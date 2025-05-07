@@ -22,7 +22,7 @@ class SvgRemapGlyphIds
   # @option [String] :logfile the path to the log file (default: log/svg_remaping_glyph_ids.log')
   # @option [Logger] :logger the logger to use (default: Rails.logger.new(logfile))
   # @option [Array<String|Symbole>] :class_names the classes to process (default: %i[Sample Molecule Reaction])
-  # @option [String] :molfile_matcher the string to match in the molfile (default: 'INDIGO-') to infere 
+  # @option [String] :molfile_matcher the string to match in the molfile (default: 'INDIGO-') to infere
   #   the source of the svg
   # @option [Boolean] :dry_run if true, do not write the remaped svg to the file (default: false)
   def initialize(logfile: LOGFILE, logger: nil, class_names: %i[Sample Molecule Reaction], dry_run: false,
@@ -82,7 +82,10 @@ class SvgRemapGlyphIds
   # @param klass [Class] the class of the entity to search for, either Sample or Molecule
   # @return [ActiveRecord::Relation] the entities that have a molfile containing 'INDIGO-'
   def entities(klass = @klass)
-    return Reaction.joins(reactions_samples: :sample).where('samples.molfile like ?', molfile_matcher) if klass == Reaction
+    if klass == Reaction
+      return Reaction.joins(reactions_samples: :sample).where('samples.molfile like ?',
+                                                              molfile_matcher)
+    end
 
     klass.where('molfile like ?', molfile_matcher)
   end
