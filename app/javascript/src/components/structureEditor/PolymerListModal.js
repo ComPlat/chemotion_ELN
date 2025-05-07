@@ -2,7 +2,7 @@
 import { PropTypes } from 'mobx-react';
 import React, { useState, useEffect } from 'react';
 import {
-  Accordion, Button, Card, Modal
+  Accordion, Button, Card, Modal,
 } from 'react-bootstrap';
 import {
   BodyRectangleIcon,
@@ -19,9 +19,12 @@ import {
   Support,
   SupportSinglePhase,
   SupportSinglePhaseWhite,
-  BodySolidWhite
+  BodySolidWhite,
+  SpecialCharacterPickerIcon
 } from 'src/components/structureEditor/TemplatesSurfaceChemistry';
-
+import {
+  textList,
+} from 'src/utilities/ketcherSurfaceChemistry/stateManager';
 const iconMap = {
   BodyRectangleIcon,
   MultiHatched,
@@ -37,6 +40,8 @@ const iconMap = {
   SupportSinglePhaseWhite,
   BodySolidWhite
 };
+
+
 
 function PolymerListModal({
   loading, onShapeSelection, title, onCloseClick
@@ -164,7 +169,87 @@ const rescaleToolBarButton = (iframeDocument) => {
     container.appendChild(newButton);
   }
 };
-export { PolymerListModal, PolymerListIconKetcherToolbarButton, rescaleToolBarButton };
+
+const specialCharButton = (iframeDocument) => {
+  const parentElement = iframeDocument.querySelector('.BottomToolbar-module_group__b-pGt');
+  if (parentElement) {
+    const newButton = iframeDocument.createElement('button');
+    newButton.classList.add('ActionButton-module_button__nfoWQ');
+    newButton.classList.add('textNodeChar');
+    newButton.title = 'Text Node Special Char';
+
+    // Apply styles directly - different ketcher version has differnet style to the button ie 2.24.0
+    newButton.style.backgroundColor = 'transparent';
+    newButton.style.border = '0';
+
+    // Set the SVG as the innerHTML of the button
+    newButton.innerHTML = SpecialCharacterPickerIcon;
+    parentElement.appendChild(newButton);
+  }
+};
+
+function SpecialCharModal({
+  loading, onSelection, title, onCloseClick
+
+}) {
+  const specialCharacters = [
+    '!', '@', '#', '$', '%', '^',
+    '&', '*', '-', '_', '=', '+', '\\',
+    '|', ';', ':', ',', '.', '<', '>',
+    '/', '?', '`', '~', '•', '—', '≠',
+    '≈', '√', '∫', '∑', '∆', '←', '↑',
+    '→', '↓', '★'
+  ];
+
+  const stored = JSON.parse(localStorage.getItem('ketcher-opts'));
+  // const prepareTextListDemoConnected = () => {
+  //   let stringConnected = '';
+  //   const separator = stored?.textNodeSeparator || '/';
+  //   for (let i = 0; i < textList.length; i++) {
+  //     const text = textList[i];
+  //     const content = JSON.parse(text.data.content); // Parse content
+  //     console.log(content);
+  //     stringConnected += content.blocks[0].text + separator;
+  //   }
+  //   return stringConnected;
+  // };
+
+  return (
+    <Modal
+      centered
+      className="w-500 h-500 top-50 start-50 translate-middle"
+      style={{ zIndex: '10000' }}
+      contentClassName="border-1"
+      animation
+      show={loading}
+      onHide={onCloseClick}
+    >
+      <Modal.Header closeButton>
+        <Modal.Title>{title}</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <div className="flex-1 flex-row flex-wrap gap-2 p-4 bg-gray-100 border border-gray-300 rounded-lg shadow-md max-w-xl" style={{ display: 'flex' }}>
+          {
+            specialCharacters.map((item) => (
+              <Button
+                key={item}
+                className={`w-10 h-10 text-lg font-medium border rounded-md hover:bg-gray-200 text-gray-800 shadow-sm flex items-center justify-center ${stored?.textNodeSeparator === item ? 'bg-green-200' : 'bg-white'
+                }`}
+                onClick={() => onSelection(item)}
+              >
+                {item}
+              </Button>
+            ))
+          }
+        </div>
+      </Modal.Body>
+    </Modal>
+  );
+}
+
+export {
+  PolymerListModal, PolymerListIconKetcherToolbarButton, rescaleToolBarButton, specialCharButton, SpecialCharModal
+};
 
 PolymerListModal.propTypes = {
   loading: PropTypes.bool,

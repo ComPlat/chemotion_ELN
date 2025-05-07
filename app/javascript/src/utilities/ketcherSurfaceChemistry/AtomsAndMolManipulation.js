@@ -366,7 +366,6 @@ const deepCompareContentImages = async (oldArray, newArray) => {
 const analyzeAliasAndImageDifferences = async (editor, oldImagePack) => {
   const listOfAliasesBefore = await collectMissingAliases();
   await fetchKetcherData(editor);
-  console.log({ oldImagePack, imagesList });
 
   // 1st collect difference between old and new data to know what's removed
   const listOfAliasesAfter = await collectMissingAliases();

@@ -81,6 +81,7 @@ const setupEditorIframe = ({
     loadTemplates();
   }
 
+
   return () => {
     if (iframe) {
       iframe.removeEventListener('load', handleIframeLoad);
@@ -218,8 +219,7 @@ const applyKetcherData = async (polymerTag, fileContent, textNodes, editor) => {
         molfileContent.root.nodes.push(...textNodeList);
       }
     }
-    const toRecenter = !polymerTag || !polymerTag.length;
-    saveMoveCanvas(editor, molfileContent, true, true, toRecenter);
+    saveMoveCanvas(editor, molfileContent, true, true);
     setTimeout(() => {
       centerPositionCanvas(editor);
     }, 10);

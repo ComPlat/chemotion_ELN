@@ -117,9 +117,7 @@ const arrangeTextNodes = async (ket2Molfile) => {
       atomCount += 1;
     });
   });
-  console.log({ assembleTextList });
   ket2Molfile.push(...assembleTextList, KET_TAGS.textNodeIdentifierClose);
-
   return ket2Molfile;
 };
 
@@ -138,7 +136,9 @@ const traverseAtonForFormulaFormation = async (ket2Lines, textNodesPairs, startA
   const sortedYIndices = Object.fromEntries(
     Object.entries(textNodesPairs).sort(([a], [b]) => parseFloat(b) - parseFloat(a))
   );
-  return Object.values(sortedYIndices).join('/');
+  const store = JSON.parse(localStorage.getItem('ketcher-opts'));
+  const valueToReplace = store?.textNodeSeparator;
+  return Object.values(sortedYIndices).join(valueToReplace || '/');
 };
 
 // collect text node with index
