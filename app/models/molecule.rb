@@ -185,7 +185,7 @@ class Molecule < ApplicationRecord
     # NB: successiv gsub seems to be faster than a single gsub with a regexp with multiple matches
     File.write(
       full_svg_path(svg_file_name),
-      Chemotion::Sanitizer.scrub_svg(svg_data, encoding: 'UTF-8'),
+      Chemotion::Sanitizer.scrub_svg(svg_data, encoding: 'UTF-8', remap_glyph_ids: true),
     )
 
     self.molecule_svg_file = svg_file_name
