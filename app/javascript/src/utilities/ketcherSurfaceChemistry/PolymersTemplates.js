@@ -19,7 +19,7 @@ const addPolymerTags = async (polymerTag, data) => {
     }
     throw new Error('No polymer tags found');
   } catch (err) {
-    console.log('addPolymerTags', err);
+    console.error('addPolymerTags', err);
     return { collectedImages: [], molfileData: data };
   }
 };
@@ -43,9 +43,8 @@ const processAtomLines = async (linesCopy, atomStarts, atomsCount) => {
 // helper to combine and prepare alias into a polymer list
 const templateAliasesPrepare = async (aliasesList, atomAliasList) => {
   let counter = 0;
-
   for (let i = 1; i < aliasesList.length; i += 2) {
-    if (ALIAS_PATTERNS.threeParts.test(aliasesList)) {
+    if (ALIAS_PATTERNS.threeParts.test(aliasesList[i])) {
       const templateId = parseInt(aliasesList[i].split('_')[1]);
       const imagePlace = parseInt(aliasesList[i].split('_')[2]);
       const { height, width } = imagesList[imagePlace].boundingBox;
