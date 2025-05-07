@@ -15,7 +15,7 @@ import {
 import {
   handleAddAtom,
   handleOnDeleteAtom,
-  removeImageTemplateAtom,
+  removeAtomFromData
 } from 'src/utilities/ketcherSurfaceChemistry/AtomsAndMolManipulation';
 
 import { addPolymerTags } from 'src/utilities/ketcherSurfaceChemistry/PolymersTemplates';
@@ -259,7 +259,8 @@ describe('Ketcher2', () => {
       await imageUsedCounterSetter(0);
       const aliasDifferences = [0];
       const collectedAliases = [];
-      let data = await removeImageTemplateAtom(latestData, [0]);
+
+      let data = await removeAtomFromData(latestData, aliasDifferences);
       data = await handleOnDeleteAtom(aliasDifferences, data, []);
       await loadKetcherData(data);
 
@@ -278,7 +279,8 @@ describe('Ketcher2', () => {
       const aliasDifferences = [0];
       await imageUsedCounterSetter(0);
       const collectedAliases = [];
-      let data = await removeImageTemplateAtom(latestData, [0]);
+
+      let data = await removeAtomFromData(latestData, aliasDifferences);
       data = await handleOnDeleteAtom(aliasDifferences, data, imagesList);
       Object.values(data).forEach((i) => i?.atoms?.forEach((j) => {
         if (j?.alias) {
@@ -310,7 +312,7 @@ describe('Ketcher2', () => {
       const collectedAliases = [];
       const imageDifferences = await deepCompareContent(oldImagePackThree, imagesList);
 
-      let data = await removeImageTemplateAtom(latestData, imageDifferences);
+      let data = await removeAtomFromData(latestData, imageDifferences);
       data = await handleOnDeleteAtom([0, 1], data, imagesList);
       Object.values(data).forEach((i) => i?.atoms?.forEach((j) => {
         if (j?.alias) {
@@ -326,8 +328,7 @@ describe('Ketcher2', () => {
       await latestDataSetter(deleteImageWithThreeOldPack);
 
       const imageDifferences = [0, 1]; // Images to be deleted
-      const data = await removeImageTemplateAtom(latestData, imageDifferences);
-
+      const data = await removeAtomFromData(latestData, imageDifferences);
       assert.strictEqual(imagesList.length, 1, 'Remaining images should be updated');
       assert.strictEqual(data.root.nodes.length, 1, 'Molecules should remain intact');
     });
@@ -341,7 +342,7 @@ describe('Ketcher2', () => {
         await latestDataSetter(deleteAtomAndRemoveImageKet);
         await imageUsedCounterSetter(0);
 
-        let data = await removeImageTemplateAtom(latestData, [0]);
+        let data = await removeAtomFromData(latestData, [0]);
         data = await handleOnDeleteAtom([0], data, imagesList);
         assert.deepStrictEqual(data, emptyKet, 'ket should be empty');
       }
@@ -399,7 +400,7 @@ describe('Ketcher2', () => {
       await imageUsedCounterSetter(0);
       const aliasDifferences = [0];
       const collectedAliases = [];
-      let data = await removeImageTemplateAtom(latestData, [0]);
+      let data = await removeAtomFromData(latestData, [0]);
       data = await handleOnDeleteAtom(aliasDifferences, data, []);
       data.root.nodes = await filterTextList(aliasDifferences, data); // remove text nodes
 
