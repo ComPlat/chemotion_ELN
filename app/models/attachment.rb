@@ -33,8 +33,9 @@
 #  index_attachments_on_identifier                         (identifier) UNIQUE
 #
 
-class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
+class Attachment < ApplicationRecord
   has_logidze
+  acts_as_paranoid
   include AttachmentJcampAasm
   include AttachmentJcampProcess
   include Labimotion::AttachmentConverter

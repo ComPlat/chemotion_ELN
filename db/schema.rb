@@ -70,6 +70,7 @@ ActiveRecord::Schema.define(version: 2025_04_22_115436) do
     t.string "folder"
     t.string "attachable_type"
     t.string "aasm_state"
+    t.datetime "deleted_at"
     t.bigint "filesize"
     t.jsonb "attachment_data"
     t.integer "con_state"
