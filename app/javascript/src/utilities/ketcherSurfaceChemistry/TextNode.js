@@ -77,22 +77,21 @@ const isAliasConsistent = () => {
 
 // find by key and update text node position from alias matching atoms
 const findByKeyAndUpdateTextNodePosition = async (textNodeKey, atom) => {
-  for (const key of Object.keys(textNodeStruct)) {
-    for (let textIdx = 0; textIdx < textList.length; textIdx++) {
-      const text = textList[textIdx];
-      const content = JSON.parse(text.data.content); // Parse content
-      if (content.blocks[0].key === textNodeKey) {
-        const split = atom.alias.split('_')[2];
-        const positionX = (atom.location[0] + imagesList[split].boundingBox.width / 2);
-        text.data.position = {
-          x: positionX,
-          y: atom.location[1],
-          z: atom.location[2]
-        };
-        return text;
-      }
+  for (let textIdx = 0; textIdx < textList.length; textIdx++) {
+    const text = textList[textIdx];
+    const content = JSON.parse(text.data.content); // Parse content
+    if (content.blocks[0].key === textNodeKey) {
+      const split = atom.alias.split('_')[2];
+      const positionX = (atom.location[0] + imagesList[split].boundingBox.width / 2);
+      text.data.position = {
+        x: positionX,
+        y: atom.location[1],
+        z: atom.location[2]
+      };
+      return text;
     }
   }
+  return null;
 };
 
 // compare 2 array and fetch index content
@@ -108,7 +107,6 @@ const deepCompareContent = async (oldArray, newArray) => {
       shift++; // Increase shift since an element is missing or changed
     }
   }
-
   return missingIndexes;
 };
 
@@ -141,6 +139,7 @@ const filterTextList = async (aliasDifferences, data) => {
     });
     return [...removeTextFromData(data), ...valueList];
   }
+  return [...removeTextFromData(data)];
 };
 
 export {

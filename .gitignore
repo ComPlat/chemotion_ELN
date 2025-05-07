@@ -132,7 +132,6 @@
 
 /public/safety_sheets/*
 !public/safety_sheets/.keep
-!/public/json/surfaceChemistryShapes.json
 
 /public/zip/*
 /public/import_logs/*
