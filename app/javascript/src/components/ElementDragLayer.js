@@ -25,26 +25,18 @@ export default function ElementDragLayer() {
   const { x, y } = currentOffset;
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        pointerEvents: 'none',
-        height: '100vh',
-        width: '100vw',
-        zIndex: 9000,
-        left: 0,
-        top: 0,
-      }}
-    >
+    <div className="element-drag-layer">
       <div
-        className="drag-layer"
+        className="element-drag-layer__preview"
         style={{
-          position: 'absolute',
           left: x,
           top: y
         }}
       >
-        {`${itemType}: ${item.element.id}`}
+        <span className="drag-handle" />
+        <span className="element-drag-layer__preview-label">
+          {`${itemType}: ${item.element.id}`}
+        </span>
       </div>
     </div>
   );

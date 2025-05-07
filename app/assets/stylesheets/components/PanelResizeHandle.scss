@@ -9,14 +9,12 @@
   &:before {
     @extend .bg-draggable;
     @extend .border-draggable;
-    border-width: 0.5rem 0.25rem;
+    border-width: 0.6rem 0.3rem;
     border-style: solid;
     content: "";
     height: 42px;
     top: calc(50% - 42px);
-    background-image: radial-gradient($chemstrap-white 1px, transparent 2px);
-    background-size: 4px 4px;
-    background-repeat: round;
+    @include drag-surface();
   }
   &:hover {
     @extend .bg-surface3;
