@@ -131,7 +131,7 @@
 
 
 /public/zip/*
-/public/failed_reports/*
+/public/import_logs/*
 !/public/zip/.keep
 
 /public/udm/*

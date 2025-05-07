@@ -4,24 +4,13 @@ class ImportCollectionsJob < ApplicationJob
   queue_as :import_collections
 
   after_perform do |job|
-    data_args = {
-      col_labels: '',
-      operation: 'import',
-      expires_at: nil,
-    }
-
-    if @discarded_info
-      data_args[:discarded_count] = @discarded_info[:count]
-      data_args[:report_path] = @discarded_info[:report_path]
-    end
-
     if @success
       Message.create_msg_notification(
         channel_subject: Channel::COLLECTION_ZIP,
         message_from: @user_id,
-        data_args: data_args,
-        url: @discarded_info&.dig(:report_path),
-        autoDismiss: 10,
+        data_args: { col_labels: '', operation: 'import', expires_at: nil },
+        url: @log_file_path,
+        autoDismiss: 5,
       )
     end
   rescue StandardError => e
@@ -36,14 +25,14 @@ class ImportCollectionsJob < ApplicationJob
       import = Import::ImportCollections.new(att, current_user_id)
       import.extract
       import.import!
-      @discarded_info = import.discarded_attachments_info
-    rescue => e
+      @log_file_path = import.log_file_path
+    rescue StandardError => e
       Delayed::Worker.logger.error e
       Message.create_msg_notification(
         channel_subject: Channel::COLLECTION_ZIP_FAIL,
         message_from: @user_id,
         data_args: { col_labels: '', operation: 'import' },
-        autoDismiss: 5
+        autoDismiss: 5,
       )
       @success = false
     ensure

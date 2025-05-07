@@ -6,7 +6,9 @@ require 'json'
 
 module Import
   class ImportCollections # rubocop:disable Metrics/ClassLength
-    def initialize(att, current_user_id, gate = false, col_id = nil, origin = nil) # rubocop:disable Style/OptionalBooleanParameter
+    attr_reader :log_file_path
+
+    def initialize(att, current_user_id, gate = false, col_id = nil, origin = nil, logger = nil) # rubocop:disable Style/OptionalBooleanParameter
       @att = att
       @current_user_id = current_user_id
       @gt = gate
@@ -17,7 +19,7 @@ module Import
       @col_id = col_id
       @col_all = Collection.get_all_collection_for_user(current_user_id)
       @tmp_dir = Dir.mktmpdir
-      @discarded_attachments = []
+      @logger, @log_file_path = initialize_logger(logger)
     end
 
     def execute
@@ -130,20 +132,30 @@ module Import
       FileUtils.rm_rf(@tmp_dir)
     end
 
-    def discarded_attachments_info
-      return nil if @discarded_attachments.empty?
+    private
 
-      filename = generate_import_report.to_s
-      root_url = Rails.application.config.root_url
-      url = filename.start_with?('/') ? "#{root_url}#{filename}" : "#{root_url}/#{filename}"
+    def initialize_logger(logger = nil)
+      return [logger, extract_log_path(logger)] if logger
 
-      {
-        count: @discarded_attachments.length,
-        report_path: url,
-      }
+      log_file = File.basename(generate_log_path)
+      url = File.join(Rails.application.config.root_url, 'import_logs', log_file)
+      [Logger.new(Rails.public_path.join('import_logs', log_file)), url]
     end
 
-    private
+    def extract_log_path(logger)
+      logger.instance_variable_get(:@logdev)&.filename
+    end
+
+    def generate_log_path
+      # Create logs directory if it doesn't exist
+      logs_dir = Rails.public_path.join('import_logs')
+      FileUtils.mkdir_p(logs_dir)
+
+      # Generate unique log filename
+      timestamp = Time.current.strftime('%Y%m%d_%H%M%S')
+      random_string = SecureRandom.hex(4)
+      logs_dir.join("import_collections_#{timestamp}_#{random_string}.log")
+    end
 
     def import_annotation(zip_file, entry, attachment)
       annotation_entry = zip_file.find_entry("#{entry.name}_annotation")
@@ -706,59 +718,30 @@ module Import
 
     def update_researchplan_body(attachments)
       @data['ResearchPlan']&.each_value do |attr_value|
-        # Filter out image fields where attachment is not found
-        attr_value['body'] = attr_value['body'].reject do |field|
-          if field['type'] == 'image'
-            public_name = field.dig('value', 'public_name')
-            new_att = attachments.find { |att| att['filename'].include?(public_name.to_s) }
+        image_fields = attr_value['body'].select { |i| i['type'] == 'image' }
 
-            if new_att.present?
-              field['value']['public_name'] = new_att['identifier']
-              field['value']['file_name'] = new_att['filename']
-              false # Keep this field
-            else
-              # Track discarded attachment
-              track_discarded_attachment(attr_value['name'], field)
-              true # Remove this field
-            end
-          else
-            false # Keep non-image fields
-          end
+        image_fields.each do |field|
+          new_att = attachments.find { |i| i['filename'].include? field['value']['public_name'] }
+
+          field['value']['public_name'] = new_att['identifier']
+          field['value']['file_name'] = new_att['filename']
+        rescue StandardError => _e
+          log_unassociated_attachment(attr_value['name'], field)
         end
       end
     end
 
-    def track_discarded_attachment(research_plan_name, field)
-      @discarded_attachments << {
-        research_plan_name: research_plan_name,
-        file_name: field.dig('value', 'file_name'),
-      }
-    end
+    def log_unassociated_attachment(research_plan_name, field)
+      log_content = <<~LOG
 
-    def generate_import_report
-      return if @discarded_attachments.empty?
+        Research Plan: #{research_plan_name}
+        File Name: #{field.dig('value', 'file_name')}
+        Error: Attachment not found
+        ----------------------------------------
 
-      report_content = "Import Report - Discarded Attachments\n"
-      report_content += "===================================\n\n"
-      report_content += "The following attachments were discarded during import:\n\n"
+      LOG
 
-      @discarded_attachments.each do |attachment|
-        report_content += "Research Plan: #{attachment[:research_plan_name]}\n"
-        report_content += "Attachment: #{attachment[:file_name]}\n"
-        report_content += "Reason: Associated attachment not found in import package\n\n"
-      end
-
-      # Create reports directory if it doesn't exist
-      reports_dir = Rails.public_path.join('failed_reports')
-      FileUtils.mkdir_p(reports_dir)
-
-      # Generate unique filename with timestamp
-      filename = "import_report_#{Time.now.to_i}.txt"
-      report_path = reports_dir.join(filename)
-      File.write(report_path, report_content)
-
-      # Return relative path for URL generation
-      "failed_reports/#{filename}"
+      @logger.error(log_content)
     end
   end
 end
