@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useContext } from 'react';
 import PropTypes from 'prop-types';
-import { useDrag, DragPreviewImage } from 'react-dnd';
+import { useDrag } from 'react-dnd';
+import { getEmptyImage } from 'react-dnd-html5-backend';
 import { observer } from 'mobx-react';
 
 import ElementStore from 'src/stores/alt/stores/ElementStore';
@@ -34,16 +35,17 @@ function inferElementSourceType(element) {
 }
 
 function EnabledHandle({ element, sourceType }) {
-  const [, drag, preview] = useDrag({
+  const [, drag, dragPreview] = useDrag({
     type: sourceType,
-    item: { element },
+    item: { element, isElement: true },
   });
 
+  useEffect(() => {
+    dragPreview(getEmptyImage(), { captureDraggingState: true });
+  }, [dragPreview]);
+
   return (
-    <>
-      <DragPreviewImage connect={preview} src="/apple-touch-icon.png" />
-      <DragHandle ref={drag} />
-    </>
+    <DragHandle ref={drag} />
   );
 }
 

@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 
+import ElementDragLayer from 'src/components/ElementDragLayer';
 import Sidebar from 'src/apps/mydb/layout/Sidebar';
 import Topbar from 'src/apps/mydb/layout/Topbar';
 
@@ -102,6 +103,7 @@ class App extends Component {
   render() {
     return (
       <>
+        <ElementDragLayer />
         {this.renderContent()}
         {this.renderModals()}
       </>
