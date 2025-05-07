@@ -34,7 +34,7 @@ Rails.application.config.content_security_policy do |policy|
   policy.connect_src(*src)
 
   # Specify URI for violation reports
-  policy.report_uri '/csp-violation-report-endpoint'
+  policy.report_uri '/csp-violation-report'
 end
 
 # If you are using UJS then enable automatic nonce generation
