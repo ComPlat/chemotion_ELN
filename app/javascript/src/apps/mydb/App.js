@@ -13,14 +13,9 @@ import Notifications from 'src/components/Notifications';
 import SampleTaskInbox from 'src/components/sampleTaskInbox/SampleTaskInbox';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
-import UIStore from 'src/stores/alt/stores/UIStore';
 import OnEventListen from 'src/utilities/UserTemplatesHelpers';
 
 class App extends Component {
-  constructor(props) {
-    super(props);
-  }
-
   componentDidMount() {
     UserActions.fetchOlsRxno();
     UserActions.fetchOlsChmo();
