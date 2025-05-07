@@ -50,11 +50,13 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   const reactionShortLabel = reaction.short_label;
   const reactionMaterials = getReactionMaterials(reaction);
   const [previousReactionMaterials, setPreviousReactionMaterials] = useState(reactionMaterials);
+  const gasMode = reaction.gaseous;
+  const [previousGasMode, setPreviousGasMode] = useState(gasMode);
+  const allReactionAnalyses = getReactionAnalyses(reaction);
+  const [previousAllReactionAnalyses, setPreviousAllReactionAnalyses] = useState(allReactionAnalyses);
   const { dispValue: durationValue = null, dispUnit: durationUnit = 'None' } = reaction.durationDisplay ?? {};
   const { userText: temperatureValue = null, valueUnit: temperatureUnit = 'None' } = reaction.temperature ?? {};
   const vesselVolume = GasPhaseReactionStore.getState().reactionVesselSizeValue;
-  const [gasMode, setGasMode] = useState(reaction.gaseous);
-  const [allReactionAnalyses, setAllReactionAnalyses] = useState(getReactionAnalyses(reaction));
   const [selectedColumns, setSelectedColumns] = useState(getVariationsColumns(reactionVariations));
   const initialColumnDefinitions = useMemo(() => getColumnDefinitions(selectedColumns, reactionMaterials, gasMode), []);
   const [columnDefinitions, setColumnDefinitions] = useReducer(columnDefinitionsReducer, initialColumnDefinitions);
@@ -123,12 +125,13 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   https://react.dev/reference/react/useState#storing-information-from-previous-renders.
   It would be preferable to refactor this to a more declarative approach, using a store for example.
   */
-  const updatedGasMode = reaction.gaseous;
-  const updatedAllReactionAnalyses = getReactionAnalyses(reaction);
 
+  /*
+  Update materials according to "Scheme" tab.
+  */
   if (!isEqual(
-    getReactionMaterialsHashes(reactionMaterials, updatedGasMode, vesselVolume),
-    getReactionMaterialsHashes(previousReactionMaterials, updatedGasMode, vesselVolume)
+    getReactionMaterialsHashes(reactionMaterials, gasMode, vesselVolume),
+    getReactionMaterialsHashes(previousReactionMaterials, gasMode, vesselVolume)
   )) {
     /*
     Keep set of materials up-to-date.
@@ -153,7 +156,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
     updatedReactionVariations = updateVariationsAux(
       updatedReactionVariations,
       reactionMaterials,
-      updatedGasMode,
+      gasMode,
       vesselVolume
     );
 
@@ -162,7 +165,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
       updatedColumnDefinitions,
       reactionMaterials,
       updatedSelectedColumns,
-      updatedGasMode
+      gasMode
     );
 
     setColumnDefinitions(
@@ -174,12 +177,13 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
     setSelectedColumns(updatedSelectedColumns);
     setReactionVariations(updatedReactionVariations);
     setPreviousReactionMaterials(reactionMaterials);
+    setPreviousGasMode(gasMode);
   }
 
   /*
   Update gas mode according to "Scheme" tab.
   */
-  if (gasMode !== updatedGasMode) {
+  if (gasMode !== previousGasMode) {
     const updatedSelectedColumns = getVariationsColumns([]);
     setSelectedColumns(updatedSelectedColumns);
     setColumnDefinitions(
@@ -190,10 +194,10 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
           return materials;
         }, {}),
         selectedColumns: updatedSelectedColumns,
-        gasMode: updatedGasMode
+        gasMode
       }
     );
-    setGasMode(updatedGasMode);
+    setPreviousGasMode(gasMode);
     setReactionVariations([]);
   }
 
@@ -237,10 +241,10 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   |               |                | only displays associations to existing rows.   |
   `-------------- ---------------- -------------------------------------------------`
   */
-  if (!isEqual(allReactionAnalyses, updatedAllReactionAnalyses)) {
-    const updatedReactionVariations = updateAnalyses(reactionVariations, updatedAllReactionAnalyses);
+  if (!isEqual(allReactionAnalyses, previousAllReactionAnalyses)) {
+    const updatedReactionVariations = updateAnalyses(reactionVariations, allReactionAnalyses);
     setReactionVariations(updatedReactionVariations);
-    setAllReactionAnalyses(updatedAllReactionAnalyses);
+    setPreviousAllReactionAnalyses(allReactionAnalyses);
   }
 
   const addRow = () => {
