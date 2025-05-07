@@ -129,7 +129,6 @@
 !/public/json/precautionaryPhrases.json
 !/public/json/hazardPhrases.json
 !/public/json/pictograms.json
-!/public/json/surfaceChemistryShapes.json
 
 /public/zip/*
 /public/import_logs/*

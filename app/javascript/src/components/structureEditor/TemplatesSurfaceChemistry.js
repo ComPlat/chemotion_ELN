@@ -1,5 +1,10 @@
 import React from 'react';
 
+/*
+file to list all shapes as react components to use on ketcher moal
+ketcher2 doesnt work if an images is loaded above it or in an active dom so thats why components are rquired
+*/
+
 function BodyRectangleIcon() {
   return (
     <svg
@@ -262,6 +267,12 @@ const RescaleCanvas = `
 <svg fill="#000000" width="20px" height="20px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M1,12A11,11,0,0,1,17.882,2.7l1.411-1.41A1,1,0,0,1,21,2V6a1,1,0,0,1-1,1H16a1,1,0,0,1-.707-1.707l1.128-1.128A8.994,8.994,0,0,0,3,12a1,1,0,0,1-2,0Zm21-1a1,1,0,0,0-1,1,9.01,9.01,0,0,1-9,9,8.9,8.9,0,0,1-4.42-1.166l1.127-1.127A1,1,0,0,0,8,17H4a1,1,0,0,0-1,1v4a1,1,0,0,0,.617.924A.987.987,0,0,0,4,23a1,1,0,0,0,.707-.293L6.118,21.3A10.891,10.891,0,0,0,12,23,11.013,11.013,0,0,0,23,12,1,1,0,0,0,22,11Z"/></svg>
 `;
 
+const SpecialCharacterPickerIcon = `
+<svg width="20px" height="20px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M12 2C7.03 2 3 6.03 3 11H5C5 7.134 8.134 4 12 4C15.866 4 19 7.134 19 11C19 14.866 15.866 18 12 18C10.673 18 9.402 17.597 8.343 16.828L7 18.172C8.645 19.421 10.735 20 12.999 20C17.97 20 22 15.97 22 11C22 6.03 17.97 2 12 2Z" fill="currentColor"/>
+</svg>
+`;
+
 export {
   BodyRectangleIcon,
   MultiHatched,
@@ -277,5 +288,6 @@ export {
   SupportSinglePhaseWhite,
   BodySolidWhite,
   PolymerShapes,
-  RescaleCanvas
+  RescaleCanvas,
+  SpecialCharacterPickerIcon
 };
