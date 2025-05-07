@@ -40,7 +40,7 @@ const updateUserTemplateDetails = async (oldValue, newValue) => {
     if (!exists) {
       await ProfilesFetcher.deleteUserTemplate({
         path: oldValue[i].props.path,
-      }).catch(() => console.log('ISSUE WITH DELETE', localItem?.props?.path));
+      }).catch(() => console.error('ISSUE WITH DELETE', localItem?.props?.path));
       createAddAttachmentidToNewUserTemplate(newValue, newValue[i], i);
       break;
     }

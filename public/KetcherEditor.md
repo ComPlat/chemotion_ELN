@@ -96,13 +96,14 @@ An example of some actions.
 🚀 Rebase all aliases:    
 📋 Aliases: [t_01_0, t_01_1], imageList: [0, 1], image_count: 1    
 
-#### Information on molfile
+#### Extra Information on molfile
 
 M  END
 > <PolymersList>
 0s/0.24-2.29 5/4/0.46-0.46
 > <TextNode>
-5#ea82s#t_4_1#asdfasdf
+5#ea82s#t_4_1#text1Content
+8#ea82g#t_4_1#text2Content
 > </TextNode>
 $$$$
 

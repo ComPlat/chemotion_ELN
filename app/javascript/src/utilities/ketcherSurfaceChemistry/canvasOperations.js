@@ -23,7 +23,10 @@ import {
   buttonClickForRectangleSelection
 } from 'src/utilities/ketcherSurfaceChemistry/DomHandeling';
 import {
-  ImagesToBeUpdatedSetter, imagesList, mols, allAtoms,
+  ImagesToBeUpdatedSetter,
+  imagesList,
+  mols,
+  allAtoms,
   textList,
   textListSetter,
   textNodeStruct,
@@ -43,7 +46,6 @@ import {
   reArrangeImagesOnCanvas,
   fetchSurfaceChemistryImageData,
   placeAtomOnImage,
-  placeImageOnAtoms
 } from 'src/utilities/ketcherSurfaceChemistry/Ketcher2SurfaceChemistryUtils';
 
 // canvas actions
@@ -117,9 +119,7 @@ const arrangeTextNodes = async (ket2Molfile) => {
       atomCount += 1;
     });
   });
-  console.log({ assembleTextList });
   ket2Molfile.push(...assembleTextList, KET_TAGS.textNodeIdentifierClose);
-
   return ket2Molfile;
 };
 
@@ -138,6 +138,7 @@ const traverseAtonForFormulaFormation = async (ket2Lines, textNodesPairs, startA
   const sortedYIndices = Object.fromEntries(
     Object.entries(textNodesPairs).sort(([a], [b]) => parseFloat(b) - parseFloat(a))
   );
+
   return Object.values(sortedYIndices).join('/');
 };
 
@@ -155,14 +156,14 @@ const collectTextListing = async (ket2Lines, startTextNode, endTextNode) => {
 };
 
 // process text nodes into for formula
-const assembleTextDescriptionFormula = async (ket2Lines) => {
+const assembleTextDescriptionFormula = async (ket2Lines, specialChars) => {
   const startAtoms = 3;
   const atomsCount = ket2Lines[3].trim().split(' ')[0];
   const startTextNode = ket2Lines.indexOf(KET_TAGS.textNodeIdentifier);
   const endTextNode = ket2Lines.indexOf(KET_TAGS.textNodeIdentifierClose);
   const endAtom = parseInt(atomsCount) + 3;
   const textNodesPairs = await collectTextListing(ket2Lines, startTextNode, endTextNode);
-  const formula = await traverseAtonForFormulaFormation(ket2Lines, textNodesPairs, startAtoms, endAtom);
+  const formula = await traverseAtonForFormulaFormation(ket2Lines, textNodesPairs, startAtoms, endAtom, specialChars);
   return formula;
 };
 
@@ -184,13 +185,11 @@ const onAddAtom = async (editor) => {
 
 // helper function to delete a pair of text node by value
 const deleteKeyByValue = (valueToDelete) => {
-  // Iterate over each key-value pair in the object
   for (const key in textNodeStruct) {
     if (textNodeStruct[key] && textNodeStruct[key] === valueToDelete) {
-      delete textNodeStruct[key]; // Delete the key if the value matches
+      delete textNodeStruct[key];
     }
   }
-  // return textNodeStruct;
 };
 
 // helper function when a text node is deleted
@@ -232,7 +231,6 @@ const onAddText = async (editor, selectedImageForTextNode) => {
     };
     textList[textList.length - 1] = lastTextNode;
     textNodeStruct[alias] = JSON.parse(lastTextNode.data.content).blocks[0].key;
-
     saveMoveCanvas(editor, latestData, true, true, false);
   }
   imageNodeForTextNodeSetter(null);
@@ -259,6 +257,7 @@ const replaceAliasWithRG = async (data) => {
 };
 
 // prepare svg
+// TODO: fix or remove after image fixes from ketcher epam
 const prepareSvg = async (editor) => {
   const regex = /source-\d+/;
   const moves = [];
@@ -380,6 +379,7 @@ const onTemplateMove = async (editor, recenter = false) => {
   await fetchKetcherData(editor);
 
   let imageNodes = [];
+  // TODO: fix after image fix
   // if (placemenType === 'atom-placement') {
   //   imageNodes = await placeImageOnAtoms(molCopy, imageListCopy);
   // } else {
@@ -399,7 +399,7 @@ const onTemplateMove = async (editor, recenter = false) => {
   textListCopyContainerSetter([]);
 };
 
-const onFinalCanvasSave = async (editor, iframeRef) => {
+const onFinalCanvasSave = async (editor, iframeRef, specialChars) => {
   try {
     let textNodesFormula = '';
     await centerPositionCanvas(editor);
@@ -407,7 +407,7 @@ const onFinalCanvasSave = async (editor, iframeRef) => {
     await reArrangeImagesOnCanvas(iframeRef); // svg display
     const ket2Lines = await arrangePolymers(canvasDataMol); // polymers added
     const ket2LineTextArranged = await arrangeTextNodes(ket2Lines); // text node
-    if (textList.length) textNodesFormula = await assembleTextDescriptionFormula(ket2LineTextArranged); // text node formula
+    if (textList.length) textNodesFormula = await assembleTextDescriptionFormula(ket2LineTextArranged, specialChars); // text node formula
     ket2LineTextArranged.push(KET_TAGS.fileEndIdentifier);
     const svgElement = await prepareSvg(editor);
     resetStore();

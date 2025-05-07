@@ -108,7 +108,6 @@ const deepCompareContent = async (oldArray, newArray) => {
       shift++; // Increase shift since an element is missing or changed
     }
   }
-
   return missingIndexes;
 };
 

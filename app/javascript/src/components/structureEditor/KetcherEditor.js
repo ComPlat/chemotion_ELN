@@ -12,10 +12,11 @@ import React, {
   useEffect, useRef, useImperativeHandle, forwardRef,
   useState
 } from 'react';
+import UsersFetcher from 'src/fetchers/UsersFetcher';
 import {
   findTemplateByPayload
 } from 'src/utilities/ketcherSurfaceChemistry/Ketcher2SurfaceChemistryUtils';
-import { PolymerListModal } from 'src/components/structureEditor/PolymerListModal';
+import { PolymerListModal, SpecialCharModal } from 'src/components/structureEditor/PolymerListModal';
 import {
   fetchKetcherData,
   setupEditorIframe,
@@ -44,7 +45,6 @@ import {
 import {
   onAddAtom,
   onDeleteText,
-  centerPositionCanvas,
   onTemplateMove,
   saveMoveCanvas,
   onFinalCanvasSave,
@@ -72,6 +72,8 @@ export let imageNodeCounter = -1; // counter of how many images are used/present
 
 // local
 let oldImagePack = [];
+let dashedSelectionCharacter = null;
+let restSelectionCharacter = null;
 
 // to reset all data containers
 export const resetStore = () => {
@@ -91,11 +93,21 @@ export const imageUsedCounterSetter = async (count) => {
 };
 
 /* istanbul ignore next */
-/* container function on atom delete
-  removes an atom: atoms should always be consistent
-    case1: when last(current count for image counter) image is deleted means aliases are consistent
-    case1: when any image is deleted means aliases are in-consistent
-*/
+/**
+ * Handles the deletion of atoms and ensures consistency in the canvas data.
+ *
+ * This function performs the following steps:
+ * 1. Analyzes alias and image differences to determine which atoms or images need to be removed.
+ * 2. Removes atoms or images based on the detected differences.
+ * 3. Resettles aliases to maintain consistency in the atom data.
+ * 4. Removes associated text nodes from the canvas.
+ * 5. Saves the updated canvas data and resets relevant state variables.
+ *
+ * @async
+ * @function onAtomDelete
+ * @param {Object} editor - The Ketcher editor instance.
+ * @throws {Error} Logs errors to the console if any step fails.
+ */
 const onAtomDelete = async (editor) => {
   try {
     if (!editor || !editor.structureDef) return;
@@ -133,6 +145,17 @@ const onAtomDelete = async (editor) => {
   }
 };
 
+/**
+ * Handles the loading of the canvas and ensures that the editor is updated with the latest state.
+ *
+ * This function performs the following actions:
+ * 1. If the canvas needs to be reloaded (`reloadCanvas` is true), it triggers the `onTemplateMove` function to reset the canvas state.
+ * 2. Sets the `ImagesToBeUpdated` flag to `true` to perform images layering
+ *
+ * @async
+ * @function eventLoadCanvas
+ * @param {Object} editor - The Ketcher editor instance.
+ */
 export const eventLoadCanvas = async (editor) => {
   if (editor && editor.structureDef) {
     if (reloadCanvas) onTemplateMove(editor, null, true);
@@ -147,6 +170,7 @@ const KetcherEditor = forwardRef((props, ref) => {
   } = props;
 
   const [showShapes, setShowShapes] = useState(false);
+  const [showSpecialCharModal, setSpecialCharModal] = useState(false);
 
   const iframeRef = useRef();
   const initMol = molfile || '\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n';
@@ -196,10 +220,8 @@ const KetcherEditor = forwardRef((props, ref) => {
       resetStore();
       imageNodeForTextNodeSetter(null);
     },
-    "[title='Rescale Polymer Canvas']": async () => {
-      await centerPositionCanvas(editor);
-      ImagesToBeUpdatedSetter(true);
-      await runImageLayering();
+    "[title='Text Node Special Char']": async () => {
+      setSpecialCharModal(true);
     },
   };
 
@@ -216,7 +238,11 @@ const KetcherEditor = forwardRef((props, ref) => {
     return cleanup;
   }, [editor]);
 
-  // add all the images at the end of the canvas
+  /**
+   * Ensures that all images are layered correctly on the canvas.
+   * @async
+   * @function runImageLayering
+   */
   const runImageLayering = async () => {
     if (ImagesToBeUpdated && !LAYERING_FLAGS.skipImageLayering) {
       setTimeout(async () => {
@@ -225,7 +251,18 @@ const KetcherEditor = forwardRef((props, ref) => {
     }
   };
 
-  // enable editor change listener
+  /**
+   * Sets up listeners for changes in the editor's content and selection.
+   *
+   * This function performs the following actions:
+   * 1. Subscribes to the `change` event in the editor to handle content updates.
+   *    - Updates the canvas selection state.
+   *    - Processes the event data using the `handleEventCapture` function.
+   *    - Ensures that all images are layered correctly on the canvas.
+   * 2. Subscribes to the `selectionChange` event in the editor to handle selection updates.
+   *    - Updates the `imageNodeForTextNode` state with the currently selected images.
+   * @function onEditorContentChange
+   */
   const onEditorContentChange = () => {
     editor._structureDef.editor.editor.subscribe('change', async (eventData) => {
       canvasSelectionsSetter(editor._structureDef.editor.editor._selection);
@@ -233,6 +270,8 @@ const KetcherEditor = forwardRef((props, ref) => {
       await handleEventCapture(editor, result, eventHandlers);
       await runImageLayering(); // post all the images at the end of the canvas not duplicate
     });
+
+    // Subscribes to the `selectionChange` event
     editor._structureDef.editor.editor.subscribe('selectionChange', async () => {
       const currentSelection = editor._structureDef.editor.editor._selection;
       if (currentSelection?.images) {
@@ -241,7 +280,18 @@ const KetcherEditor = forwardRef((props, ref) => {
     });
   };
 
-  // Load the editor content and set up the molecule
+  /**
+ * Loads the editor content and initializes the molecule structure.
+ *
+ * This function performs the following actions:
+ * 1. Sets the global `editor` instance to the `window` object for accessibility.
+ * 2. Calls `onEditorContentChange` to set up listeners for content and selection changes in the editor.
+ * 3. Prepares the Ketcher data by loading the initial molecule structure.
+ *
+ * @async
+ * @function loadContent
+ * @param {Object} event - The event object containing data about the editor initialization.
+ */
   const loadContent = async (event) => {
     if (event.data.eventType === 'init') {
       window.editor = editor;
@@ -252,6 +302,19 @@ const KetcherEditor = forwardRef((props, ref) => {
     }
   };
 
+  /**
+   * Handles the addition or copying of images to the canvas.
+   *
+   * This function performs the following actions:
+   * 1. Retrieves the list of newly added images from the `imagesList` array.
+   * 2. For each added image, attempts to find a corresponding template ID using the `findTemplateByPayload` function.
+   * 3. If a valid template ID is found, calls the `onShapeSelection` function to add the shape to the canvas.
+   * 4. Resets the `eventUpsertImageSetter` to 0 to indicate that the image addition process is complete.
+   *
+   * @async
+   * @function onImageAddedOrCopied
+   * @returns {Promise<void>} This function does not return any value.
+   */
   const onImageAddedOrCopied = async () => {
     const imagesAddedList = imagesList.slice(upsertImageCalled);
     imagesAddedList.forEach(async (item) => {
@@ -263,14 +326,37 @@ const KetcherEditor = forwardRef((props, ref) => {
     eventUpsertImageSetter(0);
   };
 
+  /**
+   * Handles the selection of a shape (template) and adds it to the canvas.
+   *
+   * This function performs the following actions:
+   * 1. Pastes the selected shape (template) onto the canvas using the `onPasteNewShapes` function.
+   * 2. Optionally adds the shape as an image to the canvas, based on the `imageToBeAdded` parameter.
+   * 3. Closes the Polymer List Modal by setting `showShapes` to `false`.
+   *
+   * @async
+   * @function onShapeSelection
+   * @param {string} tempId - The ID of the selected template to be added to the canvas.
+   * @param {boolean} [imageToBeAdded=true] - Determines whether the shape should be added as an image.
+   */
   const onShapeSelection = async (tempId, imageToBeAdded = true) => {
     await onPasteNewShapes(editor, tempId, imageToBeAdded, iframeRef);
     setShowShapes(false);
   };
 
+  const onCharSelection = (char) => {
+    setSpecialCharModal(false);
+    restSelectionCharacter = char;
+  };
+
+  const onDashedCharSelection = (char) => {
+    setSpecialCharModal(false);
+    dashedSelectionCharacter = char;
+  };
+
   // ref functions when a canvas is saved using main "SAVE" button
   useImperativeHandle(ref, () => ({
-    onSaveFileK2SC: () => onFinalCanvasSave(editor, iframeRef),
+    onSaveFileK2SC: () => onFinalCanvasSave(editor, iframeRef, { dashedSelectionCharacter, restSelectionCharacter }),
   }));
 
   return (
@@ -280,6 +366,15 @@ const KetcherEditor = forwardRef((props, ref) => {
         onShapeSelection={onShapeSelection}
         onCloseClick={() => setShowShapes(false)}
         title="Select a template"
+      />
+      <SpecialCharModal
+        loading={showSpecialCharModal}
+        onDashedSelection={onDashedCharSelection}
+        onRestSelections={onCharSelection}
+        onCloseClick={() => setSpecialCharModal(false)}
+        dashedSelection={dashedSelectionCharacter}
+        restSelection={restSelectionCharacter}
+        title="Select a special character"
       />
       <iframe
         ref={iframeRef}

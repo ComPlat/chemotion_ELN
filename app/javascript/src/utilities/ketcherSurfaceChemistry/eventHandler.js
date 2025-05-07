@@ -13,7 +13,6 @@ import {
   eventUpsertImageDecrement
 } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
 import { eventCollectDeletedAtoms } from 'src/utilities/ketcherSurfaceChemistry/AtomsAndMolManipulation';
-import { KET_TAGS } from 'src/utilities/ketcherSurfaceChemistry/constants';
 
 // helper function to add event to stack
 const addEventToFILOStack = (event) => {
