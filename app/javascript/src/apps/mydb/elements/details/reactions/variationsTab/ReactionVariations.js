@@ -12,15 +12,15 @@ import PropTypes from 'prop-types';
 import Reaction from 'src/models/Reaction';
 import {
   createVariationsRow, copyVariationsRow, updateVariationsRow, getVariationsColumns, materialTypes,
-  addMissingColumnsToVariations, removeObsoleteColumnsFromVariations, getColumnDefinitions
+  addMissingColumnsToVariations, removeObsoleteColumnsFromVariations, getColumnDefinitions,
+  removeObsoleteColumnDefinitions
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   getReactionAnalyses, updateAnalyses
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import {
-  updateVariationsGasTypes,
-  getReactionMaterials, getReactionMaterialsIDs, getReactionMaterialsGasTypes,
-  removeObsoleteMaterialColumns
+  updateVariationsAux, getReactionMaterials, getReactionMaterialsIDs,
+  removeObsoleteMaterialColumns, resetColumnDefinitionsMaterials, getReactionMaterialsHashes
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   PropertyFormatter, PropertyParser,
@@ -117,7 +117,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   };
 
   /*
-  What follows is a series of imperative state updates that keep the "Variations" tab in sync with other tabs.
+  What follows is a series of imperative state updates that keep the "Variations" tab in sync with the "Scheme" tab.
   This pattern isn't nice, but the best I could do according to
   https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes and
   https://react.dev/reference/react/useState#storing-information-from-previous-renders.
@@ -126,36 +126,53 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   const updatedGasMode = reaction.gaseous;
   const updatedAllReactionAnalyses = getReactionAnalyses(reaction);
 
-  /*
-  Keep set of materials up-to-date.
-  Materials could have been added or removed in the "Scheme" tab.
-  We need to only *remove* obsolete materials, not *add* missing ones, since users add materials manually.
-  */
-  if (
-    !isEqual(
-      getReactionMaterialsIDs(reactionMaterials),
-      getReactionMaterialsIDs(previousReactionMaterials)
-    )
-  ) {
+  if (!isEqual(
+    getReactionMaterialsHashes(reactionMaterials, updatedGasMode, vesselVolume),
+    getReactionMaterialsHashes(previousReactionMaterials, updatedGasMode, vesselVolume)
+  )) {
+    /*
+    Keep set of materials up-to-date.
+    Materials could have been added or removed in the "Scheme" tab.
+    We need to only *remove* obsolete materials, not *add* missing ones, since users add materials manually.
+    */
     const updatedSelectedColumns = removeObsoleteMaterialColumns(
       reactionMaterials,
       selectedColumns
     );
-    setSelectedColumns(updatedSelectedColumns);
 
-    const updatedReactionVariations = removeObsoleteColumnsFromVariations(
+    let updatedReactionVariations = removeObsoleteColumnsFromVariations(
       reactionVariations,
       updatedSelectedColumns
     );
-    setReactionVariations(updatedReactionVariations);
+
+    let updatedColumnDefinitions = removeObsoleteColumnDefinitions(columnDefinitions, updatedSelectedColumns);
+
+    /*
+    Update the materials' non-editable quantities according to the "Scheme" tab.
+    */
+    updatedReactionVariations = updateVariationsAux(
+      updatedReactionVariations,
+      reactionMaterials,
+      updatedGasMode,
+      vesselVolume
+    );
+
+    // Reset materials' column definitions to account for potential changes in their gas type.
+    updatedColumnDefinitions = resetColumnDefinitionsMaterials(
+      updatedColumnDefinitions,
+      reactionMaterials,
+      updatedSelectedColumns,
+      updatedGasMode
+    );
 
     setColumnDefinitions(
       {
-        type: 'remove_obsolete_materials',
-        selectedColumns: updatedSelectedColumns
+        type: 'set_updated',
+        update: updatedColumnDefinitions
       }
     );
-
+    setSelectedColumns(updatedSelectedColumns);
+    setReactionVariations(updatedReactionVariations);
     setPreviousReactionMaterials(reactionMaterials);
   }
 
@@ -178,35 +195,6 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
     );
     setGasMode(updatedGasMode);
     setReactionVariations([]);
-  }
-
-  /*
-  Update the materials's gas types according to  the "Scheme" tab.
-  */
-  if (
-    updatedGasMode && !isEqual(
-      getReactionMaterialsGasTypes(reactionMaterials),
-      getReactionMaterialsGasTypes(previousReactionMaterials)
-    )
-  ) {
-    const updatedReactionVariations = updateVariationsGasTypes(
-      reactionVariations,
-      reactionMaterials,
-      updatedGasMode,
-      vesselVolume
-    );
-    setReactionVariations(updatedReactionVariations);
-
-    setColumnDefinitions(
-      {
-        type: 'update_gas_type',
-        selectedColumns,
-        materials: reactionMaterials,
-        gasMode: updatedGasMode,
-      }
-    );
-
-    setPreviousReactionMaterials(reactionMaterials);
   }
 
   /*
