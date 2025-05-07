@@ -411,7 +411,6 @@ export default class GenericElDetails extends Component {
   }
 
   header(genericEl) {
-    const { toggleFullScreen } = this.props;
     const iconClass = (genericEl.element_klass && genericEl.element_klass.icon_name) || '';
     const { currentCollection } = UIStore.getState();
     const defCol = currentCollection
@@ -452,18 +451,6 @@ export default class GenericElDetails extends Component {
               eventableType="Labimotion::Element"
             />
           )}
-          <OverlayTrigger
-            placement="bottom"
-            overlay={<Tooltip id="tip_fullscreen_btn">FullScreen</Tooltip>}
-          >
-            <Button
-              variant="info"
-              size="xxsm"
-              onClick={() => toggleFullScreen()}
-            >
-              <i className="fa fa-expand" aria-hidden="true" />
-            </Button>
-          </OverlayTrigger>
           {copyBtn}
           <OverlayTrigger
             placement="bottom"
@@ -513,7 +500,6 @@ export default class GenericElDetails extends Component {
       }
     });
 
-    const tabTitlesMap = {};
     let { activeTab } = this.state;
 
     if (!tabKeyContentList.includes(activeTab) && tabKeyContentList.length > 0) {
@@ -527,20 +513,20 @@ export default class GenericElDetails extends Component {
       >
         <Card.Header>{this.header(genericEl)}</Card.Header>
         <Card.Body>
-          <ElementDetailSortTab
-            type={genericEl.type}
-            availableTabs={Object.keys(tabContents)}
-            tabTitles={tabTitlesMap}
-            onTabPositionChanged={this.onTabPositionChanged}
-            addInventoryTab={false}
-          />
-          <Tabs
-            activeKey={activeTab}
-            onSelect={(key) => this.handleSelect(key, genericEl.type)}
-            id="GenericElementDetailsXTab"
-          >
-            {tabContentList}
-          </Tabs>
+          <div className="tabs-container--with-borders">
+            <ElementDetailSortTab
+              type={genericEl.type}
+              availableTabs={Object.keys(tabContents)}
+              onTabPositionChanged={this.onTabPositionChanged}
+            />
+            <Tabs
+              activeKey={activeTab}
+              onSelect={(key) => this.handleSelect(key, genericEl.type)}
+              id="GenericElementDetailsXTab"
+            >
+              {tabContentList}
+            </Tabs>
+          </div>
         </Card.Body>
         <Card.Footer>
           <div className="d-inline-block p-1">
@@ -568,7 +554,6 @@ export default class GenericElDetails extends Component {
 
 GenericElDetails.propTypes = {
   genericEl: PropTypes.object,
-  toggleFullScreen: PropTypes.func.isRequired,
 };
 
 GenericElDetails.defaultProps = {
