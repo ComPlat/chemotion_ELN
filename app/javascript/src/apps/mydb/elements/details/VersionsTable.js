@@ -157,16 +157,25 @@ export default class VersionsTable extends Component {
       {
         field: 'id',
         headerName: '#',
+        flex: 1,
       },
       {
         field: 'createdAt',
         headerName: 'Modified on',
         valueFormatter: (p) => moment(p.value).format('YYYY-MM-DD HH:mm:ss'),
         tooltipValueGetter: (p) => moment(p.value).fromNow(),
+        flex: 3,
       },
       {
         field: 'userName',
         headerName: 'Author',
+        flex: 3,
+      },
+      {
+        field: 'changes',
+        headerName: 'Changes',
+        valueFormatter: (p) => p.value.map((c) => c.name).join(','),
+        flex: 5,
       },
     ];
 

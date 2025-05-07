@@ -289,6 +289,7 @@ function VersionsTableFields(props) {
       },
       wrapText: true,
       autoHeight: true,
+      flex: 1,
     },
     {
       field: 'oldValue',
@@ -299,6 +300,7 @@ function VersionsTableFields(props) {
       cellRenderer: (input) => formatValue(input.data.kind, input.value, input.data.label),
       wrapText: true,
       autoHeight: true,
+      flex: 2,
     },
     {
       field: 'newValue',
@@ -309,6 +311,7 @@ function VersionsTableFields(props) {
       cellRenderer: (input) => formatValue(input.data.kind, input.value, input.data.label),
       wrapText: true,
       autoHeight: true,
+      flex: 2,
     },
     {
       field: 'currentValue',
@@ -316,6 +319,7 @@ function VersionsTableFields(props) {
       cellRenderer: (input) => formatValue(input.data.kind, input.value, input.data.label),
       wrapText: true,
       autoHeight: true,
+      flex: 2,
     },
   ];
 
