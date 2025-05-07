@@ -50,12 +50,13 @@ const updateUserTemplateDetails = async (oldValue, newValue) => {
 
 const onEventListen = async (event) => {
   let { newValue, oldValue } = event;
-  if (newValue.length && oldValue.length) {
+  const bothArrayHaveItems = Array.isArray(newValue) && newValue.length && Array.isArray(oldValue) && oldValue.length;
+  if (bothArrayHaveItems) {
     newValue = JSON.parse(newValue);
     oldValue = JSON.parse(oldValue);
     if (event.key === key) { // matching key && deleteAllowed
       if (newValue.length > oldValue.length) { // when a new template is added
-        let newItem = newValue[newValue.length - 1];
+        const newItem = newValue[newValue.length - 1];
         createAddAttachmentidToNewUserTemplate(newValue, newItem);
       } else if (newValue.length < oldValue.length) { // when a template is deleted
         const listOfLocalid = newValue.map((item) => item.props.path);

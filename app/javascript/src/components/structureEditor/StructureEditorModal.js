@@ -23,7 +23,7 @@ import KetcherEditor from 'src/components/structureEditor/KetcherEditor';
 import loadScripts from 'src/components/structureEditor/loadScripts';
 import CommonTemplatesList from 'src/components/ketcher-templates/CommonTemplatesList';
 import CommonTemplatesFetcher from 'src/fetchers/CommonTemplateFetcher';
-import transformSvgIdsAndReferences from 'src/utilities/SvgUtils';
+import { transformSvgIdsAndReferences } from 'src/utilities/SvgUtils';
 
 const notifyError = (message) => {
   NotificationActions.add({
