@@ -13,9 +13,9 @@ import {
   adjustAtomCoordinates
 } from 'src/utilities/ketcherSurfaceChemistry/AtomsAndMolManipulation';
 import { ALIAS_PATTERNS, KET_TAGS } from 'src/utilities/ketcherSurfaceChemistry/constants';
-import { findByKeyAndUpdateTextNodePosition, deepCompareContent } from 'src/utilities/ketcherSurfaceChemistry/TextNode';
+import { findByKeyAndUpdateTextNodePosition } from 'src/utilities/ketcherSurfaceChemistry/TextNode';
 import {
-  mols, textList, textNodeStruct, allTemplates,
+  mols, textNodeStruct, allTemplates,
 } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
 import { latestData } from 'src/components/structureEditor/KetcherEditor';
 
@@ -94,7 +94,7 @@ const placeImageOnAtoms = async (mols_, imagesList_) => {
           const aliasSplits = atom.alias.split('_');
           const imageCoordinates = imageListParam[aliasSplits[2]]?.boundingBox;
           if (!imageCoordinates) {
-            throw new ('Invalid alias')();
+            throw new Error('Invalid alias');
           }
           const boundingBox = {
             x: atom.location[0] - imageCoordinates.width / 2,
@@ -124,7 +124,7 @@ const placeAtomOnImage = async (mols_, imagesList_) => {
           const aliasSplits = atom.alias.split('_');
           const imageCoordinates = imageListParam[aliasSplits[2]]?.boundingBox;
           if (!imageCoordinates) {
-            throw new ('Invalid alias')();
+            throw new Error('Invalid alias');
           }
           const coordinates = adjustAtomCoordinates(imageCoordinates);
           latestData[item].atoms[idx].location = coordinates;
@@ -136,6 +136,18 @@ const placeAtomOnImage = async (mols_, imagesList_) => {
     console.error('placeImageOnAtoms', err.message);
     return latestData.root.nodes;
   }
+};
+
+const findTextNodesNotConnectedWithTemplates = (updatedTextList) => {
+  const values = Object.values(textNodeStruct);
+  const list = [];
+  for (let i = 0; i < updatedTextList.length; i++) {
+    const block = JSON.parse(updatedTextList[i].data.content).blocks[0];
+    if (values.indexOf(block.key) === -1) {
+      list.push(updatedTextList[i]);
+    }
+  }
+  return list;
 };
 
 // place text nodes on atom with matching aliases
@@ -152,8 +164,8 @@ const placeTextOnAtoms = async (mols_) => {
         }
       }
     }
-    const diff = await deepCompareContent(textList, updatedTextList); // extra text components without aliases
-    return [...removeTextFromData(latestData), ...updatedTextList, ...diff.map((i) => textList[i])];
+    const otherTextNodes = await findTextNodesNotConnectedWithTemplates(updatedTextList); // extra text components without aliases
+    return [...removeTextFromData(latestData), ...updatedTextList, ...otherTextNodes];
   } catch (err) {
     console.error('placeTextOnAtoms', err.message);
     return [];
@@ -196,8 +208,7 @@ const applySelectedStruct = async (editor, dataCopy) => {
         const { atoms } = dataCopy[mols[i]];
         for (let j = 0; j < atoms.length; j++) {
           if (selectedAtoms.indexOf(atomCount) !== -1) {
-            // atoms[j].selected = true;
-            console.log(atoms[j]);
+            atoms[j].selected = true;
           }
           atomCount++;
         }
@@ -206,7 +217,7 @@ const applySelectedStruct = async (editor, dataCopy) => {
     }
     return dataCopy;
   } catch (err) {
-    console.log('applySelectedStruct', err.message);
+    console.error('applySelectedStruct', err.message);
     return dataCopy;
   }
 };

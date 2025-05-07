@@ -66,9 +66,7 @@ const setupEditorIframe = ({
   buttonEvents,
 }) => {
   resetStore();
-
   const iframe = iframeRef.current;
-
   const handleIframeLoad = () => {
     attachClickListeners(iframeRef, buttonEvents);
   };
@@ -110,7 +108,7 @@ const hasKetcherData = async (molfile) => {
     const polymerLine = lines.reverse().find((line) => line.includes(KET_TAGS.polymerIdentifier));
     return polymerLine ? lines[lines.indexOf(polymerLine) - 1]?.trim() || null : null;
   } catch (err) {
-    console.error('Opening this molfile is not correct. Please report this molfile to dev team.');
+    console.error('Error processing molfile');
     return null;
   }
 };
@@ -129,23 +127,17 @@ const hasTextNodes = async (molfile) => {
     const sliceOfTextNodes = lines.slice(start + 1, end);
     return sliceOfTextNodes;
   } catch (err) {
-    console.error('Opening this molfile is not correct. Please report this molfile to dev team.');
+    console.error('Error processing molfile');
     return null;
   }
 };
 
-const findTemplateById = (id) => {
-  for (const category of allTemplates) {
-    for (const subTab of category.subTabs) {
-      for (const shape of subTab.shapes) {
-        if (shape.template_id === id) {
-          return shape;
-        }
-      }
-    }
-  }
-  return null;
-};
+function findTemplateById(id) {
+  return allTemplates
+    ?.flatMap((category) => category?.subTabs || [])
+    .flatMap((subTab) => subTab?.shapes || [])
+    .find((shape) => shape.template_id === id) || null;
+}
 
 // Helper to determine template type based on polymer value
 const getTemplateType = (polymerValue) => {
@@ -170,8 +162,8 @@ const templateWithBoundingBox = async (templateType, atomLocation, templateSize)
   template.boundingBox.x = atomLocation[0];
   template.boundingBox.y = atomLocation[1];
   template.boundingBox.z = 0;
-  template.boundingBox.height = height * 1;
-  template.boundingBox.width = width * 1;
+  template.boundingBox.height = parseFloat(height);
+  template.boundingBox.width = parseFloat(width);
   return template;
 };
 
@@ -179,7 +171,7 @@ const templateWithBoundingBox = async (templateType, atomLocation, templateSize)
 // helper function to rebase with the ketcher canvas data
 const fetchKetcherData = async (editor) => {
   try {
-    if (!editor) throw new 'Editor instance is invalid'();
+    if (!editor) throw new Error('Editor instance is invalid');
     const data = JSON.parse(await editor.structureDef.editor.getKet());
     await latestDataSetter(data);
     await loadKetcherData(data);
@@ -195,12 +187,17 @@ const prepareKetcherData = async (editor, initMol) => {
     const ketFile = await editor._structureDef.editor.indigo.convert(initMol).catch((err) => {
       console.error('invalid molfile. Please try again', err.message);
     });
+
+    if (!ketFile || !ketFile.struct) {
+      console.error('Failed to convert molfile to ket format.');
+      return;
+    }
+
     const fileContent = JSON.parse(ketFile.struct);
     textNodeStructSetter({});
     await applyKetcherData(polymerTag, fileContent, textNodes, editor);
   } catch (err) {
     console.error('Error preparing Ketcher data:', err.message);
-    return null;
   }
 };
 
@@ -218,8 +215,7 @@ const applyKetcherData = async (polymerTag, fileContent, textNodes, editor) => {
         molfileContent.root.nodes.push(...textNodeList);
       }
     }
-    const toRecenter = !polymerTag || !polymerTag.length;
-    saveMoveCanvas(editor, molfileContent, true, true, toRecenter);
+    saveMoveCanvas(editor, molfileContent, true, true);
     setTimeout(() => {
       centerPositionCanvas(editor);
     }, 10);

@@ -17,7 +17,6 @@ module SVG
                     # ketcher2 goes
                     Chemotion::ChemdrawSvgProcessor.new(svg)
                   end
-
       svg = processor.centered_and_scaled_svg unless is_centered == true
       info = generate_svg_info('samples', hexdigest)
       svg_file = File.new(info[:svg_file_path], 'w+')
