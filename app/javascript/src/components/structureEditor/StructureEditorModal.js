@@ -36,7 +36,7 @@ const notifyError = (message) => {
   });
 };
 
-export const loadEditor = (editor, scripts) => {
+const loadEditor = (editor, scripts) => {
   if (scripts?.length > 0) {
     loadScripts({
       es: scripts,
@@ -58,7 +58,7 @@ const createEditorInstance = (editor, available, configs) => ({
   }),
 });
 
-export const createEditor = (configs, availableEditors) => {
+const createEditor = (configs, availableEditors) => {
   if (!availableEditors) return null;
   const available = availableEditors[configs.editor];
   if (available) {
@@ -204,7 +204,7 @@ WarningBox.propTypes = {
   hideWarning: PropTypes.func.isRequired
 };
 
-export const initEditor = () => {
+const initEditor = () => {
   const userProfile = UserStore.getState().profile;
   const eId = userProfile?.data?.default_structure_editor || 'ketcher';
   const editor = new StructureEditor({ ...EditorAttrs[eId], id: eId });
@@ -264,7 +264,7 @@ export default class StructureEditorModal extends React.Component {
           this.setState({ showModal: false, showWarning: this.props.hasChildren || this.props.hasParent }, () => { if (this.props.onSave) { this.props.onSave(mMol, svg, null, editor.id); } });
         }, (error) => { alert(`MarvinJS image generated fail: ${error}`); });
       }, (error) => { alert(`MarvinJS molfile generated fail: ${error}`); });
-    } else if (editor.id === 'ketcher2') this.handleSaveStructureKet2(structure, editor);
+    } else if (editor.id === 'ketcher2') this.saveKetcher2(editor);
     else {
       try {
         const { molfile, info } = structure;
@@ -275,18 +275,6 @@ export default class StructureEditorModal extends React.Component {
       } catch (e) {
         notifyError(`The drawing is not supported! ${e}`);
       }
-    }
-  }
-
-  async handleSaveStructureKet2(structure, editor) {
-    try {
-      const molfile = await structure.editor.getMolfile();
-      const imgfile = await structure.editor.generateImage(molfile, { outputFormat: 'svg' });
-      const text = await imgfile.text();
-      const updatedSvg = await transformSvgIdsAndReferences(text);
-      this.handleStructureSave(molfile, updatedSvg, editor.id);
-    } catch (error) {
-      console.error('Error saving structure:', error);
     }
   }
 
@@ -304,6 +292,24 @@ export default class StructureEditorModal extends React.Component {
         }
       }
     );
+  }
+
+  async saveKetcher2(editorId) {
+    const { onSaveFileK2SC } = this.ketcher2Ref.current;
+
+    // Ensure the function exists before calling it
+    if (typeof onSaveFileK2SC !== 'function') {
+      console.error('onSaveFileK2SC is not a function');
+      return;
+    }
+    try {
+      // Call onSaveFileK2SC and get the required data
+      const { ket2Molfile, svgElement } = await onSaveFileK2SC();
+      const updatedSvg = await transformSvgIdsAndReferences(svgElement);
+      this.handleStructureSave(ket2Molfile, updatedSvg, editorId.id);
+    } catch (error) {
+      console.error('Error during save operation for Ketcher2:', error);
+    }
   }
 
   initializeEditor() {

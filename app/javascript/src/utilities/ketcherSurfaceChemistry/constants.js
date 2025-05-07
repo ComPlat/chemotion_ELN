@@ -29,4 +29,39 @@ const KET_TAGS = Object.freeze({
   }
 });
 
-export { ALIAS_PATTERNS, KET_TAGS, LAYERING_FLAGS };
+// Button actions
+// These actions are used in the Ketcher UI for various functionalities
+const ButtonSelectors = {
+  CLEAN_UP: 'Clean Up (Ctrl+Shift+L)',
+  CALCULATE_CIP: 'Calculate CIP (Ctrl+P)',
+  LAYOUT: 'Layout (Ctrl+L)',
+  EXPLICIT_HYDROGENS: 'Add/Remove explicit hydrogens',
+  AROMATIZE: 'Aromatize (Alt+A)',
+  VIEWER_3D: '3D Viewer',
+  OPEN: 'Open... (Ctrl+O)',
+  SAVE: 'Save as... (Ctrl+S)',
+  UNDO: 'Undo (Ctrl+Z)',
+  REDO: 'Redo (Ctrl+Shift+Z)',
+  POLYMER_LIST: 'Polymer List',
+  CLEAR_CANVAS: 'Clear Canvas (Ctrl+Del)',
+  TEXT_NODE_SPECIAL_CHAR: 'Text Node Special Char',
+};
+
+// Function to get the button selector based on the label
+const getButtonSelector = (label) => `[title='${label.replace(/[()]/g, (match) => `\\${match}`)}']`;
+
+// These event names are used to track user interactions in the Ketcher application
+export const EventNames = {
+  MOVE_IMAGE: 'Move image',
+  MOVE_ATOM: 'Move atom',
+  ADD_ATOM: 'Add atom',
+  DELETE_ATOM: 'Delete atom',
+  ADD_TEXT: 'Add text',
+  DELETE_TEXT: 'Delete text',
+  UPSERT_IMAGE: 'Upsert image',
+};
+
+export {
+  ALIAS_PATTERNS, KET_TAGS, LAYERING_FLAGS, ButtonSelectors,
+  getButtonSelector
+};

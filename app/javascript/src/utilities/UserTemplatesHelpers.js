@@ -6,7 +6,7 @@ const key = 'ketcher-tmpls';
 const createAddAttachmentidToNewUserTemplate = async (newValue, newItem, deleteIdx) => {
   const res = await ProfilesFetcher.uploadUserTemplates({
     content: JSON.stringify(newItem),
-  }).catch((err) => console.log('err in create'));
+  }).catch((err) => console.error('err in create'));
   const attachment_id = res?.template_details?.filename;
   newItem.props.path = attachment_id;
   newValue[newValue.length - 1] = newItem;
@@ -40,7 +40,7 @@ const updateUserTemplateDetails = async (oldValue, newValue) => {
     if (!exists) {
       await ProfilesFetcher.deleteUserTemplate({
         path: oldValue[i].props.path,
-      }).catch(() => console.log('ISSUE WITH DELETE', localItem?.props?.path));
+      }).catch(() => console.error('ISSUE WITH DELETE', localItem?.props?.path));
       createAddAttachmentidToNewUserTemplate(newValue, newValue[i], i);
       break;
     }

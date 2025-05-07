@@ -43,7 +43,7 @@ const updateAtom = (atomLocation, templateType, imageCounter) => ({
 // helper function to process ketcher-rails files and adding image to ketcher2 canvas
 const addingPolymersToKetcher = async (railsPolymersList, data) => {
   try {
-    const polymerList = railsPolymersList.split(' '); // e.g., ["10", "11s", "12", "13s"]
+    const polymerList = railsPolymersList.split(' ');
     let visitedAtoms = 0;
     const collectedImages = [];
     await initializeKetcherData(data);
@@ -88,19 +88,19 @@ const removeTextFromData = (data) => data.root.nodes.filter((node) => node.type 
 
 // helper function to remove bonds by atom id
 const updateBondList = async (indexList, bondList, atomList) => {
-  console.log(indexList, 'indexList');
   const removedIndices = [...indexList].sort((a, b) => a - b);
-  const atomCount = atomList.length;
+  const atomCount = atomList?.length ?? 0;
   const result = [];
 
   for (const bond of bondList) {
-    if (bond.atoms.some((i) => removedIndices.includes(i))) continue;
-    const adjustedAtoms = bond.atoms.map((atom) => {
-      const shift = removedIndices.filter((removed) => removed < atom).length;
-      return atom - shift;
-    });
-    if (adjustedAtoms.every((i) => i >= 0 && i < atomCount)) {
-      result.push({ ...bond, atoms: adjustedAtoms });
+    if (!bond.atoms.some((i) => removedIndices.includes(i))) {
+      const adjustedAtoms = bond.atoms.map((atom) => {
+        const shift = removedIndices.filter((removed) => removed < atom).length;
+        return atom - shift;
+      });
+      if (adjustedAtoms.every((i) => i >= 0 && i < atomCount)) {
+        result.push({ ...bond, atoms: adjustedAtoms });
+      }
     }
   }
   return result;
@@ -115,7 +115,6 @@ const handleOnDeleteAtom = async (missingNumbers, data, imageL) => {
       const split = parseInt(i.split('_')[2]);
       const missingIndex = missingNumbers.indexOf(split);
       if (missingIndex !== -1) {
-        // imageL.splice(missingIndex, 1);
         delete textNodeStructureCopy[i];
       }
     });
@@ -347,8 +346,8 @@ const deepCompareContentImages = async (oldArray, newArray) => {
     for (let j = 0; j < newArray.length; j++) {
       const newItem = newArray[j];
       const isMatch = oldItem.data === newItem.data
-      && oldItem.boundingBox?.x === newItem.boundingBox?.x
-      && oldItem.boundingBox?.y === newItem.boundingBox?.y;
+        && oldItem.boundingBox?.x === newItem.boundingBox?.x
+        && oldItem.boundingBox?.y === newItem.boundingBox?.y;
       if (isMatch) {
         found = true;
         break;
@@ -356,17 +355,14 @@ const deepCompareContentImages = async (oldArray, newArray) => {
     }
     if (!found) {
       missingIndexes.push(i);
-      console.log('Missing index:', i);
     }
   }
-
   return missingIndexes;
 };
 
 const analyzeAliasAndImageDifferences = async (editor, oldImagePack) => {
   const listOfAliasesBefore = await collectMissingAliases();
   await fetchKetcherData(editor);
-  console.log({ oldImagePack, imagesList });
 
   // 1st collect difference between old and new data to know what's removed
   const listOfAliasesAfter = await collectMissingAliases();
