@@ -1,0 +1,78 @@
+.element-groups-renderer .element-group-header {
+  @extend .bg-gray-100;
+}
+
+.element-list-renderer .element-list-item,
+.element-groups-renderer .element-list-item {
+  &:not(&--selected) {
+    &:hover {
+      @extend .bg-gray-200;
+    }
+  }
+
+  &--selected {
+    @extend .text-bg-primary;
+    &:hover {
+      @extend .text-bg-primary;
+    }
+  }
+}
+
+.element-list-renderer .element-list-item,
+.element-groups-renderer .element-group-header,
+.element-groups-renderer .element-list-item {
+  @extend .d-flex;
+  @extend .border-bottom;
+  &:last-child {
+    @extend .border-bottom-0;
+  }
+}
+
+.element-groups-renderer .element-group {
+  @extend .border-top;
+  &:first-child {
+    @extend .border-top-0;
+  }
+}
+
+.element-list-renderer .element-list-item-content,
+.element-groups-renderer .element-group-header-content,
+.element-groups-renderer .element-list-item-content {
+  @extend .flex-grow-1;
+  @extend .p-2;
+}
+
+.element-list-renderer .element-list-item-checkbox,
+.element-groups-renderer .element-list-item-checkbox {
+  @extend .d-flex;
+  @extend .align-content-start;
+  @extend .justify-content-center;
+  @extend .flex-shrink-0;
+  @extend .p-2;
+}
+
+.element-list-renderer .element-list-item-drag-handle,
+.element-groups-renderer .element-group-header-drag-handle,
+.element-groups-renderer .element-list-item-drag-handle {
+  @extend .d-flex;
+  @extend .align-content-center;
+  @extend .justify-content-center;
+  @extend .flex-shrink-0;
+  @extend .p-2;
+}
+
+.element-groups-renderer .element-group-header-collapse {
+  @extend .d-flex;
+  @extend .align-items-start;
+  @extend .justify-content-center;
+  @extend .flex-shrink-0;
+  @extend .p-2;
+
+  i {
+    cursor: pointer;
+  }
+}
+
+.element-groups-renderer .element-group-show-more {
+  @extend .d-grid;
+}
