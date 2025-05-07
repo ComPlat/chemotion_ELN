@@ -1,17 +1,24 @@
-import { v4 as uuid } from 'uuid';
+const mappedIdPattern = /glyph-\d+-\d+_[0-9a-f]{8}/;
+
+function generateSuffix4() {
+  return Math.floor(Math.random() * 0x100000000).toString(16).padStart(8, '0');
+}
 
 const transformSvgIdsAndReferences = async (svgText) => {
   const parser = new DOMParser();
   const xmlDoc = parser.parseFromString(svgText, 'image/svg+xml');
   const defs = xmlDoc.querySelector('defs');
-  if (!defs) return svgText;
 
+  if (!defs) return svgText;
   const idMap = {};
   const elementsWithId = defs.querySelectorAll('[id]');
 
+  const uniqueSuffix = generateSuffix4();
+
   elementsWithId.forEach((el) => {
     const originalId = el.getAttribute('id');
-    const uniqueId = `${originalId}_${uuid()}`;
+    if (mappedIdPattern.test(originalId)) return svgText;
+    const uniqueId = `${originalId}_${uniqueSuffix}`;
     idMap[originalId] = uniqueId;
     el.setAttribute('id', uniqueId);
   });
@@ -28,4 +35,4 @@ const transformSvgIdsAndReferences = async (svgText) => {
   return svg;
 };
 
-export default transformSvgIdsAndReferences;
+export { transformSvgIdsAndReferences, mappedIdPattern };

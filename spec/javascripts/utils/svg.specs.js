@@ -2,10 +2,9 @@
 import expect from 'expect';
 import { JSDOM } from 'jsdom';
 import fs from 'fs';
-import transformSvgIdsAndReferences from 'src/utilities/SvgUtils';
+import { transformSvgIdsAndReferences, mappedIdPattern } from 'src/utilities/SvgUtils';
 
 global.DOMParser = new JSDOM().window.DOMParser;
-const modifiedIdPattern = /glyph-\d+-\d+_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/;
 const originalIdPatter = /glyph-\d+-\d/;
 const loadFixture = (name) => fs.readFileSync(`spec/fixtures/svg/${name}.svg`, 'utf-8');
 
@@ -18,14 +17,14 @@ describe('SVG id & reference mutations', () => {
     // Extract all id="..." values
     Array.from(updatedSvg.matchAll(/id="([^"]+)"/g)).forEach((match) => {
       const id = match[1];
-      expect(id).toMatch(modifiedIdPattern);
+      expect(id).toMatch(mappedIdPattern);
       allIds.add(id);
     });
 
     // Extract all xlink:href or href references
     Array.from(updatedSvg.matchAll(/<use[^>]+(?:xlink:)?href="#([^"]+)"/g)).forEach((match) => {
       const refId = match[1];
-      expect(refId).toMatch(modifiedIdPattern);
+      expect(refId).toMatch(mappedIdPattern);
       expect(allIds.has(refId)).toBe(true);
     });
   });
@@ -49,5 +48,11 @@ describe('SVG id & reference mutations', () => {
       const refId = match[1];
       expect(refId).toMatch(originalIdPatter);
     });
+  });
+
+  it('should not modify, svg is already processed', async () => {
+    const svgFile = loadFixture('defMutationAlreadyProcessed');
+    const updatedSvg = await transformSvgIdsAndReferences(svgFile);
+    expect(updatedSvg).toEqual(svgFile);
   });
 });
