@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2025_04_22_115436) do
+ActiveRecord::Schema.define(version: 2025_05_05_134152) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -74,6 +74,7 @@ ActiveRecord::Schema.define(version: 2025_04_22_115436) do
     t.integer "con_state"
     t.jsonb "log_data"
     t.string "created_by_type"
+    t.datetime "deleted_at"
     t.index ["attachable_type", "attachable_id"], name: "index_attachments_on_attachable_type_and_attachable_id"
     t.index ["identifier"], name: "index_attachments_on_identifier", unique: true
   end
@@ -166,6 +167,8 @@ ActiveRecord::Schema.define(version: 2025_04_22_115436) do
     t.integer "sample_id"
     t.text "cas"
     t.jsonb "chemical_data"
+    t.datetime "updated_at"
+    t.jsonb "log_data"
   end
 
   create_table "code_logs", id: :uuid, default: -> { "uuid_generate_v4()" }, force: :cascade do |t|
@@ -356,8 +359,8 @@ ActiveRecord::Schema.define(version: 2025_04_22_115436) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "parent_id"
-    t.text "plain_text_content"
     t.datetime "deleted_at"
+    t.text "plain_text_content"
     t.jsonb "log_data"
     t.index ["containable_type", "containable_id"], name: "index_containers_on_containable"
   end
@@ -443,60 +446,60 @@ ActiveRecord::Schema.define(version: 2025_04_22_115436) do
   end
 
   create_table "device_descriptions", force: :cascade do |t|
-    t.integer "device_id"
-    t.string "name"
-    t.string "short_label"
-    t.string "vendor_id"
-    t.string "vendor_url"
-    t.string "serial_number"
-    t.string "version_doi"
-    t.string "version_doi_url"
-    t.string "device_type"
-    t.string "device_type_detail"
-    t.string "operation_mode"
-    t.datetime "version_installation_start_date"
-    t.datetime "version_installation_end_date"
-    t.text "description"
-    t.jsonb "operators"
-    t.string "university_campus"
-    t.string "institute"
-    t.string "building"
-    t.string "room"
-    t.string "infrastructure_assignment"
-    t.string "access_options"
     t.string "access_comments"
-    t.string "size"
-    t.string "weight"
+    t.string "access_options"
+    t.string "ancestry"
     t.string "application_name"
     t.string "application_version"
-    t.text "description_for_methods_part"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
-    t.string "vendor_device_name"
-    t.string "vendor_device_id"
-    t.string "vendor_company_name"
-    t.string "general_tags", default: [], array: true
-    t.text "policies_and_user_information"
-    t.string "version_number"
-    t.text "version_characterization"
-    t.datetime "deleted_at"
+    t.string "building"
+    t.jsonb "contact_for_maintenance"
+    t.jsonb "consumables_needed_for_maintenance"
     t.integer "created_by"
-    t.jsonb "ontologies"
-    t.string "ancestry"
-    t.string "version_identifier_type"
+    t.datetime "deleted_at"
+    t.text "description"
+    t.text "description_for_methods_part"
+    t.integer "device_id"
+    t.string "device_type"
+    t.string "device_type_detail"
+    t.string "general_tags", default: [], null: false, array: true
     t.boolean "helpers_uploaded", default: false
-    t.jsonb "setup_descriptions"
+    t.string "infrastructure_assignment"
+    t.string "institute"
     t.string "maintenance_contract_available"
     t.string "maintenance_scheduling"
-    t.jsonb "contact_for_maintenance"
-    t.jsonb "planned_maintenance"
-    t.jsonb "consumables_needed_for_maintenance"
-    t.jsonb "unexpected_maintenance"
     t.text "measures_after_full_shut_down"
     t.text "measures_after_short_shut_down"
     t.text "measures_to_plan_offline_period"
+    t.string "name"
+    t.string "operation_mode"
+    t.jsonb "operators"
+    t.jsonb "ontologies"
+    t.jsonb "planned_maintenance"
+    t.text "policies_and_user_information"
     t.text "restart_after_planned_offline_period"
+    t.string "room"
+    t.string "serial_number"
+    t.jsonb "setup_descriptions"
+    t.string "size"
+    t.string "short_label"
+    t.jsonb "unexpected_maintenance"
+    t.string "university_campus"
+    t.string "vendor_id"
+    t.string "vendor_url"
+    t.text "version_characterization"
+    t.string "version_doi"
+    t.string "version_doi_url"
+    t.string "version_identifier_type"
+    t.datetime "version_installation_start_date"
+    t.datetime "version_installation_end_date"
+    t.string "version_number"
+    t.string "weight"
     t.string "weight_unit"
+    t.string "vendor_device_name"
+    t.string "vendor_device_id"
+    t.string "vendor_company_name"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
     t.index ["ancestry"], name: "index_device_descriptions_on_ancestry"
     t.index ["device_id"], name: "index_device_descriptions_on_device_id"
   end
@@ -953,7 +956,7 @@ ActiveRecord::Schema.define(version: 2025_04_22_115436) do
     t.text "cas"
     t.string "molfile_version", limit: 20
     t.index ["deleted_at"], name: "index_molecules_on_deleted_at"
-    t.index ["inchikey", "is_partial"], name: "index_molecules_on_inchikey_and_is_partial", unique: true
+    t.index ["inchikey", "sum_formular", "is_partial"], name: "index_molecules_on_formula_and_inchikey_and_is_partial", unique: true
   end
 
   create_table "nmr_sim_nmr_simulations", id: :serial, force: :cascade do |t|
@@ -2431,6 +2434,9 @@ ActiveRecord::Schema.define(version: 2025_04_22_115436) do
   SQL
   create_trigger :logidze_on_research_plans_wellplates, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_research_plans_wellplates BEFORE INSERT OR UPDATE ON public.research_plans_wellplates FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_chemicals, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_chemicals BEFORE INSERT OR UPDATE ON public.chemicals FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
   create_trigger :lab_trg_layers_changes, sql_definition: <<-SQL
       CREATE TRIGGER lab_trg_layers_changes AFTER UPDATE ON public.layers FOR EACH ROW EXECUTE FUNCTION lab_record_layers_changes()
