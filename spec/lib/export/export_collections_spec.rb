@@ -270,6 +270,33 @@ RSpec.describe 'ExportCollection' do
     end
   end
 
+  context 'with sample components' do
+    let(:component) { create(:component, sample_id: sample.id) }
+
+    before do
+      sample.sample_type = 'Mixture'
+      sample.save!
+      component.save!
+      export = Export::ExportCollections.new(job_id, [collection.id], 'zip', true)
+      export.prepare_data
+      export.to_file
+    end
+
+    it 'exported file exists' do
+      file_path = File.join('public', 'zip', "#{job_id}.zip")
+      expect(File.exist?(file_path)).to be true
+    end
+
+    it 'Component key is present in export.json' do
+      file_path = File.join('public', 'zip', "#{job_id}.zip")
+      export_json_content = Zip::File.open(file_path) do |files|
+        json_file = files.detect { |file| file.name == 'export.json' }
+        JSON.parse(json_file.get_input_stream.read)
+      end
+      expect(export_json_content).to have_key('Component')
+    end
+  end
+
   def update_body_of_researchplan(research_plan, identifier_of_attachment) # rubocop:disable Metrics/MethodLength
     research_plan.body = [
       {
