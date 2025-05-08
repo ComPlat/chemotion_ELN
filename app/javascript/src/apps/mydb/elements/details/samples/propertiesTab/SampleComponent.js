@@ -12,6 +12,8 @@ import { DragDropItemTypes } from 'src/utilities/DndConst';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 import Sample from 'src/models/Sample';
 import { permitCls, permitOn } from 'src/components/common/uis';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
+import { UrlSilentNavigation } from 'src/utilities/ElementUtils';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
 import ComponentStore from 'src/stores/alt/stores/ComponentStore';
 import ComponentActions from 'src/stores/alt/actions/ComponentActions';
@@ -72,7 +74,22 @@ const matTagCollect = (connect, monitor) => ({
   canDrop: monitor.canDrop(),
 });
 
+/**
+ * SampleComponent represents a single component within a sample mixture.
+ * It handles the display and interaction of individual components in both liquid and solid states.
+ * @class SampleComponent
+ * @extends React.Component
+ */
 class SampleComponent extends Component {
+  /**
+   * Creates an instance of SampleComponent.
+   * @param {Object} props - Component props
+   * @param {Sample} props.sample - The parent sample object
+   * @param {Sample} props.material - The component material
+   * @param {string} props.materialGroup - The group type ('liquid' or 'solid')
+   * @param {Function} props.deleteMaterial - Callback for deleting the component
+   * @param {Function} props.onChange - Callback for component changes
+   */
   constructor(props) {
     super(props);
 
@@ -92,6 +109,7 @@ class SampleComponent extends Component {
     this.handleRatioChange = this.handleRatioChange.bind(this);
     this.handleReferenceChange = this.handleReferenceChange.bind(this);
     this.handleConcentrationLockToggle = this.handleConcentrationLockToggle.bind(this);
+    this.handleMaterialClick = this.handleMaterialClick.bind(this);
   }
 
   componentDidMount() {
@@ -102,6 +120,72 @@ class SampleComponent extends Component {
     ComponentStore.unlisten(this.onComponentStoreChange);
   }
 
+  /**
+   * Handles click events on material components.
+   * If the material has a parent_id, navigates to the parent sample view.
+   * @param {Object} material - The material component that was clicked
+   */
+  handleMaterialClick(material) {
+    if (material.parent_id) {
+      const parentSample = new Sample({ id: material.parent_id, type: 'sample' });
+      UrlSilentNavigation(parentSample);
+      ElementActions.fetchSampleById(material.parent_id);
+    }
+  }
+
+  /**
+   * Renders the material name with IUPAC information and optional parent sample link.
+   * @param {Object} material - The material component to display
+   * @returns {JSX.Element} The rendered material name component
+   */
+  materialNameWithIupac(material) {
+    let moleculeIupacName = '';
+    const iupacStyle = {
+      display: 'block',
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      maxWidth: '100%'
+    };
+
+    const displayName = material.molecule_iupac_name || material.molecule?.sum_formular || '';
+
+    // Only make it clickable if it has a parent_id
+    moleculeIupacName = material.parent_id ? (
+      <a
+        role="link"
+        tabIndex={0}
+        onClick={() => this.handleMaterialClick(material)}
+        style={{
+          cursor: 'pointer',
+          textDecoration: 'underline'
+        }}
+        title="Click to view parent sample"
+      >
+        <span>{displayName}</span>
+      </a>
+    ) : (
+      <span>{displayName}</span>
+    );
+
+    return (
+      <div
+        className={material.parent_id ? 'reaction-material-link' : ''}
+        style={{ display: 'inline-block', maxWidth: '100%' }}>
+        <span style={iupacStyle}>
+          {this.svgPreview(material, moleculeIupacName)}
+        </span>
+      </div>
+    );
+  }
+
+  /**
+   * Handles changes to the component's amount.
+   * @param {Object} e - The change event
+   * @param {number} value - The current value
+   * @param {string} concType - The concentration type
+   * @param {boolean} lockColumn - Whether the column is locked
+   */
   handleAmountChange(e, value, concType, lockColumn) {
     if (e.value === value) return;
 
@@ -120,6 +204,31 @@ class SampleComponent extends Component {
     }
   }
 
+  /**
+   * Handles changes to the component's metrics (units).
+   * @param {Object} e - The change event containing metric information
+   */
+  handleMetricsChange(e) {
+    const { materialGroup, onChange } = this.props;
+
+    if (onChange && e) {
+      const event = {
+        metricUnit: e.metricUnit,
+        metricPrefix: e.metricPrefix,
+        type: 'MetricsChanged',
+        materialGroup,
+        sampleID: this.componentId(),
+      };
+      onChange(event);
+    }
+  }
+
+  /**
+   * Handles changes to the component's density.
+   * @param {Object} e - The change event
+   * @param {number} value - The current density value
+   * @param {boolean} lockColumn - Whether the column is locked
+   */
   handleDensityChange(e, value, lockColumn) {
     if (e.value === value) return;
 
@@ -137,6 +246,11 @@ class SampleComponent extends Component {
     }
   }
 
+  /**
+   * Handles changes to the component's purity.
+   * @param {Object} e - The change event
+   * @param {number} value - The current purity value
+   */
   handlePurityChange(e, value) {
     if (e.value === value) return;
 
@@ -161,21 +275,11 @@ class SampleComponent extends Component {
     }
   }
 
-  handleMetricsChange(e) {
-    const { materialGroup, onChange } = this.props;
-
-    if (onChange && e) {
-      const event = {
-        metricUnit: e.metricUnit,
-        metricPrefix: e.metricPrefix,
-        type: 'MetricsChanged',
-        materialGroup,
-        sampleID: this.componentId(),
-      };
-      onChange(event);
-    }
-  }
-
+  /**
+   * Handles changes to the component's name.
+   * @param {Object} e - The change event
+   * @param {string} value - The current name value
+   */
   handleNameChange(e, value) {
     if (e.value === value) return;
 
@@ -192,6 +296,11 @@ class SampleComponent extends Component {
     }
   }
 
+  /**
+   * Handles changes to the component's ratio.
+   * @param {Object} e - The change event
+   * @param {number} value - The current ratio value
+   */
   handleRatioChange(e, value) {
     if (e.value === value) return;
 
@@ -208,6 +317,10 @@ class SampleComponent extends Component {
     }
   }
 
+  /**
+   * Handles changes to the component's reference status.
+   * @param {Object} e - The change event
+   */
   handleReferenceChange(e) {
     const { value } = e.target;
 
@@ -224,38 +337,22 @@ class SampleComponent extends Component {
     }
   }
 
+  /**
+   * Toggles the concentration lock state for a component.
+   * @param {Object} material - The material component
+   * @param {boolean} lockConc - The new lock state
+   */
   handleConcentrationLockToggle(material, lockConc) {
     // Trigger the action to toggle the component's lock state
     ComponentActions.toggleComponentLock(material.id, lockConc);
   }
 
+  /**
+   * Updates the component store state.
+   * @param {Object} state - The new component store state
+   */
   onComponentStoreChange(state) {
     this.setState({ ...state });
-  }
-
-  materialNameWithIupac(material) {
-    let moleculeIupacName = '';
-    const iupacStyle = {
-      display: 'block',
-      whiteSpace: 'nowrap',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      maxWidth: '100%'
-    };
-
-    moleculeIupacName = material.molecule_iupac_name;
-
-    if (moleculeIupacName === '' || !moleculeIupacName) {
-      moleculeIupacName = material.molecule.sum_formular;
-    }
-
-    return (
-      <div style={{ display: 'inline-block', maxWidth: '100%' }}>
-        <span style={iupacStyle}>
-          {this.svgPreview(material, moleculeIupacName)}
-        </span>
-      </div>
-    );
   }
 
   nameInput(material) {
@@ -392,7 +489,7 @@ class SampleComponent extends Component {
       <td style={{ verticalAlign: 'top' }}>
         <NumeralInputWithUnitsCompo
           precision={4}
-          value={material.equivalent || 1}
+          value={material.equivalent || 0}
           disabled={!permitOn(sample) || isConcentrationLocked || material.reference}
           onChange={(e) => this.handleRatioChange(e, material.equivalent)}
         />
@@ -408,7 +505,11 @@ class SampleComponent extends Component {
 
     return (
       <td style={{ verticalAlign: 'top', display: 'flex', alignItems: 'center' }}>
-        {this.renderLockButton(material, isConcentrationLocked, () => this.handleConcentrationLockToggle(material, isConcentrationLocked))}
+        {this.renderLockButton(
+          material,
+          isConcentrationLocked,
+          () => this.handleConcentrationLockToggle(material, isConcentrationLocked)
+        )}
 
         <NumeralInputWithUnitsCompo
           key={material.id}
@@ -485,6 +586,17 @@ class SampleComponent extends Component {
     );
   }
 
+  /**
+   * Returns true if the purity field should be disabled for a material.
+   * Disabled if user cannot edit or if starting molarity value is set and not zero.
+   */
+  isPurityDisabled(sample, material) {
+    return (
+      !permitOn(sample)
+      || (material.starting_molarity_value && material.starting_molarity_value !== 0)
+    );
+  }
+
   mixtureComponent(props, style) {
     const {
       sample, material, deleteMaterial, connectDragSource, connectDropTarget, activeTab,
@@ -547,7 +659,7 @@ class SampleComponent extends Component {
               <NumeralInputWithUnitsCompo
                 precision={4}
                 value={material.purity || 1}
-                disabled={!permitOn(sample)}
+                disabled={this.isPurityDisabled(sample, material)}
                 onChange={(e) => this.handlePurityChange(e, material.purity)}
               />
             </td>
@@ -623,7 +735,7 @@ class SampleComponent extends Component {
               <NumeralInputWithUnitsCompo
                 precision={4}
                 value={material.purity || 1}
-                disabled={!permitOn(sample)}
+                disabled={this.isPurityDisabled(sample, material)}
                 onChange={(e) => this.handlePurityChange(e, material.purity)}
               />
             </td>
@@ -633,6 +745,12 @@ class SampleComponent extends Component {
     );
   }
 
+  /**
+   * Renders a preview of the molecule with SVG and popover.
+   * @param {Object} material - The material to preview
+   * @param {string} moleculeIupacName - The IUPAC name to display
+   * @returns {JSX.Element} The SVG preview component
+   */
   svgPreview(material, moleculeIupacName) {
     return (
       <SvgWithPopover
@@ -717,6 +835,10 @@ export default compose(
   ),
 )(SampleComponent);
 
+/**
+ * PropTypes for SampleComponent
+ * @type {Object}
+ */
 SampleComponent.propTypes = {
   sample: PropTypes.object.isRequired,
   material: PropTypes.instanceOf(Sample).isRequired,
@@ -728,4 +850,10 @@ SampleComponent.propTypes = {
   isOver: PropTypes.bool,
   enableComponentLabel: PropTypes.bool.isRequired,
   enableComponentPurity: PropTypes.bool.isRequired,
+};
+
+SampleComponent.defaultProps = {
+  isDragging: false,
+  canDrop: false,
+  isOver: false,
 };

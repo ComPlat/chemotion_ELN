@@ -11,13 +11,16 @@ module Chemotion
       route_param :sample_id do
         get do
           components = Component.where(sample_id: params[:sample_id])
-          components_with_molecule_data = components.map do |component|
+          molecule_ids = components
+                         .filter_map { |component| component.component_properties['molecule_id'] }.uniq
+          molecules = Molecule.where(id: molecule_ids).index_by(&:id)
+
+          components.each do |component|
             molecule_id = component.component_properties['molecule_id']
-            molecule = Molecule.find_by(id: molecule_id)
-            component.component_properties['molecule'] = molecule
-            component
+            component.component_properties['molecule'] = molecules[molecule_id]
           end
-          present components_with_molecule_data
+
+          present components
         end
       end
 
