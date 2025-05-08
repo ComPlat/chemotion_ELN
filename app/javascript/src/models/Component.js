@@ -555,4 +555,36 @@ export default class Component extends Sample {
       }
     };
   }
+
+  /**
+   * Creates a new component from sample data
+   * @param {Object} sampleData - The sample data to create component from
+   * @param {string} parentId - The parent sample ID
+   * @param {string} materialGroup - The material group ('solid' or 'liquid')
+   * @param {number} totalVolume - The total volume of the mixture
+   * @returns {Component} The created component
+   */
+  static createFromSampleData(componentData, parentId, materialGroup, sample) {
+    const { component_properties, ...rest } = componentData;
+    const data = {
+      ...rest,
+      ...component_properties,
+    };
+
+    const component = new Component(data);
+    component.parent_id = parentId;
+    component.material_group = materialGroup;
+    component.starting_molarity_value = data.molarity_value;
+    component.molarity_value = 0;
+    component.reference = false;
+    component.id = `comp_${Math.random().toString(36).substr(2, 9)}`;
+
+    if (materialGroup === 'solid') {
+      component.setAmount({ value: component.amount_g, unit: 'g' }, sample.amount_l);
+    } else if (materialGroup === 'liquid') {
+      component.setAmount({ value: component.amount_l, unit: 'l' }, sample.amount_l);
+    }
+
+    return component;
+  }
 }

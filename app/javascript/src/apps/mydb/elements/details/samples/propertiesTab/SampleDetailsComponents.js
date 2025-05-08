@@ -223,29 +223,20 @@ export default class SampleDetailsComponents extends React.Component {
     if (splitSample.sample_type === 'Mixture') {
       ComponentsFetcher.fetchComponentsBySampleId(srcSample.id)
         .then(async (components) => {
-          for (const component of components) {
-            const { component_properties, ...rest } = component;
-            const sampleData = {
-              ...rest,
-              ...component_properties
-            };
-            const sampleComponent = new Component(sampleData);
-            sampleComponent.parent_id = splitSample.parent_id;
-            sampleComponent.material_group = tagGroup;
-            sampleComponent.reference = false;
-            if (tagGroup === 'solid') {
-              sampleComponent.setMolarity({ value: 0, unit: 'M' }, sample.amount_l, 'startingConc');
-              sampleComponent.setAmount({ value: sampleComponent.amount_g, unit: 'g' }, sample.amount_l);
-            } else if (tagGroup === 'liquid') {
-              sampleComponent.setAmount({ value: sampleComponent.amount_l, unit: 'l' }, sample.amount_l);
-            }
-            sampleComponent.id = `comp_${Math.random().toString(36).substr(2, 9)}`;
-            await sample.addMixtureComponent(sampleComponent);
-            sample.updateMixtureComponentEquivalent();
-          }
+          await Promise.all(
+            components.map(async (component) => {
+              const sampleComponent = Component.createFromSampleData(
+                component,
+                splitSample.parent_id,
+                tagGroup,
+                sample,
+              );
+              await sample.addMixtureComponent(sampleComponent);
+              sample.updateMixtureComponentEquivalent();
+            })
+          );
           this.props.onChange(sample);
-        })
-        .catch((errorMessage) => {
+        }).catch((errorMessage) => {
           console.error(errorMessage);
         });
     } else {
