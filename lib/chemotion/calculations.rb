@@ -19,27 +19,6 @@ module Chemotion::Calculations
   VALUABLE_ELEMENTS = %w(S N C)
   FORMULA_PARSE_REGEXP = /([A-Za-z]{1}[a-z]{0,2})(\d*)/
 
-  # returns only amount of each atom
-  def self.parse_formula formula, is_partial = false
-    elements = {}
-
-    formula.scan(FORMULA_PARSE_REGEXP).each do |atom|
-      atom_label = atom.first
-
-      atoms_number = (atom.last.blank? ? 1 : atom.last).to_i
-
-      atoms_number -= 1 if atom_label == 'C' && is_partial # remove 1 C
-      atoms_number -= 3 if atom_label == 'H' && is_partial # remove 3 H
-
-      if elements.has_key? atom_label
-        old_val = elements[atom_label]
-      end
-
-      elements[atom_label] = atoms_number + old_val.to_i
-    end
-    elements
-  end
-
   def self.get_composition m_formula, p_formula = nil, p_loading = nil
     result = if p_formula.present? && p_loading.present?
       self.get_polymer_composition m_formula, p_formula, p_loading
@@ -101,21 +80,6 @@ module Chemotion::Calculations
     head_len, tail_len = $1&.size || 0, $3 && $2&.size || 0
     return larger_than_zero(num, head_len, tail_len, precision) if num >= 1.0
     smaller_than_zero(num, tail_len, precision)
-  end
-
-  def self.mw_from_formula(formula)
-    # to handle formulas with the molecule of crystallization like, C2HCl3O.H2O
-    components = formula.split('.')
-    total_mass = 0.0
-
-    components.each do |component|
-      coefficient = extract_coefficient(component)
-
-      total_mass += calculate_mass_from_groups(component) * coefficient
-      total_mass += calculate_mass_from_elements(component) * coefficient
-    end
-
-    total_mass
   end
 
 private
@@ -229,42 +193,5 @@ private
     return "%.#{pc_for_zero}f" % num&.round(pc_for_zero) if num == 0.0
     pc_non_zero = prec_limit(pc + tail_len)
     "%.#{pc_non_zero}f" % num&.round(pc_non_zero)
-  end
-
-  def self.calculate_mass_from_groups(formula)
-    group_pattern = /\((.*?)\)(\d*)/
-    total_mass = 0.0
-
-    # Iterate through the formula to extract groups with parentheses
-    while formula.match?(group_pattern)
-      formula.sub!(group_pattern) do
-        group = ::Regexp.last_match(1)
-        count_str = ::Regexp.last_match(2)
-        count = count_str&.empty? ? 1 : count_str.to_i
-        total_mass += calculate_mass_from_elements(group) * count
-        ''
-      end
-    end
-
-    total_mass
-  end
-
-  def self.calculate_mass_from_elements(formula)
-    element_pattern = /([A-Z][a-z]*)(\d*)/
-    total_mass = 0.0
-
-    formula.scan(element_pattern) do |element_symbol, count_str|
-      count = count_str.empty? ? 1 : count_str.to_i
-      element = ChemicalElements::PeriodicTable.find(element_symbol)
-
-      total_mass += element.atomic_amount * count if element
-    end
-
-    total_mass
-  end
-
-  def self.extract_coefficient(component)
-    match = component.match(/^\d+/)
-    match ? match[0].to_i : 1
   end
 end
