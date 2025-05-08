@@ -317,4 +317,123 @@ describe('Component', () => {
       });
     });
   });
+
+  describe('createFromSampleData', () => {
+    let mockComponentData;
+    let mockSample;
+    const mockParentId = 'parent_123';
+    const mockMaterialGroup = 'solid';
+
+    beforeEach(() => {
+      mockComponentData = {
+        id: 'comp_123',
+        name: 'Test Component',
+        component_properties: {
+          amount_mol: 0.1,
+          amount_l: 0.05,
+          amount_g: 2.5,
+          density: 1.2,
+          molarity_unit: 'M',
+          molarity_value: 2.0,
+          starting_molarity_value: 2.0,
+          starting_molarity_unit: 'M',
+          molecule_id: 'mol_123',
+          equivalent: 1.0,
+          parent_id: 'old_parent_123',
+          material_group: 'old_solid',
+          reference: true,
+          purity: 0.95,
+          molecule: {
+            id: 'mol_123',
+            iupac_name: 'Test Molecule',
+            molecular_weight: 100
+          }
+        }
+      };
+
+      mockSample = {
+        amount_l: 0.1
+      };
+    });
+
+    it('creates a component with correct properties from sample data', () => {
+      const component = Component.createFromSampleData(
+        mockComponentData,
+        mockParentId,
+        mockMaterialGroup,
+        mockSample
+      );
+
+      expect(component).toBeInstanceOf(Component);
+      expect(component.parent_id).toBe(mockParentId);
+      expect(component.material_group).toBe(mockMaterialGroup);
+      expect(component.starting_molarity_value).toBe(mockComponentData.component_properties.molarity_value);
+      expect(component.molarity_value).toBe(0);
+      expect(component.reference).toBe(false);
+      expect(component.id).toMatch(/^comp_/);
+      expect(component.amount_g).toBe(mockComponentData.component_properties.amount_g);
+      expect(component.amount_l).toBe(mockComponentData.component_properties.amount_l);
+
+      // Update molecule comparison to check individual properties instead of full object
+      expect(component.molecule.id).toBe(mockComponentData.component_properties.molecule.id);
+      expect(component.molecule.iupac_name).toBe(mockComponentData.component_properties.molecule.iupac_name);
+      expect(component.molecule.molecular_weight).toBe(mockComponentData.component_properties.molecule.molecular_weight);
+    });
+
+    it('handles liquid components correctly', () => {
+      const liquidComponent = Component.createFromSampleData(
+        mockComponentData,
+        mockParentId,
+        'liquid',
+        mockSample
+      );
+
+      expect(liquidComponent.material_group).toBe('liquid');
+      expect(liquidComponent.amount_l).toBe(mockComponentData.component_properties.amount_l);
+    });
+
+    it('handles solid components correctly', () => {
+      const solidComponent = Component.createFromSampleData(
+        mockComponentData,
+        mockParentId,
+        'solid',
+        mockSample
+      );
+
+      expect(solidComponent.material_group).toBe('solid');
+      expect(solidComponent.amount_g).toBe(mockComponentData.component_properties.amount_g);
+    });
+
+    it('generates unique IDs for each component', () => {
+      const component1 = Component.createFromSampleData(
+        mockComponentData,
+        mockParentId,
+        mockMaterialGroup,
+        mockSample
+      );
+      const component2 = Component.createFromSampleData(
+        mockComponentData,
+        mockParentId,
+        mockMaterialGroup,
+        mockSample
+      );
+
+      expect(component1.id).not.toBe(component2.id);
+    });
+
+    it('preserves molecule data from the original component', () => {
+      const component = Component.createFromSampleData(
+        mockComponentData,
+        mockParentId,
+        mockMaterialGroup,
+        mockSample
+      );
+
+      // Update molecule comparison to check individual properties instead of full object
+      expect(component.molecule.id).toBe(mockComponentData.component_properties.molecule.id);
+      expect(component.molecule.iupac_name).toBe(mockComponentData.component_properties.molecule.iupac_name);
+      expect(component.molecule.molecular_weight).toBe(mockComponentData.component_properties.molecule.molecular_weight);
+      expect(component.molecule.id).toBe(mockComponentData.component_properties.molecule_id);
+    });
+  });
 });
