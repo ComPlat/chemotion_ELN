@@ -1155,6 +1155,7 @@ export default class SampleDetails extends React.Component {
         <InputGroup.Text>Molfile</InputGroup.Text>
         <Form.Control
           as="textarea"
+          rows={5}
           value={this.state.molfile}
           disabled
           readOnly
@@ -1292,13 +1293,12 @@ export default class SampleDetails extends React.Component {
 
   renderMolfileModal() {
     const { molfile } = this.state;
-    const molfileText = molfile ? molfile.replace(/\r?\n/g, '<br />') : '';
 
     return (
       <Modal
         centered
         show={this.state.showMolfileModal}
-        dialogClassName="importChemDrawModal"
+        dialogClassName="modal-lg"
         onHide={this.handleMolfileClose}
       >
         <Modal.Header closeButton>
@@ -1309,9 +1309,10 @@ export default class SampleDetails extends React.Component {
             <Form.Group controlId="molfileInputModal">
               <Form.Control
                 as="textarea"
+                rows={30}
                 readOnly
                 disabled
-                value={molfileText}
+                value={molfile}
               />
             </Form.Group>
           </div>
