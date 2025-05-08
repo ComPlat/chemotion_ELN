@@ -20,6 +20,9 @@ import {
   determineTONFrequencyValue,
 } from 'src/utilities/UnitsConversion';
 
+const SAMPLE_TYPE_MIXTURE = 'Mixture';
+const SAMPLE_TYPE_MICROMOLECULE = 'Micromolecule';
+
 const prepareRangeBound = (args = {}, field) => {
   const argsNew = args;
   if (args[field] && typeof args[field] === 'string') {
@@ -97,7 +100,7 @@ export default class Sample extends Element {
     newSample.filterElementalComposition();
     newSample.segments = Segment.buildCopy(sample.segments);
 
-    if (sample.sample_type === 'Mixture') {
+    if (sample.isMixture()) {
       newSample.amount_value = sample.amount_value;
     }
 
@@ -227,7 +230,7 @@ export default class Sample extends Element {
       sum_formula: '',
       gas_type: 'off',
       xref: {},
-      sample_type: 'Micromolecule',
+      sample_type: SAMPLE_TYPE_MICROMOLECULE,
       components: [],
     });
 
@@ -247,6 +250,19 @@ export default class Sample extends Element {
 
   isNoStructureSample() {
     return this.molecule?.inchikey === 'DUMMY' && this.molfile == null;
+  }
+
+  /**
+   * Checks whether the sample is of type "mixture".
+   *
+   * @returns {boolean} True if the sample type is "mixture", otherwise false.
+   */
+  isMixture() {
+    return this.sample_type?.toString() === SAMPLE_TYPE_MIXTURE;
+  }
+
+  hasComponents() {
+    return this.components && this.components.length > 0;
   }
 
   getChildrenCount() {
@@ -539,7 +555,7 @@ export default class Sample extends Element {
   }
 
   get molarity_value() {
-    if (this.sample_type === 'Mixture' && this.reference_component) {
+    if (this.isMixture() && this.reference_component) {
       return this.reference_molarity_value;
     }
     return this._molarity_value;
@@ -551,7 +567,7 @@ export default class Sample extends Element {
   }
 
   get molarity_unit() {
-    if (this.sample_type === 'Mixture' && this.reference_component) {
+    if (this.isMixture() && this.reference_component) {
       return this.reference_molarity_unit;
     }
     return this._molarity_unit;
@@ -609,7 +625,7 @@ export default class Sample extends Element {
 
     const totalVolume = this.amount_l;
 
-    if (this.sample_type === 'Mixture' && this.components) {
+    if (this.isMixture() && this.components) {
       this.updateMixtureComponentVolume(totalVolume);
     }
   }
@@ -990,7 +1006,7 @@ export default class Sample extends Element {
   }
 
   get molecule_molecular_weight() {
-    if (this.sample_type === 'Mixture') {
+    if (this.isMixture()) {
       return this.reference_molecular_weight;
     }
     if (this.decoupled) {
@@ -1009,7 +1025,7 @@ export default class Sample extends Element {
       return (this.sum_formula && this.sum_formula.length) ? this.sum_formula : '';
     }
 
-    if (this.sample_type === 'Mixture') {
+    if (this.isMixture()) {
       return 'mixture structure';
     }
 
@@ -1100,7 +1116,7 @@ export default class Sample extends Element {
   }
 
   get isValid() {
-    const isValidMixture = this.sample_type === 'Mixture' && this.components?.length > 0;
+    const isValidMixture = this.isMixture() && this.components?.length > 0;
     return (this && ((this.molfile && !this.decoupled) || this.decoupled || isValidMixture)
       && !this.error_loading && !this.error_polymer_type);
   }
@@ -1440,33 +1456,72 @@ export default class Sample extends Element {
       }
     });
 
-    if (!this.sample_details) {
-      this.sample_details = {};
-    }
-    this.sample_details.reference_molecular_weight = this.components[componentIndex].molecule.molecular_weight;
+    // if (!this.sample_details) {
+    //   this.sample_details = {};
+    // }
+    // this.sample_details.reference_molecular_weight = this.components[componentIndex].molecule.molecular_weight;
 
     this.updateMixtureComponentEquivalent();
   }
 
+  /**
+   * Updates the 'equivalent' value (Ratio) of each component in the mixture
+   * based on amount_mol of a designated reference component.
+   *
+   * The reference component is either:
+   * - the one explicitly marked as `reference: true`, or
+   * - the one at position 0 (fallback), if no reference is marked.
+   *
+   * After updating equivalents, the function also triggers a recalculation
+   * of the mixture's molecular weight.
+   *
+   * @method updateMixtureComponentEquivalent
+   * @returns {void}
+   */
   updateMixtureComponentEquivalent() {
+    if (!this.components || this.components.length === 0) {
+      return;
+    }
+
+    // Find the index of the component marked as reference
     let referenceIndex = this.components.findIndex((component) => component.reference);
 
+    // If no component is marked as reference, use the component at position 0 as fallback
     if (referenceIndex === -1) {
       referenceIndex = this.components.findIndex((component) => component.position === 0);
       if (referenceIndex !== -1) {
         this.setReferenceComponent(referenceIndex);
+      } else {
+        // If no components exist, return
+        return;
       }
     }
 
-    const referenceMol = this.components[referenceIndex].amount_mol;
+    const referenceComponent = this.components[referenceIndex];
+    const referenceMol = referenceComponent.amount_mol ?? 0;
 
-    // Update equivalent values based on the reference component
-    for (let i = 0; i < this.components.length; i++) {
-      if (i === referenceIndex) continue;
-      this.components[i].equivalent = this.components[i].amount_mol / referenceMol;
+    // If reference moles is 0, set all non-reference components to 0
+    if (!referenceMol || Number.isNaN(referenceMol)) {
+      this.components.forEach((component, index) => {
+        if (index !== referenceIndex) {
+          component.equivalent = 0;
+        } else {
+          component.equivalent = 1;
+        }
+      });
+    } else {
+      // Update equivalent values based on the reference component
+      this.components.forEach((component, index) => {
+        if (index === referenceIndex) {
+          component.equivalent = 1;
+        } else {
+          const currentMol = component.amount_mol ?? 0;
+          component.equivalent = currentMol && !Number.isNaN(currentMol) ? currentMol / referenceMol : 0;
+        }
+      });
     }
 
-    this.updateMixtureMolecularWeight();
+    // this.updateMixtureMolecularWeight();
   }
 
   updateMixtureMolecularWeight() {

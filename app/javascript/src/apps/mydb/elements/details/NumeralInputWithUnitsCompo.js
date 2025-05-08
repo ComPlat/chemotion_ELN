@@ -18,7 +18,9 @@ export default class NumeralInputWithUnitsCompo extends Component {
       currentPrecision: precision,
       valueString: 0,
       showString: false,
+      copyButtonText: '📋',
     };
+    this.handleCopyClick = this.handleCopyClick.bind(this);
   }
 
   componentDidMount() {
@@ -142,6 +144,34 @@ export default class NumeralInputWithUnitsCompo extends Component {
     }
   }
 
+  /**
+   * Handles copying the value to clipboard and shows temporary feedback
+   */
+  handleCopyClick = async (value) => {
+    if (value && value !== 'n.d.') {
+      try {
+        await navigator.clipboard.writeText(value.toString());
+        this.setState({ copyButtonText: '✓' }, () => {
+          this.forceUpdate(); // Force re-render to ensure UI updates
+          setTimeout(() => {
+            this.setState({ copyButtonText: '📋' }, () => {
+              this.forceUpdate(); // Force re-render to ensure UI updates
+            });
+          }, 2000);
+        });
+      } catch (err) {
+        this.setState({ copyButtonText: '❌' }, () => {
+          this.forceUpdate(); // Force re-render to ensure UI updates
+          setTimeout(() => {
+            this.setState({ copyButtonText: '📋' }, () => {
+              this.forceUpdate(); // Force re-render to ensure UI updates
+            });
+          }, 2000);
+        });
+      }
+    }
+  };
+
   render() {
     const {
       size, variant, disabled, label, unit, name, showInfoTooltipTotalVol, showInfoTooltipRequiredVol
@@ -149,17 +179,16 @@ export default class NumeralInputWithUnitsCompo extends Component {
     const {
       showString, value, metricPrefix,
       currentPrecision, valueString, block,
+      copyButtonText
     } = this.state;
     const mp = metPrefSymbols[metricPrefix];
     const nanOrInfinity = isNaN(value) || !isFinite(value);
-    const val = () => {
-      if (!showString && nanOrInfinity) {
-        return 'n.d.';
-      } else if (!showString) {
-        return metPreConv(value, 'n', metricPrefix).toPrecision(currentPrecision);
-      }
-      return valueString;
-    };
+    
+    // Calculate display value once during render
+    const displayValue = !showString && nanOrInfinity ? 'n.d.' :
+      !showString ? metPreConv(value, 'n', metricPrefix).toPrecision(currentPrecision) :
+      valueString;
+
     const inputDisabled = disabled ? true : block;
     const alwaysAllowDisplayUnit = [
       'TON', 'TON/h', 'TON/m', 'TON/s',
@@ -193,14 +222,14 @@ export default class NumeralInputWithUnitsCompo extends Component {
                 <Tooltip id="info-total-volume">
                   <div>
                     <p className="mb-2">
-                      This represents the total volume of the sample itself.
+                      It is only a value given manually, i.e. volume by definition — not (re)calculated.
                     </p>
                     <p className="mb-2">
-                      It is recalculated when the attributes of a component with a locked total concentration are
-                      modified, or when the total concentration or the amount (in mol) of a component changes.
+                      Recalculation occurs only when the attributes of a component with a locked total concentration are
+                      modified.
                     </p>
                     <a
-                      href="https://www.chemotion.net/docs/eln/ui/elements/samples/mixtures#total-volume"
+                      href="https://www.chemotion.net/docs/eln/ui/elements/samples/mixtures#-total-volume-and-solvent-addition"
                       target="_blank"
                       rel="noopener noreferrer"
                     >
@@ -240,7 +269,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
               disabled={inputDisabled}
               variant={variant}
               size={size}
-              value={val() || ''}
+              value={displayValue || ''}
               onChange={event => this._handleInputValueChange(event)}
               onFocus={event => this._handleInputValueFocus(event)}
               onBlur={event => this._handleInputValueBlur(event)}
@@ -248,6 +277,18 @@ export default class NumeralInputWithUnitsCompo extends Component {
               className="flex-grow-1"
             />
             {prefixSwitch}
+            {showInfoTooltipRequiredVol && (
+              <Button
+                variant="outline-secondary"
+                size={size}
+                onClick={() => this.handleCopyClick(displayValue)}
+                className="ms-1"
+                title={copyButtonText === '📋' ? 'Copy to clipboard' : copyButtonText === '✓' ? 'Copied!' : 'Failed to copy'}
+                style={{ minWidth: '32px' }}
+              >
+                {copyButtonText}
+              </Button>
+            )}
           </InputGroup>
         </div>
       );
@@ -261,7 +302,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
             disabled={inputDisabled}
             variant={variant}
             size={size}
-            value={val() || ''}
+            value={displayValue || ''}
             onChange={event => this._handleInputValueChange(event)}
             onFocus={event => this._handleInputValueFocus(event)}
             onBlur={event => this._handleInputValueBlur(event)}

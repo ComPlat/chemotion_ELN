@@ -723,17 +723,17 @@ export default class SampleForm extends React.Component {
   totalRequiredAmount() {
     const { sample } = this.props;
 
-    const requiredTotalVolume = sample.calculateRequiredTotalVolume() / 1000;
+    const requiredTotalVolume = sample.calculateRequiredTotalVolume();
 
     return (
       <NumeralInputWithUnitsCompo
         value={requiredTotalVolume}
         unit="l"
-        label="Required total volume"
+        label="Required volume"
         metricPrefix="m"
         metricPrefixes={['m', 'u', 'n']}
         precision={5}
-        title="Required Total Volume'"
+        title="Required volume"
         disabled
         variant="light"
         id="numInput_amount_l"

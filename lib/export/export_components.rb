@@ -56,10 +56,10 @@ module Export
     #   build_component_column_query("samples.*", { components: ["name", "mass"] })
     #   => ["samples.*", ["comp.\"name\" as \"name\"", "comp.\"component_properties\"->>'amount_g' as \"mass\""]]
     def self.build_component_column_query(selection, sel)
-      component_selections = sel[:components].map do |col|
+      component_selections = sel[:components].filter_map do |col|
         query = COMPONENT_QUERIES[col.to_s.strip]
-        query ? "#{query[0]} as #{query[1]}" : nil
-      end.compact
+        "#{query[0]} as #{query[1]}" if query
+      end
 
       gathered_selections = []
       gathered_selections << selection

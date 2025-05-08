@@ -7,11 +7,28 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
 import Component from 'src/models/Component';
 import ComponentStore from 'src/stores/alt/stores/ComponentStore';
+import { checkComponentVolumeAndNotify } from 'src/utilities/VolumeUtils';
 import {
   ListGroup, ListGroupItem, Button, Modal
 } from 'react-bootstrap';
 
+/**
+ * SampleDetailsComponents manages the display and interaction of components within a sample.
+ * It handles both liquid and solid components, including their addition, removal, and modification.
+ * @class SampleDetailsComponents
+ * @extends React.Component
+ */
 export default class SampleDetailsComponents extends React.Component {
+  /**
+   * Creates an instance of SampleDetailsComponents.
+   * @param {Object} props - Component props
+   * @param {Sample} props.sample - The sample containing the components
+   * @param {Function} props.onChange - Callback for sample changes
+   * @param {boolean} props.isOver - Whether a drag operation is over the component
+   * @param {boolean} props.canDrop - Whether the component can accept drops
+   * @param {boolean} props.enableComponentLabel - Whether to show component labels
+   * @param {boolean} props.enableComponentPurity - Whether to show component purity
+   */
   constructor(props) {
     super(props);
 
@@ -39,10 +56,17 @@ export default class SampleDetailsComponents extends React.Component {
     this.updatePurity = this.updatePurity.bind(this);
   }
 
+  /**
+   * Closes the modal dialog and resets the dropped material state.
+   */
   handleModalClose() {
     this.setState({ showModal: false, droppedMaterial: null });
   }
 
+  /**
+   * Handles modal action (merge or move) for dropped materials.
+   * @param {string} action - The action to perform ('merge' or 'move')
+   */
   handleModalAction(action) {
     const { droppedMaterial, sample } = this.state;
 
@@ -56,36 +80,63 @@ export default class SampleDetailsComponents extends React.Component {
     this.props.onChange(sample);
   }
 
+  /**
+   * Handles tab selection in the component view.
+   * @param {string} tab - The selected tab name
+   */
   handleTabSelect(tab) {
     this.setState({ activeTab: tab });
   }
 
-  handleAmountUnitChange(changeEvent, currentComponent, totalVolume, referenceComponent) {
+  /**
+   * Updates total volume only if component concentration is locked
+   * @param {Object} component - The component to check
+   * @param {Sample} sample - The parent sample
+   */
+  updateTotalVolumeIfConcentrationLocked(component, sample) {
+    if (component.isComponentConcentrationLocked()) {
+      sample.updateTotalVolume(component.amount_mol, component.concn);
+    }
+  }
+
+  /**
+   * Handles changes to component amount and units.
+   * @param {Object} changeEvent - The change event
+   * @param {Object} currentComponent - The component being modified
+   * @param {Object} referenceComponent - The reference component
+   */
+  handleAmountUnitChange(changeEvent, currentComponent, referenceComponent) {
     const { sample } = this.props;
     const { amount, concType, lockColumn } = changeEvent;
+
+    const totalVolume = sample.amount_l;
 
     switch (amount.unit) {
       case 'l':
       case 'g':
         // volume/mass given, update amount
         currentComponent.handleVolumeChange(amount, totalVolume, referenceComponent);
-        sample.updateTotalVolume(currentComponent.amount_mol, currentComponent.concn);
+        this.updateTotalVolumeIfConcentrationLocked(currentComponent, sample);
         break;
       case 'mol':
         // amount given, update volume/mass
         currentComponent.handleAmountChange(amount, totalVolume, referenceComponent);
-        sample.updateTotalVolume(currentComponent.amount_mol, currentComponent.concn);
+        this.updateTotalVolumeIfConcentrationLocked(currentComponent, sample);
         break;
       case 'mol/l':
-        // starting conc./target concentration changes,
+        // starting conc./target concentration changes
         currentComponent.handleConcentrationChange(amount, totalVolume, concType, lockColumn, referenceComponent);
-        sample.updateTotalVolume(currentComponent.amount_mol, currentComponent.concn);
         break;
       default:
         break;
     }
   }
 
+  /**
+   * Updates reference component based on purity changes.
+   * @param {boolean} lockAmountColumnSolids - Whether solid amounts are locked
+   * @param {string} materialGroup - The material group type
+   */
   handleReferenceComponentUpdateFromPurity(lockAmountColumnSolids, materialGroup) {
     const { sample } = this.props;
 
@@ -100,6 +151,10 @@ export default class SampleDetailsComponents extends React.Component {
     }
   }
 
+  /**
+   * Handles changes to component properties.
+   * @param {Object} changeEvent - The change event containing the type and data
+   */
   onChangeComponent(changeEvent) {
     const { sample } = this.state;
 
@@ -135,9 +190,14 @@ export default class SampleDetailsComponents extends React.Component {
       default:
         break;
     }
+    checkComponentVolumeAndNotify(sample);
     this.props.onChange(sample);
   }
 
+  /**
+   * Updates sample for amount/unit changes.
+   * @param {Object} changeEvent - The change event
+   */
   updatedSampleForAmountUnitChange(changeEvent) {
     const { sample } = this.props;
     const { sampleID } = changeEvent;
@@ -145,11 +205,10 @@ export default class SampleDetailsComponents extends React.Component {
     const componentIndex = sample.components.findIndex((component) => component.id === sampleID);
     const currentComponent = sample.components[componentIndex];
 
-    const totalVolume = sample.amount_l;
     const referenceComponent = sample.reference_component;
 
     // Handle different units of measurement
-    this.handleAmountUnitChange(changeEvent, currentComponent, totalVolume, referenceComponent);
+    this.handleAmountUnitChange(changeEvent, currentComponent, referenceComponent);
 
     // Check if the component is the reference component
     if (referenceComponent && referenceComponent.id === sampleID) {
@@ -158,6 +217,10 @@ export default class SampleDetailsComponents extends React.Component {
     }
   }
 
+  /**
+   * Updates component density.
+   * @param {Object} changeEvent - The change event
+   */
   updateDensity(changeEvent) {
     const { sample } = this.props;
     const { sampleID, amount, lockColumn } = changeEvent;
@@ -165,30 +228,71 @@ export default class SampleDetailsComponents extends React.Component {
       (component) => component.id === sampleID
     );
 
+    if (componentIndex === -1) {
+      console.error('Component not found');
+      return;
+    }
+
+    const currentComponent = sample.components[componentIndex];
     const totalVolume = sample.amount_l;
 
-    sample.components[componentIndex].handleDensityChange(amount, lockColumn, totalVolume);
-    // sample.components[componentIndex].setDensity(amount, lockColumn, totalVolume);
+    currentComponent.handleDensityChange(amount, lockColumn, totalVolume);
 
     // update components ratio
     sample.updateMixtureComponentEquivalent();
   }
 
+  /**
+   * Updates component ratio.
+   * @param {Object} changeEvent - The change event
+   */
+  updateRatio(changeEvent) {
+    const { sample } = this.props;
+    const { sampleID, newRatio, materialGroup } = changeEvent;
+
+    const componentIndex = sample.components.findIndex(
+      (component) => component.id === sampleID
+    );
+    const refIndex = sample.components.findIndex(
+      (component) => component.reference === true
+    );
+
+    if (componentIndex === -1 || refIndex === -1) {
+      console.error('Component or reference component not found');
+      return;
+    }
+
+    const referenceMoles = sample.components[refIndex].amount_mol;
+    const totalVolume = sample.amount_l;
+    const currentComponent = sample.components[componentIndex];
+
+    currentComponent.updateRatio(newRatio, materialGroup, totalVolume, referenceMoles);
+    this.updateTotalVolumeIfConcentrationLocked(currentComponent, sample);
+  }
+
+  /**
+   * Updates component purity.
+   * @param {Object} changeEvent - The change event
+   */
   updatePurity(changeEvent) {
     const { sample } = this.props;
     const { sampleID, amount, materialGroup } = changeEvent;
-    const { lockAmountColumnSolids } = ComponentStore.getState();
+    const { lockAmountColumnSolids } = ComponentStore.getState() || { lockAmountColumnSolids: false };
 
     const purity = amount.value;
-
     const referenceComponent = sample.reference_component;
     const totalVolume = sample.amount_l;
 
     const componentIndex = sample.components.findIndex((component) => component.id === sampleID);
-    const currentComponent = sample.components[componentIndex];
+    if (componentIndex === -1) {
+      console.error('Component not found');
+      return;
+    }
 
+    const currentComponent = sample.components[componentIndex];
     currentComponent.setPurity(purity, totalVolume, referenceComponent, lockAmountColumnSolids, materialGroup);
-    sample.updateTotalVolume(currentComponent.amount_mol, currentComponent.concn);
+
+    this.updateTotalVolumeIfConcentrationLocked(currentComponent, sample);
 
     // Check if the component is the reference component
     if (referenceComponent && referenceComponent.id === sampleID) {
@@ -196,6 +300,10 @@ export default class SampleDetailsComponents extends React.Component {
     }
   }
 
+  /**
+   * Updates sample for metrics changes.
+   * @param {Object} changeEvent - The change event
+   */
   updatedSampleForMetricsChange(changeEvent) {
     const { sample } = this.props;
     const { sampleID, metricUnit, metricPrefix } = changeEvent;
@@ -205,6 +313,14 @@ export default class SampleDetailsComponents extends React.Component {
     sample.components[componentIndex].setUnitMetrics(metricUnit, metricPrefix);
   }
 
+  /**
+   * Handles dropping a sample into the component list.
+   * @param {Sample|Molecule} srcSample - The source sample or molecule
+   * @param {Object} tagMaterial - The target material
+   * @param {string} tagGroup - The target group
+   * @param {string} [extLabel] - Optional external label
+   * @param {boolean} [isNewSample=false] - Whether this is a new sample
+   */
   dropSample(srcSample, tagMaterial, tagGroup, extLabel, isNewSample = false) {
     const { sample } = this.state;
     const { currentCollection } = UIStore.getState();
@@ -220,7 +336,7 @@ export default class SampleDetailsComponents extends React.Component {
 
     splitSample.material_group = tagGroup;
 
-    if (splitSample.sample_type === 'Mixture') {
+    if (splitSample.isMixture()) {
       ComponentsFetcher.fetchComponentsBySampleId(srcSample.id)
         .then(async (components) => {
           await Promise.all(
@@ -246,6 +362,10 @@ export default class SampleDetailsComponents extends React.Component {
     }
   }
 
+  /**
+   * Updates component name.
+   * @param {Object} changeEvent - The change event
+   */
   updateComponentName(changeEvent) {
     const { sample } = this.props;
     const { sampleID, newName } = changeEvent;
@@ -257,6 +377,14 @@ export default class SampleDetailsComponents extends React.Component {
     this.props.onChange(sample);
   }
 
+  /**
+   * Handles dropping a material into the component list.
+   * @param {Object} srcMat - The source material
+   * @param {string} srcGroup - The source group
+   * @param {Object} tagMat - The target material
+   * @param {string} tagGroup - The target group
+   * @param {string} action - The action to perform ('move' or 'merge')
+   */
   dropMaterial(srcMat, srcGroup, tagMat, tagGroup, action) {
     const { sample } = this.state;
     sample.components = sample.components.map((component) => {
@@ -280,36 +408,20 @@ export default class SampleDetailsComponents extends React.Component {
     }
   }
 
+  /**
+   * Deletes a component from the mixture.
+   * @param {Object} component - The component to delete
+   */
   deleteMixtureComponent(component) {
     const { sample } = this.state;
     sample.deleteMixtureComponent(component);
     this.props.onChange(sample);
   }
 
-  updateRatio(changeEvent) {
-    const { sample } = this.props;
-    const { sampleID, newRatio, materialGroup } = changeEvent;
-
-    const componentIndex = sample.components.findIndex(
-      (component) => component.id === sampleID
-    );
-    const refIndex = sample.components.findIndex(
-      (component) => component.reference === true
-    );
-
-    const referenceMoles = sample.components[refIndex].amount_mol;
-    const totalVolume = sample.amount_l;
-    const currentComponent = sample.components[componentIndex];
-
-    currentComponent.updateRatio(newRatio, materialGroup, totalVolume, referenceMoles);
-
-    sample.updateTotalVolume(currentComponent.amount_mol, currentComponent.concn);
-
-    sample.updateMixtureMolecularWeight();
-
-    this.props.onChange(sample);
-  }
-
+  /**
+   * Updates sample when reference component changes.
+   * @param {Object} changeEvent - The change event
+   */
   updateSampleForReferenceChanged(changeEvent) {
     const { sample } = this.props;
     const { sampleID } = changeEvent;
@@ -320,6 +432,13 @@ export default class SampleDetailsComponents extends React.Component {
     sample.setReferenceComponent(componentIndex);
   }
 
+  /**
+   * Shows modal for material drop operations.
+   * @param {Object} srcMat - The source material
+   * @param {string} srcGroup - The source group
+   * @param {Object} tagMat - The target material
+   * @param {string} tagGroup - The target group
+   */
   showModalWithMaterial(srcMat, srcGroup, tagMat, tagGroup) {
     if (!tagMat && srcGroup !== tagGroup) {
       this.setState({
@@ -336,6 +455,10 @@ export default class SampleDetailsComponents extends React.Component {
     });
   }
 
+  /**
+   * Renders the modal dialog for material operations.
+   * @returns {JSX.Element} The modal component
+   */
   renderModal() {
     return (
       <Modal show={this.state.showModal} onHide={this.handleModalClose}>
@@ -352,6 +475,10 @@ export default class SampleDetailsComponents extends React.Component {
     );
   }
 
+  /**
+   * Renders the component list.
+   * @returns {JSX.Element} The rendered component
+   */
   render() {
     const {
       sample, isOver, canDrop, enableComponentLabel, enableComponentPurity
@@ -418,6 +545,10 @@ export default class SampleDetailsComponents extends React.Component {
   }
 }
 
+/**
+ * PropTypes for SampleDetailsComponents
+ * @type {Object}
+ */
 SampleDetailsComponents.propTypes = {
   sample: PropTypes.instanceOf(Sample).isRequired,
   onChange: PropTypes.func.isRequired,
