@@ -59,6 +59,7 @@ class SampleComponentsGroup extends React.Component {
           size="xxsm"
           variant={lockState ? 'warning' : 'light'}
           className="ms-1"
+          style={{ marginRight: '2px' }}
         >
           <i className={lockState ? 'fa fa-lock' : 'fa fa-unlock'} />
         </Button>

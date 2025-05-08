@@ -76,6 +76,9 @@ class Sample < ApplicationRecord
   STEREO_REL = %w[any syn anti p-geminal p-ortho p-meta p-para cis trans fac mer].freeze
   STEREO_DEF = { 'abs' => 'any', 'rel' => 'any' }.freeze
 
+  SAMPLE_TYPE_MIXTURE = 'Mixture'
+  SAMPLE_TYPE_MICROMOLECULE = 'Micromolecule'
+
   multisearchable against: %i[
     name short_label external_label molecule_sum_formular
     molecule_iupac_name molecule_inchistring molecule_inchikey molecule_cano_smiles
@@ -384,7 +387,7 @@ class Sample < ApplicationRecord
         name: component.name,
         position: component.position,
         component_properties: component.component_properties,
-        )
+      )
     end
   end
 
@@ -659,7 +662,7 @@ class Sample < ApplicationRecord
   end
 
   def check_molfile_polymer_section
-    return if decoupled || sample_type == 'Mixture'
+    return if decoupled || sample_type == SAMPLE_TYPE_MIXTURE
     return unless molfile.include? 'R#'
 
     lines = molfile.lines

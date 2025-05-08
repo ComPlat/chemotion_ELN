@@ -72,7 +72,7 @@ module Usecases
                 modified_sample = update_existing_sample(sample, fixed_label)
               end
 
-              if sample.components.present? && sample.sample_type == 'Mixture'
+              if sample.components.present? && sample.sample_type == Sample::SAMPLE_TYPE_MIXTURE
                 save_components(modified_sample.id, sample.components)
               end
 
@@ -260,8 +260,13 @@ module Usecases
         components.each do |component_params|
           molecule_id = component_params[:component_properties][:molecule_id]
 
-          component = Component.where("sample_id = ? AND CAST(component_properties ->> 'molecule_id' AS INTEGER) = ?", sample_id, molecule_id)
-                               .first_or_initialize(sample_id: sample_id)
+          component = Component
+                      .where(
+                        "sample_id = ? AND CAST(component_properties ->> 'molecule_id' AS INTEGER) = ?",
+                        sample_id,
+                        molecule_id,
+                      )
+                      .first_or_initialize(sample_id: sample_id)
 
           component.update(
             name: component_params[:name],

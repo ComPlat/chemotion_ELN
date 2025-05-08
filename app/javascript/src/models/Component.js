@@ -74,7 +74,7 @@ export default class Component extends Sample {
    * Handles volume input changes and recalculates dependent values.
    * @param {Object} amount - Contains value and unit.
    * @param {number} totalVolume - Total volume of the mixture.
-   * @param {Component} referenceComponent - Reference component for ratio calculations.
+   * @param {Object} referenceComponent - Reference component for ratio calculations.
    */
   handleVolumeChange(amount, totalVolume, referenceComponent) {
     if (!amount.unit || Number.isNaN(amount.value)) return;
@@ -83,7 +83,7 @@ export default class Component extends Sample {
 
     const purity = this.purity || 1.0;
 
-    this.calculateAmount(totalVolume, purity);
+    this.calculateAmount(purity);
 
     this.updateRatioFromReference(referenceComponent);
 
@@ -112,24 +112,28 @@ export default class Component extends Sample {
    * @param {number} totalVolume
    * @param {number} purity
    */
-  calculateAmount(totalVolume, purity) {
+  calculateAmount(purity) {
     if (this.material_group === 'liquid') {
-      this.calculateAmountForLiquid(totalVolume, purity);
+      this.calculateAmountForLiquid(purity);
     } else if (this.material_group === 'solid') {
       this.calculateAmountFromMass(purity);
     }
   }
 
   /**
-   * Calculates amount for liquid using density or concentration.
-   * @param {number} totalVolume
-   * @param {number} purity
+   * Calculates the amount (mol) for a liquid component based on either
+   * its density or starting concentration (molarity), depending on availability.
+   *
+   * Prefers using density if it is defined and greater than 0.
+   * Falls back to using starting molarity if density is not available.
+   *
+   * @param {number} purity - The purity of the component (as a decimal or percentage).
    */
-  calculateAmountForLiquid(totalVolume, purity) {
+  calculateAmountForLiquid(purity) {
     if (this.density && this.density > 0) {
-      this.calculateAmountFromDensity(totalVolume, purity);
+      this.calculateAmountFromDensity(purity);
     } else if (this.starting_molarity_value && this.starting_molarity_value > 0) {
-      this.calculateAmountFromConcentration(totalVolume, purity);
+      this.calculateAmountFromConcentration(purity);
     }
   }
 
@@ -193,7 +197,7 @@ export default class Component extends Sample {
    * @param {number} totalVolume
    * @param {string} concType - 'startingConc' or other
    * @param {boolean} lockColumn
-   * @param {Component} referenceComponent
+   * @param {Object} referenceComponent
    */
   handleConcentrationChange(amount, totalVolume, concType, lockColumn, referenceComponent) {
     if (!amount.unit || Number.isNaN(amount.value) || amount.unit !== 'mol/l' || lockColumn) { return; }
@@ -243,6 +247,36 @@ export default class Component extends Sample {
     this.concn = amount.value;
     this.molarity_value = amount.value;
     this.molarity_unit = amount.unit;
+
+    this.concentrationCheckWarning();
+  }
+
+  /**
+   * Debounced warning if concentration exceeds stock concentration.
+   */
+  concentrationCheckWarning() {
+    if (this._concentrationWarningTimeout) {
+      clearTimeout(this._concentrationWarningTimeout);
+    }
+    this._concentrationWarningTimeout = setTimeout(() => {
+      if (
+        typeof this.concn === 'number'
+        && typeof this.starting_molarity_value === 'number'
+        && this.starting_molarity_value > 0
+        && this.concn > this.starting_molarity_value
+      ) {
+        const concn_mmol = (this.concn * 1000).toFixed(2);
+        const stock_mmol = (this.starting_molarity_value * 1000).toFixed(2);
+
+        NotificationActions.add({
+          title: 'Concentration Exceeds Stock',
+          message: `Total concentration (${concn_mmol} mmol/l) exceeds stock concentration (${stock_mmol} mmol/l).`,
+          level: 'warning',
+          position: 'tr',
+          autoDismiss: 5,
+        });
+      }
+    }, 500); // 500ms debounce
   }
 
   /**
@@ -257,12 +291,29 @@ export default class Component extends Sample {
   }
 
   /**
+   * Checks if the current component has a locked concentration.
+   *
+   * Retrieves the `lockedComponents` list from the `ComponentStore` state
+   * and determines whether this component's ID (`this.id`) is included.
+   *
+   * @returns {boolean} `true` if the component's concentration is locked, otherwise `false`.
+   */
+  isComponentConcentrationLocked() {
+    try {
+      const { lockedComponents } = ComponentStore.getState() || { lockedComponents: [] };
+      return lockedComponents.includes(this.id);
+    } catch (error) {
+      console.error('Error checking component lock state:', error);
+      return false;
+    }
+  }
+
+  /**
    * Calculates concentration based on amount and total volume.
    * @param {number} totalVolume
    */
   calculateTargetConcentration(totalVolume) {
-    const { lockedComponents } = ComponentStore.getState();
-    const lockedConcentration = lockedComponents.includes(this.id);
+    const lockedConcentration = this.isComponentConcentrationLocked();
 
     if (!lockedConcentration) {
       // totalConc_mol/l = amount_mol/totalVolume_l
@@ -286,7 +337,7 @@ export default class Component extends Sample {
     if (totalVolume > 0) {
       this.amount_mol = this.concn * totalVolume;
     } else {
-      this.calculateAmount(totalVolume, purity);
+      this.calculateAmount(purity);
     }
 
     // Calculate Volume (L): check code duplication
@@ -305,8 +356,7 @@ export default class Component extends Sample {
    * @param {number} totalVolume - The new total volume.
    */
   handleTotalVolumeChanges(totalVolume, referenceComponent) {
-    const { lockedComponents } = ComponentStore.getState();
-    const lockedConcentration = lockedComponents.includes(this.id);
+    const lockedConcentration = this.isComponentConcentrationLocked();
 
     if (lockedConcentration) {
       // Case 2: Total volume updated; Total Conc. is locked
@@ -353,10 +403,9 @@ export default class Component extends Sample {
 
   /**
    * Calculates amount (mol) from volume (L), density (g/mL), molecular weight (g/mol), and purity.
-   * @param {number} totalVolume - The total volume.
    * @param {number} purity - The purity value.
    */
-  calculateAmountFromDensity(totalVolume, purity) {
+  calculateAmountFromDensity(purity) {
     this.starting_molarity_value = 0;
 
     this.amount_g = this.amount_l * this.density * 1000; // density -> g/mL. To convert it to g/L, we multiply by 1000
@@ -367,10 +416,9 @@ export default class Component extends Sample {
 
   /**
    * Calculates amount (mol) from volume (L), concentration (mol/L), and purity.
-   * @param {number} totalVolume - The total volume.
    * @param {number} purity - The purity value.
    */
-  calculateAmountFromConcentration(totalVolume, purity) {
+  calculateAmountFromConcentration(purity) {
     this.amount_mol = this.starting_molarity_value * this.amount_l * purity;
   }
 
@@ -408,18 +456,24 @@ export default class Component extends Sample {
     if (this.equivalent === newRatio) { return; }
 
     const purity = this.purity || 1.0;
-    this.amount_mol = newRatio * referenceMoles; // Amount (amount = amount of reference component * ratio)
+
+    // Calculate new amount based on ratio and reference moles
+    // If reference moles is 0, set amount to 0
+    // Amount (amount = amount of reference component * ratio)
+    this.amount_mol = referenceMoles === 0 ? 0 : newRatio * referenceMoles;
     this.equivalent = newRatio;
 
-    // Volume(Liquid)/Mass(Solid) Calculation (Calculated from the Amount)
+    // Volume(Liquid)/Mass(Solid) Calculation
     if (materialGroup === 'liquid') {
       this.calculateVolumeForLiquid(purity);
     } else if (materialGroup === 'solid') {
       this.calculateMassFromAmount(purity);
     }
 
-    // Total concentration (Calculated from Amount and Volume/Mass)
-    this.calculateTargetConcentration(totalVolume);
+    // Total concentration calculation
+    if (totalVolume && totalVolume > 0) {
+      this.calculateTargetConcentration(totalVolume);
+    }
   }
 
   // Case 1(Solids): Mass given -> Calculate Amount
@@ -438,21 +492,28 @@ export default class Component extends Sample {
    * @param {Component} referenceComponent - The reference component.
    */
   updateRatioFromReference(referenceComponent) {
-    if (referenceComponent && referenceComponent.id !== this.id) {
-      // in case the current line is not the reference component
-      const refAmountMol = referenceComponent.amount_mol ?? 0;
-
-      if (refAmountMol > 0) {
-        // ratio = amount_mol_current_component / amount_mol_ref_component
-        this.equivalent = this.amount_mol / refAmountMol;
-      } else {
-        // when amount_mol for the reference component is 0, ratio of the current component = 0
-        this.equivalent = 0;
-      }
-    } else {
-      // If the current component is the reference, set the ratio to 1
+    if (!referenceComponent) {
       this.equivalent = 1;
+      return;
     }
+
+    if (referenceComponent.id === this.id) {
+      // If this is the reference component, set ratio to 1
+      this.equivalent = 1;
+      return;
+    }
+
+    const refAmountMol = referenceComponent.amount_mol ?? 0;
+    const currentAmountMol = this.amount_mol ?? 0;
+
+    // If either amount is 0 or NaN, set ratio to 0
+    if (!refAmountMol || !currentAmountMol || Number.isNaN(refAmountMol) || Number.isNaN(currentAmountMol)) {
+      this.equivalent = 0;
+      return;
+    }
+
+    // Calculate ratio only if both amounts are valid numbers
+    this.equivalent = currentAmountMol / refAmountMol;
   }
 
   /**
@@ -586,5 +647,17 @@ export default class Component extends Sample {
     }
 
     return component;
+  }
+
+  /**
+   * Construct a Component from API data, merging component_properties and other fields.
+   * @param {Object} component
+   * @returns {Component}
+   */
+  static deserializeData(component) {
+    const { component_properties, ...rest } = component;
+    const sampleData = { ...rest, ...component_properties };
+
+    return new Component(sampleData);
   }
 }
