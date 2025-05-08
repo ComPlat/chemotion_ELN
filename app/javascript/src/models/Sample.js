@@ -20,6 +20,9 @@ import {
   determineTONFrequencyValue,
 } from 'src/utilities/UnitsConversion';
 
+const SAMPLE_TYPE_MIXTURE = 'Mixture';
+const SAMPLE_TYPE_MICROMOLECULE = 'Micromolecule';
+
 const prepareRangeBound = (args = {}, field) => {
   const argsNew = args;
   if (args[field] && typeof args[field] === 'string') {
@@ -97,7 +100,7 @@ export default class Sample extends Element {
     newSample.filterElementalComposition();
     newSample.segments = Segment.buildCopy(sample.segments);
 
-    if (sample.sample_type === 'Mixture') {
+    if (sample.isMixture()) {
       newSample.amount_value = sample.amount_value;
     }
 
@@ -227,7 +230,7 @@ export default class Sample extends Element {
       sum_formula: '',
       gas_type: 'off',
       xref: {},
-      sample_type: 'Micromolecule',
+      sample_type: SAMPLE_TYPE_MICROMOLECULE,
       components: [],
     });
 
@@ -247,6 +250,19 @@ export default class Sample extends Element {
 
   isNoStructureSample() {
     return this.molecule?.inchikey === 'DUMMY' && this.molfile == null;
+  }
+
+  /**
+   * Checks whether the sample is of type "mixture".
+   *
+   * @returns {boolean} True if the sample type is "mixture", otherwise false.
+   */
+  isMixture() {
+    return this.sample_type?.toString() === SAMPLE_TYPE_MIXTURE;
+  }
+
+  hasComponents() {
+    return this.components && this.components.length > 0;
   }
 
   getChildrenCount() {
@@ -539,7 +555,7 @@ export default class Sample extends Element {
   }
 
   get molarity_value() {
-    if (this.sample_type === 'Mixture' && this.reference_component) {
+    if (this.isMixture() && this.reference_component) {
       return this.reference_molarity_value;
     }
     return this._molarity_value;
@@ -551,7 +567,7 @@ export default class Sample extends Element {
   }
 
   get molarity_unit() {
-    if (this.sample_type === 'Mixture' && this.reference_component) {
+    if (this.isMixture() && this.reference_component) {
       return this.reference_molarity_unit;
     }
     return this._molarity_unit;
@@ -609,7 +625,7 @@ export default class Sample extends Element {
 
     const totalVolume = this.amount_l;
 
-    if (this.sample_type === 'Mixture' && this.components) {
+    if (this.isMixture() && this.components) {
       this.updateMixtureComponentVolume(totalVolume);
     }
   }
@@ -990,7 +1006,7 @@ export default class Sample extends Element {
   }
 
   get molecule_molecular_weight() {
-    if (this.sample_type === 'Mixture') {
+    if (this.isMixture()) {
       return this.reference_molecular_weight;
     }
     if (this.decoupled) {
@@ -1009,7 +1025,7 @@ export default class Sample extends Element {
       return (this.sum_formula && this.sum_formula.length) ? this.sum_formula : '';
     }
 
-    if (this.sample_type === 'Mixture') {
+    if (this.isMixture()) {
       return 'mixture structure';
     }
 
@@ -1100,7 +1116,7 @@ export default class Sample extends Element {
   }
 
   get isValid() {
-    const isValidMixture = this.sample_type === 'Mixture' && this.components?.length > 0;
+    const isValidMixture = this.isMixture() && this.components?.length > 0;
     return (this && ((this.molfile && !this.decoupled) || this.decoupled || isValidMixture)
       && !this.error_loading && !this.error_polymer_type);
   }

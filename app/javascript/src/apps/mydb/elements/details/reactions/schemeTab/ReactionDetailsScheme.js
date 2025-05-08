@@ -108,7 +108,7 @@ export default class ReactionDetailsScheme extends React.Component {
       splitSample.reference = false;
     }
 
-    if (splitSample.sample_type === 'Mixture') {
+    if (splitSample.isMixture()) {
       ComponentsFetcher.fetchComponentsBySampleId(srcSample.id)
          .then(async components => {
             const sampleComponents = components.map(component => {

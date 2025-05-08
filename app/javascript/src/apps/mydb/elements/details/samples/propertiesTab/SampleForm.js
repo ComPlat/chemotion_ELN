@@ -723,7 +723,7 @@ export default class SampleForm extends React.Component {
   totalRequiredAmount() {
     const { sample } = this.props;
 
-    const requiredTotalVolume = sample.calculateRequiredTotalVolume() / 1000;
+    const requiredTotalVolume = sample.calculateRequiredTotalVolume();
 
     return (
       <NumeralInputWithUnitsCompo
