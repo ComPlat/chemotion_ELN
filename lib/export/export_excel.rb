@@ -62,6 +62,48 @@ module Export
       @samples = nil
     end
 
+    # Generates an Excel sheet that includes sample rows along with their associated components.
+    #
+    # @param table [Symbol, String] The name of the sheet to be created.
+    # @param samples [Array<Hash>, nil] An array of sample hashes that include component data.
+    # @param selected_columns [Array<String>] The columns to include in the sheet.
+    # @return [void]
+    def generate_components_sheet_with_samples(table, samples = nil, selected_columns)
+      @samples = samples
+      return if samples.nil?
+
+      generate_headers(table, [], selected_columns)
+
+      sheet = @xfile.workbook.add_worksheet(name: table.to_s)
+      grey = sheet.styles.add_style(sz: 12, border: { style: :thick, color: 'FF777777', edges: [:bottom] })
+      light_grey = sheet.styles.add_style(border: { style: :thick, color: 'FFCCCCCC', edges: [:top] })
+
+      # Add header row with units
+      sheet.add_row(@headers.map { |h| Export::ExportComponents.header_with_units(h) }, style: grey)
+      decoupled_style = sheet.styles.add_style(DECOUPLED_STYLE)
+      ['sample uuid'].each do |e|
+        s_idx = @headers.find_index(e)
+        sheet.rows[0].cells[s_idx].style = decoupled_style
+      end
+      row_length = @headers.size
+
+      samples.each do |sample|
+        # Add the sample's ID row (if components exist)
+        sample_id_row = (@row_headers & HEADERS_SAMPLE_ID).map { |column| sample[column] }
+        sample_id_row[row_length - 1] = nil
+        components = prepare_sample_component_data(sample)
+        sheet.add_row(sample_id_row, style: light_grey) if components.present?
+
+        # Add each component row
+        components.each do |component|
+          component_row = @headers.map { |column| Export::ExportComponents.format_component_value(column, component[column]) }
+          sheet.add_row(component_row, sz: 12) if component_row.compact.present?
+        end
+      end
+
+      @samples = nil
+    end
+
     #TODO: implement better detail level filter
     def generate_analyses_sheet_with_samples(table, samples = nil, selected_columns)
       @samples = samples
@@ -88,7 +130,7 @@ module Export
           sheet.add_row(data, style: light_grey) if analyses.present?
           analyses.each do |an|
             data = @headers.map { |column| an[column] }
-            sheet.add_row(data, sz: 12)  if data.compact.present?
+            sheet.add_row(data, sz: 12) if data.compact.present?
             (an['datasets'] || []).map do |dataset|
               data = @headers.map { |column| dataset[column] }
               sheet.add_row(data, sz: 12) if data.compact.present?
@@ -112,6 +154,18 @@ module Export
       JSON.parse(sample['analyses'].presence || '[]').map do |an|
         an['content'] = quill_to_html_to_string(an['content'])
         an
+      end
+    end
+
+    # Prepares the component data for a given sample by parsing JSON and converting rich text content to plain HTML string.
+    #
+    # @param sample [Hash] A hash representing a sample, expected to contain a JSON string under the 'components' key.
+    # @return [Array<Hash>] An array of component hashes with 'content' converted to HTML string.
+    def prepare_sample_component_data(sample)
+      components = JSON.parse(sample['components'].presence || '[]')
+      components.map do |component|
+        component['content'] = quill_to_html_to_string(component['content'])
+        component
       end
     end
 
