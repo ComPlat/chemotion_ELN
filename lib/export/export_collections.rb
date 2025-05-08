@@ -125,6 +125,7 @@ module Export
                   })
         fetch_samples collection
         fetch_chemicals collection
+        fetch_components collection
         fetch_reactions collection
         fetch_elements collection
         fetch_wellplates collection if @gt == false
@@ -177,6 +178,14 @@ module Export
       chemicals = collection.samples.filter_map(&:chemical)
       fetch_many(chemicals, {
                    'id' => 'Chemical',
+                   'sample_id' => 'Sample',
+                 })
+    end
+
+    def fetch_components(collection)
+      components = collection.samples.flat_map(&:components)
+      fetch_many(components, {
+                   'id' => 'Component',
                    'sample_id' => 'Sample',
                  })
     end
