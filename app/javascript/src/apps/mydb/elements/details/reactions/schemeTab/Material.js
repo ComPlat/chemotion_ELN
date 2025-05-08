@@ -825,11 +825,11 @@ class Material extends Component {
   }
 
   generateMolecularWeightTooltipText(sample, reaction) {
-    const isProduct = reaction.products.includes(sample)
+    const isProduct = reaction.products.includes(sample);
     let molecularWeight = sample.decoupled ?
       (sample.molecular_mass) : (sample.molecule && sample.molecule.molecular_weight);
 
-    if (sample.sample_type === 'Mixture' && sample.reference_molecular_weight) {
+    if (sample.isMixture() && sample.reference_molecular_weight) {
       molecularWeight = sample.reference_molecular_weight.toFixed(4);
     }
     let theoreticalMassPart = "";
