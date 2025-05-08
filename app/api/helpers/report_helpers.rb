@@ -337,9 +337,7 @@ module ReportHelpers
     return if sample_ids.empty? || columns.blank? || columns[0].blank? || columns[1].blank?
 
     # Use sample columns directly
-    sample_columns = columns[0]
-    sample_columns.unshift('s.id as "id"') unless sample_columns.any? { |col| col.include?('id as') }
-    sample_sql = sample_columns.join(', ')
+    sample_sql = build_sample_columns(columns[0])
 
     # Use component columns directly
     component_columns = columns[1].join(', ')
@@ -368,6 +366,11 @@ module ReportHelpers
       WHERE s.id IN (#{sample_ids})
       ORDER BY s.id
     SQL
+  end
+
+  def build_sample_columns(columns)
+    columns.unshift('s.id as "id"') unless columns.any? { |col| col.include?('id as') }
+    columns.join(', ')
   end
 
   def build_sql_sample_analyses(columns, c_id, ids, checkedAll = false)
@@ -748,7 +751,7 @@ module ReportHelpers
 
   def force_molfile_selection
     sample_params = params[:columns][:sample]
-    return unless !sample_params || !sample_params.include?(:molfile)
+    return unless sample_params.nil? || sample_params.exclude?(:molfile)
 
     params[:columns][:sample] = (sample_params || []) + [:molfile]
   end

@@ -39,7 +39,7 @@ RSpec.describe Export::ExportComponents do
         expect(result.first).to eq(base_selection)
         expect(result.last).to include('comp."name" as "name"')
         expect(result.last).to include('comp."component_properties"->>\'amount_g\' as "mass"')
-        expect(result.last).not_to be_any { |q| q.include?('invalid_field') }
+        expect(result.last).not_to(be_any { |q| q.include?('invalid_field') })
       end
     end
 

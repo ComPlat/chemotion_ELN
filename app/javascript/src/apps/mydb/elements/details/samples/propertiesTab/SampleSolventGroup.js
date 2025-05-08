@@ -31,9 +31,22 @@ function SolventDetails({ solvent, deleteSolvent, onChangeSolvent, sampleType })
     onChangeSolvent(solvent);
   };
 
+  const changePurity = (event) => {
+    solvent.purity = event.target.value;
+    onChangeSolvent(solvent);
+  };
+
+  const changeVendor = (event) => {
+    solvent.vendor = event.target.value;
+    onChangeSolvent(solvent);
+  };
+
   // onChangeRatio
   const metricPrefixes = ['m', 'n', 'u'];
-  const metric = (solvent.metrics && solvent.metrics.length > 2 && metricPrefixes.indexOf(solvent.metrics[1]) > -1) ? solvent.metrics[1] : 'm';
+  const hasValidMetrics = solvent.metrics && solvent.metrics.length > 2;
+  const isValidPrefix = hasValidMetrics && metricPrefixes.includes(solvent.metrics[1]);
+  const metric = isValidPrefix ? solvent.metrics[1] : 'm';
+
   return (
     <tr>
       <td>
@@ -66,6 +79,22 @@ function SolventDetails({ solvent, deleteSolvent, onChangeSolvent, sampleType })
         />
       </td>
       <td>
+        <Form.Control
+          type="number"
+          name="solvent_purity"
+          value={solvent.purity || 1.0}
+          onChange={changePurity}
+        />
+      </td>
+      <td>
+        <Form.Control
+          type="text"
+          name="solvent_vendor"
+          value={solvent.vendor}
+          onChange={changeVendor}
+        />
+      </td>
+      <td>
         <Button
           variant="danger"
           onClick={() => deleteSolvent(solvent)}
@@ -77,7 +106,7 @@ function SolventDetails({ solvent, deleteSolvent, onChangeSolvent, sampleType })
             justifyContent: 'center'
           }}
         >
-          <i className="fa fa-trash-o fa-lg" />
+          <i className="fa fa-trash-o fa-lg"/>
         </Button>
       </td>
     </tr>
@@ -140,6 +169,8 @@ function SampleSolventGroup({
                   <td>Volume</td>
                 )}
                 <td>Ratio</td>
+                <td>Purity</td>
+                <td>Vendor</td>
                 <td>Action</td>
               </tr>
             </thead>

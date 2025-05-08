@@ -536,18 +536,6 @@ class ElementActions {
     }
   }
 
-  showMixtureMaterial(params) {
-    return (dispatch) => {
-      SamplesFetcher.fetchById(params.sample.id)
-        .then((result) => {
-          params.sample = result;
-          dispatch(params);
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        })
-    }
-  }
-
   importSamplesFromFile(params) {
     return (dispatch) => {
       SamplesFetcher.importSamplesFromFile(params)
