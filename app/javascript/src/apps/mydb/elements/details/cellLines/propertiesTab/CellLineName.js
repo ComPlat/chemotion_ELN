@@ -26,7 +26,7 @@ export default class CellLineName extends React.Component {
 
   static renderNameSuggestion(name, src) {
     return (
-      <span style={{ display: 'block', textAlign: 'left' }}>
+      <span className="d-block text-start">
         {name}
         {' '}
         (
