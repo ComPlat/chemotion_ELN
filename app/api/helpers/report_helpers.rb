@@ -202,6 +202,9 @@ module ReportHelpers
       sheet_name = "#{table}_chemicals"
       format_result = Export::ExportChemicals.format_chemical_results(result)
       export.generate_sheet_with_samples(sheet_name, format_result, columns_params)
+    when :components
+      sheet_name = :"#{table}_components"
+      export.generate_components_sheet_with_samples(sheet_name, result, columns_params)
     else
       export.generate_sheet_with_samples(table, result)
     end
@@ -322,6 +325,42 @@ module ReportHelpers
       FROM (#{sample_query}) AS sample_results
       JOIN (#{chemical_query}) AS chemical_results
       ON sample_results.s_id = chemical_results.chemical_sample_id
+    SQL
+  end
+
+  def build_sql_sample_components(columns, _c_id, ids, _checked_all)
+    sample_ids = [ids].flatten.join(',')
+    return if sample_ids.empty? || columns.blank? || columns[0].blank? || columns[1].blank?
+
+    # Use sample columns directly
+    sample_columns = columns[0]
+    sample_columns.unshift('s.id as "id"') unless sample_columns.any? { |col| col.include?('id as') }
+    sample_sql = sample_columns.join(', ')
+
+    # Use component columns directly
+    component_columns = columns[1].join(', ')
+
+    # Check if we need molecule properties
+    needs_molecule_join = component_columns.include?('m.')
+
+    <<~SQL.squish
+      SELECT
+        #{sample_sql},
+        COALESCE(components.components, '[]') AS components
+      FROM samples s
+      LEFT JOIN LATERAL (
+        SELECT json_agg(row_to_json(component_row)) AS components
+        FROM (
+          SELECT
+            #{component_columns}
+          FROM components comp
+          #{needs_molecule_join ? "LEFT JOIN molecules m ON m.id = (comp.component_properties->>'molecule_id')::integer" : ''}
+          WHERE comp.sample_id = s.id
+          ORDER BY comp.position
+        ) AS component_row
+      ) AS components ON TRUE
+      WHERE s.id IN (#{sample_ids})
+      ORDER BY s.id
     SQL
   end
 
@@ -519,7 +558,7 @@ module ReportHelpers
     SQL
   end
 
-  # desc: returns hash of alllowed tables and associated columns
+  # desc: returns hash of allowed tables and associated columns
   # to be queried for export.
   # { table_name:
   #     column_name: ['abbr.column_name', 'alt column_name', min_detail_level]
@@ -565,6 +604,7 @@ module ReportHelpers
         external_label: ['s.external_label', '"sample external label"', 0],
         name: ['s."name"', '"sample name"', 0],
         short_label: ['s.short_label', '"short label"', 0],
+        sample_type: ['s."sample_type"', '"sample type"', 0],
         # molecule_name: ['mn."name"', '"molecule name"', 1]
       },
       molecule: {
@@ -660,11 +700,14 @@ module ReportHelpers
         custom_column_query(table, col, selection, user_id, attrs)
       end
     end
-    selection = if sel[:chemicals].present?
-                  Export::ExportChemicals.build_chemical_column_query(selection, sel)
-                else
-                  selection.join(',')
-                end
+
+    selection = Export::ExportChemicals.build_chemical_column_query(selection, sel) if sel[:chemicals].present?
+
+    if sel[:components].present?
+      return Export::ExportComponents.build_component_column_query(selection, sel)
+    end
+
+    sel[:chemicals].present? ? selection : selection.join(',')
   end
 
   def filter_column_selection(table, columns = params[:columns])
@@ -683,6 +726,8 @@ module ReportHelpers
     #  columns.slice(:analysis).merge(reaction_id: params[:columns][:reaction])
     when :sample_chemicals
       columns.slice(:chemicals, :sample, :molecule)
+    when :sample_components
+      columns.slice(:components).merge(sample_id: params[:columns][:sample])
     else
       {}
     end

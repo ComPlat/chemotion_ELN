@@ -20,12 +20,12 @@ module Export
     ].freeze
 
     HEADERS_SAMPLE_ID = [
-      'sample external label', 'sample name', 'short label'
+      'sample external label', 'sample name', 'short label', 'sample type'
     ].freeze
 
     # allowed well/wellplate headers for wellplate detail level 0
     HEADERS_WELLPLATE_0 = [
-      'wellplate name'
+      'wellplate name',
     ].freeze
 
     # allowed well/wellplate headers for wellplate detail level 10
@@ -44,11 +44,11 @@ module Export
     ].freeze
 
     HEADERS_ANALYSIS_0 = [].freeze
-    HEADERS_ANALYSIS = ["name", "description", "uuid", "kind", "status", "content"].freeze
+    HEADERS_ANALYSIS = %w[name description uuid kind status content].freeze
     HEADERS_DATASET_0 = [].freeze
-    HEADERS_DATASET = ["dataset name", "instrument", "dataset description"].freeze
+    HEADERS_DATASET = %w[dataset name instrument dataset description].freeze
     HEADERS_ATTACHMENT_0 = [].freeze
-    HEADERS_ATTACHMENT = ["filename", "checksum"].freeze
+    HEADERS_ATTACHMENT = %w[filename checksum].freeze
 
     def extract_label_from_solvent_column(sample_column)
       return unless sample_column.is_a?(String) && !sample_column.empty?
@@ -77,6 +77,9 @@ module Export
       when :sample_analyses
         generate_headers_sample_id
         add_analyses_header(selected_columns)
+      when :sample_components
+        generate_headers_sample_id
+        add_components_header(selected_columns)
       when :sample, :sample_chemicals
         generate_headers_sample
       else generate_headers_sample_id
@@ -156,15 +159,20 @@ module Export
 
     def add_analyses_header(selected_headers)
       h = HEADERS_ANALYSIS + HEADERS_DATASET + HEADERS_ATTACHMENT
-      h = h & selected_headers
+      h &= selected_headers
       @headers += h
       # @headers00 << 'analyses'
       @headers100 << 'analyses'
     end
 
+    def add_components_header(selected_headers)
+      @headers.concat(Export::ExportComponents::COMPONENT_FIELDS & selected_headers)
+      @headers100 << 'components'
+    end
+
     def quill_to_html_to_string(delta)
       html_content = Chemotion::QuillToHtml.convert(delta)
-      Nokogiri::HTML( html_content).text
+      Nokogiri::HTML(html_content).text
     end
   end
 end
