@@ -187,7 +187,7 @@ export default class SampleDetails extends React.Component {
 
   componentDidUpdate(prevProps) {
     const { sample } = this.props;
-    if (sample === prevProps.sample) { return };
+    if (sample === prevProps.sample) { return; }
 
     const smileReadonly = !(
       (sample.isNew
@@ -1279,7 +1279,7 @@ export default class SampleDetails extends React.Component {
 
   splitSmiles(editor, svgFile) {
     const { sample } = this.state;
-    if (sample.sample_type !== 'Mixture' || !sample.molecule_cano_smiles || sample.molecule_cano_smiles === '')  { return }
+    if (sample.sample_type !== 'Mixture' || !sample.molecule_cano_smiles || sample.molecule_cano_smiles === '') { return; }
 
     const mixtureSmiles = sample.molecule_cano_smiles.split('.')
     if (mixtureSmiles) {
