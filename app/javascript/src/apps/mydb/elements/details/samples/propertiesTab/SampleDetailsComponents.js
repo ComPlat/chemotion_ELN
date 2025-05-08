@@ -220,7 +220,7 @@ export default class SampleDetailsComponents extends React.Component {
 
     splitSample.material_group = tagGroup;
 
-    if (splitSample.sample_type === 'Mixture') {
+    if (splitSample.isMixture()) {
       ComponentsFetcher.fetchComponentsBySampleId(srcSample.id)
         .then(async (components) => {
           await Promise.all(

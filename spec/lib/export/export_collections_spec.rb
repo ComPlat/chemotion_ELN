@@ -274,7 +274,7 @@ RSpec.describe 'ExportCollection' do
     let(:component) { create(:component, sample_id: sample.id) }
 
     before do
-      sample.sample_type = 'Mixture'
+      sample.sample_type = Sample::SAMPLE_TYPE_MIXTURE
       sample.save!
       component.save!
       export = Export::ExportCollections.new(job_id, [collection.id], 'zip', true)

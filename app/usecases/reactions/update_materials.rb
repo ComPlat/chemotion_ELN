@@ -72,7 +72,7 @@ module Usecases
                 modified_sample = update_existing_sample(sample, fixed_label)
               end
 
-              if sample.components.present? && sample.sample_type == 'Mixture'
+              if sample.components.present? && sample.sample_type == Sample::SAMPLE_TYPE_MIXTURE
                 save_components(modified_sample.id, sample.components)
               end
 
