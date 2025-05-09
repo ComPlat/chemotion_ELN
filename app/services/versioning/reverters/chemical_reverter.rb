@@ -1,23 +1,31 @@
 # frozen_string_literal: true
 
-class Versioning::Reverters::ChemicalReverter < Versioning::Reverters::BaseReverter
-  def self.scope
-    Chemical
-  end
+module Versioning
+  module Reverters
+    class ChemicalReverter < BaseReverter
+      def self.scope
+        Chemical
+      end
 
-  def field_definitions
-    {
-      chemical_data: handle_json,
-    }.with_indifferent_access
-  end
+      def field_definitions
+        {
+          chemical_data: handle_json,
+        }.with_indifferent_access
+      end
 
-  private
+      private
 
-  def handle_json
-    lambda do |value|
-      return [{}] if value.blank?
+      def handle_json
+        lambda do |value|
+          return [{}] if value.blank?
 
-      value.split("\n").map { |data| JSON.parse(data.gsub('=>', ':').gsub('nil', 'null')) }
+          begin
+            value.split("\n").map { |data| JSON.parse(data.gsub('=>', ':').gsub('nil', 'null')) }
+          rescue JSON::ParserError
+            [{}]
+          end
+        end
+      end
     end
   end
 end
