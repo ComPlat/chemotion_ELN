@@ -60,10 +60,6 @@ export default class MyCollections extends React.Component {
     });
   }
 
-  isActive(node) {
-    return node === this.state.active;
-  }
-
   label(node) {
     if (node.id == -1) {
       return (
@@ -294,18 +290,6 @@ export default class MyCollections extends React.Component {
     parent.children = parent.children.filter((child) => child.id != id);
   }
 
-  onClickNode(node) {
-    if (node.is_locked) {
-      this.setState({
-        active: { id: null }
-      });
-    } else {
-      this.setState({
-        active: node
-      });
-    }
-  }
-
   handleModalHide() {
     this.setState({
       sharingModal: {
@@ -317,11 +301,8 @@ export default class MyCollections extends React.Component {
 
   renderNode(node) {
     return (
-      <div className="mb-2">
-        <div
-          className={`${this.isActive(node) ? 'bg-dark-subtle' : ''} d-flex justify-content-between`}
-          onClick={() => this.onClickNode(node)}
-        >
+      <div className="collection-node mb-2">
+        <div className="d-flex justify-content-between">
           {this.label(node)}
           {this.actions(node)}
         </div>
