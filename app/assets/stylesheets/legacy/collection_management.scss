@@ -40,12 +40,13 @@
     @extend .bg-dark-subtle;
   }
 
-  &.placeholder > * {
-    visibility: hidden;
-  }
-
   &.placeholder {
+    & > * {
+      visibility: hidden;
+    }
+
     border: 1px dashed #1385e5;
+    width: 100%;
   }
 
   .caret-right:before {

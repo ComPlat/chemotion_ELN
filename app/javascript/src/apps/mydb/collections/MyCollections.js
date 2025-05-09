@@ -4,8 +4,7 @@ import { Button, ButtonGroup, Form } from 'react-bootstrap';
 import ManagingModalSharing from 'src/components/managingActions/ManagingModalSharing';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
-import UserInfoIcon from 'src/apps/mydb/collections/UserInfoIcon';
-import PermissionIcons from 'src/apps/mydb/collections/PermissionIcons';
+import SyncedCollectionsUsersButton from 'src/apps/mydb/collections/SyncedCollectionsUsersButton';
 
 export default class MyCollections extends React.Component {
   constructor(props) {
@@ -124,6 +123,8 @@ export default class MyCollections extends React.Component {
 
     return (
       <ButtonGroup>
+        {this.renderSyncButton(node)}
+
         <Button
           id="sync-users-btn"
           size="sm"
@@ -149,43 +150,21 @@ export default class MyCollections extends React.Component {
     );
   }
 
-  renderSync(node) {
+  renderSyncButton(node) {
     const syncUsers = node.sync_collections_users ?? [];
     if (syncUsers.length === 0) return null;
 
     return (
-      <div>
-        {syncUsers.map((collection) => (
-          <div
-            key={collection.id}
-            className="ms-4 mt-2 d-flex justify-content-between"
-          >
-            <span className="d-flex gap-2 align-items-baseline">
-              <UserInfoIcon type={collection.type} />
-              {collection.name}
-              <PermissionIcons pl={collection.permission_level} />
-            </span>
-            <ButtonGroup>
-              <Button
-                size="sm"
-                variant="primary"
-                onClick={() => this.doSync(collection, 'EditSync')}
-              >
-                <i className="fa fa-share-alt me-1" />
-                edit
-              </Button>
-              <Button
-                size="sm"
-                variant="danger"
-                onClick={() => CollectionActions.deleteSync({ id: collection.id, is_syncd: false })}
-              >
-                <i className="fa fa-share-alt me-1" />
-                <i className="fa fa-trash-o" />
-              </Button>
-            </ButtonGroup>
-          </div>
-        ))}
-      </div>
+      <SyncedCollectionsUsersButton
+        node={node}
+        syncUsers={syncUsers}
+        updateSync={(collection) => {
+          this.doSync(collection, 'EditSync');
+        }}
+        deleteSync={(collection) => {
+          CollectionActions.deleteSync({ id: collection.id, is_syncd: false });
+        }}
+      />
     );
   }
 
@@ -301,24 +280,20 @@ export default class MyCollections extends React.Component {
 
   renderNode(node) {
     return (
-      <div className="collection-node mb-2">
-        <div className="d-flex justify-content-between">
-          {this.label(node)}
-          {this.actions(node)}
-        </div>
-        {this.renderSync(node)}
+      <div className="collection-node py-1 d-flex justify-content-between">
+        {this.label(node)}
+        {this.actions(node)}
       </div>
     );
   }
 
   render() {
-    const { sharingModal, active } = this.state;
+    const { tree, sharingModal, active } = this.state;
     return (
       <div className="tree">
         <Tree
           paddingLeft={20}
-          tree={this.state.tree}
-          isNodeCollapsed={this.isNodeCollapsed}
+          tree={tree}
           onChange={this.handleChange}
           renderNode={this.renderNode}
         />
