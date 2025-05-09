@@ -36,6 +36,10 @@
 }
 
 .m-node {
+  .collection-node:hover {
+    @extend .bg-dark-subtle;
+  }
+
   &.placeholder > * {
     visibility: hidden;
   }
