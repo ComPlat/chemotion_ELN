@@ -97,7 +97,10 @@ class Molecule < ApplicationRecord
 
     is_partial = babel_info[:is_partial]
     partial_molfile = babel_info[:molfile]
+    # NB: if the molfile has a R# group for solid support (is_partial) then
+    #   it has been replaced by C befor getting babel_info (which would have added a fictif CH3 group)
     formula = babel_info[:formula]
+    formula = SumFormula.new(formula).remove_fragment('CH3').valid.to_s if is_partial
     molecule = Molecule.find_by(inchikey: inchikey, is_partial: is_partial, sum_formular: formula)
     molecule ||= Molecule.create(inchikey: inchikey, is_partial: is_partial, sum_formular: formula) do |mol|
       pubchem_info = Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
@@ -202,17 +205,7 @@ class Molecule < ApplicationRecord
     atomic_weight_c = Chemotion::PeriodicTable.get_atomic_weight 'C'
     self.molecular_weight -= atomic_weight_c # remove CH3
     self.exact_molecular_weight -= atomic_weight_c # remove CH3
-
-    fdata = Chemotion::Calculations.parse_formula self.sum_formular, true
-    self.sum_formular = fdata.map do |key, value|
-      if value == 0
-        ''
-      elsif value == 1
-        key
-      else
-        key + value.to_s
-      end
-    end.join
+    self.sum_formular = SumFormula.new(sum_formular).remove_fragment('CH3').valid.to_s
   end
 
   def load_cas
