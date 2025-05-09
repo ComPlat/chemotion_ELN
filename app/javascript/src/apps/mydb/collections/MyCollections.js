@@ -4,8 +4,7 @@ import { Button, ButtonGroup, Form } from 'react-bootstrap';
 import ManagingModalSharing from 'src/components/managingActions/ManagingModalSharing';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
-import UserInfoIcon from 'src/apps/mydb/collections/UserInfoIcon';
-import PermissionIcons from 'src/apps/mydb/collections/PermissionIcons';
+import SyncedCollectionsUsersModal from 'src/apps/mydb/collections/SyncedCollectionsUsersModal';
 
 export default class MyCollections extends React.Component {
   constructor(props) {
@@ -24,7 +23,8 @@ export default class MyCollections extends React.Component {
       sharingModal: {
         action: null,
         show: false
-      }
+      },
+      syncListModalNodeId: null,
     };
 
     this.onStoreChange = this.onStoreChange.bind(this);
@@ -32,6 +32,8 @@ export default class MyCollections extends React.Component {
     this.handleChange = this.handleChange.bind(this);
     this.renderNode = this.renderNode.bind(this);
     this.handleModalHide = this.handleModalHide.bind(this);
+    this.openSyncListModal = this.openSyncListModal.bind(this);
+    this.closeSyncListModal = this.closeSyncListModal.bind(this);
   }
 
   componentDidMount() {
@@ -124,6 +126,8 @@ export default class MyCollections extends React.Component {
 
     return (
       <ButtonGroup>
+        {this.renderSyncButton(node)}
+
         <Button
           id="sync-users-btn"
           size="sm"
@@ -149,43 +153,23 @@ export default class MyCollections extends React.Component {
     );
   }
 
-  renderSync(node) {
+  renderSyncButton(node) {
     const syncUsers = node.sync_collections_users ?? [];
     if (syncUsers.length === 0) return null;
 
     return (
-      <div>
-        {syncUsers.map((collection) => (
-          <div
-            key={collection.id}
-            className="ms-4 mt-2 d-flex justify-content-between"
-          >
-            <span className="d-flex gap-2 align-items-baseline">
-              <UserInfoIcon type={collection.type} />
-              {collection.name}
-              <PermissionIcons pl={collection.permission_level} />
-            </span>
-            <ButtonGroup>
-              <Button
-                size="sm"
-                variant="primary"
-                onClick={() => this.doSync(collection, 'EditSync')}
-              >
-                <i className="fa fa-share-alt me-1" />
-                edit
-              </Button>
-              <Button
-                size="sm"
-                variant="danger"
-                onClick={() => CollectionActions.deleteSync({ id: collection.id, is_syncd: false })}
-              >
-                <i className="fa fa-share-alt me-1" />
-                <i className="fa fa-trash-o" />
-              </Button>
-            </ButtonGroup>
-          </div>
-        ))}
-      </div>
+      <Button
+        id={`sync-users-button_${node.id}`}
+        className="d-flex align-items-center gap-1"
+        onClick={() => this.openSyncListModal(node)}
+        size="sm"
+        variant="warning"
+        disabled={node.isNew === true}
+      >
+        <i className="fa fa-users" />
+        <i className="fa fa-share-alt" />
+        {`(${syncUsers.length})`}
+      </Button>
     );
   }
 
@@ -208,6 +192,18 @@ export default class MyCollections extends React.Component {
         <i className="fa fa-plus" />
       </Button>
     );
+  }
+
+  openSyncListModal(node) {
+    this.setState({
+      syncListModalNodeId: node.id,
+    });
+  }
+
+  closeSyncListModal() {
+    this.setState({
+      syncListModalNodeId: null,
+    });
   }
 
   addSubcollectionButton(node) {
@@ -286,6 +282,19 @@ export default class MyCollections extends React.Component {
     }
   }
 
+  findNodeById(node, id) {
+    if (node.id === id) return node;
+    if (!node.children) return null;
+
+    const { children } = node;
+    for (let i = 0; i < children.length; i += 1) {
+      const found = this.findNodeById(children[i], id);
+      if (found) return found;
+    }
+
+    return null;
+  }
+
   removeNodeById(parent, id) {
     parent.children = parent.children.filter((child) => child.id != id);
   }
@@ -301,24 +310,22 @@ export default class MyCollections extends React.Component {
 
   renderNode(node) {
     return (
-      <div className="collection-node mb-2">
-        <div className="d-flex justify-content-between">
-          {this.label(node)}
-          {this.actions(node)}
-        </div>
-        {this.renderSync(node)}
+      <div className="collection-node py-1 d-flex justify-content-between">
+        {this.label(node)}
+        {this.actions(node)}
       </div>
     );
   }
 
   render() {
-    const { sharingModal, active } = this.state;
+    const {
+      tree, sharingModal, syncListModalNodeId, active
+    } = this.state;
     return (
       <div className="tree">
         <Tree
           paddingLeft={20}
-          tree={this.state.tree}
-          isNodeCollapsed={this.isNodeCollapsed}
+          tree={tree}
           onChange={this.handleChange}
           renderNode={this.renderNode}
         />
@@ -336,6 +343,19 @@ export default class MyCollections extends React.Component {
             screenDetailLevel={active.screen_detail_level}
             selectUsers={sharingModal.action === 'CreateSync'}
             collAction={sharingModal.action}
+          />
+        )}
+
+        {syncListModalNodeId && (
+          <SyncedCollectionsUsersModal
+            node={this.findNodeById(tree, syncListModalNodeId)}
+            updateSync={(collection) => {
+              this.doSync(collection, 'EditSync');
+            }}
+            deleteSync={(collection) => {
+              CollectionActions.deleteSync({ id: collection.id, is_syncd: false });
+            }}
+            onHide={this.closeSyncListModal}
           />
         )}
       </div>
