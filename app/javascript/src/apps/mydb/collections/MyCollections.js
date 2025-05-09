@@ -85,9 +85,7 @@ export default class MyCollections extends React.Component {
 
   handleLabelChange(e, node) {
     node.label = e.target.value;
-    this.setState({
-      tree: this.state.tree
-    });
+    this.forceUpdate();
   }
 
   // TODO: confirmation before start the updating process?
@@ -239,6 +237,7 @@ export default class MyCollections extends React.Component {
         isNew: true
       }];
     }
+    this.forceUpdate();
   }
 
   deleteCollection(node) {
@@ -255,6 +254,7 @@ export default class MyCollections extends React.Component {
         deleted_ids
       });
     }
+    this.forceUpdate();
   }
 
   appendChildrenToParent(parent, children) {
