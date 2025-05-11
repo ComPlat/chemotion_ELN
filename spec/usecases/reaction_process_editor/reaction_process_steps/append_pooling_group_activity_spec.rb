@@ -35,9 +35,9 @@ RSpec.describe Usecases::ReactionProcessEditor::ReactionProcessSteps::AppendPool
     expect(created_action.activity_name).to eq 'DISCARD'
   end
 
-  it 'sets vials' do
+  it 'sets fractions' do
     append_activity
-    expect(created_action.workup['vials']).to eq [1, 2, 3]
+    expect(created_action.workup['fractions']).to eq [1, 2, 3]
   end
 
   it 'sets vessel' do
@@ -47,5 +47,23 @@ RSpec.describe Usecases::ReactionProcessEditor::ReactionProcessSteps::AppendPool
 
   it 'appends after parent activity' do
     expect(append_activity.position).to eq 2
+  end
+
+  context 'when followup_action SAVE' do
+    let(:pooling_group_params) do
+      { followup_action: { value: 'SAVE' },
+        workup: {},
+        vessel: vessel_params,
+        vials: vials_params }.deep_stringify_keys
+    end
+
+    it 'invokes SaveIntermediate' do
+      allow(Usecases::ReactionProcessEditor::ReactionProcessActivities::SaveIntermediate).to receive(:execute!)
+
+      append_activity
+
+      expect(Usecases::ReactionProcessEditor::ReactionProcessActivities::SaveIntermediate).to have_received(:execute!)
+        .with(activity: instance_of(ReactionProcessEditor::ReactionProcessActivity), workup: {})
+    end
   end
 end

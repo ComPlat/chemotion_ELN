@@ -193,7 +193,7 @@ message ReactionProcessAction {
     ActionEvaporation evaporation = 17;
   }
   optional AutomationStatus automation_status = 18;
-  repeated string vials = 19;
+  repeated string fractions = 19;
 
   message ActionAdd {
     ReactionRole.ReactionRoleType reaction_role = 1;
@@ -358,8 +358,8 @@ message ReactionProcessAction {
     Percentage percentage = 6;
   }
 
-  message ActionDiscard { repeated string vials = 1; }
-  message ActionEvaporation { repeated string vials = 1; }
+  message ActionDiscard { repeated string fractions = 1; }
+  message ActionEvaporation { repeated string fractions = 1; }
   message ActionWait { TimeSpan duration = 1; }
 
   message ActionSaveSample {

@@ -10,9 +10,13 @@ module OrdKit
           vesselable = model&.vesselable
           return unless vesselable
 
-          @vessel_template = vesselable.is_a?(VesselTemplate) ? vesselable : vesselable.vessel_template
-
-          @vessel = vesselable.is_a?(VesselTemplate) ? nil : vesselable
+          if model.vesselable_type == 'VesselTemplate'
+            @vessel_template = vesselable
+            @vessel = nil
+          else
+            @vessel_template = vesselable.vessel_template
+            @vessel = vesselable
+          end
 
           OrdKit::VesselTemplate.new(
             id: vessel_template.id,

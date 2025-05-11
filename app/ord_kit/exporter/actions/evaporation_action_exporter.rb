@@ -9,7 +9,7 @@ module OrdKit
         def action_type_attributes
           {
             evaporation:
-              OrdKit::ReactionProcessAction::ActionEvaporation.new(vials: workup['vials']&.map(&:to_s) || []),
+              OrdKit::ReactionProcessAction::ActionEvaporation.new(fractions: workup['fractions']&.map(&:to_s) || []),
           }
         end
       end

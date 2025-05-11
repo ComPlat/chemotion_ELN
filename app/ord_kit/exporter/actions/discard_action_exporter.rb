@@ -8,7 +8,8 @@ module OrdKit
 
         def action_type_attributes
           {
-            discard: OrdKit::ReactionProcessAction::ActionDiscard.new(vials: workup['vials']&.map(&:to_s) || []),
+            discard:
+            OrdKit::ReactionProcessAction::ActionDiscard.new(fractions: workup['fractions']&.map(&:to_s) || []),
           }
         end
       end
