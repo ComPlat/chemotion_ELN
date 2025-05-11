@@ -109,7 +109,6 @@ are also considered environment conditions in this model.
 
 Technically both are treated equally in defining the "Activities" within a process step (i.e. in the ReactionProcessStep has_many :reaction_process_activities association, ordered by their `position`), which can each be either an `Àction` or a `Condition`.
 
-
 An ReactionProcessActivity has the relevant attributes:
 
 * `action_name`: defines the type of the Activity, which can basically be any arbitrary string value describing the Activity. A set of are implemented and used for the required funcionalities: "ADD", "REMOVE", "MOTION", "PURIFICATION", "ANALYSIS", "SAVE", "TRANSFER", "WAIT", "DISCARD", "EVAPORATE", "CONDITION".
@@ -125,7 +124,6 @@ As they fulfill no external schema it is a bit hard to validate and keep track o
 by the the respective input fields in the frontend RPE which set them when filled out and sent as part of the request.
 The only actual validation (2023-12-11) is on `"ADD"` Activities validating that `workup[:sample_id]` is set.
 This again makes it very easy to handle and store arbitrary data and later transform them into ORDKit.
-
 
 ### API endpoints
 
