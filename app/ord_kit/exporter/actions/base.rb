@@ -24,7 +24,7 @@ module OrdKit
               equipment: equipment,
               vessel_template: vessel_template,
               automation_status: automation_status,
-              vials: vials,
+              fractions: fractions,
             }.merge(action_type_attributes),
           )
         end
@@ -75,8 +75,8 @@ module OrdKit
           Vessels::ReactionProcessVesselableExporter.new(@action.reaction_process_vessel).to_ord
         end
 
-        def vials
-          @action.workup['vials']&.map(&:to_s) || []
+        def fractions
+          @action.workup['fractions']&.map(&:to_s) || []
         end
 
         def action_type_attributes
