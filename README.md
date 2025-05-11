@@ -20,9 +20,7 @@ This project has been funded by the **[DFG]**.
 
 [![DFG Logo]][DFG]
 
-
 Funded by the [Deutsche Forschungsgemeinschaft (DFG, German Research Foundation)](https://www.dfg.de/) under the [National Research Data Infrastructure – NFDI4Chem](https://nfdi4chem.de/) – Projektnummer **441958208** since 2020.
-
 
 ---
 

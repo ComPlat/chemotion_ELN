@@ -24,9 +24,13 @@ module Usecases
 
             activity.reaction_process_vessel = vessel
 
-            activity.workup = { vials: pooling_group_params['vials']&.pluck('id') || [] }
+            activity.workup = { fractions: pooling_group_params['vials']&.pluck('id') || [] }
                               .merge(activity_setup[:workup])
                               .deep_stringify_keys
+
+            if activity.saves_sample?
+              ReactionProcessActivities::SaveIntermediate.execute!(activity: activity, workup: {})
+            end
 
             ReactionProcessActivities::UpdatePosition.execute!(activity: activity, position: position)
 
