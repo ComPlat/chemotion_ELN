@@ -451,7 +451,7 @@ function NoteCellRenderer(noteCellProps) {
         <Tooltip id={`note-tooltip-${data.id}`}>
           double click to edit
         </Tooltip>
-      )}
+            )}
     >
       <span>{value || '_'}</span>
     </OverlayTrigger>
@@ -519,20 +519,20 @@ function MaterialOverlay({ value: cellData }) {
       <div className="tooltip-inner text-start">
         {aux?.isReference && <div>Reference</div>}
         {aux?.coefficient !== null && (
-          <div>
-            Coefficient:
-            {' '}
-            {aux.coefficient.toPrecision(4)}
-          </div>
+        <div>
+          Coefficient:
+          {' '}
+          {aux.coefficient.toPrecision(4)}
+        </div>
         )}
         {aux?.molecularWeight !== null && (
-          <div>
-            Molar mass:
-            {' '}
-            {aux.molecularWeight.toPrecision(2)}
-            {' '}
-            g/mol
-          </div>
+        <div>
+          Molar mass:
+          {' '}
+          {aux.molecularWeight.toPrecision(2)}
+          {' '}
+          g/mol
+        </div>
         )}
         {Object.entries(cellData)
           .map(
