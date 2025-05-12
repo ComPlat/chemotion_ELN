@@ -1,6 +1,70 @@
 # Chemotion_ELN Changelog
 ## Latest
 
+## [v2.0.0-rc3]
+> (2025-05-15)
+
+
+* Features and enhancements
+  * add volume to editable entries of reaction variation materials  ([#2426](https://github.com/ComPlat/chemotion_ELN/pull/2426))
+  * add created_by_type to attachments  ([#2459](https://github.com/ComPlat/chemotion_ELN/pull/2459))
+  * enable soft-deletion for attachment  ([#2484](https://github.com/ComPlat/chemotion_ELN/pull/2484))
+  * enhance import process with discarded attachments of research_plans  ([#2482](https://github.com/ComPlat/chemotion_ELN/pull/2482))
+  * add simple cors config for public TPA interaction  ([#2047](https://github.com/ComPlat/chemotion_ELN/pull/2047))
+
+  UX/UI
+  * history tracker update  ([#2479](https://github.com/ComPlat/chemotion_ELN/pull/2479))
+
+* Bug fixes
+
+  UX/UI
+  * minor css / react improvements and fixes  ([#2421](https://github.com/ComPlat/chemotion_ELN/pull/2421))
+  * click on reaction link from sample list always showing the warning modal  ([#2439](https://github.com/ComPlat/chemotion_ELN/pull/2439))
+  * remove unnecessary min-width from svg style  ([#2443](https://github.com/ComPlat/chemotion_ELN/pull/2443))
+  * regression introduced by #2068  ([#2461](https://github.com/ComPlat/chemotion_ELN/pull/2461))
+  * layout and event propagation in sample and reaction card  ([#2462](https://github.com/ComPlat/chemotion_ELN/pull/2462))
+  * molfile info in sample card - chemical identifiers  ([#2492](https://github.com/ComPlat/chemotion_ELN/pull/2492))
+  * handling proper recipient when looping over the envelopes  ([#2427](https://github.com/ComPlat/chemotion_ELN/pull/2427))
+  * import collection with faulty svg  ([#2428](https://github.com/ComPlat/chemotion_ELN/pull/2428))
+  * update state for import samples to collection button  ([#2436](https://github.com/ComPlat/chemotion_ELN/pull/2436))
+  * rdkit seed - drop trigger if feature disabled but rdkit schema present  ([#2449](https://github.com/ComPlat/chemotion_ELN/pull/2449))
+  * creating pdf prints codes if a SVG of one of the selected samples is not available  ([#2445](https://github.com/ComPlat/chemotion_ELN/pull/2445))
+  * selecting cas for a sample breaks when sample has multiple cids  ([#2447](https://github.com/ComPlat/chemotion_ELN/pull/2447))
+  * molecule index on inchkey-sum formula to bypass openbabel  formula issue  ([#2444](https://github.com/ComPlat/chemotion_ELN/pull/2444))
+  * attachment serialization errors when thumbnail previews cannot be retrieved  ([#2450](https://github.com/ComPlat/chemotion_ELN/pull/2450))
+  * use molecule ID instead of inchikey for names molecule api endpoint  ([#2453](https://github.com/ComPlat/chemotion_ELN/pull/2453))
+  * css for image and svg in history tracker  ([#2457](https://github.com/ComPlat/chemotion_ELN/pull/2457))
+  * de-type deleted user-device  ([#2458](https://github.com/ComPlat/chemotion_ELN/pull/2458))
+  * arg parsing to query pubchem by cid  ([#2463](https://github.com/ComPlat/chemotion_ELN/pull/2463))
+  * reporter quill delta to html to handle blank inputs  ([#2465](https://github.com/ComPlat/chemotion_ELN/pull/2465))
+  * correct total volume used in solvent volume ratio calculation  ([#2466](https://github.com/ComPlat/chemotion_ELN/pull/2466))
+  * reaction variations optional field access  ([#2476](https://github.com/ComPlat/chemotion_ELN/pull/2476))
+  * research plan export with image attachment  ([#2474](https://github.com/ComPlat/chemotion_ELN/pull/2474))
+  * handling deletion of image for research plan from the attachment list  ([#2478](https://github.com/ComPlat/chemotion_ELN/pull/2478))
+  * ensure unicity of SVG glyph IDs and references on Ket2 svgs  ([#2480](https://github.com/ComPlat/chemotion_ELN/pull/2480))
+  * remap glyph ids and references to them in ket svgs  ([#2483](https://github.com/ComPlat/chemotion_ELN/pull/2483))
+  * sample SVG solid support bead not visible  ([#2496](https://github.com/ComPlat/chemotion_ELN/pull/2496))
+
+* Code refactoring
+  * define a default admin getter  ([#2448](https://github.com/ComPlat/chemotion_ELN/pull/2448))
+  * rename labels in the history tracker  ([#2451](https://github.com/ComPlat/chemotion_ELN/pull/2451))
+  * sum formula handling for molecule creation  ([#2495](https://github.com/ComPlat/chemotion_ELN/pull/2495))
+
+* Tests
+  * add factories and test cases for molecules-samples and their structure attributes  ([#2429](https://github.com/ComPlat/chemotion_ELN/pull/2429))
+  * fix flaky spec  ([#2460](https://github.com/ComPlat/chemotion_ELN/pull/2460))
+
+* Chores
+  * fix molecules and sample with faulty molfiles  ([#2431](https://github.com/ComPlat/chemotion_ELN/pull/2431))
+  * update service dependencies  ([#2452](https://github.com/ComPlat/chemotion_ELN/pull/2452))
+  * Bump http-proxy-middleware from 2.0.7 to 2.0.9  ([#2454](https://github.com/ComPlat/chemotion_ELN/pull/2454))
+  * remove unused endpoint  ([#2464](https://github.com/ComPlat/chemotion_ELN/pull/2464))
+  * miscellaneous db/schema - annotation - bump minor node  ([#2485](https://github.com/ComPlat/chemotion_ELN/pull/2485))
+
+* Build
+  * set schema format to sql for test env  ([#2401](https://github.com/ComPlat/chemotion_ELN/pull/2401))
+  * update postgres client to 16  ([#2403](https://github.com/ComPlat/chemotion_ELN/pull/2403))
+
 ## [v2.0.0-rc2]
 > (2025-03-27)
 
