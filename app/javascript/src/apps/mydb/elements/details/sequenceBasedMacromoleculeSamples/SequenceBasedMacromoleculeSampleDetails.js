@@ -103,6 +103,8 @@ const SequenceBasedMacromoleculeSampleDetails = () => {
   }
 
   const handleSubmit = () => {
+    sbmmStore.clearStructureErrorMessages(sbmmSample.id);
+
     if (sbmmStore.hasValidFields()) {
       LoadingActions.start();
       if (sbmmSample.is_new) {

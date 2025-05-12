@@ -60,6 +60,8 @@ class SequenceBasedMacromolecule < ApplicationRecord
   belongs_to :post_translational_modification, optional: true
   belongs_to :parent, class_name: 'SequenceBasedMacromolecule', optional: true
 
+  has_many :attachments, as: :attachable, inverse_of: :attachable, dependent: :nullify
+
   scope :uniprot, -> { where(uniprot_derivation: 'uniprot') }
   scope :modified, -> { where(uniprot_derivation: 'uniprot_modified') }
   scope :unknown, -> { where(uniprot_derivation: 'uniprot_unknown') }
