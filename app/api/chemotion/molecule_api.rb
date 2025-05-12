@@ -166,9 +166,10 @@ module Chemotion
         end
         get do
           formula = params[:molecular_formula]
-          total_mass = Chemotion::Calculations.mw_from_formula(formula)
-
-          total_mass
+          SumFormula.new(formula).molecular_weight
+        rescue StandardError => e
+          Rails.logger.error ["with formula: #{formula}", e.message, *e.backtrace].join($INPUT_RECORD_SEPARATOR)
+          0.0
         end
       end
 
