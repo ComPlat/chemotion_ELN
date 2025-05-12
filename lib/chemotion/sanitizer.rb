@@ -82,7 +82,7 @@ module Chemotion
     end
 
     def map_defs_ids
-      @current_node.xpath('svg:defs//*[@id]', svg_namespace).each do |element|
+      @current_node.xpath('svg:defs//svg:g[@id]', svg_namespace).each do |element|
         # Check if the element has an id attribute or skip if it has a unique id ending
         # (from SecureRandom.hex(4))
         next if !element['id'] || element['id'].match?(/_[0-9a-f]{8}$/)
