@@ -175,10 +175,10 @@ const KetcherEditor = forwardRef((props, ref) => {
 
   // action based on event-name
   const eventHandlers = {
-    'Move image': async () => onTemplateMove(editor),
+    'Move image': async () => onTemplateMove(editor, 'img-placement', false),
     'Move atom': async () => {
       oldImagePack = [...imagesList];
-      await onTemplateMove(editor, null, false);
+      await onTemplateMove(editor, 'img-placement', false);
     },
     'Add atom': async () => onAddAtom(editor),
     'Delete atom': async () => {
@@ -349,12 +349,14 @@ const KetcherEditor = forwardRef((props, ref) => {
 
   const onCharSelection = (char) => {
     setSpecialCharModal(false);
-    const ketcherSettings = JSON.parse(localStorage.getItem('ketcher-opts'));
-    if (ketcherSettings) {
+    let ketcherSettings = JSON.parse(localStorage.getItem('ketcher-opts'));
+    if (!ketcherSettings) {
+      ketcherSettings = { textNodeSeparator: char };
+    } else {
       ketcherSettings.textNodeSeparator = char;
-      localStorage.setItem('ketcher-opts', JSON.stringify(ketcherSettings));
-      UsersFetcher.updateUserKetcher2Options(JSON.stringify(ketcherSettings));
     }
+    localStorage.setItem('ketcher-opts', JSON.stringify(ketcherSettings));
+    UsersFetcher.updateUserKetcher2Options(JSON.stringify(ketcherSettings));
   };
 
   // ref functions when a canvas is saved using main "SAVE" button

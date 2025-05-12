@@ -22,9 +22,6 @@ import {
   BodySolidWhite,
   SpecialCharacterPickerIcon
 } from 'src/components/structureEditor/TemplatesSurfaceChemistry';
-import {
-  textList,
-} from 'src/utilities/ketcherSurfaceChemistry/stateManager';
 const iconMap = {
   BodyRectangleIcon,
   MultiHatched,
