@@ -3,6 +3,7 @@
 class AddLogidzeToChemicals < ActiveRecord::Migration[6.1]
   def change
       add_column :chemicals, :updated_at, :datetime
+      add_column :chemicals, :deleted_at, :datetime
       add_column :chemicals, :log_data, :jsonb
 
       reversible do |dir|

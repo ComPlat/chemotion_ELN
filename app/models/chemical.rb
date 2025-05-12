@@ -12,5 +12,6 @@
 
 class Chemical < ApplicationRecord
   has_logidze
+  acts_as_paranoid
   belongs_to :sample
 end
