@@ -70,12 +70,12 @@ ActiveRecord::Schema.define(version: 2025_05_06_133809) do
     t.string "folder"
     t.string "attachable_type"
     t.string "aasm_state"
-    t.datetime "deleted_at"
     t.bigint "filesize"
     t.jsonb "attachment_data"
     t.integer "con_state"
     t.jsonb "log_data"
     t.string "created_by_type"
+    t.datetime "deleted_at"
     t.index ["attachable_type", "attachable_id"], name: "index_attachments_on_attachable_type_and_attachable_id"
     t.index ["identifier"], name: "index_attachments_on_identifier", unique: true
   end
@@ -168,6 +168,9 @@ ActiveRecord::Schema.define(version: 2025_05_06_133809) do
     t.integer "sample_id"
     t.text "cas"
     t.jsonb "chemical_data"
+    t.datetime "updated_at"
+    t.datetime "deleted_at"
+    t.jsonb "log_data"
   end
 
   create_table "code_logs", id: :uuid, default: -> { "uuid_generate_v4()" }, force: :cascade do |t|
@@ -2413,11 +2416,11 @@ ActiveRecord::Schema.define(version: 2025_05_06_133809) do
   create_trigger :logidze_on_reactions, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_reactions BEFORE INSERT OR UPDATE ON public.reactions FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
-  create_trigger :logidze_on_samples, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_samples BEFORE INSERT OR UPDATE ON public.samples FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
   create_trigger :set_samples_mol_rdkit_trg, sql_definition: <<-SQL
       CREATE TRIGGER set_samples_mol_rdkit_trg BEFORE INSERT OR UPDATE ON public.samples FOR EACH ROW EXECUTE FUNCTION set_samples_mol_rdkit()
+  SQL
+  create_trigger :logidze_on_samples, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_samples BEFORE INSERT OR UPDATE ON public.samples FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
   create_trigger :logidze_on_wells, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_wells BEFORE INSERT OR UPDATE ON public.wells FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
@@ -2454,6 +2457,9 @@ ActiveRecord::Schema.define(version: 2025_05_06_133809) do
   SQL
   create_trigger :logidze_on_research_plans_wellplates, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_research_plans_wellplates BEFORE INSERT OR UPDATE ON public.research_plans_wellplates FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_chemicals, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_chemicals BEFORE INSERT OR UPDATE ON public.chemicals FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
   create_trigger :lab_trg_layers_changes, sql_definition: <<-SQL
       CREATE TRIGGER lab_trg_layers_changes AFTER UPDATE ON public.layers FOR EACH ROW EXECUTE FUNCTION lab_record_layers_changes()
