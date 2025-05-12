@@ -375,10 +375,10 @@ export default class WellplateDetails extends Component {
           </ListGroup>
         </Tab>
       ),
-      versions: (
+      history: (
         <Tab
-          eventKey="versioning"
-          title="Versions"
+          eventKey="history"
+          title="History"
           key={`Versions_Wellplate_${wellplate.id.toString()}`}
         >
           <VersionsTable

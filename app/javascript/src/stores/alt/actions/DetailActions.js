@@ -32,15 +32,15 @@ class DetailActions {
   }
 
   updateMoleculeNames(sample, newMolName = '') {
-    const inchikey = sample.molecule.inchikey;
-    if (!inchikey) { return null; }
+    const id = sample.molecule.id;
+    if (!id) { return null; }
 
     return (dispatch) => {
       MoleculesFetcher
-        .updateNames(inchikey, newMolName)
+        .updateNames(id, newMolName)
         .then((result) => {
-          const mn = result.find(r => r.name === newMolName);
-          if (mn) sample.molecule_name = { label: mn.name, value: mn.id };
+          const mn = result.find((r) => r.label === newMolName);
+          if (mn) sample.molecule_name = mn;
           sample.molecule_names = result;
           dispatch(sample);
         })

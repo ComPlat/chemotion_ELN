@@ -11,7 +11,7 @@ export default class ResearchPlanDetailsFieldRichText extends Component {
     } = this.props;
 
     return (
-      <div className="quill-resize">
+      <div>
         <QuillEditor
           value={field.value}
           height="100%"

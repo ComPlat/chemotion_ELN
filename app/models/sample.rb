@@ -446,7 +446,7 @@ class Sample < ApplicationRecord
     return if inchikey.blank?
 
     is_partial = babel_info[:is_partial]
-    molfile_version = babel_info[:version]
+    self.molfile_version = babel_info[:version]
     return unless molecule&.inchikey != inchikey || molecule.is_partial != is_partial
 
     self.molecule = Molecule.find_or_create_by_molfile(molfile, babel_info)
@@ -494,7 +494,7 @@ class Sample < ApplicationRecord
       FileUtils.remove(src)
     end
     if svg.start_with?(/\s*<\?xml/, /\s*<svg/)
-      File.write(full_svg_path(svg_file_name), Chemotion::Sanitizer.scrub_svg(svg))
+      File.write(full_svg_path(svg_file_name), Chemotion::Sanitizer.scrub_svg(svg, remap_glyph_ids: true))
       self.sample_svg_file = svg_file_name
     end
     return if /\A[0-9a-f]{128}.svg\z/.match?(sample_svg_file)

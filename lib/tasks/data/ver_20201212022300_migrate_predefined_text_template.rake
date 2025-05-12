@@ -3,7 +3,7 @@ namespace :data do
   task ver_20201212022300_migrate_predefined_text_template: :environment do
     predefined_template_seeds_path = File.join(Rails.root, 'db', 'text_template_seeds.json')
     predefined_templates = JSON.parse(File.read(predefined_template_seeds_path))
-    admin = Admin.first
+    admin = Admin.default_admin
 
     predefined_templates.each do |template|
       next if PredefinedTextTemplate.where(name: template["name"]).count > 0

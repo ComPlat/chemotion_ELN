@@ -42,12 +42,12 @@ export default class MoleculesFetcher {
       .catch(errorMessage => console.log(errorMessage));
   }
 
-  static updateNames(inchikey, newMolName = '') {
-    return fetch(`/api/v1/molecules/names?inchikey=${inchikey}` +
-      `&new_name=${escape(newMolName)}`, {
+  static updateNames(id, newMolName = '') {
+    return fetch(`/api/v1/molecules/names?id=${id}`
+      + `&new_name=${escape(newMolName)}`, {
       credentials: 'same-origin',
-    }).then(response => response.json()).then(json => json.molecules)
-      .catch(errorMessage => console.log(errorMessage));
+    }).then((response) => response.json()).then((json) => json.molecules)
+      .catch((errorMessage) => console.log(errorMessage));
   }
 
   static computePropsFromSmiles(sampleId) {

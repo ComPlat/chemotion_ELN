@@ -3,7 +3,7 @@
 module Versioning
   module Serializers
     class WellplateSerializer < Versioning::Serializers::BaseSerializer
-      def self.call(record, name = ['Properties'])
+      def self.call(record, name = ['Wellplate Properties'])
         new(record: record, name: name).call
       end
 

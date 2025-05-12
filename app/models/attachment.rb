@@ -24,8 +24,8 @@
 #  aasm_state      :string
 #  filesize        :bigint
 #  attachment_data :jsonb
-#  edit_state      :integer          default(0)
 #  con_state       :integer
+#  created_by_type :string
 #
 # Indexes
 #
@@ -33,8 +33,9 @@
 #  index_attachments_on_identifier                         (identifier) UNIQUE
 #
 
-class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
+class Attachment < ApplicationRecord
   has_logidze
+  acts_as_paranoid
   include AttachmentJcampAasm
   include AttachmentJcampProcess
   include Labimotion::AttachmentConverter
@@ -46,6 +47,7 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
 
   validate :check_file_size
 
+  after_initialize :set_default_created_by_type
   before_create :generate_key
 
   # reload to get identifier:uuid
@@ -76,6 +78,12 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
   scope :where_template, lambda {
     where(attachable_type: 'Template')
   }
+
+  def set_default_created_by_type
+    self.created_by_type ||= 'User'
+  rescue NoMethodError
+    # This is a workaround for the case ActiveRecord::Migrator.current_version < 20210921114428
+  end
 
   def extname
     File.extname(filename.to_s)

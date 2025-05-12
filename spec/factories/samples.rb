@@ -7,6 +7,10 @@ FactoryBot.define do
     molarity_unit { 'M' }
     density { 0.0 }
 
+    transient do
+      force_attributes { nil }
+    end
+
     #  molfile "\n  Ketcher 05301616272D 1   1.00000     0.00000     0\n\n  2  1  0     0  0            999 V2000\n    1.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n  1  2  1  0     0  0\nM  END\n"
     callback(:before_create) do |sample|
       sample.creator = FactoryBot.build(:user) unless sample.creator
@@ -51,6 +55,9 @@ FactoryBot.define do
         sample.molecule = FactoryBot.build(:molecule) unless sample.molecule
         sample.container = FactoryBot.create(:container, :with_analysis) unless sample.container
       end
+    end
+    after(:create) do |sample, evaluator|
+      sample.update_columns(**evaluator.force_attributes) if evaluator.force_attributes # rubocop:disable Rails/SkipsModelValidations
     end
   end
 
@@ -103,6 +110,67 @@ FactoryBot.define do
         created_for: user.id,
         attachable_type: 'Container'
       )
+    end
+  end
+
+  # factory to create an array of samples
+  # @note: This allow to bypass validation and callbacks to create
+  #  samples with specific attributes (also invalid ones) from a json file
+  # @option [String, Symbol] :from the name of the json file to load relative
+  #  to the spec/fixtures/ directory
+  # @option [Hash] :default_attributes common attributes to all samples
+  #   can be overriden by the attributes in the json file
+  # @option [Integer] :size the number of samples to create
+  #   default to 0 (all samples in the json file)
+  factory :sample_set, class: Array do
+    transient do
+      from { nil }
+      size { 0 }
+      fixtures_dir { Rails.root.join('spec/fixtures') }
+      build_attributes { {} }
+      default_attributes { {} }
+    end
+    initialize_with do
+      next build_list(:sample, size) if from.nil?
+
+      attribute_names = Sample.attribute_names.map(&:to_sym)
+      attributes_set = build(:attributes_set, from: from, fixtures_dir: fixtures_dir, slice: attribute_names)
+      attributes_set = attributes_set.first(size).to_h if size > 0
+      attributes_set.map do |id, attributes|
+        sample_attributes = build_attributes.slice(*attribute_names).merge(
+          force_attributes: default_attributes.merge(name: id).merge(attributes),
+        )
+        create(:sample, **sample_attributes)
+      end
+    end
+  end
+
+  # Dedicated factory to create problematic samples from the PC400 dataset
+  #  grouped by problematic molecules
+  factory :sample_map_pc400, class: Hash do
+    initialize_with do
+      molecule = create(:molecule, molfile: build(:molfile, type: :water))
+      build_attributes = {
+        user_id: create(:user).id,
+        molfile: molecule.molfile,
+        molecule_id: molecule.id,
+      }
+
+      molecule_map = build(
+        :molecule_set, from: 'structures/pc400',
+                       default_attributes: { molfile: build(:molfile, type: :pc400) }
+      ).to_h { |m| [m.iupac_name, m.id] }
+
+      molecule_map.to_h do |key, molecule_id|
+        [
+          molecule_id,
+          build(
+            :sample_set, from: "structures/samples/#{key}",
+                         default_attributes: { molecule_id: molecule_id },
+                         build_attributes: build_attributes
+          ),
+        ]
+      end
     end
   end
 end

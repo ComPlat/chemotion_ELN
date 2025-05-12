@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-# rubocop: disable Style/OpenStructUse
+# rubocop: disable Style/OpenStructUse, RSpec/MultipleMemoizedHelpers
 
 describe Usecases::Reactions::UpdateMaterials do
   let(:user) { create(:user) }
@@ -31,7 +31,7 @@ describe Usecases::Reactions::UpdateMaterials do
            gas_phase_data: gas_phase_data)
   end
 
-  let(:molfile) { File.read(Rails.root + 'spec/fixtures/test_2.mol') }
+  let(:molfile) { build(:molfile, type: 'test_2') }
   let(:starting_materials) do
     {
       'starting_materials' => [
@@ -58,7 +58,7 @@ describe Usecases::Reactions::UpdateMaterials do
         'molfile' => molfile,
         'container' => root_container,
         'parent_id' => sample2.id, # gets named after parent, hence no name specified
-      ]
+      ],
     }
   end
   let(:products) do
@@ -110,7 +110,7 @@ describe Usecases::Reactions::UpdateMaterials do
         'is_new' => true,
         'molfile' => molfile,
         'container' => root_container,
-      ]
+      ],
     }.merge(starting_materials, reactants, products)
   end
   let(:class_instance) { described_class.new(reaction, products, user, vessel_size) }
@@ -130,25 +130,26 @@ describe Usecases::Reactions::UpdateMaterials do
     end
 
     it 'associates reaction with materials' do
-      expect(ReactionsSample.count).to eq(4)
-      expect(ReactionsStartingMaterialSample.count).to eq(1)
-      expect(ReactionsReactantSample.count).to eq(1)
-      expect(ReactionsSolventSample.count).to eq(1)
-      expect(ReactionsProductSample.count).to eq(1)
-      expect(reaction.reactions_samples).to eq(ReactionsSample.all)
+      counts = [ReactionsSample, ReactionsStartingMaterialSample, ReactionsReactantSample,
+                ReactionsSolventSample, ReactionsProductSample].map(&:count)
+      expect(counts).to contain_exactly(4, 1, 1, 1, 1)
+      expect(reaction.reactions_samples).to match_array(ReactionsSample.all)
     end
 
     context 'when sample exists' do
       let(:samples) { starting_materials } # hits .update_existing_sample
 
       it 'does not update reaction-SVG from sample model', :svg_update do
-        # Capturing SVG::ReactionComposer:new is the most straightforward way I could think of to test updates to the reaction-SVG.
+        # Capturing SVG::ReactionComposer:new is the most straightforward way
+        # I could think of to test updates to the reaction-SVG.
         # Since the updates to the reaction-SVG are a side-effect they are difficult to test.
-        expect(SVG::ReactionComposer).to have_received(:new).once # only one final update to reaction-SVG once reaction is saved
+        # only one final update to reaction-SVG once reaction is saved
+        expect(SVG::ReactionComposer).to have_received(:new).once
       end
 
       it 'updates the sample' do
-        expect(Sample.count).to eq(1) # RSpec creates `sample` fixture, and UpdateMaterials update it
+        # RSpec creates `sample` fixture, and UpdateMaterials update it
+        expect(Sample.count).to eq(1)
         expect(Sample.find_by(name: 'starting_material').target_amount_value).to eq(75.09596)
       end
     end
@@ -157,7 +158,8 @@ describe Usecases::Reactions::UpdateMaterials do
       let(:samples) { reactants } # hits .create_sub_sample
 
       it 'creates sub-sample for sample with parent' do
-        expect(Sample.count).to eq(2) # RSpec creates `sample` fixture (parent), UpdateMaterials derive new sample from it
+        # RSpec creates `sample` fixture (parent), UpdateMaterials derive new sample from it
+        expect(Sample.count).to eq(2)
         expect(Sample.find_by(short_label: 'reactant').target_amount_value).to eq(86.09596)
       end
     end
@@ -185,7 +187,7 @@ describe Usecases::Reactions::UpdateMaterials do
       end
     end
 
-    context 'updates samples using set_mole_value_gas_product' do
+    context 'when updating samples using set_mole_value_gas_product' do
       it 'returns nil when reaction vessel size amount is nil' do
         result = class_instance.send(:set_mole_value_gas_product, sample, product_material)
         expect(result).to be_nil
@@ -197,11 +199,12 @@ describe Usecases::Reactions::UpdateMaterials do
       end
 
       it 'updates real_amount_value of product sample' do
-        class_instance_with_vessel_volume.send(:set_mole_value_gas_product, sample, product_material_with_real_amount_value)
+        class_instance_with_vessel_volume.send(:set_mole_value_gas_product, sample,
+                                               product_material_with_real_amount_value)
         expect(sample.real_amount_value).to eq(4.442921016193781e-09)
       end
     end
   end
 end
 
-# rubocop:enable Style/OpenStructUse
+# rubocop:enable Style/OpenStructUse, RSpec/MultipleMemoizedHelpers

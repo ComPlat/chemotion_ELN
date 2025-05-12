@@ -1,0 +1,13 @@
+{
+  "cubane": {
+    "inchistring": "InChI=1S/C8H8/c1-2-5-3(1)7-4(1)6(2)8(5)7/h1-8H",
+    "inchikey": "TXWRERCHRDBNLG-UHFFFAOYSA-N",
+    "molecular_weight": 104.14912,
+    "sum_formular": "C8H8",
+    "iupac_name": "cubane",
+    "cano_smiles": "C12C3C4C2C2C1C3C42",
+    "names": [
+      "cubane"
+    ]
+  }
+}

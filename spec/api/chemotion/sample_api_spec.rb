@@ -204,7 +204,7 @@ describe Chemotion::SampleAPI do
           },
           rows: [{
             inchikey: 'DTHMTBUWTGVEFG-DDWIOCJRSA-N',
-            molfile: Rails.root.join('spec', 'fixtures', 'mf_with_data_01.sdf').read,
+            molfile: build(:molfile, type: 'mf_with_data_01'),
             description: "MOLECULE_NAME\n(R)-Methyl-2-amino-2-phenylacetate hydrochloride ?96%; (R)-(?)-2-Phenylglycine methyl ester hydrochloride\n\nSAFETY_R_S\nH: 319; P: 305+351+338\n\nSMILES_STEREO\n[Cl-].COC(=O)[C@H](N)c1ccccc1.[H+]\n",
             short_label: 'C9H12ClNO2',
             target_amount: '10 g /  g',
@@ -274,7 +274,7 @@ describe Chemotion::SampleAPI do
           },
           rows: [{
             inchikey: 'DTHMTBUWTGVEFG-DDWIOCJRSA-N',
-            molfile: Rails.root.join('spec', 'fixtures', 'mf_with_data_01.sdf').read,
+            molfile: build(:molfile, type: 'mf_with_data_01'),
             description: "MOLECULE_NAME\n(R)-Methyl-2-amino-2-phenylacetate hydrochloride ?96%; (R)-(?)-2-Phenylglycine methyl ester hydrochloride\n\nSAFETY_R_S\nH: 319; P: 305+351+338\n\nSMILES_STEREO\n[Cl-].COC(=O)[C@H](N)c1ccccc1.[H+]\n",
             short_label: 'C9H12ClNO2',
             target_amount: 'Test data',
@@ -690,7 +690,7 @@ describe Chemotion::SampleAPI do
         boiling_point_lowerbound: 100,
         melting_point_upperbound: 200,
         melting_point_lowerbound: 200,
-        molfile: File.read("#{Rails.root}/spec/fixtures/test_2.mol"),
+        molfile: build(:molfile, type: 'test_2'),
         is_top_secret: false,
         dry_solvent: true,
         xref: { 'cas' => cas },

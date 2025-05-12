@@ -593,8 +593,8 @@ export default class SampleDetails extends React.Component {
     return (
       <Tab
         eventKey={index}
-        title="Versions"
-        key={`Versions_Sample_${sample.id.toString()}`}
+        title="History"
+        key={`History_Sample_${sample.id.toString()}`}
       >
         <ListGroupItem>
           <VersionsTable
@@ -825,11 +825,13 @@ export default class SampleDetails extends React.Component {
     const { sample, isCasLoading, validCas } = this.state;
     const { molecule, xref } = sample;
     const cas = xref?.cas ?? '';
-    let casArr = [];
-    casArr = molecule?.cas?.filter((element) => element !== null);
-    casArr = cas && casArr && cas !== '' && !casArr.includes(cas) ? [...casArr, cas] : casArr;
+    let casArr = Array.isArray(molecule?.cas) ? molecule?.cas?.filter((el) => el !== null) : [];
+    if (cas && !casArr.includes(cas)) {
+      casArr.push(cas);
+    }
     const errorMessage = <span className="text-danger">Cas number is invalid</span>;
-    const options = casArr?.map((element) => ({ label: element, value: element }));
+    const options = casArr.map((element) => ({ label: element, value: element }));
+
     return (
       <div className="my-4">
         <InputGroup className="z-4">
@@ -840,7 +842,7 @@ export default class SampleDetails extends React.Component {
             onChange={(e) => this.updateCas(e)}
             onMenuOpen={() => this.onCasSelectOpen(casArr)}
             isLoading={isCasLoading}
-            value={options.find(({ value }) => value === cas)}
+            value={options.find(({ value }) => value === cas) || null}
             onBlur={() => this.isCASNumberValid(cas || '', true)}
             isDisabled={!sample.can_update}
             className="flex-grow-1"
@@ -963,7 +965,7 @@ export default class SampleDetails extends React.Component {
       <Form.Check
         type="checkbox"
         id="sample-inventory-header"
-        className="mx-3 sample-inventory-header"
+        className="mx-2 sample-inventory-header"
         checked={sample.inventory_sample}
         onChange={(e) => this.handleInventorySample(e)}
         label="Inventory"
@@ -974,7 +976,7 @@ export default class SampleDetails extends React.Component {
       <Form.Check
         type="checkbox"
         id="sample-header-decouple"
-        className="mx-3 sample-header-decouple"
+        className="mx-2 sample-header-decouple"
         checked={sample.decoupled}
         onChange={(e) => this.decoupleChanged(e)}
         label="Decoupled"
@@ -984,8 +986,8 @@ export default class SampleDetails extends React.Component {
     const inventoryLabel = sample.inventory_sample && sample.inventory_label ? sample.inventory_label : null;
 
     return (
-      <div className="d-flex align-items-center justify-content-between">
-        <div className="d-flex align-items-center flex-wrap gap-2">
+      <div className="d-flex align-items-center flex-wrap">
+        <div className="d-flex align-items-center flex-wrap flex-grow-1 gap-2">
           <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
             <span className="flex-shrink-0">
               <i className="icon-sample me-1" />
@@ -1000,7 +1002,7 @@ export default class SampleDetails extends React.Component {
           <HeaderCommentSection element={sample} />
           {sample.isNew && <FastInput fnHandle={this.handleFastInput} />}
         </div>
-        <div className="d-flex align-items-center gap-1">
+        <div className="d-flex align-items-center gap-2">
           {decoupleCb}
           {inventorySample}
           {!sample.isNew && <OpenCalendarButton isPanelHeader eventableId={sample.id} eventableType="Sample" />}
@@ -1153,6 +1155,7 @@ export default class SampleDetails extends React.Component {
         <InputGroup.Text>Molfile</InputGroup.Text>
         <Form.Control
           as="textarea"
+          rows={5}
           value={this.state.molfile}
           disabled
           readOnly
@@ -1290,13 +1293,12 @@ export default class SampleDetails extends React.Component {
 
   renderMolfileModal() {
     const { molfile } = this.state;
-    const molfileText = molfile ? molfile.replace(/\r?\n/g, '<br />') : '';
 
     return (
       <Modal
         centered
         show={this.state.showMolfileModal}
-        dialogClassName="importChemDrawModal"
+        dialogClassName="modal-lg"
         onHide={this.handleMolfileClose}
       >
         <Modal.Header closeButton>
@@ -1307,9 +1309,10 @@ export default class SampleDetails extends React.Component {
             <Form.Group controlId="molfileInputModal">
               <Form.Control
                 as="textarea"
+                rows={30}
                 readOnly
                 disabled
-                value={molfileText}
+                value={molfile}
               />
             </Form.Group>
           </div>
@@ -1333,7 +1336,7 @@ export default class SampleDetails extends React.Component {
       results: this.sampleImportReadoutTab('results'),
       qc_curation: this.qualityCheckTab('qc_curation'),
       measurements: this.measurementsTab('measurements'),
-      versioning: this.versioningTable('versioning')
+      history: this.versioningTable('history')
     };
 
     if (this.enableComputedProps) {

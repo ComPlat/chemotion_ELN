@@ -29,19 +29,19 @@ RSpec.shared_context 'Report shared declarations', shared_context: :metadata do
     )
   end
   let(:starting_material_1) do
-    create(:sample, molfile: File.read('./spec/fixtures/rinchi/esterifica/rct_01.mol'), collections: [collection])
+    create(:sample, molfile: build(:molfile, type: '../../rinchi/esterifica/rct_01'), collections: [collection])
   end
   let(:starting_material_2) do
-    create(:sample, molfile: File.read('./spec/fixtures/rinchi/esterifica/rct_02.mol'), collections: [collection])
+    create(:sample, molfile: build(:molfile, type: '../../rinchi/esterifica/rct_02'), collections: [collection])
   end
   let(:product_1) do
-    create(:sample, molfile: File.read('./spec/fixtures/rinchi/esterifica/prd_01.mol'), collections: [collection])
+    create(:sample, molfile: build(:molfile, type: '../../rinchi/esterifica/prd_01'), collections: [collection])
   end
   let(:product_2) do
-    create(:sample, molfile: File.read('./spec/fixtures/rinchi/esterifica/prd_02.mol'), collections: [collection])
+    create(:sample, molfile: build(:molfile, type: '../../rinchi/esterifica/prd_02'), collections: [collection])
   end
   let(:solvent) do
-    create(:sample, molfile: File.read('./spec/fixtures/rinchi/esterifica/agt_01.mol'), collections: [collection])
+    create(:sample, molfile: build(:molfile, type: '../../rinchi/esterifica/agt_01'), collections: [collection])
   end
   let(:reaction) do
     create(:reaction, name: 'title 1', collections: [collection])
@@ -61,10 +61,10 @@ RSpec.shared_context 'Report shared declarations', shared_context: :metadata do
   end
 
   before do
-    reaction.reactions_starting_material_samples.create(sample: starting_material_1, equivalent: 0.88)
-    reaction.reactions_starting_material_samples.create(sample: starting_material_2, equivalent: 0.88)
-    reaction.reactions_product_samples.create(sample: product_1, equivalent: 0.88)
-    reaction.reactions_product_samples.create(sample: product_2, equivalent: 0.88)
+    reaction.reactions_starting_material_samples.create(sample: starting_material_1, equivalent: 0.88, position: 1)
+    reaction.reactions_starting_material_samples.create(sample: starting_material_2, equivalent: 0.88, position: 2)
+    reaction.reactions_product_samples.create(sample: product_1, equivalent: 0.88, position: 1)
+    reaction.reactions_product_samples.create(sample: product_2, equivalent: 0.88, position: 2)
     reaction.reactions_solvent_samples.create(sample: solvent, equivalent: 0.88)
   end
 end

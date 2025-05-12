@@ -105,11 +105,6 @@ const refreshSvgTooltip = <Tooltip id="refresh_svg_tooltip">Refresh reaction dia
 
 const AddtoDescToolTip = <Tooltip id="tp-spl-code" className="left_tooltip">Add to description or additional information for publication and purification details</Tooltip>;
 
-const solvConcentration = (material, solventVolume) => {
-  const concn = ((material.amount_l / solventVolume) * 100).toFixed(1);
-  if (isNaN(concn) || !isFinite(concn)) { return 'n.d.'; }
-  return `${concn}%`;
-};
 
 class Material extends Component {
   constructor(props) {
@@ -847,7 +842,7 @@ class Material extends Component {
 
   solventMaterial(props, className) {
     const { material, deleteMaterial, connectDragSource,
-      connectDropTarget, reaction } = props;
+      connectDropTarget, reaction, materialGroup } = props;
     const isTarget = material.amountType === 'target';
     const mw = material.molecule && material.molecule.molecular_weight;
     const drySolvTooltip = <Tooltip>Dry Solvent</Tooltip>;
@@ -889,18 +884,18 @@ class Material extends Component {
                 size="sm"
                 value={material.external_label}
                 placeholder={material.molecule.iupac_name}
-                onChange={event => this.handleExternalLabelChange(event)}
+                onChange={(event) => this.handleExternalLabelChange(event)}
               />
             </OverlayTrigger>
             <OverlayTrigger placement="bottom" overlay={refreshSvgTooltip}>
-                <Button
-                  disabled={!permitOn(reaction)}
-                  active
-                  onClick={e => this.handleExternalLabelCompleted(e)}
-                  size="sm"
-                >
-                  <i className="fa fa-refresh" />
-                </Button>
+              <Button
+                disabled={materialGroup === 'purification_solvents' || !permitOn(reaction)}
+                active
+                onClick={(e) => this.handleExternalLabelCompleted(e)}
+                size="sm"
+              >
+                <i className="fa fa-refresh" />
+              </Button>
             </OverlayTrigger>
           </InputGroup>
         </td>
@@ -910,7 +905,7 @@ class Material extends Component {
           <Form.Control
             type="text"
             size="sm"
-            value={solvConcentration(material, props.reaction.purificationSolventVolume)}
+            value={reaction.volumeRatioByMaterialId(material.id)}
             disabled
           />
         </td>

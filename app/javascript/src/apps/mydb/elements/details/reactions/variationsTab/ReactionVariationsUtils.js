@@ -184,7 +184,14 @@ function getCellDataType(entry, gasType = 'off') {
     case 'mass':
     case 'volume':
     case 'amount':
-      return gasType === 'feedstock' ? 'feedstock' : 'material';
+      switch (gasType) {
+        case 'feedstock':
+          return 'feedstock';
+        case 'gas':
+          return 'gas';
+        default:
+          return 'material';
+      }
     case 'concentration':
     case 'turnoverNumber':
     case 'turnoverFrequency':
@@ -310,10 +317,11 @@ function updateVariationsRow(row, field, value, reactionHasPolymers) {
 
   attribute         | needs to be updated in response to change in
   ------------------|---------------------------------------------
-  equivalent        | mass^, amount^, reference material's mass~, reference material's amount~
-  mass              | amount^, equivalent^, concentration^, temperature^
-  amount            | mass^, equivalent^, concentration^, temperature^
-  yield             | mass^, amount^x, concentration^, temperature^, reference material's mass~, reference material's amount~
+  volume            | equivalent^, mass^, amount^, concentration^, temperature^
+  mass              | amount^, equivalent^, concentration^, temperature^, volume^
+  amount            | mass^, equivalent^, concentration^, temperature^, volume^
+  equivalent        | mass^, amount^, volume^, reference material's mass~, reference material's amount~, reference material's volume~
+  yield             | mass^, amount^x, concentration^, temperature^, volume^, reference material's mass~, reference material's amount~, reference material's volume~
   turnoverNumber    | concentration^, temperature^, catalyst material's amount~
   turnoverFrequency | concentration^, temperature^, duration^, turnoverNumber^, catalyst material's amount~
 
@@ -629,19 +637,20 @@ function getColumnDefinitions(selectedColumns, materials, gasMode) {
       children: selectedColumns.segmentData.map((entry) => getSegmentColumnGroupChild(entry)),
     },
   ].concat(
-    Object.entries(materialTypes)
-      .map(([materialType, { label }]) => ({
-        headerName: label,
-        groupId: materialType,
-        marryChildren: true,
-        children: selectedColumns[materialType].map(
-          (materialID) => getMaterialColumnGroupChild(
-            materials[materialType].find((material) => material.id.toString() === materialID),
-            materialType,
-            gasMode,
-          ),
-        ),
-      })),
+    Object.entries(materialTypes).map(([materialType, { label }]) => ({
+      headerName: label,
+      groupId: materialType,
+      marryChildren: true,
+      autoHeaderHeight: true,
+      wrapHeaderText: true,
+      children: selectedColumns[materialType].map(
+        (materialID) => getMaterialColumnGroupChild(
+          materials[materialType].find((material) => material.id.toString() === materialID),
+          materialType,
+          gasMode
+        )
+      )
+    }))
   );
 }
 

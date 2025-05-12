@@ -235,6 +235,7 @@ export default function ReactionVariations({
       reactionVariations,
       updatedReactionMaterials,
       updatedGasMode,
+      vesselVolume
     );
     setReactionVariations(updatedReactionVariations);
 

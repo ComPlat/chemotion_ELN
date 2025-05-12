@@ -42,7 +42,9 @@ async function setUpReaction() {
         durationUnit: 'Hour(s)',
         temperatureValue: '',
         temperatureUnit: '°C',
-      },
+        gasMode: false,
+        vesselVolume: 42,
+      }
     ));
   }
   reaction.variations = variations;

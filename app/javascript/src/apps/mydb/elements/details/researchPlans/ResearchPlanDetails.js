@@ -266,13 +266,6 @@ export default class ResearchPlanDetails extends Component {
     this.setState({ visible });
   }
 
-  toggleFullScreen() {
-    this.props.toggleFullScreen();
-
-    // toogle update prop to notify react data grid for view change
-    this.setState((prevState) => ({ update: !prevState.update }));
-  }
-
   dropWellplate(wellplate) {
     const { researchPlan } = this.state;
     researchPlan.changed = true;
@@ -593,10 +586,10 @@ export default class ResearchPlanDetails extends Component {
           <ResearchPlanMetadata researchPlan={researchPlan} />
         </Tab>
       ),
-      versions: (
+      history: (
         <Tab
-          eventKey="versioning"
-          title="Versions"
+          eventKey="history"
+          title="History"
           key={`Versions_ResearchPlan_${researchPlan.id.toString()}`}
         >
           <VersionsTable

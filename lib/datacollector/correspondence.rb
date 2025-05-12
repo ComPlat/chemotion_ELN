@@ -97,6 +97,7 @@ module Datacollector
       Attachment.create(
         filename: name,
         created_by: sender.id,
+        created_by_type: sender.class.name,
         created_for: recipient.id,
         file_path: file_data,
       )

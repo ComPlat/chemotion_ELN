@@ -6,7 +6,9 @@ require 'json'
 
 module Import
   class ImportCollections # rubocop:disable Metrics/ClassLength
-    def initialize(att, current_user_id, gate = false, col_id = nil, origin = nil) # rubocop:disable Style/OptionalBooleanParameter
+    attr_reader :log_file_path
+
+    def initialize(att, current_user_id, gate = false, col_id = nil, origin = nil, logger = nil) # rubocop:disable Style/OptionalBooleanParameter
       @att = att
       @current_user_id = current_user_id
       @gt = gate
@@ -16,13 +18,14 @@ module Import
       @attachments = []
       @col_id = col_id
       @col_all = Collection.get_all_collection_for_user(current_user_id)
-      @images = {}
-      @svg_files = []
+      @tmp_dir = Dir.mktmpdir
+      @logger, @log_file_path = initialize_logger(logger)
     end
 
     def execute
       extract
       import
+    ensure
       cleanup
     end
 
@@ -38,12 +41,14 @@ module Import
           # do nothing for directory entry
           next if entry.ftype == :directory
 
-          data = entry.get_input_stream.read.force_encoding('UTF-8')
-          case entry.name
+          entry_name = entry.name
+          case entry_name
           when 'export.json'
+            data = entry.get_input_stream.read.force_encoding('UTF-8')
             @data = JSON.parse(data)
           when %r{attachments/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})}
-            file_name = entry.name.sub('attachments/', '')
+            data = entry.get_input_stream.read.force_encoding('UTF-8')
+            file_name = entry_name.sub('attachments/', '')
             attachment = Attachment.new(
               transferred: true,
               con_state: Labimotion::ConState::NONE,
@@ -68,10 +73,10 @@ module Import
               tmp.unlink # deletes the temp file
             end
           when %r{^images/(samples|reactions|molecules|research_plans)/(\w{1,128}\.\w{1,4})}
-            tmp_file = Tempfile.new
-            tmp_file.write(data)
-            tmp_file.rewind
-            @images["#{Regexp.last_match(1)}/#{Regexp.last_match(2)}"] = tmp_file
+            # write data to tmp dir with the same path
+            path = File.join(@tmp_dir, entry_name)
+            FileUtils.mkdir_p(File.dirname(path))
+            entry.extract(path) { |src, dest| IO.copy_stream(src, dest) }
           end
         end
       end
@@ -124,13 +129,33 @@ module Import
     # desc: to destroy uploaded zip and sweep image tmp files
     def cleanup
       # @att.destroy!
-      @images.each_value do |tmp_file|
-        tmp_file.close
-        tmp_file.unlink
-      end
+      FileUtils.rm_rf(@tmp_dir)
     end
 
     private
+
+    def initialize_logger(logger = nil)
+      return [logger, extract_log_path(logger)] if logger
+
+      log_file = File.basename(generate_log_path)
+      url = File.join(Rails.application.config.root_url, 'import_logs', log_file)
+      [Logger.new(Rails.public_path.join('import_logs', log_file)), url]
+    end
+
+    def extract_log_path(logger)
+      logger.instance_variable_get(:@logdev)&.filename
+    end
+
+    def generate_log_path
+      # Create logs directory if it doesn't exist
+      logs_dir = Rails.public_path.join('import_logs')
+      FileUtils.mkdir_p(logs_dir)
+
+      # Generate unique log filename
+      timestamp = Time.current.strftime('%Y%m%d_%H%M%S')
+      random_string = SecureRandom.hex(4)
+      logs_dir.join("import_collections_#{timestamp}_#{random_string}.log")
+    end
 
     def import_annotation(zip_file, entry, attachment)
       annotation_entry = zip_file.find_entry("#{entry.name}_annotation")
@@ -166,7 +191,7 @@ module Import
     def gate_collection
       collection = Collection.find(@col_id)
       @uuid = nil
-      @data.fetch('Collection', {}).each do |uuid, _fields|
+      @data.fetch('Collection', {}).each_key do |uuid|
         @uuid = uuid
       end
       update_instances!(@uuid, collection)
@@ -186,7 +211,7 @@ module Import
     end
 
     def import_chemicals
-      @data.fetch('Chemical', {}).each do |_uuid, fields|
+      @data.fetch('Chemical', {}).each_value do |fields|
         sample = @instances.fetch('Sample').fetch(fields.fetch('sample_id'))
         next unless sample
 
@@ -277,14 +302,6 @@ module Import
               [{ label: solvent[:value][:external_label], smiles: solvent[:value][:smiles], ratio: '100' }]
           end
         end
-
-        # for same sample_svg_file case
-        s_svg_file = @svg_files.find { |s| s[:sample_svg_file] == fields.fetch('sample_svg_file') }
-        if s_svg_file.nil?
-          @svg_files.push(sample_svg_file: fields.fetch('sample_svg_file'), svg_file: sample.sample_svg_file)
-        end
-
-        sample.sample_svg_file = s_svg_file[:svg_file] unless s_svg_file.nil?
 
         # keep orig eln info
         if @gt == true
@@ -658,18 +675,18 @@ module Import
       @instances.fetch(type, {}).fetch(parent_uuid, nil)
     end
 
-    def fetch_image(image_path, image_file_name)
-      begin
-        svg = nil
-        if image_file_name.present? && (tmp_file = @images["#{image_path}/#{image_file_name}"]) && (tmp_file && !tmp_file.closed?)
-          svg = tmp_file.read
-        end
-      rescue StandardError => e
-        Rails.logger.error e
-      ensure
-        tmp_file.close! if tmp_file && !tmp_file.closed?
-      end
-      svg || image_file_name
+    # read the image from the tmp dir/file
+    # @param [String] element_type: the image category (samples, reactions, molecules, research_plans)
+    # @param [String] image_file_name: the svg image file name
+    # @return [String, nil] the svg image content or nil if the image file does not exist or is not an svg
+    def fetch_image(element_type, image_file_name)
+      tmp_file = Pathname.new(@tmp_dir).join("images/#{element_type}/#{image_file_name}")
+      return nil unless File.exist?(tmp_file)
+
+      svg = File.read(tmp_file)
+      svg&.start_with?('<svg') ? svg : nil
+    rescue StandardError => e
+      Rails.logger.error e
     end
 
     def update_instances!(uuid, instance)
@@ -689,7 +706,7 @@ module Import
     # Follows a has_many relation to `foreign_type` through `association_type`
     def fetch_many(foreign_type, association_type, local_field, foreign_field, local_id)
       associations = []
-      @data.fetch(association_type, {}).each do |_uuid, fields|
+      @data.fetch(association_type, {}).each_value do |fields|
         next unless fields.fetch(local_field) == local_id
 
         foreign_id = fields.fetch(foreign_field)
@@ -700,14 +717,31 @@ module Import
     end
 
     def update_researchplan_body(attachments)
-      @data['ResearchPlan']&.each do |_attr_name, attr_value|
+      @data['ResearchPlan']&.each_value do |attr_value|
         image_fields = attr_value['body'].select { |i| i['type'] == 'image' }
+
         image_fields.each do |field|
           new_att = attachments.find { |i| i['filename'].include? field['value']['public_name'] }
+
           field['value']['public_name'] = new_att['identifier']
           field['value']['file_name'] = new_att['filename']
+        rescue StandardError => _e
+          log_unassociated_attachment(attr_value['name'], field)
         end
       end
+    end
+
+    def log_unassociated_attachment(research_plan_name, field)
+      log_content = <<~LOG
+
+        Research Plan: #{research_plan_name}
+        File Name: #{field.dig('value', 'file_name')}
+        Error: Attachment not found
+        ----------------------------------------
+
+      LOG
+
+      @logger.error(log_content)
     end
   end
 end

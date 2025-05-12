@@ -300,6 +300,16 @@ function SolventsMaterialGroup({
 
   return (
     <Table borderless className="w-100">
+      <colgroup>
+        <col style={{ width: '4%' }} />
+        <col style={{ width: '22%' }} />
+        <col style={{ width: '2%' }} />
+        <col style={{ width: '2%' }} />
+        <col style={{ width: '22%' }} />
+        <col style={{ width: '14%' }} />
+        <col style={{ width: '14%' }} />
+        <col style={{ width: '2%' }} />
+      </colgroup>
       <thead>
         <tr>
           <th className="align-middle">{addSampleButton}</th>

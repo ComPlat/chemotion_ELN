@@ -70,6 +70,7 @@ module Entities
 
     expose :mass, using: 'Entities::ReactionVariationMaterialEntryEntity'
     expose :amount, using: 'Entities::ReactionVariationMaterialEntryEntity'
+    expose :volume, using: 'Entities::ReactionVariationMaterialEntryEntity'
     expose :yield, using: 'Entities::ReactionVariationMaterialEntryEntity'
 
     expose :duration, if: IS_GAS, using: 'Entities::ReactionVariationMaterialEntryEntity'
@@ -82,13 +83,10 @@ module Entities
   end
 
   class StartingMaterialEntity < ApplicationEntity
-    IS_FEEDSTOCK = ->(object, _) { (object[:aux][:gasType] == 'feedstock') }.freeze
-
     expose :mass, using: 'Entities::ReactionVariationMaterialEntryEntity'
     expose :amount, using: 'Entities::ReactionVariationMaterialEntryEntity'
+    expose :volume, using: 'Entities::ReactionVariationMaterialEntryEntity'
     expose :equivalent, using: 'Entities::ReactionVariationMaterialEntryEntity'
-
-    expose :volume, if: IS_FEEDSTOCK, using: 'Entities::ReactionVariationMaterialEntryEntity'
 
     expose :aux, using: 'Entities::ReactionVariationMaterialAuxEntity'
   end
@@ -105,6 +103,7 @@ module Entities
       :gasType,
       :vesselVolume,
       :materialType,
+      :density,
     )
   end
 

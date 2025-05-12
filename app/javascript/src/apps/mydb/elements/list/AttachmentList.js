@@ -142,16 +142,18 @@ export const downloadButton = (attachment) => (
   </Dropdown>
 );
 
-export const removeButton = (attachment, onDelete, readOnly) => (
-  <OverlayTrigger placement="top" overlay={<Tooltip id="delete_tooltip">Delete attachment</Tooltip>}>
-    <Button
-      size="sm"
-      variant="danger"
-      onClick={() => onDelete(attachment)}
-      disabled={readOnly}
-    >
-      <i className="fa fa-trash-o" aria-hidden="true" />
-    </Button>
+export const removeButton = (attachment, onDelete, readOnly, tooltipText = 'Delete attachment') => (
+  <OverlayTrigger placement="top" overlay={<Tooltip id="delete_tooltip">{tooltipText}</Tooltip>}>
+    <span>
+      <Button
+        size="sm"
+        variant="danger"
+        onClick={() => onDelete(attachment)}
+        disabled={readOnly}
+      >
+        <i className="fa fa-trash-o" aria-hidden="true" />
+      </Button>
+    </span>
   </OverlayTrigger>
 );
 

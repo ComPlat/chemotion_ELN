@@ -78,8 +78,8 @@ RSpec.describe Well do
       let(:well_three) { create(:well, sample_id: sample_three.id, wellplate_id: wellplate.id) }
 
       it 'three sample ids are returned' do
-        expected = [well_one.sample_id, well_two.sample_id, well_three.sample_id]
-        expect(described_class.get_samples_in_wellplates(wellplate.id)).to eq(expected)
+        expected = [well_one, well_two, well_three].map(&:sample_id)
+        expect(described_class.get_samples_in_wellplates(wellplate.id)).to match_array(expected)
       end
     end
   end

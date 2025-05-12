@@ -28,6 +28,24 @@ function getGramFromMol(mol, material) {
   return (mol / (material.aux.purity ?? 1.0)) * material.aux.molecularWeight;
 }
 
+function getVolumeFromGram(gram, material) {
+  if (material.aux.molarity) {
+    return (gram * material.aux.purity) / (material.aux.molarity * material.aux.molecularWeight);
+  } if (material.aux.density) {
+    return gram / (material.aux.density * 1000);
+  }
+  return 0;
+}
+
+function getGramFromVolume(volume, material) {
+  if (material.aux.molarity) {
+    return volume * material.aux.molarity * material.aux.molecularWeight;
+  } if (material.aux.density) {
+    return volume * material.aux.density * 1000;
+  }
+  return 0;
+}
+
 function getReferenceMaterial(row) {
   const rowCopy = cloneDeep(row);
   const potentialReferenceMaterials = { ...rowCopy.startingMaterials, ...rowCopy.reactants };
@@ -124,11 +142,10 @@ function getMaterialEntries(materialType, gasType) {
     case 'solvents':
       return ['volume'];
     case 'products':
-      return ['mass', 'amount', 'yield'];
+      return ['mass', 'amount', 'volume', 'yield'];
     case 'startingMaterials':
     case 'reactants':
     case 'catalyst':
-      return ['mass', 'amount', 'equivalent'];
     case 'feedstock':
       return ['mass', 'amount', 'volume', 'equivalent'];
     case 'gas':
@@ -140,6 +157,7 @@ function getMaterialEntries(materialType, gasType) {
         'turnoverFrequency',
         'mass',
         'amount',
+        'volume',
         'yield'
       ];
     default:
@@ -159,6 +177,8 @@ function cellIsEditable(params) {
       return !['feedstock', 'gas'].includes(gasType);
     case 'amount':
       return materialType !== 'products';
+    case 'volume':
+      return gasType !== 'gas';
     case 'yield':
     case 'turnoverNumber':
     case 'turnoverFrequency':
@@ -186,6 +206,7 @@ function getMaterialData(material, materialType, gasMode = false, vesselVolume =
     isReference: materialCopy.reference ?? false,
     loading: (Array.isArray(materialCopy.residues) && materialCopy.residues.length) ? materialCopy.residues[0].custom_info?.loading : null,
     purity: materialCopy.purity ?? null,
+    density: materialCopy.density ?? null,
     molarity: materialCopy.molarity_value ?? null,
     molecularWeight: materialCopy.molecule_molecular_weight ?? null,
     sumFormula: materialCopy.molecule_formula ?? null,
@@ -263,7 +284,7 @@ function removeObsoleteMaterialColumns(materials, columns) {
   return updatedColumns;
 }
 
-function updateVariationsGasTypes(variations, materials, gasMode) {
+function updateVariationsGasTypes(variations, materials, gasMode, vesselVolume) {
   const updatedVariations = cloneDeep(variations);
   updatedVariations.forEach((row) => {
     Object.keys(materialTypes).forEach((materialType) => {
@@ -273,7 +294,7 @@ function updateVariationsGasTypes(variations, materials, gasMode) {
           return;
         }
         if (currentGasType !== row[materialType][material.id].aux.gasType) {
-          row[materialType][material.id] = getMaterialData(material, materialType, gasMode);
+          row[materialType][material.id] = getMaterialData(material, materialType, gasMode, vesselVolume);
         }
       });
     });
@@ -359,6 +380,8 @@ export {
   getFeedstockMaterial,
   getMolFromGram,
   getGramFromMol,
+  getVolumeFromGram,
+  getGramFromVolume,
   computeEquivalent,
   computePercentYield,
   computePercentYieldGas,

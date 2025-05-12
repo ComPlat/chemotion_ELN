@@ -320,5 +320,11 @@ class Reaction < ApplicationRecord
   # rubocop:enable Rails/SkipsModelValidations
 
   handle_asynchronously :update_to_plain_text, queue: 'plain_text_reaction'
+
+  def full_svg_path(svg_file_name = reaction_svg_file)
+    return unless svg_file_name
+
+    Rails.public_path.join('images/reactions', svg_file_name)
+  end
 end
 # rubocop:enable Metrics/ClassLength

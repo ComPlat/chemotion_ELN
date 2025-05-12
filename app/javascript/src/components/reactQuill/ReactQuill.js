@@ -424,7 +424,7 @@ export default class ReactQuill extends React.Component {
 
     return preserveWhitespace
       ? <pre {...properties} />
-      : <div {...properties} />;
+      : <div className="quill-resize" {...properties} />;
   }
 
   render() {

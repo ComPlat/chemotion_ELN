@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Versioning::Serializers::ReactionSerializer < Versioning::Serializers::BaseSerializer
-  def self.call(record, name = ['Properties'])
+  def self.call(record, name = ['Reaction Properties'])
     new(record: record, name: name).call
   end
 
@@ -25,7 +25,7 @@ class Versioning::Serializers::ReactionSerializer < Versioning::Serializers::Bas
         revert: %i[temperature],
       },
       reaction_svg_file: {
-        label: 'Structural formula',
+        label: 'Reaction scheme',
         kind: :image,
         formatter: svg_path_formatter('reactions'),
       },

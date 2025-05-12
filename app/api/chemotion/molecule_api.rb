@@ -37,8 +37,7 @@ module Chemotion
           babel_info = OpenBabelService.molecule_info_from_structure(smiles, 'smi')
           inchikey = babel_info[:inchikey]
           return {} if inchikey.blank?
-
-          molecule = Molecule.find_by(inchikey: inchikey, is_partial: false)
+          molecule = Molecule.find_by(inchikey: inchikey, is_partial: false, sum_formular: babel_info[:formula])
           unless molecule
             molfile = babel_info[:molfile] if babel_info
             begin
@@ -167,9 +166,10 @@ module Chemotion
         end
         get do
           formula = params[:molecular_formula]
-          total_mass = Chemotion::Calculations.mw_from_formula(formula)
-
-          total_mass
+          SumFormula.new(formula).molecular_weight
+        rescue StandardError => e
+          Rails.logger.error ["with formula: #{formula}", e.message, *e.backtrace].join($INPUT_RECORD_SEPARATOR)
+          0.0
         end
       end
 
@@ -220,14 +220,14 @@ module Chemotion
 
       desc 'return names of the molecule'
       params do
-        requires :inchikey, type: String, desc: 'Molecule inchikey'
+        requires :id, type: String, desc: 'Molecule id'
         optional :new_name, type: String, desc: 'New molecule_name'
       end
       get :names do
-        inchikey = params[:inchikey]
+        id = params[:id]
         new_name = params[:new_name]
 
-        mol = Molecule.find_by(inchikey: inchikey)
+        mol = Molecule.find_by(id: id)
         return [] if mol.blank?
 
         user_id = current_user.id

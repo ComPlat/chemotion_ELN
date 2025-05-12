@@ -2,9 +2,17 @@
 
 require 'rails_helper'
 
+# rubocop:disable Rspec/MultipleMemoizedHelpers, Rspec/NestedGroups, RSpec/IndexedLet
 describe Chemotion::ReportAPI do
-  context 'authorized user logged in' do
-    let(:user) { create(:user) }
+  let(:user) { create(:user) }
+  let(:warden_authentication_instance) { instance_double(WardenAuthentication) }
+
+  before do
+    allow(WardenAuthentication).to receive(:new).and_return(warden_authentication_instance)
+    allow(warden_authentication_instance).to receive(:current_user).and_return(user)
+  end
+
+  context 'with an authorized user logged in' do
     let(:other) { create(:user) }
     let(:docx_mime_type) do
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
@@ -12,33 +20,18 @@ describe Chemotion::ReportAPI do
 
     let(:excel_mime_type) { 'application/vnd.ms-excel' }
     let(:ext) { 'docx' }
-    let!(:rp1) do
-      create(:report, :downloadable, user: user, file_name: 'ELN_Report_1')
-    end
-
+    let!(:rp1) { create(:report, :downloadable, user: user, file_name: 'ELN_Report_1') }
     let!(:rp2) { create(:report, :undownloadable, user: user) }
     let!(:rp3) { create(:report, :downloadable, user: user) }
-    let!(:att1) do
-      create(
-        :attachment,
-        filename: rp1.file_name + '.' + ext,
-        attachable_id: rp1.id,
-        attachable_type: 'Report',
-        content_type: docx_mime_type
-      )
-    end
 
     let!(:rp_others) { create(:report, user: other) }
-    let!(:s1)   { create(:sample) }
-    let!(:s2)   { create(:sample) }
-    let!(:r1)   { create(:reaction) }
-    let!(:r2)   { create(:reaction) }
-    let!(:c)    { create(:collection, user_id: user.id) }
+    let!(:s1) { create(:sample) }
+    let!(:s2) { create(:sample) }
+    let!(:r1) { create(:reaction) }
+    let!(:r2) { create(:reaction) }
+    let!(:c)  { create(:collection, user_id: user.id) }
 
     before do
-      allow_any_instance_of(WardenAuthentication).to(
-        receive(:current_user).and_return(user)
-      )
       CollectionsSample.create!(sample: s1, collection: c)
       CollectionsSample.create!(sample: s2, collection: c)
       CollectionsReaction.create!(reaction: r1, collection: c)
@@ -59,20 +52,30 @@ describe Chemotion::ReportAPI do
     end
 
     describe 'export_samples_from_selections as SDfiles' do
-      let!(:mf2000_1) { IO.read(Rails.root.join('spec', 'fixtures', 'mof_v2000_1.mol')) }
-      let!(:mf2000_2) { IO.read(Rails.root.join('spec', 'fixtures', 'mof_v2000_2.mol')) }
-      let!(:mf2000_3) { IO.read(Rails.root.join('spec', 'fixtures', 'mof_v2000_3.mol')) }
-      let!(:mf3000_1) { IO.read(Rails.root.join('spec', 'fixtures', 'mof_v3000_1.mol')) }
       let(:c) { create(:collection, user_id: user.id) }
-      let(:sample_1) { create(:sample, name: 'Sample 20001', molfile: mf2000_1) }
-      let(:sample_2) { create(:sample, name: 'Sample 20002', molfile: mf2000_2) }
-      let(:sample_3) { create(:sample, name: 'Sample 20002', molfile: mf2000_3) }
-      let(:sample_4) { create(:sample, name: 'Sample 30001', molfile: mf3000_1) }
+      let(:molfiles) do
+        [
+          '../../mof_v2000_1.sdf',
+          '../../mof_v2000_2.sdf',
+          '../../mof_v2000_3.sdf',
+          '../../mof_v3000_1.sdf',
+        ].map do |src|
+          build(:molfile, src: src)
+        end
+      end
+      let(:samples) do
+        [
+          create(:sample, name: 'Sample 20001', molfile: molfiles[0]),
+          create(:sample, name: 'Sample 20002', molfile: molfiles[1]),
+          create(:sample, name: 'Sample 20002', molfile: molfiles[2]),
+          create(:sample, name: 'Sample 30001', molfile: molfiles[3]),
+        ]
+      end
       let(:no_checked) do
         {
           checkedIds: [],
           uncheckedIds: [],
-          checkedAll: false
+          checkedAll: false,
         }
       end
 
@@ -83,12 +86,12 @@ describe Chemotion::ReportAPI do
             sample: {
               checkedIds: [],
               uncheckedIds: [],
-              checkedAll: false
+              checkedAll: false,
             },
             reaction: no_checked,
             wellplate: no_checked,
             currentCollection: c.id,
-            isSync: false
+            isSync: false,
           },
           columns: {
             analyses: [],
@@ -96,133 +99,62 @@ describe Chemotion::ReportAPI do
             reaction: %w[name short_label],
             sample: %w[name external_label real_amount_value real_amount_unit created_at],
             sample_analyses: [],
-            wellplate: []
-          }
+            wellplate: [],
+          },
         }
       end
 
-      before do
-        CollectionsSample.create!(sample: sample_1, collection: c)
-        CollectionsSample.create!(sample: sample_2, collection: c)
-        CollectionsSample.create!(sample: sample_3, collection: c)
-        CollectionsSample.create!(sample: sample_4, collection: c)
-      end
-
-      context 'with V2000 molfile contains no dollar sign' do
-        before do
-          params[:uiState][:sample][:checkedIds] = [sample_1.id]
+      it 'returns correct sdf with different molfile format(ing)s' do
+        samples.each { |sample| CollectionsSample.create!(sample: sample, collection: c) }
+        # 0 with V2000 molfile that contains no dollar sign
+        # 1 with V2000 molfile that contains dollar sign' do
+        # 2 with V2000 molfile that contains ' do
+        # 3 with V3000 molfile that contains' do
+        samples.each.with_index do |sample, i|
+          params[:uiState][:sample][:checkedIds] = [sample.id]
           post(
             '/api/v1/reports/export_samples_from_selections',
             params: params.to_json,
-            headers: { 'CONTENT-TYPE' => 'application/json' }
+            headers: { 'CONTENT-TYPE' => 'application/json' },
           )
-        end
-
-        it 'returns correct sdf' do
 
           expect(response['Content-Type']).to eq('chemical/x-mdl-sdfile')
           expect(response['Content-Disposition']).to include('.sdf')
-          msdf = IO.read(Rails.root.join('spec', 'fixtures', 'mof_v2000_1.sdf'))
-          sdf = response.body
-          sdf = sdf.gsub(/<CREATED_AT>.+?</ms, '<')
-          msdf = msdf.gsub(/<CREATED_AT>.+?</ms, '<')
-          expect(sdf.squish).to eq(msdf.squish)
-        end
-      end
-
-      context 'with V2000 molfile contains dollar sign' do
-        before do
-          params[:uiState][:sample][:checkedIds] = [sample_2.id]
-          post(
-            '/api/v1/reports/export_samples_from_selections',
-            params: params.to_json,
-            headers: { 'CONTENT-TYPE' => 'application/json' }
-          )
-        end
-
-        it 'returns correct sdf' do
-          expect(response['Content-Type']).to eq('chemical/x-mdl-sdfile')
-          expect(response['Content-Disposition']).to include('.sdf')
-          msdf = IO.read(Rails.root.join('spec', 'fixtures', 'mof_v2000_2.sdf'))
-          sdf = response.body
-          sdf = sdf.gsub(/<CREATED_AT>.+?</ms, '<')
-          msdf = msdf.gsub(/<CREATED_AT>.+?</ms, '<')
-          expect(sdf.squish).to eq(msdf.squish)
-        end
-      end
-
-      context 'with V2000 molfile contains extart tags and no dollar sign' do
-        before do
-          params[:uiState][:sample][:checkedIds] = [sample_3.id]
-          post('/api/v1/reports/export_samples_from_selections',
-            params: params.to_json,
-            headers: { 'CONTENT-TYPE' => 'application/json' }
-          )
-        end
-
-        it 'returns correct sdf' do
-          expect(response['Content-Type']).to eq('chemical/x-mdl-sdfile')
-          expect(response['Content-Disposition']).to include('.sdf')
-          msdf = IO.read(Rails.root.join('spec', 'fixtures', 'mof_v2000_3.sdf'))
-          sdf = response.body
-          sdf = sdf.gsub(/<CREATED_AT>.+?</ms, '<')
-          msdf = msdf.gsub(/<CREATED_AT>.+?</ms, '<')
-          expect(sdf.squish).to eq(msdf.squish)
-        end
-      end
-
-      context 'with V3000 molfile' do
-        before do
-          params[:uiState][:sample][:checkedIds] = [sample_4.id]
-          post('/api/v1/reports/export_samples_from_selections',
-            params: params.to_json,
-            headers: { 'CONTENT-TYPE' => 'application/json' }
-          )
-        end
-
-        it 'returns correct sdf' do
-          expect(response['Content-Type']).to eq('chemical/x-mdl-sdfile')
-          expect(response['Content-Disposition']).to include('.sdf')
-          msdf = IO.read(Rails.root.join('spec', 'fixtures', 'mof_v3000_1.sdf'))
-          sdf = response.body
-          sdf = sdf.gsub(/<CREATED_AT>.+?</ms, '<')
-          msdf = msdf.gsub(/<CREATED_AT>.+?</ms, '<')
+          msdf = molfiles[i].gsub(/<CREATED_AT>.+?</ms, '<')
+          sdf = response.body.gsub(/<CREATED_AT>.+?</ms, '<')
           expect(sdf.squish).to eq(msdf.squish)
         end
       end
     end
 
     describe 'POST /api/v1/reports/export_samples_from_selections' do
-      let(:c)        { create(:collection, user_id: user.id) }
-      let(:sample_1) { create(:sample) }
-      let(:sample_2) { create(:sample) }
+      let(:c) { create(:collection, user_id: user.id) }
+      let(:sample1) { create(:sample) }
+      let(:sample2) { create(:sample) }
 
-      before do
-        CollectionsSample.create!(sample: sample_1, collection: c)
-        CollectionsSample.create!(sample: sample_2, collection: c)
-      end
-
-      before do
+      it 'returns a header with excel-type' do
+        CollectionsSample.create!(sample: sample1, collection: c)
+        CollectionsSample.create!(sample: sample2, collection: c)
         params = {
           exportType: 1,
           uiState: {
             sample: {
-              checkedIds: [sample_1.id],
+              checkedIds: [sample1.id],
               uncheckedIds: [],
-              checkedAll: false
+              checkedAll: false,
             },
             reaction: {
               checkedIds: [],
               uncheckedIds: [],
-              checkedAll: false
+              checkedAll: false,
             },
             wellplate: {
               checkedIds: [],
               uncheckedIds: [],
-              checkedAll: false
+              checkedAll: false,
             },
             currentCollection: c.id,
-            isSync: false
+            isSync: false,
           },
           columns: {
             sample: %w[
@@ -231,20 +163,18 @@ describe Chemotion::ReportAPI do
               target_amount_unit
               target_amount_value
               updated_at
-            ]
-          }
+            ],
+          },
         }
         post(
-           '/api/v1/reports/export_samples_from_selections',
-           params: params, as: :json,
-           headers: {
-             'HTTP-ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
-             'CONTENT-TYPE' => 'application/json'
-           }
+          '/api/v1/reports/export_samples_from_selections',
+          params: params, as: :json,
+          headers: {
+            'HTTP-ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
+            'CONTENT-TYPE' => 'application/json',
+          }
         )
-      end
 
-      it 'returns a header with excel-type' do
         expect(response['Content-Type']).to eq(excel_mime_type)
         expect(response['Content-Disposition']).to include('.xlsx')
       end
@@ -255,13 +185,11 @@ describe Chemotion::ReportAPI do
       let!(:c2) do
         create(
           :collection,
-          user_id: user.id + 1, is_shared: true, sample_detail_level: 0
+          user_id: user.id + 1, is_shared: true, sample_detail_level: 0,
         )
       end
 
-      let!(:mf) do
-        IO.read(Rails.root.join('spec', 'fixtures', 'test_2.mol'))
-      end
+      let!(:mf) { build(:molfile, type: 'test_2') }
 
       let!(:s0) do
         build(:sample, created_by: user.id, molfile: mf, collections: [c1])
@@ -283,11 +211,11 @@ describe Chemotion::ReportAPI do
         build(:sample, created_by: user.id, molfile: mf, collections: [c1])
       end
 
-      let(:smi_0) { s0.molecule.cano_smiles }
-      let(:smi_1) { s1.molecule.cano_smiles }
-      let(:smi_2) { s2.molecule.cano_smiles }
-      let(:smi_3) { s3.molecule.cano_smiles }
-      let(:smi_4) { s4.molecule.cano_smiles }
+      let(:smi0) { s0.molecule.cano_smiles }
+      let(:smi1) { s1.molecule.cano_smiles }
+      let(:smi2) { s2.molecule.cano_smiles }
+      let(:smi3) { s3.molecule.cano_smiles }
+      let(:smi4) { s4.molecule.cano_smiles }
       let!(:rxn) do
         build(:valid_reaction,
               name: 'Reaction 0',
@@ -305,22 +233,22 @@ describe Chemotion::ReportAPI do
             sample: {
               checkedIds: [],
               uncheckedIds: [],
-              checkedAll: false
+              checkedAll: false,
             },
             reaction: {
               checkedIds: [rxn.id],
               uncheckedIds: [],
-              checkedAll: false
+              checkedAll: false,
             },
             wellplate: {
               checkedIds: [],
               uncheckedIds: [],
-              checkedAll: false
+              checkedAll: false,
             },
             currentCollection: c1.id,
-            isSync: false
+            isSync: false,
           },
-          columns: {}
+          columns: {},
         }
       end
 
@@ -343,66 +271,63 @@ describe Chemotion::ReportAPI do
 
       it 'returns a txt file with reaction smiles' do
         post('/api/v1/reports/export_reactions_from_selections',
-          params: params.to_json,
-          headers: {
-            'HTTP_ACCEPT' => 'text/plain, text/csv',
-            'CONTENT-TYPE' => 'application/json'
-          }
-        )
+             params: params.to_json,
+             headers: {
+               'HTTP_ACCEPT' => 'text/plain, text/csv',
+               'CONTENT-TYPE' => 'application/json',
+             })
         expect(response['Content-Type']).to eq('text/csv')
       end
 
       describe 'ReportHelpers' do
         it 'concats the smiles SM>>P' do
           expect(subj.r_smiles_0(result.first.second)).to eq(
-            [smi_0, smi_1].join('.') + '>>' + smi_4
+            "#{[smi0, smi1].join('.')}>>#{smi4}",
           )
         end
 
         it 'concats the smiles SM.R>>P' do
           expect(subj.r_smiles_1(result.first.second)).to eq(
-            [smi_0, smi_1, smi_2].join('.') + '>>' + smi_4
+            "#{[smi0, smi1, smi2].join('.')}>>#{smi4}",
           )
         end
 
         it 'concats the smiles SM.R.S>>P' do
           expect(subj.r_smiles_2(result.first.second)).to eq(
-            [smi_0, smi_1, smi_2, smi_3].join('.') + '>>' + smi_4
+            "#{[smi0, smi1, smi2, smi3].join('.')}>>#{smi4}",
           )
         end
 
         it 'concats the smiles SM>R>P' do
           expect(subj.r_smiles_3(result.first.second)).to eq(
-            [smi_0, smi_1].join('.') + '>' + smi_2 \
-            + '>' + smi_4
+            "#{[smi0, smi1].join('.')}>#{smi2}>#{smi4}",
           )
         end
 
         it 'concats the smiles SM>R.S>P' do
           expect(subj.r_smiles_4(result.first.second)).to eq(
-            [smi_0, smi_1].join('.') + '>' + [smi_2, smi_3].join('.') \
-            + '>' + smi_4
+            "#{[smi0, smi1].join('.')}>#{[smi2, smi3].join('.')}>#{smi4}",
           )
         end
 
-        context 'user owned reaction, ' do
+        context 'with user owned reaction,' do
           it 'queries the cano_smiles from reaction associated samples' do
             expect(result.fetch(rxn.id.to_s)).to eq(
-              '0' => [smi_0, smi_1],
-              '1' => [smi_2],
-              '2' => [smi_3],
-              '3' => [smi_4]
+              '0' => [smi0, smi1],
+              '1' => [smi2],
+              '2' => [smi3],
+              '3' => [smi4],
             )
           end
         end
 
-        context 'shared reaction,' do
+        context 'with shared reaction,' do
           it 'returns * as smiles for hidden structure' do
             expect(result_for_shared.fetch(rxn.id.to_s)).to eq(
               '0' => ['*', '*'],
               '1' => ['*'],
               '2' => ['*'],
-              '3' => ['*']
+              '3' => ['*'],
             )
           end
         end
@@ -417,7 +342,7 @@ describe Chemotion::ReportAPI do
       it 'return all reports of the user' do
         archives = JSON.parse(response.body)['archives']
         expect(archives.count).to eq(3)
-        expect(archives.map { |a| a['id'] }).to include(rp1.id, rp2.id, rp3.id)
+        expect(archives.pluck('id')).to include(rp1.id, rp2.id, rp3.id)
       end
     end
 
@@ -438,7 +363,7 @@ describe Chemotion::ReportAPI do
       #  let!(:a_mine) { user.reports.create }
       #  let!(:a_others) { other.reports.create }
 
-      context 'my archive' do
+      context 'with my archive' do
         before do
           delete "/api/v1/archives/#{rp1.id}"
         end
@@ -450,7 +375,7 @@ describe Chemotion::ReportAPI do
         end
       end
 
-      context 'other\'s archive' do
+      context 'with other\'s archive' do
         before do
           delete "/api/v1/archives/#{rp_others.id}"
         end
@@ -464,57 +389,57 @@ describe Chemotion::ReportAPI do
     end
 
     describe 'POST /api/v1/reports' do
-      let(:fileName) { 'ELN' }
+      let(:filename) { 'ELN' }
       let(:params) do
         {
           objTags: [
-            { id: r1.id, type: "reaction" },
-            { id: r2.id, type: "reaction" }
+            { id: r1.id, type: 'reaction' },
+            { id: r2.id, type: 'reaction' },
           ],
           splSettings: [
             { text: 'diagram', checked: true },
-            { text: 'analyses', checked: true }
+            { text: 'analyses', checked: true },
           ],
           rxnSettings: [
             { text: 'diagram', checked: true },
-            { text: 'material' ,checked: true }
+            { text: 'material', checked: true },
           ],
           siRxnSettings: [
-            { text: "Name", checked: true },
-            { text: "CAS", checked: true }
+            { text: 'Name', checked: true },
+            { text: 'CAS', checked: true },
           ],
           configs: [
-            { text: "page_break", checked: true },
-            { text: "whole_diagram", checked: true }
+            { text: 'page_break', checked: true },
+            { text: 'whole_diagram', checked: true },
           ],
           imgFormat: 'png',
-          fileName: fileName,
+          fileName: filename,
           molSerials: [
-            { mol: { id: 1, svgPath: "1a.svg", sumFormula: "C6H6", iupacName: "benzene" }, value: "1a" }
+            { mol: { id: 1, svgPath: '1a.svg', sumFormula: 'C6H6', iupacName: 'benzene' }, value: '1a' },
           ],
           prdAtts: [
             {
               id: 2,
               attachable_id: 121,
-              attachable_type: "Report",
-              filename: "kit_logo.png",
-              identifier: "123",
-              checksum: "456",
-              storage: "local",
+              attachable_type: 'Report',
+              filename: 'kit_logo.png',
+              identifier: '123',
+              checksum: '456',
+              storage: 'local',
               created_by: 1,
               created_for: 1,
               version: 0,
-              created_at: "2018-01-03T15:24:19.751Z",
-              updated_at: "2018-01-03T15:24:28.686Z",
-              content_type: "image/png",
-              bucket: "1",
-              key: "987",
+              created_at: '2018-01-03T15:24:19.751Z',
+              updated_at: '2018-01-03T15:24:28.686Z',
+              content_type: 'image/png',
+              bucket: '1',
+              key: '987',
               thumb: true,
               folder: '',
-              kind: "GCMS"
-            }
+              kind: 'GCMS',
+            },
           ],
-          templateId: 1
+          templateId: 1,
         }
       end
 
@@ -522,27 +447,33 @@ describe Chemotion::ReportAPI do
         params[:template] = 'standard'
         post '/api/v1/reports', params: params, as: :json
 
-        expect(response.body).to include(fileName)
+        expect(response.body).to include(filename)
       end
 
       it 'returns a created -supporting_information- report' do
         params[:template] = 'supporting_information'
         post '/api/v1/reports', params: params, as: :json
-        expect(response.body).to include(fileName)
+        expect(response.body).to include(filename)
       end
     end
 
     describe 'GET /api/v1/download_report/file' do
-      before do
-        params = { id: rp1.id, ext: ext }
-        get '/api/v1/download_report/file', params: params
+      let!(:report) do
+        create(
+          :attachment,
+          filename: "#{rp1.file_name}.#{ext}",
+          attachable_id: rp1.id,
+          attachable_type: 'Report',
+          content_type: docx_mime_type,
+        )
+        rp1
       end
 
       it 'returns a header with ext' do
-        expect(response['Content-Disposition']).to(
-          include(rp1.file_name + '.' + ext)
-        )
+        get '/api/v1/download_report/file', params: { id: report.id, ext: ext }
+        expect(response['Content-Disposition']).to include("#{report.file_name}.#{ext}")
       end
     end
   end
 end
+# rubocop:enable Rspec/MultipleMemoizedHelpers, Rspec/NestedGroups, RSpec/IndexedLet

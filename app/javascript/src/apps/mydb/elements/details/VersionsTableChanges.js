@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import VersionsTableFields from 'src/apps/mydb/elements/details/VersionsTableFields';
 import { Alert, Button, ButtonGroup } from 'react-bootstrap';
 import { AgGridReact } from 'ag-grid-react';
+import moment from 'moment';
 
 function VersionsTableChanges(props) {
   const {
@@ -13,7 +14,9 @@ function VersionsTableChanges(props) {
     return '';
   }
 
-  const { id, changes } = data;
+  const {
+    changes, createdAt, userName
+  } = data;
   const revertibleFields = () => {
     if (isEdited) return -1;
 
@@ -34,7 +37,11 @@ function VersionsTableChanges(props) {
     return filteredFields.length;
   };
 
-  const change = changes.map(({ name, fields }, index) => (
+  const change = changes.sort((a, b) => {
+    const nameA = a.name[0] || '';
+    const nameB = b.name[0] || '';
+    return nameA.localeCompare(nameB, undefined, { numeric: true });
+  }).map(({ name, fields }, index) => (
     // eslint-disable-next-line react/no-array-index-key
     <React.Fragment key={index}>
       {name.map((item) => (
@@ -88,7 +95,9 @@ function VersionsTableChanges(props) {
 
   return (
     <>
-      <h2>{`# ${id}`}</h2>
+      <h2>
+        {`# ${moment(createdAt).format('YYYY-MM-DD HH:mm:ss')}${userName ? ` by ${userName}` : ''}`}
+      </h2>
       <ol className="history-table-breadcrumb">
         {change}
       </ol>

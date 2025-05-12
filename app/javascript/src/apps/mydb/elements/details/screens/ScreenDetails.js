@@ -402,11 +402,11 @@ export default class ScreenDetails extends Component {
           />
         </Tab>
       ),
-      versions: (
+      history: (
         <Tab
-          eventKey="versioning"
-          title="Versions"
-          key={`Versions_Reaction_${screen.id.toString()}`}
+          eventKey="history"
+          title="History"
+          key={`History_Reaction_${screen.id.toString()}`}
         >
           <VersionsTable
             type="screens"

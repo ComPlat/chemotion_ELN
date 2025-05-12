@@ -15,7 +15,7 @@ Rails.application.configure do
   # Configure public file server for tests with Cache-Control for performance.
   config.public_file_server.enabled = true
   config.public_file_server.headers = {
-    'Cache-Control' => "public, max-age=#{1.hour.to_i}"
+    'Cache-Control' => "public, max-age=#{1.hour.to_i}",
   }
 
   # Show full error reports and disable caching.
@@ -30,6 +30,11 @@ Rails.application.configure do
 
   # Store uploaded files on the local file system in a temporary directory
   # config.active_storage.service = :test
+
+  # Using sql schema format to ensure additional schemas can be found
+  # Alternately, we should be able to set 'SET search_path TO public,rdkit;' with schema_search_path
+  # https://api.rubyonrails.org/v6.1/classes/ActiveRecord/ConnectionAdapters/PostgreSQL/SchemaStatements.html#method-i-schema_search_path # rubocop:disable Layout/LineLength
+  config.active_record.schema_format = :sql
 
   # config.action_mailer.perform_caching = false
 

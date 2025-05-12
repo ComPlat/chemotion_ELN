@@ -27,8 +27,8 @@
 #
 # Indexes
 #
-#  index_molecules_on_deleted_at               (deleted_at)
-#  index_molecules_on_inchikey_and_is_partial  (inchikey,is_partial) UNIQUE
+#  index_molecules_on_deleted_at                           (deleted_at)
+#  index_molecules_on_formula_and_inchikey_and_is_partial  (inchikey,sum_formular,is_partial) UNIQUE
 #
 
 # rubocop:disable Metrics/ClassLength
@@ -54,8 +54,9 @@ class Molecule < ApplicationRecord
   after_create :create_molecule_names
   after_create :get_lcss
   skip_callback :save, before: :sanitize_molfile, if: :skip_sanitize_molfile
+  before_destroy :deindex_inchikey
 
-  validates_uniqueness_of :inchikey, scope: :is_partial
+  # validates_uniqueness_of :inchikey, scope: :is_partial
 
   # scope for suggestions
   scope :by_iupac_name, -> (query) {
@@ -86,23 +87,30 @@ class Molecule < ApplicationRecord
     molecule = Molecule.find_or_create_by(inchikey: 'DUMMY')
   end
 
+  # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/AbcSize
   def self.find_or_create_by_molfile(molfile, **babel_info)
     unless babel_info && babel_info[:inchikey]
       babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
     end
     inchikey = babel_info[:inchikey]
-    return unless inchikey.present?
+    return if inchikey.blank?
+
     is_partial = babel_info[:is_partial]
     partial_molfile = babel_info[:molfile]
-    molecule = Molecule.find_or_create_by(inchikey: inchikey, is_partial: is_partial) do |molecule|
+    # NB: if the molfile has a R# group for solid support (is_partial) then
+    #   it has been replaced by C befor getting babel_info (which would have added a fictif CH3 group)
+    formula = babel_info[:formula]
+    formula = SumFormula.new(formula).remove_fragment('CH3').valid.to_s if is_partial
+    molecule = Molecule.find_by(inchikey: inchikey, is_partial: is_partial, sum_formular: formula)
+    molecule ||= Molecule.create(inchikey: inchikey, is_partial: is_partial, sum_formular: formula) do |mol|
       pubchem_info = Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
-      molecule.molfile = is_partial && partial_molfile || molfile
-      molecule.assign_molecule_data(babel_info, pubchem_info)
+      mol.molfile = (is_partial && partial_molfile) || molfile
+      mol.assign_molecule_data(babel_info, pubchem_info)
     end
-
     molecule.ob_log = babel_info[:ob_log]
     molecule
   end
+  # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/AbcSize
 
   def self.find_or_create_by_cano_smiles(cano_smiles)
     molfile = Chemotion::OpenBabelService.molfile_from_cano_smiles(cano_smiles)
@@ -180,7 +188,7 @@ class Molecule < ApplicationRecord
     # NB: successiv gsub seems to be faster than a single gsub with a regexp with multiple matches
     File.write(
       full_svg_path(svg_file_name),
-      Chemotion::Sanitizer.scrub_svg(svg_data, encoding: 'UTF-8'),
+      Chemotion::Sanitizer.scrub_svg(svg_data, encoding: 'UTF-8', remap_glyph_ids: true),
     )
 
     self.molecule_svg_file = svg_file_name
@@ -197,17 +205,7 @@ class Molecule < ApplicationRecord
     atomic_weight_c = Chemotion::PeriodicTable.get_atomic_weight 'C'
     self.molecular_weight -= atomic_weight_c # remove CH3
     self.exact_molecular_weight -= atomic_weight_c # remove CH3
-
-    fdata = Chemotion::Calculations.parse_formula self.sum_formular, true
-    self.sum_formular = fdata.map do |key, value|
-      if value == 0
-        ''
-      elsif value == 1
-        key
-      else
-        key + value.to_s
-      end
-    end.join
+    self.sum_formular = SumFormula.new(sum_formular).remove_fragment('CH3').valid.to_s
   end
 
   def load_cas
@@ -272,7 +270,14 @@ class Molecule < ApplicationRecord
     file_path&.file? ? file_path : nil
   end
 
-private
+  private
+
+  # This frees the inchikey value from the index
+  def deindex_inchikey
+    return if inchikey.starts_with?("#{id}_")
+
+    update_columns(inchikey: "#{id}_#{inchikey}") # rubocop:disable Rails/SkipsModelValidations
+  end
 
   # TODO: check that molecules are OK and remove this method. fix is in editor
   def sanitize_molfile
