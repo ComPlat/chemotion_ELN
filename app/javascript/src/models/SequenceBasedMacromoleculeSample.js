@@ -473,6 +473,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
         tissue: '',
         uniprot_derivation: '',
         uniprot_source: '',
+        attachments: [],
 
         post_translational_modifications: {
           acetylation_enabled: false,
@@ -585,6 +586,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
 
         post_translational_modification_attributes: this.sequence_based_macromolecule.post_translational_modifications,
         protein_sequence_modification_attributes: this.sequence_based_macromolecule.protein_sequence_modifications,
+        attachments: this.sequence_based_macromolecule.attachments,
       },
     };
     return serialized;

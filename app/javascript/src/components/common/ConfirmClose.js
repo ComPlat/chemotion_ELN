@@ -18,15 +18,17 @@ export default class ConfirmClose extends Component {
     this.onClickButton = this.onClickButton.bind(this);
   }
 
-  closeElement(e) {
-    const { el } = this.props;
+  closeByContextType(el) {
+    if (el && el.type == 'device_description') {
+      this.context.deviceDescriptions.removeFromOpenDeviceDescriptions(el);
+    }
     if (el && el.type == 'sequence_based_macromolecule_sample') {
       this.context.sequenceBasedMacromoleculeSamples.removeFromOpenSequenceBasedMacromoleculeSamples(el);
     }
-    DetailActions.confirmDelete(e);
   }
 
   onClickButton(el) {
+    this.closeByContextType(el);
     this.setState(
       prevState => ({ ...prevState, showTooltip: !prevState.showTooltip }),
       () => DetailActions.close(el, this.props.forceClose)
@@ -35,9 +37,7 @@ export default class ConfirmClose extends Component {
 
   closeElement(e) {
     const { el } = this.props;
-    if (el && el.type == 'device_description') {
-      this.context.deviceDescriptions.removeFromOpenDeviceDescriptions(el);
-    }
+    this.closeByContextType(el);
     DetailActions.confirmDelete(e);
   }
 

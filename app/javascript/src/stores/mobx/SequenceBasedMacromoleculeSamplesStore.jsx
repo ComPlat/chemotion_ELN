@@ -137,10 +137,19 @@ export const SequenceBasedMacromoleculeSamplesStore = types
       openSequenceBasedMacromoleculeSamples[index] = sequence_based_macromolecule_sample;
       self.open_sequence_based_macromolecule_samples = openSequenceBasedMacromoleculeSamples;
     },
-    removeFromOpenSequenceBasedMacromolecules(sequence_based_macromolecule_sample) {
+    removeFromOpenSequenceBasedMacromoleculeSamples(sequence_based_macromolecule_sample) {
       const openSequenceBasedMacromoleculeSamples =
         self.open_sequence_based_macromolecule_samples.filter((s) => { return s.id !== sequence_based_macromolecule_sample.id });
+
       self.open_sequence_based_macromolecule_samples = openSequenceBasedMacromoleculeSamples;
+
+      let contents = { ...self.toggable_contents };
+      Object.keys(contents).map((key) => {
+        if (key.startsWith(sequence_based_macromolecule_sample.id)) {
+          delete contents[key];
+        }
+      });
+      self.toggable_contents = contents;
     },
     setSbmmByResult(result, primary_accession) {
       let sequenceBasedMacromoleculeSample = { ...self.sequence_based_macromolecule_sample };
@@ -278,11 +287,18 @@ export const SequenceBasedMacromoleculeSamplesStore = types
     },
     changeAttachment(index, key, value, initial = false) {
       let sequenceBasedMacromoleculeSample = { ...self.sequence_based_macromolecule_sample };
-      let attachment = { ...sequence_based_macromolecule_sample.attachments[index] };
+      let attachment = { ...self.sequence_based_macromolecule_sample.attachments[index] };
       attachment[key] = value;
       sequenceBasedMacromoleculeSample.attachments[index] = attachment;
       self.setFilteredAttachments(sequenceBasedMacromoleculeSample.attachments);
-      self.setSequenceBasedMacromolecule(sequenceBasedMacromoleculeSample, initial);
+      self.setSequenceBasedMacromoleculeSample(sequenceBasedMacromoleculeSample, initial);
+    },
+    changeSBMMAttachment(index, key, value, initial = false) {
+      let sequenceBasedMacromoleculeSample = { ...self.sequence_based_macromolecule_sample };
+      let attachment = { ...self.sequence_based_macromolecule_sample.sequence_based_macromolecule.attachments[index] };
+      attachment[key] = value;
+      sequenceBasedMacromoleculeSample.sequence_based_macromolecule.attachments[index] = attachment;
+      self.setSequenceBasedMacromoleculeSample(sequenceBasedMacromoleculeSample, initial);
     },
     openSearchResult() {
       self.show_search_result = true;
@@ -336,6 +352,11 @@ export const SequenceBasedMacromoleculeSamplesStore = types
 
       self.error_messages = errorMessages;
       return Object.keys(self.error_messages).length < 1 ? true : false;
+    },
+    clearStructureErrorMessages(id) {
+      let errorMessages = { ...self.error_messages };
+      delete errorMessages[`${id}-structure`];
+      self.setErrorMessages(errorMessages)
     },
     setErrorMessages(values) {
       self.error_messages = values;
