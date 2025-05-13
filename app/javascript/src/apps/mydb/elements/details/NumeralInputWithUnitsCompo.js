@@ -194,14 +194,14 @@ export default class NumeralInputWithUnitsCompo extends Component {
                 <Tooltip id="info-total-volume">
                   <div>
                     <p className="mb-2">
-                      This represents the total volume of the sample itself.
+                      It is only a value given manually, i.e. volume by definition — not (re)calculated.
                     </p>
                     <p className="mb-2">
-                      It is recalculated when the attributes of a component with a locked total concentration are
-                      modified, or when the total concentration or the amount (in mol) of a component changes.
+                      Recalculation occurs only when the attributes of a component with a locked total concentration are
+                      modified.
                     </p>
                     <a
-                      href="https://www.chemotion.net/docs/eln/ui/elements/samples/mixtures#total-volume"
+                      href="https://www.chemotion.net/docs/eln/ui/elements/samples/mixtures#-total-volume-and-solvent-addition"
                       target="_blank"
                       rel="noopener noreferrer"
                     >
