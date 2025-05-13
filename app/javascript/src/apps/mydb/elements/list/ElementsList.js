@@ -1,7 +1,6 @@
 import Immutable from 'immutable';
 import React from 'react';
 import { Tabs, Tab, Tooltip, OverlayTrigger, Button } from 'react-bootstrap';
-import KeyboardActions from 'src/stores/alt/actions/KeyboardActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -114,10 +113,6 @@ export default class ElementsList extends React.Component {
 
     if (currentTab < 0) currentTab = 0;
 
-    if (typeof currentType !== 'undefined' && currentType != null) {
-      KeyboardActions.contextChange.defer(currentType);
-    }
-
     this.setState({
       genericEls: state.genericEls || [],
       currentTab,
@@ -182,15 +177,12 @@ export default class ElementsList extends React.Component {
     const { page } = uiState[type];
 
     UIActions.setPagination({ type, page });
-
-    KeyboardActions.contextChange(type);
   }
 
   render() {
     const {
       visible, hidden, totalCheckedElements, totalElements, currentTab
     } = this.state;
-    const { overview } = this.props;
 
     const constEls = Immutable.Set([
       'sample',
@@ -243,7 +235,6 @@ export default class ElementsList extends React.Component {
           className={`elements-list-tab-${value}s`}
         >
           <ElementsTable
-            overview={overview}
             type={value}
             genericEl={genericEl}
           />
@@ -281,7 +272,3 @@ export default class ElementsList extends React.Component {
     );
   }
 }
-
-ElementsList.propTypes = {
-  overview: PropTypes.bool.isRequired,
-};

@@ -37,15 +37,12 @@ export default class Elements extends Component {
   render() {
     const { currentElement } = this.state;
     const hasCurrentElement = currentElement !== null;
-
     const listWidth = hasCurrentElement ? 5 : 12;
 
     return (
       <Row className='w-100'>
         <Col xs={listWidth}>
-          <ElementsList
-            overview={!hasCurrentElement}
-          />
+          <ElementsList />
         </Col>
         {hasCurrentElement && (
           <Col xs={7}>

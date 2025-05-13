@@ -1,50 +1,46 @@
 /* eslint-disable camelcase */
 import React from 'react';
-import { List } from 'immutable';
 
 import {
   Pagination, Form, InputGroup, Tooltip, OverlayTrigger
 } from 'react-bootstrap';
 import DatePicker from 'react-datepicker';
 import deepEqual from 'deep-equal';
+import Aviator from 'aviator';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
+import { elementShowOrNew } from 'src/utilities/routesUtils';
 
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import ElementAllCheckbox from 'src/apps/mydb/elements/list/ElementAllCheckbox';
 import ElementsTableEntries from 'src/apps/mydb/elements/list/ElementsTableEntries';
-import ElementsTableSampleEntries from 'src/apps/mydb/elements/list/ElementsTableSampleEntries';
+import SampleGroupContainer from 'src/apps/mydb/elements/list/sample/SampleGroupContainer';
 import { SearchUserLabels } from 'src/components/UserLabels';
 
 import UserStore from 'src/stores/alt/stores/UserStore';
 import ElementsTableGroupedEntries from 'src/apps/mydb/elements/list/ElementsTableGroupedEntries';
 import { Select } from 'src/components/common/Select';
 import PropTypes from 'prop-types';
-import CellLineGroup from 'src/models/cellLine/CellLineGroup';
 import CellLineContainer from 'src/apps/mydb/elements/list/cellLine/CellLineContainer';
 import ChevronIcon from 'src/components/common/ChevronIcon';
 import DeviceDescriptionList from 'src/apps/mydb/elements/list/deviceDescriptions/DeviceDescriptionList';
 import DeviceDescriptionListHeader from 'src/apps/mydb/elements/list/deviceDescriptions/DeviceDescriptionListHeader';
-import { getDisplayedMoleculeGroup, getMoleculeGroupsShown } from 'src/utilities/SampleUtils'
 
 export default class ElementsTable extends React.Component {
   constructor(props) {
     super(props);
     this.elementRef = React.createRef();
 
+    const { type } = props;
+    const { groupCollapse } = UIStore.getState();
+
     this.state = {
       elements: [],
-      currentElement: null,
-      ui: {
-        checkedAll: false,
-        checkedIds: List(),
-        uncheckedIds: List(),
-      },
-      collapseAll: false,
-      moleculeGroupsShown: [],
+      ui: {},
+      isGroupBaseCollapsed: groupCollapse[type]?.baseState === 'collapsed',
       moleculeSort: false,
       searchResult: false,
       productOnly: false,
@@ -126,9 +122,15 @@ export default class ElementsTable extends React.Component {
     if (typeof state[type] === 'undefined' || state[type] === null) {
       return;
     }
-    const { checkedIds, uncheckedIds, checkedAll } = state[type];
     const {
-      filterCreatedAt, fromDate, toDate, userLabel, number_of_results, currentSearchByID, productOnly
+      filterCreatedAt,
+      fromDate,
+      toDate,
+      userLabel,
+      number_of_results,
+      currentSearchByID,
+      productOnly,
+      groupCollapse,
     } = state;
 
     // check if element details of any type are open at the moment
@@ -139,7 +141,7 @@ export default class ElementsTable extends React.Component {
 
     const { currentStateProductOnly, searchResult } = this.state;
     const stateChange = (
-      checkedIds || uncheckedIds || checkedAll || currentId || filterCreatedAt
+      currentId || filterCreatedAt
       || fromDate || toDate || userLabel || productOnly !== currentStateProductOnly
       || isSearchResult !== searchResult
     );
@@ -149,15 +151,13 @@ export default class ElementsTable extends React.Component {
       this.setState({
         filterCreatedAt,
         ui: {
-          checkedIds,
-          uncheckedIds,
-          checkedAll,
           currentId,
           number_of_results,
           fromDate,
           toDate,
           userLabel,
         },
+        isGroupBaseCollapsed: groupCollapse[type]?.baseState === 'collapsed',
         productOnly,
         searchResult: isSearchResult,
         moleculeSort: moleculeSort
@@ -170,19 +170,14 @@ export default class ElementsTable extends React.Component {
     const elementsState = (state && state.elements && state.elements[`${type}s`]) || {};
     const { elements, page, pages } = elementsState;
 
-    let currentElement;
-    if (!state.currentElement || state.currentElement.type === type) {
-      const { currentElement: stateCurrentElement } = state;
-      currentElement = stateCurrentElement;
+    const { elements: stateElements } = this.state;
+    if (elements && !deepEqual(elements, stateElements)) {
+      this.setState({
+        page,
+        pages,
+        elements,
+      });
     }
-
-    const { elements: stateElements, currentElement: stateCurrentElement } = this.state;
-    const elementsDidChange = elements && !deepEqual(elements, stateElements);
-    const currentElementDidChange = !deepEqual(currentElement, stateCurrentElement);
-
-    const nextState = { page, pages, currentElement };
-    if (elementsDidChange) { nextState.elements = elements; }
-    if (elementsDidChange || currentElementDidChange) { this.setState(nextState); }
   }
 
   setUserLabel(label) {
@@ -200,20 +195,16 @@ export default class ElementsTable extends React.Component {
     if (toDate !== date) UIActions.setToDate(date);
   }
 
-  changeCollapse = (collapseAll, childPropName, childPropValue) => {
-    this.setState({
-        collapseAll: !collapseAll,
-        ...(childPropName ? { [childPropName]: childPropValue } : {})
-    });
-  };
-
   changeSampleSort = () => {
     let { moleculeSort } = this.state;
     moleculeSort = !moleculeSort;
 
     this.setState({
-      moleculeSort
-    }, () => ElementActions.changeSorting(moleculeSort));
+      moleculeSort,
+    }, () => {
+      ElementActions.changeSorting(moleculeSort);
+      UIActions.resetGroupCollapse({ type: 'sample' });
+    });
   };
 
   updateFilterAndUserProfile = (elementsSort, sortDirection, elementsGroup) => {
@@ -240,17 +231,20 @@ export default class ElementsTable extends React.Component {
   };
 
   changeElementsGroup = ({ value: elementsGroup }) => {
+    const { type } = this.props;
     const { elementsSort, sortDirection } = this.state;
 
     this.setState({
       elementsGroup,
       elementsSort,
     }, () => {
+      UIActions.resetGroupCollapse({ type });
       this.updateFilterAndUserProfile(elementsSort, sortDirection, elementsGroup);
     });
   };
 
   changeElementsSort = () => {
+    const { type } = this.props;
     const { elementsGroup, sortDirection } = this.state;
     let { elementsSort } = this.state;
     elementsSort = !elementsSort;
@@ -258,38 +252,37 @@ export default class ElementsTable extends React.Component {
     this.setState({
       elementsSort
     }, () => {
+      UIActions.resetGroupCollapse({ type });
       this.updateFilterAndUserProfile(elementsSort, sortDirection, elementsGroup);
     });
   };
 
   changeSortDirection = () => {
+    const { type } = this.props;
     const { elementsGroup, elementsSort, sortDirection } = this.state;
     const newSortDirection = sortDirection === 'DESC' ? 'ASC' : 'DESC';
 
     this.setState(
       { sortDirection: newSortDirection },
       () => {
+        UIActions.resetGroupCollapse({ type });
         this.updateFilterAndUserProfile(elementsSort, newSortDirection, elementsGroup);
       }
     );
   };
 
-  getMoleculeGroupsShownFromElement = (elements, moleculeSort) => {
-    const displayedMoleculeGroup = getDisplayedMoleculeGroup(elements, moleculeSort);
-    const moleculeGroupsShown = getMoleculeGroupsShown(displayedMoleculeGroup);
-    return moleculeGroupsShown;
-  }
-
   collapseButton = () => {
-    const { collapseAll, elements, moleculeSort} = this.state;
+    const { isGroupBaseCollapsed } = this.state;
+    const { type } = this.props;
+
+    const onClick = isGroupBaseCollapsed
+      ? () => UIActions.expandAllGroups({ type })
+      : () => UIActions.collapseAllGroups({ type });
 
     return (
       <ChevronIcon
-        direction={collapseAll ? 'right' : 'down'}
-        onClick={() => this.setState((prevState) => ({
-          collapseAll: !prevState.collapseAll,
-         moleculeGroupsShown: !collapseAll ? [] : this.getMoleculeGroupsShownFromElement(elements, moleculeSort)
-         }))}
+        direction={isGroupBaseCollapsed ? 'right' : 'down'}
+        onClick={onClick}
         color="primary"
         className="fs-5"
         role="button"
@@ -565,7 +558,7 @@ export default class ElementsTable extends React.Component {
   renderHeader = () => {
     const { filterCreatedAt, ui, elements } = this.state;
     const { type, genericEl } = this.props;
-    const { checkedAll, checkedIds, fromDate, toDate, userLabel } = ui;
+    const { fromDate, toDate, userLabel } = ui;
 
     let typeSpecificHeader = null;
     if (type === 'sample') {
@@ -573,7 +566,14 @@ export default class ElementsTable extends React.Component {
     } else if (type === 'reaction') {
       typeSpecificHeader = this.renderReactionsHeader();
     } else if (type === 'device_description') {
-      typeSpecificHeader = <DeviceDescriptionListHeader elements={elements} />;
+      typeSpecificHeader = (
+        <>
+          <DeviceDescriptionListHeader />
+          {this.collapseButton()}
+        </>
+      );
+    } else if (type === 'cell_line') {
+      typeSpecificHeader = this.collapseButton();
     } else if (genericEl) {
       typeSpecificHeader = this.renderGenericElementsHeader();
     }
@@ -591,11 +591,7 @@ export default class ElementsTable extends React.Component {
     return (
       <div className="elements-table-header">
         <div className="select-all">
-          <ElementAllCheckbox
-            type={type}
-            checkedAll={checkedAll}
-            checkedIds={checkedIds}
-          />
+          <ElementAllCheckbox type={type} />
         </div>
         <div
           className="header-right d-flex gap-1 align-items-center"
@@ -639,65 +635,44 @@ export default class ElementsTable extends React.Component {
   renderEntries() {
     const {
       elements,
-      ui,
-      currentElement,
-      collapseAll,
       moleculeSort,
       elementsGroup,
-      moleculeGroupsShown
     } = this.state;
 
-    const { overview, type, genericEl } = this.props;
+    const { type, genericEl } = this.props;
     let elementsTableEntries;
 
     if (type === 'sample') {
       elementsTableEntries = (
-        <ElementsTableSampleEntries
-          collapseAll={collapseAll}
+        <SampleGroupContainer
           elements={elements}
-          currentElement={currentElement}
-          showDragColumn={!overview}
-          ui={ui}
           moleculeSort={moleculeSort}
-          onChangeCollapse={(collapseAll, childPropName, childPropValue) => this.changeCollapse(!collapseAll, childPropName, childPropValue)}
-          moleculeGroupsShown = {moleculeGroupsShown}
         />
       );
     } else if ((type === 'reaction' || genericEl) && elementsGroup !== 'none') {
       elementsTableEntries = (
         <ElementsTableGroupedEntries
-          collapseAll={collapseAll}
           elements={elements}
-          currentElement={currentElement}
-          showDragColumn={!overview}
-          ui={ui}
           elementsGroup={elementsGroup}
-          onChangeCollapse={(checked) => this.changeCollapse(!checked)}
-          genericEl={genericEl}
           type={type}
         />
       );
     } else if (type === 'cell_line') {
       elementsTableEntries = (
         <CellLineContainer
-          cellLineGroups={CellLineGroup.buildFromElements(elements)}
+          elements={elements}
         />
       );
     } else if (type === 'device_description') {
       elementsTableEntries = (
         <DeviceDescriptionList
           elements={elements}
-          currentElement={currentElement}
-          ui={ui}
         />
       );
     } else {
       elementsTableEntries = (
         <ElementsTableEntries
           elements={elements}
-          currentElement={currentElement}
-          showDragColumn={!overview}
-          ui={ui}
         />
       );
     }
@@ -728,7 +703,6 @@ ElementsTable.defaultProps = {
 };
 
 ElementsTable.propTypes = {
-  overview: PropTypes.bool.isRequired,
   type: PropTypes.string.isRequired,
   // eslint-disable-next-line react/forbid-prop-types
   genericEl: PropTypes.object,

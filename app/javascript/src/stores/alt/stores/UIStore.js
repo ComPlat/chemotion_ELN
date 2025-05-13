@@ -1,4 +1,4 @@
-import { List, fromJS } from 'immutable';
+import { List, Set, fromJS } from 'immutable';
 import alt from 'src/stores/alt/alt';
 
 import UIActions from 'src/stores/alt/actions/UIActions';
@@ -6,6 +6,11 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import ArrayUtils from 'src/utilities/ArrayUtils';
+
+const defaultGroupCollapse = {
+  baseState: 'expanded',
+  except: new Set(),
+};
 
 class UIStore {
   constructor() {
@@ -68,6 +73,7 @@ class UIStore {
         activeTab: 0,
         activeAnalysis: 0,
       },
+      groupCollapse: {},
       showPreviews: true,
       showAdvancedSearch: false,
       filterCreatedAt: true,
@@ -105,6 +111,10 @@ class UIStore {
       handleSelectElement: UIActions.selectElement,
       handleSetPagination: UIActions.setPagination,
       handleDeselectAllElements: UIActions.deselectAllElements,
+      handleResetGroupCollapse: UIActions.resetGroupCollapse,
+      handleExpandAllGroups: UIActions.expandAllGroups,
+      handleCollapseAllGroups: UIActions.collapseAllGroups,
+      handleToggleGroupCollapse: UIActions.toggleGroupCollapse,
       handleSetSearchSelection: UIActions.setSearchSelection,
       handleSetSearchById: UIActions.setSearchById,
       handleSelectCollectionWithoutUpdating:
@@ -174,9 +184,44 @@ class UIStore {
   }
 
   handleSelectTab(params = {}) {
-    let type = params.type || "sample"
-    let tabKey = params.tabKey || 0
+    const type = params.type || 'sample';
+    const tabKey = params.tabKey || 0;
     this.state[type].activeTab = tabKey;
+    this.handleResetGroupCollapse({ type });
+  }
+
+  handleResetGroupCollapse(params) {
+    if (typeof (params?.type) !== 'undefined') {
+      this.state.groupCollapse[params.type] = {
+        ...defaultGroupCollapse,
+      };
+    } else {
+      this.state.groupCollapse = {};
+    }
+  }
+
+  handleExpandAllGroups({ type }) {
+    this.state.groupCollapse[type] = {
+      baseState: 'expanded',
+      except: new Set(),
+    };
+  }
+
+  handleCollapseAllGroups({ type }) {
+    this.state.groupCollapse[type] = {
+      baseState: 'collapsed',
+      except: new Set(),
+    };
+  }
+
+  handleToggleGroupCollapse({ type, groupKey }) {
+    const groupCollapse = this.state.groupCollapse[type] ?? { ...defaultGroupCollapse };
+    this.state.groupCollapse[type] = {
+      ...groupCollapse,
+      except: groupCollapse.except.has(groupKey)
+        ? groupCollapse.except.delete(groupKey)
+        : groupCollapse.except.add(groupKey)
+    };
   }
 
   handleSelectActiveAnalysis(params = {}) {
