@@ -11,6 +11,7 @@ import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import ReactionsFetcher from 'src/fetchers/ReactionsFetcher';
 import WellplatesFetcher from 'src/fetchers/WellplatesFetcher';
 import CellLinesFetcher from 'src/fetchers/CellLinesFetcher';
+import VesselsFetcher from 'src/fetchers/VesselsFetcher';
 import CollectionsFetcher from 'src/fetchers/CollectionsFetcher';
 import ScreensFetcher from 'src/fetchers/ScreensFetcher';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
@@ -27,6 +28,7 @@ import Sample from 'src/models/Sample';
 import Reaction from 'src/models/Reaction';
 import Wellplate from 'src/models/Wellplate';
 import CellLine from 'src/models/cellLine/CellLine';
+import Vessel from 'src/models/vessel/Vessel';
 import Screen from 'src/models/Screen';
 import ResearchPlan from 'src/models/ResearchPlan';
 import DeviceDescription from 'src/models/DeviceDescription';
@@ -361,6 +363,17 @@ class ElementActions {
     };
   }
 
+  fetchVesselsByCollectionId(id, queryParams = {}, collectionIsSync = false) {
+    return (dispatch) => {
+      VesselsFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
   // -- Samples --
 
   fetchSampleById(id) {
@@ -483,7 +496,7 @@ class ElementActions {
 
   generateEmptyCellLine(collectionId, template) {
     const { currentUser } = UserStore.getState();
-    if (!currentUser) { return }
+    if (!currentUser) { return; }
 
     const cellLineSample = CellLine.buildEmpty(collectionId, `${currentUser.initials}-C${currentUser.cell_lines_count}`);
     if (template) {
@@ -816,7 +829,6 @@ class ElementActions {
     };
   }
 
-
   // -- Screens --
   addResearchPlanToScreen(screen_id, collection_id, afterComplete = () => {}) {
     return (dispatch) => {
@@ -830,7 +842,6 @@ class ElementActions {
   generateScreenFromClipboard(collection_id) {
     return collection_id;
   }
-
 
   fetchScreenById(id) {
     return (dispatch) => {
@@ -989,6 +1000,65 @@ class ElementActions {
       DeviceDescriptionFetcher.splitAsSubDeviceDescription(ui_state)
         .then((result) => {
           dispatch(ui_state.ui_state);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
+  // -- Vessels --
+
+  fetchVesselElById(vesselId) {
+    return (dispatch) => {
+      VesselsFetcher.fetchById(vesselId)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
+  fetchVesselTemplateById(vesselTemplateId, collectionId) {
+    return (dispatch) => {
+      VesselsFetcher.fetchVesselTemplateById(vesselTemplateId, collectionId)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
+  createVessel(params) {
+    return (dispatch) => {
+      const { currentUser } = UserStore.getState();
+      VesselsFetcher.create(params, currentUser)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
+  generateEmptyVessel(collectionId, template) {
+    const { currentUser } = UserStore.getState();
+    if (!currentUser) { return; }
+
+    const vesselInstance = Vessel.buildEmpty(collectionId);
+
+    if (template) {
+      vesselInstance.copyMaterialFrom(template);
+    }
+    return vesselInstance;
+  }
+
+  updateVessel(params) {
+    return (dispatch) => {
+      VesselsFetcher.update(params)
+        .then((result) => {
+          dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });

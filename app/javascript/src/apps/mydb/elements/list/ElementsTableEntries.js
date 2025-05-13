@@ -64,9 +64,9 @@ function reactionVariations(element) {
   return null;
 }
 
-function showDetails(element) {
+function showDetails(element, type) {
   const { currentCollection, isSync } = UIStore.getState();
-  const { id, type } = element;
+  const { id } = element;
   const uri = isSync
     ? `/scollection/${currentCollection.id}/${type}/${id}`
     : `/collection/${currentCollection.id}/${type}/${id}`;
@@ -283,9 +283,10 @@ export default class ElementsTableEntries extends Component {
     };
 
     const { showPreviews } = UIStore.getState();
+    const { type } = this.props;
     if (showPreviews && (element.type === 'reaction')) {
       return (
-        <td role="gridcell" style={svgContainerStyle} onClick={() => showDetails(element)}>
+        <td role="gridcell" style={svgContainerStyle} onClick={() => showDetails(element, type)}>
           <SVG src={element.svgPath} className={classNames} key={element.svgPath} />
         </td>
       );
@@ -293,7 +294,7 @@ export default class ElementsTableEntries extends Component {
     if (element.type === 'research_plan' || element.element_klass) {
       if (element.thumb_svg !== 'not available') {
         return (
-          <td role="gridcell" style={svgContainerStyle} onClick={() => showDetails(element)}>
+          <td role="gridcell" style={svgContainerStyle} onClick={() => showDetails(element, type)}>
             <img src={`data:image/png;base64,${element.thumb_svg}`} alt="" role="button" />
           </td>
         );
@@ -303,7 +304,7 @@ export default class ElementsTableEntries extends Component {
           role="gridcell"
           aria-label="Element"
           style={svgContainerStyle}
-          onClick={() => showDetails(element)}
+          onClick={() => showDetails(element, type)}
         />
       );
     }
@@ -313,14 +314,15 @@ export default class ElementsTableEntries extends Component {
         role="gridcell"
         aria-label="Element"
         style={{ display: 'none', cursor: 'pointer' }}
-        onClick={() => showDetails(element)}
+        onClick={() => showDetails(element, type)}
       />
     );
   }
 
   render() {
-    const { elements, showDragColumn } = this.props;
+    const { elements, showDragColumn, type } = this.props;
     const { keyboardElementIndex } = this.state;
+
 
     return (
       <Table className="elements" bordered hover style={{ borderTop: 0 }}>
@@ -349,7 +351,7 @@ export default class ElementsTableEntries extends Component {
                 </td>
                 <td
                   role="gridcell"
-                  onClick={() => showDetails(element)}
+                  onClick={() => showDetails(element, type)}
                   style={{ cursor: 'pointer' }}
                   width={element.type === 'research_plan' ? '280px' : 'unset'}
                   data-cy={`researchPLanItem-${element.id}`}

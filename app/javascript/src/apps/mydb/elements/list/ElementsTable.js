@@ -25,6 +25,8 @@ import { Select } from 'src/components/common/Select';
 import PropTypes from 'prop-types';
 import CellLineGroup from 'src/models/cellLine/CellLineGroup';
 import CellLineContainer from 'src/apps/mydb/elements/list/cellLine/CellLineContainer';
+import VesselContainer from 'src/apps/mydb/elements/list/vessel/VesselContainer';
+import { groupVesselsByTemplateId } from 'src/models/vessel/VesselGroup';
 import ChevronIcon from 'src/components/common/ChevronIcon';
 import DeviceDescriptionList from 'src/apps/mydb/elements/list/deviceDescriptions/DeviceDescriptionList';
 import DeviceDescriptionListHeader from 'src/apps/mydb/elements/list/deviceDescriptions/DeviceDescriptionListHeader';
@@ -691,6 +693,12 @@ export default class ElementsTable extends React.Component {
           ui={ui}
         />
       );
+    } else if (type === 'vessel') {
+      elementsTableEntries = (
+        <VesselContainer
+          vesselGroups={groupVesselsByTemplateId(elements)}
+        />
+      );
     } else {
       elementsTableEntries = (
         <ElementsTableEntries
@@ -698,6 +706,7 @@ export default class ElementsTable extends React.Component {
           currentElement={currentElement}
           showDragColumn={!overview}
           ui={ui}
+          type={type}
         />
       );
     }
