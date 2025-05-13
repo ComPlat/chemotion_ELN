@@ -12,6 +12,8 @@ import { DragDropItemTypes } from 'src/utilities/DndConst';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 import Sample from 'src/models/Sample';
 import { permitCls, permitOn } from 'src/components/common/uis';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
+import { UrlSilentNavigation } from 'src/utilities/ElementUtils';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
 import ComponentStore from 'src/stores/alt/stores/ComponentStore';
 import ComponentActions from 'src/stores/alt/actions/ComponentActions';
@@ -92,6 +94,7 @@ class SampleComponent extends Component {
     this.handleRatioChange = this.handleRatioChange.bind(this);
     this.handleReferenceChange = this.handleReferenceChange.bind(this);
     this.handleConcentrationLockToggle = this.handleConcentrationLockToggle.bind(this);
+    this.handleMaterialClick = this.handleMaterialClick.bind(this);
   }
 
   componentDidMount() {
@@ -229,6 +232,15 @@ class SampleComponent extends Component {
     ComponentActions.toggleComponentLock(material.id, lockConc);
   }
 
+  handleMaterialClick(material) {
+    if (material.parent_id) {
+      // Only navigate if parent_id exists
+      const parentSample = new Sample({ id: material.parent_id, type: 'sample' });
+      UrlSilentNavigation(parentSample);
+      ElementActions.fetchSampleById(material.parent_id);
+    }
+  }
+
   onComponentStoreChange(state) {
     this.setState({ ...state });
   }
@@ -243,14 +255,30 @@ class SampleComponent extends Component {
       maxWidth: '100%'
     };
 
-    moleculeIupacName = material.molecule_iupac_name;
+    const displayName = material.molecule_iupac_name || material.molecule?.sum_formular || '';
 
-    if (moleculeIupacName === '' || !moleculeIupacName) {
-      moleculeIupacName = material.molecule.sum_formular;
-    }
+    // Only make it clickable if it has a parent_id
+    moleculeIupacName = material.parent_id ? (
+      <a
+        role="link"
+        tabIndex={0}
+        onClick={() => this.handleMaterialClick(material)}
+        style={{
+          cursor: 'pointer',
+          textDecoration: 'underline'
+        }}
+        title="Click to view parent sample"
+      >
+        <span>{displayName}</span>
+      </a>
+    ) : (
+      <span>{displayName}</span>
+    );
 
     return (
-      <div style={{ display: 'inline-block', maxWidth: '100%' }}>
+      <div
+        className={material.parent_id ? 'reaction-material-link' : ''}
+        style={{ display: 'inline-block', maxWidth: '100%' }}>
         <span style={iupacStyle}>
           {this.svgPreview(material, moleculeIupacName)}
         </span>
