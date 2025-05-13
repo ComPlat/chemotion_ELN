@@ -138,6 +138,18 @@ const placeAtomOnImage = async (mols_, imagesList_) => {
   }
 };
 
+const findTextNodesNotConnectedWithTemplates = (updatedTextList) => {
+  const values = Object.values(textNodeStruct);
+  const list = [];
+  for (let i = 0; i < updatedTextList.length; i++) {
+    const block = JSON.parse(updatedTextList[i].data.content).blocks[0];
+    if (values.indexOf(block.key) === -1) {
+      list.push(updatedTextList[i]);
+    }
+  }
+  return list;
+};
+
 // place text nodes on atom with matching aliases
 const placeTextOnAtoms = async (mols_) => {
   try {
@@ -152,8 +164,8 @@ const placeTextOnAtoms = async (mols_) => {
         }
       }
     }
-    const diff = await deepCompareContent(textList, updatedTextList); // extra text components without aliases
-    return [...removeTextFromData(latestData), ...updatedTextList, ...diff.map((i) => textList[i])];
+    const otherTextNodes = await findTextNodesNotConnectedWithTemplates(updatedTextList); // extra text components without aliases
+    return [...removeTextFromData(latestData), ...updatedTextList, ...otherTextNodes];
   } catch (err) {
     console.error('placeTextOnAtoms', err.message);
     return [];

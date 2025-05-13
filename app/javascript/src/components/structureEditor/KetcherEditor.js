@@ -175,10 +175,10 @@ const KetcherEditor = forwardRef((props, ref) => {
 
   // action based on event-name
   const eventHandlers = {
-    'Move image': async () => onTemplateMove(editor, 'img-placement', false),
+    'Move image': async () => onTemplateMove(editor),
     'Move atom': async () => {
       oldImagePack = [...imagesList];
-      await onTemplateMove(editor, 'img-placement', false);
+      await onTemplateMove(editor, null, false);
     },
     'Add atom': async () => onAddAtom(editor),
     'Delete atom': async () => {
