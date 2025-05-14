@@ -33,7 +33,7 @@ export default class ResearchPlansFetcher {
   static create(researchPlan) {
     researchPlan.convertTemporaryImageFieldsInBody();
 
-    const promise = fetch('/api/v1/research_plans/', {
+    const promise = () => fetch('/api/v1/research_plans/', {
       credentials: 'same-origin',
       method: 'post',
       headers: {
@@ -53,7 +53,7 @@ export default class ResearchPlansFetcher {
       .catch((errorMessage) => {
         console.log(errorMessage);
       });
-    return promise;
+    return AttachmentFetcher.uploadNewAttachmentsForContainer(researchPlan.container).then(() => promise());
   }
 
   static update(researchPlan) {
