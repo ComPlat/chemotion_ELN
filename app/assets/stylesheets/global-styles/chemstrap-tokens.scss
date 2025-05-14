@@ -24,29 +24,46 @@ $font-styles: normal, italic;
 }
 
 /* Colors */
-$chemstrap-white: #ffffff;
-$chemstrap-ink: #3c474d; //text color
 $chemstrap-blue: #2495cf; //primary
 $chemstrap-blue-dark: #015c8e; //primary-active
 $chemstrap-blue-dull: #84c0e0; //draggable-surfaces
 $chemstrap-red: #ff5555; //danger
 $chemstrap-green: #62c242; //success
 $chemstrap-orange: #f19224; //warning
-/* Gray tones */
-$chemstrap-silicon: #899da7;
-$chemstrap-carbon: #1c1b1e;
+/* White & Gray tones */
+$chemstrap-white: #ffffff; //application background
+$chemstrap-silicon: #899da7; //surfaces
+$chemstrap-carbon: #373030; //text & borders
+
+$token-color-names: (
+  "blue": $chemstrap-blue,
+  "blue-dull": $chemstrap-blue-dull,
+  "blue-dark": $chemstrap-blue-dark,
+  "red": $chemstrap-red,
+  "green": $chemstrap-green,
+  "orange": $chemstrap-orange,
+  "white": $chemstrap-white,
+  "silicon": $chemstrap-silicon,
+  "carbon": $chemstrap-carbon,
+);
+
+/* Shades */
 $shades: 6;
 
-@function mapShades($value, $shades) {
+@function mapShades($value, $steps) {
   $colors: ();
 
   $fibonacci: (3, 5, 8, 13, 21, 34, 55, 89, 144);
-  $multiplier: 100 / nth($fibonacci, $shades);
+  $multiplier: 100 / nth($fibonacci, $steps);
 
-  @for $i from 1 through $shades - 1 {
+  @for $i from 1 through $steps {
     $colors: map-merge(
       $colors,
-      (l#{$i}: mix($value, white, nth($fibonacci, $i) * $multiplier))
+      (
+        lighten#{$steps -
+          $i}:
+          mix($value, white, nth($fibonacci, $i) * $multiplier)
+      )
     );
   }
   @return $colors;

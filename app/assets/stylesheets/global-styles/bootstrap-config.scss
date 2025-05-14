@@ -5,7 +5,7 @@ $success: $chemstrap-green;
 $info: #5bc0de; // to be removed application wide
 $warning: $chemstrap-orange;
 $danger: $chemstrap-red;
-$black: $chemstrap-ink;
+$black: $chemstrap-carbon;
 
 $zindex-levels: (
   n1: -1,
@@ -19,12 +19,6 @@ $zindex-levels: (
 
 $chemstrap-theme-colors: (
   "active": $chemstrap-blue-dark,
-  "surface": $chemstrap-white,
-  "surface1": map-get($silicon-shades, l1),
-  "surface2": map-get($silicon-shades, l2),
-  "surface3": map-get($silicon-shades, l3),
-  "surface4": map-get($silicon-shades, l4),
-  "surface5": map-get($silicon-shades, l5),
   "draggable": $chemstrap-blue-dull,
 );
 
@@ -32,13 +26,13 @@ $chemstrap-theme-colors: (
 @import "bootstrap/variables";
 @import "bootstrap/mixins";
 
-$border-color: map-get($carbon-shades, l3);
+$border-color: map-get($carbon-shades, lighten3);
 $body-bg: $chemstrap-white;
-$body-color: $chemstrap-ink;
+$body-color: $chemstrap-carbon;
 $font-family-sans-serif: "Roboto", sans-serif;
 $font-size-root: 14px;
 $font-size-base: 1rem;
-$heading-color: $chemstrap-ink;
+$heading-color: $body-color;
 $h1-font-size: $font-size-base * 2;
 $h2-font-size: $font-size-base * 1.75;
 $h3-font-size: $font-size-base * 1.5;
@@ -53,10 +47,10 @@ $card-bg: $chemstrap-white;
 $accordion-bg: $chemstrap-white;
 $modal-content-bg: $chemstrap-white;
 $list-group-bg: $chemstrap-white;
-$list-group-color: $chemstrap-ink;
+$list-group-color: $body-color;
 
 $popover-bg: $chemstrap-white;
-$popover-body-color: $chemstrap-ink;
+$popover-body-color: $body-color;
 $popover-max-width: 50vw;
 $popover-body-padding-y: 0.5rem;
 

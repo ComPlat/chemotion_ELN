@@ -7,7 +7,7 @@
   &_container {
     @extend .tree-view;
     @extend .overflow-y-auto;
-    background-color: map-get($silicon-shades, l3);
+    @extend .surface-lighten3;
   }
   &_item {
     @extend .d-flex;
@@ -18,13 +18,13 @@
     @extend .pe-3;
     @extend .gap-2;
     &:hover {
-      background-color: map-get($silicon-shades, l4);
+      @extend .surface-lighten2;
     }
 
     &--selected {
-      background-color: map-get($silicon-shades, l5);
+      @extend .surface-lighten1;
       &:hover {
-        background-color: map-get($silicon-shades, l4) !important;
+        @extend .surface-lighten2;
       }
     }
 
