@@ -2,13 +2,13 @@ $sidebar-logo-height: 72px;
 
 .topbar {
   min-height: $sidebar-logo-height;
-  background-color: map-get($silicon-shades, l2);
+  @extend .surface-lighten4;
 }
 
 .sidebar {
   @extend .d-flex;
   @extend .flex-shrink-0;
-  background-color: map-get($silicon-shades, l2);
+  @extend .surface-lighten4;
   width: 260px;
   &.sidebar--collapsed {
     width: 44px;
@@ -66,27 +66,27 @@ $sidebar-logo-height: 72px;
 
 .btn-sidebar {
   @include button-variant(
-    map-get($silicon-shades, l2),
-    map-get($silicon-shades, l2),
-    $chemstrap-carbon,
-    map-get($silicon-shades, l4),
-    map-get($silicon-shades, l4),
-    $chemstrap-carbon,
-    map-get($silicon-shades, l5),
-    map-get($silicon-shades, l5),
-    $chemstrap-carbon
+    map-get($silicon-shades, lighten4),
+    map-get($silicon-shades, lighten4),
+    $body-color,
+    map-get($silicon-shades, lighten2),
+    map-get($silicon-shades, lighten2),
+    $body-color,
+    map-get($silicon-shades, lighten1),
+    map-get($silicon-shades, lighten1),
+    $body-color
   );
   &.sidebar-button--has-badge {
     @include button-variant(
-      mix(map-get($silicon-shades, l2), shade-color($warning, 20), 85),
-      mix(map-get($silicon-shades, l2), shade-color($warning, 20), 85),
-      $chemstrap-carbon,
-      mix(map-get($silicon-shades, l4), shade-color($warning, 20), 85),
-      mix(map-get($silicon-shades, l4), shade-color($warning, 20), 85),
-      $chemstrap-carbon,
-      mix(map-get($silicon-shades, l5), shade-color($warning, 20), 85),
-      mix(map-get($silicon-shades, l5), shade-color($warning, 20), 85),
-      $chemstrap-carbon
+      mix(map-get($silicon-shades, lighten4), shade-color($warning, 20), 85),
+      mix(map-get($silicon-shades, lighten4), shade-color($warning, 20), 85),
+      $body-color,
+      mix(map-get($silicon-shades, lighten2), shade-color($warning, 20), 85),
+      mix(map-get($silicon-shades, lighten2), shade-color($warning, 20), 85),
+      $body-color,
+      mix(map-get($silicon-shades, lighten1), shade-color($warning, 20), 85),
+      mix(map-get($silicon-shades, lighten1), shade-color($warning, 20), 85),
+      $body-color
     );
   }
 }
