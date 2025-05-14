@@ -1,0 +1,19 @@
+.element-drag-layer {
+  @extend .position-fixed;
+  pointer-events: none;
+  @extend .w-100;
+  @extend .h-100;
+  z-index: 9000;
+  left: 0;
+  top: 0;
+  &__preview {
+    @extend .position-absolute;
+    @extend .d-flex;
+    @extend .align-items-stretch;
+    @extend .rounded;
+    @extend .bg-surface4;
+    &-label {
+      @extend .p-2;
+    }
+  }
+}
