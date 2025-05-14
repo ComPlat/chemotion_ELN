@@ -113,6 +113,9 @@ const AnalysesContainer = ({ readonly }) => {
                     templateType="deviceDescription"
                     container={container}
                     onChange={() => handleContainerChanged(container)}
+                    rootContainer={deviceDescription.container}
+                    index={index}
+                    
                   />
                   <ViewSpectra
                     sample={deviceDescription}
