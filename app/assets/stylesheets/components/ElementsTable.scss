@@ -7,8 +7,8 @@
 
 @media (max-width: 600px) {
   .elements-table-header {
-    @extend .h-auto;
-    @extend .overflow-auto;
-    @extend .flex-wrap;
+    height: auto;
+    flex-wrap: wrap;
+    overflow: auto;
   }
 }
