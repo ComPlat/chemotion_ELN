@@ -101,10 +101,6 @@ function getReactionMaterialsIDs(materials) {
   );
 }
 
-function getReactionMaterialsGasTypes(materials) {
-  return Object.values(materials).flat().map((material) => material.gas_type);
-}
-
 function updateYields(row, reactionHasPolymers) {
   const updatedRow = cloneDeep(row);
   const referenceMaterial = getReferenceMaterial(updatedRow);
@@ -188,41 +184,80 @@ function cellIsEditable(params) {
   }
 }
 
+function getMaterialGasType(material, gasMode) {
+  const gasType = material.gas_type ?? 'off';
+  return gasMode ? gasType : 'off';
+}
+
+function getMaterialAux(material, materialType, gasMode, vesselVolume) {
+  return {
+    coefficient: material.coefficient ?? null,
+    isReference: material.reference ?? false,
+    loading: (Array.isArray(material.residues) && material.residues.length) ? material.residues[0].custom_info?.loading : null,
+    purity: material.purity ?? null,
+    density: material.density ?? null,
+    molarity: material.molarity_value ?? null,
+    molecularWeight: material.molecule_molecular_weight ?? null,
+    sumFormula: material.molecule_formula ?? null,
+    gasType: getMaterialGasType(material, gasMode),
+    vesselVolume,
+    materialType,
+  };
+}
+
 function getMaterialData(material, materialType, gasMode = false, vesselVolume = null) {
   const materialCopy = cloneDeep(material);
 
-  let gasType = materialCopy.gas_type ?? 'off';
-  gasType = gasMode ? gasType : 'off';
-
-  // Mutable data is represented as "entries", e.g., `foo: {value: bar, unit: baz}.
-  const entries = getMaterialEntries(materialType, gasType);
+  // User-editable data is represented as "entries", e.g., `foo: {value: bar, unit: baz}.
+  const entries = getMaterialEntries(materialType, getMaterialGasType(materialCopy, gasMode));
   const materialData = entries.reduce((data, entry) => {
     data[entry] = { value: getStandardValue(entry, materialCopy), unit: getStandardUnits(entry)[0] };
     return data;
   }, {});
 
-  materialData.aux = {
-    coefficient: materialCopy.coefficient ?? null,
-    isReference: materialCopy.reference ?? false,
-    loading: (Array.isArray(materialCopy.residues) && materialCopy.residues.length) ? materialCopy.residues[0].custom_info?.loading : null,
-    purity: materialCopy.purity ?? null,
-    density: materialCopy.density ?? null,
-    molarity: materialCopy.molarity_value ?? null,
-    molecularWeight: materialCopy.molecule_molecular_weight ?? null,
-    sumFormula: materialCopy.molecule_formula ?? null,
-    gasType,
-    vesselVolume,
+  // Non-user-editable data (i.e., read-only entries) is represented as "aux", e.g., `foo: bar`.
+  materialData.aux = getMaterialAux(
+    materialCopy,
     materialType,
-  };
+    gasMode,
+    vesselVolume
+  );
 
   return materialData;
+}
+
+function updateVariationsAux(variations, materials, gasMode, vesselVolume) {
+  const updatedVariations = cloneDeep(variations);
+  updatedVariations.forEach((row) => {
+    Object.keys(materialTypes).forEach((materialType) => {
+      materials[materialType].forEach((material) => {
+        if (!Object.prototype.hasOwnProperty.call(row[materialType], material.id.toString())) {
+          return;
+        }
+        row[materialType][material.id].aux = getMaterialAux(material, materialType, gasMode, vesselVolume);
+      });
+    });
+  });
+  return updatedVariations;
+}
+
+function getReactionMaterialsHashes(materials, gasMode, vesselVolume) {
+  // Hash in the sense of "a string that uniquely identifies the material".
+  return Object.fromEntries(
+    Object.entries(materials).map(([materialType, materialsOfType]) => [
+      materialType,
+      materialsOfType.map(
+        (material) => material.id.toString()
+        + JSON.stringify(getMaterialAux(material, materialType, gasMode, vesselVolume))
+      )
+    ])
+  );
 }
 
 function getMaterialColumnGroupChild(material, materialType, gasMode) {
   const materialCopy = cloneDeep(material);
 
-  let gasType = materialCopy.gas_type ?? 'off';
-  gasType = gasMode ? gasType : 'off';
+  const gasType = getMaterialGasType(materialCopy, gasMode);
 
   const entries = getMaterialEntries(
     materialType,
@@ -282,24 +317,6 @@ function removeObsoleteMaterialColumns(materials, columns) {
   });
 
   return updatedColumns;
-}
-
-function updateVariationsGasTypes(variations, materials, gasMode, vesselVolume) {
-  const updatedVariations = cloneDeep(variations);
-  updatedVariations.forEach((row) => {
-    Object.keys(materialTypes).forEach((materialType) => {
-      materials[materialType].forEach((material) => {
-        const currentGasType = material.gas_type ?? 'off';
-        if (!Object.prototype.hasOwnProperty.call(row[materialType], material.id.toString())) {
-          return;
-        }
-        if (currentGasType !== row[materialType][material.id].aux.gasType) {
-          row[materialType][material.id] = getMaterialData(material, materialType, gasMode, vesselVolume);
-        }
-      });
-    });
-  });
-  return updatedVariations;
 }
 
 function updateVariationsRowOnReferenceMaterialChange(row, reactionHasPolymers) {
@@ -366,7 +383,7 @@ export {
   getMaterialColumnGroupChild,
   getReactionMaterials,
   getReactionMaterialsIDs,
-  getReactionMaterialsGasTypes,
+  getReactionMaterialsHashes,
   getMaterialData,
   resetColumnDefinitionsMaterials,
   updateVariationsRowOnReferenceMaterialChange,
@@ -374,7 +391,7 @@ export {
   updateVariationsRowOnFeedstockMaterialChange,
   computeDerivedQuantitiesVariationsRow,
   removeObsoleteMaterialColumns,
-  updateVariationsGasTypes,
+  updateVariationsAux,
   getReferenceMaterial,
   getCatalystMaterial,
   getFeedstockMaterial,

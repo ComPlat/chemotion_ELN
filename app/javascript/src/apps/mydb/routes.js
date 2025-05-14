@@ -11,18 +11,14 @@ const routes = {
   '/collection': {
     target: {
       show: routesUtils.collectionShow,
-      showCollectionManagement: routesUtils.collectionShowCollectionManagement
     },
-    '/management': 'showCollectionManagement',
     '/:collectionID': 'show'
   },
 
   '/scollection': {
     target: {
       show: routesUtils.scollectionShow,
-      showCollectionManagement: routesUtils.collectionShowCollectionManagement
     },
-    '/management': 'showCollectionManagement',
     '/:collectionID': 'show'
   },
 
