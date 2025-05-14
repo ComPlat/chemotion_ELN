@@ -1,0 +1,22 @@
+
+.folder-dropzone {
+    display: block;
+    border: 2px dashed #ccc;
+    padding: 2rem;
+    border-radius: 6px;
+    text-align: center;
+    cursor: pointer;
+    background-color: #f8f9fa;
+    color: #333;
+    transition: border-color 0.2s ease-in-out;
+}
+
+.folder-dropzone:hover {
+    border-color: #007bff;
+    background-color: #f1f8ff;
+}
+
+.dropzone-content p {
+    margin: 0;
+    font-size: 1rem;
+}
