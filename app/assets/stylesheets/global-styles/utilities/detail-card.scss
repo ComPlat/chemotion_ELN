@@ -10,8 +10,8 @@
   > .card-body {
     @extend .p-0;
     @extend .h-0;
-    overflow-x: hidden;
-    overflow-y: scroll;
+    @extend .overflow-x-hidden;
+    @extend .overflow-y-scroll;
   }
 
   &.detail-card--unsaved > .card-header {
