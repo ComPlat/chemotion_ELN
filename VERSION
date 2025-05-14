@@ -1,3 +1,4 @@
-version: v2.0.1
-base_revision: d3380de59
-current_revision: d3380de59
+version: v3.0.0-alpha1
+describe: v2.0.1-30-g4f41b54bc
+base_revision: e195ded12
+current_revision:
