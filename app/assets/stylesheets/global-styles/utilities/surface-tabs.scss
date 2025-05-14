@@ -23,7 +23,27 @@
     --bs-border-opacity: 1;
   }
 }
-.surface-tab__header {
-  @extend .text-bg-surface3;
-  @extend .mb-2;
+.surface-tab {
+  &__header {
+    @extend .overflow-hidden;
+    padding: 0.75rem;
+    @extend .text-bg-surface3;
+    min-height: 40px;
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+      @extend .m-0;
+    }
+  }
+  &__content {
+    @extend .py-2;
+  }
+  &__text-content {
+    @extend .py-2;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
 }
