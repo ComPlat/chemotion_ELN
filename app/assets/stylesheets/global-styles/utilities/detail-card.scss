@@ -1,9 +1,10 @@
 .detail-card {
-  @extend .sheet-card;
+  @extend .border-0;
   @extend .h-100;
 
   > .card-header {
     @extend .surface-tab__header;
+    @extend .state-border;
   }
 
   > .card-body {
