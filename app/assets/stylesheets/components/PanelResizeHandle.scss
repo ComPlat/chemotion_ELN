@@ -1,5 +1,5 @@
 .panel-resize-handle {
-  @extend .bg-surface2;
+  @extend .surface-lighten4;
   @extend .d-flex;
   @extend .flex-column;
   @extend .justify-content-evenly;
@@ -17,6 +17,6 @@
     @include drag-surface();
   }
   &:hover {
-    @extend .bg-surface3;
+    @extend .surface-lighten3;
   }
 }

@@ -18,17 +18,17 @@
   .element-list-item,
   .element-group-header {
     @extend .d-flex;
-    @extend .text-bg-surface1;
+    @extend .surface-lighten5;
     @extend .rounded-start;
     &:hover {
-      @extend .text-bg-surface2;
+      @extend .surface-lighten4;
     }
     &.element-list-item,
     .element-group-header {
       &--selected {
-        @extend .text-bg-surface4;
+        @extend .surface-lighten2;
         &:hover {
-          @extend .text-bg-surface5;
+          @extend .surface-lighten1;
         }
       }
     }
