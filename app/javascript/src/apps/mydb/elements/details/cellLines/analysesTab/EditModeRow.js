@@ -5,7 +5,7 @@ import PropTypes from 'prop-types';
 import { Accordion, Card } from 'react-bootstrap';
 import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWithButtons';
 
-const EditModeRow = ({ container, handleChange, element, readOnly }) => (
+const EditModeRow = ({ container, handleChange, element, readOnly, index, rootContainer }) => (
   <Card eventKey={container.id} className="border-0 rounded-0">
     <Card.Header className="rounded-0 p-0 border-bottom-0">
       <AccordionHeaderWithButtons as="div">
@@ -28,6 +28,8 @@ const EditModeRow = ({ container, handleChange, element, readOnly }) => (
           disabled={false}
           container={container}
           onChange={() => handleChange(container)}
+          rootContainer={rootContainer}
+          index={index}
         />
       </Card.Body>
     </Accordion.Collapse>
