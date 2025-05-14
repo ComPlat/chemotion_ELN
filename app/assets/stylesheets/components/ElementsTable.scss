@@ -1,10 +1,8 @@
 .elements-table-header {
-  @extend .p-2;
   @extend .d-flex;
   @extend .align-items-center;
   @extend .justify-content-between;
   @extend .surface-tab__header;
-  min-height: 40px;
 }
 
 @media (max-width: 600px) {
