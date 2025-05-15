@@ -125,8 +125,8 @@ function ElementDragHandle({ element, sourceType: sourceTypeProp }) {
         return currentElementType === 'device_description' || useDnD(currentElement, genericEls);
       case DragDropItemTypes.SEQUENCE_BASED_MACROMOLECULE:
         return currentElementType === 'sequence_based_macromolecule' || useDnD(currentElement, genericEls);
-      case DragDropItemTypes.SEQUENCE_BASED_MACROMOLECULE_SAMPLE:
-        return currentElementType === 'sequence_based_macromolecule_sample' || useDnD(currentElement, genericEls);
+      // case DragDropItemTypes.SEQUENCE_BASED_MACROMOLECULE_SAMPLE:
+      //   return currentElementType === 'sequence_based_macromolecule_sample' || useDnD(currentElement, genericEls);
       default:
         return false;
     }
