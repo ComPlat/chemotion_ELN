@@ -74,7 +74,22 @@ const matTagCollect = (connect, monitor) => ({
   canDrop: monitor.canDrop(),
 });
 
+/**
+ * SampleComponent represents a single component within a sample mixture.
+ * It handles the display and interaction of individual components in both liquid and solid states.
+ * @class SampleComponent
+ * @extends React.Component
+ */
 class SampleComponent extends Component {
+  /**
+   * Creates an instance of SampleComponent.
+   * @param {Object} props - Component props
+   * @param {Sample} props.sample - The parent sample object
+   * @param {Sample} props.material - The component material
+   * @param {string} props.materialGroup - The group type ('liquid' or 'solid')
+   * @param {Function} props.deleteMaterial - Callback for deleting the component
+   * @param {Function} props.onChange - Callback for component changes
+   */
   constructor(props) {
     super(props);
 
@@ -105,146 +120,24 @@ class SampleComponent extends Component {
     ComponentStore.unlisten(this.onComponentStoreChange);
   }
 
-  handleAmountChange(e, value, concType, lockColumn) {
-    if (e.value === value) return;
-
-    const { materialGroup, onChange } = this.props;
-
-    if (onChange && e) {
-      const event = {
-        amount: e,
-        type: 'amountChanged',
-        materialGroup,
-        sampleID: this.componentId(),
-        concType,
-        lockColumn,
-      };
-      onChange(event);
-    }
-  }
-
-  handleDensityChange(e, value, lockColumn) {
-    if (e.value === value) return;
-
-    const { materialGroup, onChange } = this.props;
-
-    if (onChange && e) {
-      const event = {
-        amount: e,
-        type: 'densityChanged',
-        materialGroup,
-        sampleID: this.componentId(),
-        lockColumn,
-      };
-      onChange(event);
-    }
-  }
-
-  handlePurityChange(e, value) {
-    if (e.value === value) return;
-
-    const { materialGroup, onChange } = this.props;
-
-    if (e.value < 0 || e.value > 1) {
-      e.value = 1;
-      NotificationActions.add({
-        message: 'Purity value should be >= 0 and <=1',
-        level: 'error'
-      });
-    }
-
-    if (onChange && e) {
-      const event = {
-        amount: e,
-        type: 'purityChanged',
-        materialGroup,
-        sampleID: this.componentId(),
-      };
-      onChange(event);
-    }
-  }
-
-  handleMetricsChange(e) {
-    const { materialGroup, onChange } = this.props;
-
-    if (onChange && e) {
-      const event = {
-        metricUnit: e.metricUnit,
-        metricPrefix: e.metricPrefix,
-        type: 'MetricsChanged',
-        materialGroup,
-        sampleID: this.componentId(),
-      };
-      onChange(event);
-    }
-  }
-
-  handleNameChange(e, value) {
-    if (e.value === value) return;
-
-    const { onChange } = this.props;
-
-    if (onChange && e) {
-      const event = {
-        newName: e.target.value,
-        type: 'nameChanged',
-        sampleID: this.componentId(),
-
-      };
-      onChange(event);
-    }
-  }
-
-  handleRatioChange(e, value) {
-    if (e.value === value) return;
-
-    const { materialGroup, onChange } = this.props;
-
-    if (onChange && e) {
-      const event = {
-        newRatio: e.value,
-        type: 'ratioChanged',
-        sampleID: this.componentId(),
-        materialGroup,
-      };
-      onChange(event);
-    }
-  }
-
-  handleReferenceChange(e) {
-    const { value } = e.target;
-
-    const { materialGroup, onChange } = this.props;
-
-    if (onChange) {
-      const event = {
-        type: 'referenceChanged',
-        materialGroup,
-        sampleID: this.componentId(),
-        value
-      };
-      onChange(event);
-    }
-  }
-
-  handleConcentrationLockToggle(material, lockConc) {
-    // Trigger the action to toggle the component's lock state
-    ComponentActions.toggleComponentLock(material.id, lockConc);
-  }
-
+  /**
+   * Handles click events on material components.
+   * If the material has a parent_id, navigates to the parent sample view.
+   * @param {Object} material - The material component that was clicked
+   */
   handleMaterialClick(material) {
     if (material.parent_id) {
-      // Only navigate if parent_id exists
       const parentSample = new Sample({ id: material.parent_id, type: 'sample' });
       UrlSilentNavigation(parentSample);
       ElementActions.fetchSampleById(material.parent_id);
     }
   }
 
-  onComponentStoreChange(state) {
-    this.setState({ ...state });
-  }
-
+  /**
+   * Renders the material name with IUPAC information and optional parent sample link.
+   * @param {Object} material - The material component to display
+   * @returns {JSX.Element} The rendered material name component
+   */
   materialNameWithIupac(material) {
     let moleculeIupacName = '';
     const iupacStyle = {
@@ -284,6 +177,182 @@ class SampleComponent extends Component {
         </span>
       </div>
     );
+  }
+
+  /**
+   * Handles changes to the component's amount.
+   * @param {Object} e - The change event
+   * @param {number} value - The current value
+   * @param {string} concType - The concentration type
+   * @param {boolean} lockColumn - Whether the column is locked
+   */
+  handleAmountChange(e, value, concType, lockColumn) {
+    if (e.value === value) return;
+
+    const { materialGroup, onChange } = this.props;
+
+    if (onChange && e) {
+      const event = {
+        amount: e,
+        type: 'amountChanged',
+        materialGroup,
+        sampleID: this.componentId(),
+        concType,
+        lockColumn,
+      };
+      onChange(event);
+    }
+  }
+
+  /**
+   * Handles changes to the component's metrics (units).
+   * @param {Object} e - The change event containing metric information
+   */
+  handleMetricsChange(e) {
+    const { materialGroup, onChange } = this.props;
+
+    if (onChange && e) {
+      const event = {
+        metricUnit: e.metricUnit,
+        metricPrefix: e.metricPrefix,
+        type: 'MetricsChanged',
+        materialGroup,
+        sampleID: this.componentId(),
+      };
+      onChange(event);
+    }
+  }
+
+  /**
+   * Handles changes to the component's density.
+   * @param {Object} e - The change event
+   * @param {number} value - The current density value
+   * @param {boolean} lockColumn - Whether the column is locked
+   */
+  handleDensityChange(e, value, lockColumn) {
+    if (e.value === value) return;
+
+    const { materialGroup, onChange } = this.props;
+
+    if (onChange && e) {
+      const event = {
+        amount: e,
+        type: 'densityChanged',
+        materialGroup,
+        sampleID: this.componentId(),
+        lockColumn,
+      };
+      onChange(event);
+    }
+  }
+
+  /**
+   * Handles changes to the component's purity.
+   * @param {Object} e - The change event
+   * @param {number} value - The current purity value
+   */
+  handlePurityChange(e, value) {
+    if (e.value === value) return;
+
+    const { materialGroup, onChange } = this.props;
+
+    if (e.value < 0 || e.value > 1) {
+      e.value = 1;
+      NotificationActions.add({
+        message: 'Purity value should be >= 0 and <=1',
+        level: 'error'
+      });
+    }
+
+    if (onChange && e) {
+      const event = {
+        amount: e,
+        type: 'purityChanged',
+        materialGroup,
+        sampleID: this.componentId(),
+      };
+      onChange(event);
+    }
+  }
+
+  /**
+   * Handles changes to the component's name.
+   * @param {Object} e - The change event
+   * @param {string} value - The current name value
+   */
+  handleNameChange(e, value) {
+    if (e.value === value) return;
+
+    const { onChange } = this.props;
+
+    if (onChange && e) {
+      const event = {
+        newName: e.target.value,
+        type: 'nameChanged',
+        sampleID: this.componentId(),
+
+      };
+      onChange(event);
+    }
+  }
+
+  /**
+   * Handles changes to the component's ratio.
+   * @param {Object} e - The change event
+   * @param {number} value - The current ratio value
+   */
+  handleRatioChange(e, value) {
+    if (e.value === value) return;
+
+    const { materialGroup, onChange } = this.props;
+
+    if (onChange && e) {
+      const event = {
+        newRatio: e.value,
+        type: 'ratioChanged',
+        sampleID: this.componentId(),
+        materialGroup,
+      };
+      onChange(event);
+    }
+  }
+
+  /**
+   * Handles changes to the component's reference status.
+   * @param {Object} e - The change event
+   */
+  handleReferenceChange(e) {
+    const { value } = e.target;
+
+    const { materialGroup, onChange } = this.props;
+
+    if (onChange) {
+      const event = {
+        type: 'referenceChanged',
+        materialGroup,
+        sampleID: this.componentId(),
+        value
+      };
+      onChange(event);
+    }
+  }
+
+  /**
+   * Toggles the concentration lock state for a component.
+   * @param {Object} material - The material component
+   * @param {boolean} lockConc - The new lock state
+   */
+  handleConcentrationLockToggle(material, lockConc) {
+    // Trigger the action to toggle the component's lock state
+    ComponentActions.toggleComponentLock(material.id, lockConc);
+  }
+
+  /**
+   * Updates the component store state.
+   * @param {Object} state - The new component store state
+   */
+  onComponentStoreChange(state) {
+    this.setState({ ...state });
   }
 
   nameInput(material) {
@@ -661,6 +730,12 @@ class SampleComponent extends Component {
     );
   }
 
+  /**
+   * Renders a preview of the molecule with SVG and popover.
+   * @param {Object} material - The material to preview
+   * @param {string} moleculeIupacName - The IUPAC name to display
+   * @returns {JSX.Element} The SVG preview component
+   */
   svgPreview(material, moleculeIupacName) {
     return (
       <SvgWithPopover
@@ -745,6 +820,10 @@ export default compose(
   ),
 )(SampleComponent);
 
+/**
+ * PropTypes for SampleComponent
+ * @type {Object}
+ */
 SampleComponent.propTypes = {
   sample: PropTypes.object.isRequired,
   material: PropTypes.instanceOf(Sample).isRequired,

@@ -1456,33 +1456,72 @@ export default class Sample extends Element {
       }
     });
 
-    if (!this.sample_details) {
-      this.sample_details = {};
-    }
-    this.sample_details.reference_molecular_weight = this.components[componentIndex].molecule.molecular_weight;
+    // if (!this.sample_details) {
+    //   this.sample_details = {};
+    // }
+    // this.sample_details.reference_molecular_weight = this.components[componentIndex].molecule.molecular_weight;
 
     this.updateMixtureComponentEquivalent();
   }
 
+  /**
+   * Updates the 'equivalent' value (Ratio) of each component in the mixture
+   * based on amount_mol of a designated reference component.
+   *
+   * The reference component is either:
+   * - the one explicitly marked as `reference: true`, or
+   * - the one at position 0 (fallback), if no reference is marked.
+   *
+   * After updating equivalents, the function also triggers a recalculation
+   * of the mixture's molecular weight.
+   *
+   * @method updateMixtureComponentEquivalent
+   * @returns {void}
+   */
   updateMixtureComponentEquivalent() {
+    if (!this.components || this.components.length === 0) {
+      return;
+    }
+
+    // Find the index of the component marked as reference
     let referenceIndex = this.components.findIndex((component) => component.reference);
 
+    // If no component is marked as reference, use the component at position 0 as fallback
     if (referenceIndex === -1) {
       referenceIndex = this.components.findIndex((component) => component.position === 0);
       if (referenceIndex !== -1) {
         this.setReferenceComponent(referenceIndex);
+      } else {
+        // If no components exist, return
+        return;
       }
     }
 
-    const referenceMol = this.components[referenceIndex].amount_mol;
+    const referenceComponent = this.components[referenceIndex];
+    const referenceMol = referenceComponent.amount_mol ?? 0;
 
-    // Update equivalent values based on the reference component
-    for (let i = 0; i < this.components.length; i++) {
-      if (i === referenceIndex) continue;
-      this.components[i].equivalent = this.components[i].amount_mol / referenceMol;
+    // If reference moles is 0, set all non-reference components to 0
+    if (!referenceMol || Number.isNaN(referenceMol)) {
+      this.components.forEach((component, index) => {
+        if (index !== referenceIndex) {
+          component.equivalent = 0;
+        } else {
+          component.equivalent = 1;
+        }
+      });
+    } else {
+      // Update equivalent values based on the reference component
+      this.components.forEach((component, index) => {
+        if (index === referenceIndex) {
+          component.equivalent = 1;
+        } else {
+          const currentMol = component.amount_mol ?? 0;
+          component.equivalent = currentMol && !Number.isNaN(currentMol) ? currentMol / referenceMol : 0;
+        }
+      });
     }
 
-    this.updateMixtureMolecularWeight();
+    // this.updateMixtureMolecularWeight();
   }
 
   updateMixtureMolecularWeight() {
