@@ -4,10 +4,11 @@ import { useDrag } from 'react-dnd';
 import { observer } from 'mobx-react';
 
 import ElementStore from 'src/stores/alt/stores/ElementStore';
+import UserStore from 'src/stores/alt/stores/UserStore';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 
-const inferElementSourceType = (element) => {
+function inferElementSourceType(element) {
   if (!element.type) return null;
 
   switch (element.type) {
@@ -29,7 +30,7 @@ const inferElementSourceType = (element) => {
     default:
       return null;
   }
-};
+}
 
 function DragHandle({ element, sourceType }) {
   const [, drag] = useDrag({
@@ -50,18 +51,42 @@ function ElementDragHandle({ element, sourceType: sourceTypeProp }) {
   const [currentElementType, setCurrentElementType] = useState(
     ElementStore.getState().currentElement?.type || null
   );
+  const [genericEls, setGenericEls] = useState(
+    UserStore.getState().genericEls || []
+  );
   const { inbox_visible: sampleTaskInboxVisible } = useContext(StoreContext).sampleTasks;
-  const sourceType = sourceTypeProp ?? inferElementSourceType(element);
 
   useEffect(() => {
-    const updateCurrentDropTarget = ({ currentElement }) => {
+    const updateCurrentElementType = ({ currentElement }) => {
       setCurrentElementType(currentElement?.type || null);
     };
-    ElementStore.listen(updateCurrentDropTarget);
-    return () => ElementStore.unlisten(updateCurrentDropTarget);
+    ElementStore.listen(updateCurrentElementType);
+    return () => ElementStore.unlisten(updateCurrentElementType);
   }, []);
 
+  useEffect(() => {
+    const updateGenericEls = (userState) => {
+      setGenericEls(userState.genericEls);
+    };
+    UserStore.listen(updateGenericEls);
+    return () => UserStore.unlisten(updateGenericEls);
+  }, []);
+
+  const isCurrentElementGeneric = currentElementType && genericEls.some((el) => el.name === currentElementType);
+
+  let sourceType = sourceTypeProp ?? inferElementSourceType(element);
+  if (isCurrentElementGeneric) {
+    // Generic elements support SAMPLE and MOLECULE types natively.
+    // All other types are supported as ELEMENT.
+    if (![DragDropItemTypes.SAMPLE, DragDropItemTypes.MOLECULE].includes(sourceType)) {
+      sourceType = DragDropItemTypes.ELEMENT;
+    }
+  }
+
   const hasDropTarget = (type) => {
+    // Generic elements may contain drop targets for any element type.
+    if (isCurrentElementGeneric) return true;
+
     switch (type) {
       case DragDropItemTypes.SAMPLE:
         return sampleTaskInboxVisible || [
