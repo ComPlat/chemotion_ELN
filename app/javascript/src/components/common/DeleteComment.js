@@ -33,7 +33,6 @@ export default class DeleteComment extends Component {
     return (
       <>
         <Button
-          id="deleteCommentBtn"
           variant="danger"
           size="xsm"
           onClick={() => this.handleModalShow(true)}
