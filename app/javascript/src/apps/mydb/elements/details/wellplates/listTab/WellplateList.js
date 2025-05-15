@@ -132,6 +132,9 @@ const WellplateList = ({ wells, readoutTitles, handleWellsChange }) => {
         valueParser: (params) => {
           return params.newValue;
         },
+        cellRendererParams: {
+          index: index,
+        },
         cellClass: ["editable-cell", "border-end", "px-2"],
       },
     );
