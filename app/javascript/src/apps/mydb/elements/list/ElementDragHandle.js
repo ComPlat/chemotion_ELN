@@ -124,9 +124,9 @@ function ElementDragHandle({ element, sourceType: sourceTypeProp }) {
       case DragDropItemTypes.DEVICE_DESCRIPTION:
         return currentElementType === 'device_description';
       case DragDropItemTypes.SEQUENCE_BASED_MACROMOLECULE:
-        return currentElementType === 'sequence_based_macromolecule';
-      case DragDropItemTypes.SEQUENCE_BASED_MACROMOLECULE_SAMPLE:
         return currentElementType === 'sequence_based_macromolecule_sample';
+      // case DragDropItemTypes.SEQUENCE_BASED_MACROMOLECULE_SAMPLE:
+      //   return currentElementType === 'sequence_based_macromolecule_sample';
       default:
         return false;
     }
