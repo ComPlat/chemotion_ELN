@@ -205,10 +205,21 @@ class SpectraStore {
     })
   }
 
-  handleLoadSpectraForNMRDisplayer({ fetchedFiles, spcInfos }) {
+  handleLoadSpectraForNMRDisplayer(payload) {
+    if (!payload) {
+      this.setState({
+        spcInfos: [],
+        fetchedSpectra: null,
+        fetched: false,
+      });
+      return;
+    }
+  
+    const { fetchedSpectra, spcInfos } = payload;
+  
     this.setState({
-      spcInfos,
-      fetchedFiles,
+      spcInfos: spcInfos || [],
+      fetchedSpectra: fetchedSpectra || null,
       fetched: true,
     });
   }
