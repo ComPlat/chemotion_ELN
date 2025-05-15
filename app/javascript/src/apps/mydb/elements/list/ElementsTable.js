@@ -382,8 +382,9 @@ export default class ElementsTable extends React.Component {
         <Select
           options={options}
           isClearable={false}
-          value={options.find(({ value }) => value == moleculeSort)}
+          value={options.find(({ value }) => value === moleculeSort)}
           onChange={this.changeSampleSort}
+          menuPortalTarget={document.body}
         />
         <OverlayTrigger
           placement="top"
