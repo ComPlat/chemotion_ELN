@@ -4,8 +4,7 @@ import { Button, ButtonGroup, Form } from 'react-bootstrap';
 import ManagingModalSharing from 'src/components/managingActions/ManagingModalSharing';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
-import UserInfoIcon from 'src/apps/mydb/collections/UserInfoIcon';
-import PermissionIcons from 'src/apps/mydb/collections/PermissionIcons'
+import SyncedCollectionsUsersButton from 'src/apps/mydb/collections/SyncedCollectionsUsersButton';
 
 export default class MyCollections extends React.Component {
   constructor(props) {
@@ -25,7 +24,7 @@ export default class MyCollections extends React.Component {
         action: null,
         show: false
       }
-    }
+    };
 
     this.onStoreChange = this.onStoreChange.bind(this);
     this.bulkUpdate = this.bulkUpdate.bind(this);
@@ -35,12 +34,12 @@ export default class MyCollections extends React.Component {
   }
 
   componentDidMount() {
-    CollectionStore.listen(this.onStoreChange)
-    CollectionActions.fetchUnsharedCollectionRoots()
+    CollectionStore.listen(this.onStoreChange);
+    CollectionActions.fetchUnsharedCollectionRoots();
   }
 
   componentWillUnmount() {
-    CollectionStore.unlisten(this.onStoreChange)
+    CollectionStore.unlisten(this.onStoreChange);
   }
 
   onStoreChange(state) {
@@ -55,13 +54,9 @@ export default class MyCollections extends React.Component {
 
   handleChange(tree) {
     this.setState({
-      tree: tree,
+      tree,
       isChange: true
     });
-  }
-
-  isActive(node) {
-    return node === this.state.active
   }
 
   label(node) {
@@ -75,37 +70,32 @@ export default class MyCollections extends React.Component {
           disabled
         />
       );
-    } else {
-      return (
-        <Form.Control
-          className="ms-3 w-75"
-          size="sm"
-          type="text"
-          value={node.label || ''}
-          onChange={(e) => { this.handleLabelChange(e, node) }}
-        />
-      )
     }
+    return (
+      <Form.Control
+        className="ms-3 w-75"
+        size="sm"
+        type="text"
+        value={node.label || ''}
+        onChange={(e) => { this.handleLabelChange(e, node); }}
+      />
+    );
   }
 
   handleLabelChange(e, node) {
     node.label = e.target.value;
-    this.setState({
-      tree: this.state.tree
-    });
+    this.forceUpdate();
   }
 
   // TODO: confirmation before start the updating process?
   bulkUpdate() {
     // filter empty objects
-    let collections = this.state.tree.children.filter((child) => {
-      return child.label
-    });
+    const collections = this.state.tree.children.filter((child) => child.label);
 
-    let params = {
-      collections: collections,
+    const params = {
+      collections,
       deleted_ids: this.state.deleted_ids
-    }
+    };
 
     CollectionActions.bulkUpdateUnsharedCollections(params);
   }
@@ -128,72 +118,53 @@ export default class MyCollections extends React.Component {
           )}
           {this.addCollectionButton(node)}
         </div>
-      )
-    } else {
-      return (
-        <ButtonGroup>
-          <Button
-            id="sync-users-btn"
-            size="sm"
-            variant="primary"
-            disabled={node.isNew === true}
-            onClick={() => this.doSync(node, 'CreateSync')}
-          >
-            <i className="fa fa-plus" />
-            <i className="fa fa-share-alt ms-1" />
-          </Button>
-
-          {this.addSubcollectionButton(node)}
-
-          <Button
-            size="sm"
-            variant="danger"
-            id={`delete-collection-button_${node.id}`}
-            onClick={() => this.deleteCollection(node)}
-          >
-            <i className="fa fa-trash-o" />
-          </Button>
-        </ButtonGroup>
-      )
+      );
     }
+
+    return (
+      <ButtonGroup>
+        {this.renderSyncButton(node)}
+
+        <Button
+          id="sync-users-btn"
+          size="sm"
+          variant="primary"
+          disabled={node.isNew === true}
+          onClick={() => this.doSync(node, 'CreateSync')}
+        >
+          <i className="fa fa-plus" />
+          <i className="fa fa-share-alt ms-1" />
+        </Button>
+
+        {this.addSubcollectionButton(node)}
+
+        <Button
+          size="sm"
+          variant="danger"
+          id={`delete-collection-button_${node.id}`}
+          onClick={() => this.deleteCollection(node)}
+        >
+          <i className="fa fa-trash-o" />
+        </Button>
+      </ButtonGroup>
+    );
   }
 
-  renderSync(node) {
+  renderSyncButton(node) {
     const syncUsers = node.sync_collections_users ?? [];
     if (syncUsers.length === 0) return null;
 
     return (
-      <div>
-        {syncUsers.map((collection) => (
-          <div
-            key={collection.id}
-            className="ms-4 mt-2 d-flex justify-content-between"
-          >
-            <span className="d-flex gap-2 align-items-baseline">
-              <UserInfoIcon type={collection.type} />
-              {collection.name}
-              <PermissionIcons pl={collection.permission_level} />
-            </span>
-            <ButtonGroup>
-              <Button
-                size="sm"
-                variant="primary"
-                onClick={() => this.doSync(collection, 'EditSync')}>
-                <i className="fa fa-share-alt me-1" />
-                edit
-              </Button>
-              <Button
-                size="sm"
-                variant="danger"
-                onClick={() => CollectionActions.deleteSync({ id: collection.id, is_syncd: false })}
-              >
-                <i className="fa fa-share-alt me-1" />
-                <i className="fa fa-trash-o" />
-              </Button>
-            </ButtonGroup>
-          </div>
-        ))}
-      </div>
+      <SyncedCollectionsUsersButton
+        node={node}
+        syncUsers={syncUsers}
+        updateSync={(collection) => {
+          this.doSync(collection, 'EditSync');
+        }}
+        deleteSync={(collection) => {
+          CollectionActions.deleteSync({ id: collection.id, is_syncd: false });
+        }}
+      />
     );
   }
 
@@ -211,11 +182,11 @@ export default class MyCollections extends React.Component {
         size="sm"
         variant="success"
         onClick={() => this.addSubcollection(node)}
-        onMouseDown={(e)=>{e.stopPropagation();}}
+        onMouseDown={(e) => { e.stopPropagation(); }}
       >
         <i className="fa fa-plus" />
       </Button>
-    )
+    );
   }
 
   addSubcollectionButton(node) {
@@ -228,7 +199,7 @@ export default class MyCollections extends React.Component {
       >
         <i className="fa fa-plus" />
       </Button>
-    )
+    );
   }
 
   addSubcollection(node) {
@@ -245,22 +216,24 @@ export default class MyCollections extends React.Component {
         isNew: true
       }];
     }
+    this.forceUpdate();
   }
 
   deleteCollection(node) {
-    let children = node.children || [];
-    let parent = this.findParentById(this.state.tree, node.id);
+    const children = node.children || [];
+    const parent = this.findParentById(this.state.tree, node.id);
 
-    this.removeNodeById(parent, node.id)
-    this.appendChildrenToParent(parent, children)
+    this.removeNodeById(parent, node.id);
+    this.appendChildrenToParent(parent, children);
 
     if (!node.isNew) {
-      let deleted_ids = this.state.deleted_ids.concat([node.id])
+      const deleted_ids = this.state.deleted_ids.concat([node.id]);
 
       this.setState({
-        deleted_ids: deleted_ids
-      })
+        deleted_ids
+      });
     }
+    this.forceUpdate();
   }
 
   appendChildrenToParent(parent, children) {
@@ -279,36 +252,21 @@ export default class MyCollections extends React.Component {
       return null;
     }
 
-    let children = root.children;
+    const { children } = root;
 
     for (let i = 0; i < children.length; i++) {
       if (children[i].id == id) {
         return root;
-      } else {
-        let parent = this.findParentById(children[i], id);
-        if (parent) {
-          return parent
-        }
+      }
+      const parent = this.findParentById(children[i], id);
+      if (parent) {
+        return parent;
       }
     }
   }
 
   removeNodeById(parent, id) {
-    parent.children = parent.children.filter((child) => {
-      return child.id != id
-    });
-  }
-
-  onClickNode(node) {
-    if (node.is_locked) {
-      this.setState({
-        active: { id: null }
-      });
-    } else {
-      this.setState({
-        active: node
-      });
-    }
+    parent.children = parent.children.filter((child) => child.id != id);
   }
 
   handleModalHide() {
@@ -322,27 +280,20 @@ export default class MyCollections extends React.Component {
 
   renderNode(node) {
     return (
-      <div className="mb-2">
-        <div
-          className={`${this.isActive(node) ? 'bg-dark-subtle' : ''} d-flex justify-content-between`}
-          onClick={() => this.onClickNode(node)}
-        >
-          {this.label(node)}
-          {this.actions(node)}
-        </div>
-        {this.renderSync(node)}
+      <div className="collection-node py-1 d-flex justify-content-between">
+        {this.label(node)}
+        {this.actions(node)}
       </div>
     );
   }
 
   render() {
-    let { sharingModal, active } = this.state;
+    const { tree, sharingModal, active } = this.state;
     return (
       <div className="tree">
         <Tree
           paddingLeft={20}
-          tree={this.state.tree}
-          isNodeCollapsed={this.isNodeCollapsed}
+          tree={tree}
           onChange={this.handleChange}
           renderNode={this.renderNode}
         />
@@ -359,9 +310,10 @@ export default class MyCollections extends React.Component {
             wellplateDetailLevel={active.wellplate_detail_level}
             screenDetailLevel={active.screen_detail_level}
             selectUsers={sharingModal.action === 'CreateSync'}
-            collAction={sharingModal.action} />
+            collAction={sharingModal.action}
+          />
         )}
       </div>
-    )
+    );
   }
 }
