@@ -70,6 +70,7 @@ export class ContainerDatasetModalContent extends Component {
         Processed: {},
       }
     };
+    this.overlayContainerRef = React.createRef();
     this.timeout = 6e2; // 600ms timeout for input typing
     this.doneInstrumentTyping = this.doneInstrumentTyping.bind(this);
     this.handleInputChange = this.handleInputChange.bind(this);
@@ -501,7 +502,9 @@ export class ContainerDatasetModalContent extends Component {
               key={`instrument_${index}`}
               ref={`instrument_${index}`}
               header={instrument.name}
-            />
+            >
+              {instrument.name}
+            </ListGroupItem>
           ))}
         </div>
       );
@@ -677,33 +680,35 @@ export class ContainerDatasetModalContent extends Component {
     }
     return (
       <>
-        <Form.Group controlId="datasetInstrument">
-          <Form.Label>Instrument</Form.Label>
-          <Form.Control
-            type="text"
-            value={datasetContainer.extended_metadata.instrument || ''}
-            disabled={readOnly || disabled}
-            onChange={(event) => this.handleInstrumentValueChange(
-              event,
-              this.doneInstrumentTyping
-            )}
-            ref={(form) => { this.instRef = form; }}
-            autoComplete="off"
-          />
-          <Overlay
-            target={() => ReactDOM.findDOMNode(this.instRef)}
-            shouldUpdatePosition
-            placement="bottom"
-            show={showInstruments}
-            container={this}
-            rootClose
-            onHide={() => this.abortAutoSelection()}
-          >
-            <ListGroup className="ms-0 mt-5 w-100">
-              {this.renderInstruments()}
-            </ListGroup>
-          </Overlay>
-        </Form.Group>
+        <div ref={this.overlayContainerRef} style={{ position: 'relative' }}>
+          <Form.Group controlId="datasetInstrument">
+            <Form.Label>Instrument</Form.Label>
+            <Form.Control
+              type="text"
+              value={datasetContainer.extended_metadata.instrument || ''}
+              disabled={readOnly || disabled}
+              onChange={(event) => this.handleInstrumentValueChange(
+                event,
+                this.doneInstrumentTyping
+              )}
+              ref={(form) => { this.instRef = form; }}
+              autoComplete="off"
+            />
+            <Overlay
+              target={() => ReactDOM.findDOMNode(this.instRef)}
+              shouldUpdatePosition
+              placement="bottom"
+              show={showInstruments}
+              container={this.overlayContainerRef.current}
+              rootClose
+              onHide={() => this.abortAutoSelection()}
+            >
+              <ListGroup className="mt-0 w-100 overflow-auto" style={{ maxHeight: '200px' }}>
+                {this.renderInstruments()}
+              </ListGroup>
+            </Overlay>
+          </Form.Group>
+        </div>
         <Form.Group controlId="datasetDescription">
           <Form.Label>Description</Form.Label>
           <Form.Control
