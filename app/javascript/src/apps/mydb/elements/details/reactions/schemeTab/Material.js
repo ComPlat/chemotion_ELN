@@ -781,7 +781,7 @@ class Material extends Component {
                 || (!material.reference && this.props.lockEquivColumn))}
               onChange={e => this.handleAmountUnitChange(e, material.amount_mol)}
               onMetricsChange={this.handleMetricsChange}
-              variant={material.amount_unit === 'mol' ? 'success' : 'default'}
+              variant={material.amount_unit === 'mol' ? 'success' : 'light'}
               size="sm"
             />
           </td>
