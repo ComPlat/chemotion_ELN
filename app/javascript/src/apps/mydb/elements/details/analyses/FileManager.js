@@ -122,13 +122,13 @@ class FileContainer {
     }
 
     moveUpToRoot() {
-        while (this.depth > -1) {
+        while (this.depth > 0) {
             this.moveUp();
         }
     }
 
     moveUp() {
-        if (this.depth > -1) {
+        if (this.depth > 0) {
             this.depth -= 1;
             const pathArray = this.fullPath.replace(/^\//, "").split('/');
             const returnValue = pathArray.shift();
