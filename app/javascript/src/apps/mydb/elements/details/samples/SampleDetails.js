@@ -1011,18 +1011,6 @@ export default class SampleDetails extends React.Component {
           {inventorySample}
           {!sample.isNew && <OpenCalendarButton isPanelHeader eventableId={sample.id} eventableType="Sample" />}
           <PrintCodeButton element={sample} />
-          <OverlayTrigger
-            placement="bottom"
-            overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}
-          >
-            <Button
-              variant="info"
-              size="xxsm"
-              onClick={() => this.props.toggleFullScreen()}
-            >
-              <i className="fa fa-expand" />
-            </Button>
-          </OverlayTrigger>
           {copyBtn}
           {this.saveAndCloseSample(sample, saveBtnDisplay)}
         </div>
@@ -1031,7 +1019,6 @@ export default class SampleDetails extends React.Component {
   }
 
   sampleInfo(sample) {
-    const style = { height: 'auto', marginBottom: '20px' };
     let pubchemLcss = (sample.pubchem_tag && sample.pubchem_tag.pubchem_lcss
       && sample.pubchem_tag.pubchem_lcss.Record) || null;
     if (pubchemLcss && pubchemLcss.Reference) {
@@ -1049,7 +1036,7 @@ export default class SampleDetails extends React.Component {
       ? <PubchemLcss cid={pubchemCid} informArray={pubchemLcss} /> : null;
 
     return (
-      <Row style={style}>
+      <Row className='mb-4'>
         <Col md={4}>
           <h4><SampleName sample={sample} /></h4>
           <h5>{this.sampleAverageMW(sample)}</h5>
@@ -1358,10 +1345,7 @@ export default class SampleDetails extends React.Component {
     const tabTitlesMap = {
       literature: 'References',
       qc_curation: 'QC & curation',
-      computed_props: 'computed props',
       nmr_sim: 'NMR Simulation',
-      measurements: 'Measurements',
-      inventory: 'Inventory'
     };
 
     addSegmentTabs(sample, this.handleSegmentsChange, tabContentsMap);
@@ -1423,16 +1407,22 @@ export default class SampleDetails extends React.Component {
         </Card.Header>
         <Card.Body>
           {this.sampleInfo(sample)}
-          <ElementDetailSortTab
-            type="sample"
-            availableTabs={Object.keys(tabContentsMap)}
-            tabTitles={tabTitlesMap}
-            onTabPositionChanged={this.onTabPositionChanged}
-            addInventoryTab={sample.inventory_sample}
-          />
           {this.state.sfn && <ScifinderSearch el={sample} />}
           <div className="tabs-container--with-borders">
-            <Tabs mountOnEnter unmountOnExit activeKey={activeTab} onSelect={this.handleSelect} id="SampleDetailsXTab">
+            <ElementDetailSortTab
+              type="sample"
+              availableTabs={Object.keys(tabContentsMap)}
+              tabTitles={tabTitlesMap}
+              onTabPositionChanged={this.onTabPositionChanged}
+              addInventoryTab={sample.inventory_sample}
+            />
+            <Tabs
+              mountOnEnter
+              unmountOnExit
+              activeKey={activeTab}
+              onSelect={this.handleSelect}
+              id="SampleDetailsXTab"
+            >
               {tabContents}
             </Tabs>
           </div>
@@ -1448,5 +1438,4 @@ export default class SampleDetails extends React.Component {
 
 SampleDetails.propTypes = {
   sample: PropTypes.object,
-  toggleFullScreen: PropTypes.func,
 };
