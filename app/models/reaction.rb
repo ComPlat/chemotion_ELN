@@ -73,24 +73,24 @@ class Reaction < ApplicationRecord
   pg_search_scope :search_by_reaction_rinchi_string, against: :rinchi_string
 
   pg_search_scope :search_by_sample_name, associated_against: {
-    samples: :name
+    samples: :name,
   }
 
   pg_search_scope :search_by_iupac_name, associated_against: {
-    sample_molecules: :iupac_name
+    sample_molecules: :iupac_name,
   }
 
   pg_search_scope :search_by_inchistring, associated_against: {
-    sample_molecules: :inchistring
+    sample_molecules: :inchistring,
   }
 
   pg_search_scope :search_by_cano_smiles, associated_against: {
-    sample_molecules: :cano_smiles
+    sample_molecules: :cano_smiles,
   }
 
   pg_search_scope :search_by_substring, against: :name, associated_against: {
     samples: :name,
-    sample_molecules: :iupac_name
+    sample_molecules: :iupac_name,
   }, using: { trigram: { threshold: 0.0001 } }
 
   # scopes for suggestions
@@ -150,12 +150,12 @@ class Reaction < ApplicationRecord
   has_many :comments, as: :commentable, dependent: :destroy
 
   belongs_to :creator, foreign_key: :created_by, class_name: 'User'
-  validates :creator, presence: true
 
   before_save :update_svg_file!
   before_save :cleanup_array_fields
   before_save :scrub
   before_save :auto_format_temperature!
+  before_save :transform_variations
   around_save :update_fields_to_plain_text, if: -> { description_changed? || observation_changed? }
   before_create :auto_set_short_label
 
@@ -194,20 +194,20 @@ class Reaction < ApplicationRecord
 
     return '' if minTemp.nil? || maxTemp.nil?
 
-    minTemp + ' ~ ' + maxTemp
+    "#{minTemp} ~ #{maxTemp}"
   end
 
   def temperature_display_with_unit
     tp = temperature_display
-    !tp.empty? ? tp + ' ' + temperature['valueUnit'] : ''
+    tp.empty? ? '' : "#{tp} #{temperature['valueUnit']}"
   end
 
   def description_contents
-    description['ops'].map { |s| s['insert'] }.join
+    description['ops'].pluck('insert').join
   end
 
   def observation_contents
-    observation['ops'].map { |s| s['insert'] }.join
+    observation['ops'].pluck('insert').join
   end
 
   def update_svg_file!
@@ -224,12 +224,12 @@ class Reaction < ApplicationRecord
       {
         starting_materials: :reactions_starting_material_samples,
         reactants: :reactions_reactant_samples,
-        products: :reactions_product_samples
+        products: :reactions_product_samples,
       }.each do |prop, resource|
         collection = public_send(resource).includes(sample: :molecule)
         paths[prop] = collection.map do |reactions_sample|
           sample = reactions_sample.sample
-          params = [ sample.get_svg_path ]
+          params = [sample.get_svg_path]
           params[0] = sample.svg_text_path if reactions_sample.show_label
           params.append(yield_amount(sample.id)) if prop == :products
           params
@@ -247,8 +247,10 @@ class Reaction < ApplicationRecord
       end
     end
     if reaction_svg_file_changed? && reaction_svg_file_was.present?
-      file_was = File.join(Rails.public_path, 'images', 'reactions', reaction_svg_file_was)
-      File.delete(file_was) if Reaction.where(reaction_svg_file: reaction_svg_file_was).length < 2 && File.exist?(file_was)
+      file_was = Rails.public_path.join('images', 'reactions', reaction_svg_file_was)
+      if Reaction.where(reaction_svg_file: reaction_svg_file_was).length < 2 && File.exist?(file_was)
+        File.delete(file_was)
+      end
     end
     reaction_svg_file
   end
@@ -265,12 +267,12 @@ class Reaction < ApplicationRecord
 
   def solvents_in_svg
     names = solvents.map(&:preferred_label)
-    names && !names.empty? ? names : [solvent]
+    names.presence || [solvent]
   end
 
   def cleanup_array_fields
-    self.dangerous_products = dangerous_products.reject(&:blank?)
-    self.purification = purification.reject(&:blank?)
+    self.dangerous_products = dangerous_products.compact_blank
+    self.purification = purification.compact_blank
   end
 
   def auto_set_short_label
@@ -287,15 +289,24 @@ class Reaction < ApplicationRecord
     if temperature&.fetch('userText', nil).present?
       self.temperature = temperature.merge('userText' => scrubber(temperature['userText']))
     end
-    if conditions.present?
-      self.conditions = scrubber(conditions)
-    end
+    return if conditions.blank?
+
+    self.conditions = scrubber(conditions)
   end
 
   private
 
   def scrubber(value)
     Chemotion::Sanitizer.scrub_xml(value)
+  end
+
+  def transform_variations
+    return unless variations.is_a?(Array)
+
+    self.variations = variations.each_with_object({}) do |item, hash|
+      item['uuid'] = SecureRandom.uuid if item['uuid'].blank?
+      hash[item['uuid']] = item
+    end
   end
 
   def update_fields_to_plain_text

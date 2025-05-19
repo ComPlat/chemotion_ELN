@@ -103,7 +103,7 @@ module Entities
     end
 
     def variations
-      object.variations.map(&:deep_symbolize_keys)
+      object.variations.values.map(&:deep_symbolize_keys)
     end
   end
 end
