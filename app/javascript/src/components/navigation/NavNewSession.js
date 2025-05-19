@@ -95,7 +95,7 @@ function NewSession({ authenticityToken, omniauthProviders= {}, extraRules = {} 
       )}
       {showSignUp && (
         <Col xs="auto">
-          <a className="text-secondary" href="/users/sign_up">
+          <a href="/users/sign_up">
             or Sign Up
           </a>
         </Col>

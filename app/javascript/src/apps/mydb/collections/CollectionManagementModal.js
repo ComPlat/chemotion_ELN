@@ -2,7 +2,6 @@ import React from 'react';
 import propTypes from 'prop-types';
 import { Tabs, Tab, Modal } from 'react-bootstrap';
 
-import Sheet from 'src/components/common/Sheet';
 import MyCollections from 'src/apps/mydb/collections/MyCollections';
 import MySharedCollections from 'src/apps/mydb/collections/MySharedCollections';
 import SharedWithMeCollections from 'src/apps/mydb/collections/SharedWithMeCollections';
@@ -23,31 +22,21 @@ function CollectionManagementModal({ show, onHide }) {
         Collection Management
       </Modal.Header>
       <Modal.Body>
-        <Tabs defaultActiveKey={0} id="collection-management-tab" className="sheet-tabs">
+        <Tabs defaultActiveKey={0} id="collection-management-tab" className="surface-tabs">
           <Tab eventKey={0} title="My Collections">
-            <Sheet>
-              <MyCollections />
-            </Sheet>
+            <MyCollections />
           </Tab>
           <Tab eventKey={1} title="My Shared Collections">
-            <Sheet>
-              <MySharedCollections />
-            </Sheet>
+            <MySharedCollections />
           </Tab>
           <Tab eventKey={2} title="Collections shared with me ">
-            <Sheet>
-              <SharedWithMeCollections />
-            </Sheet>
+            <SharedWithMeCollections />
           </Tab>
           <Tab eventKey={3} title="Collections synchronized with me ">
-            <Sheet>
-              <SyncWithMeCollections />
-            </Sheet>
+            <SyncWithMeCollections />
           </Tab>
           <Tab eventKey={4} title="Collection Tabs">
-            <Sheet>
-              <CollectionTabs />
-            </Sheet>
+            <CollectionTabs />
           </Tab>
         </Tabs>
       </Modal.Body>
