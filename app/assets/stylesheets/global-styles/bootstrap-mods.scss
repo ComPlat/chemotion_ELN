@@ -1,14 +1,97 @@
-.btn {
-  --bs-btn-border-color: rgba(0,0,0,0.1);
-  --bs-btn-disabled-border-color: rgba(0,0,0,0.1);
-  &.btn-link {
-    --bs-btn-border-color: transparent;
-    --bs-btn-disabled-border-color: transparent;
+$special-button-variant-colors: (
+  "light": (
+    "bg-default": map-get($silicon-shades, lighten5),
+    "border-default": map-get($carbon-shades, lighten4),
+    "text-default": map-get($carbon-shades, lighten1),
+    "bg-hover": map-get($silicon-shades, lighten4),
+    "border-hover": map-get($carbon-shades, lighten3),
+    "text-hover": map-get($carbon-shades, lighten1),
+    "bg-active": map-get($silicon-shades, lighten3),
+    "border-active": map-get($carbon-shades, lighten2),
+    "text-active": map-get($carbon-shades, lighten1),
+  ),
+  "paper": (
+    "bg-default": $chemstrap-white,
+    "border-default": $chemstrap-white,
+    "text-default": $body-color,
+    "bg-hover": map-get($silicon-shades, lighten5),
+    "border-hover": map-get($carbon-shades, lighten5),
+    "text-hover": $body-color,
+    "bg-active": map-get($silicon-shades, lighten4),
+    "border-active": map-get($silicon-shades, lighten4),
+    "text-active": $body-color,
+  ),
+  "knock-out": (
+    "bg-default": transparent,
+    "border-default": transparent,
+    "text-default": map-get($carbon-shades, lighten2),
+    "bg-hover": transparent,
+    "border-hover": transparent,
+    "text-hover": $body-color,
+    "bg-active": transparent,
+    "border-active": transparent,
+    "text-active": $chemstrap-blue-dark,
+  ),
+);
+
+$simple-button-variants: (
+  "primary": $primary,
+  "secondary": $secondary,
+  "danger": $danger,
+  "success": $success,
+  "warning": $warning,
+);
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin-top: 0.5em;
+  &.modal-title,
+  &.accordion-header,
+  &.popover-header {
+    margin-top: 0;
   }
-  &.btn-info, &.btn-danger, &.btn-warning, &.btn-success, &.btn-secondary {
-    --bs-btn-color: #{$white};
-    --bs-btn-disabled-color: #{$white};
-    --bs-btn-hover-color: #{$white};
+}
+
+@mixin chemstrap-button-variant($name) {
+  @include button-variant(
+    map-get(map-get($special-button-variant-colors, $name), "bg-default"),
+    map-get(map-get($special-button-variant-colors, $name), "border-default"),
+    map-get(map-get($special-button-variant-colors, $name), "text-default"),
+    map-get(map-get($special-button-variant-colors, $name), "bg-hover"),
+    map-get(map-get($special-button-variant-colors, $name), "border-hover"),
+    map-get(map-get($special-button-variant-colors, $name), "text-hover"),
+    map-get(map-get($special-button-variant-colors, $name), "bg-active"),
+    map-get(map-get($special-button-variant-colors, $name), "border-active"),
+    map-get(map-get($special-button-variant-colors, $name), "text-active"),
+    map-get(map-get($special-button-variant-colors, $name), "bg-default"),
+    map-get(map-get($special-button-variant-colors, $name), "border-default"),
+    map-get(map-get($special-button-variant-colors, $name), "text-default")
+  );
+}
+
+// special chemstrap button variants
+@each $name, $colors in $special-button-variant-colors {
+  .btn-#{$name} {
+    @include chemstrap-button-variant($name);
+  }
+}
+
+// simple chemstrap button variants
+
+@each $name, $color in $simple-button-variants {
+  .btn-#{$name} {
+    @include button-variant(
+      $color,
+      $color,
+      $white,
+      $hover-color: $white,
+      $active-color: $white,
+      $disabled-color: $white
+    );
   }
 }
 
@@ -35,20 +118,34 @@
 }
 
 .input-group-xsm > {
-  .form-control, .form-select, .input-group-text, .btn {
+  .form-control,
+  .form-select,
+  .input-group-text,
+  .btn {
     @include xsm-form-elements;
   }
 }
 
 .input-group-xxsm > {
-  .form-control, .form-select, .input-group-text, .btn {
+  .form-control,
+  .form-select,
+  .input-group-text,
+  .btn {
     @include xxsm-form-elements;
   }
 }
 
-.popover-header:not(:first-child) {
-  border-top: var(--bs-popover-border-width) solid var(--bs-popover-border-color);
-  border-radius: 0;
+.popover-multi-item {
+  &:not(:first-child) .popover-header {
+    border-top-left-radius: 0;
+  }
+  &:not(:last-child) {
+    border-right: var(--bs-popover-border-width) solid
+      var(--bs-popover-border-color);
+    .popover-header {
+      border-top-right-radius: 0;
+    }
+  }
 }
 
 .input-group {

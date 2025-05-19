@@ -173,7 +173,7 @@ export default class ManagingActions extends React.Component {
 
     return (
       <>
-        <ButtonGroup className="d-flex align-items-center">
+        <ButtonGroup>
           <DropdownButton
             as={ButtonGroup}
             variant="success"

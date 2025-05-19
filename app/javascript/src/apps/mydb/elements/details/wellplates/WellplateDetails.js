@@ -257,14 +257,9 @@ export default class WellplateDetails extends Component {
           <ElementCollectionLabels element={wellplate} placement="right" />
           <HeaderCommentSection element={wellplate} />
         </div>
-        <div className="d-flex justify-content-end gap-1">
+        <div className="d-flex justify-content-end gap-2">
           <PrintCodeButton element={wellplate} />
-          <OverlayTrigger placement="bottom" overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}>
-            <Button variant="info" size="xxsm" onClick={() => this.props.toggleFullScreen()}>
-              <i className="fa fa-expand" />
-            </Button>
-          </OverlayTrigger>
-          {displaySaveButton &&
+          { displaySaveButton &&
             <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveWellplate">Save Wellplate</Tooltip>}>
               <Button
                 variant="warning"
@@ -390,7 +385,6 @@ export default class WellplateDetails extends Component {
       ),
     };
 
-    const tabTitlesMap = {};
     addSegmentTabs(wellplate, this.handleSegmentsChange, tabContentsMap);
 
     const tabContents = [];
@@ -406,21 +400,22 @@ export default class WellplateDetails extends Component {
       <Card variant={wellplate.isPendingToSave ? 'info' : 'primary'} className="detail-card">
         <Card.Header>{this.wellplateHeader(wellplate)}</Card.Header>
         <Card.Body>
-          <ElementDetailSortTab
-            type="wellplate"
-            availableTabs={Object.keys(tabContentsMap)}
-            tabTitles={tabTitlesMap}
-            onTabPositionChanged={this.onTabPositionChanged}
-          />
-          <Tabs
-            mountOnEnter
-            unmountOnExit
-            activeKey={activeTab}
-            onSelect={(event) => this.handleTabChange(event)}
-            id="wellplateDetailsTab"
-          >
-            {tabContents}
-          </Tabs>
+          <div className="tabs-container--with-borders">
+            <ElementDetailSortTab
+              type="wellplate"
+              availableTabs={Object.keys(tabContentsMap)}
+              onTabPositionChanged={this.onTabPositionChanged}
+            />
+            <Tabs
+              mountOnEnter
+              unmountOnExit
+              activeKey={activeTab}
+              onSelect={(event) => this.handleTabChange(event)}
+              id="wellplateDetailsTab"
+            >
+              {tabContents}
+            </Tabs>
+          </div>
           <ButtonToolbar className='gap-1'>
             <Button variant="primary" onClick={() => DetailActions.close(wellplate)}>Close</Button>
             {
@@ -448,5 +443,4 @@ export default class WellplateDetails extends Component {
 
 WellplateDetails.propTypes = {
   wellplate: PropTypes.instanceOf(WellplateModel).isRequired,
-  toggleFullScreen: PropTypes.func.isRequired,
 };
