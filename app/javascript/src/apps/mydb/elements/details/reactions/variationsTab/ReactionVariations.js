@@ -12,15 +12,15 @@ import PropTypes from 'prop-types';
 import Reaction from 'src/models/Reaction';
 import {
   createVariationsRow, copyVariationsRow, updateVariationsRow, getVariationsColumns, materialTypes,
-  addMissingColumnsToVariations, removeObsoleteColumnsFromVariations, getColumnDefinitions
+  addMissingColumnsToVariations, removeObsoleteColumnsFromVariations, getColumnDefinitions,
+  removeObsoleteColumnDefinitions
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   getReactionAnalyses, updateAnalyses
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import {
-  updateVariationsGasTypes,
-  getReactionMaterials, getReactionMaterialsIDs, getReactionMaterialsGasTypes,
-  removeObsoleteMaterialColumns
+  updateVariationsAux, getReactionMaterials, getReactionMaterialsIDs,
+  removeObsoleteMaterialColumns, resetColumnDefinitionsMaterials, getReactionMaterialsHashes
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   PropertyFormatter, PropertyParser,
@@ -48,12 +48,15 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   const reactionVariations = reaction.variations;
   const reactionHasPolymers = reaction.hasPolymers();
   const reactionShortLabel = reaction.short_label;
+  const reactionMaterials = getReactionMaterials(reaction);
+  const [previousReactionMaterials, setPreviousReactionMaterials] = useState(reactionMaterials);
+  const gasMode = reaction.gaseous;
+  const [previousGasMode, setPreviousGasMode] = useState(gasMode);
+  const allReactionAnalyses = getReactionAnalyses(reaction);
+  const [previousAllReactionAnalyses, setPreviousAllReactionAnalyses] = useState(allReactionAnalyses);
   const { dispValue: durationValue = null, dispUnit: durationUnit = 'None' } = reaction.durationDisplay ?? {};
   const { userText: temperatureValue = null, valueUnit: temperatureUnit = 'None' } = reaction.temperature ?? {};
   const vesselVolume = GasPhaseReactionStore.getState().reactionVesselSizeValue;
-  const [gasMode, setGasMode] = useState(reaction.gaseous);
-  const [allReactionAnalyses, setAllReactionAnalyses] = useState(getReactionAnalyses(reaction));
-  const [reactionMaterials, setReactionMaterials] = useState(getReactionMaterials(reaction));
   const [selectedColumns, setSelectedColumns] = useState(getVariationsColumns(reactionVariations));
   const initialColumnDefinitions = useMemo(() => getColumnDefinitions(selectedColumns, reactionMaterials, gasMode), []);
   const [columnDefinitions, setColumnDefinitions] = useReducer(columnDefinitionsReducer, initialColumnDefinitions);
@@ -116,53 +119,71 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   };
 
   /*
-  What follows is a series of imperative state updates that keep the "Variations" tab in sync with other tabs.
+  What follows is a series of imperative state updates that keep the "Variations" tab in sync with the "Scheme" tab.
   This pattern isn't nice, but the best I could do according to
   https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes and
   https://react.dev/reference/react/useState#storing-information-from-previous-renders.
   It would be preferable to refactor this to a more declarative approach, using a store for example.
   */
-  const updatedReactionMaterials = getReactionMaterials(reaction);
-  const updatedGasMode = reaction.gaseous;
-  const updatedAllReactionAnalyses = getReactionAnalyses(reaction);
 
   /*
-  Keep set of materials up-to-date.
-  Materials could have been added or removed in the "Scheme" tab.
-  We need to only *remove* obsolete materials, not *add* missing ones, since users add materials manually.
+  Update materials according to "Scheme" tab.
   */
-  if (
-    !isEqual(
-      getReactionMaterialsIDs(reactionMaterials),
-      getReactionMaterialsIDs(updatedReactionMaterials)
-    )
-  ) {
+  if (!isEqual(
+    getReactionMaterialsHashes(reactionMaterials, gasMode, vesselVolume),
+    getReactionMaterialsHashes(previousReactionMaterials, gasMode, vesselVolume)
+  )) {
+    /*
+    Keep set of materials up-to-date.
+    Materials could have been added or removed in the "Scheme" tab.
+    We need to only *remove* obsolete materials, not *add* missing ones, since users add materials manually.
+    */
     const updatedSelectedColumns = removeObsoleteMaterialColumns(
-      updatedReactionMaterials,
+      reactionMaterials,
       selectedColumns
     );
-    setSelectedColumns(updatedSelectedColumns);
 
-    const updatedReactionVariations = removeObsoleteColumnsFromVariations(
+    let updatedReactionVariations = removeObsoleteColumnsFromVariations(
       reactionVariations,
       updatedSelectedColumns
     );
-    setReactionVariations(updatedReactionVariations);
+
+    let updatedColumnDefinitions = removeObsoleteColumnDefinitions(columnDefinitions, updatedSelectedColumns);
+
+    /*
+    Update the materials' non-editable quantities according to the "Scheme" tab.
+    */
+    updatedReactionVariations = updateVariationsAux(
+      updatedReactionVariations,
+      reactionMaterials,
+      gasMode,
+      vesselVolume
+    );
+
+    // Reset materials' column definitions to account for potential changes in their gas type.
+    updatedColumnDefinitions = resetColumnDefinitionsMaterials(
+      updatedColumnDefinitions,
+      reactionMaterials,
+      updatedSelectedColumns,
+      gasMode
+    );
 
     setColumnDefinitions(
       {
-        type: 'remove_obsolete_materials',
-        selectedColumns: updatedSelectedColumns
+        type: 'set_updated',
+        update: updatedColumnDefinitions
       }
     );
-
-    setReactionMaterials(updatedReactionMaterials);
+    setSelectedColumns(updatedSelectedColumns);
+    setReactionVariations(updatedReactionVariations);
+    setPreviousReactionMaterials(reactionMaterials);
+    setPreviousGasMode(gasMode);
   }
 
   /*
   Update gas mode according to "Scheme" tab.
   */
-  if (gasMode !== updatedGasMode) {
+  if (gasMode !== previousGasMode) {
     const updatedSelectedColumns = getVariationsColumns([]);
     setSelectedColumns(updatedSelectedColumns);
     setColumnDefinitions(
@@ -173,40 +194,11 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
           return materials;
         }, {}),
         selectedColumns: updatedSelectedColumns,
-        gasMode: updatedGasMode
+        gasMode
       }
     );
-    setGasMode(updatedGasMode);
+    setPreviousGasMode(gasMode);
     setReactionVariations([]);
-  }
-
-  /*
-  Update the materials's gas types according to  the "Scheme" tab.
-  */
-  if (
-    updatedGasMode && !isEqual(
-      getReactionMaterialsGasTypes(reactionMaterials),
-      getReactionMaterialsGasTypes(updatedReactionMaterials)
-    )
-  ) {
-    const updatedReactionVariations = updateVariationsGasTypes(
-      reactionVariations,
-      updatedReactionMaterials,
-      updatedGasMode,
-      vesselVolume
-    );
-    setReactionVariations(updatedReactionVariations);
-
-    setColumnDefinitions(
-      {
-        type: 'update_gas_type',
-        selectedColumns,
-        materials: updatedReactionMaterials,
-        gasMode: updatedGasMode,
-      }
-    );
-
-    setReactionMaterials(updatedReactionMaterials);
   }
 
   /*
@@ -249,10 +241,10 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   |               |                | only displays associations to existing rows.   |
   `-------------- ---------------- -------------------------------------------------`
   */
-  if (!isEqual(allReactionAnalyses, updatedAllReactionAnalyses)) {
-    const updatedReactionVariations = updateAnalyses(reactionVariations, updatedAllReactionAnalyses);
+  if (!isEqual(allReactionAnalyses, previousAllReactionAnalyses)) {
+    const updatedReactionVariations = updateAnalyses(reactionVariations, allReactionAnalyses);
     setReactionVariations(updatedReactionVariations);
-    setAllReactionAnalyses(updatedAllReactionAnalyses);
+    setPreviousAllReactionAnalyses(allReactionAnalyses);
   }
 
   const addRow = () => {
