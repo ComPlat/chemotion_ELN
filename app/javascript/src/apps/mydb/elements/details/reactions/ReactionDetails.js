@@ -64,9 +64,9 @@ const handleProductClick = (product) => {
   sampleShowOrNew({ params: { sampleID: product.id } });
 };
 
-const productLink = (product) => (
+const productLink = (product, active) => (
   <span>
-    Analysis:
+    {active && "Sample Analysis:"}
     <span
       aria-hidden="true"
       className="pseudo-link"
@@ -260,7 +260,8 @@ export default class ReactionDetails extends Component {
     const { activeAnalysisTab } = this.state;
 
     const tabs = products.map((product, key) => {
-      const title = productLink(product);
+      const activeTab = key.toString() === activeAnalysisTab;
+      const title = productLink(product, activeTab);
       const setState = () => this.handleProductChange(product);
       const handleSampleChanged = (_, cb) => this.handleProductChange(product, cb);
 
@@ -281,7 +282,7 @@ export default class ReactionDetails extends Component {
     });
     const reactionTab = (
       <span>
-        Analysis:
+        {activeAnalysisTab === '4.1' && 'Reaction Analysis:'}
         <i className="icon-reaction mx-1" />
         {reaction.short_label}
       </span>
