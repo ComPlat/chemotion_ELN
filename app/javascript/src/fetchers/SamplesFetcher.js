@@ -63,7 +63,6 @@ export default class SamplesFetcher {
   }
 
   static update(sample) {
-    const files = AttachmentFetcher.getFileListfrom(sample.container);
     const promise = () => fetch(`/api/v1/samples/${sample.id}`, {
       credentials: 'same-origin',
       method: 'put',
@@ -79,17 +78,11 @@ export default class SamplesFetcher {
         console.log(errorMessage);
       });
 
-    if (files.length > 0) {
-      const tasks = [];
-      files.forEach((file) => tasks.push(AttachmentFetcher.uploadFile(file).then()));
-      return Promise.all(tasks).then(() => promise());
-    }
-
-    return promise();
+    return AttachmentFetcher.uploadNewAttachmentsForContainer(sample.container)
+      .then(() => promise());
   }
 
   static create(sample) {
-    const files = AttachmentFetcher.getFileListfrom(sample.container);
     const promise = () => fetch('/api/v1/samples', {
       credentials: 'same-origin',
       method: 'post',
@@ -103,13 +96,7 @@ export default class SamplesFetcher {
         .then(() => this.fetchById(json.sample.id))).catch((errorMessage) => {
         console.log(errorMessage);
       });
-    if (files.length > 0) {
-      const tasks = [];
-      files.forEach((file) => tasks.push(AttachmentFetcher.uploadFile(file)));
-      return Promise.all(tasks).then(() => promise());
-    }
-
-    return promise();
+    return AttachmentFetcher.uploadNewAttachmentsForContainer(sample.container).then(() => promise());
   }
 
   static splitAsSubsamples(params) {
@@ -117,7 +104,7 @@ export default class SamplesFetcher {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
