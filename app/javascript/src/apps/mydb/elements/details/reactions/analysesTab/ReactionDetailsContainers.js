@@ -399,6 +399,8 @@ export default class ReactionDetailsContainers extends Component {
                             templateType="reaction"
                             container={container}
                             onChange={() => this.handleChange(container)}
+                            rootContainer={reaction.container}
+                            index={key}
                           />
                           <ViewSpectra
                             sample={reaction}
