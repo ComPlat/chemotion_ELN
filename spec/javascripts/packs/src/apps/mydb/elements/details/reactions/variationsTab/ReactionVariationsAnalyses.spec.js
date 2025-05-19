@@ -36,6 +36,7 @@ describe('ReactionVariationsAnalyses', async () => {
     });
     it('when analysis is removed', async () => {
       const { variations } = reaction;
+      
       variations[0].metadata.analyses = [analysisFoo.id];
       expect(updateAnalyses(variations, getReactionAnalyses(reaction))[0].metadata.analyses)
         .toEqual([analysisFoo.id]);
