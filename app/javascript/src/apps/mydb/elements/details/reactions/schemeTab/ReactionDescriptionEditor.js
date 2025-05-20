@@ -180,7 +180,6 @@ export default class ReactionDescriptionEditor extends React.Component {
       <DynamicToolbarEditor
         theme="snow"
         formats={toolbarOptions}
-        style={{ height: '100%' }}
         ref={this.reactQuillRef}
         onChange={this.quillOnChange}
         value={value}
