@@ -3,21 +3,25 @@
 require 'rails_helper'
 
 describe Usecases::Reactions::UpdateVariations do
+  let(:uuid1) { SecureRandom.uuid }
+  let(:uuid2) { SecureRandom.uuid }
   let(:variations) do
     [
-      {
+      [uuid1, {
+        'uuid' => uuid1,
         'startingMaterials' => { '42' => {} },
         'reactants' => { '43' => {} },
         'products' => { '44' => {}, '45' => {} },
         'solvents' => {},
-      },
-      {
+      }],
+      [uuid2, {
+        'uuid' => uuid2,
         'startingMaterials' => { '42' => {} },
         'reactants' => { '43' => {} },
         'products' => { '44' => {}, '45' => {} },
         'solvents' => {},
-      },
-    ]
+      }],
+    ].to_h
   end
   let(:user) { create(:user) }
   let(:collection) { Collection.create!(user: user, label: 'collection') }

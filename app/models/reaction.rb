@@ -294,6 +294,11 @@ class Reaction < ApplicationRecord
     self.conditions = scrubber(conditions)
   end
 
+  def variations
+    raw = self[:variations]
+    raw.is_a?(Hash) ? raw.values : raw
+  end
+
   private
 
   def scrubber(value)
