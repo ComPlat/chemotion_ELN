@@ -120,9 +120,24 @@ describe Chemotion::ReportAPI do
 
           expect(response['Content-Type']).to eq('chemical/x-mdl-sdfile')
           expect(response['Content-Disposition']).to include('.sdf')
-          msdf = molfiles[i].gsub(/<CREATED_AT>.+?</ms, '<')
-          sdf = response.body.gsub(/<CREATED_AT>.+?</ms, '<')
-          expect(sdf.squish).to eq(msdf.squish)
+          
+          msdf = molfiles[i]
+          sdf = response.body
+
+          # Normalize line endings but preserve SDF structure
+          msdf = msdf.gsub(/\r\n?/, "\n")
+          sdf = sdf.gsub(/\r\n?/, "\n")
+
+          # Remove dynamic CREATED_AT tags
+          msdf = msdf.gsub(/<CREATED_AT>.+?</ms, '<')
+          sdf  = sdf.gsub(/<CREATED_AT>.+?</ms, '<')
+
+          # Replace UUIDs
+          uuid_regex = /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/i
+          msdf = msdf.gsub(uuid_regex, '<SAMPLE UUID>')
+          sdf  = sdf.gsub(uuid_regex, '<SAMPLE UUID>')
+
+          expect(sdf).to eq(msdf), "Mismatch in SDF for sample ##{i}"
         end
       end
     end

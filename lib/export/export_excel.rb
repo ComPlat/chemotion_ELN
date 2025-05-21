@@ -4,6 +4,16 @@ module Export
   class ExportExcel < ExportTable
     DEFAULT_ROW_WIDTH = 100
     DEFAULT_ROW_HEIGHT = 20
+    DECOUPLED_STYLE = {
+      b: true,
+      fg_color: 'CEECF5',
+      bg_color: 'FF777777',
+      border: {
+        style: :thick,
+        color: 'FF777777',
+        edges: [:bottom],
+      }
+    }
 
     def initialize(**args)
       @xfile = Axlsx::Package.new
@@ -19,8 +29,8 @@ module Export
       sheet = @xfile.workbook.add_worksheet(name: table.to_s) # do |sheet|
       grey = sheet.styles.add_style(sz: 12, border: { style: :thick, color: 'FF777777', edges: [:bottom] })
       sheet.add_row(@headers, style: grey) # Add header
-      decoupled_style = sheet.styles.add_style(b: true, fg_color: 'CEECF5', bg_color: 'FF777777', border: { style: :thick, color: 'FF777777', edges: [:bottom] })
-      ['decoupled', 'molecular mass (decoupled)', 'sum formula (decoupled)'].each do |e|
+      decoupled_style = sheet.styles.add_style(DECOUPLED_STYLE)
+      ['decoupled', 'molecular mass (decoupled)', 'sum formula (decoupled)', 'sample uuid'].each do |e|
         s_idx = @headers.find_index(e)
         sheet.rows[0].cells[s_idx].style = decoupled_style
       end
@@ -59,6 +69,11 @@ module Export
       grey = sheet.styles.add_style(sz: 12, :border => { :style => :thick, :color => "FF777777", :edges => [:bottom] })
       light_grey = sheet.styles.add_style(:border => { :style => :thick, :color => "FFCCCCCC", :edges => [:top] })
       sheet.add_row(@headers, style: grey) # Add header
+      decoupled_style = sheet.styles.add_style(DECOUPLED_STYLE)
+      ['sample uuid'].each do |e|
+        s_idx = @headers.find_index(e)
+        sheet.rows[0].cells[s_idx].style = decoupled_style
+      end
       image_width = DEFAULT_ROW_WIDTH
       row_height = DEFAULT_ROW_HEIGHT
       row_image_width = DEFAULT_ROW_WIDTH
