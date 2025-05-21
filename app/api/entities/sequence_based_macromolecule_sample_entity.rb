@@ -28,6 +28,7 @@ module Entities
     expose! :activity_unit
     expose! :type
     expose! :changed
+    expose! :errors
 
     expose! :attachments, using: 'Entities::AttachmentEntity'
     expose! :comments, using: 'Entities::CommentEntity'
@@ -57,6 +58,10 @@ module Entities
 
     def can_publish
       options[:policy].try(:destroy?) || false
+    end
+
+    def errors
+      object.errors || {}
     end
   end
 end

@@ -14,6 +14,7 @@ module Entities
     expose! :short_name
     expose! :molecular_weight
     expose! :sequence
+    expose! :splitted_sequence
     expose! :sequence_length
     expose! :link_uniprot
     expose! :link_pdb
@@ -49,6 +50,10 @@ module Entities
 
     def full_name
       object.systematic_name
+    end
+
+    def splitted_sequence
+      object.sequence.scan(/.{1,10}/m).join(' ')
     end
 
     def sequence_length

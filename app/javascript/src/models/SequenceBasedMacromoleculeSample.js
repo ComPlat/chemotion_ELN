@@ -467,6 +467,8 @@ export default class SequenceBasedMacromoleculeSample extends Element {
         sbmm_subtype: '',
         sbmm_type: '',
         sequence: '',
+        sequence_length: '',
+        splitted_sequence: '',
         short_name: '',
         strain: '',
         taxon_id: '',
@@ -531,6 +533,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
       can_copy: false,
       container: Container.init(),
       attachments: [],
+      errors: {},
     });
   }
 

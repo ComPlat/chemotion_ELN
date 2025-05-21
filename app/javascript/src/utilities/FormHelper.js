@@ -46,6 +46,11 @@ const elementField = (element, field) => {
   return fieldParts.reduce((accumulator, currentValue) => accumulator?.[currentValue], element);
 }
 
+const errorMessage = (element, field) => {
+  let fieldParts = `errors.${field}`.split('.');
+  return fieldParts.reduce((accumulator, currentValue) => accumulator?.[currentValue], element);
+}
+
 const optionsByRelatedField = (store, element, field, options) => {
   const relatedOptions = options.filter((o) => o.related !== undefined);
   if (relatedOptions.length < 1) { return options; }
@@ -124,7 +129,7 @@ const initFormHelper = (element, store) => {
             key={`${store.key_prefix}-${field}`}
             value={value || ''}
             disabled={disabled}
-            isInvalid={!value && store.error_messages[`${element.id}-${field}`]}
+            isInvalid={!value && errorMessage(element, field)}
             onChange={(event) => formHelper.onChange(field, event.target.value)}
           />
         </Form.Group>
@@ -146,7 +151,7 @@ const initFormHelper = (element, store) => {
       );
     },
 
-    selectInput: (field, label, options, disabled, errors, info) => {
+    selectInput: (field, label, options, disabled, info) => {
       const elementValue = elementField(element, field);
       const relatedOptions = optionsByRelatedField(store, element, field, options);
       let value = options.find((o) => { return o.value == elementValue });
@@ -164,7 +169,7 @@ const initFormHelper = (element, store) => {
             isDisabled={disabled}
             classNames={{
               control: (state) =>
-                !state.hasValue && errors[`${element.id}-${field}`] ? 'border-danger' : '',
+                !state.hasValue && errorMessage(element, field) ? 'border-danger' : '',
             }}
             onChange={(event) => formHelper.onChange(field, (event?.value || event?.label || ''))}
           />
@@ -183,7 +188,7 @@ const initFormHelper = (element, store) => {
             key={`${store.key_prefix}-${field}`}
             value={numberValue(value)}
             disabled={disabled}
-            isInvalid={!value && store.error_messages[`${element.id}-${field}`]}
+            isInvalid={!value && errorMessage(element, field)}
             onChange={(event) => formHelper.onChange(field, event.target.value)}
           />
         </Form.Group>
@@ -219,7 +224,7 @@ const initFormHelper = (element, store) => {
             value={value || ''}
             rows={rows}
             disabled={disabled}
-            isInvalid={!value && store.error_messages[`${element.id}-${field}`]}
+            isInvalid={!value && errorMessage(element, field)}
             onChange={(event) => formHelper.onChange(field, event.target.value)}
           />
         </Form.Group>
@@ -282,7 +287,7 @@ const initFormHelper = (element, store) => {
               key={`${store.key_prefix}-${field}`}
               value={value || ''}
               disabled={disabled}
-              isInvalid={!value && store.error_messages[`${element.id}-${field}`]}
+              isInvalid={!value && errorMessage(element, field)}
               onChange={(event) => formHelper.onChange(field, event.target.value, 'number')}
               className="flex-grow-1"
             />
@@ -485,19 +490,6 @@ const initFormHelper = (element, store) => {
     },
   };
   return formHelper;
-}
-
-const handleClickOnUrl = (type, id) => {
-  const { currentCollection, isSync } = UIStore.getState();
-  const uri = isSync
-    ? `/scollection/${currentCollection.id}/${type}/${id}`
-    : `/collection/${currentCollection.id}/${type}/${id}`;
-  Aviator.navigate(uri, { silent: true });
-  const e = { type, params: { collectionID: currentCollection.id } };
-  e.params[`${type}ID`] = id;
-  elementShowOrNew(e);
-
-  return null;
 }
 
 export { initFormHelper }

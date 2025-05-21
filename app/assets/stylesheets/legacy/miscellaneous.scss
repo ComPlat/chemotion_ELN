@@ -188,6 +188,16 @@ th.drag {
   max-height: 22px;
 }
 
+.uniprot-logo {
+  max-height: 22px;
+  filter: invert(25%) sepia(99%) saturate(919%) hue-rotate(166deg) brightness(105%) contrast(101%);
+}
+
+.uniprot-logo-white {
+  max-height: 22px;
+  filter: invert(1);
+}
+
 #tabList .active a {
   border-bottom-color: $gray-100;
 }

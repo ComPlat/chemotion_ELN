@@ -25,9 +25,7 @@ function ListItemHeader({
 
 ListItemHeader.propTypes = {
   group: PropTypes.arrayOf(PropTypes.instanceOf(SequenceBasedMacromoleculeSample)).isRequired,
-  getGroupKey: PropTypes.func.isRequired,
   toggleGroupCollapse: PropTypes.func.isRequired,
-  groupedByValue: PropTypes.string.isRequired,
 };
 
 function ListItem({ element, showDetails }) {
