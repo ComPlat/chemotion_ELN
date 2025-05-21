@@ -277,6 +277,8 @@ module Chemotion
           error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, device_description).read?
 
           device_description_with_entity(device_description)
+        rescue ActiveRecord::RecordNotFound
+          error!('404 Not Found', 404)
         end
       end
 

@@ -43,6 +43,7 @@ export default class SequenceBasedMacromoleculeSamplesFetcher {
     ).then(response => response.json())
       .then((json) => {
         if (json.error) {
+          const id = sequenceBasedMacromoleculeSampleId;
           return new SequenceBasedMacromoleculeSample(
             { id: `${id}:error:SequenceBasedMacromoleculeSample ${id} is not accessible!`, is_new: true }
           );

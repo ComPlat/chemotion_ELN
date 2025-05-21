@@ -90,7 +90,7 @@ module Chemotion
               can_dwnld = can_read &&
                           ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
             end
-          elsif /sample_analyses/.match?(request.url)
+          elsif /\bsample_analyses\b/.match?(request.url)
             @sample = Sample.find(params[:sample_id])
             if (element = @sample)
               can_read = ElementPolicy.new(current_user, element).read?
@@ -104,7 +104,7 @@ module Chemotion
               can_dwnld = can_read &&
                           ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
             end
-          elsif /sequence_based_macromolecule_sample_analyses/.match?(request.url)
+          elsif /\bsequence_based_macromolecule_sample_analyses\b/.match?(request.url)
             @sequence_based_macromolecule_sample =
               SequenceBasedMacromoleculeSample.find(params[:sequence_based_macromolecule_sample_id])
             if (element = @sequence_based_macromolecule_sample)
@@ -365,13 +365,11 @@ module Chemotion
 
       desc 'Download the zip attachment file by device_description_id'
       get 'device_description_analyses/:device_description_id' do
-        # rubocop:disable Performance/Sum
         tts = @device_description.analyses&.map do |a|
                 a.children&.map do |d|
                   d.attachments&.map(&:filesize)
                 end
-              end&.flatten&.reduce(:+) || 0
-        # rubocop:enable Performance/Sum
+              end&.flatten&.sum || 0
         if tts > 300_000_000
           DownloadAnalysesJob.perform_later(@device_description.id, current_user.id, false, 'device_description')
           nil
@@ -381,6 +379,31 @@ module Chemotion
           filename = CGI.escape("#{@device_description.short_label}-analytical-files.zip")
           header('Content-Disposition', "attachment; filename=\"#{filename}\"")
           zip = DownloadAnalysesJob.perform_now(@device_description.id, current_user.id, true, 'device_description')
+          zip.rewind
+          zip.read
+        end
+      end
+
+      desc 'Download the zip attachment file by sequence_based_macromolecule_sample_id'
+      get 'sequence_based_macromolecule_sample_analyses/:sequence_based_macromolecule_sample_id' do
+        tts = @sequence_based_macromolecule_sample.analyses&.map do |a|
+                a.children&.map do |d|
+                  d.attachments&.map(&:filesize)
+                end
+              end&.flatten&.sum || 0
+        if tts > 300_000_000
+          DownloadAnalysesJob.perform_later(
+            @sequence_based_macromolecule_sample.id, current_user.id, false, 'sequence_based_macromolecule_sample'
+          )
+          nil
+        else
+          env['api.format'] = :binary
+          content_type('application/zip, application/octet-stream')
+          filename = CGI.escape("#{@sequence_based_macromolecule_sample.short_label}-analytical-files.zip")
+          header('Content-Disposition', "attachment; filename=\"#{filename}\"")
+          zip = DownloadAnalysesJob.perform_now(
+            @sequence_based_macromolecule_sample.id, current_user.id, true, 'sequence_based_macromolecule_sample'
+          )
           zip.rewind
           zip.read
         end

@@ -34,7 +34,8 @@ module Chemotion
 
         requires(:sequence_based_macromolecule_attributes, type: Hash) do
           requires :sbmm_type, type: String, desc: 'SBMM Type', values: %w[protein dna rna]
-          requires :sbmm_subtype, type: String, desc: 'SBMM Subtype', values: %w[unmodified glycoprotein]
+          optional :sbmm_subtype, type: String, desc: 'SBMM Subtype', values: %w[unmodified glycoprotein],
+                                  allow_blank: true
           requires :uniprot_derivation, type: String, desc: 'Existence in Uniprot',
                                         values: %w[uniprot uniprot_modified uniprot_unknown]
 
@@ -161,6 +162,8 @@ module Chemotion
           policy: policy,
           root: :sequence_based_macromolecule_sample,
         )
+      rescue ActiveRecord::RecordNotFound
+        error!('404 Not Found', 404)
       end
 
       desc 'Create SBMM sample'

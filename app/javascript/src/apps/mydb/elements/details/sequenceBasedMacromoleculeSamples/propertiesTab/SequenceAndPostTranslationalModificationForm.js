@@ -5,11 +5,11 @@ import { initFormHelper } from 'src/utilities/FormHelper';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
-const SequenceAndPostTranslationalModificationForm = () => {
+const SequenceAndPostTranslationalModificationForm = ({ readonly }) => {
   const sbmmStore = useContext(StoreContext).sequenceBasedMacromoleculeSamples;
   let sbmmSample = sbmmStore.sequence_based_macromolecule_sample;
   const formHelper = initFormHelper(sbmmSample, sbmmStore);
-  const disabled = false;
+  const disabled = readonly ? readonly : false;
 
   const fieldPrefixSequence = 'sequence_based_macromolecule.protein_sequence_modifications';
   const fieldPrefixPostTransitional = 'sequence_based_macromolecule.post_translational_modifications';
