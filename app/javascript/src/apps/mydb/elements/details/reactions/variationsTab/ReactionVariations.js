@@ -44,6 +44,14 @@ const persistGridState = (id, event) => {
 };
 
 export default function ReactionVariations({ reaction, onReactionChange, isActive }) {
+  if (reaction.isNew) {
+    return (
+      <Alert variant="info">
+        Save the reaction to enable the variations tab.
+      </Alert>
+    );
+  }
+
   const gridRef = useRef(null);
   const reactionVariations = reaction.variations;
   const reactionHasPolymers = reaction.hasPolymers();
@@ -377,14 +385,6 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
       </Button>
     </OverlayTrigger>
   );
-
-  if (reaction.isNew) {
-    return (
-      <Alert variant="info">
-        Save the reaction to enable the variations tab.
-      </Alert>
-    );
-  }
 
   const fitColumnToContent = (event) => {
     const { column } = event;
