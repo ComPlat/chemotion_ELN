@@ -25,6 +25,7 @@
 #  index_cellline_samples_on_ancestry  (ancestry)
 #
 class CelllineSample < ApplicationRecord
+  has_logidze
   acts_as_paranoid
   has_ancestry
 
