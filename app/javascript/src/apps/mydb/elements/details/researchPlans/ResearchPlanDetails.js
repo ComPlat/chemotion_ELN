@@ -631,16 +631,14 @@ export default class ResearchPlanDetails extends Component {
           <CommentModal element={researchPlan} />
         </Card.Body>
         <Card.Footer>
-          <ButtonToolbar className="gap-2">
-            <Button variant="primary" onClick={() => DetailActions.close(researchPlan)}>Close</Button>
-            {
-              (researchPlan.changed || researchPlan.is_copy) && (
-                <Button variant="warning" onClick={() => this.handleSubmit()}>
-                  {researchPlan.isNew ? 'Create' : 'Save'}
-                </Button>
-              )
-            }
-          </ButtonToolbar>
+          <Button variant="primary" onClick={() => DetailActions.close(researchPlan)}>Close</Button>
+          {
+            (researchPlan.changed || researchPlan.is_copy) && (
+              <Button variant="warning" onClick={() => this.handleSubmit()}>
+                {researchPlan.isNew ? 'Create' : 'Save'}
+              </Button>
+            )
+          }
         </Card.Footer>
       </Card>
     );

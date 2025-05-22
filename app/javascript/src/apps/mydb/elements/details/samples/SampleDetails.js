@@ -425,7 +425,7 @@ export default class SampleDetails extends React.Component {
     const hasAnalyses = !!(sample.analyses && sample.analyses.length > 0);
 
     return (
-      <div className="d-flex gap-1">
+      <>
         <Button variant="primary" onClick={() => DetailActions.close(sample)}>
           Close
         </Button>
@@ -441,7 +441,7 @@ export default class SampleDetails extends React.Component {
             {startExport && <i className="fa fa-spin fa-spinner ms-1" />}
           </Button>
         )}
-      </div>
+      </>
     );
   }
 
@@ -1422,11 +1422,13 @@ export default class SampleDetails extends React.Component {
               {tabContents}
             </Tabs>
           </div>
-          {this.sampleFooter()}
           {this.structureEditorModal(sample)}
           {this.renderMolfileModal()}
           <CommentModal element={sample} />
         </Card.Body>
+        <Card.Footer>
+          {this.sampleFooter()}
+        </Card.Footer>
       </Card>
     );
   }

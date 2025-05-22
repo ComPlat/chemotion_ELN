@@ -1,17 +1,22 @@
 .detail-card {
   @extend .border-0;
-  @extend .h-100;
 
-  > .card-header {
-    @extend .surface-tab__header;
-    @extend .state-border;
-  }
-
-  > .card-body {
-    @extend .p-0;
-    @extend .h-0;
-    @extend .overflow-x-hidden;
-    @extend .overflow-y-scroll;
+  > .card {
+    &-header {
+      @extend .surface-tab__header;
+      @extend .state-border;
+    }
+    &-body {
+      @extend .p-0;
+    }
+    &-footer {
+      @extend .surface-tab__header;
+      @extend .border-0;
+      @extend .d-flex;
+      @extend .justify-content-end;
+      @extend .align-items-center;
+      @extend .gap-2;
+    }
   }
 
   &.detail-card--unsaved > .card-header {

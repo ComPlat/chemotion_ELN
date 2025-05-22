@@ -207,13 +207,13 @@ class CellLineDetails extends React.Component {
               </Tab>
             </Tabs>
           </div>
-          <ButtonToolbar className="d-flex gap-1">
-            <Button variant="primary" onClick={() => { this.handleClose(cellLineItem); }}>
-              Close
-            </Button>
-            {this.renderSubmitButton()}
-          </ButtonToolbar>
         </Card.Body>
+        <Card.Footer className="d-flex justify-content-between">
+          <Button variant="primary" onClick={() => { this.handleClose(cellLineItem); }}>
+            Close
+          </Button>
+          {this.renderSubmitButton()}
+        </Card.Footer>
       </Card>
     );
   }
