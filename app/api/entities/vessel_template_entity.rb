@@ -10,5 +10,6 @@ module Entities
     expose :volume_unit
     expose :details
     expose :id
+    expose :container, using: 'Entities::ContainerEntity'
   end
 end
