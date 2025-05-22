@@ -15,6 +15,5 @@ module Entities
     expose :weight_unit
     expose :vessel_template
     expose :tag
-    expose :container, using: 'Entities::ContainerEntity'
   end
 end

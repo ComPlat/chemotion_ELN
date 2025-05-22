@@ -26,4 +26,7 @@ class VesselTemplate < ApplicationRecord
   acts_as_paranoid
 
   has_many :vessels, dependent: :destroy
+  has_one :container, as: :containable, dependent: :destroy
+
+  accepts_nested_attributes_for :container
 end
