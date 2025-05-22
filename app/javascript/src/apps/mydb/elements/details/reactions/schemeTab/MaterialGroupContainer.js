@@ -4,7 +4,7 @@ import { DropTarget } from 'react-dnd';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import { MaterialGroup } from 'src/apps/mydb/elements/details/reactions/schemeTab/MaterialGroup';
 import Reaction from 'src/models/Reaction';
-
+import cs from 'classnames';
 
 const target = {
   drop(tagProps, monitor) {
@@ -58,13 +58,11 @@ class MaterialGroupContainer extends Component {
       deleteMaterial, onChange, reaction, dropSample, dropMaterial, switchEquiv, lockEquivColumn,
       displayYieldField, switchYield,
     } = this.props;
-    let className='';
-    if (canDrop) {
-      className+=' dnd-zone';
-      if (isOver) {
-        className+=' dnd-zone-over';
-      }
-    }
+
+    const className = cs({
+      'dnd-zone': canDrop,
+      'dnd-zone-over': canDrop && isOver,
+    });
 
     return connectDropTarget(
       <div className={className}>
