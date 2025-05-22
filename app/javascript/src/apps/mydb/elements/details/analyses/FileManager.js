@@ -60,7 +60,19 @@ class FileContainer {
         this.name = file.name;
         this.depth = depth;
         this.fullPath = fullPath || file.name;
-        this.subFiles = []
+        this.subFiles = [];
+        this.marked = false;
+    }
+
+    static markeAllByPaths(fileContainreList, paths) {
+        fileContainreList.forEach((file) => {
+            file.marked = paths.includes(file.fullPath);
+            FileContainer.markeAllByPaths(file.subFiles, paths);
+        });
+    }
+
+    static pathAsArray(fullPath) {
+        return fullPath.replace(/^\//, "").split('/');
     }
 
     get size() {
@@ -77,6 +89,9 @@ class FileContainer {
 
     get isFile() {
         return this.file.isFile;
+    }
+    get fullPathArray() {
+        return FileContainer.pathAsArray(this.fullPath);
     }
 
     content() {
@@ -121,6 +136,14 @@ class FileContainer {
         });
     }
 
+    moveDown(folderName) {
+        this.depth += 1;
+        const pathArray = this.fullPathArray;
+        pathArray.unshift(folderName);
+        this.fullPath = pathArray.join('/');
+        this.subFiles.forEach((x) => x.moveDown(folderName));
+    }
+
     moveUpToRoot() {
         while (this.depth > 0) {
             this.moveUp();
@@ -130,7 +153,7 @@ class FileContainer {
     moveUp() {
         if (this.depth > 0) {
             this.depth -= 1;
-            const pathArray = this.fullPath.replace(/^\//, "").split('/');
+            const pathArray = this.fullPathArray;
             const returnValue = pathArray.shift();
             this.fullPath = pathArray.join('/');
             this.subFiles.forEach((x) => x.moveUp());
@@ -152,6 +175,10 @@ class ZipFileContainer extends FileContainer {
                 name = subFiles.map((x) => x.moveUp())[0];
             }
         }
+        subFiles.forEach((x) => {
+            x.moveUpToRoot();
+            x.moveDown(name);
+        });
 
         const isFile = false;
         const isDirectory = true;

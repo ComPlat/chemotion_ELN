@@ -4,9 +4,15 @@ import ElementContainer from 'src/models/Container';
 import Dropzone from 'react-dropzone';
 import JSZip from 'jszip';
 import Attachment from "src/models/Attachment";
-import { createAnalsesForSingelFiles } from "src/apps/mydb/elements/details/analyses/utils"
-import { ZipFileContainer, FileContainer, traverseDirectory } from "src/apps/mydb/elements/details/analyses/FileManager"
-
+import {
+    addNewAnalyses,
+    createAnalsesForSingelFiles,
+    createAttachements,
+    createDataset
+} from "src/apps/mydb/elements/details/analyses/utils"
+import {ZipFileContainer, FileContainer, traverseDirectory} from "src/apps/mydb/elements/details/analyses/FileManager"
+import {FileTree, ToggleSwitch} from "src/apps/mydb/elements/details/analyses/GeneralComponents";
+import {AdvancedAnalysesList} from "src/apps/mydb/elements/details/analyses/AdvancedComponents";
 
 
 function FolderDropzone({handleChange}) {
@@ -77,12 +83,16 @@ function FileListDisplay({files}) {
     let group = null;
     let color = null;
     return (
-        <ListGroup>
+        <ListGroup style={{
+            maxHeight: '400px',
+            overflowY: 'auto',
+        }}>
             {files.map((file, index) => {
                     return (
                         <ListGroup.Item key={file.name} className="d-flex justify-content-between align-items-center">
 
-                            <div key={`DIVV__${file.name}`} className="text-truncate flex-grow-1 me-3" style={{overflow: 'hidden'}}>
+                            <div key={`DIVV__${file.name}`} className="text-truncate flex-grow-1 me-3"
+                                 style={{overflow: 'hidden'}}>
                                 <strong>{file.name}</strong>
                                 <div
                                     className="text-muted small">{file.fullPath || file.webkitRelativePath || file.name}</div>
@@ -105,14 +115,15 @@ function UploadButton({files, handleClose, element, setElement}) {
         const file = await new ZipFileContainer(files).getFile();
         createAnalsesForSingelFiles(element, [file], file.name);
         handleClose();
-        setElement(element, () => {});
+        setElement(element, () => {
+        });
 
     });
 
     const multyFileHandle = useCallback(async () => {
         const pList = [];
         files.forEach((fileContainer) => {
-            pList.push(fileContainer.getFile().then((file)=> {
+            pList.push(fileContainer.getFile().then((file) => {
                 createAnalsesForSingelFiles(element, [file], file.name);
                 return true;
             }));
@@ -120,7 +131,29 @@ function UploadButton({files, handleClose, element, setElement}) {
         });
         await Promise.all(pList);
         handleClose();
-        setElement(element, () => {});
+        setElement(element, () => {
+        });
+
+    });
+
+    const multyFileOneAnaHandle = useCallback(async () => {
+        const pList = [];
+        const newContainer = addNewAnalyses(element)
+        files.forEach((fileContainer) => {
+            pList.push(fileContainer.getFile().then((file) => {
+                const datasetContainer = createDataset();
+                const newAttachments = createAttachements([file]);
+
+                newContainer.children.push(datasetContainer);
+                datasetContainer.attachments.push(...newAttachments);
+                return true;
+            }));
+
+        });
+        await Promise.all(pList);
+        handleClose();
+        setElement(element, () => {
+        });
 
     });
 
@@ -136,12 +169,25 @@ function UploadButton({files, handleClose, element, setElement}) {
             <p>To create {files.length} analyses, one for each of the listed files and folders, please click on this
                 button. If this option is selected, the system will create {files.length} analyses and assign each file
                 or folder to one of these analyses. The folder will be attached as a zip file.</p>
+            <hr/>
+            <Button onClick={multyFileOneAnaHandle}>Greate {files.length} Datasets</Button>
+            <p>To create a single analysis with {files.length} datasets, one dataset for each of the listed files and
+                folders, please click on this button
+                . If you select this option, the system creates {files.length} datasets in a new analysis and assigns
+                one of these datasets to each file
+                or folder. Folder will be attached as a zip file.</p>
         </>
     );
 }
 
 function UploadField({disabled, element, setElement}) {
+    const wrappedSetElement = (newElement) => {
+        let newElementValue = typeof newElement === 'function' ? newElement(element) : newElement;
+        setElement(newElementValue);
+    }
+
     const [show, setShow] = useState(false);
+    const [isAdvanced, setisAdvanced] = useState(false);
     const [listedFiles, setListedFiles] = useState([]);
     const handleClose = useCallback(() => {
         setListedFiles([]);
@@ -155,7 +201,8 @@ function UploadField({disabled, element, setElement}) {
             if (items[0].isFile) {
                 createAnalsesForSingelFiles(element, [items[0].file], items[0].name);
                 setShow(false);
-                setElement(element, () => {});
+                setElement(element, () => {
+                });
 
                 return;
             } else if (items[0].isDirectory) {
@@ -168,8 +215,49 @@ function UploadField({disabled, element, setElement}) {
 
     }, []);
 
-    return (<>
+    const content = () => {
+        const [consumedPaths, setComsumedPaths] = useState([]);
 
+        const handleSetConsumedPaths = useCallback((paths) => {
+            FileContainer.markeAllByPaths(listedFiles, paths);
+            setComsumedPaths(paths);
+        });
+        if (isAdvanced && listedFiles.length > 0) {
+            return (<Container>
+                <Row><Col><p>Create new analyses using the button. Within the analyses, you can assign names and
+                    create new datasets. You can drag and drop the files from the file list on the left-hand side
+                    into the newly created dataset. Individual files are simply uploaded, but if several files or
+                    folders are assigned to a dataset, it is zipped. Do not forget to press Execute to apply your
+                    settings.</p></Col></Row>
+                <Row className='justify-content-md-center'>
+                    <Col lg={5}>
+                        <FileTree treeData={listedFiles}></FileTree>
+                    </Col>
+                    <Col lg={7}><AdvancedAnalysesList handleClose={handleClose}
+                                                      listedFiles={listedFiles}
+                                                      setConsumedPaths={handleSetConsumedPaths}
+                                                      setElement={wrappedSetElement}></AdvancedAnalysesList></Col>
+                </Row>
+            </Container>);
+        }
+        return (<Container>
+            <Row><Col><p>This upload is designed for uploading NMR data. It can be used to create multiple analyses at
+                the same time. Multiple files can be selected simultaneously by clicking on the file selector. Multiple
+                files and/or folders can be uploaded via drag & drop.</p><p>In advanced mode, you can create new
+                analyses and associated datasets. The uploaded data can then be assigned to these new datasets via drag
+                & drop</p></Col></Row>
+            <Row className='justify-content-md-center'>
+                <Col lg={5}>
+                    <FolderDropzone handleChange={handleChange}></FolderDropzone>
+                    <UploadButton files={listedFiles} handleClose={handleClose} element={element}
+                                  setElement={wrappedSetElement}></UploadButton>
+                </Col>
+                <Col lg={7}><FileListDisplay files={listedFiles}></FileListDisplay></Col>
+            </Row>
+        </Container>);
+    }
+
+    return (<>
         <Button size="xsm"
                 variant="success"
                 disabled={disabled}
@@ -182,20 +270,11 @@ function UploadField({disabled, element, setElement}) {
                 <Modal.Title>Generic file upload</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-                <Container>
-                    <Row><Col><p>This upload is designed for uploading NMR data. It can be used to create multiple analyses at the same time. Multiple files can be selected simultaneously by clicking on the file selector. Multiple files and/or folders can be uploaded via drag & drop.</p></Col></Row>
-                    <Row className='justify-content-md-center'>
-                        <Col lg={5}>
-                            <FolderDropzone handleChange={handleChange}></FolderDropzone>
-                            <UploadButton files={listedFiles} handleClose={handleClose} element={element} setElement={setElement}></UploadButton>
-                        </Col>
-                        <Col lg={7}><FileListDisplay files={listedFiles}></FileListDisplay></Col>
-                    </Row>
-                </Container>
-
-
+                {content()}
             </Modal.Body>
             <Modal.Footer>
+                <ToggleSwitch disabled={listedFiles.length == 0} isChecked={isAdvanced} setIsChecked={setisAdvanced}
+                              label="Advenced"></ToggleSwitch>
 
                 <Button variant="secondary" onClick={handleClose}>
                     Close
