@@ -50,19 +50,19 @@ function VesselEntry({ vesselItems, vesselTemplate }) {
       if (thumbnail) return thumbnail;
       return container.children?.map(searchContainer).find(Boolean) || null;
     };
-    return vessels.map((vessel) => searchContainer(vessel.container)).find(Boolean) || null;
+    return vessels.map((vessel) => searchContainer(vessel.vessel_template?.container)).find(Boolean) || null;
   };
 
-  const renderNameHeader = (firstVesselItem) => {
+  const renderNameHeader = () => {
     const thumb = findThumbnailAttachment(vesselItems);
     const imgSrc = thumb ? thumb.thumbnail : null;
-
+  
     return (
       <div className="d-flex gap-2 align-items-center">
         {imgSrc ? (
           <img
             src={`data:image/png;base64,${thumb.thumbnail}`}
-            alt={firstVesselItem.vesselName || 'Vessel'}
+            alt={vesselTemplate.name || 'Vessel'}
             className="me-2 border rounded img-fluid"
           />
         ) : (
@@ -86,13 +86,15 @@ function VesselEntry({ vesselItems, vesselTemplate }) {
       </div>
     );
   };
+  
 
-  if (vesselItems.length === 0) return null;
+  // if (vesselItems.length === 0) return null;
 
   return (
     <div className="cell-line-group">
       <div className={getBorderStyle()}>
-        {renderNameHeader(vesselItems[0])}
+        {/* {renderNameHeader(vesselItems[0])} */}
+        {renderNameHeader()}
       </div>
       {renderItemEntries()}
     </div>
