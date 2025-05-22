@@ -122,6 +122,13 @@ $font-icons-research_plan: "\f0f6";
   content: "\f1b2";
 }
 
+.icon-vessel_template {
+  font-style: inherit;
+}
+.icon-vessel_template:before {
+  font-family: FontAwesome;
+  content: "\f0ae";
+}
 
 .icon-vessel {
   font-style: inherit;
