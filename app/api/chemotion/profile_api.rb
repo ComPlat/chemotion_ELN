@@ -105,6 +105,7 @@ module Chemotion
           optional :layout_detail_wellplate, type: Hash, profile_layout_hash: true
           optional :layout_detail_screen, type: Hash, profile_layout_hash: true
           optional :layout_detail_device_description, type: Hash, profile_layout_hash: true
+          optional :layout_detail_vessel, type: Hash, profile_layout_hash: true
           optional :export_selection, type: Hash do
             optional :sample, type: [Boolean]
             optional :reaction, type: [Boolean]

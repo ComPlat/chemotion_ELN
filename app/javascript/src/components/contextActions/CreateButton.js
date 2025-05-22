@@ -300,6 +300,25 @@ export default class CreateButton extends React.Component {
     )
   }
 
+  createVesselTemplate() {
+    const { currentCollection, isSync } = UIStore.getState();
+    const uri = isSync
+      ? `/scollection/${currentCollection.id}/vessel_template/new`
+      : `/collection/${currentCollection.id}/vessel_template/new`;
+
+    Aviator.navigate(uri, { silent: true });
+
+    const e = {
+      type: 'vessel_template',
+      params: {
+        collectionID: currentCollection.id,
+        vesselTemplateID: 'new'
+      }
+    };
+
+    elementShowOrNew(e);
+  }
+
   noWellplateSelected() {
     const { wellplate } = UIStore.getState();
     return wellplate.checkedIds.size == 0 && wellplate.checkedAll == false;
@@ -343,6 +362,9 @@ export default class CreateButton extends React.Component {
         </Dropdown.Item>
         <Dropdown.Item onClick={() => this.createScreenFromWellplates()}>
           Create Screen from Wellplates
+        </Dropdown.Item>
+        <Dropdown.Item onClick={() => this.createVesselTemplate()}>
+          Create Vessel Template
         </Dropdown.Item>
         <Dropdown.Divider />
         <Dropdown.Item onClick={() => this.copySample()} disabled={this.isCopySampleDisabled()}>
