@@ -102,6 +102,11 @@ export default class ElementsList extends React.Component {
 
     if (typeof (state.profile) !== 'undefined' && state.profile
       && typeof (state.profile.data) !== 'undefined' && state.profile.data) {
+      const layout = state.profile.data.layout || {};
+      if (!layout.hasOwnProperty('vessel')) {
+        layout['vessel'] = Object.keys(layout).length + 1;
+      }
+
       visible = getArrayFromLayout(state.profile.data.layout, true);
       hidden = getArrayFromLayout(state.profile.data.layout, false);
       currentTab = visible.findIndex((e) => e === currentType);
@@ -133,8 +138,8 @@ export default class ElementsList extends React.Component {
     const elNames = [
       'sample', 'reaction', 'screen',
       'wellplate', 'research_plan',
-      'cell_line', 'device_description'
-    , 'vessel'].concat(genericKlasses);
+      'cell_line', 'device_description',
+      'vessel'].concat(genericKlasses);
 
     const newTotalCheckedElements = {};
     let needsUpdate = false;
