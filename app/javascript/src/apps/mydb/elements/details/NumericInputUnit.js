@@ -90,7 +90,6 @@ export default function NumericInputUnit(props) {
         />
         <Button
           disabled={inputDisabled}
-          active
           onClick={toggleInput}
         >
           {currentUnit}
