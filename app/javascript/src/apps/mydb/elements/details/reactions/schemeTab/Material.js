@@ -145,7 +145,6 @@ class Material extends Component {
         <OverlayTrigger placement="top" overlay={tooltip}>
           <div>
             <NumeralInputWithUnitsCompo
-              key={material.id}
               value={material.amount_l}
               unit="l"
               metricPrefix={metric}
@@ -176,7 +175,6 @@ class Material extends Component {
     return (
       <td>
         <NumeralInputWithUnitsCompo
-          key={material.id}
           value={material.loading}
           unit="mmol/g"
           metricPrefix="n"
@@ -652,7 +650,6 @@ class Material extends Component {
       >
         <div>
           <NumeralInputWithUnitsCompo
-            key={material.id}
             value={material.amount_g}
             unit="g"
             metricPrefix={metric}
@@ -723,7 +720,6 @@ class Material extends Component {
               <div>
                 <NumeralInputWithUnitsCompo
                   size="sm"
-                  key={material.id}
                   value={material.coefficient ?? 1}
                   onChange={this.handleCoefficientChange}
                   name="coefficient"
@@ -740,7 +736,6 @@ class Material extends Component {
 
           <td>
             <NumeralInputWithUnitsCompo
-              key={material.id}
               value={material.amount_mol}
               unit="mol"
               metricPrefix={metricMol}
@@ -760,7 +755,6 @@ class Material extends Component {
 
           <td className="text-nowrap">
             <NumeralInputWithUnitsCompo
-              key={material.id}
               value={material.concn}
               unit="mol/l"
               metricPrefix={metricMolConc}
