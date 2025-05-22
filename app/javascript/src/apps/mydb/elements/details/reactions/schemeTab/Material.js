@@ -1023,8 +1023,9 @@ class Material extends Component {
             role="link"
             tabIndex={0}
             onClick={() => this.handleMaterialClick(material)}
-            style={{ cursor: 'pointer' }}
-          ><span>{materialDisplayName}</span></a>
+          >
+            <span>{materialDisplayName}</span>
+          </a>
         );
       } else {
         materialName = <span>{materialDisplayName}</span>;
@@ -1039,8 +1040,9 @@ class Material extends Component {
           role="link"
           tabIndex={0}
           onClick={() => this.handleMaterialClick(material)}
-          style={{ cursor: 'pointer' }}
-        ><span>{materialDisplayName}</span></a>
+        >
+          <span>{materialDisplayName}</span>
+        </a>
       );
 
       if (material.isNew) { materialName = materialDisplayName; }
@@ -1070,7 +1072,7 @@ class Material extends Component {
             </Button>
           </OverlayTrigger>
           <OverlayTrigger placement="bottom" overlay={iupacNameTooltip(material)}>
-            <div className={'reaction-material-link'}>
+            <div className="reaction-material-link">
               {materialName}
             </div>
           </OverlayTrigger>
