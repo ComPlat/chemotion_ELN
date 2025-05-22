@@ -27,3 +27,17 @@
     white-space: inherit;
   }
 }
+
+.link {
+  color: $link-color;
+  text-decoration: $link-decoration;
+  cursor: pointer;
+  &:not([href]):not([class]) {
+    color: $link-color;
+    text-decoration: $link-decoration;
+  }
+  &:hover {
+    color: $link-hover-color;
+    text-decoration: $link-hover-decoration;
+  }
+}
