@@ -34,19 +34,27 @@ function addNewAnalyses(element) {
     return newContainer;
 }
 
-function createAnalsesForSingelFiles(element, files, name) {
-    const newContainer = addNewAnalyses(element);
+function createDataset() {
+    const datasetContainer = ElementContainer.buildEmpty();
+    datasetContainer.container_type = 'dataset';
+    return datasetContainer;
+}
 
-    const newAttachments = files.map((f) => {
+function createAttachements(files) {
+    return files.map((f) => {
         const newAttachment = Attachment.fromFile(f);
         newAttachment.is_pending = true;
         return newAttachment;
     });
+}
+
+function createAnalsesForSingelFiles(element, files, name) {
+    const newContainer = addNewAnalyses(element);
 
 
     newContainer.name = `File: ${name}`;
-    const datasetContainer = ElementContainer.buildEmpty();
-    datasetContainer.container_type = 'dataset';
+    const datasetContainer = createDataset();
+    const newAttachments = createAttachements(files);
 
     newContainer.children.push(datasetContainer);
     datasetContainer.attachments.push(...newAttachments);
@@ -57,5 +65,7 @@ export {
     indexedContainers,
     sortedContainers,
     buildEmptyAnalyContainer,
-    createAnalsesForSingelFiles
+    createDataset,
+    createAnalsesForSingelFiles,
+    createAttachements
 }
