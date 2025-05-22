@@ -1030,10 +1030,34 @@ class ElementActions {
     };
   }
 
+  fetchEmptyVesselTemplate(collectionId) {
+    return (dispatch) => {
+      VesselsFetcher.fetchEmptyVesselTemplate(collectionId)
+        .then((result) => {
+          dispatch(result);
+        })
+        .catch((errorMessage) => {
+          console.error(errorMessage);
+        });
+    };
+  }
+
   createVessel(params) {
     return (dispatch) => {
       const { currentUser } = UserStore.getState();
-      VesselsFetcher.create(params, currentUser)
+      VesselsFetcher.createVesselInstance(params, currentUser)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
+  createVesselTemplate(params) {
+    return (dispatch) => {
+      const { currentUser } = UserStore.getState();
+      VesselsFetcher.createVesselTemplate(params)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
@@ -1054,9 +1078,35 @@ class ElementActions {
     return vesselInstance;
   }
 
+  generateEmptyVesselTemplate(collectionId, template) {
+    const { currentUser } = UserStore.getState();
+    if (!currentUser) { return; }
+
+    const vesselTemplate = Vessel.buildEmpty(collectionId);
+    vesselTemplate.type = 'vessel_template';
+    vesselTemplate.is_new = true;
+
+    if (template) {
+      vesselTemplate.copyMaterialFrom(template);
+    }
+
+    return vesselTemplate;
+  }
+
   updateVessel(params) {
     return (dispatch) => {
-      VesselsFetcher.update(params)
+      VesselsFetcher.updateVesselInstance(params)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
+  updateVesselTemplate(params) {
+    return (dispatch) => {
+      VesselsFetcher.updateVesselTemplate(params)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
