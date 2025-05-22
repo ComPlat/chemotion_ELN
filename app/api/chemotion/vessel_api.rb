@@ -472,8 +472,18 @@ module Chemotion
       resource :names do
         desc 'Returns all accessible vessel templates material names and their id'
         get 'all' do
-          vessel_templates = VesselTemplate.select(:id, :name, :vessel_type, :material_type, :volume_amount, :volume_unit, :details, :material_details).distinct
-          present vessel_templates, with: Entities::VesselTemplateEntity
+          VesselStruct = Struct.new(
+            :id, :name, :vessel_type, :material_type,
+            :volume_amount, :volume_unit, :details, :material_details
+          )
+      
+          vessel_templates = VesselTemplate
+            .where(deleted_at: nil)
+            .distinct
+            .pluck(:id, :name, :vessel_type, :material_type, :volume_amount, :volume_unit, :details, :material_details)
+            .map { |row| VesselStruct.new(*row) }
+      
+          present vessel_templates, with: Entities::VesselTemplateBasicEntity
         end
       end
       
