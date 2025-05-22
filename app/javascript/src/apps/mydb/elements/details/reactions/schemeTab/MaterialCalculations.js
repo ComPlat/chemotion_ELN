@@ -29,7 +29,6 @@ export default class MaterialCalculations extends Component {
       return (
         <td className='pt-4 px-1'>
           <NumeralInputWithUnitsCompo
-            key={material.id}
             value={material.amount_ml || ''}
             unit='l'
             metricPrefix={metric}
@@ -65,7 +64,6 @@ export default class MaterialCalculations extends Component {
         <td className="pt-4 px-1"><label>Adjusted: </label></td>
         <td className="pt-4 px-1">
           <NumeralInputWithUnitsCompo
-            key={material.id}
             value={material.adjusted_amount_g}
             unit='g'
             metricPrefix={metric}
@@ -80,7 +78,6 @@ export default class MaterialCalculations extends Component {
 
         <td className="pt-4 px-1">
           <NumeralInputWithUnitsCompo
-            key={'adjusted_amount_mol' + material.id.toString()}
             value={material.adjusted_amount_mol}
             unit="mol"
             metricPrefix={metricMol}
@@ -93,7 +90,6 @@ export default class MaterialCalculations extends Component {
 
         <td className="pt-4 px-1">
           <NumeralInputWithUnitsCompo
-            key={'adjusted_loading' + material.id.toString()}
             value={material.adjusted_loading}
             unit="mmol/g"
             metricPrefix="n"
