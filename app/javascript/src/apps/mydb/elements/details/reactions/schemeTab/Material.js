@@ -696,7 +696,6 @@ class Material extends Component {
       reaction
     } = this.props;
 
-    const isTarget = material.amountType === 'target';
     const massBsStyle = material.amount_unit === 'g' ? 'primary' : 'light';
     const mol = material.amount_mol;
     //const concn = mol / reaction.solventVolume;
@@ -732,7 +731,7 @@ class Material extends Component {
           {this.materialRef(material)}
 
           <td style={{ minWidth: '30px', inputsStyle }}>
-            {this.switchTargetReal(isTarget)}
+            {this.switchTargetReal()}
           </td>
 
           <td style={{ minWidth: '35px' }}>
@@ -840,7 +839,6 @@ class Material extends Component {
       materialGroup
     } = this.props;
 
-    const isTarget = material.amountType === 'target';
     const mw = material.molecule && material.molecule.molecular_weight;
     const drySolvTooltip = <Tooltip>Dry Solvent</Tooltip>;
     return (
@@ -866,7 +864,7 @@ class Material extends Component {
           </OverlayTrigger>
         </td>
         <td>
-          {this.switchTargetReal(isTarget)}
+          {this.switchTargetReal()}
         </td>
 
         <td>
@@ -919,10 +917,15 @@ class Material extends Component {
     );
   }
 
-  switchTargetReal(isTarget) {
+  switchTargetReal() {
+    const { reaction, material, materialGroup } = this.props;
+    const isProduct = materialGroup === 'products';
+    const isTarget = !isProduct && material.amountType === 'target';
+    const isDisabled = isProduct || !permitOn(reaction);
+
     return (
       <Button
-        disabled={!permitOn(this.props.reaction)}
+        disabled={isDisabled}
         className="p-1 ms-1"
         onClick={() => this.toggleTarget(isTarget)}
         variant={isTarget ? 'primary' : 'light'}
@@ -1084,7 +1087,7 @@ class Material extends Component {
 
   render() {
     const {
-      material, isDragging, canDrop, isOver, materialGroup
+      isDragging, canDrop, isOver, materialGroup
     } = this.props;
     let className = 'text-center';
     if (isDragging) { className += ' dnd-dragging'; }
@@ -1095,9 +1098,6 @@ class Material extends Component {
       }
     }
 
-    if (materialGroup === 'products') {
-      material.amountType = 'real'; // always take real amount for product
-    }
     const sp = materialGroup === 'solvents' || materialGroup === 'purification_solvents';
     return sp
       ? this.solventMaterial(className)
