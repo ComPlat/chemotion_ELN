@@ -21,6 +21,7 @@ import Sample from 'src/models/Sample';
 import { permitCls, permitOn } from 'src/components/common/uis';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 import { calculateFeedstockMoles } from 'src/utilities/UnitsConversion';
+import cs from 'classnames';
 
 const matSource = {
   beginDrag(props) {
@@ -1089,14 +1090,12 @@ class Material extends Component {
     const {
       isDragging, canDrop, isOver, materialGroup
     } = this.props;
-    let className = 'text-center';
-    if (isDragging) { className += ' dnd-dragging'; }
-    if (canDrop) {
-      className += ' border-3 border-dashed';
-      if (isOver) {
-        className += ' dnd-zone-over';
-      }
-    }
+
+    const className = cs('text-center', {
+      'dnd-dragging': isDragging,
+      'border-3 border-dashed': canDrop,
+      'dnd-zone-over': canDrop && isOver
+    });
 
     const sp = materialGroup === 'solvents' || materialGroup === 'purification_solvents';
     return sp
