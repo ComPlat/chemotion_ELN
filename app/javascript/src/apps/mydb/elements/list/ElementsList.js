@@ -111,8 +111,8 @@ export default class ElementsList extends React.Component {
     const elNames = [
       'sample', 'reaction', 'screen',
       'wellplate', 'research_plan',
-      'cell_line', 'device_description'
-    , 'vessel'].concat(genericKlasses);
+      'cell_line', 'device_description',
+      'vessel'].concat(genericKlasses);
 
     const newTotalCheckedElements = {};
     let needsUpdate = false;
