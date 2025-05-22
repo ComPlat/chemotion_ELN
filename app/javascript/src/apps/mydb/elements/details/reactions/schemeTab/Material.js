@@ -686,9 +686,16 @@ class Material extends Component {
     );
   }
 
-  generalMaterial(props, className) {
-    const { material, deleteMaterial, connectDragSource, connectDropTarget,
-      showLoadingColumn, reaction } = props;
+  generalMaterial(className) {
+    const {
+      material,
+      deleteMaterial,
+      connectDragSource,
+      connectDropTarget,
+      showLoadingColumn,
+      reaction
+    } = this.props;
+
     const isTarget = material.amountType === 'target';
     const massBsStyle = material.amount_unit === 'g' ? 'primary' : 'light';
     const mol = material.amount_mol;
@@ -823,9 +830,16 @@ class Material extends Component {
     }
   }
 
-  solventMaterial(props, className) {
-    const { material, deleteMaterial, connectDragSource,
-      connectDropTarget, reaction, materialGroup } = props;
+  solventMaterial(className) {
+    const {
+      material,
+      deleteMaterial,
+      connectDragSource,
+      connectDropTarget,
+      reaction,
+      materialGroup
+    } = this.props;
+
     const isTarget = material.amountType === 'target';
     const mw = material.molecule && material.molecule.molecular_weight;
     const drySolvTooltip = <Tooltip>Dry Solvent</Tooltip>;
@@ -1081,15 +1095,13 @@ class Material extends Component {
       }
     }
 
-    if (this.props.materialGroup === 'products') {
+    if (materialGroup === 'products') {
       material.amountType = 'real'; // always take real amount for product
     }
     const sp = materialGroup === 'solvents' || materialGroup === 'purification_solvents';
-    const component = sp ?
-      this.solventMaterial(this.props, className) :
-      this.generalMaterial(this.props, className);
-
-    return component;
+    return sp
+      ? this.solventMaterial(className)
+      : this.generalMaterial(className);
   }
 }
 
