@@ -397,7 +397,7 @@ export default class WellplateDetails extends Component {
     const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
 
     return (
-      <Card variant={wellplate.isPendingToSave ? 'info' : 'primary'} className="detail-card">
+      <Card className={`detail-card${wellplate.isPendingToSave ? ' detail-card--unsaved' : ''}`}>
         <Card.Header>{this.wellplateHeader(wellplate)}</Card.Header>
         <Card.Body>
           <div className="tabs-container--with-borders">
@@ -416,26 +416,26 @@ export default class WellplateDetails extends Component {
               {tabContents}
             </Tabs>
           </div>
-          <ButtonToolbar className='gap-1'>
-            <Button variant="primary" onClick={() => DetailActions.close(wellplate)}>Close</Button>
-            {
-              wellplate.changed ? (
-                <Button variant="warning" onClick={() => this.handleSubmit()}>
-                  {wellplate.isNew ? 'Create' : 'Save'}
-                </Button>
-              ) : <div />
-            }
-            {exportButton}
-            <Button
-              variant="primary"
-              onClick={() => this.handlePrint()}
-              disabled={printButtonDisabled}
-            >
-              Print Wells
-            </Button>
-          </ButtonToolbar>
-          <CommentModal element={wellplate} />
         </Card.Body>
+        <Card.Footer>
+          <Button variant="primary" onClick={() => DetailActions.close(wellplate)}>Close</Button>
+          {
+            wellplate.changed && (
+              <Button variant="warning" onClick={() => this.handleSubmit()}>
+                {wellplate.isNew ? 'Create' : 'Save'}
+              </Button>
+            )
+          }
+          {exportButton}
+          <Button
+            variant="primary"
+            onClick={() => this.handlePrint()}
+            disabled={printButtonDisabled}
+          >
+            Print Wells
+          </Button>
+          <CommentModal element={wellplate} />
+        </Card.Footer>
       </Card>
     );
   }

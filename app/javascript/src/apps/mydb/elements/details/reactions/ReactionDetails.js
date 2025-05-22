@@ -631,21 +631,18 @@ export default class ReactionDetails extends Component {
           </div>
         </Card.Body>
         <Card.Footer>
-          <div className="d-inline-block p-1">
-            <Button variant="primary" onClick={() => DetailActions.close(reaction)} className="me-1">
-              Close
-            </Button>
-            <Button
-              id="submit-reaction-btn"
-              variant="warning"
-              className="me-1"
-              onClick={() => this.handleSubmit()}
-              disabled={!permitOn(reaction) || !this.reactionIsValid()}
-            >
-              {submitLabel}
-            </Button>
-            {exportButton}
-          </div>
+          <Button variant="primary" onClick={() => DetailActions.close(reaction)}>
+            Close
+          </Button>
+          <Button
+            id="submit-reaction-btn"
+            variant="warning"
+            onClick={() => this.handleSubmit()}
+            disabled={!permitOn(reaction) || !this.reactionIsValid()}
+          >
+            {submitLabel}
+          </Button>
+          {exportButton}
         </Card.Footer>
       </Card>
     );

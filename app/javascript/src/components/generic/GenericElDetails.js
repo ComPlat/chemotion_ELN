@@ -529,23 +529,19 @@ export default class GenericElDetails extends Component {
           </div>
         </Card.Body>
         <Card.Footer>
-          <div className="d-inline-block p-1">
-            <ButtonToolbar className="gap-1">
-              <Button
-                variant="secondary"
-                onClick={() => DetailActions.close(genericEl, true)}
-              >
-                Close
-              </Button>
-              <Button
-                variant="warning"
-                onClick={() => this.handleSubmit()}
-                style={saveBtnDisplay}
-              >
-                {submitLabel}
-              </Button>
-            </ButtonToolbar>
-          </div>
+          <Button
+            variant="secondary"
+            onClick={() => DetailActions.close(genericEl, true)}
+          >
+            Close
+          </Button>
+          <Button
+            variant="warning"
+            onClick={() => this.handleSubmit()}
+            style={saveBtnDisplay}
+          >
+            {submitLabel}
+          </Button>
         </Card.Footer>
       </Card>
     );

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import {
-  ButtonToolbar, Button, Tabs, Tab, Tooltip, OverlayTrigger, Card
+  Button, Tabs, Tab, Tooltip, OverlayTrigger, Card
 } from 'react-bootstrap';
 
 import PropertiesForm from './propertiesTab/PropertiesForm';
@@ -216,15 +216,13 @@ const DeviceDescriptionDetails = () => {
         <CommentModal element={deviceDescription} />
       </Card.Body>
       <Card.Footer>
-        <ButtonToolbar className="gap-2">
-          <Button variant="primary" onClick={() => DetailActions.close(deviceDescription)}>
-            Close
-          </Button>
-          <Button variant="warning" disabled={!deviceDescriptionIsValid()} onClick={() => handleSubmit()}>
-            {submitLabel}
-          </Button>
-          {downloadAnalysisButton()}
-        </ButtonToolbar>
+        <Button variant="primary" onClick={() => DetailActions.close(deviceDescription)}>
+          Close
+        </Button>
+        <Button variant="warning" disabled={!deviceDescriptionIsValid()} onClick={() => handleSubmit()}>
+          {submitLabel}
+        </Button>
+        {downloadAnalysisButton()}
       </Card.Footer>
     </Card>
   );

@@ -459,18 +459,16 @@ export default class ScreenDetails extends Component {
           <CommentModal element={screen} />
         </Card.Body>
         <Card.Footer>
-          <ButtonToolbar className="gap-2">
-            <Button variant="primary" onClick={() => DetailActions.close(screen)}>
-              Close
-            </Button>
-            <Button
-              id="submit-screen-btn"
-              variant="warning"
-              onClick={() => this.handleSubmit()}
-            >
-              {submitLabel}
-            </Button>
-          </ButtonToolbar>
+          <Button variant="primary" onClick={() => DetailActions.close(screen)}>
+            Close
+          </Button>
+          <Button
+            id="submit-screen-btn"
+            variant="warning"
+            onClick={() => this.handleSubmit()}
+          >
+            {submitLabel}
+          </Button>
         </Card.Footer>
       </Card>
     );
