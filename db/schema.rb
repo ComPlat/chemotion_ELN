@@ -17,7 +17,6 @@ ActiveRecord::Schema.define(version: 2025_05_06_133809) do
   enable_extension "pg_trgm"
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
-  enable_extension "rdkit"
   enable_extension "uuid-ossp"
 
   create_table "affiliations", id: :serial, force: :cascade do |t|
@@ -319,6 +318,16 @@ ActiveRecord::Schema.define(version: 2025_05_06_133809) do
     t.index ["section"], name: "index_comments_on_section"
   end
 
+  create_table "components", force: :cascade do |t|
+    t.bigint "sample_id", null: false
+    t.string "name"
+    t.integer "position"
+    t.jsonb "component_properties"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["sample_id"], name: "index_components_on_sample_id"
+  end
+
   create_table "computed_props", id: :serial, force: :cascade do |t|
     t.integer "molecule_id"
     t.float "max_potential", default: 0.0
@@ -361,8 +370,8 @@ ActiveRecord::Schema.define(version: 2025_05_06_133809) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "parent_id"
-    t.datetime "deleted_at"
     t.text "plain_text_content"
+    t.datetime "deleted_at"
     t.jsonb "log_data"
     t.index ["containable_type", "containable_id"], name: "index_containers_on_containable"
   end
@@ -448,60 +457,60 @@ ActiveRecord::Schema.define(version: 2025_05_06_133809) do
   end
 
   create_table "device_descriptions", force: :cascade do |t|
-    t.string "access_comments"
-    t.string "access_options"
-    t.string "ancestry"
-    t.string "application_name"
-    t.string "application_version"
-    t.string "building"
-    t.jsonb "contact_for_maintenance"
-    t.jsonb "consumables_needed_for_maintenance"
-    t.integer "created_by"
-    t.datetime "deleted_at"
-    t.text "description"
-    t.text "description_for_methods_part"
     t.integer "device_id"
-    t.string "device_type"
-    t.string "device_type_detail"
-    t.string "general_tags", default: [], null: false, array: true
-    t.boolean "helpers_uploaded", default: false
-    t.string "infrastructure_assignment"
-    t.string "institute"
-    t.string "maintenance_contract_available"
-    t.string "maintenance_scheduling"
-    t.text "measures_after_full_shut_down"
-    t.text "measures_after_short_shut_down"
-    t.text "measures_to_plan_offline_period"
     t.string "name"
-    t.string "operation_mode"
-    t.jsonb "operators"
-    t.jsonb "ontologies"
-    t.jsonb "planned_maintenance"
-    t.text "policies_and_user_information"
-    t.text "restart_after_planned_offline_period"
-    t.string "room"
-    t.string "serial_number"
-    t.jsonb "setup_descriptions"
-    t.string "size"
     t.string "short_label"
-    t.jsonb "unexpected_maintenance"
-    t.string "university_campus"
     t.string "vendor_id"
     t.string "vendor_url"
-    t.text "version_characterization"
+    t.string "serial_number"
     t.string "version_doi"
     t.string "version_doi_url"
-    t.string "version_identifier_type"
+    t.string "device_type"
+    t.string "device_type_detail"
+    t.string "operation_mode"
     t.datetime "version_installation_start_date"
     t.datetime "version_installation_end_date"
-    t.string "version_number"
+    t.text "description"
+    t.jsonb "operators"
+    t.string "university_campus"
+    t.string "institute"
+    t.string "building"
+    t.string "room"
+    t.string "infrastructure_assignment"
+    t.string "access_options"
+    t.string "access_comments"
+    t.string "size"
     t.string "weight"
-    t.string "weight_unit"
+    t.string "application_name"
+    t.string "application_version"
+    t.text "description_for_methods_part"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
     t.string "vendor_device_name"
     t.string "vendor_device_id"
     t.string "vendor_company_name"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.string "general_tags", default: [], array: true
+    t.text "policies_and_user_information"
+    t.string "version_number"
+    t.text "version_characterization"
+    t.datetime "deleted_at"
+    t.integer "created_by"
+    t.jsonb "ontologies"
+    t.string "ancestry"
+    t.string "version_identifier_type"
+    t.boolean "helpers_uploaded", default: false
+    t.jsonb "setup_descriptions"
+    t.string "maintenance_contract_available"
+    t.string "maintenance_scheduling"
+    t.jsonb "contact_for_maintenance"
+    t.jsonb "planned_maintenance"
+    t.jsonb "consumables_needed_for_maintenance"
+    t.jsonb "unexpected_maintenance"
+    t.text "measures_after_full_shut_down"
+    t.text "measures_after_short_shut_down"
+    t.text "measures_to_plan_offline_period"
+    t.text "restart_after_planned_offline_period"
+    t.string "weight_unit"
     t.index ["ancestry"], name: "index_device_descriptions_on_ancestry"
     t.index ["device_id"], name: "index_device_descriptions_on_device_id"
   end
@@ -922,6 +931,15 @@ ActiveRecord::Schema.define(version: 2025_05_06_133809) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "micromolecules", force: :cascade do |t|
+    t.string "name"
+    t.binary "molfile"
+    t.string "molfile_version", limit: 20
+    t.jsonb "stereo"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
   create_table "molecule_names", id: :serial, force: :cascade do |t|
     t.integer "molecule_id"
     t.integer "user_id"
@@ -958,7 +976,7 @@ ActiveRecord::Schema.define(version: 2025_05_06_133809) do
     t.text "cas"
     t.string "molfile_version", limit: 20
     t.index ["deleted_at"], name: "index_molecules_on_deleted_at"
-    t.index ["inchikey", "sum_formular", "is_partial"], name: "index_molecules_on_formula_and_inchikey_and_is_partial", unique: true
+    t.index ["inchikey", "is_partial"], name: "index_molecules_on_inchikey_and_is_partial", unique: true
   end
 
   create_table "nmr_sim_nmr_simulations", id: :serial, force: :cascade do |t|
@@ -1295,9 +1313,13 @@ ActiveRecord::Schema.define(version: 2025_05_06_133809) do
     t.boolean "dry_solvent", default: false
     t.boolean "inventory_sample", default: false
     t.jsonb "log_data"
+    t.string "sample_type"
+    t.jsonb "sample_details"
+    t.bigint "micromolecule_id"
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
     t.index ["identifier"], name: "index_samples_on_identifier"
     t.index ["inventory_sample"], name: "index_samples_on_inventory_sample"
+    t.index ["micromolecule_id"], name: "index_samples_on_micromolecule_id"
     t.index ["molecule_id"], name: "index_samples_on_sample_id"
     t.index ["molecule_name_id"], name: "index_samples_on_molecule_name_id"
     t.index ["user_id"], name: "index_samples_on_user_id"
@@ -1635,11 +1657,13 @@ ActiveRecord::Schema.define(version: 2025_05_06_133809) do
   end
 
   add_foreign_key "collections", "inventories"
+  add_foreign_key "components", "samples"
   add_foreign_key "layer_tracks", "layers", column: "identifier", primary_key: "identifier"
   add_foreign_key "literals", "literatures"
   add_foreign_key "report_templates", "attachments"
   add_foreign_key "sample_tasks", "samples"
   add_foreign_key "sample_tasks", "users", column: "creator_id"
+  add_foreign_key "samples", "samples", column: "micromolecule_id"
   create_function :user_instrument, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.user_instrument(user_id integer, sc text)
        RETURNS TABLE(instrument text)
@@ -1880,24 +1904,6 @@ ActiveRecord::Schema.define(version: 2025_05_06_133809) do
           END;
           RETURN NEW;
       END;
-      $function$
-  SQL
-  create_function :set_samples_mol_rdkit, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.set_samples_mol_rdkit()
-       RETURNS trigger
-       LANGUAGE plpgsql
-      AS $function$
-      begin
-      	if (TG_OP='INSERT') then
-      		insert into rdkit.mols values (new.id, mol_from_ctab(encode(new.molfile, 'escape')::cstring));
-      	end if;
-      	if (TG_OP='UPDATE') then
-      		if new.MOLFILE <> old.MOLFILE then
-      			update rdkit.mols set m = mol_from_ctab(encode(new.molfile, 'escape')::cstring) where id = new.id;
-      		end if;
-      	end if;
-      	return new;
-      end
       $function$
   SQL
   create_function :calculate_dataset_space, sql_definition: <<-'SQL'
@@ -2413,56 +2419,53 @@ ActiveRecord::Schema.define(version: 2025_05_06_133809) do
   SQL
 
 
-  create_trigger :logidze_on_reactions, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_reactions BEFORE INSERT OR UPDATE ON public.reactions FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :set_samples_mol_rdkit_trg, sql_definition: <<-SQL
-      CREATE TRIGGER set_samples_mol_rdkit_trg BEFORE INSERT OR UPDATE ON public.samples FOR EACH ROW EXECUTE FUNCTION set_samples_mol_rdkit()
-  SQL
-  create_trigger :logidze_on_samples, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_samples BEFORE INSERT OR UPDATE ON public.samples FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_wells, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_wells BEFORE INSERT OR UPDATE ON public.wells FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_wellplates, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_wellplates BEFORE INSERT OR UPDATE ON public.wellplates FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_screens, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_screens BEFORE INSERT OR UPDATE ON public.screens FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_residues, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_residues BEFORE INSERT OR UPDATE ON public.residues FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_elemental_compositions, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_elemental_compositions BEFORE INSERT OR UPDATE ON public.elemental_compositions FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_containers, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_containers BEFORE INSERT OR UPDATE ON public.containers FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
   create_trigger :logidze_on_attachments, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_attachments BEFORE INSERT OR UPDATE ON public.attachments FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_research_plans, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_research_plans BEFORE INSERT OR UPDATE ON public.research_plans FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_reactions_samples, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_reactions_samples BEFORE INSERT OR UPDATE ON public.reactions_samples FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :update_users_matrix_trg, sql_definition: <<-SQL
-      CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE FUNCTION update_users_matrix()
-  SQL
-  create_trigger :logidze_on_research_plan_metadata, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_research_plan_metadata BEFORE INSERT OR UPDATE ON public.research_plan_metadata FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_research_plans_wellplates, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_research_plans_wellplates BEFORE INSERT OR UPDATE ON public.research_plans_wellplates FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
   create_trigger :logidze_on_chemicals, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_chemicals BEFORE INSERT OR UPDATE ON public.chemicals FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
+  create_trigger :logidze_on_containers, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_containers BEFORE INSERT OR UPDATE ON public.containers FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_elemental_compositions, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_elemental_compositions BEFORE INSERT OR UPDATE ON public.elemental_compositions FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
   create_trigger :lab_trg_layers_changes, sql_definition: <<-SQL
       CREATE TRIGGER lab_trg_layers_changes AFTER UPDATE ON public.layers FOR EACH ROW EXECUTE FUNCTION lab_record_layers_changes()
+  SQL
+  create_trigger :update_users_matrix_trg, sql_definition: <<-SQL
+      CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE FUNCTION update_users_matrix()
+  SQL
+  create_trigger :logidze_on_reactions, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_reactions BEFORE INSERT OR UPDATE ON public.reactions FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_reactions_samples, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_reactions_samples BEFORE INSERT OR UPDATE ON public.reactions_samples FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_research_plan_metadata, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_research_plan_metadata BEFORE INSERT OR UPDATE ON public.research_plan_metadata FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_research_plans, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_research_plans BEFORE INSERT OR UPDATE ON public.research_plans FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_research_plans_wellplates, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_research_plans_wellplates BEFORE INSERT OR UPDATE ON public.research_plans_wellplates FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_residues, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_residues BEFORE INSERT OR UPDATE ON public.residues FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_samples, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_samples BEFORE INSERT OR UPDATE ON public.samples FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_screens, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_screens BEFORE INSERT OR UPDATE ON public.screens FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_wellplates, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_wellplates BEFORE INSERT OR UPDATE ON public.wellplates FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_wells, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_wells BEFORE INSERT OR UPDATE ON public.wells FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
 
   create_view "v_samples_collections", sql_definition: <<-SQL

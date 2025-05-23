@@ -79,6 +79,7 @@ module ReportHelpers
       selection = r_ids
     end
     return '' if selection.empty?
+
     <<~SQL
       select json_object_agg(r_id, smiles_json) as result from (
       select r_id, json_object_agg(stype, smiles_arr) as smiles_json from (
@@ -179,6 +180,7 @@ module ReportHelpers
 
   def build_sql(table, columns, c_id, ids, checkedAll = false)
     return unless %i[sample reaction wellplate].include?(table)
+
     send("build_sql_#{table}_sample", columns, c_id, ids, checkedAll)
   end
 
@@ -196,12 +198,15 @@ module ReportHelpers
   def generate_sheet(table, result, columns_params, export, type)
     case type
     when :analyses
-      sheet_name = "#{table}_analyses".to_sym
+      sheet_name = :"#{table}_analyses"
       export.generate_analyses_sheet_with_samples(sheet_name, result, columns_params)
     when :chemicals
       sheet_name = "#{table}_chemicals"
       format_result = Export::ExportChemicals.format_chemical_results(result)
       export.generate_sheet_with_samples(sheet_name, format_result, columns_params)
+    when :components
+      sheet_name = :"#{table}_components"
+      export.generate_components_sheet_with_samples(sheet_name, result, columns_params)
     else
       export.generate_sheet_with_samples(table, result)
     end
@@ -212,7 +217,7 @@ module ReportHelpers
     filter_parameter = if tables.include?(table) && type.nil?
                          table
                        else
-                         "#{table}_#{type}".to_sym
+                         :"#{table}_#{type}"
                        end
     type ||= :sample
     filter_selections = filter_column_selection(filter_parameter)
@@ -273,7 +278,7 @@ module ReportHelpers
 
       collection_join = " inner join collections_samples c_s on s_id = c_s.sample_id and c_s.deleted_at is null and c_s.collection_id = #{c_id} "
       order = 's_id asc'
-      selection = s_ids.empty? && '' || "s.id not in (#{s_ids}) and"
+      selection = (s_ids.empty? && '') || "s.id not in (#{s_ids}) and"
     else
       order = "position(','||s_id::text||',' in '(,#{s_ids},)')"
       selection = "s.id in (#{s_ids}) and"
@@ -291,12 +296,14 @@ module ReportHelpers
       s_id, ts, co_id, scu_id, shared_sync, pl, dl_s
       , res.residue_type, s.molfile_version, s.decoupled, s.molecular_mass as "molecular mass (decoupled)", s.sum_formula as "sum formula (decoupled)"
       , s.stereo->>'abs' as "stereo_abs", s.stereo->>'rel' as "stereo_rel"
+      , cl.id as "sample uuid"
       , #{rest_of_selections}
       from (#{s_subquery}) as s_dl
       inner join samples s on s_dl.s_id = s.id #{collection_join}
       left join molecules m on s.molecule_id = m.id
       left join molecule_names mn on s.molecule_name_id = mn.id
       left join residues res on res.sample_id = s.id
+      left join code_logs cl on cl.source = 'sample' and cl.source_id = s.id
       order by #{order}
     SQL
   end
@@ -325,6 +332,47 @@ module ReportHelpers
     SQL
   end
 
+  def build_sql_sample_components(columns, _c_id, ids, _checked_all)
+    sample_ids = [ids].flatten.join(',')
+    return if sample_ids.empty? || columns.blank? || columns[0].blank? || columns[1].blank?
+
+    # Use sample columns directly
+    sample_sql = build_sample_columns(columns[0])
+
+    # Use component columns directly
+    component_columns = columns[1].join(', ')
+
+    # Check if we need molecule properties
+    needs_molecule_join = component_columns.include?('m.')
+
+    <<~SQL.squish
+      SELECT
+        #{sample_sql},
+        cl.id as "sample uuid",
+        COALESCE(components.components, '[]') AS components
+      FROM samples s
+      LEFT JOIN code_logs cl on cl.source = 'sample' and cl.source_id = s.id
+      LEFT JOIN LATERAL (
+        SELECT json_agg(row_to_json(component_row)) AS components
+        FROM (
+          SELECT
+            #{component_columns}
+          FROM components comp
+          #{needs_molecule_join ? "LEFT JOIN molecules m ON m.id = (comp.component_properties->>'molecule_id')::integer" : ''}
+          WHERE comp.sample_id = s.id
+          ORDER BY comp.position
+        ) AS component_row
+      ) AS components ON TRUE
+      WHERE s.id IN (#{sample_ids})
+      ORDER BY s.id
+    SQL
+  end
+
+  def build_sample_columns(columns)
+    columns.unshift('s.id as "id"') unless columns.any? { |col| col.include?('id as') }
+    columns.join(', ')
+  end
+
   def build_sql_sample_analyses(columns, c_id, ids, checkedAll = false)
     s_ids = [ids].flatten.join(',')
     u_ids = [user_ids].flatten.join(',')
@@ -335,9 +383,10 @@ module ReportHelpers
     cont_type = 'Sample' # containable_type
     if checkedAll
       return unless c_id
+
       collection_join = " inner join collections_samples c_s on s_id = c_s.sample_id and c_s.deleted_at is null and c_s.collection_id = #{c_id} "
       order = 's_id asc'
-      selection = s_ids.empty? && '' || "s.id not in (#{s_ids}) and"
+      selection = (s_ids.empty? && '') || "s.id not in (#{s_ids}) and"
     else
       order = "position(','||s_id::text||',' in '(,#{s_ids},)')"
       selection = "s.id in (#{s_ids}) and"
@@ -348,6 +397,7 @@ module ReportHelpers
       select
       s_id, ts, co_id, scu_id, shared_sync, pl, dl_s
       , #{columns}
+      , cl.id as "sample uuid"
       , (select array_to_json(array_agg(row_to_json(analysis)))
         from (
         select  anac."name", anac.description
@@ -381,6 +431,7 @@ module ReportHelpers
       ) as analyses
       from (#{s_subquery}) as s_dl
       inner join samples s on s_dl.s_id = s.id #{collection_join}
+      left join code_logs cl on cl.source = 'sample' and cl.source_id = s.id
       order by #{order};
     SQL
   end
@@ -410,9 +461,10 @@ module ReportHelpers
 
     if checkedAll
       return unless c_id
+
       collection_join = " inner join collections_samples c_s on s_id = c_s.sample_id and c_s.deleted_at is null and c_s.collection_id = #{c_id} "
       order = 'wp_id asc'
-      selection = wp_ids.empty? && '' || "w.wellplate_id not in (#{wp_ids}) and"
+      selection = (wp_ids.empty? && '') || "w.wellplate_id not in (#{wp_ids}) and"
     else
       order = "position(','||wp_id::text||',' in '(,#{wp_ids},)')"
       selection = "w.wellplate_id in (#{wp_ids}) and"
@@ -466,9 +518,10 @@ module ReportHelpers
 
     if checkedAll
       return unless c_id
+
       collection_join = " inner join collections_samples c_s on s_id = c_s.sample_id and c_s.deleted_at is null and c_s.collection_id = #{c_id} "
       order = 'r_id asc'
-      selection = r_ids.empty? && '' || "r_s.reaction_id not in (#{r_ids}) and"
+      selection = (r_ids.empty? && '') || "r_s.reaction_id not in (#{r_ids}) and"
     else
       order = "position(','||r_id::text||',' in '(,#{r_ids},)')"
       selection = "r_s.reaction_id in (#{r_ids}) and"
@@ -519,7 +572,7 @@ module ReportHelpers
     SQL
   end
 
-  # desc: returns hash of alllowed tables and associated columns
+  # desc: returns hash of allowed tables and associated columns
   # to be queried for export.
   # { table_name:
   #     column_name: ['abbr.column_name', 'alt column_name', min_detail_level]
@@ -565,6 +618,7 @@ module ReportHelpers
         external_label: ['s.external_label', '"sample external label"', 0],
         name: ['s."name"', '"sample name"', 0],
         short_label: ['s.short_label', '"short label"', 0],
+        sample_type: ['s."sample_type"', '"sample type"', 0],
         # molecule_name: ['mn."name"', '"molecule name"', 1]
       },
       molecule: {
@@ -660,11 +714,14 @@ module ReportHelpers
         custom_column_query(table, col, selection, user_id, attrs)
       end
     end
-    selection = if sel[:chemicals].present?
-                  Export::ExportChemicals.build_chemical_column_query(selection, sel)
-                else
-                  selection.join(',')
-                end
+
+    selection = Export::ExportChemicals.build_chemical_column_query(selection, sel) if sel[:chemicals].present?
+
+    if sel[:components].present?
+      return Export::ExportComponents.build_component_column_query(selection, sel)
+    end
+
+    sel[:chemicals].present? ? selection : selection.join(',')
   end
 
   def filter_column_selection(table, columns = params[:columns])
@@ -683,6 +740,8 @@ module ReportHelpers
     #  columns.slice(:analysis).merge(reaction_id: params[:columns][:reaction])
     when :sample_chemicals
       columns.slice(:chemicals, :sample, :molecule)
+    when :sample_components
+      columns.slice(:components).merge(sample_id: params[:columns][:sample])
     else
       {}
     end
@@ -690,9 +749,9 @@ module ReportHelpers
 
   def force_molfile_selection
     sample_params = params[:columns][:sample]
-    if !sample_params || !sample_params.include?(:molfile)
-      params[:columns][:sample] = (sample_params || []) + [:molfile]
-    end
+    return unless sample_params.nil? || sample_params.exclude?(:molfile)
+
+    params[:columns][:sample] = (sample_params || []) + [:molfile]
   end
 
   DEFAULT_COLUMNS_WELLPLATE = {

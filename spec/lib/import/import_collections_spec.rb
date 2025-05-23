@@ -182,6 +182,23 @@ RSpec.describe 'ImportCollection' do
       end
     end
 
+    describe 'import a collection with a sample with components' do
+      let(:import_id) { 'collection_components' }
+      let(:attachment) { create(:attachment, :with_components_collection_zip) }
+
+      before do
+        stub_request(:get, /pubchem.ncbi.nlm.nih.gov/).to_return(status: 200, body: '{}', headers: {})
+      end
+
+      it 'successfully imported components' do
+        importer.execute
+
+        collection = Collection.find_by(label: 'collection_with_components')
+        expect(collection).to be_present
+        expect(collection.samples.map(&:components).flatten.length).to eq(2)
+      end
+    end
+
     context 'with zip file including two cell line samples, material already existing' do
       let!(:cell_line) { create(:cellline_sample) }
       let(:import_id) { '20230629_two_cell_line_samples' }
