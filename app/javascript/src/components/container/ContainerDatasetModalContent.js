@@ -78,7 +78,6 @@ export class ContainerDatasetModalContent extends Component {
     this.handleRemoveLink = this.handleRemoveLink.bind(this);
     this.handleDSChange = this.handleDSChange.bind(this);
     this.editorInitial = this.editorInitial.bind(this);
-    this.createAttachmentPreviews = this.createAttachmentPreviews.bind(this);
     this.handleEdit = this.handleEdit.bind(this);
     this.handleFilterChange = this.handleFilterChange.bind(this);
     this.handleAttachmentRemove = this.handleAttachmentRemove.bind(this);
@@ -89,7 +88,6 @@ export class ContainerDatasetModalContent extends Component {
 
   componentDidMount() {
     this.editorInitial();
-    this.createAttachmentPreviews();
     this.setState({
       attachmentGroups: this.classifyAttachments(this.props.datasetContainer.attachments)
     });
@@ -115,7 +113,6 @@ export class ContainerDatasetModalContent extends Component {
         attachmentGroups: this.classifyAttachments(attachments)
       }, () => {
         this.props.onChange({ ...this.state.datasetContainer });
-        this.createAttachmentPreviews();
         this.filterAttachments();
       });
     }
@@ -179,7 +176,6 @@ export class ContainerDatasetModalContent extends Component {
         attachmentGroups: this.classifyAttachments(updatedAttachments),
       };
     }, () => {
-      this.createAttachmentPreviews();
     });
   }
 
