@@ -79,7 +79,7 @@ class ResearchPlanDetailsFieldTableSchemasModal extends Component {
       },
       {
         headerName: "",
-        cellRenderer: this.renderButtons,
+        cellRenderer: this.renderButtons.bind(this),
         cellClass: ["p-2"],
       },
     ];
