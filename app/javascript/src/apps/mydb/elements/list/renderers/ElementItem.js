@@ -52,14 +52,14 @@ function ElementItem({ element, renderItem }) {
         { 'element-list-item--selected': isSelected },
       )}
     >
+      <div className="element-list-item-drag-handle">
+        <ElementDragHandle element={element} />
+      </div>
       <div className="element-list-item-checkbox">
         <ElementCheckbox element={element} />
       </div>
       <div className="element-list-item-content">
         {renderItem(element, () => showDetails(element))}
-      </div>
-      <div className="element-list-item-drag-handle">
-        <ElementDragHandle element={element} />
       </div>
     </div>
 

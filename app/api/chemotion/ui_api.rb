@@ -32,6 +32,7 @@ module Chemotion
           collector_address: collector_address.presence,
           third_party_apps: Entities::ThirdPartyAppEntity.represent(ThirdPartyApp.all),
           pg_cartridge: Chemotion::Application.config.pg_cartridge,
+          version: Chemotion::Application.config.version,
         }
       end
     end
