@@ -139,7 +139,13 @@ export default class SamplesFetcher {
 
   static importSamplesFromFile(params) {
     const data = new FormData();
-    data.append('file', params.file);
+    if (params.file !== undefined) {
+      data.append('file', params.file);
+    } else {
+      const jsonData = JSON.stringify(params.data);
+      data.append('data', jsonData);
+      data.append('originalFormat', params.originalFormat);
+    }
     data.append('currentCollectionId', params.currentCollectionId);
     data.append('import_type', params.type);
 
@@ -167,9 +173,7 @@ export default class SamplesFetcher {
         rows: params.rows,
         mapped_keys: params.mapped_keys,
       })
-    }).then((response) => {
-      response.json();
-    }).then((json) => {
+    }).then((response) => response.json()).then((json) => {
       if (Array.isArray(json.error_messages)) {
         json.error_messages.forEach((message) => {
           NotificationActions.add({
