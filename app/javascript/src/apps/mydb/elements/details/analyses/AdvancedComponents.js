@@ -1,4 +1,4 @@
-import {ListGroup, Button, ButtonGroup, Form} from 'react-bootstrap';
+    import {ListGroup, Button, ButtonGroup, Form} from 'react-bootstrap';
 import React, {useState, useMemo, useCallback} from 'react';
 
 import {DatasetDropZone} from "src/apps/mydb/elements/details/analyses/GeneralComponents";
@@ -216,7 +216,7 @@ function AdvancedAnalysesList({handleClose, setConsumedPaths, listedFiles, setEl
             <Button variant="success" onClick={addAnalyses}>➕ Add Analyse</Button>
             <Button
                 disabled={!analContainerList.length || !analContainerList.reduce((y, x) => y && x.children.length, true)}
-                variant="default" onClick={execute}>Execute</Button>
+                variant="primary" onClick={execute}>Execute</Button>
             <Button disabled={!analContainerList.length} variant="danger" onClick={emptyAnalyses}>❌ Empty</Button>
         </ButtonGroup>
         <ListGroup

@@ -91,8 +91,7 @@ function FileListDisplay({files}) {
                     return (
                         <ListGroup.Item key={file.name} className="d-flex justify-content-between align-items-center">
 
-                            <div key={`DIVV__${file.name}`} className="text-truncate flex-grow-1 me-3"
-                                 style={{overflow: 'hidden'}}>
+                            <div style={{overflow: 'auto'}} key={`DIVV__${file.name}`} className="flex-grow-1 me-3">
                                 <strong>{file.name}</strong>
                                 <div
                                     className="text-muted small">{file.fullPath || file.webkitRelativePath || file.name}</div>
@@ -265,7 +264,7 @@ function UploadField({disabled, element, setElement}) {
             Generic file upload
         </Button>
 
-        <Modal size="lg" show={show} onHide={handleClose}>
+        <Modal size="xl" show={show} onHide={handleClose}>
             <Modal.Header closeButton>
                 <Modal.Title>Generic file upload</Modal.Title>
             </Modal.Header>
@@ -275,10 +274,6 @@ function UploadField({disabled, element, setElement}) {
             <Modal.Footer>
                 <ToggleSwitch disabled={listedFiles.length == 0} isChecked={isAdvanced} setIsChecked={setisAdvanced}
                               label="Advenced"></ToggleSwitch>
-
-                <Button variant="secondary" onClick={handleClose}>
-                    Close
-                </Button>
             </Modal.Footer>
         </Modal>
     </>);

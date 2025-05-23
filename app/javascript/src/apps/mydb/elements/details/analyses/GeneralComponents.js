@@ -22,7 +22,7 @@ function ToggleSwitch({isChecked, setIsChecked, label}) {
 
 const FileTree = ({treeData}) => {
     return (
-        <ul>
+        <ul style={{overflow: 'auto'}}>
             {treeData.map((node, idx) => (
                 <TreeNode key={idx} node={node}/>
             ))}
@@ -31,7 +31,7 @@ const FileTree = ({treeData}) => {
 };
 
 const TreeNode = ({node}) => {
-    if(node.marked) {
+    if (node.marked) {
         return null;
     }
     const [expanded, setExpanded] = useState(false);
@@ -47,9 +47,13 @@ const TreeNode = ({node}) => {
     return (
         <li>
             <div
+                style={{
+                    whiteSpace: 'nowrap',
+                    cursor: 'pointer'
+                }}
                 draggable
                 onDragStart={onDragStart}
-                onClick={handleClick} style={{cursor: 'pointer'}}>
+                onClick={handleClick}>
                 {hasChildren ? (expanded ? '📂' : '📁') : '📄'} {node.name}
             </div>
             {hasChildren && expanded && (
@@ -95,7 +99,7 @@ function DatasetDropZone({droppedPaths, setDroppedPaths}) {
             }}
         >
             <strong>Drop files here:</strong>
-            <ul>
+            <ul style={{overflow: 'auto'}}>
                 {droppedPaths.map((p, i) => (
                     <li key={i}>
                         <span>{p}</span>
