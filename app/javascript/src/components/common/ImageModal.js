@@ -5,6 +5,7 @@ import { Modal, Button } from 'react-bootstrap';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import { stopEvent } from 'src/utilities/DomHelper';
 import { Document, Page, pdfjs } from 'react-pdf';
+import { fetchImageSrcByAttachmentId } from 'src/utilities/imageHelper';
 
 pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
 
@@ -12,17 +13,19 @@ export default class ImageModal extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      fetchSrc: props.popObject.src,
+      fetchSrc: '',
       showModal: false,
       isPdf: false,
       pageIndex: 1,
       numOfPages: 0,
+      thumbnail: ''
     };
 
     this.fetchImage = this.fetchImage.bind(this);
     this.handleModalClose = this.handleModalClose.bind(this);
     this.handleModalShow = this.handleModalShow.bind(this);
     this.handleImageError = this.handleImageError.bind(this);
+    this.fetchImageThumbnail = this.fetchImageThumbnail.bind(this);
     this.onDocumentLoadSuccess = this.onDocumentLoadSuccess.bind(this);
     this.previousPage = this.previousPage.bind(this);
     this.nextPage = this.nextPage.bind(this);
@@ -30,9 +33,7 @@ export default class ImageModal extends Component {
   }
 
   componentDidMount() {
-    if (this.props.popObject.fetchNeeded) {
-      this.fetchImage();
-    }
+    this.fetchImageThumbnail();
   }
 
   shouldComponentUpdate(nextProps, nextState) {
@@ -49,11 +50,8 @@ export default class ImageModal extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    if (
-      this.props.popObject.fetchNeeded
-      && this.props.popObject.fetchId !== prevProps.popObject.fetchId
-    ) {
-      this.fetchImage();
+    if (this.props.attachment?.id !== prevProps.attachment?.id) {
+      this.fetchImageThumbnail();
     }
   }
 
@@ -65,12 +63,13 @@ export default class ImageModal extends Component {
   handleModalShow(e) {
     if (!this.props.disableClick) {
       stopEvent(e);
+      this.fetchImage();
       this.setState({ showModal: true });
     }
   }
 
   handleImageError() {
-    this.setState({ fetchSrc: this.props.previewObject.src });
+    this.setState({ fetchSrc: '/images/wild_card/not_available.svg' });
   }
 
   onDocumentLoadSuccess(numPages) {
@@ -90,35 +89,50 @@ export default class ImageModal extends Component {
   }
 
   fetchImage() {
-    const { popObject } = this.props;
-    if (!popObject.fetchId) { return null; }
-
-    AttachmentFetcher.fetchImageAttachment({ id: popObject.fetchId, annotated: true }).then(
+    const { attachment } = this.props;
+    AttachmentFetcher.fetchImageAttachment({ id: attachment.id, annotated: true }).then(
       (result) => {
         if (result.data != null) {
           this.setState({ fetchSrc: result.data, isPdf: result.type === 'application/pdf' });
+        } else {
+          this.setState({
+            fetchSrc: '/images/wild_card/not_available.svg'
+          });
         }
       }
     );
   }
 
+  async fetchImageThumbnail() {
+    const { attachment } = this.props;
+    if (attachment?.thumb) {
+      const src = await fetchImageSrcByAttachmentId(attachment.id);
+      this.setState({ thumbnail: src });
+    } else if (attachment?.is_new || attachment?.is_pending) {
+      console.log(attachment.name, attachment?.preview);
+      this.setState({ thumbnail:  attachment?.preview });
+    } else {
+      this.setState({ thumbnail: '/images/wild_card/no_attachment.svg' });
+    }
+  }
+
   render() {
     const {
-      hasPop, previewObject, popObject, imageStyle, showPopImage
+      hasPop, popObject, imageStyle, attachment
     } = this.props;
-    const { pageIndex, numOfPages, isPdf, fetchSrc } = this.state;
-
+    const { pageIndex, numOfPages, isPdf, fetchSrc, thumbnail } = this.state;
     if (!hasPop) {
       return (
         <div className="preview-table">
           <img
-            src={previewObject.src}
-            alt=""
+            src={thumbnail}
+            alt={attachment?.filename}
             style={{ cursor: 'default', ...imageStyle }}
           />
         </div>
       );
     }
+
 
     return (
       <div>
@@ -130,8 +144,8 @@ export default class ImageModal extends Component {
           tabIndex={0}
         >
           <img
-            src={showPopImage ? popObject.src : previewObject.src}
-            alt=""
+            src={thumbnail}
+            alt={attachment?.filename}
             style={{ ...imageStyle }}
             role="button"
           />
@@ -147,7 +161,7 @@ export default class ImageModal extends Component {
             <Modal.Title>{popObject.title}</Modal.Title>
           </Modal.Header>
           <Modal.Body style={{ overflow: 'auto', position: 'relative' }}>
-            {isPdf ? (
+            {isPdf && fetchSrc ? (
               <div>
                 <Document
                   file={{ url: fetchSrc }}
@@ -168,14 +182,14 @@ export default class ImageModal extends Component {
                   <button
                     type="button"
                     disabled={pageIndex <= 1}
-                    onClick={() => this.previousPage()}
+                    onClick={this.previousPage}
                   >
                     Previous
                   </button>
                   <button
                     type="button"
                     disabled={pageIndex >= numOfPages}
-                    onClick={() => this.nextPage()}
+                    onClick={this.nextPage}
                   >
                     Next
                   </button>
@@ -185,7 +199,7 @@ export default class ImageModal extends Component {
               <img
                 src={this.state.fetchSrc}
                 style={{ display: 'block', maxHeight: '100%', maxWidth: '100%' }}
-                alt=""
+                alt={attachment?.filename}
                 onError={this.handleImageError}
               />
             )}
@@ -202,24 +216,20 @@ export default class ImageModal extends Component {
 }
 
 ImageModal.propTypes = {
-  imageStyle: PropTypes.object,
-  hasPop: PropTypes.bool.isRequired,
-  previewObject: PropTypes.shape({
-    src: PropTypes.string,
+  attachment: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    filename: PropTypes.string,
+    thumb: PropTypes.bool,
   }).isRequired,
+  hasPop: PropTypes.bool.isRequired,
   popObject: PropTypes.shape({
     title: PropTypes.string,
-    src: PropTypes.string,
-    fileName: PropTypes.string,
-    fetchNeeded: PropTypes.bool,
-    fetchId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   }).isRequired,
   disableClick: PropTypes.bool,
-  showPopImage: PropTypes.bool,
+  imageStyle: PropTypes.object,
 };
 
 ImageModal.defaultProps = {
   imageStyle: {},
   disableClick: false,
-  showPopImage: false
 };

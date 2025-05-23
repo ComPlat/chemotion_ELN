@@ -1,3 +1,8 @@
+import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
+import moment from 'moment';
+
+const parseDateWithMoment = (dateStr) => moment(dateStr, 'DD.MM.YYYY, HH:mm:ss Z');
+
 const previewContainerImage = (
   container,
   noAttSvg = '/images/wild_card/no_attachment.svg',
@@ -14,6 +19,28 @@ const previewContainerImage = (
       return `data:image/png;base64,${rawImg}`;
   }
 };
+const getAttachmentFromContainer = (container) => {
+  const datasetChildren = container.children?.filter((child) => child.container_type === 'dataset') || [];
+  const attachments = datasetChildren
+    .flatMap((child) => child.attachments || [])
+    .filter((att) => att.thumb);
+  const combinedImageAttachment = attachments.find((att) => att.filename?.toLowerCase().includes('combined'));
+  const latestImageAttachment = attachments
+    .sort((a, b) => parseDateWithMoment(b.updated_at).valueOf() - parseDateWithMoment(a.updated_at).valueOf())[0];
+  return combinedImageAttachment || latestImageAttachment || null;
+};
+
+const fetchImageSrcByAttachmentId = async (id) => {
+  try {
+    if (!id) {
+      return '/images/wild_card/no_attachment.svg';
+    }
+    const response = await AttachmentFetcher.fetchThumbnail({ id });
+    return `data:image/png;base64,${response}`;
+  } catch {
+    return '/images/wild_card/not_available.svg';
+  }
+};
 
 const previewAttachmentImage = (
   attachment,
@@ -25,4 +52,6 @@ const previewAttachmentImage = (
   return noAvaSvg;
 };
 
-export { previewContainerImage, previewAttachmentImage };
+export {
+  previewContainerImage, previewAttachmentImage, fetchImageSrcByAttachmentId, getAttachmentFromContainer
+};

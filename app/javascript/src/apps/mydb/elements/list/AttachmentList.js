@@ -21,9 +21,7 @@ export const attachmentThumbnail = (attachment) => (
         objectFit: 'contain',
       }}
       alt="thumbnail"
-      previewObject={{
-        src: attachment.preview,
-      }}
+      attachment={attachment}
       hasPop={false}
       popObject={{}}
       disableClick
@@ -39,19 +37,8 @@ export const attachmentThumbnail = (attachment) => (
         hasPop
         showPopImage
         alt="thumbnail"
-        previewObject={{
-          src: attachment.preview,
-        }}
-        popObject={
-          attachment.filename && attachment.filename.toLowerCase().match(/\.(png|jpg|bmp|tif|svg|jpeg|tiff)$/)
-            ? {
-              fetchNeeded: true,
-              src: `/api/v1/attachments/${attachment.id}?annotated=true`,
-            }
-            : {
-              src: attachment.preview,
-            }
-        }
+        attachment={attachment}
+        popObject={{}}
         disableClick
       />
     </div>
