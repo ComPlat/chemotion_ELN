@@ -1,33 +1,56 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, {
+  useState,
+  useCallback,
+  useEffect,
+  useRef
+} from 'react';
 import PropTypes from 'prop-types';
 import { AgGridReact } from 'ag-grid-react';
 import { Modal, Button, Alert } from 'react-bootstrap';
+import {
+  validateRowUnified
+} from 'src/utilities/importDataValidations';
+import TextAreaCellEditor from 'src/components/contextActions/TextAreaCellEditor';
 
 // Create a separate component for the delete button cell renderer
 function DeleteButtonCellRenderer(props) {
+  const { onDelete, data } = props;
   const onClick = () => {
-    if (props.onDelete) {
-      props.onDelete(props.data.id);
+    if (onDelete) {
+      onDelete(data.id);
     }
   };
 
   return (
-    <button 
+    <button
       type="button"
-      className="btn btn-sm btn-outline-danger"
+      className="btn btn-sm btn-danger"
       onClick={onClick}
     >
-      <i className="fa fa-trash"></i>
+      <i className="fa fa-trash" />
     </button>
   );
 }
 
 DeleteButtonCellRenderer.propTypes = {
-  data: PropTypes.object,
+  data: PropTypes.shape({
+    id: PropTypes.string
+  }),
   onDelete: PropTypes.func
 };
 
-function ValidationComponent({ rowData: initialRowData, columnDefs, onValidate, onCancel }) {
+DeleteButtonCellRenderer.defaultProps = {
+  data: null,
+  onDelete: null
+};
+
+function ValidationComponent({
+  rowData: initialRowData,
+  columnDefs,
+  onValidate,
+  onCancel,
+  onRowDataChange
+}) {
   const [gridApi, setGridApi] = useState(null);
   const [validationErrors, setValidationErrors] = useState([]);
   const [showMore, setShowMore] = useState(false);
@@ -40,10 +63,35 @@ function ValidationComponent({ rowData: initialRowData, columnDefs, onValidate, 
     setCurrentRowData(initialRowData);
   }, [initialRowData]);
 
+  const deleteRow = (rowIndex) => {
+    if (rowIndex === undefined || rowIndex < 0 || rowIndex >= currentRowData.length) {
+      return;
+    }
+
+    // Get the data from the row before deleting
+    const rowToDelete = currentRowData[rowIndex];
+    console.log(`Deleting row: ${rowIndex}`, rowToDelete);
+
+    // Create a copy of the current data
+    const newData = currentRowData.filter((_, index) => index !== rowIndex);
+    console.log(`Remaining rows: ${newData.length}`);
+
+    // Update state
+    setCurrentRowData(newData);
+    onRowDataChange(newData);
+
+    // Request a grid refresh after state update
+    setTimeout(() => {
+      if (gridApi) {
+        gridApi.refreshCells({ force: true });
+      }
+    }, 0);
+  };
+
   // Handler for the delete button click
   const handleDeleteRow = useCallback((rowId) => {
     if (rowId) {
-      const rowIndex = currentRowData.findIndex(row => row.id === rowId);
+      const rowIndex = currentRowData.findIndex((row) => row.id === rowId);
       if (rowIndex !== -1) {
         deleteRow(rowIndex);
       }
@@ -78,8 +126,67 @@ function ValidationComponent({ rowData: initialRowData, columnDefs, onValidate, 
       }
     };
 
+    // Process column defs to add special handling for molfile columns
+    const processedColumnDefs = columnDefs.map((colDef) => {
+      // Check if this is a molfile column based on field name or header
+      const isMolfileColumn = (colDef.headerName && colDef.headerName.toLowerCase().includes('molfile'));
+
+      if (isMolfileColumn) {
+        return {
+          ...colDef,
+          cellEditor: 'textAreaCellEditor',
+          cellEditorPopup: true,
+          stopEditingWhenCellsLoseFocus: false,
+          singleClickEdit: false,
+          editable: true,
+          // Used by AG Grid for displaying values - we want raw values
+          valueFormatter: (params) => params.value,
+          valueSetter: (params) => {
+            // Called when cell editing ends to save changes
+            if (params.newValue !== undefined && params.newValue !== null) {
+              // Must create a new reference to trigger proper refresh
+              const rowData = { ...params.data };
+              rowData[params.colDef.field] = params.newValue;
+
+              // Set the updated data back to the row
+              params.node.setData(rowData);
+
+              // Update React state directly as well
+              const { rowIndex } = params.node;
+              if (rowIndex !== undefined) {
+                const updatedRowData = [...currentRowData];
+                updatedRowData[rowIndex] = rowData;
+                setCurrentRowData(updatedRowData);
+                onRowDataChange(updatedRowData);
+              }
+
+              // Force refresh this cell
+              if (params.api) {
+                params.api.refreshCells({
+                  force: true,
+                  rowNodes: [params.node],
+                  columns: [params.colDef.field]
+                });
+              }
+              return true;
+            }
+            return false;
+          },
+          cellRenderer: (params) => {
+            if (!params.value) return '';
+            // Show a preview of the molfile (first line only)
+            const lines = params.value.split('\n');
+            const firstLine = lines[0] || '';
+            // Return only the text content, not wrapped in HTML
+            return firstLine ? `${firstLine.trim()} (${lines.length} lines)` : '';
+          }
+        };
+      }
+      return colDef;
+    });
+
     // Add the row number and delete columns to the column definitions
-    setGridColumnDefs([rowNumberColumn, ...columnDefs, deleteButtonColumn]);
+    setGridColumnDefs([rowNumberColumn, ...processedColumnDefs, deleteButtonColumn]);
   }, [columnDefs, handleDeleteRow]);
 
   // Add custom style for invalid rows
@@ -105,32 +212,45 @@ function ValidationComponent({ rowData: initialRowData, columnDefs, onValidate, 
     params.data && !params.data.valid ? 'invalid-row' : ''
   );
 
-  const validateData = () => {
+  const validateData = async () => {
     if (!gridApi) return;
 
     const allRows = [];
     gridApi.forEachNode((node) => allRows.push(node.data));
 
-    const invalid = allRows.filter((row) => {
-      const errors = [];
+    const invalid = [];
 
+    // Log the field names across all rows to help debug
+    const allFields = new Set();
+    allRows.forEach((row) => {
       Object.keys(row).forEach((key) => {
-        if (key === 'valid' || key === 'id' || key === 'errors' || key === 'delete') return;
-
-        if (row[key] === '' || row[key] === null || row[key] === undefined) {
-          errors.push(`Field "${key}" cannot be empty`);
+        if (key !== 'id' && key !== 'valid' && key !== 'errors') {
+          allFields.add(key);
         }
       });
+    });
+    console.log('All fields found in data:', Array.from(allFields).join(', '));
 
-      if (errors.length > 0) {
-        const updatedRow = { ...row, valid: false, errors };
+    // Use Promise.all to run validations in parallel
+    const validationPromises = allRows.map(async (row) => {
+      // Each row can have a mix of sample and chemical fields
+      console.log(`Validating row ${row.id || 'unknown'} with fields:`, Object.keys(row).join(', '));
+      
+      // Apply field-by-field validation based on each field type
+      const validation = await validateRowUnified(row);
+
+      if (!validation.valid) {
+        const updatedRow = { ...row, valid: false, errors: validation.errors };
         Object.assign(row, updatedRow);
-        return true;
+        invalid.push(row);
+        return false;
       }
 
       Object.assign(row, { ...row, valid: true });
-      return false;
+      return true;
     });
+
+    await Promise.all(validationPromises);
 
     const allErrors = invalid.flatMap((row) => (
       (row.errors || []).map((error) => `Row ${row.id || 'unknown'}: ${error}`)
@@ -138,26 +258,17 @@ function ValidationComponent({ rowData: initialRowData, columnDefs, onValidate, 
 
     setValidationErrors(allErrors);
     gridApi.refreshCells();
-    onValidate(invalid);
+    onValidate(invalid, currentRowData);
   };
 
   const addNewRow = () => {
-    if (!currentRowData.length) return;
-
-    // Create a new empty row with the same structure as existing rows
     const newRow = { id: `new-${Date.now()}`, valid: true };
-    
-    // Add empty values for all columns
-    columnDefs.forEach((colDef) => {
-      if (colDef.field && colDef.field !== 'id' && colDef.field !== 'valid' && colDef.field !== 'delete') {
-        newRow[colDef.field] = '';
-      }
-    });
 
     // Add the new row and update state
     const newData = [...currentRowData, newRow];
     setCurrentRowData(newData);
-    
+    onRowDataChange(newData);
+
     // Scroll to the new row
     setTimeout(() => {
       if (gridApi) {
@@ -167,50 +278,65 @@ function ValidationComponent({ rowData: initialRowData, columnDefs, onValidate, 
     }, 100);
   };
 
-  const deleteRow = (rowIndex) => {
-    if (rowIndex === undefined || rowIndex < 0 || rowIndex >= currentRowData.length) {
-      return;
-    }
-
-    // Get the data from the row before deleting
-    const rowToDelete = currentRowData[rowIndex];
-    console.log(`Deleting row: ${rowIndex}`, rowToDelete);
-    
-    // Create a copy of the current data
-    const newData = currentRowData.filter((_, index) => index !== rowIndex);
-    console.log(`Remaining rows: ${newData.length}`);
-    
-    // Update state
-    setCurrentRowData(newData);
-    
-    // Request a grid refresh after state update
-    setTimeout(() => {
-      if (gridApi) {
-        gridApi.refreshCells({ force: true });
-      }
-    }, 0);
-  };
-
   // Handle cell value changes
   const onCellValueChanged = (params) => {
     // Update the current row data when a cell changes
     const updatedData = [...currentRowData];
-    const rowIndex = params.rowIndex;
-    
+    const {
+      rowIndex,
+      newValue,
+      colDef,
+      data,
+      api,
+      node
+    } = params;
+
     if (rowIndex !== undefined && rowIndex >= 0 && rowIndex < updatedData.length) {
-      updatedData[rowIndex] = params.data;
+      // Preserve the original formatting of pasted content by using the raw value
+      if (newValue !== undefined && colDef && colDef.field) {
+        // Create a new object for this row to avoid reference issues
+        const updatedRow = { ...data };
+        // This preserves exact formatting of molfile data when pasted
+        updatedRow[colDef.field] = newValue;
+
+        // Update row data
+        updatedData[rowIndex] = updatedRow;
+
+        // Also update the grid's data model to ensure consistency
+        if (node && api) {
+          node.setData(updatedRow);
+          // Force refresh this specific cell
+          api.refreshCells({
+            force: true,
+            rowNodes: [node],
+            columns: [colDef.field]
+          });
+        }
+      } else {
+        updatedData[rowIndex] = { ...data };
+      }
+
+      // Update React state
       setCurrentRowData(updatedData);
+
+      // Notify parent component of the data change
+      if (onRowDataChange) {
+        onRowDataChange(updatedData);
+      }
     }
   };
 
   return (
     <Modal show size="xl" backdrop="static">
       <Modal.Header>
-        <Modal.Title>Validate Import Data</Modal.Title>
+        <Modal.Title>Validate Data to import</Modal.Title>
       </Modal.Header>
       <Modal.Body>
         <div className="mb-3">
-          <p>Review and edit your data before importing. You can modify cell values directly, add new rows, or delete existing ones.</p>
+          <p>
+            Review and edit your data before importing.
+            You can modify cell values directly, add new rows, or delete existing ones.
+          </p>
           <p>Invalid rows will be highlighted in red after validation.</p>
         </div>
 
@@ -220,8 +346,8 @@ function ValidationComponent({ rowData: initialRowData, columnDefs, onValidate, 
             <ul>
               {validationErrors
                 .slice(0, showMore ? validationErrors.length : 5)
-                .map((error, idx) => (
-                  <li key={`validation-error-${idx}`}>{error}</li>
+                .map((error) => (
+                  <li key={`validation-error-${error}`}>{error}</li>
                 ))}
             </ul>
             {validationErrors.length > 5 && !showMore && (
@@ -230,7 +356,11 @@ function ValidationComponent({ rowData: initialRowData, columnDefs, onValidate, 
                 onClick={() => setShowMore(true)}
                 className="p-0"
               >
-                Show all {validationErrors.length} errors...
+                Show all
+                {' '}
+                {validationErrors.length}
+                {' '}
+                errors...
               </Button>
             )}
           </Alert>
@@ -256,7 +386,8 @@ function ValidationComponent({ rowData: initialRowData, columnDefs, onValidate, 
               filter: true
             }}
             components={{
-              deleteButtonCellRenderer: DeleteButtonCellRenderer
+              deleteButtonCellRenderer: DeleteButtonCellRenderer,
+              textAreaCellEditor: TextAreaCellEditor
             }}
           />
         </div>
@@ -268,7 +399,8 @@ function ValidationComponent({ rowData: initialRowData, columnDefs, onValidate, 
               onClick={addNewRow}
               className="me-2"
             >
-              <i className="fa fa-plus me-1"></i> Add Row
+              <i className="fa fa-plus me-1" />
+              Add Row
             </Button>
             <Button
               variant="secondary"
@@ -283,9 +415,8 @@ function ValidationComponent({ rowData: initialRowData, columnDefs, onValidate, 
           </div>
           <div>
             <Button
-              variant="outline-secondary"
-              onClick={() => onCancel(currentRowData)}
-              className="me-2"
+              onClick={() => onCancel()}
+              className="me-2 btn-light"
             >
               Cancel
             </Button>
@@ -312,7 +443,8 @@ ValidationComponent.propTypes = {
     })
   ).isRequired,
   onValidate: PropTypes.func.isRequired,
-  onCancel: PropTypes.func.isRequired
+  onCancel: PropTypes.func.isRequired,
+  onRowDataChange: PropTypes.func.isRequired,
 };
 
 export default ValidationComponent;
