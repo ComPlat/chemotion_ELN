@@ -80,7 +80,8 @@ module Import
 
     def check_required_fields
       @mandatory_check = {}
-      ['molfile', 'smiles', 'cano_smiles', 'canonical smiles', 'decoupled'].each do |check|
+      header_fields = %w[molfile smiles cano_smiles canonical_smiles decoupled]
+      header_fields.each do |check|
         @mandatory_check[check] = true if header.find { |e| /^\s*#{check}?/i =~ e }
       end
 
@@ -236,7 +237,7 @@ module Import
     end
 
     def smiles?(row)
-      keys = ['smiles', 'cano_smiles', 'canonical smiles']
+      keys = ['smiles', 'cano_smiles', 'canonical_smiles']
 
       header_present = keys.any? { |key| determine_sheet(xlsx)[key] }
       cell_present = keys.any? { |key| row[key].to_s.present? }
@@ -254,7 +255,7 @@ module Import
         molfile_smiles = Chemotion::OpenBabelService.canon_smiles_to_smiles molfile_smiles if check['smiles']
       end
       if molfile_smiles.blank? && (molfile_smiles != row['cano_smiles'] &&
-         molfile_smiles != row['smiles'] && molfile_smiles != row['canonical smiles'])
+         molfile_smiles != row['smiles'] && molfile_smiles != row['canonical_smiles'])
         @unprocessable << { row: row, index: i }
         go_to_next = true
       end
@@ -289,7 +290,7 @@ module Import
 
       smiles = (check['smiles'] && row['smiles'].presence) ||
                (check['cano_smiles'] && row['cano_smiles'].presence) ||
-               (check['canonical smiles'] && row['canonical smiles'].presence)
+               (check['canonical_smiles'] && row['canonical_smiles'].presence)
 
       inchikey = Chemotion::OpenBabelService.smiles_to_inchikey smiles
       ori_molf = Chemotion::OpenBabelService.smiles_to_molfile smiles
@@ -303,7 +304,7 @@ module Import
     end
 
     def construct_solvents_array(solvents)
-      solvents_array = solvents.split('-')
+      solvents_array = solvents.split('/')
       solvents_array.map(&:capitalize)
     end
 
