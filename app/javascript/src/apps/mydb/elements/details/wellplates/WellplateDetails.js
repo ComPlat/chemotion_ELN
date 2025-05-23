@@ -264,7 +264,7 @@ export default class WellplateDetails extends Component {
               <i className="fa fa-expand" />
             </Button>
           </OverlayTrigger>
-          { displaySaveButton &&
+          {displaySaveButton &&
             <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveWellplate">Save Wellplate</Tooltip>}>
               <Button
                 variant="warning"
@@ -310,15 +310,13 @@ export default class WellplateDetails extends Component {
           {
             !wellplate.isNew && <CommentSection section="wellplate_list" element={wellplate} />
           }
-          <Card className="overflow-scroll h-100">
-            <Card.Body>
-              <WellplateList
-                wells={wellplate.wells}
-                readoutTitles={readoutTitles}
-                handleWellsChange={(w) => this.handleWellsChange(w)}
-              />
-            </Card.Body>
-          </Card>
+          <div className="mb-4">
+            <WellplateList
+              wells={wellplate.wells}
+              readoutTitles={readoutTitles}
+              handleWellsChange={(w) => this.handleWellsChange(w)}
+            />
+          </div>
         </Tab>
       ),
       properties: (
@@ -337,7 +335,7 @@ export default class WellplateDetails extends Component {
             element={wellplate}
             fnCb={this.handleWellplateChanged}
           />
-          <PrivateNoteElement element={wellplate} disabled={wellplate.can_update} />
+          <PrivateNoteElement element={wellplate} disabled={wellplate.can_update || false} />
           {' '}
           {/* For samples and reactions (<element>): disabled={!<element>.can_update} */}
         </Tab>

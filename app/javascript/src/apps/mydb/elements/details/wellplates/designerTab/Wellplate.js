@@ -1,15 +1,17 @@
-import React, { Component, useState } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import WellContainer from 'src/apps/mydb/elements/details/wellplates/designerTab/WellContainer';
 import WellDetails from 'src/apps/mydb/elements/details/wellplates/designerTab/WellDetails';
 import WellplateModel from 'src/models/Wellplate';
 
-const HorizontalHeaderField = ({label}) => {
-  return (<div className="fw-bold text-center wellplate-horizontal-header-field">{label}</div>)
+const HorizontalHeaderField = ({ label }) => {
+  return (<div className="fw-bold text-center wellplate-horizontal-header-field">{label}</div>);
 }
 
-const VerticalHeaderField = ({label}) => {
-  return (<div className="d-inline-flex align-items-center fw-bold text-right wellplate-vertical-header-field">{label}</div>)
+const VerticalHeaderField = ({ label }) => {
+  return (
+    <div className="d-inline-flex align-items-center fw-bold text-right wellplate-vertical-header-field">{label}</div>
+  );
 }
 
 const Wellplate = ({ wellplate, handleWellsChange }) => {
@@ -60,13 +62,14 @@ const Wellplate = ({ wellplate, handleWellsChange }) => {
     // generate first row - empty leading cell + column labels
     const columnLabels = []
     for (let columnIndex = 0; columnIndex <= wellplate.width; columnIndex += 1) {
-      columnLabels.push(<HorizontalHeaderField label={WellplateModel.columnLabel(columnIndex)} />)
+      let label = WellplateModel.columnLabel(columnIndex);
+      columnLabels.push(<HorizontalHeaderField key={`${label}-header`} label={label} />)
     }
     rows.push(columnLabels)
 
     // generate remaining rows with leading header field
     for (let rowIndex = 1; rowIndex <= wellplate.height; rowIndex += 1) {
-      const row = [<VerticalHeaderField label={WellplateModel.rowLabel(rowIndex)} />]
+      const row = [<VerticalHeaderField key={`${rowIndex}-vertical-header`} label={WellplateModel.rowLabel(rowIndex)} />]
       rows.push(row)
     }
 
@@ -79,6 +82,7 @@ const Wellplate = ({ wellplate, handleWellsChange }) => {
             swapWells={swapWells}
             dropSample={dropSample}
             active={isWellActive(well)}
+            key={`${well.id}-container`}
           />
         </div>
       )
@@ -88,9 +92,11 @@ const Wellplate = ({ wellplate, handleWellsChange }) => {
     return rows;
   }
 
-  return(
+  return (
     <div className="d-inline-flex flex-column">
-      {wellplateRows(wellplate).map(rowContent => (<div className="d-inline-flex flex-row">{rowContent}</div>))}
+      {wellplateRows(wellplate).map(rowContent => (
+        <div className="d-inline-flex flex-row" key={`${wellplate.id}-row-content-${Math.random()}`}>{rowContent}</div>
+      ))}
       {selectedWell &&
         <WellDetails
           well={selectedWell}

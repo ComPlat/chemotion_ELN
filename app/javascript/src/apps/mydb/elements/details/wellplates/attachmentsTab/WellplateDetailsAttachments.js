@@ -404,14 +404,7 @@ WellplateDetailsAttachments.propTypes = {
       PropTypes.string,
       PropTypes.number
     ]).isRequired,
-    changed: PropTypes.bool.isRequired,
-    body: PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.string.isRequired,
-        title: PropTypes.string.isRequired,
-        type: PropTypes.string.isRequired,
-      })
-    ).isRequired,
+    changed: PropTypes.bool,
     attachments: PropTypes.arrayOf(
       PropTypes.shape({
         id: PropTypes.oneOfType([
