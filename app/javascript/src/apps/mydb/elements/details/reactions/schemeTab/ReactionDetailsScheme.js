@@ -26,6 +26,8 @@ import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import TextTemplateStore from 'src/stores/alt/stores/TextTemplateStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
+import LlmFetcher from 'src/fetchers/LlmFetcher';
+
 import {
   convertTemperature,
   convertTime,
@@ -45,6 +47,8 @@ export default class ReactionDetailsScheme extends Component {
       lockEquivColumn: false,
       displayYieldField: null,
       reactionDescTemplate: textTemplate.toJS(),
+      descriptionMode: 'mistral-nemo:latest'
+
     };
 
     this.reactQuillRef = React.createRef();
@@ -1097,6 +1101,97 @@ export default class ReactionDetailsScheme extends Component {
       </Form.Group>
     );
   }
+  handleGenerateDescription(reaction) {
+    this.setState({ loading_gen: true });
+
+    console.log(reaction);
+    const startingMaterials = reaction.starting_materials
+    .map((material, index) => material._molecule?.cano_smiles || `Unknown SMILES at index ${index}`)
+    .join(", ");
+
+    const products = reaction.products
+      .map((product, index) => product._molecule?.cano_smiles || `Unknown SMILES at index ${index}`)
+      .join(", ");
+
+    const params = {  
+      stringtext: `Provide a step-by-step laboratory procedure for conducting the reaction described below.
+      - **Starting Materials**: ${startingMaterials}
+      - **Products**: ${products}
+    
+      Include safety precautions, necessary equipment, and any specific reaction conditions (e.g., temperature, pressure, solvents, catalysts). Ensure the instructions are detailed enough for a chemist to replicate the reaction accurately.`
+    , model: this.state.descriptionMode};
+
+    console.log(params)
+
+     LlmFetcher.fetchresponse(params).then(response => {
+        const quillEditor = this.reactQuillRef.current.editor; 
+        const delta = new Delta();
+        reaction.description.ops[0].insert = response.response;
+        quillEditor.setContents(delta.insert(response.response));
+        this.setState({ loading_gen: false });
+          }).catch(error => {
+           console.error("LLM API failure:", error);
+           this.setState({ loading_gen: false });
+     });
+ 
+  }
+
+  handleDescriptionCheck(description) {
+
+    this.setState({ loading_chk: true });
+
+    const getDifferenceDeltas = (text1, text2) => {
+      // const differences = diff(text1, text2);
+      const delta = new Delta();
+     
+      delta.insert(text1, { color: '#ffff00', bold: true });
+      delta.insert(text2);
+      return delta;
+    };
+
+
+    // const params = {
+    //   stringtext: `You are responsible to review reactions being published in the research data repository. Check if iupac names match the molecules mentioned in reaction smiles. Check grammar and scientific terms mentioned. Make necessary correction the reaction description and return the new reaction description only. Reaction Description : (${description.ops[0].insert})`
+    // };
+
+    const params ={ stringtext: `
+        You are an expert in organic chemistry, tasked with reviewing a reaction description for clarity, accuracy, and scientific rigor. Your objectives are as follows:
+
+        1. **Verify IUPAC Names and SMILES Consistency**: Check that the IUPAC names in the reaction description match the provided SMILES notation. Ensure that each molecule is correctly identified, and that any naming discrepancies or errors are noted and corrected.
+
+        2. **Assess Scientific Accuracy**: Ensure that the description uses scientifically accurate terms, appropriate for the reaction mechanism and relevant chemical principles. Look for:
+              - Correct usage of chemical terminology (e.g., nucleophile, electrophile, oxidation, reduction).
+              - Clear and precise language in describing the reaction steps.
+              - Consistent references to functional groups, reagents, and catalysts.
+
+        3. **Suggest Improvements**: If any part of the description could be clearer or more accurate, suggest improvements. If technical terms are used incorrectly or ambiguously, recommend better alternatives.
+
+        **Provide your review in the following format:**
+
+        - **IUPAC and SMILES Check**: (Describe any discrepancies and corrections)
+        - **Scientific Accuracy**: (Note any incorrect terms or concepts, and correct them)
+        - **Suggested Improvements**: (Offer specific edits to improve clarity and accuracy)
+
+        This is the reaction description to be reviewed : (${description.ops[0].insert})`, model: this.state.descriptionMode}
+
+
+    LlmFetcher.fetchresponse(params).then(response => {
+      
+      console.log(response, 'resp');
+      const quillEditor = this.reactQuillRef.current.editor; 
+      const deltas = getDifferenceDeltas(response.response, description.ops[0].insert);
+      quillEditor.setContents(deltas);
+     
+      this.setState({ loading_chk: false });
+      // this.state.reaction.description.ops[0].insert = getDifferenceDeltas(response.choices[0].message.content, description.ops[0].insert)
+    }).catch(error => {
+      console.error("Error fetching samples for the reaction:", error);
+      this.setState({ loading_chk: false });
+    });
+
+  }
+ 
+
 
   render() {
     const {
@@ -1302,6 +1397,27 @@ export default class ReactionDetailsScheme extends Component {
                   ) : <QuillViewer value={reaction.description} />
               }
             </div>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <select value={this.state.descriptionMode} onChange={(e) => this.setState({ descriptionMode: e.target.value })}
+                            style={{ padding: '4px', fontSize: '14px' }}>
+                            <option value="mistral-nemo:latest">Mistral Nemo</option>
+                            <option value="phi4:latest">Phi4</option>
+                            <option value="llama3.3:latest">Llama3.3</option>
+                            <option value="llama3.1:70b">Llama3.1 70B</option>
+                          </select>
+                        <button onClick={() => this.handleGenerateDescription(reaction)}>Generate Description</button>
+                        {this.state.loading_gen && (
+                            <div style={{ height: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <img style={{ height: '10px' }} src='/public/images/wild_card/loading-bubbles.svg' alt="Loading..." />
+                            </div>
+                        )}
+                        <button onClick={() => this.handleDescriptionCheck(reaction.description)}>Check Description</button>
+                        {this.state.loading_chk && (
+                            <div style={{ height: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <img style={{ height: '10px' }} src='/public/images/wild_card/loading-bubbles.svg' alt="Loading..." />
+                            </div>
+                        )}
+                    </div>
           </Form.Group>
         </Row>
         <ReactionDetailsPurification

@@ -187,8 +187,9 @@ export default class ElementDetails extends Component {
       case 'report':
         return <ReportContainer report={el} />;
       case 'prediction':
-        //return <PredictionContainer prediction={el} />;
-        console.warn('Attempting to show outdated PredictionContainer')
+        return <MlContainer prediction={el}
+                toggleFullScreen={this.toggleFullScreen}
+                 />;
       case 'format':
         return <FormatContainer format={el} />;
       case 'graph':

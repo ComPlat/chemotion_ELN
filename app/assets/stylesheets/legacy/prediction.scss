@@ -1,6 +1,374 @@
-.panel-workspace {
-  max-height: calc(100vh - 300px);
-  min-height: calc(100vh - 450px);
-  overflow-x: hidden;
-  overflow-y: scroll;
+// .panel-workspace {
+//   max-height: calc(100vh - 300px);
+//   min-height: calc(100vh - 450px);
+//   overflow-x: scroll;
+//   overflow-y: scroll;
+//   // box-shadow: rgba(50, 50, 93, 0.25) 0px 13px 27px -5px, rgba(0, 0, 0, 0.3) 0px 8px 16px -8px;
+//   color: #0d809c;
+//   padding-top:20px;
+//   padding-bottom:20px;
+//   padding-right:20px;
+//   padding-left:20px;
+  
+// }
+
+// .panel {
+
+//   // box-shadow: rgba(50, 50, 93, 0.25) 0px 13px 27px -5px, rgba(0, 0, 0, 0.3) 0px 8px 16px -8px;
+//   color: #0d809c;
+  
+// }
+
+.svgdisp {
+  max-height: 20px;
+  min-height: 20px;
+  // box-shadow: rgba(50, 50, 93, 0.25) 0px 13px 27px -5px, rgba(0, 0, 0, 0.3) 0px 8px 16px -8px;
+  color: #0d809c;
+  
+}
+
+.form-control {
+  width: 100% !important;
+}
+
+.input-fields {
+  padding-top:20px;
+  padding-bottom:20px;
+  padding-right:20px;   
+}
+.square-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-gap: 20px;
+}
+
+.square-with-shadow {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  animation: square-appear 0.5s ease-in-out;
+}
+
+.box-content {
+  flex: 1;
+  padding: 10px;
+}
+
+.svg-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+@keyframes square-appear {
+  0% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+
+
+.drop-field {
+  width: 100px;
+  height: 60px;
+  // background-image: url('chem.gif');
+  // background-size: contain;
+  // background-repeat: no-repeat;
+  // background-position: center;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  padding: 10px;
+  // border: 2px solid #000;
+}
+
+.drop-field-content {
+  text-align: center;
+  color: #000;
+}
+
+.drop-field.dragging {
+  border-color: #000;
+}
+
+.drop-ff {
+  width: 200px;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  padding: 10px;
+  border: 2px dashed #3487b8;
+}
+
+.drop-field-content {
+  text-align: center;
+  color: #000;
+}
+
+.drop-field.dragging {
+  border-color: #000;
+}
+
+.tmp-container {
+  // display: flex;
+  justify-content: center;
+  // flex-direction: column;
+  padding: 20px;
+  // max-width: 100%;
+  max-height: 700px; 
+  overflow-x: scroll;
+  overflow-y: scroll; 
+}
+
+
+.impmain-container {
+  // display: flex;
+  justify-content: center;
+  // flex-direction: column;
+  padding: 20px;
+  // max-width: 100%;
+  max-height: 600px; 
+  overflow-x: scroll;
+  overflow-y: scroll; 
+}
+
+.imp-results {
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+
+}
+
+.imp-container {
+  display: grid;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 40px;
+ 
+}
+
+.content {
+  text-align: center;
+}
+
+
+.tab-content-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+
+.dropzone {
+  min-height: 50px;
+  width: 100%;
+  align-items: center;
+  border: 3px dashed lightgray;
+
+  .image-container {
+      margin: 15px;
+  }
+
+  p {
+      text-align: center;
+      padding-top: 12px;
+      color: grey;
+  }
+}
+
+.drop-target {
+  min-height: 50px;
+  width: 100%;
+  text-align: center;
+  align-items: center;
+  padding-top: 12px;
+  &.can-drop {
+
+          border: 3px solid gray;
+
+  }
+
+  &.is-over {
+
+          border: 4px solid #add8e6;
+ 
+  }
+
+  
+}
+
+
+.react-flow__node.selected {
+  border: 2px solid blue !important;
+  background-color: lightblue !important;
+  transform: scale(1.1);
+}
+
+
+// .dropzone {
+//   min-height: 50px;
+//   width: 100%;
+//   border: 3px dashed lightgray;
+//   display: flex;
+//   align-items: center;
+
+//   .image-container {
+//     margin: 15px;
+//   }
+
+//   p {
+//     text-align: center;
+//     padding-top: 12px;
+//     color: grey;
+//   }
+// }
+
+// .drop-target {
+//   min-height: 50px;
+//   width: 100%;
+//   text-align: center;
+//   padding: 10px;
+//   align-items: center;
+
+//   .indicator {
+//     height: 30px;
+//   }
+
+//   &.can-drop {
+//     .indicator {
+//       border-bottom: 4px solid lightgray;
+//     }
+//   }
+
+//   &.is-over {
+//     .indicator {
+//       border-bottom: 4px solid lightgray;
+//     }
+//   }
+// }
+
+
+.react-flow__node-custom {
+  font-size: 10px;
+  width: 180px;
+  background: #f5f5f6;
+  color: #222;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  border-radius: 2px;
+}
+
+.react-flow__node-custom .react-flow__handle {
+  top: 24px;
+  right: -15px;
+  width: 6px;
+  height: 10px;
+  border-radius: 2px;
+  background-color: #778899;
+}
+
+.react-flow__node.circle {
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: 700;
+}
+
+.react-flow__node.annotation {
+  border-radius: 0;
+  text-align: left;
+  background: white;
+  border: none;
+  line-height: 1.4;
+  width: 225px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.react-flow__node.annotation .react-flow__handle {
+  display: none;
+}
+
+.custom-node__header {
+  padding: 8px 10px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.custom-node__body {
+  padding: 10px;
+}
+
+.custom-node__select {
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.custom-node__select select {
+  width: 100%;
+  margin-top: 5px;
+  font-size: 10px;
+}
+
+
+
+.expbutton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+}
+
+.edgebutton {
+  width: 20px;
+  height: 20px;
+  background: #eee;
+  border: 1px solid #fff;
+  cursor: pointer;
+  border-radius: 50%;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.edgebutton:hover {
+  box-shadow: 0 0 6px 2px rgba(0, 0, 0, 0.08);
+}
+
+
+.popover-container {
+  position: absolute;
+  top: -120px;
+  left: 60px;
+  width: 700px;
+  height: 200px;
+  background-color: white;
+  border: 1px solid gray;
+  border-radius: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2;
+}
+
+
+.loading-image {
+
+  display: flex;
+  justify-content: center;
+
+  width: 100px;
+  height: 100px; 
 }

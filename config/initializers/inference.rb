@@ -14,6 +14,10 @@ ActiveSupport.on_load(:active_record) do
 
     config.inference = ActiveSupport::OrderedOptions.new
     config.inference.url = inference_config[:url]
-    config.inference.port = inference_config[:port]
+    config.inference.gpu_url = inference_config[:gpu_url]
+    config.inference.gpu_port = inference_config[:gpu_port]
+    config.inference.api_key = inference_config[:api_key]
+    config.inference.username = inference_config[:username]
+    config.inference.password = inference_config[:password]
   end
 end
