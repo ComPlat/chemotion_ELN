@@ -9,12 +9,13 @@ const VesselProperty = ({ label, value, onChange, readOnly, isNumeric = false, o
     <Form.Label column sm={3}>{label}</Form.Label>
     <Col sm={6}>
       <Form.Control
-        disabled={readOnly}
+        readOnly={readOnly}
         type={isNumeric ? 'number' : 'text'}
         value={value}
         onChange={(e) => {
           onChange(e);
         }}
+        style={readOnly ? { cursor: 'not-allowed' } : undefined}
       />
     </Col>
   </Form.Group>
