@@ -153,7 +153,7 @@ function VesselDetails({ vesselItem, toggleFullScreen }) {
         {renderSaveButton(true)}
         {renderSaveButton()}
         {renderEnlargenButton()}
-        <ConfirmClose el={vesselItem} />
+        {renderCloseHeaderButton()}
       </div>
     </div>
   );
@@ -170,7 +170,7 @@ function VesselDetails({ vesselItem, toggleFullScreen }) {
               <VesselProperties item={vesselItem} readOnly={readOnly} />
             </Tab>
             <Tab eventKey="tab2" title="Attachments" key="tab2">
-              <VesselAttachmentsContainer item={vesselItem} />
+              <VesselAttachmentsContainer item={vesselItem} targetTemplateAttachments/>
             </Tab>
           </Tabs>
         </div>

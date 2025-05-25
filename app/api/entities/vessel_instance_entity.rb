@@ -13,7 +13,7 @@ module Entities
     expose :qr_code
     expose :weight_amount
     expose :weight_unit
-    expose :vessel_template
+    expose :vessel_template, using: Entities::VesselTemplateEntity
     expose :tag
   end
 end
