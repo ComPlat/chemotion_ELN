@@ -165,6 +165,7 @@ class ElementStore {
 
       handleCreateCellLine: ElementActions.createCellLine,
       handleCreateVessel: ElementActions.createVessel,
+      handleCreateVesselTemplate: ElementActions.createVesselTemplate,
 
       handleFetchSamplesByCollectionId: ElementActions.fetchSamplesByCollectionId,
       handleFetchReactionsByCollectionId: ElementActions.fetchReactionsByCollectionId,
@@ -202,6 +203,7 @@ class ElementStore {
       ],
       handleFetchCellLineById: ElementActions.tryFetchCellLineElById,
       handleFetchVesselById: ElementActions.fetchVesselElById,
+      handleFetchEmptyVesselTemplate: ElementActions.fetchEmptyVesselTemplate,
       handleFetchVesselTemplateById: ElementActions.fetchVesselTemplateById,
       handleCloseWarning: ElementActions.closeWarning,
       handleCreateReaction: ElementActions.createReaction,
@@ -254,6 +256,7 @@ class ElementStore {
           ElementActions.generateEmptyCellLine,
           ElementActions.generateEmptyDeviceDescription,
           ElementActions.generateEmptyVessel,
+          ElementActions.generateEmptyVesselTemplate,
           ElementActions.showReportContainer,
           ElementActions.showFormatContainer,
           ElementActions.showComputedPropsGraph,
@@ -295,6 +298,7 @@ class ElementStore {
         ElementActions.updateCellLine,
         ElementActions.updateDeviceDescription,
         ElementActions.updateVessel,
+        ElementActions.updateVesselTemplate,
         ElementActions.updateGenericEl,
       ],
       handleUpdateEmbeddedResearchPlan: ElementActions.updateEmbeddedResearchPlan,
@@ -1033,6 +1037,10 @@ class ElementStore {
     this.changeCurrentElement(result);
   }
 
+  handleFetchEmptyVesselTemplate(result) {
+    this.changeCurrentElement(result);
+  }
+
   handleFetchVesselTemplateById(result) {
     this.changeCurrentElement(result);
   }
@@ -1045,6 +1053,11 @@ class ElementStore {
   handleCreateVessel(vessel) {
     this.handleRefreshElements('vessel');
     this.navigateToNewElement(vessel);
+  }
+
+  handleCreateVesselTemplate(vessel) {
+    this.handleRefreshElements('vessel');
+    this.handleRefreshElements('vessel_template');
   }
 
   handleCloseWarning() {
@@ -1186,7 +1199,11 @@ class ElementStore {
         'fetchVesselsByCollectionId'
       ];
       if (allowedActions.includes(fn)) {
-        ElementActions[fn](uiState.currentCollection.id, params, uiState.isSync, moleculeSort);
+        // ElementActions[fn](uiState.currentCollection.id, params, uiState.isSync, moleculeSort);
+        const actionFn = ElementActions[fn](uiState.currentCollection.id, params, uiState.isSync);
+        if (typeof actionFn === 'function') {
+          actionFn(this.alt.dispatch.bind(this));
+        }
       } else {
         ElementActions.fetchGenericElsByCollectionId(uiState.currentCollection.id, params, uiState.isSync, type);
         ElementActions.fetchSamplesByCollectionId(uiState.currentCollection.id, params, uiState.isSync, moleculeSort);
@@ -1472,6 +1489,11 @@ class ElementStore {
         this.changeCurrentElement(updatedElement);
         this.handleRefreshElements('vessel');
         break;
+      case 'vessel_template':
+        this.changeCurrentElement(updatedElement);
+        this.handleRefreshElements('vessel_template');
+        this.handleRefreshElements('vessel');
+        break;
       case 'wellplate':
         fetchOls('wellplate');
         this.handleRefreshElements('wellplate');
@@ -1563,6 +1585,7 @@ class ElementStore {
   elementIndex(selecteds, newSelected) {
     if (Array.isArray(newSelected)) {
       return selecteds.findIndex((el) => Array.isArray(el)
+        && el.length > 0
         && el[0].type === 'vessel_template'
         && el[0].vesselTemplateId === newSelected[0].vesselTemplateId
         && el.length === newSelected.length

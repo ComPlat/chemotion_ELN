@@ -1,10 +1,19 @@
+/* eslint-disable camelcase */
 import Vessel from 'src/models/vessel/Vessel';
 import BaseFetcher from 'src/fetchers/BaseFetcher';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
 
 // eslint-disable-next-line max-len
-import { extractCreateVesselApiParameter, extractUpdateVesselApiParameter, storeLatestVesselIds } from 'src/utilities/VesselUtilities';
+import {
+  extractCreateVesselTemplateApiParameter,
+  extractCreateVesselInstanceApiParameter,
+  extractUpdateVesselTemplateApiParameter,
+  extractUpdateVesselApiParameter,
+} from 'src/utilities/VesselUtilities';
 
 const successfullyCreatedParameter = {
   title: 'Element created',
@@ -79,7 +88,6 @@ export default class VesselsFetcher {
   static fetchVesselTemplateById(id, collectionId) {
     // eslint-disable-next-line max-len
     const url = `/api/v1/vessels/templates/${id}${collectionId ? `?collection_id=${encodeURIComponent(collectionId)}` : ''}`;
-
     return fetch(url, {
       credentials: 'same-origin',
       headers: {
@@ -89,46 +97,94 @@ export default class VesselsFetcher {
       method: 'GET',
     })
       .then((response) => response.json())
-      .then((json) => Vessel.createFromTemplateResponse(collectionId, json))
-      .catch((error) => {
-        console.error(error);
-      });
-  }
-
-  static create(vessel, user) {
-    const params = extractCreateVesselApiParameter(vessel);
-    return VesselsFetcher.uploadAttachments(vessel)
-      .then(() => fetch('/api/v1/vessels', {
-        credentials: 'same-origin',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json'
-        },
-        method: 'POST',
-        body: JSON.stringify(params)
-      }))
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        return response.json();
-      })
       .then((json) => {
-        const vessels = Array.isArray(json)
-          ? json.map((item) => Vessel.createFromRestResponse(params.collection_id, item))
-          : [Vessel.createFromRestResponse(params.collection_id, json)];
-        const newVesselIds = vessels.map((v) => v.id).filter(Boolean);
-        storeLatestVesselIds(newVesselIds);
-
-        vessels.forEach(() => NotificationActions.add(successfullyCreatedParameter));
-        user.vessels_count += vessels.length;
-
+        const vessels = Vessel.createFromTemplateResponse(collectionId, json);
+        vessels.forEach((v, idx) => {
+          v.type = idx === 0 ? 'vessel_template' : 'vessel';
+        });
         return vessels;
       })
       .catch((error) => {
-        console.error('Vessel creation failed:', error);
+        console.error('Error fetching vessel template by ID:', error);
+        return [];
+      });
+  }
+
+  static fetchEmptyVesselTemplate() {
+    const promise = fetch('/api/v1/vessels/templates/new', {
+      credentials: 'same-origin',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      method: 'GET'
+    })
+      .then((response) => response.json())
+      .then((json) => Vessel.createFromRestResponse(0, json))
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    return promise;
+  }
+
+  static createVesselTemplate(vessel) {
+    return VesselsFetcher.uploadAttachments(vessel)
+      .then(() => {
+        const params = extractCreateVesselTemplateApiParameter(vessel);
+        return fetch('/api/v1/vessels/templates/create', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(params),
+        });
+      })
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to create vessel template');
+        return res.json();
+      })
+      .then((templateJson) => {
+        const { id } = templateJson;
+        const { currentCollection } = UIStore.getState();
+        const collectionId = currentCollection?.id;
+  
+        return VesselsFetcher.fetchVesselTemplateById(id, collectionId);
+      })
+      .then((fullTemplateGroup) => {
+        NotificationActions.add(successfullyCreatedParameter);
+        return fullTemplateGroup;
+      })
+      .catch((err) => {
+        console.error('Template creation failed:', err);
         NotificationActions.add(errorMessageParameter);
-        return vessel;
+      });
+  }
+
+  static createVesselInstance(vessel, user) {
+    
+    const params = extractCreateVesselInstanceApiParameter(vessel);
+
+    return fetch('/api/v1/vessels/instances/create', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    })
+      .then(res => res.json())
+      .then(json => {
+        const instance = Vessel.createFromRestResponse(vessel.collectionId, json);
+        NotificationActions.add(successfullyCreatedParameter);
+        UserStore.getState().currentUser.vessels_count += 1;
+        return instance;
+      })
+      .catch(err => {
+        console.error('Vessel instance creation failed:', err);
+        NotificationActions.add(errorMessageParameter);
       });
   }
 
@@ -189,44 +245,25 @@ export default class VesselsFetcher {
     }).then((response) => response.json());
   }
 
-  static update(vesselItem) {
-    const params = extractUpdateVesselApiParameter(vesselItem);
-    const promise = VesselsFetcher.uploadAttachments(vesselItem)
-      .then(() => fetch('/api/v1/vessels', {
+  static updateVesselTemplate(templateId, updatedData, collectionId) {
+    const params = extractUpdateVesselTemplateApiParameter(updatedData);
+  
+    return VesselsFetcher.uploadAttachments(updatedData)
+      .then(() => fetch(`/api/v1/vessels/templates/${templateId}`, {
         credentials: 'same-origin',
         headers: {
           Accept: 'application/json',
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         method: 'PUT',
-        body: JSON.stringify(params)
+        body: JSON.stringify(params),
       }))
       .then((response) => response.json())
-      .then(() => { BaseFetcher.updateAnnotationsInContainer(vesselItem); })
-      .then(() => VesselsFetcher.fetchById(vesselItem.id))
-      .then((loadedVesselInstance) => {
-        NotificationActions.add(successfullyUpdatedParameter);
-        return loadedVesselInstance;
+      .then(() => {
+        if (updatedData?.container?.attachments) {
+          BaseFetcher.updateAnnotationsInContainer(updatedData);
+        }
       })
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-        NotificationActions.add(errorMessageParameter);
-        return vesselItem;
-      });
-    return promise;
-  }
-
-  static updateVesselTemplate(templateId, updatedData, collectionId) {
-    return fetch(`/api/v1/vessels/templates/${templateId}`, {
-      credentials: 'same-origin',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      method: 'PUT',
-      body: JSON.stringify(updatedData),
-    })
-      .then((response) => response.json())
       .then(() => VesselsFetcher.fetchVesselTemplateById(templateId, collectionId))
       .then((loadedVesselInstance) => {
         NotificationActions.add(successfullyUpdatedParameter);
@@ -238,18 +275,19 @@ export default class VesselsFetcher {
       });
   }
 
-  static updateVesselInstance(vesselId, updatedData) {
-    return fetch(`/api/v1/vessels/${vesselId}`, {
+  static updateVesselInstance(updatedData) {
+    const params = extractUpdateVesselApiParameter(updatedData);
+    return fetch(`/api/v1/vessels/${updatedData.id}`, {
       credentials: 'same-origin',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
       method: 'PUT',
-      body: JSON.stringify(updatedData),
+      body: JSON.stringify(params),
     })
       .then((response) => response.json())
-      .then(() => VesselsFetcher.fetchById(vesselId))
+      .then(() => VesselsFetcher.fetchById(updatedData.id))
       .then((loadedVesselInstance) => {
         NotificationActions.add(successfullyUpdatedParameter);
         return loadedVesselInstance;
@@ -283,58 +321,47 @@ export default class VesselsFetcher {
   }
 
   static bulkCreateInstances({
-    templateName,
+    vesselTemplateId,
     collectionId,
     count,
-    details,
-    materialType,
-    vesselType,
-    volumeAmount,
-    volumeUnit,
+    container,
     shortLabels,
-    user,
+    user
   }) {
     const body = {
-      template_name: templateName,
+      vessel_template_id: vesselTemplateId,
       collection_id: collectionId,
       count,
-      details,
-      material_type: materialType,
-      vessel_type: vesselType,
-      volume_amount: volumeAmount,
-      volume_unit: volumeUnit,
-      short_labels: shortLabels,
+      container,
+      short_labels: shortLabels
     };
 
     return fetch('/api/v1/vessels/bulk_create', {
-      credentials: 'same-origin',
       method: 'POST',
+      credentials: 'same-origin',
       headers: {
         Accept: 'application/json',
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(body)
     })
-      .then((res) => {
-        if (res.status < 200 || res.status >= 300) {
-          throw new Error(`Bulk creation failed with status ${res.status}`);
-        }
+      .then(res => {
+        if (!res.ok) throw new Error('Bulk create failed');
+        return res.json();
       })
-      .then((json) => {
+      .then(json => {
         const vessels = Array.isArray(json)
-          ? json.map((item) => Vessel.createFromRestResponse(collectionId, item))
+          ? json.map(v => Vessel.createFromRestResponse(collectionId, v))
           : [];
+
         NotificationActions.add(successfullyCreatedBulkParameter(count));
-        if (user) {
-          user.vessels_count += vessels.length;
-        }
+        if (user) user.vessels_count += vessels.length;
         ElementActions.refreshElements('vessel');
         return vessels;
       })
-      .catch((err) => {
-        console.error('Bulk vessel creation failed:', err);
+      .catch(err => {
+        console.error('Bulk vessel instance creation error:', err);
         NotificationActions.add(errorMessageParameter);
-        return [];
       });
   }
 

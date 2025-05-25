@@ -19,6 +19,7 @@ import WellplateDetails from 'src/apps/mydb/elements/details/wellplates/Wellplat
 import CellLineDetails from 'src/apps/mydb/elements/details/cellLines/CellLineDetails';
 import VesselDetails from 'src/apps/mydb/elements/details/vessels/VesselDetails';
 import VesselTemplateDetails from 'src/apps/mydb/elements/details/vessels/VesselTemplateDetails';
+import VesselTemplateCreate from 'src/apps/mydb/elements/details/vessels/VesselTemplateCreate';
 import {
   Tabs, Tab, Button, Badge
 } from 'react-bootstrap';
@@ -204,12 +205,16 @@ export default class ElementDetails extends Component {
       case 'vessel':
         return <VesselDetails vesselItem={el} toggleFullScreen={this.toggleFullScreen} />;
       case 'vessel_template':
-        return (
-          <VesselTemplateDetails
-            vessels={el.group}
-            toggleFullScreen={this.toggleFullScreen}
-          />
-        );
+        if (el.is_new) {
+          return <VesselTemplateCreate vesselItem={el} toggleFullScreen={this.toggleFullScreen} />;
+        }
+        if (el.group) {
+          return <VesselTemplateDetails vessels={el.group} toggleFullScreen={this.toggleFullScreen} />;
+        }
+        if (Array.isArray(el)) {
+          return <VesselTemplateDetails vessels={el} toggleFullScreen={this.toggleFullScreen} />;
+        }
+        return null;
       default:
         return (
           <div className="text-center">
@@ -232,7 +237,7 @@ export default class ElementDetails extends Component {
     const focusing = elKey === activeKey;
     const variant = el.isPendingToSave ? 'info' : 'primary';
 
-    if (Array.isArray(el)) {
+    if (Array.isArray(el) && el.length > 0 && el[0].type === 'vessel_template') {
       return {
         id: el[0].vesselTemplateId,
         type: 'vessel_template',
@@ -275,8 +280,12 @@ export default class ElementDetails extends Component {
             group: el,
           };
         }
+        if (Array.isArray(el) && el.length === 0) {
+          return null;
+        }
         return el;
       })
+      .filter(Boolean)
       .map((el, i) => (
         <Tab
           key={

@@ -81,17 +81,17 @@ const routes = {
     },
     '/:device_descriptionID': 'showOrNew'
   },
-  '/vessel': {
-    target: {
-      showOrNew: routesUtils.vesselShowOrNew
-    },
-    '/:vesselID': 'showOrNew'
-  },
   '/vessel_template': {
     target: {
       showOrNew: routesUtils.vesselTemplateShowOrNew
     },
     '/:vesselTemplateID': 'showOrNew'
+  },
+  '/vessel': {
+    target: {
+      showOrNew: routesUtils.vesselShowOrNew
+    },
+    '/:vesselID': 'showOrNew'
   },
   '/devicesAnalysis': {
     target: {
