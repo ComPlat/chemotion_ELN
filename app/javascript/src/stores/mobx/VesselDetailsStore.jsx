@@ -181,6 +181,13 @@ export const VesselDetailsStore = types
       }));
       vessel.changed = true;
     },
+    setContainer(id, newContainer) {
+      const vessel = self.vessels.get(id);
+      if (vessel) {
+        vessel.container = newContainer;
+        vessel.markChanged(true);
+      }
+    },
     convertJsModelToMobxModel(container) {
       return VesselContainer.create({
         id: container.id,
