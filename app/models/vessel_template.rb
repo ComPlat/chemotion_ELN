@@ -24,6 +24,7 @@
 #
 class VesselTemplate < ApplicationRecord
   acts_as_paranoid
+  include Taggable
 
   has_many :vessels, dependent: :destroy
   has_one :container, as: :containable, dependent: :destroy
