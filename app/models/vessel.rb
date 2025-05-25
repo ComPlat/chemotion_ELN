@@ -24,6 +24,9 @@
 #
 class Vessel < ApplicationRecord
   acts_as_paranoid
+  include Taggable
+  include ElementCodes
+  include ElementUIStateScopes
 
   belongs_to :vessel_template
   belongs_to :creator, class_name: 'User', foreign_key: :user_id, inverse_of: :created_vessels
@@ -32,5 +35,5 @@ class Vessel < ApplicationRecord
   has_many :collections, through: :collections_vessels
 
   delegate :details, :material_details, :material_type, :vessel_type, :volume_amount, :volume_unit,
-           :weight_amount, :weight_unit, to: :vessel_template
+           to: :vessel_template
 end

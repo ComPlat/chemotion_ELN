@@ -110,6 +110,13 @@ class ElementStore {
         pages: null,
         perPage: null
       },
+      vessels: {
+        elements: [],
+        totalElements: 0,
+        page: null,
+        pages: null,
+        perPage: null
+      },
     };
 
     this.state = {
@@ -157,6 +164,8 @@ class ElementStore {
       handleCreateGenericEl: ElementActions.createGenericEl,
 
       handleCreateCellLine: ElementActions.createCellLine,
+      handleCreateVessel: ElementActions.createVessel,
+      handleCreateVesselTemplate: ElementActions.createVesselTemplate,
 
       handleFetchSamplesByCollectionId: ElementActions.fetchSamplesByCollectionId,
       handleFetchReactionsByCollectionId: ElementActions.fetchReactionsByCollectionId,
@@ -165,6 +174,7 @@ class ElementStore {
       handlefetchResearchPlansByCollectionId: ElementActions.fetchResearchPlansByCollectionId,
       handlefetchCellLinesByCollectionId: ElementActions.fetchCellLinesByCollectionId,
       handlefetchDeviceDescriptionsByCollectionId: ElementActions.fetchDeviceDescriptionsByCollectionId,
+      handlefetchVesselsByCollectionId: ElementActions.fetchVesselsByCollectionId,
 
       handleFetchSampleById: ElementActions.fetchSampleById,
       handleCreateSample: ElementActions.createSample,
@@ -192,6 +202,9 @@ class ElementStore {
         ElementActions.tryFetchGenericElById
       ],
       handleFetchCellLineById: ElementActions.tryFetchCellLineElById,
+      handleFetchVesselById: ElementActions.fetchVesselElById,
+      handleFetchEmptyVesselTemplate: ElementActions.fetchEmptyVesselTemplate,
+      handleFetchVesselTemplateById: ElementActions.fetchVesselTemplateById,
       handleCloseWarning: ElementActions.closeWarning,
       handleCreateReaction: ElementActions.createReaction,
       handleCopyReactionFromId: ElementActions.copyReactionFromId,
@@ -242,6 +255,8 @@ class ElementStore {
           ElementActions.generateEmptyReaction,
           ElementActions.generateEmptyCellLine,
           ElementActions.generateEmptyDeviceDescription,
+          ElementActions.generateEmptyVessel,
+          ElementActions.generateEmptyVesselTemplate,
           ElementActions.showReportContainer,
           ElementActions.showFormatContainer,
           ElementActions.showComputedPropsGraph,
@@ -282,6 +297,8 @@ class ElementStore {
         ElementActions.updateResearchPlan,
         ElementActions.updateCellLine,
         ElementActions.updateDeviceDescription,
+        ElementActions.updateVessel,
+        ElementActions.updateVesselTemplate,
         ElementActions.updateGenericEl,
       ],
       handleUpdateEmbeddedResearchPlan: ElementActions.updateEmbeddedResearchPlan,
@@ -290,57 +307,57 @@ class ElementStore {
   }
 
   handleFetchAllDevices(devices) {
-    this.state.elements['devices'].devices = devices
+    this.state.elements['devices'].devices = devices;
   }
 
   handleFetchDeviceById(device) {
-    this.state.currentElement = device
+    this.state.currentElement = device;
   }
 
   findDeviceIndexById(deviceId) {
-    const { devices } = this.state.elements['devices']
-    return devices.findIndex((e) => e.id === deviceId)
+    const { devices } = this.state.elements['devices'];
+    return devices.findIndex((e) => e.id === deviceId);
   }
 
   handleSaveDevice(device) {
-    const { devices } = this.state.elements['devices']
-    const deviceKey = devices.findIndex((e) => e._checksum === device._checksum)
+    const { devices } = this.state.elements['devices'];
+    const deviceKey = devices.findIndex((e) => e._checksum === device._checksum);
     if (deviceKey === -1) {
-      this.state.elements['devices'].devices.push(device)
+      this.state.elements['devices'].devices.push(device);
     } else {
-      this.state.elements['devices'].devices[deviceKey] = device
+      this.state.elements['devices'].devices[deviceKey] = device;
     }
   }
 
   handleToggleDeviceType({ device, type }) {
     if (device.types.includes(type)) {
-      device.types = device.types.filter((e) => e !== type)
+      device.types = device.types.filter((e) => e !== type);
     } else {
       device.types.push(type)
     }
-    const deviceKey = this.findDeviceIndexById(device.id)
-    this.state.elements['devices'].devices[deviceKey] = device
+    const deviceKey = this.findDeviceIndexById(device.id);
+    this.state.elements['devices'].devices[deviceKey] = device;
   }
 
   handleCreateDevice() {
-    const { devices } = this.state.elements['devices']
-    const newDevice = Device.buildEmpty()
-    const newKey = devices.length
-    this.state.elements['devices'].activeAccordionDevice = newKey
-    this.state.elements['devices'].devices.push(newDevice)
+    const { devices } = this.state.elements['devices'];
+    const newDevice = Device.buildEmpty();
+    const newKey = devices.length;
+    this.state.elements['devices'].activeAccordionDevice = newKey;
+    this.state.elements['devices'].devices.push(newDevice);
   }
 
   handleDeleteDevice(device) {
-    const { devices, activeAccordionDevice } = this.state.elements['devices']
-    this.state.elements['devices'].devices = devices.filter((e) => e.id !== device.id)
+    const { devices, activeAccordionDevice } = this.state.elements['devices'];
+    this.state.elements['devices'].devices = devices.filter((e) => e.id !== device.id);
   }
 
   handleAddSampleToDevice({ sample, device, options = { save: false } }) {
-    const deviceSample = DeviceSample.buildEmpty(device.id, sample)
-    device.samples.push(deviceSample)
+    const deviceSample = DeviceSample.buildEmpty(device.id, sample);
+    device.samples.push(deviceSample);
     if (options.save) {
-      ElementActions.saveDevice(device)
-      ElementActions.fetchDeviceById.defer(device.id)
+      ElementActions.saveDevice(device);
+      ElementActions.fetchDeviceById.defer(device.id);
     }
   }
 
@@ -553,7 +570,7 @@ class ElementStore {
   handleDeleteElements(options) {
     this.waitFor(UIStore.dispatchToken);
     const ui_state = UIStore.getState();
-    const { sample, reaction, wellplate, screen, research_plan, currentCollection, cell_line, device_description } = ui_state;
+    const { sample, reaction, wellplate, screen, research_plan, currentCollection, cell_line, device_description, vessel } = ui_state;
     const selecteds = this.state.selecteds.map(s => ({ id: s.id, type: s.type }));
     const params = {
       options,
@@ -565,7 +582,8 @@ class ElementStore {
       currentCollection,
       selecteds,
       cell_line,
-      device_description
+      device_description,
+      vessel
     };
 
     const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
@@ -619,6 +637,7 @@ class ElementStore {
         if (layout.screen && layout.screen > 0) { this.handleRefreshElements('screen'); }
         if (layout.cell_line && layout.cell_line > 0) { this.handleRefreshElements('cell_line'); }
         if (layout.device_description && layout.device_description > 0) { this.handleRefreshElements('device_description'); }
+        if (layout.vessel && layout.vessel > 0) { this.handleRefreshElements('vessel'); }
         if (!isSync && layout.research_plan && layout.research_plan > 0) { this.handleRefreshElements('research_plan'); }
 
 
@@ -679,6 +698,10 @@ class ElementStore {
 
   handlefetchDeviceDescriptionsByCollectionId(result) {
     this.state.elements.device_descriptions = result;
+  }
+
+  handlefetchVesselsByCollectionId(result) {
+    this.state.elements.vessels = result;
   }
 
   // -- Samples --
@@ -1010,15 +1033,36 @@ class ElementStore {
     this.changeCurrentElement(result);
   }
 
+  handleFetchVesselById(result) {
+    this.changeCurrentElement(result);
+  }
+
+  handleFetchEmptyVesselTemplate(result) {
+    this.changeCurrentElement(result);
+  }
+
+  handleFetchVesselTemplateById(result) {
+    this.changeCurrentElement(result);
+  }
+
   handleCreateCellLine(cellLine) {
     this.handleRefreshElements('cell_line');
     this.navigateToNewElement(cellLine);
   }
 
-  handleCloseWarning() {
-    this.state.elementWarning = false
+  handleCreateVessel(vessel) {
+    this.handleRefreshElements('vessel');
+    this.navigateToNewElement(vessel);
   }
 
+  handleCreateVesselTemplate(vessel) {
+    this.handleRefreshElements('vessel');
+    this.handleRefreshElements('vessel_template');
+  }
+
+  handleCloseWarning() {
+    this.state.elementWarning = false;
+  }
 
   handleCreateReaction(reaction) {
     UserActions.fetchCurrentUser();
@@ -1151,10 +1195,15 @@ class ElementStore {
         'fetchScreensByCollectionId',
         'fetchResearchPlansByCollectionId',
         'fetchCellLinesByCollectionId',
-        'fetchDeviceDescriptionsByCollectionId'
+        'fetchDeviceDescriptionsByCollectionId',
+        'fetchVesselsByCollectionId'
       ];
       if (allowedActions.includes(fn)) {
-        ElementActions[fn](uiState.currentCollection.id, params, uiState.isSync, moleculeSort);
+        // ElementActions[fn](uiState.currentCollection.id, params, uiState.isSync, moleculeSort);
+        const actionFn = ElementActions[fn](uiState.currentCollection.id, params, uiState.isSync);
+        if (typeof actionFn === 'function') {
+          actionFn(this.alt.dispatch.bind(this));
+        }
       } else {
         ElementActions.fetchGenericElsByCollectionId(uiState.currentCollection.id, params, uiState.isSync, type);
         ElementActions.fetchSamplesByCollectionId(uiState.currentCollection.id, params, uiState.isSync, moleculeSort);
@@ -1251,12 +1300,44 @@ class ElementStore {
   handleClose({ deleteEl, force }) {
     // Currently ignore report "isPendingToSave"
     const deletableTyps = ['report', 'prediction'];
+
+    if (deleteEl?.type === 'vessel_template' && deleteEl?.group?.length > 0) {
+      this.deleteGroupElement(deleteEl.group);
+      return;
+    }
+
     const isDeletableTyps = deletableTyps.indexOf(deleteEl.type) >= 0;
     if (force || isDeletableTyps || this.isDeletable(deleteEl)) {
       this.deleteCurrentElement(deleteEl);
     } else {
       this.setState({ deletingElement: deleteEl });
     }
+  }
+
+  // To manage closing of vessel template tabs
+  deleteGroupElement(group) {
+    const openTabs = this.state.selecteds;
+
+    const groupIds = group.map((v) => v.id);
+
+    const newSelecteds = openTabs.filter((el) => {
+      if (Array.isArray(el) && el[0]?.type === 'vessel_template') {
+        const elIds = el.map((v) => v.id);
+        const isSameGroup = elIds.length === groupIds.length &&
+          elIds.every((id) => groupIds.includes(id));
+        return !isSameGroup;
+      }
+
+      return true;
+    });
+
+    let newActiveKey = this.state.activeKey;
+    if (newActiveKey >= newSelecteds.length) {
+      newActiveKey = Math.max(0, newSelecteds.length - 1);
+    }
+
+    this.setState({ selecteds: newSelecteds, activeKey: newActiveKey });
+    this.resetCurrentElement(newActiveKey, newSelecteds);
   }
 
   handleConfirmDelete(confirm) {
@@ -1274,13 +1355,23 @@ class ElementStore {
 
     if (index === -1) {
       this.state.activeKey = selecteds.length;
-      this.state.selecteds = this.addElement(nextEl);
+      if (Array.isArray(nextEl) && nextEl[0]?.type === 'vessel_template') {
+        const groupWrapper = {
+          id: nextEl[0].id,
+          type: 'vessel_template',
+          group: nextEl,
+          title: nextEl[0]?.vesselName,
+        };
+        this.state.selecteds = this.addElement(groupWrapper);
+      } else if (nextEl) {
+        this.state.selecteds = this.addElement(nextEl);
+      }
     } else {
       this.state.activeKey = index;
       this.state.selecteds = this.updateElement(nextEl, index);
     }
 
-    return true
+    return true;
   }
 
   changeCurrentElement(nextEl) {
@@ -1394,6 +1485,15 @@ class ElementStore {
         this.changeCurrentElement(updatedElement);
         this.handleRefreshElements('cell_line');
         break;
+      case 'vessel':
+        this.changeCurrentElement(updatedElement);
+        this.handleRefreshElements('vessel');
+        break;
+      case 'vessel_template':
+        this.changeCurrentElement(updatedElement);
+        this.handleRefreshElements('vessel_template');
+        this.handleRefreshElements('vessel');
+        break;
       case 'wellplate':
         fetchOls('wellplate');
         this.handleRefreshElements('wellplate');
@@ -1483,13 +1583,16 @@ class ElementStore {
   }
 
   elementIndex(selecteds, newSelected) {
-    let index = -1;
-    if (newSelected) {
-      selecteds.forEach((s, i) => {
-        if (SameEleTypId(s, newSelected)) { index = i; }
-      });
+    if (Array.isArray(newSelected)) {
+      return selecteds.findIndex((el) => Array.isArray(el)
+        && el.length > 0
+        && el[0].type === 'vessel_template'
+        && el[0].vesselTemplateId === newSelected[0].vesselTemplateId
+        && el.length === newSelected.length
+        && el.every((v, i) => v.id === newSelected[i].id));
     }
-    return index;
+
+    return selecteds.findIndex((el) => SameEleTypId(el, newSelected));
   }
 
   resetCurrentElement(newKey, newSelecteds) {
