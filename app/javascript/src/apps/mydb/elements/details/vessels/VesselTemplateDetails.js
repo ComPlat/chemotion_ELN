@@ -1,3 +1,5 @@
+/* eslint-disable react/jsx-one-expression-per-line */
+/* eslint-disable arrow-parens */
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import PropTypes from 'prop-types';
@@ -35,17 +37,23 @@ function VesselTemplateDetails({ vessels, toggleFullScreen }) {
   const closeModal = () => setShowConfirm(false);
 
   useEffect(() => {
+    vessels.forEach(vessel => vesselDetailsStore.removeVesselFromStore(vessel.id));
     vessels.forEach((vessel) => {
       vesselDetailsStore.convertVesselToModel(vessel);
     });
   }, [vessels]);
+
 
   if (!vessels.length) return null;
 
   const templateId = vessels[0].id;
   const { vesselTemplateId } = vessels[0];
   const templateStoreItem = vesselDetailsStore.getVessel(templateId);
-  const instanceStoreItems = vessels.map(v => vesselDetailsStore.getVessel(v.id)).filter(Boolean);
+  const instanceStoreItems = vessels
+    .filter((v) => v.id !== templateId)
+    .map((v) => vesselDetailsStore.getVessel(v.id))
+    .filter(Boolean);
+
 
   const renderEnlargenButton = () => (
     <Button
@@ -132,32 +140,13 @@ function VesselTemplateDetails({ vessels, toggleFullScreen }) {
       </Button>
     </OverlayTrigger>
   );
-  
-  // const renderCloseHeaderButton = () => (
-  //   <Button
-  //   variant="danger"
-  //   size="xxsm"
-  //   onClick={() => { DetailActions.close(templateStoreItem, true); }}
-  //   >
-  //     <i className="fa fa-times" />
-  //   </Button>
-  // );
-  
-  // const handleClose = (vesselItem) => {
-  //   const { vesselDetailsStore } = context;
-  //   const mobXItem = vesselDetailsStore.getVessel(vesselItem.id);
 
-  //   if (!mobXItem.changed || window.confirm('Unsaved data will be lost. Close sample?')) {
-  //     vesselDetailsStore.removeVesselFromStore(vesselItem.id);
-  //     DetailActions.close(vesselItem, true);
-  //   }
-  // };
 
   const renderHeaderContent = () => (
     <div className="d-flex align-items-center justify-content-between">
       <div className="d-flex gap-2">
         <span>
-          <i className="icon-vessel me-1" />
+          <i className="icon-vessel_template me-2" />
           {templateStoreItem?.vesselName}
         </span>
       </div>
@@ -167,6 +156,22 @@ function VesselTemplateDetails({ vessels, toggleFullScreen }) {
       </div>
     </div>
   );
+
+  const syncTemplateAndInstances = (updatedVessels) => {
+    vessels.forEach(v => vesselDetailsStore.removeVesselFromStore(v.id));
+    updatedVessels.forEach(vesselDetailsStore.convertVesselToModel);
+
+    const elementState = ElementStore.getState();
+    const selectedIndex = elementState.activeKey;
+    const updatedGroup = [...updatedVessels];
+    elementState.selecteds[selectedIndex] = updatedGroup;
+    DetailActions.select(selectedIndex);
+
+    ElementActions.refreshElements('vessel');
+    ElementActions.refreshElements('vessel_template');
+    ElementActions.fetchVesselsByCollectionId(collectionId);
+  };
+
 
   const handleAddNewInstance = () => {
     setNewInstances([...newInstances, {
@@ -197,27 +202,14 @@ function VesselTemplateDetails({ vessels, toggleFullScreen }) {
         if (createdVessel && createdVessel.id) {
           currentUser.vessels_count += 1;
           ElementActions.refreshElements('vessel');
+          ElementActions.refreshElements('vessel_template');
         }
-
         return VesselsFetcher.fetchVesselTemplateById(vesselTemplateId, collectionId);
       })
       .then((updatedVessels) => {
-        updatedVessels.forEach(vesselDetailsStore.convertVesselToModel);
-
-        const elementState = ElementStore.getState();
-        const currentEl = elementState.selecteds.find(
-          (el) => Array.isArray(el) && el[0]?.type === 'vessel_template'
-        );
-
-        if (currentEl) {
-          currentEl.length = 0;
-          updatedVessels.forEach(v => currentEl.push(v));
-          DetailActions.select(elementState.activeKey);
-        }
-
+        syncTemplateAndInstances(updatedVessels);
         setNewInstances((prev) => prev.filter((_, i) => i !== index));
       })
-
       .catch((error) => {
         console.error('Error creating vessel instance:', error);
       });
@@ -264,26 +256,31 @@ function VesselTemplateDetails({ vessels, toggleFullScreen }) {
 
   const HandleDeleteInstance = (vesselId, vesselTemplateId) => {
     setDeleting(true);
+
     VesselsFetcher.deleteVesselInstance(vesselId)
       .then(() => {
         setDeleting(false);
         setShowConfirm(false);
-        ElementActions.refreshElements('vessel');
+
         return VesselsFetcher.fetchVesselTemplateById(vesselTemplateId, collectionId);
+      })
+      .then((updatedVessels) => {
+        syncTemplateAndInstances(updatedVessels);
       });
-    vesselDetailsStore.removeVesselFromStore(vesselId);
   };
 
   const updateTemplate = () => {
     const vesselToUpdate = vessels.find((v) => v.id === templateId);
     const updatedVessel = vesselDetailsStore.getVessel(templateId);
 
-    vesselToUpdate.adoptPropsFromMobXModel(updatedVessel);
-
-    VesselsFetcher.update(vesselToUpdate)
-      .then(() => {
+    VesselsFetcher.updateVesselTemplate(templateId, updatedVessel, collectionId)
+      .then(() => VesselsFetcher.fetchVesselTemplateById(templateId, collectionId))
+      .then((updatedVessels) => {
+        syncTemplateAndInstances(updatedVessels);
         setIsTemplateUpdated(false);
-        ElementActions.refreshElements('vessel');
+      })
+      .catch((err) => {
+        console.error('Error updating template:', err);
       });
   };
 
@@ -303,14 +300,16 @@ function VesselTemplateDetails({ vessels, toggleFullScreen }) {
   };
 
   const updateInstance = (vesselId) => {
-    const vesselToUpdate = vessels.find((v) => v.id === vesselId);
-    const updatedVessel = vesselDetailsStore.getVessel(vesselId);
+    const updatedModel = vesselDetailsStore.getVessel(vesselId);
+    const jsModel = toJS(updatedModel);
 
-    vesselToUpdate.adoptPropsFromMobXModel(updatedVessel);
-
-    VesselsFetcher.update(vesselToUpdate)
-      .then(() => {
-        ElementActions.refreshElements('vessel');
+    VesselsFetcher.updateVesselInstance(jsModel)
+      .then(() => VesselsFetcher.fetchVesselTemplateById(vesselTemplateId, collectionId))
+      .then((updatedVessels) => {
+        syncTemplateAndInstances(updatedVessels);
+      })
+      .catch((err) => {
+        console.error('Error updating instance:', err);
       });
   };
 
@@ -415,9 +414,10 @@ function VesselTemplateDetails({ vessels, toggleFullScreen }) {
                     <td key={field} className="p-1">
                       <Form.Control
                         type={field === 'weightAmount' ? 'number' : 'text'}
-                        // className="border-0 bg-transparent"
+                        readOnly={field === 'barCode'}
                         value={instance[field] ?? ''}
                         onChange={(e) => handleInstanceChange(instance.id, field, e.target.value)}
+                        style={field === 'barCode' ? { cursor: 'not-allowed' } : undefined}
                       />
                     </td>
                   ))}
@@ -577,6 +577,7 @@ VesselTemplateDetails.propTypes = {
       id: PropTypes.string.isRequired,
     })
   ).isRequired,
+  onClose: PropTypes.func.isRequired,
 };
 
 export default observer(VesselTemplateDetails);
