@@ -41,6 +41,7 @@ import Prediction from 'src/models/Prediction';
 import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
 import Metadata from 'src/models/Metadata';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import { generateNextShortLabel } from 'src/utilities/VesselUtilities';
 
 import _ from 'lodash';
 
@@ -1070,7 +1071,8 @@ class ElementActions {
     const { currentUser } = UserStore.getState();
     if (!currentUser) { return; }
 
-    const vesselInstance = Vessel.buildEmpty(collectionId);
+    const shortLabel = generateNextShortLabel();
+    const vesselInstance = Vessel.buildEmpty(collectionId, shortLabel);
 
     if (template) {
       vesselInstance.copyMaterialFrom(template);
@@ -1079,6 +1081,10 @@ class ElementActions {
   }
 
   generateEmptyVesselTemplate(collectionId, template) {
+    if (!collectionId || isNaN(Number(collectionId))) {
+      console.warn('[ElementActions] Invalid collectionId:', collectionId);
+      return null;
+    }
     const { currentUser } = UserStore.getState();
     if (!currentUser) { return; }
 

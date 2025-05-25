@@ -1,6 +1,7 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import PropTypes from 'prop-types';
+import { toJS } from 'mobx';
 import {
   Card, Button, Form, Row, Col, Table, OverlayTrigger, Popover, InputGroup, Modal
 } from 'react-bootstrap';
@@ -11,6 +12,8 @@ import { observer } from 'mobx-react';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
+import BulkInstanceModal from 'src/apps/mydb/elements/details/vessels/propertiesTab/BulkInstanceModal';
+import { generateNextShortLabel } from 'src/utilities/VesselUtilities';
 
 function VesselTemplateDetails({ vessels, toggleFullScreen }) {
   const closeBtnRef = useRef(null);
@@ -179,33 +182,19 @@ function VesselTemplateDetails({ vessels, toggleFullScreen }) {
     const baseVessel = vessels[0];
     const { vesselTemplateId } = baseVessel;
     const collectionId = currentCollection.id;
+    const shortLabel = generateNextShortLabel();
 
     const vesselToCreate = {
       collectionId,
-      vesselName: baseVessel.vesselName,
-      materialDetails: baseVessel.materialDetails,
-      materialType: baseVessel.materialType,
-      vesselType: baseVessel.vesselType,
-      volumeAmount: baseVessel.volumeAmount,
-      volumeUnit: baseVessel.volumeUnit,
-      details: baseVessel.details,
-      short_label: baseVessel.short_label,
-      container: baseVessel.container,
-      instances: [
-        {
-          vesselInstanceName: instance.vesselInstanceName,
-          vesselInstanceDescription: instance.vesselInstanceDescription,
-          barCode: instance.barCode,
-          qrCode: instance.qrCode,
-          weightAmount: instance.weightAmount,
-          weightUnit: instance.weightUnit,
-        },
-      ],
+      vesselTemplateId: baseVessel.vesselTemplateId,
+      short_label: shortLabel,
+      instances: [instance],
     };
 
-    VesselsFetcher.create(vesselToCreate, currentUser)
-      .then((createdVessels) => {
-        if (Array.isArray(createdVessels) && createdVessels.length > 0) {
+    VesselsFetcher.createVesselInstance(vesselToCreate, currentUser)
+      .then((createdVessel) => {
+        if (createdVessel && createdVessel.id) {
+          currentUser.vessels_count += 1;
           ElementActions.refreshElements('vessel');
         }
 
