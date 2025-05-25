@@ -1,3 +1,4 @@
+/* eslint-disable no-nested-ternary */
 /* eslint-disable import/prefer-default-export */
 import { types } from 'mobx-state-tree';
 import Container from 'src/models/Container';
@@ -22,7 +23,7 @@ const VesselInstance = types.model({
   vesselInstanceDescription: types.maybeNull(types.string),
   barCode: types.maybeNull(types.string),
   qrCode: types.maybeNull(types.string),
-  weightAmount: types.maybeNull(types.string),
+  weightAmount: types.maybeNull(types.number),
   weightUnit: types.maybeNull(types.string),
 });
 
@@ -37,17 +38,18 @@ const VesselItem = types
     vesselType: '',
     volumeAmount: 0,
     volumeUnit: types.string,
-    vesselInstanceName: '',
-    vesselInstanceDescription: '',
-    barCode: '',
-    qrCode: '',
-    weightAmount: 0,
-    weightUnit: types.string,
+    vesselInstanceName: types.maybeNull(types.string),
+    vesselInstanceDescription: types.maybeNull(types.string),
+    barCode: types.maybeNull(types.string),
+    qrCode: types.maybeNull(types.string),
+    weightAmount: types.maybeNull(types.number),
+    weightUnit: types.maybeNull(types.string),
     shortLabel: types.maybeNull(types.string),
     changed: false,
     instances: types.optional(types.array(VesselInstance), []),
     is_new: types.optional(types.boolean, false),
     isDuplicateName: types.optional(types.boolean, false),
+    copiedFromName: types.optional(types.string, ''),
   })
   .actions((self) => ({
     markChanged(newChanged) {
@@ -76,7 +78,7 @@ export const VesselDetailsStore = types
       const vessel = self.vessels.get(vesselId);
       return vessel ? vessel.instances : [];
     },
-    addInstance(vesselId) {
+    addInstance(vesselId, shortLabel = '') {
       const vessel = self.vessels.get(vesselId);
       if (vessel) {
         vessel.instances.push(
@@ -85,8 +87,9 @@ export const VesselDetailsStore = types
             vesselInstanceDescription: '',
             barCode: '',
             qrCode: '',
-            weightAmount: vessel.weightAmount || '',
+            weightAmount: typeof vessel.weightAmount === 'number' ? vessel.weightAmount : null,
             weightUnit: vessel.weightUnit || 'g',
+            shortLabel: shortLabel,
           })
         );
       }
@@ -108,6 +111,13 @@ export const VesselDetailsStore = types
       container.container_type = 'dataset';
       container.children = container.children || [];
       return container;
+    },
+    setVesselTemplateId(id, templateId) {
+      const vessel = self.vessels.get(id);
+      if (vessel) {
+        vessel.vesselTemplateId = templateId || '';
+        vessel.changed = true;
+      }
     },
     changeVesselName(id, newName) {
       self.vessels.get(id).changed = true;
@@ -136,6 +146,10 @@ export const VesselDetailsStore = types
     changeVolumeUnit(id, newVolumeUnit) {
       self.vessels.get(id).changed = true;
       self.vessels.get(id).volumeUnit = newVolumeUnit;
+    },
+    changeCopiedFromName(id, name) {
+      self.vessels.get(id).changed = true;
+      self.vessels.get(id).copiedFromName = name;
     },
     changeWeightAmount(id, newWeightAmount) {
       self.vessels.get(id).changed = true;
@@ -171,14 +185,18 @@ export const VesselDetailsStore = types
       const vessel = self.vessels.get(vesselId);
       if (!vessel) return;
 
-      vessel.instances = instancesFromApi.map((inst) => ({
-        vesselInstanceName: inst.name,
-        vesselInstanceDescription: inst.description || '',
-        barCode: inst.bar_code || '',
-        qrCode: inst.qr_code || '',
-        weightAmount: inst.weight_amount || '',
-        weightUnit: inst.weight_unit || 'g',
-      }));
+      const instanceModels = instancesFromApi.map((inst) =>
+        VesselInstance.create({
+          vesselInstanceName: inst.name || '',
+          vesselInstanceDescription: inst.description || '',
+          barCode: inst.bar_code || '',
+          qrCode: inst.qr_code || '',
+          weightAmount: typeof inst.weight_amount === 'number' ? inst.weight_amount : null,
+          weightUnit: inst.weight_unit || 'g',
+        })
+      );
+
+      vessel.instances.replace(instanceModels);
       vessel.changed = true;
     },
     setContainer(id, newContainer) {
@@ -196,53 +214,70 @@ export const VesselDetailsStore = types
         container_type: container.container_type,
       });
     },
-
     convertVesselToModel(jsVesselModel) {
+      if (!jsVesselModel || !jsVesselModel.id) {
+        console.warn('[convertVesselToModel] Invalid model:', jsVesselModel);
+        return;
+      }
       if (self.vessels.has(jsVesselModel.id)) {
         return;
       }
-      self.vessels.set(jsVesselModel.id, VesselItem.create({
-        id: jsVesselModel.id || '',
-        vesselTemplateId: jsVesselModel.vesselTemplateId || '',
-        vesselName: jsVesselModel.vesselName || '',
-        details: jsVesselModel.details || '',
-        materialDetails: jsVesselModel.materialDetails || '',
-        materialType: jsVesselModel.materialType || '',
-        vesselType: jsVesselModel.vesselType || '',
-        volumeAmount: jsVesselModel.volumeAmount || 0,
-        volumeUnit: jsVesselModel.volumeUnit || '',
-        shortLabel: jsVesselModel.short_label || '',
-        is_new: jsVesselModel.is_new,
-        vesselInstanceName: jsVesselModel.vesselInstanceName || '',
-        vesselInstanceDescription: jsVesselModel.vesselInstanceDescription || '',
-        barCode: jsVesselModel.barCode || '',
-        qrCode: jsVesselModel.qrCode || '',
-        weightAmount: jsVesselModel.weightAmount || 0,
-        weightUnit: jsVesselModel.weightUnit || '',
-        instances: jsVesselModel.instances?.length
-          ? jsVesselModel.instances.map((instance) => ({
-            vesselInstanceName: instance.vesselInstanceName || '',
-            vesselInstanceDescription: instance.vesselInstanceDescription || '',
-            barCode: instance.barCode || '',
-            qrCode: instance.qrCode || '',
-            weightAmount: instance.weightAmount || '',
-            weightUnit: instance.weightUnit || '',
-          }))
-          : [],
-      }));
+      const isTemplate = jsVesselModel.type === 'vessel_template';
+      try {
+        self.vessels.set(jsVesselModel.id, VesselItem.create({
+          id: jsVesselModel.id || '',
+          vesselTemplateId: jsVesselModel.vesselTemplateId || '',
+          vesselName: jsVesselModel.vesselName || '',
+          details: jsVesselModel.details || '',
+          materialDetails: jsVesselModel.materialDetails || '',
+          materialType: jsVesselModel.materialType || '',
+          vesselType: jsVesselModel.vesselType || '',
+          volumeAmount: jsVesselModel.volumeAmount || 0,
+          volumeUnit: jsVesselModel.volumeUnit || '',
+          shortLabel: jsVesselModel.short_label || '',
+          copiedFromName: jsVesselModel.copiedFromName || '',
+          is_new: jsVesselModel.is_new,
+
+          ...(isTemplate ? {} : {
+            vesselInstanceName: jsVesselModel.vesselInstanceName || '',
+            vesselInstanceDescription: jsVesselModel.vesselInstanceDescription || '',
+            barCode: jsVesselModel.barCode || '',
+            qrCode: jsVesselModel.qrCode || '',
+            weightAmount: jsVesselModel.weightAmount || 0,
+            weightUnit: jsVesselModel.weightUnit || '',
+          }),
+
+          instances: jsVesselModel.instances?.length
+            ? jsVesselModel.instances.map((instance) => VesselInstance.create({
+              vesselInstanceName: instance.vesselInstanceName || '',
+              vesselInstanceDescription: instance.vesselInstanceDescription || '',
+              barCode: instance.barCode || '',
+              qrCode: instance.qrCode || '',
+              weightAmount: typeof instance.weightAmount === 'number'
+                ? instance.weightAmount
+                : Number.isNaN(parseFloat(instance.weightAmount))
+                  ? null
+                  : parseFloat(instance.weightAmount),
+              weightUnit: instance.weightUnit || '',
+            }))
+            : [],
+        }));
+      } catch (err) {
+        console.error('Failed to convert vessel to model:', err);
+      }
     },
     setMaterialProperties(id, properties) {
       const item = self.vessels.get(id);
       if (item === undefined) {
         throw new Error(`No vessel with id found: ${id}`);
       }
-      item.vesselName = properties.name;
       item.details = properties.details || '';
       item.materialDetails = properties.material_details || '';
       item.materialType = properties.material_type || '';
       item.vesselType = properties.vessel_type || '';
       item.volumeAmount = properties.volume_amount || 0;
       item.volumeUnit = properties.volume_unit || '';
+      item.copiedFromName = properties.name || '';
     },
   }))
   .views((self) => ({
