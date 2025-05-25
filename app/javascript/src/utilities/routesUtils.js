@@ -140,30 +140,48 @@ const cellLineShowOrNew = (e) => {
 };
 
 const vesselShowOrNew = (e) => {
-  if (e.params.new_vessel || (e.params.new_vessel === undefined && e.params.vesselID === 'new')) {
-    ElementActions.generateEmptyVessel(e.params.collectionID);
-  } else {
-    if (e.params.vesselID) {
-      e.params.vesselId = e.params.vesselID;
-    }
+  const isNew = e.params.new_vessel || (e.params.new_vessel === undefined && e.params.vesselID === 'new');
 
-    const latestVesselIds = getLatestVesselIds();
-    if (latestVesselIds.length > 0) {
-      latestVesselIds.forEach((vesselId) => {
-        ElementActions.fetchVesselElById.defer(vesselId);
-      });
-      clearLatestVesselIds();
-    } else {
-      ElementActions.fetchVesselElById.defer(e.params.vesselId);
-    }
+  if (isNew) {
+    ElementActions.generateEmptyVessel(e.params.collectionID);
+    return;
+  }
+
+  if (e.params.vesselID) {
+    e.params.vesselId = e.params.vesselID;
+  }
+
+  const latestVesselIds = getLatestVesselIds();
+
+  if (latestVesselIds.length > 0) {
+    latestVesselIds.forEach((vesselId) => {
+      ElementActions.fetchVesselElById.defer(vesselId);
+    });
+    clearLatestVesselIds();
+  } else if (typeof e.params.vesselId === 'string' && e.params.vesselId.trim().length > 0) {
+    ElementActions.fetchVesselElById.defer(e.params.vesselId);
+  } else {
+    console.warn('Skipping fetch: invalid or empty vesselId', e.params.vesselId);
   }
 };
 
 const vesselTemplateShowOrNew = (e) => {
-  if (e.params.vesselTemplateID) {
-    e.params.vesselTemplateId = e.params.vesselTemplateID;
+  const { vesselTemplateID, collectionID } = e.params;
+
+  if (!collectionID) {
+    console.warn('[ROUTE] Missing collectionID. Cannot create new vessel template.');
+    return;
   }
-  ElementActions.fetchVesselTemplateById.defer(e.params.vesselTemplateID, e.params.collectionID);
+
+  if (!vesselTemplateID || vesselTemplateID === 'new') {
+    const newTemplate = ElementActions.generateEmptyVesselTemplate(collectionID);
+    newTemplate.type = 'vessel_template';
+    newTemplate.is_new = true;
+
+    ElementActions.setCurrentElement(newTemplate);
+    return;
+  }
+  ElementActions.fetchVesselTemplateById.defer(vesselTemplateID, collectionID);
 };
 
 const reactionShow = (e) => {

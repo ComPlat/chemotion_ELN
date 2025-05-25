@@ -1,37 +1,23 @@
 import Element from 'src/models/Element';
 import Container from 'src/models/Container';
-import UserStore from 'src/stores/alt/stores/UserStore';
 
 export default class Vessel extends Element {
   static buildEmpty(collectionId, shortLabelIn = '', typeIn = '') {
-    if (collectionId === undefined || !Number.isInteger(Number(collectionId))) {
+    if (!Number.isInteger(Number(collectionId))) {
       throw new Error(`collection id is not valid: ${collectionId}`);
     }
 
-    const shortLabel = shortLabelIn || Vessel.buildNewShortLabel();
-
-    const vessel = new Vessel({
+    return new Vessel({
       container: Container.init(),
       collectionId: Number(collectionId),
       type: typeIn === 'vessel_template' ? 'vessel_template' : 'vessel',
-      short_label: shortLabel,
+      short_label: shortLabelIn,
       is_new: true,
     });
-
-    return vessel;
-  }
-
-  static buildNewShortLabel() {
-    const { currentUser } = UserStore.getState();
-    if (!currentUser) return 'NEW VESSEL';
-    return `${currentUser.initials}-V${currentUser.vessels_count + 1}`;
   }
 
   title() {
-    if (this.type === 'vessel_template') {
-      return this.vesselName;
-    }
-    return this.short_label;
+    return this.type === 'vessel_template' ? this.vesselName : this.short_label;
   }
 
   static createFromRestResponse(collectionId, response) {
@@ -56,7 +42,7 @@ export default class Vessel extends Element {
     vessel.is_new = response?.is_new || false;
     vessel.instances = response.is_new ? response.instances || [] : [];
 
-    vessel.container = response.container || { children: [] };
+    vessel.container = response.vessel_template?.container || { children: [] };
     if (!Array.isArray(vessel.container.children)) {
       vessel.container.children = [];
     }
@@ -64,52 +50,91 @@ export default class Vessel extends Element {
     return vessel;
   }
 
-  static createFromTemplateResponse(collectionId, vesselData) {
-    return vesselData.vessels.map((vesselInstance) => {
-      const vessel = Vessel.buildEmpty(collectionId, vesselInstance.short_label, 'vessel_template');
+  static createFromTemplateResponse(collectionId, response) {
+    const { vessel_template: template, vessels = [] } = response;
 
-      vessel.id = vesselInstance.id;
-      vessel.vesselInstanceName = vesselInstance.name || '';
-      vessel.vesselInstanceDescription = vesselInstance.description || '';
-      vessel.barCode = vesselInstance.bar_code || '';
-      vessel.qrCode = vesselInstance.qr_code || '';
-      vessel.weightAmount = vesselInstance.weight_amount || 0;
-      vessel.weightUnit = vesselInstance.weight_unit || '';
-      vessel.tag = vesselInstance.tag;
+    const result = [];
 
-      vessel.vesselTemplateId = vesselInstance.vessel_template.id || '';
-      vessel.vesselName = vesselInstance.vessel_template.name || '';
-      vessel.details = vesselInstance.vessel_template.details || '';
-      vessel.materialDetails = vesselInstance.vessel_template.material_details || '';
-      vessel.materialType = vesselInstance.vessel_template.material_type || '';
-      vessel.vesselType = vesselInstance.vessel_template.vessel_type || '';
-      vessel.volumeAmount = vesselInstance.vessel_template.volume_amount || 0;
-      vessel.volumeUnit = vesselInstance.vessel_template.volume_unit || '';
-      vessel.is_new = vesselInstance?.is_new || false;
+    // Create the template item
+    const templateItem = Vessel.buildEmpty(collectionId, '', 'vessel_template');
+    templateItem.id = template.id;
+    templateItem.vesselTemplateId = template.id;
+    templateItem.vesselName = template.name || '';
+    templateItem.details = template.details || '';
+    templateItem.materialDetails = template.material_details || '';
+    templateItem.materialType = template.material_type || '';
+    templateItem.vesselType = template.vessel_type || '';
+    templateItem.volumeAmount = template.volume_amount || 0;
+    templateItem.volumeUnit = template.volume_unit || '';
+    templateItem.is_new = false;
+    templateItem.container = template.container || { children: [] };
+    if (!Array.isArray(templateItem.container.children)) {
+      templateItem.container.children = [];
+    }
 
-      vessel.container = vesselInstance.container || { children: [] };
+    result.push(templateItem);
+
+    // Create vessel instance items
+    vessels.forEach((instance) => {
+      const vessel = Vessel.buildEmpty(collectionId, instance.short_label || '', 'vessel');
+      vessel.id = instance.id;
+      vessel.vesselInstanceName = instance.name || '';
+      vessel.vesselInstanceDescription = instance.description || '';
+      vessel.barCode = instance.bar_code || '';
+      vessel.qrCode = instance.qr_code || '';
+      vessel.weightAmount = instance.weight_amount || 0;
+      vessel.weightUnit = instance.weight_unit || '';
+      vessel.tag = instance.tag;
+
+      vessel.vesselTemplateId = template.id;
+      vessel.vesselName = template.name || '';
+      vessel.details = instance.details || template.details || '';
+      vessel.materialDetails = instance.material_details || template.material_details || '';
+      vessel.materialType = instance.material_type || template.material_type || '';
+      vessel.vesselType = instance.vessel_type || template.vessel_type || '';
+      vessel.volumeAmount = instance.volume_amount || template.volume_amount || 0;
+      vessel.volumeUnit = instance.volume_unit || template.volume_unit || '';
+      vessel.is_new = false;
+      vessel.container = instance.container || { children: [] };
 
       if (!Array.isArray(vessel.container.children)) {
         vessel.container.children = [];
       }
 
-      return vessel;
+      result.push(vessel);
     });
 
+    return result;
+  }
+
+  static createFromTemplateObject(collectionId, templateObj) {
+    const vessel = Vessel.buildEmpty(collectionId, '', 'vessel_template');
+
+    vessel.vesselTemplateId = templateObj.id;
+    vessel.vesselName = templateObj.name || '';
+    vessel.details = templateObj.details || '';
+    vessel.materialDetails = templateObj.material_details || '';
+    vessel.materialType = templateObj.material_type || '';
+    vessel.vesselType = templateObj.vessel_type || '';
+    vessel.volumeAmount = templateObj.volume_amount || 0;
+    vessel.volumeUnit = templateObj.volume_unit || '';
+    vessel.is_new = false;
+
+    return vessel;
   }
 
   copyMaterialFrom(VesselItem) {
-    this.vesselName = VesselItem.vesselName;
+    this.details = VesselItem.details;
     this.materialDetails = VesselItem.materialDetails;
     this.materialType = VesselItem.materialType;
     this.vesselType = VesselItem.vesselType;
     this.volumeAmount = VesselItem.volumeAmount;
     this.volumeUnit = VesselItem.volumeUnit;
-    this.details = VesselItem.details;
   }
 
   adoptPropsFromMobXModel(mobx) {
     this.vesselName = mobx.vesselName;
+    this.vesselTemplateId = mobx.vesselTemplateId;
     this.details = mobx.details;
     this.materialDetails = mobx.materialDetails;
     this.materialType = mobx.materialType;

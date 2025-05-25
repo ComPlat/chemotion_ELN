@@ -1,55 +1,78 @@
+import UserStore from 'src/stores/alt/stores/UserStore';
+
 let latestVesselIds = [];
 
-const extractCreateVesselApiParameter = (vessel) => {
+const extractCreateVesselTemplateApiParameter = (vessel) => {
   const baseParams = {
-    collection_id: vessel.collectionId,
-    template_name: vessel.vesselName,
+    name: vessel.vesselName,
+    details: vessel.details,
     material_details: vessel.materialDetails,
     material_type: vessel.materialType,
     vessel_type: vessel.vesselType,
     volume_amount: vessel.volumeAmount,
     volume_unit: vessel.volumeUnit,
-    details: vessel.details,
-    short_label: vessel.short_label,
-    container: vessel.container,
-    weight_amount: vessel.weightAmount,
-    weight_unit: vessel.weightUnit,
-    instances: vessel.instances.map((instance) => ({
-      vessel_name: instance.vesselInstanceName,
-      description: instance.vesselInstanceDescription,
-      bar_code: instance.barCode,
-      qr_code: instance.qrCode,
-      weight_amount: instance.weightAmount || vessel.weightAmount,
-      weight_unit: instance.weightUnit || vessel.weightUnit,
-    })),
   };
+  const hasAttachments = vessel.container?.children?.some((child) =>
+      Array.isArray(child.attachments) && child.attachments.length > 0
+    );
+  if (hasAttachments) {
+    baseParams.container = vessel.container;
+  }
 
   return baseParams;
 };
 
-const extractUpdateVesselApiParameter = (vessel) => {
-  const baseParams = {
-    vessel_id: vessel.id,
+const extractCreateVesselInstanceApiParameter = (vessel) => {
+  const instance = vessel.instances?.[0] || {};
+  return {
     vessel_template_id: vessel.vesselTemplateId,
     collection_id: vessel.collectionId,
-    template_name: vessel.vesselName,
-    vessel_name: vessel.vesselInstanceName,
-    material_details: vessel.materialDetails,
-    material_type: vessel.materialType,
-    vessel_type: vessel.vesselType,
-    volume_amount: vessel.volumeAmount,
-    volume_unit: vessel.volumeUnit,
-    weight_amount: vessel.weightAmount,
-    weight_unit: vessel.weightUnit,
-    bar_code: vessel.barCode,
-    qr_code: vessel.qrCode,
-    details: vessel.details,
+    name: instance.vesselInstanceName || '',
+    description: instance.vesselInstanceDescription || '',
     short_label: vessel.short_label,
-    container: vessel.container,
+    weight_amount: parseFloat(instance.weightAmount) || 0,
+    weight_unit: instance.weightUnit || '',
+    bar_code: instance.barCode || '',
+    qr_code: instance.qrCode || ''
   };
-
-  return baseParams;
 };
+
+const extractBulkCreateApiParameter = ({
+  vesselTemplateId,
+  collectionId,
+  count,
+  container,
+  shortLabels
+}) => ({
+  vessel_template_id: vesselTemplateId,
+  collection_id: collectionId,
+  count,
+  container,
+  short_labels: shortLabels
+});
+
+const extractUpdateVesselApiParameter = (vessel) => ({
+  id: vessel.id,
+  name: vessel.vesselInstanceName,
+  description: vessel.vesselInstanceDescription,
+  bar_code: vessel.barCode,
+  qr_code: vessel.qrCode,
+  weight_amount: vessel.weightAmount,
+  weight_unit: vessel.weightUnit,
+  short_label: vessel.shortLabel,
+});
+
+const extractUpdateVesselTemplateApiParameter = (vessel) => ({
+  id: vessel.id,
+  name: vessel.vesselName,
+  details: vessel.details,
+  material_details: vessel.materialDetails,
+  material_type: vessel.materialType,
+  vessel_type: vessel.vesselType,
+  volume_amount: vessel.volumeAmount,
+  volume_unit: vessel.volumeUnit,
+  container: vessel.container
+});
 
 const storeLatestVesselIds = (ids) => {
   latestVesselIds = ids;
@@ -71,11 +94,33 @@ const getNextVesselIndex = (vessels, initials) => {
   return usedNumbers.length ? Math.max(...usedNumbers) + 1 : 1;
 };
 
+const generateNextShortLabel = (baseIndex = null) => {
+  const { currentUser } = UserStore.getState();
+  if (!currentUser) return 'NEW VESSEL';
+
+  const initials = currentUser.initials;
+
+  if (baseIndex !== null) {
+    return `${initials}-V${baseIndex}`;
+  }
+
+  const ElementStore = require('src/stores/alt/stores/ElementStore').default;
+  const vesselsState = ElementStore.getState().elements?.vessels || {};
+  const existingVessels = Array.isArray(vesselsState.elements) ? vesselsState.elements : [];
+
+  const index = getNextVesselIndex(existingVessels, initials);
+  return `${initials}-V${index}`;
+};
+
 export {
-  extractCreateVesselApiParameter,
+  extractCreateVesselTemplateApiParameter,
+  extractCreateVesselInstanceApiParameter,
+  extractBulkCreateApiParameter,
   extractUpdateVesselApiParameter,
+  extractUpdateVesselTemplateApiParameter,
   storeLatestVesselIds,
   getLatestVesselIds,
   clearLatestVesselIds,
-  getNextVesselIndex
+  getNextVesselIndex,
+  generateNextShortLabel
 };
