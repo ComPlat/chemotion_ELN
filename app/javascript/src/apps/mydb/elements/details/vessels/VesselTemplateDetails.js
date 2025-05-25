@@ -27,8 +27,9 @@ function VesselTemplateDetails({ vessels, toggleFullScreen }) {
   const [newInstances, setNewInstances] = useState([]);
   const [showConfirm, setShowConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showBulkModal, setShowBulkModal] = useState(false);
 
-  const collectionId = currentUser.id;
+  const collectionId = currentCollection.id;
 
   const openModal = () => setShowConfirm(true);
   const closeModal = () => setShowConfirm(false);
@@ -222,6 +223,28 @@ function VesselTemplateDetails({ vessels, toggleFullScreen }) {
       });
   };
 
+  const handleBulkCreate = async (count) => {
+    const baseVessel = vessels[0];
+    const initials = currentUser?.initials;
+    const vesselsState = ElementStore.getState().elements?.vessels;
+    const existingVessels = Array.isArray(vesselsState?.elements) ? vesselsState.elements : [];
+    const startIndex = getNextVesselIndex(existingVessels, initials);
+    const shortLabels = Array.from({ length: count }, (_, i) => `${initials}-V${startIndex + i}`);
+
+    const response = await VesselsFetcher.bulkCreateInstances({
+      vesselTemplateId: baseVessel.vesselTemplateId,
+      collectionId,
+      count,
+      shortLabels,
+      user: currentUser,
+    });
+
+    vesselDetailsStore.replaceInstances(templateId, response);
+    const updatedVessels = await VesselsFetcher.fetchVesselTemplateById(templateId, collectionId);
+    syncTemplateAndInstances(updatedVessels);
+  };
+
+
   const handleTemplateChange = (field, value) => {
     const actions = {
       vesselName: vesselDetailsStore.changeVesselName,
@@ -361,9 +384,14 @@ function VesselTemplateDetails({ vessels, toggleFullScreen }) {
         <Card.Body>
           <Card.Title className="mb-3 d-flex">
             <span>Vessel Instances</span>
-            <Button variant="success" size="sm" className="ms-auto" onClick={handleAddNewInstance}>
-              <i className="fa fa-plus" />
-            </Button>
+            <div className="ms-auto d-flex gap-2">
+            <Button variant="primary" size="sm" onClick={() => setShowBulkModal(true)}>
+                Bulk Create
+              </Button>
+              <Button variant="primary" size="sm" onClick={handleAddNewInstance}>
+                <i className="fa fa-plus" title="Add instance" />
+              </Button>
+            </div>
           </Card.Title>
           <Table bordered hover responsive className="table-sm border-rounded">
             <thead className="table-light">
@@ -528,6 +556,14 @@ function VesselTemplateDetails({ vessels, toggleFullScreen }) {
               ))}
             </tbody>
           </Table>
+          <BulkInstanceModal
+            show={showBulkModal}
+            onHide={() => setShowBulkModal(false)}
+            onSubmit={handleBulkCreate}
+            defaultBaseName={templateStoreItem?.vesselName}
+            onValidate={null}
+          />
+
         </Card.Body>
       </Card>
     </>
