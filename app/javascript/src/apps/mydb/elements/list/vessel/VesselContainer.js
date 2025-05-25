@@ -7,10 +7,11 @@ export default function VesselContainer({ vesselGroups }) {
       {vesselGroups.map(
         (group) => (
           <VesselEntry
-            key={group.vesselItems[0].id}
-            vesselItems={group.vesselItems}
+            key={group.vesselTemplate.id}
             vesselTemplate={group.vesselTemplate}
+            vesselItems={group.vesselItems}
           />
+
         )
       )}
     </div>
