@@ -5,22 +5,72 @@ import { Button } from 'react-bootstrap';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import ContainerDatasets from 'src/components/container/ContainerDatasets';
 import PropTypes from 'prop-types';
+import VesselsFetcher from 'src/fetchers/VesselsFetcher';
+import UIStore from 'src/stores/alt/stores/UIStore';
 
-const VesselAttachmentsContainer = ({ item }) => {
+function VesselAttachmentsContainer({ item, targetTemplateAttachments = false }) {
   const { vesselDetailsStore } = useContext(StoreContext);
   const { currentElement } = ElementStore.getState();
-  const currentContainer = currentElement?.container?.children?.[0] || { children: [] };
+  const { currentCollection } = UIStore.getState();
+  const collectionId = currentCollection?.id;
+  const currentContainer = item?.container?.children?.[0] || { children: [] };
+
   const [container, setContainer] = useState(currentContainer);
 
   const handleAddAttachment = () => {
     const newContainer = vesselDetailsStore.addEmptyContainer(item.id);
-    container.children.push(newContainer);
-    setContainer({ ...container });
-    vesselDetailsStore.getVessel(item.id).markChanged(true);
-  };
+    const vessel = vesselDetailsStore.getVessel(item.id);
+    if (!vessel) return;
+  
+    const updatedChildren = [...(vessel.container?.children || []), newContainer];
+    const updatedContainer = {
+      ...vessel.container,
+      children: updatedChildren,
+    };
+  
+    vesselDetailsStore.setContainer(item.id, updatedContainer);
+    setContainer(updatedContainer);
+  }; 
 
-  const handleChange = (updatedContainer) => {
-    vesselDetailsStore.getVessel(item.id).markChanged(true);
+  const handleChange = async (updatedContainer) => {
+    const vessel = vesselDetailsStore.getVessel(item.id);
+
+    if (!vessel) return;
+  
+    vesselDetailsStore.setContainer(item.id, updatedContainer);
+  
+    if (targetTemplateAttachments && vessel.vesselTemplateId) {
+      try {
+        if (!vessel.container?.id) {
+          const root = await fetch('/api/v1/containers', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+              container_type: 'root',
+              containable_id: vessel.vesselTemplateId,
+              containable_type: 'VesselTemplate',
+            }),
+          }).then(res => res.json());
+  
+          updatedContainer.id = root.id;
+          updatedContainer.is_new = false;
+        }
+  
+        await VesselsFetcher.updateVesselTemplate(
+          vessel.vesselTemplateId,
+          { ...vessel, container: updatedContainer },
+          collectionId
+        );
+      } catch (e) {
+        console.error('Error saving template attachments:', e);
+        NotificationActions.add(errorMessageParameter);
+      }
+    }
+  
     setContainer(updatedContainer);
   };
 
@@ -40,7 +90,7 @@ const VesselAttachmentsContainer = ({ item }) => {
       )}
     </div>
   );
-};
+}
 
 VesselAttachmentsContainer.propTypes = {
   item: PropTypes.shape({

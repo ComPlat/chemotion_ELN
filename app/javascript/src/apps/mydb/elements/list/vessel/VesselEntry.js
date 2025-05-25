@@ -45,18 +45,16 @@ function VesselEntry({ vesselItems, vesselTemplate }) {
   const findThumbnailAttachment = (vessels) => {
     const searchContainer = (container) => {
       if (!container) return null;
-
       const thumbnail = container.attachments?.find((attachment) => attachment.preview);
       if (thumbnail) return thumbnail;
       return container.children?.map(searchContainer).find(Boolean) || null;
     };
     return vessels.map((vessel) => searchContainer(vessel.vessel_template?.container)).find(Boolean) || null;
   };
-
+  
   const renderNameHeader = () => {
     const thumb = findThumbnailAttachment(vesselItems);
     const imgSrc = thumb ? thumb.thumbnail : null;
-  
     return (
       <div className="d-flex gap-2 align-items-center">
         {imgSrc ? (
@@ -86,14 +84,11 @@ function VesselEntry({ vesselItems, vesselTemplate }) {
       </div>
     );
   };
-  
 
-  // if (vesselItems.length === 0) return null;
 
   return (
     <div className="cell-line-group">
       <div className={getBorderStyle()}>
-        {/* {renderNameHeader(vesselItems[0])} */}
         {renderNameHeader()}
       </div>
       {renderItemEntries()}
