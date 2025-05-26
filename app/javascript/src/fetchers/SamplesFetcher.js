@@ -131,7 +131,6 @@ export default class SamplesFetcher {
     } else {
       const jsonData = JSON.stringify(params.data);
       data.append('data', jsonData);
-      data.append('originalFormat', params.originalFormat);
     }
     data.append('currentCollectionId', params.currentCollectionId);
     data.append('import_type', params.type);
