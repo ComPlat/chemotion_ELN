@@ -13,7 +13,7 @@ import Reaction from 'src/models/Reaction';
 import {
   createVariationsRow, copyVariationsRow, updateVariationsRow, getVariationsColumns, materialTypes,
   addMissingColumnsToVariations, removeObsoleteColumnsFromVariations, getColumnDefinitions,
-  removeObsoleteColumnDefinitions
+  removeObsoleteColumnDefinitions, getInitialGridState, persistGridState
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   getReactionAnalyses, updateAnalyses
@@ -31,23 +31,6 @@ import {
 import columnDefinitionsReducer
   from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsReducers';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
-import UserStore from 'src/stores/alt/stores/UserStore';
-
-function getGridStateId(id) {
-  const { currentUser } = UserStore.getState();
-  return `user${currentUser.id}-reaction${id}-reactionVariationsGridState`;
-}
-
-function getInitialGridState(id) {
-  const gridState = JSON.parse(localStorage.getItem(getGridStateId(id)));
-
-  return gridState;
-}
-
-const persistGridState = (id, event) => {
-  const { state: gridState } = event;
-  localStorage.setItem(getGridStateId(id), JSON.stringify(gridState));
-};
 
 export default function ReactionVariations({ reaction, onReactionChange, isActive }) {
   if (reaction.isNew) {
