@@ -1,7 +1,7 @@
 import React from 'react';
 import QuillViewer from 'src/components/QuillViewer';
 import PropTypes from 'prop-types';
-import { previewContainerImage } from 'src/utilities/imageHelper';
+import { getAttachmentFromContainer } from 'src/utilities/imageHelper';
 import ImageModal from 'src/components/common/ImageModal';
 import { Button } from 'react-bootstrap';
 
@@ -106,29 +106,14 @@ export default class Header extends React.Component {
 
   // eslint-disable-next-line class-methods-use-this
   renderImagePreview = () => {
-    const { container, isEditHeader } = this.props;
-    const previewImg = previewContainerImage(container);
-    // const fetchId = 1;
-    let hasPop = true;
-    let fetchNeeded = false;
-    let fetchId = 0;
-    if (previewImg.startsWith('data:image')) {
-      fetchNeeded = true;
-      fetchId = container.preview_img.id;
-    } else {
-      hasPop = false;
-    }
+    const { container } = this.props;
+    const attachment = getAttachmentFromContainer(container);
+
     return (
       <ImageModal
-        hasPop={isEditHeader}
-        previewObject={{
-          src: previewImg
-        }}
+        attachment={attachment}
         popObject={{
           title: container.name,
-          src: previewImg,
-          fetchNeeded,
-          fetchId
         }}
       />
     );
