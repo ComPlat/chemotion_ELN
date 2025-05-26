@@ -257,13 +257,8 @@ export default class WellplateDetails extends Component {
           <ElementCollectionLabels element={wellplate} placement="right" />
           <HeaderCommentSection element={wellplate} />
         </div>
-        <div className="d-flex justify-content-end gap-1">
+        <div className="d-flex justify-content-end gap-2">
           <PrintCodeButton element={wellplate} />
-          <OverlayTrigger placement="bottom" overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}>
-            <Button variant="info" size="xxsm" onClick={() => this.props.toggleFullScreen()}>
-              <i className="fa fa-expand" />
-            </Button>
-          </OverlayTrigger>
           {displaySaveButton &&
             <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveWellplate">Save Wellplate</Tooltip>}>
               <Button
@@ -390,7 +385,6 @@ export default class WellplateDetails extends Component {
       ),
     };
 
-    const tabTitlesMap = {};
     addSegmentTabs(wellplate, this.handleSegmentsChange, tabContentsMap);
 
     const tabContents = [];
@@ -403,44 +397,45 @@ export default class WellplateDetails extends Component {
     const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
 
     return (
-      <Card variant={wellplate.isPendingToSave ? 'info' : 'primary'} className="detail-card">
+      <Card className={`detail-card${wellplate.isPendingToSave ? ' detail-card--unsaved' : ''}`}>
         <Card.Header>{this.wellplateHeader(wellplate)}</Card.Header>
         <Card.Body>
-          <ElementDetailSortTab
-            type="wellplate"
-            availableTabs={Object.keys(tabContentsMap)}
-            tabTitles={tabTitlesMap}
-            onTabPositionChanged={this.onTabPositionChanged}
-          />
-          <Tabs
-            mountOnEnter
-            unmountOnExit
-            activeKey={activeTab}
-            onSelect={(event) => this.handleTabChange(event)}
-            id="wellplateDetailsTab"
-          >
-            {tabContents}
-          </Tabs>
-          <ButtonToolbar className='gap-1'>
-            <Button variant="primary" onClick={() => DetailActions.close(wellplate)}>Close</Button>
-            {
-              wellplate.changed ? (
-                <Button variant="warning" onClick={() => this.handleSubmit()}>
-                  {wellplate.isNew ? 'Create' : 'Save'}
-                </Button>
-              ) : <div />
-            }
-            {exportButton}
-            <Button
-              variant="primary"
-              onClick={() => this.handlePrint()}
-              disabled={printButtonDisabled}
+          <div className="tabs-container--with-borders">
+            <ElementDetailSortTab
+              type="wellplate"
+              availableTabs={Object.keys(tabContentsMap)}
+              onTabPositionChanged={this.onTabPositionChanged}
+            />
+            <Tabs
+              mountOnEnter
+              unmountOnExit
+              activeKey={activeTab}
+              onSelect={(event) => this.handleTabChange(event)}
+              id="wellplateDetailsTab"
             >
-              Print Wells
-            </Button>
-          </ButtonToolbar>
-          <CommentModal element={wellplate} />
+              {tabContents}
+            </Tabs>
+          </div>
         </Card.Body>
+        <Card.Footer>
+          <Button variant="primary" onClick={() => DetailActions.close(wellplate)}>Close</Button>
+          {
+            wellplate.changed && (
+              <Button variant="warning" onClick={() => this.handleSubmit()}>
+                {wellplate.isNew ? 'Create' : 'Save'}
+              </Button>
+            )
+          }
+          {exportButton}
+          <Button
+            variant="primary"
+            onClick={() => this.handlePrint()}
+            disabled={printButtonDisabled}
+          >
+            Print Wells
+          </Button>
+          <CommentModal element={wellplate} />
+        </Card.Footer>
       </Card>
     );
   }
@@ -448,5 +443,4 @@ export default class WellplateDetails extends Component {
 
 WellplateDetails.propTypes = {
   wellplate: PropTypes.instanceOf(WellplateModel).isRequired,
-  toggleFullScreen: PropTypes.func.isRequired,
 };

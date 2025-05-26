@@ -1,283 +1,149 @@
-import React from 'react';
-import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
-import Aviator from 'aviator';
-import CollectionStore from 'src/stores/alt/stores/CollectionStore';
+import React, { Fragment, useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
+
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
-import CollectionSubtree from 'src/apps/mydb/collections/CollectionSubtree';
-import UIActions from 'src/stores/alt/actions/UIActions';
+import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import ElementStore from 'src/stores/alt/stores/ElementStore';
-import UserInfos from 'src/apps/mydb/collections/UserInfos';
 
-const colVisibleTooltip = <Tooltip id="col_visible_tooltip">Toggle own collections</Tooltip>;
+import CollectionSubtree from 'src/apps/mydb/collections/CollectionSubtree';
+import SidebarButton from 'src/apps/mydb/layout/sidebar/SidebarButton';
+import CollectionManagementButton from 'src/apps/mydb/collections/CollectionManagementButton';
+import GatePushButton from 'src/components/common/GatePushButton';
 
-export default class CollectionTree extends React.Component {
-  constructor(props) {
-    super(props);
+import Aviator from 'aviator';
+import { collectionShow } from 'src/utilities/routesUtils';
 
-    const collecState = CollectionStore.getState();
+const ALL_COLLECTIONS_KEY = 'collections';
+const CHEMOTION_REPOSITORY_KEY = 'chemotionRepository';
 
-    this.state = {
-      unsharedRoots: collecState.unsharedRoots,
-      sharedRoots: collecState.sharedRoots,
-      remoteRoots: collecState.remoteRoots,
-      lockedRoots: collecState.lockedRoots,
-      syncInRoots: collecState.syncInRoots,
-      ownCollectionVisible: true,
-      sharedWithCollectionVisible: false,
-      sharedToCollectionVisible: false,
-      syncCollectionVisible: false,
-      visible: false,
-      root: {},
-      selected: false,
+function CollectionTree({ isCollapsed, expandSidebar }) {
+  const [collections, setCollections] = useState(CollectionStore.getState());
+  const [activeCollection, setActiveCollection] = useState('collections');
+  const setCollection = (collection) => {
+    if (isCollapsed) expandSidebar();
+    if (collection !== activeCollection) setActiveCollection(collection);
+  };
+
+  useEffect(() => {
+    // 'All' and 'chemotion-repository.net' are special collections that we
+    // expect to be returned by `fetchLockedCollectionRoots`. We check the UI
+    // state here to correctly restore the active collection on page load.
+    const onUiStoreChange = ({ currentCollection }) => {
+      if (!currentCollection) return;
+
+      if (currentCollection.label === 'All') {
+        setActiveCollection(ALL_COLLECTIONS_KEY);
+      }
+
+      if (currentCollection.label === 'chemotion-repository.net') {
+        setActiveCollection(CHEMOTION_REPOSITORY_KEY);
+      }
     };
 
-    this.onChange = this.onChange.bind(this);
-    this.handleCollectionManagementToggle = this.handleCollectionManagementToggle.bind(this);
-  }
+    UIStore.listen(onUiStoreChange);
+    return () => UIStore.unlisten(onUiStoreChange);
+  }, []);
 
-  componentDidMount() {
-    CollectionStore.listen(this.onChange);
+  useEffect(() => {
     CollectionActions.fetchLockedCollectionRoots();
     CollectionActions.fetchUnsharedCollectionRoots();
     CollectionActions.fetchSharedCollectionRoots();
     CollectionActions.fetchRemoteCollectionRoots();
     CollectionActions.fetchSyncInCollectionRoots();
+
+    // Create a copy of the collection store state to trigger a re-render
+    const onCollectionStoreChange = (s) => setCollections({ ...s });
+    CollectionStore.listen(onCollectionStoreChange);
+    return () => CollectionStore.unlisten(onCollectionStoreChange);
+  }, []);
+
+  const {
+    lockedRoots, unsharedRoots, sharedRoots, remoteRoots, syncInRoots
+  } = collections;
+
+  const collectionGroups = [
+    {
+      label: 'My Collections',
+      icon: 'icon-collection',
+      collectionKey: ALL_COLLECTIONS_KEY,
+      roots: unsharedRoots,
+      onClickOpenCollection: 'all',
+    },
+    {
+      label: 'Shared by me',
+      icon: 'icon-outgoing',
+      collectionKey: 'sharedByMe',
+      roots: sharedRoots,
+    },
+    {
+      label: 'Shared with me',
+      icon: 'icon-incoming',
+      collectionKey: 'sharedWithMe',
+      roots: remoteRoots,
+    },
+    {
+      label: 'Synchronized with me',
+      icon: 'fa fa-refresh',
+      collectionKey: 'syncedWithMe',
+      roots: syncInRoots,
+    },
+  ];
+
+  const chemotionRepository = lockedRoots.find((r) => r.label === 'chemotion-repository.net');
+  if (chemotionRepository) {
+    collectionGroups.push({
+      label: 'chemotion-repo',
+      icon: 'fa fa-cloud',
+      collectionKey: CHEMOTION_REPOSITORY_KEY,
+      onClickOpenCollection: chemotionRepository.id,
+      roots: chemotionRepository.children,
+    });
   }
 
-  componentWillUnmount() {
-    CollectionStore.unlisten(this.onChange);
-  }
-
-  handleSectionToggle = (visible) => {
-    this.setState((prevState) => ({
-      [visible]: !prevState[visible],
-    }));
-  };
-
-  onChange(state) {
-    this.setState(state);
-  }
-
-  lockedSubtrees() {
-    const roots = this.state.lockedRoots;
-
-    return this.subtrees(roots, null, false);
-  }
-
-  removeOrphanRoots(roots) {
-    let newRoots = []
-    roots.forEach((root) => {
-      if (root.children.length > 0) newRoots.push(root)
-    })
-
-    return newRoots;
-  }
-
-  unsharedSubtrees() {
-    let roots = this.state.unsharedRoots;
-    roots = roots.filter(function (item) { return !item.isNew })
-
-    return this.subtrees(roots, null, false);
-  }
-
-  sharedSubtrees() {
-    let { sharedRoots, sharedToCollectionVisible } = this.state
-    sharedRoots = this.removeOrphanRoots(sharedRoots)
-
-    let labelledRoots = sharedRoots.map(e => ({
-      ...e,
-      label: <span>{this.labelRoot('shared_to', e)}</span>
-    }));
-
-    let subTreeLabels = (
-      <div className="tree-view">
-        <div
-          className="title bg-white"
-          onClick={() => this.handleSectionToggle('sharedToCollectionVisible')}
-        >
-          <i className="fa fa-share-alt share-icon" />&nbsp;&nbsp;
-          My shared collections
-        </div>
+  return (
+    <div className="mh-100 d-flex flex-column">
+      <div className="sidebar-button-frame tree-view_frame flex-column">
+        {collectionGroups.map(({
+          label, icon, collectionKey, roots, onClickOpenCollection,
+        }) => {
+          const isActive = activeCollection === collectionKey;
+          return (
+            <Fragment key={collectionKey}>
+              <SidebarButton
+                label={label}
+                icon={icon}
+                isCollapsed={isCollapsed}
+                onClick={() => {
+                  setCollection(collectionKey);
+                  if (onClickOpenCollection !== undefined) {
+                    Aviator.navigate(`/collection/${onClickOpenCollection}`, { silent: true });
+                    collectionShow({ params: { collectionID: onClickOpenCollection } });
+                  }
+                }}
+                appendComponent={collectionKey === CHEMOTION_REPOSITORY_KEY ? (
+                  <GatePushButton collectionId={chemotionRepository.id} />
+                ) : null}
+                active={isActive}
+              />
+              {isActive && !isCollapsed && roots !== undefined && (
+                <div className="tree-view_container">
+                  {roots.length === 0
+                    ? <div className="text-muted text-center p-2">No collections</div>
+                    : roots.map((root) => <CollectionSubtree key={root.id} root={root} level={1} />)}
+                </div>
+              )}
+            </Fragment>
+          );
+        })}
+        <CollectionManagementButton isCollapsed={isCollapsed} />
       </div>
-    )
-    return this.subtrees(labelledRoots, subTreeLabels,
-      false, sharedToCollectionVisible)
-  }
-
-  remoteSubtrees() {
-    let { remoteRoots, sharedWithCollectionVisible } = this.state
-    remoteRoots = this.removeOrphanRoots(remoteRoots)
-
-    let labelledRoots = remoteRoots.map(e => ({
-      ...e,
-      label: (
-        <span>
-          {this.labelRoot('shared_by', e)}
-          {' '}
-          {this.labelRoot('shared_to', e)}
-        </span>
-      )
-    }));
-
-    let subTreeLabels = (
-      <div className="tree-view">
-        <div
-          id="shared-home-link"
-          className="title bg-white"
-          onClick={() => this.handleSectionToggle('sharedWithCollectionVisible')}
-        >
-          <i className="fa fa-share-alt share-icon" />
-          &nbsp;&nbsp;
-          Shared with me &nbsp;
-        </div>
-      </div>
-    )
-
-    return this.subtrees(labelledRoots, subTreeLabels,
-      false, sharedWithCollectionVisible)
-  }
-
-  remoteSyncInSubtrees() {
-    let { syncInRoots, syncCollectionVisible } = this.state
-    syncInRoots = this.removeOrphanRoots(syncInRoots)
-
-    let labelledRoots = syncInRoots.map(e => ({
-      ...e,
-      label: (
-        <span>
-          {this.labelRoot('shared_by', e)}
-          {' '}
-          {this.labelRoot('shared_to', e)}
-        </span>
-      )
-    }));
-
-    let subTreeLabels = (
-      <div className="tree-view">
-        <div
-          id="synchron-home-link"
-          className="title bg-white"
-          onClick={() => this.handleSectionToggle('syncCollectionVisible')}
-        >
-          <i className="fa fa-share-alt" />&nbsp;&nbsp;
-          Synchronized with me &nbsp;
-        </div>
-      </div>
-    )
-
-    return this.subtrees(labelledRoots, subTreeLabels,
-      false, syncCollectionVisible)
-  }
-
-
-  labelRoot(sharedToOrBy, rootCollection) {
-    let shared = rootCollection[sharedToOrBy]
-    if (!shared) return <span />
-
-    return (
-      <OverlayTrigger placement="bottom" overlay={UserInfos({ users: [shared] })}>
-        <span>
-          &nbsp; {sharedToOrBy == 'shared_to' ? 'with' : 'by'}
-          &nbsp; {shared.initials}
-        </span>
-      </OverlayTrigger>
-    )
-  }
-
-  convertToSlug(name) {
-    return name.toLowerCase()
-  }
-
-  subtrees(roots, label, isRemote, visible = true) {
-    return (
-      <div>
-        {label}
-        {visible && (
-          <div>
-            {roots && roots.map((root) => (
-              <CollectionSubtree root={root} key={`collection-${root.id}`} isRemote={isRemote} />
-            ))}
-          </div>
-        )}
-      </div>
-    )
-  }
-
-  handleCollectionManagementToggle() {
-    UIActions.toggleCollectionManagement();
-    const { showCollectionManagement, currentCollection, isSync } = UIStore.getState();
-    if (showCollectionManagement) {
-      Aviator.navigate('/collection/management');
-    } else {
-      if (currentCollection == null || currentCollection.label == 'All') {
-        Aviator.navigate(`/collection/all/${this.urlForCurrentElement()}`);
-      } else {
-        Aviator.navigate(isSync
-          ? `/scollection/${currentCollection.id}/${this.urlForCurrentElement()}`
-          : `/collection/${currentCollection.id}/${this.urlForCurrentElement()}`);
-      }
-    }
-  }
-
-  urlForCurrentElement() {
-    const { currentElement } = ElementStore.getState();
-    if (currentElement) {
-      if (currentElement.isNew) {
-        return `${currentElement.type}/new`;
-      }
-      else {
-        return `${currentElement.type}/${currentElement.id}`;
-      }
-    }
-    else {
-      return '';
-    }
-  }
-
-  render() {
-    const { ownCollectionVisible } = this.state;
-
-    return (
-      <div className="collection-tree">
-        <div className="tree-view">
-          <div className="take-ownership-btn">
-            <Button
-              id="collection-management-button"
-              size="xsm"
-              variant="danger"
-              title="Manage & organize collections: create or delete collections, adjust sharing options, adjust the visibility of tabs based on the collection level"
-              onClick={this.handleCollectionManagementToggle}
-            >
-              <i className="fa fa-cog" />
-            </Button>
-          </div>
-          <OverlayTrigger placement="top" delayShow={1000} overlay={colVisibleTooltip}>
-            <div
-              className="title bg-white"
-              onClick={() => this.handleSectionToggle('ownCollectionVisible')}
-            >
-              <i className="fa fa-list me-2" />
-              Collections
-            </div>
-          </OverlayTrigger>
-        </div>
-        {ownCollectionVisible && (
-          <div className="tree-wrapper">
-            {this.lockedSubtrees()}
-            {this.unsharedSubtrees()}
-          </div>
-        )}
-        <div className="tree-wrapper">
-          {this.sharedSubtrees()}
-        </div>
-        <div className="tree-wrapper">
-          {this.remoteSubtrees()}
-        </div>
-        <div className="tree-wrapper">
-          {this.remoteSyncInSubtrees()}
-        </div>
-      </div>
-    );
-  }
+    </div>
+  );
 }
+
+CollectionTree.propTypes = {
+  isCollapsed: PropTypes.bool.isRequired,
+  expandSidebar: PropTypes.func.isRequired,
+};
+
+export default CollectionTree;

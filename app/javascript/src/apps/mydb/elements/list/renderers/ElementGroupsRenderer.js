@@ -96,6 +96,14 @@ function ElementGroupsRenderer({
         return (
           <div key={`element-group:${groupKey}`} className="element-group">
             <div className="element-group-header">
+              {groupHeaderDragType && (
+                <div className="element-group-header-drag-handle">
+                  <ElementDragHandle
+                    element={group[0]}
+                    sourceType={groupHeaderDragType}
+                  />
+                </div>
+              )}
               <div className="element-group-header-content">
                 {renderGroupHeader(group, toggleGroupCollapse)}
               </div>
@@ -115,14 +123,6 @@ function ElementGroupsRenderer({
                   />
                 </OverlayTrigger>
               </div>
-              {groupHeaderDragType && (
-                <div className="element-group-header-drag-handle">
-                  <ElementDragHandle
-                    element={group[0]}
-                    sourceType={groupHeaderDragType}
-                  />
-                </div>
-              )}
             </div>
             {!isCollapsed && (
               <>

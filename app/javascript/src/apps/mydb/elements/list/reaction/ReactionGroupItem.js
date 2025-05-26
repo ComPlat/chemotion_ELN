@@ -17,26 +17,25 @@ function ReactionGroupItem({ element, showDetails }) {
       role="button"
       className="d-flex gap-2"
     >
-      <div className="d-flex gap-2">
-        <SvgWithPopover
-          hasPop
-          previewObject={{
-            txtOnly: element.title(),
-            isSVG: true,
-            src: element.svgPath
-          }}
-          popObject={{
-            title: element.short_label,
-            src: element.svgPath,
-            height: '26vh',
-            width: '52vw'
-          }}
-        />
-        <div className="d-flex gap-1 align-items-center">
-          <ReactionStatus element={element} />
-          <ReactionRole element={element} />
-          <ShowUserLabels element={element} />
-        </div>
+      <SvgWithPopover
+        hasPop
+        previewObject={{
+          txtOnly: element.title(),
+          isSVG: true,
+          src: element.svgPath
+        }}
+        popObject={{
+          title: element.short_label,
+          src: element.svgPath,
+          height: '26vh',
+          width: '52vw'
+        }}
+      />
+
+      <div className="d-flex gap-1 align-items-center">
+        <ReactionStatus element={element} />
+        <ReactionRole element={element} />
+        <ShowUserLabels element={element} />
         <CommentIcon commentCount={element.comment_count} />
         <ElementCollectionLabels element={element} key={element.id} />
       </div>

@@ -319,12 +319,14 @@ export default class ReactionDetails extends Component {
       : { svg: reaction.reaction_svg_file };
     if (reaction.hasMaterials()) {
       return (
-        <SvgFileZoomPan
-          duration={300}
-          resize
-          // eslint-disable-next-line react/jsx-props-no-spreading
-          {...svgProps}
-        />
+        <div>
+          <SvgFileZoomPan
+            duration={300}
+            resize
+            // eslint-disable-next-line react/jsx-props-no-spreading
+            {...svgProps}
+          />
+        </div>
       );
     }
   }
@@ -389,19 +391,6 @@ export default class ReactionDetails extends Component {
                 })}
               >
                 <i className="fa fa-cogs" />
-              </Button>
-            </OverlayTrigger>
-            <OverlayTrigger
-              placement="bottom"
-              overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}
-            >
-              <Button
-                variant="info"
-                size="xxsm"
-                // eslint-disable-next-line react/destructuring-assignment
-                onClick={() => this.props.toggleFullScreen()}
-              >
-                <i className="fa fa-expand" />
               </Button>
             </OverlayTrigger>
             {reaction.changed
@@ -602,10 +591,6 @@ export default class ReactionDetails extends Component {
       ),
     };
 
-    const tabTitlesMap = {
-      green_chemistry: 'Green Chemistry'
-    };
-
     addSegmentTabs(reaction, this.handleSegmentsChange, tabContentsMap);
 
     const tabContents = [];
@@ -626,14 +611,13 @@ export default class ReactionDetails extends Component {
         </Card.Header>
         <Card.Body>
           {this.reactionSVG(reaction)}
-          <ElementDetailSortTab
-            type="reaction"
-            availableTabs={Object.keys(tabContentsMap)}
-            tabTitles={tabTitlesMap}
-            onTabPositionChanged={this.onTabPositionChanged}
-          />
           {this.state.sfn && <ScifinderSearch el={reaction} />}
           <div className="tabs-container--with-borders">
+            <ElementDetailSortTab
+              type="reaction"
+              availableTabs={Object.keys(tabContentsMap)}
+              onTabPositionChanged={this.onTabPositionChanged}
+            />
             <Tabs
               mountOnEnter
               activeKey={currentTab}
@@ -647,21 +631,18 @@ export default class ReactionDetails extends Component {
           </div>
         </Card.Body>
         <Card.Footer>
-          <div className="d-inline-block p-1">
-            <Button variant="primary" onClick={() => DetailActions.close(reaction)} className="me-1">
-              Close
-            </Button>
-            <Button
-              id="submit-reaction-btn"
-              variant="warning"
-              className="me-1"
-              onClick={() => this.handleSubmit()}
-              disabled={!permitOn(reaction) || !this.reactionIsValid()}
-            >
-              {submitLabel}
-            </Button>
-            {exportButton}
-          </div>
+          <Button variant="primary" onClick={() => DetailActions.close(reaction)}>
+            Close
+          </Button>
+          <Button
+            id="submit-reaction-btn"
+            variant="warning"
+            onClick={() => this.handleSubmit()}
+            disabled={!permitOn(reaction) || !this.reactionIsValid()}
+          >
+            {submitLabel}
+          </Button>
+          {exportButton}
         </Card.Footer>
       </Card>
     );
@@ -671,5 +652,4 @@ export default class ReactionDetails extends Component {
 ReactionDetails.propTypes = {
   // eslint-disable-next-line react/forbid-prop-types
   reaction: PropTypes.object,
-  toggleFullScreen: PropTypes.func,
 };
