@@ -156,7 +156,6 @@ const AnalysisHeader = ({ container, readonly }) => {
     }),
   };
   const attachment = getAttachmentFromContainer(container);
-  const hasPop = !!attachment?.thumb;
 
   const orderClass = deviceDescriptionsStore.analysis_mode == 'order' ? 'order pe-2' : '';
   const deleted = container?.is_deleted || false;
@@ -168,7 +167,6 @@ const AnalysisHeader = ({ container, readonly }) => {
           ? <i className="fa fa-ban text-body-tertiary fs-2 text-center d-block" /> 
           : <ImageModal
               attachment={attachment}
-              hasPop={hasPop}
               popObject={{
                 title: container.name,
               }}

@@ -110,7 +110,7 @@ export default class ImageModal extends Component {
       this.setState({ thumbnail: src });
     } else if (attachment?.is_new || attachment?.is_pending) {
       console.log(attachment.name, attachment?.preview);
-      this.setState({ thumbnail:  attachment?.preview });
+      this.setState({ thumbnail: attachment?.preview });
     } else {
       this.setState({ thumbnail: '/images/wild_card/no_attachment.svg' });
     }
@@ -118,10 +118,10 @@ export default class ImageModal extends Component {
 
   render() {
     const {
-      hasPop, popObject, imageStyle, attachment
+      showPop, popObject, imageStyle, attachment
     } = this.props;
     const { pageIndex, numOfPages, isPdf, fetchSrc, thumbnail } = this.state;
-    if (!hasPop) {
+    if (showPop) {
       return (
         <div className="preview-table">
           <img
@@ -132,7 +132,6 @@ export default class ImageModal extends Component {
         </div>
       );
     }
-
 
     return (
       <div>
@@ -221,7 +220,7 @@ ImageModal.propTypes = {
     filename: PropTypes.string,
     thumb: PropTypes.bool,
   }).isRequired,
-  hasPop: PropTypes.bool.isRequired,
+  showPop: PropTypes.bool.isRequired,
   popObject: PropTypes.shape({
     title: PropTypes.string,
   }).isRequired,

@@ -106,12 +106,11 @@ export default class Header extends React.Component {
 
   // eslint-disable-next-line class-methods-use-this
   renderImagePreview = () => {
-    const { container, isEditHeader } = this.props;
+    const { container } = this.props;
     const attachment = getAttachmentFromContainer(container);
- 
+
     return (
       <ImageModal
-        hasPop={isEditHeader}
         attachment={attachment}
         popObject={{
           title: container.name,

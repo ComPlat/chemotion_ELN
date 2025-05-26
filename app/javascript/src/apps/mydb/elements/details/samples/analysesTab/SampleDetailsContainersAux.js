@@ -206,7 +206,6 @@ const AnalysesHeader = ({
     }),
   };
    const attachment = getAttachmentFromContainer(container);
-   const hasPop = !!attachment?.thumb;
  
   return (
     <div className={`analysis-header w-100 d-flex gap-3 lh-base ${mode === 'edit' ? '' : 'order pe-2'}`}>
@@ -214,8 +213,7 @@ const AnalysesHeader = ({
         {deleted ?
           <i className="fa fa-ban text-body-tertiary fs-2 text-center d-block" /> :
           <ImageModal
-             attachment={attachment}
-              hasPop={hasPop}
+            attachment={attachment}
             popObject={{
               title: container.name,
             }}

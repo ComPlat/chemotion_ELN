@@ -198,13 +198,11 @@ export default class ResearchPlanDetailsContainers extends Component {
         }),
       };
       const attachment = getAttachmentFromContainer(container);
-      const hasPop = !!attachment?.thumb;
 
       return (
         <div className="analysis-header w-100 d-flex gap-3 lh-base">
           <div className="preview border d-flex align-items-center">
-            <ImageModal
-              hasPop={hasPop}
+            <ImageModal         
               attachment={attachment}
               popObject={{
                 title: container.name,

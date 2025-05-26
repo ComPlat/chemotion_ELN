@@ -22,7 +22,7 @@ export const attachmentThumbnail = (attachment) => (
       }}
       alt="thumbnail"
       attachment={attachment}
-      hasPop={false}
+      showPop
       popObject={{}}
       disableClick
     />
@@ -34,8 +34,6 @@ export const attachmentThumbnail = (attachment) => (
           backgroundColor: '#FFF',
           objectFit: 'contain',
         }}
-        hasPop
-        showPopImage
         alt="thumbnail"
         attachment={attachment}
         popObject={{}}

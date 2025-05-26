@@ -270,13 +270,11 @@ export default class ReactionDetailsContainers extends Component {
         }),
       };
       const attachment = getAttachmentFromContainer(container);
-      const hasPop = !!attachment?.thumb;
       return (
         <div className="analysis-header w-100 d-flex gap-3 lh-base">
           <div className="preview border d-flex align-items-center">
             <ImageModal
               attachment={attachment}
-              hasPop={hasPop}
               popObject={{
                 title: container.name,
               }}
