@@ -1,11 +1,11 @@
 /* eslint-disable react/display-name */
 import { AgGridReact } from 'ag-grid-react';
 import React, {
-  useRef, useState, useCallback, useReducer, useEffect, useMemo,
+  useRef, useState, useCallback, useReducer, useEffect, useMemo
 } from 'react';
 import {
   Button, OverlayTrigger, Tooltip, Alert,
-  ButtonGroup, Modal,
+  ButtonGroup, Modal
 } from 'react-bootstrap';
 import { cloneDeep, isEqual } from 'lodash';
 import PropTypes from 'prop-types';
@@ -16,7 +16,7 @@ import {
   removeObsoleteColumnDefinitions, getInitialGridState, persistGridState,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
-  getReactionAnalyses, updateAnalyses,
+  getReactionAnalyses, updateAnalyses
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import {
   updateVariationsAux, getReactionMaterials, getReactionMaterialsIDs,
@@ -62,14 +62,18 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
 
     useEffect(() => {
     // Fetch data only once when component mounts
+
+    const handleProcessedSegs = () => {
+      const initialColumnDefinitions = getColumnDefinitions(selectedColumns, reactionMaterials, gasMode);
+      setColumnDefinitions({
+        type: 'set_column_definitions',
+        columnDefinitions: initialColumnDefinitions,
+      });
+    };
     const fetchData = async () => {
       try {
         processedSegs = await getSegmentsForVariations(reaction);
-        const initialColumnDefinitions = getColumnDefinitions(selectedColumns, reactionMaterials, gasMode);
-        setColumnDefinitions({
-          type: 'set_column_definitions',
-          columnDefinitions: initialColumnDefinitions,
-        });
+        handleProcessedSegs();
       } catch (error) {
         console.error('Error fetching segments:', error);
       }
@@ -77,8 +81,10 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
 
     if (processedSegs === null) {
       fetchData();
+    } else {
+      handleProcessedSegs();
     }
-  }, []);
+  }, [reactionVariations]);
 
   const dataTypeDefinitions = {
     property: {
@@ -172,7 +178,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
 
     let updatedReactionVariations = removeObsoleteColumnsFromVariations(
       reactionVariations,
-      updatedSelectedColumns,
+      updatedSelectedColumns
     );
 
     let updatedColumnDefinitions = removeObsoleteColumnDefinitions(columnDefinitions, updatedSelectedColumns);
@@ -216,12 +222,10 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
     setColumnDefinitions(
       {
         type: 'toggle_gas_mode',
-        materials: Object.keys(materialTypes)
-          .reduce((materials, materialType) => {
-            // eslint-disable-next-line no-param-reassign
-            materials[materialType] = [];
-            return materials;
-          }, {}),
+        materials: Object.keys(materialTypes).reduce((materials, materialType) => {
+          materials[materialType] = [];
+          return materials;
+        }, {}),
         selectedColumns: updatedSelectedColumns,
         gasMode
       }
@@ -292,17 +296,17 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
             temperatureValue,
             temperatureUnit,
             gasMode,
-            vesselVolume,
-          },
-        ),
-      ],
+            vesselVolume
+          }
+        )
+      ]
     );
   };
 
   const copyRow = useCallback((data) => {
     const copiedRow = copyVariationsRow(data, reactionVariations);
     setReactionVariations(
-      [...reactionVariations, copiedRow],
+      [...reactionVariations, copiedRow]
     );
   }, [reactionVariations]);
 
@@ -318,7 +322,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
     const { field } = colDef;
     const updatedRow = updateVariationsRow(oldRow, field, newValue, reactionHasPolymers);
     setReactionVariations(
-      reactionVariations.map((row) => (row.id === oldRow.id ? updatedRow : row)),
+      reactionVariations.map((row) => (row.id === oldRow.id ? updatedRow : row))
     );
   }, [reactionVariations, reactionHasPolymers]);
 
@@ -334,11 +338,11 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
       temperatureValue,
       temperatureUnit,
       gasMode,
-      vesselVolume,
+      vesselVolume
     });
     updatedReactionVariations = removeObsoleteColumnsFromVariations(
       updatedReactionVariations,
-      columns,
+      columns
     );
     setReactionVariations(updatedReactionVariations);
 
@@ -347,8 +351,8 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
         type: 'apply_column_selection',
         materials: reactionMaterials,
         selectedColumns: columns,
-        gasMode,
-      },
+        gasMode
+      }
     );
 
     setSelectedColumns(columns);
@@ -381,7 +385,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
             <Button variant="secondary" onClick={handleClose}>
               Keep variations
             </Button>
-            <Button variant="danger" onClick={handleConfirm}>
+            <Button variant="danger" onClickgridRef={handleConfirm}>
               Remove variations
             </Button>
           </Modal.Footer>
@@ -472,6 +476,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
             reactionHasPolymers,
             reactionShortLabel,
             allReactionAnalyses,
+            setReactionVariations,
           }}
           /*
           IMPORTANT: In conjunction with `onCellEditRequest`,
@@ -489,7 +494,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
       );
     }
 
-    return (<p>Loading...</p>);
+    return (<p>loading...</p>);
   }
 
   return (
