@@ -440,6 +440,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
           onCellValueChanged={(event) => fitColumnToContent(event)}
           onColumnHeaderClicked={(event) => fitColumnToContent(event)}
           onGridPreDestroyed={(event) => persistGridState(reactionShortLabel, event)}
+          onStateUpdated={(event) => persistGridState(reactionShortLabel, event)}
         />
       </div>
     </div>
