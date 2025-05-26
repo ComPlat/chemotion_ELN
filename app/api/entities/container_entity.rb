@@ -11,10 +11,10 @@ module Entities
       :extended_metadata,
     )
 
-    expose :attachments, using: 'Entities::AttachmentEntity'
-    expose :code_log, using: 'Entities::CodeLogEntity'
+    expose :attachments, using: 'Entities::AttachmentEntity', if: ->(object, _options) { object.container_type == 'dataset' }
+    expose :code_log, using: 'Entities::CodeLogEntity', if: ->(object, _options) { object.container_type == 'analysis' }
     expose :children, using: 'Entities::ContainerEntity'
-    expose :dataset, using: 'Labimotion::DatasetEntity'
+    expose :dataset, using: 'Labimotion::DatasetEntity', if: ->(object, _options) { object.container_type == 'dataset' }
 
     def extended_metadata
       return unless object.extended_metadata
