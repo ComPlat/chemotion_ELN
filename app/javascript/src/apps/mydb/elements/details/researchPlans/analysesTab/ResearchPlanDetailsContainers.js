@@ -11,7 +11,7 @@ import ContainerComponent from 'src/components/container/ContainerComponent';
 import QuillViewer from 'src/components/QuillViewer';
 import ImageModal from 'src/components/common/ImageModal';
 import { instrumentText } from 'src/utilities/ElementUtils';
-import { previewContainerImage } from 'src/utilities/imageHelper';
+import { getAttachmentFromContainer } from 'src/utilities/imageHelper';
 import { JcampIds, BuildSpcInfos, BuildSpcInfosForNMRDisplayer, isNMRKind } from 'src/utilities/SpectraHelper';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -187,7 +187,6 @@ export default class ResearchPlanDetailsContainers extends Component {
       let kind = container.extended_metadata.kind || '';
       kind = (kind.split('|')[1] || kind).trim();
       const insText = instrumentText(container);
-      const previewImg = previewContainerImage(container);
       const status = container.extended_metadata.status || '';
       const content = container.extended_metadata.content || { ops: [{ insert: '' }] };
 
@@ -198,29 +197,15 @@ export default class ResearchPlanDetailsContainers extends Component {
           return c;
         }),
       };
-      let hasPop = true;
-      let fetchNeeded = false;
-      let fetchId = 0;
-      if (previewImg.startsWith('data:image')) {
-        fetchNeeded = true;
-        fetchId = container.preview_img.id;
-      } else {
-        hasPop = false;
-      }
+      const attachment = getAttachmentFromContainer(container);
 
       return (
         <div className="analysis-header w-100 d-flex gap-3 lh-base">
           <div className="preview border d-flex align-items-center">
-            <ImageModal
-              hasPop={hasPop}
-              previewObject={{
-                src: previewImg
-              }}
+            <ImageModal         
+              attachment={attachment}
               popObject={{
                 title: container.name,
-                src: previewImg,
-                fetchNeeded,
-                fetchId
               }}
             />
           </div>
