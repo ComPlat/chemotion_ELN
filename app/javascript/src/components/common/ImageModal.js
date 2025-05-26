@@ -105,14 +105,18 @@ export default class ImageModal extends Component {
 
   async fetchImageThumbnail() {
     const { attachment } = this.props;
+    const fileType = attachment?.file?.type;
+    const isImage = fileType?.startsWith('image/');
+    const defaultNoAttachment = '/images/wild_card/no_attachment.svg';
+    const defaultUnavailable = '/images/wild_card/not_available.svg';
     if (attachment?.thumb) {
       const src = await fetchImageSrcByAttachmentId(attachment.id);
       this.setState({ thumbnail: src });
     } else if (attachment?.is_new || attachment?.is_pending) {
-      console.log(attachment.name, attachment?.preview);
-      this.setState({ thumbnail: attachment?.preview });
+      const previewSrc = isImage ? attachment?.file?.preview : defaultUnavailable;
+      this.setState({ thumbnail: previewSrc });
     } else {
-      this.setState({ thumbnail: '/images/wild_card/no_attachment.svg' });
+      this.setState({ thumbnail: defaultNoAttachment });
     }
   }
 
@@ -121,6 +125,7 @@ export default class ImageModal extends Component {
       showPop, popObject, imageStyle, attachment
     } = this.props;
     const { pageIndex, numOfPages, isPdf, fetchSrc, thumbnail } = this.state;
+
     if (showPop) {
       return (
         <div className="preview-table">
@@ -128,6 +133,8 @@ export default class ImageModal extends Component {
             src={thumbnail}
             alt={attachment?.filename}
             style={{ cursor: 'default', ...imageStyle }}
+            onError={this.handleImageError}
+
           />
         </div>
       );
