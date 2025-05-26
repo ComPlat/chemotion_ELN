@@ -10,8 +10,11 @@ import {
   AnalysesCellRenderer, AnalysesCellEditor, getAnalysesOverlay, AnalysisOverlay,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import {
-  NoteCellRenderer, NoteCellEditor, MenuHeader, RowToolsCellRenderer,
+  NoteCellRenderer, NoteCellEditor, RowToolsCellRenderer,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
+import {
+  MenuHeader, SectionMenuHeader
+}  from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsTableHeader';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import GenericSgsFetcher from 'src/fetchers/GenericSgsFetcher';
 
@@ -442,17 +445,22 @@ function getSegmentColumnGroupChild(propertyType) {
 
   const segFieldDef = segmentsForVariations.find((item) => item.key === propertyType);
 
-  const label = segFieldDef?.label;
+  const {field, layer} = segFieldDef;
   const defaultDef = {
     field: `segmentData.${propertyType}`,
     cellDataType: 'segmentData',
-    headerComponent: MenuHeader,
+    headerComponent: SectionMenuHeader,
+    entryDefs: {
+      displayUnit: field.value_system
+    },
     headerComponentParams: {
-      names: [label],
+      names: [field.label]
     },
     cellEditorParams: {
       options: segFieldDef.options,
-      fieldType: segFieldDef.field.type,
+      fieldType: field.type,
+      genericField: field,
+      genericLayer: layer
     },
   };
   if (segFieldDef.field.type === 'select') {
@@ -531,7 +539,7 @@ function getMetadataColumnGroupChild(metadataType) {
   }
 }
 
-function addMissingColumnDefinitions(columnDefinitions, selectedColumns, materials, gasMode) {
+function addMissingColumnDefinitions(columnDefinitions, selectedColumns, materials, gasMode, gridRef) {
   const updatedColumnDefinitions = cloneDeep(columnDefinitions);
 
   Object.entries(selectedColumns)
@@ -556,7 +564,7 @@ function addMissingColumnDefinitions(columnDefinitions, selectedColumns, materia
           columnGroup.children.push(getMetadataColumnGroupChild(childID));
         }
         if (columnGroupID === 'segmentData') {
-          columnGroup.children.push(getSegmentColumnGroupChild(childID));
+          columnGroup.children.push(getSegmentColumnGroupChild(childID, gridRef));
         }
       });
     });
