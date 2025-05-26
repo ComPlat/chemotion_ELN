@@ -72,7 +72,7 @@ module Chemotion
 
       post do
         # Check if we're receiving data after client validation
-        if params[:data].present? && params[:originalFormat].present?
+        if params[:data].present?
           # Handle the direct cleaned data case
           collection_id = params[:currentCollectionId]
           import_type = params[:import_type]
@@ -89,8 +89,6 @@ module Chemotion
               error!("Invalid data format: #{e.message}", 400)
             end
           end
-          # Validate the data format
-          error!('Data must be an array', 400) unless params[:data].is_a?(Array)
 
           file_path = "#{tmp_file_path}.csv"
           CSV.open(file_path, 'wb') do |csv|
