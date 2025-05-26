@@ -31,16 +31,22 @@ import {
 import columnDefinitionsReducer
   from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsReducers';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
+import UserStore from 'src/stores/alt/stores/UserStore';
+
+function getGridStateId(id) {
+  const { currentUser } = UserStore.getState();
+  return `user${currentUser.id}-reaction${id}-reactionVariationsGridState`;
+}
 
 function getInitialGridState(id) {
-  const gridState = JSON.parse(localStorage.getItem(`${id}-reactionVariationsGridState`));
+  const gridState = JSON.parse(localStorage.getItem(getGridStateId(id)));
 
   return gridState;
 }
 
 const persistGridState = (id, event) => {
   const { state: gridState } = event;
-  localStorage.setItem(`${id}-reactionVariationsGridState`, JSON.stringify(gridState));
+  localStorage.setItem(getGridStateId(id), JSON.stringify(gridState));
 };
 
 export default function ReactionVariations({ reaction, onReactionChange, isActive }) {
@@ -68,7 +74,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   const [selectedColumns, setSelectedColumns] = useState(getVariationsColumns(reactionVariations));
   const initialColumnDefinitions = useMemo(() => getColumnDefinitions(selectedColumns, reactionMaterials, gasMode), []);
   const [columnDefinitions, setColumnDefinitions] = useReducer(columnDefinitionsReducer, initialColumnDefinitions);
-  const initialGridState = useMemo(() => getInitialGridState(reactionShortLabel), []);
+  const initialGridState = useMemo(() => getInitialGridState(reaction.id), []);
 
   const dataTypeDefinitions = {
     property: {
@@ -439,8 +445,8 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
           onCellEditRequest={updateRow}
           onCellValueChanged={(event) => fitColumnToContent(event)}
           onColumnHeaderClicked={(event) => fitColumnToContent(event)}
-          onGridPreDestroyed={(event) => persistGridState(reactionShortLabel, event)}
-          onStateUpdated={(event) => persistGridState(reactionShortLabel, event)}
+          onGridPreDestroyed={(event) => persistGridState(reaction.id, event)}
+          onStateUpdated={(event) => persistGridState(reaction.id, event)}
         />
       </div>
     </div>
