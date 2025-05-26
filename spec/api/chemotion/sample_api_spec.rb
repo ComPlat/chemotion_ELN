@@ -170,6 +170,166 @@ describe Chemotion::SampleAPI do
         expect(JSON.parse(response.body)['data'].count).to eq 2
       end
     end
+
+    context 'when import from client-validated data' do
+      let(:params) do
+        {
+          'currentCollectionId' => collection.id,
+          'data' => [
+            {
+              'name' => 'Test Sample',
+              'external_label' => 'EXT-123',
+              'target_amount_value' => '10',
+              'target_amount_unit' => 'g',
+              'density' => '1.2 g/ml',
+              'molarity' => '3 M',
+              'flash_point' => '23 °C',
+              'decoupled' => 'false',
+              'is_top_secret' => 'false',
+              'dry_solvent' => 'false',
+              'solvent' => '',
+              'location' => 'Lab Room 42',
+              'molecular_mass' => '194.19',
+              'sum_formula' => 'C8H8',
+              canonical_smiles: 'C12C3C4C2C2C1C3C42',
+            }
+          ],
+          originalFormat: 'json',
+        }
+      end
+
+      it 'returns a successful response with status 201' do
+        expect(response.status).to eq 201
+      end
+
+      it 'returns a valid response with status ok and non-empty data' do
+        response_data = JSON.parse(response.body)
+        expect(response_data['status']).to eq 'ok'
+        expect(response_data['data']).not_to be_empty
+      end
+
+      it 'creates the expected number of samples in the database' do
+        response_data = JSON.parse(response.body)
+        sample_ids = response_data['data']
+        expect(Sample.where(id: sample_ids).count).to eq params['data'].length
+      end
+
+      it 'creates samples with correct details' do
+        response_data = JSON.parse(response.body)
+        sample_ids = response_data['data']
+        sample = Sample.find(sample_ids.first)
+
+        expect(sample.name).to eq params['data'].first['name']
+        expect(sample.external_label).to eq params['data'].first['external_label']
+      end
+
+      it 'creates samples with correct numeric values' do
+        response_data = JSON.parse(response.body)
+        sample_ids = response_data['data']
+        sample = Sample.find(sample_ids.first)
+
+        expect(sample.target_amount_value).to eq params['data'].first['target_amount_value'].to_f
+        expect(sample.target_amount_unit).to eq params['data'].first['target_amount_unit']
+      end
+    end
+
+    context 'when import from client-validated chemical data' do
+      let(:params) do
+        {
+          'currentCollectionId' => collection.id,
+          'data' => [
+            {
+              'name' => 'Cubane',
+              'external_label' => 'CHEM-001',
+              'target_amount_value' => '0',
+              'target_amount_unit' => 'g',
+              'density' => '4.0 g/ml',
+              'molarity' => '3 M',
+              'flash_point' => '23 °C',
+              'decoupled' => 'false',
+              'is_top_secret' => 'false',
+              'dry_solvent' => 'false',
+              'solvent' => '',
+              'location' => 'chemicals room',
+              'molecular_mass' => '194.19',
+              'sum_formula' => 'C8H8',
+              'cas' => '277-10-1',
+              'status' => 'To be ordered',
+              'vendor' => 'Merck',
+              'order_number' => 'O6582233N2',
+              'volume' => '1 ml',
+              'amount' => '1 mg',
+              'price' => '150',
+              'person' => 'ML',
+              'required_date' => '2023-05-15',
+              'expiration_date' => '2050-01-01',
+              'ordered_date' => '2023-05-19',
+              'required_by' => 'Simone',
+              'pictograms' => 'GHS07',
+              'h_statements' => 'H302',
+              'p_statements' => 'P264-P270-P301-P312-P501',
+              'host_building' => '1',
+              'host_room' => '2',
+              'host_cabinet' => 'cabinet 3',
+              'host_group' => 'Schumacher',
+              'owner' => 'Olivier',
+              'storage_temperature' => '25 °C',
+              canonical_smiles: 'C12C3C4C2C2C1C3C42',
+            }
+          ],
+          'originalFormat' => 'json',
+          'import_type' => 'chemical',
+        }
+      end
+
+      it 'returns a successful response with status 201' do
+        expect(response.status).to eq 201
+      end
+
+      it 'returns a valid response with status ok and non-empty data' do
+        response_data = JSON.parse(response.body)
+        expect(response_data['status']).to eq 'ok'
+        expect(response_data['data']).not_to be_empty
+      end
+
+      it 'creates the expected number of samples in the database' do
+        response_data = JSON.parse(response.body)
+        sample_ids = response_data['data']
+        expect(Sample.where(id: sample_ids).count).to eq params['data'].length
+      end
+
+      it 'creates chemical samples with correct details' do
+        response_data = JSON.parse(response.body)
+        sample_ids = response_data['data']
+        sample = Sample.find(sample_ids.first)
+
+        expect(sample.name).to eq params['data'].first['name']
+      end
+
+      it 'correctly stores chemical-specific data' do
+        response_data = JSON.parse(response.body)
+        sample_ids = response_data['data']
+        sample = Sample.find(sample_ids.first)
+
+        expect(sample.xref['cas']).to eq params['data'].first['cas']
+      end
+    end
+
+    context 'when import data is malformed' do
+      let(:params) do
+        {
+          currentCollectionId: collection.id,
+          'data' => 'invalid json string',
+          'originalFormat' => 'json',
+        }
+      end
+
+      it 'returns an error' do
+        expect(response.status).to eq 400
+        response_data = JSON.parse(response.body)
+        expect(response_data['error']).to include('Invalid data format')
+      end
+    end
   end
 
   describe 'POST /api/v1/samples/confirm_import/' do
