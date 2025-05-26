@@ -78,7 +78,6 @@ export class ContainerDatasetModalContent extends Component {
     this.handleRemoveLink = this.handleRemoveLink.bind(this);
     this.handleDSChange = this.handleDSChange.bind(this);
     this.editorInitial = this.editorInitial.bind(this);
-    this.createAttachmentPreviews = this.createAttachmentPreviews.bind(this);
     this.handleEdit = this.handleEdit.bind(this);
     this.handleFilterChange = this.handleFilterChange.bind(this);
     this.handleAttachmentRemove = this.handleAttachmentRemove.bind(this);
@@ -89,7 +88,6 @@ export class ContainerDatasetModalContent extends Component {
 
   componentDidMount() {
     this.editorInitial();
-    this.createAttachmentPreviews();
     this.setState({
       attachmentGroups: this.classifyAttachments(this.props.datasetContainer.attachments)
     });
@@ -115,10 +113,17 @@ export class ContainerDatasetModalContent extends Component {
         attachmentGroups: this.classifyAttachments(attachments)
       }, () => {
         this.props.onChange({ ...this.state.datasetContainer });
-        this.createAttachmentPreviews();
         this.filterAttachments();
       });
     }
+  }
+
+  // This function is being called from ContainerDatasetModal.js
+  // eslint-disable-next-line react/no-unused-class-component-methods
+  setLocalName(localName) {
+    const { datasetContainer } = this.state;
+    datasetContainer.name = localName;
+    this.setState({ datasetContainer });
   }
 
   // eslint-disable-next-line react/sort-comp
@@ -179,7 +184,6 @@ export class ContainerDatasetModalContent extends Component {
         attachmentGroups: this.classifyAttachments(updatedAttachments),
       };
     }, () => {
-      this.createAttachmentPreviews();
     });
   }
 
@@ -213,9 +217,12 @@ export class ContainerDatasetModalContent extends Component {
   // eslint-disable-next-line react/no-unused-class-component-methods
   handleSave() {
     const { datasetContainer } = this.state;
-    const { onChange, onModalHide } = this.props;
+    const {
+      onChange, onModalHide, handleContainerSubmit, isNew
+    } = this.props;
     this.context.attachmentNotificationStore.clearMessages();
     onChange(datasetContainer);
+    if (!isNew) handleContainerSubmit();
     onModalHide();
   }
 
@@ -322,7 +329,7 @@ export class ContainerDatasetModalContent extends Component {
       if (attachment.aasm_state === 'queueing' && attachment.content_type === 'application/zip') {
         groups.BagitZip.push(attachment);
       } else if (attachment.aasm_state === 'image'
-          && (attachment.filename.includes('.combined')
+        && (attachment.filename.includes('.combined')
           || attachment.filename.includes('.new_combined'))) {
         groups.Combined.push(attachment);
       } else if (attachment.filename.includes('bagit')) {
@@ -563,9 +570,9 @@ export class ContainerDatasetModalContent extends Component {
                   extension,
                   attachmentEditor,
                   attachment.aasm_state === 'oo_editing' && new Date().getTime()
-                    < (new Date(attachment.updated_at).getTime() + 15 * 60 * 1000),
+                  < (new Date(attachment.updated_at).getTime() + 15 * 60 * 1000),
                   !attachmentEditor || attachment.aasm_state === 'oo_editing'
-                    || attachment.is_new || this.documentType(attachment.filename) === null,
+                  || attachment.is_new || this.documentType(attachment.filename) === null,
                   this.handleEdit
                 )}
                 {annotateButton(attachment, () => {
@@ -768,6 +775,8 @@ ContainerDatasetModalContent.propTypes = {
     })),
   }).isRequired,
   onChange: PropTypes.func.isRequired,
+  handleContainerSubmit: PropTypes.func.isRequired,
+  isNew: PropTypes.bool.isRequired,
   onInstrumentChange: PropTypes.func,
   onModalHide: PropTypes.func.isRequired,
   readOnly: PropTypes.bool,
@@ -797,7 +806,7 @@ ContainerDatasetModalContent.defaultProps = {
   readOnly: false,
   attachments: [],
   kind: null,
-  onInstrumentChange: () => {},
+  onInstrumentChange: () => { },
 };
 
 export default observer(ContainerDatasetModalContent);

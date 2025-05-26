@@ -5,7 +5,6 @@ import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 class CollectionStore {
   constructor() {
     this.state = {
-      genericEls: [],
       unsharedRoots: [],
       sharedRoots: [],
       remoteRoots: [],

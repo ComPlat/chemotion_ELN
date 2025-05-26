@@ -6,13 +6,11 @@ import {
 } from 'react-bootstrap';
 import DatePicker from 'react-datepicker';
 import deepEqual from 'deep-equal';
-import Aviator from 'aviator';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
-import { elementShowOrNew } from 'src/utilities/routesUtils';
 
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import ElementAllCheckbox from 'src/apps/mydb/elements/list/ElementAllCheckbox';
@@ -111,9 +109,10 @@ export default class ElementsTable extends React.Component {
       });
     }
   }
+
   handleScrollToElement = () => {
     if (this.elementRef.current) {
-      this.elementRef.current.scrollTo({ top: 0, left: 0, behavior: "smooth", });
+      this.elementRef.current.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
     }
   };
 
@@ -137,7 +136,7 @@ export default class ElementsTable extends React.Component {
     const currentId = state.sample.currentId || state.reaction.currentId
       || state.wellplate.currentId;
 
-    let isSearchResult = currentSearchByID ? true : false;
+    const isSearchResult = !!currentSearchByID;
 
     const { currentStateProductOnly, searchResult } = this.state;
     const stateChange = (
@@ -160,7 +159,7 @@ export default class ElementsTable extends React.Component {
         isGroupBaseCollapsed: groupCollapse[type]?.baseState === 'collapsed',
         productOnly,
         searchResult: isSearchResult,
-        moleculeSort: moleculeSort
+        moleculeSort
       });
     }
   }
@@ -303,7 +302,6 @@ export default class ElementsTable extends React.Component {
 
   handleNumberOfResultsChange(event) {
     const { value } = event.target;
-
     if (parseInt(value, 10) > 0) {
       UIActions.changeNumberOfResultsShown(value);
       this.handleDelayForNumberOfResults();
@@ -355,7 +353,7 @@ export default class ElementsTable extends React.Component {
     }
 
     return pages > 1 && (
-      <Pagination>
+      <Pagination className="m-0">
         <Pagination.First disabled={page === 1} onClick={() => this.handlePaginationSelect(1)} />
         <Pagination.Prev disabled={page === 1} onClick={() => this.handlePaginationSelect(page - 1)} />
         {items}
@@ -384,8 +382,9 @@ export default class ElementsTable extends React.Component {
         <Select
           options={options}
           isClearable={false}
-          value={options.find(({ value }) => value == moleculeSort)}
+          value={options.find(({ value }) => value === moleculeSort)}
           onChange={this.changeSampleSort}
+          menuPortalTarget={document.body}
         />
         <OverlayTrigger
           placement="top"
@@ -556,7 +555,7 @@ export default class ElementsTable extends React.Component {
   };
 
   renderHeader = () => {
-    const { filterCreatedAt, ui, elements } = this.state;
+    const { filterCreatedAt, ui } = this.state;
     const { type, genericEl } = this.props;
     const { fromDate, toDate, userLabel } = ui;
 
@@ -590,7 +589,7 @@ export default class ElementsTable extends React.Component {
 
     return (
       <div className="elements-table-header">
-        <div className="select-all">
+        <div className="d-flex gap-1 align-items-center">
           <ElementAllCheckbox type={type} />
         </div>
         <div
@@ -678,21 +677,21 @@ export default class ElementsTable extends React.Component {
     }
 
     return (
-      <div ref={this.elementRef} className="elements-list">
+      <div ref={this.elementRef} className="flex-grow-1 h-0 overflow-y-auto surface-tab__content">
         {elementsTableEntries}
+        <div className="mt-2 d-flex justify-content-between">
+          {this.renderPagination()}
+          {this.renderNumberOfResultsInput()}
+        </div>
       </div>
     );
   }
 
   render() {
     return (
-      <div className="list-container">
+      <div className="list-container d-flex flex-column h-100">
         {this.renderHeader()}
         {this.renderEntries()}
-        <div className="d-flex flex-row-reverse justify-content-between">
-          {this.renderNumberOfResultsInput()}
-          {this.renderPagination()}
-        </div>
       </div>
     );
   }

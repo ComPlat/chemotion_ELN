@@ -96,7 +96,7 @@ const Config = (props) => {
   const { template, options, fileName, fileDescription } = props;
 
   const templateOpts = options.map(item => (
-    { id: item.id, label: item.name, value: item.report_type }
+    { id: item.id, label: item.name, value: item.id }
   ));
 
   return (

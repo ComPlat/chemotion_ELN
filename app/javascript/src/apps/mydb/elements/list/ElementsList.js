@@ -11,41 +11,21 @@ import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import ArrayUtils from 'src/utilities/ArrayUtils';
-import PropTypes from 'prop-types';
 
-function getSortedHash(inputHash) {
-  const resultHash = {};
-
-  const keys = Object.keys(inputHash);
-  keys.sort((a, b) => inputHash[a] - inputHash[b]).forEach((k) => {
-    resultHash[k] = inputHash[k];
-  });
-  return resultHash;
-}
-
-function getArrayFromLayout(layout, isVisible) {
-  let array = Immutable.List();
-  let sortedLayout = layout;
-
-  if (isVisible === true) {
-    sortedLayout = getSortedHash(sortedLayout);
-  }
-
-  Object.keys(sortedLayout).forEach((key, idx) => {
-    const order = sortedLayout[key];
-    if (isVisible && order < 0) { return; }
-    if (!isVisible && order > 0) { return; }
-
-    if (isVisible === true) {
-      array = array.set(idx + 1, key);
+function getVisibleAndHiddenFromLayout(layout) {
+  const visible = [], hidden = [];
+  Object.keys(layout).forEach((key) => {
+    if (layout[key] < 0) {
+      hidden.push(key);
     } else {
-      array = array.set(Math.abs(order), key);
+      visible.push(key);
     }
   });
 
-  array = array.filter((n) => n !== undefined);
-  return array;
+  return {
+    visible: Immutable.List(visible).sortBy((t) => layout[t]),
+    hidden: Immutable.List(hidden).sortBy((t) => -1 * layout[t]),
+  };
 }
 
 export default class ElementsList extends React.Component {
@@ -100,15 +80,13 @@ export default class ElementsList extends React.Component {
     let hidden = Immutable.List();
     let { currentType, currentTab } = state;
 
-    if (typeof (state.profile) !== 'undefined' && state.profile
-      && typeof (state.profile.data) !== 'undefined' && state.profile.data) {
-      visible = getArrayFromLayout(state.profile.data.layout, true);
-      hidden = getArrayFromLayout(state.profile.data.layout, false);
+    if (state?.profile?.data?.layout) {
+      const profileConfig = getVisibleAndHiddenFromLayout(state.profile.data.layout);
+      visible = profileConfig.visible;
+      hidden = profileConfig.hidden;
+
       currentTab = visible.findIndex((e) => e === currentType);
       if (currentType === '') { currentType = visible.get(0); }
-    }
-    if (hidden.size === 0) {
-      hidden = ArrayUtils.pushUniq(hidden, 'hidden');
     }
 
     if (currentTab < 0) currentTab = 0;
@@ -253,20 +231,20 @@ export default class ElementsList extends React.Component {
             Remove search result
           </Button>
         )}
-        <div className="position-relative">
+        <div className="tabs-container--with-full-height position-relative">
+          <ElementsTableSettings
+            visible={visible}
+            hidden={hidden}
+          />
+
           <Tabs
             id="tabList"
             activeKey={currentTab}
             onSelect={(eventKey) => this.handleTabSelect(parseInt(eventKey, 10))}
+            className="surface-tabs"
           >
             {tabItems}
           </Tabs>
-          <div className="position-absolute top-0 end-0">
-            <ElementsTableSettings
-              visible={visible}
-              hidden={hidden}
-            />
-          </div>
         </div>
       </>
     );
