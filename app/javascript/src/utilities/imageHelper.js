@@ -30,6 +30,16 @@ const getAttachmentFromContainer = (container) => {
   return combinedImageAttachment || latestImageAttachment || null;
 };
 
+/**
+ * Fetches the base64 thumbnail image source for a given attachment ID.
+ *
+ * If no ID is provided, or if the fetch fails, a fallback SVG image path is returned.
+ *
+ * @async
+ * @function fetchImageSrcByAttachmentId
+ * @param {string|number} id - The ID of the attachment.
+ * @returns {Promise<string>} A promise that resolves to a base64 image source string or a fallback SVG path.
+ */
 const fetchImageSrcByAttachmentId = async (id) => {
   try {
     if (!id) {
