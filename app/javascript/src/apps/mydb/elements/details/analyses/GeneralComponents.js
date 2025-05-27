@@ -89,14 +89,9 @@ function DatasetDropZone({droppedPaths, setDroppedPaths}) {
 
     return (
         <div
+            className="dataset-drop-zone"
             onDragOver={onDragOver}
             onDrop={onDrop}
-            style={{
-                minHeight: '57px',
-                border: '2px dashed #bbb',
-                borderRadius: '4px',
-                padding: '7px',
-            }}
         >
             <strong>Drop files here:</strong>
             <ul style={{overflow: 'auto'}}>
@@ -104,14 +99,8 @@ function DatasetDropZone({droppedPaths, setDroppedPaths}) {
                     <li key={i}>
                         <span>{p}</span>
                         <button
+                            className="dataset-drop-zone-rm-btn"
                             onClick={() => removePath(p)}
-                            style={{
-                                border: 'none',
-                                background: 'transparent',
-                                color: '#c00',
-                                cursor: 'pointer',
-                                fontSize: '1rem',
-                            }}
                             title="Remove"
                         >
                             ❌
