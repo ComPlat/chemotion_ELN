@@ -113,7 +113,10 @@ FactoryBot.define do
             solvents: solvents,
           }
         end
-        reaction.variations = variations
+        reaction.variations = variations.each_with_object({}) do |item, hash|
+          item['uuid'] = SecureRandom.uuid
+          hash[item['uuid']] = item
+        end
       end
     end
   end
