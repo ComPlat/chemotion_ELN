@@ -192,7 +192,7 @@ describe Chemotion::SampleAPI do
               'molecular_mass' => '194.19',
               'sum_formula' => 'C8H8',
               canonical_smiles: 'C12C3C4C2C2C1C3C42',
-            }
+            },
           ],
           originalFormat: 'json',
         }
@@ -275,7 +275,7 @@ describe Chemotion::SampleAPI do
               'owner' => 'Olivier',
               'storage_temperature' => '25 °C',
               canonical_smiles: 'C12C3C4C2C2C1C3C42',
-            }
+            },
           ],
           'originalFormat' => 'json',
           'import_type' => 'chemical',
