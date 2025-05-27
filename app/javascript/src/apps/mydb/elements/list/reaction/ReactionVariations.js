@@ -3,13 +3,13 @@ import PropTypes from 'prop-types';
 import { Badge } from 'react-bootstrap';
 
 function ReactionVariations({ element }) {
-  if (element.type !== 'reaction' || !element.variations) {
+  if (element.type !== 'reaction' || !element.variations || element.variations.length === 0) {
     return null;
   }
 
   return (
     <Badge bg="info">
-      {`${element.variations.length} variation(s)`}
+      {`${element.variations.length} variation${element.variations.length > 1 ? 's' : ''}`}
     </Badge>
   );
 }
