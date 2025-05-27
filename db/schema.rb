@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2025_15_05_141514) do
+ActiveRecord::Schema.define(version: 2025_05_26_160014) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -205,7 +205,6 @@ ActiveRecord::Schema.define(version: 2025_15_05_141514) do
     t.integer "celllinesample_detail_level", default: 10
     t.bigint "inventory_id"
     t.integer "devicedescription_detail_level", default: 10
-    t.jsonb "log_data"
     t.index ["ancestry"], name: "index_collections_on_ancestry"
     t.index ["deleted_at"], name: "index_collections_on_deleted_at"
     t.index ["inventory_id"], name: "index_collections_on_inventory_id"
@@ -2173,7 +2172,7 @@ ActiveRecord::Schema.define(version: 2025_15_05_141514) do
        RETURNS trigger
        LANGUAGE plpgsql
       AS $function$
-        -- version: 2
+        -- version: 3
         DECLARE
           changes jsonb;
           version jsonb;
@@ -2279,24 +2278,24 @@ ActiveRecord::Schema.define(version: 2025_15_05_141514) do
                   END LOOP;
               END;
             ELSE
-              BEGIN
-                changes = hstore_to_jsonb_loose(
-                      hstore(NEW.*) - hstore(OLD.*)
-                  );
-              EXCEPTION
-                WHEN NUMERIC_VALUE_OUT_OF_RANGE THEN
-                  changes = (SELECT
-                    COALESCE(json_object_agg(key, value), '{}')::jsonb
-                    FROM
-                    jsonb_each(row_to_json(NEW.*)::jsonb)
-                    WHERE NOT jsonb_build_object(key, value) <@ row_to_json(OLD.*)::jsonb);
-                  FOR k IN (SELECT key FROM jsonb_each(changes))
-                  LOOP
-                    IF jsonb_typeof(changes->k) = 'object' THEN
-                      changes = jsonb_set(changes, ARRAY[k], to_jsonb(changes->>k));
-                    END IF;
-                  END LOOP;
-              END;
+              SELECT COALESCE(jsonb_object_agg(key, value), '{}'::jsonb)
+              INTO changes
+              FROM jsonb_each(row_to_json(NEW)::jsonb)
+              WHERE NOT jsonb_build_object(key, value) <@ row_to_json(OLD)::jsonb;
+
+              FOR k IN SELECT key FROM jsonb_each(changes)
+                LOOP
+                  IF jsonb_typeof(changes->k) = 'object' THEN
+                    changes := jsonb_set(
+                      changes,
+                      ARRAY[k],
+                      jsonb_diff(
+                        row_to_json(OLD)::jsonb -> k,
+                        row_to_json(NEW)::jsonb -> k
+                      )
+                    );
+                  END IF;
+                END LOOP;
             END IF;
 
             changes = changes - 'log_data';
@@ -2474,9 +2473,6 @@ ActiveRecord::Schema.define(version: 2025_15_05_141514) do
   SQL
 
 
-  create_trigger :logidze_on_collections, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_collections BEFORE INSERT OR UPDATE ON public.collections FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
   create_trigger :logidze_on_reactions, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_reactions BEFORE INSERT OR UPDATE ON public.reactions FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
