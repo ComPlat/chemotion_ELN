@@ -254,8 +254,8 @@ module Import
         molfile_smiles = babel_info[:smiles]
         molfile_smiles = Chemotion::OpenBabelService.canon_smiles_to_smiles molfile_smiles if check['smiles']
       end
-      if molfile_smiles.blank? && (molfile_smiles != row['cano_smiles'] &&
-         molfile_smiles != row['smiles'] && molfile_smiles != row['canonical_smiles'])
+      if molfile_smiles.blank? && molfile_smiles != row['cano_smiles'] &&
+         molfile_smiles != row['smiles'] && molfile_smiles != row['canonical_smiles']
         @unprocessable << { row: row, index: i }
         go_to_next = true
       end
