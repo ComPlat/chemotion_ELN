@@ -63,121 +63,121 @@ module Chemotion
         end
       end
 
-    namespace :import do
-      desc 'Import Samples from a File'
+      namespace :import do
+        desc 'Import Samples from a File'
 
-      before do
-        error!('401 Unauthorized', 401) unless current_user.collections.find(params[:currentCollectionId])
-      end
+        before do
+          error!('401 Unauthorized', 401) unless current_user.collections.find(params[:currentCollectionId])
+        end
 
-      post do
-        # Check if we're receiving data after client validation
-        if params[:data].present?
-          # Handle the direct cleaned data case
-          collection_id = params[:currentCollectionId]
-          import_type = params[:import_type]
+        post do
+          # Check if we're receiving data after client validation
+          if params[:data].present?
+            # Handle the direct cleaned data case
+            collection_id = params[:currentCollectionId]
+            import_type = params[:import_type]
 
-          temp_filename = "#{SecureRandom.hex}-validated_data"
-          tmp_file_path = File.join('tmp', temp_filename)
+            temp_filename = "#{SecureRandom.hex}-validated_data"
+            tmp_file_path = File.join('tmp', temp_filename)
 
-          # parse data if it's a string (JSON)
-          if params[:data].is_a?(String)
-            begin
-              params[:data] = JSON.parse(params[:data])
-            rescue JSON::ParserError => e
-              Rails.logger.error("Failed to parse data: #{e.message}")
-              error!("Invalid data format: #{e.message}", 400)
-            end
-          end
-
-          file_path = "#{tmp_file_path}.csv"
-          CSV.open(file_path, 'wb') do |csv|
-            unless params[:data].empty?
-              # Add headers - get keys from the first row
-              first_row = params[:data].first
-
-              if first_row.is_a?(Hash)
-                headers = first_row.keys
-                csv << headers
-
-                # Add data rows
-                params[:data].each do |row|
-                  csv << headers.map { |header| row[header] }
-                end
-              else
-                error!('Invalid data format: rows must be objects', 400)
+            # parse data if it's a string (JSON)
+            if params[:data].is_a?(String)
+              begin
+                params[:data] = JSON.parse(params[:data])
+              rescue JSON::ParserError => e
+                Rails.logger.error("Failed to parse data: #{e.message}")
+                error!("Invalid data format: #{e.message}", 400)
               end
             end
-          end
 
-          # Create a file parameter structure that mimics an uploaded file
-          params[:file] = {
-            tempfile: File.open(file_path),
-            filename: 'validated_data.csv',
-            type: 'text/csv',
-          }
-        end
+            file_path = "#{tmp_file_path}.csv"
+            CSV.open(file_path, 'wb') do |csv|
+              unless params[:data].empty?
+                # Add headers - get keys from the first row
+                first_row = params[:data].first
 
-        # From here, the original logic continues
-        if params[:file].present?
-          extname = File.extname(params[:file][:filename])
-          if /\.(sdf?|mol)/i.match?(extname)
-            sdf_import = Import::ImportSdf.new(
-              file_path: params[:file][:tempfile].path,
-              collection_id: params[:currentCollectionId],
-              current_user_id: current_user.id,
-            )
-            sdf_import.find_or_create_mol_by_batch
-            return {
-              sdf: true, message: sdf_import.message,
-              data: sdf_import.processed_mol, status: sdf_import.status,
-              custom_data_keys: sdf_import.custom_data_keys.keys,
-              mapped_keys: sdf_import.mapped_keys,
-              collection_id: sdf_import.collection_id
+                if first_row.is_a?(Hash)
+                  headers = first_row.keys
+                  csv << headers
+
+                  # Add data rows
+                  params[:data].each do |row|
+                    csv << headers.map { |header| row[header] }
+                  end
+                else
+                  error!('Invalid data format: rows must be objects', 400)
+                end
+              end
+            end
+
+            # Create a file parameter structure that mimics an uploaded file
+            params[:file] = {
+              tempfile: File.open(file_path),
+              filename: 'validated_data.csv',
+              type: 'text/csv',
             }
           end
-          # Creates the Samples from the XLS/CSV file. Empty Array if not successful
-          file_size = params[:file][:tempfile].size
-          file = params[:file]
-          if file_size < 25_000
-            import = Import::ImportSamples.new(
-              params[:file][:tempfile].path,
-              params[:currentCollectionId], current_user.id, file['filename'], params[:import_type]
-            )
-            import_result = import.process
 
-            # Clean up temporary file
-            if params[:data].present? && File.exist?(file[:tempfile].path)
-              file[:tempfile].close
-              File.delete(file[:tempfile].path)
+          # From here, the original logic continues
+          if params[:file].present?
+            extname = File.extname(params[:file][:filename])
+            if /\.(sdf?|mol)/i.match?(extname)
+              sdf_import = Import::ImportSdf.new(
+                file_path: params[:file][:tempfile].path,
+                collection_id: params[:currentCollectionId],
+                current_user_id: current_user.id,
+              )
+              sdf_import.find_or_create_mol_by_batch
+              return {
+                sdf: true, message: sdf_import.message,
+                data: sdf_import.processed_mol, status: sdf_import.status,
+                custom_data_keys: sdf_import.custom_data_keys.keys,
+                mapped_keys: sdf_import.mapped_keys,
+                collection_id: sdf_import.collection_id
+              }
             end
+            # Creates the Samples from the XLS/CSV file. Empty Array if not successful
+            file_size = params[:file][:tempfile].size
+            file = params[:file]
+            if file_size < 25_000
+              import = Import::ImportSamples.new(
+                params[:file][:tempfile].path,
+                params[:currentCollectionId], current_user.id, file['filename'], params[:import_type]
+              )
+              import_result = import.process
 
-            if import_result[:status] == 'ok' || import_result[:status] == 'warning'
-              # the FE does not actually use the returned data, just the number of elements.
-              import_result[:data] = import_result[:data].map(&:id)
+              # Clean up temporary file
+              if params[:data].present? && File.exist?(file[:tempfile].path)
+                file[:tempfile].close
+                File.delete(file[:tempfile].path)
+              end
+
+              if import_result[:status] == 'ok' || import_result[:status] == 'warning'
+                # the FE does not actually use the returned data, just the number of elements.
+                import_result[:data] = import_result[:data].map(&:id)
+              end
+              import_result
+            else
+              temp_filename = "#{SecureRandom.hex}-#{file['filename']}"
+              # Create a new file in the tmp folder
+              tmp_file_path = File.join('tmp', temp_filename)
+              # Write the contents of the uploaded file to the temporary file
+              File.binwrite(tmp_file_path, file[:tempfile].read)
+              parameters = {
+                collection_id: params[:currentCollectionId],
+                user_id: current_user.id,
+                file_name: file['filename'],
+                file_path: tmp_file_path,
+                import_type: params[:import_type],
+              }
+              ImportSamplesJob.perform_later(parameters)
+              { status: 'in progress', message: 'Importing samples in background' }
             end
-            import_result
           else
-            temp_filename = "#{SecureRandom.hex}-#{file['filename']}"
-            # Create a new file in the tmp folder
-            tmp_file_path = File.join('tmp', temp_filename)
-            # Write the contents of the uploaded file to the temporary file
-            File.binwrite(tmp_file_path, file[:tempfile].read)
-            parameters = {
-              collection_id: params[:currentCollectionId],
-              user_id: current_user.id,
-              file_name: file['filename'],
-              file_path: tmp_file_path,
-              import_type: params[:import_type],
-            }
-            ImportSamplesJob.perform_later(parameters)
-            { status: 'in progress', message: 'Importing samples in background' }
+            error!('No file or data provided', 400)
           end
-        else
-          error!('No file or data provided', 400)
         end
       end
-    end
 
       namespace :confirm_import do
         desc 'Create Samples from an Array of inchikeys'

@@ -326,7 +326,7 @@ export const defaultSampleSchemaValidation = {
   purity: { type: 'float', defaultValue: 1.0 },
   melting_point: { type: 'numrange' },
   boiling_point: { type: 'numrange' },
-  density: { type: 'string' }, // Changed to string to accept with unit (g/mL)
+  density: { type: 'string' }, // String with unit g/mL, or g/ml
   molarity: { type: 'string' }, // Unified field replacing molarity_value and molarity_unit
   flash_point: { type: 'string' }, // String with unit (°C, °F, K)
   dry_solvent: { type: 'boolean', defaultValue: false },
