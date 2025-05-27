@@ -8,17 +8,17 @@ module Chemotion
     helpers ParamsHelpers
 
     helpers do
-      def filter_hash(hash1, hash2)
+      def filter_hash_by_structure(structure, input)
         result = {}
-        return result unless hash1.present? && hash2.present?
+        return result unless structure.present? && input.present?
 
-        hash1.each do |key, value|
-          next unless hash2.key?(key)
+        structure.each do |key, value|
+          next unless input.key?(key)
 
           result[key] = if value.is_a?(Hash)
-                          filter_hash(value, hash2[key])
+                          filter_hash_by_structure(value, input[key])
                         else
-                          hash2[key]
+                          input[key]
                         end
         end
 
@@ -76,41 +76,10 @@ module Chemotion
               v[:changes].each do |c|
                 next unless c[:fields]['variations']
 
-                old_value = c[:fields]['variations'][:old_value].split("\n").map do |variation|
-                  JSON.parse(variation.gsub('=>', ':').gsub('nil', 'null'))
-                end
-                old_value = [] if old_value.empty?
+                old_values = c[:fields]['variations'][:old_value]
+                new_values = c[:fields]['variations'][:new_value]
 
-                new_value = c[:fields]['variations'][:new_value].split("\n").map do |variation|
-                  JSON.parse(variation.gsub('=>', ':').gsub('nil', 'null'))
-                end
-                new_value = [] if new_value.empty?
-
-                c[:fields]['variations'][:old_value] = ActiveRecord::Base.connection.execute(
-                  "select jsonb_diff('#{new_value.to_json}', '#{old_value.to_json}');",
-                )[0]['jsonb_diff']
-                c[:fields]['variations'][:new_value] = ActiveRecord::Base.connection.execute(
-                  "select jsonb_diff('#{old_value.to_json}', '#{new_value.to_json}');",
-                )[0]['jsonb_diff']
-
-                if c[:fields]['variations'][:current_value].empty?
-                  c[:fields]['variations'][:current_value] = []
-                else
-
-                  current_value = c[:fields]['variations'][:current_value].split("\n").map do |variation|
-                    JSON.parse(variation.gsub('=>', ':').gsub('nil', 'null'))
-                  end
-
-                  new_value = JSON.parse(c[:fields]['variations'][:new_value])
-
-                  if new_value.present?
-                    current_value = current_value.each_with_index.map do |variation, i|
-                      filter_hash(new_value[i], variation)
-                    end
-
-                    c[:fields]['variations'][:current_value] = current_value.to_json
-                  end
-                end
+                c[:fields]['variations'][:old_value] = filter_hash_by_structure(new_values, old_values)
               end
             end
 
