@@ -164,6 +164,7 @@ export default class ScreenDetailsContainers extends Component {
   collapsableBody(container, key) {
     if (container.is_deleted) { return null; }
     const { readOnly } = this.props;
+    const { screen } = this.state;
 
     return (
       <Accordion.Collapse eventKey={key}>
@@ -174,6 +175,8 @@ export default class ScreenDetailsContainers extends Component {
             templateType="screen"
             container={container}
             onChange={() => this.handleChange()}
+            rootContainer={screen.container}
+            index={key}
           />
         </Card.Body>
       </Accordion.Collapse>
