@@ -295,6 +295,7 @@ class Reaction < ApplicationRecord
   end
 
   def variations
+    # We need to return raw.values because the frontend expects the variations to be an array of objects.
     raw = self[:variations]
     raw.is_a?(Hash) ? raw.values : raw
   end
