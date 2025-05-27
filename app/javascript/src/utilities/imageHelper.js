@@ -19,6 +19,20 @@ const previewContainerImage = (
       return `data:image/png;base64,${rawImg}`;
   }
 };
+
+/**
+ * Extracts the most relevant attachment (combined or latest) from a container's dataset children.
+ *
+ * This function searches through all child containers of type 'dataset', collects their attachments,
+ * filters those that have a thumbnail (`thumb`), and then returns the following in priority:
+ * - The attachment whose filename includes the word "combined" (case-insensitive).
+ * - Otherwise, the most recently updated attachment.
+ * - If none are found, returns `null`.
+ *
+ * @param {Object} container - The container object containing potential children.
+ * @param {Array<Object>} container.children - An array of child container objects.
+ * @returns {Object|null} The selected attachment object with a thumbnail, or `null` if none are found.
+ */
 const getAttachmentFromContainer = (container) => {
   const datasetChildren = container.children?.filter((child) => child.container_type === 'dataset') || [];
   const attachments = datasetChildren
@@ -34,6 +48,9 @@ const getAttachmentFromContainer = (container) => {
  * Fetches the base64 thumbnail image source for a given attachment ID.
  *
  * If no ID is provided, or if the fetch fails, a fallback SVG image path is returned.
+ *
+ * Aim: To retrieve a displayable image source for a given attachment ID by fetching its thumbnail,
+ * while gracefully handling missing or invalid IDs and fetch errors using fallback images.
  *
  * @async
  * @function fetchImageSrcByAttachmentId
