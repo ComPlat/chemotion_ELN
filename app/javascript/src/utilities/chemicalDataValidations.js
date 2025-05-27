@@ -566,6 +566,11 @@ export const validateChemicalField = async (value, fieldName, options = {}) => {
  * @returns {Promise<Object>} - Promise resolving to { valid: boolean, errors: string[] }
  */
 export const validateChemicalData = async (chemicalData, fieldTypes = {}) => {
+  if (!chemicalData || typeof chemicalData !== 'object') {
+    console.error('Invalid chemical data:', chemicalData);
+    return { valid: false, errors: ['Invalid chemical data'] };
+  }
+
   const errors = [];
   let isValid = true;
 
@@ -576,6 +581,12 @@ export const validateChemicalData = async (chemicalData, fieldTypes = {}) => {
   const dataToValidate = Array.isArray(chemicalData.chemical_data)
     ? chemicalData.chemical_data[0]
     : chemicalData;
+
+  // Patch: If dataToValidate is undefined/null (e.g., empty array), return valid
+  if (!dataToValidate) {
+    console.error('Invalid date format');
+    return { valid: false, errors: ['Invalid date format'] };
+  }
 
   // Use defaultChemicalSchemaValidation if no specific field types are provided
   const schemaToUse = Object.keys(fieldTypes).length > 0 ? fieldTypes : defaultChemicalSchemaValidation;
@@ -601,4 +612,12 @@ export const validateChemicalData = async (chemicalData, fieldTypes = {}) => {
   });
 
   return { valid: isValid, errors };
+};
+
+// Export cache variables for testing purposes
+export const testUtils = {
+  getHazardPhrasesCache: () => hazardPhrasesCache,
+  getPrecautionaryPhrasesCache: () => precautionaryPhrasesCache,
+  setHazardPhrasesCache: (value) => { hazardPhrasesCache = value; },
+  setPrecautionaryPhrasesCache: (value) => { precautionaryPhrasesCache = value; }
 };
