@@ -10,10 +10,6 @@ import {
   defaultChemicalSchemaValidation
 } from 'src/utilities/chemicalDataValidations';
 
-const MOLARITY_UNIT = /m\/L|mol\/L|M/i;
-const DENSITY_UNIT = /g\/mL|g\/ml/i;
-const FLASH_POINT_UNIT = /°C|°F|F|K/i;
-
 // Fields that require units when provided
 const fieldsWithUnits = ['density', 'molarity', 'flash_point'];
 
@@ -106,20 +102,23 @@ export const validateValueWithUnit = (value, fieldType) => {
   }
 
   // Select the appropriate unit regex based on field type
-  let unitPattern;
   let expectedUnit;
+  let isValid = false;
 
   switch (fieldType) {
     case 'density':
-      unitPattern = DENSITY_UNIT;
+      // Check for exact units g/mL or g/ml
+      isValid = /\d\s+g\/m[Ll]$/.test(value);
       expectedUnit = 'g/mL';
       break;
     case 'molarity':
-      unitPattern = MOLARITY_UNIT;
+      // Check for exact units M, m/L, or mol/L
+      isValid = /\d\s+(?:m\/L|mol\/L|M)$/.test(value);
       expectedUnit = 'M or mol/L';
       break;
     case 'flash_point':
-      unitPattern = FLASH_POINT_UNIT;
+      // Check for exact units °C, °F, or K
+      isValid = /\d\s+(?:°C|°F|K)$/.test(value);
       expectedUnit = '°C, °F, or K';
       break;
     default:
@@ -130,7 +129,7 @@ export const validateValueWithUnit = (value, fieldType) => {
   }
 
   // Check if the value has the expected unit
-  if (!unitPattern.test(value)) {
+  if (!isValid) {
     return {
       valid: false,
       message: `Value "${value}" is missing the expected unit (${expectedUnit})`
@@ -250,7 +249,6 @@ export const validateField = (value, fieldName, options = {}) => {
       || fieldName === 'molecular_mass') {
     return validateFloat(value);
   }
-  console.log(fieldName, value, options);
 
   // Handle boolean fields
   if (options.type === 'boolean'
@@ -461,7 +459,8 @@ export const getSchemaValidation = (type) => {
     case 'chemical':
       return defaultChemicalSchemaValidation;
     case 'sample':
-    default:
       return defaultSampleSchemaValidation;
+    default:
+      throw new Error(`Unknown data type "${type}" for schema validation`);
   }
 };
