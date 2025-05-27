@@ -32,6 +32,8 @@ module Export
       decoupled_style = sheet.styles.add_style(DECOUPLED_STYLE)
       ['decoupled', 'molecular mass (decoupled)', 'sum formula (decoupled)', 'sample uuid'].each do |e|
         s_idx = @headers.find_index(e)
+        next if s_idx.nil? # Skip styling if the header is not found
+
         sheet.rows[0].cells[s_idx].style = decoupled_style
       end
       image_width = DEFAULT_ROW_WIDTH
