@@ -7,36 +7,45 @@ function ReactionRole({ element }) {
     return null;
   }
 
-  let tooltip = null;
+  let tooltip;
+  let iconClasses;
   switch (element.role) {
     case 'gp':
-      tooltip = <Tooltip id="roleTp">General Procedure</Tooltip>;
-      return (
-        <OverlayTrigger placement="top" overlay={tooltip}>
-          <i className="fa fa-home c-bs-primary me-1" />
-        </OverlayTrigger>
-      );
+      tooltip = 'General Procedure';
+      iconClasses = 'fa-home c-bs-primary';
+      break;
+
     case 'parts':
-      tooltip = <Tooltip id="roleTp">Parts of General Procedure</Tooltip>;
-      return (
-        <OverlayTrigger placement="top" overlay={tooltip}>
-          <i className="fa fa-bookmark c-bs-success me-1" />
-        </OverlayTrigger>
-      );
+      tooltip = 'Parts of General Procedure';
+      iconClasses = 'fa-bookmark c-bs-success';
+      break;
+
     case 'single':
-      tooltip = <Tooltip id="roleTp">Single</Tooltip>;
-      return (
-        <OverlayTrigger placement="top" overlay={tooltip}>
-          <i className="fa fa-asterisk c-bs-danger me-1" />
-        </OverlayTrigger>
-      );
+      tooltip = 'Single';
+      iconClasses = 'fa-asterisk c-bs-danger';
+      break;
+
     default:
       return null;
   }
+
+  return (
+    <OverlayTrigger
+      placement="top"
+      overlay={(
+        <Tooltip id={`roleTp-${element.id}`}>
+          {tooltip}
+        </Tooltip>
+      )}
+    >
+      <i className={`fa ${iconClasses}`} />
+    </OverlayTrigger>
+  );
 }
 
 ReactionRole.propTypes = {
   element: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
     type: PropTypes.string,
     role: PropTypes.string,
   }).isRequired,

@@ -151,6 +151,7 @@ function GeneralMaterialGroup({
     reagentDd = (
       <Select
         isDisabled={!permitOn(reaction)}
+        value={null}
         className="mb-2"
         options={reagentList}
         placeholder="Reagents"
@@ -315,6 +316,7 @@ function SolventsMaterialGroup({
           <th className="align-middle">{addSampleButton}</th>
           <th className="align-middle">
             <Select
+              value={null}
               isDisabled={!permitOn(reaction)}
               options={solventOptions}
               placeholder="Default solvents"
