@@ -198,7 +198,7 @@ function cellIsEditable(params) {
 }
 
 function getMaterialGasType(material, gasMode) {
-  const gasType = material.gas_type ?? 'off';
+  const gasType = material?.gas_type ?? 'off';
   return gasMode ? gasType : 'off';
 }
 

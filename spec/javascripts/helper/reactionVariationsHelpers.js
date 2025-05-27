@@ -21,6 +21,13 @@ function getSelectedColumns(materialIDs) {
   };
 }
 
+function getMaterialIdsAsList(reactionMaterials) {
+  return Object.entries(getReactionMaterialsIDs(reactionMaterials)).reduce((acc, [key, value]) => {
+    acc[key] = value.map((x) => x[0]);
+    return acc;
+  }, {});
+}
+
 async function setUpReaction() {
   const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
   reaction.starting_materials[0].reference = true;
@@ -111,9 +118,7 @@ function getColumnDefinitionsMaterialIDs(columnDefinitions, materialType) {
   )
     .children
     .map(
-      // E.g., extract "foo" from "reactants.foo", or "bar" from "startingMaterials.bar",
-      // "foo" and "bar" being the material IDs.
-      (child) => child.field.replace(`${materialType}.`, ''),
+      (child) => child.field.replace(`${materialType}.`, '')
     );
 }
 
@@ -124,4 +129,5 @@ export {
   getColumnGroupChild,
   getColumnDefinitionsMaterialIDs,
   getSelectedColumns,
+  getMaterialIdsAsList,
 };

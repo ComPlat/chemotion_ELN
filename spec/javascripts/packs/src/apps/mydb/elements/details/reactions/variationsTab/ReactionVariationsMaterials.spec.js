@@ -15,6 +15,7 @@ import {
 
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import { cloneDeep } from 'lodash';
+import { getMaterialIdsAsList } from '../../../../../../../../helper/reactionVariationsHelpers';
 
 describe('ReactionVariationsMaterials', () => {
   it('updates yield when product mass changes', async () => {
@@ -132,7 +133,7 @@ describe('ReactionVariationsMaterials', () => {
     const updatedColumnDefinitions = resetColumnDefinitionsMaterials(
       columnDefinitions,
       reactionMaterials,
-      getReactionMaterialsIDs(reactionMaterials),
+      getMaterialIdsAsList(reactionMaterials),
       true
     );
 
@@ -202,7 +203,7 @@ describe('ReactionVariationsMaterials', () => {
   it('removes obsolete material columns', async () => {
     const reaction = await setUpReaction();
     const materials = getReactionMaterials(reaction);
-    const columns = getReactionMaterialsIDs(materials);
+    const columns = getMaterialIdsAsList(materials);
     materials.products.pop();
 
     expect(columns.products.length).toEqual(2);

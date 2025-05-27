@@ -12,6 +12,7 @@ import {
   getColumnGroupChild,
   getSelectedColumns,
   getColumnDefinitionsMaterialIDs,
+  getMaterialIdsAsList,
 } from 'helper/reactionVariationsHelpers';
 
 describe('ReactionVariationsUtils', () => {
@@ -131,7 +132,7 @@ describe('ReactionVariationsUtils', () => {
 
     reaction.products.pop();
     const updatedProductIDs = reaction.products.map((product) => product.id);
-    const materialIDs = getReactionMaterialsIDs(getReactionMaterials(reaction));
+    const materialIDs = getMaterialIdsAsList(getReactionMaterials(reaction));
     const updatedVariations = removeObsoleteColumnsFromVariations(reaction.variations, materialIDs);
     updatedVariations
       .forEach((variation) => {
@@ -182,7 +183,7 @@ describe('ReactionVariationsUtils', () => {
     const updatedStartingMaterialIDs = reactionMaterials.startingMaterials.map((material) => material.id);
     const updatedColumnDefinitions = removeObsoleteColumnDefinitions(
       columnDefinitions,
-      getReactionMaterialsIDs(reactionMaterials),
+      getMaterialIdsAsList(reactionMaterials)
     );
     expect(getColumnDefinitionsMaterialIDs(
       updatedColumnDefinitions,
@@ -262,7 +263,7 @@ describe('ReactionVariationsUtils', () => {
     const variationsColumns = getVariationsColumns(reaction.variations);
 
     expect(variationsColumns.startingMaterials)
-      .toEqual(reactionMaterialsIDs.startingMaterials);
+      .toEqual(reactionMaterialsIDs.startingMaterials.map((x) => x[0]));
     expect(variationsColumns.properties)
       .toEqual(expect.arrayContaining(['duration', 'temperature']));
     expect(variationsColumns.metadata)

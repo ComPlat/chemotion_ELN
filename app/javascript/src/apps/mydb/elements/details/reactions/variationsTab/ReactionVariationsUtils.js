@@ -297,8 +297,8 @@ function createVariationsRow({
     .forEach((materialType) => {
       row[materialType] = {};
       selectedColumns[materialType].forEach((materialID) => {
-        const material = materials[materialType].find((m) => m.id.toString() === materialID.toString());
-        row[materialType][materialID] = getMaterialData(material, materialType, gasMode, vesselVolume);
+        const material = materials[materialType].find((m) => m.id.toString() === materialID[0].toString());
+        row[materialType][materialID[0]] = getMaterialData(material, materialType, gasMode, vesselVolume);
       });
     });
 
@@ -668,7 +668,7 @@ function getVariationsColumns(variations) {
   const materialColumns = Object.entries(materialTypes)
     .reduce((materialsByType, [materialType]) => ({
       ...materialsByType,
-      [materialType]: Object.keys(variationsRow ? variationsRow[materialType] : []),
+      [materialType]: Object.keys(variationsRow ? variationsRow[materialType] : [])
     }), {});
   const propertyColumns = Object.keys(variationsRow ? variationsRow.properties : {});
   const metadataColumns = Object.keys(variationsRow ? variationsRow.metadata : {});

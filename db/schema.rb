@@ -1823,6 +1823,58 @@ ActiveRecord::Schema.define(version: 2025_07_01_121908) do
       end;
       $function$
   SQL
+  create_function :group_user_ids, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.group_user_ids(group_id integer)
+       RETURNS TABLE(user_ids integer)
+       LANGUAGE sql
+      AS $function$
+      select id from users where type='Person' and id= $1
+      union
+      select user_id from users_groups where group_id = $1
+      $function$
+  SQL
+  create_function :labels_by_user_sample, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.labels_by_user_sample(user_id integer, sample_id integer)
+       RETURNS TABLE(labels text)
+       LANGUAGE sql
+      AS $function$
+      select string_agg(title::text, ', ') as labels from (select title from user_labels ul where ul.id in (
+          select d.list
+          from element_tags et, lateral (
+              select value::integer as list
+              from jsonb_array_elements_text(et.taggable_data  -> 'user_labels')
+              ) d
+          where et.taggable_id = $2 and et.taggable_type = 'Sample'
+      ) and (ul.access_level = 1 or (ul.access_level = 0 and ul.user_id = $1)) order by title  ) uls
+      $function$
+  SQL
+  create_function :literatures_by_element, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.literatures_by_element(element_type text, element_id integer)
+       RETURNS TABLE(literatures text)
+       LANGUAGE sql
+      AS $function$
+      select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2
+      where l.literature_id = l2.id
+        and l.element_type = $1 and l.element_id = $2
+      $function$
+  SQL
+  create_function :shared_user_as_json, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.shared_user_as_json(in_user_id integer, in_current_user_id integer)
+       RETURNS json
+       LANGUAGE plpgsql
+      AS $function$
+      begin
+          if (in_user_id = in_current_user_id) then
+              return null;
+          else
+              return (select row_to_json(result) from (
+                                                          select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
+                                                          from users where id = $1
+                                                      ) as result);
+          end if;
+      end;
+      $function$
+  SQL
   create_function :update_users_matrix, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.update_users_matrix()
        RETURNS trigger
