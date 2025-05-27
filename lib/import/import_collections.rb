@@ -375,9 +375,6 @@ module Import
         # add reaction to the @instances map
         update_instances!(uuid, reaction)
 
-        # create the root container like with samples
-        reaction.container = Container.create_root_container
-
         # overwrite with the image from the import, this needs to be at the end
         # because otherwise Reaction:update_svg_file! would create an empty image again
         reaction.reaction_svg_file = fetch_image('reactions', fields.fetch('reaction_svg_file'))
@@ -439,8 +436,6 @@ module Import
           wellplate.height = fields['height'].to_i
         end
 
-        # create the root container like with samples
-        wellplate.container = Container.create_root_container
         wellplate.save!
 
         # add reaction to the @instances map
@@ -495,8 +490,6 @@ module Import
           ),
         ))
 
-        # create the root container like with samples
-        screen.container = Container.create_root_container
         screen.save!
 
         # add reaction to the @instances map
