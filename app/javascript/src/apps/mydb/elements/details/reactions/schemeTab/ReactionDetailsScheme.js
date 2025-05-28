@@ -129,11 +129,7 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   switchYield = (shouldDisplayYield) => {
-    if (shouldDisplayYield) {
-      this.setState({ displayYieldField: true });
-    } else {
-      this.setState({ displayYieldField: false });
-    }
+    this.setState({ displayYieldField: !!shouldDisplayYield });
   };
 
   handleOnConditionSelect(eventKey) {
