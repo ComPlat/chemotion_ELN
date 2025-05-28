@@ -120,7 +120,7 @@ export default class ChemicalTab extends React.Component {
     const { chemical, searchResults } = this.state;
 
     // Early return if chemical data is not available
-    if (!chemical || !chemical._chemical_data || !chemical._chemical_data[0]) {
+    if (!chemical?._chemical_data?.[0]) {
       console.error('Cannot remove safety sheet: Chemical data is unavailable');
       return;
     }
@@ -136,7 +136,7 @@ export default class ChemicalTab extends React.Component {
       this.setState({ searchResults: updatedSearchResults });
     } else {
       // Handle saved SDS removal
-      const path = parameters.safetySheetPath;
+      const path = parameters?.safetySheetPath;
       if (path && path.length > 0) {
         const dynamicKey = Object.keys(document).find((key) => key.endsWith('_link'));
 
