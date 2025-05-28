@@ -12,6 +12,12 @@ function SDSAttachmentModal({ show, onHide, onSubmit }) {
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
+
+    if (!file) {
+      setError('No file selected.');
+      setAttachedFile(null);
+    }
+
     // Check if the file is a PDF
     if (file && file.type !== 'application/pdf') {
       setError('Only PDF files are allowed.');
