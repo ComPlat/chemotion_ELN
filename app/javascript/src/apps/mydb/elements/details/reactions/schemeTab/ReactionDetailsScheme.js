@@ -1147,7 +1147,7 @@ export default class ReactionDetailsScheme extends Component {
       const allHaveNoConversion = reaction.products.every(
         (material) => !(material.conversion_rate && material.conversion_rate !== 0)
       );
-      this.switchYield(!!allHaveNoConversion);
+      this.switchYield(allHaveNoConversion);
     }
 
     const headReactants = reaction.starting_materials.length ?? 0;
