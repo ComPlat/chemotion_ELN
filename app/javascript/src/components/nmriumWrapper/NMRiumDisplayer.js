@@ -186,12 +186,13 @@ export default class NMRiumDisplayer extends React.Component {
   
     // Fallback: only .jdx file available
     if (jdx?.url) {
+      const jdxUrlWithFile = `${jdx.url}/file.jdx`;
       const payload = {
         type: 'nmrium',
         data: {
           spectra: [{
             id: crypto.randomUUID(),
-            source: { jcampURL: jdx.url },
+            source: { jcampURL: jdxUrlWithFile },
             display: { name: jdx.label || 'spectrum' },
           }],
           molecules: molfile ? [{ molfile }] : [],
@@ -247,15 +248,17 @@ export default class NMRiumDisplayer extends React.Component {
   
   patchJcampReference(nmriumObj, jdxUrl) {
     if (!jdxUrl) return;
+    
+    const jdxUrlWithFile = `${jdxUrl}/file.jdx`;
   
     const spectra = nmriumObj.spectra || nmriumObj.data?.spectra || [];
     spectra.forEach((s) => {
       if (s?.source) {
-        s.source.jcampURL = jdxUrl;
-        s.source.entries?.forEach((e) => (e.relativePath = jdxUrl));
+        s.source.jcampURL = jdxUrlWithFile;
+        s.source.entries?.forEach((e) => (e.relativePath = jdxUrlWithFile));
       }
       if (s?.sourceSelector?.files?.length) {
-        s.sourceSelector.files = s.sourceSelector.files.map(() => jdxUrl);
+        s.sourceSelector.files = s.sourceSelector.files.map(() => jdxUrlWithFile);
       }
     });
   
@@ -263,9 +266,9 @@ export default class NMRiumDisplayer extends React.Component {
     if (!root.source) root.source = {};
     if (!Array.isArray(root.source.entries)) root.source.entries = [];
     if (root.source.entries.length === 0) {
-      root.source.entries.push({ relativePath: jdxUrl });
+      root.source.entries.push({ relativePath: jdxUrlWithFile });
     } else {
-      root.source.entries[0].relativePath = jdxUrl;
+      root.source.entries[0].relativePath = jdxUrlWithFile;
     }
   }
   
