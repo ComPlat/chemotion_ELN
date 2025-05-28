@@ -1,5 +1,5 @@
 /* eslint-disable camelcase */
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Button,
   Form,
@@ -33,7 +33,7 @@ const sampleName = (sample) => {
       {sampleNameLabel}
     </a>
   );
-}
+};
 
 const sampleVisualisation = (well, onChange) => {
   const { sample } = well;
@@ -42,7 +42,7 @@ const sampleVisualisation = (well, onChange) => {
   const removeSampleFromWell = () => {
     well.sample = null;
     onChange(well);
-  }
+  };
 
   if (sample) {
     svg = <SVG key={sample.id} className="molecule-mid" src={sample.svgPath} />;
@@ -129,34 +129,48 @@ const labelSelection = (well, onChange) => {
   );
 };
 
-const colorPicker = (well, onChange) => (
-  <div className="mt-3">
-    <Form.Group as={Row} controlId="formColorSelectorDisplay">
-      <Form.Label as="h4">Select Color</Form.Label>
-      <InputGroup>
-        <InputGroup.Text style={{ backgroundColor: well.color_code }} />
-        <Form.Control
-          className="input-sm"
-          type="text"
-          readOnly
-          value={well.color_code}
-        />
-      </InputGroup>
-    </Form.Group>
-    <Form.Group controlId="formHorizontalPicker" className="my-3">
-      <CirclePicker
-        circleSize={17}
-        width="100%"
-        onChangeComplete={(color) => {
-          well.color_code = color.hex;
-          onChange(well);
-        }}
-      />
-    </Form.Group>
-  </div>
-);
+const colorPicker = (well, onChange, activeColor, setActiveColor) => {
+  const customCSS = `
+    .my-circle-picker .circle-picker div[title="${activeColor}"] {
+      outline: 1px solid ${activeColor} !important;
+    }
+  `;
+  return (
+    <div className="mt-3">
+      <style>{customCSS}</style>
+      <Form.Group as={Row} controlId="formColorSelectorDisplay">
+        <Form.Label as="h4">Select Color</Form.Label>
+        <InputGroup>
+          <InputGroup.Text style={{ backgroundColor: well.color_code }} />
+          <Form.Control
+            className="input-sm"
+            type="text"
+            readOnly
+            value={well.color_code || ''}
+          />
+        </InputGroup>
+      </Form.Group>
+      <Form.Group controlId="formHorizontalPicker" className="my-3">
+        <div className="my-circle-picker">
+          <CirclePicker
+            circleSize={15}
+            width="100%"
+            value={activeColor}
+            onChangeComplete={(color) => {
+              const hex = color.hex;
+              well.color_code = activeColor === hex ? null : hex;
+              setActiveColor(activeColor === hex ? null : hex);
+              onChange(well);
+            }}
+          />
+        </div>
+      </Form.Group>
+    </div>
+  )
+};
 
 const WellDetails = ({ well, readoutTitles, handleClose, onChange }) => {
+  const [activeColor, setActiveColor] = useState(well.color_code || null);
   return (
     <Modal
       animation
@@ -171,7 +185,7 @@ const WellDetails = ({ well, readoutTitles, handleClose, onChange }) => {
         {sampleVisualisation(well, onChange)}
         {labelSelection(well, onChange)}
         {readoutSection(well.readouts, readoutTitles)}
-        {colorPicker(well, onChange)}
+        {colorPicker(well, onChange, activeColor, setActiveColor)}
       </Modal.Body>
     </Modal>
   );
