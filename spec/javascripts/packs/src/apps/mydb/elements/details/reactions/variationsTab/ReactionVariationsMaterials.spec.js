@@ -8,14 +8,13 @@ import {
   EquivalentParser
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import {
-  setUpReaction, setUpGaseousReaction, getColumnDefinitionsMaterialIDs, getColumnGroupChild
+  setUpReaction, setUpGaseousReaction, getColumnDefinitionsMaterialIDs, getColumnGroupChild, getMaterialIdsAsList
 } from 'helper/reactionVariationsHelpers';
 import {
   materialTypes,
 
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import { cloneDeep } from 'lodash';
-import { getMaterialIdsAsList } from '../../../../../../../../helper/reactionVariationsHelpers';
 
 describe('ReactionVariationsMaterials', () => {
   it('updates yield when product mass changes', async () => {

@@ -39,8 +39,8 @@ describe('ReactionVariationsAnalyses', async () => {
       variations[0].metadata.analyses = [analysisFoo.id];
       expect(updateAnalyses(variations, getReactionAnalyses(reaction))[0].metadata.analyses)
         .toEqual([analysisFoo.id]);
-      const nc =  reaction.container.children[0].children.filter((child) => child.id !== analysisFoo.id);
-      reaction.container.children[0].children = nc;
+      reaction.container.children[0].children = reaction
+        .container.children[0].children.filter((child) => child.id !== analysisFoo.id);
       expect(updateAnalyses(variations, getReactionAnalyses(reaction))[0].metadata.analyses)
         .toEqual([]);
     });
@@ -54,7 +54,7 @@ describe('ReactionVariationsAnalyses', async () => {
         .toEqual([]);
     });
     it('when analysis is new', async () => {
-      let { variations } = reaction;
+      const { variations } = reaction;
       variations[1].metadata.analyses = [analysisBar.id];
       expect(updateAnalyses(variations, getReactionAnalyses(reaction))[1].metadata.analyses)
         .toEqual([analysisBar.id]);

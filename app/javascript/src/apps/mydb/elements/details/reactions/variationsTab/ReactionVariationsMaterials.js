@@ -219,17 +219,8 @@ function getMaterialAux(material, materialType, gasMode, vesselVolume) {
 }
 
 function getMaterialData(material, materialType, gasMode = false, vesselVolume = null) {
-    const materialCopy = cloneDeep(material);
+  const materialCopy = cloneDeep(material);
 
-    let gasType = materialCopy.gas_type ?? 'off';
-    gasType = gasMode ? gasType : 'off';
-
-    // Mutable data is represented as "entries", e.g., `foo: {value: bar, unit: baz}.
-    const entries = getMaterialEntries(materialType, gasType);
-    const materialData = entries.reduce((data, entry) => {
-        data[entry] = {value: getStandardValue(entry, materialCopy), unit: getStandardUnits(entry)[0]};
-        return data;
-    }, {});
   // User-editable data is represented as "entries", e.g., `foo: {value: bar, unit: baz}.
   const entries = getMaterialEntries(materialType, getMaterialGasType(materialCopy, gasMode));
   const materialData = entries.reduce((data, entry) => {
@@ -237,19 +228,6 @@ function getMaterialData(material, materialType, gasMode = false, vesselVolume =
     return data;
   }, {});
 
-    materialData.aux = {
-        coefficient: materialCopy.coefficient ?? null,
-        isReference: materialCopy.reference ?? false,
-        loading: (Array.isArray(materialCopy.residues) && materialCopy.residues.length) ? materialCopy.residues[0].custom_info?.loading : null,
-        purity: materialCopy.purity ?? null,
-        density: materialCopy.density ?? null,
-        molarity: materialCopy.molarity_value ?? null,
-        molecularWeight: materialCopy.molecule_molecular_weight ?? null,
-        sumFormula: materialCopy.molecule_formula ?? null,
-        gasType,
-        vesselVolume,
-        materialType,
-    };
   // Non-user-editable data (i.e., read-only entries) is represented as "aux", e.g., `foo: bar`.
   materialData.aux = getMaterialAux(
     materialCopy,
@@ -258,7 +236,7 @@ function getMaterialData(material, materialType, gasMode = false, vesselVolume =
     vesselVolume
   );
 
-    return materialData;
+  return materialData;
 }
 
 function updateVariationsAux(variations, materials, gasMode, vesselVolume) {

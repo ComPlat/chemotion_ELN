@@ -260,7 +260,7 @@ function createVariationsRow({
   materials,
   selectedColumns,
   variations,
-  processedSegs,
+  processedSegments,
   reactionHasPolymers = false,
   durationValue = null,
   durationUnit = 'None',
@@ -288,7 +288,7 @@ function createVariationsRow({
         const {
           type,
           value,
-        } = processedSegs.find((x) => x.key === metadataType).field;
+        } = processedSegments.find((x) => x.key === metadataType).field;
         return [metadataType, getSegmentData(type, value)];
       }),
     ),
@@ -349,7 +349,7 @@ function addMissingColumnsToVariations({
   materials,
   selectedColumns,
   variations,
-  processedSegs,
+  processedSegments,
   reactionHasPolymers = false,
   durationValue = null,
   durationUnit = 'None',
@@ -397,7 +397,7 @@ function addMissingColumnsToVariations({
               const {
                 type,
                 value,
-              } = processedSegs.find((x) => x.key === childID).field;
+              } = processedSegments.find((x) => x.key === childID).field;
               newRow.segmentData = {
                 ...newRow.segmentData,
                 [childID]: getSegmentData(type, value),
@@ -717,8 +717,8 @@ const getSegmentsForVariations = (reaction) => {
   const fetchData = async () => {
     try {
       const res = await GenericSgsFetcher.listSegmentKlass({ is_active: true }, true);
-      const reactionsSegs = res.klass.filter((k) => k.element_klass.id === 3 && k.is_active);
-      segmentsForVariations = processSegmentsForVariations(reactionsSegs, reaction);
+      const reactionsSegments = res.klass.filter((k) => k.element_klass.id === 3 && k.is_active);
+      segmentsForVariations = processSegmentsForVariations(reactionsSegments, reaction);
     } catch (error) {
       console.error('Error fetching segments:', error);
     }
