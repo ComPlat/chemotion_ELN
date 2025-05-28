@@ -8,7 +8,7 @@ import {
   EquivalentParser
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import {
-  setUpReaction, setUpGaseousReaction, getColumnDefinitionsMaterialIDs, getColumnGroupChild
+  setUpReaction, setUpGaseousReaction, getColumnDefinitionsMaterialIDs, getColumnGroupChild, getMaterialIdsAsList
 } from 'helper/reactionVariationsHelpers';
 import {
   materialTypes,
@@ -132,7 +132,7 @@ describe('ReactionVariationsMaterials', () => {
     const updatedColumnDefinitions = resetColumnDefinitionsMaterials(
       columnDefinitions,
       reactionMaterials,
-      getReactionMaterialsIDs(reactionMaterials),
+      getMaterialIdsAsList(reactionMaterials),
       true
     );
 
@@ -202,7 +202,7 @@ describe('ReactionVariationsMaterials', () => {
   it('removes obsolete material columns', async () => {
     const reaction = await setUpReaction();
     const materials = getReactionMaterials(reaction);
-    const columns = getReactionMaterialsIDs(materials);
+    const columns = getMaterialIdsAsList(materials);
     materials.products.pop();
 
     expect(columns.products.length).toEqual(2);
