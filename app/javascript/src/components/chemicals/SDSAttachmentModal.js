@@ -30,7 +30,8 @@ function SDSAttachmentModal({ show, onHide, onSubmit }) {
 
   const isValidURL = (url) => {
     const pattern = new RegExp('^(https?:\\/\\/)?' // Optional protocol
-      + '([a-z0-9\\-]+\\.)+[a-z]{2,}$', 'i'); // Domain name and TLD consists of at least two letters
+      + '([a-z0-9\\-]+\\.)+[a-z]{2,}' // Domain name and TLD
+      + '(\\/.*)?$', 'i'); // Optional path
     return !!pattern.test(url);
   };
 
@@ -49,6 +50,7 @@ function SDSAttachmentModal({ show, onHide, onSubmit }) {
       return;
     }
     if (productLink && !isValidURL(productLink)) {
+      console.log('Invalid product link:', !isValidURL(productLink));
       setError('Please enter a valid product website link.');
       return;
     }
