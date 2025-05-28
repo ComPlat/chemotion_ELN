@@ -7,13 +7,13 @@ import {
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import {
-    getVariationsRowName, convertUnit, getStandardUnits, getUserFacingUnit,
+    getVariationsRowName, convertUnit, getStandardUnits,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   getReferenceMaterial, getCatalystMaterial, getFeedstockMaterial, getMolFromGram, getGramFromMol,
   computeEquivalent, computePercentYield, computePercentYieldGas, getVolumeFromGram, getGramFromVolume,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
-import {parseNumericStringOrNum, parseNumericString} from 'src/utilities/MathUtils';
+import { parseNumericStringOrNum } from 'src/utilities/MathUtils';
 import {
   calculateGasMoles, calculateTON, calculateFeedstockMoles, calculateFeedstockVolume, calculateGasVolume,
 } from 'src/utilities/UnitsConversion';
