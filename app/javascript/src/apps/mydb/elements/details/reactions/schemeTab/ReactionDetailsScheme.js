@@ -129,8 +129,11 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   switchYield = (shouldDisplayYield) => {
-    const { displayYieldField } = this.state;
-    this.setState({ displayYieldField: shouldDisplayYield ?? !displayYieldField });
+    if (shouldDisplayYield) {
+      this.setState({ displayYieldField: true });
+    } else {
+      this.setState({ displayYieldField: false });
+    }
   };
 
   handleOnConditionSelect(eventKey) {
@@ -1142,11 +1145,9 @@ export default class ReactionDetailsScheme extends Component {
 
     if (displayYieldField === null) {
       const allHaveNoConversion = reaction.products.every(
-        (material) => material.conversion_rate && material.conversion_rate !== 0
+        (material) => !(material.conversion_rate && material.conversion_rate !== 0)
       );
-      if (allHaveNoConversion) {
-        this.switchYield(!allHaveNoConversion);
-      }
+      this.switchYield(!!allHaveNoConversion);
     }
 
     const headReactants = reaction.starting_materials.length ?? 0;
