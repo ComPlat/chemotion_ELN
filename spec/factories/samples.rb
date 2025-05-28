@@ -54,7 +54,7 @@ FactoryBot.define do
       end
       after(:build) do |sample|
         sample.molecule = FactoryBot.build(:molecule) unless sample.molecule
-        sample.container = FactoryBot.create(:container, :with_analysis) unless sample.container
+        sample.container = FactoryBot.create(:container, :with_analysis) unless sample.association(:container).reader
       end
     end
     after(:create) do |sample, evaluator|
@@ -65,6 +65,9 @@ FactoryBot.define do
   factory :sample_without_analysis, parent: :valid_sample do
     target_amount_value { 100 }
     target_amount_unit { 'mg' }
+    callback(:after_create) do |sample|
+      sample.analyses.each(&:destroy)
+    end
   end
 
   factory :sample_with_image_in_analysis, parent: :sample_without_analysis do
