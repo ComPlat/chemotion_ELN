@@ -23,6 +23,7 @@
 class Screen < ApplicationRecord
   has_logidze
   acts_as_paranoid
+  include Containerable
   include ElementUIStateScopes
   include PgSearch::Model
   include Collectable
@@ -57,8 +58,6 @@ class Screen < ApplicationRecord
   has_many :research_plans, through: :research_plans_screens
 
   has_many :comments, as: :commentable, dependent: :destroy
-
-  has_one :container, :as => :containable
 
   before_save :description_to_plain_text
 
