@@ -128,7 +128,7 @@ module Chemotion
         when 2
           "chemotion://#{@attachment.filename}?url=#{url}"
         when 3
-          "#{Rails.application.config.root_url}/api/v1/public/third_party_apps/#{@token}/#{@attachment.filename}"
+          "#{Rails.application.config.root_url}/api/v1/public/third_party_apps/#{@token}"
         else
           "chemotion://?url=#{url}"
         end
