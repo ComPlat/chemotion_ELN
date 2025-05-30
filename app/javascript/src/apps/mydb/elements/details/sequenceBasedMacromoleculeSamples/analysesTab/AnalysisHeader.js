@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { Form, Button } from 'react-bootstrap';
 
 import QuillViewer from 'src/components/QuillViewer';
-import { previewContainerImage } from 'src/utilities/imageHelper';
+import { getAttachmentFromContainer } from 'src/utilities/imageHelper';
 import ImageModal from 'src/components/common/ImageModal';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import SpectraActions from 'src/stores/alt/actions/SpectraActions';
@@ -155,16 +155,7 @@ const AnalysisHeader = ({ container, readonly }) => {
       return c;
     }),
   };
-  const previewImg = previewContainerImage(container);
-  let hasPop = true;
-  let fetchNeeded = false;
-  let fetchId = 0;
-  if (previewImg.startsWith('data:image')) {
-    fetchNeeded = true;
-    fetchId = container.preview_img.id;
-  } else {
-    hasPop = false;
-  }
+  const attachment = getAttachmentFromContainer(container);
 
   const orderClass = sbmmStore.analysis_mode == 'order' ? 'order pe-2' : '';
   const deleted = container?.is_deleted || false;
@@ -175,15 +166,9 @@ const AnalysisHeader = ({ container, readonly }) => {
         {deleted
           ? <i className="fa fa-ban text-body-tertiary fs-2 text-center d-block" /> 
           : <ImageModal
-            hasPop={hasPop}
-            previewObject={{
-              src: previewImg
-            }}
+            attachment={attachment}
             popObject={{
               title: container.name,
-              src: previewImg,
-              fetchNeeded,
-              fetchId
             }}
           />
         }
