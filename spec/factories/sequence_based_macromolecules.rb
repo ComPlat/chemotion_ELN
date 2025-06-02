@@ -25,10 +25,6 @@ FactoryBot.define do
     protein_source_details_expression_system { }
     deleted_at { }
 
-    parent { nil }
-    protein_sequence_modification { association :protein_sequence_modification }
-    post_translational_modification { association :post_translational_modification }
-
     after(:build) do |sbmm, evaluator|
       if sbmm.uniprot_derivation == 'uniprot_modified'
         sbmm.parent = build(:uniprot_sbmm) unless sbmm.parent.present?
@@ -38,7 +34,7 @@ FactoryBot.define do
     end
 
     factory(:uniprot_sbmm) do
-      uniprot_source { File.read(Rails.root.join('spec/fixtures/uniprot/P12345.json')) }
+      uniprot_source { "UNIPROT_JSON" }
       primary_accession { "P12345" }
       accessions { ["P12345", "G1SKL2"] }
       ec_numbers { ["2.6.1.1", "2.6.1.7"] }
