@@ -481,16 +481,15 @@ class SampleComponent extends Component {
 
   componentRatio(material) {
     const { sample } = this.props;
-    const { lockedComponents } = this.state;
-
-    const isConcentrationLocked = lockedComponents.includes(material.id);
+    // Only disable if user cannot edit, concentration is locked, or the material has a truthy reference
+    const isDisabled = !permitOn(sample) || material.isComponentConcentrationLocked() || !!material.reference;
 
     return (
       <td style={{ verticalAlign: 'top' }}>
         <NumeralInputWithUnitsCompo
           precision={4}
           value={material.equivalent || 0}
-          disabled={!permitOn(sample) || isConcentrationLocked || material.reference}
+          disabled={isDisabled}
           onChange={(e) => this.handleRatioChange(e, material.equivalent)}
         />
       </td>
