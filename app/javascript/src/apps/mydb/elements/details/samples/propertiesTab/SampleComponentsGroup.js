@@ -38,6 +38,29 @@ class SampleComponentsGroup extends React.Component {
     this.setState({ ...state });
   }
 
+  stockMolarityInput(headers) {
+    const { handleTabSelect, activeTab } = this.props;
+
+    return (
+      <ButtonGroup>
+        <ButtonGroupToggleButton
+          onClick={() => handleTabSelect('concentration')}
+          active={activeTab === 'concentration'}
+          size="xxsm"
+        >
+          {headers.startingConc}
+        </ButtonGroupToggleButton>
+        <ButtonGroupToggleButton
+          onClick={() => handleTabSelect('density')}
+          active={activeTab === 'density'}
+          size="xxsm"
+        >
+          {headers.density}
+        </ButtonGroupToggleButton>
+      </ButtonGroup>
+    );
+  }
+
   renderSwitchAmountButton(lockState, materialGroup, actionType) {
     const updatedActionType = materialGroup === 'solid' ? `${actionType}Solids` : actionType;
 
@@ -67,33 +90,10 @@ class SampleComponentsGroup extends React.Component {
     );
   }
 
-  stockMolarityInput(headers) {
-    const { handleTabSelect, activeTab } = this.props;
-
-    return (
-      <ButtonGroup>
-        <ButtonGroupToggleButton
-          onClick={() => handleTabSelect('concentration')}
-          active={activeTab === 'concentration'}
-          size="xxsm"
-        >
-          {headers.startingConc}
-        </ButtonGroupToggleButton>
-        <ButtonGroupToggleButton
-          onClick={() => handleTabSelect('density')}
-          active={activeTab === 'density'}
-          size="xxsm"
-        >
-          {headers.density}
-        </ButtonGroupToggleButton>
-      </ButtonGroup>
-    );
-  }
-
   render() {
     const {
       materialGroup, deleteMixtureComponent, onChange, sample, headIndex, dropSample, dropMaterial, sampleComponents,
-      showModalWithMaterial, activeTab, handleTabSelect, enableComponentLabel, enableComponentPurity
+      showModalWithMaterial, activeTab, handleTabSelect, enableComponentPurity
     } = this.props;
     const { lockAmountColumn, lockAmountColumnSolids } = this.state;
 
@@ -114,14 +114,12 @@ class SampleComponentsGroup extends React.Component {
           showModalWithMaterial={showModalWithMaterial}
           activeTab={activeTab}
           handleTabSelect={handleTabSelect}
-          enableComponentLabel={enableComponentLabel}
           enableComponentPurity={enableComponentPurity}
         />
       );
     }) : [];
 
     const headers = {
-      name: 'Label',
       amount: 'Amount',
       mass: 'Mass',
       volume: 'Volume',
@@ -147,7 +145,6 @@ class SampleComponentsGroup extends React.Component {
             <col style={{ width: '6%' }} />
             <col style={{ width: '2%' }} />
             <col style={{ width: '14%' }} />
-            {enableComponentLabel && <col style={{ width: '4%' }} />}
             {enableComponentPurity && <col style={{ width: '4%' }} />}
           </colgroup>
           <thead>
@@ -171,14 +168,12 @@ class SampleComponentsGroup extends React.Component {
                 </div>
               </th>
             )}
-
             {materialGroup === 'liquid' && (
               <th>
                 {headers.volume}
               </th>
             )}
             <th>{headers.amount}</th>
-
             <th>{headers.eq}</th>
             <th>{headers.ref}</th>
             <th>
@@ -194,8 +189,6 @@ class SampleComponentsGroup extends React.Component {
                 <i className="ms-1 fa fa-info-circle"/>
               </OverlayTrigger>
             </th>
-
-            {enableComponentLabel && <th>{headers.name}</th>}
             {enableComponentPurity && <th>{headers.purity}</th>}
           </tr>
           </thead>
@@ -216,7 +209,6 @@ SampleComponentsGroup.propTypes = {
   sample: PropTypes.instanceOf(Sample).isRequired,
   dropSample: PropTypes.func.isRequired,
   dropMaterial: PropTypes.func.isRequired,
-  enableComponentLabel: PropTypes.bool.isRequired,
   enableComponentPurity: PropTypes.bool.isRequired,
 };
 

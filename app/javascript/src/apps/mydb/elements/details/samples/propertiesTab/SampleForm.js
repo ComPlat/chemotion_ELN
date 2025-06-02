@@ -1005,7 +1005,6 @@ export default class SampleForm extends React.Component {
             <Row className="mb-4">
               <Col>
                 <div className="d-flex justify-content-center align-items-center gap-3">
-                  {this.renderCheckbox('enableComponentLabel', 'Enable label', 'enable-component-label')}
                   {this.renderCheckbox('enableComponentPurity', 'Enable purity', 'enable-component-purity')}
                 </div>
               </Col>
