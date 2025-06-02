@@ -5,6 +5,7 @@ import {
   Form, InputGroup, Button, OverlayTrigger, Tooltip,
 } from 'react-bootstrap';
 import { metPreConv, metPrefSymbols } from 'src/utilities/metricPrefix';
+import { formatDisplayValue } from 'src/utilities/MathUtils';
 
 export default class NumeralInputWithUnitsCompo extends Component {
   constructor(props) {
@@ -182,12 +183,17 @@ export default class NumeralInputWithUnitsCompo extends Component {
       copyButtonText
     } = this.state;
     const mp = metPrefSymbols[metricPrefix];
-    const nanOrInfinity = isNaN(value) || !isFinite(value);
-    
+    const nanOrInfinity = Number.isNaN(value) || !Number.isFinite(value);
+
     // Calculate display value once during render
-    const displayValue = !showString && nanOrInfinity ? 'n.d.' :
-      !showString ? metPreConv(value, 'n', metricPrefix).toPrecision(currentPrecision) :
-      valueString;
+    let displayValue;
+    if (!showString && nanOrInfinity) {
+      displayValue = 'n.d.';
+    } else if (!showString) {
+      displayValue = formatDisplayValue(metPreConv(value, 'n', metricPrefix), currentPrecision);
+    } else {
+      displayValue = valueString;
+    }
 
     const inputDisabled = disabled ? true : block;
     const alwaysAllowDisplayUnit = [
@@ -239,7 +245,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
                 </Tooltip>
               )}
             >
-              <i className="ms-1 fa fa-info-circle"/>
+              <i className="ms-1 fa fa-info-circle" />
             </OverlayTrigger>
           )}
           {showInfoTooltipRequiredVol && (
@@ -258,7 +264,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
                 </Tooltip>
               )}
             >
-              <i className="ms-1 fa fa-info-circle"/>
+              <i className="ms-1 fa fa-info-circle" />
             </OverlayTrigger>
           )}
           <InputGroup
