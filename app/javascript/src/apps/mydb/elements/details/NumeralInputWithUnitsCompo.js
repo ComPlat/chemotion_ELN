@@ -254,12 +254,12 @@ export default class NumeralInputWithUnitsCompo extends Component {
               overlay={(
                 <Tooltip id="info-required-volume">
                   <p className="mb-2">
-                    Calculation of the volume required to get the desired concentration of a selected component in the
-                    mixture.
+                    It gives the expected total volume without considering eventually given additional solvent volumes
+                    coming from the solvents' table or the stock solution.
                   </p>
                   <p>
-                    Please use the reference (Ref) button to select the component. The calculation is a helper for
-                    planning the reaction's components, it does not have impact on the component table.
+                    The required total volume is therefore not the volume to be added but the volume to be reached
+                    referring to the reference compound.
                   </p>
                 </Tooltip>
               )}

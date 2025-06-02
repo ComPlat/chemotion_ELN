@@ -105,7 +105,6 @@ class SampleComponent extends Component {
     this.handleMetricsChange = this.handleMetricsChange.bind(this);
     this.handleDensityChange = this.handleDensityChange.bind(this);
     this.handlePurityChange = this.handlePurityChange.bind(this);
-    this.handleNameChange = this.handleNameChange.bind(this);
     this.handleRatioChange = this.handleRatioChange.bind(this);
     this.handleReferenceChange = this.handleReferenceChange.bind(this);
     this.handleConcentrationLockToggle = this.handleConcentrationLockToggle.bind(this);
@@ -230,27 +229,6 @@ class SampleComponent extends Component {
   }
 
   /**
-   * Handles changes to the component's name.
-   * @param {Object} e - The change event
-   * @param {string} value - The current name value
-   */
-  handleNameChange(e, value) {
-    if (e.value === value) return;
-
-    const { onChange } = this.props;
-
-    if (onChange && e) {
-      const event = {
-        newName: e.target.value,
-        type: 'nameChanged',
-        sampleID: this.componentId(),
-
-      };
-      onChange(event);
-    }
-  }
-
-  /**
    * Handles changes to the component's ratio.
    * @param {Object} e - The change event
    * @param {number} value - The current ratio value
@@ -355,21 +333,6 @@ class SampleComponent extends Component {
     );
   }
 
-  nameInput(material) {
-    const { sample } = this.props;
-
-    return (
-      <Form.Group size="sm">
-        <Form.Control
-          type="text"
-          value={material.name || ''}
-          onChange={(e) => this.handleNameChange(e, material.name)}
-          disabled={!permitOn(sample)}
-        />
-      </Form.Group>
-    );
-  }
-
   component() {
     const { material } = this.props;
 
@@ -397,15 +360,13 @@ class SampleComponent extends Component {
   materialVolume(material) {
     if (material.contains_residues) { return this.notApplicableInput(); }
 
-    const {
-      sample, enableComponentLabel, enableComponentPurity
-    } = this.props;
+    const { sample, enableComponentPurity } = this.props;
     const metricPrefixes = ['m', 'n', 'u'];
     const metric = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[1]) > -1) ? material.metrics[1] : 'm';
 
     return (
       <td
-        style={enableComponentLabel === false && enableComponentPurity === false ? { verticalAlign: 'bottom' } : null}
+        style={enableComponentPurity === false ? { verticalAlign: 'bottom' } : null}
       >
         <NumeralInputWithUnitsCompo
           key={material.id}
@@ -455,13 +416,11 @@ class SampleComponent extends Component {
   }
 
   componentMol(material, metricMol, metricPrefixesMol) {
-    const {
-      sample, enableComponentLabel, enableComponentPurity
-    } = this.props;
+    const { sample, enableComponentPurity } = this.props;
 
     return (
       <td
-        style={enableComponentLabel === false && enableComponentPurity === false ? { verticalAlign: 'bottom' } : null}
+        style={enableComponentPurity === false ? { verticalAlign: 'bottom' } : null}
       >
         <NumeralInputWithUnitsCompo
           key={material.id}
@@ -602,8 +561,7 @@ class SampleComponent extends Component {
 
   mixtureComponent(props, style) {
     const {
-      sample, material, deleteMaterial, connectDragSource, connectDropTarget, activeTab,
-      enableComponentLabel, enableComponentPurity
+      sample, material, deleteMaterial, connectDragSource, connectDropTarget, activeTab, enableComponentPurity
     } = props;
     const metricPrefixes = ['m', 'n', 'u'];
     const metricPrefixesMol = ['m', 'n'];
@@ -649,14 +607,6 @@ class SampleComponent extends Component {
         {this.componentConc(material, metricMolConc, metricPrefixesMolConc)}
 
         {
-          enableComponentLabel && (
-            <td>
-              {this.nameInput(material)}
-            </td>
-          )
-        }
-
-        {
           enableComponentPurity && (
             <td style={{ verticalAlign: 'top' }}>
               <NumeralInputWithUnitsCompo
@@ -674,8 +624,7 @@ class SampleComponent extends Component {
 
   solidComponent(props, style) {
     const {
-      sample, material, deleteMaterial, connectDragSource, connectDropTarget,
-      enableComponentLabel, enableComponentPurity
+      sample, material, deleteMaterial, connectDragSource, connectDropTarget, enableComponentPurity
     } = props;
     const metricPrefixes = ['m', 'n', 'u'];
     const metric = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[0]) > -1) ? material.metrics[0] : 'm';
@@ -711,7 +660,7 @@ class SampleComponent extends Component {
         <td />
 
         <td
-          style={enableComponentLabel === false && enableComponentPurity === false ? { verticalAlign: 'bottom' } : null}
+          style={enableComponentPurity === false ? { verticalAlign: 'bottom' } : null}
         >
           {this.componentMass(material, metric, metricPrefixes, massBsStyle)}
         </td>
@@ -723,14 +672,6 @@ class SampleComponent extends Component {
         {this.materialRef(material)}
 
         {this.componentConc(material, metricMolConc, metricPrefixesMolConc)}
-
-        {
-          enableComponentLabel && (
-            <td>
-              {this.nameInput(material)}
-            </td>
-          )
-        }
 
         {
           enableComponentPurity && (

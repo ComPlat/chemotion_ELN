@@ -1479,9 +1479,7 @@ export default class Sample extends Element {
    * @returns {void}
    */
   updateMixtureComponentEquivalent() {
-    if (!this.components || this.components.length === 0) {
-      return;
-    }
+    if (!this.components || this.components.length === 0) return;
 
     // Find the index of the component marked as reference
     let referenceIndex = this.components.findIndex((component) => component.reference);
@@ -1492,7 +1490,6 @@ export default class Sample extends Element {
       if (referenceIndex !== -1) {
         this.setReferenceComponent(referenceIndex);
       } else {
-        // If no components exist, return
         return;
       }
     }
@@ -1500,28 +1497,25 @@ export default class Sample extends Element {
     const referenceComponent = this.components[referenceIndex];
     const referenceMol = referenceComponent.amount_mol ?? 0;
 
-    // If reference moles is 0, set all non-reference components to 0
-    if (!referenceMol || Number.isNaN(referenceMol)) {
-      this.components.forEach((component, index) => {
-        if (index !== referenceIndex) {
-          component.equivalent = 0;
-        } else {
-          component.equivalent = 1;
-        }
-      });
-    } else {
-      // Update equivalent values based on the reference component
-      this.components.forEach((component, index) => {
-        // Only update equivalent if concentration is not locked for this component
-        if (index === referenceIndex) {
-          component.equivalent = 1;
-        } else if (!component.isComponentConcentrationLocked || !component.isComponentConcentrationLocked()) {
-          const currentMol = component.amount_mol ?? 0;
-          component.equivalent = currentMol && !Number.isNaN(currentMol) ? currentMol / referenceMol : 0;
-        }
-        // If locked, do not update the equivalent or ratio (preserve current value)
-      });
-    }
+    // Helper to check if a component is concentration locked
+    const isLocked = (comp) => comp.isComponentConcentrationLocked && comp.isComponentConcentrationLocked();
+
+    // Set equivalent for each component
+    this.components.forEach((component, index) => {
+      // If concentration is locked, do not update the equivalent or ratio (preserve current value)
+      if (isLocked(component)) return;
+
+      if (!referenceMol || Number.isNaN(referenceMol)) {
+        component.equivalent = index === referenceIndex ? 1 : 'n.d';
+      } else if (index === referenceIndex) {
+        component.equivalent = 1;
+      } else {
+        const currentMol = component.amount_mol ?? 0;
+        component.equivalent = currentMol && !Number.isNaN(currentMol)
+          ? currentMol / referenceMol
+          : 0;
+      }
+    });
 
     // this.updateMixtureMolecularWeight();
   }
