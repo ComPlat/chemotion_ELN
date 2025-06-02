@@ -346,8 +346,6 @@ export default class Component extends Sample {
     } else if (this.material_group === 'solid') {
       this.calculateMassFromTargetConc(purity);
     }
-
-    this.updateRatioFromReference(referenceComponent);
   }
 
   /**
@@ -359,7 +357,7 @@ export default class Component extends Sample {
     const lockedConcentration = this.isComponentConcentrationLocked();
 
     if (lockedConcentration) {
-      // Case 2: Total volume updated; Total Conc. is locked
+      // Case 2: Total volume updated; Total Conc. is locked; thus ratio is also locked
       // Amount recalculated
       // Volume recalculated
       this.handleTargetConcUpdates(totalVolume, referenceComponent);

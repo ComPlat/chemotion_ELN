@@ -1512,12 +1512,14 @@ export default class Sample extends Element {
     } else {
       // Update equivalent values based on the reference component
       this.components.forEach((component, index) => {
+        // Only update equivalent if concentration is not locked for this component
         if (index === referenceIndex) {
           component.equivalent = 1;
-        } else {
+        } else if (!component.isComponentConcentrationLocked || !component.isComponentConcentrationLocked()) {
           const currentMol = component.amount_mol ?? 0;
           component.equivalent = currentMol && !Number.isNaN(currentMol) ? currentMol / referenceMol : 0;
         }
+        // If locked, do not update the equivalent or ratio (preserve current value)
       });
     }
 

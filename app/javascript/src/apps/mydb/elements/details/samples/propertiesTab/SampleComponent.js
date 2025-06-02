@@ -134,52 +134,6 @@ class SampleComponent extends Component {
   }
 
   /**
-   * Renders the material name with IUPAC information and optional parent sample link.
-   * @param {Object} material - The material component to display
-   * @returns {JSX.Element} The rendered material name component
-   */
-  materialNameWithIupac(material) {
-    let moleculeIupacName = '';
-    const iupacStyle = {
-      display: 'block',
-      whiteSpace: 'nowrap',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      maxWidth: '100%'
-    };
-
-    const displayName = material.molecule_iupac_name || material.molecule?.sum_formular || '';
-
-    // Only make it clickable if it has a parent_id
-    moleculeIupacName = material.parent_id ? (
-      <a
-        role="link"
-        tabIndex={0}
-        onClick={() => this.handleMaterialClick(material)}
-        style={{
-          cursor: 'pointer',
-          textDecoration: 'underline'
-        }}
-        title="Click to view parent sample"
-      >
-        <span>{displayName}</span>
-      </a>
-    ) : (
-      <span>{displayName}</span>
-    );
-
-    return (
-      <div
-        className={material.parent_id ? 'reaction-material-link' : ''}
-        style={{ display: 'inline-block', maxWidth: '100%' }}>
-        <span style={iupacStyle}>
-          {this.svgPreview(material, moleculeIupacName)}
-        </span>
-      </div>
-    );
-  }
-
-  /**
    * Handles changes to the component's amount.
    * @param {Object} e - The change event
    * @param {number} value - The current value
@@ -353,6 +307,52 @@ class SampleComponent extends Component {
    */
   onComponentStoreChange(state) {
     this.setState({ ...state });
+  }
+
+   /**
+   * Renders the material name with IUPAC information and optional parent sample link.
+   * @param {Object} material - The material component to display
+   * @returns {JSX.Element} The rendered material name component
+   */
+  materialNameWithIupac(material) {
+    let moleculeIupacName = '';
+    const iupacStyle = {
+      display: 'block',
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      maxWidth: '100%'
+    };
+
+    const displayName = material.molecule_iupac_name || material.molecule?.sum_formular || '';
+
+    // Only make it clickable if it has a parent_id
+    moleculeIupacName = material.parent_id ? (
+      <a
+        role="link"
+        tabIndex={0}
+        onClick={() => this.handleMaterialClick(material)}
+        style={{
+          cursor: 'pointer',
+          textDecoration: 'underline'
+        }}
+        title="Click to view parent sample"
+      >
+        <span>{displayName}</span>
+      </a>
+    ) : (
+      <span>{displayName}</span>
+    );
+
+    return (
+      <div
+        className={material.parent_id ? 'reaction-material-link' : ''}
+        style={{ display: 'inline-block', maxWidth: '100%' }}>
+        <span style={iupacStyle}>
+          {this.svgPreview(material, moleculeIupacName)}
+        </span>
+      </div>
+    );
   }
 
   nameInput(material) {
@@ -593,7 +593,11 @@ class SampleComponent extends Component {
   isPurityDisabled(sample, material) {
     return (
       !permitOn(sample)
-      || (material.starting_molarity_value && material.starting_molarity_value !== 0)
+      || (
+        material.material_group === 'liquid'
+        && material.starting_molarity_value
+        && material.starting_molarity_value !== 0
+      )
     );
   }
 
