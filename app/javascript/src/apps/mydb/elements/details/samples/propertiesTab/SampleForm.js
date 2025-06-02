@@ -73,15 +73,17 @@ export default class SampleForm extends React.Component {
 
   renderCheckbox = (key, label, className) => {
     const isChecked = this.state[key];
+    const id = `checkbox-${key}`;
 
     return (
       <Form.Check
         className={className}
         style={{ margin: 0 }}
         type="checkbox"
+        id={id}
         checked={isChecked}
         onChange={() => this.handleToggle(key)}
-        label={label}
+        label={<label htmlFor={id} style={{ cursor: 'pointer', marginBottom: 0 }}>{label}</label>}
       />
     );
   };
