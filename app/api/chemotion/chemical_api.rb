@@ -161,7 +161,7 @@ module Chemotion
                   product_link = chemical.chemical_data[0]['merckProductInfo']['productLink']
                   Chemotion::ChemicalsService.safety_phrases_merck(product_link)
                 else
-                  err_body = 'Please fetch and save corresponding safety data sheet first'
+                  err_body = 'No safety phrases could be found'
                   err_body
                 end
               else
