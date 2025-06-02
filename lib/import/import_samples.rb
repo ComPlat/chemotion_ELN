@@ -57,12 +57,13 @@ module Import
       @sheet = xlsx.sheet(0)
       @header = sheet.row(1)
 
-      # Get the sheet containing the sample components
+      return unless xlsx.sheets.include?('sample_components')
+
+      # Get the sheet containing the sample components, if it exists
       @component_sheet = xlsx.sheet('sample_components')
       @component_header = component_sheet.row(1).map(&:to_s).map(&:strip)
-
       # Extract unique sample names with components
-      @sample_with_components = extract_sample_uuids_with_components if component_sheet_exists?
+      @sample_with_components = extract_sample_uuids_with_components
     end
 
     def extract_sample_uuids_with_components

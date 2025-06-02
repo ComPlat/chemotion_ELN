@@ -53,7 +53,7 @@ module Entities
       expose! :melting_point,           unless: :displayed_in_list
       expose! :metrics
       expose! :molarity_unit,           unless: :displayed_in_list
-      expose! :molarity_value
+      expose! :molarity_value,          unless: :displayed_in_list
       expose! :molecule_name_hash,                                  anonymize_with: {}
       expose! :name
       expose! :parent_id,               unless: :displayed_in_list
