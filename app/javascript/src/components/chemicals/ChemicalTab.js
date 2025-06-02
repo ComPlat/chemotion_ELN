@@ -331,6 +331,27 @@ export default class ChemicalTab extends React.Component {
     );
   };
 
+  isSavedSds = () => {
+    const { chemical } = this.state;
+    const isSaved = chemical?._chemical_data?.[0]?.safetySheetPath?.some(
+      (sheet) => Object.keys(sheet).some((key) => key.endsWith('_link') && sheet[key])
+    );
+    return isSaved;
+  };
+
+  extractProductInfo = (vendor) => {
+    const { chemical } = this.state;
+    let productLink = '';
+    if (chemical && vendor === 'thermofischer') {
+      productLink = chemical._chemical_data[0].alfaProductInfo
+        ? chemical._chemical_data[0].alfaProductInfo.productLink : '';
+    } else if (chemical && vendor === 'merck') {
+      productLink = chemical._chemical_data[0].merckProductInfo
+        ? chemical._chemical_data[0].merckProductInfo.productLink : '';
+    }
+    return productLink;
+  };
+
   fetchSafetyPhrases = (vendor) => {
     const { sample } = this.props;
     const queryParams = {
@@ -343,11 +364,25 @@ export default class ChemicalTab extends React.Component {
       loadingPhrasesVendor: vendor
     });
 
+    const productLink = this.extractProductInfo(vendor);
+
+    if (!productLink) {
+      if (this.isSavedSds()) {
+        this.setState({
+          loadingPhrasesVendor: '',
+          warningMessage: 'No product link available for this vendor' });
+        return;
+      }
+      this.setState({
+        loadingPhrasesVendor: '',
+        warningMessage: 'Please fetch and save corresponding safety data sheet first' });
+      return;
+    }
+
     ChemicalFetcher.safetyPhrases(queryParams).then((result) => {
       // Clear loading state
       this.setState({ loadingPhrasesVendor: '' });
-
-      const warningMessage = 'Please fetch and save corresponding safety data sheet first';
+      const warningMessage = 'No safety phrases could be found';
       if (result === warningMessage || result === 204) {
         this.setState({ warningMessage });
       } else if (result === 'Could not find H and P phrases') {
@@ -365,23 +400,15 @@ export default class ChemicalTab extends React.Component {
 
   fetchChemicalProperties = (vendor) => {
     const { chemical } = this.state;
-    let productLink;
     this.setState({ warningMessage: '' });
 
-    if (chemical && vendor === 'thermofischer') {
-      productLink = chemical._chemical_data[0].alfaProductInfo
-        ? chemical._chemical_data[0].alfaProductInfo.productLink : '';
-    } else if (chemical && vendor === 'merck') {
-      productLink = chemical._chemical_data[0].merckProductInfo
-        ? chemical._chemical_data[0].merckProductInfo.productLink : '';
-    }
-
-    // Check if this is a saved SDS or a search result
-    const isSavedSds = chemical?._chemical_data?.[0]?.safetySheetPath?.some(
-      (sheet) => Object.keys(sheet).some((key) => key.endsWith('_link') && sheet[key])
-    );
+    const productLink = this.extractProductInfo(vendor);
 
     if (!productLink) {
+      if (this.isSavedSds()) {
+        this.setState({ warningMessage: 'No product link available for this vendor' });
+        return;
+      }
       this.setState({ warningMessage: 'Please fetch and save corresponding safety data sheet first' });
       return;
     }
@@ -391,7 +418,7 @@ export default class ChemicalTab extends React.Component {
       this.setState({ loadChemicalProperties: { vendor: '', loading: false } });
       if (result === 'Could not find additional chemical properties' || result === null) {
         // Only show warning if this is a saved SDS
-        if (isSavedSds) {
+        if (this.isSavedSds()) {
           this.setState({ warningMessage: result });
         }
       } else {
@@ -408,7 +435,7 @@ export default class ChemicalTab extends React.Component {
       console.log(errorMessage);
       this.setState({
         loadChemicalProperties: { vendor: '', loading: false },
-        warningMessage: isSavedSds ? 'Error fetching chemical properties' : ''
+        warningMessage: this.isSavedSds() ? 'Error fetching chemical properties' : ''
       });
     });
   };
@@ -471,7 +498,7 @@ export default class ChemicalTab extends React.Component {
     const { sample, editChemical } = this.props;
     const { chemical } = this.state;
     const cas = sample.xref?.cas ?? '';
-    const vendorProduct = `${vendorName.trim()}ProductInfo`;
+    const vendorProduct = `${vendorName.toLowerCase().trim()}ProductInfo`;
     const data = new FormData();
 
     // Create vendor info object - only what we need
