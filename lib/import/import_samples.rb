@@ -51,7 +51,8 @@ module Import
       @sheet = xlsx.sheet(0)
       @header = sheet.row(1)
       @mandatory_check = {}
-      ['molfile', 'smiles', 'cano_smiles', 'canonical smiles', 'decoupled'].each do |check|
+      header_fields = %w[molfile smiles cano_smiles canonical_smiles decoupled]
+      header_fields.each do |check|
         @mandatory_check[check] = true if header.find { |e| /^\s*#{check}?/i =~ e }
       end
 
@@ -120,8 +121,8 @@ module Import
     end
 
     def smiles?(row)
-      header = mandatory_check['smiles'] || mandatory_check['cano_smiles'] || mandatory_check['canonical smiles']
-      cell = row['smiles'].to_s.present? || row['cano_smiles'].to_s.present? || row['canonical smiles'].to_s.present?
+      header = mandatory_check['smiles'] || mandatory_check['cano_smiles'] || mandatory_check['canonical_smiles']
+      cell = row['smiles'].to_s.present? || row['cano_smiles'].to_s.present? || row['canonical_smiles'].to_s.present?
       header && cell
     end
 
@@ -132,8 +133,8 @@ module Import
         molfile_smiles = babel_info[:smiles]
         molfile_smiles = Chemotion::OpenBabelService.canon_smiles_to_smiles molfile_smiles if mandatory_check['smiles']
       end
-      if molfile_smiles.blank? && (molfile_smiles != row['cano_smiles'] &&
-         molfile_smiles != row['smiles'] && molfile_smiles != row['canonical smiles'])
+      if molfile_smiles.blank? && molfile_smiles != row['cano_smiles'] &&
+         molfile_smiles != row['smiles'] && molfile_smiles != row['canonical_smiles']
         @unprocessable << { row: row, index: i }
         go_to_next = true
       end
@@ -166,7 +167,7 @@ module Import
     def get_data_from_smiles(row)
       smiles = (mandatory_check['smiles'] && row['smiles'].presence) ||
                (mandatory_check['cano_smiles'] && row['cano_smiles'].presence) ||
-               (mandatory_check['canonical smiles'] && row['canonical smiles'].presence)
+               (mandatory_check['canonical_smiles'] && row['canonical_smiles'].presence)
       inchikey = Chemotion::OpenBabelService.smiles_to_inchikey smiles
       ori_molf = Chemotion::OpenBabelService.smiles_to_molfile smiles
       babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(ori_molf)
@@ -179,7 +180,7 @@ module Import
     end
 
     def construct_solvents_array(solvents)
-      solvents_array = solvents.split('-')
+      solvents_array = solvents.split('/')
       solvents_array.map(&:capitalize)
     end
 
