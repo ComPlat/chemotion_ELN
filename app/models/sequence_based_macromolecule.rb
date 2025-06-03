@@ -90,9 +90,9 @@ class SequenceBasedMacromolecule < ApplicationRecord
     when 'uniprot'
       find_duplicate_uniprot_sbmm(base_sbmm)
     when 'uniprot_modified'
-      find_duplicate_modified_sbmm(base_sbmm)
+      find_duplicate_modified_or_unknown_sbmm(base_sbmm, scope: modified)
     when 'uniprot_unknown'
-      find_duplicate_unknown_sbmm(base_sbmm)
+      find_duplicate_modified_or_unknown_sbmm(base_sbmm, scope: unknown)
     else
       nil
     end
@@ -107,8 +107,7 @@ class SequenceBasedMacromolecule < ApplicationRecord
     scope.find_by(primary_accession: base_sbmm.primary_accession)
   end
 
-  def self.find_duplicate_modified_sbmm(base_sbmm)
-    scope = modified
+  def self.find_duplicate_modified_or_unknown_sbmm(base_sbmm, scope:)
     scope = scope.where.not(id: base_sbmm.id) if base_sbmm.id
     scope = scope.joins(:protein_sequence_modification, :post_translational_modification)
     scope.find_by(
@@ -145,17 +144,6 @@ class SequenceBasedMacromolecule < ApplicationRecord
         methylation_lys_enabled: base_sbmm.post_translational_modification.methylation_lys_enabled,
         other_modifications_enabled: base_sbmm.post_translational_modification.other_modifications_enabled
       }
-    )
-  end
-
-  def self.find_duplicate_unknown_sbmm(base_sbmm)
-    scope = unknown
-    scope = scope.where.not(id: base_sbmm.id) if base_sbmm.id
-    scope.find_by(
-      sbmm_type: base_sbmm.sbmm_type,
-      sequence: base_sbmm.sequence,
-      molecular_weight: base_sbmm.molecular_weight,
-      heterologous_expression: base_sbmm.heterologous_expression
     )
   end
 end
