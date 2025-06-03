@@ -105,10 +105,42 @@ CREATE OR REPLACE FUNCTION logidze_logger() RETURNS TRIGGER AS $body$
             END LOOP;
         END;
       ELSE
+        WITH
+          new_kv AS (
+            SELECT key, value FROM jsonb_each(row_to_json(NEW)::jsonb)
+          ),
+          old_kv AS (
+            SELECT key, value FROM jsonb_each(row_to_json(OLD)::jsonb)
+          ),
+          all_keys AS (
+            SELECT key FROM new_kv
+            UNION
+            SELECT key FROM old_kv
+          )
         SELECT COALESCE(jsonb_object_agg(key, value), '{}'::jsonb)
         INTO changes
-        FROM jsonb_each(row_to_json(NEW)::jsonb)
-        WHERE NOT jsonb_build_object(key, value) <@ row_to_json(OLD)::jsonb;
+        FROM (
+          SELECT
+            k.key,
+            CASE
+              WHEN n.value IS NULL THEN
+                -- key missing in NEW → mark deleted
+                to_jsonb('deleted'::text)
+              WHEN o.value IS NULL THEN
+                -- key missing in OLD → addition
+                n.value
+              WHEN n.value <> o.value THEN
+                -- key present in both but different → changed
+                n.value
+              ELSE
+                -- identical → exclude by returning NULL (will be filtered out)
+                NULL
+            END AS value
+          FROM all_keys k
+          LEFT JOIN new_kv n ON k.key = n.key
+          LEFT JOIN old_kv o ON k.key = o.key
+        ) t
+        WHERE value IS NOT NULL;
 
         FOR k IN SELECT key FROM jsonb_each(changes)
           LOOP
