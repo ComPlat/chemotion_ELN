@@ -73,6 +73,15 @@ BEGIN
     END IF;
   END LOOP;
 
+  -- Iterate through each key-value pair in old
+  FOR v in SELECT * from jsonb_each(old) LOOP
+    -- If value was deleted
+    IF new -> v.key IS NULL AND jsonb_typeof(v.value) = 'object' THEN
+      -- Append to result with value 'deleted'
+      result := result || jsonb_build_object(v.key, 'deleted');
+    END IF;
+  END LOOP;
+
   RETURN result;
 END;
 $$;
