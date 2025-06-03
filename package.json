@@ -98,7 +98,7 @@
     "react-ui-tree": "3.1.0",
     "react-vis": "1.12.1",
     "reactflow": "^11.7.2",
-    "read-excel-file": "^5.8.7",
+    "read-excel-file": "^5.8.8",
     "redux": "^4.1.0",
     "sdf-parser": "^7.0.4",
     "sha256": "^0.2.0",
