@@ -17,7 +17,7 @@ function DeleteButtonCellRenderer(props) {
   const { onDelete, data } = props;
   const onClick = () => {
     if (onDelete) {
-      onDelete(data.id);
+      onDelete(data?.id);
     }
   };
 
