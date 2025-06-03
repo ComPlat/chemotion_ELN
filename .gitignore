@@ -151,8 +151,8 @@
 !/public/xlsx/.keep
 !/public/sdf/.keep
 
-/public/csv/*
 !/public/csv/.keep
+!/public/tsv/.keep
 
 /public/html/*
 !/public/html/.keep
