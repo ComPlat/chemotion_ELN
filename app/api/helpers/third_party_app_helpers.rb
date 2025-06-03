@@ -98,4 +98,17 @@ module ThirdPartyAppHelpers
       expires_at: expiry_time,
     )
   end
+
+  # Build the url public endpoint with the token-path that can be used to fetch an attachment
+  #
+  # @note '@token' should be defined
+  # @return [URI] the full url with token path
+  def token_uri
+    url = URI.parse Rails.application.config.root_url
+    url.path = Pathname.new(url.path)
+                       .join('/', API.prefix.to_s, API.version, 'public/third_party_apps', @token)
+                       .to_s
+
+    url
+  end
 end
