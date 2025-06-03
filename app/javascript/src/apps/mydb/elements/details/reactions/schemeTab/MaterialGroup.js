@@ -5,7 +5,6 @@ import {
 } from 'react-bootstrap';
 import { Select } from 'src/components/common/Select';
 import Material from 'src/apps/mydb/elements/details/reactions/schemeTab/Material';
-import MaterialCalculations from 'src/apps/mydb/elements/details/reactions/schemeTab/MaterialCalculations';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import Molecule from 'src/models/Molecule';
@@ -22,37 +21,26 @@ function MaterialGroup({
   dropMaterial, dropSample, switchEquiv, lockEquivColumn, displayYieldField,
   switchYield
 }) {
-  const contents = [];
   let index = headIndex;
-  if (materials && materials.length > 0) {
-    materials.forEach((material) => {
-      index += 1;
-      contents.push((
-        <Material
-          reaction={reaction}
-          onChange={onChange}
-          key={material.id}
-          material={material}
-          materialGroup={materialGroup}
-          showLoadingColumn={showLoadingColumn}
-          deleteMaterial={(m) => deleteMaterial(m, materialGroup)}
-          index={index}
-          dropMaterial={dropMaterial}
-          dropSample={dropSample}
-          lockEquivColumn={lockEquivColumn}
-          displayYieldField={displayYieldField}
-        />
-      ));
-
-      if (materialGroup === 'products'
-        && material.adjusted_loading
-        && material.error_mass) {
-        contents.push((
-          <MaterialCalculations material={material} />
-        ));
-      }
-    });
-  }
+  const contents = materials.map((material) => {
+    index += 1;
+    return (
+      <Material
+        key={material.id}
+        reaction={reaction}
+        onChange={onChange}
+        material={material}
+        materialGroup={materialGroup}
+        showLoadingColumn={showLoadingColumn}
+        deleteMaterial={(m) => deleteMaterial(m, materialGroup)}
+        index={index}
+        dropMaterial={dropMaterial}
+        dropSample={dropSample}
+        lockEquivColumn={lockEquivColumn}
+        displayYieldField={displayYieldField}
+      />
+    );
+  });
 
   if (materialGroup === 'solvents'
     || materialGroup === 'purification_solvents') {
