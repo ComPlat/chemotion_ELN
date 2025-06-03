@@ -11,6 +11,7 @@ import { DragSource, DropTarget } from 'react-dnd';
 import { compose } from 'redux';
 import { debounce } from 'lodash';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
+import MaterialCalculations from 'src/apps/mydb/elements/details/reactions/schemeTab/MaterialCalculations';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 import SampleName from 'src/components/common/SampleName';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -378,33 +379,17 @@ class Material extends Component {
     return value || 0;
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  pseudoField() {
-    return (
-      <td>
-        <span style={{ opacity: 0 }} />
-      </td>
-    );
-  }
-
   gaseousProductRow(material) {
-    const { materialGroup } = this.props;
-    if (materialGroup === 'products') {
-      return (
-        <tr style={{ width: '100%' }}>
-          {this.pseudoField()}
-          {this.pseudoField()}
-          {this.pseudoField()}
-          {this.pseudoField()}
-          {this.gaseousInputFields('time', material)}
-          {this.gaseousInputFields('temperature', material)}
-          {this.gaseousInputFields('part_per_million', material)}
-          {this.gaseousInputFields('turnover_number', material)}
-          {this.gaseousInputFields('turnover_frequency', material)}
-        </tr>
-      );
-    }
-    return null;
+    return (
+      <tr>
+        <td colSpan="4" />
+        {this.gaseousInputFields('time', material)}
+        {this.gaseousInputFields('temperature', material)}
+        {this.gaseousInputFields('part_per_million', material)}
+        {this.gaseousInputFields('turnover_number', material)}
+        {this.gaseousInputFields('turnover_frequency', material)}
+      </tr>
+    );
   }
 
   handleExternalLabelChange(event) {
@@ -690,6 +675,7 @@ class Material extends Component {
   generalMaterial(className) {
     const {
       material,
+      materialGroup,
       deleteMaterial,
       connectDragSource,
       connectDropTarget,
@@ -804,7 +790,13 @@ class Material extends Component {
             </Button>
           </td>
         </tr>
-        {material.gas_type === 'gas' && reaction.gaseous && this.gaseousProductRow(material)}
+
+        {materialGroup === 'products' && (
+          <>
+            {material.gas_type === 'gas' && reaction.gaseous && this.gaseousProductRow(material)}
+            {material.adjusted_loading && material.error_mass && <MaterialCalculations material={material} />}
+          </>
+        )}
       </tbody>
     );
   }
