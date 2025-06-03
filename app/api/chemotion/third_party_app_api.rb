@@ -11,9 +11,10 @@ module Chemotion
     # desc: public endpoint for third party apps to {down,up}load files
     namespace :public do
       resource :third_party_apps, requirements: { token: /.*/ } do
-        route_param :token, regexp: /^[\w-]+\.[\w-]+\.[\w-]+$/ do
+        route_param :token, regexp: /^[\w-]+\.[\w-]+\.[\w-]+(\/.*)?$/ do
           after_validation do
-            parse_payload(JsonWebToken.decode(params[:token]))
+            token_part = params[:token].split('/').first
+            parse_payload(JsonWebToken.decode(token_part))
           end
           desc 'download file to 3rd party app'
           get '/', requirements: { token: /.*/ } do
@@ -126,6 +127,8 @@ module Chemotion
           url.to_s
         when 2
           "chemotion://#{@attachment.filename}?url=#{url}"
+        when 3
+          "#{Rails.application.config.root_url}/api/v1/public/third_party_apps/#{@token}"
         else
           "chemotion://?url=#{url}"
         end
