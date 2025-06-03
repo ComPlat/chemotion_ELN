@@ -14,6 +14,236 @@ import ColumnMappingComponent from 'src/components/contextActions/ColumnMappingC
 import ValidationComponent from 'src/components/contextActions/ValidationComponent';
 
 export default class ModalImport extends React.Component {
+  static extractDataFromText(file, delimiter, mappedColumns) {
+    if (!file) {
+      console.warn('No text file provided for extraction');
+      throw new Error('Text file is missing for data extraction');
+    }
+
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = (evt) => {
+        try {
+          const fileContent = evt.target.result;
+          if (!fileContent) {
+            throw new Error('Empty file content');
+          }
+
+          const lines = fileContent.split(/\r?\n/);
+          if (lines.length === 0) {
+            throw new Error('No lines found in file');
+          }
+
+          const headers = lines[0].split(delimiter);
+          if (headers.length === 0) {
+            throw new Error('No headers found in file');
+          }
+
+          // Create a mapping from header index to mapped column name
+          const columnMap = {};
+          Object.entries(mappedColumns).forEach(([originalCol, mappedCol]) => {
+            if (mappedCol !== 'do_not_import') {
+              const headerIndex = headers.findIndex((h) => h.trim() === originalCol);
+              if (headerIndex !== -1) {
+                columnMap[headerIndex] = mappedCol;
+              }
+            }
+          });
+
+          if (Object.keys(columnMap).length === 0) {
+            console.warn('No columns were mapped for import');
+          }
+
+          // Parse the data rows
+          const rowData = [];
+          let currentRow = null;
+          let isMolfile = false;
+
+          lines.slice(1).forEach((line, idx) => {
+            // Detect the start of a new row
+            if (!isMolfile && line.trim() !== '' && !line.startsWith('M  END')) {
+              const values = line.split(delimiter);
+              currentRow = { id: idx + 1, valid: true };
+
+              // Map values to their corresponding column names
+              Object.entries(columnMap).forEach(([indexStr, columnName]) => {
+                const index = parseInt(indexStr, 10);
+                if (!Number.isNaN(index) && index < values.length) {
+                  currentRow[columnName] = values[index] ? values[index].trim() : '';
+                }
+              });
+
+              rowData.push(currentRow);
+
+              // Check if the molfile field exists in the row
+              if (currentRow.molfile !== undefined) {
+                isMolfile = true;
+                currentRow.molfile = '';
+              }
+            } else if (isMolfile) {
+              // Append multiline molfile content exactly as it appears
+              const delimiterIndex = line.indexOf(delimiter);
+              if (delimiterIndex !== -1) {
+                // Stop appending to molfile and process the remaining line as the next column value
+                currentRow.molfile += `${line.substring(0, delimiterIndex)}\n`;
+                const remainingValues = line.substring(delimiterIndex + 1).split(delimiter);
+
+                // Find the position of the molfile column in the columnMap
+                const molfileIndex = Object.keys(columnMap).find((key) => columnMap[key] === 'molfile');
+
+                // Map remaining values starting from the column after molfile
+                Object.entries(columnMap).forEach(([indexStr, columnName]) => {
+                  const index = parseInt(indexStr, 10);
+                  if (!Number.isNaN(index) && index > molfileIndex
+                    && index - molfileIndex - 1 < remainingValues.length) {
+                    currentRow[columnName] = remainingValues[index - molfileIndex - 1]
+                      ? remainingValues[index - molfileIndex - 1].trim() : '';
+                  }
+                });
+                isMolfile = false;
+              } else {
+                currentRow.molfile += `${line}\n`;
+              }
+            }
+          });
+          resolve(rowData);
+        } catch (error) {
+          console.error('Error parsing text file data:', error);
+          reject(new Error(`Text file parsing failed: ${error.message}`));
+        }
+      };
+
+      reader.onerror = () => {
+        reject(new Error('FileReader error while reading text file'));
+      };
+
+      reader.readAsText(file);
+    });
+  }
+
+  static containsBinaryContent(content) {
+    // Check if content contains non-printable characters or null bytes
+    // This is a simple heuristic to detect binary content
+    const sample = content.substring(0, 1000);
+    // Look for control characters excluding common whitespace
+    return /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/.test(sample);
+  }
+
+  static detectDelimiter(content) {
+    // Sample first few lines
+    const sampleLines = content.split(/\r?\n/).slice(0, 5).join('\n');
+    // Count occurrences of common delimiters
+    const delimiters = ['\t', ',', ';', '|'];
+    const counts = {};
+    delimiters.forEach((delimiter) => {
+      counts[delimiter] = (sampleLines.match(
+        new RegExp(delimiter.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')
+      ) || []).length;
+    });
+    // Find the delimiter with the most occurrences
+    const mostCommonDelimiter = delimiters.reduce(
+      (a, b) => (counts[a] > counts[b] ? a : b)
+    );
+    return mostCommonDelimiter;
+  }
+
+  // Method to generate column definitions for AG Grid
+  static generateColumnDefs(mappedColumns) {
+    const columnDefs = Object.entries(mappedColumns)
+      .filter(([, mappedCol]) => mappedCol !== 'do_not_import')
+      .map(([, mappedCol]) => ({
+        field: mappedCol, // Use the mapped column name as field
+        headerName: mappedCol, // Use the mapped column as header
+        editable: true
+      }));
+    return columnDefs;
+  }
+
+  // Helper method to convert column names to field names (snake_case)
+  static convertToFieldName(columnName) {
+    if (!columnName) return '';
+    // Convert to snake_case: lowercase, replace spaces with underscores
+    return columnName
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '_')
+      .replace(/[^a-z_]/g, ''); // Remove any characters that aren't letters, or underscores
+  }
+
+  static downloadTemplate(type) {
+    // Map of template types to their file paths and names
+    const templates = {
+      // Sample templates
+      sample_xlsx_template: {
+        path: '/xlsx/sample_import_template_01.xlsx',
+        filename: 'sample_import_template_01.xlsx'
+      },
+      sample_xlsx_example: {
+        path: '/xlsx/sample_import_example.xlsx',
+        filename: 'sample_import_example.xlsx'
+      },
+      sample_sdf_template: {
+        path: '/sdf/sample_template.sdf',
+        filename: 'sample_import_template.sdf'
+      },
+      sample_sdf_example: {
+        path: '/sdf/sample_import_example.sdf',
+        filename: 'sample_import_example.sdf'
+      },
+      sample_csv_template: {
+        path: '/csv/sample_import_template.csv',
+        filename: 'sample_import_template.csv'
+      },
+      sample_tsv_template: {
+        path: '/tsv/sample_import_template.tsv',
+        filename: 'sample_import_template.tsv'
+      },
+
+      // Chemical templates
+      chemical_xlsx_template: {
+        path: '/xlsx/chemical_import_template.xlsx',
+        filename: 'chemical_import_template.xlsx'
+      },
+      chemical_xlsx_example: {
+        path: '/xlsx/chemical_import_example.xlsx',
+        filename: 'chemical_import_example.xlsx'
+      },
+      chemical_sdf_template: {
+        path: '/sdf/chemical_import_template.sdf',
+        filename: 'chemical_import_template.sdf'
+      },
+      chemical_sdf_example: {
+        path: '/sdf/chemical_import_example.sdf',
+        filename: 'chemical_import_example.sdf'
+      }
+    };
+
+    // Get template info
+    const template = templates[type];
+
+    if (!template) {
+      NotificationActions.add({
+        title: 'Template Error',
+        message: `Template "${type}" not found. Please contact support.`,
+        level: 'error',
+        dismissible: true,
+      });
+      return;
+    }
+
+    const link = document.createElement('a');
+    link.href = template.path;
+    link.download = template.filename;
+
+    document.body.appendChild(link);
+    link.click();
+
+    setTimeout(() => {
+      document.body.removeChild(link);
+    }, 100);
+  }
+
   constructor(props) {
     super(props);
     this.state = {
@@ -399,108 +629,6 @@ export default class ModalImport extends React.Component {
     }
   }
 
-  static extractDataFromText(file, delimiter, mappedColumns) {
-    if (!file) {
-      console.warn('No text file provided for extraction');
-      throw new Error('Text file is missing for data extraction');
-    }
-
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-
-      reader.onload = (evt) => {
-        try {
-          const fileContent = evt.target.result;
-          if (!fileContent) {
-            throw new Error('Empty file content');
-          }
-
-          const lines = fileContent.split(/\r?\n/);
-          if (lines.length === 0) {
-            throw new Error('No lines found in file');
-          }
-
-          const headers = lines[0].split(delimiter);
-          if (headers.length === 0) {
-            throw new Error('No headers found in file');
-          }
-
-          // Create a mapping from header index to mapped column name
-          const columnMap = {};
-          Object.entries(mappedColumns).forEach(([originalCol, mappedCol]) => {
-            if (mappedCol !== 'do_not_import') {
-              const headerIndex = headers.findIndex((h) => h.trim() === originalCol);
-              if (headerIndex !== -1) {
-                columnMap[headerIndex] = mappedCol;
-              }
-            }
-          });
-
-          if (Object.keys(columnMap).length === 0) {
-            console.warn('No columns were mapped for import');
-          }
-
-          // Parse the data rows
-          const rowData = [];
-          for (let i = 1; i < lines.length; i += 1) {
-            const line = lines[i].trim();
-            // Skip empty lines
-            if (line !== '') {
-              const values = lines[i].split(delimiter);
-              const row = { id: i, valid: true };
-
-              // Map values to their corresponding column names
-              Object.entries(columnMap).forEach(([indexStr, columnName]) => {
-                const index = parseInt(indexStr, 10);
-                if (!isNaN(index) && index < values.length) {
-                  row[columnName] = values[index] ? values[index].trim() : '';
-                }
-              });
-
-              rowData.push(row);
-            }
-          }
-
-          console.log(`Extracted ${rowData.length} data rows from text file`);
-          resolve(rowData);
-        } catch (error) {
-          console.error('Error parsing text file data:', error);
-          reject(new Error(`Text file parsing failed: ${error.message}`));
-        }
-      };
-
-      reader.onerror = () => {
-        reject(new Error('FileReader error while reading text file'));
-      };
-
-      reader.readAsText(file);
-    });
-  }
-
-  static containsBinaryContent(content) {
-    // Check if content contains non-printable characters or null bytes
-    // This is a simple heuristic to detect binary content
-    const sample = content.substring(0, 1000);
-    // Look for control characters excluding common whitespace
-    return /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/.test(sample);
-  }
-
-  static detectDelimiter(content) {
-    // Sample first few lines
-    const sampleLines = content.split(/\r?\n/).slice(0, 5).join('\n');
-    // Count occurrences of common delimiters
-    const delimiters = ['\t', ',', ';', '|'];
-    const counts = {};
-    delimiters.forEach((delimiter) => {
-      counts[delimiter] = (sampleLines.match(
-        new RegExp(delimiter.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')
-      ) || []).length;
-    });
-    // Find the delimiter with the most occurrences
-    const mostCommonDelimiter = delimiters.reduce((a, b) => counts[a] > counts[b] ? a : b);
-    return mostCommonDelimiter;
-  }
-
   extractColumnNames(file) {
     // Check the file type
     const fileType = file.type || '';
@@ -723,18 +851,6 @@ export default class ModalImport extends React.Component {
     reader.readAsText(file, encoding);
   }
 
-  // Method to generate column definitions for AG Grid
-  static generateColumnDefs(mappedColumns) {
-    const columnDefs = Object.entries(mappedColumns)
-      .filter(([, mappedCol]) => mappedCol !== 'do_not_import')
-      .map(([, mappedCol]) => ({
-        field: mappedCol, // Use the mapped column name as field
-        headerName: mappedCol, // Use the mapped column as header
-        editable: true
-      }));
-    return columnDefs;
-  }
-
   dropzoneOrfilePreview() {
     const { file, importAsChemical, importWithColumnMapping } = this.state;
     if (file) {
@@ -804,6 +920,14 @@ export default class ModalImport extends React.Component {
                 Sample - SDF with Example Data
               </Dropdown.Item>
               <Dropdown.Divider />
+              <Dropdown.Header>Additional Sample Templates</Dropdown.Header>
+              <Dropdown.Item onClick={() => ModalImport.downloadTemplate('sample_csv_template')}>
+                Sample - CSV with Example Data
+              </Dropdown.Item>
+              <Dropdown.Item onClick={() => ModalImport.downloadTemplate('sample_tsv_template')}>
+                Sample - TSV with Example Data
+              </Dropdown.Item>
+              <Dropdown.Divider />
               <Dropdown.Header>Chemical Templates</Dropdown.Header>
               <Dropdown.Item onClick={() => ModalImport.downloadTemplate('chemical_xlsx_template')}>
                 Chemical - Empty XLSX Template
@@ -827,82 +951,6 @@ export default class ModalImport extends React.Component {
   isDisabled() {
     const { file } = this.state;
     return file == null;
-  }
-
-  // Helper method to convert column names to field names (snake_case)
-  static convertToFieldName(columnName) {
-    if (!columnName) return '';
-    // Convert to snake_case: lowercase, replace spaces with underscores
-    return columnName
-      .trim()
-      .toLowerCase()
-      .replace(/\s+/g, '_')
-      .replace(/[^a-z_]/g, ''); // Remove any characters that aren't letters, or underscores
-  }
-
-  static downloadTemplate(type) {
-    // Map of template types to their file paths and names
-    const templates = {
-      // Sample templates
-      sample_xlsx_template: {
-        path: '/xlsx/sample_import_template_01.xlsx',
-        filename: 'sample_import_template_01.xlsx'
-      },
-      sample_xlsx_example: {
-        path: '/xlsx/sample_import_example.xlsx',
-        filename: 'sample_import_example.xlsx'
-      },
-      sample_sdf_template: {
-        path: '/sdf/sample_template.sdf',
-        filename: 'sample_import_template.sdf'
-      },
-      sample_sdf_example: {
-        path: '/sdf/sample_import_example.sdf',
-        filename: 'sample_import_example.sdf'
-      },
-
-      // Chemical templates
-      chemical_xlsx_template: {
-        path: '/xlsx/chemical_import_template.xlsx',
-        filename: 'chemical_import_template.xlsx'
-      },
-      chemical_xlsx_example: {
-        path: '/xlsx/chemical_import_example.xlsx',
-        filename: 'chemical_import_example.xlsx'
-      },
-      chemical_sdf_template: {
-        path: '/sdf/chemical_import_template.sdf',
-        filename: 'chemical_import_template.sdf'
-      },
-      chemical_sdf_example: {
-        path: '/sdf/chemical_import_example.sdf',
-        filename: 'chemical_import_example.sdf'
-      }
-    };
-
-    // Get template info
-    const template = templates[type];
-
-    if (!template) {
-      NotificationActions.add({
-        title: 'Template Error',
-        message: `Template "${type}" not found. Please contact support.`,
-        level: 'error',
-        dismissible: true,
-      });
-      return;
-    }
-
-    const link = document.createElement('a');
-    link.href = template.path;
-    link.download = template.filename;
-
-    document.body.appendChild(link);
-    link.click();
-
-    setTimeout(() => {
-      document.body.removeChild(link);
-    }, 100);
   }
 
   render() {
