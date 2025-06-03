@@ -92,7 +92,7 @@ class SequenceBasedMacromolecule < ApplicationRecord
     when 'uniprot_modified'
       find_duplicate_modified_sbmm(base_sbmm)
     when 'uniprot_unknown'
-      find_duplicate_uniprot_sbmm(base_sbmm)
+      find_duplicate_unknown_sbmm(base_sbmm)
     else
       nil
     end
