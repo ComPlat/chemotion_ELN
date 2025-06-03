@@ -80,7 +80,7 @@ RSpec.describe 'ImportCollection' do
         expect(reaction.timestamp_stop).to eq('23/08/2022 16:16:33')
         expect(reaction.observation.to_s).to eq('{"ops"=>[{"insert"=>"\\nThe obtained crude product was purified via HPLC using MeCN/H₂O 10:1."}]}') # rubocop:disable Layout/LineLength
         expect(reaction.purification).to match_array(%w[TLC HPLC])
-        expect(reaction.dangerous_products).to match_array([])
+        expect(reaction.dangerous_products).to be_empty
         expect(reaction.tlc_solvents).to eq('')
         expect(reaction.tlc_description).to eq('')
         expect(reaction.rf_value).to eq('0')
@@ -244,6 +244,49 @@ RSpec.describe 'ImportCollection' do
         expect(Wellplate.count).to be 1
         expect(Wellplate.first.width).to be 12
         expect(Wellplate.first.height).to be 8
+      end
+    end
+
+    describe 'import a collection with 4 different sbmm samples' do
+      let(:imported_collection) { Collection.find_by(label: 'sbmm test') }
+      let(:sbmm_sample_with_ancestry) { SequenceBasedMacromoleculeSample.where.not(ancestry: nil) }
+      let(:sbmm_sample_uniprot) { SequenceBasedMacromoleculeSample.where(name: 'uniprot') }
+      let(:sbmm_with_parent) { SequenceBasedMacromolecule.where.not(parent_id: nil) }
+      let(:import_id) { 'collection_sbmm_samples' }
+      let(:attachment) { create(:attachment, :with_sbmm_sample_collection_zip) }
+
+      before do
+        importer.execute
+      end
+
+      it 'has created a collection with 4 sbmm samples' do
+        expect(imported_collection).to be_present
+        expect(imported_collection.sequence_based_macromolecule_samples.length).to be 4
+      end
+
+      it 'has successfully imported 4 sbmm samples' do
+        expect(SequenceBasedMacromoleculeSample.count).to be 4
+        expect(sbmm_sample_with_ancestry.count).to be 1
+      end
+
+      it 'has successfully imported 5 sbmms' do
+        expect(SequenceBasedMacromolecule.count).to be 5
+      end
+
+      it 'has successfully imported 1 sbmm with parent' do
+        expect(sbmm_with_parent.count).to be 1
+        expect(sbmm_with_parent.first.post_translational_modification).to be_present
+        expect(sbmm_with_parent.first.protein_sequence_modification).to be_present
+      end
+
+      it 'has successfully imported analyses' do
+        expect(sbmm_sample_with_ancestry.first.analyses.count).to be 1
+      end
+
+      it 'has successfully imported sbmm sample and sbmm attachments' do
+        expect(sbmm_sample_with_ancestry.first.attachments.count).to be 1
+        expect(sbmm_sample_uniprot.first.sequence_based_macromolecule.attachments.count).to be 2
+        expect(sbmm_with_parent.first.parent.attachments.count).to be 1
       end
     end
   end
