@@ -41,7 +41,7 @@ module Usecases
             label: well[:label],
             color_code: well[:color_code],
           }.compact
-
+          well_attributes[:color_code] = nil if well[:color_code].blank?
           if well[:is_new]
             wellplate.wells.create(well_attributes)
           else
