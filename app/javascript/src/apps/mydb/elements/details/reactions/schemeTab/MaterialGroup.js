@@ -48,11 +48,7 @@ function MaterialGroup({
         && material.adjusted_loading
         && material.error_mass) {
         contents.push((
-          <MaterialCalculations
-            material={material}
-            materialGroup={materialGroup}
-            index={index}
-          />
+          <MaterialCalculations material={material} />
         ));
       }
     });
