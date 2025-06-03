@@ -116,7 +116,7 @@ const SampleTaskCard = ({ sampleTask }) => {
       .deleteSampleTask(sampleTask)
       .then(result => {
         let level = 'success'
-        let message = 'Sample task successfully deleted'
+        let message = 'Weighing task successfully deleted'
 
         if (result.error) {
           level = 'error'

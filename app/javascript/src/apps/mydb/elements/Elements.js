@@ -1,55 +1,102 @@
-import React, { Component } from 'react';
-import { Row, Col } from 'react-bootstrap';
+import React, {
+  useState, useEffect, useContext, useRef, useCallback
+} from 'react';
+import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 
 import ElementsList from 'src/apps/mydb/elements/list/ElementsList';
 import ElementDetails from 'src/apps/mydb/elements/details/ElementDetails';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
+import PanelCollapseButton from 'src/apps/mydb/layout/PanelCollapseButton';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import { observer } from 'mobx-react';
 
-export default class Elements extends Component {
-  static contextType = StoreContext;
+const defaultLayout = [40, 60];
+const isLayoutCollapsed = (layout) => layout[0] === 0;
 
-  constructor(props) {
-    super(props);
-    this.state = {
-      currentElement: null
+function Elements() {
+  const { deviceDescriptions } = useContext(StoreContext);
+  const [showDetailView, setShowDetailView] = useState(false);
+  const [isCollapsed, setCollapsed] = useState(true);
+  const [returnLayout, setReturnLayout] = useState(null);
+  const panelRef = useRef(null);
+
+  useEffect(() => {
+    const onElementStoreChange = ({ currentElement }) => {
+      if (currentElement && currentElement.type === 'device_description') {
+        deviceDescriptions.addDeviceDescriptionToOpen(currentElement);
+      }
+      setShowDetailView(currentElement !== null);
     };
 
-    this.handleOnChange = this.handleOnChange.bind(this);
-  }
+    ElementStore.listen(onElementStoreChange);
+    onElementStoreChange(ElementStore.getState());
+    return () => ElementStore.unlisten(onElementStoreChange);
+  }, []);
 
-  componentDidMount() {
-    ElementStore.listen(this.handleOnChange);
-  }
+  const toggleListView = useCallback(() => {
+    if (!panelRef.current) return;
+    const panel = panelRef.current;
 
-  componentWillUnmount() {
-    ElementStore.unlisten(this.handleOnChange);
-  }
-
-  handleOnChange(state) {
-    const { currentElement } = state;
-    if (currentElement && currentElement.type == 'device_description') {
-      this.context.deviceDescriptions.addDeviceDescriptionToOpen(currentElement);
+    const layout = panel.getLayout();
+    if (isLayoutCollapsed(layout)) {
+      if (returnLayout) {
+        panel.setLayout(returnLayout);
+        setReturnLayout(null);
+      } else {
+        panel.setLayout(defaultLayout);
+      }
+    } else {
+      setReturnLayout(layout);
+      panel.setLayout([0, 100]);
     }
-    this.setState({ currentElement });
-  }
+  }, [returnLayout]);
 
-  render() {
-    const { currentElement } = this.state;
-    const hasCurrentElement = currentElement !== null;
-    const listWidth = hasCurrentElement ? 5 : 12;
+  const onLayout = useCallback((layout) => {
+    setCollapsed(isLayoutCollapsed(layout));
+  }, []);
 
-    return (
-      <Row className='w-100'>
-        <Col xs={listWidth}>
-          <ElementsList />
-        </Col>
-        {hasCurrentElement && (
-          <Col xs={7}>
-            <ElementDetails currentElement={currentElement} />
-          </Col>
-        )}
-      </Row>
-    );
-  }
+  return (
+    <PanelGroup
+      autoSaveId="elements-panel"
+      direction="horizontal"
+      ref={panelRef}
+      onLayout={onLayout}
+    >
+      <Panel
+        id="elements-list-view"
+        order={1}
+        collapsible
+        defaultSize={showDetailView ? defaultLayout[0] : 100}
+        className="w-0"
+      >
+        <div className="h-100 pt-4 px-4 overflow-x-auto">
+          <div className="h-100" style={{ minWidth: '600px' }}>
+            <ElementsList overview={!showDetailView} />
+          </div>
+        </div>
+      </Panel>
+
+      {showDetailView && (
+        <>
+          <PanelResizeHandle className="panel-resize-handle">
+            <PanelCollapseButton indented={isCollapsed} isCollapsed={isCollapsed} onClick={toggleListView} />
+          </PanelResizeHandle>
+          <Panel
+            id="elements-detail-view"
+            order={2}
+            defaultSize={defaultLayout[1]}
+            className="w-0"
+          >
+            <div className="h-100 pt-4 px-4 overflow-x-auto">
+              <div className="h-100" style={{ minWidth: '680px' }}>
+                <ElementDetails />
+              </div>
+            </div>
+          </Panel>
+        </>
+      )}
+    </PanelGroup>
+  );
 }
+
+export default observer(Elements);

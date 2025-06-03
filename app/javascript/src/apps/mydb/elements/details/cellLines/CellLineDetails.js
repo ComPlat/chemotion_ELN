@@ -88,23 +88,9 @@ class CellLineDetails extends React.Component {
         <div className="d-flex gap-1">
           {this.renderSaveButton(true)}
           {this.renderSaveButton()}
-          {this.renderEnlargenButton()}
           {this.renderCloseHeaderButton()}
         </div>
       </div>
-    );
-  }
-
-  renderEnlargenButton() {
-    const { toggleFullScreen } = this.props;
-    return (
-      <Button
-        variant="info"
-        size="xxsm"
-        onClick={toggleFullScreen}
-      >
-        <i className="fa fa-expand" />
-      </Button>
     );
   }
 
@@ -221,13 +207,13 @@ class CellLineDetails extends React.Component {
               </Tab>
             </Tabs>
           </div>
-          <ButtonToolbar className="d-flex gap-1">
-            <Button variant="primary" onClick={() => { this.handleClose(cellLineItem); }}>
-              Close
-            </Button>
-            {this.renderSubmitButton()}
-          </ButtonToolbar>
         </Card.Body>
+        <Card.Footer className="d-flex justify-content-between">
+          <Button variant="primary" onClick={() => { this.handleClose(cellLineItem); }}>
+            Close
+          </Button>
+          {this.renderSubmitButton()}
+        </Card.Footer>
       </Card>
     );
   }
@@ -246,5 +232,4 @@ CellLineDetails.propTypes = {
     literatures: PropTypes.arrayOf(PropTypes.object),
     disease: PropTypes.string.isRequired
   }).isRequired,
-  toggleFullScreen: PropTypes.func.isRequired
 };

@@ -1,0 +1,23 @@
+@for $i from 1 through $shades - 1 {
+  .surface-lighten#{$i} {
+    background-color: map-get($silicon-shades, lighten#{$i}) !important;
+  }
+  .text-lighten#{$i} {
+    color: map-get($carbon-shades, lighten#{$i}) !important;
+  }
+  .border-lighten#{$i} {
+    border-color: map-get($carbon-shades, lighten#{$i}) !important;
+  }
+}
+
+.surface-base {
+  background-color: $chemstrap-silicon !important;
+}
+
+.text-base {
+  color: $chemstrap-carbon !important;
+}
+
+.border-base {
+  border-color: $chemstrap-carbon !important;
+}

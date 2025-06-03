@@ -157,7 +157,7 @@ class Material extends Component {
                 || material.gas_type === 'gas'}
               onChange={e => this.handleAmountUnitChange(e, material.amount_l)}
               onMetricsChange={this.handleMetricsChange}
-              variant={material.amount_unit === 'l' ? 'success' : 'light'}
+              variant={material.amount_unit === 'l' ? 'primary' : 'light'}
               size="sm"
             />
           </div>
@@ -182,7 +182,7 @@ class Material extends Component {
           unit="mmol/g"
           metricPrefix="n"
           metricPrefixes={['n']}
-          variant={material.error_loading ? 'error' : 'success'}
+          variant={material.error_loading ? 'error' : 'primary'}
           size="sm"
           precision={3}
           disabled={!permitOn(this.props.reaction) || (this.props.materialGroup === 'products' || (!material.reference && this.props.lockEquivColumn))}
@@ -213,10 +213,9 @@ class Material extends Component {
   materialShowLabel(material) {
     return (
       <Button
-        active
         className="p-1 ms-1"
         onClick={e => this.handleShowLabelChange(e)}
-        variant={material.show_label ? 'success' : 'primary'}
+        variant={material.show_label ? 'primary' : 'light'}
         size="sm"
         title={material.show_label ? 'Switch to structure' : 'Switch to label'}
       >
@@ -326,7 +325,7 @@ class Material extends Component {
       <NumeralInputWithUnitsCompo
         size="sm"
         precision={4}
-        variant="success"
+        variant="primary"
         value={updateValue}
         disabled={readOnly}
         onMetricsChange={(e) => this.gasFieldsUnitsChanged(e, field)}
@@ -707,7 +706,7 @@ class Material extends Component {
     const { material, deleteMaterial, connectDragSource, connectDropTarget,
       showLoadingColumn, reaction } = props;
     const isTarget = material.amountType === 'target';
-    const massBsStyle = material.amount_unit === 'g' ? 'success' : 'light';
+    const massBsStyle = material.amount_unit === 'g' ? 'primary' : 'light';
     const mol = material.amount_mol;
     //const concn = mol / reaction.solventVolume;
     const mw = material.decoupled ?
@@ -781,7 +780,7 @@ class Material extends Component {
                 || (!material.reference && this.props.lockEquivColumn))}
               onChange={e => this.handleAmountUnitChange(e, material.amount_mol)}
               onMetricsChange={this.handleMetricsChange}
-              variant={material.amount_unit === 'mol' ? 'success' : 'light'}
+              variant={material.amount_unit === 'mol' ? 'primary' : 'light'}
               size="sm"
             />
           </td>
@@ -890,7 +889,6 @@ class Material extends Component {
             <OverlayTrigger placement="bottom" overlay={refreshSvgTooltip}>
               <Button
                 disabled={materialGroup === 'purification_solvents' || !permitOn(reaction)}
-                active
                 onClick={(e) => this.handleExternalLabelCompleted(e)}
                 size="sm"
               >
@@ -927,10 +925,9 @@ class Material extends Component {
     return (
       <Button
         disabled={!permitOn(this.props.reaction)}
-        active
         className="p-1 ms-1"
         onClick={() => this.toggleTarget(isTarget)}
-        variant={isTarget ? 'success' : 'primary'}
+        variant={isTarget ? 'primary' : 'light'}
         size="sm"
       >
         {isTarget ? 't' : 'r'}
@@ -1026,8 +1023,9 @@ class Material extends Component {
             role="link"
             tabIndex={0}
             onClick={() => this.handleMaterialClick(material)}
-            style={{ cursor: 'pointer' }}
-          ><span>{materialDisplayName}</span></a>
+          >
+            <span>{materialDisplayName}</span>
+          </a>
         );
       } else {
         materialName = <span>{materialDisplayName}</span>;
@@ -1042,8 +1040,9 @@ class Material extends Component {
           role="link"
           tabIndex={0}
           onClick={() => this.handleMaterialClick(material)}
-          style={{ cursor: 'pointer' }}
-        ><span>{materialDisplayName}</span></a>
+        >
+          <span>{materialDisplayName}</span>
+        </a>
       );
 
       if (material.isNew) { materialName = materialDisplayName; }
@@ -1068,12 +1067,12 @@ class Material extends Component {
           {reaction.gaseous && materialGroup !== 'solvents'
             ? this.gasType(material) : null}
           <OverlayTrigger placement="top" overlay={AddtoDescToolTip}>
-            <Button variant="primary" size="xsm" className="me-1" onClick={addToDesc} disabled={!permitOn(reaction)}>
+            <Button variant="light" size="xsm" className="me-1" onClick={addToDesc} disabled={!permitOn(reaction)}>
               {serialCode}
             </Button>
           </OverlayTrigger>
           <OverlayTrigger placement="bottom" overlay={iupacNameTooltip(material)}>
-            <div className={'reaction-material-link'}>
+            <div className="reaction-material-link">
               {materialName}
             </div>
           </OverlayTrigger>

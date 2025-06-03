@@ -1,65 +1,35 @@
-import React from 'react';
-import { Button, Badge } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import 'whatwg-fetch';
+
+import SidebarButton from 'src/apps/mydb/layout/sidebar/SidebarButton';
 
 import InboxActions from 'src/stores/alt/actions/InboxActions';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
 
-export default class InboxButton extends React.Component {
-  constructor(props) {
-    super(props);
+export default function InboxButton({ isCollapsed }) {
+  const { numberOfAttachments } = InboxStore.getState();
+  const [badgeCount, setBadgeCount] = useState(numberOfAttachments);
 
-    const inboxState = InboxStore.getState();
-
-    this.state = {
-      numberOfAttachments: inboxState.numberOfAttachments,
-    };
-
-    this.onChange = this.onChange.bind(this);
-    this.render = this.render.bind(this);
-  }
-
-  componentDidMount() {
-    InboxStore.listen(this.onChange);
+  useEffect(() => {
+    const onInboxStoreChange = ({ numberOfAttachments }) => setBadgeCount(numberOfAttachments);
+    InboxStore.listen(onInboxStoreChange);
     InboxActions.fetchInboxCount();
-  }
+    return () => InboxStore.unlisten(onInboxStoreChange);
+  }, []);
 
-  componentWillUnmount() {
-    InboxStore.unlisten(this.onChange);
-  }
-
-  onChange(state) {
-    this.setState(state);
-  }
-
-  render() {
-    const { numberOfAttachments } = this.state;
-    let btnStyle = 'light';
-    let btnClass = 'fa fa-inbox';
-
-    if (numberOfAttachments > 0) {
-      btnStyle = 'warning';
-      btnClass = 'fa fa-inbox';
-    }
-
-    return (
-      <Button
-        variant={btnStyle}
-        onClick={InboxActions.toggleInboxModal}
-        className="position-relative" // necessary to display the badge
-      >
-        <i className={btnClass} />
-        {numberOfAttachments > 0 && (
-          <Badge
-            pill
-            bg="light"
-            text="warning"
-            className="position-absolute top-100 start-100 translate-middle"
-          >
-            {numberOfAttachments}
-          </Badge>
-        )}
-      </Button>
-    );
-  }
+  return (
+    <SidebarButton
+      label="Inbox"
+      icon="fa-inbox"
+      onClick={InboxActions.toggleInboxModal}
+      badgeCount={badgeCount}
+      isCollapsed={isCollapsed}
+      showLabel={false}
+    />
+  );
 }
+
+InboxButton.propTypes = {
+  isCollapsed: PropTypes.bool.isRequired,
+};

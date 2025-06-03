@@ -22,11 +22,13 @@
 .chemotion-select {
   position: relative;
   &.is-invalid {
-    .chemotion-select__control, .chemotion-select__control:hover {
+    .chemotion-select__control,
+    .chemotion-select__control:hover {
       border-color: $danger;
     }
   }
-  &__control, &__menu {
+  &__control,
+  &__menu {
     @extend .d-block;
     @extend .w-100;
     padding: $form-select-padding-y $form-select-padding-x;
@@ -57,11 +59,15 @@
       border-color: color("primary");
     }
 
-    &:focus, &--is-focused {
+    &:focus,
+    &--is-focused {
       border-color: $input-focus-border-color;
       outline: 0;
       @if $enable-shadows {
-        @include box-shadow($form-select-box-shadow, $form-select-focus-box-shadow);
+        @include box-shadow(
+          $form-select-box-shadow,
+          $form-select-focus-box-shadow
+        );
       } @else {
         // Avoid using mixin so we can pass custom focus shadow properly
         box-shadow: $form-select-focus-box-shadow;
@@ -74,7 +80,8 @@
       background-image: none;
     }
 
-    &:disabled, &--is-disabled {
+    &:disabled,
+    &--is-disabled {
       color: $form-select-disabled-color;
       background-color: $form-select-disabled-bg;
       border-color: $form-select-disabled-border-color;
@@ -91,24 +98,28 @@
     @extend .text-wrap;
   }
 
-  &__indicator, &__value-container, &__input-container, &__placeholder, &__single-value, &__indicator-separator {
+  &__indicator,
+  &__value-container,
+  &__input-container,
+  &__placeholder,
+  &__single-value,
+  &__indicator-separator {
     @extend .p-0;
     @extend .m-0;
   }
 
   &__single-value .badge {
-    @extend .d-block
+    @extend .d-block;
   }
 
   &__indicator {
-
     &-separator {
       @extend .d-none;
     }
 
     &.chemotion-select__dropdown-indicator {
       @include hide-svg;
-      width: 1.75rem;
+      width: 1rem;
       height: 1rem;
       background-image: escape-svg($form-select-indicator);
       background-repeat: no-repeat;
@@ -126,8 +137,9 @@
   &__option {
     padding: $form-select-padding-y $form-select-padding-x;
 
-    &--is-selected, &--is-selected.chemotion-select__option--is-focused {
-      background-color: color("primary");
+    &--is-selected,
+    &--is-selected.chemotion-select__option--is-focused {
+      background-color: $input-focus-border-color;
     }
 
     &--is-focused {
@@ -171,11 +183,15 @@
       border-color: color("primary");
     }
 
-    &:focus, &--is-focused {
+    &:focus,
+    &--is-focused {
       border-color: $input-focus-border-color;
       outline: 0;
       @if $enable-shadows {
-        @include box-shadow($form-select-box-shadow, $form-select-focus-box-shadow);
+        @include box-shadow(
+          $form-select-box-shadow,
+          $form-select-focus-box-shadow
+        );
       } @else {
         // Avoid using mixin so we can pass custom focus shadow properly
         box-shadow: $form-select-focus-box-shadow;
@@ -192,7 +208,8 @@
   &__option {
     padding: $form-select-padding-y $form-select-padding-x;
 
-    &--is-selected, &--is-selected.chemotion-select__option--is-focused {
+    &--is-selected,
+    &--is-selected.chemotion-select__option--is-focused {
       background-color: color("primary");
     }
 
@@ -210,7 +227,8 @@
   @extend .bg-white;
 }
 
-.select-in-inputgroup-text__option, .select-in-inputgroup-text__menu-list {
+.select-in-inputgroup-text__option,
+.select-in-inputgroup-text__menu-list {
   width: 160px;
   white-space: normal;
   text-align: left;
