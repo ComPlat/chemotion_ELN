@@ -2,8 +2,8 @@
 
 FactoryBot.define do
   factory :protein_sequence_modification do
-    modification_n_terminal { false }
-    modification_n_terminal_details { }
+    modification_n_terminal { true }
+    modification_n_terminal_details { "Something else" }
     modification_c_terminal { false }
     modification_c_terminal_details { }
     modification_insertion { false }

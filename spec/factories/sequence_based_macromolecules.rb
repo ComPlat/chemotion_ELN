@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 FactoryBot.define do
+
+  # ATTENTION: This factory does not produce valid data of its own. Please use the more specific factories: :uniprot_sbmm, :modified_uniprot_sbmm and :non_uniprot_sbmm
   factory(:sequence_based_macromolecule) do
     uniprot_source { {} }
     sbmm_type { "protein" }
@@ -25,14 +27,6 @@ FactoryBot.define do
     protein_source_details_expression_system { }
     deleted_at { }
 
-    after(:build) do |sbmm, evaluator|
-      if sbmm.uniprot_derivation == 'uniprot_modified'
-        sbmm.parent = build(:uniprot_sbmm) unless sbmm.parent.present?
-        sbmm.protein_sequence_modification = build(:protein_sequence_modification) unless sbmm.protein_sequence_modification.present?
-        sbmm.post_translational_modification = build(:post_translational_modification) unless sbmm.post_translational_modification.present?
-      end
-    end
-
     factory(:uniprot_sbmm) do
       uniprot_source { "UNIPROT_JSON" }
       primary_accession { "P12345" }
@@ -46,22 +40,21 @@ FactoryBot.define do
 
     factory(:modified_uniprot_sbmm) do
       uniprot_derivation { 'uniprot_modified' }
-      parent { build(:uniprot_sbmm) }
-      post_translational_modification do
-        build(
-          :post_translational_modification,
-          phosphorylation_enabled: true,
-          phosphorylation_ser_enabled: true,
-          phosphorylation_ser_details: "Something something"
-        )
-      end
-      protein_sequence_modification do
-        build(:protein_sequence_modification)
+
+      after(:build) do |sbmm, evaluator|
+        sbmm.parent ||= build(:uniprot_sbmm)
+        sbmm.protein_sequence_modification ||= build(:protein_sequence_modification)
+        sbmm.post_translational_modification ||= build(:post_translational_modification)
       end
     end
 
     factory(:non_uniprot_sbmm) do
       uniprot_derivation { 'uniprot_unknown' }
+      after(:build) do |sbmm, evaluator|
+        sbmm.parent = nil # non_uniprot_sbmm do not have a parent
+        sbmm.protein_sequence_modification ||= build(:protein_sequence_modification)
+        sbmm.post_translational_modification ||= build(:post_translational_modification)
+      end
     end
   end
 end
