@@ -297,6 +297,93 @@ RSpec.describe 'ExportCollection' do
     end
   end
 
+  context 'when sbmm samples, sbmms, analyses and attachments were exported to zip file' do
+    let(:collection) { create(:collection, user_id: user.id, label: 'sbmm test') }
+    let(:sbmm_sample1) do
+      create(
+        :sequence_based_macromolecule_sample,
+        sequence_based_macromolecule: build(:uniprot_sbmm, systematic_name: 'Zoological Phenomenon Protein'),
+        user: user,
+        container: FactoryBot.create(:container, :with_analysis),
+      )
+    end
+    let(:sbmm_sample2) do
+      create(
+        :sequence_based_macromolecule_sample,
+        sequence_based_macromolecule: build(
+          :modified_uniprot_sbmm,
+          systematic_name: 'Foobar',
+          parent: sbmm_sample1.sequence_based_macromolecule,
+        ),
+        user: user,
+      )
+    end
+    let(:attachment1) do
+      create(
+        :attachment, :with_cif_file, bucket: 1, created_by: user.id,
+                                     attachable_id: sbmm_sample1.sequence_based_macromolecule.id
+      )
+    end
+    let(:attachment2) do
+      create(
+        :attachment, :with_png_image, bucket: 1, created_by: user.id, attachable_id: sbmm_sample1.id
+      )
+    end
+    let(:expected_attachment_filenames) do
+      %W[attachments/#{attachment1.identifier}.cif attachments/#{attachment2.identifier}.png]
+    end
+
+    let(:sequence_based_macromolecule_samples) { elements_in_json['SequenceBasedMacromoleculeSample'] }
+    let(:sequence_based_macromolecules) { elements_in_json['SequenceBasedMacromolecule'] }
+    let(:protein_sequence_modifications) { elements_in_json['ProteinSequenceModification'] }
+    let(:post_translational_modifications) { elements_in_json['PostTranslationalModification'] }
+    let(:attachments) { elements_in_json['Attachment'] }
+    let(:container) { elements_in_json['Container'] }
+
+    before do
+      sbmm_sample1
+      sbmm_sample1.attachments = [attachment2]
+      sbmm_sample1.sequence_based_macromolecule.attachments = [attachment1]
+      sbmm_sample1.save!
+      sbmm_sample2
+
+      CollectionsSequenceBasedMacromoleculeSample.create!(sequence_based_macromolecule_sample: sbmm_sample1,
+                                                          collection: collection)
+      CollectionsSequenceBasedMacromoleculeSample.create!(sequence_based_macromolecule_sample: sbmm_sample2,
+                                                          collection: collection)
+
+      export = Export::ExportCollections.new(job_id, [collection.id], 'zip', nested, gate)
+      export.prepare_data
+      export.to_file
+    end
+
+    it 'returns existing zip file' do
+      file_path = File.join('public', 'zip', "#{job_id}.zip")
+      expect(File.exist?(file_path)).to be_present
+    end
+
+    it 'has included files' do
+      expect(file_names.length).to be 5
+      expect(file_names).to include('export.json', 'schema.json', 'description.txt')
+      expect(file_names).to include(*expected_attachment_filenames)
+    end
+
+    it 'has sbmm samples in export.js' do
+      expect(sequence_based_macromolecule_samples.length).to be 2
+    end
+
+    it 'has sbmms with post translational and protein sequence modifications in export.js' do
+      expect(sequence_based_macromolecules.length).to be 2
+      expect(protein_sequence_modifications.length).to be 1
+      expect(post_translational_modifications.length).to be 1
+    end
+
+    it 'has analyses and attachments in export.js' do
+      expect(attachments.length).to be 2
+      expect(container.length).to be 3
+    end
+  end
+
   def update_body_of_researchplan(research_plan, identifier_of_attachment) # rubocop:disable Metrics/MethodLength
     research_plan.body = [
       {

@@ -8,7 +8,8 @@ module Import
   class ImportCollections # rubocop:disable Metrics/ClassLength
     attr_reader :log_file_path
 
-    def initialize(att, current_user_id, gate = false, col_id = nil, origin = nil, logger = nil) # rubocop:disable Style/OptionalBooleanParameter
+    # rubocop:disable Style/OptionalBooleanParameter , Metrics/ParameterLists
+    def initialize(att, current_user_id, gate = false, col_id = nil, origin = nil, logger = nil)
       @att = att
       @current_user_id = current_user_id
       @gt = gate
@@ -21,6 +22,7 @@ module Import
       @tmp_dir = Dir.mktmpdir
       @logger, @log_file_path = initialize_logger(logger)
     end
+    # rubocop:enable Style/OptionalBooleanParameter , Metrics/ParameterLists
 
     def execute
       extract
@@ -102,12 +104,18 @@ module Import
         import_residues
         import_reactions
         import_reactions_samples
-        CelllineImporter.new(@data, @current_user_id, @instances).execute if @gt == false
         import_elements
-        import_wellplates if @gt == false
-        import_wells if @gt == false
-        import_research_plans if @gt == false
-        import_screens if @gt == false
+
+        if @gt == false
+          import_chemicals
+          import_wellplates
+          import_wells
+          import_research_plans
+          import_screens
+          Import::Helpers::CelllineImporter.new(@data, @current_user_id, @instances).execute
+          Import::Helpers::SequenceBasedMacromoleculeSampleImporter.new(@data, @current_user_id, @instances).execute
+        end
+
         import_containers
         import_segments
         import_datasets
@@ -622,15 +630,19 @@ module Import
                          fields.fetch('aasm_state')
                        end
 
-          attachment.update!(
-            attachable: attachable,
-            transferred: transferred_status,
-            aasm_state: aasm_state,
-            filename: fields.fetch('filename'),
-            # checksum: fields.fetch('checksum'),
-            # created_at: fields.fetch('created_at'),
-            # updated_at: fields.fetch('updated_at')
-          )
+          if attachable_type == 'SequenceBasedMacromolecule' && attachable.attachments.present?
+            attachment.destroy
+          else
+            attachment.update!(
+              attachable: attachable,
+              transferred: transferred_status,
+              aasm_state: aasm_state,
+              filename: fields.fetch('filename'),
+              # checksum: fields.fetch('checksum'),
+              # created_at: fields.fetch('created_at'),
+              # updated_at: fields.fetch('updated_at')
+            )
+          end
         end
         # TODO: if attachment.checksum != fields.fetch('checksum')
 
@@ -659,7 +671,9 @@ module Import
     end
 
     def import_datasets
+      # rubocop:disable Performance/MethodObjectAsBlock
       Labimotion::Import.import_datasets(@data, @instances, @gt, @current_user_id, &method(:update_instances!))
+      # rubocop:enable Performance/MethodObjectAsBlock
     rescue StandardError => e
       Rails.logger.error(e.backtrace)
     end
