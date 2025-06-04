@@ -1,0 +1,33 @@
+.material-group {
+  &--can-drop {
+    background-color: #e0f7fa;
+  }
+
+  &--is-over {
+    background-color: #b2ebf2;
+  }
+}
+
+.material-row {
+  td {
+    padding: 1px 2px;
+    margin: 0px;
+  }
+
+  .drag-source {
+    cursor: move;
+    vertical-align: middle;
+  }
+
+  &--is-dragging {
+    opacity: 0.2;
+  }
+
+  &--can-drop {
+    background-color: #e0f7fa;
+  }
+
+  &--is-over {
+    background-color: #b2ebf2;
+  }
+}
