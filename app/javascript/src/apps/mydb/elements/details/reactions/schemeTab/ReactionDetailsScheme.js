@@ -6,7 +6,7 @@ import {
 } from 'react-bootstrap';
 import { Select } from 'src/components/common/Select';
 import Delta from 'quill-delta';
-import MaterialGroupContainer from 'src/apps/mydb/elements/details/reactions/schemeTab/MaterialGroupContainer';
+import MaterialGroup from 'src/apps/mydb/elements/details/reactions/schemeTab/MaterialGroup';
 import Sample from 'src/models/Sample';
 import Reaction from 'src/models/Reaction';
 import Molecule from 'src/models/Molecule';
@@ -1125,12 +1125,11 @@ export default class ReactionDetailsScheme extends Component {
       this.switchYield(allHaveNoConversion);
     }
 
-    const headReactants = reaction.starting_materials.length ?? 0;
     return (
       <>
         <div>
           <div className="border-bottom">
-            <MaterialGroupContainer
+            <MaterialGroup
               reaction={reaction}
               materialGroup="starting_materials"
               materials={reaction.starting_materials}
@@ -1143,12 +1142,11 @@ export default class ReactionDetailsScheme extends Component {
               onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
               switchEquiv={this.switchEquiv}
               lockEquivColumn={this.state.lockEquivColumn}
-              headIndex={0}
             />
           </div>
 
           <div className="border-bottom">
-            <MaterialGroupContainer
+            <MaterialGroup
               reaction={reaction}
               materialGroup="reactants"
               materials={reaction.reactants}
@@ -1161,11 +1159,11 @@ export default class ReactionDetailsScheme extends Component {
               onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
               switchEquiv={this.switchEquiv}
               lockEquivColumn={lockEquivColumn}
-              headIndex={headReactants}
+              headIndex={reaction.starting_materials.length ?? 0}
             />
           </div>
           <div className="mb-3">
-            <MaterialGroupContainer
+            <MaterialGroup
               reaction={reaction}
               materialGroup="products"
               materials={reaction.products}
@@ -1180,7 +1178,6 @@ export default class ReactionDetailsScheme extends Component {
               lockEquivColumn={this.state.lockEquivColumn}
               switchYield={this.switchYield}
               displayYieldField={displayYieldField}
-              headIndex={0}
             />
           </div>
 
@@ -1191,7 +1188,7 @@ export default class ReactionDetailsScheme extends Component {
             <Accordion.Item eventKey="solvents">
               <Accordion.Header>Solvents</Accordion.Header>
               <Accordion.Body>
-                <MaterialGroupContainer
+                <MaterialGroup
                   reaction={reaction}
                   materialGroup="solvents"
                   materials={reaction.solvents}
@@ -1204,7 +1201,6 @@ export default class ReactionDetailsScheme extends Component {
                   onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
                   switchEquiv={this.switchEquiv}
                   lockEquivColumn={this.state.lockEquivColumn}
-                  headIndex={0}
                 />
               </Accordion.Body>
             </Accordion.Item>
