@@ -11,7 +11,7 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 
 const PropertiesForm = ({ readonly }) => {
   const sbmmStore = useContext(StoreContext).sequenceBasedMacromoleculeSamples;
-  const sbmmSample = sbmmStore.sequence_based_macromolecule_sample;
+  let sbmmSample = sbmmStore.sequence_based_macromolecule_sample;
   const formHelper = initFormHelper(sbmmSample, sbmmStore);
   const disabled = readonly ? true : false;
   const generalAccordionIdent = `${sbmmSample.id}-general`;
@@ -21,8 +21,8 @@ const PropertiesForm = ({ readonly }) => {
     if (!sbmmStore.toggable_contents.hasOwnProperty(generalAccordionIdent)) {
       sbmmStore.toggleContent(generalAccordionIdent);
     }
-    if (sbmmSample.is_new) {
-      sbmmStore.toggleSearchOptions(true);
+    if (sbmmSample.is_new || sbmmStore.show_search_options[sbmmSample.id]) {
+      sbmmStore.toggleSearchOptions(sbmmSample.id, true);
     }
   }, []);
 
@@ -60,6 +60,8 @@ const PropertiesForm = ({ readonly }) => {
 
   const visibleForUnkownOrModification = isProtein && !['', undefined, 'uniprot'].includes(uniprotDerivationValue);
 
+  const showSearchFields = isProtein && uniprotDerivationValue;
+
   const showIfReferenceSelected =
     isProtein && (parent?.primary_accession || parent?.id
       || sbmmSample.sequence_based_macromolecule?.parent_identifier
@@ -68,7 +70,7 @@ const PropertiesForm = ({ readonly }) => {
   const showIfEnzymeIsSelected = sbmmSample.function_or_application === 'enzyme';
 
   const showReference = isProtein && !['', undefined, 'uniprot_unknown'].includes(uniprotDerivationValue)
-    && !sbmmSample.errors?.reference && (parent?.primary_accession || parent?.id);
+    && (parent?.primary_accession || parent?.id);
 
   const noPrimaryAccession = uniprotDerivationValue === 'uniprot'
     && sbmmSample.errors.sequence_based_macromolecule?.primary_accession
@@ -116,11 +118,17 @@ const PropertiesForm = ({ readonly }) => {
     }
     if (uniprotDerivationValue === 'uniprot' && result.uniprot_derivation !== 'uniprot') {
       sbmmSample = sbmmStore.setError(
-        sbmmSample, errorPath, 'The sequence based macromolecule has not the right type. Only uniprot is allowed.'
+        sbmmSample, errorPath,
+        'The sequence based macromolecule has not the right type. Only "Uniprot" is allowed.'
+      );
+    } else if (uniprotDerivationValue === 'uniprot_unknown' && result.uniprot_derivation !== 'uniprot_unknown') {
+      sbmmSample = sbmmStore.setError(
+        sbmmSample, errorPath,
+        'The sequence based macromolecule has not the right type. Only "Unknown" is allowed.'
       );
     } else {
       sbmmStore.setSbmmByResult(result);
-      // sbmmStore.toggleSearchOptions(false);
+      // sbmmStore.toggleSearchOptions(sbmmSample.id, false);
     }
   }
 
@@ -136,13 +144,18 @@ const PropertiesForm = ({ readonly }) => {
   });
 
   const dropAreaForReference = () => {
+    if (!showSearchFields) { return null; }
+
+    const dndClassName = isOver && canDrop ? ' dnd-zone-over' : '';
+    const disabledClassName = searchable ? ' bg-gray-200' : '';
+
     return (
       <>
         <label className="form-label">Reference</label>
         <div
           key="element-dropzone-SEQUENCE_BASED_MACROMOLECULE"
-          ref={(node) => drop(node)}
-          className={`border border-dashed border-3 p-1 text-center text-gray-600 ${isOver && canDrop ? 'dnd-zone-over' : ''}`}
+          ref={(node) => searchable ? node : drop(node)}
+          className={`border border-dashed border-3 p-1 text-center text-gray-600${dndClassName}${disabledClassName}`}
         >
           Drop SBMM here
         </div>
@@ -155,6 +168,48 @@ const PropertiesForm = ({ readonly }) => {
         }
       </>
     );
+  }
+
+  const toggleButtonForSearchOptions = () => {
+    if (sbmmSample.is_new) { return null; }
+
+    const buttonText = sbmmStore.show_search_options[sbmmSample.id] ? 'Close' : 'Reopen';
+    const searchOptionsVisible = sbmmStore.show_search_options[sbmmSample.id] ? false : true;
+
+    return (
+      <Button variant="primary" onClick={() => sbmmStore.toggleSearchOptions(sbmmSample.id, searchOptionsVisible)}>
+        {buttonText} search options
+      </Button>
+    )
+  }
+
+  const searchFieldsForUniprotOrModification = () => {
+    if (!visibleForUniprotOrModification) { return null }
+
+    return (
+      <>
+        <Col>
+          {
+            formHelper.selectInput(
+              'sequence_based_macromolecule.search_field', 'Search UniProt or Reference', sbmmSearchBy,
+              disabled, '', ''
+            )
+          }
+        </Col>
+        <Col>
+          {formHelper.textInput('sequence_based_macromolecule.search_term', 'Search term', disabled, '')}
+        </Col>
+        <Col className="align-self-end col-2">
+          {
+            searchable && (
+              <Button variant="primary" onClick={() => searchSequenceBasedMolecules()}>
+                Search
+              </Button>
+            )
+          }
+        </Col>
+      </>
+    )
   }
 
   return (
@@ -198,42 +253,17 @@ const PropertiesForm = ({ readonly }) => {
                 )}
               </Col>
               <Col className="col-2">
-                {
-                  !sbmmStore.show_search_options && (
-                    <Button variant="primary" onClick={() => sbmmStore.toggleSearchOptions(true)}>
-                      Reopen search options
-                    </Button>
-                  )
-                }
+                {toggleButtonForSearchOptions()}
               </Col>
             </Row>
 
             {
-              (visibleForUniprotOrModification && (sbmmSample.is_new || sbmmStore.show_search_options)) && (
+              (sbmmSample.is_new || sbmmStore.show_search_options[sbmmSample.id]) && (
                 <Row className="mb-4">
                   <Col>
-                    {!searchable && dropAreaForReference()}
+                    {dropAreaForReference()}
                   </Col>
-                  <Col>
-                    {
-                      formHelper.selectInput(
-                        'sequence_based_macromolecule.search_field', 'Search UniProt or Reference', sbmmSearchBy,
-                        disabled, '', ''
-                      )
-                    }
-                  </Col>
-                  <Col>
-                    {formHelper.textInput('sequence_based_macromolecule.search_term', 'Search term', disabled, '')}
-                  </Col>
-                  <Col className="align-self-end col-2">
-                    {
-                      searchable && (
-                        <Button variant="primary" onClick={() => searchSequenceBasedMolecules()}>
-                          Search
-                        </Button>
-                      )
-                    }
-                  </Col>
+                  {searchFieldsForUniprotOrModification()}
                 </Row>
               )
             }
