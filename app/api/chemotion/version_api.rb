@@ -7,25 +7,6 @@ module Chemotion
     include Grape::Kaminari
     helpers ParamsHelpers
 
-    helpers do
-      def filter_hash_by_structure(structure, input)
-        result = {}
-        return result unless structure.present? && input.present?
-
-        structure.each do |key, value|
-          next unless input.key?(key)
-
-          result[key] = if value.is_a?(Hash)
-                          filter_hash_by_structure(value, input[key])
-                        else
-                          input[key]
-                        end
-        end
-
-        result
-      end
-    end
-
     namespace :versions do
       after_validation do
         resource = namespace.split('/')[2]
@@ -72,16 +53,6 @@ module Chemotion
           get do
             reaction = Reaction.with_log_data.find(params[:id])
             versions = Versioning::Fetcher.call(reaction)
-            versions.each do |v|
-              v[:changes].each do |c|
-                next unless c[:fields]['variations']
-
-                old_values = c[:fields]['variations'][:old_value]
-                new_values = c[:fields]['variations'][:new_value]
-
-                c[:fields]['variations'][:old_value] = filter_hash_by_structure(new_values, old_values)
-              end
-            end
 
             { versions: paginate(Kaminari.paginate_array(versions)) }
           end
