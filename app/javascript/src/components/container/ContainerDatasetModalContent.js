@@ -699,7 +699,10 @@ export class ContainerDatasetModalContent extends Component {
               rootClose
               onHide={() => this.abortAutoSelection()}
             >
-              <ListGroup className="mt-0 w-100 overflow-auto" style={{ maxHeight: '200px' }}>
+              <ListGroup
+                className="mt-0 w-100 overflow-auto rounded-3 shadow-lg"
+                style={{ maxHeight: '200px', zIndex: 1 }}
+              >
                 {this.renderInstruments()}
               </ListGroup>
             </Overlay>
