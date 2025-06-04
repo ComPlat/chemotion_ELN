@@ -448,7 +448,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
   get ec_numbers() {
     const ecNumbers = this.sequence_based_macromolecule.ec_numbers;
     if (ecNumbers) {
-      return [ecNumbers.join(',')]
+      return [Array.isArray(ecNumbers) ? ecNumbers.join(',') : ecNumbers];
     } else {
       return [];
     }

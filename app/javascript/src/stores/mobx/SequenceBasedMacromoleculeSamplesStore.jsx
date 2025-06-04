@@ -85,7 +85,7 @@ export const SequenceBasedMacromoleculeSamplesStore = types
     filtered_attachments: types.optional(types.array(types.frozen({})), []),
     show_search_result: types.optional(types.boolean, false),
     search_result: types.optional(types.array(types.frozen({})), []),
-    show_search_options: types.optional(types.boolean, false),
+    show_search_options: types.optional(types.frozen({}), {}),
   })
   .actions(self => ({
     searchForSequenceBasedMacromolecule: flow(function* searchForSequenceBasedMacromolecule(search_term, search_field) {
@@ -129,6 +129,9 @@ export const SequenceBasedMacromoleculeSamplesStore = types
       } else {
         self.sequence_based_macromolecule_sample = openSequenceBasedMacromoleculeSamples[index];
       }
+      if (self.show_search_options[self.sequence_based_macromolecule_sample.id] === undefined) {
+        self.toggleSearchOptions(self.sequence_based_macromolecule_sample.id, false);
+      }
       self.updated_sequence_based_macromolecule_sample_id = 0;
     },
     editSequenceBasedMacromoleculeSamples(sequence_based_macromolecule_sample) {
@@ -150,6 +153,12 @@ export const SequenceBasedMacromoleculeSamplesStore = types
         }
       });
       self.toggable_contents = contents;
+
+      let searchOptions = { ...self.show_search_options };
+      if (searchOptions[self.sequence_based_macromolecule_sample.id] !== undefined) {
+        delete searchOptions[self.sequence_based_macromolecule_sample.id];
+      }
+      self.show_search_options = searchOptions;
     },
     setSbmmByResult(result, primary_accession) {
       let sequenceBasedMacromoleculeSample = { ...self.sequence_based_macromolecule_sample };
@@ -214,7 +223,7 @@ export const SequenceBasedMacromoleculeSamplesStore = types
             sequenceBasedMacromoleculeSample.sequence_based_macromolecule[key] = '';
           }
         });
-        self.show_search_options = true;
+        self.toggleSearchOptions(self.sequence_based_macromolecule_sample.id, true);
         sequenceBasedMacromoleculeSample.errors = {};
 
         if (self.toggable_contents.hasOwnProperty(`${sequenceBasedMacromoleculeSample.id}-reference`)) {
@@ -349,8 +358,10 @@ export const SequenceBasedMacromoleculeSamplesStore = types
     removeSearchResult() {
       self.search_result = [];
     },
-    toggleSearchOptions(value) {
-      self.show_search_options = value;
+    toggleSearchOptions(id, value) {
+      let searchOptions = { ...self.show_search_options };
+      searchOptions[id] = value;
+      self.show_search_options = searchOptions;
     },
     setModificationToggleButtons(fieldPrefix, field, fieldSuffix, value) {
       let sequenceBasedMacromoleculeSample = { ...self.sequence_based_macromolecule_sample };
