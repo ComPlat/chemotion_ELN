@@ -190,4 +190,8 @@ class SequenceBasedMacromolecule < ApplicationRecord
       }
     )
   end
+
+  def self.valid_accession?(string)
+    string.match?(ACCESSION_FORMAT)
+  end
 end

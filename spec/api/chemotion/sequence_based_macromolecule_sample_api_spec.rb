@@ -424,16 +424,13 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
       context 'when a SBMM with the updated data already exists' do
         # sbmm and other_sbmm should only be different on sequence
         let(:other_sbmm) do
-          log_red.call('=== Creating other_sbmm ===')
-          other_sbmm = create(
+          create(
             :modified_uniprot_sbmm,
             sequence: 'FooBar',
             parent: sbmm.parent,
             protein_sequence_modification: sbmm.protein_sequence_modification,
             post_translational_modification: sbmm.post_translational_modification,
           )
-          log_red.call("=== created other_sbmm with id #{other_sbmm.id}")
-          other_sbmm
         end
         let(:sbmm_sample_serialized_for_use_as_put_data) do
           data = Entities::SequenceBasedMacromoleculeSampleEntity.represent(sbmm_sample).serializable_hash
@@ -468,26 +465,24 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
           other_sbmm
         end
 
-        it 'returns a 200 success' do
+        it 'returns a 400 error' do
           put "/api/v1/sequence_based_macromolecule_samples/#{sbmm_sample.id}", params: put_data, as: :json
-          expect(response.status).to eq 200
+          expect(response.status).to eq 400
         end
 
-        it 'switches the sample to the new SBMM' do
+        it 'returns a machine-readable datastructure containing the error' do
           expect do
-            log_red.call('=== STARTING PUT ===')
             put "/api/v1/sequence_based_macromolecule_samples/#{sbmm_sample.id}", params: put_data, as: :json
-            sbmm_sample.reload
-          end.to change(sbmm_sample, :amount_as_used_mass_value).from(123).to(12_345)
-             .and not_change(SequenceBasedMacromolecule, :count)
-             .and change(sbmm_sample, :sequence_based_macromolecule_id).from(sbmm.id).to(other_sbmm.id)
-        end
+          end.not_to change(sbmm_sample, :updated_at) # TODO: find less brittle way of finding out if any data was changed
 
-        it 'does not delete the old SBMM yet' do
-          expect do
-            put "/api/v1/sequence_based_macromolecule_samples/#{sbmm_sample.id}", params: put_data, as: :json
-            sbmm_sample.reload
-          end.not_to change(SequenceBasedMacromolecule, :count)
+          body = parsed_json_response
+          expected_response = {
+            "message" => "Could not update SBMM #{sbmm_sample.sequence_based_macromolecule.id} as it conflicts with SBMM #{other_sbmm.id}",
+            "sbmm_id" => sbmm_sample.sequence_based_macromolecule.id,
+            "conflicting_sbmm_id" => other_sbmm.id
+          }
+
+          expect(body).to eq expected_response
         end
       end
 
