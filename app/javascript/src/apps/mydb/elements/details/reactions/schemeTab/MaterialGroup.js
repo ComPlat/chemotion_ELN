@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import {
   Button, Tooltip, OverlayTrigger, Table
 } from 'react-bootstrap';
+import classNames from 'classnames';
 import { Select } from 'src/components/common/Select';
 import Material from 'src/apps/mydb/elements/details/reactions/schemeTab/Material';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -14,53 +15,83 @@ import { ionic_liquids } from 'src/components/staticDropdownOptions/ionic_liquid
 import { reagents_kombi } from 'src/components/staticDropdownOptions/reagents_kombi';
 import { permitOn } from 'src/components/common/uis';
 import ToggleButton from 'src/components/common/ToggleButton';
+import { DragDropItemTypes } from 'src/utilities/DndConst';
+import ReorderableMaterialContainer from 'src/apps/mydb/elements/details/reactions/schemeTab/ReorderableMaterialContainer';
 
 function MaterialGroup({
   materials, materialGroup, deleteMaterial, onChange,
-  showLoadingColumn, reaction, addDefaultSolvent, headIndex,
+  showLoadingColumn, reaction, headIndex,
   dropMaterial, dropSample, switchEquiv, lockEquivColumn, displayYieldField,
   switchYield
 }) {
-  let index = headIndex;
-  const contents = materials.map((material) => {
-    index += 1;
-    return (
-      <Material
-        key={material.id}
-        reaction={reaction}
-        onChange={onChange}
-        material={material}
-        materialGroup={materialGroup}
-        showLoadingColumn={showLoadingColumn}
-        deleteMaterial={(m) => deleteMaterial(m, materialGroup)}
-        index={index}
-        dropMaterial={dropMaterial}
-        dropSample={dropSample}
-        lockEquivColumn={lockEquivColumn}
-        displayYieldField={displayYieldField}
-      />
-    );
-  });
+  const getMaterialComponent = ({
+    dragRef,
+    dropRef,
+    material,
+    index,
+    isOver,
+    canDrop,
+    isDragging
+  }) => (
+    <Material
+      key={material.id}
+      reaction={reaction}
+      onChange={onChange}
+      material={material}
+      materialGroup={materialGroup}
+      showLoadingColumn={showLoadingColumn}
+      deleteMaterial={(m) => deleteMaterial(m, materialGroup)}
+      index={index + 1}
+      lockEquivColumn={lockEquivColumn}
+      displayYieldField={displayYieldField}
+      dragRef={dragRef}
+      dropRef={dropRef}
+      isOver={isOver}
+      canDrop={canDrop}
+      isDragging={isDragging}
+    />
+  );
+
+  const onDrop = (item, index) => {
+    if (item.type === DragDropItemTypes.SAMPLE) {
+      dropSample(item.element, materials.at(index), materialGroup);
+    }
+    if (item.type === DragDropItemTypes.MOLECULE) {
+      dropSample(item.element, materials.at(index), materialGroup, null, true);
+    }
+  };
+
+  const onReorder = (item, index) => {
+    dropMaterial(item.material, item.materialGroup, materials.at(index), materialGroup);
+  };
 
   if (materialGroup === 'solvents'
     || materialGroup === 'purification_solvents') {
     return (
       <SolventsMaterialGroup
-        contents={contents}
+        materials={materials}
         materialGroup={materialGroup}
+        dropSample={dropSample}
+        onDrop={onDrop}
+        onReorder={onReorder}
+        getMaterialComponent={getMaterialComponent}
+        headIndex={headIndex}
         reaction={reaction}
-        addDefaultSolvent={addDefaultSolvent}
       />
     );
   }
 
   return (
     <GeneralMaterialGroup
-      contents={contents}
+      materials={materials}
       materialGroup={materialGroup}
+      dropSample={dropSample}
+      onDrop={onDrop}
+      onReorder={onReorder}
+      getMaterialComponent={getMaterialComponent}
+      headIndex={headIndex}
       showLoadingColumn={showLoadingColumn}
       reaction={reaction}
-      addDefaultSolvent={addDefaultSolvent}
       switchEquiv={switchEquiv}
       lockEquivColumn={lockEquivColumn}
       displayYieldField={displayYieldField}
@@ -69,17 +100,18 @@ function MaterialGroup({
   );
 }
 
-const switchEquivTooltip = () => (
-  <Tooltip id="assign_button">
-    Lock/unlock Equiv
-    <br />
-    for target amounts
-  </Tooltip>
-);
-
-function SwitchEquivButton(lockEquivColumn, switchEquiv) {
+function SwitchEquivButton({ lockEquivColumn, switchEquiv }) {
   return (
-    <OverlayTrigger placement="top" overlay={switchEquivTooltip()}>
+    <OverlayTrigger
+      placement="top"
+      overlay={(
+        <Tooltip id="assign_button">
+          Lock/unlock Equiv
+          <br />
+          for target amounts
+        </Tooltip>
+      )}
+    >
       <Button
         id="lock_equiv_column_btn"
         size="xxsm"
@@ -93,8 +125,22 @@ function SwitchEquivButton(lockEquivColumn, switchEquiv) {
   );
 }
 
+SwitchEquivButton.propTypes = {
+  lockEquivColumn: PropTypes.bool.isRequired,
+  switchEquiv: PropTypes.func.isRequired
+};
+
+function materialGroupClassNames({ isEmpty, isOver, canDrop }) {
+  return classNames('material-group', {
+    'material-group--is-over': isEmpty && isOver,
+    'material-group--can-drop': isEmpty && canDrop,
+  });
+}
+
 function GeneralMaterialGroup({
-  contents, materialGroup, showLoadingColumn, reaction, addDefaultSolvent,
+  materials, materialGroup, getMaterialComponent, headIndex,
+  dropSample, onDrop, onReorder,
+  showLoadingColumn, reaction,
   switchEquiv, lockEquivColumn, displayYieldField, switchYield
 }) {
   const isReactants = materialGroup === 'reactants';
@@ -125,7 +171,7 @@ function GeneralMaterialGroup({
         .then((result) => {
           const molecule = new Molecule(result);
           molecule.density = molecule.density || 0;
-          addDefaultSolvent(molecule, null, materialGroup, label);
+          dropSample(molecule, null, materialGroup, label);
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });
@@ -198,59 +244,87 @@ function GeneralMaterialGroup({
   );
 
   return (
-    <table className="w-100 m-2">
-      <colgroup>
-        <col style={{ width: '4%' }} />
-        <col style={{ width: showLoadingColumn ? '8%' : '15%' }} />
-        <col style={{ width: '4%' }} />
-        <col style={{ width: '3%' }} />
-        <col style={{ width: showLoadingColumn ? '3%' : '4%' }} />
-        <col style={{ width: showLoadingColumn ? '10%' : '11%' }} />
-        {showLoadingColumn && <col style={{ width: '11%' }} />}
-        <col style={{ width: showLoadingColumn ? '10%' : '11%' }} />
-        <col style={{ width: showLoadingColumn ? '12%' : '13%' }} />
-      </colgroup>
-      <thead>
-        <tr>
-          <th>{addSampleButton}</th>
-          <th>{headers.group}</th>
+    <ReorderableMaterialContainer
+      materials={materials}
+      materialGroup={materialGroup}
+      onDrop={onDrop}
+      onReorder={onReorder}
+      renderMaterial={({ index, ...props }) => getMaterialComponent({
+        ...props,
+        index: headIndex + index
+      })}
+    >
+      {({
+        contents, dropRef, isOver, canDrop
+      }) => (
+        <Table
+          borderless
+          ref={dropRef}
+          className={materialGroupClassNames({
+            isEmpty: materials.length === 0,
+            isOver,
+            canDrop
+          })}
+        >
+          <colgroup>
+            <col style={{ width: '4%' }} />
+            <col style={{ width: showLoadingColumn ? '8%' : '15%' }} />
+            <col style={{ width: '4%' }} />
+            <col style={{ width: '3%' }} />
+            <col style={{ width: showLoadingColumn ? '3%' : '4%' }} />
+            <col style={{ width: showLoadingColumn ? '10%' : '11%' }} />
+            {showLoadingColumn && <col style={{ width: '11%' }} />}
+            <col style={{ width: showLoadingColumn ? '10%' : '11%' }} />
+            <col style={{ width: showLoadingColumn ? '12%' : '13%' }} />
+          </colgroup>
+          <thead>
+            <tr>
+              <th>{addSampleButton}</th>
+              <th>{headers.group}</th>
 
-          {isReactants ? (
-            <th colSpan={showLoadingColumn ? 8 : 7}>{reagentDd}</th>
-          ) : (
-            <>
-              <th>{refTHead}</th>
-              <th>{headers.tr}</th>
-              <th>
-                <OverlayTrigger
-                  placement="top"
-                  overlay={<Tooltip id="coefficientHeaderTitleReactionScheme">Coefficient</Tooltip>}
-                >
-                  <span>{headers.reaction_coefficient}</span>
-                </OverlayTrigger>
-              </th>
-              <th>{headers.amount}</th>
-              <th />
-              <th />
-              {showLoadingColumn && <th>{headers.loading}</th>}
-              <th>{headers.concn}</th>
-              {!isReactants && (
-                <th>
-                  {headers.eq}
-                  {materialGroup !== 'products' && SwitchEquivButton(lockEquivColumn, switchEquiv)}
-                </th>
+              {isReactants ? (
+                <th colSpan={showLoadingColumn ? 8 : 7}>{reagentDd}</th>
+              ) : (
+                <>
+                  <th>{refTHead}</th>
+                  <th>{headers.tr}</th>
+                  <th>
+                    <OverlayTrigger
+                      placement="top"
+                      overlay={<Tooltip id="coefficientHeaderTitleReactionScheme">Coefficient</Tooltip>}
+                    >
+                      <span>{headers.reaction_coefficient}</span>
+                    </OverlayTrigger>
+                  </th>
+                  <th colSpan="3">{headers.amount}</th>
+                  {showLoadingColumn && <th>{headers.loading}</th>}
+                  <th>{headers.concn}</th>
+                  {!isReactants && (
+                    <th>
+                      {headers.eq}
+                      {materialGroup !== 'products' && (
+                        <SwitchEquivButton
+                          lockEquivColumn={lockEquivColumn}
+                          switchEquiv={switchEquiv}
+                        />
+                      )}
+                    </th>
+                  )}
+                </>
               )}
-            </>
-          )}
-        </tr>
-      </thead>
-      {contents}
-    </table>
+            </tr>
+          </thead>
+
+          {contents}
+        </Table>
+      )}
+    </ReorderableMaterialContainer>
   );
 }
 
 function SolventsMaterialGroup({
-  contents, materialGroup, reaction, addDefaultSolvent
+  materials, materialGroup, getMaterialComponent, headIndex, reaction,
+  dropSample, onDrop, onReorder
 }) {
   const addSampleButton = (
     <Button
@@ -271,7 +345,7 @@ function SolventsMaterialGroup({
         const d = molecule.density;
         const solventDensity = solvent.density || 1;
         molecule.density = (d && d > 0) || solventDensity;
-        addDefaultSolvent(molecule, null, materialGroup, solvent.external_label);
+        dropSample(molecule, null, materialGroup, solvent.external_label);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -288,52 +362,74 @@ function SolventsMaterialGroup({
   }), defaultMultiSolventsSmilesOptions);
 
   return (
-    <Table borderless className="w-100">
-      <colgroup>
-        <col style={{ width: '4%' }} />
-        <col style={{ width: '22%' }} />
-        <col style={{ width: '2%' }} />
-        <col style={{ width: '2%' }} />
-        <col style={{ width: '22%' }} />
-        <col style={{ width: '14%' }} />
-        <col style={{ width: '14%' }} />
-        <col style={{ width: '2%' }} />
-      </colgroup>
-      <thead>
-        <tr>
-          <th className="align-middle">{addSampleButton}</th>
-          <th className="align-middle">
-            <Select
-              value={null}
-              isDisabled={!permitOn(reaction)}
-              options={solventOptions}
-              placeholder="Default solvents"
-              onChange={createDefaultSolventsForReaction}
-            />
-          </th>
-          <th title="Dry Solvent" className="align-middle">DS</th>
-          <th className="align-middle">T/R</th>
-          <th className="align-middle">Label</th>
-          <th className="align-middle">Vol</th>
-          <th className="align-middle">Vol ratio</th>
-        </tr>
-      </thead>
-      <tbody>
-        {contents.map((item) => item)}
-      </tbody>
-    </Table>
+    <ReorderableMaterialContainer
+      materials={materials}
+      materialGroup={materialGroup}
+      onDrop={onDrop}
+      onReorder={onReorder}
+      renderMaterial={({ index, ...props }) => getMaterialComponent({
+        ...props,
+        index: headIndex + index
+      })}
+    >
+      {({
+        contents, dropRef, canDrop, isOver
+      }) => (
+        <Table
+          borderless
+          ref={dropRef}
+          className={materialGroupClassNames({
+            isEmpty: materials.length === 0,
+            isOver,
+            canDrop
+          })}
+        >
+          <colgroup>
+            <col style={{ width: '4%' }} />
+            <col style={{ width: '22%' }} />
+            <col style={{ width: '2%' }} />
+            <col style={{ width: '2%' }} />
+            <col style={{ width: '22%' }} />
+            <col style={{ width: '14%' }} />
+            <col style={{ width: '14%' }} />
+            <col style={{ width: '2%' }} />
+          </colgroup>
+          <thead>
+            <tr>
+              <th className="align-middle">{addSampleButton}</th>
+              <th className="align-middle">
+                <Select
+                  value={null}
+                  isDisabled={!permitOn(reaction)}
+                  options={solventOptions}
+                  placeholder="Default solvents"
+                  onChange={createDefaultSolventsForReaction}
+                />
+              </th>
+              <th title="Dry Solvent" className="align-middle">DS</th>
+              <th className="align-middle">T/R</th>
+              <th className="align-middle">Label</th>
+              <th className="align-middle">Vol</th>
+              <th className="align-middle">Vol ratio</th>
+            </tr>
+          </thead>
+          <tbody>
+            {contents}
+          </tbody>
+        </Table>
+      )}
+    </ReorderableMaterialContainer>
   );
 }
 
 MaterialGroup.propTypes = {
   materialGroup: PropTypes.string.isRequired,
-  headIndex: PropTypes.number.isRequired,
+  headIndex: PropTypes.number,
   materials: PropTypes.arrayOf(PropTypes.shape).isRequired,
   deleteMaterial: PropTypes.func.isRequired,
   onChange: PropTypes.func.isRequired,
   showLoadingColumn: PropTypes.bool,
   reaction: PropTypes.instanceOf(Reaction).isRequired,
-  addDefaultSolvent: PropTypes.func.isRequired,
   dropMaterial: PropTypes.func.isRequired,
   dropSample: PropTypes.func.isRequired,
   switchEquiv: PropTypes.func.isRequired,
@@ -343,11 +439,15 @@ MaterialGroup.propTypes = {
 };
 
 GeneralMaterialGroup.propTypes = {
+  materials: PropTypes.arrayOf(PropTypes.shape).isRequired,
   materialGroup: PropTypes.string.isRequired,
+  dropSample: PropTypes.func.isRequired,
+  onDrop: PropTypes.func.isRequired,
+  onReorder: PropTypes.func.isRequired,
+  getMaterialComponent: PropTypes.func.isRequired,
+  headIndex: PropTypes.number.isRequired,
   showLoadingColumn: PropTypes.bool,
   reaction: PropTypes.instanceOf(Reaction).isRequired,
-  addDefaultSolvent: PropTypes.func.isRequired,
-  contents: PropTypes.arrayOf(PropTypes.shape).isRequired,
   switchEquiv: PropTypes.func.isRequired,
   lockEquivColumn: PropTypes.bool,
   displayYieldField: PropTypes.bool,
@@ -355,16 +455,21 @@ GeneralMaterialGroup.propTypes = {
 };
 
 SolventsMaterialGroup.propTypes = {
+  materials: PropTypes.arrayOf(PropTypes.shape).isRequired,
   materialGroup: PropTypes.string.isRequired,
+  dropSample: PropTypes.func.isRequired,
+  onDrop: PropTypes.func.isRequired,
+  onReorder: PropTypes.func.isRequired,
+  getMaterialComponent: PropTypes.func.isRequired,
+  headIndex: PropTypes.number.isRequired,
   reaction: PropTypes.instanceOf(Reaction).isRequired,
-  addDefaultSolvent: PropTypes.func.isRequired,
-  contents: PropTypes.arrayOf(PropTypes.shape).isRequired
 };
 
 MaterialGroup.defaultProps = {
   showLoadingColumn: false,
   lockEquivColumn: false,
-  displayYieldField: null
+  displayYieldField: null,
+  headIndex: 0,
 };
 
 GeneralMaterialGroup.defaultProps = {
@@ -373,4 +478,4 @@ GeneralMaterialGroup.defaultProps = {
   displayYieldField: null
 };
 
-export { MaterialGroup, GeneralMaterialGroup, SolventsMaterialGroup };
+export default MaterialGroup;

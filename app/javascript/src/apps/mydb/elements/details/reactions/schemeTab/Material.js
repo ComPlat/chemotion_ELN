@@ -7,10 +7,7 @@ import {
   OverlayTrigger,
   Tooltip,
 } from 'react-bootstrap';
-import { DragSource, DropTarget } from 'react-dnd';
-import { compose } from 'redux';
 import { debounce } from 'lodash';
-import { DragDropItemTypes } from 'src/utilities/DndConst';
 import MaterialCalculations from 'src/apps/mydb/elements/details/reactions/schemeTab/MaterialCalculations';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 import SampleName from 'src/components/common/SampleName';
@@ -23,61 +20,6 @@ import { permitCls, permitOn } from 'src/components/common/uis';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 import { calculateFeedstockMoles } from 'src/utilities/UnitsConversion';
 import cs from 'classnames';
-
-const matSource = {
-  beginDrag(props) {
-    return props;
-  },
-};
-
-const matTarget = {
-  drop(tagProps, monitor) {
-    const { dropSample, dropMaterial } = tagProps;
-    const srcItem = monitor.getItem();
-    const srcType = monitor.getItemType();
-
-    if (srcType === DragDropItemTypes.SAMPLE) {
-      dropSample(
-        srcItem.element,
-        tagProps.material,
-        tagProps.materialGroup,
-      );
-    } else if (srcType === DragDropItemTypes.MOLECULE) {
-      dropSample(
-        srcItem.element,
-        tagProps.material,
-        tagProps.materialGroup,
-        null,
-        true,
-      );
-    } else if (srcType === DragDropItemTypes.MATERIAL) {
-      dropMaterial(
-        srcItem.material,
-        srcItem.materialGroup,
-        tagProps.material,
-        tagProps.materialGroup,
-      );
-    }
-  },
-  canDrop(tagProps, monitor) {
-    const srcType = monitor.getItemType();
-    const isCorrectType = srcType === DragDropItemTypes.MATERIAL
-      || srcType === DragDropItemTypes.SAMPLE
-      || srcType === DragDropItemTypes.MOLECULE;
-    return isCorrectType;
-  },
-};
-
-const matSrcCollect = (connect, monitor) => ({
-  connectDragSource: connect.dragSource(),
-  isDragging: monitor.isDragging(),
-});
-
-const matTagCollect = (connect, monitor) => ({
-  connectDropTarget: connect.dropTarget(),
-  isOver: monitor.isOver(),
-  canDrop: monitor.canDrop(),
-});
 
 const notApplicableInput = () => (
   <td>
@@ -672,15 +614,36 @@ class Material extends Component {
     );
   }
 
-  generalMaterial(className) {
+  dragHandle() {
+    const { dragRef } = this.props;
+
+    return (
+      <td ref={dragRef} className="text-center drag-source">
+        <span className="text-info fa fa-arrows" />
+      </td>
+    );
+  }
+
+  rowClassNames() {
+    const { isDragging, isOver, canDrop } = this.props;
+    return cs(
+      'material-row',
+      {
+        'material-row--is-dragging': isDragging,
+        'material-row--is-over': isOver,
+        'material-row--can-drop': canDrop,
+      }
+    );
+  }
+
+  generalMaterial() {
     const {
       material,
       materialGroup,
       deleteMaterial,
-      connectDragSource,
-      connectDropTarget,
       showLoadingColumn,
-      reaction
+      reaction,
+      dropRef,
     } = this.props;
 
     const massBsStyle = material.amount_unit === 'g' ? 'primary' : 'light';
@@ -702,14 +665,9 @@ class Material extends Component {
     };
 
     return (
-      <tbody>
+      <tbody ref={dropRef} className={this.rowClassNames()}>
         <tr className="m-1 p-1">
-          {compose(connectDragSource, connectDropTarget)(
-            <td className={`drag-source ${permitCls(reaction)} ${className}`}>
-              <span className="text-info fa fa-arrows" />
-            </td>,
-            { dropEffect: 'copy' }
-          )}
+          {this.dragHandle()}
 
           <td style={{ width: '22%', maxWidth: '50px' }}>
             {this.materialNameWithIupac(material)}
@@ -822,26 +780,20 @@ class Material extends Component {
     }
   }
 
-  solventMaterial(className) {
+  solventMaterial() {
     const {
       material,
       deleteMaterial,
-      connectDragSource,
-      connectDropTarget,
       reaction,
-      materialGroup
+      materialGroup,
+      dropRef,
     } = this.props;
 
     const mw = material.molecule && material.molecule.molecular_weight;
     const drySolvTooltip = <Tooltip>Dry Solvent</Tooltip>;
     return (
-      <tr className="m-1 p-1">
-        {compose(connectDragSource, connectDropTarget)(
-          <td className={`drag-source ${permitCls(reaction)} ${className}`}>
-            <span className="text-info fa fa-arrows" />
-          </td>,
-          { dropEffect: 'copy' }
-        )}
+      <tr ref={dropRef} className={this.rowClassNames()}>
+        {this.dragHandle()}
 
         <td style={{ width: '22%', maxWidth: '50px' }}>
           {this.materialNameWithIupac(material)}
@@ -1079,35 +1031,16 @@ class Material extends Component {
   }
 
   render() {
-    const {
-      isDragging, canDrop, isOver, materialGroup
-    } = this.props;
-
-    const className = cs('text-center', {
-      'dnd-dragging': isDragging,
-      'border-3 border-dashed': canDrop,
-      'dnd-zone-over': canDrop && isOver
-    });
+    const { materialGroup } = this.props;
 
     const sp = materialGroup === 'solvents' || materialGroup === 'purification_solvents';
     return sp
-      ? this.solventMaterial(className)
-      : this.generalMaterial(className);
+      ? this.solventMaterial()
+      : this.generalMaterial();
   }
 }
 
-export default compose(
-  DragSource(
-    DragDropItemTypes.MATERIAL,
-    matSource,
-    matSrcCollect,
-  ),
-  DropTarget(
-    [DragDropItemTypes.SAMPLE, DragDropItemTypes.MOLECULE, DragDropItemTypes.MATERIAL],
-    matTarget,
-    matTagCollect,
-  ),
-)(Material);
+export default Material;
 
 Material.propTypes = {
   reaction: PropTypes.instanceOf(Reaction).isRequired,
@@ -1116,10 +1049,18 @@ Material.propTypes = {
   deleteMaterial: PropTypes.func.isRequired,
   onChange: PropTypes.func.isRequired,
   showLoadingColumn: PropTypes.bool.isRequired,
-  index: PropTypes.number,
-  isDragging: PropTypes.bool,
-  canDrop: PropTypes.bool,
-  isOver: PropTypes.bool,
+  index: PropTypes.number.isRequired,
   lockEquivColumn: PropTypes.bool.isRequired,
   displayYieldField: PropTypes.bool,
+  dragRef: PropTypes.oneOfType([
+    PropTypes.func,
+    PropTypes.shape({ current: PropTypes.instanceOf(Element) })
+  ]).isRequired,
+  dropRef: PropTypes.oneOfType([
+    PropTypes.func,
+    PropTypes.shape({ current: PropTypes.instanceOf(Element) })
+  ]).isRequired,
+  isOver: PropTypes.bool.isRequired,
+  canDrop: PropTypes.bool.isRequired,
+  isDragging: PropTypes.bool.isRequired,
 };
