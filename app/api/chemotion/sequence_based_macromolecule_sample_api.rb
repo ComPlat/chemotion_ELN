@@ -8,6 +8,10 @@ module Chemotion
     helpers ContainerHelpers
     helpers CollectionHelpers
 
+    rescue_from ::Usecases::Sbmm::Errors::UpdateConflictError do |update_conflict|
+      error!(update_conflict.to_h, 400)
+    end
+
     helpers do
       params :sbmm_sample_params do
         requires :name, type: String

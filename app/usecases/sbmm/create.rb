@@ -13,12 +13,26 @@ module Usecases
         end
       end
 
+      def find_or_create_parent(parent_identifier:, sbmm_type:, sbmm_subtype:)
+        # TODO: clear up confusion about parent parameters sbmm_type and sbmm_subtype, currently those are taken from the
+        # child sbmm, which might not be correct within the domain model
+        if SequenceBasedMacromolecule.valid_accession?(parent_identifier)
+          find_or_create_uniprot_protein(
+            primary_accession: parent_identifier,
+            sbmm_type: sbmm_type,
+            sbmm_subtype: sbmm_subtype
+          )
+        else
+          SequenceBasedMacromolecule.find(parent_identifier.to_i)
+        end
+      end
+
       private
 
       # raise ArgumentError if primary_accession is not a valid accession code
       def find_or_create_uniprot_protein(params)
         primary_accession = params[:primary_accession]
-        raise ArgumentError.new("'#{primary_accession}' is not a valid Uniprot accession") unless valid_accession?(primary_accession)
+        raise ArgumentError.new("'#{primary_accession}' is not a valid Uniprot accession") unless SequenceBasedMacromolecule.valid_accession?(primary_accession)
 
         sbmm = SequenceBasedMacromolecule.find_by(uniprot_derivation: 'uniprot', primary_accession: primary_accession)
         if sbmm.nil?
@@ -32,7 +46,7 @@ module Usecases
       end
 
       def find_or_create_modified_protein(params)
-        if valid_accession?(params[:parent_identifier]) # parent is a uniprot sbmm
+        if SequenceBasedMacromolecule.valid_accession?(params[:parent_identifier]) # parent is a uniprot sbmm
           parent = find_or_create_uniprot_protein({
             primary_accession: params[:parent_identifier],
             sbmm_type: params[:sbmm_type],
@@ -62,10 +76,6 @@ module Usecases
         sbmm.protein_sequence_modification = ProteinSequenceModification.find_or_initialize_by(params[:protein_sequence_modification_attributes])
         sbmm.post_translational_modification = PostTranslationalModification.find_or_initialize_by(params[:post_translational_modification_attributes])
         sbmm
-      end
-
-      def valid_accession?(accession)
-        accession.match?(SequenceBasedMacromolecule::ACCESSION_FORMAT)
       end
     end
   end
