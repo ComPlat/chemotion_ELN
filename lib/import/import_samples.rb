@@ -51,11 +51,10 @@ module Import
       @sheet = xlsx.sheet(0)
       @header = sheet.row(1)
       @mandatory_check = {}
-      header_fields = %w[molfile smiles cano_smiles canonical_smiles decoupled]
+      header_fields = ['molfile', 'smiles', 'cano_smiles', 'canonical_smiles', 'canonical smiles', 'decoupled']
       header_fields.each do |check|
         @mandatory_check[check] = true if header.find { |e| /^\s*#{check}?/i =~ e }
       end
-
       message = 'Column headers should have: molfile, or Smiles (or cano_smiles, canonical smiles)'
       raise message if mandatory_check.empty?
     end
@@ -121,9 +120,10 @@ module Import
     end
 
     def smiles?(row)
-      header = mandatory_check['smiles'] || mandatory_check['cano_smiles'] || mandatory_check['canonical_smiles']
-      cell = row['smiles'].to_s.present? || row['cano_smiles'].to_s.present? || row['canonical_smiles'].to_s.present?
-      header && cell
+      smiles = ['smiles', 'cano_smiles', 'canonical_smiles', 'canonical smiles']
+      smiles.find do |key|
+        mandatory_check[key] && row[key].to_s.present?
+      end
     end
 
     def get_data_from_molfile_and_smiles(row)
@@ -142,7 +142,9 @@ module Import
     end
 
     def get_data_from_molfile(row)
-      molfile = row['molfile'].to_s
+      molfile = row['molfile'].to_s.strip
+      molfile = "\n#{molfile}" unless molfile.start_with?("\n")
+      molfile = "#{molfile}\n" unless molfile.end_with?("\n")
       babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
       inchikey = babel_info[:inchikey]
       molecule = Molecule.find_or_create_by_molfile(molfile, babel_info) if inchikey.presence
@@ -165,9 +167,11 @@ module Import
     end
 
     def get_data_from_smiles(row)
-      smiles = (mandatory_check['smiles'] && row['smiles'].presence) ||
-               (mandatory_check['cano_smiles'] && row['cano_smiles'].presence) ||
-               (mandatory_check['canonical_smiles'] && row['canonical_smiles'].presence)
+      mandatory_keys = ['smiles', 'cano_smiles', 'canonical_smiles', 'canonical smiles']
+      smiles_key = mandatory_keys.find do |key|
+        mandatory_check[key] && row[key].presence
+      end
+      smiles = smiles_key.then { |key| row[key] }
       inchikey = Chemotion::OpenBabelService.smiles_to_inchikey smiles
       ori_molf = Chemotion::OpenBabelService.smiles_to_molfile smiles
       babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(ori_molf)
@@ -285,18 +289,23 @@ module Import
       array = ["\"cas\""]
       conditions = map_column.nil? || array.include?(map_column[1])
       db_column = conditions ? field : (map_column[0].sub('s.', '').delete!('"') || map_column[0].sub('s.', ''))
-      molecule.create_molecule_name_by_user(row[field], current_user_id) if field == 'molecule name'
+      if field == 'molecule name' && row[field].present?
+        molecule.create_molecule_name_by_user(row[field], current_user_id)
+      end
       process_sample_fields(sample, db_column, field, row)
     end
     # rubocop:enable Style/StringLiterals
 
     def process_value(value, db_column)
       fields_with_units = %w[density molarity flash_point].freeze
+      fields_with_float_values = %w[real_amount_value target_amount_value purity refractive_index molecular_mass].freeze
       comparison_values = %w[melting_point boiling_point].freeze
       if comparison_values.include?(db_column)
         format_to_interval_syntax(value)
       elsif fields_with_units.include?(db_column)
         to_value_unit_format(value, db_column)
+      elsif fields_with_float_values.include?(db_column)
+        value.to_f
       else
         value
       end
@@ -309,7 +318,7 @@ module Import
 
     def extract_numerical_value(value)
       cleaned_value = clean_value(value)
-      numerical_match = cleaned_value.scan(/\b\d+(?:\.\d+)?\b/).first if cleaned_value
+      numerical_match = cleaned_value.scan(/[-+]?\d+(?:\.\d+)?/).first if cleaned_value
       numerical_match&.to_f
     end
 
@@ -369,14 +378,14 @@ module Import
       value = process_value(val, db_column)
       handle_sample_fields(sample, db_column, value) unless value.nil?
       sample[db_column] = '' if excluded_column.include?(db_column) && val.nil?
-      sample[db_column] = assign_decoupled_value(val) if %w[decoupled].include?(db_column)
+      sample[db_column] = assign_boolean_value(val) if %w[decoupled is_top_secret dry_solvent].include?(db_column)
     end
 
-    def assign_decoupled_value(value)
+    def assign_boolean_value(value)
       return false if value.nil?
 
       if value.is_a?(String)
-        return false unless value.casecmp('yes').zero? || value == '1'
+        return false unless value.casecmp('yes').zero? || value == '1' || value.casecmp('true').zero?
 
         value = true
       end
@@ -449,7 +458,7 @@ module Import
         # 'solvent',
         'impurities',
         # 'location',
-        'is_top_secret',
+        #'is_top_secret',
         # 'dry_solvent',
         'ancestry',
         # 'external_label',
