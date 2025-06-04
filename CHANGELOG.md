@@ -1,6 +1,36 @@
 # Chemotion_ELN Changelog
 ## Latest
 
+## [v2.0.1]
+> (2025-06-04)
+
+* Enhancements
+  * Reaction variations: 
+    - propagate material edits from scheme-tab to variations-tab  ([#2490](https://github.com/ComPlat/chemotion_ELN/pull/2490))
+    - improve persisting of grid layout reaction variations  ([#2527](https://github.com/ComPlat/chemotion_ELN/pull/2527))
+  * add sample uuid to sample exports  ([#2520](https://github.com/ComPlat/chemotion_ELN/pull/2520), [#2529](https://github.com/ComPlat/chemotion_ELN/pull/2529))
+
+* Bug fixes
+
+  UX/UI
+  * minor  ([#2514](https://github.com/ComPlat/chemotion_ELN/pull/2514))
+  * correctly display yield field when conversion rate is null  ([#2535](https://github.com/ComPlat/chemotion_ELN/pull/2535))
+  * show instrument suggestions dropdown in dataset metadata  ([#2511](https://github.com/ComPlat/chemotion_ELN/pull/2511))
+  * don't render variations of new, unsaved reaction  ([#2521](https://github.com/ComPlat/chemotion_ELN/pull/2521))
+  * drag-n-drop preview drift in collection management  ([#2494](https://github.com/ComPlat/chemotion_ELN/pull/2494))
+  * guard against undefined reference material in reaction variations  ([#2523](https://github.com/ComPlat/chemotion_ELN/pull/2523))
+  * prevent null cas search and show instrument modal on top of Gene…  ([#2537](https://github.com/ComPlat/chemotion_ELN/pull/2537))
+
+* Performance improvements
+  * rm image preview from container and attachment entities  ([#2516](https://github.com/ComPlat/chemotion_ELN/pull/2516))
+
+* Refactoring/Styles
+
+  UX/UI
+  * tables from bootstrap to ag-grid  ([#2437](https://github.com/ComPlat/chemotion_ELN/pull/2437))
+  * rework list and group rendering  ([#2440](https://github.com/ComPlat/chemotion_ELN/pull/2440))
+  * reaction-variation badges only visible if variations present  ([#2533](https://github.com/ComPlat/chemotion_ELN/pull/2533))
+  * warning for reaction analysis vs sample analysis in the Reaction-analyses tab ([#2513](https://github.com/ComPlat/chemotion_ELN/pull/2513))
 
 ## [v2.0.0]
 > (2025-05-13)
