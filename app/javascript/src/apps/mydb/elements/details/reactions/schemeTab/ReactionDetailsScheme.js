@@ -1,5 +1,5 @@
 /* eslint-disable react/sort-comp */
-import React, { Component } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import {
   Accordion, Form, Row, Col, Button, InputGroup
@@ -34,9 +34,11 @@ import {
 } from 'src/utilities/UnitsConversion';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
+import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
+import Component from 'src/models/Component';
 import { parseNumericString } from 'src/utilities/MathUtils';
 
-export default class ReactionDetailsScheme extends Component {
+export default class ReactionDetailsScheme extends React.Component {
   constructor(props) {
     super(props);
 
@@ -106,14 +108,32 @@ export default class ReactionDetailsScheme extends Component {
       splitSample.reference = false;
     }
 
-    this.insertSolventExtLabel(splitSample, tagGroup, extLabel);
-    reaction.addMaterialAt(splitSample, null, tagMaterial, tagGroup);
-    this.onReactionChange(reaction, { schemaChanged: true });
+    if (splitSample.isMixture()) {
+      ComponentsFetcher.fetchComponentsBySampleId(srcSample.id)
+        .then(async (components) => {
+          const sampleComponents = components.map(Component.deserializeData);
+          await splitSample.initialComponents(sampleComponents);
+          const comp = sampleComponents.find((component) => component.amount_mol > 0 && component.molarity_value > 0);
+          if (comp) {
+            splitSample.target_amount_value = comp.amount_mol / comp.molarity_value;
+            splitSample.target_amount_unit = 'l';
+          }
+          reaction.addMaterialAt(splitSample, null, tagMaterial, tagGroup);
+          this.onReactionChange(reaction, { schemaChanged: true });
+        })
+        .catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    } else {
+      this.insertSolventExtLabel(splitSample, tagGroup, extLabel);
+      reaction.addMaterialAt(splitSample, null, tagMaterial, tagGroup);
+      this.onReactionChange(reaction, { schemaChanged: true });
+    }
   }
 
-  insertSolventExtLabel(splitSample, materialGroup, external_label) {
-    if (external_label && materialGroup === 'solvents' && !splitSample.external_label) {
-      splitSample.external_label = external_label;
+  insertSolventExtLabel(splitSample, materialGroup, externalLabel) {
+    if (externalLabel && materialGroup === 'solvents' && !splitSample.external_label) {
+      splitSample.external_label = externalLabel;
     }
   }
 
@@ -133,14 +153,14 @@ export default class ReactionDetailsScheme extends Component {
   };
 
   handleOnConditionSelect(eventKey) {
-    const { reaction } = this.props;
+    const { reaction, onReactionChange } = this.props;
     const val = eventKey.value;
     if (reaction.conditions == null || reaction.conditions.length === 0) {
       reaction.conditions = `${val} `;
     } else {
       reaction.conditions += `\n${val} `;
     }
-    this.props.onReactionChange(reaction, { schemaChanged: true });
+    onReactionChange(reaction, { schemaChanged: true });
   }
 
   renderGPDnD() {
