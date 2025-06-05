@@ -1,7 +1,3 @@
-
->  <RESIDUE_TYPE>
-
-
 >  <DECOUPLED>
 
 >  <MOLECULAR_MASS_(DECOUPLED)>
@@ -22,7 +18,7 @@
 
 >  <MOLECULE_NAME>
 
->  <SAMPLE_EXTERNAL_LABEL>
+>  <EXTERNAL_LABEL>
 
 >  <SHORT_LABEL>
 
@@ -46,10 +42,9 @@
 
 >  <LOCATION>
 
->  <SECRET>
+>  <IS_TOP_SECRET>
 
->  <SAMPLE_READOUT>
-
+>  <DRY_SOLVENT>
 
 >  <MELTING_PT>
 
