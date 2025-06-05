@@ -1182,7 +1182,8 @@ export default class ReactionDetailsScheme extends React.Component {
               headIndex={reaction.starting_materials.length ?? 0}
             />
           </div>
-          <div className="mb-3">
+
+          <div className="border-bottom">
             <MaterialGroup
               reaction={reaction}
               materialGroup="products"
@@ -1201,30 +1202,27 @@ export default class ReactionDetailsScheme extends React.Component {
             />
           </div>
 
+          <div className="mb-3">
+            <MaterialGroup
+              reaction={reaction}
+              materialGroup="solvents"
+              materials={reaction.solvents}
+              dropMaterial={this.dropMaterial}
+              deleteMaterial={
+                (material, materialGroup) => this.deleteMaterial(material, materialGroup)
+              }
+              dropSample={this.dropSample}
+              showLoadingColumn={!!reaction.hasPolymers()}
+              onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
+              switchEquiv={this.switchEquiv}
+              lockEquivColumn={this.state.lockEquivColumn}
+            />
+          </div>
+
           <Accordion
             alwaysOpen
-            defaultActiveKey={['solvents']}
+            defaultActiveKey={['conditions']}
           >
-            <Accordion.Item eventKey="solvents">
-              <Accordion.Header>Solvents</Accordion.Header>
-              <Accordion.Body>
-                <MaterialGroup
-                  reaction={reaction}
-                  materialGroup="solvents"
-                  materials={reaction.solvents}
-                  dropMaterial={this.dropMaterial}
-                  deleteMaterial={
-                    (material, materialGroup) => this.deleteMaterial(material, materialGroup)
-                  }
-                  dropSample={this.dropSample}
-                  showLoadingColumn={!!reaction.hasPolymers()}
-                  onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
-                  switchEquiv={this.switchEquiv}
-                  lockEquivColumn={this.state.lockEquivColumn}
-                />
-              </Accordion.Body>
-            </Accordion.Item>
-
             <Accordion.Item eventKey="conditions">
               <Accordion.Header>Conditions</Accordion.Header>
               <Accordion.Body>
