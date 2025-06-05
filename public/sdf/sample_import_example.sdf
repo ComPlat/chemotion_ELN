@@ -9,8 +9,9 @@ Ketcher 11182013472D 1   1.00000     0.00000     0
   2  3  1  0     0  0
   3  4  1  0     0  0
 M  END
->  <RESIDUE_TYPE>
 
+>  <IS_TOP_SECRET>
+false
 
 >  <DECOUPLED>
 false
@@ -36,7 +37,7 @@ CU1-R1-A
 >  <MOLECULE_NAME>
 1-chloro-2-iodoethane
 
->  <SAMPLE_EXTERNAL_LABEL>
+>  <EXTERNAL_LABEL>
 CU1-Nicky
 
 >  <SHORT_LABEL>
@@ -58,21 +59,19 @@ g
 0.0 M
 
 >  <DENSITY>
-0.0 g/mL
+0.8 g/mL
 
 >  <PURITY>
 1.0
 
 >  <SOLVENT>
-benzene
+Benzene
 
 >  <LOCATION>
 room 23
 
->  <SECRET>
+>  <DRY_SOLVENT>
 false
-
->  <SAMPLE_READOUT>
 
 
 >  <MELTING_PT>
@@ -86,17 +85,6 @@ false
 
 >  <FLASH_POINT>
 23 °C
-
->  <CREATED_AT>
-2025-05-21 14:04:08 UTC
-
->  <UPDATED_AT>
-
-
->  <USER_LABELS>
-
-
->  <LITERATURES>
 
 
 >  <CANONICAL_SMILES>

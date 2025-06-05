@@ -10,7 +10,11 @@ Ketcher 11182013472D 1   1.00000     0.00000     0
   3  4  1  0     0  0
 M  END
 
->  <RESIDUE_TYPE>
+>  <IS_TOP_SECRET>
+false
+
+>  <DRY_SOLVENT>
+false
 
 >  <DECOUPLED>
 false
@@ -32,7 +36,7 @@ CU1-R1-A
 >  <MOLECULE_NAME>
 1-chloro-2-iodoethane
 
->  <SAMPLE_EXTERNAL_LABEL>
+>  <EXTERNAL_LABEL>
 CU1-Nicky
 
 >  <REAL_AMOUNT>
@@ -56,13 +60,10 @@ g
 1.0
 
 >  <SOLVENT>
-benzene
+Benzene
 
 >  <LOCATION>
 room 23
-
->  <SECRET>
-false
 
 >  <MELTING_PT>
 300.0 - 400.0
@@ -77,7 +78,6 @@ false
 23 °C
 
 >  <CANONICAL_SMILES>
-ClCCI
 
 >  <STATUS>
 To be ordered
@@ -101,13 +101,13 @@ O6582233N2
 ML
 
 >  <REQUIRED_DATE>
-15.05.2023
+2024-01-01
 
 >  <EXPIRATION_DATE>
-01.01.2050
+2050-01-01
 
 >  <ORDERED_DATE>
-19.05.2023
+2025-01-01
 
 >  <REQUIRED_BY>
 Simone
