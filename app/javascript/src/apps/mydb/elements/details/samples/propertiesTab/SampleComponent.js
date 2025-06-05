@@ -18,6 +18,7 @@ import SvgWithPopover from 'src/components/common/SvgWithPopover';
 import ComponentStore from 'src/stores/alt/stores/ComponentStore';
 import ComponentActions from 'src/stores/alt/actions/ComponentActions';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import UIActions from 'src/stores/alt/actions/UIActions';
 
 const matSource = {
   beginDrag(props) {
@@ -126,6 +127,7 @@ class SampleComponent extends Component {
    */
   handleMaterialClick(material) {
     if (material.parent_id) {
+      UIActions.setRedirectedFromMixture(true);
       const parentSample = new Sample({ id: material.parent_id, type: 'sample' });
       UrlSilentNavigation(parentSample);
       ElementActions.fetchSampleById(material.parent_id);
