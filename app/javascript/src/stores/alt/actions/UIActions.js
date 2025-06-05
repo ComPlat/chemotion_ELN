@@ -153,6 +153,10 @@ class UIActions {
 
   rerenderGenericWorkflow(params) { return params; }
   showGenericWorkflowModal(show) { return show; }
+  
+  setRedirectedFromMixture(value) {
+    return value;
+  }
 }
 
 export default alt.createActions(UIActions);
