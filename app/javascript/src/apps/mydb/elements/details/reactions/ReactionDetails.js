@@ -7,7 +7,6 @@ import PropTypes from 'prop-types';
 import {
   Button, Tabs, Tab, OverlayTrigger, Tooltip, Card, ButtonToolbar, ButtonGroup
 } from 'react-bootstrap';
-import SvgFileZoomPan from 'react-svg-file-zoom-pan-latest';
 import { findIndex, isEmpty } from 'lodash';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import ElementResearchPlanLabels from 'src/apps/mydb/elements/labels/ElementResearchPlanLabels';
@@ -33,7 +32,6 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { setReactionByType } from 'src/apps/mydb/elements/details/reactions/ReactionDetailsShare';
 import { sampleShowOrNew } from 'src/utilities/routesUtils';
-import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
 import ConfirmClose from 'src/components/common/ConfirmClose';
 import { rfValueFormat } from 'src/utilities/ElementUtils';
 import ExportSamplesButton from 'src/apps/mydb/elements/details/ExportSamplesButton';
@@ -56,6 +54,7 @@ import { ShowUserLabels } from 'src/components/UserLabels';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 // eslint-disable-next-line import/no-named-as-default
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
+import ReactionSchema from 'src/apps/mydb/elements/details/reactions/ReactionSchema';
 
 const handleProductClick = (product) => {
   const uri = Aviator.getCurrentURI();
@@ -86,18 +85,13 @@ export default class ReactionDetails extends Component {
     const { reaction } = props;
     this.state = {
       reaction,
-      literatures: reaction.literatures,
       activeTab: UIStore.getState().reaction.activeTab,
       activeAnalysisTab: UIStore.getState().reaction.activeAnalysisTab,
       visible: Immutable.List(),
       sfn: UIStore.getState().hasSfn,
       currentUser: (UserStore.getState() && UserStore.getState().currentUser) || {},
+      graphicUpdateKey: 0, // used to force update ReactionSchema
     };
-
-    // remarked because of #466 reaction load image issue (Paggy 12.07.2018)
-    // if(reaction.hasMaterials()) {
-    //   this.updateReactionSvg();
-    // }
 
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.handleReactionChange = this.handleReactionChange.bind(this);
@@ -155,6 +149,18 @@ export default class ReactionDetails extends Component {
     UIStore.unlisten(this.onUIStoreChange);
   }
 
+  triggerGraphicUpdate = () => {
+    this.setState((prevState) => ({
+      graphicUpdateKey: prevState.graphicUpdateKey + 1,
+    }));
+  };
+
+  handleSvgUpdate = (svgFile) => {
+    const { reaction } = this.state;
+    reaction.reaction_svg_file = svgFile;
+    this.setState(reaction);
+  };
+
   handleSubmit(closeView = false) {
     LoadingActions.start();
 
@@ -174,7 +180,7 @@ export default class ReactionDetails extends Component {
     reaction.updateMaxAmountOfProducts();
     reaction.changed = true;
     if (options.schemaChanged) {
-      this.setState({ reaction }, () => this.updateReactionSvg());
+      this.setState({ reaction }, () => this.triggerGraphicUpdate());
     } else {
       this.setState({ reaction });
     }
@@ -310,29 +316,7 @@ export default class ReactionDetails extends Component {
     );
   }
 
-  reactionSVG(reaction) {
-    if (!reaction.svgPath) {
-      return false;
-    }
-    const svgProps = reaction.svgPath.substr(reaction.svgPath.length - 4) === '.svg'
-      ? { svgPath: reaction.svgPath }
-      : { svg: reaction.reaction_svg_file };
-    if (reaction.hasMaterials()) {
-      return (
-        <div>
-          <SvgFileZoomPan
-            duration={300}
-            resize
-            // eslint-disable-next-line react/jsx-props-no-spreading
-            {...svgProps}
-          />
-        </div>
-      );
-    }
-  }
-
   reactionHeader(reaction) {
-    const hasChanged = reaction.changed ? '' : 'none';
     const titleTooltip = formatTimeStampsOfElement(reaction || {});
 
     const { currentCollection } = UIStore.getState();
@@ -433,31 +417,6 @@ export default class ReactionDetails extends Component {
     );
   }
 
-  updateReactionSvg() {
-    const { reaction } = this.state;
-    const materialsSvgPaths = {
-      starting_materials: reaction.starting_materials.map((material) => material.svgPath),
-      reactants: reaction.reactants.map((material) => material.svgPath),
-      products: reaction.products.map((material) => [material.svgPath, material.equivalent])
-    };
-
-    const solvents = reaction.solvents.map((s) => {
-      const name = s.preferred_label;
-      return name;
-    }).filter((s) => s);
-
-    let temperature = reaction.temperature_display;
-    if (/^[\-|\d]\d*\.{0,1}\d{0,2}$/.test(temperature)) {
-      temperature = `${temperature} ${reaction.temperature.valueUnit}`;
-    }
-
-    ReactionSvgFetcher.fetchByMaterialsSvgPaths(materialsSvgPaths, temperature, solvents, reaction.duration, reaction.conditions)
-      .then((result) => {
-        reaction.reaction_svg_file = result.reaction_svg;
-        this.setState(reaction);
-      });
-  }
-
   handleGaseousChange() {
     const { reaction } = this.state;
     this.handleInputChange('gaseous', !reaction.gaseous);
@@ -487,7 +446,9 @@ export default class ReactionDetails extends Component {
   }
 
   render() {
-    const { reaction, visible, activeTab } = this.state;
+    const {
+      reaction, visible, activeTab, graphicUpdateKey
+    } = this.state;
     this.updateReactionVesselSize(reaction);
     const tabContentsMap = {
       scheme: (
@@ -610,7 +571,14 @@ export default class ReactionDetails extends Component {
           {this.reactionHeader(reaction)}
         </Card.Header>
         <Card.Body>
-          {this.reactionSVG(reaction)}
+          {reaction.svgPath && reaction.hasMaterials()
+            && (
+            <ReactionSchema
+              reaction={reaction}
+              onSvgUpdate={this.handleSvgUpdate}
+              graphicUpdateKey={graphicUpdateKey}
+            />
+            )}
           {this.state.sfn && <ScifinderSearch el={reaction} />}
           <div className="tabs-container--with-borders">
             <ElementDetailSortTab
