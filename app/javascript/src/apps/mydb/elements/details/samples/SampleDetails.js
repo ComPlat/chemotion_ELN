@@ -113,6 +113,9 @@ export default class SampleDetails extends React.Component {
 
     const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
 
+    // Check redirectedFromMixture flag in UIStore
+    const redirectedFromMixture = UIStore.getState() && UIStore.getState().redirectedFromMixture;
+
     this.state = {
       sample: props.sample,
       reaction: null,
@@ -140,6 +143,7 @@ export default class SampleDetails extends React.Component {
       saveInventoryAction: false,
       isChemicalEdited: false,
       currentUser,
+      showRedirectWarning: redirectedFromMixture || false,
     };
 
     this.enableComputedProps = MatrixCheck(currentUser.matrix, 'computedProp');
@@ -173,7 +177,7 @@ export default class SampleDetails extends React.Component {
 
   componentDidMount() {
     const { sample } = this.props;
-    const { currentUser } = this.state;
+    const { currentUser, showRedirectWarning } = this.state;
 
     UIStore.listen(this.onUIStoreChange);
 
@@ -182,6 +186,13 @@ export default class SampleDetails extends React.Component {
 
     if (MatrixCheck(currentUser.matrix, commentActivation) && !sample.isNew) {
       CommentActions.fetchComments(sample);
+    }
+
+    if (showRedirectWarning) {
+      // Use setTimeout to defer dispatch and avoid dispatch-in-dispatch errors in Alt/Flux
+      setTimeout(() => {
+        UIActions.setRedirectedFromMixture(false);
+      }, 0);
     }
   }
 
@@ -1410,7 +1421,8 @@ export default class SampleDetails extends React.Component {
           <strong>Structure Alert</strong>
           <Button
             size="sm"
-            variant="warning"
+            variant="outline-warning"
+            style={{ float: 'right' }}
             onClick={() => this.setState({ pageMessage: null })}
           >
             Close Alert
@@ -1428,6 +1440,32 @@ export default class SampleDetails extends React.Component {
         </Alert>
       ) : null;
 
+    // warning message for redirection
+    const redirectWarningBlock = this.state.showRedirectWarning ? (
+      <Alert variant="warning" className="d-flex flex-column gap-2 mt-2 mb-0 p-2">
+        <div>
+          <strong>Notice:</strong>
+          <p className="mb-1">
+            You are viewing the original sample that was used to create this component. Some of its attributes may have
+            changed now.
+          </p>
+          <p className="mb-0">
+            Any updates you make here will apply only to the original sample, not to any component generated from it.
+            However, changes on this sample may affect other dependant entities.
+          </p>
+        </div>
+        <div className="align-self-end">
+          <Button
+            size="sm"
+            variant="outline-warning"
+            onClick={() => this.setState({ showRedirectWarning: false })}
+          >
+            Close Alert
+          </Button>
+        </div>
+      </Alert>
+    ) : null;
+
     const activeTab = (this.state.activeTab !== 0 && stb.indexOf(this.state.activeTab) > -1
       && this.state.activeTab) || visible.get(0);
 
@@ -1437,6 +1475,7 @@ export default class SampleDetails extends React.Component {
       <Card className={`detail-card${pendingToSave ? ' detail-card--unsaved' : ''}`}>
         <Card.Header>
           {this.sampleHeader(sample)}
+          {redirectWarningBlock}
           {messageBlock}
         </Card.Header>
         <Card.Body>
