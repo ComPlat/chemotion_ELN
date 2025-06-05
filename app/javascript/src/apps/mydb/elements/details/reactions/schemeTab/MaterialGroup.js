@@ -397,14 +397,17 @@ function SolventsMaterialGroup({
           <thead>
             <tr>
               <th className="align-middle">{addSampleButton}</th>
-              <th className="align-middle">
-                <Select
-                  value={null}
-                  isDisabled={!permitOn(reaction)}
-                  options={solventOptions}
-                  placeholder="Default solvents"
-                  onChange={createDefaultSolventsForReaction}
-                />
+              <th className="d-flex flex-row align-items-center gap-2">
+                Solvents
+                <div className="flex-grow-1">
+                  <Select
+                    value={null}
+                    isDisabled={!permitOn(reaction)}
+                    options={solventOptions}
+                    placeholder="Add default"
+                    onChange={createDefaultSolventsForReaction}
+                  />
+                </div>
               </th>
               <th title="Dry Solvent" className="align-middle">DS</th>
               <th className="align-middle">T/R</th>
