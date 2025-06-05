@@ -75,6 +75,12 @@ class Versioning::Serializers::ReactionSerializer < Versioning::Serializers::Bas
         label: 'Duration',
         revert: %i[duration],
       },
+      variations: {
+        label: 'Variations',
+        # revert: %i[variations],
+        formatter: json_formatter,
+        kind: :json,
+      },
       timestamp_start: {
         label: 'Start',
         revert: %i[timestamp_start],
@@ -84,5 +90,13 @@ class Versioning::Serializers::ReactionSerializer < Versioning::Serializers::Bas
         revert: %i[timestamp_stop],
       },
     }.with_indifferent_access
+  end
+
+  private
+
+  def json_formatter
+    lambda do |key, value|
+      default_formatter.call(key, value) || []
+    end
   end
 end
