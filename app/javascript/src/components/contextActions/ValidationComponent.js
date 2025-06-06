@@ -68,13 +68,8 @@ function ValidationComponent({
       return;
     }
 
-    // Get the data from the row before deleting
-    const rowToDelete = currentRowData[rowIndex];
-    console.log(`Deleting row: ${rowIndex}`, rowToDelete);
-
     // Create a copy of the current data
     const newData = currentRowData.filter((_, index) => index !== rowIndex);
-    console.log(`Remaining rows: ${newData.length}`);
 
     // Update state
     setCurrentRowData(newData);
@@ -229,13 +224,9 @@ function ValidationComponent({
         }
       });
     });
-    console.log('All fields found in data:', Array.from(allFields).join(', '));
 
     // Use Promise.all to run validations in parallel
     const validationPromises = allRows.map(async (row) => {
-      // Each row can have a mix of sample and chemical fields
-      console.log(`Validating row ${row.id || 'unknown'} with fields:`, Object.keys(row).join(', '));
-      
       // Apply field-by-field validation based on each field type
       const validation = await validateRowUnified(row);
 
