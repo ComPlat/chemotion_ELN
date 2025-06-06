@@ -34,7 +34,10 @@ function DeleteButtonCellRenderer(props) {
 
 DeleteButtonCellRenderer.propTypes = {
   data: PropTypes.shape({
-    id: PropTypes.string
+    id: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.number
+    ])
   }),
   onDelete: PropTypes.func
 };
