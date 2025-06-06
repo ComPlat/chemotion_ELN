@@ -512,6 +512,9 @@ class SearchUserLabels extends React.Component {
         formatOptionLabel={UserLabel}
         value={labels.find((l) => l.id === userLabel)}
         onChange={this.handleSelectChange}
+        menuPortalTarget={document.body}
+        placeholder="Filter by label"
+        minWidth="100px"
       />
     );
   }

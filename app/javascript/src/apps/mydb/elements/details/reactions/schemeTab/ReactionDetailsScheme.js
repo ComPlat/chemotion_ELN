@@ -1087,7 +1087,7 @@ export default class ReactionDetailsScheme extends Component {
           />
           <Button
             disabled={false}
-            variant="success"
+            variant="primary"
             onClick={() => this.changeVesselSizeUnit()}
           >
             {reaction.vessel_size?.unit || 'ml'}

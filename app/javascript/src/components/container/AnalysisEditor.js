@@ -201,7 +201,6 @@ export default class AnalysisEditor extends React.Component {
       <DynamicToolbarEditor
         theme="snow"
         formats={toolbarOptions}
-        style={{ height: '120px' }}
         ref={this.reactQuillRef}
         onChange={this.quillOnChange}
         value={value}

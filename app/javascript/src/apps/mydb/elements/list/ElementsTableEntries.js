@@ -82,7 +82,7 @@ export default class ElementsTableEntries extends Component {
           style={{ cursor: 'pointer' }}
           width={element.type === 'research_plan' ? '280px' : 'unset'}
           data-cy={`researchPLanItem-${element.id}`}
-          className="flex-grow-1"
+          className="d-flex gap-1 flex-column flex-grow-1"
         >
           <SvgWithPopover
             hasPop={['reaction'].includes(element.type)}
@@ -98,13 +98,16 @@ export default class ElementsTableEntries extends Component {
               width: '52vw'
             }}
           />
-          <ReactionStatus element={element} />
-          <ReactionRole element={element} />
-          <ShowUserLabels element={element} />
-          <ReactionVariations element={element} />
-          <br />
-          <CommentIcon commentCount={element.comment_count} />
-          <ElementCollectionLabels element={element} key={element.id} />
+          <div className="d-flex gap-1 align-items-center">
+            <ReactionStatus element={element} />
+            <ReactionRole element={element} />
+            <ShowUserLabels element={element} />
+            <ReactionVariations element={element} />
+          </div>
+          <div className="d-flex gap-1 align-items-center">
+            <CommentIcon commentCount={element.comment_count} />
+            <ElementCollectionLabels element={element} key={element.id} />
+          </div>
         </div>
         {this.previewColumn(element, showDetails)}
       </div>

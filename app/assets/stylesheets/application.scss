@@ -1,32 +1,44 @@
 /*
  * In order to control import order and provide access to variables, mixins and utilities, we import
  * the files within this directory manually via sass `@import`, instead of using `require_tree .`
- * 
+ *
  * The files in the legacy directory have not yet been aligned with the design system initiative and
  * will be refactored in the future.
  *
  *= require_self
  */
 
+@import "global-styles/chemstrap-tokens";
 @import "global-styles/bootstrap-config";
 @import "global-styles/bootstrap-mods";
 @import "global-styles/vendor";
 @import "global-styles/icons";
 // file css rules that are used by multiple components under global-styles/utilities
 @import "global-styles/utilities";
+@import "global-styles/tags";
 
 // file css rules that are targeted at specific components under components
-@import "components/MydbApp";
 @import "components/AttachmentList";
 @import "components/ButtonGroupToggleButton";
 @import "components/CollectionTree";
+@import "components/DragHandle";
+@import "components/ElementAllCheckbox";
+@import "components/ElementDragLayer";
 @import "components/ElementsTable";
 @import "components/ElementGroupsRenderer_ElementListRenderer";
+@import "components/ElementsTable";
+@import "components/MydbApp";
+@import "components/PanelCollapseButton";
+@import "components/PanelResizeHandle";
+@import "components/QuillEditor";
+@import "components/QuillViewer";
+@import "components/ReactionMaterial";
 @import "components/Report";
 @import "components/SearchModal";
 @import "components/SearchResult";
-@import "components/QuillEditor";
-@import "components/QuillViewer";
+@import "components/Sidebar_Topbar";
+@import "components/Styleguide";
+@import "components/TabLayoutEditor";
 @import "components/svg_with_popver";
 
 @import "legacy/miscellaneous";
@@ -36,7 +48,6 @@
 @import "legacy/chemical-tab";
 @import "legacy/chemspectra";
 @import "legacy/collection_management";
-@import "legacy/collection_tree";
 @import "legacy/common";
 @import "legacy/converter";
 @import "legacy/CustomHeader";
@@ -49,7 +60,6 @@
 @import "legacy/molecules";
 @import "legacy/molviewer";
 @import "legacy/mozilla";
-@import "legacy/navigation";
 @import "legacy/nmrdb-logo";
 @import "legacy/omniauth";
 @import "legacy/polymer_section";

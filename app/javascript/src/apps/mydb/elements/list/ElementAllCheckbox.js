@@ -51,20 +51,24 @@ export default function ElementAllCheckbox({ type }) {
   };
 
   return (
-    <div className="all-checkbox" onClick={toggleOptions}>
-      <div className="checkbox-dropdown">
-        <span className="span-checkbox" onClick={toggleCheckbox}>
-          {uiState === 'checked' && <i className="fa fa-check" />}
-          {uiState === 'partial' && <i className="fa fa-minus" />}
-          {uiState === 'unchecked' && <i className="fa" />}
-        </span>
-        <i className="fa fa-caret-down ms-2" />
+    <div className="element-all-checkbox" onClick={toggleOptions}>
+      <div className="chemotion-select__control">
+        <span className={`form-check-input form-check-input--${uiState}`} onClick={toggleCheckbox} />
+        <i className="chemotion-select__indicator chemotion-select__dropdown-indicator" />
       </div>
       {showOptions && (
-        <div className="checkbox-options">
-          <div onClick={() => selectAll(0)}>Current page</div>
-          <div onClick={() => selectAll(1)}>All pages</div>
-          <div onClick={() => selectAll(2)}>None</div>
+        <div className="chemotion-select__menu">
+          {options.map((option, index) => (
+            <div
+              key={option}
+              className={`chemotion-select__option${currentOption === index ? ' chemotion-select__option--is-selected' : ''}`}
+              onClick={() => selectAll(index)}
+            >
+              {option === 'current' && 'Current page'}
+              {option === 'all' && 'All pages'}
+              {option === 'none' && 'None'}
+            </div>
+          ))}
         </div>
       )}
     </div>

@@ -1,8 +1,11 @@
-$primary: #337ab7;
-$success: #5cb85c;
-$info: #5bc0de;
-$warning: #f0ad4e;
-$danger: #d9534f;
+$white: $chemstrap-white;
+$primary: $chemstrap-blue;
+$secondary: $chemstrap-silicon;
+$success: $chemstrap-green;
+$info: #5bc0de; // to be removed application wide
+$warning: $chemstrap-orange;
+$danger: $chemstrap-red;
+$black: $chemstrap-carbon;
 
 $zindex-levels: (
   n1: -1,
@@ -14,29 +17,55 @@ $zindex-levels: (
   5: 5,
 );
 
+$chemstrap-theme-colors: (
+  "active": $chemstrap-blue-dark,
+  "draggable": $chemstrap-blue-dull,
+);
+
 @import "bootstrap/functions";
 @import "bootstrap/variables";
 @import "bootstrap/mixins";
 
+$border-color: map-get($carbon-shades, lighten3);
+$body-bg: $chemstrap-white;
+$body-color: $chemstrap-carbon;
+$font-family-sans-serif: "Roboto", sans-serif;
 $font-size-root: 14px;
 $font-size-base: 1rem;
+$heading-color: $body-color;
 $h1-font-size: $font-size-base * 2;
 $h2-font-size: $font-size-base * 1.75;
 $h3-font-size: $font-size-base * 1.5;
 $h4-font-size: $font-size-base * 1.25;
 $h5-font-size: $font-size-base * 1.125;
 $h6-font-size: $font-size-base;
-
-$input-btn-padding-y: 0.3rem;
+$enable-negative-margins: true;
 $enable-negative-margins: true;
 
 $table-bg: transparent;
+$card-bg: $chemstrap-white;
+$accordion-bg: $chemstrap-white;
+$modal-content-bg: $chemstrap-white;
+$list-group-bg: $chemstrap-white;
+$list-group-color: $body-color;
+
+$popover-bg: $chemstrap-white;
+$popover-body-color: $body-color;
 $popover-max-width: 50vw;
+$popover-body-padding-y: 0.5rem;
+
+$input-btn-padding-y: 0.3rem;
+$input-bg: $chemstrap-white;
+$input-border-color: $border-color;
+$form-select-bg: $input-bg;
+$form-check-input-bg: $input-bg;
+$form-check-input-border: 1px solid $input-border-color;
+$form-check-input-width: 1.125em;
 $form-label-font-weight: $font-weight-bold;
 
 $modal-xxxl: 90vw;
 
-$gray-tones: (
+$gray-shades: (
   "gray-100": $gray-100,
   "gray-200": $gray-200,
   "gray-300": $gray-300,
@@ -49,6 +78,9 @@ $gray-tones: (
 );
 
 // Merge the maps
-$theme-colors: map-merge($theme-colors, $gray-tones);
+$theme-colors: map-merge(
+  map-merge($theme-colors, $chemstrap-theme-colors),
+  $gray-shades
+);
 
 @import "bootstrap";
