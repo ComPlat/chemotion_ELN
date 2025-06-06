@@ -22,8 +22,7 @@ function ColumnMappingComponent({
   const sampleKeys = [
     'name', 'cas', 'molecule_name', 'external_label', 'short_label', 'description', 'decoupled',
     'real_amount_value', 'real_amount_unit', 'target_amount_value', 'target_amount_unit',
-    'molarity', 'density', 'molfile', 'purity', 'solvent',
-    'location', 'is_top_secret', 'anhydrous', 'imported_readout', 'melting_point',
+    'molarity', 'density', 'molfile', 'purity', 'solvent', 'location', 'is_top_secret', 'melting_point',
     'boiling_point', 'refractive_index', 'flash_point', 'molecular_mass', 'canonical_smiles',
     'dry_solvent', 'stereo_abs', 'stereo_rel', 'sum_formula',
   ];
@@ -68,7 +67,6 @@ function ColumnMappingComponent({
       stereo_abs: 'stereo_abs',
       stereo_rel: 'stereo_rel',
       decoupled: 'decoupled',
-      residue_type: 'residue_type',
       sample_name: 'name',
       name: 'name',
       sample_external_label: 'external_label',
