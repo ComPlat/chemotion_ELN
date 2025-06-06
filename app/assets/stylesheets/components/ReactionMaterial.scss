@@ -1,0 +1,9 @@
+.reaction-material-link {
+  @extend .align-middle;
+  @extend .d-inline-block;
+  @extend .text-truncate;
+  max-width: 80%;
+  a {
+    @extend .link;
+  }
+}

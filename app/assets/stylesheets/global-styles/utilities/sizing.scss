@@ -1,3 +1,11 @@
+.w-0 {
+  width: 0;
+}
+
+.h-0 {
+  height: 0;
+}
+
 .vw-90 {
   width: 90vw;
 }
@@ -10,8 +18,12 @@
   height: 70vh;
 }
 
-.vh-80 {
-  height: 80vh;
+.min-vh-80 {
+  min-height: 80vh;
+}
+
+.vh-90 {
+  height: 90vh;
 }
 
 .max-vh-60 {

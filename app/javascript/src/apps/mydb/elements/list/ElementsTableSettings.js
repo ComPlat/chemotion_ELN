@@ -1,19 +1,44 @@
 import React from 'react';
-import { Popover, Button, Form, OverlayTrigger } from 'react-bootstrap';
+import { Popover, Form } from 'react-bootstrap';
 
-import TabLayoutContainer from 'src/apps/mydb/elements/tabLayout/TabLayoutContainer';
+import TabLayoutEditor from 'src/apps/mydb/elements/tabLayout/TabLayoutEditor';
+import TabLayoutButton from 'src/apps/mydb/elements/tabLayout/TabLayoutButton';
 
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import { capitalizeWords } from 'src/utilities/textHelper';
+
+function TabItem({ item }) {
+  const { genericEls = [] } = UserStore.getState();
+  const genericElement = genericEls.find((el) => el.name === item);
+
+  let icon, label;
+  if (genericElement) {
+    icon = genericElement.icon_name;
+    label = genericElement.label;
+  } else {
+    icon = `icon-${item}`;
+    label = capitalizeWords(item);
+  }
+
+  return (
+    <div className="d-flex gap-2 align-items-center">
+      <i className={icon} />
+      {label}
+    </div>
+  )
+};
 
 export default class ElementsTableSettings extends React.Component {
   constructor(props) {
     super(props);
 
     this.state = {
+      visible: props.visible,
+      hidden: props.hidden,
       currentType: '',
       showSampleExternalLabel: false,
       showSampleShortLabel: false,
@@ -32,12 +57,26 @@ export default class ElementsTableSettings extends React.Component {
 
   componentDidMount() {
     UserStore.listen(this.onChangeUser);
+    this.onChangeUser(UserStore.getState());
     UIStore.listen(this.onChangeUI);
+    this.onChangeUI(UIStore.getState());
   }
 
   componentWillUnmount() {
     UserStore.unlisten(this.onChangeUser);
     UIStore.unlisten(this.onChangeUI);
+  }
+
+  componentDidUpdate(prevProps) {
+    if (
+      prevProps.visible !== this.props.visible
+      || prevProps.hidden !== this.props.hidden
+    ) {
+      this.setState({
+        visible: this.props.visible,
+        hidden: this.props.hidden,
+      });
+    }
   }
 
   onChangeUI(state) {
@@ -117,14 +156,14 @@ export default class ElementsTableSettings extends React.Component {
   }
 
   updateLayout() {
-    const { visible, hidden } = this.tabLayoutContainerElement.state;
+    const { visible, hidden } = this.state;
     const layout = {};
 
     visible.forEach((value, index) => {
       layout[value] = (index + 1);
     });
     hidden.forEach((value, index) => {
-      if (value !== 'hidden') layout[value] = (- index - 1)
+      layout[value] = (- index - 1);
     });
 
     const userProfile = UserStore.getState().profile;
@@ -133,8 +172,9 @@ export default class ElementsTableSettings extends React.Component {
   }
 
   render() {
-    const { visible, hidden } = this.props;
     const {
+      visible,
+      hidden,
       currentType,
       tableSchemePreviews,
       showSampleExternalLabel,
@@ -142,28 +182,11 @@ export default class ElementsTableSettings extends React.Component {
       showSampleName,
     } = this.state;
 
-    const tabLayoutContainerElement = (
-      <TabLayoutContainer
-        visible={visible}
-        hidden={hidden}
-        ref={(tabLayoutContainerElement) => this.tabLayoutContainerElement = tabLayoutContainerElement}
-      />
-    );
-
     const showSettings = (currentType === 'sample' || currentType === 'reaction');
     const popoverSettings = (
-      <Popover
-        className="scrollable-popover w-auto mw-100"
-        id="popover-layout"
-      >
-        <Popover.Header>
-          Tab Layout
-        </Popover.Header>
-        <Popover.Body>
-          {tabLayoutContainerElement}
-        </Popover.Body>
+      <Popover className="d-flex popover-multi">
         {showSettings && (
-          <>
+          <div className="popover-multi-item">
             <Popover.Header>Settings</Popover.Header>
             <Popover.Body>
               <Form>
@@ -193,27 +216,28 @@ export default class ElementsTableSettings extends React.Component {
                 />
               </Form>
             </Popover.Body>
-          </>
+          </div>
         )}
+        <div className="popover-multi-item">
+          <Popover.Header>
+            Tab Layout
+          </Popover.Header>
+          <Popover.Body>
+            <TabLayoutEditor
+              visible={visible}
+              hidden={hidden}
+              getItemComponent={TabItem}
+              onLayoutChange={(visible, hidden) => {
+                this.setState({ visible, hidden });
+              }}
+            />
+          </Popover.Body>
+        </div>
       </Popover>
     );
 
     return (
-      <OverlayTrigger
-        trigger="click"
-        placement="bottom"
-        overlay={popoverSettings}
-        onToggle={this.onToggleTabLayoutContainer}
-        rootClose
-      >
-        <Button
-          size="xsm"
-          variant="light"
-          className="m-2"
-        >
-          <i className="fa fa-sliders" />
-        </Button>
-      </OverlayTrigger>
+      <TabLayoutButton popoverSettings={popoverSettings} onToggle={this.onToggleTabLayoutContainer} />
     );
   }
 }

@@ -9,7 +9,6 @@ import DetailActions from 'src/stores/alt/actions/DetailActions';
 import { elementNames } from 'src/apps/generic/Utils';
 
 const collectionShow = (e) => {
-  UIActions.showElements.defer();
   UserActions.fetchCurrentUser();
   const { profile } = UserStore.getState();
   if (!profile) {
@@ -59,12 +58,7 @@ const collectionShow = (e) => {
   });
 };
 
-const collectionShowCollectionManagement = () => {
-  UIActions.showCollectionManagement();
-};
-
 const scollectionShow = (e) => {
-  UIActions.showElements();
   UserActions.fetchCurrentUser();
   const { profile } = UserStore.getState();
   if (!profile) {
@@ -328,7 +322,6 @@ const elementShowOrNew = (e) => {
 export {
   collectionShow,
   scollectionShow,
-  collectionShowCollectionManagement,
   reportShowReport,
   sampleShowOrNew,
   reactionShow,

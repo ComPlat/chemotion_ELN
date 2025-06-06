@@ -1,0 +1,22 @@
+.panel-resize-handle {
+  @extend .surface-lighten4;
+  @extend .d-flex;
+  @extend .flex-column;
+  @extend .justify-content-evenly;
+  width: 16px;
+  margin-left: 2px;
+  &:after,
+  &:before {
+    @extend .bg-draggable;
+    @extend .border-draggable;
+    border-width: 0.6rem 0.3rem;
+    border-style: solid;
+    content: "";
+    height: 42px;
+    top: calc(50% - 42px);
+    @include drag-surface();
+  }
+  &:hover {
+    @extend .surface-lighten3;
+  }
+}
