@@ -1,6 +1,9 @@
 import React from 'react';
 import { Modal, Button, Alert } from 'react-bootstrap';
-import { configure, shallow } from 'enzyme';
+import {
+  configure,
+  shallow,
+} from 'enzyme';
 import {
   describe, it, beforeEach, afterEach
 } from 'mocha';
@@ -24,14 +27,14 @@ describe('ValidationComponent basic rendering', () => {
       id: '1',
       name: 'Sample 1',
       cas: '123-45-6',
-      valid: true
+      valid: true,
     },
     {
       id: '2',
       name: 'Sample 2',
       cas: '789-01-2',
-      valid: true
-    }
+      valid: true,
+    },
   ];
 
   const mockColumnDefs = [
@@ -68,7 +71,8 @@ describe('ValidationComponent basic rendering', () => {
     // Check specifically for buttons with exact text to avoid ambiguity
     const addRowBtn = wrapper.findWhere((node) => node.type() === Button && node.text().includes('Add Row'));
 
-    const showMoreBtn = wrapper.findWhere((node) => node.type() === Button && node.text().includes('Show More Rows'));
+    const showMoreBtn = wrapper.findWhere((node) => node.type() === Button
+      && node.text().includes('Show More Rows'));
 
     const cancelBtn = wrapper.findWhere((node) => node.type() === Button && node.text() === 'Cancel');
 
@@ -93,8 +97,18 @@ describe('ValidationComponent interaction tests', () => {
   let onRowDataChangeSpy = null;
 
   const mockRowData = [
-    { id: '1', name: 'Sample 1', cas: '123-45-6', valid: true },
-    { id: '2', name: 'Sample 2', cas: '789-01-2', valid: true }
+    {
+      id: '1',
+      name: 'Sample 1',
+      cas: '123-45-6',
+      valid: true,
+    },
+    {
+      id: '2',
+      name: 'Sample 2',
+      cas: '789-01-2',
+      valid: true,
+    },
   ];
 
   const mockColumnDefs = [
@@ -159,8 +173,18 @@ describe('ValidationComponent validation tests', () => {
   let mockGridApi = null;
 
   const mockRowData = [
-    { id: '1', name: 'Sample 1', cas: '123-45-6', valid: true },
-    { id: '2', name: 'Sample 2', cas: 'invalid-cas', valid: true }
+    {
+      id: '1',
+      name: 'Sample 1',
+      cas: '123-45-6',
+      valid: true,
+    },
+    {
+      id: '2',
+      name: 'Sample 2',
+      cas: 'invalid-cas',
+      valid: true,
+    },
   ];
 
   const mockColumnDefs = [
@@ -222,8 +246,7 @@ describe('ValidationComponent validation tests', () => {
 
   it('should validate data when validate button is clicked', async () => {
     // Find the validate button specifically by text and type
-    const validateButton = wrapper.findWhere((node) => node.type() === Button
-    && node.text() === 'Validate Data');
+    const validateButton = wrapper.findWhere((node) => node.type() === Button && node.text() === 'Validate Data');
 
     expect(validateButton).toHaveLength(1);
 
@@ -246,8 +269,8 @@ describe('ValidationComponent cell editing tests', () => {
       id: '1',
       name: 'Sample 1',
       cas: '123-45-6',
-      valid: true
-    }
+      valid: true,
+    },
   ];
 
   const mockColumnDefs = [
@@ -270,6 +293,10 @@ describe('ValidationComponent cell editing tests', () => {
         }
       )
     );
+  });
+
+  afterEach(() => {
+    wrapper.unmount();
   });
 
   it('should update row data when cell value changes', () => {
@@ -313,62 +340,5 @@ describe('ValidationComponent cell editing tests', () => {
     expect(onRowDataChangeSpy.calledOnce).toBe(true);
     const updatedData = onRowDataChangeSpy.firstCall.args[0];
     expect(updatedData).toHaveLength(0);
-  });
-});
-
-describe('ValidationComponent molfile column tests', () => {
-  // No need to render the component for these tests
-
-  it('should process molfile columns with special configuration', () => {
-    const mockMolfileDef = { field: 'molfile', headerName: 'Molfile Structure' };
-
-    // We'll create our own processColumnDefs function to mimic the component
-    const processMolfileColumn = (colDef) => {
-      if (colDef.headerName && colDef.headerName.toLowerCase().includes('molfile')) {
-        return {
-          ...colDef,
-          cellEditor: 'textAreaCellEditor',
-          cellEditorPopup: true,
-          cellRenderer: (params) => {
-            if (!params.value) return '';
-            const lines = params.value.split('\n');
-            const firstLine = lines[0] || '';
-            return firstLine ? `${firstLine.trim()} (${lines.length} lines)` : '';
-          }
-        };
-      }
-      return colDef;
-    };
-
-    // Process our mock column
-    const processedColumn = processMolfileColumn(mockMolfileDef);
-
-    // Check if it was processed correctly
-    expect(processedColumn.cellEditor).toBe('textAreaCellEditor');
-    expect(processedColumn.cellEditorPopup).toBe(true);
-    expect(typeof processedColumn.cellRenderer).toBe('function');
-
-    // Test the renderer
-    const renderedValue = processedColumn.cellRenderer({
-      value: 'Molfile\nLine 2\nLine 3'
-    });
-    expect(renderedValue).toBe('Molfile (3 lines)');
-  });
-
-  it('should render molfile preview correctly', () => {
-    // Skip the search in the component, just test the rendering function directly
-    const mockMolfileValue = 'Molfile\nLine 2\nLine 3';
-
-    // Create a rendering function like the one in the component
-    const renderMolfilePreview = (value) => {
-      if (!value) return '';
-      const lines = value.split('\n');
-      const firstLine = lines[0] || '';
-      return firstLine ? `${firstLine.trim()} (${lines.length} lines)` : '';
-    };
-
-    // Test the renderer directly
-    const renderedValue = renderMolfilePreview(mockMolfileValue);
-    expect(renderedValue).toBe('Molfile (3 lines)');
   });
 });
