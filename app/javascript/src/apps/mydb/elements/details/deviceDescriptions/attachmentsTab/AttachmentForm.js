@@ -54,7 +54,7 @@ const AttachmentForm = ({ readonly }) => {
       if (attachment.preview !== undefined && attachment.preview !== '') { return attachment; }
 
       attachment.preview = attachment.thumb
-        ? `data:image/png;base64,${attachment.thumbnail}`
+        ? `/api/v1/attachments/${attachment.id}`
         : '/images/wild_card/not_available.svg';
       return attachment;
     });

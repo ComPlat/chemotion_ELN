@@ -16,7 +16,7 @@ import ImageModal from 'src/components/common/ImageModal';
 import { hNmrCount, cNmrCount, instrumentText } from 'src/utilities/ElementUtils';
 import { contentToText } from 'src/utilities/quillFormat';
 import { chmoConversions } from 'src/components/OlsComponent';
-import { previewContainerImage } from 'src/utilities/imageHelper';
+import { getAttachmentFromContainer } from 'src/utilities/imageHelper';
 import { JcampIds, BuildSpcInfos, BuildSpcInfosForNMRDisplayer, isNMRKind } from 'src/utilities/SpectraHelper';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -259,7 +259,6 @@ export default class ReactionDetailsContainers extends Component {
       let kind = container.extended_metadata.kind || '';
       kind = (kind.split('|')[1] || kind).trim();
       const insText = instrumentText(container);
-      const previewImg = previewContainerImage(container);
       const status = container.extended_metadata.status || '';
       const content = container.extended_metadata.content || { ops: [{ insert: '' }] };
 
@@ -270,29 +269,14 @@ export default class ReactionDetailsContainers extends Component {
           return c;
         }),
       };
-      let hasPop = true;
-      let fetchNeeded = false;
-      let fetchId = 0;
-      if (previewImg.startsWith('data:image')) {
-        fetchNeeded = true;
-        fetchId = container.preview_img.id;
-      } else {
-        hasPop = false;
-      }
-
+      const attachment = getAttachmentFromContainer(container);
       return (
         <div className="analysis-header w-100 d-flex gap-3 lh-base">
           <div className="preview border d-flex align-items-center">
             <ImageModal
-              hasPop={hasPop}
-              previewObject={{
-                src: previewImg
-              }}
+              attachment={attachment}
               popObject={{
                 title: container.name,
-                src: previewImg,
-                fetchNeeded,
-                fetchId
               }}
             />
           </div>
@@ -356,7 +340,11 @@ export default class ReactionDetailsContainers extends Component {
       if (analyses_container.length === 1 && analyses_container[0].children.length > 0) {
         return (
           <div>
-            <div className="d-flex justify-content-end align-items-center mb-3">
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <span className="text-muted me-3 small" style={{ maxWidth: '60%' }}>
+                This tab can be used for reaction-related data (e.g., process control, in situ).
+                For sample data (e.g., characterization), use the sample analysis tab.
+              </span>
               <ButtonToolbar className="gap-1">
                 <div className="mt-2">
                   <CommentButton toggleCommentBox={this.toggleCommentBox} size="sm" />

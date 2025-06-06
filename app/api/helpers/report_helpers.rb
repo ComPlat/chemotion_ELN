@@ -291,12 +291,14 @@ module ReportHelpers
       s_id, ts, co_id, scu_id, shared_sync, pl, dl_s
       , res.residue_type, s.molfile_version, s.decoupled, s.molecular_mass as "molecular mass (decoupled)", s.sum_formula as "sum formula (decoupled)"
       , s.stereo->>'abs' as "stereo_abs", s.stereo->>'rel' as "stereo_rel"
+      , cl.id as "sample uuid"
       , #{rest_of_selections}
       from (#{s_subquery}) as s_dl
       inner join samples s on s_dl.s_id = s.id #{collection_join}
       left join molecules m on s.molecule_id = m.id
       left join molecule_names mn on s.molecule_name_id = mn.id
       left join residues res on res.sample_id = s.id
+      left join code_logs cl on cl.source = 'sample' and cl.source_id = s.id
       order by #{order}
     SQL
   end
@@ -348,6 +350,7 @@ module ReportHelpers
       select
       s_id, ts, co_id, scu_id, shared_sync, pl, dl_s
       , #{columns}
+      , cl.id as "sample uuid"
       , (select array_to_json(array_agg(row_to_json(analysis)))
         from (
         select  anac."name", anac.description
@@ -381,6 +384,7 @@ module ReportHelpers
       ) as analyses
       from (#{s_subquery}) as s_dl
       inner join samples s on s_dl.s_id = s.id #{collection_join}
+      left join code_logs cl on cl.source = 'sample' and cl.source_id = s.id
       order by #{order};
     SQL
   end
@@ -424,6 +428,7 @@ module ReportHelpers
       , dl_wp
       , res.residue_type, s.molfile_version, s.decoupled, s.molecular_mass as "molecular mass (decoupled)", s.sum_formula as "sum formula (decoupled)"
       , s.stereo->>'abs' as "stereo_abs", s.stereo->>'rel' as "stereo_rel"
+      , cl.id as "sample uuid"
       , #{columns}
       from (
         select
@@ -454,6 +459,7 @@ module ReportHelpers
       left join molecules m on s.molecule_id = m.id
       left join molecule_names mn on s.molecule_name_id = mn.id
       left join residues res on res.sample_id = s.id
+      left join code_logs cl on cl.source = 'sample' and cl.source_id = s.id
       order by #{order}, "wy" asc,"wx" asc;
     SQL
   end
@@ -480,8 +486,7 @@ module ReportHelpers
       , dl_r
       , res.residue_type, s.molfile_version, s.decoupled, s.molecular_mass as "molecular mass (decoupled)", s.sum_formula as "sum formula (decoupled)"
       , s.stereo->>'abs' as "stereo_abs", s.stereo->>'rel' as "stereo_rel"
-      -- , r_s.type as "type"
-      -- , r_s.position
+      , cl.id as "sample uuid"
       , #{columns}
       , case
         when r_s.type = 'ReactionsStartingMaterialSample' then '1 starting mat'
@@ -515,6 +520,7 @@ module ReportHelpers
       left join molecules m on s.molecule_id = m.id
       left join molecule_names mn on s.molecule_name_id = mn.id
       left join residues res on res.sample_id = s.id
+      left join code_logs cl on cl.source = 'sample' and cl.source_id = s.id
       order by #{order}, "type" asc, r_s.position asc;
     SQL
   end

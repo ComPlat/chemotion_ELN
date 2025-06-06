@@ -1,0 +1,22 @@
+.drag-handle {
+  cursor: move;
+  min-width: 15px;
+  @extend .d-flex;
+  @extend .align-items-center;
+  @extend .bg-draggable;
+  @extend .rounded-start;
+  @extend .px-1;
+  @extend .py-2;
+  &:after {
+    content: "";
+    @extend .w-100;
+    @extend .h-100;
+    max-height: 32px;
+    @include drag-surface();
+    background-position: 0.5px 0;
+  }
+  &.drag-handle--disabled {
+    cursor: not-allowed;
+    @extend .bg-gray-500;
+  }
+}

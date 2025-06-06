@@ -1,0 +1,11 @@
+.styleguide-color-token {
+  height: 100px;
+  max-width: 30%;
+  min-width: 30%;
+  @extend .border-end;
+  @each $name, $color in $token-color-names {
+    &--#{$name} {
+      background-color: $color;
+    }
+  }
+}

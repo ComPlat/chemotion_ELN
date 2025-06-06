@@ -10,7 +10,8 @@ module Export
       'sample external label', 'sample name', 'target amount', 'target unit',
       'real amount', 'real unit', 'description', 'purity', 'solvent', 'location',
       'secret', 'short label', 'density', 'melting pt', 'boiling pt', 'created_at',
-      'updated_at', 'MW', 'user_labels', 'decoupled', 'molecular mass (decoupled)', 'sum formula (decoupled)'
+      'updated_at', 'MW', 'user_labels', 'decoupled', 'molecular mass (decoupled)', 'sum formula (decoupled)',
+      'sample uuid'
     ].freeze
 
     # allowed sample/molecule headers for sample detail level 10
@@ -20,7 +21,10 @@ module Export
     ].freeze
 
     HEADERS_SAMPLE_ID = [
-      'sample external label', 'sample name', 'short label'
+      'sample external label',
+      'sample name',
+      'short label',
+      'sample uuid',
     ].freeze
 
     # allowed well/wellplate headers for wellplate detail level 0

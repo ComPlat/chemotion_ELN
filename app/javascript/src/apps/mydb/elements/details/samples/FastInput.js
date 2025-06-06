@@ -65,6 +65,7 @@ function FastInput(props) {
 
   const searchString = (e) => {
     const input = value;
+    if (!input) return;
     if (e.key === 'Enter' || e.type === 'click') {
       const getCas = validateCas(input, false);
       if (getCas !== 'smile') {

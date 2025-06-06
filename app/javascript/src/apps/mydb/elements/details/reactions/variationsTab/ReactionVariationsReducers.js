@@ -1,19 +1,10 @@
 import {
-  resetColumnDefinitionsMaterials
-} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
-import {
   getCellDataType, updateColumnDefinitions, addMissingColumnDefinitions, removeObsoleteColumnDefinitions,
   getColumnDefinitions
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 
 export default function columnDefinitionsReducer(columnDefinitions, action) {
   switch (action.type) {
-    case 'remove_obsolete_materials': {
-      return removeObsoleteColumnDefinitions(
-        columnDefinitions,
-        action.selectedColumns,
-      );
-    }
     case 'apply_column_selection': {
       let updatedColumnDefinitions = addMissingColumnDefinitions(
         columnDefinitions,
@@ -49,13 +40,8 @@ export default function columnDefinitionsReducer(columnDefinitions, action) {
         action.gasMode
       );
     }
-    case 'update_gas_type': {
-      return resetColumnDefinitionsMaterials(
-        columnDefinitions,
-        action.materials,
-        action.selectedColumns,
-        action.gasMode
-      );
+    case 'set_updated': {
+      return action.update;
     }
     default: {
       return columnDefinitions;

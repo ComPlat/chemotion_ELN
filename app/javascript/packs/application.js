@@ -1,6 +1,7 @@
 // see https://github.com/rackt/react-router/issues/1067
 
 var React = require('react');
+var Styleguide = require('src/apps/styleguide');
 var Home = require('src/apps/home');
 var CnC = require('src/apps/commandAndControl');
 var AdminHome = require('src/apps/admin');

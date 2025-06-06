@@ -344,9 +344,9 @@ export default class AutoCompleteInput extends React.Component {
     }
 
     return (
-      <div className="d-flex flex-column w-100">
+      <div className="d-flex flex-column">
         <Form.Group ref={this.overlayTarget}>
-          <InputGroup className="d-flex flex-nowrap w-100 z-4">
+          <InputGroup className="d-flex flex-nowrap z-4">
             {this.props.buttonBefore}
             <Form.Control
               placeholder="IUPAC, InChI, SMILES, RInChI..."
@@ -378,7 +378,7 @@ export default class AutoCompleteInput extends React.Component {
               style={{ maxHeight: 400, width: 400 }}
               ref={(alist) => { this.listSuggestions = alist; }}
             >
-              <div className="w-100 bg-white border overflow-auto">
+              <div className="w-100 text-bg-paper border overflow-auto">
                 {this.renderSuggestions()}
               </div>
             </ListGroup>

@@ -1,0 +1,96 @@
+$sidebar-logo-height: 72px;
+
+.topbar {
+  min-height: $sidebar-logo-height;
+  @extend .surface-lighten4;
+}
+
+.sidebar {
+  @extend .d-flex;
+  @extend .flex-shrink-0;
+  @extend .surface-lighten4;
+  width: 260px;
+  &.sidebar--collapsed {
+    width: 44px;
+    .sidebar-logo {
+      @extend .justify-content-center;
+      @extend .ms-0;
+    }
+  }
+  &-logo {
+    height: $sidebar-logo-height;
+    margin-left: 0.75rem;
+    @extend .d-flex;
+    @extend .align-items-center;
+  }
+  &-content {
+    @extend .h-100;
+    @extend .d-flex;
+    @extend .flex-column;
+    @extend .flex-grow-1;
+    @extend .pb-4;
+  }
+  &-collapse-button-container {
+    margin-top: $sidebar-logo-height; //hack to compensate header height
+    @extend .d-flex;
+    @extend .flex-column;
+    @extend .justify-content-center;
+  }
+  &-button-frame {
+    @extend .d-flex;
+    @extend .column-gap-1;
+  }
+  &-button {
+    @extend .mt-1;
+    @extend .d-flex;
+    @extend .align-items-center;
+    @extend .rounded-0;
+    min-height: 44px;
+    min-width: 44px;
+    padding-left: 8px;
+    padding-right: 8px;
+    font-size: 16px;
+    i {
+      font-size: 18px;
+    }
+    &__badge {
+      font-size: 10px;
+      z-index: 2;
+      top: 40px !important;
+      @extend .position-absolute;
+      @extend .start-50;
+      @extend .translate-middle;
+    }
+  }
+}
+
+.btn-sidebar {
+  @include button-variant(
+    map-get($silicon-shades, lighten4),
+    map-get($silicon-shades, lighten4),
+    $body-color,
+    map-get($silicon-shades, lighten2),
+    map-get($silicon-shades, lighten2),
+    $body-color,
+    map-get($silicon-shades, lighten1),
+    map-get($silicon-shades, lighten1),
+    $body-color
+  );
+  &.sidebar-button--has-badge {
+    @include button-variant(
+      mix(map-get($silicon-shades, lighten4), shade-color($warning, 20), 85),
+      mix(map-get($silicon-shades, lighten4), shade-color($warning, 20), 85),
+      $body-color,
+      mix(map-get($silicon-shades, lighten2), shade-color($warning, 20), 85),
+      mix(map-get($silicon-shades, lighten2), shade-color($warning, 20), 85),
+      $body-color,
+      mix(map-get($silicon-shades, lighten1), shade-color($warning, 20), 85),
+      mix(map-get($silicon-shades, lighten1), shade-color($warning, 20), 85),
+      $body-color
+    );
+  }
+}
+
+.collection-management-button {
+  @extend .rounded-0;
+}

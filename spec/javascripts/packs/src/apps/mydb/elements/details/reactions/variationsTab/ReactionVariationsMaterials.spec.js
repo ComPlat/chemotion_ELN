@@ -2,7 +2,7 @@ import expect from 'expect';
 import {
   getReactionMaterials, updateVariationsRowOnReferenceMaterialChange, removeObsoleteMaterialColumns,
   updateVariationsRowOnCatalystMaterialChange, getMaterialColumnGroupChild, getReactionMaterialsIDs,
-  resetColumnDefinitionsMaterials, getReactionMaterialsGasTypes, updateVariationsGasTypes, cellIsEditable
+  resetColumnDefinitionsMaterials, updateVariationsAux, cellIsEditable, getReactionMaterialsHashes
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   EquivalentParser
@@ -63,28 +63,37 @@ describe('ReactionVariationsMaterials', () => {
     expect(typeof reactionMaterialsIDs).toBe('object');
     expect(Object.values(reactionMaterialsIDs).flat().length).toEqual(5);
   });
-  it('retrieves reaction material gas types', async () => {
-    const reaction = await setUpGaseousReaction();
+  it('retrieves reaction material hashes', async () => {
+    const reaction = await setUpReaction();
     const reactionMaterials = getReactionMaterials(reaction);
-    const reactionMaterialsGasTypes = getReactionMaterialsGasTypes(reactionMaterials);
-    expect(reactionMaterialsGasTypes).toEqual(['catalyst', 'off', 'feedstock', 'gas', 'off']);
+    const updatedReactionMaterials = cloneDeep(reactionMaterials);
+    updatedReactionMaterials.startingMaterials[0].gas_type = 'feedstock';
+
+    const reactionMaterialsHashes = getReactionMaterialsHashes(reactionMaterials, true, null);
+    const updatedReactionMaterialsHashes = getReactionMaterialsHashes(updatedReactionMaterials, true, null);
+    expect(Object.values(reactionMaterialsHashes).flat().length).toEqual(5);
+    expect(reactionMaterialsHashes).not.toEqual(updatedReactionMaterialsHashes);
   });
-  it("updates materials' gas type", async () => {
+  it("updates materials' aux data", async () => {
     const reaction = await setUpGaseousReaction();
     const currentMaterials = getReactionMaterials(reaction);
 
     const updatedMaterials = cloneDeep(currentMaterials);
     updatedMaterials.startingMaterials[0].gas_type = 'feedstock';
+    updatedMaterials.startingMaterials[0].coefficient = 42;
     updatedMaterials.reactants[0].gas_type = 'catalyst';
     updatedMaterials.products[0].gas_type = 'off';
 
-    const updatedVariations = updateVariationsGasTypes(reaction.variations, updatedMaterials, false, null);
+    const updatedVariations = updateVariationsAux(reaction.variations, updatedMaterials, false, null);
 
     const variationsRow = reaction.variations[0];
     const updatedVariationsRow = updatedVariations[0];
 
     expect(variationsRow.startingMaterials[Object.keys(variationsRow.startingMaterials)[0]].aux.gasType).not.toBe(
       updatedVariationsRow.startingMaterials[Object.keys(updatedVariationsRow.startingMaterials)[0]].aux.gasType
+    );
+    expect(variationsRow.startingMaterials[Object.keys(variationsRow.startingMaterials)[0]].aux.coefficient).not.toBe(
+      updatedVariationsRow.startingMaterials[Object.keys(updatedVariationsRow.startingMaterials)[0]].aux.coefficient
     );
     expect(variationsRow.reactants[Object.keys(variationsRow.reactants)[0]].aux.gasType).not.toBe(
       updatedVariationsRow.reactants[Object.keys(updatedVariationsRow.reactants)[0]].aux.gasType

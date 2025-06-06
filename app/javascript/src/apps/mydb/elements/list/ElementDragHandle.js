@@ -1,13 +1,16 @@
 import React, { useEffect, useState, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { useDrag } from 'react-dnd';
+import { getEmptyImage } from 'react-dnd-html5-backend';
 import { observer } from 'mobx-react';
 
 import ElementStore from 'src/stores/alt/stores/ElementStore';
+import UserStore from 'src/stores/alt/stores/UserStore';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
+import DragHandle from 'src/components/common/DragHandle';
 
-const inferElementSourceType = (element) => {
+function inferElementSourceType(element) {
   if (!element.type) return null;
 
   switch (element.type) {
@@ -29,18 +32,24 @@ const inferElementSourceType = (element) => {
     default:
       return null;
   }
-};
-
-function DragHandle({ element, sourceType }) {
-  const [, drag] = useDrag({
-    type: sourceType,
-    item: { element },
-  });
-
-  return <span ref={drag} className="fa fa-arrows dnd-arrow-enable text-info" />;
 }
 
-DragHandle.propTypes = {
+function EnabledHandle({ element, sourceType }) {
+  const [, drag, dragPreview] = useDrag({
+    type: sourceType,
+    item: { element, isElement: true },
+  });
+
+  useEffect(() => {
+    dragPreview(getEmptyImage(), { captureDraggingState: true });
+  }, [dragPreview]);
+
+  return (
+    <DragHandle ref={drag} />
+  );
+}
+
+EnabledHandle.propTypes = {
   sourceType: PropTypes.oneOf(Object.values(DragDropItemTypes)).isRequired,
   // eslint-disable-next-line react/forbid-prop-types
   element: PropTypes.any.isRequired,
@@ -50,18 +59,42 @@ function ElementDragHandle({ element, sourceType: sourceTypeProp }) {
   const [currentElementType, setCurrentElementType] = useState(
     ElementStore.getState().currentElement?.type || null
   );
+  const [genericEls, setGenericEls] = useState(
+    UserStore.getState().genericEls || []
+  );
   const { inbox_visible: sampleTaskInboxVisible } = useContext(StoreContext).sampleTasks;
-  const sourceType = sourceTypeProp ?? inferElementSourceType(element);
 
   useEffect(() => {
-    const updateCurrentDropTarget = ({ currentElement }) => {
+    const updateCurrentElementType = ({ currentElement }) => {
       setCurrentElementType(currentElement?.type || null);
     };
-    ElementStore.listen(updateCurrentDropTarget);
-    return () => ElementStore.unlisten(updateCurrentDropTarget);
+    ElementStore.listen(updateCurrentElementType);
+    return () => ElementStore.unlisten(updateCurrentElementType);
   }, []);
 
+  useEffect(() => {
+    const updateGenericEls = (userState) => {
+      setGenericEls(userState.genericEls);
+    };
+    UserStore.listen(updateGenericEls);
+    return () => UserStore.unlisten(updateGenericEls);
+  }, []);
+
+  const isCurrentElementGeneric = currentElementType && genericEls.some((el) => el.name === currentElementType);
+
+  let sourceType = sourceTypeProp ?? inferElementSourceType(element);
+  if (isCurrentElementGeneric) {
+    // Generic elements support SAMPLE and MOLECULE types natively.
+    // All other types are supported as ELEMENT.
+    if (![DragDropItemTypes.SAMPLE, DragDropItemTypes.MOLECULE].includes(sourceType)) {
+      sourceType = DragDropItemTypes.ELEMENT;
+    }
+  }
+
   const hasDropTarget = (type) => {
+    // Generic elements may contain drop targets for any element type.
+    if (isCurrentElementGeneric) return true;
+
     switch (type) {
       case DragDropItemTypes.SAMPLE:
         return sampleTaskInboxVisible || [
@@ -92,8 +125,8 @@ function ElementDragHandle({ element, sourceType: sourceTypeProp }) {
   };
 
   return (sourceType !== null && hasDropTarget(sourceType))
-    ? <DragHandle element={element} sourceType={sourceType} />
-    : <span className="fa fa-arrows dnd-arrow-disable" />;
+    ? <EnabledHandle element={element} sourceType={sourceType} />
+    : <DragHandle enabled={false} />;
 }
 
 ElementDragHandle.propTypes = {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import {
-  ButtonToolbar, Button, Tabs, Tab, Tooltip, OverlayTrigger, Card
+  Button, Tabs, Tab, Tooltip, OverlayTrigger, Card
 } from 'react-bootstrap';
 
 import PropertiesForm from './propertiesTab/PropertiesForm';
@@ -35,7 +35,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import CollectionUtils from 'src/models/collection/CollectionUtils';
 
-const DeviceDescriptionDetails = ({ toggleFullScreen }) => {
+const DeviceDescriptionDetails = () => {
   const deviceDescriptionsStore = useContext(StoreContext).deviceDescriptions;
   let deviceDescription = deviceDescriptionsStore.device_description;
   deviceDescriptionsStore.setKeyPrefix('deviceDescription');
@@ -165,18 +165,6 @@ const DeviceDescriptionDetails = ({ toggleFullScreen }) => {
           <PrintCodeButton element={deviceDescription} />
           {!deviceDescription.isNew &&
             <OpenCalendarButton isPanelHeader eventableId={deviceDescription.id} eventableType="DeviceDescription" />}
-          <OverlayTrigger
-            placement="bottom"
-            overlay={<Tooltip id="fullDeviceDescription">FullScreen</Tooltip>}
-          >
-            <Button
-              variant="info"
-              size="xxsm"
-              onClick={() => toggleFullScreen()}
-            >
-              <i className="fa fa-expand" />
-            </Button>
-          </OverlayTrigger>
           {deviceDescription.can_copy && !deviceDescription.isNew && (
             <CopyElementModal
               element={deviceDescription}
@@ -209,13 +197,13 @@ const DeviceDescriptionDetails = ({ toggleFullScreen }) => {
         {deviceDescriptionHeader()}
       </Card.Header>
       <Card.Body>
-        <ElementDetailSortTab
-          type="device_description"
-          availableTabs={Object.keys(tabContentComponents)}
-          tabTitles={tabTitles}
-          onTabPositionChanged={onTabPositionChanged}
-        />
         <div className="tabs-container--with-borders">
+          <ElementDetailSortTab
+            type="device_description"
+            availableTabs={Object.keys(tabContentComponents)}
+            tabTitles={tabTitles}
+            onTabPositionChanged={onTabPositionChanged}
+          />
           <Tabs
             activeKey={deviceDescriptionsStore.active_tab_key}
             onSelect={key => handleTabChange(key)}
@@ -228,15 +216,13 @@ const DeviceDescriptionDetails = ({ toggleFullScreen }) => {
         <CommentModal element={deviceDescription} />
       </Card.Body>
       <Card.Footer>
-        <ButtonToolbar className="gap-2">
-          <Button variant="primary" onClick={() => DetailActions.close(deviceDescription)}>
-            Close
-          </Button>
-          <Button variant="warning" disabled={!deviceDescriptionIsValid()} onClick={() => handleSubmit()}>
-            {submitLabel}
-          </Button>
-          {downloadAnalysisButton()}
-        </ButtonToolbar>
+        <Button variant="primary" onClick={() => DetailActions.close(deviceDescription)}>
+          Close
+        </Button>
+        <Button variant="warning" disabled={!deviceDescriptionIsValid()} onClick={() => handleSubmit()}>
+          {submitLabel}
+        </Button>
+        {downloadAnalysisButton()}
       </Card.Footer>
     </Card>
   );
