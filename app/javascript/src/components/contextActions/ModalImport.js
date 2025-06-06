@@ -667,8 +667,6 @@ export default class ModalImport extends React.Component {
         // Filter out any empty headers
         const columnNames = headers.filter((header) => header && String(header).trim() !== '');
 
-        console.log('Extracted Excel headers:', columnNames);
-
         this.setState({
           showColumnMapping: true,
           columnNames,
@@ -699,7 +697,6 @@ export default class ModalImport extends React.Component {
         // Parse SDF content
         const parsedData = parseSdf(fileContent);
         const molecules = parsedData.molecules || [];
-        console.log('Parsing SDF file:', parsedData);
 
         if (!molecules || molecules.length === 0) {
           throw new Error('No molecules found in SDF file');
@@ -738,14 +735,7 @@ export default class ModalImport extends React.Component {
         }
 
         // Store the original molecule objects directly
-        console.log('Molecules to process:', molecules);
         const sdfData = molecules.filter((molecule) => molecule && typeof molecule === 'object');
-
-        // Log a sample of the data we'll be using
-        if (sdfData.length > 0) {
-          console.log('Sample SDF data entry:', sdfData);
-          console.log('Available properties:', Object.keys(sdfData[0]).join(', '));
-        }
 
         if (sdfData.length === 0) {
           NotificationActions.add({
@@ -817,9 +807,6 @@ export default class ModalImport extends React.Component {
           const columnNames = headers
             .map((header) => header.trim())
             .filter((header) => header !== '');
-
-          console.log('Extracted text file headers:', columnNames);
-          console.log('Using delimiter:', delimiter === '\t' ? 'Tab' : delimiter);
 
           this.setState({
             showColumnMapping: true,
