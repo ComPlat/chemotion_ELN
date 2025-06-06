@@ -4,6 +4,7 @@ module Entities
   class ReactionVariationEntity < ApplicationEntity
     expose(
       :id,
+      :uuid,
       :properties,
       :metadata,
       :reactants,
