@@ -1,5 +1,5 @@
 import React from "react";
-import { OverlayTrigger, Button } from "react-bootstrap";
+import { OverlayTrigger, Button } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
 export default function ConfigOverlayButton({ popoverSettings, onToggle}) {
