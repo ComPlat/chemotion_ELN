@@ -1,4 +1,9 @@
-import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
+import React, {
+  useState,
+  useEffect,
+  forwardRef,
+  useImperativeHandle
+} from 'react';
 import PropTypes from 'prop-types';
 
 // Custom TextArea Cell Editor for AG Grid
@@ -47,7 +52,11 @@ const TextAreaCellEditor = forwardRef((props, ref) => {
 
   // Handle textarea changes
   const handleChange = (event) => {
-    setValue(event.target.value);
+    const newValue = event.target.value;
+    setValue(newValue);
+    if (props.onValueChange) {
+      props.onValueChange(newValue);
+    }
   };
 
   // Handle paste events
