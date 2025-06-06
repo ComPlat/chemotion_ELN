@@ -152,7 +152,7 @@ module Chemotion
                 File.delete(file[:tempfile].path)
               end
 
-              if import_result[:status] == 'ok' || import_result[:status] == 'warning'
+              if %w[ok warning].include?(import_result[:status])
                 # the FE does not actually use the returned data, just the number of elements.
                 import_result[:data] = import_result[:data].map(&:id)
               end
