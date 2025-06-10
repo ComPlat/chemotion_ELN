@@ -89,7 +89,7 @@
     "react-papaparse": "^3.17.2",
     "react-pdf": "^7.7.3",
     "react-qr-reader": "^2.1.0",
-    "react-resizable-panels": "^2.1.6",
+    "react-resizable-panels": "^3.0.2",
     "react-select": "^5.8.1",
     "react-svg-file-zoom-pan": "0.1.5",
     "react-svg-file-zoom-pan-latest": "npm:@complat/react-svg-file-zoom-pan@1.1.3",
