@@ -24,7 +24,7 @@ class ImportSamplesJob < ApplicationJob
     file_format = File.extname(params[:file_name])
     begin
       case file_format
-      when '.xlsx'
+      when '.xlsx', '.csv'
         import = Import::ImportSamples.new(
           file_path,
           params[:collection_id],
