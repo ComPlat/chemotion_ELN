@@ -68,7 +68,7 @@ export default class ReactionDetailsPurification extends Component {
     splitSample.short_label = tagGroup.slice(0, -1);
     splitSample.external_label = extLabel;
     reaction.addMaterialAt(splitSample, null, tagMaterial, tagGroup);
-    onReactionChange(reaction, { schemaChanged: true });
+    onReactionChange(reaction, { updateGraphic: true });
   }
 
   handleMultiselectChange(type, selectedOptions) {
