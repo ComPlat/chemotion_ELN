@@ -108,7 +108,7 @@ export default class ReactionDetailsScheme extends Component {
 
     this.insertSolventExtLabel(splitSample, tagGroup, extLabel);
     reaction.addMaterialAt(splitSample, null, tagMaterial, tagGroup);
-    this.onReactionChange(reaction, { schemaChanged: true });
+    this.onReactionChange(reaction, { updateGraphic: true });
   }
 
   insertSolventExtLabel(splitSample, materialGroup, external_label) {
@@ -140,7 +140,7 @@ export default class ReactionDetailsScheme extends Component {
     } else {
       reaction.conditions += `\n${val} `;
     }
-    this.props.onReactionChange(reaction, { schemaChanged: true });
+    this.props.onReactionChange(reaction, { updateGraphic: true });
   }
 
   renderGPDnD() {
@@ -237,7 +237,7 @@ export default class ReactionDetailsScheme extends Component {
       }
     }
 
-    this.onReactionChange(reaction, { schemaChanged: true });
+    this.onReactionChange(reaction, { updateGraphic: true });
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -255,7 +255,7 @@ export default class ReactionDetailsScheme extends Component {
     const { reaction } = this.props;
     this.updateDraggedMaterialGasType(reaction, srcMat, srcGroup, tagMat, tagGroup);
     reaction.moveMaterial(srcMat, srcGroup, tagMat, tagGroup);
-    this.onReactionChange(reaction, { schemaChanged: true });
+    this.onReactionChange(reaction, { updateGraphic: true });
   }
 
   onReactionChange(reaction, options = {}) {
@@ -279,11 +279,6 @@ export default class ReactionDetailsScheme extends Component {
       case 'referenceChanged':
         this.onReactionChange(
           this.updatedReactionForReferenceChange(changeEvent)
-        );
-        break;
-      case 'showLabelChanged':
-        this.onReactionChange(
-          this.updatedReactionForShowLabelChange(changeEvent)
         );
         break;
       case 'amountChanged':
@@ -333,7 +328,7 @@ export default class ReactionDetailsScheme extends Component {
         break;
       case 'externalLabelCompleted':
         const { reaction } = this.props;
-        this.onReactionChange(reaction, { schemaChanged: true });
+        this.onReactionChange(reaction, { updateGraphic: true });
         break;
       case 'addToDesc':
         this.addSampleTo(changeEvent, 'description');
@@ -412,17 +407,6 @@ export default class ReactionDetailsScheme extends Component {
     reaction.markSampleAsReference(sampleID);
 
     return this.updatedReactionWithSample(this.updatedSamplesForReferenceChange.bind(this), sample);
-  }
-
-  updatedReactionForShowLabelChange(changeEvent) {
-    const { sampleID, value } = changeEvent;
-    const { reaction } = this.props;
-    const sample = reaction.sampleById(sampleID);
-
-    reaction.toggleShowLabelForSample(sampleID);
-    this.onReactionChange(reaction, { schemaChanged: true });
-
-    return this.updatedReactionWithSample(this.updatedSamplesForShowLabelChange.bind(this), sample);
   }
 
   updatedReactionForAmountChange(changeEvent) {
@@ -926,10 +910,6 @@ export default class ReactionDetailsScheme extends Component {
       }
       return sample;
     });
-  }
-
-  updatedSamplesForShowLabelChange(samples) {
-    return samples;
   }
 
   /* eslint-disable class-methods-use-this, no-param-reassign */
