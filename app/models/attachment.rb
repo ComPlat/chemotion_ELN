@@ -24,8 +24,8 @@
 #  aasm_state      :string
 #  filesize        :bigint
 #  attachment_data :jsonb
-#  edit_state      :integer          default(0)
 #  con_state       :integer
+#  created_by_type :string
 #
 # Indexes
 #
@@ -33,8 +33,9 @@
 #  index_attachments_on_identifier                         (identifier) UNIQUE
 #
 
-class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
+class Attachment < ApplicationRecord
   has_logidze
+  acts_as_paranoid
   include AttachmentJcampAasm
   include AttachmentJcampProcess
   include Labimotion::AttachmentConverter

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Versioning::Serializers::ScreenSerializer < Versioning::Serializers::BaseSerializer
-  def self.call(record, name = ['Properties'])
+  def self.call(record, name = ['Screen Properties'])
     new(record: record, name: name).call
   end
 

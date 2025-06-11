@@ -5,7 +5,7 @@
 module Versioning
   module Serializers
     class SampleSerializer < Versioning::Serializers::BaseSerializer
-      def self.call(record, name = ['Properties'])
+      def self.call(record, name = ['Sample Properties'])
         new(record: record, name: name).call
       end
 

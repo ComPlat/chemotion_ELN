@@ -22,16 +22,16 @@ class Versioning::Fetchers::ReactionFetcher
       versions += Versioning::Serializers::ReactionsSampleSerializer.call(reactions_sample,
                                                                           ["#{sample_type}: #{sample_name}"])
       versions += Versioning::Serializers::SampleSerializer.call(sample,
-                                                                 ["#{sample_type}: #{sample_name}", 'Sample Properties'])
+                                                                 ["#{sample_type}: #{sample_name} - Sample Properties"])
 
       versions += sample.residues.with_log_data.flat_map do |residue|
-        Versioning::Serializers::ResidueSerializer.call(residue, ["#{sample_type}: #{sample_name} Polymer section"])
+        Versioning::Serializers::ResidueSerializer.call(residue, ["#{sample_type}: #{sample_name} - Polymer section"])
       end
 
       versions += sample.elemental_compositions.with_log_data.flat_map do |elemental_composition|
         Versioning::Serializers::ElementalCompositionSerializer.call(elemental_composition,
-                                                                     ["#{sample_type}: #{sample_name}",
-                                                                      'Elemental composition'])
+                                                                     ["#{sample_type}: #{sample_name}
+                                                                     - Elemental composition"])
       end
 
       analyses_container = sample.container.children.where(container_type: :analyses).first

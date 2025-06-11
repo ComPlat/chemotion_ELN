@@ -6,7 +6,9 @@ require 'json'
 
 module Import
   class ImportCollections # rubocop:disable Metrics/ClassLength
-    def initialize(att, current_user_id, gate = false, col_id = nil, origin = nil) # rubocop:disable Style/OptionalBooleanParameter
+    attr_reader :log_file_path
+
+    def initialize(att, current_user_id, gate = false, col_id = nil, origin = nil, logger = nil) # rubocop:disable Style/OptionalBooleanParameter
       @att = att
       @current_user_id = current_user_id
       @gt = gate
@@ -17,6 +19,7 @@ module Import
       @col_id = col_id
       @col_all = Collection.get_all_collection_for_user(current_user_id)
       @tmp_dir = Dir.mktmpdir
+      @logger, @log_file_path = initialize_logger(logger)
     end
 
     def execute
@@ -131,6 +134,29 @@ module Import
 
     private
 
+    def initialize_logger(logger = nil)
+      return [logger, extract_log_path(logger)] if logger
+
+      log_file = File.basename(generate_log_path)
+      url = File.join(Rails.application.config.root_url, 'import_logs', log_file)
+      [Logger.new(Rails.public_path.join('import_logs', log_file)), url]
+    end
+
+    def extract_log_path(logger)
+      logger.instance_variable_get(:@logdev)&.filename
+    end
+
+    def generate_log_path
+      # Create logs directory if it doesn't exist
+      logs_dir = Rails.public_path.join('import_logs')
+      FileUtils.mkdir_p(logs_dir)
+
+      # Generate unique log filename
+      timestamp = Time.current.strftime('%Y%m%d_%H%M%S')
+      random_string = SecureRandom.hex(4)
+      logs_dir.join("import_collections_#{timestamp}_#{random_string}.log")
+    end
+
     def import_annotation(zip_file, entry, attachment)
       annotation_entry = zip_file.find_entry("#{entry.name}_annotation")
       return unless annotation_entry
@@ -165,7 +191,7 @@ module Import
     def gate_collection
       collection = Collection.find(@col_id)
       @uuid = nil
-      @data.fetch('Collection', {}).each do |uuid, _fields|
+      @data.fetch('Collection', {}).each_key do |uuid|
         @uuid = uuid
       end
       update_instances!(@uuid, collection)
@@ -185,7 +211,7 @@ module Import
     end
 
     def import_chemicals
-      @data.fetch('Chemical', {}).each do |_uuid, fields|
+      @data.fetch('Chemical', {}).each_value do |fields|
         sample = @instances.fetch('Sample').fetch(fields.fetch('sample_id'))
         next unless sample
 
@@ -680,7 +706,7 @@ module Import
     # Follows a has_many relation to `foreign_type` through `association_type`
     def fetch_many(foreign_type, association_type, local_field, foreign_field, local_id)
       associations = []
-      @data.fetch(association_type, {}).each do |_uuid, fields|
+      @data.fetch(association_type, {}).each_value do |fields|
         next unless fields.fetch(local_field) == local_id
 
         foreign_id = fields.fetch(foreign_field)
@@ -691,14 +717,31 @@ module Import
     end
 
     def update_researchplan_body(attachments)
-      @data['ResearchPlan']&.each do |_attr_name, attr_value|
+      @data['ResearchPlan']&.each_value do |attr_value|
         image_fields = attr_value['body'].select { |i| i['type'] == 'image' }
+
         image_fields.each do |field|
           new_att = attachments.find { |i| i['filename'].include? field['value']['public_name'] }
+
           field['value']['public_name'] = new_att['identifier']
           field['value']['file_name'] = new_att['filename']
+        rescue StandardError => _e
+          log_unassociated_attachment(attr_value['name'], field)
         end
       end
+    end
+
+    def log_unassociated_attachment(research_plan_name, field)
+      log_content = <<~LOG
+
+        Research Plan: #{research_plan_name}
+        File Name: #{field.dig('value', 'file_name')}
+        Error: Attachment not found
+        ----------------------------------------
+
+      LOG
+
+      @logger.error(log_content)
     end
   end
 end

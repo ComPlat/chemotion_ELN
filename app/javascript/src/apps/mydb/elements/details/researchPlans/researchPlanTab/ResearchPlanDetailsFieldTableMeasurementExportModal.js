@@ -3,74 +3,13 @@ import Aviator from 'aviator';
 import equal from 'deep-equal';
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Modal, ButtonToolbar, Button, ButtonGroup, Dropdown, Table } from 'react-bootstrap';
+import { Modal, ButtonToolbar, Button, ButtonGroup, Dropdown } from 'react-bootstrap';
+import { AgGridReact } from 'ag-grid-react';
 import { v4 as uuidv4 } from 'uuid';
 import { observer } from 'mobx-react';
 
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-
-class MeasurementCandidate extends Component {
-  static propTypes = {
-    description: PropTypes.string,
-    errors: PropTypes.array,
-    id: PropTypes.number,
-    onChange: PropTypes.func.isRequired,
-    sample_identifier: PropTypes.string,
-    selected: PropTypes.bool.isRequired,
-    unit: PropTypes.string,
-    uuid: PropTypes.string.isRequired,
-    value: PropTypes.string,
-  };
-
-  constructor(props) {
-    super(props);
-  }
-
-  _status() {
-    if (this.props.id) {
-      return (<span className='success'>Success: Created measurement for sample</span>);
-    }
-    if (this.props.errors.length > 0) {
-      return (<span className='danger'>Error: {this.props.errors.join('. ')}</span>);
-    }
-  }
-
-  _selector() {
-    if (this.props.errors.length > 0) { return ''; }
-    if (this.props.id) { return ''; } // Prevent resubmitting if the server has already supplied an ID
-
-    return (
-      <input
-        type="checkbox"
-        className="measurementSelector"
-        checked={this.props.selected}
-        onChange={() => this.props.onChange(this.props.uuid)} />
-    );
-  }
-
-  _canExport() {
-    return this.props.sample_identifier &&
-      this.props.description &&
-      this.props.value &&
-      this.props.unit;
-  }
-
-  render() {
-    if (!this._canExport()) {
-      return null;
-    }
-
-    return (
-      <tr>
-        <td>{this._selector()}</td>
-        <td>{this.props.sample_identifier}</td>
-        <td>{this.props.description} {this.props.value} {this.props.unit}</td>
-        <td>{this._status()}</td>
-      </tr>
-    );
-  }
-}
 
 class ResearchPlanDetailsFieldTableMeasurementExportModal extends Component {
   static propTypes = {
@@ -87,6 +26,12 @@ class ResearchPlanDetailsFieldTableMeasurementExportModal extends Component {
       measurementCandidates: this._measurementCandidates(props.rows, props.columns),
       researchPlanId: this.getResearchPlanIdFromPath() ?? -1
     };
+    this._selectAll = this._selectAll.bind(this);
+    this._renderMeasurement = this._renderMeasurement.bind(this);
+    this._renderCheckbox = this._renderCheckbox.bind(this);
+    this._renderMeasurement = this._renderMeasurement.bind(this);
+    this._renderStatus = this._renderStatus.bind(this);
+    this._toggleCandidate = this._toggleCandidate.bind(this);
   }
 
   componentDidUpdate(prevProps, _prevState, _snapshot) {
@@ -146,60 +91,121 @@ class ResearchPlanDetailsFieldTableMeasurementExportModal extends Component {
   render() {
     const { measurementCandidates } = this.state;
 
+    const columnDefs = [
+      {
+        headerName: "",
+        cellRenderer: this._renderCheckbox,
+      },
+      {
+        headerName: "Sample",
+        cellRenderer: props => {
+          return this._canExport(props.data) ? props.data.sample_identifier : '';
+        },
+      },
+      {
+        headerName: "Measurement",
+        cellRenderer: this._renderMeasurement,
+      },
+      {
+        headerName: "Status",
+        cellRenderer: this._renderStatus,
+        wrapText: true,
+        cellClass: ["lh-base", "py-2"],
+      },
+    ];
+
+    const defaultColDef = {
+      editable: false,
+      flex: 1,
+      autoHeight: true,
+      sortable: false,
+      resizable: false,
+      suppressMovable: true,
+    };
+
     return (
-      <Modal centered animation size="lg" show={this.props.show} onHide={this.props.onHide} className="measurementExportModal">
+      <Modal centered animation size="lg" show={this.props.show} onHide={this.props.onHide}>
         <Modal.Header closeButton>
           <Modal.Title>
             Export measurements to samples
           </Modal.Title>
         </Modal.Header>
-        <Modal.Body className='measurementExportModal__body'>
-          <Table>
-            <thead>
-              <tr>
-                <th>{this._selectAllButton()}</th>
-                <th>Sample</th>
-                <th>Measurement</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {measurementCandidates && measurementCandidates.map((candidate) => (
-                <MeasurementCandidate
-                  description={candidate.description}
-                  errors={candidate.errors}
-                  id={candidate.id}
-                  key={candidate.uuid}
-                  onChange={this._toggleCandidate.bind(this)}
-                  sample_identifier={candidate.sample_identifier}
-                  selected={candidate.selected}
-                  unit={candidate.unit}
-                  uuid={candidate.uuid}
-                  value={candidate.value}
-                />
-              ))}
-            </tbody>
-          </Table>
+        <Modal.Body style={{ maxHeight: '600px', overflowY: 'scroll' }}>
+          {measurementCandidates && this._selectAllButton()}
+          <div className="ag-theme-alpine">
+            {measurementCandidates &&
+              <AgGridReact
+                columnDefs={columnDefs}
+                autoSizeStrategy={{ type: 'fitGridWidth' }}
+                defaultColDef={defaultColDef}
+                rowData={measurementCandidates}
+                rowHeight="auto"
+                domLayout="autoHeight"
+              />
+            }
+          </div>
         </Modal.Body>
         <Modal.Footer className="border-0">
-            <ButtonToolbar className="gap-1">
-              <Button variant="warning" onClick={this.props.onHide}>
-                Close
-              </Button>
-              <Button variant="primary" disabled={!this.readyForSubmit()} onClick={this.handleSubmit.bind(this)}>
-                Link data to sample
-              </Button>
+          <ButtonToolbar className="gap-1">
+            <Button variant="warning" onClick={this.props.onHide}>
+              Close
+            </Button>
+            <Button variant="primary" disabled={!this.readyForSubmit()} onClick={this.handleSubmit.bind(this)}>
+              Link data to sample
+            </Button>
           </ButtonToolbar>
         </Modal.Footer> 
       </Modal>
     );
   }
 
+  _canExport(props) {
+    return props.sample_identifier &&
+      props.description &&
+      props.value &&
+      props.unit;
+  }
+
+  _renderMeasurement(node) {
+    const props = node.data;
+    if (!this._canExport(props)) { return null; }
+
+    return `${props.description} ${props.value} ${props.unit}`;
+  }
+
+  _renderStatus(node) {
+    const props = node.data;
+    if (!this._canExport(props)) { return null; }
+
+    if (props.id) {
+      return (<span className='success'>Success: Created measurement for sample</span>);
+    } else if (props.errors.length > 0) {
+      return (<span className='danger'>Error: {props.errors.join('. ')}</span>);
+    } else {
+      return '';
+    }
+  }
+
+  _renderCheckbox(node) {
+    const props = node.data;
+    if (props && !this._canExport(props)) { return null; }
+    if (props.errors.length > 0) { return ''; }
+    if (props.id) { return ''; } // Prevent resubmitting if the server has already supplied an ID
+
+    return (
+      <input
+        type="checkbox"
+        className="m-0"
+        checked={props.selected}
+        onChange={() => this._toggleCandidate(props.uuid)} />
+    );
+  }
+
   _selectAll(prefix = null) {
     const { measurementCandidates } = this.state;
     measurementCandidates.forEach((candidate) => {
-      const candidate_has_no_errors = candidate.errors.length === 0
-      const candidate_matches_prefix = prefix == null || candidate.description == prefix
+      const candidate_has_no_errors = candidate.errors.length === 0;
+      const candidate_matches_prefix = prefix == null || candidate.description == prefix;
 
       if (candidate_has_no_errors && candidate_matches_prefix) {
         candidate.selected = true;
@@ -209,25 +215,25 @@ class ResearchPlanDetailsFieldTableMeasurementExportModal extends Component {
   }
 
   _selectAllButton() {
-    const prefixes = this._readouts(this.props.columns).map(readout => readout.description)
+    const prefixes = this._readouts(this.props.columns).map(readout => readout.description);
     if (prefixes.length == 1) {
       return (
-        <Button onClick={() => this._selectAll.bind(this)()}>Select all</Button>
+        <Button className="mb-3" onClick={() => this._selectAll()}>Select all</Button>
       );
     } else {
       const readoutSelectors = prefixes.map((prefix, index) => (
         <Dropdown.Item
           eventKey={prefix}
           key={`SelectAllButtonForReadout${index}`}
-          onClick={() => this._selectAll.bind(this)(prefix)}
+          onClick={() => this._selectAll(prefix)}
         >
           {prefix}
         </Dropdown.Item>
       ));
 
       return (
-        <ButtonGroup>
-          <Button variant="light" onClick={this._selectAll.bind(this)}>Select all</Button>
+        <ButtonGroup className="mb-3">
+          <Button variant="light" onClick={() => this._selectAll()}>Select all</Button>
           <Dropdown as={ButtonGroup}>
             <Dropdown.Toggle variant="light" id="dropdown-basic">by Readout</Dropdown.Toggle>
             <Dropdown.Menu>

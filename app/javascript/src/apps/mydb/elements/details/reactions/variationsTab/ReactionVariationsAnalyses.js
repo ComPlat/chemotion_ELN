@@ -6,7 +6,10 @@ import {
 import cloneDeep from 'lodash/cloneDeep';
 import Reaction from 'src/models/Reaction';
 import UIActions from 'src/stores/alt/actions/UIActions';
-import { getVariationsRowName } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
+import {
+  getVariationsRowName,
+  REACTION_VARIATIONS_TAB_KEY,
+} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 
 function getReactionAnalyses(reaction) {
   const reactionCopy = cloneDeep(reaction);
@@ -21,14 +24,15 @@ function updateAnalyses(variations, allReactionAnalyses) {
   const updatedVariations = cloneDeep(variations);
   updatedVariations.forEach((row) => {
     // eslint-disable-next-line no-param-reassign
-    row.metadata.analyses = row.metadata.analyses.filter((id) => analysesIDs.includes(id));
+    const analyses = row.metadata.analyses || [];
+    row.metadata.analyses = analyses.filter((id) => analysesIDs.includes(id));
   });
 
   return updatedVariations;
 }
 
 function getAnalysesOverlay({ data: row, context }) {
-  const { analyses: analysesIDs } = row;
+  const { analyses: analysesIDs = [] } = row.metadata;
   const { allReactionAnalyses } = context;
 
   return allReactionAnalyses.filter((analysis) => analysesIDs.includes(analysis.id));
@@ -61,17 +65,21 @@ AnalysisOverlay.propTypes = {
 
 function AnalysisVariationLink({ reaction, analysisID }) {
   const { variations } = cloneDeep(reaction);
-  const linkedVariations = variations.filter((row) => row.metadata.analyses.includes(analysisID)) ?? [];
+  const linkedVariations = variations.filter(
+    (row) => row.metadata.analyses && row.metadata.analyses.includes(analysisID)
+  ) ?? [];
 
-  if (linkedVariations.length === 0) {
+  const count = linkedVariations.length;
+
+  if (count === 0) {
     return null;
   }
   return (
     <Badge
       bg="info"
-      onClick={() => UIActions.selectTab({ type: 'reaction', tabKey: 'variations' })}
+      onClick={() => UIActions.selectTab({ type: 'reaction', tabKey: REACTION_VARIATIONS_TAB_KEY })}
     >
-      {`Linked to ${linkedVariations.length} variation(s)`}
+      {`Linked to ${count} variation${count > 1 ? 's' : ''}`}
       {' '}
       <i className="fa fa-external-link" />
     </Badge>

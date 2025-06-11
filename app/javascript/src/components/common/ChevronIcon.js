@@ -5,7 +5,7 @@ import React, { forwardRef } from 'react';
 // the overlay can be properly positioned:
 // https://react-bootstrap.netlify.app/docs/components/overlays#overlaytrigger
 const ChevronIcon = forwardRef(({direction, className, color, ...props}, ref) => {
-  const classes = ['fa', 'text-center', 'fa-chevron-' + direction];
+  const classes = ['fa', 'fa-fw', ('fa-chevron-' + direction)];
   if (color) {
     classes.push('text-' + color);
   }
@@ -14,7 +14,7 @@ const ChevronIcon = forwardRef(({direction, className, color, ...props}, ref) =>
   }
 
   return (
-    <i ref={ref} style={{ width: '1em' }} className={classes.join(' ')} {...props} />
+    <i ref={ref} className={classes.join(' ')} {...props} />
   );
 });
 

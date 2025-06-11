@@ -5,8 +5,8 @@
 # Table name: inventories
 #
 #  id         :bigint           not null, primary key
-#  prefix     :string           not null
-#  name       :string           not null
+#  prefix     :string
+#  name       :string
 #  counter    :integer          default(0)
 #  created_at :datetime         not null
 #  updated_at :datetime         not null

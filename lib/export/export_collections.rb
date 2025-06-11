@@ -336,12 +336,16 @@ module Export
       # loop over research plans and fetch research plan properties
       collection.research_plans.each do |research_plan|
         # fetch attachments
-        # attachments are directrly related to research plans so we don't need fetch_containers
+        # attachments are directly related to research plans so we don't need fetch_containers
         fetch_many(research_plan.attachments, {
                      'attachable_id' => 'ResearchPlan',
                      'created_by' => 'User',
                      'created_for' => 'User',
                    })
+
+        # Fetch attachments referenced in the body by public_name
+        fetch_research_plan_body_attachments(research_plan)
+
         upload_att = Labimotion::Export.fetch_segments(research_plan, @uuids, nil, &method(:fetch_one))
         @attachments += upload_att if upload_att&.length&.positive?
 
@@ -356,6 +360,45 @@ module Export
           fetch_image('research_plans', svg_file)
         end
       end
+    end
+
+    def fetch_research_plan_body_attachments(research_plan)
+      return if research_plan.body.blank?
+
+      image_fields = extract_image_fields(research_plan.body)
+      return if image_fields.empty?
+
+      attachments = Attachment.where(identifier: image_fields.keys,
+                                     attachable_id: nil,
+                                     attachable_type: 'ResearchPlan')
+
+      filter_missing_attachments(research_plan, attachments)
+      process_attachments(attachments, research_plan)
+    end
+
+    def extract_image_fields(body)
+      body.select { |field| field['type'] == 'image' }
+          .each_with_object({}) do |field, map|
+            public_name = field['value']['public_name']
+            map[public_name] = field if public_name.present?
+          end
+    end
+
+    def filter_missing_attachments(research_plan, attachments)
+      found_public_names = attachments.map(&:identifier)
+      research_plan.body = research_plan.body.reject do |field|
+        field['type'] == 'image' && found_public_names.exclude?(field['value']['public_name'])
+      end
+    end
+
+    def process_attachments(attachments, research_plan)
+      attachments.each { |attachment| attachment['attachable_id'] = research_plan.id }
+      fetch_many(attachments, {
+                   'attachable_id' => 'ResearchPlan',
+                   'created_by' => 'User',
+                   'created_for' => 'User',
+                 })
+      @attachments += attachments
     end
 
     # rubocop:disable Metrics/MethodLength

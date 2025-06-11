@@ -3,10 +3,11 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Modal, Table, Badge, Button, Form, InputGroup, ButtonToolbar
+  Modal, Badge, Button, Form, InputGroup, ButtonToolbar
 } from 'react-bootstrap';
 import { CirclePicker } from 'react-color';
 import { Select } from 'src/components/common/Select';
+import { AgGridReact } from 'ag-grid-react';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
@@ -47,6 +48,7 @@ class UserLabelModal extends Component {
     this.handleAccessChange = this.handleAccessChange.bind(this);
     this.handleColorPicker = this.handleColorPicker.bind(this);
     this.handleEditLabelClick = this.handleEditLabelClick.bind(this);
+    this.renderActions = this.renderActions.bind(this);
   }
 
   componentDidMount() {
@@ -142,73 +144,103 @@ class UserLabelModal extends Component {
     });
   }
 
-  renderUserLabels() {
-    const { labels } = this.state;
-    if (labels === null || labels.length === 0) {
-      return null;
+  renderUserLabel(node) {
+    return (<UserLabel {...node.data} />);
+  }
+
+  renderAccessLabel(node) {
+    let accessLabel = '';
+    switch (node.data.access_level) {
+      case 0:
+        accessLabel = 'Private';
+        break;
+      case 1:
+        accessLabel = 'Public';
+        break;
     }
+    return accessLabel;
+  }
 
-    return (labels || []).map(g => {
-      let accessLabel = '';
-      switch (g.access_level) {
-        case 0:
-          accessLabel = 'Private';
-          break;
-        case 1:
-          accessLabel = 'Public';
-          break;
-        default:
-          accessLabel = '';
-      }
-
-      return (
-        <tr key={`row_${g.id}`}>
-          <td sm={3}><UserLabel {...g} /></td>
-          <td sm={3}>{accessLabel}</td>
-          <td sm={3}>{g.description}</td>
-          <td sm={3}>{g.color}</td>
-          <td sm={3}>
-            <Button
-              size="sm"
-              disabled={g.access_level === 2}
-              variant={g.access_level === 2 ? 'light' : 'success'}
-              onClick={(e) => this.handleEditLabelClick(e, g)}
-            >
-              {g.access_level === 2 ? 'Global' : 'Edit'}
-            </Button>
-          </td>
-        </tr>
-      );
-    });
+  renderActions(node) {
+    return (
+      <Button
+        size="sm"
+        disabled={node.data.access_level === 2}
+        variant={node.data.access_level === 2 ? 'light' : 'success'}
+        onClick={(e) => this.handleEditLabelClick(e, node.data)}
+      >
+        {node.data.access_level === 2 ? 'Global' : 'Edit'}
+      </Button>
+    );
   }
 
   renderLabels() {
-    const { showDetails } = this.state;
+    const { showDetails, labels } = this.state;
     if (showDetails === true) {
       return this.renderLabel();
     }
+
+    const columnDefs = [
+      {
+        headerName: "Label",
+        minWidth: 100,
+        maxWidth: 100,
+        cellRenderer: this.renderUserLabel,
+      },
+      {
+        headerName: "Access",
+        minWidth: 70,
+        maxWidth: 70,
+        cellRenderer: this.renderAccessLabel,
+      },
+      {
+        headerName: "Description",
+        field: "description",
+        wrapText: true,
+        cellClass: ["lh-base", "p-2", "border-end"],
+      },
+      {
+        headerName: "Color",
+        field: "color",
+        minWidth: 80,
+        maxWidth: 80,
+      },
+      {
+        headerName: "Action",
+        minWidth: 55,
+        maxWidth: 55,
+        cellRenderer: this.renderActions,
+        cellClass: ["p-2"],
+      },
+    ];
+
+    const defaultColDef = {
+      editable: false,
+      flex: 1,
+      autoHeight: true,
+      sortable: false,
+      resizable: false,
+      suppressMovable: true,
+      cellClass: ["border-end", "px-2"],
+      headerClass: ["border-end", "px-2"]
+    };
+
     return (
-      <div>
-        <h3 className="p-3 bg-gray-300">
+      <div className="ag-theme-alpine">
+        <h3 className="pb-2">
           <Button variant="primary" size="md" onClick={() => this.handelNewLabel()}>
+            <i className="fa fa-plus me-1" />
             Create
-            <i className="fa fa-plus ms-1" />
           </Button>
         </h3>
-        <Table striped bordered condensed hover>
-          <thead>
-            <tr>
-              <th>Label</th>
-              <th>Access</th>
-              <th>Description</th>
-              <th>Color</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {this.renderUserLabels()}
-          </tbody>
-        </Table>
+        <AgGridReact
+          columnDefs={columnDefs}
+          defaultColDef={defaultColDef}
+          rowData={labels || []}
+          rowHeight="auto"
+          domLayout="autoHeight"
+          autoSizeStrategy={{ type: 'fitGridWidth' }}
+        />
       </div>
     );
   }
@@ -480,6 +512,9 @@ class SearchUserLabels extends React.Component {
         formatOptionLabel={UserLabel}
         value={labels.find((l) => l.id === userLabel)}
         onChange={this.handleSelectChange}
+        menuPortalTarget={document.body}
+        placeholder="Filter by label"
+        minWidth="100px"
       />
     );
   }

@@ -113,7 +113,12 @@ export default class ElementCollectionLabels extends React.Component {
         placement={this.props.placement}
         overlay={collectionOverlay}
       >
-        <Button size="xxsm" variant="light" key={element.id}>
+        <Button
+          key={element.id}
+          size="xxsm"
+          variant="light"
+          onClick={(e) => e.stopPropagation()}
+        >
           <i className="fa fa-list" />
           {` ${labels.length} `}
           {' - '}

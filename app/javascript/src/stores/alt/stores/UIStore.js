@@ -1,4 +1,4 @@
-import { List, fromJS } from 'immutable';
+import { List, Set, fromJS } from 'immutable';
 import alt from 'src/stores/alt/alt';
 
 import UIActions from 'src/stores/alt/actions/UIActions';
@@ -6,6 +6,11 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import ArrayUtils from 'src/utilities/ArrayUtils';
+
+const defaultGroupCollapse = {
+  baseState: 'expanded',
+  except: new Set(),
+};
 
 class UIStore {
   constructor() {
@@ -68,6 +73,8 @@ class UIStore {
         activeTab: 0,
         activeAnalysis: 0,
       },
+      groupCollapse: {},
+      isSidebarCollapsed: false,
       showPreviews: true,
       showAdvancedSearch: false,
       filterCreatedAt: true,
@@ -79,13 +86,13 @@ class UIStore {
       currentCollection: null,
       currentSearchSelection: null,
       currentSearchByID: null,
-      showCollectionManagement: false,
       showDeviceManagement: false,
       isSync: false,
       hasChemSpectra: false,
       hasNmriumWrapper: false,
       matrices: {},
       thirdPartyApps: [],
+      version: {},
     };
 
     this.bindListeners({
@@ -105,15 +112,16 @@ class UIStore {
       handleSelectElement: UIActions.selectElement,
       handleSetPagination: UIActions.setPagination,
       handleDeselectAllElements: UIActions.deselectAllElements,
+      handleResetGroupCollapse: UIActions.resetGroupCollapse,
+      handleExpandAllGroups: UIActions.expandAllGroups,
+      handleCollapseAllGroups: UIActions.collapseAllGroups,
+      handleToggleGroupCollapse: UIActions.toggleGroupCollapse,
       handleSetSearchSelection: UIActions.setSearchSelection,
       handleSetSearchById: UIActions.setSearchById,
       handleSelectCollectionWithoutUpdating:
         UIActions.selectCollectionWithoutUpdating,
       handleClearSearchSelection: UIActions.clearSearchSelection,
       handleClearSearchById: UIActions.clearSearchById,
-      handleShowCollectionManagement: UIActions.showCollectionManagement,
-      handleShowElements: UIActions.showElements,
-      handleToggleCollectionManagement: UIActions.toggleCollectionManagement,
       handleUncheckWholeSelection: UIActions.uncheckWholeSelection,
       handleChangeNumberOfResultsShown: UIActions.changeNumberOfResultsShown,
       handleShowDeviceManagement: UIActions.showDeviceManagement,
@@ -125,6 +133,8 @@ class UIStore {
       handleSetProductOnly: UIActions.setProductOnly,
       handleRerenderGenericWorkflow: UIActions.rerenderGenericWorkflow,
       handleShowGenericWorkflowModal: UIActions.showGenericWorkflowModal,
+      handleExpandSidebar: UIActions.expandSidebar,
+      handleToggleSidebar: UIActions.toggleSidebar,
     });
   }
 
@@ -153,14 +163,6 @@ class UIStore {
     this.state.showGenericWorkflow = show;
   }
 
-  handleToggleCollectionManagement() {
-    this.state.showCollectionManagement = !this.state.showCollectionManagement;
-  }
-
-  handleShowCollectionManagement() {
-    this.state.showCollectionManagement = true;
-  }
-
   handleShowDeviceManagement() {
     this.state.showDeviceManagement = true
   }
@@ -169,14 +171,45 @@ class UIStore {
     this.state.showDeviceManagement = false
   }
 
-  handleShowElements() {
-    this.state.showCollectionManagement = false;
+  handleSelectTab(params = {}) {
+    const type = params.type || 'sample';
+    const tabKey = params.tabKey || 0;
+    this.state[type].activeTab = tabKey;
+    this.handleResetGroupCollapse({ type });
   }
 
-  handleSelectTab(params = {}) {
-    let type = params.type || "sample"
-    let tabKey = params.tabKey || 0
-    this.state[type].activeTab = tabKey;
+  handleResetGroupCollapse(params) {
+    if (typeof (params?.type) !== 'undefined') {
+      this.state.groupCollapse[params.type] = {
+        ...defaultGroupCollapse,
+      };
+    } else {
+      this.state.groupCollapse = {};
+    }
+  }
+
+  handleExpandAllGroups({ type }) {
+    this.state.groupCollapse[type] = {
+      baseState: 'expanded',
+      except: new Set(),
+    };
+  }
+
+  handleCollapseAllGroups({ type }) {
+    this.state.groupCollapse[type] = {
+      baseState: 'collapsed',
+      except: new Set(),
+    };
+  }
+
+  handleToggleGroupCollapse({ type, groupKey }) {
+    const groupCollapse = this.state.groupCollapse[type] ?? { ...defaultGroupCollapse };
+    this.state.groupCollapse[type] = {
+      ...groupCollapse,
+      except: groupCollapse.except.has(groupKey)
+        ? groupCollapse.except.delete(groupKey)
+        : groupCollapse.except.add(groupKey)
+    };
   }
 
   handleSelectActiveAnalysis(params = {}) {
@@ -508,6 +541,14 @@ class UIStore {
   handleSetProductOnly(productOnly) {
     this.state.productOnly = productOnly;
     this.handleSelectCollection(this.state.currentCollection, true);
+  }
+
+  handleExpandSidebar() {
+    this.setState({ isSidebarCollapsed: false });
+  }
+
+  handleToggleSidebar() {
+    this.setState({ isSidebarCollapsed: !this.state.isSidebarCollapsed });
   }
 }
 

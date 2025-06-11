@@ -12,7 +12,9 @@ describe Usecases::Attachments::Annotation::AnnotationLoader do
       let(:attachment_id) { -1 }
 
       it 'raised an error' do
-        expect { annotation }.to raise_error "Couldn't find Attachment with 'id'=#{attachment_id}"
+        expect { annotation }.to raise_error(
+          "Couldn't find Attachment with 'id'=#{attachment_id} [WHERE \"attachments\".\"deleted_at\" IS NULL]",
+        )
       end
     end
 

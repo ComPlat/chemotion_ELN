@@ -88,9 +88,66 @@ RSpec.describe 'ExportCollection' do
       expect(file_names.length).to be 4
       expect(file_names).to include expected_attachment_filename
     end
+
+    context 'with multiple image fields' do
+      let(:attachment1) do
+        create(:attachment, :with_png_image,
+               identifier: '3367b5a0-24e9-11f0-ac68-bde43cb79548',
+               filename: 'Screenshot from 2025-04-29 12-01-22.png',
+               created_by: user.id)
+      end
+      let(:attachment2) do
+        create(:attachment, :with_png_image,
+               identifier: '3d3f3da0-24e9-11f0-ac68-bde43cb79548',
+               filename: 'Screenshot from 2025-04-23 10-59-42.png',
+               created_by: user.id)
+      end
+      let(:expected_attachment_filenames) do
+        %W[attachments/#{attachment1.identifier}.png attachments/#{attachment2.identifier}.png]
+      end
+
+      before do
+        research_plan.attachments = [attachment1, attachment2]
+        research_plan.save!
+
+        research_plan.update(
+          body: [
+            {
+              id: 'a39d554e-6822-43e6-9fb5-7a1ce7cc0267',
+              type: 'image',
+              value: {
+                file_name: 'Screenshot from 2025-04-29 12-01-22.png',
+                public_name: '3367b5a0-24e9-11f0-ac68-bde43cb79548',
+              },
+            },
+            {
+              id: 'ab9740db-11b0-4b26-8c1d-58db11c58a32',
+              type: 'image',
+              value: {
+                file_name: 'Screenshot from 2025-04-23 10-59-42.png',
+                public_name: '3d3f3da0-24e9-11f0-ac68-bde43cb79548',
+              },
+            },
+          ],
+        )
+
+        export = Export::ExportCollections.new(job_id, [collection.id], 'zip', nested, gate)
+        export.prepare_data
+        export.to_file
+      end
+
+      it 'exports both attachments' do
+        expect(file_names).to include(*expected_attachment_filenames)
+      end
+
+      it 'has correct number of files in zip' do
+        # 3 base files (export.json, schema.json, description.txt) + 2 attachments
+        expect(file_names.length).to be 5
+      end
+    end
   end
 
-  context 'with a reaction' do # rubocop:disable RSpecq/MultipleMemoizedHelpers
+  context 'with a reaction' do # rubocop:disable RSpec/MultipleMemoizedHelpers
     let(:sample1) { create(:sample) }
     let(:sample2) { create(:sample) }
     let(:reaction_in_json) { elements_in_json['Reaction'].first.second }
@@ -115,7 +172,7 @@ RSpec.describe 'ExportCollection' do
 
     it 'export.json has one reaction entry' do
       expect(elements_in_json['Reaction'].length).to be 1
-      # TO DO - find an elegant way to check all properties json <-> raction, maybe with an grape entity??
+      # TO DO - find an elegant way to check all properties json <-> reaction, maybe with an grape entity??
       expect(reaction_in_json['name']).to eq reaction.name
     end
   end
@@ -186,7 +243,7 @@ RSpec.describe 'ExportCollection' do
       expect(elements_in_json[sample_material_join].values.second['cellline_sample_id']).to eq sample2_uuid
     end
   end
-  
+
   context 'with a chemical' do
     let(:chemical) { create(:chemical, sample_id: sample.id) }
 

@@ -60,8 +60,14 @@ function EquivalentParser({ data: row, oldValue: cellData, newValue }) {
     equivalent = 0;
   }
   const referenceMaterial = getReferenceMaterial(row);
-  const referenceMol = getMolFromGram(referenceMaterial.mass.value, referenceMaterial);
+  if (!referenceMaterial) {
+    return {
+      ...cellData,
+      equivalent: { ...cellData.equivalent, value: equivalent },
+    };
+  }
 
+  const referenceMol = getMolFromGram(referenceMaterial.mass.value, referenceMaterial);
   const mass = getGramFromMol(referenceMol * equivalent, cellData);
   const amount = getMolFromGram(mass, cellData);
   const volume = getVolumeFromGram(mass, cellData);
@@ -156,6 +162,9 @@ function MaterialParser({
   }
 
   const referenceMaterial = getReferenceMaterial(row);
+  if (!referenceMaterial) {
+    return updatedCellData;
+  }
 
   // Adapt equivalent to updated mass.
   if ('equivalent' in updatedCellData) {
@@ -285,6 +294,10 @@ function FeedstockParser({
   }
 
   const referenceMaterial = getReferenceMaterial(row);
+  if (!referenceMaterial) {
+    return updatedCellData;
+  }
+
   const equivalent = computeEquivalent(updatedCellData, referenceMaterial);
 
   return { ...updatedCellData, equivalent: { ...updatedCellData.equivalent, value: equivalent } };

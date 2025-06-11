@@ -21,10 +21,8 @@ export const attachmentThumbnail = (attachment) => (
         objectFit: 'contain',
       }}
       alt="thumbnail"
-      previewObject={{
-        src: attachment.preview,
-      }}
-      hasPop={false}
+      attachment={attachment}
+      showPop
       popObject={{}}
       disableClick
     />
@@ -36,22 +34,9 @@ export const attachmentThumbnail = (attachment) => (
           backgroundColor: '#FFF',
           objectFit: 'contain',
         }}
-        hasPop
-        showPopImage
         alt="thumbnail"
-        previewObject={{
-          src: attachment.preview,
-        }}
-        popObject={
-          attachment.filename && attachment.filename.toLowerCase().match(/\.(png|jpg|bmp|tif|svg|jpeg|tiff)$/)
-            ? {
-              fetchNeeded: true,
-              src: `/api/v1/attachments/${attachment.id}?annotated=true`,
-            }
-            : {
-              src: attachment.preview,
-            }
-        }
+        attachment={attachment}
+        popObject={{}}
         disableClick
       />
     </div>
@@ -142,16 +127,18 @@ export const downloadButton = (attachment) => (
   </Dropdown>
 );
 
-export const removeButton = (attachment, onDelete, readOnly) => (
-  <OverlayTrigger placement="top" overlay={<Tooltip id="delete_tooltip">Delete attachment</Tooltip>}>
-    <Button
-      size="sm"
-      variant="danger"
-      onClick={() => onDelete(attachment)}
-      disabled={readOnly}
-    >
-      <i className="fa fa-trash-o" aria-hidden="true" />
-    </Button>
+export const removeButton = (attachment, onDelete, readOnly, tooltipText = 'Delete attachment') => (
+  <OverlayTrigger placement="top" overlay={<Tooltip id="delete_tooltip">{tooltipText}</Tooltip>}>
+    <span>
+      <Button
+        size="sm"
+        variant="danger"
+        onClick={() => onDelete(attachment)}
+        disabled={readOnly}
+      >
+        <i className="fa fa-trash-o" aria-hidden="true" />
+      </Button>
+    </span>
   </OverlayTrigger>
 );
 

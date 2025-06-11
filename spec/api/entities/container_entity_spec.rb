@@ -10,19 +10,30 @@ describe Entities::ContainerEntity do
 
     let(:container) { create(:analysis_container) }
 
-    context 'with any container entry' do
+    context 'with an analysis container entry' do
       it 'returns the correct attributes' do
         expect(grape_entity_as_hash).to include(
           :id,
           :name,
-          :container_type,
           :description,
           :extended_metadata,
-          :preview_img,
-          :attachments,
-          :code_log,
-          :children,
-          :dataset,
+          code_log: satisfy do |code_log|
+                      code_log.fetch(:id, '').match(/\A[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\z/)
+                    end,
+          children: satisfy { |children| children.is_a?(Array) },
+          container_type: 'analysis',
+          # dataset: '?', # TODO Labimotion::DatasetEntity
+        )
+      end
+    end
+
+    context 'with a dataset container entry' do
+      let(:container) { create(:analysis_container, container_type: 'dataset') }
+
+      it 'returns the correct attributes' do
+        expect(grape_entity_as_hash).to include(
+          container_type: 'dataset',
+          attachments: satisfy { |attachments| attachments.is_a?(Array) },
         )
       end
     end
