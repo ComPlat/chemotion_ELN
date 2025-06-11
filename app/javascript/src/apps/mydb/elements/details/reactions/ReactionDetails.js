@@ -5,7 +5,7 @@ import React, { Component } from 'react';
 import Aviator from 'aviator';
 import PropTypes from 'prop-types';
 import {
-  Button, Tabs, Tab, OverlayTrigger, Tooltip, ButtonToolbar, ButtonGroup
+  Button, Tabs, Tab, OverlayTrigger, Tooltip, ButtonToolbar, Dropdown
 } from 'react-bootstrap';
 import { findIndex, isEmpty } from 'lodash';
 
@@ -100,7 +100,7 @@ export default class ReactionDetails extends Component {
     this.handleSubmit = this.handleSubmit.bind(this);
     this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
-    this.handleGaseousChange = this.handleGaseousChange.bind(this);
+    this.handleReactionSchemeChange = this.handleReactionSchemeChange.bind(this);
     if (!reaction.reaction_svg_file) {
       this.updateGraphic();
     }
@@ -199,6 +199,8 @@ export default class ReactionDetails extends Component {
       || type === 'conditions'
       || type === 'volume'
       || type === 'useReactionVolumeForConcentration'
+      || type === 'weight_percentage'
+      || type === 'default'
     ) {
       value = event;
     } else if (type === 'rfValue') {
@@ -486,9 +488,17 @@ export default class ReactionDetails extends Component {
     });
   }
 
-  handleGaseousChange() {
-    const { reaction } = this.state;
-    this.handleInputChange('gaseous', !reaction.gaseous);
+  handleReactionSchemeChange(type) {
+    if (type === 'default') {
+      this.handleInputChange('weight_percentage', false);
+      this.handleInputChange('gaseous', false);
+    } else if (type === 'weight_percentage') {
+      this.handleInputChange('weight_percentage', true);
+      this.handleInputChange('gaseous', false);
+    } else if (type === 'gaseous') {
+      this.handleInputChange('gaseous', true);
+      this.handleInputChange('weight_percentage', false);
+    }
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -510,23 +520,46 @@ export default class ReactionDetails extends Component {
 
   render() {
     const { reaction, visible, activeTab } = this.state;
+    this.updateReactionVesselSize(reaction);
+    let schemeType = 'default';
+    if (reaction.gaseous) {
+      schemeType = 'gaseous';
+    } else if (reaction.weight_percentage) {
+      schemeType = 'weight percentage';
+    }
     const tabContentsMap = {
       scheme: (
         <Tab eventKey="scheme" title="Scheme" key={`scheme_${reaction.id}`}>
-          <ButtonGroup>
-            <ButtonGroupToggleButton
-              active={!reaction.gaseous}
-              onClick={this.handleGaseousChange}
-            >
-              Default Scheme
-            </ButtonGroupToggleButton>
-            <ButtonGroupToggleButton
-              active={reaction.gaseous}
-              onClick={this.handleGaseousChange}
-            >
-              Gas Scheme
-            </ButtonGroupToggleButton>
-          </ButtonGroup>
+          <Dropdown>
+            <Dropdown.Toggle variant="info" size="sm" id="scheme-type-dropdown">
+              <i className="fa fa-cog" />
+              <span className="ms-1">
+                Current Scheme (
+                {schemeType}
+                )
+              </span>
+            </Dropdown.Toggle>
+            <Dropdown.Menu>
+              <Dropdown.Item
+                active={!reaction.gaseous && !reaction.weight_percentage}
+                onClick={() => this.handleReactionSchemeChange('default')}
+              >
+                Default Scheme
+              </Dropdown.Item>
+              <Dropdown.Item
+                active={reaction.gaseous}
+                onClick={() => this.handleReactionSchemeChange('gaseous')}
+              >
+                Gas Scheme
+              </Dropdown.Item>
+              <Dropdown.Item
+                active={reaction.weight_percentage}
+                onClick={() => this.handleReactionSchemeChange('weight_percentage')}
+              >
+                Weight Percentage Scheme
+              </Dropdown.Item>
+            </Dropdown.Menu>
+          </Dropdown>
           {
             !reaction.isNew && <CommentSection section="reaction_scheme" element={reaction} />
           }

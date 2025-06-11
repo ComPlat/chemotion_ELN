@@ -154,9 +154,9 @@ export default class Reaction extends Element {
       vessel_size: { amount: null, unit: 'ml' },
       volume: null,
       use_reaction_volume: false,
-      gaseous: false
+      gaseous: false,
+      weight_percentage: false
     });
-
     reaction.short_label = this.buildReactionShortLabel();
     reaction.rxno = '';
     return reaction;
@@ -225,7 +225,8 @@ export default class Reaction extends Element {
       vessel_size: this.vessel_size,
       volume: this.volume,
       use_reaction_volume: this.use_reaction_volume,
-      gaseous: this.gaseous
+      gaseous: this.gaseous,
+      weight_percentage: this.weight_percentage,
     });
   }
 
@@ -618,9 +619,11 @@ export default class Reaction extends Element {
       // Temporary set true, to fit with server side logical
       material.isSplit = true;
       material.reaction_product = false;
-    } else if (newGroup === 'starting_materials') {
+      material.product_reference = false;
+    } else if (newGroup == "starting_materials") {
       material.isSplit = true;
       material.reaction_product = false;
+      material.product_reference = false;
 
       if (material.start_parent && material.parent_id == null) {
         material.parent_id = material.start_parent;
@@ -734,6 +737,12 @@ export default class Reaction extends Element {
     });
   }
 
+  markProductSampleAsReference(sampleID) {
+    this.products = this.products.map((sample) => (
+      { ...sample, product_reference: sample.id === sampleID }
+    ));
+  }
+
   toggleShowLabelForSample(sampleID) {
     const sample = this.sampleById(sampleID);
     sample.show_label = ((sample.decoupled && !sample.molfile) ? true : !sample.show_label);
@@ -805,6 +814,7 @@ export default class Reaction extends Element {
           mat.gas_type = existingMat.gas_type;
           mat.gas_phase_data = existingMat.gas_phase_data;
           mat.coefficient = existingMat.coefficient;
+          mat.product_reference = group[index].product_reference;
 
           // Ensure all components are Component instances, not plain objects
           if (mat.hasComponents()) {

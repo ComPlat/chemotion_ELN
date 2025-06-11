@@ -155,6 +155,7 @@ export default class ReactionDetailsScheme extends React.Component {
     // Solvents are never reference materials
     if (tagGroup === 'solvents') {
       splitSample.reference = false;
+      splitSample.product_reference = false;
     }
 
     if (splitSample.isMixture()) {
@@ -356,8 +357,9 @@ export default class ReactionDetailsScheme extends React.Component {
 
     switch (changeEvent.type) {
       case 'referenceChanged':
-        onReactionChange(
-          this.updatedReactionForReferenceChange(changeEvent)
+      case 'productReferenceChanged':
+        this.onReactionChange(
+          this.updatedReactionForReferenceChange(changeEvent, changeEvent.type)
         );
         break;
       case 'amountChanged':
@@ -393,6 +395,11 @@ export default class ReactionDetailsScheme extends React.Component {
       case 'equivalentChanged':
         onReactionChange(
           this.updatedReactionForEquivalentChange(changeEvent)
+        );
+        break;
+      case 'weightPercentageChanged':
+        this.onReactionChange(
+          this.updatedReactionForWeightPercentageChange(changeEvent)
         );
         break;
       case 'externalLabelChanged':
@@ -496,11 +503,14 @@ export default class ReactionDetailsScheme extends React.Component {
     return this.updatedReactionWithSample(this.updatedSamplesForDrySolventChange.bind(this), updatedSample);
   }
 
-  updatedReactionForReferenceChange(changeEvent) {
+  updatedReactionForReferenceChange(changeEvent, type) {
     const { sampleID } = changeEvent;
     const { reaction } = this.props;
     const sample = reaction.sampleById(sampleID);
-
+    if (type === 'productReferenceChanged') {
+      reaction.markProductSampleAsReference(sampleID);
+      return this.updatedReactionWithSample(this.updatedSamplesForProductReferenceChange.bind(this), sample);
+    }
     reaction.markSampleAsReference(sampleID);
 
     return this.updatedReactionWithSample(this.updatedSamplesForReferenceChange.bind(this), sample);
@@ -662,6 +672,15 @@ export default class ReactionDetailsScheme extends React.Component {
     }
 
     return this.updatedReactionWithSample(this.updatedSamplesForEquivalentChange.bind(this), updatedSample);
+  }
+
+  updatedReactionForWeightPercentageChange(changeEvent) {
+    const { reaction } = this.props;
+    const { sampleID, weightPercentage } = changeEvent;
+    const updatedSample = reaction.sampleById(sampleID);
+    updatedSample.weight_percentage = weightPercentage;
+    updatedSample.equivalent = null;
+    return this.updatedReactionWithSample(this.updatedSamplesForWeightPercentageChange.bind(this), updatedSample);
   }
 
   calculateEquivalentForProduct(sample, referenceMaterial, stoichiometryCoeff) {
@@ -1286,6 +1305,23 @@ export default class ReactionDetailsScheme extends React.Component {
     });
   }
 
+  updatedSamplesForWeightPercentageChange(samples, updatedSample) {
+    return samples.map((sample) => {
+      if (sample.id === updatedSample.id) {
+        sample.weight_percentage = updatedSample.weight_percentage;
+        if (sample.weight_percentage > 1 || sample.weight_percentage < 0) {
+          NotificationActions.add({
+            message: 'Weight percentage should be between 0 and 100',
+            level: 'error'
+          });
+        } else {
+          sample.weightPercentage = updatedSample.weight_percentage;
+        }
+      }
+      return sample;
+    });
+  }
+
   updatedSamplesForExternalLabelChange(samples, updatedSample) {
     return samples.map((sample) => {
       if (sample.id === updatedSample.id) {
@@ -1348,6 +1384,19 @@ export default class ReactionDetailsScheme extends React.Component {
         sample.reference = false;
       }
       return sample;
+    });
+  }
+
+  updatedSamplesForProductReferenceChange(samples, referenceMaterial, materialGroup) {
+    console.log(materialGroup);
+    if (materialGroup !== 'products') return samples;
+    return samples.map((s) => {
+      if (s.id === referenceMaterial.id) {
+        s.product_reference = true;
+      } else {
+        s.product_reference = false;
+      }
+      return s;
     });
   }
 
