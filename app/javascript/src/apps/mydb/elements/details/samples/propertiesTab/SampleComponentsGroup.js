@@ -38,29 +38,6 @@ class SampleComponentsGroup extends React.Component {
     this.setState({ ...state });
   }
 
-  stockMolarityInput(headers) {
-    const { handleTabSelect, activeTab } = this.props;
-
-    return (
-      <ButtonGroup>
-        <ButtonGroupToggleButton
-          onClick={() => handleTabSelect('concentration')}
-          active={activeTab === 'concentration'}
-          size="xxsm"
-        >
-          {headers.startingConc}
-        </ButtonGroupToggleButton>
-        <ButtonGroupToggleButton
-          onClick={() => handleTabSelect('density')}
-          active={activeTab === 'density'}
-          size="xxsm"
-        >
-          {headers.density}
-        </ButtonGroupToggleButton>
-      </ButtonGroup>
-    );
-  }
-
   renderSwitchAmountButton(lockState, materialGroup, actionType) {
     const updatedActionType = materialGroup === 'solid' ? `${actionType}Solids` : actionType;
 
@@ -87,6 +64,29 @@ class SampleComponentsGroup extends React.Component {
           <i className={lockState ? 'fa fa-lock' : 'fa fa-unlock'} />
         </Button>
       </OverlayTrigger>
+    );
+  }
+
+  stockMolarityInput(headers) {
+    const { handleTabSelect, activeTab } = this.props;
+
+    return (
+      <ButtonGroup>
+        <ButtonGroupToggleButton
+          onClick={() => handleTabSelect('concentration')}
+          active={activeTab === 'concentration'}
+          size="xxsm"
+        >
+          {headers.startingConc}
+        </ButtonGroupToggleButton>
+        <ButtonGroupToggleButton
+          onClick={() => handleTabSelect('density')}
+          active={activeTab === 'density'}
+          size="xxsm"
+        >
+          {headers.density}
+        </ButtonGroupToggleButton>
+      </ButtonGroup>
     );
   }
 
