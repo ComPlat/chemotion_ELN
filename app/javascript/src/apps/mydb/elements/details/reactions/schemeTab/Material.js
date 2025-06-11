@@ -21,6 +21,9 @@ import Sample from 'src/models/Sample';
 import { permitCls, permitOn } from 'src/components/common/uis';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 import { calculateFeedstockMoles } from 'src/utilities/UnitsConversion';
+import ReactionMaterialComponentsGroup
+  from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionMaterialComponentsGroup';
+import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
 
 const matSource = {
   beginDrag(props) {
@@ -117,6 +120,45 @@ class Material extends Component {
     this.handleCoefficientChange = this.handleCoefficientChange.bind(this);
     this.debounceHandleAmountUnitChange = debounce(this.handleAmountUnitChange, 500);
     this.yieldOrConversionRate = this.yieldOrConversionRate.bind(this);
+    this.state = {
+      showComponents: false,
+      mixtureComponents: [],
+      mixtureComponentsLoading: false,
+    };
+    this.toggleComponentsAccordion = this.toggleComponentsAccordion.bind(this);
+  }
+
+  componentDidMount() {
+    this.fetchMixtureComponentsIfNeeded(this.props.material);
+  }
+
+  componentDidUpdate(prevProps) {
+    if (prevProps.material.id !== this.props.material.id) {
+      this.fetchMixtureComponentsIfNeeded(this.props.material);
+    }
+  }
+
+  fetchMixtureComponentsIfNeeded(material) {
+    if (material.isMixture && material.isMixture()) {
+      this.setState({ mixtureComponentsLoading: true });
+      ComponentsFetcher.fetchComponentsBySampleId(material.id)
+        .then((components) => {
+          // Use the same deserialization as before
+          const ComponentModel = require('src/models/Component').default || require('src/models/Component');
+          const componentsList = components.map(ComponentModel.deserializeData);
+          this.setState({ mixtureComponents: componentsList, mixtureComponentsLoading: false });
+        })
+        .catch((error) => {
+          console.error('Error fetching components:', error);
+          this.setState({ mixtureComponentsLoading: false });
+        });
+    } else {
+      this.setState({ mixtureComponents: [], mixtureComponentsLoading: false });
+    }
+  }
+
+  toggleComponentsAccordion() {
+    this.setState((prevState) => ({ showComponents: !prevState.showComponents }));
   }
 
   handleMaterialClick(sample) {
@@ -712,16 +754,38 @@ class Material extends Component {
       (material.molecular_mass) : (material.molecule && material.molecule.molecular_weight);
 
     const metricPrefixes = ['m', 'n', 'u'];
-    const metric = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[0]) > -1) ? material.metrics[0] : 'm';
+    const metric = (
+      material.metrics &&
+      material.metrics.length > 2 &&
+      metricPrefixes.indexOf(material.metrics[0]) > -1
+    )
+      ? material.metrics[0]
+      : 'm';
     const metricPrefixesMol = ['m', 'n'];
-    const metricMol = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[2]) > -1) ? material.metrics[2] : 'm';
+    const metricMol = (
+      material.metrics &&
+      material.metrics.length > 2 &&
+      metricPrefixes.indexOf(material.metrics[2]) > -1
+    )
+      ? material.metrics[2]
+      : 'm';
     const metricPrefixesMolConc = ['m', 'n'];
-    const metricMolConc = (material.metrics && material.metrics.length > 3 && metricPrefixes.indexOf(material.metrics[3]) > -1) ? material.metrics[3] : 'm';
+    const metricMolConc = (
+      material.metrics &&
+      material.metrics.length > 3 &&
+      metricPrefixes.indexOf(material.metrics[3]) > -1
+    )
+      ? material.metrics[3]
+      : 'm';
 
     const inputsStyle = {
       paddingRight: 2,
       paddingLeft: 2,
     };
+
+    const { showComponents, mixtureComponents, mixtureComponentsLoading } = this.state;
+    const isMixture = material.isMixture && material.isMixture();
+    const hasComponents = mixtureComponents && mixtureComponents.length > 0;
 
     return (
       <tbody>
@@ -819,6 +883,68 @@ class Material extends Component {
             </Button>
           </td>
         </tr>
+
+        {/* Add a new row for the arrow button if mixture with components */}
+        {isMixture && hasComponents && (
+          <tr className="mixture-arrow-row">
+            <td colSpan="14" style={{ textAlign: 'center', background: '#f8f9fa', padding: '0', height: '22px' }}>
+              <OverlayTrigger
+                placement="top"
+                overlay={
+                  <Tooltip id="mixture-components-tooltip">
+                    {showComponents ? 'Hide the components' : 'See the components'}
+                  </Tooltip>
+                }
+              >
+                <Button
+                  variant="light"
+                  size="sm"
+                  style={{ fontSize: '1.05em', color: '#007bff', lineHeight: 1, height: '20px', minHeight: 'unset', padding: '0 6px' }}
+                  onClick={this.toggleComponentsAccordion}
+                  aria-label={showComponents ? 'Hide the components' : 'See the components'}
+                >
+                  <i className={`fa fa-angle-double-${showComponents ? 'up' : 'down'} text-primary`} />
+                </Button>
+              </OverlayTrigger>
+            </td>
+          </tr>
+        )}
+
+        {/* row for mixture components */}
+        {isMixture && hasComponents && showComponents && (
+          <tr className="mixture-components-row">
+            <td colSpan="14" style={{ padding: 0, background: '#f8f9fa' }}>
+              {mixtureComponentsLoading ? (
+                <div className="text-center">Loading components...</div>
+              ) : (
+                <>
+                  {mixtureComponents.filter((c) => c.material_group === 'liquid').length > 0 && (
+                    <ReactionMaterialComponentsGroup
+                      components={mixtureComponents.filter((c) => c.material_group === 'liquid')}
+                      materialGroup="liquid"
+                      reaction={reaction}
+                    />
+                  )}
+                  {mixtureComponents.filter((c) => c.material_group === 'solid').length > 0 && (
+                    <ReactionMaterialComponentsGroup
+                      components={mixtureComponents.filter((c) => c.material_group === 'solid')}
+                      materialGroup="solid"
+                      reaction={reaction}
+                    />
+                  )}
+                  {
+                    mixtureComponents.filter((c) => c.material_group === 'liquid').length === 0
+                    && mixtureComponents.filter((c) => c.material_group === 'solid').length === 0 && (
+                      <div className="text-center">
+                        No components found for this mixture.
+                      </div>
+                    )
+                  }
+                </>
+              )}
+            </td>
+          </tr>
+        )}
         {material.gas_type === 'gas' && reaction.gaseous && this.gaseousProductRow(material)}
       </tbody>
     );
