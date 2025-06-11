@@ -1,0 +1,20 @@
+.Reaction-scheme-graphic {
+  &__material-name {
+    width: 150px;
+    @extend .pb-1;
+    @extend .lh-sm;
+    &-main,
+    &-subline {
+      @extend .d-block;
+      @extend .text-truncate;
+    }
+    &-main {
+      @extend .fs-7;
+      @extend .fw-medium;
+    }
+    &-subline {
+      @extend .fs-9;
+      @extend .text-lighten2;
+    }
+  }
+}
