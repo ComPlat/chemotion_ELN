@@ -1055,7 +1055,7 @@ ActiveRecord::Schema.define(version: 2025_07_01_134000) do
     t.index ["user_id"], name: "index_profiles_on_user_id"
   end
 
-  create_table "reactions", id: :serial, force: :cascade do |t|
+create_table "reactions", id: :serial, force: :cascade do |t|
     t.string "name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -1090,6 +1090,7 @@ ActiveRecord::Schema.define(version: 2025_07_01_134000) do
     t.boolean "gaseous", default: false
     t.jsonb "vessel_size", default: {"unit"=>"ml", "amount"=>nil}
     t.jsonb "log_data"
+    t.boolean "weight_percentage"
     t.index ["deleted_at"], name: "index_reactions_on_deleted_at"
     t.index ["rinchi_short_key"], name: "index_reactions_on_rinchi_short_key", order: :desc
     t.index ["rinchi_web_key"], name: "index_reactions_on_rinchi_web_key"
@@ -1114,6 +1115,8 @@ ActiveRecord::Schema.define(version: 2025_07_01_134000) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.jsonb "log_data"
+    t.boolean "product_reference", default: false
+    t.float "weight_percentage"
     t.index ["reaction_id"], name: "index_reactions_samples_on_reaction_id"
     t.index ["sample_id"], name: "index_reactions_samples_on_sample_id"
   end
