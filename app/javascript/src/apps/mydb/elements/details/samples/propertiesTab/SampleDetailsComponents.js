@@ -215,6 +215,9 @@ export default class SampleDetailsComponents extends React.Component {
       // update ratio of other non-reference components
       sample.updateMixtureComponentEquivalent();
     }
+
+    // update sample total mass for the reaction scheme
+    sample.calculateTotalMixtureMass();
   }
 
   /**
@@ -240,6 +243,9 @@ export default class SampleDetailsComponents extends React.Component {
 
     // update components ratio
     sample.updateMixtureComponentEquivalent();
+
+     // update sample total mass for reaction scheme
+    sample.calculateTotalMixtureMass();
   }
 
   /**

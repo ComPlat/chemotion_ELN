@@ -102,6 +102,11 @@ export default class ReactionDetailsScheme extends React.Component {
       } else {
         splitSample = srcSample.buildChild();
       }
+
+      // Preserve the sample_type if it's a mixture
+      if (srcSample.isMixture()) {
+        splitSample.sample_type = srcSample.sample_type;
+      }
     }
     splitSample.show_label = (splitSample.decoupled && !splitSample.molfile) ? true : splitSample.show_label;
     if (tagGroup == 'solvents') {
