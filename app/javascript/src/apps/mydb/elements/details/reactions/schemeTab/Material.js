@@ -22,6 +22,7 @@ import { calculateFeedstockMoles } from 'src/utilities/UnitsConversion';
 import cs from 'classnames';
 import DragHandle from 'src/components/common/DragHandle';
 import DeleteButton from 'src/components/common/DeleteButton';
+import FieldValueSelector from 'src/apps/mydb/elements/details/FieldValueSelector';
 
 const notApplicableInput = (className) => (
   <div>
@@ -69,6 +70,10 @@ const AddtoDescToolTip = (
 class Material extends Component {
   constructor(props) {
     super(props);
+
+    this.state = {
+      equivalentWeightPercentageFieldChange: 'molar mass',
+    };
 
     this.createParagraph = this.createParagraph.bind(this);
     this.handleAmountUnitChange = this.handleAmountUnitChange.bind(this);
@@ -155,9 +160,11 @@ class Material extends Component {
     const { materialGroup, reaction } = this.props;
     return (
       <div className="reaction-material__ref-input">
-        {materialGroup !== 'products'
-          && (
-            <Form.Check
+        {materialGroup === 'products'
+          ? this.renderProductReference(material, reaction)
+          : (
+            <td>
+              <Form.Check
               type="radio"
               disabled={!permitOn(reaction)}
               name="reference"
@@ -166,8 +173,51 @@ class Material extends Component {
               size="sm"
               className="m-1"
             />
-          )}
+            </td>
+          )
+        }
       </div>
+    );
+  }
+
+  renderProductReference(material, reaction) {
+    return (
+      reaction.weight_percentage ? (
+        <td>
+          <OverlayTrigger
+            placement="top"
+            overlay={(
+              <Tooltip id="product-reference-tooltip">
+                Select as reference product for weight percentage
+              </Tooltip>
+            )}
+          >
+            <Form.Check
+              type="radio"
+              disabled={!permitOn(reaction)}
+              name="productReference"
+              checked={material.product_reference}
+              onChange={(e) => this.handleReferenceChange(e, 'productReferenceChanged')}
+              size="sm"
+              className="m-1"
+            />
+          </OverlayTrigger>
+        </td>
+      ) : <td />
+    );
+  }
+
+  materialShowLabel(material) {
+    return (
+      <Button
+        className="p-1 ms-1"
+        onClick={e => this.handleShowLabelChange(e)}
+        variant={material.show_label ? 'primary' : 'light'}
+        size="sm"
+        title={material.show_label ? 'Switch to structure' : 'Switch to label'}
+      >
+        {material.show_label ? 'l' : 's'}
+      </Button>
     );
   }
 
@@ -259,17 +309,46 @@ class Material extends Component {
     if (materialGroup === 'products') {
       return this.yieldOrConversionRate(material);
     }
+    return (reaction.weight_percentage ? this.customFieldValueSelector()
+      : (
+        <NumeralInputWithUnitsCompo
+          size="sm"
+          precision={4}
+          value={material.equivalent}
+          disabled={
+            !permitOn(reaction) || ((((material.reference || false)
+            && material.equivalent) !== false) || lockEquivColumn)
+          }
+          onChange={(e) => this.handleEquivalentChange(e)}
+        />
+      )
+    );
+  }
+
+  customFieldValueSelector() {
+    const { lockEquivColumn, material, reaction } = this.props;
+    const { equivalentWeightPercentageFieldChange } = this.state;
+    const equivalentField = equivalentWeightPercentageFieldChange === 'molar mass';
+    console.log(material.equivalent);
     return (
-      <NumeralInputWithUnitsCompo
-        className="reaction-material__equivalent-input"
-        size="sm"
-        precision={4}
-        value={material.equivalent}
-        disabled={!permitOn(reaction)
-          || ((((material.reference
-          || false) && material.equivalent) !== false)
-          || lockEquivColumn)}
-        onChange={e => this.handleEquivalentChange(e)}
+      <FieldValueSelector
+        fieldOptions={['molar mass', 'weight percentage']}
+        onFirstRenderField={material.weight_percentage ? 'weight percentage' : 'molar mass'}
+        value={equivalentField ? (material.equivalent || 0) : material.weight_percentage}
+        onChange={(e) => {
+          if (equivalentField) {
+            this.handleEquivalentChange(e);
+          } else {
+            this.handleWeightPercentageChange(e);
+          }
+        }}
+        onFieldChange={(field) => {
+          this.handleEquivalentWeightPercentageChange(field);
+        }}
+        disabled={
+          !permitOn(reaction) || ((((material.reference || false)
+          && material.equivalent) !== false) || lockEquivColumn)
+        }
       />
     );
   }
@@ -372,11 +451,12 @@ class Material extends Component {
     }
   }
 
-  handleReferenceChange(e) {
+  handleReferenceChange(e, type = null) {
     const value = e.target.value;
+    console.log(type);
     if (this.props.onChange) {
       const event = {
-        type: 'referenceChanged',
+        type: type ? 'productReferenceChanged' : 'referenceChanged',
         materialGroup: this.props.materialGroup,
         sampleID: this.materialId(),
         value
@@ -493,6 +573,26 @@ class Material extends Component {
         equivalent
       };
       this.props.onChange(event);
+    }
+  }
+
+  handleEquivalentWeightPercentageChange(field) {
+    this.setState({ equivalentWeightPercentageFieldChange: field });
+    console.log(this.state.equivalentWeightPercentageFieldChange);
+  }
+
+  handleWeightPercentageChange(e) {
+    const { onChange, materialGroup } = this.props;
+    const weightPercentage = e;
+    console.log(weightPercentage);
+    if (onChange && e) {
+      const event = {
+        type: 'weightPercentageChanged',
+        materialGroup,
+        sampleID: this.materialId(),
+        weightPercentage
+      };
+      onChange(event);
     }
   }
 
@@ -939,6 +1039,13 @@ class Material extends Component {
       materialDisplayName = material.title() === ''
         ? <SampleName sample={material} />
         : material.title();
+      materialName = (
+        <a
+          role="link"
+        >
+          <span>{materialDisplayName}</span>
+        </a>
+      );
 
       linkDisplayName = !material.isNew;
     }
