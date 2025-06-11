@@ -6,6 +6,7 @@ import {
 } from 'react-bootstrap';
 import ContainerDatasetModalContent from 'src/components/container/ContainerDatasetModalContent';
 import ContainerActions from 'src/stores/alt/actions/ContainerActions';
+import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
 export default class ContainerDatasetModal extends Component {
   constructor(props) {
@@ -57,13 +58,16 @@ export default class ContainerDatasetModal extends Component {
 
   onHandleContainerSubmit = () => {
     const { updateContainerState, rootContainer } = this.props;
+    LoadingActions.start();
     ContainerActions.updateContainerWithFiles(rootContainer)
       .then((updatedContainer) => {
-        console.log('Container updated successfully:', { updatedContainer });
         updateContainerState(updatedContainer);
       })
       .catch((err) => {
         console.warn('Container update failed:', err.message);
+      })
+      .finally(() => {
+        LoadingActions.stop();
       });
   };
 
