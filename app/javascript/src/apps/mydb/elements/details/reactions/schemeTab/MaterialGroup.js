@@ -117,7 +117,6 @@ function GeneralMaterialGroup({
   let headers = {
     ref: 'Ref',
     group: 'Starting materials',
-    show_label: 'L/S',
     tr: 'T/R',
     mass: 'Mass',
     reaction_coefficient: 'Coef',
@@ -214,7 +213,6 @@ function GeneralMaterialGroup({
         <col style={{ width: showLoadingColumn ? '8%' : '15%' }} />
         <col style={{ width: '4%' }} />
         <col style={{ width: '3%' }} />
-        <col style={{ width: '3%' }} />
         <col style={{ width: showLoadingColumn ? '3%' : '4%' }} />
         <col style={{ width: showLoadingColumn ? '10%' : '11%' }} />
         {showLoadingColumn && <col style={{ width: '11%' }} />}
@@ -227,11 +225,10 @@ function GeneralMaterialGroup({
           <th>{headers.group}</th>
 
           {isReactants ? (
-            <th colSpan={showLoadingColumn ? 9 : 8}>{reagentDd}</th>
+            <th colSpan={showLoadingColumn ? 8 : 7}>{reagentDd}</th>
           ) : (
             <>
               <th>{refTHead}</th>
-              <th>{headers.show_label}</th>
               <th>{headers.tr}</th>
               <th>
                 <OverlayTrigger
