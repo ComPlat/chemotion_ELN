@@ -734,4 +734,12 @@ export default class AttachmentFetcher {
 
     return promise;
   }
+
+  static async uploadNewAttachmentsForContainer(container) {
+    const files = this.getFileListfrom(container);
+    if (files.length > 0) {
+      const tasks = files.map((file) => this.uploadFile(file));
+      await Promise.all(tasks);
+    }
+  }
 }
