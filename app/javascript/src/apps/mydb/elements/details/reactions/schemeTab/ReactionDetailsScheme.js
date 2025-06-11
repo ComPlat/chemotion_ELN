@@ -104,6 +104,7 @@ export default class ReactionDetailsScheme extends Component {
     splitSample.show_label = (splitSample.decoupled && !splitSample.molfile) ? true : splitSample.show_label;
     if (tagGroup == 'solvents') {
       splitSample.reference = false;
+      splitSample.product_reference = false;
     }
 
     this.insertSolventExtLabel(splitSample, tagGroup, extLabel);
@@ -277,8 +278,9 @@ export default class ReactionDetailsScheme extends Component {
   handleMaterialsChange(changeEvent) {
     switch (changeEvent.type) {
       case 'referenceChanged':
+      case 'productReferenceChanged':
         this.onReactionChange(
-          this.updatedReactionForReferenceChange(changeEvent)
+          this.updatedReactionForReferenceChange(changeEvent, changeEvent.type)
         );
         break;
       case 'showLabelChanged':
@@ -319,6 +321,11 @@ export default class ReactionDetailsScheme extends Component {
       case 'equivalentChanged':
         this.onReactionChange(
           this.updatedReactionForEquivalentChange(changeEvent)
+        );
+        break;
+      case 'weightPercentageChanged':
+        this.onReactionChange(
+          this.updatedReactionForWeightPercentageChange(changeEvent)
         );
         break;
       case 'externalLabelChanged':
@@ -404,11 +411,14 @@ export default class ReactionDetailsScheme extends Component {
     return this.updatedReactionWithSample(this.updatedSamplesForDrySolventChange.bind(this), updatedSample);
   }
 
-  updatedReactionForReferenceChange(changeEvent) {
+  updatedReactionForReferenceChange(changeEvent, type) {
     const { sampleID } = changeEvent;
     const { reaction } = this.props;
     const sample = reaction.sampleById(sampleID);
-
+    if (type === 'productReferenceChanged') {
+      reaction.markProductSampleAsReference(sampleID);
+      return this.updatedReactionWithSample(this.updatedSamplesForProductReferenceChange.bind(this), sample);
+    }
     reaction.markSampleAsReference(sampleID);
 
     return this.updatedReactionWithSample(this.updatedSamplesForReferenceChange.bind(this), sample);
@@ -493,6 +503,15 @@ export default class ReactionDetailsScheme extends Component {
     updatedSample.equivalent = equivalent;
 
     return this.updatedReactionWithSample(this.updatedSamplesForEquivalentChange.bind(this), updatedSample);
+  }
+
+  updatedReactionForWeightPercentageChange(changeEvent) {
+    const { reaction } = this.props;
+    const { sampleID, weightPercentage } = changeEvent;
+    const updatedSample = reaction.sampleById(sampleID);
+    updatedSample.weight_percentage = weightPercentage;
+    updatedSample.equivalent = null;
+    return this.updatedReactionWithSample(this.updatedSamplesForWeightPercentageChange.bind(this), updatedSample);
   }
 
   calculateEquivalentForProduct(sample, referenceMaterial, stoichiometryCoeff) {
@@ -910,6 +929,23 @@ export default class ReactionDetailsScheme extends Component {
     });
   }
 
+  updatedSamplesForWeightPercentageChange(samples, updatedSample) {
+    return samples.map((sample) => {
+      if (sample.id === updatedSample.id) {
+        sample.weight_percentage = updatedSample.weight_percentage;
+        if (sample.weight_percentage > 1 || sample.weight_percentage < 0) {
+          NotificationActions.add({
+            message: 'Weight percentage should be between 0 and 100',
+            level: 'error'
+          });
+        } else {
+          sample.weightPercentage = updatedSample.weight_percentage;
+        }
+      }
+      return sample;
+    });
+  }
+
   updatedSamplesForExternalLabelChange(samples, updatedSample) {
     return samples.map((sample) => {
       if (sample.id === updatedSample.id) {
@@ -973,6 +1009,19 @@ export default class ReactionDetailsScheme extends Component {
         sample.reference = false;
       }
       return sample;
+    });
+  }
+
+  updatedSamplesForProductReferenceChange(samples, referenceMaterial, materialGroup) {
+    console.log(materialGroup);
+    if (materialGroup !== 'products') return samples;
+    return samples.map((s) => {
+      if (s.id === referenceMaterial.id) {
+        s.product_reference = true;
+      } else {
+        s.product_reference = false;
+      }
+      return s;
     });
   }
 

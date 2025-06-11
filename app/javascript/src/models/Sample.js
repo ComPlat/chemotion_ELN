@@ -43,19 +43,19 @@ export default class Sample extends Element {
   // isMethodRestricted(m) {
   //   return false;
   // }
-  
+
   constructor(args) {
     let argsNew = args;
     argsNew = prepareRangeBound(argsNew, 'boiling_point');
     argsNew = prepareRangeBound(argsNew, 'melting_point');
     super(argsNew);
   }
-  
+
   cleanBoilingMelting() {
     this.boiling_point = null;
     this.melting_point = null;
   }
-  
+
   static copyFromSampleAndCollectionId(
     sample,
     collection_id,
@@ -76,11 +76,11 @@ export default class Sample extends Element {
     } else {
       newSample.filterResidueData(keepResidueInfo);
     }
-    
+
     if (keepExternalLabel == false) {
       newSample.external_label = '';
     }
-    
+
     if (sample.elemental_compositions) {
       newSample.elemental_compositions = sample.elemental_compositions;
     }
@@ -97,7 +97,7 @@ export default class Sample extends Element {
     newSample.segments = Segment.buildCopy(sample.segments);
     return newSample;
   }
-  
+
   filterElementalComposition() {
     const elemComp = (this.elemental_compositions || []).find((item) => {
       if (item.composition_type == 'formula') {
@@ -113,7 +113,7 @@ export default class Sample extends Element {
     });
     return this;
   }
-  
+
   setDefaultResidue() {
     // set default polymer data
     this.residues = [
@@ -131,7 +131,7 @@ export default class Sample extends Element {
       }
     ];
   }
-  
+
   filterResidueData(keepResidueInfo = false) {
     if (this.contains_residues) {
       if (keepResidueInfo) {
@@ -163,7 +163,7 @@ export default class Sample extends Element {
     }
     return this;
   }
-  
+
   filterSampleData() {
     // reset to default values
     this.target_amount_value = 0;
@@ -172,20 +172,20 @@ export default class Sample extends Element {
     this.purity = 1;
     this.equivalent = 0;
     this.imported_readout = '';
-    
+
     return this;
   }
-  
+
   static buildNewShortLabel() {
     const { currentUser } = UserStore.getState();
     if (!currentUser) { return 'NEW SAMPLE'; }
     return `${currentUser.initials}-${currentUser.samples_count + 1}`;
   }
-  
+
   static defaultStereo() {
     return { abs: 'any', rel: 'any' };
   }
-  
+
   static buildEmpty(collection_id) {
     const sample = new Sample({
       collection_id,
@@ -221,7 +221,7 @@ export default class Sample extends Element {
       xref: {},
       gas_type: 'off',
     });
-    
+
     sample.short_label = Sample.buildNewShortLabel();
     return sample;
   }
@@ -243,12 +243,12 @@ export default class Sample extends Element {
   getChildrenCount() {
     return parseInt(Sample.children_count[this.id] || this.children_count, 10);
   }
-  
+
   buildSplitShortLabel() {
     const children_count = this.getChildrenCount() + 1;
     return `${this.short_label}-${children_count}`;
   }
-  
+
   buildCopy() {
     const sample = super.buildCopy();
     sample.short_label = Sample.buildNewShortLabel();
@@ -258,10 +258,10 @@ export default class Sample extends Element {
     sample.gas_type = 'off';
     return sample;
   }
-  
+
   static buildNew(sample, collectionId, matGroup = null) {
     const newSample = Sample.buildEmpty(collectionId);
-    
+
     if (matGroup === 'reactants' || matGroup === 'solvents') {
       newSample.short_label = matGroup.slice(0, -1);
     }
@@ -284,21 +284,21 @@ export default class Sample extends Element {
     newSample.gas_type = 'off';
     return newSample;
   }
-  
+
   buildChild() {
     Sample.counter += 1;
     const splitSample = this.buildChildWithoutCounter();
     splitSample.short_label = splitSample.split_label;
     Sample.children_count[this.id] = this.getChildrenCount() + 1;
-    
+
     return splitSample;
   }
-  
+
   buildChildWithoutCounter() {
     const splitSample = this.clone();
     splitSample.parent_id = this.id;
     splitSample.id = Element.buildID();
-    
+
     if (this.name) { splitSample.name = this.name; }
     if (this.external_label) { splitSample.external_label = this.external_label; }
     if (this.elemental_compositions) {
@@ -316,15 +316,15 @@ export default class Sample extends Element {
     splitSample.gas_type = 'off';
     return splitSample;
   }
-  
+
   get isSplit() {
     return this.is_split;
   }
-  
+
   set isSplit(is_split) {
     this.is_split = is_split;
   }
-  
+
   serialize() {
     const serialized = super.serialize({
       name: this.name,
@@ -369,26 +369,26 @@ export default class Sample extends Element {
       inventory_sample: this.inventory_sample,
       segments: this.segments.map((s) => s.serialize()),
     });
-    
+
     return serialized;
   }
-  
+
   get is_top_secret() {
     return this._is_top_secret;
   }
-  
+
   set is_top_secret(is_top_secret) {
     this._is_top_secret = is_top_secret;
   }
-  
+
   get dry_solvent() {
     return this._dry_solvent;
   }
-  
+
   set dry_solvent(dry_solvent) {
     this._dry_solvent = dry_solvent;
   }
-  
+
   set contains_residues(value) {
     this._contains_residues = value;
     if (value) {
@@ -397,24 +397,24 @@ export default class Sample extends Element {
       } else {
         this.residues[0]._destroy = undefined;
       }
-      
+
       this.elemental_compositions.map((item) => {
         if (item.composition_type == 'formula') { item._destroy = true; }
       });
     } else {
       // this.sample_svg_file = '';
       if (this.residues.length) { this.residues[0]._destroy = true; } // delete residue info
-      
+
       this.elemental_compositions.map((item) => {
         if (item.composition_type == 'loading') { item._destroy = true; }
       });
     }
   }
-  
+
   get contains_residues() {
     return this._contains_residues;
   }
-  
+
   title() {
     const { profile } = UserStore.getState();
     const show_external_name = profile ? profile.show_external_name : false;
@@ -423,7 +423,7 @@ export default class Sample extends Element {
     const extLabelClass = 'label--bold';
     const { name } = this;
     const { short_label } = this;
-    
+
     if (show_external_name) {
       return (external_label ? <span className={extLabelClass}>{external_label}</span> : short_label);
     } if (show_sample_name) {
@@ -431,122 +431,122 @@ export default class Sample extends Element {
     }
     return short_label;
   }
-  
+
   get molecule_name_label() {
     return this.molecule_name_hash && this.molecule_name_hash.label;
   }
-  
+
   get molecule_name() {
     return this.molecule_name_hash;
   }
-  
+
   set molecule_name(mno) {
     this.molecule_name_hash = mno;
   }
-  
+
   get name() {
     return this._name;
   }
-  
+
   set name(name) {
     this._name = name;
   }
-  
+
   get short_label() {
     return this._short_label;
   }
-  
+
   set short_label(short_label) {
     this._short_label = short_label;
   }
-  
+
   get external_label() {
     return this._external_label;
   }
-  
+
   set external_label(label) {
     this._external_label = label;
   }
-  
+
   get preferred_label() {
     return this._external_label || this.molecule.iupac_name || this.molecule_formula;
   }
-  
+
   set preferred_label(label) {
     this._preferred_label = label;
   }
-  
+
   set segments(segments) {
     this._segments = (segments && segments.map((s) => new Segment(s))) || [];
   }
-  
+
   get segments() {
     return this._segments || [];
   }
-  
+
   showedName() {
     return this.showed_name;
   }
-  
+
   userLabels() {
     return this.user_labels;
   }
-  
+
   iupac_name_tag(length) {
     const iupac_name = this.molecule.iupac_name || '';
     return iupac_name.length > length
       ? `${iupac_name.slice(0, length)}...`
       : iupac_name;
   }
-  
+
   get location() {
     return this._location;
   }
-  
+
   set location(location) {
     this._location = location;
   }
-  
+
   get description() {
     return this._description;
   }
-  
+
   set description(description) {
     this._description = description;
   }
-  
+
   get metrics() {
     return this._metrics || 'mmmm';
   }
-  
+
   set metrics(metrics) {
     this._metrics = metrics;
   }
-  
+
   get molarity_value() {
     return this._molarity_value;
   }
-  
+
   set molarity_value(molarity_value) {
     this._molarity_value = molarity_value;
   }
-  
+
   get molarity_unit() {
     return this._molarity_unit;
   }
-  
+
   set molarity_unit(molarity_unit) {
     this._molarity_unit = molarity_unit;
   }
-  
+
   get imported_readout() {
     return this._imported_readout;
   }
-  
+
   set imported_readout(imported_readout) {
     this._imported_readout = imported_readout;
   }
-  
+
   updateRange(field, lower, upper) {
     this[`${field}_lowerbound`] = lower;
     this[`${field}_upperbound`] = upper;
@@ -562,7 +562,7 @@ export default class Sample extends Element {
       this[field] = lower.toString().concat('..', upper);
     }
   }
-  
+
   setAmount(amount) {
     if (amount.unit && !isNaN(amount.value)) {
       this.amount_value = amount.value;
@@ -586,65 +586,65 @@ export default class Sample extends Element {
       this.metrics = (this.metrics && this.metrics.replace(/(.{0}).{1}/, `$1${mp}`)) || 'mmmm';
     }
   }
-  
+
   setAmountAndNormalizeToGram(amount) {
     this.amount_value = this.convertToGram(amount.value, amount.unit);
     this.amount_unit = 'g';
   }
-  
+
   setMetrics(metrics) {
     this.metrics = metrics.value;
   }
-  
+
   setDensity(density) {
     this.density = density.value;
     this.molarity_value = 0;
   }
-  
+
   setMolecularMass(mass) {
     this.molecular_mass = mass.value;
   }
-  
+
   setUserLabels(userLabels) {
     this.user_labels = userLabels;
   }
-  
+
   setMolarity(molarity) {
     this.molarity_value = molarity.value;
     this.molarity_unit = molarity.unit;
     this.density = 0;
   }
-  
+
   get amountType() {
     return this._current_amount_type || this.defaultAmountType();
   }
-  
+
   set amountType(amount_type) {
     this._current_amount_type = amount_type;
   }
-  
+
   defaultAmountType() {
     return (this.real_amount_value ? 'real' : 'target');
   }
-  
+
   get defined_part_amount() {
     const mw = this.molecule_molecular_weight;
     return this.amount_mol * mw / 1000.0;
   }
-  
+
   // amount proxy
-  
+
   get amount() {
     return ({
       value: this.amount_value,
       unit: this.amount_unit
     });
   }
-  
+
   get amount_value() {
     return this.amountType === 'real' ? this.real_amount_value : this.target_amount_value;
   }
-  
+
   set amount_value(amount_value) {
     if (this.amountType === 'real') {
       this.real_amount_value = amount_value;
@@ -652,11 +652,11 @@ export default class Sample extends Element {
       this.target_amount_value = amount_value;
     }
   }
-  
+
   get amount_unit() {
     return (this.amountType === 'real' ? this.real_amount_unit : this.target_amount_unit) || 'g';
   }
-  
+
   set amount_unit(amount_unit) {
     if (this.amountType === 'real') {
       this.real_amount_unit = amount_unit;
@@ -664,47 +664,47 @@ export default class Sample extends Element {
       this.target_amount_unit = amount_unit;
     }
   }
-  
+
   get has_molarity() {
     return this.molarity_value > 0 && this.density === 0;
   }
-  
+
   get has_density() {
     return this.density > 0 && this.molarity_value === 0;
   }
-  
+
   // target amount
-  
+
   get target_amount_value() {
     return this._target_amount_value;
   }
-  
+
   set target_amount_value(amount_value) {
     this._target_amount_value = amount_value;
   }
-  
+
   get target_amount_unit() {
     return this._target_amount_unit || 'g';
   }
-  
+
   set target_amount_unit(amount_unit) {
     this._target_amount_unit = amount_unit;
   }
-  
+
   // real amount
-  
+
   get real_amount_value() {
     return this._real_amount_value;
   }
-  
+
   set real_amount_value(amount_value) {
     this._real_amount_value = amount_value;
   }
-  
+
   get real_amount_unit() {
     return this._real_amount_unit || 'g';
   }
-  
+
   set real_amount_unit(amount_unit) {
     this._real_amount_unit = amount_unit;
   }
@@ -839,7 +839,7 @@ export default class Sample extends Element {
       }
     }
   }
-      
+
   convertToGram(amount_value, amount_unit) {
     if (this.contains_residues) {
       const amountValue = amount_value;
@@ -851,7 +851,7 @@ export default class Sample extends Element {
         case 'mol': {
           const { loading } = this.residues[0].custom_info;
           if (!loading) return 0.0;
-              
+
           return (amountValue / loading) * 1000.0;
         }
         default:
@@ -888,81 +888,81 @@ export default class Sample extends Element {
       }
     }
   }
-      
+
   get molecule_iupac_name() {
     return this.molecule_name_hash && this.molecule_name_hash.label
         || this.molecule && this.molecule.iupac_name;
   }
-      
+
   set molecule_iupac_name(iupac_name) {
     this.molecule.iupac_name = iupac_name;
   }
-      
+
   get molecule_molecular_weight() {
     if (this.decoupled) {
       return this.molecular_mass;
     }
-        
+
     return this.molecule && this.molecule.molecular_weight;
   }
-      
+
   get molecule_exact_molecular_weight() {
     return !this.decoupled && this.molecule && this.molecule.exact_molecular_weight;
   }
-      
+
   get molecule_formula() {
     if (this.decoupled) {
       return (this.sum_formula && this.sum_formula.length) ? this.sum_formula : '';
     }
-        
+
     return this.molecule && this.molecule.sum_formular;
   }
-      
+
   get molecule_inchistring() {
     return this.molecule && this.molecule.inchistring;
   }
-      
+
   get molecule_inchikey() {
     return this.molecule && this.molecule.inchikey;
   }
-      
+
   get molecule_cano_smiles() {
     return this.molecule && this.molecule.cano_smiles;
   }
-      
+
   get purity() {
     return this._purity;
   }
-      
+
   set purity(purity) {
     this._purity = purity;
   }
-      
+
   get molecule() {
     return this._molecule;
   }
-      
+
   set molecule(molecule) {
     this._molecule = new Molecule(molecule);
     if (molecule.temp_svg) { this.sample_svg_file = molecule.temp_svg; }
   }
-      
+
   get polymer_formula() {
     return this.contains_residues && this.residues[0].custom_info.formula.toString();
   }
-      
+
   get concat_formula() {
     if (!this.molecule_formula) {
       return '';
     }
-        
+
     if (this.contains_residues) {
       return this.molecule_formula + this.polymer_formula;
     }
-        
+
     return this.molecule_formula;
   }
-      
+
   get polymer_type() {
     if (this.contains_residues) {
       const info = this.residues[0].custom_info;
@@ -970,47 +970,47 @@ export default class Sample extends Element {
     }
     return false;
   }
-      
+
   get loading() {
     if (this.contains_residues) {
       return this.residues[0].custom_info.loading;
     }
     return false;
   }
-      
+
   set loading(loading) {
     if (this.contains_residues) { this.residues[0].custom_info.loading = loading; }
   }
-      
+
   get external_loading() {
     if (this.contains_residues) {
       return this.residues[0].custom_info.external_loading;
     }
     return false;
   }
-      
+
   set external_loading(loading) {
     if (this.contains_residues) {
       this.residues[0].custom_info.external_loading = loading;
     }
   }
-      
+
   get error_loading() {
     // TODO: temporary disabled
     // return this.contains_residues && !this.loading && !this.reaction_product;
     return false;
   }
-      
+
   get isValid() {
     return (this && ((this.molfile && !this.decoupled) || this.decoupled)
         && !this.error_loading && !this.error_polymer_type);
   }
-      
+
   get svgPath() {
     if (this.show_label) {
       return `svg_text/${this.labelText}`;
     }
-        
+
     if (this.sample_svg_file) {
       if (this.sample_svg_file === '***') {
         return '/images/wild_card/no_image_180.svg';
@@ -1021,35 +1021,35 @@ export default class Sample extends Element {
       ? `/images/molecules/${this.molecule.molecule_svg_file}` : '';
   }
   // todo: have a dedicated Material Sample subclass
-      
+
   get labelText() {
     return this.name || this.molecule_formula || this.molecule.iupac_name;
   }
-      
+
   set equivalent(equivalent) {
     this._equivalent = equivalent;
   }
-      
+
   get equivalent() {
     return this._equivalent;
   }
-      
+
   set conc(conc) {
     this._conc = conc;
   }
-      
+
   get conc() {
     return this._conc;
   }
-      
+
   set maxAmount(maxAmount) {
     this._maxAmount = maxAmount;
   }
-      
+
   get maxAmount() {
     return this._maxAmount;
   }
-      
+
   serializeMaterial() {
     const params = this.serialize();
     const extra_params = {
@@ -1062,18 +1062,20 @@ export default class Sample extends Element {
       gas_type: this.gas_type || false,
       gas_phase_data: this.gas_phase_data,
       conversion_rate: this.conversion_rate,
+      product_reference: this.product_reference || false,
+      weight_percentage: this.weight_percentage
     };
     _.merge(params, extra_params);
     return params;
   }
-      
+
   // Container & Analyses routines
   addAnalysis(analysis) {
     this.container.children.filter(
       (element) => ~element.container_type.indexOf('analyses')
     )[0].children.push(analysis);
   }
-      
+
   attachments() {
     let target = [];
     this.datasetContainers().forEach((dt) => {
@@ -1082,16 +1084,16 @@ export default class Sample extends Element {
     });
     return target;
   }
-      
+
   calculateMaxAmount(referenceSample) {
     const refAmount = referenceSample.amount_mol;
     const sampleCoeff = this.coefficient || 1.0;
     const refCoeff = (referenceSample.coefficient || 1.0);
     const coeffQuotient = sampleCoeff / refCoeff;
-        
+
     this.maxAmount = refAmount * coeffQuotient * this.molecule_molecular_weight;
   }
-      
+
   get solvent() {
     try {
       // handle the old solvent data
@@ -1105,7 +1107,7 @@ export default class Sample extends Element {
       return this._solvent;
     }
   }
-      
+
   set solvent(solvent) {
     this._solvent = solvent;
   }
@@ -1155,13 +1157,13 @@ export default class Sample extends Element {
       this.solvent = tmpSolvents;
     }
   }
-        
+
   deleteSolvent(solventToDelete) {
     const tmpSolvents = [];
     if (this.solvent) {
       Object.assign(tmpSolvents, this.solvent);
     }
-          
+
     const filteredIndex = tmpSolvents.findIndex((solv) => (solv.label === solventToDelete.label
             && solv.smiles === solventToDelete.smiles
             && solv.inchikey === solventToDelete.inchikey));
@@ -1170,13 +1172,13 @@ export default class Sample extends Element {
     }
     this.solvent = tmpSolvents;
   }
-          
+
   updateSolvent(solventToUpdate) {
     const tmpSolvents = [];
     if (this.solvent) {
       Object.assign(tmpSolvents, this.solvent);
     }
-            
+
     const filteredIndex = tmpSolvents.findIndex((solv) => (solv.smiles === solventToUpdate.smiles
               && solv.inchikey && solventToUpdate.inchikey));
     if (filteredIndex >= 0) {
@@ -1185,7 +1187,6 @@ export default class Sample extends Element {
     this.solvent = tmpSolvents;
   }
 }
-          
+
 Sample.counter = 0;
 Sample.children_count = {};
-          

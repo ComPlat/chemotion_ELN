@@ -81,6 +81,9 @@ const setReactionByType = (reaction, type, value) => {
     case 'gaseous':
       reaction.gaseous = value;
       break;
+    case 'weight_percentage':
+      reaction.weight_percentage = value;
+      break;
   }
 
   return { newReaction: reaction, options: options }
