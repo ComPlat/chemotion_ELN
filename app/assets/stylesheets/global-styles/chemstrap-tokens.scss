@@ -73,22 +73,15 @@ $silicon-shades: mapShades($chemstrap-silicon, $shades);
 $carbon-shades: mapShades($chemstrap-carbon, $shades);
 
 /* Text-size styles */
-$text---content--title: 24px;
-$text---headline--lowered: 18px;
-$text---headline: 18px;
-$text---body: 16px;
-$text---body-italic: 16px;
-$text---body--underlined: 16px;
-$text---body-medium: 16px;
-$text---label: 14px;
-$text---label--underlined: 14px;
-$text---label-small: 13px;
-$icon---extra-large: 96px;
-$icon---medium: 24px;
-$icon---regular: 20px;
-$icon---small: 14px;
-$icon---body16: 16px;
-$icon---font-awesome6-pro: 16px;
+.fs-7 {
+  font-size: 0.92857143rem; // 13px
+}
+.fs-8 {
+  font-size: 0.85714286rem; // 12px
+}
+.fs-9 {
+  font-size: 0.78571429rem; // 11px
+}
 
 /* Effect styles */
 $drop--shadow--large: 4px 0px 55px rgba(0, 0, 0, 0.05);
