@@ -365,6 +365,8 @@ module Import
           'updated_at',
           'vessel_size',
           'gaseous',
+          'product_reference',
+          'weight_percentage',
         ).merge(
           created_by: @current_user_id,
           collections: fetch_many(
@@ -406,6 +408,8 @@ module Import
             'gas_type',
             'gas_phase_data',
             'conversion_rate',
+            'reference_product',
+            'weight_percentage',
           ).merge(
             reaction: @instances.fetch('Reaction').fetch(fields.fetch('reaction_id')),
             sample: @instances.fetch('Sample').fetch(fields.fetch('sample_id')),

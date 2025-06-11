@@ -170,6 +170,7 @@ module Chemotion
         optional :variations, type: [Hash]
         optional :vessel_size, type: Hash
         optional :gaseous, type: Boolean
+        optional :weight_percentage, type: Boolean
       end
       route_param :id do
         after_validation do
@@ -246,6 +247,7 @@ module Chemotion
         optional :variations, type: [Hash]
         optional :vessel_size, type: Hash
         optional :gaseous, type: Boolean
+        optional :weight_percentage, type: Boolean
       end
 
       post do
