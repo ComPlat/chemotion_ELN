@@ -177,24 +177,56 @@ class Material extends Component {
     }
   }
 
+  /**
+   * Fetches mixture components for a given material if it's a mixture.
+   * This method handles three scenarios:
+   * 1. If material is not a mixture, clears the components state
+   * 2. If material has existing components in memory, deserializes and uses them
+   * 3. If material is saved (has numeric ID) but no components in memory, fetches from API
+   *
+   * @param {Sample} material - The material sample to check for mixture components
+   * @returns {void}
+   */
   fetchMixtureComponentsIfNeeded(material) {
-    if (material.isMixture && material.isMixture()) {
-      this.setState({ mixtureComponentsLoading: true });
-      ComponentsFetcher.fetchComponentsBySampleId(material.id)
-        .then((components) => {
-          // Use the same deserialization as before
-          const componentsList = components.map(ComponentModel.deserializeData);
-          this.setState({
-            mixtureComponents: componentsList,
-            mixtureComponentsLoading: false,
-          });
-        })
-        .catch((error) => {
-          console.error('Error fetching components:', error);
-          this.setState({ mixtureComponentsLoading: false });
-        });
-    } else {
+    if (!material || !(material.isMixture && material.isMixture())) {
       this.setState({ mixtureComponents: [], mixtureComponentsLoading: false });
+      return;
+    }
+
+    const existingComponents = Array.isArray(material.components) ? material.components : [];
+
+    if (existingComponents.length > 0) {
+      // Use existing components, deserializing if needed
+      const componentsList = existingComponents.map(comp =>
+        comp instanceof ComponentModel ? comp : ComponentModel.deserializeData(comp)
+      );
+
+      this.setState({
+        mixtureComponents: componentsList,
+        mixtureComponentsLoading: false,
+      });
+    } else if (typeof material.id === 'number') {
+      // Fetch components for saved material
+      this.setState({ mixtureComponentsLoading: true });
+
+      ComponentsFetcher.fetchComponentsBySampleId(material.id)
+      .then((components) => {
+        const componentsList = components.map(ComponentModel.deserializeData);
+        this.setState({
+          mixtureComponents: componentsList,
+          mixtureComponentsLoading: false,
+        });
+      })
+      .catch((error) => {
+        console.error('Error fetching components:', error);
+        this.setState({ mixtureComponentsLoading: false });
+      });
+    } else {
+      // No components and no ID, clear state
+      this.setState({
+        mixtureComponents: [],
+        mixtureComponentsLoading: false,
+      });
     }
   }
 
@@ -231,13 +263,27 @@ class Material extends Component {
       ? material.metrics[1]
       : 'm';
 
+    const isMixture = material.isMixture && material.isMixture();
+    const totalMass = material.amount_g;
+    const mixtureDensity = material.density;
+
+    // Calculate volume for mixture: total mass (g) / density (g/mL) = volume (mL)
+    let value;
+    if (isMixture && totalMass != null && mixtureDensity > 0) {
+      value = (totalMass / mixtureDensity) / 1000; // volume in L
+    } else if (isMixture) {
+      value = 0; // Set the initial value to 0 for mixtures
+    } else {
+      value = material.amount_l;
+    }
+
     return (
       <td>
         <OverlayTrigger placement="top" overlay={tooltip}>
           <div>
             <NumeralInputWithUnitsCompo
               key={material.id}
-              value={material.amount_l}
+              value={value}
               unit="l"
               metricPrefix={metric}
               metricPrefixes={metricPrefixes}
@@ -283,9 +329,62 @@ class Material extends Component {
     );
   }
 
-  materialRef(material) {
+  /**
+   * Renders the concentration field for a material.
+   * For mixtures, it finds the reference component and uses its concentration.
+   * For regular materials, it uses the material's own concentration value.
+   *
+   * @param {Sample} material - The material sample to display concentration for
+   * @returns {JSX.Element} A table cell containing the concentration input component
+   */
+  materialConcentration(material) {
+    const { mixtureComponents } = this.state;
+
+    const metricPrefixesMolConc = ['m', 'n'];
+    const metricMolConc = (
+      material.metrics
+      && material.metrics.length > 3
+      && metricPrefixesMolConc.indexOf(material.metrics[3]) > -1
+    )
+      ? material.metrics[3]
+      : 'm';
+
+
+    const isMixture = material.isMixture && material.isMixture();
+
+    let value;
+    if (isMixture) {
+      // For mixtures, find the reference component and use its concentration
+      const referenceComponent = mixtureComponents.find((component) => component.reference);
+      value = referenceComponent ? referenceComponent.concn : 'n.d';
+    } else {
+      value = material.concn;
+    }
+
     return (
-      this.props.materialGroup === 'products'
+      <td className="text-nowrap">
+        <NumeralInputWithUnitsCompo
+          key={material.id}
+          value={value}
+          unit="mol/l"
+          metricPrefix={metricMolConc}
+          metricPrefixes={metricPrefixesMolConc}
+          precision={4}
+          disabled
+          onChange={(e) => this.handleAmountUnitChange(e, material.concn)}
+          onMetricsChange={this.handleMetricsChange}
+          size="sm"
+          className="w-100"
+        />
+      </td>
+    );
+  }
+
+  materialRef(material) {
+    const { materialGroup } = this.props;
+
+    return (
+      materialGroup === 'products'
         ? <td />
         : (
           <td>
@@ -293,6 +392,7 @@ class Material extends Component {
               type="radio"
               disabled={!permitOn(this.props.reaction)}
               name="reference"
+              value={material.id}
               checked={material.reference}
               onChange={(e) => this.handleReferenceChange(e)}
               size="sm"
@@ -403,19 +503,25 @@ class Material extends Component {
   }
 
   equivalentOrYield(material) {
-    const { materialGroup } = this.props;
+    const { materialGroup, reaction, lockEquivColumn } = this.props;
     if (materialGroup === 'products') {
       return this.yieldOrConversionRate(material);
+    }
+    // For mixtures, set initial value to 1 if no value is provided
+    const isMixture = material.isMixture && material.isMixture();
+    let value = material.equivalent;
+    if (isMixture) {
+      value = 1;
     }
     return (
       <NumeralInputWithUnitsCompo
         size="sm"
         precision={4}
-        value={material.equivalent}
+        value={value}
         disabled={
-          !permitOn(this.props.reaction)
-          || ((((material.reference || false) && material.equivalent) !== false)
-            || this.props.lockEquivColumn)
+          !permitOn(reaction)
+          || (((material.reference || false) && value) !== false)
+          || lockEquivColumn
         }
         onChange={(e) => this.handleEquivalentChange(e)}
       />
@@ -571,6 +677,30 @@ class Material extends Component {
       this.props.onChange(event);
     }
   }
+
+  /**
+   * Handles changes to component reference selection within mixture components.
+   * This function processes reference change events from mixture components and
+   * propagates them up to the parent component through the onChange callback.
+   *
+   * @param {Object} changeEvent - The change event object from component reference selection
+   * @param {string} changeEvent.type - Should be 'componentReferenceChanged'
+   * @param {string|number} changeEvent.componentId - The ID of the component being changed
+   * @param {boolean} changeEvent.checked - Whether the component is being set as reference
+   * @returns {void}
+   */
+  handleComponentReferenceChange = (changeEvent) => {
+    if (this.props.onChange && changeEvent.type === 'componentReferenceChanged') {
+      const event = {
+        type: 'componentReferenceChanged',
+        materialGroup: this.props.materialGroup,
+        sampleID: this.materialId(),
+        componentId: changeEvent.componentId,
+        checked: changeEvent.checked,
+      };
+      this.props.onChange(event);
+    }
+  };
 
   handleShowLabelChange(e) {
     const value = e.target.checked;
@@ -792,16 +922,12 @@ class Material extends Component {
 
   amountField(material, metricPrefixes, reaction, massBsStyle, metric) {
     const { lockEquivColumn, materialGroup } = this.props;
-    const isMixture = material.isMixture && material.isMixture();
-    const totalMass = material.sample_details?.total_mass;
 
     const tooltip = (
       <Tooltip id="molecular-weight-info">
         {this.generateMolecularWeightTooltipText(material, reaction)}
       </Tooltip>
     );
-
-    const value = isMixture ? (totalMass != null ? totalMass : 0) : material.amount_g;
 
     return (
       <OverlayTrigger
@@ -812,7 +938,7 @@ class Material extends Component {
         <div>
           <NumeralInputWithUnitsCompo
             key={material.id}
-            value={value}
+            value={material.amount_g}
             unit="g"
             metricPrefix={metric}
             metricPrefixes={metricPrefixes}
@@ -823,7 +949,7 @@ class Material extends Component {
               || material.gas_type === 'feedstock'
               || material.gas_type === 'gas'
             }
-            onChange={(e) => this.debounceHandleAmountUnitChange(e, value)}
+            onChange={(e) => this.debounceHandleAmountUnitChange(e, material.amount_g)}
             onMetricsChange={this.handleMetricsChange}
             variant={material.error_mass ? 'danger' : massBsStyle}
             size="sm"
@@ -850,8 +976,6 @@ class Material extends Component {
     const metric = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[0]) > -1) ? material.metrics[0] : 'm';
     const metricPrefixesMol = ['m', 'n'];
     const metricMol = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[2]) > -1) ? material.metrics[2] : 'm';
-    const metricPrefixesMolConc = ['m', 'n'];
-    const metricMolConc = (material.metrics && material.metrics.length > 3 && metricPrefixes.indexOf(material.metrics[3]) > -1) ? material.metrics[3] : 'm';
 
     const inputsStyle = {
       paddingRight: 2,
@@ -929,21 +1053,7 @@ class Material extends Component {
 
           {this.materialLoading(material, showLoadingColumn)}
 
-          <td className="text-nowrap">
-            <NumeralInputWithUnitsCompo
-              key={material.id}
-              value={material.concn}
-              unit="mol/l"
-              metricPrefix={metricMolConc}
-              metricPrefixes={metricPrefixesMolConc}
-              precision={4}
-              disabled
-              onChange={(e) => this.handleAmountUnitChange(e, material.concn)}
-              onMetricsChange={this.handleMetricsChange}
-              size="sm"
-              className="w-100"
-            />
-          </td>
+          {this.materialConcentration(material)}
 
           <td>
             {this.equivalentOrYield(material)}
@@ -1005,33 +1115,21 @@ class Material extends Component {
         {isMixture && hasComponents && showComponents && (
           <tr className="mixture-components-row">
             <td colSpan="14" style={{ padding: 0, background: '#f8f9fa' }}>
-              {mixtureComponentsLoading ? (
+              {mixtureComponentsLoading && (
                 <div className="text-center">Loading components...</div>
-              ) : (
-                <>
-                  {mixtureComponents.filter((c) => c.material_group === 'liquid').length > 0 && (
-                    <ReactionMaterialComponentsGroup
-                      components={mixtureComponents.filter((c) => c.material_group === 'liquid')}
-                      materialGroup="liquid"
-                      reaction={reaction}
-                    />
-                  )}
-                  {mixtureComponents.filter((c) => c.material_group === 'solid').length > 0 && (
-                    <ReactionMaterialComponentsGroup
-                      components={mixtureComponents.filter((c) => c.material_group === 'solid')}
-                      materialGroup="solid"
-                      reaction={reaction}
-                    />
-                  )}
-                  {
-                    mixtureComponents.filter((c) => c.material_group === 'liquid').length === 0
-                    && mixtureComponents.filter((c) => c.material_group === 'solid').length === 0 && (
-                      <div className="text-center">
-                        No components found for this mixture.
-                      </div>
-                    )
-                  }
-                </>
+              )}
+              {!mixtureComponentsLoading && mixtureComponents.length > 0 && (
+                <ReactionMaterialComponentsGroup
+                  components={mixtureComponents}
+                  reaction={reaction}
+                  sampleId={`${material.id}`}
+                  onComponentReferenceChange={this.handleComponentReferenceChange}
+                />
+              )}
+              {!mixtureComponentsLoading && mixtureComponents.length === 0 && (
+                <div className="text-center">
+                  No components found for this mixture.
+                </div>
               )}
             </td>
           </tr>
@@ -1053,8 +1151,8 @@ class Material extends Component {
 
     let tooltip = `molar mass: ${molecularWeight} g/mol`;
 
-    if (sample.isMixture() && sample.sample_details?.density != null) {
-      tooltip += `, density: ${sample.sample_details.density.toFixed(4)} g/mL`;
+    if (sample.isMixture() && sample.density != null) {
+      tooltip += `, density: ${sample.density.toFixed(4)} g/mL`;
     }
 
     if (isProduct && sample.maxAmount) {
