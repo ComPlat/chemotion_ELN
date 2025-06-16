@@ -196,7 +196,7 @@ export default class ScreenDetailsContainers extends Component {
       if (this.analysesContainer.length == 1 && this.analysesContainer[0].children.length > 0) {
         return (
           <div>
-            <div className="mb-2 me-1 d-flex flex-row-reverse">
+            <div className="mb-2 me-1 d-flex flex-row-reverse sticky-top bg-white p-2 border-bottom">
               <ButtonToolbar className="gap-2">
                 <div className="mt-2">
                   <CommentButton toggleCommentBox={this.toggleCommentBox} size="xxsm" />
