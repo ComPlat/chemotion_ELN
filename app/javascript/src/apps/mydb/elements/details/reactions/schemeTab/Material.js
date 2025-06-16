@@ -231,13 +231,27 @@ class Material extends Component {
       ? material.metrics[1]
       : 'm';
 
+    const isMixture = material.isMixture && material.isMixture();
+    const totalMass = material.sample_details?.total_mass;
+    const mixtureDensity = material.sample_details?.density;
+
+    // Calculate volume for mixture: total mass (g) / density (g/mL) = volume (mL)
+    let value;
+    if (isMixture && totalMass != null && mixtureDensity > 0) {
+      value = totalMass / mixtureDensity; // volume in mL
+    } else if (isMixture) {
+      value = 1; // Set initial value to 1 for mixtures
+    } else {
+      value = material.amount_l;
+    }
+
     return (
       <td>
         <OverlayTrigger placement="top" overlay={tooltip}>
           <div>
             <NumeralInputWithUnitsCompo
               key={material.id}
-              value={material.amount_l}
+              value={value}
               unit="l"
               metricPrefix={metric}
               metricPrefixes={metricPrefixes}
@@ -388,19 +402,25 @@ class Material extends Component {
   }
 
   equivalentOrYield(material) {
-    const { materialGroup } = this.props;
+    const { materialGroup, reaction, lockEquivColumn } = this.props;
     if (materialGroup === 'products') {
       return this.yieldOrConversionRate(material);
+    }
+    // For mixtures, set initial value to 1 if no value is provided
+    const isMixture = material.isMixture && material.isMixture();
+    let value = material.equivalent;
+    if (isMixture) {
+      value = 1;
     }
     return (
       <NumeralInputWithUnitsCompo
         size="sm"
         precision={4}
-        value={material.equivalent}
+        value={value}
         disabled={
-          !permitOn(this.props.reaction)
-          || ((((material.reference || false) && material.equivalent) !== false)
-            || this.props.lockEquivColumn)
+          !permitOn(reaction)
+          || (((material.reference || false) && value) !== false)
+          || lockEquivColumn
         }
         onChange={(e) => this.handleEquivalentChange(e)}
       />
