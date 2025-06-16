@@ -77,7 +77,7 @@ describe Usecases::Sbmm::Create do
          .and change(PostTranslationalModification, :count).by(1)
       end
 
-      it 'reuses existing records for PSM/PTM' do
+      it 'does not reuse existing records for PSM/PTM' do
         existing_ptm = PostTranslationalModification.create(
           phosphorylation_enabled: true,
           phosphorylation_ser_enabled: true,
@@ -87,7 +87,7 @@ describe Usecases::Sbmm::Create do
         sbmm = nil
         parent = create(:uniprot_sbmm)
         expect { sbmm = described_class.new.find_or_create_by(post_for_modified_uniprot_sbmm) }.to change(SequenceBasedMacromolecule, :count).by(1)
-        expect(sbmm.post_translational_modification.id).to eq existing_ptm.id
+        expect(sbmm.post_translational_modification.id).not_to eq existing_ptm.id
       end
     end
 

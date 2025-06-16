@@ -6,7 +6,7 @@ module Usecases
       def find_or_create_by(params)
         if params[:uniprot_derivation] == 'uniprot'
           find_or_create_uniprot_protein(params)
-        elsif params[:uniprot_derivation] == 'uniprot_modified' 
+        elsif params[:uniprot_derivation] == 'uniprot_modified'
           find_or_create_modified_protein(params)
         else
           find_or_create_unknown_protein(params)
@@ -63,8 +63,8 @@ module Usecases
 
           sbmm.parent = parent
           # TODO: Was passiert wenn es zwar ein gültiger Accession Code wäre, aber kein SBMM gefunden wurde?
-          sbmm.protein_sequence_modification = ProteinSequenceModification.find_or_initialize_by(params[:protein_sequence_modification_attributes])
-          sbmm.post_translational_modification = PostTranslationalModification.find_or_initialize_by(params[:post_translational_modification_attributes])
+          sbmm.protein_sequence_modification = ProteinSequenceModification.new(params[:protein_sequence_modification_attributes])
+          sbmm.post_translational_modification = PostTranslationalModification.new(params[:post_translational_modification_attributes])
         end
         sbmm.save
         sbmm
@@ -73,8 +73,8 @@ module Usecases
       def find_or_create_unknown_protein(params)
         sbmm = Usecases::Sbmm::Finder.new.find_non_uniprot_protein_by(params.except(:parent_identifier).merge(uniprot_derivation: 'uniprot_unknown'))
         sbmm ||= SequenceBasedMacromolecule.create(params)
-        sbmm.protein_sequence_modification = ProteinSequenceModification.find_or_initialize_by(params[:protein_sequence_modification_attributes])
-        sbmm.post_translational_modification = PostTranslationalModification.find_or_initialize_by(params[:post_translational_modification_attributes])
+        sbmm.protein_sequence_modification = ProteinSequenceModification.new(params[:protein_sequence_modification_attributes])
+        sbmm.post_translational_modification = PostTranslationalModification.new(params[:post_translational_modification_attributes])
         sbmm
       end
     end
