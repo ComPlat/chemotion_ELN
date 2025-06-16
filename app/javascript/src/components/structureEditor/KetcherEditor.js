@@ -12,7 +12,6 @@ import React, {
   useEffect, useRef, useImperativeHandle, forwardRef,
   useState
 } from 'react';
-import UsersFetcher from 'src/fetchers/UsersFetcher';
 import {
   findTemplateByPayload
 } from 'src/utilities/ketcherSurfaceChemistry/Ketcher2SurfaceChemistryUtils';

@@ -13,9 +13,9 @@ import {
   adjustAtomCoordinates
 } from 'src/utilities/ketcherSurfaceChemistry/AtomsAndMolManipulation';
 import { ALIAS_PATTERNS, KET_TAGS } from 'src/utilities/ketcherSurfaceChemistry/constants';
-import { findByKeyAndUpdateTextNodePosition, deepCompareContent } from 'src/utilities/ketcherSurfaceChemistry/TextNode';
+import { findByKeyAndUpdateTextNodePosition } from 'src/utilities/ketcherSurfaceChemistry/TextNode';
 import {
-  mols, textList, textNodeStruct, allTemplates,
+  mols, textNodeStruct, allTemplates,
 } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
 import { latestData } from 'src/components/structureEditor/KetcherEditor';
 
@@ -94,7 +94,7 @@ const placeImageOnAtoms = async (mols_, imagesList_) => {
           const aliasSplits = atom.alias.split('_');
           const imageCoordinates = imageListParam[aliasSplits[2]]?.boundingBox;
           if (!imageCoordinates) {
-            throw new ('Invalid alias')();
+            throw new Error('Invalid alias');
           }
           const boundingBox = {
             x: atom.location[0] - imageCoordinates.width / 2,
@@ -124,7 +124,7 @@ const placeAtomOnImage = async (mols_, imagesList_) => {
           const aliasSplits = atom.alias.split('_');
           const imageCoordinates = imageListParam[aliasSplits[2]]?.boundingBox;
           if (!imageCoordinates) {
-            throw new ('Invalid alias')();
+            throw new Error('Invalid alias');
           }
           const coordinates = adjustAtomCoordinates(imageCoordinates);
           latestData[item].atoms[idx].location = coordinates;
@@ -208,10 +208,7 @@ const applySelectedStruct = async (editor, dataCopy) => {
         const { atoms } = dataCopy[mols[i]];
         for (let j = 0; j < atoms.length; j++) {
           if (selectedAtoms.indexOf(atomCount) !== -1) {
-            // TODO: implement selection on keyboard movements
-            // depending on ket issues issues
-            // atoms[j].selected = true;
-            console.log(atoms[j]);
+            atoms[j].selected = true;
           }
           atomCount++;
         }

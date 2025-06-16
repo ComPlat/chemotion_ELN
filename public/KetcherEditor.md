@@ -12,10 +12,10 @@ First, the list of polymers is extracted (set aside) and removed from the origin
 Next, considering the list of polymers, images are pushed into nodes, and aliases are built for atoms labeled "A". For each new template added, a counter, named image_used_counter, is maintained to relate images to atoms.
 
 ### ⭐ Ket2 Events
-Implementation is built on event-listeners which are triggered inside the ket2 canvas. Here is a list of events used in implemetation:   
+Implementation is built on event-listeners which are triggered inside the ket2 canvas. Here is a list of events used in implementation:   
 ✔️ Load canvas -> open, saveMolecule  
 ✔️ Add Atom -> on new atom, mol, paste, delete  
-✔️ Move Atom -> on atom move  
+✔️ Move Atom -> on atom move
 ✔️ Delete Atom -> on atom delete, on molecule delete  
 ✔️ Delete Image -> on image delete  
 ✔️ _selection -> holds selected structure  
@@ -60,7 +60,7 @@ These main components of a template:
 ✔️ On atom move, get the alias of moved atom  
 ✔️ Pick the location [x,y,z] of the moved atom and based on alias third part which is an index from the image list.  
 ✔️ Update the location of image  
-✔️ Save & MoveTemplate: a helper funcation which keeps all templates in-sync
+✔️ Save & MoveTemplate: a helper function which keeps all templates in-sync
 
 ### &#9733; Event => Delete Atom (in-order):
   When an atom is deleted:  
@@ -68,7 +68,7 @@ These main components of a template:
 ✔️ identify the image based on third part of the alias  
 ✔️ remove the image index from imageList  
 ✔️ reset all aliases and rebase. All alises should be consistent 0,1,2,3,4,5    
-✔️ Save & MoveTemplate: a helper funcation which keeps all templates in-sync
+✔️ Save & MoveTemplate: a helper function which keeps all templates in-sync
 
 ### &#9733; Event => Delete Image (in-order):
   When an image is deleted:  
@@ -76,7 +76,7 @@ These main components of a template:
 ✔️ Find an alias which has the image index number as third part  
 ✔️ Delete that atom  
 ✔️ reset all aliases and should be consistent  
-✔️ Save & MoveTemplate: a helper funcation which keeps all templates in-sync
+✔️ Save & MoveTemplate: a helper function which keeps all templates in-sync
 
 ### &#9733; Event => Load canvas:  
 Event called when a file is loaded or when setMolecule function is called.
@@ -112,7 +112,7 @@ part 1: atom index
 part 2: template id from the templates datasource
 part 3: Height-width
 
-#### 5#ea82s#t_4_1#asdfasdf Explain parts of a text Node
+#### 5#ea82s#t_4_1#text-content Explain parts of a text Node
 part 1: atom index
 part 2: key id for text-node in ketcher format
 part 3: Alias of the atom, text is connect with.

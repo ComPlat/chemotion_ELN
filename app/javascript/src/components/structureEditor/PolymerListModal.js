@@ -15,7 +15,6 @@ import {
   ActivePhaseAlloy,
   ActivePhaseFullCoating,
   BodySolid,
-  RescaleCanvas,
   Support,
   SupportSinglePhase,
   SupportSinglePhaseWhite,

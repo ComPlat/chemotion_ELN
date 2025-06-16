@@ -88,19 +88,19 @@ const removeTextFromData = (data) => data.root.nodes.filter((node) => node.type 
 
 // helper function to remove bonds by atom id
 const updateBondList = async (indexList, bondList, atomList) => {
-  console.log(indexList, 'indexList');
   const removedIndices = [...indexList].sort((a, b) => a - b);
   const atomCount = atomList?.length ?? 0;
   const result = [];
 
   for (const bond of bondList) {
-    if (bond.atoms.some((i) => removedIndices.includes(i))) continue;
-    const adjustedAtoms = bond.atoms.map((atom) => {
-      const shift = removedIndices.filter((removed) => removed < atom).length;
-      return atom - shift;
-    });
-    if (adjustedAtoms.every((i) => i >= 0 && i < atomCount)) {
-      result.push({ ...bond, atoms: adjustedAtoms });
+    if (!bond.atoms.some((i) => removedIndices.includes(i))) {
+      const adjustedAtoms = bond.atoms.map((atom) => {
+        const shift = removedIndices.filter((removed) => removed < atom).length;
+        return atom - shift;
+      });
+      if (adjustedAtoms.every((i) => i >= 0 && i < atomCount)) {
+        result.push({ ...bond, atoms: adjustedAtoms });
+      }
     }
   }
   return result;
@@ -346,8 +346,8 @@ const deepCompareContentImages = async (oldArray, newArray) => {
     for (let j = 0; j < newArray.length; j++) {
       const newItem = newArray[j];
       const isMatch = oldItem.data === newItem.data
-      && oldItem.boundingBox?.x === newItem.boundingBox?.x
-      && oldItem.boundingBox?.y === newItem.boundingBox?.y;
+        && oldItem.boundingBox?.x === newItem.boundingBox?.x
+        && oldItem.boundingBox?.y === newItem.boundingBox?.y;
       if (isMatch) {
         found = true;
         break;

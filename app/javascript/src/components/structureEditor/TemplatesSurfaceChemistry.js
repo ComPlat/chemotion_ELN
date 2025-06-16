@@ -273,7 +273,6 @@ const SpecialCharacterPickerIcon = `
 </svg>
 `;
 
-
 export {
   BodyRectangleIcon,
   MultiHatched,
