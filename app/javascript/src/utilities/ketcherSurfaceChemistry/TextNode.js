@@ -139,6 +139,7 @@ const filterTextList = async (aliasDifferences, data) => {
     });
     return [...removeTextFromData(data), ...valueList];
   }
+  return [...removeTextFromData(data)];
 };
 
 export {

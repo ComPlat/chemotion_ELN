@@ -16,16 +16,6 @@ import { eventCollectDeletedAtoms } from 'src/utilities/ketcherSurfaceChemistry/
 
 // helper function to add event to stack
 const addEventToFILOStack = (event) => {
-  // if (event === 'Delete image' && FILOStack.includes('Delete atom')) {
-  //   console.log('Cannot add "Delete image" after "Delete atom" event.');
-  //   return;
-  // }
-
-  // if (event === 'Delete atom' && FILOStack.includes('Move atom')) {
-  //   console.log('Cannot add "Delete atom" after "Move atom" event.', '##');
-  //   return;
-  // }
-
   if (event === 'Delete text' && FILOStack.includes('Delete image')) {
     // console.log('Cannot add "Delete image" after "Delete text" event.');
     return;
@@ -40,11 +30,6 @@ const addEventToFILOStack = (event) => {
     // console.log('Cannot add "Upsert image" after "Add atom" event.');
     return;
   }
-
-  // if (event === 'Add Text' && FILOStack.includes('Add atom')) {
-  //   console.log('Cannot add "Add Text" after "Add atom" event.');
-  //   return;
-  // }
 
   // Add event to FILO stack only if it's not already in uniqueEvents
   if (!uniqueEvents.has(event)) {

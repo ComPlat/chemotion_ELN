@@ -31,11 +31,11 @@ const KET_TAGS = Object.freeze({
 
 // Button actions
 // These actions are used in the Ketcher UI for various functionalities
-const ButtonActions = {
+const ButtonSelectors = {
   CLEAN_UP: 'Clean Up (Ctrl+Shift+L)',
   CALCULATE_CIP: 'Calculate CIP (Ctrl+P)',
   LAYOUT: 'Layout (Ctrl+L)',
-  EXPLICIT_H: 'Add/Remove explicit hydrogens',
+  EXPLICIT_HYDROGENS: 'Add/Remove explicit hydrogens',
   AROMATIZE: 'Aromatize (Alt+A)',
   VIEWER_3D: '3D Viewer',
   OPEN: 'Open... (Ctrl+O)',
@@ -44,8 +44,11 @@ const ButtonActions = {
   REDO: 'Redo (Ctrl+Shift+Z)',
   POLYMER_LIST: 'Polymer List',
   CLEAR_CANVAS: 'Clear Canvas (Ctrl+Del)',
-  SPECIAL_CHAR: 'Text Node Special Char',
+  TEXT_NODE_SPECIAL_CHAR: 'Text Node Special Char',
 };
+
+// Function to get the button selector based on the label
+const getButtonSelector = (label) => `[title='${label.replace(/[()]/g, (match) => `\\${match}`)}']`;
 
 // These event names are used to track user interactions in the Ketcher application
 export const EventNames = {
@@ -59,5 +62,6 @@ export const EventNames = {
 };
 
 export {
-  ALIAS_PATTERNS, KET_TAGS, LAYERING_FLAGS, ButtonActions
+  ALIAS_PATTERNS, KET_TAGS, LAYERING_FLAGS, ButtonSelectors,
+  getButtonSelector
 };

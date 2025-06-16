@@ -194,8 +194,7 @@ function SpecialCharModal({
                 specialCharacters.map((item) => (
                   <Button
                     key={item}
-                    className={`w-10 h-10 text-lg font-medium border rounded-md hover:bg-gray-200 text-gray-800 shadow-sm flex items-center justify-center ${restSelection === item ? 'bg-green-200' : 'bg-white'
-                      }`}
+                    className={`w-10 h-10 text-lg font-medium border rounded-md hover:bg-gray-200 text-gray-800 shadow-sm flex items-center justify-center ${restSelection === item ? 'bg-green-200' : 'bg-white'}`}
                     onClick={() => onRestSelections(item)}
                   >
                     {item}
@@ -211,8 +210,7 @@ function SpecialCharModal({
                 specialCharacters.map((item) => (
                   <Button
                     key={item}
-                    className={`w-10 h-10 text-lg font-medium border rounded-md hover:bg-gray-200 text-gray-800 shadow-sm flex items-center justify-center ${dashedSelection === item ? 'bg-green-200' : 'bg-white'
-                      }`}
+                    className={`w-10 h-10 text-lg font-medium border rounded-md hover:bg-gray-200 text-gray-800 shadow-sm flex items-center justify-center ${dashedSelection === item ? 'bg-green-200' : 'bg-white'}`}
                     onClick={() => onDashedSelection(item)}
                   >
                     {item}

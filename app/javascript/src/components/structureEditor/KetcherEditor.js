@@ -27,7 +27,9 @@ import {
   analyzeAliasAndImageDifferences,
   filterImagesByDifferences
 } from 'src/utilities/ketcherSurfaceChemistry/AtomsAndMolManipulation';
-import { LAYERING_FLAGS } from 'src/utilities/ketcherSurfaceChemistry/constants';
+import {
+  LAYERING_FLAGS, EventNames, ButtonSelectors, getButtonSelector
+} from 'src/utilities/ketcherSurfaceChemistry/constants';
 import {
   deepCompareContent,
   filterTextList
@@ -176,24 +178,24 @@ const KetcherEditor = forwardRef((props, ref) => {
 
   // action based on event-name
   const eventHandlers = {
-    'Move image': async () => onTemplateMove(editor),
-    'Move atom': async () => {
+    [EventNames.MOVE_IMAGE]: async () => onTemplateMove(editor),
+    [EventNames.MOVE_ATOM]: async () => {
       oldImagePack = [...imagesList];
       await onTemplateMove(editor, null, false);
     },
-    'Add atom': async () => onAddAtom(editor),
-    'Delete atom': async () => {
+    [EventNames.ADD_ATOM]: async () => onAddAtom(editor),
+    [EventNames.DELETE_ATOM]: async () => {
       oldImagePack = [...imagesList];
       await onAtomDelete(editor);
       canvasSelectionsSetter(null);
     },
-    'Add text': async () => {
+    [EventNames.ADD_TEXT]: async () => {
       await onAddText(editor, selectedImageForTextNode);
       await buttonClickForRectangleSelection(iframeRef);
       imageNodeForTextNodeSetter(null);
     },
-    'Delete text': async () => onDeleteText(editor),
-    'Upsert image': async () => {
+    [EventNames.DELETE_TEXT]: async () => onDeleteText(editor),
+    [EventNames.UPSERT_IMAGE]: async () => {
       await fetchKetcherData(editor);
       oldImagePack = [...imagesList];
       await onImageAddedOrCopied();
@@ -202,26 +204,24 @@ const KetcherEditor = forwardRef((props, ref) => {
 
   // DOM button events with scope
   const buttonEvents = {
-    // fetch and place data
-    "[title='Clean Up \\(Ctrl\\+Shift\\+L\\)']": async () => fetchAndReplace(),
-    "[title='Calculate CIP \\(Ctrl\\+P\\)']": async () => fetchAndReplace(),
-    "[title='Layout \\(Ctrl\\+L\\)']": async () => fetchAndReplace(),
-    "[title='Add/Remove explicit hydrogens']": async () => fetchAndReplace(),
-    "[title='Aromatize \\(Alt\\+A\\)']": async () => fetchAndReplace(),
-    "[title='3D Viewer']": async () => fetchAndReplace(),
-
-    "[title='Open... \\(Ctrl\\+O\\)']": async () => imageNodeForTextNodeSetter(null),
-    "[title='Save as... \\(Ctrl\\+S\\)']": async () => imageNodeForTextNodeSetter(null),
-    "[title='Undo \\(Ctrl\\+Z\\)']": async () => undoKetcher(editor),
-    "[title='Redo \\(Ctrl\\+Shift\\+Z\\)']": () => redoKetcher(editor),
-    "[title='Polymer List']": async () => setShowShapes(!showShapes),
-    "[title='Clear Canvas \\(Ctrl\\+Del\\)']": async () => {
+    [getButtonSelector(ButtonSelectors.CLEAN_UP)]: async () => fetchAndReplace(),
+    [getButtonSelector(ButtonSelectors.CALCULATE_CIP)]: async () => fetchAndReplace(),
+    [getButtonSelector(ButtonSelectors.LAYOUT)]: async () => fetchAndReplace(),
+    [getButtonSelector(ButtonSelectors.EXPLICIT_HYDROGENS)]: async () => fetchAndReplace(),
+    [getButtonSelector(ButtonSelectors.AROMATIZE)]: async () => fetchAndReplace(),
+    [getButtonSelector(ButtonSelectors.VIEWER_3D)]: async () => fetchAndReplace(),
+    [getButtonSelector(ButtonSelectors.OPEN)]: async () => imageNodeForTextNodeSetter(null),
+    [getButtonSelector(ButtonSelectors.SAVE)]: async () => imageNodeForTextNodeSetter(null),
+    [getButtonSelector(ButtonSelectors.UNDO)]: async () => undoKetcher(editor),
+    [getButtonSelector(ButtonSelectors.REDO)]: () => redoKetcher(editor),
+    [getButtonSelector(ButtonSelectors.POLYMER_LIST)]: async () => setShowShapes(!showShapes),
+    [getButtonSelector(ButtonSelectors.CLEAR_CANVAS)]: async () => {
       resetStore();
       imageNodeForTextNodeSetter(null);
     },
-    "[title='Text Node Special Char']": async () => {
+    [getButtonSelector(ButtonSelectors.TEXT_NODE_SPECIAL_CHAR)]: async () => {
       setSpecialCharModal(true);
-    },
+    }
   };
 
   // attach click listeners to the iframe and initialize the editor

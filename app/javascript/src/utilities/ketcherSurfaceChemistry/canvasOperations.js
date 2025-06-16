@@ -308,9 +308,6 @@ const prepareSvg = async (editor) => {
       moves.push(useElement);
     }
   });
-  moves.forEach(() => {
-    // svgElement.appendChild(moveElement);
-  });
   const updatedSVGString = new XMLSerializer().serializeToString(doc);
   return updatedSVGString;
 };
@@ -377,12 +374,6 @@ const onTemplateMove = async (editor, recenter = false) => {
   await fetchKetcherData(editor);
 
   let imageNodes = [];
-  // TODO: fix after image fix
-  // if (placemenType === 'atom-placement') {
-  //   imageNodes = await placeImageOnAtoms(molCopy, imageListCopy);
-  // } else {
-  //   imageNodes = await placeAtomOnImage(molCopy, imageListCopy);
-  // }
   imageNodes = await placeAtomOnImage(molCopy, imageListCopy);
   latestData.root.nodes = imageNodes;
   const textNodes = await placeTextOnAtoms(molCopy, textListCopy);

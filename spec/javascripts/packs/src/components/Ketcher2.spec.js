@@ -53,12 +53,14 @@ import {
 } from '../../../data/ketcher2_mockups';
 import { textNodeStructSetter } from '../../../../../app/javascript/src/utilities/ketcherSurfaceChemistry/stateManager';
 
-// ketcher2 helpers
-
 describe('Ketcher2', () => {
   beforeEach(async () => {
     resetStore();
     await templateListSetter(templateListMockup);
+  });
+
+  afterEach(() => {
+    resetStore();
   });
 
   describe('assign data with ket format', () => {
