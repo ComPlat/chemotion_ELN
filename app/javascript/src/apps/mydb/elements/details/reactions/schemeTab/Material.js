@@ -792,18 +792,27 @@ class Material extends Component {
 
   amountField(material, metricPrefixes, reaction, massBsStyle, metric) {
     const { lockEquivColumn, materialGroup } = this.props;
+    const isMixture = material.isMixture && material.isMixture();
+    const totalMass = material.sample_details?.total_mass;
+
+    const tooltip = (
+      <Tooltip id="molecular-weight-info">
+        {this.generateMolecularWeightTooltipText(material, reaction)}
+      </Tooltip>
+    );
+
+    const value = isMixture ? (totalMass != null ? totalMass : 0) : material.amount_g;
+
     return (
       <OverlayTrigger
-        delay="100"
+        delay={100}
         placement="top"
-        overlay={
-          <Tooltip id="molecular-weight-info">{this.generateMolecularWeightTooltipText(material, reaction)}</Tooltip>
-        }
+        overlay={tooltip}
       >
         <div>
           <NumeralInputWithUnitsCompo
             key={material.id}
-            value={material.amount_g}
+            value={value}
             unit="g"
             metricPrefix={metric}
             metricPrefixes={metricPrefixes}
@@ -811,9 +820,10 @@ class Material extends Component {
             disabled={
               !permitOn(reaction)
               || (materialGroup !== 'products' && !material.reference && lockEquivColumn)
-              || material.gas_type === 'feedstock' || material.gas_type === 'gas'
+              || material.gas_type === 'feedstock'
+              || material.gas_type === 'gas'
             }
-            onChange={(e) => this.debounceHandleAmountUnitChange(e, material.amount_g)}
+            onChange={(e) => this.debounceHandleAmountUnitChange(e, value)}
             onMetricsChange={this.handleMetricsChange}
             variant={material.error_mass ? 'danger' : massBsStyle}
             size="sm"
@@ -1040,11 +1050,19 @@ class Material extends Component {
     if (sample.isMixture() && sample.reference_molecular_weight) {
       molecularWeight = sample.reference_molecular_weight.toFixed(4);
     }
-    let theoreticalMassPart = '';
-    if (isProduct && sample.maxAmount) {
-      theoreticalMassPart = `, max theoretical mass: ${Math.round(sample.maxAmount * 10000) / 10} mg`;
+
+    let tooltip = `molar mass: ${molecularWeight} g/mol`;
+
+    if (sample.isMixture() && sample.sample_details?.density != null) {
+      tooltip += `, density: ${sample.sample_details.density.toFixed(4)} g/mL`;
     }
-    return `molar mass: ${molecularWeight} g/mol${theoreticalMassPart}`;
+
+    if (isProduct && sample.maxAmount) {
+      const theoreticalMass = Math.round(sample.maxAmount * 10000) / 10;
+      tooltip += `, max theoretical mass: ${theoreticalMass} mg`;
+    }
+
+    return tooltip;
   }
 
   toggleTarget(isTarget) {
