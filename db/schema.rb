@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2025_05_15_141514) do
+ActiveRecord::Schema.define(version: 2025_06_16_123935) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -375,6 +375,7 @@ ActiveRecord::Schema.define(version: 2025_05_15_141514) do
     t.text "plain_text_content"
     t.jsonb "log_data"
     t.index ["containable_type", "containable_id"], name: "index_containers_on_containable"
+    t.index ["parent_id"], name: "index_containers_on_parent_id", where: "(deleted_at IS NULL)"
   end
 
   create_table "dataset_klasses", id: :serial, force: :cascade do |t|
@@ -1307,6 +1308,7 @@ ActiveRecord::Schema.define(version: 2025_05_15_141514) do
     t.string "sample_type", default: "Micromolecule"
     t.jsonb "sample_details"
     t.jsonb "log_data"
+    t.index ["ancestry"], name: "index_samples_on_ancestry", where: "(deleted_at IS NULL)"
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
     t.index ["identifier"], name: "index_samples_on_identifier"
     t.index ["inventory_sample"], name: "index_samples_on_inventory_sample"
