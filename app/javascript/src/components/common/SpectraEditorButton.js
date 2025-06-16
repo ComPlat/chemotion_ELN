@@ -12,6 +12,26 @@ export default function SpectraEditorButton({
 }) {
   return (
     <>
+      {hasNMRium && (
+        <OverlayTrigger
+          placement="top"
+          delayShow={500}
+          overlay={<Tooltip id="spectra_nmrium_wrapper">Process with NMRium</Tooltip>}
+        >
+          <ButtonGroup>
+            <Button
+              id="spectra-editor-split-button"
+              variant="info"
+              size="xxsm"
+              onClick={toggleNMRDisplayerModal}
+              disabled={!hasJcamp && !(spcInfos.length > 0)}
+            >
+              <i className="fa fa-bar-chart" />
+            </Button>
+          </ButtonGroup>
+        </OverlayTrigger>
+      )}
+
       <OverlayTrigger
         placement="bottom"
         delayShow={500}
@@ -29,7 +49,6 @@ export default function SpectraEditorButton({
                 id="spectra-editor-split-button"
                 variant="info"
                 size="xxsm"
-                onToggle={(_, event) => { if (event) { event.stopPropagation(); } }}
                 onClick={toggleSpectraModal}
                 disabled={!(spcInfos.length > 0) || !hasChemSpectra}
               >
@@ -79,29 +98,6 @@ export default function SpectraEditorButton({
           </Button>
         )}
       </OverlayTrigger>
-
-      {
-        hasNMRium && (
-          <OverlayTrigger
-            placement="top"
-            delayShow={500}
-            overlay={<Tooltip id="spectra_nmrium_wrapper">Process with NMRium</Tooltip>}
-          >
-            <ButtonGroup>
-              <Button
-                id="spectra-editor-split-button"
-                variant="info"
-                size="xxsm"
-                onToggle={(_, event) => { if (event) { event.stopPropagation(); } }}
-                onClick={toggleNMRDisplayerModal}
-                disabled={!hasJcamp && !(spcInfos.length > 0)}
-              >
-                <i className="fa fa-bar-chart" />
-              </Button>
-            </ButtonGroup>
-          </OverlayTrigger>
-        )
-      }
     </>
   );
 }

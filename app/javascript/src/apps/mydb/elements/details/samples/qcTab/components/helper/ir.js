@@ -1,5 +1,5 @@
 import React from 'react';
-import { Table } from 'react-bootstrap';
+import { AgGridReact } from 'ag-grid-react';
 
 import { iconStatus } from 'src/apps/mydb/elements/details/samples/qcTab/components/helper/icon';
 
@@ -18,16 +18,15 @@ const colorLabel = (idx) => {
   const style = Object.assign(
     {},
     colorStyles[idx % 8],
-    { width: 20, borderRadius: 20, textAlign: 'center' },
+    { width: 25, height: 25 },
   );
 
   return (
     <div
       style={style}
+      className="badge rounded-circle p-2 mt-2 text-center"
     >
-      <span
-        className="txt-label"
-      >
+      <span className="text-black">
         {idx + 1}
       </span>
     </div>
@@ -37,33 +36,66 @@ const colorLabel = (idx) => {
 const tableIr = (fgs) => {
   if (!fgs) return null;
 
+  const renderColorLabel = (node) => {
+    return colorLabel(node.node.rowIndex);
+  }
+
+  const renderIconStatus = (node) => {
+    return iconStatus(node.data.status);
+  }
+
+  const renderIconStatusOwner = (node) => {
+    return iconStatus(node.data.statusOwner);
+  }
+
+  const columnDefs = [
+    {
+      headerName: "#",
+      valueGetter: "node.rowIndex + 1",
+      cellRenderer: renderColorLabel,
+    },
+    {
+      headerName: "SMARTS",
+      field: "sma",
+    },
+    {
+      headerName: "Machine Confidence",
+      field: "confidence",
+    },
+    {
+      headerName: "Machine",
+      field: "status",
+      cellRenderer: renderIconStatus,
+    },
+    {
+      headerName: "Owner",
+      field: "statusOwner",
+      cellRenderer: renderIconStatusOwner,
+    },
+  ];
+
+  const defaultColDef = {
+    editable: false,
+    flex: 1,
+    autoHeight: true,
+    sortable: false,
+    resizable: false,
+    suppressMovable: true,
+    cellClass: ["border-end", "px-2"],
+    headerClass: ["border-end", "px-2"]
+  };
+
   return (
-    <Table responsive striped size="sm" hover>
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>SMARTS</th>
-          <th>Machine Confidence</th>
-          <th>Machine</th>
-          <th>Owner</th>
-        </tr>
-      </thead>
-      <tbody>
-        {
-          fgs
-            .sort((a, b) => b.confidence - a.confidence)
-            .map((fg, idx) => (
-              <tr key={`${fg}${idx}`}>
-                <td>{colorLabel(idx)}</td>
-                <td>{fg.sma}</td>
-                <td>{fg.confidence} %</td>
-                <td>{iconStatus(fg.status)}</td>
-                <td>{iconStatus(fg.statusOwner)}</td>
-              </tr>
-            ))
-        }
-      </tbody>
-    </Table>
+    <div className="ag-theme-alpine w-100 mb-4">
+      <AgGridReact
+        columnDefs={columnDefs}
+        defaultColDef={defaultColDef}
+        rowData={fgs.sort((a, b) => b.confidence - a.confidence) || []}
+        rowHeight="auto"
+        domLayout="autoHeight"
+        autoSizeStrategy={{ type: 'fitGridWidth' }}
+      />
+    </div>
   );
 };
 

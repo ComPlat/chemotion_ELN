@@ -12,6 +12,7 @@ import {
 import {
   NoteCellRenderer, NoteCellEditor, MenuHeader, RowToolsCellRenderer
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
+import UserStore from 'src/stores/alt/stores/UserStore';
 
 const REACTION_VARIATIONS_TAB_KEY = 'reactionVariationsTab';
 const temperatureUnits = ['°C', 'K', '°F'];
@@ -531,6 +532,22 @@ function getVariationsColumns(variations) {
   return { ...materialColumns, properties: propertyColumns, metadata: metadataColumns };
 }
 
+function getGridStateId(id) {
+  const { currentUser } = UserStore.getState();
+  return `user${currentUser.id}-reaction${id}-reactionVariationsGridState`;
+}
+
+function getInitialGridState(id) {
+  const gridState = JSON.parse(localStorage.getItem(getGridStateId(id)));
+
+  return gridState;
+}
+
+const persistGridState = (id, event) => {
+  const { state: gridState } = event;
+  localStorage.setItem(getGridStateId(id), JSON.stringify(gridState));
+};
+
 export {
   massUnits,
   volumeUnits,
@@ -557,5 +574,7 @@ export {
   removeObsoleteColumnDefinitions,
   getMetadataColumnGroupChild,
   getPropertyColumnGroupChild,
-  REACTION_VARIATIONS_TAB_KEY
+  REACTION_VARIATIONS_TAB_KEY,
+  getInitialGridState,
+  persistGridState
 };

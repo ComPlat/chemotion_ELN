@@ -34,3 +34,9 @@
   cursor: move;
   @extend .fs-3;
 }
+
+@mixin drag-surface() {
+  background-image: radial-gradient($chemstrap-white 1px, transparent 2px);
+  background-size: 4px 4px;
+  background-repeat: round;
+}

@@ -807,13 +807,14 @@ class ViewSpectra extends React.Component {
     return (
       <Modal
         centered
+        scrollable
         size="xxxl"
         show={showModal}
         animation
         onHide={this.closeOp}
       >
         {this.renderTitle(idx)}
-        <Modal.Body className="vh-80">
+        <Modal.Body className="min-vh-80">
           {
             showModal && (jcamp || (listMuliSpcs && listMuliSpcs.length > 0))
               ? this.renderSpectraEditor(jcamp, predictions, listMuliSpcs, listEntityFiles)

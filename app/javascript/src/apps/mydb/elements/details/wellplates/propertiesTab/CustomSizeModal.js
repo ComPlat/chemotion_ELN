@@ -5,7 +5,7 @@ import {
 import PropTypes from 'prop-types';
 import Wellplate from 'src/models/Wellplate';
 
-const isInteger = (value) =>{
+const isInteger = (value) => {
   if (Number.isNaN(value)) return false
 
   return Number.isInteger(Number(value))
@@ -26,8 +26,7 @@ const errorMessage = (label) => {
   )
 }
 
-
-const CustomSizeModal = ({show, wellplate, updateWellplate, handleClose}) => {
+const CustomSizeModal = ({ show, wellplate, updateWellplate, handleClose }) => {
   const [width, setWidth] = useState(wellplate.width)
   const [height, setHeight] = useState(wellplate.height)
 
@@ -74,10 +73,10 @@ const CustomSizeModal = ({show, wellplate, updateWellplate, handleClose}) => {
           </Col>
         </Row>
         <Row>
-          <Col xs={{span: 1, offset: 10}}>
+          <Col xs={{ span: 1, offset: 10 }}>
             <Button
               onClick={() => {
-                updateWellplate({ type: 'size', value: { width: width, height: height }})
+                updateWellplate({ type: 'size', value: { width: width, height: height } })
                 handleClose()
               }}
               disabled={!canSubmit}
@@ -93,9 +92,8 @@ const CustomSizeModal = ({show, wellplate, updateWellplate, handleClose}) => {
 
 CustomSizeModal.propTypes = {
   wellplate: PropTypes.instanceOf(Wellplate).isRequired,
-  showCustomSizeModal: PropTypes.bool.isRequired,
+  show: PropTypes.bool.isRequired,
   handleClose: PropTypes.func.isRequired,
-  triggerUIUpdate: PropTypes.func.isRequired,
 }
 
 export default CustomSizeModal

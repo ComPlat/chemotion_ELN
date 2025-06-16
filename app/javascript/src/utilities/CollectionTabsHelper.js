@@ -33,9 +33,6 @@ const getVisibilityList = (layout, availableTabs, addInventoryTab) => {
     }
   }
   hidden = hidden.filter(n => n);
-  if (hidden.length === 0) {
-    hidden.push('hidden');
-  }
   return {
     visible: Immutable.List(visible.filter(n => n !== undefined)),
     hidden: Immutable.List(hidden.filter(n => (n !== undefined && n !== first)))
@@ -59,7 +56,7 @@ const filterTabLayout = (layoutState) => {
   visible.forEach((value, index) => {
     layout[value] = (index + 1);
   });
-  hidden.filter(val => val !== 'hidden').forEach((value, index) => {
+  hidden.forEach((value, index) => {
     layout[value] = (-index - 1);
   });
   return layout;

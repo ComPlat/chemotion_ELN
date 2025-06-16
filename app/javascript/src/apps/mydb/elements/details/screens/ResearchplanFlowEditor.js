@@ -3,7 +3,7 @@ import ReactFlow, {
   ReactFlowProvider, Controls, Background, applyNodeChanges, applyEdgeChanges, addEdge, useReactFlow,
   Panel as ReactFlowPanel, useUpdateNodeInternals
 } from 'reactflow'
-import { Modal, Button, ButtonGroup, InputGroup, Card, ListGroup } from 'react-bootstrap'
+import { Modal, Button, InputGroup, Card, ListGroup } from 'react-bootstrap'
 
 const buildUnassignedNodes = (nodes, researchplans) => {
   return researchplans.reduce((newNodes, plan) => {
@@ -106,11 +106,11 @@ const ResearchplanFlowEditor = (props) => {
     if (!currentEdge) { return null; }
 
     return (
-      <Card bg="primary" className="mb-4">
-        <Card.Header className="text-white">
+      <Card className="mb-4">
+        <Card.Header className="text-bg-primary">
           Connection name
         </Card.Header>
-        <Card.Body className="bg-white">
+        <Card.Body>
           <InputGroup>
             <Button
               variant="danger"
@@ -136,11 +136,11 @@ const ResearchplanFlowEditor = (props) => {
     if (unassignedNodes.length == 0) { return null };
 
     return (
-      <Card bg="primary">
-        <Card.Header className="text-white">
+      <Card>
+        <Card.Header className="text-bg-primary">
           Unused Research Plans
         </Card.Header>
-        <Card.Body className="bg-white">
+        <Card.Body>
           <div className="overflow-y-auto" style={{ maxHeight: '280px' }}>
             <ListGroup>
               {

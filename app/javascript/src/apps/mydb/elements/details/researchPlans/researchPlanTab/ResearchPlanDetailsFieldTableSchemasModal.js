@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Table, Modal, Button, Form, InputGroup, ButtonToolbar } from 'react-bootstrap';
+import { Modal, Button, Form, InputGroup, ButtonToolbar } from 'react-bootstrap';
+import { AgGridReact } from 'ag-grid-react';
 
 class ResearchPlanDetailsFieldTableSchemasModal extends Component {
   constructor(props) {
@@ -28,36 +29,69 @@ class ResearchPlanDetailsFieldTableSchemasModal extends Component {
     }
   }
 
+  renderName(node) {
+    const schema = node.data;
+    return schema.name;
+  }
+
+  renderSchemaColumns(node) {
+    const schema = node.data;
+    return schema.value.columns.map(column => column.headerName).join(', ');
+  }
+
+  renderRows(node) {
+    const schema = node.data;
+    return schema.value.rows.length;
+  }
+
+  renderButtons(node) {
+    const schema = node.data;
+    return (
+      <ButtonToolbar className=" justify-content-end gap-1">
+        <Button variant="warning" size="sm" onClick={() => this.props.onUse(schema)}>
+          Use
+        </Button>
+        <Button variant="danger" size="sm" onClick={() => this.props.onDelete(schema)}>
+          Delete
+        </Button>
+      </ButtonToolbar>
+    );
+  }
+
   render() {
-    const {
-      modal, onHide, onUse, onDelete
-    } = this.props;
+    const { modal, onHide } = this.props;
     const { schemaNameValue, schemaNameError } = this.state;
 
-    let schemaTable = null;
-    if (modal.schemas) {
-      schemaTable = modal.schemas.map((schema, index) => (
-        <tr key={index}>
-          <td>{schema.name}</td>
-          <td>
-            {schema.value.columns.map(column => column.headerName).join(', ')}
-          </td>
-          <td className="px-3">
-            {schema.value.rows.length}
-          </td>
-          <td>
-            <ButtonToolbar className=" justify-content-end gap-1">
-              <Button variant="warning" size="sm" onClick={() => onUse(schema)}>
-                Use
-              </Button>
-              <Button variant="danger" size="sm" onClick={() => onDelete(schema)}>
-                Delete
-              </Button>
-            </ButtonToolbar>
-          </td>
-        </tr>
-      ));
-    }
+    const columnDefs = [
+      {
+        headerName: "Name",
+        cellRenderer: this.renderName,
+      },
+      {
+        headerName: "Columns",
+        cellRenderer: this.renderSchemaColumns,
+        wrapText: true,
+        cellClass: ["lh-base", "py-2"],
+      },
+      {
+        headerName: "# Rows",
+        cellRenderer: this.renderRows,
+      },
+      {
+        headerName: "",
+        cellRenderer: this.renderButtons.bind(this),
+        cellClass: ["p-2"],
+      },
+    ];
+
+    const defaultColDef = {
+      editable: false,
+      flex: 1,
+      autoHeight: true,
+      sortable: false,
+      resizable: false,
+      suppressMovable: true,
+    };
 
     return (
       <Modal centered animation show={modal.show} onHide={onHide}>
@@ -83,21 +117,16 @@ class ResearchPlanDetailsFieldTableSchemasModal extends Component {
               <Form.Text className="text-danger">{schemaNameError}</Form.Text>
             </Form.Group>
           </div>
-          <div>
+          <div className="ag-theme-alpine">
             <h4>Stored schemas</h4>
-            <Table>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Columns</th>
-                  <th># Rows</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {schemaTable}
-              </tbody>
-            </Table>
+            <AgGridReact
+              columnDefs={columnDefs}
+              autoSizeStrategy={{ type: 'fitGridWidth' }}
+              defaultColDef={defaultColDef}
+              rowData={modal.schemas}
+              rowHeight="auto"
+              domLayout="autoHeight"
+            />
           </div>
         </Modal.Body>
         <Modal.Footer className="modal-footer border-0">

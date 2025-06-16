@@ -1,0 +1,33 @@
+.element-all-checkbox {
+  user-select: none;
+  cursor: default;
+
+  .form-check-input {
+    @extend .mt-0;
+    @include border-radius($form-check-input-border-radius);
+    &--checked {
+      background-color: $form-check-input-checked-bg-color;
+      border-color: $form-check-input-checked-border-color;
+      background-image: escape-svg($form-check-input-checked-bg-image);
+    }
+    &--partial {
+      background-color: $form-check-input-indeterminate-bg-color;
+      border-color: $form-check-input-indeterminate-border-color;
+      background-image: escape-svg($form-check-input-indeterminate-bg-image);
+    }
+  }
+  .chemotion-select {
+    &__indicator.chemotion-select__dropdown-indicator {
+      height: 21px; // simulate line height of regular select elements
+    }
+    &__menu {
+      @extend .d-flex;
+      @extend .position-absolute;
+      @extend .flex-column;
+      @extend .w-auto;
+    }
+    &__option:hover {
+      background-color: $input-focus-border-color;
+    }
+  }
+}

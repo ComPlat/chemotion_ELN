@@ -18,7 +18,7 @@ const createWrapper = (label, unit, value, field, inputDisable) => shallow(
 describe('NumericInputUnit component', () => {
   it('renders correctly', () => {
     const wrapper = createWrapper('Amount', 'g', 1, 'chemical_amount_in_g', false);
-    const expectedHtml = '<div class="numericInputWithUnit_g"><label class="form-label">Amount</label><div class="input-group"><input type="text" value="1" name="chemical_amount_in_g" label="Amount" class="form-control"/><button type="button" class="btn active btn-primary">g</button></div></div>';
+    const expectedHtml = '<div class="numericInputWithUnit_g"><label class="form-label">Amount</label><div class="input-group"><input type="text" value="1" name="chemical_amount_in_g" label="Amount" class="form-control"/><button type="button" class="btn btn-primary">g</button></div></div>';
     expect(wrapper.html()).toEqual(expectedHtml);
   });
 

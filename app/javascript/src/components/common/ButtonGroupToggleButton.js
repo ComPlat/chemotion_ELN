@@ -4,7 +4,7 @@ import { Button } from 'react-bootstrap';
 const ButtonGroupToggleButton = ({active, className, children, ...props}) => {
   return (
     <Button
-      variant={active ? "info": "light"}
+      variant={active ? "primary": "light"}
       className={['button-group-toggle-button', className].join(' ')}
       disabled={active}
       {...props}

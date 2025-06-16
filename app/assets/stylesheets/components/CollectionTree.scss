@@ -1,5 +1,41 @@
+.tree-view {
+  @extend .d-flex;
+  @extend .flex-column;
+  &_frame {
+    min-height: 0;
+  }
+  &_container {
+    @extend .tree-view;
+    @extend .overflow-y-auto;
+    @extend .surface-lighten3;
+  }
+  &_item {
+    @extend .d-flex;
+    @extend .align-items-baseline;
+    cursor: pointer;
+    font-size: 14px;
+    @extend .py-2;
+    @extend .pe-3;
+    @extend .gap-2;
+    &:hover {
+      @extend .surface-lighten2;
+    }
 
+    &--selected {
+      @extend .surface-lighten1;
+      &:hover {
+        @extend .surface-lighten2;
+      }
+    }
 
-.collection-tree {
-  max-width: 15%;
+    i {
+      color: $gray-600;
+    }
+  }
+
+  &_title {
+    @extend .flex-grow-1;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+  }
 }

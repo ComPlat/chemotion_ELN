@@ -1,61 +1,44 @@
-//
-// Icon Font: icons
+// Icon Font: chemstrap-icons
+
+// The chemstrap-icons font contains chemotion specific icons, that are not available  in font-awesome.
+// The font is generated via fontello (https://fontello.com/).
+// In order to extend the font
+// 1. upload the svg version of the font (chemstrap-icons.svg) to fontello
+// 2. set the name to "chemstrap-icons"
+// 3. add new icons (ideally as 32x32px svg files)
+// 4. download the new font and css files
+// 5. replace the existing font files in the assets/fonts folder
+// 6. update the glyphcodes in this file with the contents from chemstrap-icons-codes.css
+// 7. place your new svg source files in images/svg_icons for reference
 //
 
 @font-face {
-  font-family: "icons";
-  src: url("icons.eot");
-  src: url("icons.eot?#iefix") format("embedded-opentype"),
-       url("icons.woff2") format("woff2"),
-       url("icons.woff") format("woff"),
-       url("icons.ttf") format("truetype"),
-       url("icons.svg#icons") format("svg");
+  font-family: "chemstrap-icons";
+  src: url("chemstrap-icons.eot");
+  src: url("chemstrap-icons.eot?#iefix") format("embedded-opentype"),
+    url("chemstrap-icons.woff2") format("woff2"),
+    url("chemstrap-icons.woff") format("woff"),
+    url("chemstrap-icons.ttf") format("truetype"),
+    url("chemstrap-icons.svg#icons") format("svg");
   font-weight: normal;
   font-style: normal;
 }
 
-@media screen and (-webkit-min-device-pixel-ratio:0) {
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
   @font-face {
-    font-family: "icons";
-    src: url("icons.svg#icons") format("svg");
+    font-family: "chemstrap-icons";
+    src: url("chemstrap-icons.svg#icons") format("svg");
   }
 }
 
-[data-icon]:before { content: attr(data-icon); }
+[data-icon]:before {
+  content: attr(data-icon);
+}
 
-[data-icon]:before,
-.icon-acidified-hcl:before,
-.icon-c-nmr:before,
-.icon-dried:before,
-.icon-ea:before,
-.icon-ei:before,
-.icon-gpx-a:before,
-.icon-gpx-b:before,
-.icon-h-nmr:before,
-.icon-hand-stop:before,
-.icon-hr:before,
-.icon-hr1:before,
-.icon-hr2:before,
-.icon-ir:before,
-.icon-isolated:before,
-.icon-polymer:before,
-.icon-reaction:before,
-.icon-reaction-procedure:before,
-.icon-residue-adsorbed:before,
-.icon-residue-dissolved:before,
-.icon-residue-purified:before,
-.icon-resin-solvent:before,
-.icon-resin-solvent-reagent:before,
-.icon-sample:before,
-.icon-screen:before,
-.icon-tlc-control:before,
-.icon-uv:before,
-.icon-washed-nahco3:before,
-.icon-water-free:before,
-.icon-wellplate:before,
-.icon-xvial:before {
+[class^="icon-"]:before,
+[class*=" icon-"]:before {
   display: inline-block;
-  font-family: "icons";
+  font-family: "chemstrap-icons";
   font-style: normal;
   font-weight: normal;
   font-variant: normal;
@@ -68,65 +51,135 @@
   font-smoothing: antialiased;
 }
 
-.icon-acidified-hcl:before { content: "\f10a"; }
-.icon-c-nmr:before { content: "\f116"; }
-.icon-dried:before { content: "\f115"; }
-.icon-ea:before { content: "\f117"; }
-.icon-ei:before { content: "\f118"; }
-.icon-gpx-a:before { content: "\f10c"; }
-.icon-gpx-b:before { content: "\f10d"; }
-.icon-h-nmr:before { content: "\f119"; }
-.icon-hand-stop:before { content: "\f105"; }
-.icon-hr:before { content: "\f11a"; }
-.icon-hr1:before { content: "\f11e"; }
-.icon-hr2:before { content: "\f11f"; }
-.icon-ir:before { content: "\f11b"; }
-.icon-isolated:before { content: "\f10e"; }
-.icon-polymer:before { content: "\f104"; }
-.icon-reaction:before { content: "\f100"; }
-.icon-reaction-procedure:before { content: "\f107"; }
-.icon-residue-adsorbed:before { content: "\f10f"; }
-.icon-residue-dissolved:before { content: "\f110"; }
-.icon-residue-purified:before { content: "\f111"; }
-.icon-resin-solvent:before { content: "\f108"; }
-.icon-resin-solvent-reagent:before { content: "\f109"; }
-.icon-sample:before { content: "\f101"; }
-.icon-cell_line:before { content: "\f102"; }
-.icon-screen:before { content: "\f103"; }
-.icon-tlc-control:before { content: "\f112"; }
-.icon-uv:before { content: "\f11c"; }
-.icon-washed-nahco3:before { content: "\f113"; }
-.icon-water-free:before { content: "\f106"; }
-.icon-wellplate:before { content: "\f102"; }
-.icon-xvial:before { content: "\f11d"; }
+// glyph codes
 
-$font-icons-acidified-hcl: "\f10a";
-$font-icons-c-nmr: "\f116";
-$font-icons-dried: "\f115";
-$font-icons-ea: "\f117";
-$font-icons-ei: "\f118";
-$font-icons-gpx-a: "\f10c";
-$font-icons-gpx-b: "\f10d";
-$font-icons-h-nmr: "\f119";
-$font-icons-hand-stop: "\f105";
-$font-icons-hr: "\f11a";
-$font-icons-hr1: "\f11e";
-$font-icons-hr2: "\f11f";
-$font-icons-ir: "\f11b";
-$font-icons-isolated: "\f10e";
-$font-icons-polymer: "\f104";
-$font-icons-reaction: "\f100";
-$font-icons-reaction-procedure: "\f107";
-$font-icons-residue-adsorbed: "\f10f";
-$font-icons-residue-dissolved: "\f110";
-$font-icons-residue-purified: "\f111";
-$font-icons-resin-solvent: "\f108";
-$font-icons-resin-solvent-reagent: "\f109";
-$font-icons-sample: "\f101";
-$font-icons-screen: "\f103";
-$font-icons-tlc-control: "\f112";
-$font-icons-uv: "\f11c";
-$font-icons-washed-nahco3: "\f113";
-$font-icons-water-free: "\f106";
-$font-icons-wellplate: "\f102";
-$font-icons-xvial: "\f11d";
+.icon-incoming:before {
+  content: "\e820";
+} /* '' */
+.icon-outgoing:before {
+  content: "\e821";
+} /* '' */
+.icon-collection:before {
+  content: "\e822";
+} /* '' */
+.icon-reaction:before {
+  content: "\f100";
+} /* '' */
+.icon-sample:before {
+  content: "\f101";
+} /* '' */
+.icon-wellplate:before {
+  content: "\f102";
+} /* '' */
+.icon-screen:before {
+  content: "\f103";
+} /* '' */
+.icon-polymer:before {
+  content: "\f104";
+} /* '' */
+.icon-hand-stop:before {
+  content: "\f105";
+} /* '' */
+.icon-water-free:before {
+  content: "\f106";
+} /* '' */
+.icon-reaction-procedure:before {
+  content: "\f107";
+} /* '' */
+.icon-resin-solvent:before {
+  content: "\f108";
+} /* '' */
+.icon-resin-solvent-reagent:before {
+  content: "\f109";
+} /* '' */
+.icon-acidified-hcl:before {
+  content: "\f10a";
+} /* '' */
+.icon-gpx-a:before {
+  content: "\f10c";
+} /* '' */
+.icon-gpx-b:before {
+  content: "\f10d";
+} /* '' */
+.icon-isolated:before {
+  content: "\f10e";
+} /* '' */
+.icon-residue-adsorbed:before {
+  content: "\f10f";
+} /* '' */
+.icon-residue-dissolved:before {
+  content: "\f110";
+} /* '' */
+.icon-residue-purified:before {
+  content: "\f111";
+} /* '' */
+.icon-tlc-control:before {
+  content: "\f112";
+} /* '' */
+.icon-washed-nahco3:before {
+  content: "\f113";
+} /* '' */
+.icon-dried:before {
+  content: "\f115";
+} /* '' */
+.icon-c-nmr:before {
+  content: "\f116";
+} /* '' */
+.icon-ea:before {
+  content: "\f117";
+} /* '' */
+.icon-ei:before {
+  content: "\f118";
+} /* '' */
+.icon-h-nmr:before {
+  content: "\f119";
+} /* '' */
+.icon-hr:before {
+  content: "\f11a";
+} /* '' */
+.icon-ir:before {
+  content: "\f11b";
+} /* '' */
+.icon-uv:before {
+  content: "\f11c";
+} /* '' */
+.icon-xvial:before {
+  content: "\f11d";
+} /* '' */
+.icon-hr1:before {
+  content: "\f11e";
+} /* '' */
+.icon-hr2:before {
+  content: "\f11f";
+} /* '' */
+
+// Icon Font: Font Awesome
+
+//make .fa-fw work in flex containers
+
+.fa-fw {
+  min-width: 1.28571429em;
+}
+
+// recontextualisation of standard icons
+
+.icon-research_plan,
+.icon-cell_line,
+.icon-device_description {
+  font-style: inherit;
+  &:before {
+    font-family: FontAwesome;
+  }
+}
+
+.icon-research_plan:before {
+  content: "\f0f6";
+}
+
+.icon-cell_line:before {
+  content: "\f0a3";
+}
+
+.icon-device_description:before {
+  content: "\f1b2";
+}

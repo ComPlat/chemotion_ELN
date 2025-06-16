@@ -21,7 +21,7 @@ const TitleProduct = ({ prd, molSerials }) => {
 
 const Thumbnail = ({ thumb }) => {
   const noAvaSvg = '/images/wild_card/not_available.svg';
-  const thumbImg = `data:image/png;base64,${thumb}`;
+  const thumbImg = `/api/v1/attachments/${thumb}`;
   const previewImg = thumb ? thumbImg : noAvaSvg;
   return <img src={previewImg} alt="" className="spectrum-thumbnail" />;
 };
@@ -40,7 +40,7 @@ const ContentAtts = ({ prd, attThumbNails }) => {
     }
     const key = `${idx}-${att.identifier}`;
     const thumb = attThumbNails.map(tn => (
-      tn.id === att.id ? tn.thumbnail : null
+      tn.id === att.id ? tn.id : null
     )).filter(r => r !== null)[0];
     return (
       <div key={key}>

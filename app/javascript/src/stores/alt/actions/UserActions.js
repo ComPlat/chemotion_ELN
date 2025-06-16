@@ -91,6 +91,7 @@ class UserActions {
         localStorage.setItem(storageKey, JSON.stringify(res.user_templates));
       }
     });
+    return null;
   }
 
   selectTab(tab) {
