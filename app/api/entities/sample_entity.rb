@@ -125,7 +125,7 @@ module Entities
     end
 
     def parent_id
-      object.parent&.id
+      object.parent_id
     end
 
     def type
