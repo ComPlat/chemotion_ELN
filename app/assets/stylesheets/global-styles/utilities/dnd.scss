@@ -40,3 +40,24 @@
   background-size: 4px 4px;
   background-repeat: round;
 }
+
+@mixin draggable-list-item($selectable) {
+  @extend .rounded-start;
+  @if $selectable {
+    @extend .surface-lighten4;
+    &:hover {
+      @extend .surface-lighten3;
+    }
+    &.is-selected {
+      @extend .surface-lighten2;
+      &:hover {
+        @extend .surface-lighten1;
+      }
+    }
+  } @else {
+    @extend .surface-lighten6;
+    &:hover {
+      @extend .surface-lighten5;
+    }
+  }
+}
