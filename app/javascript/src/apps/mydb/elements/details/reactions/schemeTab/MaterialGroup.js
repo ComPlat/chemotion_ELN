@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  Button, Tooltip, OverlayTrigger, Table
+  Button, Tooltip, OverlayTrigger
 } from 'react-bootstrap';
 import classNames from 'classnames';
 import { Select } from 'src/components/common/Select';
@@ -17,6 +17,19 @@ import { permitOn } from 'src/components/common/uis';
 import ToggleButton from 'src/components/common/ToggleButton';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import ReorderableMaterialContainer from 'src/apps/mydb/elements/details/reactions/schemeTab/ReorderableMaterialContainer';
+
+const headers = {
+  ref: 'Ref',
+  group: 'Starting materials',
+  tr: 'T/R',
+  mass: 'Mass',
+  reaction_coefficient: 'Coef',
+  amount: 'Amount',
+  loading: 'Loading',
+  concn: 'Conc',
+  vol: 'Vol',
+  eq: 'Equiv'
+};
 
 function MaterialGroup({
   materials, materialGroup, deleteMaterial, onChange,
@@ -144,22 +157,11 @@ function GeneralMaterialGroup({
   switchEquiv, lockEquivColumn, displayYieldField, switchYield
 }) {
   const isReactants = materialGroup === 'reactants';
-  let headers = {
-    ref: 'Ref',
-    group: 'Starting materials',
-    tr: 'T/R',
-    mass: 'Mass',
-    reaction_coefficient: 'Coef',
-    amount: 'Amount',
-    loading: 'Loading',
-    concn: 'Conc',
-    vol: 'Vol',
-    eq: 'Equiv'
-  };
+  const groupHeaders = { ...headers };
 
   let reagentDd = null;
   if (isReactants) {
-    headers = { group: 'Reactants' };
+    groupHeaders.group = 'Reactants';
 
     const reagentList = Object.keys(reagents_kombi).map((x) => ({
       label: x,
@@ -181,7 +183,6 @@ function GeneralMaterialGroup({
       <Select
         isDisabled={!permitOn(reaction)}
         value={null}
-        className="mb-2"
         options={reagentList}
         placeholder="Reagents"
         onChange={createReagentForReaction}
@@ -223,11 +224,11 @@ function GeneralMaterialGroup({
   };
 
   if (materialGroup === 'products') {
-    headers.group = 'Products';
-    headers.eq = yieldConversionRateFields();
+    groupHeaders.group = 'Products';
+    groupHeaders.eq = yieldConversionRateFields();
   }
 
-  const refTHead = (materialGroup !== 'products') ? headers.ref : null;
+  const refTHead = (materialGroup !== 'products') ? groupHeaders.ref : null;
   /**
    * Add a (not yet persisted) sample to a material group
    * of the given reaction
@@ -257,8 +258,7 @@ function GeneralMaterialGroup({
       {({
         contents, dropRef, isOver, canDrop
       }) => (
-        <Table
-          borderless
+        <div
           ref={dropRef}
           className={materialGroupClassNames({
             isEmpty: materials.length === 0,
@@ -266,57 +266,37 @@ function GeneralMaterialGroup({
             canDrop
           })}
         >
-          <colgroup>
-            <col style={{ width: '4%' }} />
-            <col style={{ width: showLoadingColumn ? '8%' : '15%' }} />
-            <col style={{ width: '4%' }} />
-            <col style={{ width: '3%' }} />
-            <col style={{ width: showLoadingColumn ? '3%' : '4%' }} />
-            <col style={{ width: showLoadingColumn ? '10%' : '11%' }} />
-            {showLoadingColumn && <col style={{ width: '11%' }} />}
-            <col style={{ width: showLoadingColumn ? '10%' : '11%' }} />
-            <col style={{ width: showLoadingColumn ? '12%' : '13%' }} />
-          </colgroup>
-          <thead>
-            <tr>
-              <th>{addSampleButton}</th>
-              <th>{headers.group}</th>
-
-              {isReactants ? (
-                <th colSpan={showLoadingColumn ? 8 : 7}>{reagentDd}</th>
-              ) : (
-                <>
-                  <th>{refTHead}</th>
-                  <th>{headers.tr}</th>
-                  <th>
-                    <OverlayTrigger
-                      placement="top"
-                      overlay={<Tooltip id="coefficientHeaderTitleReactionScheme">Coefficient</Tooltip>}
-                    >
-                      <span>{headers.reaction_coefficient}</span>
-                    </OverlayTrigger>
-                  </th>
-                  <th colSpan="3">{headers.amount}</th>
-                  {showLoadingColumn && <th>{headers.loading}</th>}
-                  <th>{headers.concn}</th>
-                  {!isReactants && (
-                    <th>
-                      {headers.eq}
-                      {materialGroup !== 'products' && (
-                        <SwitchEquivButton
-                          lockEquivColumn={lockEquivColumn}
-                          switchEquiv={switchEquiv}
-                        />
-                      )}
-                    </th>
-                  )}
-                </>
+          <div className="pseudo-table__row pseudo-table__row-header">
+            <div className="pseudo-table__cell pseudo-table__cell-title align-items-center">
+              {groupHeaders.group}
+              {isReactants && reagentDd}
+              {addSampleButton}
+            </div>
+            <div className="reaction-material__ref-header">{refTHead}</div>
+            <div className="reaction-material__target-header">{groupHeaders.tr}</div>
+            <OverlayTrigger
+              placement="top"
+              overlay={<Tooltip id="coefficientHeaderTitleReactionScheme">Coefficient</Tooltip>}
+            >
+              <div className="reaction-material__coefficient-header">{groupHeaders.reaction_coefficient}</div>
+            </OverlayTrigger>
+            <div className="reaction-material__amount-header">{groupHeaders.amount}</div>
+            {showLoadingColumn && <div>{groupHeaders.loading}</div>}
+            <div className="reaction-material__concentration-header">{groupHeaders.concn}</div>
+            <div className="reaction-material__equivalent-header">
+              {groupHeaders.eq}
+              {materialGroup === 'starting_materials' && (
+                <SwitchEquivButton
+                  lockEquivColumn={lockEquivColumn}
+                  switchEquiv={switchEquiv}
+                />
               )}
-            </tr>
-          </thead>
+            </div>
+            <div className="reaction-material__delete-header" />
+          </div>
 
           {contents}
-        </Table>
+        </div>
       )}
     </ReorderableMaterialContainer>
   );
@@ -326,6 +306,8 @@ function SolventsMaterialGroup({
   materials, materialGroup, getMaterialComponent, headIndex, reaction,
   dropSample, onDrop, onReorder
 }) {
+  const groupHeaders = { ...headers };
+  groupHeaders.group = 'Solvents';
   const addSampleButton = (
     <Button
       disabled={!permitOn(reaction)}
@@ -375,8 +357,7 @@ function SolventsMaterialGroup({
       {({
         contents, dropRef, canDrop, isOver
       }) => (
-        <Table
-          borderless
+        <div
           ref={dropRef}
           className={materialGroupClassNames({
             isEmpty: materials.length === 0,
@@ -384,42 +365,33 @@ function SolventsMaterialGroup({
             canDrop
           })}
         >
-          <colgroup>
-            <col style={{ width: '4%' }} />
-            <col style={{ width: '22%' }} />
-            <col style={{ width: '2%' }} />
-            <col style={{ width: '2%' }} />
-            <col style={{ width: '22%' }} />
-            <col style={{ width: '14%' }} />
-            <col style={{ width: '14%' }} />
-            <col style={{ width: '2%' }} />
-          </colgroup>
-          <thead>
-            <tr>
-              <th className="align-middle">{addSampleButton}</th>
-              <th className="d-flex flex-row align-items-center gap-2">
-                Solvents
-                <div className="flex-grow-1">
-                  <Select
-                    value={null}
-                    isDisabled={!permitOn(reaction)}
-                    options={solventOptions}
-                    placeholder="Add default"
-                    onChange={createDefaultSolventsForReaction}
-                  />
+          <div>
+            <div className="pseudo-table__row pseudo-table__row-header">
+              <div className="pseudo-table__cell pseudo-table__cell-title">
+                <div className="d-flex flex-row align-items-center gap-2">
+                  {groupHeaders.group}
+                  <div className="flex-grow-1">
+                    <Select
+                      value={null}
+                      isDisabled={!permitOn(reaction)}
+                      options={solventOptions}
+                      placeholder="Add default"
+                      onChange={createDefaultSolventsForReaction}
+                    />
+                  </div>
                 </div>
-              </th>
-              <th title="Dry Solvent" className="align-middle">DS</th>
-              <th className="align-middle">T/R</th>
-              <th className="align-middle">Label</th>
-              <th className="align-middle">Vol</th>
-              <th className="align-middle">Vol ratio</th>
-            </tr>
-          </thead>
-          <tbody>
-            {contents}
-          </tbody>
-        </Table>
+                {addSampleButton}
+              </div>
+              <div title="Dry Solvent" className="reaction-material__dry-solvent-header">DS</div>
+              <div className="reaction-material__target-header">{groupHeaders.tr}</div>
+              <div className="reaction-material__solvent-label-header">Label</div>
+              <div className="reaction-material__solvent-volume-header">Vol</div>
+              <div className="reaction-material__volume-ratio-header">Vol ratio</div>
+              <div className="reaction-material__delete-header" />
+            </div>
+          </div>
+          {contents}
+        </div>
       )}
     </ReorderableMaterialContainer>
   );
