@@ -17,6 +17,7 @@ ActiveRecord::Schema.define(version: 2025_15_05_141514) do
   enable_extension "pg_trgm"
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
+  enable_extension "rdkit"
   enable_extension "uuid-ossp"
 
   create_table "affiliations", id: :serial, force: :cascade do |t|
@@ -72,7 +73,6 @@ ActiveRecord::Schema.define(version: 2025_15_05_141514) do
     t.datetime "deleted_at"
     t.bigint "filesize"
     t.jsonb "attachment_data"
-    t.integer "edit_state", default: 0
     t.integer "con_state"
     t.jsonb "log_data"
     t.string "created_by_type"
@@ -277,6 +277,18 @@ ActiveRecord::Schema.define(version: 2025_15_05_141514) do
     t.index ["screen_id", "collection_id"], name: "index_collections_screens_on_screen_id_and_collection_id", unique: true
   end
 
+  create_table "collections_vessels", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.bigint "collection_id"
+    t.uuid "vessel_id"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "deleted_at"
+    t.index ["collection_id"], name: "index_collections_vessels_on_collection_id"
+    t.index ["deleted_at"], name: "index_collections_vessels_on_deleted_at"
+    t.index ["vessel_id", "collection_id"], name: "index_collections_vessels_on_vessel_id_and_collection_id", unique: true
+    t.index ["vessel_id"], name: "index_collections_vessels_on_vessel_id"
+  end
+
   create_table "collections_wellplates", id: :serial, force: :cascade do |t|
     t.integer "collection_id"
     t.integer "wellplate_id"
@@ -350,8 +362,8 @@ ActiveRecord::Schema.define(version: 2025_15_05_141514) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "parent_id"
-    t.text "plain_text_content"
     t.datetime "deleted_at"
+    t.text "plain_text_content"
     t.jsonb "log_data"
     t.index ["containable_type", "containable_id"], name: "index_containers_on_containable"
   end
@@ -1281,8 +1293,8 @@ ActiveRecord::Schema.define(version: 2025_15_05_141514) do
     t.float "molecular_mass"
     t.string "sum_formula"
     t.jsonb "solvent"
-    t.boolean "inventory_sample", default: false
     t.boolean "dry_solvent", default: false
+    t.boolean "inventory_sample", default: false
     t.jsonb "log_data"
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
     t.index ["identifier"], name: "index_samples_on_identifier"
@@ -1448,6 +1460,7 @@ ActiveRecord::Schema.define(version: 2025_15_05_141514) do
   create_table "third_party_apps", force: :cascade do |t|
     t.string "url"
     t.string "name", limit: 100, null: false
+    t.string "file_types", limit: 100
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["name"], name: "index_third_party_apps_on_name", unique: true
@@ -1509,7 +1522,6 @@ ActiveRecord::Schema.define(version: 2025_15_05_141514) do
     t.boolean "account_active"
     t.integer "matrix", default: 0
     t.jsonb "providers"
-    t.jsonb "inventory_labels", default: {}
     t.bigint "used_space", default: 0
     t.bigint "allocated_space", default: 0
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
@@ -1537,6 +1549,38 @@ ActiveRecord::Schema.define(version: 2025_15_05_141514) do
     t.integer "group_id"
     t.index ["group_id"], name: "index_users_groups_on_group_id"
     t.index ["user_id"], name: "index_users_groups_on_user_id"
+  end
+
+  create_table "vessel_templates", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name"
+    t.string "details"
+    t.string "material_details"
+    t.string "material_type"
+    t.string "vessel_type"
+    t.float "volume_amount"
+    t.string "volume_unit"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "deleted_at"
+    t.float "weight_amount"
+    t.string "weight_unit"
+    t.index ["deleted_at"], name: "index_vessel_templates_on_deleted_at"
+  end
+
+  create_table "vessels", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "vessel_template_id"
+    t.bigint "user_id"
+    t.string "name"
+    t.string "description"
+    t.string "short_label"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "deleted_at"
+    t.string "bar_code"
+    t.string "qr_code"
+    t.index ["deleted_at"], name: "index_vessels_on_deleted_at"
+    t.index ["user_id"], name: "index_vessels_on_user_id"
+    t.index ["vessel_template_id"], name: "index_vessels_on_vessel_template_id"
   end
 
   create_table "vocabularies", force: :cascade do |t|
@@ -1597,6 +1641,20 @@ ActiveRecord::Schema.define(version: 2025_15_05_141514) do
   add_foreign_key "report_templates", "attachments"
   add_foreign_key "sample_tasks", "samples"
   add_foreign_key "sample_tasks", "users", column: "creator_id"
+  create_function :user_instrument, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.user_instrument(user_id integer, sc text)
+       RETURNS TABLE(instrument text)
+       LANGUAGE sql
+      AS $function$
+         select distinct extended_metadata -> 'instrument' as instrument from containers c
+         where c.container_type='dataset' and c.id in
+         (select ch.descendant_id from containers sc,container_hierarchies ch, samples s, users u
+         where sc.containable_type in ('Sample','Reaction') and ch.ancestor_id=sc.id and sc.containable_id=s.id
+         and s.created_by = u.id and u.id = $1 and ch.generations=3 group by descendant_id)
+         and upper(extended_metadata -> 'instrument') like upper($2 || '%')
+         order by extended_metadata -> 'instrument' limit 10
+       $function$
+  SQL
   create_function :collection_shared_names, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.collection_shared_names(user_id integer, collection_id integer)
        RETURNS json
@@ -1610,6 +1668,45 @@ ActiveRecord::Schema.define(version: 2025_15_05_141514) do
        WHERE sync_collections_users.shared_by_id = $1 and sync_collections_users.collection_id = $2
        group by  sync_collections_users.id,users.type,users.name_abbreviation,users.first_name,users.last_name,sync_collections_users.permission_level
        ) as result
+       $function$
+  SQL
+  create_function :user_ids, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.user_ids(user_id integer)
+       RETURNS TABLE(user_ids integer)
+       LANGUAGE sql
+      AS $function$
+          select $1 as id
+          union
+          (select users.id from users inner join users_groups ON users.id = users_groups.group_id WHERE users.deleted_at IS null
+         and users.type in ('Group') and users_groups.user_id = $1)
+        $function$
+  SQL
+  create_function :user_as_json, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.user_as_json(user_id integer)
+       RETURNS json
+       LANGUAGE sql
+      AS $function$
+         select row_to_json(result) from (
+           select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
+           from users where id = $1
+         ) as result
+       $function$
+  SQL
+  create_function :shared_user_as_json, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.shared_user_as_json(in_user_id integer, in_current_user_id integer)
+       RETURNS json
+       LANGUAGE plpgsql
+      AS $function$
+         begin
+          if (in_user_id = in_current_user_id) then
+            return null;
+          else
+            return (select row_to_json(result) from (
+            select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
+            from users where id = $1
+            ) as result);
+          end if;
+          end;
        $function$
   SQL
   create_function :detail_level_for_sample, sql_definition: <<-'SQL'
@@ -1645,6 +1742,16 @@ ActiveRecord::Schema.define(version: 2025_15_05_141514) do
           return query select coalesce(i_detail_level_sample,0) detail_level_sample, coalesce(i_detail_level_wellplate,0) detail_level_wellplate;
       end;$function$
   SQL
+  create_function :group_user_ids, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.group_user_ids(group_id integer)
+       RETURNS TABLE(user_ids integer)
+       LANGUAGE sql
+      AS $function$
+             select id from users where type='Person' and id= $1
+             union
+             select user_id from users_groups where group_id = $1
+      $function$
+  SQL
   create_function :generate_notifications, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.generate_notifications(in_channel_id integer, in_message_id integer, in_user_id integer, in_user_ids integer[])
        RETURNS integer
@@ -1675,6 +1782,21 @@ ActiveRecord::Schema.define(version: 2025_15_05_141514) do
       	end case;
       	return in_message_id;
       end;$function$
+  SQL
+  create_function :labels_by_user_sample, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.labels_by_user_sample(user_id integer, sample_id integer)
+       RETURNS TABLE(labels text)
+       LANGUAGE sql
+      AS $function$
+         select string_agg(title::text, ', ') as labels from (select title from user_labels ul where ul.id in (
+           select d.list
+           from element_tags et, lateral (
+             select value::integer as list
+             from jsonb_array_elements_text(et.taggable_data  -> 'user_labels')
+           ) d
+           where et.taggable_id = $2 and et.taggable_type = 'Sample'
+         ) and (ul.access_level = 1 or (ul.access_level = 0 and ul.user_id = $1)) order by title  ) uls
+       $function$
   SQL
   create_function :generate_users_matrix, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.generate_users_matrix(in_user_ids integer[])
@@ -1711,58 +1833,6 @@ ActiveRecord::Schema.define(version: 2025_15_05_141514) do
       end
       $function$
   SQL
-  create_function :group_user_ids, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.group_user_ids(group_id integer)
-       RETURNS TABLE(user_ids integer)
-       LANGUAGE sql
-      AS $function$
-             select id from users where type='Person' and id= $1
-             union
-             select user_id from users_groups where group_id = $1
-      $function$
-  SQL
-  create_function :labels_by_user_sample, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.labels_by_user_sample(user_id integer, sample_id integer)
-       RETURNS TABLE(labels text)
-       LANGUAGE sql
-      AS $function$
-         select string_agg(title::text, ', ') as labels from (select title from user_labels ul where ul.id in (
-           select d.list
-           from element_tags et, lateral (
-             select value::integer as list
-             from jsonb_array_elements_text(et.taggable_data  -> 'user_labels')
-           ) d
-           where et.taggable_id = $2 and et.taggable_type = 'Sample'
-         ) and (ul.access_level = 1 or (ul.access_level = 0 and ul.user_id = $1)) order by title  ) uls
-       $function$
-  SQL
-  create_function :literatures_by_element, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.literatures_by_element(element_type text, element_id integer)
-       RETURNS TABLE(literatures text)
-       LANGUAGE sql
-      AS $function$
-         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2 
-         where l.literature_id = l2.id 
-         and l.element_type = $1 and l.element_id = $2
-       $function$
-  SQL
-  create_function :shared_user_as_json, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.shared_user_as_json(in_user_id integer, in_current_user_id integer)
-       RETURNS json
-       LANGUAGE plpgsql
-      AS $function$
-         begin
-          if (in_user_id = in_current_user_id) then
-            return null;
-          else
-            return (select row_to_json(result) from (
-            select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
-            from users where id = $1
-            ) as result);
-          end if;
-          end;
-       $function$
-  SQL
   create_function :update_users_matrix, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.update_users_matrix()
        RETURNS trigger
@@ -1786,40 +1856,14 @@ ActiveRecord::Schema.define(version: 2025_15_05_141514) do
       end
       $function$
   SQL
-  create_function :user_as_json, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.user_as_json(user_id integer)
-       RETURNS json
+  create_function :literatures_by_element, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.literatures_by_element(element_type text, element_id integer)
+       RETURNS TABLE(literatures text)
        LANGUAGE sql
       AS $function$
-         select row_to_json(result) from (
-           select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
-           from users where id = $1
-         ) as result
-       $function$
-  SQL
-  create_function :user_ids, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.user_ids(user_id integer)
-       RETURNS TABLE(user_ids integer)
-       LANGUAGE sql
-      AS $function$
-          select $1 as id
-          union
-          (select users.id from users inner join users_groups ON users.id = users_groups.group_id WHERE users.deleted_at IS null
-         and users.type in ('Group') and users_groups.user_id = $1)
-        $function$
-  SQL
-  create_function :user_instrument, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.user_instrument(user_id integer, sc text)
-       RETURNS TABLE(instrument text)
-       LANGUAGE sql
-      AS $function$
-         select distinct extended_metadata -> 'instrument' as instrument from containers c
-         where c.container_type='dataset' and c.id in
-         (select ch.descendant_id from containers sc,container_hierarchies ch, samples s, users u
-         where sc.containable_type in ('Sample','Reaction') and ch.ancestor_id=sc.id and sc.containable_id=s.id
-         and s.created_by = u.id and u.id = $1 and ch.generations=3 group by descendant_id)
-         and upper(extended_metadata -> 'instrument') like upper($2 || '%')
-         order by extended_metadata -> 'instrument' limit 10
+         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2 
+         where l.literature_id = l2.id 
+         and l.element_type = $1 and l.element_id = $2
        $function$
   SQL
   create_function :lab_record_layers_changes, sql_definition: <<-'SQL'
@@ -1837,6 +1881,24 @@ ActiveRecord::Schema.define(version: 2025_15_05_141514) do
           END;
           RETURN NEW;
       END;
+      $function$
+  SQL
+  create_function :set_samples_mol_rdkit, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.set_samples_mol_rdkit()
+       RETURNS trigger
+       LANGUAGE plpgsql
+      AS $function$
+      begin
+      	if (TG_OP='INSERT') then
+      		insert into rdkit.mols values (new.id, mol_from_ctab(encode(new.molfile, 'escape')::cstring));
+      	end if;
+      	if (TG_OP='UPDATE') then
+      		if new.MOLFILE <> old.MOLFILE then
+      			update rdkit.mols set m = mol_from_ctab(encode(new.molfile, 'escape')::cstring) where id = new.id;
+      		end if;
+      	end if;
+      	return new;
+      end
       $function$
   SQL
   create_function :calculate_dataset_space, sql_definition: <<-'SQL'
@@ -2431,55 +2493,72 @@ ActiveRecord::Schema.define(version: 2025_15_05_141514) do
   SQL
 
 
-  create_trigger :logidze_on_attachments, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_attachments BEFORE INSERT OR UPDATE ON public.attachments FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_chemicals, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_chemicals BEFORE INSERT OR UPDATE ON public.chemicals FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_containers, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_containers BEFORE INSERT OR UPDATE ON public.containers FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_elemental_compositions, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_elemental_compositions BEFORE INSERT OR UPDATE ON public.elemental_compositions FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
   create_trigger :logidze_on_reactions, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_reactions BEFORE INSERT OR UPDATE ON public.reactions FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :set_samples_mol_rdkit_trg, sql_definition: <<-SQL
+      CREATE TRIGGER set_samples_mol_rdkit_trg BEFORE INSERT OR UPDATE ON public.samples FOR EACH ROW EXECUTE FUNCTION set_samples_mol_rdkit()
   SQL
   create_trigger :logidze_on_samples, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_samples BEFORE INSERT OR UPDATE ON public.samples FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
-  create_trigger :update_users_matrix_trg, sql_definition: <<-SQL
-      CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE FUNCTION update_users_matrix()
-  SQL
-  create_trigger :logidze_on_reactions_samples, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_reactions_samples BEFORE INSERT OR UPDATE ON public.reactions_samples FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_research_plan_metadata, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_research_plan_metadata BEFORE INSERT OR UPDATE ON public.research_plan_metadata FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_research_plans, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_research_plans BEFORE INSERT OR UPDATE ON public.research_plans FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_research_plans_wellplates, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_research_plans_wellplates BEFORE INSERT OR UPDATE ON public.research_plans_wellplates FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_residues, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_residues BEFORE INSERT OR UPDATE ON public.residues FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_screens, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_screens BEFORE INSERT OR UPDATE ON public.screens FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  create_trigger :logidze_on_wells, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_wells BEFORE INSERT OR UPDATE ON public.wells FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
   create_trigger :logidze_on_wellplates, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_wellplates BEFORE INSERT OR UPDATE ON public.wellplates FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
-  create_trigger :logidze_on_wells, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_wells BEFORE INSERT OR UPDATE ON public.wells FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  create_trigger :logidze_on_screens, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_screens BEFORE INSERT OR UPDATE ON public.screens FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_residues, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_residues BEFORE INSERT OR UPDATE ON public.residues FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_elemental_compositions, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_elemental_compositions BEFORE INSERT OR UPDATE ON public.elemental_compositions FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_containers, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_containers BEFORE INSERT OR UPDATE ON public.containers FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_attachments, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_attachments BEFORE INSERT OR UPDATE ON public.attachments FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_research_plans, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_research_plans BEFORE INSERT OR UPDATE ON public.research_plans FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_reactions_samples, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_reactions_samples BEFORE INSERT OR UPDATE ON public.reactions_samples FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :update_users_matrix_trg, sql_definition: <<-SQL
+      CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE FUNCTION update_users_matrix()
+  SQL
+  create_trigger :logidze_on_research_plan_metadata, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_research_plan_metadata BEFORE INSERT OR UPDATE ON public.research_plan_metadata FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_research_plans_wellplates, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_research_plans_wellplates BEFORE INSERT OR UPDATE ON public.research_plans_wellplates FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_chemicals, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_chemicals BEFORE INSERT OR UPDATE ON public.chemicals FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
   create_trigger :lab_trg_layers_changes, sql_definition: <<-SQL
       CREATE TRIGGER lab_trg_layers_changes AFTER UPDATE ON public.layers FOR EACH ROW EXECUTE FUNCTION lab_record_layers_changes()
   SQL
 
+  create_view "v_samples_collections", sql_definition: <<-SQL
+      SELECT cols.id AS cols_id,
+      cols.user_id AS cols_user_id,
+      cols.sample_detail_level AS cols_sample_detail_level,
+      cols.wellplate_detail_level AS cols_wellplate_detail_level,
+      cols.shared_by_id AS cols_shared_by_id,
+      cols.is_shared AS cols_is_shared,
+      samples.id AS sams_id,
+      samples.name AS sams_name
+     FROM ((collections cols
+       JOIN collections_samples col_samples ON (((col_samples.collection_id = cols.id) AND (col_samples.deleted_at IS NULL))))
+       JOIN samples ON (((samples.id = col_samples.sample_id) AND (samples.deleted_at IS NULL))))
+    WHERE (cols.deleted_at IS NULL);
+  SQL
   create_view "literal_groups", sql_definition: <<-SQL
       SELECT lits.element_type,
       lits.element_id,
@@ -2522,19 +2601,5 @@ ActiveRecord::Schema.define(version: 2025_15_05_141514) do
       channels,
       users
     WHERE ((channels.id = messages.channel_id) AND (messages.id = notifications.message_id) AND (users.id = messages.created_by));
-  SQL
-  create_view "v_samples_collections", sql_definition: <<-SQL
-      SELECT cols.id AS cols_id,
-      cols.user_id AS cols_user_id,
-      cols.sample_detail_level AS cols_sample_detail_level,
-      cols.wellplate_detail_level AS cols_wellplate_detail_level,
-      cols.shared_by_id AS cols_shared_by_id,
-      cols.is_shared AS cols_is_shared,
-      samples.id AS sams_id,
-      samples.name AS sams_name
-     FROM ((collections cols
-       JOIN collections_samples col_samples ON (((col_samples.collection_id = cols.id) AND (col_samples.deleted_at IS NULL))))
-       JOIN samples ON (((samples.id = col_samples.sample_id) AND (samples.deleted_at IS NULL))))
-    WHERE (cols.deleted_at IS NULL);
   SQL
 end
