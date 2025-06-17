@@ -175,7 +175,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
 
   render() {
     const {
-      size, variant, disabled, label, unit, name, showInfoTooltipTotalVol, showInfoTooltipRequiredVol
+      size, variant, disabled, label, unit, name, showInfoTooltipTotalVol, showInfoTooltipRequiredVol, className
     } = this.props;
     const {
       showString, value, metricPrefix,
@@ -218,7 +218,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
       );
 
       return (
-        <div>
+        <div className={[className, 'numeral-input-with-units'].join(' ')}>
           {label && <Form.Label className="me-2">{label}</Form.Label>}
           {showInfoTooltipTotalVol && (
             <OverlayTrigger
@@ -300,7 +300,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
       );
     }
     return (
-      <div>
+      <div className={className}>
         {label && <Form.Label className="me-2">{label}</Form.Label>}
         <div>
           <Form.Control
@@ -322,6 +322,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
 }
 
 NumeralInputWithUnitsCompo.propTypes = {
+  className: PropTypes.string,
   onChange: PropTypes.func,
   onMetricsChange: PropTypes.func,
   unit: PropTypes.string,
@@ -339,6 +340,7 @@ NumeralInputWithUnitsCompo.propTypes = {
 };
 
 NumeralInputWithUnitsCompo.defaultProps = {
+  className: '',
   unit: 'n',
   value: 0,
   units: [],

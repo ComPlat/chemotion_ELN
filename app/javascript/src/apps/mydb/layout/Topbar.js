@@ -13,8 +13,8 @@ import UserAuth from "src/components/navigation/UserAuth";
 
 export default function Topbar() {
   return (
-    <div className="d-flex justify-content-between pe-3 topbar">
-      <div className="d-flex align-items-center gap-2">
+    <div className="d-flex justify-content-between pe-3 flex-wrap topbar">
+      <div className="d-flex align-items-center flex-wrap gap-2">
         <Search />
         <ManagingActions />
         <ButtonGroup className="d-flex align-items-center">

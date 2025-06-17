@@ -1,4 +1,7 @@
 .material-group {
+  @extend .pseudo-table;
+  container-name: material-group;
+  container-type: inline-size;
   &--can-drop {
     background-color: #e0f7fa;
   }
@@ -9,11 +12,9 @@
 }
 
 .material-row {
-  td {
-    padding: 1px 2px;
-    margin: 0px;
+  &.pseudo-table__row {
+    @extend .align-items-start;
   }
-
   .drag-source {
     cursor: move;
     vertical-align: middle;

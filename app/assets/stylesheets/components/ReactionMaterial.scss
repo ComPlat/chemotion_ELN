@@ -1,9 +1,77 @@
-.reaction-material-link {
-  @extend .align-middle;
-  @extend .d-inline-block;
-  @extend .text-truncate;
-  max-width: 80%;
-  a {
-    @extend .link;
+@mixin align-header-input($width) {
+  &-header,
+  &-input {
+    min-width: $width;
+    max-width: $width;
+  }
+}
+
+.reaction-material {
+  &__link {
+    @extend .align-middle;
+    @extend .d-inline-block;
+    @extend .text-truncate;
+    @extend .flex-grow-1;
+    a {
+      @extend .link;
+    }
+  }
+  &__iupac-name {
+    @extend .text-truncate;
+  }
+  &__volume-ratio,
+  &__equivalent,
+  &__yield {
+    @include align-header-input(4.5rem);
+  }
+  &__volume,
+  &__mass,
+  &__molarity {
+    @include align-header-input(clamp(5.5rem, 9cqw, 7.5rem));
+  }
+  &__amount {
+    @include align-header-input(
+      clamp(17.5rem, calc(27cqw + 1rem), 23.5rem)
+    ); // volume, mass and molarity + gaps
+    &-input {
+      @extend .d-flex;
+      @extend .gap-2;
+    }
+  }
+  &__solvent-label {
+    @include align-header-input(
+      clamp(20.2rem, calc(27cqw + 3.7rem), 26.2rem)
+    ); // amount, coefficient + gap
+  }
+  &__concentration,
+  &__solvent-volume {
+    @include align-header-input(clamp(6rem, 9cqw, 8rem));
+  }
+  &__coefficient {
+    @include align-header-input(2.2rem);
+  }
+  &__delete,
+  &__ref,
+  &__target,
+  &__dry-solvent {
+    @include align-header-input(2rem);
+  }
+}
+
+@container material-group (width < 51rem) {
+  .reaction-material {
+    &__amount-input {
+      flex-direction: column; // not extending bootstrap utilities in this context to avoid side effects
+      padding-bottom: 0.5rem; // not extending bootstrap utilities in this context to avoid side effects
+    }
+    &__amount,
+    &__volume,
+    &__mass,
+    &__molarity {
+      @include align-header-input(6rem);
+    }
+    &__solvent-label {
+      @include align-header-input(8.7rem);
+    } // amount, coefficient + gap
   }
 }
