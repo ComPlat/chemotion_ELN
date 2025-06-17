@@ -69,7 +69,7 @@ const SequenceAndPostTranslationalModificationForm = ({ readonly }) => {
 
   return (
     <>
-      <Row className="mb-4 align-items-end">
+      <Row className="mb-4">
         <h5 className="mb-3">Sequence modifications</h5>
         <Col>
           {formHelper.checkboxInput(`${fieldPrefixSequence}.modification_n_terminal`, 'N-terminal', disabled)}
@@ -92,7 +92,7 @@ const SequenceAndPostTranslationalModificationForm = ({ readonly }) => {
       </Row>
       {
         (proteinSequenceModification?.modification_n_terminal || proteinSequenceModification?.modification_c_terminal) && (
-          <Row className="mb-4 align-items-end">
+          <Row className="mb-4">
             {
               proteinSequenceModification?.modification_n_terminal && (
                 <Col>
@@ -122,7 +122,7 @@ const SequenceAndPostTranslationalModificationForm = ({ readonly }) => {
       }
       {
         (proteinSequenceModification?.modification_deletion || proteinSequenceModification?.modification_insertion) && (
-          <Row className="mb-4 align-items-end">
+          <Row className="mb-4">
             {
               proteinSequenceModification?.modification_insertion && (
                 <Col>
@@ -150,7 +150,7 @@ const SequenceAndPostTranslationalModificationForm = ({ readonly }) => {
       }
       {
         (proteinSequenceModification?.modification_mutation || proteinSequenceModification?.modification_other) && (
-          <Row className="mb-4 align-items-end">
+          <Row className="mb-4">
             {
               proteinSequenceModification?.modification_mutation && (
                 <Col>
@@ -177,7 +177,7 @@ const SequenceAndPostTranslationalModificationForm = ({ readonly }) => {
         )
       }
 
-      <Row className="mb-4 align-items-end">
+      <Row className="mb-4">
         <h5 className="mb-3">Posttranslational modifications</h5>
         <Col>
           {formHelper.checkboxInput(`${fieldPrefixPostTransitional}.phosphorylation_enabled`, 'Phosphorylation', disabled)}

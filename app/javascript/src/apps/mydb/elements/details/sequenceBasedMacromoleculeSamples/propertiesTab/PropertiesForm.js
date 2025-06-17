@@ -230,11 +230,11 @@ const PropertiesForm = ({ readonly }) => {
             General description
           </Accordion.Header>
           <Accordion.Body>
-            <Row className="mb-4 align-items-end">
+            <Row className="mb-4">
               <Col>
                 {
                   formHelper.selectInput(
-                    'sequence_based_macromolecule.sbmm_type', 'Type', sbmmType, disabled, ''
+                    'sequence_based_macromolecule.sbmm_type', 'Type', sbmmType, disabled, '', true
                   )
                 }
               </Col>
@@ -249,7 +249,7 @@ const PropertiesForm = ({ readonly }) => {
                 {formHelper.selectInput(
                   'sequence_based_macromolecule.uniprot_derivation',
                   derivationLabelWithIcon,
-                  uniprotDerivation, (sbmmSample.isNew ? false : true), 'Can only be changed during creation'
+                  uniprotDerivation, (sbmmSample.isNew ? false : true), 'Can only be changed during creation', true
                 )}
               </Col>
               <Col className="col-2">
@@ -310,7 +310,7 @@ const PropertiesForm = ({ readonly }) => {
               </Accordion.Header>
               <Accordion.Body>
                 <h5 className="mb-3">Application</h5>
-                <Row className="mb-4 align-items-end">
+                <Row className="mb-4">
                   <Col>
                     {formHelper.selectInput(
                       'function_or_application', 'Function or application', sampleFunctionOrApplication, disabled, '', ''
@@ -319,7 +319,7 @@ const PropertiesForm = ({ readonly }) => {
                 </Row>
 
                 <h5 className="mb-3">Sample stocks characteristics</h5>
-                <Row className="mb-4 align-items-end">
+                <Row className="mb-4">
                   <Col>
                     {formHelper.unitInput('concentration_value', 'Concentration', 'concentration', disabled, '')}
                   </Col>
@@ -345,7 +345,7 @@ const PropertiesForm = ({ readonly }) => {
                 </Row>
 
                 <h5 className="mb-3">Sample characteristics</h5>
-                <Row className="mb-4 align-items-end">
+                <Row className="mb-4">
                   <Col>
                     {formHelper.unitInput('volume_as_used_value', 'Volume as used', 'volumes', disabled, '')}
                   </Col>

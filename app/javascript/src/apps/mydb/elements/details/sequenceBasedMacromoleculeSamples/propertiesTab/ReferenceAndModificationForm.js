@@ -197,7 +197,7 @@ const ReferenceAndModificationForm = ({ ident, readonly }) => {
         </Accordion.Header>
         <Accordion.Body>
           <h5 className="mb-3">Identifiers and sequence characteristics:</h5>
-          <Row className="mb-4 align-items-end">
+          <Row className="mb-4">
             {ident === 'reference' && (
               <Col>{formHelper.textInput(`${fieldPrefix}.primary_accession`, 'UniProt number', disabled, '')}</Col>
             )
@@ -208,9 +208,9 @@ const ReferenceAndModificationForm = ({ ident, readonly }) => {
                 <Col>{formHelper.textInput(`${fieldPrefix}.own_identifier`, 'Own ID', disabled, '')}</Col>
               )
             }
-            <Col>{formHelper.textInput(`${fieldPrefix}.short_name`, 'Short name', disabled, '')}</Col>
+            <Col>{formHelper.textInput(`${fieldPrefix}.short_name`, 'Short name', disabled, '', true)}</Col>
           </Row>
-          <Row className="mb-4 align-items-end">
+          <Row className="mb-4">
             <Col>
               {
                 formHelper.readonlyInput(
@@ -224,10 +224,10 @@ const ReferenceAndModificationForm = ({ ident, readonly }) => {
               )}
             </Col>
           </Row>
-          <Row className="mb-4 align-items-end">
+          <Row className="mb-4">
             <Col>{formHelper.textInput(`${fieldPrefix}.full_name`, 'Full name', disabled, '')}</Col>
           </Row>
-          <Row className="mb-4 align-items-end">
+          <Row className="mb-4">
             {
               visibleForModification && (
                 <Col>{formHelper.textInput(`${fieldPrefix}.pdb_doi`, 'Pdb DOI', disabled, '')}</Col>
@@ -242,7 +242,7 @@ const ReferenceAndModificationForm = ({ ident, readonly }) => {
           </Row>
           {
             ident === 'reference' && (
-              <Row className="mb-4 align-items-end">
+              <Row className="mb-4">
                 <Col>{formHelper.textInput(`${fieldPrefix}.link_pdb`, 'Link pdb', disabled, '')}</Col>
               </Row>
             )
