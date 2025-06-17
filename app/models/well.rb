@@ -54,4 +54,11 @@ class Well < ApplicationRecord
     row = ('A'..'ZZ').to_a[position_y - 1]
     "#{row}#{format('%02i', position_x)}"
   end
+
+  validates :color_code,
+    format: {
+      with: /\A#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})\z/,
+      message: 'must be a valid hex color code',
+    },
+    allow_blank: true
 end

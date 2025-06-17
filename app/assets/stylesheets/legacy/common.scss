@@ -233,8 +233,17 @@
   border-radius: 4px;
   transition: background-color 0.3s ease;
 }
-.my-circle-picker .circle-picker div[style] {
-  outline: 1px solid transparent !important;
-  outline-offset: 2px !important;
+
+.color-preview-box {
+  height: 2.40rem;
+  width: 2rem;
+  border-top-left-radius: 0.375rem;
+  border-bottom-left-radius: 0.375rem;
+  border: 1px solid #ccc;
+  border-right: 0px;
 }
 
+.rounded-corners .chemotion-select__control {
+  border-bottom-left-radius: 0px;
+  border-top-left-radius: 0px;
+}

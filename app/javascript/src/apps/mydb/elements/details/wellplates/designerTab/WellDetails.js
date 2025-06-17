@@ -5,14 +5,15 @@ import {
   Form,
   InputGroup,
   Modal,
-  Row
+  Row,
+  Col
 } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import PropTypes from 'prop-types';
 import { Select } from 'src/components/common/Select';
-import { CirclePicker } from 'react-color';
 import { wellplateShowSample } from 'src/utilities/routesUtils';
 import Aviator from 'aviator';
+import { colorOptions } from 'src/components/staticDropdownOptions/options';
 
 const navigateToSample = (sample) => {
   const { params, uri } = Aviator.getCurrentRequest();
@@ -129,45 +130,38 @@ const labelSelection = (well, onChange) => {
   );
 };
 
-const colorPicker = (well, onChange, activeColor, setActiveColor) => {
-  const customCSS = `
-    .my-circle-picker .circle-picker div[title="${activeColor}"] {
-      outline: 1px solid ${activeColor} !important;
-    }
-  `;
-  return (
-    <div className="mt-3">
-      <style>{customCSS}</style>
-      <Form.Group as={Row} controlId="formColorSelectorDisplay">
-        <Form.Label as="h4">Select Color</Form.Label>
-        <InputGroup>
-          <InputGroup.Text style={{ backgroundColor: well.color_code }} />
-          <Form.Control
-            className="input-sm"
-            type="text"
-            readOnly
-            value={well.color_code || ''}
-          />
-        </InputGroup>
-      </Form.Group>
-      <Form.Group controlId="formHorizontalPicker" className="my-3">
-        <div className="my-circle-picker">
-          <CirclePicker
-            circleSize={15}
-            width="100%"
-            value={activeColor}
-            onChangeComplete={(color) => {
-              const hex = color.hex;
-              well.color_code = activeColor === hex ? null : hex;
-              setActiveColor(activeColor === hex ? null : hex);
-              onChange(well);
-            }}
-          />
-        </div>
-      </Form.Group>
-    </div>
-  )
-};
+const colorPicker = (well, onChange, activeColor, setActiveColor) => (
+  <div className="mt-3">
+    <Form.Group as={Row} controlId="formColorSelectorDisplay">
+      <Form.Label as="h4">Select Color</Form.Label>
+      <Col xs="auto" className="pe-0">
+        <div className="color-preview-box" style={{ backgroundColor: activeColor || "#fff" }} />
+      </Col>
+      <Col className="ps-0">
+        <Select
+          className="rounded-corners"
+          name="colorPicker"
+          isClearable
+          options={colorOptions}
+          value={colorOptions.find(({ value }) => value === activeColor) || null}
+          onChange={(option) => {
+            const hex = option?.value || null;
+            const newColor = activeColor === hex ? null : hex;
+            setActiveColor(newColor);
+            onChange({ ...well, color_code: newColor });
+          }}
+          styles={{
+            menuList: (base) => ({
+              ...base,
+              maxHeight: '200px',
+            }),
+          }}
+          placeholder="Choose a color..."
+        />
+      </Col>
+    </Form.Group>
+  </div>
+)
 
 const WellDetails = ({ well, readoutTitles, handleClose, onChange }) => {
   const [activeColor, setActiveColor] = useState(well.color_code || null);
