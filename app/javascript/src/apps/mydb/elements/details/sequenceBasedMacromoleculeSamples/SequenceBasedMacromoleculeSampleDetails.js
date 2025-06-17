@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import {
-  Button, Tabs, Tab, Tooltip, OverlayTrigger, Card
+  Alert, Button, Tabs, Tab, Tooltip, OverlayTrigger, Card
 } from 'react-bootstrap';
 
 import PropertiesForm from './propertiesTab/PropertiesForm';
@@ -54,7 +54,7 @@ const SequenceBasedMacromoleculeSampleDetails = () => {
   useEffect(() => {
     const items = document.getElementsByClassName('border-danger');
     if (Object.keys(sbmmSample.errors).length >= 1 && Object.keys(items).length >= 1) {
-      document.getElementById('detail-body').scrollTo({
+      document.getElementById('detail-container').scrollTo({
         top: items[0].offsetTop,
         behavior: 'smooth'
       });
@@ -153,7 +153,7 @@ const SequenceBasedMacromoleculeSampleDetails = () => {
 
     return (
       <a href={linkUniprot} className="pe-auto" target="_blank">
-        <img src="/images/wild_card/uniprot-logo.svg" className="uniprot-logo-white" />
+        <img src="/images/wild_card/uniprot-logo.svg" className="uniprot-logo" />
       </a>
     );
   }
@@ -240,24 +240,22 @@ const SequenceBasedMacromoleculeSampleDetails = () => {
           </Tabs>
         </div>
         <CommentModal element={sbmmSample} />
-      </Card.Body>
-      <Card.Footer>
-        <div className="gap-2">
-          <Button variant="primary" onClick={() => DetailActions.close(deviceDescription)}>
-            Close
-          </Button>
-          <Button variant="warning" disabled={!deviceDescriptionIsValid()} onClick={() => handleSubmit()}>
-            {submitLabel}
-          </Button>
-          {downloadAnalysisButton()}
-        </div>
         {
           Object.keys(sbmmSample.errors).length >= 1 && (
-            <div className="mt-2 text-danger">
+            <Alert variant="danger">
               {`This element cannot be ${submitLabel.toLowerCase()}d because not all fields are filled in correctly`}
-            </div>
+            </Alert>
           )
         }
+      </Card.Body>
+      <Card.Footer>
+        <Button variant="primary" onClick={() => DetailActions.close(sbmmSample)}>
+          Close
+        </Button>
+        <Button variant="warning" onClick={() => handleSubmit()}>
+          {submitLabel}
+        </Button>
+        {downloadAnalysisButton()}
       </Card.Footer>
     </Card>
   );

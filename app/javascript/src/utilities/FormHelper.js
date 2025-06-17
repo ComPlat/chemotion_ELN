@@ -118,7 +118,7 @@ const changeUnit = (store, element, units, unitField, unitValue) => {
 
 const initFormHelper = (element, store) => {
   const formHelper = {
-    textInput: (field, label, disabled, info) => {
+    textInput: (field, label, disabled, info, required = false) => {
       const value = elementField(element, field);
       return (
         <Form.Group key={`${store.key_prefix}-${label}-group`}>
@@ -129,9 +129,12 @@ const initFormHelper = (element, store) => {
             key={`${store.key_prefix}-${field}`}
             value={value || ''}
             disabled={disabled}
+            required={required}
+            controlId={`validation-${field}`}
             isInvalid={!value && errorMessage(element, field)}
             onChange={(event) => formHelper.onChange(field, event.target.value)}
           />
+          <Form.Control.Feedback type="invalid">{errorMessage(element, field)}</Form.Control.Feedback>
         </Form.Group>
       );
     },
@@ -151,7 +154,7 @@ const initFormHelper = (element, store) => {
       );
     },
 
-    selectInput: (field, label, options, disabled, info) => {
+    selectInput: (field, label, options, disabled, info, required = false) => {
       const elementValue = elementField(element, field);
       const relatedOptions = optionsByRelatedField(store, element, field, options);
       let value = options.find((o) => { return o.value == elementValue });
@@ -167,17 +170,21 @@ const initFormHelper = (element, store) => {
             value={value}
             isClearable={true}
             isDisabled={disabled}
+            required={required}
             classNames={{
               control: (state) =>
                 !state.hasValue && errorMessage(element, field) ? 'border-danger' : '',
             }}
             onChange={(event) => formHelper.onChange(field, (event?.value || event?.label || ''))}
           />
+          {errorMessage(element, field) && (
+            <div className="text-danger">{errorMessage(element, field)}</div>
+          )}
         </Form.Group>
       );
     },
 
-    numberInput: (field, label, disabled, info) => {
+    numberInput: (field, label, disabled, info, required = false) => {
       const value = elementField(element, field);
       return (
         <Form.Group key={`${store.key_prefix}-${label}`}>
@@ -188,9 +195,11 @@ const initFormHelper = (element, store) => {
             key={`${store.key_prefix}-${field}`}
             value={numberValue(value)}
             disabled={disabled}
+            required={required}
             isInvalid={!value && errorMessage(element, field)}
             onChange={(event) => formHelper.onChange(field, event.target.value)}
           />
+          <Form.Control.Feedback type="invalid">{errorMessage(element, field)}</Form.Control.Feedback>
         </Form.Group>
       );
     },
@@ -212,7 +221,7 @@ const initFormHelper = (element, store) => {
       );
     },
 
-    textareaInput: (field, label, rows, disabled, info) => {
+    textareaInput: (field, label, rows, disabled, info, required = false) => {
       const value = elementField(element, field);
       return (
         <Form.Group key={`${store.key_prefix}-${label}`}>
@@ -224,9 +233,11 @@ const initFormHelper = (element, store) => {
             value={value || ''}
             rows={rows}
             disabled={disabled}
+            required={required}
             isInvalid={!value && errorMessage(element, field)}
             onChange={(event) => formHelper.onChange(field, event.target.value)}
           />
+          <Form.Control.Feedback type="invalid">{errorMessage(element, field)}</Form.Control.Feedback>
         </Form.Group>
       );
     },
@@ -253,7 +264,7 @@ const initFormHelper = (element, store) => {
       );
     },
 
-    unitInput: (field, label, option_type, disabled, info) => {
+    unitInput: (field, label, option_type, disabled, info, required = false) => {
       const value = numberValue(elementField(element, field));
       const units = unitSystems[option_type];
       if (!units) { return null; }
@@ -287,12 +298,14 @@ const initFormHelper = (element, store) => {
               key={`${store.key_prefix}-${field}`}
               value={value || ''}
               disabled={disabled}
+              required={required}
               isInvalid={!value && errorMessage(element, field)}
               onChange={(event) => formHelper.onChange(field, event.target.value, 'number')}
               className="flex-grow-1"
             />
             {unitTextOrButton}
           </InputGroup>
+          <Form.Control.Feedback type="invalid">{errorMessage(element, field)}</Form.Control.Feedback>
         </Form.Group>
       );
     },
