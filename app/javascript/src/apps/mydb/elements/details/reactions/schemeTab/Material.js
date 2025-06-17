@@ -20,9 +20,10 @@ import { permitCls, permitOn } from 'src/components/common/uis';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 import { calculateFeedstockMoles } from 'src/utilities/UnitsConversion';
 import cs from 'classnames';
+import DragHandle from 'src/components/common/DragHandle';
 
 const notApplicableInput = () => (
-  <td>
+  <div>
     <Form.Control
       size="sm"
       type="text"
@@ -30,18 +31,18 @@ const notApplicableInput = () => (
       disabled
       className='text-align-center'
     />
-  </td>
+  </div>
 );
 
 const iupacNameTooltip = material => (
   <Tooltip id="iupac_name_tooltip" className="left_tooltip">
     <table>
-      <tbody>
-        <tr><td>IUPAC&#58;&nbsp;</td><td style={{ wordBreak: 'break-all' }}>{material.molecule.iupac_name || ''}</td></tr>
-        <tr><td>Name&#58;&nbsp;</td><td style={{ wordBreak: 'break-all' }}>{material.name || ''}</td></tr>
-        <tr><td>Ext.Label&#58;&nbsp;</td><td style={{ wordBreak: 'break-all' }}>{material.external_label || ''}</td></tr>
-        <tr><td>Short Label&#58;&nbsp;</td><td style={{ wordBreak: 'break-all' }}>{material.short_label || ''}</td></tr>
-      </tbody>
+      <div>
+        <div><div>IUPAC&#58;&nbsp;</div><div style={{ wordBreak: 'break-all' }}>{material.molecule.iupac_name || ''}</div></div>
+        <div><div>Name&#58;&nbsp;</div><div style={{ wordBreak: 'break-all' }}>{material.name || ''}</div></div>
+        <div><div>Ext.Label&#58;&nbsp;</div><div style={{ wordBreak: 'break-all' }}>{material.external_label || ''}</div></div>
+        <div><div>Short Label&#58;&nbsp;</div><div style={{ wordBreak: 'break-all' }}>{material.short_label || ''}</div></div>
+      </div>
     </table>
   </Tooltip>);
 
@@ -70,7 +71,7 @@ class Material extends Component {
     ElementActions.showReactionMaterial({ sample, reaction });
   }
 
-  materialVolume(material) {
+  materialVolume(material, className) {
     if (material.contains_residues) { return notApplicableInput(); }
     const { density, molarity_value, molarity_unit, has_density, has_molarity } = material;
     const tooltip = has_density || has_molarity ?
@@ -83,71 +84,74 @@ class Material extends Component {
 
     const metricPrefixes = ['m', 'n', 'u'];
     const metric = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[1]) > -1) ? material.metrics[1] : 'm';
-
     return (
-      <td>
-        <OverlayTrigger placement="top" overlay={tooltip}>
-          <div>
-            <NumeralInputWithUnitsCompo
-              value={material.amount_l}
-              unit="l"
-              metricPrefix={metric}
-              metricPrefixes={metricPrefixes}
-              precision={3}
-              disabled={!permitOn(this.props.reaction)
-                || ((this.props.materialGroup !== 'products')
-                && !material.reference && this.props.lockEquivColumn)
-                || material.gas_type === 'gas'}
-              onChange={e => this.handleAmountUnitChange(e, material.amount_l)}
-              onMetricsChange={this.handleMetricsChange}
-              variant={material.amount_unit === 'l' ? 'primary' : 'light'}
-              size="sm"
-            />
-          </div>
-        </OverlayTrigger>
-      </td>
+      <OverlayTrigger placement="top" overlay={tooltip}>
+        <div>
+          <NumeralInputWithUnitsCompo
+            className={className}
+            value={material.amount_l}
+            unit="l"
+            metricPrefix={metric}
+            metricPrefixes={metricPrefixes}
+            precision={3}
+            disabled={!permitOn(this.props.reaction)
+              || ((this.props.materialGroup !== 'products')
+              && !material.reference && this.props.lockEquivColumn)
+              || material.gas_type === 'gas'}
+            onChange={e => this.handleAmountUnitChange(e, material.amount_l)}
+            onMetricsChange={this.handleMetricsChange}
+            variant={material.amount_unit === 'l' ? 'primary' : 'light'}
+            size="sm"
+          />
+        </div>
+      </OverlayTrigger>
     );
   }
 
   materialLoading(material, showLoadingColumn) {
     if (!showLoadingColumn) {
       return false;
-    } else if (!material.contains_residues) {
+    }
+    if (!material.contains_residues) {
       return notApplicableInput();
     }
 
     return (
-      <td>
-        <NumeralInputWithUnitsCompo
-          value={material.loading}
-          unit="mmol/g"
-          metricPrefix="n"
-          metricPrefixes={['n']}
-          variant={material.error_loading ? 'error' : 'primary'}
-          size="sm"
-          precision={3}
-          disabled={!permitOn(this.props.reaction) || (this.props.materialGroup === 'products' || (!material.reference && this.props.lockEquivColumn))}
-          onChange={loading => this.handleLoadingChange(loading)}
-        />
-      </td>
+      <NumeralInputWithUnitsCompo
+        value={material.loading}
+        unit="mmol/g"
+        metricPrefix="n"
+        metricPrefixes={['n']}
+        variant={material.error_loading ? 'error' : 'primary'}
+        size="sm"
+        precision={3}
+        disabled={
+          !permitOn(this.props.reaction)
+            || (this.props.materialGroup === 'products'
+            || (!material.reference && this.props.lockEquivColumn))
+        }
+        onChange={loading => this.handleLoadingChange(loading)}
+      />
     );
   }
 
   materialRef(material) {
+    const { materialGroup, reaction } = this.props;
     return (
-      this.props.materialGroup === 'products'
-        ? <td />
-        : <td>
-          <Form.Check
-            type='radio'
-            disabled={!permitOn(this.props.reaction)}
-            name="reference"
-            checked={material.reference}
-            onChange={e => this.handleReferenceChange(e)}
-            size="sm"
-            className='m-1'
-          />
-        </td>
+      <div className="reaction-material__ref-input">
+        {materialGroup !== 'products'
+          && (
+            <Form.Check
+              type="radio"
+              disabled={!permitOn(reaction)}
+              name="reference"
+              checked={material.reference}
+              onChange={(e) => this.handleReferenceChange(e)}
+              size="sm"
+              className="m-1"
+            />
+          )}
+      </div>
     );
   }
 
@@ -188,16 +192,14 @@ class Material extends Component {
     const allowedConversionRateValue = material.conversion_rate && condition
       ? 100 : material.conversion_rate;
     return (
-      <div>
-        <NumeralInputWithUnitsCompo
-          precision={4}
-          value={allowedConversionRateValue || 'n.d.'}
-          unit="%"
-          disabled={!permitOn(reaction)}
-          onChange={(e) => this.handleConversionRateChange(e)}
-          size="sm"
-        />
-      </div>
+      <NumeralInputWithUnitsCompo
+        precision={4}
+        value={allowedConversionRateValue || 'n.d.'}
+        unit="%"
+        disabled={!permitOn(reaction)}
+        onChange={(e) => this.handleConversionRateChange(e)}
+        size="sm"
+      />
     );
   }
 
@@ -221,6 +223,7 @@ class Material extends Component {
             )}
           >
             <Form.Control
+              className="reaction-material__yield-input"
               name="yield"
               type="text"
               bsClass="bs-form--compact form-control"
@@ -236,16 +239,20 @@ class Material extends Component {
   }
 
   equivalentOrYield(material) {
-    const { materialGroup } = this.props;
+    const { materialGroup, reaction, lockEquivColumn } = this.props;
     if (materialGroup === 'products') {
       return this.yieldOrConversionRate(material);
     }
     return (
       <NumeralInputWithUnitsCompo
+        className="reaction-material__equivalent-input"
         size="sm"
         precision={4}
         value={material.equivalent}
-        disabled={!permitOn(this.props.reaction) || ((((material.reference || false) && material.equivalent) !== false) || this.props.lockEquivColumn)}
+        disabled={!permitOn(reaction)
+          || ((((material.reference
+          || false) && material.equivalent) !== false)
+          || lockEquivColumn)}
         onChange={e => this.handleEquivalentChange(e)}
       />
     );
@@ -256,7 +263,6 @@ class Material extends Component {
     const { value, unit, isTimeField } = this.getFieldData(field, gasPhaseData);
 
     const style = { maxWidth: '5px', paddingRight: '3px' };
-    const colSpan = isTimeField ? '2' : '1';
     const readOnly = this.isFieldReadOnly(field);
 
     const updateValue = this.getFormattedValue(value);
@@ -277,7 +283,7 @@ class Material extends Component {
     );
 
     return (
-      <td colSpan={colSpan} style={style}>
+      <div style={style}>
         <div>
           {(value === 'n.d' || !value) && !noSwitchUnits.includes(unit) ? (
             <OverlayTrigger
@@ -290,7 +296,7 @@ class Material extends Component {
             <div>{inputComponent}</div>
           )}
         </div>
-      </td>
+      </div>
     );
   }
 
@@ -323,14 +329,13 @@ class Material extends Component {
 
   gaseousProductRow(material) {
     return (
-      <tr>
-        <td colSpan="4" />
+      <div>
         {this.gaseousInputFields('time', material)}
         {this.gaseousInputFields('temperature', material)}
         {this.gaseousInputFields('part_per_million', material)}
         {this.gaseousInputFields('turnover_number', material)}
         {this.gaseousInputFields('turnover_frequency', material)}
-      </tr>
+      </div>
     );
   }
 
@@ -593,6 +598,7 @@ class Material extends Component {
       >
         <div>
           <NumeralInputWithUnitsCompo
+            className="reaction-material__mass-input"
             value={material.amount_g}
             unit="g"
             metricPrefix={metric}
@@ -605,7 +611,7 @@ class Material extends Component {
             }
             onChange={(e) => this.debounceHandleAmountUnitChange(e, material.amount_g)}
             onMetricsChange={this.handleMetricsChange}
-            variant={material.error_mass ? 'danger' : massBsStyle}
+            variant={material.error_mass ? 'error' : massBsStyle}
             size="sm"
             name="molecular-weight"
           />
@@ -618,16 +624,14 @@ class Material extends Component {
     const { dragRef } = this.props;
 
     return (
-      <td ref={dragRef} className="text-center drag-source">
-        <span className="text-info fa fa-arrows" />
-      </td>
+      <DragHandle ref={dragRef} />
     );
   }
 
   rowClassNames() {
     const { isDragging, isOver, canDrop } = this.props;
     return cs(
-      'material-row',
+      'material-row pseudo-table__row',
       {
         'material-row--is-dragging': isDragging,
         'material-row--is-over': isOver,
@@ -659,95 +663,66 @@ class Material extends Component {
     const metricPrefixesMolConc = ['m', 'n'];
     const metricMolConc = (material.metrics && material.metrics.length > 3 && metricPrefixes.indexOf(material.metrics[3]) > -1) ? material.metrics[3] : 'm';
 
-    const inputsStyle = {
-      paddingRight: 2,
-      paddingLeft: 2,
-    };
-
     return (
-      <tbody ref={dropRef} className={this.rowClassNames()}>
-        <tr className="m-1 p-1">
-          {this.dragHandle()}
-
-          <td style={{ width: '22%', maxWidth: '50px' }}>
-            {this.materialNameWithIupac(material)}
-          </td>
-
-          {this.materialRef(material)}
-
-          <td style={{ minWidth: '30px', inputsStyle }}>
-            {this.switchTargetReal()}
-          </td>
-
-          <td style={{ minWidth: '35px' }}>
-            <OverlayTrigger
-              placement="top"
-              overlay={<Tooltip id="reaction-coefficient-info"> Reaction Coefficient </Tooltip>}>
-              <div>
-                <NumeralInputWithUnitsCompo
-                  size="sm"
-                  value={material.coefficient ?? 1}
-                  onChange={this.handleCoefficientChange}
-                  name="coefficient"
-                />
-              </div>
-            </OverlayTrigger>
-          </td>
-
-          <td>
-            {this.amountField(material, metricPrefixes, reaction, massBsStyle, metric)}
-          </td>
-
-          {this.materialVolume(material)}
-
-          <td>
+      <div ref={dropRef} className={this.rowClassNames()}>
+        {this.dragHandle()}
+        {this.materialNameWithIupac(material)}
+        {this.materialRef(material)}
+        {this.switchTargetReal()}
+        <OverlayTrigger
+          placement="top"
+          overlay={<Tooltip id="reaction-coefficient-info"> Reaction Coefficient </Tooltip>}>
+          <div>
             <NumeralInputWithUnitsCompo
-              value={material.amount_mol}
-              unit="mol"
-              metricPrefix={metricMol}
-              metricPrefixes={metricPrefixes}
-              precision={4}
-              disabled={!permitOn(reaction)
-                || (this.props.materialGroup === 'products'
-                || (!material.reference && this.props.lockEquivColumn))}
-              onChange={e => this.handleAmountUnitChange(e, material.amount_mol)}
-              onMetricsChange={this.handleMetricsChange}
-              variant={material.amount_unit === 'mol' ? 'primary' : 'light'}
+              className="reaction-material__coefficient-input"
               size="sm"
+              value={material.coefficient ?? 1}
+              onChange={this.handleCoefficientChange}
+              name="coefficient"
             />
-          </td>
-
-          {this.materialLoading(material, showLoadingColumn)}
-
-          <td className="text-nowrap">
-            <NumeralInputWithUnitsCompo
-              value={material.concn}
-              unit="mol/l"
-              metricPrefix={metricMolConc}
-              metricPrefixes={metricPrefixesMolConc}
-              precision={4}
-              disabled
-              onChange={e => this.handleAmountUnitChange(e, material.concn)}
-              onMetricsChange={this.handleMetricsChange}
-              size="sm"
-              className="w-100"
-            />
-          </td>
-
-          <td>
-            {this.equivalentOrYield(material)}
-          </td>
-          <td>
-            <Button
-              disabled={!permitOn(reaction)}
-              variant="danger"
-              size="sm"
-              onClick={() => deleteMaterial(material)}
-            >
-              <i className="fa fa-trash-o" />
-            </Button>
-          </td>
-        </tr>
+          </div>
+        </OverlayTrigger>
+        <div className="reaction-material__amount-input">
+          {this.amountField(material, metricPrefixes, reaction, massBsStyle, metric)}
+          {this.materialVolume(material, 'reaction-material__volume-input')}
+          <NumeralInputWithUnitsCompo
+            value={material.amount_mol}
+            className="reaction-material__molarity-input"
+            unit="mol"
+            metricPrefix={metricMol}
+            metricPrefixes={metricPrefixes}
+            precision={4}
+            disabled={!permitOn(reaction)
+              || (this.props.materialGroup === 'products'
+              || (!material.reference && this.props.lockEquivColumn))}
+            onChange={e => this.handleAmountUnitChange(e, material.amount_mol)}
+            onMetricsChange={this.handleMetricsChange}
+            variant={material.amount_unit === 'mol' ? 'primary' : 'light'}
+            size="sm"
+          />
+        </div>
+        <NumeralInputWithUnitsCompo
+          value={material.concn}
+          className="reaction-material__concentration-input"
+          unit="mol/l"
+          metricPrefix={metricMolConc}
+          metricPrefixes={metricPrefixesMolConc}
+          precision={4}
+          disabled
+          onChange={e => this.handleAmountUnitChange(e, material.concn)}
+          onMetricsChange={this.handleMetricsChange}
+          size="sm"
+        />
+        {this.equivalentOrYield(material)}
+        <Button
+          className="reaction-material__delete-input"
+          disabled={!permitOn(reaction)}
+          variant="danger"
+          size="sm"
+          onClick={() => deleteMaterial(material)}
+        >
+          <i className="fa fa-trash-o" />
+        </Button>
 
         {materialGroup === 'products' && (
           <>
@@ -755,7 +730,7 @@ class Material extends Component {
             {material.adjusted_loading && material.error_mass && <MaterialCalculations material={material} />}
           </>
         )}
-      </tbody>
+      </div>
     );
   }
 
@@ -792,13 +767,10 @@ class Material extends Component {
     const mw = material.molecule && material.molecule.molecular_weight;
     const drySolvTooltip = <Tooltip>Dry Solvent</Tooltip>;
     return (
-      <tr ref={dropRef} className={this.rowClassNames()}>
+      <div ref={dropRef} className={this.rowClassNames()}>
         {this.dragHandle()}
-
-        <td style={{ width: '22%', maxWidth: '50px' }}>
-          {this.materialNameWithIupac(material)}
-        </td>
-        <td>
+        {this.materialNameWithIupac(material)}
+        <div className="reaction-material__dry-solvent-input">
           <OverlayTrigger placement="top" overlay={drySolvTooltip}>
             <Form.Check
               type="checkbox"
@@ -807,58 +779,57 @@ class Material extends Component {
               className="ms-1"
             />
           </OverlayTrigger>
-        </td>
-        <td>
-          {this.switchTargetReal()}
-        </td>
-
-        <td>
-          <InputGroup>
-            <OverlayTrigger
-              placement="top"
-              overlay={<Tooltip id="molecular-weight-info">{material.amount_g} g - {mw} g/mol</Tooltip>}
-            >
-              <Form.Control
-                disabled={!permitOn(reaction)}
-                type="text"
-                size="sm"
-                value={material.external_label}
-                placeholder={material.molecule.iupac_name}
-                onChange={(event) => this.handleExternalLabelChange(event)}
-              />
-            </OverlayTrigger>
-            <OverlayTrigger placement="bottom" overlay={refreshSvgTooltip}>
-              <Button
-                disabled={materialGroup === 'purification_solvents' || !permitOn(reaction)}
-                onClick={(e) => this.handleExternalLabelCompleted(e)}
-                size="sm"
-              >
-                <i className="fa fa-refresh" />
-              </Button>
-            </OverlayTrigger>
-          </InputGroup>
-        </td>
-
-        {this.materialVolume(material)}
-        <td>
-          <Form.Control
-            type="text"
-            size="sm"
-            value={reaction.volumeRatioByMaterialId(material.id)}
-            disabled
-          />
-        </td>
-        <td>
-          <Button
-            disabled={!permitOn(reaction)}
-            variant="danger"
-            size="sm"
-            onClick={() => deleteMaterial(material)}
+        </div>
+        {this.switchTargetReal()}
+        <InputGroup className="reaction-material__solvent-label-input">
+          <OverlayTrigger
+            placement="top"
+            overlay={(
+              <Tooltip id="molecular-weight-info">
+                {material.amount_g}
+                g -
+                {mw}
+                g/mol
+              </Tooltip>
+            )}
           >
-            <i className="fa fa-trash-o" />
-          </Button>
-        </td>
-      </tr>
+            <Form.Control
+              disabled={!permitOn(reaction)}
+              type="text"
+              size="sm"
+              value={material.external_label}
+              placeholder={material.molecule.iupac_name}
+              onChange={(event) => this.handleExternalLabelChange(event)}
+            />
+          </OverlayTrigger>
+          <OverlayTrigger placement="bottom" overlay={refreshSvgTooltip}>
+            <Button
+              disabled={materialGroup === 'purification_solvents' || !permitOn(reaction)}
+              onClick={(e) => this.handleExternalLabelCompleted(e)}
+              size="sm"
+            >
+              <i className="fa fa-refresh" />
+            </Button>
+          </OverlayTrigger>
+        </InputGroup>
+        {this.materialVolume(material, 'reaction-material__solvent-volume-input')}
+        <Form.Control
+          className="reaction-material__volume-ratio-input"
+          type="text"
+          size="sm"
+          value={reaction.volumeRatioByMaterialId(material.id)}
+          disabled
+        />
+        <Button
+          className="reaction-material__delete-input"
+          disabled={!permitOn(reaction)}
+          variant="danger"
+          size="sm"
+          onClick={() => deleteMaterial(material)}
+        >
+          <i className="fa fa-trash-o" />
+        </Button>
+      </div>
     );
   }
 
@@ -870,8 +841,8 @@ class Material extends Component {
 
     return (
       <Button
+        className="reaction-material__target-input"
         disabled={isDisabled}
-        className="p-1 ms-1"
         onClick={() => this.toggleTarget(isTarget)}
         variant={isTarget ? 'primary' : 'light'}
         size="sm"
@@ -940,64 +911,40 @@ class Material extends Component {
     );
     let materialName = '';
     let moleculeIupacName = '';
-    const iupacStyle = {
-      display: 'block',
-      whiteSpace: 'nowrap',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      maxWidth: '100%'
-    };
 
     const idCheck = /^\d+$/;
+    let linkDisplayName = true;
+    let materialDisplayName = '';
 
     if (skipIupacName) {
-      let materialDisplayName = material.molecule_iupac_name || material.name;
+      materialDisplayName = material.molecule_iupac_name || material.name;
       if (materialGroup === 'solvents' || materialGroup === 'purification_solvents') {
         materialDisplayName = material.external_label || materialDisplayName;
       }
       if (materialDisplayName === null || materialDisplayName === '') {
         materialDisplayName = (
-          <span>
-            <SampleName sample={material} />
-          </span>
+          <SampleName sample={material} />
         );
       }
-
-      if (idCheck.test(material.id)) {
-        materialName = (
-          <a
-            role="link"
-            tabIndex={0}
-            onClick={() => this.handleMaterialClick(material)}
-          >
-            <span>{materialDisplayName}</span>
-          </a>
-        );
-      } else {
-        materialName = <span>{materialDisplayName}</span>;
-      }
+      linkDisplayName = !!idCheck.test(material.id)
     } else {
       moleculeIupacName = material.molecule_iupac_name;
-      const materialDisplayName = material.title() === ''
+      materialDisplayName = material.title() === ''
         ? <SampleName sample={material} />
         : material.title();
-      materialName = (
-        <a
-          role="link"
-          tabIndex={0}
-          onClick={() => this.handleMaterialClick(material)}
-        >
-          <span>{materialDisplayName}</span>
-        </a>
-      );
 
-      if (material.isNew) { materialName = materialDisplayName; }
+      linkDisplayName = !material.isNew;
     }
-    let br = <br />;
-    if (moleculeIupacName === '') {
-      iupacStyle.display = 'none';
-      br = '';
-    }
+    materialName = linkDisplayName ? (
+      <a
+        role="link"
+        tabIndex={0}
+        onClick={() => this.handleMaterialClick(material)}
+      >
+        {materialDisplayName}
+      </a>
+    ) : materialDisplayName;
+
     const serialCode = SampleCode(index, materialGroup);
 
     const addToDesc = (e) => {
@@ -1006,26 +953,28 @@ class Material extends Component {
     };
 
     return (
-      <div className="d-inline-block mw-100">
-        <div
-          className="inline-inside"
-        >
-          {reaction.gaseous && materialGroup !== 'solvents'
-            ? this.gasType(material) : null}
-          <OverlayTrigger placement="top" overlay={AddtoDescToolTip}>
-            <Button variant="light" size="xsm" className="me-1" onClick={addToDesc} disabled={!permitOn(reaction)}>
-              {serialCode}
-            </Button>
-          </OverlayTrigger>
-          <OverlayTrigger placement="bottom" overlay={iupacNameTooltip(material)}>
-            <div className="reaction-material-link">
-              {materialName}
+      <div className="pseudo-table__cell pseudo-table__cell-title">
+        <div>
+          <div className="d-flex align-items-center">
+            {reaction.gaseous && materialGroup !== 'solvents'
+              ? this.gasType(material) : null}
+            <OverlayTrigger placement="top" overlay={AddtoDescToolTip}>
+              <Button variant="light" size="xsm" className="me-1" onClick={addToDesc} disabled={!permitOn(reaction)}>
+                {serialCode}
+              </Button>
+            </OverlayTrigger>
+            <OverlayTrigger placement="bottom" overlay={iupacNameTooltip(material)}>
+              <div className="reaction-material__link">
+                {materialName}
+              </div>
+            </OverlayTrigger>
+          </div>
+          {moleculeIupacName !== '' && (
+            <div className="reaction-material__iupac-name">
+              {moleculeIupacName}
             </div>
-          </OverlayTrigger>
+          )}
         </div>
-        <span style={iupacStyle}>
-          {moleculeIupacName}
-        </span>
       </div>
     );
   }
