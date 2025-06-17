@@ -1148,77 +1148,65 @@ export default class ReactionDetailsScheme extends React.Component {
     return (
       <>
         <div>
-          <div className="border-bottom">
-            <MaterialGroup
-              reaction={reaction}
-              materialGroup="starting_materials"
-              materials={reaction.starting_materials}
-              dropMaterial={this.dropMaterial}
-              deleteMaterial={
-                (material, materialGroup) => this.deleteMaterial(material, materialGroup)
-              }
-              dropSample={this.dropSample}
-              showLoadingColumn={!!reaction.hasPolymers()}
-              onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
-              switchEquiv={this.switchEquiv}
-              lockEquivColumn={this.state.lockEquivColumn}
-            />
-          </div>
-
-          <div className="border-bottom">
-            <MaterialGroup
-              reaction={reaction}
-              materialGroup="reactants"
-              materials={reaction.reactants}
-              dropMaterial={this.dropMaterial}
-              deleteMaterial={
-                (material, materialGroup) => this.deleteMaterial(material, materialGroup)
-              }
-              dropSample={this.dropSample}
-              showLoadingColumn={!!reaction.hasPolymers()}
-              onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
-              switchEquiv={this.switchEquiv}
-              lockEquivColumn={lockEquivColumn}
-              headIndex={reaction.starting_materials.length ?? 0}
-            />
-          </div>
-
-          <div className="border-bottom">
-            <MaterialGroup
-              reaction={reaction}
-              materialGroup="products"
-              materials={reaction.products}
-              dropMaterial={this.dropMaterial}
-              deleteMaterial={
-                (material, materialGroup) => this.deleteMaterial(material, materialGroup)
-              }
-              dropSample={this.dropSample}
-              showLoadingColumn={!!reaction.hasPolymers()}
-              onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
-              switchEquiv={this.switchEquiv}
-              lockEquivColumn={this.state.lockEquivColumn}
-              switchYield={this.switchYield}
-              displayYieldField={displayYieldField}
-            />
-          </div>
-
-          <div className="mb-3">
-            <MaterialGroup
-              reaction={reaction}
-              materialGroup="solvents"
-              materials={reaction.solvents}
-              dropMaterial={this.dropMaterial}
-              deleteMaterial={
-                (material, materialGroup) => this.deleteMaterial(material, materialGroup)
-              }
-              dropSample={this.dropSample}
-              showLoadingColumn={!!reaction.hasPolymers()}
-              onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
-              switchEquiv={this.switchEquiv}
-              lockEquivColumn={this.state.lockEquivColumn}
-            />
-          </div>
-
+          <MaterialGroup
+            reaction={reaction}
+            materialGroup="starting_materials"
+            materials={reaction.starting_materials}
+            dropMaterial={this.dropMaterial}
+            deleteMaterial={
+              (material, materialGroup) => this.deleteMaterial(material, materialGroup)
+            }
+            dropSample={this.dropSample}
+            showLoadingColumn={!!reaction.hasPolymers()}
+            onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
+            switchEquiv={this.switchEquiv}
+            lockEquivColumn={this.state.lockEquivColumn}
+          />
+          <MaterialGroup
+            reaction={reaction}
+            materialGroup="reactants"
+            materials={reaction.reactants}
+            dropMaterial={this.dropMaterial}
+            deleteMaterial={
+              (material, materialGroup) => this.deleteMaterial(material, materialGroup)
+            }
+            dropSample={this.dropSample}
+            showLoadingColumn={!!reaction.hasPolymers()}
+            onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
+            switchEquiv={this.switchEquiv}
+            lockEquivColumn={lockEquivColumn}
+            headIndex={reaction.starting_materials.length ?? 0}
+          />
+          <MaterialGroup
+            reaction={reaction}
+            materialGroup="products"
+            materials={reaction.products}
+            dropMaterial={this.dropMaterial}
+            deleteMaterial={
+              (material, materialGroup) => this.deleteMaterial(material, materialGroup)
+            }
+            dropSample={this.dropSample}
+            showLoadingColumn={!!reaction.hasPolymers()}
+            onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
+            switchEquiv={this.switchEquiv}
+            lockEquivColumn={this.state.lockEquivColumn}
+            switchYield={this.switchYield}
+            displayYieldField={displayYieldField}
+          />
+          <MaterialGroup
+            reaction={reaction}
+            materialGroup="solvents"
+            materials={reaction.solvents}
+            dropMaterial={this.dropMaterial}
+            deleteMaterial={
+              (material, materialGroup) => this.deleteMaterial(material, materialGroup)
+            }
+            dropSample={this.dropSample}
+            showLoadingColumn={!!reaction.hasPolymers()}
+            onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
+            switchEquiv={this.switchEquiv}
+            lockEquivColumn={this.state.lockEquivColumn}
+          />
           <Accordion
             alwaysOpen
             defaultActiveKey={['conditions']}
