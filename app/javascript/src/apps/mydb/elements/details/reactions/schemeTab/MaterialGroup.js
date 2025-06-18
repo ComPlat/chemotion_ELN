@@ -267,7 +267,7 @@ function GeneralMaterialGroup({
           })}
         >
           <div className="pseudo-table__row pseudo-table__row-header">
-            <div className="pseudo-table__cell pseudo-table__cell-title align-items-center">
+            <div className="pseudo-table__cell pseudo-table__cell-title align-items-center ps-4">
               {groupHeaders.group}
               {isReactants && reagentDd}
               {addSampleButton}
@@ -367,19 +367,15 @@ function SolventsMaterialGroup({
         >
           <div>
             <div className="pseudo-table__row pseudo-table__row-header">
-              <div className="pseudo-table__cell pseudo-table__cell-title">
-                <div className="d-flex flex-row align-items-center gap-2">
-                  {groupHeaders.group}
-                  <div className="flex-grow-1">
-                    <Select
-                      value={null}
-                      isDisabled={!permitOn(reaction)}
-                      options={solventOptions}
-                      placeholder="Add default"
-                      onChange={createDefaultSolventsForReaction}
-                    />
-                  </div>
-                </div>
+              <div className="pseudo-table__cell pseudo-table__cell-title align-items-center ps-4">
+                {groupHeaders.group}
+                <Select
+                  value={null}
+                  isDisabled={!permitOn(reaction)}
+                  options={solventOptions}
+                  placeholder="Add default"
+                  onChange={createDefaultSolventsForReaction}
+                />
                 {addSampleButton}
               </div>
               <div title="Dry Solvent" className="reaction-material__dry-solvent-header">DS</div>
