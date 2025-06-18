@@ -99,7 +99,7 @@
     "reactflow": "^11.7.2",
     "redux": "^4.1.0",
     "sha256": "^0.2.0",
-    "shakapacker": "8.0.2",
+    "shakapacker": "~8.3.0",
     "spark-md5": "^3.0.1",
     "svgedit": "^7.3.0",
     "terser-webpack-plugin": "5",

@@ -13124,10 +13124,10 @@ sha256@^0.2.0:
     convert-hex "~0.1.0"
     convert-string "~0.1.0"
 
-shakapacker@8.0.2:
-  version "8.0.2"
-  resolved "https://registry.yarnpkg.com/shakapacker/-/shakapacker-8.0.2.tgz#064303e09958b57b7a7f98dc38d0c1150a96d3a0"
-  integrity sha512-nZNAwT7onNiKZ81nMz/l0ihG8qXPZUvfxs4op5586wvn7znpPVQC4mFs131YrdUubmdqUPIjcpZnV0k4ijNtXw==
+shakapacker@~8.3.0:
+  version "8.3.0"
+  resolved "https://registry.yarnpkg.com/shakapacker/-/shakapacker-8.3.0.tgz#48b8ce16d551a07f59dd95c418962540480affc9"
+  integrity sha512-eJsSSZDMbwmzVzM+Bn2QxAFhdLfcP5prUiDNPrQBGkFazCKjG4b6ZzpUg3rXQGt2l7SPLHQ8BA78QRvPBeBeFA==
   dependencies:
     js-yaml "^4.1.0"
     path-complete-extname "^1.0.0"

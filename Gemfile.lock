@@ -726,7 +726,7 @@ GEM
     sentry-ruby (5.19.0)
       bigdecimal
       concurrent-ruby (~> 1.0, >= 1.0.2)
-    shakapacker (8.0.2)
+    shakapacker (8.3.0)
       activesupport (>= 5.2)
       package_json
       rack-proxy (>= 0.6.1)
@@ -962,7 +962,7 @@ DEPENDENCIES
   sentry-delayed_job
   sentry-rails
   sentry-ruby
-  shakapacker (= 8.0.2)
+  shakapacker (~> 8.3.0)
   shoulda-matchers
   shrine (~> 3.0)
   simplecov
