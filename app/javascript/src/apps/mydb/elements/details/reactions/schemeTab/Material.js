@@ -626,11 +626,11 @@ class Material extends Component {
   rowClassNames() {
     const { isDragging, isOver, canDrop } = this.props;
     return cs(
-      'material-row pseudo-table__row',
+      'reaction-material pseudo-table__row',
       {
-        'material-row--is-dragging': isDragging,
-        'material-row--is-over': isOver,
-        'material-row--can-drop': canDrop,
+        'draggable-list-item--is-dragging': isDragging,
+        'draggable-list-item--is-over': isOver,
+        'draggable-list-item--can-drop': canDrop,
       }
     );
   }
