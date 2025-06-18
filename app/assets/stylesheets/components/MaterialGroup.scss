@@ -1,34 +1,18 @@
 .material-group {
   @extend .pseudo-table;
+  .pseudo-table__row-header {
+    @extend .surface-lighten6;
+    @extend .rounded-start;
+    @extend .mb-2;
+  }
   container-name: material-group;
   container-type: inline-size;
-  &--can-drop {
-    background-color: #e0f7fa;
-  }
-
-  &--is-over {
-    background-color: #b2ebf2;
-  }
-}
-
-.material-row {
-  &.pseudo-table__row {
-    @extend .align-items-start;
-  }
-  .drag-source {
-    cursor: move;
-    vertical-align: middle;
-  }
-
-  &--is-dragging {
-    opacity: 0.2;
-  }
-
-  &--can-drop {
-    background-color: #e0f7fa;
-  }
-
-  &--is-over {
-    background-color: #b2ebf2;
+  &.material-group--can-drop {
+    .pseudo-table__row-header {
+      @extend .surface-lighten3;
+    }
+    &.material-group--is-over .pseudo-table__row-header {
+      @extend .bg-transparent;
+    }
   }
 }
