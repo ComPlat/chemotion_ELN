@@ -245,8 +245,6 @@ class Material extends Component {
   gaseousInputFields(field, material) {
     const gasPhaseData = material.gas_phase_data || {};
     const { value, unit, isTimeField } = this.getFieldData(field, gasPhaseData);
-
-    const style = { maxWidth: '5px', paddingRight: '3px' };
     const readOnly = this.isFieldReadOnly(field);
 
     const updateValue = this.getFormattedValue(value);
@@ -267,20 +265,16 @@ class Material extends Component {
     );
 
     return (
-      <div style={style}>
-        <div>
-          {(value === 'n.d' || !value) && !noSwitchUnits.includes(unit) ? (
-            <OverlayTrigger
-              placement="top"
-              overlay={<Tooltip id={`${field}-tooltip`}>{message}</Tooltip>}
-            >
-              <div>{inputComponent}</div>
-            </OverlayTrigger>
-          ) : (
-            <div>{inputComponent}</div>
-          )}
-        </div>
-      </div>
+      (value === 'n.d' || !value) && !noSwitchUnits.includes(unit) ? (
+        <OverlayTrigger
+          placement="top"
+          overlay={<Tooltip id={`${field}-tooltip`}>{message}</Tooltip>}
+        >
+          {inputComponent}
+        </OverlayTrigger>
+      ) : (
+        inputComponent
+      )
     );
   }
 
@@ -313,7 +307,8 @@ class Material extends Component {
 
   gaseousProductRow(material) {
     return (
-      <div>
+      <div className="reaction-material__gaseous-fields-input">
+        <div className="reaction-material__ref-input" />
         {this.gaseousInputFields('time', material)}
         {this.gaseousInputFields('temperature', material)}
         {this.gaseousInputFields('part_per_million', material)}
@@ -654,61 +649,65 @@ class Material extends Component {
       <div ref={dropRef} className={this.rowClassNames()}>
         {this.dragHandle()}
         {this.materialNameWithIupac(material)}
-        {this.materialRef(material)}
-        {this.switchTargetReal()}
-        <OverlayTrigger
-          placement="top"
-          overlay={<Tooltip id="reaction-coefficient-info"> Reaction Coefficient </Tooltip>}>
-          <NumeralInputWithUnitsCompo
-            className="reaction-material__coefficient-input"
-            size="sm"
-            value={material.coefficient ?? 1}
-            onChange={this.handleCoefficientChange}
-            name="coefficient"
-          />
-        </OverlayTrigger>
-        <div className="reaction-material__amount-input">
-          {this.amountField(material, metricPrefixes, reaction, massBsStyle, metric)}
-          {this.materialVolume(material, 'reaction-material__volume-input')}
-          <NumeralInputWithUnitsCompo
-            value={material.amount_mol}
-            className="reaction-material__molarity-input"
-            unit="mol"
-            metricPrefix={metricMol}
-            metricPrefixes={metricPrefixes}
-            precision={4}
-            disabled={!permitOn(reaction)
-              || (this.props.materialGroup === 'products'
-              || (!material.reference && this.props.lockEquivColumn))}
-            onChange={e => this.handleAmountUnitChange(e, material.amount_mol)}
-            onMetricsChange={this.handleMetricsChange}
-            variant={material.amount_unit === 'mol' ? 'primary' : 'light'}
-            size="sm"
-          />
+        <div className="d-flex gap-2 flex-column py-1">
+          <div className="d-flex gap-2 align-items-start">
+            {this.materialRef(material)}
+            {this.switchTargetReal()}
+            <OverlayTrigger
+              placement="top"
+              overlay={<Tooltip id="reaction-coefficient-info"> Reaction Coefficient </Tooltip>}
+            >
+              <NumeralInputWithUnitsCompo
+                className="reaction-material__coefficient-input"
+                size="sm"
+                value={material.coefficient ?? 1}
+                onChange={this.handleCoefficientChange}
+                name="coefficient"
+              />
+            </OverlayTrigger>
+            <div className="reaction-material__amount-input">
+              {this.amountField(material, metricPrefixes, reaction, massBsStyle, metric)}
+              {this.materialVolume(material, 'reaction-material__volume-input')}
+              <NumeralInputWithUnitsCompo
+                value={material.amount_mol}
+                className="reaction-material__molarity-input"
+                unit="mol"
+                metricPrefix={metricMol}
+                metricPrefixes={metricPrefixes}
+                precision={4}
+                disabled={!permitOn(reaction)
+                  || (this.props.materialGroup === 'products'
+                  || (!material.reference && this.props.lockEquivColumn))}
+                onChange={e => this.handleAmountUnitChange(e, material.amount_mol)}
+                onMetricsChange={this.handleMetricsChange}
+                variant={material.amount_unit === 'mol' ? 'primary' : 'light'}
+                size="sm"
+              />
+            </div>
+            <NumeralInputWithUnitsCompo
+              value={material.concn}
+              className="reaction-material__concentration-input"
+              unit="mol/l"
+              metricPrefix={metricMolConc}
+              metricPrefixes={metricPrefixesMolConc}
+              precision={4}
+              disabled
+              onChange={e => this.handleAmountUnitChange(e, material.concn)}
+              onMetricsChange={this.handleMetricsChange}
+              size="sm"
+            />
+            {this.equivalentOrYield(material)}
+            <Button
+              className="reaction-material__delete-input"
+              disabled={!permitOn(reaction)}
+              variant="danger"
+              size="sm"
+              onClick={() => deleteMaterial(material)}
+            >
+              <i className="fa fa-trash-o" />
+            </Button>
+          </div>
         </div>
-        <NumeralInputWithUnitsCompo
-          value={material.concn}
-          className="reaction-material__concentration-input"
-          unit="mol/l"
-          metricPrefix={metricMolConc}
-          metricPrefixes={metricPrefixesMolConc}
-          precision={4}
-          disabled
-          onChange={e => this.handleAmountUnitChange(e, material.concn)}
-          onMetricsChange={this.handleMetricsChange}
-          size="sm"
-        />
-        {this.equivalentOrYield(material)}
-        <Button
-          className="reaction-material__delete-input"
-          disabled={!permitOn(reaction)}
-          variant="danger"
-          size="sm"
-          onClick={() => deleteMaterial(material)}
-        >
-          <i className="fa fa-trash-o" />
-        </Button>
-
         {materialGroup === 'products' && (
           <>
             {material.gas_type === 'gas' && reaction.gaseous && this.gaseousProductRow(material)}
