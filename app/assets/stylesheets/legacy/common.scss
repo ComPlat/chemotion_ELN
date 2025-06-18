@@ -9,15 +9,15 @@
 }
 
 .c-bs-success {
-  color: #5cb85c
+  color: #5cb85c;
 }
 
 .c-bs-info {
-  color: #5bc0de
+  color: #5bc0de;
 }
 
 .c-bs-warning {
-  color: #f0ad4e
+  color: #f0ad4e;
 }
 
 .c-bs-danger {
@@ -40,7 +40,7 @@
   box-shadow: none;
 }
 
-.drop-up.is-open>.Select-control {
+.drop-up.is-open > .Select-control {
   border-bottom-right-radius: 4px;
   border-bottom-left-radius: 4px;
   border-top-left-radius: 0px;
@@ -55,8 +55,8 @@
 .span-checkbox {
   -webkit-border-radius: 0;
   border-radius: 0;
-  background-color: rgba(255, 255, 255, .05);
-  border: 1px solid rgba(155, 155, 155, .57);
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(155, 155, 155, 0.57);
   height: 17px;
   margin: 4px 0px 0px 1px;
   outline: 0;
@@ -210,7 +210,7 @@
 }
 
 .cdd-tool-button-subtool {
-  z-index: 1000 !important
+  z-index: 1000 !important;
 }
 
 .cdd.cdd-toolbar-popup-container {
@@ -294,4 +294,23 @@
   padding: 2px 4px;
   border-radius: 4px;
   transition: background-color 0.3s ease;
+}
+
+.color-preview-box {
+  height: 2.40rem;
+  width: 2rem;
+  border-top-left-radius: 0.375rem;
+  border-bottom-left-radius: 0.375rem;
+  border: 1px solid #ccc;
+  border-right: 0px;
+}
+
+.rounded-corners .chemotion-select__control {
+  border-bottom-left-radius: 0px;
+  border-top-left-radius: 0px;
+}
+
+.label-color-preview {
+  width: 10px;
+  height: 10px;
 }

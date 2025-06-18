@@ -10,12 +10,12 @@ FactoryBot.define do
       [
         {
           value: '98.34',
-          unit: '%'
+          unit: '%',
         },
         {
           value: '50',
-          unit: 'µM'
-        }
+          unit: 'µM',
+        },
       ]
     end
 
@@ -31,14 +31,17 @@ FactoryBot.define do
         evaluator.number_of_readouts.times do
           well.readouts << {
             value: Kernel.rand(evaluator.value_range).round(2),
-            unit: evaluator.units.sample
+            unit: evaluator.units.sample,
           }.with_indifferent_access # Rails serializer uses strings, so at least in specs I want both to work
         end
       end
     end
 
     trait :with_color_code_and_additive do
-      color_code { 'color_code' }
+      color_code do
+        # randomly generated hex color
+        "##{Array.new(6) { rand(16).to_s(16) }.join}"
+      end
       additive { 'additive' }
     end
   end

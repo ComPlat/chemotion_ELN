@@ -1,18 +1,19 @@
 /* eslint-disable camelcase */
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Button,
   Form,
   InputGroup,
   Modal,
-  Row
+  Row,
+  Col
 } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import PropTypes from 'prop-types';
 import { Select } from 'src/components/common/Select';
-import { CirclePicker } from 'react-color';
 import { wellplateShowSample } from 'src/utilities/routesUtils';
 import Aviator from 'aviator';
+import { colorOptions } from 'src/components/staticDropdownOptions/options';
 
 const navigateToSample = (sample) => {
   const { params, uri } = Aviator.getCurrentRequest();
@@ -33,7 +34,7 @@ const sampleName = (sample) => {
       {sampleNameLabel}
     </a>
   );
-}
+};
 
 const sampleVisualisation = (well, onChange) => {
   const { sample } = well;
@@ -42,7 +43,7 @@ const sampleVisualisation = (well, onChange) => {
   const removeSampleFromWell = () => {
     well.sample = null;
     onChange(well);
-  }
+  };
 
   if (sample) {
     svg = <SVG key={sample.id} className="molecule-mid" src={sample.svgPath} />;
@@ -129,34 +130,42 @@ const labelSelection = (well, onChange) => {
   );
 };
 
-const colorPicker = (well, onChange) => (
+const colorPicker = (well, onChange, activeColor, setActiveColor) => (
   <div className="mt-3">
     <Form.Group as={Row} controlId="formColorSelectorDisplay">
       <Form.Label as="h4">Select Color</Form.Label>
-      <InputGroup>
-        <InputGroup.Text style={{ backgroundColor: well.color_code }} />
-        <Form.Control
-          className="input-sm"
-          type="text"
-          readOnly
-          value={well.color_code}
+      <Col xs="auto" className="pe-0">
+        <div className="color-preview-box" style={{ backgroundColor: activeColor || "#fff" }} />
+      </Col>
+      <Col className="ps-0">
+        <Select
+          className="rounded-corners"
+          name="colorPicker"
+          isClearable
+          options={colorOptions}
+          value={colorOptions.find(({ value }) => value === activeColor) || null}
+          onChange={(option) => {
+            const hex = option?.value || null;
+            const newColor = activeColor === hex ? null : hex;
+            setActiveColor(newColor);
+            onChange({ ...well, color_code: newColor });
+          }}
+          getOptionLabel={(option) => (
+            <div className="d-flex align-items-center">
+              <div className="label-color-preview me-2 rounded-circle" style={{ backgroundColor: option.value }} />
+              {option.label}
+            </div>
+          )}
+          maxHeight="200px"
+          placeholder="Choose a color..."
         />
-      </InputGroup>
-    </Form.Group>
-    <Form.Group controlId="formHorizontalPicker" className="my-3">
-      <CirclePicker
-        circleSize={17}
-        width="100%"
-        onChangeComplete={(color) => {
-          well.color_code = color.hex;
-          onChange(well);
-        }}
-      />
+      </Col>
     </Form.Group>
   </div>
-);
+)
 
 const WellDetails = ({ well, readoutTitles, handleClose, onChange }) => {
+  const [activeColor, setActiveColor] = useState(well.color_code || null);
   return (
     <Modal
       animation
@@ -171,7 +180,7 @@ const WellDetails = ({ well, readoutTitles, handleClose, onChange }) => {
         {sampleVisualisation(well, onChange)}
         {labelSelection(well, onChange)}
         {readoutSection(well.readouts, readoutTitles)}
-        {colorPicker(well, onChange)}
+        {colorPicker(well, onChange, activeColor, setActiveColor)}
       </Modal.Body>
     </Modal>
   );
