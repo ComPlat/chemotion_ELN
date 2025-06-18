@@ -60,4 +60,16 @@
       @extend .surface-lighten5;
     }
   }
+  &.draggable-list-item--is-dragging {
+    @extend .opacity-25;
+  }
+  &.draggable-list-item--can-drop {
+    @extend .surface-lighten3;
+    @extend .opacity-100;
+  }
+  &.draggable-list-item--is-over {
+    .drag-handle {
+      @extend .bg-active;
+    }
+  }
 }
