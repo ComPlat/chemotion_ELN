@@ -13,7 +13,7 @@ module Usecases
       # well data must contain complete data for ALL wells of a wellplate
       # otherwise all samples that are in the wellplate but not in well_data are deleted!
       #
-      # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
+      # rubocop:disable Metrics/AbcSize, Metrics/MethodLength, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
       def update_wells(well_data:)
         collections = wellplate.collections
         current_sample_ids = wellplate.wells.pluck(:sample_id).uniq.compact
@@ -52,7 +52,7 @@ module Usecases
         deleted_sample_ids = current_sample_ids - included_sample_ids
         Sample.where(id: deleted_sample_ids).destroy_all
       end
-      # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
+      # rubocop:enable Metrics/AbcSize, Metrics/MethodLength, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
     end
   end
 end

@@ -38,7 +38,10 @@ FactoryBot.define do
     end
 
     trait :with_color_code_and_additive do
-      color_code { 'color_code' }
+      color_code {
+        # randomly generated hex color
+        "##{Array.new(6) { rand(16).to_s(16) }.join}"
+      }
       additive { 'additive' }
     end
   end

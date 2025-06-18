@@ -25,12 +25,17 @@
 #
 
 class Well < ApplicationRecord
+  HEX_COLOR_REGEX = /\A#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})\z/.freeze
   has_logidze
   acts_as_paranoid
   belongs_to :wellplate
   belongs_to :sample, optional: true
 
   include Tagging
+
+  validates :color_code,
+            format: { with: HEX_COLOR_REGEX, message: :invalid_hex_color },
+            allow_blank: true
 
   def self.get_samples_in_wellplates(wellplate_ids)
     where(wellplate_id: wellplate_ids).pluck(:sample_id).compact.uniq
@@ -54,11 +59,4 @@ class Well < ApplicationRecord
     row = ('A'..'ZZ').to_a[position_y - 1]
     "#{row}#{format('%02i', position_x)}"
   end
-
-  validates :color_code,
-    format: {
-      with: /\A#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})\z/,
-      message: 'must be a valid hex color code',
-    },
-    allow_blank: true
 end

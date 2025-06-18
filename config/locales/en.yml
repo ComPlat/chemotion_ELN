@@ -42,7 +42,10 @@ en:
           attributes:
             base:
               sample_or_scan_data_required: SampleTask creation requires either a sample id or a file + measurement data
-
+        well:
+          attributes:
+            color_code:
+              invalid_hex_color: "Must be a valid hex color code, e.g. #FF0000"
         device:
           attributes:
             name:
