@@ -21,6 +21,7 @@ export default class MaterialCalculations extends Component {
 
     return (
       <NumeralInputWithUnitsCompo
+        className="reaction-material__volume-input"
         value={material.amount_ml || ''}
         unit="l"
         metricPrefix={metric}
@@ -28,6 +29,7 @@ export default class MaterialCalculations extends Component {
         precision={5}
         disabled
         readOnly
+        size="sm"
       />
     );
   }
@@ -52,11 +54,11 @@ export default class MaterialCalculations extends Component {
       : 'm';
 
     return (
-      <tr>
-        <td colSpan="4" />
-        <td className="pt-4 px-1">Adjusted:</td>
-        <td className="pt-4 px-1">
+      <div className="d-flex gap-2 align-items-start">
+        <div className="flex-grow-1 text-end pt-1">Adjusted:</div>
+        <div className="reaction-material__amount-input">
           <NumeralInputWithUnitsCompo
+            className="reaction-material__mass-input"
             value={material.adjusted_amount_g}
             unit="g"
             metricPrefix={metric}
@@ -64,15 +66,11 @@ export default class MaterialCalculations extends Component {
             precision={5}
             disabled
             readOnly
+            size="sm"
           />
-        </td>
-
-        <td className="pt-4 px-1">
           {this.materialVolume()}
-        </td>
-
-        <td className="pt-4 px-1">
           <NumeralInputWithUnitsCompo
+            className="reaction-material__molarity-input"
             value={material.adjusted_amount_mol}
             unit="mol"
             metricPrefix={metricMol}
@@ -80,31 +78,29 @@ export default class MaterialCalculations extends Component {
             precision={4}
             disabled
             readOnly
+            size="sm"
           />
-        </td>
-
-        <td className="pt-4 px-1">
-          <NumeralInputWithUnitsCompo
-            value={material.adjusted_loading}
-            unit="mmol/g"
-            metricPrefix="n"
-            metricPrefixes={['n']}
-            precision={3}
-            disabled
-            readOnly
-          />
-        </td>
-
-        <td className="pt-4 px-1">
-          <Form.Control
-            type="text"
-            value={`${((material.adjusted_equivalent || 0) * 100).toFixed(1)} %`}
-            disabled
-          />
-        </td>
-
-        <td />
-      </tr>
+        </div>
+        <NumeralInputWithUnitsCompo
+          className="reaction-material__concentration-input"
+          value={material.adjusted_loading}
+          unit="mmol/g"
+          metricPrefix="n"
+          metricPrefixes={['n']}
+          precision={3}
+          disabled
+          readOnly
+          size="sm"
+        />
+        <Form.Control
+          className="reaction-material__equivalent-input"
+          type="text"
+          value={`${((material.adjusted_equivalent || 0) * 100).toFixed(1)} %`}
+          disabled
+          size="sm"
+        />
+        <div className="reaction-material__delete-input" />
+      </div>
     );
   }
 }
