@@ -3,15 +3,15 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Modal, Badge, Button, Form, InputGroup, ButtonToolbar
+  Modal, Badge, Button, Form, InputGroup, ButtonToolbar, Row, Col
 } from 'react-bootstrap';
-import { CirclePicker } from 'react-color';
 import { Select } from 'src/components/common/Select';
 import { AgGridReact } from 'ag-grid-react';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import { colorOptions } from 'src/components/staticDropdownOptions/options';
 
 /* eslint-disable camelcase */
 const UserLabel = ({ title, color, access_level }) => (
@@ -64,10 +64,11 @@ class UserLabelModal extends Component {
     this.setState({ showDetails: true, label });
   }
 
-  handleColorPicker(color) {
+  handleColorPicker(option) {
     const { label } = this.state;
+    const hex = option?.value || null;
     this.setState({
-      label: { ...label, color: color.hex },
+      label: { ...label, color: hex },
     });
   }
 
@@ -92,11 +93,12 @@ class UserLabelModal extends Component {
     if (typeof (this.descInput) !== 'undefined' && this.descInput) {
       label.description = this.descInput.value;
     }
-    if (typeof (this.colorInput) !== 'undefined' && this.colorInput) {
-      label.color = this.colorInput.value;
-    }
-
-    if (label.title != null && label.title.trim().length !== 0) {
+    if (
+      label.title != null
+      && label.title.trim().length !== 0
+      && label.color != null
+      && label.color.trim().length !== 0
+    ) {
       UsersFetcher.updateUserLabel({
         id: label.id,
         title: label.title,
@@ -115,7 +117,7 @@ class UserLabelModal extends Component {
       NotificationActions.removeByUid('createUserLabel');
       const notification = {
         title: 'Create User Label',
-        message: 'Title is empty',
+        message: 'Title or color is empty',
         level: 'error',
         dismissible: 'button',
         autoDismiss: 5,
@@ -245,6 +247,15 @@ class UserLabelModal extends Component {
     );
   }
 
+  renderOptionLabel(option) {
+    return (
+      <div className="d-flex align-items-center">
+        <div className="label-color-preview me-2 rounded-circle" style={{ backgroundColor: option.value }} />
+        {option.label}
+      </div>
+    );
+  }
+
   renderLabel() {
     const { label } = this.state;
     const bcStyle = {
@@ -288,22 +299,25 @@ class UserLabelModal extends Component {
             defaultValue={label.description || ''}
           />
         </Form.Group>
-        <Form.Group controlId="colorInput" className="mb-2">
-          <Form.Label>
-            Background Color
-          </Form.Label>
-          <InputGroup className="mb-3">
-            <InputGroup.Text style={bcStyle} />
-            <Form.Control
-              type="text"
-              readOnly
+        <Form.Group controlId="colorInput" as={Row}>
+          <Form.Label>Background Color</Form.Label>
+          <Col xs="auto" className="pe-0">
+            <div className="color-preview-box" style={{ backgroundColor: label.color || "#fff" }} />
+          </Col>
+          <Col className="ps-0">
+            <Select
+              className="rounded-corners"
+              name="colorPicker"
+              isClearable
               ref={(m) => { this.colorInput = m; }}
-              value={label.color || this.state.defaultColor}
+              options={colorOptions}
+              value={colorOptions.find(({ value }) => value === label.color) || null}
+              onChange={this.handleColorPicker}
+              getOptionLabel={this.renderOptionLabel}
+              maxHeight="200px"
+              placeholder="Choose a color..."
             />
-          </InputGroup>
-        </Form.Group>
-        <Form.Group controlId="formHorizontalPicker" className="m-2">
-          <CirclePicker width="90%" onChangeComplete={this.handleColorPicker} />
+          </Col>
         </Form.Group>
       </Form>
     );
