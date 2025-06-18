@@ -137,7 +137,7 @@
     "process": "^0.11.10",
     "react-refresh": "^0.12.0",
     "sinon": "^15.2.0",
-    "webpack-dev-server": "4"
+    "webpack-dev-server": "5"
   },
   "scripts": {
     "postinstall": "./package_postinstall.sh",
