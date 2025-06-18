@@ -247,6 +247,15 @@ class UserLabelModal extends Component {
     );
   }
 
+  renderOptionLabel(option) {
+    return (
+      <div className="d-flex align-items-center">
+        <div className="label-color-preview me-2 rounded-circle" style={{ backgroundColor: option.value }} />
+        {option.label}
+      </div>
+    );
+  }
+
   renderLabel() {
     const { label } = this.state;
     const bcStyle = {
@@ -304,12 +313,8 @@ class UserLabelModal extends Component {
               options={colorOptions}
               value={colorOptions.find(({ value }) => value === label.color) || null}
               onChange={this.handleColorPicker}
-              styles={{
-                menuList: (base) => ({
-                  ...base,
-                  maxHeight: '200px',
-                }),
-              }}
+              getOptionLabel={this.renderOptionLabel}
+              maxHeight="200px"
               placeholder="Choose a color..."
             />
           </Col>

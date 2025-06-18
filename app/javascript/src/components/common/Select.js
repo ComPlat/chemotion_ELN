@@ -16,13 +16,17 @@ export const Select = forwardRef(function Select(props, ref) {
       classNamePrefix="chemotion-select"
       ref={ref}
       unstyled
+      {...props}
       styles={{
         control: (baseStyles) => ({
           ...baseStyles,
           minWidth: props.minWidth || '0',
         }),
+        menuList: (baseStyles, state) => ({
+          ...baseStyles,
+          maxHeight: props.maxHeight || "250px",
+        }),
       }}
-      {...props}
     />
   );
 });

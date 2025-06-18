@@ -150,12 +150,13 @@ const colorPicker = (well, onChange, activeColor, setActiveColor) => (
             setActiveColor(newColor);
             onChange({ ...well, color_code: newColor });
           }}
-          styles={{
-            menuList: (base) => ({
-              ...base,
-              maxHeight: '200px',
-            }),
-          }}
+          getOptionLabel={(option) => (
+            <div className="d-flex align-items-center">
+              <div className="label-color-preview me-2 rounded-circle" style={{ backgroundColor: option.value }} />
+              {option.label}
+            </div>
+          )}
+          maxHeight="200px"
           placeholder="Choose a color..."
         />
       </Col>
