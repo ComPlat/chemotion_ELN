@@ -658,3 +658,24 @@ export const amountSearchOptions = [
   { label: 'l', value: 'l' },
   { label: 'mol', value: 'mol' },
 ];
+
+export const colorOptions = [
+  { label: 'Red - #f44336', value: '#f44336' },
+  { label: 'Pink - #e91e63', value: '#e91e63' },
+  { label: 'Purple - #9c27b0', value: '#9c27b0' },
+  { label: 'Deep Purple - #673ab7', value: '#673ab7' },
+  { label: 'Indigo - #3f51b5', value: '#3f51b5' },
+  { label: 'Blue - #2196f3', value: '#2196f3' },
+  { label: 'Light Blue - #03a9f4', value: '#03a9f4' },
+  { label: 'Cyan - #00bcd4', value: '#00bcd4' },
+  { label: 'Teal - #009688', value: '#009688' },
+  { label: 'Green - #4caf50', value: '#4caf50' },
+  { label: 'Light Green - #8bc34a', value: '#8bc34a' },
+  { label: 'Lime - #cddc39', value: '#cddc39' },
+  { label: 'Yellow - #ffeb3b', value: '#ffeb3b' },
+  { label: 'Amber - #ffc107', value: '#ffc107' },
+  { label: 'Orange - #ff9800', value: '#ff9800' },
+  { label: 'Deep Orange - #ff5722', value: '#ff5722' },
+  { label: 'Brown - #795548', value: '#795548' },
+  { label: 'Blue Grey - #607d8b', value: '#607d8b' },
+];
