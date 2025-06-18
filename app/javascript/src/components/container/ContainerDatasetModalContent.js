@@ -51,7 +51,7 @@ export class ContainerDatasetModalContent extends Component {
     this.thirdPartyApps = thirdPartyApps;
     this.state = {
       datasetContainer,
-      instruments: null,
+      instruments: [],
       timeoutReference: null,
       attachmentEditor: false,
       extension: null,
@@ -338,7 +338,7 @@ export class ContainerDatasetModalContent extends Component {
     const { datasetContainer } = this.state;
     this.setState({
       value: '',
-      instruments: null,
+      instruments: [],
     });
     datasetContainer.extended_metadata.instrument = '';
   }
@@ -361,7 +361,7 @@ export class ContainerDatasetModalContent extends Component {
           newState.instruments = result;
           newState.showInstruments = show;
         } else {
-          newState.instruments = null;
+          newState.instruments = [];
           newState.error = '';
           newState.showInstruments = false;
         }
@@ -571,7 +571,7 @@ export class ContainerDatasetModalContent extends Component {
   }
 
   renderMetadata() {
-    const { datasetContainer, instruments = [] } = this.state;
+    const { datasetContainer, instruments } = this.state;
     const { readOnly, disabled, kind } = this.props;
     const termId = absOlsTermId(kind);
     const klasses = (UserStore.getState() && UserStore.getState().dsKlasses) || [];
@@ -580,8 +580,6 @@ export class ContainerDatasetModalContent extends Component {
     if (idx > -1) {
       klass = klasses[idx];
     }
-    console.log({ instruments });
-
     let genericDS = {};
     if (datasetContainer?.dataset?.id) {
       genericDS = datasetContainer.dataset;
@@ -597,7 +595,7 @@ export class ContainerDatasetModalContent extends Component {
               isClearable
               className="w-100"
               value={
-                datasetContainer.extended_metadata.instrument
+                datasetContainer?.extended_metadata?.instrument
                   ? {
                     label: datasetContainer.extended_metadata.instrument,
                     value: datasetContainer.extended_metadata.instrument
@@ -615,8 +613,8 @@ export class ContainerDatasetModalContent extends Component {
                 }
               }}
               options={instruments?.map((item) => ({
-                label: item.name || item,
-                value: item.name || item,
+                label: item.name,
+                value: item.name,
               }))}
               placeholder="Enter or select an instrument"
             />
