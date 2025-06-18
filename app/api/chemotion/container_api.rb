@@ -1,7 +1,25 @@
 module Chemotion
   class ContainerAPI < Grape::API
+    helpers ContainerHelpers
 
     resource :containers do
+      desc 'Update only the container by ID'
+      params do
+        requires :container, type: Hash, desc: 'Container data to update'
+      end
+      put '/container' do
+        container_data = params[:container]
+        container = Container.find_by(id: container_data[:id])
+        error!('Container not found', 404) unless container
+
+        update_datamodel(params[:container])
+
+        present(
+          container,
+          with: Entities::ContainerEntity,
+          root: :container,
+        )
+      end
 
       desc "Remove container id of unseletced attachemnts(the attachemnts not in Inbox)"
       params do
