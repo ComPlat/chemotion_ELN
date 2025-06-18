@@ -7,6 +7,10 @@
 }
 
 .reaction-material {
+  @include draggable-list-item(false);
+  &.pseudo-table__row {
+    @extend .align-items-start;
+  }
   &__link {
     @extend .align-middle;
     @extend .d-inline-block;
