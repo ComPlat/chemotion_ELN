@@ -45,7 +45,7 @@
   }
   &__concentration,
   &__solvent-volume {
-    @include align-header-input(clamp(6rem, 9cqw, 8rem));
+    @include align-header-input(clamp(6.05rem, 9.9cqw, 8.25rem));
   }
   &__coefficient {
     @include align-header-input(2.2rem);
@@ -55,6 +55,15 @@
   &__target,
   &__dry-solvent {
     @include align-header-input(2rem);
+  }
+  &__gaseous-fields {
+    &-input {
+      @extend .d-flex;
+      @extend .gap-2;
+    }
+    @include align-header-input(
+      clamp(36.75rem, calc(36.9cqw + 14.2rem), 44.95rem)
+    ); // ref, target, amount, coefficient, concentration, equivalence + gaps
   }
 }
 
@@ -71,7 +80,14 @@
       @include align-header-input(6rem);
     }
     &__solvent-label {
-      @include align-header-input(8.7rem);
-    } // amount, coefficient + gap
+      @include align-header-input(8.7rem); // amount, coefficient + gap
+    }
+    &__gaseous-fields {
+      @include align-header-input(27.75rem);
+      // ref, target, amount, coefficient, concentration, equivalence + gaps
+      &-input .reaction-material__ref-input {
+        display: none;
+      }
+    }
   }
 }
