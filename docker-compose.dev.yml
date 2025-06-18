@@ -55,6 +55,9 @@ services:
       - *vapp
     working_dir: "/home/chemotion-dev/app"
     command: "./run-ruby-dev.sh"
+    networks:
+      - default
+      - chemotion
 
   webpacker:
     build:
@@ -89,3 +92,6 @@ volumes:
     name: ${VOLUME_NAME_DB:-chemotion_eln_database}
   homedir:
     name: ${VOLUME_NAME_HOMEDIR:-chemotion_eln_homedir}
+
+networks:
+  chemotion:

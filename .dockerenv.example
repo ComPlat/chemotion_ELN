@@ -27,3 +27,13 @@ DOCKER_DEV_IMAGE=complat/dev:v1.10.3-153-gcb7331a3b
 ## never: never run db migration on start
 RAKE_DB_MIGRATE=once
 
+## ENV for docker-compose.services.yml
+SERVICE_REPO=ptrxyz/chemotion
+ELN_VERSION=2.0.1
+
+## Images for the services
+## `cp docker-compose.services.yml.example docker-compose.services.yml` for the latest version
+## `docker compose --env-file .dockerenv -f docker-compose.dev.yml -f docker-composer.services.yml config`
+IMG_SPECTRA=${SERVICE_REPO}:spectra-${ELN_VERSION}
+IMG_CONVERTER=${SERVICE_REPO}:converter-${ELN_VERSION}
+IMG_KETCHERSVC=${SERVICE_REPO}:ketchersvc-${ELN_VERSION}
