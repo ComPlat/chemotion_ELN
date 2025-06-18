@@ -60,4 +60,20 @@ export default class ContainerFetcher {
 
     return promise;
   }
+
+  static updateContainer(container) {
+    return fetch('/api/v1/containers/container', {
+      credentials: 'same-origin',
+      method: 'PUT',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ container })
+    }).then((response) => response.json())
+      .catch((error) => {
+        console.error('Error updating container:', error);
+        throw error;
+      });
+  }
 }
