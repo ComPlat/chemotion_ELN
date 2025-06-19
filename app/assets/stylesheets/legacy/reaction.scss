@@ -15,35 +15,6 @@ table.reaction-scheme-solvent {
   }
 }
 
-.small-padding > [class*="col-"]:first-child {
-  padding-right: 5px;
-}
-
-.small-padding > [class*="col-"]:last-child {
-  padding-left: 5px;
-}
-
-.small-padding > [class*="col-"]:not(:first-child):not(:last-child) {
-  padding-right: 5px;
-  padding-left: 5px;
-}
-
-.reaction-scheme-props {
-  width: 100%;
-
-  table.table {
-    margin-bottom: 0px;
-
-    tr > div {
-      padding: 0 2px;
-    }
-
-    div.Select-menu-outer {
-      z-index: 5;
-    }
-  }
-}
-
 .gp-drop-zone {
   background-color: #eee;
   border-radius: 5px;
@@ -74,34 +45,6 @@ table.reaction-scheme-solvent {
   .Select-menu-outer {
     z-index: 3;
     width: 250%;
-  }
-}
-
-.Select.form-control-sm {
-  .Select-control {
-    height: 28px;
-  }
-  .Select-placeholder {
-    line-height: 24px;
-  }
-  .Select-value {
-    line-height: 24px;
-  }
-
-  .Select-value-label {
-    line-height: 24px;
-  }
-
-  .Select-input > input {
-    padding-top: 2px;
-  }
-
-  .Select-input {
-    height: 26px;
-  }
-
-  .Select-menu-outer {
-    z-index: 3;
   }
 }
 
