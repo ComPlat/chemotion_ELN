@@ -9,54 +9,59 @@ import RCreatableSelect from 'react-select/creatable';
 // see https://react-select.com/styles#the-unstyled-prop
 // see https://react-select.com/styles#the-classnameprefix-prop
 
-export const Select = forwardRef(function Select(props, ref) {
+const baseClassName = 'chemotion-select';
+
+function getSelectClassName(className, size) {
+  return [
+    baseClassName,
+    size ? `form-select-${size}` : null,
+    className
+  ].filter(Boolean).join(' ');
+}
+
+function getSelectStyles(minWidth, maxHeight, styles = {}) {
+  return {
+    ...styles,
+    control: (base, state) => ({
+      ...(styles.control ? styles.control(base, state) : base),
+      minWidth: minWidth || '0',
+    }),
+    menuList: (base, state) => ({
+      ...(styles.menuList ? styles.menuList(base, state) : base),
+      maxHeight: maxHeight || '250px',
+    }),
+  };
+}
+
+export const Select = forwardRef(function Select({ size, minWidth, maxHeight, className, styles, ...props }, ref) {
   return (
     <RSelect
-      className={["chemotion-select", props.className].join(' ')}
-      classNamePrefix="chemotion-select"
+      className={getSelectClassName(className, size)}
+      classNamePrefix={baseClassName}
       ref={ref}
       unstyled
       {...props}
-      styles={{
-        control: (baseStyles) => ({
-          ...baseStyles,
-          minWidth: props.minWidth || '0',
-        }),
-        menuList: (baseStyles, state) => ({
-          ...baseStyles,
-          maxHeight: props.maxHeight || "250px",
-        }),
-      }}
+      styles={getSelectStyles(minWidth, maxHeight, styles)}
     />
   );
 });
 
-export const AsyncSelect = ({ className, ...props }) => (
+export const AsyncSelect = ({ size, minWidth, maxHeight, className, styles, ...props }) => (
   <RAsyncSelect
-    className={["chemotion-select", className].join(' ')}
-    classNamePrefix="chemotion-select"
+    className={getSelectClassName(className, size)}
+    classNamePrefix={baseClassName}
     unstyled
     {...props}
-    styles={{
-      control: (baseStyles) => ({
-        ...baseStyles,
-        minWidth: props.minWidth || '0',
-      }),
-    }}
+    styles={getSelectStyles(minWidth, maxHeight, styles)}
   />
 );
 
-export const CreatableSelect = ({ className, ...props }) => (
+export const CreatableSelect = ({ size, minWidth, maxHeight, className, styles, ...props }) => (
   <RCreatableSelect
-    className={["chemotion-select", className].join(' ')}
-    classNamePrefix="chemotion-select"
+    className={getSelectClassName(className, size)}
+    classNamePrefix={baseClassName}
     unstyled
     {...props}
-    styles={{
-      control: (baseStyles) => ({
-        ...baseStyles,
-        minWidth: props.minWidth || '0',
-      }),
-    }}
+    styles={getSelectStyles(minWidth, maxHeight, styles)}
   />
 );
