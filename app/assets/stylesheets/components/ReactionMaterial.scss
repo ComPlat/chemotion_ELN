@@ -71,7 +71,7 @@
   }
 }
 
-@container material-group (width < 51rem) {
+@container material-group (width < 54rem) {
   .reaction-material {
     &__amount-input {
       flex-direction: column; // not extending bootstrap utilities in this context to avoid side effects
