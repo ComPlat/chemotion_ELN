@@ -186,6 +186,7 @@ function GeneralMaterialGroup({
         options={reagentList}
         placeholder="Reagents"
         onChange={createReagentForReaction}
+        size="sm"
       />
     );
   }
@@ -368,6 +369,7 @@ function SolventsMaterialGroup({
                   options={solventOptions}
                   placeholder="Add default"
                   onChange={createDefaultSolventsForReaction}
+                  size="sm"
                 />
                 {addSampleButton}
               </div>
