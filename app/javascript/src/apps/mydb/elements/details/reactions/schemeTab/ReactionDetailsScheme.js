@@ -502,7 +502,10 @@ export default class ReactionDetailsScheme extends React.Component {
     const { sampleID, weightPercentage } = changeEvent;
     const updatedSample = reaction.sampleById(sampleID);
     updatedSample.weight_percentage = weightPercentage;
-    updatedSample.equivalent = null;
+    const equivalentEvent = { ...changeEvent, equivalent: null, type: 'equivalentChanged' };
+    this.onReactionChange(
+      this.updatedReactionForEquivalentChange(equivalentEvent)
+    );
     return this.updatedReactionWithSample(this.updatedSamplesForWeightPercentageChange.bind(this), updatedSample);
   }
 
@@ -889,10 +892,14 @@ export default class ReactionDetailsScheme extends React.Component {
     let stoichiometryCoeff = 1.0;
     return samples.map((sample) => {
       stoichiometryCoeff = (sample.coefficient || 1.0) / (referenceMaterial?.coefficient || 1.0);
+      console.log('outside', updatedSample.equivalent);
       if (sample.id === updatedSample.id && updatedSample.equivalent) {
+        console.log('inside', updatedSample.equivalent);
         sample.equivalent = updatedSample.equivalent;
+        // console.log('inside inside', sample.equivalent);
         if (referenceMaterial && referenceMaterial.amount_value
           && updatedSample.gas_type !== 'feedstock') {
+          console.log('inside the inside');
           sample.setAmountAndNormalizeToGram({
             value: updatedSample.equivalent * referenceMaterial.amount_mol,
             unit: 'mol',
@@ -924,8 +931,7 @@ export default class ReactionDetailsScheme extends React.Component {
   updatedSamplesForWeightPercentageChange(samples, updatedSample) {
     return samples.map((sample) => {
       if (sample.id === updatedSample.id) {
-        sample.weight_percentage = updatedSample.weight_percentage;
-        if (sample.weight_percentage > 1 || sample.weight_percentage < 0) {
+        if ((sample.weight_percentage / 100) > 1 || (sample.weight_percentage / 100) < 0) {
           NotificationActions.add({
             message: 'Weight percentage should be between 0 and 100',
             level: 'error'
@@ -1001,7 +1007,6 @@ export default class ReactionDetailsScheme extends React.Component {
   }
 
   updatedSamplesForProductReferenceChange(samples, referenceMaterial, materialGroup) {
-    console.log(materialGroup);
     if (materialGroup !== 'products') return samples;
     return samples.map((s) => {
       if (s.id === referenceMaterial.id) {
@@ -1078,6 +1083,7 @@ export default class ReactionDetailsScheme extends React.Component {
 
   updatedReactionWithSample(updateFunction, updatedSample, type) {
     const { reaction } = this.props;
+    console.log('updatedReactionWithSample called with updatedSample:', updatedSample);
     reaction.starting_materials = updateFunction(reaction.starting_materials, updatedSample, 'starting_materials', type);
     reaction.reactants = updateFunction(reaction.reactants, updatedSample, 'reactants', type);
     reaction.solvents = updateFunction(reaction.solvents, updatedSample, 'solvents', type);
