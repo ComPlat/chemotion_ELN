@@ -24,8 +24,7 @@ module Versioning
             changes_comparison_hash = {} # hash for changes comparison
             revertible = changes.none? { |key, _v| key == 'created_at' }
             changes.each do |key, value|
-              next if value == base[key] # ignore if value is same as in last version
-              next if blank?(base[key]) && blank?(value) # ignore if value is empty
+              next if blank?(value)
 
               fields = field_definitions[key]
               next if fields.nil?
@@ -34,10 +33,12 @@ module Versioning
               fields.each do |field|
                 formatter = field[:formatter] || default_formatter
                 revertible_value_formatter = field[:revertible_value_formatter] || formatter
-                old_value = formatter.call(key, base[key])
+
+                old_value_raw = find_last_different_value(key, value, base)
+                old_value = formatter.call(key, old_value_raw)
                 new_value = formatter.call(key, value)
                 current_value = formatter.call(key, record.read_attribute_before_type_cast(key))
-                revertible_value = revertible_value_formatter.call(key, base[key])
+                revertible_value = revertible_value_formatter.call(key, old_value_raw)
                 next if old_value == new_value # ignore if value is same as in last version
                 next if old_value.blank? && new_value.blank? # ignore if value is empty or nil
 
@@ -52,7 +53,7 @@ module Versioning
                 }
               end
             end
-            base.merge!(changes) # merge changes with last version data for next iteration
+            base[uuid] = changes # merge changes with last version data for next iteration
             next if changes_comparison_hash.empty?
 
             result << {
@@ -92,6 +93,42 @@ module Versioning
           end
 
           User.with_deleted.where(id: ids).to_h { |u| [u.id, u.name] }
+        end
+      end
+
+      def deep_fill_missing(current_value, changes)
+        return nil unless current_value.is_a?(Hash)
+
+        result = {}
+
+        current_value.each do |key, expected_val|
+          # Gather values for this key from all changes, newest to oldest
+          candidate_stack = changes.values.reverse.map { |c| c[key] if c.is_a?(Hash) && c.key?(key) }.compact
+
+          if expected_val.is_a?(Hash)
+            # Recurse if the expected value is a hash
+            merged = deep_fill_missing(expected_val, candidate_stack.map.with_index { |val, i| [i, val] }.to_h)
+            result[key] = merged if merged.present?
+          else
+            # Use the first non-nil scalar value
+            candidate = candidate_stack.find { |v| !v.nil? }
+            result[key] = candidate unless candidate.nil?
+          end
+        end
+
+        result
+      end
+
+      def find_last_different_value(key, current_value, changes)
+        val_changes = changes.transform_values { |v| v[key] }.compact
+
+        if current_value.is_a?(Hash)
+          deep_fill_missing(current_value, val_changes) || {}
+        else
+          val_changes.values.reverse_each do |val|
+            return val if val.present?
+          end
+          nil
         end
       end
 
