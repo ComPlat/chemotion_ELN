@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Form, Button } from 'react-bootstrap';
+import { metPreConv } from 'src/utilities/metricPrefix';
 
 function FieldValueSelector({
   fieldOptions,
@@ -12,49 +13,66 @@ function FieldValueSelector({
 }) {
   const [selectedField, setSelectedField] = useState(onFirstRenderField || fieldOptions[0]);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const [internalValue, setInternalValue] = useState(value);
+  const [displayValue, setDisplayValue] = useState('');
+
+  const formatValue = (val) => {
+    if (Number.isNaN(val) || !Number.isFinite(val)) {
+      return 'n.d.';
+    }
+    return metPreConv(val, 'n', 'n').toPrecision(4);
+  };
 
   useEffect(() => {
-    if (onFirstRenderField && onFirstRenderField !== selectedField) {
-      setSelectedField(onFirstRenderField);
-      // Update value based on the new field
-      onChange(value || '');
-    }
-    console.log('selectedField:', selectedField);
-    console.log('value:', value);
+    setSelectedField(onFirstRenderField);
+    setInternalValue(value);
+    setDisplayValue(formatValue(value));
   }, [onFirstRenderField, value]);
 
   const handleFieldChange = (field) => {
     setSelectedField(field);
     setShowDropdown(false);
     onFieldChange(field);
-    // Update value based on the new field
-    onChange(value || '');
   };
 
   const handleValueChange = (e) => {
     const val = e.target.value;
-    // Accept only digits
-    if (/^\d*\.?\d*$/.test(val)) {
-      onChange(val);
+    // Allow only digits, commas, dots, and valid floats/integers
+    const validValue = val.replace(/[^0-9.,]/g, '');
+    setInternalValue(validValue);
+    if (!focused) {
+      onChange(parseFloat(validValue));
     }
   };
 
-  const toggleDropdown = () => {
-    setShowDropdown((prev) => !prev);
+  const handleFocus = () => {
+    setFocused(true);
+    setDisplayValue(internalValue);
+  };
+
+  const handleBlur = () => {
+    setFocused(false);
+    const formattedValue = formatValue(internalValue);
+    setDisplayValue(formattedValue);
+    onChange(parseFloat(internalValue));
   };
 
   return (
     <div className="position-relative" style={{ zIndex: showDropdown ? 1050 : 'auto' }}>
       <Form.Control
         type="text"
-        value={value}
+        value={focused ? internalValue : displayValue}
         onChange={handleValueChange}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
         className="pe-5"
+        style={{ border: selectedField === 'molar mass' ? '2px solid rgb(0, 123, 255)' : '2px solid rgb(0, 128, 0)' }}
         size="sm"
         disabled={disabled}
       />
       <Button
-        onClick={toggleDropdown}
+        onClick={() => setShowDropdown((prev) => !prev)}
         className="position-absolute top-50 end-0 translate-middle-y px-2 border-0 bg-transparent text-dark"
         role="button"
         size="sm"
@@ -99,13 +117,13 @@ FieldValueSelector.propTypes = {
   disabled: PropTypes.bool,
   material: PropTypes.shape({
     equivalent: PropTypes.string,
-    weight_percentage: PropTypes.string
-  }).isRequired
+    weight_percentage: PropTypes.string,
+  }).isRequired,
 };
 
 FieldValueSelector.defaultProps = {
   onFirstRenderField: null,
-  disabled: false
+  disabled: false,
 };
 
 export default FieldValueSelector;
