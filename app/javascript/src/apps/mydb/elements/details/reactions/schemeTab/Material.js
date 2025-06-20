@@ -237,7 +237,7 @@ class Material extends Component {
               checked={material.product_reference}
               onChange={(e) => this.handleReferenceChange(e, 'productReferenceChanged')}
               size="sm"
-              className="m-1"
+              className="custom-radio m-1"
             />
           </OverlayTrigger>
         </td>
@@ -309,6 +309,16 @@ class Material extends Component {
     );
   }
 
+  // eslint-disable-next-line react/sort-comp
+  handleOnValueChange(e, equivalentField) {
+    if (equivalentField) {
+      const value = { value: e };
+      this.handleEquivalentChange(value);
+    } else {
+      this.handleWeightPercentageChange(e);
+    }
+  }
+
   yieldOrConversionRate(material) {
     const { reaction, displayYieldField } = this.props;
     if (displayYieldField === true || displayYieldField === null) {
@@ -353,19 +363,16 @@ class Material extends Component {
     const { lockEquivColumn, material, reaction } = this.props;
     const { equivalentWeightPercentageFieldChange } = this.state;
     const equivalentField = equivalentWeightPercentageFieldChange === 'molar mass';
-    console.log(material.equivalent);
+    const currentValue = equivalentField ? material.equivalent : material.weight_percentage;
     return (
       <FieldValueSelector
         fieldOptions={['molar mass', 'weight percentage']}
-        onFirstRenderField={material.weight_percentage ? 'weight percentage' : 'molar mass'}
-        value={equivalentField ? (material.equivalent || 0) : material.weight_percentage}
-        onChange={(e) => {
-          if (equivalentField) {
-            this.handleEquivalentChange(e);
-          } else {
-            this.handleWeightPercentageChange(e);
-          }
-        }}
+        onFirstRenderField={
+          material.equivalent && equivalentField
+          && !Number.isNaN(material.weight_percentage) ? 'molar mass' : 'weight percentage'
+        }
+        value={currentValue}
+        onChange={(e) => { this.handleOnValueChange(e, equivalentField); }}
         onFieldChange={(field) => {
           this.handleEquivalentWeightPercentageChange(field);
         }}
@@ -624,21 +631,21 @@ class Material extends Component {
   }
 
   handleEquivalentChange(e) {
+    const { onChange, materialGroup } = this.props;
     const equivalent = e.value;
-    if (this.props.onChange && e) {
+    if (onChange && e) {
       const event = {
         type: 'equivalentChanged',
-        materialGroup: this.props.materialGroup,
+        materialGroup,
         sampleID: this.materialId(),
         equivalent
       };
-      this.props.onChange(event);
+      onChange(event);
     }
   }
 
   handleEquivalentWeightPercentageChange(field) {
     this.setState({ equivalentWeightPercentageFieldChange: field });
-    console.log(this.state.equivalentWeightPercentageFieldChange);
   }
 
   handleWeightPercentageChange(e) {
