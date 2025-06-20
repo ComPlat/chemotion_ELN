@@ -12,9 +12,17 @@ module Chemotion
       error!(update_conflict.to_h, 400)
     end
 
+    rescue_from Grape::Exceptions::ValidationErrors do |exception|
+      errors = []
+      exception.each do |parameters, error|
+        errors << { parameters: parameters, message: error.to_s }
+      end
+      error!(errors, 422)
+    end
+
     helpers do
       params :sbmm_sample_params do
-        requires :name, type: String
+        requires :name, type: String, allow_blank: false
         optional :collection_id, type: Integer
         optional :external_label, type: String
         optional :function_or_application, type: String
@@ -37,19 +45,18 @@ module Chemotion
         optional :container, type: Hash
 
         requires(:sequence_based_macromolecule_attributes, type: Hash) do
-          requires :sbmm_type, type: String, desc: 'SBMM Type', values: %w[protein dna rna]
+          requires :sbmm_type, type: String, desc: 'SBMM Type', values: %w[protein dna rna], allow_blank: false
           optional :sbmm_subtype, type: String, desc: 'SBMM Subtype', values: %w[unmodified glycoprotein],
-                                  allow_blank: true
-          requires :uniprot_derivation, type: String, desc: 'Existence in Uniprot',
-                                        values: %w[uniprot uniprot_modified uniprot_unknown]
+                                  allow_blank: false
+          requires :uniprot_derivation, type: String, desc: 'Existence in Uniprot', values: %w[uniprot uniprot_modified uniprot_unknown], allow_blank: false
 
           optional :other_identifier, type: String, desc: 'Freetext field for a custom external identifier'
 
           given(uniprot_derivation: ->(derivation) { derivation == 'uniprot' }) do
-            requires :primary_accession, type: String, desc: 'Uniprot accession code'
+            requires :primary_accession, type: String, desc: 'Uniprot accession code', allow_blank: false
           end
           given(uniprot_derivation: ->(derivation) { derivation == 'uniprot_modified' }) do
-            requires :parent_identifier, type: String, desc: 'Uniprot accession or SBMM ID of parent record'
+            requires :parent_identifier, type: String, desc: 'Uniprot accession or SBMM ID of parent record', allow_blank: false
           end
 
           given(uniprot_derivation: ->(derivation) { derivation != 'uniprot' }) do
@@ -88,7 +95,7 @@ module Chemotion
 
               optional :acetylation_enabled, type: Boolean, default: false
               given(acetylation_enabled: ->(value) { value == true }) do
-                requires :acetylation_lysin_number, type: Float
+                requires :acetylation_lysin_number, type: Float, allow_blank: false
               end
 
               optional :hydroxylation_enabled, type: Boolean, default: false
@@ -114,8 +121,8 @@ module Chemotion
             # uniprot calls it fullName, but in our DB it's systematic_name
             optional :full_name, type: String, as: :systematic_name
             optional :short_name, type: String
-            requires :molecular_weight, type: Float
-            requires :sequence, type: String
+            requires :molecular_weight, type: Float, allow_blank: false
+            requires :sequence, type: String, allow_blank: false
             optional :heterologous_expression, type: String, values: %w[yes no unknown], default: 'unknown'
             optional :organism, type: String
             optional :taxon_id, type: String
