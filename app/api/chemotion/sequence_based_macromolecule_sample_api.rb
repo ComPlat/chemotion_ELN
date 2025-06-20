@@ -46,8 +46,7 @@ module Chemotion
 
         requires(:sequence_based_macromolecule_attributes, type: Hash) do
           requires :sbmm_type, type: String, desc: 'SBMM Type', values: %w[protein dna rna], allow_blank: false
-          optional :sbmm_subtype, type: String, desc: 'SBMM Subtype', values: %w[unmodified glycoprotein],
-                                  allow_blank: false
+          optional :sbmm_subtype, type: String, desc: 'SBMM Subtype', values: %w[unmodified glycoprotein]
           requires :uniprot_derivation, type: String, desc: 'Existence in Uniprot', values: %w[uniprot uniprot_modified uniprot_unknown], allow_blank: false
 
           optional :other_identifier, type: String, desc: 'Freetext field for a custom external identifier'
