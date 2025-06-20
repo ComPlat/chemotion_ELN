@@ -268,6 +268,52 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
         end.to change(SequenceBasedMacromolecule, :count).by(1)
            .and change(SequenceBasedMacromoleculeSample, :count).by(1)
       end
+
+      context 'when required fields are missing (i.e. even the key is not present)' do
+        let(:post_data) do
+          data = post_for_modified_sbmm.dup
+          data.delete(:name) # key and value must be present
+          data[:sequence_based_macromolecule_attributes].delete(:sbmm_type) # key and value must be present
+          data[:sequence_based_macromolecule_attributes].delete(:uniprot_derivation) # key and value must be present
+          data
+        end
+        it 'throws an error' do
+          post '/api/v1/sequence_based_macromolecule_samples', params: post_data, as: :json
+          expected_result = {
+            "error" => [
+              { "parameters" => ["name"], "message" => "is missing" },
+              { "parameters" => ["name"], "message" => "is empty" },
+              { "parameters" => ["sequence_based_macromolecule_attributes[sbmm_type]"], "message" => "is missing" },
+              { "parameters" => ["sequence_based_macromolecule_attributes[sbmm_type]"], "message" => "is empty" },
+              { "parameters" => ["sequence_based_macromolecule_attributes[uniprot_derivation]"], "message" => "is missing" },
+              { "parameters" => ["sequence_based_macromolecule_attributes[uniprot_derivation]"], "message" => "is empty" }
+            ]
+          }
+          expect(parsed_json_response).to eq expected_result
+        end
+      end
+
+      context 'when required fields are present but the value is nil' do
+        let(:post_data) do
+          post_for_modified_sbmm.deep_merge(
+            sequence_based_macromolecule_attributes: {
+              post_translational_modification_attributes: {
+                acetylation_enabled: true,
+                acetylation_lysin_number: nil
+              }
+            }
+          )
+        end
+        it 'throws an error' do
+          post '/api/v1/sequence_based_macromolecule_samples', params: post_data, as: :json
+          expected_result = {
+            "error" => [
+              { "parameters" => ["sequence_based_macromolecule_attributes[post_translational_modification_attributes][acetylation_lysin_number]"], "message" => "is empty" },
+            ]
+          }
+          expect(parsed_json_response).to eq expected_result
+        end
+      end
     end
 
     context 'when creating a modified SBMM based on a non-uniprot SBMM' do
@@ -432,28 +478,9 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
             post_translational_modification: sbmm.post_translational_modification,
           )
         end
-        let(:sbmm_sample_serialized_for_use_as_put_data) do
-          data = Entities::SequenceBasedMacromoleculeSampleEntity.represent(sbmm_sample).serializable_hash
-          data[:sequence_based_macromolecule].transform_keys! do |key|
-            case key
-            when :protein_sequence_modifications
-              :protein_sequence_modification_attributes
-            when :post_translational_modifications
-              :post_translational_modification_attributes
-            else
-              key
-            end
-          end
-          data.transform_keys! do |key|
-            key == :sequence_based_macromolecule ? :sequence_based_macromolecule_attributes : key
-          end
-          parent_identifier = data[:sequence_based_macromolecule_attributes][:parent][:id]
-          data[:sequence_based_macromolecule_attributes][:parent_identifier] = parent_identifier
-          data[:sequence_based_macromolecule_attributes].delete(:parent)
-          data
-        end
+
         let(:put_data) do
-          put_data = sbmm_sample_serialized_for_use_as_put_data
+          put_data = serialize_sbmm_sample_as_api_input(sbmm_sample)
           put_data[:sequence_based_macromolecule_attributes][:sequence] = other_sbmm.sequence
           put_data[:amount_as_used_mass_value] = 12_345 # some changes to the sbmm-sample
           put_data[:sequence_based_macromolecule_attributes][:short_name] = other_sbmm.short_name # this sucks!!!
@@ -490,6 +517,53 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
       #   it 'updates the existing SBMM' do
       #   end
       # end
+      #
+
+      context 'when required fields are missing (i.e. even the key is not present)' do
+        let(:post_data) do
+          data = serialize_sbmm_sample_as_api_input(sbmm_sample)
+          data.delete(:name) # key and value must be present
+          data[:sequence_based_macromolecule_attributes].delete(:sbmm_type) # key and value must be present
+          data[:sequence_based_macromolecule_attributes].delete(:uniprot_derivation) # key and value must be present
+          data
+        end
+        it 'throws an error' do
+          put "/api/v1/sequence_based_macromolecule_samples/#{sbmm_sample.id}", params: post_data, as: :json
+          expected_result = {
+            "error" => [
+              { "parameters" => ["name"], "message" => "is missing" },
+              { "parameters" => ["name"], "message" => "is empty" },
+              { "parameters" => ["sequence_based_macromolecule_attributes[sbmm_type]"], "message" => "is missing" },
+              { "parameters" => ["sequence_based_macromolecule_attributes[sbmm_type]"], "message" => "is empty" },
+              { "parameters" => ["sequence_based_macromolecule_attributes[uniprot_derivation]"], "message" => "is missing" },
+              { "parameters" => ["sequence_based_macromolecule_attributes[uniprot_derivation]"], "message" => "is empty" }
+            ]
+          }
+          expect(parsed_json_response).to eq expected_result
+        end
+      end
+
+      context 'when required fields are present but the value is nil' do
+        let(:post_data) do
+          serialize_sbmm_sample_as_api_input(sbmm_sample).deep_merge(
+            sequence_based_macromolecule_attributes: {
+              post_translational_modification_attributes: {
+                acetylation_enabled: true,
+                acetylation_lysin_number: nil
+              }
+            }
+          )
+        end
+        it 'throws an error' do
+          put "/api/v1/sequence_based_macromolecule_samples/#{sbmm_sample.id}", params: post_data, as: :json
+          expected_result = {
+            "error" => [
+              { "parameters" => ["sequence_based_macromolecule_attributes[post_translational_modification_attributes][acetylation_lysin_number]"], "message" => "is empty" },
+            ]
+          }
+          expect(parsed_json_response).to eq expected_result
+        end
+      end
     end
   end
 
