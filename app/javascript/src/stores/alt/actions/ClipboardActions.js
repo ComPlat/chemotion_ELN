@@ -7,6 +7,12 @@ import DeviceDescription from 'src/models/DeviceDescription';
 import Sample from 'src/models/Sample';
 import Component from 'src/models/Component';
 
+/**
+ * Fetches components for a sample (if mixture) and adds them to the sample instance.
+ * @async
+ * @param {Object|Sample} sample - The sample object or instance.
+ * @returns {Promise<Sample>} The sample instance with components (if mixture).
+ */
 async function fetchAndAddComponents(sample) {
   const sampleInstance = sample instanceof Sample ? sample : new Sample({ ...sample });
 
@@ -23,7 +29,17 @@ async function fetchAndAddComponents(sample) {
   return sampleInstance;
 }
 
+/**
+ * ClipboardActions provides methods to fetch and copy samples, wellplates, and device descriptions.
+ * Used for clipboard and UI state management in Chemotion.
+ */
 class ClipboardActions {
+  /**
+   * Fetches samples by UI state and limit, processes their components, and dispatches the result.
+   * @param {Object} params - Parameters for fetching samples (must include sample.collection_id).
+   * @param {string} action - The action type for dispatch.
+   * @returns {Function} Thunk for dispatching the result.
+   */
   fetchSamplesByUIStateAndLimit(params, action) {
     return (dispatch) => {
       SamplesFetcher.fetchSamplesByUIStateAndLimit(params)

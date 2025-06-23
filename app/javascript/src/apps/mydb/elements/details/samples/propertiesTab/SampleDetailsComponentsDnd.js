@@ -5,7 +5,17 @@ import { DragDropItemTypes } from 'src/utilities/DndConst';
 import Sample from 'src/models/Sample';
 import SampleComponentsGroup from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleComponentsGroup';
 
+/**
+ * Drag-and-drop target specification for react-dnd.
+ * Handles drop and canDrop logic for supported item types.
+ * @type {Object}
+ */
 const target = {
+  /**
+   * Handles drop event for drag-and-drop of samples, molecules, or materials.
+   * @param {Object} tagProps - The target component props
+   * @param {Object} monitor - The drag-and-drop monitor
+   */
   drop(tagProps, monitor) {
     const { dropSample, dropMaterial } = tagProps;
     const srcItem = monitor.getItem();
@@ -34,6 +44,12 @@ const target = {
       );
     }
   },
+  /**
+   * Determines if the dragged item can be dropped on this target.
+   * @param {Object} tagProps - The target component props
+   * @param {Object} monitor - The drag-and-drop monitor
+   * @returns {boolean} True if drop is allowed
+   */
   canDrop(tagProps, monitor) {
     const srcType = monitor.getItemType();
     const isCorrectType = srcType === DragDropItemTypes.MATERIAL
@@ -43,12 +59,24 @@ const target = {
   },
 };
 
+/**
+ * Collects drop target props for react-dnd.
+ * @param {Object} connect - The drop target connector
+ * @param {Object} monitor - The drop target monitor
+ * @returns {Object} Drop target props
+ */
 const collect = (connect, monitor) => ({
   connectDropTarget: connect.dropTarget(),
   isOver: monitor.isOver(),
   canDrop: monitor.canDrop()
 });
 
+/**
+ * SampleDetailsComponentsDnd is a drag-and-drop enabled container for sample components.
+ * Renders a SampleComponentsGroup and handles drop events for DnD.
+ * @class SampleDetailsComponentsDnd
+ * @extends React.Component
+ */
 class SampleDetailsComponentsDnd extends React.Component {
   render() {
     const {

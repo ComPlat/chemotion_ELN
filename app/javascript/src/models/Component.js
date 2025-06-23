@@ -573,7 +573,7 @@ export default class Component extends Sample {
    */
   updatePurityFromAmount() {
     // purity = amount_mol * (Molweight / mass_g)
-    const purity = this.amount_mol * (this.molecule_molecular_weight / this.amount_g);
+    const purity = parseFloat((this.amount_mol * (this.molecule_molecular_weight / this.amount_g)).toFixed(6));
 
     if (purity <= 1) {
       this.purity = purity;

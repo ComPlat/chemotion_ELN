@@ -1274,11 +1274,18 @@ export default class SampleDetails extends React.Component {
     });
   }
 
-  splitSmiles(editor, svgFile) {
+  /**
+   * Splits the canonical SMILES string of a mixture sample and updates the sample's molecules in the editor.
+   *
+   * @param {string} editor - The editor identifier or instance to use for updating molecules.
+   * @param {string|null} svgFile - Optional SVG file content to use for rendering.
+   * @returns {void}
+   */
+  splitSmiles(editor) {
     const { sample } = this.state;
     if (!sample.isMixture() || !sample.molecule_cano_smiles || sample.molecule_cano_smiles === '') { return; }
 
-    const mixtureSmiles = sample.molecule_cano_smiles.split('.')
+    const mixtureSmiles = sample.molecule_cano_smiles.split('.');
     if (mixtureSmiles) {
       sample.splitSmilesToMolecule(mixtureSmiles, editor)
         .then(() => {

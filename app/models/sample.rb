@@ -79,6 +79,11 @@ class Sample < ApplicationRecord
   SAMPLE_TYPE_MIXTURE = 'Mixture'
   SAMPLE_TYPE_MICROMOLECULE = 'Micromolecule'
 
+  SAMPLE_TYPES = [
+    SAMPLE_TYPE_MICROMOLECULE,
+    SAMPLE_TYPE_MIXTURE
+  ].freeze
+
   multisearchable against: %i[
     name short_label external_label molecule_sum_formular
     molecule_iupac_name molecule_inchistring molecule_inchikey molecule_cano_smiles
@@ -233,7 +238,6 @@ class Sample < ApplicationRecord
   has_many :private_notes, as: :noteable, dependent: :destroy
   has_many :comments, as: :commentable, dependent: :destroy
 
-  belongs_to :micromolecule, optional: true
   has_many :components, dependent: :destroy
 
   belongs_to :fingerprint, optional: true
@@ -268,7 +272,6 @@ class Sample < ApplicationRecord
 
   delegate :computed_props, to: :molecule, prefix: true
   delegate :inchikey, to: :molecule, prefix: true, allow_nil: true
-  delegate :molfile, :molfile_version, :stereo, to: :micromolecule, prefix: true, allow_nil: true
 
   attr_writer :skip_reaction_svg_update
 

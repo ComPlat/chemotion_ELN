@@ -38,6 +38,11 @@ class SampleComponentsGroup extends React.Component {
     this.setState({ ...state });
   }
 
+  /**
+   * Renders the toggle buttons for switching between stock molarity and density input.
+   * @param {Object} headers - The table headers object
+   * @returns {JSX.Element} The button group for stock/density
+   */
   stockMolarityInput(headers) {
     const { handleTabSelect, activeTab } = this.props;
 
@@ -61,6 +66,13 @@ class SampleComponentsGroup extends React.Component {
     );
   }
 
+  /**
+   * Renders the lock/unlock button for amount columns.
+   * @param {boolean} lockState - Whether the column is locked
+   * @param {string} materialGroup - The group type ('liquid' or 'solid')
+   * @param {string} actionType - The action type string
+   * @returns {JSX.Element} The lock button
+   */
   renderSwitchAmountButton(lockState, materialGroup, actionType) {
     const updatedActionType = materialGroup === 'solid' ? `${actionType}Solids` : actionType;
 
@@ -90,6 +102,10 @@ class SampleComponentsGroup extends React.Component {
     );
   }
 
+  /**
+   * Renders the table of sample components with headers and rows.
+   * @returns {JSX.Element} The rendered table
+   */
   render() {
     const {
       materialGroup, deleteMixtureComponent, onChange, sample, headIndex, dropSample, dropMaterial, sampleComponents,
