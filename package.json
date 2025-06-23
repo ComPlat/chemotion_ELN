@@ -98,17 +98,15 @@
     "reactflow": "^11.7.2",
     "redux": "^4.1.0",
     "sha256": "^0.2.0",
-    "shakapacker": "8.0.2",
+    "shakapacker": "~8.3.0",
     "spark-md5": "^3.0.1",
     "svgedit": "^7.3.0",
     "terser-webpack-plugin": "5",
-    "uglify-js": "~3.10.3",
-    "uglifyify": "^5.0.2",
     "util": "^0.12.4",
     "uuid": "^3.3.2",
     "webpack": "5",
     "webpack-assets-manifest": "5",
-    "webpack-cli": "4",
+    "webpack-cli": "6",
     "webpack-merge": "5",
     "whatwg-fetch": "^3.6.2",
     "yarn": "^1.22.19"
@@ -117,7 +115,7 @@
     "@babel/eslint-parser": "^7.26.8",
     "@babel/register": "^7.25.9",
     "@eflexsystems/factory-bot": "^9.0.0",
-    "@pmmmwh/react-refresh-webpack-plugin": "^0.5.5",
+    "@pmmmwh/react-refresh-webpack-plugin": "^0.6",
     "@wojtekmaj/enzyme-adapter-react-17": "^0.8.0",
     "babel-loader": "8",
     "cypress": "^12.3.0",
@@ -136,7 +134,7 @@
     "process": "^0.11.10",
     "react-refresh": "^0.12.0",
     "sinon": "^15.2.0",
-    "webpack-dev-server": "4"
+    "webpack-dev-server": "5"
   },
   "scripts": {
     "postinstall": "./package_postinstall.sh",
