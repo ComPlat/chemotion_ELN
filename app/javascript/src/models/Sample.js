@@ -617,6 +617,11 @@ export default class Sample extends Element {
     }
   }
 
+  /**
+   * Sets the amount and unit for the sample.
+   * If the sample is a mixture, updates the volume for all mixture components.
+   * @param {Object} amount - The amount object with value and unit
+   */
   setAmount(amount) {
     if (amount.unit && !isNaN(amount.value)) {
       this.amount_value = amount.value;
@@ -630,6 +635,12 @@ export default class Sample extends Element {
     }
   }
 
+  /**
+   * Updates the total volume for the sample based on amount and concentration.
+   * Used for mixtures to recalculate the total volume.
+   * @param {number} amount - The amount (e.g., moles)
+   * @param {number} totalConcentration - The total concentration (e.g., molarity)
+   */
   updateTotalVolume(amount, totalConcentration) {
     if (!amount || totalConcentration === 0 || Number.isNaN(totalConcentration)) {
       return;
@@ -641,6 +652,11 @@ export default class Sample extends Element {
     this.updateMixtureComponentVolume(totalVolume);
   }
 
+  /**
+   * Calculates the required total volume for the mixture based on the reference component.
+   * Considers purity, stock concentration, density, and material group.
+   * @returns {number} The required total volume (liters)
+   */
   calculateRequiredTotalVolume() {
     const referenceComponent = this.reference_component;
     if (!referenceComponent) return 0;
@@ -1182,6 +1198,10 @@ export default class Sample extends Element {
     return this.sample_details.total_molecular_weight;
   }
 
+  /**
+   * Gets the reference component (the one marked as reference) from the components array.
+   * @returns {Object|null} The reference component or null if not found
+   */
   get reference_component() {
     if (!this.components || this.components.length < 1) { return null; }
     return this.components.find(
@@ -1189,6 +1209,10 @@ export default class Sample extends Element {
     );
   }
 
+  /**
+   * Gets the reference molecular weight from the sample details or reference component.
+   * @returns {number|null} The reference molecular weight or null if not set
+   */
   get reference_molecular_weight() {
     if (this.sample_details) {
       return this.sample_details.reference_molecular_weight;
@@ -1199,16 +1223,28 @@ export default class Sample extends Element {
     return this.reference_component.molecule.molecular_weight;
   }
 
+  /**
+   * Sets the reference molecular weight in the sample details.
+   * @param {number} reference_molecular_weight - The reference molecular weight
+   */
   set reference_molecular_weight(reference_molecular_weight) {
     this.sample_details.reference_molecular_weight = reference_molecular_weight;
   }
 
+  /**
+   * Gets the reference molarity value from the reference component.
+   * @returns {number|null} The reference molarity value or null if not set
+   */
   get reference_molarity_value() {
     if (!this.reference_component) { return null; }
 
     return this.reference_component.molarity_value;
   }
 
+  /**
+   * Gets the reference molarity unit from the reference component.
+   * @returns {string|null} The reference molarity unit or null if not set
+   */
   get reference_molarity_unit() {
     if (!this.reference_component) { return null; }
 
@@ -1363,15 +1399,30 @@ export default class Sample extends Element {
     this.solvent = tmpSolvents;
   }
 
+  /**
+   * Updates the sample type.
+   * @param {string} newSampleType - The new sample type
+   */
   updateSampleType(newSampleType) {
     this.sample_type = newSampleType;
   }
 
+  /**
+   * Initializes the components array and sorts them by position.
+   * Also updates the checksum.
+   * @param {Array<Object>} components - The components to initialize.
+   */
   initialComponents(components) {
     this.components = components.sort((a, b) => a.position - b.position);
     this._checksum = this.checksum();
   }
 
+  /**
+   * Adds a new component to the mixture if it is not already present.
+   * Updates the molecule and molfile if needed.
+   * @async
+   * @param {Object} newComponent - The new component to add.
+   */
   async addMixtureComponent(newComponent) {
     const tmpComponents = [...(this.components || [])];
     const isNew = !tmpComponents.some((component) => component.molecule.iupac_name === newComponent.molecule.iupac_name
@@ -1402,6 +1453,11 @@ export default class Sample extends Element {
     }
   }
 
+  /**
+   * Deletes a component from the mixture and updates the molecule and molfile if needed.
+   * @async
+   * @param {Object} componentToDelete - The component to delete.
+   */
   async deleteMixtureComponent(componentToDelete) {
     const tmpComponents = [...(this.components || [])];
     const filteredComponents = tmpComponents.filter(
@@ -1432,6 +1488,10 @@ export default class Sample extends Element {
   // callback function for handleTotalVolumeChangeforMixtures
   // Case 2: Total volume updated; Total Conc. is locked
   // Case 3: Total volume updated; Total Conc. is not locked
+  /**
+   * Updates the volume for all mixture components when the total volume changes.
+   * @param {number} totalVolume - The new total volume for the mixture.
+   */
   updateMixtureComponentVolume(totalVolume) {
     if (this.components.length < 1 || totalVolume <= 0) {
       return;
@@ -1446,6 +1506,10 @@ export default class Sample extends Element {
     this.updateMixtureComponentEquivalent();
   }
 
+  /**
+   * Sets the reference component in the mixture by index and updates equivalents.
+   * @param {number} componentIndex - The index of the component to set as reference.
+   */
   setReferenceComponent(componentIndex) {
     this.components[componentIndex].equivalent = 1;
     this.components[componentIndex].reference = true;
@@ -1520,6 +1584,9 @@ export default class Sample extends Element {
     // this.updateMixtureMolecularWeight();
   }
 
+  /**
+   * Updates the total molecular weight of the mixture based on the weighted average of components.
+   */
   updateMixtureMolecularWeight() {
     if (this.components && this.components.length <= 1) { return; }
 
@@ -1542,6 +1609,13 @@ export default class Sample extends Element {
     this.sample_details.total_molecular_weight = totalMolecularWeight;
   }
 
+  /**
+   * Moves a material/component within the component array and updates positions.
+   * @param {Object} srcMat - The source material/component to move.
+   * @param {string} srcGroup - The source group name.
+   * @param {Object} tagMat - The target material/component to move before/after.
+   * @param {string} tagGroup - The target group name.
+   */
   moveMaterial(srcMat, srcGroup, tagMat, tagGroup) {
     const srcIndex = this.components.findIndex((mat) => mat === srcMat);
     const tagIndex = this.components.findIndex((mat) => mat === tagMat);
@@ -1561,6 +1635,14 @@ export default class Sample extends Element {
     this.setComponentPositions();
   }
 
+  /**
+   * Merges two components into a new one by combining their SMILES and updating the mixture.
+   * @async
+   * @param {Object} srcMat - The source material/component to merge.
+   * @param {string} srcGroup - The source group name.
+   * @param {Object} tagMat - The target material/component to merge with.
+   * @param {string} tagGroup - The target group name.
+   */
   async mergeComponents(srcMat, srcGroup, tagMat, tagGroup) {
     const srcIndex = this.components.findIndex((mat) => mat === srcMat);
     const tagIndex = this.components.findIndex((mat) => mat === tagMat);
@@ -1584,12 +1666,21 @@ export default class Sample extends Element {
     }
   }
 
+  /**
+   * Updates the position property of each component in the component array.
+   */
   setComponentPositions() {
     this.components.forEach((mat, index) => {
       mat.position = index;
     });
   }
 
+  /**
+   * Splits a list of SMILES strings into molecules and adds them as subsamples/components.
+   * @param {Array<string>} mixtureSmiles - Array of SMILES strings to split.
+   * @param {string} editor - The editor to use for fetching molecules.
+   * @returns {Promise<Array>} A promise that resolves when all molecules are processed.
+   */
   splitSmilesToMolecule(mixtureSmiles, editor) {
     const promises = mixtureSmiles.map((smiles) => MoleculesFetcher.fetchBySmi(smiles, null, null, editor));
 
@@ -1601,6 +1692,10 @@ export default class Sample extends Element {
       });
   }
 
+  /**
+   * Converts an array of mixture molecules into subsamples/components and adds them to the mixture.
+   * @param {Array<Object>} mixtureMolecules - The molecules to convert and add.
+   */
   mixtureMoleculeToSubsample(mixtureMolecules) {
     mixtureMolecules.map(async (molecule) => {
       const newSample = Sample.buildNew(molecule, this.collection_id);

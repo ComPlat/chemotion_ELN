@@ -351,7 +351,7 @@ module Chemotion
         optional :sum_formula, type: String
         optional :collection_id, type: Integer, desc: 'Collection id'
         # use :root_container_params
-        optional :sample_type, type: String, default: 'Micromolecule'
+        optional :sample_type, type: String, default: 'Micromolecule', values: Sample::SAMPLE_TYPES
         optional :sample_details, type: Hash, desc: 'extra params for mixtures or polymers'
       end
 
@@ -411,14 +411,7 @@ module Chemotion
           # remove collection_id from sample attributes after updating inventory label
           attributes.delete(:collection_id)
 
-          micro_att = {
-            name: params[:name],
-            molfile: params[:molfile],
-            stereo: params[:stereo],
-          }
-
           @sample.update!(attributes)
-          @sample.micromolecule&.update(micro_att)
           @sample.save_segments(segments: params[:segments], current_user_id: current_user.id)
 
           # save to profile
@@ -489,7 +482,7 @@ module Chemotion
         optional :inventory_sample, type: Boolean, default: false
         optional :molecular_mass, type: Float
         optional :sum_formula, type: String
-        optional :sample_type, type: String, default: 'Micromolecule'
+        optional :sample_type, type: String, default: 'Micromolecule', values: Sample::SAMPLE_TYPES
         optional :sample_details, type: Hash, desc: 'extra params for mixtures or polymers'
       end
       post do
@@ -530,11 +523,6 @@ module Chemotion
           sum_formula: params[:sum_formula],
           sample_type: params[:sample_type],
           sample_details: params[:sample_details],
-        }
-        micro_att = {
-          name: params[:name],
-          molfile: params[:molfile],
-          stereo: params[:stereo],
         }
 
         boiling_point_lowerbound = (params['boiling_point_lowerbound'].presence || -Float::INFINITY)
@@ -589,13 +577,6 @@ module Chemotion
           sample.collections << all_coll
         end
 
-        case params[:sample_type]
-        when 'Micromolecule'
-          micromolecule = Micromolecule.new(micro_att)
-          micromolecule.samples << sample
-          micromolecule.save!
-        end
-
         sample.container = update_datamodel(params[:container])
         sample.update_inventory_label(params[:xref][:inventory_label], params[:collection_id])
         sample.save!
@@ -621,9 +602,7 @@ module Chemotion
 
         delete do
           sample = Sample.find(params[:id])
-          micromolecule = Micromolecule.find_by(id: sample.micromolecule_id)
           sample.destroy
-          micromolecule&.destroy
         end
       end
     end

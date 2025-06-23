@@ -2,6 +2,22 @@
 
 module Chemotion
   class ComponentAPI < Grape::API
+    rescue_from ActiveRecord::RecordNotFound do
+      error!('Resource not found', 404)
+    end
+
+    rescue_from ActiveRecord::RecordInvalid do |e|
+      error!(e.record.errors.full_messages.to_sentence, 422)
+    end
+
+    helpers do
+      def authorize_sample_update!(sample)
+        return if ElementPolicy.new(current_user, sample).update?
+
+        error!('403 Forbidden', 403)
+      end
+    end
+
     resource :components do
       desc 'Return components by sample_id'
       params do
@@ -20,7 +36,7 @@ module Chemotion
             component.component_properties['molecule'] = molecules[molecule_id]
           end
 
-          present components
+          present components, with: Entities::ComponentEntity
         end
       end
 
@@ -51,31 +67,14 @@ module Chemotion
       end
 
       put do
-        sample_id = params[:sample_id]
-        components_params = params[:components]
+        sample = Sample.find(params[:sample_id])
+        authorize_sample_update!(sample)
 
         ActiveRecord::Base.transaction do
-          components_params.each do |component_params|
-            molecule_id = component_params.dig(:component_properties, :molecule_id).to_i
-
-            component = Component.where("sample_id = ? AND CAST(component_properties ->> 'molecule_id' AS INTEGER) = ?",
-                                        sample_id, molecule_id)
-                                 .first_or_initialize(sample_id: sample_id)
-
-            component.update(
-              name: component_params[:name],
-              position: component_params[:position],
-              component_properties: component_params[:component_properties],
-            )
-          end
-
-          # Delete components
-          molecule_ids_to_keep = components_params.filter_map { |cp| cp.dig(:component_properties, :molecule_id)&.to_i }
-
-          Component.where(sample_id: sample_id)
-                   .where.not("CAST(component_properties ->> 'molecule_id' AS INTEGER) IN (?)", molecule_ids_to_keep)
-                   &.destroy_all
+          Usecases::Components::Create.new(sample.id, params[:components]).execute!
+          Usecases::Components::DeleteRemovedComponents.new(sample.id, params[:components]).execute!
         end
+        present Component.where(sample_id: sample.id), with: Entities::ComponentEntity
       end
     end
   end

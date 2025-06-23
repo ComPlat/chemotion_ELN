@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2025_15_05_141514) do
+ActiveRecord::Schema.define(version: 2025_05_15_141514) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -933,15 +933,6 @@ ActiveRecord::Schema.define(version: 2025_15_05_141514) do
     t.datetime "updated_at", null: false
   end
 
-  create_table "micromolecules", force: :cascade do |t|
-    t.string "name"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
-    t.binary "molfile"
-    t.string "molfile_version", limit: 20
-    t.jsonb "stereo"
-  end
-
   create_table "molecule_names", id: :serial, force: :cascade do |t|
     t.integer "molecule_id"
     t.integer "user_id"
@@ -1315,13 +1306,11 @@ ActiveRecord::Schema.define(version: 2025_15_05_141514) do
     t.boolean "dry_solvent", default: false
     t.boolean "inventory_sample", default: false
     t.jsonb "log_data"
-    t.bigint "micromolecule_id"
-    t.string "sample_type"
+    t.string "sample_type", default: "Micromolecule"
     t.jsonb "sample_details"
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
     t.index ["identifier"], name: "index_samples_on_identifier"
     t.index ["inventory_sample"], name: "index_samples_on_inventory_sample"
-    t.index ["micromolecule_id"], name: "index_samples_on_micromolecule_id"
     t.index ["molecule_id"], name: "index_samples_on_sample_id"
     t.index ["molecule_name_id"], name: "index_samples_on_molecule_name_id"
     t.index ["user_id"], name: "index_samples_on_user_id"
@@ -1665,8 +1654,6 @@ ActiveRecord::Schema.define(version: 2025_15_05_141514) do
   add_foreign_key "report_templates", "attachments"
   add_foreign_key "sample_tasks", "samples"
   add_foreign_key "sample_tasks", "users", column: "creator_id"
-  add_foreign_key "samples", "samples", column: "micromolecule_id"
-
   create_function :user_instrument, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.user_instrument(user_id integer, sc text)
        RETURNS TABLE(instrument text)
