@@ -133,7 +133,7 @@ function VersionsTableFields(props) {
         {' '}
         {input.valueUnit}
       </p>
-      {input.data.length > 0 && (
+      {Array.isArray(input.data) && input.data.length > 0 && (
         <Table style={{ marginTop: '1em', backgroundColor: 'transparent' }}>
           <thead>
             <tr>
@@ -297,7 +297,7 @@ function VersionsTableFields(props) {
       flex: 1,
     },
     {
-      field: 'oldValue',
+      field: 'previousValue',
       headerName: 'previous version',
       cellStyle: {
         backgroundColor: '#f2dede',

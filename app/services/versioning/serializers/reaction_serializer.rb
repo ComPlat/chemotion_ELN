@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/MethodLength
+
 class Versioning::Serializers::ReactionSerializer < Versioning::Serializers::BaseSerializer
   def self.call(record, name = ['Reaction Properties'])
     new(record: record, name: name).call
@@ -100,3 +102,5 @@ class Versioning::Serializers::ReactionSerializer < Versioning::Serializers::Bas
     end
   end
 end
+
+# rubocop:enable Metrics/MethodLength
