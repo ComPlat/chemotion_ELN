@@ -39,7 +39,7 @@ const notApplicableInput = (className) => (
   </div>
 );
 
-const iupacNameTooltip = (material) => (
+const iupacNameTooltip = material => (
   <Tooltip id="iupac_name_tooltip" className="left_tooltip">
     <div>
       <div className="d-flex">
@@ -183,20 +183,6 @@ class Material extends Component {
     const metric = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[1]) > -1)
       ? material.metrics[1]
       : 'm';
-
-    const isMixture = material.isMixture && material.isMixture();
-    const totalMass = material.amount_g;
-    const mixtureDensity = material.density;
-
-    // Calculate volume for mixture: total mass (g) / density (g/mL) = volume (mL)
-    let value;
-    if (isMixture && totalMass != null && mixtureDensity > 0) {
-      value = (totalMass / mixtureDensity) / 1000; // volume in L
-    } else if (isMixture) {
-      value = 0; // Set the initial value to 0 for mixtures
-    } else {
-      value = material.amount_l;
-    }
 
     return (
       <OverlayTrigger placement="top" overlay={tooltip}>
@@ -573,15 +559,15 @@ class Material extends Component {
    * @returns {void}
    */
   handleComponentReferenceChange = (changeEvent) => {
-    if (this.props.onChange && changeEvent.type === 'componentReferenceChanged') {
-      const event = {
-        type: 'componentReferenceChanged',
-        materialGroup: this.props.materialGroup,
-        sampleID: this.materialId(),
-        componentId: changeEvent.componentId,
-        checked: changeEvent.checked,
-      };
-      this.props.onChange(event);
+    if (changeEvent.type === 'componentReferenceChanged') {
+      this.setState((prevState) => ({
+        mixtureComponents: prevState.mixtureComponents.map((comp) => ({
+          ...comp,
+          reference: comp.id === changeEvent.componentId
+        }))
+      }));
+      // Optionally, propagate up:
+      // if (this.props.onChange) this.props.onChange(changeEvent);
     }
   };
 
@@ -1007,8 +993,8 @@ class Material extends Component {
 
     let tooltip = `molar mass: ${molecularWeight} g/mol`;
 
-    if (sample.isMixture() && sample.density != null) {
-      tooltip += `, density: ${sample.density.toFixed(4)} g/mL`;
+    if (sample.isMixture() && sample.sample_details && sample.sample_details.total_mixture_density != null) {
+      tooltip += `, density: ${sample.sample_details.total_mixture_density.toFixed(4)} g/mL`;
     }
 
     if (isProduct && sample.maxAmount) {
