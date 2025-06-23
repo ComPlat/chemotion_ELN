@@ -74,7 +74,7 @@ module Entities
       expose! :target_amount_value,     unless: :displayed_in_list
       expose! :xref
       expose! :sample_type
-      expose! :sample_details,          unless: :displayed_in_list
+      expose! :sample_details
     end
     # rubocop:enable Layout/LineLength, Layout/ExtraSpacing, Metrics/BlockLength
 
