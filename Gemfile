@@ -108,7 +108,7 @@ gem 'sassc-rails'
 gem 'scenic'
 gem 'schmooze'
 gem 'semacode', git: 'https://github.com/toretore/semacode.git', branch: 'master' # required for Barby but not listed...
-gem 'shakapacker', '8.0.2'
+gem 'shakapacker', '~> 8.3.0'
 
 gem 'sentry-delayed_job'
 gem 'sentry-rails'
