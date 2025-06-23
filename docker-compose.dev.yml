@@ -12,12 +12,12 @@
 # - see .dockerenv.example for environment variables usage
 
 x-common-volumes:
-  - &vhome homedir:/home/chemotion-dev
-  - &vapp .:/home/chemotion-dev/app
+  - &vhome homedir:/home/ubuntu
+  - &vapp .:/home/ubuntu/app
 
 services:
   postgres:
-    image: ${DOCKER_PG_IMAGE:-postgres:14}
+    image: ${DOCKER_PG_IMAGE:-postgres:16}
     environment:
       - 'POSTGRES_HOST_AUTH_METHOD=trust'
     expose: # expose port to app container
@@ -32,7 +32,7 @@ services:
       context: '.'
       dockerfile: 'Dockerfile.chemotion-dev'
       # args:
-        # source_image: ${DOCKER_DEV_IMAGE:-ubuntu:jammy}  # Build ARG for base image
+        # source_image: ${DOCKER_DEV_IMAGE:-ubuntu:noble}  # Build ARG for base image
         # FULL_BUILD: ${FULL_BUILD:-}
     image: ${DOCKER_DEV_IMAGE:-}
     depends_on:
@@ -53,7 +53,7 @@ services:
     volumes:
       - *vhome
       - *vapp
-    working_dir: "/home/chemotion-dev/app"
+    working_dir: "/home/ubuntu/app"
     command: "./run-ruby-dev.sh"
     networks:
       - default
@@ -64,7 +64,7 @@ services:
       context: '.'
       dockerfile: 'Dockerfile.chemotion-dev'
       # args:
-        # source_image: ${DOCKER_DEV_IMAGE:-ubuntu:jammy}  # Build ARG for base image
+        # source_image: ${DOCKER_DEV_IMAGE:-ubuntu:noble}  # Build ARG for base image
         # FULL_BUILD: ${FULL_BUILD:-}
     image: ${DOCKER_DEV_IMAGE:-}
     depends_on:
@@ -84,7 +84,7 @@ services:
       - '3035:3035'
     expose:
       - '3035'
-    working_dir: "/home/chemotion-dev/app"
+    working_dir: "/home/ubuntu/app"
     command: './run-js-dev.sh'
 
 volumes:
