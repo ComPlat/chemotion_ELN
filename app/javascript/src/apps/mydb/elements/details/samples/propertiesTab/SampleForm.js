@@ -701,6 +701,11 @@ export default class SampleForm extends React.Component {
     );
   }
 
+  /**
+   * Renders the total amount (volume) input for the sample if allowed.
+   * @param {Object} sample - The sample object
+   * @returns {JSX.Element|false} The rendered input or false if not applicable
+   */
   totalAmount(sample) {
     const isDisabled = !sample.can_update;
 
@@ -722,6 +727,10 @@ export default class SampleForm extends React.Component {
     }
   }
 
+  /**
+   * Renders a disabled input showing the required total volume for the sample mixture.
+   * @returns {JSX.Element} The rendered required volume input
+   */
   totalRequiredAmount() {
     const { sample } = this.props;
 
@@ -825,6 +834,11 @@ export default class SampleForm extends React.Component {
     });
   }
 
+  /**
+   * Renders the sample type selection input.
+   * Allows the user to select the type of sample (e.g., Mixture, Micromolecule).
+   * @returns {JSX.Element} The rendered sample type selects input
+   */
   sampleTypeInput() {
     const { sample } = this.props;
     const { selectedSampleType } = this.state;
@@ -845,6 +859,12 @@ export default class SampleForm extends React.Component {
     );
   }
 
+  /**
+   * Renders the list of mixture components for the sample.
+   * Passes state flags for component label and purity to the child component.
+   * @param {Object} sample - The sample object
+   * @returns {JSX.Element} The rendered mixture components list
+   */
   mixtureComponentsList(sample) {
     const { enableComponentLabel, enableComponentPurity } = this.state;
 

@@ -5,7 +5,7 @@ require 'rails_helper'
 describe Chemotion::ComponentAPI do
   include_context 'api request authorization context'
 
-  let!(:sample) { create(:sample) }
+  let!(:sample) { create(:valid_sample, creator: user, collections: [create(:collection, user_id: user.id)]) }
   let!(:molecule) { create(:molecule) }
   let!(:molecule1) { create(:molecule) }
   let!(:component) do
