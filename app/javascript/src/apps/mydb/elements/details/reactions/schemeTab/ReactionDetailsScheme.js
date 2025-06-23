@@ -118,9 +118,12 @@ export default class ReactionDetailsScheme extends React.Component {
         ? this.createSampleWithoutCounter(srcSample, tagGroup)
         : srcSample.buildChild();
 
-      // Preserve the mixture type
+      // Preserve the mixture type and apply mixture properties
       if (srcSample.isMixture()) {
         splitSample.sample_type = srcSample.sample_type;
+
+        // Use the helper function to map mixture properties
+        srcSample.applyMixturePropertiesToSample(splitSample);
       }
 
       return splitSample;
