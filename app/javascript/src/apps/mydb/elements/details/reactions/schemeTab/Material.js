@@ -240,7 +240,7 @@ class Material extends Component {
     if (isMixture && totalMass != null && mixtureDensity > 0) {
       value = totalMass / mixtureDensity; // volume in mL
     } else if (isMixture) {
-      value = 1; // Set initial value to 1 for mixtures
+      value = 0; // Set the initial value to 1 for mixtures
     } else {
       value = material.amount_l;
     }
