@@ -159,6 +159,7 @@ group :development, :test do
 
   gem 'meta_request'
 
+  gem 'pry', '>= 0.14.2'
   gem 'pry-byebug'
   gem 'pry-rails'
 
