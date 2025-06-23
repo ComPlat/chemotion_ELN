@@ -107,7 +107,7 @@
     "uuid": "^3.3.2",
     "webpack": "5",
     "webpack-assets-manifest": "5",
-    "webpack-cli": "5",
+    "webpack-cli": "6",
     "webpack-merge": "5",
     "whatwg-fetch": "^3.6.2",
     "yarn": "^1.22.19"
