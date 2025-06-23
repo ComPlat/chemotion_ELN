@@ -93,6 +93,9 @@ GEM
       erubi (~> 1.4)
       rails-dom-testing (~> 2.0)
       rails-html-sanitizer (~> 1.1, >= 1.2.0)
+    active_model_serializers (0.9.12)
+      activemodel (>= 3.2)
+      concurrent-ruby (~> 1.0)
     activejob (6.1.7.10)
       activesupport (= 6.1.7.10)
       globalid (>= 0.3.6)
@@ -429,8 +432,6 @@ GEM
       net-protocol
     net-ssh (6.1.0)
     nio4r (2.7.4)
-    nokogiri (1.15.7-aarch64-linux)
-      racc (~> 1.4)
     nokogiri (1.15.7-x86_64-linux)
       racc (~> 1.4)
     oauth2 (2.0.12)
