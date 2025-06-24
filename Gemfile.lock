@@ -1,13 +1,13 @@
 GIT
   remote: https://github.com/ComPlat/inchi-gem.git
-  revision: 9a95669b42e18a20d2a0c2d5440670ff94e46c37
+  revision: 55cf667c08f5391ae0ddcd7908f433b1ab0766c2
   branch: main
   specs:
     inchi-gem (1.06.1)
 
 GIT
   remote: https://github.com/ComPlat/rinchi-gem.git
-  revision: 3eb9cccd5d1fac11450444365c653727bdc8c38f
+  revision: 94402dfd7ddb33bf3b46d533bd8ee0484a4e0e6d
   branch: main
   specs:
     rinchi-gem (1.0.2)
@@ -902,7 +902,7 @@ DEPENDENCIES
   httparty
   icalendar
   image_processing (~> 1.8)
-  inchi-gem (= 1.06.1)!
+  inchi-gem!
   jquery-rails
   jwt
   kaminari
@@ -941,7 +941,7 @@ DEPENDENCIES
   rack
   rack-cors
   rails (~> 6.1.7.7)
-  rinchi-gem (= 1.0.2)!
+  rinchi-gem!
   rmagick
   roo
   rqrcode
