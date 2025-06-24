@@ -3,7 +3,7 @@
 # Prepare and update the application environment for Ruby/Nodejs development
 
 # asdf-vm installation with ruby and nodejs plugins
-export ASDF_BRANCH=v0.14.0
+export ASDF_BRANCH=v0.18.0
 echo '>>> checking asdf installation'
 ./prepare-asdf.sh
 
