@@ -6,5 +6,6 @@ public
 .gitignore
 node_modules
 tmp
+!tmp/ruby
 .env
 
