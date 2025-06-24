@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 class IndigoService
-  DEFAULT_SERVICE_URL = 'http://indigo_service/'
-
   def initialize(struct, output_format = 'image/svg+xml')
     @struct = struct
     @output_format = output_format

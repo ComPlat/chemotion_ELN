@@ -52,13 +52,11 @@ gem 'icalendar'
 gem 'image_processing', '~> 1.8'
 gem 'inchi-gem', git: 'https://github.com/ComPlat/inchi-gem.git', branch: 'main'
 
-gem 'jquery-rails' # must be in, otherwise the views lack jquery, even though the gem is supplied by ketcher-rails
+gem 'jquery-rails' # must be in, otherwise the views lack jquery, even though the gem is supplied by ketcher-rails(late)
 gem 'jwt'
 
 gem 'kaminari'
 gem 'kaminari-grape'
-# gem 'ketcherails', git: 'https://github.com/complat/ketcher-rails.git', branch: 'upgrade-to-rails-6'
-gem 'ketcherails', git: 'https://github.com/complat/ketcher-rails.git', ref: 'd4ae864a0e2d9e853eac8e4fc4ce7e3ab8174f80'
 
 gem 'labimotion', '2.0.0'
 gem 'logidze'

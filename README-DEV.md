@@ -4,6 +4,7 @@
 - datacollectors.yml
 - database.yml
 - storage.yml
+- indigo_service.yml (if indigo service is required)
 
 **write temporary in run-ruby-dev.sh**
 - rake db:create

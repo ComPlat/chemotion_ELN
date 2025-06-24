@@ -26,7 +26,7 @@ namespace :svg do
     message_header = build_message_header(**args)
     scope = build_scope(**args)
 
-    puts "#{message_header}Ketcher rendering service seems to #{ketcher_running ? '' : 'not'} be available"
+    puts "#{message_header}indigo rendering service seems to #{indigo_running ? '' : 'not'} be available"
 
     scope.find_each do |element|
       svg_path = element.send(:full_svg_path)
@@ -44,14 +44,11 @@ namespace :svg do
         next
       end
 
-      svg = KetcherService::RenderSvg.svg(element.molfile)
+      svg = IndigoService.new(element.molfile, 'image/svg+xml').render_structure
       if svg.blank? || svg.match('viewBox=\"0 0 0 0\"')
         puts "#{message} cannot build SVG\n"
         next
       end
-      svg = Ketcherails::SVGProcessor.new(svg)
-      svg = svg.centered_and_scaled_svg
-
       FileUtils.rm_f(svg_path) if svg_file_exists
 
       element.attach_svg(svg)
@@ -64,9 +61,11 @@ namespace :svg do
   # rubocop:enable Metrics/PerceivedComplexity
   # rubocop:enable Metrics/CyclomaticComplexity
 
-  def ketcher_running
-    svg = KetcherService::RenderSvg.svg(Molecule.last&.molfile.presence || 'dummy')
-    svg.presence&.start_with?('<svg')
+  def indigo_running
+    molfile = Molecule.last&.molfile.presence || 'dummy' # TODO:HADI dummy is questionable, with indigo it should be a valid molfile
+    svg = IndigoService.new(molfile, 'image/svg+xml').render_structure
+
+    svg && (!svg.respond_to?(:status) || svg.status != 400)
   end
 
   def build_message_header(**args)

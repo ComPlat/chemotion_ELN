@@ -40,7 +40,7 @@ export default class ResearchPlanDetailsField extends Component {
           />
         );
         break;
-      case 'ketcher':
+      case 'ketcher': // should be 'ketcher2' in the future???
         label = 'Ketcher schema';
         component = (
           <ResearchPlanDetailsFieldKetcher

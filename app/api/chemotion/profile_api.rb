@@ -141,7 +141,7 @@ module Chemotion
 
         layout = data['layout'].select { |e| available_ements.include?(e) }
         data['layout'] = layout.sort_by { |_k, v| v }.to_h
-        data['default_structure_editor'] = 'ketcher' if data['default_structure_editor'].nil?
+        data['default_structure_editor'] = 'ketcher2' if data['default_structure_editor'].nil?
         new_profile = {
           data: data.deep_merge(declared_params[:data] || {}),
           show_external_name: declared_params[:show_external_name],

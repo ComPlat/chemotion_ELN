@@ -97,22 +97,6 @@ const highestUnitFromDuration = (d, threshold = 1.0) => {
 };
 
 export default class Reaction extends Element {
-  // reaction material types
-  static STARTING_MATERIALS = 'starting_materials';
-  static REACTANTS = 'reactants';
-  static PRODUCTS = 'products';
-  static SOLVENTS = 'solvents';
-  static PURIFICATION_SOLVENTS = 'purification_solvents';
-
-  // material group
-  static materialGroups = [
-    Reaction.PRODUCTS,
-    Reaction.REACTANTS,
-    Reaction.STARTING_MATERIALS,
-    Reaction.SOLVENTS,
-    Reaction.PURIFICATION_SOLVENTS
-  ];
-
   static buildEmpty(collection_id) {
     const reaction = new Reaction({
       collection_id,
@@ -528,7 +512,6 @@ export default class Reaction extends Element {
 
     this.rebuildReference(newSrcMaterial);
     this.setPositions(tagGp);
-    this.updateMaterial(newSrcMaterial, null, "svgupdate");
   }
 
   deleteMaterial(material, group) {
@@ -798,7 +781,7 @@ export default class Reaction extends Element {
     return this.referenceMaterial;
   }
 
-  async updateMaterial(material, refreshCoefficient) {
+  updateMaterial(material, refreshCoefficient) {
     const cats = ['starting_materials', 'reactants', 'solvents', 'products'];
     let i = 0;
     let group;
@@ -879,80 +862,19 @@ export default class Reaction extends Element {
       return totalVolume;
     }
 
-  get purificationSolventVolume() {
-    return this.totalVolumeForMaterialGroup(Reaction.PURIFICATION_SOLVENTS);
-  }
-
-  get solventVolume() {
-    return this.totalVolumeForMaterialGroup(Reaction.SOLVENTS);
-  }
-
-  /**
-  * Calculates the volume ratio (as a percentage) of a material within a given material group.
-  *
-  * This method is useful for determining how much a material contributes to the total volume
-  * of its group (e.g., solvents or purification solvents).
-  *
-  * @param {number} amountLiters - The volume of the material in liters.
-  * @param {number} totalVolume - The total volume of the material group in liters.
-  * @returns {string} The volume ratio as a percentage string (e.g., "25.0%"), or `'n.d.'` if
-  * the total volume is invalid or the calculation results in a non-numeric value.
-  */
-  calculateVolumeRatio(amountLiters, totalVolume) {
-    if (!totalVolume || totalVolume === 0) return 'n.d.';
-    const concn = ((amountLiters / totalVolume) * 100);
-    if (Number.isNaN(concn) || !Number.isFinite(concn)) return 'n.d.';
-    return `${concn.toFixed(1)}%`;
-  }
-
-  /**
-   * Searches for a material by its ID within the defined material groups.
-   *
-   * Iterates through each group in `materialGroups` (e.g., starting materials, products, etc.)
-   * and returns the material if found, along with its corresponding group type.
-   *
-   * @param {string} id - The unique identifier of the material to search for.
-   * @returns {{ type: string|null, material: Object|null }} An object containing the material group type and the material itself,
-   * or `{ type: null, material: null }` if not found.
-   */
-  findMaterialById(id) {
-    let material = null;
-    const type = Reaction.materialGroups.find((materialGroup) => {
-      const list = this[materialGroup];
-      material = list.find((sample) => sample?.id === id);
-      return material;
-    });
-    return { type, material };
-  }
-
-  /**
-   * Calculates the total volume (L) for a given material group.
-   *
-   * @param {string} materialGroup - The material group to calculate the volume for (e.g., 'solvents', 'purification_solvents').
-   * @returns {number} The volume.
-   */
-  totalVolumeForMaterialGroup(materialGroup) {
-    if (Array.isArray(this[materialGroup])) {
-      return this[materialGroup].reduce((sum, m) => sum + (m.amount_l || 0), 0);
+    get purificationSolventVolume() {
+      let purificationSolventVolume = 0.0;
+      const materials = [...this.purification_solvents];
+      materials.map(m => purificationSolventVolume += m.amount_l);
+      return purificationSolventVolume;
     }
-    return 'n.d';
-  }
 
-  /**
-   * Calculates the volume ratio (as a percentage) of a specific material by its ID
-   * relative to the total volume of its material group (e.g., solvents or purification solvents).
-   *
-   * @param {number|string} id - The unique identifier of the material to calculate the ratio for.
-   * @returns {string} The volume ratio as a percentage string (e.g., '25.0%') or 'n.d.' if not determinable.
-   */
-  volumeRatioByMaterialId(id) {
-    const { type, material } = this.findMaterialById(id);
-    if (!type || !material) return 'n.d.';
-    const amountLiters = material.amount_l;
-    const totalVolume = this.totalVolumeForMaterialGroup(type);
-    if (Number.isNaN(amountLiters) || Number.isNaN(totalVolume) || totalVolume < 0 || amountLiters < 0) return 'n.d.'; // Ensure amount_l is valid
-    return this.calculateVolumeRatio(amountLiters, totalVolume);
-  }
+    get solventVolume() {
+      let solventVolume = 0.0;
+      const materials = [...this.solvents];
+      materials.map(m => solventVolume += m.amount_l);
+      return solventVolume;
+    }
 
     // overwrite isPendingToSave method in models/Element.js
     get isPendingToSave() {

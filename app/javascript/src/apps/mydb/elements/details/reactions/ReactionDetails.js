@@ -56,8 +56,6 @@ import { ShowUserLabels } from 'src/components/UserLabels';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 // eslint-disable-next-line import/no-named-as-default
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
-import IndigoServiceFetcher from 'src/fetchers/InidigoFetcher';
-import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 
 const handleProductClick = (product) => {
   const uri = Aviator.getCurrentURI();
@@ -435,61 +433,13 @@ export default class ReactionDetails extends Component {
     );
   }
 
-  handleSelect(key) {
-    UIActions.selectTab({ tabKey: key, type: 'reaction' });
-    this.setState({
-      activeTab: key
-    });
-  }
-
-  handleSelectActiveAnalysisTab(key) {
-    UIActions.selectActiveAnalysisTab(key);
-    this.setState({
-      activeAnalysisTab: key
-    });
-  }
-
-  onTabPositionChanged(visible) {
-    this.setState({ visible });
-  }
-
-  generateMoleculeImagePath(moleculeSvgFile) {
-    return `/images/molecules/${moleculeSvgFile}`;
-  }
-
-  fetchIndigoSvg(material) {
-    const hasIndigo = material.molfile.includes('INDIGO');
-    if (!hasIndigo || !material.already_processed) {
-      return IndigoServiceFetcher.rendertMolfileToSvg({ struct: material.molfile })
-        .then((indigoSVG) => {
-          if (indigoSVG.error) {
-            throw new Error('Failed to generate Indigo SVG.');
-          }
-          return MoleculesFetcher.fetchByMolfile(material.molfile, indigoSVG, 'ketcher2');
-        })
-        .then((mofileresponse) => {
-          if (!mofileresponse || !mofileresponse.molecule_svg_file) {
-            throw new Error('Failed to fetch molecule from Molfile.');
-          }
-          material.already_processed = true;
-          material.sample_svg_file = mofileresponse.molecule_svg_file;
-          return this.generateMoleculeImagePath(material.sample_svg_file);
-        })
-        .catch((e) => {
-          console.error('Error fetching Indigo SVG:', e.message);
-          return Promise.resolve(material.svgPath || null);
-        });
-    }
-    return this.generateMoleculeImagePath(material.sample_svg_file);
-  }
-
   updateReactionSvg() {
     const { reaction } = this.state;
-    const materialsPromise = Promise.all([
-      Promise.all(reaction.starting_materials.map((material) => this.fetchIndigoSvg(material))),
-      Promise.all(reaction.reactants.map((material) => this.fetchIndigoSvg(material))),
-      Promise.all(reaction.products.map(async (material) => [await this.fetchIndigoSvg(material), material.equivalent]))
-    ]);
+    const materialsSvgPaths = {
+      starting_materials: reaction.starting_materials.map((material) => material.svgPath),
+      reactants: reaction.reactants.map((material) => material.svgPath),
+      products: reaction.products.map((material) => [material.svgPath, material.equivalent])
+    };
 
     const solvents = reaction.solvents.map((s) => {
       const name = s.preferred_label;
@@ -501,29 +451,10 @@ export default class ReactionDetails extends Component {
       temperature = `${temperature} ${reaction.temperature.valueUnit}`;
     }
 
-    materialsPromise
-      .then(([starting_materials_svg, reactants_svg, products_svg]) => {
-        const materialsSvgPaths = {
-          starting_materials: starting_materials_svg,
-          reactants: reactants_svg,
-          products: products_svg
-        };
-
-        return ReactionSvgFetcher.fetchByMaterialsSvgPaths(
-          materialsSvgPaths,
-          temperature,
-          solvents,
-          reaction.duration,
-          reaction.conditions
-        );
-      })
+    ReactionSvgFetcher.fetchByMaterialsSvgPaths(materialsSvgPaths, temperature, solvents, reaction.duration, reaction.conditions)
       .then((result) => {
-        // Update the reaction's svg file with the result
         reaction.reaction_svg_file = result.reaction_svg;
-        this.setState({ reaction }); // Correctly update the state
-      })
-      .catch((error) => {
-        console.error('Error fetching reaction SVG:', error);
+        this.setState(reaction);
       });
   }
 

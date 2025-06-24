@@ -228,9 +228,13 @@ module Chemotion
       end
       post :svg do
         svg = params[:svg_file]
-        processor = Ketcherails::SVGProcessor.new svg unless params[:is_chemdraw]
-        processor = Chemotion::ChemdrawSvgProcessor.new svg if params[:is_chemdraw]
-        svg = processor.centered_and_scaled_svg
+
+        if params[:is_chemdraw]
+          processor = Chemotion::ChemdrawSvgProcessor.new svg
+          svg = processor.centered_and_scaled_svg
+          # else
+          # TODO:HADI need svg validator/processor is chemdraw is false
+        end
 
         digest = Digest::SHA256.hexdigest svg
         digest = Digest::SHA256.hexdigest digest
