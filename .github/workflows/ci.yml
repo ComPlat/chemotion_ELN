@@ -48,7 +48,7 @@ jobs:
       run:
         shell: bash
 
-    container: complat/chemotion_eln_runner:main
+    container: complat/chemotion_eln_runner:main-v2.0.0-16-gd3380de59
 
     services:
       postgres:

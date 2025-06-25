@@ -41,7 +41,7 @@ else
   echo "Installing required Node.js version..."
   asdf install nodejs $REQUIRED_NODE_VERSION
   asdf set nodejs $REQUIRED_NODE_VERSION
-  asdf global nodejs $REQUIRED_NODE_VERSION
+
   echo "Node.js updated to version: $REQUIRED_NODE_VERSION"
   asdf reshim nodejs
 fi
