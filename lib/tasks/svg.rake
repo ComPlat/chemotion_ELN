@@ -26,7 +26,7 @@ namespace :svg do
     message_header = build_message_header(**args)
     scope = build_scope(**args)
 
-    puts "#{message_header}indigo rendering service seems to #{indigo_running ? '' : 'not'} be available"
+    puts "#{message_header}indigo rendering service seems to #{'not' unless indigo_running?} be available"
 
     scope.find_each do |element|
       svg_path = element.send(:full_svg_path)
@@ -61,11 +61,17 @@ namespace :svg do
   # rubocop:enable Metrics/PerceivedComplexity
   # rubocop:enable Metrics/CyclomaticComplexity
 
-  def indigo_running
-    molfile = Molecule.last&.molfile.presence || 'dummy' # TODO:HADI dummy is questionable, with indigo it should be a valid molfile
-    svg = IndigoService.new(molfile, 'image/svg+xml').render_structure
+  def indigo_running?
+    info = IndigoService.new(nil).service_info
+    return false unless info
 
-    svg && (!svg.respond_to?(:status) || svg.status != 400)
+    status = begin
+      info.respond_to?(:status) ? info.status : info[:status]
+    rescue StandardError
+      nil
+    end
+
+    status == 200
   end
 
   def build_message_header(**args)

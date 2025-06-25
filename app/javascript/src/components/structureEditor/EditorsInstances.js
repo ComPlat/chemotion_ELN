@@ -1,5 +1,3 @@
-// src/utils/editorFactory.js
-
 import StructureEditor from 'src/models/StructureEditor';
 import EditorAttrs from 'src/components/structureEditor/StructureEditorSet';
 import UserStore from 'src/stores/alt/stores/UserStore';
