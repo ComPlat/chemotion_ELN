@@ -7,6 +7,7 @@ import {
 import ContainerDatasetModalContent from 'src/components/container/ContainerDatasetModalContent';
 import ContainerActions from 'src/stores/alt/actions/ContainerActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import BaseFetcher from 'src/fetchers/BaseFetcher';
 
 export default class ContainerDatasetModal extends Component {
   constructor(props) {
@@ -35,10 +36,10 @@ export default class ContainerDatasetModal extends Component {
     }
   }
 
-  handleSave() {
+  handleSave(shouldClose = false) {
     if (this.datasetInput.current) {
       this.datasetInput.current.setLocalName(this.state.localName);
-      this.datasetInput.current.handleSave();
+      this.datasetInput.current.handleSave(shouldClose);
     }
   }
 
@@ -56,18 +57,31 @@ export default class ContainerDatasetModal extends Component {
     }));
   };
 
-  onHandleContainerSubmit = () => {
+  onHandleContainerSubmit = (shouldClose) => {
     const { updateContainerState, rootContainer } = this.props;
+    const { attachments } = this.props.datasetContainer;
     LoadingActions.start();
     ContainerActions.updateContainerWithFiles(rootContainer)
       .then((updatedContainer) => {
-        updateContainerState(updatedContainer);
+        updateContainerState(updatedContainer, shouldClose);
+        BaseFetcher.updateAnnotationsForAttachments(attachments)
+          .then(() => {
+            // const updatedAttachments = attachments.map((att) => ({ ...att }));
+            // const updatedDatasetContainer = {
+            //   ...this.props.datasetContainer,
+            //   attachments: updatedAttachments
+            // };
+            // this.props.onChange(updatedDatasetContainer);
+            this.datasetInput?.current?.resetAnnotation();
+            LoadingActions.stop();
+          })
+          .finally(() => {
+          });
       })
       .catch((err) => {
         console.warn('Container update failed:', err.message);
       })
       .finally(() => {
-        LoadingActions.stop();
       });
   };
 
@@ -194,21 +208,29 @@ export default class ContainerDatasetModal extends Component {
             />
           </Modal.Body>
           <Modal.Footer
-            className="d-flex justify-content-between align-items-center modal-footer border-0"
+            className="d-flex justify-content-end align-items-center modal-footer border-0"
           >
-            <div>
-              <small>
-                Changes are kept for this session. Remember to save the element itself to persist changes.
-              </small>
-            </div>
+
+            {
+              !isNew
+              && (
+                <Button
+                  variant="warning"
+                  className="align-self-center"
+                  onClick={() => this.handleSave(false)}
+                >
+                  Save Dataset
+                </Button>
+              )
+            }
             <Button
-              variant="primary"
-              className="align-self-center ms-auto"
-              onClick={this.handleSave}
+              variant={isNew ? "primary" : "warning"}
+              className="align-self-center"
+              onClick={() => this.handleSave(true)}
             >
-              {isNew ? 'Keep' : 'Save'}
+              {isNew ? 'Keep & close' : 'Save & close'}
               {' '}
-              Changes
+              Dataset
             </Button>
           </Modal.Footer>
         </Modal>

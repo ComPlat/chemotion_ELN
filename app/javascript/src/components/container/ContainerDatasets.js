@@ -92,7 +92,7 @@ export default class ContainerDatasets extends Component {
     const { modal } = this.state;
     modal.show = false;
     modal.datasetContainer = null;
-    // modal.selectedIndex = null;
+    modal.selectedIndex = null;
     this.setState({ modal });
     // https://github.com/react-bootstrap/react-bootstrap/issues/1137
     document.body.className = document.body.className.replace('modal-open', '');
@@ -112,11 +112,15 @@ export default class ContainerDatasets extends Component {
     return null;
   }
 
-  updateContainerState(updatedContainer) {
+  updateContainerState(updatedContainer, shouldClose = false) {
     const { rootContainer, index } = this.props;
+    const { modal } = this.state;
     const newChild = updatedContainer.children[0].children[index];
     const updatedRoot = { ...rootContainer };
     updatedRoot.children[0].children[index] = newChild;
+    if (!shouldClose) {
+      this.setState({ modal: { ...modal, datasetContainer: newChild?.children[modal.selectedIndex] } });
+    }
     this.props.onChange(updatedRoot);
   }
 
@@ -163,7 +167,7 @@ export default class ContainerDatasets extends Component {
               analysisContainer={modal.analysisContainer}
               disabled={disabled}
               rootContainer={rootContainer}
-              updateContainerState={(cont) => this.updateContainerState(cont)}
+              updateContainerState={(cont, shouldClose) => this.updateContainerState(cont, shouldClose)}
             />
           )}
         </div>
