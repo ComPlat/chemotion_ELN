@@ -9,7 +9,8 @@
 ## Latest available version: https://hub.docker.com/u/complat/dev/tags
 ## app image with preinstalled asdf plugins(ruby, nodejs), gems and nodejs packages
 
-DOCKER_DEV_IMAGE=complat/dev:v1.10.3-153-gcb7331a3b
+#DOCKER_DEV_IMAGE=complat/dev:v1.10.3-153-gcb7331a3b
+#DOCKER_DEV_IMAGE=complat/dev:v2.0.1-9-g4aec23261
 #DOCKER_PG_IMAGE=postgres:16
 #DOCKER_PG_IMAGE=complat/dev:postgres16-rdkit
 
