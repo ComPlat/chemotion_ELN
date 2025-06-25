@@ -49,7 +49,6 @@ export default class ResearchPlanDetailsFieldKetcher extends Component {
     const isChemdraw = !!smiles;
 
     ResearchPlansFetcher.updateSVGFile(svg_file, isChemdraw).then((json) => {
-      console.log('updateSVGFile response', json);
       field.value.svg_file = json.svg_path;
       this.setState({
         field,
