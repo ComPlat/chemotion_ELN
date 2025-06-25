@@ -165,7 +165,6 @@ Person.find_each do |u|
     }
 
     reaction = Reaction.new(attributes)
-    reaction.container = Container.create_root_container
     reaction.collections = [collection, ca]
     reaction.save!
   end
