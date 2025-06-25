@@ -9,7 +9,7 @@ set -e
 
 echo '>>> check nodejs version as set in package.json: install if mismatch, and correct .tool-versions'
 # Get the currently installed Node.js version using asdf
-CURRENT_NODE_VERSION=$(asdf current nodejs 2>/dev/null | awk '{print $2}')
+CURRENT_NODE_VERSION=$(asdf current nodejs 2>/dev/null | awk '{print $2}' | tail -n 1)
 
 # Extract the required Node.js version from package.json
 REQUIRED_NODE_VERSION=$(jq -r '.engines.node' package.json)
@@ -40,8 +40,8 @@ else
   echo "Node.js version mismatch. Current: $CURRENT_NODE_VERSION, Required: $REQUIRED_NODE_VERSION"
   echo "Installing required Node.js version..."
   asdf install nodejs $REQUIRED_NODE_VERSION
-  asdf local nodejs $REQUIRED_NODE_VERSION
-  asdf global nodejs $REQUIRED_NODE_VERSION
+  asdf set nodejs $REQUIRED_NODE_VERSION
+
   echo "Node.js updated to version: $REQUIRED_NODE_VERSION"
   asdf reshim nodejs
 fi
