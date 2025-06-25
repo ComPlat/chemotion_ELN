@@ -1,46 +1,33 @@
-FROM ptrxyz/chemotion:eln-1.9.3
+FROM ptrxyz/chemotion:eln-2.0.1
 ARG BRANCH=main
+ARG REMOTE=https://github.com/ComPlat/chemotion_ELN.git
+
+RUN apt-get update && apt-get upgrade -y --no-install-recommends
 RUN apt-get install -y --no-install-recommends --autoremove --fix-missing \
   build-essential\
   openssh-server\
   libmagickwand-dev \
-  libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb \
+  libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev  libnss3 libxss1  libxtst6 xauth xvfb \
   openssl libtool libssl-dev  libyaml-dev \
   swig \
   jq
 
 WORKDIR "/chemotion/app"
 
-# avoid caching if newer commits are present
-ADD "https://api.github.com/repos/ComPlat/chemotion_ELN/commits/${BRANCH}?per_page=1" latest_commit.json
-RUN curl -LJO https://raw.githubusercontent.com/ComPlat/chemotion_ELN/${BRANCH}/Gemfile 
-RUN curl -LJO https://raw.githubusercontent.com/ComPlat/chemotion_ELN/${BRANCH}/Gemfile.lock
-RUN curl -LJO https://raw.githubusercontent.com/ComPlat/chemotion_ELN/${BRANCH}/package.json
-RUN curl -LJO https://raw.githubusercontent.com/ComPlat/chemotion_ELN/${BRANCH}/yarn.lock
-RUN curl -LJO https://raw.githubusercontent.com/ComPlat/chemotion_ELN/${BRANCH}/.tool-versions
-
-# ARG SRCDIR=./
-# COPY ${SRCDIR}Gemfile .
-# COPY ${SRCDIR}Gemfile.lock .
-# COPY ${SRCDIR}package.json .
-# COPY ${SRCDIR}yarn.lock .
-# COPY ${SRCDIR}.tool-versions .
-RUN rm -rf node_modules/*
+RUN rm -rf public/ uploads/
 RUN rm -rf tmp/cache
+ADD ${REMOTE}#${BRANCH} /chemotion/app
 
-# check asdf and asdf plugin installations
+RUN rm ${ASDF_DIR}/asdf
+ENV PATH="${ASDF_DIR}/bin:${PATH}"
 RUN ./prepare-asdf.sh
-# installed latest nodejs version as allowed by package.json
 RUN ./prepare-nodejs.sh
-
+ENV ASDF_NODEJS_VERSION=''
+ENV ASDF_RUBY_VERSION=''
+RUN asdf current && sleep 5s
 RUN ./prepare-nodejspkg.sh
 RUN ./prepare-rubygems.sh
 
-# install other versions
-RUN asdf install ruby 3.3.0
-# RUN asdf global ruby 3.3.0
-# RUN asdf local ruby 3.3.0
-# RUN ./prepare-rubygems.sh
 
 
 
