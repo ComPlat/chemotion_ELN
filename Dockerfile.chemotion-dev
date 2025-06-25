@@ -3,42 +3,55 @@
 # WARNING: Building this container initially takes a lot of time, due to gem compiling, so grab a coffee
 # and write some documentation meanwhile ;)
 
-FROM --platform=linux/amd64 ubuntu:jammy
 
+ARG source_image=ubuntu:24.04
+
+FROM ${source_image}
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN set -xe  && apt-get update -yqqq --fix-missing && apt-get upgrade -y
-RUN apt update && apt-get install -yqq --fix-missing bash ca-certificates wget apt-transport-https git gpg\
-      imagemagick libmagic-dev libmagickcore-dev libmagickwand-dev curl gnupg2 \
+RUN apt update && apt-get install -yqq --fix-missing bash ca-certificates wget apt-transport-https git gpg \
       build-essential sudo postgresql-common swig cmake \
-      libnspr4 libnss3 libxss1 xdg-utils tzdata libpq-dev \
+      libnspr4 libnss3 libxss1 xdg-utils tzdata
+
+RUN apt-get install -yqq --fix-missing  \
+      libyaml-dev \
+      libpq-dev \
+      imagemagick libmagic-dev libmagickcore-dev libmagickwand-dev curl \
       gtk2-engines-pixbuf \
-      libssl-dev libreadline-dev\
-      unzip openssh-client \
+      libssl-dev libreadline-dev \
+      unzip openssh-client
+
+RUN apt-get install -yqq --fix-missing  \
       libsqlite3-dev libboost-all-dev p7zip-full \
       xfonts-cyrillic xfonts-100dpi xfonts-75dpi xfonts-base xfonts-scalable \
       fonts-crosextra-caladea fonts-crosextra-carlito \
       fonts-dejavu fonts-dejavu-core fonts-dejavu-extra fonts-liberation2 fonts-liberation \
       fonts-linuxlibertine fonts-noto-core fonts-noto-extra fonts-noto-ui-core \
       fonts-opensymbol fonts-sil-gentium fonts-sil-gentium-basic inkscape \
-      libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libxtst6 xauth xvfb nano jq
+      libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libxtst6 \
+      xauth xvfb
+
+RUN apt-get install -yqq ranger nano vim jq
+
 
 RUN /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
 RUN apt-get update && apt-get install -yqq --fix-missing postgresql-client-16
 
 RUN apt-get clean \
     && rm -rf /var/lib/apt/lists/*
-RUN useradd -ms /bin/bash chemotion-dev \
-    && echo "chemotion-dev ALL=NOPASSWD: ALL" >> /etc/sudoers
+#RUN useradd -ms /bin/bash chemotion-dev \
 
-USER chemotion-dev
-WORKDIR /home/chemotion-dev
-
-# Create node modules folder OUTSIDE of application directory
-RUN mkdir /home/chemotion-dev/node_modules
+RUN echo "ubuntu ALL=NOPASSWD: ALL" >> /etc/sudoers
+USER ubuntu
+WORKDIR /home/ubuntu
 
 SHELL ["/bin/bash", "-c"]
 
 # Even if asdf and the related tools are only installed by running run-ruby-dev.sh, we set the PATH variables here, so when we enter the container via docker exec, we have the path set correctly
-ENV ASDF_DIR=/home/chemotion-dev/.asdf
-ENV PATH=/home/chemotion-dev/.asdf/shims:/home/chemotion-dev/.asdf/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ENV ASDF_DIR=/home/ubuntu/.asdf
+ENV PATH="${ASDF_DIR}/shims:${ASDF_DIR}/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH"
+
+# COPY --chown=ubuntu:ubuntu ./prepare-asdf.sh .
+# COPY --chown=ubuntu:ubuntu ./.tool-versions .
+# RUN chmod +x prepare-asdf.sh && ./prepare-asdf.sh
