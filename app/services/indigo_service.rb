@@ -9,7 +9,12 @@ class IndigoService
 
   def render_structure
     options = build_request
-    post_request("#{@service_url}v2/indigo/render", options)
+    make_request('POST', "#{@service_url}v2/indigo/render", options)
+  end
+
+  def service_info
+    options = build_request
+    make_request('GET', "#{@service_url}v2/indigo/info", options)
   end
 
   private
@@ -25,8 +30,17 @@ class IndigoService
     options
   end
 
-  def post_request(url, options)
-    response = HTTParty.post(url, options)
+  def make_request(method, url, options = {})
+    response =
+      case method.to_s.downcase
+      when 'post'
+        HTTParty.post(url, options)
+      when 'get'
+        HTTParty.get(url, options)
+      else
+        return { error: "Unsupported HTTP method: #{method}" }
+      end
+
     if response.success?
       response.body
     else

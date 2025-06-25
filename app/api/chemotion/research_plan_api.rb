@@ -229,12 +229,12 @@ module Chemotion
       post :svg do
         svg = params[:svg_file]
 
-        if params[:is_chemdraw]
-          processor = Chemotion::ChemdrawSvgProcessor.new svg
-          svg = processor.centered_and_scaled_svg
-          # else
-          # TODO:HADI need svg validator/processor is chemdraw is false
-        end
+        processor = if params[:is_chemdraw]
+                      Chemotion::ChemdrawSvgProcessor.new(svg)
+                    else
+                      Chemotion::KetcherSvgProcessor.new(svg)
+                    end
+        svg = processor.centered_and_scaled_svg
 
         digest = Digest::SHA256.hexdigest svg
         digest = Digest::SHA256.hexdigest digest
