@@ -15,23 +15,15 @@
     @extend .flex-grow-1;
     @extend .p-2;
   }
+  .element-group-header {
+    @include draggable-list-item(false);
+  }
+  .element-list-item {
+    @include draggable-list-item(true);
+  }
   .element-list-item,
   .element-group-header {
     @extend .d-flex;
-    @extend .surface-lighten5;
-    @extend .rounded-start;
-    &:hover {
-      @extend .surface-lighten4;
-    }
-    &.element-list-item,
-    .element-group-header {
-      &--selected {
-        @extend .surface-lighten2;
-        &:hover {
-          @extend .surface-lighten1;
-        }
-      }
-    }
     &-drag-handle {
       @extend .d-flex;
       @extend .align-content-center;
