@@ -3,14 +3,14 @@
 # Table name: literatures
 #
 #  id         :integer          not null, primary key
+#  deleted_at :datetime
+#  doi        :string
+#  isbn       :string
+#  refs       :jsonb
 #  title      :string
 #  url        :string
 #  created_at :datetime         not null
 #  updated_at :datetime         not null
-#  deleted_at :datetime
-#  refs       :jsonb
-#  doi        :string
-#  isbn       :string
 #
 # Indexes
 #
