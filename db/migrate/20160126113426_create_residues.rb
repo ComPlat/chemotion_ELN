@@ -20,7 +20,7 @@ class CreateResidues < ActiveRecord::Migration[4.2]
 
     # create folder for storage of sample_svg_file
     sample_svg_folder = Rails.root + 'public/images/samples'
-    unless Dir.exists? sample_svg_folder
+    unless Dir.exist? sample_svg_folder
       Dir.mkdir sample_svg_folder
     end
 

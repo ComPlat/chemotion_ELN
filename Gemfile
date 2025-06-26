@@ -50,7 +50,7 @@ gem 'httparty'
 
 gem 'icalendar'
 gem 'image_processing', '~> 1.8'
-gem 'inchi-gem', '1.06.1', git: 'https://github.com/ComPlat/inchi-gem.git', branch: 'main'
+gem 'inchi-gem', git: 'https://github.com/ComPlat/inchi-gem.git', branch: 'main'
 
 gem 'jquery-rails' # must be in, otherwise the views lack jquery, even though the gem is supplied by ketcher-rails
 gem 'jwt'
@@ -94,7 +94,7 @@ gem 'pundit'
 gem 'rack'
 gem 'rack-cors', require: 'rack/cors'
 gem 'rails', '~> 6.1.7.7'
-gem 'rinchi-gem', '1.0.2', git: 'https://github.com/ComPlat/rinchi-gem.git', branch: 'main'
+gem 'rinchi-gem', git: 'https://github.com/ComPlat/rinchi-gem.git', branch: 'main'
 gem 'rmagick'
 gem 'roo'
 gem 'rqrcode' # required for Barby to work but not listed as its dependency -_-
@@ -159,6 +159,7 @@ group :development, :test do
 
   gem 'meta_request'
 
+  gem 'pry', '>= 0.14.2'
   gem 'pry-byebug'
   gem 'pry-rails'
 
