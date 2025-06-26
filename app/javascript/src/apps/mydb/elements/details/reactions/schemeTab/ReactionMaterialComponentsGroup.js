@@ -81,7 +81,7 @@ class ReactionMaterialComponentsGroup extends React.Component {
             <th>Ref</th>
             <th>Amount</th>
             <th>Conc</th>
-            <th>Equiv</th>
+            <th>Ratio</th>
           </tr>
         </thead>
         <tbody>
