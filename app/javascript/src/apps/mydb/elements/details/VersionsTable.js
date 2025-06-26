@@ -114,12 +114,22 @@ export default class VersionsTable extends Component {
       ...selectedVersion,
       changes: selectedVersion.changes.map((change) => ({
         ...change,
-        fields: change.fields.map((field) => ({
-          ...field,
-          previousValue: this.findLastDifferentValue(selectedVersion.id, field.label, field.newValue) ?? field.oldValue
-        }))
+        fields: change.fields.map((field) => {
+          const lastDifferent = this.findLastDifferentValue(
+            selectedVersion.id,
+            field.label,
+            field.newValue
+          );
+
+          return {
+            ...field,
+            previousValue: lastDifferent ?? field.oldValue,
+            revertibleValue: this.calcRevertible(lastDifferent, field.currentValue) ?? field.revertibleValue,
+          };
+        })
       }))
     };
+
     const updatedVersions = versions.map((version) => (version.id === selectedRows[0].id ? updatedVersion : version));
 
     this.setState({ versions: updatedVersions });
@@ -163,6 +173,11 @@ export default class VersionsTable extends Component {
         ))
         .filter((val) => val !== undefined);
 
+      if (candidateStack[0] === 'deleted') {
+        result[key] = 'deleted';
+        return;
+      }
+
       if (typeof expectedVal === 'object' && expectedVal !== null && !Array.isArray(expectedVal)) {
         const merged = this.deep_fill_missing(
           expectedVal,
@@ -196,6 +211,44 @@ export default class VersionsTable extends Component {
     }
 
     return null;
+  }
+
+  calcRevertible(revertibleValue, currentValue) {
+    if (typeof revertibleValue !== 'object'
+    || revertibleValue === null
+    || Array.isArray(revertibleValue)
+    || Object.keys(revertibleValue).length === 0
+    ) {
+      return null;
+    }
+
+    const result = {};
+    Object.entries(revertibleValue).forEach(([key, revertTo]) => {
+      if (revertTo === 'deleted') return;
+      const currentVal = currentValue?.[key];
+
+      if (typeof revertTo === 'object'
+      && revertTo !== null
+      && !Array.isArray(revertTo)
+      && typeof currentVal === 'object'
+      && currentVal !== null
+      && !Array.isArray(currentVal)
+      ) {
+        const nested = this.calcRevertible(revertTo, currentVal);
+        if (nested !== null) {
+          result[key] = nested;
+        }
+      } else {
+        result[key] = revertTo;
+      }
+    });
+
+    Object.entries(currentValue).forEach(([key, value]) => {
+      if (!(key in revertibleValue)) {
+        result[key] = value;
+      }
+    });
+    return result;
   }
 
   render() {

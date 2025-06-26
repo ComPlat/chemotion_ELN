@@ -79,7 +79,7 @@ class Versioning::Serializers::ReactionSerializer < Versioning::Serializers::Bas
       },
       variations: {
         label: 'Variations',
-        # revert: %i[variations],
+        revert: %i[variations],
         formatter: json_formatter,
         kind: :json,
       },

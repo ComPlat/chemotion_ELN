@@ -17,9 +17,9 @@ module Versioning
 
       def handle_json
         lambda do |value|
-          return [] if value.blank?
+          return {} if value.blank?
 
-          value.split("\n").map { |variation| JSON.parse(variation.gsub('=>', ':').gsub('nil', 'null')) }
+          value
         end
       end
     end
