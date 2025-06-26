@@ -119,7 +119,7 @@ export default class ReactionDetailsContainers extends Component {
   handleUndo(container) {
     const { reaction, handleReactionChange } = this.props;
     container.is_deleted = false;
-    handleReactionChange(reaction, { schemaChanged: false });
+    handleReactionChange(reaction);
   }
 
   handleAdd() {
@@ -143,7 +143,7 @@ export default class ReactionDetailsContainers extends Component {
     ))[0].children.length - 1;
 
     this.handleAccordionOpen(newKey);
-    handleReactionChange(reaction, { schemaChanged: false });
+    handleReactionChange(reaction);
   }
 
   handleOnClickRemove(container) {
@@ -215,7 +215,7 @@ export default class ReactionDetailsContainers extends Component {
   handleRemove(container) {
     const { reaction, handleReactionChange } = this.props;
     container.is_deleted = true;
-    handleReactionChange(reaction, { schemaChanged: false });
+    handleReactionChange(reaction);
   }
 
   handleAccordionOpen(key) {
@@ -340,7 +340,7 @@ export default class ReactionDetailsContainers extends Component {
       if (analyses_container.length === 1 && analyses_container[0].children.length > 0) {
         return (
           <div>
-            <div className="d-flex justify-content-between align-items-center mb-3">
+            <div className="d-flex justify-content-between align-items-center mb-3 sticky-top bg-white p-2 border-bottom">
               <span className="text-muted me-3 small" style={{ maxWidth: '60%' }}>
                 This tab can be used for reaction-related data (e.g., process control, in situ).
                 For sample data (e.g., characterization), use the sample analysis tab.
@@ -387,6 +387,8 @@ export default class ReactionDetailsContainers extends Component {
                             templateType="reaction"
                             container={container}
                             onChange={() => this.handleChange(container)}
+                            rootContainer={reaction.container}
+                            index={key}
                           />
                           <ViewSpectra
                             sample={reaction}

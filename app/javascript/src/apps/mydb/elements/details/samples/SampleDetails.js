@@ -59,7 +59,7 @@ import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSo
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import MeasurementsTab from 'src/apps/mydb/elements/details/samples/measurementsTab/MeasurementsTab';
 import { validateCas } from 'src/utilities/CasValidation';
-import ChemicalTab from 'src/components/ChemicalTab';
+import ChemicalTab from 'src/components/chemicals/ChemicalTab';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
 import CommentSection from 'src/components/comments/CommentSection';
@@ -190,8 +190,8 @@ export default class SampleDetails extends React.Component {
 
     const smileReadonly = !(
       (sample.isNew
-       && (typeof (sample.molfile) === 'undefined'
-        || (sample.molfile || '').length === 0)
+        && (typeof (sample.molfile) === 'undefined'
+          || (sample.molfile || '').length === 0)
       )
       || (typeof (sample.molfile) !== 'undefined' && sample.molecule.inchikey === 'DUMMY')
     );
@@ -223,7 +223,11 @@ export default class SampleDetails extends React.Component {
   handleSampleChanged(sample, cb) {
     this.setState({
       sample,
-    }, cb);
+    }, () => {
+      if (typeof cb === 'function') {
+        cb();
+      }
+    });
   }
 
   handleAmountChanged(amount) {
@@ -1437,3 +1441,4 @@ export default class SampleDetails extends React.Component {
 SampleDetails.propTypes = {
   sample: PropTypes.object,
 };
+

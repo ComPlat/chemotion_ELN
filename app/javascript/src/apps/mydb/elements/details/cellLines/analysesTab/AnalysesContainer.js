@@ -122,13 +122,15 @@ class AnalysesContainer extends Component {
     const { readOnly } = this.props;
 
     const containers = currentElement.container.children[0].children;
-    const analysisRows = containers.map((container) => (
+    const analysisRows = containers.map((container,i) => (
       <EditModeRow
         key={container.id}
         handleChange={this.handleChange}
         element={currentElement}
         container={container}
         readOnly={readOnly}
+        rootContainer={currentElement.container}
+        index={i}
       />
     ));
 
@@ -192,7 +194,7 @@ class AnalysesContainer extends Component {
     const { currentElement } = ElementStore.getState();
     return (
       <div className="analysis-container">
-        <div className="d-flex justify-content-between mb-3">
+        <div className="d-flex justify-content-between mb-3 sticky-top bg-white p-2 border-bottom">
           {this.renderModeButton()}
           <ButtonToolbar className="gap-2">
             <CommentButton toggleCommentBox={this.toggleCommentBox} size="xsm" disable={false} />

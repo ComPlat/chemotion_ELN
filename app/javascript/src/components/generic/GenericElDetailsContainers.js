@@ -143,7 +143,7 @@ export default class GenericElDetailsContainers extends Component {
       if (analysesContainer.length === 1 && analysesContainer[0].children.length > 0) {
         return (
           <div>
-            <div className="mb-2 me-1 d-flex justify-content-end">
+            <div className="mb-2 me-1 d-flex justify-content-end sticky-top bg-white p-2 border-bottom">
               {this.addButton()}
             </div>
             <GenericContainerSet
@@ -161,14 +161,14 @@ export default class GenericElDetailsContainers extends Component {
         );
       }
       return (
-        <div className="d-flex align-items-center justify-content-between mb-2 mt-4 mx-3">
+        <div className="d-flex align-items-center justify-content-between mb-2 mt-4 mx-3 sticky-top bg-white p-2 border-bottom">
           <span className="ms-3"> There are currently no Analyses. </span>
           <div>{this.addButton()}</div>
         </div>
       );
     }
     return (
-      <div className="d-flex align-items-center justify-content-between mb-2 mt-4 mx-3">
+      <div className="d-flex align-items-center justify-content-between mb-2 mt-4 mx-3 sticky-top bg-white p-2 border-bottom">
         <span className="ms-3"> There are currently no Analyses. </span>
         <div>{this.addButton()}</div>
       </div>

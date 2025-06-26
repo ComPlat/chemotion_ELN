@@ -164,6 +164,7 @@ export default class ScreenDetailsContainers extends Component {
   collapsableBody(container, key) {
     if (container.is_deleted) { return null; }
     const { readOnly } = this.props;
+    const { screen } = this.state;
 
     return (
       <Accordion.Collapse eventKey={key}>
@@ -174,6 +175,8 @@ export default class ScreenDetailsContainers extends Component {
             templateType="screen"
             container={container}
             onChange={() => this.handleChange()}
+            rootContainer={screen.container}
+            index={key}
           />
         </Card.Body>
       </Accordion.Collapse>
@@ -196,7 +199,7 @@ export default class ScreenDetailsContainers extends Component {
       if (this.analysesContainer.length == 1 && this.analysesContainer[0].children.length > 0) {
         return (
           <div>
-            <div className="mb-2 me-1 d-flex flex-row-reverse">
+            <div className="mb-2 me-1 d-flex flex-row-reverse sticky-top bg-white p-2 border-bottom">
               <ButtonToolbar className="gap-2">
                 <div className="mt-2">
                   <CommentButton toggleCommentBox={this.toggleCommentBox} size="xxsm" />

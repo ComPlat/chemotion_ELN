@@ -42,6 +42,7 @@ function ReactionsDisplay({
   activeAnalysis,
   handleChange,
   handleCommentTextChange,
+  rootContainer
 }) {
   const [commentBoxVisible, setCommentBoxVisible] = useState(false);
 
@@ -49,7 +50,7 @@ function ReactionsDisplay({
 
   return (
     <div>
-      <div className="d-flex justify-content-between align-items-center mb-3">
+      <div className="d-flex justify-content-between align-items-center mb-3 sticky-top bg-white p-2 border-bottom">
         {AnalysisModeToggle(mode, handleToggleMode, isDisabled)}
         <ButtonToolbar className="gap-2">
           <CommentButton toggleCommentBox={toggleCommentBox} size="xsm" />
@@ -90,7 +91,7 @@ function ReactionsDisplay({
                       handleSubmit={handleSubmit}
                       toggleAddToReport={toggleAddToReport}
                     />
-                  </AccordionHeaderWithButtons> 
+                  </AccordionHeaderWithButtons>
                 </Card.Header>
                 {!container.is_deleted && (
                   <Accordion.Collapse eventKey={id}>
@@ -99,6 +100,8 @@ function ReactionsDisplay({
                         templateType="sample"
                         readOnly={readOnly}
                         container={container}
+                        rootContainer={rootContainer}
+                        index={i}
                         disabled={isDisabled}
                         onChange={handleChange}
                       />

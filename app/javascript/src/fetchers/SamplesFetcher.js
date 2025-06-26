@@ -63,7 +63,6 @@ export default class SamplesFetcher {
   }
 
   static update(sample) {
-    const files = AttachmentFetcher.getFileListfrom(sample.container);
     const promise = () => fetch(`/api/v1/samples/${sample.id}`, {
       credentials: 'same-origin',
       method: 'put',
@@ -79,17 +78,11 @@ export default class SamplesFetcher {
         console.log(errorMessage);
       });
 
-    if (files.length > 0) {
-      const tasks = [];
-      files.forEach((file) => tasks.push(AttachmentFetcher.uploadFile(file).then()));
-      return Promise.all(tasks).then(() => promise());
-    }
-
-    return promise();
+    return AttachmentFetcher.uploadNewAttachmentsForContainer(sample.container)
+      .then(() => promise());
   }
 
   static create(sample) {
-    const files = AttachmentFetcher.getFileListfrom(sample.container);
     const promise = () => fetch('/api/v1/samples', {
       credentials: 'same-origin',
       method: 'post',
@@ -103,13 +96,7 @@ export default class SamplesFetcher {
         .then(() => this.fetchById(json.sample.id))).catch((errorMessage) => {
         console.log(errorMessage);
       });
-    if (files.length > 0) {
-      const tasks = [];
-      files.forEach((file) => tasks.push(AttachmentFetcher.uploadFile(file)));
-      return Promise.all(tasks).then(() => promise());
-    }
-
-    return promise();
+    return AttachmentFetcher.uploadNewAttachmentsForContainer(sample.container).then(() => promise());
   }
 
   static splitAsSubsamples(params) {
@@ -117,7 +104,7 @@ export default class SamplesFetcher {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
@@ -139,7 +126,12 @@ export default class SamplesFetcher {
 
   static importSamplesFromFile(params) {
     const data = new FormData();
-    data.append('file', params.file);
+    if (params.file !== undefined) {
+      data.append('file', params.file);
+    } else {
+      const jsonData = JSON.stringify(params.data);
+      data.append('data', jsonData);
+    }
     data.append('currentCollectionId', params.currentCollectionId);
     data.append('import_type', params.type);
 
@@ -167,9 +159,7 @@ export default class SamplesFetcher {
         rows: params.rows,
         mapped_keys: params.mapped_keys,
       })
-    }).then((response) => {
-      response.json();
-    }).then((json) => {
+    }).then((response) => response.json()).then((json) => {
       if (Array.isArray(json.error_messages)) {
         json.error_messages.forEach((message) => {
           NotificationActions.add({
