@@ -354,7 +354,14 @@ export class ContainerDatasetModalContent extends Component {
 
   fetchInstruments(value, show = true) {
     const debounced = debounce((query) => InstrumentsFetcher.fetchInstrumentsForCurrentUser(query), 200);
-    debounced(value)
+    const query = (value || '').trim();
+
+    if (!query) {
+      this.setState({ instruments: [] });
+      return;
+    }
+
+    debounced(query)
       .then((result) => {
         const newState = {};
         if (result.length > 0) {
