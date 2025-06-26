@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2025_15_05_141514) do
+ActiveRecord::Schema.define(version: 2025_05_15_141514) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -318,6 +318,16 @@ ActiveRecord::Schema.define(version: 2025_15_05_141514) do
     t.index ["commentable_type", "commentable_id"], name: "index_comments_on_commentable_type_and_commentable_id"
     t.index ["created_by"], name: "index_comments_on_user"
     t.index ["section"], name: "index_comments_on_section"
+  end
+
+  create_table "components", force: :cascade do |t|
+    t.bigint "sample_id", null: false
+    t.string "name"
+    t.integer "position"
+    t.jsonb "component_properties"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["sample_id"], name: "index_components_on_sample_id"
   end
 
   create_table "computed_props", id: :serial, force: :cascade do |t|
@@ -1296,6 +1306,8 @@ ActiveRecord::Schema.define(version: 2025_15_05_141514) do
     t.boolean "dry_solvent", default: false
     t.boolean "inventory_sample", default: false
     t.jsonb "log_data"
+    t.string "sample_type", default: "Micromolecule"
+    t.jsonb "sample_details"
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
     t.index ["identifier"], name: "index_samples_on_identifier"
     t.index ["inventory_sample"], name: "index_samples_on_inventory_sample"
@@ -1637,6 +1649,7 @@ ActiveRecord::Schema.define(version: 2025_15_05_141514) do
 
   add_foreign_key "collections", "inventories"
   add_foreign_key "layer_tracks", "layers", column: "identifier", primary_key: "identifier"
+  add_foreign_key "components", "samples"
   add_foreign_key "literals", "literatures"
   add_foreign_key "report_templates", "attachments"
   add_foreign_key "sample_tasks", "samples"

@@ -76,6 +76,14 @@ class Sample < ApplicationRecord
   STEREO_REL = %w[any syn anti p-geminal p-ortho p-meta p-para cis trans fac mer].freeze
   STEREO_DEF = { 'abs' => 'any', 'rel' => 'any' }.freeze
 
+  SAMPLE_TYPE_MIXTURE = 'Mixture'
+  SAMPLE_TYPE_MICROMOLECULE = 'Micromolecule'
+
+  SAMPLE_TYPES = [
+    SAMPLE_TYPE_MICROMOLECULE,
+    SAMPLE_TYPE_MIXTURE
+  ].freeze
+
   multisearchable against: %i[
     name short_label external_label molecule_sum_formular
     molecule_iupac_name molecule_inchistring molecule_inchikey molecule_cano_smiles
@@ -230,6 +238,8 @@ class Sample < ApplicationRecord
   has_many :private_notes, as: :noteable, dependent: :destroy
   has_many :comments, as: :commentable, dependent: :destroy
 
+  has_many :components, dependent: :destroy
+
   belongs_to :fingerprint, optional: true
   belongs_to :user, optional: true
   belongs_to :molecule_name, optional: true
@@ -372,6 +382,18 @@ class Sample < ApplicationRecord
     end
   end
 
+  def create_components_for_mixture_subsample(subsample)
+    return if components.blank?
+
+    components.each do |component|
+      subsample.components.create!(
+        name: component.name,
+        position: component.position,
+        component_properties: component.component_properties,
+      )
+    end
+  end
+
   # rubocop:disable Metrics/AbcSize
   # rubocop:disable Metrics/CyclomaticComplexity
   # rubocop:disable Metrics/PerceivedComplexity
@@ -411,7 +433,10 @@ class Sample < ApplicationRecord
 
     subsample.container = Container.create_root_container
     subsample.save!
+
+    create_components_for_mixture_subsample(subsample)
     create_chemical_entry_for_subsample(id, subsample.id, type) unless type.nil?
+
     subsample
   end
 
@@ -640,7 +665,7 @@ class Sample < ApplicationRecord
   end
 
   def check_molfile_polymer_section
-    return if decoupled
+    return if decoupled || sample_type == SAMPLE_TYPE_MIXTURE
     return unless molfile.include? 'R#'
 
     lines = molfile.lines

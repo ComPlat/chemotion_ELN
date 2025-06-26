@@ -77,7 +77,7 @@ import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 const MWPrecision = 6;
 
 const decoupleCheck = (sample) => {
-  if (!sample.decoupled && sample.molecule && sample.molecule.id === '_none_') {
+  if (!sample.decoupled && sample.molecule && sample.molecule.id === '_none_' && !sample.isMixture()) {
     NotificationActions.add({
       title: 'Error on Sample creation', message: 'The molecule structure is required!', level: 'error', position: 'tc'
     });
@@ -113,6 +113,9 @@ export default class SampleDetails extends React.Component {
 
     const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
 
+    // Check redirectedFromMixture flag in UIStore
+    const redirectedFromMixture = UIStore.getState() && UIStore.getState().redirectedFromMixture;
+
     this.state = {
       sample: props.sample,
       reaction: null,
@@ -140,6 +143,7 @@ export default class SampleDetails extends React.Component {
       saveInventoryAction: false,
       isChemicalEdited: false,
       currentUser,
+      showRedirectWarning: redirectedFromMixture || false,
     };
 
     this.enableComputedProps = MatrixCheck(currentUser.matrix, 'computedProp');
@@ -168,11 +172,12 @@ export default class SampleDetails extends React.Component {
 
     this.handleStructureEditorSave = this.handleStructureEditorSave.bind(this);
     this.handleStructureEditorCancel = this.handleStructureEditorCancel.bind(this);
+    this.splitSmiles = this.splitSmiles.bind(this);
   }
 
   componentDidMount() {
     const { sample } = this.props;
-    const { currentUser } = this.state;
+    const { currentUser, showRedirectWarning } = this.state;
 
     UIStore.listen(this.onUIStoreChange);
 
@@ -182,11 +187,18 @@ export default class SampleDetails extends React.Component {
     if (MatrixCheck(currentUser.matrix, commentActivation) && !sample.isNew) {
       CommentActions.fetchComments(sample);
     }
+
+    if (showRedirectWarning) {
+      // Use setTimeout to defer dispatch and avoid dispatch-in-dispatch errors in Alt/Flux
+      setTimeout(() => {
+        UIActions.setRedirectedFromMixture(false);
+      }, 0);
+    }
   }
 
   componentDidUpdate(prevProps) {
     const { sample } = this.props;
-    if (sample === prevProps.sample) { return };
+    if (sample === prevProps.sample) { return; }
 
     const smileReadonly = !(
       (sample.isNew
@@ -315,6 +327,7 @@ export default class SampleDetails extends React.Component {
     const fetchMolecule = (fetchFunction) => {
       fetchFunction()
         .then(fetchSuccess).catch(fetchError).finally(() => {
+          this.splitSmiles(editor, svgFile);
           this.hideStructureEditor();
         });
     };
@@ -326,7 +339,7 @@ export default class SampleDetails extends React.Component {
     } else {
       fetchMolecule(() => MoleculesFetcher.fetchBySmi(smiles, svgFile, molfile, editor));
     }
-  }
+   }
 
   handleStructureEditorCancel() {
     this.hideStructureEditor();
@@ -458,6 +471,7 @@ export default class SampleDetails extends React.Component {
         molfile={molfile}
         hasParent={hasParent}
         hasChildren={hasChildren}
+        sample={sample}
       />
     );
   }
@@ -687,7 +701,8 @@ export default class SampleDetails extends React.Component {
 
   saveBtn(sample, closeView = false) {
     let submitLabel = (sample && sample.isNew) ? 'Create' : 'Save';
-    const isDisabled = !sample.can_update;
+    const hasComponents = !sample.isMixture() || (sample.hasComponents());
+    const isDisabled = !sample.can_update || !hasComponents;
     if (closeView) submitLabel += ' and close';
 
     return (
@@ -703,6 +718,11 @@ export default class SampleDetails extends React.Component {
   }
 
   elementalPropertiesItem(sample) {
+    // avoid empty ListGroupItem
+    if (!sample.molecule_formula || sample.isMixture()) {
+      return false;
+    }
+
     const label = sample.contains_residues
       ? 'Polymer section / Elemental composition'
       : 'Elemental composition';
@@ -902,7 +922,8 @@ export default class SampleDetails extends React.Component {
     const timesTag = (
       <i className="fa fa-times" />
     );
-    const sampleUpdateCondition = !this.sampleIsValid() || !sample.can_update;
+    const hasComponents = !sample.isMixture() || (sample.hasComponents());
+    const sampleUpdateCondition = !this.sampleIsValid() || !sample.can_update || !hasComponents;
 
     const elementToSave = activeTab === 'inventory' ? 'Chemical' : 'Sample';
     const saveAndClose = (saveBtnDisplay
@@ -1000,7 +1021,7 @@ export default class SampleDetails extends React.Component {
           <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
           <PubchemLabels element={sample} />
           <HeaderCommentSection element={sample} />
-          {sample.isNew && <FastInput fnHandle={this.handleFastInput} />}
+          {sample.isNew && !sample.isMixture() && <FastInput fnHandle={this.handleFastInput} />}
         </div>
         <div className="d-flex align-items-center gap-2">
           {decoupleCb}
@@ -1015,6 +1036,8 @@ export default class SampleDetails extends React.Component {
   }
 
   sampleInfo(sample) {
+    const isMixture = sample.isMixture();
+    const style = { height: 'auto', marginBottom: '20px' };
     let pubchemLcss = (sample.pubchem_tag && sample.pubchem_tag.pubchem_lcss
       && sample.pubchem_tag.pubchem_lcss.Record) || null;
     if (pubchemLcss && pubchemLcss.Reference) {
@@ -1035,9 +1058,13 @@ export default class SampleDetails extends React.Component {
       <Row className='mb-4'>
         <Col md={4}>
           <h4><SampleName sample={sample} /></h4>
-          <h5>{this.sampleAverageMW(sample)}</h5>
-          <h5>{this.sampleExactMW(sample)}</h5>
-          {sample.isNew ? null : <h6>{this.moleculeCas()}</h6>}
+          {!isMixture && (
+            <>
+              <h5>{this.sampleAverageMW(sample)}</h5>
+              <h5>{this.sampleExactMW(sample)}</h5>
+            </>
+          )}
+          {sample.isNew || isMixture ? null : <h6>{this.moleculeCas()}</h6>}
           {lcssSign}
         </Col>
         <Col md={8} className="position-relative">
@@ -1204,12 +1231,21 @@ export default class SampleDetails extends React.Component {
   }
 
   sampleAverageMW(sample) {
-    const mw = sample.molecule_molecular_weight;
+    let mw;
+
+    if (sample.isMixture() && sample.sample_details) {
+      mw = sample.total_molecular_weight;
+    } else {
+      mw = sample.molecule_molecular_weight;
+    }
+
     if (mw) return <ClipboardCopyText text={`${mw.toFixed(MWPrecision)} g/mol`} />;
     return '';
   }
 
   sampleExactMW(sample) {
+    if (sample.isMixture() && sample.sample_details) { return }
+
     const mw = sample.molecule_exact_molecular_weight;
     if (mw) return <ClipboardCopyText text={`Exact mass: ${mw.toFixed(MWPrecision)} g/mol`} />;
     return '';
@@ -1236,6 +1272,26 @@ export default class SampleDetails extends React.Component {
     this.setState({
       showStructureEditor: false
     });
+  }
+
+  /**
+   * Splits the canonical SMILES string of a mixture sample and updates the sample's molecules in the editor.
+   *
+   * @param {string} editor - The editor identifier or instance to use for updating molecules.
+   * @param {string|null} svgFile - Optional SVG file content to use for rendering.
+   * @returns {void}
+   */
+  splitSmiles(editor) {
+    const { sample } = this.state;
+    if (!sample.isMixture() || !sample.molecule_cano_smiles || sample.molecule_cano_smiles === '') { return; }
+
+    const mixtureSmiles = sample.molecule_cano_smiles.split('.');
+    if (mixtureSmiles) {
+      sample.splitSmilesToMolecule(mixtureSmiles, editor)
+        .then(() => {
+          this.setState({ sample });
+        });
+    }
   }
 
   toggleInchi() {
@@ -1372,7 +1428,8 @@ export default class SampleDetails extends React.Component {
           <strong>Structure Alert</strong>
           <Button
             size="sm"
-            variant="warning"
+            variant="outline-warning"
+            style={{ float: 'right' }}
             onClick={() => this.setState({ pageMessage: null })}
           >
             Close Alert
@@ -1390,6 +1447,32 @@ export default class SampleDetails extends React.Component {
         </Alert>
       ) : null;
 
+    // warning message for redirection
+    const redirectWarningBlock = this.state.showRedirectWarning ? (
+      <Alert variant="warning" className="d-flex flex-column gap-2 mt-2 mb-0 p-2">
+        <div>
+          <strong>Notice:</strong>
+          <p className="mb-1">
+            You are viewing the original sample that was used to create this component. Some of its attributes may have
+            changed now.
+          </p>
+          <p className="mb-0">
+            Any updates you make here will apply only to the original sample, not to any component generated from it.
+            However, changes on this sample may affect other dependant entities.
+          </p>
+        </div>
+        <div className="align-self-end">
+          <Button
+            size="sm"
+            variant="outline-warning"
+            onClick={() => this.setState({ showRedirectWarning: false })}
+          >
+            Close Alert
+          </Button>
+        </div>
+      </Alert>
+    ) : null;
+
     const activeTab = (this.state.activeTab !== 0 && stb.indexOf(this.state.activeTab) > -1
       && this.state.activeTab) || visible.get(0);
 
@@ -1399,6 +1482,7 @@ export default class SampleDetails extends React.Component {
       <Card className={`detail-card${pendingToSave ? ' detail-card--unsaved' : ''}`}>
         <Card.Header>
           {this.sampleHeader(sample)}
+          {redirectWarningBlock}
           {messageBlock}
         </Card.Header>
         <Card.Body>

@@ -4,23 +4,30 @@ require 'roo'
 
 # rubocop:disable Metrics/ClassLength
 module Import
+  # This class handles the import of sample data from Excel files.
+  # It processes the data and tracks any unprocessable entries.
   class ImportSamples
-    attr_reader :xlsx, :sheet, :header, :mandatory_check, :rows, :unprocessable,
-                :processed, :file_path, :collection_id, :current_user_id, :file_name
+    attr_reader :xlsx, :sheet, :component_sheet, :header, :component_header, :sample_components_data,
+                :mandatory_check, :mandatory_component_check, :rows,
+                :unprocessable, :processed, :file_path, :collection_id, :current_user_id, :file_name
 
     MOLARITY_UNIT = %r{m/L|mol/L|M}i.freeze
     DENSITY_UNIT = %r{g/mL|g/ml}i.freeze
     FLASH_POINT_UNIT = /°C|F|K/i.freeze
 
     def initialize(file_path, collection_id, user_id, file_name, import_type)
-      @rows = []
-      @unprocessable = []
-      @processed = []
       @file_path = file_path
       @collection_id = collection_id
       @current_user_id = user_id
       @file_name = file_name
       @import_type = import_type
+
+      @rows = []
+      @unprocessable = []
+      @processed = []
+
+      @sample_with_components = []
+      @sample_components_data = {}
     end
 
     def process
@@ -32,6 +39,8 @@ module Import
 
       begin
         check_required_fields
+        check_required_component_fields
+        parse_sample_components_data
       rescue StandardError => e
         return error_required_fields(e.message)
       end
@@ -45,11 +54,31 @@ module Import
 
     def read_file
       @xlsx = Roo::Spreadsheet.open(file_path)
+      @sheet = xlsx.sheet(0)
+      @header = sheet.row(1)
+
+      return unless xlsx.sheets.include?('sample_components')
+
+      # Get the sheet containing the sample components, if it exists
+      @component_sheet = xlsx.sheet('sample_components')
+      @component_header = component_sheet.row(1).map(&:to_s).map(&:strip)
+      # Extract unique sample names with components
+      @sample_with_components = extract_sample_uuids_with_components
+    end
+
+    def extract_sample_uuids_with_components
+      # Find the column index for the header "sample uuid"
+      sample_uuid_col = component_header.index('sample uuid') + 1
+
+      # Collect values from that column, skipping the header
+      component_sheet.column(sample_uuid_col).drop(1).compact.uniq
+    end
+
+    def component_sheet_exists?
+      xlsx.sheets.include?('sample_components')
     end
 
     def check_required_fields
-      @sheet = xlsx.sheet(0)
-      @header = sheet.row(1)
       @mandatory_check = {}
       ['molfile', 'smiles', 'cano_smiles', 'canonical smiles', 'decoupled'].each do |check|
         @mandatory_check[check] = true if header.find { |e| /^\s*#{check}?/i =~ e }
@@ -57,6 +86,84 @@ module Import
 
       message = 'Column headers should have: molfile, or Smiles (or cano_smiles, canonical smiles)'
       raise message if mandatory_check.empty?
+    end
+
+    def check_required_component_fields
+      return unless component_sheet_exists?
+
+      @mandatory_component_check = {}
+
+      # List of required fields to check
+      ['molfile', 'smiles', 'cano_smiles', 'canonical smiles'].each do |check|
+        # Check for the header matching exactly (ignoring case and surrounding spaces)
+        @mandatory_component_check[check] = true if component_header.any? do |e|
+                                                      /^\s*#{Regexp.escape(check)}\s*$/i =~ e
+                                                    end
+      end
+
+      message = 'Column headers in components sheet should have: molfile, or Smiles (or cano_smiles, canonical smiles)'
+      raise message if @mandatory_component_check.empty?
+    end
+
+    def row_to_hash(row)
+      padded_row = row.fill(nil, row.length...@component_header.length)
+      raw_hash = @component_header.zip(padded_row).to_h
+
+      # Transform headers using the mapping
+      mapped_hash = {}
+      raw_hash.each do |key, value|
+        # Remove units from keys
+        clean_key = key.to_s.strip.downcase
+        clean_key = clean_key.gsub(/\s*\([^)]*\)/, '') # Remove anything in parentheses (units)
+        clean_key = clean_key.strip # Remove any extra spaces
+
+        # Convert to component attributes using the mapping
+        mapped_key = Import::ImportComponents::COMPONENT_HEADER_MAPPING[clean_key]
+        mapped_hash[mapped_key] = value if mapped_key
+      end
+
+      mapped_hash
+    end
+
+    def parse_sample_components_data
+      return unless component_sheet_exists?
+
+      # Set the default sheet to 'sample_components'
+      xlsx.default_sheet = 'sample_components'
+
+      current_sample_uuid = nil
+      sample_uuid_col = component_header.index('sample uuid')
+
+      (2..component_sheet.last_row).each do |row_index|
+        row_values = component_sheet.row(row_index)
+        uuid_cell = row_values[sample_uuid_col].to_s.strip
+
+        if uuid_cell.present?
+          # This is a new sample uuid
+          current_sample_uuid = uuid_cell
+          @sample_components_data[current_sample_uuid] = []
+        end
+
+        next unless current_sample_uuid # skip rows until a sample uuid is found
+
+        component_data = row_to_hash(row_values)
+        next if component_data.empty?
+
+        # Avoid adding empty rows
+        component_attributes = component_data.reject do |k, _|
+          k.to_s.downcase.strip.in?(['sample name', 'sample external label', 'sample uuid'])
+        end
+
+        if valid_component_data?(component_attributes)
+          @sample_components_data[current_sample_uuid] << component_attributes
+        end
+      end
+    end
+
+    # Proceed only if the component_attributes hash contains at least one non-nil, non-empty value
+    # and the structure? method confirms that the hash has the required structure.
+    def valid_component_data?(component_attributes)
+      component_attributes.values.any? { |v| !v.nil? && v != '' } && structure?(component_attributes)
     end
 
     def extract_molfile_and_molecule(row)
@@ -83,6 +190,13 @@ module Import
       return if molfile.nil? || molecule.nil?
 
       [molecule, molfile]
+    end
+
+    def process_component_row_data(component_row)
+      molecule, molfile = extract_molfile_and_molecule(component_row)
+      return nil if molfile.nil? || molecule.nil?
+
+      molecule
     end
 
     def molecule_not_exist(molecule)
@@ -116,21 +230,28 @@ module Import
     end
 
     def molfile?(row)
-      mandatory_check['molfile'] && row['molfile'].to_s.present?
+      check = determine_sheet(xlsx)
+
+      check['molfile'].present? && row['molfile'].present?
     end
 
     def smiles?(row)
-      header = mandatory_check['smiles'] || mandatory_check['cano_smiles'] || mandatory_check['canonical smiles']
-      cell = row['smiles'].to_s.present? || row['cano_smiles'].to_s.present? || row['canonical smiles'].to_s.present?
-      header && cell
+      keys = ['smiles', 'cano_smiles', 'canonical smiles']
+
+      header_present = keys.any? { |key| determine_sheet(xlsx)[key] }
+      cell_present = keys.any? { |key| row[key].to_s.present? }
+
+      header_present && cell_present
     end
 
     def get_data_from_molfile_and_smiles(row)
       molfile = row['molfile'].presence
       if molfile
+        check = determine_sheet(xlsx)
+
         babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
         molfile_smiles = babel_info[:smiles]
-        molfile_smiles = Chemotion::OpenBabelService.canon_smiles_to_smiles molfile_smiles if mandatory_check['smiles']
+        molfile_smiles = Chemotion::OpenBabelService.canon_smiles_to_smiles molfile_smiles if check['smiles']
       end
       if molfile_smiles.blank? && (molfile_smiles != row['cano_smiles'] &&
          molfile_smiles != row['smiles'] && molfile_smiles != row['canonical smiles'])
@@ -164,9 +285,12 @@ module Import
     end
 
     def get_data_from_smiles(row)
-      smiles = (mandatory_check['smiles'] && row['smiles'].presence) ||
-               (mandatory_check['cano_smiles'] && row['cano_smiles'].presence) ||
-               (mandatory_check['canonical smiles'] && row['canonical smiles'].presence)
+      check = determine_sheet(xlsx)
+
+      smiles = (check['smiles'] && row['smiles'].presence) ||
+               (check['cano_smiles'] && row['cano_smiles'].presence) ||
+               (check['canonical smiles'] && row['canonical smiles'].presence)
+
       inchikey = Chemotion::OpenBabelService.smiles_to_inchikey smiles
       ori_molf = Chemotion::OpenBabelService.smiles_to_molfile smiles
       babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(ori_molf)
@@ -394,9 +518,51 @@ module Import
       sample.collections << Collection.get_all_collection_for_user(current_user_id)
       sample.inventory_sample = true if @import_type == 'chemical'
       chemical = ImportChemicals.build_chemical(row, header) if @import_type == 'chemical'
+      sample.sample_type = Sample::SAMPLE_TYPE_MIXTURE if sample_has_components?(row)
       sample.save!
       save_chemical(chemical, sample) if @import_type == 'chemical'
+      handle_sample_components(row, sample) if sample_has_components?(row)
       processed.push(sample)
+    end
+
+    def sample_has_components?(sample_row)
+      sample_uuid = sample_row['sample uuid']
+      sample_uuid.present? && @sample_with_components.include?(sample_uuid)
+    end
+
+    def handle_sample_components(sample_row, sample)
+      sample_uuid = sample_row['sample uuid']
+      sample_components_data = @sample_components_data.with_indifferent_access[sample_uuid]
+      return if sample_components_data.blank?
+
+      create_components(sample, sample_components_data)
+    end
+
+    def create_components(sample, sample_components_data)
+      unprocessable_count = 0
+      xlsx.default_sheet = 'sample_components'
+
+      begin
+        ActiveRecord::Base.transaction do
+          sample_components_data.each_with_index do |component_data, index|
+            molecule = process_component_row_data(component_data)
+
+            if molecule_not_exist(molecule)
+              unprocessable_count += 1
+              next
+            end
+
+            ImportComponents.component_save(component_data, sample, molecule, index)
+          end
+        end
+      rescue StandardError => _e
+        raise 'More than 1 row can not be processed' if unprocessable_count.positive?
+      end
+      xlsx.default_sheet = xlsx.sheets.first
+    end
+
+    def determine_sheet(xlsx)
+      xlsx.default_sheet == 'sample_components' ? @mandatory_component_check : mandatory_check
     end
 
     def create_sample_and_assign_molecule(current_user_id, molfile, molecule)
@@ -418,9 +584,13 @@ module Import
     end
 
     def process_all_rows
-      (2..xlsx.last_row).each do |data|
+      (2..sheet.last_row).each do |data|
+        # a flag is set to determine which sheet is under processing
+        xlsx.default_sheet = xlsx.sheets.first
+
         process_row(data)
       end
+
       begin
         write_to_db
         if processed.empty?
