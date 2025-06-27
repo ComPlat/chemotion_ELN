@@ -6,14 +6,14 @@ module SVG
   # SVG Processor
   class Processor
     def structure_svg(editor, svg, hexdigest, is_centered = false)
+      puts "Processing SVG for editor: #{editor}, hexdigest: #{hexdigest}, is_centered: #{is_centered}"
       processor = case editor
                   when /marvinjs/i
-                  when /ketcher2/i
                     Chemotion::MarvinjsSvgProcessor.new(svg)
                   when /chemdraw/i
                     Chemotion::ChemdrawSvgProcessor.new(svg)
                   when /ketcher/i
-                    Ketcherails::SVGProcessor.new(svg)
+                    Chemotion::KetcherSvgProcessor.new(svg)
                   else
                     Chemotion::OpenBabelSvgProcessor.new(svg)
                   end
