@@ -434,9 +434,11 @@ class ElementActions {
     return (dispatch) => {
       SamplesFetcher.update(sample)
         .then((newSample) => {
-          reaction.updateMaterial(newSample);
+          const { material } = reaction.findMaterialById(sample.id);
+          const coefficient = material?.coefficient;
+          reaction.updateMaterial(newSample, { sId: newSample.id, coefficient });
           reaction.changed = true;
-          dispatch({ reaction, sample: newSample, closeView })
+          dispatch({ reaction, sample: newSample, closeView });
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });
