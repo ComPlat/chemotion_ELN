@@ -159,18 +159,6 @@ module Chemotion
         end
       end
 
-      namespace :indigo do
-        desc 'render Molfile structure'
-        params do
-          requires :struct, type: String, desc: 'molfile'
-          optional :output_format, type: String, desc: 'output format for molfile', default: 'image/svg+xml'
-        end
-        post 'structure/render' do
-          client = IndigoService.new(params[:struct], params[:output_format])
-          client.render_structure
-        end
-      end
-
       namespace :molecular_weight do
         desc 'Calculate the molecular mass from the molecular_formula for decoupled sample'
         params do
@@ -179,6 +167,7 @@ module Chemotion
         get do
           formula = params[:molecular_formula]
           total_mass = Chemotion::Calculations.mw_from_formula(formula)
+
           total_mass
         end
       end
@@ -302,12 +291,9 @@ module Chemotion
       end
       post :svg do
         svg = params[:svg_file]
-        if params[:is_chemdraw]
-          processor = Chemotion::ChemdrawSvgProcessor.new svg
-          svg = processor.centered_and_scaled_svg
-        # else
-        #   svg = IndigoService.new(element.molfile, 'image/svg+xml').render_structure
-        end
+        processor = Ketcherails::SVGProcessor.new svg unless params[:is_chemdraw]
+        processor = Chemotion::ChemdrawSvgProcessor.new svg if params[:is_chemdraw]
+        svg = processor.centered_and_scaled_svg
         molecule = Molecule.find(params[:id])
         molecule.attach_svg(svg)
         { svg_path: molecule.molecule_svg_file }
