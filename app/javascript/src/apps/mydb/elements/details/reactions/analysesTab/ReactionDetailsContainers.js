@@ -340,7 +340,7 @@ export default class ReactionDetailsContainers extends Component {
       if (analyses_container.length === 1 && analyses_container[0].children.length > 0) {
         return (
           <div>
-            <div className="d-flex justify-content-between align-items-center mb-3">
+            <div className="d-flex justify-content-between align-items-center mb-3 sticky-top bg-white p-2 border-bottom">
               <span className="text-muted me-3 small" style={{ maxWidth: '60%' }}>
                 This tab can be used for reaction-related data (e.g., process control, in situ).
                 For sample data (e.g., characterization), use the sample analysis tab.
