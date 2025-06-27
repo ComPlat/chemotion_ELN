@@ -7,21 +7,23 @@ import Container from 'src/models/Container';
 
 const emptySequenceBasedMacromoleculeSample = {
   accessions: [],
-  attachments: [],
   created_at: '',
   ec_numbers: '',
   full_name: '',
   heterologous_expression: '',
   id: '',
-  link_pdb: '',
   link_uniprot: '',
+  link_pdb: '',
   localisation: '',
   molecular_weight: '',
   organism: '',
   other_identifier: '',
   own_identifier: '',
+  parent: '',
   pdb_doi: '',
   primary_accession: '',
+  sbmm_subtype: '',
+  sbmm_type: '',
   sequence: '',
   sequence_length: '',
   splitted_sequence: '',
@@ -29,19 +31,23 @@ const emptySequenceBasedMacromoleculeSample = {
   strain: '',
   taxon_id: '',
   tissue: '',
+  uniprot_derivation: '',
   uniprot_source: '',
   updated_at: '',
+  attachments: [],
   post_translational_modifications: {},
   protein_sequence_modifications: {},
 };
 
 const validationFields = [
-  'name',
   'sequence_based_macromolecule.sbmm_type',
   'sequence_based_macromolecule.uniprot_derivation',
   'sequence_based_macromolecule.primary_accession',
   'sequence_based_macromolecule.parent_identifier',
   'sequence_based_macromolecule.short_name',
+  'sequence_based_macromolecule.molecular_weight',
+  'sequence_based_macromolecule.post_translational_modifications.acetylation_lysin_number',
+  'sequence_based_macromolecule.splitted_sequence',
 ];
 
 const postModificationCheckboxWithDetailField = [
@@ -84,7 +90,9 @@ export const SequenceBasedMacromoleculeSamplesStore = types
     attachment_sort_direction: types.optional(types.string, 'asc'),
     filtered_attachments: types.optional(types.array(types.frozen({})), []),
     show_search_result: types.optional(types.boolean, false),
+    show_conflict_modal: types.optional(types.boolean, false),
     search_result: types.optional(types.array(types.frozen({})), []),
+    conflict_sbmms: types.optional(types.array(types.frozen({})), []),
     show_search_options: types.optional(types.frozen({}), {}),
   })
   .actions(self => ({
@@ -102,7 +110,14 @@ export const SequenceBasedMacromoleculeSamplesStore = types
       let result = yield SequenceBasedMacromoleculesFetcher.getSequenceBasedMacromoleculeByIdentifier(primary_accession, available_sources);
 
       if (result?.sequence_based_macromolecule) {
-        self.setSbmmByResult(result.sequence_based_macromolecule, primary_accession);
+        self.setSbmmBySearchResultOrDND(result.sequence_based_macromolecule, 'parent', primary_accession);
+      }
+    }),
+    getSequenceBasedMacromoleculeByIds: flow(function* getSequenceBasedMacromoleculeByIds(sbmm_id, conflicting_sbmm_id) {
+      let result1 = yield SequenceBasedMacromoleculesFetcher.getSequenceBasedMacromoleculeByIdentifier(sbmm_id, 'eln');
+      let result2 = yield SequenceBasedMacromoleculesFetcher.getSequenceBasedMacromoleculeByIdentifier(conflicting_sbmm_id, 'eln');
+      if (result1 && result2) {
+        self.conflict_sbmms = [result1.sequence_based_macromolecule, result2.sequence_based_macromolecule];
       }
     }),
     getLastObjectAndKeyByField(field, sequence_based_macromolecule_sample) {
@@ -160,27 +175,40 @@ export const SequenceBasedMacromoleculeSamplesStore = types
       }
       self.show_search_options = searchOptions;
     },
-    setSbmmByResult(result, primary_accession) {
+    setSbmmBySearchResultOrDND(selectedSbmm, fullSbmmOrParent, primary_accession) {
       let sequenceBasedMacromoleculeSample = { ...self.sequence_based_macromolecule_sample };
       let sbmm = sequenceBasedMacromoleculeSample.sequence_based_macromolecule;
-      const uniprotDerivation = sbmm.uniprot_derivation;
+      let uniprotDerivation = sbmm.uniprot_derivation;
 
       delete sbmm.parent_identifier;
-      if (uniprotDerivation === 'uniprot_modified') {
-        if (!sbmm.parent) { sbmm.parent = {}; }
-        sbmm.parent_identifier = primary_accession || result?.primary_accession || result?.id;
-      }
-      const sbmmOrParent = uniprotDerivation === 'uniprot_modified' ? sbmm?.parent : sbmm;
 
-      Object.keys(emptySequenceBasedMacromoleculeSample).map((key) => {
-        if (['post_translational_modifications', 'protein_sequence_modifications'].includes(key) && uniprotDerivation === 'uniprot_modified') {
-          sbmm[key] = {};
-          sbmmOrParent[key] = null;
-          sbmmOrParent.parent = null;
-        } else if (result[key] !== undefined) {
-          sbmmOrParent[key] = result[key];
+      if (fullSbmmOrParent == 'full_sbmm') {
+        uniprotDerivation = selectedSbmm.uniprot_derivation;
+        if (uniprotDerivation == 'uniprot_modified') {
+          sbmm.parent_identifier = selectedSbmm?.parent.id || selectedSbmm?.id;
         }
-      });
+
+        Object.keys(emptySequenceBasedMacromoleculeSample).map((key) => {
+          if (selectedSbmm[key] !== undefined) { sbmm[key] = selectedSbmm[key]; }
+        });
+      } else {
+        if (uniprotDerivation === 'uniprot_modified') {
+          if (!sbmm.parent) { sbmm.parent = {}; }
+          sbmm.parent_identifier = primary_accession || selectedSbmm?.primary_accession || selectedSbmm?.id;
+        }
+        const sbmmOrParent = uniprotDerivation === 'uniprot_modified' ? sbmm?.parent : sbmm;
+
+        Object.keys(emptySequenceBasedMacromoleculeSample).map((key) => {
+          if (['post_translational_modifications', 'protein_sequence_modifications'].includes(key) && uniprotDerivation === 'uniprot_modified') {
+            sbmm[key] = {};
+            sbmmOrParent[key] = null;
+            sbmmOrParent.parent = null;
+          } else if (selectedSbmm[key] !== undefined) {
+            sbmmOrParent[key] = selectedSbmm[key];
+          }
+        });
+      }
+
       if (Object.keys(sequenceBasedMacromoleculeSample.errors).length >= 1) {
         sequenceBasedMacromoleculeSample = self.checkIfFieldsAreValid(sequenceBasedMacromoleculeSample);
       }
@@ -212,27 +240,9 @@ export const SequenceBasedMacromoleculeSamplesStore = types
       if (lastKey === 'splitted_sequence') {
         lastObject['sequence'] = value.split(' ').join('');
       }
-      if (lastKey === 'uniprot_derivation' && sequenceBasedMacromoleculeSample.is_new) {
-        Object.keys(sequenceBasedMacromoleculeSample.sequence_based_macromolecule).map((key) => {
-          if (['sbmm_type', 'sbmm_subtype', 'uniprot_derivation', 'search_field', 'search_term'].includes(key)) { return }
-          if (['accessions', 'attachments'].includes(key)) {
-            sequenceBasedMacromoleculeSample.sequence_based_macromolecule[key] = [];
-          } else if (['post_translational_modifications', 'protein_sequence_modifications'].includes(key)) {
-            sequenceBasedMacromoleculeSample.sequence_based_macromolecule[key] = {};
-          } else {
-            sequenceBasedMacromoleculeSample.sequence_based_macromolecule[key] = '';
-          }
-        });
-        self.toggleSearchOptions(self.sequence_based_macromolecule_sample.id, true);
-        sequenceBasedMacromoleculeSample.errors = {};
 
-        if (self.toggable_contents.hasOwnProperty(`${sequenceBasedMacromoleculeSample.id}-reference`)) {
-          let contents = { ...self.toggable_contents };
-          const value =
-            sequenceBasedMacromoleculeSample.sequence_based_macromolecule.uniprot_derivation === 'uniprot' ? true : false;
-          contents[`${sequenceBasedMacromoleculeSample.id}-reference`] = value;
-          self.toggable_contents = contents;
-        }
+      if (lastKey === 'uniprot_derivation' && sequenceBasedMacromoleculeSample.is_new) {
+        sequenceBasedMacromoleculeSample = self.resetSBMMAndErrors(sequenceBasedMacromoleculeSample);
       }
 
       if (postModificationCheckboxWithDetailField.includes(lastKey) && !value) {
@@ -252,18 +262,52 @@ export const SequenceBasedMacromoleculeSamplesStore = types
       if (Object.keys(sequenceBasedMacromoleculeSample.errors).length >= 1) {
         sequenceBasedMacromoleculeSample = self.checkIfFieldsAreValid(sequenceBasedMacromoleculeSample);
       }
+
       self.setSequenceBasedMacromoleculeSample(sequenceBasedMacromoleculeSample);
+    },
+    resetSBMMAndErrors(sbmmSample) {
+      Object.keys(sbmmSample.sequence_based_macromolecule).map((key) => {
+        if (['sbmm_type', 'sbmm_subtype', 'uniprot_derivation', 'search_field', 'search_term'].includes(key)) { return }
+        if (['accessions', 'attachments'].includes(key)) {
+          sbmmSample.sequence_based_macromolecule[key] = [];
+        } else if (['post_translational_modifications', 'protein_sequence_modifications'].includes(key)) {
+          sbmmSample.sequence_based_macromolecule[key] = {};
+        } else {
+          sbmmSample.sequence_based_macromolecule[key] = '';
+        }
+      });
+      sbmmSample.errors = {};
+      self.toggleSearchOptions(sbmmSample.id, true);
+      return sbmmSample;
+    },
+    toggleContentsOnOpenDetail(sbmmSample, uniprotDerivationValue) {
+      let contents = { ...self.toggable_contents };
+
+      if (uniprotDerivationValue == 'uniprot_modified') {
+        contents[`${sbmmSample.id}-reference`] = false;
+      }
+      if (uniprotDerivationValue == 'uniprot') {
+        contents[`${sbmmSample.id}-reference`] = true;
+      }
+      if (uniprotDerivationValue != 'uniprot') {
+        contents[`${sbmmSample.id}-sequence_modifications`] = true;
+      }
+      if (!self.toggable_contents.hasOwnProperty(`${sbmmSample.id}-dnd-reference`)
+        && uniprotDerivationValue == 'uniprot_modified') {
+        contents[`${sbmmSample.id}-dnd-reference`] = true;
+      }
+      self.toggable_contents = contents;
+    },
+    toggleContent(content, value) {
+      let contents = { ...self.toggable_contents };
+      contents[content] = value || !contents[content];
+      self.toggable_contents = contents;
     },
     setUpdatedSequenceBasedMacromoleculeSampleId(value) {
       self.updated_sequence_based_macromolecule_sample_id = value;
     },
     setActiveTabKey(key) {
       self.active_tab_key = key;
-    },
-    toggleContent(content) {
-      let contents = { ...self.toggable_contents };
-      contents[content] = !contents[content];
-      self.toggable_contents = contents;
     },
     changeAnalysisMode() {
       const mode = { edit: 'order', order: 'edit' }[self.analysis_mode];
@@ -351,6 +395,13 @@ export const SequenceBasedMacromoleculeSamplesStore = types
     closeSearchResult() {
       self.show_search_result = false;
     },
+    openConflictModal(sbmm_id, conflicting_sbmm_id) {
+      self.show_conflict_modal = true;
+      self.getSequenceBasedMacromoleculeByIds(sbmm_id, conflicting_sbmm_id);
+    },
+    closeConflictModal() {
+      self.show_conflict_modal = false;
+    },
     setSearchResult(result) {
       self.removeSearchResult();
       self.search_result = result;
@@ -381,7 +432,6 @@ export const SequenceBasedMacromoleculeSamplesStore = types
         if (!accumulator[key]) accumulator[key] = {};
         return accumulator[key];
       }, sbmmSample)[errorPath.at(-1)] = message;
-      return sbmmSample;
     },
     removeError(sbmmSample, errorPath) {
       const errorField = errorPath.slice(0, -1).reduce((accumulator, key) => {
@@ -393,17 +443,30 @@ export const SequenceBasedMacromoleculeSamplesStore = types
       }
 
       Object.entries(sbmmSample.errors).map(([key, value]) => {
+        if (key == 'conflict') {
+          delete sbmmSample.errors[key];
+          return;
+        }
+
         if (Object.keys(value).length === 0) {
           delete sbmmSample.errors[key];
+        } else if (typeof value == 'object') {
+          Object.entries(value).map(([k, v]) => {
+            if (Object.keys(v).length === 0) {
+              delete sbmmSample.errors[key][k];
+              delete sbmmSample.errors[key];
+            } else {
+              if (sbmmSample[key] && sbmmSample[key][k] !== undefined && sbmmSample[key][k] !== '') {
+                delete sbmmSample.errors[key][k];
+              }
+            }
+          })
         }
       });
-
-      return sbmmSample;
     },
     checkIfFieldsAreValid(sbmmSample) {
       const sbmm = sbmmSample.sequence_based_macromolecule;
-
-      validationFields.map((key) => {
+      validationFields.forEach((key) => {
         const hasValue = key.split('.').reduce((accumulator, currentValue) => accumulator?.[currentValue], sbmmSample);
         const errorPath = `errors.${key}`.split('.');
 
@@ -413,22 +476,29 @@ export const SequenceBasedMacromoleculeSamplesStore = types
         const isParentIdentifier =
           self.sequence_based_macromolecule_sample.isNew && key.includes('parent_identifier')
           && sbmm.uniprot_derivation == 'uniprot_modified' && !sbmm.parent_identifier;
-        const checkOnlyValue = !key.includes('primary_accession') && !key.includes('parent_identifier') && !hasValue;
+        const hasNoLysinNumber = sbmm.post_translational_modifications && key.includes('acetylation_lysin_number')
+          && sbmm.post_translational_modifications?.acetylation_enabled
+          && !hasValue;
+        const checkOnlyValue = !key.includes('primary_accession') && !key.includes('parent_identifier')
+          && !key.includes('acetylation_lysin_number') && !hasValue;
 
-        if (hasValue && Object.keys(sbmmSample.errors).length >= 1) {
-          sbmmSample = self.removeError(sbmmSample, errorPath);
+        if (!isPrimaryAccession && !isParentIdentifier && !hasNoLysinNumber && !checkOnlyValue && hasValue) {
+          self.removeError(sbmmSample, errorPath);
         } else if (isPrimaryAccession || isParentIdentifier) {
-          sbmmSample = self.setError(sbmmSample, errorPath, "Please choose a reference");
+          self.setError(sbmmSample, errorPath, "Please choose a reference");
+        } else if (hasNoLysinNumber) {
+          self.setError(sbmmSample, errorPath, "Can't be blank");
         } else if (checkOnlyValue) {
-          sbmmSample = self.setError(sbmmSample, errorPath, "Can't be blank");
+          self.setError(sbmmSample, errorPath, "Can't be blank");
         }
       });
+
       return sbmmSample;
     },
     hasValidFields() {
       let sbmmSample = { ...self.sequence_based_macromolecule_sample };
+      self.removeError(sbmmSample, ['errors', 'structure_file']);
       sbmmSample = self.checkIfFieldsAreValid(sbmmSample);
-      sbmmSample = self.removeError(sbmmSample, ['errors', 'structure_file']);
 
       self.setSequenceBasedMacromoleculeSample(sbmmSample);
       return Object.keys(sbmmSample.errors).length < 1 ? true : false;
@@ -437,5 +507,7 @@ export const SequenceBasedMacromoleculeSamplesStore = types
   .views(self => ({
     get filteredAttachments() { return values(self.filtered_attachments) },
     get searchResult() { return values(self.search_result) },
+    get conflictSbmms() { return values(self.conflict_sbmms) },
     get shownGroups() { return values(self.shown_groups) },
+    get openSbmmSamples() { return values(self.open_sequence_based_macromolecule_samples) }
   }));

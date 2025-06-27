@@ -89,7 +89,7 @@ class SequenceBasedMacromoleculeSample < ApplicationRecord
     return if short_label
     return unless user
 
-    prefix = 'SBMMS'
+    prefix = 'sbmmS'
     abbr = user.name_abbreviation
     self.short_label = "#{abbr}-#{prefix}#{user.counters['sequence_based_macromolecule_samples'].to_i.succ}"
     user.increment_counter 'sequence_based_macromolecule_samples' # rubocop:disable Rails/SkipsModelValidations

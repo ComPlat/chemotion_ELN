@@ -32,6 +32,7 @@ export default class ConfirmClose extends Component {
       prevState => ({ ...prevState, showTooltip: !prevState.showTooltip }),
       () => DetailActions.close(el, this.props.forceClose)
     );
+    this.closeByContextType(el);
   }
 
   closeElement(e) {

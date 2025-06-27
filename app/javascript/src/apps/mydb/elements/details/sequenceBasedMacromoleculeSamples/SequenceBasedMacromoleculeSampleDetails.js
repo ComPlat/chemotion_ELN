@@ -6,6 +6,7 @@ import {
 import PropertiesForm from './propertiesTab/PropertiesForm';
 import AnalysesContainer from './analysesTab/AnalysesContainer';
 import AttachmentForm from './attachmentsTab/AttachmentForm';
+import ConflictModal from './ConflictModal';
 
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
@@ -35,7 +36,7 @@ import CollectionUtils from 'src/models/collection/CollectionUtils';
 
 const SequenceBasedMacromoleculeSampleDetails = () => {
   const sbmmStore = useContext(StoreContext).sequenceBasedMacromoleculeSamples;
-  const sbmmSample = sbmmStore.sequence_based_macromolecule_sample;
+  let sbmmSample = sbmmStore.sequence_based_macromolecule_sample;
 
   const { currentCollection, isSync } = UIStore.getState();
   const { currentUser } = UserStore.getState();
@@ -104,6 +105,26 @@ const SequenceBasedMacromoleculeSampleDetails = () => {
     );
   });
 
+  const errorMessage = () => {
+    const conflict = sbmmSample.errors.conflict;
+    const reason = conflict
+      ? 'because of sbmm conflicts.'
+      : 'because not all fields are filled in correctly.';
+    return (
+      <>
+        This element cannot be {submitLabel.toLowerCase()}d {reason}
+        {conflict && (
+          <Button
+            variant="link"
+            onClick={() => sbmmStore.openConflictModal(conflict.sbmm_id, conflict.conflicting_sbmm_id)}
+          >
+            More details
+          </Button>
+        )}
+      </>
+    );
+  }
+
   const onTabPositionChanged = (visible) => {
     setVisibleTabs(visible);
   }
@@ -116,6 +137,7 @@ const SequenceBasedMacromoleculeSampleDetails = () => {
     if (sbmmStore.hasValidFields()) {
       LoadingActions.start();
       if (sbmmSample.is_new) {
+        sbmmStore.removeFromOpenSequenceBasedMacromoleculeSamples(sbmmSample);
         DetailActions.close(sbmmSample, true);
         ElementActions.createSequenceBasedMacromoleculeSample(sbmmSample);
       } else {
@@ -172,7 +194,8 @@ const SequenceBasedMacromoleculeSampleDetails = () => {
           >
             <span>
               <i className="icon-sequence_based_macromolecule me-1" />
-              {sbmmSample.name}
+              {sbmmSample.title()}
+              {sbmmSample.sbmmShortLabelForHeader(true)}
             </span>
           </OverlayTrigger>
           {
@@ -242,11 +265,10 @@ const SequenceBasedMacromoleculeSampleDetails = () => {
         <CommentModal element={sbmmSample} />
         {
           Object.keys(sbmmSample.errors).length >= 1 && (
-            <Alert variant="danger">
-              {`This element cannot be ${submitLabel.toLowerCase()}d because not all fields are filled in correctly`}
-            </Alert>
+            <Alert variant="danger">{errorMessage()}</Alert>
           )
         }
+        {sbmmStore.show_conflict_modal && <ConflictModal />}
       </Card.Body>
       <Card.Footer>
         <Button variant="primary" onClick={() => DetailActions.close(sbmmSample)}>

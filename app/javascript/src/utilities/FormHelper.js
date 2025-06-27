@@ -237,12 +237,12 @@ const initFormHelper = (element, store) => {
             isInvalid={!value && errorMessage(element, field)}
             onChange={(event) => formHelper.onChange(field, event.target.value)}
           />
-          <Form.Control.Feedback type="invalid">{errorMessage(element, field)}</Form.Control.Feedback>
+          <Form.Control.Feedback type="invalid" className="fs-6">{errorMessage(element, field)}</Form.Control.Feedback>
         </Form.Group>
       );
     },
 
-    inputGroupTextOrNumericInput: (field, label, text, type, disabled, info) => {
+    inputGroupTextOrNumericInput: (field, label, text, type, disabled, info, required = false) => {
       let value = elementField(element, field);
       value = type == 'number' ? numberValue(value) : value || '';
 
@@ -257,9 +257,14 @@ const initFormHelper = (element, store) => {
               key={`${store.key_prefix}-${field}`}
               value={value || ''}
               disabled={disabled}
+              required={required}
+              isInvalid={!value && errorMessage(element, field)}
               onChange={(event) => formHelper.onChange(field, event.target.value)}
             />
           </InputGroup>
+          {errorMessage(element, field) && (
+            <div className="text-danger">{errorMessage(element, field)}</div>
+          )}
         </Form.Group>
       );
     },
@@ -305,7 +310,9 @@ const initFormHelper = (element, store) => {
             />
             {unitTextOrButton}
           </InputGroup>
-          <Form.Control.Feedback type="invalid">{errorMessage(element, field)}</Form.Control.Feedback>
+          {errorMessage(element, field) && (
+            <div className="text-danger">{errorMessage(element, field)}</div>
+          )}
         </Form.Group>
       );
     },
