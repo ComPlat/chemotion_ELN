@@ -1068,14 +1068,4 @@ export default class Reaction extends Element {
     const feedstockMaterial = materials.find((material) => (material.gas_type === 'feedstock'));
     return feedstockMaterial;
   }
-  findMaterialBySampleId(sampleId) {
-    const allMaterials = [
-      ...this.reactants,
-      ...this.products,
-      ...this.starting_materials,
-      ...this.solvents,
-      ...this.purification_solvents
-    ];
-    return allMaterials.find(m => m?.id === sampleId);
-  }
 }
