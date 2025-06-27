@@ -281,8 +281,6 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
           post '/api/v1/sequence_based_macromolecule_samples', params: post_data, as: :json
           expected_result = {
             "error" => [
-              { "parameters" => ["name"], "message" => "is missing" },
-              { "parameters" => ["name"], "message" => "is empty" },
               { "parameters" => ["sequence_based_macromolecule_attributes[sbmm_type]"], "message" => "is missing" },
               { "parameters" => ["sequence_based_macromolecule_attributes[sbmm_type]"], "message" => "is empty" },
               { "parameters" => ["sequence_based_macromolecule_attributes[uniprot_derivation]"], "message" => "is missing" },
@@ -504,9 +502,11 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
 
           body = parsed_json_response
           expected_response = {
-            "message" => "Could not update SBMM #{sbmm_sample.sequence_based_macromolecule.id} as it conflicts with SBMM #{other_sbmm.id}",
-            "sbmm_id" => sbmm_sample.sequence_based_macromolecule.id,
-            "conflicting_sbmm_id" => other_sbmm.id
+            "error" => {
+              "message" => "Could not update SBMM #{sbmm_sample.sequence_based_macromolecule.id} as it conflicts with SBMM #{other_sbmm.id}",
+              "sbmm_id" => sbmm_sample.sequence_based_macromolecule.id,
+              "conflicting_sbmm_id" => other_sbmm.id,
+            },
           }
 
           expect(body).to eq expected_response
@@ -531,8 +531,6 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
           put "/api/v1/sequence_based_macromolecule_samples/#{sbmm_sample.id}", params: post_data, as: :json
           expected_result = {
             "error" => [
-              { "parameters" => ["name"], "message" => "is missing" },
-              { "parameters" => ["name"], "message" => "is empty" },
               { "parameters" => ["sequence_based_macromolecule_attributes[sbmm_type]"], "message" => "is missing" },
               { "parameters" => ["sequence_based_macromolecule_attributes[sbmm_type]"], "message" => "is empty" },
               { "parameters" => ["sequence_based_macromolecule_attributes[uniprot_derivation]"], "message" => "is missing" },

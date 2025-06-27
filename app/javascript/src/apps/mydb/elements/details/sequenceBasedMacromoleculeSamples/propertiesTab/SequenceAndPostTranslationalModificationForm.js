@@ -219,7 +219,7 @@ const SequenceAndPostTranslationalModificationForm = ({ readonly }) => {
             <Col>
               <h5 className="mb-3">Details for Acetylation</h5>
               {formHelper.inputGroupTextOrNumericInput(
-                `${fieldPrefixPostTransitional}.acetylation_lysin_number`, '', 'Lysin No', 'number', disabled, ''
+                `${fieldPrefixPostTransitional}.acetylation_lysin_number`, '', 'Lysin No', 'number', disabled, '', true
               )}
             </Col>
           </Row>

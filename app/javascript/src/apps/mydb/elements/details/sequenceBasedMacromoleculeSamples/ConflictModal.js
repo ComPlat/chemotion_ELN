@@ -1,0 +1,146 @@
+import React, { useState, useContext } from 'react';
+import { Alert, Button, Modal, Row, Col, Container, Table } from 'react-bootstrap';
+import { AgGridReact } from 'ag-grid-react';
+import Draggable from "react-draggable";
+
+import { observer } from 'mobx-react';
+import { StoreContext } from 'src/stores/mobx/RootStore';
+
+const ConflictModal = () => {
+  const sbmmStore = useContext(StoreContext).sequenceBasedMacromoleculeSamples;
+  const sbmmSample = sbmmStore.sequence_based_macromolecule_sample;
+
+  const [deltaPosition, setDeltaPosition] = useState({ x: 0, y: 0 });
+
+  const handleDrag = (e, ui) => {
+    const { x, y } = deltaPosition;
+    setDeltaPosition({
+      x: x + ui.deltaX,
+      y: y + ui.deltaY,
+    });
+  }
+
+  const spinner = (
+    <i className="fa fa-spinner fa-pulse fa-3x fa-fw" />
+  );
+
+  const booleanValueOrText = (key, value) => {
+    let newValue = value;
+
+    if (key == 'parent') {
+      newValue = value?.id;
+    }
+
+    if (key == 'sequence') {
+      newValue = value.match(/.{1,10}/g).join(' ')
+    }
+
+    if (value === true) {
+      newValue = 'Yes';
+    } else if (value === false) {
+      newValue = 'No';
+    }
+    return newValue;
+  }
+
+  const rowsForModifications = (key, rows) => {
+    if (!sbmmStore.conflictSbmms[0][key]) { return rows; }
+
+    const headline =
+      key == 'protein_sequence_modifications' ? 'Sequence modifications' : 'Posttranslational modifications';
+    const cleanedKeys =
+      (({ id, deleted_at, created_at, updated_at, ...o }) => o)(sbmmStore.conflictSbmms[0][key]);
+
+    rows.push(
+      <tr>
+        <td colspan="34"><h5>{headline}</h5></td>
+      </tr>
+    );
+    Object.keys(cleanedKeys).map((modificationKey) => {
+      rows.push(
+        <tr>
+          <td>{modificationKey}</td>
+          <td className="text-wrap">{booleanValueOrText(key, sbmmSample.sequence_based_macromolecule[key][modificationKey])}</td>
+          <td className="text-wrap">{booleanValueOrText(key, sbmmStore.conflictSbmms[0][key][modificationKey])}</td>
+          <td className="text-wrap">{booleanValueOrText(key, sbmmStore.conflictSbmms[1][key][modificationKey])}</td>
+        </tr>
+      );
+    });
+    return rows;
+  }
+
+  const rowOfSbmmKeys = () => {
+    let rows = [];
+    const cleanedKeys =
+      (({ id, uniprot_source, splitted_sequence, attachments, created_at, updated_at, ...o }) => o)(sbmmStore.conflictSbmms[0]);
+
+    Object.keys(cleanedKeys).map((key) => {
+      if (key == 'protein_sequence_modifications' || key == 'post_translational_modifications') {
+        rows = rowsForModifications(key, rows);
+      } else {
+        rows.push(
+          <tr>
+            <td>{key}</td>
+            <td className="text-wrap">{booleanValueOrText(key, sbmmSample.sequence_based_macromolecule[key])}</td>
+            <td className="text-wrap">{booleanValueOrText(key, sbmmStore.conflictSbmms[0][key])}</td>
+            <td className="text-wrap">{booleanValueOrText(key, sbmmStore.conflictSbmms[1][key])}</td>
+          </tr>
+        );
+      }
+    })
+    return rows;
+  }
+
+  return (
+    <Draggable handle=".modal-header" onDrag={handleDrag}>
+      <div>
+        <Modal
+          show={true}
+          onHide={() => sbmmStore.closeConflictModal()}
+          backdrop={false}
+          keyboard={false}
+          className="draggable-modal-dialog-xxxl"
+          size="xxxl"
+          dialogClassName="draggable-modal"
+          contentClassName="draggable-modal-content"
+          style={{
+            transform: `translate(${deltaPosition.x}px, ${deltaPosition.y}px)`,
+          }}
+        >
+          <Modal.Header className="ps-0 border-bottom border-gray-600 bg-gray-300" closeButton>
+            <Modal.Title className="draggable-modal-stack-title">
+              <i className="fa fa-arrows move" />
+              SBMM Conflict
+            </Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Alert variant="danger">
+              {
+                sbmmSample.errors.conflict.message
+              }
+            </Alert>
+            {sbmmStore.conflictSbmms.length < 1 && (<div>{spinner}</div>)}
+
+            {sbmmStore.conflictSbmms.length >= 1 && (
+              <div className="overflow-auto vh-70">
+                <Table className="mw-100 p-3" bordered hover striped>
+                  <tbody>
+                    <tr>
+                      <td className="w-25">&nbsp;</td>
+                      <td className="w-25 fs-6 fw-bold p-3">Your modifications</td>
+                      <td className="w-25 fs-6 fw-bold p-3">SBMM {sbmmStore.conflictSbmms[0].id}</td>
+                      <td className="w-25 fs-6 fw-bold p-3">SBMM {sbmmStore.conflictSbmms[1].id}</td>
+                    </tr>
+                    {rowOfSbmmKeys()}
+                  </tbody>
+                </Table>
+              </div>
+            )}
+          </Modal.Body>
+        </Modal>
+      </div>
+    </Draggable>
+  );
+}
+
+export default observer(ConflictModal);

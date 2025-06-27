@@ -1118,8 +1118,12 @@ class ElementStore {
   }
 
   handleCreateSequenceBasedMacromoleculeSample(sequence_based_macromolecule_sample) {
-    this.handleRefreshElements('sequence_based_macromolecule_sample');
-    this.navigateToNewElement(sequence_based_macromolecule_sample);
+    if (Object.keys(sequence_based_macromolecule_sample?.errors).length < 1) {
+      this.handleRefreshElements('sequence_based_macromolecule_sample');
+      this.navigateToNewElement(sequence_based_macromolecule_sample);
+    } else {
+      this.changeCurrentElement(sequence_based_macromolecule_sample);
+    }
   }
 
   handleCopySequenceBasedMacromoleculeSampleFromClipboard(collection_id) {

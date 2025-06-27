@@ -37,7 +37,7 @@ const SearchResults = () => {
     sbmmStore.getSequenceBasedMacromoleculeByIdentifier(identifier, data.available_sources);
     sbmmStore.closeSearchResult();
     sbmmStore.removeSearchResult();
-    // sbmmStore.toggleSearchOptions(sbmmSample.id, false);
+    sbmmStore.toggleSearchOptions(sbmmSample.id, false);
   }
 
   const renderChooseLink = (node) => {

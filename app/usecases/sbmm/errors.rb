@@ -14,9 +14,11 @@ module Usecases
 
         def to_h
           {
-            message: message,
-            sbmm_id: sbmm.id,
-            conflicting_sbmm_id: conflicting_sbmm.id
+            error: {
+              message: message,
+              sbmm_id: sbmm.id,
+              conflicting_sbmm_id: conflicting_sbmm.id,
+            },
           }
         end
 

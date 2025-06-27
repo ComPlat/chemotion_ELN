@@ -22,7 +22,7 @@ module Chemotion
 
     helpers do
       params :sbmm_sample_params do
-        requires :name, type: String, allow_blank: false
+        optional :name, type: String
         optional :collection_id, type: Integer
         optional :external_label, type: String
         optional :function_or_application, type: String

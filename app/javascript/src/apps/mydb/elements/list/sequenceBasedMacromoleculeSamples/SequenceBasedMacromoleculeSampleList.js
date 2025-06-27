@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import PropTypes from 'prop-types';
+import { Badge } from 'react-bootstrap';
 
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import CommentIcon from 'src/components/comments/CommentIcon';
@@ -18,7 +19,10 @@ function ListItemHeader({
       onClick={() => toggleGroupCollapse()}
       role="button"
     >
-      <div className="fw-bold fs-5">{group[0].sequence_based_macromolecule.short_name}</div>
+      <div className="d-flex align-items-center gap-2 fw-bold fs-5">
+        <span>{group[0].sbmmShortLabel()}</span>
+        <span>{group[0].sequence_based_macromolecule.short_name}</span>
+      </div>
     </div>
   );
 }
@@ -29,16 +33,20 @@ ListItemHeader.propTypes = {
 };
 
 function ListItem({ element, showDetails }) {
+  const badgeTitle = element.sequence_based_macromolecule.uniprot_derivation.split('_').slice(-1)[0];
   return (
     <div
       className="d-flex justify-content-between"
       onClick={showDetails}
       role="button"
     >
-      <div className="d-flex gap-3">
-        <div>{element.title()}</div>
+      <div className="d-flex align-items-center gap-2">
+        <Badge bg="info" className="border border-active bg-opacity-25 text-active rounded">
+          {badgeTitle}
+        </Badge>
+        <span>{element.title()}</span>
       </div>
-      <div className="d-flex gap-1">
+      <div className="d-flex align-items-center gap-1 flex-wrap">
         <CommentIcon commentCount={element.comment_count} />
         <ElementCollectionLabels element={element} />
       </div>
