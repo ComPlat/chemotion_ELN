@@ -1,0 +1,18 @@
+.material-group {
+  @extend .pseudo-table;
+  .pseudo-table__row-header {
+    @extend .surface-lighten6;
+    @extend .rounded-start;
+    @extend .mb-2;
+  }
+  container-name: material-group;
+  container-type: inline-size;
+  &.material-group--can-drop {
+    .pseudo-table__row-header {
+      @extend .surface-lighten3;
+    }
+    &.material-group--is-over .pseudo-table__row-header {
+      @extend .bg-transparent;
+    }
+  }
+}
