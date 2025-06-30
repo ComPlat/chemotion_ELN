@@ -145,6 +145,7 @@ export default class SampleDetails extends React.Component {
       isChemicalEdited: false,
       currentUser,
       showRedirectWarning: redirectedFromMixture || false,
+      casInputValue: '',
     };
 
     this.enableComputedProps = MatrixCheck(currentUser.matrix, 'computedProp');
@@ -209,11 +210,15 @@ export default class SampleDetails extends React.Component {
       || (typeof (sample.molfile) !== 'undefined' && sample.molecule.inchikey === 'DUMMY')
     );
 
+    // Sync casInputValue when CAS changes
+    const currentCas = sample.xref?.cas ?? '';
+    
     this.setState({
       sample,
       smileReadonly,
       loadingMolecule: false,
       isCasLoading: false,
+      casInputValue: currentCas,
     });
   }
 
@@ -859,14 +864,38 @@ export default class SampleDetails extends React.Component {
           <InputGroup.Text>CAS</InputGroup.Text>
           <CreatableSelect
             name="cas"
+            isClearable
+            isInputEditable
+            inputValue={this.state.casInputValue}
             options={options}
-            onChange={(e) => this.updateCas(e)}
+            onChange={(selectedOption) => {
+              if (selectedOption) {
+                const value = selectedOption.value;
+                this.setState({ casInputValue: value });
+                this.updateCas(selectedOption);
+              } else {
+                this.setState({ casInputValue: '' });
+                this.updateCas(null);
+              }
+            }}
+            onInputChange={(inputValue, { action }) => {
+              if (action === 'input-change' || action === 'set-value') {
+                this.setState({ casInputValue: inputValue });
+              }
+            }}
+            onFocus={() => {
+              const currentCas = cas || '';
+              this.setState({ casInputValue: currentCas });
+            }}
             onMenuOpen={() => this.onCasSelectOpen(casArr)}
             isLoading={isCasLoading}
             value={options.find(({ value }) => value === cas) || null}
             onBlur={() => this.isCASNumberValid(cas || '', true)}
             isDisabled={!sample.can_update}
             className="flex-grow-1"
+            placeholder="Select or enter CAS number"
+            allowCreateWhileLoading
+            formatCreateLabel={(inputValue) => `Create "${inputValue}"`}
           />
           <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
             <Button

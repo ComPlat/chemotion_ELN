@@ -15,6 +15,7 @@ function Affiliations({ show, onHide }) {
   const [inputError, setInputError] = useState({});
   const [errorMsg, setErrorMsg] = useState('');
   const [showConfirmIndex, setShowConfirmIndex] = useState(null);
+  const [inputValues, setInputValues] = useState({});
 
   const currentEntries = affiliations.filter((entry) => entry.current);
 
@@ -265,6 +266,9 @@ function Affiliations({ show, onHide }) {
                     : (
                       <CreatableSelect
                         disabled={item.disabled}
+                        isClearable
+                        isInputEditable
+                        inputValue={inputValues[`${index}_country`] || item.country || ''}
                         placeholder="Select or enter a new option"
                         options={countryOptions}
                         onCreateOption={(newValue) => {
@@ -273,7 +277,19 @@ function Affiliations({ show, onHide }) {
                           onChangeHandler(index, 'country', newValue);
                         }}
                         value={countryOptions.find((option) => option.value === item.country) || null}
-                        onChange={(choice) => onChangeHandler(index, 'country', !choice ? '' : choice.value)}
+                        onChange={(choice) => {
+                          const value = choice ? choice.value : '';
+                          setInputValues(prev => ({ ...prev, [`${index}_country`]: value }));
+                          onChangeHandler(index, 'country', value);
+                        }}
+                        onInputChange={(inputValue, { action }) => {
+                          if (action === 'input-change') {
+                            setInputValues(prev => ({ ...prev, [`${index}_country`]: inputValue }));
+                            onChangeHandler(index, 'country', inputValue);
+                          }
+                        }}
+                        allowCreateWhileLoading
+                        formatCreateLabel={(inputValue) => `Create "${inputValue}"`}
                       />
                     )}
                 </td>
@@ -283,6 +299,9 @@ function Affiliations({ show, onHide }) {
                       <>
                         <CreatableSelect
                           disabled={item.disabled}
+                          isClearable
+                          isInputEditable
+                          inputValue={inputValues[`${index}_organization`] || item.organization || ''}
                           placeholder="Select or enter a new option"
                           className={inputError[index] && inputError[index].organization ? 'is-invalid' : ''}
                           options={orgOptions}
@@ -292,7 +311,19 @@ function Affiliations({ show, onHide }) {
                             setOrgOptions((prev) => [...prev, newOption]);
                             onChangeHandler(index, 'organization', newValue);
                           }}
-                          onChange={(choice) => onChangeHandler(index, 'organization', !choice ? '' : choice.value)}
+                          onChange={(choice) => {
+                            const value = choice ? choice.value : '';
+                            setInputValues(prev => ({ ...prev, [`${index}_organization`]: value }));
+                            onChangeHandler(index, 'organization', value);
+                          }}
+                          onInputChange={(inputValue, { action }) => {
+                            if (action === 'input-change') {
+                              setInputValues(prev => ({ ...prev, [`${index}_organization`]: inputValue }));
+                              onChangeHandler(index, 'organization', inputValue);
+                            }
+                          }}
+                          allowCreateWhileLoading
+                          formatCreateLabel={(inputValue) => `Create "${inputValue}"`}
                         />
                         {inputError[index] && inputError[index].organization && (
                           <div className="invalid-feedback">Organization is required</div>
@@ -305,6 +336,9 @@ function Affiliations({ show, onHide }) {
                     : (
                       <CreatableSelect
                         disabled={item.disabled}
+                        isClearable
+                        isInputEditable
+                        inputValue={inputValues[`${index}_department`] || item.department || ''}
                         placeholder="Select or enter a new option"
                         options={deptOptions}
                         value={deptOptions.find((option) => option.value === item.department) || null}
@@ -313,7 +347,19 @@ function Affiliations({ show, onHide }) {
                           setDeptOptions((prev) => [...prev, newOption]);
                           onChangeHandler(index, 'department', newValue);
                         }}
-                        onChange={(choice) => onChangeHandler(index, 'department', !choice ? '' : choice.value)}
+                        onChange={(choice) => {
+                          const value = choice ? choice.value : '';
+                          setInputValues(prev => ({ ...prev, [`${index}_department`]: value }));
+                          onChangeHandler(index, 'department', value);
+                        }}
+                        onInputChange={(inputValue, { action }) => {
+                          if (action === 'input-change') {
+                            setInputValues(prev => ({ ...prev, [`${index}_department`]: inputValue }));
+                            onChangeHandler(index, 'department', inputValue);
+                          }
+                        }}
+                        allowCreateWhileLoading
+                        formatCreateLabel={(inputValue) => `Create "${inputValue}"`}
                       />
                     )}
                 </td>
@@ -323,6 +369,9 @@ function Affiliations({ show, onHide }) {
                       <CreatableSelect
                         placeholder="Select or enter a new option"
                         disabled={item.disabled}
+                        isClearable
+                        isInputEditable
+                        inputValue={inputValues[`${index}_group`] || item.group || ''}
                         value={groupOptions.find((option) => option.value === item.group) || null}
                         options={groupOptions}
                         onCreateOption={(newValue) => {
@@ -330,7 +379,19 @@ function Affiliations({ show, onHide }) {
                           setGroupOptions((prev) => [...prev, newOption]);
                           onChangeHandler(index, 'group', newValue);
                         }}
-                        onChange={(choice) => onChangeHandler(index, 'group', !choice ? '' : choice.value)}
+                        onChange={(choice) => {
+                          const value = choice ? choice.value : '';
+                          setInputValues(prev => ({ ...prev, [`${index}_group`]: value }));
+                          onChangeHandler(index, 'group', value);
+                        }}
+                        onInputChange={(inputValue, { action }) => {
+                          if (action === 'input-change') {
+                            setInputValues(prev => ({ ...prev, [`${index}_group`]: inputValue }));
+                            onChangeHandler(index, 'group', inputValue);
+                          }
+                        }}
+                        allowCreateWhileLoading
+                        formatCreateLabel={(inputValue) => `Create "${inputValue}"`}
                       />
                     )}
                 </td>

@@ -47,6 +47,7 @@ export default class ComputedPropsGraphContainer extends React.Component {
     this.state = {
       curTemplateIdx: 0,
       graphTemplates: [],
+      templateInputValue: '',
     };
 
     this.onUserChange = this.onUserChange.bind(this);
@@ -65,6 +66,19 @@ export default class ComputedPropsGraphContainer extends React.Component {
     this.onUserChange(UserStore.getState());
   }
 
+  componentDidUpdate(prevProps, prevState) {
+  // Sync templateInputValue when template changes
+  const { curTemplateIdx, graphTemplates } = this.state;
+  const currentTemplate = graphTemplates[curTemplateIdx];
+  const prevTemplate = prevState.graphTemplates[prevState.curTemplateIdx];
+
+  if (currentTemplate?.name !== prevTemplate?.name) {
+    this.setState({
+      templateInputValue: currentTemplate?.name || ''
+    });
+  }
+}
+
   componentWillUnmount() {
     UserStore.unlisten(this.onUserChange);
   }
@@ -78,7 +92,9 @@ export default class ComputedPropsGraphContainer extends React.Component {
     );
 
     const curTemplateIdx = _.get(profileData, 'computed_props.cur_template_idx', 0);
-    this.setState({ graphTemplates, curTemplateIdx });
+    const currentTemplate = graphTemplates[curTemplateIdx];
+
+    this.setState({ graphTemplates, curTemplateIdx, templateInputValue: currentTemplate?.name || '' });
   }
 
   onXAxisChange(xAxis) {
@@ -125,10 +141,17 @@ export default class ComputedPropsGraphContainer extends React.Component {
   }
 
   onTemplateChange(template) {
+    if (!template) {
+      this.setState({ templateInputValue: '' });
+      return;
+    }
     const { graphTemplates } = this.state;
     const tIdx = graphTemplates.findIndex(t => t.name === template.label);
     if (tIdx > -1) {
-      this.setState({ curTemplateIdx: tIdx });
+      this.setState({
+        curTemplateIdx: tIdx,
+        templateInputValue: template.label
+      });
     } else {
       const newTempl = {
         name: template.label,
@@ -142,6 +165,7 @@ export default class ComputedPropsGraphContainer extends React.Component {
       this.setState({
         graphTemplates,
         curTemplateIdx: graphTemplates.length - 1,
+        templateInputValue: template.label
       });
     }
   }
@@ -243,9 +267,23 @@ export default class ComputedPropsGraphContainer extends React.Component {
               <Form.Group controlId="formInlineTemplate" className="mb-2">
                 <Form.Label column sm={4}>Template</Form.Label>
                 <CreatableSelect
-                  onChange={this.onTemplateChange}
-                  value={templateOptions.find(({value}) => value === curTemplateIdx)}
+                  isClearable
+                  isInputEditable
+                  inputValue={this.state.templateInputValue}
+                  onChange={(selectedOption) => {
+                    const value = selectedOption ? selectedOption.label : '';
+                    this.setState({ templateInputValue: value });
+                    this.onTemplateChange(selectedOption);
+                  }}
+                  onInputChange={(inputValue, { action }) => {
+                    if (action === 'input-change') {
+                      this.setState({ templateInputValue: inputValue });
+                    }
+                  }}
+                  value={templateOptions.find(({ value }) => value === curTemplateIdx)}
                   options={templateOptions}
+                  placeholder="Select or create template"
+                  allowCreateWhileLoading
                   formatCreateLabel={(label) => `Create new '${label}' template`}
                 />
               </Form.Group>

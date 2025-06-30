@@ -52,6 +52,7 @@ export class ContainerDatasetModalContent extends Component {
     this.state = {
       datasetContainer,
       instruments: [],
+      instrumentInputValue: '',
       timeoutReference: null,
       attachmentEditor: false,
       extension: null,
@@ -85,8 +86,10 @@ export class ContainerDatasetModalContent extends Component {
 
   componentDidMount() {
     this.editorInitial();
+    const { datasetContainer } = this.state;
     this.setState({
-      attachmentGroups: this.classifyAttachments(this.props.datasetContainer.attachments)
+      attachmentGroups: this.classifyAttachments(this.props.datasetContainer.attachments),
+      instrumentInputValue: datasetContainer?.extended_metadata?.instrument || ''
     });
   }
 
@@ -95,6 +98,13 @@ export class ContainerDatasetModalContent extends Component {
     const { attachments } = this.props.datasetContainer;
 
     const prevAttachments = [...attachments];
+
+    // Sync instrumentInputValue when datasetContainer.extended_metadata.instrument changes
+    if (prevProps.datasetContainer?.extended_metadata?.instrument !== this.props.datasetContainer?.extended_metadata?.instrument) {
+      this.setState({
+        instrumentInputValue: this.props.datasetContainer?.extended_metadata?.instrument || ''
+      });
+    }
 
     if (prevMessages.length !== newMessages.length) {
       this.setState({
@@ -339,6 +349,7 @@ export class ContainerDatasetModalContent extends Component {
     this.setState({
       value: '',
       instruments: [],
+      instrumentInputValue: '',
     });
     datasetContainer.extended_metadata.instrument = '';
   }
@@ -600,22 +611,18 @@ export class ContainerDatasetModalContent extends Component {
             <Form.Label>Instrument</Form.Label>
             <CreatableSelect
               isClearable
+              isInputEditable
               className="w-100"
-              value={
-                datasetContainer?.extended_metadata?.instrument
-                  ? {
-                    label: datasetContainer.extended_metadata.instrument,
-                    value: datasetContainer.extended_metadata.instrument
-                  }
-                  : null
-              }
+              inputValue={this.state.instrumentInputValue}
               isDisabled={readOnly || disabled}
               onChange={(selectedOption) => {
                 const value = selectedOption ? selectedOption.value : '';
+                this.setState({ instrumentInputValue: value });
                 this.handleInstrumentValueChange({ target: { value } }, this.doneInstrumentTyping);
               }}
               onInputChange={(inputValue, { action }) => {
                 if (action === 'input-change') {
+                  this.setState({ instrumentInputValue: inputValue });
                   this.handleInstrumentValueChange({ target: { value: inputValue } }, this.doneInstrumentTyping);
                 }
               }}
@@ -624,6 +631,8 @@ export class ContainerDatasetModalContent extends Component {
                 value: item.name,
               }))}
               placeholder="Enter or select an instrument"
+              allowCreateWhileLoading
+              formatCreateLabel={(inputValue) => `Create "${inputValue}"`}
             />
           </Form.Group>
         </div>
