@@ -21,9 +21,8 @@ import ChemDrawEditor from 'src/components/structureEditor/ChemDrawEditor';
 import MarvinjsEditor from 'src/components/structureEditor/MarvinjsEditor';
 import KetcherEditor from 'src/components/structureEditor/KetcherEditor';
 import loadScripts from 'src/components/structureEditor/loadScripts';
-import CommonTemplatesList from 'src/components/ketcher-templates/CommonTemplatesList';
-import CommonTemplatesFetcher from 'src/fetchers/CommonTemplateFetcher';
 import { transformSvgIdsAndReferences } from 'src/utilities/SvgUtils';
+import CommonTemplatesList from 'src/components/ketcher-templates/CommonTemplatesList';
 
 const notifyError = (message) => {
   NotificationActions.add({
@@ -159,17 +158,6 @@ function EditorList(props) {
   );
 }
 
-function copyContentToClipboard(content) {
-  if (navigator.clipboard) {
-    const data = typeof content === 'object' ? JSON.stringify(content) : content;
-    navigator.clipboard.writeText(data).then(() => {
-      // alert('Please click on canvas and press CTRL+V to use the template.');
-    }).catch((err) => {
-      console.error('Failed to copy text: ', err);
-    });
-  }
-}
-
 EditorList.propTypes = {
   value: PropTypes.string.isRequired,
   fnChange: PropTypes.func.isRequired,
@@ -219,9 +207,7 @@ export default class StructureEditorModal extends React.Component {
       molfile: props.molfile,
       matriceConfigs: [],
       editor: initEditor(),
-      commonTemplatesList: [],
       selectedShape: null,
-      selectedCommonTemplate: null,
       deleteAllowed: true
     };
     this.editors = createEditors();
@@ -232,7 +218,6 @@ export default class StructureEditorModal extends React.Component {
 
   componentDidMount() {
     this.resetEditor(this.editors);
-    this.fetchCommonTemplates();
   }
 
   componentDidUpdate(prevProps) {
@@ -335,10 +320,6 @@ export default class StructureEditorModal extends React.Component {
     this.setState({ showWarning: false });
   }
 
-  async fetchCommonTemplates() {
-    const list = await CommonTemplatesFetcher.fetchCommonTemplates();
-    this.setState({ commonTemplatesList: list?.templates });
-  }
 
   render() {
     const { cancelBtnText, submitBtnText, onSave } = this.props;
@@ -346,7 +327,7 @@ export default class StructureEditorModal extends React.Component {
 
     const submitAddons = this.props.submitAddons ? this.props.submitAddons : '';
     const {
-      editor, showWarning, molfile, selectedCommonTemplate, commonTemplatesList, selectedShape, showModal
+      editor, showWarning, molfile, selectedShape, showModal
     } = this.state;
     const iframeHeight = showWarning ? '0px' : '630px';
     const iframeStyle = showWarning ? { border: 'none' } : {};
@@ -394,15 +375,7 @@ export default class StructureEditorModal extends React.Component {
             options={editorOptions}
           />
           {editor.id === 'ketcher2' && (
-            <CommonTemplatesList
-              options={commonTemplatesList}
-              value={selectedCommonTemplate?.name}
-              selectedItem={selectedCommonTemplate}
-              onClickHandle={(value) => {
-                this.setState({ selectedCommonTemplate: value });
-                copyContentToClipboard(value?.molfile);
-              }}
-            />
+            <CommonTemplatesList />
           )}
         </Modal.Header>
         <Modal.Body>

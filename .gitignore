@@ -122,6 +122,7 @@
 /public/default_editors
 
 /uploads/*
+!uploads/common_templates_list.json
 !/public/attachments/.keep
 
 /public/json/*
