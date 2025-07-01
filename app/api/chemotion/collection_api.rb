@@ -92,7 +92,7 @@ module Chemotion
 
       build_tree = Proc.new do |collects, delete_empty_root|
         col_tree = []
-        collects.collect{ |obj| col_tree.push(obj) if obj['ancestry'].nil? }
+        collects.collect{ |obj| col_tree.push(obj) if obj['ancestry'] == '/' }
         get_child.call(col_tree,collects)
         col_tree.select! { |col| col[:children].count > 0 } if delete_empty_root
         Entities::CollectionRootEntity.represent(col_tree, serializable: true, root: :collections)
@@ -105,7 +105,7 @@ module Chemotion
           <<~SQL
             collections.id, label, ancestry, is_synchronized, permission_level, tabs_segment, position, collection_shared_names(user_id, collections.id) as shared_names,
             reaction_detail_level, sample_detail_level, screen_detail_level, wellplate_detail_level, element_detail_level, is_locked, is_shared, inventory_id,
-            case when (ancestry is null) then cast(collections.id as text) else concat(ancestry, chr(47), collections.id) end as ancestry_root
+            case when (ancestry is null) then cast(collections.id as text) else concat(ancestry, collections.id, chr(47)) end as ancestry_root
           SQL
         ).as_json(methods: %i[inventory_name inventory_prefix])
         build_tree.call(collects, false)
@@ -119,7 +119,7 @@ module Chemotion
             collections.id, user_id, label, ancestry, permission_level, user_as_json(user_id) as shared_to,
             is_shared, is_locked, is_synchronized, false as is_remoted, tabs_segment, inventory_id,
             reaction_detail_level, sample_detail_level, screen_detail_level, wellplate_detail_level, element_detail_level,
-            case when (ancestry is null) then cast(collections.id as text) else concat(ancestry, chr(47), collections.id) end as ancestry_root
+            case when (ancestry is null) then cast(collections.id as text) else concat(ancestry, collections.id, chr(47)) end as ancestry_root
           SQL
         ).as_json(methods: %i[inventory_name inventory_prefix])
         build_tree.call(collects, true)
@@ -131,7 +131,7 @@ module Chemotion
                              .where(user_id: current_user.id).order(:id).select(
           <<~SQL
             collections.id, user_id, label, ancestry, permission_level, user_as_json(shared_by_id) AS shared_by, tabs_segment,
-            CASE WHEN ancestry IS NULL THEN CAST(collections.id AS TEXT) ELSE CONCAT(ancestry, '/', collections.id) END AS ancestry_root,
+            CASE WHEN ancestry IS NULL THEN CAST(collections.id AS TEXT) ELSE CONCAT(ancestry, collections.id, chr(47)) END AS ancestry_root,
             reaction_detail_level, sample_detail_level, screen_detail_level, wellplate_detail_level, is_locked, is_shared, inventory_id,
             shared_user_as_json(user_id, #{current_user.id}) AS shared_to,
             position

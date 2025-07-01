@@ -5,7 +5,7 @@
 # Table name: samples
 #
 #  id                  :integer          not null, primary key
-#  ancestry            :string
+#  ancestry            :string           default("/"), not null
 #  boiling_point       :numrange
 #  created_by          :integer
 #  decoupled           :boolean          default(FALSE), not null
@@ -51,6 +51,7 @@
 #
 # Indexes
 #
+#  index_samples_on_ancestry          (ancestry) WHERE (deleted_at IS NULL)
 #  index_samples_on_deleted_at        (deleted_at)
 #  index_samples_on_identifier        (identifier)
 #  index_samples_on_inventory_sample  (inventory_sample)

@@ -5,7 +5,7 @@
 # Table name: collections
 #
 #  id                             :integer          not null, primary key
-#  ancestry                       :string
+#  ancestry                       :string           default("/"), not null
 #  celllinesample_detail_level    :integer          default(10)
 #  deleted_at                     :datetime
 #  devicedescription_detail_level :integer          default(10)
@@ -30,7 +30,7 @@
 #
 # Indexes
 #
-#  index_collections_on_ancestry      (ancestry)
+#  index_collections_on_ancestry      (ancestry) WHERE (deleted_at IS NULL)
 #  index_collections_on_deleted_at    (deleted_at)
 #  index_collections_on_inventory_id  (inventory_id)
 #  index_collections_on_user_id       (user_id)
