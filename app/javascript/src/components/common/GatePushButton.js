@@ -41,7 +41,7 @@ class GatePushButton extends React.Component {
     };
 
     const newState = {
-      showOverlay: true,
+      showOverlay: method === 'GET', // Only show overlay for GET requests (initial check)
       status: 'redirect',
       target: response.target
     };
