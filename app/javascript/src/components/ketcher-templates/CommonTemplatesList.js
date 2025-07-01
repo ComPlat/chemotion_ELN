@@ -10,6 +10,7 @@ import {
   Form,
   Button,
 } from 'react-bootstrap';
+import TemplateFetcher from 'src/fetchers/TemplateFetcher';
 
 const debounce = (func, delay) => {
   let timeoutId;
@@ -19,24 +20,47 @@ const debounce = (func, delay) => {
   };
 };
 
-const CommonTemplatesList = memo(({ options, onClickHandle, selectedItem }) => {
-  const [commonTemplateModal, setCommonTemplateModal] = useState(false);
+function copyContentToClipboard(content) {
+  if (navigator.clipboard) {
+    const data = typeof content === 'object' ? JSON.stringify(content) : content;
+    navigator.clipboard.writeText(data).then(() => {
+      // alert('Please click on canvas and press CTRL+V to use the template.');
+    }).catch((err) => {
+      console.error('Failed to copy text: ', err);
+    });
+  }
+}
+
+const CommonTemplatesList = memo(() => {
+  const [templateList, setTemplateList] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredOptions, setFilteredOptions] = useState(options);
+  const [showModal, setShowModal] = useState(false);
+  const [filteredOptions, setFilteredOptions] = useState([]);
+  const [selectedItem, setSelectedItem] = useState(null);
   const toolTip = 'Select a template. Clicking inside the canvas and Press CTRL + v.';
 
+  async function fetchTemplates() {
+    const templates = await TemplateFetcher.commonTemplates();
+    setTemplateList(templates);
+  }
+
+  useEffect(() => {
+    fetchTemplates();
+  }, []);
+
   const onSelectItem = (item) => {
-    onClickHandle(item);
-    setCommonTemplateModal(false);
+    setSelectedItem(item);
+    copyContentToClipboard(item?.molfile);
+    setShowModal(false);
   };
 
   const handleSearch = useCallback(
     debounce((query) => {
       const lowerCaseQuery = query.toLowerCase();
-      const filtered = options?.filter((item) => item.name.toLowerCase().includes(lowerCaseQuery));
+      const filtered = templateList?.filter((item) => item.name.toLowerCase()?.includes(lowerCaseQuery));
       setFilteredOptions(filtered);
     }, 300),
-    [options]
+    [templateList]
   );
 
   useEffect(() => {
@@ -54,7 +78,7 @@ const CommonTemplatesList = memo(({ options, onClickHandle, selectedItem }) => {
       <Button
         className="w-100 text-left d-flex justify-content-between align-items-baseline"
         variant="light"
-        onClick={() => setCommonTemplateModal(true)}
+        onClick={() => setShowModal(true)}
       >
         {selectedItem ? selectedItem?.name : 'Select Template'}
         <i className="fa fa-caret-down" />
@@ -62,8 +86,8 @@ const CommonTemplatesList = memo(({ options, onClickHandle, selectedItem }) => {
 
       <Modal
         centered
-        show={commonTemplateModal}
-        onHide={() => setCommonTemplateModal(false)}
+        show={showModal}
+        onHide={() => setShowModal(false)}
       >
         <Modal.Header closeButton>
           {toolTip}
@@ -73,11 +97,11 @@ const CommonTemplatesList = memo(({ options, onClickHandle, selectedItem }) => {
             type="text"
             placeholder="Search templates by Name..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value || '')}
+            onChange={(e) => setSearchQuery(e?.target?.value)}
           />
-          {filteredOptions?.length != options?.length && (
+          {filteredOptions?.length !== templateList?.length && (
             <div className="my-2">
-              {`${filteredOptions?.length} out of ${options?.length} templates found`}
+              {`${filteredOptions?.length} out of ${templateList?.length} templates found`}
             </div>
           )}
           <Card className="mt-2">
@@ -100,12 +124,6 @@ const CommonTemplatesList = memo(({ options, onClickHandle, selectedItem }) => {
     </div>
   );
 });
+CommonTemplatesList.displayName = 'CommonTemplatesList';
 
 export default CommonTemplatesList;
-
-CommonTemplatesList.propTypes = {
-  // eslint-disable-next-line react/forbid-prop-types
-  options: PropTypes.arrayOf(PropTypes.object).isRequired,
-  onClickHandle: PropTypes.func.isRequired,
-  selectedItem: PropTypes.string.isRequired
-};
