@@ -3,7 +3,7 @@
 # Table name: ols_terms
 #
 #  id               :integer          not null, primary key
-#  ancestry         :string
+#  ancestry         :string           default("/"), not null
 #  desc             :string
 #  is_enabled       :boolean          default(TRUE)
 #  label            :string
