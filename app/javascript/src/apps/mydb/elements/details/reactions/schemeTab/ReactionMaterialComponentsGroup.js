@@ -2,33 +2,45 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Table, Form } from 'react-bootstrap';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
+import {
+  getMetricMol,
+  getMetricMolConc,
+  metricPrefixesMol,
+  metricPrefixesMolConc
+} from 'src/utilities/MetricsUtils';
 
 /**
  * Component to display the components of a mixture sample in a reaction
  */
 class ReactionMaterialComponentsGroup extends React.Component {
-  renderComponentRow(component) {
-    // Prefer g > l > mol for the amount
-    let amount = '';
-    let unit = '';
-    if (component.amount_g) {
-      amount = component.amount_g;
-      unit = 'g';
-    } else if (component.amount_l) {
-      amount = component.amount_l;
-      unit = 'l';
-    } else if (component.amount_mol) {
-      amount = component.amount_mol;
-      unit = 'mol';
+  handleReferenceChange = (e, component) => {
+    const { onComponentReferenceChange } = this.props;
+    if (onComponentReferenceChange) {
+      onComponentReferenceChange({
+        type: 'componentReferenceChanged',
+        componentId: component.id,
+        checked: e.target.checked,
+      });
     }
+  };
+
+  renderComponentRow(component) {
+    const { sampleId } = this.props;
+
+    // Get metric prefixes using utility functions
+    const metricMol = getMetricMol(component);
+    const metricMolConc = getMetricMolConc(component);
+
     return (
       <tr key={component.id}>
         {/* Ref */}
         <td>
           <Form.Check
             type="radio"
-            name="reference"
+            name={`component_reference_${sampleId}`}
+            value={component.id}
             checked={!!component.reference}
+            onChange={(e) => this.handleReferenceChange(e, component)}
             size="xsm"
             className="m-0"
           />
@@ -36,8 +48,10 @@ class ReactionMaterialComponentsGroup extends React.Component {
         {/* Amount */}
         <td>
           <NumeralInputWithUnitsCompo
-            value={amount}
-            unit={unit}
+            value={component.amount_mol || 0}
+            unit="mol"
+            metricPrefix={metricMol}
+            metricPrefixes={metricPrefixesMol}
             precision={4}
             disabled
             size="sm"
@@ -46,14 +60,16 @@ class ReactionMaterialComponentsGroup extends React.Component {
         {/* Total Conc */}
         <td>
           <NumeralInputWithUnitsCompo
-            value={component.concn || ''}
+            value={component.concn || 0}
             unit="mol/l"
+            metricPrefix={metricMolConc}
+            metricPrefixes={metricPrefixesMolConc}
             precision={4}
             disabled
             size="sm"
           />
         </td>
-         {/* Ratio */}
+        {/* Ratio */}
         <td>
           <NumeralInputWithUnitsCompo
             precision={4}
@@ -93,6 +109,8 @@ class ReactionMaterialComponentsGroup extends React.Component {
 }
 
 ReactionMaterialComponentsGroup.propTypes = {
+  sampleId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  onComponentReferenceChange: PropTypes.func,
   components: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     amount_g: PropTypes.number,
@@ -100,8 +118,13 @@ ReactionMaterialComponentsGroup.propTypes = {
     amount_mol: PropTypes.number,
     concn: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     purity: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    reference: PropTypes.bool
+    reference: PropTypes.bool,
+    metrics: PropTypes.arrayOf(PropTypes.string)
   })).isRequired
+};
+
+ReactionMaterialComponentsGroup.defaultProps = {
+  onComponentReferenceChange: null,
 };
 
 export default ReactionMaterialComponentsGroup;

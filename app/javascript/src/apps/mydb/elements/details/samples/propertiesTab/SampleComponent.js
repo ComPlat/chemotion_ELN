@@ -19,6 +19,12 @@ import ComponentStore from 'src/stores/alt/stores/ComponentStore';
 import ComponentActions from 'src/stores/alt/actions/ComponentActions';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
+import {
+  getMetricMol,
+  getMetricMolConc,
+  metricPrefixesMol,
+  metricPrefixesMolConc
+} from 'src/utilities/MetricsUtils';
 
 /**
  * Drag source specification for material drag-and-drop.
@@ -676,11 +682,8 @@ class SampleComponent extends Component {
     const {
       sample, material, deleteMaterial, connectDragSource, connectDropTarget, activeTab, enableComponentPurity
     } = props;
-    const metricPrefixes = ['m', 'n', 'u'];
-    const metricPrefixesMol = ['m', 'n'];
-    const metricMol = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[2]) > -1) ? material.metrics[2] : 'm';
-    const metricPrefixesMolConc = ['m', 'n'];
-    const metricMolConc = (material.metrics && material.metrics.length > 3 && metricPrefixes.indexOf(material.metrics[3]) > -1) ? material.metrics[3] : 'm';
+    const metricMol = getMetricMol(material);
+    const metricMolConc = getMetricMolConc(material);
 
     return (
       <tr className="general-material">
@@ -747,11 +750,9 @@ class SampleComponent extends Component {
     } = props;
     const metricPrefixes = ['m', 'n', 'u'];
     const metric = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[0]) > -1) ? material.metrics[0] : 'm';
-    const metricPrefixesMol = ['m', 'n'];
-    const metricMol = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[2]) > -1) ? material.metrics[2] : 'm';
+    const metricMol = getMetricMol(material);
     const massBsStyle = material.amount_unit === 'g' ? 'success' : 'light';
-    const metricPrefixesMolConc = ['m', 'n'];
-    const metricMolConc = (material.metrics && material.metrics.length > 3 && metricPrefixes.indexOf(material.metrics[3]) > -1) ? material.metrics[3] : 'm';
+    const metricMolConc = getMetricMolConc(material);
 
     return (
       <tr className="general-material">
