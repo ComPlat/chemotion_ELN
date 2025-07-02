@@ -7,28 +7,28 @@
 # Table name: collections
 #
 #  id                             :integer          not null, primary key
-#  user_id                        :integer          not null
 #  ancestry                       :string
-#  label                          :text             not null
-#  shared_by_id                   :integer
+#  celllinesample_detail_level    :integer          default(10)
+#  deleted_at                     :datetime
+#  devicedescription_detail_level :integer          default(10)
+#  element_detail_level           :integer          default(10)
+#  is_locked                      :boolean          default(FALSE)
 #  is_shared                      :boolean          default(FALSE)
+#  is_synchronized                :boolean          default(FALSE), not null
+#  label                          :text             not null
 #  permission_level               :integer          default(0)
-#  sample_detail_level            :integer          default(10)
+#  position                       :integer
 #  reaction_detail_level          :integer          default(10)
+#  researchplan_detail_level      :integer          default(10)
+#  sample_detail_level            :integer          default(10)
+#  screen_detail_level            :integer          default(10)
+#  tabs_segment                   :jsonb
 #  wellplate_detail_level         :integer          default(10)
 #  created_at                     :datetime         not null
 #  updated_at                     :datetime         not null
-#  position                       :integer
-#  screen_detail_level            :integer          default(10)
-#  is_locked                      :boolean          default(FALSE)
-#  deleted_at                     :datetime
-#  is_synchronized                :boolean          default(FALSE), not null
-#  researchplan_detail_level      :integer          default(10)
-#  element_detail_level           :integer          default(10)
-#  tabs_segment                   :jsonb
-#  celllinesample_detail_level    :integer          default(10)
 #  inventory_id                   :bigint
-#  devicedescription_detail_level :integer          default(10)
+#  shared_by_id                   :integer
+#  user_id                        :integer          not null
 #
 # Indexes
 #

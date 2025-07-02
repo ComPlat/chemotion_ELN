@@ -1,5 +1,35 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: molecules
+#
+#  id                     :integer          not null, primary key
+#  boiling_point          :float
+#  cano_smiles            :string
+#  cas                    :text
+#  deleted_at             :datetime
+#  density                :float            default(0.0)
+#  exact_molecular_weight :float
+#  inchikey               :string
+#  inchistring            :string
+#  is_partial             :boolean          default(FALSE), not null
+#  iupac_name             :string
+#  melting_point          :float
+#  molecular_weight       :float
+#  molecule_svg_file      :string
+#  molfile                :binary
+#  molfile_version        :string(20)
+#  names                  :string           default([]), is an Array
+#  sum_formular           :string
+#  created_at             :datetime         not null
+#  updated_at             :datetime         not null
+#
+# Indexes
+#
+#  index_molecules_on_deleted_at                           (deleted_at)
+#  index_molecules_on_formula_and_inchikey_and_is_partial  (inchikey,sum_formular,is_partial) UNIQUE
+#
 require 'rails_helper'
 require 'digest'
 

@@ -6,17 +6,17 @@
 #
 #  id                 :integer          not null, primary key
 #  ancestry           :string
-#  containable_id     :integer
 #  containable_type   :string
-#  name               :string
 #  container_type     :string
+#  deleted_at         :datetime
 #  description        :text
 #  extended_metadata  :hstore
+#  name               :string
+#  plain_text_content :text
 #  created_at         :datetime         not null
 #  updated_at         :datetime         not null
+#  containable_id     :integer
 #  parent_id          :integer
-#  deleted_at         :datetime
-#  plain_text_content :text
 #
 # Indexes
 #

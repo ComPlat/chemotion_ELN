@@ -1,5 +1,21 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: elemental_compositions
+#
+#  id               :integer          not null, primary key
+#  composition_type :string           not null
+#  data             :hstore           not null
+#  loading          :float
+#  created_at       :datetime
+#  updated_at       :datetime
+#  sample_id        :integer          not null
+#
+# Indexes
+#
+#  index_elemental_compositions_on_sample_id  (sample_id)
+#
 require 'rails_helper'
 
 RSpec.describe ElementalComposition, type: :model do
