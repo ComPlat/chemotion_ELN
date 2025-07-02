@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import {
-  Button, Tabs, Tab, Tooltip, OverlayTrigger, Card
+  Button, Tabs, Tab, Tooltip, OverlayTrigger
 } from 'react-bootstrap';
 
 import PropertiesForm from './propertiesTab/PropertiesForm';
@@ -18,6 +18,7 @@ import { commentActivation } from 'src/utilities/CommentHelper';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import ConfirmClose from 'src/components/common/ConfirmClose';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
+import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 import CopyElementModal from 'src/components/common/CopyElementModal';
@@ -192,39 +193,39 @@ const DeviceDescriptionDetails = () => {
   }
 
   return (
-    <Card className={"detail-card" + (deviceDescription.isPendingToSave ? " detail-card--unsaved" : "")}>
-      <Card.Header>
-        {deviceDescriptionHeader()}
-      </Card.Header>
-      <Card.Body>
-        <div className="tabs-container--with-borders">
-          <ElementDetailSortTab
-            type="device_description"
-            availableTabs={Object.keys(tabContentComponents)}
-            tabTitles={tabTitles}
-            onTabPositionChanged={onTabPositionChanged}
-          />
-          <Tabs
-            activeKey={deviceDescriptionsStore.active_tab_key}
-            onSelect={key => handleTabChange(key)}
-            id="deviceDescriptionDetailsTab"
-            unmountOnExit
-          >
-            {tabContents}
-          </Tabs>
-        </div>
-        <CommentModal element={deviceDescription} />
-      </Card.Body>
-      <Card.Footer>
-        <Button variant="primary" onClick={() => DetailActions.close(deviceDescription)}>
-          Close
-        </Button>
-        <Button variant="warning" disabled={!deviceDescriptionIsValid()} onClick={() => handleSubmit()}>
-          {submitLabel}
-        </Button>
-        {downloadAnalysisButton()}
-      </Card.Footer>
-    </Card>
+    <DetailCard
+      isPendingToSave={deviceDescription.isPendingToSave}
+      header={deviceDescriptionHeader()}
+      footer={(
+        <>
+          <Button variant="primary" onClick={() => DetailActions.close(deviceDescription)}>
+            Close
+          </Button>
+          <Button variant="warning" disabled={!deviceDescriptionIsValid()} onClick={() => handleSubmit()}>
+            {submitLabel}
+          </Button>
+          {downloadAnalysisButton()}
+        </>
+      )}
+    >
+      <div className="tabs-container--with-borders">
+        <ElementDetailSortTab
+          type="device_description"
+          availableTabs={Object.keys(tabContentComponents)}
+          tabTitles={tabTitles}
+          onTabPositionChanged={onTabPositionChanged}
+        />
+        <Tabs
+          activeKey={deviceDescriptionsStore.active_tab_key}
+          onSelect={key => handleTabChange(key)}
+          id="deviceDescriptionDetailsTab"
+          unmountOnExit
+        >
+          {tabContents}
+        </Tabs>
+      </div>
+      <CommentModal element={deviceDescription} />
+    </DetailCard>
   );
 }
 

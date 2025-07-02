@@ -6,8 +6,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {
   Button, InputGroup, ListGroupItem, Tabs, Tab, Row, Col,
-  Tooltip, OverlayTrigger, Modal, Alert, Card, Form,
-  Accordion
+  Tooltip, OverlayTrigger, Modal, Alert, Form,
+  Accordion, Container
 } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import { CreatableSelect } from 'src/components/common/Select';
@@ -30,6 +30,7 @@ import ElementAnalysesLabels from 'src/apps/mydb/elements/labels/ElementAnalyses
 import PubchemLabels from 'src/components/pubchem/PubchemLabels';
 import PubchemLcss from 'src/components/pubchem/PubchemLcss';
 import ElementReactionLabels from 'src/apps/mydb/elements/labels/ElementReactionLabels';
+import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import SampleDetailsContainers from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainers';
 
 import StructureEditorModal from 'src/components/structureEditor/StructureEditorModal';
@@ -1006,6 +1007,7 @@ export default class SampleDetails extends React.Component {
 
     const inventoryLabel = sample.inventory_sample && sample.inventory_label ? sample.inventory_label : null;
 
+
     return (
       <div className="d-flex align-items-center flex-wrap">
         <div className="d-flex align-items-center flex-wrap flex-grow-1 gap-2">
@@ -1055,22 +1057,24 @@ export default class SampleDetails extends React.Component {
       ? <PubchemLcss cid={pubchemCid} informArray={pubchemLcss} /> : null;
 
     return (
-      <Row className='mb-4'>
-        <Col md={4}>
-          <h4><SampleName sample={sample} /></h4>
-          {!isMixture && (
-            <>
-              <h5>{this.sampleAverageMW(sample)}</h5>
-              <h5>{this.sampleExactMW(sample)}</h5>
-            </>
-          )}
-          {sample.isNew || isMixture ? null : <h6>{this.moleculeCas()}</h6>}
-          {lcssSign}
-        </Col>
-        <Col md={8} className="position-relative">
-          {this.svgOrLoading(sample)}
-        </Col>
-      </Row>
+      <Container>
+        <Row className="mb-4">
+          <Col md={4}>
+            <h4><SampleName sample={sample} /></h4>
+            {!isMixture && (
+              <>
+                <h5>{this.sampleAverageMW(sample)}</h5>
+                <h5>{this.sampleExactMW(sample)}</h5>
+              </>
+            )}
+            {sample.isNew || isMixture ? null : <h6>{this.moleculeCas()}</h6>}
+            {lcssSign}
+          </Col>
+          <Col md={8} className="position-relative">
+            {this.svgOrLoading(sample)}
+          </Col>
+        </Row>
+      </Container>
     );
   }
 
@@ -1479,41 +1483,41 @@ export default class SampleDetails extends React.Component {
     const pendingToSave = sample.isPendingToSave || isChemicalEdited;
 
     return (
-      <Card className={`detail-card${pendingToSave ? ' detail-card--unsaved' : ''}`}>
-        <Card.Header>
-          {this.sampleHeader(sample)}
-          {redirectWarningBlock}
-          {messageBlock}
-        </Card.Header>
-        <Card.Body>
-          {this.sampleInfo(sample)}
-          {this.state.sfn && <ScifinderSearch el={sample} />}
-          <div className="tabs-container--with-borders">
-            <ElementDetailSortTab
-              type="sample"
-              availableTabs={Object.keys(tabContentsMap)}
-              tabTitles={tabTitlesMap}
-              onTabPositionChanged={this.onTabPositionChanged}
-              addInventoryTab={sample.inventory_sample}
-            />
-            <Tabs
-              mountOnEnter
-              unmountOnExit
-              activeKey={activeTab}
-              onSelect={this.handleSelect}
-              id="SampleDetailsXTab"
-            >
-              {tabContents}
-            </Tabs>
-          </div>
-          {this.structureEditorModal(sample)}
-          {this.renderMolfileModal()}
-          <CommentModal element={sample} />
-        </Card.Body>
-        <Card.Footer>
-          {this.sampleFooter()}
-        </Card.Footer>
-      </Card>
+      <DetailCard
+        isPendingToSave={pendingToSave}
+        header={(
+          <>
+            {this.sampleHeader(sample)}
+            {redirectWarningBlock}
+            {messageBlock}
+          </>
+        )}
+        footer={this.sampleFooter()}
+      >
+        {this.sampleInfo(sample)}
+        {this.state.sfn && <ScifinderSearch el={sample} />}
+        <div className="tabs-container--with-borders">
+          <ElementDetailSortTab
+            type="sample"
+            availableTabs={Object.keys(tabContentsMap)}
+            tabTitles={tabTitlesMap}
+            onTabPositionChanged={this.onTabPositionChanged}
+            addInventoryTab={sample.inventory_sample}
+          />
+          <Tabs
+            mountOnEnter
+            unmountOnExit
+            activeKey={activeTab}
+            onSelect={this.handleSelect}
+            id="SampleDetailsXTab"
+          >
+            {tabContents}
+          </Tabs>
+        </div>
+        {this.structureEditorModal(sample)}
+        {this.renderMolfileModal()}
+        <CommentModal element={sample} />
+      </DetailCard>
     );
   }
 }

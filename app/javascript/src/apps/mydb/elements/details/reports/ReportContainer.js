@@ -1,11 +1,12 @@
 import React, { Component } from 'react';
 import {
-  Alert, Badge, Card, Tabs, Tab
+  Alert, Badge, Tabs, Tab
 } from 'react-bootstrap';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import ReportActions from 'src/stores/alt/actions/ReportActions';
 import ReportStore from 'src/stores/alt/stores/ReportStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
+import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import Setting from 'src/apps/mydb/elements/details/reports/Setting';
 import Previews from 'src/apps/mydb/elements/details/reports/Previews';
 import Orders from 'src/apps/mydb/elements/details/reports/Orders';
@@ -116,81 +117,82 @@ export default class ReportContainer extends Component {
 
     const { report } = this.props;
     return (
-      <Card className="detail-card">
-        <Card.Header className='d-flex align-items-center justify-content-between'>
-          Report Generation
-          <div className="d-flex gap-1">
-            <ResetBtn key="resetBtn" />
-            <GenerateReportBtn
-              key="generateReportBtn"
-              allState={this.state}
-              updateQueue={this.updateQueue}
-            />
-            <CloseBtn key="closeBtn" report={report} />
+      <DetailCard
+        header={(
+          <div className='d-flex align-items-center justify-content-between'>
+            Report Generation
+            <div className="d-flex gap-1">
+              <ResetBtn key="resetBtn" />
+              <GenerateReportBtn
+                key="generateReportBtn"
+                allState={this.state}
+                updateQueue={this.updateQueue}
+              />
+              <CloseBtn key="closeBtn" report={report} />
+            </div>
           </div>
-        </Card.Header>
-        <Card.Body>
-          {alertTemplateNotFound && (
-            <Alert variant="warning">
-              Report Template not found. Set to Standard. Please check your config settings.
-            </Alert>
-          )}
-          <div className="tabs-container--with-borders">
-            <Tabs
-              activeKey={activeKey}
-              onSelect={this.selectTab}
-              id="report-tabs"
-            >
-              <Tab eventKey={0} title="Config">
-                <Config
-                  imgFormat={imgFormat}
-                  fileName={fileName}
-                  fileDescription={fileDescription}
-                  configs={configs}
-                  checkedAllConfigs={checkedAllConfigs}
-                  template={template}
-                  handleTemplateChanged={this.handleTemplateChanged}
-                  options={templateOpts}
-                />
-              </Tab>
-              <Tab eventKey={1} title="Setting">
-                <Setting
-                  template={template}
-                  splSettings={splSettings}
-                  checkedAllSplSettings={checkedAllSplSettings}
-                  rxnSettings={rxnSettings}
-                  checkedAllRxnSettings={checkedAllRxnSettings}
-                  siRxnSettings={siRxnSettings}
-                  checkedAllSiRxnSettings={checkedAllSiRxnSettings}
-                />
-              </Tab>
+        )}
+      >
+        {alertTemplateNotFound && (
+          <Alert variant="warning">
+            Report Template not found. Set to Standard. Please check your config settings.
+          </Alert>
+        )}
+        <div className="tabs-container--with-borders">
+          <Tabs
+            activeKey={activeKey}
+            onSelect={this.selectTab}
+            id="report-tabs"
+          >
+            <Tab eventKey={0} title="Config">
+              <Config
+                imgFormat={imgFormat}
+                fileName={fileName}
+                fileDescription={fileDescription}
+                configs={configs}
+                checkedAllConfigs={checkedAllConfigs}
+                template={template}
+                handleTemplateChanged={this.handleTemplateChanged}
+                options={templateOpts}
+              />
+            </Tab>
+            <Tab eventKey={1} title="Setting">
+              <Setting
+                template={template}
+                splSettings={splSettings}
+                checkedAllSplSettings={checkedAllSplSettings}
+                rxnSettings={rxnSettings}
+                checkedAllRxnSettings={checkedAllRxnSettings}
+                siRxnSettings={siRxnSettings}
+                checkedAllSiRxnSettings={checkedAllSiRxnSettings}
+              />
+            </Tab>
 
-              <Tab eventKey={2} title="Order">
-                <Orders selectedObjs={selectedObjs} template={template} />
-              </Tab>
-              <Tab eventKey={3} title="Label">
-                <Serials selMolSerials={selMolSerials} template={template} />
-              </Tab>
-              <Tab eventKey={4} title="Preview">
-                <Previews
-                  previewObjs={previewObjs}
-                  splSettings={splSettings}
-                  rxnSettings={rxnSettings}
-                  siRxnSettings={siRxnSettings}
-                  configs={configs}
-                  template={template}
-                  molSerials={selMolSerials}
-                  prdAtts={prdAtts}
-                  attThumbNails={attThumbNails}
-                />
-              </Tab>
-              <Tab eventKey={5} title={this.archivesTitle()}>
-                <Archives archives={archives} />
-              </Tab>
-            </Tabs>
-          </div>
-        </Card.Body>
-      </Card>
+            <Tab eventKey={2} title="Order">
+              <Orders selectedObjs={selectedObjs} template={template} />
+            </Tab>
+            <Tab eventKey={3} title="Label">
+              <Serials selMolSerials={selMolSerials} template={template} />
+            </Tab>
+            <Tab eventKey={4} title="Preview">
+              <Previews
+                previewObjs={previewObjs}
+                splSettings={splSettings}
+                rxnSettings={rxnSettings}
+                siRxnSettings={siRxnSettings}
+                configs={configs}
+                template={template}
+                molSerials={selMolSerials}
+                prdAtts={prdAtts}
+                attThumbNails={attThumbNails}
+              />
+            </Tab>
+            <Tab eventKey={5} title={this.archivesTitle()}>
+              <Archives archives={archives} />
+            </Tab>
+          </Tabs>
+        </div>
+      </DetailCard>
     );
   }
 }

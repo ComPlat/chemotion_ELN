@@ -1,12 +1,14 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Card, Tabs, Tab } from 'react-bootstrap';
+import { Tabs, Tab } from 'react-bootstrap';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import Metadata from 'src/models/Metadata';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+
+import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 
 import MetadataHeader from 'src/components/metadata/MetadataHeader';
 import MetadataGeneral from 'src/components/metadata/MetadataGeneral';
@@ -85,16 +87,17 @@ export default class MetadataContainer extends Component {
     const saveBtnDisplay = !!metadata.isEdited;
 
     return (
-      <Card className="detail-card">
-        <Card.Header>
+      <DetailCard
+        header={(
           <MetadataHeader
             title={title}
             saveBtnDisplay={saveBtnDisplay}
             onSave={this.handleSave}
             onClose={this.handleClose}
           />
-        </Card.Header>
-        <Card.Body className="tabs-container--with-borders">
+        )}
+      >
+        <div className="tabs-container--with-borders">
           <Tabs
             id="metadata-tabs"
             activeKey={this.state.activeTab}
@@ -157,8 +160,8 @@ export default class MetadataContainer extends Component {
               />
             </Tab>
           </Tabs>
-        </Card.Body>
-      </Card>
+        </div>
+      </DetailCard>
     );
   }
 }

@@ -5,8 +5,6 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
   Button,
-  ButtonToolbar,
-  Card,
   ListGroupItem,
   Tabs,
   Tab,
@@ -36,6 +34,7 @@ import GenericAttachments from 'src/components/generic/GenericAttachments';
 import { SegmentTabs } from 'src/components/generic/SegmentDetails';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
+import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import { EditUserLabels, ShowUserLabels } from 'src/components/UserLabels';
 
@@ -506,44 +505,42 @@ export default class GenericElDetails extends Component {
       activeTab = tabKeyContentList[0];
     }
     return (
-      <Card
-        className={`detail-card${
-          genericEl.isPendingToSave ? ' detail-card--unsaved' : ''
-        }`}
-      >
-        <Card.Header>{this.header(genericEl)}</Card.Header>
-        <Card.Body>
-          <div className="tabs-container--with-borders">
-            <ElementDetailSortTab
-              type={genericEl.type}
-              availableTabs={Object.keys(tabContents)}
-              onTabPositionChanged={this.onTabPositionChanged}
-            />
-            <Tabs
-              activeKey={activeTab}
-              onSelect={(key) => this.handleSelect(key, genericEl.type)}
-              id="GenericElementDetailsXTab"
+      <DetailCard
+        isPendingToSave={genericEl.isPendingToSave}
+        header={this.header(genericEl)}
+        footer={(
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => DetailActions.close(genericEl, true)}
             >
-              {tabContentList}
-            </Tabs>
-          </div>
-        </Card.Body>
-        <Card.Footer>
-          <Button
-            variant="secondary"
-            onClick={() => DetailActions.close(genericEl, true)}
+              Close
+            </Button>
+            <Button
+              variant="warning"
+              onClick={() => this.handleSubmit()}
+              style={saveBtnDisplay}
+            >
+              {submitLabel}
+            </Button>
+          </>
+        )}
+      >
+        <div className="tabs-container--with-borders">
+          <ElementDetailSortTab
+            type={genericEl.type}
+            availableTabs={Object.keys(tabContents)}
+            onTabPositionChanged={this.onTabPositionChanged}
+          />
+          <Tabs
+            activeKey={activeTab}
+            onSelect={(key) => this.handleSelect(key, genericEl.type)}
+            id="GenericElementDetailsXTab"
           >
-            Close
-          </Button>
-          <Button
-            variant="warning"
-            onClick={() => this.handleSubmit()}
-            style={saveBtnDisplay}
-          >
-            {submitLabel}
-          </Button>
-        </Card.Footer>
-      </Card>
+            {tabContentList}
+          </Tabs>
+        </div>
+      </DetailCard>
     );
   }
 }

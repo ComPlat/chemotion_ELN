@@ -3,7 +3,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  ButtonToolbar, Button, Tooltip, OverlayTrigger, Tabs, Tab, Dropdown, ButtonGroup, Card
+  ButtonToolbar, Button, Tooltip, OverlayTrigger, Tabs, Tab, Dropdown, ButtonGroup
 } from 'react-bootstrap';
 import { unionBy, findIndex } from 'lodash';
 import Immutable from 'immutable';
@@ -29,6 +29,7 @@ import ResearchPlanDetailsName from
   'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsName';
 import ResearchPlanDetailsContainers from
   'src/apps/mydb/elements/details/researchPlans/analysesTab/ResearchPlanDetailsContainers';
+import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
@@ -487,37 +488,35 @@ export default class ResearchPlanDetails extends Component {
     );
 
     return (
-      <Card.Header className={`text-bg-${researchPlan.isPendingToSave ? 'info' : 'primary'}`}>
-        <div className="d-flex align-items-center justify-content-between">
-          <div className="d-flex align-items-center gap-2">
-            <OverlayTrigger placement="bottom" overlay={<Tooltip id="rpDates">{titleTooltip}</Tooltip>}>
-              <span>
-                <i className="fa fa-file-text-o" />
-                <span className="mx-1">{researchPlan.name}</span>
-              </span>
-            </OverlayTrigger>
-            <ShowUserLabels element={researchPlan} />
-            <ElementCollectionLabels element={researchPlan} placement="right" />
-            <HeaderCommentSection element={researchPlan} />
-          </div>
-          <div className="d-flex align-items-center gap-1 flex-row-reverse">
-            <ConfirmClose el={researchPlan} />
-            <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveresearch_plan">Save Research Plan</Tooltip>}>
-              <Button
-                variant="warning"
-                size="xxsm"
-                onClick={() => this.handleSubmit()}
-                style={{ display: (researchPlan.changed || false) ? '' : 'none' }}
-              >
-                <i className="fa fa-floppy-o" aria-hidden="true" />
-              </Button>
-            </OverlayTrigger>
-            {!researchPlan.isNew
-              && <OpenCalendarButton isPanelHeader eventableId={researchPlan.id} eventableType="ResearchPlan" />}
-            {copyBtn}
-          </div>
+      <div className="d-flex align-items-center justify-content-between">
+        <div className="d-flex align-items-center gap-2">
+          <OverlayTrigger placement="bottom" overlay={<Tooltip id="rpDates">{titleTooltip}</Tooltip>}>
+            <span>
+              <i className="fa fa-file-text-o" />
+              <span className="mx-1">{researchPlan.name}</span>
+            </span>
+          </OverlayTrigger>
+          <ShowUserLabels element={researchPlan} />
+          <ElementCollectionLabels element={researchPlan} placement="right" />
+          <HeaderCommentSection element={researchPlan} />
         </div>
-      </Card.Header>
+        <div className="d-flex align-items-center gap-1 flex-row-reverse">
+          <ConfirmClose el={researchPlan} />
+          <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveresearch_plan">Save Research Plan</Tooltip>}>
+            <Button
+              variant="warning"
+              size="xxsm"
+              onClick={() => this.handleSubmit()}
+              style={{ display: (researchPlan.changed || false) ? '' : 'none' }}
+            >
+              <i className="fa fa-floppy-o" aria-hidden="true" />
+            </Button>
+          </OverlayTrigger>
+          {!researchPlan.isNew
+            && <OpenCalendarButton isPanelHeader eventableId={researchPlan.id} eventableType="ResearchPlan" />}
+          {copyBtn}
+        </div>
+      </div>
     );
   }
 
@@ -609,38 +608,43 @@ export default class ResearchPlanDetails extends Component {
     const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
 
     return (
-      <Card className="detail-card">
-        {this.renderPanelHeading(researchPlan)}
-        <Card.Body>
-          <div className="tabs-container--with-borders">
-            <ElementDetailSortTab
-              type="research_plan"
-              availableTabs={Object.keys(tabContentsMap)}
-              onTabPositionChanged={this.onTabPositionChanged}
-            />
-            <Tabs
-              mountOnEnter
-              unmountOnExit
-              activeKey={activeTab}
-              onSelect={(key) => this.handleSelect(key)}
-              id="screen-detail-tab"
+      <DetailCard
+        isPendingToSave={researchPlan.isPendingToSave}
+        header={this.renderPanelHeading(researchPlan)}
+        footer={(
+          <>
+            <Button
+              variant="primary"
+              onClick={() => DetailActions.close(researchPlan)}
             >
-              {tabContents}
-            </Tabs>
-          </div>
-          <CommentModal element={researchPlan} />
-        </Card.Body>
-        <Card.Footer>
-          <Button variant="primary" onClick={() => DetailActions.close(researchPlan)}>Close</Button>
-          {
-            (researchPlan.changed || researchPlan.is_copy) && (
+              Close
+            </Button>
+            {(researchPlan.changed || researchPlan.is_copy) && (
               <Button variant="warning" onClick={() => this.handleSubmit()}>
                 {researchPlan.isNew ? 'Create' : 'Save'}
               </Button>
-            )
-          }
-        </Card.Footer>
-      </Card>
+            )}
+          </>
+        )}
+      >
+        <div className="tabs-container--with-borders">
+          <ElementDetailSortTab
+            type="research_plan"
+            availableTabs={Object.keys(tabContentsMap)}
+            onTabPositionChanged={this.onTabPositionChanged}
+          />
+          <Tabs
+            mountOnEnter
+            unmountOnExit
+            activeKey={activeTab}
+            onSelect={(key) => this.handleSelect(key)}
+            id="screen-detail-tab"
+          >
+            {tabContents}
+          </Tabs>
+        </div>
+        <CommentModal element={researchPlan} />
+      </DetailCard>
     );
   }
 }

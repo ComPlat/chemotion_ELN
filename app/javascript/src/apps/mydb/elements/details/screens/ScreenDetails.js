@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Form, Card, Row, Col, ButtonToolbar, Button,
+  Form, Row, Col, Button,
   Tooltip, OverlayTrigger, Tabs, Tab
 } from 'react-bootstrap';
 import { unionBy, findIndex } from 'lodash';
@@ -11,6 +11,7 @@ import ConfirmClose from 'src/components/common/ConfirmClose';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
+import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
@@ -430,47 +431,47 @@ export default class ScreenDetails extends Component {
     };
 
     return (
-      <Card className={`detail-card${screen.isPendingToSave ? ' detail-card--unsaved' : ''}`}>
-        <Card.Header>
-          {this.screenHeader(screen)}
-        </Card.Header>
-        <Card.Body>
-          <ResearchplanFlowDisplay
-            initialData={screen.componentGraphData}
-            researchplans={screen.research_plans}
-            flowConfiguration={flowConfiguration}
-          />
-          <div className="tabs-container--with-borders">
-            <ElementDetailSortTab
-              type="screen"
-              availableTabs={Object.keys(tabContentsMap)}
-              onTabPositionChanged={this.onTabPositionChanged}
-            />
-            <Tabs
-              mountOnEnter
-              unmountOnExit
-              activeKey={activeTab}
-              onSelect={(key) => this.handleSelect(key)}
-              id="screen-detail-tab"
+      <DetailCard
+        isPendingToSave={screen.isPendingToSave}
+        header={this.screenHeader(screen)}
+        footer={(
+          <>
+            <Button variant="primary" onClick={() => DetailActions.close(screen)}>
+              Close
+            </Button>
+            <Button
+              id="submit-screen-btn"
+              variant="warning"
+              onClick={() => this.handleSubmit()}
             >
-              {tabContents}
-            </Tabs>
-          </div>
-          <CommentModal element={screen} />
-        </Card.Body>
-        <Card.Footer>
-          <Button variant="primary" onClick={() => DetailActions.close(screen)}>
-            Close
-          </Button>
-          <Button
-            id="submit-screen-btn"
-            variant="warning"
-            onClick={() => this.handleSubmit()}
+              {submitLabel}
+            </Button>
+          </>
+        )}
+      >
+        <ResearchplanFlowDisplay
+          initialData={screen.componentGraphData}
+          researchplans={screen.research_plans}
+          flowConfiguration={flowConfiguration}
+        />
+        <div className="tabs-container--with-borders">
+          <ElementDetailSortTab
+            type="screen"
+            availableTabs={Object.keys(tabContentsMap)}
+            onTabPositionChanged={this.onTabPositionChanged}
+          />
+          <Tabs
+            mountOnEnter
+            unmountOnExit
+            activeKey={activeTab}
+            onSelect={(key) => this.handleSelect(key)}
+            id="screen-detail-tab"
           >
-            {submitLabel}
-          </Button>
-        </Card.Footer>
-      </Card>
+            {tabContents}
+          </Tabs>
+        </div>
+        <CommentModal element={screen} />
+      </DetailCard>
     );
   }
 }
