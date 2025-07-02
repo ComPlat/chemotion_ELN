@@ -1,0 +1,91 @@
+.fab-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1050;
+
+  // Main FAB button (larger)
+  .fab-main {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    font-size: 16px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    transition: all 0.3s ease;
+
+    i {
+      font-size: 16px;
+    }
+
+    &.rotate {
+      transform: rotate(45deg);
+    }
+  }
+
+  // Action buttons (smaller)
+  .fab-action-button {
+    position: absolute;
+    right: 0;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    font-size: 16px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    transition: bottom 0.3s ease, opacity 0.3s ease;
+
+    i {
+      font-size: 14px;
+      // color: white !important;
+
+    }
+  }
+
+  .fab-actions {
+    position: absolute;
+    bottom: 5px;
+    right: 0;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+
+    &.fab-actions-open {
+      opacity: 1;
+      pointer-events: all;
+    }
+  }
+
+  .fab-static-buttons {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .fab-static-button {
+      width: 34px; // same as .fab-main
+      height: 34px;
+      border-radius: 50%;
+      font-size: 16px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+      transition: all 0.3s ease;
+
+      i {
+        font-size: 16px;
+      }
+    }
+  }
+
+
+}
