@@ -43,7 +43,14 @@ module Chemotion
                  when :html
                    Loofah.scrub_html5_fragment(result, :strip)
                  else
-                   Loofah.fragment(result).scrub!(scrubber)
+                  if Loofah.fragment(result).css('img').any?
+                    # Allow <img> tags
+                    scrubber = allow_image_tag
+                    Loofah.fragment(result).scrub!(scrubber)
+                  else
+                    # No images — use strict scrub
+                    Loofah.scrub_fragment(result, :strip)
+                  end
                  end.to_s
         # Fix some camelcase attributes
         result = camelcase_attributes(result)
