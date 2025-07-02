@@ -38,20 +38,20 @@ module Chemotion
         # though rgb is an allowed css function
         result = transform_rgb_to_hex(result)
         result = case type
-                when :xml
-                  Loofah.scrub_xml_fragment(result, :strip)
-                when :html
-                  Loofah.scrub_html5_fragment(result, :strip)
-                else
-                  if Loofah.fragment(result).css('img').any?
-                    # Allow <img> tags
-                    scrubber = allow_image_tag
-                    Loofah.fragment(result).scrub!(scrubber)
+                  when :xml
+                    Loofah.scrub_xml_fragment(result, :strip)
+                  when :html
+                    Loofah.scrub_html5_fragment(result, :strip)
                   else
-                    # No images — use strict scrub
-                    Loofah.scrub_fragment(result, :strip)
-                  end
-                end.to_s
+                    if Loofah.fragment(result).css('img').any?
+                      # Allow <img> tags
+                      scrubber = allow_image_tag
+                      Loofah.fragment(result).scrub!(scrubber)
+                    else
+                      # No images — use strict scrub
+                      Loofah.scrub_fragment(result, :strip)
+                    end
+                  end.to_s
         # Fix some camelcase attributes
         result = camelcase_attributes(result)
         result = new(result).transform_defs_glyph_ids_and_references if remap_glyph_ids
