@@ -51,7 +51,7 @@ module Chemotion
                       # No images — use strict scrub
                       Loofah.scrub_fragment(result, :strip)
                     end
-                  end.to_s
+                end.to_s
         # Fix some camelcase attributes
         result = camelcase_attributes(result)
         result = new(result).transform_defs_glyph_ids_and_references if remap_glyph_ids
