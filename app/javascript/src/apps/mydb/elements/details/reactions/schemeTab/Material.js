@@ -500,6 +500,8 @@ class Material extends Component {
     }
     return (
       <NumeralInputWithUnitsCompo
+        // Force re-render when reference status changes (to reset or update input behavior)
+        key={`equiv-${material.id}-${material.reference ? 'ref' : 'nonref'}`}
         size="sm"
         precision={4}
         value={value}
