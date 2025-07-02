@@ -49,13 +49,13 @@ function ReactionsDisplay({
 
   return (
     <div>
-      <div className="d-flex justify-content-between align-items-center mb-3">
+      {/* <div className="d-flex justify-content-between align-items-center mb-3">
         {AnalysisModeToggle(mode, handleToggleMode, isDisabled)}
         <ButtonToolbar className="gap-2">
           <CommentButton toggleCommentBox={toggleCommentBox} size="xsm" />
           {addButton()}
         </ButtonToolbar>
-      </div>
+      </div> */}
       <CommentBox
         isVisible={commentBoxVisible}
         value={sample.container.description}
