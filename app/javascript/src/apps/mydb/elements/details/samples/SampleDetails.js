@@ -2,7 +2,7 @@
 /* eslint-disable react/destructuring-assignment */
 /* eslint-disable react/forbid-prop-types */
 /* eslint-disable no-param-reassign */
-import React from 'react';
+import React, { createRef } from 'react';
 import PropTypes from 'prop-types';
 import {
   Button, InputGroup, ListGroupItem, Tabs, Tab, Row, Col,
@@ -113,6 +113,7 @@ export default class SampleDetails extends React.Component {
     super(props);
 
     const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
+    this.sampleDetailsContainersRef = createRef();
 
     this.state = {
       sample: props.sample,
@@ -518,6 +519,7 @@ export default class SampleDetails extends React.Component {
         }
         <ListGroupItem className="pb-4">
           <SampleDetailsContainers
+            ref={this.sampleDetailsContainersRef}
             sample={sample}
             setState={(newSample) => { this.setState(newSample); }}
             handleSampleChanged={this.handleSampleChanged}
@@ -1010,7 +1012,7 @@ export default class SampleDetails extends React.Component {
           <PrintCodeButton element={sample} />
           <Button
             variant="info"
-            size="sm"
+            size="xxsm"
             className="text-white"
             disabled={!this.sampleIsValid()}
             onClick={() => this.handleExportAnalyses(sample)}
@@ -1406,6 +1408,8 @@ export default class SampleDetails extends React.Component {
 
     const pendingToSave = sample.isPendingToSave || isChemicalEdited;
     const isDisabled = !sample.can_update;
+    const analyContainer = sample.analysesContainers();
+    const hasAnalyses = analyContainer.length === 1 && analyContainer[0].children.length > 0;
 
     return (
       <Card className={`detail-card${pendingToSave ? ' detail-card--unsaved' : ''}`}>
@@ -1438,14 +1442,19 @@ export default class SampleDetails extends React.Component {
           {this.renderMolfileModal()}
           <CommentModal element={sample} />
         </Card.Body>
-        {/* <Card.Footer>
-          {this.sampleFooter()}
-        </Card.Footer> */}
         <Fab
           currentTab={activeTab}
           onSave={() => this.saveSampleOrInventory(false)}
           onClose={() => this.saveSampleOrInventory(true)}
+          hasAnalyses={hasAnalyses}
+          onAddAnalysis={() => this.sampleDetailsContainersRef?.current?.handleAdd()}
+          onAddComment={() => this.sampleDetailsContainersRef?.current?.toggleCommentBox?.()}
           disabled={!this.sampleIsValid() || isDisabled}
+          mode={this.sampleDetailsContainersRef?.current?.getAnalysisMode() || 'edit'}
+          handleToggleMode={(mode) => {
+            const ref = this.sampleDetailsContainersRef.current;
+            ref?.handleToggleMode(mode);
+          }}
         />
       </Card>
     );

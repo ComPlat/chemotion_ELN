@@ -647,9 +647,12 @@ export default class ReactionDetails extends Component {
           </Button>
           {exportButton}
         </Card.Footer> */}
-        {
-          <Fab currentTab={currentTab} onSave={() => this.handleSubmit()} onClose={() => DetailActions.close(reaction)} disableSave={!permitOn(reaction) || !this.reactionIsValid()} />
-        }
+        <Fab
+          currentTab={currentTab}
+          onSave={() => this.handleSubmit()}
+          onClose={() => DetailActions.close(reaction)}
+          disableSave={!permitOn(reaction) || !this.reactionIsValid()}
+        />
       </Card>
     );
   }

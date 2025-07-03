@@ -22,6 +22,7 @@ export default class SampleDetailsContainers extends Component {
     this.state = {
       activeAnalysis: UIStore.getState().sample.activeAnalysis,
       mode: 'edit',
+      commentBoxVisible: false,
     };
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.addButton = this.addButton.bind(this);
@@ -38,6 +39,8 @@ export default class SampleDetailsContainers extends Component {
     this.indexedContainers = this.indexedContainers.bind(this);
     this.buildEmptyAnalyContainer = this.buildEmptyAnalyContainer.bind(this);
     this.sortedContainers = this.sortedContainers.bind(this);
+    this.getAnalysisMode = this.getAnalysisMode.bind(this);
+    this.toggleCommentBox = this.toggleCommentBox.bind(this);
   }
 
   componentDidMount() {
@@ -166,11 +169,21 @@ export default class SampleDetailsContainers extends Component {
   }
 
   handleToggleMode(mode) {
-    this.setState({mode: mode});
+    this.setState({ mode });
+  }
+
+  getAnalysisMode() {
+    return this.state.mode
+  }
+
+  toggleCommentBox() {
+    this.setState((prevState) => ({
+      commentBoxVisible: !prevState.commentBoxVisible,
+    }));
   }
 
   render() {
-    const { activeAnalysis, mode } = this.state;
+    const { activeAnalysis, mode, commentBoxVisible } = this.state;
     const {
       readOnly, sample, handleSubmit, handleSampleChanged,
     } = this.props;
@@ -201,6 +214,7 @@ export default class SampleDetailsContainers extends Component {
             activeAnalysis={activeAnalysis}
             handleChange={this.handleChange}
             handleCommentTextChange={this.handleCommentTextChange}
+            commentBoxVisible={commentBoxVisible}
           />
           <ViewSpectra
             sample={sample}
@@ -214,13 +228,12 @@ export default class SampleDetailsContainers extends Component {
           />
         </div>
       );
-    } else {
-      return (
-        <RndNoAnalyses
-          addButton={this.addButton}
-        />
-      );
     }
+    return (
+      <RndNoAnalyses
+        addButton={this.addButton}
+      />
+    );
   }
 }
 
