@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/MethodLength
+
 class Versioning::Serializers::ReactionSerializer < Versioning::Serializers::BaseSerializer
   def self.call(record, name = ['Reaction Properties'])
     new(record: record, name: name).call
@@ -75,6 +77,12 @@ class Versioning::Serializers::ReactionSerializer < Versioning::Serializers::Bas
         label: 'Duration',
         revert: %i[duration],
       },
+      variations: {
+        label: 'Variations',
+        revert: %i[variations],
+        formatter: json_formatter,
+        kind: :json,
+      },
       timestamp_start: {
         label: 'Start',
         revert: %i[timestamp_start],
@@ -85,4 +93,14 @@ class Versioning::Serializers::ReactionSerializer < Versioning::Serializers::Bas
       },
     }.with_indifferent_access
   end
+
+  private
+
+  def json_formatter
+    lambda do |key, value|
+      default_formatter.call(key, value) || []
+    end
+  end
 end
+
+# rubocop:enable Metrics/MethodLength
