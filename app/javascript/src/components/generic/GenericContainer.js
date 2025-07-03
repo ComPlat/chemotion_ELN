@@ -225,6 +225,8 @@ function AiHeader(props) {
             disabled={readOnly}
             container={container}
             onChange={fnChange}
+            rootContainer={generic.container}
+            index={idx}
           />
           <ViewSpectra
             sample={generic}
