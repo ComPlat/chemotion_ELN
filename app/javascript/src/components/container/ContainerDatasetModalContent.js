@@ -39,6 +39,11 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { observer } from 'mobx-react';
 import { CreatableSelect } from 'src/components/common/Select';
+import { components } from 'react-select';
+
+function EditableInput(props) {
+  return <components.Input {...props} isHidden={false} />;
+}
 
 export class ContainerDatasetModalContent extends Component {
   // eslint-disable-next-line react/static-property-placement
@@ -51,6 +56,7 @@ export class ContainerDatasetModalContent extends Component {
     this.thirdPartyApps = thirdPartyApps;
     this.state = {
       datasetContainer,
+      inputValue: '',
       instruments: [],
       timeoutReference: null,
       attachmentEditor: false,
@@ -85,8 +91,11 @@ export class ContainerDatasetModalContent extends Component {
 
   componentDidMount() {
     this.editorInitial();
+    const { datasetContainer } = this.state;
+    const instrument = datasetContainer?.extended_metadata?.instrument || '';
     this.setState({
-      attachmentGroups: this.classifyAttachments(this.props.datasetContainer.attachments)
+      attachmentGroups: this.classifyAttachments(this.props.datasetContainer.attachments),
+      inputValue: instrument
     });
   }
 
@@ -609,21 +618,25 @@ export class ContainerDatasetModalContent extends Component {
                   }
                   : null
               }
+              inputValue={this.state.inputValue}
               isDisabled={readOnly || disabled}
-              onChange={(selectedOption) => {
-                const value = selectedOption ? selectedOption.value : '';
-                this.handleInstrumentValueChange({ target: { value } }, this.doneInstrumentTyping);
-              }}
               onInputChange={(inputValue, { action }) => {
                 if (action === 'input-change') {
+                  this.setState({ inputValue });
                   this.handleInstrumentValueChange({ target: { value: inputValue } }, this.doneInstrumentTyping);
                 }
+              }}
+              onChange={(selectedOption) => {
+                const value = selectedOption ? selectedOption.value : '';
+                this.setState({ inputValue: value });
+                this.handleInstrumentValueChange({ target: { value } }, this.doneInstrumentTyping);
               }}
               options={instruments?.map((item) => ({
                 label: item.name,
                 value: item.name,
               }))}
               placeholder="Enter or select an instrument"
+              components={{ Input: EditableInput }} // ✅ KEY LINE
             />
           </Form.Group>
         </div>
