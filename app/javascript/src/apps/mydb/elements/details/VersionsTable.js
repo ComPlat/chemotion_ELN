@@ -1,7 +1,7 @@
 /* eslint-disable react/forbid-prop-types */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Pagination } from 'react-bootstrap';
+import { Pagination, Spinner } from 'react-bootstrap';
 import { AgGridReact } from 'ag-grid-react';
 import VersionsFetcher from 'src/fetchers/VersionsFetcher';
 import VersionsTableChanges from 'src/apps/mydb/elements/details/VersionsTableChanges';
@@ -179,7 +179,11 @@ export default class VersionsTable extends Component {
       },
     ];
 
-    return (
+    return (Array.isArray(versions) && versions.length === 0) ? (
+      <Spinner animation="border" role="status" variant="primary">
+        <span className="visually-hidden">Loading...</span>
+      </Spinner>
+    ) : (
       <>
         <style>
           {`
