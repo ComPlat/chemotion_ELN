@@ -1,20 +1,32 @@
+import { set } from 'immutable';
 import React, { useState } from 'react';
-import { Button, OverlayTrigger, Tooltip, Modal } from 'react-bootstrap';
+import {
+  Button, OverlayTrigger, Tooltip, Modal
+} from 'react-bootstrap';
 
-export default function FabBootstrap(props) {
+export default function Fab(props) {
   const [isOpen, setIsOpen] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [mode, setMode] = useState(true);
+  const [previewMode, setPreviewMode] = useState(true);
 
-  const { currentTab, onSave, onClose, disableSave } = props;
+  const {
+    currentTab,
+    onSave,
+    onClose,
+    disableSave,
+    handleToggleMode,
+    onAddAnalysis,
+    onAddComment,
+    hasAnalyses
+  } = props;
 
   const handleToggle = () => {
     if (isOpen) {
       setIsAnimating(true); // Start reverse animation
       setTimeout(() => {
         setIsAnimating(false); // End animation
-        setIsOpen(false);      // Hide buttons
+        setIsOpen(false); // Hide buttons
       }, 200); // match CSS transition duration
     } else {
       setIsOpen(true);
@@ -22,22 +34,27 @@ export default function FabBootstrap(props) {
   };
 
   const actions = [
-    {
-      icon: mode ? 'fa-edit' : 'fa-reorder',
-      label: mode ? 'Edit' : 'Order Mode',
-      onClick: () => setMode(prev => !prev),
-      variant: 'warning',
-    },
-    {
-      icon: 'fa-comment',
-      label: 'Add Comment',
-      onClick: () => alert('Comment clicked'),
-      variant: 'primary',
-    },
+    ...(hasAnalyses
+      ? [{
+        icon: previewMode ? 'fa-edit' : 'fa-reorder',
+        label: previewMode ? 'Edit Mode' : 'View Mode',
+        onClick: () => {
+          setPreviewMode(!previewMode);
+          handleToggleMode(previewMode ? 'view' : 'edit');
+        },
+        variant: 'warning',
+      },
+      {
+        icon: 'fa-comment',
+        label: 'Add Comment',
+        onClick: onAddComment,
+        variant: 'primary',
+      }]
+      : []),
     {
       icon: 'fa-plus',
       label: 'Add Analysis',
-      onClick: () => alert('add clicked'),
+      onClick: onAddAnalysis,
       variant: 'success',
     },
 
@@ -70,21 +87,28 @@ export default function FabBootstrap(props) {
           ))}
         </div>
         {
-          currentTab === "analyses" &&
-          <Button
-            variant="success"
-            className={`fab-main ${isOpen ? 'rotate' : ''}`}
-            size="xsm"
-            onClick={handleToggle}
-          >
-            <i className="fa fa-list" />
-          </Button>
+          currentTab === 'analyses' && (
+            <OverlayTrigger
+              key={123}
+              placement="left"
+              overlay={<Tooltip>Analyses actions</Tooltip>}
+            >
+              <Button
+                variant="success"
+                className={`fab-main ${isOpen ? 'rotate' : ''}`}
+                size="xsm"
+                onClick={handleToggle}
+              >
+                <i className="fa fa-list" />
+              </Button>
+            </OverlayTrigger>
+          )
         }
         <div className="fab-static-buttons">
           <Button variant="warning" className="fab-static-button" onClick={onSave} disabled={disableSave}>
             <i className="fa fa-floppy-o" />
           </Button>
-          <Button variant="danger" className="fab-static-button" onClick={onClose}  >
+          <Button variant="danger" className="fab-static-button" onClick={onClose}>
             <i className="fa fa-times" />
           </Button>
         </div>
@@ -111,3 +135,13 @@ export default function FabBootstrap(props) {
     </>
   );
 }
+Fab.defaultProps = {
+  currentTab: 'analyses',
+  onSave: () => { },
+  onClose: () => { },
+  disableSave: false,
+  handleToggleMode: () => { },
+  onAddAnalysis: () => { },
+  onAddComment: () => { },
+  hasAnalyses: false
+};

@@ -438,13 +438,13 @@ export default class ReactionDetails extends Component {
     );
   }
 
-  reactionFooter() {
+  reactionFooter(currentTab) {
     const { reaction } = this.state;
     const submitLabel = (reaction && reaction.isNew) ? 'Create' : 'Save';
 
     return (
       <>
-        <Button variant="primary" onClick={() => DetailActions.close(reaction)}>
+        {/* <Button variant="primary" onClick={() => DetailActions.close(reaction)}>
           Close
         </Button>
         <Button
@@ -457,7 +457,13 @@ export default class ReactionDetails extends Component {
         </Button>
         {reaction && !reaction.isNew && (
           <ExportSamplesButton type="reaction" id={reaction.id} />
-        )}
+        )} */}
+        <Fab
+          currentTab={currentTab}
+          onSave={() => this.handleSubmit()}
+          onClose={() => DetailActions.close(reaction)}
+          disableSave={!permitOn(reaction) || !this.reactionIsValid()}
+        />
       </>
     );
   }
@@ -634,7 +640,7 @@ export default class ReactionDetails extends Component {
       <DetailCard
         isPendingToSave={reaction.isPendingToSave}
         header={this.reactionHeader(reaction)}
-        footer={this.reactionFooter()}
+        footer={this.reactionFooter(currentTab)}
       >
         {this.reactionSVG(reaction)}
         {this.state.sfn && <ScifinderSearch el={reaction} />}

@@ -2,7 +2,7 @@
 /* eslint-disable react/destructuring-assignment */
 /* eslint-disable react/forbid-prop-types */
 /* eslint-disable no-param-reassign */
-import React from 'react';
+import React, { createRef } from 'react';
 import PropTypes from 'prop-types';
 import {
   Button, InputGroup, ListGroupItem, Tabs, Tab, Row, Col,
@@ -114,7 +114,7 @@ export default class SampleDetails extends React.Component {
     super(props);
 
     const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
-
+    this.sampleDetailsContainersRef = createRef();
     // Check redirectedFromMixture flag in UIStore
     const redirectedFromMixture = UIStore.getState() && UIStore.getState().redirectedFromMixture;
 
@@ -433,20 +433,36 @@ export default class SampleDetails extends React.Component {
   }
 
   /* eslint-disable camelcase */
-
-  sampleFooter() {
+  sampleFooter(activeTab) {
     const { sample, startExport } = this.state;
     const belongToReaction = sample.belongTo && sample.belongTo.type === 'reaction';
-    const hasAnalyses = !!(sample.analyses && sample.analyses.length > 0);
+    const hasComponents = !sample.isMixture() || (sample.hasComponents());
+    const isDisabled = !this.sampleIsValid() || !sample.can_update || !hasComponents || (!sample.isNew && belongToReaction);
+    const analyContainer = sample.analysesContainers();
+    const hasAnalyses = analyContainer.length === 1 && analyContainer[0].children.length > 0;
 
     return (
       <>
-        <Button variant="primary" onClick={() => DetailActions.close(sample)}>
+        <Fab
+          currentTab={activeTab}
+          onSave={() => this.saveSampleOrInventory(false)}
+          onClose={() => DetailActions.close(sample)}
+          hasAnalyses={hasAnalyses}
+          onAddAnalysis={() => this.sampleDetailsContainersRef?.current?.handleAdd()}
+          onAddComment={() => this.sampleDetailsContainersRef?.current?.toggleCommentBox?.()}
+          disableSave={isDisabled}
+          mode={this.sampleDetailsContainersRef?.current?.getAnalysisMode() || 'edit'}
+          handleToggleMode={(mode) => {
+            const ref = this.sampleDetailsContainersRef.current;
+            ref?.handleToggleMode(mode);
+          }}
+        />
+        {/* <Button variant="primary" onClick={() => DetailActions.close(sample)}>
           Close
-        </Button>
-        {this.saveBtn(sample)}
-        {!sample.isNew && belongToReaction && this.saveBtn(sample, true)}
-        {!sample.isNew && hasAnalyses && (
+        </Button> */}
+        {/* {this.saveBtn(sample)}
+        {!sample.isNew && belongToReaction && this.saveBtn(sample, true)} */}
+        {/* {!sample.isNew && hasAnalyses && (
           <Button
             variant="info"
             disabled={!this.sampleIsValid()}
@@ -455,7 +471,7 @@ export default class SampleDetails extends React.Component {
             Download Analysis
             {startExport && <i className="fa fa-spin fa-spinner ms-1" />}
           </Button>
-        )}
+        )} */}
       </>
     );
   }
@@ -533,6 +549,7 @@ export default class SampleDetails extends React.Component {
         }
         <ListGroupItem className="pb-4">
           <SampleDetailsContainers
+            ref={this.sampleDetailsContainersRef}
             sample={sample}
             setState={(newSample) => { this.setState(newSample); }}
             handleSampleChanged={this.handleSampleChanged}
@@ -1083,6 +1100,16 @@ export default class SampleDetails extends React.Component {
             {inventorySample}
             {!sample.isNew && <OpenCalendarButton isPanelHeader eventableId={sample.id} eventableType="Sample" />}
             <PrintCodeButton element={sample} />
+            <Button
+              variant="info"
+              size="xxsm"
+              className="text-white"
+              disabled={!this.sampleIsValid()}
+              onClick={() => this.handleExportAnalyses(sample)}
+            >
+              <i className="fa fa-download" />
+              {startExport && <i className="fa fa-spin fa-spinner ms-1" />}
+            </Button>
             {copyBtn}
             {this.saveAndCloseSample(sample, saveBtnDisplay)}
           </div>
@@ -1485,13 +1512,12 @@ export default class SampleDetails extends React.Component {
       && this.state.activeTab) || visible.get(0);
 
     const pendingToSave = sample.isPendingToSave || isChemicalEdited;
-    const isDisabled = !sample.can_update;
 
     return (
       <DetailCard
         isPendingToSave={pendingToSave}
         header={this.sampleHeader(sample)}
-        footer={this.sampleFooter()}
+        footer={this.sampleFooter(activeTab)}
       >
         {this.sampleInfo(sample)}
         {this.state.sfn && <ScifinderSearch el={sample} />}

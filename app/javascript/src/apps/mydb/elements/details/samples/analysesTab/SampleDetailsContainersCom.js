@@ -42,11 +42,8 @@ function ReactionsDisplay({
   activeAnalysis,
   handleChange,
   handleCommentTextChange,
+  commentBoxVisible,
 }) {
-  const [commentBoxVisible, setCommentBoxVisible] = useState(false);
-
-  const toggleCommentBox = () => setCommentBoxVisible((prev) => !prev);
-
   return (
     <div>
       {/* <div className="d-flex justify-content-between align-items-center mb-3">
