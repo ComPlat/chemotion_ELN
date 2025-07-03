@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: device_metadata
@@ -44,6 +46,6 @@ RSpec.describe DeviceMetadata, type: :model do
   end
 
   it 'handles device_metadata relationship correctly' do
-    expect(device.device_metadata).to eq DeviceMetadata.find(device_metadata.id)
+    expect(device.device_metadata).to eq described_class.find(device_metadata.id)
   end
 end
