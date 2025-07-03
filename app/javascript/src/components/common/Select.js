@@ -17,6 +17,7 @@ export const Select = forwardRef(function Select(props, ref) {
       ref={ref}
       unstyled
       {...props}
+      menuPortalTarget={document.body}
       styles={{
         control: (baseStyles) => ({
           ...baseStyles,
@@ -37,6 +38,7 @@ export const AsyncSelect = ({ className, ...props }) => (
     classNamePrefix="chemotion-select"
     unstyled
     {...props}
+    menuPortalTarget={document.body}
     styles={{
       control: (baseStyles) => ({
         ...baseStyles,
@@ -52,6 +54,7 @@ export const CreatableSelect = ({ className, ...props }) => (
     classNamePrefix="chemotion-select"
     unstyled
     {...props}
+    menuPortalTarget={document.body}
     styles={{
       control: (baseStyles) => ({
         ...baseStyles,
