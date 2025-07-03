@@ -283,7 +283,7 @@ class ElementActions {
         });
     };
   }
-  
+
   fetchSamplesByCollectionId(id, queryParams = {}, collectionIsSync = false,
     moleculeSort = false) {
     return (dispatch) => {
@@ -378,7 +378,7 @@ class ElementActions {
     return (dispatch) => {
       SamplesFetcher.create(params)
         .then((result) => {
-          dispatch({ element: result, closeView })
+          dispatch({ element: result, closeView, components: params.components })
         });
     };
   }
@@ -387,7 +387,7 @@ class ElementActions {
     return (dispatch) => {
       SamplesFetcher.create(sample)
         .then((newSample) => {
-          dispatch({ newSample, reaction, materialGroup })
+          dispatch({ newSample, reaction, materialGroup, components: sample.components })
         });
     };
   }
@@ -436,7 +436,7 @@ class ElementActions {
         .then((newSample) => {
           reaction.updateMaterial(newSample);
           reaction.changed = true;
-          dispatch({ reaction, sample: newSample, closeView })
+          dispatch({ reaction, sample: newSample, closeView, components: sample.components })
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });
@@ -447,7 +447,7 @@ class ElementActions {
     return (dispatch) => {
       SamplesFetcher.update(params)
         .then((result) => {
-          dispatch({ element: result, closeView })
+          dispatch({ element: result, closeView, components: params.components })
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });
@@ -707,7 +707,7 @@ class ElementActions {
       return (dispatch) => {
         const ids = ui_state["cell_line"].checkedIds.toArray();
         const collection_id = ui_state.currentCollection.id;
-        
+
         CellLinesFetcher.splitAsSubCellLines(ids,collection_id)
           .then((result) => {
             dispatch(ui_state);
