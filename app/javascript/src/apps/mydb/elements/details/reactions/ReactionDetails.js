@@ -56,6 +56,7 @@ import { ShowUserLabels } from 'src/components/UserLabels';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 // eslint-disable-next-line import/no-named-as-default
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
+import Fab from 'src/components/common/Fab';
 
 const handleProductClick = (product) => {
   const uri = Aviator.getCurrentURI();
@@ -334,7 +335,7 @@ export default class ReactionDetails extends Component {
   reactionHeader(reaction) {
     const hasChanged = reaction.changed ? '' : 'none';
     const titleTooltip = formatTimeStampsOfElement(reaction || {});
-
+    const exportButton = (reaction && reaction.isNew) ? null : <ExportSamplesButton type="reaction" id={reaction.id} size="xxsm" />;
     const { currentCollection } = UIStore.getState();
     const defCol = currentCollection && currentCollection.is_shared === false
       && currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
@@ -426,6 +427,8 @@ export default class ReactionDetails extends Component {
                 </>
               )}
             {copyBtn}
+            {exportButton}
+
             <ConfirmClose el={reaction} />
           </ButtonToolbar>
         </div>
@@ -630,7 +633,7 @@ export default class ReactionDetails extends Component {
             <CommentModal element={reaction} />
           </div>
         </Card.Body>
-        <Card.Footer>
+        {/* <Card.Footer>
           <Button variant="primary" onClick={() => DetailActions.close(reaction)}>
             Close
           </Button>
@@ -643,7 +646,10 @@ export default class ReactionDetails extends Component {
             {submitLabel}
           </Button>
           {exportButton}
-        </Card.Footer>
+        </Card.Footer> */}
+        {
+          <Fab currentTab={currentTab} onSave={() => this.handleSubmit()} onClose={() => DetailActions.close(reaction)} disableSave={!permitOn(reaction) || !this.reactionIsValid()} />
+        }
       </Card>
     );
   }
