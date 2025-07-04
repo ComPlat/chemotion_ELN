@@ -94,7 +94,7 @@ export default class ReportContainer extends Component {
     }
   }
 
-  reportHeader() {
+  reportHeader(report) {
     return (
       <div className='d-flex align-items-center justify-content-between'>
         Report Generation
@@ -135,7 +135,7 @@ export default class ReportContainer extends Component {
     const { report } = this.props;
     return (
       <DetailCard
-        header={this.reportHeader()}
+        header={this.reportHeader(report)}
       >
         {alertTemplateNotFound && (
           <Alert variant="warning">
