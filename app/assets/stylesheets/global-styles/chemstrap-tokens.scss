@@ -15,7 +15,7 @@ $font-styles: normal, italic;
 
 @each $weight in $font-weights {
   @each $style in $font-styles {
-    $file-name: "roboto-v32-latin-#{$weight}";
+    $file-name: "roboto-condensed-v30-latin-#{$weight}";
     @if $style == italic {
       $file-name: "#{$file-name}italic";
     }
