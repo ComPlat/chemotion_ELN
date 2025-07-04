@@ -192,21 +192,23 @@ const DeviceDescriptionDetails = () => {
     );
   }
 
+  const deviceDescriptionFooter = () => (
+    <>
+      <Button variant="primary" onClick={() => DetailActions.close(deviceDescription)}>
+        Close
+      </Button>
+      <Button variant="warning" disabled={!deviceDescriptionIsValid()} onClick={() => handleSubmit()}>
+        {submitLabel}
+      </Button>
+      {downloadAnalysisButton()}
+    </>
+  );
+
   return (
     <DetailCard
       isPendingToSave={deviceDescription.isPendingToSave}
       header={deviceDescriptionHeader()}
-      footer={(
-        <>
-          <Button variant="primary" onClick={() => DetailActions.close(deviceDescription)}>
-            Close
-          </Button>
-          <Button variant="warning" disabled={!deviceDescriptionIsValid()} onClick={() => handleSubmit()}>
-            {submitLabel}
-          </Button>
-          {downloadAnalysisButton()}
-        </>
-      )}
+      footer={deviceDescriptionFooter()}
     >
       <div className="tabs-container--with-borders">
         <ElementDetailSortTab

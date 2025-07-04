@@ -520,6 +520,26 @@ export default class ResearchPlanDetails extends Component {
     );
   }
 
+  renderPanelFooter() {
+    const { researchPlan } = this.state;
+
+    return (
+      <>
+        <Button
+          variant="primary"
+          onClick={() => DetailActions.close(researchPlan)}
+        >
+          Close
+        </Button>
+        {(researchPlan.changed || researchPlan.is_copy) && (
+          <Button variant="warning" onClick={() => this.handleSubmit()}>
+            {researchPlan.isNew ? 'Create' : 'Save'}
+          </Button>
+        )}
+      </>
+    );
+  }
+
   render() {
     const { researchPlan, visible } = this.state;
 
@@ -611,21 +631,7 @@ export default class ResearchPlanDetails extends Component {
       <DetailCard
         isPendingToSave={researchPlan.isPendingToSave}
         header={this.renderPanelHeading(researchPlan)}
-        footer={(
-          <>
-            <Button
-              variant="primary"
-              onClick={() => DetailActions.close(researchPlan)}
-            >
-              Close
-            </Button>
-            {(researchPlan.changed || researchPlan.is_copy) && (
-              <Button variant="warning" onClick={() => this.handleSubmit()}>
-                {researchPlan.isNew ? 'Create' : 'Save'}
-              </Button>
-            )}
-          </>
-        )}
+        footer={this.renderPanelFooter()}
       >
         <div className="tabs-container--with-borders">
           <ElementDetailSortTab

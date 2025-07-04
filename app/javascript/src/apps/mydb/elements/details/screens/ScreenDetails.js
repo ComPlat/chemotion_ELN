@@ -226,6 +226,26 @@ export default class ScreenDetails extends Component {
     );
   }
 
+  screenFooter() {
+    const { screen } = this.state;
+    const submitLabel = screen.isNew ? 'Create' : 'Save';
+
+    return (
+      <>
+        <Button variant="primary" onClick={() => DetailActions.close(screen)}>
+          Close
+        </Button>
+        <Button
+          id="submit-screen-btn"
+          variant="warning"
+          onClick={() => this.handleSubmit()}
+        >
+          {submitLabel}
+        </Button>
+      </>
+    );
+  }
+
   propertiesFields(screen) {
     const {
       wellplates, name, collaborator, result, conditions, requirements, description
@@ -355,7 +375,6 @@ export default class ScreenDetails extends Component {
 
   render() {
     const { screen, visible } = this.state;
-    const submitLabel = screen.isNew ? 'Create' : 'Save';
 
     const tabContentsMap = {
       properties: (
@@ -434,20 +453,7 @@ export default class ScreenDetails extends Component {
       <DetailCard
         isPendingToSave={screen.isPendingToSave}
         header={this.screenHeader(screen)}
-        footer={(
-          <>
-            <Button variant="primary" onClick={() => DetailActions.close(screen)}>
-              Close
-            </Button>
-            <Button
-              id="submit-screen-btn"
-              variant="warning"
-              onClick={() => this.handleSubmit()}
-            >
-              {submitLabel}
-            </Button>
-          </>
-        )}
+        footer={this.screenFooter()}
       >
         <ResearchplanFlowDisplay
           initialData={screen.componentGraphData}

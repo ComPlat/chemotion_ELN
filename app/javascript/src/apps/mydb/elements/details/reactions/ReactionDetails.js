@@ -435,6 +435,29 @@ export default class ReactionDetails extends Component {
     );
   }
 
+  reactionFooter() {
+    const submitLabel = (reaction && reaction.isNew) ? 'Create' : 'Save';
+
+    return (
+      <>
+        <Button variant="primary" onClick={() => DetailActions.close(reaction)}>
+          Close
+        </Button>
+        <Button
+          id="submit-reaction-btn"
+          variant="warning"
+          onClick={() => this.handleSubmit()}
+          disabled={!permitOn(reaction) || !this.reactionIsValid()}
+        >
+          {submitLabel}
+        </Button>
+        {reaction && !reaction.isNew && (
+          <ExportSamplesButton type="reaction" id={reaction.id} />
+        )}
+      </>
+    );
+  }
+
   updateReactionSvg() {
     const { reaction } = this.state;
     const materialsSvgPaths = {
@@ -601,31 +624,13 @@ export default class ReactionDetails extends Component {
       if (tabContent) { tabContents.push(tabContent); }
     });
 
-    const submitLabel = (reaction && reaction.isNew) ? 'Create' : 'Save';
-    const exportButton = (reaction && reaction.isNew) ? null : <ExportSamplesButton type="reaction" id={reaction.id} />;
-
     const currentTab = (activeTab !== 0 && activeTab) || visible[0];
 
     return (
       <DetailCard
         isPendingToSave={reaction.isPendingToSave}
         header={this.reactionHeader(reaction)}
-        footer={(
-          <>
-            <Button variant="primary" onClick={() => DetailActions.close(reaction)}>
-              Close
-            </Button>
-            <Button
-              id="submit-reaction-btn"
-              variant="warning"
-              onClick={() => this.handleSubmit()}
-              disabled={!permitOn(reaction) || !this.reactionIsValid()}
-            >
-              {submitLabel}
-            </Button>
-            {exportButton}
-          </>
-        )}
+        footer={this.reactionFooter()}
       >
         {this.reactionSVG(reaction)}
         {this.state.sfn && <ScifinderSearch el={reaction} />}

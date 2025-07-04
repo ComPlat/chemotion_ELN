@@ -277,14 +277,36 @@ export default class WellplateDetails extends Component {
     );
   }
 
+  wellplateFooter() {
+    const { wellplate } = this.state;
+
+    return (
+      <>
+        <Button variant="primary" onClick={() => DetailActions.close(wellplate)}>Close</Button>
+        {wellplate.changed && (
+          <Button variant="warning" onClick={() => this.handleSubmit()}>
+            {wellplate.isNew ? 'Create' : 'Save'}
+          </Button>
+        )}
+
+        {wellplate && !wellplate.isNew && (
+          <ExportSamplesButton type="wellplate" id={wellplate.id} />
+        )}
+
+        <Button
+          variant="primary"
+          onClick={() => this.handlePrint()}
+          disabled={wellplate.width > 12}
+        >
+          Print Wells
+        </Button>
+      </>
+    );
+  }
 
   render() {
     const { wellplate, showWellplate, visible } = this.state;
-    const printButtonDisabled = wellplate.width > 12;
     const readoutTitles = wellplate.readout_titles;
-    const exportButton = (wellplate && wellplate.isNew)
-      ? null : <ExportSamplesButton type="wellplate" id={wellplate.id} />;
-
     const tabContentsMap = {
       designer: (
         <Tab eventKey="designer" title="Designer" key={`designer_${wellplate.id}`}>
@@ -401,26 +423,7 @@ export default class WellplateDetails extends Component {
       <DetailCard
         isPendingToSave={wellplate.isPendingToSave}
         header={this.wellplateHeader(wellplate)}
-        footer={(
-          <>
-            <Button variant="primary" onClick={() => DetailActions.close(wellplate)}>Close</Button>
-            {
-              wellplate.changed && (
-                <Button variant="warning" onClick={() => this.handleSubmit()}>
-                  {wellplate.isNew ? 'Create' : 'Save'}
-                </Button>
-              )
-            }
-            {exportButton}
-            <Button
-              variant="primary"
-              onClick={() => this.handlePrint()}
-              disabled={printButtonDisabled}
-            >
-              Print Wells
-            </Button>
-          </>
-        )}
+        footer={this.wellplateFooter()}
       >
         <div className="tabs-container--with-borders">
           <ElementDetailSortTab

@@ -1007,33 +1007,88 @@ export default class SampleDetails extends React.Component {
 
     const inventoryLabel = sample.inventory_sample && sample.inventory_label ? sample.inventory_label : null;
 
+    const { pageMessage } = this.state;
+    const messageBlock = (pageMessage
+      && (pageMessage.error.length > 0 || pageMessage.warning.length > 0)) ? (
+        <Alert variant="warning" style={{ marginBottom: 'unset', padding: '5px', marginTop: '10px' }}>
+          <strong>Structure Alert</strong>
+          <Button
+            size="sm"
+            variant="outline-warning"
+            style={{ float: 'right' }}
+            onClick={() => this.setState({ pageMessage: null })}
+          >
+            Close Alert
+          </Button>
+          {
+          pageMessage.error.map((m) => (
+            <div key={uuid.v1()}>{m}</div>
+          ))
+        }
+          {
+          pageMessage.warning.map((m) => (
+            <div key={uuid.v1()}>{m}</div>
+          ))
+        }
+        </Alert>
+      ) : null;
+
+    // warning message for redirection
+    const redirectWarningBlock = this.state.showRedirectWarning ? (
+      <Alert variant="warning" className="d-flex flex-column gap-2 mt-2 mb-0 p-2">
+        <div>
+          <strong>Notice:</strong>
+          <p className="mb-1">
+            You are viewing the original sample that was used to create this component. Some of its attributes may have
+            changed now.
+          </p>
+          <p className="mb-0">
+            Any updates you make here will apply only to the original sample, not to any component generated from it.
+            However, changes on this sample may affect other dependant entities.
+          </p>
+        </div>
+        <div className="align-self-end">
+          <Button
+            size="sm"
+            variant="outline-warning"
+            onClick={() => this.setState({ showRedirectWarning: false })}
+          >
+            Close Alert
+          </Button>
+        </div>
+      </Alert>
+    ) : null;
 
     return (
-      <div className="d-flex align-items-center flex-wrap">
-        <div className="d-flex align-items-center flex-wrap flex-grow-1 gap-2">
-          <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
-            <span className="flex-shrink-0">
-              <i className="icon-sample me-1" />
-              {inventoryLabel || sample.title()}
-            </span>
-          </OverlayTrigger>
-          <ShowUserLabels element={sample} />
-          <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
-          {!sample.isNew && <ElementCollectionLabels element={sample} key={sample.id} placement="right" />}
-          <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
-          <PubchemLabels element={sample} />
-          <HeaderCommentSection element={sample} />
-          {sample.isNew && !sample.isMixture() && <FastInput fnHandle={this.handleFastInput} />}
+      <>
+        <div className="d-flex align-items-center flex-wrap">
+          <div className="d-flex align-items-center flex-wrap flex-grow-1 gap-2">
+            <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
+              <span className="flex-shrink-0">
+                <i className="icon-sample me-1" />
+                {inventoryLabel || sample.title()}
+              </span>
+            </OverlayTrigger>
+            <ShowUserLabels element={sample} />
+            <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
+            {!sample.isNew && <ElementCollectionLabels element={sample} key={sample.id} placement="right" />}
+            <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
+            <PubchemLabels element={sample} />
+            <HeaderCommentSection element={sample} />
+            {sample.isNew && !sample.isMixture() && <FastInput fnHandle={this.handleFastInput} />}
+          </div>
+          <div className="d-flex align-items-center gap-2">
+            {decoupleCb}
+            {inventorySample}
+            {!sample.isNew && <OpenCalendarButton isPanelHeader eventableId={sample.id} eventableType="Sample" />}
+            <PrintCodeButton element={sample} />
+            {copyBtn}
+            {this.saveAndCloseSample(sample, saveBtnDisplay)}
+          </div>
         </div>
-        <div className="d-flex align-items-center gap-2">
-          {decoupleCb}
-          {inventorySample}
-          {!sample.isNew && <OpenCalendarButton isPanelHeader eventableId={sample.id} eventableType="Sample" />}
-          <PrintCodeButton element={sample} />
-          {copyBtn}
-          {this.saveAndCloseSample(sample, saveBtnDisplay)}
-        </div>
-      </div>
+        {messageBlock}
+        {redirectWarningBlock}
+      </>
     );
   }
 
@@ -1425,58 +1480,6 @@ export default class SampleDetails extends React.Component {
       }
     });
 
-    const { pageMessage } = this.state;
-    const messageBlock = (pageMessage
-      && (pageMessage.error.length > 0 || pageMessage.warning.length > 0)) ? (
-        <Alert variant="warning" style={{ marginBottom: 'unset', padding: '5px', marginTop: '10px' }}>
-          <strong>Structure Alert</strong>
-          <Button
-            size="sm"
-            variant="outline-warning"
-            style={{ float: 'right' }}
-            onClick={() => this.setState({ pageMessage: null })}
-          >
-            Close Alert
-          </Button>
-          {
-          pageMessage.error.map((m) => (
-            <div key={uuid.v1()}>{m}</div>
-          ))
-        }
-          {
-          pageMessage.warning.map((m) => (
-            <div key={uuid.v1()}>{m}</div>
-          ))
-        }
-        </Alert>
-      ) : null;
-
-    // warning message for redirection
-    const redirectWarningBlock = this.state.showRedirectWarning ? (
-      <Alert variant="warning" className="d-flex flex-column gap-2 mt-2 mb-0 p-2">
-        <div>
-          <strong>Notice:</strong>
-          <p className="mb-1">
-            You are viewing the original sample that was used to create this component. Some of its attributes may have
-            changed now.
-          </p>
-          <p className="mb-0">
-            Any updates you make here will apply only to the original sample, not to any component generated from it.
-            However, changes on this sample may affect other dependant entities.
-          </p>
-        </div>
-        <div className="align-self-end">
-          <Button
-            size="sm"
-            variant="outline-warning"
-            onClick={() => this.setState({ showRedirectWarning: false })}
-          >
-            Close Alert
-          </Button>
-        </div>
-      </Alert>
-    ) : null;
-
     const activeTab = (this.state.activeTab !== 0 && stb.indexOf(this.state.activeTab) > -1
       && this.state.activeTab) || visible.get(0);
 
@@ -1485,13 +1488,7 @@ export default class SampleDetails extends React.Component {
     return (
       <DetailCard
         isPendingToSave={pendingToSave}
-        header={(
-          <>
-            {this.sampleHeader(sample)}
-            {redirectWarningBlock}
-            {messageBlock}
-          </>
-        )}
+        header={this.sampleHeader(sample)}
         footer={this.sampleFooter()}
       >
         {this.sampleInfo(sample)}

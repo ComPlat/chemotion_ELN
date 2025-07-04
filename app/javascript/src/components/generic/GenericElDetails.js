@@ -470,12 +470,32 @@ export default class GenericElDetails extends Component {
     );
   }
 
+  footer() {
+    const { genericEl } = this.state;
+    const showSaveButton = genericEl && (genericEl.isNew || (genericEl.can_update && genericEl.changed));
+
+    return (
+      <>
+        <Button
+          variant="secondary"
+          onClick={() => DetailActions.close(genericEl, true)}
+        >
+          Close
+        </Button>
+        {showSaveButton && (
+          <Button
+            variant="warning"
+            onClick={() => this.handleSubmit()}
+          >
+            {genericEl.isNew ? 'Create' : 'Save'}
+          </Button>
+        )}
+      </>
+    );
+  }
+
   render() {
     const { genericEl, visible } = this.state;
-    const submitLabel = genericEl && genericEl.isNew ? 'Create' : 'Save';
-    // eslint-disable-next-line max-len
-    const saveBtnDisplay = (genericEl?.isNew || (genericEl?.can_update && genericEl?.changed)) ? { display: '' } : { display: 'none' };
-
     /**
      *  tabContents is a object containing all (visible) segment tabs
      */
@@ -508,23 +528,7 @@ export default class GenericElDetails extends Component {
       <DetailCard
         isPendingToSave={genericEl.isPendingToSave}
         header={this.header(genericEl)}
-        footer={(
-          <>
-            <Button
-              variant="secondary"
-              onClick={() => DetailActions.close(genericEl, true)}
-            >
-              Close
-            </Button>
-            <Button
-              variant="warning"
-              onClick={() => this.handleSubmit()}
-              style={saveBtnDisplay}
-            >
-              {submitLabel}
-            </Button>
-          </>
-        )}
+        footer={this.footer()}
       >
         <div className="tabs-container--with-borders">
           <ElementDetailSortTab

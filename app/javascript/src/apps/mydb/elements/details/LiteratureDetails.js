@@ -344,17 +344,36 @@ export default class LiteratureDetails extends Component {
     );
   }
 
+  literatureHeader() {
+    const { currentCollection } = this.state;
+    const label = currentCollection?.label || null;
+    return (
+      <div className="d-flex justify-content-between">
+        <span>
+          <i className="fa fa-book me-1" />
+          Literature Management for collection '{label}'
+        </span>
+        <Button
+          key="closeBtn"
+          onClick={this.onClose}
+          variant="danger"
+          size="xxsm"
+        >
+          <i className="fa fa-times" />
+        </Button>
+      </div>
+    );
+  }
+
   render() {
     const {
       sampleRefs,
       reactionRefs,
       selectedRefs,
       sortedIds,
-      currentCollection,
       literature
     } = this.state;
     const { currentUser } = UserStore.getState();
-    const label = currentCollection ? currentCollection.label : null;
     let contentSamples = '';
     sampleRefs.forEach((citation) => {
       contentSamples = `${contentSamples}\n${literatureContent(citation, true)}`;
@@ -375,24 +394,7 @@ export default class LiteratureDetails extends Component {
     });
 
     return (
-      <DetailCard
-        header={(
-          <div className="d-flex justify-content-between">
-            <span>
-              <i className="fa fa-book me-1" />
-              Literature Management for collection '{label}'
-            </span>
-            <Button
-              key="closeBtn"
-              onClick={this.onClose}
-              variant="danger"
-              size="xxsm"
-            >
-              <i className="fa fa-times" />
-            </Button>
-          </div>
-        )}
-      >
+      <DetailCard header={this.literatureHeader()}>
         <Accordion>
           <Accordion.Item eventKey="2">
             <Accordion.Header>

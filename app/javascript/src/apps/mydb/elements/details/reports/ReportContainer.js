@@ -94,6 +94,23 @@ export default class ReportContainer extends Component {
     }
   }
 
+  reportHeader() {
+    return (
+      <div className='d-flex align-items-center justify-content-between'>
+        Report Generation
+        <div className="d-flex gap-1">
+          <ResetBtn key="resetBtn" />
+          <GenerateReportBtn
+            key="generateReportBtn"
+            allState={this.state}
+            updateQueue={this.updateQueue}
+          />
+          <CloseBtn key="closeBtn" report={report} />
+        </div>
+      </div>
+    );
+  }
+
   render() {
     const {
       splSettings, checkedAllSplSettings, archives, activeKey,
@@ -118,20 +135,7 @@ export default class ReportContainer extends Component {
     const { report } = this.props;
     return (
       <DetailCard
-        header={(
-          <div className='d-flex align-items-center justify-content-between'>
-            Report Generation
-            <div className="d-flex gap-1">
-              <ResetBtn key="resetBtn" />
-              <GenerateReportBtn
-                key="generateReportBtn"
-                allState={this.state}
-                updateQueue={this.updateQueue}
-              />
-              <CloseBtn key="closeBtn" report={report} />
-            </div>
-          </div>
-        )}
+        header={this.reportHeader()}
       >
         {alertTemplateNotFound && (
           <Alert variant="warning">

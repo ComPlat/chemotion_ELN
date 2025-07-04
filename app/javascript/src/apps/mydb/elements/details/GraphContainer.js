@@ -72,28 +72,30 @@ export default class GraphContainer extends React.Component {
     });
   }
 
+  header() {
+    return (
+      <div className="d-flex align-items-baseline justify-content-between">
+        <div>
+          <i className="fa fa-area-chart me-1" />
+          Graph
+        </div>
+        <Button
+          key="closeBtn"
+          onClick={this.onClose}
+          variant="danger"
+          size="xxsm"
+        >
+          <i className="fa fa-times" />
+        </Button>
+      </div>
+    );
+  }
+
   render() {
     const { selectedComputedProps } = this.state;
 
     return (
-      <DetailCard
-        header={(
-          <div className="d-flex align-items-baseline justify-content-between">
-            <div>
-              <i className="fa fa-area-chart me-1" />
-              Graph
-            </div>
-            <Button
-              key="closeBtn"
-              onClick={this.onClose}
-              variant="danger"
-              size="xxsm"
-            >
-              <i className="fa fa-times" />
-            </Button>
-          </div>
-        )}
-      >
+      <DetailCard header={this.header()}>
         <ComputedPropsGraphContainer
           show
           style={{ overflowY: 'auto', maxHeight: 'calc(100vh - 303px)' }}

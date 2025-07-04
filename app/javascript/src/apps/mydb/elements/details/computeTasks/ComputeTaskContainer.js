@@ -64,26 +64,28 @@ export default class ComputeTaskContainer extends React.Component {
   }
   /* eslint-enable class-methods-use-this */
 
+  computeTaskHeader() {
+    return (
+      <div className="d-flex align-items-baseline justify-content-between">
+        Task
+        <Button
+          key="closeBtn"
+          onClick={this.onClose}
+          variant="danger"
+          size="xxsm"
+          className="ms-auto"
+        >
+          <i className="fa fa-times" />
+        </Button>
+      </div>
+    );
+  }
+
   render() {
     const { tasks } = this.state;
 
     return (
-      <DetailCard
-        header={(
-          <div className="d-flex align-items-baseline justify-content-between">
-            Task
-            <Button
-              key="closeBtn"
-              onClick={this.onClose}
-              variant="danger"
-              size="xxsm"
-              className="ms-auto"
-            >
-              <i className="fa fa-times" />
-            </Button>
-          </div>
-        )}
-      >
+      <DetailCard header={this.computeTaskHeader()}>
         <Table striped condensed hover>
           <thead>
             <tr>

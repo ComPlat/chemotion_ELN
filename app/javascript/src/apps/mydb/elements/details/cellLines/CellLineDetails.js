@@ -94,6 +94,19 @@ class CellLineDetails extends React.Component {
     );
   }
 
+  renderFooterContent() {
+    const { cellLineItem } = this.props;
+
+    return (
+      <>
+        <Button variant="primary" onClick={() => { this.handleClose(cellLineItem); }}>
+          Close
+        </Button>
+        {this.renderSubmitButton()}
+      </>
+    );
+  }
+
   renderSaveButton(closeAfterClick = false) {
     const { cellLineItem } = this.props;
     const { cellLineDetailsStore } = this.context;
@@ -181,14 +194,7 @@ class CellLineDetails extends React.Component {
     return (
       <DetailCard
         header={this.renderHeaderContent()}
-        footer={(
-          <>
-            <Button variant="primary" onClick={() => { this.handleClose(cellLineItem); }}>
-              Close
-            </Button>
-            {this.renderSubmitButton()}
-          </>
-        )}
+        footer={this.renderFooterContent()}
       >
         <div className="tabs-container--with-borders">
           <Tabs activeKey={activeTab} onSelect={(event) => this.handleTabChange(event)} id="cell-line-details-tab">
