@@ -19,8 +19,15 @@ import {
   SupportSinglePhase,
   SupportSinglePhaseWhite,
   BodySolidWhite,
-  SizeTester,
-  SpecialCharacterPickerIcon
+  SpecialCharacterPickerIcon,
+  ActiveMultiNew,
+  ACtivePhasenNew,
+  ActiveMonoNew,
+  PorousBodyNew,
+  SolidBodyNew,
+  SolidSupportNew,
+  SolidSupportMultiPhaseNew,
+  SolidSupportSinglePhaseNew
 } from 'src/components/structureEditor/TemplatesSurfaceChemistry';
 
 const iconMap = {
@@ -37,7 +44,14 @@ const iconMap = {
   SupportSinglePhase,
   SupportSinglePhaseWhite,
   BodySolidWhite,
-  SizeTester
+  ActiveMultiNew,
+  ACtivePhasenNew,
+  ActiveMonoNew,
+  PorousBodyNew,
+  SolidBodyNew,
+  SolidSupportNew,
+  SolidSupportMultiPhaseNew,
+  SolidSupportSinglePhaseNew
 };
 
 function PolymerListModal({
