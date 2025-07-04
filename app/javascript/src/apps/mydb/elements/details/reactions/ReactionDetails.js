@@ -436,6 +436,7 @@ export default class ReactionDetails extends Component {
   }
 
   reactionFooter() {
+    const { reaction } = this.state;
     const submitLabel = (reaction && reaction.isNew) ? 'Create' : 'Save';
 
     return (
