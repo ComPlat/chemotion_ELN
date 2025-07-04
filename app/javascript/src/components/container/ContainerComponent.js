@@ -173,7 +173,6 @@ export default class ContainerComponent extends Component {
                 value={confirmOptions.find(({ value }) => value === container.extended_metadata.status)}
                 isDisabled={readOnly || disabled}
                 onChange={({ value }) => this.handleInputChange('status', value)}
-                menuPortalTarget={document.body}
               />
             </div>
           </Col>
