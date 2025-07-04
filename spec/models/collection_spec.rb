@@ -1,5 +1,44 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: collections
+#
+#  id                             :integer          not null, primary key
+#  ancestry                       :string
+#  celllinesample_detail_level    :integer          default(10)
+#  deleted_at                     :datetime
+#  devicedescription_detail_level :integer          default(10)
+#  element_detail_level           :integer          default(10)
+#  is_locked                      :boolean          default(FALSE)
+#  is_shared                      :boolean          default(FALSE)
+#  is_synchronized                :boolean          default(FALSE), not null
+#  label                          :text             not null
+#  permission_level               :integer          default(0)
+#  position                       :integer
+#  reaction_detail_level          :integer          default(10)
+#  researchplan_detail_level      :integer          default(10)
+#  sample_detail_level            :integer          default(10)
+#  screen_detail_level            :integer          default(10)
+#  tabs_segment                   :jsonb
+#  wellplate_detail_level         :integer          default(10)
+#  created_at                     :datetime         not null
+#  updated_at                     :datetime         not null
+#  inventory_id                   :bigint
+#  shared_by_id                   :integer
+#  user_id                        :integer          not null
+#
+# Indexes
+#
+#  index_collections_on_ancestry      (ancestry)
+#  index_collections_on_deleted_at    (deleted_at)
+#  index_collections_on_inventory_id  (inventory_id)
+#  index_collections_on_user_id       (user_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (inventory_id => inventories.id)
+#
 require 'rails_helper'
 
 RSpec.describe Collection do

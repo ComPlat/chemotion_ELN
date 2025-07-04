@@ -3,6 +3,39 @@
 # rubocop:disable RSpec/NestedGroups
 # rubocop:disable RSpec/MessageSpies
 
+# == Schema Information
+#
+# Table name: attachments
+#
+#  id              :integer          not null, primary key
+#  aasm_state      :string
+#  attachable_type :string
+#  attachment_data :jsonb
+#  bucket          :string
+#  checksum        :string
+#  con_state       :integer
+#  content_type    :string
+#  created_by      :integer          not null
+#  created_by_type :string
+#  created_for     :integer
+#  deleted_at      :datetime
+#  filename        :string
+#  filesize        :bigint
+#  folder          :string
+#  identifier      :uuid
+#  key             :string(500)
+#  storage         :string(20)       default("tmp")
+#  thumb           :boolean          default(FALSE)
+#  version         :string
+#  created_at      :datetime         not null
+#  updated_at      :datetime         not null
+#  attachable_id   :integer
+#
+# Indexes
+#
+#  index_attachments_on_attachable_type_and_attachable_id  (attachable_type,attachable_id)
+#  index_attachments_on_identifier                         (identifier) UNIQUE
+#
 require 'rails_helper'
 
 RSpec.describe Attachment do

@@ -146,7 +146,7 @@ group :vscode do
 end
 
 group :development, :test do
-  gem 'annotate'
+  gem 'annotaterb'
   gem 'awesome_print'
 
   gem 'binding_of_caller'

@@ -5,47 +5,49 @@
 # Table name: samples
 #
 #  id                  :integer          not null, primary key
+#  ancestry            :string
+#  boiling_point       :numrange
+#  created_by          :integer
+#  decoupled           :boolean          default(FALSE), not null
+#  deleted_at          :datetime
+#  density             :float            default(0.0)
+#  deprecated_solvent  :string           default("")
+#  description         :text             default("")
+#  dry_solvent         :boolean          default(FALSE)
+#  external_label      :string           default("")
+#  identifier          :string
+#  imported_readout    :string
+#  impurities          :string           default("")
+#  inventory_sample    :boolean          default(FALSE)
+#  is_top_secret       :boolean          default(FALSE)
+#  location            :string           default("")
+#  melting_point       :numrange
+#  metrics             :string           default("mmm")
+#  molarity_unit       :string           default("M")
+#  molarity_value      :float            default(0.0)
+#  molecular_mass      :float
+#  molfile             :binary
+#  molfile_version     :string(20)
 #  name                :string
-#  target_amount_value :float            default(0.0)
+#  purity              :float            default(1.0)
+#  real_amount_unit    :string
+#  real_amount_value   :float
+#  sample_details      :jsonb
+#  sample_svg_file     :string
+#  sample_type         :string           default("Micromolecule")
+#  short_label         :string
+#  solvent             :jsonb
+#  stereo              :jsonb
+#  sum_formula         :string
 #  target_amount_unit  :string           default("g")
+#  target_amount_value :float            default(0.0)
+#  xref                :jsonb
 #  created_at          :datetime         not null
 #  updated_at          :datetime         not null
-#  description         :text             default("")
-#  molecule_id         :integer
-#  molfile             :binary
-#  purity              :float            default(1.0)
-#  deprecated_solvent  :string           default("")
-#  impurities          :string           default("")
-#  location            :string           default("")
-#  is_top_secret       :boolean          default(FALSE)
-#  ancestry            :string
-#  external_label      :string           default("")
-#  created_by          :integer
-#  short_label         :string
-#  real_amount_value   :float
-#  real_amount_unit    :string
-#  imported_readout    :string
-#  deleted_at          :datetime
-#  sample_svg_file     :string
-#  user_id             :integer
-#  identifier          :string
-#  density             :float            default(0.0)
-#  melting_point       :numrange
-#  boiling_point       :numrange
 #  fingerprint_id      :integer
-#  xref                :jsonb
-#  molarity_value      :float            default(0.0)
-#  molarity_unit       :string           default("M")
+#  molecule_id         :integer
 #  molecule_name_id    :integer
-#  molfile_version     :string(20)
-#  stereo              :jsonb
-#  metrics             :string           default("mmm")
-#  decoupled           :boolean          default(FALSE), not null
-#  molecular_mass      :float
-#  sum_formula         :string
-#  solvent             :jsonb
-#  dry_solvent         :boolean          default(FALSE)
-#  inventory_sample    :boolean          default(FALSE)
+#  user_id             :integer
 #
 # Indexes
 #

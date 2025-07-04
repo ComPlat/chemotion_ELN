@@ -1,5 +1,24 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: matrices
+#
+#  id          :integer          not null, primary key
+#  configs     :jsonb            not null
+#  deleted_at  :datetime
+#  enabled     :boolean          default(FALSE)
+#  exclude_ids :integer          default([]), is an Array
+#  include_ids :integer          default([]), is an Array
+#  label       :string
+#  name        :string           not null
+#  created_at  :datetime
+#  updated_at  :datetime
+#
+# Indexes
+#
+#  index_matrices_on_name  (name) UNIQUE
+#
 require 'rails_helper'
 
 RSpec.describe Matrice do

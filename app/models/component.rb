@@ -1,5 +1,25 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: components
+#
+#  id                   :bigint           not null, primary key
+#  component_properties :jsonb
+#  name                 :string
+#  position             :integer
+#  created_at           :datetime         not null
+#  updated_at           :datetime         not null
+#  sample_id            :bigint           not null
+#
+# Indexes
+#
+#  index_components_on_sample_id  (sample_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (sample_id => samples.id)
+#
 class Component < ApplicationRecord
   belongs_to :sample
 

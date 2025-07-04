@@ -1,5 +1,20 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: inventories
+#
+#  id         :bigint           not null, primary key
+#  counter    :integer          default(0)
+#  name       :string
+#  prefix     :string
+#  created_at :datetime         not null
+#  updated_at :datetime         not null
+#
+# Indexes
+#
+#  index_inventories_on_prefix  (prefix) UNIQUE
+#
 require 'rails_helper'
 
 RSpec.describe Inventory do

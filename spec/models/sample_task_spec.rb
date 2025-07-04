@@ -1,5 +1,29 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: sample_tasks
+#
+#  id                    :bigint           not null, primary key
+#  description           :string
+#  required_scan_results :integer          default(1), not null
+#  result_unit           :string           default("g"), not null
+#  result_value          :float
+#  created_at            :datetime         not null
+#  updated_at            :datetime         not null
+#  creator_id            :bigint           not null
+#  sample_id             :bigint
+#
+# Indexes
+#
+#  index_sample_tasks_on_creator_id  (creator_id)
+#  index_sample_tasks_on_sample_id   (sample_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (creator_id => users.id)
+#  fk_rails_...  (sample_id => samples.id)
+#
 describe SampleTask do
   let(:user) { create(:person) }
   let(:other_user) { create(:person) }
