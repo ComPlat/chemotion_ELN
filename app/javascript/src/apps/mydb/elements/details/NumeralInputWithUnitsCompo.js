@@ -211,7 +211,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
           onClick={() => { this.togglePrefix(unit); }}
           variant={variantBtnAfter}
           size={size}
-          className="px-2"
+          className="px-1"
         >
           {mp + unit}
         </Button>
