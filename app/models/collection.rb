@@ -43,6 +43,7 @@
 #
 
 class Collection < ApplicationRecord
+  has_logidze
   acts_as_paranoid
   belongs_to :user, optional: true
   belongs_to :inventory, optional: true
