@@ -76,6 +76,7 @@ class DeviceDescription < ApplicationRecord
   include Taggable
   include Labimotion::Segmentable
 
+  has_logidze
   acts_as_paranoid
 
   belongs_to :device, optional: true
