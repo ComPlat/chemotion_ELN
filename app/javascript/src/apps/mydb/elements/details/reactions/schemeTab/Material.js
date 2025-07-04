@@ -22,14 +22,14 @@ import { calculateFeedstockMoles } from 'src/utilities/UnitsConversion';
 import cs from 'classnames';
 import DragHandle from 'src/components/common/DragHandle';
 
-const notApplicableInput = () => (
+const notApplicableInput = (className) => (
   <div>
     <Form.Control
       size="sm"
       type="text"
       value="n/a"
       disabled
-      className="text-align-center"
+      className={`text-align-center ${className}`}
     />
   </div>
 );
@@ -86,7 +86,7 @@ class Material extends Component {
   }
 
   materialVolume(material, className) {
-    if (material.contains_residues) { return notApplicableInput(); }
+    if (material.contains_residues) { return notApplicableInput(className); }
     const { density, molarity_value, molarity_unit, has_density, has_molarity } = material;
     const tooltip = has_density || has_molarity ?
       (
@@ -127,7 +127,7 @@ class Material extends Component {
       return false;
     }
     if (!material.contains_residues) {
-      return notApplicableInput();
+      return notApplicableInput('reaction-material__loading-input');
     }
 
     return (
@@ -596,7 +596,7 @@ class Material extends Component {
     return this.props.material;
   }
 
-  amountField(material, metricPrefixes, reaction, massBsStyle, metric) {
+  massField(material, metricPrefixes, reaction, massBsStyle, metric) {
     const { lockEquivColumn, materialGroup } = this.props;
     return (
       <OverlayTrigger
@@ -696,7 +696,7 @@ class Material extends Component {
               </div>
             </OverlayTrigger>
             <div className="reaction-material__amount-input">
-              {this.amountField(material, metricPrefixes, reaction, massBsStyle, metric)}
+              {this.massField(material, metricPrefixes, reaction, massBsStyle, metric)}
               {this.materialVolume(material, 'reaction-material__volume-input')}
               <NumeralInputWithUnitsCompo
                 value={material.amount_mol}
@@ -714,6 +714,7 @@ class Material extends Component {
                 size="sm"
               />
             </div>
+            {this.materialLoading(material, showLoadingColumn)}
             <NumeralInputWithUnitsCompo
               value={material.concn}
               className="reaction-material__concentration-input"
