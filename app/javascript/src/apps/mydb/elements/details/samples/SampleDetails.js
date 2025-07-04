@@ -2,7 +2,7 @@
 /* eslint-disable react/destructuring-assignment */
 /* eslint-disable react/forbid-prop-types */
 /* eslint-disable no-param-reassign */
-import React from 'react';
+import React, { createRef } from 'react';
 import PropTypes from 'prop-types';
 import {
   Button, InputGroup, ListGroupItem, Tabs, Tab, Row, Col,
@@ -60,7 +60,7 @@ import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSo
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import MeasurementsTab from 'src/apps/mydb/elements/details/samples/measurementsTab/MeasurementsTab';
 import { validateCas } from 'src/utilities/CasValidation';
-import ChemicalTab from 'src/components/ChemicalTab';
+import ChemicalTab from 'src/components/chemicals/ChemicalTab';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
 import CommentSection from 'src/components/comments/CommentSection';
@@ -74,6 +74,7 @@ import MolViewerSet from 'src/components/viewer/MolViewerSet';
 import { copyToClipboard } from 'src/utilities/clipboard';
 // eslint-disable-next-line import/no-named-as-default
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
+import Fab from 'src/components/common/Fab';
 
 const MWPrecision = 6;
 
@@ -113,6 +114,7 @@ export default class SampleDetails extends React.Component {
     super(props);
 
     const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
+    this.sampleDetailsContainersRef = createRef();
 
     // Check redirectedFromMixture flag in UIStore
     const redirectedFromMixture = UIStore.getState() && UIStore.getState().redirectedFromMixture;
@@ -203,8 +205,8 @@ export default class SampleDetails extends React.Component {
 
     const smileReadonly = !(
       (sample.isNew
-       && (typeof (sample.molfile) === 'undefined'
-        || (sample.molfile || '').length === 0)
+        && (typeof (sample.molfile) === 'undefined'
+          || (sample.molfile || '').length === 0)
       )
       || (typeof (sample.molfile) !== 'undefined' && sample.molecule.inchikey === 'DUMMY')
     );
@@ -296,7 +298,7 @@ export default class SampleDetails extends React.Component {
     const { sample } = this.state;
     sample.molfile = molfile;
     const smiles = (config && sample.molecule) ? config.smiles : null;
-    sample.contains_residues = molfile.indexOf(' R# ') > -1;
+    sample.contains_residues = molfile?.indexOf(' R# ') > -1;
     sample.formulaChanged = true;
     this.setState({ loadingMolecule: true });
 
@@ -532,6 +534,7 @@ export default class SampleDetails extends React.Component {
         }
         <ListGroupItem className="pb-4">
           <SampleDetailsContainers
+            ref={this.sampleDetailsContainersRef}
             sample={sample}
             setState={(newSample) => { this.setState(newSample); }}
             handleSampleChanged={this.handleSampleChanged}
@@ -929,45 +932,45 @@ export default class SampleDetails extends React.Component {
     const elementToSave = activeTab === 'inventory' ? 'Chemical' : 'Sample';
     const saveAndClose = (saveBtnDisplay
       && (
-      <OverlayTrigger
-        placement="bottom"
-        overlay={(
-          <Tooltip id="saveCloseSample">
-            {`Save and Close ${elementToSave}`}
-          </Tooltip>
-        )}
-      >
-        {this.saveButton(sampleUpdateCondition, floppyTag, timesTag, true)}
-      </OverlayTrigger>
+        <OverlayTrigger
+          placement="bottom"
+          overlay={(
+            <Tooltip id="saveCloseSample">
+              {`Save and Close ${elementToSave}`}
+            </Tooltip>
+          )}
+        >
+          {this.saveButton(sampleUpdateCondition, floppyTag, timesTag, true)}
+        </OverlayTrigger>
       )
     );
     const save = (saveBtnDisplay
       && (
-      <OverlayTrigger
-        placement="bottom"
-        overlay={(
-          <Tooltip id="saveSample">
-            {`Save ${elementToSave}`}
-          </Tooltip>
-        )}
-      >
-        {this.saveButton(sampleUpdateCondition, floppyTag)}
-      </OverlayTrigger>
+        <OverlayTrigger
+          placement="bottom"
+          overlay={(
+            <Tooltip id="saveSample">
+              {`Save ${elementToSave}`}
+            </Tooltip>
+          )}
+        >
+          {this.saveButton(sampleUpdateCondition, floppyTag)}
+        </OverlayTrigger>
       )
     );
 
     const saveForChemical = isChemicalTab && isChemicalEdited ? save : null;
     return (
       <>
-        { isChemicalTab ? saveForChemical : save}
-        { isChemicalTab ? null : saveAndClose }
+        {isChemicalTab ? saveForChemical : save}
+        {isChemicalTab ? null : saveAndClose}
         <ConfirmClose el={sample} />
       </>
     );
   }
 
   sampleHeader(sample) {
-    const { isChemicalEdited, activeTab } = this.state;
+    const { isChemicalEdited, activeTab, startExport } = this.state;
     const titleTooltip = formatTimeStampsOfElement(sample || {});
     const isChemicalTab = activeTab === 'inventory';
     const saveBtnDisplay = sample.isEdited || (isChemicalEdited && isChemicalTab);
@@ -983,6 +986,7 @@ export default class SampleDetails extends React.Component {
       />
     ) : null;
 
+   
     const inventorySample = (
       <Form.Check
         type="checkbox"
@@ -1033,6 +1037,7 @@ export default class SampleDetails extends React.Component {
         </Alert>
       ) : null;
 
+
     // warning message for redirection
     const redirectWarningBlock = this.state.showRedirectWarning ? (
       <Alert variant="warning" className="d-flex flex-column gap-2 mt-2 mb-0 p-2">
@@ -1082,6 +1087,16 @@ export default class SampleDetails extends React.Component {
             {inventorySample}
             {!sample.isNew && <OpenCalendarButton isPanelHeader eventableId={sample.id} eventableType="Sample" />}
             <PrintCodeButton element={sample} />
+            <Button
+              variant="info"
+              size="xxsm"
+              className="text-white"
+              disabled={!this.sampleIsValid()}
+              onClick={() => this.handleExportAnalyses(sample)}
+            >
+              <i className="fa fa-download" />
+              {startExport && <i className="fa fa-spin fa-spinner ms-1" />}
+            </Button>
             {copyBtn}
             {this.saveAndCloseSample(sample, saveBtnDisplay)}
           </div>
@@ -1479,11 +1494,13 @@ export default class SampleDetails extends React.Component {
         stb.push(klass.label);
       }
     });
-
     const activeTab = (this.state.activeTab !== 0 && stb.indexOf(this.state.activeTab) > -1
       && this.state.activeTab) || visible.get(0);
 
     const pendingToSave = sample.isPendingToSave || isChemicalEdited;
+    const isDisabled = !sample.can_update;
+    const analyContainer = sample.analysesContainers();
+    const hasAnalyses = analyContainer.length === 1 && analyContainer[0].children.length > 0;
 
     return (
       <DetailCard
@@ -1514,6 +1531,21 @@ export default class SampleDetails extends React.Component {
         {this.structureEditorModal(sample)}
         {this.renderMolfileModal()}
         <CommentModal element={sample} />
+   <Fab
+          currentTab={activeTab}
+          onSave={() => this.saveSampleOrInventory(false)}
+          onClose={() => this.saveSampleOrInventory(true)}
+          hasAnalyses={hasAnalyses}
+          onAddAnalysis={() => this.sampleDetailsContainersRef?.current?.handleAdd()}
+          onAddComment={() => this.sampleDetailsContainersRef?.current?.toggleCommentBox?.()}
+          disabled={!this.sampleIsValid() || isDisabled}
+          mode={this.sampleDetailsContainersRef?.current?.getAnalysisMode() || 'edit'}
+          handleToggleMode={(mode) => {
+            const ref = this.sampleDetailsContainersRef.current;
+            ref?.handleToggleMode(mode);
+          }}
+        />
+
       </DetailCard>
     );
   }

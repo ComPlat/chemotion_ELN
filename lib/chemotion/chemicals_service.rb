@@ -77,16 +77,19 @@ module Chemotion
       'Could not find safety data sheet from Thermofisher'
     end
 
-    def self.write_file(file_path, link)
-      options = request_options.dup
-      options[:headers]['Origin'] = 'https://www.sigmaaldrich.com'
-      req_safety_sheet = HTTParty.get(link, options)
-      file_name = "public/safety_sheets/#{file_path}"
-      if req_safety_sheet.headers['Content-Type'] == 'application/pdf'
-        File.binwrite(file_name, req_safety_sheet)
-        true
+    def self.write_file(file_name, link, file = nil)
+      file_path = "public/safety_sheets/#{file_name}"
+      if file.present?
+        File.binwrite(file_path, file[:tempfile].read)
       else
-        'there is no file to save'
+        options = request_options.dup
+        options[:headers]['Origin'] = 'https://www.sigmaaldrich.com'
+        req_safety_sheet = HTTParty.get(link, options)
+        if req_safety_sheet.headers['Content-Type'] == 'application/pdf'
+          File.binwrite(file_path, req_safety_sheet)
+        else
+          'there is no file to save'
+        end
       end
     rescue HTTParty::RedirectionTooDeep => e
       "Redirection limit exceeded: #{e}"
@@ -94,9 +97,10 @@ module Chemotion
       "Request timed out: #{e}"
     end
 
-    def self.create_sds_file(file_path, link)
-      write_file(file_path, link)
+    def self.create_sds_file(file_name, link, attached_file = nil)
+      write_file(file_name, link, attached_file)
       sleep 1
+      true
     rescue StandardError
       'could not save safety data sheet'
     end
@@ -241,12 +245,18 @@ module Chemotion
 
     def self.handle_exceptions
       yield
-    rescue ActiveRecord::StatementInvalid, ActiveRecord::RecordInvalid => e
-      error!({ error: e.message }, 422)
-    rescue JSON::ParserError
-      error!({ error: 'Invalid JSON data' }, 400)
+    rescue ActiveRecord::StatementInvalid => e
+      Rails.logger.error("Database error: #{e.message}")
+      { error: e.message }
+    rescue ActiveRecord::RecordInvalid => e
+      Rails.logger.error("Record invalid: #{e.message}")
+      { error: e.message }
+    rescue JSON::ParserError => e
+      Rails.logger.error("JSON parse error: #{e.message}")
+      { error: 'Invalid JSON data' }
     rescue StandardError => e
       Rails.logger.error("Error: #{e.message}")
+      { error: e.message }
     end
   end
 end

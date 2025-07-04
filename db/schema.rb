@@ -10,14 +10,13 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2025_05_15_141514) do
+ActiveRecord::Schema.define(version: 2025_07_01_121908) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
   enable_extension "pg_trgm"
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
-  enable_extension "rdkit"
   enable_extension "uuid-ossp"
 
   create_table "affiliations", id: :serial, force: :cascade do |t|
@@ -60,7 +59,7 @@ ActiveRecord::Schema.define(version: 2025_05_15_141514) do
     t.string "storage", limit: 20, default: "tmp"
     t.integer "created_by", null: false
     t.integer "created_for"
-    t.string "version"
+    t.string "version", default: "/", null: false, collation: "C"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "content_type"
@@ -78,6 +77,7 @@ ActiveRecord::Schema.define(version: 2025_05_15_141514) do
     t.string "created_by_type"
     t.index ["attachable_type", "attachable_id"], name: "index_attachments_on_attachable_type_and_attachable_id"
     t.index ["identifier"], name: "index_attachments_on_identifier", unique: true
+    t.index ["version"], name: "index_attachments_on_version", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
   end
 
   create_table "authentication_keys", id: :serial, force: :cascade do |t|
@@ -152,8 +152,8 @@ ActiveRecord::Schema.define(version: 2025_05_15_141514) do
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.string "short_label"
-    t.string "ancestry"
-    t.index ["ancestry"], name: "index_cellline_samples_on_ancestry"
+    t.string "ancestry", default: "/", null: false, collation: "C"
+    t.index ["ancestry"], name: "index_cellline_samples_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
   end
 
   create_table "channels", id: :serial, force: :cascade do |t|
@@ -185,7 +185,7 @@ ActiveRecord::Schema.define(version: 2025_05_15_141514) do
 
   create_table "collections", id: :serial, force: :cascade do |t|
     t.integer "user_id", null: false
-    t.string "ancestry"
+    t.string "ancestry", default: "/", null: false, collation: "C"
     t.text "label", null: false
     t.integer "shared_by_id"
     t.boolean "is_shared", default: false
@@ -206,7 +206,7 @@ ActiveRecord::Schema.define(version: 2025_05_15_141514) do
     t.integer "celllinesample_detail_level", default: 10
     t.bigint "inventory_id"
     t.integer "devicedescription_detail_level", default: 10
-    t.index ["ancestry"], name: "index_collections_on_ancestry"
+    t.index ["ancestry"], name: "index_collections_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
     t.index ["deleted_at"], name: "index_collections_on_deleted_at"
     t.index ["inventory_id"], name: "index_collections_on_inventory_id"
     t.index ["user_id"], name: "index_collections_on_user_id"
@@ -375,6 +375,7 @@ ActiveRecord::Schema.define(version: 2025_05_15_141514) do
     t.text "plain_text_content"
     t.jsonb "log_data"
     t.index ["containable_type", "containable_id"], name: "index_containers_on_containable"
+    t.index ["parent_id"], name: "index_containers_on_parent_id", where: "(deleted_at IS NULL)"
   end
 
   create_table "dataset_klasses", id: :serial, force: :cascade do |t|
@@ -460,7 +461,7 @@ ActiveRecord::Schema.define(version: 2025_05_15_141514) do
   create_table "device_descriptions", force: :cascade do |t|
     t.string "access_comments"
     t.string "access_options"
-    t.string "ancestry"
+    t.string "ancestry", default: "/", null: false, collation: "C"
     t.string "application_name"
     t.string "application_version"
     t.string "building"
@@ -512,7 +513,7 @@ ActiveRecord::Schema.define(version: 2025_05_15_141514) do
     t.string "vendor_company_name"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
-    t.index ["ancestry"], name: "index_device_descriptions_on_ancestry"
+    t.index ["ancestry"], name: "index_device_descriptions_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
     t.index ["device_id"], name: "index_device_descriptions_on_device_id"
   end
 
@@ -995,7 +996,7 @@ ActiveRecord::Schema.define(version: 2025_05_15_141514) do
   create_table "ols_terms", id: :serial, force: :cascade do |t|
     t.string "owl_name"
     t.string "term_id"
-    t.string "ancestry"
+    t.string "ancestry", default: "/", null: false, collation: "C"
     t.string "ancestry_term_id"
     t.string "label"
     t.string "synonym"
@@ -1005,7 +1006,7 @@ ActiveRecord::Schema.define(version: 2025_05_15_141514) do
     t.boolean "is_enabled", default: true
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["ancestry"], name: "index_ols_terms_on_ancestry"
+    t.index ["ancestry"], name: "index_ols_terms_on_ancestry", opclass: :varchar_pattern_ops
     t.index ["owl_name", "term_id"], name: "index_ols_terms_on_owl_name_and_term_id", unique: true
   end
 
@@ -1276,7 +1277,7 @@ ActiveRecord::Schema.define(version: 2025_05_15_141514) do
     t.string "impurities", default: ""
     t.string "location", default: ""
     t.boolean "is_top_secret", default: false
-    t.string "ancestry"
+    t.string "ancestry", default: "/", null: false, collation: "C"
     t.string "external_label", default: ""
     t.integer "created_by"
     t.string "short_label"
@@ -1307,6 +1308,7 @@ ActiveRecord::Schema.define(version: 2025_05_15_141514) do
     t.string "sample_type", default: "Micromolecule"
     t.jsonb "sample_details"
     t.jsonb "log_data"
+    t.index ["ancestry"], name: "index_samples_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
     t.index ["identifier"], name: "index_samples_on_identifier"
     t.index ["inventory_sample"], name: "index_samples_on_inventory_sample"
@@ -1895,24 +1897,6 @@ ActiveRecord::Schema.define(version: 2025_05_15_141514) do
       END;
       $function$
   SQL
-  create_function :set_samples_mol_rdkit, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.set_samples_mol_rdkit()
-       RETURNS trigger
-       LANGUAGE plpgsql
-      AS $function$
-      begin
-      	if (TG_OP='INSERT') then
-      		insert into rdkit.mols values (new.id, mol_from_ctab(encode(new.molfile, 'escape')::cstring));
-      	end if;
-      	if (TG_OP='UPDATE') then
-      		if new.MOLFILE <> old.MOLFILE then
-      			update rdkit.mols set m = mol_from_ctab(encode(new.molfile, 'escape')::cstring) where id = new.id;
-      		end if;
-      	end if;
-      	return new;
-      end
-      $function$
-  SQL
   create_function :calculate_dataset_space, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.calculate_dataset_space(cid integer)
        RETURNS bigint
@@ -2204,7 +2188,7 @@ ActiveRecord::Schema.define(version: 2025_05_15_141514) do
        RETURNS trigger
        LANGUAGE plpgsql
       AS $function$
-        -- version: 2
+        -- version: 3
         DECLARE
           changes jsonb;
           version jsonb;
@@ -2310,24 +2294,56 @@ ActiveRecord::Schema.define(version: 2025_05_15_141514) do
                   END LOOP;
               END;
             ELSE
-              BEGIN
-                changes = hstore_to_jsonb_loose(
-                      hstore(NEW.*) - hstore(OLD.*)
-                  );
-              EXCEPTION
-                WHEN NUMERIC_VALUE_OUT_OF_RANGE THEN
-                  changes = (SELECT
-                    COALESCE(json_object_agg(key, value), '{}')::jsonb
-                    FROM
-                    jsonb_each(row_to_json(NEW.*)::jsonb)
-                    WHERE NOT jsonb_build_object(key, value) <@ row_to_json(OLD.*)::jsonb);
-                  FOR k IN (SELECT key FROM jsonb_each(changes))
-                  LOOP
-                    IF jsonb_typeof(changes->k) = 'object' THEN
-                      changes = jsonb_set(changes, ARRAY[k], to_jsonb(changes->>k));
-                    END IF;
-                  END LOOP;
-              END;
+              WITH
+                new_kv AS (
+                  SELECT key, value FROM jsonb_each(row_to_json(NEW)::jsonb)
+                ),
+                old_kv AS (
+                  SELECT key, value FROM jsonb_each(row_to_json(OLD)::jsonb)
+                ),
+                all_keys AS (
+                  SELECT key FROM new_kv
+                  UNION
+                  SELECT key FROM old_kv
+                )
+              SELECT COALESCE(jsonb_object_agg(key, value), '{}'::jsonb)
+              INTO changes
+              FROM (
+                SELECT
+                  k.key,
+                  CASE
+                    WHEN n.value IS NULL THEN
+                      -- key missing in NEW → mark deleted
+                      to_jsonb('deleted'::text)
+                    WHEN o.value IS NULL THEN
+                      -- key missing in OLD → addition
+                      n.value
+                    WHEN n.value <> o.value THEN
+                      -- key present in both but different → changed
+                      n.value
+                    ELSE
+                      -- identical → exclude by returning NULL (will be filtered out)
+                      NULL
+                  END AS value
+                FROM all_keys k
+                LEFT JOIN new_kv n ON k.key = n.key
+                LEFT JOIN old_kv o ON k.key = o.key
+              ) t
+              WHERE value IS NOT NULL;
+
+              FOR k IN SELECT key FROM jsonb_each(changes)
+                LOOP
+                  IF jsonb_typeof(changes->k) = 'object' THEN
+                    changes := jsonb_set(
+                      changes,
+                      ARRAY[k],
+                      jsonb_diff(
+                        row_to_json(OLD)::jsonb -> k,
+                        row_to_json(NEW)::jsonb -> k
+                      )
+                    );
+                  END IF;
+                END LOOP;
             END IF;
 
             changes = changes - 'log_data';
@@ -2421,6 +2437,94 @@ ActiveRecord::Schema.define(version: 2025_05_15_141514) do
               FOR EACH ROW
               WHEN (coalesce(current_setting(''logidze.disabled'', true), '''') <> ''on'')
               EXECUTE PROCEDURE logidze_logger(null, %L)', trigger_name, table_name, timestamp_column);
+      END;
+      $function$
+  SQL
+  create_function :jsonb_diff, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.jsonb_diff(old jsonb, new jsonb)
+       RETURNS jsonb
+       LANGUAGE plpgsql
+      AS $function$
+      DECLARE
+        result jsonb := '{}'::jsonb;
+        v RECORD;
+        nested_diff jsonb;
+        new_length int;
+        old_length int;
+      BEGIN
+        -- If old is NULL, return the new object as the full difference
+        IF old IS NULL OR jsonb_typeof(old) = 'null' THEN
+          RETURN new;
+        END IF;
+
+        -- If new is NULL, return an empty JSON
+        IF new IS NULL OR jsonb_typeof(new) = 'null' THEN
+          RETURN '{}'::jsonb;
+        END IF;
+
+        -- Handle top-level arrays
+        IF jsonb_typeof(old) = 'array' AND jsonb_typeof(new) = 'array' THEN
+          IF result = '{}' THEN
+            result := '[]';
+          END IF;
+
+          -- If arrays are equal, return an empty JSON
+          IF old = new THEN
+            RETURN '[]'::jsonb;
+          ELSE
+            -- Return the new array as the diff
+            -- Get array lengths
+            new_length := JSONB_ARRAY_LENGTH(new);
+            old_length := JSONB_ARRAY_LENGTH(old);
+
+            -- Loop through the array using an index
+            FOR i IN 0..new_length-1 LOOP
+              IF i <= old_length THEN
+                IF jsonb_typeof(new[i]) IN ('object','array') AND jsonb_typeof(old[i]) IN ('object','array') THEN
+                  nested_diff := jsonb_diff(old[i], new[i]);
+                  IF nested_diff <> '{}'::jsonb THEN
+                    result := result || nested_diff;
+                  END IF;
+                ELSIF new[i] IS DISTINCT FROM old[i] THEN
+                  result := result || new[i];
+                END IF;
+              ELSE
+                RETURN new[i];
+              END IF;
+            END LOOP;
+            RETURN result;
+          END IF;
+        END IF;
+
+        -- If types differ (object vs. array), return the full new value
+        IF jsonb_typeof(old) <> jsonb_typeof(new) THEN
+          RETURN new;
+        END IF;
+
+        -- Iterate through each key-value pair in new
+        FOR v IN SELECT * FROM jsonb_each(new) LOOP
+          -- If the key is an object in both old and new, recurse
+          IF jsonb_typeof(old -> v.key) = 'object' AND jsonb_typeof(new -> v.key) = 'object' THEN
+            nested_diff := jsonb_diff(old -> v.key, new -> v.key);
+            IF nested_diff <> '{}'::jsonb THEN
+              result := result || jsonb_build_object(v.key, nested_diff);
+            END IF;
+          -- If values are different, add to the result
+          ELSIF (old -> v.key) IS DISTINCT FROM v.value THEN
+            result := result || jsonb_build_object(v.key, v.value);
+          END IF;
+        END LOOP;
+
+        -- Iterate through each key-value pair in old
+        FOR v in SELECT * from jsonb_each(old) LOOP
+          -- If value was deleted
+          IF new -> v.key IS NULL AND jsonb_typeof(v.value) = 'object' THEN
+            -- Append to result with value 'deleted'
+            result := result || jsonb_build_object(v.key, 'deleted');
+          END IF;
+        END LOOP;
+
+        RETURN result;
       END;
       $function$
   SQL
