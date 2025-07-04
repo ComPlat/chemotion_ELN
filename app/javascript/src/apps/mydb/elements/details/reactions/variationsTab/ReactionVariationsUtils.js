@@ -10,6 +10,9 @@ import {
   AnalysesCellRenderer, AnalysesCellEditor, getAnalysesOverlay, AnalysisOverlay
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import {
+  PropertyFormatter, PropertyParser,
+  MaterialFormatter, MaterialParser,
+  EquivalentParser, GasParser, FeedstockParser,
   NoteCellRenderer, NoteCellEditor, MenuHeader, RowToolsCellRenderer
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -26,6 +29,43 @@ const materialTypes = {
   reactants: { label: 'Reactants', reactionAttributeName: 'reactants' },
   products: { label: 'Products', reactionAttributeName: 'products' },
   solvents: { label: 'Solvents', reactionAttributeName: 'solvents' }
+};
+const cellDataTypes = {
+  property: {
+    extendsDataType: 'object',
+    baseDataType: 'object',
+    valueFormatter: PropertyFormatter,
+    valueParser: PropertyParser,
+  },
+  material: {
+    extendsDataType: 'object',
+    baseDataType: 'object',
+    valueFormatter: MaterialFormatter,
+    valueParser: MaterialParser,
+  },
+  equivalent: {
+    extendsDataType: 'object',
+    baseDataType: 'object',
+    valueFormatter: (params) => parseFloat(Number(params.value.equivalent.value).toPrecision(4)),
+    valueParser: EquivalentParser,
+  },
+  yield: {
+    extendsDataType: 'object',
+    baseDataType: 'object',
+    valueFormatter: (params) => parseFloat(Number(params.value.yield.value).toPrecision(4)),
+  },
+  gas: {
+    extendsDataType: 'object',
+    baseDataType: 'object',
+    valueFormatter: MaterialFormatter,
+    valueParser: GasParser,
+  },
+  feedstock: {
+    extendsDataType: 'object',
+    baseDataType: 'object',
+    valueFormatter: MaterialFormatter,
+    valueParser: FeedstockParser,
+  },
 };
 
 function convertUnit(value, fromUnit, toUnit) {
@@ -558,6 +598,7 @@ export {
   getStandardUnits,
   convertUnit,
   materialTypes,
+  cellDataTypes,
   getVariationsRowName,
   getVariationsColumns,
   createVariationsRow,

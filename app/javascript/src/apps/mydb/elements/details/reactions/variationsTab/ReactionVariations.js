@@ -13,7 +13,7 @@ import Reaction from 'src/models/Reaction';
 import {
   createVariationsRow, copyVariationsRow, updateVariationsRow, getVariationsColumns, materialTypes,
   addMissingColumnsToVariations, removeObsoleteColumnsFromVariations, getColumnDefinitions,
-  removeObsoleteColumnDefinitions, getInitialGridState, persistGridState
+  removeObsoleteColumnDefinitions, getInitialGridState, persistGridState, cellDataTypes
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   getReactionAnalyses, updateAnalyses
@@ -22,12 +22,7 @@ import {
   updateVariationsAux, getReactionMaterials, getReactionMaterialsIDs,
   removeObsoleteMaterialColumns, resetColumnDefinitionsMaterials, getReactionMaterialsHashes
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
-import {
-  PropertyFormatter, PropertyParser,
-  MaterialFormatter, MaterialParser,
-  EquivalentParser, GasParser, FeedstockParser,
-  ColumnSelection
-} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
+import { ColumnSelection } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import columnDefinitionsReducer
   from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsReducers';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
@@ -58,44 +53,6 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   const initialColumnDefinitions = useMemo(() => getColumnDefinitions(selectedColumns, reactionMaterials, gasMode), []);
   const [columnDefinitions, setColumnDefinitions] = useReducer(columnDefinitionsReducer, initialColumnDefinitions);
   const initialGridState = useMemo(() => getInitialGridState(reaction.id), []);
-
-  const dataTypeDefinitions = {
-    property: {
-      extendsDataType: 'object',
-      baseDataType: 'object',
-      valueFormatter: PropertyFormatter,
-      valueParser: PropertyParser,
-    },
-    material: {
-      extendsDataType: 'object',
-      baseDataType: 'object',
-      valueFormatter: MaterialFormatter,
-      valueParser: MaterialParser,
-    },
-    equivalent: {
-      extendsDataType: 'object',
-      baseDataType: 'object',
-      valueFormatter: (params) => parseFloat(Number(params.value.equivalent.value).toPrecision(4)),
-      valueParser: EquivalentParser,
-    },
-    yield: {
-      extendsDataType: 'object',
-      baseDataType: 'object',
-      valueFormatter: (params) => parseFloat(Number(params.value.yield.value).toPrecision(4)),
-    },
-    gas: {
-      extendsDataType: 'object',
-      baseDataType: 'object',
-      valueFormatter: MaterialFormatter,
-      valueParser: GasParser,
-    },
-    feedstock: {
-      extendsDataType: 'object',
-      baseDataType: 'object',
-      valueFormatter: MaterialFormatter,
-      valueParser: FeedstockParser,
-    },
-  };
 
   const defaultColumnDefinitions = {
     editable: true,
@@ -406,7 +363,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
           columnDefs={columnDefinitions}
           suppressPropertyNamesCheck
           defaultColDef={defaultColumnDefinitions}
-          dataTypeDefinitions={dataTypeDefinitions}
+          dataTypeDefinitions={cellDataTypes}
           tooltipShowDelay={0}
           domLayout="autoHeight"
           maintainColumnOrder
