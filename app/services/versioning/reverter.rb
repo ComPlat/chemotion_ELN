@@ -21,6 +21,8 @@ module Versioning
           Versioning::Reverters::ChemicalReverter.call(change)
         when 'Container'
           Versioning::Reverters::ContainerReverter.call(change)
+        when 'DeviceDescription'
+          Versioning::Reverters::DeviceDescriptionReverter.call(change)
         when 'ElementalComposition'
           Versioning::Reverters::ElementalCompositionReverter.call(change)
         when 'Reaction'

@@ -34,6 +34,8 @@ import AttachmentForm from 'src/apps/mydb/elements/details/deviceDescriptions/at
 import AnalysesContainer from 'src/apps/mydb/elements/details/deviceDescriptions/analysesTab/AnalysesContainer';
 import MaintenanceForm from 'src/apps/mydb/elements/details/deviceDescriptions/maintenanceTab/MaintenanceForm';
 import DetailsForm from 'src/apps/mydb/elements/details/deviceDescriptions/detailsTab/DetailsForm';
+// eslint-disable-next-line import/no-named-as-default
+import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 
 function DeviceDescriptionDetails() {
   const deviceDescriptionsStore = useContext(StoreContext).deviceDescriptions;
@@ -54,12 +56,23 @@ function DeviceDescriptionDetails() {
     }
   }, []);
 
+  const versioningTable = () => (
+    <VersionsTable
+      type="device_descriptions"
+      id={deviceDescription.id}
+      element={deviceDescription}
+      parent={deviceDescriptionsStore}
+      isEdited={deviceDescription.changed}
+    />
+  );
+
   const tabContentComponents = {
     properties: PropertiesForm,
     detail: DetailsForm,
     analyses: AnalysesContainer,
     attachments: AttachmentForm,
     maintenance: MaintenanceForm,
+    history: versioningTable,
   };
 
   const tabTitles = {
@@ -68,6 +81,7 @@ function DeviceDescriptionDetails() {
     analyses: 'Analyses',
     attachments: 'Attachment',
     maintenance: 'Maintenance',
+    history: 'History',
   };
 
   const isReadOnly = () => CollectionUtils.isReadOnly(
@@ -216,8 +230,9 @@ function DeviceDescriptionDetails() {
         />
         <Tabs
           activeKey={deviceDescriptionsStore.active_tab_key}
-          onSelect={key => handleTabChange(key)}
+          onSelect={(key) => handleTabChange(key)}
           id="deviceDescriptionDetailsTab"
+          mountOnEnter
           unmountOnExit
         >
           {tabContents}
