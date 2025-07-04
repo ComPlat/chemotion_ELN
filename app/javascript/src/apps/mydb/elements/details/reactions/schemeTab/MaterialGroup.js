@@ -282,7 +282,7 @@ function GeneralMaterialGroup({
               <div className="reaction-material__coefficient-header">{groupHeaders.reaction_coefficient}</div>
             </OverlayTrigger>
             <div className="reaction-material__amount-header">{groupHeaders.amount}</div>
-            {showLoadingColumn && <div>{groupHeaders.loading}</div>}
+            {showLoadingColumn && <div className="reaction-material__loading-header">{groupHeaders.loading}</div>}
             <div className="reaction-material__concentration-header">{groupHeaders.concn}</div>
             <div className="reaction-material__equivalent-header">
               {groupHeaders.eq}
