@@ -5,8 +5,6 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
   Button,
-  ButtonToolbar,
-  Card,
   ListGroupItem,
   Tabs,
   Tab,
@@ -36,6 +34,7 @@ import GenericAttachments from 'src/components/generic/GenericAttachments';
 import { SegmentTabs } from 'src/components/generic/SegmentDetails';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
+import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import { EditUserLabels, ShowUserLabels } from 'src/components/UserLabels';
 
@@ -471,12 +470,32 @@ export default class GenericElDetails extends Component {
     );
   }
 
+  footer() {
+    const { genericEl } = this.state;
+    const showSaveButton = genericEl && (genericEl.isNew || (genericEl.can_update && genericEl.changed));
+
+    return (
+      <>
+        <Button
+          variant="secondary"
+          onClick={() => DetailActions.close(genericEl, true)}
+        >
+          Close
+        </Button>
+        {showSaveButton && (
+          <Button
+            variant="warning"
+            onClick={() => this.handleSubmit()}
+          >
+            {genericEl.isNew ? 'Create' : 'Save'}
+          </Button>
+        )}
+      </>
+    );
+  }
+
   render() {
     const { genericEl, visible } = this.state;
-    const submitLabel = genericEl && genericEl.isNew ? 'Create' : 'Save';
-    // eslint-disable-next-line max-len
-    const saveBtnDisplay = (genericEl?.isNew || (genericEl?.can_update && genericEl?.changed)) ? { display: '' } : { display: 'none' };
-
     /**
      *  tabContents is a object containing all (visible) segment tabs
      */
@@ -506,44 +525,26 @@ export default class GenericElDetails extends Component {
       activeTab = tabKeyContentList[0];
     }
     return (
-      <Card
-        className={`detail-card${
-          genericEl.isPendingToSave ? ' detail-card--unsaved' : ''
-        }`}
+      <DetailCard
+        isPendingToSave={genericEl.isPendingToSave}
+        header={this.header(genericEl)}
+        footer={this.footer()}
       >
-        <Card.Header>{this.header(genericEl)}</Card.Header>
-        <Card.Body>
-          <div className="tabs-container--with-borders">
-            <ElementDetailSortTab
-              type={genericEl.type}
-              availableTabs={Object.keys(tabContents)}
-              onTabPositionChanged={this.onTabPositionChanged}
-            />
-            <Tabs
-              activeKey={activeTab}
-              onSelect={(key) => this.handleSelect(key, genericEl.type)}
-              id="GenericElementDetailsXTab"
-            >
-              {tabContentList}
-            </Tabs>
-          </div>
-        </Card.Body>
-        <Card.Footer>
-          <Button
-            variant="secondary"
-            onClick={() => DetailActions.close(genericEl, true)}
+        <div className="tabs-container--with-borders">
+          <ElementDetailSortTab
+            type={genericEl.type}
+            availableTabs={Object.keys(tabContents)}
+            onTabPositionChanged={this.onTabPositionChanged}
+          />
+          <Tabs
+            activeKey={activeTab}
+            onSelect={(key) => this.handleSelect(key, genericEl.type)}
+            id="GenericElementDetailsXTab"
           >
-            Close
-          </Button>
-          <Button
-            variant="warning"
-            onClick={() => this.handleSubmit()}
-            style={saveBtnDisplay}
-          >
-            {submitLabel}
-          </Button>
-        </Card.Footer>
-      </Card>
+            {tabContentList}
+          </Tabs>
+        </div>
+      </DetailCard>
     );
   }
 }
