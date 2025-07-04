@@ -17,7 +17,6 @@ ActiveRecord::Schema.define(version: 2025_05_15_141514) do
   enable_extension "pg_trgm"
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
-  enable_extension "rdkit"
   enable_extension "uuid-ossp"
 
   create_table "affiliations", id: :serial, force: :cascade do |t|
@@ -883,6 +882,7 @@ ActiveRecord::Schema.define(version: 2025_05_15_141514) do
     t.jsonb "refs"
     t.string "doi"
     t.string "isbn"
+    t.jsonb "log_data"
     t.index ["deleted_at"], name: "index_literatures_on_deleted_at"
   end
 
@@ -1895,24 +1895,6 @@ ActiveRecord::Schema.define(version: 2025_05_15_141514) do
       END;
       $function$
   SQL
-  create_function :set_samples_mol_rdkit, sql_definition: <<-'SQL'
-      CREATE OR REPLACE FUNCTION public.set_samples_mol_rdkit()
-       RETURNS trigger
-       LANGUAGE plpgsql
-      AS $function$
-      begin
-      	if (TG_OP='INSERT') then
-      		insert into rdkit.mols values (new.id, mol_from_ctab(encode(new.molfile, 'escape')::cstring));
-      	end if;
-      	if (TG_OP='UPDATE') then
-      		if new.MOLFILE <> old.MOLFILE then
-      			update rdkit.mols set m = mol_from_ctab(encode(new.molfile, 'escape')::cstring) where id = new.id;
-      		end if;
-      	end if;
-      	return new;
-      end
-      $function$
-  SQL
   create_function :calculate_dataset_space, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.calculate_dataset_space(cid integer)
        RETURNS bigint
@@ -2440,6 +2422,9 @@ ActiveRecord::Schema.define(version: 2025_05_15_141514) do
   SQL
   create_trigger :logidze_on_wellplates, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_wellplates BEFORE INSERT OR UPDATE ON public.wellplates FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_literatures, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_literatures BEFORE INSERT OR UPDATE ON public.literatures FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
   create_trigger :logidze_on_screens, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_screens BEFORE INSERT OR UPDATE ON public.screens FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
