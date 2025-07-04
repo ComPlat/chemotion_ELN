@@ -24,7 +24,7 @@ $rm-columns: (
   "volume": map-get($rm-sizes, "numeral-with-units"),
   "mass": map-get($rm-sizes, "numeral-with-units"),
   "molarity": map-get($rm-sizes, "numeral-with-units"),
-  "loading": map-get($rm-sizes, "numeral"),
+  "loading": map-get($rm-sizes, "numeral-with-units"),
   "coefficient": map-get($rm-sizes, "square"),
   "amount": calc(#{3 * map-get($rm-sizes, "numeral-with-units")} + #{gap(2)}),
   // volume, mass, molarity + gap
