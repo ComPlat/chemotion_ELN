@@ -211,23 +211,25 @@ export default class ContainerDatasetModal extends Component {
           <Modal.Footer
             className="d-flex justify-content-end align-items-center modal-footer border-0"
           >
+
+            {
+              !isNew &&
+              <Button
+                variant="warning"
+                className="align-self-center"
+                onClick={() => this.handleSave(false)}
+              >
+                Save Dataset
+              </Button>
+            }
             <Button
-              variant="primary"
-              className="align-self-center"
-              onClick={() => this.handleSave(false)}
-            >
-              {isNew ? 'Keep' : 'Save'}
-              {' '}
-              Changes
-            </Button>
-            <Button
-              variant="success"
+              variant={isNew ? "primary" : "warning"}
               className="align-self-center"
               onClick={this.handleSave}
             >
-              {isNew ? 'Keep' : 'Save & Close'}
+              {isNew ? 'Keep & close' : 'Save & close'}
               {' '}
-              Changes
+              Dataset
             </Button>
           </Modal.Footer>
         </Modal>
