@@ -253,6 +253,29 @@ function BodySolidWhite() {
     </svg>
   );
 }
+
+function SizeTester() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="50"
+      height="30"
+      viewBox="0 0 120 100"
+    >
+      <rect
+        width="112"
+        height="40"
+        y="37"
+        x="2"
+        rx="5"
+        ry="5"
+        stroke="#000"
+        fill="#fff"
+        strokeWidth="4"
+      />
+    </svg>
+  );
+}
 const PolymerShapes = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
   <!-- Square with border -->
   <rect x="4" y="4" width="8" height="8" stroke="black" stroke-width="2" fill="none" />
@@ -287,6 +310,7 @@ export {
   SupportSinglePhase,
   SupportSinglePhaseWhite,
   BodySolidWhite,
+  SizeTester,
   PolymerShapes,
   RescaleCanvas,
   SpecialCharacterPickerIcon

@@ -19,8 +19,10 @@ import {
   SupportSinglePhase,
   SupportSinglePhaseWhite,
   BodySolidWhite,
+  SizeTester,
   SpecialCharacterPickerIcon
 } from 'src/components/structureEditor/TemplatesSurfaceChemistry';
+
 const iconMap = {
   BodyRectangleIcon,
   MultiHatched,
@@ -34,7 +36,8 @@ const iconMap = {
   Support,
   SupportSinglePhase,
   SupportSinglePhaseWhite,
-  BodySolidWhite
+  BodySolidWhite,
+  SizeTester
 };
 
 function PolymerListModal({
