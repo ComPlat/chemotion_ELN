@@ -29,27 +29,41 @@ const notApplicableInput = () => (
       type="text"
       value="n/a"
       disabled
-      className='text-align-center'
+      className="text-align-center"
     />
   </div>
 );
 
 const iupacNameTooltip = material => (
   <Tooltip id="iupac_name_tooltip" className="left_tooltip">
-    <table>
-      <div>
-        <div><div>IUPAC&#58;&nbsp;</div><div style={{ wordBreak: 'break-all' }}>{material.molecule.iupac_name || ''}</div></div>
-        <div><div>Name&#58;&nbsp;</div><div style={{ wordBreak: 'break-all' }}>{material.name || ''}</div></div>
-        <div><div>Ext.Label&#58;&nbsp;</div><div style={{ wordBreak: 'break-all' }}>{material.external_label || ''}</div></div>
-        <div><div>Short Label&#58;&nbsp;</div><div style={{ wordBreak: 'break-all' }}>{material.short_label || ''}</div></div>
+    <div>
+      <div className="d-flex">
+        <div>IUPAC&#58;&nbsp;</div>
+        <div style={{ wordBreak: 'break-all' }}>{material.molecule.iupac_name || ''}</div>
       </div>
-    </table>
-  </Tooltip>);
+      <div className="d-flex">
+        <div>Name&#58;&nbsp;</div>
+        <div style={{ wordBreak: 'break-all' }}>{material.name || ''}</div>
+      </div>
+      <div className="d-flex">
+        <div>Ext.Label&#58;&nbsp;</div>
+        <div style={{ wordBreak: 'break-all' }}>{material.external_label || ''}</div>
+      </div>
+      <div className="d-flex">
+        <div>Short Label&#58;&nbsp;</div>
+        <div style={{ wordBreak: 'break-all' }}>{material.short_label || ''}</div>
+      </div>
+    </div>
+  </Tooltip>
+);
 
 const refreshSvgTooltip = <Tooltip id="refresh_svg_tooltip">Refresh reaction diagram</Tooltip>;
 
-const AddtoDescToolTip = <Tooltip id="tp-spl-code" className="left_tooltip">Add to description or additional information for publication and purification details</Tooltip>;
-
+const AddtoDescToolTip = (
+  <Tooltip id="tp-spl-code" className="left_tooltip">
+    Add to description or additional information for publication and purification details
+  </Tooltip>
+);
 
 class Material extends Component {
   constructor(props) {
@@ -118,6 +132,7 @@ class Material extends Component {
 
     return (
       <NumeralInputWithUnitsCompo
+        className="reaction-material__loading-input"
         value={material.loading}
         unit="mmol/g"
         metricPrefix="n"
@@ -722,13 +737,13 @@ class Material extends Component {
               <i className="fa fa-trash-o" />
             </Button>
           </div>
+          {materialGroup === 'products' && (
+            <>
+              {material.gas_type === 'gas' && reaction.gaseous && this.gaseousProductRow(material)}
+              {material.adjusted_loading && material.error_mass && <MaterialCalculations material={material} />}
+            </>
+          )}
         </div>
-        {materialGroup === 'products' && (
-          <>
-            {material.gas_type === 'gas' && reaction.gaseous && this.gaseousProductRow(material)}
-            {material.adjusted_loading && material.error_mass && <MaterialCalculations material={material} />}
-          </>
-        )}
       </div>
     );
   }
