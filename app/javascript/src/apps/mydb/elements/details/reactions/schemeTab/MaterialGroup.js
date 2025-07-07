@@ -268,10 +268,14 @@ function GeneralMaterialGroup({
           })}
         >
           <div className="pseudo-table__row pseudo-table__row-header">
-            <div className="pseudo-table__cell pseudo-table__cell-title align-items-center ps-4">
-              {groupHeaders.group}
-              {isReactants && reagentDd}
-              {addSampleButton}
+            <div className="pseudo-table__cell pseudo-table__cell-title">
+              <div className="material-group__header-title">
+                {groupHeaders.group}
+                <div className="material-group__add-actions">
+                  {isReactants && reagentDd}
+                  {addSampleButton}
+                </div>
+              </div>
             </div>
             <div className="reaction-material__ref-header">{refTHead}</div>
             <div className="reaction-material__target-header">{groupHeaders.tr}</div>
@@ -366,27 +370,29 @@ function SolventsMaterialGroup({
             canDrop
           })}
         >
-          <div>
-            <div className="pseudo-table__row pseudo-table__row-header">
-              <div className="pseudo-table__cell pseudo-table__cell-title align-items-center ps-4">
+          <div className="pseudo-table__row pseudo-table__row-header">
+            <div className="pseudo-table__cell pseudo-table__cell-title">
+              <div className="material-group__header-title">
                 {groupHeaders.group}
-                <Select
-                  value={null}
-                  isDisabled={!permitOn(reaction)}
-                  options={solventOptions}
-                  placeholder="Add default"
-                  onChange={createDefaultSolventsForReaction}
-                  size="sm"
-                />
-                {addSampleButton}
+                <div className="material-group__add-actions">
+                  <Select
+                    value={null}
+                    isDisabled={!permitOn(reaction)}
+                    options={solventOptions}
+                    placeholder="Add default"
+                    onChange={createDefaultSolventsForReaction}
+                    size="sm"
+                  />
+                  {addSampleButton}
+                </div>
               </div>
-              <div title="Dry Solvent" className="reaction-material__dry-solvent-header">DS</div>
-              <div className="reaction-material__target-header">{groupHeaders.tr}</div>
-              <div className="reaction-material__solvent-label-header">Label</div>
-              <div className="reaction-material__solvent-volume-header">Vol</div>
-              <div className="reaction-material__volume-ratio-header">Vol ratio</div>
-              <div className="reaction-material__delete-header" />
             </div>
+            <div title="Dry Solvent" className="reaction-material__dry-solvent-header">DS</div>
+            <div className="reaction-material__target-header">{groupHeaders.tr}</div>
+            <div className="reaction-material__solvent-label-header">Label</div>
+            <div className="reaction-material__solvent-volume-header">Vol</div>
+            <div className="reaction-material__volume-ratio-header">Vol ratio</div>
+            <div className="reaction-material__delete-header" />
           </div>
           {contents}
         </div>
