@@ -19,8 +19,8 @@ import {
   getReactionAnalyses, updateAnalyses
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import {
-  updateVariationsAux, getReactionMaterials, getReactionMaterialsIDs,
-  removeObsoleteMaterialColumns, resetColumnDefinitionsMaterials, getReactionMaterialsHashes
+  updateVariationsOnAuxChange, getReactionMaterials, getReactionMaterialsIDs,
+  removeObsoleteMaterialColumns, updateColumnDefinitionsMaterialsOnAuxChange, getReactionMaterialsHashes
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import { ColumnSelection } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import columnDefinitionsReducer
@@ -105,21 +105,22 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
     let updatedColumnDefinitions = removeObsoleteColumnDefinitions(columnDefinitions, updatedSelectedColumns);
 
     /*
-    Update the materials' non-editable quantities according to the "Scheme" tab.
+    Update column definitions to account for potential changes in the corresponding materials' gas type.
     */
-    updatedReactionVariations = updateVariationsAux(
+    updatedColumnDefinitions = updateColumnDefinitionsMaterialsOnAuxChange(
+      updatedColumnDefinitions,
+      reactionMaterials,
+      gasMode
+    );
+
+    /*
+    Update materials in response to changes in non-editable quantities from the "Scheme" tab.
+    */
+    updatedReactionVariations = updateVariationsOnAuxChange(
       updatedReactionVariations,
       reactionMaterials,
       gasMode,
       vesselVolume
-    );
-
-    // Reset materials' column definitions to account for potential changes in their gas type.
-    updatedColumnDefinitions = resetColumnDefinitionsMaterials(
-      updatedColumnDefinitions,
-      reactionMaterials,
-      updatedSelectedColumns,
-      gasMode
     );
 
     setColumnDefinitions(
@@ -359,7 +360,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
           rowData={reactionVariations}
           rowDragEntireRow
           rowDragManaged
-          headerHeight={70}
+          headerHeight={110}
           columnDefs={columnDefinitions}
           suppressPropertyNamesCheck
           defaultColDef={defaultColumnDefinitions}
@@ -388,6 +389,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
           onGridPreDestroyed={(event) => persistGridState(reaction.id, event)}
           onStateUpdated={(event) => persistGridState(reaction.id, event)}
           onFirstDataRendered={() => gridRef.current.api.autoSizeAllColumns()}
+          onComponentStateChanged={() => gridRef.current.api.autoSizeAllColumns()}
         />
       </div>
     </div>

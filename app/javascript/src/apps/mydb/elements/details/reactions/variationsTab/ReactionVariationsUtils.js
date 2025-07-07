@@ -212,6 +212,26 @@ function getCellDataType(entry, gasType = 'off') {
   }
 }
 
+function getEntryDefs(entries) {
+  return entries.reduce((defs, entry) => {
+    defs[entry] = {
+      isMain: entry === entries[0],
+      isSelected: entry === entries[0],
+      displayUnit: getStandardUnits(entry)[0]
+    };
+    return defs;
+  }, {});
+}
+
+function getCurrentEntry(entryDefs) {
+  return Object.keys(entryDefs).find((key) => entryDefs[key].isMain) || null;
+}
+
+function getUserFacingEntryName(entry) {
+  // E.g., 'turnoverNumber' -> 'turnover number'
+  return entry.split(/(?=[A-Z])/).join(' ').toLowerCase();
+}
+
 function getVariationsRowName(reactionLabel, variationsRowId) {
   return `${reactionLabel}-${variationsRowId}`;
 }
@@ -393,11 +413,7 @@ function getPropertyColumnGroupChild(propertyType, gasMode) {
       return {
         field: 'properties.temperature',
         cellDataType: getCellDataType('temperature'),
-        entryDefs: {
-          currentEntry: 'temperature',
-          displayUnit: getStandardUnits('temperature')[0],
-          availableEntries: ['temperature']
-        },
+        entryDefs: getEntryDefs(['temperature']),
         headerComponent: MenuHeader,
         headerComponentParams: {
           names: ['T'],
@@ -408,11 +424,7 @@ function getPropertyColumnGroupChild(propertyType, gasMode) {
         field: 'properties.duration',
         cellDataType: getCellDataType('duration'),
         editable: !gasMode,
-        entryDefs: {
-          currentEntry: 'duration',
-          displayUnit: getStandardUnits('duration')[0],
-          availableEntries: ['duration']
-        },
+        entryDefs: getEntryDefs(['duration']),
         headerComponent: MenuHeader,
         headerComponentParams: {
           names: ['t'],
@@ -617,5 +629,8 @@ export {
   getPropertyColumnGroupChild,
   REACTION_VARIATIONS_TAB_KEY,
   getInitialGridState,
-  persistGridState
+  persistGridState,
+  getEntryDefs,
+  getCurrentEntry,
+  getUserFacingEntryName
 };
