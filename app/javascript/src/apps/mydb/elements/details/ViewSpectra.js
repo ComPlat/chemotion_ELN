@@ -23,7 +23,11 @@ const rmRefreshed = (analysis) => {
 const layoutsWillShowMulti = [
   FN.LIST_LAYOUT.CYCLIC_VOLTAMMETRY,
   FN.LIST_LAYOUT.SEC,
-  FN.LIST_LAYOUT.AIF
+  FN.LIST_LAYOUT.AIF,
+  FN.LIST_LAYOUT.H1,
+  FN.LIST_LAYOUT.C13,
+  FN.LIST_LAYOUT.UVVIS,
+  FN.LIST_LAYOUT.HPLC_UVVIS,
 ];
 
 class ViewSpectra extends React.Component {
@@ -577,13 +581,14 @@ class ViewSpectra extends React.Component {
   }
 
   buildOpsByLayout(et) {
-    if (this.props.sample && this.props.sample instanceof ResearchPlan) {
+    const { sample } = this.props;
+    if (sample && sample instanceof ResearchPlan) {
       return [
         { name: 'write & save', value: this.saveOp },
         { name: 'write, save & close', value: this.saveCloseOp },
       ];
     }
-    const updatable = this.props.sample && this.props.sample.can_update;
+    const updatable = sample && sample.can_update;    
     let baseOps = updatable ? [
       { name: 'write peak & save', value: this.writePeakOp },
       { name: 'write peak, save & close', value: this.writeClosePeakOp },
@@ -681,16 +686,16 @@ class ViewSpectra extends React.Component {
     let entityFileNames = false;
     if (!isExist) {
       if (!listMuliSpcs || listMuliSpcs.length === 0) return this.renderInvalid();
-      listMuliSpcs = listMuliSpcs.filter(((x) => x !== undefined));
-      listEntityFiles = listEntityFiles.filter(((x) => x !== undefined));
-      multiEntities = listMuliSpcs.map((spc) => {
+      const filteredListMuliSpcs = listMuliSpcs.filter(((x) => x !== undefined));
+      const filteredListEntityFiles = listEntityFiles.filter(((x) => x !== undefined));
+      multiEntities = filteredListMuliSpcs.map((spc) => {
         const {
           entity
         } = FN.buildData(spc.jcamp);
         currEntity = entity;
         return entity;
       });
-      entityFileNames = listEntityFiles.map((x) => x.label);
+      entityFileNames = filteredListEntityFiles.map((x) => x.label);
     }
 
     const others = this.buildOthers();
@@ -705,7 +710,8 @@ class ViewSpectra extends React.Component {
 
     return !isExist && multiEntities.length === 0
       ? this.renderInvalid()
-      : <SpectraEditor
+      : (
+      <SpectraEditor
         entity={currEntity}
         multiEntities={multiEntities}
         entityFileNames={entityFileNames}
@@ -719,6 +725,7 @@ class ViewSpectra extends React.Component {
         onDescriptionChanged={this.onSpectraDescriptionChanged}
         userManualLink={{ cv: 'https://www.chemotion.net/docs/services/chemspectra/cv' }}
       />
+      )
   }
 
   renderTitle(idx) {
