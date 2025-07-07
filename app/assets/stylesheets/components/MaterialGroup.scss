@@ -15,4 +15,17 @@
       @extend .bg-transparent;
     }
   }
+  &__add-actions {
+    @extend .d-flex;
+    @extend .align-items-center;
+    @extend .gap-1;
+  }
+  &__header-title {
+    @extend .d-flex;
+    @extend .align-items-center;
+    @extend .ps-4;
+    @extend .justify-content-between;
+    @extend .flex-grow-1;
+    max-width: 200px;
+  }
 }
