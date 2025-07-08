@@ -272,11 +272,11 @@ const prepareSvg = async (editor) => {
   const regex = /source-\d+/;
   const A_PATH_ONE = '';
   const A_PATH_TWO = '';
-  const struct = await replaceAliasWithRG({ ...latestData });
   const generateImageParams = { outputFormat: 'svg' };
   const parser = new DOMParser();
-  const data = JSON.stringify(struct);
-  const svgBlob = await editor.structureDef.editor.generateImage(data, generateImageParams);
+  const canvasDataMol = await editor.structureDef.editor.getMolfile('V2000');
+
+  const svgBlob = await editor.structureDef.editor.generateImage(canvasDataMol, generateImageParams);
   const svgString = await new Response(svgBlob).text();
   const doc = parser.parseFromString(svgString, 'image/svg+xml');
   const uses = doc.querySelectorAll('*');
@@ -300,7 +300,7 @@ const prepareSvg = async (editor) => {
     if (usesList.length === 2) {
       const isGroupMatching = [];
       usesList.forEach((use) => {
-        const useEach = use.getAttributeNS('http://www.w3.org/1999/xlink', 'href').replace('#', '');
+        const useEach = use.getAttributeNS('http://www.w3.org/1999/xlink', 'href')?.replace('#', '');
         isGroupMatching.push(matchingGlyphs.indexOf(useEach) !== -1);
       });
       usesList.forEach((use) => {
@@ -378,8 +378,12 @@ const onTemplateMove = async (editor, recenter = false) => {
   let imageNodes = [];
   imageNodes = await placeAtomOnImage(molCopy, imageListCopy);
   latestData.root.nodes = imageNodes;
-  const textNodes = await placeTextOnAtoms(molCopy, textListCopy);
-  latestData.root.nodes = textNodes;
+
+  if (textListCopy.length > 0) {
+    const textNodes = await placeTextOnAtoms(molCopy, textListCopy);
+    latestData.root.nodes = textNodes;
+  }
+
   await saveMoveCanvas(editor, latestData, true, false, recenter);
 
   // clear required

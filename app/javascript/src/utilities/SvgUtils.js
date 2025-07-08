@@ -18,6 +18,10 @@ const transformSvgIdsAndReferences = async (svgText) => {
   elementsWithId.forEach((el) => {
     const originalId = el.getAttribute('id');
     if (mappedIdPattern.test(originalId)) return svgText;
+
+    if (!originalId.includes('glyph')) return;
+
+    // Otherwise, add the suffix
     const uniqueId = `${originalId}_${uniqueSuffix}`;
     idMap[originalId] = uniqueId;
     el.setAttribute('id', uniqueId);
