@@ -57,16 +57,15 @@ export default class ContainerDatasetModal extends Component {
     }));
   };
 
-  onHandleContainerSubmit = () => {
+  onHandleContainerSubmit = (shouldClose) => {
     const { updateContainerState, rootContainer } = this.props;
     const { attachments } = this.props.datasetContainer;
-    console.log('Submitting container with attachments:', attachments);
     LoadingActions.start();
     ContainerActions.updateContainerWithFiles(rootContainer)
       .then((updatedContainer) => {
-        updateContainerState(updatedContainer);
+        updateContainerState(updatedContainer, shouldClose);
         BaseFetcher.updateAnnotationsForAttachments(attachments)
-          .then((response) => {
+          .then(() => {
             // const updatedAttachments = attachments.map((att) => ({ ...att }));
             // const updatedDatasetContainer = {
             //   ...this.props.datasetContainer,

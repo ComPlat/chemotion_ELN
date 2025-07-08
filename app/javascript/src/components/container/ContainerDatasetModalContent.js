@@ -225,15 +225,18 @@ export class ContainerDatasetModalContent extends Component {
     } = this.props;
     this.context.attachmentNotificationStore.clearMessages();
     onChange(datasetContainer);
-    if (!isNew) handleContainerSubmit();
+    if (!isNew) handleContainerSubmit(shouldClose);
     if (shouldClose) onModalHide();
   }
 
   // eslint-disable-next-line react/no-unused-class-component-methods, react/sort-comp
   resetAnnotation() {
     const { chosenAttachment } = this.state;
-    chosenAttachment.updatedAnnotation = null;
-    this.setState({ chosenAttachment });
+    if (chosenAttachment && chosenAttachment.updatedAnnotation) {
+      chosenAttachment.updatedAnnotation = null;
+      this.setState({ chosenAttachment });
+    }
+
   }
 
   handleInstrumentValueChange(event, doneInstrumentTyping) {
