@@ -8,11 +8,14 @@
   @extend .text-body;
   @extend .state-border;
   --bs-border-opacity: 0.7;
-  @extend .surface-lighten4;
+  @extend .surface-lighten3;
   padding: 0.25rem 0.75rem !important;
+  &:hover {
+    @extend .surface-hover-on-white;
+  }
   &.active {
     @extend .border-active;
-    @extend .surface-lighten2;
+    @extend .surface-active-on-white;
     --bs-border-opacity: 1;
     i {
       @extend .text-active;
@@ -27,7 +30,7 @@
   &__header {
     @extend .overflow-hidden;
     padding: 0.75rem;
-    @extend .surface-lighten2;
+    @extend .surface-active-on-white;
     min-height: 40px;
     h1,
     h2,
