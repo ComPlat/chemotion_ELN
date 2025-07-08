@@ -178,12 +178,20 @@ export default class ReactionDetails extends Component {
 
   handleInputChange(type, event) {
     let value;
-    if (type === 'temperatureUnit' || type === 'temperatureData'
-      || type === 'description' || type === 'role'
-      || type === 'observation' || type === 'durationUnit'
-      || type === 'duration' || type === 'rxno'
-      || type === 'vesselSizeAmount' || type === 'vesselSizeUnit'
-      || type === 'gaseous') {
+    if (
+      type === 'temperatureUnit'
+      || type === 'temperatureData'
+      || type === 'description'
+      || type === 'role'
+      || type === 'observation'
+      || type === 'durationUnit'
+      || type === 'duration'
+      || type === 'rxno'
+      || type === 'vesselSizeAmount'
+      || type === 'vesselSizeUnit'
+      || type === 'gaseous'
+      || type === 'conditions'
+    ) {
       value = event;
     } else if (type === 'rfValue') {
       value = rfValueFormat(event.target.value) || '';
