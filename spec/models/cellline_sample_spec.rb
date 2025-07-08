@@ -6,7 +6,7 @@
 #
 #  id                   :bigint           not null, primary key
 #  amount               :bigint
-#  ancestry             :string
+#  ancestry             :string           default("/"), not null
 #  contamination        :string
 #  deleted_at           :datetime
 #  description          :string
@@ -22,7 +22,7 @@
 #
 # Indexes
 #
-#  index_cellline_samples_on_ancestry  (ancestry)
+#  index_cellline_samples_on_ancestry  (ancestry) WHERE (deleted_at IS NULL)
 #
 require 'rails_helper'
 

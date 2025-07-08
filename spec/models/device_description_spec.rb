@@ -7,7 +7,7 @@
 #  id                                   :bigint           not null, primary key
 #  access_comments                      :string
 #  access_options                       :string
-#  ancestry                             :string
+#  ancestry                             :string           default("/"), not null
 #  application_name                     :string
 #  application_version                  :string
 #  building                             :string
@@ -62,7 +62,7 @@
 #
 # Indexes
 #
-#  index_device_descriptions_on_ancestry   (ancestry)
+#  index_device_descriptions_on_ancestry   (ancestry) WHERE (deleted_at IS NULL)
 #  index_device_descriptions_on_device_id  (device_id)
 #
 require 'rails_helper'
