@@ -38,6 +38,8 @@ import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import { EditUserLabels, ShowUserLabels } from 'src/components/UserLabels';
+import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
+import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
 
 const onNaviClick = (type, id) => {
   const { currentCollection, isSync } = UIStore.getState();
@@ -506,11 +508,22 @@ export default class GenericElDetails extends Component {
       activeTab = tabKeyContentList[0];
     }
     return (
-      <Card
-        className={`detail-card${
-          genericEl.isPendingToSave ? ' detail-card--unsaved' : ''
-        }`}
-      >
+      <>
+        <ViewSpectra
+          sample={genericEl}
+          handleSampleChanged={this.handleGenericElChanged}
+          handleSubmit={this.handleSubmit}
+        />
+        <NMRiumDisplayer
+          sample={genericEl}
+          handleSampleChanged={this.handleGenericElChanged}
+          handleSubmit={this.handleSubmit}
+        />
+        <Card
+          className={`detail-card${
+            genericEl.isPendingToSave ? ' detail-card--unsaved' : ''
+          }`}
+        >
         <Card.Header>{this.header(genericEl)}</Card.Header>
         <Card.Body>
           <div className="tabs-container--with-borders">
@@ -542,8 +555,9 @@ export default class GenericElDetails extends Component {
           >
             {submitLabel}
           </Button>
-        </Card.Footer>
-      </Card>
+          </Card.Footer>
+        </Card>
+      </>
     );
   }
 }
