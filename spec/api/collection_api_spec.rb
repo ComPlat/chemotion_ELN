@@ -28,10 +28,10 @@ describe Chemotion::CollectionAPI do
 
     let!(:c2) do
       create(:collection, user: u2, shared_by_id: user.id, is_shared: true, permission_level: 2,
-                          ancestry: root_u.id.to_s)
+                          parent: root_u)
     end
     let!(:c3)   { create(:collection, user: user, is_shared: false) }
-    let!(:c4)   { create(:collection, user: user, shared_by_id: u2.id, is_shared: true, ancestry: root_u2.id.to_s) }
+    let!(:c4)   { create(:collection, user: user, shared_by_id: u2.id, is_shared: true, parent: root_u2) }
     let!(:c5)   { create(:collection, shared_by_id: u2.id, is_shared: true) }
     # - - - - sync collection
     let!(:owner) { create(:user) }
@@ -174,7 +174,7 @@ describe Chemotion::CollectionAPI do
           create(
             :collection, user: user, is_shared: true,
                          shared_by_id: p2.id, is_locked: false,
-                         ancestry: root_g.id.to_s
+                         parent: root_g
           )
         end
 

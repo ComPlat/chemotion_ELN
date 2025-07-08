@@ -60,7 +60,7 @@ ActiveRecord::Schema.define(version: 2025_07_01_134000) do
     t.string "storage", limit: 20, default: "tmp"
     t.integer "created_by", null: false
     t.integer "created_for"
-    t.string "version"
+    t.string "version", default: "/", null: false, collation: "C"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "content_type"
@@ -78,6 +78,7 @@ ActiveRecord::Schema.define(version: 2025_07_01_134000) do
     t.string "created_by_type"
     t.index ["attachable_type", "attachable_id"], name: "index_attachments_on_attachable_type_and_attachable_id"
     t.index ["identifier"], name: "index_attachments_on_identifier", unique: true
+    t.index ["version"], name: "index_attachments_on_version", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
   end
 
   create_table "authentication_keys", id: :serial, force: :cascade do |t|
@@ -152,8 +153,8 @@ ActiveRecord::Schema.define(version: 2025_07_01_134000) do
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.string "short_label"
-    t.string "ancestry"
-    t.index ["ancestry"], name: "index_cellline_samples_on_ancestry"
+    t.string "ancestry", default: "/", null: false, collation: "C"
+    t.index ["ancestry"], name: "index_cellline_samples_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
   end
 
   create_table "channels", id: :serial, force: :cascade do |t|
@@ -185,7 +186,7 @@ ActiveRecord::Schema.define(version: 2025_07_01_134000) do
 
   create_table "collections", id: :serial, force: :cascade do |t|
     t.integer "user_id", null: false
-    t.string "ancestry"
+    t.string "ancestry", default: "/", null: false, collation: "C"
     t.text "label", null: false
     t.integer "shared_by_id"
     t.boolean "is_shared", default: false
@@ -206,7 +207,7 @@ ActiveRecord::Schema.define(version: 2025_07_01_134000) do
     t.integer "celllinesample_detail_level", default: 10
     t.bigint "inventory_id"
     t.integer "devicedescription_detail_level", default: 10
-    t.index ["ancestry"], name: "index_collections_on_ancestry"
+    t.index ["ancestry"], name: "index_collections_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
     t.index ["deleted_at"], name: "index_collections_on_deleted_at"
     t.index ["inventory_id"], name: "index_collections_on_inventory_id"
     t.index ["user_id"], name: "index_collections_on_user_id"
@@ -365,6 +366,7 @@ ActiveRecord::Schema.define(version: 2025_07_01_134000) do
     t.text "plain_text_content"
     t.jsonb "log_data"
     t.index ["containable_type", "containable_id"], name: "index_containers_on_containable"
+    t.index ["parent_id"], name: "index_containers_on_parent_id", where: "(deleted_at IS NULL)"
   end
 
   create_table "dataset_klasses", id: :serial, force: :cascade do |t|
@@ -450,7 +452,7 @@ ActiveRecord::Schema.define(version: 2025_07_01_134000) do
   create_table "device_descriptions", force: :cascade do |t|
     t.string "access_comments"
     t.string "access_options"
-    t.string "ancestry"
+    t.string "ancestry", default: "/", null: false, collation: "C"
     t.string "application_name"
     t.string "application_version"
     t.string "building"
@@ -986,7 +988,7 @@ ActiveRecord::Schema.define(version: 2025_07_01_134000) do
   create_table "ols_terms", id: :serial, force: :cascade do |t|
     t.string "owl_name"
     t.string "term_id"
-    t.string "ancestry"
+    t.string "ancestry", default: "/", null: false, collation: "C"
     t.string "ancestry_term_id"
     t.string "label"
     t.string "synonym"
@@ -996,7 +998,7 @@ ActiveRecord::Schema.define(version: 2025_07_01_134000) do
     t.boolean "is_enabled", default: true
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["ancestry"], name: "index_ols_terms_on_ancestry"
+    t.index ["ancestry"], name: "index_ols_terms_on_ancestry", opclass: :varchar_pattern_ops
     t.index ["owl_name", "term_id"], name: "index_ols_terms_on_owl_name_and_term_id", unique: true
   end
 
@@ -1267,7 +1269,7 @@ ActiveRecord::Schema.define(version: 2025_07_01_134000) do
     t.string "impurities", default: ""
     t.string "location", default: ""
     t.boolean "is_top_secret", default: false
-    t.string "ancestry"
+    t.string "ancestry", default: "/", null: false, collation: "C"
     t.string "external_label", default: ""
     t.integer "created_by"
     t.string "short_label"
@@ -1296,6 +1298,7 @@ ActiveRecord::Schema.define(version: 2025_07_01_134000) do
     t.boolean "dry_solvent", default: false
     t.boolean "inventory_sample", default: false
     t.jsonb "log_data"
+    t.index ["ancestry"], name: "index_samples_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
     t.index ["identifier"], name: "index_samples_on_identifier"
     t.index ["inventory_sample"], name: "index_samples_on_inventory_sample"
@@ -1861,8 +1864,8 @@ ActiveRecord::Schema.define(version: 2025_07_01_134000) do
        RETURNS TABLE(literatures text)
        LANGUAGE sql
       AS $function$
-         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2 
-         where l.literature_id = l2.id 
+         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2
+         where l.literature_id = l2.id
          and l.element_type = $1 and l.element_id = $2
        $function$
   SQL
@@ -1980,7 +1983,7 @@ ActiveRecord::Schema.define(version: 2025_07_01_134000) do
               where collection_id in (select id from collections where user_id = userId)
           ) s;
           used_space = COALESCE(used_space_samples,0);
-          
+
           select sum(calculate_element_space(r.reaction_id, 'Reaction')) into used_space_reactions from (
               select distinct reaction_id
               from collections_reactions

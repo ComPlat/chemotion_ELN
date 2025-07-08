@@ -41,32 +41,32 @@ RSpec.describe Collection do
 
     describe 'shared scope' do
       it 'returns collections the specified user has shared' do
-        expect(described_class.shared(2)).to match_array [collection_2]
+        expect(described_class.shared(2)).to contain_exactly(collection_2)
       end
     end
 
     describe 'remote scope' do
       it 'returns collections that have been shared with specified user' do
-        expect(described_class.remote(2)).to match_array [collection_3]
+        expect(described_class.remote(2)).to contain_exactly(collection_3)
       end
     end
 
     describe 'unshared scope' do
       it 'returns unshared collections' do
-        expect(described_class.unshared).to match_array [collection_1]
+        expect(described_class.unshared).to contain_exactly(collection_1)
       end
     end
 
     describe 'belongs_to_or_shared_by (without group)' do
       it 'returns collections owned or shared by a user' do
-        expect(described_class.belongs_to_or_shared_by(3)).to match_array [collection_3, collection_4]
+        expect(described_class.belongs_to_or_shared_by(3)).to contain_exactly(collection_3, collection_4)
       end
     end
 
     describe 'belongs_to_or_shared_by (with a group)' do
       it 'returns own collections and unlocked collections owned through a group' do
         p1.collections.where(label: ['chemotion-repository.net', 'All']).destroy_all
-        expect(described_class.belongs_to_or_shared_by(p1.id, [g1.id])).to match_array [collection_5]
+        expect(described_class.belongs_to_or_shared_by(p1.id, [g1.id])).to contain_exactly(collection_5)
       end
     end
   end
@@ -158,7 +158,7 @@ RSpec.describe Collection do
         expect(described_class.find_by(id: c3_u1.id)).not_to be_nil
         c = described_class.find_by(label: 'new collection')
         expect(c).not_to be_nil
-        c_1 = described_class.find(c1_u1.id)
+        described_class.find(c1_u1.id)
         c_2 = described_class.find(c2_u1.id)
         expect(c_2.parent).to eq c1_u1
       end

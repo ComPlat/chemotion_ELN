@@ -94,7 +94,7 @@ RSpec.describe Sample do
     end
 
     it 'returns samples according to ui_state' do
-      expect(described_class.for_ui_state(ui_state)).to match_array([s1, s2])
+      expect(described_class.for_ui_state(ui_state)).to contain_exactly(s1, s2)
     end
   end
 

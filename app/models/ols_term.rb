@@ -1,27 +1,3 @@
-# == Schema Information
-#
-# Table name: ols_terms
-#
-#  id               :integer          not null, primary key
-#  owl_name         :string
-#  term_id          :string
-#  ancestry         :string
-#  ancestry_term_id :string
-#  label            :string
-#  synonym          :string
-#  synonyms         :jsonb
-#  desc             :string
-#  metadata         :jsonb
-#  is_enabled       :boolean          default(TRUE)
-#  created_at       :datetime         not null
-#  updated_at       :datetime         not null
-#
-# Indexes
-#
-#  index_ols_terms_on_ancestry              (ancestry)
-#  index_ols_terms_on_owl_name_and_term_id  (owl_name,term_id) UNIQUE
-#
-
 class OlsTerm < ApplicationRecord
   has_ancestry
 
@@ -56,7 +32,7 @@ class OlsTerm < ApplicationRecord
 
     BULK_INSERT_STRING_SIZE = SQL_BULK_INSERT.size
 
-    INSERT_VALUE_QUESTION_MARKS =  "(#{Array.new(COLUMNS.size){'?'}.join(',')})"
+    INSERT_VALUE_QUESTION_MARKS = "(#{Array.new(COLUMNS.size) { '?' }.join(',')})"
 
     SQL_BULK_DELETE = <<~SQL
       DELETE FROM ols_terms WHERE owl_name = ?
@@ -65,7 +41,7 @@ class OlsTerm < ApplicationRecord
     SQL_BULK_INSERT_SANITIZE = "#{SQL_BULK_INSERT} #{INSERT_VALUE_QUESTION_MARKS}"
 
     def delete_owl_by_name(owl_name)
-      delete_sql =  sanitize_sql([ SQL_BULK_DELETE, owl_name])
+      delete_sql = sanitize_sql([SQL_BULK_DELETE, owl_name])
       ApplicationRecord.connection.exec_query(delete_sql)
     end
 
@@ -86,7 +62,7 @@ class OlsTerm < ApplicationRecord
       created_at = Time.now
 
       # compile sanitized values
-      nodes.select{|node| node['id'].present? && node['deprecated'] != 'true' }.each do |node|
+      nodes.select { |node| node['id'].present? && node['deprecated'] != 'true' }.each do |node|
         subClassTermId = extract_subclass_term_id_from_node(node)
 
         if (synonyms = node['hasExactSynonym'].presence)
@@ -97,22 +73,23 @@ class OlsTerm < ApplicationRecord
             synonym = synonyms.min_by(&:length)
           end
         end
-        label = node['label'].is_a?(String)? node['label'] : node['label'][0]
+        node['label'].is_a?(String) ? node['label'] : node['label'][0]
         # to correspond in order to SQL_BULK_INSERT listed columns
         value = [
           owl_name,
           node['id'],
           subClassTermId,
-          node['label'].is_a?(String)? node['label'] : node['label'].join(' - '), #[0],
+          node['label'].is_a?(String) ? node['label'] : node['label'].join(' - '), # [0],
           synonym,
           synonyms.nil? ? nil : synonyms.to_json,
-          node['IAO_0000115'].is_a?(Array)? node['IAO_0000115'].join(' - ') : node['IAO_0000115'],
-          { "klass": node, "version": version_info }.to_json,
+          node['IAO_0000115'].is_a?(Array) ? node['IAO_0000115'].join(' - ') : node['IAO_0000115'],
+          { klass: node, version: version_info }.to_json,
           created_at,
-          created_at
+          created_at,
         ]
         next unless value.compact.present?
-        values <<  sanitize_sql([SQL_BULK_INSERT_SANITIZE] + value)[BULK_INSERT_STRING_SIZE..-1]
+
+        values << sanitize_sql([SQL_BULK_INSERT_SANITIZE] + value)[BULK_INSERT_STRING_SIZE..-1]
       end
       ApplicationRecord.connection.exec_query("#{SQL_BULK_INSERT} #{values.join(',')}") if values.present?
     end
@@ -120,16 +97,18 @@ class OlsTerm < ApplicationRecord
     def rebuilt_ancestry_by_owl_name(owl_name)
       build_direct_parent_ancestry(owl_name)
       reprocess_count = 10
-      while reprocess_count.positive? do
+      while reprocess_count.positive?
         count = 0
         OlsTerm.where(owl_name: owl_name).find_each do |o|
           next if (root = o.root) == o
           next if root.root == root
-          new_a = root.ancestry + '/' + o.ancestry
+
+          new_a = root.ancestry + o.ancestry
           o.update_columns(ancestry: new_a)
           count += 1
         end
         break if count == 0
+
         reprocess_count -= 1
       end
     end
@@ -138,6 +117,7 @@ class OlsTerm < ApplicationRecord
       a = args.slice(:owl_name, :term_id)
       node = find_by(**a)
       return unless node
+
       node_ids = [node.id] + node.descendants.pluck(:id)
       disable_by_ids(node_ids)
     end
@@ -160,35 +140,39 @@ class OlsTerm < ApplicationRecord
       file_path = Rails.public_path.join('ontologies', "#{owl_name}.json")
       File.write(file_path, owl.to_json)
     end
+
     private
 
     def build_direct_parent_ancestry(owl_name)
       where(owl_name: owl_name).find_each do |o|
         next if o.ancestry_term_id.nil?
+
         ancestor = OlsTerm.find_by(owl_name: owl_name, term_id: o.ancestry_term_id)
         next if ancestor.nil?
-        if ancestor.ancestry.nil?
-          new_a = ancestor.id.to_s
-        else
-          new_a = ancestor.ancestry + '/' + ancestor.id.to_s
-        end
+
+        new_a = if ancestor.ancestry.nil?
+                  ancestor.id.to_s
+                else
+                  ancestor.ancestry + ancestor.id.to_s + '/'
+                end
         o.update_columns(ancestry: new_a)
       end
     end
 
     def extract_subclass_term_id_from_node(node)
       return nil unless node['subClassOf'].present?
-      if (node['subClassOf'].length > 1)
-        subClass = node['subClassOf'][0]["rdf:resource"]
-      else
-        subClass = node['subClassOf']["rdf:resource"]
-      end
+
+      subClass = if node['subClassOf'].length > 1
+                   node['subClassOf'][0]['rdf:resource']
+                 else
+                   node['subClassOf']['rdf:resource']
+                 end
 
       ## special case: RXNO:0000024
       if subClass.nil? && (sc = node.dig('equivalentClass', 'Class', 'intersectionOf', 'Description', 'rdf:about'))
         subClass = sc
       end
-      subClass.split('/').last.gsub('_',':') unless subClass.nil?
+      subClass.split('/').last.tr('_', ':') unless subClass.nil?
     end
   end
 end
