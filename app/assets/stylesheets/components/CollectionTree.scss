@@ -18,13 +18,13 @@
     @extend .pe-3;
     @extend .gap-2;
     &:hover {
-      @extend .surface-lighten2;
+      @extend .surface-hover-on-grey;
     }
 
     &--selected {
-      @extend .surface-lighten1;
+      @extend .surface-active-on-grey;
       &:hover {
-        @extend .surface-lighten2;
+        @extend .surface-hover-on-grey;
       }
     }
 
