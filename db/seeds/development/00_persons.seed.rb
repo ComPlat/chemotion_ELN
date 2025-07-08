@@ -17,7 +17,7 @@ Person.find_each do |u|
   collection = Collection.create(
     user_id: u.id,
     label: "project #{u.name_abbreviation}-#{Faker::Color.color_name}"
-    # ancestry: nil,
+    # ancestry: '/',
     # position:
   )
   ca =  Collection.find_by(user: u, label: 'All', is_locked: true)
@@ -41,7 +41,7 @@ Person.find_each do |u|
       impurities: "",
       location:  Faker::Commerce.department,
       is_top_secret: false,
-      ancestry: nil,
+      ancestry: '/',
       external_label: "#{u.name_abbreviation}-#{Faker::Name.first_name}",
       created_by: u.id,
       density: rand(0..1.0).round(3),
@@ -153,7 +153,7 @@ Person.find_each do |u|
                                          show_yield: true)
 
     reaction_svg = composer.compose_reaction_svg
-    
+
     attributes = {
       name: Faker::Book.title,
       short_label: Faker::Book.title,

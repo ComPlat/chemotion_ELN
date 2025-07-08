@@ -27,14 +27,14 @@ module Usecases
               user_id: previous_owner_id,
               shared_by_id: new_owner_id,
               is_locked: true,
-              is_shared: true
+              is_shared: true,
             }
 
             sc = SyncCollectionsUser.find_by(collection_id: c.id, user_id: @params[:current_user_id])
             sc_all = SyncCollectionsUser.where(collection_id: c.id, shared_by_id: c.user_id)
             ActiveRecord::Base.transaction do
               if c.id == rsc.collection_id
-                c.update(user_id: new_owner_id, ancestry: nil)
+                c.update(user_id: new_owner_id, ancestry: '/')
               else
                 c.update(user_id: new_owner_id)
               end
@@ -50,7 +50,7 @@ module Usecases
                   user_id: sc.user_id,
                   shared_by_id: new_owner_id,
                   is_locked: true,
-                  is_shared: true
+                  is_shared: true,
                 }
                 rca = Collection.find_or_create_by(root_collection_attrs)
                 sc.update(shared_by_id: new_owner_id, fake_ancestry: rca.id.to_s)
@@ -60,7 +60,7 @@ module Usecases
 
           user = User.find_by(id: new_owner_id)
           col = Collection.find_by(id: rsc.collection_id)
-          message = Message.create_msg_notification(
+          Message.create_msg_notification(
             channel_subject: Channel::COLLECTION_TAKE_OWNERSHIP,
             data_args: { new_owner: user.name, collection_name: col.label },
             message_from: new_owner_id, message_to: [o_owner_id]
@@ -77,19 +77,27 @@ module Usecases
 
           owner = User.find(c.shared_by_id)
           owner_collections = owner.collections
-          owner_sample_collections = owner_collections.includes(:samples).where('samples.id IN (?)', sample_ids).references(:samples)
-          owner_reaction_collections = owner_collections.includes(:reactions).where('reactions.id IN (?)', reaction_ids).references(:reacions)
-          owner_wellplate_collections = owner_collections.includes(:wellplates).where('wellplates.id IN (?)', wellplate_ids).references(:wellplates)
-          owner_screen_collections = owner_collections.includes(:screens).where('screens.id IN (?)', screen_ids).references(:screens)
+          owner_sample_collections = owner_collections.includes(:samples).where('samples.id IN (?)',
+                                                                                sample_ids).references(:samples)
+          owner_reaction_collections = owner_collections.includes(:reactions).where('reactions.id IN (?)',
+                                                                                    reaction_ids).references(:reacions)
+          owner_wellplate_collections = owner_collections.includes(:wellplates).where('wellplates.id IN (?)',
+                                                                                      wellplate_ids).references(:wellplates)
+          owner_screen_collections = owner_collections.includes(:screens).where('screens.id IN (?)',
+                                                                                screen_ids).references(:screens)
 
           ActiveRecord::Base.transaction do
             c.update(is_shared: false, parent: nil, shared_by_id: nil)
 
             # delete all associations of former_owner to elements included in c
-            CollectionsSample.where('sample_id IN (?) AND collection_id IN (?)', sample_ids, owner_sample_collections.pluck(:id)).delete_all
-            CollectionsReaction.where('reaction_id IN (?) AND collection_id IN (?)', reaction_ids, owner_reaction_collections.pluck(:id)).delete_all
-            CollectionsWellplate.where('wellplate_id IN (?) AND collection_id IN (?)', wellplate_ids, owner_wellplate_collections.pluck(:id)).delete_all
-            CollectionsScreen.where('screen_id IN (?) AND collection_id IN (?)', screen_ids, owner_screen_collections.pluck(:id)).delete_all
+            CollectionsSample.where('sample_id IN (?) AND collection_id IN (?)', sample_ids,
+                                    owner_sample_collections.pluck(:id)).delete_all
+            CollectionsReaction.where('reaction_id IN (?) AND collection_id IN (?)', reaction_ids,
+                                      owner_reaction_collections.pluck(:id)).delete_all
+            CollectionsWellplate.where('wellplate_id IN (?) AND collection_id IN (?)', wellplate_ids,
+                                       owner_wellplate_collections.pluck(:id)).delete_all
+            CollectionsScreen.where('screen_id IN (?) AND collection_id IN (?)', screen_ids,
+                                    owner_screen_collections.pluck(:id)).delete_all
           end
         end
       end
