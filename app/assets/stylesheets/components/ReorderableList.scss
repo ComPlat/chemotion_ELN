@@ -1,0 +1,11 @@
+.reorderable-list {
+  @extend .d-flex;
+  @extend .flex-column;
+  @extend .gap-2;
+
+  &__item {
+    @include draggable-list-item(true);
+    @extend .d-flex;
+    @extend .gap-2;
+  }
+}
