@@ -34,6 +34,7 @@ module Chemotion
         # Loofah will remove node having rgb function as value in svg
         # though rgb is an allowed css function
         result = transform_rgb_to_hex(result)
+<<<<<<< HEAD
         result =
           case type
           when :xml
@@ -49,6 +50,17 @@ module Chemotion
             end
           end.to_s
 
+=======
+        result = case type
+                 when :xml
+                   Loofah.scrub_xml_fragment(result, :strip)
+                 when :html
+                   Loofah.scrub_html5_fragment(result, :strip)
+                 else
+                   Nokogiri::XML(result) #Loofah.scrub_fragment(result, :strip)
+                 end.to_s
+        # Fix some camelcase attributes
+>>>>>>> 46dd3f1e2 (svg scruber loofah replace with Nokogiri, svg id_suffix limited glyph ids)
         result = camelcase_attributes(result)
         result = new(result).transform_defs_glyph_ids_and_references if remap_glyph_ids
         result
@@ -99,7 +111,9 @@ module Chemotion
 
     def map_defs_ids
       @current_node.xpath('svg:defs//svg:g[@id]', svg_namespace).each do |element|
-        next if !element['id'] || element['id'].match?(/_[0-9a-f]{8}$/)
+        # Check if the element has an id attribute or skip if it has a unique id ending
+        # (from SecureRandom.hex(4))
+        next if !element['id'] || element['id'].exclude?('glyph') || element['id'].match?(/_[0-9a-f]{8}$/)
 
         new_id = "#{element['id']}_#{SecureRandom.hex(4)}"
         @id_map[element['id']] = new_id
