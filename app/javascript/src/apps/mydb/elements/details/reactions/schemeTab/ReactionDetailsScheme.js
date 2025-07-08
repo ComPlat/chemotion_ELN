@@ -2,7 +2,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  Accordion, Form, Row, Col, Button, InputGroup
+  Form, Row, Col, Button, InputGroup
 } from 'react-bootstrap';
 import { Select } from 'src/components/common/Select';
 import Delta from 'quill-delta';
@@ -12,12 +12,13 @@ import Reaction from 'src/models/Reaction';
 import Molecule from 'src/models/Molecule';
 import ReactionDetailsMainProperties from 'src/apps/mydb/elements/details/reactions/ReactionDetailsMainProperties';
 import ReactionDetailsPurification from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsPurification';
+import ReactionConditions from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionConditions';
 
 import QuillViewer from 'src/components/QuillViewer';
 import ReactionDescriptionEditor from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDescriptionEditor';
 
 import GeneralProcedureDnd from 'src/apps/mydb/elements/details/reactions/schemeTab/GeneralProcedureDnD';
-import { rolesOptions, conditionsOptions } from 'src/components/staticDropdownOptions/options';
+import { rolesOptions } from 'src/components/staticDropdownOptions/options';
 import OlsTreeSelect from 'src/components/OlsComponent';
 import ReactionDetailsDuration from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsDuration';
 import { permitOn } from 'src/components/common/uis';
@@ -61,7 +62,6 @@ export default class ReactionDetailsScheme extends React.Component {
     this.dropSample = this.dropSample.bind(this);
     this.switchEquiv = this.switchEquiv.bind(this);
     this.switchYield = this.switchYield.bind(this);
-    this.handleOnConditionSelect = this.handleOnConditionSelect.bind(this);
     this.updateTextTemplates = this.updateTextTemplates.bind(this);
     this.reactionVesselSize = this.reactionVesselSize.bind(this);
     this.updateVesselSize = this.updateVesselSize.bind(this);
@@ -150,17 +150,6 @@ export default class ReactionDetailsScheme extends React.Component {
   switchYield = (shouldDisplayYield) => {
     this.setState({ displayYieldField: !!shouldDisplayYield });
   };
-
-  handleOnConditionSelect(eventKey) {
-    const { reaction, onReactionChange } = this.props;
-    const val = eventKey.value;
-    if (reaction.conditions == null || reaction.conditions.length === 0) {
-      reaction.conditions = `${val} `;
-    } else {
-      reaction.conditions += `\n${val} `;
-    }
-    onReactionChange(reaction, { updateGraphic: true });
-  }
 
   renderGPDnD() {
     const { reaction } = this.props;
@@ -1191,6 +1180,11 @@ export default class ReactionDetailsScheme extends React.Component {
             switchEquiv={this.switchEquiv}
             lockEquivColumn={this.state.lockEquivColumn}
           />
+          <ReactionConditions
+            conditions={reaction.conditions}
+            isDisabled={!permitOn(reaction) || reaction.isMethodDisabled('conditions')}
+            onChange={(conditions) => onInputChange('conditions', conditions)}
+          />
           <MaterialGroup
             reaction={reaction}
             materialGroup="products"
@@ -1207,32 +1201,6 @@ export default class ReactionDetailsScheme extends React.Component {
             switchYield={this.switchYield}
             displayYieldField={displayYieldField}
           />
-          <Accordion
-            alwaysOpen
-            defaultActiveKey={['conditions']}
-          >
-            <Accordion.Item eventKey="conditions">
-              <Accordion.Header>Conditions</Accordion.Header>
-              <Accordion.Body>
-                <Select
-                  disabled={!permitOn(reaction)}
-                  name="default_conditions"
-                  multi={false}
-                  options={conditionsOptions}
-                  onChange={this.handleOnConditionSelect}
-                />
-                <Form.Control
-                  as="textarea"
-                  className="mt-2"
-                  rows="4"
-                  value={reaction.conditions || ''}
-                  disabled={!permitOn(reaction) || reaction.isMethodDisabled('conditions')}
-                  placeholder="Conditions..."
-                  onChange={(event) => onInputChange('conditions', event)}
-                />
-              </Accordion.Body>
-            </Accordion.Item>
-          </Accordion>
         </div>
 
         <ReactionDetailsMainProperties
