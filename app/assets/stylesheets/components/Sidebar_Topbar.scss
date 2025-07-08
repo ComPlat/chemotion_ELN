@@ -69,11 +69,11 @@ $sidebar-logo-height: 72px;
     map-get($silicon-shades, lighten4),
     map-get($silicon-shades, lighten4),
     $body-color,
-    map-get($silicon-shades, lighten2),
-    map-get($silicon-shades, lighten2),
+    $chemstrap-silicon-hover2,
+    $chemstrap-silicon-hover2,
     $body-color,
-    map-get($silicon-shades, lighten1),
-    map-get($silicon-shades, lighten1),
+    $chemstrap-silicon-active2,
+    $chemstrap-silicon-active2,
     $body-color
   );
   &.sidebar-button--has-badge {
@@ -81,11 +81,11 @@ $sidebar-logo-height: 72px;
       mix(map-get($silicon-shades, lighten4), shade-color($warning, 20), 85),
       mix(map-get($silicon-shades, lighten4), shade-color($warning, 20), 85),
       $body-color,
-      mix(map-get($silicon-shades, lighten2), shade-color($warning, 20), 85),
-      mix(map-get($silicon-shades, lighten2), shade-color($warning, 20), 85),
+      mix($chemstrap-silicon-hover2, shade-color($warning, 20), 85),
+      mix($chemstrap-silicon-hover2, shade-color($warning, 20), 85),
       $body-color,
-      mix(map-get($silicon-shades, lighten1), shade-color($warning, 20), 85),
-      mix(map-get($silicon-shades, lighten1), shade-color($warning, 20), 85),
+      mix($chemstrap-silicon-active2, shade-color($warning, 20), 85),
+      mix($chemstrap-silicon-active2, shade-color($warning, 20), 85),
       $body-color
     );
   }
