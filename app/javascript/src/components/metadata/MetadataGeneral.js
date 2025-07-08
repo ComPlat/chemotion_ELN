@@ -65,8 +65,6 @@ const MetadataGeneral = ({
               options={subjectAreas}
               onChange={(option) => onChange(option.value, 'subjectAreas', index, 'controlledSubjectAreaName')}
               value={value}
-              menuPortalTarget={document.body}
-              styles={{ menuPortal: (base) => ({ ...base, zIndex: 9999 }) }}
             />
           </Form.Group>
           <Col xs={1}>
