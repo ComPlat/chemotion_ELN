@@ -44,20 +44,20 @@
 @mixin draggable-list-item($selectable) {
   @extend .rounded-start;
   @if $selectable {
-    @extend .surface-lighten4;
+    @extend .surface-lighten3;
     &:hover {
-      @extend .surface-lighten3;
+      @extend .surface-hover-on-white;
     }
     &.is-selected {
-      @extend .surface-lighten2;
+      @extend .surface-active-on-white;
       &:hover {
-        @extend .surface-lighten1;
+        @extend .surface-hover-on-white;
       }
     }
   } @else {
-    @extend .surface-lighten6;
+    @extend .surface-lighten5;
     &:hover {
-      @extend .surface-lighten5;
+      @extend .surface-hover-on-white;
     }
   }
   &.draggable-list-item--is-dragging {
