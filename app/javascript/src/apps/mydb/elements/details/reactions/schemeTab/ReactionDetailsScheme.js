@@ -1179,6 +1179,20 @@ export default class ReactionDetailsScheme extends React.Component {
           />
           <MaterialGroup
             reaction={reaction}
+            materialGroup="solvents"
+            materials={reaction.solvents}
+            dropMaterial={this.dropMaterial}
+            deleteMaterial={
+              (material, materialGroup) => this.deleteMaterial(material, materialGroup)
+            }
+            dropSample={this.dropSample}
+            showLoadingColumn={!!reaction.hasPolymers()}
+            onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
+            switchEquiv={this.switchEquiv}
+            lockEquivColumn={this.state.lockEquivColumn}
+          />
+          <MaterialGroup
+            reaction={reaction}
             materialGroup="products"
             materials={reaction.products}
             dropMaterial={this.dropMaterial}
@@ -1192,20 +1206,6 @@ export default class ReactionDetailsScheme extends React.Component {
             lockEquivColumn={this.state.lockEquivColumn}
             switchYield={this.switchYield}
             displayYieldField={displayYieldField}
-          />
-          <MaterialGroup
-            reaction={reaction}
-            materialGroup="solvents"
-            materials={reaction.solvents}
-            dropMaterial={this.dropMaterial}
-            deleteMaterial={
-              (material, materialGroup) => this.deleteMaterial(material, materialGroup)
-            }
-            dropSample={this.dropSample}
-            showLoadingColumn={!!reaction.hasPolymers()}
-            onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
-            switchEquiv={this.switchEquiv}
-            lockEquivColumn={this.state.lockEquivColumn}
           />
           <Accordion
             alwaysOpen
