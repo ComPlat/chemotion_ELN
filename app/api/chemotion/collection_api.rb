@@ -92,7 +92,7 @@ module Chemotion
 
       build_tree = Proc.new do |collects, delete_empty_root|
         col_tree = []
-        collects.collect{ |obj| col_tree.push(obj) if obj['ancestry'] == '/' }
+        collects.collect { |obj| col_tree.push(obj) if obj['ancestry'] == '/' }
         get_child.call(col_tree,collects)
         col_tree.select! { |col| col[:children].count > 0 } if delete_empty_root
         Entities::CollectionRootEntity.represent(col_tree, serializable: true, root: :collections)
