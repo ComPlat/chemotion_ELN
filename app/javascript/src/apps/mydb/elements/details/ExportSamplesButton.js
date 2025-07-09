@@ -21,12 +21,14 @@ export default class ExportSamplesButton extends Component {
 
   render() {
     const { startExport } = this.state;
+    const { size } = this.props;
     return (
       <Button
-        variant="info"
+        variant="primary"
+        size={size || 'sm'}
         onClick={this.handleExport}
       >
-        Export samples
+        <i className="fa fa-upload" />
         {startExport && (
           <i className="fa fa-spin fa-spinner ms-2" />
         )}
