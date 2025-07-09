@@ -9,7 +9,6 @@ gem 'ancestry'
 gem 'api-pagination'
 gem 'caxlsx'
 
-gem 'backup'
 gem 'barby'
 gem 'bcrypt_pbkdf'
 gem 'bibtex-ruby'
