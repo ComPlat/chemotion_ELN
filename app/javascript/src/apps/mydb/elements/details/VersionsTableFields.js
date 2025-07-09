@@ -72,6 +72,8 @@ function VersionsTableFields(props) {
     (input || '').split(' | ', 2)[1] || input
   );
 
+  const molFile = (input) => (<pre>{input}</pre>);
+
   const image = (input, title) => (input ? (
     <SvgWithPopover
       placement="top"
@@ -255,6 +257,7 @@ function VersionsTableFields(props) {
       quill,
       numrange,
       treeselect,
+      molFile,
       solvent,
       temperature,
       string,

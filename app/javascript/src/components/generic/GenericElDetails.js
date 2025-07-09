@@ -5,8 +5,6 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
   Button,
-  ButtonToolbar,
-  Card,
   ListGroupItem,
   Tabs,
   Tab,
@@ -36,6 +34,7 @@ import GenericAttachments from 'src/components/generic/GenericAttachments';
 import { SegmentTabs } from 'src/components/generic/SegmentDetails';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
+import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import { EditUserLabels, ShowUserLabels } from 'src/components/UserLabels';
 import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
@@ -473,12 +472,32 @@ export default class GenericElDetails extends Component {
     );
   }
 
+  footer() {
+    const { genericEl } = this.state;
+    const showSaveButton = genericEl && (genericEl.isNew || (genericEl.can_update && genericEl.changed));
+
+    return (
+      <>
+        <Button
+          variant="secondary"
+          onClick={() => DetailActions.close(genericEl, true)}
+        >
+          Close
+        </Button>
+        {showSaveButton && (
+          <Button
+            variant="warning"
+            onClick={() => this.handleSubmit()}
+          >
+            {genericEl.isNew ? 'Create' : 'Save'}
+          </Button>
+        )}
+      </>
+    );
+  }
+
   render() {
     const { genericEl, visible } = this.state;
-    const submitLabel = genericEl && genericEl.isNew ? 'Create' : 'Save';
-    // eslint-disable-next-line max-len
-    const saveBtnDisplay = (genericEl?.isNew || (genericEl?.can_update && genericEl?.changed)) ? { display: '' } : { display: 'none' };
-
     /**
      *  tabContents is a object containing all (visible) segment tabs
      */

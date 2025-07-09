@@ -1,8 +1,11 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { isEqual } from 'lodash';
-import { Form, InputGroup, Button } from 'react-bootstrap';
+import {
+  Form, InputGroup, Button, OverlayTrigger, Tooltip,
+} from 'react-bootstrap';
 import { metPreConv, metPrefSymbols } from 'src/utilities/metricPrefix';
+import { formatDisplayValue } from 'src/utilities/MathUtils';
 
 export default class NumeralInputWithUnitsCompo extends Component {
   constructor(props) {
@@ -16,7 +19,9 @@ export default class NumeralInputWithUnitsCompo extends Component {
       currentPrecision: precision,
       valueString: 0,
       showString: false,
+      copyButtonText: '📋',
     };
+    this.handleCopyClick = this.handleCopyClick.bind(this);
   }
 
   componentDidMount() {
@@ -107,15 +112,6 @@ export default class NumeralInputWithUnitsCompo extends Component {
     }, () => this._onChangeCallback());
   }
 
-  handleInputDoubleClick() {
-    if (this.state.block) {
-      this.setState({
-        block: false,
-        value: 0,
-      });
-    }
-  }
-
   _onChangeCallback() {
     if (this.props.onChange) {
       this.props.onChange({ ...this.state, unit: this.props.unit });
@@ -149,26 +145,62 @@ export default class NumeralInputWithUnitsCompo extends Component {
     }
   }
 
+  /**
+   * Handles copying the value to clipboard and shows temporary feedback
+   */
+  handleCopyClick = async (value) => {
+    if (value && value !== 'n.d.') {
+      try {
+        await navigator.clipboard.writeText(value.toString());
+        this.setState({ copyButtonText: '✓' }, () => {
+          this.forceUpdate(); // Force re-render to ensure UI updates
+          setTimeout(() => {
+            this.setState({ copyButtonText: '📋' }, () => {
+              this.forceUpdate(); // Force re-render to ensure UI updates
+            });
+          }, 2000);
+        });
+      } catch (err) {
+        this.setState({ copyButtonText: '❌' }, () => {
+          this.forceUpdate(); // Force re-render to ensure UI updates
+          setTimeout(() => {
+            this.setState({ copyButtonText: '📋' }, () => {
+              this.forceUpdate(); // Force re-render to ensure UI updates
+            });
+          }, 2000);
+        });
+      }
+    }
+  };
+
   render() {
     const {
-      size, variant, disabled, label, unit, name
+      size, variant, disabled, label, unit, name, showInfoTooltipTotalVol, showInfoTooltipRequiredVol
     } = this.props;
     const {
       showString, value, metricPrefix,
       currentPrecision, valueString, block,
+      copyButtonText
     } = this.state;
     const mp = metPrefSymbols[metricPrefix];
-    const nanOrInfinity = isNaN(value) || !isFinite(value);
-    const val = () => {
-      if (!showString && nanOrInfinity) {
-        return 'n.d.';
-      } else if (!showString) {
-        return metPreConv(value, 'n', metricPrefix).toPrecision(currentPrecision);
-      }
-      return valueString;
-    };
+    const nanOrInfinity = Number.isNaN(value) || !Number.isFinite(value);
+
+    // Calculate display value once during render
+    let displayValue;
+    if (!showString && nanOrInfinity) {
+      displayValue = 'n.d.';
+    } else if (!showString) {
+      displayValue = formatDisplayValue(metPreConv(value, 'n', metricPrefix), currentPrecision);
+    } else {
+      displayValue = valueString;
+    }
+
     const inputDisabled = disabled ? true : block;
-    const alwaysAllowDisplayUnit = ['TON', 'TON/h', 'TON/m', 'TON/s', 'g', 'mg', 'μg', 'mol', 'mmol', 'l', 'ml', 'μl'];
+    const alwaysAllowDisplayUnit = [
+      'TON', 'TON/h', 'TON/m', 'TON/s',
+      'g', 'mg', 'μg', 'mol', 'mmol',
+      'l', 'ml', 'μl', 'mol/l', 'g/ml'
+    ];
     const unitDisplayMode = alwaysAllowDisplayUnit.includes(unit) ? false : inputDisabled;
     // BsStyle-s for Input and buttonAfter have differences
     const variantBtnAfter = variant === 'error' ? 'danger' : variant;
@@ -188,16 +220,62 @@ export default class NumeralInputWithUnitsCompo extends Component {
       return (
         <div>
           {label && <Form.Label className="me-2">{label}</Form.Label>}
+          {showInfoTooltipTotalVol && (
+            <OverlayTrigger
+              placement="top"
+              delay={{ show: 500, hide: 1000 }} // in milliseconds
+              overlay={(
+                <Tooltip id="info-total-volume">
+                  <div>
+                    <p className="mb-2">
+                      It is only a value given manually, i.e. volume by definition — not (re)calculated.
+                    </p>
+                    <p className="mb-2">
+                      Recalculation occurs only when the attributes of a component with a locked total concentration are
+                      modified.
+                    </p>
+                    <a
+                      href="https://www.chemotion.net/docs/eln/ui/elements/samples/mixtures#-total-volume-and-solvent-addition"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Learn more
+                    </a>
+                  </div>
+                </Tooltip>
+              )}
+            >
+              <i className="ms-1 fa fa-info-circle" />
+            </OverlayTrigger>
+          )}
+          {showInfoTooltipRequiredVol && (
+            <OverlayTrigger
+              placement="top"
+              overlay={(
+                <Tooltip id="info-required-volume">
+                  <p className="mb-2">
+                    It gives the expected total volume without considering eventually given additional solvent volumes
+                    coming from the solvents' table or the stock solution.
+                  </p>
+                  <p>
+                    The required total volume is therefore not the volume to be added but the volume to be reached
+                    referring to the reference compound.
+                  </p>
+                </Tooltip>
+              )}
+            >
+              <i className="ms-1 fa fa-info-circle" />
+            </OverlayTrigger>
+          )}
           <InputGroup
             className="d-flex flex-nowrap align-items-center w-100"
-            onDoubleClick={event => this.handleInputDoubleClick(event)}
           >
             <Form.Control
               type="text"
               disabled={inputDisabled}
               variant={variant}
               size={size}
-              value={val() || ''}
+              value={displayValue || ''}
               onChange={event => this._handleInputValueChange(event)}
               onFocus={event => this._handleInputValueFocus(event)}
               onBlur={event => this._handleInputValueBlur(event)}
@@ -205,6 +283,18 @@ export default class NumeralInputWithUnitsCompo extends Component {
               className="flex-grow-1"
             />
             {prefixSwitch}
+            {showInfoTooltipRequiredVol && (
+              <Button
+                variant="outline-secondary"
+                size={size}
+                onClick={() => this.handleCopyClick(displayValue)}
+                className="ms-1"
+                title={copyButtonText === '📋' ? 'Copy to clipboard' : copyButtonText === '✓' ? 'Copied!' : 'Failed to copy'}
+                style={{ minWidth: '32px' }}
+              >
+                {copyButtonText}
+              </Button>
+            )}
           </InputGroup>
         </div>
       );
@@ -212,17 +302,16 @@ export default class NumeralInputWithUnitsCompo extends Component {
     return (
       <div>
         {label && <Form.Label className="me-2">{label}</Form.Label>}
-        <div onDoubleClick={event => this.handleInputDoubleClick(event)}>
+        <div>
           <Form.Control
             type="text"
             disabled={inputDisabled}
             variant={variant}
             size={size}
-            value={val() || ''}
+            value={displayValue || ''}
             onChange={event => this._handleInputValueChange(event)}
             onFocus={event => this._handleInputValueFocus(event)}
             onBlur={event => this._handleInputValueBlur(event)}
-            onDoubleClick={event => this.handleInputDoubleClick(event)}
             name={name}
             className="flex-grow-1"
           />
@@ -244,7 +333,9 @@ NumeralInputWithUnitsCompo.propTypes = {
   label: PropTypes.node,
   variant: PropTypes.string,
   size: PropTypes.string,
-  name: PropTypes.string
+  name: PropTypes.string,
+  showInfoTooltipTotalVol: PropTypes.bool,
+  showInfoTooltipRequiredVol: PropTypes.bool,
 };
 
 NumeralInputWithUnitsCompo.defaultProps = {
@@ -254,5 +345,7 @@ NumeralInputWithUnitsCompo.defaultProps = {
   disabled: false,
   block: false,
   variant: 'light',
-  name: ''
+  name: '',
+  showInfoTooltipTotalVol: false,
+  showInfoTooltipRequiredVol: false,
 };

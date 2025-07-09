@@ -1,5 +1,16 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: metadata
+#
+#  id            :bigint           not null, primary key
+#  deleted_at    :datetime
+#  metadata      :jsonb
+#  created_at    :datetime         not null
+#  updated_at    :datetime         not null
+#  collection_id :integer
+#
 require 'rails_helper'
 
 RSpec.describe Metadata do

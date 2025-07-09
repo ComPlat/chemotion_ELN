@@ -34,7 +34,7 @@ module Usecases
             sc_all = SyncCollectionsUser.where(collection_id: c.id, shared_by_id: c.user_id)
             ActiveRecord::Base.transaction do
               if c.id == rsc.collection_id
-                c.update(user_id: new_owner_id, ancestry: nil)
+                c.update(user_id: new_owner_id, ancestry: '/')
               else
                 c.update(user_id: new_owner_id)
               end

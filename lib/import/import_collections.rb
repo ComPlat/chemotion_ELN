@@ -98,6 +98,7 @@ module Import
         import_collections if @gt == false
         import_samples
         import_chemicals if @gt == false
+        import_components if @gt == false
         import_residues
         import_reactions
         import_reactions_samples
@@ -225,6 +226,24 @@ module Import
       end
     end
 
+    def import_components
+      components_data = @data.fetch('Component', {})
+
+      return if components_data.empty?
+
+      samples = @instances.fetch('Sample')
+
+      components_data.each_value do |fields|
+        sample = samples[fields['sample_id']]
+        next unless sample
+
+        Component.create!(
+          fields.slice('name', 'position', 'component_properties')
+                .merge(sample_id: sample.id),
+        )
+      end
+    end
+
     def import_samples
       @data.fetch('Sample', {}).each do |uuid, fields|
         # look for the molecule_name
@@ -281,6 +300,7 @@ module Import
           'molecular_mass',
           'sum_formula',
           'inventory_sample',
+          'sample_type',
         ).merge(
           created_by: @current_user_id,
           collections: fetch_many(

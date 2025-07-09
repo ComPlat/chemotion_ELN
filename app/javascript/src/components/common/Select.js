@@ -9,6 +9,12 @@ import RCreatableSelect from 'react-select/creatable';
 // see https://react-select.com/styles#the-unstyled-prop
 // see https://react-select.com/styles#the-classnameprefix-prop
 
+const sharedMenuStyles = (baseStyles) => ({
+  ...baseStyles,
+  minWidth: '100%',
+  width: 'max-content',
+});
+
 export const Select = forwardRef(function Select(props, ref) {
   return (
     <RSelect
@@ -17,15 +23,17 @@ export const Select = forwardRef(function Select(props, ref) {
       ref={ref}
       unstyled
       {...props}
+      menuPortalTarget={document.body}
       styles={{
         control: (baseStyles) => ({
           ...baseStyles,
           minWidth: props.minWidth || '0',
         }),
-        menuList: (baseStyles, state) => ({
+        menuList: (baseStyles) => ({
           ...baseStyles,
           maxHeight: props.maxHeight || "250px",
         }),
+        menu: sharedMenuStyles,
       }}
     />
   );
@@ -37,11 +45,13 @@ export const AsyncSelect = ({ className, ...props }) => (
     classNamePrefix="chemotion-select"
     unstyled
     {...props}
+    menuPortalTarget={document.body}
     styles={{
       control: (baseStyles) => ({
         ...baseStyles,
         minWidth: props.minWidth || '0',
       }),
+      menu: sharedMenuStyles,
     }}
   />
 );
@@ -52,11 +62,13 @@ export const CreatableSelect = ({ className, ...props }) => (
     classNamePrefix="chemotion-select"
     unstyled
     {...props}
+    menuPortalTarget={document.body}
     styles={{
       control: (baseStyles) => ({
         ...baseStyles,
         minWidth: props.minWidth || '0',
       }),
+      menu: sharedMenuStyles,
     }}
   />
 );

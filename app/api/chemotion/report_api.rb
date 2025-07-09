@@ -70,6 +70,11 @@ module Chemotion
           generate_sheets_for_tables(%i[sample], table_params, export, params[:columns][:analyses], :analyses)
         end
 
+        if params[:exportType] == 1 && params[:columns][:components].present?
+          generate_sheets_for_tables(%i[sample], table_params, export, params[:columns][:components],
+                                     :components)
+        end
+
         if params[:exportType] == 1 && params[:columns][:chemicals].present?
           generate_sheets_for_tables(%i[sample], table_params, export, params[:columns][:chemicals],
                                      :chemicals)

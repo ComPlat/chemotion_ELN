@@ -161,9 +161,7 @@ GEM
     aes_key_wrap (1.1.0)
     ancestry (4.3.3)
       activerecord (>= 5.2.6)
-    annotate (3.2.0)
-      activerecord (>= 3.2, < 8.0)
-      rake (>= 10.4, < 14.0)
+    annotaterb (4.15.0)
     api-pagination (6.0.0)
     ast (2.4.3)
     attr_required (1.0.2)
@@ -871,7 +869,7 @@ DEPENDENCIES
   activejob-status
   activerecord-nulldb-adapter
   ancestry
-  annotate
+  annotaterb
   api-pagination
   awesome_print
   backup

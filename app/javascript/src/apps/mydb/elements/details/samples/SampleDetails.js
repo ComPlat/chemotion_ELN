@@ -6,8 +6,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {
   Button, InputGroup, ListGroupItem, Tabs, Tab, Row, Col,
-  Tooltip, OverlayTrigger, Modal, Alert, Card, Form,
-  Accordion
+  Tooltip, OverlayTrigger, Modal, Alert, Form,
+  Accordion, Container
 } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import { CreatableSelect } from 'src/components/common/Select';
@@ -30,6 +30,7 @@ import ElementAnalysesLabels from 'src/apps/mydb/elements/labels/ElementAnalyses
 import PubchemLabels from 'src/components/pubchem/PubchemLabels';
 import PubchemLcss from 'src/components/pubchem/PubchemLcss';
 import ElementReactionLabels from 'src/apps/mydb/elements/labels/ElementReactionLabels';
+import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import SampleDetailsContainers from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainers';
 
 import StructureEditorModal from 'src/components/structureEditor/StructureEditorModal';
@@ -77,7 +78,7 @@ import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 const MWPrecision = 6;
 
 const decoupleCheck = (sample) => {
-  if (!sample.decoupled && sample.molecule && sample.molecule.id === '_none_') {
+  if (!sample.decoupled && sample.molecule && sample.molecule.id === '_none_' && !sample.isMixture()) {
     NotificationActions.add({
       title: 'Error on Sample creation', message: 'The molecule structure is required!', level: 'error', position: 'tc'
     });
@@ -113,6 +114,9 @@ export default class SampleDetails extends React.Component {
 
     const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
 
+    // Check redirectedFromMixture flag in UIStore
+    const redirectedFromMixture = UIStore.getState() && UIStore.getState().redirectedFromMixture;
+
     this.state = {
       sample: props.sample,
       reaction: null,
@@ -140,6 +144,7 @@ export default class SampleDetails extends React.Component {
       saveInventoryAction: false,
       isChemicalEdited: false,
       currentUser,
+      showRedirectWarning: redirectedFromMixture || false,
     };
 
     this.enableComputedProps = MatrixCheck(currentUser.matrix, 'computedProp');
@@ -168,11 +173,12 @@ export default class SampleDetails extends React.Component {
 
     this.handleStructureEditorSave = this.handleStructureEditorSave.bind(this);
     this.handleStructureEditorCancel = this.handleStructureEditorCancel.bind(this);
+    this.splitSmiles = this.splitSmiles.bind(this);
   }
 
   componentDidMount() {
     const { sample } = this.props;
-    const { currentUser } = this.state;
+    const { currentUser, showRedirectWarning } = this.state;
 
     UIStore.listen(this.onUIStoreChange);
 
@@ -182,11 +188,18 @@ export default class SampleDetails extends React.Component {
     if (MatrixCheck(currentUser.matrix, commentActivation) && !sample.isNew) {
       CommentActions.fetchComments(sample);
     }
+
+    if (showRedirectWarning) {
+      // Use setTimeout to defer dispatch and avoid dispatch-in-dispatch errors in Alt/Flux
+      setTimeout(() => {
+        UIActions.setRedirectedFromMixture(false);
+      }, 0);
+    }
   }
 
   componentDidUpdate(prevProps) {
     const { sample } = this.props;
-    if (sample === prevProps.sample) { return };
+    if (sample === prevProps.sample) { return; }
 
     const smileReadonly = !(
       (sample.isNew
@@ -315,6 +328,7 @@ export default class SampleDetails extends React.Component {
     const fetchMolecule = (fetchFunction) => {
       fetchFunction()
         .then(fetchSuccess).catch(fetchError).finally(() => {
+          this.splitSmiles(editor, svgFile);
           this.hideStructureEditor();
         });
     };
@@ -326,7 +340,7 @@ export default class SampleDetails extends React.Component {
     } else {
       fetchMolecule(() => MoleculesFetcher.fetchBySmi(smiles, svgFile, molfile, editor));
     }
-  }
+   }
 
   handleStructureEditorCancel() {
     this.hideStructureEditor();
@@ -458,6 +472,7 @@ export default class SampleDetails extends React.Component {
         molfile={molfile}
         hasParent={hasParent}
         hasChildren={hasChildren}
+        sample={sample}
       />
     );
   }
@@ -687,7 +702,8 @@ export default class SampleDetails extends React.Component {
 
   saveBtn(sample, closeView = false) {
     let submitLabel = (sample && sample.isNew) ? 'Create' : 'Save';
-    const isDisabled = !sample.can_update;
+    const hasComponents = !sample.isMixture() || (sample.hasComponents());
+    const isDisabled = !sample.can_update || !hasComponents;
     if (closeView) submitLabel += ' and close';
 
     return (
@@ -703,6 +719,11 @@ export default class SampleDetails extends React.Component {
   }
 
   elementalPropertiesItem(sample) {
+    // avoid empty ListGroupItem
+    if (!sample.molecule_formula || sample.isMixture()) {
+      return false;
+    }
+
     const label = sample.contains_residues
       ? 'Polymer section / Elemental composition'
       : 'Elemental composition';
@@ -902,7 +923,8 @@ export default class SampleDetails extends React.Component {
     const timesTag = (
       <i className="fa fa-times" />
     );
-    const sampleUpdateCondition = !this.sampleIsValid() || !sample.can_update;
+    const hasComponents = !sample.isMixture() || (sample.hasComponents());
+    const sampleUpdateCondition = !this.sampleIsValid() || !sample.can_update || !hasComponents;
 
     const elementToSave = activeTab === 'inventory' ? 'Chemical' : 'Sample';
     const saveAndClose = (saveBtnDisplay
@@ -985,36 +1007,94 @@ export default class SampleDetails extends React.Component {
 
     const inventoryLabel = sample.inventory_sample && sample.inventory_label ? sample.inventory_label : null;
 
+    const { pageMessage } = this.state;
+    const messageBlock = (pageMessage
+      && (pageMessage.error.length > 0 || pageMessage.warning.length > 0)) ? (
+        <Alert variant="warning" style={{ marginBottom: 'unset', padding: '5px', marginTop: '10px' }}>
+          <strong>Structure Alert</strong>
+          <Button
+            size="sm"
+            variant="outline-warning"
+            style={{ float: 'right' }}
+            onClick={() => this.setState({ pageMessage: null })}
+          >
+            Close Alert
+          </Button>
+          {
+          pageMessage.error.map((m) => (
+            <div key={uuid.v1()}>{m}</div>
+          ))
+        }
+          {
+          pageMessage.warning.map((m) => (
+            <div key={uuid.v1()}>{m}</div>
+          ))
+        }
+        </Alert>
+      ) : null;
+
+    // warning message for redirection
+    const redirectWarningBlock = this.state.showRedirectWarning ? (
+      <Alert variant="warning" className="d-flex flex-column gap-2 mt-2 mb-0 p-2">
+        <div>
+          <strong>Notice:</strong>
+          <p className="mb-1">
+            You are viewing the original sample that was used to create this component. Some of its attributes may have
+            changed now.
+          </p>
+          <p className="mb-0">
+            Any updates you make here will apply only to the original sample, not to any component generated from it.
+            However, changes on this sample may affect other dependant entities.
+          </p>
+        </div>
+        <div className="align-self-end">
+          <Button
+            size="sm"
+            variant="outline-warning"
+            onClick={() => this.setState({ showRedirectWarning: false })}
+          >
+            Close Alert
+          </Button>
+        </div>
+      </Alert>
+    ) : null;
+
     return (
-      <div className="d-flex align-items-center flex-wrap">
-        <div className="d-flex align-items-center flex-wrap flex-grow-1 gap-2">
-          <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
-            <span className="flex-shrink-0">
-              <i className="icon-sample me-1" />
-              {inventoryLabel || sample.title()}
-            </span>
-          </OverlayTrigger>
-          <ShowUserLabels element={sample} />
-          <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
-          {!sample.isNew && <ElementCollectionLabels element={sample} key={sample.id} placement="right" />}
-          <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
-          <PubchemLabels element={sample} />
-          <HeaderCommentSection element={sample} />
-          {sample.isNew && <FastInput fnHandle={this.handleFastInput} />}
+      <>
+        <div className="d-flex align-items-center flex-wrap">
+          <div className="d-flex align-items-center flex-wrap flex-grow-1 gap-2">
+            <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
+              <span className="flex-shrink-0">
+                <i className="icon-sample me-1" />
+                {inventoryLabel || sample.title()}
+              </span>
+            </OverlayTrigger>
+            <ShowUserLabels element={sample} />
+            <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
+            {!sample.isNew && <ElementCollectionLabels element={sample} key={sample.id} placement="right" />}
+            <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
+            <PubchemLabels element={sample} />
+            <HeaderCommentSection element={sample} />
+            {sample.isNew && !sample.isMixture() && <FastInput fnHandle={this.handleFastInput} />}
+          </div>
+          <div className="d-flex align-items-center gap-2">
+            {decoupleCb}
+            {inventorySample}
+            {!sample.isNew && <OpenCalendarButton isPanelHeader eventableId={sample.id} eventableType="Sample" />}
+            <PrintCodeButton element={sample} />
+            {copyBtn}
+            {this.saveAndCloseSample(sample, saveBtnDisplay)}
+          </div>
         </div>
-        <div className="d-flex align-items-center gap-2">
-          {decoupleCb}
-          {inventorySample}
-          {!sample.isNew && <OpenCalendarButton isPanelHeader eventableId={sample.id} eventableType="Sample" />}
-          <PrintCodeButton element={sample} />
-          {copyBtn}
-          {this.saveAndCloseSample(sample, saveBtnDisplay)}
-        </div>
-      </div>
+        {messageBlock}
+        {redirectWarningBlock}
+      </>
     );
   }
 
   sampleInfo(sample) {
+    const isMixture = sample.isMixture();
+    const style = { height: 'auto', marginBottom: '20px' };
     let pubchemLcss = (sample.pubchem_tag && sample.pubchem_tag.pubchem_lcss
       && sample.pubchem_tag.pubchem_lcss.Record) || null;
     if (pubchemLcss && pubchemLcss.Reference) {
@@ -1032,18 +1112,24 @@ export default class SampleDetails extends React.Component {
       ? <PubchemLcss cid={pubchemCid} informArray={pubchemLcss} /> : null;
 
     return (
-      <Row className='mb-4'>
-        <Col md={4}>
-          <h4><SampleName sample={sample} /></h4>
-          <h5>{this.sampleAverageMW(sample)}</h5>
-          <h5>{this.sampleExactMW(sample)}</h5>
-          {sample.isNew ? null : <h6>{this.moleculeCas()}</h6>}
-          {lcssSign}
-        </Col>
-        <Col md={8} className="position-relative">
-          {this.svgOrLoading(sample)}
-        </Col>
-      </Row>
+      <Container>
+        <Row className="mb-4">
+          <Col md={4}>
+            <h4><SampleName sample={sample} /></h4>
+            {!isMixture && (
+              <>
+                <h5>{this.sampleAverageMW(sample)}</h5>
+                <h5>{this.sampleExactMW(sample)}</h5>
+              </>
+            )}
+            {sample.isNew || isMixture ? null : <h6>{this.moleculeCas()}</h6>}
+            {lcssSign}
+          </Col>
+          <Col md={8} className="position-relative">
+            {this.svgOrLoading(sample)}
+          </Col>
+        </Row>
+      </Container>
     );
   }
 
@@ -1204,12 +1290,21 @@ export default class SampleDetails extends React.Component {
   }
 
   sampleAverageMW(sample) {
-    const mw = sample.molecule_molecular_weight;
+    let mw;
+
+    if (sample.isMixture() && sample.sample_details) {
+      mw = sample.total_molecular_weight;
+    } else {
+      mw = sample.molecule_molecular_weight;
+    }
+
     if (mw) return <ClipboardCopyText text={`${mw.toFixed(MWPrecision)} g/mol`} />;
     return '';
   }
 
   sampleExactMW(sample) {
+    if (sample.isMixture() && sample.sample_details) { return }
+
     const mw = sample.molecule_exact_molecular_weight;
     if (mw) return <ClipboardCopyText text={`Exact mass: ${mw.toFixed(MWPrecision)} g/mol`} />;
     return '';
@@ -1236,6 +1331,26 @@ export default class SampleDetails extends React.Component {
     this.setState({
       showStructureEditor: false
     });
+  }
+
+  /**
+   * Splits the canonical SMILES string of a mixture sample and updates the sample's molecules in the editor.
+   *
+   * @param {string} editor - The editor identifier or instance to use for updating molecules.
+   * @param {string|null} svgFile - Optional SVG file content to use for rendering.
+   * @returns {void}
+   */
+  splitSmiles(editor) {
+    const { sample } = this.state;
+    if (!sample.isMixture() || !sample.molecule_cano_smiles || sample.molecule_cano_smiles === '') { return; }
+
+    const mixtureSmiles = sample.molecule_cano_smiles.split('.');
+    if (mixtureSmiles) {
+      sample.splitSmilesToMolecule(mixtureSmiles, editor)
+        .then(() => {
+          this.setState({ sample });
+        });
+    }
   }
 
   toggleInchi() {
@@ -1365,71 +1480,41 @@ export default class SampleDetails extends React.Component {
       }
     });
 
-    const { pageMessage } = this.state;
-    const messageBlock = (pageMessage
-      && (pageMessage.error.length > 0 || pageMessage.warning.length > 0)) ? (
-        <Alert variant="warning" style={{ marginBottom: 'unset', padding: '5px', marginTop: '10px' }}>
-          <strong>Structure Alert</strong>
-          <Button
-            size="sm"
-            variant="warning"
-            onClick={() => this.setState({ pageMessage: null })}
-          >
-            Close Alert
-          </Button>
-          {
-          pageMessage.error.map((m) => (
-            <div key={uuid.v1()}>{m}</div>
-          ))
-        }
-          {
-          pageMessage.warning.map((m) => (
-            <div key={uuid.v1()}>{m}</div>
-          ))
-        }
-        </Alert>
-      ) : null;
-
     const activeTab = (this.state.activeTab !== 0 && stb.indexOf(this.state.activeTab) > -1
       && this.state.activeTab) || visible.get(0);
 
     const pendingToSave = sample.isPendingToSave || isChemicalEdited;
 
     return (
-      <Card className={`detail-card${pendingToSave ? ' detail-card--unsaved' : ''}`}>
-        <Card.Header>
-          {this.sampleHeader(sample)}
-          {messageBlock}
-        </Card.Header>
-        <Card.Body>
-          {this.sampleInfo(sample)}
-          {this.state.sfn && <ScifinderSearch el={sample} />}
-          <div className="tabs-container--with-borders">
-            <ElementDetailSortTab
-              type="sample"
-              availableTabs={Object.keys(tabContentsMap)}
-              tabTitles={tabTitlesMap}
-              onTabPositionChanged={this.onTabPositionChanged}
-              addInventoryTab={sample.inventory_sample}
-            />
-            <Tabs
-              mountOnEnter
-              unmountOnExit
-              activeKey={activeTab}
-              onSelect={this.handleSelect}
-              id="SampleDetailsXTab"
-            >
-              {tabContents}
-            </Tabs>
-          </div>
-          {this.structureEditorModal(sample)}
-          {this.renderMolfileModal()}
-          <CommentModal element={sample} />
-        </Card.Body>
-        <Card.Footer>
-          {this.sampleFooter()}
-        </Card.Footer>
-      </Card>
+      <DetailCard
+        isPendingToSave={pendingToSave}
+        header={this.sampleHeader(sample)}
+        footer={this.sampleFooter()}
+      >
+        {this.sampleInfo(sample)}
+        {this.state.sfn && <ScifinderSearch el={sample} />}
+        <div className="tabs-container--with-borders">
+          <ElementDetailSortTab
+            type="sample"
+            availableTabs={Object.keys(tabContentsMap)}
+            tabTitles={tabTitlesMap}
+            onTabPositionChanged={this.onTabPositionChanged}
+            addInventoryTab={sample.inventory_sample}
+          />
+          <Tabs
+            mountOnEnter
+            unmountOnExit
+            activeKey={activeTab}
+            onSelect={this.handleSelect}
+            id="SampleDetailsXTab"
+          >
+            {tabContents}
+          </Tabs>
+        </div>
+        {this.structureEditorModal(sample)}
+        {this.renderMolfileModal()}
+        <CommentModal element={sample} />
+      </DetailCard>
     );
   }
 }
