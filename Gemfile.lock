@@ -56,14 +56,6 @@ GIT
       ruby_dig (~> 0.0.2)
 
 GIT
-  remote: https://github.com/fl9/fun_sftp.git
-  revision: 24edb517e0196c83fe21f6b229c76841fe7ab2ca
-  branch: allow-port-option
-  specs:
-    fun_sftp (1.0.0)
-      net-sftp
-
-GIT
   remote: https://github.com/merlin-p/thumbnailer.git
   revision: 4935ef8836d097f22c7b6402978a93956fa5ed64
   specs:
@@ -902,7 +894,6 @@ DEPENDENCIES
   flamegraph
   font-awesome-rails
   fugit
-  fun_sftp!
   fx
   grape
   grape-entity
