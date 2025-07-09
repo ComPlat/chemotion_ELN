@@ -37,6 +37,8 @@ import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollec
 import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import { EditUserLabels, ShowUserLabels } from 'src/components/UserLabels';
+import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
+import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
 
 const onNaviClick = (type, id) => {
   const { currentCollection, isSync } = UIStore.getState();
@@ -525,26 +527,56 @@ export default class GenericElDetails extends Component {
       activeTab = tabKeyContentList[0];
     }
     return (
-      <DetailCard
-        isPendingToSave={genericEl.isPendingToSave}
-        header={this.header(genericEl)}
-        footer={this.footer()}
-      >
-        <div className="tabs-container--with-borders">
-          <ElementDetailSortTab
-            type={genericEl.type}
-            availableTabs={Object.keys(tabContents)}
-            onTabPositionChanged={this.onTabPositionChanged}
-          />
-          <Tabs
-            activeKey={activeTab}
-            onSelect={(key) => this.handleSelect(key, genericEl.type)}
-            id="GenericElementDetailsXTab"
+      <>
+        <ViewSpectra
+          sample={genericEl}
+          handleSampleChanged={this.handleGenericElChanged}
+          handleSubmit={this.handleSubmit}
+        />
+        <NMRiumDisplayer
+          sample={genericEl}
+          handleSampleChanged={this.handleGenericElChanged}
+          handleSubmit={this.handleSubmit}
+        />
+        <Card
+          className={`detail-card${
+            genericEl.isPendingToSave ? ' detail-card--unsaved' : ''
+          }`}
+        >
+        <Card.Header>{this.header(genericEl)}</Card.Header>
+        <Card.Body>
+          <div className="tabs-container--with-borders">
+            <ElementDetailSortTab
+              type={genericEl.type}
+              availableTabs={Object.keys(tabContents)}
+              onTabPositionChanged={this.onTabPositionChanged}
+            />
+            <Tabs
+              activeKey={activeTab}
+              onSelect={(key) => this.handleSelect(key, genericEl.type)}
+              id="GenericElementDetailsXTab"
+            >
+              {tabContentList}
+            </Tabs>
+          </div>
+        </Card.Body>
+        <Card.Footer>
+          <Button
+            variant="secondary"
+            onClick={() => DetailActions.close(genericEl, true)}
           >
-            {tabContentList}
-          </Tabs>
-        </div>
-      </DetailCard>
+            Close
+          </Button>
+          <Button
+            variant="warning"
+            onClick={() => this.handleSubmit()}
+            style={saveBtnDisplay}
+          >
+            {submitLabel}
+          </Button>
+          </Card.Footer>
+        </Card>
+      </>
     );
   }
 }
