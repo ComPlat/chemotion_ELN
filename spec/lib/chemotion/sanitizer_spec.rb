@@ -77,6 +77,41 @@ describe Chemotion::Sanitizer do
     it 'processes SVG files ketch 2.15 2' do
       expect(sanitizer.scrub_svg(svg_file6)).to eq(svg_file6_sanitized)
     end
+
+    it 'preserves all attributes of <img> tags' do
+      xml = <<~XML
+        <div>
+          <img src="image.png" alt="Sample Image" width="100" height="200" data-custom="customValue"/>
+        </div>
+      XML
+
+      expected = <<~XML
+        <div>
+          <img src="image.png" alt="Sample Image" width="100" height="200" data-custom="customValue"/>
+        </div>
+      XML
+      expect(sanitizer.scrub_xml(xml).strip).to eq(expected.strip)
+    end
+
+    it 'preserves all attributes of <img> tags with additional attributes and nested elements' do
+      xml = <<~XML
+        <section>
+          <p>Here is an image:</p>
+          <img src="photo.jpg" alt="Beautiful Landscape" width="300" height="150" class="responsive" data-info="landscape"/>
+          <footer>Image provided by photographer</footer>
+        </section>
+      XML
+
+      expected = <<~XML
+        <section>
+          <p>Here is an image:</p>
+          <img src="photo.jpg" alt="Beautiful Landscape" width="300" height="150" class="responsive" data-info="landscape"/>
+          <footer>Image provided by photographer</footer>
+        </section>
+      XML
+
+      expect(sanitizer.scrub_xml(xml).strip).to eq(expected.strip)
+    end
   end
 
   describe 'scrub_svg with id remap' do

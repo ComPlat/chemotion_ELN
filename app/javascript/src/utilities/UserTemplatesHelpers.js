@@ -1,13 +1,14 @@
 import ProfilesFetcher from 'src/fetchers/ProfilesFetcher';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
+
 const key = 'ketcher-tmpls';
 
 const createAddAttachmentidToNewUserTemplate = async (newValue, newItem, deleteIdx) => {
   const res = await ProfilesFetcher.uploadUserTemplates({
     content: JSON.stringify(newItem),
-  }).catch(err => console.log("err in create"));
+  }).catch((err) => console.error('err in create'));
   const attachment_id = res?.template_details?.filename;
-  newItem['props']['path'] = attachment_id;
+  newItem.props.path = attachment_id;
   newValue[newValue.length - 1] = newItem;
   if (deleteIdx) newValue.splice(deleteIdx, 1);
   window.removeEventListener('storage', null);
@@ -39,9 +40,7 @@ const updateUserTemplateDetails = async (oldValue, newValue) => {
     if (!exists) {
       await ProfilesFetcher.deleteUserTemplate({
         path: oldValue[i].props.path,
-      }).catch(() =>
-        console.log('ISSUE WITH DELETE', localItem?.props?.path)
-      );
+      }).catch(() => console.error('ISSUE WITH DELETE', localItem?.props?.path));
       createAddAttachmentidToNewUserTemplate(newValue, newValue[i], i);
       break;
     }
@@ -50,8 +49,7 @@ const updateUserTemplateDetails = async (oldValue, newValue) => {
 
 const onEventListen = async (event) => {
   let { newValue, oldValue } = event;
-  const bothArrayHaveItems = Array.isArray(newValue) && newValue.length && Array.isArray(oldValue) && oldValue.length;
-  if (bothArrayHaveItems) {
+  if (newValue && oldValue && newValue.length && oldValue.length) {
     newValue = JSON.parse(newValue);
     oldValue = JSON.parse(oldValue);
     if (event.key === key) { // matching key && deleteAllowed
