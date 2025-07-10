@@ -37,6 +37,8 @@ import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
 import Component from 'src/models/Component';
 import { parseNumericString } from 'src/utilities/MathUtils';
+import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
+import WeightPercentageReactionStore from 'src/stores/alt/stores/WeightPercentageReactionStore';
 
 export default class ReactionDetailsScheme extends React.Component {
   constructor(props) {
@@ -72,7 +74,6 @@ export default class ReactionDetailsScheme extends React.Component {
 
   componentDidMount() {
     TextTemplateStore.listen(this.handleTemplateChange);
-
     TextTemplateActions.fetchTextTemplates('reaction');
     TextTemplateActions.fetchTextTemplates('reactionDescription');
   }
@@ -295,6 +296,25 @@ export default class ReactionDetailsScheme extends React.Component {
     });
   }
 
+  updateReactionMaterials() {
+    const { reaction } = this.props;
+    const { targetAmount } = WeightPercentageReactionStore.getState();
+
+    if (!targetAmount || !targetAmount.value || targetAmount.value <= 0) return;
+
+    const updateSampleAmount = (sample) => {
+      if (sample.weight_percentage && sample.weight_percentage > 0) {
+        const amountValue = targetAmount.value * sample.weight_percentage;
+        sample.setAmount({
+          value: amountValue,
+          unit: targetAmount.unit,
+        });
+      }
+    };
+
+    [...reaction.starting_materials, ...reaction.reactants].forEach(updateSampleAmount);
+  }
+
   handleMaterialsChange(changeEvent) {
     switch (changeEvent.type) {
       case 'referenceChanged':
@@ -466,12 +486,20 @@ export default class ReactionDetailsScheme extends React.Component {
   }
 
   updatedReactionForAmountUnitChange(changeEvent) {
+    const { reaction } = this.props;
     const { sampleID, amount } = changeEvent;
-    const updatedSample = this.props.reaction.sampleById(sampleID);
+    const updatedSample = reaction.sampleById(sampleID);
     // normalize to milligram
     // updatedSample.setAmountAndNormalizeToGram(amount);
     // setAmount should be called first before updating feedstock mole and volume values
     updatedSample.setAmount(amount);
+    if (reaction.weight_percentage && updatedSample.product_reference && changeEvent.amountType === 'target') {
+      const amountUnitObject = {
+        value: amount.value,
+        unit: amount.unit,
+      };
+      WeightPercentageReactionActions.setTargetAmountProductReference(amountUnitObject);
+    }
 
     if (updatedSample.gas_type === 'catalyst') {
       GasPhaseReactionActions.setCatalystReferenceMole(updatedSample.amount_mol);
@@ -519,7 +547,6 @@ export default class ReactionDetailsScheme extends React.Component {
   updatedReactionForEquivalentChange(changeEvent) {
     const { sampleID, equivalent } = changeEvent;
     const updatedSample = this.props.reaction.sampleById(sampleID);
-
     updatedSample.equivalent = equivalent;
 
     return this.updatedReactionWithSample(this.updatedSamplesForEquivalentChange.bind(this), updatedSample);
@@ -530,10 +557,6 @@ export default class ReactionDetailsScheme extends React.Component {
     const { sampleID, weightPercentage } = changeEvent;
     const updatedSample = reaction.sampleById(sampleID);
     updatedSample.weight_percentage = weightPercentage;
-    const equivalentEvent = { ...changeEvent, equivalent: null, type: 'equivalentChanged' };
-    this.onReactionChange(
-      this.updatedReactionForEquivalentChange(equivalentEvent)
-    );
     return this.updatedReactionWithSample(this.updatedSamplesForWeightPercentageChange.bind(this), updatedSample);
   }
 
@@ -920,14 +943,10 @@ export default class ReactionDetailsScheme extends React.Component {
     let stoichiometryCoeff = 1.0;
     return samples.map((sample) => {
       stoichiometryCoeff = (sample.coefficient || 1.0) / (referenceMaterial?.coefficient || 1.0);
-      console.log('outside', updatedSample.equivalent);
       if (sample.id === updatedSample.id && updatedSample.equivalent) {
-        console.log('inside', updatedSample.equivalent);
         sample.equivalent = updatedSample.equivalent;
-        // console.log('inside inside', sample.equivalent);
         if (referenceMaterial && referenceMaterial.amount_value
           && updatedSample.gas_type !== 'feedstock') {
-          console.log('inside the inside');
           sample.setAmountAndNormalizeToGram({
             value: updatedSample.equivalent * referenceMaterial.amount_mol,
             unit: 'mol',
@@ -1115,7 +1134,6 @@ export default class ReactionDetailsScheme extends React.Component {
 
   updatedReactionWithSample(updateFunction, updatedSample, type) {
     const { reaction } = this.props;
-    console.log('updatedReactionWithSample called with updatedSample:', updatedSample);
     reaction.starting_materials = updateFunction(reaction.starting_materials, updatedSample, 'starting_materials', type);
     reaction.reactants = updateFunction(reaction.reactants, updatedSample, 'reactants', type);
     reaction.solvents = updateFunction(reaction.solvents, updatedSample, 'solvents', type);
@@ -1187,6 +1205,7 @@ export default class ReactionDetailsScheme extends React.Component {
       }
       reaction.editedSample = undefined;
     } else {
+      this.updateReactionMaterials();
       const { referenceMaterial } = reaction;
       reaction.products.map((sample) => {
         sample.concn = sample.amount_mol / reaction.solventVolume;
