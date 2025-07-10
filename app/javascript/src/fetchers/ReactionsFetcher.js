@@ -8,6 +8,7 @@ import Literature from 'src/models/Literature';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
+import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
 
 // TODO: Extract common base functionality into BaseFetcher
 export default class ReactionsFetcher {
@@ -26,6 +27,11 @@ export default class ReactionsFetcher {
             }
             if (catalystMoles) {
               GasPhaseReactionActions.setCatalystReferenceMole(catalystMoles);
+            }
+            const { productReference, targetAmount } = reaction.findProductReferenceMaterial();
+            if (productReference) {
+              WeightPercentageReactionActions.setProductReference(productReference);
+              WeightPercentageReactionActions.setTargetAmountProductReference(targetAmount);
             }
             if (json.literatures && json.literatures.length > 0) {
               const tliteratures = json.literatures.map((literature) => new Literature(literature));

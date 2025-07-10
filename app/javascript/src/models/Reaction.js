@@ -1128,4 +1128,22 @@ export default class Reaction extends Element {
     const feedstockMaterial = materials.find((material) => (material.gas_type === 'feedstock'));
     return feedstockMaterial;
   }
+
+  findProductReferenceMaterial() {
+    const result = {
+      productReference: null,
+      targetAmount: null,
+    };
+    if (this.products && this.products.length > 0) {
+      const productReference = this.products.find((material) => (material.product_reference === true));
+      if (productReference) {
+        result.productReference = productReference;
+        result.targetAmount = {
+          value: productReference.target_amount_value,
+          unit: productReference.target_amount_unit
+        };
+      }
+    }
+    return result;
+  }
 }
