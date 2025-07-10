@@ -56,8 +56,10 @@ module Chemotion
                    Loofah.scrub_xml_fragment(result, :strip)
                  when :html
                    Loofah.scrub_html5_fragment(result, :strip)
+                 when :svg
+                   Chemotion::SvgSanitizer.sanitize(result)
                  else
-                   Nokogiri::XML(result) #Loofah.scrub_fragment(result, :strip)
+                   Loofah.scrub_fragment(result, :strip)
                  end.to_s
         # Fix some camelcase attributes
 >>>>>>> 46dd3f1e2 (svg scruber loofah replace with Nokogiri, svg id_suffix limited glyph ids)
