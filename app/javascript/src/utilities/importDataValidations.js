@@ -23,7 +23,7 @@ const numrangeFields = ['melting_point', 'boiling_point'];
  */
 export const validateFloat = (value) => {
   if (value === null || value === undefined || value === '') {
-    return { valid: true, message: '' }; // Empty values are considered valid
+    return { valid: true, message: '' };
   }
 
   if (typeof value === 'number') {
@@ -235,7 +235,6 @@ export const validateSolvent = (value) => {
  */
 export const validateField = (value, fieldName, options = {}) => {
   // Skip validation for empty values if not marked as required
-  console.log((value === null || value === undefined || value === '') && !options.required);
   if ((value === null || value === undefined || value === '') && !options.required) {
     return { valid: true, message: '' };
   }
