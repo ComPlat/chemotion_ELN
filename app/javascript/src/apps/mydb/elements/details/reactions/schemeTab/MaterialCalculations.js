@@ -1,86 +1,76 @@
 import React, { Component } from 'react';
-// import PropTypes from 'prop-types';
+import PropTypes from 'prop-types';
 import { Form } from 'react-bootstrap';
 
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 
-
 export default class MaterialCalculations extends Component {
-
-  notApplicableInput() {
-    return (
-      <td className='pt-4 px-1'>
-        <Form.Control type="text"
-          value="N / A"
-          disabled={true}
-        />
-      </td>
-    )
-  }
-
-  materialVolume(material, inputsStyle) {
+  materialVolume() {
+    const { material } = this.props;
+    if (material.contains_residues) {
+      return <Form.Control type="text" value="N / A" disabled />;
+    }
 
     const metricPrefixes = ['m', 'n', 'u'];
-    const metric = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[1]) > -1) ? material.metrics[1] : 'm';
+    const metric = (
+      material.metrics
+      && material.metrics.length > 2
+      && metricPrefixes.includes(material.metrics[1])
+    ) ? material.metrics[1]
+      : 'm';
 
-    if (material.contains_residues)
-      return this.notApplicableInput(inputsStyle);
-    else
-      return (
-        <td className='pt-4 px-1'>
-          <NumeralInputWithUnitsCompo
-            key={material.id}
-            value={material.amount_ml || ''}
-            unit='l'
-            metricPrefix={metric}
-            metricPrefixes={metricPrefixes}
-            precision={5}
-            disabled
-            readOnly
-          />
-        </td>
-      )
+    return (
+      <NumeralInputWithUnitsCompo
+        className="reaction-material__volume-input"
+        value={material.amount_ml || ''}
+        unit="l"
+        metricPrefix={metric}
+        metricPrefixes={metricPrefixes}
+        precision={5}
+        disabled
+        readOnly
+        size="sm"
+      />
+    );
   }
 
   render() {
-    const { material, deleteMaterial, isDragging, connectDragSource } = this.props;
+    const { material } = this.props;
 
     const metricPrefixes = ['m', 'n', 'u'];
-    const metric = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[0]) > -1) ? material.metrics[0] : 'm';
+    const metric = (
+      material.metrics
+      && material.metrics.length > 2
+      && metricPrefixes.includes(material.metrics[0])
+    ) ? material.metrics[0]
+      : 'm';
 
     const metricPrefixesMol = ['m', 'n'];
-    const metricMol = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[2]) > -1) ? material.metrics[2] : 'm';
-
-    const inputsStyle = {
-      paddingTop: 15,
-      paddingRight: 2,
-      paddingLeft: 2,
-    };
+    const metricMol = (
+      material.metrics
+      && material.metrics.length > 2
+      && metricPrefixes.includes(material.metrics[2])
+    ) ? material.metrics[2]
+      : 'm';
 
     return (
-      <tr>
-        <td className="pt-4 px-1" />
-        <td className="pt-4 px-1" />
-        <td className="pt-4 px-1" />
-        <td className="pt-4 px-1"><label>Adjusted: </label></td>
-        <td className="pt-4 px-1">
+      <div className="d-flex gap-2 align-items-start">
+        <div className="flex-grow-1 text-end pt-1">Adjusted:</div>
+        <div className="reaction-material__amount-input">
           <NumeralInputWithUnitsCompo
-            key={material.id}
+            className="reaction-material__mass-input"
             value={material.adjusted_amount_g}
-            unit='g'
+            unit="g"
             metricPrefix={metric}
             metricPrefixes={metricPrefixes}
             precision={5}
             disabled
             readOnly
+            size="sm"
           />
-        </td>
-
-        {this.materialVolume(material, inputsStyle)}
-
-        <td className="pt-4 px-1">
+          {this.materialVolume()}
           <NumeralInputWithUnitsCompo
-            key={'adjusted_amount_mol' + material.id.toString()}
+            className="reaction-material__molarity-input"
             value={material.adjusted_amount_mol}
             unit="mol"
             metricPrefix={metricMol}
@@ -88,31 +78,41 @@ export default class MaterialCalculations extends Component {
             precision={4}
             disabled
             readOnly
+            size="sm"
           />
-        </td>
-
-        <td className="pt-4 px-1">
-          <NumeralInputWithUnitsCompo
-            key={'adjusted_loading' + material.id.toString()}
-            value={material.adjusted_loading}
-            unit="mmol/g"
-            metricPrefix="n"
-            metricPrefixes={['n']}
-            precision={3}
-            disabled
-            readOnly
-          />
-        </td>
-
-        <td className="pt-4 px-1">
-          <Form.Control
-            type="text"
-            value={`${((material.adjusted_equivalent || 0) * 100).toFixed(1)} %`}
-            disabled
-          />
-        </td>
-        <td />
-      </tr>
+        </div>
+        <NumeralInputWithUnitsCompo
+          className="reaction-material__concentration-input"
+          value={material.adjusted_loading}
+          unit="mmol/g"
+          metricPrefix="n"
+          metricPrefixes={['n']}
+          precision={3}
+          disabled
+          readOnly
+          size="sm"
+        />
+        <Form.Control
+          className="reaction-material__equivalent-input"
+          type="text"
+          value={`${((material.adjusted_equivalent || 0) * 100).toFixed(1)} %`}
+          disabled
+          size="sm"
+        />
+        <div className="reaction-material__delete-input" />
+      </div>
     );
   }
 }
+
+MaterialCalculations.propTypes = {
+  material: PropTypes.shape({
+    contains_residues: PropTypes.bool,
+    metrics: PropTypes.arrayOf(PropTypes.string),
+    amount_ml: PropTypes.number,
+    adjusted_amount_g: PropTypes.number,
+    adjusted_amount_mol: PropTypes.number,
+    adjusted_loading: PropTypes.number,
+    adjusted_equivalent: PropTypes.number,
+  }).isRequired,
+};
