@@ -56,6 +56,7 @@ import { ShowUserLabels } from 'src/components/UserLabels';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 // eslint-disable-next-line import/no-named-as-default
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
+import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
 
 const handleProductClick = (product) => {
   const uri = Aviator.getCurrentURI();
@@ -494,6 +495,17 @@ export default class ReactionDetails extends Component {
     });
   }
 
+  // eslint-disable-next-line class-methods-use-this
+  updateReactionProductReference(reaction) {
+    Promise.resolve().then(() => {
+      const { productReference, amountTarget } = reaction.findProductReferenceMaterial();
+      if (productReference) {
+        WeightPercentageReactionActions.setProductReference(productReference);
+        WeightPercentageReactionActions.setTargetAmountProductReference(amountTarget);
+      }
+    });
+  }
+
   render() {
     const { reaction, visible, activeTab } = this.state;
     this.updateReactionVesselSize(reaction);
@@ -502,6 +514,7 @@ export default class ReactionDetails extends Component {
       schemeType = 'gaseous';
     } else if (reaction.weight_percentage) {
       schemeType = 'weight percentage';
+      this.updateReactionProductReference(reaction);
     }
     const tabContentsMap = {
       scheme: (

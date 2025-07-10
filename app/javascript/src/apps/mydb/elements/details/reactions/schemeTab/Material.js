@@ -112,7 +112,7 @@ class Material extends Component {
     super(props);
 
     this.state = {
-      equivalentWeightPercentageFieldChange: 'molar mass',
+      fieldToShow: 'molar mass',
     };
 
     this.createParagraph = this.createParagraph.bind(this);
@@ -122,6 +122,23 @@ class Material extends Component {
     this.handleCoefficientChange = this.handleCoefficientChange.bind(this);
     this.debounceHandleAmountUnitChange = debounce(this.handleAmountUnitChange, 500);
     this.yieldOrConversionRate = this.yieldOrConversionRate.bind(this);
+  }
+
+  componentDidMount() {
+    const { material } = this.props;
+    const isEmpty = (v) => v === null || v === undefined || Number.isNaN(v);
+
+    // Determine initial field based on data
+    let initialField;
+    if (!isEmpty(material.weight_percentage)) {
+      initialField = 'weight percentage';
+    } else {
+      initialField = 'molar mass';
+    }
+
+    this.setState({
+      fieldToShow: initialField,
+    });
   }
 
   handleMaterialClick(sample) {
@@ -215,33 +232,6 @@ class Material extends Component {
             />
           </td>
         )
-    );
-  }
-
-  renderProductReference(material, reaction) {
-    return (
-      reaction.weight_percentage ? (
-        <td>
-          <OverlayTrigger
-            placement="top"
-            overlay={(
-              <Tooltip id="product-reference-tooltip">
-                Select as reference product for weight percentage
-              </Tooltip>
-            )}
-          >
-            <Form.Check
-              type="radio"
-              disabled={!permitOn(reaction)}
-              name="productReference"
-              checked={material.product_reference}
-              onChange={(e) => this.handleReferenceChange(e, 'productReferenceChanged')}
-              size="sm"
-              className="custom-radio m-1"
-            />
-          </OverlayTrigger>
-        </td>
-      ) : <td />
     );
   }
 
@@ -343,7 +333,7 @@ class Material extends Component {
     if (materialGroup === 'products') {
       return this.yieldOrConversionRate(material);
     }
-    return (reaction.weight_percentage ? this.customFieldValueSelector()
+    return (reaction.weight_percentage && material.decoupled ? this.customFieldValueSelector()
       : (
         <NumeralInputWithUnitsCompo
           size="sm"
@@ -361,21 +351,27 @@ class Material extends Component {
 
   customFieldValueSelector() {
     const { lockEquivColumn, material, reaction } = this.props;
-    const { equivalentWeightPercentageFieldChange } = this.state;
-    const equivalentField = equivalentWeightPercentageFieldChange === 'molar mass';
-    const currentValue = equivalentField ? material.equivalent : material.weight_percentage;
+    const { fieldToShow } = this.state;
+    const equivalentField = fieldToShow === 'molar mass';
+    const valueToShow = equivalentField ? material.equivalent : material.weight_percentage;
+    let disableWeightPercentageField = false;
+    const weightPercentageIsSelected = fieldToShow === 'weight percentage';
+    if (weightPercentageIsSelected) {
+      const productReference = reaction.findProductReferenceMaterial();
+      const productReferenceMaterial = productReference?.productReference;
+      const targetAmountIsNotValid = Number.isNaN(productReference?.targetAmount?.value)
+        || productReference?.targetAmount?.value === 0;
+      disableWeightPercentageField = !productReferenceMaterial || targetAmountIsNotValid;
+    }
+
     return (
       <FieldValueSelector
         fieldOptions={['molar mass', 'weight percentage']}
-        onFirstRenderField={
-          material.equivalent && equivalentField
-          && !Number.isNaN(material.weight_percentage) ? 'molar mass' : 'weight percentage'
-        }
-        value={currentValue}
+        onFirstRenderField={fieldToShow}
+        value={valueToShow}
         onChange={(e) => { this.handleOnValueChange(e, equivalentField); }}
-        onFieldChange={(field) => {
-          this.handleEquivalentWeightPercentageChange(field);
-        }}
+        onFieldChange={(field) => this.handleEquivalentWeightPercentageChange(field)}
+        disableSpecificField={disableWeightPercentageField}
         disabled={
           !permitOn(reaction) || ((((material.reference || false)
           && material.equivalent) !== false) || lockEquivColumn)
@@ -507,7 +503,6 @@ class Material extends Component {
 
   handleReferenceChange(e, type = null) {
     const value = e.target.value;
-    console.log(type);
     if (this.props.onChange) {
       const event = {
         type: type ? 'productReferenceChanged' : 'referenceChanged',
@@ -570,7 +565,7 @@ class Material extends Component {
     }
   }
 
-  handleAmountUnitChange(e, value) {
+  handleAmountUnitChange(e, value, amountType) {
     if (e.value === value) return;
     if (this.props.onChange && e) {
       const event = {
@@ -578,6 +573,7 @@ class Material extends Component {
         type: 'amountUnitChanged',
         materialGroup: this.props.materialGroup,
         sampleID: this.materialId(),
+        amountType,
 
       };
       this.props.onChange(event);
@@ -645,13 +641,12 @@ class Material extends Component {
   }
 
   handleEquivalentWeightPercentageChange(field) {
-    this.setState({ equivalentWeightPercentageFieldChange: field });
+    this.setState({ fieldToShow: field });
   }
 
   handleWeightPercentageChange(e) {
     const { onChange, materialGroup } = this.props;
     const weightPercentage = e;
-    console.log(weightPercentage);
     if (onChange && e) {
       const event = {
         type: 'weightPercentageChanged',
@@ -766,6 +761,10 @@ class Material extends Component {
 
   amountField(material, metricPrefixes, reaction, massBsStyle, metric) {
     const { lockEquivColumn, materialGroup } = this.props;
+    let disableFieldWithValidWeightPercentage = false;
+    if (reaction.weight_percentage && material.decoupled) {
+      disableFieldWithValidWeightPercentage = !!material.weight_percentage && !(material.weight_percentage > 0);
+    }
     return (
       <OverlayTrigger
         delay="100"
@@ -783,11 +782,12 @@ class Material extends Component {
             metricPrefixes={metricPrefixes}
             precision={4}
             disabled={
-              !permitOn(reaction)
+              disableFieldWithValidWeightPercentage
+              || !permitOn(reaction)
               || (materialGroup !== 'products' && !material.reference && lockEquivColumn)
               || material.gas_type === 'feedstock' || material.gas_type === 'gas'
             }
-            onChange={(e) => this.debounceHandleAmountUnitChange(e, material.amount_g)}
+            onChange={(e) => this.debounceHandleAmountUnitChange(e, material.amount_g, material.amountType)}
             onMetricsChange={this.handleMetricsChange}
             variant={material.error_mass ? 'error' : massBsStyle}
             size="sm"
@@ -930,9 +930,12 @@ class Material extends Component {
   }
 
   toggleTarget(isTarget) {
-/*     if (this.props.materialGroup !== 'products') {
+    /*
+    allow switching target/real for all materials
+    if (this.props.materialGroup !== 'products') {
       this.handleAmountTypeChange(!isTarget ? 'target' : 'real');
-    } */
+    }
+    */
     this.handleAmountTypeChange(!isTarget ? 'target' : 'real');
   }
 
@@ -1176,6 +1179,33 @@ class Material extends Component {
           {moleculeIupacName}
         </span>
       </div>
+    );
+  }
+
+  renderProductReference(material, reaction) {
+    return (
+      reaction.weight_percentage ? (
+        <td>
+          <OverlayTrigger
+            placement="top"
+            overlay={(
+              <Tooltip id="product-reference-tooltip">
+                Select as reference product for weight percentage
+              </Tooltip>
+            )}
+          >
+            <Form.Check
+              type="radio"
+              disabled={!permitOn(reaction)}
+              name="productReference"
+              checked={material.product_reference}
+              onChange={(e) => this.handleReferenceChange(e, 'productReferenceChanged')}
+              size="sm"
+              className="custom-radio m-1"
+            />
+          </OverlayTrigger>
+        </td>
+      ) : <td />
     );
   }
 
