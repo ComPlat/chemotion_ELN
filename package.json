@@ -40,8 +40,6 @@
     "deep-equal": "1.0.1",
     "dnd-multi-backend": "^9.0.0",
     "es6-promise-debounce": "^1.0.1",
-    "exceljs": "^4.4.0",
-    "fflate": "0.7.4",
     "html2pdf.js": "^0.10.1",
     "humps": "^2.0.1",
     "immutable": "^4.3.7",
