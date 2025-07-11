@@ -1214,7 +1214,10 @@ export default class ReactionDetailsScheme extends React.Component {
     } else {
       const { referenceMaterial } = reaction;
       reaction.products.map((sample) => {
-        sample.concn = sample.amount_mol / reaction.solventVolume;
+        // Don't override concn for mixture samples as they have their own concentration logic
+        if (!sample.isMixture()) {
+          sample.concn = sample.amount_mol / reaction.solventVolume;
+        }
         if (typeof (referenceMaterial) !== 'undefined' && referenceMaterial) {
           if (sample.contains_residues) {
             sample.maxAmount = referenceMaterial.amount_g + (referenceMaterial.amount_mol
@@ -1226,10 +1229,16 @@ export default class ReactionDetailsScheme extends React.Component {
 
     if ((typeof (lockEquivColumn) !== 'undefined' && !lockEquivColumn) || !reaction.changed) {
       reaction.starting_materials.map((sample) => {
-        sample.concn = sample.amount_mol / reaction.solventVolume;
+        // Don't override concn for mixture samples as they have their own concentration logic
+        if (!sample.isMixture()) {
+          sample.concn = sample.amount_mol / reaction.solventVolume;
+        }
       });
       reaction.reactants.map((sample) => {
-        sample.concn = sample.amount_mol / reaction.solventVolume;
+        // Don't override concn for mixture samples as they have their own concentration logic
+        if (!sample.isMixture()) {
+          sample.concn = sample.amount_mol / reaction.solventVolume;
+        }
       });
     }
 

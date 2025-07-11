@@ -16,6 +16,7 @@ import SampleName from 'src/components/common/SampleName';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import { UrlSilentNavigation, SampleCode } from 'src/utilities/ElementUtils';
 import { correctPrefix, validDigit } from 'src/utilities/MathUtils';
+import { getMetricMol, metricPrefixesMol } from 'src/utilities/MetricsUtils';
 import Reaction from 'src/models/Reaction';
 import Sample from 'src/models/Sample';
 import { permitCls, permitOn } from 'src/components/common/uis';
@@ -609,6 +610,31 @@ class Material extends Component {
     );
   }
 
+  materialAmountMol(material) {
+    const { reaction, materialGroup, lockEquivColumn } = this.props;
+    const metricMol = getMetricMol(material);
+
+    return (
+      <td>
+        <NumeralInputWithUnitsCompo
+          key={material.id}
+          value={material.amount_mol}
+          unit="mol"
+          metricPrefix={metricMol}
+          metricPrefixes={metricPrefixesMol}
+          precision={4}
+          disabled={!permitOn(reaction)
+            || (materialGroup === 'products'
+            || (!material.reference && lockEquivColumn))}
+          onChange={(e) => this.handleAmountUnitChange(e, material.amount_mol)}
+          onMetricsChange={this.handleMetricsChange}
+          variant={material.amount_unit === 'mol' ? 'primary' : 'light'}
+          size="sm"
+        />
+      </td>
+    );
+  }
+
   toggleComponentsAccordion() {
     this.setState((prevState) => ({ showComponents: !prevState.showComponents }));
   }
@@ -633,9 +659,9 @@ class Material extends Component {
 
     if (existingComponents.length > 0) {
       // Use existing components, deserializing if needed
-      const componentsList = existingComponents.map(comp =>
+      const componentsList = existingComponents.map((comp) => (
         comp instanceof ComponentModel ? comp : ComponentModel.deserializeData(comp)
-      );
+      ));
 
       this.setState({
         mixtureComponents: componentsList,
@@ -646,17 +672,17 @@ class Material extends Component {
       this.setState({ mixtureComponentsLoading: true });
 
       ComponentsFetcher.fetchComponentsBySampleId(material.id)
-      .then((components) => {
-        const componentsList = components.map(ComponentModel.deserializeData);
-        this.setState({
-          mixtureComponents: componentsList,
-          mixtureComponentsLoading: false,
+        .then((components) => {
+          const componentsList = components.map(ComponentModel.deserializeData);
+          this.setState({
+            mixtureComponents: componentsList,
+            mixtureComponentsLoading: false,
+          });
+        })
+        .catch((error) => {
+          console.error('Error fetching components:', error);
+          this.setState({ mixtureComponentsLoading: false });
         });
-      })
-      .catch((error) => {
-        console.error('Error fetching components:', error);
-        this.setState({ mixtureComponentsLoading: false });
-      });
     } else {
       // No components and no ID, clear state
       this.setState({
@@ -997,23 +1023,7 @@ class Material extends Component {
 
           {this.materialVolume(material)}
 
-          <td>
-            <NumeralInputWithUnitsCompo
-              key={material.id}
-              value={material.amount_mol}
-              unit="mol"
-              metricPrefix={metricMol}
-              metricPrefixes={metricPrefixes}
-              precision={4}
-              disabled={!permitOn(reaction)
-                || (this.props.materialGroup === 'products'
-                || (!material.reference && this.props.lockEquivColumn))}
-              onChange={(e) => this.handleAmountUnitChange(e, material.amount_mol)}
-              onMetricsChange={this.handleMetricsChange}
-              variant={material.amount_unit === 'mol' ? 'primary' : 'light'}
-              size="sm"
-            />
-          </td>
+          {this.materialAmountMol(material)}
 
           {this.materialLoading(material, showLoadingColumn)}
 
@@ -1115,7 +1125,7 @@ class Material extends Component {
 
     let tooltip = `molar mass: ${molecularWeight} g/mol`;
 
-    if (sample.isMixture() && sample.density != null) {
+    if (sample.isMixture() && sample.density != null && sample.density > 0) {
       tooltip += `, density: ${sample.density.toFixed(4)} g/mL`;
     }
 
