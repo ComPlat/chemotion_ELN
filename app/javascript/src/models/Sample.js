@@ -343,6 +343,11 @@ export default class Sample extends Element {
     splitSample.split_label = splitSample.buildSplitShortLabel();
 
     // Map mixture properties from sample_details for mixture samples
+    // Calculate total mixture mass first if this is a mixture and mass is not already calculated
+    if (this.isMixture() && this.hasComponents() && !this.sample_details?.total_mixture_mass) {
+      this.calculateTotalMixtureMass();
+    }
+
     this.applyMixturePropertiesToSample(splitSample);
 
     // Todo ???
