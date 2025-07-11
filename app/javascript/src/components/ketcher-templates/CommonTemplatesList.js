@@ -60,7 +60,7 @@ const CommonTemplatesList = memo(() => {
       const filtered = templateList?.filter((item) => item.name.toLowerCase()?.includes(lowerCaseQuery));
       setFilteredOptions(filtered);
     }, 300),
-    [templateList] // use templateList here
+    [templateList]
   );
 
   useEffect(() => {
@@ -127,9 +127,3 @@ const CommonTemplatesList = memo(() => {
 CommonTemplatesList.displayName = 'CommonTemplatesList';
 
 export default CommonTemplatesList;
-
-CommonTemplatesList.propTypes = {
-  // eslint-disable-next-line react/forbid-prop-types
-  onClickHandle: PropTypes.func.isRequired,
-  selectedItem: PropTypes.string.isRequired
-};

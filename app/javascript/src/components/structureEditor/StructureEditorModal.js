@@ -207,7 +207,6 @@ export default class StructureEditorModal extends React.Component {
       molfile: props.molfile,
       matriceConfigs: [],
       editor: initEditor(),
-      selectedShape: null,
       deleteAllowed: true
     };
     this.editors = createEditors();
@@ -327,7 +326,7 @@ export default class StructureEditorModal extends React.Component {
 
     const submitAddons = this.props.submitAddons ? this.props.submitAddons : '';
     const {
-      editor, showWarning, molfile, selectedShape, showModal
+      editor, showWarning, molfile, showModal
     } = this.state;
     const iframeHeight = showWarning ? '0px' : '630px';
     const iframeStyle = showWarning ? { border: 'none' } : {};
