@@ -1786,7 +1786,6 @@ export default class Sample extends Element {
 
     if (hasLiquid && totalVolumeML > 0) {
       this.density = totalMass / totalVolumeML;
-      console.log('Updated density:', this.density);
     } else {
       this.density = 0;
     }
