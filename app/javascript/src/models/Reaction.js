@@ -147,7 +147,8 @@ export default class Reaction extends Element {
       can_copy: false,
       variations: [],
       vessel_size: { amount: null, unit: 'ml' },
-      gaseous: false
+      gaseous: false,
+      weight_percentage: false,
     })
 
 
@@ -220,7 +221,8 @@ export default class Reaction extends Element {
       segments: this.segments.map(s => s.serialize()),
       variations: this.variations,
       vessel_size: this.vessel_size,
-      gaseous: this.gaseous
+      gaseous: this.gaseous,
+      weight_percentage: this.weight_percentage,
     });
   }
 
@@ -615,9 +617,11 @@ export default class Reaction extends Element {
       // Temporary set true, to fit with server side logical
       material.isSplit = true;
       material.reaction_product = false;
+      material.product_reference = false;
     } else if (newGroup == "starting_materials") {
       material.isSplit = true;
       material.reaction_product = false;
+      material.product_reference = false;
 
       if (material.start_parent && material.parent_id == null) {
         material.parent_id = material.start_parent
@@ -739,6 +743,12 @@ export default class Reaction extends Element {
     })
   }
 
+  markProductSampleAsReference(sampleID) {
+    this.products = this.products.map((sample) => (
+      { ...sample, product_reference: sample.id === sampleID }
+    ));
+  }
+
   toggleShowLabelForSample(sampleID) {
     const sample = this.sampleById(sampleID);
     sample.show_label = ((sample.decoupled && !sample.molfile) ? true : !sample.show_label);
@@ -812,6 +822,7 @@ export default class Reaction extends Element {
           mat.reference = group[index].reference;
           mat.gas_type = group[index].gas_type;
           mat.gas_phase_data = group[index].gas_phase_data;
+          mat.product_reference = group[index].product_reference;
           mat.updateChecksum();
           group[index] = mat;
           break;
@@ -1067,5 +1078,23 @@ export default class Reaction extends Element {
     const materials = [...this.starting_materials, ...this.reactants];
     const feedstockMaterial = materials.find((material) => (material.gas_type === 'feedstock'));
     return feedstockMaterial;
+  }
+
+  findProductReferenceMaterial() {
+    const result = {
+      productReference: null,
+      targetAmount: null,
+    };
+    if (this.products && this.products.length > 0) {
+      const productReference = this.products.find((material) => (material.product_reference === true));
+      if (productReference) {
+        result.productReference = productReference;
+        result.targetAmount = {
+          value: productReference.target_amount_value,
+          unit: productReference.target_amount_unit
+        };
+      }
+    }
+    return result;
   }
 }

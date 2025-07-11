@@ -21,6 +21,7 @@ import Sample from 'src/models/Sample';
 import { permitCls, permitOn } from 'src/components/common/uis';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 import { calculateFeedstockMoles } from 'src/utilities/UnitsConversion';
+import FieldValueSelector from 'src/apps/mydb/elements/details/FieldValueSelector';
 
 const matSource = {
   beginDrag(props) {
@@ -110,6 +111,10 @@ class Material extends Component {
   constructor(props) {
     super(props);
 
+    this.state = {
+      fieldToShow: 'molar mass',
+    };
+
     this.createParagraph = this.createParagraph.bind(this);
     this.handleAmountUnitChange = this.handleAmountUnitChange.bind(this);
     this.handleMetricsChange = this.handleMetricsChange.bind(this);
@@ -117,6 +122,23 @@ class Material extends Component {
     this.handleCoefficientChange = this.handleCoefficientChange.bind(this);
     this.debounceHandleAmountUnitChange = debounce(this.handleAmountUnitChange, 500);
     this.yieldOrConversionRate = this.yieldOrConversionRate.bind(this);
+  }
+
+  componentDidMount() {
+    const { material } = this.props;
+    const isEmpty = (v) => v === null || v === undefined || Number.isNaN(v);
+
+    // Determine initial field based on data
+    let initialField;
+    if (!isEmpty(material.weight_percentage)) {
+      initialField = 'weight percentage';
+    } else {
+      initialField = 'molar mass';
+    }
+
+    this.setState({
+      fieldToShow: initialField,
+    });
   }
 
   handleMaterialClick(sample) {
@@ -192,20 +214,23 @@ class Material extends Component {
   }
 
   materialRef(material) {
+    const { reaction, materialGroup } = this.props;
     return (
-      this.props.materialGroup === 'products'
-        ? <td />
-        : <td>
-          <Form.Check
-            type='radio'
-            disabled={!permitOn(this.props.reaction)}
-            name="reference"
-            checked={material.reference}
-            onChange={e => this.handleReferenceChange(e)}
-            size="sm"
-            className='m-1'
-          />
-        </td>
+      materialGroup === 'products'
+        ? this.renderProductReference(material, reaction)
+        : (
+          <td>
+            <Form.Check
+              type="radio"
+              disabled={!permitOn(reaction)}
+              name="reference"
+              checked={material.reference}
+              onChange={(e) => this.handleReferenceChange(e)}
+              size="sm"
+              className="m-1"
+            />
+          </td>
+        )
     );
   }
 
@@ -273,6 +298,16 @@ class Material extends Component {
     );
   }
 
+  // eslint-disable-next-line react/sort-comp
+  handleOnValueChange(e, equivalentField) {
+    if (equivalentField) {
+      const value = { value: e };
+      this.handleEquivalentChange(value);
+    } else {
+      this.handleWeightPercentageChange(e);
+    }
+  }
+
   yieldOrConversionRate(material) {
     const { reaction, displayYieldField } = this.props;
     if (displayYieldField === true || displayYieldField === null) {
@@ -293,17 +328,53 @@ class Material extends Component {
   }
 
   equivalentOrYield(material) {
-    const { materialGroup } = this.props;
+    const { materialGroup, reaction, lockEquivColumn } = this.props;
     if (materialGroup === 'products') {
       return this.yieldOrConversionRate(material);
     }
+    return (reaction.weight_percentage && material.decoupled ? this.customFieldValueSelector()
+      : (
+        <NumeralInputWithUnitsCompo
+          size="sm"
+          precision={4}
+          value={material.equivalent}
+          disabled={
+            !permitOn(reaction) || ((((material.reference || false)
+            && material.equivalent) !== false) || lockEquivColumn)
+          }
+          onChange={(e) => this.handleEquivalentChange(e)}
+        />
+      )
+    );
+  }
+
+  customFieldValueSelector() {
+    const { lockEquivColumn, material, reaction } = this.props;
+    const { fieldToShow } = this.state;
+    const equivalentField = fieldToShow === 'molar mass';
+    const valueToShow = equivalentField ? material.equivalent : material.weight_percentage;
+    let disableWeightPercentageField = false;
+    const weightPercentageIsSelected = fieldToShow === 'weight percentage';
+    if (weightPercentageIsSelected) {
+      const productReference = reaction.findProductReferenceMaterial();
+      const productReferenceMaterial = productReference?.productReference;
+      const targetAmountIsNotValid = Number.isNaN(productReference?.targetAmount?.value)
+        || productReference?.targetAmount?.value === 0;
+      disableWeightPercentageField = !productReferenceMaterial || targetAmountIsNotValid;
+    }
+
     return (
-      <NumeralInputWithUnitsCompo
-        size="sm"
-        precision={4}
-        value={material.equivalent}
-        disabled={!permitOn(this.props.reaction) || ((((material.reference || false) && material.equivalent) !== false) || this.props.lockEquivColumn)}
-        onChange={e => this.handleEquivalentChange(e)}
+      <FieldValueSelector
+        fieldOptions={['molar mass', 'weight percentage']}
+        onFirstRenderField={fieldToShow}
+        value={valueToShow}
+        onChange={(e) => { this.handleOnValueChange(e, equivalentField); }}
+        onFieldChange={(field) => this.handleEquivalentWeightPercentageChange(field)}
+        disableSpecificField={disableWeightPercentageField}
+        disabled={
+          !permitOn(reaction) || ((((material.reference || false)
+          && material.equivalent) !== false) || lockEquivColumn)
+        }
       />
     );
   }
@@ -429,11 +500,11 @@ class Material extends Component {
     }
   }
 
-  handleReferenceChange(e) {
+  handleReferenceChange(e, type = null) {
     const value = e.target.value;
     if (this.props.onChange) {
       const event = {
-        type: 'referenceChanged',
+        type: type ? 'productReferenceChanged' : 'referenceChanged',
         materialGroup: this.props.materialGroup,
         sampleID: this.materialId(),
         value
@@ -493,7 +564,7 @@ class Material extends Component {
     }
   }
 
-  handleAmountUnitChange(e, value) {
+  handleAmountUnitChange(e, value, amountType) {
     if (e.value === value) return;
     if (this.props.onChange && e) {
       const event = {
@@ -501,6 +572,7 @@ class Material extends Component {
         type: 'amountUnitChanged',
         materialGroup: this.props.materialGroup,
         sampleID: this.materialId(),
+        amountType,
 
       };
       this.props.onChange(event);
@@ -554,15 +626,34 @@ class Material extends Component {
   }
 
   handleEquivalentChange(e) {
+    const { onChange, materialGroup } = this.props;
     const equivalent = e.value;
-    if (this.props.onChange && e) {
+    if (onChange && e) {
       const event = {
         type: 'equivalentChanged',
-        materialGroup: this.props.materialGroup,
+        materialGroup,
         sampleID: this.materialId(),
         equivalent
       };
-      this.props.onChange(event);
+      onChange(event);
+    }
+  }
+
+  handleEquivalentWeightPercentageChange(field) {
+    this.setState({ fieldToShow: field });
+  }
+
+  handleWeightPercentageChange(e) {
+    const { onChange, materialGroup } = this.props;
+    const weightPercentage = e;
+    if (onChange && e) {
+      const event = {
+        type: 'weightPercentageChanged',
+        materialGroup,
+        sampleID: this.materialId(),
+        weightPercentage
+      };
+      onChange(event);
     }
   }
 
@@ -669,6 +760,10 @@ class Material extends Component {
 
   amountField(material, metricPrefixes, reaction, massBsStyle, metric) {
     const { lockEquivColumn, materialGroup } = this.props;
+    let disableFieldWithValidWeightPercentage = false;
+    if (reaction.weight_percentage && material.decoupled) {
+      disableFieldWithValidWeightPercentage = !!material.weight_percentage && !(material.weight_percentage > 0);
+    }
     return (
       <OverlayTrigger
         delay="100"
@@ -686,11 +781,12 @@ class Material extends Component {
             metricPrefixes={metricPrefixes}
             precision={4}
             disabled={
-              !permitOn(reaction)
+              disableFieldWithValidWeightPercentage
+              || !permitOn(reaction)
               || (materialGroup !== 'products' && !material.reference && lockEquivColumn)
               || material.gas_type === 'feedstock' || material.gas_type === 'gas'
             }
-            onChange={(e) => this.debounceHandleAmountUnitChange(e, material.amount_g)}
+            onChange={(e) => this.debounceHandleAmountUnitChange(e, material.amount_g, material.amountType)}
             onMetricsChange={this.handleMetricsChange}
             variant={material.error_mass ? 'danger' : massBsStyle}
             size="sm"
@@ -840,9 +936,13 @@ class Material extends Component {
   }
 
   toggleTarget(isTarget) {
+    /*
+    allow switching target/real for all materials
     if (this.props.materialGroup !== 'products') {
       this.handleAmountTypeChange(!isTarget ? 'target' : 'real');
     }
+    */
+    this.handleAmountTypeChange(!isTarget ? 'target' : 'real');
   }
 
   solventMaterial(props, className) {
@@ -1044,8 +1144,6 @@ class Material extends Component {
       materialName = (
         <a
           role="link"
-          tabIndex={0}
-          onClick={() => this.handleMaterialClick(material)}
         >
           <span>{materialDisplayName}</span>
         </a>
@@ -1090,6 +1188,33 @@ class Material extends Component {
     );
   }
 
+  renderProductReference(material, reaction) {
+    return (
+      reaction.weight_percentage ? (
+        <td>
+          <OverlayTrigger
+            placement="top"
+            overlay={(
+              <Tooltip id="product-reference-tooltip">
+                Select as reference product for weight percentage
+              </Tooltip>
+            )}
+          >
+            <Form.Check
+              type="radio"
+              disabled={!permitOn(reaction)}
+              name="productReference"
+              checked={material.product_reference}
+              onChange={(e) => this.handleReferenceChange(e, 'productReferenceChanged')}
+              size="sm"
+              className="custom-radio m-1"
+            />
+          </OverlayTrigger>
+        </td>
+      ) : <td />
+    );
+  }
+
   render() {
     const {
       material, isDragging, canDrop, isOver, materialGroup
@@ -1104,7 +1229,7 @@ class Material extends Component {
     }
 
     if (this.props.materialGroup === 'products') {
-      material.amountType = 'real'; // always take real amount for product
+      // material.amountType = 'real'; // always take real amount for product
     }
     const sp = materialGroup === 'solvents' || materialGroup === 'purification_solvents';
     const component = sp ?
