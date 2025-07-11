@@ -14,6 +14,7 @@ import SampleName from 'src/components/common/SampleName';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import { UrlSilentNavigation, SampleCode } from 'src/utilities/ElementUtils';
 import { correctPrefix, validDigit } from 'src/utilities/MathUtils';
+import { getMetricMol, metricPrefixesMol } from 'src/utilities/MetricsUtils';
 import Reaction from 'src/models/Reaction';
 import Sample from 'src/models/Sample';
 import { permitCls, permitOn } from 'src/components/common/uis';
@@ -109,47 +110,6 @@ class Material extends Component {
     UrlSilentNavigation(sample);
     sample.updateChecksum();
     ElementActions.showReactionMaterial({ sample, reaction });
-  }
-
-  materialVolume(material, className) {
-    if (material.contains_residues) { return notApplicableInput(className); }
-    const { density, molarity_value, molarity_unit, has_density, has_molarity } = material;
-    const tooltip = has_density || has_molarity ?
-      (
-        <Tooltip id="density_info">
-          {has_density ? `density = ${density}` : `molarity = ${molarity_value} ${molarity_unit}`}
-        </Tooltip>
-      )
-      : <Tooltip id="density_info">no density or molarity defined</Tooltip>;
-
-    const metricPrefixes = ['m', 'n', 'u'];
-    const metric = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[1]) > -1)
-      ? material.metrics[1]
-      : 'm';
-
-    return (
-      <OverlayTrigger placement="top" overlay={tooltip}>
-        <div>
-          <NumeralInputWithUnitsCompo
-            className={className}
-            key={material.id}
-            value={material.amount_l}
-            unit="l"
-            metricPrefix={metric}
-            metricPrefixes={metricPrefixes}
-            precision={3}
-            disabled={!permitOn(this.props.reaction)
-              || ((this.props.materialGroup !== 'products')
-              && !material.reference && this.props.lockEquivColumn)
-              || material.gas_type === 'gas'}
-            onChange={(e) => this.handleAmountUnitChange(e, material.amount_l)}
-            onMetricsChange={this.handleMetricsChange}
-            variant={material.amount_unit === 'l' ? 'primary' : 'light'}
-            size="sm"
-          />
-        </div>
-      </OverlayTrigger>
-    );
   }
 
   materialLoading(material, showLoadingColumn) {
@@ -521,6 +481,146 @@ class Material extends Component {
     }
   };
 
+  materialVolume(material) {
+    if (material.contains_residues) {
+      return notApplicableInput();
+    }
+    const {
+      density, molarity_value, molarity_unit, has_density, has_molarity
+    } = material;
+    const tooltip = has_density || has_molarity ? (
+      <Tooltip id="density_info">
+        {has_density
+          ? `density = ${density}`
+          : `molarity = ${molarity_value} ${molarity_unit}`}
+      </Tooltip>
+    ) : (
+      <Tooltip id="density_info">no density or molarity defined</Tooltip>
+    );
+
+    const metricPrefixes = ['m', 'n', 'u'];
+    const metric = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[1]) > -1)
+      ? material.metrics[1]
+      : 'm';
+
+    return (
+      <OverlayTrigger placement="top" overlay={tooltip}>
+        <div>
+          <NumeralInputWithUnitsCompo
+            key={material.id}
+            value={material.amount_l}
+            unit="l"
+            metricPrefix={metric}
+            metricPrefixes={metricPrefixes}
+            precision={3}
+            disabled={!permitOn(this.props.reaction)
+              || ((this.props.materialGroup !== 'products')
+                && !material.reference && this.props.lockEquivColumn)
+              || material.gas_type === 'gas'}
+            onChange={(e) => this.handleAmountUnitChange(e, material.amount_l)}
+            onMetricsChange={this.handleMetricsChange}
+            variant={material.amount_unit === 'l' ? 'primary' : 'light'}
+            size="sm"
+          />
+        </div>
+      </OverlayTrigger>
+    );
+  }
+
+  materialAmountMol(material) {
+    const { reaction, materialGroup, lockEquivColumn } = this.props;
+    const metricMol = getMetricMol(material);
+
+    return (
+      <NumeralInputWithUnitsCompo
+        key={material.id}
+        value={material.amount_mol}
+        className="reaction-material__molarity-input"
+        unit="mol"
+        metricPrefix={metricMol}
+        metricPrefixes={metricPrefixesMol}
+        precision={4}
+        disabled={!permitOn(reaction)
+          || (materialGroup === 'products'
+            || (!material.reference && lockEquivColumn))}
+        onChange={(e) => this.handleAmountUnitChange(e, material.amount_mol)}
+        onMetricsChange={this.handleMetricsChange}
+        variant={material.amount_unit === 'mol' ? 'primary' : 'light'}
+        size="sm"
+      />
+    );
+  }
+
+  toggleComponentsAccordion() {
+    this.setState((prevState) => ({ showComponents: !prevState.showComponents }));
+  }
+
+  /**
+   * Fetches mixture components for a given material if it's a mixture.
+   * This method handles three scenarios:
+   * 1. If material is not a mixture, clears the components state
+   * 2. If material has existing components in memory, deserializes and uses them
+   * 3. If material is saved (has numeric ID) but no components in memory, fetches from API
+   *
+   * @param {Sample} material - The material sample to check for mixture components
+   * @returns {void}
+   */
+  fetchMixtureComponentsIfNeeded(material) {
+    if (!material || !(material.isMixture && material.isMixture())) {
+      this.setState({ mixtureComponents: [], mixtureComponentsLoading: false });
+      return;
+    }
+
+    const existingComponents = Array.isArray(material.components) ? material.components : [];
+
+    if (existingComponents.length > 0) {
+      // Use existing components, deserializing if needed
+      const componentsList = existingComponents.map((comp) => (
+        comp instanceof ComponentModel ? comp : ComponentModel.deserializeData(comp)
+      ));
+
+      this.setState({
+        mixtureComponents: componentsList,
+        mixtureComponentsLoading: false,
+      });
+    } else if (typeof material.id === 'number') {
+      // Fetch components for saved material
+      this.setState({ mixtureComponentsLoading: true });
+
+      ComponentsFetcher.fetchComponentsBySampleId(material.id)
+        .then((components) => {
+          const componentsList = components.map(ComponentModel.deserializeData);
+          this.setState({
+            mixtureComponents: componentsList,
+            mixtureComponentsLoading: false,
+          });
+        })
+        .catch((error) => {
+          console.error('Error fetching components:', error);
+          this.setState({ mixtureComponentsLoading: false });
+        });
+    } else {
+      // No components and no ID, clear state
+      this.setState({
+        mixtureComponents: [],
+        mixtureComponentsLoading: false,
+      });
+    }
+  }
+
+  handleShowLabelChange(e) {
+    const value = e.target.checked;
+    if (this.props.onChange) {
+      const event = {
+        type: 'showLabelChanged',
+        materialGroup: this.props.materialGroup,
+        sampleID: this.materialId(),
+        value,
+      };
+      this.props.onChange(event);
+    }
+  }
+
   handleAmountTypeChange(e) {
     if (this.props.onChange && e) {
       const event = {
@@ -826,6 +926,7 @@ class Material extends Component {
               <NumeralInputWithUnitsCompo
                 className="reaction-material__coefficient-input"
                 size="sm"
+                key={material.id}
                 value={material.coefficient ?? 1}
                 onChange={this.handleCoefficientChange}
                 name="coefficient"
@@ -835,37 +936,18 @@ class Material extends Component {
           <div className="reaction-material__amount-input">
             {this.massField(material, metricPrefixes, reaction, massBsStyle, metric)}
             {this.materialVolume(material, 'reaction-material__volume-input')}
-            <NumeralInputWithUnitsCompo
-              key={material.id}
-              value={material.amount_mol}
-              className="reaction-material__molarity-input"
-              unit="mol"
-              metricPrefix={metricMol}
-              metricPrefixes={metricPrefixes}
-              precision={4}
-              disabled={!permitOn(reaction)
-                || (this.props.materialGroup === 'products'
-                || (!material.reference && this.props.lockEquivColumn))}
-              onChange={(e) => this.handleAmountUnitChange(e, material.amount_mol)}
-              onMetricsChange={this.handleMetricsChange}
-              variant={material.amount_unit === 'mol' ? 'primary' : 'light'}
-              size="sm"
-            />
+            {this.materialAmountMol(material)}
+            {this.materialLoading(material, showLoadingColumn)}
+            {this.materialConcentration(material)}
+            {this.equivalentOrYield(material)}
+
+            <div className="reaction-material__delete-input">
+              <DeleteButton
+                disabled={!permitOn(reaction)}
+                onClick={() => deleteMaterial(material)}
+              />
+            </div>
           </div>
-
-          {this.materialLoading(material, showLoadingColumn)}
-
-          {this.materialConcentration(material)}
-
-          {this.equivalentOrYield(material)}
-
-          <div className="reaction-material__delete-input">
-            <DeleteButton
-              disabled={!permitOn(reaction)}
-              onClick={() => deleteMaterial(material)}
-            />
-          </div>
-        </div>
 
         {/* Add a new row for the arrow button if mixture with components */}
         <div>
@@ -943,7 +1025,7 @@ class Material extends Component {
 
     let tooltip = `molar mass: ${molecularWeight} g/mol`;
 
-    if (sample.isMixture() && sample.density != null) {
+    if (sample.isMixture() && sample.density != null && sample.density > 0) {
       tooltip += `, density: ${sample.density.toFixed(4)} g/mL`;
     }
 
