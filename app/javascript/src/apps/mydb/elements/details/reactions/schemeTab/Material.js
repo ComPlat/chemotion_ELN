@@ -648,14 +648,22 @@ class Material extends Component {
    */
   handleComponentReferenceChange = (changeEvent) => {
     if (changeEvent.type === 'componentReferenceChanged') {
-      this.setState((prevState) => ({
-        mixtureComponents: prevState.mixtureComponents.map((comp) => ({
-          ...comp,
-          reference: comp.id === changeEvent.componentId
-        }))
-      }));
+      const { mixtureComponents } = this.state;
+
+      const updatedComponents = mixtureComponents.map((comp) => {
+        const isReference = comp.id === changeEvent.componentId;
+        if (comp.reference !== isReference) {
+          comp.reference = isReference; // Preserve instance, avoid unnecessary mutation
+        }
+        return comp;
+      });
+
+      this.setState({ mixtureComponents: [...updatedComponents] });
+
       // Optionally, propagate up:
-      // if (this.props.onChange) this.props.onChange(changeEvent);
+      // if (this.props.onChange) {
+      //   this.props.onChange(changeEvent);
+      // }
     }
   };
 
