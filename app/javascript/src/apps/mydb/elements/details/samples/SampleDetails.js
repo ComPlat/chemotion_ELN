@@ -855,7 +855,7 @@ export default class SampleDetails extends React.Component {
 
     return (
       <div className="my-4">
-        <InputGroup className="z-4">
+        <InputGroup>
           <InputGroup.Text>CAS</InputGroup.Text>
           <CreatableSelect
             name="cas"

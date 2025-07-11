@@ -296,7 +296,7 @@ export default class SampleForm extends React.Component {
     return (
       <Form.Group>
         <Form.Label>Molecule name</Form.Label>
-        <InputGroup className="z-4">
+        <InputGroup>
           <CreatableSelect
             name="moleculeName"
             isDisabled={!sample.can_update}
@@ -853,7 +853,6 @@ export default class SampleForm extends React.Component {
           value={selectedSampleType}
           onChange={(value) => this.handleSampleTypeChanged(value)}
           options={SampleTypesOptions}
-          className="z-5"
         />
       </Form.Group>
     );
