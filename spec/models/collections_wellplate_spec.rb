@@ -1,5 +1,20 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: collections_wellplates
+#
+#  id            :integer          not null, primary key
+#  deleted_at    :datetime
+#  collection_id :integer
+#  wellplate_id  :integer
+#
+# Indexes
+#
+#  index_collections_wellplates_on_collection_id                   (collection_id)
+#  index_collections_wellplates_on_deleted_at                      (deleted_at)
+#  index_collections_wellplates_on_wellplate_id_and_collection_id  (wellplate_id,collection_id) UNIQUE
+#
 require 'rails_helper'
 
 RSpec.describe CollectionsWellplate, type: :model do

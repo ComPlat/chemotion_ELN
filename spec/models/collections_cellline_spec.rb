@@ -2,6 +2,21 @@
 
 # rubocop:disable RSpec/IndexedLet, Lint/RedundantCopDisableDirective
 
+# == Schema Information
+#
+# Table name: collections_celllines
+#
+#  id                 :bigint           not null, primary key
+#  deleted_at         :datetime
+#  cellline_sample_id :integer
+#  collection_id      :integer
+#
+# Indexes
+#
+#  index_collections_celllines_on_cellsample_id_and_coll_id  (cellline_sample_id,collection_id) UNIQUE
+#  index_collections_celllines_on_collection_id              (collection_id)
+#  index_collections_celllines_on_deleted_at                 (deleted_at)
+#
 require 'rails_helper'
 
 RSpec.describe CollectionsCellline do

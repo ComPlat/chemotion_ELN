@@ -51,7 +51,7 @@ namespace :data do
                 file_ext = split[1]
                 file_id = "uploads/attachments/" + attach["filename"] + "." + file_ext
 
-                if File.exists?(file_id)
+                if File.exist?(file_id)
                   sha256 = Digest::SHA256.file(file_id).hexdigest
 
                   storage = Storage.new

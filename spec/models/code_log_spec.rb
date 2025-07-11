@@ -2,6 +2,22 @@
 
 # rubocop:disable RSpec/MatchArray
 
+# == Schema Information
+#
+# Table name: code_logs
+#
+#  id         :uuid             not null, primary key
+#  deleted_at :datetime
+#  source     :string
+#  value      :string(40)
+#  created_at :datetime         not null
+#  updated_at :datetime         not null
+#  source_id  :integer
+#
+# Indexes
+#
+#  index_code_logs_on_source_and_source_id  (source,source_id)
+#
 require 'rails_helper'
 
 RSpec.describe CodeLog, type: :model do

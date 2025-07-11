@@ -97,10 +97,35 @@ function parseNumericString(numberString) {
   return Number(sanitizedNumberString);
 }
 
+/**
+ * Format a number for display, using fixed notation for values between 0.001 and 1e5,
+ * and scientific notation otherwise. Returns 'n.d.' for invalid values.
+ *
+ * @param {number} val - The value to format
+ * @param {number} precision - Number of digits after the decimal point
+ * @returns {string}
+ */
+const formatDisplayValue = (val, precision) => {
+  if (val === null || val === undefined || Number.isNaN(val) || !Number.isFinite(val)) return 'n.d.';
+
+  const absVal = Math.abs(val);
+  // Show as fixed if in a reasonable range, else use scientific
+  if ((absVal >= 0.001 && absVal < 1e5) || absVal === 0) {
+    // Always use dot as decimal separator, no thousands separator
+    return Number(val).toLocaleString('en-US', {
+      maximumFractionDigits: precision,
+      minimumFractionDigits: 0,
+      useGrouping: false
+    });
+  }
+  return Number(val).toExponential(precision - 1);
+};
+
 export {
   fixDigit,
   validDigit,
   correctPrefix,
   formatBytes,
   parseNumericString,
+  formatDisplayValue,
 };

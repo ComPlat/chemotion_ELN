@@ -1,5 +1,25 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: wellplates
+#
+#  id                     :integer          not null, primary key
+#  deleted_at             :datetime
+#  description            :string
+#  height                 :integer          default(8)
+#  name                   :string
+#  plain_text_description :text
+#  readout_titles         :jsonb
+#  short_label            :string
+#  width                  :integer          default(12)
+#  created_at             :datetime         not null
+#  updated_at             :datetime         not null
+#
+# Indexes
+#
+#  index_wellplates_on_deleted_at  (deleted_at)
+#
 require 'rails_helper'
 
 RSpec.describe Wellplate, type: :model do

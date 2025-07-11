@@ -5,27 +5,28 @@
 # Table name: attachments
 #
 #  id              :integer          not null, primary key
-#  attachable_id   :integer
-#  filename        :string
-#  identifier      :uuid
+#  aasm_state      :string
+#  attachable_type :string
+#  attachment_data :jsonb
+#  bucket          :string
 #  checksum        :string
-#  storage         :string(20)       default("tmp")
+#  con_state       :integer
+#  content_type    :string
 #  created_by      :integer          not null
+#  created_by_type :string
 #  created_for     :integer
+#  deleted_at      :datetime
+#  filename        :string
+#  filesize        :bigint
+#  folder          :string
+#  identifier      :uuid
+#  key             :string(500)
+#  storage         :string(20)       default("tmp")
+#  thumb           :boolean          default(FALSE)
 #  version         :string
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
-#  content_type    :string
-#  bucket          :string
-#  key             :string(500)
-#  thumb           :boolean          default(FALSE)
-#  folder          :string
-#  attachable_type :string
-#  aasm_state      :string
-#  filesize        :bigint
-#  attachment_data :jsonb
-#  con_state       :integer
-#  created_by_type :string
+#  attachable_id   :integer
 #
 # Indexes
 #

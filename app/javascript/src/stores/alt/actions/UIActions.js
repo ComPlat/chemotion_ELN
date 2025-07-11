@@ -11,17 +11,8 @@ class UIActions {
     };
   }
 
-  showCollectionManagement() {
-    return null;
-  }
-
-  toggleCollectionManagement() {
-    return null;
-  }
-
-  showElements() {
-    return null;
-  }
+  expandSidebar = () => null;
+  toggleSidebar = () => null;
 
   showDeviceManagement() {
     return null
@@ -153,6 +144,10 @@ class UIActions {
 
   rerenderGenericWorkflow(params) { return params; }
   showGenericWorkflowModal(show) { return show; }
+  
+  setRedirectedFromMixture(value) {
+    return value;
+  }
 }
 
 export default alt.createActions(UIActions);

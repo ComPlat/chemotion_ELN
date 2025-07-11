@@ -123,7 +123,13 @@ module Versioning
       end
 
       def fix_malformed_value_formatter
-        ->(key, value) { (value || '').start_with?('{') ? YAML.safe_load(value) : default_formatter.call(key, value) }
+        lambda do |key, value|
+          if value.is_a?(String) && value.start_with?('{')
+            YAML.safe_load(value)
+          else
+            default_formatter.call(key, value)
+          end
+        end
       end
 
       def svg_path_formatter(entity)

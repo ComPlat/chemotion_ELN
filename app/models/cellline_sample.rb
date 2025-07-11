@@ -5,20 +5,20 @@
 # Table name: cellline_samples
 #
 #  id                   :bigint           not null, primary key
-#  cellline_material_id :bigint
-#  cellline_sample_id   :bigint
 #  amount               :bigint
-#  unit                 :string
-#  passage              :integer
+#  ancestry             :string
 #  contamination        :string
-#  name                 :string
-#  description          :string
-#  user_id              :bigint
 #  deleted_at           :datetime
+#  description          :string
+#  name                 :string
+#  passage              :integer
+#  short_label          :string
+#  unit                 :string
 #  created_at           :datetime         not null
 #  updated_at           :datetime         not null
-#  short_label          :string
-#  ancestry             :string
+#  cellline_material_id :bigint
+#  cellline_sample_id   :bigint
+#  user_id              :bigint
 #
 # Indexes
 #

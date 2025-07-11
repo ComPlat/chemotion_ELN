@@ -1,5 +1,23 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: literatures
+#
+#  id         :integer          not null, primary key
+#  deleted_at :datetime
+#  doi        :string
+#  isbn       :string
+#  refs       :jsonb
+#  title      :string
+#  url        :string
+#  created_at :datetime         not null
+#  updated_at :datetime         not null
+#
+# Indexes
+#
+#  index_literatures_on_deleted_at  (deleted_at)
+#
 require 'rails_helper'
 
 RSpec.describe 'Literature', type: :model do

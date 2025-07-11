@@ -10,7 +10,7 @@ jobs:
       run:
         shell: bash
 
-    container: complat/chemotion_eln_runner:main
+    container: complat/chemotion_eln_runner:main-v2.0.0-16-gd3380de59a
 
     services:
       postgres:
@@ -52,7 +52,7 @@ jobs:
       - name: prepare postgres
         run: |
           bundle exec rake db:create
-          bundle exec rake db:schema:load
+          bundle exec rake db:migrate
 
       - name: precompile
         run: |

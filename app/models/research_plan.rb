@@ -69,7 +69,7 @@ class ResearchPlan < ApplicationRecord
 
   attr_accessor :can_copy
 
-  unless Dir.exists?(path = Rails.root.to_s + '/public/images/research_plans')
+  unless Dir.exist?(path = Rails.root.to_s + '/public/images/research_plans')
     Dir.mkdir path
   end
 

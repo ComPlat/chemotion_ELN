@@ -3,18 +3,18 @@
 # Table name: ols_terms
 #
 #  id               :integer          not null, primary key
-#  owl_name         :string
-#  term_id          :string
 #  ancestry         :string
-#  ancestry_term_id :string
+#  desc             :string
+#  is_enabled       :boolean          default(TRUE)
 #  label            :string
+#  metadata         :jsonb
+#  owl_name         :string
 #  synonym          :string
 #  synonyms         :jsonb
-#  desc             :string
-#  metadata         :jsonb
-#  is_enabled       :boolean          default(TRUE)
 #  created_at       :datetime         not null
 #  updated_at       :datetime         not null
+#  ancestry_term_id :string
+#  term_id          :string
 #
 # Indexes
 #
