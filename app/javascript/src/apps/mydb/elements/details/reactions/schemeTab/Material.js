@@ -148,116 +148,11 @@ class Material extends Component {
     }
   }
 
-  /**
-   * Fetches mixture components for a given material if it's a mixture.
-   * This method handles three scenarios:
-   * 1. If material is not a mixture, clears the components state
-   * 2. If material has existing components in memory, deserializes and uses them
-   * 3. If material is saved (has numeric ID) but no components in memory, fetches from API
-   *
-   * @param {Sample} material - The material sample to check for mixture components
-   * @returns {void}
-   */
-  fetchMixtureComponentsIfNeeded(material) {
-    if (!material || !(material.isMixture && material.isMixture())) {
-      this.setState({ mixtureComponents: [], mixtureComponentsLoading: false });
-      return;
-    }
-
-    const existingComponents = Array.isArray(material.components) ? material.components : [];
-
-    if (existingComponents.length > 0) {
-      // Use existing components, deserializing if needed
-      const componentsList = existingComponents.map(comp =>
-        comp instanceof ComponentModel ? comp : ComponentModel.deserializeData(comp)
-      );
-
-      this.setState({
-        mixtureComponents: componentsList,
-        mixtureComponentsLoading: false,
-      });
-    } else if (typeof material.id === 'number') {
-      // Fetch components for saved material
-      this.setState({ mixtureComponentsLoading: true });
-
-      ComponentsFetcher.fetchComponentsBySampleId(material.id)
-      .then((components) => {
-        const componentsList = components.map(ComponentModel.deserializeData);
-        this.setState({
-          mixtureComponents: componentsList,
-          mixtureComponentsLoading: false,
-        });
-      })
-      .catch((error) => {
-        console.error('Error fetching components:', error);
-        this.setState({ mixtureComponentsLoading: false });
-      });
-    } else {
-      // No components and no ID, clear state
-      this.setState({
-        mixtureComponents: [],
-        mixtureComponentsLoading: false,
-      });
-    }
-  }
-
-  toggleComponentsAccordion() {
-    this.setState((prevState) => ({ showComponents: !prevState.showComponents }));
-  }
-
   handleMaterialClick(sample) {
     const { reaction } = this.props;
     UrlSilentNavigation(sample);
     sample.updateChecksum();
     ElementActions.showReactionMaterial({ sample, reaction });
-  }
-
-  materialVolume(material) {
-    if (material.contains_residues) {
-      return notApplicableInput();
-    }
-    const {
-      density, molarity_value, molarity_unit, has_density, has_molarity
-    } = material;
-    const tooltip = has_density || has_molarity ? (
-      <Tooltip id="density_info">
-        {has_density
-          ? `density = ${density}`
-          : `molarity = ${molarity_value} ${molarity_unit}`}
-      </Tooltip>
-    ) : (
-      <Tooltip id="density_info">no density or molarity defined</Tooltip>
-    );
-
-    const metricPrefixes = ['m', 'n', 'u'];
-    const metric = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[1]) > -1)
-      ? material.metrics[1]
-      : 'm';
-
-    return (
-      <td>
-        <OverlayTrigger placement="top" overlay={tooltip}>
-          <div>
-            <NumeralInputWithUnitsCompo
-              key={material.id}
-              value={material.amount_l}
-              unit="l"
-              metricPrefix={metric}
-              metricPrefixes={metricPrefixes}
-              precision={3}
-              disabled={!permitOn(this.props.reaction)
-                || ((this.props.materialGroup !== 'products')
-                  && !material.reference && this.props.lockEquivColumn)
-                || material.gas_type === 'gas'}
-              onChange={(e) => this.handleAmountUnitChange(e, material.amount_l)}
-              onMetricsChange={this.handleMetricsChange}
-              variant={material.amount_unit === 'l' ? 'primary' : 'light'}
-              size="sm"
-            />
-          </div>
-        </OverlayTrigger>
-      </td>
-    );
   }
 
   materialLoading(material, showLoadingColumn) {
@@ -305,7 +200,6 @@ class Material extends Component {
     )
       ? material.metrics[3]
       : 'm';
-
 
     const isMixture = material.isMixture && material.isMixture();
 
@@ -666,6 +560,111 @@ class Material extends Component {
       // }
     }
   };
+
+  materialVolume(material) {
+    if (material.contains_residues) {
+      return notApplicableInput();
+    }
+    const {
+      density, molarity_value, molarity_unit, has_density, has_molarity
+    } = material;
+    const tooltip = has_density || has_molarity ? (
+      <Tooltip id="density_info">
+        {has_density
+          ? `density = ${density}`
+          : `molarity = ${molarity_value} ${molarity_unit}`}
+      </Tooltip>
+    ) : (
+      <Tooltip id="density_info">no density or molarity defined</Tooltip>
+    );
+
+    const metricPrefixes = ['m', 'n', 'u'];
+    const metric = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[1]) > -1)
+      ? material.metrics[1]
+      : 'm';
+
+    return (
+      <td>
+        <OverlayTrigger placement="top" overlay={tooltip}>
+          <div>
+            <NumeralInputWithUnitsCompo
+              key={material.id}
+              value={material.amount_l}
+              unit="l"
+              metricPrefix={metric}
+              metricPrefixes={metricPrefixes}
+              precision={3}
+              disabled={!permitOn(this.props.reaction)
+                || ((this.props.materialGroup !== 'products')
+                  && !material.reference && this.props.lockEquivColumn)
+                || material.gas_type === 'gas'}
+              onChange={(e) => this.handleAmountUnitChange(e, material.amount_l)}
+              onMetricsChange={this.handleMetricsChange}
+              variant={material.amount_unit === 'l' ? 'primary' : 'light'}
+              size="sm"
+            />
+          </div>
+        </OverlayTrigger>
+      </td>
+    );
+  }
+
+  toggleComponentsAccordion() {
+    this.setState((prevState) => ({ showComponents: !prevState.showComponents }));
+  }
+
+  /**
+   * Fetches mixture components for a given material if it's a mixture.
+   * This method handles three scenarios:
+   * 1. If material is not a mixture, clears the components state
+   * 2. If material has existing components in memory, deserializes and uses them
+   * 3. If material is saved (has numeric ID) but no components in memory, fetches from API
+   *
+   * @param {Sample} material - The material sample to check for mixture components
+   * @returns {void}
+   */
+  fetchMixtureComponentsIfNeeded(material) {
+    if (!material || !(material.isMixture && material.isMixture())) {
+      this.setState({ mixtureComponents: [], mixtureComponentsLoading: false });
+      return;
+    }
+
+    const existingComponents = Array.isArray(material.components) ? material.components : [];
+
+    if (existingComponents.length > 0) {
+      // Use existing components, deserializing if needed
+      const componentsList = existingComponents.map(comp =>
+        comp instanceof ComponentModel ? comp : ComponentModel.deserializeData(comp)
+      );
+
+      this.setState({
+        mixtureComponents: componentsList,
+        mixtureComponentsLoading: false,
+      });
+    } else if (typeof material.id === 'number') {
+      // Fetch components for saved material
+      this.setState({ mixtureComponentsLoading: true });
+
+      ComponentsFetcher.fetchComponentsBySampleId(material.id)
+      .then((components) => {
+        const componentsList = components.map(ComponentModel.deserializeData);
+        this.setState({
+          mixtureComponents: componentsList,
+          mixtureComponentsLoading: false,
+        });
+      })
+      .catch((error) => {
+        console.error('Error fetching components:', error);
+        this.setState({ mixtureComponentsLoading: false });
+      });
+    } else {
+      // No components and no ID, clear state
+      this.setState({
+        mixtureComponents: [],
+        mixtureComponentsLoading: false,
+      });
+    }
+  }
 
   handleShowLabelChange(e) {
     const value = e.target.checked;
