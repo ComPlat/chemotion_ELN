@@ -33,15 +33,27 @@ module Chemotion
       fill-opacity
       fill-rule
       filter
+      font
+      font-size
       height
       href
       id
       mask
+      stroke
+      stroke-linecap
+      stroke-linejoin
+      stroke-miterlimit
+      stroke-opacity
+      stroke-width
+      style
+      text-anchor
       transform
+      version
       viewBox
       width
       x
       y
+      dy
     ]
 
     def self.sanitize(svg_string)
@@ -50,6 +62,17 @@ module Chemotion
         unless SAFE_TAGS.include?(node.name)
           node.remove
           next
+        end
+
+        node.attribute_nodes.each do |attr|
+          unless SAFE_ATTRIBUTES.include?(attr.name)
+            attr.remove
+            next
+          end
+
+          # Remove javascript: URIs
+
+          attr.remove if %w[href xlink:href].include?(attr.name) && attr.value =~ /^\s*javascript:/i
         end
       end
 
