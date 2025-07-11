@@ -261,6 +261,25 @@ export default class Sample extends Element {
     return this.sample_type?.toString() === SAMPLE_TYPE_MIXTURE;
   }
 
+  /**
+   * Checks whether a mixture sample is liquid based on the following criteria:
+   * - solvents are present
+   * - total volume of mixture is present
+   * - any component is liquid
+   *
+   * @returns {boolean} True if the mixture sample is liquid, otherwise false.
+   */
+  isMixtureLiquid() {
+    if (!this.isMixture()) return false;
+
+    const hasSolvent = Array.isArray(this.solvent) && this.solvent.length > 0; // Check if solvents are present
+    const hasVolume = this.amount_l > 0; // Check if total volume of mixture is present
+    const hasLiquidComponent = Array.isArray(this.components)
+      && this.components.some((c) => c.material_group === 'liquid'); // Check if any component is liquid
+
+    return hasSolvent || hasVolume || hasLiquidComponent;
+  }
+
   hasComponents() {
     return this.components && this.components.length > 0;
   }
@@ -564,9 +583,9 @@ export default class Sample extends Element {
   }
 
   get molarity_value() {
-    if (this.isMixture() && this.reference_component) {
-      return this.reference_molarity_value;
-    }
+    // if (this.isMixture() && this.reference_component) {
+    //   return this.reference_molarity_value;
+    // }
     return this._molarity_value;
   }
 
@@ -952,7 +971,9 @@ export default class Sample extends Element {
           if (this.has_molarity) {
             const molarity = this.molarity_value;
             return (amount_g * purity) / (molarity * molecularWeight);
-          } if (this.has_density) {
+          }
+
+          if (this.has_density) {
             const { density } = this;
             return amount_g / (density * 1000);
           }
@@ -1266,11 +1287,11 @@ export default class Sample extends Element {
    * Gets the reference molarity value from the reference component.
    * @returns {number|null} The reference molarity value or null if not set
    */
-  get reference_molarity_value() {
-    if (!this.reference_component) { return null; }
-
-    return this.reference_component.molarity_value;
-  }
+  // get reference_molarity_value() {
+  //   if (!this.reference_component) { return null; }
+  //
+  //   return this.reference_component.molarity_value;
+  // }
 
   /**
    * Gets the reference molarity unit from the reference component.
@@ -1787,13 +1808,12 @@ export default class Sample extends Element {
 
     const totalMass = this.sample_details.total_mixture_mass || 0;
     const totalVolumeML = (parseFloat(this.amount_l) || 0) * 1000;
-    const hasLiquid = this.components.some((c) => c.material_group === 'liquid'); // Check if any component is liquid
 
-    if (hasLiquid && totalVolumeML > 0) {
-      this.density = totalMass / totalVolumeML;
-      this.molarity_value = 0;
+    if (this.isMixtureLiquid() && totalVolumeML > 0) {
+      const density = totalMass / totalVolumeML;
+      this.setDensity({ value: density });
     } else {
-      this.density = 0;
+      this.setDensity({ value: 0 });
     }
   }
 
