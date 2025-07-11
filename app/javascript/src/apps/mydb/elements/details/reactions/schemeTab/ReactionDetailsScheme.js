@@ -99,6 +99,8 @@ export default class ReactionDetailsScheme extends React.Component {
       } else {
         this.handleRegularSample(splitSample, tagGroup, extLabel, reaction, tagMaterial);
       }
+
+      this.addSampleToReaction(splitSample, reaction, tagMaterial, tagGroup);
     } catch (error) {
       console.error('Error in dropSample:', error);
       NotificationActions.add({
@@ -161,7 +163,6 @@ export default class ReactionDetailsScheme extends React.Component {
     splitSample.components = sampleComponents;
 
     this.setTargetAmountFromComponents(splitSample, sampleComponents);
-    this.addSampleToReaction(splitSample, reaction, tagMaterial, tagGroup);
   }
 
   handleMixtureWithApiComponents(splitSample, srcSample, reaction, tagMaterial, tagGroup) {
@@ -171,12 +172,9 @@ export default class ReactionDetailsScheme extends React.Component {
         await splitSample.initialComponents(sampleComponents);
 
         this.setTargetAmountFromComponents(splitSample, sampleComponents);
-        this.addSampleToReaction(splitSample, reaction, tagMaterial, tagGroup);
       })
       .catch((error) => {
         console.error('Failed to fetch components:', error);
-        // Still add the sample even if components fail to load
-        this.addSampleToReaction(splitSample, reaction, tagMaterial, tagGroup);
       });
   }
 
@@ -202,7 +200,6 @@ export default class ReactionDetailsScheme extends React.Component {
 
   handleRegularSample(splitSample, tagGroup, extLabel, reaction, tagMaterial) {
     this.insertSolventExtLabel(splitSample, tagGroup, extLabel);
-    this.addSampleToReaction(splitSample, reaction, tagMaterial, tagGroup);
   }
 
   addSampleToReaction(splitSample, reaction, tagMaterial, tagGroup) {
