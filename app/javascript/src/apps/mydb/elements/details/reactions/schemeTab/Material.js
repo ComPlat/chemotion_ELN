@@ -104,63 +104,6 @@ class Material extends Component {
     }
   }
 
-  /**
-   * Fetches mixture components for a given material if it's a mixture.
-   * This method handles three scenarios:
-   * 1. If material is not a mixture, clears the components state
-   * 2. If material has existing components in memory, deserializes and uses them
-   * 3. If material is saved (has numeric ID) but no components in memory, fetches from API
-   *
-   * @param {Sample} material - The material sample to check for mixture components
-   * @returns {void}
-   */
-  fetchMixtureComponentsIfNeeded(material) {
-    if (!material || !(material.isMixture && material.isMixture())) {
-      this.setState({ mixtureComponents: [], mixtureComponentsLoading: false });
-      return;
-    }
-
-    const existingComponents = Array.isArray(material.components) ? material.components : [];
-
-    if (existingComponents.length > 0) {
-      // Use existing components, deserializing if needed
-      const componentsList = existingComponents.map(comp =>
-        comp instanceof ComponentModel ? comp : ComponentModel.deserializeData(comp)
-      );
-
-      this.setState({
-        mixtureComponents: componentsList,
-        mixtureComponentsLoading: false,
-      });
-    } else if (typeof material.id === 'number') {
-      // Fetch components for saved material
-      this.setState({ mixtureComponentsLoading: true });
-
-      ComponentsFetcher.fetchComponentsBySampleId(material.id)
-      .then((components) => {
-        const componentsList = components.map(ComponentModel.deserializeData);
-        this.setState({
-          mixtureComponents: componentsList,
-          mixtureComponentsLoading: false,
-        });
-      })
-      .catch((error) => {
-        console.error('Error fetching components:', error);
-        this.setState({ mixtureComponentsLoading: false });
-      });
-    } else {
-      // No components and no ID, clear state
-      this.setState({
-        mixtureComponents: [],
-        mixtureComponentsLoading: false,
-      });
-    }
-  }
-
-  toggleComponentsAccordion() {
-    this.setState((prevState) => ({ showComponents: !prevState.showComponents }));
-  }
-
   handleMaterialClick(sample) {
     const { reaction } = this.props;
     UrlSilentNavigation(sample);
@@ -257,7 +200,6 @@ class Material extends Component {
     )
       ? material.metrics[3]
       : 'm';
-
 
     const isMixture = material.isMixture && material.isMixture();
 
