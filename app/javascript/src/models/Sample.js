@@ -1787,6 +1787,7 @@ export default class Sample extends Element {
 
     if (hasLiquid && totalVolumeML > 0) {
       this.density = totalMass / totalVolumeML;
+      this.molarity_value = 0;
     } else {
       this.density = 0;
     }
