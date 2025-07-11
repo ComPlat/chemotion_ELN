@@ -1108,8 +1108,8 @@ class Material extends Component {
 
     let tooltip = `molar mass: ${molecularWeight} g/mol`;
 
-    if (sample.isMixture() && sample.sample_details && sample.sample_details.total_mixture_density != null) {
-      tooltip += `, density: ${sample.sample_details.total_mixture_density.toFixed(4)} g/mL`;
+    if (sample.isMixture() && sample.density != null) {
+      tooltip += `, density: ${sample.density.toFixed(4)} g/mL`;
     }
 
     if (isProduct && sample.maxAmount) {
