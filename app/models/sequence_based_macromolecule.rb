@@ -70,10 +70,10 @@ class SequenceBasedMacromolecule < ApplicationRecord
                            ec_number ? where('ec_numbers @> ARRAY[?]::varchar[]', [ec_number&.strip]) : none
                          }
   scope :with_accession, lambda { |accession|
-                           accession ? where('accessions @> ARRAY[?]::varchar[]', [accession&.strip]) : none
+                           accession ? where('accessions @> ARRAY[?]::varchar[]', [accession&.strip&.upcase]) : none
                          }
   scope :search_in_name, lambda { |text|
-                           text ? where("systematic_name LIKE '%#{text}%' OR short_name LIKE '%#{text}%'") : none
+                           text ? where("LOWER(systematic_name) LIKE '%#{text.downcase}%' OR LOWER(short_name) LIKE '%#{text.downcase}%'") : none
                          }
 
   accepts_nested_attributes_for(

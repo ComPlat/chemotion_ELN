@@ -64,4 +64,17 @@ describe SequenceBasedMacromolecule do
       expect(result.first.id).to be sbmm1.id
     end
   end
+
+  describe '.search_in_name' do
+    it 'finds the result in a case-insensitive way' do
+      sbmm1 = create(:uniprot_sbmm, short_name: 'Insulin')
+      sbmm2 = create(:uniprot_sbmm, short_name: 'Some insulin-producing Protein')
+      sbmm3 = create(:uniprot_sbmm, short_name: 'Some other protein')
+
+      result = described_class.search_in_name('insulin')
+
+      expect(result.count).to eq 2
+      expect(result.map(&:id).sort).to eq [sbmm1.id, sbmm2.id].sort
+    end
+  end
 end
