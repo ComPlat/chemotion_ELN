@@ -297,8 +297,8 @@ function createVariationsRow({
     .forEach((materialType) => {
       row[materialType] = {};
       selectedColumns[materialType].forEach((materialID) => {
-        const material = materials[materialType].find((m) => m.id.toString() === materialID[0].toString());
-        row[materialType][materialID[0]] = getMaterialData(material, materialType, gasMode, vesselVolume);
+        const material = materials[materialType].find((m) => m.id.toString() === materialID.toString());
+        row[materialType][materialID] = getMaterialData(material, materialType, gasMode, vesselVolume);
       });
     });
 
@@ -713,7 +713,10 @@ const processSegmentsForVariations = (segments, reaction) => {
 };
 
 const getSegmentsForVariations = (reaction) => {
-  // Fetch data only once when component mounts
+  // Fetch the segment data, preprocess it and strip irrelevant information.
+  // The data is loaded only once when the component mounts, using the 'soft reload'
+  // argument from the 'GenericSegmentFetcher.listSegmentKlass' method.
+
   const fetchData = async () => {
     try {
       const res = await GenericSgsFetcher.listSegmentKlass({ is_active: true }, true);
