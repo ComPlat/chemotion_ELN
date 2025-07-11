@@ -340,6 +340,10 @@ export default class Sample extends Element {
     splitSample.is_split = true;
     splitSample.is_new = true;
     splitSample.split_label = splitSample.buildSplitShortLabel();
+
+    // Map mixture properties from sample_details for mixture samples
+    this.applyMixturePropertiesToSample(splitSample);
+
     // Todo ???
     splitSample.container = Container.init();
     splitSample.gas_type = 'off';
@@ -632,6 +636,7 @@ export default class Sample extends Element {
 
     if (this.isMixture() && this.components) {
       this.updateMixtureComponentVolume(totalVolume);
+      this.updateMixtureDensity();
     }
   }
 
@@ -1199,6 +1204,27 @@ export default class Sample extends Element {
   }
 
   /**
+   * Gets the total mixture mass from sample_details.
+   * @returns {number|null} The total mixture mass or null if not set
+   */
+  get total_mixture_mass() {
+    if (!this.sample_details) { return null; }
+
+    return this.sample_details.total_mixture_mass;
+  }
+
+  /**
+   * Sets the total mixture mass in sample_details.
+   * @param {number} total_mixture_mass - The total mixture mass
+   */
+  set total_mixture_mass(total_mixture_mass) {
+    if (!this.sample_details) {
+      this.sample_details = {};
+    }
+    this.sample_details.total_mixture_mass = total_mixture_mass;
+  }
+
+  /**
    * Gets the reference component (the one marked as reference) from the components array.
    * @returns {Object|null} The reference component or null if not found
    */
@@ -1543,7 +1569,7 @@ export default class Sample extends Element {
    * @returns {void}
    */
   updateMixtureComponentEquivalent() {
-    if (!this.components || this.components.length === 0) return;
+    if (!this.hasComponents()) return;
 
     // Find the index of the component marked as reference
     let referenceIndex = this.components.findIndex((component) => component.reference);
@@ -1580,8 +1606,6 @@ export default class Sample extends Element {
           : 0;
       }
     });
-
-    // this.updateMixtureMolecularWeight();
   }
 
   /**
@@ -1701,6 +1725,86 @@ export default class Sample extends Element {
       const newSample = Sample.buildNew(molecule, this.collection_id);
       await this.addMixtureComponent(newSample);
     });
+  }
+
+  initializeSampleDetails() {
+    this.sample_details = this.sample_details || {};
+  }
+
+  /**
+   * Calculates the total mass (g) of a mixture sample.
+   * - Sums all masses of included solid materials (amount_g).
+   * - For each liquid, mass = density [g/ml] * volume [ml] (if density is given),
+   *   or 1 [g/ml] * volume [ml] if density is not given.
+   * - Stores the total mass in sample_details.total_mixture_mass and returns it.
+   * - If at least one component is liquid, also calculates and stores mixture density (g/ml) as
+   *   total_mixture_mass/total_volume in the sample.
+   */
+  calculateTotalMixtureMass() {
+    this.initializeSampleDetails();
+
+    if (!this.isMixture() || !this.hasComponents()) {
+      this.sample_details.total_mixture_mass = 0;
+
+      return;
+    }
+
+    let totalMass = 0;
+    let hasLiquid = false;
+
+    this.components.forEach((component) => {
+      if (component.material_group === 'solid') {
+        // For solids, use amount_g (already in grams)
+        totalMass += parseFloat(component.amount_g) || 0;
+      } else if (component.material_group === 'liquid') {
+        hasLiquid = true;
+        // For liquids, use density * volume (ml)
+        const density = (component.density && component.density > 0) ? component.density : 1; // g/ml
+        const componentVolumeML = (parseFloat(component.amount_l) || 0) * 1000;
+        totalMass += density * componentVolumeML;
+      }
+    });
+    this.sample_details.total_mixture_mass = totalMass;
+    // Only update density here for safety, but the main update should be after amount_l changes
+    if (hasLiquid) {
+      this.updateMixtureDensity();
+    }
+  }
+
+  /**
+   * Updates the density (g/mL) of the mixture sample.
+   * Calculates density = total_mixture_mass / total_volume for mixtures with liquid components.
+   */
+  updateMixtureDensity() {
+    if (!this.isMixture() || !this.hasComponents()) return;
+
+    this.initializeSampleDetails();
+
+    const totalMass = this.sample_details.total_mixture_mass || 0;
+    const totalVolumeML = (parseFloat(this.amount_l) || 0) * 1000;
+    const hasLiquid = this.components.some((c) => c.material_group === 'liquid'); // Check if any component is liquid
+
+    if (hasLiquid && totalVolumeML > 0) {
+      this.density = totalMass / totalVolumeML;
+      console.log('Updated density:', this.density);
+    } else {
+      this.density = 0;
+    }
+  }
+
+  /**
+   * Applies mixture properties from sample_details to a target sample.
+   * Maps total_mixture_mass to amount_g.
+   * and calculates amount_l based on mass and density.
+   * @param {Sample} targetSample - The sample to apply mixture properties to
+   */
+  applyMixturePropertiesToSample(targetSample) {
+    if (this.isMixture() && this.sample_details) {
+      if (this.sample_details.total_mixture_mass !== undefined) {
+        // Set the amount in grams using the proper amount_value and amount_unit properties
+        targetSample.setAmount({ value: this.sample_details.total_mixture_mass, unit: 'g' });
+      }
+    }
   }
 }
 
