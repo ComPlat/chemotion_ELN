@@ -717,7 +717,7 @@ const getSegmentsForVariations = (reaction) => {
   const fetchData = async () => {
     try {
       const res = await GenericSgsFetcher.listSegmentKlass({ is_active: true }, true);
-      const reactionsSegments = res.klass.filter((k) => k.element_klass.id === 3 && k.is_active);
+      const reactionsSegments = res.klass.filter((k) => k.element_klass.name === "reaction" && k.is_active);
       segmentsForVariations = processSegmentsForVariations(reactionsSegments, reaction);
     } catch (error) {
       console.error('Error fetching segments:', error);
