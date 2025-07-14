@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop: disable Metrics/ClassLength
+
 module Versioning
   module Serializers
     class DeviceDescriptionSerializer < Versioning::Serializers::BaseSerializer
@@ -169,9 +171,56 @@ module Versioning
             label: 'Weight unit',
             revert: %i[weight_unit],
           },
+          # Maintenance
+          maintenance_contract_available: {
+            label: 'Maintenance contract available',
+            revert: %i[maintenance_contract_available],
+          },
+          maintenance_scheduling: {
+            label: 'Maintenance scheduling',
+            revert: %i[maintenance_scheduling],
+          },
+          contact_for_maintenance: {
+            label: 'Contact for maintenance and repair',
+            formatter: array_formatter,
+            revert: %i[contact_for_maintenance],
+          },
+          planned_maintenance: {
+            label: 'Planned maintenance',
+            formatter: array_formatter,
+            revert: %i[planned_maintenance],
+          },
+          consumables_needed_for_maintenance: {
+            label: 'Consumables needed for maintenance',
+            formatter: array_formatter,
+            revert: %i[consumables_needed_for_maintenance],
+          },
+          unexpected_maintenance: {
+            label: 'Unexpected maintenance and repair',
+            formatter: array_formatter,
+            revert: %i[unexpected_maintenance],
+          },
+          measures_after_full_shut_down: {
+            label: 'Measures after complete power shutdown',
+            revert: %i[measures_after_full_shut_down],
+          },
+          measures_after_short_shut_down: {
+            label: 'Measures for running a device with short shutdown period',
+            revert: %i[measures_after_short_shut_down],
+          },
+          measures_to_plan_offline_period: {
+            label: 'Measures to plan an offline period',
+            revert: %i[measures_to_plan_offline_period],
+          },
+          restart_after_planned_offline_period: {
+            label: 'Re-Start after planned offline time',
+            revert: %i[restart_after_planned_offline_period],
+          },
         }.with_indifferent_access
       end
       # rubocop:enable Metrics/MethodLength
     end
   end
 end
+
+# rubocop: enable Metrics/ClassLength

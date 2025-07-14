@@ -15,6 +15,12 @@ module Versioning
       def call
         versions = Versioning::Serializers::DeviceDescriptionSerializer.call(device_description)
 
+        device_description.attachments.with_log_data.each do |attachment|
+          versions += Versioning::Serializers::AttachmentSerializer.call(attachment,
+                                                                         ['Device Description',
+                                                                          "Attachment: #{attachment.filename}"].compact)
+        end
+
         analyses_container = device_description.container.children.where(container_type: :analyses).first
         analyses_container.children.where(container_type: :analysis).with_deleted.with_log_data.each do |analysis|
           versions += Versioning::Serializers::ContainerSerializer.call(analysis, ["Analysis: #{analysis.name}"])
