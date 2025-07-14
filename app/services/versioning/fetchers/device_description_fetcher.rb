@@ -11,6 +11,7 @@ module Versioning
         new(**args).call
       end
 
+      # rubocop:disable Metrics/AbcSize
       def call
         versions = Versioning::Serializers::DeviceDescriptionSerializer.call(device_description)
 
@@ -34,6 +35,7 @@ module Versioning
 
         versions
       end
+      # rubocop:enable Metrics/AbcSize
     end
   end
 end

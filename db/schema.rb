@@ -513,6 +513,7 @@ ActiveRecord::Schema.define(version: 2025_07_01_134000) do
     t.string "vendor_company_name"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.jsonb "log_data"
     t.index ["ancestry"], name: "index_device_descriptions_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
     t.index ["device_id"], name: "index_device_descriptions_on_device_id"
   end
@@ -1875,8 +1876,8 @@ ActiveRecord::Schema.define(version: 2025_07_01_134000) do
        RETURNS TABLE(literatures text)
        LANGUAGE sql
       AS $function$
-         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2
-         where l.literature_id = l2.id
+         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2 
+         where l.literature_id = l2.id 
          and l.element_type = $1 and l.element_id = $2
        $function$
   SQL
@@ -1976,7 +1977,7 @@ ActiveRecord::Schema.define(version: 2025_07_01_134000) do
               where collection_id in (select id from collections where user_id = userId)
           ) s;
           used_space = COALESCE(used_space_samples,0);
-
+          
           select sum(calculate_element_space(r.reaction_id, 'Reaction')) into used_space_reactions from (
               select distinct reaction_id
               from collections_reactions
@@ -2415,9 +2416,6 @@ ActiveRecord::Schema.define(version: 2025_07_01_134000) do
   SQL
   create_trigger :logidze_on_samples, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_samples BEFORE INSERT OR UPDATE ON public.samples FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :set_samples_mol_rdkit_trg, sql_definition: <<-SQL
-      CREATE TRIGGER set_samples_mol_rdkit_trg BEFORE INSERT OR UPDATE ON public.samples FOR EACH ROW EXECUTE FUNCTION set_samples_mol_rdkit()
   SQL
   create_trigger :logidze_on_wells, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_wells BEFORE INSERT OR UPDATE ON public.wells FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
