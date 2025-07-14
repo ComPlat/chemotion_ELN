@@ -5,6 +5,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
   Button,
+  Card,
   ListGroupItem,
   Tabs,
   Tab,
@@ -461,7 +462,7 @@ export default class GenericElDetails extends Component {
               variant="warning"
               size="xxsm"
               onClick={() => this.handleSubmit()}
-              style={{ display: saveBtnDisplay }}
+              style={{ display: this.saveBtnDisplay }}
             >
               <i className="fa fa-floppy-o" aria-hidden="true" />
             </Button>
@@ -526,6 +527,9 @@ export default class GenericElDetails extends Component {
     if (!tabKeyContentList.includes(activeTab) && tabKeyContentList.length > 0) {
       activeTab = tabKeyContentList[0];
     }
+
+    const submitLabel = (genericEl && genericEl.isNew) ? 'Create' : 'Save';
+
     return (
       <>
         <ViewSpectra
@@ -570,7 +574,7 @@ export default class GenericElDetails extends Component {
           <Button
             variant="warning"
             onClick={() => this.handleSubmit()}
-            style={saveBtnDisplay}
+            style={this.saveBtnDisplay}
           >
             {submitLabel}
           </Button>
