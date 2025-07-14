@@ -11,6 +11,7 @@ import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import ScreensFetcher from 'src/fetchers/ScreensFetcher';
 import WellplatesFetcher from 'src/fetchers/WellplatesFetcher';
+import DeviceDescriptionFetcher from 'src/fetchers/DeviceDescriptionFetcher';
 import moment from 'moment';
 
 export default class VersionsTable extends Component {
@@ -76,6 +77,12 @@ export default class VersionsTable extends Component {
       case 'wellplate': {
         WellplatesFetcher.fetchById(id).then((result) => {
           parent.setState({ wellplate: result });
+        });
+        break;
+      }
+      case 'device_description': {
+        DeviceDescriptionFetcher.fetchById(id).then((result) => {
+          parent.setDeviceDescription(result);
         });
         break;
       }
@@ -203,13 +210,15 @@ export default class VersionsTable extends Component {
           />
           {pagination()}
         </div>
-        <VersionsTableChanges
-          data={versions[TableChangesId]}
-          handleRevert={this.handleRevert}
-          isEdited={isEdited}
-          renderRevertView={renderRevertView}
-          toggleRevertView={this.toggleRevertView}
-        />
+        {TableChangesId !== -1 && (
+          <VersionsTableChanges
+            data={versions[TableChangesId]}
+            handleRevert={this.handleRevert}
+            isEdited={isEdited}
+            renderRevertView={renderRevertView}
+            toggleRevertView={this.toggleRevertView}
+          />
+        )}
       </>
     );
   }

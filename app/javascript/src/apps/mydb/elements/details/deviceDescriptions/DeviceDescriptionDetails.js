@@ -3,12 +3,6 @@ import {
   Button, Tabs, Tab, Tooltip, OverlayTrigger
 } from 'react-bootstrap';
 
-import PropertiesForm from './propertiesTab/PropertiesForm';
-import DetailsForm from './detailsTab/DetailsForm';
-import AnalysesContainer from './analysesTab/AnalysesContainer';
-import AttachmentForm from './attachmentsTab/AttachmentForm';
-import MaintenanceForm from './maintenanceTab/MaintenanceForm';
-
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
 import CommentSection from 'src/components/comments/CommentSection';
@@ -35,10 +29,17 @@ import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import CollectionUtils from 'src/models/collection/CollectionUtils';
+import PropertiesForm from 'src/apps/mydb/elements/details/deviceDescriptions/propertiesTab/PropertiesForm';
+import AttachmentForm from 'src/apps/mydb/elements/details/deviceDescriptions/attachmentsTab/AttachmentForm';
+import AnalysesContainer from 'src/apps/mydb/elements/details/deviceDescriptions/analysesTab/AnalysesContainer';
+import MaintenanceForm from 'src/apps/mydb/elements/details/deviceDescriptions/maintenanceTab/MaintenanceForm';
+import DetailsForm from 'src/apps/mydb/elements/details/deviceDescriptions/detailsTab/DetailsForm';
+// eslint-disable-next-line import/no-named-as-default
+import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 
-const DeviceDescriptionDetails = () => {
+function DeviceDescriptionDetails() {
   const deviceDescriptionsStore = useContext(StoreContext).deviceDescriptions;
-  let deviceDescription = deviceDescriptionsStore.device_description;
+  const deviceDescription = deviceDescriptionsStore.device_description;
   deviceDescriptionsStore.setKeyPrefix('deviceDescription');
 
   const { currentCollection, isSync } = UIStore.getState();
@@ -47,7 +48,7 @@ const DeviceDescriptionDetails = () => {
   const [visibleTabs, setVisibleTabs] = useState(Immutable.List());
 
   const submitLabel = deviceDescription.isNew ? 'Create' : 'Save';
-  let tabContents = [];
+  const tabContents = [];
 
   useEffect(() => {
     if (MatrixCheck(currentUser.matrix, commentActivation) && !deviceDescription.isNew) {
@@ -55,12 +56,23 @@ const DeviceDescriptionDetails = () => {
     }
   }, []);
 
+  const versioningTable = () => (
+    <VersionsTable
+      type="device_descriptions"
+      id={deviceDescription.id}
+      element={deviceDescription}
+      parent={deviceDescriptionsStore}
+      isEdited={deviceDescription.changed}
+    />
+  );
+
   const tabContentComponents = {
     properties: PropertiesForm,
     detail: DetailsForm,
     analyses: AnalysesContainer,
     attachments: AttachmentForm,
     maintenance: MaintenanceForm,
+    history: versioningTable,
   };
 
   const tabTitles = {
@@ -69,26 +81,23 @@ const DeviceDescriptionDetails = () => {
     analyses: 'Analyses',
     attachments: 'Attachment',
     maintenance: 'Maintenance',
+    history: 'History',
   };
 
-  const isReadOnly = () => {
-    return CollectionUtils.isReadOnly(
-      currentCollection,
-      currentUser.id,
-      isSync
-    );
-  }
+  const isReadOnly = () => CollectionUtils.isReadOnly(
+    currentCollection,
+    currentUser.id,
+    isSync
+  );
 
-  const disabled = (index) => {
-    return deviceDescription.isNew && index !== 0 ? true : false;
-  }
+  const disabled = (index) => (!!(deviceDescription.isNew && index !== 0));
 
   visibleTabs.forEach((key, i) => {
     tabContents.push(
       <Tab eventKey={key} title={tabTitles[key]} key={`${key}_${deviceDescription.id}`} disabled={disabled(i)}>
         {
-          !deviceDescription.isNew &&
-          <CommentSection section={`device_description_${key}`} element={deviceDescription} />
+          !deviceDescription.isNew
+          && <CommentSection section={`device_description_${key}`} element={deviceDescription} />
         }
         {React.createElement(tabContentComponents[key], {
           key: `${deviceDescription.id}-${key}`,
@@ -100,11 +109,11 @@ const DeviceDescriptionDetails = () => {
 
   const onTabPositionChanged = (visible) => {
     setVisibleTabs(visible);
-  }
+  };
 
   const handleTabChange = (key) => {
     deviceDescriptionsStore.setActiveTabKey(key);
-  }
+  };
 
   const handleSubmit = () => {
     LoadingActions.start();
@@ -115,19 +124,16 @@ const DeviceDescriptionDetails = () => {
       ElementActions.updateDeviceDescription(deviceDescription);
     }
     deviceDescriptionsStore.setCurrentDeviceDescriptionIdToSave(`${deviceDescription.id}`);
-  }
+  };
 
-  const deviceDescriptionIsValid = () => {
-    // TODO: validation
-    return true;
-  }
+  const deviceDescriptionIsValid = () => true; // TODO: validation
 
   const handleExportAnalyses = () => {
     deviceDescriptionsStore.toggleAnalysisStartExport();
     AttachmentFetcher.downloadZipByDeviceDescription(deviceDescription.id)
       .then(() => { deviceDescriptionsStore.toggleAnalysisStartExport(); })
       .catch((errorMessage) => { console.log(errorMessage); });
-  }
+  };
 
   const downloadAnalysisButton = () => {
     const hasNoAnalysis = deviceDescription.analyses?.length === 0 || deviceDescription.analyses?.length === undefined;
@@ -143,7 +149,7 @@ const DeviceDescriptionDetails = () => {
         {deviceDescriptionsStore.analysis_start_export && <i className="fa fa-spin fa-spinner ms-1" />}
       </Button>
     );
-  }
+  };
 
   const deviceDescriptionHeader = () => {
     const titleTooltip = formatTimeStampsOfElement(deviceDescription || {});
@@ -164,8 +170,13 @@ const DeviceDescriptionDetails = () => {
         </div>
         <div className="d-flex align-items-center gap-1">
           <PrintCodeButton element={deviceDescription} />
-          {!deviceDescription.isNew &&
-            <OpenCalendarButton isPanelHeader eventableId={deviceDescription.id} eventableType="DeviceDescription" />}
+          {!deviceDescription.isNew && (
+            <OpenCalendarButton
+              isPanelHeader
+              eventableId={deviceDescription.id}
+              eventableType="DeviceDescription"
+            />
+          )}
           {deviceDescription.can_copy && !deviceDescription.isNew && (
             <CopyElementModal
               element={deviceDescription}
@@ -190,7 +201,7 @@ const DeviceDescriptionDetails = () => {
         </div>
       </div>
     );
-  }
+  };
 
   const deviceDescriptionFooter = () => (
     <>
@@ -219,8 +230,9 @@ const DeviceDescriptionDetails = () => {
         />
         <Tabs
           activeKey={deviceDescriptionsStore.active_tab_key}
-          onSelect={key => handleTabChange(key)}
+          onSelect={(key) => handleTabChange(key)}
           id="deviceDescriptionDetailsTab"
+          mountOnEnter
           unmountOnExit
         >
           {tabContents}
