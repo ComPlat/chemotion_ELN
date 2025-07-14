@@ -102,8 +102,7 @@ module Chemotion
         return error!('No read access to attachment', 403) unless read_access?(@attachment, @current_user)
 
         # redirect url with callback url to {down,up}load file: NB path should match the public endpoint
-        url = CGI.escape("#{Rails.application.config.root_url}/api/v1/public/third_party_apps/#{@token}")
-        "#{@app.url}?url=#{url}"
+        "#{@app.url}?url=#{CGI.escape(token_uri.to_s)}"
       end
 
       desc 'get chemotion handler url'
@@ -117,17 +116,15 @@ module Chemotion
         prepare_payload
         parse_payload
         encode_and_cache_token
-        url = CGI.escape("#{Rails.application.config.root_url}/api/v1/public/third_party_apps/#{@token}")
+        url = token_uri
         case params[:type]
         when 1
-          url = URI.parse Rails.application.config.root_url
-          url.path = "/api/v1/public/third_party_apps/#{@token}"
           url.scheme = 'chemotion'
           url.to_s
         when 2
-          "chemotion://#{@attachment.filename}?url=#{url}"
+          "chemotion://#{@attachment.id}?url=#{CGI.escape(url.to_s)}"
         else
-          "chemotion://?url=#{url}"
+          "chemotion://?url=#{url.to_s}"
         end
       end
 
