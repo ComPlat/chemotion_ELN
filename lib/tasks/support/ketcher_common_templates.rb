@@ -7,8 +7,8 @@ class CommonTemplateExporter
   TABLE_NAME = 'ketcherails_common_templates'
   MODEL_CLASS = 'KetcherailsCommonTemplate'.constantize
   OUTPUT_DIR = 'public/common_templates'
-  OUTPUT_FILE = File.join('public/json', 'common_templates_list.json')
-  DEFAULT_TEMPLATES_PATH = File.join('uploads', 'common_templates_list.json')
+  OUTPUT_FILE = File.join('uploads/common_templates', 'user.json')
+  DEFAULT_TEMPLATES_PATH = File.join('uploads/common_templates', 'default.json')
   LOGFILE = 'log/ketcher_common_templates.log'
 
   def self.export(logfile: LOGFILE, logger: nil)
