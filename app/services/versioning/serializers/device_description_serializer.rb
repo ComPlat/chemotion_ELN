@@ -216,6 +216,12 @@ module Versioning
             label: 'Re-Start after planned offline time',
             revert: %i[restart_after_planned_offline_period],
           },
+          # Details
+          ontologies: {
+            label: 'Ontologies',
+            formatter: array_formatter,
+            revert: %i[ontologies],
+          },
         }.with_indifferent_access
       end
       # rubocop:enable Metrics/MethodLength
