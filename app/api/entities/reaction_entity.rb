@@ -48,6 +48,7 @@ module Entities
       expose! :variations,            anonymize_with: [],                               using: 'Entities::ReactionVariationEntity'
       expose! :vessel_size
       expose! :gaseous
+      expose! :weight_percentage
     end
 
     expose_timestamps
