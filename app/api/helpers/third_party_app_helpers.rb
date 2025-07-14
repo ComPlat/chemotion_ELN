@@ -44,8 +44,7 @@ module ThirdPartyAppHelpers
 
   # desc: decrement the counters / check if token permission is expired
   def update_cache(key)
-    param_token = params[:token].split('/').first
-    return error!('Invalid token', 403) if cached_token.nil? || cached_token[:token] != param_token
+    return error!('Invalid token', 403) if cached_token.nil? || cached_token[:token] != params[:token]
 
     # TODO: expire token when both counters reach 0
     # IDEA: split counters into two caches?
