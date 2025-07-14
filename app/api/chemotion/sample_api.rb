@@ -599,6 +599,21 @@ module Chemotion
           sample.destroy
         end
       end
+
+      desc 'render sample SVG file with indigo'
+      params do
+        requires :svg_path, type: String, desc: 'existing svg file path'
+        requires :molfile, type: String, desc: 'Sample molfile'
+      end
+      post "render-svg-indigo" do
+        svg = IndigoService.new(params[:molfile], 'image/svg+xml').render_structure
+        if svg.present?
+          # svg_path = Rails.public_path.join('images', 'samples', params[:svg_path])
+          # svg_file = File.new(svg_path, 'w+')
+          # svg_file.write(svg)
+          present svg_file
+        end
+      end
     end
   end
 end
