@@ -120,7 +120,7 @@ module Chemotion
             # uniprot calls it fullName, but in our DB it's systematic_name
             optional :full_name, type: String, as: :systematic_name
             optional :short_name, type: String
-            requires :molecular_weight, type: Float, allow_blank: false
+            optional :molecular_weight, type: Float
             requires :sequence, type: String, allow_blank: false
             optional :heterologous_expression, type: String, values: %w[yes no unknown], default: 'unknown'
             optional :organism, type: String

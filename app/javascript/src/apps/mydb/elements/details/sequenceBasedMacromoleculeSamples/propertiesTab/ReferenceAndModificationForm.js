@@ -80,7 +80,7 @@ const ReferenceAndModificationForm = ({ ident, readonly }) => {
   const handleStructureFileUpload = (files) => {
     const errorPath = ['errors', 'structure_file'];
     if (sbmmSample.errors?.structure_file) {
-      sbmmSample = sbmmStore.removeError(sbmmSample, errorPath);
+      sbmmStore.removeError(sbmmSample, errorPath);
     }
     let errors = [];
 
@@ -98,7 +98,7 @@ const ReferenceAndModificationForm = ({ ident, readonly }) => {
     });
 
     if (errors.length >= 1) {
-      sbmmSample = sbmmStore.setError(sbmmSample, errorPath, errors.join(', '));
+      sbmmStore.setError(sbmmSample, errorPath, errors.join(', '));
     }
 
     if (newAttachments) {
@@ -280,7 +280,7 @@ const ReferenceAndModificationForm = ({ ident, readonly }) => {
             </Col>
             <Col>
               {formHelper.unitInput(
-                `${fieldPrefix}.molecular_weight`, 'Sequence mass (Da = g/mol)', 'molecular_weight', disabled, true
+                `${fieldPrefix}.molecular_weight`, 'Sequence mass (kD = kg/mol)', 'molecular_weight', disabled, true
               )}
             </Col>
           </Row>
