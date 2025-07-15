@@ -38,6 +38,8 @@ import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import { EditUserLabels, ShowUserLabels } from 'src/components/UserLabels';
+import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
+import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
 
 const onNaviClick = (type, id) => {
   const { currentCollection, isSync } = UIStore.getState();
@@ -486,7 +488,7 @@ export default class GenericElDetails extends Component {
 
   render() {
     const { genericEl, visible } = this.state;
-    const submitLabel = genericEl && genericEl.isNew ? 'Create' : 'Save';
+    const submitLabel = (genericEl && genericEl.isNew) ? 'Create' : 'Save';
     // eslint-disable-next-line max-len
     const saveBtnDisplay = (genericEl?.isNew || (genericEl?.can_update && genericEl?.changed)) ? { display: '' } : { display: 'none' };
 
@@ -519,49 +521,63 @@ export default class GenericElDetails extends Component {
     if (!tabKeyContentList.includes(activeTab) && tabKeyContentList.length > 0) {
       activeTab = tabKeyContentList[0];
     }
+
+
     return (
-      <Card
-        className={`detail-card${
-          genericEl.isPendingToSave ? ' detail-card--unsaved' : ''
-        }`}
-      >
-        <Card.Header>{this.header(genericEl)}</Card.Header>
-        <Card.Body>
-          <ElementDetailSortTab
-            type={genericEl.type}
-            availableTabs={Object.keys(tabContents)}
-            tabTitles={tabTitlesMap}
-            onTabPositionChanged={this.onTabPositionChanged}
-            addInventoryTab={false}
-          />
-          <Tabs
-            activeKey={activeTab}
-            onSelect={(key) => this.handleSelect(key, genericEl.type)}
-            id="GenericElementDetailsXTab"
-          >
-            {tabContentList}
-          </Tabs>
-        </Card.Body>
-        <Card.Footer>
-          <div className="d-inline-block p-1">
-            <ButtonToolbar className="gap-1">
-              <Button
-                variant="secondary"
-                onClick={() => DetailActions.close(genericEl, true)}
-              >
-                Close
-              </Button>
-              <Button
-                variant="warning"
-                onClick={() => this.handleSubmit()}
-                style={saveBtnDisplay}
-              >
-                {submitLabel}
-              </Button>
-            </ButtonToolbar>
-          </div>
-        </Card.Footer>
-      </Card>
+      <>
+        <ViewSpectra
+          sample={genericEl}
+          handleSampleChanged={this.handleGenericElChanged}
+          handleSubmit={this.handleSubmit}
+        />
+        <NMRiumDisplayer
+          sample={genericEl}
+          handleSampleChanged={this.handleGenericElChanged}
+          handleSubmit={this.handleSubmit}
+        />
+        <Card
+          className={`detail-card${
+            genericEl.isPendingToSave ? ' detail-card--unsaved' : ''
+          }`}
+        >
+          <Card.Header>{this.header(genericEl)}</Card.Header>
+          <Card.Body>
+            <ElementDetailSortTab
+              type={genericEl.type}
+              availableTabs={Object.keys(tabContents)}
+              tabTitles={tabTitlesMap}
+              onTabPositionChanged={this.onTabPositionChanged}
+              addInventoryTab={false}
+            />
+            <Tabs
+              activeKey={activeTab}
+              onSelect={(key) => this.handleSelect(key, genericEl.type)}
+              id="GenericElementDetailsXTab"
+            >
+              {tabContentList}
+            </Tabs>
+          </Card.Body>
+          <Card.Footer>
+            <div className="d-inline-block p-1">
+              <ButtonToolbar className="gap-1">
+                <Button
+                  variant="secondary"
+                  onClick={() => DetailActions.close(genericEl, true)}
+                >
+                  Close
+                </Button>
+                <Button
+                  variant="warning"
+                  onClick={() => this.handleSubmit()}
+                  style={saveBtnDisplay}
+                >
+                  {submitLabel}
+                </Button>
+              </ButtonToolbar>
+            </div>
+          </Card.Footer>
+        </Card>
+      </>
     );
   }
 }
