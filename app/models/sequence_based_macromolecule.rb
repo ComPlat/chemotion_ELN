@@ -104,7 +104,7 @@ class SequenceBasedMacromolecule < ApplicationRecord
     scope = uniprot
     scope = scope.where.not(id: base_sbmm.id) if base_sbmm.id
 
-    scope.find_by(primary_accession: base_sbmm.primary_accession)
+    scope.find_by(primary_accession: base_sbmm.primary_accession, sequence: base_sbmm.sequence)
   end
 
   def self.find_duplicate_modified_sbmm(base_sbmm)
@@ -112,11 +112,7 @@ class SequenceBasedMacromolecule < ApplicationRecord
     scope = scope.where.not(id: base_sbmm.id) if base_sbmm.id
     scope = scope.joins(:protein_sequence_modification, :post_translational_modification)
     scope.find_by(
-      parent: base_sbmm.parent,
-      sbmm_type: base_sbmm.sbmm_type,
       sequence: base_sbmm.sequence,
-      molecular_weight: base_sbmm.molecular_weight,
-      heterologous_expression: base_sbmm.heterologous_expression,
       protein_sequence_modification: {
         modification_n_terminal: base_sbmm.protein_sequence_modification.modification_n_terminal,
         modification_c_terminal: base_sbmm.protein_sequence_modification.modification_c_terminal,
@@ -154,11 +150,7 @@ class SequenceBasedMacromolecule < ApplicationRecord
     scope = scope.where.not(id: base_sbmm.id) if base_sbmm.id
     scope = scope.joins(:protein_sequence_modification, :post_translational_modification)
     scope.find_by(
-      parent: nil,
-      sbmm_type: base_sbmm.sbmm_type,
       sequence: base_sbmm.sequence,
-      molecular_weight: base_sbmm.molecular_weight,
-      heterologous_expression: base_sbmm.heterologous_expression,
       protein_sequence_modification: {
         modification_n_terminal: base_sbmm.protein_sequence_modification.modification_n_terminal,
         modification_c_terminal: base_sbmm.protein_sequence_modification.modification_c_terminal,
