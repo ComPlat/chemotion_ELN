@@ -43,7 +43,7 @@ export default class ContainerDatasets extends Component {
     datasetContainer.container_type = 'dataset';
 
     container.children.push(datasetContainer);
-    let index = container.children.length - 1;
+    const index = container.children.length - 1;
     this.handleModalOpen(datasetContainer, index);
   }
 
@@ -56,8 +56,8 @@ export default class ContainerDatasets extends Component {
       datasetContainer.attachments.push(attachment);
     });
     container.children.push(datasetContainer);
-
-    this.handleModalOpen(datasetContainer);
+    let index = container.children.length - 1;
+    this.handleModalOpen(datasetContainer, index);
     this.props.onChange(container);
   }
 
@@ -92,7 +92,7 @@ export default class ContainerDatasets extends Component {
     const { modal } = this.state;
     modal.show = false;
     modal.datasetContainer = null;
-    modal.selectedIndex = null;
+    // modal.selectedIndex = null;
     this.setState({ modal });
     // https://github.com/react-bootstrap/react-bootstrap/issues/1137
     document.body.className = document.body.className.replace('modal-open', '');
@@ -115,11 +115,29 @@ export default class ContainerDatasets extends Component {
   updateContainerState(updatedContainer, shouldClose = false) {
     const { rootContainer, index } = this.props;
     const { modal } = this.state;
-    const newChild = updatedContainer.children[0].children[index];
+    const { datasetContainer } = modal;
+    const newChild = updatedContainer?.children?.[0]?.children?.[index];
+    if (!newChild || !rootContainer?.children?.[0]) {
+      console.log("Invalid container structure");
+      return;
+    }
     const updatedRoot = { ...rootContainer };
     updatedRoot.children[0].children[index] = newChild;
     if (!shouldClose) {
-      this.setState({ modal: { ...modal, datasetContainer: newChild?.children[modal.selectedIndex] } });
+      const container = updatedContainer.children[0].children[index];
+      const selectedIndex = modal?.selectedIndex;
+      const attachments = container?.children?.[selectedIndex]?.attachments || [];
+
+      this.setState({
+        container,
+        modal: {
+          ...modal,
+          datasetContainer: {
+            ...modal.datasetContainer,
+            attachments,
+          },
+        }
+      });
     }
     this.props.onChange(updatedRoot);
   }
@@ -127,7 +145,6 @@ export default class ContainerDatasets extends Component {
   render() {
     const { container, modal } = this.state;
     const { disabled, readOnly, rootContainer, } = this.props;
-
     if (container.children.length > 0) {
       const kind = container.extended_metadata && container.extended_metadata.kind;
       return (
@@ -168,6 +185,7 @@ export default class ContainerDatasets extends Component {
               disabled={disabled}
               rootContainer={rootContainer}
               updateContainerState={(cont, shouldClose) => this.updateContainerState(cont, shouldClose)}
+              isContainerNew={container?.is_new}
             />
           )}
         </div>
@@ -193,6 +211,7 @@ export default class ContainerDatasets extends Component {
 
 ContainerDatasets.propTypes = {
   container: PropTypes.object.isRequired,
+  rootContainer: PropTypes.object.isRequired,
   onChange: PropTypes.func.isRequired,
   readOnly: PropTypes.bool,
   disabled: PropTypes.bool,

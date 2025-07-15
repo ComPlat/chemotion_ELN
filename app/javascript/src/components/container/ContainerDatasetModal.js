@@ -81,13 +81,13 @@ export default class ContainerDatasetModal extends Component {
       .catch((err) => {
         console.warn('Container update failed:', err.message);
       })
-      .finally(() => {
-      });
+      .finally(() => { });
   };
 
   render() {
     const {
-      show, onHide, onChange, readOnly, disabled, kind, datasetContainer, rootContainer
+      show, onHide, onChange, readOnly, disabled, kind, datasetContainer, rootContainer,
+      isContainerNew
     } = this.props;
 
     const { mode, instrumentIsEmpty } = this.state;
@@ -212,7 +212,7 @@ export default class ContainerDatasetModal extends Component {
           >
 
             {
-              !isNew
+              !isNew && !isContainerNew
               && (
                 <Button
                   variant="warning"
