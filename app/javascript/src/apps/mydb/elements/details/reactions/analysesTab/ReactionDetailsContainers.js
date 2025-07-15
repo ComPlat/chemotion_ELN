@@ -388,16 +388,6 @@ export default class ReactionDetailsContainers extends Component {
                             container={container}
                             onChange={() => this.handleChange(container)}
                           />
-                          <ViewSpectra
-                            sample={reaction}
-                            handleSampleChanged={this.handleSpChange}
-                            handleSubmit={this.props.handleSubmit}
-                          />
-                          <NMRiumDisplayer
-                            sample={reaction}
-                            handleSampleChanged={this.handleSpChange}
-                            handleSubmit={this.props.handleSubmit}
-                          />
                         </Card.Body>
                       </Accordion.Collapse>
                     )}
@@ -405,6 +395,16 @@ export default class ReactionDetailsContainers extends Component {
                 );
               })}
             </Accordion>
+            <ViewSpectra
+              sample={reaction}
+              handleSampleChanged={this.handleSpChange}
+              handleSubmit={this.props.handleSubmit}
+            />
+            <NMRiumDisplayer
+              sample={reaction}
+              handleSampleChanged={this.handleSpChange}
+              handleSubmit={this.props.handleSubmit}
+            />
           </div>
         );
       }
