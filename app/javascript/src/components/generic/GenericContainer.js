@@ -16,8 +16,6 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import SpectraActions from 'src/stores/alt/actions/SpectraActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
-import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
-import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
 import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
 import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWithButtons';
 
@@ -225,16 +223,6 @@ function AiHeader(props) {
             disabled={readOnly}
             container={container}
             onChange={fnChange}
-          />
-          <ViewSpectra
-            sample={generic}
-            handleSampleChanged={fnChange}
-            handleSubmit={handleSubmit}
-          />
-          <NMRiumDisplayer
-            sample={generic}
-            handleSampleChanged={fnChange}
-            handleSubmit={handleSubmit}
           />
         </Card.Body>
       </Accordion.Collapse>
