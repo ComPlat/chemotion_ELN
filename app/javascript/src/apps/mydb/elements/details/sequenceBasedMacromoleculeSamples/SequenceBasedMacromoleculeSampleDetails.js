@@ -264,7 +264,8 @@ const SequenceBasedMacromoleculeSampleDetails = () => {
         </div>
         <CommentModal element={sbmmSample} />
         {
-          Object.keys(sbmmSample.errors).length >= 1 && (
+          Object.keys(sbmmSample.errors).length >= 1
+          || (Object.keys(sbmmSample.errors).length == 1 && sbmmSample.errors?.structure_file) && (
             <Alert variant="danger">{errorMessage()}</Alert>
           )
         }

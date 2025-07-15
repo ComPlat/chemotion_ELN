@@ -181,7 +181,7 @@ export default class SequenceBasedMacromoleculeSamplesFetcher {
     sbmmSampleWithErrors.is_new = isNew;
     if (Array.isArray(error)) {
       error.map((e) => {
-        const message = ['is empty', 'is missing'].includes(e.message) ? "Can't be blank" : e.message;
+        const message = ['is empty', 'is missing', 'does not have a valid value'].includes(e.message) ? "Can't be blank" : e.message;
         e.parameters.map((parameter) => {
           const parts = [parameter.match(/^(\w+)_attributes/)[1], ...[...parameter.matchAll(/\[([^\]]+)\]/g)]
             .map(m => m[1].replace(/_attributes$/, ''))];

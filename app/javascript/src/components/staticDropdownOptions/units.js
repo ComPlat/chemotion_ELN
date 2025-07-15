@@ -45,7 +45,7 @@ const unitSystems = {
     { value: 'kilo_dalton', label: 'kD' },
   ],
   molecular_weight: [
-    { value: 'g_mol', label: 'g/mol' },
+    { value: 'kg_mol', label: 'kg/mol' },
   ],
   volumes: [
     { value: 'L', label: 'L' },

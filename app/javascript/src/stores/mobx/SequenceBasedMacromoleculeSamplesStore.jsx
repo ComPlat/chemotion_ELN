@@ -45,7 +45,6 @@ const validationFields = [
   'sequence_based_macromolecule.primary_accession',
   'sequence_based_macromolecule.parent_identifier',
   'sequence_based_macromolecule.short_name',
-  'sequence_based_macromolecule.molecular_weight',
   'sequence_based_macromolecule.post_translational_modifications.acetylation_lysin_number',
   'sequence_based_macromolecule.splitted_sequence',
 ];
@@ -203,7 +202,15 @@ export const SequenceBasedMacromoleculeSamplesStore = types
             sbmm[key] = {};
             sbmmOrParent[key] = null;
             sbmmOrParent.parent = null;
+          } else if (key === 'sbmm_type' && uniprotDerivation === 'uniprot') {
+            sbmmOrParent[key] = sbmm.sbmm_type;
+          } else if (key === 'sbmm_subtype' && uniprotDerivation === 'uniprot') {
+            sbmmOrParent[key] = sbmm.sbmm_subtype;
           } else if (selectedSbmm[key] !== undefined) {
+            if (key === 'sbmm_type' && uniprotDerivation === 'uniprot') {
+              sbmmOrParent[key] = sbmm.sbmm_type;
+              sbmmOrParent[key] = sbmm.sbmm_subtype;
+            }
             sbmmOrParent[key] = selectedSbmm[key];
           }
         });
@@ -476,20 +483,11 @@ export const SequenceBasedMacromoleculeSamplesStore = types
         const isParentIdentifier =
           self.sequence_based_macromolecule_sample.isNew && key.includes('parent_identifier')
           && sbmm.uniprot_derivation == 'uniprot_modified' && !sbmm.parent_identifier;
-        const hasNoLysinNumber = sbmm.post_translational_modifications && key.includes('acetylation_lysin_number')
-          && sbmm.post_translational_modifications?.acetylation_enabled
-          && !hasValue;
-        const checkOnlyValue = !key.includes('primary_accession') && !key.includes('parent_identifier')
-          && !key.includes('acetylation_lysin_number') && !hasValue;
 
-        if (!isPrimaryAccession && !isParentIdentifier && !hasNoLysinNumber && !checkOnlyValue && hasValue) {
+        if (!isPrimaryAccession && !isParentIdentifier && hasValue) {
           self.removeError(sbmmSample, errorPath);
         } else if (isPrimaryAccession || isParentIdentifier) {
           self.setError(sbmmSample, errorPath, "Please choose a reference");
-        } else if (hasNoLysinNumber) {
-          self.setError(sbmmSample, errorPath, "Can't be blank");
-        } else if (checkOnlyValue) {
-          self.setError(sbmmSample, errorPath, "Can't be blank");
         }
       });
 
