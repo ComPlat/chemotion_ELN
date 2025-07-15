@@ -41,8 +41,9 @@ module Uniprot
       dig('sequence', 'value')
     end
 
+    # Uniprot gives g/mol, ELN saves kg/mol
     def molecular_weight
-      dig('sequence', 'molWeight')
+      (dig('sequence', 'molWeight') || 0) / 1000
     end
 
     def link_uniprot
