@@ -31,6 +31,7 @@ function buildWrappedComponent(name, BaseComponent) {
       menu: {
         minWidth: '100%',
         width: 'max-content',
+        maxWidth: '400px',
       },
       menuPortal: {
         position: 'fixed',
