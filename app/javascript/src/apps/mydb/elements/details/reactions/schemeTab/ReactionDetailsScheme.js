@@ -75,6 +75,32 @@ export default class ReactionDetailsScheme extends React.Component {
 
     TextTemplateActions.fetchTextTemplates('reaction');
     TextTemplateActions.fetchTextTemplates('reactionDescription');
+
+    // Deserialize components for any existing samples in the reaction
+    this.deserializeReactionMaterialComponents();
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  deserializeReactionMaterialComponents() {
+    const { reaction } = this.props;
+
+    // Helper function to deserialize components in a materials array
+    const deserializeComponentsInMaterials = (materials) => {
+      materials.forEach((sample) => {
+        if (sample.components && Array.isArray(sample.components) && sample.components.length > 0) {
+          // Check if components need deserialization (have component_properties)
+          const needsDeserialization = sample.components.some((comp) => comp.component_properties);
+          if (needsDeserialization) {
+            sample.components = sample.components.map(Component.deserializeData);
+          }
+        }
+      });
+    };
+
+    // Deserialize components for all material groups
+    deserializeComponentsInMaterials(reaction.starting_materials || []);
+    deserializeComponentsInMaterials(reaction.reactants || []);
+    deserializeComponentsInMaterials(reaction.products || []);
   }
 
   componentWillUnmount() {
