@@ -179,6 +179,30 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
         end.to not_change(SequenceBasedMacromolecule, :count)
            .and change(SequenceBasedMacromoleculeSample, :count).by(1)
       end
+
+      it 'ignores some attributes that are available for non-uniprot proteins' do
+        post_data = post_for_uniprot_sbmm
+        post_data.merge(
+          heterologous_expression: "no",
+          organism: "SomeOrganism",
+          taxon_id: "SomeTaxonId",
+          strain: "SomeStrain",
+          tissue: "SomeTissue",
+          localisation: "SomeLocalisation"
+        )
+
+        post '/api/v1/sequence_based_macromolecule_samples', params: post_data, as: :json
+
+        expect(response.status).to eq 201
+
+        sample = SequenceBasedMacromoleculeSample.find(parsed_json_response["sequence_based_macromolecule_sample"]["id"])
+        expect(sample.heterologous_expression).not_to eq "no"
+        expect(sample.organism).not_to eq "SomeOrganism"
+        expect(sample.taxon_id).not_to eq "SomeTaxonId"
+        expect(sample.strain).not_to eq "SomeStrain"
+        expect(sample.tissue).not_to eq "SomeTissue"
+        expect(sample.localisation).not_to eq "SomeLocalisation"
+      end
     end
 
     context 'when creating a modified SBMM based on a uniprot SBMM' do
@@ -311,6 +335,29 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
           }
           expect(parsed_json_response).to eq expected_result
         end
+      end
+
+      it 'allows usage of some attributes that are only available for non-uniprot proteins' do
+        post_data = post_for_modified_sbmm
+        post_data.merge!(
+          heterologous_expression: "no",
+          organism: "SomeOrganism",
+          taxon_id: "SomeTaxonId",
+          strain: "SomeStrain",
+          tissue: "SomeTissue",
+          localisation: "SomeLocalisation"
+        )
+
+        post '/api/v1/sequence_based_macromolecule_samples', params: post_data, as: :json
+        expect(response.status).to eq 201
+
+        sample = SequenceBasedMacromoleculeSample.find(parsed_json_response["sequence_based_macromolecule_sample"]["id"])
+        expect(sample.heterologous_expression).to eq "no"
+        expect(sample.organism).to eq "SomeOrganism"
+        expect(sample.taxon_id).to eq "SomeTaxonId"
+        expect(sample.strain).to eq "SomeStrain"
+        expect(sample.tissue).to eq "SomeTissue"
+        expect(sample.localisation).to eq "SomeLocalisation"
       end
     end
 

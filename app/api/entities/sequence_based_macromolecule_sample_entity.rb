@@ -30,6 +30,13 @@ module Entities
     expose! :changed
     expose! :errors
 
+    expose! :heterologous_expression, if: ->(object, options) { !uniprot_protein? }
+    expose! :organism, if: ->(object, options) { !uniprot_protein? }
+    expose! :taxon_id, if: ->(object, options) { !uniprot_protein? }
+    expose! :strain, if: ->(object, options) { !uniprot_protein? }
+    expose! :tissue, if: ->(object, options) { !uniprot_protein? }
+    expose! :localisation, if: ->(object, options) { !uniprot_protein? }
+
     expose! :attachments, using: 'Entities::AttachmentEntity'
     expose! :comments, using: 'Entities::CommentEntity'
     expose! :comment_count
@@ -62,6 +69,12 @@ module Entities
 
     def errors
       object.errors || {}
+    end
+
+    private
+
+    def uniprot_protein?
+      object.sequence_based_macromolecule&.uniprot_derivation == 'uniprot'
     end
   end
 end
