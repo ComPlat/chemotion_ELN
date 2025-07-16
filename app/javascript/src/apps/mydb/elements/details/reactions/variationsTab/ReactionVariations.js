@@ -387,6 +387,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
           onColumnHeaderClicked={(event) => fitColumnToContent(event)}
           onGridPreDestroyed={(event) => persistGridState(reaction.id, event)}
           onStateUpdated={(event) => persistGridState(reaction.id, event)}
+          onFirstDataRendered={() => gridRef.current.api.autoSizeAllColumns()}
         />
       </div>
     </div>
