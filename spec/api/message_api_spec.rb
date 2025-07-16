@@ -15,14 +15,14 @@ describe Chemotion::MessageAPI do
   let!(:m_sys) do
     create(:message, channel_id: c_sys.id,
                      content: {
-                       data: 'Thanks for using ELN! To make our system better for you, we bring updates every Friday.'
+                       data: 'Thanks for using ELN! To make our system better for you, we bring updates every Friday.',
                      }, created_by: u_admin.id)
   end
   # message created by u2
   let!(:m_nosys) do
     create(:message, channel_id: c_nosys.id,
                      content: {
-                       data: 'How are you?'
+                       data: 'How are you?',
                      }, created_by: u2.id)
   end
   let!(:n_sys_u2) { create(:notification, message_id: m_sys.id, user_id: u2.id) }
@@ -42,6 +42,7 @@ describe Chemotion::MessageAPI do
         messages = JSON.parse(response.body)['messages']
         expect(messages.length).to eq 0
       end
+
       if Rails.env.production?
         it 'get system version' do
           expect(response.body).to include('version')
@@ -60,10 +61,22 @@ describe Chemotion::MessageAPI do
         messages = JSON.parse(response.body)['messages']
         expect(messages.length).to eq 1
       end
+
       if Rails.env.production?
         it 'get system version' do
           expect(response.body).to include('version')
         end
+      end
+    end
+
+    describe 'publish a message' do
+      before do
+        post '/api/v1/messages/new', params: { channel_id: m_sys.channel_id, content: m_sys.content[:data] }.to_json,
+                                     headers: { 'CONTENT_TYPE' => 'application/json' }
+      end
+
+      it 'returns 204' do
+        expect(response.code).to eq '204'
       end
     end
   end
