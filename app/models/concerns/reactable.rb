@@ -27,6 +27,8 @@ module Reactable
   }.freeze
 
   def update_equivalent
+    return if weight_percentage.present? && weight_percentage != 0
+
     ref_record = ReactionsSample.find_by(reaction_id: reaction_id, reference: true)
     return if ref_record.nil? ||
               ref_record.id == id ||
