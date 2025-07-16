@@ -80,6 +80,14 @@ export default class ReactionDetailsScheme extends React.Component {
     this.deserializeReactionMaterialComponents();
   }
 
+  componentDidUpdate(prevProps) {
+    const { reaction } = this.props;
+    // Deserialize components when reaction data changes (e.g., after save/reload)
+    if (prevProps.reaction !== reaction) {
+      this.deserializeReactionMaterialComponents();
+    }
+  }
+
   // eslint-disable-next-line class-methods-use-this
   deserializeReactionMaterialComponents() {
     const { reaction } = this.props;
