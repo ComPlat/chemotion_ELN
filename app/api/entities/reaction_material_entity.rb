@@ -3,10 +3,11 @@
 module Entities
   # wraps a ReactionsSample object
   class ReactionMaterialEntity < ApplicationEntity
-    # important: unexpose gas_type and gas_phase_data first to avoid conflict
+    # important: unexpose gas_type, gas_phase_data and weight_percentage first to avoid conflict
     expose! :sample, using: 'Entities::SampleEntity', merge: true do
       unexpose :gas_type
       unexpose :gas_phase_data
+      unexpose :weight_percentage
     end
 
     expose! :coefficient

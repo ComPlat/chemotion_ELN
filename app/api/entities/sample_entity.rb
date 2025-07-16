@@ -25,6 +25,7 @@ module Entities
       expose! :gas_type
       expose! :gas_phase_data
       expose! :user_labels
+      expose! :weight_percentage
     end
 
     # Level 1 attributes
@@ -145,6 +146,10 @@ module Entities
 
     def gas_phase_data
       object.reactions_samples.pick(:gas_phase_data)
+    end
+
+    def weight_percentage
+      object.reactions_samples.pick(:weight_percentage)
     end
   end
 end
