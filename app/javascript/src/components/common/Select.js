@@ -32,6 +32,10 @@ function buildWrappedComponent(name, BaseComponent) {
         minWidth: '100%',
         width: 'max-content',
       },
+      menuPortal: {
+        position: 'fixed',
+        zIndex: 9000,
+      }
     };
 
     const stylesWithOverrides = {
@@ -58,6 +62,7 @@ function buildWrappedComponent(name, BaseComponent) {
         classNamePrefix={baseClassName}
         ref={ref}
         menuPortalTarget={document.body}
+        menuPlacement="auto"
         unstyled
         styles={stylesWithOverrides}
       />
