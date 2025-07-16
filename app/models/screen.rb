@@ -64,10 +64,6 @@ class Screen < ApplicationRecord
 
   accepts_nested_attributes_for :collections_screens
 
-  def user_labels
-    tag&.taggable_data&.fetch('user_labels', nil)
-  end
-
   def analyses
     self.container ? self.container.analyses : []
   end

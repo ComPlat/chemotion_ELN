@@ -3,6 +3,7 @@
   min-width: 15px;
   @extend .d-flex;
   @extend .align-items-center;
+  @extend .align-self-stretch;
   @extend .bg-draggable;
   @extend .rounded-start;
   @extend .px-1;

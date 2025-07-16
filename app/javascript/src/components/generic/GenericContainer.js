@@ -223,6 +223,8 @@ function AiHeader(props) {
             disabled={readOnly}
             container={container}
             onChange={fnChange}
+            rootContainer={generic.container}
+            index={idx}
           />
         </Card.Body>
       </Accordion.Collapse>
