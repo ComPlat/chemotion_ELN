@@ -27,6 +27,8 @@ module Reactable
   }.freeze
 
   def update_equivalent
+    return if weight_percentage.present? && weight_percentage != 0
+
     ref_record = ReactionsSample.where(reaction_id: reaction_id, reference: true).first
     return unless ref_record
     return unless ref_record.id != id
