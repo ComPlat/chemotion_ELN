@@ -607,7 +607,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     const staticColumns = cloneDeep(columns);
 
     staticColumns.forEach((item) => {
-      if (item.colId == 'sample' || item.colId == 'reaction') {
+      if (item.colId === 'Sample (short-label)' || item.colId === 'Reaction (short-label)') {
         item.cellRenderer = this.renderShortLabel;
       }
       item.editable = false;
