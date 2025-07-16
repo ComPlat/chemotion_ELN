@@ -44,6 +44,7 @@ module Chemotion
         optional :activity_unit, type: String, values: %w[U mU kat mkat µkat nkat], default: 'U'
         optional :container, type: Hash
 
+
         requires(:sequence_based_macromolecule_attributes, type: Hash) do
           requires :sbmm_type, type: String, desc: 'SBMM Type', values: %w[protein dna rna], allow_blank: false
           optional :sbmm_subtype, type: String, desc: 'SBMM Subtype', values: %w[unmodified glycoprotein], allow_blank: true
@@ -122,17 +123,21 @@ module Chemotion
             optional :short_name, type: String
             optional :molecular_weight, type: Float
             requires :sequence, type: String, allow_blank: false
-            optional :heterologous_expression, type: String, values: %w[yes no unknown], default: 'unknown'
-            optional :organism, type: String
-            optional :taxon_id, type: String
-            optional :tissue, type: String
-            optional :localisation, type: String
+
             optional :link_pdb, type: String
             optional :pdb_doi, type: String
-            optional :strain, type: String
             optional :protein_source_details_comments, type: String
             optional :protein_source_details_expression_system, type: String
           end
+        end
+
+        given(sequence_based_macromolecule_attributes: ->(sbmm_attributes) { sbmm_attributes[:uniprot_derivation] != 'uniprot' }) do
+          optional :heterologous_expression, type: String, values: %w[yes no unknown], default: 'unknown'
+          optional :organism, type: String
+          optional :taxon_id, type: String
+          optional :strain, type: String
+          optional :tissue, type: String
+          optional :localisation, type: String
         end
       end
     end

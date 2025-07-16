@@ -19,12 +19,12 @@ module Entities
     expose! :link_uniprot
     expose! :link_pdb
     expose! :pdb_doi
-    expose! :heterologous_expression
-    expose! :organism
-    expose! :taxon_id
-    expose! :strain
-    expose! :tissue
-    expose! :localisation
+    expose! :heterologous_expression, if: ->(object, options) { uniprot_protein? }
+    expose! :organism, if: ->(object, options) { uniprot_protein? }
+    expose! :taxon_id, if: ->(object, options) { uniprot_protein? }
+    expose! :strain, if: ->(object, options) { uniprot_protein? }
+    expose! :tissue, if: ->(object, options) { uniprot_protein? }
+    expose! :localisation, if: ->(object, options) { uniprot_protein? }
     expose! :own_identifier
     expose! :other_identifier
     expose! :parent, using: 'Entities::SequenceBasedMacromoleculeEntity'
