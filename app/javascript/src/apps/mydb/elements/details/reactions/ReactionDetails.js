@@ -34,6 +34,7 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import { setReactionByType } from 'src/apps/mydb/elements/details/reactions/ReactionDetailsShare';
 import { sampleShowOrNew } from 'src/utilities/routesUtils';
 import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
+import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 import ConfirmClose from 'src/components/common/ConfirmClose';
 import { rfValueFormat } from 'src/utilities/ElementUtils';
 import ExportSamplesButton from 'src/apps/mydb/elements/details/ExportSamplesButton';
@@ -310,6 +311,49 @@ export default class ReactionDetails extends Component {
     );
   }
 
+  async getSvgFromIndigo(reaction) {
+    const { _starting_materials, _solvents, _products, _reactants } = reaction;
+
+    const alreadyProcessed = {
+      _starting_materials: [],
+      _solvents: [],
+      _products: [],
+      _reactants: [],
+    };
+    LoadingActions.start();
+
+    const processMaterials = async (materials, type) => {
+      const results = await Promise.all(
+        materials.map(async (material) => {
+          const checksum = material?._checksum;
+          if (!alreadyProcessed[type].includes(checksum)) {
+            const newSVGPath = await SamplesFetcher.renderSampleSvgWithIndigo({
+              molfile: material.molfile,
+              svg_path: material.sample_svg_file,
+            });
+            if (!newSVGPath) {
+              return material;
+            }
+            material.sample_svg_file = newSVGPath;
+            alreadyProcessed[type].push(checksum);
+          }
+          return material;
+        })
+      );
+      return results;
+    };
+
+    reaction._starting_materials = await processMaterials(_starting_materials, '_starting_materials');
+    reaction._solvents = await processMaterials(_solvents, '_solvents');
+    reaction._products = await processMaterials(_products, '_products');
+    reaction._reactants = await processMaterials(_reactants, '_reactants');
+
+    reaction.changed = true;
+    this.setState({ reaction });
+    this.updateReactionSvg();
+    LoadingActions.stop();
+  }
+
   reactionSVG(reaction) {
     if (!reaction.svgPath) {
       return false;
@@ -320,6 +364,16 @@ export default class ReactionDetails extends Component {
     if (reaction.hasMaterials()) {
       return (
         <div>
+          <div style={{ textAlign: 'end' }}>
+            <Button
+              variant="success"
+              size="xxsm"
+              disabled={false}
+              onClick={() => this.getSvgFromIndigo(reaction)}
+            >
+              <i className="fa fa-refresh" />
+            </Button>
+          </div>
           <SvgFileZoomPan
             duration={300}
             resize
