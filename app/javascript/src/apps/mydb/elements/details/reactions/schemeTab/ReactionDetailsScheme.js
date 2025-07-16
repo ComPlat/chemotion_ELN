@@ -168,9 +168,6 @@ export default class ReactionDetailsScheme extends React.Component {
 
         this.setTargetAmountFromComponents(splitSample, sampleComponents);
 
-        // Apply mixture properties after components are loaded
-        srcSample.applyMixturePropertiesToSample(splitSample);
-
         this.addSampleToReaction(splitSample, reaction, tagMaterial, tagGroup);
       })
       .catch((error) => {
