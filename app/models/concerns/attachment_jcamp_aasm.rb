@@ -503,8 +503,11 @@ module AttachmentJcampProcess
 
   def fname_wo_ext(target)
     parts = target.filename_parts
-    ending = parts.length == 2 || parts.length == 3 ? -2 : -3
-    parts[0..ending].join('_')
+    if parts.length >= 2
+      parts[0..-2].join('.')
+    else
+      parts[0]
+    end
   end
 
   def delete_related_imgs(img_att)
