@@ -657,9 +657,12 @@ export default class Sample extends Element {
       this.amount_unit = amount.unit;
     }
 
+    // Save the current total volume (in liters) for further calculations
     const totalVolume = this.amount_l;
 
-    if (this.isMixture() && this.components) {
+    // If the new amount is a volume in liters, and it's a mixture with components,
+    // update the volume distribution and recalculate density
+    if (amount.unit === 'l' && this.isMixture() && this.hasComponents()) {
       this.updateMixtureComponentVolume(totalVolume);
       this.updateMixtureDensity();
     }
@@ -984,6 +987,11 @@ export default class Sample extends Element {
           if (this.gas_type && this.gas_type !== 'off' && this.gas_type !== 'catalyst') {
             return this.calculateFeedstockOrGasMoles(purity, this.gas_type);
           }
+
+          if (this.isMixture()) {
+            return this.reference_amount_mol;
+          }
+
           if (this.has_molarity) {
             return this.amount_l * this.molarity_value;
           }
@@ -1288,11 +1296,22 @@ export default class Sample extends Element {
    * Gets the reference molarity value from the reference component.
    * @returns {number|null} The reference molarity value or null if not set
    */
-  // get reference_molarity_value() {
-  //   if (!this.reference_component) { return null; }
-  //
-  //   return this.reference_component.molarity_value;
-  // }
+  get reference_molarity_value() {
+    if (!this.reference_component) { return null; }
+
+    return this.reference_component.molarity_value;
+  }
+
+  /**
+   * Gets the number in moles from the reference component.
+   * @returns {number|null} The reference component's amount in moles or null if no reference component
+   */
+  get reference_amount_mol() {
+    const referenceComponent = this.reference_component;
+    if (!referenceComponent) { return null; }
+
+    return referenceComponent.amount_mol;
+  }
 
   /**
    * Gets the reference molarity unit from the reference component.
