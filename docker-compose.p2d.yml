@@ -1,0 +1,54 @@
+services:
+  db:
+    image: ptrxyz/chemotion:db-2.0.1
+    restart: unless-stopped
+    hostname: db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - chemotion_db:/var/lib/postgresql/data/
+    networks:
+      - chemotion
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.github-ci
+      args:
+        - BRANCH=$BUILD_BRANCH
+    restart: unless-stopped
+    environment:
+      - CONFIG_ROLE=worker
+      - SECRET_KEY_BASE=pleasechangeme
+      - RUBYOPT=-W0
+    depends_on:
+      - db
+      - eln
+    networks:
+      - chemotion
+
+  eln:
+    build:
+      context: .
+      dockerfile: Dockerfile.github-ci
+      args:
+        - BRANCH=$BUILD_BRANCH
+    restart: unless-stopped
+    environment:
+      - CONFIG_ROLE=eln
+      - SECRET_KEY_BASE=pleasechangeme
+      - RUBYOPT=-W0
+    depends_on:
+      - db
+    ports:
+      - 4000
+    networks:
+      - chemotion
+
+volumes:
+  chemotion_db:
+    name: chemotion_db
+
+networks:
+  chemotion:
