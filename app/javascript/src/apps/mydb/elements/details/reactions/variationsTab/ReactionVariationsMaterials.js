@@ -265,12 +265,12 @@ function getReactionMaterialsHashes(materials, gasMode, vesselVolume) {
   );
 }
 
-function getMaterialColumnGroupChild(material, materialType, gasMode) {
+function getMaterialColumnGroupChild(material, materialType, gasMode, externalEntryDefs = undefined) {
   const materialCopy = cloneDeep(material);
 
   const gasType = getMaterialGasType(materialCopy, gasMode);
 
-  const entryDefs = getEntryDefs(getMaterialEntries(
+  const entryDefs = externalEntryDefs || getEntryDefs(getMaterialEntries(
     materialType,
     gasType
   ));
