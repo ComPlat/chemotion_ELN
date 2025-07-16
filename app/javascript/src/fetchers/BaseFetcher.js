@@ -159,6 +159,26 @@ export default class BaseFetcher {
     return Promise.all(updateTasks);
   }
 
+  static updateAnnotationsForAttachments(attachments) {
+    const updateTasks = [];
+    attachments
+      .filter((attach) => attach.updatedAnnotation)
+      .forEach((attach) => {
+        const data = new FormData();
+        data.append('updated_svg_string', attach.updatedAnnotation);
+        const updateTask = fetch(`/api/v1/attachments/${attach.id}/annotation`, {
+          credentials: 'same-origin',
+          method: 'post',
+          body: data
+        })
+          .catch((errorMessage) => {
+            console.log(errorMessage);
+          });
+        updateTasks.push(updateTask);
+      });
+    return Promise.all(updateTasks);
+  }
+
   static updateAnnotationsOfAttachments(element) {
     const updateTasks = [];
     if (!element.attachments) {

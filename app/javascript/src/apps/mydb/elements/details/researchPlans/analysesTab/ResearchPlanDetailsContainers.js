@@ -309,6 +309,8 @@ export default class ResearchPlanDetailsContainers extends Component {
                             disabled={readOnly}
                             container={container}
                             onChange={this.handleChange}
+                            rootContainer={researchPlan.container}
+                            index={key}
                           />
                         </Card.Body>
                       </Accordion.Collapse>
