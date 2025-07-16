@@ -293,6 +293,7 @@ export default class ReactionDetailsScheme extends React.Component {
           value: amountValue,
           unit: targetAmount.unit,
         });
+        sample.equivalent = 0;
       }
     };
 
@@ -440,6 +441,11 @@ export default class ReactionDetailsScheme extends React.Component {
     const sample = reaction.sampleById(sampleID);
     if (type === 'productReferenceChanged') {
       reaction.markProductSampleAsReference(sampleID);
+      WeightPercentageReactionActions.setProductReference(sample);
+      WeightPercentageReactionActions.setTargetAmountProductReference({
+        value: sample.target_amount_value,
+        unit: sample.target_amount_unit,
+      });
       return this.updatedReactionWithSample(this.updatedSamplesForProductReferenceChange.bind(this), sample);
     }
     reaction.markSampleAsReference(sampleID);
@@ -511,7 +517,10 @@ export default class ReactionDetailsScheme extends React.Component {
     const updatedSample = this.props.reaction.sampleById(sampleID);
 
     updatedSample.coefficient = coefficient;
-    this.updatedReactionForEquivalentChange(changeEvent);
+    // enable update of equivalent only if weight percentage is not set
+    if (!updatedSample.weight_percentage || updatedSample.weight_percentage === 0) {
+      this.updatedReactionForEquivalentChange(changeEvent);
+    }
 
     return this.updatedReactionWithSample(this.updatedSamplesForCoefficientChange.bind(this), updatedSample);
   }
@@ -950,9 +959,9 @@ export default class ReactionDetailsScheme extends React.Component {
   updatedSamplesForWeightPercentageChange(samples, updatedSample) {
     return samples.map((sample) => {
       if (sample.id === updatedSample.id) {
-        if ((sample.weight_percentage / 100) > 1 || (sample.weight_percentage / 100) < 0) {
+        if (sample.weight_percentage > 1 || sample.weight_percentage < 0) {
           NotificationActions.add({
-            message: 'Weight percentage should be between 0 and 100',
+            message: 'Weight percentage should be between 0 and 1',
             level: 'error'
           });
         } else {
@@ -1008,6 +1017,8 @@ export default class ReactionDetailsScheme extends React.Component {
       if (sample.id === referenceMaterial.id) {
         sample.equivalent = 1.0;
         sample.reference = true;
+        // reset weight percentage to zero, if updated material is a reference material
+        sample.weight_percentage = 0;
       } else {
         if (sample.amount_value) {
           const referenceAmount = referenceMaterial.amount_mol;
