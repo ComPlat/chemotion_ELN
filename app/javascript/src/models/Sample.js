@@ -274,7 +274,7 @@ export default class Sample extends Element {
     if (!this.isMixture()) return false;
 
     const hasSolvent = Array.isArray(this.solvent) && this.solvent.length > 0; // Check if solvents are present
-    const hasVolume = this.amount_l > 0; // Check if total volume of mixture is present
+    const hasVolume = this.amount_l > 0; // Check if the total volume of mixture is present
     const hasLiquidComponent = Array.isArray(this.components)
       && this.components.some((c) => c.material_group === 'liquid'); // Check if any component is liquid
 
@@ -584,9 +584,9 @@ export default class Sample extends Element {
   }
 
   get molarity_value() {
-    // if (this.isMixture() && this.reference_component) {
-    //   return this.reference_molarity_value;
-    // }
+    if (this.isMixture() && this.reference_component) {
+      return this.reference_molarity_value;
+    }
     return this._molarity_value;
   }
 
@@ -652,7 +652,7 @@ export default class Sample extends Element {
    * @param {Object} amount - The amount object with value and unit
    */
   setAmount(amount) {
-    if (amount.unit && !isNaN(amount.value)) {
+    if (amount.unit && !Number.isNaN(amount.value)) {
       this.amount_value = amount.value;
       this.amount_unit = amount.unit;
     }
@@ -1777,14 +1777,12 @@ export default class Sample extends Element {
     }
 
     let totalMass = 0;
-    let hasLiquid = false;
 
     this.components.forEach((component) => {
       if (component.material_group === 'solid') {
         // For solids, use amount_g (already in grams)
         totalMass += parseFloat(component.amount_g) || 0;
       } else if (component.material_group === 'liquid') {
-        hasLiquid = true;
         // For liquids, use density * volume (ml)
         const density = (component.density && component.density > 0) ? component.density : 1; // g/ml
         const componentVolumeML = (parseFloat(component.amount_l) || 0) * 1000;
@@ -1792,8 +1790,9 @@ export default class Sample extends Element {
       }
     });
     this.sample_details.total_mixture_mass = totalMass;
+
     // Only update density here for safety, but the main update should be after amount_l changes
-    if (hasLiquid) {
+    if (this.isMixtureLiquid()) {
       this.updateMixtureDensity();
     }
   }
