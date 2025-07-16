@@ -4,7 +4,7 @@ class IndigoService
   def initialize(struct, output_format = 'image/svg+xml')
     @struct = struct
     @output_format = output_format
-    @service_url = Rails.configuration.indigo_service.indigo_service_url || DEFAULT_SERVICE_URL
+    @service_url = Rails.configuration.indigo_service.indigo_service_url
   end
 
   def render_structure

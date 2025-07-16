@@ -29,18 +29,17 @@ RSpec.describe IndigoService do
     it 'returns error hash when request fails' do
       stub_request(:post, "#{service_url}v2/indigo/render")
         .to_return(status: 400, body: '')
+
       result = described_class.new(molfile_structure, output_format).render_structure
       expect(result).to eq({ error: 'Failed to contact Indigo service', status: 400 })
     end
   end
 
   describe '#service_info' do
-    it 'returns parsed JSON when IndigoService responds successfully' do
+    it 'returns raw JSON string when IndigoService responds successfully' do
       stub_request(:get, "#{service_url}v2/indigo/info")
-        .with(
-          headers: { 'Content-Type' => 'application/json' },
-        )
-        .to_return(status: 200, body: info_response_body, headers: { 'Content-Type' => 'application/json' })
+        .with(headers: { 'Content-Type' => 'application/json' })
+        .to_return(status: 200, body: info_response_body)
 
       result = described_class.new(molfile_structure, output_format).service_info
       expect(result).to eq(info_response_body)
@@ -52,6 +51,22 @@ RSpec.describe IndigoService do
 
       result = described_class.new(molfile_structure, output_format).service_info
       expect(result).to eq({ error: 'Failed to contact Indigo service', status: 500 })
+    end
+  end
+
+  describe 'error handling' do
+    it 'returns HTTParty error message when HTTParty raises an exception' do
+      allow(HTTParty).to receive(:post).and_raise(HTTParty::Error.new('network timeout'))
+
+      result = described_class.new(molfile_structure, output_format).render_structure
+      expect(result).to eq({ error: 'HTTParty error: network timeout' })
+    end
+
+    it 'returns general error message when a standard error is raised' do
+      allow(HTTParty).to receive(:get).and_raise(StandardError.new('unexpected failure'))
+
+      result = described_class.new(molfile_structure, output_format).service_info
+      expect(result).to eq({ error: 'General error: unexpected failure' })
     end
   end
 end

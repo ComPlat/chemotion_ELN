@@ -320,6 +320,7 @@ export default class ReactionDetails extends Component {
       _products: [],
       _reactants: [],
     };
+    LoadingActions.start();
 
     const processMaterials = async (materials, type) => {
       const results = await Promise.all(
@@ -330,6 +331,9 @@ export default class ReactionDetails extends Component {
               molfile: material.molfile,
               svg_path: material.sample_svg_file,
             });
+            if (!newSVGPath) {
+              return material;
+            }
             material.sample_svg_file = newSVGPath;
             alreadyProcessed[type].push(checksum);
           }
@@ -347,6 +351,7 @@ export default class ReactionDetails extends Component {
     reaction.changed = true;
     this.setState({ reaction });
     this.updateReactionSvg();
+    LoadingActions.stop();
   }
 
   reactionSVG(reaction) {
@@ -359,15 +364,16 @@ export default class ReactionDetails extends Component {
     if (reaction.hasMaterials()) {
       return (
         <div>
-          <Button
-            variant="success"
-            size="xxsm"
-            // disabled={reaction.changed || reaction.isNew}
-            disabled={false}
-            onClick={() => this.getSvgFromIndigo(reaction)}
-          >
-            <i className="fa fa-refresh" />
-          </Button>
+          <div style={{ textAlign: 'end' }}>
+            <Button
+              variant="success"
+              size="xxsm"
+              disabled={false}
+              onClick={() => this.getSvgFromIndigo(reaction)}
+            >
+              <i className="fa fa-refresh" />
+            </Button>
+          </div>
           <SvgFileZoomPan
             duration={300}
             resize
