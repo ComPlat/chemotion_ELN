@@ -104,6 +104,10 @@ export default class Sample extends Element {
       newSample.amount_value = sample.amount_value;
     }
 
+    if (sample.weight_percentage) {
+      newSample.weight_percentage = sample.weight_percentage;
+    }
+
     return newSample;
   }
 
@@ -229,6 +233,7 @@ export default class Sample extends Element {
       molecular_mass: 0,
       sum_formula: '',
       gas_type: 'off',
+      weight_percentage: null,
       xref: {},
       sample_type: SAMPLE_TYPE_MICROMOLECULE,
       components: [],
