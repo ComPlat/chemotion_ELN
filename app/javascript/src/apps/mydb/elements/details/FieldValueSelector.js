@@ -25,10 +25,12 @@ function FieldValueSelector({
   const [displayValue, setDisplayValue] = useState('');
 
   const formatValue = (val) => {
-    if ((Number.isNaN(val) || !Number.isFinite(val)) && parseFloat(val) !== 0) {
+    const normalizedVal = val?.toString().replace(',', '.');
+    const numValue = parseFloat(normalizedVal);
+    if (!Number.isFinite(numValue)) {
       return 'n.d.';
     }
-    return metPreConv(val, 'n', 'n').toPrecision(4);
+    return metPreConv(numValue, 'n', 'n').toPrecision(4);
   };
 
   useEffect(() => {
@@ -55,11 +57,12 @@ function FieldValueSelector({
     const val = e.target.value;
     // Allow only digits, commas, dots, and valid floats/integers
     const initialValidValue = val.replace(/[^0-9.,]/g, '');
-    const validValue = validRange(initialValidValue);
+    const normalizedValue = initialValidValue.replace(',', '.');
+
+    // Validate weight percentage range
     if (selectedField === 'weight percentage') {
-      if (validValue || validValue === 0) {
-        setInternalValue(initialValidValue);
-      } else {
+      const isValid = validRange(initialValidValue);
+      if (!isValid) {
         NotificationActions.add({
           title: 'Invalid value',
           message: 'Please enter a number between 0 and 1.',
@@ -70,21 +73,18 @@ function FieldValueSelector({
         return;
       }
     }
-    if (!focused) {
-      onChange(parseFloat(initialValidValue));
+
+    // Only call onChange if the value actually changed
+    if (normalizedValue !== internalValue) {
+      setInternalValue(normalizedValue);
+      onChange(parseFloat(normalizedValue));
     }
   };
 
   const handleFocus = () => {
     setFocused(true);
-    setDisplayValue(internalValue);
-  };
-
-  const handleBlur = () => {
-    setFocused(false);
     const formattedValue = formatValue(internalValue);
     setDisplayValue(formattedValue);
-    onChange(parseFloat(internalValue));
   };
 
   let tooltipMessage = `Current field: ${selectedField}`;
@@ -110,7 +110,6 @@ function FieldValueSelector({
           value={focused ? internalValue : displayValue}
           onChange={handleValueChange}
           onFocus={handleFocus}
-          onBlur={handleBlur}
           className="pe-5"
           style={{ border: selectedField === 'molar mass' ? '2px solid rgb(0, 123, 255)' : '2px solid rgb(0, 128, 0)' }}
           size="sm"

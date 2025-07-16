@@ -822,6 +822,7 @@ export default class Reaction extends Element {
           mat.reference = group[index].reference;
           mat.gas_type = group[index].gas_type;
           mat.gas_phase_data = group[index].gas_phase_data;
+          mat.weight_percentage = group[index].weight_percentage;
           mat.product_reference = group[index].product_reference;
           mat.updateChecksum();
           group[index] = mat;
