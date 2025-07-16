@@ -130,7 +130,6 @@
 !/public/json/hazardPhrases.json
 !/public/json/pictograms.json
 
-
 /public/zip/*
 /public/import_logs/*
 !/public/zip/.keep
