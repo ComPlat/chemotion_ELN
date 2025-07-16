@@ -75,6 +75,7 @@ module Entities
       expose! :xref
       expose! :sample_type
       expose! :sample_details
+      expose! :components,              unless: :displayed_in_list, using:     'Entities::ComponentEntity'
     end
     # rubocop:enable Layout/LineLength, Layout/ExtraSpacing, Metrics/BlockLength
 
