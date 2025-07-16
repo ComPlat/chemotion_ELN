@@ -719,6 +719,11 @@ export default class SampleForm extends React.Component {
     const disableFieldsForGasTypeSample = ['amount_l', 'amount_g', 'amount_mol'];
     const gasSample = sample.isGas() && disableFieldsForGasTypeSample.includes(field);
     const feedstockSample = sample.isFeedstock() && field === 'amount_g';
+    const weightPercentageSample = sample.weight_percentage > 0;
+    const overlayMessage = weightPercentageSample
+      ? 'Amount field is is disabled for samples that belong to reactions with weight percentage. '
+        + 'To change the amount, please edit the material sample amount field using weight percentage field in the reaction scheme tab and save the reaction.'
+      : null;
     let metric;
     if (unit === 'l') {
       metric = prefixes[1];
@@ -775,6 +780,7 @@ export default class SampleForm extends React.Component {
         onMetricsChange={(e) => this.handleMetricsChange(e)}
         id={`numInput_${field}`}
         showInfoTooltipTotalVol={showInfoTooltipTotalVol}
+        overlayMessage={overlayMessage}
       />
     );
   }
@@ -943,7 +949,8 @@ export default class SampleForm extends React.Component {
   }
 
   sampleAmount(sample) {
-    const isDisabled = !sample.can_update;
+    const belongsToWeightPercentageReaction = sample.weight_percentage > 0;
+    const isDisabled = !sample.can_update || belongsToWeightPercentageReaction;
     const volumeBlocked = !sample.has_density && !sample.has_molarity;
 
     return (

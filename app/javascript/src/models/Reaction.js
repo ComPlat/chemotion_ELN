@@ -814,7 +814,8 @@ export default class Reaction extends Element {
           mat.gas_type = existingMat.gas_type;
           mat.gas_phase_data = existingMat.gas_phase_data;
           mat.coefficient = existingMat.coefficient;
-          mat.product_reference = group[index].product_reference;
+          mat.product_reference = existingMat.product_reference;
+          mat.weight_percentage = existingMat.weight_percentage;
 
           // Ensure all components are Component instances, not plain objects
           if (mat.hasComponents()) {
