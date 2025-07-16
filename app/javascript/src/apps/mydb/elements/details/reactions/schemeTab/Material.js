@@ -86,7 +86,7 @@ class Material extends Component {
 
   componentDidMount() {
     const { material } = this.props;
-    const isEmpty = (v) => v === null || v === undefined || Number.isNaN(v);
+    const isEmpty = (v) => (v === null || v === undefined || Number.isNaN(v) || v === 0);
 
     // Determine initial field based on data
     let initialField;
@@ -109,6 +109,7 @@ class Material extends Component {
   }
 
   materialVolume(material, className) {
+    const { reaction, materialGroup, lockEquivColumn} = this.props;
     if (material.contains_residues) { return notApplicableInput(className); }
     const { density, molarity_value, molarity_unit, has_density, has_molarity } = material;
     const tooltip = has_density || has_molarity ?
@@ -121,6 +122,8 @@ class Material extends Component {
 
     const metricPrefixes = ['m', 'n', 'u'];
     const metric = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[1]) > -1) ? material.metrics[1] : 'm';
+    const isAmountDisabledByWeightPercentage = reaction.weight_percentage
+      && material.weight_percentage > 0;
     return (
       <OverlayTrigger placement="top" overlay={tooltip}>
         <div>
@@ -131,9 +134,10 @@ class Material extends Component {
             metricPrefix={metric}
             metricPrefixes={metricPrefixes}
             precision={3}
-            disabled={!permitOn(this.props.reaction)
-              || ((this.props.materialGroup !== 'products')
-              && !material.reference && this.props.lockEquivColumn)
+            disabled={!permitOn(reaction)
+              || isAmountDisabledByWeightPercentage
+              || ((materialGroup !== 'products')
+              && !material.reference && lockEquivColumn)
               || material.gas_type === 'gas'}
             onChange={e => this.handleAmountUnitChange(e, material.amount_l)}
             onMetricsChange={this.handleMetricsChange}
@@ -309,7 +313,7 @@ class Material extends Component {
     if (materialGroup === 'products') {
       return this.yieldOrConversionRate(material);
     }
-    return (reaction.weight_percentage && material.decoupled ? this.customFieldValueSelector()
+    return (reaction.weight_percentage ? this.customFieldValueSelector()
       : (
         <NumeralInputWithUnitsCompo
           size="sm"
@@ -464,6 +468,7 @@ class Material extends Component {
         value
       };
       this.props.onChange(event);
+      this.setState({ fieldToShow: 'molar mass' });
     }
   }
 
@@ -582,12 +587,17 @@ class Material extends Component {
 
   handleEquivalentWeightPercentageChange(field) {
     this.setState({ fieldToShow: field });
+    if (field === 'weight percentage') {
+      this.handleEquivalentChange({ value: 0 });
+    } else if (field === 'molar mass') {
+      this.handleWeightPercentageChange(0);
+    }
   }
 
   handleWeightPercentageChange(e) {
     const { onChange, materialGroup } = this.props;
     const weightPercentage = e;
-    if (onChange && e) {
+    if (onChange && (e || e === 0)) {
       const event = {
         type: 'weightPercentageChanged',
         materialGroup,
@@ -701,10 +711,8 @@ class Material extends Component {
 
   massField(material, metricPrefixes, reaction, massBsStyle, metric) {
     const { lockEquivColumn, materialGroup } = this.props;
-    let disableFieldWithValidWeightPercentage = false;
-    if (reaction.weight_percentage && material.decoupled) {
-      disableFieldWithValidWeightPercentage = !!material.weight_percentage && !(material.weight_percentage > 0);
-    }
+    const isAmountDisabledByWeightPercentage = reaction.weight_percentage
+      && material.weight_percentage > 0;
     return (
       <OverlayTrigger
         delay="100"
@@ -722,7 +730,7 @@ class Material extends Component {
             metricPrefixes={metricPrefixes}
             precision={4}
             disabled={
-              disableFieldWithValidWeightPercentage
+              isAmountDisabledByWeightPercentage
               || !permitOn(reaction)
               || (materialGroup !== 'products' && !material.reference && lockEquivColumn)
               || material.gas_type === 'feedstock' || material.gas_type === 'gas'
@@ -781,6 +789,13 @@ class Material extends Component {
     const metricPrefixesMolConc = ['m', 'n'];
     const metricMolConc = (material.metrics && material.metrics.length > 3 && metricPrefixes.indexOf(material.metrics[3]) > -1) ? material.metrics[3] : 'm';
 
+    const inputsStyle = {
+      paddingRight: 2,
+      paddingLeft: 2,
+    };
+    const isAmountDisabledByWeightPercentage = reaction.weight_percentage
+      && material.weight_percentage > 0;
+
     return (
       <div ref={dropRef} className={this.rowClassNames()}>
         {this.dragHandle()}
@@ -813,6 +828,7 @@ class Material extends Component {
               metricPrefixes={metricPrefixes}
               precision={4}
               disabled={!permitOn(reaction)
+                || isAmountDisabledByWeightPercentage
                 || (this.props.materialGroup === 'products'
                 || (!material.reference && this.props.lockEquivColumn))}
               onChange={e => this.handleAmountUnitChange(e, material.amount_mol)}
