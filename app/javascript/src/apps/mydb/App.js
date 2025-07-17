@@ -30,6 +30,7 @@ class App extends Component {
     UserActions.fetchUnitsSystem();
     UserActions.fetchEditors();
     UserActions.fetchKetcher2Options();
+    UserActions.fetchCurrentUser();
     UIActions.initialize.defer();
     this.patchExternalLibraries();
 
