@@ -329,7 +329,7 @@ module Chemotion
                     Sample.none
                   end
                 when 'iupac_name', 'inchistring', 'inchikey', 'cano_smiles',
-                     'sample_name', 'sample_short_label'
+                     'sample_name', 'sample_short_label', 'molecule_name'
                   if dl_s.positive?
                     Sample.by_collection_id(c_id).order('samples.updated_at DESC')
                           .search_by(search_method, arg)
