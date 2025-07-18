@@ -19,7 +19,7 @@ services:
         - BRANCH=$BUILD_BRANCH
     restart: unless-stopped
     environment:
-      - CONFIG_ROLE=eln
+      - CONFIG_ROLE=combine
       - SECRET_KEY_BASE=pleasechangeme
       - RUBYOPT=-W0
     depends_on:
