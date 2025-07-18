@@ -11,27 +11,10 @@ services:
     networks:
       - chemotion
 
-  worker:
-    build:
-      context: .
-      dockerfile: Dockerfile.github-ci
-      args:
-        - BRANCH=$BUILD_BRANCH
-    restart: unless-stopped
-    environment:
-      - CONFIG_ROLE=worker
-      - SECRET_KEY_BASE=pleasechangeme
-      - RUBYOPT=-W0
-    depends_on:
-      - db
-      - eln
-    networks:
-      - chemotion
-
   eln:
     build:
       context: .
-      dockerfile: Dockerfile.github-ci
+      dockerfile: Dockerfile.p2d
       args:
         - BRANCH=$BUILD_BRANCH
     restart: unless-stopped
