@@ -2,14 +2,14 @@ class UpdateAncestryDataForSbmmSamples < ActiveRecord::Migration[6.1]
   def up
     execute <<~SQL.squish
       UPDATE sequence_based_macromolecule_samples
-      SET ancestry = '/'
-      WHERE ancestry IS NULL;
+      SET ancestry = '/' || trim(both '/' FROM ancestry) || '/'
+      WHERE ancestry IS NOT NULL;
     SQL
 
     execute <<~SQL.squish
       UPDATE sequence_based_macromolecule_samples
-      SET ancestry = '/' || trim(both '/' FROM ancestry) || '/'
-      WHERE ancestry IS NOT NULL;
+      SET ancestry = '/'
+      WHERE ancestry IS NULL;
     SQL
   end
 
