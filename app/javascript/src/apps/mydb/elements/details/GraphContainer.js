@@ -1,7 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Card } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 
+import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import ReportActions from 'src/stores/alt/actions/ReportActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -71,33 +72,36 @@ export default class GraphContainer extends React.Component {
     });
   }
 
+  header() {
+    return (
+      <div className="d-flex align-items-baseline justify-content-between">
+        <div>
+          <i className="fa fa-area-chart me-1" />
+          Graph
+        </div>
+        <Button
+          key="closeBtn"
+          onClick={this.onClose}
+          variant="danger"
+          size="xxsm"
+        >
+          <i className="fa fa-times" />
+        </Button>
+      </div>
+    );
+  }
+
   render() {
     const { selectedComputedProps } = this.state;
 
     return (
-      <Card>
-        <Card.Header className="text-bg-primary d-flex align-items-baseline justify-content-between">
-          <div>
-            <i className="fa fa-area-chart me-1" />
-            Graph
-          </div>
-          <Button
-            key="closeBtn"
-            onClick={this.onClose}
-            variant="danger"
-            size="xxsm"
-          >
-            <i className="fa fa-times" />
-          </Button>
-        </Card.Header>
-        <Card.Body>
-          <ComputedPropsGraphContainer
-            show
-            style={{ overflowY: 'auto', maxHeight: 'calc(100vh - 303px)' }}
-            graphData={selectedComputedProps}
-          />
-        </Card.Body>
-      </Card>
+      <DetailCard header={this.header()}>
+        <ComputedPropsGraphContainer
+          show
+          style={{ overflowY: 'auto', maxHeight: 'calc(100vh - 303px)' }}
+          graphData={selectedComputedProps}
+        />
+      </DetailCard>
     );
   }
 }

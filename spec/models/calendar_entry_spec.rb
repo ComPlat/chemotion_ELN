@@ -1,5 +1,26 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: calendar_entries
+#
+#  id             :bigint           not null, primary key
+#  created_by     :integer          not null
+#  description    :string
+#  end_time       :datetime
+#  eventable_type :string
+#  kind           :string
+#  start_time     :datetime
+#  title          :string
+#  created_at     :datetime         not null
+#  updated_at     :datetime         not null
+#  eventable_id   :bigint
+#
+# Indexes
+#
+#  index_calendar_entries_on_created_by                       (created_by)
+#  index_calendar_entries_on_eventable_type_and_eventable_id  (eventable_type,eventable_id)
+#
 require 'rails_helper'
 
 RSpec.describe 'CalendarEntry' do

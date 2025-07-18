@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import {
-  ButtonToolbar, Button, Tabs, Tab, Tooltip, OverlayTrigger, Card
+  Button, Tabs, Tab, Tooltip, OverlayTrigger
 } from 'react-bootstrap';
 
 import PropertiesForm from './propertiesTab/PropertiesForm';
@@ -18,6 +18,7 @@ import { commentActivation } from 'src/utilities/CommentHelper';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import ConfirmClose from 'src/components/common/ConfirmClose';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
+import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 import CopyElementModal from 'src/components/common/CopyElementModal';
@@ -35,7 +36,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import CollectionUtils from 'src/models/collection/CollectionUtils';
 
-const DeviceDescriptionDetails = ({ toggleFullScreen }) => {
+const DeviceDescriptionDetails = () => {
   const deviceDescriptionsStore = useContext(StoreContext).deviceDescriptions;
   let deviceDescription = deviceDescriptionsStore.device_description;
   deviceDescriptionsStore.setKeyPrefix('deviceDescription');
@@ -165,18 +166,6 @@ const DeviceDescriptionDetails = ({ toggleFullScreen }) => {
           <PrintCodeButton element={deviceDescription} />
           {!deviceDescription.isNew &&
             <OpenCalendarButton isPanelHeader eventableId={deviceDescription.id} eventableType="DeviceDescription" />}
-          <OverlayTrigger
-            placement="bottom"
-            overlay={<Tooltip id="fullDeviceDescription">FullScreen</Tooltip>}
-          >
-            <Button
-              variant="info"
-              size="xxsm"
-              onClick={() => toggleFullScreen()}
-            >
-              <i className="fa fa-expand" />
-            </Button>
-          </OverlayTrigger>
           {deviceDescription.can_copy && !deviceDescription.isNew && (
             <CopyElementModal
               element={deviceDescription}
@@ -203,42 +192,42 @@ const DeviceDescriptionDetails = ({ toggleFullScreen }) => {
     );
   }
 
+  const deviceDescriptionFooter = () => (
+    <>
+      <Button variant="primary" onClick={() => DetailActions.close(deviceDescription)}>
+        Close
+      </Button>
+      <Button variant="warning" disabled={!deviceDescriptionIsValid()} onClick={() => handleSubmit()}>
+        {submitLabel}
+      </Button>
+      {downloadAnalysisButton()}
+    </>
+  );
+
   return (
-    <Card className={"detail-card" + (deviceDescription.isPendingToSave ? " detail-card--unsaved" : "")}>
-      <Card.Header>
-        {deviceDescriptionHeader()}
-      </Card.Header>
-      <Card.Body>
+    <DetailCard
+      isPendingToSave={deviceDescription.isPendingToSave}
+      header={deviceDescriptionHeader()}
+      footer={deviceDescriptionFooter()}
+    >
+      <div className="tabs-container--with-borders">
         <ElementDetailSortTab
           type="device_description"
           availableTabs={Object.keys(tabContentComponents)}
           tabTitles={tabTitles}
           onTabPositionChanged={onTabPositionChanged}
         />
-        <div className="tabs-container--with-borders">
-          <Tabs
-            activeKey={deviceDescriptionsStore.active_tab_key}
-            onSelect={key => handleTabChange(key)}
-            id="deviceDescriptionDetailsTab"
-            unmountOnExit
-          >
-            {tabContents}
-          </Tabs>
-        </div>
-        <CommentModal element={deviceDescription} />
-      </Card.Body>
-      <Card.Footer>
-        <ButtonToolbar className="gap-2">
-          <Button variant="primary" onClick={() => DetailActions.close(deviceDescription)}>
-            Close
-          </Button>
-          <Button variant="warning" disabled={!deviceDescriptionIsValid()} onClick={() => handleSubmit()}>
-            {submitLabel}
-          </Button>
-          {downloadAnalysisButton()}
-        </ButtonToolbar>
-      </Card.Footer>
-    </Card>
+        <Tabs
+          activeKey={deviceDescriptionsStore.active_tab_key}
+          onSelect={key => handleTabChange(key)}
+          id="deviceDescriptionDetailsTab"
+          unmountOnExit
+        >
+          {tabContents}
+        </Tabs>
+      </div>
+      <CommentModal element={deviceDescription} />
+    </DetailCard>
   );
 }
 

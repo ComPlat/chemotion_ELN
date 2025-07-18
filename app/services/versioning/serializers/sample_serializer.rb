@@ -95,6 +95,7 @@ module Versioning
           },
           molfile: {
             label: 'Molfile',
+            kind: :molFile,
           },
           metrics: {
             label: 'Amount metrics',

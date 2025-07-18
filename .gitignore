@@ -35,6 +35,7 @@
 .dockerenv
 /.devcontainer/Dockerfile*
 /.devcontainer/docker-compose.dev*
+/docker-compose.services.yml
 
 /config/matrices.json
 /config/mailcollector.yml
@@ -128,6 +129,9 @@
 !/public/json/precautionaryPhrases.json
 !/public/json/hazardPhrases.json
 !/public/json/pictograms.json
+
+/public/safety_sheets/*
+!public/safety_sheets/.keep
 
 
 /public/zip/*

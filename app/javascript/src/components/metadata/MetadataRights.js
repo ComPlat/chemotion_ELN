@@ -23,8 +23,6 @@ const MetadataRights = ({
           options={controlledRightsList}
           onChange={(option) => onChange(option.value, 'rights', index, 'controlledRights')}
           value={controlledRights}
-          menuPortalTarget={document.body}
-          styles={{ menuPortal: (base) => ({ ...base, zIndex: 9999 }) }}
         />
       </Form.Group>
       <Form.Group className="mb-3">

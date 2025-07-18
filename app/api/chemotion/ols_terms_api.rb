@@ -30,7 +30,7 @@ module Chemotion
       end
 
       get 'root' do
-        list = OlsTerm.where(owl_name: params[:name], is_enabled: true, ancestry: nil)
+        list = OlsTerm.where(owl_name: params[:name], is_enabled: true, ancestry: '/')
 
         present list, with: Entities::OlsTermEntity, root: :ols_terms
       end

@@ -29,21 +29,31 @@
       }
     },
     {
-      "name": "Debug RSpec - selected line, active file",
       "type": "Ruby",
+      "name": "Debug RSpec - active file",
       "request": "launch",
-      "cwd": "${workspaceRoot}",
-      "useBundler": true,
-      "pathToBundler": "${env:BUNDLER_PATH}",
-      "pathToRDebugIDE": "${env:RUBY_DEBUG_IDE_PATH}",
-      "program": "/home/chemotion-dev/.asdf/installs/ruby/2.7.6/bin/rspec", // "program" doesn't support env variable substitution
+      "program": "${workspaceRoot}/bin/rspec",
+      "args": [
+        "${file}"
+      ],
+      "env": {
+        "RAILS_ENV": "test"
+      },
+      "useBundler": true
+    },
+    {
+      "type": "Ruby",
+      "name": "Debug RSpec - line",
+      "request": "launch",
+      "program": "${workspaceRoot}/bin/rspec",
       "args": [
         "${file}:${lineNumber}"
       ],
       "env": {
         "RAILS_ENV": "test"
-      }
-    },
+      },
+      "useBundler": true
+    }
   ],
   "environment": [
     {
@@ -53,6 +63,6 @@
     {
       "name": "RUBY_DEBUG_IDE_PATH",
       "value": "$(bundle info --path ruby-debug-ide)"
-    },
+    }
   ]
 }

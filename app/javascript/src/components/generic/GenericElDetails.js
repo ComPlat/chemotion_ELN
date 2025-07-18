@@ -5,7 +5,6 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
   Button,
-  ButtonToolbar,
   Card,
   ListGroupItem,
   Tabs,
@@ -36,8 +35,11 @@ import GenericAttachments from 'src/components/generic/GenericAttachments';
 import { SegmentTabs } from 'src/components/generic/SegmentDetails';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
+import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import { EditUserLabels, ShowUserLabels } from 'src/components/UserLabels';
+import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
+import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
 
 const onNaviClick = (type, id) => {
   const { currentCollection, isSync } = UIStore.getState();
@@ -411,7 +413,6 @@ export default class GenericElDetails extends Component {
   }
 
   header(genericEl) {
-    const { toggleFullScreen } = this.props;
     const iconClass = (genericEl.element_klass && genericEl.element_klass.icon_name) || '';
     const { currentCollection } = UIStore.getState();
     const defCol = currentCollection
@@ -452,18 +453,6 @@ export default class GenericElDetails extends Component {
               eventableType="Labimotion::Element"
             />
           )}
-          <OverlayTrigger
-            placement="bottom"
-            overlay={<Tooltip id="tip_fullscreen_btn">FullScreen</Tooltip>}
-          >
-            <Button
-              variant="info"
-              size="xxsm"
-              onClick={() => toggleFullScreen()}
-            >
-              <i className="fa fa-expand" aria-hidden="true" />
-            </Button>
-          </OverlayTrigger>
           {copyBtn}
           <OverlayTrigger
             placement="bottom"
@@ -473,7 +462,7 @@ export default class GenericElDetails extends Component {
               variant="warning"
               size="xxsm"
               onClick={() => this.handleSubmit()}
-              style={{ display: saveBtnDisplay }}
+              style={{ display: this.saveBtnDisplay }}
             >
               <i className="fa fa-floppy-o" aria-hidden="true" />
             </Button>
@@ -484,12 +473,32 @@ export default class GenericElDetails extends Component {
     );
   }
 
+  footer() {
+    const { genericEl } = this.state;
+    const showSaveButton = genericEl && (genericEl.isNew || (genericEl.can_update && genericEl.changed));
+
+    return (
+      <>
+        <Button
+          variant="secondary"
+          onClick={() => DetailActions.close(genericEl, true)}
+        >
+          Close
+        </Button>
+        {showSaveButton && (
+          <Button
+            variant="warning"
+            onClick={() => this.handleSubmit()}
+          >
+            {genericEl.isNew ? 'Create' : 'Save'}
+          </Button>
+        )}
+      </>
+    );
+  }
+
   render() {
     const { genericEl, visible } = this.state;
-    const submitLabel = genericEl && genericEl.isNew ? 'Create' : 'Save';
-    // eslint-disable-next-line max-len
-    const saveBtnDisplay = (genericEl?.isNew || (genericEl?.can_update && genericEl?.changed)) ? { display: '' } : { display: 'none' };
-
     /**
      *  tabContents is a object containing all (visible) segment tabs
      */
@@ -513,62 +522,71 @@ export default class GenericElDetails extends Component {
       }
     });
 
-    const tabTitlesMap = {};
     let { activeTab } = this.state;
 
     if (!tabKeyContentList.includes(activeTab) && tabKeyContentList.length > 0) {
       activeTab = tabKeyContentList[0];
     }
+
+    const submitLabel = (genericEl && genericEl.isNew) ? 'Create' : 'Save';
+
     return (
-      <Card
-        className={`detail-card${
-          genericEl.isPendingToSave ? ' detail-card--unsaved' : ''
-        }`}
-      >
+      <>
+        <ViewSpectra
+          sample={genericEl}
+          handleSampleChanged={this.handleGenericElChanged}
+          handleSubmit={this.handleSubmit}
+        />
+        <NMRiumDisplayer
+          sample={genericEl}
+          handleSampleChanged={this.handleGenericElChanged}
+          handleSubmit={this.handleSubmit}
+        />
+        <Card
+          className={`detail-card${
+            genericEl.isPendingToSave ? ' detail-card--unsaved' : ''
+          }`}
+        >
         <Card.Header>{this.header(genericEl)}</Card.Header>
         <Card.Body>
-          <ElementDetailSortTab
-            type={genericEl.type}
-            availableTabs={Object.keys(tabContents)}
-            tabTitles={tabTitlesMap}
-            onTabPositionChanged={this.onTabPositionChanged}
-            addInventoryTab={false}
-          />
-          <Tabs
-            activeKey={activeTab}
-            onSelect={(key) => this.handleSelect(key, genericEl.type)}
-            id="GenericElementDetailsXTab"
-          >
-            {tabContentList}
-          </Tabs>
+          <div className="tabs-container--with-borders">
+            <ElementDetailSortTab
+              type={genericEl.type}
+              availableTabs={Object.keys(tabContents)}
+              onTabPositionChanged={this.onTabPositionChanged}
+            />
+            <Tabs
+              activeKey={activeTab}
+              onSelect={(key) => this.handleSelect(key, genericEl.type)}
+              id="GenericElementDetailsXTab"
+            >
+              {tabContentList}
+            </Tabs>
+          </div>
         </Card.Body>
         <Card.Footer>
-          <div className="d-inline-block p-1">
-            <ButtonToolbar className="gap-1">
-              <Button
-                variant="secondary"
-                onClick={() => DetailActions.close(genericEl, true)}
-              >
-                Close
-              </Button>
-              <Button
-                variant="warning"
-                onClick={() => this.handleSubmit()}
-                style={saveBtnDisplay}
-              >
-                {submitLabel}
-              </Button>
-            </ButtonToolbar>
-          </div>
-        </Card.Footer>
-      </Card>
+          <Button
+            variant="secondary"
+            onClick={() => DetailActions.close(genericEl, true)}
+          >
+            Close
+          </Button>
+          <Button
+            variant="warning"
+            onClick={() => this.handleSubmit()}
+            style={this.saveBtnDisplay}
+          >
+            {submitLabel}
+          </Button>
+          </Card.Footer>
+        </Card>
+      </>
     );
   }
 }
 
 GenericElDetails.propTypes = {
   genericEl: PropTypes.object,
-  toggleFullScreen: PropTypes.func.isRequired,
 };
 
 GenericElDetails.defaultProps = {

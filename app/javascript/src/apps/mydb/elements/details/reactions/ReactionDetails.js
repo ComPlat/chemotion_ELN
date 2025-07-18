@@ -5,16 +5,18 @@ import React, { Component } from 'react';
 import Aviator from 'aviator';
 import PropTypes from 'prop-types';
 import {
-  Button, Tabs, Tab, OverlayTrigger, Tooltip, Card, ButtonToolbar, ButtonGroup
+  Button, Tabs, Tab, OverlayTrigger, Tooltip, ButtonToolbar, ButtonGroup
 } from 'react-bootstrap';
 import SvgFileZoomPan from 'react-svg-file-zoom-pan-latest';
 import { findIndex, isEmpty } from 'lodash';
+
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import ElementResearchPlanLabels from 'src/apps/mydb/elements/labels/ElementResearchPlanLabels';
 import ElementAnalysesLabels from 'src/apps/mydb/elements/labels/ElementAnalysesLabels';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import ReactionVariations from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariations';
 import {
   REACTION_VARIATIONS_TAB_KEY
@@ -319,12 +321,14 @@ export default class ReactionDetails extends Component {
       : { svg: reaction.reaction_svg_file };
     if (reaction.hasMaterials()) {
       return (
-        <SvgFileZoomPan
-          duration={300}
-          resize
-          // eslint-disable-next-line react/jsx-props-no-spreading
-          {...svgProps}
-        />
+        <div>
+          <SvgFileZoomPan
+            duration={300}
+            resize
+            // eslint-disable-next-line react/jsx-props-no-spreading
+            {...svgProps}
+          />
+        </div>
       );
     }
   }
@@ -391,19 +395,6 @@ export default class ReactionDetails extends Component {
                 <i className="fa fa-cogs" />
               </Button>
             </OverlayTrigger>
-            <OverlayTrigger
-              placement="bottom"
-              overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}
-            >
-              <Button
-                variant="info"
-                size="xxsm"
-                // eslint-disable-next-line react/destructuring-assignment
-                onClick={() => this.props.toggleFullScreen()}
-              >
-                <i className="fa fa-expand" />
-              </Button>
-            </OverlayTrigger>
             {reaction.changed
               && (
                 <>
@@ -441,6 +432,30 @@ export default class ReactionDetails extends Component {
           </ButtonToolbar>
         </div>
       </div>
+    );
+  }
+
+  reactionFooter() {
+    const { reaction } = this.state;
+    const submitLabel = (reaction && reaction.isNew) ? 'Create' : 'Save';
+
+    return (
+      <>
+        <Button variant="primary" onClick={() => DetailActions.close(reaction)}>
+          Close
+        </Button>
+        <Button
+          id="submit-reaction-btn"
+          variant="warning"
+          onClick={() => this.handleSubmit()}
+          disabled={!permitOn(reaction) || !this.reactionIsValid()}
+        >
+          {submitLabel}
+        </Button>
+        {reaction && !reaction.isNew && (
+          <ExportSamplesButton type="reaction" id={reaction.id} />
+        )}
+      </>
     );
   }
 
@@ -602,10 +617,6 @@ export default class ReactionDetails extends Component {
       ),
     };
 
-    const tabTitlesMap = {
-      green_chemistry: 'Green Chemistry'
-    };
-
     addSegmentTabs(reaction, this.handleSegmentsChange, tabContentsMap);
 
     const tabContents = [];
@@ -614,56 +625,34 @@ export default class ReactionDetails extends Component {
       if (tabContent) { tabContents.push(tabContent); }
     });
 
-    const submitLabel = (reaction && reaction.isNew) ? 'Create' : 'Save';
-    const exportButton = (reaction && reaction.isNew) ? null : <ExportSamplesButton type="reaction" id={reaction.id} />;
-
     const currentTab = (activeTab !== 0 && activeTab) || visible[0];
 
     return (
-      <Card className={`detail-card${reaction.isPendingToSave ? ' detail-card--unsaved' : ''}`}>
-        <Card.Header>
-          {this.reactionHeader(reaction)}
-        </Card.Header>
-        <Card.Body>
-          {this.reactionSVG(reaction)}
+      <DetailCard
+        isPendingToSave={reaction.isPendingToSave}
+        header={this.reactionHeader(reaction)}
+        footer={this.reactionFooter()}
+      >
+        {this.reactionSVG(reaction)}
+        {this.state.sfn && <ScifinderSearch el={reaction} />}
+        <div className="tabs-container--with-borders">
           <ElementDetailSortTab
             type="reaction"
             availableTabs={Object.keys(tabContentsMap)}
-            tabTitles={tabTitlesMap}
             onTabPositionChanged={this.onTabPositionChanged}
           />
-          {this.state.sfn && <ScifinderSearch el={reaction} />}
-          <div className="tabs-container--with-borders">
-            <Tabs
-              mountOnEnter
-              activeKey={currentTab}
-              onSelect={this.handleSelect}
-              id="reaction-detail-tab"
-              unmountOnExit
-            >
-              {tabContents}
-            </Tabs>
-            <CommentModal element={reaction} />
-          </div>
-        </Card.Body>
-        <Card.Footer>
-          <div className="d-inline-block p-1">
-            <Button variant="primary" onClick={() => DetailActions.close(reaction)} className="me-1">
-              Close
-            </Button>
-            <Button
-              id="submit-reaction-btn"
-              variant="warning"
-              className="me-1"
-              onClick={() => this.handleSubmit()}
-              disabled={!permitOn(reaction) || !this.reactionIsValid()}
-            >
-              {submitLabel}
-            </Button>
-            {exportButton}
-          </div>
-        </Card.Footer>
-      </Card>
+          <Tabs
+            mountOnEnter
+            activeKey={currentTab}
+            onSelect={this.handleSelect}
+            id="reaction-detail-tab"
+            unmountOnExit
+          >
+            {tabContents}
+          </Tabs>
+          <CommentModal element={reaction} />
+        </div>
+      </DetailCard>
     );
   }
 }
@@ -671,5 +660,4 @@ export default class ReactionDetails extends Component {
 ReactionDetails.propTypes = {
   // eslint-disable-next-line react/forbid-prop-types
   reaction: PropTypes.object,
-  toggleFullScreen: PropTypes.func,
 };

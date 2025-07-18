@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Form, Card, Row, Col, ButtonToolbar, Button,
+  Form, Row, Col, Button,
   Tooltip, OverlayTrigger, Tabs, Tab
 } from 'react-bootstrap';
 import { unionBy, findIndex } from 'lodash';
@@ -11,6 +11,7 @@ import ConfirmClose from 'src/components/common/ConfirmClose';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
+import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
@@ -204,22 +205,8 @@ export default class ScreenDetails extends Component {
         </div>
         <div className="d-flex align-items-center gap-1">
           <PrintCodeButton element={screen} />
-          {screen.isNew
-            ? null
-            : <OpenCalendarButton isPanelHeader eventableId={screen.id} eventableType="Screen" />}
-
-          <OverlayTrigger
-            placement="bottom"
-            overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}
-          >
-            <Button
-              variant="info"
-              size="xxsm"
-              onClick={() => this.props.toggleFullScreen()}
-            >
-              <i className="fa fa-expand" />
-            </Button>
-          </OverlayTrigger>
+          {!screen.isNew
+            && <OpenCalendarButton isPanelHeader eventableId={screen.id} eventableType="Screen" />}
           <OverlayTrigger
             placement="bottom"
             overlay={<Tooltip id="saveScreen">Save Screen</Tooltip>}
@@ -236,6 +223,26 @@ export default class ScreenDetails extends Component {
           <ConfirmClose el={screen} />
         </div>
       </div>
+    );
+  }
+
+  screenFooter() {
+    const { screen } = this.state;
+    const submitLabel = screen.isNew ? 'Create' : 'Save';
+
+    return (
+      <>
+        <Button variant="primary" onClick={() => DetailActions.close(screen)}>
+          Close
+        </Button>
+        <Button
+          id="submit-screen-btn"
+          variant="warning"
+          onClick={() => this.handleSubmit()}
+        >
+          {submitLabel}
+        </Button>
+      </>
     );
   }
 
@@ -368,7 +375,6 @@ export default class ScreenDetails extends Component {
 
   render() {
     const { screen, visible } = this.state;
-    const submitLabel = screen.isNew ? 'Create' : 'Save';
 
     const tabContentsMap = {
       properties: (
@@ -419,12 +425,6 @@ export default class ScreenDetails extends Component {
       ),
     };
 
-    const tabTitlesMap = {
-      properties: 'Properties',
-      analyses: 'Analyses',
-      research_plans: 'Research Plans',
-    };
-
     addSegmentTabs(screen, this.handleSegmentsChange, tabContentsMap);
 
     const tabContents = [];
@@ -450,55 +450,38 @@ export default class ScreenDetails extends Component {
     };
 
     return (
-      <Card className={`detail-card${screen.isPendingToSave ? ' detail-card--unsaved' : ''}`}>
-        <Card.Header>
-          {this.screenHeader(screen)}
-        </Card.Header>
-        <Card.Body>
-          <ResearchplanFlowDisplay
-            initialData={screen.componentGraphData}
-            researchplans={screen.research_plans}
-            flowConfiguration={flowConfiguration}
-          />
+      <DetailCard
+        isPendingToSave={screen.isPendingToSave}
+        header={this.screenHeader(screen)}
+        footer={this.screenFooter()}
+      >
+        <ResearchplanFlowDisplay
+          initialData={screen.componentGraphData}
+          researchplans={screen.research_plans}
+          flowConfiguration={flowConfiguration}
+        />
+        <div className="tabs-container--with-borders">
           <ElementDetailSortTab
             type="screen"
             availableTabs={Object.keys(tabContentsMap)}
-            tabTitles={tabTitlesMap}
             onTabPositionChanged={this.onTabPositionChanged}
           />
-          <div className="tabs-container--with-borders">
-            <Tabs
-              mountOnEnter
-              unmountOnExit
-              activeKey={activeTab}
-              onSelect={(key) => this.handleSelect(key)}
-              id="screen-detail-tab"
-            >
-              {tabContents}
-            </Tabs>
-          </div>
-          <CommentModal element={screen} />
-        </Card.Body>
-        <Card.Footer>
-          <ButtonToolbar className="gap-2">
-            <Button variant="primary" onClick={() => DetailActions.close(screen)}>
-              Close
-            </Button>
-            <Button
-              id="submit-screen-btn"
-              variant="warning"
-              onClick={() => this.handleSubmit()}
-            >
-              {submitLabel}
-            </Button>
-          </ButtonToolbar>
-        </Card.Footer>
-      </Card>
+          <Tabs
+            mountOnEnter
+            unmountOnExit
+            activeKey={activeTab}
+            onSelect={(key) => this.handleSelect(key)}
+            id="screen-detail-tab"
+          >
+            {tabContents}
+          </Tabs>
+        </div>
+        <CommentModal element={screen} />
+      </DetailCard>
     );
   }
 }
 
 ScreenDetails.propTypes = {
   screen: PropTypes.instanceOf(Screen).isRequired,
-  toggleFullScreen: PropTypes.func.isRequired,
 };

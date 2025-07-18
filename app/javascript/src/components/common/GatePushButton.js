@@ -41,7 +41,7 @@ class GatePushButton extends React.Component {
     };
 
     const newState = {
-      showOverlay: true,
+      showOverlay: method === 'GET', // Only show overlay for GET requests (initial check)
       status: 'redirect',
       target: response.target
     };
@@ -142,12 +142,12 @@ class GatePushButton extends React.Component {
     return (
       <>
         <Button
-          variant="success"
+          variant="secondary"
           size="sm"
           onClick={() => this.transmit()}
           ref={this.buttonRef}
         >
-          <i className="fa fa-cloud" />
+          <i className="fa fa-paper-plane" />
         </Button>
 
         <Overlay

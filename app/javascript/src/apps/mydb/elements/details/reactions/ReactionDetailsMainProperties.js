@@ -112,7 +112,7 @@ export default class ReactionDetailsMainProperties extends Component {
                 />
                 <Button
                   disabled={!permitOn(reaction)}
-                  variant="success"
+                  variant="primary"
                   onClick={() => this.changeUnit()}
                 >
                   {temperature.valueUnit}
