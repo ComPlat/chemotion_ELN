@@ -21,6 +21,14 @@ function getSelectedColumns(materialIDs) {
   };
 }
 
+function getOnlyReactionMaterialsIDs(materials) {
+  return Object.fromEntries(
+    Object.entries(getReactionMaterialsIDs(materials)).map(
+      ([k, matList]) => [k, matList.map((mat) => mat[0])]
+    )
+  );
+}
+
 function getMaterialIdsAsList(reactionMaterials) {
   return Object.entries(getReactionMaterialsIDs(reactionMaterials)).reduce((acc, [key, value]) => {
     acc[key] = value.map((x) => x[0]);
@@ -34,8 +42,7 @@ async function setUpReaction() {
   reaction.reactants = [await setUpMaterial()];
   const processedSegs = [];
   const materials = getReactionMaterials(reaction);
-  const materialIDs = getReactionMaterialsIDs(materials);
-
+  const materialIDs = getOnlyReactionMaterialsIDs(materials);
   const variations = [];
   // eslint-disable-next-line no-plusplus
   for (let id = 0; id < 3; id++) {
@@ -86,7 +93,8 @@ async function setUpGaseousReaction() {
   reaction.products[0].amount_value = 1;
 
   const materials = getReactionMaterials(reaction);
-  const materialIDs = getReactionMaterialsIDs(materials);
+
+  const materialIDs = getOnlyReactionMaterialsIDs(materials);
 
   const variations = [];
   for (let id = 0; id < 3; id++) {
@@ -130,4 +138,5 @@ export {
   getColumnDefinitionsMaterialIDs,
   getSelectedColumns,
   getMaterialIdsAsList,
+  getOnlyReactionMaterialsIDs,
 };

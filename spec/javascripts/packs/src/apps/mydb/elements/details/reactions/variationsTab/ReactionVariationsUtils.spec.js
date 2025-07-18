@@ -13,6 +13,7 @@ import {
   getSelectedColumns,
   getColumnDefinitionsMaterialIDs,
   getMaterialIdsAsList,
+  getOnlyReactionMaterialsIDs,
 } from 'helper/reactionVariationsHelpers';
 
 describe('ReactionVariationsUtils', () => {
@@ -41,7 +42,7 @@ describe('ReactionVariationsUtils', () => {
       .toBe(2);
 
     const materials = getReactionMaterials(reaction);
-    const materialIDs = getReactionMaterialsIDs(materials);
+    const materialIDs = getOnlyReactionMaterialsIDs(materials);
     materialIDs.products.pop();
 
     const row = createVariationsRow(

@@ -101,7 +101,7 @@ function getReactionMaterialsIDs(materials) {
     return Object.fromEntries(
         Object.entries(materials).map(([materialType, materialsOfType]) => [
             materialType,
-            materialsOfType.map((material) => [material.id.toString(), material.showed_name])
+            materialsOfType.map((material) => [material.id.toString(), material.short_label])
         ])
     );
 }
