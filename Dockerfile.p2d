@@ -2,6 +2,8 @@ FROM ptrxyz/chemotion:eln-2.0.1
 
 ARG BRANCH=main
 ARG REMOTE=https://github.com/ComPlat/chemotion_ELN.git
+ARG BUNDLER_VERSION=2.4.22
+# The last version of bundler to support current Ruby & RubyGems was 2.4.22.
 
 SHELL ["/bin/bash", "-e", "-o", "pipefail", "-c", "--"]
 
@@ -9,26 +11,40 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=apt-cache \
     --mount=type=cache,target=/var/lib/apt,sharing=locked,id=apt-lib \
     apt-get update -y && \
     apt-get install -y --no-install-recommends --autoremove --fix-missing \
-        git ca-certificates curl unzip nano \
-        build-essential \
-        zlib1g-dev libreadline-dev patchelf \
-        cmake libpq-dev swig libmagickcore-dev \
-        postgresql-client inkscape imagemagick librsvg2-bin locales ghostscript \
-        vim iproute2 sudo make jq
+    git ca-certificates curl unzip nano \
+    build-essential \
+    zlib1g-dev libreadline-dev patchelf \
+    cmake libpq-dev swig libmagickcore-dev \
+    postgresql-client inkscape imagemagick librsvg2-bin locales ghostscript \
+    vim iproute2 sudo make jq
 
-WORKDIR "/chemotion/app"
+WORKDIR /chemotion/app
+
+RUN cp .version /bk.version
 
 RUN git remote add origin ${REMOTE} && \
     git fetch && \
     git switch ${BRANCH}
 
+RUN mv /bk.version .version
+
+RUN echo "For this deployed container" && \
+    echo "CHEMOTION_REF=$(git rev-parse --short HEAD || echo unknown)" >> /chemotion/app/.version && \
+    echo "CHEMOTION_TAG=$(git describe --abbrev=0 --tags || echo untagged)" >> /chemotion/app/.version
+
 RUN rm ${ASDF_DIR}/asdf
 ENV PATH="${ASDF_DIR}/bin:${PATH}"
 RUN ./prepare-asdf.sh
 
-# Ruby gems
+RUN rm -rf /asdf/installs/ruby/2.7.8/lib/ruby/gems/2.7.0/gems/bundler-* && \
+    rm -f /asdf/installs/ruby/**/lib/ruby/gems/**/specifications/default/bundler-*.gemspec
+
+# Ruby
 RUN --mount=type=cache,target=/asdf/cache,sharing=locked \
     MAKEFLAGS="-j$(nproc)" && export MAKEFLAGS && \
+    # asdf plugin add ruby && \
+    # asdf install ruby "${RUBY_VERSION}" && \
+    gem install bundler -v "${BUNDLER_VERSION}" && \
     bundle install --jobs="$(nproc)" --retry=3 && \
     bundle clean --force
 
@@ -45,7 +61,9 @@ RUN --mount=type=cache,target=/asdf/cache,sharing=locked \
 
 RUN bash package_postinstall.sh
 
-ADD https://raw.githubusercontent.com/harivyasi/push2deploy/refs/heads/main/payload/run.sh /embed/run.sh
+RUN MAKEFLAGS="-j$(nproc)" && export MAKEFLAGS && \
+    bundle install --jobs="$(nproc)" --retry=3
+
+ADD https://raw.githubusercontent.com/harivyasi/push2deploy/main/payload/run.sh /embed/run.sh
+
 RUN chmod +x /embed/run.sh
-
-
