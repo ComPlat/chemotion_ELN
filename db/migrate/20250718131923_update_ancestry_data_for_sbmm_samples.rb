@@ -17,7 +17,7 @@ class UpdateAncestryDataForSbmmSamples < ActiveRecord::Migration[6.1]
     execute <<~SQL.squish
       UPDATE sequence_based_macromolecule_samples
       SET ancestry = NULL
-      WHERE ancestry '/';
+      WHERE ancestry = '/';
     SQL
 
     execute <<~SQL.squish
