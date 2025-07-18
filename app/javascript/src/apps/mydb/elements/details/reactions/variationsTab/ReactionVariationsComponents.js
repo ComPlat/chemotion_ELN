@@ -610,7 +610,7 @@ function ColumnSelection(selectedColumns, availableColumns, onApply, loading = f
         Object.entries(currentColumns)
             .map(([key, values]) => {
                 const {[key]: availableValues} = availableColumns;
-                const newValues = values.filter((value) => availableValues.map((x) => x[0])
+                const newValues = values.filter((value) => availableValues.map((x) => Array.isArray(x) ? x[0] : x)
                     .includes(value));
                 return [key, newValues];
             }),

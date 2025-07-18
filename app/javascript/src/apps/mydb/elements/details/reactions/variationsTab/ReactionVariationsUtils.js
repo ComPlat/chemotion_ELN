@@ -296,7 +296,7 @@ function createVariationsRow({
   Object.keys(materialTypes)
     .forEach((materialType) => {
       row[materialType] = {};
-      selectedColumns[materialType].forEach((materialID) => {
+      selectedColumns[materialType].forEach(([materialID, h]) => {
         const material = materials[materialType].find((m) => m.id.toString() === materialID.toString());
         row[materialType][materialID] = getMaterialData(material, materialType, gasMode, vesselVolume);
       });
