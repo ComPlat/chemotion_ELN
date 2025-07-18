@@ -429,60 +429,6 @@ export default class ReactionDetailsContainers extends Component {
             <div className="m-4">
                 There are currently no Analyses.
             </div>
-            <CommentBox
-              isVisible={commentBoxVisible}
-              value={reaction.container.description}
-              handleCommentTextChange={this.handleCommentTextChange}
-            />
-            <Accordion
-              className='border rounded overflow-hidden'
-              onSelect={this.handleAccordionOpen}
-              activeKey={activeContainer}
-            >
-              {analyses_container[0].children.map((container, key) => {
-                const isFirstTab = key === 0;
-                return (
-                  <Card
-                    ref={(element) => { this.containerRefs[key] = element; }}
-                    key={`reaction_container_${container.id}`}
-                    className={`rounded-0 border-0${isFirstTab ? '' : ' border-top'}`}
-                  >
-                    <Card.Header className="rounded-0 p-0 border-bottom-0">
-                      <AccordionHeaderWithButtons eventKey={key}>
-                        {container.is_deleted
-                          ? containerHeaderDeleted(container)
-                          : containerHeader(container)}
-                      </AccordionHeaderWithButtons>
-                    </Card.Header>
-
-                    {!container.is_deleted && (
-                      <Accordion.Collapse eventKey={key}>
-                        <Card.Body>
-                          <ContainerComponent
-                            disabled={readOnly}
-                            readOnly={readOnly}
-                            templateType="reaction"
-                            container={container}
-                            onChange={() => this.handleChange(container)}
-                          />
-                        </Card.Body>
-                      </Accordion.Collapse>
-                    )}
-                  </Card>
-                );
-              })}
-            </Accordion>
-            <ViewSpectra
-              sample={reaction}
-              handleSampleChanged={this.handleSpChange}
-              handleSubmit={this.props.handleSubmit}
-            />
-            <NMRiumDisplayer
-              sample={reaction}
-              handleSampleChanged={this.handleSpChange}
-              handleSubmit={this.props.handleSubmit}
-            />
-          </div>
         );
     }
 }
