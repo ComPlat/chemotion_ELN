@@ -15,7 +15,7 @@
 #  amount_as_used_mass_value       :float
 #  amount_as_used_mol_unit         :string           default("mol"), not null
 #  amount_as_used_mol_value        :float
-#  ancestry                        :string
+#  ancestry                        :string           default("/"), not null
 #  concentration_unit              :string           default("ng/L"), not null
 #  concentration_value             :float
 #  deleted_at                      :datetime
@@ -40,7 +40,7 @@
 #
 # Indexes
 #
-#  idx_sbmm_samples_ancestry    (ancestry)
+#  idx_sbmm_samples_ancestry    (ancestry) WHERE (deleted_at IS NULL)
 #  idx_sbmm_samples_deleted_at  (deleted_at)
 #  idx_sbmm_samples_sbmm        (sequence_based_macromolecule_id)
 #  idx_sbmm_samples_user        (user_id)

@@ -1525,14 +1525,14 @@ ActiveRecord::Schema.define(version: 202501151333346) do
     t.bigint "user_id"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
-    t.string "ancestry"
+    t.string "ancestry", default: "/", null: false, collation: "C"
     t.string "heterologous_expression", default: "unknown", null: false
     t.string "organism", default: ""
     t.string "taxon_id", default: ""
     t.string "strain", default: ""
     t.string "tissue", default: ""
     t.string "localisation", default: ""
-    t.index ["ancestry"], name: "idx_sbmm_samples_ancestry"
+    t.index ["ancestry"], name: "idx_sbmm_samples_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
     t.index ["deleted_at"], name: "idx_sbmm_samples_deleted_at"
     t.index ["sequence_based_macromolecule_id"], name: "idx_sbmm_samples_sbmm"
     t.index ["user_id"], name: "idx_sbmm_samples_user"
