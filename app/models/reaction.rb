@@ -300,6 +300,10 @@ class Reaction < ApplicationRecord
     raw.is_a?(Hash) ? raw.values : raw
   end
 
+  def user_labels
+    tag&.taggable_data&.fetch('user_labels', nil)
+  end
+
   private
 
   def scrubber(value)
