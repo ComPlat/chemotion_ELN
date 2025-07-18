@@ -15,6 +15,7 @@ export default function ElementCheckbox({ element }) {
         || checkedIds.includes(element.id);
       setChecked(newChecked);
     };
+    handleUiStoreChange(UIStore.getState());
 
     UIStore.listen(handleUiStoreChange);
     return () => UIStore.unlisten(handleUiStoreChange);
