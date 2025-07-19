@@ -9,7 +9,7 @@ services:
     networks:
       - chemotion
 
-  eln:
+  app:
     build:
       context: .
       dockerfile: Dockerfile.p2d
