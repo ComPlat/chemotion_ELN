@@ -6,8 +6,6 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-    volumes:
-      - chemotion_db:/var/lib/postgresql/data/
     networks:
       - chemotion
 
@@ -28,10 +26,6 @@ services:
       - 4000
     networks:
       - chemotion
-
-volumes:
-  chemotion_db:
-    name: chemotion_db
 
 networks:
   chemotion:
