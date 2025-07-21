@@ -67,3 +67,14 @@ RUN MAKEFLAGS="-j$(nproc)" && export MAKEFLAGS && \
 ADD https://raw.githubusercontent.com/harivyasi/push2deploy/main/payload/run.sh /embed/run.sh
 
 RUN chmod +x /embed/run.sh
+
+EXPOSE 4000
+
+WORKDIR /chemotion/app
+
+CMD ["/embed/run.sh"]
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=300s --retries=3 \
+    CMD /embed/health.sh || exit 1
+
+VOLUME [ "/chemotion/app", "/chemotion/data" ]
