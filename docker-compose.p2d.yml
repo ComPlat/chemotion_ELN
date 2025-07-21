@@ -26,8 +26,6 @@ services:
       - 4000
     networks:
       - chemotion
-    labels:
-      - traefik.swarm.network=dokploy-network
 
 networks:
   chemotion:
