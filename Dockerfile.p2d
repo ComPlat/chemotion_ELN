@@ -65,8 +65,10 @@ RUN MAKEFLAGS="-j$(nproc)" && export MAKEFLAGS && \
     bundle install --jobs="$(nproc)" --retry=3
 
 ADD https://raw.githubusercontent.com/harivyasi/push2deploy/main/payload/run.sh /embed/run.sh
+ADD https://raw.githubusercontent.com/harivyasi/push2deploy/main/payload/health.sh /embed/health.sh
 
-RUN chmod +x /embed/run.sh
+RUN chmod +x /embed/run.sh && \
+    chmod +x /embed/health.sh
 
 EXPOSE 4000
 
