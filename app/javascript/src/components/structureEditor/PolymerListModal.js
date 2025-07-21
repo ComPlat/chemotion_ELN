@@ -21,7 +21,7 @@ import {
   BodySolidWhite,
   SpecialCharacterPickerIcon,
   ActiveMultiNew,
-  ACtivePhasenNew,
+  ActivePhaseNew,
   ActiveMonoNew,
   PorousBodyNew,
   SolidBodyNew,
@@ -44,14 +44,14 @@ const iconMap = {
   SupportSinglePhase,
   SupportSinglePhaseWhite,
   BodySolidWhite,
-  ActiveMultiNew,
-  ACtivePhasenNew,
+  ActivePhaseNew,
   ActiveMonoNew,
-  PorousBodyNew,
-  SolidBodyNew,
+  ActiveMultiNew,
   SolidSupportNew,
   SolidSupportMultiPhaseNew,
-  SolidSupportSinglePhaseNew
+  SolidSupportSinglePhaseNew,
+  PorousBodyNew,
+  SolidBodyNew
 };
 
 function PolymerListModal({
@@ -122,7 +122,12 @@ function PolymerListModal({
                                     }
                                   }}
                                 >
-                                  <PolymerIcon />
+                                  <div className='flex flex-col items-center gap-2'>
+                                    <PolymerIcon />
+                                    <p className="fw-400">
+                                      {shape.name}
+                                    </p>
+                                  </div>
                                 </Button>
                               );
                             })}
