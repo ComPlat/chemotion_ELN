@@ -14,7 +14,7 @@ services:
       context: .
       dockerfile: Dockerfile.p2d
       args:
-        - BRANCH=$BUILD_BRANCH
+        - BUILDKIT_CONTEXT_KEEP_GIT_DIR=1
     restart: unless-stopped
     environment:
       - CONFIG_ROLE=combine
