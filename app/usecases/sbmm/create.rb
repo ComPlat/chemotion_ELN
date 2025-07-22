@@ -34,18 +34,57 @@ module Usecases
         primary_accession = params[:primary_accession]
         raise ArgumentError.new("'#{primary_accession}' is not a valid Uniprot accession") unless SequenceBasedMacromolecule.valid_accession?(primary_accession)
 
-        sbmm = SequenceBasedMacromolecule.find_by(uniprot_derivation: 'uniprot', primary_accession: primary_accession)
-        if sbmm.nil?
-          sbmm = Usecases::Sbmm::Finder.new.find_in_uniprot(primary_accession: primary_accession)
-          sbmm.sbmm_type = params[:sbmm_type]
-          sbmm.sbmm_subtype = params[:sbmm_subtype]
-          sbmm.uniprot_derivation = 'uniprot'
-        end
-        sbmm.save
-        sbmm
+        sbmm = SequenceBasedMacromolecule.find_by(uniprot_derivation: 'uniprot', primary_accession: primary_accession, sequence: params[:sequence])
+        return sbmm if sbmm.present?
+
+
+        new_sbmm = Usecases::Sbmm::Finder.new.find_in_uniprot(primary_accession: primary_accession)
+        new_sbmm.sbmm_type = params[:sbmm_type]
+        new_sbmm.sbmm_subtype = params[:sbmm_subtype]
+        new_sbmm.uniprot_derivation = 'uniprot'
+        new_sbmm.save
+
+        new_sbmm
       end
 
       def find_or_create_modified_protein(params)
+        parent = find_or_create_parent(params)
+
+        # Step 1: check if the exact same protein is already present (using ALL fields) -> user just selected an existing sbmm without modifying it
+        sbmm = Usecases::Sbmm::Finder.new.find_non_uniprot_protein_by(params.except(:parent_identifier).merge(parent_id: parent.id))
+        return sbmm if sbmm.present?
+
+        # Step 2: check if a protein with the same sequence and modifications exists
+        new_sbmm = SequenceBasedMacromolecule.new(params.except(:parent_identifier, :protein_sequence_modification_attributes, :post_translational_modification_attributes))
+        new_sbmm.parent = parent
+        new_sbmm.protein_sequence_modification = ProteinSequenceModification.new(params[:protein_sequence_modification_attributes])
+        new_sbmm.post_translational_modification = PostTranslationalModification.new(params[:post_translational_modification_attributes])
+
+        existing_sbmm = SequenceBasedMacromolecule.duplicate_sbmm(new_sbmm)
+        raise CreateConflictError.new(sbmm: new_sbmm, conflicting_sbmm: existing_sbmm) if existing_sbmm.present?
+
+        new_sbmm.save
+        new_sbmm
+      end
+
+      def find_or_create_unknown_protein(params)
+        # Step 1: check if the exact same protein is already present (using ALL fields) -> user just selected an existing sbmm without modifying it
+        sbmm = Usecases::Sbmm::Finder.new.find_non_uniprot_protein_by(params)
+        return sbmm if sbmm.present?
+
+        # Step 2: check if a protein with the same sequence and modifications exists
+        new_sbmm = SequenceBasedMacromolecule.new(params.except(:protein_sequence_modification_attributes, :post_translational_modification_attributes))
+        new_sbmm.protein_sequence_modification = ProteinSequenceModification.new(params[:protein_sequence_modification_attributes])
+        new_sbmm.post_translational_modification = PostTranslationalModification.new(params[:post_translational_modification_attributes])
+
+        existing_sbmm = SequenceBasedMacromolecule.duplicate_sbmm(new_sbmm)
+        raise CreateConflictError.new(sbmm: new_sbmm, conflicting_sbmm: existing_sbmm) if existing_sbmm.present?
+
+        new_sbmm.save
+        new_sbmm
+      end
+
+      def find_or_create_parent(params)
         if SequenceBasedMacromolecule.valid_accession?(params[:parent_identifier]) # parent is a uniprot sbmm
           parent = find_or_create_uniprot_protein({
             primary_accession: params[:parent_identifier],
@@ -56,26 +95,6 @@ module Usecases
           id = params[:parent_identifier].to_i # TODO: remove .to_i if we ever change our IDs to UUIDs
           parent = SequenceBasedMacromolecule.find(id)
         end
-
-        sbmm = Usecases::Sbmm::Finder.new.find_non_uniprot_protein_by(params.except(:parent_identifier).merge(parent_id: parent.id, uniprot_derivation: 'uniprot_modified'))
-        if sbmm.nil?
-          sbmm = SequenceBasedMacromolecule.new(params.except(:parent_identifier, :protein_sequence_modification_attributes, :post_translational_modification_attributes))
-
-          sbmm.parent = parent
-          # TODO: Was passiert wenn es zwar ein gültiger Accession Code wäre, aber kein SBMM gefunden wurde?
-          sbmm.protein_sequence_modification = ProteinSequenceModification.new(params[:protein_sequence_modification_attributes])
-          sbmm.post_translational_modification = PostTranslationalModification.new(params[:post_translational_modification_attributes])
-        end
-        sbmm.save
-        sbmm
-      end
-
-      def find_or_create_unknown_protein(params)
-        sbmm = Usecases::Sbmm::Finder.new.find_non_uniprot_protein_by(params.except(:parent_identifier).merge(uniprot_derivation: 'uniprot_unknown'))
-        sbmm ||= SequenceBasedMacromolecule.create(params)
-        sbmm.protein_sequence_modification = ProteinSequenceModification.new(params[:protein_sequence_modification_attributes])
-        sbmm.post_translational_modification = PostTranslationalModification.new(params[:post_translational_modification_attributes])
-        sbmm
       end
     end
   end
