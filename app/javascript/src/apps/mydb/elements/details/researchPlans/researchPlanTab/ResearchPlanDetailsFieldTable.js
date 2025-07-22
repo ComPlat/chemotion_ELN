@@ -16,6 +16,10 @@ import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 import ReactionsFetcher from 'src/fetchers/ReactionsFetcher';
 
+
+const COLUMN_NAME_SHORT_LABEL_SAMPLE = 'Sample (short-label)';
+const COLUMN_NAME_SHORT_LABEL_REACTION = 'Reaction (short-label)';
+
 export default class ResearchPlanDetailsFieldTable extends Component {
   constructor(props) {
     super(props);
@@ -553,9 +557,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
   }
 
   openSampleByShortLabel(shortLabel) {
-    console.debug('opening Sample by short label', shortLabel);
     SamplesFetcher.findByShortLabel(shortLabel).then((result) => {
-      console.debug('got Result', result);
       if (result.sample_id && result.collection_id) {
         Aviator.navigate(`/collection/${result.collection_id}/sample/${result.sample_id}`, { silent: true });
         ElementActions.fetchSampleById(result.sample_id);
@@ -566,9 +568,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
   }
 
   openReactionByShortLabel(shortLabel) {
-    console.debug('opening reaction by short label', shortLabel);
     ReactionsFetcher.findByShortLabel(shortLabel).then((result) => {
-      console.debug('got Result', result);
       if (result.reaction_id && result.collection_id) {
         Aviator.navigate(`/collection/${result.collection_id}/reaction/${result.reaction_id}`, { silent: true });
         ElementActions.fetchReactionById(result.reaction_id);
@@ -583,7 +583,8 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     if (!data) {
       return node.value || '';
     }
-    const { sample, reaction } = data;
+    const sample = data[COLUMN_NAME_SHORT_LABEL_SAMPLE];
+    const reaction = data[COLUMN_NAME_SHORT_LABEL_REACTION];
     if (sample && sample !== '') {
       return (
         <a className="link" onClick={(e) => { e.preventDefault(); this.openSampleByShortLabel(sample); }}>
@@ -607,7 +608,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     const staticColumns = cloneDeep(columns);
 
     staticColumns.forEach((item) => {
-      if (item.colId === 'Sample (short-label)' || item.colId === 'Reaction (short-label)') {
+      if (item.colId === COLUMN_NAME_SHORT_LABEL_SAMPLE || item.colId === COLUMN_NAME_SHORT_LABEL_REACTION) {
         item.cellRenderer = this.renderShortLabel;
       }
       item.editable = false;
