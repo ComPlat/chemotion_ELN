@@ -542,6 +542,12 @@ module Chemotion
         end
 
         post do
+          # Ensure the first element's 'link' is an empty string unless already set.
+          # This prevents invalid SQL fragments like "AND ( OR (samples.name=..." from being generated.
+          if (link_hash = params.dig('selection', 'advanced_params', 0)).is_a?(Hash) && link_hash['link'] != ''
+            link_hash['link'] = ''
+          end
+
           conditions =
             Usecases::Search::ConditionsForAdvancedSearch.new(
               detail_levels: @dl,
