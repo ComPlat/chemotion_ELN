@@ -199,7 +199,7 @@ export default class SampleDetails extends React.Component {
 
   componentDidUpdate(prevProps) {
     const { sample } = this.props;
-    if (sample === prevProps.sample) { return; }
+    if (sample === prevProps.sample) { return };
 
     const smileReadonly = !(
       (sample.isNew
@@ -296,7 +296,7 @@ export default class SampleDetails extends React.Component {
     const { sample } = this.state;
     sample.molfile = molfile;
     const smiles = (config && sample.molecule) ? config.smiles : null;
-    sample.contains_residues = molfile.indexOf(' R# ') > -1;
+    sample.contains_residues = molfile?.indexOf(' R# ') > -1;
     sample.formulaChanged = true;
     this.setState({ loadingMolecule: true });
 
@@ -1479,6 +1479,31 @@ export default class SampleDetails extends React.Component {
         stb.push(klass.label);
       }
     });
+
+    const { pageMessage } = this.state;
+    const messageBlock = (pageMessage
+      && (pageMessage.error.length > 0 || pageMessage.warning.length > 0)) ? (
+        <Alert variant="warning" style={{ marginBottom: 'unset', padding: '5px', marginTop: '10px' }}>
+          <strong>Structure Alert</strong>
+          <Button
+            size="sm"
+            variant="warning"
+            onClick={() => this.setState({ pageMessage: null })}
+          >
+            Close Alert
+          </Button>
+          {
+          pageMessage.error.map((m) => (
+            <div key={uuid.v1()}>{m}</div>
+          ))
+        }
+          {
+          pageMessage.warning.map((m) => (
+            <div key={uuid.v1()}>{m}</div>
+          ))
+        }
+        </Alert>
+      ) : null;
 
     const activeTab = (this.state.activeTab !== 0 && stb.indexOf(this.state.activeTab) > -1
       && this.state.activeTab) || visible.get(0);
