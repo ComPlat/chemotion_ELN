@@ -27,6 +27,7 @@ module Usecases
         def message
           "Could not create the new SBMM as another with the same data already exists"
         end
+      end
 
       class UpdateConflictError < ConflictError
         def to_h
