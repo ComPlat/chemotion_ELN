@@ -99,17 +99,17 @@ class ClipboardActions {
     };
   }
 
-  fetchElementAndBuildCopy(sample, collection_id, action) {
-    sample.collection_id = collection_id;
+  fetchElementAndBuildCopy(sample, collectionId, action) {
+    sample.collection_id = collectionId;
     return (
       { samples: [sample], collection_id: collectionId, action }
     );
   }
 
-  fetchDeviceDescriptionAndBuildCopy(deviceDescription, collectionId, action) {
+  fetchDeviceDescriptionAndBuildCopy(deviceDescription, collectionId) {
     const newDeviceDescription = new DeviceDescription(deviceDescription);
     newDeviceDescription.collection_id = collectionId;
-    return { device_descriptions: [newDeviceDescription], collection_id: collectionId, action };
+    return { device_descriptions: [newDeviceDescription], collection_id: collectionId };
   }
 
   fetchSequenceBasedMacromoleculeSamplesAndBuildCopy(sequence_based_macromolecule_sample, collection_id) {

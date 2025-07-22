@@ -23,7 +23,7 @@ module Import
             .merge(
               user_id: @current_user_id,
               sequence_based_macromolecule_id: sbmm_id,
-              ancestry: ancestry.try(:id),
+              ancestry: (ancestry.try(:id).present? ? "/#{ancestry.id}/" : '/'),
               collections: fetch_collection(uuid),
               container: Container.create_root_container,
             ),

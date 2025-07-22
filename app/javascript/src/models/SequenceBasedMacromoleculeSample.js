@@ -436,6 +436,18 @@ export default class SequenceBasedMacromoleculeSample extends Element {
     this._volume_as_used_unit = value;
   }
 
+  get concentration_by_purity() {
+    return this.concentration_value && this.purity ? parseFloat((this.concentration_value * this.purity) / 100).toFixed(8) : '';
+  }
+
+  get molarity_by_purity() {
+    return this.molarity_value && this.purity ? parseFloat((this.molarity_value * this.purity) / 100).toFixed(8) : '';
+  }
+
+  get activity_per_mass_by_purity() {
+    return this.activity_per_mass_value && this.purity ? parseFloat((this.activity_per_mass_value * this.purity) / 100).toFixed(8) : '';
+  }
+
   get accessions() {
     const accessions = this.sequence_based_macromolecule.accessions;
     if (accessions) {
@@ -478,6 +490,18 @@ export default class SequenceBasedMacromoleculeSample extends Element {
       molarity_value: '',
       volume_as_used_unit: 'L',
       volume_as_used_value: '',
+      heterologous_expression: '',
+      localisation: '',
+      organism: '',
+      strain: '',
+      taxon_id: '',
+      tissue: '',
+      obtained_by: '',
+      supplier: '',
+      formulation: '',
+      purity: '',
+      purity_detection: '',
+      purification_method: '',
       
       sequence_based_macromolecule: {
         accessions: [],
@@ -495,7 +519,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
         pdb_doi: '',
         primary_accession: '',
         sbmm_subtype: '',
-        sbmm_type: '',
+        sbmm_type: 'protein',
         sequence: '',
         sequence_length: '',
         splitted_sequence: '',
@@ -590,6 +614,19 @@ export default class SequenceBasedMacromoleculeSample extends Element {
       activity_per_volume_unit: this.activity_per_volume_unit,
       volume_as_used_value: this.volume_as_used_value,
       volume_as_used_unit: this.volume_as_used_unit,
+      heterologous_expression: this.heterologous_expression,
+      localisation: this.localisation,
+      organism: this.organism,
+      strain: this.strain,
+      taxon_id: this.taxon_id,
+      tissue: this.tissue,
+      obtained_by: this.obtained_by,
+      supplier: this.supplier,
+      formulation: this.formulation,
+      purity: this.purity,
+      purity_detection: this.purity_detection,
+      purification_method: this.purification_method,
+
       sequence_based_macromolecule_attributes: {
         accessions: this.accessions,
         ec_numbers: this.ec_numbers,
@@ -650,6 +687,18 @@ export default class SequenceBasedMacromoleculeSample extends Element {
       volume_as_used_value: this.volume_as_used_value,
       volume_as_used_unit: this.volume_as_used_unit,
       sequence_based_macromolecule: this.sequence_based_macromolecule,
+      heterologous_expression: this.heterologous_expression,
+      localisation: this.localisation,
+      organism: this.organism,
+      strain: this.strain,
+      taxon_id: this.taxon_id,
+      tissue: this.tissue,
+      obtained_by: this.obtained_by,
+      supplier: this.supplier,
+      formulation: this.formulation,
+      purity: this.purity,
+      purity_detection: this.purity_detection,
+      purification_method: this.purification_method,
       errors: {},
     };
     return serialized;

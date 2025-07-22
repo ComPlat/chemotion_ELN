@@ -10,8 +10,6 @@ import { v4 as uuid } from 'uuid';
 
 import { unitSystems } from 'src/components/staticDropdownOptions/units';
 import { capitalizeWords } from 'src/utilities/textHelper';
-import { elementShowOrNew } from 'src/utilities/routesUtils';
-import UIStore from 'src/stores/alt/stores/UIStore';
 
 const inputByType = (object, field, index, formHelper, disabled) => {
   const fullFieldName = `${field}.${index}.${object.value}`

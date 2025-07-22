@@ -13,8 +13,7 @@ module Usecases
         scope = base_list_scope(params)
         scope = with_time_filter(scope, params)
         scope = scope.in_sbmm_order
-
-        scope
+        order_by_sbmm_or_sequence(scope, params)
       end
 
       private
@@ -36,6 +35,7 @@ module Usecases
         SequenceBasedMacromoleculeSample.none
       end
 
+      # rubocop:disable Metrics/AbcSize,  Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
       def with_time_filter(scope, params)
         return scope unless params[:filter]
         return scope unless params[:filter][:timestamp_field]
@@ -53,6 +53,11 @@ module Usecases
         end
 
         scope
+      end
+      # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+
+      def order_by_sbmm_or_sequence(scope, params)
+        params[:list_order] ? scope.in_sbmm_sequence_order : scope.in_sbmm_order
       end
     end
   end

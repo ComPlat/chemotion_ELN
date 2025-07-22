@@ -61,12 +61,6 @@ const SequenceAndPostTranslationalModificationForm = ({ readonly }) => {
     { abel: 'Amino Acids', options: methylationAminoAcids },
   ];
 
-  // <Col>
-  //   {formHelper.textInput(`${fieldPrefixPostTransitional}.name`, 'Name of the post modification ', disabled, '')}
-  // </Col>
-  // </Row>
-  // <Row className="mb-4 align-items-end">
-
   return (
     <>
       <Row className="mb-4">
