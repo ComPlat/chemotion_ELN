@@ -8,7 +8,7 @@ module Chemotion
     helpers ContainerHelpers
     helpers CollectionHelpers
 
-    rescue_from [::Usecases::Sbmm::Errors::CreateConflictError, ::Usecases::Sbmm::Errors::UpdateConflictError do |conflict|
+    rescue_from [::Usecases::Sbmm::Errors::CreateConflictError, ::Usecases::Sbmm::Errors::UpdateConflictError] do |conflict|
       error!(conflict.to_h, 400)
     end
 
