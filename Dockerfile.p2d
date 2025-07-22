@@ -16,7 +16,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=apt-cache \
     zlib1g-dev libreadline-dev patchelf \
     cmake libpq-dev swig libmagickcore-dev \
     postgresql-client inkscape imagemagick librsvg2-bin locales ghostscript \
-    vim iproute2 sudo make jq
+    vim iproute2 sudo make jq tmate
 
 WORKDIR /chemotion/app
 
@@ -45,6 +45,7 @@ RUN --mount=type=cache,target=/asdf/cache,sharing=locked \
     # asdf plugin add ruby && \
     # asdf install ruby "${RUBY_VERSION}" && \
     gem install bundler -v "${BUNDLER_VERSION}" && \
+    bundle add --skip-install 'factory_bot' && \
     bundle install --jobs="$(nproc)" --retry=3 && \
     bundle clean --force
 
@@ -66,9 +67,11 @@ RUN MAKEFLAGS="-j$(nproc)" && export MAKEFLAGS && \
 
 ADD https://raw.githubusercontent.com/harivyasi/push2deploy/main/payload/run.sh /embed/run.sh
 ADD https://raw.githubusercontent.com/harivyasi/push2deploy/main/payload/health.sh /embed/health.sh
+ADD https://raw.githubusercontent.com/harivyasi/push2deploy/main/payload/initialize.sh /initialize.sh
 
 RUN chmod +x /embed/run.sh && \
-    chmod +x /embed/health.sh
+    chmod +x /embed/health.sh && \
+    chmod +x /initialize.sh
 
 EXPOSE 4000
 
