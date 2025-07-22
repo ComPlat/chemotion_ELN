@@ -111,5 +111,9 @@ module Taggable
 
     pcid.presence || PubChem.get_cid_from_inchikey(inchikey)
   end
+
+  def user_labels
+    tag&.taggable_data&.fetch('user_labels', [])
+  end
 end
 # rubocop: enable Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity,Metrics/AbcSize, Naming/MethodParameterName, Lint/AssignmentInCondition

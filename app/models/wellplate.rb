@@ -147,10 +147,6 @@ class Wellplate < ApplicationRecord
     wells.order(position_y: :asc, position_x: :asc)
   end
 
-  def user_labels
-    tag&.taggable_data&.fetch('user_labels', nil)
-  end
-
   def ordered_wells_with_samples
     ordered_wells.includes(:sample)
   end
