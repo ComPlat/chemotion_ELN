@@ -33,7 +33,6 @@ class CelllineImporter
         cellline_material_id: material.id,
       ),
     )
-    sample.container = Container.create_root_container
     update_instances!(uuid, sample)
     add_collections_to_sample(uuid, sample)
   end

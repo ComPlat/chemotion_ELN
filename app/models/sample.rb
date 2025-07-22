@@ -66,6 +66,7 @@ class Sample < ApplicationRecord
 
   has_logidze
   acts_as_paranoid
+  include Containerable # for creating root container
   include ElementUIStateScopes
   include PgSearch::Model
   include Collectable
@@ -211,7 +212,6 @@ class Sample < ApplicationRecord
   before_save :auto_set_short_label
   before_create :check_molecule_name
   before_create :set_boiling_melting_points
-  after_create :create_root_container
   after_save :update_counter
   after_save :update_equivalent_for_reactions
   after_save :update_gas_material
@@ -247,7 +247,6 @@ class Sample < ApplicationRecord
   belongs_to :user, optional: true
   belongs_to :molecule_name, optional: true
 
-  has_one :container, as: :containable
   has_one :chemical, dependent: :destroy
 
   has_many :wells
@@ -434,7 +433,6 @@ class Sample < ApplicationRecord
     )
     subsample.collections << collections
 
-    subsample.container = Container.create_root_container
     subsample.save!
 
     create_components_for_mixture_subsample(subsample)
@@ -749,10 +747,6 @@ class Sample < ApplicationRecord
     return unless /^#{creator.name_abbreviation}-\d+$/.match?(short_label)
 
     creator.increment_counter 'samples'
-  end
-
-  def create_root_container
-    self.container = Container.create_root_container if container.nil?
   end
 
   def assign_molecule_name

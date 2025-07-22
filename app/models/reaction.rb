@@ -52,6 +52,7 @@
 class Reaction < ApplicationRecord
   has_logidze
   acts_as_paranoid
+  include Containerable
   include ElementUIStateScopes
   include PgSearch::Model
   include Collectable
@@ -160,8 +161,6 @@ class Reaction < ApplicationRecord
   before_create :auto_set_short_label
 
   after_create :update_counter
-
-  has_one :container, as: :containable
 
   def self.get_associated_samples(reaction_ids)
     ReactionsSample.where(reaction_id: reaction_ids).pluck(:sample_id)
