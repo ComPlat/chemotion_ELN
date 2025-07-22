@@ -8,8 +8,8 @@ module Chemotion
     helpers ContainerHelpers
     helpers CollectionHelpers
 
-    rescue_from ::Usecases::Sbmm::Errors::UpdateConflictError do |update_conflict|
-      error!(update_conflict.to_h, 400)
+    rescue_from [::Usecases::Sbmm::Errors::CreateConflictError, ::Usecases::Sbmm::Errors::UpdateConflictError do |conflict|
+      error!(conflict.to_h, 400)
     end
 
     rescue_from Grape::Exceptions::ValidationErrors do |exception|
@@ -205,9 +205,8 @@ module Chemotion
         end
 
         put do
-          Usecases::Sbmm::Sample.new(current_user: current_user).update(@sbmm_sample,
-                                                                        declared(params, evaluate_given: true))
-
+          Usecases::Sbmm::Sample.new(current_user: current_user)
+                                .update(@sbmm_sample, declared(params, evaluate_given: true))
           present(
             @sbmm_sample,
             with: Entities::SequenceBasedMacromoleculeSampleEntity,
