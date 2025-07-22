@@ -4,9 +4,10 @@ import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromolec
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 
 export default class SequenceBasedMacromoleculeSamplesFetcher {
-  static fetchByCollectionId(id, queryParams = {}, isSync = false) {
+  static fetchByCollectionId(id, queryParams = {}, isSync = false, listOrder = 'sbmm') {
+    const updatedQueryParams = { ...queryParams, listOrder };
     return BaseFetcher.fetchByCollectionId(
-      id, queryParams, isSync, 'sequence_based_macromolecule_samples', SequenceBasedMacromoleculeSample
+      id, updatedQueryParams, isSync, 'sequence_based_macromolecule_samples', SequenceBasedMacromoleculeSample
     );
   }
 
@@ -183,7 +184,8 @@ export default class SequenceBasedMacromoleculeSamplesFetcher {
       error.map((e) => {
         const message = ['is empty', 'is missing', 'does not have a valid value'].includes(e.message) ? "Can't be blank" : e.message;
         e.parameters.map((parameter) => {
-          const parts = [parameter.match(/^(\w+)_attributes/)[1], ...[...parameter.matchAll(/\[([^\]]+)\]/g)]
+          const matchedParameter = parameter.match(/^(\w+)_attributes/) ? parameter.match(/^(\w+)_attributes/)[1] : parameter;
+          const parts = [matchedParameter, ...[...parameter.matchAll(/\[([^\]]+)\]/g)]
             .map(m => m[1].replace(/_attributes$/, ''))];
 
           parts.reduce((obj, key, i) => {

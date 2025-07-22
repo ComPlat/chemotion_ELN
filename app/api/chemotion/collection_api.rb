@@ -491,8 +491,8 @@ module Chemotion
               error!('401 Unauthorized', 401) unless collection
             end
           end
-          ExportCollectionsJob.perform_now(collection_ids, params[:format].to_s, nested, current_user.id)
           status 204
+          ExportCollectionsJob.perform_now(collection_ids, params[:format].to_s, nested, current_user.id)
         end
       end
 

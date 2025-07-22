@@ -93,10 +93,10 @@ export default class BaseFetcher {
       }
     }
     if (type == 'generic_elements') {
-      userState = UserStore.getState();
-      filters = userState?.profile?.data?.filters || {};
-      group = filters[queryParams.name]?.group || 'none';
-      sort = filters[queryParams.name]?.sort || false;
+      const userState = UserStore.getState();
+      const filters = userState?.profile?.data?.filters || {};
+      const group = filters[queryParams.name]?.group || 'none';
+      const sort = filters[queryParams.name]?.sort || false;
 
       getParams.el_type = queryParams.name
       getParams.sort_column = (sort && group) || 'updated_at'
@@ -108,6 +108,8 @@ export default class BaseFetcher {
       .join("&")
 
     if (type == 'sequence_based_macromolecule_samples') {
+      paramsString += '&list_order=' + queryParams.listOrder;
+
       paramsString += '&filter[timestamp_field]=' + (queryParams.filterCreatedAt ? 'created_at' : 'updated_at');
       if (queryParams.fromDate) {
         paramsString += '&filter[after_timestamp]=' + dateToUnixTimestamp(queryParams.fromDate);

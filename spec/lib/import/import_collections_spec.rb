@@ -249,7 +249,7 @@ RSpec.describe 'ImportCollection' do
 
     describe 'import a collection with 4 different sbmm samples' do
       let(:imported_collection) { Collection.find_by(label: 'sbmm test') }
-      let(:sbmm_sample_with_ancestry) { SequenceBasedMacromoleculeSample.where.not(ancestry: nil) }
+      let(:sbmm_sample_with_ancestry) { SequenceBasedMacromoleculeSample.where.not(ancestry: '/') }
       let(:sbmm_sample_uniprot) { SequenceBasedMacromoleculeSample.where(name: 'uniprot') }
       let(:sbmm_with_parent) { SequenceBasedMacromolecule.where.not(parent_id: nil) }
       let(:import_id) { 'collection_sbmm_samples' }

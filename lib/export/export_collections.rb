@@ -104,7 +104,7 @@ module Export
 
     def prepare_data # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
       # get the collections from the database, in order of ancestry, but with empty ancestry first
-      collections = Collection.order(Arel.sql("NULLIF(ancestry, '') ASC NULLS FIRST")).find(@collection_ids)
+      collections = Collection.order(ancestry: :asc).find(@collection_ids)
       # add decendants for nested collections
       if @nested
         descendants = []
@@ -147,7 +147,7 @@ module Export
     def fetch_sequence_based_macromolecule_samples(collection)
       # get sbmm samples in order of ancestry, but with empty ancestry first
       sbmm_samples = collection.sequence_based_macromolecule_samples
-                               .order(Arel.sql("NULLIF(ancestry, '') ASC NULLS FIRST"))
+                               .order(ancestry: :asc)
       # fetch sbmm samples
       fetch_many(sbmm_samples, {
                    'sequence_based_macromolecule_id' => 'SequenceBasedMacromolecule',
@@ -259,7 +259,7 @@ module Export
 
     def fetch_samples(collection)
       # get samples in order of ancestry, but with empty ancestry first
-      samples = collection.samples.order(Arel.sql("NULLIF(ancestry, '') ASC NULLS FIRST"))
+      samples = collection.samples.order(ancestry: :asc)
       # fetch samples
       fetch_many(samples, {
                    'molecule_name_id' => 'MoleculeName',

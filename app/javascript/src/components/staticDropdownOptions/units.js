@@ -47,6 +47,9 @@ const unitSystems = {
   molecular_weight: [
     { value: 'kg_mol', label: 'kg/mol' },
   ],
+  purity: [
+    { value: 'percent', label: '%' },
+  ],
   volumes: [
     { value: 'L', label: 'L' },
     { value: 'mL', label: 'mL' },

@@ -37,6 +37,13 @@ module Entities
     expose! :tissue, if: ->(object, options) { !uniprot_protein? }
     expose! :localisation, if: ->(object, options) { !uniprot_protein? }
 
+    expose! :obtained_by
+    expose! :supplier
+    expose! :formulation
+    expose! :purity
+    expose! :purity_detection
+    expose! :purification_method
+
     expose! :attachments, using: 'Entities::AttachmentEntity'
     expose! :comments, using: 'Entities::CommentEntity'
     expose! :comment_count

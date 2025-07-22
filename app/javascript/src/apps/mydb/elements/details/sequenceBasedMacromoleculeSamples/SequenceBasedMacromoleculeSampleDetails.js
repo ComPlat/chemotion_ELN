@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import {
-  Alert, Button, Tabs, Tab, Tooltip, OverlayTrigger, Card
+  Alert, Button, Tabs, Tab, Tooltip, OverlayTrigger
 } from 'react-bootstrap';
 
 import PropertiesForm from './propertiesTab/PropertiesForm';
@@ -17,6 +17,7 @@ import { commentActivation } from 'src/utilities/CommentHelper';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import ConfirmClose from 'src/components/common/ConfirmClose';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
+import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 import CopyElementModal from 'src/components/common/CopyElementModal';
@@ -240,47 +241,49 @@ const SequenceBasedMacromoleculeSampleDetails = () => {
     );
   }
 
+  const sbmmSampleFooter = () => (
+    <>
+      <Button variant="primary" onClick={() => DetailActions.close(sbmmSample)}>
+        Close
+      </Button>
+      <Button variant="warning" onClick={() => handleSubmit()}>
+        {submitLabel}
+      </Button>
+      {downloadAnalysisButton()}
+    </>
+  );
+
   return (
-    <Card className={"detail-card" + (sbmmSample.isPendingToSave ? " detail-card--unsaved" : "")}>
-      <Card.Header>
-        {sbmmSampleHeader()}
-      </Card.Header>
-      <Card.Body style={{ minHeight: '500px' }}>
-        <div className="tabs-container--with-borders">
-          <ElementDetailSortTab
-            type="sequence_based_macromolecule_sample"
-            availableTabs={Object.keys(tabContentComponents)}
-            tabTitles={tabTitles}
-            onTabPositionChanged={onTabPositionChanged}
-          />
-          <Tabs
-            activeKey={sbmmStore.active_tab_key}
-            onSelect={key => handleTabChange(key)}
-            id="sbmmSampleSampleDetailsTab"
-            unmountOnExit
-          >
-            {tabContents}
-          </Tabs>
-        </div>
-        <CommentModal element={sbmmSample} />
-        {
-          Object.keys(sbmmSample.errors).length >= 1
-          || (Object.keys(sbmmSample.errors).length == 1 && sbmmSample.errors?.structure_file) && (
-            <Alert variant="danger">{errorMessage()}</Alert>
-          )
-        }
-        {sbmmStore.show_conflict_modal && <ConflictModal />}
-      </Card.Body>
-      <Card.Footer>
-        <Button variant="primary" onClick={() => DetailActions.close(sbmmSample)}>
-          Close
-        </Button>
-        <Button variant="warning" onClick={() => handleSubmit()}>
-          {submitLabel}
-        </Button>
-        {downloadAnalysisButton()}
-      </Card.Footer>
-    </Card>
+    <DetailCard
+      isPendingToSave={sbmmSample.isPendingToSave}
+      header={sbmmSampleHeader()}
+      footer={sbmmSampleFooter()}
+    >
+      <div className="tabs-container--with-borders">
+        <ElementDetailSortTab
+          type="sequence_based_macromolecule_sample"
+          availableTabs={Object.keys(tabContentComponents)}
+          tabTitles={tabTitles}
+          onTabPositionChanged={onTabPositionChanged}
+        />
+        <Tabs
+          activeKey={sbmmStore.active_tab_key}
+          onSelect={key => handleTabChange(key)}
+          id="sbmmSampleSampleDetailsTab"
+          unmountOnExit
+        >
+          {tabContents}
+        </Tabs>
+      </div>
+      <CommentModal element={sbmmSample} />
+      {
+        Object.keys(sbmmSample.errors).length >= 1
+        || (Object.keys(sbmmSample.errors).length == 1 && sbmmSample.errors?.structure_file) && (
+          <Alert variant="danger">{errorMessage()}</Alert>
+        )
+      }
+      {sbmmStore.show_conflict_modal && <ConflictModal />}
+    </DetailCard>
   );
 }
 

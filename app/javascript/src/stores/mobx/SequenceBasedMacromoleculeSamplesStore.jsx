@@ -5,7 +5,7 @@ import SequenceBasedMacromoleculesFetcher from 'src/fetchers/SequenceBasedMacrom
 import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';
 import Container from 'src/models/Container';
 
-const emptySequenceBasedMacromoleculeSample = {
+const emptySequenceBasedMacromolecule = {
   accessions: [],
   created_at: '',
   ec_numbers: '',
@@ -23,7 +23,7 @@ const emptySequenceBasedMacromoleculeSample = {
   pdb_doi: '',
   primary_accession: '',
   sbmm_subtype: '',
-  sbmm_type: '',
+  sbmm_type: 'protein',
   sequence: '',
   sequence_length: '',
   splitted_sequence: '',
@@ -93,6 +93,7 @@ export const SequenceBasedMacromoleculeSamplesStore = types
     search_result: types.optional(types.array(types.frozen({})), []),
     conflict_sbmms: types.optional(types.array(types.frozen({})), []),
     show_search_options: types.optional(types.frozen({}), {}),
+    list_grouped_by: types.optional(types.string, 'sbmm'),
   })
   .actions(self => ({
     searchForSequenceBasedMacromolecule: flow(function* searchForSequenceBasedMacromolecule(search_term, search_field) {
@@ -187,7 +188,7 @@ export const SequenceBasedMacromoleculeSamplesStore = types
           sbmm.parent_identifier = selectedSbmm?.parent.id || selectedSbmm?.id;
         }
 
-        Object.keys(emptySequenceBasedMacromoleculeSample).map((key) => {
+        Object.keys(emptySequenceBasedMacromolecule).map((key) => {
           if (selectedSbmm[key] !== undefined) { sbmm[key] = selectedSbmm[key]; }
         });
       } else {
@@ -197,7 +198,7 @@ export const SequenceBasedMacromoleculeSamplesStore = types
         }
         const sbmmOrParent = uniprotDerivation === 'uniprot_modified' ? sbmm?.parent : sbmm;
 
-        Object.keys(emptySequenceBasedMacromoleculeSample).map((key) => {
+        Object.keys(emptySequenceBasedMacromolecule).map((key) => {
           if (['post_translational_modifications', 'protein_sequence_modifications'].includes(key) && uniprotDerivation === 'uniprot_modified') {
             sbmm[key] = {};
             sbmmOrParent[key] = null;
@@ -420,6 +421,9 @@ export const SequenceBasedMacromoleculeSamplesStore = types
       let searchOptions = { ...self.show_search_options };
       searchOptions[id] = value;
       self.show_search_options = searchOptions;
+    },
+    setListGroupedBy(value) {
+      self.list_grouped_by = value;
     },
     setModificationToggleButtons(fieldPrefix, field, fieldSuffix, value) {
       let sequenceBasedMacromoleculeSample = { ...self.sequence_based_macromolecule_sample };

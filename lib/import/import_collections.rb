@@ -99,8 +99,6 @@ module Import
         gate_collection if @gt == true
         import_collections if @gt == false
         import_samples
-        import_chemicals if @gt == false
-        import_components if @gt == false
         import_residues
         import_reactions
         import_reactions_samples
@@ -108,6 +106,7 @@ module Import
 
         if @gt == false
           import_chemicals
+          import_components
           import_wellplates
           import_wells
           import_research_plans
@@ -700,7 +699,7 @@ module Import
     end
 
     def fetch_ancestry(type, ancestry)
-      return if ancestry.blank?
+      return if ancestry == '/' || ancestry.blank?
 
       parents = ancestry.split('/')
       parent_uuid = parents[-1]

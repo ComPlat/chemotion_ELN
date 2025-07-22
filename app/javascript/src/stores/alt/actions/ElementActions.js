@@ -378,9 +378,10 @@ class ElementActions {
     };
   }
 
-  fetchSequenceBasedMacromoleculeSamplesByCollectionId(id, queryParams = {}, collectionIsSync = false) {
+  fetchSequenceBasedMacromoleculeSamplesByCollectionId(id, queryParams = {}, collectionIsSync = false,
+    listOrder = 'sbmm') {
     return (dispatch) => {
-      SequenceBasedMacromoleculeSamplesFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
+      SequenceBasedMacromoleculeSamplesFetcher.fetchByCollectionId(id, queryParams, collectionIsSync, listOrder)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
@@ -1302,6 +1303,10 @@ class ElementActions {
 
   changeSorting(sort) {
     return sort;
+  }
+
+  changeSbmmSampleOrder(order) {
+    return order;
   }
 
   changeElementsFilter(filter) {
