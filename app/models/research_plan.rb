@@ -90,10 +90,6 @@ class ResearchPlan < ApplicationRecord
     self.container ? self.container.analyses : Container.none
   end
 
-  def user_labels
-    tag&.taggable_data&.fetch('user_labels', nil)
-  end
-
   def svg_files
     fields = body.select { |field| field['type'] == 'ketcher' }
     svg_files = []

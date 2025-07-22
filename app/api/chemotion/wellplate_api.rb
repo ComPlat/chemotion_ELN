@@ -189,6 +189,7 @@ module Chemotion
         optional :height, type: Integer, default: 8, values: 1..100
         optional :width, type: Integer, default: 12, values: 1..100
         optional :segments, type: Array, desc: 'Segments'
+        optional :user_labels, type: Array
       end
       post do
         container = params[:container]
@@ -197,6 +198,7 @@ module Chemotion
         wellplate.container = update_datamodel(container)
 
         wellplate.save!
+        update_element_labels(wellplate, params[:user_labels], current_user.id)
 
         # save to profile
         kinds = wellplate.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
