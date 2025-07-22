@@ -3,44 +3,28 @@ import {
   Button, ButtonToolbar, Form, Accordion
 } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import StructureEditor from 'src/models/StructureEditor';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import {
   togglePanel, showErrorMessage, AccordeonHeaderButtonForSearchForm, panelVariables
 } from 'src/components/searchModal/forms/SearchModalFunctions';
 import SearchResult from 'src/components/searchModal/forms/SearchResult';
+import { getEditorById } from 'src/components/structureEditor/EditorsInstances';
+import KetcherEditor from 'src/components/structureEditor/KetcherEditor';
 
 function KetcherRailsform() {
-  const ketcherStructure = {
-    structure: {
-      path: 'ketcher',
-      setMolfileInFrame: false,
-      setMfFuncName: 'setMolecule',
-      getMfFuncName: 'getMolfile',
-      getMfWithCallback: false,
-      getSVGFuncName: 'getSVG',
-      getSVGWithCallback: false
-    }
-  };
-  const editor = new StructureEditor({ ...ketcherStructure, id: 'ketcher' });
-
+  const [editor, setEditor] = React.useState(null);
   const searchStore = useContext(StoreContext).search;
   const panelVars = panelVariables(searchStore);
   const activeSearchAccordionClass = searchStore.search_accordion_active_key === 0 ? 'active' : '';
   const activeResultAccordionClass = searchStore.search_accordion_active_key === 1 ? ' active' : '';
   const { pgCartridge } = UIStore.getState();
-  let iframe;
-  const iframeHeight = panelVars.invisibleClassName ? '88.3vh' : '85vh';
+  const iframeHeight = panelVars.invisibleClassName ? '550px' : '85vh';
+  const iframeStyle = {};
 
   useEffect(() => {
-    iframe = document.getElementById('ketcher');
-    iframe.onload = () => {
-      if (searchStore.ketcherRailsValues.queryMolfile && editor && searchStore.searchModalVisible) {
-        editor.structureDef.molfile = searchStore.ketcherRailsValues.queryMolfile;
-      }
-    };
-  }, [iframe]);
+    setEditor(getEditorById('ketcher2'));
+  }, []);
 
   const handleSearchTypeChange = (e) => {
     searchStore.changeKetcherRailsValue('searchType', e.target.value);
@@ -98,10 +82,9 @@ function KetcherRailsform() {
     }
   };
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     const structure = editor.structureDef;
-    const { molfile } = structure;
-    handleStructureEditorSave(molfile);
+    handleStructureEditorSave(await structure.editor.getMolfile());
   };
 
   const handleClear = () => {
@@ -125,13 +108,14 @@ function KetcherRailsform() {
         <Accordion.Collapse eventKey={0}>
           <div className="accordion-body">
             {showErrorMessage(searchStore)}
-            <iframe
-              id="ketcher"
-              src="/ketcher"
-              title="Ketcher Rails"
-              width="100%"
-              style={{ border: 'none', minHeight: `calc(${iframeHeight} - 242px)` }}
-            />
+            {editor && (
+              <KetcherEditor
+                editor={editor}
+                molfile={''}
+                iH={iframeHeight}
+                iS={iframeStyle}
+              />
+            )}
             <div className="ketcher-buttons">
               <ButtonToolbar className="gap-2">
                 <Button variant="warning" onClick={() => searchStore.handleCancel()}>

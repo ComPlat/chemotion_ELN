@@ -6,7 +6,7 @@ import {
 import { Select } from 'src/components/common/Select';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 
-const DEFAULT_EDITOR = 'ketcher';
+const DEFAULT_EDITOR = 'ketcher2';
 
 function UserSetting() {
   const [editors, setEditors] = useState([]);
@@ -49,7 +49,7 @@ function UserSetting() {
     setEditor((prev) => ({ ...prev, selected: e.value }));
   };
 
-  const options = [{ value: 'ketcher', label: 'Ketcher (ketcher)' }];
+  const options = [{ value: 'ketcher2', label: 'Ketcher2 (ketcher)' }];
   editors.forEach((e) => {
     options.push({
       value: e.configs.editor,
