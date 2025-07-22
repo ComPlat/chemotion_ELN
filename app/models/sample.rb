@@ -589,10 +589,6 @@ class Sample < ApplicationRecord
     mnl && !is_sum_form ? mnl : molecule_iupac_name
   end
 
-  def user_labels
-    tag&.taggable_data&.fetch('user_labels', nil)
-  end
-
   def detect_amount_type
     condition = real_amount_value.nil? || real_amount_unit.nil?
     return { 'value' => target_amount_value, 'unit' => target_amount_unit } if condition
