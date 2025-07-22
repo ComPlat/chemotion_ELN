@@ -11,18 +11,20 @@ export default class ModalImport extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      file: null
+      file: null,
+      importAsChemical: false
     };
   }
 
   handleClick() {
-    const { onHide, importAsChemical } = this.props;
-    const { file } = this.state;
+    const { onHide } = this.props;
+    const { file, importAsChemical } = this.state;
     const uiState = UIStore.getState();
+    const importSampleAs = importAsChemical ? 'chemical' : 'sample';
     const params = {
       file,
       currentCollectionId: uiState.currentCollection.id,
-      type: importAsChemical ? 'chemical' : 'sample',
+      type: importSampleAs,
     };
     ElementActions.importSamplesFromFile(params);
     onHide();
@@ -48,7 +50,7 @@ export default class ModalImport extends React.Component {
   }
 
   dropzoneOrfilePreview() {
-    const { file } = this.state;
+    const { file, importAsChemical } = this.state;
     if (file) {
       return (
         <div className="d-flex justify-content-between">
@@ -89,7 +91,8 @@ export default class ModalImport extends React.Component {
   }
 
   render() {
-    const { onHide, importAsChemical } = this.props;
+    const { onHide } = this.props;
+    const { importAsChemical } = this.state;
     return (
       <Modal show onHide={onHide}>
         <Modal.Header closeButton>
@@ -112,10 +115,5 @@ export default class ModalImport extends React.Component {
 }
 
 ModalImport.propTypes = {
-  importAsChemical: PropTypes.bool,
   onHide: PropTypes.func.isRequired,
-}
-
-ModalImport.defaultProps = {
-  importAsChemical: false,
-}
+};
