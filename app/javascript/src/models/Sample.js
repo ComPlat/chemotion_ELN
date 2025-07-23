@@ -958,6 +958,38 @@ export default class Sample extends Element {
       this.updateTONPerTimeValue(value, gasPhaseTime);
     }
   }
+
+  /**
+   * Calculates the volume (in liters) for mixture samples based on total mass and density/molarity.
+   *
+   * @param {number} totalMassGrams - The total mass of the mixture in grams
+   * @param {number} purity - The purity factor (default: 1.0)
+   * @param {null} molecularWeight - The molecular weight to use for molarity calculations
+   * @returns {number} The calculated volume in liters, or 0 if calculation is not possible
+   */
+  calculateMixtureVolume(amount_g, purity = 1.0, molecularWeight = null) {
+    const { density, molarity_value } = this;
+
+    if (!this.isMixture() || !amount_g || amount_g <= 0) {
+      return 0;
+    }
+
+    // Priority 1: Use density if available
+    if (density > 0) {
+      // Formula: volume (L) = total mass (g) / density (g/ml) / 1000 (ml to L conversion)
+      return amount_g / (density * 1000);
+    }
+
+    // Priority 2: Use molarity if available and molecular weight is provided
+    if (molarity_value > 0 && molecularWeight && molecularWeight > 0) {
+      // Formula: volume (L) = (total mass (g) * purity) / (molarity (mol/L) * molecular weight (g/mol))
+      return (amount_g * purity) / (molarity_value * molecularWeight);
+    }
+
+    // No calculation method available
+    return 0;
+  }
+
   // Menge in mmol = Menge (mg) * Reinheit  / Molmasse (g/mol)
   // Volumen (ml) = Menge (mg) / Dichte (g/ml) / 1000
   // Menge (mg)  = Volumen (ml) * Dichte (g/ml) * 1000
@@ -990,6 +1022,11 @@ export default class Sample extends Element {
               this.gas_phase_data
             );
           }
+
+          if (this.isMixture()) {
+            return this.calculateMixtureVolume(amount_g, purity, molecularWeight);
+          }
+
           if (this.has_molarity) {
             const molarity = this.molarity_value;
             return (amount_g * purity) / (molarity * molecularWeight);
