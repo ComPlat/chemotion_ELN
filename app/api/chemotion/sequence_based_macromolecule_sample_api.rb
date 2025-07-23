@@ -8,7 +8,11 @@ module Chemotion
     helpers ContainerHelpers
     helpers CollectionHelpers
 
-    rescue_from [::Usecases::Sbmm::Errors::CreateConflictError, ::Usecases::Sbmm::Errors::UpdateConflictError] do |conflict|
+    rescue_from ::Usecases::Sbmm::Errors::CreateConflictError do |conflict|
+      error!(conflict.to_h, 400)
+    end
+
+    rescue_from ::Usecases::Sbmm::Errors::UpdateConflictError do |conflict|
       error!(conflict.to_h, 400)
     end
 
@@ -51,7 +55,7 @@ module Chemotion
         optional :purification_method, type: String
 
         requires(:sequence_based_macromolecule_attributes, type: Hash) do
-          requires :sbmm_type, type: String, desc: 'SBMM Type', values: %w[protein dna rna], allow_blank: false
+          requires :sbmm_type, type: String, desc: 'SBMM Type', values: %w[protein], allow_blank: false
           optional :sbmm_subtype, type: String, desc: 'SBMM Subtype', values: %w[unmodified glycoprotein], allow_blank: true
           requires :uniprot_derivation, type: String, desc: 'Existence in Uniprot', values: %w[uniprot uniprot_modified uniprot_unknown], allow_blank: false
 
@@ -137,7 +141,7 @@ module Chemotion
         end
 
         given(sequence_based_macromolecule_attributes: ->(sbmm_attributes) { sbmm_attributes[:uniprot_derivation] != 'uniprot' }) do
-          optional :heterologous_expression, type: String, values: %w[yes no unknown], default: 'unknown'
+          optional :heterologous_expression, type: String, values: %w[yes no unknown], default: 'unknown', allow_blank: true
           optional :organism, type: String
           optional :taxon_id, type: String
           optional :strain, type: String
