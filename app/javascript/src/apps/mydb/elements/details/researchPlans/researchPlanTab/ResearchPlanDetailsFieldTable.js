@@ -579,16 +579,26 @@ export default class ResearchPlanDetailsFieldTable extends Component {
   }
 
   renderShortLabel(node) {
-    const shortLabel = node.data?.sample ? node.data.sample : node.data?.reaction;
-    if (node.data?.sample) {
-      return (<a className="link" onClick={(e) => { e.preventDefault(); this.openSampleByShortLabel(shortLabel) }}>
-        {shortLabel}
-      </a>);
-    } else if (node.data?.reaction) {
-      return (<a className="link" onClick={(e) => { e.preventDefault(); this.openReactionByShortLabel(shortLabel) }}>
-        {shortLabel}
-      </a>);
+    const { data } = node;
+    if (!data) {
+      return node.value || '';
     }
+    const { sample, reaction } = data;
+    if (sample && sample !== '') {
+      return (
+        <a className="link" onClick={(e) => { e.preventDefault(); this.openSampleByShortLabel(sample); }}>
+          {sample}
+        </a>
+      );
+    }
+    if (reaction && reaction !== '') {
+      return (
+        <a className="link" onClick={(e) => { e.preventDefault(); this.openReactionByShortLabel(reaction); }}>
+          {reaction}
+        </a>
+      );
+    }
+    return node.value || '';
   }
 
   renderStatic() {
@@ -597,7 +607,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     const staticColumns = cloneDeep(columns);
 
     staticColumns.forEach((item) => {
-      if (item.colId == 'sample' || item.colId == 'reaction') {
+      if (item.colId === 'Sample (short-label)' || item.colId === 'Reaction (short-label)') {
         item.cellRenderer = this.renderShortLabel;
       }
       item.editable = false;

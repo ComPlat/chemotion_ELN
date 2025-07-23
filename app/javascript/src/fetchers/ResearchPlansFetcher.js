@@ -33,7 +33,7 @@ export default class ResearchPlansFetcher {
   static create(researchPlan) {
     researchPlan.convertTemporaryImageFieldsInBody();
 
-    const promise = fetch('/api/v1/research_plans/', {
+    const promise = () => fetch('/api/v1/research_plans/', {
       credentials: 'same-origin',
       method: 'post',
       headers: {
@@ -53,11 +53,10 @@ export default class ResearchPlansFetcher {
       .catch((errorMessage) => {
         console.log(errorMessage);
       });
-    return promise;
+    return AttachmentFetcher.uploadNewAttachmentsForContainer(researchPlan.container).then(() => promise());
   }
 
   static update(researchPlan) {
-    const containerFiles = AttachmentFetcher.getFileListfrom(researchPlan.container);
     researchPlan.convertTemporaryImageFieldsInBody();
 
     const promise = () => fetch(`/api/v1/research_plans/${researchPlan.id}`, {
@@ -79,12 +78,7 @@ export default class ResearchPlansFetcher {
         .then(() => this.fetchById(researchPlan.id))))
       .catch((errorMessage) => { console.log(errorMessage); });
 
-    if (containerFiles.length > 0) {
-      const tasks = [];
-      containerFiles.forEach((file) => tasks.push(AttachmentFetcher.uploadFile(file).then()));
-      return Promise.all(tasks).then(() => promise());
-    }
-    return promise();
+    return AttachmentFetcher.uploadNewAttachmentsForContainer(researchPlan.container).then(() => promise());
   }
 
   static updateSVGFile(svg_file, isChemdraw = false) {

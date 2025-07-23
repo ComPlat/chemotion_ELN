@@ -5,6 +5,9 @@ import {
   Modal, OverlayTrigger, Tooltip, Button
 } from 'react-bootstrap';
 import ContainerDatasetModalContent from 'src/components/container/ContainerDatasetModalContent';
+import ContainerActions from 'src/stores/alt/actions/ContainerActions';
+import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import BaseFetcher from 'src/fetchers/BaseFetcher';
 
 export default class ContainerDatasetModal extends Component {
   constructor(props) {
@@ -21,6 +24,8 @@ export default class ContainerDatasetModal extends Component {
     this.handleSave = this.handleSave.bind(this);
     this.handleSwitchMode = this.handleSwitchMode.bind(this);
     this.handleModalClose = this.handleModalClose.bind(this);
+
+    this.onHandleContainerSubmit = this.onHandleContainerSubmit.bind(this);
   }
 
   handleModalClose(event) {
@@ -31,13 +36,11 @@ export default class ContainerDatasetModal extends Component {
     }
   }
 
-  handleSave() {
-    this.datasetInput.current.handleSave();
-    this.props.onChange({
-      ...this.props.datasetContainer,
-      ...this.datasetInput.current.state.datasetContainer,
-      name: this.state.localName
-    });
+  handleSave(shouldClose = false) {
+    if (this.datasetInput.current) {
+      this.datasetInput.current.setLocalName(this.state.localName);
+      this.datasetInput.current.handleSave(shouldClose);
+    }
   }
 
   handleNameChange(newName) {
@@ -54,15 +57,44 @@ export default class ContainerDatasetModal extends Component {
     }));
   };
 
+  onHandleContainerSubmit = (shouldClose) => {
+    const { updateContainerState, rootContainer } = this.props;
+    const { attachments } = this.props.datasetContainer;
+    LoadingActions.start();
+    ContainerActions.updateContainerWithFiles(rootContainer)
+      .then((updatedContainer) => {
+        updateContainerState(updatedContainer, shouldClose);
+        BaseFetcher.updateAnnotationsForAttachments(attachments)
+          .then(() => {
+            // const updatedAttachments = attachments.map((att) => ({ ...att }));
+            // const updatedDatasetContainer = {
+            //   ...this.props.datasetContainer,
+            //   attachments: updatedAttachments
+            // };
+            // this.props.onChange(updatedDatasetContainer);
+            this.datasetInput?.current?.resetAnnotation();
+            LoadingActions.stop();
+          })
+          .finally(() => {
+          });
+      })
+      .catch((err) => {
+        console.warn('Container update failed:', err.message);
+      })
+      .finally(() => { });
+  };
+
   render() {
     const {
-      show, onHide, onChange, readOnly, disabled, kind, datasetContainer
+      show, onHide, onChange, readOnly, disabled, kind, datasetContainer, rootContainer,
+      isContainerNew
     } = this.props;
 
     const { mode, instrumentIsEmpty } = this.state;
 
     const attachmentTooltip = (<Tooltip id="attachment-tooltip">Click to view Attachments</Tooltip>);
     const metadataTooltip = (<Tooltip id="metadata-tooltip">Click to view Metadata</Tooltip>);
+    const isNew = !Number.isInteger(rootContainer.id);
 
     const AttachmentsButton = (
       <Button
@@ -123,6 +155,7 @@ export default class ContainerDatasetModal extends Component {
                 <div className="d-flex flex-grow-1 align-items-center">
                   <input
                     type="text"
+                    autoFocus={true}
                     value={this.state.localName}
                     onBlur={this.toggleNameEditing}
                     onKeyPress={(event) => {
@@ -138,21 +171,21 @@ export default class ContainerDatasetModal extends Component {
                 <div className="d-flex flex-grow-1">
                   <span className="me-2">{this.state.localName}</span>
                   {!readOnly && (
-                  <i
-                    className="fa fa-pencil text-primary mt-1"
-                    aria-hidden="true"
-                    onClick={this.toggleNameEditing}
-                    role="button"
-                  />
+                    <i
+                      className="fa fa-pencil text-primary mt-1"
+                      aria-hidden="true"
+                      onClick={this.toggleNameEditing}
+                      role="button"
+                    />
                   )}
                   <div className="d-flex align-items-center ms-auto">
                     {mode === 'attachments' && instrumentIsEmpty && (
-                    <div className="d-flex align-items-center text-danger me-3">
-                      <i className="fa fa-exclamation-triangle me-1" />
-                      <span className="fw-bold">
-                        Instrument missing, switch to Metadata.
-                      </span>
-                    </div>
+                      <div className="d-flex align-items-center text-danger me-3">
+                        <i className="fa fa-exclamation-triangle me-1" />
+                        <span className="fw-bold">
+                          Instrument missing, switch to Metadata.
+                        </span>
+                      </div>
                     )}
                     {btnMode}
                   </div>
@@ -170,22 +203,34 @@ export default class ContainerDatasetModal extends Component {
               onModalHide={() => onHide()}
               onChange={onChange}
               mode={mode}
+              isNew={isNew}
+              handleContainerSubmit={this.onHandleContainerSubmit}
             />
           </Modal.Body>
           <Modal.Footer
-            className="d-flex justify-content-between align-items-center modal-footer border-0"
+            className="d-flex justify-content-end align-items-center modal-footer border-0"
           >
-            <div>
-              <small>
-                Changes are kept for this session. Remember to save the element itself to persist changes.
-              </small>
-            </div>
+
+            {
+              !isNew && !isContainerNew
+              && (
+                <Button
+                  variant="warning"
+                  className="align-self-center"
+                  onClick={() => this.handleSave(false)}
+                >
+                  Save Dataset
+                </Button>
+              )
+            }
             <Button
-              variant="primary"
-              className="align-self-center ms-auto"
-              onClick={this.handleSave}
+              variant={isNew ? "primary" : "warning"}
+              className="align-self-center"
+              onClick={() => this.handleSave(true)}
             >
-              Keep Changes
+              {isNew ? 'Keep & close' : 'Save & close'}
+              {' '}
+              Dataset
             </Button>
           </Modal.Footer>
         </Modal>
@@ -208,6 +253,10 @@ ContainerDatasetModal.propTypes = {
   readOnly: PropTypes.bool,
   disabled: PropTypes.bool,
   kind: PropTypes.string,
+  updateContainerState: PropTypes.func.isRequired,
+  rootContainer: PropTypes.shape({
+    id: PropTypes.number,
+  }).isRequired,
 };
 
 ContainerDatasetModal.defaultProps = {

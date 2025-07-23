@@ -218,6 +218,7 @@ const cleaningNMRiumData = (nmriumData) => {
   const newSpectra = spectra.map((spc) => {
     const tmpSpc = { ...spc };
     delete tmpSpc.originalData;
+    delete tmpSpc.data;
     return tmpSpc;
   });
 

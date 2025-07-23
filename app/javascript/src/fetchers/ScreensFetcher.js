@@ -28,8 +28,6 @@ export default class ScreensFetcher {
   }
 
   static update(screen) {
-    const files = AttachmentFetcher.getFileListfrom(screen.container);
-
     const promise = () => fetch(`/api/v1/screens/${screen.id}`, {
       credentials: 'same-origin',
       method: 'put',
@@ -40,24 +38,14 @@ export default class ScreensFetcher {
       body: JSON.stringify(screen.serialize())
     }).then(response => response.json())
       .then(json => GenericElsFetcher.uploadGenericFiles(screen, json.screen.id, 'Screen')
-      .then(()=>BaseFetcher.updateAnnotationsInContainer(screen))  
-      .then(() => this.fetchById(json.screen.id))).catch((errorMessage) => {
+        .then(() => BaseFetcher.updateAnnotationsInContainer(screen))
+        .then(() => this.fetchById(json.screen.id))).catch((errorMessage) => {
           console.log(errorMessage);
         });
-
-    if (files.length > 0) {
-      let tasks = [];
-      files.forEach(file => tasks.push(AttachmentFetcher.uploadFile(file).then()));
-      return Promise.all(tasks).then(() => {
-        return promise();
-      });
-    }
-    return promise();
+    return AttachmentFetcher.uploadNewAttachmentsForContainer(screen.container).then(() => promise());
   }
 
   static create(screen) {
-    const files = AttachmentFetcher.getFileListfrom(screen.container);
-
     const promise = () => fetch('/api/v1/screens/', {
       credentials: 'same-origin',
       method: 'post',
@@ -71,15 +59,7 @@ export default class ScreensFetcher {
         .then(() => this.fetchById(json.screen.id))).catch((errorMessage) => {
           console.log(errorMessage);
         });
-
-    if (files.length > 0) {
-      let tasks = [];
-      files.forEach(file => tasks.push(AttachmentFetcher.uploadFile(file).then()));
-      return Promise.all(tasks).then(() => {
-        return promise();
-      });
-    }
-    return promise();
+    return AttachmentFetcher.uploadNewAttachmentsForContainer(screen.container).then(() => promise());
   }
 
   static addResearchPlan(screen_id, collection_id) {
