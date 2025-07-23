@@ -359,7 +359,7 @@ class Material extends Component {
     if (materialGroup === 'products') {
       return this.yieldOrConversionRate(material);
     }
-    // For mixtures, set initial value to 1 if no value is provided
+    // For mixtures, set the initial value to 1 if no value is provided
     const isMixture = material.isMixture && material.isMixture();
     let value = material.equivalent;
     if (isMixture) {
@@ -614,6 +614,11 @@ class Material extends Component {
     const { reaction, materialGroup, lockEquivColumn } = this.props;
     const metricMol = getMetricMol(material);
 
+    const isDisabled = !permitOn(reaction)
+      || (materialGroup === 'products'
+      || (!material.reference && lockEquivColumn)
+      || (material.isMixture && material.isMixture()));
+
     return (
       <td>
         <NumeralInputWithUnitsCompo
@@ -623,9 +628,7 @@ class Material extends Component {
           metricPrefix={metricMol}
           metricPrefixes={metricPrefixesMol}
           precision={4}
-          disabled={!permitOn(reaction)
-            || (materialGroup === 'products'
-            || (!material.reference && lockEquivColumn))}
+          disabled={isDisabled}
           onChange={(e) => this.handleAmountUnitChange(e, material.amount_mol)}
           onMetricsChange={this.handleMetricsChange}
           variant={material.amount_unit === 'mol' ? 'primary' : 'light'}
