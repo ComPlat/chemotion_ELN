@@ -21,13 +21,10 @@ WORKDIR /chemotion/app
 
 RUN cp .version /bk.version
 
-COPY ./.git/HEAD .current_branch
-
-RUN git remote add origin ${REMOTE} && \
+RUN --mount=type=bind,source=.git/ORIG_HEAD,target=/.current_hash,readonly \
+    git remote add origin ${REMOTE} && \
     git fetch && \
-    git checkout $(cat .current_branch | cut -d'/' -f3)
-
-RUN rm .current_branch
+    git checkout $(cat /.current_hash)
 
 RUN mv /bk.version .version
 
