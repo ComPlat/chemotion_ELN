@@ -1,6 +1,6 @@
 import {
   getCellDataType, updateColumnDefinitions, addMissingColumnDefinitions, removeObsoleteColumnDefinitions,
-  getColumnDefinitions
+  getColumnDefinitions, getCurrentEntry
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 
 export default function columnDefinitionsReducer(columnDefinitions, action) {
@@ -29,7 +29,7 @@ export default function columnDefinitionsReducer(columnDefinitions, action) {
         updatedColumnDefinitions,
         action.field,
         'cellDataType',
-        getCellDataType(action.entryDefs.currentEntry, action.gasType)
+        getCellDataType(getCurrentEntry(action.entryDefs), action.gasType)
       );
       return updatedColumnDefinitions;
     }

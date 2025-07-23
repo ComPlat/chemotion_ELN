@@ -2,7 +2,7 @@ import expect from 'expect';
 import {
   getReactionMaterials, updateVariationsRowOnReferenceMaterialChange, removeObsoleteMaterialColumns,
   updateVariationsRowOnCatalystMaterialChange, getMaterialColumnGroupChild, getReactionMaterialsIDs,
-  resetColumnDefinitionsMaterials, updateVariationsAux, cellIsEditable, getReactionMaterialsHashes
+  updateColumnDefinitionsMaterialsOnAuxChange, updateVariationsOnAuxChange, cellIsEditable, getReactionMaterialsHashes
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   EquivalentParser
@@ -11,8 +11,7 @@ import {
   setUpReaction, setUpGaseousReaction, getColumnDefinitionsMaterialIDs, getColumnGroupChild
 } from 'helper/reactionVariationsHelpers';
 import {
-  materialTypes,
-
+  materialTypes, getCurrentEntry, getEntryDefs,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import { cloneDeep } from 'lodash';
 
@@ -84,7 +83,7 @@ describe('ReactionVariationsMaterials', () => {
     updatedMaterials.reactants[0].gas_type = 'catalyst';
     updatedMaterials.products[0].gas_type = 'off';
 
-    const updatedVariations = updateVariationsAux(reaction.variations, updatedMaterials, false, null);
+    const updatedVariations = updateVariationsOnAuxChange(reaction.variations, updatedMaterials, false, null);
 
     const variationsRow = reaction.variations[0];
     const updatedVariationsRow = updatedVariations[0];
@@ -129,10 +128,9 @@ describe('ReactionVariationsMaterials', () => {
       });
     });
 
-    const updatedColumnDefinitions = resetColumnDefinitionsMaterials(
+    const updatedColumnDefinitions = updateColumnDefinitionsMaterialsOnAuxChange(
       columnDefinitions,
       reactionMaterials,
-      getReactionMaterialsIDs(reactionMaterials),
       true
     );
 
@@ -143,8 +141,9 @@ describe('ReactionVariationsMaterials', () => {
       `products.${productIDs[0]}`
     );
     expect(productColumnDefinition.cellDataType).toBe('gas');
-    expect(productColumnDefinition.entryDefs.currentEntry).toBe('duration');
-    expect(productColumnDefinition.entryDefs.displayUnit).toBe('Second(s)');
+    const currentEntry = getCurrentEntry(productColumnDefinition.entryDefs);
+    expect(currentEntry).toBe('duration');
+    expect(productColumnDefinition.entryDefs[currentEntry].displayUnit).toBe('Second(s)');
 
     const reactantIDs = getColumnDefinitionsMaterialIDs(updatedColumnDefinitions, 'reactants');
     const reactantColumnDefinition = getColumnGroupChild(
@@ -153,17 +152,12 @@ describe('ReactionVariationsMaterials', () => {
       `reactants.${reactantIDs[0]}`
     );
     expect(reactantColumnDefinition.cellDataType).toBe('feedstock');
-    const { currentEntry } = reactantColumnDefinition.entryDefs;
-
-    expect(currentEntry).toBe('mass');
+    expect(getCurrentEntry(reactantColumnDefinition.entryDefs)).toBe('mass');
   });
   it('determines cell editability based on entry', async () => {
     const colDef = {
       field: 'foo',
-      entryDefs: {
-        currentEntry: 'equivalent',
-        displayUnit: null
-      }
+      entryDefs: getEntryDefs(['equivalent'])
     };
     const data = {
       foo: {
