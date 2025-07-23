@@ -24,28 +24,10 @@ module Usecases
       end
 
       def update(sbmm_sample, params)
-        params = params.dup
-        sample_params = params.except(:sequence_based_macromolecule_attributes, :collection_id, :container)
-        sbmm_params = params[:sequence_based_macromolecule_attributes]
-
-        if sbmm_sample.sequence_based_macromolecule.uniprot_derivation == 'uniprot_modified'
-          parent_identifier = sbmm_params.delete(:parent_identifier)
-          # TODO: does the parent have the same type/subtype as the child? Clarify domain model with Nicole
-          parent = ::Usecases::Sbmm::Create.new.find_or_create_parent(
-            parent_identifier: parent_identifier,
-            sbmm_type: sbmm_params[:sbmm_type],
-            sbmm_subtype: sbmm_params[:sbmm_subtype]
-          )
-          sbmm_sample.sequence_based_macromolecule.parent = parent
-        end
-        # check for duplicate
-        sbmm_sample.sequence_based_macromolecule.assign_attributes(sbmm_params)
-        duplicate = SequenceBasedMacromolecule.duplicate_sbmm(sbmm_sample.sequence_based_macromolecule)
-        raise Errors::UpdateConflictError.new(sbmm: sbmm_sample.sequence_based_macromolecule, conflicting_sbmm: duplicate) if duplicate
-
+        # TODO: Prüfen ob der User das Update überhaupt durchführen darf
         sbmm_sample.transaction do
-          sbmm_sample.sequence_based_macromolecule.save!
-          sbmm_sample.update!(sample_params)
+          sbmm = Update.new.updated_sbmm(params: params[:sequence_based_macromolecule_attributes])
+          sbmm_sample.update!(params.except(:sequence_based_macromolecule_attributes, :container, :collection_id))
           sbmm_sample.container = ::Usecases::Containers::UpdateDatamodel.new(current_user).update_datamodel(params[:container]) if params[:container]
         end
 

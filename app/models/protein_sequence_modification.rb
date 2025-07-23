@@ -26,5 +26,5 @@
 #  idx_sbmm_psm_deleted_at  (deleted_at)
 #
 class ProteinSequenceModification < ApplicationRecord
-  has_many :sequence_based_macromolecules
+  has_many :sequence_based_macromolecules # questionable... should actually be a belongs_to relation now
 end
