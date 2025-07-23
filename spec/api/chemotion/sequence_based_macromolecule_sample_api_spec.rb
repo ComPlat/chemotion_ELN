@@ -429,31 +429,10 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
   end
 
   describe 'PUT /api/v1/sequence_based_macromolecule_samples/:id' do
-    let(:logger) do
-      ActiveRecord::Base.logger = Logger.new($stdout)
-    end
-    let(:log_red) do
-      # ->(message) { logger.debug ActiveSupport::LogSubscriber.new.send(:color, message, :red) }
-      ->(message) {} # do nothing
-    end
-    # before do
-    #   logger
-    # end
-
-    let(:collection) do
-      log_red.call('=== Creating Collection ===')
-      collection = create(:collection, user_id: logged_in_user.id)
-      log_red.call("=== created collection with id #{collection.id}")
-      collection
-    end
     let(:sbmm) do
-      log_red.call('=== Creating SBMM ===')
-      sbmm = create(:modified_uniprot_sbmm)
-      log_red.call("=== created SBMM with id #{sbmm.id}")
-      sbmm
+      create(:modified_uniprot_sbmm)
     end
     let(:sbmm_sample) do
-      log_red.call('=== Creating SBMM Sample ===')
       sample = create(
         :sequence_based_macromolecule_sample,
         amount_as_used_mass_value: 123,
@@ -461,34 +440,13 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
         sequence_based_macromolecule: sbmm,
         user: logged_in_user,
       )
-      sample.collections << collection
-      log_red.call("=== created SBMM sample with id #{sample.id}")
+      sample.collections << create(:collection, user_id: logged_in_user.id)
       sample
     end
 
     context 'when updating only the sample' do
       let(:put_data) do
-        {
-          amount_as_used_mass_value: 12_345,
-          name: sbmm_sample.name,
-          sequence_based_macromolecule_attributes: {
-            sbmm_type: sbmm.sbmm_type,
-            sbmm_subtype: sbmm.sbmm_subtype,
-            uniprot_derivation: sbmm.uniprot_derivation,
-            parent_identifier: sbmm.parent_id,
-            molecular_weight: sbmm.molecular_weight,
-            sequence: sbmm.sequence,
-            short_name: sbmm.short_name,
-            # the following parameters are only there so grape's format validation does not complain about missing
-            # ptm/psm attributes
-            protein_sequence_modification_attributes: {
-              modification_n_terminal: false,
-            },
-            post_translational_modification_attributes: {
-              phosphorylation_enabled: false,
-            },
-          },
-        }
+        serialize_sbmm_sample_as_api_input(sbmm_sample).merge(amount_as_used_mass_value: 12_345)
       end
 
       before do
@@ -496,14 +454,12 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
       end
 
       it 'returns a 200 success' do
-        log_red.call('=== STARTING PUT ===')
         put "/api/v1/sequence_based_macromolecule_samples/#{sbmm_sample.id}", params: put_data, as: :json
         expect(response.status).to eq 200
       end
 
       it 'does not touch the SBMM' do
         expect do
-          log_red.call('=== STARTING PUT ===')
           put "/api/v1/sequence_based_macromolecule_samples/#{sbmm_sample.id}", params: put_data, as: :json
           sbmm_sample.reload
         end.to change(sbmm_sample, :amount_as_used_mass_value).from(123).to(12_345)
@@ -519,16 +475,22 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
             :modified_uniprot_sbmm,
             sequence: 'FooBar',
             parent: sbmm.parent,
-            protein_sequence_modification: sbmm.protein_sequence_modification,
-            post_translational_modification: sbmm.post_translational_modification,
+            protein_sequence_modification: build(
+              :protein_sequence_modification,
+              sbmm.protein_sequence_modification.attributes.except("id", "created_at", "updated_at", "deleted_at")
+            ),
+            post_translational_modification: build(
+              :post_translational_modification,
+              sbmm.post_translational_modification.attributes.except("id", "created_at", "updated_at", "deleted_at")
+            )
           )
         end
 
         let(:put_data) do
           put_data = serialize_sbmm_sample_as_api_input(sbmm_sample)
           put_data[:sequence_based_macromolecule_attributes][:sequence] = other_sbmm.sequence
-          put_data[:amount_as_used_mass_value] = 12_345 # some changes to the sbmm-sample
-          put_data[:sequence_based_macromolecule_attributes][:short_name] = other_sbmm.short_name # this sucks!!!
+          # put_data[:amount_as_used_mass_value] = 12_345 # some changes to the sbmm-sample
+          # put_data[:sequence_based_macromolecule_attributes][:short_name] = other_sbmm.short_name # this sucks!!!
           put_data
         end
 

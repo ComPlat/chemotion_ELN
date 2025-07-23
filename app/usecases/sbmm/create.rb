@@ -27,8 +27,6 @@ module Usecases
         end
       end
 
-      private
-
       # raise ArgumentError if primary_accession is not a valid accession code
       def find_or_create_uniprot_protein(params)
         primary_accession = params[:primary_accession]
@@ -47,8 +45,14 @@ module Usecases
         new_sbmm
       end
 
+      private
+
       def find_or_create_modified_protein(params)
-        parent = find_or_create_parent(params)
+        parent = find_or_create_parent(
+          parent_identifier: params[:parent_identifier],
+          sbmm_type: params[:sbmm_type],
+          sbmm_subtype: params[:sbmm_subtype]
+        )
 
         # Step 1: check if the exact same protein is already present (using ALL fields) -> user just selected an existing sbmm without modifying it
         sbmm = Usecases::Sbmm::Finder.new.find_non_uniprot_protein_by(params.except(:parent_identifier).merge(parent_id: parent.id))
@@ -83,20 +87,6 @@ module Usecases
 
         new_sbmm.save
         new_sbmm
-      end
-
-      # TODO: we can not safely assume type and subtype from child protein, so what do we do?
-      def find_or_create_parent(params)
-        if SequenceBasedMacromolecule.valid_accession?(params[:parent_identifier]) # parent is a uniprot sbmm
-          parent = find_or_create_uniprot_protein({
-            primary_accession: params[:parent_identifier],
-            sbmm_type: params[:sbmm_type],
-            sbmm_subtype: params[:sbmm_subtype]
-          })
-        else
-          id = params[:parent_identifier].to_i # TODO: remove .to_i if we ever change our IDs to UUIDs
-          parent = SequenceBasedMacromolecule.find(id)
-        end
       end
     end
   end
