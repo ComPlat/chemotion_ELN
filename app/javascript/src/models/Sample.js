@@ -1846,6 +1846,7 @@ export default class Sample extends Element {
 
     if (!this.isMixture() || !this.hasComponents()) {
       this.sample_details.total_mixture_mass_g = 0;
+      this.setDensity({ value: 0 });
 
       return;
     }
@@ -1866,9 +1867,7 @@ export default class Sample extends Element {
     this.sample_details.total_mixture_mass_g = totalMass;
 
     // Only update density here for safety, but the main update should be after amount_l changes
-    if (this.isMixtureLiquid()) {
-      this.updateMixtureDensity();
-    }
+    this.updateMixtureDensity();
   }
 
   /**
