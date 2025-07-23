@@ -32,13 +32,24 @@ function SearchValuesList({ searchStore }) {
       <div className="search-value-list">
         <h4>Your Search</h4>
         {
-            searchStore.searchValues.map((val, i) => <div key={i}>{val.replace('ILIKE', 'LIKE')}</div>)
-          }
+          searchStore.searchValues.map((val, i) => {
+            let cleanVal = val.replace(/\bILIKE\b/, 'LIKE');
+
+            if (i === 0) {
+              cleanVal = cleanVal
+                .replace(/^AND\b\s*/, '')
+                .replace(/^OR\b\s*/, '')
+                .trim();
+            }
+
+            return <div key={i}>{cleanVal}</div>;
+          })
+        }
         {
-            searchStore.searchResultsCount > 0 ? null : (
-              <div className="search-spinner"><i className="fa fa-spinner fa-pulse fa-4x fa-fw" /></div>
-            )
-          }
+          searchStore.searchResultsCount > 0 ? null : (
+            <div className="search-spinner"><i className="fa fa-spinner fa-pulse fa-4x fa-fw" /></div>
+          )
+        }
         {showResultErrorMessage()}
       </div>
     );
