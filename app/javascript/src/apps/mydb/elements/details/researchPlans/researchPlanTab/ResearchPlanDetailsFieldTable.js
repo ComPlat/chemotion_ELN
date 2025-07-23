@@ -615,7 +615,8 @@ export default class ResearchPlanDetailsFieldTable extends Component {
       item.resizable = false;
       item.sortable = false;
       item.rowDrag = false;
-      item.cellClass = 'border-end';
+      item.wrapText = true;
+      item.cellClass = ["lh-base", "py-2", "border-end"];
       return item;
     });
 
@@ -646,7 +647,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
             domLayout='autoHeight'
             autoSizeStrategy={{ type: 'fitGridWidth' }}
             rowData={rows}
-            rowHeight="37"
+            rowHeight="auto"
           />
         </div>
       </div>
