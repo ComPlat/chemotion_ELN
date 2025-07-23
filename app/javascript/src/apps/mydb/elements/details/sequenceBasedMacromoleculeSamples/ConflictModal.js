@@ -1,6 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { Alert, Button, Modal, Row, Col, Container, Table } from 'react-bootstrap';
-import { AgGridReact } from 'ag-grid-react';
+import { Alert, Button, Modal, Table } from 'react-bootstrap';
 import Draggable from "react-draggable";
 
 import { observer } from 'mobx-react';
@@ -60,7 +59,6 @@ const ConflictModal = () => {
       rows.push(
         <tr>
           <td>{modificationKey}</td>
-          <td className="text-wrap">{booleanValueOrText(key, sbmmSample.sequence_based_macromolecule[key][modificationKey])}</td>
           <td className="text-wrap">{booleanValueOrText(key, sbmmStore.conflictSbmms[0][key][modificationKey])}</td>
           <td className="text-wrap">{booleanValueOrText(key, sbmmStore.conflictSbmms[1][key][modificationKey])}</td>
         </tr>
@@ -81,7 +79,6 @@ const ConflictModal = () => {
         rows.push(
           <tr>
             <td>{key}</td>
-            <td className="text-wrap">{booleanValueOrText(key, sbmmSample.sequence_based_macromolecule[key])}</td>
             <td className="text-wrap">{booleanValueOrText(key, sbmmStore.conflictSbmms[0][key])}</td>
             <td className="text-wrap">{booleanValueOrText(key, sbmmStore.conflictSbmms[1][key])}</td>
           </tr>
@@ -122,16 +119,30 @@ const ConflictModal = () => {
             {sbmmStore.conflictSbmms.length < 1 && (<div>{spinner}</div>)}
 
             {sbmmStore.conflictSbmms.length >= 1 && (
-              <div className="overflow-auto vh-70">
+              <div className="overflow-auto vh-80">
                 <Table className="mw-100 p-3" bordered hover striped>
                   <tbody>
                     <tr>
                       <td className="w-25">&nbsp;</td>
                       <td className="w-25 fs-6 fw-bold p-3">Your modifications</td>
-                      <td className="w-25 fs-6 fw-bold p-3">SBMM {sbmmStore.conflictSbmms[0].id}</td>
                       <td className="w-25 fs-6 fw-bold p-3">SBMM {sbmmStore.conflictSbmms[1].id}</td>
                     </tr>
                     {rowOfSbmmKeys()}
+                    <tr>
+                      <td className="w-25">&nbsp;</td>
+                      <td className="w-25">
+                        If this existing SBMM and its samples should be changed, please contact your system admin.
+                        Your Sample will be saved with the existing SBMM.
+                        <br />
+                        <Button className="mt-2">Contact your system admin</Button>
+                      </td>
+                      <td className="w-25">
+                        Discard changes of this SBMM and use existing SBMM to save this sample.
+                        <br />
+                        <br />
+                        <Button className="mt-2">Use this SBMM</Button>
+                      </td>
+                    </tr>
                   </tbody>
                 </Table>
               </div>
