@@ -34,7 +34,7 @@ module Usecases
         primary_accession = params[:primary_accession]
         raise ArgumentError.new("'#{primary_accession}' is not a valid Uniprot accession") unless SequenceBasedMacromolecule.valid_accession?(primary_accession)
 
-        sbmm = SequenceBasedMacromolecule.find_by(uniprot_derivation: 'uniprot', primary_accession: primary_accession, sequence: params[:sequence])
+        sbmm = SequenceBasedMacromolecule.find_by(uniprot_derivation: 'uniprot', primary_accession: primary_accession)
         return sbmm if sbmm.present?
 
 
@@ -61,12 +61,13 @@ module Usecases
         new_sbmm.post_translational_modification = PostTranslationalModification.new(params[:post_translational_modification_attributes])
 
         existing_sbmm = SequenceBasedMacromolecule.duplicate_sbmm(new_sbmm)
-        raise CreateConflictError.new(sbmm: new_sbmm, conflicting_sbmm: existing_sbmm) if existing_sbmm.present?
+        raise Errors::CreateConflictError.new(sbmm: new_sbmm, conflicting_sbmm: existing_sbmm) if existing_sbmm.present?
 
         new_sbmm.save
         new_sbmm
       end
 
+      # only difference to modified is that unknown doesn't have a parent sbmm
       def find_or_create_unknown_protein(params)
         # Step 1: check if the exact same protein is already present (using ALL fields) -> user just selected an existing sbmm without modifying it
         sbmm = Usecases::Sbmm::Finder.new.find_non_uniprot_protein_by(params)
@@ -78,12 +79,13 @@ module Usecases
         new_sbmm.post_translational_modification = PostTranslationalModification.new(params[:post_translational_modification_attributes])
 
         existing_sbmm = SequenceBasedMacromolecule.duplicate_sbmm(new_sbmm)
-        raise CreateConflictError.new(sbmm: new_sbmm, conflicting_sbmm: existing_sbmm) if existing_sbmm.present?
+        raise Errors::CreateConflictError.new(sbmm: new_sbmm, conflicting_sbmm: existing_sbmm) if existing_sbmm.present?
 
         new_sbmm.save
         new_sbmm
       end
 
+      # TODO: we can not safely assume type and subtype from child protein, so what do we do?
       def find_or_create_parent(params)
         if SequenceBasedMacromolecule.valid_accession?(params[:parent_identifier]) # parent is a uniprot sbmm
           parent = find_or_create_uniprot_protein({
