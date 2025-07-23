@@ -41,7 +41,7 @@ module Usecases
         # check for duplicate
         sbmm_sample.sequence_based_macromolecule.assign_attributes(sbmm_params)
         duplicate = SequenceBasedMacromolecule.duplicate_sbmm(sbmm_sample.sequence_based_macromolecule)
-        raise Usecases::Sbmm::Errors::UpdateConflictError.new(sbmm: sbmm_sample.sequence_based_macromolecule, conflicting_sbmm: duplicate) if duplicate
+        raise Errors::UpdateConflictError.new(sbmm: sbmm_sample.sequence_based_macromolecule, conflicting_sbmm: duplicate) if duplicate
 
         sbmm_sample.transaction do
           sbmm_sample.sequence_based_macromolecule.save!
