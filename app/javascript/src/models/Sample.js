@@ -647,23 +647,41 @@ export default class Sample extends Element {
 
   /**
    * Sets the amount and unit for the sample.
-   * If the sample is a mixture, updates the volume for all mixture components.
-   * @param {Object} amount - The amount object with value and unit
+   * For mixture samples with components, automatically triggers recalculation of:
+   * - Component volumes (when setting liters)
+   * - Mixture density (when setting liters)
+   * - Component relative molecular weights (when setting grams)
+   *
+   * @param {Object} amount - The amount object containing value and unit
+   * @param {number} amount.value - The numeric value of the amount
+   * @param {string} amount.unit - The unit of measurement ('g', 'l', 'mol', etc.)
+   * @returns {void} Returns early if amount is invalid
    */
   setAmount(amount) {
-    if (amount.unit && !Number.isNaN(amount.value)) {
-      this.amount_value = amount.value;
-      this.amount_unit = amount.unit;
-    }
+    // Validate input parameters - early return if invalid
+    if (!amount.unit || Number.isNaN(amount.value)) return;
 
-    // Save the current total volume (in liters) for further calculations
+    // Set the basic amount properties
+    this.amount_value = amount.value;
+    this.amount_unit = amount.unit;
+
+    // Save the current total volume (in liters) for mixture calculations
     const totalVolume = this.amount_l;
 
-    // If the new amount is a volume in liters, and it's a mixture with components,
-    // update the volume distribution and recalculate density
-    if (amount.unit === 'l' && this.isMixture() && this.hasComponents()) {
-      this.updateMixtureComponentVolume(totalVolume);
-      this.updateMixtureDensity();
+    // Handle mixture-specific calculations only if this is a mixture with components
+    if (this.isMixture() && this.hasComponents()) {
+      // If the new amount is a volume in liters,
+      // update the volume distribution and recalculate density
+      if (amount.unit === 'l') {
+        this.updateMixtureComponentVolume(totalVolume);
+        this.updateMixtureDensity();
+      }
+
+      // If the new amount is mass in grams for mixtures,
+      // recalculate relative molecular weights based on mass contributions
+      if (amount.unit === 'g') {
+        this.calculateMixtureComponentsRelativeMolecularWeight();
+      }
     }
   }
 
@@ -1676,6 +1694,44 @@ export default class Sample extends Element {
     }, 0);
 
     this.sample_details.total_molecular_weight = totalMolecularWeight;
+  }
+
+  /**
+   * Calculates the relative molecular weight of all components based on their mass contribution
+   * to the total mixture mass.
+   *
+   * Formula: relative MW per component = total_mixture_mass_g / amount_mol_component (g/mol)
+   *
+   * @returns {Array} Array of component objects with id, name, amount_mol, and relative_molecular_weight
+   */
+  calculateMixtureComponentsRelativeMolecularWeight() {
+    if (!this.isMixture() || !this.hasComponents()) {
+      return [];
+    }
+
+    const totalMixtureMass = this.total_mixture_mass_g || 0;
+
+    return this.components.map((component) => {
+      const componentAmountMol = component.amount_mol || 0;
+
+      const relativeMW = (totalMixtureMass > 0 && componentAmountMol > 0)
+        ? totalMixtureMass / componentAmountMol
+        : 0;
+
+      // Ensure component_properties exists
+      component.component_properties = component.component_properties || {};
+
+      // Assign calculated value
+      component.component_properties.relative_molecular_weight = relativeMW;
+
+      // Return summary for reporting/debugging
+      return {
+        id: component.id,
+        name: component.name || 'Unknown',
+        amount_mol: componentAmountMol,
+        relative_molecular_weight: relativeMW
+      };
+    });
   }
 
   /**
