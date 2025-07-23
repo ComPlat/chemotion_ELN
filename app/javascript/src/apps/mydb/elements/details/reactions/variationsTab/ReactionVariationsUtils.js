@@ -10,6 +10,9 @@ import {
   AnalysesCellRenderer, AnalysesCellEditor, getAnalysesOverlay, AnalysisOverlay
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import {
+  PropertyFormatter, PropertyParser,
+  MaterialFormatter, MaterialParser,
+  EquivalentParser, GasParser, FeedstockParser,
   NoteCellRenderer, NoteCellEditor, MenuHeader, RowToolsCellRenderer
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -26,6 +29,43 @@ const materialTypes = {
   reactants: { label: 'Reactants', reactionAttributeName: 'reactants' },
   products: { label: 'Products', reactionAttributeName: 'products' },
   solvents: { label: 'Solvents', reactionAttributeName: 'solvents' }
+};
+const cellDataTypes = {
+  property: {
+    extendsDataType: 'object',
+    baseDataType: 'object',
+    valueFormatter: PropertyFormatter,
+    valueParser: PropertyParser,
+  },
+  material: {
+    extendsDataType: 'object',
+    baseDataType: 'object',
+    valueFormatter: MaterialFormatter,
+    valueParser: MaterialParser,
+  },
+  equivalent: {
+    extendsDataType: 'object',
+    baseDataType: 'object',
+    valueFormatter: (params) => parseFloat(Number(params.value.equivalent.value).toPrecision(4)),
+    valueParser: EquivalentParser,
+  },
+  yield: {
+    extendsDataType: 'object',
+    baseDataType: 'object',
+    valueFormatter: (params) => parseFloat(Number(params.value.yield.value).toPrecision(4)),
+  },
+  gas: {
+    extendsDataType: 'object',
+    baseDataType: 'object',
+    valueFormatter: MaterialFormatter,
+    valueParser: GasParser,
+  },
+  feedstock: {
+    extendsDataType: 'object',
+    baseDataType: 'object',
+    valueFormatter: MaterialFormatter,
+    valueParser: FeedstockParser,
+  },
 };
 
 function convertUnit(value, fromUnit, toUnit) {
@@ -170,6 +210,26 @@ function getCellDataType(entry, gasType = 'off') {
     default:
       return null;
   }
+}
+
+function getEntryDefs(entries) {
+  return entries.reduce((defs, entry) => {
+    defs[entry] = {
+      isMain: entry === entries[0],
+      isSelected: entry === entries[0],
+      displayUnit: getStandardUnits(entry)[0]
+    };
+    return defs;
+  }, {});
+}
+
+function getCurrentEntry(entryDefs) {
+  return Object.keys(entryDefs).find((key) => entryDefs[key].isMain) || null;
+}
+
+function getUserFacingEntryName(entry) {
+  // E.g., 'turnoverNumber' -> 'turnover number'
+  return entry.split(/(?=[A-Z])/).join(' ').toLowerCase();
 }
 
 function getVariationsRowName(reactionLabel, variationsRowId) {
@@ -347,17 +407,13 @@ function removeObsoleteColumnsFromVariations(variations, selectedColumns) {
   return updatedVariations;
 }
 
-function getPropertyColumnGroupChild(propertyType, gasMode) {
+function getPropertyColumnGroupChild(propertyType, gasMode, externalEntryDefs = undefined) {
   switch (propertyType) {
     case 'temperature':
       return {
         field: 'properties.temperature',
         cellDataType: getCellDataType('temperature'),
-        entryDefs: {
-          currentEntry: 'temperature',
-          displayUnit: getStandardUnits('temperature')[0],
-          availableEntries: ['temperature']
-        },
+        entryDefs: externalEntryDefs || getEntryDefs(['temperature']),
         headerComponent: MenuHeader,
         headerComponentParams: {
           names: ['T'],
@@ -368,11 +424,7 @@ function getPropertyColumnGroupChild(propertyType, gasMode) {
         field: 'properties.duration',
         cellDataType: getCellDataType('duration'),
         editable: !gasMode,
-        entryDefs: {
-          currentEntry: 'duration',
-          displayUnit: getStandardUnits('duration')[0],
-          availableEntries: ['duration']
-        },
+        entryDefs: externalEntryDefs || getEntryDefs(['duration']),
         headerComponent: MenuHeader,
         headerComponentParams: {
           names: ['t'],
@@ -479,7 +531,7 @@ function updateColumnDefinitions(columnDefinitions, field, property, newValue) {
   return updatedColumnDefinitions;
 }
 
-function getColumnDefinitions(selectedColumns, materials, gasMode) {
+function getColumnDefinitions(selectedColumns, materials, gasMode, externalEntryDefs = {}) {
   return [
     {
       headerName: 'Tools',
@@ -500,7 +552,9 @@ function getColumnDefinitions(selectedColumns, materials, gasMode) {
       headerName: 'Properties',
       groupId: 'properties',
       marryChildren: true,
-      children: selectedColumns.properties.map((entry) => getPropertyColumnGroupChild(entry, gasMode))
+      children: selectedColumns.properties.map(
+        (entry) => getPropertyColumnGroupChild(entry, gasMode, externalEntryDefs[`properties.${entry}`])
+      )
     },
   ].concat(
     Object.entries(materialTypes).map(([materialType, { label }]) => ({
@@ -513,7 +567,8 @@ function getColumnDefinitions(selectedColumns, materials, gasMode) {
         (materialID) => getMaterialColumnGroupChild(
           materials[materialType].find((material) => material.id.toString() === materialID),
           materialType,
-          gasMode
+          gasMode,
+          externalEntryDefs[`${materialType}.${materialID}`]
         )
       )
     }))
@@ -532,20 +587,42 @@ function getVariationsColumns(variations) {
   return { ...materialColumns, properties: propertyColumns, metadata: metadataColumns };
 }
 
-function getGridStateId(id) {
+function getGridStateId(reactionId) {
   const { currentUser } = UserStore.getState();
-  return `user${currentUser.id}-reaction${id}-reactionVariationsGridState`;
+  return `user${currentUser.id}-reaction${reactionId}-reactionVariationsGridState`;
 }
 
-function getInitialGridState(id) {
-  const gridState = JSON.parse(localStorage.getItem(getGridStateId(id)));
-
-  return gridState;
+function getEntryDefinitionsId(reactionId) {
+  const { currentUser } = UserStore.getState();
+  return `user${currentUser.id}-reaction${reactionId}-reactionVariationsEntryDefinitions`;
 }
 
-const persistGridState = (id, event) => {
+function getInitialGridState(reactionId) {
+  return JSON.parse(localStorage.getItem(getGridStateId(reactionId))) || {};
+}
+
+function getInitialEntryDefinitions(reactionId) {
+  return JSON.parse(localStorage.getItem(getEntryDefinitionsId(reactionId))) || {};
+}
+
+const persistTableLayout = (reactionId, event, columnDefinitions) => {
   const { state: gridState } = event;
-  localStorage.setItem(getGridStateId(id), JSON.stringify(gridState));
+  localStorage.setItem(getGridStateId(reactionId), JSON.stringify(gridState));
+
+  const entryDefs = {};
+  function extractEntryDefs(items) {
+    items.forEach((item) => {
+      if (item.field) {
+        entryDefs[item.field] = item.entryDefs || {};
+      }
+      if (item.children && Array.isArray(item.children)) {
+        extractEntryDefs(item.children);
+      }
+    });
+  }
+  extractEntryDefs(columnDefinitions);
+
+  localStorage.setItem(getEntryDefinitionsId(reactionId), JSON.stringify(entryDefs));
 };
 
 export {
@@ -558,6 +635,7 @@ export {
   getStandardUnits,
   convertUnit,
   materialTypes,
+  cellDataTypes,
   getVariationsRowName,
   getVariationsColumns,
   createVariationsRow,
@@ -576,5 +654,9 @@ export {
   getPropertyColumnGroupChild,
   REACTION_VARIATIONS_TAB_KEY,
   getInitialGridState,
-  persistGridState
+  getInitialEntryDefinitions,
+  persistTableLayout,
+  getEntryDefs,
+  getCurrentEntry,
+  getUserFacingEntryName
 };
