@@ -54,7 +54,9 @@ const SequenceBasedMacromoleculeSampleDetails = () => {
   }, []);
 
   useEffect(() => {
-    const items = document.getElementsByClassName('border-danger');
+    let items = document.getElementsByClassName('border-danger');
+    items = items.length < 1 ? document.getElementsByClassName('alert-danger') : items;
+
     if (Object.keys(sbmmSample.errors).length >= 1 && Object.keys(items).length >= 1) {
       document.getElementById('detail-container').scrollTo({
         top: items[0].offsetTop,
@@ -117,7 +119,7 @@ const SequenceBasedMacromoleculeSampleDetails = () => {
         {conflict && (
           <Button
             variant="link"
-            onClick={() => sbmmStore.openConflictModal(conflict.sbmm_id, conflict.conflicting_sbmm_id)}
+            onClick={() => sbmmStore.openConflictModal(conflict.sbmm_data, conflict.conflicting_sbmm_id)}
           >
             More details
           </Button>
@@ -277,8 +279,8 @@ const SequenceBasedMacromoleculeSampleDetails = () => {
       </div>
       <CommentModal element={sbmmSample} />
       {
-        Object.keys(sbmmSample.errors).length >= 1
-        || (Object.keys(sbmmSample.errors).length == 1 && sbmmSample.errors?.structure_file) && (
+        (Object.keys(sbmmSample.errors).length >= 1
+          || (Object.keys(sbmmSample.errors).length == 1 && sbmmSample.errors?.structure_file)) && (
           <Alert variant="danger">{errorMessage()}</Alert>
         )
       }
