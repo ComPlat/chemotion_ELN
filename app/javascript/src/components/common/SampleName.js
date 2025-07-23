@@ -52,8 +52,9 @@ const getPolymerName = (polymerType, decoupled) => {
  * @param {Array} components - Array of component objects
  * @returns {string} Formatted components title
  */
-const getComponentsTitle = (components) => components.map((comp) => comp.molecule.iupac_name).join('/');
-
+const getComponentsTitle = (components) => components
+  .map((comp) => comp.molecule?.iupac_name || 'Unknown')
+  .join('/');
 /**
  * Component to display sample name with formula and additional information
  */
