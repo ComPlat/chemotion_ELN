@@ -16,6 +16,10 @@ import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 import ReactionsFetcher from 'src/fetchers/ReactionsFetcher';
 
+
+const COLUMN_NAME_SHORT_LABEL_SAMPLE = 'Sample (short-label)';
+const COLUMN_NAME_SHORT_LABEL_REACTION = 'Reaction (short-label)';
+
 export default class ResearchPlanDetailsFieldTable extends Component {
   constructor(props) {
     super(props);
@@ -553,9 +557,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
   }
 
   openSampleByShortLabel(shortLabel) {
-    console.debug('opening Sample by short label', shortLabel);
     SamplesFetcher.findByShortLabel(shortLabel).then((result) => {
-      console.debug('got Result', result);
       if (result.sample_id && result.collection_id) {
         Aviator.navigate(`/collection/${result.collection_id}/sample/${result.sample_id}`, { silent: true });
         ElementActions.fetchSampleById(result.sample_id);
@@ -566,9 +568,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
   }
 
   openReactionByShortLabel(shortLabel) {
-    console.debug('opening reaction by short label', shortLabel);
     ReactionsFetcher.findByShortLabel(shortLabel).then((result) => {
-      console.debug('got Result', result);
       if (result.reaction_id && result.collection_id) {
         Aviator.navigate(`/collection/${result.collection_id}/reaction/${result.reaction_id}`, { silent: true });
         ElementActions.fetchReactionById(result.reaction_id);
@@ -579,16 +579,27 @@ export default class ResearchPlanDetailsFieldTable extends Component {
   }
 
   renderShortLabel(node) {
-    const shortLabel = node.data?.sample ? node.data.sample : node.data?.reaction;
-    if (node.data?.sample) {
-      return (<a className="link" onClick={(e) => { e.preventDefault(); this.openSampleByShortLabel(shortLabel) }}>
-        {shortLabel}
-      </a>);
-    } else if (node.data?.reaction) {
-      return (<a className="link" onClick={(e) => { e.preventDefault(); this.openReactionByShortLabel(shortLabel) }}>
-        {shortLabel}
-      </a>);
+    const { data } = node;
+    if (!data) {
+      return node.value || '';
     }
+    const sample = data[COLUMN_NAME_SHORT_LABEL_SAMPLE];
+    const reaction = data[COLUMN_NAME_SHORT_LABEL_REACTION];
+    if (sample && sample !== '') {
+      return (
+        <a className="link" onClick={(e) => { e.preventDefault(); this.openSampleByShortLabel(sample); }}>
+          {sample}
+        </a>
+      );
+    }
+    if (reaction && reaction !== '') {
+      return (
+        <a className="link" onClick={(e) => { e.preventDefault(); this.openReactionByShortLabel(reaction); }}>
+          {reaction}
+        </a>
+      );
+    }
+    return node.value || '';
   }
 
   renderStatic() {
@@ -597,14 +608,15 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     const staticColumns = cloneDeep(columns);
 
     staticColumns.forEach((item) => {
-      if (item.colId == 'sample' || item.colId == 'reaction') {
+      if (item.colId === COLUMN_NAME_SHORT_LABEL_SAMPLE || item.colId === COLUMN_NAME_SHORT_LABEL_REACTION) {
         item.cellRenderer = this.renderShortLabel;
       }
       item.editable = false;
       item.resizable = false;
       item.sortable = false;
       item.rowDrag = false;
-      item.cellClass = 'border-end';
+      item.wrapText = true;
+      item.cellClass = ["lh-base", "py-2", "border-end"];
       return item;
     });
 
@@ -635,7 +647,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
             domLayout='autoHeight'
             autoSizeStrategy={{ type: 'fitGridWidth' }}
             rowData={rows}
-            rowHeight="37"
+            rowHeight="auto"
           />
         </div>
       </div>
