@@ -107,10 +107,10 @@ const ConflictModal = () => {
           <Modal.Header className="ps-0 border-bottom border-gray-600 bg-gray-300" closeButton>
             <Modal.Title className="draggable-modal-stack-title">
               <i className="fa fa-arrows move" />
-              SBMM Conflict
+              SBMM Conflict Options
             </Modal.Title>
           </Modal.Header>
-          <Modal.Body>
+          <Modal.Body style={{ height: "calc(100% - 70vh - 120px)" }}>
             <Alert variant="danger">
               {
                 sbmmSample.errors.conflict.message
@@ -119,35 +119,47 @@ const ConflictModal = () => {
             {sbmmStore.conflictSbmms.length < 1 && (<div>{spinner}</div>)}
 
             {sbmmStore.conflictSbmms.length >= 1 && (
-              <div className="overflow-auto vh-80">
-                <Table className="mw-100 p-3" bordered hover striped>
-                  <tbody>
-                    <tr>
-                      <td className="w-25">&nbsp;</td>
-                      <td className="w-25 fs-6 fw-bold p-3">Your modifications</td>
-                      <td className="w-25 fs-6 fw-bold p-3">SBMM {sbmmStore.conflictSbmms[1].id}</td>
-                    </tr>
-                    {rowOfSbmmKeys()}
-                    <tr>
-                      <td className="w-25">&nbsp;</td>
-                      <td className="w-25">
-                        If this existing SBMM and its samples should be changed, please contact your system admin.
-                        Your Sample will be saved with the existing SBMM.
-                        <br />
-                        <Button className="mt-2">Contact your system admin</Button>
-                      </td>
-                      <td className="w-25">
-                        Discard changes of this SBMM and use existing SBMM to save this sample.
-                        <br />
-                        <br />
-                        <Button className="mt-2">Use this SBMM</Button>
-                      </td>
-                    </tr>
-                  </tbody>
+              <>
+                <div className="overflow-auto" style={{ height: "calc(100% - 160px)" }}>
+                  <Table className="mw-100 p-3" bordered hover striped>
+                    <tbody>
+                      <tr>
+                        <td className="w-25">&nbsp;</td>
+                        <td className="w-25 fs-6 fw-bold p-3">Your new SBMM</td>
+                        <td className="w-25 fs-6 fw-bold p-3">Existing SBMM {sbmmStore.conflictSbmms[1].id}</td>
+                      </tr>
+                      {rowOfSbmmKeys()}
+                    </tbody>
+                  </Table>
+                </div>
+                <Table>
+                  <tr>
+                    <td className="w-25">&nbsp;</td>
+                    <td className="w-25">
+                      <div className="d-flex align-content-between flex-wrap" style={{ height: "100px" }}>
+                        <span>
+                          If the existing SBMM and its samples should be changed, please contact your system admin.
+                          Your Sample will be saved with the existing SBMM.
+                        </span>
+                        
+                        <Button variant="warning" className="mt-2">Contact your system admin</Button>
+                      </div>
+                    </td>
+                    <td className="w-25">
+                      <div className="d-flex align-content-between flex-wrap" style={{ height: "100px" }}>
+                        <span>Discard changes of your new SBMM and use existing SBMM to save this sample.</span>
+
+                        <Button variant="warning" className="mt-2">Use this SBMM</Button>
+                      </div>
+                    </td>
+                  </tr>
                 </Table>
-              </div>
+              </>
             )}
           </Modal.Body>
+          <Modal.Footer>
+            <Button variant="primary" onClick={() => sbmmStore.closeConflictModal()}>Cancel</Button>
+          </Modal.Footer>
         </Modal>
       </div>
     </Draggable>

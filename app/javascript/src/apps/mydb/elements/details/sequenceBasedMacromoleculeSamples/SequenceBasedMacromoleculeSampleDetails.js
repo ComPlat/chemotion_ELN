@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import {
   Alert, Button, Tabs, Tab, Tooltip, OverlayTrigger
 } from 'react-bootstrap';
@@ -46,6 +46,8 @@ const SequenceBasedMacromoleculeSampleDetails = () => {
 
   const submitLabel = sbmmSample.isNew ? 'Create' : 'Save';
   let tabContents = [];
+  const alertRef = useRef();
+  const hasError = Object.keys(sbmmSample.errors).length >= 1;
 
   useEffect(() => {
     if (sbmmSample?.id && !sbmmSample.isNew && MatrixCheck(currentUser.matrix, commentActivation)) {
@@ -54,16 +56,18 @@ const SequenceBasedMacromoleculeSampleDetails = () => {
   }, []);
 
   useEffect(() => {
-    let items = document.getElementsByClassName('border-danger');
-    items = items.length < 1 ? document.getElementsByClassName('alert-danger') : items;
+    const items = document.getElementsByClassName('border-danger');
 
-    if (Object.keys(sbmmSample.errors).length >= 1 && Object.keys(items).length >= 1) {
-      document.getElementById('detail-container').scrollTo({
-        top: items[0].offsetTop,
-        behavior: 'smooth'
-      });
+    if (hasError && Object.keys(items).length >= 1 && items.item(0) !== null) {
+      setTimeout(() => {
+        items.item(0).scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 500);
+    } else if (hasError && alertRef.current !== undefined) {
+      setTimeout(() => {
+        document.getElementById('sbmm-error-alert').scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 500);
     }
-  }, [Object.keys(sbmmSample.errors).length]);
+  }, [alertRef.current]);
 
   const tabContentComponents = {
     properties: PropertiesForm,
@@ -111,17 +115,18 @@ const SequenceBasedMacromoleculeSampleDetails = () => {
   const errorMessage = () => {
     const conflict = sbmmSample.errors.conflict;
     const reason = conflict
-      ? 'because of sbmm conflicts.'
-      : 'because not all fields are filled in correctly.';
+      ? conflict.message
+      : 'This element cannot be ' + submitLabel.toLowerCase() + 'd because not all fields are filled in correctly.';
     return (
       <>
-        This element cannot be {submitLabel.toLowerCase()}d {reason}
+        {reason}
         {conflict && (
           <Button
             variant="link"
+            className="py-0 px-2"
             onClick={() => sbmmStore.openConflictModal(conflict.sbmm_data, conflict.conflicting_sbmm_id)}
           >
-            More details
+            Options
           </Button>
         )}
       </>
@@ -137,16 +142,14 @@ const SequenceBasedMacromoleculeSampleDetails = () => {
   }
 
   const handleSubmit = () => {
-    if (sbmmStore.hasValidFields()) {
-      LoadingActions.start();
-      if (sbmmSample.is_new) {
-        sbmmStore.removeFromOpenSequenceBasedMacromoleculeSamples(sbmmSample);
-        DetailActions.close(sbmmSample, true);
-        ElementActions.createSequenceBasedMacromoleculeSample(sbmmSample);
-      } else {
-        ElementActions.updateSequenceBasedMacromoleculeSample(sbmmSample);
-        sbmmStore.setUpdatedSequenceBasedMacromoleculeSampleId(sbmmSample.id);
-      }
+    LoadingActions.start();
+    if (sbmmSample.is_new) {
+      sbmmStore.removeFromOpenSequenceBasedMacromoleculeSamples(sbmmSample);
+      DetailActions.close(sbmmSample, true);
+      ElementActions.createSequenceBasedMacromoleculeSample(sbmmSample);
+    } else {
+      ElementActions.updateSequenceBasedMacromoleculeSample(sbmmSample);
+      sbmmStore.setUpdatedSequenceBasedMacromoleculeSampleId(sbmmSample.id);
     }
   }
 
@@ -279,9 +282,8 @@ const SequenceBasedMacromoleculeSampleDetails = () => {
       </div>
       <CommentModal element={sbmmSample} />
       {
-        (Object.keys(sbmmSample.errors).length >= 1
-          || (Object.keys(sbmmSample.errors).length == 1 && sbmmSample.errors?.structure_file)) && (
-          <Alert variant="danger">{errorMessage()}</Alert>
+        (hasError || sbmmSample.errors?.structure_file) && (
+          <Alert ref={alertRef} id="sbmm-error-alert" variant="danger" className="mt-3">{errorMessage()}</Alert>
         )
       }
       {sbmmStore.show_conflict_modal && <ConflictModal />}
