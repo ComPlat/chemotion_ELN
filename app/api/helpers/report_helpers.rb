@@ -279,8 +279,8 @@ module ReportHelpers
       selection = "s.id in (#{s_ids}) and"
     end
 
-    rest_of_selections = if columns[0].is_a?(Array)
-                           columns[0][0]
+    rest_of_selections = if columns.is_a?(Array)
+                           columns.join(', ')
                          else
                            columns
                          end
@@ -303,26 +303,46 @@ module ReportHelpers
     SQL
   end
 
-  def chemical_query(chemical_columns, sample_ids)
-    individual_queries = sample_ids.map do |s_id|
-      <<~SQL.squish
-        SELECT #{s_id} AS chemical_sample_id, #{chemical_columns}
-        FROM chemicals c
-        WHERE c.sample_id = #{s_id}
-      SQL
+  def chemical_query(chemical_columns, c_id, ids, checked_all)
+    s_ids = [ids].flatten.join(',')
+    return '' if !checked_all && s_ids.empty?
+
+    if checked_all
+      return '' unless c_id
+
+      collection_condition = "INNER JOIN collections_samples cs ON c.sample_id = cs.sample_id AND cs.deleted_at IS NULL AND cs.collection_id = #{c_id}"
+      order = 'c.sample_id ASC'
+      selection = if s_ids.empty?
+                    ''
+                  else
+                    "AND c.sample_id NOT IN (#{s_ids})"
+                  end
+    else
+      collection_condition = ''
+      order = "position(','||c.sample_id::text||',' in '(,#{s_ids},)')"
+      selection = "AND c.sample_id IN (#{s_ids})"
     end
-    individual_queries.join(' UNION ALL ')
+
+    <<~SQL.squish
+      SELECT c.sample_id AS chemical_sample_id, #{chemical_columns}
+      FROM chemicals c
+      #{collection_condition}
+      WHERE c.deleted_at IS NULL #{selection}
+      ORDER BY #{order}
+    SQL
   end
 
   def build_sql_sample_chemicals(columns, c_id, ids, checked_all)
-    sample_query = build_sql_sample_sample(columns[0].join(','), c_id, ids, checked_all)
+    sample_query = build_sql_sample_sample(columns[0], c_id, ids, checked_all)
     return nil if sample_query.blank?
 
-    chemical_query = chemical_query(columns[1].join(','), ids)
+    chemical_query_sql = chemical_query(columns[1].join(','), c_id, ids, checked_all)
+    return sample_query if chemical_query_sql.blank?
+
     <<~SQL.squish
-      SELECT *
+      SELECT sample_results.*, chemical_results.*
       FROM (#{sample_query}) AS sample_results
-      JOIN (#{chemical_query}) AS chemical_results
+      LEFT JOIN (#{chemical_query_sql}) AS chemical_results
       ON sample_results.s_id = chemical_results.chemical_sample_id
     SQL
   end
