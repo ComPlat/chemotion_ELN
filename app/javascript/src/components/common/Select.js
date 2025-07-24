@@ -1,6 +1,6 @@
 import React, { forwardRef } from 'react';
 import PropTypes from 'prop-types';
-import RSelect from 'react-select';
+import RSelect, { components } from 'react-select';
 import RAsyncSelect from 'react-select/async';
 import RCreatableSelect from 'react-select/creatable';
 import cs from 'classnames';
@@ -13,12 +13,19 @@ import cs from 'classnames';
 
 const baseClassName = 'chemotion-select';
 
+// Custom Input component that keeps the input visible for editing selected values
+const EditableInput = (props) => (
+  <components.Input {...props} isHidden={false} />
+);
+
 function buildWrappedComponent(name, BaseComponent) {
   const component = forwardRef(({
     minWidth,
     maxHeight,
     className,
     styles = {},
+    components: customComponents = {},
+    isInputEditable = false,
     ...props
   }, ref) => {
     const styleDefaults = {
@@ -53,6 +60,12 @@ function buildWrappedComponent(name, BaseComponent) {
       )
     };
 
+    // Merge custom components with editable input if needed
+    const mergedComponents = {
+      ...customComponents,
+      ...(isInputEditable && { Input: EditableInput }),
+    };
+
     return (
       <BaseComponent
         {...props}
@@ -66,6 +79,7 @@ function buildWrappedComponent(name, BaseComponent) {
         menuPlacement="auto"
         unstyled
         styles={stylesWithOverrides}
+        components={mergedComponents}
       />
     );
   });
@@ -75,11 +89,13 @@ function buildWrappedComponent(name, BaseComponent) {
     ...BaseComponent.propTypes,
     minWidth: PropTypes.string,
     maxHeight: PropTypes.string,
+    isInputEditable: PropTypes.bool,
   };
   component.defaultProps = {
     ...BaseComponent.defaultProps,
     minWidth: null,
     maxHeight: null,
+    isInputEditable: false,
   };
 
   return component;
