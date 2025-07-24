@@ -16,6 +16,7 @@ import {
   isChemicalField,
   getSchemaValidation,
   validateFieldUnified,
+  validateAndConvertAmountUnit,
   defaultSampleSchemaValidation
 } from 'src/utilities/importDataValidations';
 
@@ -232,6 +233,406 @@ describe('Import Data Validations', () => {
       const result = validateSolvent('Water//Methanol');
       expect(result.valid).toBe(false);
       expect(result.message).toContain('invalid format');
+    });
+  });
+
+  describe('validateAndConvertAmountUnit', () => {
+    describe('mass units', () => {
+      it('should validate and convert mass units to grams', () => {
+        expect(validateAndConvertAmountUnit('kg')).toMatchObject({
+          valid: true,
+          convertedUnit: 'g',
+          conversionFactor: 1000,
+          message: 'Unit "kg" is converted to "g"'
+        });
+
+        expect(validateAndConvertAmountUnit('mg')).toMatchObject({
+          valid: true,
+          convertedUnit: 'g',
+          conversionFactor: 0.001,
+          message: 'Unit "mg" is converted to "g"'
+        });
+
+        expect(validateAndConvertAmountUnit('μg')).toMatchObject({
+          valid: true,
+          convertedUnit: 'g',
+          conversionFactor: 0.000001,
+          message: 'Unit "μg" is converted to "g"'
+        });
+
+        expect(validateAndConvertAmountUnit('ug')).toMatchObject({
+          valid: true,
+          convertedUnit: 'g',
+          conversionFactor: 0.000001,
+          message: 'Unit "ug" is converted to "g"'
+        });
+
+        expect(validateAndConvertAmountUnit('microgram')).toMatchObject({
+          valid: true,
+          convertedUnit: 'g',
+          conversionFactor: 0.000001,
+          message: 'Unit "microgram" is converted to "g"'
+        });
+      });
+
+      it('should accept grams without conversion', () => {
+        expect(validateAndConvertAmountUnit('g')).toMatchObject({
+          valid: true,
+          convertedUnit: 'g',
+          conversionFactor: 1,
+          message: ''
+        });
+      });
+    });
+
+    describe('volume units', () => {
+      it('should validate and convert volume units to liters', () => {
+        expect(validateAndConvertAmountUnit('ml')).toMatchObject({
+          valid: true,
+          convertedUnit: 'l',
+          conversionFactor: 0.001,
+          message: 'Unit "ml" is converted to "l"'
+        });
+
+        expect(validateAndConvertAmountUnit('milliliter')).toMatchObject({
+          valid: true,
+          convertedUnit: 'l',
+          conversionFactor: 0.001,
+          message: 'Unit "milliliter" is converted to "l"'
+        });
+
+        expect(validateAndConvertAmountUnit('μl')).toMatchObject({
+          valid: true,
+          convertedUnit: 'l',
+          conversionFactor: 0.000001,
+          message: 'Unit "μl" is converted to "l"'
+        });
+
+        expect(validateAndConvertAmountUnit('ul')).toMatchObject({
+          valid: true,
+          convertedUnit: 'l',
+          conversionFactor: 0.000001,
+          message: 'Unit "ul" is converted to "l"'
+        });
+
+        expect(validateAndConvertAmountUnit('microliter')).toMatchObject({
+          valid: true,
+          convertedUnit: 'l',
+          conversionFactor: 0.000001,
+          message: 'Unit "microliter" is converted to "l"'
+        });
+      });
+
+      it('should accept liters without conversion', () => {
+        expect(validateAndConvertAmountUnit('l')).toMatchObject({
+          valid: true,
+          convertedUnit: 'l',
+          conversionFactor: 1,
+          message: ''
+        });
+
+        expect(validateAndConvertAmountUnit('liter')).toMatchObject({
+          valid: true,
+          convertedUnit: 'l',
+          conversionFactor: 1,
+          message: ''
+        });
+      });
+    });
+
+    describe('molar units', () => {
+      it('should validate and convert molar units to mol', () => {
+        expect(validateAndConvertAmountUnit('mmol')).toMatchObject({
+          valid: true,
+          convertedUnit: 'mol',
+          conversionFactor: 0.001,
+          message: 'Unit "mmol" is converted to "mol"'
+        });
+
+        expect(validateAndConvertAmountUnit('millimol')).toMatchObject({
+          valid: true,
+          convertedUnit: 'mol',
+          conversionFactor: 0.001,
+          message: 'Unit "millimol" is converted to "mol"'
+        });
+
+        expect(validateAndConvertAmountUnit('μmol')).toMatchObject({
+          valid: true,
+          convertedUnit: 'mol',
+          conversionFactor: 0.000001,
+          message: 'Unit "μmol" is converted to "mol"'
+        });
+
+        expect(validateAndConvertAmountUnit('umol')).toMatchObject({
+          valid: true,
+          convertedUnit: 'mol',
+          conversionFactor: 0.000001,
+          message: 'Unit "umol" is converted to "mol"'
+        });
+
+        expect(validateAndConvertAmountUnit('micromole')).toMatchObject({
+          valid: true,
+          convertedUnit: 'mol',
+          conversionFactor: 0.000001,
+          message: 'Unit "micromole" is converted to "mol"'
+        });
+      });
+
+      it('should accept mol without conversion', () => {
+        expect(validateAndConvertAmountUnit('mol')).toMatchObject({
+          valid: true,
+          convertedUnit: 'mol',
+          conversionFactor: 1,
+          message: ''
+        });
+
+        expect(validateAndConvertAmountUnit('mole')).toMatchObject({
+          valid: true,
+          convertedUnit: 'mol',
+          conversionFactor: 1,
+          message: ''
+        });
+      });
+    });
+
+    describe('case insensitivity and whitespace handling', () => {
+      it('should handle uppercase and mixed case units', () => {
+        expect(validateAndConvertAmountUnit('KG')).toMatchObject({
+          valid: true,
+          convertedUnit: 'g',
+          conversionFactor: 1000
+        });
+
+        expect(validateAndConvertAmountUnit('Mg')).toMatchObject({
+          valid: true,
+          convertedUnit: 'g',
+          conversionFactor: 0.001
+        });
+
+        expect(validateAndConvertAmountUnit('ML')).toMatchObject({
+          valid: true,
+          convertedUnit: 'l',
+          conversionFactor: 0.001
+        });
+      });
+
+      it('should handle whitespace around units', () => {
+        expect(validateAndConvertAmountUnit(' mg ')).toMatchObject({
+          valid: true,
+          convertedUnit: 'g',
+          conversionFactor: 0.001
+        });
+
+        expect(validateAndConvertAmountUnit('  ml  ')).toMatchObject({
+          valid: true,
+          convertedUnit: 'l',
+          conversionFactor: 0.001
+        });
+      });
+    });
+
+    describe('invalid inputs', () => {
+      it('should reject invalid units', () => {
+        const result = validateAndConvertAmountUnit('pounds');
+        expect(result.valid).toBe(false);
+        expect(result.convertedUnit).toBe(null);
+        expect(result.conversionFactor).toBe(1);
+        expect(result.message).toContain('Invalid unit "pounds"');
+        expect(result.message).toContain('Valid units are:');
+      });
+
+      it('should reject null, undefined, and empty inputs', () => {
+        expect(validateAndConvertAmountUnit(null)).toMatchObject({
+          valid: false,
+          message: 'Unit is required and must be a string'
+        });
+
+        expect(validateAndConvertAmountUnit(undefined)).toMatchObject({
+          valid: false,
+          message: 'Unit is required and must be a string'
+        });
+
+        expect(validateAndConvertAmountUnit('')).toMatchObject({
+          valid: false,
+          message: 'Unit is required and must be a string'
+        });
+      });
+
+      it('should reject non-string inputs', () => {
+        expect(validateAndConvertAmountUnit(123)).toMatchObject({
+          valid: false,
+          message: 'Unit is required and must be a string'
+        });
+
+        expect(validateAndConvertAmountUnit({})).toMatchObject({
+          valid: false,
+          message: 'Unit is required and must be a string'
+        });
+      });
+    });
+  });
+
+  describe('validateField with amount unit conversions', () => {
+    it('should validate and convert target_amount_unit', () => {
+      const result = validateField('mg', 'target_amount_unit');
+      expect(result.valid).toBe(true);
+      expect(result.convertedValue).toBe('g');
+      expect(result.conversionFactor).toBe(0.001);
+      expect(result.conversionMessage).toBe('Unit "mg" is converted to "g"');
+    });
+
+    it('should validate and convert real_amount_unit', () => {
+      const result = validateField('ml', 'real_amount_unit');
+      expect(result.valid).toBe(true);
+      expect(result.convertedValue).toBe('l');
+      expect(result.conversionFactor).toBe(0.001);
+      expect(result.conversionMessage).toBe('Unit "ml" is converted to "l"');
+    });
+
+    it('should reject invalid amount units', () => {
+      const result = validateField('pounds', 'target_amount_unit');
+      expect(result.valid).toBe(false);
+      expect(result.message).toContain('Invalid unit "pounds"');
+    });
+  });
+
+  describe('validateRow with unit conversions', () => {
+    it('should convert units and values in a complete row', () => {
+      const testRow = {
+        name: 'Test Sample',
+        target_amount_value: '500',
+        target_amount_unit: 'mg',
+        real_amount_value: '25',
+        real_amount_unit: 'ml'
+      };
+
+      const result = validateRow(testRow);
+      expect(result.valid).toBe(true);
+      expect(result.conversions.length).toBe(2);
+      expect(result.conversions).toContain('Field "target_amount_unit": Unit "mg" is converted to "g"');
+      expect(result.conversions).toContain('Field "real_amount_unit": Unit "ml" is converted to "l"');
+
+      // Check converted data
+      expect(result.convertedData.target_amount_unit).toBe('g');
+      expect(result.convertedData.target_amount_value).toBe(0.5); // 500 * 0.001
+      expect(result.convertedData.real_amount_unit).toBe('l');
+      expect(result.convertedData.real_amount_value).toBe(0.025); // 25 * 0.001
+    });
+
+    it('should handle precision correctly for small conversions', () => {
+      const testRow = {
+        target_amount_value: '1.5',
+        target_amount_unit: 'μg'
+      };
+
+      const result = validateRow(testRow);
+      expect(result.valid).toBe(true);
+      expect(result.convertedData.target_amount_unit).toBe('g');
+      expect(result.convertedData.target_amount_value).toBe(0.0000015); // 1.5 * 0.000001, rounded to 4 decimal places
+    });
+
+    it('should handle precision correctly to avoid floating point issues', () => {
+      const testRow = {
+        target_amount_value: '123.456789',
+        target_amount_unit: 'mg'
+      };
+
+      const result = validateRow(testRow);
+      expect(result.valid).toBe(true);
+      expect(result.convertedData.target_amount_unit).toBe('g');
+      // Should be rounded to 8 decimal places: 123.456789 * 0.001 = 0.123456789 -> 0.12345679
+      expect(result.convertedData.target_amount_value).toBe(0.12345679);
+    });
+
+    it('should not convert units that are already in target format', () => {
+      const testRow = {
+        target_amount_value: '100',
+        target_amount_unit: 'g',
+        real_amount_value: '2',
+        real_amount_unit: 'l'
+      };
+
+      const result = validateRow(testRow);
+      expect(result.valid).toBe(true);
+      expect(result.conversions.length).toBe(0); // No conversions needed
+      expect(result.convertedData.target_amount_unit).toBe('g');
+      expect(result.convertedData.target_amount_value).toBe('100'); // Unchanged
+      expect(result.convertedData.real_amount_unit).toBe('l');
+      expect(result.convertedData.real_amount_value).toBe('2'); // Unchanged
+    });
+
+    it('should handle invalid units and prevent conversion', () => {
+      const testRow = {
+        target_amount_value: '100',
+        target_amount_unit: 'pounds' // Invalid unit
+      };
+
+      const result = validateRow(testRow);
+      expect(result.valid).toBe(false);
+      expect(result.errors.length).toBe(1);
+      expect(result.errors[0]).toContain('Invalid unit "pounds"');
+      expect(result.conversions.length).toBe(0);
+    });
+
+    it('should handle missing value field gracefully', () => {
+      const testRow = {
+        target_amount_unit: 'mg' // No corresponding value field
+      };
+
+      const result = validateRow(testRow);
+      expect(result.valid).toBe(true);
+      expect(result.conversions.length).toBe(1);
+      expect(result.convertedData.target_amount_unit).toBe('g');
+      // No value field to convert, should not throw error
+    });
+
+    it('should handle non-numeric value fields gracefully', () => {
+      const testRow = {
+        target_amount_value: 'not-a-number',
+        target_amount_unit: 'mg'
+      };
+
+      const result = validateRow(testRow);
+      expect(result.valid).toBe(false); // Should fail on value validation
+      expect(result.conversions.length).toBe(1); // Unit conversion still happens
+      expect(result.convertedData.target_amount_unit).toBe('g');
+      expect(result.convertedData.target_amount_value).toBe('not-a-number'); // Unchanged since it's not a number
+    });
+  });
+
+  describe('validateRowUnified with unit conversions', () => {
+    it('should handle unit conversions in unified validation', async () => {
+      const testRow = {
+        name: 'Test Sample',
+        target_amount_value: '1000',
+        target_amount_unit: 'mg',
+        real_amount_value: '50',
+        real_amount_unit: 'ml'
+      };
+
+      const result = await validateRowUnified(testRow);
+      expect(result.valid).toBe(true);
+      expect(result.conversions.length).toBe(2);
+      expect(result.convertedData.target_amount_unit).toBe('g');
+      expect(result.convertedData.target_amount_value).toBe(1); // 1000 * 0.001
+      expect(result.convertedData.real_amount_unit).toBe('l');
+      expect(result.convertedData.real_amount_value).toBe(0.05); // 50 * 0.001
+    });
+
+    it('should handle mixed valid and invalid conversions', async () => {
+      const testRow = {
+        target_amount_value: '500',
+        target_amount_unit: 'mg', // Valid conversion
+        real_amount_value: '25',
+        real_amount_unit: 'pounds' // Invalid unit
+      };
+
+      const result = await validateRowUnified(testRow);
+      expect(result.valid).toBe(false);
+      expect(result.errors.length).toBe(1);
+      expect(result.conversions.length).toBe(1); // Only the valid conversion
+      expect(result.convertedData.target_amount_unit).toBe('g');
+      expect(result.convertedData.target_amount_value).toBe(0.5);
     });
   });
 

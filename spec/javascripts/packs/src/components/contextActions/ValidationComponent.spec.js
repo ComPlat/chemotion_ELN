@@ -86,7 +86,10 @@ describe('ValidationComponent basic rendering', () => {
   });
 
   it('should not render validation errors by default', () => {
-    expect(wrapper.find(Alert)).toHaveLength(0);
+    // Should show the warning alert but no validation error/success alerts
+    expect(wrapper.find(Alert)).toHaveLength(1);
+    // The warning alert should be present
+    expect(wrapper.find(Alert).prop('variant')).toBe('warning');
   });
 });
 

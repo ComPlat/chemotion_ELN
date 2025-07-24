@@ -6,7 +6,6 @@
 
 import {
   validateChemicalField,
-  validateChemicalData,
   defaultChemicalSchemaValidation
 } from 'src/utilities/chemicalDataValidations';
 
@@ -15,6 +14,129 @@ const fieldsWithUnits = ['density', 'molarity', 'flash_point'];
 
 // Fields that should be numrange (numeric intervals)
 const numrangeFields = ['melting_point', 'boiling_point'];
+
+// Unit conversion mappings
+const unitConversions = {
+  // Mass units (convert to grams)
+  mass: {
+    kg: 1000,
+    g: 1,
+    mg: 0.001,
+    μg: 0.000001,
+    ug: 0.000001, // Alternative notation for microgram
+    microgram: 0.000001,
+    micrograms: 0.000001
+  },
+  // Volume units (convert to liters)
+  volume: {
+    l: 1,
+    liter: 1,
+    liters: 1,
+    ml: 0.001,
+    milliliter: 0.001,
+    milliliters: 0.001,
+    μl: 0.000001,
+    ul: 0.000001, // Alternative notation for microliter
+    microliter: 0.000001,
+    microliters: 0.000001
+  },
+  // Molar units (convert to mol)
+  molar: {
+    mol: 1,
+    mole: 1,
+    moles: 1,
+    mmol: 0.001,
+    millimol: 0.001,
+    millimole: 0.001,
+    millimoles: 0.001,
+    μmol: 0.000001,
+    umol: 0.000001, // Alternative notation for micromole
+    micromol: 0.000001,
+    micromole: 0.000001,
+    micromoles: 0.000001
+  }
+};
+
+// Valid target units after conversion
+const validTargetUnits = ['g', 'l', 'mol'];
+
+/**
+ * Validates and converts amount units to standard units (g, l, mol)
+ * @param {string} unit - The unit to validate and convert
+ * @returns {Object} - { valid: boolean, convertedUnit: string, conversionFactor: number, message: string }
+ */
+export const validateAndConvertAmountUnit = (unit) => {
+  if (!unit || typeof unit !== 'string') {
+    return {
+      valid: false,
+      convertedUnit: null,
+      conversionFactor: 1,
+      message: 'Unit is required and must be a string'
+    };
+  }
+
+  const normalizedUnit = unit.toLowerCase().trim();
+
+  // Check if already a valid target unit (no conversion needed)
+  if (validTargetUnits.includes(normalizedUnit)) {
+    return {
+      valid: true,
+      convertedUnit: normalizedUnit,
+      conversionFactor: 1,
+      message: ''
+    };
+  }
+
+  // Check mass units
+  if (unitConversions.mass[normalizedUnit]) {
+    const convertedUnit = 'g';
+    const conversionFactor = unitConversions.mass[normalizedUnit];
+    return {
+      valid: true,
+      convertedUnit,
+      conversionFactor,
+      message: conversionFactor === 1 ? '' : `Unit "${unit}" is converted to "${convertedUnit}"`
+    };
+  }
+
+  // Check volume units
+  if (unitConversions.volume[normalizedUnit]) {
+    const convertedUnit = 'l';
+    const conversionFactor = unitConversions.volume[normalizedUnit];
+    return {
+      valid: true,
+      convertedUnit,
+      conversionFactor,
+      message: conversionFactor === 1 ? '' : `Unit "${unit}" is converted to "${convertedUnit}"`
+    };
+  }
+
+  // Check molar units
+  if (unitConversions.molar[normalizedUnit]) {
+    const convertedUnit = 'mol';
+    const conversionFactor = unitConversions.molar[normalizedUnit];
+    return {
+      valid: true,
+      convertedUnit,
+      conversionFactor,
+      message: conversionFactor === 1 ? '' : `Unit "${unit}" is converted to "${convertedUnit}"`
+    };
+  }
+
+  // Invalid unit
+  const allValidUnits = [
+    ...Object.keys(unitConversions.mass),
+    ...Object.keys(unitConversions.volume),
+    ...Object.keys(unitConversions.molar)
+  ];
+
+  return {
+    valid: false,
+    convertedUnit: null,
+    conversionFactor: 1,
+    message: `Invalid unit "${unit}". Valid units are: ${allValidUnits.join(', ')}`
+  };
+};
 
 /**
  * Validates if a value can be converted to a float
@@ -231,12 +353,24 @@ export const validateSolvent = (value) => {
  * @param {any} value - The value to validate
  * @param {string} fieldName - The name of the field
  * @param {Object} options - Additional options (like data types)
- * @returns {Object} - { valid: boolean, message: string }
+ * @returns {Object} - { valid: boolean, message: string, convertedValue?: any, conversionMessage?: string }
  */
 export const validateField = (value, fieldName, options = {}) => {
   // Skip validation for empty values if not marked as required
   if ((value === null || value === undefined || value === '') && !options.required) {
     return { valid: true, message: '' };
+  }
+
+  // Handle amount unit fields with conversion
+  if (fieldName === 'target_amount_unit' || fieldName === 'real_amount_unit') {
+    const unitValidation = validateAndConvertAmountUnit(value);
+    return {
+      valid: unitValidation.valid,
+      message: unitValidation.message,
+      convertedValue: unitValidation.convertedUnit,
+      conversionMessage: unitValidation.message,
+      conversionFactor: unitValidation.conversionFactor
+    };
   }
 
   // Handle numeric fields
@@ -280,10 +414,12 @@ export const validateField = (value, fieldName, options = {}) => {
  * Validates a complete row of data
  * @param {Object} rowData - The row data to validate
  * @param {Object} fieldTypes - Mapping of field names to their expected types
- * @returns {Object} - { valid: boolean, errors: string[] }
+ * @returns {Object} - { valid: boolean, errors: string[], conversions: string[], convertedData: Object }
  */
 export const validateRow = (rowData, fieldTypes = {}) => {
   const errors = [];
+  const conversions = [];
+  const convertedData = { ...rowData };
   let isValid = true;
 
   // Skip validation for special fields
@@ -302,10 +438,30 @@ export const validateRow = (rowData, fieldTypes = {}) => {
     if (!validation.valid) {
       isValid = false;
       errors.push(`Field "${fieldName}": ${validation.message}`);
+    } else if (validation.convertedValue && validation.conversionMessage) {
+      // Handle unit conversions
+      convertedData[fieldName] = validation.convertedValue;
+      conversions.push(`Field "${fieldName}": ${validation.conversionMessage}`);
+
+      // Also convert the corresponding value field if it exists
+      const valueFieldName = fieldName.replace('_unit', '_value');
+      if (convertedData[valueFieldName] && validation.conversionFactor !== 1) {
+        const originalValue = parseFloat(convertedData[valueFieldName]);
+        if (!Number.isNaN(originalValue)) {
+          const convertedValue = originalValue * validation.conversionFactor;
+          // Round to 8 decimal places to handle microgram/microliter/micromole conversions
+          convertedData[valueFieldName] = Math.round(convertedValue * 100000000) / 100000000;
+        }
+      }
     }
   });
 
-  return { valid: isValid, errors };
+  return {
+    valid: isValid,
+    errors,
+    conversions,
+    convertedData
+  };
 };
 
 /**
@@ -398,12 +554,14 @@ export const validateFieldUnified = async (value, fieldName, options = {}) => {
  * Unified validation function for a complete row of data
  * @param {Object} rowData - The row data to validate
  * @param {Object} fieldTypes - Mapping of field names to their expected types
- * @returns {Promise<Object>} - Promise resolving to { valid: boolean, errors: string[] }
+ * @returns {Promise<Object>} - Promise resolving to { valid: boolean, errors: string[], conversions: string[], convertedData: Object }
  */
 export const validateRowUnified = async (rowData, fieldTypes = {}) => {
   // Initialize the result
   let isValid = true;
   const errors = [];
+  const conversions = [];
+  const convertedData = { ...rowData };
   const validationPromises = [];
 
   // Process each field in the row
@@ -433,6 +591,24 @@ export const validateRowUnified = async (rowData, fieldTypes = {}) => {
           errors.push(`Field "${fieldName}": ${validation.message}`);
           return false;
         }
+
+        // Handle conversions for unit fields
+        if (validation.convertedValue && validation.conversionMessage) {
+          convertedData[fieldName] = validation.convertedValue;
+          conversions.push(`Field "${fieldName}": ${validation.conversionMessage}`);
+
+          // Also convert the corresponding value field if it exists
+          const valueFieldName = fieldName.replace('_unit', '_value');
+          if (convertedData[valueFieldName] && validation.conversionFactor !== 1) {
+            const originalValue = parseFloat(convertedData[valueFieldName]);
+            if (!Number.isNaN(originalValue)) {
+              const convertedValue = originalValue * validation.conversionFactor;
+              // Round to 8 decimal places to handle microgram/microliter/micromole conversions
+              convertedData[valueFieldName] = Math.round(convertedValue * 100000000) / 100000000;
+            }
+          }
+        }
+
         return true;
       });
 
@@ -443,9 +619,12 @@ export const validateRowUnified = async (rowData, fieldTypes = {}) => {
   const results = await Promise.all(validationPromises);
   isValid = results.every((result) => result === true);
 
-  console.log(`Validated row with ${Object.keys(rowData).length} fields. Valid: ${isValid}. Errors: ${errors.length}`);
-
-  return { valid: isValid, errors };
+  return {
+    valid: isValid,
+    errors,
+    conversions,
+    convertedData
+  };
 };
 
 /**
