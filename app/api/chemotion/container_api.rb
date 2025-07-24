@@ -9,13 +9,16 @@ module Chemotion
       end
       put '/container' do
         container_data = params[:container]
-        container = Container.find_by(id: container_data[:id])
-        error!('Container not found', 404) unless container
+        @container = Container.find_by(id: container_data[:id])
+        error!('Container not found', 404) unless @container
+
+        @element_policy = ElementPolicy.new(current_user, @container.root_element)
+        error!('401 Unauthorized', 401) unless @element_policy.update?
 
         update_datamodel(params[:container])
 
         present(
-          container,
+          @container,
           with: Entities::ContainerEntity,
           root: :container,
         )
