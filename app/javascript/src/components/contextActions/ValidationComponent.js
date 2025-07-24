@@ -11,6 +11,7 @@ import {
   validateRowUnified
 } from 'src/utilities/importDataValidations';
 import TextAreaCellEditor from 'src/components/contextActions/TextAreaCellEditor';
+import DocumentationButton from 'src/components/common/DocumentationButton';
 
 // Create a separate component for the delete button cell renderer
 function DeleteButtonCellRenderer(props) {
@@ -52,49 +53,47 @@ function ValidationComponent({
   columnDefs,
   onValidate,
   onCancel,
-  onRowDataChange
+  onRowDataChange,
+  onImport
 }) {
   const [gridApi, setGridApi] = useState(null);
   const [validationErrors, setValidationErrors] = useState([]);
+  const [conversionMessages, setConversionMessages] = useState([]);
   const [showMore, setShowMore] = useState(false);
   const [gridColumnDefs, setGridColumnDefs] = useState([]);
   const [currentRowData, setCurrentRowData] = useState(initialRowData);
+  const [isValidated, setIsValidated] = useState(false);
+  const [isDataValid, setIsDataValid] = useState(false);
+  const [showWarning, setShowWarning] = useState(false);
   const gridRef = useRef(null);
 
-  // Initialize current row data from props
+  // Initialize current row data from props and ensure all rows have IDs
   useEffect(() => {
-    setCurrentRowData(initialRowData);
+    const dataWithIds = initialRowData.map((row, index) => ({
+      ...row,
+      id: row.id || `row-${index + 1}`
+    }));
+    setCurrentRowData(dataWithIds);
   }, [initialRowData]);
 
-  const deleteRow = (rowIndex) => {
-    if (rowIndex === undefined || rowIndex < 0 || rowIndex >= currentRowData.length) {
-      return;
-    }
-
-    // Create a copy of the current data
-    const newData = currentRowData.filter((_, index) => index !== rowIndex);
-
-    // Update state
-    setCurrentRowData(newData);
-    onRowDataChange(newData);
-
-    // Request a grid refresh after state update
-    setTimeout(() => {
-      if (gridApi) {
-        gridApi.refreshCells({ force: true });
-      }
-    }, 0);
-  };
-
-  // Handler for the delete button click
+  // Handler for the delete button click - simplified to work directly with row ID
   const handleDeleteRow = useCallback((rowId) => {
     if (rowId) {
-      const rowIndex = currentRowData.findIndex((row) => row.id === rowId);
-      if (rowIndex !== -1) {
-        deleteRow(rowIndex);
-      }
+      // Filter out the row with the matching ID
+      const newData = currentRowData.filter((row) => row.id !== rowId);
+
+      // Update state
+      setCurrentRowData(newData);
+      onRowDataChange(newData);
+
+      // Request a grid refresh after state update
+      setTimeout(() => {
+        if (gridApi) {
+          gridApi.refreshCells({ force: true });
+        }
+      }, 0);
     }
-  }, [currentRowData]);
+  }, [currentRowData, gridApi]);
 
   // Add row number and action columns to the column definitions
   useEffect(() => {
@@ -187,36 +186,21 @@ function ValidationComponent({
     setGridColumnDefs([rowNumberColumn, ...processedColumnDefs, deleteButtonColumn]);
   }, [columnDefs, handleDeleteRow]);
 
-  // Add custom style for invalid rows
-  useEffect(() => {
-    const styleEl = document.createElement('style');
-    styleEl.innerHTML = `
-      .invalid-row {
-        background-color: rgba(255, 0, 0, 0.2) !important;
-      }
-    `;
-    document.head.appendChild(styleEl);
-
-    return () => {
-      document.head.removeChild(styleEl);
-    };
-  }, []);
-
   const onGridReady = useCallback((params) => {
     setGridApi(params.api);
   }, []);
 
   const getRowClass = (params) => (
-    params.data && !params.data.valid ? 'invalid-row' : ''
+    params.data && params.data.valid === false ? 'invalid-row' : ''
   );
 
   const validateData = async () => {
     if (!gridApi) return;
 
-    const allRows = [];
-    gridApi.forEachNode((node) => allRows.push(node.data));
-
+    // Use currentRowData as the single source of truth
+    const allRows = [...currentRowData];
     const invalid = [];
+    const allConversions = [];
 
     // Log the field names across all rows to help debug
     const allFields = new Set();
@@ -229,15 +213,32 @@ function ValidationComponent({
     });
 
     // Use Promise.all to run validations in parallel
-    const validationPromises = allRows.map(async (row) => {
+    const validationPromises = allRows.map(async (row, index) => {
       // Apply field-by-field validation based on each field type
       const validation = await validateRowUnified(row);
 
       if (!validation.valid) {
-        const updatedRow = { ...row, valid: false, errors: validation.errors };
+        const updatedRow = {
+          ...row,
+          valid: false,
+          errors: validation.errors,
+          rowIndex: index
+        };
         Object.assign(row, updatedRow);
-        invalid.push(row);
+        invalid.push(updatedRow);
         return false;
+      }
+
+      // Handle conversions - update the row with converted data
+      if (validation.convertedData) {
+        Object.assign(row, validation.convertedData);
+      }
+
+      // Collect conversion messages with row numbers
+      if (validation.conversions && validation.conversions.length > 0) {
+        validation.conversions.forEach((conversionMsg) => {
+          allConversions.push(`Row ${index + 1}: ${conversionMsg.replace('Field "', '').replace('":', ' -')}`);
+        });
       }
 
       Object.assign(row, { ...row, valid: true });
@@ -246,17 +247,39 @@ function ValidationComponent({
 
     await Promise.all(validationPromises);
 
-    const allErrors = invalid.flatMap((row) => (
-      (row.errors || []).map((error) => `Row ${row.id || 'unknown'}: ${error}`)
-    ));
+    const allErrors = invalid.flatMap((row) => {
+      // Use the stored rowIndex for consistent numbering
+      const rowNumber = (row.rowIndex !== undefined) ? row.rowIndex + 1 : 'unknown';
+
+      return (row.errors || []).map((error) => `Row ${rowNumber}: ${error}`);
+    });
 
     setValidationErrors(allErrors);
+    setConversionMessages(allConversions);
+    setIsValidated(true);
+    setIsDataValid(invalid.length === 0);
+
+    // Update the currentRowData with validation results and conversions
+    setCurrentRowData(allRows);
+    onRowDataChange(allRows);
+
     gridApi.refreshCells();
-    onValidate(invalid, currentRowData);
+    onValidate(invalid, allRows);
+  };
+
+  const handleImportData = () => {
+    if (onImport) {
+      onImport();
+    }
   };
 
   const addNewRow = () => {
-    const newRow = { id: `new-${Date.now()}`, valid: true };
+    // Generate a user-friendly row ID based on current data length
+    const newRowNumber = currentRowData.length + 1;
+    const newRow = {
+      id: `row-${newRowNumber}`,
+      valid: true
+    };
 
     // Add the new row and update state
     const newData = [...currentRowData, newRow];
@@ -274,6 +297,12 @@ function ValidationComponent({
 
   // Handle cell value changes
   const onCellValueChanged = (params) => {
+    // Reset validation state when data changes
+    setIsValidated(false);
+    setIsDataValid(false);
+    setValidationErrors([]);
+    setConversionMessages([]);
+
     // Update the current row data when a cell changes
     const updatedData = [...currentRowData];
     const {
@@ -319,6 +348,8 @@ function ValidationComponent({
       }
     }
   };
+  const chemotionSaurusLink = 'https://www.chemotion.net/docs/eln/ui/import';
+  const documentationLink = `${chemotionSaurusLink}#importing-data-with-column-mapping-and-validation`;
 
   return (
     <Modal show size="xl" backdrop="static">
@@ -327,14 +358,66 @@ function ValidationComponent({
       </Modal.Header>
       <Modal.Body>
         <div className="mb-3">
-          <p>
-            Review and edit your data before importing.
-            You can modify cell values directly, add new rows, or delete existing ones.
-          </p>
-          <p>Invalid rows will be highlighted in red after validation.</p>
+          <div className="d-flex justify-content-between align-items-start">
+            <div>
+              <p>
+                Review and edit your data before importing.
+                You can modify cell values directly, add new rows, or delete existing ones.
+              </p>
+              <p>Invalid rows will be highlighted in red after validation.</p>
+            </div>
+            <DocumentationButton
+              link={documentationLink}
+              overlayMessage="Click to open link to the documentation of the feature"
+              className="ms-3 flex-shrink-0"
+            />
+          </div>
         </div>
 
-        {validationErrors.length > 0 && (
+        <Alert variant="warning" className="mb-3">
+          <div className="d-flex align-items-center justify-content-between">
+            <div className="d-flex align-items-center">
+              <i className="fa fa-exclamation-triangle me-2" />
+              <strong>Important: Structure Validation Notice</strong>
+            </div>
+            <Button
+              variant="link"
+              size="sm"
+              onClick={() => setShowWarning(!showWarning)}
+              className="p-0 text-warning"
+            >
+              {showWarning ? (
+                <>
+                  <i className="fa fa-chevron-up me-1" />
+                  Hide Details
+                </>
+              ) : (
+                <>
+                  <i className="fa fa-chevron-down me-1" />
+                  Show Details
+                </>
+              )}
+            </Button>
+          </div>
+          {showWarning && (
+            <div className="mt-3 pt-3 border-top border-warning">
+              <p className="mb-2">
+                <strong>Please note:</strong>
+                {' '}
+                Data related to chemical structures like Canonical SMILES, molfile and other chemical
+                {' '}
+                identifiers cannot be validated at this step.
+              </p>
+              <p className="text-muted small mb-0">
+                If structure-related data is invalid, you will receive an informative notification message after the
+                {' '}
+                import process completes.
+              </p>
+            </div>
+          )}
+        </Alert>
+
+        {validationErrors.length > 0 && isValidated && (
           <Alert variant="danger">
             <Alert.Heading>Validation Errors</Alert.Heading>
             <ul>
@@ -360,6 +443,50 @@ function ValidationComponent({
           </Alert>
         )}
 
+        {isValidated && isDataValid && (
+          <Alert variant="success">
+            <Alert.Heading>✅ Data is Valid!</Alert.Heading>
+            <p>
+              All rows have passed validation successfully. You can now import the data.
+            </p>
+
+            {conversionMessages.length > 0 && (
+              <div className="mt-3 mb-3">
+                <strong>Unit Conversions Applied:</strong>
+                <ul className="mt-2 mb-0">
+                  {conversionMessages.map((message) => (
+                    <li key={`conversion-${message}`} className="text-info">
+                      {message}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div className="d-flex align-items-center mt-3">
+              <div className="me-3">
+                Click on
+                {' '}
+                <strong>Import Data</strong>
+                {' '}
+                button to import
+                {' '}
+                <strong>{currentRowData.length}</strong>
+                {' '}
+                rows
+              </div>
+              <Button
+                variant="success"
+                onClick={handleImportData}
+                className="ms-auto"
+              >
+                <i className="fa fa-upload me-1" />
+                Import Data
+              </Button>
+            </div>
+          </Alert>
+        )}
+
         <div className="ag-theme-alpine" style={{ height: 400, width: '100%' }}>
           <AgGridReact
             ref={gridRef}
@@ -370,9 +497,6 @@ function ValidationComponent({
             onGridReady={onGridReady}
             getRowClass={getRowClass}
             onCellValueChanged={onCellValueChanged}
-            rowClassRules={{
-              'invalid-row': (params) => params.data && !params.data.valid
-            }}
             defaultColDef={{
               editable: true,
               resizable: true,
@@ -439,6 +563,7 @@ ValidationComponent.propTypes = {
   onValidate: PropTypes.func.isRequired,
   onCancel: PropTypes.func.isRequired,
   onRowDataChange: PropTypes.func.isRequired,
+  onImport: PropTypes.func.isRequired,
 };
 
 export default ValidationComponent;
