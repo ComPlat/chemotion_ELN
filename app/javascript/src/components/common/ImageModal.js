@@ -94,6 +94,27 @@ export default class ImageModal extends Component {
     }
   }
 
+  buildImageSrcArrayFromThumbnails(thumbnails) {
+    console.log(thumbnails);
+    if (thumbnails && thumbnails.length > 0) {
+      return thumbnails.map(({ id, thumbnail }) => ({
+        id,
+        thumbnail: thumbnail ? `data:image/png;base64,${thumbnail}` : null
+      }));
+    }
+    return [];
+  }
+
+  fetchThumbnails() {
+    const { ChildrenAttachmentsIds } = this.props;
+    console.log('ChildrenAttachmentsIds', ChildrenAttachmentsIds);
+    if (ChildrenAttachmentsIds && ChildrenAttachmentsIds.length > 0) {
+      AttachmentFetcher.fetchThumbnails(ChildrenAttachmentsIds).then((result) => {
+        this.setState({ thumbnails: this.buildImageSrcArrayFromThumbnails(result.thumbnails) });
+      });
+    }
+  }
+
   async fetchImageThumbnail() {
     const { attachment, preferredThumbnail } = this.props;
     const fileType = attachment?.file?.type;
