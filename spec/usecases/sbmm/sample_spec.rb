@@ -1,12 +1,16 @@
 # frozen_string_literal: true
 
 require 'rails_helper'
-describe Usecases::Sbmm::Sample do
+RSpec.describe Usecases::Sbmm::Sample do
   before do
-    stub_request(:get, "https://rest.uniprot.org/uniprotkb/P12345")
-      .to_return(status: 200,
-                 body: file_fixture("uniprot/P12345.json").read,
-                 headers: { 'Content-Type' => 'application/json' })
+    stub_request(
+      :get,
+      "https://rest.uniprot.org/uniprotkb/P12345"
+    ).to_return(
+      status: 200,
+      body: file_fixture("uniprot/P12345.json").read,
+      headers: { 'Content-Type' => 'application/json' }
+    )
   end
 
   describe '#create' do
