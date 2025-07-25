@@ -206,7 +206,14 @@ const AnalysesHeader = ({
     }),
   };
    const attachment = getAttachmentFromContainer(container);
- 
+   const preferredThumbnail = container.children[0]?.extended_metadata?.preferred_thumbnail || null;
+  const attachmentsIds = container?.children?.flatMap((child) =>
+    (child.attachments || [])
+      .filter(att => typeof att.id === 'number')
+      .map(att => att.id)
+  ) || [];
+   console.log('container.children', container.children);
+   console.log('attachmentsIds', attachmentsIds);
   return (
     <div className={`analysis-header w-100 d-flex gap-3 lh-base ${mode === 'edit' ? '' : 'order pe-2'}`}>
       <div className="preview border d-flex align-items-center">
@@ -217,6 +224,8 @@ const AnalysesHeader = ({
             popObject={{
               title: container.name,
             }}
+            preferredThumbnail={preferredThumbnail}
+            ChildrenAttachmentsIds={attachmentsIds}
           />
     }
       </div>
