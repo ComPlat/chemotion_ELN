@@ -20,7 +20,7 @@
 #  primary_accession                        :string
 #  protein_source_details_comments          :string           default("")
 #  protein_source_details_expression_system :string           default("")
-#  sbmm_subtype                             :string           not null
+#  sbmm_subtype                             :string
 #  sbmm_type                                :string           not null
 #  sequence                                 :string           not null
 #  short_name                               :string           not null

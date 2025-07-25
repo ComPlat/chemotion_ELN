@@ -1548,7 +1548,7 @@ ActiveRecord::Schema.define(version: 2025_10_29_122332) do
     t.jsonb "uniprot_source"
     t.bigint "parent_id"
     t.string "sbmm_type", null: false
-    t.string "sbmm_subtype", null: false
+    t.string "sbmm_subtype"
     t.string "uniprot_derivation", null: false
     t.string "primary_accession"
     t.string "accessions", array: true

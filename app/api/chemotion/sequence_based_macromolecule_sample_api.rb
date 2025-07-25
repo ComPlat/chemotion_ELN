@@ -8,8 +8,15 @@ module Chemotion
     helpers ContainerHelpers
     helpers CollectionHelpers
 
-    rescue_from ::Usecases::Sbmm::Errors::UpdateConflictError do |conflict|
-      error!(conflict.to_h, 400)
+    rescue_from ::Usecases::Sbmm::Errors::SbmmUpdateNotAllowedError do |conflict|
+      error!(
+        {
+          message: conflict.message,
+          original_sbmm: Entities::SequenceBasedMacromoleculeEntity.represent(conflict.original_sbmm),
+          requested_changes: Entities::SequenceBasedMacromoleculeEntity.represent(conflict.requested_changes)
+        },
+        conflict.to_h, 400
+      )
     end
 
     rescue_from Grape::Exceptions::ValidationErrors do |exception|

@@ -13,6 +13,8 @@ module Usecases
         sample = nil
         SequenceBasedMacromoleculeSample.transaction do
           sbmm = ::Usecases::Sbmm::Finder.new.find_or_initialize_by(params[:sequence_based_macromolecule_attributes].dup)
+          raise_if_sbmm_is_not_writable!(sbmm)
+
           sample = SequenceBasedMacromoleculeSample.new(params.except(:sequence_based_macromolecule_attributes, :collection_id, :container))
           sample.user = current_user
           sample.container = ::Usecases::Containers::UpdateDatamodel.new(current_user).update_datamodel(params[:container]) if params[:container]
@@ -20,21 +22,25 @@ module Usecases
           target_collections(params).each do |collection|
             sample.collections << collection
           end
+
           sample.save!
         end
 
         sample
       end
 
-      def update(sbmm_sample, params)
+      def update(sample, params)
         # TODO: Prüfen ob der User das Update überhaupt durchführen darf
-        sbmm_sample.transaction do
+        sample.transaction do
           sbmm = Usecases::Sbmm::Finder.new.find_or_initialize_by(params[:sequence_based_macromolecule_attributes].dup)
-          sbmm_sample.update!(params.except(:sequence_based_macromolecule_attributes, :container, :collection_id))
-          sbmm_sample.container = ::Usecases::Containers::UpdateDatamodel.new(current_user).update_datamodel(params[:container]) if params[:container]
+          raise_if_sbmm_is_not_writable!(sbmm)
+
+          sample.sequence_based_macromolecule = sbmm
+          sample.update!(params.except(:sequence_based_macromolecule_attributes, :container, :collection_id))
+          sample.container = ::Usecases::Containers::UpdateDatamodel.new(current_user).update_datamodel(params[:container]) if params[:container]
         end
 
-        sbmm_sample
+        sample
       end
 
       private
@@ -52,6 +58,19 @@ module Usecases
         end
 
         collections
+      end
+
+      def raise_if_sbmm_is_not_writable!(sbmm)
+        return unless sbmm.persisted? # new objects are fine, the finder took care of checking if a duplicate exists
+        return if current_user.is_a?(Admin)
+
+        # there is at least one other user that uses this SBMM
+        if SequenceBasedMacromoleculeSample.user_count_for_sbmm(sbmm_id: sbmm.id, except_user_id: current_user.id).positive?
+          raise Errors::SbmmUpdateNotAllowedError.new(
+            original_sbmm: SequenceBasedMacromolecule.find(sbmm.id),
+            requested_changes: sbmm
+          )
+        end
       end
     end
   end

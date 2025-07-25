@@ -81,6 +81,7 @@ class SequenceBasedMacromoleculeSample < ApplicationRecord
   belongs_to :user
 
   scope :created_by, ->(user_id) { where(user_id: user_id) }
+  scope :not_created_by, ->(user_id) { where.not(user_id: user_id) }
   scope :includes_for_list_display, -> { includes(:sequence_based_macromolecule) }
   scope :in_sbmm_order, lambda {
                           joins(:sequence_based_macromolecule)
@@ -90,6 +91,12 @@ class SequenceBasedMacromoleculeSample < ApplicationRecord
                                    joins(:sequence_based_macromolecule)
                                      .order('sequence_based_macromolecules.sequence' => :asc)
                                  }
+
+  def self.user_count_for_sbmm(sbmm_id:, except_user_id: nil)
+    scope = where(sequence_based_macromolecule_id: sbmm_id)
+    scope = scope.not_created_by(except_user_id) if except_user_id.present?
+    scope.distinct.count(:user_id)
+  end
 
   def analyses
     container&.analyses || []
