@@ -98,10 +98,10 @@ const iupacNameTooltip = material => (
   <Tooltip id="iupac_name_tooltip" className="left_tooltip">
     <table>
       <tbody>
-      <tr><td>IUPAC&#58;&nbsp;</td><td style={{ wordBreak: 'break-all' }}>{material.molecule.iupac_name || ''}</td></tr>
-      <tr><td>Name&#58;&nbsp;</td><td style={{ wordBreak: 'break-all' }}>{material.name || ''}</td></tr>
-      <tr><td>Ext.Label&#58;&nbsp;</td><td style={{ wordBreak: 'break-all' }}>{material.external_label || ''}</td></tr>
-      <tr><td>Short Label&#58;&nbsp;</td><td style={{ wordBreak: 'break-all' }}>{material.short_label || ''}</td></tr>
+        <tr><td>IUPAC&#58;&nbsp;</td><td style={{ wordBreak: 'break-all' }}>{material.molecule.iupac_name || ''}</td></tr>
+        <tr><td>Name&#58;&nbsp;</td><td style={{ wordBreak: 'break-all' }}>{material.name || ''}</td></tr>
+        <tr><td>Ext.Label&#58;&nbsp;</td><td style={{ wordBreak: 'break-all' }}>{material.external_label || ''}</td></tr>
+        <tr><td>Short Label&#58;&nbsp;</td><td style={{ wordBreak: 'break-all' }}>{material.short_label || ''}</td></tr>
       </tbody>
     </table>
   </Tooltip>);
