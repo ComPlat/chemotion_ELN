@@ -155,6 +155,7 @@ const AnalysisHeader = ({ container, readonly }) => {
       return c;
     }),
   };
+  console.log('container extended_metadata', container.extended_metadata);
   const attachment = getAttachmentFromContainer(container);
 
   const orderClass = deviceDescriptionsStore.analysis_mode == 'order' ? 'order pe-2' : '';
