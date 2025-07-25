@@ -20,9 +20,9 @@ function FieldValueSelector({
 }) {
   const [selectedField, setSelectedField] = useState(onFirstRenderField || fieldOptions[0]);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [focused, setFocused] = useState(false);
   const [internalValue, setInternalValue] = useState(value);
   const [displayValue, setDisplayValue] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
 
   const formatValue = (val) => {
     const normalizedVal = val?.toString().replace(',', '.');
@@ -62,29 +62,38 @@ function FieldValueSelector({
     // Validate weight percentage range
     if (selectedField === 'weight percentage') {
       const isValid = validRange(initialValidValue);
-      if (!isValid) {
+      if (!isValid && normalizedValue !== '') {
         NotificationActions.add({
           title: 'Invalid value',
           message: 'Please enter a number between 0 and 1.',
           level: 'error',
           position: 'tc'
         });
-        setInternalValue('');
         return;
       }
     }
 
-    // Only call onChange if the value actually changed
-    if (normalizedValue !== internalValue) {
-      setInternalValue(normalizedValue);
-      onChange(parseFloat(normalizedValue));
+    setInternalValue(normalizedValue);
+    setDisplayValue(normalizedValue);
+    setIsEditing(true);
+  };
+
+  const handleBlur = () => {
+    if (isEditing && internalValue !== '') {
+      // Round the normalized value to fix floating point precision issues
+      const formattedValue = formatValue(internalValue);
+      setDisplayValue(formattedValue);
+      setIsEditing(false);
+      onChange(parseFloat(formattedValue));
+    } else {
+      setIsEditing(false);
     }
   };
 
   const handleFocus = () => {
-    setFocused(true);
-    const formattedValue = formatValue(internalValue);
-    setDisplayValue(formattedValue);
+    // When focusing, show the raw value for editing
+    setDisplayValue(internalValue);
+    setIsEditing(true);
   };
 
   let tooltipMessage = `Current field: ${selectedField}`;
@@ -107,9 +116,10 @@ function FieldValueSelector({
       >
         <Form.Control
           type="text"
-          value={focused ? internalValue : displayValue}
+          value={displayValue}
           onChange={handleValueChange}
           onFocus={handleFocus}
+          onBlur={handleBlur}
           className="pe-5"
           style={{ border: selectedField === 'molar mass' ? '2px solid rgb(0, 123, 255)' : '2px solid rgb(0, 128, 0)' }}
           size="sm"
@@ -161,10 +171,6 @@ FieldValueSelector.propTypes = {
   onFirstRenderField: PropTypes.string,
   disableSpecificField: PropTypes.bool,
   disabled: PropTypes.bool,
-  material: PropTypes.shape({
-    equivalent: PropTypes.string,
-    weight_percentage: PropTypes.string,
-  }).isRequired,
 };
 
 FieldValueSelector.defaultProps = {
