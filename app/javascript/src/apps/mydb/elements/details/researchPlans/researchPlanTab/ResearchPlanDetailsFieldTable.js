@@ -6,19 +6,18 @@ import { AgGridReact } from 'ag-grid-react';
 import { ContextMenu, ContextMenuTrigger } from "react-contextmenu";
 import { Button, Row, Col, Dropdown } from 'react-bootstrap';
 import { cloneDeep } from 'lodash';
+import { v4 as uuidv4 } from 'uuid';
 
 import CustomHeader from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/CustomHeader';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ResearchPlanDetailsFieldTableColumnNameModal from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsFieldTableColumnNameModal';
 import ResearchPlanDetailsFieldTableMeasurementExportModal from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsFieldTableMeasurementExportModal';
 import ResearchPlanDetailsFieldTableSchemasModal from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsFieldTableSchemasModal';
+import { COLUMN_ID_SHORT_LABEL_SAMPLE, COLUMN_ID_SHORT_LABEL_REACTION } from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsFieldTableUtils';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 import ReactionsFetcher from 'src/fetchers/ReactionsFetcher';
 
-
-const COLUMN_NAME_SHORT_LABEL_SAMPLE = 'Sample (short-label)';
-const COLUMN_NAME_SHORT_LABEL_REACTION = 'Reaction (short-label)';
 
 export default class ResearchPlanDetailsFieldTable extends Component {
   constructor(props) {
@@ -50,13 +49,19 @@ export default class ResearchPlanDetailsFieldTable extends Component {
   }
 
   buildColumn(columnName) {
+    const id = uuidv4();
+    // TODO implement a more robust way to set the column id and select the renderer not based on the column name
+    const colId = (columnName === COLUMN_ID_SHORT_LABEL_SAMPLE || columnName === COLUMN_ID_SHORT_LABEL_REACTION)
+      ? columnName
+      : id;
+
     return {
       cellEditor: 'agTextCellEditor',
-      colId: columnName,
+      colId,
       editable: true,
       field: columnName,
       headerName: columnName,
-      key: columnName,
+      key: id,
       name: columnName,
       resizable: true,
       width: 200,
@@ -77,13 +82,13 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     });
   }
 
-  handleColumnNameModalSubmit(columnName) {
+  handleColumnNameModalSubmit(columnName, newColId = null) {
     const { action, colId } = this.state.columnNameModal;
 
     if (action === 'insert') {
       this.handleColumnInsert(columnName);
     } else if (action === 'rename') {
-      this.handleColumnRename(colId, columnName);
+      this.handleColumnRename(colId, columnName, newColId);
     }
 
     this.handleColumnNameModalHide();
@@ -583,8 +588,8 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     if (!data) {
       return node.value || '';
     }
-    const sample = data[COLUMN_NAME_SHORT_LABEL_SAMPLE];
-    const reaction = data[COLUMN_NAME_SHORT_LABEL_REACTION];
+    const sample = data[COLUMN_ID_SHORT_LABEL_SAMPLE];
+    const reaction = data[COLUMN_ID_SHORT_LABEL_REACTION];
     if (sample && sample !== '') {
       return (
         <a className="link" onClick={(e) => { e.preventDefault(); this.openSampleByShortLabel(sample); }}>
@@ -608,7 +613,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     const staticColumns = cloneDeep(columns);
 
     staticColumns.forEach((item) => {
-      if (item.colId === COLUMN_NAME_SHORT_LABEL_SAMPLE || item.colId === COLUMN_NAME_SHORT_LABEL_REACTION) {
+      if (item.colId === COLUMN_ID_SHORT_LABEL_SAMPLE || item.colId === COLUMN_ID_SHORT_LABEL_REACTION) {
         item.cellRenderer = this.renderShortLabel;
       }
       item.editable = false;
