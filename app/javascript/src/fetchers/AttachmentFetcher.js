@@ -23,6 +23,7 @@ export default class AttachmentFetcher {
         .filter((key) => key !== 'id')
         .map((key) => [key, params[key]])
     );
+    console.log(params, urlParams);
 
     const url = `/api/v1/attachments/${params.id}${urlParams.toString() === '' ? '' : `?${urlParams}`}`;
     return fetch(url, {
