@@ -10,12 +10,13 @@ module Usecases
       def find_or_initialize_by(params)
         params[:sequence] = SequenceBasedMacromolecule.normalize_sequence(params[:sequence]) if params[:sequence]
 
-        if params[:parent_identifier] && params[:uniprot_derivation] == 'uniprot_modified'
+        if params[:uniprot_derivation] == 'uniprot_modified'
           parent_identifier = params.delete(:parent_identifier)
           parent = if SequenceBasedMacromolecule.valid_accession?(parent_identifier)
-            sbmm = SequenceBasedMacromolecule.uniprot.find_by(primary_accession: parent_identifier)
-            sbmm ||= Uniprot::Converter.new(Uniprot::Client.new.get(parent_identifier)).to_sequence_based_macromolecule
-            sbmm.sbmm_type ||= params[:sbmm_type] # must be the same as the child's type, as type can not change when modifying proteins
+            parent_sbmm = SequenceBasedMacromolecule.uniprot.find_by(primary_accession: parent_identifier)
+            parent_sbmm ||= Uniprot::Converter.new(Uniprot::Client.new.get(parent_identifier)).to_sequence_based_macromolecule
+            parent_sbmm.sbmm_type ||= params[:sbmm_type] # must be the same as the child's type, as type can not change when modifying proteins
+            parent_sbmm
           else
             SequenceBasedMacromolecule.find(parent_identifier.to_i)
           end
@@ -40,7 +41,7 @@ module Usecases
           )
         end
 
-        sbmm.parent = parent if params[:uniprot_derivation] == 'uniprot'
+        sbmm.parent = parent if params[:uniprot_derivation] == 'uniprot_modified'
         sbmm.assign_attributes(params)
 
         sbmm

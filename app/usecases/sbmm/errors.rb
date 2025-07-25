@@ -4,44 +4,29 @@ module Usecases
   module Sbmm
     module Errors
       class ConflictError < StandardError
-        attr_reader :sbmm, :conflicting_sbmm
+        attr_reader :original_sbmm, :requested_changes
 
-        def initialize(sbmm:, conflicting_sbmm:)
-          @sbmm = sbmm
-          @conflicting_sbmm = conflicting_sbmm
+        def initialize(original_sbmm:, requested_changes:)
+          @original_sbmm = original_sbmm
+          @requested_changes = requested_changes
           super(message)
         end
       end
 
-      class CreateConflictError < ConflictError
+      class SbmmUpdateNotAllowedError < ConflictError
         def to_h
           {
             error: {
               message: message,
-              sbmm_data: sbmm,
-              conflicting_sbmm_id: conflicting_sbmm.id,
+              original_sbmm: original_sbmm,
+              requested_changes: conflicting_sbmm,
             }
           }
         end
 
         def message
-          "Could not create the new SBMM as another with the same data already exists"
-        end
-      end
-
-      class UpdateConflictError < ConflictError
-        def to_h
-          {
-            error: {
-              message: message,
-              sbmm_id: sbmm.id,
-              conflicting_sbmm_id: conflicting_sbmm.id,
-            }
-          }
-        end
-
-        def message
-          "Could not update SBMM #{sbmm.id} as it conflicts with SBMM #{conflicting_sbmm.id}"
+          "Your changes could not be saved, as this SBMM is used by other other users as well. \
+            Please contact your ELN admin if you think that your data is of better quality."
         end
       end
     end

@@ -473,24 +473,14 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
         let(:other_sbmm) do
           create(
             :modified_uniprot_sbmm,
-            sequence: 'FooBar',
-            parent: sbmm.parent,
-            protein_sequence_modification: build(
-              :protein_sequence_modification,
-              sbmm.protein_sequence_modification.attributes.except("id", "created_at", "updated_at", "deleted_at")
-            ),
-            post_translational_modification: build(
-              :post_translational_modification,
-              sbmm.post_translational_modification.attributes.except("id", "created_at", "updated_at", "deleted_at")
-            )
+            sequence: 'FOOBAR',
+            parent: sbmm.parent
           )
         end
 
         let(:put_data) do
           put_data = serialize_sbmm_sample_as_api_input(sbmm_sample)
           put_data[:sequence_based_macromolecule_attributes][:sequence] = other_sbmm.sequence
-          # put_data[:amount_as_used_mass_value] = 12_345 # some changes to the sbmm-sample
-          # put_data[:sequence_based_macromolecule_attributes][:short_name] = other_sbmm.short_name # this sucks!!!
           put_data
         end
 
@@ -499,34 +489,20 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
           other_sbmm
         end
 
-        it 'returns a 400 error' do
+        it 'returns a 200 error' do
           put "/api/v1/sequence_based_macromolecule_samples/#{sbmm_sample.id}", params: put_data, as: :json
-          expect(response.status).to eq 400
+          expect(response.status).to eq 200
         end
 
-        it 'returns a machine-readable datastructure containing the error' do
+        it 'assigns the sample to the other SBMM without changing anything else' do
           expect do
             put "/api/v1/sequence_based_macromolecule_samples/#{sbmm_sample.id}", params: put_data, as: :json
-          end.not_to change(sbmm_sample, :updated_at) # TODO: find less brittle way of finding out if any data was changed
-
-          body = parsed_json_response
-          expected_response = {
-            "error" => {
-              "message" => "Could not update SBMM #{sbmm_sample.sequence_based_macromolecule.id} as it conflicts with SBMM #{other_sbmm.id}",
-              "sbmm_id" => sbmm_sample.sequence_based_macromolecule.id,
-              "conflicting_sbmm_id" => other_sbmm.id,
-            },
-          }
-
-          expect(body).to eq expected_response
+            sbmm_sample.reload
+          end.to change(sbmm_sample, :sequence_based_macromolecule_id).from(sbmm.id).to(other_sbmm.id)
+             .and not_change(sbmm, :updated_at) # TODO: find less brittle way of finding out if any data was changed
+             .and not_change(other_sbmm, :updated_at)
         end
       end
-
-      # context 'when no SBMM with the updated data exists' do
-      #   it 'updates the existing SBMM' do
-      #   end
-      # end
-      #
 
       context 'when required fields are missing (i.e. even the key is not present)' do
         let(:post_data) do
