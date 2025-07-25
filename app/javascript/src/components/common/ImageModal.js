@@ -90,6 +90,13 @@ export default class ImageModal extends Component {
 
   fetchImage() {
     const { attachment } = this.props;
+    if (!attachment || !attachment.id) {
+      this.setState({
+        fetchSrc: '/images/wild_card/not_available.svg'
+      });
+      return;
+    }
+
     AttachmentFetcher.fetchImageAttachment({ id: attachment.id, annotated: true }).then(
       (result) => {
         if (result.data != null) {
@@ -100,7 +107,11 @@ export default class ImageModal extends Component {
           });
         }
       }
-    );
+    ).catch(() => {
+      this.setState({
+        fetchSrc: '/images/wild_card/not_available.svg'
+      });
+    });
   }
 
   async fetchImageThumbnail() {
