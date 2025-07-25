@@ -108,6 +108,7 @@ export default class Header extends React.Component {
   renderImagePreview = () => {
     const { container } = this.props;
     const attachment = getAttachmentFromContainer(container);
+    console.log('renderImagePreview');
 
     return (
       <ImageModal
