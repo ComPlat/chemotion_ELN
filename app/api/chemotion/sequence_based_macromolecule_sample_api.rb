@@ -8,10 +8,6 @@ module Chemotion
     helpers ContainerHelpers
     helpers CollectionHelpers
 
-    rescue_from ::Usecases::Sbmm::Errors::CreateConflictError do |conflict|
-      error!(conflict.to_h, 400)
-    end
-
     rescue_from ::Usecases::Sbmm::Errors::UpdateConflictError do |conflict|
       error!(conflict.to_h, 400)
     end
@@ -55,7 +51,6 @@ module Chemotion
         optional :purification_method, type: String
 
         requires(:sequence_based_macromolecule_attributes, type: Hash) do
-          optional :id, type: Integer, desc: 'Database ID of the SBMM record'
           requires :sbmm_type, type: String, desc: 'SBMM Type', values: %w[protein], allow_blank: false
           optional :sbmm_subtype, type: String, desc: 'SBMM Subtype', values: %w[unmodified glycoprotein], allow_blank: true
           requires :uniprot_derivation, type: String, desc: 'Existence in Uniprot', values: %w[uniprot uniprot_modified uniprot_unknown], allow_blank: false
@@ -130,7 +125,7 @@ module Chemotion
             optional :ec_numbers, type: [String]
             # uniprot calls it fullName, but in our DB it's systematic_name
             optional :full_name, type: String, as: :systematic_name
-            optional :short_name, type: String
+            requires :short_name, type: String, allow_blank: false
             optional :molecular_weight, type: Float
             requires :sequence, type: String, allow_blank: false
 

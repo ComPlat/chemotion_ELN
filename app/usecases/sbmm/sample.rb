@@ -10,15 +10,18 @@ module Usecases
       end
 
       def create(params)
-        sbmm = ::Usecases::Sbmm::Create.new.find_or_create_by(params[:sequence_based_macromolecule_attributes])
-        sample = SequenceBasedMacromoleculeSample.new(params.except(:sequence_based_macromolecule_attributes, :collection_id, :container))
-        sample.user = current_user
-        sample.container = ::Usecases::Containers::UpdateDatamodel.new(current_user).update_datamodel(params[:container]) if params[:container]
-        sample.sequence_based_macromolecule = sbmm
-        target_collections(params).each do |collection|
-          sample.collections << collection
+        sample = nil
+        SequenceBasedMacromoleculeSample.transaction do
+          sbmm = ::Usecases::Sbmm::Finder.new.find_or_initialize_by(params[:sequence_based_macromolecule_attributes].dup)
+          sample = SequenceBasedMacromoleculeSample.new(params.except(:sequence_based_macromolecule_attributes, :collection_id, :container))
+          sample.user = current_user
+          sample.container = ::Usecases::Containers::UpdateDatamodel.new(current_user).update_datamodel(params[:container]) if params[:container]
+          sample.sequence_based_macromolecule = sbmm
+          target_collections(params).each do |collection|
+            sample.collections << collection
+          end
+          sample.save!
         end
-        sample.save!
 
         sample
       end
@@ -26,7 +29,7 @@ module Usecases
       def update(sbmm_sample, params)
         # TODO: Prüfen ob der User das Update überhaupt durchführen darf
         sbmm_sample.transaction do
-          sbmm = Update.new.updated_sbmm(params: params[:sequence_based_macromolecule_attributes])
+          sbmm = Usecases::Sbmm::Finder.new.find_or_initialize_by(params[:sequence_based_macromolecule_attributes].dup)
           sbmm_sample.update!(params.except(:sequence_based_macromolecule_attributes, :container, :collection_id))
           sbmm_sample.container = ::Usecases::Containers::UpdateDatamodel.new(current_user).update_datamodel(params[:container]) if params[:container]
         end

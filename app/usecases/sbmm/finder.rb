@@ -3,22 +3,51 @@
 module Usecases
   module Sbmm
     class Finder
-      def find_in_eln(id:)
-        SequenceBasedMacromolecule.find(id)
+      # WARNING:
+      #   This method is intended to be used in the SBMM Sample API, which already has parameter validation
+      #   Therefore, any missing or malformed parameters will likely make this method crash or create corrupt data.
+      #   Don't use it in other places without proper parameter validation!
+      def find_or_initialize_by(params)
+        params[:sequence] = SequenceBasedMacromolecule.normalize_sequence(params[:sequence]) if params[:sequence]
+
+        if params[:parent_identifier] && params[:uniprot_derivation] == 'uniprot_modified'
+          parent_identifier = params.delete(:parent_identifier)
+          parent = if SequenceBasedMacromolecule.valid_accession?(parent_identifier)
+            sbmm = SequenceBasedMacromolecule.uniprot.find_by(primary_accession: parent_identifier)
+            sbmm ||= Uniprot::Converter.new(Uniprot::Client.new.get(parent_identifier)).to_sequence_based_macromolecule
+            sbmm.sbmm_type ||= params[:sbmm_type] # must be the same as the child's type, as type can not change when modifying proteins
+          else
+            SequenceBasedMacromolecule.find(parent_identifier.to_i)
+          end
+        end
+
+        if params[:uniprot_derivation] == 'uniprot'
+          # if already in ELN
+          sbmm = SequenceBasedMacromolecule.uniprot.find_by(primary_accession: params[:primary_accession])
+          # otherwise fetch from uniprot
+          sbmm ||= Uniprot::Converter.new(Uniprot::Client.new.get(params[:primary_accession])).to_sequence_based_macromolecule
+        else
+          sbmm = SequenceBasedMacromolecule.non_uniprot.with_modifications.find_by(
+            sequence: params[:sequence],
+            post_translational_modification: params[:post_translational_modification_attributes],
+            protein_sequence_modification: params[:protein_sequence_modification_attributes]
+          )
+
+          sbmm ||= SequenceBasedMacromolecule.new(
+            sequence: params[:sequence],
+            post_translational_modification_attributes: params[:post_translational_modification_attributes],
+            protein_sequence_modification_attributes: params[:protein_sequence_modification_attributes]
+          )
+        end
+
+        sbmm.parent = parent if params[:uniprot_derivation] == 'uniprot'
+        sbmm.assign_attributes(params)
+
+        sbmm
       end
 
-      def find_non_uniprot_protein_by(params)
-        my_params = params.dup # prevent manipulating params that are still in use from the outside
-        joins = []
-        if my_params.key?(:protein_sequence_modification_attributes)
-          my_params[:protein_sequence_modification] ||= my_params.delete(:protein_sequence_modification_attributes)
-          joins << :protein_sequence_modification
-        end
-        if my_params.key?(:post_translational_modification_attributes)
-          my_params[:post_translational_modification] ||= my_params.delete(:post_translational_modification_attributes)
-          joins << :post_translational_modification
-        end
-        SequenceBasedMacromolecule.non_uniprot.joins(*joins).find_by(my_params)
+      def find_in_eln(id:)
+        SequenceBasedMacromolecule.find(id)
       end
 
       # returns an instance of SequenceBasedMacromolecule
