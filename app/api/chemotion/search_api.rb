@@ -329,7 +329,7 @@ module Chemotion
                     Sample.none
                   end
                 when 'iupac_name', 'inchistring', 'inchikey', 'cano_smiles',
-                     'sample_name', 'sample_short_label'
+                     'sample_name', 'sample_short_label', 'molecule_name'
                   if dl_s.positive?
                     Sample.by_collection_id(c_id).order('samples.updated_at DESC')
                           .search_by(search_method, arg)
@@ -542,6 +542,12 @@ module Chemotion
         end
 
         post do
+          # Ensure the first element's 'link' is an empty string unless already set.
+          # This prevents invalid SQL fragments like "AND ( OR (samples.name=..." from being generated.
+          if (link_hash = params.dig('selection', 'advanced_params', 0)).is_a?(Hash) && link_hash['link'] != ''
+            link_hash['link'] = ''
+          end
+
           conditions =
             Usecases::Search::ConditionsForAdvancedSearch.new(
               detail_levels: @dl,

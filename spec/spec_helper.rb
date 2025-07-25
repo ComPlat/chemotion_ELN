@@ -4,6 +4,7 @@
 
 # require 'coveralls'
 # Coveralls.wear!
+require 'logger'
 require 'rspec/repeat'
 require 'webmock/rspec'
 

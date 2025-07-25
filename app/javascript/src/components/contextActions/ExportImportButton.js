@@ -28,10 +28,11 @@ const editMetadataFunction = () => {
 function ExportImportButton() {
   const [modal, showModal] = useState(null);
   const hideModal = () => showModal(null);
+  const [hasRadar, setHasRadar] = useState(false);
 
   const [isDisabled, setIsDisabled] = useState(true);
 
-  const onUIStoreChange = ({ currentCollection }) => {
+  const onUIStoreChange = ({ currentCollection, hasRadar: storeHasRadar }) => {
     if (!currentCollection) {
       setIsDisabled(true);
       return;
@@ -45,7 +46,7 @@ function ExportImportButton() {
       || (is_shared === true && permission_level < PermissionConst.ImportElements)
     );
 
-
+    setHasRadar(storeHasRadar);
     setIsDisabled(newIsDisabled);
   };
 
@@ -72,7 +73,6 @@ function ExportImportButton() {
     }
   })(modal);
 
-  const showRadar = UIStore.getState().hasRadar;
   return (
     <>
       <Dropdown as={ButtonGroup} id="export-dropdown">
@@ -114,7 +114,7 @@ function ExportImportButton() {
           >
             Import collections
           </Dropdown.Item>
-          {showRadar && (
+          {hasRadar && (
             <>
               <Dropdown.Divider />
               <Dropdown.Item

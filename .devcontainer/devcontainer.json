@@ -6,7 +6,7 @@
     "docker-compose.vs.yml"
   ],
   "service": "app",
-  "workspaceFolder": "/home/chemotion-dev/app",
+  "workspaceFolder": "/home/ubuntu/app",
   "customizations": {
     "vscode": {
       "extensions": [
@@ -56,7 +56,7 @@
     "/bin/bash",
     "prepare-ruby-dev.sh"
   ],
-  "remoteUser": "chemotion-dev", // see https: //aka.ms/vscode-remote/containers/non-root
+  "remoteUser": "ubuntu", // see https: //aka.ms/vscode-remote/containers/non-root
   "shutdownAction": "stopCompose", // stop compose when quitting
   "overrideCommand": true, // The 'app' container (which vscode is using as the devontainer) dies, as soon as we are killing the rails server that is started in the 'app' container command. To prevent this we override the 'app' container command from the the compose file.
   "containerEnv": {

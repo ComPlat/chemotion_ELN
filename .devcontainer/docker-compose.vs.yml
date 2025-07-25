@@ -1,6 +1,6 @@
 x-common-volumes:
-  - &vhome homedir:/home/chemotion-dev
-  - &vapp ..:/home/chemotion-dev/app
+  - &vhome homedir:/home/ubuntu
+  - &vapp ..:/home/ubuntu/app
 
 
 services:
@@ -8,8 +8,8 @@ services:
     build:
       context: '.'
       dockerfile: 'Dockerfile.chemotion-dev'
-      # args:
-        # source_image: ${DOCKER_DEV_IMAGE:-ubuntu:jammy}  # Build ARG for base image
+      args:
+        source_image: ${DOCKER_DEV_IMAGE:-ubuntu:noble}  # Build ARG for base image
         # FULL_BUILD: ${FULL_BUILD:-false}
     image: ""
     volumes:
@@ -19,8 +19,8 @@ services:
     build:
       context: '.'
       dockerfile: 'Dockerfile.chemotion-dev'
-      # args:
-        # source_image: ${DOCKER_DEV_IMAGE:-ubuntu:jammy}  # Build ARG for base image
+      args:
+        source_image: ${DOCKER_DEV_IMAGE:-ubuntu:noble}  # Build ARG for base image
         # FULL_BUILD: ${FULL_BUILD:-false}
     image: ""
     volumes:

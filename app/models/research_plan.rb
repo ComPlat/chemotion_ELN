@@ -69,7 +69,7 @@ class ResearchPlan < ApplicationRecord
 
   attr_accessor :can_copy
 
-  unless Dir.exists?(path = Rails.root.to_s + '/public/images/research_plans')
+  unless Dir.exist?(path = Rails.root.to_s + '/public/images/research_plans')
     Dir.mkdir path
   end
 
@@ -88,10 +88,6 @@ class ResearchPlan < ApplicationRecord
 
   def analyses
     self.container ? self.container.analyses : Container.none
-  end
-
-  def user_labels
-    tag&.taggable_data&.fetch('user_labels', nil)
   end
 
   def svg_files

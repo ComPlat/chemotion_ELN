@@ -38,6 +38,7 @@ import { formatDate } from 'src/utilities/timezoneHelper';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { observer } from 'mobx-react';
+import { CreatableSelect } from 'src/components/common/Select';
 
 export class ContainerDatasetModalContent extends Component {
   // eslint-disable-next-line react/static-property-placement
@@ -46,15 +47,11 @@ export class ContainerDatasetModalContent extends Component {
   constructor(props) {
     super(props);
     const datasetContainer = { ...props.datasetContainer };
-    const {
-      onImport
-    } = props;
     const { thirdPartyApps } = UIStore.getState() || [];
     this.thirdPartyApps = thirdPartyApps;
     this.state = {
       datasetContainer,
-      instruments: null,
-      valueBeforeFocus: null,
+      instruments: [],
       timeoutReference: null,
       attachmentEditor: false,
       extension: null,
@@ -318,7 +315,7 @@ export class ContainerDatasetModalContent extends Component {
       if (attachment.aasm_state === 'queueing' && attachment.content_type === 'application/zip') {
         groups.BagitZip.push(attachment);
       } else if (attachment.aasm_state === 'image'
-          && (attachment.filename.includes('.combined')
+        && (attachment.filename.includes('.combined')
           || attachment.filename.includes('.new_combined'))) {
         groups.Combined.push(attachment);
       } else if (attachment.filename.includes('bagit')) {
@@ -341,10 +338,7 @@ export class ContainerDatasetModalContent extends Component {
     const { datasetContainer } = this.state;
     this.setState({
       value: '',
-      showInstruments: false,
-      instruments: null,
-      valueBeforeFocus: null,
-      error: '',
+      instruments: [],
     });
     datasetContainer.extended_metadata.instrument = '';
   }
@@ -360,75 +354,27 @@ export class ContainerDatasetModalContent extends Component {
 
   fetchInstruments(value, show = true) {
     const debounced = debounce((query) => InstrumentsFetcher.fetchInstrumentsForCurrentUser(query), 200);
-    debounced(value)
+    const query = (value || '').trim();
+
+    if (!query) {
+      this.setState({ instruments: [] });
+      return;
+    }
+
+    debounced(query)
       .then((result) => {
         const newState = {};
         if (result.length > 0) {
           newState.instruments = result;
           newState.showInstruments = show;
         } else {
-          newState.instruments = null;
+          newState.instruments = [];
           newState.error = '';
           newState.showInstruments = false;
         }
         this.setState(newState);
       })
       .catch((error) => console.log(error));
-  }
-
-  selectInstrument() {
-    const { datasetContainer, timeoutReference, value } = this.state;
-
-    this.setState({
-      showInstruments: false,
-      valueBeforeFocus: null,
-    });
-
-    if (!value || value.trim() === '') {
-      this.setState({ value: '' });
-      return 0;
-    }
-    datasetContainer.extended_metadata.instrument = value;
-    clearTimeout(timeoutReference);
-    return value;
-  }
-
-  focusInstrument(newFocus) {
-    const { instruments, valueBeforeFocus } = this.state;
-    const newState = {};
-    if (!valueBeforeFocus) {
-      newState.valueBeforeFocus = instruments[newFocus].name;
-    }
-    newState.value = instruments[newFocus].name;
-    this.setState(newState);
-  }
-
-  abortAutoSelection() {
-    const { valueBeforeFocus } = this.state;
-    this.setState({
-      value: valueBeforeFocus,
-      valueBeforeFocus: null,
-    });
-  }
-
-  createAttachmentPreviews() {
-    const { datasetContainer } = this.props;
-    datasetContainer.attachments.map((attachment) => {
-      if (attachment.thumb) {
-        AttachmentFetcher.fetchThumbnail({ id: attachment.id }).then(
-          (result) => {
-            if (result != null) {
-              attachment.preview = `data:image/png;base64,${result}`;
-              this.forceUpdate();
-            }
-          }
-        );
-      } else {
-        attachment.preview = '/images/wild_card/not_available.svg';
-        this.forceUpdate();
-      }
-      return attachment;
-    });
   }
 
   documentType(filename) {
@@ -484,32 +430,6 @@ export class ContainerDatasetModalContent extends Component {
     );
   }
 
-  renderInstruments() {
-    const { instruments, error } = this.state;
-
-    if (instruments) {
-      return (
-        <div>
-          {instruments.map((instrument, index) => (
-            <ListGroupItem
-              onClick={() => this.selectInstrument()}
-              onMouseEnter={() => this.focusInstrument(index)}
-              // eslint-disable-next-line react/no-array-index-key
-              key={`instrument_${index}`}
-              ref={`instrument_${index}`}
-              header={instrument.name}
-            >
-              {instrument.name}
-            </ListGroupItem>
-          ))}
-        </div>
-      );
-    } if (error) {
-      return <ListGroupItem>{error}</ListGroupItem>;
-    }
-    return null;
-  }
-
   renderAttachmentRow(attachment) {
     const { extension, attachmentEditor } = this.state;
     const { readOnly } = this.props;
@@ -559,9 +479,9 @@ export class ContainerDatasetModalContent extends Component {
                   extension,
                   attachmentEditor,
                   attachment.aasm_state === 'oo_editing' && new Date().getTime()
-                    < (new Date(attachment.updated_at).getTime() + 15 * 60 * 1000),
+                  < (new Date(attachment.updated_at).getTime() + 15 * 60 * 1000),
                   !attachmentEditor || attachment.aasm_state === 'oo_editing'
-                    || attachment.is_new || this.documentType(attachment.filename) === null,
+                  || attachment.is_new || this.documentType(attachment.filename) === null,
                   this.handleEdit
                 )}
                 {annotateButton(attachment, () => {
@@ -658,7 +578,7 @@ export class ContainerDatasetModalContent extends Component {
   }
 
   renderMetadata() {
-    const { datasetContainer, showInstruments } = this.state;
+    const { datasetContainer, instruments } = this.state;
     const { readOnly, disabled, kind } = this.props;
     const termId = absOlsTermId(kind);
     const klasses = (UserStore.getState() && UserStore.getState().dsKlasses) || [];
@@ -667,7 +587,6 @@ export class ContainerDatasetModalContent extends Component {
     if (idx > -1) {
       klass = klasses[idx];
     }
-
     let genericDS = {};
     if (datasetContainer?.dataset?.id) {
       genericDS = datasetContainer.dataset;
@@ -679,33 +598,33 @@ export class ContainerDatasetModalContent extends Component {
         <div ref={this.overlayContainerRef} style={{ position: 'relative' }}>
           <Form.Group controlId="datasetInstrument">
             <Form.Label>Instrument</Form.Label>
-            <Form.Control
-              type="text"
-              value={datasetContainer.extended_metadata.instrument || ''}
-              disabled={readOnly || disabled}
-              onChange={(event) => this.handleInstrumentValueChange(
-                event,
-                this.doneInstrumentTyping
-              )}
-              ref={(form) => { this.instRef = form; }}
-              autoComplete="off"
+            <CreatableSelect
+              isClearable
+              className="w-100"
+              value={
+                datasetContainer?.extended_metadata?.instrument
+                  ? {
+                    label: datasetContainer.extended_metadata.instrument,
+                    value: datasetContainer.extended_metadata.instrument
+                  }
+                  : null
+              }
+              isDisabled={readOnly || disabled}
+              onChange={(selectedOption) => {
+                const value = selectedOption ? selectedOption.value : '';
+                this.handleInstrumentValueChange({ target: { value } }, this.doneInstrumentTyping);
+              }}
+              onInputChange={(inputValue, { action }) => {
+                if (action === 'input-change') {
+                  this.handleInstrumentValueChange({ target: { value: inputValue } }, this.doneInstrumentTyping);
+                }
+              }}
+              options={instruments?.map((item) => ({
+                label: item.name,
+                value: item.name,
+              }))}
+              placeholder="Enter or select an instrument"
             />
-            <Overlay
-              target={() => ReactDOM.findDOMNode(this.instRef)}
-              shouldUpdatePosition
-              placement="bottom"
-              show={showInstruments}
-              container={this.overlayContainerRef.current}
-              rootClose
-              onHide={() => this.abortAutoSelection()}
-            >
-              <ListGroup
-                className="mt-0 w-100 overflow-auto rounded-3 shadow-lg"
-                style={{ maxHeight: '200px', zIndex: 1 }}
-              >
-                {this.renderInstruments()}
-              </ListGroup>
-            </Overlay>
           </Form.Group>
         </div>
         <Form.Group controlId="datasetDescription">
@@ -796,7 +715,7 @@ ContainerDatasetModalContent.defaultProps = {
   readOnly: false,
   attachments: [],
   kind: null,
-  onInstrumentChange: () => {},
+  onInstrumentChange: () => { },
 };
 
 export default observer(ContainerDatasetModalContent);

@@ -1,0 +1,53 @@
+services:
+  msconvert:
+    image: ${SERVICE_REPO}:msconvert-${ELN_VERSION}
+    restart: unless-stopped
+    hostname: msconvert
+    volumes:
+      - spectra:/shared:rw
+    networks:
+      - chemotion
+
+  spectra:
+    image: ${IMG_SPECTRA}
+    restart: unless-stopped
+    hostname: spectra
+    volumes:
+      - spectra:/shared:rw
+    depends_on:
+      - msconvert
+    environment:
+      - DEBUG=true
+    networks:
+      - chemotion
+
+  converter:
+    image: ${IMG_CONVERTER}
+    restart: unless-stopped
+    environment:
+      - SECRET_KEY=imsupersecretandwanttobechanged
+      - DEBUG=true
+    volumes:
+      - ./services/converter/profiles:/srv/chemotion/profiles
+      - ./services/converter/datasets:/srv/chemotion/datasets
+    networks:
+      - chemotion
+
+  ketchersvc:
+    environment:
+      - CONFIG_KETCHER_URL=http://eln:4000/ketcher/
+    image: ${IMG_KETCHERSVC}
+    networks:
+      - chemotion
+    restart: unless-stopped
+
+networks:
+  chemotion:
+
+volumes:
+  spectra:
+    name: chemotion_spectra
+  websockify-data:
+    name: chemotion_websockify
+
+

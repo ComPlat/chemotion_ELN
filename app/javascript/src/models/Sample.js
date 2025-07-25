@@ -220,6 +220,7 @@ export default class Sample extends Element {
       sum_formula: '',
       xref: {},
       gas_type: 'off',
+      ancestor_ids: [],
     });
     
     sample.short_label = Sample.buildNewShortLabel();
