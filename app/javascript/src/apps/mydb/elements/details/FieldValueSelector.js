@@ -97,6 +97,9 @@ function FieldValueSelector({
   };
 
   let tooltipMessage = `Current field: ${selectedField}`;
+  if (selectedField === 'weight percentage') {
+    tooltipMessage = `${tooltipMessage} in decimal format (e.g.: 0.5 = 50%)`;
+  }
   if (disableSpecificField) {
     if (selectedField === 'weight percentage') {
       tooltipMessage = 'select a reference product from products and assign target amount to enable '
