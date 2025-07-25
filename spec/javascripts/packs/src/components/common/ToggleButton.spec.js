@@ -20,7 +20,15 @@ describe('React.createElement(ToggleButton, {})', () => {
     onChangeSpy = sinon.spy();
 
     wrapper = shallow(
-      React.createElement(ToggleButton, { isToggledInitial: false, onToggle: onToggleSpy, onChange: onChangeSpy, onLabel: "Conv.", offLabel: "Yield", onColor: "#afcfee", offColor: "#d3d3d3", tooltipOn: "Click to enable Default mode", tooltipOff: "Click to enable Gas mode" })
+      React.createElement(ToggleButton, {
+        isToggledInitial: false,
+        onToggle: onToggleSpy,
+        onChange: onChangeSpy,
+        onLabel: 'Conv.',
+        offLabel: 'Yield',
+        tooltipOn: 'Click to enable Default mode',
+        tooltipOff: 'Click to enable Gas mode'
+      })
     );
   });
 
