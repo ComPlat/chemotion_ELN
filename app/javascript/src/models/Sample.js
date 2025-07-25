@@ -584,9 +584,9 @@ export default class Sample extends Element {
   }
 
   get molarity_value() {
-    if (this.isMixture() && this.reference_component) {
-      return this.reference_molarity_value;
-    }
+    // if (this.isMixture() && this.reference_component) {
+    //   return this.reference_molarity_value;
+    // }
     return this._molarity_value;
   }
 
@@ -1257,6 +1257,9 @@ export default class Sample extends Element {
   }
 
   get equivalent() {
+    if (this.isMixture && this.isMixture()) {
+      return this.reference_equivalent;
+    }
     return this._equivalent;
   }
 
@@ -1366,6 +1369,13 @@ export default class Sample extends Element {
     if (!referenceComponent) { return null; }
 
     return referenceComponent.amount_mol;
+  }
+
+  get reference_equivalent() {
+    const referenceComponent = this.reference_component;
+    if (!referenceComponent) { return null; }
+
+    return referenceComponent.equivalent;
   }
 
   /**
