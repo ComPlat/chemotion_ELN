@@ -359,21 +359,15 @@ class Material extends Component {
     if (materialGroup === 'products') {
       return this.yieldOrConversionRate(material);
     }
-    // For mixtures, set the initial value to 1 if no value is provided
-    const isMixture = material.isMixture && material.isMixture();
-    let value = material.equivalent;
-    if (isMixture) {
-      value = 1;
-    }
     return (
       <NumeralInputWithUnitsCompo
         size="sm"
         precision={4}
-        value={value}
+        value={material.equivalent}
         disabled={
           !permitOn(reaction)
-          || (((material.reference || false) && value) !== false)
-          || lockEquivColumn
+          || ((((material.reference || false) && material.equivalent) !== false)
+          || lockEquivColumn)
         }
         onChange={(e) => this.handleEquivalentChange(e)}
       />
