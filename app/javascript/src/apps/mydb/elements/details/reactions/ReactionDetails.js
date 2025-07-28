@@ -58,6 +58,7 @@ import { ShowUserLabels } from 'src/components/UserLabels';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 // eslint-disable-next-line import/no-named-as-default
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
+import Fab from 'src/components/common/Fab';
 
 const handleProductClick = (product) => {
   const uri = Aviator.getCurrentURI();
@@ -336,7 +337,7 @@ export default class ReactionDetails extends Component {
   reactionHeader(reaction) {
     const hasChanged = reaction.changed ? '' : 'none';
     const titleTooltip = formatTimeStampsOfElement(reaction || {});
-
+    const exportButton = (reaction && reaction.isNew) ? null : <ExportSamplesButton type="reaction" id={reaction.id} size="xxsm" />;
     const { currentCollection } = UIStore.getState();
     const defCol = currentCollection && currentCollection.is_shared === false
       && currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
@@ -428,6 +429,8 @@ export default class ReactionDetails extends Component {
                 </>
               )}
             {copyBtn}
+            {exportButton}
+
             <ConfirmClose el={reaction} />
           </ButtonToolbar>
         </div>
@@ -435,13 +438,13 @@ export default class ReactionDetails extends Component {
     );
   }
 
-  reactionFooter() {
+  reactionFooter(currentTab) {
     const { reaction } = this.state;
     const submitLabel = (reaction && reaction.isNew) ? 'Create' : 'Save';
 
     return (
       <>
-        <Button variant="primary" onClick={() => DetailActions.close(reaction)}>
+        {/* <Button variant="primary" onClick={() => DetailActions.close(reaction)}>
           Close
         </Button>
         <Button
@@ -454,7 +457,13 @@ export default class ReactionDetails extends Component {
         </Button>
         {reaction && !reaction.isNew && (
           <ExportSamplesButton type="reaction" id={reaction.id} />
-        )}
+        )} */}
+        <Fab
+          currentTab={currentTab}
+          onSave={() => this.handleSubmit()}
+          onClose={() => DetailActions.close(reaction)}
+          disableSave={!permitOn(reaction) || !this.reactionIsValid()}
+        />
       </>
     );
   }
@@ -631,7 +640,7 @@ export default class ReactionDetails extends Component {
       <DetailCard
         isPendingToSave={reaction.isPendingToSave}
         header={this.reactionHeader(reaction)}
-        footer={this.reactionFooter()}
+        footer={this.reactionFooter(currentTab)}
       >
         {this.reactionSVG(reaction)}
         {this.state.sfn && <ScifinderSearch el={reaction} />}
