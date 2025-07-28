@@ -19,7 +19,7 @@ module Usecases
             error: {
               message: message,
               original_sbmm: original_sbmm,
-              requested_changes: conflicting_sbmm,
+              requested_changes: requested_changes,
             }
           }
         end

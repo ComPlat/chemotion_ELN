@@ -28,10 +28,12 @@ module Usecases
           # otherwise fetch from uniprot
           sbmm ||= Uniprot::Converter.new(Uniprot::Client.new.get(params[:primary_accession])).to_sequence_based_macromolecule
         else
+          ptm_attrs = PostTranslationalModification.attributes_for_sbmm_uniqueness
+          psm_attrs = ProteinSequenceModification.attributes_for_sbmm_uniqueness
           sbmm = SequenceBasedMacromolecule.non_uniprot.with_modifications.find_by(
             sequence: params[:sequence],
-            post_translational_modification: params[:post_translational_modification_attributes],
-            protein_sequence_modification: params[:protein_sequence_modification_attributes]
+            post_translational_modification: params[:post_translational_modification_attributes].slice(*ptm_attrs),
+            protein_sequence_modification: params[:protein_sequence_modification_attributes].slice(*psm_attrs)
           )
 
           sbmm ||= SequenceBasedMacromolecule.new(

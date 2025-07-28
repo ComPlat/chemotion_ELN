@@ -15,7 +15,7 @@ module Chemotion
           original_sbmm: Entities::SequenceBasedMacromoleculeEntity.represent(conflict.original_sbmm),
           requested_changes: Entities::SequenceBasedMacromoleculeEntity.represent(conflict.requested_changes)
         },
-        conflict.to_h, 400
+        403
       )
     end
 

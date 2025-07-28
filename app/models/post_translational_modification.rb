@@ -47,4 +47,28 @@
 #
 class PostTranslationalModification < ApplicationRecord
   has_many :sequence_based_macromolecules
+
+  def self.attributes_for_sbmm_uniqueness
+    [
+      :acetylation_enabled,
+      :acetylation_lysin_number,
+      :glycosylation_enabled,
+      :glycosylation_n_linked_asn_enabled,
+      :glycosylation_o_linked_lys_enabled,
+      :glycosylation_o_linked_ser_enabled,
+      :glycosylation_o_linked_thr_enabled,
+      :hydroxylation_enabled,
+      :hydroxylation_lys_enabled,
+      :hydroxylation_pro_enabled,
+      :methylation_arg_enabled,
+      :methylation_enabled,
+      :methylation_glu_enabled,
+      :methylation_lys_enabled,
+      :other_modifications_enabled,
+      :phosphorylation_enabled,
+      :phosphorylation_ser_enabled,
+      :phosphorylation_thr_enabled,
+      :phosphorylation_tyr_enabled,
+    ]
+  end
 end
