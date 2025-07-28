@@ -205,7 +205,7 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
       end
     end
 
-    context 'when creating a modified SBMM based on a uniprot SBMM' do
+    context 'when creating a sample for a modified SBMM' do
       let(:post_for_modified_sbmm) do
         {
           name: 'Testsample',
@@ -359,6 +359,63 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
         expect(sample.tissue).to eq "SomeTissue"
         expect(sample.localisation).to eq "SomeLocalisation"
       end
+
+      context 'when the given SBMM already exists and the params contain changes' do
+        let(:existing_sbmm) do
+          # same params as in :post_for_modified_sbmm
+          create(
+            :modified_uniprot_sbmm,
+            sbmm_type: 'protein',
+            sbmm_subtype: 'unmodified',
+            uniprot_derivation: 'uniprot_modified',
+            molecular_weight: 123,
+            parent: build(:uniprot_sbmm),
+            sequence: 'MODIFIEDSEQUENCE',
+            short_name: 'FooBar',
+            protein_sequence_modification: build(
+              :protein_sequence_modification,
+              modification_n_terminal: true,
+              modification_n_terminal_details: 'Some details',
+            ),
+            post_translational_modification: build(
+              :post_translational_modification,
+              phosphorylation_enabled: true,
+              phosphorylation_ser_enabled: true,
+            ),
+          )
+        end
+
+        before do
+          existing_sbmm
+        end
+
+        context 'when there is more than one user using the SBMM' do
+          let(:other_user) { create(:person) }
+          let(:other_sample) do
+            create(
+              :sequence_based_macromolecule_sample,
+              sequence_based_macromolecule: existing_sbmm,
+              user: other_user
+            )
+          end
+
+          before do
+            other_sample
+          end
+
+          it 'rejects the creation' do
+            post '/api/v1/sequence_based_macromolecule_samples', params: post_for_modified_sbmm, as: :json
+
+            expect(response.status).to eq 403
+          end
+        end
+
+        context 'when the current user is an admin' do
+          it 'allows the creation even if there are multiple users of the SBMM' do
+
+          end
+        end
+      end
     end
 
     context 'when creating a modified SBMM based on a non-uniprot SBMM' do
@@ -468,7 +525,22 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
     end
 
     context 'when updating SBMM data as well' do
-      context 'when a SBMM with the updated data already exists' do
+      context 'when the given SBMM does not yet exist' do
+        it 'creates a new SBMM and switches the sample to the new SBMM' do
+          put_data = serialize_sbmm_sample_as_api_input(sbmm_sample) # original data
+          put_data[:sequence_based_macromolecule_attributes][:sequence] = 'BLABLA'
+
+          expect do
+            put "/api/v1/sequence_based_macromolecule_samples/#{sbmm_sample.id}", params: put_data, as: :json
+            sbmm_sample.reload
+            sbmm.reload
+          end.to change(sbmm_sample, :sequence_based_macromolecule_id)
+             .and change(SequenceBasedMacromolecule, :count).by(1) # make sure we create a new SBMM
+             .and not_change(sbmm, :sequence) # make sure we don't update the original SBMM
+        end
+      end
+
+      context 'when an SBMM with the updated data (key fields only) already exists' do
         # sbmm and other_sbmm should only be different on sequence
         let(:other_sbmm) do
           create(
