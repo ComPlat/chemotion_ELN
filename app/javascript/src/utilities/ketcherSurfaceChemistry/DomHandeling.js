@@ -216,12 +216,12 @@ const attachClickListeners = (iframeRef, buttonEvents) => {
               await attachListenerForTitle(iframeDocument, selector, buttonEvents);
             })
           );
-          if (selectedImageForTextNode) {
-            for (let i = 0; i < mutation.addedNodes.length; i++) {
-              const node = mutation.addedNodes[i]; // Access each node
-              await addTextNodeDescriptionOnTextPopup(node);
-            }
-          }
+          // if (selectedImageForTextNode) {
+          //   for (let i = 0; i < mutation.addedNodes.length; i++) {
+          //     const node = mutation.addedNodes[i]; // Access each node
+          //     await addTextNodeDescriptionOnTextPopup(node);
+          //   }
+          // }
         }
       })
     );
