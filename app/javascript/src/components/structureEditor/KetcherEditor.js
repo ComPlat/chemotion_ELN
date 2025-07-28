@@ -15,7 +15,7 @@ import React, {
 import {
   findTemplateByPayload
 } from 'src/utilities/ketcherSurfaceChemistry/Ketcher2SurfaceChemistryUtils';
-import { PolymerListModal, SpecialCharModal } from 'src/components/structureEditor/PolymerListModal';
+import { PolymerListModal } from 'src/components/structureEditor/PolymerListModal';
 import {
   fetchKetcherData,
   setupEditorIframe,
@@ -171,7 +171,7 @@ const KetcherEditor = forwardRef((props, ref) => {
   } = props;
 
   const [showShapes, setShowShapes] = useState(false);
-  const [showSpecialCharModal, setSpecialCharModal] = useState(false);
+  // const [showSpecialCharModal, setSpecialCharModal] = useState(false);
 
   const iframeRef = useRef();
   const initMol = molfile || '\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n';
@@ -218,10 +218,10 @@ const KetcherEditor = forwardRef((props, ref) => {
     [getButtonSelector(ButtonSelectors.CLEAR_CANVAS)]: async () => {
       resetStore();
       imageNodeForTextNodeSetter(null);
-    },
-    [getButtonSelector(ButtonSelectors.TEXT_NODE_SPECIAL_CHAR)]: async () => {
-      setSpecialCharModal(true);
     }
+    // [getButtonSelector(ButtonSelectors.TEXT_NODE_SPECIAL_CHAR)]: async () => {
+    //   setSpecialCharModal(true);
+    // }
   };
 
   // attach click listeners to the iframe and initialize the editor
@@ -343,19 +343,13 @@ const KetcherEditor = forwardRef((props, ref) => {
     setShowShapes(false);
   };
 
-  const onCharSelection = (char) => {
-    setSpecialCharModal(false);
-    restSelectionCharacter = char;
-  };
-
-  const onDashedCharSelection = (char) => {
-    setSpecialCharModal(false);
-    dashedSelectionCharacter = char;
-  };
-
   // ref functions when a canvas is saved using main "SAVE" button
   useImperativeHandle(ref, () => ({
-    onSaveFileK2SC: () => onFinalCanvasSave(editor, iframeRef, { dashedSelectionCharacter, restSelectionCharacter }),
+    onSaveFileK2SC: () => onFinalCanvasSave(
+      editor,
+      iframeRef,
+      latestData
+    )
   }));
 
   return (
@@ -364,9 +358,9 @@ const KetcherEditor = forwardRef((props, ref) => {
         loading={showShapes}
         onShapeSelection={onShapeSelection}
         onCloseClick={() => setShowShapes(false)}
-        title="Select a template"
+        title="Surface Chemistry Templates"
       />
-      <SpecialCharModal
+      {/* <SpecialCharModal
         loading={showSpecialCharModal}
         onDashedSelection={onDashedCharSelection}
         onRestSelections={onCharSelection}
@@ -374,7 +368,7 @@ const KetcherEditor = forwardRef((props, ref) => {
         dashedSelection={dashedSelectionCharacter}
         restSelection={restSelectionCharacter}
         title="Select a special character"
-      />
+      /> */}
       <iframe
         ref={iframeRef}
         id={editor?.id}
