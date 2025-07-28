@@ -42,13 +42,13 @@ else
   if [[ $NODEJS_FORCE_INSTALL == "true" ]]; then
     echo "NODEJS_FORCE_INSTALL is set to true, forcing installation of Node.js version $REQUIRED_NODE_VERSION"
     asdf install nodejs $REQUIRED_NODE_VERSION
-    asdf set nodejs $REQUIRED_NODE_VERSION
   else
     echo "NODEJS_FORCE_INSTALL is not set to true, proceeding with normal $CURRENT_NODE_VERSION installation"
     asdf install nodejs $CURRENT_NODE_VERSION
     REQUIRED_NODE_VERSION=$CURRENT_NODE_VERSION
   fi
 
+  asdf set nodejs $REQUIRED_NODE_VERSION
   asdf reshim nodejs
 fi
 echo "Node.js updated to version: $REQUIRED_NODE_VERSION"
