@@ -191,7 +191,20 @@ function GeneralMaterialGroup({
     headers.eq = yieldConversionRateFields();
   }
 
-  const refTHead = (materialGroup !== 'products') ? headers.ref : null;
+  const specialRefTHead = reaction.weight_percentage ? (
+    <OverlayTrigger
+      placement="top"
+      overlay={(
+        <Tooltip id="coefficientHeaderTitleReactionScheme">
+          Reference Product for weight percentage calculation
+        </Tooltip>
+      )}
+    >
+      <span>{headers.ref}</span>
+    </OverlayTrigger>
+  ) : null;
+
+  const refTHead = materialGroup !== 'products' ? headers.ref : specialRefTHead;
   /**
    * Add a (not yet persisted) sample to a material group
    * of the given reaction
