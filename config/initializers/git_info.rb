@@ -8,7 +8,7 @@ module GitInfo
       return {} unless git_available?
       return {} unless in_git_repo?
 
-      info[:tag] = capture('git describe --tags --long --dirty')
+      info[:describe_tag] = capture('git describe --tags --long --dirty')
       info[:branch] = capture('git describe --all')
       info[:current_revision] = capture('git rev-list --simplify-by-decoration -1 HEAD')
       info[:base_revision] = capture('git merge-base HEAD origin/main').presence ||
@@ -20,7 +20,7 @@ module GitInfo
 
     def info
       @info ||= {
-        tag: nil,
+        describe_tag: nil,
         branch: nil,
         current_revision: nil,
         base_revision: nil,
@@ -49,7 +49,7 @@ module GitInfo
     def log_info
       message = <<~INFO
         Git Info:
-                      describe --tags: #{info[:tag]}
+                      describe --tags: #{info[:describe_tag]}
                        describe --all: #{info[:branch]}
                              rev-list: #{info[:current_revision]}
           merge-base HEAD origin/main: #{info[:base_revision]}
