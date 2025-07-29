@@ -9,6 +9,8 @@ module Usecases
       #   Don't use it in other places without proper parameter validation!
       def find_or_initialize_by(params)
         params[:sequence] = SequenceBasedMacromolecule.normalize_sequence(params[:sequence]) if params[:sequence]
+        psm_params = params.delete(:protein_sequence_modification_attributes)
+        ptm_params = params.delete(:post_translational_modification_attributes)
 
         if params[:uniprot_derivation] == 'uniprot_modified'
           parent_identifier = params.delete(:parent_identifier)
@@ -32,14 +34,14 @@ module Usecases
           psm_attrs = ProteinSequenceModification.attributes_for_sbmm_uniqueness
           sbmm = SequenceBasedMacromolecule.non_uniprot.with_modifications.find_by(
             sequence: params[:sequence],
-            post_translational_modification: params[:post_translational_modification_attributes].slice(*ptm_attrs),
-            protein_sequence_modification: params[:protein_sequence_modification_attributes].slice(*psm_attrs)
+            post_translational_modification: ptm_params.slice(*ptm_attrs),
+            protein_sequence_modification: psm_params.slice(*psm_attrs)
           )
 
           sbmm ||= SequenceBasedMacromolecule.new(
             sequence: params[:sequence],
-            post_translational_modification_attributes: params[:post_translational_modification_attributes],
-            protein_sequence_modification_attributes: params[:protein_sequence_modification_attributes]
+            post_translational_modification_attributes: ptm_params,
+            protein_sequence_modification_attributes: psm_params
           )
         end
 
