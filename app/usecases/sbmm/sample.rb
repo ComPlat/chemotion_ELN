@@ -23,6 +23,7 @@ module Usecases
             sample.collections << collection
           end
 
+          sample.sequence_based_macromolecule.save!
           sample.save!
         end
 
@@ -38,6 +39,9 @@ module Usecases
           sample.sequence_based_macromolecule = sbmm
           sample.update!(params.except(:sequence_based_macromolecule_attributes, :container, :collection_id))
           sample.container = ::Usecases::Containers::UpdateDatamodel.new(current_user).update_datamodel(params[:container]) if params[:container]
+
+          sample.sequence_based_macromolecule.save!
+          sample.save!
         end
 
         sample
@@ -65,7 +69,9 @@ module Usecases
         return if current_user.is_a?(Admin)
 
         # there is at least one other user that uses this SBMM
-        if SequenceBasedMacromoleculeSample.user_count_for_sbmm(sbmm_id: sbmm.id, except_user_id: current_user.id).positive?
+        more_than_one_user = SequenceBasedMacromoleculeSample.user_count_for_sbmm(sbmm_id: sbmm.id, except_user_id: current_user.id).positive?
+        sbmm_has_changes = sbmm.changes.any?
+        if sbmm_has_changes && more_than_one_user
           raise Errors::SbmmUpdateNotAllowedError.new(
             original_sbmm: SequenceBasedMacromolecule.find(sbmm.id),
             requested_changes: sbmm
