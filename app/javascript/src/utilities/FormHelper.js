@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import {
   InputGroup, OverlayTrigger, Tooltip, Button, Form, Row, Col, ToggleButton, ButtonGroup,
+  Collapse, AccordionContext, useAccordionButton,
 } from 'react-bootstrap';
 import { Select } from 'src/components/common/Select';
 import { useDrop } from 'react-dnd';
@@ -510,4 +511,48 @@ const initFormHelper = (element, store) => {
   return formHelper;
 }
 
-export { initFormHelper }
+const ColoredAccordeonHeaderButton = ({ title, eventKey, bgColor, bgColorActive, callback }) => {
+  const { activeEventKey } = useContext(AccordionContext);
+  const isCurrentEventKey = activeEventKey === eventKey;
+
+  const backgroundColor = bgColor ? bgColor : 'surface-lighten3 text-body';
+  const backgroundColorActive = bgColorActive ? bgColorActive : 'surface-lighten1 text-body';
+  const activeClass = isCurrentEventKey ? `active ${backgroundColorActive}` : `collapsed ${backgroundColor}`;
+  const decoratedOnClick = useAccordionButton(eventKey, () => callback && callback(eventKey));
+
+  return (
+    <Button
+      variant="secondary"
+      className={`accordion-button ${activeClass}`}
+      onClick={decoratedOnClick}
+    >
+      {title}
+    </Button>
+  );
+}
+
+const SecondaryCollapseContent = ({ children, title, eventKey, error, active, store }) => {
+  const activeClass = active ? 'active' : 'collapsed';
+  const errorInCollapseClass = error ? 'border border-danger' : '';
+
+  return (
+    <div className={`mb-4 ${errorInCollapseClass}`}>
+      <Button
+        variant="secondary"
+        className={`accordion-button secondary-toggle-headline ${activeClass}`}
+        onClick={() => store.toggleContent(eventKey, !active)}
+        aria-controls={`collapse-${eventKey}`}
+        aria-expanded={active}
+      >
+        <span>{title}</span>
+      </Button>
+      <Collapse in={active}>
+        <div className={`accordion-body mb-0 pb-0`}>
+          {children}
+        </div>
+      </Collapse>
+    </div>
+  );
+}
+
+export { initFormHelper, ColoredAccordeonHeaderButton, SecondaryCollapseContent }

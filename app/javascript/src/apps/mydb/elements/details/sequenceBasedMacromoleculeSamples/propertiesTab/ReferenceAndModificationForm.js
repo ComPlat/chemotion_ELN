@@ -1,13 +1,12 @@
 import React, { useContext, useEffect } from 'react';
-import { Row, Col, Accordion, } from 'react-bootstrap';
-import { initFormHelper } from 'src/utilities/FormHelper';
+import { Row, Col, } from 'react-bootstrap';
+import { initFormHelper, SecondaryCollapseContent } from 'src/utilities/FormHelper';
 import { useDrop } from 'react-dnd';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import SequenceAndPostTranslationalModificationForm from './SequenceAndPostTranslationalModificationForm';
-import { selectOptions } from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/selectOptions';
 import Attachment from 'src/models/Attachment';
 
-import { undoButton, removeButton, customDropzone, formatFileSize, } from 'src/apps/mydb/elements/list/AttachmentList';
+import { undoButton, removeButton, customDropzone, formatFileSize } from 'src/apps/mydb/elements/list/AttachmentList';
 import MolViewerBtn from 'src/components/viewer/MolViewerBtn';
 import { formatDate } from 'src/utilities/timezoneHelper';
 
@@ -54,13 +53,19 @@ const ReferenceAndModificationForm = ({ ident, readonly }) => {
     && (sbmmSample.errors.sequence_based_macromolecule
       || sbmmSample.errors?.structure_file);
 
-  let accordionErrorByIdent = '';
+  let accordionErrorByIdent = false;
 
   if (uniprotDerivationValue === 'uniprot' || ident === 'reference') {
-    accordionErrorByIdent = '';
+    accordionErrorByIdent = false;
   } else if (errorInModification) {
-    accordionErrorByIdent = 'border border-danger';
+    accordionErrorByIdent = true;
   }
+
+  const heterologousExpression = [
+    { label: 'Yes', value: 'yes' },
+    { label: 'No', value: 'no' },
+    { label: 'Unknown', value: 'unknown' },
+  ]
 
   const referenceAccordionHeader = () => {
     if (ident === 'sequence_modifications') {
@@ -68,7 +73,7 @@ const ReferenceAndModificationForm = ({ ident, readonly }) => {
     } else if (uniprotDerivationValue === 'uniprot') {
       return `Protein Identifiers and structural characteristics${sbmmSample.sbmmShortLabelForHeader()}`;
     } else if (uniprotDerivationValue === 'uniprot_modified') {
-      return "Protein Identifiers and structural characteristics of reference entries";
+      return "Protein Identifiers and structural characteristics of reference entries"
     }
   }
 
@@ -219,140 +224,124 @@ const ReferenceAndModificationForm = ({ ident, readonly }) => {
     return (<Col className={`col-${sbmmAttachmentListCols}`}>{attachmentList}</Col>);
   }
 
+
   if (ident === 'dnd_reference') {
     return (
-      <Accordion
-        className={`mb-4 ${accordionErrorByIdent}`}
-        activeKey={sbmmStore.toggable_contents[accordionIdent] && accordionIdent}
-        onSelect={() => sbmmStore.toggleContent(accordionIdent)}
+      <SecondaryCollapseContent
+        title={referenceAccordionHeader()}
+        eventKey={accordionIdent}
+        error={accordionErrorByIdent}
+        store={sbmmStore}
+        active={sbmmStore.toggable_contents[accordionIdent] && accordionIdent}
       >
-        <Accordion.Item eventKey={accordionIdent}>
-          <Accordion.Header>
-            {referenceAccordionHeader()}
-          </Accordion.Header>
-          <Accordion.Body>
-            {dropAreaForReference()}
-          </Accordion.Body>
-        </Accordion.Item>
-      </Accordion>
+        {dropAreaForReference()}
+      </SecondaryCollapseContent>
     );
   }
 
   return (
-    <Accordion
-      className={`mb-4 ${accordionErrorByIdent}`}
-      activeKey={sbmmStore.toggable_contents[accordionIdent] && accordionIdent}
-      onSelect={() => sbmmStore.toggleContent(accordionIdent)}
+    <SecondaryCollapseContent
+      title={referenceAccordionHeader()}
+      eventKey={accordionIdent}
+      error={accordionErrorByIdent}
+      store={sbmmStore}
+      active={sbmmStore.toggable_contents[accordionIdent] && accordionIdent}
     >
-      <Accordion.Item eventKey={accordionIdent}>
-        <Accordion.Header>
-          {referenceAccordionHeader()}
-        </Accordion.Header>
-        <Accordion.Body>
-          {visibleForModification && ident == 'reference' && dropAreaForReference()}
+      {visibleForModification && ident == 'reference' && dropAreaForReference()}
 
-          <h5 className="mb-3">Identifiers and sequence characteristics:</h5>
-          <Row className="mb-4">
-            {ident === 'reference' && (
-              <Col>{formHelper.textInput(`${fieldPrefix}.primary_accession`, 'UniProt number', disabled, '')}</Col>
+      <h5 className="mb-3">Identifiers and sequence characteristics:</h5>
+      <Row className="mb-4">
+        {ident === 'reference' && (
+          <Col>{formHelper.textInput(`${fieldPrefix}.primary_accession`, 'UniProt number', disabled, '')}</Col>
+        )
+        }
+        <Col>{formHelper.textInput(`${fieldPrefix}.other_identifier`, 'Other reference ID', disabled, '')}</Col>
+        {
+          ident === 'sequence_modifications' && (
+            <Col>{formHelper.textInput(`${fieldPrefix}.own_identifier`, 'Own ID', disabled, '')}</Col>
+          )
+        }
+        <Col>{formHelper.textInput(`${fieldPrefix}.short_name`, 'Short name', disabled, '', true)}</Col>
+      </Row>
+      <Row className="mb-4">
+        <Col>
+          {
+            formHelper.readonlyInput(
+              `${fieldPrefix}.sequence_length`, 'Sequence length', sequenceLengthValue, ''
             )
-            }
-            <Col>{formHelper.textInput(`${fieldPrefix}.other_identifier`, 'Other reference ID', disabled, '')}</Col>
-            {
-              ident === 'sequence_modifications' && (
-                <Col>{formHelper.textInput(`${fieldPrefix}.own_identifier`, 'Own ID', disabled, '')}</Col>
-              )
-            }
-            <Col>{formHelper.textInput(`${fieldPrefix}.short_name`, 'Short name', disabled, '', true)}</Col>
-          </Row>
-          <Row className="mb-4">
-            <Col>
-              {
-                formHelper.readonlyInput(
-                  `${fieldPrefix}.sequence_length`, 'Sequence length', sequenceLengthValue, ''
-                )
-              }
-            </Col>
-            <Col>
-              {formHelper.unitInput(
-                `${fieldPrefix}.molecular_weight`, 'Sequence mass (kD = kg/mol)', 'molecular_weight', disabled, ''
-              )}
-            </Col>
-          </Row>
-          <Row className="mb-4">
-            <Col>{formHelper.textInput(`${fieldPrefix}.full_name`, 'Full name', disabled, '')}</Col>
-            <Col>{formHelper.textInput(`${fieldPrefix}.ec_numbers`, 'EC number', disabled, '')}</Col>
-          </Row>
-          {(visibleForModification || ident === 'reference') && (
-            <Row className="mb-4">
-              {
-                visibleForModification && (
-                  <Col>{formHelper.textInput(`${fieldPrefix}.pdb_doi`, 'Pdb DOI', disabled, '')}</Col>
-                )
-              }
-              {
-                ident === 'reference' && (
-                  <Col>{formHelper.textInput(`${fieldPrefix}.link_pdb`, 'Link pdb', disabled, '')}</Col>
-                )
-              }
-            </Row>
+          }
+        </Col>
+        <Col>
+          {formHelper.unitInput(
+            `${fieldPrefix}.molecular_weight`, 'Sequence mass (kD = kg/mol)', 'molecular_weight', disabled, true
           )}
-          <Row className="mb-4">
-            <Col>
-              {formHelper.textareaInput(`${fieldPrefix}.splitted_sequence`, 'Sequence of the structure', 3, disabled, '', true)}
-            </Col>
-          </Row>
+        </Col>
+      </Row>
+      <Row className="mb-4">
+        <Col>{formHelper.textInput(`${fieldPrefix}.full_name`, 'Full name', disabled, '')}</Col>
+        <Col>{formHelper.textInput(`${fieldPrefix}.ec_numbers`, 'EC number', disabled, '')}</Col>
+      </Row>
+      {(visibleForModification || ident === 'reference') && (
+        <Row className="mb-4">
           {
-            (showAttachments || sbmmAttachments.length >= 1) && (
-              <>
-                <Row>
-                  <Col>
-                    <label className="form-label">Structure files (cif / pdb)</label>
-                    {structureAttachmentError()}
-                  </Col>
-                </Row>
-                <Row className="mb-4 align-items-start">
-                  {dropzoneForModificationOrUniprot()}
-                  {listSBMMAttachments()}
-                </Row>
-              </>
+            visibleForModification && (
+              <Col>{formHelper.textInput(`${fieldPrefix}.pdb_doi`, 'Pdb DOI', disabled, '')}</Col>
             )
           }
+          {
+            ident === 'reference' && (
+              <Col>{formHelper.textInput(`${fieldPrefix}.link_pdb`, 'Link pdb', disabled, '')}</Col>
+            )
+          }
+        </Row>
+      )}
+      <Row className="mb-4">
+        <Col>
+          {formHelper.textareaInput(`${fieldPrefix}.splitted_sequence`, 'Sequence of the structure', 3, disabled, true)}
+        </Col>
+      </Row>
+      {
+        (showAttachments || sbmmAttachments.length >= 1) && (
+          <>
+            <Row>
+              <Col>
+                <label className="form-label">Structure files (cif / pdb)</label>
+                {structureAttachmentError()}
+              </Col>
+            </Row>
+            <Row className="mb-4 align-items-start">
+              {dropzoneForModificationOrUniprot()}
+              {listSBMMAttachments()}
+            </Row>
+          </>
+        )
+      }
 
-          {
-            parent.uniprot_derivation === 'uniprot' && (
-              <>
-                <h5 className="mb-3">Details on Protein's source:</h5>
-                <Row className="mb-4 align-items-end">
-                  <Col>
-                    {formHelper.selectInput(
-                      `${fieldPrefix}.heterologous_expression`, 'Heterologous expression',
-                      selectOptions['heterologous_expression'], disabled, '', ''
-                    )}
-                  </Col>
-                  <Col>{formHelper.textInput(`${fieldPrefix}.organism`, 'Organism', disabled, '')}</Col>
-                  <Col>{formHelper.textInput(`${fieldPrefix}.taxon_id`, 'Taxon ID', disabled, '')}</Col>
-                </Row>
-                <Row className="mb-4 align-items-end">
-                  <Col>{formHelper.textInput(`${fieldPrefix}.strain`, 'Strain', disabled, '')}</Col>
-                  <Col>{formHelper.textInput(`${fieldPrefix}.tissue`, 'Tissue', disabled, '')}</Col>
-                  <Col>{formHelper.textInput(`${fieldPrefix}.localisation`, 'Localisation', disabled, '')}</Col>
-                </Row>
-              </>
-            )
-          }
-
-          {
-            ident === 'sequence_modifications' && (
-              <SequenceAndPostTranslationalModificationForm
-                readonly={readonly}
-                key="sequence-and-post-translational-modification"
-              />
-            )
-          }
-        </Accordion.Body>
-      </Accordion.Item>
-    </Accordion>
+      <h5 className="mb-3">Details on Protein's source:</h5>
+      <Row className="mb-4 align-items-end">
+        <Col>
+          {formHelper.selectInput(
+            `${fieldPrefix}.heterologous_expression`, 'Heterologous expression',
+            heterologousExpression, disabled, '', ''
+          )}
+        </Col>
+        <Col>{formHelper.textInput(`${fieldPrefix}.organism`, 'Organism', disabled, '')}</Col>
+        <Col>{formHelper.textInput(`${fieldPrefix}.taxon_id`, 'Taxon ID', disabled, '')}</Col>
+      </Row>
+      <Row className="mb-4 align-items-end">
+        <Col>{formHelper.textInput(`${fieldPrefix}.strain`, 'Strain', disabled, '')}</Col>
+        <Col>{formHelper.textInput(`${fieldPrefix}.tissue`, 'Tissue', disabled, '')}</Col>
+        <Col>{formHelper.textInput(`${fieldPrefix}.localisation`, 'Localisation', disabled, '')}</Col>
+      </Row>
+      {
+        ident === 'sequence_modifications' && (
+          <SequenceAndPostTranslationalModificationForm
+            readonly={readonly}
+            key="sequence-and-post-translational-modification"
+          />
+        )
+      }
+    </SecondaryCollapseContent>
   );
 }
 

@@ -1,6 +1,6 @@
-import React, { useContext, useEffect } from 'react';
-import { Form, Row, Col, Accordion, Button, } from 'react-bootstrap';
-import { initFormHelper } from 'src/utilities/FormHelper';
+import React, { useContext, useEffect, useState } from 'react';
+import { Form, Row, Col, Accordion, Button } from 'react-bootstrap';
+import { initFormHelper, ColoredAccordeonHeaderButton, SecondaryCollapseContent } from 'src/utilities/FormHelper';
 import { selectOptions } from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/selectOptions';
 import { useDrop } from 'react-dnd';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
@@ -15,12 +15,19 @@ const PropertiesForm = ({ readonly }) => {
   let sbmmSample = sbmmStore.sequence_based_macromolecule_sample;
   const formHelper = initFormHelper(sbmmSample, sbmmStore);
   const disabled = readonly ? true : false;
+  const sbmmAccordionIdent = `${sbmmSample.id}-sbmm`;
   const generalAccordionIdent = `${sbmmSample.id}-general`;
   const sampleAccordionIdent = `${sbmmSample.id}-sample`;
 
   useEffect(() => {
+    if (!sbmmStore.toggable_contents.hasOwnProperty(sbmmAccordionIdent) && sbmmSample.isNew) {
+      sbmmStore.toggleContent(sbmmAccordionIdent);
+    }
     if (!sbmmStore.toggable_contents.hasOwnProperty(generalAccordionIdent)) {
       sbmmStore.toggleContent(generalAccordionIdent);
+    }
+    if (!sbmmStore.toggable_contents.hasOwnProperty(sampleAccordionIdent) && !sbmmSample.isNew) {
+      sbmmStore.toggleContent(sampleAccordionIdent);
     }
     if (showSearchFields) {
       sbmmStore.toggleSearchOptions(sbmmSample.id, true);
@@ -136,7 +143,7 @@ const PropertiesForm = ({ readonly }) => {
   }
 
   const toggleButtonForSearchOptions = () => {
-    if (!hasReference) { return null; }
+    if (!hasReference || sbmmSample.isNew) { return null; }
 
     const buttonText = sbmmStore.show_search_options[sbmmSample.id] ? 'Close' : 'Reopen';
     const searchOptionsVisible = sbmmStore.show_search_options[sbmmSample.id] ? false : true;
@@ -180,88 +187,101 @@ const PropertiesForm = ({ readonly }) => {
   return (
     <Form>
       <Accordion
-        className={`mb-4 ${errorInGeneralDescription ? 'border border-danger' : ''}`}
-        activeKey={sbmmStore.toggable_contents[generalAccordionIdent] && generalAccordionIdent}
-        onSelect={() => sbmmStore.toggleContent(generalAccordionIdent)}
+        className={`mb-4`}
+        activeKey={sbmmStore.toggable_contents[sbmmAccordionIdent] && sbmmAccordionIdent}
+        onSelect={() => sbmmStore.toggleContent(sbmmAccordionIdent)}
       >
-        <Accordion.Item eventKey={generalAccordionIdent}>
-          <Accordion.Header>
-            General description
-          </Accordion.Header>
-          <Accordion.Body>
-            {dropAreaForReference()}
-            <Row className="mb-4">
-              <Col>
-                {
-                  formHelper.selectInput(
-                    'sequence_based_macromolecule.sbmm_type', 'Type', selectOptions['sbmm_type'], disabled, '', true
-                  )
-                }
-              </Col>
-              <Col>
-                {
-                  formHelper.selectInput(
-                    'sequence_based_macromolecule.sbmm_subtype', 'Subtype of protein', selectOptions['sbmm_sub_type'], disabled, ''
-                  )
-                }
-              </Col>
-              <Col>
-                {formHelper.selectInput(
-                  'sequence_based_macromolecule.uniprot_derivation',
-                  derivationLabelWithIcon,
-                  selectOptions['uniprot_derivation'], (sbmmSample.isNew ? false : true), 'Can only be changed during creation', true
-                )}
-              </Col>
-              <Col className="col-2 align-self-end">
-                {toggleButtonForSearchOptions()}
-              </Col>
-            </Row>
-
-            {
-              showSearchFields && visibleForUniprotOrModification && (
+        <Accordion.Item eventKey={sbmmAccordionIdent}>
+          <h2 className="accordion-header">
+            <ColoredAccordeonHeaderButton
+              title="SBMM"
+              eventKey={sbmmAccordionIdent}
+            />
+          </h2>
+          <Accordion.Collapse eventKey={sbmmAccordionIdent}>
+            <div className="accordion-body">
+              <SecondaryCollapseContent
+                title="General description"
+                eventKey={generalAccordionIdent}
+                error={errorInGeneralDescription}
+                store={sbmmStore}
+                active={sbmmStore.toggable_contents[generalAccordionIdent] && generalAccordionIdent}
+              >
+                {dropAreaForReference()}
                 <Row className="mb-4">
-                  {searchFieldsForUniprotOrModification()}
+                  <Col>
+                    {
+                      formHelper.selectInput(
+                        'sequence_based_macromolecule.sbmm_type', 'Type', selectOptions['sbmm_type'], disabled, '', true
+                      )
+                    }
+                  </Col>
+                  <Col>
+                    {
+                      formHelper.selectInput(
+                        'sequence_based_macromolecule.sbmm_subtype', 'Subtype of protein', selectOptions['sbmm_sub_type'], disabled, ''
+                      )
+                    }
+                  </Col>
+                  <Col>
+                    {formHelper.selectInput(
+                      'sequence_based_macromolecule.uniprot_derivation',
+                      derivationLabelWithIcon,
+                      selectOptions['uniprot_derivation'], (sbmmSample.isNew ? false : true), 'Can only be changed during creation', true
+                    )}
+                  </Col>
+                  <Col className="col-2 align-self-end">
+                    {toggleButtonForSearchOptions()}
+                  </Col>
                 </Row>
-              )
-            }
-            {
-              (!hasReference && noReferenceError) && (
-                <div className="text-danger">
-                  Please choose a reference
-                </div>
-              )
-            }
-          </Accordion.Body>
+
+                {
+                  showSearchFields && visibleForUniprotOrModification && (
+                    <Row className="mb-4">
+                      {searchFieldsForUniprotOrModification()}
+                    </Row>
+                  )
+                }
+                {
+                  (!hasReference && noReferenceError) && (
+                    <div className="text-danger">
+                      Please choose a reference
+                    </div>
+                  )
+                }
+              </SecondaryCollapseContent>
+
+              {
+                visibleForModification && (
+                  <ReferenceAndModificationForm
+                    ident="dnd_reference"
+                    readonly={readonly}
+                    key="dnd_reference_modification"
+                  />
+                )
+              }
+              {
+                showReference && (
+                  <ReferenceAndModificationForm
+                    ident="reference"
+                    readonly={readonly}
+                    key="reference_uniprot"
+                  />
+                )
+              }
+              {
+                showIfReferenceSelected && visibleForUnkownOrModification && (
+                  <ReferenceAndModificationForm
+                    ident="sequence_modifications"
+                    readonly={readonly}
+                    key="sequence_modifications_uniprot"
+                  />
+                )
+              }
+            </div>
+          </Accordion.Collapse>
         </Accordion.Item>
       </Accordion>
-
-      {
-        visibleForModification && (
-          <ReferenceAndModificationForm
-            ident="dnd_reference"
-            readonly={readonly}
-            key="dnd_reference_modification"
-          />
-        )
-      }
-      {
-        showReference && (
-          <ReferenceAndModificationForm
-            ident="reference"
-            readonly={readonly}
-            key="reference_uniprot"
-          />
-        )
-      }
-      {
-        showIfReferenceSelected && visibleForUnkownOrModification && (
-          <ReferenceAndModificationForm
-            ident="sequence_modifications"
-            readonly={readonly}
-            key="sequence_modifications_uniprot"
-          />
-        )
-      }
 
       {
         showIfReferenceSelected && (
