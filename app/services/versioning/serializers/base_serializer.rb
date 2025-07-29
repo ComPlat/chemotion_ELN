@@ -34,6 +34,7 @@ module Versioning
               fields.each do |field|
                 formatter = field[:formatter] || default_formatter
                 revertible_value_formatter = field[:revertible_value_formatter] || formatter
+
                 old_value = formatter.call(key, base[key])
                 new_value = formatter.call(key, value)
                 current_value = formatter.call(key, record.read_attribute_before_type_cast(key))
