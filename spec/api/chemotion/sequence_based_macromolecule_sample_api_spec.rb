@@ -619,6 +619,19 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
           expect(parsed_json_response).to eq expected_result
         end
       end
+
+      context 'when updating the full name' do
+        it 'saves the change' do
+          put_data = serialize_sbmm_sample_as_api_input(sbmm_sample) # original data
+          put_data[:sequence_based_macromolecule_attributes][:full_name] = 'BLABLA'
+
+          expect do
+            put "/api/v1/sequence_based_macromolecule_samples/#{sbmm_sample.id}", params: put_data, as: :json
+            sbmm_sample.reload
+            sbmm.reload
+          end.to change(sbmm, :systematic_name).to("BLABLA")
+        end
+      end
     end
   end
 
