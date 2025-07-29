@@ -48,6 +48,13 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     this.renderShortLabel = this.renderShortLabel.bind(this);
   }
 
+  componentWillUnmount() {
+    // Clean up any pending clipboard operations
+    if (this.clipboardTimeout) {
+      clearTimeout(this.clipboardTimeout);
+    }
+  }
+
   buildColumn(columnName) {
     const id = uuidv4();
     // TODO implement a more robust way to set the column id and select the renderer not based on the column name
@@ -55,17 +62,24 @@ export default class ResearchPlanDetailsFieldTable extends Component {
       ? columnName
       : id;
 
-    return {
+    const column = {
       cellEditor: 'agTextCellEditor',
       colId,
       editable: true,
-      field: columnName,
+      field: colId, // Use colId as field to ensure data consistency
       headerName: columnName,
       key: id,
       name: columnName,
       resizable: true,
       width: 200,
     };
+
+    // If it's a special column, add the cell renderer
+    if (columnName === COLUMN_ID_SHORT_LABEL_SAMPLE || columnName === COLUMN_ID_SHORT_LABEL_REACTION) {
+      column.cellRenderer = this.renderShortLabel;
+    }
+
+    return column;
   }
 
   buildRow() {
@@ -106,15 +120,48 @@ export default class ResearchPlanDetailsFieldTable extends Component {
 
   handleColumnInsert(columnName) {
     const { field, onChange } = this.props;
-    const { gridApi } = this.state
+    const { gridApi } = this.state;
 
-    let columnDefs = gridApi.getColumnDefs();
-    columnDefs.push(this.buildColumn(columnName));
-    gridApi.setGridOption('columnDefs', columnDefs);
-    field.value.columns = gridApi.getColumnDefs();
-    field.value.columnStates = gridApi.getColumnState();
+    if (!columnName || columnName.trim() === '') {
+      console.warn('Cannot insert column with empty name');
+      return;
+    }
 
-    onChange(field.value, field.id);
+    if (!gridApi || !gridApi.getColumnDefs) {
+      console.error('Grid API not available for column insert');
+      return;
+    }
+
+    try {
+      let columnDefs = gridApi.getColumnDefs();
+      const newColumn = this.buildColumn(columnName.trim());
+      columnDefs.push(newColumn);
+      
+      // If inserting a special column, clear any existing data for that colId
+      if (columnName === COLUMN_ID_SHORT_LABEL_SAMPLE || columnName === COLUMN_ID_SHORT_LABEL_REACTION) {
+        let rowData = [];
+        gridApi.forEachNode(node => rowData.push(node.data));
+        
+        // Clear existing data for this special column ID to ensure fresh start
+        rowData.forEach(row => {
+          if (row[columnName] !== undefined) {
+            delete row[columnName];
+          }
+        });
+        
+        gridApi.setGridOption('columnDefs', columnDefs);
+        gridApi.applyTransaction({ update: rowData });
+      } else {
+        gridApi.setGridOption('columnDefs', columnDefs);
+      }
+      
+      field.value.columns = gridApi.getColumnDefs();
+      field.value.columnStates = gridApi.getColumnState();
+
+      onChange(field.value, field.id);
+    } catch (error) {
+      console.error('Error inserting column:', error);
+    }
   }
 
   handleColumnRename(colId, columnName) {
@@ -123,10 +170,85 @@ export default class ResearchPlanDetailsFieldTable extends Component {
 
     let columnDefs = gridApi.getColumnDefs();
     let columnChange = columnDefs.find(o => o.colId === colId);
-    columnChange.headerName = columnName;
-    gridApi.setGridOption('columnDefs', columnDefs);
+    
+    // Store the old colId and field to check if it was a special column
+    const oldColId = columnChange.colId;
+    const oldField = columnChange.field;
+    const wasSpecialColumn = (oldColId === COLUMN_ID_SHORT_LABEL_SAMPLE || oldColId === COLUMN_ID_SHORT_LABEL_REACTION);
+    const isBecomingSpecialColumn = (columnName === COLUMN_ID_SHORT_LABEL_SAMPLE || columnName === COLUMN_ID_SHORT_LABEL_REACTION);
+    
+    // Get current row data before making any changes
+    let rowData = [];
+    gridApi.forEachNode(node => rowData.push(node.data));
+    
+    if (isBecomingSpecialColumn) {
+      // Check if this special column ID is already taken by another column
+      const existingSpecialColumn = columnDefs.find(col => 
+        col.colId === columnName && col.colId !== colId
+      );
+      
+      if (!existingSpecialColumn) {
+        // Move data from old field to new special colId
+        rowData.forEach(row => {
+          if (row[oldField] !== undefined) {
+            row[columnName] = row[oldField];
+            delete row[oldField];
+          }
+        });
+        
+        // Update column definition for special column
+        columnChange.colId = columnName;
+        columnChange.field = columnName;
+        columnChange.headerName = columnName;
+        columnChange.cellRenderer = this.renderShortLabel;
+        
+        // Update grid with new column defs and data
+        gridApi.setGridOption('columnDefs', columnDefs);
+        gridApi.applyTransaction({ update: rowData });
+      } else {
+        // Just update header name if special column already exists
+        columnChange.headerName = columnName;
+        gridApi.setGridOption('columnDefs', columnDefs);
+      }
+    } else if (wasSpecialColumn) {
+      // Renaming away from a special column to a regular column
+      // Generate new UUID for non-special column
+      const newId = uuidv4();
+      
+      // Move data from old special colId to new regular field
+      rowData.forEach(row => {
+        if (row[oldField] !== undefined) {
+          row[newId] = row[oldField];
+          delete row[oldField];
+        }
+      });
+      
+      // Update column definition for regular column
+      delete columnChange.cellRenderer;
+      columnChange.colId = newId;
+      columnChange.field = newId;
+      columnChange.headerName = columnName;
+      
+      // Update grid with new column defs and data
+      gridApi.setGridOption('columnDefs', columnDefs);
+      gridApi.applyTransaction({ update: rowData });
+    } else {
+      // Regular column to regular column - just update the header name
+      // Keep the same colId and field, only change the display name
+      columnChange.headerName = columnName;
+      
+      // Update grid with new column defs (no data migration needed)
+      gridApi.setGridOption('columnDefs', columnDefs);
+    }
+    
+    // Save the updated state
     field.value.columns = gridApi.getColumnDefs();
     field.value.columnStates = gridApi.getColumnState();
+    
+    // Get final row data after all updates
+    let finalRowData = [];
+    gridApi.forEachNode(node => finalRowData.push(node.data));
+    field.value.rows = finalRowData;
 
     onChange(field.value, field.id);
   }
@@ -229,7 +351,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
   }
 
   onGridReady = (params) => {
-    this.setState({ 
+    this.setState({
       gridApi: params.api,
     });
 
@@ -300,14 +422,28 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     const { field, onChange } = this.props;
     const { gridApi, columnClicked } = this.state;
     if (columnClicked) {
-      let columnDefs = gridApi.getColumnDefs();
-      columnDefs = columnDefs.filter(function (value, index, arr) {
-        return value.colId !== columnClicked;
+      // Get row data before removing column to clean up orphaned data
+      let rowData = [];
+      gridApi.forEachNode((node) => rowData.push(node.data));
+      
+      // Remove the column data from all rows
+      rowData.forEach((row) => {
+        if (row[columnClicked] !== undefined) {
+          delete row[columnClicked];
+        }
       });
+      
+      // Remove column definition
+      let columnDefs = gridApi.getColumnDefs();
+      columnDefs = columnDefs.filter((value) => value.colId !== columnClicked);
 
+      // Update grid with new column definitions and cleaned data
       gridApi.setGridOption('columnDefs', columnDefs);
+      gridApi.applyTransaction({ update: rowData });
+      
       field.value.columns = gridApi.getColumnDefs();
       field.value.columnStates = gridApi.getColumnState();
+      field.value.rows = rowData;
 
       onChange(field.value, field.id);
     }
@@ -327,7 +463,11 @@ export default class ResearchPlanDetailsFieldTable extends Component {
   handlePaste = (event) => {
     const { field, onChange } = this.props;
     const { gridApi, columnClicked, rowClicked } = this.state;
-    onChange(field.value, field.id);
+
+    if (!navigator.clipboard) {
+      console.warn('Clipboard API not available');
+      return;
+    }
 
     navigator.clipboard.readText()
       .then(data => {
@@ -336,7 +476,6 @@ export default class ResearchPlanDetailsFieldTable extends Component {
         lines.forEach(element => {
           cellData.push(element.split('\t'));
         });
-
 
         let columns = gridApi.getAllGridColumns();
         let rowData = [];
@@ -487,7 +626,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
                 onSortChanged={this.onSaveGridColumnState.bind(this)}
                 rowData={rows}
                 rowDragManaged={true}
-                rowHeight='37'
+                rowHeight={37}
                 rowSelection='multiple'
                 singleClickEdit={true}
                 stopEditingWhenCellsLoseFocus={true}
@@ -562,49 +701,69 @@ export default class ResearchPlanDetailsFieldTable extends Component {
   }
 
   openSampleByShortLabel(shortLabel) {
-    SamplesFetcher.findByShortLabel(shortLabel).then((result) => {
-      if (result.sample_id && result.collection_id) {
-        Aviator.navigate(`/collection/${result.collection_id}/sample/${result.sample_id}`, { silent: true });
-        ElementActions.fetchSampleById(result.sample_id);
-      } else {
-        console.debug('No valid data returned for short label', shortLabel, result);
-      }
-    });
+    SamplesFetcher.findByShortLabel(shortLabel)
+      .then((result) => {
+        if (result.sample_id && result.collection_id) {
+          Aviator.navigate(`/collection/${result.collection_id}/sample/${result.sample_id}`, { silent: true });
+          ElementActions.fetchSampleById(result.sample_id);
+        } else {
+          console.debug('No valid data returned for short label', shortLabel, result);
+        }
+      })
+      .catch((error) => {
+        console.error('Error fetching sample by short label:', error);
+      });
   }
 
   openReactionByShortLabel(shortLabel) {
-    ReactionsFetcher.findByShortLabel(shortLabel).then((result) => {
-      if (result.reaction_id && result.collection_id) {
-        Aviator.navigate(`/collection/${result.collection_id}/reaction/${result.reaction_id}`, { silent: true });
-        ElementActions.fetchReactionById(result.reaction_id);
-      } else {
-        console.debug('No valid data returned for short label', shortLabel, result);
-      }
-    });
+    ReactionsFetcher.findByShortLabel(shortLabel)
+      .then((result) => {
+        if (result.reaction_id && result.collection_id) {
+          Aviator.navigate(`/collection/${result.collection_id}/reaction/${result.reaction_id}`, { silent: true });
+          ElementActions.fetchReactionById(result.reaction_id);
+        } else {
+          console.debug('No valid data returned for short label', shortLabel, result);
+        }
+      })
+      .catch((error) => {
+        console.error('Error fetching reaction by short label:', error);
+      });
   }
 
-  renderShortLabel(node) {
-    const { data } = node;
+  renderShortLabel(params) {
+    const { data, colDef } = params;
     if (!data) {
-      return node.value || '';
+      return params.value || '';
     }
-    const sample = data[COLUMN_ID_SHORT_LABEL_SAMPLE];
-    const reaction = data[COLUMN_ID_SHORT_LABEL_REACTION];
-    if (sample && sample !== '') {
-      return (
-        <a className="link" onClick={(e) => { e.preventDefault(); this.openSampleByShortLabel(sample); }}>
-          {sample}
-        </a>
-      );
+
+    const cellValue = data[colDef.colId];
+    if (!cellValue || cellValue === '') {
+      return params.value || '';
     }
-    if (reaction && reaction !== '') {
-      return (
-        <a className="link" onClick={(e) => { e.preventDefault(); this.openReactionByShortLabel(reaction); }}>
-          {reaction}
-        </a>
-      );
+
+    if (colDef.colId === COLUMN_ID_SHORT_LABEL_SAMPLE) {
+      return React.createElement('a', {
+        className: 'link',
+        onClick: (e) => {
+          e.preventDefault();
+          this.openSampleByShortLabel(cellValue);
+        },
+        style: { cursor: 'pointer' }
+      }, cellValue);
     }
-    return node.value || '';
+
+    if (colDef.colId === COLUMN_ID_SHORT_LABEL_REACTION) {
+      return React.createElement('a', {
+        className: 'link',
+        onClick: (e) => {
+          e.preventDefault();
+          this.openReactionByShortLabel(cellValue);
+        },
+        style: { cursor: 'pointer' }
+      }, cellValue);
+    }
+
+    return params.value || '';
   }
 
   renderStatic() {
@@ -651,7 +810,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
             domLayout='autoHeight'
             autoSizeStrategy={{ type: 'fitGridWidth' }}
             rowData={rows}
-            rowHeight="37"
+            rowHeight={37}
           />
         </div>
       </div>
@@ -671,5 +830,6 @@ ResearchPlanDetailsFieldTable.propTypes = {
   index: PropTypes.number,
   disabled: PropTypes.bool,
   onChange: PropTypes.func,
-  edit: PropTypes.bool
+  edit: PropTypes.bool,
+  onExport: PropTypes.func
 };
