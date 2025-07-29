@@ -1,8 +1,8 @@
 import React from "react";
-import { OverlayTrigger, Button } from "react-bootstrap";
+import { OverlayTrigger, Button } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
-export default function TabLayoutButton({ popoverSettings, onToggle}) {
+export default function ConfigOverlayButton({ popoverSettings, onToggle}) {
   return (
     <div className="position-absolute top-0 end-0">
       <OverlayTrigger
@@ -24,7 +24,7 @@ export default function TabLayoutButton({ popoverSettings, onToggle}) {
   );
 }
 
-TabLayoutButton.propTypes = {
+ConfigOverlayButton.propTypes = {
   popoverSettings: PropTypes.element.isRequired,
   onToggle: PropTypes.func.isRequired
 };
