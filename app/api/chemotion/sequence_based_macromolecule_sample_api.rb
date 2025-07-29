@@ -64,7 +64,7 @@ module Chemotion
           optional :sbmm_subtype, type: String, desc: 'SBMM Subtype', values: %w[unmodified glycoprotein], allow_blank: true
           requires :uniprot_derivation, type: String, desc: 'Existence in Uniprot', values: %w[uniprot uniprot_modified uniprot_unknown], allow_blank: false
 
-          optional :other_identifier, type: String, desc: 'Freetext field for a custom external identifier'
+          optional :other_identifier, type: String, desc: 'Freetext field for a custom external identifier', default: ''
 
           given(uniprot_derivation: ->(derivation) { derivation == 'uniprot' }) do
             requires :primary_accession, type: String, desc: 'Uniprot accession code', allow_blank: false
@@ -130,7 +130,7 @@ module Chemotion
               optional :other_modifications_details, type: String, default: ''
             end
 
-            optional :own_identifier, type: String, desc: 'Freetext field for a internal identifier'
+            optional :own_identifier, type: String, desc: 'Freetext field for a internal identifier', default: ''
             optional :ec_numbers, type: [String]
             # uniprot calls it fullName, but in our DB it's systematic_name
             optional :full_name, type: String, as: :systematic_name
