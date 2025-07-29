@@ -360,7 +360,7 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
         expect(sample.localisation).to eq "SomeLocalisation"
       end
 
-      context 'when the given SBMM already exists and the params contain changes' do
+      context 'when the given SBMM already exists' do
         let(:existing_sbmm) do
           # same params as in :post_for_modified_sbmm
           create(
@@ -403,16 +403,44 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
             other_sample
           end
 
-          it 'rejects the creation' do
-            post '/api/v1/sequence_based_macromolecule_samples', params: post_for_modified_sbmm, as: :json
+          context 'when the params contain changes to the SBMM' do
+            let(:post_data_with_sbmm_modification) do
+              post_for_modified_sbmm[:sequence_based_macromolecule_attributes].merge!(short_name: 'BlaKeks')
+              post_for_modified_sbmm
+            end
 
-            expect(response.status).to eq 403
+            it 'rejects the creation for non admin users' do
+              post '/api/v1/sequence_based_macromolecule_samples', params: post_data_with_sbmm_modification, as: :json
+
+              expect(response.status).to eq 403
+              original_sbmm = parsed_json_response.dig("error", "original_sbmm")
+              requested_changes = parsed_json_response.dig("error", "requested_changes")
+              expect(original_sbmm).not_to eq requested_changes
+            end
+
+            context 'when the current user is an admin' do
+              let(:user) { create(:admin) }
+
+              it 'allows the creation' do
+                post '/api/v1/sequence_based_macromolecule_samples', params: post_data_with_sbmm_modification, as: :json
+
+                expect(response.status).to eq 201
+              end
+            end
           end
-        end
 
-        context 'when the current user is an admin' do
-          it 'allows the creation even if there are multiple users of the SBMM' do
+          context 'when the params do not contain changes to the SBMM' do
+            it 'saves the sample and assigns it to the existing SBMM' do
+              expect do
+                post '/api/v1/sequence_based_macromolecule_samples', params: post_for_modified_sbmm, as: :json
+                existing_sbmm.reload
+              end.to change(SequenceBasedMacromoleculeSample, :count).by(1)
+                 .and change(PostTranslationalModification, :count).by(0)
+                 .and change(ProteinSequenceModification, :count).by(0)
 
+              sample_id = parsed_json_response.dig("sequence_based_macromolecule_sample", "id")
+              expect(SequenceBasedMacromoleculeSample.find(sample_id).sequence_based_macromolecule_id).to eq existing_sbmm.id
+            end
           end
         end
       end
