@@ -462,7 +462,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
     if (ecNumbers) {
       return [Array.isArray(ecNumbers) ? ecNumbers.join(',') : ecNumbers];
     } else {
-      return [];
+      return [''];
     }
   }
 
@@ -505,7 +505,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
       
       sequence_based_macromolecule: {
         accessions: [],
-        ec_numbers: '',
+        ec_numbers: [''],
         full_name: '',
         heterologous_expression: '',
         link_uniprot: '',
