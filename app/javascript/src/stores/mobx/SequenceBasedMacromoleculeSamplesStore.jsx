@@ -299,9 +299,9 @@ export const SequenceBasedMacromoleculeSamplesStore = types
       if (uniprotDerivationValue != 'uniprot') {
         contents[`${sbmmSample.id}-sequence_modifications`] = true;
       }
-      if (!self.toggable_contents.hasOwnProperty(`${sbmmSample.id}-dnd-reference`)
+      if (!self.toggable_contents.hasOwnProperty(`${sbmmSample.id}-dnd_reference`)
         && uniprotDerivationValue == 'uniprot_modified') {
-        contents[`${sbmmSample.id}-dnd-reference`] = true;
+        contents[`${sbmmSample.id}-dnd_reference`] = true;
       }
       self.toggable_contents = contents;
     },
