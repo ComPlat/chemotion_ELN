@@ -25,7 +25,7 @@ module Usecases
         end
 
         def message
-          "Your changes could not be saved, as this SBMM is used by other other users as well. \
+          "Your changes could not be saved, as this SBMM is used by other users as well. \
             Please contact your ELN admin if you think that your data is of better quality."
         end
       end
