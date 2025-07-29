@@ -6,8 +6,6 @@
 #
 #  id                                     :bigint           not null, primary key
 #  deleted_at                             :datetime
-#  created_at                             :datetime         not null
-#  updated_at                             :datetime         not null
 #  collection_id                          :bigint
 #  sequence_based_macromolecule_sample_id :bigint
 #
