@@ -208,6 +208,53 @@ describe('ChemicalFetcher methods', () => {
     });
   });
 
+  describe('saveManualAttachedSafetySheet', () => {
+    const inputParams = {
+      sample_id: 19,
+      cas: '50-00-0',
+      chemical_data: [{ status: 'Out of stock' }],
+      vendor_product: 'merckProductInfo',
+      attached_file: {
+        filename: 's41597-023-02501-8.pdf',
+        type: 'application/pdf',
+        name: 'attached_file',
+        tempfile: new File(['mock file content'], 's41597-023-02501-8.pdf', { type: 'application/pdf' }),
+        head: `Content-Disposition: form-data; name="attached_file"; filename="s41597-023-02501-8.pdf"
+        Content-Type: application/pdf\r\n`
+      }
+    };
+
+    it('should save manual attached safety sheet', async () => {
+      const expectedResponse = true;
+
+      fetchStub.resolves(new Response(JSON.stringify(expectedResponse)));
+
+      const result = await ChemicalFetcher.saveManualAttachedSafetySheet(inputParams);
+
+      // Assert that fetch was called once with the correct parameters
+      sinon.assert.calledOnce(fetchStub);
+      sinon.assert.calledWithExactly(fetchStub, '/api/v1/chemicals/save_manual_sds', {
+        credentials: 'same-origin',
+        method: 'post',
+        body: inputParams
+      });
+
+      expect(result).toEqual(expectedResponse);
+    });
+
+    it('should handle fetch error', async () => {
+      // Setup fetchStub to reject with a specific error
+      fetchStub.rejects(new Error('Fetch error'));
+
+      try {
+        await ChemicalFetcher.saveManualAttachedSafetySheet(inputParams);
+        throw new Error('Failed to save manual attached safety sheet');
+      } catch (error) {
+        expect(error.message).toEqual('Failed to save manual attached safety sheet');
+      }
+    });
+  });
+
   describe('safety phrases', () => {
     const queryParams = {
       vendor: 'Merck',
