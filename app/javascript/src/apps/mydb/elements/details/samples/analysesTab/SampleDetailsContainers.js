@@ -166,7 +166,7 @@ export default class SampleDetailsContainers extends Component {
   }
 
   handleToggleMode(mode) {
-    this.setState({mode: mode});
+    this.setState({ mode: mode });
   }
 
   render() {
@@ -188,6 +188,7 @@ export default class SampleDetailsContainers extends Component {
             sample={sample}
             mode={mode}
             orderContainers={orderContainers}
+            rootContainer={sample.container}
             readOnly={readOnly}
             isDisabled={isDisabled}
             addButton={this.addButton}

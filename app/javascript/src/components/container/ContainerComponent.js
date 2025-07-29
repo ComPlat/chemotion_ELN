@@ -132,7 +132,7 @@ export default class ContainerComponent extends Component {
 
   render() {
     const { container, textTemplate } = this.state;
-    const { readOnly, disabled, onChange } = this.props;
+    const { readOnly, disabled, onChange, rootContainer,index  } = this.props;
 
     let quill = (<span />);
     if (readOnly || disabled) {
@@ -213,6 +213,8 @@ export default class ContainerComponent extends Component {
             readOnly={readOnly}
             disabled={disabled}
             onChange={onChange}
+            rootContainer={rootContainer}
+            index={index}
           />
         </Col>
         <Col sm={12}>
