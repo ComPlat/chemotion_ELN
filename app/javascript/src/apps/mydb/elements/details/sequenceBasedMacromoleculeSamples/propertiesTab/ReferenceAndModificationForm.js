@@ -1,6 +1,7 @@
 import React, { useContext, useEffect } from 'react';
 import { Row, Col, } from 'react-bootstrap';
 import { initFormHelper, SecondaryCollapseContent } from 'src/utilities/FormHelper';
+import { selectOptions } from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/selectOptions';
 import { useDrop } from 'react-dnd';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import SequenceAndPostTranslationalModificationForm from './SequenceAndPostTranslationalModificationForm';
@@ -317,22 +318,28 @@ const ReferenceAndModificationForm = ({ ident, readonly }) => {
         )
       }
 
-      <h5 className="mb-3">Details on Protein's source:</h5>
-      <Row className="mb-4 align-items-end">
-        <Col>
-          {formHelper.selectInput(
-            `${fieldPrefix}.heterologous_expression`, 'Heterologous expression',
-            heterologousExpression, disabled, '', ''
-          )}
-        </Col>
-        <Col>{formHelper.textInput(`${fieldPrefix}.organism`, 'Organism', disabled, '')}</Col>
-        <Col>{formHelper.textInput(`${fieldPrefix}.taxon_id`, 'Taxon ID', disabled, '')}</Col>
-      </Row>
-      <Row className="mb-4 align-items-end">
-        <Col>{formHelper.textInput(`${fieldPrefix}.strain`, 'Strain', disabled, '')}</Col>
-        <Col>{formHelper.textInput(`${fieldPrefix}.tissue`, 'Tissue', disabled, '')}</Col>
-        <Col>{formHelper.textInput(`${fieldPrefix}.localisation`, 'Localisation', disabled, '')}</Col>
-      </Row>
+      {
+        uniprotDerivationValue == 'uniprot' && (
+          <>
+            <h5 className="mb-3">Details on Protein's source:</h5>
+            <Row className="mb-4 align-items-end">
+              <Col>
+                {formHelper.selectInput(
+                  `${fieldPrefix}.heterologous_expression`, 'Heterologous expression',
+                  selectOptions['heterologous_expression'], disabled, '', ''
+                )}
+              </Col>
+              <Col>{formHelper.textInput(`${fieldPrefix}.organism`, 'Organism', disabled, '')}</Col>
+              <Col>{formHelper.textInput(`${fieldPrefix}.taxon_id`, 'Taxon ID', disabled, '')}</Col>
+            </Row>
+            <Row className="mb-4 align-items-end">
+              <Col>{formHelper.textInput(`${fieldPrefix}.strain`, 'Strain', disabled, '')}</Col>
+              <Col>{formHelper.textInput(`${fieldPrefix}.tissue`, 'Tissue', disabled, '')}</Col>
+              <Col>{formHelper.textInput(`${fieldPrefix}.localisation`, 'Localisation', disabled, '')}</Col>
+            </Row>
+          </>
+        )
+      }
       {
         ident === 'sequence_modifications' && (
           <SequenceAndPostTranslationalModificationForm
