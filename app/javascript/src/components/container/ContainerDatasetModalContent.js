@@ -10,7 +10,8 @@ import EditorFetcher from 'src/fetchers/EditorFetcher';
 import SaveEditedImageWarning from 'src/apps/mydb/elements/details/researchPlans/SaveEditedImageWarning';
 import debounce from 'es6-promise-debounce';
 import {
-  findIndex, cloneDeep, last, findKey
+  findIndex, cloneDeep, last, findKey,
+  create
 } from 'lodash';
 import { absOlsTermId } from 'chem-generic-ui';
 import Attachment from 'src/models/Attachment';
@@ -60,6 +61,7 @@ export class ContainerDatasetModalContent extends Component {
       prevMessages: [],
       newMessages: [],
       filterText: '',
+      chosenAttachment: null,
       attachmentGroups: {
         Original: [],
         BagitZip: [],
@@ -107,12 +109,21 @@ export class ContainerDatasetModalContent extends Component {
     if (prevAttachments.length !== prevProps.datasetContainer.attachments.length) {
       this.setState({
         filteredAttachments: [...attachments],
-        attachmentGroups: this.classifyAttachments(attachments)
+        attachmentGroups: this.classifyAttachments(attachments),
+        datasetContainer: { ...this.props.datasetContainer }
       }, () => {
         this.props.onChange({ ...this.state.datasetContainer });
         this.filterAttachments();
       });
     }
+  }
+
+  // This function is being called from ContainerDatasetModal.js
+  // eslint-disable-next-line react/no-unused-class-component-methods
+  setLocalName(localName) {
+    const { datasetContainer } = this.state;
+    datasetContainer.name = localName;
+    this.setState({ datasetContainer });
   }
 
   // eslint-disable-next-line react/sort-comp
@@ -204,12 +215,30 @@ export class ContainerDatasetModalContent extends Component {
 
   // the next method is used in ContainerDatasetModal.js please ignore eslint warning
   // eslint-disable-next-line react/no-unused-class-component-methods
-  handleSave() {
+  handleSave(shouldClose = false) {
     const { datasetContainer } = this.state;
-    const { onChange, onModalHide } = this.props;
+    const {
+      onChange, onModalHide, handleContainerSubmit, isNew
+    } = this.props;
     this.context.attachmentNotificationStore.clearMessages();
     onChange(datasetContainer);
-    onModalHide();
+    if (!isNew) {
+      handleContainerSubmit(shouldClose);
+      if (shouldClose) onModalHide();
+      return;
+    }
+    if (shouldClose) {
+      onModalHide();
+    }
+  }
+
+  // eslint-disable-next-line react/no-unused-class-component-methods, react/sort-comp
+  resetAnnotation() {
+    const { chosenAttachment } = this.state;
+    if (chosenAttachment && chosenAttachment.updatedAnnotation) {
+      chosenAttachment.updatedAnnotation = null;
+      this.setState({ chosenAttachment });
+    }
   }
 
   handleInstrumentValueChange(event, doneInstrumentTyping) {
@@ -433,7 +462,6 @@ export class ContainerDatasetModalContent extends Component {
   renderAttachmentRow(attachment) {
     const { extension, attachmentEditor } = this.state;
     const { readOnly } = this.props;
-
     return (
       <div className="attachment-row" key={attachment.id}>
         {attachmentThumbnail(attachment)}
@@ -686,6 +714,8 @@ ContainerDatasetModalContent.propTypes = {
     })),
   }).isRequired,
   onChange: PropTypes.func.isRequired,
+  handleContainerSubmit: PropTypes.func.isRequired,
+  isNew: PropTypes.bool.isRequired,
   onInstrumentChange: PropTypes.func,
   onModalHide: PropTypes.func.isRequired,
   readOnly: PropTypes.bool,

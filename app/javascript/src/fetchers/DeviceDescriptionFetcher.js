@@ -11,7 +11,7 @@ export default class DeviceDescriptionFetcher {
   static fetchDeviceDescriptionsByUIStateAndLimit(params) {
     const limit = params.limit ? limit : null;
 
-    return fetch('/api/v1/device_descriptions/ui_state/', 
+    return fetch('/api/v1/device_descriptions/ui_state/',
       {
         ...this._httpOptions('POST'),
         body: JSON.stringify(params)
@@ -24,7 +24,7 @@ export default class DeviceDescriptionFetcher {
   }
 
   static splitAsSubDeviceDescription(params) {
-    return fetch('/api/v1/device_descriptions/sub_device_descriptions/', 
+    return fetch('/api/v1/device_descriptions/sub_device_descriptions/',
       {
         ...this._httpOptions('POST'),
         body: JSON.stringify(params)
@@ -70,7 +70,6 @@ export default class DeviceDescriptionFetcher {
   }
 
   static createDeviceDescription(deviceDescription) {
-    const containerFiles = AttachmentFetcher.getFileListfrom(deviceDescription.container);
     const newFiles = (deviceDescription.attachments || []).filter((a) => a.is_new && !a.is_deleted);
 
     const promise = () => fetch(
@@ -88,17 +87,10 @@ export default class DeviceDescriptionFetcher {
           .then(() => new DeviceDescription(json.device_description));
       })
       .catch(errorMessage => console.log(errorMessage));
-
-    if (containerFiles.length > 0) {
-      const tasks = [];
-      containerFiles.forEach((file) => tasks.push(AttachmentFetcher.uploadFile(file).then()));
-      return Promise.all(tasks).then(() => promise());
-    }
-    return promise();
+    return AttachmentFetcher.uploadNewAttachmentsForContainer(deviceDescription.container).then(() => promise());
   }
 
   static updateDeviceDescription(deviceDescription) {
-    const containerFiles = AttachmentFetcher.getFileListfrom(deviceDescription.container);
     const newFiles = (deviceDescription.attachments || []).filter((a) => a.is_new && !a.is_deleted);
     const delFiles = (deviceDescription.attachments || []).filter((a) => !a.is_new && a.is_deleted);
 
@@ -118,9 +110,8 @@ export default class DeviceDescriptionFetcher {
       .catch(errorMessage => console.log(errorMessage));
 
     const tasks = [];
-    if (containerFiles.length > 0) {
-      containerFiles.forEach((file) => tasks.push(AttachmentFetcher.uploadFile(file).then()));
-    }
+    tasks.push(AttachmentFetcher.uploadNewAttachmentsForContainer(deviceDescription.container));
+
     if (newFiles.length > 0 || delFiles.length > 0) {
       tasks.push(AttachmentFetcher.updateAttachables(newFiles, 'DeviceDescription', deviceDescription.id, delFiles)());
     }
