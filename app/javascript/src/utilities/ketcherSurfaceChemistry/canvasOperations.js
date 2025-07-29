@@ -261,10 +261,12 @@ const assembleTextDescriptionFormula = async (ket2Lines, editor) => {
 
   for (let mol = 0; mol < mols.length; mol++) {
     const { bonds } = data[mols[mol]] || {};
-    for (let atom1Bond = 0; atom1Bond < bonds.length; atom1Bond++) {
-      const [atom1, atom2] = bonds[atom1Bond].atoms;
-      for (let atom2Bond = atom1Bond; atom2Bond < bonds.length; atom2Bond++) {
-        indicesMap[atom1].push(atom2);
+    for (let atom1Bond = 0; atom1Bond < bonds?.length; atom1Bond++) {
+      const [atom1, atom2] = bonds[atom1Bond].atoms || [];
+      for (let atom2Bond = atom1Bond; atom2Bond < bonds?.length; atom2Bond++) {
+        if (atom1 !== atom2) {
+          indicesMap[atom1].push(atom2);
+        }
       }
     }
   }
@@ -478,13 +480,16 @@ export const saveMoveCanvas = async (
 
 const centerPositionCanvas = async (editor) => {
   try {
-    if (!textList.length) {
+    if (false) {
       await fetchKetcherData(editor);
-      await editor.editor.renderAndRecoordinateStruct(editor.editor.struct().clone());
+      // await editor.editor.renderAndRecoordinateStruct(editor.editor.struct().clone());
+      // await editor._structureDef.editor.editor.renderAndRecoordinateStruct();
+      // const clone = editor._structureDef.editor.editor.struct().clone();
+      // await editor.structureDef.editor.setMolecule(clone.toString());
       await fetchKetcherData(editor);
       saveMoveCanvas(editor, latestData, true, true, false);
+      await fetchKetcherData(editor);
     }
-    await fetchKetcherData(editor);
   } catch (err) {
     console.error('centerPositionCanvas', err.message);
   }
@@ -531,7 +536,7 @@ const onFinalCanvasSave = async (editor, iframeRef) => {
     await reArrangeImagesOnCanvas(iframeRef); // svg display
     const ket2Lines = await arrangePolymers(canvasDataMol); // polymers added
     const ket2LineTextArranged = await arrangeTextNodes(ket2Lines); // text node
-    if (textList.length) textNodesFormula = await assembleTextDescriptionFormula(ket2Lines, editor);
+    if (textList?.length) textNodesFormula = await assembleTextDescriptionFormula(ket2Lines, editor);
     ket2LineTextArranged.push(KET_TAGS.fileEndIdentifier);
     const svgElement = await prepareSvg(editor);
     resetStore();
