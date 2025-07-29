@@ -3,12 +3,13 @@ import React, { useState, useEffect } from 'react';
 import Select from 'react-select';
 import { AgGridReact } from 'ag-grid-react';
 import {
-  Button, ButtonGroup, Modal, Form, OverlayTrigger, Tooltip
+  Button, ButtonGroup, Modal, Form, OverlayTrigger, Tooltip, Table
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import { cloneDeep, isEqual } from 'lodash';
 import {
-  getVariationsRowName, convertUnit, getStandardUnits, getUserFacingUnit
+  getVariationsRowName, convertUnit, getStandardUnits, getUserFacingUnit, getCurrentEntry,
+  getUserFacingEntryName
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   getReferenceMaterial, getCatalystMaterial, getFeedstockMaterial, getMolFromGram, getGramFromMol,
@@ -18,6 +19,34 @@ import { parseNumericString } from 'src/utilities/MathUtils';
 import {
   calculateGasMoles, calculateTON, calculateFeedstockMoles, calculateFeedstockVolume, calculateGasVolume
 } from 'src/utilities/UnitsConversion';
+
+function MaterialEntry({ children, entry, isMain }) {
+  function getEntryWidth() {
+    switch (entry) {
+      case 'temperature':
+      case 'concentration':
+      case 'turnoverNumber':
+      case 'turnoverFrequency':
+        return 140;
+      default:
+        return 110;
+    }
+  }
+  return (
+    <li
+      className={`list-group-item rounded-0 overflow-hidden ${isMain ? 'bg-info-subtle' : ''}`}
+      style={{ width: `${getEntryWidth()}px` }}
+    >
+      {children}
+    </li>
+  );
+}
+
+MaterialEntry.propTypes = {
+  children: PropTypes.node.isRequired,
+  entry: PropTypes.string.isRequired,
+  isMain: PropTypes.bool.isRequired
+};
 
 function RowToolsCellRenderer({
   data: row, context
@@ -81,17 +110,11 @@ function EquivalentParser({ data: row, oldValue: cellData, newValue }) {
   };
 }
 
-function PropertyFormatter({ value: cellData, colDef }) {
-  const { displayUnit } = colDef.entryDefs;
-  const valueInDisplayUnit = convertUnit(Number(cellData.value), cellData.unit, displayUnit);
-
-  return parseFloat(Number(valueInDisplayUnit).toPrecision(4));
-}
-
 function PropertyParser({
   oldValue: cellData, newValue, colDef
 }) {
-  const { currentEntry, displayUnit } = colDef.entryDefs;
+  const currentEntry = getCurrentEntry(colDef.entryDefs);
+  const { displayUnit } = colDef.entryDefs[currentEntry];
   let value = parseNumericString(newValue);
   if (currentEntry !== 'temperature' && value < 0) {
     value = 0;
@@ -102,21 +125,67 @@ function PropertyParser({
   return updatedCellData;
 }
 
-function MaterialFormatter({ value: cellData, colDef }) {
-  const { currentEntry, displayUnit } = colDef.entryDefs;
-  const valueInDisplayUnit = convertUnit(
-    Number(cellData[currentEntry].value),
-    cellData[currentEntry].unit,
-    displayUnit
-  );
+function convertValueToDisplayUnit(value, unit, displayUnit) {
+  const valueInDisplayUnit = convertUnit(Number(value), unit, displayUnit);
 
   return parseFloat(Number(valueInDisplayUnit).toPrecision(4));
 }
 
+function PropertyFormatter({ value: cellData, colDef }) {
+  const currentEntry = getCurrentEntry(colDef.entryDefs);
+  const { displayUnit } = colDef.entryDefs[currentEntry];
+
+  return convertValueToDisplayUnit(cellData.value, cellData.unit, displayUnit);
+}
+
+function MaterialFormatter({ value: cellData, colDef }) {
+  const currentEntry = getCurrentEntry(colDef.entryDefs);
+  const { displayUnit } = colDef.entryDefs[currentEntry];
+
+  return convertValueToDisplayUnit(cellData[currentEntry].value, cellData[currentEntry].unit, displayUnit);
+}
+function MaterialRenderer({ value: cellData, colDef }) {
+  const { entryDefs } = colDef;
+  return (
+    <ol className="list-group list-group-horizontal w-100">
+      {Object.entries(entryDefs).map(([entry, entryDef]) => {
+        const entryData = cellData[entry];
+        return (
+          entryData
+          && typeof entryData === 'object'
+          && 'value' in entryData
+          && entryDef.isSelected ? (
+            <MaterialEntry key={entry} entry={entry} isMain={entryDef.isMain}>
+              {convertValueToDisplayUnit(entryData.value, entryData.unit, entryDef.displayUnit)}
+            </MaterialEntry>
+            ) : null
+        );
+      })}
+    </ol>
+  );
+}
+
+MaterialRenderer.propTypes = {
+  value: PropTypes.arrayOf(PropTypes.shape({
+    value: PropTypes.number.isRequired,
+    unit: PropTypes.string.isRequired,
+  })).isRequired,
+  colDef: PropTypes.shape({
+    entryDefs: PropTypes.objectOf(
+      PropTypes.shape({
+        isMain: PropTypes.bool.isRequired,
+        isSelected: PropTypes.bool.isRequired,
+        displayUnit: PropTypes.string.isRequired
+      })
+    ).isRequired
+  }).isRequired
+};
+
 function MaterialParser({
   data: row, oldValue: cellData, newValue, colDef, context
 }) {
-  const { currentEntry, displayUnit } = colDef.entryDefs;
+  const currentEntry = getCurrentEntry(colDef.entryDefs);
+  const { displayUnit } = colDef.entryDefs[currentEntry];
   let value = convertUnit(parseNumericString(newValue), displayUnit, cellData[currentEntry].unit);
   if (value < 0) {
     value = 0;
@@ -184,7 +253,8 @@ function MaterialParser({
 function GasParser({
   data: row, oldValue: cellData, newValue, colDef
 }) {
-  const { currentEntry, displayUnit } = colDef.entryDefs;
+  const currentEntry = getCurrentEntry(colDef.entryDefs);
+  const { displayUnit } = colDef.entryDefs[currentEntry];
   let value = convertUnit(parseNumericString(newValue), displayUnit, cellData[currentEntry].unit);
   if (currentEntry !== 'temperature' && value < 0) {
     value = 0;
@@ -246,7 +316,8 @@ function GasParser({
 function FeedstockParser({
   data: row, oldValue: cellData, newValue, colDef
 }) {
-  const { currentEntry, displayUnit } = colDef.entryDefs;
+  const currentEntry = getCurrentEntry(colDef.entryDefs);
+  const { displayUnit } = colDef.entryDefs[currentEntry];
   let value = convertUnit(parseNumericString(newValue), displayUnit, cellData[currentEntry].unit);
   if (value < 0) {
     value = 0;
@@ -397,7 +468,7 @@ function MaterialOverlay({ value: cellData }) {
         {Object.entries(cellData).map(
           ([key, entry]) => (entry && typeof entry === 'object' && 'value' in entry ? (
             <div key={key}>
-              {`${key.charAt(0).toUpperCase() + key.slice(1)}: ${entry.value}${entry.unit ? ` ${entry.unit}` : ''}`}
+              {`${getUserFacingEntryName(key)}: ${entry.value}${entry.unit ? ` ${entry.unit}` : ''}`}
             </div>
           ) : null)
         )}
@@ -412,11 +483,171 @@ MaterialOverlay.propTypes = {
     unit: PropTypes.string.isRequired,
   })).isRequired,
   colDef: PropTypes.shape({
-    entryDefs: PropTypes.shape({
-      currentEntry: PropTypes.number.isRequired,
-      displayUnit: PropTypes.string.isRequired,
-    }).isRequired,
+    entryDefs: PropTypes.objectOf(
+      PropTypes.shape({
+        isMain: PropTypes.bool.isRequired,
+        isSelected: PropTypes.bool.isRequired,
+        displayUnit: PropTypes.string.isRequired
+      })
+    )
+    ,
   }).isRequired,
+};
+
+function MaterialEntrySelection({ entryDefs, onChange }) {
+  const [showModal, setShowModal] = useState(false);
+
+  const handleEntrySelection = (item) => {
+    const updated = { ...entryDefs };
+    const wasMain = updated[item].isMain;
+    const wasSelected = updated[item].isSelected;
+    const selectedCount = Object.values(updated).filter((entry) => entry.isSelected).length;
+
+    // Prevent deselection if this is the last selected item
+    if (wasSelected && selectedCount <= 1) {
+      return;
+    }
+
+    // Toggle the selection state
+    updated[item] = {
+      ...updated[item],
+      isSelected: !wasSelected,
+      isMain: wasSelected ? false : wasMain // Clear isMain if deselecting
+    };
+
+    // If we're deselecting the current main entry, find a new main entry
+    if (wasMain && wasSelected) {
+      const firstAvailable = Object.keys(updated).find(
+        (key) => key !== item && updated[key].isSelected
+      );
+      if (firstAvailable) {
+        updated[firstAvailable].isMain = true;
+      }
+    }
+
+    onChange(updated);
+  };
+
+  const handleUnitChange = (item, unit) => {
+    const updated = {
+      ...entryDefs,
+      [item]: {
+        ...entryDefs[item],
+        displayUnit: unit
+      }
+    };
+
+    onChange(updated);
+  };
+
+  const handleMainEntryChange = (item) => {
+    const updated = { ...entryDefs };
+
+    Object.keys(updated).forEach((key) => {
+      // Clear previous main entry
+      if (updated[key].isMain) {
+        updated[key].isMain = false;
+      }
+    });
+
+    // Set new main entry
+    updated[item].isMain = true;
+
+    onChange(updated);
+  };
+
+  return (
+    <div className="w-100">
+      <div className="d-inline-block">
+        <Button className="w-100" onClick={() => setShowModal(true)}>
+          Entries
+        </Button>
+        <ol className="list-group list-group-horizontal w-100">
+          {Object.entries(entryDefs).map(([entry, entryDef]) => (!entryDef.isSelected ? null : (
+            <MaterialEntry key={entry} entry={entry} isMain={entryDef.isMain}>
+              {getUserFacingEntryName(entry)}
+              {' '}
+              {entryDef.displayUnit === null ? '' : `(${getUserFacingUnit(entryDef.displayUnit)})` }
+            </MaterialEntry>
+
+          )))}
+        </ol>
+      </div>
+
+      <Modal show={showModal} onHide={() => setShowModal(false)} size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>Select entries</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Table striped bordered hover className="table-layout-fixed">
+            <thead>
+              <tr>
+                <th>Selected</th>
+                <th>Entry</th>
+                <th>Unit</th>
+                <th>Main entry (editable, sortable)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.entries(entryDefs).map(([entry, entryDef]) => {
+                const units = getStandardUnits(entry);
+                return (
+                  <tr key={entry}>
+                    <td className="text-center">
+                      <Form.Check
+                        type="checkbox"
+                        checked={entryDef.isSelected || false}
+                        onChange={() => handleEntrySelection(entry)}
+                      />
+                    </td>
+                    <td>{getUserFacingEntryName(entry)}</td>
+                    <td>
+                      {units.length > 1 ? (
+                        <Form.Select
+                          size="sm"
+                          value={entryDef.displayUnit || ''}
+                          onChange={(e) => handleUnitChange(entry, e.target.value)}
+                        >
+                          {units.map((unit) => (
+                            <option key={unit} value={unit}>{getUserFacingUnit(unit)}</option>
+                          ))}
+                        </Form.Select>
+                      ) : getUserFacingUnit(units[0])}
+                    </td>
+                    <td className="text-center">
+                      <Form.Check
+                        type="radio"
+                        name="default"
+                        checked={entryDef.isMain || false}
+                        onChange={() => handleMainEntryChange(entry)}
+                        disabled={!entryDef.isSelected}
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </Table>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="primary" onClick={() => setShowModal(false)}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </div>
+  );
+}
+
+MaterialEntrySelection.propTypes = {
+  entryDefs: PropTypes.objectOf(
+    PropTypes.shape({
+      isMain: PropTypes.bool.isRequired,
+      isSelected: PropTypes.bool.isRequired,
+      displayUnit: PropTypes.string.isRequired,
+    })
+  ).isRequired,
+  onChange: PropTypes.func.isRequired,
 };
 
 function MenuHeader({
@@ -428,9 +659,6 @@ function MenuHeader({
   const [noSort, setNoSort] = useState('inactive');
   const [name, setName] = useState(names[0]);
   const { field, entryDefs } = column.colDef;
-  const { currentEntry, displayUnit, availableEntries } = entryDefs;
-  const units = getStandardUnits(currentEntry);
-  const currentEntryTitle = currentEntry.split(/(?=[A-Z])/).join(' ').toLowerCase(); // e.g. 'turnoverNumber' -> 'turnover number'
 
   const onSortChanged = () => {
     setAscendingSort(column.isSortAscending() ? 'sort_active' : 'inactive');
@@ -451,59 +679,19 @@ function MenuHeader({
     setSort(order, event.shiftKey);
   };
 
-  const onUnitChanged = () => {
-    const newDisplayUnit = units[(units.indexOf(displayUnit) + 1) % units.length];
-
+  const onEntryDefChange = (updatedEntryDefs) => {
     setColumnDefinitions(
       {
         type: 'update_entry_defs',
         field,
-        entryDefs: { currentEntry, displayUnit: newDisplayUnit, availableEntries },
+        entryDefs: updatedEntryDefs,
         gasType
       }
     );
   };
-
-  const unitSelection = (
-    <Button
-      className={`unitSelection ${displayUnit === null ? 'd-none' : 'd-inline'}`}
-      variant="success"
-      size="sm"
-      disabled={units.length === 1}
-      onClick={onUnitChanged}
-    >
-      {getUserFacingUnit(displayUnit)}
-    </Button>
-  );
-
-  const onEntryChanged = () => {
-    const newCurrentEntry = availableEntries[(availableEntries.indexOf(currentEntry) + 1) % availableEntries.length];
-    const newUnit = getStandardUnits(newCurrentEntry)[0];
-
-    setColumnDefinitions(
-      {
-        type: 'update_entry_defs',
-        field,
-        entryDefs: { currentEntry: newCurrentEntry, displayUnit: newUnit, availableEntries },
-        gasType
-      }
-    );
-  };
-
-  const entrySelection = (
-    <Button
-      className="entrySelection"
-      variant="light"
-      size="sm"
-      disabled={availableEntries.length === 1}
-      onClick={onEntryChanged}
-    >
-      {currentEntryTitle}
-    </Button>
-  );
 
   const sortMenu = (
-    <div className="sortHeader d-flex align-items-center">
+    <div>
       <div
         onClick={(event) => onSortRequested('asc', event)}
         onTouchEnd={(event) => onSortRequested('asc', event)}
@@ -529,19 +717,15 @@ function MenuHeader({
   );
 
   return (
-    <div className="d-grid">
+    <div className="d-grid gap-1">
       <span
         className="header-title"
         onClick={() => setName(names[(names.indexOf(name) + 1) % names.length])}
       >
         {`${name} ${gasType !== 'off' ? `(${gasType})` : ''}`}
       </span>
-      <div>
-        {entrySelection}
-        {' '}
-        {unitSelection}
-      </div>
       {sortMenu}
+      <MaterialEntrySelection entryDefs={entryDefs} onChange={onEntryDefChange} />
     </div>
   );
 }
@@ -627,6 +811,7 @@ export {
   EquivalentParser,
   PropertyFormatter,
   PropertyParser,
+  MaterialRenderer,
   MaterialFormatter,
   MaterialParser,
   GasParser,

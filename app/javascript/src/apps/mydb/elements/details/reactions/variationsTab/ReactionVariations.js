@@ -13,21 +13,16 @@ import Reaction from 'src/models/Reaction';
 import {
   createVariationsRow, copyVariationsRow, updateVariationsRow, getVariationsColumns, materialTypes,
   addMissingColumnsToVariations, removeObsoleteColumnsFromVariations, getColumnDefinitions,
-  removeObsoleteColumnDefinitions, getInitialGridState, persistGridState
+  removeObsoleteColumnDefinitions, getInitialGridState, getInitialEntryDefinitions, persistTableLayout, cellDataTypes
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   getReactionAnalyses, updateAnalyses
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import {
-  updateVariationsAux, getReactionMaterials, getReactionMaterialsIDs,
-  removeObsoleteMaterialColumns, resetColumnDefinitionsMaterials, getReactionMaterialsHashes
+  updateVariationsOnAuxChange, getReactionMaterials, getReactionMaterialsIDs,
+  removeObsoleteMaterialColumns, updateColumnDefinitionsMaterialsOnAuxChange, getReactionMaterialsHashes
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
-import {
-  PropertyFormatter, PropertyParser,
-  MaterialFormatter, MaterialParser,
-  EquivalentParser, GasParser, FeedstockParser,
-  ColumnSelection
-} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
+import { ColumnSelection } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import columnDefinitionsReducer
   from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsReducers';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
@@ -55,47 +50,14 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   const { userText: temperatureValue = null, valueUnit: temperatureUnit = 'None' } = reaction.temperature ?? {};
   const vesselVolume = GasPhaseReactionStore.getState().reactionVesselSizeValue;
   const [selectedColumns, setSelectedColumns] = useState(getVariationsColumns(reactionVariations));
-  const initialColumnDefinitions = useMemo(() => getColumnDefinitions(selectedColumns, reactionMaterials, gasMode), []);
+  const initialColumnDefinitions = useMemo(() => getColumnDefinitions(
+    selectedColumns,
+    reactionMaterials,
+    gasMode,
+    getInitialEntryDefinitions(reaction.id)
+  ), []);
   const [columnDefinitions, setColumnDefinitions] = useReducer(columnDefinitionsReducer, initialColumnDefinitions);
   const initialGridState = useMemo(() => getInitialGridState(reaction.id), []);
-
-  const dataTypeDefinitions = {
-    property: {
-      extendsDataType: 'object',
-      baseDataType: 'object',
-      valueFormatter: PropertyFormatter,
-      valueParser: PropertyParser,
-    },
-    material: {
-      extendsDataType: 'object',
-      baseDataType: 'object',
-      valueFormatter: MaterialFormatter,
-      valueParser: MaterialParser,
-    },
-    equivalent: {
-      extendsDataType: 'object',
-      baseDataType: 'object',
-      valueFormatter: (params) => parseFloat(Number(params.value.equivalent.value).toPrecision(4)),
-      valueParser: EquivalentParser,
-    },
-    yield: {
-      extendsDataType: 'object',
-      baseDataType: 'object',
-      valueFormatter: (params) => parseFloat(Number(params.value.yield.value).toPrecision(4)),
-    },
-    gas: {
-      extendsDataType: 'object',
-      baseDataType: 'object',
-      valueFormatter: MaterialFormatter,
-      valueParser: GasParser,
-    },
-    feedstock: {
-      extendsDataType: 'object',
-      baseDataType: 'object',
-      valueFormatter: MaterialFormatter,
-      valueParser: FeedstockParser,
-    },
-  };
 
   const defaultColumnDefinitions = {
     editable: true,
@@ -148,21 +110,22 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
     let updatedColumnDefinitions = removeObsoleteColumnDefinitions(columnDefinitions, updatedSelectedColumns);
 
     /*
-    Update the materials' non-editable quantities according to the "Scheme" tab.
+    Update column definitions to account for potential changes in the corresponding materials' gas type.
     */
-    updatedReactionVariations = updateVariationsAux(
+    updatedColumnDefinitions = updateColumnDefinitionsMaterialsOnAuxChange(
+      updatedColumnDefinitions,
+      reactionMaterials,
+      gasMode
+    );
+
+    /*
+    Update materials in response to changes in non-editable quantities from the "Scheme" tab.
+    */
+    updatedReactionVariations = updateVariationsOnAuxChange(
       updatedReactionVariations,
       reactionMaterials,
       gasMode,
       vesselVolume
-    );
-
-    // Reset materials' column definitions to account for potential changes in their gas type.
-    updatedColumnDefinitions = resetColumnDefinitionsMaterials(
-      updatedColumnDefinitions,
-      reactionMaterials,
-      updatedSelectedColumns,
-      gasMode
     );
 
     setColumnDefinitions(
@@ -402,11 +365,11 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
           rowData={reactionVariations}
           rowDragEntireRow
           rowDragManaged
-          headerHeight={70}
+          headerHeight={110}
           columnDefs={columnDefinitions}
           suppressPropertyNamesCheck
           defaultColDef={defaultColumnDefinitions}
-          dataTypeDefinitions={dataTypeDefinitions}
+          dataTypeDefinitions={cellDataTypes}
           tooltipShowDelay={0}
           domLayout="autoHeight"
           maintainColumnOrder
@@ -428,8 +391,10 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
           onCellEditRequest={updateRow}
           onCellValueChanged={(event) => fitColumnToContent(event)}
           onColumnHeaderClicked={(event) => fitColumnToContent(event)}
-          onGridPreDestroyed={(event) => persistGridState(reaction.id, event)}
-          onStateUpdated={(event) => persistGridState(reaction.id, event)}
+          onGridPreDestroyed={(event) => persistTableLayout(reaction.id, event, columnDefinitions)}
+          onStateUpdated={(event) => persistTableLayout(reaction.id, event, columnDefinitions)}
+          onFirstDataRendered={() => gridRef.current.api.autoSizeAllColumns()}
+          onComponentStateChanged={() => gridRef.current.api.autoSizeAllColumns()}
         />
       </div>
     </div>

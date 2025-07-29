@@ -35,8 +35,6 @@ const MetadataRelatedIdentifier = ({
           options={relatedIdentifierTypes}
           onChange={(option) => onChange(option.value, 'relatedIdentifiers', index, 'relatedIdentifierType')}
           value={relatedIdentifierType}
-          menuPortalTarget={document.body}
-          styles={{ menuPortal: (base) => ({ ...base, zIndex: 9999 }) }}
         />
       </Form.Group>
       <Form.Group as={Col} xs={3}>
@@ -48,8 +46,6 @@ const MetadataRelatedIdentifier = ({
           options={relationTypes}
           onChange={(option) => onChange(option.value, 'relatedIdentifiers', index, 'relationType')}
           value={relationType}
-          menuPortalTarget={document.body}
-          styles={{ menuPortal: (base) => ({ ...base, zIndex: 9999 }) }}
         />
       </Form.Group>
       <Col xs={1} className="d-flex align-items-center">

@@ -5,50 +5,53 @@
 # Table name: samples
 #
 #  id                  :integer          not null, primary key
+#  ancestry            :string           default("/"), not null
+#  boiling_point       :numrange
+#  created_by          :integer
+#  decoupled           :boolean          default(FALSE), not null
+#  deleted_at          :datetime
+#  density             :float            default(0.0)
+#  deprecated_solvent  :string           default("")
+#  description         :text             default("")
+#  dry_solvent         :boolean          default(FALSE)
+#  external_label      :string           default("")
+#  identifier          :string
+#  imported_readout    :string
+#  impurities          :string           default("")
+#  inventory_sample    :boolean          default(FALSE)
+#  is_top_secret       :boolean          default(FALSE)
+#  location            :string           default("")
+#  melting_point       :numrange
+#  metrics             :string           default("mmm")
+#  molarity_unit       :string           default("M")
+#  molarity_value      :float            default(0.0)
+#  molecular_mass      :float
+#  molfile             :binary
+#  molfile_version     :string(20)
 #  name                :string
-#  target_amount_value :float            default(0.0)
+#  purity              :float            default(1.0)
+#  real_amount_unit    :string
+#  real_amount_value   :float
+#  sample_details      :jsonb
+#  sample_svg_file     :string
+#  sample_type         :string           default("Micromolecule")
+#  short_label         :string
+#  solvent             :jsonb
+#  stereo              :jsonb
+#  sum_formula         :string
 #  target_amount_unit  :string           default("g")
+#  target_amount_value :float            default(0.0)
+#  xref                :jsonb
 #  created_at          :datetime         not null
 #  updated_at          :datetime         not null
-#  description         :text             default("")
-#  molecule_id         :integer
-#  molfile             :binary
-#  purity              :float            default(1.0)
-#  deprecated_solvent  :string           default("")
-#  impurities          :string           default("")
-#  location            :string           default("")
-#  is_top_secret       :boolean          default(FALSE)
-#  ancestry            :string
-#  external_label      :string           default("")
-#  created_by          :integer
-#  short_label         :string
-#  real_amount_value   :float
-#  real_amount_unit    :string
-#  imported_readout    :string
-#  deleted_at          :datetime
-#  sample_svg_file     :string
-#  user_id             :integer
-#  identifier          :string
-#  density             :float            default(0.0)
-#  melting_point       :numrange
-#  boiling_point       :numrange
 #  fingerprint_id      :integer
-#  xref                :jsonb
-#  molarity_value      :float            default(0.0)
-#  molarity_unit       :string           default("M")
+#  molecule_id         :integer
 #  molecule_name_id    :integer
-#  molfile_version     :string(20)
-#  stereo              :jsonb
-#  metrics             :string           default("mmm")
-#  decoupled           :boolean          default(FALSE), not null
-#  molecular_mass      :float
-#  sum_formula         :string
-#  solvent             :jsonb
-#  dry_solvent         :boolean          default(FALSE)
-#  inventory_sample    :boolean          default(FALSE)
+#  user_id             :integer
 #
 # Indexes
 #
+#  index_samples_on_ancestry          (ancestry) WHERE (deleted_at IS NULL)
 #  index_samples_on_deleted_at        (deleted_at)
 #  index_samples_on_identifier        (identifier)
 #  index_samples_on_inventory_sample  (inventory_sample)
@@ -75,6 +78,14 @@ class Sample < ApplicationRecord
   STEREO_ABS = ['any', 'rac', 'meso', 'delta', 'lambda', '(S)', '(R)', '(Sp)', '(Rp)', '(Sa)', '(Ra)'].freeze
   STEREO_REL = %w[any syn anti p-geminal p-ortho p-meta p-para cis trans fac mer].freeze
   STEREO_DEF = { 'abs' => 'any', 'rel' => 'any' }.freeze
+
+  SAMPLE_TYPE_MIXTURE = 'Mixture'
+  SAMPLE_TYPE_MICROMOLECULE = 'Micromolecule'
+
+  SAMPLE_TYPES = [
+    SAMPLE_TYPE_MICROMOLECULE,
+    SAMPLE_TYPE_MIXTURE,
+  ].freeze
 
   multisearchable against: %i[
     name short_label external_label molecule_sum_formular
@@ -113,6 +124,9 @@ class Sample < ApplicationRecord
   pg_search_scope :search_by_sample_short_label, against: :short_label
   pg_search_scope :search_by_sample_external_label, against: :external_label
   pg_search_scope :search_by_cas, against: { xref: 'cas' }
+  pg_search_scope :search_by_molecule_name, associated_against: {
+    molecule_name: :name,
+  }
 
   # scopes for suggestions
   scope :by_residues_custom_info, lambda { |info, val|
@@ -122,6 +136,10 @@ class Sample < ApplicationRecord
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :by_sample_xref_cas,
         ->(query) { where("xref ? 'cas'").where("xref ->> 'cas' ILIKE ?", "%#{sanitize_sql_like(query)}%") }
+  scope :by_molecule_name, lambda { |query|
+    joins(:molecule_name)
+      .where('molecule_names.name ILIKE ?', "%#{sanitize_sql_like(query)}%")
+  }
   scope :by_exact_name, lambda { |query|
                           sanitized_query = "^([a-zA-Z0-9]+-)?#{sanitize_sql_like(query)}(-?[a-zA-Z])$"
                           where('lower(name) ~* lower(?) or lower(external_label) ~* lower(?)',
@@ -229,6 +247,8 @@ class Sample < ApplicationRecord
   has_many :analyses_experiments
   has_many :private_notes, as: :noteable, dependent: :destroy
   has_many :comments, as: :commentable, dependent: :destroy
+
+  has_many :components, dependent: :destroy
 
   belongs_to :fingerprint, optional: true
   belongs_to :user, optional: true
@@ -372,6 +392,18 @@ class Sample < ApplicationRecord
     end
   end
 
+  def create_components_for_mixture_subsample(subsample)
+    return if components.blank?
+
+    components.each do |component|
+      subsample.components.create!(
+        name: component.name,
+        position: component.position,
+        component_properties: component.component_properties,
+      )
+    end
+  end
+
   # rubocop:disable Metrics/AbcSize
   # rubocop:disable Metrics/CyclomaticComplexity
   # rubocop:disable Metrics/PerceivedComplexity
@@ -411,7 +443,10 @@ class Sample < ApplicationRecord
 
     subsample.container = Container.create_root_container
     subsample.save!
+
+    create_components_for_mixture_subsample(subsample)
     create_chemical_entry_for_subsample(id, subsample.id, type) unless type.nil?
+
     subsample
   end
 
@@ -516,7 +551,7 @@ class Sample < ApplicationRecord
       end
 
       if p_formula.present?
-        d = Chemotion::Calculations.get_composition(molecule_sum_formular, p_formula, (p_loading || 0.0))
+        d = Chemotion::Calculations.get_composition(molecule_sum_formular, p_formula, p_loading || 0.0)
         # if it is reaction product then loading has been calculated
         l_type = if residue['custom_info']['loading_type'] == 'mass_diff'
                    'mass_diff'
@@ -582,10 +617,6 @@ class Sample < ApplicationRecord
     mnl && !is_sum_form ? mnl : molecule_iupac_name
   end
 
-  def user_labels
-    tag&.taggable_data&.fetch('user_labels', nil)
-  end
-
   def detect_amount_type
     condition = real_amount_value.nil? || real_amount_unit.nil?
     return { 'value' => target_amount_value, 'unit' => target_amount_unit } if condition
@@ -640,7 +671,7 @@ class Sample < ApplicationRecord
   end
 
   def check_molfile_polymer_section
-    return if decoupled
+    return if decoupled || sample_type == SAMPLE_TYPE_MIXTURE
     return unless molfile.include? 'R#'
 
     lines = molfile.lines

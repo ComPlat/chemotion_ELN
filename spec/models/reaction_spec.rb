@@ -1,5 +1,52 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: reactions
+#
+#  id                     :integer          not null, primary key
+#  conditions             :string
+#  created_by             :integer
+#  dangerous_products     :string           default([]), is an Array
+#  deleted_at             :datetime
+#  description            :text
+#  duration               :string
+#  gaseous                :boolean          default(FALSE)
+#  name                   :string
+#  observation            :text
+#  origin                 :jsonb
+#  plain_text_description :text
+#  plain_text_observation :text
+#  purification           :string           default([]), is an Array
+#  reaction_svg_file      :string
+#  rf_value               :string
+#  rinchi_long_key        :text
+#  rinchi_short_key       :string
+#  rinchi_string          :text
+#  rinchi_web_key         :string
+#  role                   :string
+#  rxno                   :string
+#  short_label            :string
+#  solvent                :string
+#  status                 :string
+#  temperature            :jsonb
+#  timestamp_start        :string
+#  timestamp_stop         :string
+#  tlc_description        :text
+#  tlc_solvents           :string
+#  variations             :jsonb
+#  vessel_size            :jsonb
+#  created_at             :datetime         not null
+#  updated_at             :datetime         not null
+#
+# Indexes
+#
+#  index_reactions_on_deleted_at        (deleted_at)
+#  index_reactions_on_rinchi_short_key  (rinchi_short_key)
+#  index_reactions_on_rinchi_web_key    (rinchi_web_key)
+#  index_reactions_on_role              (role)
+#  index_reactions_on_rxno              (rxno)
+#
 require 'rails_helper'
 require Rails.root.join 'spec/concerns/taggable.rb'
 require Rails.root.join 'spec/concerns/reaction_rinchi.rb'

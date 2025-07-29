@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Card, Button } from 'react-bootstrap';
 import QuillViewer from 'src/components/QuillViewer';
+import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 
 const tryParse = function TryParseToJson(obj) {
   if (typeof obj === 'object') return obj;
@@ -105,20 +106,14 @@ FormatComponentHeader.propTypes = {
 const FormatComponent = ({
   list, isPendingToSave, onSave, onFormat, onClose
 }) => (
-  <Card className={"detail-card" + (isPendingToSave ? " detail-card--unsaved" : "")}>
-    <Card.Header>
-      <FormatComponentHeader
-        onSave={onSave}
-        onFormat={onFormat}
-        onClose={onClose}
-      />
-    </Card.Header>
-    <Card.Body className="d-flex flex-column gap-3">
-      {list.map((el, idx) => (
-        <ElementAnalyses key={el.id} element={el} idx={idx} />
-      ))}
-    </Card.Body>
-  </Card>
+  <DetailCard
+    isPendingToSave={isPendingToSave}
+    header={<FormatComponentHeader onSave={onSave} onFormat={onFormat} onClose={onClose} />}
+  >
+    {list.map((el, idx) => (
+      <ElementAnalyses key={el.id} element={el} idx={idx} />
+    ))}
+  </DetailCard>
 );
 
 FormatComponent.propTypes = {

@@ -1,5 +1,35 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: reports
+#
+#  id                   :integer          not null, primary key
+#  configs              :text
+#  deleted_at           :datetime
+#  file_description     :text
+#  file_name            :string
+#  file_path            :string
+#  generated_at         :datetime
+#  img_format           :string
+#  mol_serials          :text             default([])
+#  objects              :text
+#  prd_atts             :text             default([])
+#  reaction_settings    :text
+#  sample_settings      :text
+#  si_reaction_settings :text             default({"Name"=>true, "CAS"=>true, "Formula"=>true, "Smiles"=>true, "InCHI"=>true, "Molecular Mass"=>true, "Exact Mass"=>true, "EA"=>true})
+#  template             :string           default("standard")
+#  created_at           :datetime         not null
+#  updated_at           :datetime         not null
+#  author_id            :integer
+#  report_templates_id  :integer
+#
+# Indexes
+#
+#  index_reports_on_author_id            (author_id)
+#  index_reports_on_file_name            (file_name)
+#  index_reports_on_report_templates_id  (report_templates_id)
+#
 require 'rails_helper'
 
 RSpec.describe Report, type: :report do

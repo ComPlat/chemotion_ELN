@@ -1,9 +1,10 @@
 import { get, cloneDeep } from 'lodash';
 import {
-  materialTypes, getStandardUnits, getCellDataType, updateColumnDefinitions, getStandardValue, convertUnit
+  materialTypes, getStandardUnits, getCellDataType, getStandardValue, convertUnit,
+  getEntryDefs, getCurrentEntry
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
-  MaterialOverlay, MenuHeader
+  MaterialOverlay, MaterialRenderer, MenuHeader
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import { calculateTON, calculateFeedstockMoles } from 'src/utilities/UnitsConversion';
 
@@ -162,7 +163,7 @@ function getMaterialEntries(materialType, gasType) {
 }
 
 function cellIsEditable(params) {
-  const entry = params.colDef.entryDefs.currentEntry;
+  const entry = getCurrentEntry(params.colDef.entryDefs);
   const cellData = get(params.data, params.colDef.field);
   const { isReference, gasType, materialType } = cellData.aux;
 
@@ -226,7 +227,7 @@ function getMaterialData(material, materialType, gasMode = false, vesselVolume =
   return materialData;
 }
 
-function updateVariationsAux(variations, materials, gasMode, vesselVolume) {
+function updateVariationsOnAuxChange(variations, materials, gasMode, vesselVolume) {
   const updatedVariations = cloneDeep(variations);
   updatedVariations.forEach((row) => {
     Object.keys(materialTypes).forEach((materialType) => {
@@ -234,7 +235,17 @@ function updateVariationsAux(variations, materials, gasMode, vesselVolume) {
         if (!Object.prototype.hasOwnProperty.call(row[materialType], material.id.toString())) {
           return;
         }
-        row[materialType][material.id].aux = getMaterialAux(material, materialType, gasMode, vesselVolume);
+        if (row[materialType][material.id].aux.gasType !== getMaterialGasType(material, gasMode)) {
+          // Re-instantiate the entire material data because we need another set of entries if gas type changes.
+          row[materialType][material.id] = getMaterialData(
+            material,
+            materialType,
+            gasMode,
+            vesselVolume
+          );
+        } else {
+          row[materialType][material.id].aux = getMaterialAux(material, materialType, gasMode, vesselVolume);
+        }
       });
     });
   });
@@ -254,16 +265,15 @@ function getReactionMaterialsHashes(materials, gasMode, vesselVolume) {
   );
 }
 
-function getMaterialColumnGroupChild(material, materialType, gasMode) {
+function getMaterialColumnGroupChild(material, materialType, gasMode, externalEntryDefs = undefined) {
   const materialCopy = cloneDeep(material);
 
   const gasType = getMaterialGasType(materialCopy, gasMode);
 
-  const entries = getMaterialEntries(
+  const entryDefs = externalEntryDefs || getEntryDefs(getMaterialEntries(
     materialType,
     gasType
-  );
-  const entry = entries[0];
+  ));
 
   let names = new Set([`ID: ${materialCopy.id}`]);
   ['external_label', 'name', 'short_label', 'molecule_formula', 'molecule_iupac_name'].forEach((name) => {
@@ -277,34 +287,38 @@ function getMaterialColumnGroupChild(material, materialType, gasMode) {
     field: `${materialType}.${materialCopy.id}`, // Must be unique.
     tooltipField: `${materialType}.${materialCopy.id}`,
     tooltipComponent: MaterialOverlay,
-    entryDefs: {
-      currentEntry: entry,
-      displayUnit: getStandardUnits(entry)[0],
-      availableEntries: entries
-    },
+    entryDefs,
     editable: (params) => cellIsEditable(params),
-    cellDataType: getCellDataType(entry, gasType),
+    cellDataType: getCellDataType(getCurrentEntry(entryDefs), gasType),
     headerComponent: MenuHeader,
     headerComponentParams: {
       names,
       gasType,
     },
+    cellRenderer: MaterialRenderer
   };
 }
 
-function resetColumnDefinitionsMaterials(columnDefinitions, materials, selectedColumns, gasMode) {
-  return Object.entries(materials).reduce((updatedDefinitions, [materialType, materialsOfType]) => {
-    const updatedMaterials = materialsOfType
-      .filter((material) => selectedColumns[materialType].includes(material.id.toString()))
-      .map((material) => getMaterialColumnGroupChild(material, materialType, gasMode));
+function updateColumnDefinitionsMaterialsOnAuxChange(columnDefinitions, materials, gasMode) {
+  const materialTypeKeys = Object.keys(materialTypes);
+  const updatedColumnDefinitions = cloneDeep(columnDefinitions);
 
-    return updateColumnDefinitions(
-      updatedDefinitions,
-      materialType,
-      'children',
-      updatedMaterials
-    );
-  }, cloneDeep(columnDefinitions));
+  return updatedColumnDefinitions.map((parent) => {
+    if (parent.groupId && materialTypeKeys.includes(parent.groupId) && parent.children) {
+      parent.children = parent.children.map((child) => {
+        const [materialType, materialId] = child.field.split('.');
+        const material = materials[materialType].find((m) => m.id.toString() === materialId);
+        const gasType = getMaterialGasType(material, gasMode);
+
+        if (gasType !== child.headerComponentParams.gasType) {
+          return getMaterialColumnGroupChild(material, materialType, gasMode);
+        }
+
+        return child;
+      });
+    }
+    return parent;
+  });
 }
 
 function removeObsoleteMaterialColumns(materials, columns) {
@@ -385,13 +399,13 @@ export {
   getReactionMaterialsIDs,
   getReactionMaterialsHashes,
   getMaterialData,
-  resetColumnDefinitionsMaterials,
+  updateColumnDefinitionsMaterialsOnAuxChange,
   updateVariationsRowOnReferenceMaterialChange,
   updateVariationsRowOnCatalystMaterialChange,
   updateVariationsRowOnFeedstockMaterialChange,
   computeDerivedQuantitiesVariationsRow,
   removeObsoleteMaterialColumns,
-  updateVariationsAux,
+  updateVariationsOnAuxChange,
   getReferenceMaterial,
   getCatalystMaterial,
   getFeedstockMaterial,

@@ -25,7 +25,6 @@ const ImgFormat = ({ imgFormat }) => (
       value={imgFormatOpts.find(({value}) => value == imgFormat)}
       isClearable={false}
       onChange={onImgFormatChange}
-      menuPortalTarget={document.body}
     />
     {imgFormat === 'eps' && (
       <Form.Text>
@@ -108,7 +107,6 @@ const Config = (props) => {
           value={template}
           isClearable={false}
           onChange={onTemplateChange}
-          menuPortalTarget={document.body}
         />
       </Form.Group>
 

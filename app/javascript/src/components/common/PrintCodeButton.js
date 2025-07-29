@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
-import { Tooltip, OverlayTrigger, Dropdown, DropdownButton } from 'react-bootstrap';
+import { Tooltip, OverlayTrigger, Dropdown } from 'react-bootstrap';
 import PrintCodeModal from 'src/components/common/PrintCodeModal';
 
 // Component that allows users to print a PDF.
@@ -76,26 +77,32 @@ export default function PrintCodeButton({ element, analyses }) {
           </Tooltip>
         )}
       >
-        <DropdownButton
-          id="print-code"
-          variant="light"
-          disabled={element.isNew}
-          size="xxsm"
-          onClick={(event) => { event.stopPropagation() }}
-          title={<i className="fa fa-barcode fa-lg" />}
-        >
-          {menuItems.map((e) => (
-            <Dropdown.Item
-              key={e.key}
-              onClick={() => {
-                setSelectedConfig(e.contents);
-                handleModalShow();
-              }}
-            >
-              {e.text}
-            </Dropdown.Item>
-          ))}
-        </DropdownButton>
+        <Dropdown>
+          <Dropdown.Toggle
+            variant="light"
+            disabled={element.isNew}
+            size="xxsm"
+          >
+            <i className="fa fa-barcode fa-lg" />
+          </Dropdown.Toggle>
+
+          {createPortal(
+            <Dropdown.Menu>
+              {menuItems.map((e) => (
+                <Dropdown.Item
+                  key={e.key}
+                  onClick={() => {
+                    setSelectedConfig(e.contents);
+                    handleModalShow();
+                  }}
+                >
+                  {e.text}
+                </Dropdown.Item>
+              ))}
+            </Dropdown.Menu>,
+            document.body,
+          )}
+        </Dropdown>
       </OverlayTrigger>
 
       {/* Display the modal */}

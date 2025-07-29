@@ -351,6 +351,8 @@ module Chemotion
         optional :sum_formula, type: String
         optional :collection_id, type: Integer, desc: 'Collection id'
         # use :root_container_params
+        optional :sample_type, type: String, default: 'Micromolecule', values: Sample::SAMPLE_TYPES
+        optional :sample_details, type: Hash, desc: 'extra params for mixtures or polymers'
       end
 
       route_param :id do
@@ -480,6 +482,8 @@ module Chemotion
         optional :inventory_sample, type: Boolean, default: false
         optional :molecular_mass, type: Float
         optional :sum_formula, type: String
+        optional :sample_type, type: String, default: 'Micromolecule', values: Sample::SAMPLE_TYPES
+        optional :sample_details, type: Hash, desc: 'extra params for mixtures or polymers'
       end
       post do
         molecule_id = if params[:decoupled] && params[:molfile].blank?
@@ -517,6 +521,8 @@ module Chemotion
           inventory_sample: params[:inventory_sample],
           molecular_mass: params[:molecular_mass],
           sum_formula: params[:sum_formula],
+          sample_type: params[:sample_type],
+          sample_details: params[:sample_details],
         }
 
         boiling_point_lowerbound = (params['boiling_point_lowerbound'].presence || -Float::INFINITY)

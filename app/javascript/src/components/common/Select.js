@@ -1,7 +1,9 @@
 import React, { forwardRef } from 'react';
+import PropTypes from 'prop-types';
 import RSelect from 'react-select';
 import RAsyncSelect from 'react-select/async';
 import RCreatableSelect from 'react-select/creatable';
+import cs from 'classnames';
 
 /* eslint-disable react/jsx-props-no-spreading */
 
@@ -9,54 +11,80 @@ import RCreatableSelect from 'react-select/creatable';
 // see https://react-select.com/styles#the-unstyled-prop
 // see https://react-select.com/styles#the-classnameprefix-prop
 
-export const Select = forwardRef(function Select(props, ref) {
-  return (
-    <RSelect
-      className={["chemotion-select", props.className].join(' ')}
-      classNamePrefix="chemotion-select"
-      ref={ref}
-      unstyled
-      {...props}
-      styles={{
-        control: (baseStyles) => ({
-          ...baseStyles,
-          minWidth: props.minWidth || '0',
-        }),
-        menuList: (baseStyles, state) => ({
-          ...baseStyles,
-          maxHeight: props.maxHeight || "250px",
-        }),
-      }}
-    />
-  );
-});
+const baseClassName = 'chemotion-select';
 
-export const AsyncSelect = ({ className, ...props }) => (
-  <RAsyncSelect
-    className={["chemotion-select", className].join(' ')}
-    classNamePrefix="chemotion-select"
-    unstyled
-    {...props}
-    styles={{
-      control: (baseStyles) => ({
-        ...baseStyles,
-        minWidth: props.minWidth || '0',
-      }),
-    }}
-  />
-);
+function buildWrappedComponent(name, BaseComponent) {
+  const component = forwardRef(({
+    minWidth,
+    maxHeight,
+    className,
+    styles = {},
+    ...props
+  }, ref) => {
+    const styleDefaults = {
+      control: {
+        minWidth: minWidth || '0',
+      },
+      menuList: {
+        maxHeight: maxHeight || '250px',
+      },
+      menu: {
+        minWidth: '100%',
+        width: 'max-content',
+        maxWidth: '400px',
+      },
+      menuPortal: {
+        position: 'fixed',
+        zIndex: 9000,
+      }
+    };
 
-export const CreatableSelect = ({ className, ...props }) => (
-  <RCreatableSelect
-    className={["chemotion-select", className].join(' ')}
-    classNamePrefix="chemotion-select"
-    unstyled
-    {...props}
-    styles={{
-      control: (baseStyles) => ({
-        ...baseStyles,
-        minWidth: props.minWidth || '0',
-      }),
-    }}
-  />
-);
+    const stylesWithOverrides = {
+      ...styles,
+      ...Object.entries(styleDefaults).reduce(
+        (acc, [key, defaults]) => {
+          acc[key] = (base, state) => ({
+            ...(styles[key] ? styles[key](base, state) : base),
+            ...defaults,
+          });
+          return acc;
+        },
+        {}
+      )
+    };
+
+    return (
+      <BaseComponent
+        {...props}
+        className={cs(
+          baseClassName,
+          className,
+        )}
+        classNamePrefix={baseClassName}
+        ref={ref}
+        menuPortalTarget={document.body}
+        menuPlacement="auto"
+        unstyled
+        styles={stylesWithOverrides}
+      />
+    );
+  });
+
+  component.displayName = name;
+  component.propTypes = {
+    ...BaseComponent.propTypes,
+    minWidth: PropTypes.string,
+    maxHeight: PropTypes.string,
+  };
+  component.defaultProps = {
+    ...BaseComponent.defaultProps,
+    minWidth: null,
+    maxHeight: null,
+  };
+
+  return component;
+}
+
+export const Select = buildWrappedComponent('Select', RSelect);
+export const AsyncSelect = buildWrappedComponent('AsyncSelect', RAsyncSelect);
+export const CreatableSelect = buildWrappedComponent('CreatableSelect', RCreatableSelect);

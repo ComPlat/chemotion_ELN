@@ -93,6 +93,7 @@ class UIStore {
       matrices: {},
       thirdPartyApps: [],
       version: {},
+      redirectedFromMixture: false,
     };
 
     this.bindListeners({
@@ -135,6 +136,7 @@ class UIStore {
       handleShowGenericWorkflowModal: UIActions.showGenericWorkflowModal,
       handleExpandSidebar: UIActions.expandSidebar,
       handleToggleSidebar: UIActions.toggleSidebar,
+      handleSetRedirectedFromMixture: UIActions.setRedirectedFromMixture,
     });
   }
 
@@ -549,6 +551,10 @@ class UIStore {
 
   handleToggleSidebar() {
     this.setState({ isSidebarCollapsed: !this.state.isSidebarCollapsed });
+  }
+
+  handleSetRedirectedFromMixture(value) {
+    this.state.redirectedFromMixture = value;
   }
 }
 

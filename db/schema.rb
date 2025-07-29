@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2025_05_26_160014) do
+ActiveRecord::Schema.define(version: 2025_07_01_121908) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -59,7 +59,7 @@ ActiveRecord::Schema.define(version: 2025_05_26_160014) do
     t.string "storage", limit: 20, default: "tmp"
     t.integer "created_by", null: false
     t.integer "created_for"
-    t.string "version"
+    t.string "version", default: "/", null: false, collation: "C"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "content_type"
@@ -77,6 +77,7 @@ ActiveRecord::Schema.define(version: 2025_05_26_160014) do
     t.string "created_by_type"
     t.index ["attachable_type", "attachable_id"], name: "index_attachments_on_attachable_type_and_attachable_id"
     t.index ["identifier"], name: "index_attachments_on_identifier", unique: true
+    t.index ["version"], name: "index_attachments_on_version", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
   end
 
   create_table "authentication_keys", id: :serial, force: :cascade do |t|
@@ -151,8 +152,8 @@ ActiveRecord::Schema.define(version: 2025_05_26_160014) do
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.string "short_label"
-    t.string "ancestry"
-    t.index ["ancestry"], name: "index_cellline_samples_on_ancestry"
+    t.string "ancestry", default: "/", null: false, collation: "C"
+    t.index ["ancestry"], name: "index_cellline_samples_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
   end
 
   create_table "channels", id: :serial, force: :cascade do |t|
@@ -184,7 +185,7 @@ ActiveRecord::Schema.define(version: 2025_05_26_160014) do
 
   create_table "collections", id: :serial, force: :cascade do |t|
     t.integer "user_id", null: false
-    t.string "ancestry"
+    t.string "ancestry", default: "/", null: false, collation: "C"
     t.text "label", null: false
     t.integer "shared_by_id"
     t.boolean "is_shared", default: false
@@ -205,7 +206,7 @@ ActiveRecord::Schema.define(version: 2025_05_26_160014) do
     t.integer "celllinesample_detail_level", default: 10
     t.bigint "inventory_id"
     t.integer "devicedescription_detail_level", default: 10
-    t.index ["ancestry"], name: "index_collections_on_ancestry"
+    t.index ["ancestry"], name: "index_collections_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
     t.index ["deleted_at"], name: "index_collections_on_deleted_at"
     t.index ["inventory_id"], name: "index_collections_on_inventory_id"
     t.index ["user_id"], name: "index_collections_on_user_id"
@@ -318,6 +319,16 @@ ActiveRecord::Schema.define(version: 2025_05_26_160014) do
     t.index ["section"], name: "index_comments_on_section"
   end
 
+  create_table "components", force: :cascade do |t|
+    t.bigint "sample_id", null: false
+    t.string "name"
+    t.integer "position"
+    t.jsonb "component_properties"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["sample_id"], name: "index_components_on_sample_id"
+  end
+
   create_table "computed_props", id: :serial, force: :cascade do |t|
     t.integer "molecule_id"
     t.float "max_potential", default: 0.0
@@ -364,6 +375,7 @@ ActiveRecord::Schema.define(version: 2025_05_26_160014) do
     t.text "plain_text_content"
     t.jsonb "log_data"
     t.index ["containable_type", "containable_id"], name: "index_containers_on_containable"
+    t.index ["parent_id"], name: "index_containers_on_parent_id", where: "(deleted_at IS NULL)"
   end
 
   create_table "dataset_klasses", id: :serial, force: :cascade do |t|
@@ -449,7 +461,7 @@ ActiveRecord::Schema.define(version: 2025_05_26_160014) do
   create_table "device_descriptions", force: :cascade do |t|
     t.string "access_comments"
     t.string "access_options"
-    t.string "ancestry"
+    t.string "ancestry", default: "/", null: false, collation: "C"
     t.string "application_name"
     t.string "application_version"
     t.string "building"
@@ -501,7 +513,7 @@ ActiveRecord::Schema.define(version: 2025_05_26_160014) do
     t.string "vendor_company_name"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
-    t.index ["ancestry"], name: "index_device_descriptions_on_ancestry"
+    t.index ["ancestry"], name: "index_device_descriptions_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
     t.index ["device_id"], name: "index_device_descriptions_on_device_id"
   end
 
@@ -984,7 +996,7 @@ ActiveRecord::Schema.define(version: 2025_05_26_160014) do
   create_table "ols_terms", id: :serial, force: :cascade do |t|
     t.string "owl_name"
     t.string "term_id"
-    t.string "ancestry"
+    t.string "ancestry", default: "/", null: false, collation: "C"
     t.string "ancestry_term_id"
     t.string "label"
     t.string "synonym"
@@ -994,7 +1006,7 @@ ActiveRecord::Schema.define(version: 2025_05_26_160014) do
     t.boolean "is_enabled", default: true
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["ancestry"], name: "index_ols_terms_on_ancestry"
+    t.index ["ancestry"], name: "index_ols_terms_on_ancestry", opclass: :varchar_pattern_ops
     t.index ["owl_name", "term_id"], name: "index_ols_terms_on_owl_name_and_term_id", unique: true
   end
 
@@ -1265,7 +1277,7 @@ ActiveRecord::Schema.define(version: 2025_05_26_160014) do
     t.string "impurities", default: ""
     t.string "location", default: ""
     t.boolean "is_top_secret", default: false
-    t.string "ancestry"
+    t.string "ancestry", default: "/", null: false, collation: "C"
     t.string "external_label", default: ""
     t.integer "created_by"
     t.string "short_label"
@@ -1293,7 +1305,10 @@ ActiveRecord::Schema.define(version: 2025_05_26_160014) do
     t.jsonb "solvent"
     t.boolean "dry_solvent", default: false
     t.boolean "inventory_sample", default: false
+    t.string "sample_type", default: "Micromolecule"
+    t.jsonb "sample_details"
     t.jsonb "log_data"
+    t.index ["ancestry"], name: "index_samples_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
     t.index ["identifier"], name: "index_samples_on_identifier"
     t.index ["inventory_sample"], name: "index_samples_on_inventory_sample"
@@ -1634,6 +1649,7 @@ ActiveRecord::Schema.define(version: 2025_05_26_160014) do
   end
 
   add_foreign_key "collections", "inventories"
+  add_foreign_key "components", "samples"
   add_foreign_key "layer_tracks", "layers", column: "identifier", primary_key: "identifier"
   add_foreign_key "literals", "literatures"
   add_foreign_key "report_templates", "attachments"
@@ -2513,12 +2529,14 @@ ActiveRecord::Schema.define(version: 2025_05_26_160014) do
       $function$
   SQL
 
-
   create_trigger :logidze_on_reactions, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_reactions BEFORE INSERT OR UPDATE ON public.reactions FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
   create_trigger :logidze_on_samples, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_samples BEFORE INSERT OR UPDATE ON public.samples FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :set_samples_mol_rdkit_trg, sql_definition: <<-SQL
+      CREATE TRIGGER set_samples_mol_rdkit_trg BEFORE INSERT OR UPDATE ON public.samples FOR EACH ROW EXECUTE FUNCTION set_samples_mol_rdkit()
   SQL
   create_trigger :logidze_on_wells, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_wells BEFORE INSERT OR UPDATE ON public.wells FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')

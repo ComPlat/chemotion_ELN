@@ -22,6 +22,8 @@ function ListItemHeader({
   let groupName = groupedByValue === 'short_label' ? group[0].short_label : groupKey;
   if (groupKey !== '[empty]' && groupKey !== '[other]' && !groupedByValue.includes('ontology')) {
     groupName = `${groupDeviceName} - ${groupKey} ${groupType}`;
+  } else if (groupKey === '[empty]') {
+    groupName = '[missing serial no]';
   }
 
   return (

@@ -220,6 +220,32 @@ describe Chemotion::SearchAPI do
         expect(result.dig('wellplates', 'totalElements')).to eq 1
         expect(result.dig('wellplates', 'ids')).to eq [wellplate.id]
       end
+
+      context 'when link is incorrectly set for first advanced param' do
+        let(:advanced_params) do
+          [
+            {
+              link: 'OR',
+              match: 'LIKE',
+              table: 'samples',
+              element_id: 0,
+              field: {
+                column: 'name',
+                label: 'Name',
+              },
+              value: search_term,
+              sub_values: [],
+              unit: '',
+            },
+          ]
+        end
+
+        it 'returns the same sample' do
+          result = JSON.parse(response.body)
+          expect(result.dig('samples', 'totalElements')).to eq 1
+          expect(result.dig('samples', 'ids')).to eq [sample_a.id]
+        end
+      end
     end
 
     context 'when searching a duration in reactions in correct collection' do

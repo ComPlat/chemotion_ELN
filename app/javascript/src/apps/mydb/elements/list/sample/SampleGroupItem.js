@@ -52,6 +52,12 @@ const showDecoupledIcon = (sample) => (
   ) : null
 );
 
+const showMixtureIcon = (sample) => (sample.isMixture() ? (
+  <OverlayTrigger placement="top" overlay={<Tooltip id="tip_mixture_icon">is a mixture</Tooltip>}>
+    <Button size="xxsm" variant="light"><i className="fa fa-glass" aria-hidden="true" /></Button>
+  </OverlayTrigger>
+) : null);
+
 const showInventoryLabelIcon = (sample) => (
   sample.inventory_sample && sample.inventory_label ? (
     <OverlayTrigger
@@ -90,6 +96,7 @@ function SampleGroupItem({ sample, showDetails }) {
           <ElementAnalysesLabels element={sample} />
         </div>
         {showDecoupledIcon(sample)}
+        {showMixtureIcon(sample)}
         <TopSecretIcon element={sample} />
       </div>
     </div>

@@ -1,5 +1,20 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: collections_reactions
+#
+#  id            :integer          not null, primary key
+#  deleted_at    :datetime
+#  collection_id :integer
+#  reaction_id   :integer
+#
+# Indexes
+#
+#  index_collections_reactions_on_collection_id                  (collection_id)
+#  index_collections_reactions_on_deleted_at                     (deleted_at)
+#  index_collections_reactions_on_reaction_id_and_collection_id  (reaction_id,collection_id) UNIQUE
+#
 require 'rails_helper'
 
 RSpec.describe CollectionsReaction, type: :model do
