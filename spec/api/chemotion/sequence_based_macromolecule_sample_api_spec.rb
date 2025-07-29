@@ -418,7 +418,7 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
       end
     end
 
-    context 'when creating a modified SBMM based on a non-uniprot SBMM' do
+    context 'when creating a sample for a modified SBMM based on a non-uniprot SBMM' do
       let(:non_uniprot_sbmm) { create(:non_uniprot_sbmm) }
       let(:post_for_child_of_non_uniprot_sbmm) do
         {
@@ -561,7 +561,7 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
           other_sbmm
         end
 
-        it 'returns a 200 error' do
+        it 'returns a 200 code' do
           put "/api/v1/sequence_based_macromolecule_samples/#{sbmm_sample.id}", params: put_data, as: :json
           expect(response.status).to eq 200
         end
