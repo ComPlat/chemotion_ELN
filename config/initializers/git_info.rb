@@ -5,8 +5,8 @@ require 'open3'
 module GitInfo
   class << self
     def run
-      return unless git_available?
-      return unless in_git_repo?
+      return {} unless git_available?
+      return {} unless in_git_repo?
 
       info[:tag] = capture('git describe --tags --long --dirty')
       info[:branch] = capture('git describe --all')
