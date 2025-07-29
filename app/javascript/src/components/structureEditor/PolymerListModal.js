@@ -124,9 +124,9 @@ function PolymerListModal({
                                 >
                                   <div className='flex flex-col items-center gap-2'>
                                     <PolymerIcon />
-                                    <p className="fw-400">
+                                    {/* <p className="fw-400">
                                       {shape.name}
-                                    </p>
+                                    </p> */}
                                   </div>
                                 </Button>
                               );
