@@ -402,9 +402,10 @@ export const SequenceBasedMacromoleculeSamplesStore = types
     closeSearchResult() {
       self.show_search_result = false;
     },
-    openConflictModal(sbmm_data, conflicting_sbmm_id) {
+    openConflictModal(original_sbmm, requested_changes) {
       self.show_conflict_modal = true;
-      self.getSequenceBasedMacromoleculeByIds(sbmm_data, conflicting_sbmm_id);
+      self.conflict_sbmms = [requested_changes, original_sbmm];
+      //self.getSequenceBasedMacromoleculeByIds(sbmm_data, conflicting_sbmm_id);
     },
     closeConflictModal() {
       self.show_conflict_modal = false;

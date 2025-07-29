@@ -124,7 +124,7 @@ const SequenceBasedMacromoleculeSampleDetails = () => {
           <Button
             variant="link"
             className="py-0 px-2"
-            onClick={() => sbmmStore.openConflictModal(conflict.sbmm_data, conflict.conflicting_sbmm_id)}
+            onClick={() => sbmmStore.openConflictModal(conflict.original_sbmm, conflict.requested_changes)}
           >
             Options
           </Button>

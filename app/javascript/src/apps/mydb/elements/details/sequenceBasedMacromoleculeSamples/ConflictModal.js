@@ -137,17 +137,17 @@ const ConflictModal = () => {
                     <td className="w-25">&nbsp;</td>
                     <td className="w-25">
                       <div className="d-flex align-content-between flex-wrap" style={{ height: "100px" }}>
-                        <span>
+                        <div className="w-100">
                           If the existing SBMM and its samples should be changed, please contact your system admin.
                           Your Sample will be saved with the existing SBMM.
-                        </span>
+                        </div>
                         
                         <Button variant="warning" className="mt-2">Contact your system admin</Button>
                       </div>
                     </td>
                     <td className="w-25">
                       <div className="d-flex align-content-between flex-wrap" style={{ height: "100px" }}>
-                        <span>Discard changes of your new SBMM and use existing SBMM to save this sample.</span>
+                        <div className="w-100">Discard changes of your new SBMM and use existing SBMM to save this sample.</div>
 
                         <Button variant="warning" className="mt-2">Use this SBMM</Button>
                       </div>
