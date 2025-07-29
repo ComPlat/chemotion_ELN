@@ -69,11 +69,11 @@ ActiveRecord::Schema.define(version: 202501151333346) do
     t.string "folder"
     t.string "attachable_type"
     t.string "aasm_state"
+    t.datetime "deleted_at"
     t.bigint "filesize"
     t.jsonb "attachment_data"
     t.integer "con_state"
     t.jsonb "log_data"
-    t.datetime "deleted_at"
     t.string "created_by_type"
     t.index ["attachable_type", "attachable_id"], name: "index_attachments_on_attachable_type_and_attachable_id"
     t.index ["identifier"], name: "index_attachments_on_identifier", unique: true
@@ -281,8 +281,6 @@ ActiveRecord::Schema.define(version: 202501151333346) do
     t.bigint "collection_id"
     t.bigint "sequence_based_macromolecule_sample_id"
     t.datetime "deleted_at"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
     t.index ["collection_id", "sequence_based_macromolecule_sample_id"], name: "idx_collections_sbmm_sample_unique_joins", unique: true
     t.index ["collection_id"], name: "idx_collections_sbmm_sample_collection"
     t.index ["deleted_at"], name: "idx_collections_sbmm_sample_deleted_at"
@@ -1377,9 +1375,9 @@ ActiveRecord::Schema.define(version: 202501151333346) do
     t.jsonb "solvent"
     t.boolean "dry_solvent", default: false
     t.boolean "inventory_sample", default: false
-    t.jsonb "log_data"
     t.string "sample_type", default: "Micromolecule"
     t.jsonb "sample_details"
+    t.jsonb "log_data"
     t.index ["ancestry"], name: "index_samples_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
     t.index ["identifier"], name: "index_samples_on_identifier"

@@ -242,6 +242,8 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
             parent_identifier: 'P12345',
             sequence: 'MODIFIEDSEQUENCE',
             short_name: 'FooBar',
+            own_identifier: 'bla',
+            other_identifier: 'keks',
             protein_sequence_modification_attributes: {
               modification_n_terminal: true,
               modification_n_terminal_details: 'Some details',
@@ -372,6 +374,8 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
             parent: build(:uniprot_sbmm),
             sequence: 'MODIFIEDSEQUENCE',
             short_name: 'FooBar',
+            own_identifier: 'bla',
+            other_identifier: 'keks',
             protein_sequence_modification: build(
               :protein_sequence_modification,
               modification_n_terminal: true,
