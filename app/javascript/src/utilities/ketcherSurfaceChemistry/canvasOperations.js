@@ -480,12 +480,11 @@ export const saveMoveCanvas = async (
 
 const centerPositionCanvas = async (editor) => {
   try {
-    if (false) {
-      await fetchKetcherData(editor);
-      // await editor.editor.renderAndRecoordinateStruct(editor.editor.struct().clone());
-      // await editor._structureDef.editor.editor.renderAndRecoordinateStruct();
+    await fetchKetcherData(editor);
+    if (!textList.length) {
+      await editor._structureDef.editor.editor.struct().clone();
+      await editor._structureDef.editor.editor.renderAndRecoordinateStruct();
       // const clone = editor._structureDef.editor.editor.struct().clone();
-      // await editor.structureDef.editor.setMolecule(clone.toString());
       await fetchKetcherData(editor);
       saveMoveCanvas(editor, latestData, true, true, false);
       await fetchKetcherData(editor);
