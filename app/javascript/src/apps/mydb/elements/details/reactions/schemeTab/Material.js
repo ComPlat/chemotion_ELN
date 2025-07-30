@@ -21,6 +21,7 @@ import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 import { calculateFeedstockMoles } from 'src/utilities/UnitsConversion';
 import cs from 'classnames';
 import DragHandle from 'src/components/common/DragHandle';
+import DeleteButton from 'src/components/common/DeleteButton';
 
 const notApplicableInput = (className) => (
   <div>
@@ -728,15 +729,10 @@ class Material extends Component {
               size="sm"
             />
             {this.equivalentOrYield(material)}
-            <Button
-              className="reaction-material__delete-input"
+            <DeleteButton
               disabled={!permitOn(reaction)}
-              variant="danger"
-              size="sm"
               onClick={() => deleteMaterial(material)}
-            >
-              <i className="fa fa-trash-o" />
-            </Button>
+            />
           </div>
           {materialGroup === 'products' && (
             <>
@@ -835,15 +831,10 @@ class Material extends Component {
           value={reaction.volumeRatioByMaterialId(material.id)}
           disabled
         />
-        <Button
-          className="reaction-material__delete-input"
+        <DeleteButton
           disabled={!permitOn(reaction)}
-          variant="danger"
-          size="sm"
           onClick={() => deleteMaterial(material)}
-        >
-          <i className="fa fa-trash-o" />
-        </Button>
+        />
       </div>
     );
   }
