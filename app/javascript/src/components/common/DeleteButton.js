@@ -7,7 +7,7 @@ function DeleteButton({ ...props }) {
   return (
     <Button
       variant="danger"
-      size="xsm"
+      size="sm"
       className="delete-button"
       {...props}
     >

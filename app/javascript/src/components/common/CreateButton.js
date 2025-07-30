@@ -7,7 +7,7 @@ function CreateButton({ ...props }) {
   return (
     <Button
       variant="success"
-      size="xsm"
+      size="sm"
       className="create-button"
       {...props}
     >
