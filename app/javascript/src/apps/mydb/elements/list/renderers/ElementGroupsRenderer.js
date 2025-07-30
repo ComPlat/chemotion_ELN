@@ -1,14 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Set } from 'immutable';
-import { OverlayTrigger, Tooltip, Button } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 
 import ElementDragHandle from 'src/apps/mydb/elements/list/ElementDragHandle';
 import ElementItem from 'src/apps/mydb/elements/list/renderers/ElementItem';
-import ChevronIcon from 'src/components/common/ChevronIcon';
 
 function ElementGroupsRenderer({
   type,
@@ -95,7 +94,7 @@ function ElementGroupsRenderer({
 
         return (
           <div key={`element-group:${groupKey}`} className="element-group">
-            <div className="element-group-header">
+            <div className={`element-group-header${isCollapsed ? ' collapsed' : ''}`}>
               {groupHeaderDragType && (
                 <div className="element-group-header-drag-handle">
                   <ElementDragHandle
@@ -104,24 +103,8 @@ function ElementGroupsRenderer({
                   />
                 </div>
               )}
-              <div className="element-group-header-content">
+              <div className={`element-group-header-content${isCollapsed ? ' collapsed' : ''}`}>
                 {renderGroupHeader(group, toggleGroupCollapse)}
-              </div>
-              <div className="element-group-header-collapse">
-                <OverlayTrigger
-                  placement="top"
-                  overlay={(
-                    <Tooltip id={`collapse-tooltip-${groupKey}`}>
-                      {`${isCollapsed ? 'Expand' : 'Collapse'} group`}
-                    </Tooltip>
-                  )}
-                >
-                  <ChevronIcon
-                    direction={isCollapsed ? 'right' : 'down'}
-                    color="primary"
-                    onClick={toggleGroupCollapse}
-                  />
-                </OverlayTrigger>
               </div>
             </div>
             {!isCollapsed && (
