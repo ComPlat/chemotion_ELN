@@ -30,6 +30,16 @@ export default class Component extends Sample {
   }
 
   /** @type {number} */
+  get relative_molecular_weight() {
+    return this._relative_molecular_weight;
+  }
+
+  /** @param {number} relative_molecular_weight */
+  set relative_molecular_weight(relative_molecular_weight) {
+    this._relative_molecular_weight = relative_molecular_weight;
+  }
+
+  /** @type {number} */
   get amount_g() {
     return this._amount_g;
   }
@@ -600,6 +610,7 @@ export default class Component extends Sample {
         amount_mol: this.amount_mol,
         amount_l: this.amount_l,
         amount_g: this.amount_g,
+        relative_molecular_weight: this.relative_molecular_weight,
         density: this.density,
         molarity_unit: this.molarity_unit,
         molarity_value: this.molarity_value,
