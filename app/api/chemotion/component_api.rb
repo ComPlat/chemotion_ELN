@@ -71,7 +71,7 @@ module Chemotion
         authorize_sample_update!(sample)
 
         ActiveRecord::Base.transaction do
-          Usecases::Components::Create.new(sample.id, params[:components]).execute!
+          Usecases::Components::Create.new(sample, params[:components]).execute!
           Usecases::Components::DeleteRemovedComponents.new(sample.id, params[:components]).execute!
         end
         present Component.where(sample_id: sample.id), with: Entities::ComponentEntity
