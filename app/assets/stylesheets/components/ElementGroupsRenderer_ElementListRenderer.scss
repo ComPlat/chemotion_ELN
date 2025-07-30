@@ -4,11 +4,50 @@
 
 .element-list-renderer,
 .element-groups-renderer {
-  .element-list-item {
-    margin-top: 2px;
-  }
+  @extend .d-flex;
+  @extend .flex-column;
+  @extend .gap-2;
   .element-group {
-    @extend .mb-2;
+    --bs-accordion-color: #{$accordion-color};
+    --bs-accordion-bg: #{$accordion-bg};
+    --bs-accordion-border-width: #{$accordion-border-width};
+    --bs-accordion-border-color: #{$accordion-border-color};
+    --bs-accordion-border-radius: #{$accordion-border-radius};
+    --bs-accordion-padding-y: #{$accordion-padding-y};
+    --bs-accordion-padding-x: #{$accordion-padding-x};
+    --bs-accordion-body-padding-y: #{$accordion-body-padding-y};
+    --bs-accordion-body-padding-x: #{$accordion-body-padding-x};
+    --bs-accordion-btn-padding-y: #{$accordion-button-padding-y};
+    --bs-accordion-btn-padding-x: #{$accordion-button-padding-x};
+    --bs-accordion-btn-color: #{$accordion-button-color};
+    --bs-accordion-btn-bg: #{$accordion-button-bg};
+    --bs-accordion-active-bg: #{$accordion-button-active-bg};
+    --bs-accordion-active-color: #{$accordion-button-active-color};
+    --bs-accordion-btn-focus-border-color: #{$accordion-button-focus-border-color};
+    --bs-accordion-btn-focus-box-shadow: #{$accordion-button-focus-box-shadow};
+    --bs-accordion-icon-width: #{$accordion-icon-width};
+    --bs-accordion-icon-color: #{$accordion-icon-color};
+    --bs-accordion-icon-active-color: #{$accordion-icon-active-color};
+    --bs-accordion-btn-icon-transition: #{$accordion-icon-transition};
+    --bs-accordion-btn-icon-transform: #{$accordion-icon-transform};
+    --bs-accordion-inner-border-radius: #{$accordion-inner-border-radius};
+    @extend .accordion-item;
+    // apply following rules to every item, as they are rendered separated by a gap
+    border-radius: var(--bs-accordion-border-radius) !important;
+    border-top: var(--bs-accordion-border-width) solid
+      var(--bs-accordion-border-color) !important;
+  }
+  .element-group-items {
+    @extend .accordion-body;
+    @extend .d-flex;
+    @extend .flex-column;
+    @extend .gap-1;
+  }
+  .element-group-header-content {
+    @extend .accordion-button;
+    // apply following rules to every item, as they are rendered separated by a gap
+    border-top-left-radius: var(--bs-accordion-inner-border-radius) !important;
+    border-top-right-radius: var(--bs-accordion-inner-border-radius) !important;
   }
   .element-group-header-content,
   .element-list-item-content {
@@ -16,10 +55,16 @@
     @extend .p-2;
   }
   .element-group-header {
-    @include draggable-list-item(false);
+    @extend .accordion-header;
+    &:not(.collapsed) {
+      .drag-handle {
+        border-bottom-left-radius: 0 !important;
+      }
+    }
   }
   .element-list-item {
-    @include draggable-list-item(true);
+    @include draggable-list-item();
+    @extend .rounded-end;
   }
   .element-list-item,
   .element-group-header {
