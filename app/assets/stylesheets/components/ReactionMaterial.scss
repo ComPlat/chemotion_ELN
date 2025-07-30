@@ -47,7 +47,7 @@ $rm-columns: (
 );
 
 .reaction-material {
-  @include draggable-list-item(false);
+  @include draggable-list-item();
   &.pseudo-table__row {
     @extend .align-items-start;
   }

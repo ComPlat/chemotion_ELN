@@ -41,21 +41,15 @@
   background-repeat: round;
 }
 
-@mixin draggable-list-item($selectable) {
+@mixin draggable-list-item() {
   @extend .rounded-start;
-  @if $selectable {
-    @extend .surface-lighten3;
-    &:hover {
-      @extend .surface-hover-on-white;
-    }
-    &.is-selected {
-      @extend .surface-active-on-white;
-      &:hover {
-        @extend .surface-hover-on-white;
-      }
-    }
-  } @else {
-    @extend .surface-lighten5;
+  @extend .surface-lighten4;
+  &:hover {
+    @extend .surface-hover-on-white;
+  }
+
+  &.is-selected {
+    @extend .surface-active-on-white;
     &:hover {
       @extend .surface-hover-on-white;
     }
