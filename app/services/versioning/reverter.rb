@@ -1,49 +1,38 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/CyclomaticComplexity
-
 module Versioning
   class Reverter
     include ActiveModel::Model
 
     attr_accessor :changes
 
+    ALLOWED_REVERTERS = %w[Attachment Chemical Container DeviceDescription ElementalComposition Reactions
+                           ReactionsSample ResearchPlan ResearchPlanMetadata Residue
+                           Sample Screen Wellplate Well].freeze
+
     def self.call(changes)
       new(changes: changes).call
     end
 
     def call
+      errors = []
+
       changes.each do |change|
-        case change['klass_name']
-        when 'Attachment'
-          Versioning::Reverters::AttachmentReverter.call(change)
-        when 'Chemical'
-          Versioning::Reverters::ChemicalReverter.call(change)
-        when 'Container'
-          Versioning::Reverters::ContainerReverter.call(change)
-        when 'ElementalComposition'
-          Versioning::Reverters::ElementalCompositionReverter.call(change)
-        when 'Reaction'
-          Versioning::Reverters::ReactionReverter.call(change)
-        when 'ReactionsSample'
-          Versioning::Reverters::ReactionsSampleReverter.call(change)
-        when 'ResearchPlan'
-          Versioning::Reverters::ResearchPlanReverter.call(change)
-        when 'ResearchPlanMetadata'
-          Versioning::Reverters::ResearchPlanMetadataReverter.call(change)
-        when 'Residue'
-          Versioning::Reverters::ResidueReverter.call(change)
-        when 'Sample'
-          Versioning::Reverters::SampleReverter.call(change)
-        when 'Screen'
-          Versioning::Reverters::ScreenReverter.call(change)
-        when 'Wellplate'
-          Versioning::Reverters::WellplateReverter.call(change)
-        when 'Well'
-          Versioning::Reverters::WellReverter.call(change)
+        classname = change['klass_name']
+        unless ALLOWED_REVERTERS.include?(classname)
+          errors << "Unknown reverter type: #{classname}"
+          next
+        end
+
+        begin
+          reverter_class = "Versioning::Reverters::#{classname}Reverter".safe_constantize
+          reverter_class.call(change)
+        rescue StandardError => e
+          errors << "Error processing #{classname}: #{e.message}"
         end
       end
+
+      raise StandardError, errors.join(', ') if errors.any?
     end
   end
 end
-# rubocop:enable Metrics/CyclomaticComplexity

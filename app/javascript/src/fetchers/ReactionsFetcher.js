@@ -70,15 +70,12 @@ export default class ReactionsFetcher {
     ).then((response) => response.json()).catch((errorMessage) => console.log(errorMessage));
   }
 
-  static create(reaction, method = 'post') {
-    const reactionFiles = AttachmentFetcher.getFileListfrom(reaction.container);
-    let productsFiles = [];
-    reaction.products.forEach((prod) => {
-      const files = AttachmentFetcher.getFileListfrom(prod.container);
-      productsFiles = [...productsFiles, ...files];
-    });
-    const allFiles = reactionFiles.concat(productsFiles);
-
+  static async create(reaction, method = 'post') {
+    const uploadPromises = [
+      AttachmentFetcher.uploadNewAttachmentsForContainer(reaction.container),
+      ...reaction.products.map(prod => AttachmentFetcher.uploadNewAttachmentsForContainer(prod.container)),
+    ];
+    await Promise.all(uploadPromises);
     const promise = () => fetch(`/api/v1/reactions/${method === 'post' ? '' : reaction.id}`, {
       credentials: 'same-origin',
       method,
@@ -93,13 +90,6 @@ export default class ReactionsFetcher {
         .then(() => this.fetchById(json.reaction.id))).catch((errorMessage) => {
         console.log(errorMessage);
       });
-
-    if (allFiles.length > 0) {
-      const tasks = [];
-      allFiles.forEach((file) => tasks.push(AttachmentFetcher.uploadFile(file).then()));
-      return Promise.all(tasks).then(() => promise());
-    }
-
     return promise();
   }
 

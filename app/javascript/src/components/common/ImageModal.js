@@ -89,18 +89,18 @@ export default class ImageModal extends Component {
   }
 
   fetchImage() {
-    const { attachment } = this.props;
-    AttachmentFetcher.fetchImageAttachment({ id: attachment.id, annotated: true }).then(
-      (result) => {
-        if (result.data != null) {
+    try {
+      const { attachment } = this.props;
+      if (!attachment) throw new Error('Attachment is not provided');
+      AttachmentFetcher.fetchImageAttachment({ id: attachment.id, annotated: true }).then(
+        (result) => {
+          if (!result?.data) throw new Error('Attachment is not provided');
           this.setState({ fetchSrc: result.data, isPdf: result.type === 'application/pdf' });
-        } else {
-          this.setState({
-            fetchSrc: '/images/wild_card/not_available.svg'
-          });
         }
-      }
-    );
+      );
+    } catch (error) {
+      this.handleImageError();
+    }
   }
 
   async fetchImageThumbnail() {

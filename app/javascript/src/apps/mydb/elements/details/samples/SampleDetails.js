@@ -203,8 +203,8 @@ export default class SampleDetails extends React.Component {
 
     const smileReadonly = !(
       (sample.isNew
-       && (typeof (sample.molfile) === 'undefined'
-        || (sample.molfile || '').length === 0)
+        && (typeof (sample.molfile) === 'undefined'
+          || (sample.molfile || '').length === 0)
       )
       || (typeof (sample.molfile) !== 'undefined' && sample.molecule.inchikey === 'DUMMY')
     );
@@ -236,7 +236,11 @@ export default class SampleDetails extends React.Component {
   handleSampleChanged(sample, cb) {
     this.setState({
       sample,
-    }, cb);
+    }, () => {
+      if (typeof cb === 'function') {
+        cb();
+      }
+    });
   }
 
   handleAmountChanged(amount) {
@@ -1479,6 +1483,31 @@ export default class SampleDetails extends React.Component {
         stb.push(klass.label);
       }
     });
+
+    const { pageMessage } = this.state;
+    const messageBlock = (pageMessage
+      && (pageMessage.error.length > 0 || pageMessage.warning.length > 0)) ? (
+        <Alert variant="warning" style={{ marginBottom: 'unset', padding: '5px', marginTop: '10px' }}>
+          <strong>Structure Alert</strong>
+          <Button
+            size="sm"
+            variant="warning"
+            onClick={() => this.setState({ pageMessage: null })}
+          >
+            Close Alert
+          </Button>
+          {
+          pageMessage.error.map((m) => (
+            <div key={uuid.v1()}>{m}</div>
+          ))
+        }
+          {
+          pageMessage.warning.map((m) => (
+            <div key={uuid.v1()}>{m}</div>
+          ))
+        }
+        </Alert>
+      ) : null;
 
     const activeTab = (this.state.activeTab !== 0 && stb.indexOf(this.state.activeTab) > -1
       && this.state.activeTab) || visible.get(0);

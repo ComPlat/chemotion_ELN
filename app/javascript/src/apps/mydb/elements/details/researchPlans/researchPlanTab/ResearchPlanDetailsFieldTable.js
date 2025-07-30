@@ -6,15 +6,18 @@ import { AgGridReact } from 'ag-grid-react';
 import { ContextMenu, ContextMenuTrigger } from "react-contextmenu";
 import { Button, Row, Col, Dropdown } from 'react-bootstrap';
 import { cloneDeep } from 'lodash';
+import { v4 as uuidv4 } from 'uuid';
 
 import CustomHeader from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/CustomHeader';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ResearchPlanDetailsFieldTableColumnNameModal from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsFieldTableColumnNameModal';
 import ResearchPlanDetailsFieldTableMeasurementExportModal from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsFieldTableMeasurementExportModal';
 import ResearchPlanDetailsFieldTableSchemasModal from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsFieldTableSchemasModal';
+import { COLUMN_ID_SHORT_LABEL_SAMPLE, COLUMN_ID_SHORT_LABEL_REACTION } from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsFieldTableUtils';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 import ReactionsFetcher from 'src/fetchers/ReactionsFetcher';
+
 
 export default class ResearchPlanDetailsFieldTable extends Component {
   constructor(props) {
@@ -46,13 +49,19 @@ export default class ResearchPlanDetailsFieldTable extends Component {
   }
 
   buildColumn(columnName) {
+    const id = uuidv4();
+    // TODO implement a more robust way to set the column id and select the renderer not based on the column name
+    const colId = (columnName === COLUMN_ID_SHORT_LABEL_SAMPLE || columnName === COLUMN_ID_SHORT_LABEL_REACTION)
+      ? columnName
+      : id;
+
     return {
       cellEditor: 'agTextCellEditor',
-      colId: columnName,
+      colId,
       editable: true,
       field: columnName,
       headerName: columnName,
-      key: columnName,
+      key: id,
       name: columnName,
       resizable: true,
       width: 200,
@@ -73,13 +82,13 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     });
   }
 
-  handleColumnNameModalSubmit(columnName) {
+  handleColumnNameModalSubmit(columnName, newColId = null) {
     const { action, colId } = this.state.columnNameModal;
 
     if (action === 'insert') {
       this.handleColumnInsert(columnName);
     } else if (action === 'rename') {
-      this.handleColumnRename(colId, columnName);
+      this.handleColumnRename(colId, columnName, newColId);
     }
 
     this.handleColumnNameModalHide();
@@ -553,9 +562,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
   }
 
   openSampleByShortLabel(shortLabel) {
-    console.debug('opening Sample by short label', shortLabel);
     SamplesFetcher.findByShortLabel(shortLabel).then((result) => {
-      console.debug('got Result', result);
       if (result.sample_id && result.collection_id) {
         Aviator.navigate(`/collection/${result.collection_id}/sample/${result.sample_id}`, { silent: true });
         ElementActions.fetchSampleById(result.sample_id);
@@ -566,9 +573,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
   }
 
   openReactionByShortLabel(shortLabel) {
-    console.debug('opening reaction by short label', shortLabel);
     ReactionsFetcher.findByShortLabel(shortLabel).then((result) => {
-      console.debug('got Result', result);
       if (result.reaction_id && result.collection_id) {
         Aviator.navigate(`/collection/${result.collection_id}/reaction/${result.reaction_id}`, { silent: true });
         ElementActions.fetchReactionById(result.reaction_id);
@@ -579,16 +584,27 @@ export default class ResearchPlanDetailsFieldTable extends Component {
   }
 
   renderShortLabel(node) {
-    const shortLabel = node.data?.sample ? node.data.sample : node.data?.reaction;
-    if (node.data?.sample) {
-      return (<a className="link" onClick={(e) => { e.preventDefault(); this.openSampleByShortLabel(shortLabel) }}>
-        {shortLabel}
-      </a>);
-    } else if (node.data?.reaction) {
-      return (<a className="link" onClick={(e) => { e.preventDefault(); this.openReactionByShortLabel(shortLabel) }}>
-        {shortLabel}
-      </a>);
+    const { data } = node;
+    if (!data) {
+      return node.value || '';
     }
+    const sample = data[COLUMN_ID_SHORT_LABEL_SAMPLE];
+    const reaction = data[COLUMN_ID_SHORT_LABEL_REACTION];
+    if (sample && sample !== '') {
+      return (
+        <a className="link" onClick={(e) => { e.preventDefault(); this.openSampleByShortLabel(sample); }}>
+          {sample}
+        </a>
+      );
+    }
+    if (reaction && reaction !== '') {
+      return (
+        <a className="link" onClick={(e) => { e.preventDefault(); this.openReactionByShortLabel(reaction); }}>
+          {reaction}
+        </a>
+      );
+    }
+    return node.value || '';
   }
 
   renderStatic() {
@@ -597,7 +613,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     const staticColumns = cloneDeep(columns);
 
     staticColumns.forEach((item) => {
-      if (item.colId == 'sample' || item.colId == 'reaction') {
+      if (item.colId === COLUMN_ID_SHORT_LABEL_SAMPLE || item.colId === COLUMN_ID_SHORT_LABEL_REACTION) {
         item.cellRenderer = this.renderShortLabel;
       }
       item.editable = false;
