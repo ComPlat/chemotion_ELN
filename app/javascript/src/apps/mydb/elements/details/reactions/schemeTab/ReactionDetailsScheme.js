@@ -794,13 +794,6 @@ export default class ReactionDetailsScheme extends React.Component {
     const updatedSample = reaction.sampleById(sampleID);
 
     if (updatedSample && updatedSample.isMixture() && updatedSample.hasComponents()) {
-      // Update the reference component directly on the ComponentModel instances
-      updatedSample.components.forEach((component) => {
-        component.reference = component.id === componentId;
-        if (component.reference) {
-          component.equivalent = 1;
-        }
-      });
 
       // Initialize sample details if needed
       updatedSample.initializeSampleDetails();

@@ -1298,12 +1298,18 @@ class Material extends Component {
 
   materialNameWithIupac(material) {
     const { index, materialGroup, reaction } = this.props;
-    // Skip shortLabel for reactants and solvents/purification_solvents
+
+    // Check if the material is a mixture
+    const isMixture = material.isMixture && material.isMixture();
+
+    // Skip IUPAC name for reactants, solvents/purification_solvents, and mixtures
     const skipIupacName = (
-      materialGroup === 'reactants' ||
-      materialGroup === 'solvents' ||
-      materialGroup === 'purification_solvents'
+      materialGroup === 'reactants'
+      || materialGroup === 'solvents'
+      || materialGroup === 'purification_solvents'
+      || isMixture
     );
+
     let materialName = '';
     let moleculeIupacName = '';
     const iupacStyle = {
@@ -1317,10 +1323,18 @@ class Material extends Component {
     const idCheck = /^\d+$/;
 
     if (skipIupacName) {
-      let materialDisplayName = material.molecule_iupac_name || material.name;
-      if (materialGroup === 'solvents' || materialGroup === 'purification_solvents') {
-        materialDisplayName = material.external_label || materialDisplayName;
+      let materialDisplayName;
+
+      if (isMixture) {
+        // For mixtures, show the sample name or short label directly
+        materialDisplayName = material.name || material.short_label;
+      } else {
+        materialDisplayName = material.molecule_iupac_name || material.name;
+        if (materialGroup === 'solvents' || materialGroup === 'purification_solvents') {
+          materialDisplayName = material.external_label || materialDisplayName;
+        }
       }
+
       if (materialDisplayName === null || materialDisplayName === '') {
         materialDisplayName = (
           <span>
