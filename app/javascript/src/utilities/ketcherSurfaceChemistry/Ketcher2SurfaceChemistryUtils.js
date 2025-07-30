@@ -19,6 +19,17 @@ import {
 } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
 import { latestData } from 'src/components/structureEditor/KetcherEditor';
 
+const loadAndEncodeSVG = async (src) => {
+  try {
+    const response = await fetch(src);
+    const svgText = await response.text();
+    const encoded = btoa(svgText);
+    return encoded;
+  } catch (error) {
+    console.error('Failed to load SVG:', error);
+  }
+};
+
 // helper function to fetch list of all surface chemistry shape/image list
 const fetchSurfaceChemistryImageData = async (templateId) => {
   const polymerCategory = localStorage.getItem('polymerCategory') || 'basic';
@@ -36,7 +47,7 @@ const fetchSurfaceChemistryImageData = async (templateId) => {
               y: -5.824999999999999,
               z: 0
             },
-            data: shape.payload
+            data: await loadAndEncodeSVG(`/assets/svg_icons/polymerShapes/${polymerCategory}/${shape.iconName}.svg`),
           };
           return constructImageObj;
         }
