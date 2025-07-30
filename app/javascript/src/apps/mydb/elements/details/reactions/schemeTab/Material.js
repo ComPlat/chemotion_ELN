@@ -538,21 +538,27 @@ class Material extends Component {
   handleComponentReferenceChange = (changeEvent) => {
     if (changeEvent.type === 'componentReferenceChanged') {
       const { mixtureComponents } = this.state;
+      const { onChange, material, materialGroup } = this.props;
 
-      const updatedComponents = mixtureComponents.map((comp) => {
+      // Update the reference directly on the ComponentModel instances
+      mixtureComponents.forEach((comp) => {
         const isReference = comp.id === changeEvent.componentId;
         if (comp.reference !== isReference) {
-          comp.reference = isReference; // Preserve instance, avoid unnecessary mutation
+          comp.reference = isReference;
         }
-        return comp;
       });
 
-      this.setState({ mixtureComponents: [...updatedComponents] });
+      // Trigger re-render with updated components
+      this.setState({ mixtureComponents: [...mixtureComponents] });
 
-      // Optionally, propagate up:
-      // if (this.props.onChange) {
-      //   this.props.onChange(changeEvent);
-      // }
+      // Propagate the change up to notify the reaction that it has changed
+      if (onChange) {
+        onChange({
+          ...changeEvent,
+          sampleID: material.id,
+          materialGroup
+        });
+      }
     }
   };
 
@@ -610,8 +616,7 @@ class Material extends Component {
 
     const isDisabled = !permitOn(reaction)
       || (materialGroup === 'products'
-      || (!material.reference && lockEquivColumn)
-      || (material.isMixture && material.isMixture()));
+      || (!material.reference && lockEquivColumn));
 
     return (
       <td>

@@ -43,6 +43,7 @@ class ReactionMaterialComponentsGroup extends React.Component {
             onChange={(e) => this.handleReferenceChange(e, component)}
             size="xsm"
             className="m-0"
+            aria-label={`Set ${component.id} as reference`}
           />
         </td>
         {/* Amount */}
@@ -53,6 +54,16 @@ class ReactionMaterialComponentsGroup extends React.Component {
             metricPrefix={metricMol}
             metricPrefixes={metricPrefixesMol}
             precision={4}
+            disabled
+            size="sm"
+          />
+        </td>
+        {/* Relative MW */}
+        <td>
+          <NumeralInputWithUnitsCompo
+            value={component.relative_molecular_weight || 0}
+            unit="g/mol"
+            precision={2}
             disabled
             size="sm"
           />
@@ -96,6 +107,7 @@ class ReactionMaterialComponentsGroup extends React.Component {
           <tr>
             <th>Ref</th>
             <th>Amount</th>
+            <th>Rel. MW</th>
             <th>Conc</th>
             <th>Ratio</th>
           </tr>
@@ -119,6 +131,7 @@ ReactionMaterialComponentsGroup.propTypes = {
     concn: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     purity: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     reference: PropTypes.bool,
+    relative_molecular_weight: PropTypes.number,
     metrics: PropTypes.arrayOf(PropTypes.string)
   })).isRequired
 };
