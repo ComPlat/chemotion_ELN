@@ -39,7 +39,6 @@ export default class ResearchPlanDetailsFieldTable extends Component {
       measurementExportModal: {
         show: false
       },
-      selection: {},
       gridApi: {},
       columnClicked: null,
       rowClicked: null,
@@ -57,10 +56,6 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     if (this.clipboardTimeout) {
       clearTimeout(this.clipboardTimeout);
     }
-  }
-
-  buildRow() {
-    return [];
   }
 
   handleColumnNameModalShow(action, colId) {
@@ -135,6 +130,19 @@ export default class ResearchPlanDetailsFieldTable extends Component {
       console.error('Error inserting column:', error);
     }
   }
+
+  handleSchemaModalShow = () => {
+    ResearchPlansFetcher.fetchTableSchemas().then((json) => {
+      this.setState({
+        schemaModal: {
+          show: true,
+          schemas: json.table_schemas
+        }
+      });
+    });
+  };
+
+
 
   buildColumnSimple(columnId, displayName = null, linkType = null) {
     const headerName = displayName || columnId;
@@ -214,42 +222,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     onChange(field.value, field.id);
   }
 
-  handleColumnResize(columnIdx, width) {
-    const { field, onChange } = this.props;
-    field.value.columns[columnIdx].width = width;
-    onChange(field.value, field.id);
-  }
 
-  handleColumnDelete(columnIdx) {
-    const { field, onChange } = this.props;
-    const columns = field.value.columns.slice();
-    columns.splice(columnIdx, 1);
-    field.value.columns = columns;
-    onChange(field.value, field.id);
-  }
-
-  handleRowInsert(rowIdx) {
-    const { field, onChange } = this.props;
-    field.value.rows.splice(rowIdx, 0, this.buildRow());
-    onChange(field.value, field.id);
-  }
-
-  handleRowDelete(rowIdx) {
-    const { field, onChange } = this.props;
-    field.value.rows.splice(rowIdx, 1);
-    onChange(field.value, field.id);
-  }
-
-  handleSchemaModalShow = () => {
-    ResearchPlansFetcher.fetchTableSchemas().then((json) => {
-      this.setState({
-        schemaModal: {
-          show: true,
-          schemas: json.table_schemas
-        }
-      });
-    });
-  };
 
   handleSchemasModalSubmit(schemaName) {
     const { field } = this.props;
@@ -266,13 +239,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     });
   }
 
-  _handleMeasurementExportModalShow = () => {
-    this.setState({
-      measurementExportModal: {
-        show: true
-      }
-    });
-  };
+
 
   _handleMeasurementExportModalHide = () => {
     this.setState({
@@ -293,11 +260,6 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     ResearchPlansFetcher.deleteTableSchema(schema.id).then(() => {
       this.handleSchemaModalShow();
     });
-  }
-
-  rowGetter(idx) {
-    const { field } = this.props;
-    return field.value.rows[idx];
   }
 
   cellValueChanged = () => {
@@ -421,7 +383,7 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     }
   };
 
-  handlePaste = (event) => {
+  handlePaste = () => {
     const { field, onChange } = this.props;
     const { gridApi, columnClicked, rowClicked } = this.state;
 
@@ -486,6 +448,14 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     this.setState({ isDisable: true });
   }
 
+  _handleMeasurementExportModalShow = () => {
+    this.setState({
+      measurementExportModal: {
+        show: true
+      }
+    });
+  };
+
   toggleTemporaryCollapse() {
     const { edit } = this.props;
     const { currentlyCollapsedInEditMode, currentlyCollapsedInViewMode } = this.state;
@@ -546,6 +516,38 @@ export default class ResearchPlanDetailsFieldTable extends Component {
         in view mode
       </Button>
     );
+  }
+
+
+
+  openSampleByShortLabel(shortLabel) {
+    SamplesFetcher.findByShortLabel(shortLabel)
+      .then((result) => {
+        if (result.sample_id && result.collection_id) {
+          Aviator.navigate(`/collection/${result.collection_id}/sample/${result.sample_id}`, { silent: true });
+          ElementActions.fetchSampleById(result.sample_id);
+        } else {
+          console.debug('No valid data returned for short label', shortLabel, result);
+        }
+      })
+      .catch((error) => {
+        console.error('Error fetching sample by short label:', error);
+      });
+  }
+
+  openReactionByShortLabel(shortLabel) {
+    ReactionsFetcher.findByShortLabel(shortLabel)
+      .then((result) => {
+        if (result.reaction_id && result.collection_id) {
+          Aviator.navigate(`/collection/${result.collection_id}/reaction/${result.reaction_id}`, { silent: true });
+          ElementActions.fetchReactionById(result.reaction_id);
+        } else {
+          console.debug('No valid data returned for short label', shortLabel, result);
+        }
+      })
+      .catch((error) => {
+        console.error('Error fetching reaction by short label:', error);
+      });
   }
 
   renderEdit() {
@@ -676,36 +678,6 @@ export default class ResearchPlanDetailsFieldTable extends Component {
         />
       </div>
     );
-  }
-
-  openSampleByShortLabel(shortLabel) {
-    SamplesFetcher.findByShortLabel(shortLabel)
-      .then((result) => {
-        if (result.sample_id && result.collection_id) {
-          Aviator.navigate(`/collection/${result.collection_id}/sample/${result.sample_id}`, { silent: true });
-          ElementActions.fetchSampleById(result.sample_id);
-        } else {
-          console.debug('No valid data returned for short label', shortLabel, result);
-        }
-      })
-      .catch((error) => {
-        console.error('Error fetching sample by short label:', error);
-      });
-  }
-
-  openReactionByShortLabel(shortLabel) {
-    ReactionsFetcher.findByShortLabel(shortLabel)
-      .then((result) => {
-        if (result.reaction_id && result.collection_id) {
-          Aviator.navigate(`/collection/${result.collection_id}/reaction/${result.reaction_id}`, { silent: true });
-          ElementActions.fetchReactionById(result.reaction_id);
-        } else {
-          console.debug('No valid data returned for short label', shortLabel, result);
-        }
-      })
-      .catch((error) => {
-        console.error('Error fetching reaction by short label:', error);
-      });
   }
 
   renderShortLabel(params) {
