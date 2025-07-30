@@ -1257,7 +1257,7 @@ export default class Sample extends Element {
   }
 
   get equivalent() {
-    if (this.isMixture && this.isMixture()) {
+    if (this.isMixture() && this.isNew) {
       return this.reference_equivalent;
     }
     return this._equivalent;
@@ -1329,7 +1329,7 @@ export default class Sample extends Element {
   }
 
   /**
-   * Gets the reference molecular weight from the sample details or reference component.
+   * Gets the reference molecular weight from the reference component.
    * @returns {number|null} The reference molecular weight or null if not set
    */
   get reference_molecular_weight() {
@@ -1657,10 +1657,8 @@ export default class Sample extends Element {
       }
     });
 
-    // if (!this.sample_details) {
-    //   this.sample_details = {};
-    // }
-    // this.sample_details.reference_molecular_weight = this.components[componentIndex].molecule.molecular_weight;
+    this.initializeSampleDetails();
+    this.sample_details.reference_molecular_weight = this.components[componentIndex].molecule.molecular_weight;
 
     this.updateMixtureComponentEquivalent();
   }
@@ -1685,7 +1683,7 @@ export default class Sample extends Element {
     // Find the index of the component marked as reference
     let referenceIndex = this.components.findIndex((component) => component.reference);
 
-    // If no component is marked as reference, use the component at position 0 as fallback
+    // If no component is marked as the reference, use the component at position 0 as fallback
     if (referenceIndex === -1) {
       referenceIndex = this.components.findIndex((component) => component.position === 0);
       if (referenceIndex !== -1) {
@@ -1728,7 +1726,7 @@ export default class Sample extends Element {
     // Calculate the total amount_mol across components
     const totalAmount = this.components.reduce((acc, component) => acc + (component.amount_mol || 0), 0);
 
-    this.sample_details = this.sample_details || {};
+    this.initializeSampleDetails();
 
     if (totalAmount === 0) {
       this.sample_details.total_molecular_weight = 0;

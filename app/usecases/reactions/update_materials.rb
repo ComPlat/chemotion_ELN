@@ -73,7 +73,7 @@ module Usecases
               end
 
               if sample.components.present? && sample.sample_type == Sample::SAMPLE_TYPE_MIXTURE
-                Usecases::Components::Create.new(modified_sample.id, sample.components).execute!
+                Usecases::Components::Create.new(modified_sample, sample.components).execute!
               end
 
               modified_sample.save_segments(segments: sample.segments, current_user_id: @current_user.id) if sample.segments
