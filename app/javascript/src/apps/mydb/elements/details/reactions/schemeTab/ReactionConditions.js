@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { Button, Form } from 'react-bootstrap';
+import { Form } from 'react-bootstrap';
 
 import { Select } from 'src/components/common/Select';
 import ReorderableList from 'src/components/common/ReorderableList';
 import { conditionsOptions } from 'src/components/staticDropdownOptions/options';
+import CreateButton from 'src/components/common/CreateButton';
+import DeleteButton from 'src/components/common/DeleteButton';
 
 function textToLines(text) {
   if (!text || text.trim() === '') return [];
@@ -44,25 +46,28 @@ export default function ReactionConditions({
   }, [conditions]);
 
   return (
-    <div className="reaction-conditions">
-      <div>Conditions:</div>
-      <Select
-        disabled={isDisabled}
-        name="default_conditions"
-        multi={false}
-        options={conditionsOptions}
-        onChange={({ value }) => addCondition(value)}
-      />
-      <Button
-        variant="primary"
-        size="sm"
-        onClick={() => addCondition()}
-        isDisabled={isDisabled}
-        className="add-condition-button"
-      >
-        Add Condition
-      </Button>
-
+    <div className="material-group">
+      <div className="pseudo-table__row pseudo-table__row-header">
+        <div className="pseudo-table__cell pseudo-table__cell-title">
+          <div className="material-group__header-title">
+            Conditions
+            <div className="material-group__add-actions">
+              <Select
+                disabled={isDisabled}
+                name="default_conditions"
+                multi={false}
+                options={conditionsOptions}
+                onChange={({ value }) => addCondition(value)}
+                size="sm"
+              />
+              <CreateButton
+                onClick={() => addCondition()}
+                isDisabled={isDisabled}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
       <ReorderableList
         items={conditions}
         getItemId={(item) => conditions.indexOf(item).toString()}
@@ -77,14 +82,9 @@ export default function ReactionConditions({
               value={condition}
               onChange={(e) => updateCondition(index, e.target.value)}
             />
-            <Button
-              variant="danger"
-              size="sm"
+            <DeleteButton
               onClick={() => removeCondition(index)}
-              className="remove-condition-button"
-            >
-              Remove
-            </Button>
+            />
           </div>
         )}
       />
