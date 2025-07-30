@@ -1,9 +1,9 @@
 .material-group {
   @extend .pseudo-table;
   .pseudo-table__row-header {
-    @extend .surface-lighten5;
+    @extend .surface-lighten4;
     @extend .rounded-start;
-    @extend .mb-2;
+    @extend .mb-1;
   }
   container-name: material-group;
   container-type: inline-size;
