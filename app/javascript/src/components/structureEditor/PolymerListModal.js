@@ -1,8 +1,9 @@
 /* eslint-disable max-len */
 import { PropTypes } from 'mobx-react';
 import React, { useState, useEffect } from 'react';
+import { Select } from 'src/components/common/Select';
 import {
-  Accordion, Button, Card, Modal,
+  Accordion, Button, Card, Form, Modal, Spinner
 } from 'react-bootstrap';
 import {
   BodyRectangleIcon,
@@ -58,6 +59,8 @@ function PolymerListModal({
   loading, onShapeSelection, title, onCloseClick
 }) {
   const [shapesList, setShapeList] = useState([]); // Initialize the state as an empty array
+  const [basicCategory, setCategory] = useState('basic'); // Initialize the state as an empty array
+  const [loadingData, setLoadingData] = useState(false); // Initialize the state as an empty array
 
   const loadTemplates = () => {
     fetch('/json/surfaceChemistryShapes.json').then((response) => {
@@ -69,12 +72,24 @@ function PolymerListModal({
       setShapeList(data);
     }).catch((error) => {
       console.error('Error fetching the JSON data:', error);
-    });
+    })
+      .finally(() => {
+        setTimeout(() => {
+          setLoadingData(false);
+        }, 200);
+      });
   };
 
   useEffect(() => {
+    setLoadingData(true);
     loadTemplates();
-  }, []);
+  }, [basicCategory]);
+
+  const onCategoryChange = (category) => {
+    setCategory(category);
+    setLoadingData(true);
+    localStorage.setItem('polymerCategory', category);
+  };
 
   return (
     <Modal
@@ -90,8 +105,46 @@ function PolymerListModal({
         <Modal.Title>{title}</Modal.Title>
       </Modal.Header>
       <Modal.Body>
+        <Form.Group className="w-100 d-flex justify-content-end align-items-center mb-3">
+          <div className="btn-group" role="group" aria-label="Category switch">
+            {shapesList && Object.keys(shapesList).map((category, index, arr) => {
+              const isActive = basicCategory === category;
+              const isFirst = index === 0;
+              const isLast = index === arr.length - 1;
+
+              return (
+                <Button
+                  key={category}
+                  onClick={() => {
+                    onCategoryChange(category);
+                  }}
+                  style={{
+                    backgroundColor: isActive ? '#167782' : 'transparent',
+                    color: isActive ? '#fff' : '#6c757d',
+                    border: '1px solid #ced4da',
+                    textTransform: 'capitalize',
+                    borderRadius: isFirst
+                      ? '8px 0 0 8px'
+                      : isLast
+                        ? '0 8px 8px 0'
+                        : '0',
+                  }}
+                >
+                  {category}
+                </Button>
+              );
+            })}
+          </div>
+        </Form.Group>
         <Accordion>
-          {shapesList.map((tab) => (
+          {loadingData ? (
+            <div className="d-flex justify-content-center align-items-center" style={{ height: '200px' }}>
+              <Spinner animation="border" role="status" variant="#167782" style={{ color: '#167782' }}
+              >
+                <span className="visually-hidden">Loading...</span>
+              </Spinner>
+            </div>
+          ) : shapesList && shapesList[basicCategory]?.map((tab) => (
             <Card key={tab.id}>
               <Card.Header>
                 <Accordion.Item eventKey={String(tab.id)}>
@@ -122,7 +175,7 @@ function PolymerListModal({
                                     }
                                   }}
                                 >
-                                  <div className='flex flex-col items-center gap-2'>
+                                  <div className="flex flex-col items-center gap-2">
                                     <PolymerIcon />
                                     {/* <p className="fw-400">
                                       {shape.name}
