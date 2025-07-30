@@ -21,7 +21,8 @@ import { latestData } from 'src/components/structureEditor/KetcherEditor';
 
 // helper function to fetch list of all surface chemistry shape/image list
 const fetchSurfaceChemistryImageData = async (templateId) => {
-  for (const tab of allTemplates) {
+  const polymerCategory = localStorage.getItem('polymerCategory') || 'basic';
+  for (const tab of allTemplates[polymerCategory]) {
     for (const subTab of tab.subTabs) {
       for (const shape of subTab.shapes) {
         if (shape.template_id === parseInt(templateId)) {
