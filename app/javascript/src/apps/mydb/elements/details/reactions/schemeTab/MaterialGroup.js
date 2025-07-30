@@ -16,7 +16,9 @@ import { reagents_kombi } from 'src/components/staticDropdownOptions/reagents_ko
 import { permitOn } from 'src/components/common/uis';
 import ToggleButton from 'src/components/common/ToggleButton';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
-import ReorderableMaterialContainer from 'src/apps/mydb/elements/details/reactions/schemeTab/ReorderableMaterialContainer';
+import ReorderableMaterialContainer
+  from 'src/apps/mydb/elements/details/reactions/schemeTab/ReorderableMaterialContainer';
+import CreateButton from 'src/components/common/CreateButton';
 
 const headers = {
   ref: 'Ref',
@@ -235,14 +237,10 @@ function GeneralMaterialGroup({
    * of the given reaction
    */
   const addSampleButton = (
-    <Button
+    <CreateButton
       disabled={!permitOn(reaction)}
-      variant="success"
-      size="xsm"
       onClick={() => ElementActions.addSampleToMaterialGroup({ reaction, materialGroup })}
-    >
-      <i className="fa fa-plus" />
-    </Button>
+    />
   );
 
   return (
@@ -314,14 +312,10 @@ function SolventsMaterialGroup({
   const groupHeaders = { ...headers };
   groupHeaders.group = 'Solvents';
   const addSampleButton = (
-    <Button
+    <CreateButton
       disabled={!permitOn(reaction)}
-      variant="success"
-      size="xsm"
       onClick={() => ElementActions.addSampleToMaterialGroup({ reaction, materialGroup })}
-    >
-      <i className="fa fa-plus" />
-    </Button>
+    />
   );
 
   const createDefaultSolventsForReaction = ({ value: solvent }) => {
