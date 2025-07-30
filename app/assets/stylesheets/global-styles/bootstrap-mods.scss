@@ -1,14 +1,14 @@
 $special-button-variant-colors: (
   "light": (
     "bg-default": map-get($silicon-shades, lighten5),
-    "border-default": map-get($carbon-shades, lighten4),
-    "text-default": map-get($carbon-shades, lighten1),
+    "border-default": map-get($carbon-shades, lighten3),
+    "text-default": $body-color,
     "bg-hover": map-get($silicon-shades, lighten4),
-    "border-hover": map-get($carbon-shades, lighten3),
-    "text-hover": map-get($carbon-shades, lighten1),
+    "border-hover": map-get($carbon-shades, lighten2),
+    "text-hover": $body-color,
     "bg-active": map-get($silicon-shades, lighten3),
-    "border-active": map-get($carbon-shades, lighten2),
-    "text-active": map-get($carbon-shades, lighten1),
+    "border-active": map-get($carbon-shades, lighten1),
+    "text-active": $body-color,
   ),
   "paper": (
     "bg-default": $chemstrap-white,
@@ -150,4 +150,23 @@ h6 {
 
 .input-group {
   z-index: 0;
+}
+
+.accordion-button {
+  &::after {
+    content: "\f078";
+    font-family: "FontAwesome";
+    background-image: none !important;
+    @extend .bg-draggable;
+    @extend .rounded-circle;
+    width: 24px;
+    height: 24px;
+    @extend .text-white;
+    @extend .d-flex;
+    @extend .align-items-center;
+    @extend .justify-content-center;
+  }
+  &:hover::after {
+    padding-top: 3px;
+  }
 }

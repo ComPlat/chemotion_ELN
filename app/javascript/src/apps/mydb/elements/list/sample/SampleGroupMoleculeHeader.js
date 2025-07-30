@@ -23,7 +23,7 @@ function MoleculeHeader({ sample, onClick }) {
   }, []);
 
   return (
-    <div role="button" onClick={onClick}>
+    <div role="button" onClick={onClick} className="flex-grow-1">
       {sample.isNoStructureSample()
         ? (<h4>(No-structure sample)</h4>)
         : (

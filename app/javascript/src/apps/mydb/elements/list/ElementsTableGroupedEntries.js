@@ -13,12 +13,10 @@ function GenericElementsHeader({
   group, onClick
 }) {
   return (
-    <div onClick={onClick} role="button">
-      <td colSpan="2" className="position-relative">
-        <div className="preview-table">
-          {group}
-        </div>
-      </td>
+    <div onClick={onClick} role="button" className="flex-grow-1">
+      <div className="preview-table">
+        {group}
+      </div>
     </div>
   );
 }

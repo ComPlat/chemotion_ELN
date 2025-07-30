@@ -40,11 +40,16 @@ $h4-font-size: $font-size-base * 1.25;
 $h5-font-size: $font-size-base * 1.125;
 $h6-font-size: $font-size-base;
 $enable-negative-margins: true;
-$enable-negative-margins: true;
 
 $table-bg: transparent;
 $card-bg: $chemstrap-white;
 $accordion-bg: $chemstrap-white;
+$accordion-button-bg: map-get($silicon-shades, lighten5);
+$accordion-button-active-bg: $chemstrap-white;
+$accordion-button-focus-box-shadow: none;
+$accordion-body-padding-y: 0.5rem;
+$accordion-body-padding-x: 0.5rem;
+$accordion-icon-transition: transform 0.2s, padding-top 0.2s;
 $modal-content-bg: $chemstrap-white;
 $list-group-bg: $chemstrap-white;
 $list-group-color: $body-color;
