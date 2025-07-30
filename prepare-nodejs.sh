@@ -47,10 +47,10 @@ else
     asdf install nodejs $CURRENT_NODE_VERSION
     REQUIRED_NODE_VERSION=$CURRENT_NODE_VERSION
   fi
-
-  asdf set nodejs $REQUIRED_NODE_VERSION
-  asdf reshim nodejs
 fi
+
+asdf set nodejs $REQUIRED_NODE_VERSION
+asdf reshim nodejs
 echo "Node.js updated to version: $REQUIRED_NODE_VERSION"
 export REQUIRED_NODE_VERSION
 echo $REQUIRED_NODE_VERSION
