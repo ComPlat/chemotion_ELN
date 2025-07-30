@@ -14,4 +14,11 @@ services:
       dockerfile: 'Dockerfile.chemotion-dev.uid'
       args:
         uid: ${uid}
-        gid: ${gid} 
+        gid: ${gid}
+  webpacker:
+    build:
+      context: '.'
+      dockerfile: 'Dockerfile.chemotion-dev.uid'
+      args:
+        uid: ${uid}
+        gid: ${gid}

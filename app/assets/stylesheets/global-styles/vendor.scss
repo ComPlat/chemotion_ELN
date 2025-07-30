@@ -1,17 +1,17 @@
-@import "ag-grid-community/styles/ag-grid";
-@import "ag-grid-community/styles/ag-theme-alpine";
-@import "ag-grid-community/styles/ag-theme-balham";
+@import "ag-grid-community/styles/ag-grid.css";
+@import "ag-grid-community/styles/ag-theme-alpine.css";
+@import "ag-grid-community/styles/ag-theme-balham.css";
 
-@import "react-vis/dist/style";
-@import "reactflow/dist/style";
+@import "react-vis/dist/style.css";
+@import "reactflow/dist/style.css";
 
 @import "font-awesome";
 @import "autocomplete";
-@import "react-big-calendar/lib/css/react-big-calendar";
-@import "react-big-calendar/lib/addons/dragAndDrop/styles";
-@import "react-calendar/dist/Calendar";
-@import "react-clock/dist/Clock";
-@import "react-datetime-picker/dist/DateTimePicker";
+@import "react-big-calendar/lib/css/react-big-calendar.css";
+@import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
+@import "react-calendar/dist/Calendar.css";
+@import "react-clock/dist/Clock.css";
+@import "react-datetime-picker/dist/DateTimePicker.css";
 
 @import "package-mods/calendar";
 @import "package-mods/react-svg-file-zoom-pan";

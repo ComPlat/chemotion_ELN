@@ -58,3 +58,4 @@ groupmod -g ${uid} ubuntu
 usermod -u ${uid} -g ${gid} ubuntu
 find / -group ${gid_was} -exec chgrp -h ${gid} {} \;
 echo "User 'ubuntu' has been changed to UID ${uid} and GID ${gid}."
+sudo chown -R ubuntu:ubuntu /home/ubuntu
