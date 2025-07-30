@@ -951,66 +951,67 @@ class Material extends Component {
             </div>
           </div>
 
-        {/* Add a new row for the arrow button if mixture with components */}
-        <div>
-          {isMixture && hasComponents && (
-            <OverlayTrigger
-              placement="top"
-              overlay={(
-                <Tooltip id="mixture-components-tooltip">
-                  {showComponents ? 'Hide the components' : 'See the components'}
-                </Tooltip>
-              )}
-            >
-              <Button
-                variant="light"
-                size="sm"
-                style={{
-                  fontSize: '1.05em',
-                  color: '#007bff',
-                  lineHeight: 1,
-                  height: '20px',
-                  minHeight: 'unset',
-                  padding: '0 6px',
-                }}
-                onClick={this.toggleComponentsAccordion}
-                aria-label={showComponents ? 'Hide the components' : 'See the components'}
+          {/* Add a new row for the arrow button if mixture with components */}
+          <div>
+            {isMixture && hasComponents && (
+              <OverlayTrigger
+                placement="top"
+                overlay={(
+                  <Tooltip id="mixture-components-tooltip">
+                    {showComponents ? 'Hide the components' : 'See the components'}
+                  </Tooltip>
+                )}
               >
-                <i className={`fa fa-angle-double-${showComponents ? 'up' : 'down'} text-primary`} />
-              </Button>
-            </OverlayTrigger>
+                <Button
+                  variant="light"
+                  size="sm"
+                  style={{
+                    fontSize: '1.05em',
+                    color: '#007bff',
+                    lineHeight: 1,
+                    height: '20px',
+                    minHeight: 'unset',
+                    padding: '0 6px',
+                  }}
+                  onClick={this.toggleComponentsAccordion}
+                  aria-label={showComponents ? 'Hide the components' : 'See the components'}
+                >
+                  <i className={`fa fa-angle-double-${showComponents ? 'up' : 'down'} text-primary`} />
+                </Button>
+              </OverlayTrigger>
+            )}
+          </div>
+
+          {/* row for mixture components */}
+          {isMixture && hasComponents && showComponents && (
+            <tr className="mixture-components-row">
+              <td colSpan="14" style={{ padding: 0, background: '#f8f9fa' }}>
+                {mixtureComponentsLoading && (
+                  <div className="text-center">Loading components...</div>
+                )}
+                {!mixtureComponentsLoading && mixtureComponents.length > 0 && (
+                  <ReactionMaterialComponentsGroup
+                    components={mixtureComponents}
+                    reaction={reaction}
+                    sampleId={`${material.id}`}
+                    onComponentReferenceChange={this.handleComponentReferenceChange}
+                  />
+                )}
+                {!mixtureComponentsLoading && mixtureComponents.length === 0 && (
+                  <div className="text-center">
+                    No components found for this mixture.
+                  </div>
+                )}
+              </td>
+            </tr>
+          )}
+          {materialGroup === 'products' && (
+            <>
+              {material.gas_type === 'gas' && reaction.gaseous && this.gaseousProductRow(material)}
+              {material.adjusted_loading && material.error_mass && <MaterialCalculations material={material} />}
+            </>
           )}
         </div>
-
-        {/* row for mixture components */}
-        {isMixture && hasComponents && showComponents && (
-          <tr className="mixture-components-row">
-            <td colSpan="14" style={{ padding: 0, background: '#f8f9fa' }}>
-              {mixtureComponentsLoading && (
-                <div className="text-center">Loading components...</div>
-              )}
-              {!mixtureComponentsLoading && mixtureComponents.length > 0 && (
-                <ReactionMaterialComponentsGroup
-                  components={mixtureComponents}
-                  reaction={reaction}
-                  sampleId={`${material.id}`}
-                  onComponentReferenceChange={this.handleComponentReferenceChange}
-                />
-              )}
-              {!mixtureComponentsLoading && mixtureComponents.length === 0 && (
-                <div className="text-center">
-                  No components found for this mixture.
-                </div>
-              )}
-            </td>
-          </tr>
-        )}
-        {materialGroup === 'products' && (
-          <>
-            {material.gas_type === 'gas' && reaction.gaseous && this.gaseousProductRow(material)}
-            {material.adjusted_loading && material.error_mass && <MaterialCalculations material={material} />}
-          </>
-        )}
       </div>
     );
   }
@@ -1188,12 +1189,18 @@ class Material extends Component {
 
   materialNameWithIupac(material) {
     const { index, materialGroup, reaction } = this.props;
-    // Skip shortLabel for reactants and solvents/purification_solvents
+
+    // Check if the material is a mixture
+    const isMixture = material.isMixture && material.isMixture();
+
+    // Skip IUPAC name for reactants, solvents/purification_solvents, and mixtures
     const skipIupacName = (
-      materialGroup === 'reactants' ||
-      materialGroup === 'solvents' ||
-      materialGroup === 'purification_solvents'
+      materialGroup === 'reactants'
+      || materialGroup === 'solvents'
+      || materialGroup === 'purification_solvents'
+      || isMixture
     );
+
     let materialName = '';
     let moleculeIupacName = '';
 
@@ -1202,10 +1209,18 @@ class Material extends Component {
     let materialDisplayName = '';
 
     if (skipIupacName) {
-      materialDisplayName = material.molecule_iupac_name || material.name;
-      if (materialGroup === 'solvents' || materialGroup === 'purification_solvents') {
-        materialDisplayName = material.external_label || materialDisplayName;
+      let materialDisplayName;
+
+      if (isMixture) {
+        // For mixtures, show the sample name or short label directly
+        materialDisplayName = material.name || material.short_label;
+      } else {
+        materialDisplayName = material.molecule_iupac_name || material.name;
+        if (materialGroup === 'solvents' || materialGroup === 'purification_solvents') {
+          materialDisplayName = material.external_label || materialDisplayName;
+        }
       }
+
       if (materialDisplayName === null || materialDisplayName === '') {
         materialDisplayName = (
           <SampleName sample={material} />
