@@ -493,6 +493,11 @@ export default class ReactionDetailsScheme extends React.Component {
           this.updatedReactionForConversionRateChange(changeEvent)
         );
         break;
+      case 'componentReferenceChanged':
+        this.onReactionChange(
+          this.updatedReactionForComponentReferenceChange(changeEvent)
+        );
+        break;
       default:
         break;
     }
@@ -779,6 +784,39 @@ export default class ReactionDetailsScheme extends React.Component {
     }
 
     return this.updatedReactionWithSample(this.updatedSamplesForConversionRateChange.bind(this), updatedSample);
+  }
+
+  updatedReactionForComponentReferenceChange(changeEvent) {
+    const { reaction } = this.props;
+    const { sampleID, componentId } = changeEvent;
+
+    // Find the sample that contains the component
+    const updatedSample = reaction.sampleById(sampleID);
+
+    if (updatedSample && updatedSample.isMixture() && updatedSample.hasComponents()) {
+      // Update the reference component directly on the ComponentModel instances
+      updatedSample.components.forEach((component) => {
+        component.reference = component.id === componentId;
+        if (component.reference) {
+          component.equivalent = 1;
+        }
+      });
+
+      // Initialize sample details if needed
+      updatedSample.initializeSampleDetails();
+
+      // Find the reference component and set its molecular weight if it has one
+      const referenceComponent = updatedSample.components.find((comp) => comp.reference);
+      if (referenceComponent && referenceComponent.molecule && referenceComponent.molecule.molecular_weight) {
+        updatedSample.sample_details.reference_molecular_weight = referenceComponent.molecule.molecular_weight;
+      }
+
+      // Update equivalents for all components
+      // updatedSample.updateMixtureComponentEquivalent();
+    }
+
+    // Return the updated reaction
+    return reaction;
   }
 
   calculateEquivalent(refM, updatedSample) {
