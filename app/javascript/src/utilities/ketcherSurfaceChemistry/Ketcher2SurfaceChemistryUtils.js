@@ -33,7 +33,7 @@ const loadAndEncodeSVG = async (src) => {
 // helper function to fetch list of all surface chemistry shape/image list
 const fetchSurfaceChemistryImageData = async (templateId) => {
   const polymerCategory = localStorage.getItem('polymerCategory') || 'basic';
-  for (const tab of allTemplates[polymerCategory]) {
+  for (const tab of allTemplates) {
     for (const subTab of tab.subTabs) {
       for (const shape of subTab.shapes) {
         if (shape.template_id === parseInt(templateId)) {
@@ -47,6 +47,7 @@ const fetchSurfaceChemistryImageData = async (templateId) => {
               y: -5.824999999999999,
               z: 0
             },
+            // TODO:I may have to find the catgory based on the template_id
             data: await loadAndEncodeSVG(`/assets/svg_icons/polymerShapes/${polymerCategory}/${shape.iconName}.svg`),
           };
           return constructImageObj;
