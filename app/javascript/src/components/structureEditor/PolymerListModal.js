@@ -164,7 +164,7 @@ function PolymerListModal({
                                 }}
                               >
                                 <div className="flex flex-col items-center gap-2">
-                                  <InlineSVG src={`/assets/svg_icons/polymerShapes/${category}/${shape.iconName}.svg`} />
+                                  <InlineSVG src={`/polymerShapes/${category}/${shape.iconName}.svg`} />
                                 </div>
                               </Button>
                             ))}

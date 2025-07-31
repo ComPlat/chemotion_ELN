@@ -6,11 +6,11 @@
 
 // DOM functions
 // Function to attach click listeners based on titles
-import { KET_TAGS, LAYERING_FLAGS } from 'src/utilities/ketcherSurfaceChemistry/constants';
+import { KET_TAGS, LAYERING_FLAGS, EventNames, KET_DOM_TAG } from 'src/utilities/ketcherSurfaceChemistry/constants';
 import { fetchKetcherData } from 'src/utilities/ketcherSurfaceChemistry/InitializeAndParseKetcher';
 import {
   PolymerListIconKetcherToolbarButton,
-  specialCharButton
+  specialCharButton,
 } from 'src/components/structureEditor/PolymerListModal';
 import { ImagesToBeUpdated, ImagesToBeUpdatedSetter } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
 import { saveMoveCanvas } from 'src/utilities/ketcherSurfaceChemistry/canvasOperations';
@@ -37,25 +37,22 @@ const buttonClickForRectangleSelection = async (iframeRef) => {
 
 /* istanbul ignore next */
 // function to make template list extra content hidden
-const makeTransparentByTitle = (iframeDocument) => {
-  const elements = iframeDocument.querySelectorAll('[title]');
+const makeTransparentByTitle = (iframeRef) => {
+  const iframeDocument = iframeRef?.current?.contentWindow?.document;
+  if (!iframeDocument) return;
 
-  /* istanbul ignore next */
+  const svg = iframeDocument.querySelector('[data-testid="canvas"]');
+  if (!svg) return;
+
+  const elements = svg.querySelectorAll('text');
+  if (elements.length === 0) return;
+
   elements.forEach((element) => {
-    if (KET_TAGS.shapes.indexOf(element.getAttribute('title')) !== -1) {
-      element.querySelectorAll('path, text').forEach((child) => {
-        if (
-          (child.getAttribute('stroke-width') === '2'
-            && child.getAttribute('stroke-linecap') === 'round'
-            && child.getAttribute('stroke-linejoin') === 'round')
-          || (
-            child.tagName.toLowerCase() === 'text'
-            && (child.textContent.trim() === 'A')
-          )
-        ) {
-          child.style.opacity = '0';
-        }
-      });
+    if (element.textContent.trim() === KET_DOM_TAG.textBehindImg) {
+      const tspan = element.querySelector('tspan');
+      if (tspan) {
+        tspan.style.setProperty('fill', 'transparent', 'important');
+      }
     }
   });
 };
@@ -63,11 +60,11 @@ const makeTransparentByTitle = (iframeDocument) => {
 /* istanbul ignore next */
 // helper function to update DOM images using layering technique
 const updateImagesInTheCanvas = async (iframeRef) => {
-  if (iframeRef?.current && iframeRef?.current?.contentWindow?.document) {
-    const iframeDocument = iframeRef.current.contentWindow.document;
-    const svg = iframeDocument.querySelector('svg'); // Get the main SVG tag
+  const iframeDocument = iframeRef?.current?.contentWindow?.document;
+  if (iframeDocument) {
+    const svg = iframeDocument.querySelector('[data-testid="canvas"]');
     if (svg) {
-      const imageElements = iframeDocument.querySelectorAll('image'); // Select all text elements
+      const imageElements = iframeDocument.querySelectorAll(KET_DOM_TAG.imageTag);
       imageElements.forEach((img) => {
         svg?.removeChild(img);
       });
@@ -90,7 +87,8 @@ const updateTemplatesInTheCanvas = async (iframeRef) => {
       const textElements = svg.querySelectorAll('text'); // Select all text elements
       textElements.forEach((textElem) => {
         const { textContent } = textElem; // Get the text content of the <text> element
-        if (textContent === KET_TAGS.inspiredLabel) { // Check if it matches the pattern
+        if (textContent === KET_TAGS.inspiredLabel) {
+          // Check if it matches the pattern
           textElem.setAttribute('fill', 'transparent'); // Set fill to transparent
         }
       });
@@ -104,7 +102,7 @@ const undoKetcher = (editor) => {
     const { historyPtr } = editor._structureDef.editor.editor;
     let operationIdx = 0;
     for (let i = historyPtr - 1; i >= 0; i--) {
-      if (list[i]?.operations[0]?.type !== 'Load canvas') {
+      if (list[i]?.operations[0]?.type !== EventNames.LOAD_CANVAS) {
         break;
       } else {
         operationIdx++;
@@ -126,7 +124,7 @@ const redoKetcher = (editor) => {
     let operationIdx = 1;
 
     for (let i = historyPtr; i < list.length; i++) {
-      if (list[i]?.operations[0]?.type !== 'Load canvas') {
+      if (list[i]?.operations[0]?.type !== EventNames.LOAD_CANVAS) {
         break;
       } else {
         operationIdx++;
@@ -155,7 +153,8 @@ const addTextNodeDescriptionOnTextPopup = async (node) => {
 
     let newParagraph; // Declare the variable to store the added paragraph
 
-    if (parentElement) { // Ensure showTextNode is used properly
+    if (parentElement) {
+      // Ensure showTextNode is used properly
       newParagraph = document.createElement('p');
       const firstChild = parentElement.lastChild;
       newParagraph.id = KET_TAGS.templateEditProps.id; // Add an ID to the paragraph
@@ -216,12 +215,6 @@ const attachClickListeners = (iframeRef, buttonEvents) => {
               await attachListenerForTitle(iframeDocument, selector, buttonEvents);
             })
           );
-          // if (selectedImageForTextNode) {
-          //   for (let i = 0; i < mutation.addedNodes.length; i++) {
-          //     const node = mutation.addedNodes[i]; // Access each node
-          //     await addTextNodeDescriptionOnTextPopup(node);
-          //   }
-          // }
         }
       })
     );
@@ -292,5 +285,5 @@ export {
   runImageLayering,
   attachClickListeners,
   addTextNodeDescriptionOnTextPopup,
-  updateCharValue
+  updateCharValue,
 };

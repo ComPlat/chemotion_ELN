@@ -21,13 +21,10 @@ WORKDIR /chemotion/app
 
 RUN cp .version /bk.version
 
-COPY ./.git/HEAD .current_branch
-
-RUN git remote add origin ${REMOTE} && \
+RUN --mount=type=bind,source=.git/shallow,target=/.current_hash,readonly \
+    git remote add origin ${REMOTE} && \
     git fetch && \
-    git checkout $(cat .current_branch | cut -d'/' -f3)
-
-RUN rm .current_branch
+    git checkout $(cat /.current_hash)
 
 RUN mv /bk.version .version
 
@@ -37,6 +34,9 @@ RUN echo "For this deployed container" && \
 
 RUN rm ${ASDF_DIR}/asdf
 ENV PATH="${ASDF_DIR}/bin:${PATH}"
+ENV ASDF_NODEJS_VERSION=''
+ENV ASDF_RUBY_VERSION=''
+
 RUN ./prepare-asdf.sh
 
 RUN rm -rf /asdf/installs/ruby/2.7.8/lib/ruby/gems/2.7.0/gems/bundler-* && \
@@ -52,8 +52,6 @@ RUN --mount=type=cache,target=/asdf/cache,sharing=locked \
     bundle install --jobs="$(nproc)" --retry=3 && \
     bundle clean --force
 
-ENV ASDF_NODEJS_VERSION=''
-ENV ASDF_RUBY_VERSION=''
 RUN ./prepare-nodejs.sh
 RUN asdf current && sleep 5s
 
@@ -68,13 +66,13 @@ RUN bash package_postinstall.sh
 RUN MAKEFLAGS="-j$(nproc)" && export MAKEFLAGS && \
     bundle install --jobs="$(nproc)" --retry=3
 
-ADD https://raw.githubusercontent.com/Chemotion/Push2Deploy/main/payload/run.sh /embed/run.sh
-ADD https://raw.githubusercontent.com/Chemotion/Push2Deploy/main/payload/health.sh /embed/health.sh
-ADD https://raw.githubusercontent.com/Chemotion/Push2Deploy/main/payload/initialize.sh /initialize.sh
+ADD https://payload.chemserv.scc.kit.edu/run.sh /embed/run.sh
+ADD https://payload.chemserv.scc.kit.edu/health.sh /embed/health.sh
+ADD https://payload.chemserv.scc.kit.edu/initialize.sh /initialize.sh
 
-ADD https://raw.githubusercontent.com/Chemotion/Push2Deploy/main/payload/converter.yml /chemotion/app/config/converter.yml
-ADD https://raw.githubusercontent.com/Chemotion/Push2Deploy/main/payload/spectra.yml /chemotion/app/config/spectra.yml
-ADD https://raw.githubusercontent.com/Chemotion/Push2Deploy/main/payload/ketcher.yml /chemotion/app/config/ketcher_service.yml
+ADD https://payload.chemserv.scc.kit.edu/converter.yml /chemotion/app/config/converter.yml
+ADD https://payload.chemserv.scc.kit.edu/spectra.yml /chemotion/app/config/spectra.yml
+ADD https://payload.chemserv.scc.kit.edu/ketcher.yml /chemotion/app/config/ketcher_service.yml
 
 RUN chmod +x /embed/run.sh && \
     chmod +x /embed/health.sh && \
@@ -90,3 +88,6 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=300s --retries=3 \
     CMD /embed/health.sh || exit 1
 
 VOLUME [ "/chemotion/app", "/chemotion/data" ]
+
+# TODO:remove this before merging to main
+ADD https://github.com/haditariq/ketcher-build-holder.git /chemotion/app/public/editors/ketcher2/standalone

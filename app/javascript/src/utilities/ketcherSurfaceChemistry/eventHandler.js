@@ -13,22 +13,13 @@ import {
   eventUpsertImageDecrement
 } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
 import { eventCollectDeletedAtoms } from 'src/utilities/ketcherSurfaceChemistry/AtomsAndMolManipulation';
+import { EventNames } from 'src/utilities/ketcherSurfaceChemistry/constants';
 
 // helper function to add event to stack
 const addEventToFILOStack = (event) => {
-  if (event === 'Delete text' && FILOStack.includes('Delete image')) {
-    return;
-  }
-
-  if (event === 'Delete text' && FILOStack.includes('Delete atom')) {
-    return;
-  }
-
-  if (event === 'Upsert image' && FILOStack.includes('Add atom')) {
-    return;
-  }
-
-  // Add event to FILO stack only if it's not already in uniqueEvents
+  if (event === EventNames.DELETE_TEXT && FILOStack.includes(EventNames.UPSERT_IMAGE)) return;
+  if (event === EventNames.DELETE_TEXT && FILOStack.includes(EventNames.DELETE_ATOM)) return;
+  if (event === EventNames.UPSERT_IMAGE && FILOStack.includes(EventNames.DELETE_ATOM)) return;
   if (!uniqueEvents.has(event)) {
     FILOStack.push(event);
     uniqueEventsAddEvent(event);
@@ -37,44 +28,44 @@ const addEventToFILOStack = (event) => {
 
 // Handlers for each event operation, mapped by operation name;
 const eventOperationHandlers = {
-  'Load canvas': async () => {
+  [EventNames.LOAD_CANVAS]: async () => {
     await eventLoadCanvas();
   },
-  'Move image': async () => {
-    addEventToFILOStack('Move image');
+  [EventNames.MOVE_IMAGE]: async () => {
+    addEventToFILOStack(EventNames.MOVE_IMAGE);
   },
-  'Add atom': async () => {
-    addEventToFILOStack('Add atom');
+  [EventNames.ADD_ATOM]: async () => {
+    addEventToFILOStack(EventNames.ADD_ATOM);
   },
-  'Upsert image': async () => {
+  [EventNames.UPSERT_IMAGE]: async () => {
     eventUpsertImageDecrement();
-    addEventToFILOStack('Upsert image');
+    addEventToFILOStack(EventNames.UPSERT_IMAGE);
   },
-  'Move atom': async () => {
+  [EventNames.MOVE_ATOM]: async () => {
     allowProcessingSetter(true);
-    addEventToFILOStack('Move atom');
+    addEventToFILOStack(EventNames.MOVE_ATOM);
   },
-  'Delete image': async () => {
-    addEventToFILOStack('Delete atom');
+  [EventNames.DELETE_IMAGE]: async () => {
+    addEventToFILOStack(EventNames.DELETE_ATOM);
   },
-  'Delete atom': async (eventItem) => {
+  [EventNames.DELETE_ATOM]: async (eventItem) => {
     await eventCollectDeletedAtoms(eventItem);
-    addEventToFILOStack('Delete atom');
+    addEventToFILOStack(EventNames.DELETE_ATOM);
   },
-  'Add text': async () => {
-    addEventToFILOStack('Add text');
+  [EventNames.ADD_TEXT]: async () => {
+    addEventToFILOStack(EventNames.ADD_TEXT);
   },
-  'Delete text': async () => {
-    addEventToFILOStack('Delete text');
+  [EventNames.DELETE_TEXT]: async () => {
+    addEventToFILOStack(EventNames.DELETE_TEXT);
   }
 };
 
 // helper function to execute a stack: first in last out
 const processFILOStack = async (eventHandlers) => {
-  const loadCanvasIndex = FILOStack.indexOf('Load canvas');
+  const loadCanvasIndex = FILOStack.indexOf(EventNames.LOAD_CANVAS);
   if (loadCanvasIndex > -1) {
     FILOStack.splice(loadCanvasIndex, 1);
-    uniqueEvents.delete('Load canvas');
+    uniqueEvents.delete(EventNames.LOAD_CANVAS);
   }
   while (FILOStack.length > 0) {
     const event = FILOStack.pop();
@@ -94,7 +85,7 @@ const handleEventCapture = async (editor, data, eventHandlers) => {
 
   const selection = editor._structureDef.editor.editor._selection;
   if (selection?.images || selection?.texts) {
-    addEventToFILOStack('Move atom');
+    addEventToFILOStack(EventNames.MOVE_ATOM);
   }
 
   // eslint-disable-next-line no-restricted-syntax

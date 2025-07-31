@@ -1,5 +1,6 @@
 /* eslint-disable import/no-mutable-exports */
 import { KET_TAGS } from 'src/utilities/ketcherSurfaceChemistry/constants';
+import { imageNodeCounter } from 'src/components/structureEditor/KetcherEditor';
 
 export let FILOStack = []; // a stack to main a list of event triggered
 export const uniqueEvents = new Set(); // list of unique event from the canvas
@@ -17,6 +18,7 @@ export let imageListCopyContainer = [];
 export let textListCopyContainer = [];
 export let { editor } = window; // reference to the editor
 export let allTemplates = {}; // contains all templates
+export let templatesBaseHashWithTemplateId = {}; // contains all templates
 export let allowProcessing = true;
 export let upsertImageCalled = 0;
 
@@ -75,7 +77,21 @@ export const textNodeStructSetter = (data) => {
 
 // set templates dataset
 export const templateListSetter = async (data) => {
-  allTemplates = data;
+  const keys = Object.keys(data);
+  allTemplates = [...data[keys[0]], ...data[keys[1]]];
+};
+
+// Set base64-encoded SVG templates by template_id
+export const setBase64TemplateHashSetter = async (data) => {
+  const templateHash = {};
+  data.forEach((group) => {
+    group.subTabs.forEach((subTab) => {
+      subTab.shapes.forEach((shape) => {
+        templateHash[shape.template_id] = shape.iconName;
+      });
+    });
+  });
+  templatesBaseHashWithTemplateId = templateHash;
 };
 
 export const allowProcessingSetter = (data) => {
@@ -131,21 +147,17 @@ export const emptyKetcherStore = () => ({
   root: {
     nodes: [],
     connections: [],
-    templates: []
-  }
+    templates: [],
+  },
 });
 
-export const addNewMol = (tempId, imageNodeCounter) => ({
+export const addNewMol = (tempId) => ({
   type: 'molecule',
   atoms: [
     {
       label: KET_TAGS.inspiredLabel,
       alias: `t_${tempId}_${imageNodeCounter}`,
-      location: [
-        1,
-        -1,
-        0
-      ]
+      location: [-1.5250001907348631, 1.5250000000000004, 0],
     },
-  ]
+  ],
 });

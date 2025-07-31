@@ -8,13 +8,8 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable import/no-mutable-exports */
 import PropTypes from 'prop-types';
-import React, {
-  useEffect, useRef, useImperativeHandle, forwardRef,
-  useState
-} from 'react';
-import {
-  findTemplateByPayload
-} from 'src/utilities/ketcherSurfaceChemistry/Ketcher2SurfaceChemistryUtils';
+import React, { useEffect, useRef, useImperativeHandle, forwardRef, useState } from 'react';
+import { findTemplateByPayload } from 'src/utilities/ketcherSurfaceChemistry/Ketcher2SurfaceChemistryUtils';
 import { PolymerListModal } from 'src/components/structureEditor/PolymerListModal';
 import {
   fetchKetcherData,
@@ -25,15 +20,15 @@ import {
   handleOnDeleteAtom,
   removeAtomFromData,
   analyzeAliasAndImageDifferences,
-  filterImagesByDifferences
+  filterImagesByDifferences,
 } from 'src/utilities/ketcherSurfaceChemistry/AtomsAndMolManipulation';
 import {
-  LAYERING_FLAGS, EventNames, ButtonSelectors, getButtonSelector
+  LAYERING_FLAGS,
+  EventNames,
+  ButtonSelectors,
+  getButtonSelector,
 } from 'src/utilities/ketcherSurfaceChemistry/constants';
-import {
-  deepCompareContent,
-  filterTextList
-} from 'src/utilities/ketcherSurfaceChemistry/TextNode';
+import { deepCompareContent, filterTextList } from 'src/utilities/ketcherSurfaceChemistry/TextNode';
 import {
   buttonClickForRectangleSelection,
   updateImagesInTheCanvas,
@@ -41,7 +36,8 @@ import {
   redoKetcher,
   attachClickListeners,
   imageNodeForTextNodeSetter,
-  selectedImageForTextNode
+  selectedImageForTextNode,
+  makeTransparentByTitle,
 } from 'src/utilities/ketcherSurfaceChemistry/DomHandeling';
 import {
   onAddAtom,
@@ -50,7 +46,7 @@ import {
   saveMoveCanvas,
   onFinalCanvasSave,
   onPasteNewShapes,
-  onAddText
+  onAddText,
 } from 'src/utilities/ketcherSurfaceChemistry/canvasOperations';
 import { handleEventCapture } from 'src/utilities/ketcherSurfaceChemistry/eventHandler';
 import {
@@ -64,8 +60,7 @@ import {
   fetchAndReplace,
   eventUpsertImageSetter,
   upsertImageCalled,
-  allTemplates,
-  imagesListSetter
+  imagesListSetter,
 } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
 
 export let latestData = null; // latestData contains the updated ket2 format always
@@ -73,8 +68,6 @@ export let imageNodeCounter = -1; // counter of how many images are used/present
 
 // local
 let oldImagePack = [];
-let dashedSelectionCharacter = null;
-let restSelectionCharacter = null;
 
 // to reset all data containers
 export const resetStore = () => {
@@ -112,20 +105,21 @@ export const imageUsedCounterSetter = async (count) => {
 const onAtomDelete = async (editor) => {
   try {
     if (!editor || !editor.structureDef) return;
-    const {
-      aliasDifferences,
-      hasImageDifferences,
-      imageDifferences
-    } = await analyzeAliasAndImageDifferences(editor, oldImagePack);
+    const { aliasDifferences, hasImageDifferences, imageDifferences } = await analyzeAliasAndImageDifferences(
+      editor,
+      oldImagePack
+    );
     let imagesDifferencesContainer = imageDifferences;
     let dataRes = latestData;
 
     let removeFrom = 'atom-removal';
     // 2nd remove images if not removed
-    if (hasImageDifferences) { // image delete
+    if (hasImageDifferences) {
+      // image delete
       aliasDifferences.push(...imagesDifferencesContainer);
       removeFrom = 'image-removal';
-    } else if (!hasImageDifferences) { // atom delete with not image diff
+    } else if (!hasImageDifferences) {
+      // atom delete with not image diff
       const filteredImages = await filterImagesByDifferences(aliasDifferences);
       imagesDifferencesContainer = await deepCompareContent(imagesList, filteredImages);
       imagesListSetter(filteredImages);
@@ -166,9 +160,7 @@ export const eventLoadCanvas = async (editor) => {
 
 /* istanbul ignore next */
 const KetcherEditor = forwardRef((props, ref) => {
-  const {
-    editor, iH, iS, molfile
-  } = props;
+  const { editor, iH, iS, molfile } = props;
 
   const [showShapes, setShowShapes] = useState(false);
   // const [showSpecialCharModal, setSpecialCharModal] = useState(false);
@@ -199,7 +191,7 @@ const KetcherEditor = forwardRef((props, ref) => {
       await fetchKetcherData(editor);
       oldImagePack = [...imagesList];
       await onImageAddedOrCopied();
-    }
+    },
   };
 
   // DOM button events with scope
@@ -218,10 +210,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     [getButtonSelector(ButtonSelectors.CLEAR_CANVAS)]: async () => {
       resetStore();
       imageNodeForTextNodeSetter(null);
-    }
-    // [getButtonSelector(ButtonSelectors.TEXT_NODE_SPECIAL_CHAR)]: async () => {
-    //   setSpecialCharModal(true);
-    // }
+    },
   };
 
   // attach click listeners to the iframe and initialize the editor
@@ -245,6 +234,7 @@ const KetcherEditor = forwardRef((props, ref) => {
   const runImageLayering = async () => {
     if (ImagesToBeUpdated && !LAYERING_FLAGS.skipImageLayering) {
       setTimeout(async () => {
+        await makeTransparentByTitle(iframeRef);
         await updateImagesInTheCanvas(iframeRef);
       }, [100]);
     }
@@ -266,8 +256,11 @@ const KetcherEditor = forwardRef((props, ref) => {
     editor._structureDef.editor.editor.subscribe('change', async (eventData) => {
       canvasSelectionsSetter(editor._structureDef.editor.editor._selection);
       const result = await eventData;
-      await handleEventCapture(editor, result, eventHandlers);
-      await runImageLayering(); // post all the images at the end of the canvas not duplicate
+      if (result) {
+        await handleEventCapture(editor, result, eventHandlers);
+        await runImageLayering(); // post all the images at the end of the canvas not duplicate
+        await makeTransparentByTitle(iframeRef);
+      }
     });
 
     // Subscribes to the `selectionChange` event
@@ -280,17 +273,17 @@ const KetcherEditor = forwardRef((props, ref) => {
   };
 
   /**
- * Loads the editor content and initializes the molecule structure.
- *
- * This function performs the following actions:
- * 1. Sets the global `editor` instance to the `window` object for accessibility.
- * 2. Calls `onEditorContentChange` to set up listeners for content and selection changes in the editor.
- * 3. Prepares the Ketcher data by loading the initial molecule structure.
- *
- * @async
- * @function loadContent
- * @param {Object} event - The event object containing data about the editor initialization.
- */
+   * Loads the editor content and initializes the molecule structure.
+   *
+   * This function performs the following actions:
+   * 1. Sets the global `editor` instance to the `window` object for accessibility.
+   * 2. Calls `onEditorContentChange` to set up listeners for content and selection changes in the editor.
+   * 3. Prepares the Ketcher data by loading the initial molecule structure.
+   *
+   * @async
+   * @function loadContent
+   * @param {Object} event - The event object containing data about the editor initialization.
+   */
   const loadContent = async (event) => {
     if (event.data.eventType === 'init') {
       window.editor = editor;
@@ -317,7 +310,7 @@ const KetcherEditor = forwardRef((props, ref) => {
   const onImageAddedOrCopied = async () => {
     const imagesAddedList = imagesList.slice(upsertImageCalled);
     imagesAddedList.forEach(async (item) => {
-      const templateId = await findTemplateByPayload(allTemplates, item.data);
+      const templateId = await findTemplateByPayload(item.data);
       if (templateId != null) {
         await onShapeSelection(templateId, false);
       }
@@ -345,11 +338,7 @@ const KetcherEditor = forwardRef((props, ref) => {
 
   // ref functions when a canvas is saved using main "SAVE" button
   useImperativeHandle(ref, () => ({
-    onSaveFileK2SC: () => onFinalCanvasSave(
-      editor,
-      iframeRef,
-      latestData
-    )
+    onSaveFileK2SC: () => onFinalCanvasSave(editor, iframeRef, latestData),
   }));
 
   return (
@@ -358,24 +347,15 @@ const KetcherEditor = forwardRef((props, ref) => {
         loading={showShapes}
         onShapeSelection={onShapeSelection}
         onCloseClick={() => setShowShapes(false)}
-        title="Surface Chemistry Templates"
+        title='Surface Chemistry Templates'
       />
-      {/* <SpecialCharModal
-        loading={showSpecialCharModal}
-        onDashedSelection={onDashedCharSelection}
-        onRestSelections={onCharSelection}
-        onCloseClick={() => setSpecialCharModal(false)}
-        dashedSelection={dashedSelectionCharacter}
-        restSelection={restSelectionCharacter}
-        title="Select a special character"
-      /> */}
       <iframe
         ref={iframeRef}
         id={editor?.id}
         src={editor?.extSrc}
         title={editor?.label}
         height={iH}
-        width="100%"
+        width='100%'
         style={iS}
       />
     </div>
