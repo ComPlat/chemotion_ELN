@@ -6,7 +6,7 @@ module Versioning
 
     attr_accessor :changes
 
-    ALLOWED_REVERTERS = %w[Attachment Chemical Container DeviceDescription ElementalComposition Reactions
+    ALLOWED_REVERTERS = %w[Attachment Chemical Container DeviceDescription ElementalComposition Reaction
                            ReactionsSample ResearchPlan ResearchPlanMetadata Residue
                            Sample Screen Wellplate Well].freeze
 
