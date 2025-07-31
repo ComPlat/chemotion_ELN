@@ -75,7 +75,8 @@ export const textNodeStructSetter = (data) => {
 
 // set templates dataset
 export const templateListSetter = async (data) => {
-  allTemplates = data;
+  const keys = Object.keys(data);
+  allTemplates = [...data[keys[0]], ...data[keys[1]]];
 };
 
 export const allowProcessingSetter = (data) => {
