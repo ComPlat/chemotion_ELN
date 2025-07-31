@@ -15,25 +15,14 @@ import {
 import { ALIAS_PATTERNS, KET_TAGS } from 'src/utilities/ketcherSurfaceChemistry/constants';
 import { findByKeyAndUpdateTextNodePosition } from 'src/utilities/ketcherSurfaceChemistry/TextNode';
 import {
-  mols, textNodeStruct, allTemplates,
+  mols, textNodeStruct, allTemplates, templatesBaseHashWithTemplateId
 } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
 import { latestData } from 'src/components/structureEditor/KetcherEditor';
-
-const loadAndEncodeSVG = async (src) => {
-  try {
-    const response = await fetch(src);
-    const svgText = await response.text();
-    const encoded = btoa(svgText);
-    return encoded;
-  } catch (error) {
-    console.error('Failed to load SVG:', error);
-  }
-};
+import loadAndEncodeSVG from 'src/utilities/ketcherSurfaceChemistry/iconBaseProvider';
 
 // helper function to fetch list of all surface chemistry shape/image list
 const fetchSurfaceChemistryImageData = async (templateId) => {
-  const polymerCategory = localStorage.getItem('polymerCategory') || 'basic';
-  for (const tab of allTemplates[polymerCategory]) {
+  for (const tab of allTemplates) {
     for (const subTab of tab.subTabs) {
       for (const shape of subTab.shapes) {
         if (shape.template_id === parseInt(templateId)) {
@@ -47,7 +36,7 @@ const fetchSurfaceChemistryImageData = async (templateId) => {
               y: -5.824999999999999,
               z: 0
             },
-            data: await loadAndEncodeSVG(`/assets/svg_icons/polymerShapes/${polymerCategory}/${shape.iconName}.svg`),
+            data: await loadAndEncodeSVG(shape.iconName),
           };
           return constructImageObj;
         }
@@ -235,14 +224,11 @@ const applySelectedStruct = async (editor, dataCopy) => {
 };
 
 // find template from dataset by image base
-const findTemplateByPayload = async (templateList, targetPayload) => {
-  for (const category of templateList) {
-    for (const subTab of category.subTabs) {
-      for (const shape of subTab.shapes) {
-        if (shape.payload === targetPayload) {
-          return shape.template_id;
-        }
-      }
+const findTemplateByPayload = async (targetPayload) => {
+  for (const [templateId, iconName] of Object.entries(templatesBaseHashWithTemplateId)) {
+    const base64 = await loadAndEncodeSVG(iconName);
+    if (base64 === targetPayload) {
+      return templateId;
     }
   }
   return null;
