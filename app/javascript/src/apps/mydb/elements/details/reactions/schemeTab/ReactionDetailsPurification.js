@@ -4,7 +4,7 @@ import { Row, Col, Form } from 'react-bootstrap';
 import { Select } from 'src/components/common/Select';
 import 'moment-precise-range-plugin';
 import { purificationOptions } from 'src/components/staticDropdownOptions/options';
-import MaterialGroupContainer from 'src/apps/mydb/elements/details/reactions/schemeTab/MaterialGroupContainer';
+import MaterialGroup from 'src/apps/mydb/elements/details/reactions/schemeTab/MaterialGroup';
 import QuillEditor from 'src/components/QuillEditor';
 import QuillViewer from 'src/components/QuillViewer';
 import Sample from 'src/models/Sample';
@@ -68,7 +68,7 @@ export default class ReactionDetailsPurification extends Component {
     splitSample.short_label = tagGroup.slice(0, -1);
     splitSample.external_label = extLabel;
     reaction.addMaterialAt(splitSample, null, tagMaterial, tagGroup);
-    onReactionChange(reaction, { schemaChanged: true });
+    onReactionChange(reaction, { updateGraphic: true });
   }
 
   handleMultiselectChange(type, selectedOptions) {
@@ -117,7 +117,7 @@ export default class ReactionDetailsPurification extends Component {
         <Row className="mb-2">
           <Col sm={12}>
             <Form.Label>Purification solvents</Form.Label>
-            <MaterialGroupContainer
+            <MaterialGroup
               reaction={reaction}
               materialGroup="purification_solvents"
               materials={reaction.purification_solvents}
@@ -126,7 +126,6 @@ export default class ReactionDetailsPurification extends Component {
               dropSample={this.dropPSolvent}
               showLoadingColumn={!!reaction.hasPolymers()}
               onChange={onChange}
-              headIndex={0}
             />
           </Col>
         </Row>
