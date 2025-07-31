@@ -121,7 +121,7 @@ class ResearchPlanDetailsFieldTableColumnNameModal extends Component {
   }
 
   render() {
-    const { modal, onHide } = this.props;
+    const { modal, onHide, columns } = this.props;
     const {
       columnNameValue,
       columnNameError,
@@ -130,6 +130,27 @@ class ResearchPlanDetailsFieldTableColumnNameModal extends Component {
       linkSampleShortLabelAvailable,
       linkReactionShortLabelAvailable
     } = this.state;
+
+    // Find existing linked column names
+    const existingSampleColumn = columns.find((col) => col.linkType === 'sample');
+    const existingReactionColumn = columns.find((col) => col.linkType === 'reaction');
+
+    // Generate help text based on availability
+    const generateHelpText = () => {
+      if (!linkSampleShortLabelAvailable && !linkReactionShortLabelAvailable) {
+        return 'Both sample and reaction linking columns already exist: '
+               + `"${existingSampleColumn?.headerName}" (sample) and `
+               + `"${existingReactionColumn?.headerName}" (reaction).`;
+      }
+      if (!linkSampleShortLabelAvailable) {
+        return `Sample linking column already exists: "${existingSampleColumn?.headerName}".`;
+      }
+      if (!linkReactionShortLabelAvailable) {
+        return `Reaction linking column already exists: "${existingReactionColumn?.headerName}".`;
+      }
+      return 'Check one option to enable automatic linking for short labels. '
+             + 'The column name you enter will be used as the display name.';
+    };
 
     let title;
     if (modal.action === 'insert') {
@@ -179,15 +200,7 @@ class ResearchPlanDetailsFieldTableColumnNameModal extends Component {
               />
             </div>
             <Form.Text className="text-muted">
-              {!linkSampleShortLabelAvailable && !linkReactionShortLabelAvailable ? (
-                'Both sample and reaction linking columns already exist.'
-              ) : !linkSampleShortLabelAvailable ? (
-                'Sample linking column already exists.'
-              ) : !linkReactionShortLabelAvailable ? (
-                'Reaction linking column already exists.'
-              ) : (
-                'Check one option to enable automatic linking for short labels. The column name you enter will be used as the display name.'
-              )}
+              {generateHelpText()}
             </Form.Text>
           </Form.Group>
         </Modal.Body>
