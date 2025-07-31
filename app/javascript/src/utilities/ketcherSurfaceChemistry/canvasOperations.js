@@ -8,19 +8,15 @@ import { reAttachPolymerList } from 'src/utilities/ketcherSurfaceChemistry/Polym
 import {
   latestData,
   resetStore,
-  imageNodeCounter,
   latestDataSetter,
-  imageUsedCounterSetter
+  imageUsedCounterSetter,
 } from 'src/components/structureEditor/KetcherEditor';
 import { ALIAS_PATTERNS, KET_TAGS } from 'src/utilities/ketcherSurfaceChemistry/constants';
-import {
-  findAtomByImageIndex,
-  handleAddAtom
-} from 'src/utilities/ketcherSurfaceChemistry/AtomsAndMolManipulation';
+import { findAtomByImageIndex, handleAddAtom } from 'src/utilities/ketcherSurfaceChemistry/AtomsAndMolManipulation';
 import { fetchKetcherData } from 'src/utilities/ketcherSurfaceChemistry/InitializeAndParseKetcher';
 import {
   imageNodeForTextNodeSetter,
-  buttonClickForRectangleSelection
+  buttonClickForRectangleSelection,
 } from 'src/utilities/ketcherSurfaceChemistry/DomHandeling';
 import {
   ImagesToBeUpdatedSetter,
@@ -39,7 +35,7 @@ import {
   addNewMol,
   emptyKetcherStore,
   allAtomsSetter,
-  FILOStackSetter
+  FILOStackSetter,
 } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
 import {
   placeTextOnAtoms,
@@ -51,7 +47,8 @@ import {
 // canvas actions
 const removeUnfamiliarRgLabels = async (lines) => {
   const removableAtoms = [];
-  for (let i = lines.length - 1; i > 0; i--) { // Looping backwards to avoid index shifting issues
+  for (let i = lines.length - 1; i > 0; i--) {
+    // Looping backwards to avoid index shifting issues
     if (ALIAS_PATTERNS.threeParts.test(lines[i])) {
       const template = parseInt(lines[i].split('_')[1]);
 
@@ -76,7 +73,10 @@ const arrangePolymers = async (canvasData) => {
   if (lines.length < 5) return { ket2Molfile: null, svgElement: null };
   const elementsInfo = lines[3];
 
-  const headers = elementsInfo.trim().split(' ').filter((i) => i !== '');
+  const headers = elementsInfo
+    .trim()
+    .split(' ')
+    .filter((i) => i !== '');
   const atomsCount = parseInt(headers[0]);
   const bondsCount = parseInt(headers[1]);
 
@@ -84,7 +84,11 @@ const arrangePolymers = async (canvasData) => {
   const additionalDataEnd = lines.length - 1;
 
   const ket2Lines = await reAttachPolymerList({
-    lines, atomsCount, additionalDataStart, additionalDataEnd, allAtoms
+    lines,
+    atomsCount,
+    additionalDataStart,
+    additionalDataEnd,
+    allAtoms,
   });
   return ket2Lines;
 };
@@ -103,15 +107,9 @@ const arrangeTextNodes = async (ket2Molfile) => {
         textList.forEach((textItem) => {
           const block = JSON.parse(textItem.data.content).blocks[0];
           if (textNodeKey === block.key) {
-            const line = [
-              atomCount,
-              textSeparator,
-              textNodeKey,
-              textSeparator,
-              atom.alias,
-              textSeparator,
-              block.text
-            ].join('').trim();
+            const line = [atomCount, textSeparator, textNodeKey, textSeparator, atom.alias, textSeparator, block.text]
+              .join('')
+              .trim();
             assembleTextList.push(line);
           }
         });
@@ -159,7 +157,10 @@ const connectionHash = async (ket2Lines, bondsCount, startAtoms, atomsCount) => 
   const connections = {};
   const startIdx = atomsCount + startAtoms + 1;
   for (let i = startIdx; i < startIdx + bondsCount; i++) {
-    const line = ket2Lines[i].trim().split(' ').filter((j) => j !== '');
+    const line = ket2Lines[i]
+      .trim()
+      .split(' ')
+      .filter((j) => j !== '');
     if (line.length >= 3) {
       const [atom1, atom2] = line;
       console.log('atom1, atom2', atom1, atom2);
@@ -178,21 +179,13 @@ const smartInlineExpand = (input) => {
 
   for (const key in result) {
     const children = result[key];
-
     for (const child of children) {
       if (input[child]) {
         const childValues = input[child];
-
-        // Try to find next-level key (like child after current key)
         const nextLevelKey = findNextKey(key, result);
-
         if (nextLevelKey) {
           const nextLevelValues = result[nextLevelKey];
-
-          const newItems = childValues.filter(
-            (val) => !nextLevelValues.includes(val)
-          );
-
+          const newItems = childValues.filter((val) => !nextLevelValues.includes(val));
           if (newItems.length > 0) {
             result[nextLevelKey].push(...newItems);
             keysToDelete.add(child);
@@ -226,9 +219,7 @@ function connectWithUnderscore(connections, data) {
   for (const key in connections) {
     const connectedKeys = connections[key];
 
-    const texts = connectedKeys
-      .map(k => data[k]?.text)
-      .filter(Boolean);  // remove undefined/null texts
+    const texts = connectedKeys.map((k) => data[k]?.text).filter(Boolean); // remove undefined/null texts
 
     result[key] = texts.join('_');
   }
@@ -239,7 +230,7 @@ function connectWithUnderscore(connections, data) {
 const subtractOneFromAll = (obj) => {
   const result = {};
   for (const key in obj) {
-    result[key] = obj[key].map(val => Number(val) - 1);
+    result[key] = obj[key].map((val) => Number(val) - 1);
   }
   return result;
 };
@@ -247,7 +238,11 @@ const subtractOneFromAll = (obj) => {
 // process text nodes into for formula
 const assembleTextDescriptionFormula = async (ket2Lines, editor) => {
   const startAtoms = 3;
-  const splitsHeaders = ket2Lines[3].trim().split(' ').map((i) => i.trim()).filter((i) => i !== '');
+  const splitsHeaders = ket2Lines[3]
+    .trim()
+    .split(' ')
+    .map((i) => i.trim())
+    .filter((i) => i !== '');
   const atomsCount = parseInt(splitsHeaders[0]);
   const bondsCount = parseInt(splitsHeaders[1]);
   const startTextNode = ket2Lines.indexOf(KET_TAGS.textNodeIdentifier);
@@ -364,7 +359,7 @@ const onAddText = async (editor, selectedImageForTextNode) => {
     lastTextNode.data.position = {
       x: atomLocation[0] + width / 2,
       y: atomLocation[1],
-      z: atomLocation[2]
+      z: atomLocation[2],
     };
     textList[textList.length - 1] = lastTextNode;
     textNodeStruct[alias] = JSON.parse(lastTextNode.data.content).blocks[0].key;
@@ -384,9 +379,7 @@ const replaceAliasWithRG = async (data) => {
         delete atom.label;
         delete atom.alias;
         atom.type = 'rg-label';
-        atom.$refs = [
-          'rg-6'
-        ];
+        atom.$refs = ['rg-6'];
       }
     }
   }
@@ -451,19 +444,15 @@ const prepareSvg = async (editor) => {
 
 /* istanbul ignore next */
 // save molfile with source, should_fetch, should_move
-export const saveMoveCanvas = async (
-  editor,
-  data,
-  isFetchRequired,
-  isMoveRequired,
-  recenter = false,
-) => {
+export const saveMoveCanvas = async (editor, data, isFetchRequired, isMoveRequired, recenter = false) => {
   const dataCopy = data || latestData;
   if (editor) {
     if (recenter) {
       await editor.structureDef.editor.setMolecule(JSON.stringify(dataCopy));
     } else {
-      await editor.structureDef.editor.setMolecule(JSON.stringify(dataCopy), { rescale: false });
+      await editor.structureDef.editor.setMolecule(JSON.stringify(dataCopy), {
+        rescale: false,
+      });
     }
 
     if (isFetchRequired) {
@@ -530,16 +519,22 @@ const onTemplateMove = async (editor, recenter = false) => {
 const onFinalCanvasSave = async (editor, iframeRef) => {
   try {
     let textNodesFormula = '';
+    let ket2Lines = [];
+
     await centerPositionCanvas(editor);
     const canvasDataMol = await editor.structureDef.editor.getMolfile();
     await reArrangeImagesOnCanvas(iframeRef); // svg display
-    const ket2Lines = await arrangePolymers(canvasDataMol); // polymers added
-    const ket2LineTextArranged = await arrangeTextNodes(ket2Lines); // text node
+    ket2Lines = await arrangePolymers(canvasDataMol); // polymers added
+    ket2Lines = await arrangeTextNodes(ket2Lines); // text node
     if (textList?.length) textNodesFormula = await assembleTextDescriptionFormula(ket2Lines, editor);
-    ket2LineTextArranged.push(KET_TAGS.fileEndIdentifier);
+    ket2Lines.push(KET_TAGS.fileEndIdentifier);
     const svgElement = await prepareSvg(editor);
     resetStore();
-    return { ket2Molfile: ket2LineTextArranged.join('\n'), svgElement, textNodesFormula };
+    return {
+      ket2Molfile: ket2Lines.join('\n'),
+      svgElement,
+      textNodesFormula,
+    };
   } catch (e) {
     console.error('onSaveFileK2SC', e);
     return e.message;
@@ -547,21 +542,42 @@ const onFinalCanvasSave = async (editor, iframeRef) => {
 };
 
 const onPasteNewShapes = async (editor, tempId, imageToBeAdded, iframeRef) => {
-  const combo = [];
-  combo.push({
-    $ref: `mol${mols.length}`
-  });
+  // Check the length of mols and imagesList
+  const molCount = mols.length === 0 ? 0 : mols.length;
+  const imageCount = imagesList.length === 0 ? 0 : imagesList.length;
+
+  const combo = [{ $ref: `mol${molCount}` }];
+
+  // If an image is to be added, fetch the image data and adjust its bounding box
   if (imageToBeAdded) {
     const imageItem = await fetchSurfaceChemistryImageData(tempId);
     imageItem.boundingBox.y = -1.5250001907348631;
     imageItem.boundingBox.x = 1.5250000000000004;
     combo.push(imageItem);
   }
-  imageUsedCounterSetter(imageNodeCounter + 1);
-  if (!latestData) { latestDataSetter(emptyKetcherStore()); }
-  latestData.root.nodes.push(...combo);
-  latestData[`mol${mols.length}`] = await addNewMol(tempId, imageNodeCounter);
+
+  // Update image used counter
+  const imageCountAlias =
+    imagesList.length === 0 ? 0 : molCount < imageCount ? imagesList.length - 1 : imagesList.length;
+
+  imageUsedCounterSetter(imageCountAlias);
+
+  if (!latestData) {
+    latestDataSetter(emptyKetcherStore());
+  }
+
+  // Add nodes to root if both molCount and imageCount are 0 or different
+  if (molCount === 0 && imageCount === 0) {
+    latestData.root.nodes.push(...combo);
+    // Add a new molecule
+    latestData[`mol${molCount}`] = await addNewMol(tempId);
+  } else if (molCount !== imageCount) {
+    latestData.root.nodes.push(...combo);
+    // Add a new molecule
+    latestData[`mol${molCount}`] = await addNewMol(tempId);
+  }
   saveMoveCanvas(editor, latestData, true, true, false);
+
   await buttonClickForRectangleSelection(iframeRef);
   FILOStackSetter([]);
   allAtomsSetter([]);
@@ -581,5 +597,5 @@ export {
   onTemplateMove,
   onFinalCanvasSave,
   onPasteNewShapes,
-  getTitleSelector
+  getTitleSelector,
 };

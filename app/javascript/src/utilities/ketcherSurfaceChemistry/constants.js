@@ -1,12 +1,12 @@
 // Constants
 const ALIAS_PATTERNS = Object.freeze({
   threeParts: /t_\d{1,3}_\d{1,3}/,
-  twoParts: /^t_\d{1,3}$/
+  twoParts: /^t_\d{1,3}$/,
 });
 
 const LAYERING_FLAGS = Object.freeze({
   skipTemplateName: false,
-  skipImageLayering: false
+  skipImageLayering: false,
 });
 
 const KET_TAGS = Object.freeze({
@@ -25,8 +25,8 @@ const KET_TAGS = Object.freeze({
   textIdentifier: '#',
   templateEditProps: {
     text: 'You are adding a text description to the selected template',
-    id: 'templateSelectedInfo'
-  }
+    id: 'templateSelectedInfo',
+  },
 });
 
 // Button actions
@@ -59,9 +59,15 @@ export const EventNames = {
   ADD_TEXT: 'Add text',
   DELETE_TEXT: 'Delete text',
   UPSERT_IMAGE: 'Upsert image',
+  DELETE_IMAGE: 'Delete image',
+  LOAD_CANVAS: 'Load canvas',
 };
 
-export {
-  ALIAS_PATTERNS, KET_TAGS, LAYERING_FLAGS, ButtonSelectors,
-  getButtonSelector
-};
+// DOM element handlers
+export const KET_DOM_TAG = Object.freeze({
+  textBehindImg: 'A',
+  tagCompBehindImg: ['text', 'span'],
+  imageTag: 'image',
+});
+
+export { ALIAS_PATTERNS, KET_TAGS, LAYERING_FLAGS, ButtonSelectors, getButtonSelector };

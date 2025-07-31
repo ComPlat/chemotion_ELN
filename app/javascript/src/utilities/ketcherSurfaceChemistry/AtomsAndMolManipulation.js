@@ -20,8 +20,7 @@ import {
   textNodeStructSetter,
   imagesList,
   allAtoms,
-  deletedAtomsSetter,
-  allTemplates
+  deletedAtomsSetter
 } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
 import {
   isAliasConsistent,
@@ -381,7 +380,7 @@ const filterImagesByDifferences = async (aliasDifferences) => {
   const filteredImages = [];
   for (let i = 0; i < imagesList.length; i++) {
     if (aliasDifferences.indexOf(i) !== -1) {
-      const templateId = await findTemplateByPayload(allTemplates, imagesList[i].data);
+      const templateId = await findTemplateByPayload(imagesList[i].data);
       if (templateId == null) {
         filteredImages.push(imagesList[i]);
       }
