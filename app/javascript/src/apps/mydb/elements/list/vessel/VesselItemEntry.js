@@ -1,8 +1,6 @@
 import React from 'react';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { Table } from 'react-bootstrap';
-import ElementCheckbox from 'src/apps/mydb/elements/list/ElementCheckbox';
-import ElementDragHandle from 'src/apps/mydb/elements/list/ElementDragHandle';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import Aviator from 'aviator';
@@ -33,50 +31,25 @@ function VesselItemEntry({ vesselItem }) {
     elementShowOrNew(e);
   };
 
-  const isElementChecked = (element) => {
-    const { checkedIds = [], uncheckedIds = [], checkedAll } = UIStore.getState().vessel;
-    return (checkedAll && !uncheckedIds.includes(element.id)) || checkedIds.includes(element.id);
-  };
-
   const { currentElement } = ElementStore.getState();
   const backgroundColorClass = currentElement?.id === vesselItem.id ? 'text-bg-primary' : '';
 
   return (
-    <div className="group-entry">
-      <Table className="elements">
-        <tbody>
-          <tr className={`${backgroundColorClass} border-top`}>
-            <td className="select-checkBox">
-              <ElementCheckbox
-                element={vesselItem}
-                checked={isElementChecked(vesselItem)}
-              />
-            </td>
-            <td
-              className="short_label"
-              onClick={showDetails}
-            >
-              {vesselItem.short_label}
-            </td>
-            <td
-              className="short_label"
-              onClick={showDetails}
-            >
-              {vesselItem.name}
-            </td>
-            <td>
-              <ElementCollectionLabels element={vesselItem} />
-            </td>
-            <td className="arrow">
-              <ElementDragHandle
-                sourceType={DragDropItemTypes.VESSEL}
-                element={vesselItem}
-              />
-            </td>
-          </tr>
-        </tbody>
-      </Table>
-    </div>
+  // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/interactive-supports-focus
+    <button
+      type="button"
+      className={`border-0 bg-transparent ${backgroundColorClass}`}
+      onClick={showDetails}
+    >
+      <div className="flex-grow-1">
+        {vesselItem.short_label}
+        {' '}
+        {vesselItem.name}
+      </div>
+      <div>
+        <ElementCollectionLabels element={vesselItem} />
+      </div>
+    </button>
   );
 }
 

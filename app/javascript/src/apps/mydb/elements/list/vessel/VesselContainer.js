@@ -1,19 +1,31 @@
-import React from 'react';
-import VesselEntry from 'src/apps/mydb/elements/list/vessel/VesselEntry';
+import React, { useCallback } from 'react';
+import PropTypes from 'prop-types';
+import VesselItemHeader from 'src/apps/mydb/elements/list/vessel/VesselItemHeader';
+import VesselItemEntry from 'src/apps/mydb/elements/list/vessel/VesselItemEntry';
+import ElementGroupsRenderer from 'src/apps/mydb/elements/list/renderers/ElementGroupsRenderer';
 
 export default function VesselContainer({ vesselGroups }) {
-  return (
-    <div className="list-container">
-      {vesselGroups.map(
-        (group) => (
-          <VesselEntry
-            key={group.vesselTemplate.id}
-            vesselTemplate={group.vesselTemplate}
-            vesselItems={group.vesselItems}
-          />
+  const getGroupKey = useCallback(
+    (vessel) => `${vessel.vessel_template?.name}`,
+    []
+  );
 
-        )
+  return (
+    <ElementGroupsRenderer
+      type="vessel"
+      elements={vesselGroups}
+      getGroupKey={getGroupKey}
+      renderGroupHeader={(groupArray) => (
+        <VesselItemHeader groupItems={groupArray} />
       )}
-    </div>
+      renderGroupItem={(item) => (
+        <VesselItemEntry key={item.id} vesselItem={item} />
+      )}
+    />
   );
 }
+
+VesselContainer.propTypes = {
+  // eslint-disable-next-line react/forbid-prop-types
+  vesselGroups: PropTypes.arrayOf(PropTypes.object).isRequired,
+};
