@@ -7,7 +7,7 @@ import { DragDropItemTypes } from 'src/utilities/DndConst';
 import SequenceAndPostTranslationalModificationForm from './SequenceAndPostTranslationalModificationForm';
 import Attachment from 'src/models/Attachment';
 
-import { undoButton, removeButton, customDropzone, formatFileSize } from 'src/apps/mydb/elements/list/AttachmentList';
+import { customDropzone, formatFileSize } from 'src/apps/mydb/elements/list/AttachmentList';
 import MolViewerBtn from 'src/components/viewer/MolViewerBtn';
 import { formatDate } from 'src/utilities/timezoneHelper';
 
@@ -24,6 +24,7 @@ const ReferenceAndModificationForm = ({ ident, readonly }) => {
   let parent = sbmmSample.sequence_based_macromolecule;
   let disabled = readonly ? true : false;
   const accordionIdent = `${sbmmSample.id}-${ident}`;
+  const structureFileIdent = `${sbmmSample.id}-structure-file-${ident}`;
 
   let fieldPrefix = 'sequence_based_macromolecule';
   if (ident === 'reference' && sbmmSample.sequence_based_macromolecule.parent) {
@@ -50,23 +51,19 @@ const ReferenceAndModificationForm = ({ ident, readonly }) => {
 
   const sequenceLengthValue = parent?.sequence.length || (parent && parent?.sequence && parent?.sequence.length) || '';
 
-  const errorInModification = Object.keys(sbmmSample.errors).length >= 1
-    && (sbmmSample.errors.sequence_based_macromolecule
-      || sbmmSample.errors?.structure_file);
+  const errorInModification = Object.keys(sbmmSample.errors).length >= 1 && sbmmSample.errors.sequence_based_macromolecule;
+  const errorInStructureFile = Object.keys(sbmmSample.errors).length >= 1 && sbmmSample.errors?.structure_file;
 
   let accordionErrorByIdent = false;
+  let accordionStructureFileErrorByIdent = false;
 
   if (uniprotDerivationValue === 'uniprot' || ident === 'reference') {
     accordionErrorByIdent = false;
   } else if (errorInModification) {
     accordionErrorByIdent = true;
+  } else if (errorInStructureFile) {
+    accordionStructureFileErrorByIdent = true;
   }
-
-  const heterologousExpression = [
-    { label: 'Yes', value: 'yes' },
-    { label: 'No', value: 'no' },
-    { label: 'Unknown', value: 'unknown' },
-  ]
 
   const referenceAccordionHeader = () => {
     if (ident === 'sequence_modifications') {
@@ -74,7 +71,7 @@ const ReferenceAndModificationForm = ({ ident, readonly }) => {
     } else if (uniprotDerivationValue === 'uniprot') {
       return `Protein Identifiers and structural characteristics${sbmmSample.sbmmShortLabelForHeader()}`;
     } else if (uniprotDerivationValue === 'uniprot_modified') {
-      return "Protein Identifiers and structural characteristics of reference entries"
+      return "Protein Identifiers and structural characteristics of reference entries";
     }
   }
 
@@ -106,16 +103,6 @@ const ReferenceAndModificationForm = ({ ident, readonly }) => {
       const updatedAttachments = sbmmSample.sequence_based_macromolecule.attachments.concat(newAttachments);
       sbmmStore.changeSequenceBasedMacromoleculeSample('sequence_based_macromolecule.attachments', updatedAttachments);
     }
-  }
-
-  const onUndoDelete = (attachment) => {
-    const index = sbmmSample.sequence_based_macromolecule.attachments.indexOf(attachment);
-    sbmmStore.changeSBMMAttachment(index, 'is_deleted', false);
-  }
-
-  const onDelete = (attachment) => {
-    const index = sbmmSample.sequence_based_macromolecule.attachments.indexOf(attachment);
-    sbmmStore.changeSBMMAttachment(index, 'is_deleted', true);
   }
 
   const structureAttachmentError = () => {
@@ -185,11 +172,6 @@ const ReferenceAndModificationForm = ({ ident, readonly }) => {
     let attachmentList = [];
     sbmmAttachments.map((attachment) => {
       const rowTextClass = attachment.is_deleted ? ' text-decoration-line-through' : '';
-      let deleteButton = '';
-      if (showAttachments) {
-        deleteButton =
-          attachment.is_deleted ? undoButton(attachment, onUndoDelete) : removeButton(attachment, onDelete, false)
-      }
 
       attachmentList.push(
         <div className="attachment-row" key={attachment.id}>
@@ -217,7 +199,6 @@ const ReferenceAndModificationForm = ({ ident, readonly }) => {
               viewType={`file_${attachment.id}`}
               key={`attachment_${attachment.id}`}
             />
-            {deleteButton}
           </div>
         </div>
       );
@@ -302,24 +283,7 @@ const ReferenceAndModificationForm = ({ ident, readonly }) => {
         </Col>
       </Row>
       {
-        (showAttachments || sbmmAttachments.length >= 1) && (
-          <>
-            <Row>
-              <Col>
-                <label className="form-label">Structure files (cif / pdb)</label>
-                {structureAttachmentError()}
-              </Col>
-            </Row>
-            <Row className="mb-4 align-items-start">
-              {dropzoneForModificationOrUniprot()}
-              {listSBMMAttachments()}
-            </Row>
-          </>
-        )
-      }
-
-      {
-        uniprotDerivationValue == 'uniprot' && (
+        (uniprotDerivationValue == 'uniprot' || parent.uniprot_derivation == 'uniprot') && (
           <>
             <h5 className="mb-3">Details on Protein's source:</h5>
             <Row className="mb-4 align-items-end">
@@ -348,6 +312,29 @@ const ReferenceAndModificationForm = ({ ident, readonly }) => {
           />
         )
       }
+      <SecondaryCollapseContent
+        title="Structure files (cif / pdb)"
+        eventKey={structureFileIdent}
+        error={accordionStructureFileErrorByIdent}
+        store={sbmmStore}
+        active={sbmmStore.toggable_contents[structureFileIdent] && structureFileIdent}
+      >
+        {
+          (showAttachments || sbmmAttachments.length >= 1) && (
+            <>
+              <Row>
+                <Col>
+                  {structureAttachmentError()}
+                </Col>
+              </Row>
+              <Row className="align-items-start">
+                {dropzoneForModificationOrUniprot()}
+                {listSBMMAttachments()}
+              </Row>
+            </>
+          )
+        }
+      </SecondaryCollapseContent>
     </SecondaryCollapseContent>
   );
 }
