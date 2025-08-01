@@ -11,6 +11,8 @@
 #  name               :string
 #  qr_code            :string
 #  short_label        :string
+#  weight_amount      :float
+#  weight_unit        :string
 #  created_at         :datetime         not null
 #  updated_at         :datetime         not null
 #  user_id            :bigint

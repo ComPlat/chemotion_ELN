@@ -11,6 +11,7 @@ import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import ReactionsFetcher from 'src/fetchers/ReactionsFetcher';
 import WellplatesFetcher from 'src/fetchers/WellplatesFetcher';
 import CellLinesFetcher from 'src/fetchers/CellLinesFetcher';
+import VesselsFetcher from 'src/fetchers/VesselsFetcher';
 import CollectionsFetcher from 'src/fetchers/CollectionsFetcher';
 import ScreensFetcher from 'src/fetchers/ScreensFetcher';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
@@ -27,6 +28,7 @@ import Sample from 'src/models/Sample';
 import Reaction from 'src/models/Reaction';
 import Wellplate from 'src/models/Wellplate';
 import CellLine from 'src/models/cellLine/CellLine';
+import Vessel from 'src/models/vessel/Vessel';
 import Screen from 'src/models/Screen';
 import ResearchPlan from 'src/models/ResearchPlan';
 import DeviceDescription from 'src/models/DeviceDescription';
@@ -39,6 +41,7 @@ import Prediction from 'src/models/Prediction';
 import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
 import Metadata from 'src/models/Metadata';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import { generateNextShortLabel } from 'src/utilities/VesselUtilities';
 
 import _ from 'lodash';
 
@@ -361,6 +364,17 @@ class ElementActions {
     };
   }
 
+  fetchVesselsByCollectionId(id, queryParams = {}, collectionIsSync = false) {
+    return (dispatch) => {
+      VesselsFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
   // -- Samples --
 
   fetchSampleById(id) {
@@ -483,7 +497,7 @@ class ElementActions {
 
   generateEmptyCellLine(collectionId, template) {
     const { currentUser } = UserStore.getState();
-    if (!currentUser) { return }
+    if (!currentUser) { return; }
 
     const cellLineSample = CellLine.buildEmpty(collectionId, `${currentUser.initials}-C${currentUser.cell_lines_count}`);
     if (template) {
@@ -816,7 +830,6 @@ class ElementActions {
     };
   }
 
-
   // -- Screens --
   addResearchPlanToScreen(screen_id, collection_id, afterComplete = () => {}) {
     return (dispatch) => {
@@ -830,7 +843,6 @@ class ElementActions {
   generateScreenFromClipboard(collection_id) {
     return collection_id;
   }
-
 
   fetchScreenById(id) {
     return (dispatch) => {
@@ -989,6 +1001,120 @@ class ElementActions {
       DeviceDescriptionFetcher.splitAsSubDeviceDescription(ui_state)
         .then((result) => {
           dispatch(ui_state.ui_state);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
+  // -- Vessels --
+
+  fetchVesselElById(vesselId) {
+    return (dispatch) => {
+      VesselsFetcher.fetchById(vesselId)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
+  fetchVesselTemplateById(vesselTemplateId, collectionId) {
+    return (dispatch) => {
+      VesselsFetcher.fetchVesselTemplateById(vesselTemplateId, collectionId)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
+  fetchEmptyVesselTemplate(collectionId) {
+    return (dispatch) => {
+      VesselsFetcher.fetchEmptyVesselTemplate(collectionId)
+        .then((result) => {
+          dispatch(result);
+        })
+        .catch((errorMessage) => {
+          console.error(errorMessage);
+        });
+    };
+  }
+
+  createVessel(params) {
+    return (dispatch) => {
+      const { currentUser } = UserStore.getState();
+      VesselsFetcher.createVesselInstance(params, currentUser)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
+  createVesselTemplate(params) {
+    return (dispatch) => {
+      const { currentUser } = UserStore.getState();
+      VesselsFetcher.createVesselTemplate(params)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
+  generateEmptyVessel(collectionId, template) {
+    const { currentUser } = UserStore.getState();
+    if (!currentUser) { return; }
+
+    const shortLabel = generateNextShortLabel();
+    const vesselInstance = Vessel.buildEmpty(collectionId, shortLabel);
+
+    if (template) {
+      vesselInstance.copyMaterialFrom(template);
+    }
+    return vesselInstance;
+  }
+
+  generateEmptyVesselTemplate(collectionId, template) {
+    if (!collectionId || isNaN(Number(collectionId))) {
+      console.warn('[ElementActions] Invalid collectionId:', collectionId);
+      return null;
+    }
+    const { currentUser } = UserStore.getState();
+    if (!currentUser) { return; }
+
+    const vesselTemplate = Vessel.buildEmpty(collectionId);
+    vesselTemplate.type = 'vessel_template';
+    vesselTemplate.is_new = true;
+
+    if (template) {
+      vesselTemplate.copyMaterialFrom(template);
+    }
+
+    return vesselTemplate;
+  }
+
+  updateVessel(params) {
+    return (dispatch) => {
+      VesselsFetcher.updateVesselInstance(params)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
+  updateVesselTemplate(params) {
+    return (dispatch) => {
+      VesselsFetcher.updateVesselTemplate(params)
+        .then((result) => {
+          dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });

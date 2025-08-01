@@ -7,6 +7,7 @@ import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import { elementNames } from 'src/apps/generic/Utils';
+import { getLatestVesselIds, clearLatestVesselIds } from 'src/utilities/VesselUtilities';
 
 const collectionShow = (e) => {
   UserActions.fetchCurrentUser();
@@ -94,6 +95,7 @@ const scollectionShow = (e) => {
     UIActions.uncheckAllElements({ type: 'wellplate', range: 'all' });
     UIActions.uncheckAllElements({ type: 'screen', range: 'all' });
     UIActions.uncheckAllElements({ type: 'device_description', range: 'all' });
+    UIActions.uncheckAllElements({ type: 'vessel', range: 'all' });
     elementNames(false).then((klassArray) => {
       klassArray.forEach((klass) => {
         UIActions.uncheckAllElements({ type: klass, range: 'all' });
@@ -135,6 +137,51 @@ const cellLineShowOrNew = (e) => {
   } else {
     ElementActions.tryFetchCellLineElById.defer(e.params.cell_lineID);
   }
+};
+
+const vesselShowOrNew = (e) => {
+  const isNew = e.params.new_vessel || (e.params.new_vessel === undefined && e.params.vesselID === 'new');
+
+  if (isNew) {
+    ElementActions.generateEmptyVessel(e.params.collectionID);
+    return;
+  }
+
+  if (e.params.vesselID) {
+    e.params.vesselId = e.params.vesselID;
+  }
+
+  const latestVesselIds = getLatestVesselIds();
+
+  if (latestVesselIds.length > 0) {
+    latestVesselIds.forEach((vesselId) => {
+      ElementActions.fetchVesselElById.defer(vesselId);
+    });
+    clearLatestVesselIds();
+  } else if (typeof e.params.vesselId === 'string' && e.params.vesselId.trim().length > 0) {
+    ElementActions.fetchVesselElById.defer(e.params.vesselId);
+  } else {
+    console.warn('Skipping fetch: invalid or empty vesselId', e.params.vesselId);
+  }
+};
+
+const vesselTemplateShowOrNew = (e) => {
+  const { vesselTemplateID, collectionID } = e.params;
+
+  if (!collectionID) {
+    console.warn('[ROUTE] Missing collectionID. Cannot create new vessel template.');
+    return;
+  }
+
+  if (!vesselTemplateID || vesselTemplateID === 'new') {
+    const newTemplate = ElementActions.generateEmptyVesselTemplate(collectionID);
+    newTemplate.type = 'vessel_template';
+    newTemplate.is_new = true;
+
+    ElementActions.setCurrentElement(newTemplate);
+    return;
+  }
+  ElementActions.fetchVesselTemplateById.defer(vesselTemplateID, collectionID);
 };
 
 const reactionShow = (e) => {
@@ -309,6 +356,12 @@ const elementShowOrNew = (e) => {
     case 'device_description':
       deviceDescriptionShowOrNew(e);
       break;
+    case 'vessel':
+      vesselShowOrNew(e);
+      break;
+    case 'vessel_template':
+      vesselTemplateShowOrNew(e);
+      break;
     default:
       if (e && e.klassType == 'GenericEl') {
         genericElShowOrNew(e, type);
@@ -339,5 +392,7 @@ export {
   elementShowOrNew,
   predictionShowFwdRxn,
   genericElShowOrNew,
-  cellLineShowOrNew
+  cellLineShowOrNew,
+  vesselShowOrNew,
+  vesselTemplateShowOrNew
 };

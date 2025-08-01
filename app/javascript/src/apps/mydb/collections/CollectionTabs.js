@@ -19,7 +19,8 @@ const elements = [
   { name: 'wellplate', label: 'Wellplate' },
   { name: 'screen', label: 'Screen' },
   { name: 'research_plan', label: 'Research Plan' },
-  { name: 'device_description', label: 'Device description' }
+  { name: 'device_description', label: 'Device description' },
+  { name: 'vessel', label: 'Vessel' }
 ];
 
 export default class CollectionTabs extends React.Component {

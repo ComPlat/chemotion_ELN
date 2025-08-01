@@ -23,6 +23,8 @@ import ElementsTableGroupedEntries from 'src/apps/mydb/elements/list/ElementsTab
 import { Select } from 'src/components/common/Select';
 import PropTypes from 'prop-types';
 import CellLineContainer from 'src/apps/mydb/elements/list/cellLine/CellLineContainer';
+import VesselContainer from 'src/apps/mydb/elements/list/vessel/VesselContainer';
+import VesselTemplateGroupView from 'src/apps/mydb/elements/list/vessel/VesselTemplateGroupView';
 import ChevronIcon from 'src/components/common/ChevronIcon';
 import DeviceDescriptionList from 'src/apps/mydb/elements/list/deviceDescriptions/DeviceDescriptionList';
 import DeviceDescriptionListHeader from 'src/apps/mydb/elements/list/deviceDescriptions/DeviceDescriptionListHeader';
@@ -553,6 +555,48 @@ export default class ElementsTable extends React.Component {
     );
   };
 
+  renderVesselsHeader = () => {
+    const { elementsGroup, elementsSort, sortDirection } = this.state;
+
+    const optionsHash = {
+      none: { sortColumn: 'create date', label: 'List' },
+      by_template: { sortColumn: 'template name', label: 'Grouped by Template (All)' }, // NEW
+    };
+
+    const options = Object.entries(optionsHash).map(([value, config]) => ({
+      value,
+      label: config.label,
+    }));
+
+    const { sortColumn } = optionsHash[elementsGroup];
+    const sortTitle = elementsSort
+      ? `Sort by ${sortColumn} (${sortDirection})`
+      : `Sort by update date (${sortDirection})`;
+    const sortTooltip = <Tooltip id="vessel_sort_tooltip">{sortTitle}</Tooltip>;
+
+    const sortIconClass = elementsSort ? 'fa-sort-alpha-desc' : 'fa-clock-o';
+    const sortIcon = <i className={`fa fa-fw ${sortIconClass}`} />;
+
+    return (
+      <>
+        <Select
+          options={options}
+          isClearable={false}
+          value={options.find(({ value }) => value === elementsGroup)}
+          onChange={this.changeElementsGroup}
+          className="header-group-select"
+        />
+        <OverlayTrigger placement="top" overlay={sortTooltip}>
+          <button type="button" style={{ border: 'none' }} onClick={this.changeElementsSort}>
+            {sortIcon}
+          </button>
+        </OverlayTrigger>
+        {elementsGroup !== 'none' ? this.collapseButton() : null}
+      </>
+    );
+  };
+
+
   renderHeader = () => {
     const { filterCreatedAt, ui } = this.state;
     const { type, genericEl } = this.props;
@@ -574,6 +618,8 @@ export default class ElementsTable extends React.Component {
       typeSpecificHeader = this.collapseButton();
     } else if (genericEl) {
       typeSpecificHeader = this.renderGenericElementsHeader();
+    } else if (type === 'vessel') {
+      typeSpecificHeader = this.renderVesselsHeader();
     }
 
     const searchLabel = <SearchUserLabels userLabel={userLabel} fnCb={this.setUserLabel} />;
@@ -667,6 +713,18 @@ export default class ElementsTable extends React.Component {
           elements={elements}
         />
       );
+    } else if (type === 'vessel') {
+      if (elementsGroup === 'by_template') {
+        elementsTableEntries = (
+          <VesselTemplateGroupView elements={elements} />
+        );
+      } else {
+        elementsTableEntries = (
+          <VesselContainer
+            vesselGroups={elements}
+          />
+        );
+      }
     } else {
       elementsTableEntries = (
         <ElementsTableEntries
