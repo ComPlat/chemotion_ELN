@@ -2,7 +2,7 @@ import React from 'react';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { Table } from 'react-bootstrap';
 import ElementCheckbox from 'src/apps/mydb/elements/list/ElementCheckbox';
-import ElementContainer from 'src/apps/mydb/elements/list/ElementContainer';
+import ElementDragHandle from 'src/apps/mydb/elements/list/ElementDragHandle';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import Aviator from 'aviator';
@@ -68,7 +68,7 @@ function VesselItemEntry({ vesselItem }) {
               <ElementCollectionLabels element={vesselItem} />
             </td>
             <td className="arrow">
-              <ElementContainer
+              <ElementDragHandle
                 sourceType={DragDropItemTypes.VESSEL}
                 element={vesselItem}
               />
