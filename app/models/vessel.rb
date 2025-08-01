@@ -5,16 +5,18 @@
 # Table name: vessels
 #
 #  id                 :uuid             not null, primary key
-#  vessel_template_id :uuid
-#  user_id            :bigint
-#  name               :string
+#  bar_code           :string
+#  deleted_at         :datetime
 #  description        :string
+#  name               :string
+#  qr_code            :string
 #  short_label        :string
+#  weight_amount      :float
+#  weight_unit        :string
 #  created_at         :datetime         not null
 #  updated_at         :datetime         not null
-#  deleted_at         :datetime
-#  bar_code           :string
-#  qr_code            :string
+#  user_id            :bigint
+#  vessel_template_id :uuid
 #
 # Indexes
 #
