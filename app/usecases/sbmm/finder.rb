@@ -47,8 +47,10 @@ module Usecases
 
         sbmm.parent = parent if params[:uniprot_derivation] == 'uniprot_modified'
         sbmm.assign_attributes(params)
-        sbmm.post_translational_modification.assign_attributes(ptm_params)
-        sbmm.protein_sequence_modification.assign_attributes(psm_params)
+        if params[:uniprot_derivation] != 'uniprot'
+          sbmm.post_translational_modification.assign_attributes(ptm_params)
+          sbmm.protein_sequence_modification.assign_attributes(psm_params)
+        end
 
         sbmm
       end

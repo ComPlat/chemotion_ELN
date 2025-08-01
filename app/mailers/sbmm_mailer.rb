@@ -2,8 +2,8 @@
 
 # Mailer to email an ELNer about a created/update calendar entry
 class SbmmMailer < ApplicationMailer
-  def request_changes(sbmm_with_changes, requested_changes:, effective_changes:, user:)
-    @sbmm = sbmm_with_changes
+  def request_changes(sbmm_id, requested_changes:, effective_changes:, user:)
+    @sbmm = SequenceBasedMacromolecule.find(sbmm_id)
     @user = user
     @requested_changes = requested_changes
     @effective_changes = effective_changes
