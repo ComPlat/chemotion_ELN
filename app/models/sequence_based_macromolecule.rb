@@ -81,11 +81,12 @@ class SequenceBasedMacromolecule < ApplicationRecord
   accepts_nested_attributes_for(:protein_sequence_modification, :post_translational_modification, update_only: true )
 
   before_validation :normalize_sequence
+  before_save :calculate_molecular_weight
 
   def self.valid_accession?(string)
     return false if string.to_s.blank?
 
-    string.match?(ACCESSION_FORMAT)
+    string.to_s.match?(ACCESSION_FORMAT)
   end
 
   def self.normalize_sequence(string)
@@ -97,7 +98,13 @@ class SequenceBasedMacromolecule < ApplicationRecord
   end
 
   # returns the result in g/mol
-  def calculated_molecular_mass
-    Usecases::Sbmm::MolecularMassCalculator.new.calculate(sequence)
+  def calculated_molecular_weight
+    Usecases::Sbmm::MolecularWeightCalculator.new(sequence).calculate
+  end
+
+  def calculate_molecular_weight
+    return unless molecular_weight.to_s.blank?
+
+    self.molecular_weight = calculated_molecular_weight
   end
 end

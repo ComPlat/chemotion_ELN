@@ -2,6 +2,16 @@
 
 module Chemotion
   class SequenceBasedMacromoleculeAPI < Grape::API
+    helpers ParamsHelpers
+
+    rescue_from Grape::Exceptions::ValidationErrors do |exception|
+      errors = []
+      exception.each do |parameters, error|
+        errors << { parameters: parameters, message: error.to_s }
+      end
+      error!(errors, 422)
+    end
+
     resource :sequence_based_macromolecules do
       desc 'Search for sequence based macromolecules'
       params do
@@ -32,6 +42,16 @@ module Chemotion
         end
 
         present sbmm, with: Entities::SequenceBasedMacromoleculeEntity, root: :sequence_based_macromolecule
+      end
+
+      resource :change_request do
+        desc 'Request changes to an SBMM from an administrator of your ELN installation'
+        params do
+          use :sbmm_params
+        end
+        post do
+          Usecases::Sbmm::ChangeRequest.new(current_user).for(declared(params, evaluate_given: true)).deliver_later
+        end
       end
     end
   end

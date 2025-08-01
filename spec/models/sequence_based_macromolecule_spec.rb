@@ -77,4 +77,30 @@ describe SequenceBasedMacromolecule do
       expect(result.map(&:id).sort).to eq [sbmm1.id, sbmm2.id].sort
     end
   end
+
+  describe '#assign_attributes' do
+    it 'recursively assigns attributes to PTM/PSM' do
+      sbmm = create(:modified_uniprot_sbmm)
+      attributes = {
+        short_name: 'BlaKeks',
+        protein_sequence_modification_attributes: {
+          modification_c_terminal_details: 'Some Details'
+        }
+      }
+
+      sbmm.assign_attributes(attributes)
+
+      expect(sbmm.short_name).to eq 'BlaKeks'
+      expect(sbmm.protein_sequence_modification.modification_c_terminal_details).to eq 'Some Details'
+    end
+  end
+
+  describe '.before_save' do
+    it 'calculates the mass from sequence if none is given' do
+      sbmm = build(:uniprot_sbmm)
+      sbmm.molecular_weight = nil
+
+      expect { sbmm.save! }.to change(sbmm, :molecular_weight).from(nil).to(47409.34)
+    end
+  end
 end
