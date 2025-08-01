@@ -1,6 +1,12 @@
 # frozen_string_literal: true
 
+VesselStruct = Struct.new(
+  :id, :name, :vessel_type, :material_type,
+  :volume_amount, :volume_unit, :details, :material_details
+)
+
 module Chemotion
+  # rubocop:disable Metrics/ClassLength
   class VesselAPI < Grape::API
     include Grape::Kaminari
     helpers ParamsHelpers
@@ -68,9 +74,8 @@ module Chemotion
         requires :id, type: String, desc: 'id of vessel instance to load'
       end
       get ':id' do
-        if params[:id] == 'new'
-          return present Vessel.new, with: Entities::VesselInstanceEntity
-        end
+        return present Vessel.new, with: Entities::VesselInstanceEntity if params[:id] == 'new'
+
         begin
           vessel = Vessel.find(params[:id])
         rescue ActiveRecord::RecordNotFound
@@ -96,7 +101,7 @@ module Chemotion
         if VesselTemplate.exists?(name: params[:name])
           error!('409 Conflict: Vessel Template with the same name already exists', 409)
         end
-      
+
         vessel_template = VesselTemplate.create!(
           name: params[:name],
           details: params[:details],
@@ -104,9 +109,9 @@ module Chemotion
           material_type: params[:material_type],
           vessel_type: params[:vessel_type],
           volume_amount: params[:volume_amount],
-          volume_unit: params[:volume_unit]
+          volume_unit: params[:volume_unit],
         )
-      
+
         if params[:container]
           begin
             root = Container.create_root_container(containable: vessel_template)
@@ -117,7 +122,7 @@ module Chemotion
             error!("Container update failed: #{e.message}", 400)
           end
         end
-      
+
         vessel_template.reload
         present vessel_template, with: Entities::VesselTemplateEntity
       end
@@ -135,12 +140,12 @@ module Chemotion
       post 'instances/create' do
         vessel_template = VesselTemplate.find_by(id: params[:vessel_template_id])
         error!('404 Vessel Template not found', 404) unless vessel_template
-      
+
         collection = current_user.collections.find_by(id: params[:collection_id])
         error!('404 Collection not found', 404) unless collection
 
         current_count = Vessel.where(user_id: current_user.id).count
-      
+
         vessel = Vessel.create!(
           vessel_template: vessel_template,
           name: params[:name] || "#{vessel_template.name} instance",
@@ -148,13 +153,13 @@ module Chemotion
           description: params[:description],
           short_label: params[:short_label] || "#{current_user.initials}-V#{current_count + 1}",
           weight_amount: params[:weight_amount],
-          weight_unit: params[:weight_unit]
+          weight_unit: params[:weight_unit],
         )
-      
+
         vessel.create_code_log
-      
+
         vessel.collections << collection
-      
+
         present vessel.reload, with: Entities::VesselInstanceEntity
       end
 
@@ -163,9 +168,10 @@ module Chemotion
         requires :vessel_template_id, type: String, desc: 'ID of the selected vessel template'
         requires :collection_id, type: Integer, desc: 'Collection ID for the vessels'
         requires :count, type: Integer, values: 1..100, desc: 'Number of vessel instances to create (1-100)'
-        optional :short_labels, type: Array[String], desc: 'Short labels for each vessel', documentation: { is_array: true }
+        optional :short_labels, type: [String], desc: 'Short labels for each vessel',
+                                documentation: { is_array: true }
         optional :container, type: Hash, desc: 'Root container for vessel template'
-      
+
         optional :template_name, type: String
         optional :material_type, type: String
         optional :vessel_type, type: String
@@ -176,61 +182,59 @@ module Chemotion
 
       post 'bulk_create' do
         error!('401 Unauthorized', 401) unless current_user.collections.find_by(id: params[:collection_id])
-      
+
         vessel_template = VesselTemplate.find_by(id: params[:vessel_template_id])
         error!('404 VesselTemplate Not Found', 404) unless vessel_template
-      
+
         if params[:container]
           begin
             vessel_template.container = update_datamodel(params[:container].deep_dup)
             vessel_template.save!
-          rescue => e
+          rescue StandardError => e
             error!("Container update failed: #{e.message}", 400)
           end
         end
-      
+
         short_labels = params[:short_labels] || []
         created_vessels = []
-      
+
         ActiveRecord::Base.transaction do
           current_count = Vessel.where(user_id: current_user.id).count
           params[:count].times do |i|
             short_label = short_labels[i] || "#{current_user.initials}-V#{current_count + i + 1}"
-      
+
             vessel = Vessel.create!(
               vessel_template: vessel_template,
               name: "instance#{i + 1}",
               user_id: current_user.id,
               short_label: short_label,
             )
-      
+
             if params[:collection_id]
               collection = current_user.collections.find_by(id: params[:collection_id])
               vessel.collections << collection if collection.present?
             end
-      
+
             created_vessels << vessel
           end
         end
-      
+
         created_vessels.each do |vessel|
           vessel.create_code_log
-        
+
           vessel.define_singleton_method(:code_log) do
             CodeLog.where(source: 'vessel', source_id: vessel.id).order(created_at: :desc).first
           end
         end
-        
-      
-        present created_vessels.map { |v|
-        v.reload
 
-        log = CodeLog.where(source: 'vessel', source_id: v.id).order(created_at: :desc).first
-        v.define_singleton_method(:code_log) { log }
-      
-        v
-       }, with: Entities::VesselInstanceEntity
-      
+        present created_vessels.map { |v|
+          v.reload
+
+          log = CodeLog.where(source: 'vessel', source_id: v.id).order(created_at: :desc).first
+          v.define_singleton_method(:code_log) { log }
+
+          v
+        }, with: Entities::VesselInstanceEntity
       end
 
       desc 'Update only a vessel template'
@@ -249,7 +253,8 @@ module Chemotion
         vessel_template = VesselTemplate.find_by(id: params[:id])
         error!('Vessel template not found', 404) unless vessel_template
 
-        template_params = params.slice(:name, :details, :material_details, :material_type, :vessel_type, :volume_amount, :volume_unit).compact
+        template_params = params.slice(:name, :details, :material_details, :material_type, :vessel_type,
+                                       :volume_amount, :volume_unit).compact
         vessel_template.update!(template_params)
 
         if params[:container]
@@ -260,14 +265,14 @@ module Chemotion
               root = Container.create_root_container(containable: vessel_template)
               params[:container][:id] = root.id
               params[:container][:is_new] = false
-        
+
               update_datamodel(params[:container].deep_dup)
             end
           rescue StandardError => e
             error!("Container update failed: #{e.message}", 400)
           end
         end
-        
+
         vessel_template.reload
         present vessel_template, with: Entities::VesselTemplateEntity
       end
@@ -296,7 +301,6 @@ module Chemotion
         present VesselTemplate.new, with: Entities::VesselTemplateEntity
       end
 
-
       resource :templates do
         desc 'fetch a vessel template and associated vessel instances for the current user and collection'
         params do
@@ -305,44 +309,42 @@ module Chemotion
         end
         get ':id' do
           vessel_template = VesselTemplate.includes(:vessels).find_by(id: params[:id])
-      
+
           if vessel_template
             user_vessels = vessel_template.vessels.where(user_id: current_user.id)
-      
+
             if params[:collection_id]
               user_vessels = user_vessels.joins(:collections).where(collections: { id: params[:collection_id] })
             end
-      
+
             present(
               {
                 vessel_template: Entities::VesselTemplateEntity.represent(vessel_template),
-                vessels: user_vessels.map { |vessel| Entities::VesselInstanceEntity.represent(vessel) }
-              }
+                vessels: user_vessels.map { |vessel| Entities::VesselInstanceEntity.represent(vessel) },
+              },
             )
           else
             error!({ error: 'Vessel template not found' }, 404)
           end
         end
       end
-            
+
       resource :names do
         desc 'Returns all accessible vessel templates material names and their id'
         get 'all' do
-          VesselStruct = Struct.new(
-            :id, :name, :vessel_type, :material_type,
-            :volume_amount, :volume_unit, :details, :material_details
-          )
-      
           vessel_templates = VesselTemplate
-            .where(deleted_at: nil)
-            .distinct
-            .pluck(:id, :name, :vessel_type, :material_type, :volume_amount, :volume_unit, :details, :material_details)
-            .map { |row| VesselStruct.new(*row) }
-      
+                             .where(deleted_at: nil)
+                             .distinct
+                             .pluck(
+                               :id, :name, :vessel_type, :material_type, :volume_amount,
+                               :volume_unit, :details, :material_details
+                             )
+                             .map { |row| VesselStruct.new(*row) }
+
           present vessel_templates, with: Entities::VesselTemplateBasicEntity
         end
       end
-      
+
       resource :material do
         params do
           requires :id, type: String, desc: 'id of vessel template to load'
@@ -362,7 +364,7 @@ module Chemotion
           error!('404 Vessel Not Found', 404) unless @vessel
           error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, @vessel).destroy?
         end
-      
+
         delete do
           @vessel.destroy
           status 200
@@ -370,7 +372,7 @@ module Chemotion
         end
       end
 
-      #Not called from the UI yet
+      # Not called from the UI yet
       desc 'Delete a Vessel Template'
       params do
         requires :id, type: String, desc: 'ID of the vessel template to delete'
@@ -389,4 +391,5 @@ module Chemotion
       end
     end
   end
+  # rubocop:enable Metrics/ClassLength
 end
