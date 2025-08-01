@@ -41,6 +41,17 @@ services:
       - chemotion
     restart: unless-stopped
 
+  indigo_service:
+    hostname: indigo_service
+    image: ${IMG_INDIGO:-epmlsop/indigo-service:latest}
+    environment:
+      - PYTHONPATH=${INDIGO_SERVICE_PYTHONPATH:-/srv/indigo-python}
+      - INDIGO_UWSGI_RUN_PARAMETERS=--plugin python3 --py-autoreload=1
+      - PYTHONDONTWRITEBYTECODE=1
+    ports:
+      - 8002:80
+    command: supervisord -n
+
 networks:
   chemotion:
 
