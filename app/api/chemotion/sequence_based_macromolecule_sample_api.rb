@@ -12,9 +12,9 @@ module Chemotion
       error!(
         {
           error: {
-          message: conflict.message,
-          original_sbmm: Entities::SequenceBasedMacromoleculeEntity.represent(conflict.original_sbmm),
-          requested_changes: Entities::SequenceBasedMacromoleculeEntity.represent(conflict.requested_changes)
+            message: conflict.message,
+            original_sbmm: Entities::SequenceBasedMacromoleculeEntity.represent(conflict.original_sbmm),
+            requested_changes: Entities::SequenceBasedMacromoleculeEntity.represent(conflict.requested_changes)
           }
         },
         403

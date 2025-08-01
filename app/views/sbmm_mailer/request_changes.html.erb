@@ -1,0 +1,62 @@
+<h1>A user requests changes to a sequence based macromolecule</h1>
+
+<p>
+  You receive this email as an administrator of the ELN instance, because a user wants to update a SBMM, but was blocked from doing so, because the SBMM is in use by multiple users.
+</p>
+
+<table>
+  <tr>
+    <th>User</th>
+    <td><%= @user.name %> (<%= @user.email %>)</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <th>SBMM</th>
+    <td>(ID: <%= @sbmm.id %>) <%= @sbmm.systematic_name %></td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr><td colspan="3">&nbsp;</td></tr>
+  <tr>
+    <th>Attribute</th>
+    <th>Original Value</th>
+    <th>Requested Change</th>
+  </tr>
+<% @effective_changes.each do |attribute, changes| %>
+  <% if changes.is_a?(Array) %>
+  <tr>
+    <th><%= attribute %></th>
+    <td><%= changes.first %></td>
+    <td><%= changes.second %></td>
+  </tr>
+  <% elsif changes.is_a?(Hash) %>
+    <% changes.each do |nested_attribute, nested_changes| %>
+  <tr>
+    <th><%= attribute %> <%= nested_attribute %></th>
+    <td><%= nested_changes.first %></td>
+    <td><%= nested_changes.second %></td>
+  </tr>
+    <% end %>
+  <% end %>
+<% end %>
+</table>
+
+<p>
+  For your convenience, here is are snippets for the Rails console
+</p>
+<pre>
+  <code class="language-ruby">
+    # find SBMM and assign requested changes
+    sbmm = Usecases::Sbmm::Finder.new.find_or_initialize_by(<%= @requested_changes %>)
+
+    # check changes in SBMM, please review them thoroughly
+    sbmm.changes
+
+    # # check changes in modifications, please review them thoroughly
+    sbmm.protein_sequence_modification.changes if sbmm.uniprot_derivation != 'uniprot'
+    sbmm.post_translational_modification.changes if sbmm.uniprot_derivation != 'uniprot'
+
+    # check changed parent - depending on whether the requested change in parent identifier was a uniprot accession or an ActiveRecord ID
+
+    sbmm.parent if sbmm.changes?(:parent)
+  </code>
+</pre>

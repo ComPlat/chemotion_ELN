@@ -1,6 +1,6 @@
 module Usecases
   module Sbmm
-    class MolecularMassCalculator
+    class MolecularWeightCalculator
       attr_reader :sequence
 
       def initialize(sequence)
@@ -8,7 +8,7 @@ module Usecases
       end
 
       def calculate
-        sum_of_amino_acid_weights - (peptid_bindings * weights[:water_molecule])
+        (sum_of_amino_acid_weights - (peptid_bindings * weights[:water_molecule])).round(2)
       end
 
       private

@@ -409,7 +409,12 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
 
           context 'when the params contain changes to the SBMM' do
             let(:post_data_with_sbmm_modification) do
-              post_for_modified_sbmm[:sequence_based_macromolecule_attributes].merge!(short_name: 'BlaKeks')
+              post_for_modified_sbmm[:sequence_based_macromolecule_attributes].deep_merge!(
+                short_name: 'BlaKeks',
+                post_translational_modification_attributes: {
+                  phosphorylation_ser_details: 'Hallo Welt'
+                }
+              )
               post_for_modified_sbmm
             end
 
