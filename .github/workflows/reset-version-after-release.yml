@@ -1,0 +1,36 @@
+name: Reset VERSION after release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  reset-version:
+    runs-on: ubuntu-latest
+    if: github.event.release.draft == false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT_RELEASE }}
+
+      - name: Extract tag version
+        id: extract_tag
+        run: |
+          tag="${GITHUB_REF#refs/tags/}"
+          echo "TAG_VERSION=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Update only the first line in VERSION file
+        run: |
+          sed -i 's/^version: .*/version: post-${{ steps.extract_tag.outputs.TAG_VERSION }}/' VERSION
+
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add VERSION
+          git commit -m "Reset VERSION to post-${{ steps.extract_tag.outputs.TAG_VERSION }}" || echo "No changes to commit"
+          git push
+

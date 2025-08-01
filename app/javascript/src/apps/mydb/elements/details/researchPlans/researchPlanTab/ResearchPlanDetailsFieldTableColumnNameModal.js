@@ -1,13 +1,18 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Modal, ButtonToolbar, Button, Form } from 'react-bootstrap';
-
+import { COLUMN_ID_SHORT_LABEL_SAMPLE, COLUMN_ID_SHORT_LABEL_REACTION } from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsFieldTableUtils';
 class ResearchPlanDetailsFieldTableColumnNameModal extends Component {
   constructor(props) {
     super(props);
+    const { columns, colId } = this.props;
     this.state = {
       columnNameValue: '',
-      columnNameError: ''
+      columnNameError: '',
+      linkSampleShortLabel: colId === COLUMN_ID_SHORT_LABEL_SAMPLE,
+      linkSampleShortLabelAvailable: !columns.some(col => col.colId !== colId && col.colId === COLUMN_ID_SHORT_LABEL_SAMPLE),
+      linkReactionShortLabel: colId === 'reaction',
+      linkReactionShortLabelAvailable: !columns.some(col => col.colId !== colId && col.colId === COLUMN_ID_SHORT_LABEL_REACTION),
     };
   }
 
@@ -95,7 +100,10 @@ ResearchPlanDetailsFieldTableColumnNameModal.propTypes = {
   columnName: PropTypes.string,
   onSubmit: PropTypes.func,
   onHide: PropTypes.func,
-  columns: PropTypes.array
+  columns: PropTypes.array,
+  colId: PropTypes.string,
 };
+
+
 
 export default ResearchPlanDetailsFieldTableColumnNameModal;
