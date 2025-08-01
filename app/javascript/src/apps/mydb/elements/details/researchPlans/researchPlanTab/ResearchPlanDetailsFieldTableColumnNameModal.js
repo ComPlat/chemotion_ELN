@@ -1,6 +1,10 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Modal, ButtonToolbar, Button, Form } from 'react-bootstrap';
+import {
+  Modal, ButtonToolbar, Button, Form
+} from 'react-bootstrap';
+import { COLUMN_ID_SHORT_LABEL_REACTION, COLUMN_ID_SHORT_LABEL_SAMPLE } from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsFieldTableUtils';
+
 class ResearchPlanDetailsFieldTableColumnNameModal extends Component {
   constructor(props) {
     super(props);
@@ -8,16 +12,16 @@ class ResearchPlanDetailsFieldTableColumnNameModal extends Component {
 
     // For insert actions, don't consider any existing column
     // For rename actions, find the column being renamed
-    const currentColumn = (modal.action === 'rename' && modal.colId) 
-      ? columns.find(col => col.colId === modal.colId) 
+    const currentColumn = (modal.action === 'rename' && modal.colId)
+      ? columns.find(col => col.colId === modal.colId)
       : null;
-    
-    const isCurrentlySampleColumn = currentColumn?.linkType === 'sample';
-    const isCurrentlyReactionColumn = currentColumn?.linkType === 'reaction';
+
+    const isCurrentlySampleColumn = currentColumn?.linkType === COLUMN_ID_SHORT_LABEL_SAMPLE;
+    const isCurrentlyReactionColumn = currentColumn?.linkType === COLUMN_ID_SHORT_LABEL_REACTION;
 
     // Check availability of link types
-    const sampleColumnExists = columns.some(col => col.linkType === 'sample');
-    const reactionColumnExists = columns.some(col => col.linkType === 'reaction');
+    const sampleColumnExists = columns.some(col => col.linkType === COLUMN_ID_SHORT_LABEL_SAMPLE);
+    const reactionColumnExists = columns.some(col => col.linkType === COLUMN_ID_SHORT_LABEL_REACTION);
 
     this.state = {
       columnNameValue: '',
@@ -42,19 +46,19 @@ class ResearchPlanDetailsFieldTableColumnNameModal extends Component {
         if (currentColumn) {
           columnNameValue = currentColumn.headerName;
           // Check if this column currently has linking functionality
-          linkSampleShortLabel = currentColumn.linkType === 'sample';
-          linkReactionShortLabel = currentColumn.linkType === 'reaction';
+          linkSampleShortLabel = currentColumn.linkType === COLUMN_ID_SHORT_LABEL_SAMPLE;
+          linkReactionShortLabel = currentColumn.linkType === COLUMN_ID_SHORT_LABEL_REACTION;
         }
       }
       // For 'insert' action, keep checkboxes unchecked - this is correct behavior
 
       // Simple availability check: only one of each link type allowed
-      const sampleColumnExists = columns.some((col) => col.linkType === 'sample');
-      const reactionColumnExists = columns.some((col) => col.linkType === 'reaction');
+      const sampleColumnExists = columns.some((col) => col.linkType === COLUMN_ID_SHORT_LABEL_SAMPLE);
+      const reactionColumnExists = columns.some((col) => col.linkType === COLUMN_ID_SHORT_LABEL_REACTION);
 
       // Allow linking if no column with that link type exists, or if we're renaming the existing one
-      const isCurrentlySampleColumn = modal.colId && columns.find(col => col.colId === modal.colId)?.linkType === 'sample';
-      const isCurrentlyReactionColumn = modal.colId && columns.find(col => col.colId === modal.colId)?.linkType === 'reaction';
+      const isCurrentlySampleColumn = modal.colId && columns.find(col => col.colId === modal.colId)?.linkType === COLUMN_ID_SHORT_LABEL_SAMPLE;
+      const isCurrentlyReactionColumn = modal.colId && columns.find(col => col.colId === modal.colId)?.linkType === COLUMN_ID_SHORT_LABEL_REACTION;
 
       this.setState({
         columnNameValue,
@@ -99,9 +103,9 @@ class ResearchPlanDetailsFieldTableColumnNameModal extends Component {
     // Determine link type based on checkboxes
     let linkType = null;
     if (linkSampleShortLabel) {
-      linkType = 'sample';
+      linkType = COLUMN_ID_SHORT_LABEL_SAMPLE;
     } else if (linkReactionShortLabel) {
-      linkType = 'reaction';
+      linkType = COLUMN_ID_SHORT_LABEL_REACTION;
     }
 
     // Check for duplicate regular column names only
@@ -132,8 +136,8 @@ class ResearchPlanDetailsFieldTableColumnNameModal extends Component {
     } = this.state;
 
     // Find existing linked column names
-    const existingSampleColumn = columns.find((col) => col.linkType === 'sample');
-    const existingReactionColumn = columns.find((col) => col.linkType === 'reaction');
+    const existingSampleColumn = columns.find((col) => col.linkType === COLUMN_ID_SHORT_LABEL_SAMPLE);
+    const existingReactionColumn = columns.find((col) => col.linkType === COLUMN_ID_SHORT_LABEL_REACTION);
 
     // Generate help text based on availability
     const generateHelpText = () => {
@@ -149,7 +153,7 @@ class ResearchPlanDetailsFieldTableColumnNameModal extends Component {
         return `Reaction linking column already exists: "${existingReactionColumn?.headerName}".`;
       }
       return 'Check one option to enable automatic linking for short labels. '
-             + 'The column name you enter will be used as the display name.';
+        + 'The column name you enter will be used as the display name.';
     };
 
     let title;

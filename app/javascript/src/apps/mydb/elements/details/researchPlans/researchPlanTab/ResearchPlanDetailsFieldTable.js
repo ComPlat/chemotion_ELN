@@ -51,13 +51,6 @@ export default class ResearchPlanDetailsFieldTable extends Component {
     this.renderShortLabel = this.renderShortLabel.bind(this);
   }
 
-  componentWillUnmount() {
-    // Clean up any pending clipboard operations
-    if (this.clipboardTimeout) {
-      clearTimeout(this.clipboardTimeout);
-    }
-  }
-
   handleColumnNameModalShow(action, colId) {
     this.setState({
       columnNameModal: {
@@ -141,8 +134,6 @@ export default class ResearchPlanDetailsFieldTable extends Component {
       });
     });
   };
-
-
 
   buildColumnSimple(columnId, displayName = null, linkType = null) {
     const headerName = displayName || columnId;
