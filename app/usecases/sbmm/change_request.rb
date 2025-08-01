@@ -27,7 +27,7 @@ module Usecases
         end
 
         SbmmMailer.request_changes(
-          sbmm,
+          sbmm.id,
           requested_changes: params,
           effective_changes: effective_changes,
           user: current_user
