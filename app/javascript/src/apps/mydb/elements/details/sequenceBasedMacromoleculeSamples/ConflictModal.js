@@ -19,6 +19,19 @@ const ConflictModal = () => {
     });
   }
 
+  const useExistingSBMMAndSaveSample = () => {
+    sbmmStore.closeConflictModal();
+    sbmmStore.useExistingSbmmAndSaveSample(sbmmSample, sbmmStore.conflictSbmms[1]);
+  }
+
+  const useExistingSBMMSaveSampleAndSendInfoToAdmin = () => {
+    const existingSbmm = sbmmStore.conflictSbmms[1];
+    const modifiedSbmm = sbmmStore.conflictSbmms[0];
+    sbmmStore.closeConflictModal();
+    sbmmStore.useExistingSbmmAndSaveSample(sbmmSample, existingSbmm);
+    sbmmStore.changeRequestForSequenceBasedMacromolecule(modifiedSbmm);
+  }
+
   const spinner = (
     <i className="fa fa-spinner fa-pulse fa-3x fa-fw" />
   );
@@ -142,14 +155,28 @@ const ConflictModal = () => {
                           Your Sample will be saved with the existing SBMM.
                         </div>
                         
-                        <Button variant="warning" className="mt-2">Contact your system admin</Button>
+                        <Button
+                          variant="warning"
+                          className="mt-2"
+                          onClick={() => useExistingSBMMSaveSampleAndSendInfoToAdmin()}
+                        >
+                          Contact your system admin
+                        </Button>
                       </div>
                     </td>
                     <td className="w-25">
                       <div className="d-flex align-content-between flex-wrap" style={{ height: "100px" }}>
-                        <div className="w-100">Discard changes of your new SBMM and use existing SBMM to save this sample.</div>
+                        <div className="w-100">
+                          Discard changes of your new SBMM and use existing SBMM to save this sample.
+                        </div>
 
-                        <Button variant="warning" className="mt-2">Use this SBMM</Button>
+                        <Button
+                          variant="warning"
+                          className="mt-2"
+                          onClick={() => useExistingSBMMAndSaveSample()}
+                        >
+                          Use this SBMM
+                        </Button>
                       </div>
                     </td>
                   </tr>

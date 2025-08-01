@@ -4,6 +4,8 @@ import { flow, types } from 'mobx-state-tree';
 import SequenceBasedMacromoleculesFetcher from 'src/fetchers/SequenceBasedMacromoleculesFetcher';
 import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';
 import Container from 'src/models/Container';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
+import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
 const emptySequenceBasedMacromolecule = {
   accessions: [],
@@ -117,6 +119,19 @@ export const SequenceBasedMacromoleculeSamplesStore = types
       let result = yield SequenceBasedMacromoleculesFetcher.getSequenceBasedMacromoleculeByIdentifier(conflicting_sbmm_id, 'eln');
       if (sbmm_data && result) {
         self.conflict_sbmms = [sbmm_data, result.sequence_based_macromolecule];
+      }
+    }),
+    changeRequestForSequenceBasedMacromolecule: flow(function* changeRequestForSequenceBasedMacromolecule(sbmm_params) {
+      let params = { ...sbmm_params };
+      params.parent_identifier = sbmm_params?.parent_identifier || sbmm_params.parent?.id || '';
+      params.post_translational_modification_attributes = sbmm_params.post_translational_modifications;
+      params.protein_sequence_modification_attributes = sbmm_params.protein_sequence_modifications;
+      delete params.post_translational_modifications;
+      delete params.protein_sequence_modifications;
+
+      let result = yield SequenceBasedMacromoleculesFetcher.changeRequestForSequenceBasedMacromolecule(params);
+      if (result) {
+        console.log('result', result);
       }
     }),
     getLastObjectAndKeyByField(field, sequence_based_macromolecule_sample) {
@@ -271,6 +286,24 @@ export const SequenceBasedMacromoleculeSamplesStore = types
       }
 
       self.setSequenceBasedMacromoleculeSample(sequenceBasedMacromoleculeSample);
+    },
+    useExistingSbmmAndSaveSample(sbmmSample, sbmm) {
+      let sample = { ...sbmmSample };
+      sample.sequence_based_macromolecule = sbmm;
+      self.setSequenceBasedMacromoleculeSample(sample);
+      self.conflict_sbmms = [];
+      self.saveSample(self.sequence_based_macromolecule_sample);
+    },
+    saveSample(sbmmSample) {
+      LoadingActions.start();
+      if (sbmmSample.is_new) {
+        self.removeFromOpenSequenceBasedMacromoleculeSamples(sbmmSample);
+        DetailActions.close(sbmmSample, true);
+        ElementActions.createSequenceBasedMacromoleculeSample(sbmmSample);
+      } else {
+        ElementActions.updateSequenceBasedMacromoleculeSample(sbmmSample);
+        self.setUpdatedSequenceBasedMacromoleculeSampleId(sbmmSample.id);
+      }
     },
     resetSBMMAndErrors(sbmmSample) {
       Object.keys(sbmmSample.sequence_based_macromolecule).map((key) => {
