@@ -1579,6 +1579,7 @@ ActiveRecord::Schema.define(version: 2025_07_01_134000) do
     t.float "weight_amount"
     t.string "weight_unit"
     t.index ["deleted_at"], name: "index_vessel_templates_on_deleted_at"
+    t.index ["name"], name: "index_vessel_templates_on_name", unique: true
   end
 
   create_table "vessels", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1592,6 +1593,8 @@ ActiveRecord::Schema.define(version: 2025_07_01_134000) do
     t.datetime "deleted_at"
     t.string "bar_code"
     t.string "qr_code"
+    t.float "weight_amount"
+    t.string "weight_unit"
     t.index ["deleted_at"], name: "index_vessels_on_deleted_at"
     t.index ["user_id"], name: "index_vessels_on_user_id"
     t.index ["vessel_template_id"], name: "index_vessels_on_vessel_template_id"
