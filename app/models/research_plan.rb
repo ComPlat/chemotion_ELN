@@ -14,6 +14,7 @@
 class ResearchPlan < ApplicationRecord
   has_logidze
   acts_as_paranoid
+  include Containerable
   include ElementUIStateScopes
   include Collectable
   include Taggable
@@ -46,9 +47,6 @@ class ResearchPlan < ApplicationRecord
   }
   scope :by_literature_ids, ->(ids) { joins(:literals).where(literals: { literature_id: ids }) }
 
-  after_create :create_root_container
-
-  has_one :container, as: :containable
   has_one :research_plan_metadata, dependent: :destroy, foreign_key: :research_plan_id
   has_many :collections_research_plans, inverse_of: :research_plan, dependent: :destroy
   has_many :collections, through: :collections_research_plans
@@ -78,12 +76,6 @@ class ResearchPlan < ApplicationRecord
     attachment = image_atts[0] || attachments[0]
     preview = attachment&.read_thumbnail
     (preview && Base64.encode64(preview)) || 'not available'
-  end
-
-  def create_root_container
-    if self.container == nil
-      self.container = Container.create_root_container
-    end
   end
 
   def analyses
