@@ -21,6 +21,17 @@ export default class SequenceBasedMacromoleculesFetcher {
       .catch(errorMessage => console.log(errorMessage));
   }
 
+  static changeRequestForSequenceBasedMacromolecule(sbmm_params) {
+    return fetch('/api/v1/sequence_based_macromolecules/change_request/', 
+      {
+        ...this._httpOptions('POST'),
+        body: JSON.stringify(sbmm_params)
+      }
+    ).then(response => response.json())
+      .then((json) => json)
+      .catch(errorMessage => console.log(errorMessage));
+  }
+
   static _httpOptions(method = 'GET') {
     return {
       credentials: 'same-origin',

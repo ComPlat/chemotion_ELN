@@ -28,9 +28,7 @@ import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import ElementActions from 'src/stores/alt/actions/ElementActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
-import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import CollectionUtils from 'src/models/collection/CollectionUtils';
@@ -142,15 +140,7 @@ const SequenceBasedMacromoleculeSampleDetails = () => {
   }
 
   const handleSubmit = () => {
-    LoadingActions.start();
-    if (sbmmSample.is_new) {
-      sbmmStore.removeFromOpenSequenceBasedMacromoleculeSamples(sbmmSample);
-      DetailActions.close(sbmmSample, true);
-      ElementActions.createSequenceBasedMacromoleculeSample(sbmmSample);
-    } else {
-      ElementActions.updateSequenceBasedMacromoleculeSample(sbmmSample);
-      sbmmStore.setUpdatedSequenceBasedMacromoleculeSampleId(sbmmSample.id);
-    }
+    sbmmStore.saveSample(sbmmSample);
   }
 
   const handleExportAnalyses = () => {
