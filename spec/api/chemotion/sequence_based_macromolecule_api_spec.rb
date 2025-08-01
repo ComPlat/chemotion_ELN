@@ -56,7 +56,7 @@ describe Chemotion::SequenceBasedMacromoleculeAPI do
     end
   end
 
-  describe 'POST /api/v1/sequence_based_macromolecules/:id/change_request' do
+  describe 'POST /api/v1/sequence_based_macromolecules/change_request' do
     it 'sends an email to an admin with the requested changes' do
       admin = create(:admin)
       sbmm = create(:modified_uniprot_sbmm)
@@ -70,7 +70,7 @@ describe Chemotion::SequenceBasedMacromoleculeAPI do
       )
 
       expect do
-        post "/api/v1/sequence_based_macromolecules/#{sbmm.id}/change_request", params: post_data, as: :json
+        post "/api/v1/sequence_based_macromolecules/change_request", params: post_data, as: :json
       end.to have_enqueued_mail(SbmmMailer, :request_changes)
     end
   end
