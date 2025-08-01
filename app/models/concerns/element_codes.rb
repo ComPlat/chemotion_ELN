@@ -41,14 +41,14 @@ module ElementCodes
 
   def create_code_log
     return if is_container_but_not_analysis
-  
-    value = source_class == "vessel" ? Chemotion::CodeCreator.uuid_to_digit(self.id) : nil
-  
-    CodeLog.create!(
+
+    code = CodeLog.new(
       source: source_class,
-      source_id: self.id,
-      value: value
+      source_id: id,
     )
+    # For Vessels, we set the code.id to the vessel id since the primary key is a uuid
+    code.id = id if source_class == 'vessel'
+    code.save!
   end
 
   def destroy_code_logs
