@@ -31,11 +31,9 @@ module Chemotion
           data[ll.to_s] = layout[ll] if layout[ll].present? && data[ll.to_s].nil?
         end
 
-        if (element_list = layout.dig(:layout))
-          element_list.each do |element, sorting|
-            data['layout'][element.to_s] = sorting if data['layout'][element.to_s].nil?
-          end
-       end
+        layout&.fetch(:layout, {})&.each do |element, sorting|
+          data['layout'][element.to_s] = sorting if data['layout'][element.to_s].nil?
+        end
 
         if current_user.matrix_check_by_name('genericElement')
           available_elements = Labimotion::ElementKlass.where(is_active: true).pluck(:name)
