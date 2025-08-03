@@ -75,6 +75,7 @@ ActiveRecord::Schema.define(version: 2026_01_20_183627) do
     t.jsonb "attachment_data"
     t.integer "con_state"
     t.jsonb "log_data"
+    t.datetime "deleted_at"
     t.string "created_by_type"
     t.integer "edit_state", default: 0
     t.index ["attachable_type", "attachable_id"], name: "index_attachments_on_attachable_type_and_attachable_id"
@@ -386,8 +387,8 @@ ActiveRecord::Schema.define(version: 2026_01_20_183627) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "parent_id"
-    t.datetime "deleted_at"
     t.text "plain_text_content"
+    t.datetime "deleted_at"
     t.jsonb "log_data"
     t.index ["containable_type", "containable_id"], name: "index_containers_on_containable"
     t.index ["parent_id"], name: "index_containers_on_parent_id", where: "(deleted_at IS NULL)"
@@ -776,6 +777,15 @@ ActiveRecord::Schema.define(version: 2026_01_20_183627) do
     t.time "deleted_at"
   end
 
+  create_table "fractions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.integer "position"
+    t.uuid "parent_activity_id"
+    t.uuid "consuming_activity_id"
+    t.string "vials", default: [], array: true
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
   create_table "inventories", force: :cascade do |t|
     t.string "prefix"
     t.string "name"
@@ -1130,6 +1140,7 @@ ActiveRecord::Schema.define(version: 2026_01_20_183627) do
     t.datetime "deleted_at"
     t.uuid "reaction_process_vessel_id"
     t.jsonb "automation_response"
+    t.integer "automation_ordinal"
   end
 
   create_table "reaction_process_defaults", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1167,6 +1178,7 @@ ActiveRecord::Schema.define(version: 2026_01_20_183627) do
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.datetime "deleted_at"
+    t.integer "automation_ordinal"
   end
 
   create_table "reactions", id: :serial, force: :cascade do |t|
@@ -2234,6 +2246,7 @@ ActiveRecord::Schema.define(version: 2026_01_20_183627) do
           select sum(calculate_element_space(s.sample_id, 'Sample')) into used_space_samples from (
               select distinct sample_id
               from collections_samples
+              where collection_id in (select id from collections where user_id = userId)
           ) s;
           used_space = COALESCE(used_space_samples,0);
 
@@ -2250,6 +2263,12 @@ ActiveRecord::Schema.define(version: 2026_01_20_183627) do
               where collection_id in (select id from collections where user_id = userId)
           ) wp;
           used_space = used_space + COALESCE(used_space_wellplates,0);
+
+          select sum(calculate_element_space(wp.screen_id, 'Screen')) into used_space_screens from (
+              select distinct screen_id
+              from collections_screens
+              where collection_id in (select id from collections where user_id = userId)
+          ) wp;
           used_space = used_space + COALESCE(used_space_screens,0);
 
           select sum(calculate_element_space(rp.research_plan_id, 'ResearchPlan')) into used_space_research_plans from (

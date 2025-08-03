@@ -13,10 +13,14 @@ RSpec.describe Usecases::ReactionProcessEditor::ReactionProcesses::FindOrCreate 
     it 'creates Provenance' do
       expect { usecase }.to change { reaction.reaction_process&.provenance }.from(nil)
     end
+
+    it 'sets automation_ordinal' do
+      expect { usecase }.to change { reaction.reaction_process&.automation_ordinal }.to(0)
+    end
   end
 
   context 'with ReactionProcess' do
-    let!(:reaction_process) { create_default(:reaction_process) }
+    let!(:reaction_process) { create_default(:reaction_process, automation_ordinal: 5) }
     let!(:provenance) { create(:provenance) }
 
     it 'keeps ReactionProcess' do
@@ -25,6 +29,10 @@ RSpec.describe Usecases::ReactionProcessEditor::ReactionProcesses::FindOrCreate 
 
     it 'keeps Provenance' do
       expect { usecase }.not_to change(reaction_process, :provenance).from(provenance)
+    end
+
+    it 'retains automation_ordinal' do
+      expect { usecase }.not_to(change { reaction.reaction_process&.automation_ordinal })
     end
   end
 end

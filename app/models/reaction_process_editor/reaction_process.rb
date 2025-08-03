@@ -44,5 +44,11 @@ module ReactionProcessEditor
     def saved_sample_ids
       reaction_process_steps.includes([:reaction_process_activities]).map(&:saved_sample_ids).flatten.uniq
     end
+
+    def next_automation_ordinal
+      next_ordinal = (automation_ordinal || 0) + 1
+      update({ automation_ordinal: next_ordinal })
+      next_ordinal
+    end
   end
 end

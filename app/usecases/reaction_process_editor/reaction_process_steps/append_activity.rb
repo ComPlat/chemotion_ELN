@@ -14,7 +14,12 @@ module Usecases
                             reaction_process_step
                           end
 
-            activity = target_step.reaction_process_activities.new(activity_name: activity_params['activity_name'])
+            automation_ordinal = reaction_process_step.reaction_process.next_automation_ordinal
+
+            activity = target_step.reaction_process_activities.new(
+              activity_name: activity_params['activity_name'],
+              automation_ordinal: automation_ordinal,
+            )
 
             ReactionProcessActivities::Update.execute!(activity: activity, activity_params: activity_params)
 

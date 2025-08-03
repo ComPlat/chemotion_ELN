@@ -25,6 +25,7 @@ module OrdKit
               vessel_template: vessel_template,
               automation_status: automation_status,
               fractions: fractions,
+              automation_ordinal: @action.automation_ordinal,
             }.merge(action_type_attributes),
           )
         end
