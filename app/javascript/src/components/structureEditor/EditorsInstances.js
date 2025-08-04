@@ -68,6 +68,6 @@ export function createEditors(_state = {}) {
 
 export const initEditor = () => {
   const userProfile = UserStore.getState().profile;
-  const eId = userProfile?.data?.default_structure_editor || 'ketcher2';
+  const eId = userProfile?.data?.default_structure_editor || 'ketcher';
   return getEditorById(eId);
 };

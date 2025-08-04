@@ -131,7 +131,7 @@ export default class StructureEditorModal extends React.Component {
           this.setState({ showModal: false, showWarning: this.props.hasChildren || this.props.hasParent }, () => { if (this.props.onSave) { this.props.onSave(mMol, svg, null, editor.id); } });
         }, (error) => { alert(`MarvinJS image generated fail: ${error}`); });
       }, (error) => { alert(`MarvinJS molfile generated fail: ${error}`); });
-    } else if (editor.id === 'ketcher2') this.handleSaveStructureKet2(structure, editor);
+    } else if (editor.id === 'ketcher') this.handleSaveStructureKet2(structure, editor);
     else {
       try {
         const { molfile, info } = structure;
@@ -181,9 +181,9 @@ export default class StructureEditorModal extends React.Component {
   resetEditor(_editors) {
     const kks = Object.keys(_editors);
     const { editor } = this.state;
-    if (!kks.find((e) => e === editor.id)) {
+    if (!kks.find((e) => e === editor?.id)) {
       this.setState({
-        editor: new StructureEditor({ ...EditorAttrs.ketcher2, id: 'ketcher2' }),
+        editor: new StructureEditor({ ...EditorAttrs.ketcher, id: 'ketcher' }),
       });
     }
   }
@@ -223,19 +223,19 @@ export default class StructureEditorModal extends React.Component {
     let useEditor = (
       <div>
         <iframe
-          id={editor.id}
-          src={editor.src}
-          title={`${editor.label}`}
+          id={editor?.id}
+          src={editor?.src}
+          title={`${editor?.label}`}
           height={iframeHeight}
           width="100%"
           style={iframeStyle}
         />
       </div>
     );
-    useEditor = !showWarning && this.editors[editor.id] && (
+    useEditor = !showWarning && editor && this.editors[editor?.id] && (
       <EditorRenderer
-        type={editor.id}
-        editor={this.editors[editor.id]}
+        type={editor?.id}
+        editor={this.editors[editor?.id]}
         molfile={molfile}
         iframeHeight={iframeHeight}
         iframeStyle={iframeStyle}
@@ -244,8 +244,8 @@ export default class StructureEditorModal extends React.Component {
     );
     const editorOptions = Object.keys(this.editors).map((e) => ({
       value: e,
-      name: this.editors[e].label,
-      label: this.editors[e].label,
+      name: this.editors[e]?.label,
+      label: this.editors[e]?.label,
     }));
 
     return (
@@ -258,11 +258,11 @@ export default class StructureEditorModal extends React.Component {
       >
         <Modal.Header closeButton className="gap-3">
           <EditorList
-            value={editor.id}
+            value={editor?.id}
             fnChange={this.handleEditorSelection}
             options={editorOptions}
           />
-          {editor.id === 'ketcher2' && (
+          {editor?.id === 'ketcher' && (
             <CommonTemplatesList
               options={commonTemplatesList}
               value={selectedCommonTemplate?.name}
