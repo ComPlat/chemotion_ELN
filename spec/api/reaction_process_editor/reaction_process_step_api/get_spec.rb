@@ -69,7 +69,8 @@ describe ReactionProcessEditor::ReactionProcessStepAPI, '.get' do
                                  { acts_as: 'SAMPLE', label: 'iupac_name' }.stringify_keys,
                                )],
                                FROM_METHOD: [],
-                               STEPWISE: [] }
+                               STEPWISE: [],
+                               SOLVENT_FROM_FRACTION: [] }
                              .deep_stringify_keys
 
       expect(parsed_select_options.dig('FORMS', 'REMOVE', 'removable_samples'))

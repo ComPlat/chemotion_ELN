@@ -6,9 +6,12 @@ module Entities
       module Forms
         class PoolingGroups < Base
           def select_options
-            activities_list = %w[EVAPORATION DISCARD ADD FILTRATION EXTRACTION CHROMATOGRAPHY
-                                 CRYSTALLIZATION ANALYSIS_CHROMATOGRAPHY ANALYSIS_SPECTROSCOPY REMOVE SAVE]
-            { followup_action_types: titlecase_options_for(activities_list) }
+            activities_list = %w[DEFINE_FRACTION DISCARD FILTRATION EXTRACTION CHROMATOGRAPHY
+                                 CRYSTALLIZATION ANALYSIS_CHROMATOGRAPHY ANALYSIS_SPECTROSCOPY]
+            { consuming_activity_names: titlecase_options_for(activities_list).push(
+              { value: 'REMOVE', label: 'Remove (Solvent From Fraction)' },
+              { value: 'SAVE', label: 'Save Intermediate' },
+            ) }
           end
         end
       end

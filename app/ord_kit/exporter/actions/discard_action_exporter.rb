@@ -9,7 +9,8 @@ module OrdKit
         def action_type_attributes
           {
             discard:
-            OrdKit::ReactionProcessAction::ActionDiscard.new(fractions: workup['fractions']&.map(&:to_s) || []),
+            OrdKit::ReactionProcessAction::ActionDiscard.new(fraction:
+                 OrdKit::Exporter::Samples::FractionExporter.new(action.consumed_fraction).to_ord),
           }
         end
       end

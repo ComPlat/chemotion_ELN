@@ -2,7 +2,6 @@
 
 module Entities
   module ReactionProcessEditor
-    # wraps a ReactionsSample object
     class MediumEntity < Grape::Entity
       expose(
         :id, :sum_formula, :label, :short_label, :preferred_label, :sample_name, :molecule_name
