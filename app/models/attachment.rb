@@ -261,7 +261,13 @@ class Attachment < ApplicationRecord
   end
 
   def preview
-    "data:image/png;base64,#{Base64.encode64(read_thumbnail)}" if thumb
+    if thumb
+      thumbnail_data = read_thumbnail
+      thumbnail_data ? "data:image/png;base64,#{Base64.encode64(thumbnail_data)}" : nil
+    end
+  rescue StandardError => e
+    Rails.logger.error("Failed to generate preview for attachment #{id}: #{e.message}")
+    nil
   end
 
   private

@@ -9,7 +9,13 @@ module Chemotion
   class AttachmentAPI < Grape::API # rubocop:disable Metrics/ClassLength
     helpers do
       def thumbnail(att)
-        att.thumb ? Base64.encode64(att.read_thumbnail) : nil
+        if att.thumb
+          thumbnail_data = att.read_thumbnail
+          thumbnail_data ? Base64.encode64(thumbnail_data) : nil
+        end
+      rescue StandardError => e
+        Rails.logger.error("Failed to read thumbnail for attachment #{att&.id}: #{e.message}")
+        nil
       end
 
       def thumbnail_obj(att)
@@ -401,7 +407,13 @@ module Chemotion
 
       desc 'Return Base64 encoded thumbnail'
       get 'thumbnail/:attachment_id' do
-        Base64.encode64(@attachment.read_thumbnail) if @attachment.thumb
+        if @attachment.thumb
+          thumbnail_data = @attachment.read_thumbnail
+          thumbnail_data ? Base64.encode64(thumbnail_data) : nil
+        end
+      rescue StandardError => e
+        Rails.logger.error("Failed to read thumbnail for attachment #{@attachment&.id}: #{e.message}")
+        nil
       end
 
       desc 'Return Base64 encoded thumbnails'
