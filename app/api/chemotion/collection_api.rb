@@ -231,8 +231,8 @@ module Chemotion
                                                  .by_ui_state(params[:elements_filter][:device_description])
                                                  .for_user_n_groups(user_ids)
           vessels = Vessel.by_collection_id(@cid)
-                                     .by_ui_state(params[:elements_filter][:vessel])
-                                     .for_user_n_groups(user_ids)
+                          .by_ui_state(params[:elements_filter][:vessel])
+                          .for_user_n_groups(user_ids)
           elements = {}
           Labimotion::ElementKlass.find_each do |klass|
             elements[klass.name] = Labimotion::Element.by_collection_id(@cid).by_ui_state(params[:elements_filter][klass.name]).for_user_n_groups(user_ids)

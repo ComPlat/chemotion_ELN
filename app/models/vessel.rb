@@ -26,6 +26,7 @@
 #
 class Vessel < ApplicationRecord
   acts_as_paranoid
+  include Collectable
   include Taggable
   include ElementCodes
   include ElementUIStateScopes
