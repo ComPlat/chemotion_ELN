@@ -793,22 +793,37 @@ export default class ReactionDetailsScheme extends React.Component {
     // Find the sample that contains the component
     const updatedSample = reaction.sampleById(sampleID);
 
-    if (updatedSample && updatedSample.isMixture() && updatedSample.hasComponents()) {
-
-      // Initialize sample details if needed
-      updatedSample.initializeSampleDetails();
-
-      // Find the reference component and set its molecular weight if it has one
-      const referenceComponent = updatedSample.components.find((comp) => comp.reference);
-      if (referenceComponent && referenceComponent.molecule && referenceComponent.molecule.molecular_weight) {
-        updatedSample.sample_details.reference_molecular_weight = referenceComponent.molecule.molecular_weight;
-      }
-
-      // Update equivalents for all components
-      // updatedSample.updateMixtureComponentEquivalent();
+    if (!updatedSample || !updatedSample.isMixture() || !updatedSample.hasComponents()) {
+      return reaction;
     }
 
-    // Return the updated reaction
+    const referenceComponentIndex = updatedSample.components.findIndex(
+      (component) => component.id === componentId
+    );
+
+    // Handle case where a reference component is not found
+    if (referenceComponentIndex === -1) {
+      console.warn(`Component with id ${componentId} not found in sample ${sampleID}`);
+      return reaction;
+    }
+
+    // Set the reference component to true and all others to false
+    updatedSample.components.forEach((component, index) => {
+      // eslint-disable-next-line no-param-reassign
+      component.reference = (index === referenceComponentIndex);
+    });
+
+    // Initialize sample details and set reference molecular weight
+    updatedSample.initializeSampleDetails();
+    const referenceComponent = updatedSample.components[referenceComponentIndex];
+
+    if (referenceComponent?.molecule?.molecular_weight) {
+      updatedSample.sample_details.reference_molecular_weight = referenceComponent.molecule.molecular_weight;
+    }
+
+    // Update equivalents for all components
+    // updatedSample.updateMixtureComponentEquivalent();
+
     return reaction;
   }
 

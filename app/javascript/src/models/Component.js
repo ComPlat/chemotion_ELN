@@ -665,8 +665,16 @@ export default class Component extends Sample {
    */
   static deserializeData(component) {
     const { component_properties, ...rest } = component;
-    const sampleData = { ...rest, ...component_properties };
+    const { molecule, ...otherProperties } = component_properties || {};
+    const sampleData = { ...rest, ...otherProperties };
 
-    return new Component(sampleData);
+    const comp = new Component(sampleData);
+    
+    // Set the molecule if it exists in component_properties
+    if (molecule) {
+      comp.molecule = molecule;
+    }
+
+    return comp;
   }
 }
