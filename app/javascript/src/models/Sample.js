@@ -1257,8 +1257,8 @@ export default class Sample extends Element {
   }
 
   get equivalent() {
-    if (this.isMixture() && this.isNew) {
-      return this.reference_equivalent;
+    if (this.reference || (this.isMixture() && this._equivalent === undefined)) {
+      return 1;
     }
     return this._equivalent;
   }
@@ -1646,6 +1646,7 @@ export default class Sample extends Element {
   /**
    * Sets the reference component in the mixture by index and updates equivalents.
    * @param {number} componentIndex - The index of the component to set as reference.
+   * @throws {Error} If componentIndex is invalid or components array is empty.
    */
   setReferenceComponent(componentIndex) {
     this.components[componentIndex].equivalent = 1;
@@ -1657,9 +1658,17 @@ export default class Sample extends Element {
       }
     });
 
+    // Initialize sample details and set reference molecular weight
     this.initializeSampleDetails();
-    this.sample_details.reference_molecular_weight = this.components[componentIndex].molecule.molecular_weight;
 
+    const molecularWeight = this.components[componentIndex].molecule?.molecular_weight;
+    if (molecularWeight) {
+      this.sample_details.reference_molecular_weight = molecularWeight;
+    } else {
+      console.warn(`Reference component at index ${componentIndex} has no molecular weight`);
+    }
+
+    // Update equivalents for all components
     this.updateMixtureComponentEquivalent();
   }
 
