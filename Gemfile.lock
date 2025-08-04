@@ -908,6 +908,7 @@ DEPENDENCIES
   devise-jwt
   dotenv-rails
   ed25519
+  execjs
   factory_bot_rails
   faker
   faraday
