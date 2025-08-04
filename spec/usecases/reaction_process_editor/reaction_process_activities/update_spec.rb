@@ -28,6 +28,23 @@ RSpec.describe Usecases::ReactionProcessEditor::ReactionProcessActivities::Updat
     end
   end
 
+  context 'when setting a REMOVE fraction' do
+    let(:activity) { build(:reaction_process_activity, activity_name: 'REMOVE') }
+    let(:fraction) { create(:fraction) }
+    let(:activity_params) do
+      {
+        workup: {
+          origin_type: 'SOLVENT_FROM_FRACTION',
+          samples: [{ id: fraction.id }],
+        },
+      }.deep_stringify_keys
+    end
+
+    it 'sets fraction consuming_activity' do
+      expect { update_activity }.to change { fraction.reload.consuming_activity }.to(activity)
+    end
+  end
+
   context 'with vessel params' do
     let(:vessel) { create(:vessel) }
     let(:activity_params) do

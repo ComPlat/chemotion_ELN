@@ -37,6 +37,7 @@ module Entities
             DIVERSE_SOLVENTS: [],
             STEPWISE: [],
             FROM_METHOD: [],
+            SOLVENT_FROM_FRACTION: step_fractions_options(reaction_process_step),
           }
         end
 
@@ -62,6 +63,20 @@ module Entities
 
         def transferable_sample_ids(reaction_process_step)
           reaction_process_step.reaction_process.saved_sample_ids
+        end
+
+        def step_fractions_options(reaction_process_step)
+          reaction_process_step
+            .reaction_process_activities
+            .order(:position)
+            .map do |parent_activity|
+              parent_activity.fractions.map do |fraction|
+                label = "(#{parent_activity.position + 1}) Fraction ##{fraction.position}"
+
+                { value: fraction.id, id: fraction.id, label: label, acts_as: 'FRACTION' }
+              end
+            end.flatten
+               .compact
         end
 
         def save_sample_origins(reaction_process_step)
