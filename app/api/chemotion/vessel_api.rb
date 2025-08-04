@@ -9,6 +9,7 @@ module Chemotion
   # rubocop:disable Metrics/ClassLength
   class VesselAPI < Grape::API
     include Grape::Kaminari
+
     helpers ParamsHelpers
     helpers ContainerHelpers
 
