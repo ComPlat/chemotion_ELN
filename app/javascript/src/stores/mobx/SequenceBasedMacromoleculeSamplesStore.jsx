@@ -5,6 +5,7 @@ import SequenceBasedMacromoleculesFetcher from 'src/fetchers/SequenceBasedMacrom
 import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';
 import Container from 'src/models/Container';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
+import DetailActions from 'src/stores/alt/actions/DetailActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
 const emptySequenceBasedMacromolecule = {
