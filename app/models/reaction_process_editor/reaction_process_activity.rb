@@ -24,6 +24,17 @@ module ReactionProcessEditor
     belongs_to :reaction_process_vessel, optional: true
 
     has_one :reactions_intermediate_sample, dependent: :nullify
+    has_many :fractions,
+             class_name: 'ReactionProcessEditor::Fraction',
+             inverse_of: :parent_activity,
+             foreign_key: :parent_activity_id,
+             dependent: :destroy
+
+    has_one :consumed_fraction,
+            class_name: 'ReactionProcessEditor::Fraction',
+            inverse_of: :consuming_activity,
+            foreign_key: :consuming_activity_id,
+            dependent: :nullify
 
     validate :validate_workup
 
@@ -35,6 +46,10 @@ module ReactionProcessEditor
 
     def saves_sample?
       %w[SAVE].include?(activity_name)
+    end
+
+    def remove?
+      %w[REMOVE].include?(activity_name)
     end
 
     def transfer?

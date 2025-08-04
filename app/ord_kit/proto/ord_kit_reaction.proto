@@ -167,6 +167,13 @@ enum StepAutomationStatus {
   STEP_COMPLETED = 4;
 }
 
+message PoolingFraction {
+  string parent_activity_id = 1;
+  int32 position = 2;
+  string consuming_activity_id = 3;
+  repeated string vials = 4;
+}
+
 /**
  * An individual Action defining the reaction workflow.
  * It is usually referenced within a ReactionStep.
@@ -190,11 +197,10 @@ message ReactionProcessAction {
     ActionWait wait = 14;
     ActionSaveSample save_sample = 15;
     ActionDiscard discard = 16;
-    ActionEvaporation evaporation = 17;
+    ActionDefineFraction define_fraction = 17;
   }
   optional AutomationStatus automation_status = 18;
-  repeated string fractions = 19;
-
+  optional PoolingFraction consumed_fraction = 19;
   int32 automation_ordinal = 20;
 
   message ActionAdd {
@@ -203,7 +209,7 @@ message ReactionProcessAction {
   }
 
   message ActionRemove {
-    message DiverseSolvents {
+    message FromDiverseSolvents {
       repeated CompoundWithRatio solvents = 1;
       Amount solvents_amount = 2;
     }
@@ -217,6 +223,9 @@ message ReactionProcessAction {
       ReactionConditions starter_conditions = 1;
       repeated ReactionConditionLimits limits = 2;
     }
+    message FromFraction {
+      repeated PoolingFraction fraction = 1;
+    }
 
     Automation.AutomationMode automation_mode = 1;
     oneof origin {
@@ -224,8 +233,9 @@ message ReactionProcessAction {
       FromReaction from_reaction_step = 3;
       FromReaction from_sample = 4;
       FromMethod from_method = 5;
-      FromMethod stepwise = 7;
-      DiverseSolvents diverse_solvents = 6;
+      FromMethod stepwise = 6;
+      FromFraction from_fraction = 7;
+      FromDiverseSolvents diverse_solvents = 8;
     }
   }
 
@@ -285,6 +295,7 @@ message ReactionProcessAction {
     optional Length filling_height = 15;
 
     repeated ChromatographyStep steps = 16;
+    repeated PoolingFraction fractions = 17;
   }
 
   message ActionPurificationExtraction {
@@ -360,8 +371,8 @@ message ReactionProcessAction {
     Percentage percentage = 6;
   }
 
-  message ActionDiscard { repeated string fractions = 1; }
-  message ActionEvaporation { repeated string fractions = 1; }
+  message ActionDiscard {  PoolingFraction fraction = 1;  }
+  message ActionDefineFraction { PoolingFraction fraction = 1; }
   message ActionWait { TimeSpan duration = 1; }
 
   message ActionSaveSample {
