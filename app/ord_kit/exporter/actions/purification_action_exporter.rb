@@ -18,7 +18,7 @@ module OrdKit
         end
 
         def purification_type_action
-          PURIFICATION_EXPORTER[workup['purification_type']].new(workup).to_ord
+          PURIFICATION_EXPORTER[workup['purification_type']].new(action).to_ord
         end
       end
     end

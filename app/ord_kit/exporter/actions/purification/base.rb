@@ -5,13 +5,13 @@ module OrdKit
     module Actions
       module Purification
         class Base
-          def initialize(workup)
-            @workup = workup
+          def initialize(action)
+            @action = action
           end
 
-          private
+          attr_reader :action
 
-          attr_reader :workup
+          delegate :workup, to: :@action
         end
       end
     end

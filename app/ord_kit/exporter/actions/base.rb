@@ -11,6 +11,8 @@ module OrdKit
           @action = action
         end
 
+        attr_reader :action
+
         delegate :workup, to: :@action
 
         def to_ord(starts_at:)
@@ -24,7 +26,7 @@ module OrdKit
               equipment: equipment,
               vessel_template: vessel_template,
               automation_status: automation_status,
-              fractions: fractions,
+              consumed_fraction: consumed_fraction,
               automation_ordinal: @action.automation_ordinal,
             }.merge(action_type_attributes),
           )
@@ -76,8 +78,8 @@ module OrdKit
           Vessels::ReactionProcessVesselableExporter.new(@action.reaction_process_vessel).to_ord
         end
 
-        def fractions
-          @action.workup['fractions']&.map(&:to_s) || []
+        def consumed_fraction
+          OrdKit::Exporter::Samples::FractionExporter.new(@action.consumed_fraction).to_ord
         end
 
         def action_type_attributes

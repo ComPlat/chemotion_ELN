@@ -34,6 +34,7 @@ module Entities
               { value: 'FROM_SAMPLE', label: 'From Sample' },
               { value: 'STEPWISE', label: 'Stepwise' },
               { value: 'FROM_METHOD', label: 'From Method' },
+              { value: 'SOLVENT_FROM_FRACTION', label: 'Solvent From Fraction' },
             ]
           end
         end
