@@ -29,15 +29,14 @@ module ReactionProcessEditor
           ), with: Entities::ReactionProcessEditor::ReactionProcessActivityEntity, root: :reaction_process_activity
         end
 
-        desc 'Create and append an action for the pooling groups.'
-        put :append_pooling_groups do
-          pooling_groups = params[:pooling_groups]
+        desc 'Create and append an action for the fractions of a chromatography automation result.'
+        put :create_fraction_activities do
+          fractions_params = params[:fractions]
+          @activity.fractions.destroy_all
 
-          pooling_groups.each_with_index do |pooling_group, index|
-            Usecases::ReactionProcessEditor::ReactionProcessSteps::AppendPoolingGroupActivity
-              .execute!(reaction_process_step: @activity.reaction_process_step,
-                        pooling_group_params: pooling_group,
-                        position: @activity.position + 1 + index)
+          fractions_params.each_with_index do |fraction_params, index|
+            ::Usecases::ReactionProcessEditor::ReactionProcessSteps::AppendFractionActivity
+              .execute!(parent_activity: @activity, index: index, fraction_params: fraction_params)
           end
 
           @activity.workup['AUTOMATION_STATUS'] = 'HALT_RESOLVED_NEEDS_CONFIRMATION'
