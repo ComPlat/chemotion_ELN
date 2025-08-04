@@ -11,7 +11,7 @@ export default class MoleculesFetcher {
       .catch(errorMessage => console.log(errorMessage));
   }
 
-  static fetchByMolfile(molfile, svgfile, editor = 'ketcher2', decoupled = false) {
+  static fetchByMolfile(molfile, svgfile, editor = 'ketcher', decoupled = false) {
     return fetch('/api/v1/molecules', {
       credentials: 'same-origin',
       method: 'POST',
@@ -23,7 +23,7 @@ export default class MoleculesFetcher {
       .catch(errorMessage => console.log(errorMessage));
   }
 
-  static fetchBySmi(smi, svgfile, molfile, editor = 'ketcher2') {
+  static fetchBySmi(smi, svgfile, molfile, editor = 'ketcher') {
     return fetch('/api/v1/molecules/smiles', {
       credentials: 'same-origin',
       method: 'POST',

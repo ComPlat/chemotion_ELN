@@ -9,7 +9,7 @@ function EditorRenderer({
   type, editor, molfile, iframeHeight, iframeStyle, fnCb
 }) {
   switch (type) {
-    case 'ketcher2':
+    case 'ketcher':
       return (
         <KetcherEditor
           editor={editor}
@@ -40,7 +40,7 @@ function EditorRenderer({
       return (
         <div>
           <iframe
-            id={editor.id}
+            id={editor?.id}
             src={editor.src}
             title={`${editor.label}`}
             height={iframeHeight}

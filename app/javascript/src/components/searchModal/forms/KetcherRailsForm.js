@@ -23,7 +23,7 @@ function KetcherRailsform() {
   const iframeStyle = {};
 
   useEffect(() => {
-    setEditor(getEditorById('ketcher2'));
+    setEditor(getEditorById('ketcher'));
   }, []);
 
   const handleSearchTypeChange = (e) => {
