@@ -16,6 +16,9 @@ module Usecases
         # Calculate relative molecular weights for mixture samples before saving
         calculate_relative_molecular_weights
 
+        # Preload molecule data for all components in one query
+        add_molecule_data_to_components
+
         @components.each do |component_params|
           molecule_id = component_params.dig(:component_properties, :molecule_id).to_i
 
@@ -34,6 +37,28 @@ module Usecases
       end
 
       private
+
+      def add_molecule_data_to_components
+        # Extract all molecule IDs from components
+        molecule_ids = @components.map { |comp| comp.dig(:component_properties, :molecule_id)&.to_i }.compact.uniq
+        return if molecule_ids.empty?
+
+        # Bulk load molecules
+        molecules = Molecule.where(id: molecule_ids).index_by(&:id)
+
+        # Add molecule data to each component's component_properties
+        @components.each do |component_params|
+          component_properties = component_params[:component_properties]
+          next unless component_properties
+
+          molecule_id = component_properties[:molecule_id]&.to_i
+          molecule = molecules[molecule_id]
+          next unless molecule
+
+          # Add complete molecule data
+          component_properties[:molecule] = molecule
+        end
+      end
 
       def calculate_relative_molecular_weights
         # Only calculate for mixture samples
