@@ -5,11 +5,12 @@
 # Table name: reaction_processes
 #
 #  id                 :uuid             not null, primary key
-#  reaction_id        :integer
+#  automation_ordinal :integer
 #  default_conditions :jsonb
+#  deleted_at         :datetime
 #  created_at         :datetime         not null
 #  updated_at         :datetime         not null
-#  deleted_at         :datetime
+#  reaction_id        :integer
 #
 
 module ReactionProcessEditor
