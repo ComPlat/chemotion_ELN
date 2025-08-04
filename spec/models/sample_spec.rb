@@ -15,6 +15,7 @@
 #  description         :text             default("")
 #  dry_solvent         :boolean          default(FALSE)
 #  external_label      :string           default("")
+#  hide_in_eln         :boolean
 #  identifier          :string
 #  imported_readout    :string
 #  impurities          :string           default("")

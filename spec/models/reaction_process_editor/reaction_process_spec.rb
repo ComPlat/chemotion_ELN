@@ -1,5 +1,17 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: reaction_processes
+#
+#  id                 :uuid             not null, primary key
+#  automation_ordinal :integer
+#  default_conditions :jsonb
+#  deleted_at         :datetime
+#  created_at         :datetime         not null
+#  updated_at         :datetime         not null
+#  reaction_id        :integer
+#
 require 'rails_helper'
 
 RSpec.describe ReactionProcessEditor::ReactionProcess do

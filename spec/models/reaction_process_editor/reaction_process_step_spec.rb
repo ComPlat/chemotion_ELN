@@ -1,5 +1,20 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: reaction_process_steps
+#
+#  id                         :uuid             not null, primary key
+#  automation_status          :string
+#  deleted_at                 :datetime
+#  locked                     :boolean
+#  name                       :string
+#  position                   :integer
+#  created_at                 :datetime         not null
+#  updated_at                 :datetime         not null
+#  reaction_process_id        :uuid
+#  reaction_process_vessel_id :uuid
+#
 require 'rails_helper'
 
 RSpec.describe ReactionProcessEditor::ReactionProcessStep do

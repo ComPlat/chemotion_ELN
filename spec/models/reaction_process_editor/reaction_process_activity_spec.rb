@@ -1,5 +1,21 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: reaction_process_activities
+#
+#  id                         :uuid             not null, primary key
+#  activity_name              :string
+#  automation_ordinal         :integer
+#  automation_response        :jsonb
+#  deleted_at                 :datetime
+#  position                   :integer
+#  workup                     :json
+#  created_at                 :datetime         not null
+#  updated_at                 :datetime         not null
+#  reaction_process_step_id   :uuid
+#  reaction_process_vessel_id :uuid
+#
 require 'rails_helper'
 
 SAMPLE_KEYS = %w[SAMPLE SOLVENT].freeze

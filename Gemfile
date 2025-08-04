@@ -29,6 +29,8 @@ gem 'dotenv-rails', require: 'dotenv/rails-now'
 
 gem 'ed25519'
 
+gem 'execjs'
+
 gem 'faker', require: false
 gem 'faraday'
 gem 'faraday-follow_redirects'

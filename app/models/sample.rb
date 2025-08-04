@@ -15,6 +15,7 @@
 #  description         :text             default("")
 #  dry_solvent         :boolean          default(FALSE)
 #  external_label      :string           default("")
+#  hide_in_eln         :boolean
 #  identifier          :string
 #  imported_readout    :string
 #  impurities          :string           default("")
@@ -48,16 +49,6 @@
 #  molecule_id         :integer
 #  molecule_name_id    :integer
 #  user_id             :integer
-#  molfile_version     :string(20)
-#  stereo              :jsonb
-#  metrics             :string           default("mmm")
-#  decoupled           :boolean          default(FALSE), not null
-#  molecular_mass      :float
-#  sum_formula         :string
-#  solvent             :jsonb
-#  inventory_sample    :boolean          default(FALSE)
-#  dry_solvent         :boolean          default(FALSE)
-#  hide_in_eln         :boolean
 #
 # Indexes
 #
