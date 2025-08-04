@@ -19,8 +19,10 @@ function KetcherRailsform() {
   const activeSearchAccordionClass = searchStore.search_accordion_active_key === 0 ? 'active' : '';
   const activeResultAccordionClass = searchStore.search_accordion_active_key === 1 ? ' active' : '';
   const { pgCartridge } = UIStore.getState();
-  const iframeHeight = panelVars.invisibleClassName ? '550px' : '85vh';
   const iframeStyle = {};
+  const iframeHeight = panelVars.invisibleClassName
+    ? 0.62 * window.innerHeight
+    : 0.65 * window.innerHeight;
 
   useEffect(() => {
     setEditor(getEditorById('ketcher'));
