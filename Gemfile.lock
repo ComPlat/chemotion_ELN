@@ -255,6 +255,7 @@ GEM
     erubi (1.13.1)
     et-orbi (1.2.11)
       tzinfo
+    execjs (2.10.0)
     factory_bot (6.4.5)
       activesupport (>= 5.0.0)
     factory_bot_rails (6.4.3)
@@ -440,8 +441,6 @@ GEM
       net-protocol
     net-ssh (6.1.0)
     nio4r (2.7.4)
-    nokogiri (1.15.7-aarch64-linux)
-      racc (~> 1.4)
     nokogiri (1.15.7-x86_64-linux)
       racc (~> 1.4)
     oauth2 (2.0.12)
@@ -822,7 +821,6 @@ GEM
     zeitwerk (2.6.18)
 
 PLATFORMS
-  aarch64-linux
   x86_64-linux
 
 DEPENDENCIES
@@ -860,6 +858,7 @@ DEPENDENCIES
   devise-jwt
   dotenv-rails
   ed25519
+  execjs
   factory_bot_rails
   faker
   faraday
