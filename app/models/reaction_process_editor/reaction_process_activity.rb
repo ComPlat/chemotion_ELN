@@ -5,13 +5,15 @@
 # Table name: reaction_process_activities
 #
 #  id                         :uuid             not null, primary key
-#  reaction_process_step_id   :uuid
 #  activity_name              :string
+#  automation_ordinal         :integer
+#  automation_response        :jsonb
+#  deleted_at                 :datetime
 #  position                   :integer
 #  workup                     :json
 #  created_at                 :datetime         not null
 #  updated_at                 :datetime         not null
-#  deleted_at                 :datetime
+#  reaction_process_step_id   :uuid
 #  reaction_process_vessel_id :uuid
 #
 module ReactionProcessEditor
