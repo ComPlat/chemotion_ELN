@@ -12,7 +12,7 @@ function VesselTemplateGroupView({ elements }) {
 
   const grouped = templates.map((template) => {
     const vesselItems = elements.filter(
-      (item) => item.vessel_template?.id === template.id
+      (item) => item.vesselTemplateId === template.id
     );
 
     return {

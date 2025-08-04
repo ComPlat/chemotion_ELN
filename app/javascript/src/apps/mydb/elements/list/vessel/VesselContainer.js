@@ -6,7 +6,7 @@ import ElementGroupsRenderer from 'src/apps/mydb/elements/list/renderers/Element
 
 export default function VesselContainer({ vesselGroups }) {
   const getGroupKey = useCallback(
-    (vessel) => `${vessel.vessel_template?.name}`,
+    (vessel) => `${vessel.vesselName}`,
     []
   );
 

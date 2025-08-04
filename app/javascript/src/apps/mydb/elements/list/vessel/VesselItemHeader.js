@@ -7,26 +7,25 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 function VesselItemHeader({ groupItems }) {
   const { currentCollection } = UIStore.getState();
   const vessel = groupItems?.[0];
-  const vesselTemplate = vessel?.vessel_template;
 
   const getGroupKey = useCallback(
-    (item) => `${item.vessel_template.name}`,
+    (item) => `${item.vesselName}`,
     []
   );
 
-  const navigateToTemplate = (template) => {
-    if (!template?.id) {
+  const navigateToTemplate = (templateId) => {
+    if (!templateId) {
       console.error('Vessel template ID is missing.');
       return;
     }
 
-    const uri = `/vessel_template/${template.id}`;
+    const uri = `/vessel_template/${templateId}`;
     Aviator.navigate(uri, { silent: true });
 
     elementShowOrNew({
       type: 'vessel_template',
       params: {
-        vesselTemplateID: template.id,
+        vesselTemplateID: templateId,
         collectionID: currentCollection.id,
       },
     });
@@ -38,7 +37,7 @@ function VesselItemHeader({ groupItems }) {
     <button
       type="button"
       className="fs-5 btn btn-link p-0 text-start"
-      onClick={() => navigateToTemplate(vesselTemplate)}
+      onClick={() => navigateToTemplate(vessel?.vesselTemplateId)}
     >
       {groupKey}
     </button>
@@ -48,10 +47,8 @@ function VesselItemHeader({ groupItems }) {
 VesselItemHeader.propTypes = {
   groupItems: PropTypes.arrayOf(
     PropTypes.shape({
-      vessel_template: PropTypes.shape({
-        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-        name: PropTypes.string,
-      }),
+      vesselTemplateId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      vesselName: PropTypes.string,
     })
   ).isRequired,
 };
