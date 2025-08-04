@@ -1333,7 +1333,7 @@ export default class Sample extends Element {
    * @returns {number|null} The reference molecular weight or null if not set
    */
   get reference_molecular_weight() {
-    if (this.sample_details) {
+    if (this.sample_details && this.sample_details.reference_molecular_weight != null) {
       return this.sample_details.reference_molecular_weight;
     }
 
