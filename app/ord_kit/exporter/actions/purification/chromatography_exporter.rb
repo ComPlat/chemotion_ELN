@@ -13,11 +13,18 @@ module OrdKit
                 stationary_phase: workup['stationary_phase'],
                 steps: steps,
                 automation_mode: ontology_ord(workup['automation_mode']),
+                fractions: fractions,
               }.merge(automation_specific_fields),
             ) }
           end
 
           private
+
+          def fractions
+            action.fractions.map do |fraction|
+              OrdKit::Exporter::Samples::FractionExporter.new(fraction).to_ord
+            end
+          end
 
           def automation_mode_ontology
             ReactionProcessEditor::Ontology.find_by(ontology_id: workup['automation_mode'])

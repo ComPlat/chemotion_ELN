@@ -111,7 +111,7 @@ Technically both are treated equally in defining the "Activities" within a proce
 
 An ReactionProcessActivity has the relevant attributes:
 
-* `action_name`: defines the type of the Activity, which can basically be any arbitrary string value describing the Activity. A set of are implemented and used for the required funcionalities: "ADD", "REMOVE", "MOTION", "PURIFICATION", "ANALYSIS", "SAVE", "TRANSFER", "WAIT", "DISCARD", "EVAPORATE", "CONDITION".
+* `action_name`: defines the type of the Activity, which can basically be any arbitrary string value describing the Activity. A set of are implemented and used for the required funcionalities: "ADD", "REMOVE", "MOTION", "PURIFICATION", "ANALYSIS", "SAVE", "TRANSFER", "WAIT", "DISCARD", "DEFINE_FRACTION", "CONDITION".
 
 * `position`: The order of the action within the associated reaction_process_step.
 
