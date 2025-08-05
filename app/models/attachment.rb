@@ -260,14 +260,15 @@ class Attachment < ApplicationRecord
     "#{File.basename(filename, '.*')}_annotated#{extension_of_annotation}"
   end
 
+  def thumbnail_base64
+    return nil unless thumb
+    thumbnail_data = read_thumbnail
+    thumbnail_data.present? ? Base64.encode64(thumbnail_data) : nil
+  end
+
   def preview
-    if thumb
-      thumbnail_data = read_thumbnail
-      thumbnail_data ? "data:image/png;base64,#{Base64.encode64(thumbnail_data)}" : nil
-    end
-  rescue StandardError => e
-    Rails.logger.error("Failed to generate preview for attachment #{id}: #{e.message}")
-    nil
+    base64_data = thumbnail_base64
+    base64_data ? "data:image/png;base64,#{base64_data}" : nil
   end
 
   private
