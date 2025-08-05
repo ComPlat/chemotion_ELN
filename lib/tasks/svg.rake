@@ -45,7 +45,7 @@ namespace :svg do
       end
 
       svg = IndigoService.new(element.molfile, 'image/svg+xml').render_structure
-      if svg.blank? || svg.match('viewBox=\"0 0 0 0\"')
+      if svg.nil?
         puts "#{message} cannot build SVG\n"
         next
       end

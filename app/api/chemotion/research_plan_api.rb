@@ -228,7 +228,7 @@ module Chemotion
       end
       post :svg do
         svg = params[:svg_file]
-
+        error!({ error: 'Invalid SVG' }, 422) unless IndigoService.new(nil).valid_indigo_svg?(svg)
         processor = if params[:is_chemdraw]
                       Chemotion::ChemdrawSvgProcessor.new(svg)
                     else

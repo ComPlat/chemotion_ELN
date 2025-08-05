@@ -69,10 +69,12 @@ module Chemotion
             svg_process = SVG::Processor.new.generate_svg_info('samples', svg_digest)
             svg_file_src = Rails.public_path.join('images', 'molecules', molecule.molecule_svg_file)
             if File.exist?(svg_file_src)
-              mol = molecule.molfile.lines[0..1]
               if svg.nil? || svg&.include?('Open Babel')
-                svg = Molecule.svg_reprocess(svg, molecule.molfile)
-                svg_process = SVG::Processor.new.structure_svg('ketcher', svg, svg_digest, true)
+                indigo_served_svg = Molecule.svg_reprocess(svg, molecule.molfile)
+                if indigo_served_svg
+                  svg_process = SVG::Processor.new.structure_svg('ketcher', indigo_served_svg, svg_digest, true)
+                  FileUtils.cp(svg_process[:svg_file_path], svg_file_src)
+                end
               else
                 FileUtils.cp(svg_file_src, svg_process[:svg_file_path])
               end

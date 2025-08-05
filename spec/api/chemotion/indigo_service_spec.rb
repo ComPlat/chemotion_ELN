@@ -6,7 +6,8 @@ RSpec.describe IndigoService do
   let(:molfile_structure) { 'C1=CC=CC=C1' }
   let(:output_format) { 'image/svg+xml' }
   let(:service_url) { 'http://indigo_service/' }
-  let(:response_body) { '<svg></svg>' }
+  let(:valid_svg) { '<svg viewBox="0 0 300 300"></svg>' }
+  let(:invalid_svg) { '<html></html>' }
   let(:info_response_body) { { 'name' => 'Indigo Service', 'version' => '2.3.4', 'status' => 'ok' }.to_json }
 
   before do
@@ -14,44 +15,78 @@ RSpec.describe IndigoService do
   end
 
   describe '#render_structure' do
-    it 'returns SVG when IndigoService responds successfully' do
-      stub_request(:post, "#{service_url}v2/indigo/render")
-        .with(
-          body: { struct: molfile_structure, output_format: output_format }.to_json,
-          headers: { 'Content-Type' => 'application/json' },
-        )
-        .to_return(status: 200, body: response_body)
+    context 'when Indigo service returns valid SVG' do
+      it 'returns the SVG body' do
+        stub_request(:post, "#{service_url}v2/indigo/render")
+          .to_return(status: 200, body: valid_svg)
 
-      result = described_class.new(molfile_structure, output_format).render_structure
-      expect(result).to eq(response_body)
+        result = described_class.new(molfile_structure).render_structure
+        expect(result).to eq(valid_svg)
+      end
     end
 
-    it 'returns error hash when request fails' do
-      stub_request(:post, "#{service_url}v2/indigo/render")
-        .to_return(status: 400, body: '')
-      result = described_class.new(molfile_structure, output_format).render_structure
-      expect(result).to eq({ error: 'Failed to contact Indigo service', status: 400 })
+    context 'when Indigo service returns invalid SVG' do
+      it 'returns nil' do
+        stub_request(:post, "#{service_url}v2/indigo/render")
+          .to_return(status: 200, body: invalid_svg)
+
+        result = described_class.new(molfile_structure).render_structure
+        expect(result).to be_nil
+      end
+    end
+
+    context 'when Indigo service returns error response' do
+      it 'returns nil' do
+        stub_request(:post, "#{service_url}v2/indigo/render")
+          .to_return(status: 500, body: '')
+
+        result = described_class.new(molfile_structure).render_structure
+        expect(result).to be_nil
+      end
     end
   end
 
   describe '#service_info' do
-    it 'returns parsed JSON when IndigoService responds successfully' do
-      stub_request(:get, "#{service_url}v2/indigo/info")
-        .with(
-          headers: { 'Content-Type' => 'application/json' },
-        )
-        .to_return(status: 200, body: info_response_body, headers: { 'Content-Type' => 'application/json' })
+    context 'when Indigo service responds successfully' do
+      it 'returns the response body' do
+        stub_request(:get, "#{service_url}v2/indigo/info")
+          .to_return(status: 200, body: info_response_body, headers: { 'Content-Type' => 'application/json' })
 
-      result = described_class.new(molfile_structure, output_format).service_info
-      expect(result).to eq(info_response_body)
+        result = described_class.new(nil).service_info
+        expect(result).to eq(info_response_body)
+      end
     end
 
-    it 'returns error hash when request fails' do
-      stub_request(:get, "#{service_url}v2/indigo/info")
-        .to_return(status: 500, body: '')
+    context 'when Indigo service fails to respond' do
+      it 'returns nil' do
+        stub_request(:get, "#{service_url}v2/indigo/info")
+          .to_return(status: 503, body: '')
 
-      result = described_class.new(molfile_structure, output_format).service_info
-      expect(result).to eq({ error: 'Failed to contact Indigo service', status: 500 })
+        result = described_class.new(nil).service_info
+        expect(result).to be_nil
+      end
+    end
+  end
+
+  describe '#valid_indigo_svg?' do
+    let(:service) { described_class.new(nil) }
+
+    it 'returns true for valid SVG' do
+      expect(service.valid_indigo_svg?(valid_svg)).to be true
+    end
+
+    it 'returns false for non-SVG content' do
+      expect(service.valid_indigo_svg?(invalid_svg)).to be false
+    end
+
+    it 'returns false if viewBox is 0 0 0 0' do
+      svg = '<svg viewBox="0 0 0 0"></svg>'
+      expect(service.valid_indigo_svg?(svg)).to be false
+    end
+
+    it 'returns false if SVG has syntax errors' do
+      bad_svg = '<svg><bad></svg>'
+      expect(service.valid_indigo_svg?(bad_svg)).to be false
     end
   end
 end
