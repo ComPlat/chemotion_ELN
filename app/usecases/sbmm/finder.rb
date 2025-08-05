@@ -75,6 +75,8 @@ module Usecases
           SequenceBasedMacromolecule.with_accession(search_term)
         when 'protein_name'
           SequenceBasedMacromolecule.search_in_name(search_term)
+        when 'sequence'
+          SequenceBasedMacromolecule.search_for_sequence(search_term)
         else
           SequenceBasedMacromolecule.none
         end
@@ -82,6 +84,8 @@ module Usecases
 
       # returns an array of Uniprot::SearchResult instances
       def search_in_uniprot(search_term:, search_field:)
+        return [] if search_term == 'sequence'
+
         Uniprot::Client.new.search(
           search_term: search_term, 
           search_field: search_field

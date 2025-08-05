@@ -76,6 +76,11 @@ class SequenceBasedMacromolecule < ApplicationRecord
   scope :search_in_name, lambda { |text|
                            text ? where("LOWER(systematic_name) LIKE '%#{text.downcase}%' OR LOWER(short_name) LIKE '%#{text.downcase}%'") : none
                          }
+  scope :search_for_sequence, lambda { |sequence|
+                                cleaned_sequence = normalize_sequence(sequence)
+                                cleaned_sequence.present? ? where(sequence: cleaned_sequence) : none
+                              }
+
   # update_only must be true, because assigning an attribute hash without ID creates a new object,
   # but we never want to do that after creating the objects initially
   accepts_nested_attributes_for(:protein_sequence_modification, :post_translational_modification, update_only: true )
