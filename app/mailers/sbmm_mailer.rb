@@ -9,7 +9,7 @@ class SbmmMailer < ApplicationMailer
     @effective_changes = effective_changes
 
     mail(
-      to: Admin.first.email,
+      to: Admin.all.pluck(:email),
       from: user.email,
       subject: "User requests a change to a SequenceBasedMacromolecule",
     )
