@@ -84,7 +84,7 @@ module Usecases
 
       # returns an array of Uniprot::SearchResult instances
       def search_in_uniprot(search_term:, search_field:)
-        return [] if search_term == 'sequence'
+        return [] if search_field == 'sequence'
 
         Uniprot::Client.new.search(
           search_term: search_term, 
