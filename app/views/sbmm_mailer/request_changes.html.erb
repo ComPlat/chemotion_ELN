@@ -12,7 +12,7 @@
   </tr>
   <tr>
     <th>SBMM</th>
-    <td>(ID: <%= @sbmm.id %>) <%= @sbmm.systematic_name %></td>
+    <td>(ID: <%= @sbmm.id %>) <%= @sbmm.systematic_name.presence || @sbmm.sequence %></td>
     <td>&nbsp;</td>
   </tr>
   <tr><td colspan="3">&nbsp;</td></tr>
@@ -51,7 +51,7 @@
     # check changes in SBMM, please review them thoroughly
     sbmm.changes
 
-    # # check changes in modifications, please review them thoroughly
+    # check changes in modifications, please review them thoroughly
     sbmm.protein_sequence_modification.changes if sbmm.uniprot_derivation != 'uniprot'
     sbmm.post_translational_modification.changes if sbmm.uniprot_derivation != 'uniprot'
 

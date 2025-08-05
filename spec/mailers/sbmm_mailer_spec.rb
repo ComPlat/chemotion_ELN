@@ -16,7 +16,7 @@ RSpec.describe SbmmMailer, type: :mailer do
 
     it "renders the body correctly" do
       sbmm.short_name = 'Hallo Welt'
-      sbmm.post_translational_modification.phosphorylation_ser_details = 'Hallo Welt'
+      sbmm.post_translational_modification.phosphorylation_ser_details = 'Foo Bar'
 
       params = serialize_sbmm_as_api_input(sbmm)
       # fix parameters. Usually the API does this,
@@ -26,7 +26,8 @@ RSpec.describe SbmmMailer, type: :mailer do
       params.delete(:sequence_length)
 
       mail = Usecases::Sbmm::ChangeRequest.new(user).for(params)
-      binding.pry
+      expect(mail.body.encoded).to have_text('Hallo Welt').twice
+      expect(mail.body.encoded).to have_text('Foo Bar').twice
     end
   end
 end

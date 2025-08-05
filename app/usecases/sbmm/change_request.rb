@@ -10,7 +10,7 @@ module Usecases
       end
 
       def for(params)
-        sbmm = Finder.new.find_or_initialize_by(params)
+        sbmm = Finder.new.find_or_initialize_by(params.dup)
 
         effective_changes = {}
         effective_changes.merge!(sbmm.changes.except("created_at", "updated_at"))
