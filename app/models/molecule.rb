@@ -250,15 +250,12 @@ class Molecule < ApplicationRecord
     mns.exclude?(new_name)
   end
 
-  def self.svg_reprocess(svg, molfile)
+  def self.svg_reprocess(svg, struct)
     return svg if indigo_disabled?
     return svg if svg_valid_and_not_openbabel?(svg)
 
-    rendered_svg = IndigoService.new(molfile, 'image/svg+xml').render_structure
-
-    return rendered_svg if valid_indigo_svg?(rendered_svg)
-
-    Chemotion::OpenBabelService.svg_from_molfile(molfile)
+    rendered_svg = IndigoService.new(struct, 'image/svg+xml').render_structure
+    rendered_svg || Chemotion::OpenBabelService.svg_from_molfile(struct)
   end
 
   def self.indigo_disabled?
@@ -267,10 +264,6 @@ class Molecule < ApplicationRecord
 
   def self.svg_valid_and_not_openbabel?(svg)
     svg.present? && svg.exclude?('Open Babel')
-  end
-
-  def self.valid_indigo_svg?(svg)
-    svg && (!svg.respond_to?(:status) || svg.status != 400)
   end
 
   # return the full path of the svg file if it exsits or nil.
