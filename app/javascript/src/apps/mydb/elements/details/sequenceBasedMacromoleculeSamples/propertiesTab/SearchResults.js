@@ -5,6 +5,7 @@ import Draggable from "react-draggable";
 
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import { selectOptions } from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/selectOptions';
 
 const SearchResults = () => {
   const sbmmStore = useContext(StoreContext).sequenceBasedMacromoleculeSamples;
@@ -24,11 +25,9 @@ const SearchResults = () => {
     });
   }
 
-  const searchByLabel = {
-    accession: 'UniProt ID',
-    protein_name: 'Name',
-    ec: 'EC-Number',
-  };
+  const searchFieldHuman = (searchField) => {
+    return selectOptions.sbmm_search_by.find( element => element.value == searchField )?.label
+  }
 
   const searchResult = sbmmStore.searchResult;
 
@@ -138,7 +137,7 @@ const SearchResults = () => {
             <div className="mb-4">
               <b>Your search for:</b>
               <br />
-              {`${searchByLabel[sbmmSample.sequence_based_macromolecule?.search_field]}:
+              {`${searchFieldHuman(sbmmSample.sequence_based_macromolecule?.search_field)}:
               ${sbmmSample.sequence_based_macromolecule?.search_term}`}
             </div>
 

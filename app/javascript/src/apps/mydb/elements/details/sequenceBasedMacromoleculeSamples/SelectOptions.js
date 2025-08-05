@@ -15,6 +15,7 @@ const selectOptions = {
     { label: 'UniProt ID', value: 'accession' },
     { label: 'Name', value: 'protein_name' },
     { label: 'EC-Number', value: 'ec' },
+    { label: 'Sequence (ELN only)', value: 'sequence' }
   ],
   sample_function_or_application: [
     { label: 'Enzyme', value: 'enzyme' },
