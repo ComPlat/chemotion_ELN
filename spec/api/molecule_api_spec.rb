@@ -104,7 +104,6 @@ describe Chemotion::MoleculeAPI do
       it 'handles SMILES correctly and returns molecule' do
         (bad_smiles + pc_smiles).each do |smiles|
           post '/api/v1/molecules/smiles', params: { smiles: smiles }
-          puts smiles
           response_body = JSON.parse(response.body)
           expect(response_body).to include('molfile' => satisfy { |molfile|
             molfile.present? && !molfile.start_with?('Status: 400')

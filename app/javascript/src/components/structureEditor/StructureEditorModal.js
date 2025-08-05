@@ -219,20 +219,7 @@ export default class StructureEditorModal extends React.Component {
     } = this.state;
     const iframeHeight = showWarning ? '0px' : '630px';
     const iframeStyle = showWarning ? { border: 'none' } : {};
-
-    let useEditor = (
-      <div>
-        <iframe
-          id={editor?.id}
-          src={editor?.src}
-          title={`${editor?.label}`}
-          height={iframeHeight}
-          width="100%"
-          style={iframeStyle}
-        />
-      </div>
-    );
-    useEditor = !showWarning && editor && this.editors[editor?.id] && (
+    let useEditor = !showWarning && editor && this.editors[editor?.id] && (
       <EditorRenderer
         type={editor?.id}
         editor={this.editors[editor?.id]}

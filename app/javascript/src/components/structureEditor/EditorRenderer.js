@@ -9,15 +9,6 @@ function EditorRenderer({
   type, editor, molfile, iframeHeight, iframeStyle, fnCb
 }) {
   switch (type) {
-    case 'ketcher':
-      return (
-        <KetcherEditor
-          editor={editor}
-          molfile={molfile}
-          iH={iframeHeight}
-          iS={iframeStyle}
-        />
-      );
     case 'chemdraw':
       return (
         <ChemDrawEditor
@@ -38,16 +29,12 @@ function EditorRenderer({
       );
     default:
       return (
-        <div>
-          <iframe
-            id={editor?.id}
-            src={editor.src}
-            title={`${editor.label}`}
-            height={iframeHeight}
-            width="100%"
-            style={iframeStyle}
-          />
-        </div>
+        <KetcherEditor
+          editor={editor}
+          molfile={molfile}
+          iH={iframeHeight}
+          iS={iframeStyle}
+        />
       );
   }
 }
