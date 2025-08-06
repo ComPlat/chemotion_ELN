@@ -8,12 +8,8 @@ require 'digest'
 module Chemotion
   class AttachmentAPI < Grape::API # rubocop:disable Metrics/ClassLength
     helpers do
-      def thumbnail(att)
-        att.thumb ? Base64.encode64(att.read_thumbnail) : nil
-      end
-
       def thumbnail_obj(att)
-        { id: att.id, thumbnail: thumbnail(att) }
+        { id: att.id, thumbnail: att.thumbnail_base64 }
       end
 
       def raw_file(att)
@@ -401,7 +397,7 @@ module Chemotion
 
       desc 'Return Base64 encoded thumbnail'
       get 'thumbnail/:attachment_id' do
-        Base64.encode64(@attachment.read_thumbnail) if @attachment.thumb
+        @attachment.thumbnail_base64
       end
 
       desc 'Return Base64 encoded thumbnails'
