@@ -256,6 +256,19 @@ RSpec.describe 'ImportCollection' do
       let(:attachment) { create(:attachment, :with_sbmm_sample_collection_zip) }
 
       before do
+        stub_request(:get, 'https://rest.uniprot.org/uniprotkb/P12345')
+          .to_return(
+            status: 200,
+            body: file_fixture('uniprot/P12345.json'),
+            headers: { 'Content-Type' => 'application/json' },
+          )
+        stub_request(:get, 'https://rest.uniprot.org/uniprotkb/P12346')
+          .to_return(
+            status: 200,
+            body: file_fixture('uniprot/P12346.json'),
+            headers: { 'Content-Type' => 'application/json' },
+          )
+
         importer.execute
       end
 
