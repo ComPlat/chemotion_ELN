@@ -101,7 +101,7 @@ module Chemotion
             else
               Chemical.create!(sample_id: params[:sample_id], cas: params[:cas], chemical_data: params[:chemical_data])
             end
-            file_path = "#{product_info['productNumber']}_#{product_info['vendor']}.pdf"
+            file_path = "#{product_info['productNumber']}_#{product_info['vendor']}"
             Chemotion::ChemicalsService.create_sds_file(file_path, product_info['sdsLink'])
           end
         end
