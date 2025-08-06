@@ -45,33 +45,34 @@ module Import
         find_or_create_sbmm(sbmm_json, sbmm_uuid, parent_id)
       end
 
+      # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
       def find_or_create_sbmm(sbmm_json, sbmm_uuid, parent_id)
         ptm_id = sbmm_json['post_translational_modification_id']
         psm_id = sbmm_json['protein_sequence_modification_id']
-        sbmm = SequenceBasedMacromolecule.new(
-          sbmm_json.except('parent_id', 'post_translational_modification_id', 'protein_sequence_modification_id'),
-        )
-        sbmm.parent_id = parent_id
+
+        sbmm_params =
+          sbmm_json.except('parent_id', 'post_translational_modification_id', 'protein_sequence_modification_id')
+                   .transform_keys(&:to_sym)
+        sbmm_params[:parent_identifier] = parent_id if parent_id.present?
+        sbmm_params[:post_translational_modification_attributes] = {}
+        sbmm_params[:protein_sequence_modification_attributes] = {}
 
         if ptm_id.present?
           ptm_json = @data.fetch('PostTranslationalModification', {})[ptm_id]
-          sbmm.post_translational_modification = PostTranslationalModification.new(ptm_json)
+          sbmm_params[:post_translational_modification_attributes] = ptm_json.transform_keys(&:to_sym)
         end
         if psm_id.present?
           psm_json = @data.fetch('ProteinSequenceModification', {})[psm_id]
-          sbmm.protein_sequence_modification = ProteinSequenceModification.new(psm_json)
+          sbmm_params[:protein_sequence_modification_attributes] = psm_json.transform_keys(&:to_sym)
         end
 
-        existing_sbmm = SequenceBasedMacromolecule.duplicate_sbmm(sbmm)
-        if existing_sbmm.present?
-          update_instances!(sbmm_uuid, existing_sbmm)
-          return existing_sbmm.id
-        end
+        existing_or_new_sbmm = ::Usecases::Sbmm::Finder.new.find_or_initialize_by(sbmm_params)
+        existing_or_new_sbmm.save if existing_or_new_sbmm.present? && existing_or_new_sbmm.new_record?
 
-        sbmm.save
-        update_instances!(sbmm_uuid, sbmm)
-        sbmm.id
+        update_instances!(sbmm_uuid, existing_or_new_sbmm)
+        existing_or_new_sbmm.id
       end
+      # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
       def update_instances!(uuid, instance)
         type = instance.class.name
