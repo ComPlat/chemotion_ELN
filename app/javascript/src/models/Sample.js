@@ -1044,7 +1044,7 @@ export default class Sample extends Element {
           }
 
           if (this.isMixture()) {
-            return this.reference_amount_mol;
+            return this.calculateMixtureAmountMol();
           }
 
           if (this.has_molarity) {
@@ -1056,6 +1056,25 @@ export default class Sample extends Element {
           return amount_g;
       }
     }
+  }
+
+  /**
+   * Converts moles to grams for mixture samples using reference component's relative molecular weight.
+   *
+   * @param {number} amount_value - The amount in moles to convert.
+   * @returns {number} The amount converted to grams, or 0 if conversion is not possible.
+   */
+  convertMixtureMolToGram(amount_value) {
+    const referenceComponent = this.reference_component;
+    const relativeMW = referenceComponent && this.getReferenceRelativeMolecularWeight(referenceComponent);
+
+    if (!relativeMW || relativeMW <= 0) {
+      console.warn('Invalid reference molecular weight for mixture mol to gram conversion');
+      return 0;
+    }
+
+    // Convert moles to grams: amount_g = amount_mol * relative_molecular_weight
+    return amount_value * relativeMW; // amount_mol * relativeMW
   }
 
   convertToGram(amount_value, amount_unit) {
@@ -1098,13 +1117,53 @@ export default class Sample extends Element {
           return 0;
         }
         case 'mol': {
+          if (this.isMixture()) {
+            return this.convertMixtureMolToGram(amount_value);
+          }
           const molecularWeight = this.molecule_molecular_weight;
-          return (amount_value / (this.purity || 1.0)) * molecularWeight;
+          const purity = this.purity || 1.0;
+
+          return (amount_value / purity) * molecularWeight;
         }
         default:
           return amount_value;
       }
     }
+  }
+
+  /**
+   * Calculates the amount in moles for mixture samples.
+   * Uses the formula: amount_mol = total mass (g) / relative molecular weight (g/mol)
+   * Falls back to reference component amount_mol if calculation is not possible.
+   *
+   * @returns {number} The calculated amount in moles or fallback value
+   */
+  calculateMixtureAmountMol() {
+    // Use current amount_g to reflect any updates from setAmountAndNormalizeToGram
+    const currentMassG = this.amount_g;
+    const referenceComponent = this.reference_component;
+
+    if (currentMassG && referenceComponent) {
+      const relMolMass = this.getReferenceRelativeMolecularWeight(referenceComponent);
+
+      if (relMolMass && relMolMass > 0) {
+        return currentMassG / relMolMass;
+      }
+    }
+
+    // Fallback to reference component amount_mol if calculation is not possible
+    return this.reference_amount_mol;
+  }
+
+  /**
+   * Gets the relative molecular weight from the reference component.
+   * Only uses the component_properties.relative_molecular_weight value.
+   *
+   * @param {Object} referenceComponent - The reference component to get molecular weight from
+   * @returns {number|null} The relative molecular weight or null if not found
+   */
+  getReferenceRelativeMolecularWeight(referenceComponent) {
+    return referenceComponent.component_properties?.relative_molecular_weight;
   }
 
   get molecule_iupac_name() {
@@ -1257,6 +1316,9 @@ export default class Sample extends Element {
   }
 
   get equivalent() {
+    if (this.isMixture() && this.reference) {
+      return 1;
+    }
     return this._equivalent;
   }
 
@@ -1935,6 +1997,127 @@ export default class Sample extends Element {
       this.setDensity({ value: density });
     } else {
       this.setDensity({ value: 0 });
+    }
+  }
+
+  /**
+   * Calculates and updates the target volume from reference component concentration.
+   * Volume = amount_mol of parent sample / concentration of the reference component
+   * @param {Component} referenceComponent - The reference component with concentration data
+   * @returns {boolean} - Whether the calculation was performed and volume updated
+   */
+  calculateVolumeFromReferenceComponent(referenceComponent) {
+    if (!referenceComponent) {
+      console.warn('Missing reference component for volume calculation');
+      return false;
+    }
+
+    const parentAmountMol = this.amount_mol;
+    const referenceConcentration = referenceComponent.concn;
+    if (!referenceConcentration || referenceConcentration <= 0) {
+      console.warn('Invalid reference component concentration for volume calculation');
+      return false;
+    }
+
+    const calculatedVolume = parentAmountMol / referenceConcentration; // Volume in L
+
+    // Store the calculated volume and use setAmount to trigger proper updates
+    console.log(`Calculated volume from reference component: ${calculatedVolume} L`);
+
+    // Use the setAmount method to properly update volume and trigger cascading calculations
+    this.setAmount({ value: calculatedVolume, unit: 'l' });
+
+    return true;
+  }
+
+  /**
+   * Calculates and updates the target mass from reference component molecular weight.
+   * Mass = amount_mol of parent sample / relative molecular mass of reference component
+   * @param {Component} referenceComponent - The reference component with molecular weight data
+   * @returns {boolean} - Whether the calculation was performed and mass updated
+   */
+  calculateMassFromReferenceComponent(referenceComponent) {
+    if (!referenceComponent) {
+      console.warn('Missing reference component for mass calculation');
+      return false;
+    }
+
+    if (!referenceComponent.relative_molecular_weight || referenceComponent.relative_molecular_weight <= 0) {
+      console.warn('Invalid reference component molecular weight for mass calculation');
+      return false;
+    }
+
+    const parentAmountMol = this.amount_mol;
+    const calculatedMass = parentAmountMol / referenceComponent.relative_molecular_weight; // Mass in g
+
+    // Store the calculated mass in sample details
+    this.initializeSampleDetails();
+    this.sample_details.total_mixture_mass_g = calculatedMass;
+
+    // Update sample target amount to calculated mass if the sample is in mass form
+    if (this.target_amount_unit === 'g' || this.target_amount_unit === 'mg') {
+      this.target_amount_value = this.target_amount_unit === 'mg'
+        ? calculatedMass * 1000 : calculatedMass;
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Calculates and updates the equivalent from reaction reference material.
+   * Equivalent = sample.amount_mol / reference_sample.amount_mol
+   * @param {Object} referenceMaterial - The reaction's reference material
+   * @returns {boolean} - Whether the calculation was performed and equivalent updated
+   */
+  calculateEquivalentFromReferenceMaterial(referenceMaterial) {
+    if (!referenceMaterial) {
+      console.warn('Missing reference material for equivalent calculation');
+      return false;
+    }
+
+    const parentAmountMol = this.amount_mol;
+    if (!referenceMaterial.amount_mol || referenceMaterial.amount_mol <= 0) {
+      console.warn('Invalid reference material amount_mol for equivalent calculation');
+      return false;
+    }
+
+    this.equivalent = parentAmountMol / referenceMaterial.amount_mol;
+    return true;
+  }
+
+  /**
+   * Applies reference-based properties (specifically `equivalent`) to the current sample
+   * when added to a reaction. This logic is only applied for **mixture** samples.
+   *
+   * - If the sample is marked as a reference, its equivalent is set to `1`.
+   * - If the sample is not a reference and a valid `referenceMaterial` exists
+   *   with `amount_mol > 0`, the equivalent is calculated as:
+   *     `this.amount_mol / referenceMaterial.amount_mol`
+   *   This is only done for tagGroups: `"starting_materials"` or `"reactants"`.
+   *
+   * @param {Object} reaction - The reaction object containing the reference material.
+   * @param {string} tagGroup - The group the sample belongs to (e.g., 'starting_materials', 'reactants').
+   */
+  applyReferenceProperties(reaction, tagGroup) {
+    if (!this.isMixture()) return;
+    const { referenceMaterial } = reaction;
+
+    // Reference sample: set equivalent to 1
+    if (this.reference) {
+      this.equivalent = 1;
+      return;
+    }
+
+    // Non-reference sample: copy from referenceMaterial if valid
+    if (
+      referenceMaterial
+      && referenceMaterial.amount_mol > 0
+      && (tagGroup === 'starting_materials' || tagGroup === 'reactants')
+    ) {
+      // Always set equivalent to 1 for mixture samples in reactants/starting_materials
+      // regardless of isNew status to ensure proper initialization
+      this.equivalent = this.amount_mol / referenceMaterial.amount_mol;
     }
   }
 
