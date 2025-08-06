@@ -131,7 +131,7 @@ export default class ReactionDetailsScheme extends React.Component {
       if (splitSample.isMixture()) {
         this.handleMixtureSample(splitSample, srcSample, reaction, tagMaterial, tagGroup);
       } else {
-        this.handleRegularSample(splitSample, tagGroup, extLabel, reaction, tagMaterial);
+        this.handleRegularSample(splitSample, srcSample, tagGroup, extLabel, reaction, tagMaterial);
       }
     } catch (error) {
       console.error('Error in dropSample:', error);
@@ -192,7 +192,7 @@ export default class ReactionDetailsScheme extends React.Component {
     splitSample.components = sampleComponents;
 
     this.setTargetAmountFromComponents(splitSample, sampleComponents);
-    this.addSampleToReaction(splitSample, reaction, tagMaterial, tagGroup);
+    this.addSampleToReaction(splitSample, srcSample, reaction, tagMaterial, tagGroup);
   }
 
   handleMixtureWithApiComponents(splitSample, srcSample, reaction, tagMaterial, tagGroup) {
@@ -206,12 +206,12 @@ export default class ReactionDetailsScheme extends React.Component {
         // Apply mixture properties after components are loaded
         srcSample.applyMixturePropertiesToSample(splitSample);
 
-        this.addSampleToReaction(splitSample, reaction, tagMaterial, tagGroup);
+        this.addSampleToReaction(splitSample, srcSample, reaction, tagMaterial, tagGroup);
       })
       .catch((error) => {
         console.error('Failed to fetch components:', error);
         // Still add the sample even if components fail to load
-        this.addSampleToReaction(splitSample, reaction, tagMaterial, tagGroup);
+        this.addSampleToReaction(splitSample, srcSample, reaction, tagMaterial, tagGroup);
       });
   }
 
@@ -235,12 +235,16 @@ export default class ReactionDetailsScheme extends React.Component {
     }
   }
 
-  handleRegularSample(splitSample, tagGroup, extLabel, reaction, tagMaterial) {
+  handleRegularSample(splitSample, srcSample, tagGroup, extLabel, reaction, tagMaterial) {
     this.insertSolventExtLabel(splitSample, tagGroup, extLabel);
-    this.addSampleToReaction(splitSample, reaction, tagMaterial, tagGroup);
+    this.addSampleToReaction(splitSample, srcSample, reaction, tagMaterial, tagGroup);
   }
 
-  addSampleToReaction(splitSample, reaction, tagMaterial, tagGroup) {
+  addSampleToReaction(splitSample, srcSample, reaction, tagMaterial, tagGroup) {
+    if (splitSample.isMixture()) {
+      srcSample.applyMixturePropertiesToSample(splitSample);
+      splitSample.applyReferenceProperties(reaction, tagGroup);
+    }
     reaction.addMaterialAt(splitSample, null, tagMaterial, tagGroup);
     this.onReactionChange(reaction, { schemaChanged: true });
   }
@@ -495,7 +499,8 @@ export default class ReactionDetailsScheme extends React.Component {
         break;
       case 'componentReferenceChanged':
         this.onReactionChange(
-          this.updatedReactionForComponentReferenceChange(changeEvent)
+          this.updatedReactionForComponentReferenceChange(changeEvent),
+          { schemaChanged: true }
         );
         break;
       default:
@@ -821,10 +826,49 @@ export default class ReactionDetailsScheme extends React.Component {
       updatedSample.sample_details.reference_molecular_weight = referenceComponent.molecule.molecular_weight;
     }
 
-    // Update equivalents for all components
-    // updatedSample.updateMixtureComponentEquivalent();
+    // Perform calculations when the reference component changes
+    this.calculateMixturePropertiesFromReferenceComponent(updatedSample, referenceComponent);
+
+    // Mark the sample as changed for persistence
+    updatedSample.changed = true;
 
     return reaction;
+  }
+
+  /**
+   * Calculates mixture properties when the reference component changes.
+   * Implements:
+   * (1) Volume calculation: Volume = mmol of parent sample / concentration of the reference component
+   * (2) Mass calculation: Mass = mmol of parent sample / relative molecular mass of reference component
+   * (3) Equivalent calculation: Equivalent = sample.amount_mol / reference_sample.amount_mol
+   * @param {Sample} updatedSample - The mixture sample being updated
+   * @param {Component} referenceComponent - The new reference component
+   */
+  calculateMixturePropertiesFromReferenceComponent(updatedSample, referenceComponent) {
+    if (!updatedSample || !referenceComponent) {
+      console.warn('Missing sample or reference component for calculation');
+      return;
+    }
+
+    // Get the parent sample amount in mol for validation
+    const parentAmountMol = updatedSample.amount_mol;
+    if (parentAmountMol <= 0) {
+      console.warn('Sample amount (mol) is zero or negative, cannot calculate properties');
+      return;
+    }
+
+    // (1) Volume calculation using Sample method
+    updatedSample.calculateVolumeFromReferenceComponent(referenceComponent);
+
+    // (2) Mass calculation using Sample method
+    updatedSample.calculateMassFromReferenceComponent(referenceComponent);
+
+    // (3) Equivalent calculation using Sample method
+    const { reaction } = this.props;
+    const { referenceMaterial } = reaction;
+    if (referenceMaterial) {
+      updatedSample.calculateEquivalentFromReferenceMaterial(referenceMaterial);
+    }
   }
 
   calculateEquivalent(refM, updatedSample) {
