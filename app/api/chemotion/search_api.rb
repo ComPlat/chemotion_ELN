@@ -368,7 +368,7 @@ module Chemotion
                   CelllineSample.by_sample_name(arg, c_id)
                 end
 
-        if search_method != 'advanced' && search_method != 'structure' && molecule_sort == true
+        if search_method != 'advanced' && search_method != 'structure' && molecule_sort == true && scope.respond_to?(:includes)
           scope.includes(:molecule)
                .joins(:molecule)
                .order(Arel.sql("LENGTH(SUBSTRING(molecules.sum_formular, 'C\\d+'))"))
