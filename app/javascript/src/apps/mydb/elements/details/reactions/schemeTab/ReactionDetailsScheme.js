@@ -75,6 +75,40 @@ export default class ReactionDetailsScheme extends React.Component {
 
     TextTemplateActions.fetchTextTemplates('reaction');
     TextTemplateActions.fetchTextTemplates('reactionDescription');
+
+    // Deserialize components for any existing samples in the reaction
+    this.deserializeReactionMaterialComponents();
+  }
+
+  componentDidUpdate(prevProps) {
+    const { reaction } = this.props;
+    // Deserialize components when reaction data changes (e.g., after save/reload)
+    if (prevProps.reaction !== reaction) {
+      this.deserializeReactionMaterialComponents();
+    }
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  deserializeReactionMaterialComponents() {
+    const { reaction } = this.props;
+
+    // Helper function to deserialize components in a materials array
+    const deserializeComponentsInMaterials = (materials) => {
+      materials.forEach((sample) => {
+        if (sample.components && Array.isArray(sample.components) && sample.components.length > 0) {
+          // Check if components need deserialization (have component_properties)
+          const needsDeserialization = sample.components.some((comp) => comp.component_properties);
+          if (needsDeserialization) {
+            sample.components = sample.components.map(Component.deserializeData);
+          }
+        }
+      });
+    };
+
+    // Deserialize components for all material groups
+    deserializeComponentsInMaterials(reaction.starting_materials || []);
+    deserializeComponentsInMaterials(reaction.reactants || []);
+    deserializeComponentsInMaterials(reaction.products || []);
   }
 
   componentWillUnmount() {
@@ -89,46 +123,130 @@ export default class ReactionDetailsScheme extends React.Component {
 
   dropSample(srcSample, tagMaterial, tagGroup, extLabel, isNewSample = false) {
     const { reaction } = this.props;
-    let splitSample;
 
-    if (srcSample instanceof Molecule || isNewSample) {
-      // Create new Sample with counter
-      splitSample = Sample.buildNew(srcSample, reaction.collection_id, tagGroup);
-    } else if (srcSample instanceof Sample) {
-      if (tagGroup === 'reactants' || tagGroup === 'solvents') {
-        // Skip counter for reactants or solvents
-        splitSample = srcSample.buildChildWithoutCounter();
-        splitSample.short_label = tagGroup.slice(0, -1);
+    try {
+      const splitSample = this.createSplitSample(srcSample, tagGroup, isNewSample, reaction.collection_id);
+      this.configureSplitSample(splitSample, tagGroup);
+
+      if (splitSample.isMixture()) {
+        this.handleMixtureSample(splitSample, srcSample, reaction, tagMaterial, tagGroup);
       } else {
-        splitSample = srcSample.buildChild();
+        this.handleRegularSample(splitSample, srcSample, tagGroup, extLabel, reaction, tagMaterial);
       }
+    } catch (error) {
+      console.error('Error in dropSample:', error);
+      NotificationActions.add({
+        message: `Failed to add sample to reaction: ${error.message}`,
+        level: 'error'
+      });
     }
-    splitSample.show_label = (splitSample.decoupled && !splitSample.molfile) ? true : splitSample.show_label;
-    if (tagGroup == 'solvents') {
+  }
+
+  createSplitSample(srcSample, tagGroup, isNewSample, collectionId) {
+    if (srcSample instanceof Molecule || isNewSample) {
+      return Sample.buildNew(srcSample, collectionId, tagGroup);
+    }
+
+    if (srcSample instanceof Sample) {
+      const splitSample = tagGroup === 'reactants' || tagGroup === 'solvents'
+        ? this.createSampleWithoutCounter(srcSample, tagGroup)
+        : srcSample.buildChild();
+
+      // Preserve the mixture type and apply mixture properties
+      if (srcSample.isMixture()) {
+        splitSample.sample_type = srcSample.sample_type;
+      }
+
+      return splitSample;
+    }
+
+    throw new Error('Invalid sample type provided');
+  }
+
+  createSampleWithoutCounter(srcSample, tagGroup) {
+    const splitSample = srcSample.buildChildWithoutCounter();
+    splitSample.short_label = tagGroup.slice(0, -1);
+    return splitSample;
+  }
+
+  configureSplitSample(splitSample, tagGroup) {
+    // Configure label visibility
+    splitSample.show_label = (splitSample.decoupled && !splitSample.molfile) || splitSample.show_label;
+
+    // Configure reference for solvents
+    if (tagGroup === 'solvents') {
       splitSample.reference = false;
     }
+  }
 
-    if (splitSample.isMixture()) {
-      ComponentsFetcher.fetchComponentsBySampleId(srcSample.id)
-        .then(async (components) => {
-          const sampleComponents = components.map(Component.deserializeData);
-          await splitSample.initialComponents(sampleComponents);
-          const comp = sampleComponents.find((component) => component.amount_mol > 0 && component.molarity_value > 0);
-          if (comp) {
-            splitSample.target_amount_value = comp.amount_mol / comp.molarity_value;
-            splitSample.target_amount_unit = 'l';
-          }
-          reaction.addMaterialAt(splitSample, null, tagMaterial, tagGroup);
-          this.onReactionChange(reaction, { schemaChanged: true });
-        })
-        .catch((errorMessage) => {
-          console.log(errorMessage);
-        });
+  handleMixtureSample(splitSample, srcSample, reaction, tagMaterial, tagGroup) {
+    if (srcSample.components && srcSample.components.length > 0) {
+      this.handleMixtureWithLoadedComponents(splitSample, srcSample, reaction, tagMaterial, tagGroup);
     } else {
-      this.insertSolventExtLabel(splitSample, tagGroup, extLabel);
-      reaction.addMaterialAt(splitSample, null, tagMaterial, tagGroup);
-      this.onReactionChange(reaction, { schemaChanged: true });
+      this.handleMixtureWithApiComponents(splitSample, srcSample, reaction, tagMaterial, tagGroup);
     }
+  }
+
+  handleMixtureWithLoadedComponents(splitSample, srcSample, reaction, tagMaterial, tagGroup) {
+    const sampleComponents = this.copyComponents(srcSample.components, splitSample.id);
+    splitSample.components = sampleComponents;
+
+    this.setTargetAmountFromComponents(splitSample, sampleComponents);
+    this.addSampleToReaction(splitSample, srcSample, reaction, tagMaterial, tagGroup);
+  }
+
+  handleMixtureWithApiComponents(splitSample, srcSample, reaction, tagMaterial, tagGroup) {
+    ComponentsFetcher.fetchComponentsBySampleId(srcSample.id)
+      .then(async (components) => {
+        const sampleComponents = components.map(Component.deserializeData);
+        await splitSample.initialComponents(sampleComponents);
+
+        this.setTargetAmountFromComponents(splitSample, sampleComponents);
+
+        // Apply mixture properties after components are loaded
+        srcSample.applyMixturePropertiesToSample(splitSample);
+
+        this.addSampleToReaction(splitSample, srcSample, reaction, tagMaterial, tagGroup);
+      })
+      .catch((error) => {
+        console.error('Failed to fetch components:', error);
+        // Still add the sample even if components fail to load
+        this.addSampleToReaction(splitSample, srcSample, reaction, tagMaterial, tagGroup);
+      });
+  }
+
+  copyComponents(sourceComponents, newParentId) {
+    return sourceComponents.map((component) => {
+      const componentCopy = new Component(component);
+      componentCopy.id = `comp_${Math.random().toString(36).substr(2, 9)}`;
+      componentCopy.parent_id = newParentId;
+      return componentCopy;
+    });
+  }
+
+  setTargetAmountFromComponents(splitSample, sampleComponents) {
+    const validComponent = sampleComponents.find(
+      (component) => component.amount_mol > 0 && component.molarity_value > 0
+    );
+
+    if (validComponent) {
+      splitSample.target_amount_value = validComponent.amount_mol / validComponent.molarity_value;
+      splitSample.target_amount_unit = 'l';
+    }
+  }
+
+  handleRegularSample(splitSample, srcSample, tagGroup, extLabel, reaction, tagMaterial) {
+    this.insertSolventExtLabel(splitSample, tagGroup, extLabel);
+    this.addSampleToReaction(splitSample, srcSample, reaction, tagMaterial, tagGroup);
+  }
+
+  addSampleToReaction(splitSample, srcSample, reaction, tagMaterial, tagGroup) {
+    if (splitSample.isMixture()) {
+      srcSample.applyMixturePropertiesToSample(splitSample);
+      splitSample.applyReferenceProperties(reaction, tagGroup);
+    }
+    reaction.addMaterialAt(splitSample, null, tagMaterial, tagGroup);
+    this.onReactionChange(reaction, { schemaChanged: true });
   }
 
   insertSolventExtLabel(splitSample, materialGroup, externalLabel) {
@@ -377,6 +495,12 @@ export default class ReactionDetailsScheme extends React.Component {
       case 'conversionRateChanged':
         this.onReactionChange(
           this.updatedReactionForConversionRateChange(changeEvent)
+        );
+        break;
+      case 'componentReferenceChanged':
+        this.onReactionChange(
+          this.updatedReactionForComponentReferenceChange(changeEvent),
+          { schemaChanged: true }
         );
         break;
       default:
@@ -665,6 +789,86 @@ export default class ReactionDetailsScheme extends React.Component {
     }
 
     return this.updatedReactionWithSample(this.updatedSamplesForConversionRateChange.bind(this), updatedSample);
+  }
+
+  updatedReactionForComponentReferenceChange(changeEvent) {
+    const { reaction } = this.props;
+    const { sampleID, componentId } = changeEvent;
+
+    // Find the sample that contains the component
+    const updatedSample = reaction.sampleById(sampleID);
+
+    if (!updatedSample || !updatedSample.isMixture() || !updatedSample.hasComponents()) {
+      return reaction;
+    }
+
+    const referenceComponentIndex = updatedSample.components.findIndex(
+      (component) => component.id === componentId
+    );
+
+    // Handle case where a reference component is not found
+    if (referenceComponentIndex === -1) {
+      console.warn(`Component with id ${componentId} not found in sample ${sampleID}`);
+      return reaction;
+    }
+
+    // Set the reference component to true and all others to false
+    updatedSample.components.forEach((component, index) => {
+      // eslint-disable-next-line no-param-reassign
+      component.reference = (index === referenceComponentIndex);
+    });
+
+    // Initialize sample details and set reference molecular weight
+    updatedSample.initializeSampleDetails();
+    const referenceComponent = updatedSample.components[referenceComponentIndex];
+
+    if (referenceComponent?.molecule?.molecular_weight) {
+      updatedSample.sample_details.reference_molecular_weight = referenceComponent.molecule.molecular_weight;
+    }
+
+    // Perform calculations when the reference component changes
+    this.calculateMixturePropertiesFromReferenceComponent(updatedSample, referenceComponent);
+
+    // Mark the sample as changed for persistence
+    updatedSample.changed = true;
+
+    return reaction;
+  }
+
+  /**
+   * Calculates mixture properties when the reference component changes.
+   * Implements:
+   * (1) Volume calculation: Volume = mmol of parent sample / concentration of the reference component
+   * (2) Mass calculation: Mass = mmol of parent sample / relative molecular mass of reference component
+   * (3) Equivalent calculation: Equivalent = sample.amount_mol / reference_sample.amount_mol
+   * @param {Sample} updatedSample - The mixture sample being updated
+   * @param {Component} referenceComponent - The new reference component
+   */
+  calculateMixturePropertiesFromReferenceComponent(updatedSample, referenceComponent) {
+    if (!updatedSample || !referenceComponent) {
+      console.warn('Missing sample or reference component for calculation');
+      return;
+    }
+
+    // Get the parent sample amount in mol for validation
+    const parentAmountMol = updatedSample.amount_mol;
+    if (parentAmountMol <= 0) {
+      console.warn('Sample amount (mol) is zero or negative, cannot calculate properties');
+      return;
+    }
+
+    // (1) Volume calculation using Sample method
+    updatedSample.calculateVolumeFromReferenceComponent(referenceComponent);
+
+    // (2) Mass calculation using Sample method
+    updatedSample.calculateMassFromReferenceComponent(referenceComponent);
+
+    // (3) Equivalent calculation using Sample method
+    const { reaction } = this.props;
+    const { referenceMaterial } = reaction;
+    if (referenceMaterial) {
+      updatedSample.calculateEquivalentFromReferenceMaterial(referenceMaterial);
+    }
   }
 
   calculateEquivalent(refM, updatedSample) {
@@ -1134,7 +1338,10 @@ export default class ReactionDetailsScheme extends React.Component {
     } else {
       const { referenceMaterial } = reaction;
       reaction.products.map((sample) => {
-        sample.concn = sample.amount_mol / reaction.solventVolume;
+        // Don't override concn for mixture samples as they have their own concentration logic
+        if (!sample.isMixture()) {
+          sample.concn = sample.amount_mol / reaction.solventVolume;
+        }
         if (typeof (referenceMaterial) !== 'undefined' && referenceMaterial) {
           if (sample.contains_residues) {
             sample.maxAmount = referenceMaterial.amount_g + (referenceMaterial.amount_mol
@@ -1146,10 +1353,16 @@ export default class ReactionDetailsScheme extends React.Component {
 
     if ((typeof (lockEquivColumn) !== 'undefined' && !lockEquivColumn) || !reaction.changed) {
       reaction.starting_materials.map((sample) => {
-        sample.concn = sample.amount_mol / reaction.solventVolume;
+        // Don't override concn for mixture samples as they have their own concentration logic
+        if (!sample.isMixture()) {
+          sample.concn = sample.amount_mol / reaction.solventVolume;
+        }
       });
       reaction.reactants.map((sample) => {
-        sample.concn = sample.amount_mol / reaction.solventVolume;
+        // Don't override concn for mixture samples as they have their own concentration logic
+        if (!sample.isMixture()) {
+          sample.concn = sample.amount_mol / reaction.solventVolume;
+        }
       });
     }
 
