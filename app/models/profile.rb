@@ -89,7 +89,7 @@ class Profile < ApplicationRecord
                   'research_plan' => 5,
                   'cell_line' => -1000,
                   'device_description' => -1100,
-                  'sequence_based_macromolecule_sample' => -1200
+                  'sequence_based_macromolecule_sample' => -1200,
                   'vessel' => -1300,
                 })
   end
