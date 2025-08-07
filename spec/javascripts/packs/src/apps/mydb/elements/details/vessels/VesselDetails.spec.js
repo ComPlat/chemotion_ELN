@@ -2,11 +2,10 @@ import React from 'react';
 import expect from 'expect';
 import Enzyme, { shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
-import { describe, it, beforeEach, afterEach } from 'mocha';
+import { describe, it, beforeEach } from 'mocha';
 import { Button, Tabs, Tab } from 'react-bootstrap';
 import VesselDetails from 'src/apps/mydb/elements/details/vessels/VesselDetails';
 import VesselProperties from 'src/apps/mydb/elements/details/vessels/propertiesTab/VesselProperties';
-import VesselAttachmentsContainer from 'src/apps/mydb/elements/details/vessels/attachmentsTab/VesselAttachmentsContainer';
 
 Enzyme.configure({ adapter: new Adapter() });
 
@@ -96,14 +95,6 @@ describe('VesselDetails', () => {
         (btn) => btn.prop('variant') === 'warning'
       );
       expect(submitButton.first().text()).toContain('Create');
-    });
-  });
-
-  describe('when the vessel has attachments', () => {
-    it('renders the VesselAttachmentsContainer', () => {
-      const wrapper = shallow(<VesselDetails {...props} />);
-      const attachmentsTab = wrapper.find(Tab).at(1).find(VesselAttachmentsContainer);
-      expect(attachmentsTab.exists()).toBe(true);
     });
   });
 

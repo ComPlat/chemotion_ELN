@@ -10,7 +10,6 @@ import VesselProperty from 'src/apps/mydb/elements/details/vessels/propertiesTab
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import VesselsFetcher from 'src/fetchers/VesselsFetcher';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import VesselAttachmentsContainer from "src/apps/mydb/elements/details/vessels/attachmentsTab/VesselAttachmentsContainer";
 
 function VesselTemplateCreate({ vesselItem: initialVesselItem, toggleFullScreen }) {
   const { vesselDetailsStore } = useContext(StoreContext);
@@ -256,12 +255,7 @@ function VesselTemplateCreate({ vesselItem: initialVesselItem, toggleFullScreen 
                     </InputGroup>
                   </Col>
                 </Form.Group>
-
-
               </Form>
-            </Tab>
-            <Tab eventKey="tab2" title="Attachments" key="tab2">
-              <VesselAttachmentsContainer item={vesselItem} />
             </Tab>
           </Tabs>
         </div>

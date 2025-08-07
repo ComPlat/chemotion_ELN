@@ -1,6 +1,6 @@
-import React, { useState, useContext, useEffect, createRef } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import { ButtonToolbar, Button, Card, Tabs, Tab, OverlayTrigger, Tooltip, Popover } from 'react-bootstrap';
+import { ButtonToolbar, Button, Card, Tabs, Tab, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import { observer } from 'mobx-react';
@@ -9,9 +9,7 @@ import CollectionUtils from 'src/models/collection/CollectionUtils';
 import PropTypes from 'prop-types';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import ConfirmClose from 'src/components/common/ConfirmClose';
 import VesselProperties from 'src/apps/mydb/elements/details/vessels/propertiesTab/VesselProperties';
-import VesselAttachmentsContainer from "src/apps/mydb/elements/details/vessels/attachmentsTab/VesselAttachmentsContainer";
 
 function VesselDetails({ vesselItem, toggleFullScreen }) {
   const isReadOnly = () => {
@@ -26,7 +24,6 @@ function VesselDetails({ vesselItem, toggleFullScreen }) {
   const context = useContext(StoreContext);
   const [activeTab, setActiveTab] = useState('tab1');
   const [readOnly, setReadOnly] = useState(isReadOnly());
-  const [showTooltip, setShowTooltip] = useState(false);
 
   useEffect(() => {
     context.vesselDetailsStore.convertVesselToModel(vesselItem);
@@ -168,9 +165,6 @@ function VesselDetails({ vesselItem, toggleFullScreen }) {
           <Tabs activeKey={activeTab} onSelect={handleTabChange} id="vessel-details-tab">
             <Tab eventKey="tab1" title="Properties" key="tab1">
               <VesselProperties item={vesselItem} readOnly={readOnly} />
-            </Tab>
-            <Tab eventKey="tab2" title="Attachments" key="tab2">
-              <VesselAttachmentsContainer item={vesselItem} targetTemplateAttachments/>
             </Tab>
           </Tabs>
         </div>
