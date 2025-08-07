@@ -12,7 +12,7 @@ module Chemotion
       error!(
         {
           error: {
-            type: 'SbmmUpdateNotAllowed'
+            type: 'SbmmUpdateNotAllowed',
             message: conflict.message,
             original_sbmm: Entities::SequenceBasedMacromoleculeEntity.represent(conflict.original_sbmm),
             requested_changes: Entities::SequenceBasedMacromoleculeEntity.represent(conflict.requested_changes)
@@ -26,7 +26,7 @@ module Chemotion
       error!(
         {
           error: {
-            type: 'ForbiddenUniprotDerivationChange'
+            type: 'ForbiddenUniprotDerivationChange',
             message: error.message,
             original_sbmm: Entities::SequenceBasedMacromoleculeEntity.represent(error.original_sbmm),
             requested_changes: Entities::SequenceBasedMacromoleculeEntity.represent(error.requested_changes)
