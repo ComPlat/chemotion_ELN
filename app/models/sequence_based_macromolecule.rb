@@ -95,7 +95,7 @@ class SequenceBasedMacromolecule < ApplicationRecord
   end
 
   def self.normalize_sequence(string)
-    string.upcase.gsub(/[^A-Z]/, '')
+    string.upcase.gsub(/[^ACDEFGHIKLMNPQRSTVWY]/, '')
   end
 
   def normalize_sequence

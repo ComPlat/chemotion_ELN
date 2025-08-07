@@ -18,7 +18,7 @@ module Usecases
       end
 
       def sum_of_amino_acid_weights
-        standardized_sequence.chars.reduce(0) { |result, letter| result += weights[letter.to_sym] }
+        standardized_sequence.chars.reduce(0) { |result, letter| result += weights[letter.to_sym].to_f }
       end
 
       def peptid_bindings
