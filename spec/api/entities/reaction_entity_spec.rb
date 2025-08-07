@@ -63,6 +63,7 @@ describe Entities::ReactionEntity do
           vessel_size: reaction.vessel_size,
           gaseous: reaction.gaseous,
           user_labels: [],
+          weight_percentage: reaction.weight_percentage,
         )
       end
 
@@ -150,6 +151,7 @@ describe Entities::ReactionEntity do
           variations: [],
           vessel_size: '***',
           gaseous: '***',
+          weight_percentage: '***',
         )
       end
 
