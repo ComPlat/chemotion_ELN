@@ -104,7 +104,7 @@ describe Chemotion::ProfileAPI do
     end
   end
 
-  describe 'PUT /api/v1/profiles/editors/ketcher2-options' do
+  describe 'PUT /api/v1/profiles/editors/ketcher-options' do
     let(:folder_path) { 'ketcher-optns' }
     let(:complete_folder_path) { Rails.root.join('uploads', Rails.env, folder_path) }
     let(:file_path) { "#{complete_folder_path}/#{user.id}.json" }
@@ -124,7 +124,7 @@ describe Chemotion::ProfileAPI do
 
     context 'when valid data is provided' do
       it 'creates or updates the ketcher options file and saves the attachment' do
-        put '/api/v1/profiles/editors/ketcher2-options', params: { data: valid_data }.to_json, headers: headers
+        put '/api/v1/profiles/editors/ketcher-options', params: { data: valid_data }.to_json, headers: headers
 
         expect(response).to have_http_status(:success)
 
@@ -139,7 +139,7 @@ describe Chemotion::ProfileAPI do
         attachment = instance_double(Attachment, save: false) # Create a double for the Attachment
         allow(Attachment).to receive(:new).and_return(attachment) # Stub the creation of the attachment
 
-        put '/api/v1/profiles/editors/ketcher2-options', params: { data: valid_data }.to_json, headers: headers
+        put '/api/v1/profiles/editors/ketcher-options', params: { data: valid_data }.to_json, headers: headers
 
         expect(response).to have_http_status(:unprocessable_entity)
         response_body = JSON.parse(response.body)
@@ -152,7 +152,7 @@ describe Chemotion::ProfileAPI do
       it 'returns a 500 error if an unexpected error occurs' do
         allow(File).to receive(:write).and_raise(StandardError.new('Unexpected error'))
 
-        put '/api/v1/profiles/editors/ketcher2-options', params: { data: valid_data }.to_json, headers: headers
+        put '/api/v1/profiles/editors/ketcher-options', params: { data: valid_data }.to_json, headers: headers
         response_body = JSON.parse(response.body)
         expect(response_body['status']).to be false
         expect(response_body['error_messages']).to include('Unexpected error')
@@ -160,7 +160,7 @@ describe Chemotion::ProfileAPI do
     end
   end
 
-  describe 'GET /api/v1/profiles/editors/ketcher2-options' do
+  describe 'GET /api/v1/profiles/editors/ketcher-options' do
     context 'when the settings file exists' do
       it 'returns the Ketcher 2 settings successfully' do
         file_content = { 'option1' => 'value1', 'option2' => 'value2' }.to_json
@@ -169,7 +169,7 @@ describe Chemotion::ProfileAPI do
         allow(File).to receive(:exist?).with(file_path).and_return(true)
         allow(File).to receive(:read).with(file_path).and_return(file_content)
 
-        get '/api/v1/profiles/editors/ketcher2-options', headers: headers
+        get '/api/v1/profiles/editors/ketcher-options', headers: headers
 
         expect(response).to have_http_status(:ok)
         expect(JSON.parse(response.body)).to eq('status' => true, 'settings' => JSON.parse(file_content))
@@ -182,7 +182,7 @@ describe Chemotion::ProfileAPI do
 
         allow(File).to receive(:exist?).with(file_path).and_return(false)
 
-        get '/api/v1/profiles/editors/ketcher2-options', headers: headers
+        get '/api/v1/profiles/editors/ketcher-options', headers: headers
 
         expect(response).to have_http_status(:ok)
         response_body = JSON.parse(response.body)
@@ -199,7 +199,7 @@ describe Chemotion::ProfileAPI do
         allow(File).to receive(:exist?).with(file_path).and_return(true)
         allow(File).to receive(:read).with(file_path).and_raise(Errno::EACCES)
 
-        get '/api/v1/profiles/editors/ketcher2-options', headers: headers
+        get '/api/v1/profiles/editors/ketcher-options', headers: headers
 
         expect(response).to have_http_status(:ok)
         response_body = JSON.parse(response.body)
@@ -213,7 +213,7 @@ describe Chemotion::ProfileAPI do
         allow(File).to receive(:exist?).with(file_path).and_return(true)
         allow(File).to receive(:read).with(file_path).and_raise(StandardError.new('Unexpected error'))
 
-        get '/api/v1/profiles/editors/ketcher2-options', headers: headers
+        get '/api/v1/profiles/editors/ketcher-options', headers: headers
 
         expect(response).to have_http_status(:ok)
         response_body = JSON.parse(response.body)
