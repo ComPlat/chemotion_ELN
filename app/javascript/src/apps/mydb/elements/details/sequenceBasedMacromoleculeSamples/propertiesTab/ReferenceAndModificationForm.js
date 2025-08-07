@@ -312,29 +312,25 @@ const ReferenceAndModificationForm = ({ ident, readonly }) => {
           />
         )
       }
-      <SecondaryCollapseContent
-        title="Structure files (cif / pdb)"
-        eventKey={structureFileIdent}
-        error={accordionStructureFileErrorByIdent}
-        store={sbmmStore}
-        active={sbmmStore.toggable_contents[structureFileIdent] && structureFileIdent}
-      >
-        {
-          (showAttachments || sbmmAttachments.length >= 1) && (
-            <>
-              <Row>
-                <Col>
-                  {structureAttachmentError()}
-                </Col>
-              </Row>
-              <Row className="align-items-start">
-                {dropzoneForModificationOrUniprot()}
-                {listSBMMAttachments()}
-              </Row>
-            </>
-          )
-        }
-      </SecondaryCollapseContent>
+      {(showAttachments || sbmmAttachments.length >= 1) && (
+        <SecondaryCollapseContent
+          title="Structure files (cif / pdb)"
+          eventKey={structureFileIdent}
+          error={accordionStructureFileErrorByIdent}
+          store={sbmmStore}
+          active={sbmmStore.toggable_contents[structureFileIdent] && structureFileIdent}
+        >
+          <Row>
+            <Col>
+              {structureAttachmentError()}
+            </Col>
+          </Row>
+          <Row className="align-items-start">
+            {dropzoneForModificationOrUniprot()}
+            {listSBMMAttachments()}
+          </Row>
+        </SecondaryCollapseContent>
+      )}
     </SecondaryCollapseContent>
   );
 }
