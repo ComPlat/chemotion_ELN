@@ -240,7 +240,7 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
             uniprot_derivation: 'uniprot_modified',
             molecular_weight: 123,
             parent_identifier: 'P12345',
-            sequence: 'MODIFIEDSEQUENCE',
+            sequence: 'MDIFIEDSEQENCE',
             short_name: 'FooBar',
             own_identifier: 'bla',
             other_identifier: 'keks',
@@ -283,7 +283,7 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
 
         result = parsed_json_response['sequence_based_macromolecule_sample']
 
-        expect(result['sequence_based_macromolecule']['sequence']).to eq 'MODIFIEDSEQUENCE'
+        expect(result['sequence_based_macromolecule']['sequence']).to eq 'MDIFIEDSEQENCE'
         expect(result['sequence_based_macromolecule']['parent']['primary_accession']).to eq 'P12345'
       end
 
@@ -372,7 +372,7 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
             uniprot_derivation: 'uniprot_modified',
             molecular_weight: 123,
             parent: build(:uniprot_sbmm),
-            sequence: 'MODIFIEDSEQUENCE',
+            sequence: 'MDIFIEDSEQENCE',
             short_name: 'FooBar',
             own_identifier: 'bla',
             other_identifier: 'keks',
@@ -491,7 +491,7 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
             uniprot_derivation: 'uniprot_modified',
             molecular_weight: 123,
             parent_identifier: non_uniprot_sbmm.id,
-            sequence: 'MODIFIEDSEQUENCE',
+            sequence: 'MDIFIEDSEQENCE',
             short_name: 'FooBar',
             protein_sequence_modification_attributes: {
               modification_n_terminal: true,
