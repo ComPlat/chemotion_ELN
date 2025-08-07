@@ -83,13 +83,16 @@ module Usecases
 
       def raise_if_forbidden_uniprot_derivation_change!(sbmm)
         return unless sbmm.persisted? # new objects are fine
-        return unless sbmm.changed?(:uniprot_derivation)
+        return unless sbmm.changes.key?('uniprot_derivation')
 
-        old_value = sbmm.changes[:uniprot_derivation].first
-        new_value = sbmm.changes[:uniprot_derivation].second
+        old_value = sbmm.changes['uniprot_derivation'].first
+        new_value = sbmm.changes['uniprot_derivation'].second
 
         if old_value == 'uniprot_modified' && new_value == 'uniprot_unknown'
-          raise Errors::ForbiddenUniprotDerivationChangeError.new(requested_changes: sbmm)
+          raise Errors::ForbiddenUniprotDerivationChangeError.new(
+            original_sbmm: SequenceBasedMacromolecule.find(sbmm.id),
+            requested_changes: sbmm
+          )
         end
       end
     end
