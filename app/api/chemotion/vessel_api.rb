@@ -157,8 +157,6 @@ module Chemotion
           weight_unit: params[:weight_unit],
         )
 
-        vessel.create_code_log
-
         vessel.collections << collection
 
         present vessel.reload, with: Entities::VesselInstanceEntity
@@ -221,8 +219,6 @@ module Chemotion
         end
 
         created_vessels.each do |vessel|
-          vessel.create_code_log
-
           vessel.define_singleton_method(:code_log) do
             CodeLog.where(source: 'vessel', source_id: vessel.id).order(created_at: :desc).first
           end
