@@ -98,6 +98,8 @@ const AnalysesContainer = ({ readonly }) => {
                     templateType="sbmmSample"
                     container={container}
                     onChange={() => sbmmStore.changeAnalysisContainerContent(container)}
+                    rootContainer={sbmmSample.container}
+                    index={index}
                   />
                   <ViewSpectra
                     sample={sbmmSample}
