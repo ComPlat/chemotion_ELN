@@ -14,36 +14,13 @@ module Usecases
       end
 
       class SbmmUpdateNotAllowedError < ConflictError
-        def to_h
-          {
-            error: {
-              message: message,
-              original_sbmm: original_sbmm,
-              requested_changes: requested_changes,
-            }
-          }
-        end
-
         def message
           "Your changes could not be saved, as this SBMM is used by other users as well. \
             Please contact your ELN admin if you think that your data is of better quality."
         end
       end
 
-      class ForbiddenUniprotDerivationChangeError < StandardError
-        def initialize(requested_changes:)
-          @requested_changes = requested_changes
-        end
-
-        def to_h
-          {
-            error: {
-              message: message,
-              requested_changes: sbmm
-            }
-          }
-        end
-
+      class ForbiddenUniprotDerivationChangeError < ConflictError
         def message
           "The requested SBMM (selected by sequence and modifications) does not allow a change in \
             uniprot existence from modified to unknown."
