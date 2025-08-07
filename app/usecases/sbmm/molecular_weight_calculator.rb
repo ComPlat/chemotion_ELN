@@ -13,16 +13,16 @@ module Usecases
 
       private
 
-      def standardized_sequence
-        sequence.upcase.gsub(/[^A-Z]/, '')
+      def normalized_sequence
+        @normalized_sequence ||= SequenceBasedMacromolecule.normalize_sequence(sequence)
       end
 
       def sum_of_amino_acid_weights
-        standardized_sequence.chars.reduce(0) { |result, letter| result += weights[letter.to_sym].to_f }
+        normalized_sequence.chars.reduce(0) { |result, letter| result += weights[letter.to_sym].to_f }
       end
 
       def peptid_bindings
-        standardized_sequence.length - 1
+        normalized_sequence.length - 1
       end
 
       def weights
