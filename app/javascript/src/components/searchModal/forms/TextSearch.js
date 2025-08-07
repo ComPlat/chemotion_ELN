@@ -4,6 +4,7 @@ import {
   togglePanel, handleClear, showErrorMessage, panelVariables,
   AccordeonHeaderButtonForSearchForm, SearchButtonToolbar
 } from './SearchModalFunctions';
+import { allElnElementsForSearch } from 'src/apps/generic/Utils';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import AdvancedSearchRow from './AdvancedSearchRow';
 import DetailSearch from './DetailSearch';
@@ -12,7 +13,7 @@ import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
 const TextSearch = () => {
-  const elnElements = ['cell_lines', 'samples', 'reactions', 'wellplates', 'screens', 'research_plans'];
+  const elnElements = allElnElementsForSearch;
   const genericElements = UserStore.getState().genericEls || [];
   const searchStore = useContext(StoreContext).search;
   const panelVars = panelVariables(searchStore);
@@ -86,6 +87,7 @@ const TextSearch = () => {
             id={value[0]}
             value={`${value[0]}s`}
             variant="outline-dark"
+            className={`${value[0]}s` === searchStore.searchElement.element_table ? 'active' : null}
           >
             <OverlayTrigger delayShow={500} placement="top" overlay={tooltip}>
               <i className={iconClass} />

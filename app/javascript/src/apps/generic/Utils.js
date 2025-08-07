@@ -35,6 +35,11 @@ export const allElnElements = [
   'cell_line', 'device_description', 'sequence_based_macromolecule_sample',
 ];
 
+export const allElnElementsForSearch = [
+  'cell_lines', 'samples', 'reactions', 'wellplates', 'screens', 'research_plans',
+  'sequence_based_macromolecule_samples',
+];
+
 export const allElnElmentsWithLabel = [
   { name: 'sample', label: 'Sample' },
   { name: 'reaction', label: 'Reaction' },

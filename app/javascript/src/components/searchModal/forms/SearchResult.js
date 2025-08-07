@@ -8,6 +8,7 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
 import { capitalizeWords } from 'src/utilities/textHelper';
+import { allElnElementsForSearch } from 'src/apps/generic/Utils';
 
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
@@ -160,11 +161,10 @@ function SearchResult({ handleClear }) {
   const searchResultNavItem = (list, tabResult) => {
     if (searchStore.searchResultsCount === 0) { return null }
 
-    const elnElements = ['cell_line', 'sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
     let iconClass = `icon-${list.key}`;
     let tooltipText = list.key && capitalizeWords(list.key);
-
-    if (!elnElements.includes(list.key)) {
+    
+    if (!allElnElementsForSearch.includes(list.key + 's')) {
       const genericElement = (genericElements && genericElements.find((el) => el.name === list.key)) || {};
       iconClass = `${genericElement.icon_name} icon_generic_nav`;
       tooltipText = `${genericElement.label}<br />${genericElement.desc}`;

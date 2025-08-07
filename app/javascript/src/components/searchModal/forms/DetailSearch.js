@@ -6,6 +6,8 @@ import SelectFieldData from './SelectFieldData';
 import SampleInventoryFieldData from './SampleInventoryFieldData';
 import AnalysesFieldData from './AnalysesFieldData';
 import MeasurementFieldData from './MeasurementFieldData';
+import { unitSystems } from 'src/components/staticDropdownOptions/units';
+import { selectOptions } from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/selectOptions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { observer } from 'mobx-react';
@@ -18,6 +20,7 @@ const DetailSearch = () => {
   const searchStore = useContext(StoreContext).search;
   let selection = searchStore.searchElement;
   let fieldOptions = SelectFieldData.fields[selection.table];
+  fieldOptions = selection.table === 'sequence_based_macromolecule_samples' ? SelectFieldData[selection.table] : fieldOptions;
   const { rxnos, chmos, unitsSystem, segmentKlasses, genericEls, dsKlasses, profile } = UserStore.getState();
   const layoutTabs = profile.data[`layout_detail_${selection.table.slice(0, -1)}`];
   const currentCollection = UIStore.getState().currentCollection;
@@ -251,6 +254,24 @@ const DetailSearch = () => {
     );
   }
 
+  const textareaInput = (option, type, selectedValue, column, keyLabel) => {
+    let validationState = selectedValue !== undefined ? selectedValue[column].validationState : null;
+
+    return (
+      <Form.Group key={`${column}-${keyLabel}-${type}`}>
+        {labelWithInfo(option)}
+        <Form.Control
+          as="textarea"
+          key={`${column}-${keyLabel}`}
+          value={selectedValue ? selectedValue[column].value : ''}
+          rows={3}
+          onChange={handleFieldChanged(option, column, type)}
+          className={validationState}
+        />
+      </Form.Group>
+    );
+  }
+
   const checkboxInput = (option, type, selectedValue, column, keyLabel) => {
     return (
       <Form.Check
@@ -285,6 +306,8 @@ const DetailSearch = () => {
         options = FieldOptions.durationOptions;
       } else if (option.column && option.column == 'target_amount_value') {
         options = FieldOptions.amountSearchOptions;
+      } else if (option.table === 'sequence_based_macromolecule_samples') {
+        options = unitSystems[option.option_layers];
       } else {
         options = systemOptions.units;
       }
@@ -299,6 +322,8 @@ const DetailSearch = () => {
         selectOption.value = selectOption.value ? selectOption.value : selectOption.label;
         options.push(selectOption);
       });
+    } else if (option.table === 'sequence_based_macromolecule_samples') {
+      options = selectOptions[option.option_layers];
     } else {
       options = FieldOptions[option.option_layers];
     }
@@ -586,6 +611,8 @@ const DetailSearch = () => {
       case 'boiling_point':
       case 'melting_point':
         return '<@';
+      case 'ec_numbers':
+        return '@>';
       case 'density':
       case 'molarity_value':
       case 'target_amount_value':
@@ -595,6 +622,12 @@ const DetailSearch = () => {
       case 'value_measurement':
       case 'solvent_ratio':
       case 'molecular_mass':
+      case 'concentration_value':
+      case 'activity_per_volume_value':
+      case 'activity_per_mass_value':
+      case 'acetylation_lysin_number':
+      case 'sequence_length':
+      case 'molecular_weight':
         return searchStore.numeric_match;
       case 'unit_measurement':
       case 'solvent_smiles':
@@ -775,6 +808,9 @@ const DetailSearch = () => {
       case 'formula-field':
         fields.push(textInput(option, 'text', selectedValue, column, keyLabel));
         break;
+      case 'sequence-textarea':
+        fields.push(textareaInput(option, 'textarea', selectedValue, column, keyLabel));
+        break;
       case 'checkbox':
         fields.push(checkboxInput(option, 'checkbox', selectedValue, column, keyLabel));
         break;
@@ -809,6 +845,9 @@ const DetailSearch = () => {
         break;
       case 'headline':
         fields.push(componentHeadline(option.label, 'headline', 'detail-search-headline'));
+        break;
+      case 'segment-headline':
+        fields.push(componentHeadline(option.label, 'segment-headline', 'detail-search-segment-headline'));
         break;
       case 'hr':
         fields.push(<hr className='content-spacer' key={`spacer-${i}`} />);

@@ -136,6 +136,10 @@ class API < Grape::API
     'screens' => %w[name collaborator requirements conditions result content plain_text_description],
     'research_plans' => %w[name body content],
     'elements' => %w[name short_label],
+    'sequence_based_macromolecule_samples' => %w[
+      name function_or_application obtained_by supplier concentration_value molarity_value activity_per_volume_value
+      activity_per_mass_value formulation purity purity_detection purification_method organism taxon_id strain tissue
+    ],
   }.freeze
 
   TARGET = Rails.env.production? ? 'https://www.chemotion-repository.net/' : 'http://localhost:3000/'
