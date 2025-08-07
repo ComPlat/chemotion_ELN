@@ -14,6 +14,7 @@ module Usecases
         SequenceBasedMacromoleculeSample.transaction do
           sbmm = ::Usecases::Sbmm::Finder.new.find_or_initialize_by(params[:sequence_based_macromolecule_attributes].dup)
           raise_if_sbmm_is_not_writable!(sbmm)
+          raise_if_forbidden_uniprot_derivation_change!(sbmm)
 
           sample = SequenceBasedMacromoleculeSample.new(params.except(:sequence_based_macromolecule_attributes, :collection_id, :container))
           sample.user = current_user
@@ -35,6 +36,7 @@ module Usecases
         sample.transaction do
           sbmm = Usecases::Sbmm::Finder.new.find_or_initialize_by(params[:sequence_based_macromolecule_attributes].dup)
           raise_if_sbmm_is_not_writable!(sbmm)
+          raise_if_forbidden_uniprot_derivation_change!(sbmm)
 
           sample.sequence_based_macromolecule = sbmm
           sample.update!(params.except(:sequence_based_macromolecule_attributes, :container, :collection_id))
@@ -76,6 +78,18 @@ module Usecases
             original_sbmm: SequenceBasedMacromolecule.find(sbmm.id),
             requested_changes: sbmm
           )
+        end
+      end
+
+      def raise_if_forbidden_uniprot_derivation_change!(sbmm)
+        return unless sbmm.persisted? # new objects are fine
+        return unless sbmm.changed?(:uniprot_derivation)
+
+        old_value = sbmm.changes[:uniprot_derivation].first
+        new_value = sbmm.changes[:uniprot_derivation].second
+
+        if old_value == 'uniprot_modified' && new_value == 'uniprot_unknown'
+          raise Errors::ForbiddenUniprotDerivationChangeError.new(requested_changes: sbmm)
         end
       end
     end

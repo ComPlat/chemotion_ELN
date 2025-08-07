@@ -21,6 +21,18 @@ module Chemotion
       )
     end
 
+    rescue_from ::Usecases::Sbmm::Errors::ForbiddenUniprotDerivationChangeError do |error|
+      error!(
+        {
+          error: {
+            message: error.message,
+            requested_changes: Entities::SequenceBasedMacromoleculeEntity.represent(error.requested_changes)
+          }
+        },
+        400
+      )
+    end
+
     rescue_from Grape::Exceptions::ValidationErrors do |exception|
       errors = []
       exception.each do |parameters, error|
