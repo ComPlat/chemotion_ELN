@@ -203,7 +203,7 @@
 
     .ant-select {
       width: 100%;
-      height: 38px;
+      height: 34px;
     }
   }
 
@@ -229,7 +229,7 @@
 .detail-search-form {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-start;
   gap: 1.5rem 1.25rem;
 }
 
@@ -292,7 +292,7 @@
 
   .ant-select {
     width: 100%;
-    height: 38px;
+    height: 34px;
   }
 
   hr.content-spacer {
@@ -302,12 +302,13 @@
     flex-basis: 100%;
   }
 
-  .form-control {
-    height: 38px;
-  }
-
   .form-control.error {
     border-color: var(--bs-form-invalid-border-color);
+  }
+
+  .form-check {
+    align-self: flex-end;
+    margin-bottom: 1rem;
   }
 }
 
