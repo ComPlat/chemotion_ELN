@@ -7,7 +7,7 @@ import SampleInventoryFieldData from './SampleInventoryFieldData';
 import AnalysesFieldData from './AnalysesFieldData';
 import MeasurementFieldData from './MeasurementFieldData';
 import { unitSystems } from 'src/components/staticDropdownOptions/units';
-import { selectOptions } from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/selectOptions';
+import { selectOptions } from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/SelectOptions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { observer } from 'mobx-react';

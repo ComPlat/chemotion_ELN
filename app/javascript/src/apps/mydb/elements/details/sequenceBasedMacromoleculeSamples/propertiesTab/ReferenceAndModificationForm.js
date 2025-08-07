@@ -1,7 +1,7 @@
 import React, { useContext, useEffect } from 'react';
 import { Row, Col, } from 'react-bootstrap';
 import { initFormHelper, SecondaryCollapseContent } from 'src/utilities/FormHelper';
-import { selectOptions } from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/selectOptions';
+import { selectOptions } from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/SelectOptions';
 import { useDrop } from 'react-dnd';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import SequenceAndPostTranslationalModificationForm from './SequenceAndPostTranslationalModificationForm';

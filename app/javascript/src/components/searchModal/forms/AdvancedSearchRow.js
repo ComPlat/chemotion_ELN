@@ -8,7 +8,7 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 import SelectFieldData from './SelectFieldData';
 import { mapperFields, unitMapperFields } from './SelectMapperData';
 import { statusOptions, temperatureOptions, durationOptions } from 'src/components/staticDropdownOptions/options';
-import { selectOptions } from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/selectOptions';
+import { selectOptions } from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/SelectOptions';
 
 const AdvancedSearchRow = ({ idx }) => {
   const searchStore = useContext(StoreContext).search;

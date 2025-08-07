@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { Form, Row, Col, Accordion, Button } from 'react-bootstrap';
 import { initFormHelper, ColoredAccordeonHeaderButton, SecondaryCollapseContent } from 'src/utilities/FormHelper';
-import { selectOptions } from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/selectOptions';
+import { selectOptions } from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/SelectOptions';
 import { useDrop } from 'react-dnd';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import ReferenceAndModificationForm from './ReferenceAndModificationForm';
