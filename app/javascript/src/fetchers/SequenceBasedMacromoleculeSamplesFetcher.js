@@ -59,7 +59,6 @@ export default class SequenceBasedMacromoleculeSamplesFetcher {
   }
 
   static createSequenceBasedMacromoleculeSample(sequenceBasedMacromoleculeSample) {
-    const containerFiles = AttachmentFetcher.getFileListfrom(sequenceBasedMacromoleculeSample.container);
     const newSampleAttachmentFiles =
       (sequenceBasedMacromoleculeSample.attachments || []).filter((a) => a.is_new && !a.is_deleted);
     const newSBMMAttachmentFiles =
@@ -104,16 +103,10 @@ export default class SequenceBasedMacromoleculeSamplesFetcher {
       })
       .catch(errorMessage => console.log(errorMessage));
 
-    if (containerFiles.length > 0) {
-      const tasks = [];
-      containerFiles.forEach((file) => tasks.push(AttachmentFetcher.uploadFile(file).then()));
-      return Promise.all(tasks).then(() => promise());
-    }
-    return promise();
+    return AttachmentFetcher.uploadNewAttachmentsForContainer(sequenceBasedMacromoleculeSample.container).then(() => promise());
   }
 
   static updateSequenceBasedMacromoleculeSample(sequenceBasedMacromoleculeSample) {
-    const containerFiles = AttachmentFetcher.getFileListfrom(sequenceBasedMacromoleculeSample.container);
     const sbmm = sequenceBasedMacromoleculeSample.sequence_based_macromolecule;
     const newSampleAttachmentFiles = (sequenceBasedMacromoleculeSample.attachments || []).filter((a) => a.is_new && !a.is_deleted);
     const newSBMMAttachmentFiles = (sbmm.attachments || []).filter((a) => a.is_new && !a.is_deleted);
@@ -143,9 +136,7 @@ export default class SequenceBasedMacromoleculeSamplesFetcher {
       .catch(errorMessage => console.log(errorMessage));
 
     const tasks = [];
-    if (containerFiles.length > 0) {
-      containerFiles.forEach((file) => tasks.push(AttachmentFetcher.uploadFile(file).then()));
-    }
+    tasks.push(AttachmentFetcher.uploadNewAttachmentsForContainer(sequenceBasedMacromoleculeSample.container).then(() => promise()));
     if (newSampleAttachmentFiles.length > 0 || deletedSampleAttachmentFiles.length > 0) {
       tasks.push(
         AttachmentFetcher.updateAttachables(
