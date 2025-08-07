@@ -185,13 +185,13 @@ const AccordeonHeaderButtonForSearchForm = ({ title, eventKey, disabled, callbac
 const SearchButtonToolbar = ({ store }) => {
   return (
     <ButtonToolbar className="advanced-search-buttons">
-      <Button variant="warning" id="advanced-cancel-button" onClick={() => store.handleCancel()}>
+      <Button variant="primary" id="advanced-cancel-button" onClick={() => store.handleCancel()}>
         Cancel
       </Button>
       <Button variant="info" onClick={() => handleClear(store)}>
         Reset
       </Button>
-      <Button variant="primary" id="advanced-search-button"
+      <Button variant="warning" id="advanced-search-button"
         onClick={() => handleSearch(store, UIStore.getState())}>
         Search
       </Button>
