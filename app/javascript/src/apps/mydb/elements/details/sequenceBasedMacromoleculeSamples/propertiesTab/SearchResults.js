@@ -5,7 +5,7 @@ import Draggable from "react-draggable";
 
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import { selectOptions } from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/selectOptions';
+import { selectOptions } from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/SelectOptions';
 
 const SearchResults = () => {
   const sbmmStore = useContext(StoreContext).sequenceBasedMacromoleculeSamples;
