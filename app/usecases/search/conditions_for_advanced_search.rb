@@ -79,8 +79,6 @@ module Usecases
           measurements_tab_options(filter)
         elsif @table_or_tab_types[:literatures]
           literatures_tab_options(filter)
-        elsif @table_or_tab_types[:sequence_based_macromolecule_samples]
-          sequence_based_macromolecule_sample_field_options
         elsif @table_or_tab_types[:sequence_based_macromolecules]
           sequence_based_macromolecule_field_options(filter)
         elsif @table_or_tab_types[:protein_sequence_modifications]
@@ -101,8 +99,6 @@ module Usecases
         @table_or_tab_types[:analyses] = @field_table.present? && %w[containers datasets].include?(@field_table)
         @table_or_tab_types[:measurements] = @field_table.present? && @field_table == 'measurements'
         @table_or_tab_types[:literatures] = @table.present? && @table == 'literatures'
-        @table_or_tab_types[:sequence_based_macromolecule_samples] =
-          @field_table.present? && @field_table == 'sequence_based_macromolecule_samples'
         @table_or_tab_types[:sequence_based_macromolecules] =
           @field_table.present? && @field_table == 'sequence_based_macromolecules'
         @table_or_tab_types[:protein_sequence_modifications] =
@@ -484,7 +480,7 @@ module Usecases
         @conditions[:joins] << field_table_inner_join if @conditions[:joins].exclude?(field_table_inner_join)
       end
 
-      def sequence_based_macromolecule_sample_field_options
+      def join_for_sequence_based_macromolecule
         field_table_inner_join =
           'INNER JOIN sequence_based_macromolecules ON
           sequence_based_macromolecules.id = sequence_based_macromolecule_samples.sequence_based_macromolecule_id'
@@ -493,6 +489,7 @@ module Usecases
 
       def sequence_based_macromolecule_field_options(filter)
         @conditions[:condition_table] = ''
+        join_for_sequence_based_macromolecule
 
         if filter['field']['column'] == 'ec_numbers'
           @conditions[:first_condition] = "#{@field_table}.ec_numbers @> ARRAY['#{@conditions[:words][0]}']::varchar[]"
@@ -513,6 +510,7 @@ module Usecases
       def protein_sequence_modification_field_options(filter)
         @conditions[:condition_table] = ''
         @conditions[:field] = "#{@field_table}.#{filter['field']['column']}"
+        join_for_sequence_based_macromolecule
         field_table_inner_join =
           'INNER JOIN protein_sequence_modifications ON
           protein_sequence_modifications.id = sequence_based_macromolecules.protein_sequence_modification_id'
@@ -522,6 +520,7 @@ module Usecases
       def post_translational_modification_field_options(filter)
         @conditions[:condition_table] = ''
         @conditions[:field] = "#{@field_table}.#{filter['field']['column']}"
+        join_for_sequence_based_macromolecule
         field_table_inner_join =
           'INNER JOIN post_translational_modifications ON
           post_translational_modifications.id = sequence_based_macromolecules.post_translational_modification_id'
