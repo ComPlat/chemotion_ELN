@@ -118,7 +118,7 @@ const SequenceBasedMacromoleculeSampleDetails = () => {
     return (
       <>
         {reason}
-        {conflict && (
+        {(conflict && conflict.type === 'SbmmUpdateNotAllowed') && (
           <Button
             variant="link"
             className="py-0 px-2"
