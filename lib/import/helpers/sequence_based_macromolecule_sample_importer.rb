@@ -66,7 +66,7 @@ module Import
           sbmm_params[:protein_sequence_modification_attributes] = psm_json.transform_keys(&:to_sym)
         end
 
-        existing_or_new_sbmm = ::Usecases::Sbmm::Finder.new.find_or_initialize_by(sbmm_params)
+        existing_or_new_sbmm = ::Usecases::Sbmm::Finder.new.find_or_initialize_by(sbmm_params.deep_dup)
         existing_or_new_sbmm.save if existing_or_new_sbmm.present? && existing_or_new_sbmm.new_record?
 
         update_instances!(sbmm_uuid, existing_or_new_sbmm)

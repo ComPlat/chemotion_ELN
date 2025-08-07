@@ -12,7 +12,7 @@ module Usecases
       def create(params)
         sample = nil
         SequenceBasedMacromoleculeSample.transaction do
-          sbmm = ::Usecases::Sbmm::Finder.new.find_or_initialize_by(params[:sequence_based_macromolecule_attributes].dup)
+          sbmm = ::Usecases::Sbmm::Finder.new.find_or_initialize_by(params[:sequence_based_macromolecule_attributes].deep_dup)
           raise_if_sbmm_is_not_writable!(sbmm)
           raise_if_forbidden_uniprot_derivation_change!(sbmm)
 
@@ -34,7 +34,7 @@ module Usecases
       def update(sample, params)
         # TODO: Prüfen ob der User das Update überhaupt durchführen darf
         sample.transaction do
-          sbmm = Usecases::Sbmm::Finder.new.find_or_initialize_by(params[:sequence_based_macromolecule_attributes].dup)
+          sbmm = Usecases::Sbmm::Finder.new.find_or_initialize_by(params[:sequence_based_macromolecule_attributes].deep_dup)
           raise_if_sbmm_is_not_writable!(sbmm)
           raise_if_forbidden_uniprot_derivation_change!(sbmm)
 
