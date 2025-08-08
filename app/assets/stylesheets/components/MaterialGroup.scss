@@ -1,0 +1,31 @@
+.material-group {
+  @extend .pseudo-table;
+  .pseudo-table__row-header {
+    @extend .surface-lighten4;
+    @extend .rounded-start;
+    @extend .mb-1;
+  }
+  container-name: material-group;
+  container-type: inline-size;
+  &.material-group--can-drop {
+    .pseudo-table__row-header {
+      @extend .surface-lighten3;
+    }
+    &.material-group--is-over .pseudo-table__row-header {
+      @extend .bg-transparent;
+    }
+  }
+  &__add-actions {
+    @extend .d-flex;
+    @extend .align-items-center;
+    @extend .gap-1;
+  }
+  &__header-title {
+    @extend .d-flex;
+    @extend .align-items-center;
+    @extend .ps-4;
+    @extend .justify-content-between;
+    @extend .flex-grow-1;
+    max-width: 200px;
+  }
+}

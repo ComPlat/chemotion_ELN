@@ -30,7 +30,6 @@
   &__control,
   &__menu {
     @extend .d-block;
-    padding: $form-select-padding-y $form-select-padding-x;
     font-family: $form-select-font-family;
     @include font-size($form-select-font-size);
     font-weight: $form-select-font-weight;
@@ -44,6 +43,7 @@
   }
 
   &__control {
+    padding: $form-select-padding-y $form-select-padding-x;
     @extend .d-flex;
     @extend .justify-content-between;
     @extend .align-items-center;
@@ -163,6 +163,44 @@
 
   &__clear-indicator {
     @include fa-based-remove-icon;
+  }
+
+  // bootstrap sm size modification
+  &.form-select-sm .chemotion-select {
+    &__control,
+    &__menu {
+      @include font-size($form-select-font-size-sm);
+    }
+    &__control,
+    &__option {
+      padding: $form-select-padding-y-sm $form-select-padding-x-sm;
+    }
+    &[multiple],
+    &[size]:not([size="1"]) {
+      padding-right: $form-select-padding-x-sm;
+    }
+    &__menu {
+      padding: $form-select-padding-y-sm 0;
+    }
+  }
+
+  // bootstrap lg size modification
+  &.form-select-lg .chemotion-select {
+    &__control,
+    &__menu {
+      @include font-size($form-select-font-size-lg);
+    }
+    &__control,
+    &__option {
+      padding: $form-select-padding-y-lg $form-select-padding-x-lg;
+    }
+    &[multiple],
+    &[size]:not([size="1"]) {
+      padding-right: $form-select-padding-x-lg;
+    }
+    &__menu {
+      padding: $form-select-padding-y-lg 0;
+    }
   }
 }
 
