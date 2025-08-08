@@ -354,15 +354,6 @@ const KetcherEditor = forwardRef((props, ref) => {
         onCloseClick={() => setShowShapes(false)}
         title="Surface Chemistry Templates"
       />
-      {/* <SpecialCharModal
-        loading={showSpecialCharModal}
-        onDashedSelection={onDashedCharSelection}
-        onRestSelections={onCharSelection}
-        onCloseClick={() => setSpecialCharModal(false)}
-        dashedSelection={dashedSelectionCharacter}
-        restSelection={restSelectionCharacter}
-        title="Select a special character"
-      /> */}
       <iframe
         ref={iframeRef}
         id={editor?.id}

@@ -59,6 +59,8 @@ export const EventNames = {
   ADD_TEXT: 'Add text',
   DELETE_TEXT: 'Delete text',
   UPSERT_IMAGE: 'Upsert image',
+  DELETE_IMAGE: 'Delete image',
+  LOAD_CANVAS: 'Load canvas'
 };
 
 export {

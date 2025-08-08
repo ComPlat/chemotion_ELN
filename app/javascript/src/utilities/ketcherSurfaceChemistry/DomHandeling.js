@@ -6,7 +6,7 @@
 
 // DOM functions
 // Function to attach click listeners based on titles
-import { KET_TAGS, LAYERING_FLAGS } from 'src/utilities/ketcherSurfaceChemistry/constants';
+import { KET_TAGS, LAYERING_FLAGS, EventNames } from 'src/utilities/ketcherSurfaceChemistry/constants';
 import { fetchKetcherData } from 'src/utilities/ketcherSurfaceChemistry/InitializeAndParseKetcher';
 import {
   PolymerListIconKetcherToolbarButton,
@@ -104,7 +104,7 @@ const undoKetcher = (editor) => {
     const { historyPtr } = editor._structureDef.editor.editor;
     let operationIdx = 0;
     for (let i = historyPtr - 1; i >= 0; i--) {
-      if (list[i]?.operations[0]?.type !== 'Load canvas') {
+      if (list[i]?.operations[0]?.type !== EventNames.LOAD_CANVAS) {
         break;
       } else {
         operationIdx++;
@@ -126,7 +126,7 @@ const redoKetcher = (editor) => {
     let operationIdx = 1;
 
     for (let i = historyPtr; i < list.length; i++) {
-      if (list[i]?.operations[0]?.type !== 'Load canvas') {
+      if (list[i]?.operations[0]?.type !== EventNames.LOAD_CANVAS) {
         break;
       } else {
         operationIdx++;
@@ -216,12 +216,6 @@ const attachClickListeners = (iframeRef, buttonEvents) => {
               await attachListenerForTitle(iframeDocument, selector, buttonEvents);
             })
           );
-          // if (selectedImageForTextNode) {
-          //   for (let i = 0; i < mutation.addedNodes.length; i++) {
-          //     const node = mutation.addedNodes[i]; // Access each node
-          //     await addTextNodeDescriptionOnTextPopup(node);
-          //   }
-          // }
         }
       })
     );
