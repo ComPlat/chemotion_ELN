@@ -84,10 +84,10 @@ export default class ElementalCompositionTable extends React.Component {
       return (
         <tr key={element}>
           <td className="fw-bold">{element}</td>
-          <td className="text-end">
+          <td>
             {theoreticalValue ? Number(theoreticalValue).toFixed(2) : '—'}
           </td>
-          <td className="text-end">
+          <td>
             {readOnly ? (
               <span>
                 {hasExperimentalValue ? Number(experimentalValue).toFixed(2) : '—'}
@@ -102,7 +102,7 @@ export default class ElementalCompositionTable extends React.Component {
               />
             )}
           </td>
-          <td className="text-end">
+          <td>
             {difference !== null ? (
               <span
                 className={(() => {
@@ -138,13 +138,13 @@ export default class ElementalCompositionTable extends React.Component {
         <Table bordered size="sm" className="mb-3">
           <thead>
             <tr>
-              <th style={{ width: '15%' }}>Element</th>
+              <th style={{ width: '25%' }}>Element</th>
               <th style={{ width: '25%' }}>
                 Theoretical (%)
                 <br />
-                <small className="text-muted">{theoreticalComposition.description}</small>
+                <small className="text-muted">{theoreticalComposition?.description}</small>
               </th>
-              <th style={{ width: '35%' }}>
+              <th style={{ width: '25%' }}>
                 Experimental (%)
                 <br />
                 <small className="text-muted">

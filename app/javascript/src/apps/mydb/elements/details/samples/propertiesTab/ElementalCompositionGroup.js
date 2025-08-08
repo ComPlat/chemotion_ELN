@@ -26,7 +26,7 @@ export default class ElementalCompositionGroup extends React.Component {
       (comp) => comp.composition_type === 'found'
     );
 
-    if (foundIndex >= 0) {
+    if (foundIndex !== -1) {
       elementalCompositions[foundIndex] = updatedComposition;
       sample.elemental_compositions = elementalCompositions;
       this.handleElementalChanged();
