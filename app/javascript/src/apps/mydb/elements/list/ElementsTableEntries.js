@@ -17,7 +17,7 @@ import ReactionVariations from 'src/apps/mydb/elements/list/reaction/ReactionVar
 import ReactionStatus from 'src/apps/mydb/elements/list/reaction/ReactionStatus';
 import ImageModal from 'src/components/common/ImageModal';
 
-import ReactionEditorLink from 'src/components/reaction_editor/ReactionEditorLink';
+import ReactionEditorLink from '../details/reactions/reactionProcessEditor/ReactionEditorLink';
 
 export default class ElementsTableEntries extends Component {
   constructor(props) {
