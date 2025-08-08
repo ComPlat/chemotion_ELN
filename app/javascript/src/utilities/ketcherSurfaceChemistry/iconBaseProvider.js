@@ -128,15 +128,15 @@ export const svgMap = {
 const loadAndEncodeSVG = async (iconName) => {
   try {
     const polymerCategory = localStorage.getItem('polymerCategory') || 'basic';
-    const path = `/assets/svg_icons/polymerShapes/${polymerCategory}/${iconName}.svg`;
+    const path = `/polymerShapes/${polymerCategory}/${iconName}.svg`;
     const response = await fetch(path);
     const svgText = await response.text();
     const encoded = btoa(svgText);
     return encoded;
   } catch (error) {
     console.error('Failed to load SVG:', error);
-    return null
+    return null;
   }
 };
 
-export default loadAndEncodeSVG;
+export default loadAndEncodeSVG
