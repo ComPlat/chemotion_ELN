@@ -58,6 +58,7 @@ import { ShowUserLabels } from 'src/components/UserLabels';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 // eslint-disable-next-line import/no-named-as-default
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
+import ReactionEditorLink from './reactionProcessEditor/ReactionEditorLink';
 
 const handleProductClick = (product) => {
   const uri = Aviator.getCurrentURI();
@@ -81,7 +82,6 @@ const productLink = (product, active) => (
   </span>
 );
 
-import ReactionEditorLink from 'src/components/reaction_editor/ReactionEditorLink';
 export default class ReactionDetails extends Component {
   constructor(props) {
     super(props);
