@@ -60,6 +60,7 @@ import ReactionSchemeGraphic from 'src/apps/mydb/elements/details/reactions/Reac
 import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
 import isEqual from 'lodash/isEqual';
 import DocumentationButton from 'src/components/common/DocumentationButton';
+import ReactionEditorLink from './reactionProcessEditor/ReactionEditorLink';
 
 const handleProductClick = (product) => {
   const uri = Aviator.getCurrentURI();
@@ -83,7 +84,6 @@ const productLink = (product, active) => (
   </span>
 );
 
-import ReactionEditorLink from 'src/components/reaction_editor/ReactionEditorLink';
 export default class ReactionDetails extends Component {
   constructor(props) {
     super(props);
