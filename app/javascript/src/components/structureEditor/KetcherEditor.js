@@ -64,7 +64,6 @@ import {
   fetchAndReplace,
   eventUpsertImageSetter,
   upsertImageCalled,
-  allTemplates,
   imagesListSetter
 } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
 
@@ -73,8 +72,6 @@ export let imageNodeCounter = -1; // counter of how many images are used/present
 
 // local
 let oldImagePack = [];
-let dashedSelectionCharacter = null;
-let restSelectionCharacter = null;
 
 // to reset all data containers
 export const resetStore = () => {
@@ -219,9 +216,6 @@ const KetcherEditor = forwardRef((props, ref) => {
       resetStore();
       imageNodeForTextNodeSetter(null);
     }
-    // [getButtonSelector(ButtonSelectors.TEXT_NODE_SPECIAL_CHAR)]: async () => {
-    //   setSpecialCharModal(true);
-    // }
   };
 
   // attach click listeners to the iframe and initialize the editor
@@ -317,7 +311,7 @@ const KetcherEditor = forwardRef((props, ref) => {
   const onImageAddedOrCopied = async () => {
     const imagesAddedList = imagesList.slice(upsertImageCalled);
     imagesAddedList.forEach(async (item) => {
-      const templateId = await findTemplateByPayload(allTemplates, item.data);
+      const templateId = await findTemplateByPayload(item.data);
       if (templateId != null) {
         await onShapeSelection(templateId, false);
       }

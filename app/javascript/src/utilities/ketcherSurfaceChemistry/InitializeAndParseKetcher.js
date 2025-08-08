@@ -19,7 +19,8 @@ import {
   textList,
   textListSetter,
   textNodeStructSetter,
-  ImagesToBeUpdatedSetter
+  ImagesToBeUpdatedSetter,
+  setBase64TemplateHashSetter
 } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
 import {
   latestDataSetter,
@@ -69,6 +70,7 @@ const setupEditorIframe = ({
   const iframe = iframeRef.current;
   const handleIframeLoad = () => {
     attachClickListeners(iframeRef, buttonEvents);
+    setBase64TemplateHashSetter(allTemplates);
   };
 
   if (editor?.structureDef) {

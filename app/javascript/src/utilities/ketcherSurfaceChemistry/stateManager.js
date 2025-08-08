@@ -1,5 +1,6 @@
 /* eslint-disable import/no-mutable-exports */
 import { KET_TAGS } from 'src/utilities/ketcherSurfaceChemistry/constants';
+import loadAndEncodeSVG from 'src/utilities/ketcherSurfaceChemistry/iconBaseProvider';
 
 export let FILOStack = []; // a stack to main a list of event triggered
 export const uniqueEvents = new Set(); // list of unique event from the canvas
@@ -17,6 +18,7 @@ export let imageListCopyContainer = [];
 export let textListCopyContainer = [];
 export let { editor } = window; // reference to the editor
 export let allTemplates = {}; // contains all templates
+export let templatesBaseHashWithTemplateId = {}; // contains all templates
 export let allowProcessing = true;
 export let upsertImageCalled = 0;
 
@@ -77,6 +79,28 @@ export const textNodeStructSetter = (data) => {
 export const templateListSetter = async (data) => {
   const keys = Object.keys(data);
   allTemplates = [...data[keys[0]], ...data[keys[1]]];
+};
+
+// Set base64-encoded SVG templates by template_id
+export const setBase64TemplateHashSetter = async (data) => {
+  const templateHash = {};
+  const loadTasks = [];
+
+  data.forEach((group) => {
+    group.subTabs.forEach((subTab) => {
+      subTab.shapes.forEach((shape) => {
+        loadTasks.push(
+          loadAndEncodeSVG(shape.iconName).then((base64) => [shape.template_id, base64])
+        );
+      });
+    });
+  });
+
+  const results = await Promise.all(loadTasks);
+  results.forEach(([templateId, base64]) => {
+    templateHash[templateId] = base64;
+  });
+  templatesBaseHashWithTemplateId = templateHash; // still mutating global var
 };
 
 export const allowProcessingSetter = (data) => {
