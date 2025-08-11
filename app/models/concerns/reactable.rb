@@ -28,6 +28,7 @@ module Reactable
 
   def update_equivalent
     ref_record = ReactionsSample.where(reaction_id: reaction_id, reference: true).first
+    return if ref_record.sample&.sample_type == Sample::SAMPLE_TYPE_MIXTURE
     return unless ref_record
     return unless ref_record.id != id
 
