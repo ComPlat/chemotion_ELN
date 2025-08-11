@@ -1,24 +1,17 @@
 import 'whatwg-fetch';
 
 export default class TemplateFetcher {
-  static userTemplates(query) {
-    return fetch(`/api/v1/ketcher/templates_search?query=${query}`, {
-      credentials: 'same-origin',
-    })
-      .then((response) => response.json())
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-  }
-
   static commonTemplates() {
-    return fetch('/api/v1/ketcher/common_templates_list', {
+    return fetch('/json/common_templates_list.json', {
       credentials: 'same-origin',
     })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
+      .then((response) => {
+        if (!response.ok) throw new Error('Failed to load common templates');
+        return response.json();
+      })
+      .catch((error) => {
+        console.error('Error loading templates:', error);
+        return [];
       });
   }
 }
