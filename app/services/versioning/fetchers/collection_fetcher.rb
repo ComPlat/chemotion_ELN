@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Versioning::Fetchers::ResearchPlanFetcher
+class Versioning::Fetchers::CollectionFetcher
   include ActiveModel::Model
 
   attr_accessor :collection
