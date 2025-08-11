@@ -161,9 +161,10 @@ const SearchResultTabContent = ({ list, tabResult, openDetail }) => {
 
     if (tabResultByPage.elements.length > 0) {
       contentList = tabResultByPage.elements.map((object, i, elements) => {
-        let previous = elements[i - 1];
-        let previousMolecule = previous ? previous.molecule_formula : '';
-        let moleculeName = previous && previousMolecule == object.molecule_formula ? '' : <SampleName sample={object} />;
+        const previous = elements[i - 1];
+        const previousMolecule = previous ? previous.molecule_formula : '';
+        const sampleNameOrEmpty = object.type === 'sample' ? <SampleName sample={object} /> : '';
+        const moleculeName = previous && previousMolecule == object.molecule_formula ? '' : sampleNameOrEmpty;
 
         if (['sample', 'reaction'].includes(object.type)) {
           return (
