@@ -1,6 +1,7 @@
 /* eslint-disable import/no-mutable-exports */
 import { KET_TAGS } from 'src/utilities/ketcherSurfaceChemistry/constants';
 import loadAndEncodeSVG from 'src/utilities/ketcherSurfaceChemistry/iconBaseProvider';
+import { imageNodeCounter } from 'src/components/structureEditor/KetcherEditor';
 
 export let FILOStack = []; // a stack to main a list of event triggered
 export const uniqueEvents = new Set(); // list of unique event from the canvas
@@ -160,7 +161,7 @@ export const emptyKetcherStore = () => ({
   }
 });
 
-export const addNewMol = (tempId, imageNodeCounter) => ({
+export const addNewMol = (tempId) => ({
   type: 'molecule',
   atoms: [
     {

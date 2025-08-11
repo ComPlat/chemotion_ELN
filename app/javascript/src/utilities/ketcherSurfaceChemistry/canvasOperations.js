@@ -546,7 +546,7 @@ const onFinalCanvasSave = async (editor, iframeRef) => {
   }
 };
 
-const onPasteNewShapes = async (editor, tempId, imageToBeAdded, iframeRef) => {
+const onPasteNewShapes = async (editor, tempId, imageToBeAdded) => {
   const combo = [];
   combo.push({
     $ref: `mol${mols.length}`
@@ -560,11 +560,11 @@ const onPasteNewShapes = async (editor, tempId, imageToBeAdded, iframeRef) => {
   imageUsedCounterSetter(imageNodeCounter + 1);
   if (!latestData) { latestDataSetter(emptyKetcherStore()); }
   latestData.root.nodes.push(...combo);
-  latestData[`mol${mols.length}`] = await addNewMol(tempId, imageNodeCounter);
-  saveMoveCanvas(editor, latestData, true, true, false);
-  await buttonClickForRectangleSelection(iframeRef);
-  FILOStackSetter([]);
-  allAtomsSetter([]);
+  latestData[`mol${mols.length}`] = await addNewMol(tempId);
+  saveMoveCanvas(editor, latestData, true, false, false);
+  // await buttonClickForRectangleSelection(iframeRef);
+  // FILOStackSetter([]);
+  // allAtomsSetter([]);
 };
 
 const getTitleSelector = (title) => `[title='${title.replace(/\(/g, '\\(').replace(/\)/g, '\\)')}']`;
