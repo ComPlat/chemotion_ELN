@@ -1,0 +1,30 @@
+.pseudo-table {
+  @extend .d-flex;
+  @extend .flex-column;
+  @extend .w-100;
+  @extend .gap-1;
+  @extend .my-2;
+  &__row {
+    @extend .d-flex;
+    @extend .align-items-center;
+    @extend .justify-content-between;
+    @extend .w-100;
+    @extend .gap-2;
+    &-header {
+      @extend .fw-bold;
+    }
+  }
+  &__cell {
+    @extend .py-1;
+    @extend .d-flex;
+    @extend .gap-1;
+    &-title {
+      @extend .flex-grow-1;
+      // Prevent overflow issues
+      min-width: 0;
+      * {
+        max-width: 100%;
+      }
+    }
+  }
+}
