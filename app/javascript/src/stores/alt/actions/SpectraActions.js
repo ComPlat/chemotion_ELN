@@ -118,7 +118,7 @@ class SpectraActions {
       si.label?.toLowerCase().endsWith('.nmrium'),
     );
   
-    const jcampExtensions = ['.jdx', '.dx', '.jcamp'];
+    const jcampExtensions = ['.jdx', '.dx', '.jcamp', '.zip'];
     const jdxInfos = spcInfos.filter(si =>
       jcampExtensions.some(ext => si.label?.toLowerCase().endsWith(ext)),
     );

@@ -186,7 +186,9 @@ export default class NMRiumDisplayer extends React.Component {
   
     // Fallback: only .jdx file available
     if (jdx?.url) {
-      const jdxUrlWithFile = `${jdx.url}/file.jdx`;
+      // get file extension from jdx.label
+      const fileExtension = jdx.label?.split('.').pop()?.toLowerCase() || 'jdx';
+      const jdxUrlWithFile = `${jdx.url}/file.${fileExtension}`;
       const payload = {
         type: 'nmrium',
         data: {
