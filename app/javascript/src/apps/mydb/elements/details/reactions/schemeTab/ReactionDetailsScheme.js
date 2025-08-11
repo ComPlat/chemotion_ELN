@@ -826,8 +826,14 @@ export default class ReactionDetailsScheme extends React.Component {
       updatedSample.sample_details.reference_molecular_weight = referenceComponent.molecule.molecular_weight;
     }
 
+    // Set the reference relative molecular weight
+    const relativeWeight = referenceComponent.component_properties?.relative_molecular_weight;
+    if (relativeWeight) {
+      updatedSample.sample_details.reference_relative_molecular_weight = relativeWeight;
+    }
+
     // Perform calculations when the reference component changes
-    this.calculateMixturePropertiesFromReferenceComponent(updatedSample, referenceComponent);
+    this.calculateMixturePropertiesFromReferenceComponentChange(updatedSample, referenceComponent);
 
     // Mark the sample as changed for persistence
     updatedSample.changed = true;
@@ -844,7 +850,7 @@ export default class ReactionDetailsScheme extends React.Component {
    * @param {Sample} updatedSample - The mixture sample being updated
    * @param {Component} referenceComponent - The new reference component
    */
-  calculateMixturePropertiesFromReferenceComponent(updatedSample, referenceComponent) {
+  calculateMixturePropertiesFromReferenceComponentChange(updatedSample, referenceComponent) {
     if (!updatedSample || !referenceComponent) {
       console.warn('Missing sample or reference component for calculation');
       return;
@@ -857,11 +863,13 @@ export default class ReactionDetailsScheme extends React.Component {
       return;
     }
 
-    // (1) Volume calculation using Sample method
-    updatedSample.calculateVolumeFromReferenceComponent(referenceComponent);
-
-    // (2) Mass calculation using Sample method
-    updatedSample.calculateMassFromReferenceComponent(referenceComponent);
+    if (updatedSample.isMixtureLiquid()){
+      // (1) Volume calculation using Sample method
+      updatedSample.calculateVolumeFromReferenceComponent(referenceComponent);
+    } else {
+      // (2) Mass calculation using Sample method
+      updatedSample.calculateMassFromReferenceComponent(referenceComponent);
+    }
 
     // (3) Equivalent calculation using Sample method
     const { reaction } = this.props;
