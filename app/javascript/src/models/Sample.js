@@ -2035,29 +2035,29 @@ export default class Sample extends Element {
    * @param {Component} referenceComponent - The reference component with concentration data
    * @returns {boolean} - Whether the calculation was performed and volume updated
    */
-  calculateVolumeFromReferenceComponent(referenceComponent) {
-    if (!referenceComponent) {
-      console.warn('Missing reference component for volume calculation');
-      return false;
-    }
-
-    const parentAmountMol = this.amount_mol;
-    const referenceConcentration = referenceComponent.concn;
-    if (!referenceConcentration || referenceConcentration <= 0) {
-      console.warn('Invalid reference component concentration for volume calculation');
-      return false;
-    }
-
-    const calculatedVolume = parentAmountMol / referenceConcentration; // Volume in L
-
-    // Store the calculated volume and use setAmount to trigger proper updates
-    console.log(`Calculated volume from reference component: ${calculatedVolume} L`);
-
-    // Use the setAmount method to properly update volume and trigger cascading calculations
-    this.setAmount({ value: calculatedVolume, unit: 'l' });
-
-    return true;
-  }
+  // calculateVolumeFromReferenceComponent(referenceComponent) {
+  //   if (!referenceComponent) {
+  //     console.warn('Missing reference component for volume calculation');
+  //     return false;
+  //   }
+  //
+  //   const parentAmountMol = this.amount_mol;
+  //   const referenceConcentration = referenceComponent.concn;
+  //   if (!referenceConcentration || referenceConcentration <= 0) {
+  //     console.warn('Invalid reference component concentration for volume calculation');
+  //     return false;
+  //   }
+  //
+  //   const calculatedVolume = parentAmountMol / referenceConcentration; // Volume in L
+  //
+  //   // Store the calculated volume and use setAmount to trigger proper updates
+  //   console.log(`Calculated volume from reference component: ${calculatedVolume} L`);
+  //
+  //   // Use the setAmount method to properly update volume and trigger cascading calculations
+  //   this.setAmount({ value: calculatedVolume, unit: 'l' });
+  //
+  //   return true;
+  // }
 
   /**
    * Calculates and updates the target mass from reference component molecular weight.
