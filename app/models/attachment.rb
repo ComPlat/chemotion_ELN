@@ -33,6 +33,7 @@
 #  index_attachments_on_identifier                         (identifier) UNIQUE
 #
 
+# rubocop:disable Metrics/ClassLength
 class Attachment < ApplicationRecord
   has_logidze
   acts_as_paranoid
@@ -258,8 +259,19 @@ class Attachment < ApplicationRecord
     "#{File.basename(filename, '.*')}_annotated#{extension_of_annotation}"
   end
 
+  def thumbnail_base64
+    return nil unless thumb
+
+    thumbnail_data = read_thumbnail
+    Base64.encode64(thumbnail_data)
+  rescue TypeError, Errno::ENOENT
+    Rails.logger.error "Thumbnail data is not available for attachment #{id} but thumb is set to true"
+    nil
+  end
+
   def preview
-    "data:image/png;base64,#{Base64.encode64(read_thumbnail)}" if thumb
+    base64_data = thumbnail_base64
+    base64_data ? "data:image/png;base64,#{base64_data}" : nil
   end
 
   private
@@ -322,3 +334,4 @@ class Attachment < ApplicationRecord
       cannot be uploaded. File size must be less than #{Rails.configuration.shrine_storage.maximum_size} MB"
   end
 end
+# rubocop:enable Metrics/ClassLength
