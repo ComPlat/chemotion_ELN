@@ -677,12 +677,6 @@ export default class Sample extends Element {
         this.updateMixtureComponentVolume(totalVolume);
         this.updateMixtureDensity();
       }
-
-      // If the new amount is mass in grams for mixtures,
-      // recalculate relative molecular weights based on mass contributions
-      if (amount.unit === 'g') {
-        this.calculateMixtureComponentsRelativeMolecularWeight();
-      }
     }
   }
 
@@ -894,7 +888,7 @@ export default class Sample extends Element {
 
   get amount_mol() {
     if (this.amount_unit === 'mol' && (this.gas_type === 'gas'
-    || this.gas_type === 'feedstock')) return this.amount_value;
+    || this.gas_type === 'feedstock' || this.isMixture())) return this.amount_value;
     return this.convertGramToUnit(this.amount_g, 'mol');
   }
 
@@ -1064,18 +1058,18 @@ export default class Sample extends Element {
    * @param {number} amount_value - The amount in moles to convert.
    * @returns {number} The amount converted to grams, or 0 if conversion is not possible.
    */
-  convertMixtureMolToGram(amount_value) {
-    const referenceComponent = this.reference_component;
-    const relativeMW = referenceComponent && this.getReferenceRelativeMolecularWeight(referenceComponent);
-
-    if (!relativeMW || relativeMW <= 0) {
-      console.warn('Invalid reference molecular weight for mixture mol to gram conversion');
-      return 0;
-    }
-
-    // Convert moles to grams: amount_g = amount_mol * relative_molecular_weight
-    return amount_value * relativeMW; // amount_mol * relativeMW
-  }
+  // convertMixtureMolToGram(amount_value) {
+  //   const referenceComponent = this.reference_component;
+  //   const relativeMW = referenceComponent && this.getReferenceRelativeMolecularWeight(referenceComponent);
+  //
+  //   if (!relativeMW || relativeMW <= 0) {
+  //     console.warn('Invalid reference molecular weight for mixture mol to gram conversion');
+  //     return 0;
+  //   }
+  //
+  //   // Convert moles to grams: amount_g = amount_mol * relative_molecular_weight
+  //   return amount_value * relativeMW; // amount_mol * relativeMW
+  // }
 
   convertToGram(amount_value, amount_unit) {
     if (this.contains_residues) {
@@ -1117,9 +1111,9 @@ export default class Sample extends Element {
           return 0;
         }
         case 'mol': {
-          if (this.isMixture()) {
-            return this.convertMixtureMolToGram(amount_value);
-          }
+          // if (this.isMixture()) {
+          //   return this.convertMixtureMolToGram(amount_value);
+          // }
           const molecularWeight = this.molecule_molecular_weight;
           const purity = this.purity || 1.0;
 
@@ -1403,6 +1397,31 @@ export default class Sample extends Element {
    */
   set reference_molecular_weight(reference_molecular_weight) {
     this.sample_details.reference_molecular_weight = reference_molecular_weight;
+  }
+
+  /**
+   * Gets the relative molecular weight from the reference component.
+   * This represents the effective molecular weight of the reference component
+   * considering its contribution to the total mixture mass.
+   *
+   * @returns {number|null} The relative molecular weight of the reference component,
+   *                        or null if no reference component exists
+   */
+  get reference_relative_molecular_weight() {
+    if (!this.reference_component) { return null; }
+
+    return this.reference_component.component_properties?.relative_molecular_weight;
+  }
+
+  /**
+   * Sets the reference relative molecular weight in the sample details.
+   * This value represents the calculated relative molecular weight of the reference
+   * component based on the mixture composition.
+   *
+   * @param {number} reference_molecular_weight - The relative molecular weight to store
+   */
+  set reference_relative_molecular_weight(reference_relative_molecular_weight) {
+    this.sample_details.reference_relative_molecular_weight = reference_relative_molecular_weight;
   }
 
   /**
@@ -1713,16 +1732,6 @@ export default class Sample extends Element {
       }
     });
 
-    // Initialize sample details and set reference molecular weight
-    this.initializeSampleDetails();
-
-    const molecularWeight = this.components[componentIndex].molecule?.molecular_weight;
-    if (molecularWeight) {
-      this.sample_details.reference_molecular_weight = molecularWeight;
-    } else {
-      console.warn(`Reference component at index ${componentIndex} has no molecular weight`);
-    }
-
     // Update equivalents for all components
     this.updateMixtureComponentEquivalent();
   }
@@ -1808,7 +1817,7 @@ export default class Sample extends Element {
 
   /**
    * Calculates the relative molecular weight of all components based on their mass contribution
-   * to the total mixture mass.
+   * to the total mixture mass and updates the components in place.
    *
    * Formula: relative MW per component = total_mixture_mass_g / amount_mol_component (g/mol)
    *
@@ -1817,6 +1826,11 @@ export default class Sample extends Element {
   calculateMixtureComponentsRelativeMolecularWeight() {
     if (!this.isMixture() || !this.hasComponents()) {
       return [];
+    }
+
+    // Ensure the total mixture mass is calculated first
+    if (!this.total_mixture_mass_g || this.total_mixture_mass_g === 0) {
+      this.calculateTotalMixtureMass();
     }
 
     const totalMixtureMass = this.total_mixture_mass_g || 0;
