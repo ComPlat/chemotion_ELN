@@ -35,6 +35,7 @@
 #  index_attachments_on_version                            (version) WHERE (deleted_at IS NULL)
 #
 
+# rubocop:disable Metrics/ClassLength
 class Attachment < ApplicationRecord
   has_logidze
   acts_as_paranoid
@@ -335,3 +336,4 @@ class Attachment < ApplicationRecord
       cannot be uploaded. File size must be less than #{Rails.configuration.shrine_storage.maximum_size} MB"
   end
 end
+# rubocop:enable Metrics/ClassLength
