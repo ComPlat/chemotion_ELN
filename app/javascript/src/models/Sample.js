@@ -1127,26 +1127,41 @@ export default class Sample extends Element {
 
   /**
    * Calculates the amount in moles for mixture samples.
-   * Uses the formula: amount_mol = total mass (g) / relative molecular weight (g/mol)
-   * Falls back to reference component amount_mol if calculation is not possible.
+   * Handles two cases:
+   * 1. Initial case: When the reference component has been changed, uses amount_mol of reference component
+   * 2. Based on amount_g/amount_l changes: Uses formula amount_mol = total mass (g) / reference_component.rel_mol_weight (g/mol)
    *
    * @returns {number} The calculated amount in moles or fallback value
    */
   calculateMixtureAmountMol() {
-    // Use current amount_g to reflect any updates from setAmountAndNormalizeToGram
-    const currentMassG = this.amount_g;
     const referenceComponent = this.reference_component;
-
-    if (currentMassG && referenceComponent) {
-      const relMolMass = this.getReferenceRelativeMolecularWeight(referenceComponent);
-
-      if (relMolMass && relMolMass > 0) {
-        return currentMassG / relMolMass;
-      }
+    if (!referenceComponent) {
+      return 0;
     }
 
-    // Fallback to reference component amount_mol if calculation is not possible
-    return this.reference_amount_mol;
+    // Check if the reference component has been changed (flag set during reference change)
+    const hasReferenceChanged = this.sample_details?.reference_component_changed || false;
+
+    // Get the reference component's relative molecular weight
+    const relMolWeight = referenceComponent.relative_molecular_weight;
+
+    let result;
+
+    // Case 1: Initial case - when the reference has been changed, use amount_mol of reference component
+    if (hasReferenceChanged) {
+      result = referenceComponent.amount_mol || 0;
+
+      // Don't reset the flag immediately - let it persist for the calculation chain
+      // The flag will be reset externally after all calculations are complete
+    } else if (relMolWeight && relMolWeight > 0 && this.amount_g && this.amount_g > 0) {
+      // Case 2: Based on amount_g/amount_l changes - use total mass / relative molecular weight
+      result = this.amount_g / relMolWeight;
+    } else {
+      // Case 3: Fallback to using amount_mol of the reference component
+      result = referenceComponent.amount_mol || 'n.d';
+    }
+
+    return result;
   }
 
   /**
@@ -1157,7 +1172,7 @@ export default class Sample extends Element {
    * @returns {number|null} The relative molecular weight or null if not found
    */
   getReferenceRelativeMolecularWeight(referenceComponent) {
-    return referenceComponent.component_properties?.relative_molecular_weight;
+    return referenceComponent.relative_molecular_weight;
   }
 
   get molecule_iupac_name() {
@@ -2061,8 +2076,10 @@ export default class Sample extends Element {
       return false;
     }
 
-    const parentAmountMol = this.amount_mol;
-    const calculatedMass = parentAmountMol / referenceComponent.relative_molecular_weight; // Mass in g
+    const calculatedMass = referenceComponent.amount_mol / referenceComponent.relative_molecular_weight; // Mass in g
+
+    // Use the setAmount method to properly update mass and trigger cascading calculations
+    this.setAmount({ value: calculatedMass, unit: 'g' });
 
     // Store the calculated mass in sample details
     this.initializeSampleDetails();
