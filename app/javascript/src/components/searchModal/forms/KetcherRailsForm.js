@@ -134,10 +134,10 @@ function KetcherRailsform() {
             />
             <div className="ketcher-buttons">
               <ButtonToolbar className="gap-2">
-                <Button variant="warning" onClick={() => searchStore.handleCancel()}>
+                <Button variant="primary" onClick={() => searchStore.handleCancel()}>
                   Cancel
                 </Button>
-                <Button variant="primary" onClick={handleSearch}>
+                <Button variant="warning" onClick={handleSearch}>
                   Search
                 </Button>
               </ButtonToolbar>
