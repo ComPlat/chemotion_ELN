@@ -1107,6 +1107,32 @@ export default class ReactionDetailsScheme extends React.Component {
     return (sample.amount_mol / feedstockMolValue);
   }
 
+  // eslint-disable-next-line class-methods-use-this
+  // Handle mixture samples differently
+  handleEquivalentBasedAmountUpdate(sample, newAmountMol) {
+    if (sample.isMixture() && sample.hasComponents()) {
+      // For mixture samples, we need to use the reference component's relative molecular weight
+      // to calculate the correct mass from the new amount_mol
+      const referenceComponent = sample.reference_component;
+      if (referenceComponent && referenceComponent.relative_molecular_weight) {
+        const newAmountG = newAmountMol * referenceComponent.relative_molecular_weight;
+        sample.setAmount({ value: newAmountG, unit: 'g' });
+      } else {
+        // Fallback if no reference component or relative molecular weight
+        sample.setAmountAndNormalizeToGram({
+          value: newAmountMol,
+          unit: 'mol',
+        });
+      }
+    } else {
+      // For regular samples, use the standard method
+      sample.setAmountAndNormalizeToGram({
+        value: newAmountMol,
+        unit: 'mol',
+      });
+    }
+  }
+
   updatedSamplesForEquivalentChange(samples, updatedSample, materialGroup) {
     const { reaction: { referenceMaterial } } = this.props;
     let stoichiometryCoeff = 1.0;
@@ -1116,10 +1142,8 @@ export default class ReactionDetailsScheme extends React.Component {
         sample.equivalent = updatedSample.equivalent;
         if (referenceMaterial && referenceMaterial.amount_value
           && updatedSample.gas_type !== 'feedstock') {
-          sample.setAmountAndNormalizeToGram({
-            value: updatedSample.equivalent * referenceMaterial.amount_mol,
-            unit: 'mol',
-          });
+          const newAmountMol = updatedSample.equivalent * referenceMaterial.amount_mol;
+          this.handleEquivalentBasedAmountUpdate(sample, newAmountMol);
         } else if (sample.amount_value && updatedSample.gas_type !== 'feedstock') {
           sample.setAmountAndNormalizeToGram({
             value: updatedSample.equivalent * sample.amount_mol,
