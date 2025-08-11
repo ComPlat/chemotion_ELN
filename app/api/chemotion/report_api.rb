@@ -93,7 +93,7 @@ module Chemotion
         header('Content-Disposition', "attachment; filename=\"#{filename}\"")
         # header 'Content-Disposition', "attachment; filename*=UTF-8''#{fileURI}"
 
-        export.read
+        export.read || ''
       end
 
       params do
@@ -137,7 +137,7 @@ module Chemotion
 
         result = db_exec_query(sql_query)
         export.generate_sheet_with_samples(:wellplate, result)
-        export.read
+        export.read || ''
       end
 
       params do
@@ -159,7 +159,7 @@ module Chemotion
 
         result = db_exec_query(sql_query)
         export.generate_sheet_with_samples(:reaction, result)
-        export.read
+        export.read || ''
       end
     end
 
