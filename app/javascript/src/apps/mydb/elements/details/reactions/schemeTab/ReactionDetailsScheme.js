@@ -591,6 +591,11 @@ export default class ReactionDetailsScheme extends React.Component {
       GasPhaseReactionActions.setCatalystReferenceMole(updatedSample.amount_mol);
     }
 
+    // Reset the reference component changed flag after amount/unit changes are processed
+    if (updatedSample.sample_details) {
+      updatedSample.sample_details.reference_component_changed = false;
+    }
+
     return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample);
   }
 
@@ -832,6 +837,9 @@ export default class ReactionDetailsScheme extends React.Component {
       updatedSample.sample_details.reference_relative_molecular_weight = relativeWeight;
     }
 
+    // Mark that the reference component has been changed (for calculation logic)
+    updatedSample.sample_details.reference_component_changed = true;
+
     // Perform calculations when the reference component changes
     this.calculateMixturePropertiesFromReferenceComponentChange(updatedSample, referenceComponent);
 
@@ -863,13 +871,7 @@ export default class ReactionDetailsScheme extends React.Component {
       return;
     }
 
-    if (updatedSample.isMixtureLiquid()){
-      // (1) Volume calculation using Sample method
-      updatedSample.calculateVolumeFromReferenceComponent(referenceComponent);
-    } else {
-      // (2) Mass calculation using Sample method
-      updatedSample.calculateMassFromReferenceComponent(referenceComponent);
-    }
+    updatedSample.calculateMassFromReferenceComponent(referenceComponent);
 
     // (3) Equivalent calculation using Sample method
     const { reaction } = this.props;

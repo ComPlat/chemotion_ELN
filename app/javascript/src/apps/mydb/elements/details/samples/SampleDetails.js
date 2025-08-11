@@ -374,6 +374,9 @@ export default class SampleDetails extends React.Component {
           reference_relative_molecular_weight: componentProperties?.relative_molecular_weight || null
         });
 
+        // Reset the reference component changed flag after saving calculations
+        sample.sample_details.reference_component_changed = false;
+
         // Log warnings if values are missing
         if (!molecule?.molecular_weight) {
           console.warn('Reference component has no molecular weight');
