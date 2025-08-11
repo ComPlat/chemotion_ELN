@@ -262,8 +262,12 @@ class Attachment < ApplicationRecord
 
   def thumbnail_base64
     return nil unless thumb
+
     thumbnail_data = read_thumbnail
-    thumbnail_data.present? ? Base64.encode64(thumbnail_data) : nil
+    Base64.encode64(thumbnail_data)
+  rescue TypeError, Errno::ENOENT
+    Rails.logger.error "Thumbnail data is not available for attachment #{id} but thumb is set to true"
+    nil
   end
 
   def preview
