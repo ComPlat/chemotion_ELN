@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 class MaterialDecorator
-  require 'material_serializer'
 
   attr_reader :reaction_materials
 
