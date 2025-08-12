@@ -89,6 +89,19 @@ $sidebar-logo-height: 72px;
       $body-color
     );
   }
+  &.sidebar-button--expandable {
+    .expand-icon {
+      display: none;
+    }
+    &:hover {
+      .expand-icon {
+        display: inline-block;
+      }
+      .type-icon {
+        display: none;
+      }
+    }
+  }
 }
 
 .collection-management-button {

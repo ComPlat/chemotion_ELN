@@ -104,7 +104,7 @@ function CollectionTree({ isCollapsed, expandSidebar }) {
     <div className="mh-100 d-flex flex-column">
       <div className="sidebar-button-frame tree-view_frame flex-column">
         {collectionGroups.map(({
-          label, icon, collectionKey, roots, onClickOpenCollection,
+          label, icon, collectionKey, roots, onClickOpenCollection
         }) => {
           const isActive = activeCollection === collectionKey;
           return (
@@ -120,6 +120,7 @@ function CollectionTree({ isCollapsed, expandSidebar }) {
                     collectionShow({ params: { collectionID: onClickOpenCollection } });
                   }
                 }}
+                expandable
                 appendComponent={collectionKey === CHEMOTION_REPOSITORY_KEY ? (
                   <GatePushButton collectionId={chemotionRepository.id} />
                 ) : null}
