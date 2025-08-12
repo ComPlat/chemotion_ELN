@@ -4,7 +4,7 @@ module OrdKit
   module Exporter
     module Actions
       module Analysis
-        class SpectrometryExporter < Purification::ChromatographyExporter
+        class SpectrometryExporter < Purification::Base
           def to_ord
             { spectrometry: ReactionProcessAction::ActionSpectrometry.new({ device: workup['device'] }) }
           end

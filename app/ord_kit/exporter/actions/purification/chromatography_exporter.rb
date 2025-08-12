@@ -14,11 +14,18 @@ module OrdKit
                 steps: steps,
                 automation_mode: ontology_ord(workup['automation_mode']),
                 fractions: fractions,
+                molecular_entities: molecular_entities,
               }.merge(automation_specific_fields),
             ) }
           end
 
           private
+
+          def molecular_entities
+            Array(workup['samples']).map do |sample|
+              OrdKit::Exporter::Samples::SampleExporter.new(sample).to_ord
+            end
+          end
 
           def fractions
             action.fractions.map do |fraction|
