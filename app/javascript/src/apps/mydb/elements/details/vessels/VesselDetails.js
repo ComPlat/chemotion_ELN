@@ -12,6 +12,9 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import VesselProperties from 'src/apps/mydb/elements/details/vessels/propertiesTab/VesselProperties';
 
 function VesselDetails({ vesselItem, toggleFullScreen }) {
+  if (!vesselItem) {
+    return null; // Render nothing if no vesselItem
+  }
   const isReadOnly = () => {
     const { currentCollection, isSync } = UIStore.getState();
     const { currentUser } = UserStore.getState();
