@@ -7,8 +7,8 @@
 // allowing to store data describing the process of a chemical reaction
 // (loosely based on the original ORD Schema).
 //
-// v0.8.0
-// (draft, 18.01.2025)
+// v0.9.0
+// (draft, 12.08.2025)
 //
 //
 // Copyright 2020 Open Reaction Database Project Authors
@@ -296,6 +296,8 @@ message ReactionProcessAction {
 
     repeated ChromatographyStep steps = 16;
     repeated PoolingFraction fractions = 17;
+
+    repeated Compound molecular_entities = 18;
   }
 
   message ActionPurificationExtraction {
@@ -344,20 +346,22 @@ message ReactionProcessAction {
     }
   }
 
-  message ActionSpectroscopy {
+  message ActionAnalysisSpectroscopy {
     Automation.AutomationMode automation_mode = 1;
     string device = 2;
+    repeated Compound molecular_entities = 3;
   }
 
-  message ActionSpectrometry {
+  message ActionAnalysisSpectrometry {
     Automation.AutomationMode automation_mode = 1;
     string device = 2;
+    repeated Compound molecular_entities = 3;
   }
 
   message ActionAnalysis {
     oneof type {
-      ActionSpectroscopy spectroscopy = 1;
-      ActionSpectrometry spectrometry = 2;
+      ActionAnalysisSpectroscopy spectroscopy = 1;
+      ActionAnalysisSpectrometry spectrometry = 2;
       ActionPurificationChromatography chromatography = 3; // for now identical, ActionAnalysisChr. might diverge soon.
     }
   }
