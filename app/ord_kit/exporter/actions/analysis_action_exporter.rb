@@ -13,7 +13,7 @@ module OrdKit
         private
 
         def action_type_attributes
-          { analysis: ANALYSIS_EXPORTER[workup['analysis_type']]&.new(workup)&.to_ord || {} }
+          { analysis: ANALYSIS_EXPORTER[workup['analysis_type']]&.new(action)&.to_ord || {} }
         end
       end
     end
