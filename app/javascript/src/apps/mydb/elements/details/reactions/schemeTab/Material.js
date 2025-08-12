@@ -275,17 +275,32 @@ class Material extends Component {
 
   yieldOrConversionRate(material) {
     const { reaction, displayYieldField } = this.props;
+    const yieldMessage = (
+      <>
+        The final yield value calculated upon saving the reaction
+        is based on the real amount field value of this product.
+      </>
+    );
     if (displayYieldField === true || displayYieldField === null) {
       return (
         <div>
-          <Form.Control
-            name="yield"
-            type="text"
-            bsClass="bs-form--compact form-control"
-            size="sm"
-            value={this.calculateYield(material, reaction) || 'n.d.'}
-            disabled
-          />
+          <OverlayTrigger
+            placement="top"
+            overlay={(
+              <Tooltip id="yield-tooltip">
+                {yieldMessage}
+              </Tooltip>
+            )}
+          >
+            <Form.Control
+              name="yield"
+              type="text"
+              bsClass="bs-form--compact form-control"
+              size="sm"
+              value={this.calculateYield(material, reaction) || 'n.d.'}
+              disabled
+            />
+          </OverlayTrigger>
         </div>
       );
     }
