@@ -132,7 +132,15 @@ module Chemotion
         when 3
           url
         else
-          "chemotion://?url=#{escaped_url}"
+          element = @attachment.root_element
+          path = "#{element.class.name.downcase}/#{element&.id}"
+          dataset = @attachment.attachable
+          if dataset.is_a?(Container)
+            analysis = dataset.parent
+            path += "/analysis/#{analysis.id}" if analysis.present?
+            path += "/dataset/#{dataset.id}"
+          end
+          "chemotion://?url=#{escaped_url}&path=#{CGI.escape(path)}"
         end
       end
 
