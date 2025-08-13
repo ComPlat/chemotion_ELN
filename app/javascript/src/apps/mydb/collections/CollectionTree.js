@@ -16,33 +16,40 @@ import { collectionShow } from 'src/utilities/routesUtils';
 const ALL_COLLECTIONS_KEY = 'collections';
 const CHEMOTION_REPOSITORY_KEY = 'chemotionRepository';
 
+function containsCollection(collections, collectionId) {
+  if (!collections || collections.length === 0) return false;
+  return collections.some((collection) => {
+    if (collection.id === collectionId) return true;
+    return containsCollection(collection.children, collectionId);
+  });
+}
+
 function CollectionTree({ isCollapsed, expandSidebar }) {
   const [collections, setCollections] = useState(CollectionStore.getState());
-  const [activeCollection, setActiveCollection] = useState('collections');
-  const setCollection = (collection) => {
-    if (isCollapsed) expandSidebar();
-    if (collection !== activeCollection) setActiveCollection(collection);
+  const [activeCollection, setActiveCollection] = useState(ALL_COLLECTIONS_KEY);
+  const [expandedCollections, setExpandedCollections] = useState([ALL_COLLECTIONS_KEY]);
+
+  const toggleCollection = (collectionKey) => {
+    setExpandedCollections((prev) => {
+      if (prev.includes(collectionKey)) {
+        return prev.filter((key) => key !== collectionKey);
+      }
+      return [...prev, collectionKey];
+    });
   };
 
-  useEffect(() => {
-    // 'All' and 'chemotion-repository.net' are special collections that we
-    // expect to be returned by `fetchLockedCollectionRoots`. We check the UI
-    // state here to correctly restore the active collection on page load.
-    const onUiStoreChange = ({ currentCollection }) => {
-      if (!currentCollection) return;
+  const expandCollection = (collectionKey) => {
+    setExpandedCollections((prev) => {
+      if (prev.includes(collectionKey)) return prev;
+      return [...prev, collectionKey];
+    });
+  };
 
-      if (currentCollection.label === 'All') {
-        setActiveCollection(ALL_COLLECTIONS_KEY);
-      }
-
-      if (currentCollection.label === 'chemotion-repository.net') {
-        setActiveCollection(CHEMOTION_REPOSITORY_KEY);
-      }
-    };
-
-    UIStore.listen(onUiStoreChange);
-    return () => UIStore.unlisten(onUiStoreChange);
-  }, []);
+  const setCollection = (collection) => {
+    if (isCollapsed) expandSidebar();
+    expandCollection(collection);
+    if (collection !== activeCollection) setActiveCollection(collection);
+  };
 
   useEffect(() => {
     CollectionActions.fetchLockedCollectionRoots();
@@ -100,6 +107,19 @@ function CollectionTree({ isCollapsed, expandSidebar }) {
     });
   }
 
+  // Set the active collection based on the currentCollection in UIStore
+  useEffect(() => {
+    const onUiStoreChange = ({ currentCollection }) => {
+      if (!currentCollection) return;
+
+      const group = collectionGroups.find(({ roots }) => containsCollection(roots, currentCollection.id));
+      if (group) setCollection(group.collectionKey);
+    };
+
+    UIStore.listen(onUiStoreChange);
+    return () => UIStore.unlisten(onUiStoreChange);
+  }, [collectionGroups]);
+
   return (
     <div className="mh-100 d-flex flex-column">
       <div className="sidebar-button-frame tree-view_frame flex-column">
@@ -107,6 +127,7 @@ function CollectionTree({ isCollapsed, expandSidebar }) {
           label, icon, collectionKey, roots, onClickOpenCollection
         }) => {
           const isActive = activeCollection === collectionKey;
+          const isExpanded = expandedCollections.includes(collectionKey);
           return (
             <Fragment key={collectionKey}>
               <SidebarButton
@@ -114,19 +135,23 @@ function CollectionTree({ isCollapsed, expandSidebar }) {
                 icon={icon}
                 isCollapsed={isCollapsed}
                 onClick={() => {
-                  setCollection(collectionKey);
                   if (onClickOpenCollection !== undefined) {
+                    setCollection(collectionKey);
                     Aviator.navigate(`/collection/${onClickOpenCollection}`, { silent: true });
                     collectionShow({ params: { collectionID: onClickOpenCollection } });
+                  } else {
+                    expandCollection(collectionKey);
                   }
                 }}
                 expandable
+                isExpanded={isExpanded}
+                onToggleExpansion={() => toggleCollection(collectionKey)}
                 appendComponent={collectionKey === CHEMOTION_REPOSITORY_KEY ? (
                   <GatePushButton collectionId={chemotionRepository.id} />
                 ) : null}
                 active={isActive}
               />
-              {isActive && !isCollapsed && roots !== undefined && (
+              {isExpanded && !isCollapsed && roots !== undefined && (
                 <div className="tree-view_container">
                   {roots.length === 0
                     ? <div className="text-muted text-center p-2">No collections</div>

@@ -7,13 +7,15 @@ import {
 
 export default function SidebarButton({
   isCollapsed, onClick, label, icon, variant,
-  badgeCount, appendComponent, active, showLabel, expandable
+  badgeCount, appendComponent, active, showLabel, expandable, isExpanded, onToggleExpansion
 }) {
   const hasBadge = badgeCount !== null && badgeCount > 0;
 
-  const toggleExpansion = () => {
-    // do something
+  const toggleExpansion = (e) => {
+    e.stopPropagation();
+    onToggleExpansion();
   };
+
   return isCollapsed || !showLabel ? (
     <OverlayTrigger
       placement={isCollapsed ? 'right' : 'top'}
@@ -48,7 +50,7 @@ export default function SidebarButton({
         <i className={`type-icon fa-fw ${icon}`} />
         {expandable && (
           <ChevronIcon
-            direction={active ? 'down' : 'right'}
+            direction={isExpanded ? 'down' : 'right'}
             onClick={toggleExpansion}
             className="expand-icon"
           />
@@ -72,7 +74,9 @@ SidebarButton.propTypes = {
   appendComponent: PropTypes.node,
   active: PropTypes.bool,
   showLabel: PropTypes.bool,
-  expandable: PropTypes.bool
+  expandable: PropTypes.bool,
+  isExpanded: PropTypes.bool,
+  onToggleExpansion: PropTypes.func,
 };
 
 SidebarButton.defaultProps = {
@@ -82,5 +86,7 @@ SidebarButton.defaultProps = {
   appendComponent: null,
   active: false,
   showLabel: true,
-  expandable: false
+  expandable: false,
+  isExpanded: false,
+  onToggleExpansion: () => { }
 };
