@@ -165,18 +165,18 @@ export default class ElementDetails extends Component {
       case 'literature_map':
         return <LiteratureDetails literatureMap={el} />;
       case 'cell_line':
-        return <CellLineDetails cellLineItem={el} toggleFullScreen={this.toggleFullScreen} />;
+        return <CellLineDetails cellLineItem={el} />;
       case 'vessel':
-        return <VesselDetails vesselItem={el} toggleFullScreen={this.toggleFullScreen} />;
+        return <VesselDetails vesselItem={el} />;
       case 'vessel_template':
         if (el.is_new) {
-          return <VesselTemplateCreate vesselItem={el} toggleFullScreen={this.toggleFullScreen} />;
+          return <VesselTemplateCreate vesselItem={el} />;
         }
         if (el.group) {
-          return <VesselTemplateDetails vessels={el.group} toggleFullScreen={this.toggleFullScreen} />;
+          return <VesselTemplateDetails vessels={el.group} />;
         }
         if (Array.isArray(el)) {
-          return <VesselTemplateDetails vessels={el} toggleFullScreen={this.toggleFullScreen} />;
+          return <VesselTemplateDetails vessels={el} />;
         }
         return null;
       default:

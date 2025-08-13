@@ -11,7 +11,7 @@ import DetailActions from 'src/stores/alt/actions/DetailActions';
 import VesselsFetcher from 'src/fetchers/VesselsFetcher';
 import UIStore from 'src/stores/alt/stores/UIStore';
 
-function VesselTemplateCreate({ vesselItem: initialVesselItem, toggleFullScreen }) {
+function VesselTemplateCreate({ vesselItem: initialVesselItem }) {
   const { vesselDetailsStore } = useContext(StoreContext);
   const context = useContext(StoreContext);
   const isCreateMode = true;
@@ -155,9 +155,6 @@ function VesselTemplateCreate({ vesselItem: initialVesselItem, toggleFullScreen 
         <div className="d-flex justify-content-between align-items-center">
           <h5 className="mb-0">Create Vessel Template</h5>
           <div className="d-flex align-items-center">
-            <Button variant="info" size="xxsm" onClick={toggleFullScreen} className="me-2">
-              <i className="fa fa-expand" />
-            </Button>
             {renderCloseHeaderButton()}
           </div>
         </div>

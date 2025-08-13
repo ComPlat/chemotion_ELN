@@ -11,7 +11,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import VesselProperties from 'src/apps/mydb/elements/details/vessels/propertiesTab/VesselProperties';
 
-function VesselDetails({ vesselItem, toggleFullScreen }) {
+function VesselDetails({ vesselItem }) {
   if (!vesselItem) {
     return null; // Render nothing if no vesselItem
   }
@@ -59,16 +59,6 @@ function VesselDetails({ vesselItem, toggleFullScreen }) {
   const handleTabChange = (eventKey) => {
     setActiveTab(eventKey);
   };
-
-  const renderEnlargenButton = () => (
-    <Button
-      variant="info"
-      size="xxsm"
-      onClick={toggleFullScreen}
-    >
-      <i className="fa fa-expand" />
-    </Button>
-  );
 
   const renderSaveButton = (closeAfterClick = false) => {
     const { vesselDetailsStore } = context;
@@ -152,7 +142,6 @@ function VesselDetails({ vesselItem, toggleFullScreen }) {
       <div className="d-flex gap-1">
         {renderSaveButton(true)}
         {renderSaveButton()}
-        {renderEnlargenButton()}
         {renderCloseHeaderButton()}
       </div>
     </div>
