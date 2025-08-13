@@ -225,7 +225,8 @@ const applySelectedStruct = async (editor, dataCopy) => {
 
 // find template from dataset by image base
 const findTemplateByPayload = async (targetPayload) => {
-  for (const [templateId, base64] of Object.entries(templatesBaseHashWithTemplateId)) {
+  for (const [templateId, iconName] of Object.entries(templatesBaseHashWithTemplateId)) {
+    const base64 = await loadAndEncodeSVG(iconName);
     if (base64 === targetPayload) {
       return templateId;
     }

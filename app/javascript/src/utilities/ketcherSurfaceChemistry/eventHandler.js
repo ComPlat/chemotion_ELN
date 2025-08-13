@@ -20,15 +20,6 @@ const addEventToFILOStack = (event) => {
   if (event === EventNames.DELETE_TEXT && FILOStack.includes(EventNames.UPSERT_IMAGE)) return;
   if (event === EventNames.DELETE_TEXT && FILOStack.includes(EventNames.DELETE_ATOM)) return;
   if (event === EventNames.UPSERT_IMAGE && FILOStack.includes(EventNames.DELETE_ATOM)) return;
-
-  // Clear the stack and push only UPSERT_IMAGE
-  // if (event === EventNames.UPSERT_IMAGE) {
-    // FILOStack.length = 0;
-    // uniqueEvents.clear();
-  //   FILOStack.push(EventNames.ADD_ATOM);
-  //   uniqueEventsAddEvent(EventNames.ADD_ATOM);
-  // }
-
   if (!uniqueEvents.has(event)) {
     FILOStack.push(event);
     uniqueEventsAddEvent(event);

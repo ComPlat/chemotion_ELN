@@ -1,6 +1,5 @@
 /* eslint-disable import/no-mutable-exports */
 import { KET_TAGS } from 'src/utilities/ketcherSurfaceChemistry/constants';
-import loadAndEncodeSVG from 'src/utilities/ketcherSurfaceChemistry/iconBaseProvider';
 import { imageNodeCounter } from 'src/components/structureEditor/KetcherEditor';
 
 export let FILOStack = []; // a stack to main a list of event triggered
@@ -85,23 +84,14 @@ export const templateListSetter = async (data) => {
 // Set base64-encoded SVG templates by template_id
 export const setBase64TemplateHashSetter = async (data) => {
   const templateHash = {};
-  const loadTasks = [];
-
   data.forEach((group) => {
     group.subTabs.forEach((subTab) => {
       subTab.shapes.forEach((shape) => {
-        loadTasks.push(
-          loadAndEncodeSVG(shape.iconName).then((base64) => [shape.template_id, base64])
-        );
+        templateHash[shape.template_id] = shape.iconName;
       });
     });
   });
-
-  const results = await Promise.all(loadTasks);
-  results.forEach(([templateId, base64]) => {
-    templateHash[templateId] = base64;
-  });
-  templatesBaseHashWithTemplateId = templateHash; // still mutating global var
+  templatesBaseHashWithTemplateId = templateHash;
 };
 
 export const allowProcessingSetter = (data) => {
