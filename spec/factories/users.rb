@@ -37,6 +37,7 @@ FactoryBot.define do
           'research_plan' => 5,
           'cell_line' => -1000,
           'device_descriptions' => -1100,
+          'vessel' => -1100,
         }
         profile.update_columns(data: data) # rubocop:disable Rails/SkipsModelValidations
       end
