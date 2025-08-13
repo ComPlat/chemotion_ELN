@@ -17,7 +17,7 @@ import ElementStore from 'src/stores/alt/stores/ElementStore';
 import BulkInstanceModal from 'src/apps/mydb/elements/details/vessels/propertiesTab/BulkInstanceModal';
 import { generateNextShortLabel } from 'src/utilities/VesselUtilities';
 
-function VesselTemplateDetails({ vessels, toggleFullScreen }) {
+function VesselTemplateDetails({ vessels }) {
   const closeBtnRef = useRef(null);
   const { currentCollection } = UIStore.getState();
   const { currentUser } = UserStore.getState();
@@ -53,17 +53,6 @@ function VesselTemplateDetails({ vessels, toggleFullScreen }) {
     .filter((v) => v.id !== templateId)
     .map((v) => vesselDetailsStore.getVessel(v.id))
     .filter(Boolean);
-
-
-  const renderEnlargenButton = () => (
-    <Button
-      variant="info"
-      size="xxsm"
-      onClick={toggleFullScreen}
-    >
-      <i className="fa fa-expand" />
-    </Button>
-  );
 
   const getInstancesToRemoveFromStore = () => {
     const allOpenTabs = ElementStore.getState().selecteds;
@@ -571,7 +560,6 @@ function VesselTemplateDetails({ vessels, toggleFullScreen }) {
 }
 
 VesselTemplateDetails.propTypes = {
-  toggleFullScreen: PropTypes.func.isRequired,
   vessels: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.string.isRequired,

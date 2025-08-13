@@ -265,7 +265,7 @@ function VesselTemplateCreate({ vesselItem: initialVesselItem }) {
             Create Template
           </Button>
         </ButtonToolbar>
-        </Card.Body>
+      </Card.Body>
     </Card>
   );
 }
