@@ -23,7 +23,6 @@ describe('VesselDetails', () => {
         is_new: true,
         adoptPropsFromMobXModel: sinon.spy(),
       },
-      toggleFullScreen: sinon.spy(),
     };
     UserStore.state.currentUser = {
       id: 'CU1',
@@ -40,7 +39,6 @@ describe('VesselDetails', () => {
       const wrapper = shallow(
         React.createElement(VesselDetails, {
           vesselItem: null,
-          toggleFullScreen: sinon.spy(),
         })
       );
       expect(wrapper.isEmptyRender()).toBe(true);
@@ -70,16 +68,6 @@ describe('VesselDetails', () => {
         (btn) => btn.prop('variant') === 'warning'
       );
       expect(saveButtons).toHaveLength(3);
-    });
-
-    it('renders the fullscreen button', () => {
-      const wrapper = shallow(React.createElement(VesselDetails, { ...props }));
-      const fullscreenButton = wrapper.find(Button).filterWhere(
-        (btn) => btn.prop('variant') === 'info'
-      );
-      expect(fullscreenButton).toHaveLength(1);
-      fullscreenButton.simulate('click');
-      expect(props.toggleFullScreen.callCount).toBe(1);
     });
   });
 

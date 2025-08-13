@@ -179,7 +179,6 @@ VesselDetails.propTypes = {
     short_label: PropTypes.string.isRequired,
     is_new: PropTypes.bool.isRequired,
   }).isRequired,
-  toggleFullScreen: PropTypes.func.isRequired
 };
 
 export default observer(VesselDetails);
