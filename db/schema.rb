@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2025_15_05_141514) do
+ActiveRecord::Schema.define(version: 2025_07_01_134000) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -206,7 +206,6 @@ ActiveRecord::Schema.define(version: 2025_15_05_141514) do
     t.integer "celllinesample_detail_level", default: 10
     t.bigint "inventory_id"
     t.integer "devicedescription_detail_level", default: 10
-    t.jsonb "log_data"
     t.index ["ancestry"], name: "index_collections_on_ancestry"
     t.index ["deleted_at"], name: "index_collections_on_deleted_at"
     t.index ["inventory_id"], name: "index_collections_on_inventory_id"
@@ -503,6 +502,7 @@ ActiveRecord::Schema.define(version: 2025_15_05_141514) do
     t.string "vendor_company_name"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.jsonb "log_data"
     t.index ["ancestry"], name: "index_device_descriptions_on_ancestry"
     t.index ["device_id"], name: "index_device_descriptions_on_device_id"
   end
@@ -2192,7 +2192,7 @@ ActiveRecord::Schema.define(version: 2025_15_05_141514) do
        RETURNS trigger
        LANGUAGE plpgsql
       AS $function$
-        -- version: 2
+        -- version: 3
         DECLARE
           changes jsonb;
           version jsonb;
@@ -2298,24 +2298,56 @@ ActiveRecord::Schema.define(version: 2025_15_05_141514) do
                   END LOOP;
               END;
             ELSE
-              BEGIN
-                changes = hstore_to_jsonb_loose(
-                      hstore(NEW.*) - hstore(OLD.*)
-                  );
-              EXCEPTION
-                WHEN NUMERIC_VALUE_OUT_OF_RANGE THEN
-                  changes = (SELECT
-                    COALESCE(json_object_agg(key, value), '{}')::jsonb
-                    FROM
-                    jsonb_each(row_to_json(NEW.*)::jsonb)
-                    WHERE NOT jsonb_build_object(key, value) <@ row_to_json(OLD.*)::jsonb);
-                  FOR k IN (SELECT key FROM jsonb_each(changes))
-                  LOOP
-                    IF jsonb_typeof(changes->k) = 'object' THEN
-                      changes = jsonb_set(changes, ARRAY[k], to_jsonb(changes->>k));
-                    END IF;
-                  END LOOP;
-              END;
+              WITH
+                new_kv AS (
+                  SELECT key, value FROM jsonb_each(row_to_json(NEW)::jsonb)
+                ),
+                old_kv AS (
+                  SELECT key, value FROM jsonb_each(row_to_json(OLD)::jsonb)
+                ),
+                all_keys AS (
+                  SELECT key FROM new_kv
+                  UNION
+                  SELECT key FROM old_kv
+                )
+              SELECT COALESCE(jsonb_object_agg(key, value), '{}'::jsonb)
+              INTO changes
+              FROM (
+                SELECT
+                  k.key,
+                  CASE
+                    WHEN n.value IS NULL THEN
+                      -- key missing in NEW → mark deleted
+                      to_jsonb('deleted'::text)
+                    WHEN o.value IS NULL THEN
+                      -- key missing in OLD → addition
+                      n.value
+                    WHEN n.value <> o.value THEN
+                      -- key present in both but different → changed
+                      n.value
+                    ELSE
+                      -- identical → exclude by returning NULL (will be filtered out)
+                      NULL
+                  END AS value
+                FROM all_keys k
+                LEFT JOIN new_kv n ON k.key = n.key
+                LEFT JOIN old_kv o ON k.key = o.key
+              ) t
+              WHERE value IS NOT NULL;
+
+              FOR k IN SELECT key FROM jsonb_each(changes)
+                LOOP
+                  IF jsonb_typeof(changes->k) = 'object' THEN
+                    changes := jsonb_set(
+                      changes,
+                      ARRAY[k],
+                      jsonb_diff(
+                        row_to_json(OLD)::jsonb -> k,
+                        row_to_json(NEW)::jsonb -> k
+                      )
+                    );
+                  END IF;
+                END LOOP;
             END IF;
 
             changes = changes - 'log_data';
@@ -2487,6 +2519,15 @@ ActiveRecord::Schema.define(version: 2025_15_05_141514) do
           END IF;
         END LOOP;
 
+        -- Iterate through each key-value pair in old
+        FOR v in SELECT * from jsonb_each(old) LOOP
+          -- If value was deleted
+          IF new -> v.key IS NULL AND jsonb_typeof(v.value) = 'object' THEN
+            -- Append to result with value 'deleted'
+            result := result || jsonb_build_object(v.key, 'deleted');
+          END IF;
+        END LOOP;
+
         RETURN result;
       END;
       $function$
@@ -2540,6 +2581,9 @@ ActiveRecord::Schema.define(version: 2025_15_05_141514) do
   SQL
   create_trigger :logidze_on_chemicals, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_chemicals BEFORE INSERT OR UPDATE ON public.chemicals FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_device_descriptions, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_device_descriptions BEFORE INSERT OR UPDATE ON public.device_descriptions FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
   create_trigger :lab_trg_layers_changes, sql_definition: <<-SQL
       CREATE TRIGGER lab_trg_layers_changes AFTER UPDATE ON public.layers FOR EACH ROW EXECUTE FUNCTION lab_record_layers_changes()

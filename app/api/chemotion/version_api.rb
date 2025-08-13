@@ -115,6 +115,25 @@ module Chemotion
         end
       end
 
+      resource :device_descriptions do
+        desc 'Return versions of the given device description'
+
+        params do
+          requires :id, type: Integer, desc: 'Device description id'
+        end
+
+        paginate per_page: 10, offset: 0, max_per_page: 100
+
+        route_param :id do
+          get do
+            device_description = DeviceDescription.with_log_data.find(params[:id])
+
+            versions = Versioning::Fetcher.call(device_description)
+            { versions: paginate(Kaminari.paginate_array(versions)) }
+          end
+        end
+      end
+
       resource :revert do
         desc 'Revert selected changes'
 

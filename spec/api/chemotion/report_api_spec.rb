@@ -120,7 +120,7 @@ describe Chemotion::ReportAPI do
 
           expect(response['Content-Type']).to eq('chemical/x-mdl-sdfile')
           expect(response['Content-Disposition']).to include('.sdf')
-          
+
           msdf = molfiles[i]
           sdf = response.body
 
@@ -143,55 +143,98 @@ describe Chemotion::ReportAPI do
     end
 
     describe 'POST /api/v1/reports/export_samples_from_selections' do
+      subject(:make_request) do
+        post '/api/v1/reports/export_samples_from_selections',
+             params: params, as: :json, headers: headers
+      end
+
       let(:c) { create(:collection, user_id: user.id) }
       let(:sample1) { create(:sample) }
       let(:sample2) { create(:sample) }
 
-      it 'returns a header with excel-type' do
-        CollectionsSample.create!(sample: sample1, collection: c)
-        CollectionsSample.create!(sample: sample2, collection: c)
-        params = {
-          exportType: 1,
-          uiState: {
-            sample: {
-              checkedIds: [sample1.id],
-              uncheckedIds: [],
-              checkedAll: false,
-            },
-            reaction: {
-              checkedIds: [],
-              uncheckedIds: [],
-              checkedAll: false,
-            },
-            wellplate: {
-              checkedIds: [],
-              uncheckedIds: [],
-              checkedAll: false,
-            },
-            currentCollection: c.id,
-            isSync: false,
-          },
-          columns: {
-            sample: %w[
-              created_at
-              molfile
-              target_amount_unit
-              target_amount_value
-              updated_at
-            ],
-          },
+      let(:headers) do
+        {
+          'HTTP-ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
+          'CONTENT-TYPE' => 'application/json',
         }
-        post(
-          '/api/v1/reports/export_samples_from_selections',
-          params: params, as: :json,
-          headers: {
-            'HTTP-ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
-            'CONTENT-TYPE' => 'application/json',
-          }
-        )
+      end
 
-        expect(response['Content-Type']).to eq(excel_mime_type)
-        expect(response['Content-Disposition']).to include('.xlsx')
+      let(:base_ui_state) do
+        {
+          reaction: {
+            checkedIds: [],
+            uncheckedIds: [],
+            checkedAll: false,
+          },
+          wellplate: {
+            checkedIds: [],
+            uncheckedIds: [],
+            checkedAll: false,
+          },
+          currentCollection: c.id,
+          isSync: false,
+        }
+      end
+
+      let(:columns) do
+        {
+          sample: %w[
+            created_at
+            molfile
+            target_amount_unit
+            target_amount_value
+            updated_at
+          ],
+        }
+      end
+
+      describe 'when nothing is selected' do
+        let(:params) do
+          {
+            exportType: 1,
+            uiState: base_ui_state.merge(
+              sample: {
+                checkedIds: [],
+                uncheckedIds: [],
+                checkedAll: false,
+              },
+            ),
+            columns: columns,
+          }
+        end
+
+        before { make_request }
+
+        it 'returns status 204' do
+          expect(response).to have_http_status(:no_content)
+        end
+      end
+
+      describe 'when sample1 is selected' do
+        before do
+          CollectionsSample.create!(sample: sample1, collection: c)
+          CollectionsSample.create!(sample: sample2, collection: c)
+          make_request
+        end
+
+        let(:params) do
+          {
+            exportType: 1,
+            uiState: base_ui_state.merge(
+              sample: {
+                checkedIds: [sample1.id],
+                uncheckedIds: [],
+                checkedAll: false,
+              },
+            ),
+            columns: columns,
+          }
+        end
+
+        it 'returns a header with excel-type' do
+          expect(response['Content-Type']).to eq(excel_mime_type)
+          expect(response['Content-Disposition']).to include('.xlsx')
+        end
       end
     end
 
