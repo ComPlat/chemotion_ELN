@@ -9,11 +9,9 @@ import { ShowUserLabels } from 'src/components/UserLabels';
 import ReactionGroupHeader from 'src/apps/mydb/elements/list/reaction/ReactionGroupHeader';
 import ReactionGroupItem from 'src/apps/mydb/elements/list/reaction/ReactionGroupItem';
 
-function GenericElementsHeader({
-  group, onClick
-}) {
+function GenericElementsHeader({ group }) {
   return (
-    <div onClick={onClick} role="button" className="flex-grow-1">
+    <div className="flex-grow-1">
       <div className="preview-table">
         {group}
       </div>
@@ -23,7 +21,6 @@ function GenericElementsHeader({
 
 GenericElementsHeader.propTypes = {
   group: PropTypes.string.isRequired,
-  onClick: PropTypes.func.isRequired,
 };
 
 function GenericElementItem({ element, showDetails }) {
@@ -59,13 +56,12 @@ export default function ElementsTableGroupedEntries({
         type="reaction"
         elements={elements}
         getGroupKey={(element) => getGroupKey(element)}
-        renderGroupHeader={(group, toggleGroupCollapse) => {
+        renderGroupHeader={(group) => {
           const groupKey = getGroupKey(group[0]);
           return (
             <ReactionGroupHeader
               group={groupKey}
               element={group[0]}
-              onClick={() => toggleGroupCollapse()}
             />
           );
         }}
@@ -90,15 +86,9 @@ export default function ElementsTableGroupedEntries({
       type={type}
       elements={elements}
       getGroupKey={(element) => getGroupKey(element)}
-      renderGroupHeader={(group, toggleGroupCollapse) => {
-        const groupKey = getGroupKey(group[0]);
-        return (
-          <GenericElementsHeader
-            group={groupKey}
-            onClick={() => toggleGroupCollapse()}
-          />
-        );
-      }}
+      renderGroupHeader={(group) => (
+        <GenericElementsHeader group={getGroupKey(group[0])} />
+      )}
       renderGroupItem={(item, showDetails) => (
         <GenericElementItem element={item} showDetails={showDetails} />
       )}
