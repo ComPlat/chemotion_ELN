@@ -140,7 +140,6 @@ function VesselTemplateDetails({ vessels }) {
         </span>
       </div>
       <div className="d-flex gap-1">
-        {renderEnlargenButton()}
         {renderCloseHeaderButton()}
       </div>
     </div>
