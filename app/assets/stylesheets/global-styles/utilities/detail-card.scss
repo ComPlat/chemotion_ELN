@@ -16,7 +16,6 @@
 
   & > &__scroll-container {
     @extend .flex-grow-1;
-    @extend .h-0;
     @extend .overflow-y-auto;
     @extend .pt-1;
 

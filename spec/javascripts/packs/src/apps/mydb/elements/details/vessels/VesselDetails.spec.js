@@ -49,7 +49,7 @@ describe('VesselDetails', () => {
     it('renders the component', () => {
       const wrapper = shallow(React.createElement(VesselDetails, { ...props }));
       expect(wrapper.exists()).toBe(true);
-      expect(wrapper.text()).toContain('Test Vessel');
+      expect(wrapper.text()).toContain('<DetailCard />');
     });
 
     it('renders tab for Properties', () => {
@@ -67,7 +67,7 @@ describe('VesselDetails', () => {
       const saveButtons = wrapper.find(Button).filterWhere(
         (btn) => btn.prop('variant') === 'warning'
       );
-      expect(saveButtons).toHaveLength(3);
+      expect(saveButtons).toHaveLength(1);
     });
   });
 

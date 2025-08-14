@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import { ButtonToolbar, Button, Card, Tabs, Tab, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { ButtonToolbar, Button, Tabs, Tab, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
@@ -34,7 +34,7 @@ function VesselDetails({ vesselItem }) {
     setReadOnly(isReadOnly());
   }, [vesselItem]);
 
-  const handleSubmit = (vesselItem) => {
+  const handleSubmit = () => {
     const mobXItem = context.vesselDetailsStore.getVessel(vesselItem.id);
     vesselItem.adoptPropsFromMobXModel(mobXItem);
 
@@ -47,7 +47,7 @@ function VesselDetails({ vesselItem }) {
     mobXItem.markChanged(false);
   };
 
-  const handleClose = (vesselItem) => {
+  const handleClose = () => {
     const { vesselDetailsStore } = context;
     const mobXItem = vesselDetailsStore.getVessel(vesselItem.id);
 
@@ -151,8 +151,7 @@ function VesselDetails({ vesselItem }) {
   return (
     <DetailCard
       header={renderHeaderContent()}
-      // footer=
-      // isPendingToSave={context.vesselDetailsStore.isPendingToSave(vesselItem.id)}
+      isPendingToSave={context.vesselDetailsStore.getVessel(vesselItem.id)?.changed}
     >
       <div className="tabs-container--with-borders">
         <Tabs activeKey={activeTab} onSelect={handleTabChange} id="vessel-details-tab">

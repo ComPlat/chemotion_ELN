@@ -1,6 +1,8 @@
 /* eslint-disable react/function-component-definition */
 import React, { useContext, useEffect, useState } from 'react';
-import { Button, Form, InputGroup, Row, Col, Card } from 'react-bootstrap';
+import {
+  Button, Form, InputGroup, Row, Col
+} from 'react-bootstrap';
 import { observer } from 'mobx-react';
 import PropTypes from 'prop-types';
 import { StoreContext } from 'src/stores/mobx/RootStore';
@@ -13,6 +15,7 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import { generateNextShortLabel } from 'src/utilities/VesselUtilities';
+import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 
 const VesselProperties = ({ item, readOnly }) => {
   const { vesselDetailsStore } = useContext(StoreContext);
@@ -35,7 +38,7 @@ const VesselProperties = ({ item, readOnly }) => {
         qrCode: vesselItem?.qrCode || '',
       },
     ];
-  
+
   useEffect(() => {
     if (isCreateMode && vesselDetailsStore.getInstances(vesselId).length === 0) {
       const shortLabel = generateNextShortLabel();
@@ -112,79 +115,73 @@ const VesselProperties = ({ item, readOnly }) => {
 
   return (
     <>
-      <Card className="vessel-properties shadow-sm mb-3">
-        <Card.Header className="fw-bold">
-          Template Properties
-        </Card.Header>
-
-        <Card.Body className="bg-light">
-          <VesselSuggestProperties
-            id={vesselId}
-            label="Vessel name"
-            field="vessel_name"
-            value={vesselItem?.vesselName}
+      <DetailCard header="Template Properties">
+        <VesselSuggestProperties
+          id={vesselId}
+          label="Vessel name"
+          field="vessel_name"
+          value={vesselItem?.vesselName}
             // readOnly under the assumption that template should not be changed once instance is created
-            readOnly={!isCreateMode}
-            storeUpdater={(id, value) => vesselDetailsStore.changeVesselName(id, value)}
-            onTemplateSelect={applyTemplate}
-          />
-          <VesselSuggestProperties
-            id={vesselId}
-            label="Details"
-            field="details"
-            value={vesselItem?.details || ''}
-            readOnly
-            storeUpdater={vesselDetailsStore.changeDetails}
-          />
-          <VesselSuggestProperties
-            id={vesselId}
-            label="Material Type"
-            field="material_type"
-            value={vesselItem?.materialType}
-            readOnly
-            storeUpdater={vesselDetailsStore.changeMaterialType}
-          />
-          <VesselSuggestProperties
-            id={vesselId}
-            label="Vessel Type"
-            field="vessel_type"
-            value={vesselItem?.vesselType || ''}
-            readOnly
-            storeUpdater={vesselDetailsStore.changeVesselType}
-          />
-          <VesselSuggestProperties
-            id={vesselId}
-            label="Material details"
-            field="material_details"
-            value={vesselItem?.materialDetails || ''}
-            readOnly
-            storeUpdater={vesselDetailsStore.changeMaterialDetails}
-          />
-          <Form.Group as={Row} className="mt-3">
-            <Form.Label column sm={3}>Volume</Form.Label>
-            <Col sm={6}>
-              <InputGroup>
-                <Form.Control
-                  name="vessel volume"
-                  type="number"
-                  step="any"
-                  value={vesselItem?.volumeAmount}
-                  disabled
-                  onChange={handleVolumeChange}
-                  className="flex-grow-1"
-                />
-                <Button
-                  disabled
-                  variant="success"
-                  onClick={handleUnitChange}
-                >
-                  {vesselItem?.volumeUnit || 'ml'}
-                </Button>
-              </InputGroup>
-            </Col>
-          </Form.Group>
-        </Card.Body>
-      </Card>
+          readOnly={!isCreateMode}
+          storeUpdater={(id, value) => vesselDetailsStore.changeVesselName(id, value)}
+          onTemplateSelect={applyTemplate}
+        />
+        <VesselSuggestProperties
+          id={vesselId}
+          label="Details"
+          field="details"
+          value={vesselItem?.details || ''}
+          readOnly
+          storeUpdater={vesselDetailsStore.changeDetails}
+        />
+        <VesselSuggestProperties
+          id={vesselId}
+          label="Material Type"
+          field="material_type"
+          value={vesselItem?.materialType}
+          readOnly
+          storeUpdater={vesselDetailsStore.changeMaterialType}
+        />
+        <VesselSuggestProperties
+          id={vesselId}
+          label="Vessel Type"
+          field="vessel_type"
+          value={vesselItem?.vesselType || ''}
+          readOnly
+          storeUpdater={vesselDetailsStore.changeVesselType}
+        />
+        <VesselSuggestProperties
+          id={vesselId}
+          label="Material details"
+          field="material_details"
+          value={vesselItem?.materialDetails || ''}
+          readOnly
+          storeUpdater={vesselDetailsStore.changeMaterialDetails}
+        />
+        <Form.Group as={Row} className="mt-3">
+          <Form.Label column sm={3}>Volume</Form.Label>
+          <Col sm={6}>
+            <InputGroup>
+              <Form.Control
+                name="vessel volume"
+                type="number"
+                step="any"
+                value={vesselItem?.volumeAmount}
+                disabled
+                onChange={handleVolumeChange}
+                className="flex-grow-1"
+              />
+              <Button
+                disabled
+                variant="success"
+                onClick={handleUnitChange}
+              >
+                {vesselItem?.volumeUnit || 'ml'}
+              </Button>
+            </InputGroup>
+          </Col>
+        </Form.Group>
+      </DetailCard>
 
       {instances.map((instance, index) => (
         <div key={index} className="border-top pt-3 mt-3">
