@@ -152,7 +152,7 @@ function VesselDetails({ vesselItem }) {
     <DetailCard
       header={renderHeaderContent()}
       // footer=
-      isPendingToSave={context.vesselDetailsStore.isPendingToSave(vesselItem.id)}
+      // isPendingToSave={context.vesselDetailsStore.isPendingToSave(vesselItem.id)}
     >
       <div className="tabs-container--with-borders">
         <Tabs activeKey={activeTab} onSelect={handleTabChange} id="vessel-details-tab">
