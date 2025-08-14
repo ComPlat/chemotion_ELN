@@ -14,6 +14,22 @@
   background-color: $chemstrap-silicon !important;
 }
 
+.surface-hover-on-white {
+  background-color: $chemstrap-silicon-hover1 !important;
+}
+
+.surface-hover-on-grey {
+  background-color: $chemstrap-silicon-hover2 !important;
+}
+
+.surface-active-on-white {
+  background-color: $chemstrap-silicon-active1 !important;
+}
+
+.surface-active-on-grey {
+  background-color: $chemstrap-silicon-active2 !important;
+}
+
 .text-base {
   color: $chemstrap-carbon !important;
 }
