@@ -45,6 +45,7 @@
   }
   .element-group-header-content {
     @extend .accordion-button;
+    cursor: pointer;
     // apply following rules to every item, as they are rendered separated by a gap
     border-top-left-radius: var(--bs-accordion-inner-border-radius) !important;
     border-top-right-radius: var(--bs-accordion-inner-border-radius) !important;
