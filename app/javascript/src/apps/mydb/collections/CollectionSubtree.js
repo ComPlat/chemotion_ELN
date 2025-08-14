@@ -149,7 +149,7 @@ export default class CollectionSubtree extends React.Component {
           id={`tree-id-${root.label}`}
           className={`tree-view_item ${selected ? 'tree-view_item--selected' : ''}`}
           onClick={this.handleClick}
-          style={{ paddingLeft: `${(level - 0.5) * 12}px` }}
+          style={{ paddingLeft: `${((level - 0.5) * 12)-4}px` }}
         >
           {children.length > 0 ? (
             <ChevronIcon
