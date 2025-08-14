@@ -40,20 +40,17 @@ function AnalysisListItem({backgroundColor, container, setContainer, addContaine
              style={{overflow: 'hidden'}}>
             <Form.Group controlId="formName">
                 <Form.Label>Analysis: </Form.Label>
-                <button
+                <Button
+                    size='xsm'
+                    type='button'
                     onClick={() => removeContainer(container.id)}
-                    style={{
-                        border: 'none',
-                        background: 'transparent',
-                        color: '#c00',
-                        cursor: 'pointer',
-                        fontSize: '1rem',
-                    }}
                     title="Remove"
+                    variant='danger'
                 >
-                    ❌
-                </button>
+                    <i className="fa fa-close" />
+                </Button>
                 <Form.Control
+                className='mt-1'
                     type="text"
                     placeholder="Enter your name"
                     value={container.name}
@@ -89,28 +86,27 @@ function AnalysisListItem({backgroundColor, container, setContainer, addContaine
                 </DatasestListItem>
             })}
         </div>
-        <Button className="position-absolute top-0 end-0 m-2"
-                variant="success" onClick={addContainer}>➕</Button>
+        <Button className="position-absolute top-0 end-0 m-2" size="xsm"
+                variant="success" onClick={addContainer}>
+                    <i className="fa fa-plus" />
+                </Button>
     </ListGroup.Item>)
 }
 
 function DatasestListItem({dataset, droppedPaths, setDroppedPaths, removeDataset}) {
     return (<div className="ml-5 text-truncate flex-grow-1 me-3 list-group-item">
-        <div>
+        <div >
             {dataset.name}
-            <button
+            <Button
+                size='xsm'
+                type='button'
                 onClick={() => removeDataset(dataset.id)}
-                style={{
-                    border: 'none',
-                    background: 'transparent',
-                    color: '#c00',
-                    cursor: 'pointer',
-                    fontSize: '1rem',
-                }}
                 title="Remove"
+                variant='danger'
+                className='mb-1'
             >
-                ❌
-            </button>
+                <i className="fa fa-close" />
+            </Button>
             <DatasetDropZone droppedPaths={droppedPaths} setDroppedPaths={setDroppedPaths}></DatasetDropZone>
         </div>
     </div>);
@@ -213,11 +209,15 @@ function AdvancedAnalysesList({handleClose, setConsumedPaths, listedFiles, setEl
 
     return (<>
         <ButtonGroup>
-            <Button variant="success" onClick={addAnalyses}>➕ Add Analyse</Button>
+            <Button variant="success" onClick={addAnalyses}>
+                <i className="fa fa-plus me-1" />
+                Add Analyse</Button>
             <Button
                 disabled={!analContainerList.length || !analContainerList.reduce((y, x) => y && x.children.length, true)}
                 variant="primary" onClick={execute}>Execute</Button>
-            <Button disabled={!analContainerList.length} variant="danger" onClick={emptyAnalyses}>❌ Empty</Button>
+            <Button disabled={!analContainerList.length} variant="danger" onClick={emptyAnalyses}>
+                <i className="fa fa-close me-1" />
+                Empty</Button>
         </ButtonGroup>
         <ListGroup
             style={{

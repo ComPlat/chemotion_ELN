@@ -1,5 +1,5 @@
 import React, {useCallback, useState} from 'react';
-import {Form} from 'react-bootstrap';
+import {Button, Form} from 'react-bootstrap';
 
 function ToggleSwitch({isChecked, setIsChecked, label}) {
 
@@ -98,14 +98,15 @@ function DatasetDropZone({droppedPaths, setDroppedPaths}) {
                 {droppedPaths.map((p, i) => (
                     <li key={i}>
                         <span>{p}</span>
-                        <button
+                        <Button
+                            variant="danger"
+                            size='xxsm'
                             className="dataset-drop-zone-rm-btn"
                             onClick={() => removePath(p)}
                             title="Remove"
                         >
-                            ❌
-                        </button>
-
+                            <i className="fa fa-close" />
+                        </Button>
                     </li>
                 ))}
             </ul>
