@@ -30,19 +30,16 @@ services:
       - path: .env # see https://github.com/Dokploy/dokploy/issues/385 for more details
     volumes:
       - ../files/pullin:/shared
-
-  configure:
-    image: ptrxyz/chemotion:eln-2.0.1 # same as the base image in Dockerfile.p2d for efficiency
-    profiles:
-      - configure
-    restart: no
-    volumes:
-      - ../files/pullin:/shared
-    healthcheck:
-      disable: true
-    tty: true         # Equivalent to `docker run -t`
-    stdin_open: true  # Equivalent to `docker run -i`
-    command: ["bash"]
+  indigo_service:
+    hostname: indigo_service
+    image: ${IMG_INDIGO:-epmlsop/indigo-service:latest}
+    environment:
+      - PYTHONPATH=${INDIGO_SERVICE_PYTHONPATH:-/srv/indigo-python}
+      - INDIGO_UWSGI_RUN_PARAMETERS=--plugin python3 --py-autoreload=1
+      - PYTHONDONTWRITEBYTECODE=1
+    networks:
+      - chemotion
+    command: supervisord -n
 
 networks:
   chemotion:
