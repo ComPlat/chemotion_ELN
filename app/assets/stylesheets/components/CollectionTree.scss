@@ -8,6 +8,7 @@
     @extend .tree-view;
     @extend .overflow-y-auto;
     @extend .surface-lighten3;
+    margin: 0 4px;
   }
   &_item {
     @extend .d-flex;
@@ -29,10 +30,14 @@
     }
 
     i {
-      color: $gray-600;
+      @extend .text-lighten1;
     }
   }
-
+  &_expand-icon {
+    &:hover {
+      @extend .text-active;
+    }
+  }
   &_title {
     @extend .flex-grow-1;
     overflow-x: hidden;
