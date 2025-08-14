@@ -3,6 +3,7 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 import { ButtonToolbar, Button, Card, Tabs, Tab, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
+import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import { observer } from 'mobx-react';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import CollectionUtils from 'src/models/collection/CollectionUtils';
@@ -148,26 +149,25 @@ function VesselDetails({ vesselItem }) {
   );
 
   return (
-    <Card className="detail-card">
-      <Card.Header>
-        {renderHeaderContent()}
-      </Card.Header>
-      <Card.Body>
-        <div className="tabs-container--with-borders">
-          <Tabs activeKey={activeTab} onSelect={handleTabChange} id="vessel-details-tab">
-            <Tab eventKey="tab1" title="Properties" key="tab1">
-              <VesselProperties item={vesselItem} readOnly={readOnly} />
-            </Tab>
-          </Tabs>
-        </div>
-        <ButtonToolbar className="d-flex gap-1">
-          <Button variant="primary" onClick={() => { handleClose(vesselItem); }}>
-            Close
-          </Button>
-          {renderSubmitButton()}
-        </ButtonToolbar>
-      </Card.Body>
-    </Card>
+    <DetailCard
+      header={renderHeaderContent()}
+      // footer=
+      isPendingToSave={context.vesselDetailsStore.isPendingToSave(vesselItem.id)}
+    >
+      <div className="tabs-container--with-borders">
+        <Tabs activeKey={activeTab} onSelect={handleTabChange} id="vessel-details-tab">
+          <Tab eventKey="tab1" title="Properties" key="tab1">
+            <VesselProperties item={vesselItem} readOnly={readOnly} />
+          </Tab>
+        </Tabs>
+      </div>
+      <ButtonToolbar className="d-flex gap-1">
+        <Button variant="primary" onClick={() => { handleClose(vesselItem); }}>
+          Close
+        </Button>
+        {renderSubmitButton()}
+      </ButtonToolbar>
+    </DetailCard>
   );
 }
 
