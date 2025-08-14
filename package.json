@@ -55,6 +55,7 @@
     "moment-precise-range-plugin": "^1.2.4",
     "npm": "^8.11.0",
     "numeral": "^1.5.3",
+    "path": "^0.12.7",
     "pdf-lib": "^1.17.1",
     "prop-types": "15.6.2",
     "quagga": "^0.11.5",
@@ -100,6 +101,7 @@
     "spark-md5": "^3.0.1",
     "svgedit": "^7.3.0",
     "terser-webpack-plugin": "5",
+    "util": "^0.12.5",
     "uuid": "^3.3.2",
     "webpack": "5",
     "webpack-assets-manifest": "5",
@@ -144,6 +146,17 @@
       "**/*.spec.js",
       "spec/javascripts/fixture/*",
       "spec/javascripts/helper/*"
+    ]
+  },
+  "depcheck": {
+    "ignores": [
+      "@sentry/webpack-plugin",
+      "path",
+      "util",
+      "process",
+      "svgedit",
+      "quill-delta-to-html",
+      "quill-delta-to-plaintext"
     ]
   },
   "license": "MIT",
