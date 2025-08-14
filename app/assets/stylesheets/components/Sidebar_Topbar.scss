@@ -92,6 +92,10 @@ $sidebar-logo-height: 72px;
   &.sidebar-button--expandable {
     .expand-icon {
       display: none;
+      @extend .text-lighten1;
+      &:hover {
+        @extend .text-active;
+      }
     }
     &:hover {
       .expand-icon {
