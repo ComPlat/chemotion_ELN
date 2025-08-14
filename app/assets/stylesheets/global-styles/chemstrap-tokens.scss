@@ -1,8 +1,8 @@
 /* Define a mixin for @font-face */
-@mixin font-face($font-style, $font-weight, $file-name) {
+@mixin font-face($family-name, $font-style, $font-weight, $file-name) {
   @font-face {
     font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
-    font-family: "Roboto";
+    font-family: $family-name;
     font-style: $font-style;
     font-weight: $font-weight;
     src: url("#{$file-name}.woff2") format("woff2"); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
@@ -10,17 +10,34 @@
 }
 
 /* Iterate over font weights and styles */
-$font-weights: 400, 500, 600, 700;
+$font-weights: 400, 500, 700;
+$font-widths: normal, condensed;
 $font-styles: normal, italic;
 
-@each $weight in $font-weights {
-  @each $style in $font-styles {
-    $file-name: "roboto-condensed-v30-latin-#{$weight}";
-    @if $style == italic {
-      $file-name: "#{$file-name}italic";
-    }
-    @include font-face($style, $weight, $file-name);
+@each $width in $font-widths {
+  $file-name-base: "roboto";
+  $family-name: "Roboto";
+  @if $width == condensed {
+    $file-name-base: "roboto-condensed";
+    $family-name: "Roboto Condensed";
   }
+  @each $weight in $font-weights {
+    @each $style in $font-styles {
+      $file-name: "#{$file-name-base}-#{$weight}";
+      @if $style == italic {
+        $file-name: "#{$file-name-base}-#{$weight}italic";
+      }
+      @include font-face($family-name, $style, $weight, $file-name);
+    }
+  }
+}
+
+@mixin condensed-text-width {
+  font-family: "Roboto Condensed", sans-serif;
+}
+
+@mixin normal-text-width {
+  font-family: "Roboto", sans-serif;
 }
 
 /* Colors */
