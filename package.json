@@ -42,7 +42,7 @@
     "es6-promise-debounce": "^1.0.1",
     "html2pdf.js": "^0.10.1",
     "humps": "^2.0.1",
-    "immutable": "^4.0.0-rc.12",
+    "immutable": "^4.3.7",
     "jcampconverter": "^2.11.0",
     "js-yaml": "^3.13.1",
     "jsdom": "^22.1.0",
@@ -101,7 +101,7 @@
     "spark-md5": "^3.0.1",
     "svgedit": "^7.3.0",
     "terser-webpack-plugin": "5",
-    "util": "^0.12.4",
+    "util": "^0.12.5",
     "uuid": "^3.3.2",
     "webpack": "5",
     "webpack-assets-manifest": "5",
@@ -146,6 +146,17 @@
       "**/*.spec.js",
       "spec/javascripts/fixture/*",
       "spec/javascripts/helper/*"
+    ]
+  },
+  "depcheck": {
+    "ignores": [
+      "@sentry/webpack-plugin",
+      "path",
+      "util",
+      "process",
+      "svgedit",
+      "quill-delta-to-html",
+      "quill-delta-to-plaintext"
     ]
   },
   "license": "MIT",
