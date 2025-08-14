@@ -22,6 +22,7 @@ RUN rm ${ASDF_DIR}/asdf
 ENV PATH="${ASDF_DIR}/bin:${PATH}"
 ENV ASDF_NODEJS_VERSION=''
 ENV ASDF_RUBY_VERSION=''
+ENV NODEJS_FORCE_INSTALL=true
 RUN ./prepare-asdf.sh
 RUN ./prepare-nodejs.sh
 RUN ./prepare-nodejspkg.sh
