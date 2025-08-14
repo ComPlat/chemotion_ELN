@@ -150,7 +150,7 @@
   },
   "license": "MIT",
   "engines": {
-    "node": "^22.16"
+    "node": "^22.18"
   },
   "browserslist": [
     "defaults"
