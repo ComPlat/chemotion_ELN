@@ -23,7 +23,7 @@ function MoleculeHeader({ sample }) {
   }, []);
 
   return (
-    <div className="flex-grow-1">
+    <div className="flex-grow-1 pe-1">
       {sample.isNoStructureSample()
         ? (<h4>(No-structure sample)</h4>)
         : (
