@@ -100,6 +100,7 @@ h6 {
   font-size: 12px;
   line-height: 1.5;
   border-radius: 3px;
+  @include condensed-text-width;
 }
 
 @mixin xxsm-form-elements {
@@ -107,6 +108,11 @@ h6 {
   font-size: 12px;
   line-height: 1;
   border-radius: 2.5px;
+  @include condensed-text-width;
+}
+
+.btn-sm {
+  @include condensed-text-width;
 }
 
 .btn-xsm {
@@ -115,6 +121,10 @@ h6 {
 
 .btn-xxsm {
   @include xxsm-form-elements;
+}
+
+.input-group-sm > {
+  @include condensed-text-width;
 }
 
 .input-group-xsm > {
