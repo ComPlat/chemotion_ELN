@@ -21,7 +21,7 @@ WORKDIR /chemotion/app
 
 RUN cp .version /bk.version
 
-RUN --mount=type=bind,source=.git/ORIG_HEAD,target=/.current_hash,readonly \
+RUN --mount=type=bind,source=.git/shallow,target=/.current_hash,readonly \
     git remote add origin ${REMOTE} && \
     git fetch && \
     git checkout $(cat /.current_hash)
