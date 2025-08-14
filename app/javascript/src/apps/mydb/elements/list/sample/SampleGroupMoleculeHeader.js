@@ -10,7 +10,7 @@ import ChemrepoLabels from 'src/apps/mydb/elements/labels/ChemrepoLabels';
 import PubchemLabels from 'src/components/pubchem/PubchemLabels';
 import ComputedPropLabel from 'src/apps/mydb/elements/labels/ComputedPropLabel';
 
-function MoleculeHeader({ sample, onClick }) {
+function MoleculeHeader({ sample }) {
   const [showPreviews, setShowPreviews] = useState(UIStore.getState().showPreviews);
 
   useEffect(() => {
@@ -23,7 +23,7 @@ function MoleculeHeader({ sample, onClick }) {
   }, []);
 
   return (
-    <div role="button" onClick={onClick} className="flex-grow-1">
+    <div className="flex-grow-1">
       {sample.isNoStructureSample()
         ? (<h4>(No-structure sample)</h4>)
         : (
@@ -60,7 +60,6 @@ function MoleculeHeader({ sample, onClick }) {
 
 MoleculeHeader.propTypes = {
   sample: PropTypes.instanceOf(Sample).isRequired,
-  onClick: PropTypes.func.isRequired,
 };
 
 export default MoleculeHeader;
