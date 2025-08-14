@@ -1,29 +1,31 @@
-import React, { Component } from 'react';
+import React, { useCallback } from 'react';
 import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
 import Formula from 'src/components/common/Formula';
 import { copyToClipboard } from 'src/utilities/clipboard';
 
-export default class ClipboardCopyText extends Component {
-  render() {
-    const { clipText, text } = this.props;
-    const copyText = clipText === '' ? text : clipText;
-    return (
-      <OverlayTrigger
-        placement="bottom"
-        overlay={<Tooltip id="copy_clipboard">copy to clipboard</Tooltip>}
+export default function ClipboardCopyText({ text, clipText }) {
+  const copyText = clipText === '' ? text : clipText;
+  const handleClick = useCallback((e) => {
+    e.stopPropagation();
+    copyToClipboard(copyText);
+  }, [copyText]);
+
+  return (
+    <OverlayTrigger
+      placement="bottom"
+      overlay={<Tooltip id="copy_clipboard">copy to clipboard</Tooltip>}
+    >
+      <span
+        role="button"
+        onClick={handleClick}
+        className="d-inline"
       >
-        <span
-          role="button"
-          onClick={() => copyToClipboard(copyText)}
-          className="d-inline"
-        >
-          {text}
-        </span>
-      </OverlayTrigger>
-    );
-  }
+        {text}
+      </span>
+    </OverlayTrigger>
+  );
 }
 
 ClipboardCopyText.propTypes = {
