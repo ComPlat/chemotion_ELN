@@ -26,7 +26,7 @@ namespace :svg do
     message_header = build_message_header(**args)
     scope = build_scope(**args)
 
-    puts "#{message_header}Ketcher rendering service seems to #{ketcher_running ? '' : 'not'} be available"
+    puts "#{message_header}indigo rendering service seems to #{'not' unless indigo_running?} be available"
 
     scope.find_each do |element|
       svg_path = element.send(:full_svg_path)
@@ -44,14 +44,11 @@ namespace :svg do
         next
       end
 
-      svg = KetcherService::RenderSvg.svg(element.molfile)
-      if svg.blank? || svg.match('viewBox=\"0 0 0 0\"')
+      svg = IndigoService.new(element.molfile, 'image/svg+xml').render_structure
+      if svg.nil?
         puts "#{message} cannot build SVG\n"
         next
       end
-      svg = Ketcherails::SVGProcessor.new(svg)
-      svg = svg.centered_and_scaled_svg
-
       FileUtils.rm_f(svg_path) if svg_file_exists
 
       element.attach_svg(svg)
@@ -64,9 +61,17 @@ namespace :svg do
   # rubocop:enable Metrics/PerceivedComplexity
   # rubocop:enable Metrics/CyclomaticComplexity
 
-  def ketcher_running
-    svg = KetcherService::RenderSvg.svg(Molecule.last&.molfile.presence || 'dummy')
-    svg.presence&.start_with?('<svg')
+  def indigo_running?
+    info = IndigoService.new(nil).service_info
+    return false unless info
+
+    status = begin
+      info.respond_to?(:status) ? info.status : info[:status]
+    rescue StandardError
+      nil
+    end
+
+    status == 200
   end
 
   def build_message_header(**args)

@@ -29,7 +29,7 @@ class App extends Component {
     UserActions.fetchDatasetKlasses();
     UserActions.fetchUnitsSystem();
     UserActions.fetchEditors();
-    UserActions.fetchKetcher2Options();
+    UserActions.fetchKetcherOptions();
     UIActions.initialize.defer();
     this.patchExternalLibraries();
 

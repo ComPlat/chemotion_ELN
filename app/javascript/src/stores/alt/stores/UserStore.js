@@ -70,8 +70,6 @@ class UserStore {
   }
 
   handleFetchProfile(result) {
-    // DEFAULT_KETCHER2: disable to remove default ketcher2
-    // result.data.default_structure_editor = "ketcher2"
     this.state.profile = result;
     const { layout } = this.state.profile.data;
     if (this.state.currentType === '') {

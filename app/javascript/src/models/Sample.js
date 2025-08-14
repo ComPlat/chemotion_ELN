@@ -1447,7 +1447,7 @@ export default class Sample extends Element {
         || !this.molecule_cano_smiles.split('.').some((smiles) => smiles === newComponent.molecule_cano_smiles)) {
         const newSmiles = this.molecule_cano_smiles ? `${this.molecule_cano_smiles}.${newComponent.molecule_cano_smiles}` : newComponent.molecule_cano_smiles;
 
-        const result = await MoleculesFetcher.fetchBySmi(newSmiles, null, this.molfile, 'ketcher2');
+        const result = await MoleculesFetcher.fetchBySmi(newSmiles, null, this.molfile, 'ketcher');
         this.molecule = result;
         this.molfile = result.molfile;
       }
@@ -1479,7 +1479,7 @@ export default class Sample extends Element {
       .join('.');
 
     if (newSmiles !== this.molecule_cano_smiles) {
-      const result = await MoleculesFetcher.fetchBySmi(newSmiles, null, this.molfile, 'ketcher2');
+      const result = await MoleculesFetcher.fetchBySmi(newSmiles, null, this.molfile, 'ketcher');
       this.molecule = result;
       this.molfile = result.molfile;
     }
@@ -1655,7 +1655,7 @@ export default class Sample extends Element {
     const newSmiles = `${srcMat.molecule_cano_smiles}.${tagMat.molecule_cano_smiles}`;
 
     try {
-      const newMolecule = await MoleculesFetcher.fetchBySmi(newSmiles, null, this.molfile, 'ketcher2');
+      const newMolecule = await MoleculesFetcher.fetchBySmi(newSmiles, null, this.molfile, 'ketcher');
       const newComponent = Sample.buildNew(newMolecule, this.collection_id);
       newComponent.material_group = tagGroup;
 
