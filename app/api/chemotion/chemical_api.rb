@@ -101,9 +101,44 @@ module Chemotion
             else
               Chemical.create!(sample_id: params[:sample_id], cas: params[:cas], chemical_data: params[:chemical_data])
             end
-            file_path = "#{product_info['productNumber']}_#{product_info['vendor']}.pdf"
+            file_path = "#{product_info['productNumber']}_#{product_info['vendor']}"
             Chemotion::ChemicalsService.create_sds_file(file_path, product_info['sdsLink'])
           end
+        end
+      end
+
+      resource :save_manual_sds do
+        desc 'save attached safety data sheet'
+        params do
+          requires :sample_id, type: Integer, desc: 'Sample ID'
+          optional :cas, type: String, desc: 'CAS number'
+          requires :vendor_info, type: String, desc: 'Vendor info as JSON string'
+          requires :vendor_name, type: String, desc: 'Vendor name'
+          requires :attached_file, type: File, desc: 'Attached file (SDS document)'
+          requires :vendor_product, type: String, desc: 'Vendor product info key'
+          optional :chemical_data, type: String, desc: 'Chemical data as JSON string'
+        end
+
+        post do
+          result = Chemotion::ManualSdsService.create_manual_sds(
+            sample_id: params[:sample_id],
+            cas: params[:cas],
+            vendor_info: params[:vendor_info],
+            vendor_name: params[:vendor_name],
+            vendor_product: params[:vendor_product],
+            attached_file: params[:attached_file],
+            chemical_data: params[:chemical_data],
+          )
+
+          if result.is_a?(Hash) && result[:error].present?
+            error!({ error: result[:error] }, 400)
+          else
+            # Return the created/updated chemical
+            present result
+          end
+        rescue StandardError => e
+          Rails.logger.error("Error in save_manual_sds: #{e.message}")
+          error!({ error: "Internal server error: #{e.message}" }, 500)
         end
       end
 
@@ -126,7 +161,7 @@ module Chemotion
                   product_link = chemical.chemical_data[0]['merckProductInfo']['productLink']
                   Chemotion::ChemicalsService.safety_phrases_merck(product_link)
                 else
-                  err_body = 'Please fetch and save corresponding safety data sheet first'
+                  err_body = 'No safety phrases could be found'
                   err_body
                 end
               else

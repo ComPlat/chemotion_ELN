@@ -132,7 +132,7 @@ module Import
     end
 
     def self.create_safety_sheet_path(vendor, value, product_number, chemical)
-      file_path = "#{product_number}_#{vendor.capitalize}.pdf"
+      file_path = "#{product_number}_#{vendor.capitalize}"
       chemical['chemical_data'][0]['safetySheetPath'] ||= []
       sheet_path = { "#{vendor}_link" => "#{SAFETY_SHEET_PATH}#{file_path}" }
       is_created = Chemotion::ChemicalsService.create_sds_file(file_path, value)

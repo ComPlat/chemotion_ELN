@@ -73,6 +73,16 @@ export default class ChemicalFetcher {
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
+  static saveManualAttachedSafetySheet(params) {
+    return fetch('/api/v1/chemicals/save_manual_sds', {
+      credentials: 'same-origin',
+      method: 'post',
+      body: params
+    }).then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => { console.log(errorMessage); });
+  }
+
   static safetyPhrases(queryParams) {
     return fetch(`/api/v1/chemicals/safety_phrases/${queryParams.id}?vendor=${queryParams.vendor}`, {
       credentials: 'same-origin',
