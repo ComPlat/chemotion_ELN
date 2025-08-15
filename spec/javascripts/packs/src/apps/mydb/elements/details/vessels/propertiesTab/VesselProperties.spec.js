@@ -3,7 +3,7 @@ import expect from 'expect';
 import Enzyme, { shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import { describe, it, beforeEach } from 'mocha';
-import { Card } from 'react-bootstrap';
+import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import VesselProperties from 'src/apps/mydb/elements/details/vessels/propertiesTab/VesselProperties';
 import VesselProperty from 'src/apps/mydb/elements/details/vessels/propertiesTab/VesselProperty';
 import UIStore from '../../../../../../../../../../app/javascript/src/stores/alt/stores/UIStore';
@@ -27,14 +27,9 @@ describe('VesselProperties', () => {
   });
 
   describe('when rendered', () => {
-    it('renders the Card component', () => {
+    it('renders the DetailCard component', () => {
       const wrapper = shallow(React.createElement(VesselProperties, { ...props }));
-      expect(wrapper.find(Card)).toHaveLength(1);
-    });
-
-    it('renders one Card body', () => {
-      const wrapper = shallow(React.createElement(VesselProperties, { ...props }));
-      expect(wrapper.find(Card.Body)).toHaveLength(1);
+      expect(wrapper.find(DetailCard)).toHaveLength(1);
     });
 
     it('renders the correct number of VesselProperty components', () => {
