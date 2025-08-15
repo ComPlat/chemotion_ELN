@@ -1,5 +1,5 @@
 import {
-  ListGroup, Button, ButtonGroup, Form
+  ListGroup, Button, ButtonToolbar, Form
 } from 'react-bootstrap';
 import React, { useState, useMemo, useCallback } from 'react';
 
@@ -51,15 +51,16 @@ function AnalysisListItem({
         style={{ overflow: 'hidden' }}
       >
         <Form.Group controlId="formName">
-          <Form.Label>Analysis: </Form.Label>
+          <Form.Label>Analysis</Form.Label>
           <Button
             size="xsm"
             type="button"
             onClick={() => removeContainer(container.id)}
-            title="Remove"
+            title="Remove Analysis"
             variant="danger"
+            className="m-2 position-absolute top-0 end-0"
           >
-            <i className="fa fa-close" />
+            <i className="fa fa-trash" />
           </Button>
           <Form.Control
             className="mt-1"
@@ -70,7 +71,16 @@ function AnalysisListItem({
           />
         </Form.Group>
         <div className="label--bold">
-          Datasets:
+          Datasets
+          <Button
+            className="m-2"
+            size="xsm"
+            variant="success"
+            onClick={addContainer}
+          >
+            <i className="fa fa-plus" />
+          </Button>
+
         </div>
         {container.children.map((ds) => (
           <DatasestListItem
@@ -94,14 +104,6 @@ function AnalysisListItem({
           />
         ))}
       </div>
-      <Button
-        className="position-absolute top-0 end-0 m-2"
-        size="xsm"
-        variant="success"
-        onClick={addContainer}
-      >
-        <i className="fa fa-plus" />
-      </Button>
     </ListGroup.Item>
   );
 }
@@ -117,11 +119,11 @@ function DatasestListItem({
           size="xsm"
           type="button"
           onClick={() => removeDataset(dataset.id)}
-          title="Remove"
+          title="Remove Dataset"
           variant="danger"
-          className="mb-1"
+          className="mb-1 position-absolute top-0 end-0 "
         >
-          <i className="fa fa-close" />
+          <i className="fa fa-trash" />
         </Button>
         <DatasetDropZone droppedPaths={droppedPaths} setDroppedPaths={setDroppedPaths} />
       </div>
@@ -226,10 +228,10 @@ function AdvancedAnalysesList({
 
   return (
     <>
-      <ButtonGroup>
+      <ButtonToolbar className="gap-2">
         <Button variant="success" onClick={addAnalyses}>
           <i className="fa fa-plus me-1" />
-          Add Analyse
+          Analysis
         </Button>
         <Button
           disabled={!analContainerList.length || !analContainerList.reduce((y, x) => y && x.children.length, true)}
@@ -239,10 +241,10 @@ function AdvancedAnalysesList({
           Execute
         </Button>
         <Button disabled={!analContainerList.length} variant="danger" onClick={emptyAnalyses}>
-          <i className="fa fa-close me-1" />
-          Empty
+          <i className="fa fa-refresh me-1" />
+          Reset
         </Button>
-      </ButtonGroup>
+      </ButtonToolbar>
       <ListGroup
         style={{
           maxHeight: '70vh',

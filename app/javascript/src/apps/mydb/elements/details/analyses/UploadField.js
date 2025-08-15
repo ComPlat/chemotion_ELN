@@ -76,7 +76,7 @@ function FolderDropzone({ handleChange }) {
         style={{ display: 'none' }}
       />
       <div className="dropzone-content">
-        <p>Drag and drop some files here, or click to select files</p>
+        <p>Drop files or folders here, or click to browse and select multiple files from your device </p>
       </div>
     </label>
   );
@@ -165,49 +165,27 @@ function UploadButton({
   return (
     <>
       <hr />
-      <Button onClick={singleFileHandle}>Create a single Analyse</Button>
+      <Button onClick={singleFileHandle}>Single Analysis - one dataset</Button>
       <p>
-        Please click here to create a single analysis from all of the listed files and folders. If this option is
-        selected, a single analysis will be generated and all files will be compressed as attachments to this
-        analysis.
+        Create one analysis with a single dataset containing all files and folders zipped together.
       </p>
       <hr />
       <Button onClick={multyFileHandle}>
-        Greate
-        {files.length}
-        {' '}
-        Analyses
+        Multiple Analyses ({files.length}
+        )
       </Button>
       <p>
-        To create
-        {files.length}
-        {' '}
-        analyses, one for each of the listed files and folders, please click on this
-        button. If this option is selected, the system will create
-        {files.length}
-        {' '}
-        analyses and assign each file
-        or folder to one of these analyses. The folder will be attached as a zip file.
+        Create {files.length}
+        analyses, one for each listed file or folder (folders will be zipped).
       </p>
       <hr />
       <Button onClick={multyFileOneAnaHandle}>
-        Greate
-        {files.length}
-        {' '}
-        Datasets
+        Single Analysis - multiple ({files.length}
+        ) datasets
       </Button>
       <p>
-        To create a single analysis with
-        {files.length}
-        {' '}
-        datasets, one dataset for each of the listed files and
-        folders, please click on this button
-        . If you select this option, the system creates
-        {files.length}
-        {' '}
-        datasets in a new analysis and assigns
-        one of these datasets to each file
-        or folder. Folder will be attached as a zip file.
+        Create one analysis with {files.length}
+        datasets, each containing one listed file or folder (folders will be zipped).
       </p>
     </>
   );
@@ -259,10 +237,10 @@ function UploadField({ disabled, element, setElement }) {
           <Row>
             <Col>
               <p>
-                Create new analyses using the button. Within the analyses, you can assign names and
+                Create new analyses: for each one, you can assign names and
                 create new datasets. You can drag and drop the files from the file list on the left-hand side
                 into the newly created dataset. Individual files are simply uploaded, but if several files or
-                folders are assigned to a dataset, it is zipped. Do not forget to press Execute to apply your
+                folders are assigned to a dataset, they are zipped together. Do not forget to press Execute to apply your
                 settings.
               </p>
             </Col>
@@ -288,14 +266,11 @@ function UploadField({ disabled, element, setElement }) {
         <Row>
           <Col>
             <p>
-              This upload is designed for uploading NMR data. It can be used to create multiple analyses at
-              the same time. Multiple files can be selected simultaneously by clicking on the file selector. Multiple
-              files and/or folders can be uploaded via drag & drop.
+              Create multiple analyses at once from selected files and/or folders that will be uploaded.
             </p>
             <p>
-              In advanced mode, you can create new
-              analyses and associated datasets. The uploaded data can then be assigned to these new datasets via drag
-              & drop
+              Advanced mode: add and name as many analyses with as many datasets as needed,
+      and associate each selected file or folder individualy by dragging and dropping them into the datasets.
             </p>
           </Col>
         </Row>
@@ -323,12 +298,12 @@ function UploadField({ disabled, element, setElement }) {
         disabled={disabled}
         onClick={handleShow}
       >
-        Generic file upload
+        Analyses from upload
       </Button>
 
       <Modal size="xl" show={show} onHide={handleClose}>
         <Modal.Header closeButton>
-          <Modal.Title>Generic file upload</Modal.Title>
+          <Modal.Title>Create Analyses from files or folders</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {content()}
@@ -338,7 +313,7 @@ function UploadField({ disabled, element, setElement }) {
             disabled={listedFiles.length == 0}
             isChecked={isAdvanced}
             setIsChecked={setisAdvanced}
-            label="Advenced"
+            label="Advanced mode"
           />
         </Modal.Footer>
       </Modal>
