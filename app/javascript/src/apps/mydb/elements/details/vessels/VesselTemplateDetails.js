@@ -301,7 +301,11 @@ function VesselTemplateDetails({ vessels }) {
 
   return (
     <>
-      <DetailCard header={renderHeaderContent()} title="Vessel Template Details">
+      <DetailCard
+        header={renderHeaderContent()}
+        title="Vessel Template Details"
+        isPendingToSave={templateStoreItem?.changed}
+      >
         <Form>
           {['vesselName',
             'details',
@@ -360,7 +364,7 @@ function VesselTemplateDetails({ vessels }) {
         </Form>
       </DetailCard>
       <DetailCard
-        title={(
+        header={(
           <div className="d-flex align-items-center w-100">
             <span>Vessel Instances</span>
             <div className="ms-auto d-flex gap-2">
