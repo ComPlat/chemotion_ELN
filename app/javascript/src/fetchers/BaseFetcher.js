@@ -2,6 +2,7 @@ import 'whatwg-fetch';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
 import CellLine from 'src/models/cellLine/CellLine';
+import Vessel from 'src/models/vessel/Vessel';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { dateToUnixTimestamp } from 'src/utilities/timezoneHelper';
 
@@ -114,6 +115,9 @@ export default class BaseFetcher {
         elements: json[type].map((r) => {
           if (type === 'cell_lines') {
             return CellLine.createFromRestResponse(id, r);
+          }
+          if (type === 'vessels') {
+            return Vessel.createFromRestResponse(id, r);
           }
           return (new ElKlass(r));
         }),

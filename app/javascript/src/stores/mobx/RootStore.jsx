@@ -9,12 +9,14 @@ import { DeviceMetadataStore } from 'src/stores/mobx/DeviceMetadataStore';
 import { AttachmentNotificationStore } from 'src/stores/mobx/AttachmentNotificationStore';
 import { CalendarStore } from 'src/stores/mobx/CalendarStore';
 import { DeviceDescriptionsStore } from 'src/stores/mobx/DeviceDescriptionsStore';
+import { VesselDetailsStore } from 'src/stores/mobx/VesselDetailsStore';
 
 export const RootStore = types
   .model({
     measurementsStore: types.optional(MeasurementsStore, { measurements: {}, sampleHeaders: {} }),
     sampleTasksStore: types.optional(SampleTasksStore, {}),
     cellLineDetailsStore: types.optional(CellLineDetailsStore, {}),
+    vesselDetailsStore: types.optional(VesselDetailsStore, {}),
     searchStore: types.optional(SearchStore, {}),
     devicesStore: types.optional(DevicesStore, {}),
     deviceMetadataStore: types.optional(DeviceMetadataStore, {}),
@@ -22,15 +24,16 @@ export const RootStore = types
     calendarStore: types.optional(CalendarStore, {}),
     deviceDescriptionsStore: types.optional(DeviceDescriptionsStore, {}),
   })
-  .views(self => ({
-    get measurements() { return self.measurementsStore },
-    get sampleTasks() { return self.sampleTasksStore },
-    get cellLineDetails() { return self.CellLineDetailsStore },
-    get search() { return self.searchStore },
-    get devices() { return self.devicesStore },
-    get deviceMetadata() { return self.deviceMetadataStore },
-    get attachmentNotifications() { return self.attachmentNotificationStore },
-    get calendar() { return self.calendarStore },
+  .views((self) => ({
+    get measurements() { return self.measurementsStore; },
+    get sampleTasks() { return self.sampleTasksStore; },
+    get cellLineDetails() { return self.CellLineDetailsStore; },
+    get vesselDetails() { return self.VesselDetailsStore; },
+    get search() { return self.searchStore; },
+    get devices() { return self.devicesStore; },
+    get deviceMetadata() { return self.deviceMetadataStore; },
+    get attachmentNotifications() { return self.attachmentNotificationStore; },
+    get calendar() { return self.calendarStore; },
     get deviceDescriptions() { return self.deviceDescriptionsStore },
   }));
 export const StoreContext = React.createContext(RootStore.create({}));

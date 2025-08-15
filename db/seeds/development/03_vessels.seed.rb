@@ -166,10 +166,12 @@ def create_vessels_and_vessel_templates
       )
 
       User.where(type: 'Person').find_each do |person|
+        next if Vessel.exists?(vessel_template: vessel_template, user_id: person.id)
+
         description = "A #{vessel_template.vessel_type} with size " \
                       "#{vessel_template.volume_amount} #{vessel_template.volume_unit}."
 
-        vessel = Vessel.create!(
+        Vessel.create!(
           vessel_template: vessel_template,
           name: Faker::Commerce.product_name,
           user_id: person.id,
@@ -177,9 +179,9 @@ def create_vessels_and_vessel_templates
           bar_code: SecureRandom.hex(8),
           qr_code: SecureRandom.hex(10),
           short_label: "#{person.name_abbreviation}-#{Faker::Name.first_name}",
-        )
-
-        CollectionsVessel.create!(vessel: vessel, collection: person.collections.first) if person.collections.any?
+        ).tap do |vessel|
+          CollectionsVessel.create!(vessel: vessel, collection: person.collections.first) if person.collections.any?
+        end
       end
     end
   end
