@@ -20,7 +20,9 @@ function RndNoAnalyses({ addButton }) {
   return (
     <div className='d-flex justify-content-between align-items-center'>
       <p className='m-0'>There are currently no Analyses.</p>
+      <ButtonToolbar className="gap-2">
       {addButton()}
+      </ButtonToolbar>
     </div>
   );
 }
