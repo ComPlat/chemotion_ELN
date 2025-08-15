@@ -299,11 +299,11 @@ function MenuHeader({
 }
 
 MenuHeader.propTypes = {
-    column: PropTypes.shape(AgGridReact.column).isRequired,
-    context: PropTypes.instanceOf(AgGridReact.context).isRequired,
-    setSort: PropTypes.func.isRequired,
-    names: PropTypes.arrayOf(PropTypes.string).isRequired,
-    gasType: PropTypes.string,
+  column: PropTypes.instanceOf(AgGridReact.column).isRequired,
+  context: PropTypes.instanceOf(AgGridReact.context).isRequired,
+  setSort: PropTypes.func.isRequired,
+  names: PropTypes.arrayOf(PropTypes.string).isRequired,
+  gasType: PropTypes.string,
 };
 
 MenuHeader.defaultProps = {
