@@ -30,7 +30,7 @@ function VesselEntry({ vesselItems, vesselTemplate }) {
       console.error('Vessel template ID is missing.');
       return;
     }
-    const uri = `/vessel_template/${template.id}`;
+    const uri = `/collection/${currentCollection.id}/vessel_template/${template.id}`;
     Aviator.navigate(uri, { silent: true });
 
     elementShowOrNew({

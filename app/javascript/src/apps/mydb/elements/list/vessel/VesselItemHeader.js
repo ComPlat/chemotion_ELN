@@ -19,7 +19,7 @@ function VesselItemHeader({ groupItems }) {
       return;
     }
 
-    const uri = `/vessel_template/${templateId}`;
+    const uri = `/collection/${currentCollection.id}/vessel_template/${templateId}`;
     Aviator.navigate(uri, { silent: true });
 
     elementShowOrNew({
