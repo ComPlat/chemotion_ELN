@@ -147,8 +147,8 @@ export const emptyKetcherStore = () => ({
   root: {
     nodes: [],
     connections: [],
-    templates: []
-  }
+    templates: [],
+  },
 });
 
 export const addNewMol = (tempId) => ({
@@ -157,11 +157,7 @@ export const addNewMol = (tempId) => ({
     {
       label: KET_TAGS.inspiredLabel,
       alias: `t_${tempId}_${imageNodeCounter}`,
-      location: [
-        1,
-        -1,
-        0
-      ]
+      location: [-1.5250001907348631, 1.5250000000000004, 0],
     },
-  ]
+  ],
 });
