@@ -1,36 +1,36 @@
 
 .folder-dropzone {
-    display: block;
-    border: 2px dashed #ccc;
-    padding: 2rem;
-    border-radius: 6px;
-    text-align: center;
-    cursor: pointer;
-    background-color: #f8f9fa;
-    color: #333;
-    transition: border-color 0.2s ease-in-out;
+  display: block;
+  border: 2px dashed #ccc;
+  padding: 2rem;
+  border-radius: 6px;
+  text-align: center;
+  cursor: pointer;
+  background-color: #f8f9fa;
+  color: #333;
+  transition: border-color 0.2s ease-in-out;
 }
 
 .folder-dropzone:hover {
-    border-color: #007bff;
-    background-color: #f1f8ff;
+  border-color: #007bff;
+  background-color: #f1f8ff;
 }
 
 .dropzone-content p {
-    margin: 0;
-    font-size: 1rem;
+  margin: 0;
+  font-size: 1rem;
 }
 
 .dataset-drop-zone {
-    min-height: 57px;
-    border: 2px dashed #bbb;
-    border-radius: 4px;
-    padding: 7px;
-    .dataset-drop-zone-rm-btn {
-        border: none;
-        background: transparent;
-        color: #c00;
-        cursor: pointer;
-        font-size: 1rem;
-    }
+  min-height: 57px;
+  border: 2px dashed #bbb;
+  border-radius: 4px;
+  padding: 7px;
+  .dataset-drop-zone-rm-btn {
+    border: none;
+    background: transparent;
+    color: #c00;
+    cursor: pointer;
+    font-size: 1rem;
+  }
 }
