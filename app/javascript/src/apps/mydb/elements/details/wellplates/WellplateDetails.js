@@ -420,29 +420,46 @@ export default class WellplateDetails extends Component {
     const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
 
     return (
-      <DetailCard
-        isPendingToSave={wellplate.isPendingToSave}
-        header={this.wellplateHeader(wellplate)}
-        footer={this.wellplateFooter()}
-      >
-        <div className="tabs-container--with-borders">
-          <ElementDetailSortTab
-            type="wellplate"
-            availableTabs={Object.keys(tabContentsMap)}
-            onTabPositionChanged={this.onTabPositionChanged}
-          />
-          <Tabs
-            mountOnEnter
-            unmountOnExit
-            activeKey={activeTab}
-            onSelect={(event) => this.handleTabChange(event)}
-            id="wellplateDetailsTab"
+      <Card className={`detail-card${wellplate.isPendingToSave ? ' detail-card--unsaved' : ''}`}>
+        <Card.Header>{this.wellplateHeader(wellplate)}</Card.Header>
+        <Card.Body>
+          <div className="tabs-container--with-borders">
+            <ElementDetailSortTab
+              type="wellplate"
+              availableTabs={Object.keys(tabContentsMap)}
+              onTabPositionChanged={this.onTabPositionChanged}
+            />
+            <Tabs
+              mountOnEnter
+              unmountOnExit
+              activeKey={activeTab}
+              onSelect={(event) => this.handleTabChange(event)}
+              id="wellplateDetailsTab"
+            >
+              {tabContents}
+            </Tabs>
+          </div>
+        </Card.Body>
+        <Card.Footer>
+          <Button variant="primary" onClick={() => DetailActions.close(wellplate)}>Close</Button>
+          {
+            wellplate.changed && (
+              <Button variant="warning" onClick={() => this.handleSubmit()}>
+                {wellplate.isNew ? 'Create' : 'Save'}
+              </Button>
+            )
+          }
+          {exportButton}
+          <Button
+            variant="primary"
+            onClick={() => this.handlePrint()}
+            disabled={printButtonDisabled}
           >
-            {tabContents}
-          </Tabs>
+            Print Wells
+          </Button>
           <CommentModal element={wellplate} />
-        </div>
-      </DetailCard>
+        </Card.Footer>
+      </Card>
     );
   }
 }

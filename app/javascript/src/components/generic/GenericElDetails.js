@@ -530,21 +530,39 @@ export default class GenericElDetails extends Component {
         header={this.header(genericEl)}
         footer={this.footer()}
       >
-        <div className="tabs-container--with-borders">
-          <ElementDetailSortTab
-            type={genericEl.type}
-            availableTabs={Object.keys(tabContents)}
-            onTabPositionChanged={this.onTabPositionChanged}
-          />
-          <Tabs
-            activeKey={activeTab}
-            onSelect={(key) => this.handleSelect(key, genericEl.type)}
-            id="GenericElementDetailsXTab"
+        <Card.Header>{this.header(genericEl)}</Card.Header>
+        <Card.Body>
+          <div className="tabs-container--with-borders">
+            <ElementDetailSortTab
+              type={genericEl.type}
+              availableTabs={Object.keys(tabContents)}
+              onTabPositionChanged={this.onTabPositionChanged}
+            />
+            <Tabs
+              activeKey={activeTab}
+              onSelect={(key) => this.handleSelect(key, genericEl.type)}
+              id="GenericElementDetailsXTab"
+            >
+              {tabContentList}
+            </Tabs>
+          </div>
+        </Card.Body>
+        <Card.Footer>
+          <Button
+            variant="secondary"
+            onClick={() => DetailActions.close(genericEl, true)}
           >
-            {tabContentList}
-          </Tabs>
-        </div>
-      </DetailCard>
+            Close
+          </Button>
+          <Button
+            variant="warning"
+            onClick={() => this.handleSubmit()}
+            style={saveBtnDisplay}
+          >
+            {submitLabel}
+          </Button>
+        </Card.Footer>
+      </Card>
     );
   }
 }

@@ -628,31 +628,46 @@ export default class ReactionDetails extends Component {
     const currentTab = (activeTab !== 0 && activeTab) || visible[0];
 
     return (
-      <DetailCard
-        isPendingToSave={reaction.isPendingToSave}
-        header={this.reactionHeader(reaction)}
-        footer={this.reactionFooter()}
-      >
-        {this.reactionSVG(reaction)}
-        {this.state.sfn && <ScifinderSearch el={reaction} />}
-        <div className="tabs-container--with-borders">
-          <ElementDetailSortTab
-            type="reaction"
-            availableTabs={Object.keys(tabContentsMap)}
-            onTabPositionChanged={this.onTabPositionChanged}
-          />
-          <Tabs
-            mountOnEnter
-            activeKey={currentTab}
-            onSelect={this.handleSelect}
-            id="reaction-detail-tab"
-            unmountOnExit
+      <Card className={`detail-card${reaction.isPendingToSave ? ' detail-card--unsaved' : ''}`}>
+        <Card.Header>
+          {this.reactionHeader(reaction)}
+        </Card.Header>
+        <Card.Body>
+          {this.reactionSVG(reaction)}
+          {this.state.sfn && <ScifinderSearch el={reaction} />}
+          <div className="tabs-container--with-borders">
+            <ElementDetailSortTab
+              type="reaction"
+              availableTabs={Object.keys(tabContentsMap)}
+              onTabPositionChanged={this.onTabPositionChanged}
+            />
+            <Tabs
+              mountOnEnter
+              activeKey={currentTab}
+              onSelect={this.handleSelect}
+              id="reaction-detail-tab"
+              unmountOnExit
+            >
+              {tabContents}
+            </Tabs>
+            <CommentModal element={reaction} />
+          </div>
+        </Card.Body>
+        <Card.Footer>
+          <Button variant="primary" onClick={() => DetailActions.close(reaction)}>
+            Close
+          </Button>
+          <Button
+            id="submit-reaction-btn"
+            variant="warning"
+            onClick={() => this.handleSubmit()}
+            disabled={!permitOn(reaction) || !this.reactionIsValid()}
           >
-            {tabContents}
-          </Tabs>
-          <CommentModal element={reaction} />
-        </div>
-      </DetailCard>
+            {submitLabel}
+          </Button>
+          {exportButton}
+        </Card.Footer>
+      </Card>
     );
   }
 }

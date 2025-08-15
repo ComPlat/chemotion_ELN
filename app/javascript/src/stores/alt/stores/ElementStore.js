@@ -780,7 +780,7 @@ class ElementStore {
   }
 
   handleUpdateLinkedElement({ element, closeView, components }) {
-    if (element instanceof Sample && element.isMixture()) {
+    if (element.isMixture()) {
       ComponentsFetcher.saveOrUpdateComponents(element, components)
         .then(() => {
           element.initialComponents(components);

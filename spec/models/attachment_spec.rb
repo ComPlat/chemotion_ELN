@@ -26,7 +26,7 @@
 #  key             :string(500)
 #  storage         :string(20)       default("tmp")
 #  thumb           :boolean          default(FALSE)
-#  version         :string           default("/"), not null
+#  version         :string
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
 #  attachable_id   :integer
@@ -35,7 +35,6 @@
 #
 #  index_attachments_on_attachable_type_and_attachable_id  (attachable_type,attachable_id)
 #  index_attachments_on_identifier                         (identifier) UNIQUE
-#  index_attachments_on_version                            (version) WHERE (deleted_at IS NULL)
 #
 require 'rails_helper'
 

@@ -628,29 +628,38 @@ export default class ResearchPlanDetails extends Component {
     const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
 
     return (
-      <DetailCard
-        isPendingToSave={researchPlan.isPendingToSave}
-        header={this.renderPanelHeading(researchPlan)}
-        footer={this.renderPanelFooter()}
-      >
-        <div className="tabs-container--with-borders">
-          <ElementDetailSortTab
-            type="research_plan"
-            availableTabs={Object.keys(tabContentsMap)}
-            onTabPositionChanged={this.onTabPositionChanged}
-          />
-          <Tabs
-            mountOnEnter
-            unmountOnExit
-            activeKey={activeTab}
-            onSelect={(key) => this.handleSelect(key)}
-            id="screen-detail-tab"
-          >
-            {tabContents}
-          </Tabs>
-        </div>
-        <CommentModal element={researchPlan} />
-      </DetailCard>
+      <Card className="detail-card">
+        {this.renderPanelHeading(researchPlan)}
+        <Card.Body>
+          <div className="tabs-container--with-borders">
+            <ElementDetailSortTab
+              type="research_plan"
+              availableTabs={Object.keys(tabContentsMap)}
+              onTabPositionChanged={this.onTabPositionChanged}
+            />
+            <Tabs
+              mountOnEnter
+              unmountOnExit
+              activeKey={activeTab}
+              onSelect={(key) => this.handleSelect(key)}
+              id="screen-detail-tab"
+            >
+              {tabContents}
+            </Tabs>
+          </div>
+          <CommentModal element={researchPlan} />
+        </Card.Body>
+        <Card.Footer>
+          <Button variant="primary" onClick={() => DetailActions.close(researchPlan)}>Close</Button>
+          {
+            (researchPlan.changed || researchPlan.is_copy) && (
+              <Button variant="warning" onClick={() => this.handleSubmit()}>
+                {researchPlan.isNew ? 'Create' : 'Save'}
+              </Button>
+            )
+          }
+        </Card.Footer>
+      </Card>
     );
   }
 }

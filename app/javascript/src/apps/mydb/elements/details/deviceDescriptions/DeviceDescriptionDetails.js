@@ -205,29 +205,39 @@ const DeviceDescriptionDetails = () => {
   );
 
   return (
-    <DetailCard
-      isPendingToSave={deviceDescription.isPendingToSave}
-      header={deviceDescriptionHeader()}
-      footer={deviceDescriptionFooter()}
-    >
-      <div className="tabs-container--with-borders">
-        <ElementDetailSortTab
-          type="device_description"
-          availableTabs={Object.keys(tabContentComponents)}
-          tabTitles={tabTitles}
-          onTabPositionChanged={onTabPositionChanged}
-        />
-        <Tabs
-          activeKey={deviceDescriptionsStore.active_tab_key}
-          onSelect={key => handleTabChange(key)}
-          id="deviceDescriptionDetailsTab"
-          unmountOnExit
-        >
-          {tabContents}
-        </Tabs>
-      </div>
-      <CommentModal element={deviceDescription} />
-    </DetailCard>
+    <Card className={"detail-card" + (deviceDescription.isPendingToSave ? " detail-card--unsaved" : "")}>
+      <Card.Header>
+        {deviceDescriptionHeader()}
+      </Card.Header>
+      <Card.Body>
+        <div className="tabs-container--with-borders">
+          <ElementDetailSortTab
+            type="device_description"
+            availableTabs={Object.keys(tabContentComponents)}
+            tabTitles={tabTitles}
+            onTabPositionChanged={onTabPositionChanged}
+          />
+          <Tabs
+            activeKey={deviceDescriptionsStore.active_tab_key}
+            onSelect={key => handleTabChange(key)}
+            id="deviceDescriptionDetailsTab"
+            unmountOnExit
+          >
+            {tabContents}
+          </Tabs>
+        </div>
+        <CommentModal element={deviceDescription} />
+      </Card.Body>
+      <Card.Footer>
+        <Button variant="primary" onClick={() => DetailActions.close(deviceDescription)}>
+          Close
+        </Button>
+        <Button variant="warning" disabled={!deviceDescriptionIsValid()} onClick={() => handleSubmit()}>
+          {submitLabel}
+        </Button>
+        {downloadAnalysisButton()}
+      </Card.Footer>
+    </Card>
   );
 }
 

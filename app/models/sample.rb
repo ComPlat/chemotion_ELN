@@ -5,7 +5,7 @@
 # Table name: samples
 #
 #  id                  :integer          not null, primary key
-#  ancestry            :string           default("/"), not null
+#  ancestry            :string
 #  boiling_point       :numrange
 #  created_by          :integer
 #  decoupled           :boolean          default(FALSE), not null

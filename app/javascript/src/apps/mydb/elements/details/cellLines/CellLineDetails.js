@@ -94,6 +94,7 @@ class CellLineDetails extends React.Component {
     );
   }
 
+<<<<<<< HEAD
   renderFooterContent() {
     const { cellLineItem } = this.props;
 
@@ -107,6 +108,8 @@ class CellLineDetails extends React.Component {
     );
   }
 
+=======
+>>>>>>> origin/main
   renderSaveButton(closeAfterClick = false) {
     const { cellLineItem } = this.props;
     const { cellLineDetailsStore } = this.context;
@@ -192,6 +195,7 @@ class CellLineDetails extends React.Component {
     const { readOnly } = this.state;
     const { activeTab } = this.state;
     return (
+<<<<<<< HEAD
       <DetailCard
         header={this.renderHeaderContent()}
         footer={this.renderFooterContent()}
@@ -220,6 +224,44 @@ class CellLineDetails extends React.Component {
           </Tabs>
         </div>
       </DetailCard>
+=======
+      <Card className="detail-card">
+        <Card.Header>
+          {this.renderHeaderContent()}
+        </Card.Header>
+        <Card.Body>
+          <div className="tabs-container--with-borders">
+            <Tabs activeKey={activeTab} onSelect={(event) => this.handleTabChange(event)} id="cell-line-details-tab">
+              <Tab eventKey="tab1" title="Properties" key="tab1">
+                <GeneralProperties
+                  item={cellLineItem}
+                  readOnly={readOnly}
+                />
+              </Tab>
+              <Tab eventKey="tab2" title="Analyses" key="tab2">
+                <AnalysesContainer
+                  item={cellLineItem}
+                  readOnly={readOnly}
+                />
+              </Tab>
+              <Tab eventKey="tab3" title="References" key="tab3" disabled={cellLineItem.is_new}>
+                <DetailsTabLiteratures
+                  readOnly={readOnly}
+                  element={cellLineItem}
+                  literatures={cellLineItem.is_new ? cellLineItem.literatures : null}
+                />
+              </Tab>
+            </Tabs>
+          </div>
+        </Card.Body>
+        <Card.Footer className="d-flex justify-content-between">
+          <Button variant="primary" onClick={() => { this.handleClose(cellLineItem); }}>
+            Close
+          </Button>
+          {this.renderSubmitButton()}
+        </Card.Footer>
+      </Card>
+>>>>>>> origin/main
     );
   }
 }

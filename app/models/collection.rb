@@ -7,7 +7,7 @@
 # Table name: collections
 #
 #  id                             :integer          not null, primary key
-#  ancestry                       :string           default("/"), not null
+#  ancestry                       :string
 #  celllinesample_detail_level    :integer          default(10)
 #  deleted_at                     :datetime
 #  devicedescription_detail_level :integer          default(10)
