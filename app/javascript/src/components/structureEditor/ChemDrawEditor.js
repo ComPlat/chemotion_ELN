@@ -4,7 +4,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import StructureEditor from 'src/models/StructureEditor';
 import loadScripts from 'src/components/structureEditor/loadScripts';
-import LoadingEditorModal from './LoadingEditorModal';
+import LoadingEditorModal from 'src/components/structureEditor/LoadingEditorModal';
 
 class ChemDrawEditor extends React.Component {
   constructor(props) {
@@ -19,8 +19,13 @@ class ChemDrawEditor extends React.Component {
     const { editor } = this.props;
     const { extJs, id } = editor;
     loadScripts({
-      es: extJs, id, cbError: () => loadError(id), cbLoaded: () => this.loaded()
+      es: extJs, id, cbError: () => this.loadError('Internal Server Error!'), cbLoaded: () => this.loaded()
     });
+  }
+
+  loadError(e) {
+    this.setState({ loading: false });
+    alert(`Chemdraw JS is failed to load or attach! Error: ${e}`);
   }
 
   cdAttached(cd) {
