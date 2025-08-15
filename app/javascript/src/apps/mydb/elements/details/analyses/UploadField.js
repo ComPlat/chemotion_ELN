@@ -237,11 +237,12 @@ function UploadField({ disabled, element, setElement }) {
           <Row>
             <Col>
               <p>
-                Create new analyses: for each one, you can assign names and
-                create new datasets. You can drag and drop the files from the file list on the left-hand side
-                into the newly created dataset. Individual files are simply uploaded, but if several files or
-                folders are assigned to a dataset, they are zipped together. Do not forget to press Execute to apply your
-                settings.
+                Add and name new analyses with as many datasets as needed.
+                Drag and drop files or folders from the file list on the left-hand side into the datasets.
+                Folder can be expanded to see their contents, and files can be selected individually.
+                Multiple files and/or folders in a dataset will be zipped together.
+                A single file in a dataset is uploaded as it is.
+                Do not forget to press Execute to apply your settings.
               </p>
             </Col>
           </Row>

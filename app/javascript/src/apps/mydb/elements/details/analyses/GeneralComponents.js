@@ -46,16 +46,14 @@ function TreeNode({ node }) {
   return (
     <li>
       <div
-        style={{
-          whiteSpace: 'nowrap',
-          cursor: 'pointer'
-        }}
+        role="button"
         draggable
         onDragStart={onDragStart}
         onClick={handleClick}
       >
-        {hasChildren ? (expanded ? '📂' : '📁') : '📄'}
-        {' '}
+        {hasChildren
+          ? (expanded ? <i className="fa fa-folder-open me-1" /> : <i className="fa fa-folder me-1" />)
+          : <i className="fa fa-file me-1" />}
         {node.name}
       </div>
       {hasChildren && expanded && (
@@ -94,7 +92,7 @@ function DatasetDropZone({ droppedPaths, setDroppedPaths }) {
       onDragOver={onDragOver}
       onDrop={onDrop}
     >
-      <strong>Drop files here:</strong>
+      <strong>Drop files and/or folders here</strong>
       <ul style={{ overflow: 'auto' }}>
         {droppedPaths.map((p, i) => (
           <li key={i}>
