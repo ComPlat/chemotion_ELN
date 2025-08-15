@@ -1,20 +1,31 @@
-development:
-  :url:
+shared:
+  :ext:
+    - '.aif'
+    - '.brml'
+    - '.cif'
+    - '.dpt'
+    - '.dsp'
+    - '.dta'
+    - '.gz'
+    - '.pssession'
+    - '.tar'
+    - '.txt'
+    - '.xls'
+    - '.xlsx'
+    - '.xy'
   :profile:
   :secret_key:
   :timeout:
-  :ext:
+  :url:
+
+development:
+  :profile: 'chemotion'
+  :secret_key: 'chemotion'
+  :timeout: 300
+  :url: 'http://converter:4000/'
 
 test:
   :url:
-  :profile:
-  :secret_key:
-  :timeout:
-  :ext:
 
 production:
   :url:
-  :profile:
-  :secret_key:
-  :timeout:
-  :ext:
