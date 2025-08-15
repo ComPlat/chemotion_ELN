@@ -3,7 +3,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  ButtonToolbar, Button, Tooltip, OverlayTrigger, Tabs, Tab, Dropdown, ButtonGroup
+  ButtonToolbar, Button, Tooltip, OverlayTrigger, Tabs, Tab, Dropdown, ButtonGroup, Card
 } from 'react-bootstrap';
 import { unionBy, findIndex } from 'lodash';
 import Immutable from 'immutable';
@@ -29,7 +29,6 @@ import ResearchPlanDetailsName from
   'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsName';
 import ResearchPlanDetailsContainers from
   'src/apps/mydb/elements/details/researchPlans/analysesTab/ResearchPlanDetailsContainers';
-import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
@@ -488,55 +487,37 @@ export default class ResearchPlanDetails extends Component {
     );
 
     return (
-      <div className="d-flex align-items-center justify-content-between">
-        <div className="d-flex align-items-center gap-2">
-          <OverlayTrigger placement="bottom" overlay={<Tooltip id="rpDates">{titleTooltip}</Tooltip>}>
-            <span>
-              <i className="fa fa-file-text-o" />
-              <span className="mx-1">{researchPlan.name}</span>
-            </span>
-          </OverlayTrigger>
-          <ShowUserLabels element={researchPlan} />
-          <ElementCollectionLabels element={researchPlan} placement="right" />
-          <HeaderCommentSection element={researchPlan} />
+      <Card.Header className={`text-bg-${researchPlan.isPendingToSave ? 'info' : 'primary'}`}>
+        <div className="d-flex align-items-center justify-content-between">
+          <div className="d-flex align-items-center gap-2">
+            <OverlayTrigger placement="bottom" overlay={<Tooltip id="rpDates">{titleTooltip}</Tooltip>}>
+              <span>
+                <i className="fa fa-file-text-o" />
+                <span className="mx-1">{researchPlan.name}</span>
+              </span>
+            </OverlayTrigger>
+            <ShowUserLabels element={researchPlan} />
+            <ElementCollectionLabels element={researchPlan} placement="right" />
+            <HeaderCommentSection element={researchPlan} />
+          </div>
+          <div className="d-flex align-items-center gap-1 flex-row-reverse">
+            <ConfirmClose el={researchPlan} />
+            <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveresearch_plan">Save Research Plan</Tooltip>}>
+              <Button
+                variant="warning"
+                size="xxsm"
+                onClick={() => this.handleSubmit()}
+                style={{ display: (researchPlan.changed || false) ? '' : 'none' }}
+              >
+                <i className="fa fa-floppy-o" aria-hidden="true" />
+              </Button>
+            </OverlayTrigger>
+            {!researchPlan.isNew
+              && <OpenCalendarButton isPanelHeader eventableId={researchPlan.id} eventableType="ResearchPlan" />}
+            {copyBtn}
+          </div>
         </div>
-        <div className="d-flex align-items-center gap-1 flex-row-reverse">
-          <ConfirmClose el={researchPlan} />
-          <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveresearch_plan">Save Research Plan</Tooltip>}>
-            <Button
-              variant="warning"
-              size="xxsm"
-              onClick={() => this.handleSubmit()}
-              style={{ display: (researchPlan.changed || false) ? '' : 'none' }}
-            >
-              <i className="fa fa-floppy-o" aria-hidden="true" />
-            </Button>
-          </OverlayTrigger>
-          {!researchPlan.isNew
-            && <OpenCalendarButton isPanelHeader eventableId={researchPlan.id} eventableType="ResearchPlan" />}
-          {copyBtn}
-        </div>
-      </div>
-    );
-  }
-
-  renderPanelFooter() {
-    const { researchPlan } = this.state;
-
-    return (
-      <>
-        <Button
-          variant="primary"
-          onClick={() => DetailActions.close(researchPlan)}
-        >
-          Close
-        </Button>
-        {(researchPlan.changed || researchPlan.is_copy) && (
-          <Button variant="warning" onClick={() => this.handleSubmit()}>
-            {researchPlan.isNew ? 'Create' : 'Save'}
-          </Button>
-        )}
-      </>
+      </Card.Header>
     );
   }
 

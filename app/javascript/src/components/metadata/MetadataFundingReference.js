@@ -44,6 +44,8 @@ const MetadataFundingReference = ({
             options={funderIdentifierTypes}
             onChange={(option) => onChange(option.value, 'fundingReferences', index, 'funderIdentifierType')}
             value={funderIdentifierType}
+            menuPortalTarget={document.body}
+            styles={{ menuPortal: (base) => ({ ...base, zIndex: 9999 }) }}
           />
         </Form.Group>
       </Row>

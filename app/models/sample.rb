@@ -51,7 +51,6 @@
 #
 # Indexes
 #
-#  index_samples_on_ancestry          (ancestry) WHERE (deleted_at IS NULL)
 #  index_samples_on_deleted_at        (deleted_at)
 #  index_samples_on_identifier        (identifier)
 #  index_samples_on_inventory_sample  (inventory_sample)

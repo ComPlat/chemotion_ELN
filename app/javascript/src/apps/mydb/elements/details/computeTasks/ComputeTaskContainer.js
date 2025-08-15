@@ -1,8 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Table } from 'react-bootstrap';
-
-import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
+import { Button, Table, Card } from 'react-bootstrap';
 
 import ComputeTaskActions from 'src/stores/alt/actions/ComputeTaskActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
@@ -64,50 +62,47 @@ export default class ComputeTaskContainer extends React.Component {
   }
   /* eslint-enable class-methods-use-this */
 
-  computeTaskHeader() {
-    return (
-      <div className="d-flex align-items-baseline justify-content-between">
-        Task
-        <Button
-          key="closeBtn"
-          onClick={this.onClose}
-          variant="danger"
-          size="xxsm"
-          className="ms-auto"
-        >
-          <i className="fa fa-times" />
-        </Button>
-      </div>
-    );
-  }
-
   render() {
     const { tasks } = this.state;
 
     return (
-      <DetailCard header={this.computeTaskHeader()}>
-        <Table striped condensed hover>
-          <thead>
-            <tr>
-              <th className="text-center">Sample</th>
-              <th className="text-center">Status</th>
-              <th className="text-center">Updated at</th>
-              <th className="text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {tasks.map((task) => (
-              <ComputeTask
-                key={task.id}
-                task={task}
-                checkState={this.checkState}
-                revokeTask={this.revokeTask}
-                deleteTask={this.deleteTask}
-              />
-            ))}
-          </tbody>
-        </Table>
-      </DetailCard>
+      <Card className="detail-card">
+        <Card.Header className="d-flex align-items-baseline justify-content-between">
+          Task
+          <Button
+            key="closeBtn"
+            onClick={this.onClose}
+            variant="danger"
+            size="xxsm"
+            className="ms-auto"
+          >
+            <i className="fa fa-times" />
+          </Button>
+        </Card.Header>
+        <Card.Body>
+          <Table striped condensed hover>
+            <thead>
+              <tr>
+                <th className="text-center">Sample</th>
+                <th className="text-center">Status</th>
+                <th className="text-center">Updated at</th>
+                <th className="text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tasks.map((task) => (
+                <ComputeTask
+                  key={task.id}
+                  task={task}
+                  checkState={this.checkState}
+                  revokeTask={this.revokeTask}
+                  deleteTask={this.deleteTask}
+                />
+              ))}
+            </tbody>
+          </Table>
+        </Card.Body>
+      </Card>
     );
   }
 }

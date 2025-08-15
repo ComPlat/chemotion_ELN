@@ -5,18 +5,16 @@ import React, { Component } from 'react';
 import Aviator from 'aviator';
 import PropTypes from 'prop-types';
 import {
-  Button, Tabs, Tab, OverlayTrigger, Tooltip, ButtonToolbar, ButtonGroup
+  Button, Tabs, Tab, OverlayTrigger, Tooltip, Card, ButtonToolbar, ButtonGroup
 } from 'react-bootstrap';
 import SvgFileZoomPan from 'react-svg-file-zoom-pan-latest';
 import { findIndex, isEmpty } from 'lodash';
-
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import ElementResearchPlanLabels from 'src/apps/mydb/elements/labels/ElementResearchPlanLabels';
 import ElementAnalysesLabels from 'src/apps/mydb/elements/labels/ElementAnalysesLabels';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
-import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import ReactionVariations from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariations';
 import {
   REACTION_VARIATIONS_TAB_KEY
@@ -435,30 +433,6 @@ export default class ReactionDetails extends Component {
     );
   }
 
-  reactionFooter() {
-    const { reaction } = this.state;
-    const submitLabel = (reaction && reaction.isNew) ? 'Create' : 'Save';
-
-    return (
-      <>
-        <Button variant="primary" onClick={() => DetailActions.close(reaction)}>
-          Close
-        </Button>
-        <Button
-          id="submit-reaction-btn"
-          variant="warning"
-          onClick={() => this.handleSubmit()}
-          disabled={!permitOn(reaction) || !this.reactionIsValid()}
-        >
-          {submitLabel}
-        </Button>
-        {reaction && !reaction.isNew && (
-          <ExportSamplesButton type="reaction" id={reaction.id} />
-        )}
-      </>
-    );
-  }
-
   updateReactionSvg() {
     const { reaction } = this.state;
     const materialsSvgPaths = {
@@ -624,6 +598,9 @@ export default class ReactionDetails extends Component {
       const tabContent = tabContentsMap[value];
       if (tabContent) { tabContents.push(tabContent); }
     });
+
+    const submitLabel = (reaction && reaction.isNew) ? 'Create' : 'Save';
+    const exportButton = (reaction && reaction.isNew) ? null : <ExportSamplesButton type="reaction" id={reaction.id} />;
 
     const currentTab = (activeTab !== 0 && activeTab) || visible[0];
 

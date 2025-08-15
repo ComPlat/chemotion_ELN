@@ -34,6 +34,8 @@ const MetadataAlternateIdentifier = ({
           options={alternateIdentifierTypes}
           onChange={(option) => onChange(option.value, 'alternateIdentifiers', index, 'alternateIdentifierType')}
           value={alternateIdentifierType}
+          menuPortalTarget={document.body}
+          styles={{ menuPortal: (base) => ({ ...base, zIndex: 9999 }) }}
         />
       </Form.Group>
       <Col xs={1} className="d-flex align-items-center">

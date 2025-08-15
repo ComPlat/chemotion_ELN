@@ -6,8 +6,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {
   Button, InputGroup, ListGroupItem, Tabs, Tab, Row, Col,
-  Tooltip, OverlayTrigger, Modal, Alert, Form,
-  Accordion, Container
+  Tooltip, OverlayTrigger, Modal, Alert, Card, Form,
+  Accordion
 } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import { CreatableSelect } from 'src/components/common/Select';
@@ -30,7 +30,6 @@ import ElementAnalysesLabels from 'src/apps/mydb/elements/labels/ElementAnalyses
 import PubchemLabels from 'src/components/pubchem/PubchemLabels';
 import PubchemLcss from 'src/components/pubchem/PubchemLcss';
 import ElementReactionLabels from 'src/apps/mydb/elements/labels/ElementReactionLabels';
-import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import SampleDetailsContainers from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainers';
 
 import StructureEditorModal from 'src/components/structureEditor/StructureEditorModal';
@@ -1007,88 +1006,32 @@ export default class SampleDetails extends React.Component {
 
     const inventoryLabel = sample.inventory_sample && sample.inventory_label ? sample.inventory_label : null;
 
-    const { pageMessage } = this.state;
-    const messageBlock = (pageMessage
-      && (pageMessage.error.length > 0 || pageMessage.warning.length > 0)) ? (
-        <Alert variant="warning" style={{ marginBottom: 'unset', padding: '5px', marginTop: '10px' }}>
-          <strong>Structure Alert</strong>
-          <Button
-            size="sm"
-            variant="outline-warning"
-            style={{ float: 'right' }}
-            onClick={() => this.setState({ pageMessage: null })}
-          >
-            Close Alert
-          </Button>
-          {
-          pageMessage.error.map((m) => (
-            <div key={uuid.v1()}>{m}</div>
-          ))
-        }
-          {
-          pageMessage.warning.map((m) => (
-            <div key={uuid.v1()}>{m}</div>
-          ))
-        }
-        </Alert>
-      ) : null;
-
-    // warning message for redirection
-    const redirectWarningBlock = this.state.showRedirectWarning ? (
-      <Alert variant="warning" className="d-flex flex-column gap-2 mt-2 mb-0 p-2">
-        <div>
-          <strong>Notice:</strong>
-          <p className="mb-1">
-            You are viewing the original sample that was used to create this component. Some of its attributes may have
-            changed now.
-          </p>
-          <p className="mb-0">
-            Any updates you make here will apply only to the original sample, not to any component generated from it.
-            However, changes on this sample may affect other dependant entities.
-          </p>
-        </div>
-        <div className="align-self-end">
-          <Button
-            size="sm"
-            variant="outline-warning"
-            onClick={() => this.setState({ showRedirectWarning: false })}
-          >
-            Close Alert
-          </Button>
-        </div>
-      </Alert>
-    ) : null;
-
     return (
-      <>
-        <div className="d-flex align-items-center flex-wrap">
-          <div className="d-flex align-items-center flex-wrap flex-grow-1 gap-2">
-            <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
-              <span className="flex-shrink-0">
-                <i className="icon-sample me-1" />
-                {inventoryLabel || sample.title()}
-              </span>
-            </OverlayTrigger>
-            <ShowUserLabels element={sample} />
-            <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
-            {!sample.isNew && <ElementCollectionLabels element={sample} key={sample.id} placement="right" />}
-            <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
-            <PubchemLabels element={sample} />
-            <HeaderCommentSection element={sample} />
-            {sample.isNew && !sample.isMixture() && <FastInput fnHandle={this.handleFastInput} />}
-          </div>
-          <div className="d-flex align-items-center gap-2">
-            {decoupleCb}
-            {inventorySample}
-            {!sample.isNew && <OpenCalendarButton isPanelHeader eventableId={sample.id} eventableType="Sample" />}
-            <PrintCodeButton element={sample} />
-            {copyBtn}
-            {this.saveAndCloseSample(sample, saveBtnDisplay)}
-          </div>
+      <div className="d-flex align-items-center flex-wrap">
+        <div className="d-flex align-items-center flex-wrap flex-grow-1 gap-2">
+          <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
+            <span className="flex-shrink-0">
+              <i className="icon-sample me-1" />
+              {inventoryLabel || sample.title()}
+            </span>
+          </OverlayTrigger>
+          <ShowUserLabels element={sample} />
+          <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
+          {!sample.isNew && <ElementCollectionLabels element={sample} key={sample.id} placement="right" />}
+          <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
+          <PubchemLabels element={sample} />
+          <HeaderCommentSection element={sample} />
+          {sample.isNew && !sample.isMixture() && <FastInput fnHandle={this.handleFastInput} />}
         </div>
-        {messageBlock}
-        {redirectWarningBlock}
-      </>
+        <div className="d-flex align-items-center gap-2">
+          {decoupleCb}
+          {inventorySample}
+          {!sample.isNew && <OpenCalendarButton isPanelHeader eventableId={sample.id} eventableType="Sample" />}
+          <PrintCodeButton element={sample} />
+          {copyBtn}
+          {this.saveAndCloseSample(sample, saveBtnDisplay)}
+        </div>
+      </div>
     );
   }
 
@@ -1485,7 +1428,8 @@ export default class SampleDetails extends React.Component {
           <strong>Structure Alert</strong>
           <Button
             size="sm"
-            variant="warning"
+            variant="outline-warning"
+            style={{ float: 'right' }}
             onClick={() => this.setState({ pageMessage: null })}
           >
             Close Alert
@@ -1503,6 +1447,32 @@ export default class SampleDetails extends React.Component {
         </Alert>
       ) : null;
 
+    // warning message for redirection
+    const redirectWarningBlock = this.state.showRedirectWarning ? (
+      <Alert variant="warning" className="d-flex flex-column gap-2 mt-2 mb-0 p-2">
+        <div>
+          <strong>Notice:</strong>
+          <p className="mb-1">
+            You are viewing the original sample that was used to create this component. Some of its attributes may have
+            changed now.
+          </p>
+          <p className="mb-0">
+            Any updates you make here will apply only to the original sample, not to any component generated from it.
+            However, changes on this sample may affect other dependant entities.
+          </p>
+        </div>
+        <div className="align-self-end">
+          <Button
+            size="sm"
+            variant="outline-warning"
+            onClick={() => this.setState({ showRedirectWarning: false })}
+          >
+            Close Alert
+          </Button>
+        </div>
+      </Alert>
+    ) : null;
+
     const activeTab = (this.state.activeTab !== 0 && stb.indexOf(this.state.activeTab) > -1
       && this.state.activeTab) || visible.get(0);
 
@@ -1512,28 +1482,37 @@ export default class SampleDetails extends React.Component {
       <Card className={`detail-card${pendingToSave ? ' detail-card--unsaved' : ''}`}>
         <Card.Header>
           {this.sampleHeader(sample)}
+          {redirectWarningBlock}
           {messageBlock}
         </Card.Header>
         <Card.Body>
           {this.sampleInfo(sample)}
-          <ElementDetailSortTab
-            type="sample"
-            availableTabs={Object.keys(tabContentsMap)}
-            tabTitles={tabTitlesMap}
-            onTabPositionChanged={this.onTabPositionChanged}
-            addInventoryTab={sample.inventory_sample}
-          />
           {this.state.sfn && <ScifinderSearch el={sample} />}
           <div className="tabs-container--with-borders">
-            <Tabs mountOnEnter unmountOnExit activeKey={activeTab} onSelect={this.handleSelect} id="SampleDetailsXTab">
+            <ElementDetailSortTab
+              type="sample"
+              availableTabs={Object.keys(tabContentsMap)}
+              tabTitles={tabTitlesMap}
+              onTabPositionChanged={this.onTabPositionChanged}
+              addInventoryTab={sample.inventory_sample}
+            />
+            <Tabs
+              mountOnEnter
+              unmountOnExit
+              activeKey={activeTab}
+              onSelect={this.handleSelect}
+              id="SampleDetailsXTab"
+            >
               {tabContents}
             </Tabs>
           </div>
-          {this.sampleFooter()}
           {this.structureEditorModal(sample)}
           {this.renderMolfileModal()}
           <CommentModal element={sample} />
         </Card.Body>
+        <Card.Footer>
+          {this.sampleFooter()}
+        </Card.Footer>
       </Card>
     );
   }

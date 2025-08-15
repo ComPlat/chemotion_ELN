@@ -28,7 +28,6 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import ConfirmClose from 'src/components/common/ConfirmClose';
-import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import ExportSamplesButton from 'src/apps/mydb/elements/details/ExportSamplesButton';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
@@ -277,36 +276,14 @@ export default class WellplateDetails extends Component {
     );
   }
 
-  wellplateFooter() {
-    const { wellplate } = this.state;
-
-    return (
-      <>
-        <Button variant="primary" onClick={() => DetailActions.close(wellplate)}>Close</Button>
-        {wellplate.changed && (
-          <Button variant="warning" onClick={() => this.handleSubmit()}>
-            {wellplate.isNew ? 'Create' : 'Save'}
-          </Button>
-        )}
-
-        {wellplate && !wellplate.isNew && (
-          <ExportSamplesButton type="wellplate" id={wellplate.id} />
-        )}
-
-        <Button
-          variant="primary"
-          onClick={() => this.handlePrint()}
-          disabled={wellplate.width > 12}
-        >
-          Print Wells
-        </Button>
-      </>
-    );
-  }
 
   render() {
     const { wellplate, showWellplate, visible } = this.state;
+    const printButtonDisabled = wellplate.width > 12;
     const readoutTitles = wellplate.readout_titles;
+    const exportButton = (wellplate && wellplate.isNew)
+      ? null : <ExportSamplesButton type="wellplate" id={wellplate.id} />;
+
     const tabContentsMap = {
       designer: (
         <Tab eventKey="designer" title="Designer" key={`designer_${wellplate.id}`}>

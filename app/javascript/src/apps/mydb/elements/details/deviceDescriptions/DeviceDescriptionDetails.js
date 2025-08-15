@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import {
-  Button, Tabs, Tab, Tooltip, OverlayTrigger
+  Button, Tabs, Tab, Tooltip, OverlayTrigger, Card
 } from 'react-bootstrap';
 
 import PropertiesForm from './propertiesTab/PropertiesForm';
@@ -18,7 +18,6 @@ import { commentActivation } from 'src/utilities/CommentHelper';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import ConfirmClose from 'src/components/common/ConfirmClose';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
-import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 import CopyElementModal from 'src/components/common/CopyElementModal';
@@ -191,18 +190,6 @@ const DeviceDescriptionDetails = () => {
       </div>
     );
   }
-
-  const deviceDescriptionFooter = () => (
-    <>
-      <Button variant="primary" onClick={() => DetailActions.close(deviceDescription)}>
-        Close
-      </Button>
-      <Button variant="warning" disabled={!deviceDescriptionIsValid()} onClick={() => handleSubmit()}>
-        {submitLabel}
-      </Button>
-      {downloadAnalysisButton()}
-    </>
-  );
 
   return (
     <Card className={"detail-card" + (deviceDescription.isPendingToSave ? " detail-card--unsaved" : "")}>

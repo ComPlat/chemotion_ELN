@@ -21,7 +21,6 @@
 # Indexes
 #
 #  index_containers_on_containable  (containable_type,containable_id)
-#  index_containers_on_parent_id    (parent_id) WHERE (deleted_at IS NULL)
 #
 
 class Container < ApplicationRecord

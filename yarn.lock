@@ -4911,11 +4911,6 @@ chem-generic-ui@2.1.0-rc2:
     reactflow "^11.7.2"
     uuid "^9.0.0"
 
-chem-units@^1.2.0:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/chem-units/-/chem-units-1.2.0.tgz#370b89ba225a84112ca1d201adb3343d9cddb9fd"
-  integrity sha512-Yzz6Re1ZSvEwZc0aINCj2yVvsZrdPms+RcF4EPdHLDdJK8ElHG73pFJM+3cIW1sLn9cddDSnqST7Qnltcy+n/w==
-
 chem-units@^1.3.1:
   version "1.3.1"
   resolved "https://registry.yarnpkg.com/chem-units/-/chem-units-1.3.1.tgz#dcca4d2c4d39b4026d5f42d15e378a5a1f740c76"
@@ -7604,15 +7599,7 @@ gauge@^4.0.3:
     strip-ansi "^6.0.1"
     wide-align "^1.1.5"
 
-generic-ui-core@^1.5.2:
-  version "1.5.2"
-  resolved "https://registry.yarnpkg.com/generic-ui-core/-/generic-ui-core-1.5.2.tgz#d5b01974196808083d7d2c65f3dd84126b0cbc9c"
-  integrity sha512-zzA/I2m2Lo4POIeCBV44vmOt9lVAgd3BvNWpwjOIaXlnXlA5/a7zfnNgNwZcU62QQPxO+cRjm84hvDPCDKg76A==
-  dependencies:
-    chem-units "^1.2.0"
-    lodash "^4.17.21"
-
-generic-ui-core@^1.6.0:
+generic-ui-core@^1.5.2, generic-ui-core@^1.6.0:
   version "1.6.0"
   resolved "https://registry.yarnpkg.com/generic-ui-core/-/generic-ui-core-1.6.0.tgz#8dcb86dfba35d2f9baa8d02154bc83003d9de07e"
   integrity sha512-6XOsdwluv7DYt61OqNpIG0N/P0LwEpR7eO9pmJKROEc2I1eUaxra1TWQ1wvzcEt5QMNRZX0/SHNRA8eIaCHn8Q==
@@ -12514,7 +12501,7 @@ read@1, read@^1.0.7, read@~1.0.7:
   dependencies:
     mute-stream "~0.0.4"
 
-readable-stream@^2.0.1:
+readable-stream@^2.0.1, readable-stream@~2.3.6:
   version "2.3.8"
   resolved "https://registry.yarnpkg.com/readable-stream/-/readable-stream-2.3.8.tgz#91125e8042bba1b9887f49345f6277027ce8be9b"
   integrity sha512-8p0AUk4XODgIewSi0l8Epjs+EVnWiK7NoDIEGU0HhE7+ZyY8D1IMY7odu5lRrFXGg71L15KG8QrPmum45RTtdA==
@@ -12544,19 +12531,6 @@ readable-stream@^3.6.0:
     inherits "^2.0.3"
     string_decoder "^1.1.1"
     util-deprecate "^1.0.1"
-
-readable-stream@~2.3.6:
-  version "2.3.8"
-  resolved "https://registry.yarnpkg.com/readable-stream/-/readable-stream-2.3.8.tgz#91125e8042bba1b9887f49345f6277027ce8be9b"
-  integrity sha512-8p0AUk4XODgIewSi0l8Epjs+EVnWiK7NoDIEGU0HhE7+ZyY8D1IMY7odu5lRrFXGg71L15KG8QrPmum45RTtdA==
-  dependencies:
-    core-util-is "~1.0.0"
-    inherits "~2.0.3"
-    isarray "~1.0.0"
-    process-nextick-args "~2.0.0"
-    safe-buffer "~5.1.1"
-    string_decoder "~1.1.1"
-    util-deprecate "~1.0.1"
 
 readdir-scoped-modules@^1.1.0:
   version "1.1.0"

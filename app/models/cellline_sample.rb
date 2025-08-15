@@ -22,11 +22,11 @@
 #
 # Indexes
 #
-#  index_cellline_samples_on_ancestry  (ancestry) WHERE (deleted_at IS NULL)
+#  index_cellline_samples_on_ancestry  (ancestry)
 #
 class CelllineSample < ApplicationRecord
   acts_as_paranoid
-  has_ancestry orphan_strategy: :adopt
+  has_ancestry
 
   include ElementUIStateScopes
   include Taggable

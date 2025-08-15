@@ -12,16 +12,11 @@ module Entities
       :solvents,
     )
     expose :starting_materials, as: :startingMaterials
-    expose :segment_data, as: :segmentData
 
     def properties
       object[:properties].slice(:duration, :temperature).transform_values do |value|
         ReactionVariationPropertyEntity.represent(value)
       end
-    end
-
-    def segment_data
-      object[:segmentData]
     end
 
     def metadata
