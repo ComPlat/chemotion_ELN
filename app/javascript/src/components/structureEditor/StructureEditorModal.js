@@ -302,14 +302,14 @@ export default class StructureEditorModal extends React.Component {
       console.error('onSaveFileK2SC is not a function');
       return;
     }
-    try {
+    // try {
       // Call onSaveFileK2SC and get the required data
       const { ket2Molfile, svgElement } = await onSaveFileK2SC();
       const updatedSvg = await transformSvgIdsAndReferences(svgElement);
       this.handleStructureSave(ket2Molfile, updatedSvg, editorId.id);
-    } catch (error) {
-      console.error('Error during save operation for Ketcher2:', error);
-    }
+    // } catch (error) {
+    //   console.error('Error during save operation for Ketcher2:', error);
+    // }
   }
 
   initializeEditor() {

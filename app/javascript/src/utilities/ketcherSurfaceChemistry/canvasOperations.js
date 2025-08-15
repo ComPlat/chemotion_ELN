@@ -517,26 +517,25 @@ const onTemplateMove = async (editor, recenter = false) => {
 };
 
 const onFinalCanvasSave = async (editor, iframeRef) => {
-  try {
-    let textNodesFormula = '';
+  // try {
     await centerPositionCanvas(editor);
     const canvasDataMol = await editor.structureDef.editor.getMolfile();
     await reArrangeImagesOnCanvas(iframeRef); // svg display
     const ket2Lines = await arrangePolymers(canvasDataMol); // polymers added
     const ket2LineTextArranged = await arrangeTextNodes(ket2Lines); // text node
-    if (textList?.length) textNodesFormula = await assembleTextDescriptionFormula(ket2Lines, editor);
+    // if (textList?.length) textNodesFormula = await assembleTextDescriptionFormula(ket2Lines, editor);
     ket2LineTextArranged.push(KET_TAGS.fileEndIdentifier);
     const svgElement = await prepareSvg(editor);
     resetStore();
     return {
       ket2Molfile: ket2LineTextArranged.join('\n'),
       svgElement,
-      textNodesFormula,
+      textNodesFormula: '',
     };
-  } catch (e) {
-    console.error('onSaveFileK2SC', e);
-    return e.message;
-  }
+  // } catch (e) {
+  //   console.error('onSaveFileK2SC', e);
+  //   return e.message;
+  // }
 };
 
 const onPasteNewShapes = async (editor, tempId, imageToBeAdded, iframeRef) => {
