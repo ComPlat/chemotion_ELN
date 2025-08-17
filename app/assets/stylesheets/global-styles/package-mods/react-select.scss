@@ -21,6 +21,7 @@
 
 .chemotion-select {
   position: relative;
+  padding: 0 !important;
   &.is-invalid {
     .chemotion-select__control,
     .chemotion-select__control:hover {
