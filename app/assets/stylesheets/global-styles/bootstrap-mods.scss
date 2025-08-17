@@ -179,4 +179,10 @@ h6 {
   &:hover::after {
     padding-top: 3px;
   }
+  &:not(.collapsed)::after {
+    transform: rotate(180deg);
+  }
+  &--icon-only {
+    width: 24px;
+  }
 }
