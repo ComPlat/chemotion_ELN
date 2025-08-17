@@ -528,6 +528,7 @@ class SearchUserLabels extends React.Component {
         onChange={this.handleSelectChange}
         placeholder="Filter by label"
         minWidth="100px"
+        size={this.props.size}
       />
     );
   }
@@ -536,10 +537,12 @@ class SearchUserLabels extends React.Component {
 SearchUserLabels.propTypes = {
   fnCb: PropTypes.func.isRequired,
   userLabel: PropTypes.number,
+  size: PropTypes.string,
 };
 
 SearchUserLabels.defaultProps = {
   userLabel: null,
+  size: 'md',
 };
 
 export { UserLabelModal, EditUserLabels, ShowUserLabels, SearchUserLabels };
