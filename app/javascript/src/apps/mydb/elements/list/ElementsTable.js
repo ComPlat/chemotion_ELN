@@ -2,7 +2,7 @@
 import React from 'react';
 
 import {
-  Pagination, Form, InputGroup, Tooltip, OverlayTrigger
+  Button, Pagination, Form, InputGroup, Tooltip, OverlayTrigger
 } from 'react-bootstrap';
 import DatePicker from 'react-datepicker';
 import deepEqual from 'deep-equal';
@@ -281,13 +281,13 @@ export default class ElementsTable extends React.Component {
       : () => UIActions.collapseAllGroups({ type });
 
     return (
-      <ChevronIcon
-        direction={isGroupBaseCollapsed ? 'right' : 'down'}
+      <button
+        type="button"
         onClick={onClick}
-        color="primary"
-        className="fs-5"
-        role="button"
-      />
+        className={`accordion-button accordion-button--icon-only${isGroupBaseCollapsed ? ' collapsed' : ''}`}
+      >
+        &nbsp;
+      </button>
     );
   };
 
@@ -376,7 +376,6 @@ export default class ElementsTable extends React.Component {
       { value: false, label: 'Grouped by Sample' },
       { value: true, label: 'Grouped by Molecule' }
     ];
-    const color = productOnly ? '#5cb85c' : 'currentColor';
     const tooltipText = productOnly ? 'Show all' : 'Show products only';
 
     return (
@@ -386,22 +385,21 @@ export default class ElementsTable extends React.Component {
           isClearable={false}
           value={options.find(({ value }) => value === moleculeSort)}
           onChange={this.changeSampleSort}
+          size="sm"
         />
         <OverlayTrigger
           placement="top"
           overlay={<Tooltip id="showProductsOnly">{tooltipText}</Tooltip>}
         >
-          <button
-            type="button"
-            className="border-0"
+          <Button
+            size="sm"
             onClick={this.toggleProductOnly}
-            role="button"
+            variant={productOnly ? 'primary' : 'light'}
           >
             <i
-              style={{ color }}
-              className="fa fa-lg fa-product-hunt"
+              className="fa fa-product-hunt"
             />
-          </button>
+          </Button>
         </OverlayTrigger>
         {this.collapseButton()}
       </>
@@ -474,6 +472,7 @@ export default class ElementsTable extends React.Component {
           value={options.find(({ value }) => value == elementsGroup)}
           onChange={this.changeElementsGroup}
           className="header-group-select"
+          size="sm"
         />
         {sortContent}
         {this.renderChangeSortDirectionIcon()}
@@ -548,6 +547,7 @@ export default class ElementsTable extends React.Component {
           value={options.find(({ value }) => value == elementsGroup)}
           onChange={this.changeElementsGroup}
           className="header-group-select"
+          size="sm"
         />
         {elementsGroup !== 'none' ? (sortContent) : null}
         {elementsGroup !== 'none' ? (this.collapseButton()) : null}
@@ -585,6 +585,7 @@ export default class ElementsTable extends React.Component {
           value={options.find(({ value }) => value === elementsGroup)}
           onChange={this.changeElementsGroup}
           className="header-group-select"
+          size="sm"
         />
         <OverlayTrigger placement="top" overlay={sortTooltip}>
           <button type="button" style={{ border: 'none' }} onClick={this.changeElementsSort}>
@@ -622,7 +623,7 @@ export default class ElementsTable extends React.Component {
       typeSpecificHeader = this.renderVesselsHeader();
     }
 
-    const searchLabel = <SearchUserLabels userLabel={userLabel} fnCb={this.setUserLabel} />;
+    const searchLabel = <SearchUserLabels userLabel={userLabel} fnCb={this.setUserLabel} size="sm" />;
 
     const filterTitle = filterCreatedAt === true
       ? 'click to filter by update date - currently filtered by creation date'
@@ -633,42 +634,36 @@ export default class ElementsTable extends React.Component {
     const filterIcon = <i className={`fa ${filterIconClass}`} />;
 
     return (
-      <div className="elements-table-header">
+      <div className="elements-table-header gap-1">
+        <ElementAllCheckbox type={type} />
         <div className="d-flex gap-1 align-items-center">
-          <ElementAllCheckbox type={type} />
-        </div>
-        <div
-          className="header-right d-flex gap-1 align-items-center"
-        >
-          {searchLabel}
-          <OverlayTrigger placement="top" overlay={filterTooltip}>
-            <button
-              type="button"
-              style={{ border: 'none' }}
-              onClick={this.changeDateFilter}
-            >
-              {filterIcon}
-            </button>
-          </OverlayTrigger>
-          <div className="sample-list-from-date">
-            <DatePicker
-              selected={fromDate}
-              placeholderText="From"
-              onChange={this.setFromDate}
-              popperPlacement="bottom-start"
-              isClearable
-              dateFormat="dd-MM-YY"
-            />
-          </div>
-          <div className="sample-list-to-date">
-            <DatePicker
-              selected={toDate}
-              placeholderText="To"
-              popperPlacement="bottom"
-              onChange={this.setToDate}
-              isClearable
-              dateFormat="dd-MM-YY"
-            />
+          <div className="elements-table-header__standard-filters">
+            {searchLabel}
+            <InputGroup className="elements-table-header__date-filter" size="sm">
+              <OverlayTrigger placement="top" overlay={filterTooltip}>
+                <Button
+                  onClick={this.changeDateFilter}
+                >
+                  {filterIcon}
+                </Button>
+              </OverlayTrigger>
+              <DatePicker
+                selected={fromDate}
+                placeholderText="From"
+                onChange={this.setFromDate}
+                popperPlacement="bottom-start"
+                isClearable
+                dateFormat="dd-MM-YY"
+              />
+              <DatePicker
+                selected={toDate}
+                placeholderText="To"
+                popperPlacement="bottom"
+                onChange={this.setToDate}
+                isClearable
+                dateFormat="dd-MM-YY"
+              />
+            </InputGroup>
           </div>
           {typeSpecificHeader}
         </div>

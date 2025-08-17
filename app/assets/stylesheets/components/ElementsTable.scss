@@ -1,14 +1,24 @@
 .elements-table-header {
+  container-name: elements-table-header;
+  container-type: inline-size;
   @extend .d-flex;
   @extend .align-items-center;
   @extend .justify-content-between;
   @extend .surface-tab__header;
-}
+  &__date-filter {
+    position: static;
+    z-index: 1;
+    flex-wrap: nowrap;
+    width: auto;
+  }
+  &__standard-filters {
+    @extend .d-flex;
+    @extend .gap-1;
+    @extend .align-items-center;
 
-@media (max-width: 600px) {
-  .elements-table-header {
-    height: auto;
-    flex-wrap: wrap;
-    overflow: auto;
+    @container elements-table-header (width < 37rem) {
+      flex-direction: column-reverse;
+      align-items: stretch !important;
+    }
   }
 }
