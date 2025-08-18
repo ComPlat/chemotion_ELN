@@ -41,6 +41,43 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 import { observer } from 'mobx-react';
 import { CreatableSelect } from 'src/components/common/Select';
 
+export function classifyAttachments(attachments) {
+  const groups = {
+    Original: [],
+    BagitZip: [],
+    Combined: [],
+    Processed: {},
+    Pending: [],
+  };
+
+  attachments.forEach((attachment) => {
+    if (attachment.is_pending) {
+      groups.Pending.push(attachment);
+      return;
+    }
+
+    if (attachment.aasm_state === 'queueing' && attachment.content_type === 'application/zip') {
+      groups.BagitZip.push(attachment);
+    } else if (attachment.aasm_state === 'image'
+        && (attachment.filename.includes('.combined')
+            || attachment.filename.includes('.new_combined'))) {
+      groups.Combined.push(attachment);
+    } else if (attachment.filename.includes('bagit')) {
+      const baseName = attachment.filename.split('_bagit')[0].trim();
+      if (!groups.Processed[baseName]) {
+        groups.Processed[baseName] = [];
+      }
+      groups.Processed[baseName].push(attachment);
+    } else if (attachment.aasm_state === 'non_jcamp' && attachment.filename.includes('.new_combined')) {
+      groups.Combined.push(attachment);
+    } else {
+      groups.Original.push(attachment);
+    }
+  });
+
+  return groups;
+}
+
 export class ContainerDatasetModalContent extends Component {
   // eslint-disable-next-line react/static-property-placement
   static contextType = StoreContext;
@@ -337,40 +374,7 @@ export class ContainerDatasetModalContent extends Component {
 
   // eslint-disable-next-line class-methods-use-this
   classifyAttachments(attachments) {
-    const groups = {
-      Original: [],
-      BagitZip: [],
-      Combined: [],
-      Processed: {},
-      Pending: [],
-    };
-
-    attachments.forEach((attachment) => {
-      if (attachment.is_pending) {
-        groups.Pending.push(attachment);
-        return;
-      }
-
-      if (attachment.aasm_state === 'queueing' && attachment.content_type === 'application/zip') {
-        groups.BagitZip.push(attachment);
-      } else if (attachment.aasm_state === 'image'
-        && (attachment.filename.includes('.combined')
-          || attachment.filename.includes('.new_combined'))) {
-        groups.Combined.push(attachment);
-      } else if (attachment.filename.includes('bagit')) {
-        const baseName = attachment.filename.split('_bagit')[0].trim();
-        if (!groups.Processed[baseName]) {
-          groups.Processed[baseName] = [];
-        }
-        groups.Processed[baseName].push(attachment);
-      } else if (attachment.aasm_state === 'non_jcamp' && attachment.filename.includes('.new_combined')) {
-        groups.Combined.push(attachment);
-      } else {
-        groups.Original.push(attachment);
-      }
-    });
-
-    return groups;
+    return classifyAttachments(attachments);
   }
 
   resetInstrumentComponent() {
