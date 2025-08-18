@@ -62,23 +62,17 @@ export default class Search extends React.Component {
     }
   }
 
-  renderMenuItems() {
+  render() {
     const elements = [
-      'All',
-      'Samples', 'Reactions',
-      'Wellplates', 'Screens', 'Cell lines'
+      { label: 'All', value: 'all' },
+      { label: 'Samples', value: 'samples' },
+      { label: 'Reactions', value: 'reactions' },
+      { label: 'Wellplates', value: 'wellplates' },
+      { label: 'Screens', value: 'screens' },
+      { label: 'Cell lines', value: 'cell_lines' },
+      { label: 'Sequence Based Macromolecule Samples', value: 'sequence_based_macromolecule_samples' },
     ];
 
-    const menu = elements.map(element => (
-      <Dropdown.Item key={element} onClick={() => this.handleElementSelection(element.toLowerCase())}>
-        {element}
-      </Dropdown.Item>
-    ));
-
-    return menu;
-  }
-
-  render() {
     const buttonAfter = (
       <>
         <Button variant="info" id="open-search-modal" onClick={() => this.context.search.showSearchModal()}>
@@ -92,9 +86,8 @@ export default class Search extends React.Component {
 
     const searchIcon = (elementType) => {
       if (elementType === 'all') return 'All';
-      if (['samples', 'reactions', 'screens', 'wellplates'].includes(elementType.toLowerCase())) return (<i className={`icon-${elementType.toLowerCase().slice(0, -1)}`} />);
-      if (elementType == 'cell lines') {
-        return (<i className={`icon-cell_line`} />);
+      if (elements.find((e) => e.value === elementType)) {
+        return (<i className={`icon-${elementType.slice(0, -1)}`} />);
       }
       if (this.state.genericEl) return (<i className={this.state.genericEl.icon_name} />);
       return elementType;
@@ -106,7 +99,11 @@ export default class Search extends React.Component {
         id="search-inner-dropdown"
         title={searchIcon(this.state.elementType)}
       >
-        {this.renderMenuItems()}
+        {elements.map(element => (
+          <Dropdown.Item key={element.value} onClick={() => this.handleElementSelection(element.value)}>
+            {element.label}
+          </Dropdown.Item>
+        ))}
       </DropdownButton>
     );
 

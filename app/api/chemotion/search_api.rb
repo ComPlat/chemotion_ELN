@@ -197,6 +197,7 @@ module Chemotion
         wellplate_ids = elements.fetch(:wellplate_ids, [])
         cell_line_ids = elements.fetch(:cell_line_ids, [])
         research_plan_ids = elements.fetch(:research_plan_ids, [])
+        sequence_based_macromolecule_sample_ids = elements.fetch(:sequence_based_macromolecule_sample_ids, [])
 
         paginated_reaction_ids = Kaminari.paginate_array(reaction_ids).page(page).per(page_size)
         serialized_reactions = Reaction.find(paginated_reaction_ids).map do |reaction|
@@ -222,6 +223,16 @@ module Chemotion
         serialized_research_plans = ResearchPlan.find(paginated_research_plan_ids).map do |research_plan|
           Entities::ResearchPlanEntity.represent(research_plan, displayed_in_list: true).serializable_hash
         end
+
+        paginated_sequence_based_macromolecule_sample_ids =
+          Kaminari.paginate_array(sequence_based_macromolecule_sample_ids)
+                  .page(page).per(page_size)
+        serialized_sequence_based_macromolecule_samples =
+          SequenceBasedMacromoleculeSample.find(paginated_sequence_based_macromolecule_sample_ids)
+                                          .map do |sequence_based_macromolecule_sample|
+            Entities::SequenceBasedMacromoleculeSampleEntity
+              .represent(sequence_based_macromolecule_sample, displayed_in_list: true).serializable_hash
+          end
 
         result = {
           samples: {
@@ -271,6 +282,14 @@ module Chemotion
             pages: pages(research_plan_ids.size),
             perPage: page_size,
             ids: research_plan_ids,
+          },
+          sequence_based_macromolecule_samples: {
+            elements: serialized_sequence_based_macromolecule_samples,
+            totalElements: sequence_based_macromolecule_sample_ids.size,
+            page: page,
+            pages: pages(sequence_based_macromolecule_sample_ids.size),
+            perPage: page_size,
+            ids: sequence_based_macromolecule_sample_ids,
           },
         }
 
@@ -345,9 +364,13 @@ module Chemotion
                   # MW + external_label (dl_s = 0) and the other info only available
                   # from dl_s > 0. For now one can use the suggested search instead.
                   if dl_s.positive?
-                    AllElementSearch.new(arg).search_by_substring.by_collection_id(c_id, current_user)
+                    Usecases::Search::AllElementsSearch.new(
+                      term: params[:selection][:name],
+                      collection_id: c_id,
+                      user: current_user,
+                    ).search_by_substring
                   else
-                    AllElementSearch::Results.new(Sample.none)
+                    Usecases::Search::AllElementsSearch::Results.new(Sample.none)
                   end
                 when 'structure'
                   sample_structure_search
@@ -357,6 +380,14 @@ module Chemotion
                   CelllineSample.by_material_name(arg, c_id)
                 when 'cell_line_sample_name'
                   CelllineSample.by_sample_name(arg, c_id)
+                when 'sbmm_sample_name', 'sbmm_sample_short_label', 'sbmm_sample_organism', 'sbmm_sample_taxon_id',
+                     'sbmm_sample_strain', 'sbmm_sample_tissue', 'sbmm_systematic_name', 'sbmm_short_name',
+                     'sbmm_other_identifier', 'sbmm_own_identifier', 'sbmm_ec_numbers',
+                     'sbmm_organism', 'sbmm_taxon_id', 'sbmm_strain', 'sbmm_tissue'
+                  SequenceBasedMacromoleculeSample.by_collection_id(c_id)
+                                                  .joins(:sequence_based_macromolecule)
+                                                  .order('sequence_based_macromolecule_samples.updated_at DESC')
+                                                  .search_by(search_method, arg)
                 end
 
         if search_method != 'advanced' && search_method != 'structure' && molecule_sort == true
@@ -419,9 +450,9 @@ module Chemotion
           elements[:element_ids] = scope&.ids
           sids = Labimotion::ElementsSample.where(element_id: elements[:element_ids]).pluck(:sample_id)
           elements[:sample_ids] = Sample.by_collection_id(collection_id).where(id: sids).uniq.pluck(:id)
-        when AllElementSearch::Results
-          # TODO: check this samples_ids + molecules_ids ????
-          elements[:sample_ids] = (scope&.samples_ids + scope&.molecules_ids)
+        when Usecases::Search::AllElementsSearch::Results
+          # TODO: check this samples_ids + molecules_ids ???? There are no Molecules in pg_search_documents
+          elements[:sample_ids] = scope&.samples_ids
           elements[:reaction_ids] = (
             scope&.reactions_ids +
             user_reactions.by_sample_ids(elements[:sample_ids]).pluck(:id)
@@ -437,9 +468,13 @@ module Chemotion
             user_screens.by_wellplate_ids(elements[:wellplate_ids]).pluck(:id)
           ).uniq
 
+          elements[:sequence_based_macromolecule_sample_ids] = scope&.sequence_based_macromolecule_sample_ids
+
           elements[:element_ids] = (scope&.element_ids).uniq
         when CelllineSample
           elements[:cell_line_ids] = scope&.ids
+        when SequenceBasedMacromoleculeSample
+          elements[:sequence_based_macromolecule_sample_ids] = scope&.ids
         end
         elements
       end
@@ -688,6 +723,28 @@ module Chemotion
 
           serialization_by_elements_and_page(
             elements_by_scope(screens),
+            params[:page],
+          )
+        end
+      end
+
+      namespace :sequence_based_macromolecule_samples do
+        desc 'Return sbmm samples and associated elements by search selection'
+        params do
+          use :search_params
+        end
+
+        after_validation do
+          set_var
+        end
+
+        post do
+          sbmm_samples = SequenceBasedMacromoleculeSample.by_collection_id(@c_id)
+                                                         .joins(:sequence_based_macromolecule)
+                                                         .search_by(search_by_method, params[:selection][:name])
+
+          serialization_by_elements_and_page(
+            elements_by_scope(sbmm_samples),
             params[:page],
           )
         end

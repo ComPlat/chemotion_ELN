@@ -53,6 +53,8 @@
 class SequenceBasedMacromolecule < ApplicationRecord
   ACCESSION_FORMAT = /[OPQ][0-9][A-Z0-9]{3}[0-9]|[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2}/.freeze
 
+  include PgSearch::Model
+
   acts_as_paranoid
   has_many :sequence_based_macromolecule_samples, dependent: nil
   has_many :collections, through: :sequence_based_macromolecule_samples
@@ -74,16 +76,25 @@ class SequenceBasedMacromolecule < ApplicationRecord
                            accession ? where('accessions @> ARRAY[?]::varchar[]', [accession&.strip&.upcase]) : none
                          }
   scope :search_in_name, lambda { |text|
-                           text ? where("LOWER(systematic_name) LIKE '%#{text.downcase}%' OR LOWER(short_name) LIKE '%#{text.downcase}%'") : none
+                           if text
+                             where("LOWER(systematic_name) LIKE '%#{text.downcase}%' \
+                              OR LOWER(short_name) LIKE '%#{text.downcase}%'")
+                           else
+                             none
+                           end
                          }
   scope :search_for_sequence, lambda { |sequence|
                                 cleaned_sequence = normalize_sequence(sequence)
                                 cleaned_sequence.present? ? where(sequence: cleaned_sequence) : none
                               }
 
+  multisearchable against: %i[
+    systematic_name short_name other_identifier own_identifier ec_numbers organism taxon_id strain tissue
+  ]
+
   # update_only must be true, because assigning an attribute hash without ID creates a new object,
   # but we never want to do that after creating the objects initially
-  accepts_nested_attributes_for(:protein_sequence_modification, :post_translational_modification, update_only: true )
+  accepts_nested_attributes_for(:protein_sequence_modification, :post_translational_modification, update_only: true)
 
   before_validation :normalize_sequence
   before_save :calculate_molecular_weight
@@ -108,7 +119,7 @@ class SequenceBasedMacromolecule < ApplicationRecord
   end
 
   def calculate_molecular_weight
-    return unless molecular_weight.to_s.blank?
+    return if molecular_weight.to_s.present?
 
     self.molecular_weight = calculated_molecular_weight
   end
