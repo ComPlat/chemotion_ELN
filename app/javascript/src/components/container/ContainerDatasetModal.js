@@ -228,7 +228,7 @@ export default class ContainerDatasetModal extends Component {
               className="align-self-center"
               onClick={() => this.handleSave(true)}
             >
-              {isNew ? 'Keep & close' : 'Save & close'}
+              {isNew ? 'Keep and Close' : 'Save and Close'}
               {' '}
               Dataset
             </Button>

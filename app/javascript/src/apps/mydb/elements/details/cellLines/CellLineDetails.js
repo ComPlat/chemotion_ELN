@@ -120,7 +120,7 @@ class CellLineDetails extends React.Component {
       ? () => { this.handleSubmit(cellLineItem); DetailActions.close(cellLineItem, true); }
       : () => { this.handleSubmit(cellLineItem); };
 
-    const toolTipMessage = closeAfterClick ? 'save and close' : 'save';
+    const toolTipMessage = closeAfterClick ? 'Save and Close' : 'Save';
     const icons = closeAfterClick
       ? (
         <div>
