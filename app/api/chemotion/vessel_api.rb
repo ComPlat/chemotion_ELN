@@ -167,6 +167,7 @@ module Chemotion
         requires :vessel_template_id, type: String, desc: 'ID of the selected vessel template'
         requires :collection_id, type: Integer, desc: 'Collection ID for the vessels'
         requires :count, type: Integer, values: 1..100, desc: 'Number of vessel instances to create (1-100)'
+        optional :base_name, type: String, desc: 'Basename for the new vessels'
         optional :short_labels, type: [String], desc: 'Short labels for each vessel',
                                 documentation: { is_array: true }
         optional :container, type: Hash, desc: 'Root container for vessel template'
@@ -204,7 +205,7 @@ module Chemotion
 
             vessel = Vessel.create!(
               vessel_template: vessel_template,
-              name: "instance#{i + 1}",
+              name: "#{params[:base_name] || 'instance'} #{i + 1}",
               user_id: current_user.id,
               short_label: short_label,
             )

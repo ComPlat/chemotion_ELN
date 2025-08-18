@@ -1,5 +1,5 @@
 /* eslint-disable react/function-component-definition */
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect } from 'react';
 import {
   Button, Form, InputGroup, Row, Col
 } from 'react-bootstrap';
@@ -8,25 +8,15 @@ import PropTypes from 'prop-types';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import VesselProperty from 'src/apps/mydb/elements/details/vessels/propertiesTab/VesselProperty';
 import VesselSuggestProperties from 'src/apps/mydb/elements/details/vessels/propertiesTab/VesselSuggestProperties';
-import BulkInstanceModal from 'src/apps/mydb/elements/details/vessels/propertiesTab/BulkInstanceModal';
-import VesselsFetcher from 'src/fetchers/VesselsFetcher';
-import UIStore from 'src/stores/alt/stores/UIStore';
-import UserStore from 'src/stores/alt/stores/UserStore';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
-import ElementStore from 'src/stores/alt/stores/ElementStore';
 import { generateNextShortLabel } from 'src/utilities/VesselUtilities';
 import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 
 const VesselProperties = ({ item, readOnly }) => {
   const { vesselDetailsStore } = useContext(StoreContext);
-  const { currentCollection } = UIStore.getState();
   const vesselId = item.id;
   const vesselItem = vesselDetailsStore.getVessel(vesselId);
-  const collectionId = currentCollection.id;
 
   const isCreateMode = vesselItem?.is_new || false;
-  const [activeKey, setActiveKey] = useState(isCreateMode ? 'common-properties' : null);
-  const [showBulkModal, setShowBulkModal] = useState(false);
 
   const instances = isCreateMode
     ? vesselDetailsStore.getInstances(vesselId)
@@ -54,52 +44,6 @@ const VesselProperties = ({ item, readOnly }) => {
   const handleUnitChange = () => {
     const newUnit = vesselItem?.volumeUnit === 'ml' ? 'l' : 'ml';
     vesselDetailsStore.changeVolumeUnit(vesselId, newUnit);
-  };
-
-  const validateTemplateFields = () => {
-    const vessel = vesselDetailsStore.getVessel(vesselId);
-    const missingFields = [];
-    if (!vessel.vesselName?.trim()) missingFields.push('Vessel name');
-    if (!vessel.materialType?.trim()) missingFields.push('Material type');
-    if (!vessel.vesselType?.trim()) missingFields.push('Vessel type');
-    if (!vessel.volumeAmount || vessel.volumeAmount <= 0) missingFields.push('Volume amount');
-    if (!vessel.volumeUnit?.trim()) missingFields.push('Volume unit');
-
-    if (missingFields.length > 0) {
-      const message = `Please complete the following before creating instances:\n- ${missingFields.join('\n- ')}`;
-      NotificationActions.add({
-        title: 'Missing Template Fields',
-        message,
-        level: 'error',
-        autoDismiss: 7,
-        position: 'tr',
-      });
-      return message;
-    }
-    return '';
-  };
-
-  const handleBulkCreate = async (count) => {
-    const vessel = vesselDetailsStore.getVessel(vesselId);
-    const { currentUser } = UserStore.getState();
-    const initials = currentUser?.initials;
-
-    const vesselsState = ElementStore.getState().elements?.vessels;
-    const existingVessels = Array.isArray(vesselsState?.elements) ? vesselsState.elements : [];
-
-    const startIndex = getNextVesselIndex(existingVessels, initials);
-
-    const shortLabels = Array.from({ length: count }, (_, i) => `${initials}-V${startIndex + i}`);
-
-    const response = await VesselsFetcher.bulkCreateInstances({
-      vesselTemplateId: vessel.vesselTemplateId,
-      collectionId,
-      count,
-      shortLabels,
-      user: currentUser,
-    });
-
-    vesselDetailsStore.replaceInstances(vesselId, response);
   };
 
   const applyTemplate = (template) => {
@@ -259,21 +203,6 @@ const VesselProperties = ({ item, readOnly }) => {
           </Form.Group>
         </div>
       ))}
-      {isCreateMode && (
-        <div className="mt-3 ms-3">
-          <Button variant="outline-primary" size="xsm" onClick={() => setShowBulkModal(true)}>
-            Create bulk vessel instances
-          </Button>
-        </div>
-      )}
-
-      <BulkInstanceModal
-        show={showBulkModal}
-        onHide={() => setShowBulkModal(false)}
-        onSubmit={handleBulkCreate}
-        defaultBaseName={vesselItem?.vesselName}
-        onValidate={validateTemplateFields}
-      />
     </>
   );
 };

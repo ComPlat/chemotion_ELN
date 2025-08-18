@@ -175,14 +175,14 @@ export default class VesselsFetcher {
       },
       body: JSON.stringify(params)
     })
-      .then(res => res.json())
-      .then(json => {
+      .then((res) => res.json())
+      .then((json) => {
         const instance = Vessel.createFromRestResponse(vessel.collectionId, json);
         NotificationActions.add(successfullyCreatedParameter);
         UserStore.getState().currentUser.vessels_count += 1;
         return instance;
       })
-      .catch(err => {
+      .catch((err) => {
         console.error('Vessel instance creation failed:', err);
         NotificationActions.add(errorMessageParameter);
       });
@@ -324,6 +324,7 @@ export default class VesselsFetcher {
     vesselTemplateId,
     collectionId,
     count,
+    baseName,
     container,
     shortLabels,
     user
@@ -332,6 +333,7 @@ export default class VesselsFetcher {
       vessel_template_id: vesselTemplateId,
       collection_id: collectionId,
       count,
+      base_name: baseName,
       container,
       short_labels: shortLabels
     };
@@ -345,13 +347,13 @@ export default class VesselsFetcher {
       },
       body: JSON.stringify(body)
     })
-      .then(res => {
+      .then((res) => {
         if (!res.ok) throw new Error('Bulk create failed');
         return res.json();
       })
-      .then(json => {
+      .then((json) => {
         const vessels = Array.isArray(json)
-          ? json.map(v => Vessel.createFromRestResponse(collectionId, v))
+          ? json.map((v) => Vessel.createFromRestResponse(collectionId, v))
           : [];
 
         NotificationActions.add(successfullyCreatedBulkParameter(count));
@@ -359,7 +361,7 @@ export default class VesselsFetcher {
         ElementActions.refreshElements('vessel');
         return vessels;
       })
-      .catch(err => {
+      .catch((err) => {
         console.error('Bulk vessel instance creation error:', err);
         NotificationActions.add(errorMessageParameter);
       });

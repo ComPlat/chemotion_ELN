@@ -18,7 +18,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import BulkInstanceModal from 'src/apps/mydb/elements/details/vessels/propertiesTab/BulkInstanceModal';
-import { generateNextShortLabel } from 'src/utilities/VesselUtilities';
+import { generateNextShortLabel, getNextVesselIndex } from 'src/utilities/VesselUtilities';
 
 function VesselTemplateDetails({ vessels }) {
   const closeBtnRef = useRef(null);
@@ -202,7 +202,7 @@ function VesselTemplateDetails({ vessels }) {
       });
   };
 
-  const handleBulkCreate = async (count) => {
+  const handleBulkCreate = async (count, baseName) => {
     const baseVessel = vessels[0];
     const initials = currentUser?.initials;
     const vesselsState = ElementStore.getState().elements?.vessels;
@@ -214,6 +214,7 @@ function VesselTemplateDetails({ vessels }) {
       vesselTemplateId: baseVessel.vesselTemplateId,
       collectionId,
       count,
+      baseName,
       shortLabels,
       user: currentUser,
     });
@@ -558,6 +559,7 @@ VesselTemplateDetails.propTypes = {
   vessels: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.string.isRequired,
+      vesselTemplateId: PropTypes.string.isRequired,
     })
   ).isRequired,
 };
