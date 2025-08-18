@@ -175,8 +175,8 @@ function UploadButton({
         )
       </Button>
       <p>
-        Create {files.length}
-        analyses, one for each listed file or folder (folders will be zipped).
+        {`Create ${files.length} `}
+        analyses, one for each listed files or folders (folders will be zipped).
       </p>
       <hr />
       <Button onClick={multyFileOneAnaHandle}>
@@ -184,8 +184,8 @@ function UploadButton({
         ) datasets
       </Button>
       <p>
-        Create one analysis with {files.length}
-        datasets, each containing one listed file or folder (folders will be zipped).
+        {`Create one analysis with ${files.length} `}
+        datasets, each containing one of the listed files or folders (folders will be zipped).
       </p>
     </>
   );
