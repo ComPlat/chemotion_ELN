@@ -13,6 +13,8 @@ Rails.application.config.content_security_policy do |policy|
   # policy.style_src   :self, :https
 
   # policy.default_src :self, :https :unsafe_inline, :unsafe_eval
+  #
+  policy.frame_src :self, :https, :blob, "https://nmrium.chemserv.scc.kit.edu"
 
   # Allow WebSocket, blob, and specific external connections
   src = %i[self https data wss blob]
