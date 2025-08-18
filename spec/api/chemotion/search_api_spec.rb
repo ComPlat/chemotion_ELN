@@ -13,8 +13,8 @@ describe Chemotion::SearchAPI do
   let(:sample_b) { create(:sample, name: 'SampleB', creator: user) }
   let(:sample_c) { create(:sample, name: 'SampleC', creator: user) }
   let(:sample_d) { create(:sample, name: 'SampleD', creator: user) }
-  let(:sample_e) { create(:sample, name: 'Methonol', creator: user, molfile: mof3000_2) }
-  let(:sample_f) { create(:sample, name: 'Dekan', creator: user, molfile: mof3000_1) }
+  let(:sample_e) { create(:sample, name: 'Methonol', creator: user, molfile: mof3000_two) }
+  let(:sample_f) { create(:sample, name: 'Dekan', creator: user, molfile: mof3000) }
   let(:wellplate) { create(:wellplate, name: 'Wellplate', wells: [build(:well, sample: sample_a)]) }
   let(:other_wellplate) { create(:wellplate, name: 'Other Wellplate', wells: [build(:well, sample: sample_b)]) }
   let(:reaction) { create(:reaction, name: 'Reaction', samples: [sample_a, sample_b], creator: user) }
@@ -43,8 +43,29 @@ describe Chemotion::SearchAPI do
   let(:screen) { create(:screen, name: 'Screen') }
   let(:other_screen) { create(:screen, name: 'Other Screen') }
   let!(:cell_line) { create(:cellline_sample, name: 'another-cellline-search-example', collections: [collection]) }
-  let!(:mof3000_1) { Rails.root.join('spec/fixtures/mof_v3000_1.mol').read }
-  let!(:mof3000_2) { Rails.root.join('spec/fixtures/mof_v3000_2.mol').read }
+  let!(:mof3000) { Rails.root.join('spec/fixtures/mof_v3000_1.mol').read }
+  let!(:mof3000_two) { Rails.root.join('spec/fixtures/mof_v3000_2.mol').read }
+
+  let(:sbmm_sample_uniprot) do
+    create(
+      :sequence_based_macromolecule_sample,
+      sequence_based_macromolecule: build(:uniprot_sbmm, systematic_name: 'Zoological Phenomenon Protein'),
+      user: user,
+      name: 'Test sample',
+    )
+  end
+  let(:sbmm_sample_modified) do
+    create(
+      :sequence_based_macromolecule_sample,
+      sequence_based_macromolecule: build(
+        :modified_uniprot_sbmm,
+        systematic_name: 'Foobar test',
+        ec_numbers: ['2.6.1.1'],
+        parent: sbmm_sample_uniprot.sequence_based_macromolecule,
+      ),
+      user: user,
+    )
+  end
 
   before do
     CollectionsReaction.create!(reaction: reaction, collection: collection)
@@ -67,6 +88,11 @@ describe Chemotion::SearchAPI do
     CollectionsWellplate.create!(wellplate: other_wellplate, collection: other_collection)
     ScreensWellplate.create!(wellplate: other_wellplate, screen: other_screen)
 
+    CollectionsSequenceBasedMacromoleculeSample.create!(sequence_based_macromolecule_sample: sbmm_sample_uniprot,
+                                                        collection: collection)
+    CollectionsSequenceBasedMacromoleculeSample.create!(sequence_based_macromolecule_sample: sbmm_sample_modified,
+                                                        collection: collection)
+
     post url, params: params
   end
 
@@ -76,7 +102,6 @@ describe Chemotion::SearchAPI do
 
   describe 'POST /api/v1/search/cell_lines' do
     let(:url) { '/api/v1/search/cell_lines' }
-    let(:result) { JSON.parse(response.body) }
     let(:params) do
       {
         selection: {
@@ -93,8 +118,8 @@ describe Chemotion::SearchAPI do
       let(:search_method) { 'cell_line_material_name' }
 
       it 'returns one cell line sample object' do
-        expect(result.dig('cell_lines', 'totalElements')).to eq 1
-        expect(result.dig('cell_lines', 'ids')).to eq [cell_line.id]
+        expect(parsed_json_response.dig('cell_lines', 'totalElements')).to eq 1
+        expect(parsed_json_response.dig('cell_lines', 'ids')).to eq [cell_line.id]
       end
     end
 
@@ -103,17 +128,15 @@ describe Chemotion::SearchAPI do
       let(:search_method) { 'cell_line_sample_name' }
 
       it 'returns one cell line sample object' do
-        expect(result.dig('cell_lines', 'totalElements')).to eq 1
-        expect(result.dig('cell_lines', 'ids')).to eq [cell_line.id]
+        expect(parsed_json_response.dig('cell_lines', 'totalElements')).to eq 1
+        expect(parsed_json_response.dig('cell_lines', 'ids')).to eq [cell_line.id]
       end
     end
   end
 
   describe 'POST /api/v1/search/all' do
     let(:url) { '/api/v1/search/all' }
-    let(:search_method) { 'substring' }
     let(:search_by_method) { :substring }
-    let(:result) { JSON.parse(response.body) }
     let(:params) do
       {
         selection: {
@@ -127,23 +150,21 @@ describe Chemotion::SearchAPI do
 
     context 'when searching a cell line sample in correct collection by cell line material name' do
       let(:search_term) { 'name-001' }
-      let(:search_method) { 'cell_line_material_name' }
       let(:search_by_method) { :cell_line_material_name }
 
       it 'returns one cell line sample object' do
-        expect(result.dig('cell_lines', 'totalElements')).to eq 1
-        expect(result.dig('cell_lines', 'ids')).to eq [cell_line.id]
+        expect(parsed_json_response.dig('cell_lines', 'totalElements')).to eq 1
+        expect(parsed_json_response.dig('cell_lines', 'ids')).to eq [cell_line.id]
       end
     end
 
     context 'when searching a cell line sample in correct collection by cell line sample name' do
       let(:search_term) { 'cellline-search-example' }
-      let(:search_method) { 'cell_line_sample_name' }
       let(:search_by_method) { :cell_line_sample_name }
 
       it 'returns one cell line sample object' do
-        expect(result.dig('cell_lines', 'totalElements')).to eq 1
-        expect(result.dig('cell_lines', 'ids')).to eq [cell_line.id]
+        expect(parsed_json_response.dig('cell_lines', 'totalElements')).to eq 1
+        expect(parsed_json_response.dig('cell_lines', 'ids')).to eq [cell_line.id]
       end
     end
 
@@ -151,23 +172,43 @@ describe Chemotion::SearchAPI do
       let(:search_term) { 'SampleA' }
 
       it 'returns the sample' do
-        expect(result.dig('samples', 'totalElements')).to eq 1
-        expect(result.dig('samples', 'ids')).to eq [sample_a.id]
+        expect(parsed_json_response.dig('samples', 'totalElements')).to eq 1
+        expect(parsed_json_response.dig('samples', 'ids')).to eq [sample_a.id]
       end
 
       it 'returns referenced reaction of sample' do
-        expect(result.dig('reactions', 'totalElements')).to eq 1
-        expect(result.dig('reactions', 'ids')).to eq [reaction.id]
+        expect(parsed_json_response.dig('reactions', 'totalElements')).to eq 1
+        expect(parsed_json_response.dig('reactions', 'ids')).to eq [reaction.id]
       end
 
       it 'returns referenced screen of sample' do
-        expect(result.dig('screens', 'totalElements')).to eq 1
-        expect(result.dig('screens', 'ids')).to eq [screen.id]
+        expect(parsed_json_response.dig('screens', 'totalElements')).to eq 1
+        expect(parsed_json_response.dig('screens', 'ids')).to eq [screen.id]
       end
 
       it 'returns referenced wellplate of sample' do
-        expect(result.dig('wellplates', 'totalElements')).to eq 1
-        expect(result.dig('wellplates', 'ids')).to eq [wellplate.id]
+        expect(parsed_json_response.dig('wellplates', 'totalElements')).to eq 1
+        expect(parsed_json_response.dig('wellplates', 'ids')).to eq [wellplate.id]
+      end
+    end
+
+    context 'when searching a sbmm sample by substring search method' do
+      let(:search_term) { 'test' }
+
+      it 'returns two sbmm samples' do
+        expect(parsed_json_response.dig('sequence_based_macromolecule_samples', 'totalElements')).to eq 2
+        expect(parsed_json_response.dig('sequence_based_macromolecule_samples',
+                                        'ids')).to eq [sbmm_sample_uniprot.id, sbmm_sample_modified.id]
+      end
+    end
+
+    context 'when searching a sbmm sample by sbmm_sample_name search method' do
+      let(:search_term) { 'test' }
+      let(:search_by_method) { :sbmm_sample_name }
+
+      it 'returns one sbmm samples' do
+        expect(parsed_json_response.dig('sequence_based_macromolecule_samples', 'totalElements')).to eq 1
+        expect(parsed_json_response.dig('sequence_based_macromolecule_samples', 'ids')).to eq [sbmm_sample_uniprot.id]
       end
     end
   end
@@ -178,7 +219,7 @@ describe Chemotion::SearchAPI do
       [
         {
           link: '',
-          match: 'LIKE',
+          match: 'ILIKE',
           table: 'samples',
           element_id: 0,
           field: {
@@ -209,16 +250,14 @@ describe Chemotion::SearchAPI do
       let(:search_term) { 'SampleA' }
 
       it 'returns the sample and all other objects referencing the sample from the requested collection' do
-        result = JSON.parse(response.body)
-
-        expect(result.dig('reactions', 'totalElements')).to eq 1
-        expect(result.dig('reactions', 'ids')).to eq [reaction.id]
-        expect(result.dig('samples', 'totalElements')).to eq 1
-        expect(result.dig('samples', 'ids')).to eq [sample_a.id]
-        expect(result.dig('screens', 'totalElements')).to eq 1
-        expect(result.dig('screens', 'ids')).to eq [screen.id]
-        expect(result.dig('wellplates', 'totalElements')).to eq 1
-        expect(result.dig('wellplates', 'ids')).to eq [wellplate.id]
+        expect(parsed_json_response.dig('reactions', 'totalElements')).to eq 1
+        expect(parsed_json_response.dig('reactions', 'ids')).to eq [reaction.id]
+        expect(parsed_json_response.dig('samples', 'totalElements')).to eq 1
+        expect(parsed_json_response.dig('samples', 'ids')).to eq [sample_a.id]
+        expect(parsed_json_response.dig('screens', 'totalElements')).to eq 1
+        expect(parsed_json_response.dig('screens', 'ids')).to eq [screen.id]
+        expect(parsed_json_response.dig('wellplates', 'totalElements')).to eq 1
+        expect(parsed_json_response.dig('wellplates', 'ids')).to eq [wellplate.id]
       end
 
       context 'when link is incorrectly set for first advanced param' do
@@ -241,9 +280,8 @@ describe Chemotion::SearchAPI do
         end
 
         it 'returns the same sample' do
-          result = JSON.parse(response.body)
-          expect(result.dig('samples', 'totalElements')).to eq 1
-          expect(result.dig('samples', 'ids')).to eq [sample_a.id]
+          expect(parsed_json_response.dig('samples', 'totalElements')).to eq 1
+          expect(parsed_json_response.dig('samples', 'ids')).to eq [sample_a.id]
         end
       end
     end
@@ -272,8 +310,7 @@ describe Chemotion::SearchAPI do
       end
 
       it 'returns one reaction' do
-        result = JSON.parse(response.body)
-        expect(result.dig('reactions', 'totalElements')).to eq 1
+        expect(parsed_json_response.dig('reactions', 'totalElements')).to eq 1
       end
     end
 
@@ -304,8 +341,31 @@ describe Chemotion::SearchAPI do
       end
 
       it 'returns one reaction' do
-        result = JSON.parse(response.body)
-        expect(result.dig('reactions', 'totalElements')).to eq 2
+        expect(parsed_json_response.dig('reactions', 'totalElements')).to eq 2
+      end
+    end
+
+    context 'when searching a sbmm sample name' do
+      let(:advanced_params) do
+        [
+          {
+            link: '',
+            match: 'ILIKE',
+            table: 'sequence_based_macromolecule_samples',
+            element_id: 0,
+            field: {
+              column: 'name',
+              label: 'Name',
+            },
+            value: 'test',
+            sub_values: [],
+            unit: '',
+          },
+        ]
+      end
+
+      it 'returns one sbmm sample' do
+        expect(parsed_json_response.dig('sequence_based_macromolecule_samples', 'totalElements')).to eq 1
       end
     end
   end
@@ -335,12 +395,10 @@ describe Chemotion::SearchAPI do
         let(:molfile) { sample_a.molfile }
 
         it 'returns nothing found' do
-          result = JSON.parse(response.body)
-
-          expect(result.dig('reactions', 'totalElements')).to eq 0
-          expect(result.dig('samples', 'totalElements')).to eq 0
-          expect(result.dig('screens', 'totalElements')).to eq 0
-          expect(result.dig('wellplates', 'totalElements')).to eq 0
+          expect(parsed_json_response.dig('reactions', 'totalElements')).to eq 0
+          expect(parsed_json_response.dig('samples', 'totalElements')).to eq 0
+          expect(parsed_json_response.dig('screens', 'totalElements')).to eq 0
+          expect(parsed_json_response.dig('wellplates', 'totalElements')).to eq 0
         end
       end
 
@@ -348,16 +406,14 @@ describe Chemotion::SearchAPI do
         let(:molfile) { sample_e.molfile }
 
         it 'returns the sample' do
-          result = JSON.parse(response.body)
-
-          expect(result.dig('reactions', 'totalElements')).to eq 1
-          expect(result.dig('reactions', 'ids')).to eq [reaction.id]
-          expect(result.dig('samples', 'totalElements')).to eq 2
-          expect(result.dig('samples', 'ids')).to eq [sample_e.id, sample_a.id]
-          expect(result.dig('screens', 'totalElements')).to eq 1
-          expect(result.dig('screens', 'ids')).to eq [screen.id]
-          expect(result.dig('wellplates', 'totalElements')).to eq 1
-          expect(result.dig('wellplates', 'ids')).to eq [wellplate.id]
+          expect(parsed_json_response.dig('reactions', 'totalElements')).to eq 1
+          expect(parsed_json_response.dig('reactions', 'ids')).to eq [reaction.id]
+          expect(parsed_json_response.dig('samples', 'totalElements')).to eq 2
+          expect(parsed_json_response.dig('samples', 'ids')).to eq [sample_e.id, sample_a.id]
+          expect(parsed_json_response.dig('screens', 'totalElements')).to eq 1
+          expect(parsed_json_response.dig('screens', 'ids')).to eq [screen.id]
+          expect(parsed_json_response.dig('wellplates', 'totalElements')).to eq 1
+          expect(parsed_json_response.dig('wellplates', 'ids')).to eq [wellplate.id]
         end
       end
     end
@@ -389,9 +445,8 @@ describe Chemotion::SearchAPI do
         end
 
         it 'returns the proper samples' do
-          result = JSON.parse(response.body)
           expected_count = Rails.configuration.pg_cartridge == 'rdkit' ? 1 : 2
-          expect(result.dig('samples', 'totalElements')).to eq expected_count
+          expect(parsed_json_response.dig('samples', 'totalElements')).to eq expected_count
         end
       end
 
@@ -418,20 +473,19 @@ describe Chemotion::SearchAPI do
           expected_count = Rails.configuration.pg_cartridge == 'none' ? 2 : 1
           expected_ids = Rails.configuration.pg_cartridge == 'none' ? [sample_a.id, sample_e.id] : [sample_a.id]
 
-          result = JSON.parse(response.body)
-          expect(result.dig('reactions', 'totalElements')).to eq 1
-          expect(result.dig('reactions', 'ids')).to eq [reaction.id]
-          expect(result.dig('samples', 'totalElements')).to eq expected_count
-          expect(result.dig('samples', 'ids')).to include(*expected_ids)
-          expect(result.dig('screens', 'totalElements')).to eq 1
-          expect(result.dig('screens', 'ids')).to eq [screen.id]
-          expect(result.dig('wellplates', 'totalElements')).to eq 1
-          expect(result.dig('wellplates', 'ids')).to eq [wellplate.id]
+          expect(parsed_json_response.dig('reactions', 'totalElements')).to eq 1
+          expect(parsed_json_response.dig('reactions', 'ids')).to eq [reaction.id]
+          expect(parsed_json_response.dig('samples', 'totalElements')).to eq expected_count
+          expect(parsed_json_response.dig('samples', 'ids')).to include(*expected_ids)
+          expect(parsed_json_response.dig('screens', 'totalElements')).to eq 1
+          expect(parsed_json_response.dig('screens', 'ids')).to eq [screen.id]
+          expect(parsed_json_response.dig('wellplates', 'totalElements')).to eq 1
+          expect(parsed_json_response.dig('wellplates', 'ids')).to eq [wellplate.id]
         end
       end
 
       context 'when searching a molfile in samples in wrong collection' do
-        let(:molfile) { mof3000_1 }
+        let(:molfile) { mof3000 }
         let(:params) do
           {
             selection: {
@@ -449,12 +503,10 @@ describe Chemotion::SearchAPI do
         end
 
         it 'returns nothing found' do
-          result = JSON.parse(response.body)
-
-          expect(result.dig('reactions', 'totalElements')).to eq 0
-          expect(result.dig('samples', 'totalElements')).to eq 0
-          expect(result.dig('screens', 'totalElements')).to eq 0
-          expect(result.dig('wellplates', 'totalElements')).to eq 0
+          expect(parsed_json_response.dig('reactions', 'totalElements')).to eq 0
+          expect(parsed_json_response.dig('samples', 'totalElements')).to eq 0
+          expect(parsed_json_response.dig('screens', 'totalElements')).to eq 0
+          expect(parsed_json_response.dig('wellplates', 'totalElements')).to eq 0
         end
       end
     end
@@ -490,10 +542,8 @@ describe Chemotion::SearchAPI do
       let(:ids) { [sample_a.id, sample_b.id] }
 
       it 'returns the sample and all other objects referencing the sample from the requested collection' do
-        result = JSON.parse(response.body)
-
-        expect(result.dig('samples', 'totalElements')).to eq 2
-        expect(result.dig('samples', 'ids')).to eq [sample_a.id.to_s, sample_b.id.to_s]
+        expect(parsed_json_response.dig('samples', 'totalElements')).to eq 2
+        expect(parsed_json_response.dig('samples', 'ids')).to eq [sample_a.id.to_s, sample_b.id.to_s]
       end
     end
   end
@@ -503,7 +553,6 @@ describe Chemotion::SearchAPI do
 
     context 'when searching a sample in correct collection' do
       let(:search_term) { 'SampleA' }
-      let(:result) { JSON.parse(response.body) }
       let(:params) do
         {
           selection: {
@@ -516,23 +565,46 @@ describe Chemotion::SearchAPI do
       end
 
       it 'returns the sample' do
-        expect(result.dig('samples', 'totalElements')).to eq 1
-        expect(result.dig('samples', 'ids')).to eq [sample_a.id]
+        expect(parsed_json_response.dig('samples', 'totalElements')).to eq 1
+        expect(parsed_json_response.dig('samples', 'ids')).to eq [sample_a.id]
       end
 
       it 'returns referenced reaction of sample' do
-        expect(result.dig('reactions', 'totalElements')).to eq 1
-        expect(result.dig('reactions', 'ids')).to eq [reaction.id]
+        expect(parsed_json_response.dig('reactions', 'totalElements')).to eq 1
+        expect(parsed_json_response.dig('reactions', 'ids')).to eq [reaction.id]
       end
 
       it 'returns screen reaction of sample' do
-        expect(result.dig('screens', 'totalElements')).to eq 1
-        expect(result.dig('screens', 'ids')).to eq [screen.id]
+        expect(parsed_json_response.dig('screens', 'totalElements')).to eq 1
+        expect(parsed_json_response.dig('screens', 'ids')).to eq [screen.id]
       end
 
       it 'returns wellplate reaction of sample' do
-        expect(result.dig('wellplates', 'totalElements')).to eq 1
-        expect(result.dig('wellplates', 'ids')).to eq [wellplate.id]
+        expect(parsed_json_response.dig('wellplates', 'totalElements')).to eq 1
+        expect(parsed_json_response.dig('wellplates', 'ids')).to eq [wellplate.id]
+      end
+    end
+  end
+
+  describe 'POST /api/v1/search/sequence_based_macromolecule_names' do
+    let(:url) { '/api/v1/search/sequence_based_macromolecule_samples' }
+
+    context 'when searching sbmm samples' do
+      let(:params) do
+        {
+          selection: {
+            elementType: :sequence_based_macromolecule_samples,
+            name: 'test',
+            search_by_method: :substring,
+          },
+          collection_id: collection.id,
+        }
+      end
+
+      it 'returns two sbmm samples' do
+        expect(parsed_json_response.dig('sequence_based_macromolecule_samples', 'totalElements')).to eq 2
+        expect(parsed_json_response.dig('sequence_based_macromolecule_samples',
+                                        'ids')).to eq [sbmm_sample_uniprot.id, sbmm_sample_modified.id]
       end
     end
   end

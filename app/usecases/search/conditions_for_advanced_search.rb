@@ -79,6 +79,8 @@ module Usecases
           measurements_tab_options(filter)
         elsif @table_or_tab_types[:literatures]
           literatures_tab_options(filter)
+        elsif @table_or_tab_types[:sequence_based_macromolecule_samples]
+          join_for_sequence_based_macromolecule
         elsif @table_or_tab_types[:sequence_based_macromolecules]
           sequence_based_macromolecule_field_options(filter)
         elsif @table_or_tab_types[:protein_sequence_modifications]
@@ -99,6 +101,8 @@ module Usecases
         @table_or_tab_types[:analyses] = @field_table.present? && %w[containers datasets].include?(@field_table)
         @table_or_tab_types[:measurements] = @field_table.present? && @field_table == 'measurements'
         @table_or_tab_types[:literatures] = @table.present? && @table == 'literatures'
+        @table_or_tab_types[:sequence_based_macromolecule_samples] =
+          @field_table.present? && @field_table == 'sequence_based_macromolecule_samples'
         @table_or_tab_types[:sequence_based_macromolecules] =
           @field_table.present? && @field_table == 'sequence_based_macromolecules'
         @table_or_tab_types[:protein_sequence_modifications] =

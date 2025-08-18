@@ -60,6 +60,7 @@ class SequenceBasedMacromoleculeSample < ApplicationRecord
   acts_as_paranoid
 
   include ElementUIStateScopes
+  include PgSearch::Model
   include Collectable
   include ElementCodes
   include AnalysisCodes
@@ -91,6 +92,93 @@ class SequenceBasedMacromoleculeSample < ApplicationRecord
                                    joins(:sequence_based_macromolecule)
                                      .order('sequence_based_macromolecules.sequence' => :asc)
                                  }
+
+  multisearchable against: %i[
+    name short_label organism taxon_id strain tissue
+  ]
+
+  pg_search_scope :search_by_sbmm_sample_name, against: :name
+  pg_search_scope :search_by_sbmm_sample_short_label, against: :short_label
+  pg_search_scope :search_by_sbmm_sample_organism, against: :organism
+  pg_search_scope :search_by_sbmm_sample_taxon_id, against: :taxon_id
+  pg_search_scope :search_by_sbmm_sample_strain, against: :strain
+  pg_search_scope :search_by_sbmm_sample_tissue, against: :tissue
+
+  pg_search_scope :search_by_sbmm_systematic_name, associated_against: {
+    sequence_based_macromolecule: :systematic_name,
+  }
+  pg_search_scope :search_by_sbmm_short_name, associated_against: {
+    sequence_based_macromolecule: :short_name,
+  }
+  pg_search_scope :search_by_sbmm_other_identifier, associated_against: {
+    sequence_based_macromolecule: :other_identifier,
+  }
+  pg_search_scope :search_by_sbmm_own_identifier, associated_against: {
+    sequence_based_macromolecule: :own_identifier,
+  }
+  pg_search_scope :search_by_sbmm_ec_numbers, associated_against: {
+    sequence_based_macromolecule: :ec_numbers,
+  }
+  pg_search_scope :search_by_sbmm_organism, associated_against: {
+    sequence_based_macromolecule: :organism,
+  }
+  pg_search_scope :search_by_sbmm_taxon_id, associated_against: {
+    sequence_based_macromolecule: :taxon_id,
+  }
+  pg_search_scope :search_by_sbmm_strain, associated_against: {
+    sequence_based_macromolecule: :strain,
+  }
+  pg_search_scope :search_by_sbmm_tissue, associated_against: {
+    sequence_based_macromolecule: :tissue,
+  }
+
+  pg_search_scope :search_by_substring, against: %i[
+    name short_label organism taxon_id strain tissue
+  ], associated_against: {
+    sequence_based_macromolecule: %i[
+      systematic_name short_name other_identifier own_identifier ec_numbers organism taxon_id strain tissue
+    ],
+  }, using: { trigram: { threshold: 0.0001 } }
+
+  def self.search_text_filter(term, field)
+    Arel.sql(
+      "COALESCE(array_agg(DISTINCT #{field}) FILTER (WHERE #{field} ILIKE '#{term}'), '{}')",
+    )
+  end
+
+  def self.search_array_filter(term, table, field)
+    Arel.sql(
+      'COALESCE(' \
+      "(SELECT array_agg(DISTINCT val) FROM #{table} s, unnest(s.#{field}) val WHERE val ILIKE '#{term}'), '{}'" \
+      ')',
+    )
+  end
+
+  def self.by_search_fields(query)
+    term = "%#{sanitize_sql_like(query)}%"
+
+    json_expr = Arel.sql(
+      'jsonb_build_object(' \
+      "'sbmm_sample_name', #{search_text_filter(term, 'sequence_based_macromolecule_samples.name')}, " \
+      "'sbmm_sample_short_label', #{search_text_filter(term, 'sequence_based_macromolecule_samples.short_label')}, " \
+      "'sbmm_sample_organism', #{search_text_filter(term, 'sequence_based_macromolecule_samples.organism')}, " \
+      "'sbmm_sample_taxon_id', #{search_text_filter(term, 'sequence_based_macromolecule_samples.taxon_id')}, " \
+      "'sbmm_sample_strain', #{search_text_filter(term, 'sequence_based_macromolecule_samples.strain')}, " \
+      "'sbmm_sample_tissue', #{search_text_filter(term, 'sequence_based_macromolecule_samples.tissue')}, " \
+      "'sbmm_systematic_name', #{search_text_filter(term, 'sequence_based_macromolecules.systematic_name')}, " \
+      "'sbmm_short_name', #{search_text_filter(term, 'sequence_based_macromolecules.short_name')}, " \
+      "'sbmm_other_identifier', #{search_text_filter(term, 'sequence_based_macromolecules.other_identifier')}, " \
+      "'sbmm_own_identifier', #{search_text_filter(term, 'sequence_based_macromolecules.own_identifier')}, " \
+      "'sbmm_ec_numbers', #{search_array_filter(term, 'sequence_based_macromolecules', 'ec_numbers')}, " \
+      "'sbmm_organism', #{search_text_filter(term, 'sequence_based_macromolecules.organism')}, " \
+      "'sbmm_taxon_id', #{search_text_filter(term, 'sequence_based_macromolecules.taxon_id')}, " \
+      "'sbmm_strain', #{search_text_filter(term, 'sequence_based_macromolecules.strain')}, " \
+      "'sbmm_tissue', #{search_text_filter(term, 'sequence_based_macromolecules.tissue')}" \
+      ')',
+    )
+
+    select(json_expr.as('result')).joins(:sequence_based_macromolecule).take.result
+  end
 
   def self.user_count_for_sbmm(sbmm_id:, except_user_id: nil)
     scope = where(sequence_based_macromolecule_id: sbmm_id)
