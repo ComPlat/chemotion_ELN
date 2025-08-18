@@ -38,6 +38,7 @@ export const attachmentThumbnail = (attachment) => (
         attachment={attachment}
         popObject={{}}
         disableClick
+        inlineFullRes
       />
     </div>
   </div>

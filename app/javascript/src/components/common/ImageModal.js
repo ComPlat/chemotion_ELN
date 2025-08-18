@@ -34,6 +34,9 @@ export default class ImageModal extends Component {
 
   componentDidMount() {
     this.fetchImageThumbnail();
+    if (this.props.inlineFullRes) {
+      this.fetchImage();
+    }
   }
 
   shouldComponentUpdate(nextProps, nextState) {
@@ -52,6 +55,9 @@ export default class ImageModal extends Component {
   componentDidUpdate(prevProps) {
     if (this.props.attachment?.id !== prevProps.attachment?.id) {
       this.fetchImageThumbnail();
+      if (this.props.inlineFullRes) {
+        this.fetchImage();
+      }
     }
   }
 
@@ -125,6 +131,21 @@ export default class ImageModal extends Component {
       showPop, popObject, imageStyle, attachment
     } = this.props;
     const { pageIndex, numOfPages, isPdf, fetchSrc, thumbnail } = this.state;
+
+    if (this.props.inlineFullRes) {
+      const srcToUse = isPdf ? thumbnail : (fetchSrc || thumbnail);
+      return (
+        <div className="preview-table">
+          <img
+            src={srcToUse}
+            alt={attachment?.filename}
+            style={{ cursor: 'default', ...imageStyle }}
+            onError={this.handleImageError}
+
+          />
+        </div>
+      );
+    }
 
     if (showPop) {
       return (
@@ -233,9 +254,11 @@ ImageModal.propTypes = {
   }).isRequired,
   disableClick: PropTypes.bool,
   imageStyle: PropTypes.object,
+  inlineFullRes: PropTypes.bool,
 };
 
 ImageModal.defaultProps = {
   imageStyle: {},
   disableClick: false,
+  inlineFullRes: false,
 };
