@@ -3,11 +3,12 @@ import React, {useState, useEffect} from 'react';
 import Select from 'react-select';
 import {AgGridReact} from 'ag-grid-react';
 import {
-    Button, ButtonGroup, Modal, Form, OverlayTrigger, Tooltip,
+  Button, ButtonGroup, Modal, Form, OverlayTrigger, Tooltip, Table
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import {
-    getVariationsRowName, convertUnit, getStandardUnits,
+  getVariationsRowName, convertUnit, getStandardUnits, getUserFacingUnit, getCurrentEntry,
+  getUserFacingEntryName
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   getReferenceMaterial, getCatalystMaterial, getFeedstockMaterial, getMolFromGram, getGramFromMol,
@@ -17,6 +18,34 @@ import { parseNumericStringOrNum } from 'src/utilities/MathUtils';
 import {
   calculateGasMoles, calculateTON, calculateFeedstockMoles, calculateFeedstockVolume, calculateGasVolume,
 } from 'src/utilities/UnitsConversion';
+
+function MaterialEntry({ children, entry, isMain }) {
+  function getEntryWidth() {
+    switch (entry) {
+      case 'temperature':
+      case 'concentration':
+      case 'turnoverNumber':
+      case 'turnoverFrequency':
+        return 140;
+      default:
+        return 110;
+    }
+  }
+  return (
+    <li
+      className={`list-group-item rounded-0 overflow-hidden ${isMain ? 'bg-info-subtle' : ''}`}
+      style={{ width: `${getEntryWidth()}px` }}
+    >
+      {children}
+    </li>
+  );
+}
+
+MaterialEntry.propTypes = {
+  children: PropTypes.node.isRequired,
+  entry: PropTypes.string.isRequired,
+  isMain: PropTypes.bool.isRequired
+};
 
 function RowToolsCellRenderer({
                                   data: row,
@@ -130,71 +159,87 @@ function SegmentParser({
     };
 }
 
-function PropertyFormatter({
-                               value: cellData,
-                               colDef,
-                           }) {
-    const {displayUnit} = colDef.entryDefs;
-    const valueInDisplayUnit = convertUnit(Number(cellData.value), cellData.unit, displayUnit);
-
-    return parseFloat(Number(valueInDisplayUnit)
-        .toPrecision(4));
-}
-
 function PropertyParser({
-                            oldValue: cellData,
-                            newValue,
-                            colDef,
-                        }) {
-    const {
-        currentEntry,
-        displayUnit,
-    } = colDef.entryDefs;
-    let value = parseNumericStringOrNum(newValue);
-    if (currentEntry !== 'temperature' && value < 0) {
-        value = 0;
-    }
-    value = convertUnit(value, displayUnit, cellData.unit);
-    return {
-        ...cellData,
-        value,
-    };
+  oldValue: cellData, newValue, colDef
+}) {
+  const currentEntry = getCurrentEntry(colDef.entryDefs);
+  const { displayUnit } = colDef.entryDefs[currentEntry];
+  let value = parseNumericStringOrNum(newValue);
+  if (currentEntry !== 'temperature' && value < 0) {
+    value = 0;
+  }
+  value = convertUnit(value, displayUnit, cellData.unit);
+  const updatedCellData = { ...cellData, value };
+
+  return updatedCellData;
 }
 
-function MaterialFormatter({value: cellData, colDef}) {
-    const {currentEntry, displayUnit} = colDef.entryDefs;
-    const valueInDisplayUnit = convertUnit(
-        Number(cellData[currentEntry].value),
-        cellData[currentEntry].unit,
-        displayUnit
-    );
+function convertValueToDisplayUnit(value, unit, displayUnit) {
+  const valueInDisplayUnit = convertUnit(Number(value), unit, displayUnit);
 
-    return parseFloat(Number(valueInDisplayUnit)
-        .toPrecision(4));
+  return parseFloat(Number(valueInDisplayUnit).toPrecision(4));
 }
+
+function PropertyFormatter({ value: cellData, colDef }) {
+  const currentEntry = getCurrentEntry(colDef.entryDefs);
+  const { displayUnit } = colDef.entryDefs[currentEntry];
+
+  return convertValueToDisplayUnit(cellData.value, cellData.unit, displayUnit);
+}
+
+function MaterialFormatter({ value: cellData, colDef }) {
+  const currentEntry = getCurrentEntry(colDef.entryDefs);
+  const { displayUnit } = colDef.entryDefs[currentEntry];
+
+  return convertValueToDisplayUnit(cellData[currentEntry].value, cellData[currentEntry].unit, displayUnit);
+}
+function MaterialRenderer({ value: cellData, colDef }) {
+  const { entryDefs } = colDef;
+  return (
+    <ol className="list-group list-group-horizontal w-100">
+      {Object.entries(entryDefs).map(([entry, entryDef]) => {
+        const entryData = cellData[entry];
+        return (
+          entryData
+          && typeof entryData === 'object'
+          && 'value' in entryData
+          && entryDef.isSelected ? (
+            <MaterialEntry key={entry} entry={entry} isMain={entryDef.isMain}>
+              {convertValueToDisplayUnit(entryData.value, entryData.unit, entryDef.displayUnit)}
+            </MaterialEntry>
+            ) : null
+        );
+      })}
+    </ol>
+  );
+}
+
+MaterialRenderer.propTypes = {
+  value: PropTypes.arrayOf(PropTypes.shape({
+    value: PropTypes.number.isRequired,
+    unit: PropTypes.string.isRequired,
+  })).isRequired,
+  colDef: PropTypes.shape({
+    entryDefs: PropTypes.objectOf(
+      PropTypes.shape({
+        isMain: PropTypes.bool.isRequired,
+        isSelected: PropTypes.bool.isRequired,
+        displayUnit: PropTypes.string.isRequired
+      })
+    ).isRequired
+  }).isRequired
+};
 
 function MaterialParser({
-                            data: row,
-                            oldValue: cellData,
-                            newValue,
-                            colDef,
-                            context,
-                        }) {
-    const {
-        currentEntry,
-        displayUnit,
-    } = colDef.entryDefs;
-    let value = convertUnit(parseNumericStringOrNum(newValue), displayUnit, cellData[currentEntry].unit);
-    if (value < 0) {
-        value = 0;
-    }
-    let updatedCellData = {
-        ...cellData,
-        [currentEntry]: {
-            ...cellData[currentEntry],
-            value,
-        },
-    };
+  data: row, oldValue: cellData, newValue, colDef, context
+}) {
+  const currentEntry = getCurrentEntry(colDef.entryDefs);
+  const { displayUnit } = colDef.entryDefs[currentEntry];
+  let value = convertUnit(parseNumericStringOrNum(newValue), displayUnit, cellData[currentEntry].unit);
+  if (value < 0) {
+    value = 0;
+  }
+  let updatedCellData = { ...cellData, [currentEntry]: { ...cellData[currentEntry], value } };
 
     switch (currentEntry) {
         case 'mass': {
@@ -267,26 +312,15 @@ function MaterialParser({
 }
 
 function GasParser({
-                       data: row,
-                       oldValue: cellData,
-                       newValue,
-                       colDef,
-                   }) {
-    const {
-        currentEntry,
-        displayUnit,
-    } = colDef.entryDefs;
-    let value = convertUnit(parseNumericStringOrNum(newValue), displayUnit, cellData[currentEntry].unit);
-    if (currentEntry !== 'temperature' && value < 0) {
-        value = 0;
-    }
-    let updatedCellData = {
-        ...cellData,
-        [currentEntry]: {
-            ...cellData[currentEntry],
-            value,
-        },
-    };
+  data: row, oldValue: cellData, newValue, colDef
+}) {
+  const currentEntry = getCurrentEntry(colDef.entryDefs);
+  const { displayUnit } = colDef.entryDefs[currentEntry];
+  let value = convertUnit(parseNumericStringOrNum(newValue), displayUnit, cellData[currentEntry].unit);
+  if (currentEntry !== 'temperature' && value < 0) {
+    value = 0;
+  }
+  let updatedCellData = { ...cellData, [currentEntry]: { ...cellData[currentEntry], value } };
 
     switch (currentEntry) {
         case 'concentration':
@@ -344,26 +378,15 @@ function GasParser({
 }
 
 function FeedstockParser({
-                             data: row,
-                             oldValue: cellData,
-                             newValue,
-                             colDef,
-                         }) {
-    const {
-        currentEntry,
-        displayUnit,
-    } = colDef.entryDefs;
-    let value = convertUnit(parseNumericStringOrNum(newValue), displayUnit, cellData[currentEntry].unit);
-    if (value < 0) {
-        value = 0;
-    }
-    let updatedCellData = {
-        ...cellData,
-        [currentEntry]: {
-            ...cellData[currentEntry],
-            value,
-        },
-    };
+  data: row, oldValue: cellData, newValue, colDef
+}) {
+  const currentEntry = getCurrentEntry(colDef.entryDefs);
+  const { displayUnit } = colDef.entryDefs[currentEntry];
+  let value = convertUnit(parseNumericStringOrNum(newValue), displayUnit, cellData[currentEntry].unit);
+  if (value < 0) {
+    value = 0;
+  }
+  let updatedCellData = { ...cellData, [currentEntry]: { ...cellData[currentEntry], value } };
 
     switch (currentEntry) {
         case 'amount': {
@@ -508,51 +531,53 @@ NoteCellEditor.propTypes = {
 function MaterialOverlay({value: cellData}) {
     const {aux = null} = cellData;
 
-    return (
-        <div className="tooltip show">
-            <div className="tooltip-inner text-start">
-                {aux?.isReference && <div>Reference</div>}
-                {aux?.coefficient !== null && (
-                    <div>
-                        Coefficient:
-                        {' '}
-                        {aux.coefficient.toPrecision(4)}
-                    </div>
-                )}
-                {aux?.molecularWeight !== null && (
-                    <div>
-                        Molar mass:
-                        {' '}
-                        {aux.molecularWeight.toPrecision(2)}
-                        {' '}
-                        g/mol
-                    </div>
-                )}
-                {Object.entries(cellData)
-                    .map(
-                        ([key, entry]) => (entry && typeof entry === 'object' && 'value' in entry ? (
-                            <div key={key}>
-                                {`${key.charAt(0)
-                                    .toUpperCase() + key.slice(1)}: ${entry.value}${entry.unit ? ` ${entry.unit}` : ''}`}
-                            </div>
-                        ) : null),
-                    )}
-            </div>
+  return (
+    <div className="tooltip show">
+      <div className="tooltip-inner text-start">
+        {aux?.isReference && <div>Reference</div>}
+        {aux?.coefficient !== null && (
+        <div>
+          Coefficient:
+          {' '}
+          {aux.coefficient.toPrecision(4)}
         </div>
-    );
+        )}
+        {aux?.molecularWeight !== null && (
+        <div>
+          Molar mass:
+          {' '}
+          {aux.molecularWeight.toPrecision(2)}
+          {' '}
+          g/mol
+        </div>
+        )}
+        {Object.entries(cellData).map(
+          ([key, entry]) => (entry && typeof entry === 'object' && 'value' in entry ? (
+            <div key={key}>
+              {`${getUserFacingEntryName(key)}: ${entry.value}${entry.unit ? ` ${entry.unit}` : ''}`}
+            </div>
+          ) : null)
+        )}
+      </div>
+    </div>
+  );
 }
 
 MaterialOverlay.propTypes = {
-    value: PropTypes.shape({
-        value: PropTypes.number.isRequired,
-        unit: PropTypes.string.isRequired,
-    }).isRequired,
-    colDef: PropTypes.shape({
-        entryDefs: PropTypes.shape({
-            currentEntry: PropTypes.number.isRequired,
-            displayUnit: PropTypes.string.isRequired,
-        }).isRequired,
-    }).isRequired,
+  value: PropTypes.arrayOf(PropTypes.shape({
+    value: PropTypes.number.isRequired,
+    unit: PropTypes.string.isRequired,
+  })).isRequired,
+  colDef: PropTypes.shape({
+    entryDefs: PropTypes.objectOf(
+      PropTypes.shape({
+        isMain: PropTypes.bool.isRequired,
+        isSelected: PropTypes.bool.isRequired,
+        displayUnit: PropTypes.string.isRequired
+      })
+    )
+    ,
+  }).isRequired,
 };
 
 const toUpperCase = (str) => str.charAt(0)
@@ -678,6 +703,7 @@ export {
     SegmentParser,
     PropertyFormatter,
     PropertyParser,
+    MaterialRenderer,
     MaterialFormatter,
     MaterialParser,
     GasParser,

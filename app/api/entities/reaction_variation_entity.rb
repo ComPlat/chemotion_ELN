@@ -25,7 +25,7 @@ module Entities
     end
 
     def metadata
-      object[:metadata].slice(:notes, :analyses)
+      object[:metadata]&.slice(:notes, :analyses) || {}
     end
 
     def materials(material_type, entity)

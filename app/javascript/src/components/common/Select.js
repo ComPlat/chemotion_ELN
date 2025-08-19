@@ -1,7 +1,9 @@
 import React, { forwardRef } from 'react';
-import RSelect from 'react-select';
+import PropTypes from 'prop-types';
+import RSelect, { components } from 'react-select';
 import RAsyncSelect from 'react-select/async';
 import RCreatableSelect from 'react-select/creatable';
+import cs from 'classnames';
 
 /* eslint-disable react/jsx-props-no-spreading */
 
@@ -9,66 +11,96 @@ import RCreatableSelect from 'react-select/creatable';
 // see https://react-select.com/styles#the-unstyled-prop
 // see https://react-select.com/styles#the-classnameprefix-prop
 
-const sharedMenuStyles = (baseStyles) => ({
-  ...baseStyles,
-  minWidth: '100%',
-  width: 'max-content',
-});
+const baseClassName = 'chemotion-select';
 
-export const Select = forwardRef(function Select(props, ref) {
-  return (
-    <RSelect
-      className={["chemotion-select", props.className].join(' ')}
-      classNamePrefix="chemotion-select"
-      ref={ref}
-      unstyled
-      {...props}
-      menuPortalTarget={document.body}
-      styles={{
-        control: (baseStyles) => ({
-          ...baseStyles,
-          minWidth: props.minWidth || '0',
-        }),
-        menuList: (baseStyles) => ({
-          ...baseStyles,
-          maxHeight: props.maxHeight || "250px",
-        }),
-        menu: sharedMenuStyles,
-      }}
-    />
-  );
-});
-
-export const AsyncSelect = ({ className, ...props }) => (
-  <RAsyncSelect
-    className={["chemotion-select", className].join(' ')}
-    classNamePrefix="chemotion-select"
-    unstyled
-    {...props}
-    menuPortalTarget={document.body}
-    styles={{
-      control: (baseStyles) => ({
-        ...baseStyles,
-        minWidth: props.minWidth || '0',
-      }),
-      menu: sharedMenuStyles,
-    }}
-  />
+// Custom Input component that keeps the input visible for editing selected values
+const EditableInput = (props) => (
+  <components.Input {...props} isHidden={false} />
 );
 
-export const CreatableSelect = ({ className, ...props }) => (
-  <RCreatableSelect
-    className={["chemotion-select", className].join(' ')}
-    classNamePrefix="chemotion-select"
-    unstyled
-    {...props}
-    menuPortalTarget={document.body}
-    styles={{
-      control: (baseStyles) => ({
-        ...baseStyles,
-        minWidth: props.minWidth || '0',
-      }),
-      menu: sharedMenuStyles,
-    }}
-  />
-);
+function buildWrappedComponent(name, BaseComponent) {
+  const component = forwardRef(({
+    minWidth,
+    maxHeight,
+    className,
+    styles = {},
+    components: customComponents = {},
+    isInputEditable = false,
+    ...props
+  }, ref) => {
+    const styleDefaults = {
+      control: {
+        minWidth: minWidth || '0',
+      },
+      menuList: {
+        maxHeight: maxHeight || '250px',
+      },
+      menu: {
+        minWidth: '100%',
+        width: 'max-content',
+        maxWidth: '400px',
+      },
+      menuPortal: {
+        position: 'fixed',
+        zIndex: 9000,
+      }
+    };
+
+    const stylesWithOverrides = {
+      ...styles,
+      ...Object.entries(styleDefaults).reduce(
+        (acc, [key, defaults]) => {
+          acc[key] = (base, state) => ({
+            ...(styles[key] ? styles[key](base, state) : base),
+            ...defaults,
+          });
+          return acc;
+        },
+        {}
+      )
+    };
+
+    // Merge custom components with editable input if needed
+    const mergedComponents = {
+      ...customComponents,
+      ...(isInputEditable && { Input: EditableInput }),
+    };
+
+    return (
+      <BaseComponent
+        {...props}
+        className={cs(
+          baseClassName,
+          className,
+        )}
+        classNamePrefix={baseClassName}
+        ref={ref}
+        menuPortalTarget={document.body}
+        menuPlacement="auto"
+        unstyled
+        styles={stylesWithOverrides}
+        components={mergedComponents}
+      />
+    );
+  });
+
+  component.displayName = name;
+  component.propTypes = {
+    ...BaseComponent.propTypes,
+    minWidth: PropTypes.string,
+    maxHeight: PropTypes.string,
+    isInputEditable: PropTypes.bool,
+  };
+  component.defaultProps = {
+    ...BaseComponent.defaultProps,
+    minWidth: null,
+    maxHeight: null,
+    isInputEditable: false,
+  };
+
+  return component;
+}
+
+export const Select = buildWrappedComponent('Select', RSelect);
+export const AsyncSelect = buildWrappedComponent('AsyncSelect', RAsyncSelect);
+export const CreatableSelect = buildWrappedComponent('CreatableSelect', RCreatableSelect);

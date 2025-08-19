@@ -1,5 +1,5 @@
 /* eslint-disable react/display-name */
-import {AgGridReact} from 'ag-grid-react';
+import { AgGridReact } from 'ag-grid-react';
 import React, {
     useRef, useState, useCallback, useReducer, useEffect, useMemo
 } from 'react';
@@ -11,23 +11,18 @@ import {cloneDeep, isEqual} from 'lodash';
 import PropTypes from 'prop-types';
 import Reaction from 'src/models/Reaction';
 import {
-    createVariationsRow, copyVariationsRow, updateVariationsRow, getVariationsColumns, materialTypes,
-    addMissingColumnsToVariations, removeObsoleteColumnsFromVariations, getColumnDefinitions, getSegmentsForVariations,
-    removeObsoleteColumnDefinitions, getInitialGridState, persistGridState,
+  createVariationsRow, copyVariationsRow, updateVariationsRow, getVariationsColumns, materialTypes,
+  addMissingColumnsToVariations, removeObsoleteColumnsFromVariations, getColumnDefinitions, getSegmentsForVariations,
+  removeObsoleteColumnDefinitions, getInitialGridState, getInitialEntryDefinitions, persistTableLayout, cellDataTypes
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
-    getReactionAnalyses, updateAnalyses
+  getReactionAnalyses, updateAnalyses
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import {
-    updateVariationsAux, getReactionMaterials, getReactionMaterialsIDs,
-    removeObsoleteMaterialColumns, resetColumnDefinitionsMaterials, getReactionMaterialsHashes
+  updateVariationsOnAuxChange, getReactionMaterials, getReactionMaterialsIDs,
+  removeObsoleteMaterialColumns, updateColumnDefinitionsMaterialsOnAuxChange, getReactionMaterialsHashes
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
-import {
-    PropertyFormatter, PropertyParser,
-    MaterialFormatter, MaterialParser,
-    EquivalentParser, GasParser, FeedstockParser,
-    ColumnSelection, toUpperCase, SegmentFormatter, SegmentParser,
-} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
+import { ColumnSelection, toUpperCase } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import columnDefinitionsReducer
     from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsReducers';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
@@ -64,7 +59,8 @@ export default function ReactionVariations({reaction, onReactionChange, isActive
         // Fetch data only once when component mounts
 
         const handleprocessedSegments = () => {
-            const initialColumnDefinitions = getColumnDefinitions(selectedColumns, reactionMaterials, gasMode);
+            const initialColumnDefinitions = getColumnDefinitions(selectedColumns, reactionMaterials, gasMode,
+                getInitialEntryDefinitions(reaction.id));
             setColumnDefinitions({
                 type: 'set_updated',
                 update: initialColumnDefinitions,
@@ -92,52 +88,6 @@ export default function ReactionVariations({reaction, onReactionChange, isActive
             gridRef.current.api.autoSizeAllColumns();
         }
     }, [isActive]);
-
-    const dataTypeDefinitions = {
-        property: {
-            extendsDataType: 'object',
-            baseDataType: 'object',
-            valueFormatter: PropertyFormatter,
-            valueParser: PropertyParser,
-        },
-        segmentData: {
-            extendsDataType: 'object',
-            baseDataType: 'object',
-            valueFormatter: SegmentFormatter,
-            valueParser: SegmentParser,
-        },
-        material: {
-            extendsDataType: 'object',
-            baseDataType: 'object',
-            valueFormatter: MaterialFormatter,
-            valueParser: MaterialParser,
-        },
-        equivalent: {
-            extendsDataType: 'object',
-            baseDataType: 'object',
-            valueFormatter: (params) => parseFloat(Number(params.value.equivalent.value)
-                .toPrecision(4)),
-            valueParser: EquivalentParser,
-        },
-        yield: {
-            extendsDataType: 'object',
-            baseDataType: 'object',
-            valueFormatter: (params) => parseFloat(Number(params.value.yield.value)
-                .toPrecision(4)),
-        },
-        gas: {
-            extendsDataType: 'object',
-            baseDataType: 'object',
-            valueFormatter: MaterialFormatter,
-            valueParser: GasParser,
-        },
-        feedstock: {
-            extendsDataType: 'object',
-            baseDataType: 'object',
-            valueFormatter: MaterialFormatter,
-            valueParser: FeedstockParser,
-        },
-    };
 
     const defaultColumnDefinitions = {
         editable: true,
@@ -183,102 +133,103 @@ export default function ReactionVariations({reaction, onReactionChange, isActive
 
         let updatedColumnDefinitions = removeObsoleteColumnDefinitions(columnDefinitions, updatedSelectedColumns);
 
-        /*
-        Update the materials' non-editable quantities according to the "Scheme" tab.
-        */
-        updatedReactionVariations = updateVariationsAux(
-            updatedReactionVariations,
-            reactionMaterials,
-            gasMode,
-            vesselVolume
-        );
-
-        // Reset materials' column definitions to account for potential changes in their gas type.
-        updatedColumnDefinitions = resetColumnDefinitionsMaterials(
-            updatedColumnDefinitions,
-            reactionMaterials,
-            updatedSelectedColumns,
-            gasMode
-        );
-
-        setColumnDefinitions(
-            {
-                type: 'set_updated',
-                update: updatedColumnDefinitions
-            }
-        );
-        setSelectedColumns(updatedSelectedColumns);
-        setReactionVariations(updatedReactionVariations);
-        setPreviousReactionMaterials(reactionMaterials);
-        setPreviousGasMode(gasMode);
-    }
+    /*
+    Update column definitions to account for potential changes in the corresponding materials' gas type.
+    */
+    updatedColumnDefinitions = updateColumnDefinitionsMaterialsOnAuxChange(
+      updatedColumnDefinitions,
+      reactionMaterials,
+      gasMode
+    );
 
     /*
-    Update gas mode according to "Scheme" tab.
+    Update materials in response to changes in non-editable quantities from the "Scheme" tab.
     */
-    if (gasMode !== previousGasMode) {
-        const updatedSelectedColumns = getVariationsColumns([]);
-        setSelectedColumns(updatedSelectedColumns);
-        setColumnDefinitions(
-            {
-                type: 'toggle_gas_mode',
-                materials: Object.keys(materialTypes).reduce((materials, materialType) => {
-                    materials[materialType] = [];
-                    return materials;
-                }, {}),
-                selectedColumns: updatedSelectedColumns,
-                gasMode
-            }
-        );
-        setPreviousGasMode(gasMode);
-        setReactionVariations([]);
-    }
+    updatedReactionVariations = updateVariationsOnAuxChange(
+      updatedReactionVariations,
+      reactionMaterials,
+      gasMode,
+      vesselVolume
+    );
 
-    /*
-    The "Variations" tab holds references to analyses in the "Analyses" tab.
-    Users can add, remove, or edit analyses in the "Analyses" tab.
-    Every analysis in the "Analyses" tab can be assigned to one or more rows in the "Variations" tab.
-    Each row in the variations table keeps references to its assigned analyses
-    by tracking the corresponding `analysesIDs`.
-    In the example below, variations row "A" keeps a reference to `analysesIDs` "1",
-    whereas variations row "C" keeps references to "1" and "3".
-    The set of all `analysesIDs` that are referenced by variations is called `referenceIDs`.
+    setColumnDefinitions(
+      {
+        type: 'set_updated',
+        update: updatedColumnDefinitions
+      }
+    );
+    setSelectedColumns(updatedSelectedColumns);
+    setReactionVariations(updatedReactionVariations);
+    setPreviousReactionMaterials(reactionMaterials);
+    setPreviousGasMode(gasMode);
+  }
 
-    Figure 1
-    Analyses tab  Variations tab
-    .---.         .---------.
-    | 1 |<--------| A: 1    |
-    |---|     \   |---------|
-    | 2 |      \  | B:      |
-    |---|       \ |---------|
-    | 3 |<-------\| C: 1, 3 |
-    |---|         `---------`
-    | 4 |
-    `---`
+  /*
+  Update gas mode according to "Scheme" tab.
+  */
+  if (gasMode !== previousGasMode) {
+    const updatedSelectedColumns = getVariationsColumns([]);
+    setSelectedColumns(updatedSelectedColumns);
+    setColumnDefinitions(
+      {
+        type: 'toggle_gas_mode',
+        materials: Object.keys(materialTypes).reduce((materials, materialType) => {
+          materials[materialType] = [];
+          return materials;
+        }, {}),
+        selectedColumns: updatedSelectedColumns,
+        gasMode
+      }
+    );
+    setPreviousGasMode(gasMode);
+    setReactionVariations([]);
+  }
 
-    The table below shows how to keep the state consistent across the "Analyses" tab and "Variations" tab.
-    "X" denotes absence of ID.
+  /*
+  The "Variations" tab holds references to analyses in the "Analyses" tab.
+  Users can add, remove, or edit analyses in the "Analyses" tab.
+  Every analysis in the "Analyses" tab can be assigned to one or more rows in the "Variations" tab.
+  Each row in the variations table keeps references to its assigned analyses
+  by tracking the corresponding `analysesIDs`.
+  In the example below, variations row "A" keeps a reference to `analysesIDs` "1",
+  whereas variations row "C" keeps references to "1" and "3".
+  The set of all `analysesIDs` that are referenced by variations is called `referenceIDs`.
 
-    Table 1
-    .-------------- ---------------- -------------------------------------------------.
-    | Analyses tab  | Variations tab | action                                         |
-    | (analysesIDs) | (referenceIDs) |                                                |
-    |-------------- |--------------- |----------------------------------------------- |
-    | ID            | ID             | None                                           |
-    |-------------- |--------------- |----------------------------------------------- |
-    | X             | ID             | Container with ID removed in "Analyses" tab.   |
-    |               |                | Remove ID from `referenceIDs`.                 |
-    |-------------- |--------------- |----------------------------------------------- |
-    | ID            | X              | Row that's tracking ID removed in "Variations" |
-    |               |                | tab. No action required since "Analyses" tab   |
-    |               |                | only displays associations to existing rows.   |
-    `-------------- ---------------- -------------------------------------------------`
-    */
-    if (!isEqual(allReactionAnalyses, previousAllReactionAnalyses)) {
-        const updatedReactionVariations = updateAnalyses(reactionVariations, allReactionAnalyses);
-        setReactionVariations(updatedReactionVariations);
-        setPreviousAllReactionAnalyses(allReactionAnalyses);
-    }
+  Figure 1
+  Analyses tab  Variations tab
+  .---.         .---------.
+  | 1 |<--------| A: 1    |
+  |---|     \   |---------|
+  | 2 |      \  | B:      |
+  |---|       \ |---------|
+  | 3 |<-------\| C: 1, 3 |
+  |---|         `---------`
+  | 4 |
+  `---`
+
+  The table below shows how to keep the state consistent across the "Analyses" tab and "Variations" tab.
+  "X" denotes absence of ID.
+
+  Table 1
+  .-------------- ---------------- -------------------------------------------------.
+  | Analyses tab  | Variations tab | action                                         |
+  | (analysesIDs) | (referenceIDs) |                                                |
+  |-------------- |--------------- |----------------------------------------------- |
+  | ID            | ID             | None                                           |
+  |-------------- |--------------- |----------------------------------------------- |
+  | X             | ID             | Container with ID removed in "Analyses" tab.   |
+  |               |                | Remove ID from `referenceIDs`.                 |
+  |-------------- |--------------- |----------------------------------------------- |
+  | ID            | X              | Row that's tracking ID removed in "Variations" |
+  |               |                | tab. No action required since "Analyses" tab   |
+  |               |                | only displays associations to existing rows.   |
+  `-------------- ---------------- -------------------------------------------------`
+  */
+  if (!isEqual(allReactionAnalyses, previousAllReactionAnalyses)) {
+    const updatedReactionVariations = updateAnalyses(reactionVariations, allReactionAnalyses);
+    setReactionVariations(updatedReactionVariations);
+    setPreviousAllReactionAnalyses(allReactionAnalyses);
+  }
 
     const addRow = () => {
         setReactionVariations(
@@ -461,11 +412,11 @@ export default function ReactionVariations({reaction, onReactionChange, isActive
                     rowData={reactionVariations}
                     rowDragEntireRow
                     rowDragManaged
-                    headerHeight={70}
+                    headerHeight={110}
                     columnDefs={columnDefinitionsWithSeperatedSegments}
                     suppressPropertyNamesCheck
                     defaultColDef={defaultColumnDefinitions}
-                    dataTypeDefinitions={dataTypeDefinitions}
+                    dataTypeDefinitions={cellDataTypes}
                     tooltipShowDelay={0}
                     domLayout="autoHeight"
                     maintainColumnOrder
@@ -488,8 +439,10 @@ export default function ReactionVariations({reaction, onReactionChange, isActive
                     onCellEditRequest={updateRow}
                     onCellValueChanged={(event) => fitColumnToContent(event)}
                     onColumnHeaderClicked={(event) => fitColumnToContent(event)}
-                    onGridPreDestroyed={(event) => persistGridState(reaction.id, event)}
-                    onStateUpdated={(event) => persistGridState(reaction.id, event)}
+                    onGridPreDestroyed={(event) => persistTableLayout(reaction.id, event, columnDefinitions)}
+                    onStateUpdated={(event) => persistTableLayout(reaction.id, event, columnDefinitions)}
+                    onFirstDataRendered={() => gridRef.current.api.autoSizeAllColumns()}
+                    onComponentStateChanged={() => gridRef.current.api.autoSizeAllColumns()}
                 />
             );
         }
@@ -499,7 +452,7 @@ export default function ReactionVariations({reaction, onReactionChange, isActive
 
     return (
         <div>
-            <ButtonGroup>
+            <ButtonGroup>70
                 {addVariation()}
                 {removeAllVariations()}
                 {columnSelectControl()}

@@ -309,16 +309,8 @@ export default class ResearchPlanDetailsContainers extends Component {
                             disabled={readOnly}
                             container={container}
                             onChange={this.handleChange}
-                          />
-                          <ViewSpectra
-                            sample={this.props.researchPlan}
-                            handleSampleChanged={this.handleSpChange}
-                            handleSubmit={this.props.handleSubmit}
-                          />
-                          <NMRiumDisplayer
-                            sample={this.props.researchPlan}
-                            handleSampleChanged={this.handleSpChange}
-                            handleSubmit={this.props.handleSubmit}
+                            rootContainer={researchPlan.container}
+                            index={key}
                           />
                         </Card.Body>
                       </Accordion.Collapse>
@@ -327,6 +319,16 @@ export default class ResearchPlanDetailsContainers extends Component {
                 );
               })}
             </Accordion>
+            <ViewSpectra
+              sample={this.props.researchPlan}
+              handleSampleChanged={this.handleSpChange}
+              handleSubmit={this.props.handleSubmit}
+            />
+            <NMRiumDisplayer
+              sample={this.props.researchPlan}
+              handleSampleChanged={this.handleSpChange}
+              handleSubmit={this.props.handleSubmit}
+            />
           </div>
         );
       }

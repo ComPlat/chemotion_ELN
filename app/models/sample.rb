@@ -84,7 +84,7 @@ class Sample < ApplicationRecord
 
   SAMPLE_TYPES = [
     SAMPLE_TYPE_MICROMOLECULE,
-    SAMPLE_TYPE_MIXTURE
+    SAMPLE_TYPE_MIXTURE,
   ].freeze
 
   multisearchable against: %i[
@@ -124,6 +124,9 @@ class Sample < ApplicationRecord
   pg_search_scope :search_by_sample_short_label, against: :short_label
   pg_search_scope :search_by_sample_external_label, against: :external_label
   pg_search_scope :search_by_cas, against: { xref: 'cas' }
+  pg_search_scope :search_by_molecule_name, associated_against: {
+    molecule_name: :name,
+  }
 
   # scopes for suggestions
   scope :by_residues_custom_info, lambda { |info, val|
@@ -133,6 +136,10 @@ class Sample < ApplicationRecord
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{sanitize_sql_like(query)}%") }
   scope :by_sample_xref_cas,
         ->(query) { where("xref ? 'cas'").where("xref ->> 'cas' ILIKE ?", "%#{sanitize_sql_like(query)}%") }
+  scope :by_molecule_name, lambda { |query|
+    joins(:molecule_name)
+      .where('molecule_names.name ILIKE ?', "%#{sanitize_sql_like(query)}%")
+  }
   scope :by_exact_name, lambda { |query|
                           sanitized_query = "^([a-zA-Z0-9]+-)?#{sanitize_sql_like(query)}(-?[a-zA-Z])$"
                           where('lower(name) ~* lower(?) or lower(external_label) ~* lower(?)',
@@ -544,7 +551,7 @@ class Sample < ApplicationRecord
       end
 
       if p_formula.present?
-        d = Chemotion::Calculations.get_composition(molecule_sum_formular, p_formula, (p_loading || 0.0))
+        d = Chemotion::Calculations.get_composition(molecule_sum_formular, p_formula, p_loading || 0.0)
         # if it is reaction product then loading has been calculated
         l_type = if residue['custom_info']['loading_type'] == 'mass_diff'
                    'mass_diff'
@@ -608,10 +615,6 @@ class Sample < ApplicationRecord
     mnd = mn&.description
     is_sum_form = mnd&.include?('sum_formula')
     mnl && !is_sum_form ? mnl : molecule_iupac_name
-  end
-
-  def user_labels
-    tag&.taggable_data&.fetch('user_labels', nil)
   end
 
   def detect_amount_type

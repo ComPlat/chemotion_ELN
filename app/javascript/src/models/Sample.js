@@ -232,6 +232,7 @@ export default class Sample extends Element {
       xref: {},
       sample_type: SAMPLE_TYPE_MICROMOLECULE,
       components: [],
+      ancestor_ids: []
     });
 
     sample.short_label = Sample.buildNewShortLabel();

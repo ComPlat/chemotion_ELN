@@ -21,6 +21,7 @@
 # Indexes
 #
 #  index_vessel_templates_on_deleted_at  (deleted_at)
+#  index_vessel_templates_on_name        (name) UNIQUE
 #
 require 'rails_helper'
 
