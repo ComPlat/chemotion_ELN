@@ -1408,8 +1408,8 @@ class ElementStore {
     const newSelecteds = openTabs.filter((el) => {
       if (Array.isArray(el) && el[0]?.type === 'vessel_template') {
         const elIds = el.map((v) => v.id);
-        const isSameGroup = elIds.length === groupIds.length &&
-          elIds.every((id) => groupIds.includes(id));
+        const isSameGroup = elIds.length === groupIds.length
+          && elIds.every((id) => groupIds.includes(id));
         return !isSameGroup;
       }
 

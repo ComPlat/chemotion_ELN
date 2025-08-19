@@ -11,6 +11,7 @@ import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import VesselsFetcher from 'src/fetchers/VesselsFetcher';
 import UIStore from 'src/stores/alt/stores/UIStore';
+import { getSnapshot } from 'mobx-state-tree';
 
 function VesselTemplateCreate({ vesselItem: initialVesselItem }) {
   const { vesselDetailsStore } = useContext(StoreContext);
@@ -89,7 +90,9 @@ function VesselTemplateCreate({ vesselItem: initialVesselItem }) {
       const { currentCollection } = UIStore.getState();
       const collectionId = currentCollection?.id;
 
-      DetailActions.close(vesselItem, true);
+      const snapshot = getSnapshot(vesselItem);
+      const vesselWithType = { ...snapshot, type: 'vessel_template' };
+      DetailActions.close(vesselWithType, true);
 
       Aviator.navigate(`/collection/${collectionId}/vessel_template/${template.vesselTemplateId}`);
     });
@@ -99,22 +102,22 @@ function VesselTemplateCreate({ vesselItem: initialVesselItem }) {
     setActiveTab(eventKey);
   };
 
-  const handleClose = (vesselItem) => {
-    const { vesselDetailsStore } = context;
+  const handleClose = () => {
     const mobXItem = vesselDetailsStore.getVessel(vesselItem.id);
 
     if (!mobXItem.changed || window.confirm('Unsaved data will be lost. Close sample?')) {
       vesselDetailsStore.removeVesselFromStore(vesselItem.id);
-      DetailActions.close(vesselItem, true);
+      const snapshot = getSnapshot(vesselItem);
+      const vesselWithType = { ...snapshot, type: 'vessel_template' };
+      DetailActions.close(vesselWithType, true);
     }
   };
-
 
   const renderCloseHeaderButton = () => (
     <Button
       variant="danger"
       size="xxsm"
-      onClick={() => { handleClose(vesselItem); }}
+      onClick={() => { handleClose(); }}
     >
       <i className="fa fa-times" />
     </Button>
@@ -251,7 +254,7 @@ function VesselTemplateCreate({ vesselItem: initialVesselItem }) {
       </div>
 
       <ButtonToolbar className="d-flex gap-1">
-        <Button variant="primary" onClick={() => DetailActions.close(vesselItem, true)}>
+        <Button variant="primary" onClick={() => handleClose()}>
           Cancel
         </Button>
         <Button variant="warning" disabled={isSubmitDisabled} onClick={handleSubmit}>
