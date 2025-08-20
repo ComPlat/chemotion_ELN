@@ -1180,11 +1180,6 @@ export default class ReactionDetailsScheme extends React.Component {
             switchEquiv={this.switchEquiv}
             lockEquivColumn={this.state.lockEquivColumn}
           />
-          <ReactionConditions
-            conditions={reaction.conditions}
-            isDisabled={!permitOn(reaction) || reaction.isMethodDisabled('conditions')}
-            onChange={(conditions) => onInputChange('conditions', conditions)}
-          />
           <MaterialGroup
             reaction={reaction}
             materialGroup="products"
@@ -1200,6 +1195,11 @@ export default class ReactionDetailsScheme extends React.Component {
             lockEquivColumn={this.state.lockEquivColumn}
             switchYield={this.switchYield}
             displayYieldField={displayYieldField}
+          />
+          <ReactionConditions
+            conditions={reaction.conditions}
+            isDisabled={!permitOn(reaction) || reaction.isMethodDisabled('conditions')}
+            onChange={(conditions) => onInputChange('conditions', conditions)}
           />
         </div>
 
