@@ -138,7 +138,7 @@ $rm-columns: (
   }
 }
 
-@container material-group (width < 54.5rem) {
+@container material-group (width < 49.5rem) {
   .reaction-material {
     &__amount-input {
       flex-direction: column; // not extending bootstrap utilities in this context to avoid side effects
