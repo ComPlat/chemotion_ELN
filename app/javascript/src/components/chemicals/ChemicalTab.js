@@ -139,10 +139,10 @@ export default class ChemicalTab extends React.Component {
       const path = parameters?.safetySheetPath;
       if (path && path.length > 0) {
         const dynamicKey = Object.keys(document).find((key) => key.endsWith('_link'));
-
+        const dynamicKeyValue = document[dynamicKey];
         if (dynamicKey) {
           // Extract vendor name from the link key (e.g., 'merck' from 'merck_link')
-          const vendorName = dynamicKey.replace('_link', '');
+          const vendorName = (dynamicKeyValue.match(/\/safety_sheets\/([^/]+)\//) || [])[1];
           const normalizedVendorName = vendorName.toLowerCase();
 
           // Find the safety sheet with this vendor link
@@ -270,6 +270,7 @@ export default class ChemicalTab extends React.Component {
       language: safetySheetLanguage,
       string: searchStr
     };
+    this.setState({ warningMessage: '' });
 
     ChemicalFetcher.fetchSafetySheets(queryParams).then((result) => {
       const obj = JSON.parse(result);
@@ -688,10 +689,18 @@ export default class ChemicalTab extends React.Component {
     const vendorLinkKey = Object.keys(document).find((key) => key.endsWith('_link'));
 
     if (vendorLinkKey) {
-      // Extract vendor name from the link key (e.g., 'merck' from 'merck_link')
-      const vendorName = vendorLinkKey.replace('_link', '');
-      const productLinkKey = `${vendorName}_product_link`;
-      const productInfoKey = `${vendorName}ProductInfo`;
+      value = document[vendorLinkKey];
+      // Extract vendor name from the value, using regex /safety_sheets/([^/]+)/
+      const vendorLinkMatch = value.match(/\/safety_sheets\/([^/]+)\//);
+      let vendorName;
+      let productLinkKey;
+      let productInfoKey;
+      if (vendorLinkMatch && vendorLinkMatch[1]) {
+        // If the match is successful, use the vendor name from the link
+        vendorName = vendorLinkMatch[1];
+        productLinkKey = `${vendorName}_product_link`;
+        productInfoKey = `${vendorName}ProductInfo`;
+      }
 
       // Try to get the product link from chemical data first
       if (info && info[productInfoKey] && info[productInfoKey].productLink) {
@@ -832,7 +841,14 @@ export default class ChemicalTab extends React.Component {
     // Check if the document has the vendor link and we should show a check mark
     if (document[dynamicKey] && checkSaveIcon) {
       return (
-        <OverlayTrigger placement="top" overlay={<Tooltip id={`saveCheckIcon${vendorName}`}>Saved</Tooltip>}>
+        <OverlayTrigger
+          placement="top"
+          overlay={(
+            <Tooltip id={`saveCheckIcon${vendorName}`}>
+              File is already saved
+            </Tooltip>
+          )}
+        >
           <i className="fa fa-check-circle" />
         </OverlayTrigger>
       );
@@ -855,7 +871,8 @@ export default class ChemicalTab extends React.Component {
 
   saveSdsFile(productInfo) {
     const { chemical } = this.state;
-    const { sample } = this.props;
+    const { sample, editChemical } = this.props;
+
     let vendorProduct;
 
     // Determine vendor product key based on vendor name
@@ -888,48 +905,22 @@ export default class ChemicalTab extends React.Component {
       vendor_product: vendorProduct
     };
 
-    ChemicalFetcher.saveSafetySheets(params).then((result) => {
-      if (result) {
-        const value = `/safety_sheets/${productInfo.productNumber}_${productInfo.vendor}.pdf`;
-        const chemicalData = chemical._chemical_data;
-
-        // Determine the vendor link key
-        const vendorParams = `${productInfo.vendor.toLowerCase()}_link`;
-
-        // Create a new entry object for this safety sheet
-        const newEntry = {};
-        newEntry[vendorParams] = value;
-
-        // Initialize safetySheetPath array if it doesn't exist
-        if (!chemicalData[0].safetySheetPath) {
-          chemicalData[0].safetySheetPath = [];
-        }
-
-        // Check if an entry for this vendor already exists
-        const existingIndex = chemicalData[0].safetySheetPath.findIndex(
-          (entry) => entry[vendorParams] !== undefined
-        );
-
-        if (existingIndex === -1) {
-          // If no existing entry, append a new one
-          chemicalData[0].safetySheetPath.push(newEntry);
-        } else {
-          // If an entry exists, update it
-          chemicalData[0].safetySheetPath[existingIndex][vendorParams] = value;
-        }
-
+    ChemicalFetcher.saveSafetySheets(params).then((updatedChemical) => {
+      if (updatedChemical) {
         // Mark chemical as not new
         chemical.isNew = false;
 
         // Update the state and save to database
+        const chemicalInstance = new Chemical(updatedChemical);
         this.setState({
-          chemical,
+          chemical: chemicalInstance,
           // Clear search results after saving
           searchResults: [],
           // Clear loading state for this element
           loadingSaveSafetySheets: {}
         });
-        this.handleSubmitSave();
+        editChemical(false);
+        chemicalInstance.updateChecksum();
 
         // Update the checkmark for this vendor
         this.handleCheckMark(productInfo.vendor);
@@ -938,7 +929,9 @@ export default class ChemicalTab extends React.Component {
       console.log(errorMessage);
       // Clear loading state on error
       this.setState(() => ({
-        loadingSaveSafetySheets: {}
+        searchResults: [],
+        loadingSaveSafetySheets: {},
+        warningMessage: `${errorMessage}`
       }));
     });
   }
@@ -973,7 +966,13 @@ export default class ChemicalTab extends React.Component {
     // 1. Check in the actual safety sheet data
     if (chemical?._chemical_data?.[0]?.safetySheetPath) {
       const safetySheets = chemical._chemical_data[0].safetySheetPath;
-      isSaved = safetySheets.some((sheet) => sheet[vendorLinkKey] === sdsLink);
+      isSaved = safetySheets.some((sheet) => {
+        const key = Object.keys(sheet).find((k) => /^(\d+)_/.test(k));
+        const extractProductNumber = key ? key.match(/^(\d+)_/)[1] : null;
+        // Disable save button if safety sheet file of same product number for merck vendor already saved
+        const existingMerckSafetySheet = normalizedVendorName === 'merck' && extractProductNumber === productNumber;
+        return (sheet[vendorLinkKey] === sdsLink || existingMerckSafetySheet);
+      });
     }
 
     // 2. If not found in data, check state variables
@@ -1130,26 +1129,102 @@ export default class ChemicalTab extends React.Component {
   }
 
   renderChildElements = (document, index) => {
-    // First check if document is valid
     if (!document) {
       return null;
     }
 
-    // Find any key that ends with "_link" to determine vendor
-    const linkKey = Object.keys(document).find((key) => key.endsWith('_link'));
+    const linkKey = Object.keys(document).find((key) => key.endsWith('_link')
+          && !key.includes('_product_link')
+          && document[key]);
+
     const vendorLink = linkKey ? document[linkKey] : null;
-    const vendorName = linkKey ? linkKey.replace('_link', '') : 'uploaded source';
+    // const rawVendorName = linkKey ? linkKey.replace('_link', '') : 'uploaded source';
+    let displayName = 'queried vendor';
+    let productInfo = '';
+    let versionInfo = '';
+
+    if (vendorLink && vendorLink.includes('/safety_sheets/')) {
+      // Extract vendor from file path: /safety_sheets/merck/270709_hash.pdf -> merck
+      const pathParts = vendorLink.split('/');
+      const vendorFromPath = pathParts[2]; // safety_sheets/[vendor]/filename
+      const fileName = pathParts[pathParts.length - 1]; // get the filename
+
+      if (vendorFromPath) {
+        displayName = vendorFromPath.charAt(0).toUpperCase() + vendorFromPath.slice(1);
+      }
+
+      // Extract product number from filename: 270709_4c82b57ffb35b49b.pdf -> 270709
+      const productMatch = fileName.match(/^([^_]+)_(?:web_)?([a-f0-9]{16})\.pdf$/);
+      if (productMatch) {
+        const productNumber = productMatch[1];
+        productInfo = ` - ${productNumber}`;
+
+        // Count versions for the same vendor AND product number
+        const { chemical } = this.state;
+        const savedSds = chemical?._chemical_data?.[0]?.safetySheetPath || [];
+
+        const sameProductCount = savedSds.filter((sheet) => {
+          const sheetLinkKey = Object.keys(sheet).find((key) => key.endsWith('_link'));
+          if (sheetLinkKey && sheet[sheetLinkKey]) {
+            const sheetFilePath = sheet[sheetLinkKey];
+            const sheetFileName = sheetFilePath.split('/').pop();
+            const sheetMatch = sheetFileName.match(/^([^_]+)_(?:web_)?([a-f0-9]{16})\.pdf$/);
+
+            if (sheetMatch) {
+              const sheetProductNumber = sheetMatch[1];
+              const sheetVendor = sheetFilePath.split('/')[2];
+
+              // Count if same vendor AND same product number
+              return sheetVendor === vendorFromPath && sheetProductNumber === productNumber;
+            }
+          }
+          return false;
+        }).length;
+
+        // Only show version info if there are multiple files for the same product
+        if (sameProductCount > 1) {
+          // Find the position of this specific document in the filtered list
+          let currentPosition = 1;
+          for (let i = 0; i <= index && i < savedSds.length; i++) {
+            const sheet = savedSds[i];
+            const sheetLinkKey = Object.keys(sheet).find((key) => key.endsWith('_link'));
+            if (sheetLinkKey && sheet[sheetLinkKey]) {
+              const sheetFilePath = sheet[sheetLinkKey];
+              const sheetFileName = sheetFilePath.split('/').pop();
+              const sheetMatch = sheetFileName.match(/^([^_]+)_(?:web_)?([a-f0-9]{16})\.pdf$/);
+
+              if (sheetMatch) {
+                const sheetProductNumber = sheetMatch[1];
+                const sheetVendor = sheetFilePath.split('/')[2];
+
+                if (sheetVendor === vendorFromPath && sheetProductNumber === productNumber) {
+                  if (i === index) {
+                    break; // Found our position
+                  }
+                  currentPosition++;
+                }
+              }
+            }
+          }
+          versionInfo = ` v${currentPosition}`;
+        }
+      }
+    } else {
+      // for a search query: extract vendor name from key
+      const vendor = linkKey.replace('_link', '').toUpperCase();
+      // uppercase first letter
+      displayName = vendor.charAt(0).toUpperCase() + vendor.slice(1).toLowerCase();
+      productInfo = ` - ${document[`${vendor.toLowerCase()}_product_number`] || ''}`;
+    }
+
+    const finalDisplayName = `Safety Data Sheet from ${displayName}${productInfo}${versionInfo}`;
 
     return (
       <div className="d-flex gap-3 align-items-center">
         <div className="d-flex me-auto gap-3">
           {vendorLink ? (
-            <a
-              href={vendorLink}
-              target="_blank"
-              rel="noreferrer"
-            >
-              {`Safety Data Sheet from ${vendorName}`}
+            <a href={vendorLink} target="_blank" rel="noreferrer">
+              {finalDisplayName}
               {this.checkMarkButton(document)}
             </a>
           ) : null}
@@ -1160,10 +1235,10 @@ export default class ChemicalTab extends React.Component {
           </ButtonToolbar>
         </div>
         <div className="me-auto">
-          {this.renderChemicalProperties(vendorName.toLowerCase())}
+          {this.renderChemicalProperties(displayName.toLowerCase())}
         </div>
         <div className="justify-content-end">
-          {this.querySafetyPhrases(vendorName.toLowerCase())}
+          {this.querySafetyPhrases(displayName.toLowerCase())}
         </div>
       </div>
     );
@@ -1566,9 +1641,18 @@ export default class ChemicalTab extends React.Component {
     const hasSavedSds = savedSds.length > 0;
 
     // Check if default vendors (merck or thermofischer) exist in saved safety sheets
+    let hasWebSignature = false;
     const hasDefaultVendors = savedSds.some((sheet) => {
       const keys = Object.keys(sheet);
-      return keys.includes('merck_link') || keys.includes('thermofischer_link') || keys.includes('alfa_link');
+      hasWebSignature = hasWebSignature || Object.entries(sheet).some(
+        ([, v]) => v.includes('_web_')
+      );
+      return (
+        keys.includes('merck_link')
+        || keys.includes('thermofischer_link')
+        || keys.includes('alfa_link')
+        || hasWebSignature
+      );
     });
 
     // Only disable the button if we're loading or if default vendors exist
@@ -1596,8 +1680,8 @@ export default class ChemicalTab extends React.Component {
     const overlay = (
       <Tooltip id="disabledSdsSearchButton">
         {hasDefaultVendors
-          ? 'Search is disabled because default vendor safety sheets already exist. Delete them to enable search.'
-          : 'Delete saved sheets to enable search button'}
+          ? 'Delete the saved sheet fetched via this search button to enable the search button'
+          : 'click to fetch safety sheet from the vendor'}
       </Tooltip>
     );
 
@@ -1616,7 +1700,7 @@ export default class ChemicalTab extends React.Component {
     const { displayWell, warningMessage } = this.state;
     return (
       <>
-        <Row className="mb-3 align-items-end">
+        <Row className="mb-4 align-items-end">
           <Col xs="auto" className="mb-1">
             {this.addAttachment()}
           </Col>

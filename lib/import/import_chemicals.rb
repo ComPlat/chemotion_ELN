@@ -132,12 +132,22 @@ module Import
     end
 
     def self.create_safety_sheet_path(vendor, value, product_number, chemical)
-      file_path = "#{product_number}_#{vendor.capitalize}.pdf"
-      chemical['chemical_data'][0]['safetySheetPath'] ||= []
-      sheet_path = { "#{vendor}_link" => "#{SAFETY_SHEET_PATH}#{file_path}" }
-      is_created = Chemotion::ChemicalsService.create_sds_file(file_path, value)
-      result = [true].include?(is_created)
-      chemical['chemical_data'][0]['safetySheetPath'] << sheet_path if result
+      ## only fetch and save safety sheets for accepted vendors
+      accepted_vendors = %w[merck sigma_aldrich]
+      return unless accepted_vendors.include?(vendor.downcase) && product_number.present?
+
+      file_path = Chemotion::ChemicalsService.create_sds_file(value, product_number, vendor)
+      is_created = File.exist?("public/safety_sheets/#{file_path}.pdf")
+
+      if is_created
+        chemical_data = Chemotion::ChemicalsService.update_chemical_data(
+          chemical['chemical_data'],
+          file_path,
+          product_number,
+          vendor,
+        )
+        chemical['chemical_data'] = chemical_data
+      end
       chemical
     end
 
