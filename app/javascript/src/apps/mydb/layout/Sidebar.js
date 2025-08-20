@@ -29,10 +29,7 @@ export default function Sidebar() {
           <ChemotionLogo collapsed={isCollapsed} />
         </a>
         <div className="flex-grow-1 h-0 pb-4">
-          <CollectionTree
-            isCollapsed={isCollapsed}
-            expandSidebar={UIActions.expandSidebar}
-          />
+          <CollectionTree isCollapsed={isCollapsed} />
         </div>
         <div className={classnames(
           'sidebar-button-frame justify-content-center mx-auto',
