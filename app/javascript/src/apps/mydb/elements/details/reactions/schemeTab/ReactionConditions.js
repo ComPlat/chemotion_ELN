@@ -59,6 +59,7 @@ export default function ReactionConditions({
                 options={conditionsOptions}
                 onChange={({ value }) => addCondition(value)}
                 size="sm"
+                placeholder="Add"
               />
               <CreateButton
                 onClick={() => addCondition()}
