@@ -186,7 +186,7 @@ function GeneralMaterialGroup({
         isDisabled={!permitOn(reaction)}
         value={null}
         options={reagentList}
-        placeholder="Reagents"
+        placeholder="Add"
         onChange={createReagentForReaction}
         size="sm"
       />
@@ -366,7 +366,7 @@ function SolventsMaterialGroup({
                     value={null}
                     isDisabled={!permitOn(reaction)}
                     options={solventOptions}
-                    placeholder="Add default"
+                    placeholder="Add"
                     onChange={createDefaultSolventsForReaction}
                     size="sm"
                   />
