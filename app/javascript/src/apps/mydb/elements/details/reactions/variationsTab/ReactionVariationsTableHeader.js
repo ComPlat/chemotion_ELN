@@ -1,170 +1,15 @@
 import React, {useEffect, useState} from "react";
 import {
     getStandardUnits,
-    getUserFacingUnit
+    getUserFacingUnit, getUserFacingEntryName,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
+import {
+    MaterialEntrySelection,
+} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import {Button, Modal, OverlayTrigger, Tooltip} from "react-bootstrap";
 import PropTypes from "prop-types";
 import {GenUnitBtn} from 'chem-generic-ui'
 import {AgGridReact} from "ag-grid-react";
-
-
-
-function MaterialEntrySelection({ entryDefs, onChange }) {
-    const [showModal, setShowModal] = useState(false);
-
-    const handleEntrySelection = (item) => {
-        const updated = { ...entryDefs };
-        const wasMain = updated[item].isMain;
-        const wasSelected = updated[item].isSelected;
-        const selectedCount = Object.values(updated).filter((entry) => entry.isSelected).length;
-
-        // Prevent deselection if this is the last selected item
-        if (wasSelected && selectedCount <= 1) {
-            return;
-        }
-
-        // Toggle the selection state
-        updated[item] = {
-            ...updated[item],
-            isSelected: !wasSelected,
-            isMain: wasSelected ? false : wasMain // Clear isMain if deselecting
-        };
-
-        // If we're deselecting the current main entry, find a new main entry
-        if (wasMain && wasSelected) {
-            const firstAvailable = Object.keys(updated).find(
-                (key) => key !== item && updated[key].isSelected
-            );
-            if (firstAvailable) {
-                updated[firstAvailable].isMain = true;
-            }
-        }
-
-        onChange(updated);
-    };
-
-    const handleUnitChange = (item, unit) => {
-        const updated = {
-            ...entryDefs,
-            [item]: {
-                ...entryDefs[item],
-                displayUnit: unit
-            }
-        };
-
-        onChange(updated);
-    };
-
-    const handleMainEntryChange = (item) => {
-        const updated = { ...entryDefs };
-
-        Object.keys(updated).forEach((key) => {
-            // Clear previous main entry
-            if (updated[key].isMain) {
-                updated[key].isMain = false;
-            }
-        });
-
-        // Set new main entry
-        updated[item].isMain = true;
-
-        onChange(updated);
-    };
-
-    return (
-        <div className="w-100">
-            <div className="d-inline-block">
-                <Button className="w-100" onClick={() => setShowModal(true)}>
-                    Entries
-                </Button>
-                <ol className="list-group list-group-horizontal w-100">
-                    {Object.entries(entryDefs).map(([entry, entryDef]) => (!entryDef.isSelected ? null : (
-                        <MaterialEntry key={entry} entry={entry} isMain={entryDef.isMain}>
-                            {getUserFacingEntryName(entry)}
-                            {' '}
-                            {entryDef.displayUnit === null ? '' : `(${getUserFacingUnit(entryDef.displayUnit)})` }
-                        </MaterialEntry>
-
-                    )))}
-                </ol>
-            </div>
-
-            <Modal show={showModal} onHide={() => setShowModal(false)} size="lg">
-                <Modal.Header closeButton>
-                    <Modal.Title>Select entries</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <Table striped bordered hover className="table-layout-fixed">
-                        <thead>
-                        <tr>
-                            <th>Selected</th>
-                            <th>Entry</th>
-                            <th>Unit</th>
-                            <th>Main entry (editable, sortable)</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {Object.entries(entryDefs).map(([entry, entryDef]) => {
-                            const units = getStandardUnits(entry);
-                            return (
-                                <tr key={entry}>
-                                    <td className="text-center">
-                                        <Form.Check
-                                            type="checkbox"
-                                            checked={entryDef.isSelected || false}
-                                            onChange={() => handleEntrySelection(entry)}
-                                        />
-                                    </td>
-                                    <td>{getUserFacingEntryName(entry)}</td>
-                                    <td>
-                                        {units.length > 1 ? (
-                                            <Form.Select
-                                                size="sm"
-                                                value={entryDef.displayUnit || ''}
-                                                onChange={(e) => handleUnitChange(entry, e.target.value)}
-                                            >
-                                                {units.map((unit) => (
-                                                    <option key={unit} value={unit}>{getUserFacingUnit(unit)}</option>
-                                                ))}
-                                            </Form.Select>
-                                        ) : getUserFacingUnit(units[0])}
-                                    </td>
-                                    <td className="text-center">
-                                        <Form.Check
-                                            type="radio"
-                                            name="default"
-                                            checked={entryDef.isMain || false}
-                                            onChange={() => handleMainEntryChange(entry)}
-                                            disabled={!entryDef.isSelected}
-                                        />
-                                    </td>
-                                </tr>
-                            );
-                        })}
-                        </tbody>
-                    </Table>
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="primary" onClick={() => setShowModal(false)}>
-                        Close
-                    </Button>
-                </Modal.Footer>
-            </Modal>
-        </div>
-    );
-}
-
-MaterialEntrySelection.propTypes = {
-    entryDefs: PropTypes.objectOf(
-        PropTypes.shape({
-            isMain: PropTypes.bool.isRequired,
-            isSelected: PropTypes.bool.isRequired,
-            displayUnit: PropTypes.string.isRequired,
-        })
-    ).isRequired,
-    onChange: PropTypes.func.isRequired,
-};
 
 function useStates(context, name) {
     const {setColumnDefinitions} = context;
@@ -342,7 +187,7 @@ function MenuHeader({
         ascendingState, descendingState, noSortState,
         nameState: [name, setName]
     } = useStates(context, names[0]);
-    const {entryDefs} = column.colDef;
+    const {field, entryDefs} = column.colDef;
 
 
     const sortMenu = setSortEffects({
@@ -351,6 +196,18 @@ function MenuHeader({
         setSort
     });
     const handleTitleClick = () => setName(names[(names.indexOf(name) + 1) % names.length]);
+
+    const onEntryDefChange = (updatedEntryDefs) => {
+        setColumnDefinitions(
+            {
+                type: 'update_entry_defs',
+                field,
+                entryDefs: updatedEntryDefs,
+                gasType
+            }
+        );
+    };
+
     return (
         <div className="d-grid">
       <span
