@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
+import UIActions from 'src/stores/alt/actions/UIActions';
 
 import CollectionSubtree from 'src/apps/mydb/collections/CollectionSubtree';
 import SidebarButton from 'src/apps/mydb/layout/sidebar/SidebarButton';
@@ -24,7 +25,7 @@ function containsCollection(collections, collectionId) {
   });
 }
 
-function CollectionTree({ isCollapsed, expandSidebar }) {
+function CollectionTree({ isCollapsed }) {
   const [collections, setCollections] = useState(CollectionStore.getState());
   const [activeCollection, setActiveCollection] = useState(ALL_COLLECTIONS_KEY);
   const [expandedCollections, setExpandedCollections] = useState([ALL_COLLECTIONS_KEY]);
@@ -39,6 +40,7 @@ function CollectionTree({ isCollapsed, expandSidebar }) {
   };
 
   const expandCollection = (collectionKey) => {
+    if (isCollapsed) UIActions.expandSidebar.defer();
     setExpandedCollections((prev) => {
       if (prev.includes(collectionKey)) return prev;
       return [...prev, collectionKey];
@@ -46,7 +48,6 @@ function CollectionTree({ isCollapsed, expandSidebar }) {
   };
 
   const setCollection = (collection) => {
-    if (isCollapsed) expandSidebar();
     expandCollection(collection);
     if (collection !== activeCollection) setActiveCollection(collection);
   };
@@ -169,7 +170,6 @@ function CollectionTree({ isCollapsed, expandSidebar }) {
 
 CollectionTree.propTypes = {
   isCollapsed: PropTypes.bool.isRequired,
-  expandSidebar: PropTypes.func.isRequired,
 };
 
 export default CollectionTree;
