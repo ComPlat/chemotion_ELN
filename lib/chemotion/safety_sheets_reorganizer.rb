@@ -6,8 +6,6 @@
 # Run this from your Rails root directory
 
 require 'fileutils'
-require_relative 'generate_file_hash_utils'
-require_relative 'data_extractor'
 
 # Safety Data Sheets folder reorganization utility
 #

@@ -1,7 +1,4 @@
 # frozen_string_literal: true
-
-require_relative 'input_validation_utils'
-
 module Chemotion
   # Data extraction utilities for parsing filenames and identifiers
   module DataExtractor

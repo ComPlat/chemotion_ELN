@@ -3,7 +3,6 @@
 require 'rails_helper'
 require 'tempfile'
 require 'digest'
-require_relative '../../../lib/chemotion/generate_file_hash_utils'
 
 RSpec.describe Chemotion::GenerateFileHashUtils do
   let(:test_content) { 'This is test file content for hashing' }
