@@ -37,7 +37,7 @@ export const allElnElements = [
 
 export const allElnElementsForSearch = [
   'cell_lines', 'samples', 'reactions', 'wellplates', 'screens', 'research_plans',
-  'sequence_based_macromolecule_samples',
+  'sequence_based_macromolecule_samples', 'device_descriptions',
 ];
 
 export const allElnElmentsWithLabel = [

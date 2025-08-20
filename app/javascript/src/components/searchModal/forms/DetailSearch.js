@@ -1,13 +1,16 @@
 import React, { useContext } from 'react';
 import { Button, Form, InputGroup, Tabs, Tab, OverlayTrigger, Tooltip } from 'react-bootstrap'
+import DatePicker from 'react-datepicker';
 import { Select } from 'src/components/common/Select';
 import TreeSelect from 'antd/lib/tree-select';
 import SelectFieldData from './SelectFieldData';
 import SampleInventoryFieldData from './SampleInventoryFieldData';
 import AnalysesFieldData from './AnalysesFieldData';
 import MeasurementFieldData from './MeasurementFieldData';
+import MaintenanceFieldData from './MaintenanceFieldData';
 import { unitSystems } from 'src/components/staticDropdownOptions/units';
 import { selectOptions } from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/SelectOptions';
+import { deviceDescriptionSelectOptions } from 'src/apps/mydb/elements/details/deviceDescriptions/SelectOptions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { observer } from 'mobx-react';
@@ -18,23 +21,26 @@ import * as FieldOptions from 'src/components/staticDropdownOptions/options';
 
 const DetailSearch = () => {
   const searchStore = useContext(StoreContext).search;
-  let selection = searchStore.searchElement;
+  const selection = searchStore.searchElement;
   let fieldOptions = SelectFieldData.fields[selection.table];
-  fieldOptions = selection.table === 'sequence_based_macromolecule_samples' ? SelectFieldData[selection.table] : fieldOptions;
+  fieldOptions = ['sequence_based_macromolecule_samples', 'device_descriptions'].includes(selection.table)
+    ? SelectFieldData[selection.table]
+    : fieldOptions;
   const { rxnos, chmos, unitsSystem, segmentKlasses, genericEls, dsKlasses, profile } = UserStore.getState();
   const layoutTabs = profile.data[`layout_detail_${selection.table.slice(0, -1)}`];
   const currentCollection = UIStore.getState().currentCollection;
-  let tabSegment = currentCollection?.tabs_segment;
-  let tabs = tabSegment && tabSegment[selection.table.slice(0, -1)] ? tabSegment[selection.table.slice(0, -1)] : layoutTabs;
+  const tabSegment = currentCollection?.tabs_segment;
+  const tabs = tabSegment && tabSegment[selection.table.slice(0, -1)] ? tabSegment[selection.table.slice(0, -1)] : layoutTabs;
   let genericFields = [];
   let genericSelectOptions = [];
   let fieldsByTab = [];
   let datasetOptions = [];
   let datasetSelectOptions = [];
-  let inventoryData = SampleInventoryFieldData.chemicals;
-  let analysesData = AnalysesFieldData.containers;
-  let measurementData = MeasurementFieldData.measurements;
-  let validFieldTypes = ['text', 'select', 'checkbox', 'system-defined', 'textarea', 'input-group', 'formula-field', 'table'];
+  const inventoryData = SampleInventoryFieldData.chemicals;
+  const analysesData = AnalysesFieldData.containers;
+  const measurementData = MeasurementFieldData.measurements;
+  const maintenanceData = MaintenanceFieldData.maintenance;
+  const validFieldTypes = ['text', 'select', 'checkbox', 'system-defined', 'textarea', 'input-group', 'formula-field', 'table'];
 
   const defaultDetailSearchValues = [{
     link: 'AND',
@@ -207,6 +213,9 @@ const DetailSearch = () => {
         if (value[0] === 'measurements') {
           fieldsByTab.push(...measurementData);
         }
+        if (value[0] === 'maintenance') {
+          fieldsByTab.push(...maintenanceData);
+        }
         if (segmentKlasses) {
           segmentKlasses.filter((s) => {
             if (s.element_klass.name == selection.table.slice(0, -1) && s.label == value[0]) {
@@ -234,6 +243,45 @@ const DetailSearch = () => {
 
     return (
       <Form.Label>{option.label}{infoButton}</Form.Label>
+    );
+  }
+
+  const datePickerInput = (option, type, selectedValue, column, keyLabel) => {
+    const selectedDate = selectedValue ? selectedValue[column].value : null;
+    return (
+      <Form.Group key={`${column}-${keyLabel}-${type}`}>
+        {labelWithInfo(option)}
+        <DatePicker
+          selected={selectedDate}
+          onChange={handleFieldChanged(option, column, type)}
+          popperPlacement="bottom-start"
+          isClearable
+          dateFormat="dd-MM-YY"
+          wrapperClassName="w-100"
+        />
+      </Form.Group>
+    );
+  }
+
+  const dateTimePickerInput = (option, type, selectedValue, column, keyLabel) => {
+    const selectedDate = selectedValue ? new Date(selectedValue[column].value) : null;
+    return (
+      <Form.Group key={`${column}-${keyLabel}-${type}`}>
+        {labelWithInfo(option)}
+        <DatePicker
+          selected={selectedDate}
+          onChange={handleFieldChanged(option, column, type)}
+          isClearable
+          showTimeSelect
+          timeFormat="HH:mm"
+          timeIntervals={15}
+          timeCaption="Time"
+          dateFormat="dd/MM/yyyy HH:mm"
+          placeholderText="dd/MM/YYYY HH:mm"
+          popperPlacement="bottom-end"
+          wrapperClassName="w-100"
+        />
+      </Form.Group>
     );
   }
 
@@ -324,6 +372,8 @@ const DetailSearch = () => {
       });
     } else if (option.table === 'sequence_based_macromolecule_samples') {
       options = selectOptions[option.option_layers];
+    } else if (option.table === 'device_descriptions') {
+      options = deviceDescriptionSelectOptions[option.option_layers];
     } else {
       options = FieldOptions[option.option_layers];
     }
@@ -796,10 +846,21 @@ const DetailSearch = () => {
     searchStore.addDetailSearchValue(column, searchValue);
   }
 
-  const fieldsByType = (option, fields, keyLabel, i) => {
-    let multi_fields = ['stereo', 'xref', 'solvent', 'body'];
-    let column = multi_fields.includes(option.column) ? `${option.column}_${option.opt}` : (option.column || option.field);
+  const columnName = (option) => {
+    let multi_fields = [
+      'stereo', 'xref', 'solvent', 'body', 'operators', 'setup_descriptions', 'ontologies',
+      'planned_maintenance', 'unexpected_maintenance'
+    ];
+    let column = option.column || option.field;
+    if (multi_fields.includes(option.column)) {
+      column = option.opt_type ? `${option.column}_${option.opt_type}_${option.opt}` : `${option.column}_${option.opt}`;
+    }
     column = option.key !== undefined ? `${column}_${option.key}` : column;
+    return column;
+  }
+
+  const fieldsByType = (option, fields, keyLabel, i) => {
+    const column = columnName(option);
     const selectedValue = searchStore.detailSearchValues.find((f) => { return Object.keys(f).indexOf(column) != -1 });
 
     switch (option.type) {
@@ -839,6 +900,12 @@ const DetailSearch = () => {
         break;
       case 'solventSelect':
         fields.push(solventSelect(option, 'solventSelect', selectedValue, column, keyLabel));
+        break;
+      case 'date':
+        fields.push(datePickerInput(option, option.type, selectedValue, column, keyLabel));
+        break;
+      case 'datetime':
+        fields.push(dateTimePickerInput(option, option.type, selectedValue, column, keyLabel));
         break;
       case 'spacer':
         fields.push(<div className="form-group" key={`empty-column-${i}`}></div>);
