@@ -499,7 +499,7 @@ export default class ReactionDetails extends Component {
     const tabContentsMap = {
       scheme: (
         <Tab eventKey="scheme" title="Scheme" key={`scheme_${reaction.id}`}>
-          <ButtonGroup size="sm">
+          <ButtonGroup>
             <ButtonGroupToggleButton
               active={!reaction.gaseous}
               onClick={this.handleGaseousChange}
