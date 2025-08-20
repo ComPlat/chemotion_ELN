@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require_relative 'generate_file_hash_utils'
+require_relative 'input_validation_utils'
+
 module Chemotion
   # Service class for handling manual Safety Data Sheet attachment (SDS) operations
   class ManualSdsService
@@ -26,6 +29,7 @@ module Chemotion
       @vendor_product = args[:vendor_product]
       @attached_file = args[:attached_file]
       @chemical_data = args[:chemical_data]
+      @file_hash = nil
     end
 
     # Create a new manual SDS record
@@ -51,6 +55,8 @@ module Chemotion
       return { error: 'Sample ID is required' } if @sample_id.blank?
       return { error: 'File is required' } if @attached_file.blank?
       return { error: 'Vendor name is required' } if @vendor_name.blank?
+      return { error: 'Vendor name is invalid' } unless InputValidationUtils.valid_vendor_name?(@vendor_name)
+      return { error: 'Vendor product is invalid' } unless InputValidationUtils.valid_product_number?(@vendor_product)
 
       true
     end
@@ -76,30 +82,68 @@ module Chemotion
     # Process the uploaded SDS file and create/update the chemical record
     # @return [Chemical, Hash] Chemical record or error hash
     def process_file
-      # Generate file path based on vendor and product number
-      file_name, file_path = generate_file_paths
+      upload_path = fetch_upload_path
+      product_number = @vendor_info['productNumber']
+      @file_hash = compute_or_fail(upload_path)
+      sds_file_path = resolve_sds_file_path(product_number)
+      handle_chemical_update_or_create(build_sds_params(product_number, sds_file_path))
+    rescue StandardError => e
+      { error: "Error processing SDS: #{e.message}" }
+    end
 
-      # Save the file
-      save_result = save_sds_file(file_name)
-      return save_result if save_result.is_a?(Hash) && save_result[:error]
+    # Compute hash for uploaded file
+    def compute_file_hash(upload_path)
+      GenerateFileHashUtils.generate_full_hash(upload_path)
+    end
 
-      # Generate vendor name key
-      vendor_name_key = "#{@vendor_name.downcase}_link"
+    # Ensure upload path exists
+    def fetch_upload_path
+      path = @attached_file[:tempfile]&.path
+      raise StandardError, 'File is required' if path.blank?
 
-      # Update or create chemical record
-      sds_params = {
+      path
+    end
+
+    # Compute file hash or raise when missing
+    def compute_or_fail(upload_path)
+      hash = compute_file_hash(upload_path)
+      raise StandardError, 'File hash could not be generated' if hash.blank?
+
+      hash
+    end
+
+    # Resolve the final SDS file path, using existing duplicate when available
+    def resolve_sds_file_path(product_number)
+      existing = GenerateFileHashUtils.find_duplicate_file_by_hash(
+        @vendor_name,
+        product_number,
+        @file_hash,
+      )
+      return existing if existing.present?
+
+      path = Chemotion::ChemicalsService.generate_safety_sheet_file_path(
+        @vendor_name,
+        product_number,
+        @file_hash[0..15],
+      )
+      unless GenerateFileHashUtils.vendor_folder_exists?(@vendor_name)
+        GenerateFileHashUtils.create_vendor_product_folder(@vendor_name)
+      end
+      Chemotion::ChemicalsService.write_file(path, @attached_file) if path.present?
+      path
+    end
+
+    # Build params for creating/updating the chemical with SDS
+    def build_sds_params(product_number, file_path)
+      {
         sample_id: @sample_id,
         cas: @cas,
         vendor_info: @vendor_info,
         vendor_product: @vendor_product,
-        vendor_name_key: vendor_name_key,
+        vendor_name_key: "#{product_number}_#{@file_hash[0..15]}_link",
         file_path: file_path,
         chemical_data: @chemical_data,
       }
-
-      handle_chemical_update_or_create(sds_params)
-    rescue StandardError => e
-      { error: "Error processing SDS: #{e.message}" }
     end
 
     # Parse JSON parameter
@@ -114,27 +158,6 @@ module Chemotion
       rescue JSON::ParserError
         { error: error_message }
       end
-    end
-
-    # Generate file paths for SDS storage
-    # @return [Array<String>] Array containing [file_name, file_path]
-    def generate_file_paths
-      product_number = @vendor_info['productNumber']
-      file_name = "#{@vendor_name}_#{product_number}.pdf"
-      file_path = "/safety_sheets/#{file_name}"
-      [file_name, file_path]
-    end
-
-    # Save the SDS file to disk
-    # @param file_name [String] Name to save the file as
-    # @return [true, Hash] true if successful, error hash otherwise
-    def save_sds_file(file_name)
-      result = ChemicalsService.create_sds_file(file_name, nil, @attached_file)
-      return { error: 'Error saving file' } unless result == true
-
-      true
-    rescue StandardError => e
-      { error: "Error saving SDS file: #{e.message}" }
     end
 
     # Handle updating or creating a chemical record
@@ -280,27 +303,34 @@ module Chemotion
       chemical_data = sds_params[:chemical_data]
 
       # Prepare the chemical data
-      chem_data = prepare_chemical_data(
-        chemical_data,
-        vendor_info,
-        vendor_product,
-        vendor_name_key,
-        file_path,
-      )
+      chem_data = prepare_chemical_data({
+                                          chemical_data: chemical_data,
+                                          vendor_info: vendor_info,
+                                          vendor_product: vendor_product,
+                                          vendor_name_key: vendor_name_key,
+                                          file_path: file_path,
+                                        })
       return chem_data if chem_data.is_a?(Hash) && chem_data[:error]
 
       # Create the chemical
-      create_chemical(sample_id, cas, chem_data)
+      Chemotion::ChemicalsService.create_chemical(sample_id, cas, chem_data)
     end
 
     # Prepare chemical data for a new chemical record
-    # @param chemical_data [Hash, Array, nil] Optional chemical data
-    # @param vendor_info [Hash] Vendor information
-    # @param vendor_product [String] Vendor product key
-    # @param vendor_name_key [String] Vendor name key
-    # @param file_path [String] Path to the SDS file
+    # @param params [Hash] Parameters for chemical data preparation
+    # @option params [Hash, Array, nil] :chemical_data Optional chemical data
+    # @option params [Hash] :vendor_info Vendor information
+    # @option params [String] :vendor_product Vendor product key
+    # @option params [String] :vendor_name_key Vendor name key
+    # @option params [String] :file_path Path to the SDS file
     # @return [Array<Hash>, Hash] Prepared chemical data or error hash
-    def prepare_chemical_data(chemical_data, vendor_info, vendor_product, vendor_name_key, file_path)
+    def prepare_chemical_data(params)
+      chemical_data = params[:chemical_data]
+      vendor_info = params[:vendor_info]
+      vendor_product = params[:vendor_product]
+      vendor_name_key = params[:vendor_name_key]
+      file_path = params[:file_path]
+
       if chemical_data.present?
         process_existing_chemical_data(chemical_data, vendor_info, vendor_product, vendor_name_key, file_path)
       else
@@ -336,22 +366,6 @@ module Chemotion
     rescue StandardError => e
       Rails.logger.error("Error processing chemical_data: #{e.message}")
       { error: 'chemical_data is invalid' }
-    end
-
-    # Create a new chemical record
-    # @param sample_id [Integer] Sample ID
-    # @param cas [String] CAS number
-    # @param chem_data [Array<Hash>] Chemical data
-    # @return [Chemical, Hash] Created chemical record or error hash
-    def create_chemical(sample_id, cas, chem_data)
-      Chemical.create!(
-        sample_id: sample_id,
-        cas: cas,
-        chemical_data: chem_data,
-      )
-    rescue StandardError => e
-      Rails.logger.error("Error creating chemical: #{e.message}")
-      { error: "Error creating chemical: #{e.message}" }
     end
 
     # Update a safety sheet entry in chemical data

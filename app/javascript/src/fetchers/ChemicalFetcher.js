@@ -68,9 +68,17 @@ export default class ChemicalFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(params)
-    }).then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
+    }).then((response) => {
+      if (response.ok) {
+        return response.json();
+      }
+      return response.json().then((errorData) => {
+        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+      });
+    }).catch((errorMessage) => {
+      console.error(errorMessage);
+      throw errorMessage;
+    });
   }
 
   static saveManualAttachedSafetySheet(params) {

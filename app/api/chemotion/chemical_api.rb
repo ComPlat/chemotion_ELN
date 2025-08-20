@@ -94,15 +94,22 @@ module Chemotion
         end
         post do
           Chemotion::ChemicalsService.handle_exceptions do
-            chemical = Chemical.find_by(sample_id: params[:sample_id])
             product_info = params[:chemical_data][0][params[:vendor_product]]
-            if chemical.present?
-              chemical.update!(chemical_data: params[:chemical_data])
-            else
-              Chemical.create!(sample_id: params[:sample_id], cas: params[:cas], chemical_data: params[:chemical_data])
-            end
-            file_path = "#{product_info['productNumber']}_#{product_info['vendor']}.pdf"
-            Chemotion::ChemicalsService.create_sds_file(file_path, product_info['sdsLink'])
+            file_path = Chemotion::ChemicalsService.find_existing_or_create_safety_sheet(
+              product_info['sdsLink'],
+              product_info['vendor'].downcase,
+              product_info['productNumber'],
+            )
+            return error!({ error: file_path[:error] }, 400) if file_path.is_a?(Hash) && file_path[:error]
+
+            Chemotion::ChemicalsService.find_or_create_chemical_with_safety_data(
+              sample_id: params[:sample_id],
+              cas: params[:cas],
+              chemical_data: params[:chemical_data],
+              file_path: file_path,
+              product_number: product_info['productNumber'],
+              vendor: product_info['vendor'].downcase,
+            )
           end
         end
       end
