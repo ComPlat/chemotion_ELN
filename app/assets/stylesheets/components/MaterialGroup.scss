@@ -1,4 +1,5 @@
 .material-group {
+  @include condensed-text-width;
   @extend .pseudo-table;
   .pseudo-table__row-header {
     @extend .surface-lighten4;
@@ -26,6 +27,13 @@
     @extend .ps-4;
     @extend .justify-content-between;
     @extend .flex-grow-1;
-    max-width: 200px;
+    max-width: 12.5rem;
+  }
+}
+
+@container material-group (width < 54.5rem) {
+  .material-group__header-title {
+    flex-direction: column;
+    align-items: flex-start !important;
   }
 }

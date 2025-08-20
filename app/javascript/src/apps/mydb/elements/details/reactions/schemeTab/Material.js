@@ -853,7 +853,7 @@ class Material extends Component {
         variant={isTarget ? 'primary' : 'light'}
         size="sm"
       >
-        {isTarget ? 't' : 'r'}
+        {isTarget ? 'T' : 'R'}
       </Button>
     );
   }
