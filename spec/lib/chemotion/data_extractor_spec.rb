@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'rails_helper'
-require_relative '../../../lib/chemotion/data_extractor'
 
 # rubocop:disable Layout/LineLength
 RSpec.describe Chemotion::DataExtractor do

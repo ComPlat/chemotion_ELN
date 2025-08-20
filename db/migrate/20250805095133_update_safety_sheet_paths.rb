@@ -1,5 +1,3 @@
-require_relative '../../lib/chemotion/generate_file_hash_utils'
-require_relative '../../lib/chemotion/data_extractor'
 
 class UpdateSafetySheetPaths < ActiveRecord::Migration[6.1]
   def up
@@ -23,9 +21,6 @@ class UpdateSafetySheetPaths < ActiveRecord::Migration[6.1]
   def reorganize_safety_sheets
     Rails.logger.info "Running Safety Sheets Reorganizer..."
 
-    # Load shared utilities and reorganizer
-    require_relative '../../lib/chemotion/file_hash_utils'
-    require_relative '../../lib/chemotion/safety_sheets_reorganizer'
     SafetySheetsReorganizer.reorganize!
 
     Rails.logger.info "Safety sheets reorganization complete."

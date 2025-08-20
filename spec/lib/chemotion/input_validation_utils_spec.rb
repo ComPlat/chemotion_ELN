@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'rails_helper'
-require_relative '../../../lib/chemotion/input_validation_utils'
 
 RSpec.describe Chemotion::InputValidationUtils do
   describe '.valid_vendor_name?' do

@@ -1,8 +1,5 @@
 # frozen_string_literal: true
 
-require_relative 'generate_file_hash_utils'
-require_relative 'input_validation_utils'
-
 module Chemotion
   # Service class for handling manual Safety Data Sheet attachment (SDS) operations
   class ManualSdsService

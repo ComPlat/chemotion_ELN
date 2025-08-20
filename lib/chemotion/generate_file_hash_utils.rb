@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 require 'digest'
-require_relative 'input_validation_utils'
-require_relative 'data_extractor'
 
 module Chemotion
   # Utility module for file hash operations shared across safety sheet processing
