@@ -401,7 +401,6 @@ export default class ElementsTable extends React.Component {
             />
           </Button>
         </OverlayTrigger>
-        {this.collapseButton()}
       </>
     );
   };
@@ -604,19 +603,19 @@ export default class ElementsTable extends React.Component {
     const { fromDate, toDate, userLabel } = ui;
 
     let typeSpecificHeader = null;
+    let displayCollapseButton = false;
     if (type === 'sample') {
       typeSpecificHeader = this.renderSamplesHeader();
+      displayCollapseButton = true;
     } else if (type === 'reaction') {
       typeSpecificHeader = this.renderReactionsHeader();
     } else if (type === 'device_description') {
       typeSpecificHeader = (
-        <>
-          <DeviceDescriptionListHeader />
-          {this.collapseButton()}
-        </>
+        <DeviceDescriptionListHeader />
       );
+      displayCollapseButton = true;
     } else if (type === 'cell_line') {
-      typeSpecificHeader = this.collapseButton();
+      displayCollapseButton = true;
     } else if (genericEl) {
       typeSpecificHeader = this.renderGenericElementsHeader();
     } else if (type === 'vessel') {
@@ -637,7 +636,7 @@ export default class ElementsTable extends React.Component {
       <div className="elements-table-header gap-1">
         <ElementAllCheckbox type={type} />
         <div className="d-flex gap-1 align-items-center">
-          <div className="elements-table-header__standard-filters">
+          <div className="elements-table-header__filters">
             {searchLabel}
             <InputGroup className="elements-table-header__date-filter" size="sm">
               <OverlayTrigger placement="top" overlay={filterTooltip}>
@@ -672,8 +671,9 @@ export default class ElementsTable extends React.Component {
                 dateFormat="dd-MM-YY"
               />
             </InputGroup>
+            {typeSpecificHeader}
           </div>
-          {typeSpecificHeader}
+          {displayCollapseButton && this.collapseButton()}
         </div>
       </div>
     );
