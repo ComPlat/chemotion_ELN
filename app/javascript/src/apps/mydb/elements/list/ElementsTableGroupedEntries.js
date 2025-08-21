@@ -28,13 +28,15 @@ function GenericElementItem({ element, showDetails }) {
     <div
       role="button"
       onClick={showDetails}
-      className="d-flex gap-2"
+      className="d-flex justify-content-between"
     >
       <div className="preview-table">
         {element.title()}
       </div>
-      <ShowUserLabels element={element} />
-      <ElementCollectionLabels element={element} />
+      <div className="d-flex gap-2">
+        <ShowUserLabels element={element} />
+        <ElementCollectionLabels element={element} />
+      </div>
     </div>
   );
 }
