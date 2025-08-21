@@ -175,7 +175,8 @@ export default class NumeralInputWithUnitsCompo extends Component {
 
   render() {
     const {
-      size, variant, disabled, label, unit, name, showInfoTooltipTotalVol, showInfoTooltipRequiredVol
+      size, variant, disabled, label, unit, name, showInfoTooltipTotalVol, showInfoTooltipRequiredVol,
+      overlayMessage
     } = this.props;
     const {
       showString, value, metricPrefix,
@@ -267,35 +268,59 @@ export default class NumeralInputWithUnitsCompo extends Component {
               <i className="ms-1 fa fa-info-circle" />
             </OverlayTrigger>
           )}
-          <InputGroup
-            className="d-flex flex-nowrap align-items-center w-100"
-          >
-            <Form.Control
-              type="text"
-              disabled={inputDisabled}
-              variant={variant}
-              size={size}
-              value={displayValue || ''}
-              onChange={event => this._handleInputValueChange(event)}
-              onFocus={event => this._handleInputValueFocus(event)}
-              onBlur={event => this._handleInputValueBlur(event)}
-              name={name}
-              className="flex-grow-1"
-            />
-            {prefixSwitch}
-            {showInfoTooltipRequiredVol && (
-              <Button
-                variant="outline-secondary"
-                size={size}
-                onClick={() => this.handleCopyClick(displayValue)}
-                className="ms-1"
-                title={copyButtonText === '📋' ? 'Copy to clipboard' : copyButtonText === '✓' ? 'Copied!' : 'Failed to copy'}
-                style={{ minWidth: '32px' }}
+          {(() => {
+            const inputGroup = (
+              <InputGroup
+                className="d-flex flex-nowrap align-items-center w-100"
               >
-                {copyButtonText}
-              </Button>
-            )}
-          </InputGroup>
+                <Form.Control
+                  type="text"
+                  disabled={inputDisabled}
+                  variant={variant}
+                  size={size}
+                  value={displayValue || ''}
+                  onChange={event => this._handleInputValueChange(event)}
+                  onFocus={event => this._handleInputValueFocus(event)}
+                  onBlur={event => this._handleInputValueBlur(event)}
+                  name={name}
+                  className="flex-grow-1"
+                />
+                {prefixSwitch}
+                {showInfoTooltipRequiredVol && (
+                  <Button
+                    variant="outline-secondary"
+                    size={size}
+                    onClick={() => this.handleCopyClick(displayValue)}
+                    className="ms-1"
+                    title={
+                      // eslint-disable-next-line no-nested-ternary
+                      copyButtonText === '📋'
+                        ? 'Copy to clipboard'
+                        : copyButtonText === '✓'
+                          ? 'Copied!'
+                          : 'Failed to copy'
+                    }
+                    style={{ minWidth: '32px' }}
+                  >
+                    {copyButtonText}
+                  </Button>
+                )}
+              </InputGroup>
+            );
+
+            return overlayMessage ? (
+              <OverlayTrigger
+                placement="top"
+                overlay={(
+                  <Tooltip id="info-for-weight-percentage-sample">
+                    {overlayMessage}
+                  </Tooltip>
+                )}
+              >
+                {inputGroup}
+              </OverlayTrigger>
+            ) : inputGroup;
+          })()}
         </div>
       );
     }
@@ -336,6 +361,7 @@ NumeralInputWithUnitsCompo.propTypes = {
   name: PropTypes.string,
   showInfoTooltipTotalVol: PropTypes.bool,
   showInfoTooltipRequiredVol: PropTypes.bool,
+  overlayMessage: PropTypes.string,
 };
 
 NumeralInputWithUnitsCompo.defaultProps = {
@@ -348,4 +374,5 @@ NumeralInputWithUnitsCompo.defaultProps = {
   name: '',
   showInfoTooltipTotalVol: false,
   showInfoTooltipRequiredVol: false,
+  overlayMessage: null,
 };
