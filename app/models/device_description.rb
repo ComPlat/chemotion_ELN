@@ -68,6 +68,7 @@
 class DeviceDescription < ApplicationRecord
   attr_accessor :collection_id, :is_split
 
+  include Containerable
   include ElementUIStateScopes
   # include PgSearch::Model
   include Collectable
@@ -89,7 +90,6 @@ class DeviceDescription < ApplicationRecord
   has_many :sync_collections_users, through: :collections
 
   has_many :comments, as: :commentable, inverse_of: :commentable, dependent: :destroy
-  has_one :container, as: :containable, inverse_of: :containable, dependent: :nullify
   has_ancestry orphan_strategy: :adopt
 
   accepts_nested_attributes_for :collections_device_descriptions
@@ -132,7 +132,7 @@ class DeviceDescription < ApplicationRecord
     device_description.short_label = "#{short_label}-#{counter_for_split_short_label + 1}"
     device_description.parent = self
     device_description.created_by = user.id
-    device_description.container = Container.create_root_container
+    device_description.container
     device_description.attachments = []
     device_description.segments = []
     device_description.collections << all_collections(user, collection_ids)
