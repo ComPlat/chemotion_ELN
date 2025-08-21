@@ -6,19 +6,16 @@
   @extend .justify-content-between;
   @extend .surface-tab__header;
   &__date-filter {
-    position: static;
     z-index: 10;
-    flex-wrap: nowrap;
-    width: auto;
+    @extend .position-static;
+    @extend .flex-nowrap;
+    @extend .w-auto;
   }
-  &__standard-filters {
+  &__filters {
+    @extend .flex-grow-1;
     @extend .d-flex;
     @extend .gap-1;
     @extend .align-items-center;
-
-    @container elements-table-header (width < 37rem) {
-      flex-direction: column-reverse;
-      align-items: stretch !important;
-    }
+    @extend .flex-wrap;
   }
 }
