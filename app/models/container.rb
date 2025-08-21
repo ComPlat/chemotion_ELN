@@ -35,8 +35,8 @@ class Container < ApplicationRecord
   around_save :content_to_plain_text,
               if: -> { extended_metadata_changed? && extended_metadata && extended_metadata['content'].present? }
   # TODO: dependent destroy for attachments should be implemented when attachment get paranoidized instead of this DJ
-  before_destroy :delete_attachment
   before_destroy :destroy_datasetable
+  # after_destroy :delete_attachment
 
   has_closure_tree
 
