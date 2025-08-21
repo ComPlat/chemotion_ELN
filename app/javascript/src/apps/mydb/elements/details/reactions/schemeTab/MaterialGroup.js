@@ -188,7 +188,6 @@ function GeneralMaterialGroup({
         variant="primary"
         tooltipOn={conversionText}
         tooltipOff={yieldText}
-        buttonTitleClass="fw-bold text-dark"
         buttonClass="px-2 py-1"
       />
     );
