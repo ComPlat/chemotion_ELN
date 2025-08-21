@@ -20,7 +20,6 @@ export default function ClipboardCopyText({ text, clipText }) {
       <span
         role="button"
         onClick={handleClick}
-        className="d-inline"
       >
         {text}
       </span>

@@ -29,7 +29,7 @@ const getMoleculeName = (decoupled, sample) => {
   if (decoupled || sample.isMixture()) return null;
 
   return (
-    <p style={{ wordBreak: 'break-all' }}>
+    <p className="sample-name__molecule-name">
       <ClipboardCopyText text={sample.showed_name} />
     </p>
   );
