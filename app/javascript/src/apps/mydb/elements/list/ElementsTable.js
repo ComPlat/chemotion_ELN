@@ -652,6 +652,10 @@ export default class ElementsTable extends React.Component {
                 placeholderText="From"
                 onChange={this.setFromDate}
                 popperPlacement="bottom-start"
+                popperModifiers={[{
+                  name: 'prevent-flip',
+                  fn: () => ({ reset: { placement: 'bottom-start' } })
+                }]}
                 isClearable
                 dateFormat="dd-MM-YY"
               />
@@ -659,6 +663,10 @@ export default class ElementsTable extends React.Component {
                 selected={toDate}
                 placeholderText="To"
                 popperPlacement="bottom"
+                popperModifiers={[{
+                  name: 'prevent-flip',
+                  fn: () => ({ reset: { placement: 'bottom' } })
+                }]}
                 onChange={this.setToDate}
                 isClearable
                 dateFormat="dd-MM-YY"
