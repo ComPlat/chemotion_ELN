@@ -7,7 +7,7 @@
   @extend .surface-tab__header;
   &__date-filter {
     position: static;
-    z-index: 1;
+    z-index: 10;
     flex-wrap: nowrap;
     width: auto;
   }
