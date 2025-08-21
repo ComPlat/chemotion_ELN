@@ -65,7 +65,7 @@ const onEventListen = async (event) => {
         updateUserTemplateDetails(oldValue, newValue);
       }
     } else if (event.key === 'ketcher-opts') {
-      UsersFetcher.updateUserKetcher2Options(event.newValue);
+      UsersFetcher.updateUserKetcherOptions(event.newValue);
     }
   }
 };

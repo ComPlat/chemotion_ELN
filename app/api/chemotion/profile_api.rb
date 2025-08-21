@@ -147,7 +147,9 @@ module Chemotion
 
         layout = data['layout'].select { |e| available_ements.include?(e) }
         data['layout'] = layout.sort_by { |_k, v| v }.to_h
-        data['default_structure_editor'] = 'ketcher' if data['default_structure_editor'].nil?
+        if data['default_structure_editor'].nil? || data['default_structure_editor'] =~ /ketcher/i
+          data['default_structure_editor'] = 'ketcher'
+        end
         new_profile = {
           data: data.deep_merge(declared_params[:data] || {}),
           show_external_name: declared_params[:show_external_name],
@@ -207,7 +209,7 @@ module Chemotion
       end
 
       desc 'get user profile editor ketcher 2 setting options'
-      get 'editors/ketcher2-options' do
+      get 'editors/ketcher-options' do
         file_path = "ketcher-optns/#{current_user.id}.json"
         complete_folder_path = Rails.root.join('uploads', Rails.env, file_path)
         error_messages = []
@@ -229,7 +231,7 @@ module Chemotion
       params do
         requires :data, type: Hash, desc: 'data structure for ketcher options'
       end
-      put 'editors/ketcher2-options' do
+      put 'editors/ketcher-options' do
         error_messages = []
         folder_path = 'ketcher-optns'
         complete_folder_path = Rails.root.join('uploads', Rails.env, folder_path)
