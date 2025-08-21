@@ -533,6 +533,7 @@ class ElementActions {
   }
 
   addSampleToMaterialGroup(params) {
+    UIActions.selectTab(0);
     return params;
   }
 
