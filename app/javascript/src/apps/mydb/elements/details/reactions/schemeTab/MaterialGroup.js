@@ -185,7 +185,7 @@ function GeneralMaterialGroup({
         onToggle={switchYield}
         onLabel="Yield"
         offLabel="Conv."
-        variant="secondary"
+        variant="primary"
         tooltipOn={conversionText}
         tooltipOff={yieldText}
         buttonTitleClass="fw-bold text-dark"
