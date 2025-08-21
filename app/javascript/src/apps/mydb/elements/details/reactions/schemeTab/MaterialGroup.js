@@ -161,28 +161,35 @@ function GeneralMaterialGroup({
   }
 
   const yieldConversionRateFields = () => {
-    const conversionText = 'Click to switch to conversion field.'
-    + ' The conversion will not be displayed as part of the reaction scheme';
-    const yieldText = 'Click to switch to yield field.'
-    + ' The yield will be displayed as part of the reaction scheme';
+    const conversionText = (
+      <>
+        Click to switch to conversion field.
+        <br />
+        The conversion will be displayed as part of the reaction scheme.
+      </>
+    );
+    const yieldText = (
+      <>
+        Click to switch to yield field.
+        <br />
+        The yield will be displayed as part of the reaction scheme.
+      </>
+    );
     let conversionOrYield = displayYieldField;
     if (displayYieldField || displayYieldField === null) {
       conversionOrYield = true;
     }
     return (
-      <div>
-        <ToggleButton
-          isToggledInitial={conversionOrYield}
-          onToggle={switchYield}
-          onLabel="Yield"
-          offLabel="Conv."
-          onColor="transparent"
-          offColor="transparent"
-          tooltipOn={conversionText}
-          tooltipOff={yieldText}
-          additionalClasses="fw-bold text-dark"
-        />
-      </div>
+      <ToggleButton
+        isToggledInitial={conversionOrYield}
+        onToggle={switchYield}
+        onLabel="Yield"
+        offLabel="Conv."
+        variant="primary"
+        tooltipOn={conversionText}
+        tooltipOff={yieldText}
+        buttonClass="px-2 py-1"
+      />
     );
   };
 
