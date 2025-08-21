@@ -25,7 +25,6 @@ import PropTypes from 'prop-types';
 import CellLineContainer from 'src/apps/mydb/elements/list/cellLine/CellLineContainer';
 import VesselContainer from 'src/apps/mydb/elements/list/vessel/VesselContainer';
 import VesselTemplateGroupView from 'src/apps/mydb/elements/list/vessel/VesselTemplateGroupView';
-import ChevronIcon from 'src/components/common/ChevronIcon';
 import DeviceDescriptionList from 'src/apps/mydb/elements/list/deviceDescriptions/DeviceDescriptionList';
 import DeviceDescriptionListHeader from 'src/apps/mydb/elements/list/deviceDescriptions/DeviceDescriptionListHeader';
 
@@ -475,7 +474,6 @@ export default class ElementsTable extends React.Component {
         />
         {sortContent}
         {this.renderChangeSortDirectionIcon()}
-        {elementsGroup !== 'none' ? (this.collapseButton()) : null}
       </>
     );
   };
@@ -549,7 +547,6 @@ export default class ElementsTable extends React.Component {
           size="sm"
         />
         {elementsGroup !== 'none' ? (sortContent) : null}
-        {elementsGroup !== 'none' ? (this.collapseButton()) : null}
       </>
     );
   };
@@ -598,7 +595,7 @@ export default class ElementsTable extends React.Component {
 
 
   renderHeader = () => {
-    const { filterCreatedAt, ui } = this.state;
+    const { filterCreatedAt, ui, elementsGroup } = this.state;
     const { type, genericEl } = this.props;
     const { fromDate, toDate, userLabel } = ui;
 
@@ -673,7 +670,7 @@ export default class ElementsTable extends React.Component {
             </InputGroup>
             {typeSpecificHeader}
           </div>
-          {displayCollapseButton && this.collapseButton()}
+          {(displayCollapseButton || elementsGroup !== 'none') && this.collapseButton()}
         </div>
       </div>
     );
