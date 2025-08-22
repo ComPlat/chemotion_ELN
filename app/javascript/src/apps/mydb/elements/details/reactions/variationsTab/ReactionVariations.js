@@ -336,7 +336,7 @@ export default function ReactionVariations({reaction, onReactionChange, isActive
                         <Button variant="secondary" onClick={handleClose}>
                             Keep variations
                         </Button>
-                        <Button variant="danger" onClickgridRef={handleConfirm}>
+                        <Button variant="danger" onClick={handleConfirm}>
                             Remove variations
                         </Button>
                     </Modal.Footer>
@@ -452,7 +452,7 @@ export default function ReactionVariations({reaction, onReactionChange, isActive
 
     return (
         <div>
-            <ButtonGroup>70
+            <ButtonGroup>
                 {addVariation()}
                 {removeAllVariations()}
                 {columnSelectControl()}

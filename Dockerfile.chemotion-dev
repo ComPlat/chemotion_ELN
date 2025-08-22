@@ -6,7 +6,7 @@
 
 ARG source_image=ubuntu:24.04
 
-FROM ubuntu:24.04
+FROM ${source_image}
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN set -xe  && apt-get update -yqqq --fix-missing && apt-get upgrade -y
