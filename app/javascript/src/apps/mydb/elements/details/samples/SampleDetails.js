@@ -355,39 +355,6 @@ export default class SampleDetails extends React.Component {
     this.hideStructureEditor();
   }
 
-  prepareMixtureForSave(sample) {
-    // Set reference molecular weight for mixture samples before saving
-    if (sample.isMixture && sample.isMixture() && sample.hasComponents && sample.hasComponents()) {
-      sample.initializeSampleDetails();
-
-      // Calculate relative molecular weights for mixture components before saving
-      sample.calculateMixtureComponentsRelativeMolecularWeight();
-
-      const referenceComponent = sample.reference_component;
-
-      if (referenceComponent) {
-        const { molecule, component_properties: componentProperties } = referenceComponent;
-
-        // Assign values to sample_details
-        Object.assign(sample.sample_details, {
-          reference_molecular_weight: molecule?.molecular_weight || null,
-          reference_relative_molecular_weight: componentProperties?.relative_molecular_weight || null
-        });
-
-        // Reset the reference component changed flag after saving calculations
-        sample.sample_details.reference_component_changed = false;
-
-        // Log warnings if values are missing
-        if (!molecule?.molecular_weight) {
-          console.warn('Reference component has no molecular weight');
-        }
-        if (!componentProperties?.relative_molecular_weight) {
-          console.warn('Reference component has no relative molecular weight');
-        }
-      }
-    }
-  }
-
   handleSubmit(closeView = false) {
     const { currentCollection } = UIStore.getState();
     LoadingActions.start.defer();
@@ -403,7 +370,8 @@ export default class SampleDetails extends React.Component {
     if (!rangeCheck('boiling_point', sample)) return;
     if (!rangeCheck('melting_point', sample)) return;
 
-    this.prepareMixtureForSave(sample);
+    // Prepare mixture samples for saving using Sample.js method
+    sample.prepareMixtureForSave();
 
     if (sample.belongTo && sample.belongTo.type === 'reaction') {
       const reaction = sample.belongTo;
