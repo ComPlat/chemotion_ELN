@@ -18,12 +18,10 @@ export default class ElementCollectionLabels extends React.Component {
     this.handleOnClick = this.handleOnClick.bind(this);
   }
 
-  handleOnClick(label, e, is_synchronized) {
+  handleOnClick(label, e) {
     e.stopPropagation();
 
-    const collectionUrl = is_synchronized ? '/scollection' : '/collection';
-    const url = `${collectionUrl}/${label.id}/${this.state.element.type}/${this.state.element.id}`;
-
+    const url = `/collection/${label.id}/${this.state.element.type}/${this.state.element.id}`;
     Aviator.navigate(url);
   }
 
@@ -44,7 +42,7 @@ export default class ElementCollectionLabels extends React.Component {
       }
       return (
         <span className="d-inline-block m-1" key={index}>
-          <Button variant="light" size="sm" onClick={(e) => this.handleOnClick(label, e, is_synchronized)}>
+          <Button variant="light" size="sm" onClick={(e) => this.handleOnClick(label, e)}>
             {label.name}
           </Button>
         </span>
@@ -102,7 +100,6 @@ export default class ElementCollectionLabels extends React.Component {
       <Popover className="scrollable-popover" id="element-collections">
         {this.renderCollectionsLabels('My Collections', labels)}
         {this.renderCollectionsLabels('Shared Collections', shared_labels)}
-        {this.renderCollectionsLabels('Synchronized Collections', sync_labels, true)}
       </Popover>
     );
 

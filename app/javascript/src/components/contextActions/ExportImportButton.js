@@ -13,19 +13,15 @@ import ModalImportConfirm from 'src/components/contextActions/import/ModalImport
 import ModalImportCollection from 'src/components/contextActions/import/ModalImportCollection';
 
 import { PermissionConst } from 'src/utilities/PermissionConst';
-import { elementShowOrNew } from 'src/utilities/routesUtils';
+import { aviatorNavigation } from 'src/utilities/routesUtils';
 
 const editMetadataFunction = () => {
   const { currentCollection, isSync } = UIStore.getState();
-  const uri = isSync
-    ? `/scollection/${currentCollection.id}/metadata`
-    : `/collection/${currentCollection.id}/metadata`;
-  Aviator.navigate(uri, { silent: true });
-
-  elementShowOrNew({
+  const params = {
     type: 'metadata',
     params: { collectionID: currentCollection.id }
-  });
+  };
+  aviatorNavigation('metadata', '', true, true, params);
 };
 
 function ExportImportButton() {

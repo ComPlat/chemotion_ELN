@@ -210,26 +210,6 @@ const SameEleTypId = (orig, next) => {
   return false;
 };
 
-const UrlSilentNavigation = (element) => {
-  const { currentCollection, isSync } = UIStore.getState();
-  if (element) {
-    let elementString = `${element.type}`;
-    if (!isNaN(element.id)) elementString += `/${element.id}`;
-
-    const collectionUrl = `${currentCollection.id}/${elementString}`;
-    Aviator.navigate(
-      isSync ? `/scollection/${collectionUrl}` : `/collection/${collectionUrl}`,
-      { silent: true },
-    );
-  } else {
-    const cId = currentCollection.id;
-    Aviator.navigate(
-      isSync ? `/scollection/${cId}/` : `/collection/${cId}/`,
-      { silent: true },
-    );
-  }
-};
-
 const markdownChemicalFormular = (text) => {
   text = text.replace(/(C|H|O|N|S)(\d+)/g, '$1<sub>$2</sub>');
   return text;
@@ -481,7 +461,6 @@ export {
   cNmrCount,
   msCheckMsg,
   SameEleTypId,
-  UrlSilentNavigation,
   sampleAnalysesFormatPattern,
   commonFormatPattern,
   Alphabet,

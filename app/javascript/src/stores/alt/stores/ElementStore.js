@@ -32,10 +32,9 @@ import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import WellplatesFetcher from 'src/fetchers/WellplatesFetcher';
 import ScreensFetcher from 'src/fetchers/ScreensFetcher';
 
-import { elementShowOrNew } from 'src/utilities/routesUtils';
-
 import DetailActions from 'src/stores/alt/actions/DetailActions';
-import { SameEleTypId, UrlSilentNavigation } from 'src/utilities/ElementUtils';
+import { SameEleTypId } from 'src/utilities/ElementUtils';
+import { aviatorNavigation, aviatorNavigationWithCollectionId } from 'src/utilities/routesUtils';
 import { chmoConversions } from 'src/components/OlsComponent';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import GenericEl from 'src/models/GenericEl';
@@ -420,7 +419,7 @@ class ElementStore {
   handleOpenDeviceAnalysis({ device, type }) {
     switch (type) {
       case "NMR":
-        const { currentCollection, isSync } = UIStore.getState();
+        const { currentCollection } = UIStore.getState();
         const deviceAnalysis = device.devicesAnalyses.find((a) => a.analysisType === "NMR");
 
         // update Device in case of sample was added by dnd and device was not saved
@@ -428,15 +427,9 @@ class ElementStore {
         ElementActions.saveDevice(device);
 
         if (deviceAnalysis) {
-          Aviator.navigate(isSync
-            ? `/scollection/${currentCollection.id}/devicesAnalysis/${deviceAnalysis.id}`
-            : `/collection/${currentCollection.id}/devicesAnalysis/${deviceAnalysis.id}`
-          );
+          Aviator.navigate(`/collection/${currentCollection.id}/devicesAnalysis/${deviceAnalysis.id}`);
         } else {
-          Aviator.navigate(isSync
-            ? `/scollection/${currentCollection.id}/devicesAnalysis/new/${device.id}/${type}`
-            : `/collection/${currentCollection.id}/devicesAnalysis/new/${device.id}/${type}`
-          );
+          Aviator.navigate(`/collection/${currentCollection.id}/devicesAnalysis/new/${device.id}/${type}`);
         }
         break;
     }
@@ -527,13 +520,10 @@ class ElementStore {
   }
 
   handleSaveDeviceAnalysis(analysis) {
-    const { currentCollection, isSync } = UIStore.getState();
+    const { currentCollection } = UIStore.getState();
     this.state.currentElement = analysis;
 
-    Aviator.navigate(isSync
-      ? `/scollection/${currentCollection.id}/devicesAnalysis/${analysis.id}`
-      : `/collection/${currentCollection.id}/devicesAnalysis/${analysis.id}`
-    );
+    Aviator.navigate(`/collection/${currentCollection.id}/devicesAnalysis/${analysis.id}`);
   }
 
   handleChangeAnalysisExperimentProp({ analysis, experiment, prop, value }) {
@@ -645,7 +635,6 @@ class ElementStore {
 
   fetchElementsByCollectionIdandLayout() {
     const { currentSearchSelection, currentCollection } = UIStore.getState();
-    const isSync = !!(currentCollection && currentCollection.is_sync_to_me);
     if (currentSearchSelection != null) {
       const { currentType } = UserStore.getState();
       this.handleRefreshElements(currentType);
@@ -664,7 +653,7 @@ class ElementStore {
         if (layout.sequence_based_macromolecule_sample && layout.sequence_based_macromolecule_sample > 0) {
           this.handleRefreshElements('sequence_based_macromolecule_sample');
         }
-        if (!isSync && layout.research_plan && layout.research_plan > 0) { this.handleRefreshElements('research_plan'); }
+        if (layout.research_plan && layout.research_plan > 0) { this.handleRefreshElements('research_plan'); }
 
         const { currentUser, genericEls } = UserStore.getState();
         if (MatrixCheck(currentUser.matrix, 'genericElement')) {
@@ -1221,21 +1210,26 @@ class ElementStore {
   }
 
   handleCopyReaction(result) {
+<<<<<<< HEAD
     const { reaction, colId, keepAmounts } = result;
     this.changeCurrentElement(
       Reaction.copyFromReactionAndCollectionId(reaction, colId, keepAmounts)
     );
     Aviator.navigate(`/collection/${colId}/reaction/copy`);
+=======
+    this.changeCurrentElement(Reaction.copyFromReactionAndCollectionId(result.reaction, result.colId));
+    aviatorNavigationWithCollectionId(result.colId, 'reaction', 'copy', true, false);
+>>>>>>> b1f685939 (Add aviator navigation function)
   }
 
   handleCopyResearchPlan(result) {
     this.changeCurrentElement(ResearchPlan.copyFromResearchPlanAndCollectionId(result.research_plan, result.colId));
-    Aviator.navigate(`/collection/${result.colId}/research_plan/copy`);
+    aviatorNavigationWithCollectionId(result.colId, 'research_plan', 'copy', true, false);
   }
 
   handleCopyElement(result) {
     this.changeCurrentElement(GenericEl.copyFromCollectionId(result.element, result.colId));
-    Aviator.navigate(`/collection/${result.colId}/${result.element.type}/copy`);
+    aviatorNavigationWithCollectionId(result.colId, result.element.type, 'copy', true, false);
   }
 
   handleCopyCellLine(result) {
@@ -1268,15 +1262,8 @@ class ElementStore {
   navigateToNewElement(element = {}, klassType = '') {
     this.waitFor(UIStore.dispatchToken);
     const { type, id } = element;
-    const { uri, namedParams } = Aviator.getCurrentRequest();
-    const uriArray = uri.split(/\//);
-    if (!type) {
-      Aviator.navigate(`/${uriArray[1]}/${uriArray[2]}`, { silent: true });
-      return null;
-    }
-    namedParams[`${type}ID`] = id;
-    Aviator.navigate(`/${uriArray[1]}/${uriArray[2]}/${type}/${id}`, { silent: true });
-    elementShowOrNew({ type, klassType, params: namedParams });
+
+    aviatorNavigation(type, id, true, true);
     return null;
   }
 
@@ -1772,7 +1759,7 @@ class ElementStore {
       this.changeCurrentElement(newCurrentElement);
     }
 
-    UrlSilentNavigation(newCurrentElement);
+    aviatorNavigation(newCurrentElement?.type, newCurrentElement?.id, true, false);
     return true;
   }
 
@@ -1860,8 +1847,8 @@ class ElementStore {
   static isCurrentElement(element) {
     const currentElement = this.state?.currentElement;
     return !!element && !!currentElement
-         && currentElement.type === element.type
-         && currentElement.id === element.id;
+      && currentElement.type === element.type
+      && currentElement.id === element.id;
   }
 }
 

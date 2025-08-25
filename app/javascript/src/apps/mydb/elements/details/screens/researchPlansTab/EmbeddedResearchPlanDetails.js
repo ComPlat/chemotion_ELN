@@ -5,9 +5,6 @@ import {
   Button, ButtonGroup, Tooltip, Overlay, OverlayTrigger, Dropdown,
   Card, Collapse, Container, Row, Col
 } from 'react-bootstrap';
-import Aviator from 'aviator';
-import UIStore from 'src/stores/alt/stores/UIStore';
-import { researchPlanShowOrNew } from 'src/utilities/routesUtils';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import ResearchPlan from 'src/models/ResearchPlan';
@@ -16,6 +13,7 @@ import ResearchPlanDetailsBody from
 import ResearchPlanDetailsName from
   'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsName';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
+import { aviatorNavigation } from 'src/utilities/routesUtils';
 
 function InfoButton({ iconClass, text, style, tooltip }) {
   style ||= 'info';
@@ -172,14 +170,6 @@ export default class EmbeddedResearchPlanDetails extends Component {
     });
   }
 
-  openResearchPlan() {
-    const { currentCollection, isSync } = UIStore.getState();
-    const researchPlanID = this.state.researchPlan.id;
-    const uri = `/${isSync ? 's' : ''}collection/${currentCollection.id}/research_plan/${researchPlanID}`;
-    Aviator.navigate(uri, { silent: true });
-    researchPlanShowOrNew({ params: { research_planID: researchPlanID } });
-  }
-
   numberOfAnalyses(researchPlan) {
     if (!researchPlan.container) { return; }
     const analyses_container = researchPlan.container.children
@@ -316,7 +306,7 @@ export default class EmbeddedResearchPlanDetails extends Component {
             <Button
               variant="info"
               size="xxsm"
-              onClick={() => this.openResearchPlan()}>
+              onClick={() => aviatorNavigation('research_plan', this.state.researchPlan.id, true, true)}>
               <i className="fa fa-window-maximize" aria-hidden="true" />
             </Button>
           </OverlayTrigger>

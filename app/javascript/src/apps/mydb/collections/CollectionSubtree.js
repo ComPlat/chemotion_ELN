@@ -50,9 +50,7 @@ export default class CollectionSubtree extends React.Component {
     }
     this.setState({ visible: visible || this.isVisible(root, uiState) });
 
-    const url = (root.sharer)
-      ? `/scollection/${root.id}/${this.urlForCurrentElement()}`
-      : `/collection/${root.id}/${this.urlForCurrentElement()}`;
+    const url = `/collection/${root.id}/${this.urlForCurrentElement()}`;
     Aviator.navigate(url, { silent: true });
 
     const collShow = root.sharer ? scollectionShow : collectionShow;
@@ -100,7 +98,7 @@ export default class CollectionSubtree extends React.Component {
     const { currentElement } = ElementStore.getState();
 
     if (Array.isArray(currentElement) && currentElement.length > 0) {
-    // When currentElement is an array, use the first item (special handling for vessel templates)
+      // When currentElement is an array, use the first item (special handling for vessel templates)
       const template = currentElement[0];
       return template.isNew
         ? `${template.type}/new`

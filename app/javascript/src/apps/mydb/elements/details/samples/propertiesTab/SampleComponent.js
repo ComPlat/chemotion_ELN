@@ -13,7 +13,7 @@ import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralIn
 import Sample from 'src/models/Sample';
 import { permitCls, permitOn } from 'src/components/common/uis';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
-import { UrlSilentNavigation } from 'src/utilities/ElementUtils';
+import { aviatorNavigation } from 'src/utilities/routesUtils';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
 import ComponentStore from 'src/stores/alt/stores/ComponentStore';
 import ComponentActions from 'src/stores/alt/actions/ComponentActions';
@@ -88,8 +88,8 @@ const matTarget = {
   canDrop(tagProps, monitor) {
     const srcType = monitor.getItemType();
     const isCorrectType = srcType === DragDropItemTypes.MATERIAL
-    || srcType === DragDropItemTypes.SAMPLE
-    || srcType === DragDropItemTypes.MOLECULE;
+      || srcType === DragDropItemTypes.SAMPLE
+      || srcType === DragDropItemTypes.MOLECULE;
     return isCorrectType;
   },
 };
@@ -180,7 +180,7 @@ class SampleComponent extends Component {
     if (material.parent_id) {
       UIActions.setRedirectedFromMixture(true);
       const parentSample = new Sample({ id: material.parent_id, type: 'sample' });
-      UrlSilentNavigation(parentSample);
+      aviatorNavigation(parentSample.type, parentSample.id, true, false);
       ElementActions.fetchSampleById(material.parent_id);
     }
   }
@@ -485,7 +485,7 @@ class SampleComponent extends Component {
         placement="top"
         overlay={
           <Tooltip id="molecular-weight-info">{this.generateMolecularWeightTooltipText(material)}</Tooltip>
-      }
+        }
       >
         <div>
           <NumeralInputWithUnitsCompo
