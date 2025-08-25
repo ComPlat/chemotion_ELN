@@ -1097,7 +1097,6 @@ class Material extends Component {
               {!mixtureComponentsLoading && mixtureComponents.length > 0 && (
                 <ReactionMaterialComponentsGroup
                   components={mixtureComponents}
-                  reaction={reaction}
                   sampleId={`${material.id}`}
                   onComponentReferenceChange={this.handleComponentReferenceChange}
                 />

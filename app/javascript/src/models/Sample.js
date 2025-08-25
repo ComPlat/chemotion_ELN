@@ -1972,6 +1972,48 @@ export default class Sample extends Element {
   }
 
   /**
+   * Prepares mixture samples for saving by setting reference molecular weights
+   * and calculating relative molecular weights for components.
+   *
+   * This method should be called before saving mixture samples to ensure
+   * all mixture-specific properties are properly calculated and stored.
+   */
+  prepareMixtureForSave() {
+    // Only process mixture samples with components
+    if (!this.isMixture() || !this.hasComponents()) {
+      return;
+    }
+
+    this.initializeSampleDetails();
+
+    // Calculate relative molecular weights for mixture components before saving
+    this.calculateMixtureComponentsRelativeMolecularWeight();
+
+    const referenceComponent = this.reference_component;
+
+    if (referenceComponent) {
+      const { molecule, component_properties: componentProperties } = referenceComponent;
+
+      // Assign values to sample_details
+      Object.assign(this.sample_details, {
+        reference_molecular_weight: molecule?.molecular_weight || null,
+        reference_relative_molecular_weight: componentProperties?.relative_molecular_weight || null
+      });
+
+      // Reset the reference component changed flag after saving calculations
+      this.sample_details.reference_component_changed = false;
+
+      // Log warnings if values are missing
+      if (!molecule?.molecular_weight) {
+        console.warn('Reference component has no molecular weight');
+      }
+      if (!componentProperties?.relative_molecular_weight) {
+        console.warn('Reference component has no relative molecular weight');
+      }
+    }
+  }
+
+  /**
    * Calculates the total mass (g) of a mixture sample.
    * - Sums all masses of included solid materials (amount_g).
    * - For each liquid, mass = density [g/ml] * volume [ml] (if density is given),
