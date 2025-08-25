@@ -11,9 +11,9 @@ import MatrixCheck from 'src/components/common/MatrixCheck';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 
 const onNaviClick = (type, id) => {
-  const { currentCollection, isSync } = UIStore.getState();
+  const { currentCollection } = UIStore.getState();
   const { genericEls = [] } = UserStore.getState();
-  const elementAction = browseElement(currentCollection, isSync, type, id, genericEls);
+  const elementAction = browseElement(currentCollection, false, type, id, genericEls);
   if (elementAction != null && ElementActions[elementAction]) {
     ElementActions[elementAction](id);
   }

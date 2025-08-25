@@ -33,6 +33,7 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import { copyToClipboard } from 'src/utilities/clipboard';
+import { aviatorNavigation } from 'src/utilities/routesUtils';
 
 const Cite = require('citation-js');
 
@@ -48,13 +49,7 @@ const ElementLink = ({ literature }) => {
   return (
     <Button
       title={`${external_label ? external_label.concat(' - ') : ''}${name}`}
-      onClick={() => {
-        const { uri } = Aviator.getCurrentRequest();
-        const uriArray = uri.split(/\//);
-        if (type && element_id) {
-          Aviator.navigate(`/${uriArray[1]}/${uriArray[2]}/${type}/${element_id}`);
-        }
-      }}
+      onClick={() => aviatorNavigation(type, element_id, false, false)}
     >
       <i className={`me-2 ${element_type ? `icon-${type}` : ''}`} />
       {short_label}
