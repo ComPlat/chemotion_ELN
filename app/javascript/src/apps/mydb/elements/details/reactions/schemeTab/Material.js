@@ -984,26 +984,24 @@ class Material extends Component {
 
           {/* row for mixture components */}
           {isMixture && hasComponents && showComponents && (
-            <tr className="mixture-components-row">
-              <td colSpan="14" style={{ padding: 0, background: '#f8f9fa' }}>
-                {mixtureComponentsLoading && (
-                  <div className="text-center">Loading components...</div>
-                )}
-                {!mixtureComponentsLoading && mixtureComponents.length > 0 && (
-                  <ReactionMaterialComponentsGroup
-                    components={mixtureComponents}
-                    reaction={reaction}
-                    sampleId={`${material.id}`}
-                    onComponentReferenceChange={this.handleComponentReferenceChange}
-                  />
-                )}
-                {!mixtureComponentsLoading && mixtureComponents.length === 0 && (
-                  <div className="text-center">
-                    No components found for this mixture.
-                  </div>
-                )}
-              </td>
-            </tr>
+            <div>
+              {mixtureComponentsLoading && (
+                <div className="text-center">Loading components...</div>
+              )}
+              {!mixtureComponentsLoading && mixtureComponents.length > 0 && (
+                <ReactionMaterialComponentsGroup
+                  components={mixtureComponents}
+                  reaction={reaction}
+                  sampleId={`${material.id}`}
+                  onComponentReferenceChange={this.handleComponentReferenceChange}
+                />
+              )}
+              {!mixtureComponentsLoading && mixtureComponents.length === 0 && (
+                <div className="text-center">
+                  No components found for this mixture.
+                </div>
+              )}
+            </div>
           )}
           {materialGroup === 'products' && (
             <>
