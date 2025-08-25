@@ -185,6 +185,25 @@ ActiveRecord::Schema.define(version: 2026_01_20_183627) do
     t.index ["source", "source_id"], name: "index_code_logs_on_source_and_source_id"
   end
 
+  create_table "collection_shares", force: :cascade do |t|
+    t.bigint "collection_id"
+    t.bigint "shared_with_id", null: false
+    t.integer "permission_level", default: 0, null: false
+    t.integer "celllinesample_detail_level", default: 0, null: false
+    t.integer "devicedescription_detail_level", default: 0, null: false
+    t.integer "element_detail_level", default: 0, null: false
+    t.integer "reaction_detail_level", default: 0, null: false
+    t.integer "researchplan_detail_level", default: 0, null: false
+    t.integer "sample_detail_level", default: 0, null: false
+    t.integer "screen_detail_level", default: 0, null: false
+    t.integer "sequencebasedmacromoleculesample_detail_level", default: 0, null: false
+    t.integer "wellplate_detail_level", default: 0, null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["collection_id"], name: "index_collection_shares_on_collection_id"
+    t.index ["shared_with_id"], name: "index_collection_shares_on_shared_with_id"
+  end
+
   create_table "collections", id: :serial, force: :cascade do |t|
     t.integer "user_id", null: false
     t.string "ancestry", default: "/", null: false, collation: "C"
@@ -1768,6 +1787,8 @@ ActiveRecord::Schema.define(version: 2026_01_20_183627) do
     t.index ["wellplate_id"], name: "index_wells_on_wellplate_id"
   end
 
+  add_foreign_key "collection_shares", "collections"
+  add_foreign_key "collection_shares", "users", column: "shared_with_id"
   add_foreign_key "collections", "inventories"
   add_foreign_key "collections_sequence_based_macromolecule_samples", "collections"
   add_foreign_key "collections_sequence_based_macromolecule_samples", "sequence_based_macromolecule_samples"
