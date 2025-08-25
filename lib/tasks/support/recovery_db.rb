@@ -104,7 +104,7 @@ module RecoveryDB
         recovery_model = Class.new(RecoveryDB::Models::DynamicRecord) do
           self.table_name = model.table_name
           self.primary_key = model.primary_key
-          self.inheritance_column = model.inheritance_column
+          self.inheritance_column = :_type_disabled if model.columns_hash.key?('type')
         end
         RecoveryDB::Models.const_set(:"#{model.name}", recovery_model)
         log_event "#{recovery_model.name} mounted"
@@ -187,15 +187,17 @@ module RecoveryDB
         raise ArgumentError, 'Collection ID and label is required' if @collection_id.nil?
         raise ActiveRecord::RecordNotFound, 'Collection not found' if rec_collection.nil?
 
-        @mount.log_event "Restoring chemicals from collection #{@collection_id} #{@collection_label} #{dry_run ? '(DRY_RUN)' : ''}"
-        @mount.log_event "Restoring soft deleted samples #{dry_run ? '(DRY_RUN)' : ''}"
+        @mount.log_event "Restoring chemicals from collection #{@collection_id} #{@collection_label} #{if dry_run
+                                                                                                         '(DRY_RUN)'
+                                                                                                       end}"
+        @mount.log_event "Restoring soft deleted samples #{'(DRY_RUN)' if dry_run}"
         target_samples.each do |sample|
           sample.restore! unless dry_run
           @mount.log_event "Restored sample #{sample.id} #{sample.label}" unless dry_run
         end
 
         CollectionsSample.create_in_collection(target_samples.pluck(:id), target_collection_ids) unless dry_run
-        puts "Restoring chemicals from collection #{@collection_id} #{@collection_label} #{dry_run ? '(DRY_RUN)' : ''}"
+        puts "Restoring chemicals from collection #{@collection_id} #{@collection_label} #{'(DRY_RUN)' if dry_run}"
         rec_chemicals.each do |chemical|
           chemical_attributes = chemical.attributes
           Chemical.create(chemical_attributes) unless dry_run
