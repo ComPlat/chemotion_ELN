@@ -31,14 +31,10 @@ class ClipboardStore {
 
     switch (result.action) {
       case 'template_wellplate':
-        Aviator.navigate(result.isSync
-          ? `/scollection/${result.collection_id}/wellplate/template`
-          : `/collection/${result.collection_id}/wellplate/template`);
+        Aviator.navigate(`/collection/${result.collection_id}/wellplate/template`);
         break;
       case 'copy_sample':
-        Aviator.navigate(result.isSync
-          ? `/scollection/${result.collection_id}/sample/copy`
-          : `/collection/${result.collection_id}/sample/copy`);
+        Aviator.navigate(`/collection/${result.collection_id}/sample/copy`);
     }
   }
 
@@ -46,17 +42,13 @@ class ClipboardStore {
     this.state.wellplates = result.wellplates;
     switch (result.action) {
       case 'template_screen':
-        Aviator.navigate(result.isSync
-          ? `/scollection/${result.collection_id}/screen/template`
-          : `/collection/${result.collection_id}/screen/template`);
+        Aviator.navigate(`/collection/${result.collection_id}/screen/template`);
     }
   }
 
   handleFetchDeviceDescriptionAndBuildCopy(result) {
     this.state.device_descriptions = result.device_descriptions;
-    Aviator.navigate(result.isSync
-      ? `/scollection/${result.collection_id}/device_description/copy`
-      : `/collection/${result.collection_id}/device_description/copy`);
+    Aviator.navigate(`/collection/${result.collection_id}/device_description/copy`);
   }
 
   handleFetchSequenceBasedMacromoleculeSamplesAndBuildCopy(result) {

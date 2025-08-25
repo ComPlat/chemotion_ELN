@@ -12,7 +12,6 @@ import MaterialCalculations from 'src/apps/mydb/elements/details/reactions/schem
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 import SampleName from 'src/components/common/SampleName';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
-import { UrlSilentNavigation, SampleCode } from 'src/utilities/ElementUtils';
 import { correctPrefix, validDigit } from 'src/utilities/MathUtils';
 import Reaction from 'src/models/Reaction';
 import Sample from 'src/models/Sample';
@@ -22,6 +21,8 @@ import { calculateFeedstockMoles } from 'src/utilities/UnitsConversion';
 import cs from 'classnames';
 import DragHandle from 'src/components/common/DragHandle';
 import DeleteButton from 'src/components/common/DeleteButton';
+import { SampleCode } from 'src/utilities/ElementUtils';
+import { aviatorNavigation } from 'src/utilities/routesUtils';
 
 const notApplicableInput = (className) => (
   <div>
@@ -81,7 +82,7 @@ class Material extends Component {
 
   handleMaterialClick(sample) {
     const { reaction } = this.props;
-    UrlSilentNavigation(sample);
+    aviatorNavigation(sample.type, sample.id, true, false);
     sample.updateChecksum();
     ElementActions.showReactionMaterial({ sample, reaction });
   }
@@ -100,26 +101,29 @@ class Material extends Component {
     const metricPrefixes = ['m', 'n', 'u'];
     const metric = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[1]) > -1) ? material.metrics[1] : 'm';
     return (
-      <OverlayTrigger placement="top" overlay={tooltip}>
-        <div>
-          <NumeralInputWithUnitsCompo
-            className={className}
-            value={material.amount_l}
-            unit="l"
-            metricPrefix={metric}
-            metricPrefixes={metricPrefixes}
-            precision={3}
-            disabled={!permitOn(this.props.reaction)
-              || ((this.props.materialGroup !== 'products')
-              && !material.reference && this.props.lockEquivColumn)
-              || material.gas_type === 'gas'}
-            onChange={e => this.handleAmountUnitChange(e, material.amount_l)}
-            onMetricsChange={this.handleMetricsChange}
-            variant={material.amount_unit === 'l' ? 'primary' : 'light'}
-            size="sm"
-          />
-        </div>
-      </OverlayTrigger>
+      <td>
+        <OverlayTrigger placement="top" overlay={tooltip}>
+          <div>
+            <NumeralInputWithUnitsCompo
+              className={className}
+              key={material.id}
+              value={material.amount_l}
+              unit="l"
+              metricPrefix={metric}
+              metricPrefixes={metricPrefixes}
+              precision={3}
+              disabled={!permitOn(this.props.reaction)
+                || ((this.props.materialGroup !== 'products')
+                  && !material.reference && this.props.lockEquivColumn)
+                || material.gas_type === 'gas'}
+              onChange={e => this.handleAmountUnitChange(e, material.amount_l)}
+              onMetricsChange={this.handleMetricsChange}
+              variant={material.amount_unit === 'l' ? 'primary' : 'light'}
+              size="sm"
+            />
+          </div>
+        </OverlayTrigger>
+      </td>
     );
   }
 
@@ -143,7 +147,7 @@ class Material extends Component {
         precision={3}
         disabled={
           !permitOn(this.props.reaction)
-            || (this.props.materialGroup === 'products'
+          || (this.props.materialGroup === 'products'
             || (!material.reference && this.props.lockEquivColumn))
         }
         onChange={loading => this.handleLoadingChange(loading)}
@@ -267,8 +271,8 @@ class Material extends Component {
         value={material.equivalent}
         disabled={!permitOn(reaction)
           || ((((material.reference
-          || false) && material.equivalent) !== false)
-          || lockEquivColumn)}
+            || false) && material.equivalent) !== false)
+            || lockEquivColumn)}
         onChange={e => this.handleEquivalentChange(e)}
       />
     );
@@ -707,7 +711,7 @@ class Material extends Component {
               precision={4}
               disabled={!permitOn(reaction)
                 || (this.props.materialGroup === 'products'
-                || (!material.reference && this.props.lockEquivColumn))}
+                  || (!material.reference && this.props.lockEquivColumn))}
               onChange={e => this.handleAmountUnitChange(e, material.amount_mol)}
               onMetricsChange={this.handleMetricsChange}
               variant={material.amount_unit === 'mol' ? 'primary' : 'light'}

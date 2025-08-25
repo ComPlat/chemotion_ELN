@@ -6,6 +6,7 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
+import Aviator from 'aviator';
 import { elementNames } from 'src/apps/generic/Utils';
 import { getLatestVesselIds, clearLatestVesselIds } from 'src/utilities/VesselUtilities';
 
@@ -34,7 +35,6 @@ const collectionShow = (e) => {
       ElementActions.fetchBasedOnSearchSelectionAndCollection({
         selection: currentSearchSelection,
         collectionId: collection.id,
-        isSync: !!collection.is_sync_to_me
       });
     } else {
       if (currentSearchByID) {
@@ -43,20 +43,11 @@ const collectionShow = (e) => {
       UIActions.selectCollection(collection);
     }
 
-    // if (!e.params['sampleID'] && !e.params['reactionID'] &&
-    // !e.params['wellplateID'] && !e.params['screenID']) {
-    UIActions.uncheckAllElements({ type: 'sample', range: 'all' });
-    UIActions.uncheckAllElements({ type: 'reaction', range: 'all' });
-    UIActions.uncheckAllElements({ type: 'wellplate', range: 'all' });
-    UIActions.uncheckAllElements({ type: 'screen', range: 'all' });
-    UIActions.uncheckAllElements({ type: 'device_description', range: 'all' });
-    UIActions.uncheckAllElements({ type: 'sequence_based_macromolecule_sample', range: 'all' });
-    elementNames(false).then((klassArray) => {
+    elementNames(true).then((klassArray) => {
       klassArray.forEach((klass) => {
         UIActions.uncheckAllElements({ type: klass, range: 'all' });
       });
     });
-    // }
   });
 };
 
@@ -394,6 +385,45 @@ const elementShowOrNew = (e) => {
   return null;
 };
 
+const aviatorNavigation = (type, id, silent = true, showOrNew = false, params = {}) => {
+  const { currentCollection } = UIStore.getState();
+  const withType = type ? `/${type}` : '';
+  const withId = id ? `/${id}` : '';
+  const url = type === 'collection' ? `/collection/${id}/` : `/collection/${currentCollection.id}${withType}${withId}`;
+
+  Aviator.navigate(url, { silent: silent });
+
+  if (showOrNew) {
+    if (Object.keys(params).length >= 1) {
+      return elementShowOrNew(params);
+    } else {
+      return elementShowOrNew(defaultParamsForAviatorNavigation(currentCollection, type, id));
+    }
+  }
+}
+
+const defaultParamsForAviatorNavigation = (currentCollection, type, id) => {
+  const isGenericEl = (UserStore.getState().genericEls || []).some(({ name }) => name === type);
+
+  const params = {
+    type,
+    klassType: isGenericEl ? 'GenericEl' : undefined,
+    params: {
+      collectionID: currentCollection.id,
+      [`${type}ID`]: id,
+    }
+  };
+  return params;
+}
+
+const aviatorNavigationWithCollectionId = (collectionId, type, id, silent = true) => {
+  const withId = id ? `/${id}` : '';
+  const url = `/collection/${collectionId}/${type}${withId}`;
+  console.log(url);
+  Aviator.navigate(url, { silent: silent });
+  return true;
+}
+
 export {
   collectionShow,
   scollectionShow,
@@ -418,4 +448,6 @@ export {
   vesselShowOrNew,
   vesselTemplateShowOrNew,
   sequenceBasedMacromoleculeSampleShowOrNew,
+  aviatorNavigation,
+  aviatorNavigationWithCollectionId,
 };

@@ -2,7 +2,6 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable react/require-default-props */
 import React, { Component } from 'react';
-import Aviator from 'aviator';
 import PropTypes from 'prop-types';
 import {
   Button, Tabs, Tab, OverlayTrigger, Tooltip, ButtonToolbar, ButtonGroup
@@ -33,7 +32,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { setReactionByType } from 'src/apps/mydb/elements/details/reactions/ReactionDetailsShare';
-import { sampleShowOrNew } from 'src/utilities/routesUtils';
+import { aviatorNavigation } from 'src/utilities/routesUtils';
 import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
 import ConfirmClose from 'src/components/common/ConfirmClose';
 import { rfValueFormat } from 'src/utilities/ElementUtils';
@@ -59,24 +58,18 @@ import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButt
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 import ReactionSchemeGraphic from 'src/apps/mydb/elements/details/reactions/ReactionSchemeGraphic';
 
-const handleProductClick = (product) => {
-  const uri = Aviator.getCurrentURI();
-  const uriArray = uri.split(/\//);
-  Aviator.navigate(`/${uriArray[1]}/${uriArray[2]}/sample/${product.id}`, { silent: true });
-  sampleShowOrNew({ params: { sampleID: product.id } });
-};
-
 const productLink = (product, active) => (
   <span>
     {active && "Sample Analysis:"}
     <span
       aria-hidden="true"
       className="pseudo-link"
-      onClick={() => handleProductClick(product)}
+      onClick={() => aviatorNavigation('sample', product.id, true, true)}
       title="Open sample window"
     >
       <i className="icon-sample mx-1" />
       {product.title()}
+      hah
     </span>
   </span>
 );
