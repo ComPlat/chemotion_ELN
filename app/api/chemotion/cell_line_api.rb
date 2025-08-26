@@ -28,15 +28,6 @@ module Chemotion
                   rescue ActiveRecord::RecordNotFound
                     CelllineSample.none
                   end
-                elsif params[:sync_collection_id]
-                  begin
-                    current_user.all_sync_in_collections_users
-                                .find(params[:sync_collection_id])
-                                .collection
-                                .cellline_samples
-                  rescue ActiveRecord::RecordNotFound
-                    CelllineSample.none
-                  end
                 else
                   # All collection of current_user
                   CelllineSample.none.joins(:collections).where(collections: { user_id: current_user.id }).distinct
