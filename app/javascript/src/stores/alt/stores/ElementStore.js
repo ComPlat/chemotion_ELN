@@ -1085,7 +1085,7 @@ class ElementStore {
   }
 
   handleSplitAsSubDeviceDescription(uiState) {
-    ElementActions.fetchDeviceDescriptionsByCollectionId(uiState.currentCollectionId, {});
+    this.handleRefreshElements('device_description');
   }
 
   // -- Sequence Based Macromolecules --
