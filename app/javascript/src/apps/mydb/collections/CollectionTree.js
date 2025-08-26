@@ -28,23 +28,15 @@ function containsCollection(collections, collectionId) {
 function CollectionTree({ isCollapsed }) {
   const [collections, setCollections] = useState(CollectionStore.getState());
   const [activeCollection, setActiveCollection] = useState(ALL_COLLECTIONS_KEY);
-  const [expandedCollections, setExpandedCollections] = useState([ALL_COLLECTIONS_KEY]);
+  const [expandedCollection, setExpandedCollection] = useState(ALL_COLLECTIONS_KEY);
 
   const toggleCollection = (collectionKey) => {
-    setExpandedCollections((prev) => {
-      if (prev.includes(collectionKey)) {
-        return prev.filter((key) => key !== collectionKey);
-      }
-      return [...prev, collectionKey];
-    });
+    setExpandedCollection((prev) => ((prev === collectionKey) ? null : collectionKey));
   };
 
   const expandCollection = (collectionKey) => {
     if (isCollapsed) UIActions.expandSidebar.defer();
-    setExpandedCollections((prev) => {
-      if (prev.includes(collectionKey)) return prev;
-      return [...prev, collectionKey];
-    });
+    setExpandedCollection(collectionKey);
   };
 
   const setCollection = (collection) => {
@@ -128,7 +120,7 @@ function CollectionTree({ isCollapsed }) {
           label, icon, collectionKey, roots, onClickOpenCollection
         }) => {
           const isActive = activeCollection === collectionKey;
-          const isExpanded = expandedCollections.includes(collectionKey);
+          const isExpanded = expandedCollection === collectionKey;
           return (
             <Fragment key={collectionKey}>
               <SidebarButton
