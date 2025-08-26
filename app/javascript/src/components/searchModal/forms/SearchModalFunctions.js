@@ -86,7 +86,6 @@ const handleSearch = (store, uiState) => {
     store.loadSearchResults({
       selection,
       collectionId: collectionId,
-      isSync: uiState.isSync,
       moleculeSort: true,
     });
     store.clearSearchAndTabResults();

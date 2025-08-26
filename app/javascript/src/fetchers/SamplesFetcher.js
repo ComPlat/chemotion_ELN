@@ -78,9 +78,9 @@ export default class SamplesFetcher {
     return promise;
   }
 
-  static fetchByCollectionId(id, queryParams = {}, isSync = false, moleculeSort = false) {
+  static fetchByCollectionId(id, queryParams = {}, moleculeSort = false) {
     const updatedQueryParams = { ...queryParams, moleculeSort };
-    return BaseFetcher.fetchByCollectionId(id, updatedQueryParams, isSync, 'samples', Sample);
+    return BaseFetcher.fetchByCollectionId(id, updatedQueryParams, 'samples', Sample);
   }
 
   static findByShortLabel(shortLabel) {

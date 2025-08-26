@@ -70,7 +70,7 @@ export default class CellLineGroupHeader extends Component {
 
   renderCreateSubSampleButton() {
     const { cellLineItems } = this.props;
-    const { currentCollection, isSync } = UIStore.getState();
+    const { currentCollection } = UIStore.getState();
     if (currentCollection.label === 'All') { return null; }
     if (currentCollection.is_sync_to_me && currentCollection.permission_level === 0) { return null; }
     const params = {

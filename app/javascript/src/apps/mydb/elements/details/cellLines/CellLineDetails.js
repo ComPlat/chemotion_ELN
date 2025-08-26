@@ -58,14 +58,10 @@ class CellLineDetails extends React.Component {
   }
 
   isReadOnly() {
-    const { currentCollection, isSync } = UIStore.getState();
+    const { currentCollection } = UIStore.getState();
     const { currentUser } = UserStore.getState();
 
-    return CollectionUtils.isReadOnly(
-      currentCollection,
-      currentUser.id,
-      isSync
-    );
+    return CollectionUtils.isReadOnly(currentCollection, currentUser.id);
   }
 
   renderHeaderContent() {

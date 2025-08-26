@@ -5,8 +5,8 @@ import PropTypes from 'prop-types';
 import {
   OverlayTrigger, Popover, Button
 } from 'react-bootstrap';
-import Aviator from 'aviator';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import { aviatorNavigationWithCollectionId } from 'src/utilities/routesUtils';
 
 export default class ElementCollectionLabels extends React.Component {
   constructor(props) {
@@ -20,9 +20,7 @@ export default class ElementCollectionLabels extends React.Component {
 
   handleOnClick(label, e) {
     e.stopPropagation();
-
-    const url = `/collection/${label.id}/${this.state.element.type}/${this.state.element.id}`;
-    Aviator.navigate(url);
+    aviatorNavigationWithCollectionId(label.id, this.state.element.type, this.state.element.id);
   }
 
   labelStyle(label) {

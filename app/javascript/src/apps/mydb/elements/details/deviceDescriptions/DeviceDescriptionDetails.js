@@ -43,7 +43,7 @@ function DeviceDescriptionDetails({ openedFromCollectionId }) {
   const deviceDescription = deviceDescriptionsStore.device_description;
   deviceDescriptionsStore.setKeyPrefix('deviceDescription');
 
-  const { currentCollection, isSync } = UIStore.getState();
+  const { currentCollection } = UIStore.getState();
   const { currentUser } = UserStore.getState();
 
   const [visibleTabs, setVisibleTabs] = useState(Immutable.List());
@@ -85,11 +85,7 @@ function DeviceDescriptionDetails({ openedFromCollectionId }) {
     history: 'History',
   };
 
-  const isReadOnly = () => CollectionUtils.isReadOnly(
-    currentCollection,
-    currentUser.id,
-    isSync
-  );
+  const isReadOnly = () => CollectionUtils.isReadOnly(currentCollection, currentUser.id);
 
   const disabled = (index) => (!!(deviceDescription.isNew && index !== 0));
 

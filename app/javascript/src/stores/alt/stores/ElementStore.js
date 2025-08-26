@@ -841,12 +841,7 @@ class ElementStore {
   }
 
   handleSplitAsSubsamples(uiState) {
-    ElementActions.fetchSamplesByCollectionId(
-      uiState.currentCollection.id,
-      {},
-      uiState.isSync,
-      this.state.moleculeSort
-    );
+    ElementActions.fetchSamplesByCollectionId(uiState.currentCollection.id, {}, this.state.moleculeSort);
   }
 
   handleSplitElements(obj) {
@@ -859,17 +854,12 @@ class ElementStore {
     const params = {
       page, perPage, fromDate, toDate, userLabel, productOnly, name
     };
-    ElementActions.fetchGenericElsByCollectionId(ui_state.currentCollection.id, params, ui_state.isSync, name);
+    ElementActions.fetchGenericElsByCollectionId(ui_state.currentCollection.id, params, name);
   }
 
   handleSplitAsSubwellplates(uiState) {
     ElementActions.fetchWellplatesByCollectionId(uiState.currentCollection.id);
-    ElementActions.fetchSamplesByCollectionId(
-      uiState.currentCollection.id,
-      {},
-      uiState.isSync,
-      this.state.moleculeSort
-    );
+    ElementActions.fetchSamplesByCollectionId(uiState.currentCollection.id, {}, this.state.moleculeSort);
   }
 
   handleSplitAsSubCellLines(uiState) {
@@ -1090,11 +1080,7 @@ class ElementStore {
   }
 
   handleSplitAsSubDeviceDescription(uiState) {
-    ElementActions.fetchDeviceDescriptionsByCollectionId(
-      uiState.currentCollectionId,
-      {},
-      uiState.isSync,
-    );
+    ElementActions.fetchDeviceDescriptionsByCollectionId(uiState.currentCollectionId, {});
   }
 
   // -- Sequence Based Macromolecules --
@@ -1309,7 +1295,6 @@ class ElementStore {
         selection: currentSearchSelection,
         collectionId: uiState.currentCollection.id,
         page,
-        isSync: uiState.isSync,
         moleculeSort
       });
     } else if (currentSearchByID != null) {
@@ -1333,13 +1318,13 @@ class ElementStore {
         'fetchSequenceBasedMacromoleculeSamplesByCollectionId'
       ];
       if (allowedActions.includes(fn)) {
-        const actionFn = ElementActions[fn](uiState.currentCollection.id, params, uiState.isSync, sortValue);
+        const actionFn = ElementActions[fn](uiState.currentCollection.id, params, sortValue);
         if (typeof actionFn === 'function') {
           actionFn(this.alt.dispatch.bind(this));
         }
       } else {
-        ElementActions.fetchGenericElsByCollectionId(uiState.currentCollection.id, params, uiState.isSync, type);
-        ElementActions.fetchSamplesByCollectionId(uiState.currentCollection.id, params, uiState.isSync, moleculeSort);
+        ElementActions.fetchGenericElsByCollectionId(uiState.currentCollection.id, params, type);
+        ElementActions.fetchSamplesByCollectionId(uiState.currentCollection.id, params, moleculeSort);
       }
     }
 
@@ -1391,7 +1376,6 @@ class ElementStore {
       selection,
       collectionId: uiState.currentCollection.id,
       page,
-      isSync: uiState.isSync,
       moleculeSort
     });
   }

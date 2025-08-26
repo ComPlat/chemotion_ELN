@@ -9,7 +9,7 @@ import ReportsFetcher from 'src/fetchers/ReportsFetcher';
 
 const filterUIState = (uiState) => {
   const {
-    currentCollection, sample, reaction, wellplate, isSync
+    currentCollection, sample, reaction, wellplate
   } = uiState;
   return {
     sample: {
@@ -28,7 +28,6 @@ const filterUIState = (uiState) => {
       checkedAll: wellplate.checkedAll,
     },
     currentCollection: currentCollection.id,
-    isSync,
   };
 };
 
