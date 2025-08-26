@@ -139,7 +139,6 @@ module Chemotion
       # Return serialized device description by collection id
       params do
         optional :collection_id, type: Integer
-        optional :sync_collection_id, type: Integer
         optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'
         optional :from_date, type: Integer, desc: 'created_date from in ms'
         optional :to_date, type: Integer, desc: 'created_date to in ms'
@@ -154,13 +153,6 @@ module Chemotion
             begin
               Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids)
                         .find(params[:collection_id]).device_descriptions
-            rescue ActiveRecord::RecordNotFound
-              DeviceDescription.none
-            end
-          elsif params[:sync_collection_id]
-            begin
-              current_user.all_sync_in_collections_users.find(params[:sync_collection_id])
-                          .collection.device_descriptions
             rescue ActiveRecord::RecordNotFound
               DeviceDescription.none
             end
@@ -227,13 +219,12 @@ module Chemotion
             optional :from_date, type: Date
             optional :to_date, type: Date
             optional :collection_id, type: Integer
-            optional :is_sync_to_me, type: Boolean, default: false
           end
           optional :limit, type: Integer, desc: 'Limit number of device descriptions'
         end
 
         before do
-          cid = fetch_collection_id_w_current_user(params[:ui_state][:collection_id], params[:ui_state][:is_sync_to_me])
+          cid = fetch_collection_id_w_current_user(params[:ui_state][:collection_id], false)
           @device_descriptions =
             DeviceDescription.by_collection_id(cid).by_ui_state(params[:ui_state]).for_user(current_user.id)
           error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, @device_descriptions).read?
