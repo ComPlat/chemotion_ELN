@@ -10,7 +10,7 @@ import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromolec
 
 export default class SearchFetcher {
   static fetchBasedOnSearchSelectionAndCollection(params) {
-    const { selection, collectionId, page, isSync, moleculeSort, isPublic } = params;
+    const { selection, collectionId, page, moleculeSort, isPublic } = params;
     return fetch(`/api/v1/search/${selection.elementType.toLowerCase()}`, {
       credentials: 'same-origin',
       method: 'POST',
@@ -23,7 +23,6 @@ export default class SearchFetcher {
         collection_id: collectionId,
         page: page || 1,
         per_page: selection.page_size,
-        is_sync: isSync || false,
         molecule_sort: moleculeSort || false,
         is_public: isPublic || false,
       })
@@ -35,7 +34,7 @@ export default class SearchFetcher {
   }
 
   static fetchBasedOnSearchResultIds(params) {
-    const { selection, collectionId, page, isSync, moleculeSort, isPublic } = params;
+    const { selection, collectionId, page, moleculeSort, isPublic } = params;
     return fetch(`/api/v1/search/${selection.elementType.toLowerCase()}`, {
       credentials: 'same-origin',
       method: 'POST',
@@ -49,7 +48,6 @@ export default class SearchFetcher {
         page: page || 1,
         page_size: selection.page_size,
         per_page: selection.page_size,
-        is_sync: isSync || false,
         molecule_sort: moleculeSort || false,
         is_public: isPublic || false,
       })

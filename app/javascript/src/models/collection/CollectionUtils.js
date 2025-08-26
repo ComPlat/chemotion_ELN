@@ -1,13 +1,10 @@
-function isReadOnly(collection, userId, isSync) {
+function isReadOnly(collection, userId, isSync = false) {
   if (collection.permission_level > 0) { return false; }
 
   const isShared = collection.is_shared
-          && collection.shared_by_id !== userId;
+    && collection.shared_by_id !== userId;
 
-  const isSynced = isSync
-          && collection.shared_by_id !== userId;
-
-  return isSynced || isShared;
+  return isShared;
 }
 
 function isWritable(collection) {

@@ -134,7 +134,6 @@ describe Chemotion::DeviceDescriptionAPI do
             included_ids: [device_description.id],
             excluded_ids: [],
           },
-          isSync: false,
         },
       }
     end

@@ -1,10 +1,8 @@
-import Aviator from 'aviator';
 import _ from 'lodash';
 import { deltaToMarkdown, markdownToDelta } from 'src/utilities/deltaMarkdownConverter';
 import { searchAndReplace } from 'src/utilities/markdownUtils';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 
-import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from '../stores/alt/stores/UserStore';
 
 const rfValueFormat = (input) => {
