@@ -16,7 +16,7 @@ import { PermissionConst } from 'src/utilities/PermissionConst';
 import { aviatorNavigation } from 'src/utilities/routesUtils';
 
 const editMetadataFunction = () => {
-  const { currentCollection, isSync } = UIStore.getState();
+  const { currentCollection } = UIStore.getState();
   const params = {
     type: 'metadata',
     params: { collectionID: currentCollection.id }

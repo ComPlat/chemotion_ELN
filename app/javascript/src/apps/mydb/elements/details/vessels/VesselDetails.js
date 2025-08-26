@@ -17,13 +17,9 @@ function VesselDetails({ vesselItem }) {
     return null; // Render nothing if no vesselItem
   }
   const isReadOnly = () => {
-    const { currentCollection, isSync } = UIStore.getState();
+    const { currentCollection } = UIStore.getState();
     const { currentUser } = UserStore.getState();
-    return CollectionUtils.isReadOnly(
-      currentCollection,
-      currentUser.id,
-      isSync
-    );
+    return CollectionUtils.isReadOnly(currentCollection, currentUser.id);
   };
   const context = useContext(StoreContext);
   const [activeTab, setActiveTab] = useState('tab1');
