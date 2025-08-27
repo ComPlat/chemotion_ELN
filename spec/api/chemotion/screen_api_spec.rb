@@ -59,32 +59,6 @@ describe Chemotion::ScreenAPI do
         end
       end
     end
-
-    context 'when sync_collection_id is given' do
-      let(:sharer) { create(:person) }
-      let(:sync_collections_user) do
-        create(:sync_collections_user, collection: collection, user: user, sharer: sharer)
-      end
-      let(:params) do
-        { sync_collection_id: sync_collections_user.id }
-      end
-
-      it 'returns screens' do
-        get '/api/v1/screens', params: params, headers: request_headers
-        expect(JSON.parse(response.body)['screens'].size).to eq(2)
-      end
-
-      context 'when no screens found' do
-        let(:params) do
-          { sync_collection_id: sync_collections_user.id + 1 }
-        end
-
-        it 'returns no screens' do
-          get '/api/v1/screens', params: params, headers: request_headers
-          expect(JSON.parse(response.body)['screens'].size).to eq(0)
-        end
-      end
-    end
   end
 
   describe 'GET /api/v1/screens/{id}' do
@@ -230,17 +204,12 @@ describe Chemotion::ScreenAPI do
     end
 
     it 'writes the component_graph_data correctly' do
-      puts parsed_json_response
       expect(parsed_json_response['screen']['component_graph_data']).to eq(
         {
           'nodes' => [{ 'id' => 1337 }],
           'edges' => [],
         },
       )
-    end
-
-    context 'when collection_id is a sync_collection_user.id' do
-      pending 'TODO: Add missing spec'
     end
   end
 end

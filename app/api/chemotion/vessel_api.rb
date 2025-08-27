@@ -20,7 +20,6 @@ module Chemotion
       desc 'return vessels of a collection'
       params do
         optional :collection_id, type: Integer, desc: 'Collection id'
-        optional :sync_collection_id, type: Integer, desc: 'SyncCollectionsUser id'
         optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'
         optional :from_date, type: Integer, desc: 'created_date from in ms'
         optional :to_date, type: Integer, desc: 'created_date to in ms'
@@ -34,15 +33,6 @@ module Chemotion
                   begin
                     Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids)
                               .find(params[:collection_id]).vessels
-                  rescue ActiveRecord::RecordNotFound
-                    Vessel.none
-                  end
-                elsif params[:sync_collection_id]
-                  begin
-                    current_user.all_sync_in_collections_users
-                                .find(params[:sync_collection_id])
-                                .collection
-                                .vessels
                   rescue ActiveRecord::RecordNotFound
                     Vessel.none
                   end

@@ -15,7 +15,6 @@ module Chemotion
       desc 'Return serialized research plans of current user'
       params do
         optional :collection_id, type: Integer, desc: 'Collection id'
-        optional :sync_collection_id, type: Integer, desc: 'SyncCollectionsUser id'
         optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'
         optional :user_label, type: Integer, desc: 'user label'
         optional :from_date, type: Integer, desc: 'created_date from in ms'
@@ -24,23 +23,16 @@ module Chemotion
       paginate per_page: 7, offset: 0, max_per_page: 100
       get do
         scope = if params[:collection_id]
-                  begin
-                    Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids)
-                              .find(params[:collection_id]).research_plans
-                  rescue ActiveRecord::RecordNotFound
-                    ResearchPlan.none
-                  end
-                elsif params[:sync_collection_id]
-                  begin
-                    current_user.all_sync_in_collections_users.find(params[:sync_collection_id])
-                                .collection.research_plans
-                  rescue ActiveRecord::RecordNotFound
-                    ResearchPlan.none
-                  end
-                else
-                  # All collection of current_user
-                  ResearchPlan.joins(:collections).where(collections: { user_id: current_user.id }).distinct
-                end.order('research_plans.created_at DESC')
+          begin
+            Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids)
+                      .find(params[:collection_id]).research_plans
+          rescue ActiveRecord::RecordNotFound
+            ResearchPlan.none
+          end
+        else
+          # All collection of current_user
+          ResearchPlan.joins(:collections).where('collections.user_id = ?', current_user.id).distinct
+        end.order('research_plans.created_at DESC')
 
         from = params[:from_date]
         to = params[:to_date]
@@ -98,24 +90,12 @@ module Chemotion
         Usecases::Attachments::Copy.execute!(clone_attachs, research_plan, current_user.id) if clone_attachs
 
         if params[:collection_id]
-          collection = current_user.collections.find_by(id: params[:collection_id])
-          research_plan.collections << collection if collection.present?
+          collection = current_user.collections.where(id: params[:collection_id]).take
+          research_plan.collections << collection
         end
 
-        is_shared_collection = false
-        unless collection.present?
-          sync_collection = current_user.all_sync_in_collections_users.find_by(id: params[:collection_id])
-          if sync_collection.present?
-            is_shared_collection = true
-            research_plan.collections << Collection.find(sync_collection['collection_id'])
-            research_plan.collections << Collection.get_all_collection_for_user(sync_collection['shared_by_id'])
-          end
-        end
-
-        unless is_shared_collection
-          all_coll = Collection.get_all_collection_for_user(current_user.id)
-          research_plan.collections << all_coll
-        end
+        all_coll = Collection.get_all_collection_for_user(current_user.id)
+        research_plan.collections << all_coll
 
         update_element_labels(research_plan, params[:user_labels], current_user.id)
         present research_plan.reload, with: Entities::ResearchPlanEntity, root: :research_plan

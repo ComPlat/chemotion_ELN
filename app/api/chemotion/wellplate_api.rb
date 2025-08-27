@@ -38,8 +38,7 @@ module Chemotion
         end
         # we are using POST because the fetchers don't support GET requests with body data
         post do
-          cid = fetch_collection_id_w_current_user(params[:ui_state][:collection_id],
-                                                   params[:ui_state][:is_sync_to_me])
+          cid = fetch_collection_id_w_current_user(params[:ui_state][:collection_id], false)
           wellplates = Wellplate
                        .includes_for_list_display
                        .by_collection_id(cid)
@@ -54,7 +53,6 @@ module Chemotion
       desc 'Return serialized wellplates'
       params do
         optional :collection_id, type: Integer, desc: 'Collection id'
-        optional :sync_collection_id, type: Integer, desc: 'SyncCollectionsUser id'
         optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'
         optional :user_label, type: Integer, desc: 'user label'
         optional :from_date, type: Integer, desc: 'created_date from in ms'
@@ -69,12 +67,6 @@ module Chemotion
                   begin
                     Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids)
                               .find(params[:collection_id]).wellplates
-                  rescue ActiveRecord::RecordNotFound
-                    Wellplate.none
-                  end
-                elsif params[:sync_collection_id]
-                  begin
-                    current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection.wellplates
                   rescue ActiveRecord::RecordNotFound
                     Wellplate.none
                   end
