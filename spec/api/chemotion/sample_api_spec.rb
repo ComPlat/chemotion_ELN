@@ -527,8 +527,8 @@ describe Chemotion::SampleAPI do
           'is_shared' => false,
           'id' => personal_collection.id,
           'user_id' => user.id,
-          'shared_by_id' => personal_collection.shared_by_id,
-          'is_synchronized' => personal_collection.is_synchronized,
+          'shared_by_id' => nil,
+          'is_synchronized' => false,
         )
         expect(
           first_sample[:tag]['taggable_data']['analyses'],
