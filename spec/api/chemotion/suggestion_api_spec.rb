@@ -10,7 +10,6 @@ describe Chemotion::SuggestionAPI do
     {
       collection_id: collection.id,
       query: query,
-      is_sync: false,
     }
   end
 
@@ -286,8 +285,11 @@ describe Chemotion::SuggestionAPI do
     let(:query) { 'query' }
 
     it 'returns suggestions object with the correct structure' do
-      get '/api/v1/suggestions/all', params: params
-
+      get '/api/v1/suggestions/all',
+          params: {
+            collection_id: collection.id,
+            query: query,
+          }
       expect(response).to have_http_status(:success)
       expect(parsed_json_response.keys).to contain_exactly('suggestions')
       suggestions = parsed_json_response['suggestions']
@@ -299,8 +301,12 @@ describe Chemotion::SuggestionAPI do
     let(:query) { 'query' }
 
     it 'returns unauthorized error' do
-      get '/api/v1/suggestions/all', params: params
-
+      get '/api/v1/suggestions/all',
+        params:
+          {
+            collection_id: collection.id,
+            query: query,
+          }
       expect(response).to have_http_status(:unauthorized)
     end
   end
