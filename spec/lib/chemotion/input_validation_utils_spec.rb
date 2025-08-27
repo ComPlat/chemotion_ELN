@@ -375,4 +375,76 @@ RSpec.describe Chemotion::InputValidationUtils do
       expect(described_class.valid_product_number?('javascript:')).to be false
     end
   end
+
+  describe '.valid_url?' do
+    it 'accepts valid HTTPS and HTTP URLs' do
+      aggregate_failures do
+        expect(described_class.valid_url?('https://example.com')).to be true
+        expect(described_class.valid_url?('http://example.com')).to be true
+        expect(described_class.valid_url?('https://example.com/path')).to be true
+      end
+    end
+
+    it 'rejects invalid inputs' do
+      aggregate_failures do
+        expect(described_class.valid_url?(nil)).to be false
+        expect(described_class.valid_url?('')).to be false
+        expect(described_class.valid_url?('not a url')).to be false
+        expect(described_class.valid_url?('ftp://example.com')).to be false
+      end
+    end
+
+    it 'rejects URLs that are too long' do
+      long_url = 'https://example.com/' + 'a' * (described_class::URL_MAX_LENGTH)
+      expect(described_class.valid_url?(long_url)).to be false
+    end
+  end
+
+  describe '.safe_parse_uri' do
+    it 'parses valid URIs and returns nil for invalid ones' do
+      aggregate_failures do
+        expect(described_class.safe_parse_uri('https://example.com')).to be_a(URI::HTTPS)
+        expect(described_class.safe_parse_uri('invalid url')).to be_nil
+        expect(described_class.safe_parse_uri('https://[invalid')).to be_nil
+      end
+    end
+  end
+
+  describe '.scheme_allowed?' do
+    it 'allows HTTP and HTTPS, rejects others' do
+      aggregate_failures do
+        expect(described_class.scheme_allowed?('https')).to be true
+        expect(described_class.scheme_allowed?('http')).to be true
+        expect(described_class.scheme_allowed?('ftp')).to be false
+        expect(described_class.scheme_allowed?(nil)).to be false
+      end
+    end
+  end
+
+  describe '.host_present?' do
+    it 'detects presence of host in URI' do
+      aggregate_failures do
+        uri_with_host = URI.parse('https://example.com')
+        expect(described_class.host_present?(uri_with_host)).to be true
+
+        uri_with_nil_host = URI.parse('https://example.com')
+        uri_with_nil_host.instance_variable_set(:@host, nil)
+        expect(described_class.host_present?(uri_with_nil_host)).to be false
+      end
+    end
+  end
+
+  describe '.valid_product_link_url?' do
+    it 'delegates to valid_url? method' do
+      expect(described_class.valid_product_link_url?('https://example.com')).to be true
+      expect(described_class.valid_product_link_url?('invalid')).to be false
+    end
+  end
+
+  describe '.valid_safety_sheet_link_url?' do
+    it 'delegates to valid_url? method' do
+      expect(described_class.valid_safety_sheet_link_url?('https://example.com')).to be true
+      expect(described_class.valid_safety_sheet_link_url?('invalid')).to be false
+    end
+  end
 end

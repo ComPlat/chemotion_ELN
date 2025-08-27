@@ -33,8 +33,8 @@ module Chemotion
     # @return [Chemical, Hash] Created/updated chemical record or error hash
     def create
       # Validate parameters
-      validation_result = validate_params
-      return validation_result if validation_result.is_a?(Hash) && validation_result[:error]
+      validation_errors = validate_params
+      return { error: validation_errors.join(', ') } if validation_errors.any?
 
       # Parse vendor info and chemical data
       parsing_result = parse_data
@@ -46,16 +46,57 @@ module Chemotion
 
     private
 
-    # Validate required parameters
-    # @return [true, Hash] true if valid, error hash otherwise
+    # Validate required parameters and basic formats.
+    # Checks performed:
+    #  - presence: sample_id, attached_file, vendor_name
+    #  - format: vendor_name (InputValidationUtils.valid_vendor_name?)
+    #  - format: vendor_product (InputValidationUtils.valid_product_number?)
+    #  - if vendor_info is a Hash, delegates URL checks to validate_vendor_info_links
+    # @return [Array<String>] empty array if valid; otherwise list of error messages
     def validate_params
-      return { error: 'Sample ID is required' } if @sample_id.blank?
-      return { error: 'File is required' } if @attached_file.blank?
-      return { error: 'Vendor name is required' } if @vendor_name.blank?
-      return { error: 'Vendor name is invalid' } unless InputValidationUtils.valid_vendor_name?(@vendor_name)
-      return { error: 'Vendor product is invalid' } unless InputValidationUtils.valid_product_number?(@vendor_product)
+      errors = []
+      errors.concat(validate_presence_errors)
+      errors.concat(validate_format_errors)
+      errors.concat(validate_vendor_info_links)
+      errors
+    end
 
-      true
+    # Collect presence-related validation errors for required fields
+    # @return [Array<String>]
+    def validate_presence_errors
+      errors = []
+      errors << 'Sample ID is required' if @sample_id.blank?
+      errors << 'File is required' if @attached_file.blank?
+      errors << 'Vendor name is required' if @vendor_name.blank?
+      errors
+    end
+
+    # Collect format-related validation errors
+    # @return [Array<String>]
+    def validate_format_errors
+      errors = []
+      errors << 'Vendor name is invalid' unless InputValidationUtils.valid_vendor_name?(@vendor_name)
+      errors << 'Vendor product is invalid' unless InputValidationUtils.valid_product_number?(@vendor_product)
+      errors
+    end
+
+    # Validate optional URLs inside vendor_info.
+    # Only performs checks when vendor_info is a Hash. If present, validates:
+    #  - productLink: must satisfy InputValidationUtils.valid_product_link_url?
+    #  - sdsLink:     must satisfy InputValidationUtils.valid_safety_sheet_link_url?
+    # @return [Array<String>]
+    def validate_vendor_info_links
+      return [] unless @vendor_info.is_a?(Hash)
+
+      errors = []
+      if @vendor_info['productLink'] && !InputValidationUtils.valid_product_link_url?(@vendor_info['productLink'])
+        errors << 'Invalid product link URL'
+      end
+
+      if @vendor_info['sdsLink'] && !InputValidationUtils.valid_safety_sheet_link_url?(@vendor_info['sdsLink'])
+        errors << 'Invalid safety sheet link URL'
+      end
+      errors
     end
 
     # Parse JSON data from strings to hashes

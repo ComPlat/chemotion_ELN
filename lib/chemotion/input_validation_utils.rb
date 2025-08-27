@@ -1,8 +1,14 @@
 # frozen_string_literal: true
 
+require 'uri'
 module Chemotion
   # Input sanitization and validation utilities for secure data processing
   module InputValidationUtils
+    # URL validation constants (match frontend rules)
+    URL_MAX_LENGTH = 100
+    SAFE_URL_RE = %r{\Ahttps?://(?:[a-z0-9-]+\.)+[a-z]{2,}(/[^\s#]*)?\z}i.freeze
+    ALLOWED_SCHEMES = %w[https http].freeze
+
     # Validate vendor name format with security restrictions
     # @param vendor_name [String] Vendor name to validate
     # @return [Boolean] true if valid vendor name
@@ -44,7 +50,7 @@ module Chemotion
       valid_identifier?(product_number, max_length: 25, allow_leading_digit: true)
     end
 
-    # Generic identifier validation engine for secure input validation
+    # Generic identifier validation method for secure input validation
     # @param identifier [String] The identifier to validate
     # @param max_length [Integer] Maximum allowed length (default: 20)
     # @param allow_leading_digit [Boolean] Whether to allow identifiers starting with digits
@@ -122,6 +128,56 @@ module Chemotion
       %w[
         admin root test null undefined script javascript sql drop delete insert update select
       ].exclude?(str)
+    end
+
+    # Validate a safe HTTPS URL. Blank or nil are considered invalid here.
+    # Checks performed:
+    #  - type must be String
+    #  - non-empty and length <= URL_MAX_LENGTH
+    #  - parsable via URI.parse
+    #  - allowed scheme (see ALLOWED_SCHEMES)
+    #  - host present
+    # @param url [String, nil]
+    # @param max_length [Integer]
+    # @return [Boolean]
+    def self.valid_url?(url, max_length: URL_MAX_LENGTH)
+      return false unless url.is_a?(String)
+
+      s = url.strip
+      return false if s.empty? || s.length > max_length
+
+      uri = safe_parse_uri(s)
+      return false unless uri
+
+      scheme_allowed?(uri.scheme) && host_present?(uri)
+    end
+
+    # Parse URI safely, returning nil on failure
+    def self.safe_parse_uri(str)
+      URI.parse(str)
+    rescue URI::InvalidURIError
+      nil
+    end
+
+    # Check allowed schemes
+    def self.scheme_allowed?(scheme)
+      ALLOWED_SCHEMES.include?(scheme&.downcase)
+    end
+
+    # Ensure URI has a host component
+    def self.host_present?(uri)
+      !uri.host.nil?
+    end
+
+    # Convenience wrappers for clarity at call sites
+    # @return [Boolean]
+    def self.valid_product_link_url?(url)
+      valid_url?(url)
+    end
+
+    # @return [Boolean]
+    def self.valid_safety_sheet_link_url?(url)
+      valid_url?(url)
     end
   end
 end

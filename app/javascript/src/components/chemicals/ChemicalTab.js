@@ -16,6 +16,7 @@ import NumericInputUnit from 'src/apps/mydb/elements/details/NumericInputUnit';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 import SDSAttachmentModal from 'src/components/chemicals/SDSAttachmentModal';
 import Chemical from 'src/models/Chemical';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 export default class ChemicalTab extends React.Component {
   constructor(props) {
@@ -139,9 +140,9 @@ export default class ChemicalTab extends React.Component {
       const path = parameters?.safetySheetPath;
       if (path && path.length > 0) {
         const dynamicKey = Object.keys(document).find((key) => key.endsWith('_link'));
-        const dynamicKeyValue = document[dynamicKey];
         if (dynamicKey) {
           // Extract vendor name from the link key (e.g., 'merck' from 'merck_link')
+          const dynamicKeyValue = document[dynamicKey];
           const vendorName = (dynamicKeyValue.match(/\/safety_sheets\/([^/]+)\//) || [])[1];
           const normalizedVendorName = vendorName.toLowerCase();
 
@@ -543,8 +544,13 @@ export default class ChemicalTab extends React.Component {
     // Send data to server
     ChemicalFetcher.saveManualAttachedSafetySheet(data)
       .then((updatedChemical) => {
-        if (!updatedChemical) {
-          console.error('No chemical data returned from the server');
+        if (!updatedChemical || updatedChemical.error) {
+          NotificationActions.add({
+            title: 'Could not attach safety sheet',
+            message: updatedChemical.error,
+            level: 'error',
+            position: 'tc'
+          });
           return;
         }
 
@@ -789,11 +795,13 @@ export default class ChemicalTab extends React.Component {
 
   updateCheckMark(document) {
     // Find any key that ends with "_link"
-    const vendorLinkKey = Object.keys(document)
+    const dynamicKey = Object.keys(document)
       .find((key) => key.endsWith('_link') && document[key]);
-    if (vendorLinkKey) {
+    if (dynamicKey) {
       // Extract vendor name by removing "_link" suffix
-      const vendor = vendorLinkKey.replace('_link', '');
+      const dynamicKeyValue = document[dynamicKey];
+      const vendorName = (dynamicKeyValue.match(/\/safety_sheets\/([^/]+)\//) || [])[1];
+      const vendor = vendorName.toLowerCase();
       this.handleCheckMark(vendor, false);
     }
   }

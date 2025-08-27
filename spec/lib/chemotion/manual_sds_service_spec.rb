@@ -88,7 +88,7 @@ RSpec.describe Chemotion::ManualSdsService do
 
     it_behaves_like 'validation error', :sample_id, 'Sample ID is required'
     it_behaves_like 'validation error', :attached_file, 'File is required'
-    it_behaves_like 'validation error', :vendor_name, 'Vendor name is required'
+    it_behaves_like 'validation error', :vendor_name, 'Vendor name is required, Vendor name is invalid'
 
     shared_examples 'invalid JSON error' do |param, value, error_message|
       let(:params) { valid_params.merge(param => value) }
