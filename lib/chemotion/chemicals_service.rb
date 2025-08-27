@@ -81,6 +81,10 @@ module Chemotion
 
     def self.write_file(file_path, file = nil, link = nil)
       full_file_path = "public#{file_path}"
+
+      # Ensure parent directory exists
+      FileUtils.mkdir_p(File.dirname(full_file_path))
+
       if file.is_a?(Hash) && file['tempfile']
         File.binwrite(full_file_path, file['tempfile'].read)
       elsif file.respond_to?(:read)
@@ -90,7 +94,7 @@ module Chemotion
       end
     rescue HTTParty::RedirectionTooDeep => e
       "Redirection limit exceeded: #{e}"
-    rescue HTTParty::TimeoutError => e
+    rescue Timeout::Error => e
       "Request timed out: #{e}"
     end
 
