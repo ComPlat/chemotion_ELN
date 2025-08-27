@@ -395,7 +395,7 @@ RSpec.describe Chemotion::InputValidationUtils do
     end
 
     it 'rejects URLs that are too long' do
-      long_url = 'https://example.com/' + 'a' * (described_class::URL_MAX_LENGTH)
+      long_url = "https://example.com/#{'a' * described_class::URL_MAX_LENGTH}"
       expect(described_class.valid_url?(long_url)).to be false
     end
   end

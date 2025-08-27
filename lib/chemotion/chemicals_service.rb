@@ -49,7 +49,7 @@ module Chemotion
 
     def self.merck(name, language)
       product_number_string = merck_request(name)
-      product_number = (merck_request(name)[15, merck_request(name).length]).split('/')[1]
+      product_number = merck_request(name)[15, merck_request(name).length].split('/')[1]
       url_string = product_number_string[15, product_number_string.length]
       merck_link = "https://www.sigmaaldrich.com/DE/#{language}/sds/#{url_string}"
       { 'merck_link' => merck_link, 'merck_product_number' => product_number,
@@ -309,6 +309,7 @@ module Chemotion
     # @param file_hash_initials [String] first 16 chars (or similar) of file hash for uniqueness
     # @param url_signature [Boolean] whether to include the "_web_" segment (API-fetched)
     # @return [String] relative path starting with /safety_sheets/
+    # rubocop:disable Style/OptionalBooleanParameter
     def self.generate_safety_sheet_file_path(vendor_name, product_number, file_hash_initials, url_signature = false)
       base_file_name = "#{vendor_name}/#{product_number}"
       if url_signature
@@ -317,6 +318,7 @@ module Chemotion
         "/safety_sheets/#{base_file_name}_#{file_hash_initials}.pdf"
       end
     end
+    # rubocop:enable Style/OptionalBooleanParameter
 
     # Check if chemical record already contains this vendor and product combination
     # @param chemical [Chemical] Chemical record to check
