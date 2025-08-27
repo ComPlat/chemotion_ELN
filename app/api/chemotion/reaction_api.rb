@@ -15,7 +15,6 @@ module Chemotion
       desc 'Return serialized reactions'
       params do
         optional :collection_id, type: Integer, desc: 'Collection id'
-        optional :sync_collection_id, type: Integer, desc: 'SyncCollectionsUser id'
         optional :from_date, type: Integer, desc: 'created_date from in ms'
         optional :to_date, type: Integer, desc: 'created_date to in ms'
         optional :user_label, type: Integer, desc: 'user label'
@@ -38,13 +37,6 @@ module Chemotion
                     Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids)
                               .find(params[:collection_id])
                               .reactions
-                  rescue ActiveRecord::RecordNotFound
-                    Reaction.none
-                  end
-                elsif params[:sync_collection_id]
-                  begin
-                    current_user.all_sync_in_collections_users.find(params[:sync_collection_id])
-                                .collection.reactions
                   rescue ActiveRecord::RecordNotFound
                     Reaction.none
                   end
@@ -278,27 +270,11 @@ module Chemotion
         reaction.save!
         update_element_labels(reaction, params[:user_labels], current_user.id)
         reaction.save_segments(segments: params[:segments], current_user_id: current_user.id)
-        CollectionsReaction.create(reaction: reaction, collection: collection) if collection.present?
-
-        is_shared_collection = false
-        if collection.blank?
-          sync_collection = current_user.all_sync_in_collections_users.find_by(id: collection_id)
-          if sync_collection.present?
-            is_shared_collection = true
-            sync_in_collection_receiver = Collection.find(sync_collection['collection_id'])
-            CollectionsReaction.create(reaction: reaction,
-                                       collection: sync_in_collection_receiver)
-            sync_out_collection_sharer = Collection.get_all_collection_for_user(sync_collection['shared_by_id'])
-            CollectionsReaction.create(reaction: reaction,
-                                       collection: sync_out_collection_sharer)
-          end
-        end
-
-        unless is_shared_collection
-          CollectionsReaction.create(reaction: reaction,
-                                     collection: Collection.get_all_collection_for_user(current_user.id))
-        end
+        CollectionsReaction.create(reaction: reaction, collection: collection)
+        CollectionsReaction.create(reaction: reaction,
+                                   collection: Collection.get_all_collection_for_user(current_user.id))
         CollectionsReaction.update_tag_by_element_ids(reaction.id)
+
         if reaction
           if attributes['origin'] && attributes['origin']['short_label'] && materials['products'].present?
             materials['products'].map! do |prod|

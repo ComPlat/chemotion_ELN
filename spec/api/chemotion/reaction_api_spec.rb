@@ -33,8 +33,8 @@ describe Chemotion::ReactionAPI do
             'taggable_data' => include(
               'collection_labels' => include(
                 'name' => 'C2', 'is_shared' => false, 'id' => c2.id,
-                'user_id' => user.id, 'shared_by_id' => c2.shared_by_id,
-                'is_synchronized' => c2.is_synchronized
+                'user_id' => user.id, 'shared_by_id' => false,
+                'is_synchronized' => false
               ),
             )
           )
@@ -53,33 +53,6 @@ describe Chemotion::ReactionAPI do
 
     context 'with ID of non-existing collection' do
       before { get '/api/v1/reactions', params: { collection_id: -1 } }
-
-      it 'does not return reaction' do
-        reactions = JSON.parse(response.body)['reactions']
-        expect(reactions.size).to be(0)
-      end
-    end
-
-    context 'with ID of synced collection' do
-      let(:sharer) { create(:person) }
-      let(:sync_collections_user) do
-        create(:sync_collections_user, collection: c1, user: user, sharer: sharer)
-      end
-
-      before do
-        get '/api/v1/reactions', params: { sync_collection_id: sync_collections_user.id }
-      end
-
-      it 'returns serialized reaction' do
-        reactions = JSON.parse(response.body)['reactions']
-        expect(reactions.pluck('id')).to eq([r2.id, r1.id])
-      end
-    end
-
-    context 'with ID of non-existing synced collection' do
-      before do
-        get '/api/v1/reactions', params: { sync_collection_id: -1 }
-      end
 
       it 'does not return reaction' do
         reactions = JSON.parse(response.body)['reactions']
@@ -487,15 +460,12 @@ describe Chemotion::ReactionAPI do
     end
     let(:molfile_1) { sample1.molecule.molfile }
 
-    context 'when adding reaction to synced collection' do
+    context 'when adding reaction to collection' do
       let(:receiver) { create(:person, name: 'receiver') }
       let(:collection) { create(:collection, user_id: user.id) }
-      let(:sync_collection) do
-        create(:sync_collections_user, collection_id: collection.id, sharer: user, user: receiver)
-      end
       let(:params) do
         {
-          'collection_id' => sync_collection.id,
+          'collection_id' => collection.id,
           'container' => new_root_container,
           'literatures' => {
             'foo' => { 'title' => 'Foo', 'url' => 'foo.com' },
