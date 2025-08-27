@@ -93,32 +93,6 @@ describe Chemotion::WellplateAPI do
         end
       end
     end
-
-    context 'when sync_collection_id is given' do
-      let(:sharer) { create(:person) }
-      let(:sync_collections_user) do
-        create(:sync_collections_user, collection: collection, user: user, sharer: sharer)
-      end
-      let(:params) do
-        { sync_collection_id: sync_collections_user.id }
-      end
-
-      it 'returns wellplates' do
-        get '/api/v1/wellplates/', params: params
-        expect(JSON.parse(response.body)['wellplates'].size).to eq(1)
-      end
-
-      context 'when no wellplates found' do
-        let(:params) do
-          { sync_collection_id: sync_collections_user.id + 1 }
-        end
-
-        it 'returns no wellplates' do
-          get '/api/v1/wellplates/', params: params
-          expect(JSON.parse(response.body)['wellplates'].size).to eq(0)
-        end
-      end
-    end
   end
 
   describe 'GET /api/v1/wellplates/:id' do
