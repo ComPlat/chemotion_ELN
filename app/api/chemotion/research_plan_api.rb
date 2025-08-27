@@ -14,7 +14,6 @@ module Chemotion
       desc 'Return serialized research plans of current user'
       params do
         optional :collection_id, type: Integer, desc: 'Collection id'
-        optional :sync_collection_id, type: Integer, desc: 'SyncCollectionsUser id'
         optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'
         optional :user_label, type: Integer, desc: 'user label'
         optional :from_date, type: Integer, desc: 'created_date from in ms'
@@ -26,12 +25,6 @@ module Chemotion
           begin
             Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids)
                       .find(params[:collection_id]).research_plans
-          rescue ActiveRecord::RecordNotFound
-            ResearchPlan.none
-          end
-        elsif params[:sync_collection_id]
-          begin
-            current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection.research_plans
           rescue ActiveRecord::RecordNotFound
             ResearchPlan.none
           end
@@ -92,23 +85,11 @@ module Chemotion
 
         if params[:collection_id]
           collection = current_user.collections.where(id: params[:collection_id]).take
-          research_plan.collections << collection if collection.present?
+          research_plan.collections << collection
         end
 
-        is_shared_collection = false
-        unless collection.present?
-          sync_collection = current_user.all_sync_in_collections_users.where(id: params[:collection_id]).take
-          if sync_collection.present?
-            is_shared_collection = true
-            research_plan.collections << Collection.find(sync_collection['collection_id'])
-            research_plan.collections << Collection.get_all_collection_for_user(sync_collection['shared_by_id'])
-          end
-        end
-
-        unless is_shared_collection
-          all_coll = Collection.get_all_collection_for_user(current_user.id)
-          research_plan.collections << all_coll
-        end
+        all_coll = Collection.get_all_collection_for_user(current_user.id)
+        research_plan.collections << all_coll
 
         update_element_labels(research_plan, params[:user_labels], current_user.id)
         present research_plan.reload, with: Entities::ResearchPlanEntity, root: :research_plan

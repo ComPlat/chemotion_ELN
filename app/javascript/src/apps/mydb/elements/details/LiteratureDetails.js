@@ -173,9 +173,7 @@ export default class LiteratureDetails extends Component {
     const cCol = this.state.currentCollection;
     const { currentCollection, sorting } = state;
 
-    if (cCol && currentCollection &&
-      (cCol.id !== currentCollection.id || cCol.is_sync_to_me !== currentCollection.is_sync_to_me)
-    ) {
+    if (cCol && currentCollection && cCol.id !== currentCollection.id) {
       LiteraturesFetcher.fetchReferencesByCollection(currentCollection).then((literatures) => {
 
         this.setState(prevState => ({
@@ -203,7 +201,6 @@ export default class LiteratureDetails extends Component {
         sample,
         reaction,
         id: currentCollection.id,
-        is_sync_to_me: currentCollection.is_sync_to_me
 
       };
       LiteraturesFetcher.postReferencesByUIState(params).then((selectedRefs) => {
@@ -263,7 +260,6 @@ export default class LiteratureDetails extends Component {
       sample,
       reaction,
       id: currentCollection.id,
-      is_sync_to_me: currentCollection.is_sync_to_me,
       ref: { ...literature, doi: sanitizeDoi(doi || '') }
     };
     LiteraturesFetcher.postReferencesByUIState(params).then((selectedRefs) => {
