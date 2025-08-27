@@ -21,8 +21,7 @@ module Chemotion
         end
 
         post do
-          cid = fetch_collection_id_w_current_user(params[:currentCollection][:id],
-                                                   params[:currentCollection][:is_sync_to_me])
+          cid = fetch_collection_id_w_current_user(params[:currentCollection][:id], false)
           sel = {}
           has_sel = {}
 
@@ -58,7 +57,7 @@ module Chemotion
 
           deletion_allowed = true
           sharing_allowed = true
-          if params[:currentCollection][:is_sync_to_me] || params[:currentCollection][:is_shared]
+          if params[:currentCollection][:is_shared]
             deletion_allowed = has_sel['sample'] ? ElementsPolicy.new(current_user, sel['sample']).destroy? : true
             deletion_allowed &&= (if has_sel['reaction']
                                     ElementsPolicy.new(current_user,
