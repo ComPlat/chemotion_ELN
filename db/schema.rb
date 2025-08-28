@@ -69,12 +69,12 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
     t.string "folder"
     t.string "attachable_type"
     t.string "aasm_state"
-    t.datetime "deleted_at"
     t.bigint "filesize"
     t.jsonb "attachment_data"
     t.integer "con_state"
     t.jsonb "log_data"
     t.string "created_by_type"
+    t.datetime "deleted_at"
     t.index ["attachable_type", "attachable_id"], name: "index_attachments_on_attachable_type_and_attachable_id"
     t.index ["identifier"], name: "index_attachments_on_identifier", unique: true
     t.index ["version"], name: "index_attachments_on_version", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
@@ -1184,7 +1184,7 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.jsonb "log_data"
-    t.boolean "product_reference", default: false
+    t.boolean "weight_percentage_reference", default: false
     t.float "weight_percentage"
     t.index ["reaction_id"], name: "index_reactions_samples_on_reaction_id"
     t.index ["sample_id"], name: "index_reactions_samples_on_sample_id"

@@ -406,7 +406,7 @@ module Import
           'updated_at',
           'vessel_size',
           'gaseous',
-          'product_reference',
+          'weight_percentage_reference',
           'weight_percentage',
         ).merge(
           created_by: @current_user_id,
