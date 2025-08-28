@@ -56,26 +56,13 @@ class Collection < ApplicationRecord
   has_many :elements, through: :collections_elements
   has_many :cellline_samples, through: :collections_celllines
   has_many :sequence_based_macromolecule_samples, through: :collections_sequence_based_macromolecule_samples
-
-  has_many :sync_collections_users, dependent: :destroy, inverse_of: :collection
-  has_many :shared_users, through: :sync_collections_users, source: :user
   has_many :collection_shares
 
   has_one :metadata
 
   delegate :prefix, :name, to: :inventory, allow_nil: true, prefix: :inventory
 
-  # A collection is locked if it is not allowed to rename or rearrange it
-  scope :unlocked, -> { where(is_locked: false) }
-  scope :locked, -> { where(is_locked: true) }
-
-  scope :ordered, -> { order('position ASC') }
-  # SELECT collections.id, count(collections.id)
-  # FROM public.collections
-  # JOIN public.sync_collections_users
-  # ON collections.id = sync_collections_users.collection_id
-  # GROUP BY collections.id
-  # HAVING count(collections.id) > 1
+  scope :ordered, -> { order('ancestry ASC, position ASC') }
 
   scope(
     :shared_with_more_than_one_user,
@@ -86,16 +73,15 @@ class Collection < ApplicationRecord
         .having('COUNT(collection.id) > 1')
     end
   )
-  scope :belongs_to_or_shared_by, lambda { |user_id, with_group = false|
-    if with_group.present?
-      where(
-        'user_id = ? OR shared_by_id = ? OR (user_id IN (?) AND is_locked = false)',
-        user_id, user_id, with_group
-      )
-    else
-      where('user_id = ? OR shared_by_id = ?', user_id, user_id)
+
+  scope(
+    :accessible_for,
+    lambda do |user|
+      left_joins(:collection_shares)
+      .where(user_id: user.id)
+      .or(where(collection_shares: { shared_with_id: user.id }))
     end
-  }
+  )
 
   default_scope { ordered }
   SQL_INVENT_JOIN = 'LEFT JOIN ' \
@@ -119,7 +105,7 @@ class Collection < ApplicationRecord
   }
 
   def self.get_all_collection_for_user(user_id)
-    find_by(user_id: user_id, label: 'All', is_locked: true)
+    find_by(user_id: user_id, label: 'All')
   end
 
   def self.bulk_update(user_id, collection_attributes, deleted_ids)
