@@ -2,52 +2,22 @@
 
 module Entities
   class CollectionEntity < ApplicationEntity
-    expose(
-      :descendant_ids,
-      :id,
-      :is_locked,
-      :is_remote,
-      :is_shared,
-      :is_synchronized,
-      :label,
-      :permission_level,
-      :reaction_detail_level,
-      :sample_detail_level,
-      :screen_detail_level,
-      :shared_by_id,
-      :wellplate_detail_level,
-      :tabs_segment,
-      :inventory_id,
-    )
+    expose! :id
+    expose! :ancestry
+    expose! :label
+    expose! :tabs_segment
+    expose! :inventory_id
+    expose! :owner
+    expose! :shares, using: 'Entities::CollectionShareEntity'
 
-    expose :children, using: 'Entities::CollectionEntity'
-    expose :shared_to, using: 'Entities::UserSimpleEntity'
-    expose :shared_users, using: 'Entities::UserSimpleEntity'
-    expose :sync_collections_users, using: 'Entities::SyncCollectionsUserEntity'
-
-    private
-
-    def sync_collections_users
-      object.sync_collections_users.includes(:user, :sharer, :collection)
+    def owner
+      "#{user.name} (#{user.name_abbreviation})"
     end
 
-    def children
-      object.children.ordered
-    end
+    def shares
+      return [] unless user_id == current_user.id
 
-    def is_remote
-      object.is_shared &&
-        (object.shared_by_id != current_user.id)
-    end
-
-    def descendant_ids
-      object.descendant_ids
-    end
-
-    def shared_to
-      return unless object.is_shared
-
-      object.user || User.new
+      collection_shares
     end
   end
 end
