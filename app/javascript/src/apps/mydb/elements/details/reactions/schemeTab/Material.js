@@ -349,18 +349,18 @@ class Material extends Component {
   }
 
   customFieldValueSelector() {
-    const { lockEquivColumn, material, reaction } = this.props;
+    const { material, reaction, lockEquivColumn } = this.props;
     const { fieldToShow } = this.state;
     const equivalentField = fieldToShow === 'molar mass';
     const valueToShow = equivalentField ? material.equivalent : material.weight_percentage;
     let disableWeightPercentageField = false;
     const weightPercentageIsSelected = fieldToShow === 'weight percentage';
     if (weightPercentageIsSelected) {
-      const productReference = reaction.findProductReferenceMaterial();
-      const productReferenceMaterial = productReference?.productReference;
-      const targetAmountIsNotValid = Number.isNaN(productReference?.targetAmount?.value)
-        || productReference?.targetAmount?.value === 0;
-      disableWeightPercentageField = !productReferenceMaterial || targetAmountIsNotValid;
+      const weightPercentageReference = reaction.findWeightPercentageReferenceMaterial();
+      const weightPercentageReferenceMaterial = weightPercentageReference?.weightPercentageReference;
+      const targetAmountIsNotValid = Number.isNaN(weightPercentageReference?.targetAmount?.value)
+        || weightPercentageReference?.targetAmount?.value === 0;
+      disableWeightPercentageField = !weightPercentageReferenceMaterial || targetAmountIsNotValid;
     }
 
     return (
@@ -369,11 +369,10 @@ class Material extends Component {
         onFirstRenderField={fieldToShow}
         value={valueToShow}
         onChange={(e) => { this.handleOnValueChange(e, equivalentField); }}
-        onFieldChange={(field) => this.handleEquivalentWeightPercentageChange(field)}
+        onFieldChange={(field) => this.handleEquivalentWeightPercentageChange(material, field)}
         disableSpecificField={disableWeightPercentageField}
         disabled={
-          !permitOn(reaction) || ((((material.reference || false)
-          && material.equivalent) !== false) || lockEquivColumn)
+          !permitOn(reaction) || material.reference || lockEquivColumn
         }
       />
     );
@@ -496,15 +495,16 @@ class Material extends Component {
   }
 
   handleReferenceChange(e, type = null) {
+    const { materialGroup, onChange } = this.props;
     const value = e.target.value;
-    if (this.props.onChange) {
+    if (onChange) {
       const event = {
-        type: type ? 'productReferenceChanged' : 'referenceChanged',
-        materialGroup: this.props.materialGroup,
+        type: type ? 'weightPercentageReferenceChanged' : 'referenceChanged',
+        materialGroup,
         sampleID: this.materialId(),
         value,
       };
-      this.props.onChange(event);
+      onChange(event);
       this.setState({ fieldToShow: 'molar mass' });
     }
   }
@@ -820,12 +820,18 @@ class Material extends Component {
     }
   }
 
-  handleEquivalentWeightPercentageChange(field) {
+  handleEquivalentWeightPercentageChange(material, field) {
     this.setState({ fieldToShow: field });
     if (field === 'weight percentage') {
-      this.handleEquivalentChange({ value: 0 });
+      if (material.reference) {
+        this.handleEquivalentChange({ value: 1 });
+      } else {
+        this.handleEquivalentChange({ value: 0 });
+      }
     } else if (field === 'molar mass') {
-      this.handleWeightPercentageChange(0);
+      if (!material.reference) {
+        this.handleWeightPercentageChange(0);
+      }
     }
   }
 
@@ -1428,7 +1434,7 @@ class Material extends Component {
           <OverlayTrigger
             placement="top"
             overlay={(
-              <Tooltip id="product-reference-tooltip">
+              <Tooltip id="weight-percentage-reference-tooltip">
                 Select as reference product for weight percentage
               </Tooltip>
             )}
@@ -1436,9 +1442,9 @@ class Material extends Component {
             <Form.Check
               type="radio"
               disabled={!permitOn(reaction)}
-              name="productReference"
-              checked={material.product_reference}
-              onChange={(e) => this.handleReferenceChange(e, 'productReferenceChanged')}
+              name="weightPercentageReference"
+              checked={material.weight_percentage_reference}
+              onChange={(e) => this.handleReferenceChange(e, 'weightPercentageReferenceChanged')}
               size="sm"
               className="custom-radio m-1"
             />

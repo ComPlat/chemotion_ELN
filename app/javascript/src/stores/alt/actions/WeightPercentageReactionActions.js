@@ -2,11 +2,11 @@
 import alt from 'src/stores/alt/alt';
 
 class WeightPercentageReactionActions {
-  setProductReference(value) {
+  setWeightPercentageReference(value) {
     return value;
   }
 
-  setTargetAmountProductReference(value) {
+  setTargetAmountWeightPercentageReference(value) {
     return value;
   }
 }

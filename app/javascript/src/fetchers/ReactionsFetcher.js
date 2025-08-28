@@ -28,10 +28,10 @@ export default class ReactionsFetcher {
             if (catalystMoles) {
               GasPhaseReactionActions.setCatalystReferenceMole(catalystMoles);
             }
-            const { productReference, targetAmount } = reaction.findProductReferenceMaterial();
-            if (productReference) {
-              WeightPercentageReactionActions.setProductReference(productReference);
-              WeightPercentageReactionActions.setTargetAmountProductReference(targetAmount);
+            const { weightPercentageReference, targetAmount } = reaction.findWeightPercentageReferenceMaterial();
+            if (weightPercentageReference) {
+              WeightPercentageReactionActions.setWeightPercentageReference(weightPercentageReference);
+              WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(targetAmount);
             }
             if (json.literatures && json.literatures.length > 0) {
               const tliteratures = json.literatures.map((literature) => new Literature(literature));

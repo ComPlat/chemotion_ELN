@@ -520,12 +520,12 @@ export default class ReactionDetails extends Component {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  updateReactionProductReference(reaction) {
+  updateWeightPercentageReference(reaction) {
     Promise.resolve().then(() => {
-      const { productReference, amountTarget } = reaction.findProductReferenceMaterial();
-      if (productReference) {
-        WeightPercentageReactionActions.setProductReference(productReference);
-        WeightPercentageReactionActions.setTargetAmountProductReference(amountTarget);
+      const { weightPercentageReference, amountTarget } = reaction.findWeightPercentageReferenceMaterial();
+      if (weightPercentageReference) {
+        WeightPercentageReactionActions.setWeightPercentageReference(weightPercentageReference);
+        WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(amountTarget);
       }
     });
   }
@@ -538,7 +538,7 @@ export default class ReactionDetails extends Component {
       schemeType = 'gaseous';
     } else if (reaction.weight_percentage) {
       schemeType = 'weight percentage';
-      this.updateReactionProductReference(reaction);
+      this.updateWeightPercentageReference(reaction);
     }
     const tabContentsMap = {
       scheme: (

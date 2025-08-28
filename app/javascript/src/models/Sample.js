@@ -1766,7 +1766,7 @@ export default class Sample extends Element {
       components: this.components && this.components.length > 0
         ? this.components.map((s) => s.serializeComponent())
         : [],
-      product_reference: this.product_reference || false,
+      weight_percentage_reference: this.weight_percentage_reference || false,
       weight_percentage: this.weight_percentage
     };
     _.merge(params, extra_params);
