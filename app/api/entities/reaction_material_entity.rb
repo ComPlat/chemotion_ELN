@@ -19,7 +19,7 @@ module Entities
     expose! :gas_type
     expose! :gas_phase_data
     expose! :conversion_rate
-    expose! :product_reference
+    expose! :weight_percentage_reference
     expose! :weight_percentage
   end
 end

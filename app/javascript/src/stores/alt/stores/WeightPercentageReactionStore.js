@@ -4,24 +4,24 @@ import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercen
 class WeightPercentageReactionStore {
   constructor() {
     this.state = {
-      productReference: null,
+      weightPercentageReference: null,
       targetAmount: null,
     };
 
     this.bindListeners({
-      setProductReference: this.setProductReference,
-      setTargetAmountProductReference: this.setTargetAmountProductReference,
+      setWeightPercentageReference: this.setWeightPercentageReference,
+      setTargetAmountWeightPercentageReference: this.setTargetAmountWeightPercentageReference,
     });
     this.bindActions(WeightPercentageReactionActions);
   }
 
-  setProductReference(value) {
+  setWeightPercentageReference(value) {
     this.setState({
-      productReference: value,
+      weightPercentageReference: value,
     });
   }
 
-  setTargetAmountProductReference(value) {
+  setTargetAmountWeightPercentageReference(value) {
     this.setState({
       targetAmount: value,
     });
