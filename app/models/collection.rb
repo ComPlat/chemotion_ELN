@@ -6,30 +6,17 @@
 #
 # Table name: collections
 #
-#  id                                            :integer          not null, primary key
-#  ancestry                                      :string           default("/"), not null
-#  celllinesample_detail_level                   :integer          default(10)
-#  deleted_at                                    :datetime
-#  devicedescription_detail_level                :integer          default(10)
-#  element_detail_level                          :integer          default(10)
-#  is_locked                                     :boolean          default(FALSE)
-#  is_shared                                     :boolean          default(FALSE)
-#  is_synchronized                               :boolean          default(FALSE), not null
-#  label                                         :text             not null
-#  permission_level                              :integer          default(0)
-#  position                                      :integer
-#  reaction_detail_level                         :integer          default(10)
-#  researchplan_detail_level                     :integer          default(10)
-#  sample_detail_level                           :integer          default(10)
-#  screen_detail_level                           :integer          default(10)
-#  sequencebasedmacromoleculesample_detail_level :integer          default(10)
-#  tabs_segment                                  :jsonb
-#  wellplate_detail_level                        :integer          default(10)
-#  created_at                                    :datetime         not null
-#  updated_at                                    :datetime         not null
-#  inventory_id                                  :bigint
-#  shared_by_id                                  :integer
-#  user_id                                       :integer          not null
+#  id                     :integer          not null, primary key
+#  ancestry               :string           default("/"), not null
+#  deleted_at             :datetime
+#  label                  :text             not null
+#  position               :integer
+#  tabs_segment           :jsonb
+#  wellplate_detail_level :integer          default(10)
+#  created_at             :datetime         not null
+#  updated_at             :datetime         not null
+#  inventory_id           :bigint
+#  user_id                :integer          not null
 #
 # Indexes
 #
@@ -72,6 +59,7 @@ class Collection < ApplicationRecord
 
   has_many :sync_collections_users, dependent: :destroy, inverse_of: :collection
   has_many :shared_users, through: :sync_collections_users, source: :user
+  has_many :collection_shares
 
   has_one :metadata
 
@@ -82,10 +70,22 @@ class Collection < ApplicationRecord
   scope :locked, -> { where(is_locked: true) }
 
   scope :ordered, -> { order('position ASC') }
-  scope :unshared, -> { where(is_shared: false) }
-  scope :synchronized, -> { where(is_synchronized: true) }
-  scope :shared, ->(user_id) { where('shared_by_id = ? AND is_shared = ?', user_id, true) }
-  scope :remote, ->(user_id) { where('is_shared = ? AND NOT shared_by_id = ?', true, user_id) }
+  # SELECT collections.id, count(collections.id)
+  # FROM public.collections
+  # JOIN public.sync_collections_users
+  # ON collections.id = sync_collections_users.collection_id
+  # GROUP BY collections.id
+  # HAVING count(collections.id) > 1
+
+  scope(
+    :shared_with_more_than_one_user,
+    lambda do
+      joins(:collection_shares)
+        .select('collections.id, COUNT(collections.id)')
+        .group('collections.id')
+        .having('COUNT(collection.id) > 1')
+    end
+  )
   scope :belongs_to_or_shared_by, lambda { |user_id, with_group = false|
     if with_group.present?
       where(
