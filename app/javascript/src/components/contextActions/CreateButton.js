@@ -327,15 +327,23 @@ export default class CreateButton extends React.Component {
   render() {
     const { isDisabled, layout } = this.state;
     const type = UserStore.getState().currentType;
+    const itemTables = [];
     const sortedLayout = Object.entries(layout)
       .filter((o) => o[1] && o[1] > 0)
       .sort((a, b) => a[1] - b[1]);
 
-    const sortedGenericEls = [];
-    sortedLayout.forEach(([sl]) => {
+    sortedLayout?.forEach(([sl]) => {
       const el = allElnElmentsWithLabel.concat(allGenericElements()).find((ael) => ael.name === sl);
-      if (typeof el !== 'undefined') {
-        sortedGenericEls.push(el);
+      if (el) {
+        itemTables.push(
+          <Dropdown.Item
+            id={`create-${el.name}-button`}
+            key={el.name}
+            onClick={() => this.createElementOfType(`${el.name}`)}
+          >
+            Create {el.label}
+          </Dropdown.Item>
+        );
       }
     });
 
