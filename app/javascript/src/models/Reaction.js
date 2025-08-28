@@ -601,6 +601,7 @@ export default class Reaction extends Element {
       material.reaction_product = true;
       material.equivalent = 0;
       material.reference = false;
+      material.weight_percentage_reference = false;
 
       if (material.parent_id) {
         material.start_parent = material.parent_id
@@ -612,16 +613,17 @@ export default class Reaction extends Element {
     ) {
       if (newGroup === "solvents") {
         material.reference = false;
+        material.weight_percentage_reference = false;
       }
 
       // Temporary set true, to fit with server side logical
       material.isSplit = true;
       material.reaction_product = false;
-      material.product_reference = false;
+      material.weight_percentage_reference = false;
     } else if (newGroup == "starting_materials") {
       material.isSplit = true;
       material.reaction_product = false;
-      material.product_reference = false;
+      material.weight_percentage_reference = false;
 
       if (material.start_parent && material.parent_id == null) {
         material.parent_id = material.start_parent
@@ -743,10 +745,10 @@ export default class Reaction extends Element {
     })
   }
 
-  markProductSampleAsReference(sampleID) {
-    this.products = this.products.map((sample) => (
-      { ...sample, product_reference: sample.id === sampleID }
-    ));
+  markWeightPercentageSampleAsReference(sampleID) {
+    this.samples.forEach((sample) => {
+      sample.weight_percentage_reference = sample.id === sampleID;
+    });
   }
 
   toggleShowLabelForSample(sampleID) {
@@ -824,7 +826,7 @@ export default class Reaction extends Element {
           mat.gas_phase_data = group[index].gas_phase_data;
           mat.coefficient = group[index].coefficient;
           mat.weight_percentage = group[index].weight_percentage;
-          mat.product_reference = group[index].product_reference;
+          mat.weight_percentage_reference = group[index].weight_percentage_reference;
           mat.updateChecksum();
           group[index] = mat;
           break;
@@ -1082,18 +1084,19 @@ export default class Reaction extends Element {
     return feedstockMaterial;
   }
 
-  findProductReferenceMaterial() {
+  findWeightPercentageReferenceMaterial() {
     const result = {
-      productReference: null,
+      weightPercentageReference: null,
       targetAmount: null,
     };
-    if (this.products && this.products.length > 0) {
-      const productReference = this.products.find((material) => (material.product_reference === true));
-      if (productReference) {
-        result.productReference = productReference;
+    const materials = [...this.starting_materials, ...this.reactants, ...this.products];
+    if (materials && materials.length > 0) {
+      const reference = materials.find((material) => (material.weight_percentage_reference === true));
+      if (reference) {
+        result.weightPercentageReference = reference;
         result.targetAmount = {
-          value: productReference.target_amount_value,
-          unit: productReference.target_amount_unit
+          value: reference.target_amount_value,
+          unit: reference.target_amount_unit
         };
       }
     }

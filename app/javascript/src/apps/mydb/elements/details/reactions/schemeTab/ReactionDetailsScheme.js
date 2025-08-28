@@ -106,7 +106,7 @@ export default class ReactionDetailsScheme extends React.Component {
     splitSample.show_label = (splitSample.decoupled && !splitSample.molfile) ? true : splitSample.show_label;
     if (tagGroup == 'solvents') {
       splitSample.reference = false;
-      splitSample.product_reference = false;
+      splitSample.weight_percentage_reference = false;
     }
 
     if (splitSample.isMixture()) {
@@ -293,7 +293,10 @@ export default class ReactionDetailsScheme extends React.Component {
           value: amountValue,
           unit: targetAmount.unit,
         });
-        sample.equivalent = 0;
+        // set equivalent to zero only if sample is not a reference material
+        if (!sample.reference) {
+          sample.equivalent = 0;
+        }
       }
     };
 
@@ -305,7 +308,7 @@ export default class ReactionDetailsScheme extends React.Component {
 
     switch (changeEvent.type) {
       case 'referenceChanged':
-      case 'productReferenceChanged':
+      case 'weightPercentageReferenceChanged':
         this.onReactionChange(
           this.updatedReactionForReferenceChange(changeEvent, changeEvent.type)
         );
@@ -439,14 +442,14 @@ export default class ReactionDetailsScheme extends React.Component {
     const { sampleID } = changeEvent;
     const { reaction } = this.props;
     const sample = reaction.sampleById(sampleID);
-    if (type === 'productReferenceChanged') {
-      reaction.markProductSampleAsReference(sampleID);
-      WeightPercentageReactionActions.setProductReference(sample);
-      WeightPercentageReactionActions.setTargetAmountProductReference({
+    if (type === 'weightPercentageReferenceChanged') {
+      reaction.markWeightPercentageSampleAsReference(sampleID);
+      WeightPercentageReactionActions.setWeightPercentageReference(sample);
+      WeightPercentageReactionActions.setTargetAmountWeightPercentageReference({
         value: sample.target_amount_value,
         unit: sample.target_amount_unit,
       });
-      return this.updatedReactionWithSample(this.updatedSamplesForProductReferenceChange.bind(this), sample);
+      return this.updatedReactionWithSample(this.updatedSamplesForWeightPercentageReferenceChange.bind(this), sample);
     }
     reaction.markSampleAsReference(sampleID);
 
@@ -471,12 +474,12 @@ export default class ReactionDetailsScheme extends React.Component {
     // updatedSample.setAmountAndNormalizeToGram(amount);
     // setAmount should be called first before updating feedstock mole and volume values
     updatedSample.setAmount(amount);
-    if (reaction.weight_percentage && updatedSample.product_reference && changeEvent.amountType === 'target') {
+    if (reaction.weight_percentage && updatedSample.weight_percentage_reference && changeEvent.amountType === 'target') {
       const amountUnitObject = {
         value: amount.value,
         unit: amount.unit,
       };
-      WeightPercentageReactionActions.setTargetAmountProductReference(amountUnitObject);
+      WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(amountUnitObject);
     }
 
     if (updatedSample.gas_type === 'catalyst') {
@@ -1017,8 +1020,6 @@ export default class ReactionDetailsScheme extends React.Component {
       if (sample.id === referenceMaterial.id) {
         sample.equivalent = 1.0;
         sample.reference = true;
-        // reset weight percentage to zero, if updated material is a reference material
-        sample.weight_percentage = 0;
       } else {
         if (sample.amount_value) {
           const referenceAmount = referenceMaterial.amount_mol;
@@ -1036,13 +1037,13 @@ export default class ReactionDetailsScheme extends React.Component {
     });
   }
 
-  updatedSamplesForProductReferenceChange(samples, referenceMaterial, materialGroup) {
-    if (materialGroup !== 'products') return samples;
+  updatedSamplesForWeightPercentageReferenceChange(samples, referenceMaterial, materialGroup) {
+    // if (materialGroup !== 'products') return samples;
     return samples.map((s) => {
       if (s.id === referenceMaterial.id) {
-        s.product_reference = true;
+        s.weight_percentage_reference = true;
       } else {
-        s.product_reference = false;
+        s.weight_percentage_reference = false;
       }
       return s;
     });
