@@ -100,11 +100,9 @@ function FieldValueSelector({
   if (selectedField === 'weight percentage') {
     tooltipMessage = `${tooltipMessage} in decimal format (e.g.: 0.5 = 50%)`;
   }
-  if (disableSpecificField) {
-    if (selectedField === 'weight percentage') {
-      tooltipMessage = 'select a reference product from products and assign target amount to enable '
-        + 'weight percentage field';
-    }
+  if (disableSpecificField && selectedField === 'weight percentage') {
+    tooltipMessage = 'select a reference product from products and assign target amount to enable '
+    + 'weight percentage field';
   }
 
   return (
@@ -126,7 +124,7 @@ function FieldValueSelector({
           className="pe-5"
           style={{ border: selectedField === 'molar mass' ? '2px solid rgb(0, 123, 255)' : '2px solid rgb(0, 128, 0)' }}
           size="sm"
-          disabled={disabled || disableSpecificField}
+          disabled={(disabled && selectedField === 'molar mass') || disableSpecificField}
         />
       </OverlayTrigger>
       <Button
@@ -134,7 +132,7 @@ function FieldValueSelector({
         className="position-absolute top-50 end-0 translate-middle-y px-2 border-0 bg-transparent text-dark"
         role="button"
         size="sm"
-        disabled={disabled}
+        disabled={false}
       >
         <i className="fa fa-caret-down" />
       </Button>
