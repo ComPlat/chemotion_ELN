@@ -15,7 +15,10 @@ module RecoveryDB
       def mount
         @mount ||= RecoveryDB::Mount.new(file: @file,
                                          tables: %w[users profiles collections samples reactions wellplates wells
-                                                    screens research_plans device_descriptions])
+                                                    screens research_plans device_descriptions attachments
+                                                    containers container_hierarchies collections_samples
+                                                    collections_reactions collections_wellplates collections_screens
+                                                    collections_research_plans collections_device_descriptions])
       end
 
       def run
@@ -84,6 +87,7 @@ module RecoveryDB
         return if old_collections.empty?
 
         id_map = {}
+        created_elements = {}
         sorted_collections = old_collections.sort_by { |col| col.ancestry.to_s.split('/').size }
 
         sorted_collections.each do |old_collection|
@@ -91,7 +95,7 @@ module RecoveryDB
           new_collection.save!
 
           id_map[old_collection.id] = new_collection
-          restore_collection_elements(old_collection, new_collection, new_user.id)
+          restore_collection_elements(old_collection, new_collection, new_user.id, created_elements)
         rescue ActiveRecord::RecordInvalid => e
           Rails.logger.error "Failed to copy collection #{old_collection.id} for user #{old_user.id}: #{e.message}"
         end
@@ -108,42 +112,41 @@ module RecoveryDB
         new_collection
       end
 
-      def restore_collection_elements(old_collection, new_collection, new_user_id)
-        restore_collection_elements_by_type(Sample, old_collection, new_collection, new_user_id)
-        restore_collection_elements_by_type(Reaction, old_collection, new_collection, new_user_id)
-        restore_collection_elements_by_type(Wellplate, old_collection, new_collection, new_user_id)
-        restore_collection_elements_by_type(Screen, old_collection, new_collection, new_user_id)
-        restore_collection_elements_by_type(ResearchPlan, old_collection, new_collection, new_user_id)
-        restore_collection_elements_by_type(DeviceDescription, old_collection, new_collection, new_user_id)
+      def restore_collection_elements(old_collection, new_collection, new_user_id, created_elements)
+        restore_collection_elements_by_type(Sample, old_collection, new_collection, new_user_id, created_elements)
+        restore_collection_elements_by_type(Reaction, old_collection, new_collection, new_user_id, created_elements)
+        restore_collection_elements_by_type(Wellplate, old_collection, new_collection, new_user_id, created_elements)
+        restore_collection_elements_by_type(Screen, old_collection, new_collection, new_user_id, created_elements)
+        restore_collection_elements_by_type(ResearchPlan, old_collection, new_collection, new_user_id, created_elements)
+        restore_collection_elements_by_type(DeviceDescription, old_collection, new_collection, new_user_id,
+                                            created_elements)
       end
 
-      def restore_collection_elements_by_type(main_model, old_collection, new_collection, new_user_id)
-        model_name       = main_model.name
+      def restore_collection_elements_by_type(main_model, old_collection, new_collection, new_user_id, created_elements)
+        model_name = main_model.name
         join_model_name  = "Collections#{model_name}"
         foreign_key      = "#{model_name.underscore}_id"
 
-        # Source models from RecoveryDB
         recovery_element_model = RecoveryDB::Models.const_get(model_name)
         recovery_join_model    = RecoveryDB::Models.const_get(join_model_name)
-
-        # Target join model (in main app)
-        join_model = Object.const_get(join_model_name)
-
-        created_elements = {}
+        join_model             = Object.const_get(join_model_name)
 
         join_records = recovery_join_model.where(collection_id: old_collection.id)
 
         join_records.each do |join_record|
           original_id = join_record.public_send(foreign_key)
+          element_key = [main_model.name, original_id]
 
-          new_element = created_elements[original_id] || restore_element(
+          new_element = created_elements[element_key] ||= restore_element(
             recovery_element_model, main_model, original_id, new_user_id
           )
 
           next unless new_element
 
-          created_elements[original_id] = new_element
-          join_model.create!(collection: new_collection, model_name.underscore.to_sym => new_element)
+          join_model.create!(
+            collection: new_collection,
+            model_name.underscore.to_sym => new_element,
+          )
         end
       end
 
@@ -155,16 +158,86 @@ module RecoveryDB
 
         attributes['user_id'] = new_user_id if main_model.column_names.include?('user_id')
         attributes['created_by'] = new_user_id if main_model.column_names.include?('created_by')
-        attributes['short_label'] = nil
+        attributes['short_label'] = nil if main_model.column_names.include?('short_label')
 
         new_record = main_model.new(attributes)
         new_record.creator = User.find(new_user_id) if new_record.respond_to?(:creator=)
         new_record.save(validate: false)
+        restore_container(main_model, original_id, new_record.id)
+        restore_attachments(main_model, original_id, new_record.id)
         restore_wells(original_id, new_record.id) if main_model == Wellplate
         new_record
       rescue ActiveRecord::RecordInvalid => e
         Rails.logger.error "Failed to restore #{main_model.name} #{original_id}: #{e.message}"
         nil
+      end
+
+      def restore_container(element_type, old_element_id, new_element_id)
+        old_base = RecoveryDB::Models::Container.find_by!(
+          containable_type: element_type.name,
+          containable_id: old_element_id,
+        )
+        return unless old_base
+
+        id_map = {}
+        # Create new base container and its first-level children
+        new_base = Container.find_by(containable: element_type.find(new_element_id))
+        new_base ||= Container.create_root_container(containable: element_type.find(new_element_id))
+
+        raise "Couldn't create new_base container" unless new_base
+
+        id_map[old_base.id] = new_base.id
+
+        # Map any pre-created child containers
+        existing_children = new_base.children.to_a
+        existing_children.each do |child|
+          # Try to find matching old container
+          match = RecoveryDB::Models::Container.find_by(
+            parent_id: old_base.id,
+            container_type: child.container_type,
+          )
+          id_map[match.id] = child.id if match
+        end
+
+        descendants = RecoveryDB::Models::Container
+                      .joins('INNER JOIN container_hierarchies ON containers.id = container_hierarchies.descendant_id')
+                      .where(container_hierarchies: { ancestor_id: old_base.id })
+                      .where.not(containers: { id: id_map.keys }) # Skip already cloned or pre-created
+                      .order('container_hierarchies.generations ASC')
+
+        descendants.each do |old_container|
+          new_container = Container.new(old_container.attributes.except(*attributes_to_exclude))
+          new_container.parent_id = id_map[old_container.parent_id]
+          new_container.save!
+          id_map[old_container.id] = new_container.id
+        end
+
+        old_hierarchies = RecoveryDB::Models::ContainerHierarchy.where(descendant_id: id_map.keys)
+        old_hierarchies.each do |h|
+          ContainerHierarchy.create_or_find_by!(
+            ancestor_id: id_map[h.ancestor_id],
+            descendant_id: id_map[h.descendant_id],
+            generations: h.generations,
+          )
+        end
+
+        all_old_containers = RecoveryDB::Models::Container.where(id: id_map.keys, container_type: 'dataset')
+        all_old_containers.each do |old_container|
+          new_id = id_map[old_container.id]
+          restore_attachments(Container, old_container.id, new_id)
+        end
+      end
+
+      def restore_attachments(element_type, old_element_id, new_element_id)
+        attachments = RecoveryDB::Models::Attachment.where(attachable_type: element_type.name,
+                                                           attachable_id: old_element_id)
+        attachments.each do |attachment|
+          attrs = attachment.attributes.except(*attributes_to_exclude)
+          attrs[:attachable_id] = new_element_id
+          Attachment.create!(attrs)
+        rescue ActiveRecord::RecordInvalid => e
+          Rails.logger.error "Failed to restore Attachment #{attachment.id}: #{e.message}"
+        end
       end
 
       def restore_wells(original_wellplate_id, new_wellplate_id)
@@ -179,7 +252,10 @@ module RecoveryDB
       end
 
       def attributes_to_exclude
-        %w[id created_at updated_at deleted_at user_id ancestry]
+        %w[
+          id created_at updated_at deleted_at user_id ancestry attachable_id
+          containable_id containable_type parent_id log_data identifier
+        ]
       end
 
       def rec_users
