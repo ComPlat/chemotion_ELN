@@ -163,6 +163,7 @@ h6 {
 }
 
 .accordion-button {
+  @extend .justify-content-between;
   &::after {
     content: "\f078";
     font-family: "FontAwesome";
@@ -175,6 +176,7 @@ h6 {
     @extend .d-flex;
     @extend .align-items-center;
     @extend .justify-content-center;
+    @extend .ms-2;
   }
   &:hover::after {
     padding-top: 3px;
@@ -182,7 +184,10 @@ h6 {
   &:not(.collapsed)::after {
     transform: rotate(180deg);
   }
-  &--icon-only {
-    width: 24px;
+  &.accordion-button--icon-only {
+    width: auto;
+    &::after {
+      @extend .ms-0;
+    }
   }
 }
