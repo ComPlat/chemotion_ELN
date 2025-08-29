@@ -1,4 +1,11 @@
 class MigrateToCollectionShare < ActiveRecord::Migration[6.1]
+  # SyncCollectionsUser was deleted, but the data migration still needs the model class, so we define it here
+  # to be able to use its ActiveRecord interface
+  if !defined?(SyncCollectionsUser)
+      class SyncCollectionsUser < ApplicationRecord
+      end
+  end
+
   def up
     Collection.where.not(shared_by_id: nil).find_each do |collection|
       CollectionShare.create(
