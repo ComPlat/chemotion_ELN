@@ -39,6 +39,7 @@ export default class SampleForm extends React.Component {
       selectedSampleType: selectedOption || SampleTypesOptions[0],
       enableComponentLabel: false,
       enableComponentPurity: false,
+      moleculeNameInputValue: props.sample.molecule_name?.label || props.sample.molecule_name?.value || '',
     };
 
     this.handleFieldChanged = this.handleFieldChanged.bind(this);
@@ -62,6 +63,18 @@ export default class SampleForm extends React.Component {
     const { isMolNameLoading } = this.state;
     if (this.props != prevProps && isMolNameLoading) {
       this.setState({ isMolNameLoading: false });
+    }
+
+    // Sync moleculeNameInputValue when molecule_name changes
+    const currentMoleculeName = this.props.sample?.molecule_name;
+    const prevMoleculeName = prevProps.sample?.molecule_name;
+    
+    if (currentMoleculeName !== prevMoleculeName) {
+      // Use the label for display if available, otherwise fall back to value
+      const displayValue = currentMoleculeName?.label || currentMoleculeName?.value || '';
+      this.setState({
+        moleculeNameInputValue: String(displayValue)
+      });
     }
   }
 
@@ -286,12 +299,22 @@ export default class SampleForm extends React.Component {
 
   moleculeInput() {
     const { sample } = this.props;
-    const { isMolNameLoading } = this.state;
+    const { isMolNameLoading, moleculeNameInputValue } = this.state;
     const mnos = sample.molecule_names;
     const mno = sample.molecule_name;
     const newMolecule = !mno || sample._molecule.id !== mno.mid;
     let moleculeNames = newMolecule ? [] : [mno];
     if (sample && mnos) { moleculeNames = moleculeNames.concat(mnos); }
+
+    const formattedOptions = moleculeNames.filter(name => name).map(name => {
+      if (typeof name === 'string') {
+        return { label: name, value: name };
+      }
+      return {
+        label: name.label || name.value || name.name || String(name),
+        value: name.value || name.label || name.name || String(name)
+      };
+    });
 
     return (
       <Form.Group>
@@ -299,13 +322,34 @@ export default class SampleForm extends React.Component {
         <InputGroup>
           <CreatableSelect
             name="moleculeName"
+            isClearable
+            isInputEditable
+            inputValue={moleculeNameInputValue}
             isDisabled={!sample.can_update}
-            options={moleculeNames}
+            options={formattedOptions}
             onMenuOpen={() => this.openMolName(sample)}
-            onChange={this.updateMolName}
+            onChange={(selectedOption) => {
+              const value = selectedOption ? selectedOption.label : '';
+              this.setState({ moleculeNameInputValue: value });
+              this.updateMolName(selectedOption);
+            }}
+            onInputChange={(inputValue, { action }) => {
+              if (action === 'input-change') {
+                this.setState({ moleculeNameInputValue: inputValue });
+              }
+            }}
             isLoading={isMolNameLoading}
-            value={moleculeNames.find(({ value }) => value === mno?.value)}
-            onCreateOption={this.addMolName}
+            value={formattedOptions.find(({ value, label }) => {
+              if (!mno) return false;
+              return String(value) === String(mno.value) || String(label) === String(mno.label);
+            }) || null}
+            onCreateOption={(inputValue) => {
+              this.setState({ moleculeNameInputValue: inputValue });
+              this.addMolName(inputValue);
+            }}
+            placeholder="Enter or select a molecule name"
+            allowCreateWhileLoading
+            formatCreateLabel={(inputValue) => `Create "${inputValue}"`}
             className="flex-grow-1"
           />
           {this.structureEditorButton(!sample.can_update)}

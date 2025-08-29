@@ -2,6 +2,7 @@ import 'whatwg-fetch';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
 import CellLine from 'src/models/cellLine/CellLine';
+import Vessel from 'src/models/vessel/Vessel';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { dateToUnixTimestamp } from 'src/utilities/timezoneHelper';
 
@@ -115,6 +116,9 @@ export default class BaseFetcher {
           if (type === 'cell_lines') {
             return CellLine.createFromRestResponse(id, r);
           }
+          if (type === 'vessels') {
+            return Vessel.createFromRestResponse(id, r);
+          }
           return (new ElKlass(r));
         }),
         totalElements: parseInt(response.headers.get('X-Total'), 10),
@@ -156,6 +160,26 @@ export default class BaseFetcher {
         updateTasks.push(updateTask);
       });
 
+    return Promise.all(updateTasks);
+  }
+
+  static updateAnnotationsForAttachments(attachments) {
+    const updateTasks = [];
+    attachments
+      .filter((attach) => attach.updatedAnnotation)
+      .forEach((attach) => {
+        const data = new FormData();
+        data.append('updated_svg_string', attach.updatedAnnotation);
+        const updateTask = fetch(`/api/v1/attachments/${attach.id}/annotation`, {
+          credentials: 'same-origin',
+          method: 'post',
+          body: data
+        })
+          .catch((errorMessage) => {
+            console.log(errorMessage);
+          });
+        updateTasks.push(updateTask);
+      });
     return Promise.all(updateTasks);
   }
 

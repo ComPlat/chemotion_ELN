@@ -153,23 +153,25 @@ def create_vessels_and_vessel_templates
     vessel_names.each_with_index do |vessel_name, index|
       next if VesselTemplate.find_by(name: vessel_name)
 
+      vessel_template = VesselTemplate.create!(
+        name: vessel_name,
+        details: Faker::Science.element_subcategory,
+        material_details: Faker::Science.tool,
+        material_type: vessel_materials.sample,
+        vessel_type: ord_vessel_types.sample,
+        volume_amount: index < 21 ? small_vessel_sizes.sample : large_vessel_sizes.sample,
+        volume_unit: 'ml',
+        weight_amount: weight_amounts.sample,
+        weight_unit: 'g'
+      )
+
       User.where(type: 'Person').find_each do |person|
-        vessel_template = VesselTemplate.create!(
-          name: vessel_name,
-          details: Faker::Science.element_subcategory,
-          material_details: Faker::Science.tool,
-          material_type: vessel_materials.sample,
-          vessel_type: ord_vessel_types.sample,
-          volume_amount: index < 21 ? small_vessel_sizes.sample : large_vessel_sizes.sample,
-          volume_unit: 'ml',
-          weight_amount: weight_amounts.sample,
-          weight_unit: 'g'
-        )
+        next if Vessel.exists?(vessel_template: vessel_template, user_id: person.id)
 
         description = "A #{vessel_template.vessel_type} with size " \
                       "#{vessel_template.volume_amount} #{vessel_template.volume_unit}."
 
-        vessel = Vessel.create!(
+        Vessel.create!(
           vessel_template: vessel_template,
           name: Faker::Commerce.product_name,
           user_id: person.id,
@@ -177,9 +179,9 @@ def create_vessels_and_vessel_templates
           bar_code: SecureRandom.hex(8),
           qr_code: SecureRandom.hex(10),
           short_label: "#{person.name_abbreviation}-#{Faker::Name.first_name}",
-        )
-
-        CollectionsVessel.create!(vessel: vessel, collection: person.collections.first) if person.collections.any?
+        ).tap do |vessel|
+          CollectionsVessel.create!(vessel: vessel, collection: person.collections.first) if person.collections.any?
+        end
       end
     end
   end

@@ -20,7 +20,9 @@ function RndNoAnalyses({ addButton }) {
   return (
     <div className='d-flex justify-content-between align-items-center'>
       <p className='m-0'>There are currently no Analyses.</p>
+      <ButtonToolbar className="gap-2">
       {addButton()}
+      </ButtonToolbar>
     </div>
   );
 }
@@ -42,6 +44,7 @@ function ReactionsDisplay({
   activeAnalysis,
   handleChange,
   handleCommentTextChange,
+  rootContainer
 }) {
   const [commentBoxVisible, setCommentBoxVisible] = useState(false);
 
@@ -90,7 +93,7 @@ function ReactionsDisplay({
                       handleSubmit={handleSubmit}
                       toggleAddToReport={toggleAddToReport}
                     />
-                  </AccordionHeaderWithButtons> 
+                  </AccordionHeaderWithButtons>
                 </Card.Header>
                 {!container.is_deleted && (
                   <Accordion.Collapse eventKey={id}>
@@ -99,6 +102,8 @@ function ReactionsDisplay({
                         templateType="sample"
                         readOnly={readOnly}
                         container={container}
+                        rootContainer={rootContainer}
+                        index={i}
                         disabled={isDisabled}
                         onChange={handleChange}
                       />

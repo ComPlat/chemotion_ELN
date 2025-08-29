@@ -15,10 +15,17 @@ import {
 } from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainersCom';
 
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
+import { UploadField } from 'src/apps/mydb/elements/details/analyses/UploadField';
+import {
+  buildEmptyAnalyContainer,
+  sortedContainers,
+  indexedContainers,
+  addNewAnalyses
+} from 'src/apps/mydb/elements/details/analyses/utils';
 
 export default class SampleDetailsContainers extends Component {
   constructor(props) {
-    super();
+    super(props);
     this.state = {
       activeAnalysis: UIStore.getState().sample.activeAnalysis,
       mode: 'edit',
@@ -49,35 +56,31 @@ export default class SampleDetailsContainers extends Component {
     UIStore.unlisten(this.onUIStoreChange);
   }
 
-  onUIStoreChange(state) {
-    if (state.sample.activeAnalysis !== this.state.activeAnalysis) {
-      this.setState({ activeAnalysis: state.sample.activeAnalysis });
-    }
-  }
-
-  handleChange(container) {
-    const { sample } = this.props;
-    this.props.handleSampleChanged(sample);
-  }
-
   handleCommentTextChange(e) {
     const { sample } = this.props;
 
     sample.container.description = e.target.value;
 
-    this.handleChange(sample.container);
+    this.handleChange();
+  }
+
+  handleChange() {
+    const { sample, handleSampleChanged } = this.props;
+    handleSampleChanged(sample);
+  }
+
+  onUIStoreChange(state) {
+    const { activeAnalysis } = this.state;
+    if (state.sample.activeAnalysis !== activeAnalysis) {
+      this.setState({ activeAnalysis: state.sample.activeAnalysis });
+    }
   }
 
   handleAdd() {
-    const { sample } = this.props;
-    const newContainer = this.buildEmptyAnalyContainer();
-
-    const sortedConts = this.sortedContainers(sample);
-    const newSortConts = [...sortedConts, newContainer];
-    const newIndexedConts = this.indexedContainers(newSortConts);
-
-    sample.analysesContainers()[0].children = newIndexedConts;
-    this.props.setState(prevState => ({ ...prevState, sample }),
+    const { sample, setState } = this.props;
+    const newContainer = addNewAnalyses(sample);
+    setState(
+      (prevState) => ({ ...prevState, sample }),
       this.handleAccordionOpen(newContainer.id),
     );
   }
@@ -90,45 +93,35 @@ export default class SampleDetailsContainers extends Component {
     const newIndexedConts = this.indexedContainers(newSortConts);
 
     sample.analysesContainers()[0].children = newIndexedConts;
-    this.props.setState(prevState => ({ ...prevState, sample }));
+    this.props.setState((prevState) => ({ ...prevState, sample }));
   }
 
   sortedContainers(sample) {
-    const containers = sample.analysesContainers()[0].children;
-    return ArrayUtils.sortArrByIndex(containers);
+    sortedContainers(sample);
   }
 
-  buildEmptyAnalyContainer() {
-    const newContainer = Container.buildEmpty();
-    newContainer.container_type = "analysis";
-    newContainer.extended_metadata.content = { ops: [{ insert: '\n' }] };
-    return newContainer;
-  }
+  buildEmptyAnalyContainer = () => buildEmptyAnalyContainer();
 
   isEqCId(container, tagEl) {
     return container.id === tagEl.cId;
   }
 
   indexedContainers(containers) {
-    return containers.map((c, i) => {
-      const container = c;
-      container.extended_metadata.index = i;
-      return container;
-    });
+    return indexedContainers(containers);
   }
 
   handleRemove(container) {
     const { sample } = this.props;
     container.is_deleted = true;
 
-    this.props.setState(prevState => ({ ...prevState, sample }));
+    this.props.setState((prevState) => ({ ...prevState, sample }));
   }
 
   handleUndo(container) {
     const { sample } = this.props;
     container.is_deleted = false;
 
-    this.props.setState(prevState => ({ ...prevState, sample }));
+    this.props.setState((prevState) => ({ ...prevState, sample }));
   }
 
   handleAccordionOpen(newKey) {
@@ -143,20 +136,27 @@ export default class SampleDetailsContainers extends Component {
   }
 
   addButton() {
-    const { readOnly, sample } = this.props;
+    const { readOnly, sample, setState } = this.props;
     if (readOnly) {
       return null;
     }
     return (
-      <Button
-        size="xsm"
-        variant="success"
-        onClick={this.handleAdd}
-        disabled={!sample.can_update}
-      >
-        <i className="fa fa-plus me-1" />
-        Add analysis
-      </Button>
+      <>
+        <UploadField
+          disabled={!sample.can_update}
+          element={sample}
+          setElement={(sample, cb = null) => setState((prevState) => ({ ...prevState, sample }), cb)}
+        />
+        <Button
+          size="xsm"
+          variant="success"
+          onClick={this.handleAdd}
+          disabled={!sample.can_update}
+        >
+          <i className="fa fa-plus me-1" />
+          Add analysis
+        </Button>
+      </>
     );
   }
 
@@ -166,7 +166,7 @@ export default class SampleDetailsContainers extends Component {
   }
 
   handleToggleMode(mode) {
-    this.setState({mode: mode});
+    this.setState({ mode });
   }
 
   render() {
@@ -188,6 +188,7 @@ export default class SampleDetailsContainers extends Component {
             sample={sample}
             mode={mode}
             orderContainers={orderContainers}
+            rootContainer={sample.container}
             readOnly={readOnly}
             isDisabled={isDisabled}
             addButton={this.addButton}
@@ -214,13 +215,12 @@ export default class SampleDetailsContainers extends Component {
           />
         </div>
       );
-    } else {
-      return (
-        <RndNoAnalyses
-          addButton={this.addButton}
-        />
-      );
     }
+    return (
+      <RndNoAnalyses
+        addButton={this.addButton}
+      />
+    );
   }
 }
 

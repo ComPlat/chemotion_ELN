@@ -28,6 +28,8 @@ module Versioning
         Versioning::Fetchers::ScreenFetcher.call(screen: record)
       when ::Wellplate
         Versioning::Fetchers::WellplateFetcher.call(wellplate: record)
+      when ::DeviceDescription
+        Versioning::Fetchers::DeviceDescriptionFetcher.call(device_description: record)
       end
     end
   end

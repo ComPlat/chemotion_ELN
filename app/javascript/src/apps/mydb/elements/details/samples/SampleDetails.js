@@ -145,6 +145,7 @@ export default class SampleDetails extends React.Component {
       isChemicalEdited: false,
       currentUser,
       showRedirectWarning: redirectedFromMixture || false,
+      casInputValue: '',
     };
 
     this.enableComputedProps = MatrixCheck(currentUser.matrix, 'computedProp');
@@ -203,17 +204,21 @@ export default class SampleDetails extends React.Component {
 
     const smileReadonly = !(
       (sample.isNew
-       && (typeof (sample.molfile) === 'undefined'
-        || (sample.molfile || '').length === 0)
+        && (typeof (sample.molfile) === 'undefined'
+          || (sample.molfile || '').length === 0)
       )
       || (typeof (sample.molfile) !== 'undefined' && sample.molecule.inchikey === 'DUMMY')
     );
 
+    // Sync casInputValue when CAS changes
+    const currentCas = sample.xref?.cas ?? '';
+    
     this.setState({
       sample,
       smileReadonly,
       loadingMolecule: false,
       isCasLoading: false,
+      casInputValue: currentCas,
     });
   }
 
@@ -236,7 +241,11 @@ export default class SampleDetails extends React.Component {
   handleSampleChanged(sample, cb) {
     this.setState({
       sample,
-    }, cb);
+    }, () => {
+      if (typeof cb === 'function') {
+        cb();
+      }
+    });
   }
 
   handleAmountChanged(amount) {
@@ -859,14 +868,38 @@ export default class SampleDetails extends React.Component {
           <InputGroup.Text>CAS</InputGroup.Text>
           <CreatableSelect
             name="cas"
+            isClearable
+            isInputEditable
+            inputValue={this.state.casInputValue}
             options={options}
-            onChange={(e) => this.updateCas(e)}
+            onChange={(selectedOption) => {
+              if (selectedOption) {
+                const value = selectedOption.value;
+                this.setState({ casInputValue: value });
+                this.updateCas(selectedOption);
+              } else {
+                this.setState({ casInputValue: '' });
+                this.updateCas(null);
+              }
+            }}
+            onInputChange={(inputValue, { action }) => {
+              if (action === 'input-change' || action === 'set-value') {
+                this.setState({ casInputValue: inputValue });
+              }
+            }}
+            onFocus={() => {
+              const currentCas = cas || '';
+              this.setState({ casInputValue: currentCas });
+            }}
             onMenuOpen={() => this.onCasSelectOpen(casArr)}
             isLoading={isCasLoading}
             value={options.find(({ value }) => value === cas) || null}
             onBlur={() => this.isCASNumberValid(cas || '', true)}
             isDisabled={!sample.can_update}
             className="flex-grow-1"
+            placeholder="Select or enter CAS number"
+            allowCreateWhileLoading
+            formatCreateLabel={(inputValue) => `Create "${inputValue}"`}
           />
           <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
             <Button
@@ -1479,6 +1512,31 @@ export default class SampleDetails extends React.Component {
         stb.push(klass.label);
       }
     });
+
+    const { pageMessage } = this.state;
+    const messageBlock = (pageMessage
+      && (pageMessage.error.length > 0 || pageMessage.warning.length > 0)) ? (
+        <Alert variant="warning" style={{ marginBottom: 'unset', padding: '5px', marginTop: '10px' }}>
+          <strong>Structure Alert</strong>
+          <Button
+            size="sm"
+            variant="warning"
+            onClick={() => this.setState({ pageMessage: null })}
+          >
+            Close Alert
+          </Button>
+          {
+          pageMessage.error.map((m) => (
+            <div key={uuid.v1()}>{m}</div>
+          ))
+        }
+          {
+          pageMessage.warning.map((m) => (
+            <div key={uuid.v1()}>{m}</div>
+          ))
+        }
+        </Alert>
+      ) : null;
 
     const activeTab = (this.state.activeTab !== 0 && stb.indexOf(this.state.activeTab) > -1
       && this.state.activeTab) || visible.get(0);

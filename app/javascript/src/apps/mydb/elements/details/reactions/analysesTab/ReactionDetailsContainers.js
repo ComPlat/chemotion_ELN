@@ -17,7 +17,9 @@ import { hNmrCount, cNmrCount, instrumentText } from 'src/utilities/ElementUtils
 import { contentToText } from 'src/utilities/quillFormat';
 import { chmoConversions } from 'src/components/OlsComponent';
 import { getAttachmentFromContainer } from 'src/utilities/imageHelper';
-import { JcampIds, BuildSpcInfos, BuildSpcInfosForNMRDisplayer, isNMRKind } from 'src/utilities/SpectraHelper';
+import {
+  JcampIds, BuildSpcInfos, BuildSpcInfosForNMRDisplayer, isNMRKind
+} from 'src/utilities/SpectraHelper';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import SpectraActions from 'src/stores/alt/actions/SpectraActions';
@@ -31,6 +33,7 @@ import { AnalysisVariationLink } from 'src/apps/mydb/elements/details/reactions/
 import { truncateText } from 'src/utilities/textHelper';
 import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWithButtons';
 import { CommentButton, CommentBox } from 'src/components/common/AnalysisCommentBoxComponent';
+import { UploadField } from 'src/apps/mydb/elements/details/analyses/UploadField';
 
 const nmrMsg = (reaction, container) => {
   const ols = container.extended_metadata?.kind?.split('|')[0].trim();
@@ -45,11 +48,13 @@ const nmrMsg = (reaction, container) => {
       <div className="d-inline text-dark">
         (
         <sup>1</sup>
-        H:{msg}
+        H:
+        {msg}
         )
       </div>
     );
-  } if ((container.extended_metadata.kind || '').split('|')[0].trim() === chmoConversions.nmr_13c.termId) {
+  }
+  if ((container.extended_metadata.kind || '').split('|')[0].trim() === chmoConversions.nmr_13c.termId) {
     const msg = cNmrCount(nmrStr);
     return (
       <div className="d-inline-block ms-1 text-dark">
@@ -57,7 +62,9 @@ const nmrMsg = (reaction, container) => {
         <sup>
           13
         </sup>
-        C: {msg}
+        C:
+        {' '}
+        {msg}
         )
       </div>
     );
@@ -134,11 +141,11 @@ export default class ReactionDetailsContainers extends Component {
       reaction.container.children.push(analyses);
     }
 
-    reaction.container.children.filter(element => (
+    reaction.container.children.filter((element) => (
       ~element.container_type.indexOf('analyses')
     ))[0].children.push(container);
 
-    const newKey = reaction.container.children.filter(element => (
+    const newKey = reaction.container.children.filter((element) => (
       ~element.container_type.indexOf('analyses')
     ))[0].children.length - 1;
 
@@ -171,7 +178,7 @@ export default class ReactionDetailsContainers extends Component {
       SpectraActions.LoadSpectra.defer(spcInfos);
     };
 
-    //process open NMRium
+    // process open NMRium
     const toggleNMRDisplayerModal = (e) => {
       const spcInfosForNMRDisplayer = BuildSpcInfosForNMRDisplayer(reaction, container);
       e.stopPropagation();
@@ -209,8 +216,7 @@ export default class ReactionDetailsContainers extends Component {
         </Button>
       </div>
     );
-  };
-
+  }
 
   handleRemove(container) {
     const { reaction, handleReactionChange } = this.props;
@@ -223,19 +229,23 @@ export default class ReactionDetailsContainers extends Component {
   }
 
   addButton() {
-    const { readOnly } = this.props;
+    const { readOnly, reaction, handleReactionChange } = this.props;
     if (!readOnly) {
       return (
-        <div className="mt-2">
+        <>
+          <UploadField
+            disabled={!reaction.can_update}
+            element={reaction}
+            setElement={(reaction, cb = null) => handleReactionChange(reaction)}
+          />
           <Button
-            size="sm"
+            size="xsm"
             variant="success"
             onClick={this.handleAdd}
           >
             Add analysis
           </Button>
-        </div>
-
+        </>
       );
     }
     return null;
@@ -264,7 +274,7 @@ export default class ReactionDetailsContainers extends Component {
 
       const contentOneLine = {
         ops: content.ops.map((x) => {
-          const c = Object.assign({}, x);
+          const c = { ...x };
           if (c.insert) c.insert = truncateText(c.insert.replace(/\n/g, ' '), 100);
           return c;
         }),
@@ -288,10 +298,14 @@ export default class ReactionDetailsContainers extends Component {
               }
             </div>
             <div className="text-body-tertiary">
-              Type: {kind}
+              Type:
+              {' '}
+              {kind}
               <br />
               Status:
-              {status} {nmrMsg(reaction, container)}
+              {status}
+              {' '}
+              {nmrMsg(reaction, container)}
               <span className="me-5" />
               {insText}
             </div>
@@ -311,7 +325,7 @@ export default class ReactionDetailsContainers extends Component {
       const titleKind = kind ? (` - Type: ${(container.extended_metadata.kind.split('|')[1] || container.extended_metadata.kind).trim()}`) : '';
 
       const status = container.extended_metadata.status && container.extended_metadata.status != '';
-      const titleStatus = status ? (' - Status: ' + container.extended_metadata.status) : '';
+      const titleStatus = status ? (` - Status: ${container.extended_metadata.status}`) : '';
 
       return (
         <div className="d-flex w-100 mb-0 align-items-center">
@@ -333,7 +347,7 @@ export default class ReactionDetailsContainers extends Component {
     };
 
     if (reaction.container != null && reaction.container.children) {
-      const analyses_container = reaction.container.children.filter(element => (
+      const analyses_container = reaction.container.children.filter((element) => (
         ~element.container_type.indexOf('analyses')
       ));
 
@@ -345,10 +359,8 @@ export default class ReactionDetailsContainers extends Component {
                 This tab can be used for reaction-related data (e.g., process control, in situ).
                 For sample data (e.g., characterization), use the sample analysis tab.
               </span>
-              <ButtonToolbar className="gap-1">
-                <div className="mt-2">
-                  <CommentButton toggleCommentBox={this.toggleCommentBox} size="sm" />
-                </div>
+              <ButtonToolbar className="gap-2">
+                <CommentButton toggleCommentBox={this.toggleCommentBox} size="xsm" />
                 {this.addButton()}
               </ButtonToolbar>
             </div>
@@ -358,7 +370,7 @@ export default class ReactionDetailsContainers extends Component {
               handleCommentTextChange={this.handleCommentTextChange}
             />
             <Accordion
-              className='border rounded overflow-hidden'
+              className="border rounded overflow-hidden"
               onSelect={this.handleAccordionOpen}
               activeKey={activeContainer}
             >
@@ -366,7 +378,9 @@ export default class ReactionDetailsContainers extends Component {
                 const isFirstTab = key === 0;
                 return (
                   <Card
-                    ref={(element) => { this.containerRefs[key] = element; }}
+                    ref={(element) => {
+                      this.containerRefs[key] = element;
+                    }}
                     key={`reaction_container_${container.id}`}
                     className={`rounded-0 border-0${isFirstTab ? '' : ' border-top'}`}
                   >
@@ -379,17 +393,19 @@ export default class ReactionDetailsContainers extends Component {
                     </Card.Header>
 
                     {!container.is_deleted && (
-                      <Accordion.Collapse eventKey={key}>
-                        <Card.Body>
-                          <ContainerComponent
-                            disabled={readOnly}
-                            readOnly={readOnly}
-                            templateType="reaction"
-                            container={container}
-                            onChange={() => this.handleChange(container)}
-                          />
-                        </Card.Body>
-                      </Accordion.Collapse>
+                    <Accordion.Collapse eventKey={key}>
+                      <Card.Body>
+                        <ContainerComponent
+                                    disabled={readOnly}
+                                    readOnly={readOnly}
+                                    templateType="reaction"
+                                    container={container}
+                                    onChange={() => this.handleChange(container)}
+                                    rootContainer={reaction.container}
+                                    index={key}
+                                  />
+                      </Card.Body>
+                    </Accordion.Collapse>
                     )}
                   </Card>
                 );

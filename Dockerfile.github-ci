@@ -20,11 +20,11 @@ ADD ${REMOTE}#${BRANCH} /chemotion/app
 
 RUN rm ${ASDF_DIR}/asdf
 ENV PATH="${ASDF_DIR}/bin:${PATH}"
-RUN ./prepare-asdf.sh
-RUN ./prepare-nodejs.sh
 ENV ASDF_NODEJS_VERSION=''
 ENV ASDF_RUBY_VERSION=''
-RUN asdf current && sleep 5s
+ENV NODEJS_FORCE_INSTALL=true
+RUN ./prepare-asdf.sh
+RUN ./prepare-nodejs.sh
 RUN ./prepare-nodejspkg.sh
 RUN ./prepare-rubygems.sh
 

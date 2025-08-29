@@ -34,10 +34,11 @@ module ThirdPartyAppHelpers
 
   # desc: find records from the payload
   def parse_payload(payload = @payload)
-    # TODO: implement attachment authorization
     @attachment = Attachment.find(payload['attID']&.to_i)
     @user = User.find(payload['userID']&.to_i)
     @app = payload['appID'].to_i.zero? ? ThirdPartyApp.new : ThirdPartyApp.find(payload['appID']&.to_i)
+
+    error!('No read access to attachment', 403) unless read_access?(@attachment, @user)
   rescue ActiveRecord::RecordNotFound
     error!('Record not found', 404)
   end
@@ -97,5 +98,18 @@ module ThirdPartyAppHelpers
       { token: @token, download: 3, upload: 10 },
       expires_at: expiry_time,
     )
+  end
+
+  # Build the url public endpoint with the token-path that can be used to fetch an attachment
+  #
+  # @note '@token' should be defined
+  # @return [URI] the full url with token path
+  def token_uri
+    url = URI.parse Rails.application.config.root_url
+    url.path = Pathname.new(url.path)
+                       .join('/', API.prefix.to_s, API.version, 'public/third_party_apps', @token)
+                       .to_s
+
+    url
   end
 end

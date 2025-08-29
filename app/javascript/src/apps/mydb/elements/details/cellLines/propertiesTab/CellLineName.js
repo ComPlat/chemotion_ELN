@@ -12,7 +12,8 @@ export default class CellLineName extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      nameSuggestions: []
+      nameSuggestions: [],
+      cellLineNameInputValue: props.name || ''
     };
   }
 
@@ -24,9 +25,18 @@ export default class CellLineName extends React.Component {
       });
   }
 
+  componentDidUpdate(prevProps) {
+    // Sync cellLineNameInputValue when name prop changes
+    if (prevProps.name !== this.props.name) {
+      this.setState({
+        cellLineNameInputValue: this.props.name || ''
+      });
+    }
+  }
+
   static renderNameSuggestion(name, src) {
     return (
-      <span style={{ display: 'block', textAlign: 'left' }}>
+      <span className="d-block text-start">
         {name}
         {' '}
         (
@@ -38,7 +48,7 @@ export default class CellLineName extends React.Component {
 
   render() {
     const { cellLineDetailsStore } = this.context;
-    const { nameSuggestions } = this.state;
+    const { nameSuggestions, cellLineNameInputValue } = this.state;
     const { id, name, readOnly } = this.props;
 
     if (readOnly) {
@@ -65,28 +75,36 @@ export default class CellLineName extends React.Component {
         <Col sm={9}>
           <CreatableSelect
             className={className}
+            isClearable
+            isInputEditable
+            inputValue={this.state.cellLineNameInputValue}
             onChange={(e) => {
-              if (typeof e.value === 'number') {
-                const currentEntry = nameSuggestions.filter((x) => x.value === e.value);
+              const value = e ? e.value : '';
+              this.setState({ cellLineNameInputValue: value });
+              if (typeof value === 'number') {
+                const currentEntry = nameSuggestions.filter((x) => x.value === value);
                 if (currentEntry.length > 0) {
                   cellLineDetailsStore.changeCellLineName(id, currentEntry[0].name);
-                  CellLinesFetcher.getCellLineMaterialById(e.value)
+                  CellLinesFetcher.getCellLineMaterialById(value)
                     .then((result) => {
                       cellLineDetailsStore.setMaterialProperties(id, result);
                     });
                 }
               } else {
-                cellLineDetailsStore.changeCellLineName(id, e.value);
+                cellLineDetailsStore.changeCellLineName(id, value);
               }
             }}
-            onInputChange={(e, action) => {
-              if (action.action === 'input-change') {
+            onInputChange={(e, { action }) => {
+              if (action === 'input-change') {
+                this.setState({ cellLineNameInputValue: e });
                 cellLineDetailsStore.changeCellLineName(id, e);
               }
             }}
             options={nameSuggestions}
-            placeholder="enter new cell line name or choose from existing ones "
+            placeholder="Enter new cell line name or choose from existing ones "
             defaultInputValue={name}
+            allowCreateWhileLoading
+            formatCreateLabel={(inputValue) => `Create "${inputValue}"`}
           />
         </Col>
       </Form.Group>

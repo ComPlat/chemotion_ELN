@@ -40,11 +40,13 @@
 @import "components/Styleguide";
 @import "components/TabLayoutEditor";
 @import "components/svg_with_popver";
+@import "components/FolderDropzone.module";
 
 @import "legacy/miscellaneous";
 @import "legacy/AttachmentContainer";
 @import "legacy/sample";
 @import "legacy/cellLines";
+@import "legacy/vessels";
 @import "legacy/chemical-tab";
 @import "legacy/chemspectra";
 @import "legacy/collection_management";

@@ -81,12 +81,12 @@ export default class CollectionSubtree extends React.Component {
 
   isVisible(node, uiState) {
     if (node.descendant_ids) {
-      let currentCollectionId = parseInt(uiState.currentCollection.id)
-      if (node.descendant_ids.indexOf(currentCollectionId) > -1) return true
+      const currentCollectionId = parseInt(uiState.currentCollection.id);
+      if (node.descendant_ids.indexOf(currentCollectionId) > -1) return true;
     }
 
-    let { visibleRootsIds } = CollectionStore.getState();
-    return (visibleRootsIds.indexOf(node.id) > -1)
+    const { visibleRootsIds } = CollectionStore.getState();
+    return (visibleRootsIds.indexOf(node.id) > -1);
   }
 
   canTakeOwnership() {
@@ -98,11 +98,19 @@ export default class CollectionSubtree extends React.Component {
 
   urlForCurrentElement() {
     const { currentElement } = ElementStore.getState();
-    if (currentElement) {
+
+    if (Array.isArray(currentElement) && currentElement.length > 0) {
+    // When currentElement is an array, use the first item (special handling for vessel templates)
+      const template = currentElement[0];
+      return template.isNew
+        ? `${template.type}/new`
+        : `${template.type}/${template.id}`;
+    } if (currentElement) {
       return currentElement.isNew
         ? `${currentElement.type}/new`
         : `${currentElement.type}/${currentElement.id}`;
     }
+
     return '';
   }
 
@@ -147,16 +155,16 @@ export default class CollectionSubtree extends React.Component {
             <ChevronIcon
               direction={visible ? 'down' : 'right'}
               onClick={this.toggleExpansion}
-            />) :
-            (<i className="fa fa-fw" />)
-          }
+            />
+          )
+            : (<i className="fa fa-fw" />)}
           <span className="tree-view_title">{root.label}</span>
           {root.inventory_prefix && (
             <OverlayTrigger
               placement="top"
               overlay={<Tooltip id="collection_inventory_label">{root.inventory_prefix}</Tooltip>}
             >
-              <i className="fa fa-tag"/>
+              <i className="fa fa-tag" />
             </OverlayTrigger>
           )}
           {this.canTakeOwnership() && (
@@ -174,7 +182,7 @@ export default class CollectionSubtree extends React.Component {
         {visible && (
           <div className="tree-view">
             {children.map((child) => (
-              <CollectionSubtree key={child.id} root={child} isRemote={isRemote} level={level+1}/>
+              <CollectionSubtree key={child.id} root={child} isRemote={isRemote} level={level + 1} />
             ))}
           </div>
         )}

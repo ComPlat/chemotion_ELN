@@ -10,13 +10,17 @@ module Chemotion
 
     # desc: public endpoint for third party apps to {down,up}load files
     namespace :public do
-      resource :third_party_apps, requirements: { token: /.*/ } do
+      resource :third_party_apps, requirements: { token: %r{[^\/]+} } do
         route_param :token, regexp: /^[\w-]+\.[\w-]+\.[\w-]+$/ do
           after_validation do
             parse_payload(JsonWebToken.decode(params[:token]))
           end
           desc 'download file to 3rd party app'
-          get '/', requirements: { token: /.*/ } do
+          get '/' do
+            download_attachment_to_third_party_app
+          end
+
+          get '/*' do
             download_attachment_to_third_party_app
           end
 
@@ -102,8 +106,7 @@ module Chemotion
         return error!('No read access to attachment', 403) unless read_access?(@attachment, @current_user)
 
         # redirect url with callback url to {down,up}load file: NB path should match the public endpoint
-        url = CGI.escape("#{Rails.application.config.root_url}/api/v1/public/third_party_apps/#{@token}")
-        "#{@app.url}?url=#{url}"
+        "#{@app.url}?url=#{CGI.escape(token_uri.to_s)}"
       end
 
       desc 'get chemotion handler url'
@@ -117,17 +120,27 @@ module Chemotion
         prepare_payload
         parse_payload
         encode_and_cache_token
-        url = CGI.escape("#{Rails.application.config.root_url}/api/v1/public/third_party_apps/#{@token}")
+        uri = token_uri
+        url = uri.to_s
+        escaped_url = CGI.escape(url)
         case params[:type]
         when 1
-          url = URI.parse Rails.application.config.root_url
-          url.path = "/api/v1/public/third_party_apps/#{@token}"
-          url.scheme = 'chemotion'
-          url.to_s
+          uri.scheme = 'chemotion'
+          uri.to_s
         when 2
-          "chemotion://#{@attachment.filename}?url=#{url}"
+          "chemotion://#{@attachment.id}?url=#{escaped_url}"
+        when 3
+          url
         else
-          "chemotion://?url=#{url}"
+          element = @attachment.root_element
+          path = "#{element.class.name.downcase}/#{element&.id}"
+          dataset = @attachment.attachable
+          if dataset.is_a?(Container)
+            analysis = dataset.parent
+            path += "/analysis/#{analysis.id}" if analysis.present?
+            path += "/dataset/#{dataset.id}"
+          end
+          "chemotion://?url=#{escaped_url}&path=#{CGI.escape(path)}"
         end
       end
 

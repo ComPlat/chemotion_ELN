@@ -21,12 +21,12 @@ const showErrorMessage = (store) => {
 }
 
 const filterSearchValues = (store) => {
-  let filteredOptions = [];
+  const filteredOptions = [];
 
   if (store.detail_search_values.length >= 1) {
-    store.detailSearchValues.map((f, i) => {
-      let values = { ...Object.values(f)[0] };
-      if (values.value != '') {
+    store.detailSearchValues.forEach((f) => {
+      const values = { ...Object.values(f)[0] };
+      if (values.value !== '') {
         filteredOptions.push(values);
       }
     });
@@ -34,17 +34,26 @@ const filterSearchValues = (store) => {
       filteredOptions[0].link = '';
     }
   } else {
-    let searchValues =
-      store.searchModalSelectedForm.value == 'publication' ? store.publicationSearchValues : store.advancedSearchValues;
-    filteredOptions = searchValues.filter((f, id) => {
-      return (f.field && f.link && f.value) ||
-        (id == 0 && f.field && f.value)
+    const isPublication = store.searchModalSelectedForm.value === 'publication';
+    const searchValues = isPublication ? store.publicationSearchValues : store.advancedSearchValues;
+    searchValues.forEach((f, id) => {
+      const isValid = (f.field && f.link && f.value) || (id === 0 && f.field && f.value);
+      if (isValid) {
+        filteredOptions.push({ ...f });
+      }
     });
+    if (!isPublication) {
+      store.resetAdvancedSearchValue();
+      if (filteredOptions[0]) {
+        filteredOptions[0].link = '';
+      }
+      filteredOptions.forEach((f, id) => { store.addAdvancedSearchValue(id, f); });
+    }
   }
   store.changeSearchFilter(filteredOptions);
   const storedFilter = store.searchFilters;
-  return storedFilter.length == 0 ? [] : storedFilter[0].filters;
-}
+  return storedFilter.length === 0 ? [] : storedFilter[0].filters;
+};
 
 const handleSearch = (store, uiState) => {
   const { currentCollection } = uiState;
@@ -176,13 +185,13 @@ const AccordeonHeaderButtonForSearchForm = ({ title, eventKey, disabled, callbac
 const SearchButtonToolbar = ({ store }) => {
   return (
     <ButtonToolbar className="advanced-search-buttons">
-      <Button variant="warning" id="advanced-cancel-button" onClick={() => store.handleCancel()}>
+      <Button variant="primary" id="advanced-cancel-button" onClick={() => store.handleCancel()}>
         Cancel
       </Button>
       <Button variant="info" onClick={() => handleClear(store)}>
         Reset
       </Button>
-      <Button variant="primary" id="advanced-search-button"
+      <Button variant="warning" id="advanced-search-button"
         onClick={() => handleSearch(store, UIStore.getState())}>
         Search
       </Button>

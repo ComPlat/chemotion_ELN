@@ -93,6 +93,8 @@ class ElementPermissionProxy
       10
     when DeviceDescription
       10
+    when Vessel
+      10
     end
   end
 
