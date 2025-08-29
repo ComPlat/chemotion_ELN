@@ -17,6 +17,7 @@ function FieldValueSelector({
   onFirstRenderField,
   disableSpecificField,
   disabled,
+  weightPercentageReference,
 }) {
   const [selectedField, setSelectedField] = useState(onFirstRenderField || fieldOptions[0]);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -101,8 +102,12 @@ function FieldValueSelector({
     tooltipMessage = `${tooltipMessage} in decimal format (e.g.: 0.5 = 50%)`;
   }
   if (disableSpecificField && selectedField === 'weight percentage') {
-    tooltipMessage = 'select a reference product from products and assign target amount to enable '
-    + 'weight percentage field';
+    if (weightPercentageReference) {
+      tooltipMessage = 'weight percentage field is disabled for reference material';
+    } else {
+      tooltipMessage = 'select a reference material for weight percentage calculation'
+      + 'and assign target amount to enable weight percentage field';
+    }
   }
 
   return (
@@ -172,12 +177,14 @@ FieldValueSelector.propTypes = {
   onFirstRenderField: PropTypes.string,
   disableSpecificField: PropTypes.bool,
   disabled: PropTypes.bool,
+  weightPercentageReference: PropTypes.bool,
 };
 
 FieldValueSelector.defaultProps = {
   onFirstRenderField: null,
   disableSpecificField: false,
   disabled: false,
+  weightPercentageReference: false,
 };
 
 export default FieldValueSelector;

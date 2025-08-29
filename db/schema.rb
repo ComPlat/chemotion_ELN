@@ -17,6 +17,7 @@ ActiveRecord::Schema.define(version: 2025_12_10_144345) do
   enable_extension "pg_trgm"
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
+  enable_extension "rdkit"
   enable_extension "uuid-ossp"
 
   create_table "affiliations", id: :serial, force: :cascade do |t|
@@ -171,6 +172,7 @@ ActiveRecord::Schema.define(version: 2025_12_10_144345) do
     t.datetime "updated_at"
     t.datetime "deleted_at"
     t.jsonb "log_data"
+    t.bigint "sequence_based_macromolecule_id"
   end
 
   create_table "code_logs", id: :uuid, default: -> { "uuid_generate_v4()" }, force: :cascade do |t|
@@ -1293,9 +1295,9 @@ ActiveRecord::Schema.define(version: 2025_12_10_144345) do
     t.jsonb "solvent"
     t.boolean "dry_solvent", default: false
     t.boolean "inventory_sample", default: false
+    t.jsonb "log_data"
     t.string "sample_type", default: "Micromolecule"
     t.jsonb "sample_details"
-    t.jsonb "log_data"
     t.index ["ancestry"], name: "index_samples_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
     t.index ["identifier"], name: "index_samples_on_identifier"
@@ -1729,6 +1731,7 @@ ActiveRecord::Schema.define(version: 2025_12_10_144345) do
     t.index ["wellplate_id"], name: "index_wells_on_wellplate_id"
   end
 
+  add_foreign_key "chemicals", "sequence_based_macromolecules"
   add_foreign_key "collections", "inventories"
   add_foreign_key "collections_sequence_based_macromolecule_samples", "collections"
   add_foreign_key "collections_sequence_based_macromolecule_samples", "sequence_based_macromolecule_samples"
