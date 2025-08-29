@@ -10,7 +10,7 @@ import ChemrepoLabels from 'src/apps/mydb/elements/labels/ChemrepoLabels';
 import PubchemLabels from 'src/components/pubchem/PubchemLabels';
 import ComputedPropLabel from 'src/apps/mydb/elements/labels/ComputedPropLabel';
 
-function MoleculeHeader({ sample, onClick }) {
+function MoleculeHeader({ sample }) {
   const [showPreviews, setShowPreviews] = useState(UIStore.getState().showPreviews);
 
   useEffect(() => {
@@ -23,9 +23,9 @@ function MoleculeHeader({ sample, onClick }) {
   }, []);
 
   return (
-    <div role="button" onClick={onClick}>
+    <div className="flex-grow-1 pe-1">
       {sample.isNoStructureSample()
-        ? (<h4>(No-structure sample)</h4>)
+        ? (<h5>(No-structure sample)</h5>)
         : (
           <div className="d-flex align-items-start gap-1">
             {showPreviews && (
@@ -44,7 +44,7 @@ function MoleculeHeader({ sample, onClick }) {
                 }}
               />
             )}
-            <h4 className="flex-grow-1"><SampleName sample={sample} /></h4>
+            <div className="h5 flex-grow-1"><SampleName sample={sample} /></div>
             <div className="d-flex align-items-center gap-1">
               {sample.molecule.chem_repo && sample.molecule.chem_repo.id && (
                 <ChemrepoLabels chemrepoId={sample.molecule.chem_repo.id} />
@@ -60,7 +60,6 @@ function MoleculeHeader({ sample, onClick }) {
 
 MoleculeHeader.propTypes = {
   sample: PropTypes.instanceOf(Sample).isRequired,
-  onClick: PropTypes.func.isRequired,
 };
 
 export default MoleculeHeader;

@@ -18,7 +18,7 @@
   }
   .chemotion-select {
     &__indicator.chemotion-select__dropdown-indicator {
-      height: 21px; // simulate line height of regular select elements
+      height: 18.4px; // simulate line height of select element (size sm)
     }
     &__menu {
       @extend .d-flex;
@@ -28,6 +28,9 @@
     }
     &__option:hover {
       background-color: $input-focus-border-color;
+    }
+    &__control {
+      padding: $form-select-padding-y-sm $form-select-padding-x-sm;
     }
   }
 }

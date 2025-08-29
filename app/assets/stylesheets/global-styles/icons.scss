@@ -1,6 +1,6 @@
 // Icon Font: chemstrap-icons
 
-// The chemstrap-icons font contains chemotion specific icons, that are not available  in font-awesome.
+// The chemstrap-icons font contains chemotion specific icons, that are not available in font-awesome.
 // The font is generated via fontello (https://fontello.com/).
 // In order to extend the font
 // 1. upload the svg version of the font (chemstrap-icons.svg) to fontello
@@ -53,6 +53,9 @@
 
 // glyph codes
 
+.icon-abc:before {
+  content: "\e824";
+} /* '' */
 .icon-incoming:before {
   content: "\e820";
 } /* '' */
