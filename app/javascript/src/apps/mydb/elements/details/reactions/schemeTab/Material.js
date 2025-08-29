@@ -180,7 +180,7 @@ class Material extends Component {
                 || ((this.props.materialGroup !== 'products')
                 && !material.reference && this.props.lockEquivColumn)
                 || material.gas_type === 'gas'}
-              onChange={e => this.handleAmountUnitChange(e, material.amount_l)}
+              onChange={e => this.handleAmountUnitChange(e, material.amount_l, material.amountType)}
               onMetricsChange={this.handleMetricsChange}
               variant={material.amount_unit === 'l' ? 'primary' : 'light'}
               size="sm"
@@ -590,7 +590,7 @@ class Material extends Component {
     }
   }
 
-  handleAmountUnitChange(e, value, amountType) {
+  handleAmountUnitChange(e, value, amountType = null) {
     if (e.value === value) return;
     if (this.props.onChange && e) {
       const event = {
@@ -915,7 +915,7 @@ class Material extends Component {
                 || isAmountDisabledByWeightPercentage
                 || (this.props.materialGroup === 'products'
                 || (!material.reference && this.props.lockEquivColumn))}
-              onChange={e => this.handleAmountUnitChange(e, material.amount_mol)}
+              onChange={e => this.handleAmountUnitChange(e, material.amount_mol, material.amountType)}
               onMetricsChange={this.handleMetricsChange}
               variant={material.amount_unit === 'mol' ? 'primary' : 'light'}
               size="sm"
