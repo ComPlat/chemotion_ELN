@@ -4,6 +4,7 @@ module Entities
   class CollectionEntity < ApplicationEntity
     expose! :id
     expose! :ancestry
+    expose! :position
     expose! :label
     expose! :tabs_segment
     expose! :inventory_id
@@ -11,13 +12,13 @@ module Entities
     expose! :shares, using: 'Entities::CollectionShareEntity'
 
     def owner
-      "#{user.name} (#{user.name_abbreviation})"
+      "#{object.user.name} (#{object.user.name_abbreviation})"
     end
 
     def shares
-      return [] unless user_id == current_user.id
+      return [] unless object.user_id == current_user.id
 
-      collection_shares
+      object.collection_shares
     end
   end
 end

@@ -129,8 +129,8 @@ class User < ApplicationRecord
                                          }
   before_create :set_account_active, if: proc { |user| %w[Person].include?(user.type) }
 
-  after_create :create_chemotion_public_collection
-  after_create :create_all_collection
+  # after_create :create_chemotion_public_collection
+  # after_create :create_all_collection
   after_create :update_matrix
   after_create :send_welcome_email, if: proc { |user| %w[Person].include?(user.type) }
   after_create :set_default_avail_space
@@ -463,13 +463,13 @@ class User < ApplicationRecord
   # - delete it
 
   def create_all_collection
-    Collection.create(user: self, label: 'All', is_locked: true, position: 0)
+    Collection.create(user: self, label: 'All', position: 0)
   end
 
   def create_chemotion_public_collection
     return unless type == 'Person'
 
-    Collection.create(user: self, label: 'chemotion-repository.net', is_locked: true, position: 1)
+    Collection.create(user: self, label: 'chemotion-repository.net', position: 1)
   end
 
   def set_account_active
