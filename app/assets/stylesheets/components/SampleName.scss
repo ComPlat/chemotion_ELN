@@ -1,5 +1,6 @@
 .sample-name__molecule-name {
   word-break: break-all;
   max-height: 37.8px; //line height is 18.9px
+  @extend .mb-2;
   @extend .overflow-hidden;
 }

@@ -2,11 +2,14 @@
   @extend .flex-grow-1;
 }
 
+.element-list-renderer {
+  @extend .gap-1;
+}
+
 .element-list-renderer,
 .element-groups-renderer {
   @extend .d-flex;
   @extend .flex-column;
-  @extend .gap-2;
   .element-group {
     --bs-accordion-color: #{$accordion-color};
     --bs-accordion-bg: #{$accordion-bg};
@@ -32,16 +35,17 @@
     --bs-accordion-btn-icon-transform: #{$accordion-icon-transform};
     --bs-accordion-inner-border-radius: #{$accordion-inner-border-radius};
     @extend .accordion-item;
-    // apply following rules to every item, as they are rendered separated by a gap
-    border-radius: var(--bs-accordion-border-radius) !important;
-    border-top: var(--bs-accordion-border-width) solid
-      var(--bs-accordion-border-color) !important;
+    &:not(:first-child) {
+      .element-group-header .drag-handle {
+        border-top-left-radius: 0 !important;
+      }
+    }
   }
   .element-group-items {
-    @extend .accordion-body;
     @extend .d-flex;
     @extend .flex-column;
-    @extend .gap-1;
+    gap: 2px;
+    padding: 3px;
   }
   .element-group-header-content {
     @extend .accordion-button;
@@ -57,10 +61,8 @@
   }
   .element-group-header {
     @extend .accordion-header;
-    &:not(.collapsed) {
-      .drag-handle {
-        border-bottom-left-radius: 0 !important;
-      }
+    .drag-handle {
+      border-bottom-left-radius: 0 !important;
     }
   }
   .element-list-item {
