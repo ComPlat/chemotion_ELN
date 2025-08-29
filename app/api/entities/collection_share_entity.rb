@@ -2,7 +2,7 @@
 
 module Entities
   class CollectionShareEntity < ApplicationEntity
-    expose! :id,
+    expose! :id
     expose! :shared_with
     expose! :shared_with_id
     expose! :permission_level # TODO: wie kommuniziert man sauber die Möglichkeiten die das FE freigeben soll?
@@ -17,7 +17,7 @@ module Entities
     expose! :wellplate_detail_level
 
     def shared_with
-      "#{shared_with.name} (#{shared_with.name_abbreviation})"
+      "#{object.shared_with.name} (#{object.shared_with.name_abbreviation})"
     end
   end
 end
