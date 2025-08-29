@@ -203,7 +203,7 @@ function GeneralMaterialGroup({
       placement="top"
       overlay={(
         <Tooltip id="coefficientHeaderTitleReactionScheme">
-          Reference Product for weight percentage calculation
+          Select Reference material for weight percentage calculation
         </Tooltip>
       )}
     >

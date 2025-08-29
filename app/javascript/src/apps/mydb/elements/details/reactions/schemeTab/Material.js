@@ -223,15 +223,19 @@ class Material extends Component {
         ? this.renderProductReference(material, reaction)
         : (
           <td>
-            <Form.Check
-              type="radio"
-              disabled={!permitOn(reaction)}
-              name="reference"
-              checked={material.reference}
-              onChange={(e) => this.handleReferenceChange(e)}
-              size="sm"
-              className="m-1"
-            />
+            {reaction.weight_percentage ? (
+              this.renderNestedReferenceRadios(material, reaction)
+            ) : (
+              <Form.Check
+                type="radio"
+                disabled={!permitOn(reaction)}
+                name="reference"
+                checked={material.reference}
+                onChange={(e) => this.handleReferenceChange(e)}
+                size="sm"
+                className="m-1"
+              />
+            )}
           </td>
         )
     );
@@ -378,7 +382,9 @@ class Material extends Component {
       const weightPercentageReferenceMaterial = weightPercentageReference?.weightPercentageReference;
       const targetAmountIsNotValid = Number.isNaN(weightPercentageReference?.targetAmount?.value)
         || weightPercentageReference?.targetAmount?.value === 0;
-      disableWeightPercentageField = !weightPercentageReferenceMaterial || targetAmountIsNotValid;
+      disableWeightPercentageField = !weightPercentageReferenceMaterial
+        || targetAmountIsNotValid
+        || material.weight_percentage_reference;
     }
 
     return (
@@ -392,6 +398,7 @@ class Material extends Component {
         disabled={
           !permitOn(reaction) || material.reference || lockEquivColumn
         }
+        weightPercentageReference={material.weight_percentage_reference}
       />
     );
   }
@@ -668,7 +675,7 @@ class Material extends Component {
       }
     } else if (field === 'molar mass') {
       if (!material.reference) {
-        this.handleWeightPercentageChange(0);
+        this.handleWeightPercentageChange(null);
       }
     }
   }
@@ -676,7 +683,8 @@ class Material extends Component {
   handleWeightPercentageChange(e) {
     const { onChange, materialGroup } = this.props;
     const weightPercentage = e;
-    if (onChange && (e || e === 0)) {
+    //(e || e === 0)
+    if (onChange) {
       const event = {
         type: 'weightPercentageChanged',
         materialGroup,
@@ -1242,7 +1250,81 @@ class Material extends Component {
             />
           </OverlayTrigger>
         </td>
-      ) : <td />
+      ) : <td aria-label="Empty cell" />
+    );
+  }
+
+  renderNestedReferenceRadios(material, reaction) {
+    const isDisabled = !permitOn(reaction);
+
+    const outerClassNames = [
+      'nested-radio-outer',
+      material.weight_percentage_reference ? 'checked' : '',
+      isDisabled ? 'disabled' : ''
+    ].filter(Boolean).join(' ');
+
+    const innerClassNames = [
+      'nested-radio-inner',
+      material.reference ? 'checked' : '',
+      isDisabled ? 'disabled' : ''
+    ].filter(Boolean).join(' ');
+
+    const handleOuterClick = (e) => {
+      e.preventDefault();
+      if (isDisabled) {
+        return;
+      }
+      this.handleReferenceChange(e, 'weightPercentageReferenceChanged');
+    };
+
+    const handleInnerClick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (isDisabled) {
+        return;
+      }
+      this.handleReferenceChange(e, null);
+    };
+
+    const handleKeyDown = (handler) => (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handler(e);
+      }
+    };
+
+    return (
+      <OverlayTrigger
+        placement="top"
+        overlay={(
+          <Tooltip id="nested-reference-tooltip">
+            Outer: Weight % Reference
+            <br />
+            Inner: Molar Reference
+          </Tooltip>
+        )}
+      >
+        <div className="nested-radio-container m-1">
+          <div
+            className={outerClassNames}
+            onClick={handleOuterClick}
+            onKeyDown={handleKeyDown(handleOuterClick)}
+            tabIndex={0}
+            role="radio"
+            aria-checked={material.weight_percentage_reference}
+            aria-label="Weight percentage reference"
+          />
+          <div
+            className={innerClassNames}
+            onClick={handleInnerClick}
+            onKeyDown={handleKeyDown(handleInnerClick)}
+            tabIndex={0}
+            role="radio"
+            aria-checked={material.reference}
+            aria-label="Molar reference"
+          />
+        </div>
+      </OverlayTrigger>
     );
   }
 
