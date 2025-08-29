@@ -571,7 +571,11 @@ export default class ReactionDetailsScheme extends React.Component {
     // updatedSample.setAmountAndNormalizeToGram(amount);
     // setAmount should be called first before updating feedstock mole and volume values
     updatedSample.setAmount(amount);
-    if (reaction.weight_percentage && updatedSample.weight_percentage_reference && changeEvent.amountType === 'target') {
+    if (
+      reaction.weight_percentage
+      && updatedSample.weight_percentage_reference
+      && changeEvent.amountType === 'target'
+    ) {
       const amountUnitObject = {
         value: amount.value,
         unit: amount.unit,

@@ -755,7 +755,7 @@ class Material extends Component {
     }
   }
 
-  handleAmountUnitChange(e, value, amountType) {
+  handleAmountUnitChange(e, value, amountType = null) {
     if (e.value === value) return;
 
     if (onChange && e) {
