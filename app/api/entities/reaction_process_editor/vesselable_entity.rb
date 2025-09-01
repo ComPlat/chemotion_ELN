@@ -58,7 +58,7 @@ module Entities
         is_vessel_template ? nil : object.bar_code
       end
 
-      def is_vessel_template # rubocop:disable Naming/PredicateName
+      def is_vessel_template # rubocop:disable Naming
         object.instance_of?(VesselTemplate)
       end
 
