@@ -8,7 +8,7 @@ module Chemotion
       end
 
       get '/:id' do
-        collection = Collections.accessible_for(current_user).find(params[:id])
+        collection = Collection.accessible_for(current_user).find(params[:id])
 
         present collection, with: Entities::CollectionEntity, root: :collection
       end
