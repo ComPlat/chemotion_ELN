@@ -8,11 +8,12 @@ module Entities
           {
             added_materials: added_materials(reaction_process_step),
             mounted_equipment: mounted_equipment(reaction_process_step),
+            saved_samples: saved_samples(reaction_process_step),
             FORMS: {
               REMOVE: { removable_samples: removable_samples(reaction_process_step) },
               SAVE: { origins: save_sample_origins(reaction_process_step) },
               TRANSFER: {
-                transferable_samples: transferable_samples(reaction_process_step),
+                transferable_samples: saved_samples(reaction_process_step),
                 targets: transfer_targets(reaction_process_step),
               },
             },
@@ -45,8 +46,8 @@ module Entities
           titlecase_options_for(reaction_process_step.mounted_equipment)
         end
 
-        def transferable_samples(reaction_process_step)
-          Sample.where(id: transferable_sample_ids(reaction_process_step))
+        def saved_samples(reaction_process_step)
+          Sample.where(id: reaction_process_step.reaction_process.saved_sample_ids)
                 .includes(%i[molecule residues])
                 .map do |sample|
             sample_info_option(sample, 'SAMPLE')
@@ -59,10 +60,6 @@ module Entities
               label: process_step.label,
               saved_sample_ids: process_step.saved_sample_ids }
           end
-        end
-
-        def transferable_sample_ids(reaction_process_step)
-          reaction_process_step.reaction_process.saved_sample_ids
         end
 
         def step_fractions_options(reaction_process_step)

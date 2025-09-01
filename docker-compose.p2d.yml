@@ -16,6 +16,8 @@ services:
       args:
         - BUILDKIT_CONTEXT_KEEP_GIT_DIR=1
     restart: unless-stopped
+    env_file:
+      - path: .env
     environment:
       - CONFIG_ROLE=combine
       - SECRET_KEY_BASE=pleasechangeme

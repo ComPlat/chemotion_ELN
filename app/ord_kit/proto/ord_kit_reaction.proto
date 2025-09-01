@@ -298,6 +298,7 @@ message ReactionProcessAction {
     repeated PoolingFraction fractions = 17;
 
     repeated Compound molecular_entities = 18;
+    optional Compound sample = 19;
   }
 
   message ActionPurificationExtraction {
@@ -350,12 +351,14 @@ message ReactionProcessAction {
     Automation.AutomationMode automation_mode = 1;
     string device = 2;
     repeated Compound molecular_entities = 3;
+    Compound sample = 4;
   }
 
   message ActionAnalysisSpectrometry {
     Automation.AutomationMode automation_mode = 1;
     string device = 2;
     repeated Compound molecular_entities = 3;
+    Compound sample = 4;
   }
 
   message ActionAnalysis {
