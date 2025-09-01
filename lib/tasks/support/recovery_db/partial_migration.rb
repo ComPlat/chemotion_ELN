@@ -20,17 +20,22 @@ module RecoveryDB
                                                     screens research_plans device_descriptions attachments
                                                     containers container_hierarchies collections_samples
                                                     collections_reactions collections_wellplates collections_screens
-                                                    collections_research_plans collections_device_descriptions])
+                                                    collections_research_plans collections_device_descriptions
+                                                    sync_collections_users])
       end
 
       def run
         raise ArgumentError, 'User Ids are required' if @user_ids.nil?
         raise ActiveRecord::RecordNotFound, 'No user found' if rec_users.empty?
 
+        user_id_map = {}
+
         @mount.log_event "Restoring users: found #{rec_users.size} of #{@user_ids.size} user(s) to restore"
         rec_users.each do |recovery_user|
-          restore_user(recovery_user)
+          new_user = restore_user(recovery_user)
+          user_id_map[recovery_user.id] = new_user.id
         end
+        restore_sharing_and_synchronization(user_id_map)
         @mount.destroy!
       end
 
@@ -38,24 +43,34 @@ module RecoveryDB
         user_attributes = old_user.attributes.except(*attributes_to_exclude)
 
         begin
-          abbreviation_log_path = Rails.root.join('log/name_abbreviation_changes.log')
-          if User.find_by(name_abbreviation: user_attributes['name_abbreviation'])
-            old_abbreviation = user_attributes['name_abbreviation']
-            new_abbreviation = create_unique_name_abbreviation(user_attributes)
-            user_attributes['name_abbreviation'] = new_abbreviation
-            # Log the change to a dedicated file
-            File.open(abbreviation_log_path, 'a') do |file|
-              file.puts "#{user_attributes['email']}: #{old_abbreviation} => #{new_abbreviation}"
-            end
-          end
+          handle_name_abbreviation(user_attributes)
           new_user = User.new(user_attributes)
           # Skip validations (e.g. password) when restoring
           new_user.save(validate: false)
-
           restore_profile(old_user, new_user)
           restore_collections(old_user, new_user)
+          restore_sync_collection_users(
+            old_user_id: old_user.id,
+            new_user_id: new_user.id,
+          )
+
+          new_user
         rescue ActiveRecord::ActiveRecordError => e
           Rails.logger.error "Failed to copy user #{old_user.id}: #{e.message}"
+          nil
+        end
+      end
+
+      def handle_name_abbreviation(user_attributes)
+        return unless User.find_by(name_abbreviation: user_attributes['name_abbreviation'])
+
+        abbreviation_log_path = Rails.root.join('log/name_abbreviation_changes.log')
+        old_abbreviation = user_attributes['name_abbreviation']
+        new_abbreviation = create_unique_name_abbreviation(user_attributes)
+        user_attributes['name_abbreviation'] = new_abbreviation
+        # Log the change to a dedicated file
+        File.open(abbreviation_log_path, 'a') do |file|
+          file.puts "#{user_attributes['email']}: #{old_abbreviation} => #{new_abbreviation}"
         end
       end
 
@@ -106,12 +121,42 @@ module RecoveryDB
       def build_new_collection(old_collection, new_user, id_map)
         attributes = old_collection.attributes.except(*attributes_to_exclude)
         new_collection = Collection.new(attributes.merge(user_id: new_user.id))
+        restore_sync_collection_users(
+          new_user_id: new_user.id,
+          old_collection_id: old_collection.id,
+          new_collection_id: new_collection.id,
+        )
+
         return new_collection if old_collection.ancestry.blank?
 
         old_parent_id = old_collection.ancestry.split('/').last.to_i
         new_parent = id_map[old_parent_id]
         new_collection.parent = new_parent if new_parent
         new_collection
+      end
+
+      def restore_sync_collection_users(new_user_id, old_user_id: nil, old_collection_id: nil, new_collection_id: nil)
+        # Build query conditions
+        conditions = {}
+        conditions[:user_id] = old_user_id if old_user_id
+        conditions[:collection_id] = old_collection_id if old_collection_id
+
+        sync_collections = RecoveryDB::Models::SyncCollectionsUser.where(conditions)
+
+        sync_collections.find_each do |sync_collection|
+          attrs = sync_collection.attributes.except(*attributes_to_exclude)
+
+          # Always replace user_id
+          attrs['user_id'] = new_user_id
+
+          # Replace collection_id only if it matches the provided old_collection_id
+          if old_collection_id && sync_collection.collection_id == old_collection_id
+            attrs['collection_id'] = new_collection_id
+          end
+
+          # Leave shared_by_id (sharer) as-is — will fix later
+          SyncCollectionsUser.create!(attrs)
+        end
       end
 
       def restore_collection_elements(old_collection, new_collection, new_user_id, created_elements)
@@ -265,6 +310,38 @@ module RecoveryDB
           Well.create!(attrs)
         rescue ActiveRecord::RecordInvalid => e
           Rails.logger.error "Failed to restore Well #{well.id}: #{e.message}"
+        end
+      end
+
+      def restore_sharing_and_synchronization(user_id_map)
+        restore_sharing(user_id_map)
+        restore_synchronization(user_id_map)
+      end
+
+      def restore_sharing(user_id_map)
+        Collection.where(is_shared: true).find_each do |collection|
+          new_user_id = user_id_map[collection.shared_by_id]
+
+          if new_user_id
+            collection.update_columns!(shared_by_id: new_user_id)
+          else
+            collection.update_columns!(shared_by_id: nil, is_shared: false)
+          end
+        end
+      end
+
+      def restore_synchronization(user_id_map)
+        Collection.synchronized.includes(:sync_collections_users).find_each do |collection|
+          collection.sync_collections_users.each do |sync_user|
+            new_user_id = user_id_map[sync_user.shared_by_id]
+
+            if new_user_id
+              sync_user.update_columns!(shared_by_id: new_user_id)
+            else
+              sync_user.destroy
+            end
+          end
+          collection.update_columns!(is_synchronized: false) if collection.sync_collections_users.empty?
         end
       end
 
