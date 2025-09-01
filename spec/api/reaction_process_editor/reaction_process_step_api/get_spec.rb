@@ -31,7 +31,6 @@ describe ReactionProcessEditor::ReactionProcessStepAPI, '.get' do
 
   it 'returns reaction_process_step' do
     get_process_step_request
-    puts(parsed_json_response['reaction_process_step'])
     expect(parsed_json_response['reaction_process_step']).to include expected_process_step_hash
   end
 
