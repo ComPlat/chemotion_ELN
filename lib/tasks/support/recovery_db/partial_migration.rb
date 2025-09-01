@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/ClassLength
+
 module RecoveryDB
   module PartialMigration
     class RestoreUsers
@@ -155,43 +157,60 @@ module RecoveryDB
         return nil unless original
 
         attributes = original.attributes.except(*attributes_to_exclude)
-
-        attributes['user_id'] = new_user_id if main_model.column_names.include?('user_id')
-        attributes['created_by'] = new_user_id if main_model.column_names.include?('created_by')
         attributes['short_label'] = nil if main_model.column_names.include?('short_label')
-
         new_record = main_model.new(attributes)
-        new_record.creator = User.find(new_user_id) if new_record.respond_to?(:creator=)
+        assign_creator_or_user(new_record, new_user_id)
         new_record.save(validate: false)
-        restore_container(main_model, original_id, new_record.id)
-        restore_attachments(main_model, original_id, new_record.id)
-        restore_wells(original_id, new_record.id) if main_model == Wellplate
+        restore_associations(main_model, original_id, new_record.id)
         new_record
       rescue ActiveRecord::RecordInvalid => e
         Rails.logger.error "Failed to restore #{main_model.name} #{original_id}: #{e.message}"
         nil
       end
 
+      def assign_creator_or_user(record, new_user_id)
+        if record.respond_to?(:creator=)
+          record.creator = User.find(new_user_id)
+        else
+          record['user_id'] = new_user_id if record.has_attribute?('user_id')
+          record['created_by'] = new_user_id if record.has_attribute?('created_by')
+        end
+      end
+
+      def restore_associations(main_model, original_id, new_id)
+        restore_container(main_model, original_id, new_id)
+        restore_attachments(main_model, original_id, new_id)
+        restore_wells(original_id, new_id) if main_model == Wellplate
+      end
+
       def restore_container(element_type, old_element_id, new_element_id)
+        old_base_id, id_map = restore_base_container(element_type, old_element_id, new_element_id)
+        return unless old_base_id && id_map
+
+        restore_descendants(old_base_id, id_map)
+        restore_hierarchies(id_map)
+
+        all_old_containers = RecoveryDB::Models::Container.where(id: id_map.keys, container_type: 'dataset')
+        all_old_containers.each do |old_container|
+          new_id = id_map[old_container.id]
+          restore_attachments(Container, old_container.id, new_id)
+        end
+      end
+
+      def restore_base_container(element_type, old_element_id, new_element_id)
+        id_map = {}
         old_base = RecoveryDB::Models::Container.find_by!(
           containable_type: element_type.name,
           containable_id: old_element_id,
         )
-        return unless old_base
-
-        id_map = {}
-        # Create new base container and its first-level children
         new_base = Container.find_by(containable: element_type.find(new_element_id))
         new_base ||= Container.create_root_container(containable: element_type.find(new_element_id))
-
-        raise "Couldn't create new_base container" unless new_base
+        return unless new_base
 
         id_map[old_base.id] = new_base.id
 
-        # Map any pre-created child containers
         existing_children = new_base.children.to_a
         existing_children.each do |child|
-          # Try to find matching old container
           match = RecoveryDB::Models::Container.find_by(
             parent_id: old_base.id,
             container_type: child.container_type,
@@ -199,32 +218,30 @@ module RecoveryDB
           id_map[match.id] = child.id if match
         end
 
+        [old_base.id, id_map]
+      end
+
+      def restore_descendants(old_base_id, id_map)
         descendants = RecoveryDB::Models::Container
                       .joins('INNER JOIN container_hierarchies ON containers.id = container_hierarchies.descendant_id')
-                      .where(container_hierarchies: { ancestor_id: old_base.id })
+                      .where(container_hierarchies: { ancestor_id: old_base_id })
                       .where.not(containers: { id: id_map.keys }) # Skip already cloned or pre-created
                       .order('container_hierarchies.generations ASC')
 
-        descendants.each do |old_container|
+        descendants.find_each do |old_container|
           new_container = Container.new(old_container.attributes.except(*attributes_to_exclude))
           new_container.parent_id = id_map[old_container.parent_id]
           new_container.save!
           id_map[old_container.id] = new_container.id
         end
+      end
 
+      def restore_hierarchies(id_map)
         old_hierarchies = RecoveryDB::Models::ContainerHierarchy.where(descendant_id: id_map.keys)
         old_hierarchies.each do |h|
-          ContainerHierarchy.create_or_find_by!(
-            ancestor_id: id_map[h.ancestor_id],
-            descendant_id: id_map[h.descendant_id],
-            generations: h.generations,
-          )
-        end
-
-        all_old_containers = RecoveryDB::Models::Container.where(id: id_map.keys, container_type: 'dataset')
-        all_old_containers.each do |old_container|
-          new_id = id_map[old_container.id]
-          restore_attachments(Container, old_container.id, new_id)
+          ContainerHierarchy.create_or_find_by!(ancestor_id: id_map[h.ancestor_id],
+                                                descendant_id: id_map[h.descendant_id],
+                                                generations: h.generations)
         end
       end
 
@@ -273,3 +290,5 @@ module RecoveryDB
     end
   end
 end
+
+# rubocop:enable Metrics/ClassLength
