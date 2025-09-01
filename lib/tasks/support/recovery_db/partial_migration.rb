@@ -273,11 +273,13 @@ module RecoveryDB
                       .where.not(containers: { id: id_map.keys }) # Skip already cloned or pre-created
                       .order('container_hierarchies.generations ASC')
 
-        descendants.find_each do |old_container|
-          new_container = Container.new(old_container.attributes.except(*attributes_to_exclude))
-          new_container.parent_id = id_map[old_container.parent_id]
-          new_container.save!
-          id_map[old_container.id] = new_container.id
+        descendants.in_batches(of: 500) do |batch|
+          batch.each do |old_container|
+            new_container = Container.new(old_container.attributes.except(*attributes_to_exclude))
+            new_container.parent_id = id_map[old_container.parent_id]
+            new_container.save!
+            id_map[old_container.id] = new_container.id
+          end
         end
       end
 
