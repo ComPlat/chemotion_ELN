@@ -2196,7 +2196,39 @@ export const hasConsistentAliasesKet = {
   }
 };
 
-export const mock_ketcher_mols_images_nodes = {
+export const isMoleculeEmptyKet = {
+  root: {
+    nodes: [
+      {
+        $ref: 'mol0'
+      }
+    ],
+    connections: [],
+    templates: []
+  },
+  mol0: {
+    type: 'molecule',
+    atoms: [
+      {
+        label: 'A',
+        alias: 't_01_0',
+        location: [
+          7.908093197220616,
+          -5.419931654451775,
+          0
+        ]
+      }
+    ],
+    bonds: [],
+    stereoFlagPosition: {
+      x: 8.195481704210694,
+      y: -5.422639880466175,
+      z: 0
+    }
+  },
+};
+
+export const deleteImageWithThreeOldPack = {
   root: {
     nodes: [
       {
@@ -2218,13 +2250,129 @@ export const mock_ketcher_mols_images_nodes = {
         type: 'image',
         format: 'image/svg+xml',
         boundingBox: {
-          x: 12.439399957342559,
-          y: -5.4582998402121765,
+          x: 12.738299980163575,
+          y: -4.529699935913086,
           z: 0,
-          width: 1.0250000000000006,
-          height: 1.0250000000000006
+          width: 0.97,
+          height: 0.97
         },
-        data: 'PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj4NCiAgPGRlZnM+DQogICAgPHJhZGlhbEdyYWRpZW50IGlkPSJncmFkMSIgY3g9IjUwJSIgY3k9IjUwJSIgcj0iNTAlIiBmeD0iNTAlIiBmeT0iNTAlIj4NCiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOnJnYigyNTUsMjU1LDI1NSk7c3RvcC1vcGFjaXR5OjEiIC8+DQogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOnJnYigwLDAsMCk7c3RvcC1vcGFjaXR5OjEiIC8+DQogICAgPC9yYWRpYWxHcmFkaWVudD4NCiAgPC9kZWZzPg0KICA8Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0MCIgZmlsbD0idXJsKCNncmFkMSkiIC8+DQo8L3N2Zz4NCg=='
+        data: 'IDxzdmcKICAgICAgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIgogICAgICB3aWR0aD0iNTAiCiAgICAgIGhlaWdodD0iNTAiCiAgICAgIHZpZXdCb3g9IjAgMCAxMDAgMTAwIgogICAgPgogICAgICA8Y2lyY2xlIHI9IjQwIiBjeD0iNTAiIGN5PSI1MCIgc3Ryb2tlPSIjMzE1MzhmIiBzdHJva2VXaWR0aD0iNSIgZmlsbD0iIzQ0NzJjNCIgLz4KICAgIDwvc3ZnPg=='
+      },
+    ],
+    connections: [],
+    templates: []
+  },
+  mol0: {
+    type: 'molecule',
+    atoms: [
+      {
+        label: 'A',
+        alias: 't_01_0',
+        location: [
+          7.908093197220616,
+          -5.419931654451775,
+          0
+        ]
+      }
+    ],
+    bonds: [],
+    stereoFlagPosition: {
+      x: 8.195481704210694,
+      y: -5.422639880466175,
+      z: 0
+    }
+  },
+  mol1: {
+    type: 'molecule',
+    atoms: [
+      {
+        label: 'A',
+        alias: 't_01_1',
+        location: [
+          7.908093197220616,
+          -5.419931654451775,
+          0
+        ]
+      }
+    ],
+    bonds: [],
+    stereoFlagPosition: {
+      x: 8.195481704210694,
+      y: -5.422639880466175,
+      z: 0
+    }
+  },
+  mol2: {
+    type: 'molecule',
+    atoms: [
+      {
+        label: 'A',
+        alias: 't_01_2',
+        location: [
+          7.908093197220616,
+          -5.419931654451775,
+          0
+        ]
+      }
+    ],
+    bonds: [],
+    stereoFlagPosition: {
+      x: 8.195481704210694,
+      y: -5.422639880466175,
+      z: 0
+    }
+  },
+};
+
+export const isImageSelectionValidKet = {
+  root: {
+    nodes: [
+      {
+        $ref: 'mol0'
+      },
+      {
+        type: 'image',
+        format: 'image/svg+xml',
+        boundingBox: {
+          x: 8.971577291071608,
+          y: -4.963591998912502,
+          z: 0,
+          width: 2,
+          height: 0.5
+        },
+        data: 'PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMjAwIiB2aWV3Qm94PSIwIDAgMzAwIDMwMCI+CiAgPHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIxNTAiIHk9IjgwIiByeD0iMjAiIHJ5PSIyMCIKICBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMTAiIGZpbGw9Ijc1NzA3MCIKICAvPgo8L3N2Zz4='
+      }
+    ],
+    connections: [],
+    templates: []
+  },
+  mol0: {
+    type: 'molecule',
+    atoms: [
+      {
+        label: 'A',
+        alias: 't_01_0',
+        location: [
+          7.908093197220616,
+          -5.419931654451775,
+          0
+        ]
+      }
+    ],
+    bonds: [],
+    stereoFlagPosition: {
+      x: 8.195481704210694,
+      y: -5.422639880466175,
+      z: 0
+    }
+  },
+};
+
+export const only2AliasAtomsKet = {
+  root: {
+    nodes: [
+      {
+        $ref: 'mol0'
       }
     ],
     connections: [],
@@ -2238,38 +2386,6 @@ export const mock_ketcher_mols_images_nodes = {
         alias: 't_01_0',
         location: [
           18.148100042657443,
-          -5.970799840212177,
-          0
-        ]
-      },
-      {
-        label: 'C',
-        location: [
-          17.282100868432757,
-          -5.470799867681642,
-          0
-        ]
-      },
-      {
-        label: 'C',
-        location: [
-          16.416000604736084,
-          -5.970799840212177,
-          0
-        ]
-      },
-      {
-        label: 'C',
-        location: [
-          15.550000476837134,
-          -5.470799867681642,
-          0
-        ]
-      },
-      {
-        label: 'C',
-        location: [
-          14.684000348938183,
           -5.970799840212177,
           0
         ]
@@ -2291,19 +2407,30 @@ export const mock_ketcher_mols_images_nodes = {
           0
         ]
       },
+    ],
+    bonds: []
+  },
+};
+
+export const twoAliasAtomsOneImageKet = {
+  root: {
+    nodes: [
       {
-        label: 'C',
-        location: [
-          17.313900183091988,
-          -6.406299961244762,
-          0
-        ]
-      },
+        $ref: 'mol0'
+      }
+    ],
+    connections: [],
+    templates: []
+  },
+  mol0: {
+    type: 'molecule',
+    atoms: [
       {
-        label: 'C',
+        label: 'A',
+        alias: 't_01_0',
         location: [
-          17.538601098481532,
-          -7.37879975522877,
+          18.148100042657443,
+          -5.970799840212177,
           0
         ]
       },

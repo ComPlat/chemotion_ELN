@@ -42,7 +42,9 @@ module Chemotion
           when :html
             Loofah.scrub_html5_fragment(result, :strip)
           else
-            if Loofah.fragment(result).css('img').any?
+            # scrubber = allow_image_tag
+            # Loofah.fragment(result).scrub!(scrubber)
+            if Loofah.fragment(result).css('image').any?
               scrubber = allow_image_tag
               Loofah.fragment(result).scrub!(scrubber)
             else

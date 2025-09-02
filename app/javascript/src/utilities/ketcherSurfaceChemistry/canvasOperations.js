@@ -8,12 +8,18 @@ import { reAttachPolymerList } from 'src/utilities/ketcherSurfaceChemistry/Polym
 import {
   latestData,
   resetStore,
+  imageUsedCounterSetter,
+  imageNodeCounter,
+  latestDataSetter
+} from 'src/components/structureEditor/KetcherEditor';
+import { ALIAS_PATTERNS, KET_TAGS } from 'src/utilities/ketcherSurfaceChemistry/constants';
+import { handleAddAtom } from 'src/utilities/ketcherSurfaceChemistry/AtomsAndMolManipulation';
+import { fetchKetcherData } from 'src/utilities/ketcherSurfaceChemistry/InitializeAndParseKetcher';
+import {
   latestDataSetter,
   imageUsedCounterSetter,
 } from 'src/components/structureEditor/KetcherEditor';
-import { ALIAS_PATTERNS, KET_TAGS } from 'src/utilities/ketcherSurfaceChemistry/constants';
 import { findAtomByImageIndex, handleAddAtom } from 'src/utilities/ketcherSurfaceChemistry/AtomsAndMolManipulation';
-import { fetchKetcherData } from 'src/utilities/ketcherSurfaceChemistry/InitializeAndParseKetcher';
 import {
   imageNodeForTextNodeSetter,
   buttonClickForRectangleSelection,
@@ -82,7 +88,6 @@ const arrangePolymers = async (canvasData) => {
 
   const additionalDataStart = KET_TAGS.molfileHeaderLinenumber + atomsCount + bondsCount;
   const additionalDataEnd = lines.length - 1;
-
   const ket2Lines = await reAttachPolymerList({
     lines,
     atomsCount,
@@ -469,16 +474,12 @@ export const saveMoveCanvas = async (editor, data, isFetchRequired, isMoveRequir
 
 const centerPositionCanvas = async (editor) => {
   try {
+    await editor._structureDef.editor.editor.renderAndRecoordinateStruct();
     await fetchKetcherData(editor);
-    if (!textList.length) {
-      await editor._structureDef.editor.editor.struct().clone();
-      await editor._structureDef.editor.editor.renderAndRecoordinateStruct();
-      // const clone = editor._structureDef.editor.editor.struct().clone();
-      await fetchKetcherData(editor);
-      saveMoveCanvas(editor, latestData, true, true, false);
-      await fetchKetcherData(editor);
-    }
+    saveMoveCanvas(editor, latestData, true, true, false);
+    await fetchKetcherData(editor);
   } catch (err) {
+    await fetchKetcherData(editor);
     console.error('centerPositionCanvas', err.message);
   }
 };
@@ -518,6 +519,10 @@ const onTemplateMove = async (editor, recenter = false) => {
 
 const onFinalCanvasSave = async (editor, iframeRef) => {
   try {
+    // await centerPositionCanvas(editor);
+//     const canvasDataMol = await editor.structureDef.editor.getMolfile();
+//     await reArrangeImagesOnCanvas(iframeRef); // svg display
+//     const ket2Lines = await arrangePolymers(canvasDataMol); // polymers added
     let textNodesFormula = '';
     let ket2Lines = [];
 
@@ -542,40 +547,32 @@ const onFinalCanvasSave = async (editor, iframeRef) => {
 };
 
 const onPasteNewShapes = async (editor, tempId, imageToBeAdded, iframeRef) => {
-  // Check the length of mols and imagesList
-  const molCount = mols.length === 0 ? 0 : mols.length;
-  const imageCount = imagesList.length === 0 ? 0 : imagesList.length;
+  const molCount = mols.length;
+  const imageCount = imagesList.length;
+  if (!latestData) latestDataSetter(emptyKetcherStore());
 
-  const combo = [{ $ref: `mol${molCount}` }];
-
-  // If an image is to be added, fetch the image data and adjust its bounding box
   if (imageToBeAdded) {
+    // image header
+    // mol headers
+    // mol body
+    imageUsedCounterSetter(imageCount);
     const imageItem = await fetchSurfaceChemistryImageData(tempId);
-    imageItem.boundingBox.y = -1.5250001907348631;
-    imageItem.boundingBox.x = 1.5250000000000004;
-    combo.push(imageItem);
-  }
-
-  // Update image used counter
-  const imageCountAlias =
-    imagesList.length === 0 ? 0 : molCount < imageCount ? imagesList.length - 1 : imagesList.length;
-
-  imageUsedCounterSetter(imageCountAlias);
-
-  if (!latestData) {
-    latestDataSetter(emptyKetcherStore());
-  }
-
-  // Add nodes to root if both molCount and imageCount are 0 or different
-  if (molCount === 0 && imageCount === 0) {
-    latestData.root.nodes.push(...combo);
-    // Add a new molecule
+    imageItem.boundingBox = { ...imageItem.boundingBox, x: 1.525, y: -1.5250001907348631 };
+    latestData.root.nodes.push({ $ref: `mol${molCount}` });
+    latestData.root.nodes.push(imageItem);
     latestData[`mol${molCount}`] = await addNewMol(tempId);
-  } else if (molCount !== imageCount) {
-    latestData.root.nodes.push(...combo);
-    // Add a new molecule
-    latestData[`mol${molCount}`] = await addNewMol(tempId);
+  } else if (imageCount - 1 !== imageNodeCounter) {
+    // header
+    // atom
+    if (imageCount - 1 > imageNodeCounter) {
+      imageUsedCounterSetter(imageNodeCounter + 1);
+      if (!latestData[`mol${molCount}`]) {
+        latestData.root.nodes.push({ $ref: `mol${molCount}` });
+        latestData[`mol${molCount}`] = await addNewMol(tempId);
+      }
+    }
   }
+
   saveMoveCanvas(editor, latestData, true, true, false);
 
   await buttonClickForRectangleSelection(iframeRef);
@@ -587,6 +584,8 @@ const getTitleSelector = (title) => `[title='${title.replace(/\(/g, '\\(').repla
 
 export {
   arrangePolymers,
+  onAddAtom,
+  onDeleteText,
   arrangeTextNodes,
   assembleTextDescriptionFormula,
   onAddAtom,

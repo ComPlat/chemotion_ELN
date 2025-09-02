@@ -1,7 +1,8 @@
-/* eslint-disable no-undef */
 import assert from 'assert';
+import { describe, it, beforeEach, afterEach } from 'mocha';
 import {
-  allAtoms, allNodes,
+  allAtoms,
+  allNodes,
   deletedAtoms,
   FILOStack,
   imagesList,
@@ -32,7 +33,7 @@ import {
   imageNodeCounter,
   imageUsedCounterSetter,
   latestData,
-  resetStore
+  resetStore,
 } from 'src/components/structureEditor/KetcherEditor';
 import {
   ketFormateFullyLoaded,
@@ -51,12 +52,12 @@ import {
   deleteAtomAndRemoveImageKet,
   molfileWithPolymerList,
 } from '../../../data/ketcher2_mockups';
-import { textNodeStructSetter } from '../../../../../app/javascript/src/utilities/ketcherSurfaceChemistry/stateManager';
+import templates from '../../../../../public/json/surfaceChemistryShapes.json';
 
 describe('Ketcher2', () => {
   beforeEach(async () => {
     resetStore();
-    await templateListSetter(templateListMockup);
+    templateListSetter(templates);
   });
 
   afterEach(() => {
@@ -116,7 +117,6 @@ describe('Ketcher2', () => {
       assert.strictEqual(mols.length, 0, 'mols should not have some length');
     });
   });
-
   describe('On reading molfile', () => {
     it('should have rails polymer list', async () => {
       const railsList = await hasKetcherData(molfileWithPolymerList);
@@ -151,11 +151,13 @@ describe('Ketcher2', () => {
       const aliasListWithAtom = [];
       let modifiedAlias = null;
       const { d, isConsistent } = await handleAddAtom();
-      Object.values(d).forEach((i) => i?.atoms?.forEach((j) => {
-        if (j?.alias) {
-          aliasListWithAtom.push(j.alias);
-        }
-      }));
+      Object.values(d).forEach((i) =>
+        i?.atoms?.forEach((j) => {
+          if (j?.alias) {
+            aliasListWithAtom.push(j.alias);
+          }
+        })
+      );
       await loadKetcherData(d);
       modifiedAlias = ALIAS_PATTERNS.threeParts.test(aliasListWithAtom[aliasListWithAtom.length - 1]);
       assert.strictEqual(isConsistent, true, 'mols should be a list');
@@ -213,11 +215,13 @@ describe('Ketcher2', () => {
 
       const { d, isConsistent } = await handleAddAtom();
       const aliasList = [];
-      Object.values(d).forEach((i) => i?.atoms?.forEach((j) => {
-        if (ALIAS_PATTERNS.threeParts.test(j.alias)) {
-          aliasList.push(j.alias);
-        }
-      }));
+      Object.values(d).forEach((i) =>
+        i?.atoms?.forEach((j) => {
+          if (ALIAS_PATTERNS.threeParts.test(j.alias)) {
+            aliasList.push(j.alias);
+          }
+        })
+      );
       const uniqueAliases = new Set(aliasList);
       assert.strictEqual(isConsistent, true, 'Atom addition should be consistent');
       assert.strictEqual(aliasList.length, uniqueAliases.size, 'All aliases should be unique');
@@ -247,7 +251,11 @@ describe('Ketcher2', () => {
 
       aliasList.forEach((alias) => {
         if (ALIAS_PATTERNS.threeParts.test(alias)) {
-          assert.strictEqual(ALIAS_PATTERNS.threeParts.test(alias), true, 'All aliases should match the expected format');
+          assert.strictEqual(
+            ALIAS_PATTERNS.threeParts.test(alias),
+            true,
+            'All aliases should match the expected format'
+          );
         }
       });
       assert.strictEqual(isConsistent, false, 'Atom addition should be consistent');
@@ -266,11 +274,14 @@ describe('Ketcher2', () => {
       data = await handleOnDeleteAtom(aliasDifferences, data, []);
       await loadKetcherData(data);
 
-      Object.values(data).forEach((i) => i?.atoms?.forEach((j) => {
-        if (j?.alias) {
-          collectedAliases.push(j.alias);
-        }
-      }));
+      Object.values(data).forEach((i) =>
+        i?.atoms?.forEach((j) => {
+          if (j?.alias) {
+            collectedAliases.push(j.alias);
+          }
+        })
+      );
+
       assert.deepStrictEqual(collectedAliases, [], 'nodes should be equal to sum of mols and images list');
       assert.deepStrictEqual(imagesList, [], 'image list should be cleared');
     });
@@ -284,14 +295,19 @@ describe('Ketcher2', () => {
 
       let data = await removeAtomFromData(latestData, aliasDifferences);
       data = await handleOnDeleteAtom(aliasDifferences, data, imagesList);
-      Object.values(data).forEach((i) => i?.atoms?.forEach((j) => {
-        if (j?.alias) {
-          collectedAliases.push(j.alias);
-        }
-      }));
+      Object.values(data).forEach((i) =>
+        i?.atoms?.forEach((j) => {
+          if (j?.alias) {
+            collectedAliases.push(j.alias);
+          }
+        })
+      );
       const matchImages = imagesList.length === 0 ? 0 : imagesList.length - 1;
-      assert
-        .strictEqual(matchImages, imageNodeCounter, 'images left in the canvas should be equal to used image counter');
+      assert.strictEqual(
+        matchImages,
+        imageNodeCounter,
+        'images left in the canvas should be equal to used image counter'
+      );
       assert.deepStrictEqual(data, emptyKet, 'Latest molfile should be empty');
     });
 
@@ -316,11 +332,14 @@ describe('Ketcher2', () => {
 
       let data = await removeAtomFromData(latestData, imageDifferences);
       data = await handleOnDeleteAtom([0, 1], data, imagesList);
-      Object.values(data).forEach((i) => i?.atoms?.forEach((j) => {
-        if (j?.alias) {
-          collectedAliases.push(j.alias);
-        }
-      }));
+      Object.values(data).forEach((i) =>
+        i?.atoms?.forEach((j) => {
+          if (j?.alias) {
+            collectedAliases.push(j.alias);
+          }
+        })
+      );
+
       assert.deepStrictEqual(collectedAliases, ['t_01_0'], 'Remaining alias should be with 0');
       assert.deepStrictEqual(imagesList.length, 1, 'Remaining alias should be 2');
     });
@@ -337,18 +356,15 @@ describe('Ketcher2', () => {
   });
 
   describe('on delete atom', async () => {
-    it(
-      'update alias with image-count and decrease image-used-counter by number of atoms removed.',
-      async () => {
-        await loadKetcherData(deleteAtomAndRemoveImageKet);
-        await latestDataSetter(deleteAtomAndRemoveImageKet);
-        await imageUsedCounterSetter(0);
+    it('update alias with image-count and decrease image-used-counter by number of atoms removed.', async () => {
+      await loadKetcherData(deleteAtomAndRemoveImageKet);
+      await latestDataSetter(deleteAtomAndRemoveImageKet);
+      await imageUsedCounterSetter(0);
 
-        let data = await removeAtomFromData(latestData, [0]);
-        data = await handleOnDeleteAtom([0], data, imagesList);
-        assert.deepStrictEqual(data, emptyKet, 'ket should be empty');
-      }
-    );
+      let data = await removeAtomFromData(latestData, [0]);
+      data = await handleOnDeleteAtom([0], data, imagesList);
+      assert.deepStrictEqual(data, emptyKet, 'ket should be empty');
+    });
 
     it('should delete all atoms and remove the molecule', async () => {
       await loadKetcherData(oneImageKet);

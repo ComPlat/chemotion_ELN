@@ -30,8 +30,8 @@ const fetchSurfaceChemistryImageData = async (templateId) => {
             type: 'image',
             format: 'image/svg+xml',
             boundingBox: {
-              width: shape.width,
-              height: shape.height,
+              width: shape.width || 1,
+              height: shape.height || 1,
               x: 8.700000000000001,
               y: -5.824999999999999,
               z: 0

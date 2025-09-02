@@ -30,7 +30,6 @@ import {
 } from 'src/utilities/ketcherSurfaceChemistry/constants';
 import { deepCompareContent, filterTextList } from 'src/utilities/ketcherSurfaceChemistry/TextNode';
 import {
-  buttonClickForRectangleSelection,
   updateImagesInTheCanvas,
   undoKetcher,
   redoKetcher,
@@ -331,7 +330,7 @@ const KetcherEditor = forwardRef((props, ref) => {
    * @param {string} tempId - The ID of the selected template to be added to the canvas.
    * @param {boolean} [imageToBeAdded=true] - Determines whether the shape should be added as an image.
    */
-  const onShapeSelection = async (tempId, imageToBeAdded = true) => {
+  const onShapeSelection = async (tempId, imageToBeAdded) => {
     await onPasteNewShapes(editor, tempId, imageToBeAdded, iframeRef);
     setShowShapes(false);
   };

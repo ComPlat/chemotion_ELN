@@ -4,13 +4,7 @@
 /* eslint-disable react/forbid-prop-types */
 import React from 'react';
 import PropTypes from 'prop-types';
-import {
-  Form,
-  Button,
-  ButtonToolbar,
-  Modal,
-  Card
-} from 'react-bootstrap';
+import { Form, Button, ButtonToolbar, Modal, Card } from 'react-bootstrap';
 import { Select } from 'src/components/common/Select';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -41,10 +35,8 @@ const loadEditor = (editor, scripts) => {
     loadScripts({
       es: scripts,
       id: editor,
-      cbError: () => notifyError(
-        `The ${editor} failed to initialize! Please contact your system administrator!`
-      ),
-      cbLoaded: () => { },
+      cbError: () => notifyError(`The ${editor} failed to initialize! Please contact your system administrator!`),
+      cbLoaded: () => {},
     });
   }
 };
@@ -88,9 +80,7 @@ const createEditors = (_state = {}) => {
 
   return editors;
 };
-function Editor({
-  type, editor, molfile, iframeHeight, iframeStyle, fnCb, forwardedRef
-}) {
+function Editor({ type, editor, molfile, iframeHeight, iframeStyle, fnCb, forwardedRef }) {
   switch (type) {
     case 'ketcher2':
       return (
@@ -103,23 +93,9 @@ function Editor({
         />
       );
     case 'chemdraw':
-      return (
-        <ChemDrawEditor
-          editor={editor}
-          molfile={molfile}
-          iH={iframeHeight}
-          fnCb={fnCb}
-        />
-      );
+      return <ChemDrawEditor editor={editor} molfile={molfile} iH={iframeHeight} fnCb={fnCb} />;
     case 'marvinjs':
-      return (
-        <MarvinjsEditor
-          editor={editor}
-          molfile={molfile}
-          iH={iframeHeight}
-          fnCb={fnCb}
-        />
-      );
+      return <MarvinjsEditor editor={editor} molfile={molfile} iH={iframeHeight} fnCb={fnCb} />;
     default:
       return (
         <div>
@@ -163,11 +139,14 @@ function EditorList(props) {
 function copyContentToClipboard(content) {
   if (navigator.clipboard) {
     const data = typeof content === 'object' ? JSON.stringify(content) : content;
-    navigator.clipboard.writeText(data).then(() => {
-      // alert('Please click on canvas and press CTRL+V to use the template.');
-    }).catch((err) => {
-      console.error('Failed to copy text: ', err);
-    });
+    navigator.clipboard
+      .writeText(data)
+      .then(() => {
+        // alert('Please click on canvas and press CTRL+V to use the template.');
+      })
+      .catch((err) => {
+        console.error('Failed to copy text: ', err);
+      });
   }
 }
 
@@ -179,9 +158,7 @@ EditorList.propTypes = {
 
 const WarningBox = ({ handleCancelBtn, hideWarning, show }) => (
   <Card variant="info">
-    <Card.Header>
-      Parents/Descendants will not be changed!
-    </Card.Header>
+    <Card.Header>Parents/Descendants will not be changed!</Card.Header>
     <Card.Body>
       <p>This sample has parents or descendants, and they will not be changed.</p>
       <p>Are you sure?</p>
@@ -201,7 +178,7 @@ const WarningBox = ({ handleCancelBtn, hideWarning, show }) => (
 
 WarningBox.propTypes = {
   handleCancelBtn: PropTypes.func.isRequired,
-  hideWarning: PropTypes.func.isRequired
+  hideWarning: PropTypes.func.isRequired,
 };
 
 const initEditor = () => {
@@ -223,7 +200,7 @@ export default class StructureEditorModal extends React.Component {
       commonTemplatesList: [],
       selectedShape: null,
       selectedCommonTemplate: null,
-      deleteAllowed: true
+      deleteAllowed: true,
     };
     this.editors = createEditors();
     this.handleEditorSelection = this.handleEditorSelection.bind(this);
@@ -251,19 +228,35 @@ export default class StructureEditorModal extends React.Component {
   handleCancelBtn() {
     const { onCancel } = this.props;
     this.hideModal();
-    if (onCancel) { onCancel(); }
+    if (onCancel) {
+      onCancel();
+    }
   }
 
   async handleSaveBtn() {
     const { editor } = this.state;
     const structure = editor.structureDef;
     if (editor.id === 'marvinjs') {
-      structure.editor.sketcherInstance.exportStructure('mol').then((mMol) => {
-        const editorImg = new structure.editor.ImageExporter({ imageType: 'image/svg' });
-        editorImg.render(mMol).then((svg) => {
-          this.setState({ showModal: false, showWarning: this.props.hasChildren || this.props.hasParent }, () => { if (this.props.onSave) { this.props.onSave(mMol, svg, null, editor.id); } });
-        }, (error) => { alert(`MarvinJS image generated fail: ${error}`); });
-      }, (error) => { alert(`MarvinJS molfile generated fail: ${error}`); });
+      structure.editor.sketcherInstance.exportStructure('mol').then(
+        (mMol) => {
+          const editorImg = new structure.editor.ImageExporter({ imageType: 'image/svg' });
+          editorImg.render(mMol).then(
+            (svg) => {
+              this.setState({ showModal: false, showWarning: this.props.hasChildren || this.props.hasParent }, () => {
+                if (this.props.onSave) {
+                  this.props.onSave(mMol, svg, null, editor.id);
+                }
+              });
+            },
+            (error) => {
+              alert(`MarvinJS image generated fail: ${error}`);
+            }
+          );
+        },
+        (error) => {
+          alert(`MarvinJS molfile generated fail: ${error}`);
+        }
+      );
     } else if (editor.id === 'ketcher2') this.saveKetcher2(editor);
     else {
       try {
@@ -296,7 +289,6 @@ export default class StructureEditorModal extends React.Component {
 
   async saveKetcher2(editorId) {
     const { onSaveFileK2SC } = this.ketcher2Ref.current;
-
     // Ensure the function exists before calling it
     if (typeof onSaveFileK2SC !== 'function') {
       console.error('onSaveFileK2SC is not a function');
@@ -314,7 +306,9 @@ export default class StructureEditorModal extends React.Component {
 
   initializeEditor() {
     const { editor, molfile } = this.state;
-    if (editor) { editor.structureDef.molfile = molfile; }
+    if (editor) {
+      editor.structureDef.molfile = molfile;
+    }
   }
 
   resetEditor(_editors) {
@@ -335,7 +329,7 @@ export default class StructureEditorModal extends React.Component {
     const { hasChildren, hasParent } = this.props;
     this.setState({
       showModal: false,
-      showWarning: hasChildren || hasParent
+      showWarning: hasChildren || hasParent,
     });
   }
 
@@ -353,9 +347,8 @@ export default class StructureEditorModal extends React.Component {
     const handleSaveBtn = !onSave ? null : this.handleSaveBtn.bind(this);
 
     const submitAddons = this.props.submitAddons ? this.props.submitAddons : '';
-    const {
-      editor, showWarning, molfile, selectedCommonTemplate, commonTemplatesList, selectedShape, showModal
-    } = this.state;
+    const { editor, showWarning, molfile, selectedCommonTemplate, commonTemplatesList, selectedShape, showModal } =
+      this.state;
     const iframeHeight = showWarning ? '0px' : '630px';
     const iframeStyle = showWarning ? { border: 'none' } : {};
 
@@ -394,14 +387,9 @@ export default class StructureEditorModal extends React.Component {
         className={!this.state.showWarning && 'modal-xxxl'}
         show={showModal}
         onLoad={this.initializeEditor.bind(this)}
-        onHide={this.handleCancelBtn.bind(this)}
-      >
+        onHide={this.handleCancelBtn.bind(this)}>
         <Modal.Header closeButton className="gap-3">
-          <EditorList
-            value={editor.id}
-            fnChange={this.handleEditorSelection}
-            options={editorOptions}
-          />
+          <EditorList value={editor.id} fnChange={this.handleEditorSelection} options={editorOptions} />
           {editor.id === 'ketcher2' && (
             <CommonTemplatesList
               options={commonTemplatesList}
@@ -416,10 +404,7 @@ export default class StructureEditorModal extends React.Component {
         </Modal.Header>
         <Modal.Body>
           {showWarning && (
-            <WarningBox
-              handleCancelBtn={this.handleCancelBtn.bind(this)}
-              hideWarning={this.hideWarning.bind(this)}
-            />
+            <WarningBox handleCancelBtn={this.handleCancelBtn.bind(this)} hideWarning={this.hideWarning.bind(this)} />
           )}
           {useEditor}
         </Modal.Body>
@@ -459,8 +444,8 @@ StructureEditorModal.defaultProps = {
   showModal: false,
   hasChildren: false,
   hasParent: false,
-  onCancel: () => { },
-  onSave: () => { },
+  onCancel: () => {},
+  onSave: () => {},
   submitBtnText: 'Save',
   cancelBtnText: 'Cancel',
 };
