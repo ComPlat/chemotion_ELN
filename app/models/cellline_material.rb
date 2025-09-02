@@ -29,6 +29,7 @@
 #  index_cellline_materials_on_name_and_source  (name,source) UNIQUE
 #
 class CelllineMaterial < ApplicationRecord
+  has_logidze
   acts_as_paranoid
 
   has_many :literals, as: :element, dependent: :destroy
