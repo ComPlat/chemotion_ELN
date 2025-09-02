@@ -250,6 +250,12 @@ export default class Sample extends Element {
       components: [],
       ancestor_ids: [],
       literatures: {},
+      state: '',
+      color: '',
+      height: '',
+      width: '',
+      length: '',
+      storage_condition: '',
     });
 
     sample.short_label = Sample.buildNewShortLabel();
@@ -299,14 +305,16 @@ export default class Sample extends Element {
   }
   
   /**
-  * Checks whether the sample is of type "HeterogeneousMaterial".
+   * Checks whether the sample is of type "HeterogeneousMaterial".
    *
-   * @returns {boolean} True if the sample type is "HeterogeneousMaterial", otherwise false.
+   * Checks the `sample_type` property against the constant
+   * `SAMPLE_TYPE_HETEROGENEOUS_MATERIAL`.
+   *
+   * @returns {boolean} True if the sample type matches "HeterogeneousMaterial"; otherwise false.
    */
   isHeterogeneousMaterial() {
     return this.sample_type?.toString() === SAMPLE_TYPE_HETEROGENEOUS_MATERIAL;
   }
-
   hasComponents() {
     return this.components && this.components.length > 0;
   }
@@ -460,6 +468,12 @@ export default class Sample extends Element {
       sample_type: this.sample_type,
       sample_details: this.sample_details,
       literatures: this.literatures,
+      state: this.state,
+      color: this.color || '',
+      height: this.height || '',
+      width: this.width || '',
+      length: this.length || '',
+      storage_condition: this.storage_condition || '',
     });
 
     return serialized;
@@ -1077,11 +1091,6 @@ export default class Sample extends Element {
     || this.isFeedstock())) return this.amount_value;
 
     return this.convertGramToUnit(this.amount_g, 'mol');
-  }
-
-  getWeightRatioCalcForComponent(component_properties) {
-    const { molarMass, weightRatioCal } = component_properties;
-    return (weightRatioCal / molarMass).toFixed(8) || 0.0;
   }
 
   calculateFeedstockOrGasMoles(purity, gasType, amountLiter = null) {
