@@ -43,6 +43,7 @@ import {
   fetchSurfaceChemistryImageData,
   placeAtomOnImage,
 } from 'src/utilities/ketcherSurfaceChemistry/Ketcher2SurfaceChemistryUtils';
+import { findTemplateIdCategoryFromTemplates } from 'src/utilities/ketcherSurfaceChemistry/iconBaseProvider';
 
 // canvas actions
 const removeUnfamiliarRgLabels = async (lines) => {
@@ -122,11 +123,15 @@ const arrangeTextNodes = async (ket2Molfile) => {
 };
 
 // sort and join / text nodes
-const traverseAtonForFormulaFormation = async (ket2Lines, textNodesPairs, startAtoms, endAtom) => {
+const traverseAtomForFormulaFormation = async (ket2Lines, textNodesPairs, startAtoms, endAtom) => {
+  const componentsList = [];
   let count = 0;
   for (let i = startAtoms + 1; i <= endAtom; i++) {
     const pairValue = textNodesPairs[count];
     if (pairValue) {
+      const templateId = pairValue.unique.split('_')[1];
+      const categoryName = await findTemplateIdCategoryFromTemplates(templateId);
+      componentsList.push({ [pairValue.text]: categoryName });
       delete textNodesPairs[count];
       const Y = parseFloat(ket2Lines[i].trim().split('   ')[1]);
       textNodesPairs[Y.toFixed(4)] = pairValue.text;
@@ -137,7 +142,7 @@ const traverseAtonForFormulaFormation = async (ket2Lines, textNodesPairs, startA
     Object.entries(textNodesPairs).sort(([a], [b]) => parseFloat(b) - parseFloat(a))
   );
 
-  return Object.values(sortedYIndices).join('/');
+  return { formula: Object.values(sortedYIndices).join('/'), componentsList };
 };
 
 // collect text node with index
@@ -266,7 +271,6 @@ const assembleTextDescriptionFormula = async (ket2Lines, editor) => {
     }
   }
 
-  console.log('indicesMap', indicesMap);
   const atomNumbersConnectWith_ = [];
   const indicesKeys = Object.keys(indicesMap);
   for (let atom = 0; atom < indicesKeys.length; atom++) {
@@ -277,15 +281,6 @@ const assembleTextDescriptionFormula = async (ket2Lines, editor) => {
   }
 
   const textNodesPairs = await collectTextListing(ket2Lines, startTextNode, endTextNode);
-  const pairKeys = Object.keys(textNodesPairs);
-  console.log('pairKeys', pairKeys);
-  console.log('atomNumbersConnectWith_', atomNumbersConnectWith_);
-
-  // for (let textNode = 0; textNode < pairKeys.length; textNode++) {
-  //   if (atomNumbersConnectWith_.indexOf(parseInt(pairKeys[textNode])) !== -1) {
-  //     textNodesPairs[pairKeys[textNode]].text += '_';
-  //   }
-  // }
 
   for (let i = 0; i < atomNumbersConnectWith_.length; i++) {
     const idx = atomNumbersConnectWith_[i];
@@ -294,9 +289,7 @@ const assembleTextDescriptionFormula = async (ket2Lines, editor) => {
     }
   }
 
-  const formula = await traverseAtonForFormulaFormation(ket2Lines, textNodesPairs, startAtoms, endAtom);
-  console.log('formula', formula);
-  return '';
+  return traverseAtomForFormulaFormation(ket2Lines, textNodesPairs, startAtoms, endAtom);
 };
 
 /* istanbul ignore next */
@@ -519,6 +512,7 @@ const onTemplateMove = async (editor, recenter = false) => {
 const onFinalCanvasSave = async (editor, iframeRef) => {
   try {
     let textNodesFormula = '';
+    let componentsListContainer = '';
     let ket2Lines = [];
 
     await centerPositionCanvas(editor);
@@ -526,7 +520,11 @@ const onFinalCanvasSave = async (editor, iframeRef) => {
     await reArrangeImagesOnCanvas(iframeRef); // svg display
     ket2Lines = await arrangePolymers(canvasDataMol); // polymers added
     ket2Lines = await arrangeTextNodes(ket2Lines); // text node
-    if (textList?.length) textNodesFormula = await assembleTextDescriptionFormula(ket2Lines, editor);
+    if (textList?.length) {
+      const { formula, componentsList } = await assembleTextDescriptionFormula(ket2Lines, editor);
+      textNodesFormula = formula;
+      componentsListContainer = componentsList;
+    }
     ket2Lines.push(KET_TAGS.fileEndIdentifier);
     const svgElement = await prepareSvg(editor);
     resetStore();
@@ -534,6 +532,7 @@ const onFinalCanvasSave = async (editor, iframeRef) => {
       ket2Molfile: ket2Lines.join('\n'),
       svgElement,
       textNodesFormula,
+      componentsList: componentsListContainer,
     };
   } catch (e) {
     console.error('onSaveFileK2SC', e);

@@ -212,7 +212,6 @@ export default class SampleDetails extends React.Component {
 
     // Sync casInputValue when CAS changes
     const currentCas = sample.xref?.cas ?? '';
-    
     this.setState({
       sample,
       smileReadonly,
@@ -301,12 +300,13 @@ export default class SampleDetails extends React.Component {
     }
   }
 
-  handleStructureEditorSave(molfile, svgFile = null, config = null, editor = 'ketcher') {
+  handleStructureEditorSave(molfile, svgFile = null, config = null, editor = 'ketcher', components) {
     const { sample } = this.state;
     sample.molfile = molfile;
     const smiles = (config && sample.molecule) ? config.smiles : null;
     sample.contains_residues = molfile?.indexOf(' R# ') > -1;
     sample.formulaChanged = true;
+    sample.components = components;
     this.setState({ loadingMolecule: true });
 
     const fetchError = (errorMessage) => {
@@ -385,7 +385,9 @@ export default class SampleDetails extends React.Component {
       ElementActions.createSample(sample, closeView);
     } else {
       sample.cleanBoilingMelting();
-      ElementActions.updateSample(new Sample(sample), closeView);
+      const newSample = new Sample(sample);
+      newSample.components = sample.components;
+      ElementActions.updateSample(newSample, closeView);
     }
 
     if (sample.is_new || closeView) {

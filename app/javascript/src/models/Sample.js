@@ -272,14 +272,16 @@ export default class Sample extends Element {
   }
 
   /**
-   * Checks whether the sample is of type "HeterogeneousMaterial".
+   * Determines whether the sample is of type "HeterogeneousMaterial".
    *
-   * @returns {boolean} True if the sample type is "HeterogeneousMaterial", otherwise false.
+   * Checks the `sample_type` property against the constant
+   * `SAMPLE_TYPE_HETEROGENEOUS_MATERIAL`.
+   *
+   * @returns {boolean} True if the sample type matches "HeterogeneousMaterial"; otherwise false.
    */
   isHeterogeneousMaterial() {
     return this.sample_type?.toString() === SAMPLE_TYPE_HETEROGENEOUS_MATERIAL;
   }
-
   hasComponents() {
     return this.components && this.components.length > 0;
   }
@@ -873,11 +875,6 @@ export default class Sample extends Element {
     if (this.amount_unit === 'mol' && (this.gas_type === 'gas' || this.gas_type === 'feedstock'))
       return this.amount_value;
     return this.convertGramToUnit(this.amount_g, 'mol');
-  }
-
-  getWeightRatioCalcForComponent(component_properties) {
-    const { molarMass, weightRatioCal } = component_properties;
-    return (weightRatioCal / molarMass).toFixed(8) || 0.0;
   }
 
   calculateFeedstockOrGasMoles(purity, gasType, amountLiter = null) {

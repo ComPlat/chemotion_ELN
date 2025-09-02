@@ -24,6 +24,8 @@ import loadScripts from 'src/components/structureEditor/loadScripts';
 import CommonTemplatesList from 'src/components/ketcher-templates/CommonTemplatesList';
 import CommonTemplatesFetcher from 'src/fetchers/CommonTemplateFetcher';
 import { transformSvgIdsAndReferences } from 'src/utilities/SvgUtils';
+import uuid from 'uuid';
+import Component from 'src/models/Component';
 
 const notifyError = (message) => {
   NotificationActions.add({
@@ -278,7 +280,7 @@ export default class StructureEditorModal extends React.Component {
     }
   }
 
-  handleStructureSave(molfile, svg, editorId, info = null) {
+  handleStructureSave(molfile, svg, editorId, components, info = null) {
     const { hasChildren, hasParent, onSave } = this.props;
 
     this.setState(
@@ -288,15 +290,29 @@ export default class StructureEditorModal extends React.Component {
       },
       () => {
         if (onSave) {
-          onSave(molfile, svg, info, editorId);
+          onSave(molfile, svg, info, editorId, components);
         }
       }
     );
   }
 
+  postComponents(components) {
+    return components.map(
+      (comp, idx) => new Component({
+        id: uuid(),
+        name: 'HeterogeneousMaterial',
+        position: idx,
+        molecule: { id: Math.random().toFixed(2) * 100 }, // TODO: should be discussion, duplication is not concerned in this case
+        template_category: Object.values(comp)[0],
+        source: Object.keys(comp)[0],
+        molar_mass: 0,
+        weight_ratio_exp: 0
+      })
+    );
+  }
+
   async saveKetcher2(editorId) {
     const { onSaveFileK2SC } = this.ketcher2Ref.current;
-
     // Ensure the function exists before calling it
     if (typeof onSaveFileK2SC !== 'function') {
       console.error('onSaveFileK2SC is not a function');
@@ -304,9 +320,10 @@ export default class StructureEditorModal extends React.Component {
     }
     try {
       // Call onSaveFileK2SC and get the required data
-      const { ket2Molfile, svgElement } = await onSaveFileK2SC();
+      const { ket2Molfile, svgElement, componentsList } = await onSaveFileK2SC();
       const updatedSvg = await transformSvgIdsAndReferences(svgElement);
-      this.handleStructureSave(ket2Molfile, updatedSvg, editorId.id);
+      const components = this.postComponents(componentsList);
+      this.handleStructureSave(ket2Molfile, updatedSvg, editorId.id, components);
     } catch (error) {
       console.error('Error during save operation for Ketcher2:', error);
     }
@@ -354,7 +371,7 @@ export default class StructureEditorModal extends React.Component {
 
     const submitAddons = this.props.submitAddons ? this.props.submitAddons : '';
     const {
-      editor, showWarning, molfile, selectedCommonTemplate, commonTemplatesList, selectedShape, showModal
+      editor, showWarning, molfile, selectedCommonTemplate, commonTemplatesList, showModal
     } = this.state;
     const iframeHeight = showWarning ? '0px' : '630px';
     const iframeStyle = showWarning ? { border: 'none' } : {};
@@ -394,14 +411,9 @@ export default class StructureEditorModal extends React.Component {
         className={!this.state.showWarning && 'modal-xxxl'}
         show={showModal}
         onLoad={this.initializeEditor.bind(this)}
-        onHide={this.handleCancelBtn.bind(this)}
-      >
+        onHide={this.handleCancelBtn.bind(this)}>
         <Modal.Header closeButton className="gap-3">
-          <EditorList
-            value={editor.id}
-            fnChange={this.handleEditorSelection}
-            options={editorOptions}
-          />
+          <EditorList value={editor.id} fnChange={this.handleEditorSelection} options={editorOptions} />
           {editor.id === 'ketcher2' && (
             <CommonTemplatesList
               options={commonTemplatesList}
