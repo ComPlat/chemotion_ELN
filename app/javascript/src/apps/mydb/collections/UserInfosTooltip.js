@@ -8,7 +8,7 @@ const UserInfosTooltip = forwardRef(({ users, ...tooltipProps }, ref) => (
     {users.map((user) => (
       <div key={user.id} className="d-flex align-items-baseline gap-1">
         <UserInfoIcon type={user.type} />
-        {user.name}
+        {user.shared_with}
       </div>
     ))}
   </Tooltip>

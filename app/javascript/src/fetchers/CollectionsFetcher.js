@@ -4,6 +4,40 @@ import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import { downloadBlob } from 'src/utilities/FetcherHelper';
 
 export default class CollectionsFetcher {
+  static fetchCollections() {
+    return fetch('/api/v1/collections', { ...this._httpOptions() })
+      .then(response => response.json())
+      .then((json) => {
+        return json.collections;
+      })
+      .catch(errorMessage => console.log(errorMessage));
+  }
+
+  static fetchByCollectionId(collectionId) {
+    return fetch(`/api/v1/collections/${collectionId}`, { ...this._httpOptions() })
+      .then(response => response.json())
+      .then((json) => {
+        return json.collection;
+      })
+      .catch(errorMessage => console.log(errorMessage));
+  }
+
+
+
+  static _httpOptions(method = 'GET') {
+    return {
+      credentials: 'same-origin',
+      method: method,
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      }
+    };
+  }
+
+
+
+
   static takeOwnership(params) {
     let promise = fetch(`/api/v1/collections/take_ownership/${params.id}`, {
       credentials: 'same-origin',

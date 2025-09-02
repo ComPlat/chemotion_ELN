@@ -6,6 +6,7 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
+import CollectionsFetcher from 'src/fetchers/CollectionsFetcher';
 import Aviator from 'aviator';
 import { elementNames } from 'src/apps/generic/Utils';
 import { getLatestVesselIds, clearLatestVesselIds } from 'src/utilities/VesselUtilities';
@@ -17,19 +18,18 @@ const collectionShow = (e) => {
     UserActions.fetchProfile();
   }
   const uiState = UIStore.getState();
-  const currentSearchSelection = uiState.currentSearchSelection;
-  const currentSearchByID = uiState.currentSearchByID;
+  const { currentSearchSelection, currentSearchByID } = uiState;
   const collectionId = e.params['collectionID'];
-  let collectionPromise = null;
-  if (collectionId === 'all') {
-    collectionPromise = CollectionStore.findAllCollection();
-  } else {
-    collectionPromise = CollectionStore.findById(collectionId);
-  }
+  const collectionPromise = CollectionsFetcher.fetchByCollectionId(collectionId);
 
-  collectionPromise.then((result) => {
-    const collection = result.collection;
 
+  //if (collectionId === 'all') {
+  //  collectionPromise = CollectionStore.findAllCollection();
+  //} else {
+  //  collectionPromise = CollectionStore.findById(collectionId);
+  //}
+
+  collectionPromise.then((collection) => {
     if (currentSearchSelection) {
       UIActions.selectCollectionWithoutUpdating(collection);
       ElementActions.fetchBasedOnSearchSelectionAndCollection({
@@ -397,30 +397,40 @@ const aviatorNavigation = (type, id, silent = true, showOrNew = false, params = 
     if (Object.keys(params).length >= 1) {
       return elementShowOrNew(params);
     } else {
-      return elementShowOrNew(defaultParamsForAviatorNavigation(currentCollection, type, id));
+      return elementShowOrNew(defaultParamsForAviatorNavigation(currentCollection.id, type, id));
     }
   }
 }
 
-const defaultParamsForAviatorNavigation = (currentCollection, type, id) => {
+const defaultParamsForAviatorNavigation = (collectionId, type, id) => {
   const isGenericEl = (UserStore.getState().genericEls || []).some(({ name }) => name === type);
 
   const params = {
     type,
     klassType: isGenericEl ? 'GenericEl' : undefined,
     params: {
-      collectionID: currentCollection.id,
+      collectionID: collectionId,
       [`${type}ID`]: id,
     }
   };
   return params;
 }
 
-const aviatorNavigationWithCollectionId = (collectionId, type, id, silent = true) => {
+const aviatorNavigationWithCollectionId = (collectionId, type, id, silent = true, showOrNew = false) => {
   const withId = id ? `/${id}` : '';
-  const url = `/collection/${collectionId}/${type}${withId}`;
-  console.log(url);
+  const withType = type ? `/${type}` : '';
+  const url = `/collection/${collectionId}${withType}${withId}`;
+  const isGenericEl = (UserStore.getState().genericEls || []).some(({ name }) => name === type);
+
   Aviator.navigate(url, { silent: silent });
+
+  if (showOrNew) {
+    if (type && id) {
+      return elementShowOrNew(defaultParamsForAviatorNavigation(collectionId, type, id));
+    } else {
+      return collectionShow({ params: { collectionID: collectionId } });
+    }
+  }
   return true;
 }
 

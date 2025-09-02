@@ -1,18 +1,18 @@
-import React, { Fragment, useState, useEffect } from 'react';
+import React, { Fragment, useState, useEffect, useContext } from 'react';
 import PropTypes from 'prop-types';
 
-import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
+import { observer } from 'mobx-react';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
 import CollectionSubtree from 'src/apps/mydb/collections/CollectionSubtree';
 import SidebarButton from 'src/apps/mydb/layout/sidebar/SidebarButton';
 import CollectionManagementButton from 'src/apps/mydb/collections/CollectionManagementButton';
 import GatePushButton from 'src/components/common/GatePushButton';
 
-import Aviator from 'aviator';
-import { collectionShow } from 'src/utilities/routesUtils';
+import { aviatorNavigation } from 'src/utilities/routesUtils';
 
 const ALL_COLLECTIONS_KEY = 'collections';
 const CHEMOTION_REPOSITORY_KEY = 'chemotionRepository';
@@ -26,8 +26,14 @@ function containsCollection(collections, collectionId) {
 }
 
 function CollectionTree({ isCollapsed }) {
+  const collectionsStore = useContext(StoreContext).collections;
+  const activeCollection = collectionsStore.active_collection;
+  const ownCollections = collectionsStore.ownCollections;
+  const sharedWithMeCollections = collectionsStore.sharedWithMeCollections;
+  const chemotionRepositoryCollection = collectionsStore.chemotion_repository_collection;
+
   const [collections, setCollections] = useState(CollectionStore.getState());
-  const [activeCollection, setActiveCollection] = useState(ALL_COLLECTIONS_KEY);
+  //const [activeCollection, setActiveCollection] = useState(ALL_COLLECTIONS_KEY);
   const [expandedCollection, setExpandedCollection] = useState(ALL_COLLECTIONS_KEY);
 
   const toggleCollection = (collectionKey) => {
@@ -44,80 +50,90 @@ function CollectionTree({ isCollapsed }) {
     if (collection !== activeCollection) setActiveCollection(collection);
   };
 
+  const setActiveCollection = (collection) => {
+    //if (isCollapsed) expandSidebar();
+    if (collection !== activeCollection) collectionsStore.setActiveCollection(collection);
+  };
   useEffect(() => {
-    CollectionActions.fetchLockedCollectionRoots();
-    CollectionActions.fetchUnsharedCollectionRoots();
-    CollectionActions.fetchSharedCollectionRoots();
-    CollectionActions.fetchRemoteCollectionRoots();
-    CollectionActions.fetchSyncInCollectionRoots();
+    collectionsStore.fetchCollections();
 
-    // Create a copy of the collection store state to trigger a re-render
-    const onCollectionStoreChange = (s) => setCollections({ ...s });
-    CollectionStore.listen(onCollectionStoreChange);
-    return () => CollectionStore.unlisten(onCollectionStoreChange);
+    // 'All' and 'chemotion-repository.net' are special collections that we
+    // expect to be returned by `fetchLockedCollectionRoots`. We check the UI
+    // state here to correctly restore the active collection on page load.
+    // do we still need this???
+    const onUiStoreChange = ({ currentCollection }) => {
+      if (!currentCollection) return;
+
+      if (currentCollection.label === 'All') {
+        setActiveCollection(ALL_COLLECTIONS_KEY);
+      }
+
+      if (currentCollection.label === 'chemotion-repository.net') {
+        setActiveCollection(CHEMOTION_REPOSITORY_KEY);
+      }
+    };
+
+    UIStore.listen(onUiStoreChange);
+    return () => UIStore.unlisten(onUiStoreChange);
   }, []);
 
-  const {
-    lockedRoots, unsharedRoots, sharedRoots, remoteRoots, syncInRoots
-  } = collections;
+  // useEffect(() => {
+  //  CollectionActions.fetchLockedCollectionRoots();
+  //  CollectionActions.fetchUnsharedCollectionRoots();
+  //  CollectionActions.fetchSharedCollectionRoots();
+  //  CollectionActions.fetchRemoteCollectionRoots();
+  //  CollectionActions.fetchSyncInCollectionRoots();//
+
+  //  // Create a copy of the collection store state to trigger a re-render
+  //  const onCollectionStoreChange = (s) => setCollections({ ...s });
+  //  CollectionStore.listen(onCollectionStoreChange);
+  //  return () => CollectionStore.unlisten(onCollectionStoreChange);
+  //}, []);
+
+  // Set the active collection based on the currentCollection in UIStore
+  //useEffect(() => {
+  //  const onUiStoreChange = ({ currentCollection }) => {
+  //    if (!currentCollection) return;
+  //
+  //    const group = collectionGroups.find(({ roots }) => containsCollection(roots, currentCollection.id));
+  //    if (group) setCollection(group.collectionKey);
+  //  };
+  //
+  //  UIStore.listen(onUiStoreChange);
+  //  return () => UIStore.unlisten(onUiStoreChange);
+  //}, [collectionGroups]);
 
   const collectionGroups = [
     {
       label: 'My Collections',
       icon: 'icon-collection',
       collectionKey: ALL_COLLECTIONS_KEY,
-      roots: unsharedRoots,
+      collections: ownCollections,
       onClickOpenCollection: 'all',
-    },
-    {
-      label: 'Shared by me',
-      icon: 'icon-outgoing',
-      collectionKey: 'sharedByMe',
-      roots: sharedRoots,
     },
     {
       label: 'Shared with me',
       icon: 'icon-incoming',
       collectionKey: 'sharedWithMe',
-      roots: remoteRoots,
-    },
-    {
-      label: 'Synchronized with me',
-      icon: 'fa fa-refresh',
-      collectionKey: 'syncedWithMe',
-      roots: syncInRoots,
+      collections: sharedWithMeCollections,
     },
   ];
 
-  const chemotionRepository = lockedRoots.find((r) => r.label === 'chemotion-repository.net');
-  if (chemotionRepository) {
+  if (chemotionRepositoryCollection) {
     collectionGroups.push({
       label: 'chemotion-repo',
       icon: 'fa fa-cloud',
       collectionKey: CHEMOTION_REPOSITORY_KEY,
-      onClickOpenCollection: chemotionRepository.id,
-      roots: chemotionRepository.children,
+      onClickOpenCollection: chemotionRepositoryCollection.id,
+      collections: chemotionRepositoryCollection.children,
     });
   }
-
-  // Set the active collection based on the currentCollection in UIStore
-  useEffect(() => {
-    const onUiStoreChange = ({ currentCollection }) => {
-      if (!currentCollection) return;
-
-      const group = collectionGroups.find(({ roots }) => containsCollection(roots, currentCollection.id));
-      if (group) setCollection(group.collectionKey);
-    };
-
-    UIStore.listen(onUiStoreChange);
-    return () => UIStore.unlisten(onUiStoreChange);
-  }, [collectionGroups]);
 
   return (
     <div className="mh-100 d-flex flex-column">
       <div className="sidebar-button-frame tree-view_frame flex-column">
         {collectionGroups.map(({
-          label, icon, collectionKey, roots, onClickOpenCollection
+          label, icon, collectionKey, collections, onClickOpenCollection,
         }) => {
           const isActive = activeCollection === collectionKey;
           const isExpanded = expandedCollection === collectionKey;
@@ -130,8 +146,8 @@ function CollectionTree({ isCollapsed }) {
                 onClick={() => {
                   if (onClickOpenCollection !== undefined) {
                     setCollection(collectionKey);
-                    Aviator.navigate(`/collection/${onClickOpenCollection}`, { silent: true });
-                    collectionShow({ params: { collectionID: onClickOpenCollection } });
+                    setActiveCollection(collectionKey);
+                    aviatorNavigation('collection', onClickOpenCollection, true, true)
                   } else {
                     expandCollection(collectionKey);
                   }
@@ -140,22 +156,15 @@ function CollectionTree({ isCollapsed }) {
                 isExpanded={isExpanded}
                 onToggleExpansion={() => toggleCollection(collectionKey)}
                 appendComponent={collectionKey === CHEMOTION_REPOSITORY_KEY ? (
-                  <GatePushButton collectionId={chemotionRepository.id} />
+                  <GatePushButton collectionId={chemotionRepositoryCollection.id} />
                 ) : null}
                 active={isActive}
               />
-              {isExpanded && !isCollapsed && roots !== undefined && (
+              {isExpanded && !isCollapsed && collections !== undefined && (
                 <div className="tree-view_container">
-                  {roots.length === 0
+                  {collections.length === 0
                     ? <div className="text-muted text-center p-2">No collections</div>
-                    : roots.map((root) => {
-                      // create a copy of the root with computed label
-                      const rootWithLabel = collectionKey === 'syncedWithMe'
-                        ? { ...root, label: CollectionStore.getChildLabel(root) }
-                        : root;
-
-                      return <CollectionSubtree key={root.id} root={rootWithLabel} level={1} />;
-                    })}
+                    : collections.map((collection) => <CollectionSubtree key={collection.id} root={collection} level={1} />)}
                 </div>
               )}
             </Fragment>
@@ -171,4 +180,4 @@ CollectionTree.propTypes = {
   isCollapsed: PropTypes.bool.isRequired,
 };
 
-export default CollectionTree;
+export default observer(CollectionTree);
