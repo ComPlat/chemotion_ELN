@@ -61,7 +61,54 @@ export const CollectionsStore = types
     },
     setActiveCollection(collection) {
       self.active_collection = collection;
-    }
+    },
+    addCollection(node, ownCollection = true) {
+      // TODO: send new collection to fetcher and api => create endpoint
+
+      // Temporary for testing
+      let collections = ownCollection ? [...self.own_collections] : [...self.shared_with_me_collections];
+      if (node.children.length >= 1) {
+        // Add collection after last position
+        collections.push({
+          ancestry: '/',
+          children: [],
+          id: Math.random(),
+          label: "New Collection",
+          owner: node.children[0]?.owner,
+          shares: [],
+          tabs_segment: {},
+          isNew: true
+        });
+      } else {
+        // Add collection as child of node
+        const ancestry = node.ancestry.split('/').filter(Number);
+        const children = {
+          ancestry: `${node.ancestry}${node.id}/`,
+          children: [],
+          id: Math.random(),
+          label: "New Collection",
+          owner: node.owner,
+          shares: [],
+          tabs_segment: {},
+          isNew: true
+        };
+        // buggy, is easier with api request ...
+        collections.forEach((collection) => {
+          if (collection.id == node.id) {
+            Object.assign({}, collection, { children: children });
+          }
+          if (ancestry.length >= 1 && collection.id == ancestry[0]) {
+            collection.children.forEach((child) => {
+              // ancestry.includes(child.id)
+              if (child.id == node.id) {
+                Object.assign({}, child, { children: children });
+              }
+            })
+          }
+        });
+      }
+      self.own_collections = collections;
+    },
   }))
   .views(self => ({
     get ownCollections() { return values(self.own_collections) },
