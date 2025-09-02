@@ -737,8 +737,8 @@ class ElementStore {
   // -- Samples --
 
   handleFetchSampleById(result) {
-    if (!this.state.currentElement || this.state.currentElement._checksum != result._checksum) {
-      if (result.isMixture()) {
+    if (!this.state?.currentElement || this.state?.currentElement._checksum != result?._checksum) {
+      if (result.isMixture() || result.isHeterogeneousMaterial()) {
         ComponentsFetcher.fetchComponentsBySampleId(result.id)
           .then(async (components) => {
             const sampleComponents = components.map((component) => {
@@ -760,7 +760,7 @@ class ElementStore {
   }
 
   handleCreateSample({ element, closeView, components }) {
-    if (element.isMixture()) {
+    if (element.isMixture() || element.isHeterogeneousMaterial()) {
       ComponentsFetcher.saveOrUpdateComponents(element, components)
         .then(async () => {
           await element.initialComponents(components);
@@ -779,7 +779,7 @@ class ElementStore {
 
   handleCreateSampleForReaction({ newSample, reaction, materialGroup, components }) {
     UserActions.fetchCurrentUser();
-    if (newSample.isMixture()) {
+    if (newSample.isMixture() || newSample.isHeterogeneousMaterial()) {
       ComponentsFetcher.saveOrUpdateComponents(newSample, components)
         .then(async () => {
           await newSample.initialComponents(components);
@@ -825,7 +825,7 @@ class ElementStore {
   }
 
   handleUpdateLinkedElement({ element, closeView, components }) {
-    if (element instanceof Sample && element.isMixture()) {
+    if (element instanceof Sample && (element.isMixture() || element.isHeterogeneousMaterial()) ) {
       ComponentsFetcher.saveOrUpdateComponents(element, components)
         .then(() => {
           element.initialComponents(components);

@@ -3,12 +3,7 @@
 /* eslint-disable react/forbid-prop-types */
 import React from 'react';
 import PropTypes from 'prop-types';
-import {
-  Button, Form, InputGroup,
-  OverlayTrigger, Tooltip, Row, Col,
-  ButtonGroup,
-  Table
-} from 'react-bootstrap';
+import { Button, Form, InputGroup, OverlayTrigger, Tooltip, Row, Col, ButtonGroup, Table } from 'react-bootstrap';
 import { Select, CreatableSelect } from 'src/components/common/Select';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
@@ -22,57 +17,8 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import MoleculeFetcher from 'src/fetchers/MoleculesFetcher';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 import SampleDetailsComponents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsComponents';
-import { SAMPLE_TYPE_HETEROGENEOUS_MATERIAL } from 'src/models/Sample.js';
-
-const component_properties_temp = [
-  {
-    name: 'asfasdf',
-    position: 0,
-    component_properties: {
-      category: 'Basic',
-      component: 'Pt',
-      source: '1wt.% Pt',
-      molarMass: 195.0,
-      weightRatio: 0.9,
-      weightRatioCal: 1,
-    },
-  },
-  {
-    name: 'asfasdf',
-    position: 0,
-    component_properties: {
-      category: 'Basic',
-      component: 'Pt',
-      source: '1wt.% Pt',
-      molarMass: 195.0,
-      weightRatio: 1.6,
-      weightRatioCal: 1,
-    },
-  },
-  {
-    name: 'asfasdf',
-    position: 0,
-    component_properties: {
-      category: 'Semantic',
-      component: 'Ce',
-      source: '5wt.% CeO2',
-      molarMass: 88.85,
-      weightRatio: 5,
-      weightRatioCal: 5,
-    },
-  },
-  {
-    name: 'asfasdf',
-    position: 0,
-    component_properties: {
-      category: 'Basic',
-      component: 'Al',
-      source: 'γ-Al2O3',
-      weightRatio: 90,
-      molarMass: 125.0,
-    },
-  },
-];
+import { SAMPLE_TYPE_HETEROGENEOUS_MATERIAL } from 'src/models/Sample';
+import Component from 'src/models/Component';
 
 export default class SampleForm extends React.Component {
   constructor(props) {
@@ -90,6 +36,7 @@ export default class SampleForm extends React.Component {
       enableComponentLabel: false,
       enableComponentPurity: false,
       moleculeNameInputValue: props.sample.molecule_name?.label || props.sample.molecule_name?.value || '',
+      components: props.sample.components || [],
     };
 
     this.handleFieldChanged = this.handleFieldChanged.bind(this);
@@ -107,10 +54,10 @@ export default class SampleForm extends React.Component {
     this.switchDensityMolarity = this.switchDensityMolarity.bind(this);
     this.handleMixtureComponentChanged = this.handleMixtureComponentChanged.bind(this);
     this.handleSampleTypeChanged = this.handleSampleTypeChanged.bind(this);
+    this.stateSelect = this.stateSelect.bind(this);
   }
 
   componentDidUpdate(prevProps) {
-    this.props.sample.initialComponents(component_properties_temp);
     const { isMolNameLoading } = this.state;
     if (this.props != prevProps && isMolNameLoading) {
       this.setState({ isMolNameLoading: false });
@@ -119,6 +66,13 @@ export default class SampleForm extends React.Component {
     // Sync moleculeNameInputValue when molecule_name changes
     const currentMoleculeName = this.props.sample?.molecule_name;
     const prevMoleculeName = prevProps.sample?.molecule_name;
+
+    const prevComponents = this.props.sample?.components || [];
+    const currentComponents = this.state?.components || [];
+
+    if (prevComponents.length !== currentComponents.length) {
+      this.setState({ components: this.props.sample.components });
+    }
 
     if (currentMoleculeName !== prevMoleculeName) {
       // Use the label for display if available, otherwise fall back to value
@@ -1119,6 +1073,34 @@ export default class SampleForm extends React.Component {
     );
   }
 
+  dimensionFieldGroup(sample) {
+    return (
+      <Row>
+        <Col>{this.textInput(sample, 'height', 'Height')}</Col>
+        <Col>{this.textInput(sample, 'width', 'Width')}</Col>
+        <Col>{this.textInput(sample, 'length', 'Length')}</Col>
+      </Row>
+    );
+  }
+
+  stateSelect(sample) {
+    return (
+      <Form.Group controlId="sampleDetailLevelSelect">
+        <Form.Label>State</Form.Label>
+        <Form.Select
+          onChange={(e) => {
+            this.handleFieldChanged('state', e.target.value);
+          }}
+          value={sample.state || 0}
+        >
+          <option value="0">State 1</option>
+          <option value="1">State 2</option>
+          <option value="2">State 3</option>
+        </Form.Select>
+      </Form.Group>
+    );
+  }
+
   heterogeneousMaterialComponentsList(sample) {
     return (
       <>
@@ -1126,88 +1108,145 @@ export default class SampleForm extends React.Component {
         <Row className="align-items-end mb-4">
           <Col>{this.moleculeInput()}</Col>
           <Col>{this.textInput(sample, 'short_label', 'Short label', true)}</Col>
+        </Row>
+        <Row className="align-items-end mb-4">
           <Col xs={4} className="d-flex align-items-end gap-2">
             {this.infoButton()}
             {this.sampleAmount(sample)}
           </Col>
-        </Row>
-        <Row className="align-items-end mb-4">
-          <Col>{this.textInput(sample, 'dimensions', 'Dimensions')}</Col>
-          <Col>{this.textInput(sample, 'state', 'State')}</Col>
-          <Col>{this.textInput(sample, 'color', 'Color')}</Col>
+          <Col>{this.dimensionFieldGroup(sample)}</Col>
         </Row>
         <Row>
-          <Col>{this.textInput(sample, 'chemicalIdentifier', 'Chemical Identifier')}</Col>
-          <Col>{this.textInput(sample, 'storageConditions', 'Storage Conditions')}</Col>
+          <Col>{this.stateSelect(sample)}</Col>
+          <Col>{this.textInput(sample, 'color', 'Color')}</Col>
+          <Col>{this.textInput(sample, 'storage_condition', 'Storage Conditions')}</Col>
         </Row>
-        <h5 className="mt-3">Composition table:</h5>
         <Row>{this.heteroMaterialTable(sample)}</Row>
         <Row>{this.sampleDescription(sample)}</Row>
       </>
     );
   }
 
-  heteroMaterialTable(sample) {
+  handleComponentFieldChanged(index, field, value) {
+    const { sample } = this.props;
+
+    this.setState(
+      (prevState) => {
+        const updated = [...prevState.components];
+        updated[index] = { ...updated[index], [field]: value };
+        return { components: updated };
+      },
+      () => {
+        sample.components = this.state.components.map((comp) => new Component(comp));
+        this.props.handleSampleChanged(sample);
+      }
+    );
+  }
+
+  heteroMaterialTable() {
+    const { components } = this.state;
+
+    const rowsData = [];
+    let totalMolarCalc = 0;
+    let totalMolarExp = 0;
+
+    components?.forEach((item, index) => {
+      const {
+        source,
+        template_category,
+        name,
+        parseComponentSource,
+        calcWeightRatioWithoutWeight,
+        weightRatioBasedExpCalc,
+      } = new Component(item);
+
+      // convert numeric fields safely to integers
+      const molar_mass = parseFloat(item.molar_mass, 10) || 0;
+      const weight_ratio_exp = parseFloat(item.weight_ratio_exp, 10) || 0;
+      if (name !== 'HeterogeneousMaterial') return;
+
+      const molarMassStateValue = parseFloat(components[index]?.molar_mass) || 0;
+      const weightRatioExpStateValue = parseFloat(components[index]?.weight_ratio_exp) || 0;
+
+      const { weightRatioCalc, component, source: sourceAlias } = parseComponentSource(source);
+      const weightRatioCalcProcessed = weightRatioCalc > 0 ? weightRatioCalc : calcWeightRatioWithoutWeight(components);
+      const molarRatioCalcMM = parseFloat(weightRatioBasedExpCalc(weightRatioCalcProcessed, molarMassStateValue));
+      const weightRatioCalcMM = parseFloat(weightRatioBasedExpCalc(weightRatioExpStateValue, molarMassStateValue));
+
+      totalMolarCalc += molarRatioCalcMM || 0;
+      totalMolarExp += weightRatioCalcMM || 0;
+
+      rowsData.push({
+        index,
+        template_category,
+        component,
+        sourceAlias,
+        molar_mass,
+        weight_ratio_exp,
+        weightRatioCalcProcessed,
+        molarRatioCalcMM: molarRatioCalcMM.toFixed(7),
+        weightRatioCalcMM: weightRatioCalcMM.toFixed(7),
+      });
+    });
+
     return (
-      <Table responsive hover bordered>
-        <thead>
-          <tr>
-            <th>Category</th>
-            <th>Component</th>
-            <th>Source</th>
-            <th>Molar Mass (g/mol)</th>
-            <th>Weight ratio exp.</th>
-            <th>Weight ratio calc</th>
-            <th>Molar ratio calc.</th>
-            <th>Weight ratio exp</th>
-          </tr>
-        </thead>
-        <tbody>
-          {component_properties_temp.map((item, index) => {
-            const {
-              component, source, category, molarMass, weightRatio,
-              weightRatioCal
-            } = item.component_properties;
-            const weightRatioCalc = sample.getWeightRatioCalcForComponent(item.component_properties);
-            return (
-              <tr key={index}>
-                <td>{category}</td>
-                <td>{component}</td>
-                <td>{source}</td>
-                <td>
-                  <Form.Control
-                    id={`txtinput_${molarMass}`}
-                    type="text"
-                    value={molarMass}
-                    onChange={(e) => {
-                      const newValue = e.target.value;
-                      this.setState({ sumFormula: newValue });
-                      this.handleFieldChanged('molar_mass', newValue);
-                    }}
-                  />
-                </td>
-
-                <td>
-                  <Form.Control
-                    id={`txtinput_${weightRatio}`}
-                    type="text"
-                    value={weightRatio}
-                    onChange={(e) => {
-                      const newValue = e.target.value;
-                      this.setState({ sumFormula: newValue });
-                      this.handleFieldChanged('molar_mass', newValue);
-                    }}
-                  />
-                </td>
-
-                <td>{weightRatioCal || '-'}</td>
-                <td>{index} - calculation</td>
-                <td>{weightRatioCalc}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </Table>
+      <>
+        <h5 className="mt-3">Composition table:</h5>
+        <Table responsive hover bordered>
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>Component</th>
+              <th>Source</th>
+              <th>Weight ratio exp.</th>
+              <th>Molar Mass (g/mol)</th>
+              <th>Weight ratio calc./%</th>
+              <th>weight ratio (calc)/molar mass</th>
+              <th>molar ratio (calc)/molar mass</th>
+              <th>Molar ratio exp / %</th>
+              <th>Molar ratio calc / %</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rowsData.map((row) => {
+              const molarRatioCalcPercent = totalMolarCalc > 0 ? (row.molarRatioCalcMM / totalMolarCalc).toFixed(7) : '-';
+              const molarRatioExpPercent = totalMolarExp > 0 ? (row.weightRatioCalcMM / totalMolarExp).toFixed(7) : '-';
+              return (
+                <tr key={`component${row.template_category}`}>
+                  <td>{row.template_category || ''}</td>
+                  <td>{row.component || ''}</td>
+                  <td>{row.sourceAlias || ''}</td>
+                  <td>
+                    <Form.Control
+                      type="number"
+                      value={row.weight_ratio_exp}
+                      onChange={(e) => {
+                        const newValue = e.target.value;
+                        this.handleComponentFieldChanged(row.index, 'weight_ratio_exp', newValue);
+                      }}
+                    />
+                  </td>
+                  <td>
+                    <Form.Control
+                      type="number"
+                      value={row.molar_mass}
+                      onChange={(e) => {
+                        const newValue = e.target.value;
+                        this.handleComponentFieldChanged(row.index, 'molar_mass', newValue);
+                      }}
+                    />
+                  </td>
+                  <td>{row.weightRatioCalcProcessed}</td>
+                  <td>{row.molarRatioCalcMM || '-'}</td>
+                  <td>{row.weightRatioCalcMM || '-'}</td>
+                  <td>{molarRatioCalcPercent}</td>
+                  <td>{molarRatioExpPercent}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </Table>
+      </>
     );
   }
 
@@ -1368,8 +1407,8 @@ export default class SampleForm extends React.Component {
           </>
         )}
 
-        {selectedSampleType?.value === SAMPLE_TYPE_HETEROGENEOUS_MATERIAL &&
-          this.heterogeneousMaterialComponentsList(sample)}
+        {selectedSampleType?.value === SAMPLE_TYPE_HETEROGENEOUS_MATERIAL
+          && this.heterogeneousMaterialComponentsList(sample)}
 
         <Row>
           <SampleDetailsSolvents sample={sample} onChange={handleSampleChanged} />

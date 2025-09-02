@@ -147,7 +147,14 @@ export default class SampleDetails extends React.Component {
       currentUser,
       showRedirectWarning: redirectedFromMixture || false,
       casInputValue: '',
-      ketcherSVGError: null
+      ketcherSVGError: null,
+      // Heterogeneous sample props
+      state: props.sample.state || '',
+      color: props.sample.color || '',
+      height: props.sample.height || '',
+      width: props.sample.width || '',
+      length: props.sample.length || '',
+      storage_condition: props.sample.storage_condition || '',
     };
 
     this.enableComputedProps = MatrixCheck(currentUser.matrix, 'computedProp');
@@ -214,7 +221,6 @@ export default class SampleDetails extends React.Component {
 
     // Sync casInputValue when CAS changes
     const currentCas = sample.xref?.cas ?? '';
-
     this.setState({
       sample,
       smileReadonly,
@@ -320,7 +326,7 @@ export default class SampleDetails extends React.Component {
     }
   }
 
-  handleStructureEditorSave(molfile, svg, info, editorId) {
+  handleStructureEditorSave(molfile, svgFile = null, config = null, editor = 'ketcher', components) {
     const { sample } = this.state;
     sample.molfile = molfile;
     const svgFile = svg; // SVG is passed as 4th parameter
@@ -329,6 +335,7 @@ export default class SampleDetails extends React.Component {
     const smiles = (config && sample.molecule) ? config.smiles : null;
     sample.contains_residues = molfile?.indexOf(' R# ') > -1;
     sample.formulaChanged = true;
+    sample.components = components;
     this.setState({ loadingMolecule: true });
 
     const fetchError = (errorMessage) => {
@@ -422,8 +429,11 @@ export default class SampleDetails extends React.Component {
     } else if (sample.isNew) {
       ElementActions.createSample(sample, closeView);
     } else {
+      // TODO: upate sample params
       sample.cleanBoilingMelting();
-      ElementActions.updateSample(new Sample(sample), closeView);
+      const newSample = new Sample(sample);
+      newSample.components = sample.components;
+      ElementActions.updateSample(newSample, closeView);
     }
 
     if (sample.is_new || closeView) {

@@ -165,7 +165,7 @@ export default class StructureEditorModal extends React.Component {
     }
   }
 
-  handleStructureSave(molfile, svg, editorId, info = null) {
+  handleStructureSave(molfile, svg, editorId, components, info = null) {
     const { hasChildren, hasParent, onSave } = this.props;
     this.setState(
       {
@@ -174,7 +174,7 @@ export default class StructureEditorModal extends React.Component {
       },
       () => {
         if (onSave) {
-          onSave(molfile, svg, info, editorId);
+          onSave(molfile, svg, info, editorId, components);
         }
       }
     );
@@ -328,8 +328,7 @@ export default class StructureEditorModal extends React.Component {
         className={!showWarning && 'modal-xxxl'}
         show={showModal}
         onLoad={this.initializeEditor.bind(this)}
-        onHide={this.handleCancelBtn.bind(this)}
-      >
+        onHide={this.handleCancelBtn.bind(this)}>
         <Modal.Header closeButton className="gap-3">
           {editor?.id && (
             <EditorList
