@@ -81,6 +81,7 @@ export default class ChemicalTab extends React.Component {
       sample,
       setSaveInventory,
       editChemical,
+      type,
     } = this.props;
     if (!sample || !chemical) {
       return;
@@ -90,8 +91,16 @@ export default class ChemicalTab extends React.Component {
     const params = {
       chemical_data: chemicalData,
       cas,
-      sample_id: sample.id
+      sample_id: sample.id,
+      type,
     };
+    if (type === 'SBMM') {
+      params.sequence_based_macromolecule_id = sample.id;
+      params.type = 'SBMM';
+    } else {
+      params.sample_id = sample.id;
+      params.type = 'sample';
+    }
     if (chemical.isNew) {
       ChemicalFetcher.create(params).then((response) => {
         if (response) {
@@ -566,10 +575,11 @@ export default class ChemicalTab extends React.Component {
   };
 
   fetchChemical(sample) {
+    const { type } = this.props;
     if (sample === undefined || sample.is_new) {
       return;
     }
-    ChemicalFetcher.fetchChemical(sample.id).then((chemical) => {
+    ChemicalFetcher.fetchChemical(sample.id, type).then((chemical) => {
       if (chemical !== null) {
         this.setState({ chemical });
       }
@@ -1803,8 +1813,8 @@ export default class ChemicalTab extends React.Component {
   render() {
     const {
       chemical,
-      showModal,
     } = this.state;
+    const { type } = this.props;
 
     const data = chemical?._chemical_data?.[0] ?? [];
     return (
@@ -1824,12 +1834,14 @@ export default class ChemicalTab extends React.Component {
             </Accordion.Body>
           </Accordion.Item>
 
-          <Accordion.Item eventKey="safetyTab">
-            <Accordion.Header>Safety</Accordion.Header>
-            <Accordion.Body>
-              {this.safetyTab()}
-            </Accordion.Body>
-          </Accordion.Item>
+          {type === 'sample' && (
+            <Accordion.Item eventKey="safetyTab">
+              <Accordion.Header>Safety</Accordion.Header>
+              <Accordion.Body>
+                {this.safetyTab()}
+              </Accordion.Body>
+            </Accordion.Item>
+          )}
 
           <Accordion.Item eventKey="locationTab">
             <Accordion.Header>Location and Information</Accordion.Header>
@@ -1853,8 +1865,14 @@ export default class ChemicalTab extends React.Component {
 
 ChemicalTab.propTypes = {
   sample: PropTypes.object,
+  type: PropTypes.string.isRequired,
+  handleUpdateSample: PropTypes.func,
   handleUpdateSample: PropTypes.func.isRequired,
   saveInventory: PropTypes.bool.isRequired,
   setSaveInventory: PropTypes.func.isRequired,
   editChemical: PropTypes.func.isRequired,
+};
+
+ChemicalTab.defaultProps = {
+  handleUpdateSample: () => {},
 };

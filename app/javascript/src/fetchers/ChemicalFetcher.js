@@ -2,8 +2,10 @@ import 'whatwg-fetch';
 import Chemical from 'src/models/Chemical';
 
 export default class ChemicalFetcher {
-  static fetchChemical(sampleId) {
-    return fetch(`/api/v1/chemicals?sample_id=${sampleId}`, {
+  // Fetch chemical by either sample_id or sequence_based_macromolecule_id, depending on type
+  static fetchChemical(id, type) {
+    const paramName = type === 'SBMM' ? 'sequence_based_macromolecule_id' : 'sample_id';
+    return fetch(`/api/v1/chemicals?${paramName}=${id}&type=${type}`, {
       credentials: 'same-origin',
     }).then((response) => response.json())
       .then((json) => new Chemical(json))
@@ -26,7 +28,15 @@ export default class ChemicalFetcher {
   }
 
   static update(params) {
-    return fetch(`/api/v1/chemicals/${params.sample_id}`, {
+    // type should be 'sample' or 'sequence_based_macromolecule'
+    let query = '';
+    const { type } = params;
+    if (type === 'sequence_based_macromolecule' || type === 'SBMM') {
+      query = `sequence_based_macromolecule_id=${params.sequence_based_macromolecule_id}&type=${type}`;
+    } else {
+      query = `sample_id=${params.sample_id}&type=${type}`;
+    }
+    return fetch(`/api/v1/chemicals?${query}`, {
       credentials: 'same-origin',
       method: 'put',
       headers: {
