@@ -1,6 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import Aviator from 'aviator';
 import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -9,7 +8,7 @@ import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import UserInfosTooltip from 'src/apps/mydb/collections/UserInfosTooltip';
 import ChevronIcon from 'src/components/common/ChevronIcon';
-import { collectionShow, scollectionShow } from 'src/utilities/routesUtils';
+import { aviatorNavigationWithCollectionId } from 'src/utilities/routesUtils';
 
 export default class CollectionSubtree extends React.Component {
   constructor(props) {
@@ -45,16 +44,16 @@ export default class CollectionSubtree extends React.Component {
     const { root } = this.props;
     const { visible } = this.state;
     const uiState = UIStore.getState();
+    const { currentElement } = ElementStore.getState();
+    // When currentElement is an array, use the first item (special handling for vessel templates)
+    const element = Array.isArray(currentElement) && currentElement.length > 0 ? currentElement[0] : currentElement;
+
     if (uiState.showCollectionManagement) {
       UIActions.toggleCollectionManagement();
     }
     this.setState({ visible: visible || this.isVisible(root, uiState) });
 
-    const url = `/collection/${root.id}/${this.urlForCurrentElement()}`;
-    Aviator.navigate(url, { silent: true });
-
-    const collShow = root.sharer ? scollectionShow : collectionShow;
-    collShow({ params: { collectionID: root.id } });
+    aviatorNavigationWithCollectionId(root.id, element?.type, (element?.isNew ? 'new' : element?.id), true, true);
   }
 
   onChange(state) {
@@ -94,24 +93,6 @@ export default class CollectionSubtree extends React.Component {
     return (isRemote || isSync) && isTakeOwnershipAllowed;
   }
 
-  urlForCurrentElement() {
-    const { currentElement } = ElementStore.getState();
-
-    if (Array.isArray(currentElement) && currentElement.length > 0) {
-      // When currentElement is an array, use the first item (special handling for vessel templates)
-      const template = currentElement[0];
-      return template.isNew
-        ? `${template.type}/new`
-        : `${template.type}/${template.id}`;
-    } if (currentElement) {
-      return currentElement.isNew
-        ? `${currentElement.type}/new`
-        : `${currentElement.type}/${currentElement.id}`;
-    }
-
-    return '';
-  }
-
   toggleExpansion(e) {
     e.stopPropagation();
     const { root } = this.props;
@@ -138,7 +119,7 @@ export default class CollectionSubtree extends React.Component {
   render() {
     const { root, isRemote, level } = this.props;
     const { visible, selected } = this.state;
-    const sharedUsers = root.sync_collections_users;
+    const sharedUsers = root.shares;
     const children = root.children || [];
 
     return (
