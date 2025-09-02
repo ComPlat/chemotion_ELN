@@ -10,16 +10,21 @@ import {
   reloadCanvas,
   uniqueEvents,
   templateListSetter,
+  textList,
+  textNodeStruct
 } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
 import {
   handleAddAtom,
   handleOnDeleteAtom,
-  removeAtomFromData,
+  removeAtomFromData
 } from 'src/utilities/ketcherSurfaceChemistry/AtomsAndMolManipulation';
 
 import { addPolymerTags } from 'src/utilities/ketcherSurfaceChemistry/PolymersTemplates';
 import { ALIAS_PATTERNS } from 'src/utilities/ketcherSurfaceChemistry/constants';
-import { deepCompareContent } from 'src/utilities/ketcherSurfaceChemistry/TextNode';
+import {
+  deepCompareContent,
+  filterTextList
+} from 'src/utilities/ketcherSurfaceChemistry/TextNode';
 
 // ketcher/molfiles mockups
 import { hasKetcherData, loadKetcherData } from 'src/utilities/ketcherSurfaceChemistry/InitializeAndParseKetcher';
@@ -38,6 +43,7 @@ import {
   oneImageKet,
   molfileWithoutPolymerList,
   oneNodeNonPolymerKet,
+  templateListMockup,
   addAtomMockup,
   hasConsistentAliasesKet,
   isMoleculeEmptyKet,
@@ -159,6 +165,7 @@ describe('Ketcher2', () => {
       assert.strictEqual(addAtomMockup.root.nodes.length, 9, 'nodes should have an image added');
       assert.strictEqual(allNodes.length, 9, 'allNodes should have a right count');
       assert.strictEqual(imagesList.length, 6, 'imagesList should have a right count');
+      assert.strictEqual(textList.length, 1, 'textList should have a right count');
       assert.notStrictEqual(d, null, 'nodes should be equal to sum of mols and images list');
       resetStore();
     });
@@ -189,6 +196,7 @@ describe('Ketcher2', () => {
       assert.strictEqual(isConsistent, true, 'Atom addition should be consistent');
       assert.strictEqual(mols.length, 0, 'A new molecule should be created');
       assert.strictEqual(d[mols[0]], undefined, 'The molecule should contain one atom');
+      assert.strictEqual(textList.length, 0, 'textList should have a right count');
     });
 
     it('should handle empty data gracefully', async () => {
@@ -227,6 +235,7 @@ describe('Ketcher2', () => {
       assert.strictEqual(isConsistent, true, 'Atom addition should be consistent');
       assert.strictEqual(d[mols[0]].atoms.length, 2, 'The molecule should contain one additional atom');
       assert.strictEqual(d[mols[0]].bonds.length, 1, 'The molecule should retain its bonds');
+      assert.strictEqual(textList.length, 1, 'The molecule should retain its bonds');
     });
 
     it('should generate a valid alias for an atom with an invalid alias format', async () => {
@@ -272,6 +281,7 @@ describe('Ketcher2', () => {
           }
         })
       );
+
       assert.deepStrictEqual(collectedAliases, [], 'nodes should be equal to sum of mols and images list');
       assert.deepStrictEqual(imagesList, [], 'image list should be cleared');
     });
@@ -329,6 +339,7 @@ describe('Ketcher2', () => {
           }
         })
       );
+
       assert.deepStrictEqual(collectedAliases, ['t_01_0'], 'Remaining alias should be with 0');
       assert.deepStrictEqual(imagesList.length, 1, 'Remaining alias should be 2');
     });
@@ -385,6 +396,41 @@ describe('Ketcher2', () => {
       assert.strictEqual(imagesList.length, 0, 'Images list should be cleared');
       await loadKetcherData(addAtomMockup);
       assert.strictEqual(allAtoms.length, 15, 'All atoms should be restored');
+    });
+  });
+
+  describe('on delete text node', async () => {
+    it('should have a text node', async () => {
+      await loadKetcherData(oneImageKet);
+      textNodeStructSetter({
+        "t_01_0": 'dknjs'
+      });
+      assert.strictEqual(textList.length, 1, 'textList should have a right count');
+      assert.strictEqual(Object.keys(textNodeStruct).length, 1, 'textList should have a right count');
+    });
+
+    it('should delete a text node with image template', async () => {
+      await loadKetcherData(oneImageKet);
+      await latestDataSetter(oneImageKet);
+      textNodeStructSetter({
+        "t_01_0": 'dknjs'
+      });
+      await imageUsedCounterSetter(0);
+      const aliasDifferences = [0];
+      const collectedAliases = [];
+      let data = await removeAtomFromData(latestData, [0]);
+      data = await handleOnDeleteAtom(aliasDifferences, data, []);
+      data.root.nodes = await filterTextList(aliasDifferences, data); // remove text nodes
+
+      await loadKetcherData(data);
+      Object.values(data).forEach((i) => i?.atoms?.forEach((j) => {
+        if (j?.alias) {
+          collectedAliases.push(j.alias);
+        }
+      }));
+      assert.strictEqual(collectedAliases.length, 0, 'nodes should be equal to sum of mols and images list');
+      assert.deepStrictEqual(imagesList.length, 0, 'image list should be cleared');
+      assert.deepStrictEqual(textList.length, 0, 'text list should be cleared');
     });
   });
 });

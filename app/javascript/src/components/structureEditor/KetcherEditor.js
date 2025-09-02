@@ -35,14 +35,17 @@ import {
   redoKetcher,
   attachClickListeners,
   imageNodeForTextNodeSetter,
+  selectedImageForTextNode,
   makeTransparentByTitle,
 } from 'src/utilities/ketcherSurfaceChemistry/DomHandeling';
 import {
   onAddAtom,
+  onDeleteText,
   onTemplateMove,
   saveMoveCanvas,
   onFinalCanvasSave,
   onPasteNewShapes,
+  onAddText,
 } from 'src/utilities/ketcherSurfaceChemistry/canvasOperations';
 import { handleEventCapture } from 'src/utilities/ketcherSurfaceChemistry/eventHandler';
 import {
@@ -177,6 +180,12 @@ const KetcherEditor = forwardRef((props, ref) => {
       await onAtomDelete(editor);
       canvasSelectionsSetter(null);
     },
+    [EventNames.ADD_TEXT]: async () => {
+      await onAddText(editor, selectedImageForTextNode);
+      await buttonClickForRectangleSelection(iframeRef);
+      imageNodeForTextNodeSetter(null);
+    },
+    [EventNames.DELETE_TEXT]: async () => onDeleteText(editor),
     [EventNames.UPSERT_IMAGE]: async () => {
       await fetchKetcherData(editor);
       oldImagePack = [...imagesList];
@@ -246,9 +255,11 @@ const KetcherEditor = forwardRef((props, ref) => {
     editor._structureDef.editor.editor.subscribe('change', async (eventData) => {
       canvasSelectionsSetter(editor._structureDef.editor.editor._selection);
       const result = await eventData;
-      await handleEventCapture(editor, result, eventHandlers);
-      await runImageLayering(); // post all the images at the end of the canvas not duplicate
-      await makeTransparentByTitle(iframeRef);
+      if (result) {
+        await handleEventCapture(editor, result, eventHandlers);
+        await runImageLayering(); // post all the images at the end of the canvas not duplicate
+        await makeTransparentByTitle(iframeRef);
+      }
     });
 
     // Subscribes to the `selectionChange` event
@@ -335,7 +346,7 @@ const KetcherEditor = forwardRef((props, ref) => {
         loading={showShapes}
         onShapeSelection={onShapeSelection}
         onCloseClick={() => setShowShapes(false)}
-        title="Surface Chemistry Templates"
+        title='Surface Chemistry Templates'
       />
       <iframe
         ref={iframeRef}
@@ -343,7 +354,7 @@ const KetcherEditor = forwardRef((props, ref) => {
         src={editor?.extSrc}
         title={editor?.label}
         height={iH}
-        width="100%"
+        width='100%'
         style={iS}
       />
     </div>
