@@ -61,6 +61,7 @@ class SequenceBasedMacromolecule < ApplicationRecord
   belongs_to :protein_sequence_modification, optional: true
   belongs_to :post_translational_modification, optional: true
   belongs_to :parent, class_name: 'SequenceBasedMacromolecule', optional: true
+  has_one :chemical
 
   has_many :attachments, as: :attachable, inverse_of: :attachable, dependent: :nullify
 

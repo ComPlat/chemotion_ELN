@@ -7,29 +7,42 @@ module Chemotion
       desc 'update chemicals'
       params do
         requires :chemical_data, type: Array[Hash], desc: 'chemical data'
+        requires :type, type: String, desc: 'chemical type is sample or SBMM'
         optional :cas, type: String, desc: 'cas number'
+        optional :sample_id, type: Integer
+        optional :sequence_based_macromolecule_id, type: Integer
       end
-      route_param :sample_id do
-        put do
-          Chemotion::ChemicalsService.handle_exceptions do
-            attributes = declared(params, include_missing: false)
-            if params[:chemical_data].present? || params[:cas].present?
-              Chemical.find_by(sample_id: params[:sample_id]).update!(attributes)
-            else
-              status 204
-            end
+      put do
+        Chemotion::ChemicalsService.handle_exceptions do
+          attributes = declared(params, include_missing: false)
+          attributes = attributes.except(:type)
+          if params[:chemical_data].present? || params[:cas].present?
+            chemical = if params[:type] == 'SBMM'
+                         Chemical.find_by(sequence_based_macromolecule_id: params[:sequence_based_macromolecule_id])
+                       else
+                         Chemical.find_by(sample_id: params[:sample_id])
+                       end
+            chemical&.update!(attributes)
+          else
+            status 204
           end
         end
       end
 
-      desc 'Return chemical by sample_id'
+      desc 'Return chemical by sample_id or sequence_based_macromolecule_id'
       params do
-        requires :sample_id, type: Integer, desc: 'sample id'
+        requires :type, type: String, desc: 'chemical type is sample or SBMM'
+        optional :sample_id, type: Integer, desc: 'sample id'
+        optional :sequence_based_macromolecule_id, type: Integer, desc: 'sequence based macromolecule id'
       end
 
       get do
         Chemotion::ChemicalsService.handle_exceptions do
-          Chemical.find_by(sample_id: params[:sample_id]) || Chemical.new
+          if params[:type] == 'SBMM'
+            Chemical.find_by(sequence_based_macromolecule_id: params[:sequence_based_macromolecule_id]) || Chemical.new
+          else
+            Chemical.find_by(sample_id: params[:sample_id]) || Chemical.new
+          end
         end
       end
 
@@ -38,12 +51,22 @@ module Chemotion
         params do
           requires :chemical_data, type: Array[Hash], desc: 'chemical data'
           requires :cas, type: String
-          requires :sample_id, type: Integer
+          requires :type, type: String, desc: 'chemical type sample or SBMM'
+          optional :sample_id, type: Integer
+          optional :sequence_based_macromolecule_id, type: Integer
         end
 
         post do
           Chemotion::ChemicalsService.handle_exceptions do
-            attributes = declared(params, include_missing: false)
+            attributes = declared(params, include_missing: false) || {}
+            attributes = attributes.except(:type)
+            if params[:type] == 'SBMM'
+              attributes[:sample_id] = nil
+              attributes[:sequence_based_macromolecule_id] = params[:sequence_based_macromolecule_id]
+            else
+              attributes[:sequence_based_macromolecule_id] = nil
+              attributes[:sample_id] = params[:sample_id]
+            end
             Chemical.create!(attributes)
           end
         end
