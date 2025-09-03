@@ -23,7 +23,7 @@ function MoleculeHeader({ sample }) {
   }, []);
 
   return (
-    <div className="flex-grow-1 pe-1">
+    <div className="flex-grow-1">
       {sample.isNoStructureSample()
         ? (<h5>(No-structure sample)</h5>)
         : (
@@ -44,13 +44,15 @@ function MoleculeHeader({ sample }) {
                 }}
               />
             )}
-            <div className="h5 flex-grow-1"><SampleName sample={sample} /></div>
-            <div className="d-flex align-items-center gap-1">
-              {sample.molecule.chem_repo && sample.molecule.chem_repo.id && (
-                <ChemrepoLabels chemrepoId={sample.molecule.chem_repo.id} />
-              )}
-              <PubchemLabels element={sample} />
-              <ComputedPropLabel cprops={sample.molecule_computed_props} />
+            <div className="h5 flex-grow-1">
+              <SampleName sample={sample} />
+              <div className="d-flex align-items-center gap-1 h5">
+                {sample.molecule.chem_repo && sample.molecule.chem_repo.id && (
+                  <ChemrepoLabels chemrepoId={sample.molecule.chem_repo.id} />
+                )}
+                <PubchemLabels element={sample} />
+                <ComputedPropLabel cprops={sample.molecule_computed_props} />
+              </div>
             </div>
           </div>
         )}
