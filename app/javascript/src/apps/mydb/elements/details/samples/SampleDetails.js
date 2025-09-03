@@ -769,7 +769,7 @@ export default class SampleDetails extends React.Component {
 
     return (
       <Accordion
-        className="chem-identifiers-section"
+        className="chem-identifiers-section mb-2"
         activeKey={showChemicalIdentifiers && paneKey}
         onSelect={(key) => this.setState({ showChemicalIdentifiers: key === paneKey })}
       >
