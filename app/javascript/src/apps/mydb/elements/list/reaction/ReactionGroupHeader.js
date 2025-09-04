@@ -6,7 +6,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import Reaction from 'src/models/Reaction';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
 
-function ReactionGroupHeader({ group, element, onClick }) {
+function ReactionGroupHeader({ group, element }) {
   const [showPreviews, setShowPreviews] = useState(UIStore.getState().showPreviews);
 
   useEffect(() => {
@@ -19,10 +19,7 @@ function ReactionGroupHeader({ group, element, onClick }) {
   }, []);
 
   return (
-    <div
-      onClick={onClick}
-      role="button"
-    >
+    <div>
       {showPreviews && (
         <SvgWithPopover
           hasPop
@@ -47,7 +44,6 @@ function ReactionGroupHeader({ group, element, onClick }) {
 ReactionGroupHeader.propTypes = {
   group: PropTypes.string.isRequired,
   element: PropTypes.instanceOf(Reaction).isRequired,
-  onClick: PropTypes.func.isRequired,
 };
 
 export default ReactionGroupHeader;

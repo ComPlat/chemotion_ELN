@@ -15,7 +15,7 @@ function ReactionGroupItem({ element, showDetails }) {
     <div
       onClick={showDetails}
       role="button"
-      className="d-flex gap-2"
+      className="d-flex justify-content-between"
     >
       <SvgWithPopover
         hasPop
