@@ -7,7 +7,7 @@
 }
 
 .element-groups-renderer {
-  gap: 4px;
+  gap: 2px;
 }
 
 .element-list-renderer,
@@ -42,8 +42,8 @@
   .element-group-items {
     @extend .d-flex;
     @extend .flex-column;
-    gap: 2px;
-    padding-top: 2px;
+    gap: 1px;
+    padding-top: 1px;
   }
   .element-group-header-content {
     @extend .accordion-button;
