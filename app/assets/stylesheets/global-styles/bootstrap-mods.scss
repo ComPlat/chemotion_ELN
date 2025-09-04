@@ -183,6 +183,7 @@ h6 {
   }
   &:not(.collapsed)::after {
     transform: rotate(180deg);
+    @extend .surface-base;
   }
   &.accordion-button--icon-only {
     width: auto;
