@@ -18,6 +18,6 @@
   }
   &.drag-handle--disabled {
     cursor: not-allowed;
-    @extend .bg-gray-500;
+    @extend .surface-lighten1;
   }
 }
