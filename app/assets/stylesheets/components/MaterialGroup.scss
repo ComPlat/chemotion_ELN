@@ -1,10 +1,10 @@
 .material-group {
   @include condensed-text-width;
   @extend .pseudo-table;
+  margin-bottom: 2px;
   .pseudo-table__row-header {
-    @extend .surface-lighten4;
-    @extend .rounded-start;
-    @extend .mb-1;
+    @extend .rounded;
+    @extend .border;
   }
   container-name: material-group;
   container-type: inline-size;

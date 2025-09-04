@@ -1136,7 +1136,7 @@ export default class ReactionDetailsScheme extends React.Component {
 
     return (
       <>
-        <div>
+        <div className="mt-2">
           <MaterialGroup
             reaction={reaction}
             materialGroup="starting_materials"
