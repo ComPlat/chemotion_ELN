@@ -23,7 +23,7 @@ function MoleculeHeader({ sample }) {
   }, []);
 
   return (
-    <div className="flex-grow-1">
+    <div className="flex-grow-1 sample-group-molecule-header">
       {sample.isNoStructureSample()
         ? (<h5>(No-structure sample)</h5>)
         : (
@@ -44,7 +44,7 @@ function MoleculeHeader({ sample }) {
                 }}
               />
             )}
-            <div className="h5 flex-grow-1">
+            <div className="flex-grow-1 sample-group-molecule-header__name">
               <SampleName sample={sample} />
               <div className="d-flex align-items-center gap-1 h5">
                 {sample.molecule.chem_repo && sample.molecule.chem_repo.id && (

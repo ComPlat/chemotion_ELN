@@ -2,8 +2,8 @@
   @extend .d-flex;
   @extend .flex-column;
   @extend .w-100;
-  @extend .gap-1;
-  @extend .my-2;
+  gap: 1px;
+  margin-bottom: 2px;
   &__row {
     @extend .d-flex;
     @extend .align-items-center;

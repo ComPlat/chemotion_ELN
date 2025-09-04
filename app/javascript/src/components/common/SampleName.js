@@ -108,7 +108,7 @@ function SampleName({ sample }) {
 
   return (
     <div>
-      <p className="mb-2">
+      <p className="mb-1">
         <ClipboardCopyText text={sumFormulaCom} clipText={clipText} />
       </p>
       {moleculeName}
