@@ -188,10 +188,18 @@ const headerBtnGroup = (
   );
 };
 
-const AnalysesHeader = ({
-  sample, container, mode, readOnly, isDisabled, handleRemove, handleUndo, handleSubmit, toggleAddToReport,
-}) => {
-
+function AnalysesHeader({
+  sample,
+  container,
+  mode,
+  readOnly,
+  isDisabled,
+  handleRemove,
+  handleUndo,
+  handleSubmit,
+  toggleAddToReport,
+  updateContainerPreferredThumbnail,
+}) {
   let kind = container.extended_metadata.kind || '';
   kind = (kind.split('|')[1] || kind).trim();
   const deleted = container.is_deleted;
@@ -205,29 +213,38 @@ const AnalysesHeader = ({
       return c;
     }),
   };
-   const attachment = getAttachmentFromContainer(container);
-   const preferredThumbnail = container.children[0]?.extended_metadata?.preferred_thumbnail || null;
-  const attachmentsIds = container?.children?.flatMap((child) =>
-    (child.attachments || [])
-      .filter(att => typeof att.id === 'number')
-      .map(att => att.id)
-  ) || [];
-   console.log('container.children', container.children);
-   console.log('attachmentsIds', attachmentsIds);
+  const attachment = getAttachmentFromContainer(container);
+  const preferredThumbnail = container?.extended_metadata?.preferred_thumbnail || null;
+  const attachmentsIds = container?.children?.flatMap((child) => (child.attachments
+    || []).map((att) => Number(att.id))) || [];
+  const onChangePreferredThumbnail = (currentPreferredThumbnail) => {
+    // Handle the change of preferred thumbnail
+    if (currentPreferredThumbnail !== preferredThumbnail) {
+      // Handle the change of preferred thumbnail
+      container.extended_metadata = {
+        ...container.extended_metadata,
+        preferred_thumbnail: currentPreferredThumbnail,
+      };
+      updateContainerPreferredThumbnail();
+    }
+  };
   return (
     <div className={`analysis-header w-100 d-flex gap-3 lh-base ${mode === 'edit' ? '' : 'order pe-2'}`}>
       <div className="preview border d-flex align-items-center">
-        {deleted ?
-          <i className="fa fa-ban text-body-tertiary fs-2 text-center d-block" /> :
-          <ImageModal
-            attachment={attachment}
-            popObject={{
-              title: container.name,
-            }}
-            preferredThumbnail={preferredThumbnail}
-            ChildrenAttachmentsIds={attachmentsIds}
-          />
-    }
+        {deleted
+          ? <i className="fa fa-ban text-body-tertiary fs-2 text-center d-block" /> : (
+            <ImageModal
+              attachment={attachment}
+              popObject={{
+                title: container.name,
+              }}
+              preferredThumbnail={preferredThumbnail}
+              ChildrenAttachmentsIds={attachmentsIds}
+              onChangePreferredThumbnail={(currentPreferredThumbnail) => onChangePreferredThumbnail(
+                currentPreferredThumbnail
+              )}
+            />
+          )}
       </div>
       <div className={"flex-grow-1" + (deleted ? "" : " analysis-header-fade")}>
         <div className="d-flex justify-content-between align-items-center">
@@ -255,6 +272,6 @@ const AnalysesHeader = ({
       </div>
     </div>
   );
-};
+}
 
 export { AnalysesHeader, AnalysisModeToggle };

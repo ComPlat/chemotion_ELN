@@ -203,6 +203,20 @@ export default class ResearchPlanDetailsContainers extends Component {
         }),
       };
       const attachment = getAttachmentFromContainer(container);
+      const preferredThumbnail = container?.extended_metadata?.preferred_thumbnail || null;
+      const attachmentsIds = container?.children?.flatMap((child) => (child.attachments || [])
+        .map((att) => Number(att.id))) || [];
+      const onChangePreferredThumbnail = (currentPreferredThumbnail) => {
+        // Handle the change of preferred thumbnail
+        if (currentPreferredThumbnail !== preferredThumbnail) {
+          // Handle the change of preferred thumbnail
+          container.extended_metadata = {
+            ...container.extended_metadata,
+            preferred_thumbnail: currentPreferredThumbnail,
+          };
+          this.handleChange();
+        }
+      };
 
       return (
         <div className="analysis-header w-100 d-flex gap-3 lh-base">
@@ -212,6 +226,11 @@ export default class ResearchPlanDetailsContainers extends Component {
               popObject={{
                 title: container.name,
               }}
+              preferredThumbnail={preferredThumbnail}
+              ChildrenAttachmentsIds={attachmentsIds}
+              onChangePreferredThumbnail={(currentPreferredThumbnail) => onChangePreferredThumbnail(
+                currentPreferredThumbnail
+              )}
             />
           </div>
           <div className="flex-grow-1">
