@@ -77,9 +77,10 @@ class Collection < ApplicationRecord
   scope(
     :accessible_for,
     lambda do |user|
+      user_and_group_ids = [user.id, *user.group_ids]
       left_joins(:collection_shares)
-      .where(user_id: user.id)
-      .or(where(collection_shares: { shared_with_id: user.id }))
+      .where(user_id: user_and_group_ids)
+      .or(where(collection_shares: { shared_with_id: user_and_group_ids }))
     end
   )
 
