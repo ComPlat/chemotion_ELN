@@ -43,7 +43,6 @@ import {
   oneImageKet,
   molfileWithoutPolymerList,
   oneNodeNonPolymerKet,
-  templateListMockup,
   addAtomMockup,
   hasConsistentAliasesKet,
   isMoleculeEmptyKet,

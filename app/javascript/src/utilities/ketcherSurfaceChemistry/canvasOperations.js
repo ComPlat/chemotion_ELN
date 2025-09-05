@@ -13,12 +13,7 @@ import {
   latestDataSetter
 } from 'src/components/structureEditor/KetcherEditor';
 import { ALIAS_PATTERNS, KET_TAGS } from 'src/utilities/ketcherSurfaceChemistry/constants';
-import { handleAddAtom } from 'src/utilities/ketcherSurfaceChemistry/AtomsAndMolManipulation';
 import { fetchKetcherData } from 'src/utilities/ketcherSurfaceChemistry/InitializeAndParseKetcher';
-import {
-  latestDataSetter,
-  imageUsedCounterSetter,
-} from 'src/components/structureEditor/KetcherEditor';
 import { findAtomByImageIndex, handleAddAtom } from 'src/utilities/ketcherSurfaceChemistry/AtomsAndMolManipulation';
 import {
   imageNodeForTextNodeSetter,
@@ -473,6 +468,7 @@ export const saveMoveCanvas = async (editor, data, isFetchRequired, isMoveRequir
 };
 
 const centerPositionCanvas = async (editor) => {
+  if(false) // TODO: fix and remove
   try {
     await editor._structureDef.editor.editor.renderAndRecoordinateStruct();
     await fetchKetcherData(editor);
@@ -588,8 +584,6 @@ export {
   onDeleteText,
   arrangeTextNodes,
   assembleTextDescriptionFormula,
-  onAddAtom,
-  onDeleteText,
   onAddText,
   prepareSvg,
   centerPositionCanvas,
