@@ -66,7 +66,8 @@ function ReactionsDisplay({
   handleCommentTextChange,
   rootContainer,
   commentBoxVisible,
-  toggleCommentBox
+  toggleCommentBox,
+  updateContainerPreferredThumbnail
 }) {
   return (
     <div>
@@ -114,6 +115,7 @@ function ReactionsDisplay({
                       handleRemove={handleRemove}
                       handleSubmit={handleSubmit}
                       toggleAddToReport={toggleAddToReport}
+                      updateContainerPreferredThumbnail={updateContainerPreferredThumbnail}
                     />
                   </AccordionHeaderWithButtons>
                 </Card.Header>
@@ -155,6 +157,7 @@ function ReactionsDisplay({
                 handleSubmit={handleSubmit}
                 handleUndo={handleUndo}
                 toggleAddToReport={toggleAddToReport}
+                updateContainerPreferredThumbnail={updateContainerPreferredThumbnail}
               />
             );
           })}
