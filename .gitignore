@@ -133,7 +133,6 @@
 /public/safety_sheets/*
 !public/safety_sheets/.keep
 
-
 /public/zip/*
 /public/import_logs/*
 !/public/zip/.keep
