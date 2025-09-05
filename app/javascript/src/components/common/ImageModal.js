@@ -20,8 +20,9 @@ export default class ImageModal extends Component {
       numOfPages: 0,
       thumbnail: '',
       thumbnails: [],
-      currentPreferredThumbnail: props.preferredThumbnail || null,
+      currentPreferredThumbnail: Number(props.preferredThumbnail) || null,
       thumbPage: 0,
+      isLoading: false,
     };
 
     this.fetchImage = this.fetchImage.bind(this);
@@ -128,27 +129,6 @@ export default class ImageModal extends Component {
     }
   }
 
-  buildImageSrcArrayFromThumbnails(thumbnails) {
-    console.log(thumbnails);
-    if (thumbnails && thumbnails.length > 0) {
-      return thumbnails.map(({ id, thumbnail }) => ({
-        id,
-        thumbnail: thumbnail ? `data:image/png;base64,${thumbnail}` : null
-      }));
-    }
-    return [];
-  }
-
-  fetchThumbnails() {
-    const { ChildrenAttachmentsIds } = this.props;
-    console.log('ChildrenAttachmentsIds', ChildrenAttachmentsIds);
-    if (ChildrenAttachmentsIds && ChildrenAttachmentsIds.length > 0) {
-      AttachmentFetcher.fetchThumbnails(ChildrenAttachmentsIds).then((result) => {
-        this.setState({ thumbnails: this.buildImageSrcArrayFromThumbnails(result.thumbnails) });
-      });
-    }
-  }
-
   async fetchImageThumbnail() {
     const { attachment, preferredThumbnail } = this.props;
     const fileType = attachment?.file?.type;
@@ -157,8 +137,9 @@ export default class ImageModal extends Component {
     const defaultUnavailable = '/images/wild_card/not_available.svg';
     // render image of preferred attachment thumbnail if available
     if (preferredThumbnail) {
+      this.setState({ isLoading: true });
       const src = await fetchImageSrcByAttachmentId(preferredThumbnail);
-      this.setState({ thumbnail: src, fetchSrc: src });
+      this.setState({ thumbnail: src, fetchSrc: src, isLoading: false });
       return;
     }
     if (attachment?.thumb) {
@@ -174,9 +155,10 @@ export default class ImageModal extends Component {
 
   handleSetPreferred = (thumb) => {
     const { onChangePreferredThumbnail } = this.props;
-    const { currentPreferredThumbnail } = this.state;
     this.setState({ currentPreferredThumbnail: thumb.id, thumbnail: thumb.thumbnail });
-    onChangePreferredThumbnail(currentPreferredThumbnail);
+    if (thumb.id !== this.state.currentPreferredThumbnail) {
+      onChangePreferredThumbnail(thumb.id);
+    }
   };
 
   handleThumbPage = (delta) => {
@@ -216,7 +198,7 @@ export default class ImageModal extends Component {
                 <div
                   key={thumb.id}
                   className={`d-flex flex-column align-items-center justify-content-center p-1 rounded
-                    ${thumb.id === currentPreferredThumbnail
+                      ${thumb.id === currentPreferredThumbnail
                     ? 'border-2 border-info bg-info-subtle' : 'border border-secondary bg-white'}`}
                   style={{
                     cursor: 'pointer',
@@ -232,8 +214,9 @@ export default class ImageModal extends Component {
                   role="button"
                   tabIndex={0}
                   onClick={() => this.handleSetPreferred(thumb)}
-                  onKeyPress={(e) => {
+                  onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
                       this.handleSetPreferred(thumb);
                     }
                   }}
@@ -280,21 +263,34 @@ export default class ImageModal extends Component {
       isPdf,
       fetchSrc,
       thumbnail,
-      thumbnails,
     } = this.state;
-    console.log(thumbnail);
-    console.log("hamada");
-    console.log(this.state.fetchSrc);
 
     if (showPop) {
       return (
         <div className="preview-table">
-          <img
-            src={thumbnail}
-            alt={attachment?.filename}
-            style={{ cursor: 'default', ...imageStyle }}
-            onError={this.handleImageError}
-          />
+          {this.state.isLoading ? (
+            <div
+              className="d-flex justify-content-center align-items-center"
+              style={{
+                width: imageStyle?.width || 120,
+                height: imageStyle?.height || 120,
+                minWidth: 60,
+                minHeight: 60,
+                ...imageStyle
+              }}
+            >
+              <div className="spinner-border text-primary" role="status">
+                <span className="visually-hidden">Loading...</span>
+              </div>
+            </div>
+          ) : (
+            <img
+              src={thumbnail}
+              alt={attachment?.filename}
+              style={{ cursor: 'default', ...imageStyle }}
+              onError={this.handleImageError}
+            />
+          )}
         </div>
       );
     }
@@ -308,12 +304,29 @@ export default class ImageModal extends Component {
           role="button"
           tabIndex={0}
         >
-          <img
-            src={thumbnail}
-            alt={attachment?.filename}
-            style={{ ...imageStyle }}
-            role="button"
-          />
+          {this.state.isLoading ? (
+            <div
+              className="d-flex justify-content-center align-items-center"
+              style={{
+                width: imageStyle?.width || 120,
+                height: imageStyle?.height || 120,
+                minWidth: 60,
+                minHeight: 60,
+                ...imageStyle
+              }}
+            >
+              <div className="spinner-border text-primary" role="status">
+                <span className="visually-hidden">Loading...</span>
+              </div>
+            </div>
+          ) : (
+            <img
+              src={thumbnail}
+              alt={attachment?.filename}
+              style={{ ...imageStyle }}
+              role="button"
+            />
+          )}
         </div>
         <Modal
           centered
@@ -363,12 +376,29 @@ export default class ImageModal extends Component {
                 </div>
               ) : (
                 <div className="d-flex justify-content-center align-items-center mt-2">
-                  <img
-                    src={this.state.fetchSrc}
-                    style={{ maxHeight: '100%', maxWidth: '100%', display: 'block' }}
-                    alt={attachment?.filename}
-                    onError={this.handleImageError}
-                  />
+                  {this.state.isLoading ? (
+                    <div
+                      className="d-flex justify-content-center align-items-center"
+                      style={{
+                        width: imageStyle?.width || 300,
+                        height: imageStyle?.height || 300,
+                        minWidth: 120,
+                        minHeight: 120,
+                        ...imageStyle
+                      }}
+                    >
+                      <div className="spinner-border text-primary" role="status">
+                        <span className="visually-hidden">Loading...</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <img
+                      src={this.state.fetchSrc}
+                      style={{ maxHeight: '100%', maxWidth: '100%', display: 'block' }}
+                      alt={attachment?.filename}
+                      onError={this.handleImageError}
+                    />
+                  )}
                 </div>
               )}
               {this.renderAttachmentsThumbnails()}
@@ -407,4 +437,5 @@ ImageModal.defaultProps = {
   disableClick: false,
   preferredThumbnail: null,
   ChildrenAttachmentsIds: [],
+  onChangePreferredThumbnail: () => { },
 };
