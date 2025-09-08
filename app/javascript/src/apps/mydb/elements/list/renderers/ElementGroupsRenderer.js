@@ -93,7 +93,7 @@ function ElementGroupsRenderer({
 
         return (
           <div key={`element-group:${groupKey}`} className="element-group">
-            <div className={cs('element-group-header', { collapsed: isCollapsed })}>
+            <div className={cs('element-group-header', { collapsed: isCollapsed }, { draggable: groupHeaderDragType })}>
               {groupHeaderDragType && (
                 <div className="element-group-header-drag-handle">
                   <ElementDragHandle
