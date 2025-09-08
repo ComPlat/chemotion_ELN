@@ -48,13 +48,16 @@
   .element-group-header-content {
     @extend .accordion-button;
     box-shadow: none !important;
-    border-radius: 0 var(--bs-accordion-border-radius)
-      var(--bs-accordion-border-radius) 0;
-    border-width: var(--bs-accordion-border-width)
-      var(--bs-accordion-border-width) var(--bs-accordion-border-width) 0;
+    border-radius: var(--bs-accordion-border-radius);
+    border-width: var(--bs-accordion-border-width);
     border-style: solid;
     border-color: var(--bs-accordion-border-color);
     cursor: pointer;
+  }
+  .element-group-header.draggable .element-group-header-content {
+    border-left: none;
+    border-radius: 0 var(--bs-accordion-border-radius)
+      var(--bs-accordion-border-radius) 0;
   }
   .element-group-header-content,
   .element-list-item-content {
