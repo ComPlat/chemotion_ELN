@@ -4,18 +4,9 @@
   margin-bottom: 2px;
   .pseudo-table__row-header {
     @extend .rounded;
-    @extend .border;
   }
   container-name: material-group;
   container-type: inline-size;
-  &.material-group--can-drop {
-    .pseudo-table__row-header {
-      @extend .surface-lighten3;
-    }
-    &.material-group--is-over .pseudo-table__row-header {
-      @extend .bg-transparent;
-    }
-  }
   &__header-title {
     @extend .d-flex;
     @extend .align-items-center;
