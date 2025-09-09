@@ -7,7 +7,7 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 import PropTypes from 'prop-types';
 import { toJS } from 'mobx';
 import {
-  Button, Form, Row, Col, Table, OverlayTrigger, Popover, InputGroup, Modal
+  Button, Form, Row, Col, Table, OverlayTrigger, Popover, InputGroup, Modal, Card, Container
 } from 'react-bootstrap';
 import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
@@ -301,12 +301,12 @@ function VesselTemplateDetails({ vessels }) {
   };
 
   return (
-    <>
-      <DetailCard
-        header={renderHeaderContent()}
-        title="Vessel Template Details"
-        isPendingToSave={templateStoreItem?.changed}
-      >
+    <DetailCard
+      header={renderHeaderContent()}
+      isPendingToSave={templateStoreItem?.changed}
+    >
+      <Container>
+        <h5>Vessel Template Details</h5>
         <Form>
           {['vesselName',
             'details',
@@ -363,9 +363,10 @@ function VesselTemplateDetails({ vessels }) {
             </Button>
           </div>
         </Form>
-      </DetailCard>
-      <DetailCard
-        header={(
+      </Container>
+
+      <Card className="mt-3">
+        <Card.Header>
           <div className="d-flex align-items-center w-100">
             <span>Vessel Instances</span>
             <div className="ms-auto d-flex gap-2">
@@ -377,181 +378,182 @@ function VesselTemplateDetails({ vessels }) {
               </Button>
             </div>
           </div>
-      )}
-      >
-        <Table bordered hover responsive className="table-sm border-rounded">
-          <thead className="table-light">
-            <tr>
-              <th>Name</th>
-              <th>Description</th>
-              <th>Barcode</th>
-              <th>QR Code</th>
-              <th>Weight</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {instanceStoreItems.map((instance) => (
-              <tr key={instance.id}>
-                {['vesselInstanceName',
-                  'vesselInstanceDescription',
-                  'barCode',
-                  'qrCode',
-                ].map((field) => (
-                  <td key={field} className="p-1">
-                    <Form.Control
-                      type={field === 'weightAmount' ? 'number' : 'text'}
-                      readOnly={field === 'barCode'}
-                      value={instance[field] ?? ''}
-                      onChange={(e) => handleInstanceChange(instance.id, field, e.target.value)}
-                      style={field === 'barCode' ? { cursor: 'not-allowed' } : undefined}
-                    />
+        </Card.Header>
+
+        <Card.Body>
+          <Table bordered hover responsive className="table-sm border-rounded">
+            <thead className="table-light">
+              <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Barcode</th>
+                <th>QR Code</th>
+                <th>Weight</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {instanceStoreItems.map((instance) => (
+                <tr key={instance.id}>
+                  {['vesselInstanceName',
+                    'vesselInstanceDescription',
+                    'barCode',
+                    'qrCode',
+                  ].map((field) => (
+                    <td key={field} className="p-1">
+                      <Form.Control
+                        type={field === 'weightAmount' ? 'number' : 'text'}
+                        readOnly={field === 'barCode'}
+                        value={instance[field] ?? ''}
+                        onChange={(e) => handleInstanceChange(instance.id, field, e.target.value)}
+                        style={field === 'barCode' ? { cursor: 'not-allowed' } : undefined}
+                      />
+                    </td>
+                  ))}
+                  <td className="p-1">
+                    <Form.Group className="m-0">
+                      <InputGroup>
+                        <Form.Control
+                          type="number"
+                          style={{ maxWidth: '100px' }}
+                          value={instance.weightAmount ?? ''}
+                          onChange={(e) => handleInstanceChange(instance.id, 'weightAmount', e.target.value)}
+                        />
+                        <Button
+                          variant="success"
+                          size="sm"
+                          onClick={() => {
+                            const units = ['g', 'kg', 'mg'];
+                            const currentIndex = units.indexOf(instance.weightUnit);
+                            const nextUnit = units[(currentIndex + 1) % units.length];
+                            handleInstanceChange(instance.id, 'weightUnit', nextUnit);
+                          }}
+                        >
+                          {instance.weightUnit || 'g'}
+                        </Button>
+                      </InputGroup>
+                    </Form.Group>
                   </td>
-                ))}
-                <td className="p-1">
-                  <Form.Group className="m-0">
+                  <td className="align-middle">
+                    <div className="d-flex flex-wrap gap-1 justify-content-center align-items-center">
+                      <Button
+                        variant="warning"
+                        size="xxsm"
+                        onClick={() => updateInstance(instance.id)}
+                      >
+                        <i className="fa fa-save" title="Save changes" />
+                      </Button>
+                      <Button
+                        variant="warning"
+                        size="xxsm"
+                        onClick={openModal}
+                      >
+                        <i className="fa fa-minus-square" title="Remove from current collection" />
+                      </Button>
+                    </div>
+                    <Modal
+                      show={showConfirm}
+                      onHide={closeModal}
+                      centered
+                    >
+                      <Modal.Body>
+                        Remove selected vessel instance from this collection?
+                      </Modal.Body>
+                      <Modal.Footer>
+                        <Button variant="secondary" onClick={closeModal} disabled={deleting}>
+                          Cancel
+                        </Button>
+                        <Button
+                          variant="danger"
+                          onClick={() => HandleDeleteInstance(instance.id, vesselTemplateId)}
+                          disabled={deleting}
+                        >
+                          {deleting ? 'Removing…' : 'Remove'}
+                        </Button>
+                      </Modal.Footer>
+                    </Modal>
+                  </td>
+                </tr>
+              ))}
+              {newInstances.map((instance, index) => (
+                <tr key={`new-${index}`}>
+                  {['vesselInstanceName', 'vesselInstanceDescription', 'barCode', 'qrCode'].map((field) => (
+                    <td key={field} className="p-1">
+                      <Form.Control
+                        type="text"
+                        value={instance[field] ?? ''}
+                        onChange={(e) => {
+                          const updated = [...newInstances];
+                          updated[index][field] = e.target.value;
+                          setNewInstances(updated);
+                        }}
+                      />
+                    </td>
+                  ))}
+                  <td className="p-1">
                     <InputGroup>
                       <Form.Control
                         type="number"
-                        style={{ maxWidth: '100px' }}
                         value={instance.weightAmount ?? ''}
-                        onChange={(e) => handleInstanceChange(instance.id, 'weightAmount', e.target.value)}
+                        style={{ maxWidth: '100px' }}
+                        onChange={(e) => {
+                          const updated = [...newInstances];
+                          updated[index].weightAmount = e.target.value;
+                          setNewInstances(updated);
+                        }}
                       />
                       <Button
                         variant="success"
                         size="sm"
                         onClick={() => {
+                          const updated = [...newInstances];
+                          const current = updated[index].weightUnit || 'g';
                           const units = ['g', 'kg', 'mg'];
-                          const currentIndex = units.indexOf(instance.weightUnit);
-                          const nextUnit = units[(currentIndex + 1) % units.length];
-                          handleInstanceChange(instance.id, 'weightUnit', nextUnit);
+                          const next = units[(units.indexOf(current) + 1) % units.length];
+                          updated[index].weightUnit = next;
+                          setNewInstances(updated);
                         }}
                       >
                         {instance.weightUnit || 'g'}
                       </Button>
                     </InputGroup>
-                  </Form.Group>
-                </td>
-                <td className="align-middle">
-                  <div className="d-flex flex-wrap gap-1 justify-content-center align-items-center">
-                    <Button
-                      variant="warning"
-                      size="xxsm"
-                      onClick={() => updateInstance(instance.id)}
-                    >
-                      <i className="fa fa-save" title="Save changes" />
-                    </Button>
-                    <Button
-                      variant="warning"
-                      size="xxsm"
-                      onClick={openModal}
-                    >
-                      <i className="fa fa-minus-square" title="Remove from current collection" />
-                    </Button>
-                  </div>
-                  <Modal
-                    show={showConfirm}
-                    onHide={closeModal}
-                    backdropClassName="custom-backdrop"
-                    centered
-                  >
-                    <Modal.Body>
-                      Remove selected vessel instance from this collection?
-                    </Modal.Body>
-                    <Modal.Footer>
-                      <Button variant="secondary" onClick={closeModal} disabled={deleting}>
-                        Cancel
+                  </td>
+                  <td className="align-middle">
+                    <div className="d-flex flex-wrap gap-1 justify-content-center align-items-center">
+                      <Button
+                        variant="warning"
+                        size="xxsm"
+                        onClick={() => handleCreateNewInstance(instance, index)}
+                      >
+                        <i className="fa fa-save" title="Save changes" />
                       </Button>
                       <Button
                         variant="danger"
-                        onClick={() => HandleDeleteInstance(instance.id, vesselTemplateId)}
-                        disabled={deleting}
+                        size="xxsm"
+                        onClick={() => {
+                          const updated = [...newInstances];
+                          updated.splice(index, 1);
+                          setNewInstances(updated);
+                        }}
                       >
-                        {deleting ? 'Removing…' : 'Remove'}
+                        <i className="fa fa-trash" title="Delete" />
                       </Button>
-                    </Modal.Footer>
-                  </Modal>
-                </td>
-              </tr>
-            ))}
-            {newInstances.map((instance, index) => (
-              <tr key={`new-${index}`}>
-                {['vesselInstanceName', 'vesselInstanceDescription', 'barCode', 'qrCode'].map((field) => (
-                  <td key={field} className="p-1">
-                    <Form.Control
-                      type="text"
-                      value={instance[field] ?? ''}
-                      onChange={(e) => {
-                        const updated = [...newInstances];
-                        updated[index][field] = e.target.value;
-                        setNewInstances(updated);
-                      }}
-                    />
+                    </div>
                   </td>
-                ))}
-                <td className="p-1">
-                  <InputGroup>
-                    <Form.Control
-                      type="number"
-                      value={instance.weightAmount ?? ''}
-                      style={{ maxWidth: '100px' }}
-                      onChange={(e) => {
-                        const updated = [...newInstances];
-                        updated[index].weightAmount = e.target.value;
-                        setNewInstances(updated);
-                      }}
-                    />
-                    <Button
-                      variant="success"
-                      size="sm"
-                      onClick={() => {
-                        const updated = [...newInstances];
-                        const current = updated[index].weightUnit || 'g';
-                        const units = ['g', 'kg', 'mg'];
-                        const next = units[(units.indexOf(current) + 1) % units.length];
-                        updated[index].weightUnit = next;
-                        setNewInstances(updated);
-                      }}
-                    >
-                      {instance.weightUnit || 'g'}
-                    </Button>
-                  </InputGroup>
-                </td>
-                <td className="align-middle">
-                  <div className="d-flex flex-wrap gap-1 justify-content-center align-items-center">
-                    <Button
-                      variant="warning"
-                      size="xxsm"
-                      onClick={() => handleCreateNewInstance(instance, index)}
-                    >
-                      <i className="fa fa-save" title="Save changes" />
-                    </Button>
-                    <Button
-                      variant="danger"
-                      size="xxsm"
-                      onClick={() => {
-                        const updated = [...newInstances];
-                        updated.splice(index, 1);
-                        setNewInstances(updated);
-                      }}
-                    >
-                      <i className="fa fa-trash" title="Delete" />
-                    </Button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-        <BulkInstanceModal
-          show={showBulkModal}
-          onHide={() => setShowBulkModal(false)}
-          onSubmit={handleBulkCreate}
-          defaultBaseName={templateStoreItem?.vesselName}
-          onValidate={null}
-        />
-      </DetailCard>
-    </>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+          <BulkInstanceModal
+            show={showBulkModal}
+            onHide={() => setShowBulkModal(false)}
+            onSubmit={handleBulkCreate}
+            defaultBaseName={templateStoreItem?.vesselName}
+            onValidate={null}
+          />
+        </Card.Body>
+      </Card>
+    </DetailCard>
   );
 }
 
