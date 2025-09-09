@@ -184,7 +184,6 @@ h6 {
     padding-top: 3px;
   }
   &:not(.collapsed) {
-    box-shadow: none !important;
     &::after {
       transform: rotate(180deg);
       @extend .surface-base;
@@ -197,11 +196,4 @@ h6 {
       @extend .ms-0;
     }
   }
-}
-
-.accordion-item {
-  @extend .border-0;
-}
-.accordion-collapse {
-  @extend .border;
 }
