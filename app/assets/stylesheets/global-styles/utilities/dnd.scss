@@ -42,8 +42,8 @@
 }
 
 @mixin draggable-list-item() {
-  @extend .rounded-start;
-  @extend .surface-lighten4;
+  @extend .border;
+  @extend .rounded;
   &:hover {
     @extend .surface-hover-on-white;
   }
@@ -65,5 +65,8 @@
     .drag-handle {
       @extend .bg-active;
     }
+  }
+  .drag-handle {
+    margin: -1px 0 -1px -1px;
   }
 }
