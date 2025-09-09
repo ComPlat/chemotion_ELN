@@ -187,10 +187,12 @@ module RecoveryDB
           original_id = join_record.public_send(foreign_key)
           element_key = [main_model.name, original_id]
 
-          new_element = created_elements[element_key] ||= restore_element(
-            recovery_element_model, main_model, original_id, new_user_id
-          )
-
+          unless created_elements.key?(element_key)
+            created_elements[element_key] = restore_element(
+              recovery_element_model, main_model, original_id, new_user_id, created_elements
+            )
+          end
+          new_element = created_elements[element_key]
           next unless new_element
 
           join_model.create!(
@@ -200,7 +202,7 @@ module RecoveryDB
         end
       end
 
-      def restore_element(recovery_model, main_model, original_id, new_user_id)
+      def restore_element(recovery_model, main_model, original_id, new_user_id, created_elements)
         original = recovery_model.find_by(id: original_id)
         return nil unless original
 
@@ -208,7 +210,7 @@ module RecoveryDB
         new_record = main_model.new(attributes)
         assign_creator_or_user(new_record, new_user_id)
         new_record.save(validate: false)
-        restore_associations(main_model, original_id, new_record.id, new_user_id)
+        restore_associations(main_model, original_id, new_record.id, new_user_id, created_elements)
         new_record
       rescue ActiveRecord::RecordInvalid => e
         Rails.logger.error "Failed to restore #{main_model.name} #{original_id}: #{e.message}"
@@ -224,10 +226,11 @@ module RecoveryDB
         end
       end
 
-      def restore_associations(main_model, original_id, new_id, new_user_id)
+      def restore_associations(main_model, original_id, new_id, new_user_id, created_elements)
         restore_container(main_model, original_id, new_id, new_user_id)
         restore_attachments(main_model, original_id, new_id, new_user_id)
         restore_wells(original_id, new_id) if main_model == Wellplate
+        restore_links(new_id, created_elements) if main_model == ResearchPlan
       end
 
       def restore_container(element_type, old_element_id, new_element_id, new_user_id)
@@ -317,6 +320,28 @@ module RecoveryDB
         rescue ActiveRecord::RecordInvalid => e
           Rails.logger.error "Failed to restore Well #{well.id}: #{e.message}"
         end
+      end
+
+      def restore_links(id, created_elements)
+        research_plan = ResearchPlan.find(id)
+        rp_body = research_plan.body
+
+        linkable_types = %w[sample reaction]
+
+        rp_body.each do |b|
+          next unless linkable_types.include?(b['type'])
+
+          key_name = "#{b['type']}_id"
+          old_id = b['value'][key_name]
+          element_key = [b['type'].capitalize, old_id]
+
+          new_id = created_elements[element_key]
+          raise "Missing mapping for #{element_key.inspect}" unless new_id
+
+          b['value'][key_name] = new_id
+        end
+
+        research_plan.update!(body: rp_body)
       end
 
       def restore_sharing_and_synchronization(user_id_map)
