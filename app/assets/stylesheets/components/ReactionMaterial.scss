@@ -50,7 +50,6 @@ $rm-columns: (
 .reaction-material {
   @include draggable-list-item();
   &.pseudo-table__row {
-    @extend .align-items-start;
     @extend .ps-0;
   }
   &__link {
