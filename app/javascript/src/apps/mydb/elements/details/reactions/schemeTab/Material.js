@@ -729,10 +729,12 @@ class Material extends Component {
               size="sm"
             />
             {this.equivalentOrYield(material)}
-            <DeleteButton
-              disabled={!permitOn(reaction)}
-              onClick={() => deleteMaterial(material)}
-            />
+            <div className="reaction-material__delete-input">
+              <DeleteButton
+                disabled={!permitOn(reaction)}
+                onClick={() => deleteMaterial(material)}
+              />
+            </div>
           </div>
           {materialGroup === 'products' && (
             <>
