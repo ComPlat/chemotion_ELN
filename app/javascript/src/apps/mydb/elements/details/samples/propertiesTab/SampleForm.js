@@ -3,9 +3,7 @@
 /* eslint-disable react/forbid-prop-types */
 import React from 'react';
 import PropTypes from 'prop-types';
-import {
-  Button, Form, InputGroup, OverlayTrigger, Tooltip, Row, Col, ButtonGroup, Table
-} from 'react-bootstrap';
+import { Button, Form, InputGroup, OverlayTrigger, Tooltip, Row, Col, ButtonGroup, Table } from 'react-bootstrap';
 import { Select, CreatableSelect } from 'src/components/common/Select';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
@@ -103,11 +101,11 @@ export default class SampleForm extends React.Component {
         id={id}
         checked={isChecked}
         onChange={() => this.handleToggle(key)}
-        label={(
+        label={
           <label htmlFor={id} style={{ cursor: 'pointer', marginBottom: 0 }}>
             {label}
           </label>
-        )}
+        }
       />
     );
   };
@@ -160,13 +158,12 @@ export default class SampleForm extends React.Component {
     return (
       <OverlayTrigger
         placement="top"
-        overlay={(
+        overlay={
           <Tooltip id="assignButton">
             Information mirrored to the reaction table describing the content of pure compound or amount of pure
             compound in a given solution
           </Tooltip>
-        )}
-      >
+        }>
         <Button>
           <i className="fa fa-info" />
         </Button>
@@ -397,8 +394,8 @@ export default class SampleForm extends React.Component {
           } else {
             NotificationActions.add({
               message:
-                'Could not find next inventory label. '
-                + 'Please assign a prefix and a counter for a valid collection first.',
+                'Could not find next inventory label. ' +
+                'Please assign a prefix and a counter for a valid collection first.',
               level: 'error',
             });
           }
@@ -444,6 +441,7 @@ export default class SampleForm extends React.Component {
     } else {
       sample[field] = e;
     }
+
     sample.formulaChanged = this.formulaChanged();
 
     if (field === 'decoupled') {
@@ -539,7 +537,8 @@ export default class SampleForm extends React.Component {
   }
 
   textInput(sample, field, label, disabled = false, readOnly = false) {
-    const updateValue = (/^xref_/.test(field) && sample.xref ? sample.xref[field.split('xref_')[1]] : sample[field]) || '';
+    const updateValue =
+      (/^xref_/.test(field) && sample.xref ? sample.xref[field.split('xref_')[1]] : sample[field]) || '';
 
     return (
       <Form.Group className="w-100">
@@ -562,8 +561,8 @@ export default class SampleForm extends React.Component {
 
   nextInventoryLabel(sample) {
     const overlayMessage = sample.isNew
-      ? 'Inventory label will be auto generated on sample create,'
-        + ' if sample belongs to a collection with a predefined label'
+      ? 'Inventory label will be auto generated on sample create,' +
+        ' if sample belongs to a collection with a predefined label'
       : 'click to assign next inventory label';
     return (
       <OverlayTrigger placement="top" overlay={<Tooltip id="FetchNextInventoryLabel">{overlayMessage}</Tooltip>}>
@@ -779,7 +778,7 @@ export default class SampleForm extends React.Component {
         disabled
         variant="light"
         id="numInput_amount_l"
-        showInfoTooltipRequiredVol
+        showInfoTooltipRequiredVol={true}
       />
     );
   }
@@ -816,33 +815,31 @@ export default class SampleForm extends React.Component {
           <ButtonGroupToggleButton
             onClick={() => this.setState({ densityMolarity: 'density' })}
             active={densityMolarity === 'density'}
-            size="xxsm"
-          >
+            size="xxsm">
             Density
           </ButtonGroupToggleButton>
           <ButtonGroupToggleButton
             onClick={() => this.setState({ densityMolarity: 'molarity' })}
             active={densityMolarity === 'molarity'}
-            size="xxsm"
-          >
+            size="xxsm">
             Molarity
           </ButtonGroupToggleButton>
         </ButtonGroup>
         {densityMolarity === 'density'
           ? this.numInputWithoutTable(sample, 'density', 'g/ml', ['n'], 5, '', '', polyDisabled, '', false, isPolymer)
           : this.numInputWithoutTable(
-            sample,
-            'molarity_value',
-            'M',
-            ['n'],
-            5,
-            '',
-            '',
-            polyDisabled,
-            '',
-            false,
-            isPolymer
-          )}
+              sample,
+              'molarity_value',
+              'M',
+              ['n'],
+              5,
+              '',
+              '',
+              polyDisabled,
+              '',
+              false,
+              isPolymer
+            )}
       </>
     );
   }
