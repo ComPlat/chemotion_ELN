@@ -12,6 +12,7 @@
     @extend .gap-2;
     @extend .px-2;
     &-header {
+      @extend .surface-lighten4;
       @extend .fw-bold;
     }
   }
