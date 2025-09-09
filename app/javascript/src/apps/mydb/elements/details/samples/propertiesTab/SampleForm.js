@@ -3,7 +3,9 @@
 /* eslint-disable react/forbid-prop-types */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Form, InputGroup, OverlayTrigger, Tooltip, Row, Col, ButtonGroup, Table } from 'react-bootstrap';
+import {
+  Button, Form, InputGroup, OverlayTrigger, Tooltip, Row, Col, ButtonGroup, Table
+} from 'react-bootstrap';
 import { Select, CreatableSelect } from 'src/components/common/Select';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
@@ -54,6 +56,7 @@ export default class SampleForm extends React.Component {
     this.switchDensityMolarity = this.switchDensityMolarity.bind(this);
     this.handleMixtureComponentChanged = this.handleMixtureComponentChanged.bind(this);
     this.handleSampleTypeChanged = this.handleSampleTypeChanged.bind(this);
+    this.stateSelect = this.stateSelect.bind(this);
   }
 
   componentDidUpdate(prevProps) {
@@ -100,11 +103,11 @@ export default class SampleForm extends React.Component {
         id={id}
         checked={isChecked}
         onChange={() => this.handleToggle(key)}
-        label={
+        label={(
           <label htmlFor={id} style={{ cursor: 'pointer', marginBottom: 0 }}>
             {label}
           </label>
-        }
+        )}
       />
     );
   };
@@ -157,12 +160,13 @@ export default class SampleForm extends React.Component {
     return (
       <OverlayTrigger
         placement="top"
-        overlay={
+        overlay={(
           <Tooltip id="assignButton">
             Information mirrored to the reaction table describing the content of pure compound or amount of pure
             compound in a given solution
           </Tooltip>
-        }>
+        )}
+      >
         <Button>
           <i className="fa fa-info" />
         </Button>
@@ -393,8 +397,8 @@ export default class SampleForm extends React.Component {
           } else {
             NotificationActions.add({
               message:
-                'Could not find next inventory label. ' +
-                'Please assign a prefix and a counter for a valid collection first.',
+                'Could not find next inventory label. '
+                + 'Please assign a prefix and a counter for a valid collection first.',
               level: 'error',
             });
           }
@@ -440,7 +444,6 @@ export default class SampleForm extends React.Component {
     } else {
       sample[field] = e;
     }
-
     sample.formulaChanged = this.formulaChanged();
 
     if (field === 'decoupled') {
@@ -536,8 +539,7 @@ export default class SampleForm extends React.Component {
   }
 
   textInput(sample, field, label, disabled = false, readOnly = false) {
-    const updateValue =
-      (/^xref_/.test(field) && sample.xref ? sample.xref[field.split('xref_')[1]] : sample[field]) || '';
+    const updateValue = (/^xref_/.test(field) && sample.xref ? sample.xref[field.split('xref_')[1]] : sample[field]) || '';
 
     return (
       <Form.Group className="w-100">
@@ -560,8 +562,8 @@ export default class SampleForm extends React.Component {
 
   nextInventoryLabel(sample) {
     const overlayMessage = sample.isNew
-      ? 'Inventory label will be auto generated on sample create,' +
-        ' if sample belongs to a collection with a predefined label'
+      ? 'Inventory label will be auto generated on sample create,'
+        + ' if sample belongs to a collection with a predefined label'
       : 'click to assign next inventory label';
     return (
       <OverlayTrigger placement="top" overlay={<Tooltip id="FetchNextInventoryLabel">{overlayMessage}</Tooltip>}>
@@ -777,7 +779,7 @@ export default class SampleForm extends React.Component {
         disabled
         variant="light"
         id="numInput_amount_l"
-        showInfoTooltipRequiredVol={true}
+        showInfoTooltipRequiredVol
       />
     );
   }
@@ -814,31 +816,33 @@ export default class SampleForm extends React.Component {
           <ButtonGroupToggleButton
             onClick={() => this.setState({ densityMolarity: 'density' })}
             active={densityMolarity === 'density'}
-            size="xxsm">
+            size="xxsm"
+          >
             Density
           </ButtonGroupToggleButton>
           <ButtonGroupToggleButton
             onClick={() => this.setState({ densityMolarity: 'molarity' })}
             active={densityMolarity === 'molarity'}
-            size="xxsm">
+            size="xxsm"
+          >
             Molarity
           </ButtonGroupToggleButton>
         </ButtonGroup>
         {densityMolarity === 'density'
           ? this.numInputWithoutTable(sample, 'density', 'g/ml', ['n'], 5, '', '', polyDisabled, '', false, isPolymer)
           : this.numInputWithoutTable(
-              sample,
-              'molarity_value',
-              'M',
-              ['n'],
-              5,
-              '',
-              '',
-              polyDisabled,
-              '',
-              false,
-              isPolymer
-            )}
+            sample,
+            'molarity_value',
+            'M',
+            ['n'],
+            5,
+            '',
+            '',
+            polyDisabled,
+            '',
+            false,
+            isPolymer
+          )}
       </>
     );
   }
@@ -928,11 +932,16 @@ export default class SampleForm extends React.Component {
     );
   }
 
-  stateSelect() {
+  stateSelect(sample) {
     return (
       <Form.Group controlId="sampleDetailLevelSelect">
         <Form.Label>State</Form.Label>
-        <Form.Select onChange={(e) => alert('state changed')} value={1}>
+        <Form.Select
+          onChange={(e) => {
+            this.handleFieldChanged('state', e.target.value);
+          }}
+          value={sample.state || 0}
+        >
           <option value="0">State 1</option>
           <option value="1">State 2</option>
           <option value="2">State 3</option>
@@ -942,7 +951,6 @@ export default class SampleForm extends React.Component {
   }
 
   heterogeneousMaterialComponentsList(sample) {
-    console.log(sample)
     return (
       <>
         <h5 className="mt-4">Heterogeneous material components:</h5>
@@ -958,9 +966,9 @@ export default class SampleForm extends React.Component {
           <Col>{this.dimensionFieldGroup(sample)}</Col>
         </Row>
         <Row>
-          <Col>{this.stateSelect()}</Col>
+          <Col>{this.stateSelect(sample)}</Col>
           <Col>{this.textInput(sample, 'color', 'Color')}</Col>
-          <Col>{this.textInput(sample, 'storageConditions', 'Storage Conditions')}</Col>
+          <Col>{this.textInput(sample, 'storage_condition', 'Storage Conditions')}</Col>
         </Row>
         <Row>{this.heteroMaterialTable(sample)}</Row>
         <Row>{this.sampleDescription(sample)}</Row>
@@ -1050,8 +1058,7 @@ export default class SampleForm extends React.Component {
           </thead>
           <tbody>
             {rowsData.map((row) => {
-              const molarRatioCalcPercent =
-                totalMolarCalc > 0 ? (row.molarRatioCalcMM / totalMolarCalc).toFixed(7) : '-';
+              const molarRatioCalcPercent = totalMolarCalc > 0 ? (row.molarRatioCalcMM / totalMolarCalc).toFixed(7) : '-';
               const molarRatioExpPercent = totalMolarExp > 0 ? (row.weightRatioCalcMM / totalMolarExp).toFixed(7) : '-';
               return (
                 <tr key={`component${row.template_category}`}>
@@ -1093,7 +1100,9 @@ export default class SampleForm extends React.Component {
   }
 
   render() {
-    const { enableSampleDecoupled, sample = {}, customizableField, handleSampleChanged } = this.props;
+    const {
+      enableSampleDecoupled, sample = {}, customizableField, handleSampleChanged
+    } = this.props;
     const isPolymer = (sample.molfile || '').indexOf(' R# ') !== -1;
     const isDisabled = !sample.can_update;
     const polyDisabled = isPolymer || isDisabled;
@@ -1219,8 +1228,8 @@ export default class SampleForm extends React.Component {
           </>
         )}
 
-        {selectedSampleType?.value === SAMPLE_TYPE_HETEROGENEOUS_MATERIAL &&
-          this.heterogeneousMaterialComponentsList(sample)}
+        {selectedSampleType?.value === SAMPLE_TYPE_HETEROGENEOUS_MATERIAL
+          && this.heterogeneousMaterialComponentsList(sample)}
 
         <Row>
           <SampleDetailsSolvents sample={sample} onChange={handleSampleChanged} />

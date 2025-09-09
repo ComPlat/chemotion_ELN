@@ -242,6 +242,12 @@ export default class Sample extends Element {
       sample_type: SAMPLE_TYPE_MICROMOLECULE,
       components: [],
       ancestor_ids: [],
+      state: '',
+      color: '',
+      height: '',
+      width: '',
+      length: '',
+      storage_condition: '',
     });
 
     sample.short_label = Sample.buildNewShortLabel();
@@ -424,6 +430,12 @@ export default class Sample extends Element {
       segments: this.segments.map((s) => s.serialize()),
       sample_type: this.sample_type,
       sample_details: this.sample_details,
+      state: this.state,
+      color: this.color || '',
+      height: this.height || '',
+      width: this.width || '',
+      length: this.length || '',
+      storage_condition: this.storage_condition || '',
     });
 
     return serialized;

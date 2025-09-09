@@ -146,6 +146,13 @@ export default class SampleDetails extends React.Component {
       currentUser,
       showRedirectWarning: redirectedFromMixture || false,
       casInputValue: '',
+      // Heterogeneous sample props
+      state: props.sample.state || '',
+      color: props.sample.color || '',
+      height: props.sample.height || '',
+      width: props.sample.width || '',
+      length: props.sample.length || '',
+      storage_condition: props.sample.storage_condition || '',
     };
 
     this.enableComputedProps = MatrixCheck(currentUser.matrix, 'computedProp');
@@ -384,6 +391,7 @@ export default class SampleDetails extends React.Component {
     } else if (sample.isNew) {
       ElementActions.createSample(sample, closeView);
     } else {
+      // TODO: upate sample params
       sample.cleanBoilingMelting();
       const newSample = new Sample(sample);
       newSample.components = sample.components;
