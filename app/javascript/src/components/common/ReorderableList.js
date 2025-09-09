@@ -104,7 +104,7 @@ function ReorderableItem({
     }
   });
 
-  const className = cs('reorderable-list__item', {
+  const className = cs('reorderable-list__item pseudo-table__row', {
     'draggable-list-item--is-dragging': isDragging,
     'draggable-list-item--is-over': isOver,
     'draggable-list-item--can-drop': canDrop,

@@ -1,9 +1,9 @@
 .material-group {
   @include condensed-text-width;
   @extend .pseudo-table;
-  margin-bottom: 2px;
   .pseudo-table__row-header {
-    @extend .rounded;
+    @extend .border;
+    @extend .border-top-0;
   }
   container-name: material-group;
   container-type: inline-size;

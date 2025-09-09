@@ -73,7 +73,7 @@ export default function ReactionConditions({
         getItemId={(item) => conditions.indexOf(item).toString()}
         onReorder={handleChange}
         renderItem={(condition, index) => (
-          <div className="w-100 d-flex align-items-center gap-2">
+          <div className="w-100 d-flex align-items-center gap-2 py-2">
             <Form.Control
               className="flex-grow-1"
               key={`condition-${index}`}
