@@ -678,71 +678,69 @@ class Material extends Component {
       <div ref={dropRef} className={this.rowClassNames()}>
         {this.dragHandle()}
         {this.materialNameWithIupac(material)}
-        <div className="d-flex gap-2 flex-column py-1">
-          <div className="d-flex gap-2 align-items-start">
-            {this.materialRef(material)}
-            {this.switchTargetReal()}
-            <OverlayTrigger
-              placement="top"
-              overlay={<Tooltip id="reaction-coefficient-info"> Reaction Coefficient </Tooltip>}
-            >
-              <div>
-                <NumeralInputWithUnitsCompo
-                  className="reaction-material__coefficient-input"
-                  size="sm"
-                  value={material.coefficient ?? 1}
-                  onChange={this.handleCoefficientChange}
-                  name="coefficient"
-                />
-              </div>
-            </OverlayTrigger>
-            <div className="reaction-material__amount-input">
-              {this.massField(material, metricPrefixes, reaction, massBsStyle, metric)}
-              {this.materialVolume(material, 'reaction-material__volume-input')}
+        <div className="d-flex gap-2 py-1 align-items-start">
+          {this.materialRef(material)}
+          {this.switchTargetReal()}
+          <OverlayTrigger
+            placement="top"
+            overlay={<Tooltip id="reaction-coefficient-info"> Reaction Coefficient </Tooltip>}
+          >
+            <div>
               <NumeralInputWithUnitsCompo
-                value={material.amount_mol}
-                className="reaction-material__molarity-input"
-                unit="mol"
-                metricPrefix={metricMol}
-                metricPrefixes={metricPrefixes}
-                precision={4}
-                disabled={!permitOn(reaction)
-                  || (this.props.materialGroup === 'products'
-                  || (!material.reference && this.props.lockEquivColumn))}
-                onChange={e => this.handleAmountUnitChange(e, material.amount_mol)}
-                onMetricsChange={this.handleMetricsChange}
-                variant={material.amount_unit === 'mol' ? 'primary' : 'light'}
+                className="reaction-material__coefficient-input"
                 size="sm"
+                value={material.coefficient ?? 1}
+                onChange={this.handleCoefficientChange}
+                name="coefficient"
               />
             </div>
-            {this.materialLoading(material, showLoadingColumn)}
+          </OverlayTrigger>
+          <div className="reaction-material__amount-input">
+            {this.massField(material, metricPrefixes, reaction, massBsStyle, metric)}
+            {this.materialVolume(material, 'reaction-material__volume-input')}
             <NumeralInputWithUnitsCompo
-              value={material.concn}
-              className="reaction-material__concentration-input"
-              unit="mol/l"
-              metricPrefix={metricMolConc}
-              metricPrefixes={metricPrefixesMolConc}
+              value={material.amount_mol}
+              className="reaction-material__molarity-input"
+              unit="mol"
+              metricPrefix={metricMol}
+              metricPrefixes={metricPrefixes}
               precision={4}
-              disabled
-              onChange={e => this.handleAmountUnitChange(e, material.concn)}
+              disabled={!permitOn(reaction)
+                || (this.props.materialGroup === 'products'
+                || (!material.reference && this.props.lockEquivColumn))}
+              onChange={e => this.handleAmountUnitChange(e, material.amount_mol)}
               onMetricsChange={this.handleMetricsChange}
+              variant={material.amount_unit === 'mol' ? 'primary' : 'light'}
               size="sm"
             />
-            {this.equivalentOrYield(material)}
-            <div className="reaction-material__delete-input">
-              <DeleteButton
-                disabled={!permitOn(reaction)}
-                onClick={() => deleteMaterial(material)}
-              />
-            </div>
           </div>
-          {materialGroup === 'products' && (
-            <>
-              {material.gas_type === 'gas' && reaction.gaseous && this.gaseousProductRow(material)}
-              {material.adjusted_loading && material.error_mass && <MaterialCalculations material={material} />}
-            </>
-          )}
+          {this.materialLoading(material, showLoadingColumn)}
+          <NumeralInputWithUnitsCompo
+            value={material.concn}
+            className="reaction-material__concentration-input"
+            unit="mol/l"
+            metricPrefix={metricMolConc}
+            metricPrefixes={metricPrefixesMolConc}
+            precision={4}
+            disabled
+            onChange={e => this.handleAmountUnitChange(e, material.concn)}
+            onMetricsChange={this.handleMetricsChange}
+            size="sm"
+          />
+          {this.equivalentOrYield(material)}
+          <div className="reaction-material__delete-input">
+            <DeleteButton
+              disabled={!permitOn(reaction)}
+              onClick={() => deleteMaterial(material)}
+            />
+          </div>
         </div>
+        {materialGroup === 'products' && (
+          <>
+            {material.gas_type === 'gas' && reaction.gaseous && this.gaseousProductRow(material)}
+            {material.adjusted_loading && material.error_mass && <MaterialCalculations material={material} />}
+          </>
+        )}
       </div>
     );
   }
@@ -961,7 +959,7 @@ class Material extends Component {
     };
 
     return (
-      <div className="pseudo-table__cell pseudo-table__cell-title">
+      <div className="pseudo-table__cell pseudo-table__cell-title align-self-start">
         <div>
           <div className="d-flex align-items-center">
             {reaction.gaseous && materialGroup !== 'solvents'
