@@ -12,6 +12,7 @@
 
 $rm-sizes: (
   "square": 1.9rem,
+  "small-numeral": 2.75rem,
   "numeral": 4rem,
   "numeral-with-units": 6.4rem,
   "large-numeral-with-units": 7.2rem,
@@ -19,7 +20,7 @@ $rm-sizes: (
 
 $rm-columns: (
   "ratio": map-get($rm-sizes, "numeral"),
-  "equivalent": map-get($rm-sizes, "numeral"),
+  "equivalent": map-get($rm-sizes, "small-numeral"),
   "yield": map-get($rm-sizes, "numeral"),
   "volume": map-get($rm-sizes, "numeral-with-units"),
   "mass": map-get($rm-sizes, "numeral-with-units"),
@@ -50,6 +51,7 @@ $rm-columns: (
   @include draggable-list-item();
   &.pseudo-table__row {
     @extend .align-items-start;
+    @extend .ps-0;
   }
   &__link {
     @extend .align-middle;
@@ -138,7 +140,7 @@ $rm-columns: (
   }
 }
 
-@container material-group (width < 49.5rem) {
+@container material-group (width < 48.5rem) {
   .reaction-material {
     &__amount-input {
       flex-direction: column; // not extending bootstrap utilities in this context to avoid side effects
