@@ -21,7 +21,7 @@ module RecoveryDB
                                                     containers container_hierarchies collections_samples
                                                     collections_reactions collections_wellplates collections_screens
                                                     collections_research_plans collections_device_descriptions
-                                                    sync_collections_users])
+                                                    sync_collections_users users_devices devices])
       end
 
       def run
@@ -53,7 +53,7 @@ module RecoveryDB
             old_user_id: old_user.id,
             new_user_id: new_user.id,
           )
-
+          restore_devices(old_user, new_user)
           new_user
         rescue ActiveRecord::ActiveRecordError => e
           Rails.logger.error "Failed to copy user #{old_user.id}: #{e.message}"
@@ -342,6 +342,20 @@ module RecoveryDB
         end
 
         research_plan.update!(body: rp_body)
+      end
+
+      def restore_devices(old_user, new_user)
+        users_devices = RecoveryDB::Models::UsersDevice.where(user_id: old_user.id)
+        device_ids = users_devices.pluck(:device_id)
+        old_devices = RecoveryDB::Models::Device.where(id: device_ids).index_by(&:id)
+        users_devices.each do |ud|
+          old_device = old_devices[ud.device_id]
+          attributes = old_device.attributes.except(*attributes_to_exclude)
+          new_device = Device.create!(attributes)
+          UsersDevice.create!(user_id: new_user.id, device_id: new_device.id)
+        rescue StandardError => e
+          Rails.logger.error "Failed to restore device #{old_device.id}: #{e.message}"
+        end
       end
 
       def restore_sharing_and_synchronization(user_id_map)
