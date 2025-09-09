@@ -30,7 +30,7 @@ const headers = {
   loading: 'Loading',
   concn: 'Conc',
   vol: 'Vol',
-  eq: 'Equiv'
+  eq: 'Eq'
 };
 
 function MaterialGroup({

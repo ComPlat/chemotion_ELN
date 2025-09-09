@@ -10,6 +10,7 @@
     @extend .justify-content-between;
     @extend .w-100;
     @extend .gap-2;
+    @extend .px-2;
     &-header {
       @extend .fw-bold;
     }
