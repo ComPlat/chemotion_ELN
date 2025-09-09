@@ -452,7 +452,6 @@ function VesselTemplateDetails({ vessels }) {
                   <Modal
                     show={showConfirm}
                     onHide={closeModal}
-                    backdropClassName="custom-backdrop"
                     centered
                   >
                     <Modal.Body>
