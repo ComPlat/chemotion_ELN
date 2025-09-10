@@ -2,22 +2,23 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  Accordion, Form, Row, Col, Button, InputGroup
+  Form, Row, Col, Button, InputGroup
 } from 'react-bootstrap';
 import { Select } from 'src/components/common/Select';
 import Delta from 'quill-delta';
-import MaterialGroupContainer from 'src/apps/mydb/elements/details/reactions/schemeTab/MaterialGroupContainer';
+import MaterialGroup from 'src/apps/mydb/elements/details/reactions/schemeTab/MaterialGroup';
 import Sample from 'src/models/Sample';
 import Reaction from 'src/models/Reaction';
 import Molecule from 'src/models/Molecule';
 import ReactionDetailsMainProperties from 'src/apps/mydb/elements/details/reactions/ReactionDetailsMainProperties';
 import ReactionDetailsPurification from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsPurification';
+import ReactionConditions from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionConditions';
 
 import QuillViewer from 'src/components/QuillViewer';
 import ReactionDescriptionEditor from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDescriptionEditor';
 
 import GeneralProcedureDnd from 'src/apps/mydb/elements/details/reactions/schemeTab/GeneralProcedureDnD';
-import { rolesOptions, conditionsOptions } from 'src/components/staticDropdownOptions/options';
+import { rolesOptions } from 'src/components/staticDropdownOptions/options';
 import OlsTreeSelect from 'src/components/OlsComponent';
 import ReactionDetailsDuration from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsDuration';
 import { permitOn } from 'src/components/common/uis';
@@ -54,7 +55,6 @@ export default class ReactionDetailsScheme extends React.Component {
 
     this.handleTemplateChange = this.handleTemplateChange.bind(this);
 
-    this.onReactionChange = this.onReactionChange.bind(this);
     this.onChangeRole = this.onChangeRole.bind(this);
     this.renderRole = this.renderRole.bind(this);
     this.addSampleTo = this.addSampleTo.bind(this);
@@ -62,7 +62,6 @@ export default class ReactionDetailsScheme extends React.Component {
     this.dropSample = this.dropSample.bind(this);
     this.switchEquiv = this.switchEquiv.bind(this);
     this.switchYield = this.switchYield.bind(this);
-    this.handleOnConditionSelect = this.handleOnConditionSelect.bind(this);
     this.updateTextTemplates = this.updateTextTemplates.bind(this);
     this.reactionVesselSize = this.reactionVesselSize.bind(this);
     this.updateVesselSize = this.updateVesselSize.bind(this);
@@ -88,7 +87,7 @@ export default class ReactionDetailsScheme extends React.Component {
   }
 
   dropSample(srcSample, tagMaterial, tagGroup, extLabel, isNewSample = false) {
-    const { reaction } = this.props;
+    const { reaction, onReactionChange } = this.props;
     let splitSample;
 
     if (srcSample instanceof Molecule || isNewSample) {
@@ -119,7 +118,7 @@ export default class ReactionDetailsScheme extends React.Component {
             splitSample.target_amount_unit = 'l';
           }
           reaction.addMaterialAt(splitSample, null, tagMaterial, tagGroup);
-          this.onReactionChange(reaction, { schemaChanged: true });
+          onReactionChange(reaction, { updateGraphic: true });
         })
         .catch((errorMessage) => {
           console.log(errorMessage);
@@ -127,7 +126,7 @@ export default class ReactionDetailsScheme extends React.Component {
     } else {
       this.insertSolventExtLabel(splitSample, tagGroup, extLabel);
       reaction.addMaterialAt(splitSample, null, tagMaterial, tagGroup);
-      this.onReactionChange(reaction, { schemaChanged: true });
+      onReactionChange(reaction, { updateGraphic: true });
     }
   }
 
@@ -151,17 +150,6 @@ export default class ReactionDetailsScheme extends React.Component {
   switchYield = (shouldDisplayYield) => {
     this.setState({ displayYieldField: !!shouldDisplayYield });
   };
-
-  handleOnConditionSelect(eventKey) {
-    const { reaction, onReactionChange } = this.props;
-    const val = eventKey.value;
-    if (reaction.conditions == null || reaction.conditions.length === 0) {
-      reaction.conditions = `${val} `;
-    } else {
-      reaction.conditions += `\n${val} `;
-    }
-    onReactionChange(reaction, { schemaChanged: true });
-  }
 
   renderGPDnD() {
     const { reaction } = this.props;
@@ -228,7 +216,7 @@ export default class ReactionDetailsScheme extends React.Component {
   }
 
   deleteMaterial(material, materialGroup) {
-    const { reaction } = this.props;
+    const { reaction, onReactionChange } = this.props;
     reaction.deleteMaterial(material, materialGroup);
 
     // only reference of 'starting_materials' or 'reactants' triggers updatedReactionForReferenceChange
@@ -257,7 +245,7 @@ export default class ReactionDetailsScheme extends React.Component {
       }
     }
 
-    this.onReactionChange(reaction, { schemaChanged: true });
+    onReactionChange(reaction, { updateGraphic: true });
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -272,14 +260,10 @@ export default class ReactionDetailsScheme extends React.Component {
   }
 
   dropMaterial(srcMat, srcGroup, tagMat, tagGroup) {
-    const { reaction } = this.props;
+    const { reaction, onReactionChange } = this.props;
     this.updateDraggedMaterialGasType(reaction, srcMat, srcGroup, tagMat, tagGroup);
     reaction.moveMaterial(srcMat, srcGroup, tagMat, tagGroup);
-    this.onReactionChange(reaction, { schemaChanged: true });
-  }
-
-  onReactionChange(reaction, options = {}) {
-    this.props.onReactionChange(reaction, options);
+    onReactionChange(reaction, { updateGraphic: true });
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -295,87 +279,84 @@ export default class ReactionDetailsScheme extends React.Component {
   }
 
   handleMaterialsChange(changeEvent) {
+    const { onReactionChange } = this.props;
+
     switch (changeEvent.type) {
       case 'referenceChanged':
-        this.onReactionChange(
+        onReactionChange(
           this.updatedReactionForReferenceChange(changeEvent)
         );
         break;
-      case 'showLabelChanged':
-        this.onReactionChange(
-          this.updatedReactionForShowLabelChange(changeEvent)
-        );
-        break;
       case 'amountChanged':
-        this.onReactionChange(
+        onReactionChange(
           this.updatedReactionForAmountChange(changeEvent)
         );
         break;
       case 'amountUnitChanged':
-        this.onReactionChange(
+        onReactionChange(
           this.updatedReactionForAmountUnitChange(changeEvent)
         );
         break;
       case 'MetricsChanged':
-        this.onReactionChange(
+        onReactionChange(
           this.updatedReactionForMetricsChange(changeEvent)
         );
         break;
       case 'loadingChanged':
-        this.onReactionChange(
+        onReactionChange(
           this.updatedReactionForLoadingChange(changeEvent)
         );
         break;
       case 'coefficientChanged':
-        this.onReactionChange(
+        onReactionChange(
           this.updatedReactionForCoefficientChange(changeEvent)
         );
         break;
       case 'amountTypeChanged':
-        this.onReactionChange(
+        onReactionChange(
           this.updatedReactionForAmountTypeChange(changeEvent)
         );
         break;
       case 'equivalentChanged':
-        this.onReactionChange(
+        onReactionChange(
           this.updatedReactionForEquivalentChange(changeEvent)
         );
         break;
       case 'externalLabelChanged':
-        this.onReactionChange(
+        onReactionChange(
           this.updatedReactionForExternalLabelChange(changeEvent)
         );
         break;
       case 'drysolventChanged':
-        this.onReactionChange(
+        onReactionChange(
           this.updatedReactionForDrySolventChange(changeEvent)
         );
         break;
       case 'externalLabelCompleted':
         const { reaction } = this.props;
-        this.onReactionChange(reaction, { schemaChanged: true });
+        onReactionChange(reaction, { updateGraphic: true });
         break;
       case 'addToDesc':
         this.addSampleTo(changeEvent, 'description');
         this.addSampleTo(changeEvent, 'observation');
         break;
       case 'gasType':
-        this.onReactionChange(
+        onReactionChange(
           this.updatedReactionForGasTypeChange(changeEvent)
         );
         break;
       case 'gasFieldsChanged':
-        this.onReactionChange(
+        onReactionChange(
           this.updatedReactionForGasProductFieldsChange(changeEvent)
         );
         break;
       case 'gasFieldsUnitsChanged':
-        this.onReactionChange(
+        onReactionChange(
           this.updatedReactionForGasFieldsUnitsChange(changeEvent)
         );
         break;
       case 'conversionRateChanged':
-        this.onReactionChange(
+        onReactionChange(
           this.updatedReactionForConversionRateChange(changeEvent)
         );
         break;
@@ -385,7 +366,9 @@ export default class ReactionDetailsScheme extends React.Component {
   }
 
   addSampleTo(e, type) {
+    const { onInputChange } = this.props;
     const { paragraph } = e;
+
     let quillEditor = this.reactQuillRef.current.editor;
     if (type === 'observation') quillEditor = this.additionQuillRef.current.editor;
     const range = quillEditor.getSelection();
@@ -402,7 +385,7 @@ export default class ReactionDetailsScheme extends React.Component {
       range.length = 0;
       range.index += insertDelta.length();
       quillEditor.setSelection(range);
-      this.props.onInputChange(type, new Delta(contents));
+      onInputChange(type, new Delta(contents));
     }
   }
 
@@ -432,17 +415,6 @@ export default class ReactionDetailsScheme extends React.Component {
     reaction.markSampleAsReference(sampleID);
 
     return this.updatedReactionWithSample(this.updatedSamplesForReferenceChange.bind(this), sample);
-  }
-
-  updatedReactionForShowLabelChange(changeEvent) {
-    const { sampleID, value } = changeEvent;
-    const { reaction } = this.props;
-    const sample = reaction.sampleById(sampleID);
-
-    reaction.toggleShowLabelForSample(sampleID);
-    this.onReactionChange(reaction, { schemaChanged: true });
-
-    return this.updatedReactionWithSample(this.updatedSamplesForShowLabelChange.bind(this), sample);
   }
 
   updatedReactionForAmountChange(changeEvent) {
@@ -948,10 +920,6 @@ export default class ReactionDetailsScheme extends React.Component {
     });
   }
 
-  updatedSamplesForShowLabelChange(samples) {
-    return samples;
-  }
-
   /* eslint-disable class-methods-use-this, no-param-reassign */
   updatedSamplesForCoefficientChange(samples, updatedSample) {
     return samples.map((sample) => {
@@ -1123,7 +1091,7 @@ export default class ReactionDetailsScheme extends React.Component {
       reactionDescTemplate,
       displayYieldField,
     } = this.state;
-    const { reaction } = this.props;
+    const { reaction, onInputChange, onReactionChange } = this.props;
     if (reaction.editedSample !== undefined) {
       if (reaction.editedSample.amountType === 'target') {
         this.updatedSamplesForEquivalentChange(reaction.samples, reaction.editedSample);
@@ -1166,121 +1134,82 @@ export default class ReactionDetailsScheme extends React.Component {
       this.switchYield(allHaveNoConversion);
     }
 
-    const headReactants = reaction.starting_materials.length ?? 0;
     return (
       <>
-        <div>
-          <div className="border-bottom">
-            <MaterialGroupContainer
-              reaction={reaction}
-              materialGroup="starting_materials"
-              materials={reaction.starting_materials}
-              dropMaterial={this.dropMaterial}
-              deleteMaterial={
-                (material, materialGroup) => this.deleteMaterial(material, materialGroup)
-              }
-              dropSample={this.dropSample}
-              showLoadingColumn={!!reaction.hasPolymers()}
-              onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
-              switchEquiv={this.switchEquiv}
-              lockEquivColumn={this.state.lockEquivColumn}
-              headIndex={0}
-            />
-          </div>
-
-          <div className="border-bottom">
-            <MaterialGroupContainer
-              reaction={reaction}
-              materialGroup="reactants"
-              materials={reaction.reactants}
-              dropMaterial={this.dropMaterial}
-              deleteMaterial={
-                (material, materialGroup) => this.deleteMaterial(material, materialGroup)
-              }
-              dropSample={this.dropSample}
-              showLoadingColumn={!!reaction.hasPolymers()}
-              onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
-              switchEquiv={this.switchEquiv}
-              lockEquivColumn={lockEquivColumn}
-              headIndex={headReactants}
-            />
-          </div>
-          <div className="mb-3">
-            <MaterialGroupContainer
-              reaction={reaction}
-              materialGroup="products"
-              materials={reaction.products}
-              dropMaterial={this.dropMaterial}
-              deleteMaterial={
-                (material, materialGroup) => this.deleteMaterial(material, materialGroup)
-              }
-              dropSample={this.dropSample}
-              showLoadingColumn={!!reaction.hasPolymers()}
-              onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
-              switchEquiv={this.switchEquiv}
-              lockEquivColumn={this.state.lockEquivColumn}
-              switchYield={this.switchYield}
-              displayYieldField={displayYieldField}
-              headIndex={0}
-            />
-          </div>
-
-          <Accordion
-            alwaysOpen
-            defaultActiveKey={['solvents']}
-          >
-            <Accordion.Item eventKey="solvents">
-              <Accordion.Header>Solvents</Accordion.Header>
-              <Accordion.Body>
-                <MaterialGroupContainer
-                  reaction={reaction}
-                  materialGroup="solvents"
-                  materials={reaction.solvents}
-                  dropMaterial={this.dropMaterial}
-                  deleteMaterial={
-                    (material, materialGroup) => this.deleteMaterial(material, materialGroup)
-                  }
-                  dropSample={this.dropSample}
-                  showLoadingColumn={!!reaction.hasPolymers()}
-                  onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
-                  switchEquiv={this.switchEquiv}
-                  lockEquivColumn={this.state.lockEquivColumn}
-                  headIndex={0}
-                />
-              </Accordion.Body>
-            </Accordion.Item>
-
-            <Accordion.Item eventKey="conditions">
-              <Accordion.Header>Conditions</Accordion.Header>
-              <Accordion.Body>
-                <Select
-                  disabled={!permitOn(reaction)}
-                  name="default_conditions"
-                  multi={false}
-                  options={conditionsOptions}
-                  onChange={this.handleOnConditionSelect}
-                />
-                <Form.Control
-                  as="textarea"
-                  className="mt-2"
-                  rows="4"
-                  value={reaction.conditions || ''}
-                  disabled={!permitOn(reaction) || reaction.isMethodDisabled('conditions')}
-                  placeholder="Conditions..."
-                  onChange={(event) => this.props.onInputChange('conditions', event)}
-                />
-              </Accordion.Body>
-            </Accordion.Item>
-          </Accordion>
+        <div className="mt-2 border-top">
+          <MaterialGroup
+            reaction={reaction}
+            materialGroup="starting_materials"
+            materials={reaction.starting_materials}
+            dropMaterial={this.dropMaterial}
+            deleteMaterial={
+              (material, materialGroup) => this.deleteMaterial(material, materialGroup)
+            }
+            dropSample={this.dropSample}
+            showLoadingColumn={!!reaction.hasPolymers()}
+            onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
+            switchEquiv={this.switchEquiv}
+            lockEquivColumn={this.state.lockEquivColumn}
+          />
+          <MaterialGroup
+            reaction={reaction}
+            materialGroup="reactants"
+            materials={reaction.reactants}
+            dropMaterial={this.dropMaterial}
+            deleteMaterial={
+              (material, materialGroup) => this.deleteMaterial(material, materialGroup)
+            }
+            dropSample={this.dropSample}
+            showLoadingColumn={!!reaction.hasPolymers()}
+            onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
+            switchEquiv={this.switchEquiv}
+            lockEquivColumn={lockEquivColumn}
+            headIndex={reaction.starting_materials.length ?? 0}
+          />
+          <MaterialGroup
+            reaction={reaction}
+            materialGroup="solvents"
+            materials={reaction.solvents}
+            dropMaterial={this.dropMaterial}
+            deleteMaterial={
+              (material, materialGroup) => this.deleteMaterial(material, materialGroup)
+            }
+            dropSample={this.dropSample}
+            showLoadingColumn={!!reaction.hasPolymers()}
+            onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
+            switchEquiv={this.switchEquiv}
+            lockEquivColumn={this.state.lockEquivColumn}
+          />
+          <MaterialGroup
+            reaction={reaction}
+            materialGroup="products"
+            materials={reaction.products}
+            dropMaterial={this.dropMaterial}
+            deleteMaterial={
+              (material, materialGroup) => this.deleteMaterial(material, materialGroup)
+            }
+            dropSample={this.dropSample}
+            showLoadingColumn={!!reaction.hasPolymers()}
+            onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
+            switchEquiv={this.switchEquiv}
+            lockEquivColumn={this.state.lockEquivColumn}
+            switchYield={this.switchYield}
+            displayYieldField={displayYieldField}
+          />
+          <ReactionConditions
+            conditions={reaction.conditions}
+            isDisabled={!permitOn(reaction) || reaction.isMethodDisabled('conditions')}
+            onChange={(conditions) => onInputChange('conditions', conditions)}
+          />
         </div>
 
         <ReactionDetailsMainProperties
           reaction={reaction}
-          onInputChange={(type, event) => this.props.onInputChange(type, event)}
+          onInputChange={onInputChange}
         />
         <ReactionDetailsDuration
           reaction={reaction}
-          onInputChange={(type, event) => this.props.onInputChange(type, event)}
+          onInputChange={onInputChange}
         />
         <Row className="mb-3">
           <Col sm={4}>
@@ -1289,7 +1218,7 @@ export default class ReactionDetailsScheme extends React.Component {
               <OlsTreeSelect
                 selectName="rxno"
                 selectedValue={(reaction.rxno && reaction.rxno.trim()) || ''}
-                onSelectChange={(event) => this.props.onInputChange('rxno', event.trim())}
+                onSelectChange={(event) => onInputChange('rxno', event.trim())}
                 selectedDisable={!permitOn(reaction) || reaction.isMethodDisabled('rxno')}
               />
             </Form.Group>
@@ -1314,7 +1243,7 @@ export default class ReactionDetailsScheme extends React.Component {
                       template={reactionDescTemplate}
                       value={reaction.description}
                       updateTextTemplates={this.updateTextTemplates}
-                      onChange={(event) => this.props.onInputChange('description', event)}
+                      onChange={(event) => onInputChange('description', event)}
                     />
                   ) : <QuillViewer value={reaction.description} />
               }
@@ -1323,8 +1252,8 @@ export default class ReactionDetailsScheme extends React.Component {
         </Row>
         <ReactionDetailsPurification
           reaction={reaction}
-          onReactionChange={(r) => this.onReactionChange(r)}
-          onInputChange={(type, event) => this.props.onInputChange(type, event)}
+          onReactionChange={onReactionChange}
+          onInputChange={onInputChange}
           additionQuillRef={this.additionQuillRef}
           onChange={(event) => this.handleMaterialsChange(event)}
         />

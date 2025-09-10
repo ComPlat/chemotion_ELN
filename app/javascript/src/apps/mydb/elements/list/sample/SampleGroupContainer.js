@@ -24,10 +24,9 @@ function SampleGroupContainer({
           ? DragDropItemTypes.MOLECULE
           : null
       )}
-      renderGroupHeader={([sample], toggleGroupCollapse) => (
+      renderGroupHeader={([sample]) => (
         <SampleGroupMoleculeHeader
           sample={sample}
-          onClick={() => toggleGroupCollapse()}
         />
       )}
       renderGroupItem={(item, showDetails) => (

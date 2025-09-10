@@ -1,8 +1,8 @@
 /* Define a mixin for @font-face */
-@mixin font-face($font-style, $font-weight, $file-name) {
+@mixin font-face($family-name, $font-style, $font-weight, $file-name) {
   @font-face {
     font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
-    font-family: "Roboto";
+    font-family: $family-name;
     font-style: $font-style;
     font-weight: $font-weight;
     src: url("#{$file-name}.woff2") format("woff2"); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
@@ -10,23 +10,40 @@
 }
 
 /* Iterate over font weights and styles */
-$font-weights: 400, 500, 600, 700;
+$font-weights: 400, 500, 700;
+$font-widths: normal, condensed;
 $font-styles: normal, italic;
 
-@each $weight in $font-weights {
-  @each $style in $font-styles {
-    $file-name: "roboto-v32-latin-#{$weight}";
-    @if $style == italic {
-      $file-name: "#{$file-name}italic";
-    }
-    @include font-face($style, $weight, $file-name);
+@each $width in $font-widths {
+  $file-name-base: "roboto";
+  $family-name: "Roboto";
+  @if $width == condensed {
+    $file-name-base: "roboto-condensed";
+    $family-name: "Roboto Condensed";
   }
+  @each $weight in $font-weights {
+    @each $style in $font-styles {
+      $file-name: "#{$file-name-base}-#{$weight}";
+      @if $style == italic {
+        $file-name: "#{$file-name-base}-#{$weight}italic";
+      }
+      @include font-face($family-name, $style, $weight, $file-name);
+    }
+  }
+}
+
+@mixin condensed-text-width {
+  font-family: "Roboto Condensed", sans-serif;
+}
+
+@mixin normal-text-width {
+  font-family: "Roboto", sans-serif;
 }
 
 /* Colors */
 $chemstrap-blue: #2495cf; //primary
 $chemstrap-blue-dark: #015c8e; //primary-active
-$chemstrap-blue-dull: #84c0e0; //draggable-surfaces
+$chemstrap-blue-dull: #439dca; //draggable-surfaces
 $chemstrap-red: #ff5555; //danger
 $chemstrap-green: #62c242; //success
 $chemstrap-orange: #f19224; //warning
@@ -34,6 +51,10 @@ $chemstrap-orange: #f19224; //warning
 $chemstrap-white: #ffffff; //application background
 $chemstrap-silicon: #899da7; //surfaces
 $chemstrap-carbon: #373030; //text & borders
+$chemstrap-silicon-hover1: #c6e0e8;
+$chemstrap-silicon-hover2: #b1d0db;
+$chemstrap-silicon-active1: #9ccbe2;
+$chemstrap-silicon-active2: #99c8e0;
 
 $token-color-names: (
   "blue": $chemstrap-blue,
@@ -69,26 +90,39 @@ $shades: 6;
   @return $colors;
 }
 
+@function activeShades($saturation-mod, $lightness-mod, $string) {
+  $colors: ();
+  @each $name, $color in $silicon-shades {
+    $hue: hue($color);
+    $saturation: saturation($color) + $saturation-mod;
+    $lightness: lightness($color) + $lightness-mod;
+    $new-color: hsl($hue, $saturation, $lightness);
+    $colors: map-merge(
+      $colors,
+      (
+        $name: $new-color,
+      )
+    );
+  }
+  @return $colors;
+}
+
 $silicon-shades: mapShades($chemstrap-silicon, $shades);
 $carbon-shades: mapShades($chemstrap-carbon, $shades);
+$blue-shades: mapShades($chemstrap-blue, $shades);
+$hover-shades: activeShades(10, -3, "hover");
+$active-shades: activeShades(17, -8, "active");
 
 /* Text-size styles */
-$text---content--title: 24px;
-$text---headline--lowered: 18px;
-$text---headline: 18px;
-$text---body: 16px;
-$text---body-italic: 16px;
-$text---body--underlined: 16px;
-$text---body-medium: 16px;
-$text---label: 14px;
-$text---label--underlined: 14px;
-$text---label-small: 13px;
-$icon---extra-large: 96px;
-$icon---medium: 24px;
-$icon---regular: 20px;
-$icon---small: 14px;
-$icon---body16: 16px;
-$icon---font-awesome6-pro: 16px;
+.fs-7 {
+  font-size: 0.92857143rem; // 13px
+}
+.fs-8 {
+  font-size: 0.85714286rem; // 12px
+}
+.fs-9 {
+  font-size: 0.78571429rem; // 11px
+}
 
 /* Effect styles */
 $drop--shadow--large: 4px 0px 55px rgba(0, 0, 0, 0.05);

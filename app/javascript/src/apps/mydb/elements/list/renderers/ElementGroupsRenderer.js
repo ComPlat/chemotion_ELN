@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Set } from 'immutable';
-import { OverlayTrigger, Tooltip, Button } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
+import cs from 'classnames';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 
 import ElementDragHandle from 'src/apps/mydb/elements/list/ElementDragHandle';
 import ElementItem from 'src/apps/mydb/elements/list/renderers/ElementItem';
-import ChevronIcon from 'src/components/common/ChevronIcon';
 
 function ElementGroupsRenderer({
   type,
@@ -86,16 +86,14 @@ function ElementGroupsRenderer({
         const group = groups[groupKey];
         const groupLimit = getGroupLimit(groupKey);
         const isCollapsed = collapsedGroups.has(groupKey);
-        const toggleGroupCollapse = () => {
-          UIActions.toggleGroupCollapse({ type, groupKey });
-        };
+        const toggleGroupCollapse = () => UIActions.toggleGroupCollapse({ type, groupKey });
         const groupHeaderDragType = typeof getGroupHeaderDragType === 'function'
           ? getGroupHeaderDragType(group)
           : null;
 
         return (
           <div key={`element-group:${groupKey}`} className="element-group">
-            <div className="element-group-header">
+            <div className={cs('element-group-header', { collapsed: isCollapsed }, { draggable: groupHeaderDragType })}>
               {groupHeaderDragType && (
                 <div className="element-group-header-drag-handle">
                   <ElementDragHandle
@@ -104,24 +102,16 @@ function ElementGroupsRenderer({
                   />
                 </div>
               )}
-              <div className="element-group-header-content">
-                {renderGroupHeader(group, toggleGroupCollapse)}
-              </div>
-              <div className="element-group-header-collapse">
-                <OverlayTrigger
-                  placement="top"
-                  overlay={(
-                    <Tooltip id={`collapse-tooltip-${groupKey}`}>
-                      {`${isCollapsed ? 'Expand' : 'Collapse'} group`}
-                    </Tooltip>
-                  )}
-                >
-                  <ChevronIcon
-                    direction={isCollapsed ? 'right' : 'down'}
-                    color="primary"
-                    onClick={toggleGroupCollapse}
-                  />
-                </OverlayTrigger>
+              {/*
+                eslint-disable-next-line
+                  jsx-a11y/click-events-have-key-events,
+                  jsx-a11y/no-static-element-interactions
+              */}
+              <div
+                className={cs('element-group-header-content', { collapsed: isCollapsed })}
+                onClick={toggleGroupCollapse}
+              >
+                {renderGroupHeader(group)}
               </div>
             </div>
             {!isCollapsed && (
