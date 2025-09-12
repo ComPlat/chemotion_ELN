@@ -165,7 +165,7 @@ export default class StructureEditorModal extends React.Component {
     }
   }
 
-  handleStructureSave(molfile, svg, editorId, components, info = null) {
+  handleStructureSave(molfile, svg, editorId, components, textNodesFormula, info = null) {
     const { hasChildren, hasParent, onSave } = this.props;
     this.setState(
       {
@@ -174,7 +174,7 @@ export default class StructureEditorModal extends React.Component {
       },
       () => {
         if (onSave) {
-          onSave(molfile, svg, info, editorId, components);
+          onSave(molfile, components, textNodesFormula, svg, info, editorId);
         }
       }
     );

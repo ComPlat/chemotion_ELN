@@ -26,6 +26,12 @@ module Entities
       expose! :gas_phase_data
       expose! :user_labels
       expose! :weight_percentage
+      expose! :state
+      expose! :color
+      expose! :storage_condition
+      expose! :height
+      expose! :width
+      expose! :length
     end
 
     # Level 1 attributes
