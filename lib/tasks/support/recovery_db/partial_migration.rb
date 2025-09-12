@@ -21,7 +21,9 @@ module RecoveryDB
                                                     containers container_hierarchies collections_samples
                                                     collections_reactions collections_wellplates collections_screens
                                                     collections_research_plans collections_device_descriptions
-                                                    sync_collections_users users_devices devices])
+                                                    sync_collections_users users_devices devices collections_elements
+                                                    elements element_klasses elements_elements elements_samples
+                                                    segment_klasses segments])
       end
 
       def run
@@ -29,30 +31,64 @@ module RecoveryDB
         raise ActiveRecord::RecordNotFound, 'No user found' if rec_users.empty?
 
         user_id_map = {}
+        created_elements = {}
 
         @mount.log_event "Restoring users: found #{rec_users.size} of #{@user_ids.size} user(s) to restore"
+        restore_element_klasses(created_elements)
         rec_users.each do |recovery_user|
-          new_user = restore_user(recovery_user)
+          new_user = restore_user(recovery_user, created_elements)
           user_id_map[recovery_user.id] = new_user.id
         end
         restore_sharing_and_synchronization(user_id_map)
         @mount.destroy!
       end
 
-      def restore_user(old_user)
-        user_attributes = old_user.attributes.except(*attributes_to_exclude)
+      def restore_element_klasses(created_elements)
+        element_klass_ids = RecoveryDB::Models::Element
+                            .joins(collections_elements: { collection: :user })
+                            .where(collections: { user_id: @user_ids })
+                            .distinct
+                            .pluck(:element_klass_id)
+        old_element_klasses = RecoveryDB::Models::ElementKlass.where(id: element_klass_ids)
+        old_element_klasses.find_each do |old_element_klass|
+          next if created_elements.key?(['ElementKlass', old_element_klass.id])
 
+          attributes = old_element_klass.attributes.except(*attributes_to_exclude)
+          new_element_klass = Labimotion::ElementKlass.create!(attributes)
+          element_klass_key = ['ElementKlass', old_element_klass.id]
+          created_elements[element_klass_key] = new_element_klass.id
+          restore_segment_klass(created_elements, old_element_klass.id, new_element_klass.id)
+        end
+      end
+
+      def restore_segment_klass(created_elements, old_element_klass_id, new_element_klass_id)
+        old_segment_klasses = RecoveryDB::Models::SegmentKlass.where(element_klass_id: old_element_klass_id)
+        old_segment_klasses.find_each do |old_segment_klass|
+          next if created_elements.key?(['SegmentKlass', old_segment_klass.id])
+
+          attributes = old_segment_klass.attributes.except(*attributes_to_exclude)
+          attributes['element_klass_id'] = new_element_klass_id
+          new_segment_klass = Labimotion::SegmentKlass.create!(attributes)
+          segment_klass_key = ['SegmentKlass', old_segment_klass.id]
+          created_elements[segment_klass_key] = new_segment_klass.id
+        end
+      end
+
+      def restore_user(old_user, created_elements)
+        user_attributes = old_user.attributes.except(*attributes_to_exclude)
         begin
           handle_name_abbreviation(user_attributes)
           new_user = User.new(user_attributes)
           # Skip validations (e.g. password) when restoring
           new_user.save(validate: false)
           restore_profile(old_user, new_user)
-          restore_collections(old_user, new_user)
+          restore_collections(old_user, new_user, created_elements)
           restore_sync_collection_users(
             old_user_id: old_user.id,
             new_user_id: new_user.id,
           )
+          restore_elements_elements(created_elements, old_user, new_user)
+          restore_elements_samples(created_elements, old_user, new_user)
           restore_devices(old_user, new_user)
           new_user
         rescue ActiveRecord::ActiveRecordError => e
@@ -99,7 +135,7 @@ module RecoveryDB
         end
       end
 
-      def restore_collections(old_user, new_user)
+      def restore_collections(old_user, new_user, created_elements)
         old_collections = RecoveryDB::Models::Collection.where(user_id: old_user.id)
                                                         .where(is_shared: false)
                                                         .or(RecoveryDB::Models::Collection.where(shared_by: @user_ids))
@@ -113,7 +149,7 @@ module RecoveryDB
           new_collection.save!
 
           id_map[old_collection.id] = new_collection
-          restore_collection_elements(old_collection, new_collection, new_user.id)
+          restore_collection_elements(old_collection, new_collection, new_user.id, created_elements)
         rescue ActiveRecord::RecordInvalid => e
           Rails.logger.error "Failed to copy collection #{old_collection.id} for user #{old_user.id}: #{e.message}"
         end
@@ -161,8 +197,7 @@ module RecoveryDB
         end
       end
 
-      def restore_collection_elements(old_collection, new_collection, new_user_id)
-        created_elements = {}
+      def restore_collection_elements(old_collection, new_collection, new_user_id, created_elements)
         restore_collection_elements_by_type(Sample, old_collection, new_collection, new_user_id, created_elements)
         restore_collection_elements_by_type(Reaction, old_collection, new_collection, new_user_id, created_elements)
         restore_collection_elements_by_type(Wellplate, old_collection, new_collection, new_user_id, created_elements)
@@ -170,6 +205,7 @@ module RecoveryDB
         restore_collection_elements_by_type(ResearchPlan, old_collection, new_collection, new_user_id, created_elements)
         restore_collection_elements_by_type(DeviceDescription, old_collection, new_collection, new_user_id,
                                             created_elements)
+        restore_collection_elements_labimotion(old_collection, new_collection, new_user_id, created_elements)
       end
 
       def restore_collection_elements_by_type(main_model, old_collection, new_collection, new_user_id, created_elements)
@@ -344,6 +380,128 @@ module RecoveryDB
         research_plan.update!(body: rp_body)
       end
 
+      def restore_collection_elements_labimotion(old_collection, new_collection, _new_user_id, created_elements)
+        col_elements = RecoveryDB::Models::CollectionsElement.where(collection_id: old_collection.id)
+        col_elements.each do |col_elem|
+          restore_collection_element_labimotion(col_elem, new_collection, created_elements)
+        end
+      end
+
+      def restore_collection_element_labimotion(col_elem, new_collection, created_elements)
+        old_element = RecoveryDB::Models::Element.find(col_elem.element_id)
+        element_key = ['Element', old_element.id]
+        return if created_elements.key?(element_key)
+
+        attributes = old_element.attributes.except(*attributes_to_exclude)
+        element_klass_key = ['ElementKlass', old_element.element_klass_id]
+        attributes['element_klass_id'] = created_elements[element_klass_key]
+        new_element = Labimotion::Element.create!(attributes)
+
+        created_elements[element_key] = new_element.id
+        new_element = Labimotion::CollectionsElement.create!(
+          collection_id: new_collection.id,
+          element_id: new_element.id,
+          element_type: col_elem.element_type,
+        )
+        restore_segments(old_element, new_element, created_elements)
+      rescue StandardError => e
+        Rails.logger.error "Failed to restore element #{col_elem.element_id} " \
+                           "for collection #{col_elem.collection_id}: #{e.message}"
+      end
+
+      def restore_segments(old_element, new_element, created_elements)
+        old_segments = RecoveryDB::Models::Segment.where(element_id: old_element.id)
+        old_segments.find_each do |old_segment|
+          segment_key = ['Segment', old_segment.id]
+          next if created_elements.key?(segment_key)
+
+          attributes = old_segment.attributes.except(*attributes_to_exclude)
+          attributes['element_id'] = new_element.id
+
+          segment_klass_key = ['SegmentKlass', old_segment.segment_klass_id]
+          attributes['segment_klass_id'] = created_elements[segment_klass_key]
+
+          new_segment = Labimotion::Segment.create!(attributes)
+          created_elements[segment_key] = new_segment.id
+        rescue StandardError => e
+          Rails.logger.error "Failed to restore segment #{old_segment.id} " \
+                             "for element #{old_element.id}: #{e.message}"
+        end
+      end
+
+      def restore_elements_elements(created_elements, old_user, new_user)
+        element_ids = created_elements.keys
+                                      .select { |k| k[0] == 'Element' }
+                                      .map(&:last)
+
+        old_relations = RecoveryDB::Models::ElementsElement.where(
+          element_id: element_ids,
+          created_by: old_user.id,
+        )
+
+        old_relations.each do |old_relation|
+          new_element_id, new_parent_id = fetch_new_ids_or_nil(
+            created_elements,
+            ['Element', old_relation.element_id],
+            ['Element', old_relation.parent_id],
+          )
+
+          if new_element_id && new_parent_id
+            Labimotion::ElementsElement.find_or_create_by!(
+              element_id: new_element_id,
+              parent_id: new_parent_id,
+            ) do |relation|
+              relation.created_by = new_user.id
+            end
+          else
+            Rails.logger.warn "Skipping elements relation with element_id #{old_relation.element_id} " \
+                              "or parent_id #{old_relation.parent_id} because one is missing in map"
+          end
+        rescue StandardError => e
+          Rails.logger.error 'Failed to restore elements_element relation ' \
+                             "for element_id #{old_relation.element_id}: #{e.message}"
+        end
+      end
+
+      def restore_elements_samples(created_elements, old_user, new_user)
+        element_ids = created_elements.keys
+                                      .select { |k| k[0] == 'Element' }
+                                      .map(&:last)
+
+        old_relations = RecoveryDB::Models::ElementsSample.where(
+          element_id: element_ids,
+          created_by: old_user.id,
+        )
+
+        old_relations.each do |old_relation|
+          new_element_id, new_sample_id = fetch_new_ids_or_nil(
+            created_elements,
+            ['Element', old_relation.element_id],
+            ['Sample', old_relation.sample_id],
+          )
+
+          if new_element_id && new_sample_id
+            Labimotion::ElementsSample.find_or_create_by!(
+              element_id: new_element_id,
+              sample_id: new_sample_id,
+            ) do |relation|
+              relation.created_by = new_user.id
+            end
+          else
+            Rails.logger.warn "Skipping elements_sample relation with element_id #{old_relation.element_id} " \
+                              "or sample_id #{old_relation.sample_id} because one is missing in map"
+          end
+        rescue StandardError => e
+          Rails.logger.error 'Failed to restore elements_sample relation ' \
+                             "for element_id #{old_relation.element_id}: #{e.message}"
+        end
+      end
+
+      def fetch_new_ids_or_nil(created_elements, *keys)
+        new_ids = keys.map { |key| created_elements[key] }
+        new_ids.size == keys.size ? new_ids : nil
+      end
+
       def restore_devices(old_user, new_user)
         users_devices = RecoveryDB::Models::UsersDevice.where(user_id: old_user.id)
         device_ids = users_devices.pluck(:device_id)
@@ -390,10 +548,13 @@ module RecoveryDB
         end
       end
 
+      private
+
       def attributes_to_exclude
         %w[
           id created_at updated_at deleted_at user_id ancestry attachable_id
           containable_id containable_type parent_id log_data identifier
+          element_klass_id user_ids admin_ids segment_klass_id element_id
         ]
       end
 
