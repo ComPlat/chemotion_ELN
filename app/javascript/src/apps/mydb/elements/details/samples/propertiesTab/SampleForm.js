@@ -20,6 +20,15 @@ import SampleDetailsComponents from 'src/apps/mydb/elements/details/samples/prop
 import { SAMPLE_TYPE_HETEROGENEOUS_MATERIAL } from 'src/models/Sample';
 import Component from 'src/models/Component';
 
+const stateOptions = [
+  { value: 'solid_powder', label: 'Solid Powder' },
+  { value: 'solid_pellet', label: 'Solid Pellet' },
+  { value: 'solid_monolith', label: 'Solid Monolith' },
+  { value: 'solid_shape', label: 'Solid Shape' },
+  { value: 'liquid_colloidal', label: 'Liquid Colloidal' },
+  { value: 'liquid_solution', label: 'Liquid Solution' }
+];
+
 export default class SampleForm extends React.Component {
   constructor(props) {
     super(props);
@@ -1091,11 +1100,14 @@ export default class SampleForm extends React.Component {
           onChange={(e) => {
             this.handleFieldChanged('state', e.target.value);
           }}
-          value={sample.state || 0}
+          value={sample.state || ''}
         >
-          <option value="0">State 1</option>
-          <option value="1">State 2</option>
-          <option value="2">State 3</option>
+          <option value="">Select a state</option>
+          {stateOptions.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
         </Form.Select>
       </Form.Group>
     );

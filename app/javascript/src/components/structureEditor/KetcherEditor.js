@@ -129,6 +129,7 @@ const onAtomDelete = async (editor) => {
       removeFrom = 'atom-removal';
     }
     const missingList = removeFrom === 'image-removal' ? imagesDifferencesContainer : aliasDifferences;
+    if (missingList.length < 1) return;
     dataRes = await removeAtomFromData(dataRes, missingList);
 
     imageNodeCounter = imagesList.length - 1;

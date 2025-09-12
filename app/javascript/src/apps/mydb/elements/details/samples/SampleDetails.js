@@ -326,7 +326,7 @@ export default class SampleDetails extends React.Component {
     }
   }
 
-  handleStructureEditorSave(molfile, svgFile = null, config = null, editor = 'ketcher', components) {
+  handleStructureEditorSave(molfile, components, textNodesFormula, svgFile = null, config = null, editor = 'ketcher') {
     const { sample } = this.state;
     sample.molfile = molfile;
     const svgFile = svg; // SVG is passed as 4th parameter
@@ -336,6 +336,7 @@ export default class SampleDetails extends React.Component {
     sample.contains_residues = molfile?.indexOf(' R# ') > -1;
     sample.formulaChanged = true;
     sample.components = components;
+    if (textNodesFormula.length > 0) sample.name = textNodesFormula;
     this.setState({ loadingMolecule: true });
 
     const fetchError = (errorMessage) => {
