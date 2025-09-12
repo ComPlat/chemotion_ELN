@@ -138,7 +138,7 @@ module RecoveryDB
       def restore_collections(old_user, new_user, created_elements)
         old_collections = RecoveryDB::Models::Collection.where(user_id: old_user.id)
                                                         .where(is_shared: false)
-                                                        .or(RecoveryDB::Models::Collection.where(shared_by: @user_ids))
+                                                        .or(RecoveryDB::Models::Collection.where(shared_by_id: @user_ids))
         return if old_collections.empty?
 
         id_map = {}
@@ -184,9 +184,7 @@ module RecoveryDB
         sync_collections.find_each do |sync_collection|
           attrs = sync_collection.attributes.except(*attributes_to_exclude)
 
-          # Always replace user_id
           attrs['user_id'] = new_user_id
-
           # Replace collection_id only if it matches the provided old_collection_id
           if old_collection_id && sync_collection.collection_id == old_collection_id
             attrs['collection_id'] = new_collection_id
@@ -522,29 +520,32 @@ module RecoveryDB
       end
 
       def restore_sharing(user_id_map)
-        Collection.where(is_shared: true).find_each do |collection|
+        collections = Collection.where(is_shared: true).where(user_id: user_id_map.values)
+        collections.find_each do |collection|
           new_user_id = user_id_map[collection.shared_by_id]
 
           if new_user_id
-            collection.update_columns!(shared_by_id: new_user_id)
+            collection.update!(shared_by_id: new_user_id)
           else
-            collection.update_columns!(shared_by_id: nil, is_shared: false)
+            collection.update!(shared_by_id: nil, is_shared: false)
           end
         end
       end
 
       def restore_synchronization(user_id_map)
-        Collection.synchronized.includes(:sync_collections_users).find_each do |collection|
+        collections = Collection.synchronized.where(user_id: user_id_map.values).includes(:sync_collections_users)
+        collections.find_each do |collection|
           collection.sync_collections_users.each do |sync_user|
             new_user_id = user_id_map[sync_user.shared_by_id]
 
             if new_user_id
-              sync_user.update_columns!(shared_by_id: new_user_id)
+              sync_user.update!(shared_by_id: new_user_id)
             else
               sync_user.destroy
             end
           end
-          collection.update_columns!(is_synchronized: false) if collection.sync_collections_users.empty?
+
+          collection.update!(is_synchronized: false) if collection.sync_collections_users.reload.empty?
         end
       end
 
