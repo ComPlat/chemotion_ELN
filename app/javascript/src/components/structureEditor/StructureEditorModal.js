@@ -280,9 +280,8 @@ export default class StructureEditorModal extends React.Component {
     }
   }
 
-  handleStructureSave(molfile, svg, editorId, components, info = null) {
+  handleStructureSave(molfile, svg, editorId, components, textNodesFormula, info = null) {
     const { hasChildren, hasParent, onSave } = this.props;
-
     this.setState(
       {
         showModal: false,
@@ -290,14 +289,14 @@ export default class StructureEditorModal extends React.Component {
       },
       () => {
         if (onSave) {
-          onSave(molfile, svg, info, editorId, components);
+          onSave(molfile, components, textNodesFormula, svg, info, editorId);
         }
       }
     );
   }
 
   postComponents(components) {
-    return components.map(
+    return components?.map(
       (comp, idx) => new Component({
         id: uuid(),
         name: 'HeterogeneousMaterial',
@@ -320,10 +319,12 @@ export default class StructureEditorModal extends React.Component {
     }
     try {
       // Call onSaveFileK2SC and get the required data
-      const { ket2Molfile, svgElement, componentsList } = await onSaveFileK2SC();
+      const {
+        ket2Molfile, svgElement, componentsList, textNodesFormula
+      } = await onSaveFileK2SC();
       const updatedSvg = await transformSvgIdsAndReferences(svgElement);
-      const components = this.postComponents(componentsList);
-      this.handleStructureSave(ket2Molfile, updatedSvg, editorId.id, components);
+      const components = componentsList ? this.postComponents(componentsList) : [];
+      this.handleStructureSave(ket2Molfile, updatedSvg, editorId.id, components, textNodesFormula);
     } catch (error) {
       console.error('Error during save operation for Ketcher2:', error);
     }
