@@ -10,7 +10,6 @@ import { KET_TAGS, LAYERING_FLAGS, EventNames, KET_DOM_TAG } from 'src/utilities
 import { fetchKetcherData } from 'src/utilities/ketcherSurfaceChemistry/InitializeAndParseKetcher';
 import {
   PolymerListIconKetcherToolbarButton,
-  specialCharButton,
 } from 'src/components/structureEditor/PolymerListModal';
 import { ImagesToBeUpdated, ImagesToBeUpdatedSetter } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
 import { saveMoveCanvas } from 'src/utilities/ketcherSurfaceChemistry/canvasOperations';
@@ -253,10 +252,8 @@ const attachClickListeners = (iframeRef, buttonEvents) => {
     // Ensure iframe content is loaded before adding the button
     if (iframeRef?.current?.contentWindow?.document?.readyState === 'complete') {
       PolymerListIconKetcherToolbarButton(iframeDocument);
-      specialCharButton(iframeDocument);
     } else if (iframeRef?.current?.onload) {
       iframeRef.current.onload = PolymerListIconKetcherToolbarButton;
-      iframeRef.current.onload = specialCharButton;
     }
     updateCharValue(iframeDocument);
   }, 1000);

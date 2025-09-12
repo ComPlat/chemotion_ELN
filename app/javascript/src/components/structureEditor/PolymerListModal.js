@@ -199,23 +199,6 @@ const PolymerListIconKetcherToolbarButton = (iframeDocument) => {
   }
 };
 
-const specialCharButton = (iframeDocument) => {
-  const parentElement = iframeDocument.querySelector('.BottomToolbar-module_group__b-pGt');
-  if (parentElement) {
-    const newButton = iframeDocument.createElement('button');
-    newButton.classList.add('ActionButton-module_button__nfoWQ');
-    newButton.classList.add('textNodeChar');
-    newButton.title = 'Text Node Special Char';
-
-    newButton.style.backgroundColor = 'transparent';
-    newButton.style.border = '0';
-
-    // Set the SVG as the innerHTML of the button
-    newButton.innerHTML = SpecialCharacterPickerIcon;
-    parentElement.appendChild(newButton);
-  }
-};
-
 function SpecialCharModal({
   loading,
   title,
@@ -284,7 +267,7 @@ function SpecialCharModal({
 }
 
 export {
-  PolymerListModal, PolymerListIconKetcherToolbarButton, specialCharButton, SpecialCharModal
+  PolymerListModal, PolymerListIconKetcherToolbarButton, SpecialCharModal
 };
 
 PolymerListModal.propTypes = {

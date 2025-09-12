@@ -2,30 +2,114 @@
   "basic": [
     {
       "id": 1,
-      "label": "Active Phase (Round)",
+      "label": "Active Phase",
       "description": "Agglomeration of balls in one color",
       "subTabs": [
         {
           "id": "1.1",
-          "label": "Single-compound active phase",
-          "description": "Different colors representing different elements: Active_Mono_v1-2_",
+          "label": "Single-compound active Mono",
+          "description": "Different colors representing different elements: Active Mono",
           "shapes": [
             {
               "template_id": 1,
-              "iconName": "BodyRectangleIcon",
-              "width": 1.0250000000000006,
+              "iconName": "activeMono-1",
+              "width": 2,
+              "height": 1.0250000000000006
+            },
+            {
+              "template_id": 2,
+              "iconName": "activeMono-2",
+              "width": 2,
+              "height": 1.0250000000000006
+            },
+            {
+              "template_id": 3,
+              "iconName": "activeMono-3",
+              "width": 2,
+              "height": 1.0250000000000006
+            },
+            {
+              "template_id": 4,
+              "iconName": "activeMono-4",
+              "width": 2,
+              "height": 1.0250000000000006
+            },
+            {
+              "template_id": 5,
+              "iconName": "activeMono-5",
+              "width": 2,
+              "height": 1.0250000000000006
+            },
+            {
+              "template_id": 6,
+              "iconName": "activeMono-6",
+              "width": 2,
+              "height": 1.0250000000000006
+            },
+            {
+              "template_id": 7,
+              "iconName": "activeMono-7",
+              "width": 2,
+              "height": 1.0250000000000006
+            },
+            {
+              "template_id": 8,
+              "iconName": "activeMono-8",
+              "width": 2,
               "height": 1.0250000000000006
             }
           ]
         },
         {
           "id": "1.2",
-          "label": "Multi-compound active phase",
-          "description": "Different colors representing different elements: Active_Multi_v1-2_",
+          "label": "Single-compound active Multi",
+          "description": "Different colors representing different elements: Active Multi",
           "shapes": [
             {
-              "template_id": 2,
-              "iconName": "ActivePhaseAlloy",
+              "template_id": 9,
+              "iconName": "activeMulti-1",
+              "width": 2,
+              "height": 1.0250000000000006
+            },
+            {
+              "template_id": 10,
+              "iconName": "activeMulti-2",
+              "width": 2,
+              "height": 1.0250000000000006
+            },
+            {
+              "template_id": 11,
+              "iconName": "activeMulti-3",
+              "width": 1.0250000000000006,
+              "height": 1.0250000000000006
+            },
+            {
+              "template_id": 12,
+              "iconName": "activeMulti-4",
+              "width": 1.0250000000000006,
+              "height": 1.0250000000000006
+            },
+            {
+              "template_id": 13,
+              "iconName": "activeMulti-5",
+              "width": 1.0250000000000006,
+              "height": 1.0250000000000006
+            },
+            {
+              "template_id": 14,
+              "iconName": "activeMulti-6",
+              "width": 1.0250000000000006,
+              "height": 1.0250000000000006
+            },
+            {
+              "template_id": 15,
+              "iconName": "activeMulti-7",
+              "width": 1.0250000000000006,
+              "height": 1.0250000000000006
+            },
+            {
+              "template_id": 16,
+              "iconName": "activeMulti-8",
               "width": 1.0250000000000006,
               "height": 1.0250000000000006
             }
@@ -33,14 +117,56 @@
         },
         {
           "id": "1.3",
-          "label": "Promotors",
-          "description": "Different colors representing different elements: Active_Dopant_v1-2_",
+          "label": "Single-compound active Dopant",
+          "description": "Different colors representing different elements: Active Dopant",
           "shapes": [
             {
-              "template_id": 3,
-              "iconName": "ActivePhasePromotors",
-              "width": 1,
-              "height": 1
+              "template_id": 17,
+              "iconName": "activeDopand-1",
+              "width": 2,
+              "height": 1.0250000000000006
+            },
+            {
+              "template_id": 18,
+              "iconName": "activeDopand-2",
+              "width": 2,
+              "height": 1.0250000000000006
+            },
+            {
+              "template_id": 19,
+              "iconName": "activeDopand-3",
+              "width": 2,
+              "height": 1.0250000000000006
+            },
+            {
+              "template_id": 20,
+              "iconName": "activeDopand-4",
+              "width": 2,
+              "height": 1.0250000000000006
+            },
+            {
+              "template_id": 21,
+              "iconName": "activeDopand-5",
+              "width": 2,
+              "height": 1.0250000000000006
+            },
+            {
+              "template_id": 22,
+              "iconName": "activeDopand-6",
+              "width": 2,
+              "height": 1.0250000000000006
+            },
+            {
+              "template_id": 23,
+              "iconName": "activeDopand-7",
+              "width": 2,
+              "height": 1.0250000000000006
+            },
+            {
+              "template_id": 24,
+              "iconName": "activeDopand-8",
+              "width": 2,
+              "height": 1.0250000000000006
             }
           ]
         }
@@ -48,18 +174,59 @@
     },
     {
       "id": 2,
-      "label": "Support (Rectangle)",
+      "label": "Support",
       "description": "Types and filling options for Support (Rectangle)",
       "subTabs": [
         {
           "id": "2.1",
-          "label": "Single phase support",
-          "description": "Different colors representing different elements: Support_Mono_v1-2_",
-          "template_id": 4,
+          "label": "Single phase support Mono",
+          "description": "Different colors representing different elements: Support_Mono ",
           "shapes": [
             {
-              "template_id": 5,
-              "iconName": "PhaseSeparatedSupportSolidDivided",
+              "template_id": 25,
+              "iconName": "supportMono-1",
+              "width": 2.0,
+              "height": 0.50
+            },
+            {
+              "template_id": 26,
+              "iconName": "supportMono-2",
+              "width": 2.0,
+              "height": 0.50
+            },
+            {
+              "template_id": 27,
+              "iconName": "supportMono-3",
+              "width": 2.0,
+              "height": 0.50
+            },
+            {
+              "template_id": 28,
+              "iconName": "supportMono-4",
+              "width": 2.0,
+              "height": 0.50
+            },
+            {
+              "template_id": 29,
+              "iconName": "supportMono-5",
+              "width": 2.0,
+              "height": 0.50
+            },
+            {
+              "template_id": 30,
+              "iconName": "supportMono-6",
+              "width": 2.0,
+              "height": 0.50
+            },
+            {
+              "template_id": 31,
+              "iconName": "supportMono-7",
+              "width": 2.0,
+              "height": 0.50
+            },
+            {
+              "template_id": 32,
+              "iconName": "supportMono-8",
               "width": 2.0,
               "height": 0.50
             }
@@ -67,12 +234,54 @@
         },
         {
           "id": "2.2",
-          "label": "Multi phase support",
-          "description": "Different colors representing different elements: Support_Mixed_v1-2_",
+          "label": "Multi phase support Mixed",
+          "description": "Different colors representing different elements: Support Mixed",
           "shapes": [
             {
-              "template_id": 6,
-              "iconName": "Support",
+              "template_id": 33,
+              "iconName": "supportMixed-1",
+              "width": 2.0,
+              "height": 0.90
+            },
+            {
+              "template_id": 34,
+              "iconName": "supportMixed-2",
+              "width": 2.0,
+              "height": 0.90
+            },
+            {
+              "template_id": 35,
+              "iconName": "supportMixed-3",
+              "width": 2.0,
+              "height": 0.90
+            },
+            {
+              "template_id": 36,
+              "iconName": "supportMixed-4",
+              "width": 2.0,
+              "height": 0.90
+            },
+            {
+              "template_id": 37,
+              "iconName": "supportMixed-5",
+              "width": 2.0,
+              "height": 0.90
+            },
+            {
+              "template_id": 38,
+              "iconName": "supportMixed-6",
+              "width": 2.0,
+              "height": 0.90
+            },
+            {
+              "template_id": 39,
+              "iconName": "supportMixed-7",
+              "width": 2.0,
+              "height": 0.90
+            },
+            {
+              "template_id": 40,
+              "iconName": "supportMixed-8",
               "width": 2.0,
               "height": 0.90
             }
@@ -84,8 +293,50 @@
           "description": "Different colors representing different elements: Support_Surface_v1-2_",
           "shapes": [
             {
-              "template_id": 7,
-              "iconName": "SupportSinglePhase",
+              "template_id": 41,
+              "iconName": "solidSurface-1",
+              "width": 1.8,
+              "height": 0.90
+            },
+            {
+              "template_id": 42,
+              "iconName": "solidSurface-2",
+              "width": 1.8,
+              "height": 0.90
+            },
+            {
+              "template_id": 43,
+              "iconName": "solidSurface-3",
+              "width": 1.8,
+              "height": 0.90
+            },
+            {
+              "template_id": 44,
+              "iconName": "solidSurface-4",
+              "width": 1.8,
+              "height": 0.90
+            },
+            {
+              "template_id": 45,
+              "iconName": "solidSurface-5",
+              "width": 1.8,
+              "height": 0.90
+            },
+            {
+              "template_id": 46,
+              "iconName": "solidSurface-6",
+              "width": 1.8,
+              "height": 0.90
+            },
+            {
+              "template_id": 47,
+              "iconName": "solidSurface-7",
+              "width": 1.8,
+              "height": 0.90
+            },
+            {
+              "template_id": 48,
+              "iconName": "solidSurface-8",
               "width": 1.8,
               "height": 0.90
             }
@@ -94,17 +345,17 @@
       ]
     },
     {
-      "id": 4,
-      "label": "Body (Rectangle)",
+      "id": 3,
+      "label": "Body",
       "description": "Rectangle with rough surface",
       "subTabs": [
         {
-          "id": "4.1",
+          "id": "3.1",
           "label": "Porous body",
           "description": "Body_porous_v1-2",
           "shapes": [
             {
-              "template_id": 8,
+              "template_id": 49,
               "iconName": "BodySolid",
               "width": 2.0,
               "height": 1
@@ -112,13 +363,13 @@
           ]
         },
         {
-          "id": "4.2",
+          "id": "3.2",
           "label": "Porous",
           "description": "Variations of Grey",
           "shapes": [
             {
-              "template_id": 9,
-              "iconName": "BodySolidWhite",
+              "template_id": 50,
+              "iconName": "BodyPorous",
               "width": 2.0,
               "height": 1
             }
@@ -129,115 +380,325 @@
   ],
   "semantic": [
     {
-      "id": 5,
+      "id": 4,
       "label": "Active Phase (Round)",
       "description": "Types and filling options for Body (Rectangle)",
       "subTabs": [
         {
-          "id": "5.1",
+          "id": "4.1",
           "label": "Single-compound active phase ",
           "description": "Different colors representing different elements: Active_Multi_v1-2_",
           "shapes": [
-            { "template_id": 10, "iconName": "Active_Mono_v1-2_r", "width": 1.0, "height": 1 },
-            { "template_id": 11, "iconName": "Active_Mono_v1-2_b-cropped", "width": 1.0, "height": 1 },
-            { "template_id": 12, "iconName": "Active_Mono_v1-2_g-cropped", "width": 1.0, "height": 1 },
-            { "template_id": 13, "iconName": "Active_Mono_v1-2_y-cropped", "width": 1.0, "height": 1 },
-            { "template_id": 14, "iconName": "Active_Mono_v1-2_l-cropped", "width": 1.0, "height": 1 },
-            { "template_id": 15, "iconName": "Active_Mono_v1-2_w-cropped", "width": 1.0, "height": 1 }
+            {
+              "template_id": 51,
+              "iconName": "Active_Mono_v1-2_r",
+              "width": 1.0,
+              "height": 1
+            },
+            {
+              "template_id": 52,
+              "iconName": "Active_Mono_v1-2_b-cropped",
+              "width": 1.0,
+              "height": 1
+            },
+            {
+              "template_id": 53,
+              "iconName": "Active_Mono_v1-2_g-cropped",
+              "width": 1.0,
+              "height": 1
+            },
+            {
+              "template_id": 54,
+              "iconName": "Active_Mono_v1-2_y-cropped",
+              "width": 1.0,
+              "height": 1
+            },
+            {
+              "template_id": 55,
+              "iconName": "Active_Mono_v1-2_l-cropped",
+              "width": 1.0,
+              "height": 1
+            },
+            {
+              "template_id": 56,
+              "iconName": "Active_Mono_v1-2_w-cropped",
+              "width": 1.0,
+              "height": 1
+            }
+          ]
+        },
+        {
+          "id": "4.2",
+          "label": "Multi-compound active phase ",
+          "description": "Different colors representing different elements: Active_Mono_v1-2_",
+          "shapes": [
+            {
+              "template_id": 57,
+              "iconName": "Active_Multi_v1-2_d+w-cropped",
+              "width": 1.0,
+              "height": 1
+            },
+            {
+              "template_id": 58,
+              "iconName": "Active_Multi_v1-2_g+w-cropped",
+              "width": 1.0,
+              "height": 1
+            },
+            {
+              "template_id": 59,
+              "iconName": "Active_Multi_v1-2_t+w-cropped",
+              "width": 1.0,
+              "height": 1
+            },
+            {
+              "template_id": 60,
+              "iconName": "Active_Multi_v1-2_b+w-cropped",
+              "width": 1.0,
+              "height": 1
+            },
+            {
+              "template_id": 61,
+              "iconName": "Active_Multi_v1-2_t+w-cropped",
+              "width": 1.0,
+              "height": 1
+            },
+            {
+              "template_id": 62,
+              "iconName": "Active_Multi_v1-2_l+w-cropped",
+              "width": 1.0,
+              "height": 1
+            },
+            {
+              "template_id": 63,
+              "iconName": "Active_Multi_v1-2_y+w-cropped",
+              "width": 1.0,
+              "height": 1
+            }
+          ]
+        },
+        {
+          "id": "4.3",
+          "label": "Promoter",
+          "description": "Different colors representing different elements: Active_Dopant_v1-2_",
+          "shapes": [
+            {
+              "template_id": 64,
+              "iconName": "Active_Dopant_v1-2_r",
+              "width": 1,
+              "height": 1
+            },
+            {
+              "template_id": 65,
+              "iconName": "Active_Dopant_v1-2_b",
+              "width": 1.0,
+              "height": 1
+            },
+            {
+              "template_id": 66,
+              "iconName": "Active_Dopant_v1-2_d",
+              "width": 1.0,
+              "height": 1
+            },
+            {
+              "template_id": 67,
+              "iconName": "Active_Dopant_v1-2_g",
+              "width": 1.0,
+              "height": 1
+            },
+            {
+              "template_id": 68,
+              "iconName": "Active_Dopant_v1-2_l",
+              "width": 1.0,
+              "height": 1
+            },
+            {
+              "template_id": 69,
+              "iconName": "Active_Dopant_v1-2_w",
+              "width": 1.0,
+              "height": 1
+            },
+            {
+              "template_id": 70,
+              "iconName": "Active_Dopant_v1-2_y",
+              "width": 1.0,
+              "height": 1
+            },
+            {
+              "template_id": 71,
+              "iconName": "Active_Dopant_v1-2_t",
+              "width": 1.0,
+              "height": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "label": "Support (Rectangle)",
+      "description": "Types and filling options for Body (Rectangle)",
+      "subTabs": [
+        {
+          "id": "5.1",
+          "label": "Single phase support",
+          "description": "Different colors representing different elements: Support_Mono_v1-2_",
+          "shapes": [
+            {
+              "template_id": 72,
+              "iconName": "Support_Mono_v1-2_y-cropped",
+              "width": 2,
+              "height": 2
+            },
+            {
+              "template_id": 73,
+              "iconName": "Support_Mono_v1-2_d-cropped",
+              "width": 2,
+              "height": 2
+            },
+            {
+              "template_id": 74,
+              "iconName": "Support_Mono_v1-2_w-cropped",
+              "width": 2,
+              "height": 2
+            },
+            {
+              "template_id": 75,
+              "iconName": "Support_Mono_v1-2_g-cropped",
+              "width": 2,
+              "height": 2
+            },
+            {
+              "template_id": 76,
+              "iconName": "Support_Mono_v1-2_t-cropped",
+              "width": 2,
+              "height": 2
+            },
+            {
+              "template_id": 77,
+              "iconName": "Support_Mono_v1-2_b-cropped",
+              "width": 2,
+              "height": 2
+            },
+            {
+              "template_id": 78,
+              "iconName": "Support_Mono_v1-2_l-cropped",
+              "width": 2,
+              "height": 2
+            },
+            {
+              "template_id": 79,
+              "iconName": "Support_Mono_v1-2_r-cropped",
+              "width": 2,
+              "height": 2
+            }
           ]
         },
         {
           "id": "5.2",
-          "label": "Multi-compound active phase ",
-          "description": "Different colors representing different elements: Active_Mono_v1-2_",
+          "label": "Multi phase support",
+          "description": "Different colors representing different elements: Support_Mixed_v1-2_",
           "shapes": [
-            { "template_id": 16, "iconName": "Active_Multi_v1-2_d+w-cropped", "width": 1.0, "height": 1 },
-            { "template_id": 17, "iconName": "Active_Multi_v1-2_g+w-cropped", "width": 1.0, "height": 1 },
-            { "template_id": 18, "iconName": "Active_Multi_v1-2_t+w-cropped", "width": 1.0, "height": 1 },
-            { "template_id": 19, "iconName": "Active_Multi_v1-2_b+w-cropped", "width": 1.0, "height": 1 },
-            { "template_id": 20, "iconName": "Active_Multi_v1-2_t+w-cropped", "width": 1.0, "height": 1 },
-            { "template_id": 21, "iconName": "Active_Multi_v1-2_l+w-cropped", "width": 1.0, "height": 1 },
-            { "template_id": 22, "iconName": "Active_Multi_v1-2_y+w-cropped", "width": 1.0, "height": 1 }
+            {
+              "template_id": 80,
+              "iconName": "Support_Surface_v1-2_y-cropped",
+              "width": 2.0,
+              "height": 2
+            },
+            {
+              "template_id": 81,
+              "iconName": "Support_Surface_v1-2_w-cropped",
+              "width": 2.0,
+              "height": 2
+            },
+            {
+              "template_id": 82,
+              "iconName": "Support_Surface_v1-2_t-cropped",
+              "width": 2.0,
+              "height": 2
+            },
+            {
+              "template_id": 83,
+              "iconName": "Support_Surface_v1-2_b-cropped",
+              "width": 2.0,
+              "height": 2
+            },
+            {
+              "template_id": 84,
+              "iconName": "Support_Surface_v1-2_l-cropped",
+              "width": 2.0,
+              "height": 2
+            },
+            {
+              "template_id": 85,
+              "iconName": "Support_Surface_v1-2_r-cropped",
+              "width": 2.0,
+              "height": 2
+            }
           ]
         },
         {
           "id": "5.3",
-          "label": "Promoter",
-          "description": "Different colors representing different elements: Active_Dopant_v1-2_",
+          "label": "Surface modified support",
+          "description": "Different colors representing different elements: Support_Surface_v1-2_",
           "shapes": [
-            { "template_id": 23, "iconName": "Active_Dopant_v1-2_r", "width": 1, "height": 1 },
-            { "template_id": 24, "iconName": "Active_Dopant_v1-2_b", "width": 1.0, "height": 1 },
-            { "template_id": 25, "iconName": "Active_Dopant_v1-2_d", "width": 1.0, "height": 1 },
-            { "template_id": 26, "iconName": "Active_Dopant_v1-2_g", "width": 1.0, "height": 1 },
-            { "template_id": 27, "iconName": "Active_Dopant_v1-2_l", "width": 1.0, "height": 1 },
-            { "template_id": 28, "iconName": "Active_Dopant_v1-2_w", "width": 1.0, "height": 1 },
-            { "template_id": 29, "iconName": "Active_Dopant_v1-2_y", "width": 1.0, "height": 1 },
-            { "template_id": 30, "iconName": "Active_Dopant_v1-2_t", "width": 1.0, "height": 1 }
+            {
+              "template_id": 86,
+              "iconName": "Support_Mixed_v1-2_d+w-cropped",
+              "width": 2.0,
+              "height": 2
+            },
+            {
+              "template_id": 87,
+              "iconName": "Support_Mixed_v1-2_d+y-cropped",
+              "width": 2.0,
+              "height": 2
+            },
+            {
+              "template_id": 88,
+              "iconName": "Support_Mixed_v1-2_d+r-cropped",
+              "width": 2.0,
+              "height": 2
+            },
+            {
+              "template_id": 89,
+              "iconName": "Support_Mixed_v1-2_d+l-cropped",
+              "width": 2.0,
+              "height": 2
+            },
+            {
+              "template_id": 90,
+              "iconName": "Support_Mixed_v1-2_d+b-cropped",
+              "width": 2.0,
+              "height": 2
+            },
+            {
+              "template_id": 91,
+              "iconName": "Support_Mixed_v1-2_d+t-cropped",
+              "width": 2.0,
+              "height": 2
+            },
+            {
+              "template_id": 92,
+              "iconName": "Support_Mixed_v1-2_d+g-cropped",
+              "width": 2.0,
+              "height": 2
+            }
           ]
         }
       ]
     },
     {
       "id": 6,
-      "label": "Support (Rectangle)",
-      "description": "Types and filling options for Body (Rectangle)",
-      "subTabs": [
-        {
-          "id": "6.1",
-          "label": "Single phase support",
-          "description": "Different colors representing different elements: Support_Mono_v1-2_",
-          "shapes": [
-            { "template_id": 31, "iconName": "Support_Mono_v1-2_y-cropped", "width": 2, "height": 2 },
-            { "template_id": 32, "iconName": "Support_Mono_v1-2_d-cropped", "width": 2, "height": 2 },
-            { "template_id": 33, "iconName": "Support_Mono_v1-2_w-cropped", "width": 2, "height": 2 },
-            { "template_id": 34, "iconName": "Support_Mono_v1-2_g-cropped", "width": 2, "height": 2 },
-            { "template_id": 35, "iconName": "Support_Mono_v1-2_t-cropped", "width": 2, "height": 2 },
-            { "template_id": 36, "iconName": "Support_Mono_v1-2_b-cropped", "width": 2, "height": 2 },
-            { "template_id": 37, "iconName": "Support_Mono_v1-2_l-cropped", "width": 2, "height": 2 },
-            { "template_id": 38, "iconName": "Support_Mono_v1-2_r-cropped", "width": 2, "height": 2 }
-          ]
-        },
-        {
-          "id": "6.2",
-          "label": "Multi phase support",
-          "description": "Different colors representing different elements: Support_Mixed_v1-2_",
-          "shapes": [
-            { "template_id": 39, "iconName": "Support_Surface_v1-2_y-cropped", "width": 2.0, "height": 2 },
-            { "template_id": 40, "iconName": "Support_Surface_v1-2_w-cropped", "width": 2.0, "height": 2 },
-            { "template_id": 41, "iconName": "Support_Surface_v1-2_t-cropped", "width": 2.0, "height": 2 },
-            { "template_id": 42, "iconName": "Support_Surface_v1-2_b-cropped", "width": 2.0, "height": 2 },
-            { "template_id": 43, "iconName": "Support_Surface_v1-2_l-cropped", "width": 2.0, "height": 2 },
-            { "template_id": 44, "iconName": "Support_Surface_v1-2_r-cropped", "width": 2.0, "height": 2 }
-          ]
-        },
-        {
-          "id": "6.3",
-          "label": "Surface modified support",
-          "description": "Different colors representing different elements: Support_Surface_v1-2_",
-          "shapes": [
-            { "template_id": 45, "iconName": "Support_Mixed_v1-2_d+w-cropped", "width": 2.0, "height": 2 },
-            { "template_id": 46, "iconName": "Support_Mixed_v1-2_d+y-cropped", "width": 2.0, "height": 2 },
-            { "template_id": 47, "iconName": "Support_Mixed_v1-2_d+r-cropped", "width": 2.0, "height": 2 },
-            { "template_id": 48, "iconName": "Support_Mixed_v1-2_d+l-cropped", "width": 2.0, "height": 2 },
-            { "template_id": 49, "iconName": "Support_Mixed_v1-2_d+b-cropped", "width": 2.0, "height": 2 },
-            { "template_id": 50, "iconName": "Support_Mixed_v1-2_d+t-cropped", "width": 2.0, "height": 2 },
-            { "template_id": 51, "iconName": "Support_Mixed_v1-2_d+g-cropped", "width": 2.0, "height": 2 }
-          ]
-        }
-      ]
-    },
-    {
-      "id": 7,
       "label": "Body (Rectangle)",
       "description": "Types and filling options for Body (Rectangle)",
       "subTabs": [
         {
-          "id": "7.1",
+          "id": "6.1",
           "label": "Porous body",
           "description": "Body_porous_v1-2",
           "shapes": [
             {
-              "template_id": 52,
+              "template_id": 93,
               "iconName": "Body_solid_v1-2",
               "width": 2.0,
               "height": 1.5
@@ -245,12 +706,12 @@
           ]
         },
         {
-          "id": "7.2",
+          "id": "6.2",
           "label": "Solid body",
           "description": "Body_solid_v1-2",
           "shapes": [
             {
-              "template_id": 53,
+              "template_id": 94,
               "iconName": "Body_porous_v1-2",
               "width": 2.0,
               "height": 1.5
