@@ -23,7 +23,7 @@ module RecoveryDB
                                                     collections_research_plans collections_device_descriptions
                                                     sync_collections_users users_devices devices collections_elements
                                                     elements element_klasses elements_elements elements_samples
-                                                    segment_klasses segments])
+                                                    segment_klasses segments user_labels users_admins users_groups])
       end
 
       def run
@@ -40,6 +40,8 @@ module RecoveryDB
           user_id_map[recovery_user.id] = new_user.id
         end
         restore_sharing_and_synchronization(user_id_map)
+        restore_user_admin(old_user, new_user)
+        restore_user_group(old_user, new_user)
         @mount.destroy!
       end
 
@@ -82,6 +84,7 @@ module RecoveryDB
           # Skip validations (e.g. password) when restoring
           new_user.save(validate: false)
           restore_profile(old_user, new_user)
+          restore_user_label(old_user, new_user)
           restore_collections(old_user, new_user, created_elements)
           restore_sync_collection_users(
             old_user_id: old_user.id,
@@ -132,6 +135,18 @@ module RecoveryDB
           Profile.create!(profile_attributes.merge(user_id: new_user.id))
         rescue ActiveRecord::RecordInvalid => e
           Rails.logger.error "Failed to copy profile for user #{old_user.id}: #{e.message}"
+        end
+      end
+
+      def restore_user_label(old_user, new_user)
+        old_label = RecoveryDB::Models::UserLabel.find_by(user_id: old_user.id)
+        return unless old_label
+
+        label_attributes = old_label.attributes.except(*attributes_to_exclude)
+        begin
+          UserLabel.create!(label_attributes.merge(user_id: new_user.id))
+        rescue ActiveRecord::RecordInvalid => e
+          Rails.logger.error "Failed to copy label for user #{old_user.id}: #{e.message}"
         end
       end
 
@@ -546,6 +561,28 @@ module RecoveryDB
           end
 
           collection.update!(is_synchronized: false) if collection.sync_collections_users.reload.empty?
+        end
+      end
+
+      def restore_user_admin(user_id_map)
+        RecoveryDB::Models::UsersAdmin.find_each do |ua|
+          new_admin_id = user_id_map[ua.admin_id]
+          new_user_id  = user_id_map[ua.user_id]
+
+          next unless new_admin_id && new_user_id
+
+          UsersAdmin.create!(admin_id: new_admin_id, user_id: new_user_id)
+        end
+      end
+
+      def restore_user_group(user_id_map)
+        RecoveryDB::Models::UsersGroup.find_each do |ua|
+          new_group_id = user_id_map[ua.group_id]
+          new_user_id  = user_id_map[ua.user_id]
+
+          next unless new_group_id && new_user_id
+
+          UsersGroup.create!(admin_id: new_group_id, user_id: new_user_id)
         end
       end
 
