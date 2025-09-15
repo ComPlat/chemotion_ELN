@@ -23,11 +23,11 @@ if ! id -u ubuntu >/dev/null 2>&1; then
 fi
 
 # Check if the provided uid and gid are valid numbers
-# If not, exit with an error message
+# If not, exit without error (assumes the process has to be skipped)
 
 if ! echo "$uid" | grep -qE '^[0-9]+$' || ! echo "$gid" | grep -qE '^[0-9]+$'; then
-    echo "Both uid and gid must be valid numbers."
-    exit 1
+    echo "Both uid and gid must be valid numbers. Skipping"
+    exit 0
 fi
 
 # Check if the provided uid and gid are not the same as the current uid and gid
