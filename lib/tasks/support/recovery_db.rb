@@ -2,6 +2,19 @@ module RecoveryDB
   class Mount
     attr_reader :dump_path, :config, :logger
 
+    MODEL_NAMES = %w[
+      User Profile Collection Sample Reaction Wellplate Well
+      Screen ResearchPlan DeviceDescription Attachment
+      Container ContainerHierarchy CollectionsSample
+      CollectionsReaction CollectionsWellplate CollectionsScreen
+      CollectionsResearchPlan CollectionsDeviceDescription Labimotion::ElementsSample
+      SyncCollectionsUser UsersDevice Device Labimotion::CollectionsElement
+      Labimotion::Element Labimotion::ElementKlass Labimotion::ElementsElement
+      Labimotion::SegmentKlass Labimotion::Segment UserLabel UsersAdmin UsersGroup
+    ]
+
+    MODEL_CLASSES = MODEL_NAMES.map(&:constantize)
+
     def initialize(file: nil, tables: [], database: nil, username: nil, password: nil, host: nil, port: nil)
       raise ArgumentError, 'Dump file not found' unless file.nil? || File.exist?(file)
       raise ArgumentError, 'Database name or db backup file required' if database.nil? && file.nil?
@@ -93,9 +106,9 @@ module RecoveryDB
     def load_models(tables: @tables)
       # Load all models in the app/models directory
       tables = tables.map(&:to_s)
-      ActiveSupport::Dependencies.autoload_paths << Rails.root.join('app/models')
-      Rails.application.eager_load!
-      ApplicationRecord.descendants.each do |model|
+      MODEL_CLASSES.each do |model|
+        log_event 'Found Element' if model == Labimotion::Element
+        log_event 'Found ElementKlass' if model == Labimotion::ElementKlass
         next if model.name.start_with?('RecoveryDB::')
         next unless tables.empty? || tables.include?(model.table_name)
 
@@ -106,7 +119,7 @@ module RecoveryDB
           self.primary_key = model.primary_key
           self.inheritance_column = :_type_disabled if model.columns_hash.key?('type')
         end
-        RecoveryDB::Models.const_set(:"#{model.name}", recovery_model)
+        RecoveryDB::Models.const_set(:"#{model.name.demodulize}", recovery_model)
         log_event "#{recovery_model.name} mounted"
 
         recovery_model.connect_to(config)

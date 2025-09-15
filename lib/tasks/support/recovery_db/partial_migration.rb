@@ -40,17 +40,19 @@ module RecoveryDB
           user_id_map[recovery_user.id] = new_user.id
         end
         restore_sharing_and_synchronization(user_id_map)
-        restore_user_admin(old_user, new_user)
-        restore_user_group(old_user, new_user)
+        restore_user_admin(user_id_map)
+        restore_user_group(user_id_map)
         @mount.destroy!
       end
 
       def restore_element_klasses(created_elements)
         element_klass_ids = RecoveryDB::Models::Element
-                            .joins(collections_elements: { collection: :user })
+                            .joins('INNER JOIN collections_elements ON collections_elements.element_id = elements.id')
+                            .joins('INNER JOIN collections ON collections.id = collections_elements.collection_id')
                             .where(collections: { user_id: @user_ids })
                             .distinct
                             .pluck(:element_klass_id)
+
         old_element_klasses = RecoveryDB::Models::ElementKlass.where(id: element_klass_ids)
         old_element_klasses.find_each do |old_element_klass|
           next if created_elements.key?(['ElementKlass', old_element_klass.id])
