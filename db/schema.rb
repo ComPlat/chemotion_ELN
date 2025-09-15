@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2025_07_01_134000) do
+ActiveRecord::Schema.define(version: 2025_08_28_174543) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -69,12 +69,12 @@ ActiveRecord::Schema.define(version: 2025_07_01_134000) do
     t.string "folder"
     t.string "attachable_type"
     t.string "aasm_state"
-    t.datetime "deleted_at"
     t.bigint "filesize"
     t.jsonb "attachment_data"
     t.integer "con_state"
     t.jsonb "log_data"
     t.string "created_by_type"
+    t.datetime "deleted_at"
     t.index ["attachable_type", "attachable_id"], name: "index_attachments_on_attachable_type_and_attachable_id"
     t.index ["identifier"], name: "index_attachments_on_identifier", unique: true
     t.index ["version"], name: "index_attachments_on_version", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
@@ -1090,6 +1090,7 @@ ActiveRecord::Schema.define(version: 2025_07_01_134000) do
     t.boolean "gaseous", default: false
     t.jsonb "vessel_size", default: {"unit"=>"ml", "amount"=>nil}
     t.jsonb "log_data"
+    t.boolean "weight_percentage"
     t.index ["deleted_at"], name: "index_reactions_on_deleted_at"
     t.index ["rinchi_short_key"], name: "index_reactions_on_rinchi_short_key", order: :desc
     t.index ["rinchi_web_key"], name: "index_reactions_on_rinchi_web_key"
@@ -1114,6 +1115,8 @@ ActiveRecord::Schema.define(version: 2025_07_01_134000) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.jsonb "log_data"
+    t.boolean "weight_percentage_reference", default: false
+    t.float "weight_percentage"
     t.index ["reaction_id"], name: "index_reactions_samples_on_reaction_id"
     t.index ["sample_id"], name: "index_reactions_samples_on_sample_id"
   end
