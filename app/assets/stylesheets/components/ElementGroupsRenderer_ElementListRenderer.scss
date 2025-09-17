@@ -4,34 +4,65 @@
 
 .element-list-renderer,
 .element-groups-renderer {
-  .element-list-item {
-    margin-top: 2px;
-  }
+  @extend .d-flex;
+  @extend .flex-column;
+  @extend .border-top;
   .element-group {
-    @extend .mb-2;
+    --bs-accordion-color: #{$accordion-color};
+    --bs-accordion-bg: #{$accordion-bg};
+    --bs-accordion-border-width: #{$accordion-border-width};
+    --bs-accordion-border-color: #{$accordion-border-color};
+    --bs-accordion-border-radius: #{$accordion-border-radius};
+    --bs-accordion-padding-y: #{$accordion-padding-y};
+    --bs-accordion-padding-x: #{$accordion-padding-x};
+    --bs-accordion-body-padding-y: #{$accordion-body-padding-y};
+    --bs-accordion-body-padding-x: #{$accordion-body-padding-x};
+    --bs-accordion-btn-padding-y: #{$accordion-button-padding-y};
+    --bs-accordion-btn-padding-x: #{$accordion-button-padding-x};
+    --bs-accordion-btn-color: #{$accordion-button-color};
+    --bs-accordion-btn-bg: #{$accordion-button-bg};
+    --bs-accordion-active-bg: #{$accordion-button-active-bg};
+    --bs-accordion-active-color: #{$accordion-button-active-color};
+    --bs-accordion-btn-focus-border-color: #{$accordion-button-focus-border-color};
+    --bs-accordion-btn-focus-box-shadow: #{$accordion-button-focus-box-shadow};
+    --bs-accordion-icon-width: #{$accordion-icon-width};
+    --bs-accordion-icon-color: #{$accordion-icon-color};
+    --bs-accordion-icon-active-color: #{$accordion-icon-active-color};
+    --bs-accordion-btn-icon-transition: #{$accordion-icon-transition};
+    --bs-accordion-btn-icon-transform: #{$accordion-icon-transform};
+    --bs-accordion-inner-border-radius: #{$accordion-inner-border-radius};
+  }
+  .element-group-items {
+    @extend .d-flex;
+    @extend .flex-column;
+  }
+  .element-group-header {
+    @extend .border;
+    @extend .border-top-0;
+    @extend .accordion-header;
+    &.draggable {
+      @extend .border-start-0;
+    }
+    &-content {
+      @extend .accordion-button;
+      box-shadow: none !important;
+      border-width: var(--bs-accordion-border-width);
+      border-style: solid;
+      border-color: var(--bs-accordion-border-color);
+      cursor: pointer;
+    }
   }
   .element-group-header-content,
   .element-list-item-content {
     @extend .flex-grow-1;
     @extend .p-2;
   }
+  .element-list-item {
+    @include draggable-list-item();
+  }
   .element-list-item,
   .element-group-header {
     @extend .d-flex;
-    @extend .surface-lighten5;
-    @extend .rounded-start;
-    &:hover {
-      @extend .surface-lighten4;
-    }
-    &.element-list-item,
-    .element-group-header {
-      &--selected {
-        @extend .surface-lighten2;
-        &:hover {
-          @extend .surface-lighten1;
-        }
-      }
-    }
     &-drag-handle {
       @extend .d-flex;
       @extend .align-content-center;

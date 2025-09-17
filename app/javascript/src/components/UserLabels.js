@@ -3,7 +3,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Modal, Badge, Button, Form, InputGroup, ButtonToolbar, Row, Col
+  Modal, Badge, Button, Form, ButtonToolbar, Row, Col
 } from 'react-bootstrap';
 import { Select } from 'src/components/common/Select';
 import { AgGridReact } from 'ag-grid-react';
@@ -12,6 +12,7 @@ import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { colorOptions } from 'src/components/staticDropdownOptions/options';
+import ColorLabel from 'src/components/common/ColorLabel';
 
 /* eslint-disable camelcase */
 const UserLabel = ({ title, color, access_level }) => (
@@ -247,12 +248,9 @@ class UserLabelModal extends Component {
     );
   }
 
-  renderOptionLabel(option) {
+  renderColorOptionLabel(option) {
     return (
-      <div className="d-flex align-items-center">
-        <div className="label-color-preview me-2 rounded-circle" style={{ backgroundColor: option.value }} />
-        {option.label}
-      </div>
+      <ColorLabel color={option.value} label={option.label} />
     );
   }
 
@@ -299,25 +297,20 @@ class UserLabelModal extends Component {
             defaultValue={label.description || ''}
           />
         </Form.Group>
-        <Form.Group controlId="colorInput" as={Row}>
+        <Form.Group controlId="colorInput">
           <Form.Label>Background Color</Form.Label>
-          <Col xs="auto" className="pe-0">
-            <div className="color-preview-box" style={{ backgroundColor: label.color || "#fff" }} />
-          </Col>
-          <Col className="ps-0">
-            <Select
-              className="rounded-corners"
-              name="colorPicker"
-              isClearable
-              ref={(m) => { this.colorInput = m; }}
-              options={colorOptions}
-              value={colorOptions.find(({ value }) => value === label.color) || null}
-              onChange={this.handleColorPicker}
-              getOptionLabel={this.renderOptionLabel}
-              maxHeight="200px"
-              placeholder="Choose a color..."
-            />
-          </Col>
+          <Select
+            className="rounded-corners"
+            name="colorPicker"
+            isClearable
+            ref={(m) => { this.colorInput = m; }}
+            options={colorOptions}
+            value={colorOptions.find(({ value }) => value === label.color) || null}
+            onChange={this.handleColorPicker}
+            getOptionLabel={this.renderColorOptionLabel}
+            maxHeight="200px"
+            placeholder="Choose a color..."
+          />
         </Form.Group>
       </Form>
     );
@@ -528,6 +521,7 @@ class SearchUserLabels extends React.Component {
         onChange={this.handleSelectChange}
         placeholder="Filter by label"
         minWidth="100px"
+        size={this.props.size}
       />
     );
   }
@@ -536,10 +530,12 @@ class SearchUserLabels extends React.Component {
 SearchUserLabels.propTypes = {
   fnCb: PropTypes.func.isRequired,
   userLabel: PropTypes.number,
+  size: PropTypes.string,
 };
 
 SearchUserLabels.defaultProps = {
   userLabel: null,
+  size: 'md',
 };
 
 export { UserLabelModal, EditUserLabels, ShowUserLabels, SearchUserLabels };
