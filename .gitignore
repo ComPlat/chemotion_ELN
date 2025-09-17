@@ -233,3 +233,6 @@ public/pdf.worker.min.js
 
 # Changes from Shakapacker Installation
 .yarn-integrity
+
+*storybook.log
+storybook-static
