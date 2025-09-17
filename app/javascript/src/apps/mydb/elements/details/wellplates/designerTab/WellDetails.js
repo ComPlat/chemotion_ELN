@@ -13,6 +13,7 @@ import PropTypes from 'prop-types';
 import { Select } from 'src/components/common/Select';
 import { wellplateShowSample } from 'src/utilities/routesUtils';
 import Aviator from 'aviator';
+import ColorLabel from 'src/components/common/ColorLabel';
 import { colorOptions } from 'src/components/staticDropdownOptions/options';
 
 const navigateToSample = (sample) => {
@@ -131,38 +132,28 @@ const labelSelection = (well, onChange) => {
 };
 
 const colorPicker = (well, onChange, activeColor, setActiveColor) => (
-  <div className="mt-3">
-    <Form.Group as={Row} controlId="formColorSelectorDisplay">
-      <Form.Label as="h4">Select Color</Form.Label>
-      <Col xs="auto" className="pe-0">
-        <div className="color-preview-box" style={{ backgroundColor: activeColor || "#fff" }} />
-      </Col>
-      <Col className="ps-0">
-        <Select
-          className="rounded-corners"
-          name="colorPicker"
-          isClearable
-          options={colorOptions}
-          value={colorOptions.find(({ value }) => value === activeColor) || null}
-          onChange={(option) => {
-            const hex = option?.value || null;
-            const newColor = activeColor === hex ? null : hex;
-            setActiveColor(newColor);
-            onChange({ ...well, color_code: newColor });
-          }}
-          getOptionLabel={(option) => (
-            <div className="d-flex align-items-center">
-              <div className="label-color-preview me-2 rounded-circle" style={{ backgroundColor: option.value }} />
-              {option.label}
-            </div>
-          )}
-          maxHeight="200px"
-          placeholder="Choose a color..."
-        />
-      </Col>
-    </Form.Group>
-  </div>
-)
+  <Form.Group controlId="formColorSelectorDisplay" className="mt-3">
+    <Form.Label as="h4">Select Color</Form.Label>
+    <Select
+      className="rounded-corners"
+      name="colorPicker"
+      isClearable
+      options={colorOptions}
+      value={colorOptions.find(({ value }) => value === activeColor) || null}
+      onChange={(option) => {
+        const hex = option?.value || null;
+        const newColor = activeColor === hex ? null : hex;
+        setActiveColor(newColor);
+        onChange({ ...well, color_code: newColor });
+      }}
+      getOptionLabel={(option) => (
+        <ColorLabel color={option.value} label={option.label} />
+      )}
+      maxHeight="200px"
+      placeholder="Choose a color..."
+    />
+  </Form.Group>
+);
 
 const WellDetails = ({ well, readoutTitles, handleClose, onChange }) => {
   const [activeColor, setActiveColor] = useState(well.color_code || null);
