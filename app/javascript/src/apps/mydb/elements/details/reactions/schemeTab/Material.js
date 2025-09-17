@@ -1207,8 +1207,6 @@ class Material extends Component {
     let materialDisplayName = '';
 
     if (skipIupacName) {
-      let materialDisplayName;
-
       if (isMixture) {
         // For mixtures, show the sample name or short label directly
         materialDisplayName = material.name || material.short_label;
@@ -1217,14 +1215,13 @@ class Material extends Component {
         if (materialGroup === 'solvents' || materialGroup === 'purification_solvents') {
           materialDisplayName = material.external_label || materialDisplayName;
         }
+        if (materialDisplayName === null || materialDisplayName === '') {
+          materialDisplayName = (
+            <SampleName sample={material} />
+          );
+        }
+        linkDisplayName = !!idCheck.test(material.id);
       }
-
-      if (materialDisplayName === null || materialDisplayName === '') {
-        materialDisplayName = (
-          <SampleName sample={material} />
-        );
-      }
-      linkDisplayName = !!idCheck.test(material.id)
     } else {
       moleculeIupacName = material.molecule_iupac_name;
       materialDisplayName = material.title() === ''
