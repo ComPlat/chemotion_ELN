@@ -582,6 +582,9 @@ export default class Sample extends Element {
   }
 
   get molarity_value() {
+    // if (this.isMixture() && this.reference_component) {
+    //   return this.reference_molarity_value;
+    // }
     return this._molarity_value;
   }
 
@@ -1087,6 +1090,9 @@ export default class Sample extends Element {
           return 0;
         }
         case 'mol': {
+          // if (this.isMixture()) {
+          //   return this.convertMixtureMolToGram(amount_value);
+          // }
           const molecularWeight = this.molecule_molecular_weight;
           const purity = this.purity || 1.0;
 
