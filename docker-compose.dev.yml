@@ -2,20 +2,49 @@
 # It builds an app container based on Dockerfile.chemotion.dev
 #
 # USAGE:
+# The docker compose command should be apply with the following args
+#      docker compose -f docker-compose.dev.yml --env-file .dockerenv
+#
+# docker_cmd="docker compose -f docker-compose.dev.yml --env-file .dockerenv "
+#
+# - Build the dev image with mapping to the current user and group ids:
+#     gid=$(id -g) uid=$(id -u) ${docker_cmd} build setup
+#
 # - Run development environment:
-#     docker-compose -f docker-compose.dev.yml up postgres app webpacker
+#     ${docker_cmd} up -d
+#
 # - Open a bash shell in the app container:
-#     docker exec -it NAME_OF_APP_CONTAINER_FROM_DOCKER_PS /bin/bash
+#     ${docker_cmd} app bash
+#
 # - Run tests:
-#     bundle exec rspec
+#     ${docker_cmd} app bundle exec rspec
+#     ${docker_cmd} app yarn test
 #
 # - see .dockerenv.example for environment variables usage
+#
 
-x-common-volumes:
-  - &vhome homedir:/home/ubuntu
-  - &vapp .:/home/ubuntu/app
+x-common-volumes: &common-volumes
+  - homedir:/home/ubuntu
+  - .:/home/ubuntu/app
+
+x-common-build: &common-build
+  context: '.'
+  dockerfile: 'Dockerfile.chemotion-dev'
+  args:
+    uid: ${uid:-default}
+    gid: ${gid:-default}
+
+x-common-image:
+  - &chemotion_eln_dev ${DOCKER_DEV_IMAGE:-chemotion_eln_dev}
 
 services:
+  setup:
+    build: *common-build
+    image: *chemotion_eln_dev
+    volumes: *common-volumes
+    working_dir: "/home/ubuntu/app"
+    command: "./prepare-ruby-dev.sh"
+
   postgres:
     image: ${DOCKER_PG_IMAGE:-postgres:16}
     environment:
@@ -23,36 +52,38 @@ services:
     expose: # expose port to app container
       - '5432'
     ports: # expose port to host machine in case we want to use external db gui tools
-      - '5432:5432'
+      - ${HOST_PORT_PG:-5432}:5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
     volumes:
       - database:/var/lib/postgresql/data
 
   app:
-    build:
-      context: '.'
-      dockerfile: 'Dockerfile.chemotion-dev'
-      # args:
-        # source_image: ${DOCKER_DEV_IMAGE:-ubuntu:noble}  # Build ARG for base image
-        # FULL_BUILD: ${FULL_BUILD:-}
-    image: ${DOCKER_DEV_IMAGE:-}
+    image: *chemotion_eln_dev
     depends_on:
-      - 'postgres'
+      setup:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "bundle", "check"] # exit 0 if all gems from Gemfile are installed, otherwise exit 1
       interval: 30s
       timeout: 10s
     env_file:
-      - ./.env
+      - .env
     environment:
       - 'SHAKAPACKER_DEV_SERVER_HOST=webpacker'
       - 'SHAKAPACKER_DEV_SERVER_PORT=3035'
       - 'THOR_SILENCE_DEPRECATION=true'
       - RAKE_DB_MIGRATE=${RAKE_DB_MIGRATE:-never}
     ports: # expose default rails port to host machine
-      - "3000:3000"
-    volumes:
-      - *vhome
-      - *vapp
+      - ${HOST_PORT_APP:-3000}:3000
+    volumes: *common-volumes
     working_dir: "/home/ubuntu/app"
     command: "./run-ruby-dev.sh"
     networks:
@@ -60,14 +91,10 @@ services:
       - chemotion
 
   webpacker:
-    build:
-      context: '.'
-      dockerfile: 'Dockerfile.chemotion-dev'
-      # args:
-        # source_image: ${DOCKER_DEV_IMAGE:-ubuntu:noble}  # Build ARG for base image
-        # FULL_BUILD: ${FULL_BUILD:-}
-    image: ${DOCKER_DEV_IMAGE:-}
+    image: *chemotion_eln_dev
     depends_on:
+      setup:
+        condition: service_completed_successfully
       app:
         condition: service_healthy
     environment:
@@ -75,13 +102,11 @@ services:
       - 'SHAKAPACKER_DEV_SERVER_HOST=webpacker'
       - 'SHAKAPACKER_DEV_SERVER_PORT=3035'
     env_file:
-      - ./.env
-      #- ./.env.development
-    volumes:
-      - *vhome
-      - *vapp
+      - .env
+    # - .env.development
+    volumes: *common-volumes
     ports: # expose webpacker dev server port to app container
-      - '3035:3035'
+      - ${HOST_PORT_WEBPACK:-3035}:3035
     expose:
       - '3035'
     working_dir: "/home/ubuntu/app"
