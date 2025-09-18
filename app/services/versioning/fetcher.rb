@@ -30,6 +30,8 @@ module Versioning
         Versioning::Fetchers::WellplateFetcher.call(wellplate: record)
       when ::DeviceDescription
         Versioning::Fetchers::DeviceDescriptionFetcher.call(device_description: record)
+      when ::CelllineSample
+        Versioning::Fetchers::CelllineSampleFetcher.call(cellline_sample: record)
       end
     end
   end
