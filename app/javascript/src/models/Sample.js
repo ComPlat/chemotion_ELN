@@ -2041,13 +2041,10 @@ export default class Sample extends Element {
     this.components.forEach((component, index) => {
       if (component && typeof component.calculateRelativeMolecularWeight === 'function') {
         try {
-          const result = component.calculateRelativeMolecularWeight(this);
-          console.log(`Component ${index} relative MW calculation result:`, result);
+          component.calculateRelativeMolecularWeight(this);
         } catch (error) {
           console.error(`Error calculating relative MW for component ${index}:`, error);
         }
-      } else {
-        console.warn(`Component ${index} is missing calculateRelativeMolecularWeight method or is null:`, component);
       }
     });
   }
