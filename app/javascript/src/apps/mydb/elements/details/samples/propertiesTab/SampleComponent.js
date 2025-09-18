@@ -391,13 +391,22 @@ class SampleComponent extends Component {
 
   /**
    * Generates tooltip text for molecular weight.
-   * @param {Object} sample - The sample object
+   * @param {Object} material - The material object
    * @returns {string} Tooltip text
    */
-  generateMolecularWeightTooltipText(sample) {
-    const molecularWeight = sample.decoupled
-      ? (sample.molecular_mass) : (sample.molecule && sample.molecule.molecular_weight);
-    return molecularWeight ? `molar mass: ${molecularWeight.toFixed(6)} g/mol` : 'molar mass: N/A';
+  generateMolecularWeightTooltipText(material) {
+    const molecularWeight = material.decoupled
+      ? (material.molecular_mass) : (material.molecule && material.molecule.molecular_weight);
+
+    let tooltipText = molecularWeight ? `molar mass: ${molecularWeight.toFixed(6)} g/mol` : 'molar mass: N/A';
+
+    // Add relative molecular weight if available
+    const relativeMolecularWeight = material.component_properties?.relative_molecular_weight;
+    if (relativeMolecularWeight && relativeMolecularWeight > 0) {
+      tooltipText += `\nrelative molecular weight: ${relativeMolecularWeight.toFixed(6)} g/mol`;
+    }
+
+    return tooltipText;
   }
 
   /**
