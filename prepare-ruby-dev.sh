@@ -10,6 +10,9 @@ echo '>>> checking asdf installation'
 # nodejs installation
 ./prepare-nodejs.sh
 
+# default config for rails app
+./prepare-config.sh
+
 # ruby gems installation
 ./prepare-rubygems.sh
 
