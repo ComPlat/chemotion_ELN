@@ -3,12 +3,12 @@
 # Table name: research_plans
 #
 #  id         :integer          not null, primary key
-#  name       :string           not null
+#  body       :jsonb
 #  created_by :integer          not null
 #  deleted_at :datetime
+#  name       :string           not null
 #  created_at :datetime         not null
 #  updated_at :datetime         not null
-#  body       :jsonb
 #
 
 class ResearchPlan < ApplicationRecord
