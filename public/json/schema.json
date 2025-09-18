@@ -489,7 +489,7 @@
               "type": "string"
             },
             "custom_info": {
-              "type": "objecy"
+              "type": "object"
             },
             "created_at": {
               "$ref": "#/definitions/datetime"
