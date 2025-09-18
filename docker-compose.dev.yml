@@ -52,7 +52,7 @@ services:
     expose: # expose port to app container
       - '5432'
     ports: # expose port to host machine in case we want to use external db gui tools
-      - '5432:5432'
+      - ${HOST_PORT_PG:-5432}:5432
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -82,7 +82,7 @@ services:
       - 'THOR_SILENCE_DEPRECATION=true'
       - RAKE_DB_MIGRATE=${RAKE_DB_MIGRATE:-never}
     ports: # expose default rails port to host machine
-      - "3000:3000"
+      - ${HOST_PORT_APP:-3000}:3000
     volumes: *common-volumes
     working_dir: "/home/ubuntu/app"
     command: "./run-ruby-dev.sh"
@@ -106,7 +106,7 @@ services:
     # - .env.development
     volumes: *common-volumes
     ports: # expose webpacker dev server port to app container
-      - '3035:3035'
+      - ${HOST_PORT_WEBPACK:-3035}:3035
     expose:
       - '3035'
     working_dir: "/home/ubuntu/app"

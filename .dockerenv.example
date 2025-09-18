@@ -9,7 +9,6 @@
 ## Latest available version: https://hub.docker.com/u/complat/dev/tags
 ## app image with preinstalled asdf plugins(ruby, nodejs), gems and nodejs packages
 
-#DOCKER_DEV_IMAGE=complat/dev:v1.10.3-153-gcb7331a3b
 #DOCKER_DEV_IMAGE=complat/dev:v2.0.1-9-g4aec23261
 #DOCKER_PG_IMAGE=postgres:16
 #DOCKER_PG_IMAGE=complat/dev:postgres16-rdkit
@@ -38,3 +37,9 @@ ELN_VERSION=2.0.1
 IMG_SPECTRA=${SERVICE_REPO}:spectra-${ELN_VERSION}
 IMG_CONVERTER=${SERVICE_REPO}:converter-${ELN_VERSION}
 IMG_KETCHERSVC=${SERVICE_REPO}:ketchersvc-${ELN_VERSION}
+
+
+## Map ports to host
+#HOST_PORT_DB=5432
+#HOST_PORT_APP=3000
+#HOST_PORT_WEBPACK=3035
