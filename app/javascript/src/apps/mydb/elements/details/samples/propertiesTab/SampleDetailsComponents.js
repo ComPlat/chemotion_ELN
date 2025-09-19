@@ -212,9 +212,15 @@ export default class SampleDetailsComponents extends React.Component {
 
     // Check if the component is the reference component
     if (referenceComponent && referenceComponent.id === sampleID) {
-      // update ratio of other non-reference components
+      // Update ratio of other non-reference components
       sample.updateMixtureComponentEquivalent();
     }
+
+    // Update sample total mass for the reaction scheme
+    sample.calculateTotalMixtureMass();
+
+    // Calculate relative molecular weight
+    currentComponent.calculateRelativeMolecularWeight(sample);
   }
 
   /**
@@ -240,6 +246,12 @@ export default class SampleDetailsComponents extends React.Component {
 
     // update components ratio
     sample.updateMixtureComponentEquivalent();
+
+    // update sample total mass for the reaction scheme
+    sample.calculateTotalMixtureMass();
+
+    // Calculate relative molecular weight
+    currentComponent.calculateRelativeMolecularWeight(sample);
   }
 
   /**
@@ -356,9 +368,14 @@ export default class SampleDetailsComponents extends React.Component {
           console.error(errorMessage);
         });
     } else {
-      sample.addMixtureComponent(splitSample);
-      sample.updateMixtureComponentEquivalent();
-      this.props.onChange(sample);
+      sample.addMixtureComponent(splitSample)
+        .then(() => {
+          sample.updateMixtureComponentEquivalent();
+          this.props.onChange(sample);
+        })
+        .catch((errorMessage) => {
+          console.error('Error adding component:', errorMessage);
+        });
     }
   }
 
