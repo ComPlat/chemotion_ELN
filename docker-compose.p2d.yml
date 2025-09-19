@@ -20,6 +20,10 @@ services:
       - CONFIG_ROLE=combine
       - SECRET_KEY_BASE=pleasechangeme
       - RUBYOPT=-W0
+    deploy:
+      resources:
+        limits:
+          cpus: 2
     depends_on:
       - db
     ports:
