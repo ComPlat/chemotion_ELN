@@ -68,7 +68,7 @@ export default class SampleForm extends React.Component {
     // Sync moleculeNameInputValue when molecule_name changes
     const currentMoleculeName = this.props.sample?.molecule_name;
     const prevMoleculeName = prevProps.sample?.molecule_name;
-    
+
     if (currentMoleculeName !== prevMoleculeName) {
       // Use the label for display if available, otherwise fall back to value
       const displayValue = currentMoleculeName?.label || currentMoleculeName?.value || '';
@@ -585,6 +585,20 @@ export default class SampleForm extends React.Component {
     );
   }
 
+  /**
+   * Renders the inventory label input section with the text input and next label button.
+   * @param {Object} sample - The sample object
+   * @returns {JSX.Element} The rendered inventory label section
+   */
+  inventoryLabelSection(sample) {
+    return (
+      <>
+        {this.textInput(sample, 'xref_inventory_label', 'Inventory label')}
+        {this.nextInventoryLabel(sample)}
+      </>
+    );
+  }
+
   inputWithUnit(sample, field, label) {
     const value = sample.xref && sample.xref[field.split('xref_')[1]] ? sample.xref[field.split('xref_')[1]].value : '';
     const unit = sample.xref && sample.xref[field.split('xref_')[1]] ? sample.xref[field.split('xref_')[1]].unit : '°C';
@@ -792,8 +806,36 @@ export default class SampleForm extends React.Component {
         disabled
         variant="light"
         id="numInput_amount_l"
-        showInfoTooltipRequiredVol={true}
+        showInfoTooltipRequiredVol
       />
+    );
+  }
+
+  /**
+   * Renders the total mixture mass using NumeralInputWithUnitsCompo, similar to Required volume.
+   * @returns {JSX.Element|null}
+   */
+  totalMixtureMass() {
+    const { sample } = this.props;
+    const massG = sample.total_mixture_mass_g;
+
+    if (massG === null) return null;
+
+    return (
+      <div className="me-3">
+        <NumeralInputWithUnitsCompo
+          value={massG}
+          unit="g"
+          label="Total mixture mass"
+          metricPrefix="m"
+          metricPrefixes={['m', 'n', 'u']}
+          precision={6}
+          title="Total mixture mass"
+          disabled
+          variant="light"
+          id="numInput_total_mixture_mass_g"
+        />
+      </div>
     );
   }
 
@@ -964,8 +1006,7 @@ export default class SampleForm extends React.Component {
                 <Col>{this.textInput(sample, 'short_label', 'Short label', true)}</Col>
                 <Col>{this.textInput(sample, 'external_label', 'External label')}</Col>
                 <Col className="d-flex align-items-end">
-                  {this.textInput(sample, 'xref_inventory_label', 'Inventory label')}
-                  {this.nextInventoryLabel(sample)}
+                  {this.inventoryLabelSection(sample)}
                 </Col>
                 <Col>{this.textInput(sample, 'location', 'Location')}</Col>
                 <Col xs={2}>{this.drySolventCheckbox(sample)}</Col>
@@ -1036,17 +1077,30 @@ export default class SampleForm extends React.Component {
               </Row>
             </>
           ) : (
-            <Row>
-              <Col md={4}>
-                {this.textInput(sample, 'name', 'Name')}
-              </Col>
-              <Col md={4}>
-                {this.textInput(sample, 'external_label', 'External label')}
-              </Col>
-              <Col md={4}>
-                {this.textInput(sample, 'xref_inventory_label', 'Inventory label')}
-              </Col>
-            </Row>
+            <>
+              <Row className="align-items-end mb-4">
+                <Col md={4}>
+                  {this.textInput(sample, 'name', 'Name')}
+                </Col>
+                <Col md={4}>
+                  {this.textInput(sample, 'external_label', 'External label')}
+                </Col>
+                <Col md={4} className="d-flex align-items-end">
+                  {this.inventoryLabelSection(sample)}
+                </Col>
+              </Row>
+              <Row className="align-items-end mb-4">
+                <Col md={4}>
+                  {this.textInput(sample, 'short_label', 'Short label', true)}
+                </Col>
+                <Col md={4}>
+                  {this.textInput(sample, 'location', 'Location')}
+                </Col>
+                <Col md={4}>
+                  {this.drySolventCheckbox(sample)}
+                </Col>
+              </Row>
+            </>
           )
         }
 
@@ -1059,6 +1113,7 @@ export default class SampleForm extends React.Component {
                 <div className="me-3">
                   {this.totalRequiredAmount()}
                 </div>
+                {this.totalMixtureMass()}
                 {this.totalAmount(sample)}
               </Col>
             </Row>

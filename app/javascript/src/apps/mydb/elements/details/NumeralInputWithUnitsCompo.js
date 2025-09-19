@@ -6,6 +6,7 @@ import {
 } from 'react-bootstrap';
 import { metPreConv, metPrefSymbols } from 'src/utilities/metricPrefix';
 import { formatDisplayValue } from 'src/utilities/MathUtils';
+import { copyToClipboard } from 'src/utilities/clipboard';
 
 export default class NumeralInputWithUnitsCompo extends Component {
   constructor(props) {
@@ -19,9 +20,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
       currentPrecision: precision,
       valueString: 0,
       showString: false,
-      copyButtonText: '📋',
     };
-    this.handleCopyClick = this.handleCopyClick.bind(this);
   }
 
   componentDidMount() {
@@ -145,42 +144,12 @@ export default class NumeralInputWithUnitsCompo extends Component {
     }
   }
 
-  /**
-   * Handles copying the value to clipboard and shows temporary feedback
-   */
-  handleCopyClick = async (value) => {
-    if (value && value !== 'n.d.') {
-      try {
-        await navigator.clipboard.writeText(value.toString());
-        this.setState({ copyButtonText: '✓' }, () => {
-          this.forceUpdate(); // Force re-render to ensure UI updates
-          setTimeout(() => {
-            this.setState({ copyButtonText: '📋' }, () => {
-              this.forceUpdate(); // Force re-render to ensure UI updates
-            });
-          }, 2000);
-        });
-      } catch (err) {
-        this.setState({ copyButtonText: '❌' }, () => {
-          this.forceUpdate(); // Force re-render to ensure UI updates
-          setTimeout(() => {
-            this.setState({ copyButtonText: '📋' }, () => {
-              this.forceUpdate(); // Force re-render to ensure UI updates
-            });
-          }, 2000);
-        });
-      }
-    }
-  };
-
   render() {
     const {
       size, variant, disabled, label, unit, name, showInfoTooltipTotalVol, showInfoTooltipRequiredVol, className
     } = this.props;
     const {
-      showString, value, metricPrefix,
-      currentPrecision, valueString, block,
-      copyButtonText
+      showString, value, metricPrefix,currentPrecision, valueString, block
     } = this.state;
     const mp = metPrefSymbols[metricPrefix];
     const nanOrInfinity = Number.isNaN(value) || !Number.isFinite(value);
@@ -284,16 +253,16 @@ export default class NumeralInputWithUnitsCompo extends Component {
             />
             {prefixSwitch}
             {showInfoTooltipRequiredVol && (
-              <Button
-                variant="outline-secondary"
-                size={size}
-                onClick={() => this.handleCopyClick(displayValue)}
-                className="ms-1"
-                title={copyButtonText === '📋' ? 'Copy to clipboard' : copyButtonText === '✓' ? 'Copied!' : 'Failed to copy'}
-                style={{ minWidth: '32px' }}
-              >
-                {copyButtonText}
-              </Button>
+              <OverlayTrigger placement="bottom" overlay={<Tooltip id="assign_button">copy to clipboard</Tooltip>}>
+                <Button
+                  variant="light"
+                  size={size}
+                  onClick={() => copyToClipboard(displayValue)}
+                  className="ms-1"
+                >
+                  <i className="fa fa-clipboard" />
+                </Button>
+              </OverlayTrigger>
             )}
           </InputGroup>
         </div>
