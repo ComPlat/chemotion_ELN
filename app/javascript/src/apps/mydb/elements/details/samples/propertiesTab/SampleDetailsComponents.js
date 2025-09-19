@@ -356,9 +356,14 @@ export default class SampleDetailsComponents extends React.Component {
           console.error(errorMessage);
         });
     } else {
-      sample.addMixtureComponent(splitSample);
-      sample.updateMixtureComponentEquivalent();
-      this.props.onChange(sample);
+      sample.addMixtureComponent(splitSample)
+      .then(() => {
+        sample.updateMixtureComponentEquivalent();
+        this.props.onChange(sample);
+      })
+      .catch((errorMessage) => {
+        console.error('Error adding component:', errorMessage);
+      });
     }
   }
 

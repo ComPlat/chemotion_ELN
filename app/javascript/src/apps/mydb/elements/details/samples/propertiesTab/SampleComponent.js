@@ -397,7 +397,7 @@ class SampleComponent extends Component {
   generateMolecularWeightTooltipText(sample) {
     const molecularWeight = sample.decoupled
       ? (sample.molecular_mass) : (sample.molecule && sample.molecule.molecular_weight);
-    return `molar mass: ${molecularWeight} g/mol`;
+    return molecularWeight ? `molar mass: ${molecularWeight.toFixed(6)} g/mol` : 'molar mass: N/A';
   }
 
   /**
@@ -436,7 +436,7 @@ class SampleComponent extends Component {
           metricPrefixes={metricPrefixes}
           precision={3}
           disabled={!permitOn(sample)}
-          onChange={(e) => this.handleAmountChange(e, material.amount_l)}
+          onChange={(e) => this.handleAmountChange(e, material.amount_l, '', false)}
           onMetricsChange={this.handleMetricsChange}
           variant={material.amount_unit === 'l' ? 'success' : 'light'}
         />
@@ -473,7 +473,7 @@ class SampleComponent extends Component {
             metricPrefixes={metricPrefixes}
             precision={4}
             disabled={!permitOn(sample) || lockAmountColumnSolids}
-            onChange={(e) => this.handleAmountChange(e, material.amount_g)}
+            onChange={(e) => this.handleAmountChange(e, material.amount_g, '', lockAmountColumnSolids)}
             onMetricsChange={this.handleMetricsChange}
             variant={material.error_mass ? 'danger' : massBsStyle}
             name="molecular-weight"
@@ -497,18 +497,28 @@ class SampleComponent extends Component {
       <td
         style={enableComponentPurity === false ? { verticalAlign: 'bottom' } : null}
       >
-        <NumeralInputWithUnitsCompo
-          key={material.id}
-          value={material.amount_mol}
-          unit="mol"
-          metricPrefix={metricMol}
-          metricPrefixes={metricPrefixesMol}
-          precision={4}
-          disabled={!permitOn(sample)}
-          onChange={(e) => this.handleAmountChange(e, material.amount_mol)}
-          onMetricsChange={this.handleMetricsChange}
-          variant={material.amount_unit === 'mol' ? 'success' : 'light'}
-        />
+        <OverlayTrigger
+          delay="100"
+          placement="top"
+          overlay={
+            <Tooltip id="molecular-weight-info">{this.generateMolecularWeightTooltipText(material)}</Tooltip>
+        }
+        >
+          <div>
+            <NumeralInputWithUnitsCompo
+              key={material.id}
+              value={material.amount_mol}
+              unit="mol"
+              metricPrefix={metricMol}
+              metricPrefixes={metricPrefixesMol}
+              precision={4}
+              disabled={!permitOn(sample)}
+              onChange={(e) => this.handleAmountChange(e, material.amount_mol, '', false)}
+              onMetricsChange={this.handleMetricsChange}
+              variant={material.amount_unit === 'mol' ? 'success' : 'light'}
+            />
+          </div>
+        </OverlayTrigger>
       </td>
     );
   }
