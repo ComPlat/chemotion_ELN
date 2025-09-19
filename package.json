@@ -137,7 +137,7 @@
     "webpack-dev-server": "5"
   },
   "resolutions": {
-    "@complat/react-spectra-editor": "git+https://github.com/ComPlat/react-spectra-editor.git#feat/247-cv-current-density-axis-toggle",
+    "@complat/react-spectra-editor": "git+https://github.com/ComPlat/react-spectra-editor.git#feat/247-cv-current-density-axis-toggle"
   },
   "scripts": {
     "postinstall": "./package_postinstall.sh",
