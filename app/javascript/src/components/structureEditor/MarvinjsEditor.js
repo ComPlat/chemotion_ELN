@@ -3,12 +3,12 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import StructureEditor from 'src/models/StructureEditor';
 import loadScripts from 'src/components/structureEditor/loadScripts';
-import LoadingEditorModal from './LoadingEditorModal';
+import LoadingEditorModal from 'src/components/structureEditor/LoadingEditorModal';
 
 class MarvinjsEditor extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { loading: true };
+    this.state = { loading: true, message: '', failed: false };
     this.attachEditor = this.attachEditor.bind(this);
     this.loadError = this.loadError.bind(this);
     this.attachError = this.attachError.bind(this);
@@ -38,7 +38,7 @@ class MarvinjsEditor extends React.Component {
   }
 
   attachError(e) {
-    this.setState({ loading: false });
+    this.setState({ loading: false, message: 'Marvin JS is not available.', failed: true });
     alert(`Marvin JS is failed to load or attach! Error: ${e}`);
   }
 
@@ -51,10 +51,13 @@ class MarvinjsEditor extends React.Component {
 
   render() {
     const { iH, editor } = this.props;
+    const { loading, message, failed } = this.state;
     return (
-      <div>
-        <iframe title="Marvin JS" id="mvs" src={editor.extSrc} className="sketcher-frame" height={iH} width="100%" />
-        <LoadingEditorModal loading={this.state.loading} />
+      <div style={{ height: iH }}>
+        {!failed && (
+          <iframe title='Marvin JS' id='mvs' src={editor.extSrc} className='sketcher-frame' height={iH} width='100%' />
+        )}
+        <LoadingEditorModal loading={loading} message={message} />
       </div>
     );
   }

@@ -1,28 +1,26 @@
-x-common-volumes:
-  - &vhome homedir:/home/ubuntu
-  - &vapp ..:/home/ubuntu/app
+x-common-volumes: &common-volumes
+  - homedir:/home/ubuntu
+  - ..:/home/ubuntu/app
+
+
+x-common-build: &common-build
+  context: '.'
+  dockerfile: 'Dockerfile.chemotion-dev'
+  target: chemotion_dev_base
+  args:
+    uid: skip
+    gid: skip
 
 
 services:
+  setup:
+    build: *common-build
+    volumes: *common-volumes
+
+
   app:
-    build:
-      context: '.'
-      dockerfile: 'Dockerfile.chemotion-dev'
-      args:
-        source_image: ${DOCKER_DEV_IMAGE:-ubuntu:noble}  # Build ARG for base image
-        # FULL_BUILD: ${FULL_BUILD:-false}
-    image: ""
-    volumes:
-      - *vhome
-      - *vapp
+    build: *common-build
+    volumes: *common-volumes
+
   webpacker:
-    build:
-      context: '.'
-      dockerfile: 'Dockerfile.chemotion-dev'
-      args:
-        source_image: ${DOCKER_DEV_IMAGE:-ubuntu:noble}  # Build ARG for base image
-        # FULL_BUILD: ${FULL_BUILD:-false}
-    image: ""
-    volumes:
-      - *vhome
-      - *vapp
+    volumes: *common-volumes

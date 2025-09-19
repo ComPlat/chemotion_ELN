@@ -1,4 +1,4 @@
-FROM ptrxyz/chemotion:eln-2.0.1
+FROM ptrxyz/internal:eln-2.1.0-pre
 ARG BRANCH=main
 ARG REMOTE=https://github.com/ComPlat/chemotion_ELN.git
 
@@ -22,6 +22,7 @@ RUN rm ${ASDF_DIR}/asdf
 ENV PATH="${ASDF_DIR}/bin:${PATH}"
 ENV ASDF_NODEJS_VERSION=''
 ENV ASDF_RUBY_VERSION=''
+ENV NODEJS_FORCE_INSTALL=true
 RUN ./prepare-asdf.sh
 RUN ./prepare-nodejs.sh
 RUN ./prepare-nodejspkg.sh

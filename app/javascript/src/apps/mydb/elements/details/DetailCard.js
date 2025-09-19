@@ -3,6 +3,10 @@ import PropTypes from 'prop-types';
 import cs from 'classnames';
 import { Card } from 'react-bootstrap';
 
+// This component is used to display a single tab in the details view.
+// It displays the header and body of the tab and allows the content to
+// be scrollable while keeping the tab header fixed.
+
 export default function DetailCard({
   children, isPendingToSave, header, footer
 }) {

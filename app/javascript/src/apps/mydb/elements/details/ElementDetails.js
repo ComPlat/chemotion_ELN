@@ -20,6 +20,9 @@ import ScreenDetails from 'src/apps/mydb/elements/details/screens/ScreenDetails'
 import UserStore from 'src/stores/alt/stores/UserStore';
 import WellplateDetails from 'src/apps/mydb/elements/details/wellplates/WellplateDetails';
 import CellLineDetails from 'src/apps/mydb/elements/details/cellLines/CellLineDetails';
+import VesselDetails from 'src/apps/mydb/elements/details/vessels/VesselDetails';
+import VesselTemplateDetails from 'src/apps/mydb/elements/details/vessels/VesselTemplateDetails';
+import VesselTemplateCreate from 'src/apps/mydb/elements/details/vessels/VesselTemplateCreate';
 
 const tabInfoHash = {
   metadata: {
@@ -163,9 +166,22 @@ export default class ElementDetails extends Component {
         return <LiteratureDetails literatureMap={el} />;
       case 'cell_line':
         return <CellLineDetails cellLineItem={el} />;
+      case 'vessel':
+        return <VesselDetails vesselItem={el} />;
+      case 'vessel_template':
+        if (el.is_new) {
+          return <VesselTemplateCreate vesselItem={el} />;
+        }
+        if (el.group) {
+          return <VesselTemplateDetails vessels={el.group} />;
+        }
+        if (Array.isArray(el)) {
+          return <VesselTemplateDetails vessels={el} />;
+        }
+        return null;
       default:
         return (
-          <div style={{ textAlign: 'center' }}>
+          <div className="text-center">
             <br />
             <h1>{el.id.substring(el.id.indexOf('error:') + 6)}</h1>
             <h3><i className="fa fa-eye-slash fa-5x" /></h3>
@@ -182,8 +198,17 @@ export default class ElementDetails extends Component {
 
   tabTitle(el) {
 
+    if (Array.isArray(el) && el.length > 0 && el[0].type === 'vessel_template') {
+      return {
+        id: el[0].vesselTemplateId,
+        type: 'vessel_template',
+        group: el,
+        title: el[0]?.vesselName,
+      };
+    }
+
     const tab = tabInfoHash[el.type] ?? {};
-    const title = tab.title ?? el.title();
+    const title = el.type === 'vessel_template' ? el.title : tab.title ?? el.title();
 
     const spanClassName = el.isPendingToSave ? 'unsaved' : '';
     const iconClassName = 'me-1 ' + (el.element_klass ? el.element_klass.icon_name : tab.iconEl ?? 'icon-' + el.type);
@@ -199,11 +224,32 @@ export default class ElementDetails extends Component {
   render() {
     const { selecteds, activeKey } = this.state;
 
+    const keyForTemplateGroup = (group) => `vessel_template-${group.map(v => v.id).sort().join('_')}`;
+
     const selectedElements = selecteds
       .filter((el) => !!el)
+      .map((el, i) => {
+        if (Array.isArray(el) && el.length > 0) {
+          return {
+            id: el[0].vesselTemplateId,
+            type: 'vessel_template',
+            title: el[0]?.vesselName,
+            group: el,
+          };
+        }
+        if (Array.isArray(el) && el.length === 0) {
+          return null;
+        }
+        return el;
+      })
+      .filter(Boolean)
       .map((el, i) => (
         <Tab
-          key={`${el.type}-${el.id}`}
+          key={
+            Array.isArray(el) && el[0]?.type === 'vessel_template'
+              ? keyForTemplateGroup(el)
+              : `${el.type}-${el.id}`
+          }
           eventKey={i}
           unmountOnExit
           title={this.tabTitle(el)}
