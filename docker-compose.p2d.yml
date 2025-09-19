@@ -1,6 +1,6 @@
 services:
   db:
-    image: ptrxyz/chemotion:db-2.0.1
+    image: ptrxyz/internal:db-2.1.0-pre
     restart: unless-stopped
     hostname: db
     environment:
