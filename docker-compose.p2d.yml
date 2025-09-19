@@ -23,7 +23,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: 2
+          cpus: "2.0"
     depends_on:
       - db
     ports:
@@ -44,8 +44,8 @@ services:
       - ../files/pullin:/shared
     healthcheck:
       disable: true
-    tty: true         # Equivalent to `docker run -t`
-    stdin_open: true  # Equivalent to `docker run -i`
+    tty: true # Equivalent to `docker run -t`
+    stdin_open: true # Equivalent to `docker run -i`
     command: ["bash"]
 
 networks:
