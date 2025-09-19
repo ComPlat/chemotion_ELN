@@ -1387,7 +1387,7 @@ export default class Sample extends Element {
    * @returns {number|null} The reference molecular weight or null if not set
    */
   get reference_molecular_weight() {
-    if (!this.reference_component) { return null; }
+    if (!this.reference_component || !this.reference_component.molecule) { return null; }
 
     return this.reference_component.molecule.molecular_weight;
   }
@@ -1826,7 +1826,7 @@ export default class Sample extends Element {
     // Calculate the weighted molecular weight
     const totalMolecularWeight = this.components.reduce((acc, component) => {
       const moleFraction = (component.amount_mol || 0) / totalAmount;
-      return acc + (component.molecule.molecular_weight * moleFraction);
+      return acc + ((component.molecule?.molecular_weight || 0) * moleFraction);
     }, 0);
 
     this.sample_details.total_molecular_weight = totalMolecularWeight;
