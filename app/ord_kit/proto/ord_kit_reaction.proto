@@ -203,6 +203,10 @@ message ReactionProcessAction {
   optional PoolingFraction consumed_fraction = 19;
   int32 automation_ordinal = 20;
 
+  Ontology automation_mode = 21;
+  optional Ontology device = 22;
+  optional string method = 23;
+
   message ActionAdd {
     ReactionRole.ReactionRoleType reaction_role = 1;
     ReactionInput input = 2;
@@ -567,9 +571,9 @@ message CompoundIdentifier {
 }
 
 /**
- * The VesVesselTemplatesel defines the primary container within which the reaction was
- * performed, including the type of vessel, its primary material, any
- * preparation steps or vessel attachments, and its volume.
+ * The VesselTemplate defines the primary container within which the
+ * reaction was performed, including the type of vessel, its primary material,
+ * any preparation steps or vessel attachments, and its volume.
  */
 message VesselTemplate {
   enum VesselType {
