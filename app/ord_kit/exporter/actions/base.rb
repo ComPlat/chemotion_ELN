@@ -28,11 +28,17 @@ module OrdKit
               automation_status: automation_status,
               consumed_fraction: consumed_fraction,
               automation_ordinal: @action.automation_ordinal,
+              automation_mode: ontology_ord(workup['automation_mode']),
+              device: ontology_ord(workup['device']),
+              method: workup['method'],
             }.merge(action_type_attributes),
           )
         end
 
         private
+        def ontology_ord(ontology_id)
+          OrdKit::Exporter::Models::OntologyExporter.new(ontology_id).to_ord
+        end
 
         # ORD attributes in order of ORD definition by convention (they are numbered).
         def description
