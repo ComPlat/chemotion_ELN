@@ -953,7 +953,7 @@ export default class Sample extends Element {
    *
    * @param {number} totalMassGrams - The total mass of the mixture in grams
    * @param {number} purity - The purity factor (default: 1.0)
-   * @param {null} molecularWeight - The molecular weight to use for molarity calculations
+   * @param {number|null} molecularWeight - The molecular weight to use for molarity calculations
    * @returns {number} The calculated volume in liters, or 0 if calculation is not possible
    */
   calculateMixtureVolume(amount_g, purity = 1.0, molecularWeight = null) {

@@ -61,7 +61,7 @@ const getComponentsTitle = (components) => components.map((component) => {
   const name = component.molecule?.iupac_name || 'Unknown';
 
   const mw = component.molecule?.molecular_weight;
-  const mwText = mw ? ` (${mw.toFixed(6)} g/mol)` : '';
+  const mwText = (typeof mw === 'number' && Number.isFinite(mw)) ? ` (${mw.toFixed(6)} g/mol)` : '';
 
   return (
     <div key={component.molecule?.id || component.id || name}>
