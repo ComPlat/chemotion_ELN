@@ -134,7 +134,7 @@ module Chemotion
         end
       end
 
-      resource :cellline_sample do
+      resource :cellline_samples do
         desc 'Return versions of the given cell line sample'
 
         params do

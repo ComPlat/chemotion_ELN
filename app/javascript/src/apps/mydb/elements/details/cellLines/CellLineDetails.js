@@ -227,7 +227,7 @@ class CellLineDetails extends React.Component {
             </Tab>
             <Tab eventKey="tab4" title="History" key="tab4" disabled={cellLineItem.is_new}>
               <VersionsTable
-                type="cellline_sample"
+                type="cellline_samples"
                 id={parseInt(cellLineItem.id, 10)}
                 element={cellLineItem}
                 parent={cellLineDetailsStore}

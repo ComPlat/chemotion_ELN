@@ -90,7 +90,12 @@ export default class VersionsTable extends Component {
       }
       case 'cellline_sample': {
         CellLinesFetcher.fetchById(id).then((result) => {
-          parent.convertCellLineToModel(result);
+          parent.changeAmount(result.id, result.amount);
+          parent.changeUnit(result.id, result.unit);
+          parent.changePassage(result.id, result.passage);
+          parent.changeContamination(result.id, result.contamination);
+          parent.changeItemName(result.id, result.name);
+          parent.changeItemDescription(result.id, result.description);
         });
         break;
       }
