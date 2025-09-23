@@ -167,6 +167,60 @@
   }
 
   // bootstrap sm size modification
+
+  &.form-select-xxsm,
+  &.form-select-xsm {
+    .chemotion-select {
+      &__indicator.chemotion-select__dropdown-indicator {
+        background-size: 8px 6px;
+        width: 0.5rem;
+        height: 0.5rem;
+      }
+    }
+  }
+
+  &.form-select-xxsm .chemotion-select {
+    &__control,
+    &__menu {
+      @include condensed-text-width;
+      font-size: 12px;
+      line-height: 1;
+      border-radius: 2.5px;
+    }
+    &__control,
+    &__option {
+      padding: 3px 2px 3px 4px;
+    }
+    &[multiple],
+    &[size]:not([size="1"]) {
+      padding-right: 4px;
+    }
+    &__menu {
+      padding: 3px 0;
+    }
+  }
+
+  &.form-select-xsm .chemotion-select {
+    &__control,
+    &__menu {
+      @include condensed-text-width;
+      font-size: 12px;
+      line-height: 1.5;
+      border-radius: 3px;
+    }
+    &__control,
+    &__option {
+      padding: 1px 3px 1px 5px;
+    }
+    &[multiple],
+    &[size]:not([size="1"]) {
+      padding-right: 5px;
+    }
+    &__menu {
+      padding: 1px 0;
+    }
+  }
+
   &.form-select-sm .chemotion-select {
     &__control,
     &__menu {
@@ -174,14 +228,13 @@
     }
     &__control,
     &__option {
-      padding: $form-select-padding-y-sm $form-select-padding-x-sm;
+      padding: $form-select-padding-y-sm 0.3rem $form-select-padding-y-sm
+        $form-select-padding-x-sm;
     }
-    &[multiple],
-    &[size]:not([size="1"]) {
-      padding-right: $form-select-padding-x-sm;
-    }
-    &__menu {
-      padding: $form-select-padding-y-sm 0;
+    &__indicator.chemotion-select__dropdown-indicator {
+      background-size: 12px 9px;
+      width: 0.75rem;
+      height: 0.75rem;
     }
   }
 
