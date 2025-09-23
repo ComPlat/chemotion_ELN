@@ -352,9 +352,11 @@ module ReportHelpers
     SQL
   end
 
-  def build_sql_sample_components(columns, _c_id, ids, _checked_all)
-    sample_ids = [ids].flatten.join(',')
-    return if sample_ids.empty? || columns.blank? || columns[0].blank? || columns[1].blank?
+  def build_sql_sample_components(columns, c_id, ids, checked_all)
+    return if columns.blank? || columns[0].blank? || columns[1].blank?
+
+    u_ids = [user_ids].flatten.join(',')
+    return if u_ids.empty?
 
     # Use sample columns directly
     sample_sql = build_sample_columns(columns[0])
@@ -365,12 +367,34 @@ module ReportHelpers
     # Check if we need molecule properties
     needs_molecule_join = component_columns.include?('m.')
 
+    if checked_all
+      return unless c_id
+
+      # For "All pages" - get all samples from the collection except excluded ones
+      excluded_ids = [ids].flatten.join(',')
+      collection_condition = "INNER JOIN collections_samples cs ON s.id = cs.sample_id AND cs.deleted_at IS NULL AND cs.collection_id = #{c_id}"
+      where_condition = excluded_ids.empty? ? '' : "AND s.id NOT IN (#{excluded_ids})"
+      order_clause = 's.id ASC'
+    else
+      # For specific sample selection
+      sample_ids = [ids].flatten.join(',')
+      return if sample_ids.empty?
+
+      collection_condition = ''
+      where_condition = "AND s.id IN (#{sample_ids})"
+      order_clause = "position(','||s.id::text||',' in '(,#{sample_ids},)')"
+    end
+
     <<~SQL.squish
       SELECT
         #{sample_sql},
         cl.id as "sample uuid",
         COALESCE(components.components, '[]') AS components
       FROM samples s
+      #{collection_condition}
+      LEFT JOIN molecules m on s.molecule_id = m.id
+      LEFT JOIN molecule_names mn on s.molecule_name_id = mn.id
+      LEFT JOIN residues res on res.sample_id = s.id
       LEFT JOIN code_logs cl on cl.source = 'sample' and cl.source_id = s.id
       LEFT JOIN LATERAL (
         SELECT json_agg(row_to_json(component_row)) AS components
@@ -383,8 +407,8 @@ module ReportHelpers
           ORDER BY comp.position
         ) AS component_row
       ) AS components ON TRUE
-      WHERE s.id IN (#{sample_ids})
-      ORDER BY s.id
+      WHERE s.deleted_at IS NULL #{where_condition}
+      ORDER BY #{order_clause}
     SQL
   end
 
@@ -763,7 +787,7 @@ module ReportHelpers
     when :sample_chemicals
       columns.slice(:chemicals, :sample, :molecule)
     when :sample_components
-      columns.slice(:components).merge(sample_id: params[:columns][:sample])
+      columns.slice(:components, :sample, :molecule)
     else
       {}
     end
