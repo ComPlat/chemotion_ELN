@@ -584,8 +584,8 @@ export const validateChemicalData = async (chemicalData, fieldTypes = {}) => {
 
   // Patch: If dataToValidate is undefined/null (e.g., empty array), return valid
   if (!dataToValidate) {
-    console.error('Invalid date format');
-    return { valid: false, errors: ['Invalid date format'] };
+    console.error('Empty or invalid data structure');
+    return { valid: false, errors: ['Empty or invalid data structure'] };
   }
 
   // Use defaultChemicalSchemaValidation if no specific field types are provided
