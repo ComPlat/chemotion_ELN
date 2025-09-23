@@ -1,7 +1,6 @@
 .material-group {
   @include condensed-text-width;
   @extend .pseudo-table;
-  margin-bottom: 2px;
   .pseudo-table__row-header {
     @extend .rounded;
   }

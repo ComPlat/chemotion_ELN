@@ -2,8 +2,6 @@
   @extend .d-flex;
   @extend .flex-column;
   @extend .w-100;
-  gap: 1px;
-  margin-bottom: 2px;
   &__row {
     @extend .d-flex;
     @extend .align-items-center;
@@ -11,8 +9,10 @@
     @extend .w-100;
     @extend .gap-2;
     @extend .px-2;
+    margin-bottom: -1px; // To compensate the border of the next row
     &-header {
       @extend .fw-bold;
+      @extend .border;
     }
   }
   &__cell {

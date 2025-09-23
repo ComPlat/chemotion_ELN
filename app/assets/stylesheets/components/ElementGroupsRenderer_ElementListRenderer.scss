@@ -2,14 +2,6 @@
   @extend .flex-grow-1;
 }
 
-.element-list-renderer {
-  @extend .gap-1;
-}
-
-.element-groups-renderer {
-  gap: 2px;
-}
-
 .element-list-renderer,
 .element-groups-renderer {
   @extend .d-flex;
@@ -42,8 +34,6 @@
   .element-group-items {
     @extend .d-flex;
     @extend .flex-column;
-    gap: 1px;
-    padding-top: 1px;
   }
   .element-group-header-content {
     @extend .accordion-button;
@@ -74,6 +64,7 @@
   .element-list-item,
   .element-group-header {
     @extend .d-flex;
+    margin-bottom: -1px; // To compensate the border of the next item;
     &-drag-handle {
       @extend .d-flex;
       @extend .align-content-center;

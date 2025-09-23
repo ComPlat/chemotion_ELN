@@ -165,7 +165,7 @@ h6 {
 .accordion-button {
   @extend .justify-content-between;
   @extend .surface-lighten4;
-  @extend .border-0;
+  @extend .border;
   &::after {
     content: "\f078";
     font-family: "FontAwesome";
@@ -204,4 +204,5 @@ h6 {
 }
 .accordion-collapse {
   @extend .border;
+  @extend .border-top-0;
 }

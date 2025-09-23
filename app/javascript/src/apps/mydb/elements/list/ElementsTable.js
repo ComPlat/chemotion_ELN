@@ -734,7 +734,7 @@ export default class ElementsTable extends React.Component {
     }
 
     return (
-      <div ref={this.elementRef} className="flex-grow-1 h-0 overflow-y-auto surface-tab__content">
+      <div ref={this.elementRef} className="flex-grow-1 h-0 overflow-y-auto pt-0 surface-tab__content">
         {elementsTableEntries}
         <div className="mt-2 d-flex justify-content-between">
           {this.renderPagination()}
