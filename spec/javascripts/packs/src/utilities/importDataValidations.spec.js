@@ -133,7 +133,6 @@ describe('Import Data Validations', () => {
       expect(result1.message).toContain('missing the expected unit');
 
       const result2 = validateValueWithUnit('1.5 ppm', 'molarity');
-      console.log('result:', result2);
       expect(result2.valid).toBe(false);
       expect(result2.message).toContain('missing the expected unit');
 
