@@ -50,22 +50,21 @@ export default function ReactionConditions({
       <div className="pseudo-table__row pseudo-table__row-header">
         <div className="pseudo-table__cell pseudo-table__cell-title">
           <div className="material-group__header-title">
-            Conditions
-            <div className="material-group__add-actions">
-              <Select
-                disabled={isDisabled}
-                name="default_conditions"
-                multi={false}
-                options={conditionsOptions}
-                onChange={({ value }) => addCondition(value)}
-                size="sm"
-                placeholder="Add"
-              />
-              <CreateButton
-                onClick={() => addCondition()}
-                isDisabled={isDisabled}
-              />
-            </div>
+            <CreateButton
+              onClick={() => addCondition()}
+              isDisabled={isDisabled}
+              size="xsm"
+            />
+            <span>Conditions</span>
+            <Select
+              disabled={isDisabled}
+              name="default_conditions"
+              multi={false}
+              options={conditionsOptions}
+              onChange={({ value }) => addCondition(value)}
+              size="xsm"
+              placeholder="Add"
+            />
           </div>
         </div>
       </div>

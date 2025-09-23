@@ -19,8 +19,9 @@
     @extend .py-1;
     @extend .d-flex;
     @extend .gap-1;
-    &-title {
+    &.pseudo-table__cell-title {
       @extend .flex-grow-1;
+      @extend .py-2;
       // Prevent overflow issues
       min-width: 0;
       * {

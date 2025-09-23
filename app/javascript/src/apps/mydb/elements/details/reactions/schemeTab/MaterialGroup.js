@@ -188,7 +188,7 @@ function GeneralMaterialGroup({
         options={reagentList}
         placeholder="Add"
         onChange={createReagentForReaction}
-        size="sm"
+        size="xsm"
       />
     );
   }
@@ -221,7 +221,7 @@ function GeneralMaterialGroup({
         variant="primary"
         tooltipOn={conversionText}
         tooltipOff={yieldText}
-        buttonClass="px-2 py-1"
+        size="xsm"
       />
     );
   };
@@ -240,6 +240,7 @@ function GeneralMaterialGroup({
     <CreateButton
       disabled={!permitOn(reaction)}
       onClick={() => ElementActions.addSampleToMaterialGroup({ reaction, materialGroup })}
+      size="xsm"
     />
   );
 
@@ -268,11 +269,9 @@ function GeneralMaterialGroup({
           <div className="pseudo-table__row pseudo-table__row-header">
             <div className="pseudo-table__cell pseudo-table__cell-title">
               <div className="material-group__header-title">
+                {addSampleButton}
                 {groupHeaders.group}
-                <div className="material-group__add-actions">
-                  {isReactants && reagentDd}
-                  {addSampleButton}
-                </div>
+                {isReactants && reagentDd}
               </div>
             </div>
             <div className="reaction-material__ref-header">{refTHead}</div>
@@ -315,6 +314,7 @@ function SolventsMaterialGroup({
     <CreateButton
       disabled={!permitOn(reaction)}
       onClick={() => ElementActions.addSampleToMaterialGroup({ reaction, materialGroup })}
+      size="xsm"
     />
   );
 
@@ -367,18 +367,16 @@ function SolventsMaterialGroup({
           <div className="pseudo-table__row pseudo-table__row-header">
             <div className="pseudo-table__cell pseudo-table__cell-title">
               <div className="material-group__header-title">
+                {addSampleButton}
                 {groupHeaders.group}
-                <div className="material-group__add-actions">
-                  <Select
-                    value={null}
-                    isDisabled={!permitOn(reaction)}
-                    options={solventOptions}
-                    placeholder="Add"
-                    onChange={createDefaultSolventsForReaction}
-                    size="sm"
-                  />
-                  {addSampleButton}
-                </div>
+                <Select
+                  value={null}
+                  isDisabled={!permitOn(reaction)}
+                  options={solventOptions}
+                  placeholder="Add"
+                  onChange={createDefaultSolventsForReaction}
+                  size="xsm"
+                />
               </div>
             </div>
             <div title="Dry Solvent" className="reaction-material__dry-solvent-header">DS</div>

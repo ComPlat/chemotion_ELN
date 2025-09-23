@@ -16,24 +16,11 @@
       @extend .bg-transparent;
     }
   }
-  &__add-actions {
-    @extend .d-flex;
-    @extend .align-items-center;
-    @extend .gap-1;
-  }
   &__header-title {
     @extend .d-flex;
     @extend .align-items-center;
-    @extend .ps-4;
-    @extend .justify-content-between;
     @extend .flex-grow-1;
-    max-width: 12.5rem;
-  }
-}
-
-@container material-group (width < 54.5rem) {
-  .material-group__header-title {
-    flex-direction: column;
-    align-items: flex-start !important;
+    @extend .gap-2;
+    @extend .flex-wrap;
   }
 }
