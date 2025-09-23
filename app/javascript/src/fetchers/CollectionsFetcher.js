@@ -7,9 +7,6 @@ export default class CollectionsFetcher {
   static fetchCollections() {
     return fetch('/api/v1/collections', { ...this._httpOptions() })
       .then(response => response.json())
-      .then((json) => {
-        return json.collections;
-      })
       .catch(errorMessage => console.log(errorMessage));
   }
 

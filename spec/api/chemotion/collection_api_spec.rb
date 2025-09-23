@@ -16,6 +16,38 @@ describe Chemotion::CollectionAPI do
     end
   end
 
+  describe 'GET PERFORMANCECHECK' do
+    let(:other_users) { create_list(:person, 100) }
+    let(:collection_tree) do
+      collections_per_nesting_level = 10
+      collections_per_nesting_level.times do |i|
+        collection = create(:collection, user: user, position: i+1)
+        other_users.each { |other_user| create(:collection_share, collection: collection, shared_with: other_user) }
+        collections_per_nesting_level.times do |j|
+          child_collection = create(:collection, user: user, parent: collection, position: j+1)
+          other_users.each { |other_user| create(:collection_share, collection: child_collection, shared_with: other_user ) }
+          collections_per_nesting_level.times do |k|
+            grandchild_collection = create(:collection, user: user, parent: child_collection, position: k+1)
+            other_users.each { |other_user| create(:collection_share, collection: grandchild_collection, shared_with: other_user) }
+          end
+        end
+      end
+    end
+
+    it 'performs adequately' do
+      collection_tree
+
+
+      starting = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      get '/api/v1/collections'
+      ending = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      elapsed = ending - starting
+
+      result = parsed_json_response['own']
+      binding.pry
+    end
+  end
+
   describe 'GET /api/v1/collections' do
     before do
       collection
@@ -99,6 +131,83 @@ describe Chemotion::CollectionAPI do
         expect(first_child.reload.position).to be 2
         expect(second_child.reload.position).to be 3
       end
+    end
+  end
+
+  describe 'PUT /api/v1/collections/bulk_update_own_collections' do
+    let(:collection_A) { create(:collection, label: 'Collection A', user: user, position: 1) }
+    let(:collection_AA) { create(:collection, label: "Collection AA", parent: collection_A, user: user, position: 1) }
+    let(:collection_AB) { create(:collection, label: "Collection AB", parent: collection_A, user: user, position: 2) }
+    let(:collection_ABA) { create(:collection, label: "Collection ABA", parent: collection_AB, user: user, position: 1) }
+    let(:collection_B) { create(:collection, label: 'Collection B', user: user, position: 2) }
+    let(:collection_BA) { create(:collection, label: "Collection BA", parent: collection_B, user: user, position: 1) }
+    let(:collection_BAA) { create(:collection, label: "Collection BAA", parent: collection_BA, user: user, position: 1) }
+    let(:collection_BAB) { create(:collection, label: "Collection BAB", parent: collection_BA, user: user, position: 2) }
+    let(:collection_BB) { create(:collection, label: "Collection BB", parent: collection_B, user: user, position: 2) }
+    let(:collection_C) { create(:collection, label: 'Collection C', user: user, position: 3) }
+
+    let(:collections) do
+      [
+        collection_A,
+          collection_AA,
+          collection_AB,
+            collection_ABA,
+        collection_B,
+          collection_BA,
+            collection_BAA,
+            collection_BAB,
+          collection_BB,
+        collection_C
+      ]
+    end
+
+    it 'updates the collection tree correctly' do
+      put_data = [
+        { id: collection_C.id, label: 'Collection C', children: [
+          { id: collection_BA.id, label: "Collection BA", children: [
+            { id: collection_AB.id, label: "Collection AB" },
+          ]},
+          { id: collection_BAB.id, label: "Collection BAB", children: [
+            { id: collection_AA.id, label: "Collection AA", children: [
+              { id: collection_A.id, label: "Collection A" },
+            ]}
+          ]}
+        ]},
+        { id: collection_ABA.id, label: "Collection ABA", children: [
+          { id: collection_BAA.id, label: "Collection BAA" }
+        ]},
+        { id: collection_B.id, label: "Collection B", children: [
+          { id: collection_BB.id, label: "Collection BB" },
+        ]}
+      ]
+
+      put '/api/v1/collections/bulk_update_own_collections', params: { collections: put_data }
+
+      updated_collection_tree = parsed_json_response['collections']
+
+      binding.pry
+
+      updated_collection_C = updated_collection_tree.find { |c| c['label'] == 'Collection C' }
+        updated_collection_BA = updated_collection_tree.find { |c| c['label'] == 'Collection BA' }
+          updated_collection_AB = updated_collection_tree.find { |c| c['label'] == 'Collection AB' }
+        updated_collection_BAB = updated_collection_tree.find { |c| c['label'] == 'Collection BAB' }
+          updated_collection_AA = updated_collection_tree.find { |c| c['label'] == 'Collection AA' }
+            updated_collection_A = updated_collection_tree.find { |c| c['label'] == 'Collection A' }
+      updated_collection_ABA = updated_collection_tree.find { |c| c['label'] == 'Collection ABA' }
+        updated_collection_BAA = updated_collection_tree.find { |c| c['label'] == 'Collection BAA' }
+      updated_collection_B = updated_collection_tree.find { |c| c['label'] == 'Collection B' }
+        updated_collection_BB = updated_collection_tree.find { |c| c['label'] == 'Collection BB' }
+
+      expect(updated_collection_C).to include("id" => collection_C.id, "label" => "Collection C", "ancestry" => '/', "position" => 1 )
+        expect(updated_collection_BA).to include("id" => collection_BA.id, "label" => "Collection BA", "ancestry" => "/#{collection_C.id}/", "position" => 1)
+          expect(updated_collection_AB).to include("id" => collection_AB.id, "label" => "Collection AB", "ancestry" => "/#{collection_C.id}/#{collection_BA.id}/", "position" => 1)
+        expect(updated_collection_BAB).to include("id" => collection_BAB.id, "label" => "Collection BAB", "ancestry" => "/#{collection_C.id}/", "position" => 2)
+          expect(updated_collection_AA).to include("id" => collection_AA.id, "label" => "Collection AA", "ancestry" => "/#{collection_C.id}/#{collection_BAB.id}/", "position" => 1)
+            expect(updated_collection_A).to include("id" => collection_A.id, "label" => "Collection A", "ancestry" => "/#{collection_C.id}/#{collection_BAB.id}/#{collection_AA.id}/", "position" => 1)
+      expect(updated_collection_ABA).to include("id" => collection_ABA.id, "label" => "Collection ABA", "ancestry" => "/", "position" => 2)
+        expect(updated_collection_BAA).to include("id" => collection_BAA.id, "label" => "Collection BAA", "ancestry" => "/#{collection_ABA.id}/", "position" => 1)
+      expect(updated_collection_B).to include("id" => collection_B.id, "label" => "Collection B", "ancestry" => "/", "position" => 3)
+        expect(updated_collection_BB).to include("id" => collection_BB.id, "label" => "Collection BB", "ancestry" => "/#{collection_B.id}/", "position" => 1)
     end
   end
 end

@@ -62,7 +62,7 @@ class Collection < ApplicationRecord
 
   delegate :prefix, :name, to: :inventory, allow_nil: true, prefix: :inventory
 
-  scope :ordered, -> { order('ancestry ASC, position ASC') }
+  scope :ordered, -> { order('position ASC') }
 
   scope(
     :shared_with_more_than_one_user,
@@ -74,13 +74,44 @@ class Collection < ApplicationRecord
     end
   )
 
+  # returns the users own collections and those shared with him
+  # WARNING: Doing this for a large number of collections is very slow, due to
+  # the required joins
   scope(
     :accessible_for,
     lambda do |user|
       user_and_group_ids = [user.id, *user.group_ids]
       left_joins(:collection_shares)
+      .left_joins(:inventory)
       .where(user_id: user_and_group_ids)
       .or(where(collection_shares: { shared_with_id: user_and_group_ids }))
+    end
+  )
+
+  # returns only the own collections, NOT those shared with him
+  scope(
+    :own_collections_for,
+    lambda do |user|
+      left_joins(:inventory)
+        .where(user_id: [user.id, *user.group_ids])
+        .select('collections.*, inventories.name AS inventory_name, inventories.prefix AS inventory_prefix')
+    end
+  )
+  scope(
+    :shared_collections_for,
+    lambda do |user|
+      joins(:collection_shares)
+        .joins(:user)
+        .left_joins(:inventory)
+        .where(collection_shares: { shared_with_id: [user.id, *user.group_ids] })
+        .select(
+          [
+            'collections.*',
+            'inventories.name AS inventory_name',
+            'inventories.prefix AS inventory_prefix',
+            'concat(users.first_name, chr(32), users.last_name, chr(40), users.name_abbreviation, chr(41)) AS owner'
+          ].join(', ')
+        )
     end
   )
 
