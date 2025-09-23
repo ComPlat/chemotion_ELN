@@ -30,7 +30,7 @@ module Entities
           elsif represented_object.respond_to?(field)
             represented_object.public_send(field)
           else
-            represented_object[field] # works both for AR and Hash objects
+            represented_object[field.send(self.class.hash_access)] # works both for AR and Hash objects
           end
         end
       end

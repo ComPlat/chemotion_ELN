@@ -2,9 +2,15 @@ module Chemotion
   class CollectionAPI < Grape::API
     resource :collections do
       get '/' do
-        collections = Collection.accessible_for(current_user)
+        own_collections = Collection.connection.exec_query(Collection.own_collections_for(current_user).to_sql).map do |collection|
+          Entities::OwnCollectionEntity.represent(collection, current_user: current_user).serializable_hash
+        end
 
-        present collections, with: Entities::CollectionEntity, root: :collections
+        shared_collections = Collection.connection.exec_query(Collection.shared_collections_for(current_user).to_sql).map do |collection|
+          Entities::SharedCollectionEntity.represent(collection, current_user: current_user).serializable_hash
+        end
+
+        { own: own_collections, shared_with_me: shared_collections }
       end
 
       get '/:id' do
@@ -25,7 +31,22 @@ module Chemotion
           inventory_id: params[:inventory_id]
         )
 
-        present collection, with: Entities::CollectionEntity, root: :collection
+        present collection, with: Entities::OwnCollectionEntity, root: :collection
+      end
+
+      params do
+        requires :collections, type: Array do
+          requires :id, type: Integer
+          optional :label, type: String
+          optional :children, type: Array, default: [] # children have the same structure, but Grape cannot declare recursive structures
+        end
+      end
+      put '/bulk_update_own_collections' do
+        Usecases::Collections::UpdateTree.new(current_user).perform!(collections: params[:collections])
+
+        own_collections = Collection.connection.exec_query(Collection.own_collections_for(current_user).to_sql)
+
+        present own_collections, with: Entities::OwnCollectionEntity, root: :collections
       end
     end
   end
