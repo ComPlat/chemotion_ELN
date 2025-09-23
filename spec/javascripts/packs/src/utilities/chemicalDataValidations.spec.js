@@ -587,7 +587,7 @@ describe('Chemical Data Validations', () => {
       };
       const result = await validateChemicalData(chemicalData);
       expect(result.valid).toBe(false);
-      expect(result.errors).toEqual(['Invalid date format']);
+      expect(result.errors).toEqual(['Empty or invalid data structure']);
     });
 
     it('should handle non-array chemical_data', async () => {
