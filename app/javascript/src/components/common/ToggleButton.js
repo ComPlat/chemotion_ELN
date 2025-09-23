@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 
 export default function ToggleButton({
   isToggledInitial, onToggle, onChange, onLabel, offLabel,
-  tooltipOn, tooltipOff, buttonTitleClass, buttonClass, variant
+  tooltipOn, tooltipOff, buttonTitleClass, buttonClass, variant, size
 }) {
   const [isToggled, setIsToggled] = useState(isToggledInitial);
 
@@ -30,6 +30,7 @@ export default function ToggleButton({
         variant={variant}
         className={buttonClass}
         onClick={handleChange}
+        size={size}
       >
         <span className={`fs-6 ${buttonTitleClass}`}>
           {isToggled ? onLabel : offLabel}
@@ -50,6 +51,7 @@ ToggleButton.propTypes = {
   buttonTitleClass: PropTypes.string,
   buttonClass: PropTypes.string,
   variant: PropTypes.string,
+  size: PropTypes.string,
 };
 
 ToggleButton.defaultProps = {
@@ -62,4 +64,5 @@ ToggleButton.defaultProps = {
   buttonTitleClass: '',
   buttonClass: '',
   variant: 'outline-secondary',
+  size: 'sm',
 };
