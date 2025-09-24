@@ -147,7 +147,8 @@ export default class Reaction extends Element {
       can_copy: false,
       variations: [],
       vessel_size: { amount: null, unit: 'ml' },
-      gaseous: false
+      gaseous: false,
+      weight_percentage: false,
     })
 
 
@@ -220,7 +221,8 @@ export default class Reaction extends Element {
       segments: this.segments.map(s => s.serialize()),
       variations: this.variations,
       vessel_size: this.vessel_size,
-      gaseous: this.gaseous
+      gaseous: this.gaseous,
+      weight_percentage: this.weight_percentage,
     });
   }
 
@@ -599,6 +601,7 @@ export default class Reaction extends Element {
       material.reaction_product = true;
       material.equivalent = 0;
       material.reference = false;
+      material.weight_percentage_reference = false;
 
       if (material.parent_id) {
         material.start_parent = material.parent_id
@@ -610,14 +613,17 @@ export default class Reaction extends Element {
     ) {
       if (newGroup === "solvents") {
         material.reference = false;
+        material.weight_percentage_reference = false;
       }
 
       // Temporary set true, to fit with server side logical
       material.isSplit = true;
       material.reaction_product = false;
+      material.weight_percentage_reference = false;
     } else if (newGroup == "starting_materials") {
       material.isSplit = true;
       material.reaction_product = false;
+      material.weight_percentage_reference = false;
 
       if (material.start_parent && material.parent_id == null) {
         material.parent_id = material.start_parent
@@ -739,6 +745,12 @@ export default class Reaction extends Element {
     })
   }
 
+  markWeightPercentageSampleAsReference(sampleID) {
+    this.samples.forEach((sample) => {
+      sample.weight_percentage_reference = sample.id === sampleID;
+    });
+  }
+
   toggleShowLabelForSample(sampleID) {
     const sample = this.sampleById(sampleID);
     sample.show_label = ((sample.decoupled && !sample.molfile) ? true : !sample.show_label);
@@ -813,6 +825,8 @@ export default class Reaction extends Element {
           mat.gas_type = group[index].gas_type;
           mat.gas_phase_data = group[index].gas_phase_data;
           mat.coefficient = group[index].coefficient;
+          mat.weight_percentage = group[index].weight_percentage;
+          mat.weight_percentage_reference = group[index].weight_percentage_reference;
           mat.updateChecksum();
           group[index] = mat;
           break;
@@ -1068,5 +1082,24 @@ export default class Reaction extends Element {
     const materials = [...this.starting_materials, ...this.reactants];
     const feedstockMaterial = materials.find((material) => (material.gas_type === 'feedstock'));
     return feedstockMaterial;
+  }
+
+  findWeightPercentageReferenceMaterial() {
+    const result = {
+      weightPercentageReference: null,
+      targetAmount: null,
+    };
+    const materials = [...this.starting_materials, ...this.reactants, ...this.products];
+    if (materials && materials.length > 0) {
+      const reference = materials.find((material) => (material.weight_percentage_reference === true));
+      if (reference) {
+        result.weightPercentageReference = reference;
+        result.targetAmount = {
+          value: reference.target_amount_value,
+          unit: reference.target_amount_unit
+        };
+      }
+    }
+    return result;
   }
 }
