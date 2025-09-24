@@ -129,8 +129,8 @@ class User < ApplicationRecord
                                          }
   before_create :set_account_active, if: proc { |user| %w[Person].include?(user.type) }
 
-  # after_create :create_chemotion_public_collection
-  # after_create :create_all_collection
+  after_create :create_chemotion_public_collection
+  after_create :create_all_collection
   after_create :update_matrix
   after_create :send_welcome_email, if: proc { |user| %w[Person].include?(user.type) }
   after_create :set_default_avail_space
