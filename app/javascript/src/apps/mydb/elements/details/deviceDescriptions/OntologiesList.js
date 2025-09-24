@@ -273,7 +273,7 @@ const OntologiesList = ({ store, element }) => {
 
   return (
     <>
-      <div className="d-flex justify-content-between mb-3" key={`${store.key_prefix}-${element['name']}`}>
+      <div className="d-flex justify-content-between mb-3 sticky-top bg-white p-2 border-bottom" key={`${store.key_prefix}-${element['name']}`}>
         {ontologyModeButton()}
         {addOntologyButton()}
       </div>

@@ -268,7 +268,7 @@ export default class ResearchPlanDetailsContainers extends Component {
       if (analysesContainer.length === 1 && analysesContainer[0].children.length > 0) {
         return (
           <div>
-            <div className="my-2 mx-3 d-flex justify-content-end">
+            <div className="my-2 mx-3 d-flex justify-content-end sticky-top bg-white p-2 border-bottom">
               <ButtonToolbar className="gap-1">
                 <div className="mt-2">
                   <CommentButton toggleCommentBox={this.toggleCommentBox} size="sm" />
