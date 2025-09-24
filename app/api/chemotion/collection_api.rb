@@ -1,5 +1,9 @@
 module Chemotion
   class CollectionAPI < Grape::API
+    rescue_from ActiveRecord::RecordNotFound do
+      error!('Collection not found', 404)
+    end
+
     resource :collections do
       get '/' do
         own_collections = Collection.connection.exec_query(Collection.own_collections_for(current_user).to_sql).map do |collection|
@@ -13,10 +17,24 @@ module Chemotion
         { own: own_collections, shared_with_me: shared_collections }
       end
 
+      params do
+        requires :id, type: String, regexp: /[Aa]ll|\d+/
+      end
       get '/:id' do
-        collection = Collection.accessible_for(current_user).find(params[:id])
+        if params[:id].in?(%w[All all])
+          collection = Collection.get_all_collection_for_user(current_user.id)
+          present collection, with: Entities::OwnCollectionEntity, root: :collection
+          return
+        end
 
-        present collection, with: Entities::CollectionEntity, root: :collection
+        id = params[:id].to_i
+        if collection = Collection.own_collections_for(current_user).where(id: id).first # find_by breaks, no idea why
+          present collection, with: Entities::OwnCollectionEntity, root: :collection
+        elsif collection = Collection.shared_collections_for(current_user).where(id: id).first # find_by breaks, no idea why
+          present collection, with: Entities::SharedCollectionEntity, root: :collection
+        else
+          raise ActiveRecord::RecordNotFound
+        end
       end
 
       params do

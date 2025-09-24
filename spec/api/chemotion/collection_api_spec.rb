@@ -15,6 +15,7 @@ describe Chemotion::CollectionAPI do
       create(:collection_share, collection: other_users_collection, shared_with: user)
     end
   end
+  let(:other_users_collection) { create(:collection, user: build(:person)) }
 
   describe 'GET PERFORMANCECHECK' do
     let(:other_users) { create_list(:person, 100) }
@@ -67,25 +68,48 @@ describe Chemotion::CollectionAPI do
   end
 
   describe 'GET /api/v1/collections/:id' do
-    before do
-      collection
+    context 'when requested collection is ALL-collection' do
+      before do
+        collection
+      end
+
+      it "returns the users all-collection" do
+        get "/api/v1/collections/all"
+
+        expect(parsed_json_response['collection']['label']).to eq 'All'
+        expect(parsed_json_response['collection']['id'].to_i).to eq Collection.get_all_collection_for_user(user.id).id
+      end
     end
 
-    it 'returns a serialized collection' do
-      get "/api/v1/collections/#{collection.id}"
+    context 'when requested collection is owned by the user' do
+      before do
+        collection
+      end
+      it 'returns a serialized own collection' do
+        get "/api/v1/collections/#{collection.id}"
 
-      expected_serialization = {
-        'id' => collection.id,
-        'ancestry' => collection.ancestry,
-        'position' => collection.position,
-        'label' => collection.label,
-        'tabs_segment' => collection.tabs_segment,
-        'inventory_id' => collection.inventory_id,
-        'owner' => "#{collection.user.name} (#{collection.user.name_abbreviation})",
-        'shares' => []
-      }
+        expect(parsed_json_response['collection']).not_to have_key('owner') # own collection does not expose owner
+      end
+    end
 
-      expect(parsed_json_response['collection']).to eq expected_serialization
+    context 'when requested collection is shared to the user' do
+      let(:collection) { collection_shared_with_user }
+      before { collection }
+
+      it 'returns a serialized shared collection' do
+        get "/api/v1/collections/#{collection.id}"
+
+        expect(parsed_json_response['collection']).to have_key('owner')
+      end
+    end
+
+    context 'when user has no access to the requested collection' do
+      let(:collection) { other_users_collection }
+      before { collection }
+      it 'returns a 404 error' do
+        get "/api/v1/collections/#{collection.id}"
+        expect(response.status).to be 404
+      end
     end
   end
 
