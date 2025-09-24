@@ -67,12 +67,21 @@ export default class NMRiumDisplayer extends React.Component {
     ).length || 0;
   
     const jcampExtensions = ['.jdx', '.dx', '.jcamp'];
+    const zipExtensions = ['.zip'];
     const jdxCount = fetchedSpectra?.filter((s) =>
       jcampExtensions.some((ext) => s.label?.toLowerCase().endsWith(ext))
     ).length || 0;
   
     const expectedJdxCount = spcInfos?.filter((si) =>
       jcampExtensions.some((ext) => si.label?.toLowerCase().endsWith(ext))
+    ).length || 0;
+
+    const zipCount = fetchedSpectra?.filter((s) =>
+      zipExtensions.some((ext) => s.label?.toLowerCase().endsWith(ext))
+    ).length || 0;
+
+    const expectedZipCount = spcInfos?.filter((si) =>
+      zipExtensions.some((ext) => si.label?.toLowerCase().endsWith(ext))
     ).length || 0;
   
     // Ensure loaded files match requested spectra
@@ -83,7 +92,8 @@ export default class NMRiumDisplayer extends React.Component {
       fetchedSpectra?.length > 0 &&
       (
         (nmriumCount > 0 && jdxCount > 0) ||
-        (nmriumCount === 0 && jdxCount === expectedJdxCount)
+        (nmriumCount === 0 && jdxCount === expectedJdxCount) ||
+        (zipCount > 0 && zipCount === expectedZipCount)
       ) &&
       fetchedIds === currentIds;
   
@@ -175,16 +185,17 @@ export default class NMRiumDisplayer extends React.Component {
   
     const nmrium = fetchedSpectra.find((s) => s.kind === 'nmrium');
     const jdx = fetchedSpectra.find((s) => s.kind === 'jcamp');
+    const zip = fetchedSpectra.find((s) => s.kind === 'zip');
     const molfile = sample?.molfile || null;
   
     // If we have a .nmrium file, patch it and send it
     if (nmrium?.file) {
-      await this.sendPatchedNmrium(nmrium, jdx, molfile, sample);
+      await this.sendPatchedNmrium(nmrium, jdx, zip, molfile, sample);
       LoadingActions.stop.defer();
       return;
     }
   
-    // Fallback: only .jdx file available
+    // Fallback: only .jdx/.zip file available
     if (jdx?.url) {
       // get file extension from jdx.label
       const fileExtension = jdx.label?.split('.').pop()?.toLowerCase() || 'jdx';
@@ -201,6 +212,21 @@ export default class NMRiumDisplayer extends React.Component {
         },
       };
       this.iframeRef.current?.contentWindow.postMessage({ type: 'nmr-wrapper:load', data: payload }, '*');
+    } else if (zip?.url) {
+  
+    this.iframeRef.current?.contentWindow.postMessage({ type: 'nmr-wrapper:load', data: { type: 'url', data: [`${zip.url}/file.zip`] } },'*');
+  
+    const nmriumState = await this.waitForNMRiumDataWithSpectra(8000);
+    if (!nmriumState) {
+      LoadingActions.stop.defer();
+      return;
+    }
+    
+    const cleaned = cleaningNMRiumData(nmriumState);
+  
+    if (molfile) { cleaned.molecules = [{ molfile }]; }
+  
+    this.iframeRef.current?.contentWindow.postMessage({ type: 'nmr-wrapper:load', data: { type: 'nmrium', data: cleaned } },'*');
     } else {
       console.warn('No usable .nmrium or .jdx file for display.');
     }
@@ -208,12 +234,30 @@ export default class NMRiumDisplayer extends React.Component {
     LoadingActions.stop.defer();
   }
 
-  async sendPatchedNmrium(nmrium, jdx, molfile, sample) {
+  async waitForNMRiumDataWithSpectra(timeoutMs = 5000) {
+    const start = Date.now();
+    return new Promise((resolve) => {
+      const check = () => {
+        const current = this.state.nmriumData;
+        const spectra = current?.spectra || current?.data?.spectra || [];
+        if (Array.isArray(spectra) && spectra.length > 0) {
+          resolve(current?.data || current);
+        } else if (Date.now() - start >= timeoutMs) {
+          resolve(null);
+        } else {
+          setTimeout(check, 100);
+        }
+      };
+      check();
+    });
+  }
+
+  async sendPatchedNmrium(nmrium, jdx, zip, molfile) {
     try {
       const fileContent = await this.readFileContent(nmrium.file);
       const nmriumObj = JSON.parse(fileContent);
   
-      this.patchJcampReference(nmriumObj, jdx?.url);
+      this.patchJcampReference(nmriumObj, jdx?.url, zip?.url);
       if (molfile) {
         nmriumObj.molecules = [{ molfile }];
       }
@@ -221,13 +265,7 @@ export default class NMRiumDisplayer extends React.Component {
       const patchedFile = this.buildPatchedNmriumFile(nmrium.label, nmriumObj);
       const fileList = [patchedFile];
   
-      if (molfile) {
-        const molBlob = new Blob([molfile], { type: 'text/plain' });
-        fileList.push(new File([molBlob], `${sample.id}.mol`));
-      }
-  
-      // Update state to keep patched .nmrium
-      const updatedSpectra = this.state.fetchedSpectra.filter((s) => s.kind === 'jcamp');
+      const updatedSpectra = this.state.fetchedSpectra.filter((s) => s.kind === 'jcamp' || s.kind === 'zip');
       updatedSpectra.push({ ...nmrium, file: patchedFile });
       this.setState({ fetchedSpectra: updatedSpectra });
   
@@ -248,32 +286,26 @@ export default class NMRiumDisplayer extends React.Component {
     throw new Error('Unsupported .nmrium file format');
   }
   
-  patchJcampReference(nmriumObj, jdxUrl) {
-    if (!jdxUrl) return;
-    
-    const jdxUrlWithFile = `${jdxUrl}/file.jdx`;
-  
-    const spectra = nmriumObj.spectra || nmriumObj.data?.spectra || [];
-    spectra.forEach((s) => {
-      if (s?.source) {
-        s.source.jcampURL = jdxUrlWithFile;
-        s.source.entries?.forEach((e) => (e.relativePath = jdxUrlWithFile));
-      }
-      if (s?.sourceSelector?.files?.length) {
-        s.sourceSelector.files = s.sourceSelector.files.map(() => jdxUrlWithFile);
-      }
+  patchJcampReference(nmriumObj, jdxUrl, zipUrl) {
+    if (!jdxUrl && !zipUrl) return;
+
+    const jdxUrlWithFile = jdxUrl !== undefined ? `${jdxUrl}/file.jdx` : undefined;
+    const zipUrlWithFile = zipUrl !== undefined ? `${zipUrl}/file.zip` : undefined;
+    const preferredUrl = jdxUrlWithFile !== undefined ? jdxUrlWithFile : zipUrlWithFile;
+
+    const u = new URL(preferredUrl);
+
+    let baseURL = u.origin;
+    let relativePath = u.pathname;
+
+    nmriumObj.spectra.forEach((s) => {
+      if (!s) return;
+      delete s.sourceSelector.files;
+      nmriumObj.source.entries[0].relativePath = relativePath;
+      nmriumObj.source.entries[0].baseURL = baseURL;
     });
-  
-    const root = nmriumObj.spectra ? nmriumObj : nmriumObj.data;
-    if (!root.source) root.source = {};
-    if (!Array.isArray(root.source.entries)) root.source.entries = [];
-    if (root.source.entries.length === 0) {
-      root.source.entries.push({ relativePath: jdxUrlWithFile });
-    } else {
-      root.source.entries[0].relativePath = jdxUrlWithFile;
-    }
   }
-  
+
   buildPatchedNmriumFile(label, contentObj) {
     const blob = new Blob([JSON.stringify(contentObj)], { type: 'application/json' });
     return new File([blob], label || 'spectrum.nmrium');
