@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" id="svg51" viewBox="0.18141497473456 42.00630270768 113.61283212000001 30.613863600000002" version="1.1" style="max-height: 500px" width="113.61283212000001" height="30.613863600000002">
+  <defs id="defs51">
+    <linearGradient id="swatch152">
+      <stop id="stop152" offset="0" style="stop-color:#000000;stop-opacity:1;"/>
+    </linearGradient>
+    <pattern y="0" x="0" patternTransform="matrix(0.98367094,0,0,1.0001649,-20.346321,-303.59409)" id="pattern160-1" preserveAspectRatio="xMidYMid" xlink:href="#halftones-8"/>
+    <pattern y="0" x="0" id="halftones-8" style="fill:#dc9592" preserveAspectRatio="xMidYMid" height="10" width="10" patternUnits="userSpaceOnUse">
+      <g transform="scale(0.1)" style="display:inline" id="fullPattern-9">
+        <circle r="25" cy="50" cx="50" id="circle10-8" style="fill-opacity:1;stroke:none;paint-order:markers fill stroke;stop-color:#000000"/>
+        <path d="M 25,0 A 25,25 0 0 1 0,25 25,25 0 0 1 -25,0 25,25 0 0 1 0,-25 25,25 0 0 1 25,0 Z" style="paint-order:markers fill stroke" id="circle37-4"/>
+        <path d="M 125,0 A 25,25 0 0 1 100,25 25,25 0 0 1 75,0 25,25 0 0 1 100,-25 25,25 0 0 1 125,0 Z" style="paint-order:markers fill stroke" id="circle39-1"/>
+        <path d="M 25,100 A 25,25 0 0 1 0,125 25,25 0 0 1 -25,100 25,25 0 0 1 0,75 25,25 0 0 1 25,100 Z" style="paint-order:markers fill stroke" id="circle43-4"/>
+        <path d="m 125,100 a 25,25 0 0 1 -25,25 25,25 0 0 1 -25,-25 25,25 0 0 1 25,-25 25,25 0 0 1 25,25 z" style="paint-order:markers fill stroke" id="circle45-3"/>
+      </g>
+    </pattern>
+  </defs>
+  
+    
+  
+  <path id="path49-8" style="fill:url(#pattern160-1);fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.571326;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1" d="m 1.0304225,48.833512 v 17.010606 q 0,5.670235 5.5766274,5.670235 H 106.98801 q 5.57673,0 5.57673,-5.670235 V 48.833512 q 0,-5.670235 -5.57673,-5.670235 H 6.6070499 q -5.5766274,0 -5.5766274,5.670235 z"/>
+</svg>
