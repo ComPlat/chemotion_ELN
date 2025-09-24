@@ -118,9 +118,13 @@ class SpectraActions {
       si.label?.toLowerCase().endsWith('.nmrium'),
     );
   
-    const jcampExtensions = ['.jdx', '.dx', '.jcamp', '.zip'];
+    const jcampExtensions = ['.jdx', '.dx', '.jcamp'];
+    const zipExtensions = ['.zip'];
     const jdxInfos = spcInfos.filter(si =>
       jcampExtensions.some(ext => si.label?.toLowerCase().endsWith(ext)),
+    );
+    const zipInfos = spcInfos.filter(si =>
+      zipExtensions.some(ext => si.label?.toLowerCase().endsWith(ext)),
     );
   
     return async (dispatch) => {
@@ -136,6 +140,14 @@ class SpectraActions {
         const jdxUrls = await Promise.all(
           jdxIds.map(id => ThirdPartyAppFetcher.getHandlerUrl(id, 3))
         );
+
+        // Fetch ZIP files
+        const zipIds = zipInfos.map(si => {
+          return si.idx;
+        });
+        const zipUrls = await Promise.all(
+          zipIds.map(id => ThirdPartyAppFetcher.getHandlerUrl(id, 3))
+        );
   
         // Construct list of fetched spectra
         const fetchedSpectra = [
@@ -150,6 +162,12 @@ class SpectraActions {
             label: info.label,
             kind: 'jcamp',
             url: jdxUrls[i],
+          })),
+          ...zipInfos.map((info, i) => ({
+            id: info.idx,
+            label: info.label,
+            kind: 'zip',
+            url: zipUrls[i],
           })),
         ].filter(entry => entry.file || entry.url);
   
