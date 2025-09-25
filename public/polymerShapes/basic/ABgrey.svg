@@ -1,17 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" id="svg51" viewBox="29.103253564439996 43.85991545632 53.97176456 26.985553839999998" version="1.1" style="max-height: 500px" width="53.97176456" height="26.985553839999998">
-  <defs id="defs51">
-    <pattern patternTransform="matrix(1.4142135,1.4142135,-1.4142135,1.4142135,-158.96529,-19.762037)" id="pattern17" preserveAspectRatio="xMidYMid" xlink:href="#pattern2"/>
-    <pattern patternTransform="matrix(1.4142135,1.4142135,-1.4142135,1.4142135,-158.96529,-19.762037)" id="pattern2" preserveAspectRatio="xMidYMid" xlink:href="#pattern150-0-76"/>
-    <linearGradient id="swatch152">
-      <stop id="stop152" offset="0" style="stop-color:#000000;stop-opacity:1;"/>
-    </linearGradient>
-    <pattern y="0" x="0" patternTransform="matrix(1.4142135,1.4142135,-1.4142135,1.4142135,-369.71572,-4.7620062)" id="pattern150-0-76" preserveAspectRatio="xMidYMid" xlink:href="#stripes-grid-9-14"/>
-    <pattern y="0" x="0" style="fill:#bdbcbc" id="stripes-grid-9-14" preserveAspectRatio="xMidYMid" patternTransform="scale(2)" height="10" width="3" patternUnits="userSpaceOnUse">
-      <rect id="rect134-4-4-2" height="10" width="2" y="0" x="0" style="stroke:none"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="29.103253564439996 43.85991545632 53.97176456 26.985553839999998" width="53.97176456" height="26.985553839999998">
+  <defs>
+    <pattern id="stripes-grid-9-14" preserveAspectRatio="xMidYMid" patternUnits="userSpaceOnUse" width="6" height="10">
+      <rect width="2" height="10" x="0" y="0" fill="#bdbcbc"/>
     </pattern>
   </defs>
-  
-    
-  
-  <path id="path1" style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:url(#pattern17);fill-opacity:1;fill-rule:evenodd;stroke:#1b1918;stroke-width:0.5669;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1" d="m 29.833405,59.276127 v 10.3113 h 51.5252 v -10.3113 l -14.1732,-14.1732 h -23.1788 z"/>
+
+  <path style="fill:url(#stripes-grid-9-14);stroke:#1b1918;stroke-width:0.5669;stroke-linecap:butt;stroke-linejoin:miter;" 
+        d="M29.833405,59.276127v10.3113h51.5252v-10.3113l-14.1732,-14.1732h-23.1788z"/>
 </svg>

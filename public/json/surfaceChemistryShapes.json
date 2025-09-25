@@ -351,7 +351,7 @@
           "shapes": [
             {
               "template_id": 93,
-              "iconName": "BS",
+              "iconName": "BP",
               "width": 2,
               "height": 1
             }
@@ -364,7 +364,7 @@
           "shapes": [
             {
               "template_id": 94,
-              "iconName": "BP",
+              "iconName": "BS",
               "width": 2,
               "height": 1
             }

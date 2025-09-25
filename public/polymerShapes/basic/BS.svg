@@ -1,17 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" id="svg51" viewBox="0.18141497473456 42.00630270768 113.61283212000001 30.613863600000002" version="1.1" style="max-height: 500px" width="113.61283212000001" height="30.613863600000002">
-  <defs id="defs51">
-    <pattern patternTransform="scale(7.1)" id="pattern19" preserveAspectRatio="xMidYMid" xlink:href="#pattern170"/>
-    <pattern y="0" x="0" patternTransform="scale(7.1)" id="pattern170" preserveAspectRatio="xMidYMid" xlink:href="#Checkerboard"/>
-    <pattern preserveAspectRatio="xMidYMid" id="Checkerboard" patternTransform="translate(0,0) scale(10,10)" height="2" width="2" patternUnits="userSpaceOnUse" style="fill:#565555">
-      <rect id="rect209" height="1" width="1" y="0" x="0" style="stroke:none"/>
-      <rect id="rect211" height="1" width="1" y="1" x="1" style="stroke:none"/>
-    </pattern>
-    <linearGradient id="swatch152">
-      <stop id="stop152" offset="0" style="stop-color:#000000;stop-opacity:1;"/>
-    </linearGradient>
-  </defs>
-  
-    
-  
-  <path id="path49-8" style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:url(#pattern19);fill-opacity:1;fill-rule:evenodd;stroke:#1b1918;stroke-width:0.5669;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1" d="m 1.0304225,48.833512 v 17.010606 q 0,5.670235 5.5766274,5.670235 H 106.98801 q 5.57673,0 5.57673,-5.670235 V 48.833512 q 0,-5.670235 -5.57673,-5.670235 H 6.6070499 q -5.5766274,0 -5.5766274,5.670235 z"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0.18 42.01 113.61 30.61" width="113.61" height="30.61">
+  <!-- Checkerboard Pattern -->
+  <pattern id="checkerboard" patternUnits="userSpaceOnUse" width="2" height="2" patternTransform="scale(10)">
+    <rect width="1" height="1" fill="#565555"/>
+    <rect x="1" y="1" width="1" height="1" fill="#565555"/>
+  </pattern>
+
+  <!-- Path with Checkerboard Pattern -->
+  <path d="M1.03 48.83v17.01q0,5.67 5.58,5.67h95.38q5.58,0 5.58,-5.67V48.83q0,-5.67 -5.58,-5.67H6.61q-5.58,0 -5.58,5.67z" 
+        fill="url(#checkerboard)" 
+        stroke="#1b1918" 
+        stroke-width="0.57"/>
 </svg>

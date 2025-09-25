@@ -1,17 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" id="svg51" viewBox="29.103253564439996 43.85991545632 53.97176456 26.985553839999998" version="1.1" style="max-height: 500px" width="53.97176456" height="26.985553839999998">
-  <defs id="defs51">
-    <pattern patternTransform="matrix(1.4142135,1.4142135,-1.4142135,1.4142135,210.75043,-15.00003)" id="pattern17" preserveAspectRatio="xMidYMid" xlink:href="#pattern8"/>
-    <pattern patternTransform="matrix(1.4142135,1.4142135,-1.4142135,1.4142135,210.75043,-15.00003)" id="pattern8" preserveAspectRatio="xMidYMid" xlink:href="#pattern150"/>
-    <linearGradient id="swatch152">
-      <stop id="stop152" offset="0" style="stop-color:#000000;stop-opacity:1;"/>
-    </linearGradient>
-    <pattern y="0" x="0" patternTransform="matrix(1.4142135,1.4142135,-1.4142135,1.4142135,0,0)" id="pattern150" preserveAspectRatio="xMidYMid" xlink:href="#stripes-grid"/>
-    <pattern y="0" x="0" style="fill:#565555" id="stripes-grid" preserveAspectRatio="xMidYMid" patternTransform="scale(2)" height="10" width="3" patternUnits="userSpaceOnUse">
-      <rect id="rect134-4" height="10" width="2" y="0" x="0" style="stroke:none"/>
-    </pattern>
-  </defs>
-  
-    
-  
-  <path id="path1" style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:url(#pattern17);fill-opacity:1;fill-rule:evenodd;stroke:#1b1918;stroke-width:0.5669;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1" d="m 29.833405,59.276127 v 10.3113 h 51.5252 v -10.3113 l -14.1732,-14.1732 h -23.1788 z"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="29.1 43.86 53.97 26.99" width="53.97" height="26.99">
+  <!-- Path with applied pattern -->
+  <path d="M29.83 59.28v10.31h51.53v-10.31l-14.17-14.17h-23.18z" fill="url(#pattern-3fa2f967-1a42-4649-b41a-0b4f875f14c7)" stroke="#1b1918" stroke-width="0.57"/>
+
+  <!-- Random pattern definition -->
+  <pattern patternUnits="userSpaceOnUse" width="3" height="10" id="pattern-3fa2f967-1a42-4649-b41a-0b4f875f14c7" patternTransform="scale(2)">
+    <rect width="2" height="10" fill="#565555"/>
+  </pattern>
 </svg>
