@@ -1,0 +1,6 @@
+- if flash[:success]
+  .alert.alert-success
+    = flash[:success]
+
+:javascript
+  window.top.location.href = "#{root_path}";
