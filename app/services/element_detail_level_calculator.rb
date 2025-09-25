@@ -4,18 +4,6 @@
 class ElementDetailLevelCalculator
   attr_reader :user, :element, :detail_levels
 
-  DETAIL_LEVEL_FIELDS = %i[
-    element_detail_level
-    researchplan_detail_level
-    sample_detail_level
-    reaction_detail_level
-    wellplate_detail_level
-    screen_detail_level
-    celllinesample_detail_level
-    devicedescription_detail_level
-    sequencebasedmacromoleculesample_detail_level
-  ].freeze
-
   def initialize(user:, element:)
     @user = user
     @element = element
@@ -26,18 +14,17 @@ class ElementDetailLevelCalculator
 
   def calculate_detail_levels # rubocop:disable Metrics/AbcSize, Metrics/PerceivedComplexity
     detail_levels = Hash.new(0)
-    all_collections_detail_levels = user_collection_detail_levels + sync_collection_detail_levels
 
-    detail_levels[Labimotion::Element] = all_collections_detail_levels.pluck(:element_detail_level).max || 0
-    detail_levels[Reaction] = all_collections_detail_levels.pluck(:reaction_detail_level).max || 0
-    detail_levels[ResearchPlan] = all_collections_detail_levels.pluck(:researchplan_detail_level).max || 0
-    detail_levels[Sample] = all_collections_detail_levels.pluck(:sample_detail_level).max || 0
-    detail_levels[Screen] = all_collections_detail_levels.pluck(:screen_detail_level).max || 0
-    detail_levels[Wellplate] = all_collections_detail_levels.pluck(:wellplate_detail_level).max || 0
-    detail_levels[CelllineSample] = all_collections_detail_levels.pluck(:celllinesample_detail_level).max || 0
-    detail_levels[DeviceDescription] = all_collections_detail_levels.pluck(:devicedescription_detail_level).max || 0
+    detail_levels[Labimotion::Element] = detail_level_for(:element_detail_level) || 0
+    detail_levels[Reaction] = detail_level_for(:reaction_detail_level) || 0
+    detail_levels[ResearchPlan] = detail_level_for(:researchplan_detail_level) || 0
+    detail_levels[Sample] = detail_level_for(:sample_detail_level) || 0
+    detail_levels[Screen] = detail_level_for(:screen_detail_level) || 0
+    detail_levels[Wellplate] = detail_level_for(:wellplate_detail_level) || 0
+    detail_levels[CelllineSample] = detail_level_for(:celllinesample_detail_level) || 0
+    detail_levels[DeviceDescription] = detail_level_for(:devicedescription_detail_level) || 0
     detail_levels[SequenceBasedMacromoleculeSample] =
-      all_collections_detail_levels.pluck(:sequencebasedmacromoleculesample_detail_level).max || 0
+      detail_level_for(:sequencebasedmacromoleculesample_detail_level) || 0
     detail_levels[Well] = detail_levels[Wellplate]
 
     detail_levels
@@ -48,34 +35,24 @@ class ElementDetailLevelCalculator
     @user_ids ||= user.group_ids + [user.id]
   end
 
+  def detail_level_for(key)
+    if user_collections_with_element.any?
+      10 # full access for all elements within own collections
+    elsif shared_collections_with_element.any?
+      shared_collections_with_element.maximum(key) || 0
+    else
+      0
+    end
+  end
+
   # All collections containing the element that belong to the user or were shared to them
   def user_collections_with_element
     @user_collections_with_element ||= element.collections.where(user_id: user_ids)
   end
 
   # All collections containing the element that were synced to the current user
-  def sync_collections_with_element
-    @sync_collections_with_element ||=
-      SyncCollectionsUser.where(
-        user_id: user_ids,
-        collection_id: element.collections.ids,
-      )
-  end
-
-  # Returns an array of Hashes. One hash per collection from user_collections_with_element.
-  # Hash contains the all detail level attributes and their respective values + the is_shared field
-  def user_collection_detail_levels
-    @user_collection_detail_levels ||= user_collections_with_element
-                                       .pluck(*DETAIL_LEVEL_FIELDS)
-                                       .map { |values| Hash[DETAIL_LEVEL_FIELDS.zip(values)] }
-  end
-
-  # Returns an array of Hashes. One hash per collection from sync_collections_with_element.
-  # Hash contains the all detail level attributes and their respective values
-  def sync_collection_detail_levels
-    @sync_collection_detail_levels ||= sync_collections_with_element
-                                       .pluck(*DETAIL_LEVEL_FIELDS)
-                                       .map { |values| Hash[DETAIL_LEVEL_FIELDS.zip(values)] }
+  def shared_collections_with_element
+    @shared_collections_with_element ||= element.collections.shared_collections_for(user)
   end
 end
 # rubocop:enable Metrics/CyclomaticComplexity Metrics/PerceivedComplexity
