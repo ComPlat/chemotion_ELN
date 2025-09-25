@@ -6,20 +6,47 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 
 export const OwnCollection = types.model({
   ancestry: types.string,
-  children: types.late(() => types.array(OwnCollection)),
+  children: types.array(types.late(() => OwnCollection)),
   id: types.identifierNumber,
   inventory_id: types.maybeNull(types.integer),
   inventory_name: types.maybeNull(types.string),
   inventory_prefix: types.maybeNull(types.string),
   label: types.string,
   locked: types.boolean,
-  position: types.number,
+  position: types.maybeNull(types.number),
   tabs_segment: types.optional(types.frozen({}), {}),
-});
+}).actions(self => ({
+  addChild(collection) {
+    if (self.isParentOf(collection)) {
+      self.children.push(collection)
+      self.sortChildren()
+    } else if (self.isAncestorOf(collection)) {
+      const nextParentIndex = self.children.findIndex(element => element.isAncestorOf(collection))
+      self.children[nextParentIndex].addChild(collection)
+    }
+  },
+  sortChildren() {
+    self.children.sort((a,b) => {
+      if (a.position != null && b.position != null) { return a.position - b.position }
+      else if (a.position != null && b.position == null) { return -1 }
+      else if (a.position == null && b.position != null) { return 1 }
+      else if (a.label.toUpperCase() < b.label.toUpperCase()) { return -1; }
+      else if (a.label.toUpperCase() == b.label.toUpperCase()) { return 0 }
+      else if (a.label.toUpperCase() > b.label.toUpperCase()) { return 1 }
+      else { console.debug('unsortable collections:', a, b); return 0 }
+    })
+  }
+})).views(self=> ({
+  get ancestorIds() { return self.ancestry.split('/').filter(Number).map(element => parseInt(element)) },
+  get isRootCollection() { return self.ancestry == '/' },
+  isAncestorOf(collection) {
+    return collection.ancestorIds.indexOf(self.id) != -1
+  },
+  isParentOf(collection) { return self.id == collection.ancestorIds.findLast },
+}));
 
 export const SharedCollection = types.model({
   ancestry: types.string,
-  children: types.late(() => types.array(SharedCollection)),
   id: types.identifierNumber,
   inventory_id: types.maybeNull(types.integer),
   inventory_name: types.maybeNull(types.string),
@@ -27,26 +54,9 @@ export const SharedCollection = types.model({
   label: types.string,
   locked: types.boolean,
   owner: types.string,
-  position: types.number,
+  position: types.maybeNull(types.number),
   tabs_segment: types.optional(types.frozen({}), {}),
 });
-
-const insert_into_collection_tree = (tree, traversed_parent_ids, remaining_parent_ids, collection) => {
-  if (remaining_parent_ids.length == 0) { tree.push(collection) }
-  if (remaining_parent_ids.length > 0) {
-    const next_parent_id = remaining_parent_ids.shift()
-    traversed_parent_ids.push(next_parent_id)
-    const index_of_next_parent = tree.indexOf(element => element.id == next_parent_id)
-    tree[index_of_next_parent].children = insert_into_collection_tree(
-      tree[index_of_next_parent].children,
-      traversed_parent_ids,
-      remaining_parent_ids,
-      collection
-    )
-  }
-
-  return tree;
-}
 
 const recursively_sort_by_position = (tree) => {
   tree.sort((a, b) => { a.position - b.position })
@@ -67,7 +77,7 @@ export const CollectionsStore = types
     chemotion_repository_collection: types.maybeNull(OwnCollection),
     current_user_id: types.maybeNull(types.integer),
     own_collections: types.array(OwnCollection),
-    shared_with_me_collections: types.map(SharedCollection),
+    shared_with_me_collections: types.map(types.array(SharedCollection)),
   })
   .actions(self => ({
     fetchCollections: flow(function* fetchCollections() {
@@ -76,32 +86,25 @@ export const CollectionsStore = types
 
       // basic presorting, so we can assume that parent objects are encountered before child objects when iterating the collection array
       all_collections.own.sort(presort);
-      all_collections.own.map(
-        collection => { return OwnCollection.create({ ...collection, children: [] }) }
-      ).forEach(collection => {
+      all_collections.own.forEach(collection => {
         if (collection.label == 'All') {
-          self.all_collection = collection;
+          self.all_collection = OwnCollection.create(collection);
         } else if (collection.label == 'chemotion-repository.net') {
-          self.chemotion_repository_collection = collection;
+          self.chemotion_repository_collection = OwnCollection.create(collection);
         } else {
-          const all_parent_ids = collection.ancestry.split('/').filter(Number);
-
-          insert_into_collection_tree(own_collections_tree, [], all_parent_ids, collection)
+          self.addOwnCollection(OwnCollection.create(collection))
         }
       });
-      recursively_sort_by_position(own_collections_tree)
-
-      self.own_collections = own_collections_tree
 
       // group shared collections by owner
-      all_collections.shared_with_me.map(
-        collection => { return SharedCollection.create({ ...collection, children: [] }) }
-      ).forEach(shared_collection => {
-        if (self.shared_with_me_collections[shared_collection.owner] === undefined) {
-          self.shared_with_me_collections[shared_collection.owner] = []
-        }
-        self.shared_with_me_collections[shared_collection.owner].push(shared_collection)
-      })
+      all_collections.shared_with_me
+        .map(collection => { return SharedCollection.create(collection) })
+        .forEach(shared_collection => {
+          if (self.shared_with_me_collections[shared_collection.owner] === undefined) {
+            self.shared_with_me_collections[shared_collection.owner] = []
+          }
+          self.shared_with_me_collections[shared_collection.owner].push(shared_collection)
+        })
       // sort shared collections by label within their groups
       self.shared_with_me_collections.keys().forEach(owner => {
         self.shared_with_me_collections[owner].sort((a,b) => {
@@ -123,52 +126,23 @@ export const CollectionsStore = types
     setActiveCollection(collection_id) {
       self.active_collection = collection;
     },
-    addCollection(node, ownCollection = true) {
-      // TODO: send new collection to fetcher and api => create endpoint
-
-      // Temporary for testing
-      let collections = ownCollection ? [...self.own_collections] : [...self.shared_with_me_collections];
-      if (node.children.length >= 1) {
-        // Add collection after last position
-        collections.push({
-          ancestry: '/',
-          children: [],
-          id: Math.random(),
-          label: "New Collection",
-          owner: node.children[0]?.owner,
-          shares: [],
-          tabs_segment: {},
-          isNew: true
-        });
+    addOwnCollection(collection) {
+      if (collection.isRootCollection) {
+        self.own_collections.push(collection)
+        self.ownCollections.sort((a,b) => {
+          if (a.position != null && b.position != null) { return a.position - b.position }
+          else if (a.position != null && b.position == null) { return -1 }
+          else if (a.position == null && b.position != null) { return 1 }
+          else if (a.label < b.label) { return -1; }
+          else if (a.label == b.label) { return 0 }
+          else if (a.label > b.label) { return 1 }
+          else { console.debug('unsortable collections:', a, b); return 0 }
+        })
       } else {
-        // Add collection as child of node
-        const ancestry = node.ancestry.split('/').filter(Number);
-        const children = {
-          ancestry: `${node.ancestry}${node.id}/`,
-          children: [],
-          id: Math.random(),
-          label: "New Collection",
-          owner: node.owner,
-          shares: [],
-          tabs_segment: {},
-          isNew: true
-        };
-        // buggy, is easier with api request ...
-        collections.forEach((collection) => {
-          if (collection.id == node.id) {
-            Object.assign({}, collection, { children: children });
-          }
-          if (ancestry.length >= 1 && collection.id == ancestry[0]) {
-            collection.children.forEach((child) => {
-              // ancestry.includes(child.id)
-              if (child.id == node.id) {
-                Object.assign({}, child, { children: children });
-              }
-            })
-          }
-        });
+        const parentIndex = self.ownCollections.findIndex(element => element.isAncestorOf(collection))
+
+        self.own_collections[parentIndex].addChild(collection)
       }
-      self.own_collections = collections;
     },
   }))
   .views(self => ({
