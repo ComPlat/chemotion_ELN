@@ -64,7 +64,9 @@ export default class ManagingActions extends React.Component {
       const newHasSel = klassArray.some((el) => {
         return (state[el] && (state[el].checkedIds.size > 0 || state[el].checkedAll));
       });
-      PermissionActions.fetchPermissionStatus(state);
+      if (state.currentCollection) {
+        PermissionActions.fetchPermissionStatus(state);
+      }
       const { hasSel } = this.state;
       if (newHasSel != hasSel) this.setState({ hasSel: newHasSel });
     }
