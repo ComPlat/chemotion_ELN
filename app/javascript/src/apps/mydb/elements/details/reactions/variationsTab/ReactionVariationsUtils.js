@@ -12,13 +12,13 @@ import {
 import {
   PropertyFormatter, PropertyParser,
   MaterialFormatter, MaterialParser,
-    SegmentFormatter, SegmentParser,
+  SegmentFormatter, SegmentParser,
   EquivalentParser, GasParser, FeedstockParser,
   NoteCellRenderer, NoteCellEditor, RowToolsCellRenderer
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import {
   MenuHeader, SectionMenuHeader
-}  from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsTableHeader';
+} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsTableHeader';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import GenericSgsFetcher from 'src/fetchers/GenericSgsFetcher';
 
@@ -54,12 +54,12 @@ const cellDataTypes = {
     valueFormatter: PropertyFormatter,
     valueParser: PropertyParser,
   },
-    segmentData: {
-        extendsDataType: 'object',
-        baseDataType: 'object',
-        valueFormatter: SegmentFormatter,
-        valueParser: SegmentParser,
-    },
+  segmentData: {
+    extendsDataType: 'object',
+    baseDataType: 'object',
+    valueFormatter: SegmentFormatter,
+    valueParser: SegmentParser,
+  },
   material: {
     extendsDataType: 'object',
     baseDataType: 'object',
@@ -512,7 +512,7 @@ function getSegmentColumnGroupChild(propertyType) {
 
   const segFieldDef = segmentsForVariations.find((item) => item.key === propertyType);
 
-  const {field, layer} = segFieldDef;
+  const { field, layer } = segFieldDef;
   const defaultDef = {
     field: `segmentData.${propertyType}`,
     cellDataType: 'segmentData',
@@ -782,7 +782,7 @@ const getSegmentsForVariations = (reaction) => {
   const fetchData = async () => {
     try {
       const res = await GenericSgsFetcher.listSegmentKlass({ is_active: true }, true);
-      const reactionsSegments = res.klass.filter((k) => k.element_klass.name === "reaction" && k.is_active);
+      const reactionsSegments = res.klass.filter((k) => k.element_klass.name === 'reaction' && k.is_active);
       segmentsForVariations = processSegmentsForVariations(reactionsSegments, reaction);
     } catch (error) {
       console.error('Error fetching segments:', error);

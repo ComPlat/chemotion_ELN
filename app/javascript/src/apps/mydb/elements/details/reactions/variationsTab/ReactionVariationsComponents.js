@@ -1,7 +1,7 @@
 /* eslint-disable react/display-name */
-import React, {useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import Select from 'react-select';
-import {AgGridReact} from 'ag-grid-react';
+import { AgGridReact } from 'ag-grid-react';
 import {
   Button, ButtonGroup, Modal, Form, OverlayTrigger, Tooltip, Table
 } from 'react-bootstrap';
@@ -14,12 +14,12 @@ import {
   getReferenceMaterial, getCatalystMaterial, getFeedstockMaterial, getMolFromGram, getGramFromMol,
   computeEquivalent, computePercentYield, computePercentYieldGas, getVolumeFromGram, getGramFromVolume,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
-import {parseNumericStringOrNum} from 'src/utilities/MathUtils';
+import { parseNumericStringOrNum } from 'src/utilities/MathUtils';
 import {
   calculateGasMoles, calculateTON, calculateFeedstockMoles, calculateFeedstockVolume, calculateGasVolume,
 } from 'src/utilities/UnitsConversion';
 
-function MaterialEntry({children, entry, isMain}) {
+function MaterialEntry({ children, entry, isMain }) {
   function getEntryWidth() {
     switch (entry) {
       case 'temperature':
@@ -35,7 +35,7 @@ function MaterialEntry({children, entry, isMain}) {
   return (
     <li
       className={`list-group-item rounded-0 overflow-hidden ${isMain ? 'bg-info-subtle' : ''}`}
-      style={{width: `${getEntryWidth()}px`}}
+      style={{ width: `${getEntryWidth()}px` }}
     >
       {children}
     </li>
@@ -49,9 +49,9 @@ MaterialEntry.propTypes = {
 };
 
 function RowToolsCellRenderer({
-                                data: row,
-                                context,
-                              }) {
+  data: row,
+  context,
+}) {
   const {
     reactionShortLabel,
     copyRow,
@@ -67,10 +67,10 @@ function RowToolsCellRenderer({
           <Button size="xsm" variant="secondary">{row.id}</Button>
         </OverlayTrigger>
         <Button size="xsm" variant="success" onClick={() => copyRow(row)}>
-          <i className="fa fa-clone"/>
+          <i className="fa fa-clone" />
         </Button>
         <Button size="xsm" variant="danger" onClick={() => removeRow(row)}>
-          <i className="fa fa-trash-o"/>
+          <i className="fa fa-trash-o" />
         </Button>
       </ButtonGroup>
     </div>
@@ -89,10 +89,10 @@ RowToolsCellRenderer.propTypes = {
 };
 
 function EquivalentParser({
-                            data: row,
-                            oldValue: cellData,
-                            newValue,
-                          }) {
+  data: row,
+  oldValue: cellData,
+  newValue,
+}) {
   let equivalent = parseNumericStringOrNum(newValue);
   if (equivalent < 0) {
     equivalent = 0;
@@ -101,7 +101,7 @@ function EquivalentParser({
   if (!referenceMaterial) {
     return {
       ...cellData,
-      equivalent: {...cellData.equivalent, value: equivalent},
+      equivalent: { ...cellData.equivalent, value: equivalent },
     };
   }
 
@@ -112,19 +112,19 @@ function EquivalentParser({
 
   return {
     ...cellData,
-    mass: {...cellData.mass, value: mass},
-    amount: {...cellData.amount, value: amount},
-    volume: {...cellData.volume, value: volume},
-    equivalent: {...cellData.equivalent, value: equivalent},
+    mass: { ...cellData.mass, value: mass },
+    amount: { ...cellData.amount, value: amount },
+    volume: { ...cellData.volume, value: volume },
+    equivalent: { ...cellData.equivalent, value: equivalent },
   };
 }
 
 function SegmentFormatter({
-                            value: cellData,
-                            colDef,
-                          }) {
-  const {cellEditorParams} = colDef;
-  const {fieldType} = cellEditorParams;
+  value: cellData,
+  colDef,
+}) {
+  const { cellEditorParams } = colDef;
+  const { fieldType } = cellEditorParams;
   let newValue = cellData;
   if (typeof cellData === 'object') {
     newValue = cellData?.value ?? '';
@@ -145,10 +145,10 @@ function SegmentFormatter({
 }
 
 function SegmentParser({
-                         oldValue: cellData,
-                         newValue,
-                         colDef,
-                       }) {
+  oldValue: cellData,
+  newValue,
+  colDef,
+}) {
   const value = SegmentFormatter({
     value: newValue,
     colDef,
@@ -161,16 +161,16 @@ function SegmentParser({
 }
 
 function PropertyParser({
-                          oldValue: cellData, newValue, colDef
-                        }) {
+  oldValue: cellData, newValue, colDef
+}) {
   const currentEntry = getCurrentEntry(colDef.entryDefs);
-  const {displayUnit} = colDef.entryDefs[currentEntry];
+  const { displayUnit } = colDef.entryDefs[currentEntry];
   let value = parseNumericStringOrNum(newValue);
   if (currentEntry !== 'temperature' && value < 0) {
     value = 0;
   }
   value = convertUnit(value, displayUnit, cellData.unit);
-  const updatedCellData = {...cellData, value};
+  const updatedCellData = { ...cellData, value };
 
   return updatedCellData;
 }
@@ -181,22 +181,22 @@ function convertValueToDisplayUnit(value, unit, displayUnit) {
   return parseFloat(Number(valueInDisplayUnit).toPrecision(4));
 }
 
-function PropertyFormatter({value: cellData, colDef}) {
+function PropertyFormatter({ value: cellData, colDef }) {
   const currentEntry = getCurrentEntry(colDef.entryDefs);
-  const {displayUnit} = colDef.entryDefs[currentEntry];
+  const { displayUnit } = colDef.entryDefs[currentEntry];
 
   return convertValueToDisplayUnit(cellData.value, cellData.unit, displayUnit);
 }
 
-function MaterialFormatter({value: cellData, colDef}) {
+function MaterialFormatter({ value: cellData, colDef }) {
   const currentEntry = getCurrentEntry(colDef.entryDefs);
-  const {displayUnit} = colDef.entryDefs[currentEntry];
+  const { displayUnit } = colDef.entryDefs[currentEntry];
 
   return convertValueToDisplayUnit(cellData[currentEntry].value, cellData[currentEntry].unit, displayUnit);
 }
 
-function MaterialRenderer({value: cellData, colDef}) {
-  const {entryDefs} = colDef;
+function MaterialRenderer({ value: cellData, colDef }) {
+  const { entryDefs } = colDef;
   return (
     <ol className="list-group list-group-horizontal w-100">
       {Object.entries(entryDefs).map(([entry, entryDef]) => {
@@ -209,7 +209,7 @@ function MaterialRenderer({value: cellData, colDef}) {
             <MaterialEntry key={entry} entry={entry} isMain={entryDef.isMain}>
               {convertValueToDisplayUnit(entryData.value, entryData.unit, entryDef.displayUnit)}
             </MaterialEntry>
-          ) : null
+            ) : null
         );
       })}
     </ol>
@@ -233,15 +233,15 @@ MaterialRenderer.propTypes = {
 };
 
 function MaterialParser({
-                          data: row, oldValue: cellData, newValue, colDef, context
-                        }) {
+  data: row, oldValue: cellData, newValue, colDef, context
+}) {
   const currentEntry = getCurrentEntry(colDef.entryDefs);
-  const {displayUnit} = colDef.entryDefs[currentEntry];
+  const { displayUnit } = colDef.entryDefs[currentEntry];
   let value = convertUnit(parseNumericStringOrNum(newValue), displayUnit, cellData[currentEntry].unit);
   if (value < 0) {
     value = 0;
   }
-  let updatedCellData = {...cellData, [currentEntry]: {...cellData[currentEntry], value}};
+  let updatedCellData = { ...cellData, [currentEntry]: { ...cellData[currentEntry], value } };
 
   switch (currentEntry) {
     case 'mass': {
@@ -249,8 +249,8 @@ function MaterialParser({
       const volume = getVolumeFromGram(value, updatedCellData);
       updatedCellData = {
         ...updatedCellData,
-        amount: {...updatedCellData.amount, value: amount},
-        volume: {...updatedCellData.volume, value: volume}
+        amount: { ...updatedCellData.amount, value: amount },
+        volume: { ...updatedCellData.volume, value: volume }
       };
       break;
     }
@@ -259,8 +259,8 @@ function MaterialParser({
       const volume = getVolumeFromGram(mass, updatedCellData);
       updatedCellData = {
         ...updatedCellData,
-        mass: {...updatedCellData.mass, value: mass},
-        volume: {...updatedCellData.volume, value: volume}
+        mass: { ...updatedCellData.mass, value: mass },
+        volume: { ...updatedCellData.volume, value: volume }
       };
       break;
     }
@@ -269,8 +269,8 @@ function MaterialParser({
       const amount = getMolFromGram(mass, updatedCellData);
       updatedCellData = {
         ...updatedCellData,
-        mass: {...updatedCellData.mass, value: mass},
-        amount: {...updatedCellData.amount, value: amount}
+        mass: { ...updatedCellData.mass, value: mass },
+        amount: { ...updatedCellData.amount, value: amount }
       };
       break;
     }
@@ -314,15 +314,15 @@ function MaterialParser({
 }
 
 function GasParser({
-                     data: row, oldValue: cellData, newValue, colDef
-                   }) {
+  data: row, oldValue: cellData, newValue, colDef
+}) {
   const currentEntry = getCurrentEntry(colDef.entryDefs);
-  const {displayUnit} = colDef.entryDefs[currentEntry];
+  const { displayUnit } = colDef.entryDefs[currentEntry];
   let value = convertUnit(parseNumericStringOrNum(newValue), displayUnit, cellData[currentEntry].unit);
   if (currentEntry !== 'temperature' && value < 0) {
     value = 0;
   }
-  let updatedCellData = {...cellData, [currentEntry]: {...cellData[currentEntry], value}};
+  let updatedCellData = { ...cellData, [currentEntry]: { ...cellData[currentEntry], value } };
 
   switch (currentEntry) {
     case 'concentration':
@@ -333,13 +333,13 @@ function GasParser({
         'K'
       );
       const concentration = updatedCellData.concentration.value;
-      const {vesselVolume} = updatedCellData.aux;
+      const { vesselVolume } = updatedCellData.aux;
 
       const amount = calculateGasMoles(vesselVolume, concentration, temperatureInKelvin);
       const mass = getGramFromMol(amount, updatedCellData);
       const volume = calculateGasVolume(
         amount,
-        {part_per_million: concentration, temperature: {value: temperatureInKelvin, unit: 'K'}}
+        { part_per_million: concentration, temperature: { value: temperatureInKelvin, unit: 'K' } }
       );
 
       const catalyst = getCatalystMaterial(row);
@@ -350,11 +350,11 @@ function GasParser({
 
       updatedCellData = {
         ...updatedCellData,
-        mass: {...updatedCellData.mass, value: mass},
-        amount: {...updatedCellData.amount, value: amount},
-        volume: {...updatedCellData.volume, value: volume},
-        yield: {...updatedCellData.yield, value: percentYield},
-        turnoverNumber: {...updatedCellData.turnoverNumber, value: turnoverNumber},
+        mass: { ...updatedCellData.mass, value: mass },
+        amount: { ...updatedCellData.amount, value: amount },
+        volume: { ...updatedCellData.volume, value: volume },
+        yield: { ...updatedCellData.yield, value: percentYield },
+        turnoverNumber: { ...updatedCellData.turnoverNumber, value: turnoverNumber },
       };
       break;
     }
@@ -380,15 +380,15 @@ function GasParser({
 }
 
 function FeedstockParser({
-                           data: row, oldValue: cellData, newValue, colDef
-                         }) {
+  data: row, oldValue: cellData, newValue, colDef
+}) {
   const currentEntry = getCurrentEntry(colDef.entryDefs);
-  const {displayUnit} = colDef.entryDefs[currentEntry];
+  const { displayUnit } = colDef.entryDefs[currentEntry];
   let value = convertUnit(parseNumericStringOrNum(newValue), displayUnit, cellData[currentEntry].unit);
   if (value < 0) {
     value = 0;
   }
-  let updatedCellData = {...cellData, [currentEntry]: {...cellData[currentEntry], value}};
+  let updatedCellData = { ...cellData, [currentEntry]: { ...cellData[currentEntry], value } };
 
   switch (currentEntry) {
     case 'amount': {
@@ -478,14 +478,14 @@ function NoteCellRenderer(noteCellProps) {
 }
 
 function NoteCellEditor({
-                          data: row,
-                          value,
-                          onValueChange,
-                          stopEditing,
-                          context,
-                        }) {
+  data: row,
+  value,
+  onValueChange,
+  stopEditing,
+  context,
+}) {
   const [note, setNote] = useState(value);
-  const {reactionShortLabel} = context;
+  const { reactionShortLabel } = context;
 
   const onClose = () => {
     stopEditing();
@@ -530,8 +530,8 @@ NoteCellEditor.propTypes = {
   }).isRequired,
 };
 
-function MaterialOverlay({value: cellData}) {
-  const {aux = null} = cellData;
+function MaterialOverlay({ value: cellData }) {
+  const { aux = null } = cellData;
 
   return (
     <div className="tooltip show">
@@ -623,7 +623,7 @@ function ColumnSelection(selectedColumns, availableColumns, onApply, loading = f
   };
 
   const handleSelectChange = (key) => (selectedOptions) => {
-    const updatedCurrentColumns = {...currentColumns};
+    const updatedCurrentColumns = { ...currentColumns };
     updatedCurrentColumns[key] = selectedOptions ? selectedOptions.map((option) => option.value) : [];
     setCurrentColumns(updatedCurrentColumns);
   };
@@ -636,8 +636,8 @@ function ColumnSelection(selectedColumns, availableColumns, onApply, loading = f
   const updatedCurrentColumns = Object.fromEntries(
     Object.entries(currentColumns)
       .map(([key, values]) => {
-        const {[key]: availableValues} = availableColumns;
-        const newValues = values.filter((value) => availableValues.map((x) => Array.isArray(x) ? x[0] : x)
+        const { [key]: availableValues } = availableColumns;
+        const newValues = values.filter((value) => availableValues.map((x) => (Array.isArray(x) ? x[0] : x))
           .includes(value));
         return [key, newValues];
       }),
@@ -698,12 +698,11 @@ function ColumnSelection(selectedColumns, availableColumns, onApply, loading = f
   );
 }
 
-
-function MaterialEntrySelection({entryDefs, onChange}) {
+function MaterialEntrySelection({ entryDefs, onChange }) {
   const [showModal, setShowModal] = useState(false);
 
   const handleEntrySelection = (item) => {
-    const updated = {...entryDefs};
+    const updated = { ...entryDefs };
     const wasMain = updated[item].isMain;
     const wasSelected = updated[item].isSelected;
     const selectedCount = Object.values(updated).filter((entry) => entry.isSelected).length;
@@ -746,7 +745,7 @@ function MaterialEntrySelection({entryDefs, onChange}) {
   };
 
   const handleMainEntryChange = (item) => {
-    const updated = {...entryDefs};
+    const updated = { ...entryDefs };
 
     Object.keys(updated).forEach((key) => {
       // Clear previous main entry
@@ -786,51 +785,51 @@ function MaterialEntrySelection({entryDefs, onChange}) {
         <Modal.Body>
           <Table striped bordered hover className="table-layout-fixed">
             <thead>
-            <tr>
-              <th>Selected</th>
-              <th>Entry</th>
-              <th>Unit</th>
-              <th>Main entry (editable, sortable)</th>
-            </tr>
+              <tr>
+                <th>Selected</th>
+                <th>Entry</th>
+                <th>Unit</th>
+                <th>Main entry (editable, sortable)</th>
+              </tr>
             </thead>
             <tbody>
-            {Object.entries(entryDefs).map(([entry, entryDef]) => {
-              const units = getStandardUnits(entry);
-              return (
-                <tr key={entry}>
-                  <td className="text-center">
-                    <Form.Check
-                      type="checkbox"
-                      checked={entryDef.isSelected || false}
-                      onChange={() => handleEntrySelection(entry)}
-                    />
-                  </td>
-                  <td>{getUserFacingEntryName(entry)}</td>
-                  <td>
-                    {units.length > 1 ? (
-                      <Form.Select
-                        size="sm"
-                        value={entryDef.displayUnit || ''}
-                        onChange={(e) => handleUnitChange(entry, e.target.value)}
-                      >
-                        {units.map((unit) => (
-                          <option key={unit} value={unit}>{getUserFacingUnit(unit)}</option>
-                        ))}
-                      </Form.Select>
-                    ) : getUserFacingUnit(units[0])}
-                  </td>
-                  <td className="text-center">
-                    <Form.Check
-                      type="radio"
-                      name="default"
-                      checked={entryDef.isMain || false}
-                      onChange={() => handleMainEntryChange(entry)}
-                      disabled={!entryDef.isSelected}
-                    />
-                  </td>
-                </tr>
-              );
-            })}
+              {Object.entries(entryDefs).map(([entry, entryDef]) => {
+                const units = getStandardUnits(entry);
+                return (
+                  <tr key={entry}>
+                    <td className="text-center">
+                      <Form.Check
+                        type="checkbox"
+                        checked={entryDef.isSelected || false}
+                        onChange={() => handleEntrySelection(entry)}
+                      />
+                    </td>
+                    <td>{getUserFacingEntryName(entry)}</td>
+                    <td>
+                      {units.length > 1 ? (
+                        <Form.Select
+                          size="sm"
+                          value={entryDef.displayUnit || ''}
+                          onChange={(e) => handleUnitChange(entry, e.target.value)}
+                        >
+                          {units.map((unit) => (
+                            <option key={unit} value={unit}>{getUserFacingUnit(unit)}</option>
+                          ))}
+                        </Form.Select>
+                      ) : getUserFacingUnit(units[0])}
+                    </td>
+                    <td className="text-center">
+                      <Form.Check
+                        type="radio"
+                        name="default"
+                        checked={entryDef.isMain || false}
+                        onChange={() => handleMainEntryChange(entry)}
+                        disabled={!entryDef.isSelected}
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </Table>
         </Modal.Body>

@@ -28,10 +28,10 @@ export default function columnDefinitionsReducer(columnDefinitions, action) {
 
       if (!action.only_update_entry_defs) {
         updatedColumnDefinitions = updateColumnDefinitions(
-            updatedColumnDefinitions,
-            action.field,
-            'cellDataType',
-            getCellDataType(getCurrentEntry(action.entryDefs), action.gasType)
+          updatedColumnDefinitions,
+          action.field,
+          'cellDataType',
+          getCellDataType(getCurrentEntry(action.entryDefs), action.gasType)
         );
       }
       return updatedColumnDefinitions;
