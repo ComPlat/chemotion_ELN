@@ -230,26 +230,15 @@ module Chemotion
       paginate per_page: 7, offset: 0, max_per_page: 100
 
       get do
-        own_collection = false
         sample_scope = Sample.none
         if params[:collection_id]
           begin
-            c = Collection.belongs_to_or_shared_by(
-              current_user.id, current_user.group_ids
-            ).find(params[:collection_id])
-
-            !c.is_shared && (c.shared_by_id != current_user.id) &&
-              (own_collection = true)
-
-            sample_scope = Collection.belongs_to_or_shared_by(
-              current_user.id, current_user.group_ids
-            ).find(params[:collection_id]).samples
+            sample_scope = Collection.accessible_for(current_user).find(params[:collection_id]).samples
           rescue ActiveRecord::RecordNotFound
             Sample.none
           end
         else
           # All collection
-          own_collection = true
           sample_scope = Sample.for_user(current_user.id).distinct
         end
         sample_scope = sample_scope.includes_for_list_display
