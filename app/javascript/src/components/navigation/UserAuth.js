@@ -34,6 +34,7 @@ export default class UserAuth extends Component {
       selectedUsers: null,
       showSubscription: false,
       showAffiliations: false,
+      showSettings: false,
       currentSubscriptions: [],
       showDeviceMetadataModal: false,
       device: {},
@@ -54,6 +55,9 @@ export default class UserAuth extends Component {
     this.handleAffiliationsShow = this.handleAffiliationsShow.bind(this);
     this.handleAffiliationsHide = this.handleAffiliationsHide.bind(this);
     this.renderAffiliations = this.renderAffiliations.bind(this);
+    this.handleSettingsShow = this.handleSettingsShow.bind(this);
+    this.handleSettingsHide = this.handleSettingsHide.bind(this);
+    this.renderSettings = this.renderSettings.bind(this);
 
     this.promptTextCreator = this.promptTextCreator.bind(this);
 
@@ -284,6 +288,7 @@ export default class UserAuth extends Component {
   handleAffiliationsShow() {
     this.setState({ showAffiliations: true });
   }
+
   handleAffiliationsHide = () => {
     this.setState({ showAffiliations: false });
   };
@@ -292,14 +297,47 @@ export default class UserAuth extends Component {
     return this.state.showAffiliations ? (
       <Affiliations
         show={this.state.showAffiliations}
-        onHide={this.handleAffiliationsHide} />
+        onHide={this.handleAffiliationsHide}
+      />
     ) : null;
+  }
 
+  // eslint-disable-next-line class-methods-use-this
+  handleSettingsShow() {
+    this.setState({ showSettings: true });
+  }
+
+  handleSettingsHide = () => {
+    this.setState({ showSettings: false });
+  };
+
+  renderSettings() {
+    const { showSettings } = this.state;
+
+    return (
+      <Modal
+        fullscreen
+        show={showSettings}
+        onHide={this.handleSettingsHide}
+        centered
+      >
+        <Modal.Header closeButton />
+        <Modal.Body style={{ padding: 0, overflow: 'hidden' }}>
+          <iframe
+            title="settings"
+            src="/pages/settings"
+            style={{ width: '100%', height: '100%', border: 'none' }}
+          />
+        </Modal.Body>
+      </Modal>
+    );
   }
 
   // render modal
   renderModal() {
-    const { showModal, currentUser, currentGroups, currentDevices } = this.state;
+    const {
+      showModal, currentUser, currentGroups, currentDevices
+    } = this.state;
 
     const tBodyGroups = currentGroups.map((g) => (
       <GroupElement
@@ -614,7 +652,10 @@ export default class UserAuth extends Component {
             {currentUser.name}
           </Dropdown.Toggle>
           <Dropdown.Menu>
-            <Dropdown.Item eventKey="1" href="/pages/settings">
+            <Dropdown.Item
+              eventKey="1"
+              onClick={this.handleSettingsShow}
+            >
               Account &amp; Profile
             </Dropdown.Item>
             {currentUser.is_templates_moderator && (
@@ -626,7 +667,8 @@ export default class UserAuth extends Component {
               Change Password
             </Dropdown.Item>
             <Dropdown.Item
-              onClick={this.handleAffiliationsShow}>
+              onClick={this.handleAffiliationsShow}
+            >
               My Affiliations
             </Dropdown.Item>
             <Dropdown.Item onClick={this.handleShow}>My Groups & Devices</Dropdown.Item>
@@ -655,6 +697,7 @@ export default class UserAuth extends Component {
 
         {this.renderModal()}
         {this.renderAffiliations()}
+        {this.renderSettings()}
         <UserLabelModal
           showLabelModal={showLabelModal}
           onHide={() => this.handleLabelClose()}
