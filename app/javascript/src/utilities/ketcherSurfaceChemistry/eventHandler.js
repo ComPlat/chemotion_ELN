@@ -49,6 +49,12 @@ const eventOperationHandlers = {
   [EventNames.DELETE_ATOM]: async (eventItem) => {
     await eventCollectDeletedAtoms(eventItem);
     addEventToFILOStack(EventNames.DELETE_ATOM);
+  },
+  [EventNames.ADD_TEXT]: async () => {
+    addEventToFILOStack(EventNames.ADD_TEXT);
+  },
+  [EventNames.DELETE_TEXT]: async () => {
+    addEventToFILOStack(EventNames.DELETE_TEXT);
   }
 };
 
