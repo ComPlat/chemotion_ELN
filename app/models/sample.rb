@@ -216,6 +216,7 @@ class Sample < ApplicationRecord
   before_save :attach_svg, :init_elemental_compositions,
               :set_loading_from_ea
   before_save :auto_set_short_label
+  ## before_save :update_amount_using_weight_percentage
   before_create :check_molecule_name
   before_create :set_boiling_melting_points
   after_create :create_root_container
@@ -625,21 +626,9 @@ class Sample < ApplicationRecord
   end
 
   def amount_mol
-    mol = nil
     amount_value = detect_amount_type['value']
-    case detect_amount_type['unit']
-    when 'l'
-      mol = if has_molarity
-              amount_value * molarity_value
-            else
-              amount_value * density * 1000 * purity / molecule.molecular_weight
-            end
-    when 'mol'
-      mol = amount_value
-    when 'g'
-      mol = (amount_value * purity) / molecule.molecular_weight
-    end
-    mol
+    unit = detect_amount_type['unit']
+    convert_amount_to_mol(amount_value, unit)
   end
 
   def update_inventory_label(inventory_label, collection_id = nil)
@@ -648,6 +637,26 @@ class Sample < ApplicationRecord
     return if inventory_label.present? && !inventory.match_inventory_counter(inventory_label)
 
     self['xref']['inventory_label'] = inventory.label if inventory.update_incremented_counter
+  end
+
+  # Compute number of moles from given amount and unit
+  # Supports units: 'l', 'mol', 'g'
+  # - 'l': if `has_molarity` uses molarity, otherwise uses density and molecular weight
+  # - 'mol': returns amount_value
+  # - 'g': converts mass to moles using molecular weight and purity
+  def convert_amount_to_mol(amount_value, unit)
+    amount = coerce_amount(amount_value)
+    return nil if amount.nil?
+
+    case unit
+    when 'l'
+      return convert_liters_to_moles(amount)
+    when 'mol'
+      amount
+    when 'g'
+      return convert_grams_to_moles(amount)
+    end
+    nil
   end
 
   private
@@ -817,6 +826,43 @@ class Sample < ApplicationRecord
     ).find_each do |material|
       material.update_gas_material(catalyst_mol_value)
     end
+  end
+
+  def coerce_amount(value)
+    return nil if value.nil?
+
+    amount = value.to_f
+    return nil unless amount&.finite?
+
+    amount
+  end
+
+  def convert_liters_to_moles(amount)
+    return convert_liters_using_molarity(amount) if has_molarity
+
+    return nil unless density_and_mw_valid?
+
+    amount * density.to_f * 1000 * purity.to_f / molecule.molecular_weight.to_f
+  end
+
+  def convert_liters_using_molarity(amount)
+    return nil unless molarity_value.present? && molarity_value.to_f.positive?
+
+    amount * molarity_value.to_f
+  end
+
+  def density_and_mw_valid?
+    density.present? && density.to_f.positive? && valid_molecular_weight?
+  end
+
+  def convert_grams_to_moles(amount)
+    return nil unless valid_molecular_weight?
+
+    (amount * purity.to_f) / molecule.molecular_weight.to_f
+  end
+
+  def valid_molecular_weight?
+    molecule&.molecular_weight.present? && molecule.molecular_weight.to_f.positive?
   end
 end
 # rubocop:enable Metrics/ClassLength
