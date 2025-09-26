@@ -1,5 +1,5 @@
 #FROM ptrxyz/chemotion:eln-2.0.1
-FROM complat/chemotion_eln_stage:main-v2.0.1-67-g109bb63fc
+FROM complat/chemotion_eln_stage:v2.x
 
 
 ARG REMOTE=https://github.com/ComPlat/chemotion_ELN.git
