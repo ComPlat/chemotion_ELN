@@ -652,7 +652,7 @@ class Sample < ApplicationRecord
     when 'l'
       return convert_liters_to_moles(amount)
     when 'mol'
-      amount
+      return amount
     when 'g'
       return convert_grams_to_moles(amount)
     end
