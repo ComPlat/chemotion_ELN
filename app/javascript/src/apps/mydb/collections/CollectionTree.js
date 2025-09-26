@@ -13,7 +13,7 @@ import GatePushButton from 'src/components/common/GatePushButton';
 
 import { aviatorNavigation } from 'src/utilities/routesUtils';
 
-const ALL_COLLECTIONS_KEY = 'collections';
+const ALL_COLLECTIONS_KEY = 'all';
 const CHEMOTION_REPOSITORY_KEY = 'chemotionRepository';
 
 function containsCollection(collections, collectionId) {
@@ -26,7 +26,7 @@ function containsCollection(collections, collectionId) {
 
 function CollectionTree({ isCollapsed }) {
   const collectionsStore = useContext(StoreContext).collections;
-  const activeCollection = collectionsStore.active_collection;
+  const activeCollectionType = collectionsStore.active_collection_type;
   const ownCollections = collectionsStore.ownCollections;
   const sharedWithMeCollections = collectionsStore.sharedWithMeCollections;
   const chemotionRepositoryCollection = collectionsStore.chemotion_repository_collection;
@@ -37,22 +37,23 @@ function CollectionTree({ isCollapsed }) {
 
   const toggleCollection = (collectionKey) => {
     setExpandedCollection((prev) => ((prev === collectionKey) ? null : collectionKey));
-  };
+  }
 
   const expandCollection = (collectionKey) => {
     if (isCollapsed) UIActions.expandSidebar.defer();
     setExpandedCollection(collectionKey);
-  };
+  }
 
   const setCollection = (collection) => {
     expandCollection(collection);
     if (collection !== activeCollection) setActiveCollection(collection);
-  };
+  }
 
   const setActiveCollection = (collection) => {
     //if (isCollapsed) expandSidebar();
-    if (collection !== activeCollection) collectionsStore.setActiveCollection(collection);
-  };
+    if (collection !== activeCollectionType) collectionsStore.setActiveCollectionType(collection);
+  }
+
   useEffect(() => {
     collectionsStore.fetchCollections();
 
@@ -134,7 +135,7 @@ function CollectionTree({ isCollapsed }) {
         {collectionGroups.map(({
           label, icon, collectionKey, collections, onClickOpenCollection,
         }) => {
-          const isActive = activeCollection === collectionKey;
+          const isActive = activeCollectionType === collectionKey;
           const isExpanded = expandedCollection === collectionKey;
           return (
             <Fragment key={collectionKey}>
