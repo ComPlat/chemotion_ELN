@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="11.6986067405 34.882796802 88.4411268 45.127102640000004" width="88.4411268" height="45.127102640000004">
+  <!-- Background Rectangle (White) -->
+  <rect x="11.6986067405" y="34.882796802" width="88.4411268" height="45.127102640000004" style="fill:white;"/>
+
+  <!-- Your original path element with a random pattern ID -->
+  <path style="fill:url(#pattern-93c618d8-8bb8-4877-b5cf-6ecfc7a7bc2b);fill-opacity:1;fill-rule:evenodd;stroke:#1b1918;stroke-width:0.5669;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" d="m 13.783477,41.952131 v 31.1807 q 0,5.6693 5.6693,5.6693 h 73.700797 q 5.6693,0 5.6693,-5.6693 v -31.1807 q 0,-5.6693 -5.6693,-5.6693 H 19.452777 q -5.6693,0 -5.6693,5.6693 z"/>
+
+  <!-- Random pattern definition -->
+  <pattern patternUnits="userSpaceOnUse" width="3" height="10" id="pattern-93c618d8-8bb8-4877-b5cf-6ecfc7a7bc2b">
+    <rect width="2" height="10" fill="#cea5cd"/>
+  </pattern>
+</svg>

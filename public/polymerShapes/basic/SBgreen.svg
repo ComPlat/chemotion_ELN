@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" id="svg51" viewBox="11.066479456 34.882796802 88.89467104 46.487718799999996" version="1.1" style="max-height: 500px" width="88.89467104" height="46.487718799999996">
+  <defs id="defs51">
+    <pattern patternTransform="matrix(1.4142135,1.4142135,-1.4142135,1.4142135,191.10288,2.227912)" id="pattern19" preserveAspectRatio="xMidYMid" xlink:href="#pattern11"/>
+    <pattern patternTransform="matrix(1.4142135,1.4142135,-1.4142135,1.4142135,191.10288,2.227912)" id="pattern11" preserveAspectRatio="xMidYMid" xlink:href="#pattern150-0-2"/>
+    <linearGradient id="swatch152">
+      <stop id="stop152" offset="0" style="stop-color:#000000;stop-opacity:1;"/>
+    </linearGradient>
+    <pattern y="0" x="0" patternTransform="matrix(1.4142135,1.4142135,-1.4142135,1.4142135,191.10288,2.227912)" id="pattern150-0-2" preserveAspectRatio="xMidYMid" xlink:href="#stripes-grid-9-4"/>
+    <pattern y="0" x="0" style="fill:#a6d097" id="stripes-grid-9-4" preserveAspectRatio="xMidYMid" patternTransform="scale(2)" height="10" width="3" patternUnits="userSpaceOnUse">
+      <rect id="rect134-4-4-5" height="10" width="2" y="0" x="0" style="stroke:none"/>
+    </pattern>
+  </defs>
+  
+    
+  
+  <path id="path25-8" style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:url(#pattern19);fill-opacity:1;fill-rule:evenodd;stroke:#1b1918;stroke-width:0.5669;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1" d="m 13.783477,41.952131 v 31.1807 q 0,5.6693 5.6693,5.6693 h 73.700797 q 5.6693,0 5.6693,-5.6693 v -31.1807 q 0,-5.6693 -5.6693,-5.6693 H 19.452777 q -5.6693,0 -5.6693,5.6693 z"/>
+</svg>
