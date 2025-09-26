@@ -42,7 +42,7 @@ export const OwnCollection = types.model({
   isAncestorOf(collection) {
     return collection.ancestorIds.indexOf(self.id) != -1
   },
-  isParentOf(collection) { return self.id == collection.ancestorIds.findLast },
+  isParentOf(collection) { return self.id == collection.ancestorIds.slice(-1) },
 }));
 
 export const SharedCollection = types.model({
@@ -72,7 +72,7 @@ const presort = (a, b) => {
 
 export const CollectionsStore = types
   .model({
-    active_collection: types.maybeNull(types.integer),
+    active_collection_type: types.optional(types.string, 'all'),
     all_collection: types.maybeNull(OwnCollection),
     chemotion_repository_collection: types.maybeNull(OwnCollection),
     current_user_id: types.maybeNull(types.integer),
@@ -83,6 +83,8 @@ export const CollectionsStore = types
     fetchCollections: flow(function* fetchCollections() {
       let all_collections = yield CollectionsFetcher.fetchCollections();
       const own_collections_tree = []
+      self.own_collections.clear();
+      self.shared_with_me_collections.clear();
 
       // basic presorting, so we can assume that parent objects are encountered before child objects when iterating the collection array
       all_collections.own.sort(presort);
@@ -123,8 +125,8 @@ export const CollectionsStore = types
         return self.current_user;
       }
     },
-    setActiveCollection(collection_id) {
-      self.active_collection = collection;
+    setActiveCollectionType(collection_type) {
+      self.active_collection_type = collection_type;
     },
     addOwnCollection(collection) {
       if (collection.isRootCollection) {
@@ -139,7 +141,7 @@ export const CollectionsStore = types
           else { console.debug('unsortable collections:', a, b); return 0 }
         })
       } else {
-        const parentIndex = self.ownCollections.findIndex(element => element.isAncestorOf(collection))
+        const parentIndex = self.own_collections.findIndex(element => element.isAncestorOf(collection))
 
         self.own_collections[parentIndex].addChild(collection)
       }
