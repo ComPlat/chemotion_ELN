@@ -1,14 +1,14 @@
 $special-button-variant-colors: (
   "light": (
     "bg-default": map-get($silicon-shades, lighten5),
-    "border-default": map-get($carbon-shades, lighten4),
-    "text-default": map-get($carbon-shades, lighten1),
+    "border-default": map-get($carbon-shades, lighten3),
+    "text-default": $body-color,
     "bg-hover": map-get($silicon-shades, lighten4),
-    "border-hover": map-get($carbon-shades, lighten3),
-    "text-hover": map-get($carbon-shades, lighten1),
+    "border-hover": map-get($carbon-shades, lighten2),
+    "text-hover": $body-color,
     "bg-active": map-get($silicon-shades, lighten3),
-    "border-active": map-get($carbon-shades, lighten2),
-    "text-active": map-get($carbon-shades, lighten1),
+    "border-active": map-get($carbon-shades, lighten1),
+    "text-active": $body-color,
   ),
   "paper": (
     "bg-default": $chemstrap-white,
@@ -100,6 +100,7 @@ h6 {
   font-size: 12px;
   line-height: 1.5;
   border-radius: 3px;
+  @include condensed-text-width;
 }
 
 @mixin xxsm-form-elements {
@@ -107,6 +108,11 @@ h6 {
   font-size: 12px;
   line-height: 1;
   border-radius: 2.5px;
+  @include condensed-text-width;
+}
+
+.btn-sm {
+  @include condensed-text-width;
 }
 
 .btn-xsm {
@@ -115,6 +121,10 @@ h6 {
 
 .btn-xxsm {
   @include xxsm-form-elements;
+}
+
+.input-group-sm > {
+  @include condensed-text-width;
 }
 
 .input-group-xsm > {
@@ -150,4 +160,40 @@ h6 {
 
 .input-group {
   z-index: 0;
+}
+
+.accordion-button {
+  @extend .justify-content-between;
+  @extend .surface-lighten4;
+  @extend .border-0;
+  &::after {
+    content: "\f078";
+    font-family: "FontAwesome";
+    background-image: none !important;
+    @extend .bg-draggable;
+    @extend .rounded-circle;
+    width: 24px;
+    height: 24px;
+    @extend .text-white;
+    @extend .d-flex;
+    @extend .align-items-center;
+    @extend .justify-content-center;
+    @extend .ms-2;
+  }
+  &:hover::after {
+    padding-top: 3px;
+  }
+  &:not(.collapsed) {
+    &::after {
+      transform: rotate(180deg);
+      @extend .surface-base;
+    }
+  }
+  &.accordion-button--icon-only {
+    width: auto;
+    background: transparent !important;
+    &::after {
+      @extend .ms-0;
+    }
+  }
 }

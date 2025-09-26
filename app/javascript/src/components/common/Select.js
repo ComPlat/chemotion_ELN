@@ -20,6 +20,7 @@ const EditableInput = (props) => (
 
 function buildWrappedComponent(name, BaseComponent) {
   const component = forwardRef(({
+    size,
     minWidth,
     maxHeight,
     className,
@@ -72,6 +73,7 @@ function buildWrappedComponent(name, BaseComponent) {
         className={cs(
           baseClassName,
           className,
+          { [`form-select-${size}`]: !!size }
         )}
         classNamePrefix={baseClassName}
         ref={ref}
@@ -87,12 +89,14 @@ function buildWrappedComponent(name, BaseComponent) {
   component.displayName = name;
   component.propTypes = {
     ...BaseComponent.propTypes,
+    size: PropTypes.string,
     minWidth: PropTypes.string,
     maxHeight: PropTypes.string,
     isInputEditable: PropTypes.bool,
   };
   component.defaultProps = {
     ...BaseComponent.defaultProps,
+    size: null,
     minWidth: null,
     maxHeight: null,
     isInputEditable: false,

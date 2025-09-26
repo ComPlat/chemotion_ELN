@@ -12,7 +12,6 @@ import DeviceDescription from 'src/models/DeviceDescription';
 function ListItemHeader({
   group,
   getGroupKey,
-  toggleGroupCollapse,
   groupedByValue
 }) {
   const groupKey = getGroupKey(group[0]);
@@ -27,19 +26,13 @@ function ListItemHeader({
   }
 
   return (
-    <div
-      onClick={() => toggleGroupCollapse()}
-      role="button"
-    >
-      <div className="fw-bold fs-5">{groupName}</div>
-    </div>
+    <div className="fw-bold fs-5">{groupName}</div>
   );
 }
 
 ListItemHeader.propTypes = {
   group: PropTypes.arrayOf(PropTypes.instanceOf(DeviceDescription)).isRequired,
   getGroupKey: PropTypes.func.isRequired,
-  toggleGroupCollapse: PropTypes.func.isRequired,
   groupedByValue: PropTypes.string.isRequired,
 };
 
@@ -96,11 +89,10 @@ function DeviceDescriptionList({
       type="device_description"
       elements={elements}
       getGroupKey={getGroupKey}
-      renderGroupHeader={(group, toggleGroupCollapse) => (
+      renderGroupHeader={(group) => (
         <ListItemHeader
           group={group}
           getGroupKey={getGroupKey}
-          toggleGroupCollapse={toggleGroupCollapse}
           groupedByValue={groupedByValue}
         />
       )}

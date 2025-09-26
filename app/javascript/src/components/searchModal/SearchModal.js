@@ -116,7 +116,7 @@ const SearchModal = () => {
                   className={searchTypeStructureClass}
                   variant="outline-dark"
                 >
-                  <img src="/images/wild_card/pubchem.svg" className="pubchem-logo button-icon" />
+                  <i className="icon-pubchem me-1" />
                   Structure search
                 </Button>
               </ButtonGroup>

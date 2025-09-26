@@ -1,3 +1,11 @@
+.condensed-text-width {
+  @include condensed-text-width;
+}
+
+.normal-text-width {
+  @include normal-text-width;
+}
+
 .white-space {
   &-nowrap {
     white-space: nowrap;

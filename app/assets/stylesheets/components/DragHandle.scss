@@ -3,8 +3,8 @@
   min-width: 15px;
   @extend .d-flex;
   @extend .align-items-center;
+  @extend .align-self-stretch;
   @extend .bg-draggable;
-  @extend .rounded-start;
   @extend .px-1;
   @extend .py-2;
   &:after {
@@ -17,6 +17,6 @@
   }
   &.drag-handle--disabled {
     cursor: not-allowed;
-    @extend .bg-gray-500;
+    @extend .surface-lighten3;
   }
 }
