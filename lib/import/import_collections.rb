@@ -407,7 +407,6 @@ module Import
           'updated_at',
           'vessel_size',
           'gaseous',
-          'weight_percentage_reference',
           'weight_percentage',
         ).merge(
           created_by: @current_user_id,
@@ -450,7 +449,7 @@ module Import
             'gas_type',
             'gas_phase_data',
             'conversion_rate',
-            'reference_product',
+            'weight_percentage_reference',
             'weight_percentage',
           ).merge(
             reaction: @instances.fetch('Reaction').fetch(fields.fetch('reaction_id')),

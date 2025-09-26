@@ -13,6 +13,7 @@ import Container from 'src/models/Container';
 
 import UserStore from 'src/stores/alt/stores/UserStore';
 import Segment from 'src/models/Segment';
+import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
 
 const TemperatureUnit = ['°C', '°F', 'K'];
 
@@ -541,6 +542,27 @@ export default class Reaction extends Element {
       ...materials.slice(idx + 1),
     ];
 
+    // If deleted material is weight percentage reference, then set it to false
+    if (material.weight_percentage_reference) {
+      material.weight_percentage_reference = false;
+      WeightPercentageReactionActions.setWeightPercentageReference(null);
+      WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(null);
+      const refMaterial = [...this.starting_materials, ...this.reactants].filter(
+        (m) => m.reference === true
+      )[0];
+      // reset all weight percentage to null, since there is no weight percentage reference assigned
+      [...this.starting_materials, ...this.reactants].forEach(
+        (m) => {
+          m.weight_percentage = null;
+          // assign equivalent based on reference material
+          m.equivalent = m.amount_mol / refMaterial.amount_mol;
+        }
+      );
+    }
+
+    if (material.weight_percentage && material.weight_percentage > 0) {
+      material.weight_percentage = null;
+    }
     this.rebuildReference(material);
     this.setPositions(group);
   }

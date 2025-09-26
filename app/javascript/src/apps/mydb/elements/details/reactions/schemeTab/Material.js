@@ -253,17 +253,26 @@ class Material extends Component {
 
   calculateYield(material, reaction) {
     const refMaterial = reaction.getReferenceMaterial();
-    let calculateYield = material.equivalent;
+    let calculateYield;
+    const isNumeric = (v) => {
+      const n = Number(v);
+      return Number.isFinite(n);
+    };
     if (material.gas_type === 'gas') {
       calculateYield = this.recalculateYieldForGasProduct(material, reaction);
     } else if (reaction.hasPolymers()) {
-      calculateYield = `${((material.equivalent || 0) * 100).toFixed(0)}%`;
+      if (isNumeric(material.equivalent)) {
+        const eq = material.equivalent <= 1 ? material.equivalent : 1;
+        calculateYield = `${(eq * 100).toFixed(0)}%`;
+      }
     } else if (refMaterial && (refMaterial.decoupled || material.decoupled)) {
       calculateYield = 'n.a.';
-    } else if (material.purity < 1 && material.equivalent > 1) {
-      calculateYield = `${((material.purity / 100 * (material.amount_g * 1000)) * 100).toFixed(1)}%`;
-    } else {
-      calculateYield = `${((material.equivalent <= 1 ? material.equivalent || 0 : 1) * 100).toFixed(0)}%`;
+    } else if (material.purity < 1 && isNumeric(material.equivalent) && material.equivalent > 1) {
+      const eq = (material.purity / 100) * material.amount_g <= 1 ? material.amount_g : 1;
+      calculateYield = `${(((material.purity / 100) * (eq * 1000)) * 100).toFixed(1)}%`;
+    } else if (isNumeric(material.equivalent)) {
+      const eq = material.equivalent <= 1 ? material.equivalent : 1;
+      calculateYield = `${((eq || 0) * 100).toFixed(0)}%`;
     }
     return calculateYield;
   }
@@ -846,7 +855,6 @@ class Material extends Component {
   handleWeightPercentageChange(e) {
     const { onChange, materialGroup } = this.props;
     const weightPercentage = e;
-    //(e || e === 0)
     if (onChange) {
       const event = {
         type: 'weightPercentageChanged',

@@ -97,10 +97,14 @@ module Usecases
         subsample = parent_sample.create_subsample(@current_user, @reaction.collections, true, 'reaction')
         subsample.short_label = fixed_label if fixed_label
 
-        subsample.target_amount_value = sample.target_amount_value
-        subsample.target_amount_unit = sample.target_amount_unit
-        subsample.real_amount_value = sample.real_amount_value
-        subsample.real_amount_unit = sample.real_amount_unit
+        if @reaction.weight_percentage && subsample.weight_percentage.present?
+          assign_weight_percentage_amounts(subsample, sample)
+        else
+          subsample.target_amount_value = sample.target_amount_value
+          subsample.target_amount_unit = sample.target_amount_unit
+          subsample.real_amount_value = sample.real_amount_value
+          subsample.real_amount_unit = sample.real_amount_unit
+        end
         subsample.metrics = sample.metrics
         subsample.dry_solvent = sample.dry_solvent
         # add new data container
@@ -178,6 +182,8 @@ module Usecases
         )
         if sample.gas_type == 'gas' && update_gas_material
           set_mole_value_gas_product(existing_sample, sample)
+        elsif @reaction.weight_percentage && sample.weight_percentage.present?
+          assign_weight_percentage_amounts(existing_sample, sample)
         else
           existing_sample.target_amount_value = sample.target_amount_value
           existing_sample.target_amount_unit = sample.target_amount_unit
@@ -261,6 +267,77 @@ module Usecases
         else
           Range.new(lower, upper)
         end
+      end
+
+      # Update own amounts based on a reaction-level weight-percentage reference.
+      #
+      # Steps:
+      # 1) Short-circuit when this sample is the weight percentage reference or
+      #    the `weight_percentage` is not provided/zero.
+      # 2) Locate the reaction-level weight-percentage reference record.
+      # 3) If the reference has a valid `target_amount_value`, apply the local
+      #    `weight_percentage` multiplier to the appropriate amount field for
+      #    this sample (`target_amount_value` or `real_amount_value`).
+      def update_amount_using_weight_percentage(material, ref_record)
+        return nil unless ref_record && ref_record.sample.present?
+
+        ref_target_amount_value = ref_record.sample&.target_amount_value
+        return nil unless valid_reference_target_amount?(ref_target_amount_value)
+
+        return nil if skip_weight_percentage_update?(material)
+
+        apply_weight_percentage(ref_target_amount_value, material.weight_percentage)
+      end
+
+      # Find the reaction-level ReactionsSample marked as the weight-percentage
+      # reference.
+      #
+      # @return [ReactionsSample, nil]
+      def find_weight_percentage_reference_record
+        ReactionsSample.where(reaction_id: @reaction.id, weight_percentage_reference: true).first
+      end
+
+      # Return true when update should be skipped because the weight percentage is missing/zero.
+      #
+      # @return [Boolean]
+      def skip_weight_percentage_update?(material)
+        material.weight_percentage.nil? || material.weight_percentage.zero?
+      end
+
+      # Validate that the reference's target amount value is present and non-zero.
+      #
+      # @param ref_target_amount_value [Numeric, nil]
+      # @return [Boolean]
+      def valid_reference_target_amount?(ref_target_amount_value)
+        !ref_target_amount_value.nil? && !ref_target_amount_value.zero?
+      end
+
+      # Apply the reference's target amount multiplied by the local weight
+      # percentage to the appropriate amount field (target or real) on this
+      # ReactionsSample.
+      #
+      # @param ref_target_amount_value [Numeric], weight percentage [Numeric]
+      # @return [void]
+      def apply_weight_percentage(ref_target_amount_value, weight_percentage)
+        ref_target_amount_value * weight_percentage
+      end
+
+      # Assign weight-percentage-derived amounts and units to the provided
+      # sample record and return it.
+      #
+      # @param target_sample [Sample] The ActiveRecord sample to update
+      # @param source_osample [OSample] The incoming OSample
+      # @return [Sample]
+      def assign_weight_percentage_amounts(target_sample, source_osample)
+        ref_record = find_weight_percentage_reference_record
+        calculated_value = update_amount_using_weight_percentage(target_sample, ref_record)
+
+        target_sample.target_amount_value = calculated_value
+        target_sample.target_amount_unit = ref_record&.target_amount_unit
+        target_sample.real_amount_value = calculated_value
+        target_sample.real_amount_unit = ref_record&.real_amount_unit
+
+        target_sample
       end
     end
   end

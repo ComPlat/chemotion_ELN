@@ -361,6 +361,8 @@ export default class ReactionDetailsScheme extends React.Component {
 
     const updateSampleAmount = (sample) => {
       if (sample.weight_percentage && sample.weight_percentage > 0) {
+        if (!targetAmount.unit || !targetAmount.value) return;
+
         const amountValue = targetAmount.value * sample.weight_percentage;
         sample.setAmount({
           value: amountValue,
@@ -373,7 +375,28 @@ export default class ReactionDetailsScheme extends React.Component {
       }
     };
 
+    const updateYield = (sample) => {
+      // enforce recalculation of yield
+      if (sample.weight_percentage_reference) {
+        if (sample.amountType === 'target') {
+          sample.equivalent = 'n.d';
+        } else if (sample.amountType === 'real') {
+          // Convert units if different and calculate equivalent
+          const targetValue = sample.convertGramToUnit(sample.target_amount_value, 'mol');
+          if (targetValue !== null && sample.target_amount_value > 0) {
+            const calculatedYield = sample.amount_mol / targetValue;
+            const yieldValue = calculatedYield > 1 ? 1 : calculatedYield;
+            // update yield of product material
+            sample.equivalent = yieldValue;
+          } else {
+            sample.equivalent = 'n.d';
+          }
+        }
+      }
+    };
+
     [...reaction.starting_materials, ...reaction.reactants].forEach(updateSampleAmount);
+    [...reaction.products].forEach(updateYield);
   }
 
   handleMaterialsChange(changeEvent) {
@@ -1432,7 +1455,7 @@ export default class ReactionDetailsScheme extends React.Component {
     });
   }
 
-  updatedSamplesForWeightPercentageReferenceChange(samples, referenceMaterial, materialGroup) {
+  updatedSamplesForWeightPercentageReferenceChange(samples, referenceMaterial) {
     // if (materialGroup !== 'products') return samples;
     return samples.map((s) => {
       if (s.id === referenceMaterial.id) {

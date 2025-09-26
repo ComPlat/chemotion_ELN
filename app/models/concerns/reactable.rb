@@ -38,9 +38,22 @@ module Reactable
 
     case self
     when ReactionsProductSample
-      amount = sample.amount_mmol(:real) if is_a? ReactionsProductSample
-      ref_amount = ref_record.sample.amount_mmol(:target) *
-                   (self[:coefficient] || 1.0) / (ref_record[:coefficient] || 1.0)
+      ## update yield ( = target amount / real amount) for product sample if it is weight percentage reference
+      if weight_percentage_reference
+        amount = sample.convert_amount_to_mol(
+          sample.real_amount_value,
+          sample.real_amount_unit,
+        )
+
+        ref_amount = sample.convert_amount_to_mol(
+          sample.target_amount_value,
+          sample.target_amount_unit,
+        )
+      else
+        amount = sample.amount_mmol(:real) if is_a? ReactionsProductSample
+        ref_amount = ref_record.sample.amount_mmol(:target) *
+                    (self[:coefficient] || 1.0) / (ref_record[:coefficient] || 1.0)
+      end
     else
       condition = sample.real_amount_value && sample.real_amount_value != 0
       ref_record_condition = ref_record.sample.real_amount_value && ref_record.sample.real_amount_value != 0
