@@ -98,7 +98,7 @@ module Usecases
         subsample.short_label = fixed_label if fixed_label
 
         if @reaction.weight_percentage && subsample.weight_percentage.present?
-          assign_weight_percentage_amounts(subsample, sample)
+          assign_weight_percentage_amounts(subsample)
         else
           subsample.target_amount_value = sample.target_amount_value
           subsample.target_amount_unit = sample.target_amount_unit
@@ -183,7 +183,7 @@ module Usecases
         if sample.gas_type == 'gas' && update_gas_material
           set_mole_value_gas_product(existing_sample, sample)
         elsif @reaction.weight_percentage && sample.weight_percentage.present?
-          assign_weight_percentage_amounts(existing_sample, sample)
+          assign_weight_percentage_amounts(existing_sample)
         else
           existing_sample.target_amount_value = sample.target_amount_value
           existing_sample.target_amount_unit = sample.target_amount_unit
@@ -326,16 +326,17 @@ module Usecases
       # sample record and return it.
       #
       # @param target_sample [Sample] The ActiveRecord sample to update
-      # @param source_osample [OSample] The incoming OSample
       # @return [Sample]
-      def assign_weight_percentage_amounts(target_sample, source_osample)
+      def assign_weight_percentage_amounts(target_sample)
         ref_record = find_weight_percentage_reference_record
-        calculated_value = update_amount_using_weight_percentage(target_sample, ref_record)
+        # Find the ReactionsSample record for this target_sample to get weight_percentage
+        target_reactions_sample = ReactionsSample.find_by(reaction_id: @reaction.id, sample_id: target_sample.id)
+        calculated_value = update_amount_using_weight_percentage(target_reactions_sample, ref_record)
 
         target_sample.target_amount_value = calculated_value
-        target_sample.target_amount_unit = ref_record&.target_amount_unit
+        target_sample.target_amount_unit = ref_record&.sample&.target_amount_unit
         target_sample.real_amount_value = calculated_value
-        target_sample.real_amount_unit = ref_record&.real_amount_unit
+        target_sample.real_amount_unit = ref_record&.sample&.real_amount_unit
 
         target_sample
       end
