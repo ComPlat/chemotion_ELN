@@ -44,10 +44,10 @@ class PagesController < ApplicationController
     end
 
     if @user.save
-      flash[:success] = 'User settings were successfully saved!'
-      render 'pages/redirect_parent'
+      flash['success'] = 'User settings is successfully saved!'
+      redirect_to pages_settings_path
     else
-      flash.now[:danger] = 'Not saved! Please check input fields.'
+      flash.now['danger'] = 'Not saved! Please check input fields.'
       render 'user'
     end
   end
@@ -61,10 +61,10 @@ class PagesController < ApplicationController
     @profile.assign_attributes(profile_params)
 
     if @profile.save
-      flash[:success] = 'Profile is successfully saved!'
-      render 'pages/redirect_parent'
+      flash['success'] = 'User settings is successfully saved!'
+      redirect_to pages_settings_path
     else
-      flash.now[:danger] = 'Not saved! Please check input fields.'
+      flash.now['danger'] = 'Not saved! Please check input fields.'
       render 'profile'
     end
   end
