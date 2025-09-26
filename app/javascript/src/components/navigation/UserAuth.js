@@ -308,6 +308,9 @@ export default class UserAuth extends Component {
   }
 
   handleSettingsHide = () => {
+    UserActions.fetchCurrentUser();
+    const { currentUser } = this.state;
+    UserActions.updateUserProfile(currentUser.profile);
     this.setState({ showSettings: false });
   };
 
