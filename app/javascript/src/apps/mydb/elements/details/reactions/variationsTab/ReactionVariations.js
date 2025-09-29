@@ -30,7 +30,6 @@ import columnDefinitionsReducer
   from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsReducers';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 
-let segments = null;
 export default function ReactionVariations({ reaction, onReactionChange, isActive }) {
   if (reaction.isNew) {
     return (
@@ -62,19 +61,17 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   ), []);
   const [columnDefinitions, setColumnDefinitions] = useReducer(columnDefinitionsReducer, initialColumnDefinitions);
   const initialGridState = useMemo(() => getInitialGridState(reaction.id), []);
+  const [segments, setSegments] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        segments = await getSegmentsForVariations(reaction);
+        setSegments(await getSegmentsForVariations(reaction));
       } catch (error) {
         console.error('Error fetching segments:', error);
       }
     };
-
-    if (segments === null) {
-      fetchData();
-    }
+    fetchData();
   }, []);
 
   useEffect(() => {
