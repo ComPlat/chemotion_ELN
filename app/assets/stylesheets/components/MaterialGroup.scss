@@ -1,0 +1,17 @@
+.material-group {
+  @include condensed-text-width;
+  @extend .pseudo-table;
+  .pseudo-table__row-header {
+    @extend .border;
+    @extend .border-top-0;
+  }
+  container-name: material-group;
+  container-type: inline-size;
+  &__header-title {
+    @extend .d-flex;
+    @extend .align-items-center;
+    @extend .flex-grow-1;
+    @extend .gap-2;
+    @extend .flex-wrap;
+  }
+}

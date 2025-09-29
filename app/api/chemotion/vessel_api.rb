@@ -157,8 +157,6 @@ module Chemotion
           weight_unit: params[:weight_unit],
         )
 
-        vessel.create_code_log
-
         vessel.collections << collection
 
         present vessel.reload, with: Entities::VesselInstanceEntity
@@ -169,6 +167,7 @@ module Chemotion
         requires :vessel_template_id, type: String, desc: 'ID of the selected vessel template'
         requires :collection_id, type: Integer, desc: 'Collection ID for the vessels'
         requires :count, type: Integer, values: 1..100, desc: 'Number of vessel instances to create (1-100)'
+        optional :base_name, type: String, desc: 'Basename for the new vessels'
         optional :short_labels, type: [String], desc: 'Short labels for each vessel',
                                 documentation: { is_array: true }
         optional :container, type: Hash, desc: 'Root container for vessel template'
@@ -206,7 +205,7 @@ module Chemotion
 
             vessel = Vessel.create!(
               vessel_template: vessel_template,
-              name: "instance#{i + 1}",
+              name: "#{params[:base_name] || 'instance'} #{i + 1}",
               user_id: current_user.id,
               short_label: short_label,
             )
@@ -221,8 +220,6 @@ module Chemotion
         end
 
         created_vessels.each do |vessel|
-          vessel.create_code_log
-
           vessel.define_singleton_method(:code_log) do
             CodeLog.where(source: 'vessel', source_id: vessel.id).order(created_at: :desc).first
           end

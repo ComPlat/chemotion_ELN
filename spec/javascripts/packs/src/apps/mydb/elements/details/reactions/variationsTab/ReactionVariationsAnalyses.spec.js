@@ -1,7 +1,7 @@
 import expect from 'expect';
 import Container from 'src/models/Container';
 import {
-  updateAnalyses, getReactionAnalyses
+  updateAnalyses, getReactionAnalyses,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import { setUpReaction } from 'helper/reactionVariationsHelpers';
 
@@ -26,32 +26,41 @@ describe('ReactionVariationsAnalyses', async () => {
       reaction.container.children[0].children.push(analysisFoo);
       reaction.container.children[0].children.push(analysisBar);
     });
-    it('when no update is necessary', async () => {
-      let { variations } = reaction;
+    it('when no update is necessary', async (done) => {
+      const { variations } = reaction;
       variations[0].metadata.analyses = [analysisFoo.id];
       variations[1].metadata.analyses = [analysisBar.id];
-      expect(updateAnalyses(variations, getReactionAnalyses(reaction))).toEqual(variations);
+      expect(updateAnalyses(variations, getReactionAnalyses(reaction)))
+        .toEqual(variations);
+      done();
     });
     it('when analysis is removed', async () => {
-      let { variations } = reaction;
+      const { variations } = reaction;
       variations[0].metadata.analyses = [analysisFoo.id];
-      expect(updateAnalyses(variations, getReactionAnalyses(reaction))[0].metadata.analyses).toEqual([analysisFoo.id]);
-      reaction.container.children[0].children = reaction.container.children[0].children.filter((child) => child.id !== analysisFoo.id);
-      expect(updateAnalyses(variations, getReactionAnalyses(reaction))[0].metadata.analyses).toEqual([]);
+      expect(updateAnalyses(variations, getReactionAnalyses(reaction))[0].metadata.analyses)
+        .toEqual([analysisFoo.id]);
+      reaction.container.children[0].children = reaction
+        .container.children[0].children.filter((child) => child.id !== analysisFoo.id);
+      expect(updateAnalyses(variations, getReactionAnalyses(reaction))[0].metadata.analyses)
+        .toEqual([]);
     });
     it('when analysis is marked as deleted', async () => {
-      let { variations } = reaction;
+      const { variations } = reaction;
       variations[1].metadata.analyses = [analysisBar.id];
-      expect(updateAnalyses(variations, getReactionAnalyses(reaction))[1].metadata.analyses).toEqual([analysisBar.id]);
+      expect(updateAnalyses(variations, getReactionAnalyses(reaction))[1].metadata.analyses)
+        .toEqual([analysisBar.id]);
       analysisBar.is_deleted = true;
-      expect(updateAnalyses(variations, getReactionAnalyses(reaction))[1].metadata.analyses).toEqual([]);
+      expect(updateAnalyses(variations, getReactionAnalyses(reaction))[1].metadata.analyses)
+        .toEqual([]);
     });
     it('when analysis is new', async () => {
-      let { variations } = reaction;
+      const { variations } = reaction;
       variations[1].metadata.analyses = [analysisBar.id];
-      expect(updateAnalyses(variations, getReactionAnalyses(reaction))[1].metadata.analyses).toEqual([analysisBar.id]);
+      expect(updateAnalyses(variations, getReactionAnalyses(reaction))[1].metadata.analyses)
+        .toEqual([analysisBar.id]);
       analysisBar.is_new = true;
-      expect(updateAnalyses(variations, getReactionAnalyses(reaction))[1].metadata.analyses).toEqual([]);
+      expect(updateAnalyses(variations, getReactionAnalyses(reaction))[1].metadata.analyses)
+        .toEqual([]);
     });
   });
 });

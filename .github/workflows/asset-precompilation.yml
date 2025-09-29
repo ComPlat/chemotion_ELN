@@ -10,7 +10,7 @@ jobs:
       run:
         shell: bash
 
-    container: complat/chemotion_eln_runner:main-v2.0.1-63-ga949b6834
+    container: complat/chemotion_eln_runner:main-v2.0.1-77-gb9bd119dd
 
     services:
       postgres:

@@ -200,12 +200,12 @@ export default class SampleDetails extends React.Component {
 
   componentDidUpdate(prevProps) {
     const { sample } = this.props;
-    if (sample === prevProps.sample) { return; }
+    if (sample === prevProps.sample) { return };
 
     const smileReadonly = !(
       (sample.isNew
-        && (typeof (sample.molfile) === 'undefined'
-          || (sample.molfile || '').length === 0)
+       && (typeof (sample.molfile) === 'undefined'
+        || (sample.molfile || '').length === 0)
       )
       || (typeof (sample.molfile) !== 'undefined' && sample.molecule.inchikey === 'DUMMY')
     );
@@ -769,7 +769,7 @@ export default class SampleDetails extends React.Component {
 
     return (
       <Accordion
-        className="chem-identifiers-section"
+        className="chem-identifiers-section mb-2"
         activeKey={showChemicalIdentifiers && paneKey}
         onSelect={(key) => this.setState({ showChemicalIdentifiers: key === paneKey })}
       >

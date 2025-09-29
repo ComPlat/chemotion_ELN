@@ -14,7 +14,7 @@ module SVG
                   when /ketcher/i
                     Chemotion::KetcherSvgProcessor.new(svg)
                   else
-                    Chemotion::OpenBabelSvgProcessor.new(svg)
+                    Chemotion::ChemdrawSvgProcessor.new(svg)
                   end
       svg = processor.centered_and_scaled_svg unless is_centered == true
       info = generate_svg_info('samples', hexdigest)

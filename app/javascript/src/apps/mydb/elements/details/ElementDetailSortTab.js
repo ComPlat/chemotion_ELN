@@ -8,7 +8,7 @@ import _, { isEmpty } from 'lodash';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import TabLayoutEditor from 'src/apps/mydb/elements/tabLayout/TabLayoutEditor';
-import TabLayoutButton from 'src/apps/mydb/elements/tabLayout/TabLayoutButton';
+import ConfigOverlayButton from 'src/components/common/ConfigOverlayButton';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import { capitalizeWords } from 'src/utilities/textHelper';
@@ -110,7 +110,7 @@ export default class ElementDetailSortTab extends Component {
     const buttonRef = React.createRef(null);
 
     return (
-      <TabLayoutButton onToggle={this.toggleTabLayoutContainer} popoverSettings={popoverSettings} />
+      <ConfigOverlayButton onToggle={this.toggleTabLayoutContainer} popoverSettings={popoverSettings} />
     );
   }
 }

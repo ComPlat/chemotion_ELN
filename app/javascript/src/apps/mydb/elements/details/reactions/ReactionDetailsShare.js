@@ -13,7 +13,6 @@ const setReactionByType = (reaction, type, value) => {
       break;
     case 'description':
       reaction.description = value;
-      options = { schemaChanged: false }
       break;
     case 'purification':
       reaction.purification = value;
@@ -35,26 +34,26 @@ const setReactionByType = (reaction, type, value) => {
       break;
     case 'temperature':
       reaction.temperature.userText = value;
-      options = {schemaChanged: true}
+      options = {updateGraphic: true}
       break;
     case 'temperatureUnit':
       reaction.temperature = reaction.convertTemperature(value);
-      options = {schemaChanged: true}
+      options = {updateGraphic: true}
       break;
     case 'temperatureData':
       reaction.temperature = value;
-      options = {schemaChanged: true}
+      options = {updateGraphic: true}
       break;
     case 'dangerousProducts':
       reaction.dangerous_products = value;
       break;
     case 'conditions':
       reaction.conditions = value;
-      options = {schemaChanged: true}
+      options = {updateGraphic: true}
       break;
     case 'solvent':
       reaction.solvent = value;
-      options = {schemaChanged: true}
+      options = {updateGraphic: true}
       break;
     case 'role':
       reaction.role = value;
@@ -62,7 +61,7 @@ const setReactionByType = (reaction, type, value) => {
       break;
     case 'duration':
       reaction.durationDisplay = value;
-      options = { schemaChanged: true }
+      options = { updateGraphic: true }
       break;
     case 'rxno':
       reaction.rxno = value;

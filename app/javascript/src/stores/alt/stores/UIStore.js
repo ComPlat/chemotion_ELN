@@ -75,6 +75,13 @@ class UIStore {
       },
       groupCollapse: {},
       isSidebarCollapsed: false,
+      vessel: {
+        checkedAll: false,
+        checkedIds: List(),
+        uncheckedIds: List(),
+        currentId: null,
+        page: 1,
+      },
       showPreviews: true,
       showAdvancedSearch: false,
       filterCreatedAt: true,
@@ -293,6 +300,7 @@ class UIStore {
     this.handleUncheckAllElements({ type: 'research_plan', range: 'all' });
     this.handleUncheckAllElements({ type: 'cell_line', range: 'all' });
     this.handleUncheckAllElements({ type: 'device_description', range: 'all' });
+    this.handleUncheckAllElements({ type: 'vessel', range: 'all' });
     this.state.klasses?.forEach((klass) => { this.handleUncheckAllElements({ type: klass, range: 'all' }); });
   }
 
@@ -415,20 +423,29 @@ class UIStore {
               Object.assign(params, { page: state.device_description.page }),
             );
           }
+          if (!isSync && layout.vessel && layout.vessel > 0) {
+            ElementActions.fetchVesselsByCollectionId(
+              collection.id,
+              Object.assign(params, { page: state.vessel.page }),
+            );
+          }
 
           Object.keys(layout)
-            .filter(l => !['sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'cell_line', 'device_description'].includes(l))
+            
+            .filter((l) => !['sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'cell_line', 'device_description', 'vessel']
+              .includes(l))
+            
             .forEach((key) => {
-              if (typeof layout[key] !== 'undefined' && layout[key] > 0) {
-                const page = state[key] ? state[key].page : 1;
-                ElementActions.fetchGenericElsByCollectionId(
-                  collection.id,
-                  Object.assign(params, { page, name: key }),
-                  isSync,
-                  key
-                );
-              }
-            });
+                if (typeof layout[key] !== 'undefined' && layout[key] > 0) {
+                  const page = state[key] ? state[key].page : 1;
+                  ElementActions.fetchGenericElsByCollectionId(
+                    collection.id,
+                    Object.assign(params, { page, name: key }),
+                    isSync,
+                    key
+                  );
+                }
+              });
         }
       }
     }

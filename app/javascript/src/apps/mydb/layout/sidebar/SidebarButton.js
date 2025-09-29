@@ -1,14 +1,21 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import ChevronIcon from 'src/components/common/ChevronIcon';
 import {
   Badge, Button, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
 
 export default function SidebarButton({
   isCollapsed, onClick, label, icon, variant,
-  badgeCount, appendComponent, active, showLabel
+  badgeCount, appendComponent, active, showLabel, expandable, isExpanded, onToggleExpansion
 }) {
   const hasBadge = badgeCount !== null && badgeCount > 0;
+
+  const toggleExpansion = (e) => {
+    e.stopPropagation();
+    onToggleExpansion();
+  };
+
   return isCollapsed || !showLabel ? (
     <OverlayTrigger
       placement={isCollapsed ? 'right' : 'top'}
@@ -34,13 +41,20 @@ export default function SidebarButton({
     </OverlayTrigger>
   ) : (
     <Button
-      className="sidebar-button gap-2"
+      className={`sidebar-button gap-2 ${expandable ? 'sidebar-button--expandable' : ''}`}
       variant={variant}
       onClick={onClick}
       active={active}
     >
       <span className="d-flex gap-2 align-items-center flex-grow-1">
-        <i className={`fa-fw ${icon}`} />
+        <i className={`type-icon fa-fw ${icon}`} />
+        {expandable && (
+          <ChevronIcon
+            direction={isExpanded ? 'down' : 'right'}
+            onClick={toggleExpansion}
+            className="expand-icon"
+          />
+        )}
         <span>{label}</span>
       </span>
       {appendComponent && (
@@ -59,7 +73,10 @@ SidebarButton.propTypes = {
   badgeCount: PropTypes.number,
   appendComponent: PropTypes.node,
   active: PropTypes.bool,
-  showLabel: PropTypes.bool
+  showLabel: PropTypes.bool,
+  expandable: PropTypes.bool,
+  isExpanded: PropTypes.bool,
+  onToggleExpansion: PropTypes.func,
 };
 
 SidebarButton.defaultProps = {
@@ -68,5 +85,8 @@ SidebarButton.defaultProps = {
   badgeCount: null,
   appendComponent: null,
   active: false,
-  showLabel: true
+  showLabel: true,
+  expandable: false,
+  isExpanded: false,
+  onToggleExpansion: () => { }
 };

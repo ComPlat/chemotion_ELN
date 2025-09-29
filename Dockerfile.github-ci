@@ -1,4 +1,4 @@
-FROM ptrxyz/chemotion:eln-2.0.1
+FROM ptrxyz/internal:eln-2.1.0-pre
 ARG BRANCH=main
 ARG REMOTE=https://github.com/ComPlat/chemotion_ELN.git
 

@@ -21,6 +21,7 @@
 
 .chemotion-select {
   position: relative;
+  padding: 0 !important;
   &.is-invalid {
     .chemotion-select__control,
     .chemotion-select__control:hover {
@@ -30,7 +31,6 @@
   &__control,
   &__menu {
     @extend .d-block;
-    padding: $form-select-padding-y $form-select-padding-x;
     font-family: $form-select-font-family;
     @include font-size($form-select-font-size);
     font-weight: $form-select-font-weight;
@@ -44,6 +44,7 @@
   }
 
   &__control {
+    padding: $form-select-padding-y $form-select-padding-x;
     @extend .d-flex;
     @extend .justify-content-between;
     @extend .align-items-center;
@@ -163,6 +164,97 @@
 
   &__clear-indicator {
     @include fa-based-remove-icon;
+  }
+
+  // bootstrap sm size modification
+
+  &.form-select-xxsm,
+  &.form-select-xsm {
+    .chemotion-select {
+      &__indicator.chemotion-select__dropdown-indicator {
+        background-size: 8px 6px;
+        width: 0.5rem;
+        height: 0.5rem;
+      }
+    }
+  }
+
+  &.form-select-xxsm .chemotion-select {
+    &__control,
+    &__menu {
+      @include condensed-text-width;
+      font-size: 12px;
+      line-height: 1;
+      border-radius: 2.5px;
+    }
+    &__control,
+    &__option {
+      padding: 3px 2px 3px 4px;
+    }
+    &[multiple],
+    &[size]:not([size="1"]) {
+      padding-right: 4px;
+    }
+    &__menu {
+      padding: 3px 0;
+    }
+  }
+
+  &.form-select-xsm .chemotion-select {
+    &__control,
+    &__menu {
+      @include condensed-text-width;
+      font-size: 12px;
+      line-height: 1.5;
+      border-radius: 3px;
+    }
+    &__control,
+    &__option {
+      padding: 1px 3px 1px 5px;
+    }
+    &[multiple],
+    &[size]:not([size="1"]) {
+      padding-right: 5px;
+    }
+    &__menu {
+      padding: 1px 0;
+    }
+  }
+
+  &.form-select-sm .chemotion-select {
+    &__control,
+    &__menu {
+      @include font-size($form-select-font-size-sm);
+    }
+    &__control,
+    &__option {
+      padding: $form-select-padding-y-sm 0.3rem $form-select-padding-y-sm
+        $form-select-padding-x-sm;
+    }
+    &__indicator.chemotion-select__dropdown-indicator {
+      background-size: 12px 9px;
+      width: 0.75rem;
+      height: 0.75rem;
+    }
+  }
+
+  // bootstrap lg size modification
+  &.form-select-lg .chemotion-select {
+    &__control,
+    &__menu {
+      @include font-size($form-select-font-size-lg);
+    }
+    &__control,
+    &__option {
+      padding: $form-select-padding-y-lg $form-select-padding-x-lg;
+    }
+    &[multiple],
+    &[size]:not([size="1"]) {
+      padding-right: $form-select-padding-x-lg;
+    }
+    &__menu {
+      padding: $form-select-padding-y-lg 0;
+    }
   }
 }
 

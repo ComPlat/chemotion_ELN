@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 
 export default function ToggleButton({
   isToggledInitial, onToggle, onChange, onLabel, offLabel,
-  onColor, offColor, tooltipOn, tooltipOff, additionalClasses,
+  tooltipOn, tooltipOff, buttonTitleClass, buttonClass, variant, size
 }) {
   const [isToggled, setIsToggled] = useState(isToggledInitial);
 
@@ -19,16 +19,20 @@ export default function ToggleButton({
     setIsToggled(isToggledInitial);
   }, [isToggledInitial]);
 
-  const buttonColor = isToggled ? onColor : offColor;
   const toolTipMessage = isToggled ? tooltipOn : tooltipOff;
 
   return (
-    <OverlayTrigger placement="top" overlay={<Tooltip id="toggle-button-tooltip">{toolTipMessage}</Tooltip>}>
+    <OverlayTrigger
+      placement="top"
+      overlay={<Tooltip id="toggle-button-tooltip">{toolTipMessage}</Tooltip>}
+    >
       <Button
-        className={`bg-${buttonColor} border-0 p-0`}
+        variant={variant}
+        className={buttonClass}
         onClick={handleChange}
+        size={size}
       >
-        <span className={`fs-6 ${additionalClasses}`}>
+        <span className={`fs-6 ${buttonTitleClass}`}>
           {isToggled ? onLabel : offLabel}
         </span>
       </Button>
@@ -42,11 +46,12 @@ ToggleButton.propTypes = {
   onChange: PropTypes.func,
   onLabel: PropTypes.string,
   offLabel: PropTypes.string,
-  onColor: PropTypes.string,
-  offColor: PropTypes.string,
   tooltipOn: PropTypes.string,
   tooltipOff: PropTypes.string,
-  additionalClasses: PropTypes.string,
+  buttonTitleClass: PropTypes.string,
+  buttonClass: PropTypes.string,
+  variant: PropTypes.string,
+  size: PropTypes.string,
 };
 
 ToggleButton.defaultProps = {
@@ -54,9 +59,10 @@ ToggleButton.defaultProps = {
   onChange: null,
   onLabel: 'On',
   offLabel: 'Off',
-  onColor: '#afcfee',
-  offColor: '#d3d3d3',
   tooltipOn: 'Click to switch off',
   tooltipOff: 'Click to switch on',
-  additionalClasses: '',
+  buttonTitleClass: '',
+  buttonClass: '',
+  variant: 'outline-secondary',
+  size: 'sm',
 };
