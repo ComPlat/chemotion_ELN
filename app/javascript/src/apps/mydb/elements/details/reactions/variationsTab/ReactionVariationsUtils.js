@@ -327,7 +327,7 @@ function createVariationsRow({
   materials,
   selectedColumns,
   variations,
-  processedSegments,
+  segments,
   reactionHasPolymers = false,
   durationValue = null,
   durationUnit = 'None',
@@ -355,7 +355,7 @@ function createVariationsRow({
         const {
           type,
           value,
-        } = processedSegments.find((x) => x.key === metadataType).field;
+        } = segments.find((x) => x.key === metadataType).field;
         return [metadataType, getSegmentData(type, value)];
       }),
     ),
@@ -416,7 +416,7 @@ function addMissingColumnsToVariations({
   materials,
   selectedColumns,
   variations,
-  processedSegments,
+  segments,
   reactionHasPolymers = false,
   durationValue = null,
   durationUnit = 'None',
@@ -464,7 +464,7 @@ function addMissingColumnsToVariations({
               const {
                 type,
                 value,
-              } = processedSegments.find((x) => x.key === childID).field;
+              } = segments.find((x) => x.key === childID).field;
               newRow.segmentData = {
                 ...newRow.segmentData,
                 [childID]: getSegmentData(type, value),

@@ -30,7 +30,7 @@ import columnDefinitionsReducer
   from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsReducers';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 
-let processedSegments = null;
+let segments = null;
 export default function ReactionVariations({ reaction, onReactionChange, isActive }) {
   if (reaction.isNew) {
     return (
@@ -60,7 +60,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   useEffect(() => {
     // Fetch data only once when component mounts
 
-    const handleprocessedSegments = () => {
+    const handleSegments = () => {
       const initialColumnDefinitions = getColumnDefinitions(
         selectedColumns,
         reactionMaterials,
@@ -74,17 +74,17 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
     };
     const fetchData = async () => {
       try {
-        processedSegments = await getSegmentsForVariations(reaction);
-        handleprocessedSegments();
+        segments = await getSegmentsForVariations(reaction);
+        handleSegments();
       } catch (error) {
         console.error('Error fetching segments:', error);
       }
     };
 
-    if (processedSegments === null) {
+    if (segments === null) {
       fetchData();
     } else {
-      handleprocessedSegments();
+      handleSegments();
     }
   }, []);
 
@@ -244,7 +244,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
         createVariationsRow(
           {
             materials: reactionMaterials,
-            processedSegments,
+            segments,
             selectedColumns,
             variations: reactionVariations,
             reactionHasPolymers,
@@ -288,7 +288,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
       materials: reactionMaterials,
       selectedColumns: columns,
       variations: reactionVariations,
-      processedSegments,
+      segments,
       reactionHasPolymers,
       durationValue,
       durationUnit,
@@ -353,7 +353,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
 
   const columnSelectControl = () => {
     const availableColumns = {
-      segmentData: (processedSegments ?? []).map((a) => [a.key, a.label, a.group]),
+      segmentData: (segments ?? []).map((a) => [a.key, a.label, a.group]),
       ...getReactionMaterialsIDs(reactionMaterials),
       properties: ['duration', 'temperature'].map((x) => [x, toUpperCase(x)]),
       metadata: ['notes', 'analyses'].map((x) => [x, toUpperCase(x)]),
@@ -363,7 +363,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
       selectedColumns,
       availableColumns,
       applyColumnSelection,
-      processedSegments === null,
+      segments === null,
     );
   };
 
