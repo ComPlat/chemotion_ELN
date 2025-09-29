@@ -91,8 +91,6 @@ const cellDataTypes = {
   },
 };
 
-let segmentsForVariations = null;
-
 function convertUnit(value, fromUnit, toUnit) {
   if (temperatureUnits.includes(fromUnit) && temperatureUnits.includes(toUnit)) {
     const convertedValue = convertTemperature(value, fromUnit, toUnit);
@@ -505,6 +503,57 @@ function removeObsoleteColumnsFromVariations(variations, selectedColumns) {
     });
 }
 
+let segmentsForVariations = null;
+
+const processSegmentsForVariations = (segments, reaction) => {
+  const result = [];
+  segments.forEach((seg) => {
+    const key = seg.label;
+    const inRea = reaction.segments.find((x) => x.klass_label === seg.label);
+    const layers = inRea ? inRea.properties.layers ?? [] : seg.properties_release.layers ?? [];
+
+    Object.values(layers)
+      .forEach((layer) => {
+        layer.fields.forEach((field) => {
+          if (['integer', 'system-defined', 'select', 'text'].includes(field.type)) {
+            const options = [];
+            if (field.type === 'select') {
+              options.push(seg.properties_release.select_options[field.option_layers].options ?? []);
+            }
+            result.push({
+              key: `${key}___${layer.key}___${field.field}`,
+              label: `${layer.label}: ${field.label}`,
+              group: key,
+              layer,
+              field,
+              options,
+            });
+          }
+        });
+      });
+  });
+  return result;
+};
+
+const getSegmentsForVariations = (reaction) => {
+  // Fetch the segment data, preprocess it and strip irrelevant information.
+  // The data is loaded only once when the component mounts, using the 'soft reload'
+  // argument from the 'GenericSegmentFetcher.listSegmentKlass' method.
+
+  const fetchData = async () => {
+    try {
+      const res = await GenericSgsFetcher.listSegmentKlass({ is_active: true }, true);
+      const reactionsSegments = res.klass.filter((k) => k.element_klass.name === 'reaction' && k.is_active);
+      segmentsForVariations = processSegmentsForVariations(reactionsSegments, reaction);
+    } catch (error) {
+      console.error('Error fetching segments:', error);
+    }
+    return segmentsForVariations;
+  };
+
+  return fetchData();
+};
+
 function getSegmentColumnGroupChild(propertyType) {
   if (!segmentsForVariations) {
     return {};
@@ -743,55 +792,6 @@ function getVariationsColumns(variations) {
     segmentData: segmentDataColumns,
   };
 }
-
-const processSegmentsForVariations = (segments, reaction) => {
-  const result = [];
-  segments.forEach((seg) => {
-    const key = seg.label;
-    const inRea = reaction.segments.find((x) => x.klass_label === seg.label);
-    const layers = inRea ? inRea.properties.layers ?? [] : seg.properties_release.layers ?? [];
-
-    Object.values(layers)
-      .forEach((layer) => {
-        layer.fields.forEach((field) => {
-          if (['integer', 'system-defined', 'select', 'text'].includes(field.type)) {
-            const options = [];
-            if (field.type === 'select') {
-              options.push(seg.properties_release.select_options[field.option_layers].options ?? []);
-            }
-            result.push({
-              key: `${key}___${layer.key}___${field.field}`,
-              label: `${layer.label}: ${field.label}`,
-              group: key,
-              layer,
-              field,
-              options,
-            });
-          }
-        });
-      });
-  });
-  return result;
-};
-
-const getSegmentsForVariations = (reaction) => {
-  // Fetch the segment data, preprocess it and strip irrelevant information.
-  // The data is loaded only once when the component mounts, using the 'soft reload'
-  // argument from the 'GenericSegmentFetcher.listSegmentKlass' method.
-
-  const fetchData = async () => {
-    try {
-      const res = await GenericSgsFetcher.listSegmentKlass({ is_active: true }, true);
-      const reactionsSegments = res.klass.filter((k) => k.element_klass.name === 'reaction' && k.is_active);
-      segmentsForVariations = processSegmentsForVariations(reactionsSegments, reaction);
-    } catch (error) {
-      console.error('Error fetching segments:', error);
-    }
-    return segmentsForVariations;
-  };
-
-  return fetchData();
-};
 
 function getGridStateId(reactionId) {
   const { currentUser } = UserStore.getState();
