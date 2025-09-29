@@ -198,12 +198,14 @@ export default class ReactionDetailsScheme extends React.Component {
   }
 
   addSampleToReaction(splitSample, srcSample, reaction, tagMaterial, tagGroup) {
+    const { onReactionChange } = this.props;
+
     if (splitSample.isMixture()) {
       srcSample.applyMixturePropertiesToSample(splitSample);
       splitSample.applyReferenceProperties(reaction, tagGroup);
     }
     reaction.addMaterialAt(splitSample, null, tagMaterial, tagGroup);
-    this.onReactionChange(reaction, { schemaChanged: true });
+    onReactionChange(reaction, { updateGraphic: true });
   }
 
   insertSolventExtLabel(splitSample, materialGroup, externalLabel) {

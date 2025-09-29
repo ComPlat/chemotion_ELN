@@ -46,6 +46,21 @@ class ReactionMaterialComponentsGroup extends React.Component {
             aria-label={`Set ${component.id} as reference`}
           />
         </td>
+        {/* Component Name */}
+        <td>
+          <div
+            style={{ display: 'inline-block', maxWidth: '100%' }}>
+            <span style={{
+              display: 'block',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              maxWidth: '100%'
+            }}>
+              {component.molecule_iupac_name || component.molecule?.sum_formular || component.name}
+            </span>
+          </div>
+        </td>
         {/* Amount */}
         <td>
           <NumeralInputWithUnitsCompo
@@ -106,6 +121,7 @@ class ReactionMaterialComponentsGroup extends React.Component {
         <thead>
           <tr>
             <th>Ref</th>
+            <th>Component</th>
             <th>Amount</th>
             <th>Rel. MW</th>
             <th>Conc</th>
