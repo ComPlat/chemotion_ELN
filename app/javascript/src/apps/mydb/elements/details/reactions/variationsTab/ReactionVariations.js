@@ -64,14 +64,14 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   const [segments, setSegments] = useState(null);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchSegments = async () => {
       try {
         setSegments(await getSegmentsForVariations(reaction));
       } catch (error) {
         console.error('Error fetching segments:', error);
       }
     };
-    fetchData();
+    fetchSegments();
   }, []);
 
   useEffect(() => {
