@@ -48,13 +48,15 @@ class IndigoService
   # @return [String, nil] The service info as a string, or nil if the request fails.
   def service_info
     response = make_request('GET', "#{@service_url}v2/indigo/info", build_request)
-    # If there's an issue with the response, log it and return nil
     if response.nil? || !response.success?
       log_error('Failed to fetch service info', response)
       return nil
     end
 
-    response.body
+    JSON.parse(response.body)
+  rescue JSON::ParserError => e
+    log_error('Invalid JSON from Indigo service', e)
+    nil
   end
 
   # Checks if the given SVG is a valid Indigo SVG.

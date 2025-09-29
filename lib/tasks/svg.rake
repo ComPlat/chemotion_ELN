@@ -26,8 +26,12 @@ namespace :svg do
     message_header = build_message_header(**args)
     scope = build_scope(**args)
 
-    puts "#{message_header}indigo rendering service seems to #{'not' unless indigo_running?} be available"
+    unless indigo_running?
+      puts "#{message_header}Indigo rendering service is NOT available. Aborting.\n"
+      return
+    end
 
+    puts "#{message_header}Indigo rendering service is available.\n"
     scope.find_each do |element|
       svg_path = element.send(:full_svg_path)
       svg_file_exists = svg_path.present? && File.file?(svg_path)
@@ -63,15 +67,11 @@ namespace :svg do
 
   def indigo_running?
     info = IndigoService.new(nil).service_info
-    return false unless info
+    indigo_info = info['Indigo'] || info[:Indigo]
 
-    status = begin
-      info.respond_to?(:status) ? info.status : info[:status]
-    rescue StandardError
-      nil
-    end
-
-    status == 200
+    indigo_info.is_a?(Hash) && indigo_info['version'].present?
+  rescue StandardError
+    false
   end
 
   def build_message_header(**args)

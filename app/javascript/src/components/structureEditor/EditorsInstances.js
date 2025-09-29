@@ -32,19 +32,22 @@ const loadEditor = (editor, scripts) => {
 /**
  * Creates an editor by ID.
  */
-export function getEditorById(editorIdP, configs = {}, availableEditors = null) {
-  let editorId = editorIdP;
-  if (editorId === 'ketcher') editorId = 'ketcher2';
-  const available = availableEditors?.[editorId] || UIStore.getState().structureEditors?.editors?.[editorId];
-
-  if (!available) return null;
-  loadEditor(editorId, available.extJs);
-  return new StructureEditor({
-    ...EditorAttrs[editorId],
-    ...available,
-    ...configs,
-    id: editorId,
-  });
+export function getEditorById(editorId, configs = {}, availableEditors = null) {
+  const editorAlias = editorId ?? 'ketcher';
+  if (editorAlias) {
+    const available = availableEditors?.[editorAlias] || UIStore.getState().structureEditors?.editors?.[editorAlias];
+    if (!available) {
+      return null;
+    }
+    loadEditor(editorAlias, available.extJs);
+    return new StructureEditor({
+      ...EditorAttrs[editorAlias],
+      ...available,
+      ...configs,
+      id: editorAlias,
+    });
+  }
+  return null;
 }
 
 /**
@@ -68,6 +71,7 @@ export function createEditors(_state = {}) {
 
 export const initEditor = () => {
   const userProfile = UserStore.getState().profile;
-  const eId = userProfile?.data?.default_structure_editor || 'ketcher';
+  let eId = userProfile?.data?.default_structure_editor;
+  if (!eId || eId === 'ketcher2') eId = 'ketcher';
   return getEditorById(eId);
 };

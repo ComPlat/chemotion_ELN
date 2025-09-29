@@ -8,7 +8,8 @@ RSpec.describe IndigoService do
   let(:service_url) { 'http://indigo_service/' }
   let(:valid_svg) { '<svg viewBox="0 0 300 300"></svg>' }
   let(:invalid_svg) { '<html></html>' }
-  let(:info_response_body) { { 'name' => 'Indigo Service', 'version' => '2.3.4', 'status' => 'ok' }.to_json }
+  let(:info_response_hash) { { 'Indigo' => { 'version' => 'any-version-string-you-like' } } }
+  let(:info_response_body) { info_response_hash.to_json }
 
   before do
     allow(Rails.configuration.indigo_service).to receive(:indigo_service_url).and_return(service_url)
@@ -48,12 +49,15 @@ RSpec.describe IndigoService do
 
   describe '#service_info' do
     context 'when Indigo service responds successfully' do
-      it 'returns the response body' do
+      it 'returns parsed JSON with Indigo version info' do
         stub_request(:get, "#{service_url}v2/indigo/info")
           .to_return(status: 200, body: info_response_body, headers: { 'Content-Type' => 'application/json' })
 
         result = described_class.new(nil).service_info
-        expect(result).to eq(info_response_body)
+
+        expect(result).to have_key('Indigo')
+        expect(result['Indigo']).to have_key('version')
+        expect(result['Indigo']['version']).not_to be_empty
       end
     end
 

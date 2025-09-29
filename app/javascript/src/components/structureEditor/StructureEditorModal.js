@@ -92,7 +92,7 @@ export default class StructureEditorModal extends React.Component {
     this.handleEditorSelection = this.handleEditorSelection.bind(this);
     this.resetEditor = this.resetEditor.bind(this);
     this.updateEditor = this.updateEditor.bind(this);
-    this.ketcher2Ref = React.createRef();
+    this.ketcherRef = React.createRef();
   }
 
   componentDidMount() {
@@ -143,7 +143,7 @@ export default class StructureEditorModal extends React.Component {
           alert(`MarvinJS molfile generated fail: ${error}`);
         }
       );
-    } else if (editor.id === 'ketcher2') this.saveKetcher2(editor);
+    } else if (editor.id === 'ketcher') this.saveKetcher(editor);
     else {
       try {
         const { molfile, info } = structure;
@@ -173,20 +173,22 @@ export default class StructureEditorModal extends React.Component {
     );
   }
 
-  async saveKetcher2(editorId) {
-    const { onSaveFileK2SC } = this.ketcher2Ref.current;
-    // Ensure the function exists before calling it
-    if (typeof onSaveFileK2SC !== 'function') {
-      console.error('onSaveFileK2SC is not a function');
-      return;
-    }
-    try {
-      // Call onSaveFileK2SC and get the required data
-      const { ket2Molfile, svgElement } = await onSaveFileK2SC();
-      const updatedSvg = await transformSvgIdsAndReferences(svgElement);
-      this.handleStructureSave(ket2Molfile, updatedSvg, editorId.id);
-    } catch (error) {
-      console.error('Error during save operation for Ketcher2:', error);
+  async saveKetcher(editorId) {
+    if (this.ketcherRef?.current) {
+      const { onSaveFileK2SC } = this.ketcherRef.current;
+      // Ensure the function exists before calling it
+      if (typeof onSaveFileK2SC !== 'function') {
+        console.error('onSaveFileK2SC is not a function');
+        return;
+      }
+      try {
+        // Call onSaveFileK2SC and get the required data
+        const { ket2Molfile, svgElement } = await onSaveFileK2SC();
+        const updatedSvg = await transformSvgIdsAndReferences(svgElement);
+        this.handleStructureSave(ket2Molfile, updatedSvg, editorId.id);
+      } catch (error) {
+        console.error('Error during save operation for Ketcher2:', error);
+      }
     }
   }
 
@@ -245,7 +247,7 @@ export default class StructureEditorModal extends React.Component {
         iframeHeight={iframeHeight}
         iframeStyle={iframeStyle}
         fnCb={this.updateEditor}
-        forwardedRef={this.ketcher2Ref}
+        forwardedRef={this.ketcherRef}
       />
     );
     const editorOptions = Object.keys(this.editors).map((e) => ({
@@ -262,8 +264,8 @@ export default class StructureEditorModal extends React.Component {
         onLoad={this.initializeEditor.bind(this)}
         onHide={this.handleCancelBtn.bind(this)}>
         <Modal.Header closeButton className="gap-3">
-          <EditorList value={editor.id} fnChange={this.handleEditorSelection} options={editorOptions} />
-          {editor.id === 'ketcher2' && (
+          <EditorList value={editor?.id} fnChange={this.handleEditorSelection} options={editorOptions} />
+          {editor?.id === 'ketcher' && (
             <CommonTemplatesList
               options={commonTemplatesList}
               value={selectedCommonTemplate?.name}

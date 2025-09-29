@@ -6,7 +6,7 @@ import KetcherEditor from 'src/components/structureEditor/KetcherEditor';
 import PropTypes from 'prop-types';
 
 function EditorRenderer({
-  type, editor, molfile, iframeHeight, iframeStyle, fnCb
+  type, editor, molfile, iframeHeight, iframeStyle, fnCb, forwardedRef
 }) {
   switch (type) {
     case 'chemdraw':
@@ -30,6 +30,7 @@ function EditorRenderer({
     default:
       return (
         <KetcherEditor
+          ref={forwardedRef} // Forwarding the ref to the KetcherEditor
           editor={editor}
           molfile={molfile}
           iH={iframeHeight}
@@ -43,9 +44,13 @@ export default EditorRenderer;
 
 EditorRenderer.propTypes = {
   type: PropTypes.string.isRequired,
-  editor: PropTypes.object.isRequired,
-  molfile: PropTypes.string.isRequired,
-  iframeHeight: PropTypes.string.isRequired,
-  iframeStyle: PropTypes.object.isRequired,
-  fnCb: PropTypes.func.isRequired,
+  editor: PropTypes.object,
+  molfile: PropTypes.string,
+  iframeHeight: PropTypes.string,
+  iframeStyle: PropTypes.object,
+  fnCb: PropTypes.func,
+  forwardedRef: PropTypes.oneOfType([
+    PropTypes.func,
+    PropTypes.shape({current: PropTypes.any})
+  ]),
 };

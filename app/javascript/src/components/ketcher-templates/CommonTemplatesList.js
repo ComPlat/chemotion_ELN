@@ -19,8 +19,6 @@ const debounce = (func, delay) => {
   };
 };
 
-// TODO: HADI - from where common templates coming! if ketcherservice then check
-
 const CommonTemplatesList = memo(({ options, onClickHandle, selectedItem }) => {
   const [commonTemplateModal, setCommonTemplateModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');

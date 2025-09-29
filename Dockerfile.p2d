@@ -1,6 +1,4 @@
-#FROM ptrxyz/chemotion:eln-2.0.1
-FROM complat/chemotion_eln_stage:main-v2.0.1-67-g109bb63fc
-
+FROM ptrxyz/chemotion:eln-2.0.1
 
 ARG REMOTE=https://github.com/ComPlat/chemotion_ELN.git
 ARG BUNDLER_VERSION=2.4.22
@@ -90,6 +88,3 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=300s --retries=3 \
     CMD /embed/health.sh || exit 1
 
 VOLUME [ "/chemotion/app", "/chemotion/data" ]
-
-# TODO:remove this before merging to main
-ADD https://github.com/haditariq/ketcher-build-holder.git /chemotion/app/public/editors/ketcher2/standalone
