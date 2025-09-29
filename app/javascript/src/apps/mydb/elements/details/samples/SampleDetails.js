@@ -369,6 +369,10 @@ export default class SampleDetails extends React.Component {
     if (!decoupleCheck(sample)) return;
     if (!rangeCheck('boiling_point', sample)) return;
     if (!rangeCheck('melting_point', sample)) return;
+
+    // Prepare mixture samples for saving using Sample.js method
+    sample.prepareMixtureForSave();
+
     if (sample.belongTo && sample.belongTo.type === 'reaction') {
       const reaction = sample.belongTo;
       reaction.editedSample = sample;
