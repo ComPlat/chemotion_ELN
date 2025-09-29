@@ -42,7 +42,7 @@ export const OwnCollection = types.model({
   isAncestorOf(collection) {
     return collection.ancestorIds.indexOf(self.id) != -1
   },
-  isParentOf(collection) { return self.id == collection.ancestorIds.slice(-1) },
+  isParentOf(collection) { return self.id == collection.ancestorIds.findLast(id => true) },
 }));
 
 export const SharedCollection = types.model({
