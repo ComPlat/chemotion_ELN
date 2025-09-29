@@ -48,14 +48,30 @@ const getPolymerName = (polymerType, decoupled) => {
 };
 
 /**
- * Extracts and formats the titles of components for mixture samples
- * @param {Array} components - Array of component objects
- * @returns {string} Formatted components title
+ * Builds a list of component titles with their IUPAC name and exact molecular weight.
+ *
+ * @param {Array<Object>} components - The array of component objects.
+ * @param {Object} components[].molecule - Molecule data for the component.
+ * @param {string} [components[].molecule.iupac_name] - The IUPAC name of the molecule.
+ * @param {number} [components[].molecule.exact_molecular_weight] - The exact molecular weight of the molecule.
+ * @param {string|number} [components[].molecule.id] - Unique identifier for the molecule (used as React key).
+ * @returns {JSX.Element[]} A list of JSX <div> elements containing component names and weights.
  */
-const getComponentsTitle = (components) => components.map((comp) => comp.molecule.iupac_name).join('/');
+const getComponentsTitle = (components) => components.map((component) => {
+  const name = component.molecule?.iupac_name || 'Unknown';
 
+  const mw = component.molecule?.molecular_weight;
+  const mwText = (typeof mw === 'number' && Number.isFinite(mw)) ? ` (${mw.toFixed(6)} g/mol)` : '';
+
+  return (
+    <div key={component.molecule?.id || component.id || name}>
+      {name}
+      {mwText}
+    </div>
+  );
+});
 /**
- * Component to display sample name with formula and additional information
+ * Component to display the sample name with formula and additional information
  */
 function SampleName({ sample }) {
   const {
@@ -98,7 +114,7 @@ function SampleName({ sample }) {
 
     return (
       <div>
-        <p className="mb-2">
+        <p className="mb-2" style={{ fontSize: '0.85em' }}>
           Components:
           {title}
         </p>
