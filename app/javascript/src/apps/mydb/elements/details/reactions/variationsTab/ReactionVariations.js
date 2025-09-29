@@ -54,28 +54,19 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   const { userText: temperatureValue = null, valueUnit: temperatureUnit = 'None' } = reaction.temperature ?? {};
   const vesselVolume = GasPhaseReactionStore.getState().reactionVesselSizeValue;
   const [selectedColumns, setSelectedColumns] = useState(getVariationsColumns(reactionVariations));
-  const [columnDefinitions, setColumnDefinitions] = useReducer(columnDefinitionsReducer, {});
+  const initialColumnDefinitions = useMemo(() => getColumnDefinitions(
+    selectedColumns,
+    reactionMaterials,
+    gasMode,
+    getInitialEntryDefinitions(reaction.id)
+  ), []);
+  const [columnDefinitions, setColumnDefinitions] = useReducer(columnDefinitionsReducer, initialColumnDefinitions);
   const initialGridState = useMemo(() => getInitialGridState(reaction.id), []);
 
   useEffect(() => {
-    // Fetch data only once when component mounts
-
-    const handleSegments = () => {
-      const initialColumnDefinitions = getColumnDefinitions(
-        selectedColumns,
-        reactionMaterials,
-        gasMode,
-        getInitialEntryDefinitions(reaction.id)
-      );
-      setColumnDefinitions({
-        type: 'set_updated',
-        update: initialColumnDefinitions,
-      });
-    };
     const fetchData = async () => {
       try {
         segments = await getSegmentsForVariations(reaction);
-        handleSegments();
       } catch (error) {
         console.error('Error fetching segments:', error);
       }
@@ -83,8 +74,6 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
 
     if (segments === null) {
       fetchData();
-    } else {
-      handleSegments();
     }
   }, []);
 
