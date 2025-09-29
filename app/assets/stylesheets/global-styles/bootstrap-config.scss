@@ -27,6 +27,7 @@ $chemstrap-theme-colors: (
 @import "bootstrap/mixins";
 
 $border-color: map-get($carbon-shades, lighten3);
+$border-radius: 0.3rem;
 $body-bg: $chemstrap-white;
 $body-color: $chemstrap-carbon;
 $font-family-sans-serif: "Roboto", sans-serif;
@@ -40,11 +41,17 @@ $h4-font-size: $font-size-base * 1.25;
 $h5-font-size: $font-size-base * 1.125;
 $h6-font-size: $font-size-base;
 $enable-negative-margins: true;
-$enable-negative-margins: true;
 
 $table-bg: transparent;
 $card-bg: $chemstrap-white;
 $accordion-bg: $chemstrap-white;
+$accordion-button-bg: $chemstrap-white;
+$accordion-button-active-bg: $chemstrap-white;
+$accordion-button-focus-box-shadow: inset 0
+  calc(-1 * var(--bs-accordion-border-width)) 0 var(--bs-accordion-border-color); //same value as unfocused
+$accordion-body-padding-y: 0.5rem;
+$accordion-body-padding-x: 0.5rem;
+$accordion-icon-transition: transform 0.2s, padding-top 0.2s;
 $modal-content-bg: $chemstrap-white;
 $list-group-bg: $chemstrap-white;
 $list-group-color: $body-color;

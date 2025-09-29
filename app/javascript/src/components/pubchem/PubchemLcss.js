@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Row, Col } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import { concat, uniqBy } from 'lodash';
 import PubchemSigns from 'src/components/pubchem/PubchemSigns';
@@ -49,7 +49,7 @@ const PubchemLcss = ({
           />
       ))}
       <Button size="sm" variant="light" className="my-2" onClick={() => { window.open(`${sourceRoot}/compound/${cid}#datasheet=lcss&section=Top`, '_blank'); }}>
-        <img src="/images/wild_card/pubchem.svg" style={{ height: '1.5vh' }} alt="" className='me-1'/>
+        <i className="icon-pubchem me-1" />
         <span>Source: European Chemicals Agency (ECHA)<br />
         Read more about Safety Summary from PubChem</span>
       </Button>

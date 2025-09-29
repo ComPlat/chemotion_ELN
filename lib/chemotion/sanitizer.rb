@@ -34,7 +34,6 @@ module Chemotion
         # Loofah will remove node having rgb function as value in svg
         # though rgb is an allowed css function
         result = transform_rgb_to_hex(result)
-
         result =
           case type
           when :xml
@@ -42,8 +41,6 @@ module Chemotion
           when :html
             Loofah.scrub_html5_fragment(result, :strip)
           else
-            # scrubber = allow_image_tag
-            # Loofah.fragment(result).scrub!(scrubber)
             if Loofah.fragment(result).css('image').any?
               scrubber = allow_image_tag
               Loofah.fragment(result).scrub!(scrubber)

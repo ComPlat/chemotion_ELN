@@ -27,13 +27,18 @@
 @import "components/ElementsTable";
 @import "components/ElementGroupsRenderer_ElementListRenderer";
 @import "components/ElementsTable";
+@import "components/MaterialGroup";
 @import "components/MydbApp";
+@import "components/NumeralInputWithUnits";
 @import "components/PanelCollapseButton";
 @import "components/PanelResizeHandle";
 @import "components/QuillEditor";
 @import "components/QuillViewer";
 @import "components/ReactionMaterial";
+@import "components/ReactionSchemeGraphic";
 @import "components/Report";
+@import "components/ReorderableList";
+@import "components/SampleName";
 @import "components/SearchModal";
 @import "components/SearchResult";
 @import "components/Sidebar_Topbar";
@@ -56,7 +61,6 @@
 @import "legacy/export-collections";
 @import "legacy/format-container";
 @import "legacy/generic_element";
-@import "legacy/material";
 @import "legacy/metadata";
 @import "legacy/molecules";
 @import "legacy/molviewer";

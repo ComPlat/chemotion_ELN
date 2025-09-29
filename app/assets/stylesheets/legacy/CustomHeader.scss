@@ -23,17 +23,23 @@ div[role=columnheader] {
 .customSortUpLabel {
   float: left;
   margin: 0 0 0 3px;
+  color: inherit;
+  padding: 0;
 }
 
 .customSortDownLabel {
   float: left;
   margin: 0 0 0 3px;
+  color: inherit;
+  padding: 0;
 }
 
 .customSortRemoveLabel {
   float: left;
   margin: 0 0 0 3px;
   font-size: 11px;
+  color: inherit;
+  padding: 0;
 }
 
 .sort_active {

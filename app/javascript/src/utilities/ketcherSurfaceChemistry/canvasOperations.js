@@ -13,9 +13,10 @@ import {
   latestDataSetter
 } from 'src/components/structureEditor/KetcherEditor';
 import { ALIAS_PATTERNS, KET_TAGS } from 'src/utilities/ketcherSurfaceChemistry/constants';
-import { handleAddAtom } from 'src/utilities/ketcherSurfaceChemistry/AtomsAndMolManipulation';
 import { fetchKetcherData } from 'src/utilities/ketcherSurfaceChemistry/InitializeAndParseKetcher';
+import { findAtomByImageIndex, handleAddAtom } from 'src/utilities/ketcherSurfaceChemistry/AtomsAndMolManipulation';
 import {
+  imageNodeForTextNodeSetter,
   buttonClickForRectangleSelection,
 } from 'src/utilities/ketcherSurfaceChemistry/DomHandeling';
 import {
@@ -92,6 +93,212 @@ const arrangePolymers = async (canvasData) => {
   return ket2Lines;
 };
 
+// helper function to arrange text nodes for formula
+const arrangeTextNodes = async (ket2Molfile) => {
+  ket2Molfile.push(KET_TAGS.textNodeIdentifier);
+  let atomCount = 0;
+  const assembleTextList = [];
+  mols.forEach(async (item) => {
+    const textSeparator = KET_TAGS.textIdentifier;
+    latestData[item]?.atoms.forEach(async (atom) => {
+      const textNodeKey = textNodeStruct[atom.alias];
+
+      if (textNodeKey) {
+        textList.forEach((textItem) => {
+          const block = JSON.parse(textItem.data.content).blocks[0];
+          if (textNodeKey === block.key) {
+            const line = [atomCount, textSeparator, textNodeKey, textSeparator, atom.alias, textSeparator, block.text]
+              .join('')
+              .trim();
+            assembleTextList.push(line);
+          }
+        });
+      }
+      atomCount += 1;
+    });
+  });
+  ket2Molfile.push(...assembleTextList, KET_TAGS.textNodeIdentifierClose);
+  return ket2Molfile;
+};
+
+// sort and join / text nodes
+const traverseAtonForFormulaFormation = async (ket2Lines, textNodesPairs, startAtoms, endAtom) => {
+  let count = 0;
+  for (let i = startAtoms + 1; i <= endAtom; i++) {
+    const pairValue = textNodesPairs[count];
+    if (pairValue) {
+      delete textNodesPairs[count];
+      const Y = parseFloat(ket2Lines[i].trim().split('   ')[1]);
+      textNodesPairs[Y.toFixed(4)] = pairValue.text;
+    }
+    count++;
+  }
+  const sortedYIndices = Object.fromEntries(
+    Object.entries(textNodesPairs).sort(([a], [b]) => parseFloat(b) - parseFloat(a))
+  );
+
+  return Object.values(sortedYIndices).join('/');
+};
+
+// collect text node with index
+const collectTextListing = async (ket2Lines, startTextNode, endTextNode) => {
+  const struct = {};
+  for (let i = startTextNode + 1; i < endTextNode; i++) {
+    const item = ket2Lines[i].split(KET_TAGS.textIdentifier);
+    if (item.length === 4) {
+      const [idx, , unique, text] = item;
+      struct[idx] = { text, unique };
+    }
+  }
+  return struct;
+};
+
+const connectionHash = async (ket2Lines, bondsCount, startAtoms, atomsCount) => {
+  const connections = {};
+  const startIdx = atomsCount + startAtoms + 1;
+  for (let i = startIdx; i < startIdx + bondsCount; i++) {
+    const line = ket2Lines[i]
+      .trim()
+      .split(' ')
+      .filter((j) => j !== '');
+    if (line.length >= 3) {
+      const [atom1, atom2] = line;
+      console.log('atom1, atom2', atom1, atom2);
+      if (!connections[atom1]) connections[atom1] = [];
+      connections[atom1].push(atom2);
+    }
+  }
+  console.log('connections', connections);
+  console.log('texts', textList);
+  return smartInlineExpand(connections);
+};
+
+const smartInlineExpand = (input) => {
+  const result = JSON.parse(JSON.stringify(input)); // deep clone
+  const keysToDelete = new Set();
+
+  for (const key in result) {
+    const children = result[key];
+    for (const child of children) {
+      if (input[child]) {
+        const childValues = input[child];
+        const nextLevelKey = findNextKey(key, result);
+        if (nextLevelKey) {
+          const nextLevelValues = result[nextLevelKey];
+          const newItems = childValues.filter((val) => !nextLevelValues.includes(val));
+          if (newItems.length > 0) {
+            result[nextLevelKey].push(...newItems);
+            keysToDelete.add(child);
+          }
+        }
+      }
+    }
+  }
+
+  // Remove any fully inlined keys
+  for (const key of keysToDelete) {
+    delete result[key];
+  }
+
+  return result;
+};
+
+// Helper: find the "next" key in insertion order
+function findNextKey(currentKey, hash) {
+  const keys = Object.keys(hash);
+  const idx = keys.indexOf(currentKey);
+  if (idx !== -1 && idx + 1 < keys.length) {
+    return keys[idx + 1];
+  }
+  return null;
+}
+
+function connectWithUnderscore(connections, data) {
+  const result = {};
+
+  for (const key in connections) {
+    const connectedKeys = connections[key];
+
+    const texts = connectedKeys.map((k) => data[k]?.text).filter(Boolean); // remove undefined/null texts
+
+    result[key] = texts.join('_');
+  }
+
+  return result;
+}
+
+const subtractOneFromAll = (obj) => {
+  const result = {};
+  for (const key in obj) {
+    result[key] = obj[key].map((val) => Number(val) - 1);
+  }
+  return result;
+};
+
+// process text nodes into for formula
+const assembleTextDescriptionFormula = async (ket2Lines, editor) => {
+  const startAtoms = 3;
+  const splitsHeaders = ket2Lines[3]
+    .trim()
+    .split(' ')
+    .map((i) => i.trim())
+    .filter((i) => i !== '');
+  const atomsCount = parseInt(splitsHeaders[0]);
+  const bondsCount = parseInt(splitsHeaders[1]);
+  const startTextNode = ket2Lines.indexOf(KET_TAGS.textNodeIdentifier);
+  const endTextNode = ket2Lines.indexOf(KET_TAGS.textNodeIdentifierClose);
+  const endAtom = atomsCount + 3;
+  const indicesMap = {};
+  for (let i = 0; i < atomsCount; i++) {
+    indicesMap[i] = [];
+  }
+  const data = JSON.parse(await editor.structureDef.editor.getKet());
+
+  for (let mol = 0; mol < mols.length; mol++) {
+    const { bonds } = data[mols[mol]] || {};
+    for (let atom1Bond = 0; atom1Bond < bonds?.length; atom1Bond++) {
+      const [atom1, atom2] = bonds[atom1Bond].atoms || [];
+      for (let atom2Bond = atom1Bond; atom2Bond < bonds?.length; atom2Bond++) {
+        if (atom1 !== atom2) {
+          indicesMap[atom1].push(atom2);
+        }
+      }
+    }
+  }
+
+  console.log('indicesMap', indicesMap);
+  const atomNumbersConnectWith_ = [];
+  const indicesKeys = Object.keys(indicesMap);
+  for (let atom = 0; atom < indicesKeys.length; atom++) {
+    const connectedAtoms = indicesMap[atom];
+    if (connectedAtoms.length > 1) {
+      atomNumbersConnectWith_.push(...connectedAtoms);
+    }
+  }
+
+  const textNodesPairs = await collectTextListing(ket2Lines, startTextNode, endTextNode);
+  const pairKeys = Object.keys(textNodesPairs);
+  console.log('pairKeys', pairKeys);
+  console.log('atomNumbersConnectWith_', atomNumbersConnectWith_);
+
+  // for (let textNode = 0; textNode < pairKeys.length; textNode++) {
+  //   if (atomNumbersConnectWith_.indexOf(parseInt(pairKeys[textNode])) !== -1) {
+  //     textNodesPairs[pairKeys[textNode]].text += '_';
+  //   }
+  // }
+
+  for (let i = 0; i < atomNumbersConnectWith_.length; i++) {
+    const idx = atomNumbersConnectWith_[i];
+    if (textNodesPairs[idx]) {
+      textNodesPairs[idx].text += '_'; // textNodesPairs[idx].text.replace(/_/g, '');
+    }
+  }
+
+  const formula = await traverseAtonForFormulaFormation(ket2Lines, textNodesPairs, startAtoms, endAtom);
+  console.log('formula', formula);
+  return '';
+};
+
 /* istanbul ignore next */
 // container function for onAddAtom
 const onAddAtom = async (editor) => {
@@ -135,6 +342,31 @@ const onDeleteText = async (editor) => {
   } catch (e) {
     console.error('onDeleteText', e);
   }
+};
+
+// function to add text nodes to canvas/struct
+const onAddText = async (editor, selectedImageForTextNode) => {
+  if (editor && editor.structureDef && selectedImageForTextNode) {
+    await fetchKetcherData(editor);
+    const { atomLocation, alias } = await findAtomByImageIndex(selectedImageForTextNode[0]);
+
+    if (!atomLocation && !atomLocation?.length) return null;
+
+    // sync positions between atom alias, and text-node
+    const { width } = imagesList[selectedImageForTextNode[0]]?.boundingBox || 10;
+    const lastTextNode = textList[textList.length - 1];
+
+    lastTextNode.data.position = {
+      x: atomLocation[0] + width / 2,
+      y: atomLocation[1],
+      z: atomLocation[2],
+    };
+    textList[textList.length - 1] = lastTextNode;
+    textNodeStruct[alias] = JSON.parse(lastTextNode.data.content).blocks[0].key;
+    saveMoveCanvas(editor, latestData, true, true, false);
+  }
+  imageNodeForTextNodeSetter(null);
+  return true;
 };
 
 // make all special atom to rg-labels6 temp
@@ -283,17 +515,22 @@ const onTemplateMove = async (editor, recenter = false) => {
 
 const onFinalCanvasSave = async (editor, iframeRef) => {
   try {
+    let textNodesFormula = '';
+    let ket2Lines = [];
+
     await centerPositionCanvas(editor);
     const canvasDataMol = await editor.structureDef.editor.getMolfile();
     await reArrangeImagesOnCanvas(iframeRef); // svg display
-    const ket2Lines = await arrangePolymers(canvasDataMol); // polymers added
+    ket2Lines = await arrangePolymers(canvasDataMol); // polymers added
+    ket2Lines = await arrangeTextNodes(ket2Lines); // text node
+    if (textList?.length) textNodesFormula = await assembleTextDescriptionFormula(ket2Lines, editor);
     ket2Lines.push(KET_TAGS.fileEndIdentifier);
     const svgElement = await prepareSvg(editor);
     resetStore();
     return {
       ket2Molfile: ket2Lines.join('\n'),
       svgElement,
-      textNodesFormula: '',
+      textNodesFormula,
     };
   } catch (e) {
     console.error('onSaveFileK2SC', e);
@@ -341,6 +578,9 @@ export {
   arrangePolymers,
   onAddAtom,
   onDeleteText,
+  arrangeTextNodes,
+  assembleTextDescriptionFormula,
+  onAddText,
   prepareSvg,
   centerPositionCanvas,
   onTemplateMove,

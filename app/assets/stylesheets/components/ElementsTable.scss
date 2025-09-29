@@ -1,14 +1,21 @@
 .elements-table-header {
+  container-name: elements-table-header;
+  container-type: inline-size;
   @extend .d-flex;
   @extend .align-items-center;
   @extend .justify-content-between;
   @extend .surface-tab__header;
-}
-
-@media (max-width: 600px) {
-  .elements-table-header {
-    height: auto;
-    flex-wrap: wrap;
-    overflow: auto;
+  &__date-filter {
+    z-index: 10;
+    @extend .position-static;
+    @extend .flex-nowrap;
+    @extend .w-auto;
+  }
+  &__filters {
+    @extend .flex-grow-1;
+    @extend .d-flex;
+    @extend .gap-1;
+    @extend .align-items-center;
+    @extend .flex-wrap;
   }
 }

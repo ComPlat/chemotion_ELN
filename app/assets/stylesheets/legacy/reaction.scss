@@ -1,5 +1,6 @@
 @media screen and (max-width: 1366px) {
-  table.reaction-scheme .form-group, table.reaction-scheme button.btn-danger {
+  table.reaction-scheme .form-group,
+  table.reaction-scheme button.btn-danger {
     .form-control {
       padding: 3px 12px;
       height: 26px;
@@ -11,45 +12,6 @@
 table.reaction-scheme-solvent {
   td {
     padding: 2px 0;
-  }
-}
-
-.small-padding > [class*='col-']:first-child {
-  padding-right: 5px;
-}
-
-.small-padding > [class*='col-']:last-child {
-  padding-left: 5px;
-}
-
-.small-padding > [class*='col-']:not(:first-child):not(:last-child) {
-  padding-right: 5px;
-  padding-left: 5px;
-}
-
-.inline-inside {
-  div {
-    display: inline-block;
-  }
-
-  p {
-    margin: 0;
-  }
-}
-
-.reaction-scheme-props {
-  width: 100%;
-
-  table.table {
-    margin-bottom: 0px;
-
-    tr > div {
-      padding: 0 2px;
-    }
-
-    div.Select-menu-outer {
-      z-index: 5;
-    }
   }
 }
 
@@ -83,34 +45,6 @@ table.reaction-scheme-solvent {
   .Select-menu-outer {
     z-index: 3;
     width: 250%;
-  }
-}
-
-.Select.form-control-sm {
-  .Select-control {
-    height: 28px;
-  }
-  .Select-placeholder {
-    line-height: 24px;
-  }
-  .Select-value {
-    line-height: 24px;
-  }
-
-  .Select-value-label {
-    line-height: 24px;
-  }
-
-  .Select-input > input {
-    padding-top: 2px;
-  }
-
-  .Select-input {
-    height: 26px;
-  }
-
-  .Select-menu-outer {
-    z-index: 3;
   }
 }
 
@@ -173,20 +107,22 @@ table.reaction-scheme-solvent {
 
 .reaction-status-change {
   .Select-value {
-
-  -webkit-animation: reaction-status-color-change 3s;  /* Safari 4.0 - 8.0 */
-  -webkit-animation-fill-mode: forwards; /* Safari 4.0 - 8.0 */
-  animation: reaction-status-color-change 3s;
+    -webkit-animation: reaction-status-color-change 3s; /* Safari 4.0 - 8.0 */
+    -webkit-animation-fill-mode: forwards; /* Safari 4.0 - 8.0 */
+    animation: reaction-status-color-change 3s;
   }
-
 }
 
 /* Safari 4.0 - 8.0 */
 @-webkit-keyframes reaction-status-color-change {
-  from { background-color: aliceblue;}
+  from {
+    background-color: aliceblue;
+  }
 }
 
 @keyframes reaction-status-color-change {
   //from {top: 0px;}
-  from { background-color: aliceblue;}
+  from {
+    background-color: aliceblue;
+  }
 }
