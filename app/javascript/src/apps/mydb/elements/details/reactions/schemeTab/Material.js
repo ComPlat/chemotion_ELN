@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
+  Accordion,
   Form,
   Button,
   InputGroup,
@@ -889,7 +890,7 @@ class Material extends Component {
     const isMixture = material.isMixture && material.isMixture();
     const hasComponents = mixtureComponents && mixtureComponents.length > 0;
 
-    return (
+    const materialRow = (
       <div ref={dropRef} className={this.rowClassNames()}>
         {this.dragHandle()}
         {this.materialNameWithIupac(material)}
@@ -926,78 +927,6 @@ class Material extends Component {
           </div>
         </div>
 
-        {/* Mixture Arrow Row */}
-        {isMixture && hasComponents && (
-          <div
-            className="mixture-arrow-row text-center"
-            style={{
-              background: '#f8f9fa',
-              padding: '0',
-              height: '22px',
-            }}
-          >
-            <OverlayTrigger
-              placement="top"
-              overlay={
-                <Tooltip id="mixture-components-tooltip">
-                  {showComponents ? 'Hide the components' : 'See the components'}
-                </Tooltip>
-              }
-            >
-              <Button
-                variant="light"
-                size="sm"
-                style={{
-                  fontSize: '1.05em',
-                  color: '#007bff',
-                  lineHeight: 1,
-                  height: '20px',
-                  minHeight: 'unset',
-                  padding: '0 6px',
-                }}
-                onClick={this.toggleComponentsAccordion}
-                aria-label={showComponents ? 'Hide the components' : 'See the components'}
-              >
-                <i
-                  className={`fa fa-angle-double-${
-                    showComponents ? 'up' : 'down'
-                  } text-primary`}
-                />
-              </Button>
-            </OverlayTrigger>
-          </div>
-        )}
-
-        {/* Mixture Components Row */}
-        {isMixture && hasComponents && showComponents && (
-          <div className="mixture-components-row" style={{ padding: 0, background: '#f8f9fa' }}>
-            {mixtureComponentsLoading ? (
-              <div className="text-center">Loading components...</div>
-            ) : (
-              <>
-                {mixtureComponents.filter((c) => c.material_group === 'liquid').length > 0 && (
-                  <ReactionMaterialComponentsGroup
-                    components={mixtureComponents.filter((c) => c.material_group === 'liquid')}
-                    materialGroup="liquid"
-                    reaction={reaction}
-                  />
-                )}
-                {mixtureComponents.filter((c) => c.material_group === 'solid').length > 0 && (
-                  <ReactionMaterialComponentsGroup
-                    components={mixtureComponents.filter((c) => c.material_group === 'solid')}
-                    materialGroup="solid"
-                    reaction={reaction}
-                  />
-                )}
-                {mixtureComponents.filter((c) => c.material_group === 'liquid').length === 0 &&
-                  mixtureComponents.filter((c) => c.material_group === 'solid').length === 0 && (
-                    <div className="text-center">No components found for this mixture.</div>
-                  )}
-              </>
-            )}
-          </div>
-        )}
-
         {materialGroup === 'products' && (
           <>
             {material.gas_type === 'gas' && reaction.gaseous && this.gaseousProductRow(material)}
@@ -1005,6 +934,37 @@ class Material extends Component {
           </>
         )}
       </div>
+    );
+
+    return (
+      <>
+        {materialRow}
+
+        {isMixture && hasComponents && (
+          <Accordion
+            className="mixture-components-accordion"
+            activeKey={showComponents ? 'components' : null}
+            onSelect={this.toggleComponentsAccordion}
+          >
+            <Accordion.Item eventKey="components">
+              <Accordion.Header>Components</Accordion.Header>
+              <Accordion.Body>
+                <div className="mixture-components-row" style={{ padding: 0, background: '#f8f9fa' }}>
+                  {mixtureComponentsLoading ? (
+                    <div className="text-center">Loading components...</div>
+                  ) : (
+                    <ReactionMaterialComponentsGroup
+                      components={mixtureComponents}
+                      sampleId={material.id}
+                      onComponentReferenceChange={this.handleComponentReferenceChange}
+                    />
+                  )}
+                </div>
+              </Accordion.Body>
+            </Accordion.Item>
+          </Accordion>
+        )}
+      </>
     );
   }
 
