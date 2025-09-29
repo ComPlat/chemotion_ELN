@@ -714,19 +714,15 @@ export default class Reaction extends Element {
   }
 
   _coerceToSamples(samples) {
-    return samples && samples.map(s => new Sample(s)) || []
+    return samples && samples.map((s) => new Sample(s)) || []
   }
 
   sampleById(sampleID) {
-    return this.samples.find((sample) => {
-      return sample.id == sampleID;
-    })
+    return this.samples.find((sample) => sample.id == sampleID)
   }
 
   get referenceMaterial() {
-    return this.samples.find((sample) => {
-      return sample.reference;
-    })
+    return this.samples.find((sample) => sample.reference);
   }
 
   get sampleCount() {
