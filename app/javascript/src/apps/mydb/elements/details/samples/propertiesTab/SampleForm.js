@@ -1050,11 +1050,7 @@ export default class SampleForm extends React.Component {
             </>
           ) : (
             <>
-<<<<<<< HEAD
               <Row className="align-items-end mb-4">
-=======
-              <Row>
->>>>>>> 0f787a9ee (feat: enhance SampleForm and SampleGroupItem components for improved inventory label handling and display of mixture component titles)
                 <Col md={4}>
                   {this.textInput(sample, 'name', 'Name')}
                 </Col>
