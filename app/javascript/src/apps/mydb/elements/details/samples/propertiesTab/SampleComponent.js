@@ -19,6 +19,12 @@ import ComponentStore from 'src/stores/alt/stores/ComponentStore';
 import ComponentActions from 'src/stores/alt/actions/ComponentActions';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
+import {
+  getMetricMol,
+  getMetricMolConc,
+  metricPrefixesMol,
+  metricPrefixesMolConc
+} from 'src/utilities/MetricsUtils';
 
 /**
  * Drag source specification for material drag-and-drop.
@@ -391,13 +397,22 @@ class SampleComponent extends Component {
 
   /**
    * Generates tooltip text for molecular weight.
-   * @param {Object} sample - The sample object
+   * @param {Object} material - The material object
    * @returns {string} Tooltip text
    */
-  generateMolecularWeightTooltipText(sample) {
-    const molecularWeight = sample.decoupled
-      ? (sample.molecular_mass) : (sample.molecule && sample.molecule.molecular_weight);
-    return `molar mass: ${molecularWeight} g/mol`;
+  generateMolecularWeightTooltipText(material) {
+    const molecularWeight = material.decoupled
+      ? (material.molecular_mass) : (material.molecule && material.molecule.molecular_weight);
+
+    let tooltipText = molecularWeight ? `molar mass: ${molecularWeight.toFixed(6)} g/mol` : 'molar mass: N/A';
+
+    // Add relative molecular weight if available
+    const relativeMolecularWeight = material.component_properties?.relative_molecular_weight;
+    if (relativeMolecularWeight && relativeMolecularWeight > 0) {
+      tooltipText += `\nrelative molecular weight: ${relativeMolecularWeight.toFixed(6)} g/mol`;
+    }
+
+    return tooltipText;
   }
 
   /**
@@ -436,7 +451,7 @@ class SampleComponent extends Component {
           metricPrefixes={metricPrefixes}
           precision={3}
           disabled={!permitOn(sample)}
-          onChange={(e) => this.handleAmountChange(e, material.amount_l)}
+          onChange={(e) => this.handleAmountChange(e, material.amount_l, '', false)}
           onMetricsChange={this.handleMetricsChange}
           variant={material.amount_unit === 'l' ? 'success' : 'light'}
         />
@@ -473,7 +488,7 @@ class SampleComponent extends Component {
             metricPrefixes={metricPrefixes}
             precision={4}
             disabled={!permitOn(sample) || lockAmountColumnSolids}
-            onChange={(e) => this.handleAmountChange(e, material.amount_g)}
+            onChange={(e) => this.handleAmountChange(e, material.amount_g, '', lockAmountColumnSolids)}
             onMetricsChange={this.handleMetricsChange}
             variant={material.error_mass ? 'danger' : massBsStyle}
             name="molecular-weight"
@@ -497,18 +512,28 @@ class SampleComponent extends Component {
       <td
         style={enableComponentPurity === false ? { verticalAlign: 'bottom' } : null}
       >
-        <NumeralInputWithUnitsCompo
-          key={material.id}
-          value={material.amount_mol}
-          unit="mol"
-          metricPrefix={metricMol}
-          metricPrefixes={metricPrefixesMol}
-          precision={4}
-          disabled={!permitOn(sample)}
-          onChange={(e) => this.handleAmountChange(e, material.amount_mol)}
-          onMetricsChange={this.handleMetricsChange}
-          variant={material.amount_unit === 'mol' ? 'success' : 'light'}
-        />
+        <OverlayTrigger
+          delay="100"
+          placement="top"
+          overlay={
+            <Tooltip id="molecular-weight-info">{this.generateMolecularWeightTooltipText(material)}</Tooltip>
+        }
+        >
+          <div>
+            <NumeralInputWithUnitsCompo
+              key={material.id}
+              value={material.amount_mol}
+              unit="mol"
+              metricPrefix={metricMol}
+              metricPrefixes={metricPrefixesMol}
+              precision={4}
+              disabled={!permitOn(sample)}
+              onChange={(e) => this.handleAmountChange(e, material.amount_mol, '', false)}
+              onMetricsChange={this.handleMetricsChange}
+              variant={material.amount_unit === 'mol' ? 'success' : 'light'}
+            />
+          </div>
+        </OverlayTrigger>
       </td>
     );
   }
@@ -676,11 +701,8 @@ class SampleComponent extends Component {
     const {
       sample, material, deleteMaterial, connectDragSource, connectDropTarget, activeTab, enableComponentPurity
     } = props;
-    const metricPrefixes = ['m', 'n', 'u'];
-    const metricPrefixesMol = ['m', 'n'];
-    const metricMol = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[2]) > -1) ? material.metrics[2] : 'm';
-    const metricPrefixesMolConc = ['m', 'n'];
-    const metricMolConc = (material.metrics && material.metrics.length > 3 && metricPrefixes.indexOf(material.metrics[3]) > -1) ? material.metrics[3] : 'm';
+    const metricMol = getMetricMol(material);
+    const metricMolConc = getMetricMolConc(material);
 
     return (
       <tr className="general-material">
@@ -747,11 +769,9 @@ class SampleComponent extends Component {
     } = props;
     const metricPrefixes = ['m', 'n', 'u'];
     const metric = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[0]) > -1) ? material.metrics[0] : 'm';
-    const metricPrefixesMol = ['m', 'n'];
-    const metricMol = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[2]) > -1) ? material.metrics[2] : 'm';
+    const metricMol = getMetricMol(material);
     const massBsStyle = material.amount_unit === 'g' ? 'success' : 'light';
-    const metricPrefixesMolConc = ['m', 'n'];
-    const metricMolConc = (material.metrics && material.metrics.length > 3 && metricPrefixes.indexOf(material.metrics[3]) > -1) ? material.metrics[3] : 'm';
+    const metricMolConc = getMetricMolConc(material);
 
     return (
       <tr className="general-material">
