@@ -503,8 +503,6 @@ function removeObsoleteColumnsFromVariations(variations, selectedColumns) {
     });
 }
 
-let segmentsForVariations = null;
-
 const processSegmentsForVariations = (segments, reaction) => {
   const result = [];
   segments.forEach((seg) => {
@@ -544,17 +542,17 @@ const getSegmentsForVariations = (reaction) => {
     try {
       const res = await GenericSgsFetcher.listSegmentKlass({ is_active: true }, true);
       const reactionsSegments = res.klass.filter((k) => k.element_klass.name === 'reaction' && k.is_active);
-      segmentsForVariations = processSegmentsForVariations(reactionsSegments, reaction);
+      return processSegmentsForVariations(reactionsSegments, reaction);
     } catch (error) {
       console.error('Error fetching segments:', error);
+      return [];
     }
-    return segmentsForVariations;
   };
 
   return fetchData();
 };
 
-function getSegmentColumnGroupChild(propertyType) {
+function getSegmentColumnGroupChild(propertyType, segmentsForVariations) {
   if (!segmentsForVariations) {
     return {};
   }
@@ -647,7 +645,7 @@ function getMetadataColumnGroupChild(metadataType) {
   }
 }
 
-function addMissingColumnDefinitions(columnDefinitions, selectedColumns, materials, gasMode, gridRef) {
+function addMissingColumnDefinitions(columnDefinitions, selectedColumns, materials, gasMode, segments = []) {
   const updatedColumnDefinitions = cloneDeep(columnDefinitions);
 
   Object.entries(selectedColumns)
@@ -672,7 +670,7 @@ function addMissingColumnDefinitions(columnDefinitions, selectedColumns, materia
           columnGroup.children.push(getMetadataColumnGroupChild(childID));
         }
         if (columnGroupID === 'segmentData') {
-          columnGroup.children.push(getSegmentColumnGroupChild(childID, gridRef));
+          columnGroup.children.push(getSegmentColumnGroupChild(childID, segments));
         }
       });
     });
@@ -724,7 +722,7 @@ function updateColumnDefinitions(columnDefinitions, field, property, newValue) {
   return updatedColumnDefinitions;
 }
 
-function getColumnDefinitions(selectedColumns, materials, gasMode, externalEntryDefs = {}) {
+function getColumnDefinitions(selectedColumns, materials, gasMode, externalEntryDefs = {}, segments = []) {
   return [
     {
       headerName: 'Tools',
@@ -753,7 +751,7 @@ function getColumnDefinitions(selectedColumns, materials, gasMode, externalEntry
       headerName: 'Segments',
       groupId: 'segmentData',
       marryChildren: true,
-      children: selectedColumns.segmentData.map((entry) => getSegmentColumnGroupChild(entry)),
+      children: selectedColumns.segmentData.map((entry) => getSegmentColumnGroupChild(entry, segments)),
     },
   ].concat(
     Object.entries(materialTypes).map(([materialType, { label }]) => ({

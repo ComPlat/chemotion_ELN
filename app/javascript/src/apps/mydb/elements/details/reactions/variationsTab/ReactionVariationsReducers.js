@@ -10,7 +10,8 @@ export default function columnDefinitionsReducer(columnDefinitions, action) {
         columnDefinitions,
         action.selectedColumns,
         action.materials,
-        action.gasMode
+        action.gasMode,
+        action.segments
       );
       updatedColumnDefinitions = removeObsoleteColumnDefinitions(
         updatedColumnDefinitions,
@@ -40,7 +41,9 @@ export default function columnDefinitionsReducer(columnDefinitions, action) {
       return getColumnDefinitions(
         action.selectedColumns,
         action.materials,
-        action.gasMode
+        action.gasMode,
+        {},
+        action.segments
       );
     }
     case 'set_updated': {
