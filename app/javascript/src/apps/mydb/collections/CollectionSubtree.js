@@ -1,49 +1,50 @@
-import React from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
-import CollectionStore from 'src/stores/alt/stores/CollectionStore';
-import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import UserInfosTooltip from 'src/apps/mydb/collections/UserInfosTooltip';
 import ChevronIcon from 'src/components/common/ChevronIcon';
 import { aviatorNavigationWithCollectionId } from 'src/utilities/routesUtils';
+import { observer } from 'mobx-react';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
-export default class CollectionSubtree extends React.Component {
-  constructor(props) {
-    super(props);
+function CollectionSubtree({ root, sharedWithMe, level }) {
+  const collectionsStore = useContext(StoreContext).collections;
+  const uiState = UIStore.getState();
+  const sharedUsers = root.shares;
+  const children = root.children || [];
 
-    this.state = {
-      selected: false,
-      visible: false
-    };
+  const [selected, setSelected] = useState(false);
+  const [visible, setVisible] = useState(false);
 
-    this.onChange = this.onChange.bind(this);
-    this.toggleExpansion = this.toggleExpansion.bind(this);
-    this.handleClick = this.handleClick.bind(this);
-    this.handleTakeOwnership = this.handleTakeOwnership.bind(this);
+  const isVisible = (node, currentCollection) => {
+    const descendantIds = collectionsStore.descendantIds(node);
+    if (descendantIds) {
+      return descendantIds.indexOf(parseInt(currentCollection.id)) > -1;
+    }
+    return false;
   }
 
-  componentDidMount() {
-    this.onChange(UIStore.getState());
-    UIStore.listen(this.onChange);
+  const onUiStoreChange = ({ currentCollection }) => {
+    if (currentCollection) {
+      setVisible(isVisible(root, currentCollection));
+      setSelected(currentCollection.id === root.id);
+    }
   }
 
-  componentWillUnmount() {
-    UIStore.unlisten(this.onChange);
+  useEffect(() => {
+    UIStore.listen(onUiStoreChange);
+    return () => UIStore.unlisten(onUiStoreChange);
+  }, []);
+
+  const handleTakeOwnership = () => {
+    // TODO: add takeOwnership endpoint
+    // CollectionActions.takeOwnership({ root.id });
   }
 
-  handleTakeOwnership() {
-    const { root: { sharer, id } } = this.props;
-    const isSync = !!sharer;
-    CollectionActions.takeOwnership({ id, isSync });
-  }
-
-  handleClick() {
-    const { root } = this.props;
-    const { visible } = this.state;
-    const uiState = UIStore.getState();
+  const handleClick = () => {
     const { currentElement } = ElementStore.getState();
     // When currentElement is an array, use the first item (special handling for vessel templates)
     const element = Array.isArray(currentElement) && currentElement.length > 0 ? currentElement[0] : currentElement;
@@ -51,127 +52,72 @@ export default class CollectionSubtree extends React.Component {
     if (uiState.showCollectionManagement) {
       UIActions.toggleCollectionManagement();
     }
-    this.setState({ visible: visible || this.isVisible(root, uiState) });
+    setVisible(visible || isVisible(root, uiState.currentCollection));
 
     aviatorNavigationWithCollectionId(root.id, element?.type, (element?.isNew ? 'new' : element?.id), true, true);
   }
 
-  onChange(state) {
-    const { root } = this.props;
-
-    if (state.currentCollection) {
-      const visible = this.isVisible(root, state);
-      const selectedCol = (
-        state.currentCollection.id === root.id
-        && (
-          state.currentCollection.is_synchronized === root.is_synchronized
-          || state.currentCollection.isRemote === root.isRemote
-        )
-      );
-
-      this.setState({
-        selected: selectedCol,
-        visible
-      });
-    }
-  }
-
-  isVisible(node, uiState) {
-    if (node.descendant_ids) {
-      const currentCollectionId = parseInt(uiState.currentCollection.id);
-      if (node.descendant_ids.indexOf(currentCollectionId) > -1) return true;
-    }
-
-    const { visibleRootsIds } = CollectionStore.getState();
-    return (visibleRootsIds.indexOf(node.id) > -1);
-  }
-
-  canTakeOwnership() {
-    const { root, isRemote } = this.props;
+  const canTakeOwnership = () => {
     const isTakeOwnershipAllowed = root.permission_level === 5;
-    const isSync = !!((root.sharer && root.user && root.user.type !== 'Group'));
-    return (isRemote || isSync) && isTakeOwnershipAllowed;
+    return sharedWithMe && isTakeOwnershipAllowed;
   }
 
-  toggleExpansion(e) {
+  const toggleExpansion = (e) => {
     e.stopPropagation();
-    const { root } = this.props;
-    let { visible } = this.state;
-    visible = !visible;
-    this.setState({ visible });
-
-    let { visibleRootsIds } = CollectionStore.getState();
-    if (visible) {
-      visibleRootsIds.push(root.id);
-    } else {
-      const descendantIds = root.descendant_ids
-        ? root.descendant_ids
-        : root.children.map((s) => s.id);
-      descendantIds.push(root.id);
-      visibleRootsIds = visibleRootsIds.filter((x) => descendantIds.indexOf(x) === -1);
-    }
-
-    // Remove duplicate
-    const newIds = Array.from(new Set(visibleRootsIds));
-    CollectionActions.updateCollectrionTree(newIds);
+    setVisible(!visible);
   }
 
-  render() {
-    const { root, isRemote, level } = this.props;
-    const { visible, selected } = this.state;
-    const sharedUsers = root.shares;
-    const children = root.children || [];
-
-    return (
-      <div key={root.id}>
-        <div
-          id={`tree-id-${root.label}`}
-          className={`tree-view_item ${selected ? 'tree-view_item--selected' : ''}`}
-          onClick={this.handleClick}
-          style={{ paddingLeft: `${((level - 0.5) * 12)-4}px` }}
-        >
-          {children.length > 0 ? (
-            <ChevronIcon
-              direction={visible ? 'down' : 'right'}
-              onClick={this.toggleExpansion}
-            />
-          )
-            : (<i className="fa fa-fw" />)}
-          <span className="tree-view_title">{root.label}</span>
-          {root.inventory_prefix && (
-            <OverlayTrigger
-              placement="top"
-              overlay={<Tooltip id="collection_inventory_label">{root.inventory_prefix}</Tooltip>}
-            >
-              <i className="fa fa-tag" />
-            </OverlayTrigger>
-          )}
-          {this.canTakeOwnership() && (
-            <i
-              className="fa fa-exchange"
-              onClick={this.handleTakeOwnership}
-            />
-          )}
-          {(sharedUsers && sharedUsers.length > 0) && (
-            <OverlayTrigger placement="top" overlay={<UserInfosTooltip users={sharedUsers} />}>
-              <i className="fa fa-share-alt" />
-            </OverlayTrigger>
-          )}
-        </div>
-        {visible && (
-          <div className="tree-view">
-            {children.map((child) => (
-              <CollectionSubtree key={child.id} root={child} isRemote={isRemote} level={level + 1} />
-            ))}
-          </div>
+  return (
+    <div key={root.id}>
+      <div
+        id={`tree-id-${root.label}`}
+        className={`tree-view_item ${selected ? 'tree-view_item--selected' : ''}`}
+        onClick={() => handleClick()}
+        style={{ paddingLeft: `${((level - 0.5) * 12) - 4}px` }}
+      >
+        {children.length > 0 ? (
+          <ChevronIcon
+            direction={visible ? 'down' : 'right'}
+            onClick={(e) => toggleExpansion(e)}
+          />
+        )
+          : (<i className="fa fa-fw" />)}
+        <span className="tree-view_title">{root.label}</span>
+        {root.inventory_prefix && (
+          <OverlayTrigger
+            placement="top"
+            overlay={<Tooltip id="collection_inventory_label">{root.inventory_prefix}</Tooltip>}
+          >
+            <i className="fa fa-tag" />
+          </OverlayTrigger>
+        )}
+        {canTakeOwnership() && (
+          <i
+            className="fa fa-exchange"
+            onClick={() => handleTakeOwnership()}
+          />
+        )}
+        {(sharedUsers && sharedUsers.length > 0) && (
+          <OverlayTrigger placement="top" overlay={<UserInfosTooltip users={sharedUsers} />}>
+            <i className="fa fa-share-alt" />
+          </OverlayTrigger>
         )}
       </div>
-    );
-  }
+      {visible && (
+        <div className="tree-view">
+          {children.map((child) => (
+            <CollectionSubtree key={child.id} root={child} sharedWithMe={sharedWithMe} level={level + 1} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
+export default observer(CollectionSubtree);
+
 CollectionSubtree.propTypes = {
-  isRemote: PropTypes.bool,
+  sharedWithMe: PropTypes.bool,
   root: PropTypes.object,
   level: PropTypes.number
 };

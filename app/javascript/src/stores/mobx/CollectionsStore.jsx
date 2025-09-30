@@ -124,6 +124,9 @@ export const CollectionsStore = types
         return self.current_user;
       }
     },
+    descendantIds(collection) {
+      return collection.children.flatMap(child => [child.id].concat(self.descendantIds(child)))
+    },
     addOwnCollection(collection) {
       if (collection.isRootCollection) {
         self.own_collections.push(collection)
