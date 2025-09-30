@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/ClassLength
+# rubocop:disable Metrics/ClassLength, Metrics/AbcSize
 
 module RecoveryDB
   module PartialMigration
@@ -36,8 +36,13 @@ module RecoveryDB
         @mount.log_event "Restoring users: found #{rec_users.size} of #{@user_ids.size} user(s) to restore"
         restore_element_klasses(created_elements)
         rec_users.each do |recovery_user|
-          new_user = restore_user(recovery_user, created_elements)
-          user_id_map[recovery_user.id] = new_user.id
+          ActiveRecord::Base.transaction do
+            new_user = restore_user(recovery_user, created_elements)
+            user_id_map[recovery_user.id] = new_user.id
+          rescue StandardError => e
+            Rails.logger.error("Restoring user #{recovery_user.id} failed: #{e.message}")
+            raise ActiveRecord::Rollback
+          end
         end
         restore_sharing_and_synchronization(user_id_map)
         restore_user_admin(user_id_map)
@@ -63,6 +68,8 @@ module RecoveryDB
           created_elements[element_klass_key] = new_element_klass.id
           restore_segment_klass(created_elements, old_element_klass.id, new_element_klass.id)
         end
+      rescue ActiveRecord::ActiveRecordError => e
+        Rails.logger.error "Failed to copy element klass #{element_klass_ids}: #{e.message}"
       end
 
       def restore_segment_klass(created_elements, old_element_klass_id, new_element_klass_id)
@@ -98,7 +105,7 @@ module RecoveryDB
           new_user
         rescue ActiveRecord::ActiveRecordError => e
           Rails.logger.error "Failed to copy user #{old_user.id}: #{e.message}"
-          nil
+          raise
         end
       end
 
@@ -137,6 +144,7 @@ module RecoveryDB
           Profile.create!(profile_attributes.merge(user_id: new_user.id))
         rescue ActiveRecord::RecordInvalid => e
           Rails.logger.error "Failed to copy profile for user #{old_user.id}: #{e.message}"
+          raise
         end
       end
 
@@ -149,13 +157,16 @@ module RecoveryDB
           UserLabel.create!(label_attributes.merge(user_id: new_user.id))
         rescue ActiveRecord::RecordInvalid => e
           Rails.logger.error "Failed to copy label for user #{old_user.id}: #{e.message}"
+          raise
         end
       end
 
       def restore_collections(old_user, new_user, created_elements)
         old_collections = RecoveryDB::Models::Collection.where(user_id: old_user.id)
                                                         .where(is_shared: false)
-                                                        .or(RecoveryDB::Models::Collection.where(shared_by_id: @user_ids))
+                                                        .or(
+                                                          RecoveryDB::Models::Collection.where(shared_by_id: @user_ids),
+                                                        )
         return if old_collections.empty?
 
         id_map = {}
@@ -169,6 +180,7 @@ module RecoveryDB
           restore_collection_elements(old_collection, new_collection, new_user.id, created_elements)
         rescue ActiveRecord::RecordInvalid => e
           Rails.logger.error "Failed to copy collection #{old_collection.id} for user #{old_user.id}: #{e.message}"
+          raise
         end
       end
 
@@ -265,7 +277,7 @@ module RecoveryDB
         new_record
       rescue ActiveRecord::RecordInvalid => e
         Rails.logger.error "Failed to restore #{main_model.name} #{original_id}: #{e.message}"
-        nil
+        raise
       end
 
       def assign_creator_or_user(record, new_user_id)
@@ -359,6 +371,7 @@ module RecoveryDB
           Attachment.create!(attrs)
         rescue ActiveRecord::RecordInvalid => e
           Rails.logger.error "Failed to restore Attachment #{attachment.id}: #{e.message}"
+          raise
         end
       end
 
@@ -370,6 +383,7 @@ module RecoveryDB
           Well.create!(attrs)
         rescue ActiveRecord::RecordInvalid => e
           Rails.logger.error "Failed to restore Well #{well.id}: #{e.message}"
+          raise
         end
       end
 
@@ -422,6 +436,7 @@ module RecoveryDB
       rescue StandardError => e
         Rails.logger.error "Failed to restore element #{col_elem.element_id} " \
                            "for collection #{col_elem.collection_id}: #{e.message}"
+        raise
       end
 
       def restore_segments(old_element, new_element, created_elements)
@@ -441,6 +456,7 @@ module RecoveryDB
         rescue StandardError => e
           Rails.logger.error "Failed to restore segment #{old_segment.id} " \
                              "for element #{old_element.id}: #{e.message}"
+          raise
         end
       end
 
@@ -475,6 +491,7 @@ module RecoveryDB
         rescue StandardError => e
           Rails.logger.error 'Failed to restore elements_element relation ' \
                              "for element_id #{old_relation.element_id}: #{e.message}"
+          raise
         end
       end
 
@@ -509,6 +526,7 @@ module RecoveryDB
         rescue StandardError => e
           Rails.logger.error 'Failed to restore elements_sample relation ' \
                              "for element_id #{old_relation.element_id}: #{e.message}"
+          raise
         end
       end
 
@@ -528,6 +546,7 @@ module RecoveryDB
           UsersDevice.create!(user_id: new_user.id, device_id: new_device.id)
         rescue StandardError => e
           Rails.logger.error "Failed to restore device #{old_device.id}: #{e.message}"
+          raise
         end
       end
 
@@ -584,7 +603,7 @@ module RecoveryDB
 
           next unless new_group_id && new_user_id
 
-          UsersGroup.create!(admin_id: new_group_id, user_id: new_user_id)
+          UsersGroup.create!(group_id: new_group_id, user_id: new_user_id)
         end
       end
 
@@ -614,4 +633,4 @@ module RecoveryDB
   end
 end
 
-# rubocop:enable Metrics/ClassLength
+# rubocop:enable Metrics/ClassLength, Metrics/AbcSize
