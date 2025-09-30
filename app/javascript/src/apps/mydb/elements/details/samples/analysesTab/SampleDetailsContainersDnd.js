@@ -36,7 +36,7 @@ const orderDropCollect = (connect, monitor) => ({
 const ContainerRow = ({
   sample, container, mode, readOnly, isDisabled, handleRemove,
   handleSubmit, toggleAddToReport, handleUndo,
-  connectDragSource, connectDropTarget, isDragging, isOver, canDrop,
+  connectDragSource, connectDropTarget, isDragging, isOver, canDrop, updateContainerPreferredThumbnail
 }) => {
   let dndClass = " border";
   if (canDrop) {
@@ -64,6 +64,7 @@ const ContainerRow = ({
         handleRemove={handleRemove}
         handleSubmit={handleSubmit}
         toggleAddToReport={toggleAddToReport}
+        updateContainerPreferredThumbnail={updateContainerPreferredThumbnail}
       />
     </div>,
   );
