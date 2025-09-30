@@ -62,12 +62,23 @@ module Chemotion
           c_id: c_id,
         }
 
+        ui_state = table_params[:ui_state].select do |_, v|
+          v.is_a?(Hash) && v.key?('checkedIds') && v.key?('checkedAll')
+        end
+
+        return status 204 if ui_state.all? { |_, v| v['checkedIds'].to_a.empty? && !v['checkedAll'] }
+
         if params[:columns][:chemicals].blank?
           generate_sheets_for_tables(%i[sample reaction wellplate], table_params, export)
         end
 
         if params[:exportType] == 1 && params[:columns][:analyses].present?
           generate_sheets_for_tables(%i[sample], table_params, export, params[:columns][:analyses], :analyses)
+        end
+
+        if params[:exportType] == 1 && params[:columns][:components].present?
+          generate_sheets_for_tables(%i[sample], table_params, export, params[:columns][:components],
+                                     :components)
         end
 
         if params[:exportType] == 1 && params[:columns][:chemicals].present?
@@ -88,7 +99,7 @@ module Chemotion
         header('Content-Disposition', "attachment; filename=\"#{filename}\"")
         # header 'Content-Disposition', "attachment; filename*=UTF-8''#{fileURI}"
 
-        export.read
+        export.read || ''
       end
 
       params do
@@ -103,7 +114,9 @@ module Chemotion
         real_coll_id = fetch_collection_id_w_current_user(
           params[:uiState][:currentCollection], params[:uiState][:isSync]
         )
-        return unless (p_t = params[:uiState][:reaction])
+
+        p_t = params[:uiState][:reaction]
+        return status 204 unless p_t && (p_t[:checkedAll] || p_t[:checkedIds].to_a.present?)
 
         results = reaction_smiles_hash(
           real_coll_id,
@@ -132,7 +145,7 @@ module Chemotion
 
         result = db_exec_query(sql_query)
         export.generate_sheet_with_samples(:wellplate, result)
-        export.read
+        export.read || ''
       end
 
       params do
@@ -154,7 +167,7 @@ module Chemotion
 
         result = db_exec_query(sql_query)
         export.generate_sheet_with_samples(:reaction, result)
-        export.read
+        export.read || ''
       end
     end
 

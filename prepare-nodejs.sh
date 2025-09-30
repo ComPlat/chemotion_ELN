@@ -39,12 +39,19 @@ if [[ "$CURRENT_NODE_VERSION" == "$REQUIRED_NODE_VERSION" ]]; then
 else
   echo "Node.js version mismatch. Current: $CURRENT_NODE_VERSION, Required: $REQUIRED_NODE_VERSION"
   echo "Installing required Node.js version..."
-  asdf install nodejs $REQUIRED_NODE_VERSION
-  asdf set nodejs $REQUIRED_NODE_VERSION
-
-  echo "Node.js updated to version: $REQUIRED_NODE_VERSION"
-  asdf reshim nodejs
+  if [[ $NODEJS_FORCE_INSTALL == "true" ]]; then
+    echo "NODEJS_FORCE_INSTALL is set to true, forcing installation of Node.js version $REQUIRED_NODE_VERSION"
+    asdf install nodejs $REQUIRED_NODE_VERSION
+  else
+    echo "NODEJS_FORCE_INSTALL is not set to true, proceeding with normal $CURRENT_NODE_VERSION installation"
+    asdf install nodejs $CURRENT_NODE_VERSION
+    REQUIRED_NODE_VERSION=$CURRENT_NODE_VERSION
+  fi
 fi
+
+asdf set nodejs $REQUIRED_NODE_VERSION
+asdf reshim nodejs
+echo "Node.js updated to version: $REQUIRED_NODE_VERSION"
 export REQUIRED_NODE_VERSION
 echo $REQUIRED_NODE_VERSION
 

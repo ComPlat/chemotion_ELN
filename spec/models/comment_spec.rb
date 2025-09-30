@@ -1,5 +1,27 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: comments
+#
+#  id               :bigint           not null, primary key
+#  commentable_type :string
+#  content          :string
+#  created_by       :integer          not null
+#  resolver_name    :string
+#  section          :string
+#  status           :string           default("Pending")
+#  submitter        :string
+#  created_at       :datetime         not null
+#  updated_at       :datetime         not null
+#  commentable_id   :integer
+#
+# Indexes
+#
+#  index_comments_on_commentable_type_and_commentable_id  (commentable_type,commentable_id)
+#  index_comments_on_section                              (section)
+#  index_comments_on_user                                 (created_by)
+#
 require 'rails_helper'
 
 RSpec.describe Comment do

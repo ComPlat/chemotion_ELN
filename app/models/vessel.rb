@@ -5,16 +5,18 @@
 # Table name: vessels
 #
 #  id                 :uuid             not null, primary key
-#  vessel_template_id :uuid
-#  user_id            :bigint
-#  name               :string
+#  bar_code           :string
+#  deleted_at         :datetime
 #  description        :string
+#  name               :string
+#  qr_code            :string
 #  short_label        :string
+#  weight_amount      :float
+#  weight_unit        :string
 #  created_at         :datetime         not null
 #  updated_at         :datetime         not null
-#  deleted_at         :datetime
-#  bar_code           :string
-#  qr_code            :string
+#  user_id            :bigint
+#  vessel_template_id :uuid
 #
 # Indexes
 #
@@ -24,6 +26,10 @@
 #
 class Vessel < ApplicationRecord
   acts_as_paranoid
+  include Collectable
+  include Taggable
+  include ElementCodes
+  include ElementUIStateScopes
 
   belongs_to :vessel_template
   belongs_to :creator, class_name: 'User', foreign_key: :user_id, inverse_of: :created_vessels
@@ -32,5 +38,5 @@ class Vessel < ApplicationRecord
   has_many :collections, through: :collections_vessels
 
   delegate :details, :material_details, :material_type, :vessel_type, :volume_amount, :volume_unit,
-           :weight_amount, :weight_unit, to: :vessel_template
+           to: :vessel_template
 end

@@ -115,7 +115,7 @@ module Chemotion
         params do
           requires :channel_id, type: Integer, desc: 'channel id'
           requires :content, type: String, desc: 'message content'
-          requires :user_ids, type: Array, desc: 'notification user ids',
+          optional :user_ids, type: Array, desc: 'notification user ids',
                               coerce_with: ->(val) { val.filter { |id| id.is_a?(Integer) } }
         end
         post do

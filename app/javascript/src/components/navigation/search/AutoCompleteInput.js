@@ -261,8 +261,8 @@ export default class AutoCompleteInput extends React.Component {
   }
 
   renderSuggestions() {
-    let { suggestions, error } = this.state;
-    let types = {
+    const { suggestions, error } = this.state;
+    const types = {
       sample_name: { icon: 'icon-sample', label: 'Sample Name' },
       sample_short_label: { icon: 'icon-sample', label: 'Sample Short Label' },
       sample_external_label: { icon: 'icon-sample', label: 'Sample External Label' },
@@ -279,6 +279,7 @@ export default class AutoCompleteInput extends React.Component {
       cano_smiles: { icon: 'icon-sample', label: 'Canonical Smiles' },
       sum_formula: { icon: 'icon-sample', label: 'Sum Formula' },
       cas: { icon: 'icon-sample', label: 'cas' },
+      molecule_name: { icon: 'icon-sample', label: 'Molecule name' },
       requirements: { icon: 'icon-screen', label: 'Requirement' },
       conditions: { icon: 'icon-screen', label: 'Condition' },
       element_short_label: { icon: 'icon-element', label: 'Element Short Label' },

@@ -5,7 +5,6 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
   Button,
-  ButtonToolbar,
   Card,
   ListGroupItem,
   Tabs,
@@ -36,8 +35,11 @@ import GenericAttachments from 'src/components/generic/GenericAttachments';
 import { SegmentTabs } from 'src/components/generic/SegmentDetails';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
+import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import { EditUserLabels, ShowUserLabels } from 'src/components/UserLabels';
+import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
+import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
 
 const onNaviClick = (type, id) => {
   const { currentCollection, isSync } = UIStore.getState();
@@ -460,7 +462,7 @@ export default class GenericElDetails extends Component {
               variant="warning"
               size="xxsm"
               onClick={() => this.handleSubmit()}
-              style={{ display: saveBtnDisplay }}
+              style={{ display: this.saveBtnDisplay }}
             >
               <i className="fa fa-floppy-o" aria-hidden="true" />
             </Button>
@@ -471,12 +473,32 @@ export default class GenericElDetails extends Component {
     );
   }
 
+  footer() {
+    const { genericEl } = this.state;
+    const showSaveButton = genericEl && (genericEl.isNew || (genericEl.can_update && genericEl.changed));
+
+    return (
+      <>
+        <Button
+          variant="secondary"
+          onClick={() => DetailActions.close(genericEl, true)}
+        >
+          Close
+        </Button>
+        {showSaveButton && (
+          <Button
+            variant="warning"
+            onClick={() => this.handleSubmit()}
+          >
+            {genericEl.isNew ? 'Create' : 'Save'}
+          </Button>
+        )}
+      </>
+    );
+  }
+
   render() {
     const { genericEl, visible } = this.state;
-    const submitLabel = genericEl && genericEl.isNew ? 'Create' : 'Save';
-    // eslint-disable-next-line max-len
-    const saveBtnDisplay = (genericEl?.isNew || (genericEl?.can_update && genericEl?.changed)) ? { display: '' } : { display: 'none' };
-
     /**
      *  tabContents is a object containing all (visible) segment tabs
      */
@@ -505,12 +527,26 @@ export default class GenericElDetails extends Component {
     if (!tabKeyContentList.includes(activeTab) && tabKeyContentList.length > 0) {
       activeTab = tabKeyContentList[0];
     }
+
+    const submitLabel = (genericEl && genericEl.isNew) ? 'Create' : 'Save';
+
     return (
-      <Card
-        className={`detail-card${
-          genericEl.isPendingToSave ? ' detail-card--unsaved' : ''
-        }`}
-      >
+      <>
+        <ViewSpectra
+          sample={genericEl}
+          handleSampleChanged={this.handleGenericElChanged}
+          handleSubmit={this.handleSubmit}
+        />
+        <NMRiumDisplayer
+          sample={genericEl}
+          handleSampleChanged={this.handleGenericElChanged}
+          handleSubmit={this.handleSubmit}
+        />
+        <Card
+          className={`detail-card${
+            genericEl.isPendingToSave ? ' detail-card--unsaved' : ''
+          }`}
+        >
         <Card.Header>{this.header(genericEl)}</Card.Header>
         <Card.Body>
           <div className="tabs-container--with-borders">
@@ -538,12 +574,13 @@ export default class GenericElDetails extends Component {
           <Button
             variant="warning"
             onClick={() => this.handleSubmit()}
-            style={saveBtnDisplay}
+            style={this.saveBtnDisplay}
           >
             {submitLabel}
           </Button>
-        </Card.Footer>
-      </Card>
+          </Card.Footer>
+        </Card>
+      </>
     );
   }
 }

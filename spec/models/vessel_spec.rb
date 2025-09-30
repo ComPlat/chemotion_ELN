@@ -1,5 +1,29 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: vessels
+#
+#  id                 :uuid             not null, primary key
+#  bar_code           :string
+#  deleted_at         :datetime
+#  description        :string
+#  name               :string
+#  qr_code            :string
+#  short_label        :string
+#  weight_amount      :float
+#  weight_unit        :string
+#  created_at         :datetime         not null
+#  updated_at         :datetime         not null
+#  user_id            :bigint
+#  vessel_template_id :uuid
+#
+# Indexes
+#
+#  index_vessels_on_deleted_at          (deleted_at)
+#  index_vessels_on_user_id             (user_id)
+#  index_vessels_on_vessel_template_id  (vessel_template_id)
+#
 require 'rails_helper'
 
 RSpec.describe Vessel do
@@ -24,6 +48,8 @@ RSpec.describe Vessel do
   it { is_expected.to delegate_method(:vessel_type).to(:vessel_template) }
   it { is_expected.to delegate_method(:volume_amount).to(:vessel_template) }
   it { is_expected.to delegate_method(:volume_unit).to(:vessel_template) }
-  it { is_expected.to delegate_method(:weight_amount).to(:vessel_template) }
-  it { is_expected.to delegate_method(:weight_unit).to(:vessel_template) }
+  # Vessel have their own weight_amount and weight_unit attributes because the template gives an
+  #  approximate value.
+  # it { is_expected.to delegate_method(:weight_amount).to(:vessel_template) }
+  # it { is_expected.to delegate_method(:weight_unit).to(:vessel_template) }
 end

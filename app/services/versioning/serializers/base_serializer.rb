@@ -34,6 +34,7 @@ module Versioning
               fields.each do |field|
                 formatter = field[:formatter] || default_formatter
                 revertible_value_formatter = field[:revertible_value_formatter] || formatter
+
                 old_value = formatter.call(key, base[key])
                 new_value = formatter.call(key, value)
                 current_value = formatter.call(key, record.read_attribute_before_type_cast(key))
@@ -123,7 +124,13 @@ module Versioning
       end
 
       def fix_malformed_value_formatter
-        ->(key, value) { (value || '').start_with?('{') ? YAML.safe_load(value) : default_formatter.call(key, value) }
+        lambda do |key, value|
+          if value.is_a?(String) && value.start_with?('{')
+            YAML.safe_load(value)
+          else
+            default_formatter.call(key, value)
+          end
+        end
       end
 
       def svg_path_formatter(entity)

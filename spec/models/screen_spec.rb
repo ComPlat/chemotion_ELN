@@ -1,5 +1,26 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: screens
+#
+#  id                     :integer          not null, primary key
+#  collaborator           :string
+#  component_graph_data   :jsonb
+#  conditions             :string
+#  deleted_at             :datetime
+#  description            :string
+#  name                   :string
+#  plain_text_description :text
+#  requirements           :string
+#  result                 :string
+#  created_at             :datetime         not null
+#  updated_at             :datetime         not null
+#
+# Indexes
+#
+#  index_screens_on_deleted_at  (deleted_at)
+#
 require 'rails_helper'
 
 RSpec.describe Screen, type: :model do

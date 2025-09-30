@@ -3,13 +3,17 @@
 ## Do not commit .dockerenv to the repository
 ## `docker compose --env-file .dockerenv -f docker-compose.dev.yml config`
 ##  will use the values from this file
+
+
+## Project name
+#COMPOSE_PROJECT_NAME=chemotion_eln
+
 ## - DOCKER_PG_IMAGE: the image to use as base for the db container
 ## - DOCKER_DEV_IMAGE: the image to use as base for the app and webpacker containers
 ##  overwriten to '' when using vs decontainer.json to avoid tag conflicts
 ## Latest available version: https://hub.docker.com/u/complat/dev/tags
 ## app image with preinstalled asdf plugins(ruby, nodejs), gems and nodejs packages
 
-#DOCKER_DEV_IMAGE=complat/dev:v1.10.3-153-gcb7331a3b
 #DOCKER_DEV_IMAGE=complat/dev:v2.0.1-9-g4aec23261
 #DOCKER_PG_IMAGE=postgres:16
 #DOCKER_PG_IMAGE=complat/dev:postgres16-rdkit
@@ -38,3 +42,10 @@ ELN_VERSION=2.0.1
 IMG_SPECTRA=${SERVICE_REPO}:spectra-${ELN_VERSION}
 IMG_CONVERTER=${SERVICE_REPO}:converter-${ELN_VERSION}
 IMG_KETCHERSVC=${SERVICE_REPO}:ketchersvc-${ELN_VERSION}
+
+
+## Map ports to host
+#HOST_PORT_DG=5432
+#HOST_PORT_APP=3000
+#HOST_PORT_WEBPACK=3035
+

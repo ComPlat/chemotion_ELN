@@ -8,6 +8,8 @@ const EditorAttrs = {
       setMfFuncName: 'setMolecule',
       getMfFuncName: 'getMolfile',
       getMfWithCallback: false,
+      getRxnFuncName: 'getRxn',
+      getSVGFuncName: 'getSVG',
     }
   },
   chemdraw:

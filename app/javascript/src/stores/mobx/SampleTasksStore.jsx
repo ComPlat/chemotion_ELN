@@ -36,8 +36,8 @@ export const SampleTasksStore = types
       self.sample_tasks.clear();
       result.forEach(entry => self.sample_tasks.set(entry.id, SampleTask.create({ ...entry })));
     }),
-    showSampleTaskInbox() {
-      self.inbox_visible = true;
+    toggleSampleTaskInbox() {
+      self.inbox_visible = !self.inbox_visible;
     },
     hideSampleTaskInbox() {
       self.inbox_visible = false;

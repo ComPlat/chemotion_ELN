@@ -5,9 +5,11 @@
 # Table name: chemicals
 #
 #  id            :bigint           not null, primary key
-#  sample_id     :integer
 #  cas           :text
 #  chemical_data :jsonb
+#  deleted_at    :datetime
+#  updated_at    :datetime
+#  sample_id     :integer
 #
 
 class Chemical < ApplicationRecord

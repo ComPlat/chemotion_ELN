@@ -5,7 +5,7 @@ export default class MeasurementsFetcher {
   static fetchMeasurementHierarchy(sample_or_sample_id) {
     // No measurement fetching for new samples
     if (sample_or_sample_id.is_new === true) {
-      return new Promise(() => []);
+      return Promise.resolve([]);
     }
     let sample_id = sample_or_sample_id.id || sample_or_sample_id;
 

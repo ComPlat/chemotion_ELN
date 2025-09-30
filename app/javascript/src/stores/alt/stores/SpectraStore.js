@@ -47,7 +47,7 @@ class SpectraStore {
     }
 
     try {
-      const raw = base64.decode(file);
+      const raw = new TextDecoder("utf-8").decode(new Uint8Array([...(base64.decode(file))].map(ch => ch.charCodeAt(0))));
       const jcamp = FN.ExtractJcamp(raw);
       if (!jcamp.spectra) return null;
       spectrum = Object.assign({}, spectrum, { jcamp });
@@ -190,7 +190,7 @@ class SpectraStore {
   }
 
   handleAddOthers(rsp) {
-    const origData = base64.decode(rsp.jcamp);
+    const origData = new TextDecoder("utf-8").decode(new Uint8Array([...(base64.decode(rsp.jcamp))].map(ch => ch.charCodeAt(0))));
     const jcampData = FN.ExtractJcamp(origData);
     this.setState({ others: [jcampData] });
   }

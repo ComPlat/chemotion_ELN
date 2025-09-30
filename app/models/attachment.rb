@@ -5,34 +5,37 @@
 # Table name: attachments
 #
 #  id              :integer          not null, primary key
-#  attachable_id   :integer
-#  filename        :string
-#  identifier      :uuid
+#  aasm_state      :string
+#  attachable_type :string
+#  attachment_data :jsonb
+#  bucket          :string
 #  checksum        :string
-#  storage         :string(20)       default("tmp")
+#  con_state       :integer
+#  content_type    :string
 #  created_by      :integer          not null
+#  created_by_type :string
 #  created_for     :integer
-#  version         :string
+#  deleted_at      :datetime
+#  filename        :string
+#  filesize        :bigint
+#  folder          :string
+#  identifier      :uuid
+#  key             :string(500)
+#  storage         :string(20)       default("tmp")
+#  thumb           :boolean          default(FALSE)
+#  version         :string           default("/"), not null
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
-#  content_type    :string
-#  bucket          :string
-#  key             :string(500)
-#  thumb           :boolean          default(FALSE)
-#  folder          :string
-#  attachable_type :string
-#  aasm_state      :string
-#  filesize        :bigint
-#  attachment_data :jsonb
-#  con_state       :integer
-#  created_by_type :string
+#  attachable_id   :integer
 #
 # Indexes
 #
 #  index_attachments_on_attachable_type_and_attachable_id  (attachable_type,attachable_id)
 #  index_attachments_on_identifier                         (identifier) UNIQUE
+#  index_attachments_on_version                            (version) WHERE (deleted_at IS NULL)
 #
 
+# rubocop:disable Metrics/ClassLength
 class Attachment < ApplicationRecord
   has_logidze
   acts_as_paranoid
@@ -43,7 +46,7 @@ class Attachment < ApplicationRecord
 
   attr_accessor :file_data, :file_path, :thumb_path, :thumb_data, :duplicated, :transferred
 
-  has_ancestry ancestry_column: :version
+  has_ancestry ancestry_column: :version, orphan_strategy: :adopt
 
   validate :check_file_size
 
@@ -258,8 +261,19 @@ class Attachment < ApplicationRecord
     "#{File.basename(filename, '.*')}_annotated#{extension_of_annotation}"
   end
 
+  def thumbnail_base64
+    return nil unless thumb
+
+    thumbnail_data = read_thumbnail
+    Base64.encode64(thumbnail_data)
+  rescue TypeError, Errno::ENOENT
+    Rails.logger.error "Thumbnail data is not available for attachment #{id} but thumb is set to true"
+    nil
+  end
+
   def preview
-    "data:image/png;base64,#{Base64.encode64(read_thumbnail)}" if thumb
+    base64_data = thumbnail_base64
+    base64_data ? "data:image/png;base64,#{base64_data}" : nil
   end
 
   private
@@ -322,3 +336,4 @@ class Attachment < ApplicationRecord
       cannot be uploaded. File size must be less than #{Rails.configuration.shrine_storage.maximum_size} MB"
   end
 end
+# rubocop:enable Metrics/ClassLength

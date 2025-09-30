@@ -1,5 +1,20 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: collections_samples
+#
+#  id            :integer          not null, primary key
+#  deleted_at    :datetime
+#  collection_id :integer
+#  sample_id     :integer
+#
+# Indexes
+#
+#  index_collections_samples_on_collection_id                (collection_id)
+#  index_collections_samples_on_deleted_at                   (deleted_at)
+#  index_collections_samples_on_sample_id_and_collection_id  (sample_id,collection_id) UNIQUE
+#
 require 'rails_helper'
 
 RSpec.describe CollectionsSample, type: :model do

@@ -85,32 +85,43 @@ export default class ReportsFetcher {
   }
 
   static createDownloadFile(params, filename, route = 'export_samples_from_selections') {
-    let file_name = filename
-    let promise = fetch(`/api/v1/reports/${route}`, {
+    let fileName = filename;
+    const promise = fetch(`/api/v1/reports/${route}`, {
       credentials: 'same-origin',
       method: 'post',
       headers: {
-        'Accept': 'application/vnd.ms-excel, chemical/x-mdl-sdfile, text/csv, application/zip, application/octet-stream',
+        Accept: 'application/vnd.ms-excel, chemical/x-mdl-sdfile, text/csv, application/zip, application/octet-stream',
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(params),
     }).then((response) => {
-      const disposition = response.headers.get('Content-Disposition')
+      if (response.status === 204) {
+        NotificationActions.add({
+          title: 'Nothing Selected',
+          message: 'Please select the elements to export and try again!',
+          level: 'warning',
+          dismissible: 'button',
+          position: 'tr',
+        });
+        return null;
+      }
+      const disposition = response.headers.get('Content-Disposition');
       if (disposition && disposition.indexOf('attachment') !== -1) {
-        let filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
-        let matches = filenameRegex.exec(disposition);
+        const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+        const matches = filenameRegex.exec(disposition);
         if (matches != null && matches[1]) {
-          file_name = matches[1].replace(/['"]/g, '');
+          fileName = matches[1].replace(/['"]/g, '');
         }
       }
-      return response.blob()
+      return response.blob();
     }).then((blob) => {
-      const a = document.createElement("a");
-      a.style = "display: none";
+      if (!blob || blob.size === 0) return;
+      const a = document.createElement('a');
+      a.style = 'display: none';
       document.body.appendChild(a);
-      let url = window.URL.createObjectURL(blob);
+      const url = window.URL.createObjectURL(blob);
       a.href = url;
-      a.download = file_name
+      a.download = fileName;
       a.click();
       window.URL.revokeObjectURL(url);
     }).catch((errorMessage) => {
@@ -119,5 +130,4 @@ export default class ReportsFetcher {
 
     return promise;
   }
-
 }

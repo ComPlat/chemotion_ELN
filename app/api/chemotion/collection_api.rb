@@ -92,7 +92,7 @@ module Chemotion
 
       build_tree = Proc.new do |collects, delete_empty_root|
         col_tree = []
-        collects.collect{ |obj| col_tree.push(obj) if obj['ancestry'].nil? }
+        collects.collect { |obj| col_tree.push(obj) if obj['ancestry'] == '/' }
         get_child.call(col_tree,collects)
         col_tree.select! { |col| col[:children].count > 0 } if delete_empty_root
         Entities::CollectionRootEntity.represent(col_tree, serializable: true, root: :collections)
@@ -105,7 +105,7 @@ module Chemotion
           <<~SQL
             collections.id, label, ancestry, is_synchronized, permission_level, tabs_segment, position, collection_shared_names(user_id, collections.id) as shared_names,
             reaction_detail_level, sample_detail_level, screen_detail_level, wellplate_detail_level, element_detail_level, is_locked, is_shared, inventory_id,
-            case when (ancestry is null) then cast(collections.id as text) else concat(ancestry, chr(47), collections.id) end as ancestry_root
+            case when (ancestry is null) then cast(collections.id as text) else concat(ancestry, collections.id, chr(47)) end as ancestry_root
           SQL
         ).as_json(methods: %i[inventory_name inventory_prefix])
         build_tree.call(collects, false)
@@ -119,7 +119,7 @@ module Chemotion
             collections.id, user_id, label, ancestry, permission_level, user_as_json(user_id) as shared_to,
             is_shared, is_locked, is_synchronized, false as is_remoted, tabs_segment, inventory_id,
             reaction_detail_level, sample_detail_level, screen_detail_level, wellplate_detail_level, element_detail_level,
-            case when (ancestry is null) then cast(collections.id as text) else concat(ancestry, chr(47), collections.id) end as ancestry_root
+            case when (ancestry is null) then cast(collections.id as text) else concat(ancestry, collections.id, chr(47)) end as ancestry_root
           SQL
         ).as_json(methods: %i[inventory_name inventory_prefix])
         build_tree.call(collects, true)
@@ -131,7 +131,7 @@ module Chemotion
                              .where(user_id: current_user.id).order(:id).select(
           <<~SQL
             collections.id, user_id, label, ancestry, permission_level, user_as_json(shared_by_id) AS shared_by, tabs_segment,
-            CASE WHEN ancestry IS NULL THEN CAST(collections.id AS TEXT) ELSE CONCAT(ancestry, '/', collections.id) END AS ancestry_root,
+            CASE WHEN ancestry IS NULL THEN CAST(collections.id AS TEXT) ELSE CONCAT(ancestry, collections.id, chr(47)) END AS ancestry_root,
             reaction_detail_level, sample_detail_level, screen_detail_level, wellplate_detail_level, is_locked, is_shared, inventory_id,
             shared_user_as_json(user_id, #{current_user.id}) AS shared_to,
             position
@@ -196,6 +196,9 @@ module Chemotion
             optional :device_description, type: Hash do
               use :ui_state_params
             end
+            optional :vessel, type: Hash do
+              use :ui_state_params
+            end
           end
           requires :collection_attributes, type: Hash do
             requires :permission_level, type: Integer
@@ -227,6 +230,9 @@ module Chemotion
           device_descriptions = DeviceDescription.by_collection_id(@cid)
                                                  .by_ui_state(params[:elements_filter][:device_description])
                                                  .for_user_n_groups(user_ids)
+          vessels = Vessel.by_collection_id(@cid)
+                          .by_ui_state(params[:elements_filter][:vessel])
+                          .for_user_n_groups(user_ids)
           elements = {}
           Labimotion::ElementKlass.find_each do |klass|
             elements[klass.name] = Labimotion::Element.by_collection_id(@cid).by_ui_state(params[:elements_filter][klass.name]).for_user_n_groups(user_ids)
@@ -244,6 +250,7 @@ module Chemotion
           share_research_plans = ElementsPolicy.new(current_user, research_plans).share?
           share_cell_lines = ElementsPolicy.new(current_user, cell_lines).share?
           share_device_descriptions = ElementsPolicy.new(current_user, device_descriptions).share?
+          share_vessels = ElementsPolicy.new(current_user, vessels).share?
           share_elements = !(elements&.length > 0)
           elements.each do |k, v|
             share_elements = ElementsPolicy.new(current_user, v).share?
@@ -257,6 +264,7 @@ module Chemotion
                             share_research_plans &&
                             share_cell_lines &&
                             share_device_descriptions &&
+                            share_vessels &&
                             share_elements
           error!('401 Unauthorized', 401) if (!sharing_allowed || is_top_secret)
 
@@ -267,6 +275,7 @@ module Chemotion
           @research_plan_ids = research_plans.pluck(:id)
           @cell_line_ids = cell_lines.pluck(:id)
           @device_description_ids = device_descriptions.pluck(:id)
+          @vessel_ids = vessels.pluck(:id)
           @element_ids = elements&.transform_values { |v| v && v.pluck(:id) }
         end
 
@@ -290,6 +299,7 @@ module Chemotion
             research_plan_ids: @research_plan_ids,
             cell_line_ids: @cell_line_ids,
             device_description_ids: @device_description_ids,
+            vessel_ids: @vessel_ids,
             element_ids: @element_ids,
             collection_attributes: params[:collection_attributes].merge(shared_by_id: current_user.id)
           ).execute!

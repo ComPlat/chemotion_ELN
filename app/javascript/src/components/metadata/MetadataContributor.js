@@ -56,8 +56,6 @@ const MetadataContributor = ({
             options={contributorTypes}
             onChange={(option) => onChange(option.value, 'contributors', index, 'contributorType')}
             value={contributorType}
-            menuPortalTarget={document.body}
-            styles={{ menuPortal: (base) => ({ ...base, zIndex: 9999 }) }}
           />
         </Form.Group>
       </Row>

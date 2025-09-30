@@ -13,7 +13,7 @@ function SampleTaskNavigationElement({ isCollapsed }) {
     <SidebarButton
       label="Weighing Tasks"
       icon="fa-image"
-      onClick={sampleTasksStore.showSampleTaskInbox}
+      onClick={sampleTasksStore.toggleSampleTaskInbox}
       badgeCount={sampleTasksStore.openSampleTaskCount}
       showLabel={false}
       isCollapsed={isCollapsed}

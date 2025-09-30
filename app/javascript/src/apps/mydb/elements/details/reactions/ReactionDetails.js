@@ -5,16 +5,17 @@ import React, { Component } from 'react';
 import Aviator from 'aviator';
 import PropTypes from 'prop-types';
 import {
-  Button, Tabs, Tab, OverlayTrigger, Tooltip, Card, ButtonToolbar, ButtonGroup
+  Button, Tabs, Tab, OverlayTrigger, Tooltip, ButtonToolbar, ButtonGroup
 } from 'react-bootstrap';
-import SvgFileZoomPan from 'react-svg-file-zoom-pan-latest';
 import { findIndex, isEmpty } from 'lodash';
+
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import ElementResearchPlanLabels from 'src/apps/mydb/elements/labels/ElementResearchPlanLabels';
 import ElementAnalysesLabels from 'src/apps/mydb/elements/labels/ElementAnalysesLabels';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import ReactionVariations from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariations';
 import {
   REACTION_VARIATIONS_TAB_KEY
@@ -57,6 +58,7 @@ import { ShowUserLabels } from 'src/components/UserLabels';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 // eslint-disable-next-line import/no-named-as-default
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
+import ReactionSchemeGraphic from 'src/apps/mydb/elements/details/reactions/ReactionSchemeGraphic';
 
 const handleProductClick = (product) => {
   const uri = Aviator.getCurrentURI();
@@ -87,18 +89,12 @@ export default class ReactionDetails extends Component {
     const { reaction } = props;
     this.state = {
       reaction,
-      literatures: reaction.literatures,
       activeTab: UIStore.getState().reaction.activeTab,
       activeAnalysisTab: UIStore.getState().reaction.activeAnalysisTab,
       visible: Immutable.List(),
       sfn: UIStore.getState().hasSfn,
       currentUser: (UserStore.getState() && UserStore.getState().currentUser) || {},
     };
-
-    // remarked because of #466 reaction load image issue (Paggy 12.07.2018)
-    // if(reaction.hasMaterials()) {
-    //   this.updateReactionSvg();
-    // }
 
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.handleReactionChange = this.handleReactionChange.bind(this);
@@ -107,7 +103,7 @@ export default class ReactionDetails extends Component {
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
     this.handleGaseousChange = this.handleGaseousChange.bind(this);
     if (!reaction.reaction_svg_file) {
-      this.updateReactionSvg();
+      this.updateGraphic();
     }
   }
 
@@ -174,8 +170,8 @@ export default class ReactionDetails extends Component {
   handleReactionChange(reaction, options = {}) {
     reaction.updateMaxAmountOfProducts();
     reaction.changed = true;
-    if (options.schemaChanged) {
-      this.setState({ reaction }, () => this.updateReactionSvg());
+    if (options.updateGraphic) {
+      this.setState({ reaction }, () => this.updateGraphic());
     } else {
       this.setState({ reaction });
     }
@@ -183,12 +179,20 @@ export default class ReactionDetails extends Component {
 
   handleInputChange(type, event) {
     let value;
-    if (type === 'temperatureUnit' || type === 'temperatureData'
-      || type === 'description' || type === 'role'
-      || type === 'observation' || type === 'durationUnit'
-      || type === 'duration' || type === 'rxno'
-      || type === 'vesselSizeAmount' || type === 'vesselSizeUnit'
-      || type === 'gaseous') {
+    if (
+      type === 'temperatureUnit'
+      || type === 'temperatureData'
+      || type === 'description'
+      || type === 'role'
+      || type === 'observation'
+      || type === 'durationUnit'
+      || type === 'duration'
+      || type === 'rxno'
+      || type === 'vesselSizeAmount'
+      || type === 'vesselSizeUnit'
+      || type === 'gaseous'
+      || type === 'conditions'
+    ) {
       value = event;
     } else if (type === 'rfValue') {
       value = rfValueFormat(event.target.value) || '';
@@ -487,7 +491,31 @@ export default class ReactionDetails extends Component {
     );
   }
 
-  updateReactionSvg() {
+  reactionFooter() {
+    const { reaction } = this.state;
+    const submitLabel = (reaction && reaction.isNew) ? 'Create' : 'Save';
+
+    return (
+      <>
+        <Button variant="primary" onClick={() => DetailActions.close(reaction)}>
+          Close
+        </Button>
+        <Button
+          id="submit-reaction-btn"
+          variant="warning"
+          onClick={() => this.handleSubmit()}
+          disabled={!permitOn(reaction) || !this.reactionIsValid()}
+        >
+          {submitLabel}
+        </Button>
+        {reaction && !reaction.isNew && (
+          <ExportSamplesButton type="reaction" id={reaction.id} />
+        )}
+      </>
+    );
+  }
+
+  updateGraphic() {
     const { reaction } = this.state;
     const materialsSvgPaths = {
       starting_materials: reaction.starting_materials.map((material) => material.svgPath),
@@ -546,7 +574,7 @@ export default class ReactionDetails extends Component {
     const tabContentsMap = {
       scheme: (
         <Tab eventKey="scheme" title="Scheme" key={`scheme_${reaction.id}`}>
-          <ButtonGroup size="sm">
+          <ButtonGroup>
             <ButtonGroupToggleButton
               active={!reaction.gaseous}
               onClick={this.handleGaseousChange}
@@ -653,52 +681,40 @@ export default class ReactionDetails extends Component {
       if (tabContent) { tabContents.push(tabContent); }
     });
 
-    const submitLabel = (reaction && reaction.isNew) ? 'Create' : 'Save';
-    const exportButton = (reaction && reaction.isNew) ? null : <ExportSamplesButton type="reaction" id={reaction.id} />;
-
     const currentTab = (activeTab !== 0 && activeTab) || visible[0];
 
     return (
-      <Card className={`detail-card${reaction.isPendingToSave ? ' detail-card--unsaved' : ''}`}>
-        <Card.Header>
-          {this.reactionHeader(reaction)}
-        </Card.Header>
-        <Card.Body>
-          {this.reactionSVG(reaction)}
-          {this.state.sfn && <ScifinderSearch el={reaction} />}
-          <div className="tabs-container--with-borders">
-            <ElementDetailSortTab
-              type="reaction"
-              availableTabs={Object.keys(tabContentsMap)}
-              onTabPositionChanged={this.onTabPositionChanged}
-            />
-            <Tabs
-              mountOnEnter
-              activeKey={currentTab}
-              onSelect={this.handleSelect}
-              id="reaction-detail-tab"
-              unmountOnExit
-            >
-              {tabContents}
-            </Tabs>
-            <CommentModal element={reaction} />
-          </div>
-        </Card.Body>
-        <Card.Footer>
-          <Button variant="primary" onClick={() => DetailActions.close(reaction)}>
-            Close
-          </Button>
-          <Button
-            id="submit-reaction-btn"
-            variant="warning"
-            onClick={() => this.handleSubmit()}
-            disabled={!permitOn(reaction) || !this.reactionIsValid()}
+      <DetailCard
+        isPendingToSave={reaction.isPendingToSave}
+        header={this.reactionHeader(reaction)}
+        footer={this.reactionFooter()}
+      >
+        <ReactionSchemeGraphic
+          reaction={reaction}
+          onToggleLabel={(materialId) => {
+            reaction.toggleShowLabelForSample(materialId);
+            this.handleReactionChange(reaction, { updateGraphic: true });
+          }}
+        />
+        {this.state.sfn && <ScifinderSearch el={reaction} />}
+        <div className="tabs-container--with-borders">
+          <ElementDetailSortTab
+            type="reaction"
+            availableTabs={Object.keys(tabContentsMap)}
+            onTabPositionChanged={this.onTabPositionChanged}
+          />
+          <Tabs
+            mountOnEnter
+            activeKey={currentTab}
+            onSelect={this.handleSelect}
+            id="reaction-detail-tab"
+            unmountOnExit
           >
-            {submitLabel}
-          </Button>
-          {exportButton}
-        </Card.Footer>
-      </Card>
+            {tabContents}
+          </Tabs>
+          <CommentModal element={reaction} />
+        </div>
+      </DetailCard>
     );
   }
 }

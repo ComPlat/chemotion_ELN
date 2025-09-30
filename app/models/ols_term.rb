@@ -3,18 +3,18 @@
 # Table name: ols_terms
 #
 #  id               :integer          not null, primary key
-#  owl_name         :string
-#  term_id          :string
-#  ancestry         :string
-#  ancestry_term_id :string
+#  ancestry         :string           default("/"), not null
+#  desc             :string
+#  is_enabled       :boolean          default(TRUE)
 #  label            :string
+#  metadata         :jsonb
+#  owl_name         :string
 #  synonym          :string
 #  synonyms         :jsonb
-#  desc             :string
-#  metadata         :jsonb
-#  is_enabled       :boolean          default(TRUE)
 #  created_at       :datetime         not null
 #  updated_at       :datetime         not null
+#  ancestry_term_id :string
+#  term_id          :string
 #
 # Indexes
 #
@@ -125,7 +125,7 @@ class OlsTerm < ApplicationRecord
         OlsTerm.where(owl_name: owl_name).find_each do |o|
           next if (root = o.root) == o
           next if root.root == root
-          new_a = root.ancestry + '/' + o.ancestry
+          new_a = root.ancestry + o.ancestry
           o.update_columns(ancestry: new_a)
           count += 1
         end
@@ -170,7 +170,7 @@ class OlsTerm < ApplicationRecord
         if ancestor.ancestry.nil?
           new_a = ancestor.id.to_s
         else
-          new_a = ancestor.ancestry + '/' + ancestor.id.to_s
+          new_a = ancestor.ancestry + ancestor.id.to_s + '/'
         end
         o.update_columns(ancestry: new_a)
       end

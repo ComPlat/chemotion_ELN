@@ -72,6 +72,8 @@ function VersionsTableFields(props) {
     (input || '').split(' | ', 2)[1] || input
   );
 
+  const molFile = (input) => (<pre>{input}</pre>);
+
   const image = (input, title) => (input ? (
     <SvgWithPopover
       placement="top"
@@ -133,7 +135,7 @@ function VersionsTableFields(props) {
         {' '}
         {input.valueUnit}
       </p>
-      {input.data.length > 0 && (
+      {Array.isArray(input.data) && input.data.length > 0 && (
         <Table style={{ marginTop: '1em', backgroundColor: 'transparent' }}>
           <thead>
             <tr>
@@ -226,10 +228,15 @@ function VersionsTableFields(props) {
       string,
     };
 
+    const replacer = (key, value) => {
+      if (key === 'uuid') return undefined; // omit uuid
+      return value;
+    };
+
     return array.map((jsonObject, i) => (
       // eslint-disable-next-line react/no-array-index-key
       <div key={i}>
-        {jsonObject.map((object, j) => {
+        {Array.isArray(jsonObject) ? jsonObject.map((object, j) => {
           const { title, content, kind } = object;
 
           return (
@@ -242,7 +249,7 @@ function VersionsTableFields(props) {
               </div>
             </React.Fragment>
           );
-        })}
+        }) : <pre>{JSON.stringify(jsonObject, replacer, 2)}</pre>}
       </div>
     ));
   };
@@ -255,6 +262,7 @@ function VersionsTableFields(props) {
       quill,
       numrange,
       treeselect,
+      molFile,
       solvent,
       temperature,
       string,
@@ -292,7 +300,7 @@ function VersionsTableFields(props) {
       flex: 1,
     },
     {
-      field: 'oldValue',
+      field: 'previousValue',
       headerName: 'previous version',
       cellStyle: {
         backgroundColor: '#f2dede',

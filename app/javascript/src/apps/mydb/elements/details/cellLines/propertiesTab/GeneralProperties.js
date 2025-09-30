@@ -115,15 +115,13 @@ class GeneralProperties extends React.Component {
         onChange={() => {}}
       />
     ) : (
-      <CreatableSelect
+      <Select
+        name="unit"
         className={styleClassUnit}
+        value={options.find(({ value }) => value === item.unit)}
         onChange={(e) => { cellLineDetailsStore.changeUnit(item.id, e.value); }}
-        onInputChange={(e, action) => {
-          if (action.action === 'input-change') { cellLineDetailsStore.changeUnit(item.id, e); }
-        }}
         options={options}
-        placeholder="choose/enter unit"
-        defaultInputValue={item.unit}
+        placeholder="choose unit"
       />
     );
 

@@ -4,7 +4,7 @@ module UserLabelHelpers
   extend Grape::API::Helpers
 
   def update_element_labels(element, user_labels, user_id)
-    tag = ElementTag.find_by(taggable: element)
+    tag = element.tag
     return if tag.nil?
 
     data = tag.taggable_data || {}

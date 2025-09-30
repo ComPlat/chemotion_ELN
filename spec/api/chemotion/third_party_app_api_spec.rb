@@ -369,6 +369,7 @@ describe Chemotion::ThirdPartyAppAPI do
 
         before do
           cache.write(cache_key, { token: token, upload: allowed_uploads }, expires_in: 1.hour)
+          allow_any_instance_of(Chemotion::ThirdPartyAppAPI::AttachmentHelpers).to receive(:read_access?).and_return(true)
           post "/api/v1/public/third_party_apps/#{token}", params: params
         end
 
