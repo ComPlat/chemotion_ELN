@@ -16,14 +16,6 @@ import { aviatorNavigation } from 'src/utilities/routesUtils';
 const ALL_COLLECTIONS_KEY = 'all';
 const CHEMOTION_REPOSITORY_KEY = 'chemotionRepository';
 
-// function containsCollection(collections, collectionId) {
-//   if (!collections || collections.length === 0) return false;
-//   return collections.some((collection) => {
-//     if (collection.id === collectionId) return true;
-//     return containsCollection(collection.children, collectionId);
-//   });
-// }
-
 function CollectionTree({ isCollapsed }) {
   const collectionsStore = useContext(StoreContext).collections;
   const ownCollections = collectionsStore.ownCollections;
@@ -47,46 +39,13 @@ function CollectionTree({ isCollapsed }) {
     if (collectionType !== activeCollectionType) setActiveCollectionType(collectionType);
   }
 
-  useEffect(() => {
-    collectionsStore.fetchCollections();
-
-    // 'All' and 'chemotion-repository.net' are special collections that we
-    // expect to be returned by `fetchLockedCollectionRoots`. We check the UI
-    // state here to correctly restore the active collection on page load.
-    // do we still need this???
-    const onUiStoreChange = ({ currentCollection }) => {
-      if (!currentCollection) return;
-
-      // const group = collectionGroups.find(({ collections }) => containsCollection(collections, currentCollection.id));
-      // if (group) setCollection(group.collectionKey);
-
-      if (currentCollection.label === 'All') {
-        changeActiveCollectionType(ALL_COLLECTIONS_KEY);
-      }
-      // shared with me?
-
-      if (currentCollection.label === 'chemotion-repository.net') {
-        changeActiveCollectionType(CHEMOTION_REPOSITORY_KEY);
-      }
-    };
-
-    UIStore.listen(onUiStoreChange);
-    return () => UIStore.unlisten(onUiStoreChange);
-  }, []);
-
-
-  // Set the active collection based on the currentCollection in UIStore
-  // useEffect(() => {
-  //   const onUiStoreChange = ({ currentCollection }) => {
-  //     if (!currentCollection) return;
-  // 
-  //     const group = collectionGroups.find(({ roots }) => containsCollection(roots, currentCollection.id));
-  //     if (group) setCollection(group.collectionKey);
-  //   };
-  // 
-  //   UIStore.listen(onUiStoreChange);
-  //   return () => UIStore.unlisten(onUiStoreChange);
-  // }, [collectionGroups]);
+  const containsCollection = (collections, collectionId) => {
+    if (!collections || collections.length === 0) return false;
+    return collections.some((collection) => {
+      if (collection.id === collectionId) return true;
+      return containsCollection(collection.children, collectionId);
+    });
+  }
 
   const collectionGroups = [
     {
@@ -114,6 +73,23 @@ function CollectionTree({ isCollapsed }) {
     });
   }
 
+  useEffect(() => {
+    collectionsStore.fetchCollections();
+  }, []);
+
+  // Set the active collection based on the currentCollection in UIStore
+  useEffect(() => {
+    const onUiStoreChange = ({ currentCollection }) => {
+      if (!currentCollection) return;
+  
+      const group = collectionGroups.find(({ collections }) => containsCollection(collections, currentCollection.id));
+      if (group) changeActiveCollectionType(group.collectionType);
+    };
+  
+    UIStore.listen(onUiStoreChange);
+    return () => UIStore.unlisten(onUiStoreChange);
+  }, [collectionGroups]);
+
   return (
     <div className="mh-100 d-flex flex-column">
       <div className="sidebar-button-frame tree-view_frame flex-column">
@@ -122,6 +98,7 @@ function CollectionTree({ isCollapsed }) {
         }) => {
           const isActive = activeCollectionType === collectionType;
           const isExpanded = expandedCollection === collectionType;
+          const sharedWithMe = activeCollectionType === 'sharedWithMe';
           return (
             <Fragment key={collectionType}>
               <SidebarButton
@@ -146,7 +123,9 @@ function CollectionTree({ isCollapsed }) {
                 <div className="tree-view_container">
                   {collections.length === 0
                     ? <div className="text-muted text-center p-2">No collections</div>
-                    : collections.map((collection) => <CollectionSubtree key={collection.id} root={collection} level={1} />)}
+                    : collections.map((collection) => {
+                      return <CollectionSubtree key={collection.id} root={collection} sharedWithMe={sharedWithMe} level={1} />
+                    })}
                 </div>
               )}
             </Fragment>
