@@ -1,4 +1,4 @@
-import React, { Fragment, useEffect, useContext } from 'react';
+import React, { Fragment, useState, useEffect, useContext } from 'react';
 import PropTypes from 'prop-types';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -16,42 +16,35 @@ import { aviatorNavigation } from 'src/utilities/routesUtils';
 const ALL_COLLECTIONS_KEY = 'all';
 const CHEMOTION_REPOSITORY_KEY = 'chemotionRepository';
 
-function containsCollection(collections, collectionId) {
-  if (!collections || collections.length === 0) return false;
-  return collections.some((collection) => {
-    if (collection.id === collectionId) return true;
-    return containsCollection(collection.children, collectionId);
-  });
-}
+// function containsCollection(collections, collectionId) {
+//   if (!collections || collections.length === 0) return false;
+//   return collections.some((collection) => {
+//     if (collection.id === collectionId) return true;
+//     return containsCollection(collection.children, collectionId);
+//   });
+// }
 
 function CollectionTree({ isCollapsed }) {
   const collectionsStore = useContext(StoreContext).collections;
-  const activeCollectionType = collectionsStore.active_collection_type;
   const ownCollections = collectionsStore.ownCollections;
   const sharedWithMeCollections = collectionsStore.sharedWithMeCollections;
   const chemotionRepositoryCollection = collectionsStore.chemotion_repository_collection;
 
-  const [collections, setCollections] = useState(CollectionStore.getState());
-  //const [activeCollection, setActiveCollection] = useState(ALL_COLLECTIONS_KEY);
+  const [activeCollectionType, setActiveCollectionType] = useState(ALL_COLLECTIONS_KEY);
   const [expandedCollection, setExpandedCollection] = useState(ALL_COLLECTIONS_KEY);
 
-  const toggleCollection = (collectionKey) => {
-    setExpandedCollection((prev) => ((prev === collectionKey) ? null : collectionKey));
+  const toggleCollection = (collectionType) => {
+    setExpandedCollection((prev) => ((prev === collectionType) ? null : collectionType));
   }
 
-  const expandCollection = (collectionKey) => {
+  const expandCollection = (collectionType) => {
     if (isCollapsed) UIActions.expandSidebar.defer();
-    setExpandedCollection(collectionKey);
+    setExpandedCollection(collectionType);
   }
 
-  const setCollection = (collection) => {
-    expandCollection(collection);
-    if (collection !== activeCollection) setActiveCollection(collection);
-  }
-
-  const setActiveCollection = (collection) => {
-    //if (isCollapsed) expandSidebar();
-    if (collection !== activeCollectionType) collectionsStore.setActiveCollectionType(collection);
+  const changeActiveCollectionType = (collectionType) => {
+    expandCollection(collectionType);
+    if (collectionType !== activeCollectionType) setActiveCollectionType(collectionType);
   }
 
   useEffect(() => {
@@ -64,12 +57,16 @@ function CollectionTree({ isCollapsed }) {
     const onUiStoreChange = ({ currentCollection }) => {
       if (!currentCollection) return;
 
+      // const group = collectionGroups.find(({ collections }) => containsCollection(collections, currentCollection.id));
+      // if (group) setCollection(group.collectionKey);
+
       if (currentCollection.label === 'All') {
-        setActiveCollection(ALL_COLLECTIONS_KEY);
+        changeActiveCollectionType(ALL_COLLECTIONS_KEY);
       }
+      // shared with me?
 
       if (currentCollection.label === 'chemotion-repository.net') {
-        setActiveCollection(CHEMOTION_REPOSITORY_KEY);
+        changeActiveCollectionType(CHEMOTION_REPOSITORY_KEY);
       }
     };
 
@@ -77,44 +74,32 @@ function CollectionTree({ isCollapsed }) {
     return () => UIStore.unlisten(onUiStoreChange);
   }, []);
 
-  // useEffect(() => {
-  //  CollectionActions.fetchLockedCollectionRoots();
-  //  CollectionActions.fetchUnsharedCollectionRoots();
-  //  CollectionActions.fetchSharedCollectionRoots();
-  //  CollectionActions.fetchRemoteCollectionRoots();
-  //  CollectionActions.fetchSyncInCollectionRoots();//
-
-  //  // Create a copy of the collection store state to trigger a re-render
-  //  const onCollectionStoreChange = (s) => setCollections({ ...s });
-  //  CollectionStore.listen(onCollectionStoreChange);
-  //  return () => CollectionStore.unlisten(onCollectionStoreChange);
-  //}, []);
 
   // Set the active collection based on the currentCollection in UIStore
-  //useEffect(() => {
-  //  const onUiStoreChange = ({ currentCollection }) => {
-  //    if (!currentCollection) return;
-  //
-  //    const group = collectionGroups.find(({ roots }) => containsCollection(roots, currentCollection.id));
-  //    if (group) setCollection(group.collectionKey);
-  //  };
-  //
-  //  UIStore.listen(onUiStoreChange);
-  //  return () => UIStore.unlisten(onUiStoreChange);
-  //}, [collectionGroups]);
+  // useEffect(() => {
+  //   const onUiStoreChange = ({ currentCollection }) => {
+  //     if (!currentCollection) return;
+  // 
+  //     const group = collectionGroups.find(({ roots }) => containsCollection(roots, currentCollection.id));
+  //     if (group) setCollection(group.collectionKey);
+  //   };
+  // 
+  //   UIStore.listen(onUiStoreChange);
+  //   return () => UIStore.unlisten(onUiStoreChange);
+  // }, [collectionGroups]);
 
   const collectionGroups = [
     {
       label: 'My Collections',
       icon: 'icon-collection',
-      collectionKey: ALL_COLLECTIONS_KEY,
+      collectionType: ALL_COLLECTIONS_KEY,
       collections: ownCollections,
       onClickOpenCollection: 'all',
     },
     {
       label: 'Shared with me',
       icon: 'icon-incoming',
-      collectionKey: 'sharedWithMe',
+      collectionType: 'sharedWithMe',
       collections: sharedWithMeCollections,
     },
   ];
@@ -123,7 +108,7 @@ function CollectionTree({ isCollapsed }) {
     collectionGroups.push({
       label: 'chemotion-repo',
       icon: 'fa fa-cloud',
-      collectionKey: CHEMOTION_REPOSITORY_KEY,
+      collectionType: CHEMOTION_REPOSITORY_KEY,
       onClickOpenCollection: chemotionRepositoryCollection.id,
       collections: chemotionRepositoryCollection.children,
     });
@@ -133,29 +118,26 @@ function CollectionTree({ isCollapsed }) {
     <div className="mh-100 d-flex flex-column">
       <div className="sidebar-button-frame tree-view_frame flex-column">
         {collectionGroups.map(({
-          label, icon, collectionKey, collections, onClickOpenCollection,
+          label, icon, collectionType, collections, onClickOpenCollection,
         }) => {
-          const isActive = activeCollectionType === collectionKey;
-          const isExpanded = expandedCollection === collectionKey;
+          const isActive = activeCollectionType === collectionType;
+          const isExpanded = expandedCollection === collectionType;
           return (
-            <Fragment key={collectionKey}>
+            <Fragment key={collectionType}>
               <SidebarButton
                 label={label}
                 icon={icon}
                 isCollapsed={isCollapsed}
                 onClick={() => {
+                  changeActiveCollectionType(collectionType);
                   if (onClickOpenCollection !== undefined) {
-                    setCollection(collectionKey);
-                    setActiveCollection(collectionKey);
                     aviatorNavigation('collection', onClickOpenCollection, true, true)
-                  } else {
-                    expandCollection(collectionKey);
                   }
                 }}
                 expandable
                 isExpanded={isExpanded}
-                onToggleExpansion={() => toggleCollection(collectionKey)}
-                appendComponent={collectionKey === CHEMOTION_REPOSITORY_KEY ? (
+                onToggleExpansion={() => toggleCollection(collectionType)}
+                appendComponent={collectionType === CHEMOTION_REPOSITORY_KEY ? (
                   <GatePushButton collectionId={chemotionRepositoryCollection.id} />
                 ) : null}
                 active={isActive}
