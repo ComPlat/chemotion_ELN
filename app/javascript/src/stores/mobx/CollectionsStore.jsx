@@ -26,7 +26,7 @@ export const OwnCollection = types.model({
     }
   },
   sortChildren() {
-    self.children.sort((a,b) => {
+    self.children.sort((a, b) => {
       if (a.position != null && b.position != null) { return a.position - b.position }
       else if (a.position != null && b.position == null) { return -1 }
       else if (a.position == null && b.position != null) { return 1 }
@@ -36,7 +36,7 @@ export const OwnCollection = types.model({
       else { console.debug('unsortable collections:', a, b); return 0 }
     })
   }
-})).views(self=> ({
+})).views(self => ({
   get ancestorIds() { return self.ancestry.split('/').filter(Number).map(element => parseInt(element)) },
   get isRootCollection() { return self.ancestry == '/' },
   isAncestorOf(collection) {
@@ -72,7 +72,6 @@ const presort = (a, b) => {
 
 export const CollectionsStore = types
   .model({
-    active_collection_type: types.optional(types.string, 'all'),
     all_collection: types.maybeNull(OwnCollection),
     chemotion_repository_collection: types.maybeNull(OwnCollection),
     current_user_id: types.maybeNull(types.integer),
@@ -109,7 +108,7 @@ export const CollectionsStore = types
         })
       // sort shared collections by label within their groups
       self.shared_with_me_collections.keys().forEach(owner => {
-        self.shared_with_me_collections[owner].sort((a,b) => {
+        self.shared_with_me_collections[owner].sort((a, b) => {
           const label_a = a.label.toUpperCase()
           const label_ = ba.label.toUpperCase()
           if (label_a < label_b) { return -1; }
@@ -125,13 +124,10 @@ export const CollectionsStore = types
         return self.current_user;
       }
     },
-    setActiveCollectionType(collection_type) {
-      self.active_collection_type = collection_type;
-    },
     addOwnCollection(collection) {
       if (collection.isRootCollection) {
         self.own_collections.push(collection)
-        self.ownCollections.sort((a,b) => {
+        self.ownCollections.sort((a, b) => {
           if (a.position != null && b.position != null) { return a.position - b.position }
           else if (a.position != null && b.position == null) { return -1 }
           else if (a.position == null && b.position != null) { return 1 }
