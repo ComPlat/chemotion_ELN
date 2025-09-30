@@ -11,7 +11,7 @@ module RecoveryDB
       SyncCollectionsUser UsersDevice Device Labimotion::CollectionsElement
       Labimotion::Element Labimotion::ElementKlass Labimotion::ElementsElement
       Labimotion::SegmentKlass Labimotion::Segment UserLabel UsersAdmin UsersGroup
-    ]
+    ].freeze
 
     MODEL_CLASSES = MODEL_NAMES.map(&:constantize)
 
