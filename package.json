@@ -120,6 +120,7 @@
     "@pmmmwh/react-refresh-webpack-plugin": "^0.6",
     "@storybook/addon-docs": "^9.1.6",
     "@storybook/addon-webpack5-compiler-swc": "^4.0.1",
+    "@storybook/blocks": "^8.6.14",
     "@storybook/react-webpack5": "^9.1.6",
     "@wojtekmaj/enzyme-adapter-react-17": "^0.8.0",
     "babel-loader": "8",
