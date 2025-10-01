@@ -1676,6 +1676,11 @@ export default class Sample extends Element {
     );
     this.components = filteredComponents;
 
+    // Clear sample_svg_file for mixture samples to ensure combined molecule SVG is used
+    if (this.isMixture()) {
+      this.sample_svg_file = null;
+    }
+
     if (!this.molecule_cano_smiles || this.molecule_cano_smiles === '') {
       this.molecule = null;
       this.molfile = '';

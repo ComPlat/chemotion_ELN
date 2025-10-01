@@ -123,6 +123,7 @@ export default class SampleDetails extends React.Component {
       materialGroup: null,
       showStructureEditor: false,
       loadingMolecule: false,
+      loadingComponentDeletion: false,
       showChemicalIdentifiers: false,
       activeTab: UIStore.getState().sample.activeTab,
       qrCodeSVG: '',
@@ -175,6 +176,7 @@ export default class SampleDetails extends React.Component {
     this.handleStructureEditorSave = this.handleStructureEditorSave.bind(this);
     this.handleStructureEditorCancel = this.handleStructureEditorCancel.bind(this);
     this.splitSmiles = this.splitSmiles.bind(this);
+    this.setComponentDeletionLoading = this.setComponentDeletionLoading.bind(this);
   }
 
   componentDidMount() {
@@ -813,6 +815,7 @@ export default class SampleDetails extends React.Component {
           customizableField={this.customizableField}
           enableSampleDecoupled={this.enableSampleDecoupled}
           decoupleMolecule={this.decoupleMolecule}
+          setComponentDeletionLoading={this.setComponentDeletionLoading}
         />
         <div className="mb-2">
           {this.chemicalIdentifiersItem(sample)}
@@ -1297,7 +1300,7 @@ export default class SampleDetails extends React.Component {
   }
 
   svgOrLoading(sample) {
-    const svgPath = this.state.loadingMolecule
+    const svgPath = (this.state.loadingMolecule || this.state.loadingComponentDeletion)
       ? '/images/wild_card/loading-bubbles.svg'
       : sample.svgPath;
 
@@ -1375,6 +1378,16 @@ export default class SampleDetails extends React.Component {
   hideStructureEditor() {
     this.setState({
       showStructureEditor: false
+    });
+  }
+
+  /**
+   * Sets the loading state for component deletion
+   * @param {boolean} loading - Whether component deletion is in progress
+   */
+  setComponentDeletionLoading(loading) {
+    this.setState({
+      loadingComponentDeletion: loading
     });
   }
 
