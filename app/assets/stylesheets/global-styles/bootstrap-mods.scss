@@ -96,17 +96,17 @@ h6 {
 }
 
 @mixin xsm-form-elements {
-  padding: 1px 5px;
+  padding: 3px 5px;
   font-size: 12px;
-  line-height: 1.5;
+  line-height: 1.25;
   border-radius: 3px;
   @include condensed-text-width;
 }
 
 @mixin xxsm-form-elements {
-  padding: 3px 4px;
+  padding: 1px 4px;
   font-size: 12px;
-  line-height: 1;
+  line-height: 1.25;
   border-radius: 2.5px;
   @include condensed-text-width;
 }
@@ -120,6 +120,14 @@ h6 {
 }
 
 .btn-xxsm {
+  @include xxsm-form-elements;
+}
+
+.form-control-xsm {
+  @include xsm-form-elements;
+}
+
+.form-control-xxsm {
   @include xxsm-form-elements;
 }
 

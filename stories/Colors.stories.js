@@ -73,9 +73,9 @@ export default {
       page: () => (
         <>
           <Title />
-          <Subtitle />
+          <Subtitle>Base Colors</Subtitle>
           <Primary />
-          <Title>Shades</Title>
+          <Subtitle>Shades</Subtitle>
           <Canvas of={Shades} />
         </>
       ),
