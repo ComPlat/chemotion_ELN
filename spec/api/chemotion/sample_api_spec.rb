@@ -996,6 +996,88 @@ describe Chemotion::SampleAPI do
       end
     end
   end
+
+  # sample svg re-rendering of svg using indigo service
+  describe 'POST /render-svg-indigo' do
+    let(:valid_molfile) do
+      <<~MOL
+        Benzene
+        ChemDraw09122110462D
+
+        6  6  0  0  0  0            999 V2000
+          0.0000    1.4027    0.0000 C   0  0
+          1.2148    0.7014    0.0000 C   0  0
+         -1.2148    0.7014    0.0000 C   0  0
+          1.2148   -0.7014    0.0000 C   0  0
+         -1.2148   -0.7014    0.0000 C   0  0
+          0.0000   -1.4027    0.0000 C   0  0
+        1  2  2  0
+        2  4  1  0
+        4  6  2  0
+        6  5  1  0
+        5  3  2  0
+        3  1  1  0
+        M  END
+      MOL
+    end
+
+    let(:invalid_molfile) { "garbage data\nonly\n3\nlines" }
+    let(:svg_filename) { 'benzene.svg' }
+    let(:svg_path) { Rails.public_path.join('images', 'samples', svg_filename) }
+    let(:indigo_service_svg) { instance_double(IndigoService, render_structure: '<svg>benzene</svg>') }
+    let(:indigo_service) { instance_double(IndigoService) }
+
+    before do
+      allow(IndigoService).to receive(:new).and_return(indigo_service_svg)
+    end
+
+    after do
+      FileUtils.rm_f(svg_path)
+    end
+
+    it 'replaces SVG file for valid inputs and returns filename' do
+      post '/api/v1/samples/render-svg-indigo',
+           params: { molfile: valid_molfile, svg_path: svg_filename }
+
+      expect(response).to have_http_status(:created)
+      expect(response.body).to include(svg_filename)
+    end
+
+    it 'returns 400 if molfile is missing' do
+      post '/api/v1/samples/render-svg-indigo',
+           params: { svg_path: svg_filename }
+
+      expect(response).to have_http_status(:bad_request)
+      expect(response.body).to include('molfile is missing')
+    end
+
+    it 'returns 400 if svg_path is missing' do
+      post '/api/v1/samples/render-svg-indigo',
+           params: { molfile: valid_molfile }
+
+      expect(response).to have_http_status(:bad_request)
+      expect(response.body).to include('svg_path is missing')
+    end
+
+    it 'returns 422 if molfile format is invalid' do
+      post '/api/v1/samples/render-svg-indigo',
+           params: { molfile: invalid_molfile, svg_path: svg_filename }
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.body).to include('Invalid molfile format')
+    end
+
+    it 'returns 500 if IndigoService fails' do
+      allow(IndigoService).to receive(:new).and_return(indigo_service)
+      allow(indigo_service).to receive(:render_structure).and_return(nil)
+
+      post '/api/v1/samples/render-svg-indigo',
+           params: { molfile: valid_molfile, svg_path: svg_filename }
+
+      expect(response).to have_http_status(:internal_server_error)
+      expect(response.body).to include('Failed to generate SVG')
+    end
+  end
 end
 
 # rubocop:enable RSpec/MultipleMemoizedHelpers
