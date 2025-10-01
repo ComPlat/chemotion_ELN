@@ -212,7 +212,7 @@ export default class SampleDetails extends React.Component {
 
     // Sync casInputValue when CAS changes
     const currentCas = sample.xref?.cas ?? '';
-    
+
     this.setState({
       sample,
       smileReadonly,

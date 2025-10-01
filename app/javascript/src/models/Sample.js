@@ -1905,6 +1905,26 @@ export default class Sample extends Element {
   }
 
   /**
+   * Creates components from the current sample when switching to Mixture type.
+   * Uses the same logic as SampleDetails.splitSmiles but as a reusable method.
+   * @param {string} editor - The editor to use for fetching molecules.
+   * @returns {Promise<boolean>} A promise that resolves to true if components were created.
+   */
+  async createComponentsFromCurrentSample(editor = 'ketcher') {
+    if (!this.isMixture() || !this.molecule_cano_smiles?.trim()) {
+      return false;
+    }
+
+    try {
+      const mixtureSmiles = this.molecule_cano_smiles.split('.');
+      await this.splitSmilesToMolecule(mixtureSmiles, editor);
+      return true;
+    } catch (err) {
+      return false;
+    }
+  }
+
+  /**
    * Converts an array of mixture molecules into subsamples/components and adds them to the mixture.
    * @param {Array<Object>} mixtureMolecules - The molecules to convert and add.
    */
