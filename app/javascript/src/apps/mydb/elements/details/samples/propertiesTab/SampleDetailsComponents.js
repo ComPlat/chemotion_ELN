@@ -434,10 +434,23 @@ export default class SampleDetailsComponents extends React.Component {
    * Deletes a component from the mixture.
    * @param {Object} component - The component to delete
    */
-  deleteMixtureComponent(component) {
+  async deleteMixtureComponent(component) {
     const { sample } = this.state;
-    sample.deleteMixtureComponent(component);
-    this.props.onChange(sample);
+    
+    // Set loading state for component deletion
+    if (this.props.setComponentDeletionLoading) {
+      this.props.setComponentDeletionLoading(true);
+    }
+    
+    try {
+      await sample.deleteMixtureComponent(component);
+      this.props.onChange(sample);
+    } finally {
+      // Clear loading state
+      if (this.props.setComponentDeletionLoading) {
+        this.props.setComponentDeletionLoading(false);
+      }
+    }
   }
 
   /**

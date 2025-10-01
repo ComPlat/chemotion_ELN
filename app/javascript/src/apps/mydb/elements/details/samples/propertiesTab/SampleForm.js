@@ -993,6 +993,7 @@ export default class SampleForm extends React.Component {
             onChange={this.handleMixtureComponentChanged}
             enableComponentLabel={enableComponentLabel}
             enableComponentPurity={enableComponentPurity}
+            setComponentDeletionLoading={this.props.setComponentDeletionLoading}
           />
         </Col>
       </Row>
