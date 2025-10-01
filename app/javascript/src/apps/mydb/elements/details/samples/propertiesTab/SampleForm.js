@@ -120,7 +120,39 @@ export default class SampleForm extends React.Component {
     // selectedSampleType = {label: 'Single molecule', value: 'Micromolecule'}
     sample.updateSampleType(sampleType.value);
     this.setState({ selectedSampleType: sampleType });
+
+    // If switching to Mixture, create component(s) from the current sample
+    if (sampleType.value === 'Mixture' && sample.molecule && sample.molfile) {
+      this.createComponentsFromCurrentSample(sample);
+    }
+
     this.props.handleSampleChanged(sample);
+  }
+
+  /**
+   * Creates components from the current sample when switching to Mixture type.
+   * Uses the new method from Sample model.
+   * @param {Sample} sample - The sample to create components from
+   */
+  createComponentsFromCurrentSample(sample) {
+    // Use the new method from Sample model
+    sample.createComponentsFromCurrentSample('ketcher')
+      .then((result) => {
+        if (result) {
+          this.props.handleSampleChanged(sample);
+        }
+      })
+      .catch((errorMessage) => {
+        // Show error notification
+        NotificationActions.add({
+          title: 'Error Creating Components',
+          message: `Failed to create components: ${errorMessage}`,
+          level: 'error',
+          position: 'tc',
+          dismissible: 'button',
+          autoDismiss: 10
+        });
+      });
   }
 
   handleDensityChanged(density) {
