@@ -1,5 +1,10 @@
 import React from 'react';
-import { Title, Subtitle, Primary, Canvas } from '@storybook/blocks';
+import {
+  Title,
+  Subtitle,
+  Primary,
+  Canvas
+} from '@storybook/blocks';
 
 export function Typography() {
   return (
@@ -74,9 +79,9 @@ export default {
       page: () => (
         <>
           <Title />
-          <Subtitle />
+          <Subtitle>Text formats</Subtitle>
           <Primary />
-          <Title>Supported but rare text formats</Title>
+          <Subtitle>Supported but rare</Subtitle>
           <Canvas of={SupportedButRare} />
         </>
       ),
