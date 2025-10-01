@@ -326,6 +326,18 @@ export default class SampleDetails extends React.Component {
       sample.molecule = result;
       sample.molecule_id = result.id;
       if (result.inchikey === 'DUMMY') { sample.decoupled = true; }
+
+      // Handle temporary SVG file from structure editor
+      if (result.temp_svg) {
+        // For mixture samples, clear any existing sample_svg_file to preserve combined molecule SVG
+        // This ensures the combined molecule SVG is always displayed
+        if (sample.isMixture()) {
+          sample.sample_svg_file = null;
+        } else {
+          sample.sample_svg_file = result.temp_svg;
+        }
+      }
+
       this.setState({
         sample,
         smileReadonly: true,
