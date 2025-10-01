@@ -1,8 +1,5 @@
 import React from 'react';
-
-export default {
-  title: 'Design Principles/Typography',
-};
+import { Title, Subtitle, Primary, Canvas } from '@storybook/blocks';
 
 export function Typography() {
   return (
@@ -36,18 +33,53 @@ export function Typography() {
         <a href="https://chemotion.net/" target="_blank" rel="noreferrer">link</a>
         &nbsp;to another page.
       </p>
+      <p><strong>This line rendered as bold text.</strong></p>
+      <p><em>This line rendered as italicized text.</em></p>
+      <p className="condensed-text-width">
+        This line rendered as condensed. The class&nbsp;
+        <strong>condensed-text-width</strong>
+        , when different pieces of information need to be presented next to each other in compact form.
+      </p>
+    </>
+  );
+}
+
+export function SupportedButRare() {
+  return (
+    <>
+      <p><code>This is a piece of computer code.</code></p>
+      <p><del>This line of text is meant to be treated as deleted text.</del></p>
       <p>
         You can use the mark tag to
         <mark>highlight</mark>
         text.
       </p>
-      <p><del>This line of text is meant to be treated as deleted text.</del></p>
       <p><s>This line of text is meant to be treated as no longer accurate.</s></p>
-      <p><ins>This line of text is meant to be treated as an addition to the document.</ins></p>
       <p><u>This line of text will render as underlined.</u></p>
       <p><small>This line of text is meant to be treated as fine print.</small></p>
-      <p><strong>This line rendered as bold text.</strong></p>
-      <p><em>This line rendered as italicized text.</em></p>
     </>
   );
 }
+
+export default {
+  title: 'Design Principles/Typography',
+  tags: ['autodocs'],
+  parameters: {
+    options: {
+      storySort: {
+        order: ['Typography', 'SupportedButRare'],
+      },
+    },
+    docs: {
+      page: () => (
+        <>
+          <Title />
+          <Subtitle />
+          <Primary />
+          <Title>Supported but rare text formats</Title>
+          <Canvas of={SupportedButRare} />
+        </>
+      ),
+    },
+  },
+};
