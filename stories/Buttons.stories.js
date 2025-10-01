@@ -1,10 +1,11 @@
 import React from 'react';
 import { fn } from 'storybook/test';
+import { sizeAttributes, colorAttributes } from './componentAttributes';
 
 import { Button } from 'react-bootstrap';
 
-const variants = ['primary', 'secondary', 'success', 'danger', 'warning', 'light', 'paper', 'knock-out'];
-const sizes = ['lg', 'md', 'sm', 'xsm', 'xxsm'];
+const variants = colorAttributes;
+const sizes = sizeAttributes;
 
 export default {
   title: 'Components/Button',
