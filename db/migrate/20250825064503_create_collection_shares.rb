@@ -15,5 +15,7 @@ class CreateCollectionShares < ActiveRecord::Migration[6.1]
       t.integer :wellplate_detail_level, null: false, default: 0
       t.timestamps
     end
+
+    add_column :collections, :shared, :boolean, null: false, default: false
   end
 end

@@ -112,6 +112,7 @@ class Collection < ApplicationRecord
         .select(
           [
             'collections.*',
+            'collection_shares.permission_level AS permission_level',
             'inventories.name AS inventory_name',
             'inventories.prefix AS inventory_prefix',
             'concat(users.first_name, chr(32), users.last_name, chr(40), users.name_abbreviation, chr(41)) AS owner'
