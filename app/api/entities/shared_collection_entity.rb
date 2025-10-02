@@ -13,10 +13,7 @@ module Entities
     expose! :inventory_name
     expose! :inventory_prefix
     expose! :owner
-    expose! :locked
-
-    def locked
-      false
-    end
+    expose! :is_locked
+    expose! :permission_level
   end
 end
