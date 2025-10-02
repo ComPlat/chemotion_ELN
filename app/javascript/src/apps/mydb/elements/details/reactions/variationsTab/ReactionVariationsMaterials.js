@@ -1,14 +1,11 @@
 import { get, cloneDeep } from 'lodash';
 import {
-  materialTypes, getStandardUnits, getCellDataType, updateColumnDefinitions, getStandardValue, convertUnit,
+  materialTypes, getStandardUnits, getCellDataType, getStandardValue, convertUnit,
   getEntryDefs, getCurrentEntry
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
-  MaterialOverlay, MaterialRenderer
+  MaterialOverlay, MaterialRenderer, MenuHeader
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
-import {
-  MenuHeader
-} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsTableHeader';
 import { calculateTON, calculateFeedstockMoles } from 'src/utilities/UnitsConversion';
 
 function getMolFromGram(gram, material) {
@@ -18,7 +15,7 @@ function getMolFromGram(gram, material) {
 
   if (material.aux.molarity) {
     const liter = (gram * material.aux.purity)
-            / (material.aux.molarity * material.aux.molecularWeight);
+      / (material.aux.molarity * material.aux.molecularWeight);
     return liter * material.aux.molarity;
   }
 
@@ -35,8 +32,7 @@ function getGramFromMol(mol, material) {
 function getVolumeFromGram(gram, material) {
   if (material.aux.molarity) {
     return (gram * material.aux.purity) / (material.aux.molarity * material.aux.molecularWeight);
-  }
-  if (material.aux.density) {
+  } if (material.aux.density) {
     return gram / (material.aux.density * 1000);
   }
   return 0;
@@ -45,8 +41,7 @@ function getVolumeFromGram(gram, material) {
 function getGramFromVolume(volume, material) {
   if (material.aux.molarity) {
     return volume * material.aux.molarity * material.aux.molecularWeight;
-  }
-  if (material.aux.density) {
+  } if (material.aux.density) {
     return volume * material.aux.density * 1000;
   }
   return 0;
@@ -72,14 +67,14 @@ function getFeedstockMaterial(row) {
 
 function computeEquivalent(material, referenceMaterial) {
   return getMolFromGram(material.mass.value, material)
-        / getMolFromGram(referenceMaterial.mass.value, referenceMaterial);
+  / getMolFromGram(referenceMaterial.mass.value, referenceMaterial);
 }
 
 function computePercentYield(material, referenceMaterial, reactionHasPolymers) {
   const stoichiometryCoefficient = (material.aux.coefficient ?? 1.0)
-        / (referenceMaterial.aux.coefficient ?? 1.0);
+    / (referenceMaterial.aux.coefficient ?? 1.0);
   const equivalent = computeEquivalent(material, referenceMaterial)
-        / stoichiometryCoefficient;
+    / stoichiometryCoefficient;
   return reactionHasPolymers ? (equivalent * 100)
     : ((equivalent <= 1 ? equivalent : 1) * 100);
 }
@@ -102,7 +97,7 @@ function getReactionMaterialsIDs(materials) {
   return Object.fromEntries(
     Object.entries(materials).map(([materialType, materialsOfType]) => [
       materialType,
-      materialsOfType.map((material) => [material.id.toString(), material.short_label])
+      materialsOfType.map((material) => material.id.toString())
     ])
   );
 }
@@ -110,14 +105,10 @@ function getReactionMaterialsIDs(materials) {
 function updateYields(row, reactionHasPolymers) {
   const updatedRow = cloneDeep(row);
   const referenceMaterial = getReferenceMaterial(updatedRow);
-  if (!referenceMaterial) {
-    return updatedRow;
-  }
+  if (!referenceMaterial) { return updatedRow; }
 
   Object.values(updatedRow.products).forEach((productMaterial) => {
-    if (productMaterial.aux.gasType === 'gas') {
-      return;
-    }
+    if (productMaterial.aux.gasType === 'gas') { return; }
     productMaterial.yield.value = computePercentYield(
       productMaterial,
       referenceMaterial,
@@ -131,15 +122,11 @@ function updateYields(row, reactionHasPolymers) {
 function updateEquivalents(row) {
   const updatedRow = cloneDeep(row);
   const referenceMaterial = getReferenceMaterial(updatedRow);
-  if (!referenceMaterial) {
-    return updatedRow;
-  }
+  if (!referenceMaterial) { return updatedRow; }
 
   ['startingMaterials', 'reactants'].forEach((materialType) => {
     Object.values(updatedRow[materialType]).forEach((material) => {
-      if (material.aux.isReference) {
-        return;
-      }
+      if (material.aux.isReference) { return; }
       const updatedEquivalent = computeEquivalent(material, referenceMaterial);
       material.equivalent.value = updatedEquivalent;
     });
@@ -199,7 +186,7 @@ function cellIsEditable(params) {
 }
 
 function getMaterialGasType(material, gasMode) {
-  const gasType = material?.gas_type ?? 'off';
+  const gasType = material.gas_type ?? 'off';
   return gasMode ? gasType : 'off';
 }
 

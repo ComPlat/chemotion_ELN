@@ -10,8 +10,7 @@ export default function columnDefinitionsReducer(columnDefinitions, action) {
         columnDefinitions,
         action.selectedColumns,
         action.materials,
-        action.gasMode,
-        action.segments
+        action.gasMode
       );
       updatedColumnDefinitions = removeObsoleteColumnDefinitions(
         updatedColumnDefinitions,
@@ -26,24 +25,19 @@ export default function columnDefinitionsReducer(columnDefinitions, action) {
         'entryDefs',
         action.entryDefs
       );
-
-      if (!action.only_update_entry_defs) {
-        updatedColumnDefinitions = updateColumnDefinitions(
-          updatedColumnDefinitions,
-          action.field,
-          'cellDataType',
-          getCellDataType(getCurrentEntry(action.entryDefs), action.gasType)
-        );
-      }
+      updatedColumnDefinitions = updateColumnDefinitions(
+        updatedColumnDefinitions,
+        action.field,
+        'cellDataType',
+        getCellDataType(getCurrentEntry(action.entryDefs), action.gasType)
+      );
       return updatedColumnDefinitions;
     }
     case 'toggle_gas_mode': {
       return getColumnDefinitions(
         action.selectedColumns,
         action.materials,
-        action.gasMode,
-        {},
-        action.segments
+        action.gasMode
       );
     }
     case 'set_updated': {
