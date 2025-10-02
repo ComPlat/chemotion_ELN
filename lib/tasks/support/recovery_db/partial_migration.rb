@@ -173,6 +173,15 @@ module RecoveryDB
         sorted_collections = old_collections.sort_by { |col| col.ancestry.to_s.split('/').size }
 
         sorted_collections.each do |old_collection|
+          if old_collection.label.in?(['All', 'chemotion-repository.net'])
+            existing = Collection.find_by(user_id: new_user.id, label: old_collection.label)
+            if existing
+              id_map[old_collection.id] = existing
+              restore_collection_elements(old_collection, existing, new_user.id, created_elements)
+              next
+            end
+          end
+
           new_collection = build_new_collection(old_collection, new_user, id_map)
           new_collection.save!
 
@@ -265,11 +274,39 @@ module RecoveryDB
         end
       end
 
+      def serialized_text_columns_for(model)
+        model.columns.select do |column|
+          column.type == :text && model.type_for_attribute(column.name).is_a?(ActiveRecord::Type::Serialized)
+        end.map(&:name)
+      end
+
+      def process_text_columns_attributes(model, attributes)
+        serialized_text_columns = serialized_text_columns_for(model)
+
+        serialized_text_columns.each do |field|
+          value = attributes[field]
+          next unless value.is_a?(String)
+
+          begin
+            parsed = JSON.parse(value)
+          rescue JSON::ParserError
+            parsed = YAML.safe_load(value, permitted_classes: [ActiveSupport::HashWithIndifferentAccess, Hash, Array],
+                                           aliases: true)
+          end
+
+          attributes[field] = parsed if parsed.is_a?(Hash) || parsed.is_a?(Array)
+        end
+
+        attributes
+      end
+
       def restore_element(recovery_model, main_model, original_id, new_user_id, created_elements)
         original = recovery_model.find_by(id: original_id)
         return nil unless original
 
         attributes = original.attributes.except(*attributes_to_exclude)
+        attributes = process_text_columns_attributes(main_model, attributes)
+
         new_record = main_model.new(attributes)
         assign_creator_or_user(new_record, new_user_id)
         new_record.save(validate: false)
@@ -364,13 +401,18 @@ module RecoveryDB
         attachments = RecoveryDB::Models::Attachment.where(attachable_type: element_type.name,
                                                            attachable_id: old_element_id)
         attachments.each do |attachment|
-          attrs = attachment.attributes.except(%w[id attachable_id created_by created_by_type log_data])
+          attrs = attachment.attributes.with_indifferent_access.except(
+            :id, :attachable_id, :created_by, :created_by_type, :log_data, :version
+          )
+
           attrs[:attachable_id] = new_element_id
           attrs[:created_by] = new_user_id
           attrs[:created_by_type] = 'User'
+          attrs[:version] = '/'
+
           Attachment.create!(attrs)
         rescue ActiveRecord::RecordInvalid => e
-          Rails.logger.error "Failed to restore Attachment #{attachment.id}: #{e.message}"
+          Rails.logger.error "Failed to restore Attachment #{attachment.id}: #{e.record.errors.full_messages.join(', ')}"
           raise
         end
       end
@@ -424,7 +466,9 @@ module RecoveryDB
         attributes = old_element.attributes.except(*attributes_to_exclude)
         element_klass_key = ['ElementKlass', old_element.element_klass_id]
         attributes['element_klass_id'] = created_elements[element_klass_key]
-        new_element = Labimotion::Element.create!(attributes)
+        new_element = Labimotion::Element.new(attributes)
+        assign_creator_or_user(new_element, new_collection.user_id)
+        new_element.save!
 
         created_elements[element_key] = new_element.id
         new_element = Labimotion::CollectionsElement.create!(
@@ -434,7 +478,7 @@ module RecoveryDB
         )
         restore_segments(old_element, new_element, created_elements)
       rescue StandardError => e
-        Rails.logger.error "Failed to restore element #{col_elem.element_id} " \
+        Rails.logger.error "Failed to restore labImotion element #{col_elem.element_id} " \
                            "for collection #{col_elem.collection_id}: #{e.message}"
         raise
       end
