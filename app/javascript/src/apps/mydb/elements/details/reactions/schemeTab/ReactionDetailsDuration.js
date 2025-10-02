@@ -57,7 +57,7 @@ export default class ReactionDetailsDuration extends Component {
                 placeholder={timePlaceholder}
                 onChange={event => this.props.onInputChange('timestampStart', event)}
               />
-                <Button disabled={!permitOn(reaction) || reaction.gaseous} variant='secondary' active onClick={() => this.setCurrentTime('timestampStart')}>
+                <Button disabled={!permitOn(reaction) || reaction.gaseous} variant='light' onClick={() => this.setCurrentTime('timestampStart')}>
                   <i className="fa fa-clock-o" aria-hidden="true" />
                 </Button>
             </InputGroup>
@@ -74,7 +74,7 @@ export default class ReactionDetailsDuration extends Component {
                 placeholder={timePlaceholder}
                 onChange={event => this.props.onInputChange('timestampStop', event)}
               />
-              <Button disabled={!permitOn(reaction) || reaction.gaseous} variant='secondary' active onClick={() => this.setCurrentTime('timestampStop')}>
+              <Button disabled={!permitOn(reaction) || reaction.gaseous} variant='light' onClick={() => this.setCurrentTime('timestampStop')}>
                 <i className="fa fa-clock-o" aria-hidden="true" />
               </Button>
             </InputGroup>
@@ -91,8 +91,7 @@ export default class ReactionDetailsDuration extends Component {
               >
                 <Button
                   disabled={!permitOn(reaction) || reaction.gaseous}
-                  active
-                  variant="secondary"
+                  variant="light"
                   onClick={() => copyToClipboard(durationCalc || ' ')}
                 >
                   <i className="fa fa-clipboard" aria-hidden="true" />
@@ -102,7 +101,7 @@ export default class ReactionDetailsDuration extends Component {
                 placement="bottom"
                 overlay={<Tooltip id="copy_durationCalc_to_duration">use this duration<br />(rounded to precision 1)</Tooltip>}
               >
-                <Button disabled={!permitOn(reaction) || reaction.gaseous} active variant='secondary' onClick={() => this.copyToDuration()}>
+                <Button disabled={!permitOn(reaction) || reaction.gaseous} variant='light' onClick={() => this.copyToDuration()}>
                   <i className="fa fa-arrow-right" aria-hidden="true" />
                 </Button>
               </OverlayTrigger>

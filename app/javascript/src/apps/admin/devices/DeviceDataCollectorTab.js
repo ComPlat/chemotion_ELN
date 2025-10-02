@@ -21,9 +21,8 @@ function ListLocalCollector({ localCollectorValues }) {
             <InputGroup>
               <OverlayTrigger placement="right" overlay={<Tooltip id="copy_tooltip">copy to clipboard</Tooltip>}>
                 <Button
-                  size="sm"
-                  variant="secondary"
-                  className="btn-xxsm"
+                  size="xxsm"
+                  variant="light"
                   onClick={() => copyToClipboard(c.path)}
                 >
                   <i className="fa fa-clipboard" />

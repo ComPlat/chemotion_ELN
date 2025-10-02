@@ -95,10 +95,9 @@ export default class ReactionDetailsMainProperties extends Component {
                 )}>
                   <Button
                     disabled={!permitOn(reaction)}
-                    active
                     className="clipboardBtn"
                     onClick={this.toggleTemperatureChart}
-                    variant="secondary"
+                    variant="light"
                   >
                     <i className="fa fa-area-chart" />
                   </Button>
