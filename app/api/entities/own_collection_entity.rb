@@ -12,10 +12,7 @@ module Entities
     expose! :inventory_id
     expose! :inventory_name
     expose! :inventory_prefix
-    expose! :locked
-
-    def locked
-      object["label"].in?(['All', 'chemotion-repository-net'])
-    end
+    expose! :is_locked
+    expose! :shared
   end
 end
