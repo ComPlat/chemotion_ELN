@@ -19,7 +19,6 @@ class RemoveOldCollectionTablesStructure < ActiveRecord::Migration[6.1]
     )
     remove_columns(
       :collections,
-      :is_locked,
       :is_shared,
       :is_synchronized,
       type: :boolean,
