@@ -3,6 +3,7 @@ class MigrateToCollectionShare < ActiveRecord::Migration[6.1]
   # to be able to use its ActiveRecord interface
   if !defined?(SyncCollectionsUser)
       class SyncCollectionsUser < ApplicationRecord
+        belongs_to :collection
       end
   end
 
