@@ -15,8 +15,6 @@ module Usecases
           label: label, 
           inventory: inventory(inventory_id)
         )
-        adjust_positions_within_same_generation(collection)
-        collection.reload # update record to reflect updated position
       end
 
       private
@@ -40,17 +38,10 @@ module Usecases
 
         current_user.collections.create!(
           parent: parent,
-          position: 0,
+          position: parent.children.map(&:position).max + 1,
           label: label,
           inventory: inventory
         )
-      end
-
-      def adjust_positions_within_same_generation(collection)
-        current_user
-          .collections
-          .where(ancestry: collection.ancestry)
-          .update_all('position = position + 1')
       end
     end
   end
