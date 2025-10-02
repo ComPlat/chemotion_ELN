@@ -62,7 +62,9 @@ class Collection < ApplicationRecord
 
   delegate :prefix, :name, to: :inventory, allow_nil: true, prefix: :inventory
 
+  scope :locked, -> { where(is_locked: true) }
   scope :ordered, -> { order('position ASC') }
+  scope :unlocked, -> { where(is_locked: false) }
 
   scope(
     :shared_with_more_than_one_user,
@@ -140,7 +142,7 @@ class Collection < ApplicationRecord
   }
 
   def self.get_all_collection_for_user(user_id)
-    find_by(user_id: user_id, label: 'All')
+    find_by(user_id: user_id, label: 'All', is_locked: true)
   end
 
   def self.bulk_update(user_id, collection_attributes, deleted_ids)

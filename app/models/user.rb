@@ -463,13 +463,13 @@ class User < ApplicationRecord
   # - delete it
 
   def create_all_collection
-    Collection.create(user: self, label: 'All', position: 0)
+    Collection.create(user: self, label: 'All', position: 0, is_locked: true)
   end
 
   def create_chemotion_public_collection
     return unless type == 'Person'
 
-    Collection.create(user: self, label: 'chemotion-repository.net', position: 1)
+    Collection.create(user: self, label: 'chemotion-repository.net', position: 1, is_locked: true)
   end
 
   def set_account_active
