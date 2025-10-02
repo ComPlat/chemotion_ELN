@@ -11,6 +11,7 @@ const preview = {
       storySort: {
         order: [
           'Design Principles',
+          ['Colors', 'Typography', 'Forms'],
           'Components',
         ],
       },
