@@ -145,70 +145,11 @@ class Collection < ApplicationRecord
     find_by(user_id: user_id, label: 'All', is_locked: true)
   end
 
-  def self.bulk_update(user_id, collection_attributes, deleted_ids)
-    ApplicationRecord.transaction do
-      update_or_create(user_id, collection_attributes)
-      update_parent_child_associations(user_id, collection_attributes)
-      delete_set(user_id, deleted_ids)
-    end
-  end
-
-  def self.filter_collection_attributes(user_id, collection_attributes)
-    c_ids = collection_attributes.filter_map { |ca| (!ca['isNew'] && ca['id'].to_i) || nil }
-    filtered_cids = Collection.where(id: c_ids, is_locked: false).filter_map do |c|
-      if (c.user_id == user_id && !c.is_shared) ||
-         (c.is_shared && (c.shared_by_id == user_id || (c.user_id == user_id && c.permission_level == 10)))
-        c.id
-      end
-    end
-    collection_attributes.select { |ca| ca['isNew'] || filtered_cids.include?(ca['id'].to_i) }
-  end
-
-  def self.update_or_create(user_id, collection_attributes, position = 0)
-    return unless collection_attributes && user_id.is_a?(Integer)
-
-    filter_collection_attributes(user_id, collection_attributes).each do |attr|
-      position += 1
-      if attr['isNew']
-        collection = create(label: attr['label'], user_id: user_id, position: position)
-        attr['id'] = collection.id
-      else
-        find(attr['id']).update(label: attr['label'], position: position)
-      end
-      update_or_create(user_id, attr['children'], position + 1)
-    end
-  end
-
-  def self.update_parent_child_associations(user_id, collection_attributes, grand_parent = nil)
-    return unless collection_attributes && user_id.is_a?(Integer)
-
-    filter_collection_attributes(user_id, collection_attributes).each do |attr|
-      parent = Collection.find_by(id: attr['id'])
-      next if parent.nil?
-
-      # collection is a new root collection
-      parent.update(parent: nil) unless grand_parent
-
-      if attr['children']
-        filter_collection_attributes(user_id, attr['children']).each do |attr_child|
-          Collection.find_by(id: attr_child['id'])&.update(parent: parent)
-        end
-      end
-
-      update_parent_child_associations(user_id, attr['children'], parent)
-    end
-  end
-
   def self.delete_set(user_id, deleted_ids)
     (
       Collection.where(id: deleted_ids, user_id: user_id, is_shared: false, is_locked: false) |
       Collection.where(id: deleted_ids, shared_by_id: user_id)
     ).each(&:destroy)
-  end
-
-  def self.reject_shared(user_id, collection_id)
-    Collection.where(id: collection_id, user_id: user_id, is_shared: true)
-              .find_each(&:destroy)
   end
 end
 # rubocop:enable Metrics/AbcSize, Rails/HasManyOrHasOneDependent,Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
