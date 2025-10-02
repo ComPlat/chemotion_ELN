@@ -5,7 +5,7 @@ import {
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   getReactionMaterials,
-  getReactionMaterialsIDs,
+  getReactionMaterialsIDs
 } from '../../../app/javascript/src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 
 async function setUpMaterial() {
@@ -13,45 +13,24 @@ async function setUpMaterial() {
 }
 
 function getSelectedColumns(materialIDs) {
-  return {
-    ...materialIDs,
-    properties: ['duration', 'temperature'],
-    metadata: ['analyses', 'notes'],
-    segmentData: [],
-  };
-}
-
-function getOnlyReactionMaterialsIDs(materials) {
-  return Object.fromEntries(
-    Object.entries(getReactionMaterialsIDs(materials)).map(
-      ([k, matList]) => [k, matList.map((mat) => mat[0])]
-    )
-  );
-}
-
-function getMaterialIdsAsList(reactionMaterials) {
-  return Object.entries(getReactionMaterialsIDs(reactionMaterials)).reduce((acc, [key, value]) => {
-    acc[key] = value.map((x) => x[0]);
-    return acc;
-  }, {});
+  return { ...materialIDs, properties: ['duration', 'temperature'], metadata: ['analyses', 'notes'] };
 }
 
 async function setUpReaction() {
   const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
   reaction.starting_materials[0].reference = true;
   reaction.reactants = [await setUpMaterial()];
-  const processedSegs = [];
+
   const materials = getReactionMaterials(reaction);
-  const materialIDs = getOnlyReactionMaterialsIDs(materials);
+  const materialIDs = getReactionMaterialsIDs(materials);
+
   const variations = [];
-  // eslint-disable-next-line no-plusplus
   for (let id = 0; id < 3; id++) {
     variations.push(createVariationsRow(
       {
         materials,
         selectedColumns: getSelectedColumns(materialIDs),
         variations,
-        processedSegs,
         durationValue: '',
         durationUnit: 'Hour(s)',
         temperatureValue: '',
@@ -74,27 +53,17 @@ async function setUpGaseousReaction() {
   reaction.reactants[0].gas_type = 'feedstock';
   reaction.products[0].gas_type = 'gas';
   reaction.products[0].gas_phase_data = {
-    time: {
-      unit: 'h',
-      value: 1,
-    },
-    temperature: {
-      unit: 'K',
-      value: 1,
-    },
+    time: { unit: 'h', value: 1 },
+    temperature: { unit: 'K', value: 1 },
     turnover_number: 1,
     part_per_million: 1,
-    turnover_frequency: {
-      unit: 'TON/h',
-      value: 1,
-    },
+    turnover_frequency: { unit: 'TON/h', value: 1 }
   };
   reaction.products[0].amount_unit = 'mol';
   reaction.products[0].amount_value = 1;
 
   const materials = getReactionMaterials(reaction);
-
-  const materialIDs = getOnlyReactionMaterialsIDs(materials);
+  const materialIDs = getReactionMaterialsIDs(materials);
 
   const variations = [];
   for (let id = 0; id < 3; id++) {
@@ -104,8 +73,8 @@ async function setUpGaseousReaction() {
         selectedColumns: getSelectedColumns(materialIDs),
         variations,
         gasMode: true,
-        vesselVolume: 10,
-      },
+        vesselVolume: 10
+      }
     ));
   }
   reaction.variations = variations;
@@ -122,12 +91,12 @@ function getColumnGroupChild(columnDefinitions, groupID, fieldID) {
 
 function getColumnDefinitionsMaterialIDs(columnDefinitions, materialType) {
   return columnDefinitions.find(
-    (columnDefinition) => columnDefinition.groupId === materialType,
-  )
-    .children
-    .map(
-      (child) => child.field.replace(`${materialType}.`, '')
-    );
+    (columnDefinition) => columnDefinition.groupId === materialType
+  ).children.map(
+    // E.g., extract "foo" from "reactants.foo", or "bar" from "startingMaterials.bar",
+    // "foo" and "bar" being the material IDs.
+    (child) => child.field.replace(`${materialType}.`, '')
+  );
 }
 
 export {
@@ -136,7 +105,5 @@ export {
   setUpGaseousReaction,
   getColumnGroupChild,
   getColumnDefinitionsMaterialIDs,
-  getSelectedColumns,
-  getMaterialIdsAsList,
-  getOnlyReactionMaterialsIDs,
+  getSelectedColumns
 };
