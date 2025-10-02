@@ -68,6 +68,19 @@ $token-color-names: (
   "carbon": $chemstrap-carbon,
 );
 
+/* Generate CSS Custom Properties from SCSS variables */
+:root {
+  --chemstrap-white: #{$chemstrap-white};
+  --chemstrap-carbon: #{$chemstrap-carbon};
+  --chemstrap-silicon: #{$chemstrap-silicon};
+  --chemstrap-blue: #{$chemstrap-blue};
+  --chemstrap-blue-dark: #{$chemstrap-blue-dark};
+  --chemstrap-blue-dull: #{$chemstrap-blue-dull};
+  --chemstrap-red: #{$chemstrap-red};
+  --chemstrap-green: #{$chemstrap-green};
+  --chemstrap-orange: #{$chemstrap-orange};
+}
+
 /* Shades */
 $shades: 6;
 

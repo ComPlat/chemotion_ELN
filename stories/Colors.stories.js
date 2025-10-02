@@ -1,37 +1,19 @@
 import React from 'react';
-import { Title, Subtitle, Primary, Canvas } from '@storybook/blocks';
+import { Title, Subtitle, Canvas, ColorPalette, ColorItem } from '@storybook/blocks';
+import { getColorValue } from './componentAttributes';
 
-const renderColorCard = (name, application) => (
-  <div className="d-flex border mb-2">
-    <div className={`styleguide-color-token styleguide-color-token--${name}`} />
-    <div className="px-2 overflow-hidden">
-      <h5>{`chemstrap-${name}`}</h5>
-      <p>{application}</p>
-    </div>
-  </div>
-);
-
-export function Colors() {
-  return (
-    <div className="row mb-3">
-      <div className="col">
-        {renderColorCard('white', 'Application background')}
-        {renderColorCard('carbon', 'Base color for text and borders')}
-        {renderColorCard('silicon', 'Base color for surface backgrounds')}
-      </div>
-      <div className="col">
-        {renderColorCard('blue', 'Primary functions')}
-        {renderColorCard('blue-dark', 'Active state')}
-        {renderColorCard('blue-dull', 'Draggable interfaces')}
-      </div>
-      <div className="col">
-        {renderColorCard('red', 'Error, Danger, Destructive Operations')}
-        {renderColorCard('orange', 'Warning')}
-        {renderColorCard('green', 'Success, Affirmation')}
-      </div>
-    </div>
-  );
-}
+// Base colors array. Color values are fetched dynamically from CSS custom properties.
+const baseColors = [
+  { title: 'chemstrap-white', description: 'Application background' },
+  { title: 'chemstrap-carbon', description: 'Text & borders' },
+  { title: 'chemstrap-silicon', description: 'Surfaces' },
+  { title: 'chemstrap-blue', description: 'Primary' },
+  { title: 'chemstrap-blue-dark', description: 'Primary – active' },
+  { title: 'chemstrap-blue-dull', description: 'Draggable surfaces' },
+  { title: 'chemstrap-red', description: 'Danger' },
+  { title: 'chemstrap-green', description: 'Success' },
+  { title: 'chemstrap-orange', description: 'Warning' },
+];
 
 export function Shades() {
   return (
@@ -74,7 +56,16 @@ export default {
         <>
           <Title />
           <Subtitle>Base Colors</Subtitle>
-          <Primary />
+          <ColorPalette>
+            {baseColors.map((color) => (
+              <ColorItem
+                key={color.title}
+                title={color.title}
+                subtitle={color.description}
+                colors={[getColorValue(color.title)]}
+              />
+            ))}
+          </ColorPalette>
           <Subtitle>Shades</Subtitle>
           <Canvas of={Shades} />
         </>
