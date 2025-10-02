@@ -14,7 +14,7 @@
 
 @mixin fa-based-remove-icon {
   @include hide-svg;
-  @extend .text-secondary;
+  @extend .text-lighten2;
   @extend .fa;
   @extend .fa-times-circle;
 }
