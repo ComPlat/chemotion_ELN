@@ -6,11 +6,11 @@ module Chemotion
 
     resource :collections do
       get '/' do
-        own_collections = Collection.connection.exec_query(Collection.own_collections_for(current_user).to_sql).map do |collection|
+        own_collections = Collection.connection.exec_query(Collection.serialized_own_collections_for(current_user).to_sql).map do |collection|
           Entities::OwnCollectionEntity.represent(collection, current_user: current_user).serializable_hash
         end
 
-        shared_collections = Collection.connection.exec_query(Collection.shared_collections_for(current_user).to_sql).map do |collection|
+        shared_collections = Collection.connection.exec_query(Collection.serialized_shared_collections_for(current_user).to_sql).map do |collection|
           Entities::SharedCollectionEntity.represent(collection, current_user: current_user).serializable_hash
         end
 
@@ -28,15 +28,16 @@ module Chemotion
         end
 
         id = params[:id].to_i
-        if collection = Collection.own_collections_for(current_user).where(id: id).first # find_by breaks, no idea why
+        if collection = Collection.own_collections_for(current_user).find(id)
           present collection, with: Entities::OwnCollectionEntity, root: :collection
-        elsif collection = Collection.shared_collections_for(current_user).where(id: id).first # find_by breaks, no idea why
+        elsif collection = Collection.shared_collections_for(current_user).find(id) # find_by breaks, no idea why
           present collection, with: Entities::SharedCollectionEntity, root: :collection
         else
           raise ActiveRecord::RecordNotFound
         end
       end
 
+      desc 'Adds a new child collection to a parent'
       params do
         requires :parent_id, type: Integer, allow_blank: true
         requires :label, type: String
@@ -52,6 +53,22 @@ module Chemotion
         present collection, with: Entities::OwnCollectionEntity, root: :collection
       end
 
+      desc 'Update a single own collection'
+      params do
+        requires :id, type: Integer
+        optional :label, type: String
+        optional :tabs_segment, type: Hash
+      end
+      put '/:id' do
+        collection = Collection.own_collections_for(current_user).find(params[:id])
+        attributes = { label: params[:label], tabs_segment: params[:tabs_segment] }.compact
+
+        collection.update(attributes)
+
+        present collection, with: Entities::OwnCollectionEntity, root: :collection
+      end
+
+      desc 'Updates the tree of own collections, updating the labels and ancestry/position'
       params do
         requires :collections, type: Array do
           requires :id, type: Integer
@@ -62,7 +79,21 @@ module Chemotion
       put '/bulk_update_own_collections' do
         Usecases::Collections::UpdateTree.new(current_user).perform!(collections: params[:collections])
 
-        own_collections = Collection.connection.exec_query(Collection.own_collections_for(current_user).to_sql)
+        own_collections = Collection.connection.exec_query(Collection.serialized_own_collections_for(current_user).to_sql)
+
+        present own_collections, with: Entities::OwnCollectionEntity, root: :collections
+      end
+
+      desc 'Deletes an own collection (shared collections can not be deleted, only the share rejected)'
+      params do
+        requires :id, type: Integer
+      end
+      delete '/:id' do
+        collection = Collection.own_collections_for(current_user).find(params[:id])
+
+        collection.destroy
+
+        own_collections = Collection.connection.exec_query(Collection.serialized_own_collections_for(current_user).to_sql)
 
         present own_collections, with: Entities::OwnCollectionEntity, root: :collections
       end

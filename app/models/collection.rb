@@ -91,33 +91,38 @@ class Collection < ApplicationRecord
     end
   )
 
-  # returns only the own collections, NOT those shared with him
+  scope :own_collections_for, ->(user) { left_joins(:inventory).where(user_id: [user.id, *user.group_ids]) }
   scope(
-    :own_collections_for,
+    :serialized_own_collections_for,
     lambda do |user|
-      left_joins(:inventory)
-        .where(user_id: [user.id, *user.group_ids])
-        .distinct
-        .select('collections.*, inventories.name AS inventory_name, inventories.prefix AS inventory_prefix')
+      own_collections_for(user).select(
+        'collections.*, inventories.name AS inventory_name, inventories.prefix AS inventory_prefix'
+      )
     end
   )
+
   scope(
     :shared_collections_for,
     lambda do |user|
       joins(:collection_shares)
         .joins(:user)
         .left_joins(:inventory)
-        .where(collection_shares: { shared_with_id: [user.id, *user.group_ids] })
+        .where(collection_shares { shared_with_id: [user.id, *user.group_ids] })
         .distinct
-        .select(
-          [
-            'collections.*',
-            'collection_shares.permission_level AS permission_level',
-            'inventories.name AS inventory_name',
-            'inventories.prefix AS inventory_prefix',
-            'concat(users.first_name, chr(32), users.last_name, chr(40), users.name_abbreviation, chr(41)) AS owner'
-          ].join(', ')
-        )
+    end
+  )
+  scope(
+    :shared_collections_for,
+    lambda do |user|
+      shared_collections_for(user).select(
+        [
+          'collections.*',
+          'collection_shares.permission_level AS permission_level',
+          'inventories.name AS inventory_name',
+          'inventories.prefix AS inventory_prefix',
+          'concat(users.first_name, chr(32), users.last_name, chr(40), users.name_abbreviation, chr(41)) AS owner'
+        ].join(', ')
+      )
     end
   )
 

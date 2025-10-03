@@ -11,8 +11,6 @@ module Usecases
       end
 
       def perform!(collections:)
-        # The counter is used to create a global position (global meaning within the collection tree of 1 user)
-        #
         collections.each.with_index do |collection, index|
           add_collection_and_children_to_linear_tree(collection, position: index + 1)
         end
