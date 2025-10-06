@@ -19,7 +19,7 @@ import {
   getReactionAnalyses, updateAnalyses
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import {
-  updateVariationsOnAuxChange, getReactionMaterials, getReactionMaterialsIDs,
+  updateVariationsOnAuxChange, getReactionMaterials, getReactionMaterialsIDsToLabels,
   removeObsoleteMaterialColumns, updateColumnDefinitionsMaterialsOnAuxChange, getReactionMaterialsHashes
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import { ColumnSelection } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
@@ -351,9 +351,9 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
         {ColumnSelection(
           selectedColumns,
           {
-            ...getReactionMaterialsIDs(reactionMaterials),
-            properties: ['duration', 'temperature'],
-            metadata: ['notes', 'analyses']
+            ...getReactionMaterialsIDsToLabels(reactionMaterials),
+            properties: { duration: 'Duration', temperature: 'Temperature' },
+            metadata: { notes: 'Notes', analyses: 'Analyses' }
           },
           applyColumnSelection,
         )}

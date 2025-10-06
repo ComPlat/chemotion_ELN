@@ -5,13 +5,14 @@ import {
   addMissingColumnsToVariations, getVariationsColumns
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
-  getReactionMaterials, getMaterialColumnGroupChild, getReactionMaterialsIDs
+  getReactionMaterials, getMaterialColumnGroupChild
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   setUpReaction,
   getColumnGroupChild,
   getSelectedColumns,
-  getColumnDefinitionsMaterialIDs
+  getColumnDefinitionsMaterialIDs,
+  getReactionMaterialsIDs
 } from 'helper/reactionVariationsHelpers';
 
 describe('ReactionVariationsUtils', () => {

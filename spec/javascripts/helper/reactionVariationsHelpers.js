@@ -5,7 +5,6 @@ import {
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   getReactionMaterials,
-  getReactionMaterialsIDs
 } from '../../../app/javascript/src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 
 async function setUpMaterial() {
@@ -14,6 +13,15 @@ async function setUpMaterial() {
 
 function getSelectedColumns(materialIDs) {
   return { ...materialIDs, properties: ['duration', 'temperature'], metadata: ['analyses', 'notes'] };
+}
+
+function getReactionMaterialsIDs(materials) {
+  return Object.fromEntries(
+    Object.entries(materials).map(([materialType, materialsOfType]) => [
+      materialType,
+      materialsOfType.map((material) => material.id.toString())
+    ])
+  );
 }
 
 async function setUpReaction() {
@@ -105,5 +113,6 @@ export {
   setUpGaseousReaction,
   getColumnGroupChild,
   getColumnDefinitionsMaterialIDs,
-  getSelectedColumns
+  getSelectedColumns,
+  getReactionMaterialsIDs,
 };
