@@ -6,13 +6,19 @@
 
 // DOM functions
 // Function to attach click listeners based on titles
-import { KET_TAGS, LAYERING_FLAGS, EventNames, KET_DOM_TAG } from 'src/utilities/ketcherSurfaceChemistry/constants';
+import {
+  KET_TAGS, LAYERING_FLAGS, EventNames, KET_DOM_TAG
+} from 'src/utilities/ketcherSurfaceChemistry/constants';
 import { fetchKetcherData } from 'src/utilities/ketcherSurfaceChemistry/InitializeAndParseKetcher';
 import {
   PolymerListIconKetcherToolbarButton,
-  specialCharButton,
 } from 'src/components/structureEditor/PolymerListModal';
-import { ImagesToBeUpdated, ImagesToBeUpdatedSetter } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
+import {
+  ImagesToBeUpdated,
+  ImagesToBeUpdatedSetter,
+  canvasSelection,
+  canvasSelectionsSetter
+} from 'src/utilities/ketcherSurfaceChemistry/stateManager';
 import { saveMoveCanvas } from 'src/utilities/ketcherSurfaceChemistry/canvasOperations';
 import { handleAddAtom } from 'src/utilities/ketcherSurfaceChemistry/AtomsAndMolManipulation';
 
@@ -239,11 +245,16 @@ const attachClickListeners = (iframeRef, buttonEvents) => {
       await updateTemplatesInTheCanvas(iframeRef);
     }
 
-    if (isTextModal && textModalPopup && !textModalPopup.querySelector('.appended-text')) {
+    if (isTextModal
+      && textModalPopup
+      && !textModalPopup.querySelector('.appended-text')
+      && canvasSelection?.images.length > 0
+    ) {
       const newText = document.createElement('div');
       newText.classList.add('appended-text');
-      newText.textContent = 'Input examples: Pt 1wt.% Pt, γ-Al2O3';
+      newText.textContent = 'Input structure examples: Pt 1wt.% Pt, γ-Al2O3';
       textModalPopup.appendChild(newText);
+      canvasSelectionsSetter(null);
     }
   });
 

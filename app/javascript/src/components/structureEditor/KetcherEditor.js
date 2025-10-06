@@ -265,7 +265,9 @@ const KetcherEditor = forwardRef((props, ref) => {
     // Subscribes to the `selectionChange` event
     editor._structureDef.editor.editor.subscribe('selectionChange', async () => {
       const currentSelection = editor._structureDef.editor.editor._selection;
+
       if (currentSelection?.images) {
+        canvasSelectionsSetter(currentSelection);
         imageNodeForTextNodeSetter(editor._structureDef.editor.editor._selection?.images);
       }
     });

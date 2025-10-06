@@ -269,11 +269,55 @@ const replaceAliasWithRG = async (data) => {
 // prepare svg
 // TODO: fix or remove after image fixes from ketcher epam
 const prepareSvg = async (editor) => {
+  const regex = /source-\d+/;
+  const A_PATH_ONE = '';
+  const A_PATH_TWO = '';
   const struct = await replaceAliasWithRG({ ...latestData });
   const generateImageParams = { outputFormat: 'svg' };
+  const parser = new DOMParser();
   const data = JSON.stringify(struct);
   const svgBlob = await editor.structureDef.editor.generateImage(data, generateImageParams);
-  return svgBlob;
+  const svgString = await new Response(svgBlob).text();
+  const doc = parser.parseFromString(svgString, 'image/svg+xml');
+  const uses = doc.querySelectorAll('*');
+  const glyphs = doc.querySelectorAll("g[id^='glyph-']");
+  const matchingGlyphs = [];
+  const moves = [];
+
+  glyphs.forEach((glyph) => {
+    const path = glyph.querySelector('path');
+    if (!path) return;
+
+    const d = path.getAttribute('d').trim();
+    if (d.includes(A_PATH_ONE.trim()) || d.includes(A_PATH_TWO.trim())) {
+      matchingGlyphs.push(glyph.getAttribute('id'));
+    }
+  });
+
+  const groups = doc.querySelectorAll('g');
+  groups.forEach((group) => {
+    const usesList = group.querySelectorAll('*');
+    if (usesList.length === 2) {
+      const isGroupMatching = [];
+      usesList.forEach((use) => {
+        const useEach = use.getAttributeNS('http://www.w3.org/1999/xlink', 'href').replace('#', '');
+        isGroupMatching.push(matchingGlyphs.indexOf(useEach) !== -1);
+      });
+      usesList.forEach((use) => {
+        use.style.fill = 'transparent';
+      });
+    }
+  });
+
+  uses.forEach((useElement) => {
+    const xlinkHref = useElement.getAttributeNS('http://www.w3.org/1999/xlink', 'href');
+    if (regex.test(xlinkHref)) {
+      // useElement.remove();
+      moves.push(useElement);
+    }
+  });
+  const updatedSVGString = new XMLSerializer().serializeToString(doc);
+  return updatedSVGString;
 };
 
 /* istanbul ignore next */

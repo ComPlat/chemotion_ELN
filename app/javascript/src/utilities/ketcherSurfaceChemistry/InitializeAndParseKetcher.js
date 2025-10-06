@@ -136,18 +136,6 @@ const hasTextNodes = async (molfile) => {
   }
 };
 
-// remove lower part of molfile after END
-const cleanMolfile = (initMolfile) => {
-  const lines = initMolfile.trim().split('\n');
-  const endIndex = lines.indexOf('M  END');
-  // If 'END' is found, slice the array to keep everything before 'END'
-  if (endIndex !== -1) {
-    return lines.slice(0, endIndex + 1).join('\n');
-  }
-
-  // If 'END' is not found, return the original molfile
-  return initMolfile;
-};
 
 function findTemplateById(id) {
   return allTemplates
@@ -201,8 +189,8 @@ const prepareKetcherData = async (editor, initMol) => {
   try {
     const polymerTag = await hasKetcherData(initMol);
     const textNodes = await hasTextNodes(initMol);
-    const molfile = await cleanMolfile(initMol);
-    const ketFile = await editor._structureDef.editor.indigo.convert(molfile).catch((err) => {
+    // const molfile = await cleanMolfile(initMol);
+    const ketFile = await editor._structureDef.editor.indigo.convert(initMol).catch((err) => {
       console.error('invalid molfile. Please try again', err.message);
     });
 
