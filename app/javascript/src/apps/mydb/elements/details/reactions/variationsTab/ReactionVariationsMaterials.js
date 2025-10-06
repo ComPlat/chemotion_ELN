@@ -93,11 +93,13 @@ function getReactionMaterials(reaction) {
   }, {});
 }
 
-function getReactionMaterialsIDs(materials) {
+function getReactionMaterialsIDsToLabels(materials) {
   return Object.fromEntries(
     Object.entries(materials).map(([materialType, materialsOfType]) => [
       materialType,
-      materialsOfType.map((material) => material.id.toString())
+      Object.fromEntries(
+        materialsOfType.map(({ id, molecule_formula }) => [id, molecule_formula || id.toString()])
+      )
     ])
   );
 }
@@ -396,7 +398,7 @@ function computeDerivedQuantitiesVariationsRow(row, reactionHasPolymers, gasMode
 export {
   getMaterialColumnGroupChild,
   getReactionMaterials,
-  getReactionMaterialsIDs,
+  getReactionMaterialsIDsToLabels,
   getReactionMaterialsHashes,
   getMaterialData,
   updateColumnDefinitionsMaterialsOnAuxChange,
