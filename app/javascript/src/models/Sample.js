@@ -2080,7 +2080,8 @@ export default class Sample extends Element {
       return false;
     }
 
-    const calculatedMass = referenceComponent.amount_mol / referenceComponent.relative_molecular_weight; // Mass in g
+    //  mol * (g/mol) = Molar mass in g
+    const calculatedMass = referenceComponent.amount_mol * referenceComponent.relative_molecular_weight;
 
     // Use the setAmount method to properly update mass and trigger cascading calculations
     this.setAmount({ value: calculatedMass, unit: 'g' });
