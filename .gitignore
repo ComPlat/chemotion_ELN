@@ -49,6 +49,7 @@
 /config/converter.yml
 /config/ketcher_service.yml
 /config/structure_editors.yml
+/config/indigo_service.yml
 !/config/data_collector_keys/.keep
 
 /config/database.yml

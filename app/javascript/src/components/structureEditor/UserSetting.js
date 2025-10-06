@@ -30,6 +30,30 @@ function UserSetting() {
     });
   };
 
+  const collectionOptions = () => {
+    const seenLabels = new Set();
+    const result = [];
+
+    const firstOption = { value: 'ketcher', label: 'ketcher' };
+    if (!seenLabels.has(firstOption.label)) {
+      result.push(firstOption);
+      seenLabels.add(firstOption.label);
+    }
+
+    editors.forEach((e) => {
+      const label = `${e.label} (${e.configs.editor})`;
+      if (!seenLabels.has(label)) {
+        result.push({
+          value: e.configs.editor,
+          label
+        });
+        seenLabels.add(label);
+      }
+    });
+
+    return result;
+  };
+
   useEffect(() => {
     initProfile();
     initEditor();
@@ -49,13 +73,7 @@ function UserSetting() {
     setEditor((prev) => ({ ...prev, selected: e.value }));
   };
 
-  const options = [{ value: 'ketcher', label: 'Ketcher (ketcher)' }];
-  editors.forEach((e) => {
-    options.push({
-      value: e.configs.editor,
-      label: `${e.label} (${e.configs.editor})`
-    })
-  });
+  const options = collectionOptions();
 
   return (
     <Card>
