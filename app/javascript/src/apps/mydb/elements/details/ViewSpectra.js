@@ -227,20 +227,35 @@ class ViewSpectra extends React.Component {
       return [];
     }
 
-    const { jcamp } = this.getContent();
-    const { entity } = FN.buildData(jcamp);
-    const { features } = entity;
-    const { temperature } = entity;
-    const { observeFrequency } = Array.isArray(features)
+    const content = this.getContent();
+    let built = content?.jcamp ? FN.buildData(content.jcamp) : null;
+  
+    if (!built) {
+      const listMuliSpcs = content?.listMuliSpcs;
+      if (Array.isArray(listMuliSpcs) && listMuliSpcs.length) {
+        const spc = listMuliSpcs[curveIdx] || listMuliSpcs[0];
+        if (spc?.jcamp) built = FN.buildData(spc.jcamp);
+      }
+    }
+    const entity = built?.entity;
+    if (!entity) return [];
+  
+    const features = entity?.features;
+    const f0 = Array.isArray(features)
       ? features[0]
-      : (features.editPeak || features.autoPeak);
+      : (features?.editPeak || features?.autoPeak || features) || {};
+    const temperature = entity?.temperature;
+  
+    let observeFrequency = Array.isArray(f0?.observeFrequency)
+      ? f0.observeFrequency[0]
+      : f0?.observeFrequency;
     const freq = Array.isArray(observeFrequency) ? observeFrequency[0] : observeFrequency;
     const freqStr = freq ? `${parseInt(freq, 10)} MHz, ` : '';
-    // peaks
-    const { maxY, minY } = Array.isArray(features)
-      ? features[0]
-      : (features.editPeak || features.autoPeak);
-    const boundary = { maxY, minY };
+  
+    const boundary = (f0 && (typeof f0.maxY !== 'undefined') && (typeof f0.minY !== 'undefined'))
+      ? { maxY: f0.maxY, minY: f0.minY }
+      : undefined;
+  
     const mBody = body || FN.peaksBody({
       peaks,
       layout,
@@ -278,64 +293,73 @@ class ViewSpectra extends React.Component {
     const selectedIntegration = integrations[curveIdx];
     const { multiplicities } = multiplicity;
     const selectedMutiplicity = multiplicities[curveIdx];
-    // if (!selectedShift || !selectedIntegration) {
-    //   return []
-    // }
+    const content = this.getContent();
+    let built = content?.jcamp ? FN.buildData(content.jcamp) : null;
 
-    // obsv freq
-    const { jcamp } = this.getContent();
-    const { entity } = FN.buildData(jcamp);
-    const { features } = entity;
-    const { observeFrequency } = Array.isArray(features)
+    if (!built) {
+      const listMuliSpcs = content?.listMuliSpcs;
+      if (Array.isArray(listMuliSpcs) && listMuliSpcs.length) {
+        const spc = listMuliSpcs[curveIdx] || listMuliSpcs[0];
+        if (spc?.jcamp) built = FN.buildData(spc.jcamp);
+      }
+    }
+    const entity = built?.entity;
+    if (!entity) return [];
+
+    const features = entity?.features;
+    const f0 = Array.isArray(features)
       ? features[0]
-      : (features.editPeak || features.autoPeak);
+      : (features?.editPeak || features?.autoPeak || features) || {};
+
+    let observeFrequency = Array.isArray(f0?.observeFrequency)
+      ? f0.observeFrequency[0]
+      : f0?.observeFrequency;
     const freq = Array.isArray(observeFrequency) ? observeFrequency[0] : observeFrequency;
     const freqStr = freq ? `${parseInt(freq, 10)} MHz, ` : '';
     // multiplicity
-    const { refArea, refFactor } = selectedIntegration;
+    const { refArea, refFactor, stack: isStack } = selectedIntegration;
     const shiftVal = selectedMutiplicity.shift;
-    const ms = selectedMutiplicity.stack;
-    const is = selectedIntegration.stack;
+    const ms = selectedMutiplicity.stack || [];
+    const is = isStack || [];
 
     const macs = ms.map((m) => {
       const { peaks, mpyType, xExtent } = m;
-      const { xL, xU } = xExtent;
-      const it = is.filter((i) => i.xL === xL && i.xU === xU)[0] || { area: 0 };
-      const area = (it.area * refFactor) / refArea;
+      const { xL, xU } = xExtent || {};
+      const it = is.find((i) => i.xL === xL && i.xU === xU) || { area: 0 };
+      const area = refArea ? (it.area * refFactor) / refArea : 0;
       const center = FN.calcMpyCenter(peaks, shiftVal, mpyType);
-      const xs = m.peaks.map(p => p.x).sort((a, b) => a - b);
+      const xs = (m.peaks || []).map(p => p.x).sort((a, b) => a - b);
       const [aIdx, bIdx] = isAscend ? [0, xs.length - 1] : [xs.length - 1, 0];
-      const mxA = mpyType === 'm' ? (xs[aIdx] - shiftVal).toFixed(decimal) : 0;
-      const mxB = mpyType === 'm' ? (xs[bIdx] - shiftVal).toFixed(decimal) : 0;
-      return Object.assign({}, m, {
-        area, center, mxA, mxB,
-      });
+      const mxA = mpyType === 'm' && xs.length ? (xs[aIdx] - shiftVal).toFixed(decimal) : 0;
+      const mxB = mpyType === 'm' && xs.length ? (xs[bIdx] - shiftVal).toFixed(decimal) : 0;
+      return { ...m, area, center, mxA, mxB };
     }).sort((a, b) => (isAscend ? a.center - b.center : b.center - a.center));
     let couplings = [].concat(...macs.map((m) => {
-      m.js.sort((a, b) => (isAscend ? a - b : b - a));
+      const jsSorted = (m.js || []).slice().sort((a, b) => (isAscend ? a - b : b - a));
       const c = m.center;
-      const type = m.mpyType;
-      const it = Math.round(m.area);
-      const js = [].concat(...m.js.map(j => (
-        [
-          { insert: 'J', attributes: { italic: true } },
-          { insert: ` = ${j.toFixed(1)} Hz` },
-          { insert: ', ' },
-        ]
-      )));
+      const type = m.mpyType || 'm';
+      const it = Math.round(m.area || 0);
+      const js = [].concat(...jsSorted.map(j => ([
+        { insert: 'J', attributes: { italic: true } },
+        { insert: ` = ${j.toFixed(1)} Hz` },
+        { insert: ', ' },
+      ])));
       const atomCount = layout === '1H' ? `, ${it}H` : '';
-      const location = type === 'm' ? `${m.mxA}–${m.mxB}` : `${c.toFixed(decimal)}`;
-      return m.js.length === 0
+      const location = type === 'm'
+        ? `${m.mxA}–${m.mxB}`
+        : `${(c ?? 0).toFixed(decimal)}`;
+
+      return jsSorted.length === 0
         ? [
-          { insert: `${location} (${type}${atomCount})` },
-          { insert: ', ' },
-        ]
+            { insert: `${location} (${type}${atomCount})` },
+            { insert: ', ' },
+          ]
         : [
-          { insert: `${location} (${type}, ` },
-          ...js.slice(0, js.length - 1),
-          { insert: `${atomCount})` },
-          { insert: ', ' },
-        ];
+            { insert: `${location} (${type}, ` },
+            ...js.slice(0, js.length - 1),
+            { insert: `${atomCount})` },
+            { insert: ', ' },
+          ];
     }));
     couplings = couplings.slice(0, couplings.length - 1);
     const { label, value, name } = selectedShift.ref;
@@ -604,12 +628,14 @@ class ViewSpectra extends React.Component {
 
     if (layoutsWillShowMulti.includes(et.layout)) {
       if (FN.isCyclicVoltaLayout(et.layout)) {
-        return [
+        baseOps = [
+          ...baseOps,
           { name: 'save', value: this.writeCommon },
           { name: 'save & close', value: this.writeCloseCommon },
         ];
       } else {
-        return [
+        baseOps = [
+          ...baseOps,
           { name: 'save', value: this.saveOp },
           { name: 'save & close', value: this.saveCloseOp },
         ];
@@ -623,6 +649,7 @@ class ViewSpectra extends React.Component {
         { name: 'save & close', value: this.saveCloseOp },
       ];
     }
+    baseOps = baseOps.filter((op, i, arr) => i === arr.findIndex(o => o.name === op.name));
 
     return baseOps;
   }
