@@ -38,7 +38,7 @@ module Reactable
 
     case self
     when ReactionsProductSample
-      ## update yield ( = target amount / real amount) for product sample if it is weight percentage reference
+      ## update yield (= real amount / target amount) for product sample if it is weight percentage reference
       if weight_percentage_reference
         amount = sample.convert_amount_to_mol(
           sample.real_amount_value,
