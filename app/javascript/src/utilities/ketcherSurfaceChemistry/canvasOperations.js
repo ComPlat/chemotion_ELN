@@ -54,7 +54,7 @@ const arrangePolymers = async (canvasData, editor) => {
   const data = JSON.parse(await editor.structureDef.editor.getKet());
   mols
     .flatMap((item) => data[item]?.atoms ?? [])
-    // .filter((i) => ALIAS_PATTERNS.threeParts.test(i.alias))
+    .filter((i) => ALIAS_PATTERNS.threeParts.test(i.alias))
     .forEach((i) => listOfAtomsWithAlias.push(i.alias));
   const processString = await templateAliasesPrepare(listOfAtomsWithAlias);
   return [...canvasData.split('\n'), KET_TAGS.polymerIdentifier, processString];
@@ -346,9 +346,9 @@ const saveMoveCanvas = async (editor, data, isFetchRequired, isMoveRequired, rec
 };
 
 const centerPositionCanvas = async (editor) => {
-  if(false) // TODO: fix and remove
   try {
-    await editor._structureDef.editor.editor.layout();
+    const clone = editor._structureDef.editor.editor.struct().clone();
+    await editor._structureDef.editor.editor.renderAndRecoordinateStruct(clone);
     await fetchKetcherData(editor);
     saveMoveCanvas(editor, latestData, true, true, false);
     await fetchKetcherData(editor);

@@ -196,12 +196,12 @@ const KetcherEditor = forwardRef((props, ref) => {
 
   // DOM button events with scope
   const buttonEvents = {
-    [getButtonSelector(ButtonSelectors.CLEAN_UP)]: async () => fetchAndReplace(),
-    [getButtonSelector(ButtonSelectors.CALCULATE_CIP)]: async () => fetchAndReplace(),
-    [getButtonSelector(ButtonSelectors.LAYOUT)]: async () => fetchAndReplace(),
-    [getButtonSelector(ButtonSelectors.EXPLICIT_HYDROGENS)]: async () => fetchAndReplace(),
-    [getButtonSelector(ButtonSelectors.AROMATIZE)]: async () => fetchAndReplace(),
-    [getButtonSelector(ButtonSelectors.VIEWER_3D)]: async () => fetchAndReplace(),
+    [getButtonSelector(ButtonSelectors.CLEAN_UP)]: async () => fetchAndReplace(editor),
+    [getButtonSelector(ButtonSelectors.CALCULATE_CIP)]: async () => fetchAndReplace(editor),
+    [getButtonSelector(ButtonSelectors.LAYOUT)]: async () => fetchAndReplace(editor),
+    [getButtonSelector(ButtonSelectors.EXPLICIT_HYDROGENS)]: async () => fetchAndReplace(editor),
+    [getButtonSelector(ButtonSelectors.AROMATIZE)]: async () => fetchAndReplace(editor),
+    [getButtonSelector(ButtonSelectors.VIEWER_3D)]: async () => fetchAndReplace(editor),
     [getButtonSelector(ButtonSelectors.OPEN)]: async () => imageNodeForTextNodeSetter(null),
     [getButtonSelector(ButtonSelectors.SAVE)]: async () => imageNodeForTextNodeSetter(null),
     [getButtonSelector(ButtonSelectors.UNDO)]: async () => undoKetcher(editor),

@@ -185,27 +185,6 @@ export const imageNodeForTextNodeSetter = async (data) => {
   selectedImageForTextNode = data;
 };
 
-// newButton.title = 'Text Node Special Char';
-const updateCharValue = async (iframeDocument) => {
-  // Find element with class .textNodeChar
-  const el = iframeDocument.querySelector("[title='Text Node Special Char']");
-
-  if (el) {
-    el.style.position = 'relative';
-    const circle = iframeDocument.createElement('span');
-    circle.style.width = '10px';
-    circle.style.height = '10px';
-    // circle.style.backgroundColor = '#337ab7';
-    circle.style.borderRadius = '50%';
-    circle.style.position = 'absolute';
-    circle.style.top = '2px';
-    circle.style.right = '2px';
-    el.appendChild(circle);
-  } else {
-    console.warn('Element with class "textNodeChar" not found in iframe.');
-  }
-};
-
 // helper function to add mutation observers to DOM elements
 const attachClickListeners = (iframeRef, buttonEvents) => {
   // Main function to attach listeners and observers
@@ -276,7 +255,6 @@ const attachClickListeners = (iframeRef, buttonEvents) => {
     } else if (iframeRef?.current?.onload) {
       iframeRef.current.onload = PolymerListIconKetcherToolbarButton;
     }
-    updateCharValue(iframeDocument);
   }, 1000);
 
   // Cleanup function
@@ -303,5 +281,4 @@ export {
   runImageLayering,
   attachClickListeners,
   addTextNodeDescriptionOnTextPopup,
-  updateCharValue,
 };
