@@ -33,4 +33,7 @@
 class CollectionShare < ApplicationRecord
   belongs_to :collection
   belongs_to :shared_with, class_name: "User"
+
+  scope :shared_by, ->(user) { joins(:collection).where(collections: { user: user }) }
+  scope :shared_with, ->(user) { where(shared_with: user) }
 end
