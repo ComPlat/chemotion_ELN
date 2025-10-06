@@ -285,7 +285,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
             {prefixSwitch}
             {showInfoTooltipRequiredVol && (
               <Button
-                variant="outline-secondary"
+                variant="light"
                 size={size}
                 onClick={() => this.handleCopyClick(displayValue)}
                 className="ms-1"
