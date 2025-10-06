@@ -9,7 +9,7 @@ export let ImagesToBeUpdated = false;
 export let imagesList = []; // image list has all nodes matching type === image
 export let mols = []; // mols has list of molecules present in ket2 format ['mol0', 'mol1']
 export let allNodes = []; // contains a list of latestData.root.nodes list
-export let allAtoms = []; // contains list of all atoms present in a ketcher2 format
+export let allAtoms = []; // contains list of all atoms present in a ketcher format
 export let reloadCanvas = false; // flag to re-render canvas
 export let canvasSelection = null; // contains list of images, atoms, bonds selected in the canvas
 export let deletedAtoms = []; // has a list of deleted atoms on delete "atom event"

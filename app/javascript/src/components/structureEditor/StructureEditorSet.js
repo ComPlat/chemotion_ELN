@@ -1,21 +1,5 @@
-const EditorAttrs =
-{
+const EditorAttrs = {
   ketcher:
-  {
-    label: 'ketcher-rails',
-    src: '/ketcher',
-    structure:
-    {
-      path: 'ketcher',
-      setMolfileInFrame: false,
-      setMfFuncName: 'setMolecule',
-      getMfFuncName: 'getMolfile',
-      getMfWithCallback: false,
-      getSVGFuncName: 'getSVG',
-      getSVGWithCallback: false
-    }
-  },
-  ketcher2:
   {
     structure:
     {

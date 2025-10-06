@@ -182,9 +182,9 @@ class UserActions {
     };
   }
 
-  fetchKetcher2Options() {
+  fetchKetcherOptions() {
     return () => {
-      UsersFetcher.fetchUserKetcher2Options()
+      UsersFetcher.fetchUserKetcherOptions()
         .then((result) => {
           if (result && result?.settings) {
             if (Object.keys(result?.settings).length) {

@@ -39,7 +39,7 @@ const updateAtom = (atomLocation, templateType, imageCounter) => ({
   location: atomLocation
 });
 
-// helper function to process ketcher-rails files and adding image to ketcher2 canvas
+// helper function to process ketcher-rails files and adding image to ketcher canvas
 const addingPolymersToKetcher = async (railsPolymersList, data) => {
   try {
     const polymerList = railsPolymersList.split(' ');
