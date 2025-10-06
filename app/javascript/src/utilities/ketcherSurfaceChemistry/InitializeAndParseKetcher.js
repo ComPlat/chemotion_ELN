@@ -136,7 +136,6 @@ const hasTextNodes = async (molfile) => {
   }
 };
 
-
 function findTemplateById(id) {
   return allTemplates
     ?.flatMap((category) => category?.subTabs || [])
@@ -189,7 +188,6 @@ const prepareKetcherData = async (editor, initMol) => {
   try {
     const polymerTag = await hasKetcherData(initMol);
     const textNodes = await hasTextNodes(initMol);
-    // const molfile = await cleanMolfile(initMol);
     const ketFile = await editor._structureDef.editor.indigo.convert(initMol).catch((err) => {
       console.error('invalid molfile. Please try again', err.message);
     });
