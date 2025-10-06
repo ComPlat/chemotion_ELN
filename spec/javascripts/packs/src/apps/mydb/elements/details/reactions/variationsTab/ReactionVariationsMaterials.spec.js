@@ -1,14 +1,14 @@
 import expect from 'expect';
 import {
   getReactionMaterials, updateVariationsRowOnReferenceMaterialChange, removeObsoleteMaterialColumns,
-  updateVariationsRowOnCatalystMaterialChange, getMaterialColumnGroupChild, getReactionMaterialsIDs,
+  updateVariationsRowOnCatalystMaterialChange, getMaterialColumnGroupChild,
   updateColumnDefinitionsMaterialsOnAuxChange, updateVariationsOnAuxChange, cellIsEditable, getReactionMaterialsHashes
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   EquivalentParser
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import {
-  setUpReaction, setUpGaseousReaction, getColumnDefinitionsMaterialIDs, getColumnGroupChild
+  setUpReaction, setUpGaseousReaction, getColumnDefinitionsMaterialIDs, getColumnGroupChild, getReactionMaterialsIDs
 } from 'helper/reactionVariationsHelpers';
 import {
   materialTypes, getCurrentEntry, getEntryDefs,

@@ -750,9 +750,10 @@ function ColumnSelection(selectedColumns, availableColumns, onApply) {
     // Remove currently selected columns that are no longer available.
     const updatedCurrentColumns = cloneDeep(currentColumns);
 
-    Object.entries(updatedCurrentColumns).forEach(([key, values]) => {
-      const { [key]: availableValues } = availableColumns;
-      updatedCurrentColumns[key] = values.filter((value) => availableValues.includes(value));
+    Object.entries(updatedCurrentColumns).forEach(([columnGroup, columnIDs]) => {
+      const { [columnGroup]: availableColumnIDsToLabels } = availableColumns;
+      const availableColumnIDs = Object.keys(availableColumnIDsToLabels || {});
+      updatedCurrentColumns[columnGroup] = columnIDs.filter((columnID) => availableColumnIDs.includes(columnID));
     });
     if (!isEqual(updatedCurrentColumns, currentColumns)) {
       setCurrentColumns(updatedCurrentColumns);
@@ -784,14 +785,14 @@ function ColumnSelection(selectedColumns, availableColumns, onApply) {
           <Modal.Title>Column Selection</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {Object.entries(availableColumns).map(([key, values]) => (
-            <div key={key}>
-              <h5>{toUpperCase(splitCamelCase(key))}</h5>
+          {Object.entries(availableColumns).map(([columnGroup, columnIDsToLabels]) => (
+            <div key={columnGroup}>
+              <h5>{toUpperCase(splitCamelCase(columnGroup))}</h5>
               <Select
                 isMulti
-                options={values.map((value) => ({ value, label: toUpperCase(value) }))}
-                value={currentColumns[key]?.map((value) => ({ value, label: toUpperCase(value) })) || []}
-                onChange={handleSelectChange(key)}
+                options={Object.entries(columnIDsToLabels).map(([id, label]) => ({ value: id, label }))}
+                value={currentColumns[columnGroup]?.map((id) => ({ value: id, label: columnIDsToLabels[id] })) || []}
+                onChange={handleSelectChange(columnGroup)}
               />
             </div>
           ))}
