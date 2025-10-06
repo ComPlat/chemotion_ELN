@@ -61,6 +61,7 @@ export const EventNames = {
   UPSERT_IMAGE: 'Upsert image',
   DELETE_IMAGE: 'Delete image',
   LOAD_CANVAS: 'Load canvas',
+  ADD_BOND: 'Add bond',
 };
 
 // DOM element handlers

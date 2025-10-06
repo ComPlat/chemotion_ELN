@@ -221,6 +221,8 @@ const attachClickListeners = (iframeRef, buttonEvents) => {
 
     const cancelButton = iframeDocument.querySelector('.Dialog-module_cancel__8d83c');
     const crossButton = iframeDocument.querySelector('.Dialog-module_buttonTop__91ha8');
+    const textModalPopup = iframeDocument.querySelector('.Dialog-module_body__EWh4H');
+    const isTextModal = iframeDocument.querySelector('.Text-module_controlPanel__agLDc');
 
     if (cancelButton) {
       cancelButton?.addEventListener('click', () => {
@@ -235,6 +237,13 @@ const attachClickListeners = (iframeRef, buttonEvents) => {
 
     if (!LAYERING_FLAGS.skipTemplateName) {
       await updateTemplatesInTheCanvas(iframeRef);
+    }
+
+    if (isTextModal && textModalPopup && !textModalPopup.querySelector('.appended-text')) {
+      const newText = document.createElement('div');
+      newText.classList.add('appended-text');
+      newText.textContent = 'Input examples: Pt 1wt.% Pt, γ-Al2O3';
+      textModalPopup.appendChild(newText);
     }
   });
 
@@ -253,10 +262,8 @@ const attachClickListeners = (iframeRef, buttonEvents) => {
     // Ensure iframe content is loaded before adding the button
     if (iframeRef?.current?.contentWindow?.document?.readyState === 'complete') {
       PolymerListIconKetcherToolbarButton(iframeDocument);
-      specialCharButton(iframeDocument);
     } else if (iframeRef?.current?.onload) {
       iframeRef.current.onload = PolymerListIconKetcherToolbarButton;
-      iframeRef.current.onload = specialCharButton;
     }
     updateCharValue(iframeDocument);
   }, 1000);

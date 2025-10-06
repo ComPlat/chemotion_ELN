@@ -33,6 +33,9 @@ import {
   centerPositionCanvas,
   saveMoveCanvas,
 } from 'src/utilities/ketcherSurfaceChemistry/canvasOperations';
+import {
+  attachClickListeners
+} from 'src/utilities/ketcherSurfaceChemistry/DomHandeling';
 
 const loadTemplates = async () => {
   fetch('/json/surfaceChemistryShapes.json').then((response) => {
@@ -63,13 +66,12 @@ const setupEditorIframe = ({
   editor,
   resetStore,
   loadContent,
-  attachClickListeners,
   buttonEvents,
 }) => {
   resetStore();
   const iframe = iframeRef.current;
   const handleIframeLoad = () => {
-    attachClickListeners(iframeRef, buttonEvents);
+    attachClickListeners(iframeRef, buttonEvents, editor);
     setBase64TemplateHashSetter(allTemplates);
   };
 
@@ -107,8 +109,8 @@ const hasKetcherData = async (molfile) => {
 
   try {
     const lines = molfile.trim().split('\n');
-    const polymerLine = lines.reverse().find((line) => line.includes(KET_TAGS.polymerIdentifier));
-    return polymerLine ? lines[lines.indexOf(polymerLine) - 1]?.trim() || null : null;
+    const polymerLine = lines.find((line) => line.includes(KET_TAGS.polymerIdentifier));
+    return polymerLine ? lines[lines.indexOf(polymerLine) + 1]?.trim() || null : null;
   } catch (err) {
     console.error('Error processing molfile');
     return null;
@@ -132,6 +134,19 @@ const hasTextNodes = async (molfile) => {
     console.error('Error processing molfile');
     return null;
   }
+};
+
+// remove lower part of molfile after END
+const cleanMolfile = (initMolfile) => {
+  const lines = initMolfile.trim().split('\n');
+  const endIndex = lines.indexOf('M  END');
+  // If 'END' is found, slice the array to keep everything before 'END'
+  if (endIndex !== -1) {
+    return lines.slice(0, endIndex + 1).join('\n');
+  }
+
+  // If 'END' is not found, return the original molfile
+  return initMolfile;
 };
 
 function findTemplateById(id) {
@@ -186,7 +201,8 @@ const prepareKetcherData = async (editor, initMol) => {
   try {
     const polymerTag = await hasKetcherData(initMol);
     const textNodes = await hasTextNodes(initMol);
-    const ketFile = await editor._structureDef.editor.indigo.convert(initMol).catch((err) => {
+    const molfile = await cleanMolfile(initMol);
+    const ketFile = await editor._structureDef.editor.indigo.convert(molfile).catch((err) => {
       console.error('invalid molfile. Please try again', err.message);
     });
 
@@ -206,7 +222,6 @@ const prepareKetcherData = async (editor, initMol) => {
 const applyKetcherData = async (polymerTag, fileContent, textNodes, editor) => {
   try {
     let molfileContent = fileContent;
-
     if (polymerTag) {
       const { molfileData } = await addPolymerTags(polymerTag, fileContent);
       molfileContent = molfileData;

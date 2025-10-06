@@ -110,6 +110,7 @@ export const textListCopyContainerSetter = (data) => {
 export const fetchAndReplace = () => {
   imageListCopyContainerSetter([...imagesList]);
   textListCopyContainerSetter([...textList]);
+  ImagesToBeUpdatedSetter(true);
 };
 
 export const eventUpsertImageDecrement = () => {

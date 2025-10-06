@@ -33,7 +33,6 @@ import {
   updateImagesInTheCanvas,
   undoKetcher,
   redoKetcher,
-  attachClickListeners,
   imageNodeForTextNodeSetter,
   selectedImageForTextNode,
   makeTransparentByTitle,
@@ -190,6 +189,9 @@ const KetcherEditor = forwardRef((props, ref) => {
       oldImagePack = [...imagesList];
       await onImageAddedOrCopied();
     },
+    [EventNames.ADD_BOND]: async () => {
+      onTemplateMove(editor);
+    }
   };
 
   // DOM button events with scope
@@ -218,7 +220,6 @@ const KetcherEditor = forwardRef((props, ref) => {
       editor,
       resetStore,
       loadContent,
-      attachClickListeners,
       buttonEvents,
     });
     return cleanup;
@@ -339,18 +340,13 @@ const KetcherEditor = forwardRef((props, ref) => {
     onSaveFileK2SC: () => onFinalCanvasSave(editor, iframeRef, latestData),
   }));
 
-  // ref functions when a canvas is saved using main "SAVE" button
-  useImperativeHandle(ref, () => ({
-    onSaveFileK2SC: () => onFinalCanvasSave(editor, iframeRef, latestData),
-  }));
-
   return (
     <div>
       <PolymerListModal
         loading={showShapes}
         onShapeSelection={onShapeSelection}
         onCloseClick={() => setShowShapes(false)}
-        title='Surface Chemistry Templates'
+        title="Surface Chemistry Templates"
       />
       <iframe
         ref={iframeRef}
@@ -358,7 +354,7 @@ const KetcherEditor = forwardRef((props, ref) => {
         src={editor?.extSrc}
         title={editor?.label}
         height={iH}
-        width='100%'
+        width="100%"
         style={iS}
       />
     </div>
