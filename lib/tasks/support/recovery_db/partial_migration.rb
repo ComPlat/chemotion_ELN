@@ -7,6 +7,13 @@ module RecoveryDB
     class RestoreUsers
       attr_reader :user_ids, :file
 
+      SAMPLE_SECTIONS = %w[
+        products
+        reactants
+        solvents
+        startingMaterials
+      ].freeze
+
       def initialize(user_ids: nil, file: nil)
         @user_ids = user_ids
         @file = file
@@ -16,9 +23,9 @@ module RecoveryDB
 
       def mount
         @mount ||= RecoveryDB::Mount.new(file: @file,
-                                         tables: %w[users profiles collections samples reactions wellplates wells
-                                                    screens research_plans device_descriptions attachments
-                                                    containers container_hierarchies collections_samples
+                                         tables: %w[users profiles collections samples reactions reactions_samples
+                                                    wellplates wells screens research_plans device_descriptions
+                                                    attachments containers container_hierarchies collections_samples
                                                     collections_reactions collections_wellplates collections_screens
                                                     collections_research_plans collections_device_descriptions
                                                     sync_collections_users users_devices devices collections_elements
@@ -264,7 +271,7 @@ module RecoveryDB
               recovery_element_model, main_model, original_id, new_user_id, created_elements
             )
           end
-          new_element = created_elements[element_key]
+          new_element = main_model.find(created_elements[element_key])
           next unless new_element
 
           join_model.create!(
@@ -311,7 +318,7 @@ module RecoveryDB
         assign_creator_or_user(new_record, new_user_id)
         new_record.save(validate: false)
         restore_associations(main_model, original_id, new_record.id, new_user_id, created_elements)
-        new_record
+        new_record.id
       rescue ActiveRecord::RecordInvalid => e
         Rails.logger.error "Failed to restore #{main_model.name} #{original_id}: #{e.message}"
         raise
@@ -329,6 +336,12 @@ module RecoveryDB
       def restore_associations(main_model, original_id, new_id, new_user_id, created_elements)
         restore_container(main_model, original_id, new_id, new_user_id)
         restore_attachments(main_model, original_id, new_id, new_user_id)
+        if main_model == Reaction
+          created_samples = created_elements.each_with_object({}) do |((type, old_id), new_id), result|
+            result[old_id] = new_id if type == 'Sample'
+          end
+          restore_reactions_samples(original_id, new_id, created_samples)
+        end
         restore_wells(original_id, new_id) if main_model == Wellplate
         restore_links(new_id, created_elements) if main_model == ResearchPlan
       end
@@ -412,8 +425,55 @@ module RecoveryDB
 
           Attachment.create!(attrs)
         rescue ActiveRecord::RecordInvalid => e
-          Rails.logger.error "Failed to restore Attachment #{attachment.id}: #{e.record.errors.full_messages.join(', ')}"
+          Rails.logger.error "Failed to restore Attachment #{attachment.id}:#{e.record.errors.full_messages.join(', ')}"
           raise
+        end
+      end
+
+      def restore_reactions_samples(original_reaction_id, new_reaction_id, created_samples)
+        reactions_samples = RecoveryDB::Models::ReactionsSample.where(reaction_id: original_reaction_id)
+        reactions_samples.each do |reaction_sample|
+          attrs = reaction_sample.attributes.except(*attributes_to_exclude, 'reaction_id', 'sample_id')
+          new_sample_id = created_samples[reaction_sample.sample_id]
+          raise "Missing created sample for ID #{reaction_sample.sample_id}" unless new_sample_id
+
+          new_reaction_sample = ReactionsSample.new(attrs)
+          new_reaction_sample.sample_id = new_sample_id
+          new_reaction_sample.reaction_id = new_reaction_id
+          new_reaction_sample.save!
+        rescue StandardError => e
+          Rails.logger.error "Failed to restore ReactionsSamples for reaction #{original_reaction_id}: #{e.message}"
+          raise
+        end
+        reaction = Reaction.find(new_reaction_id)
+        update_reaction_variations_sample_ids(reaction, created_samples)
+      end
+
+      def update_reaction_variations_sample_ids(reaction, created_samples)
+        return unless reaction.variations.is_a?(Array)
+
+        updated = transform_sample_ids_in_variation_array(reaction.variations, created_samples)
+
+        reaction.variations = updated
+        reaction.save! # triggers before_save, including transform_variations
+      end
+
+      def transform_sample_ids_in_variation_array(variation_array, created_samples)
+        variation_array.map do |variation|
+          variation.deep_dup.tap do |v|
+            SAMPLE_SECTIONS.each do |section|
+              next unless v[section].is_a?(Hash)
+
+              v[section] = v[section].transform_keys do |sample_id_str|
+                sample_id = sample_id_str.to_i
+                new_sample_id = created_samples.fetch(sample_id) do
+                  raise KeyError, "Sample ID #{sample_id} not found in created_samples during variation restoration"
+                end
+
+                new_sample_id.to_s
+              end
+            end
+          end
         end
       end
 

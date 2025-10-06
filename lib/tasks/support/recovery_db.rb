@@ -3,7 +3,7 @@ module RecoveryDB
     attr_reader :dump_path, :config, :logger
 
     MODEL_NAMES = %w[
-      User Profile Collection Sample Reaction Wellplate Well
+      User Profile Collection Sample Reaction ReactionsSample Wellplate Well
       Screen ResearchPlan DeviceDescription Attachment
       Container ContainerHierarchy CollectionsSample
       CollectionsReaction CollectionsWellplate CollectionsScreen
