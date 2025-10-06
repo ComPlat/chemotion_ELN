@@ -107,12 +107,12 @@ class Collection < ApplicationRecord
       joins(:collection_shares)
         .joins(:user)
         .left_joins(:inventory)
-        .where(collection_shares { shared_with_id: [user.id, *user.group_ids] })
+        .where(collection_shares: { shared_with_id: [user.id, *user.group_ids] })
         .distinct
     end
   )
   scope(
-    :shared_collections_for,
+    :serialized_shared_collections_for,
     lambda do |user|
       shared_collections_for(user).select(
         [
