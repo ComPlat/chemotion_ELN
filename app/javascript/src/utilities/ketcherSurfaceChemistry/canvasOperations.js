@@ -365,7 +365,6 @@ const onTemplateMove = async (editor, recenter = false) => {
   if (!recenter && (imageListCopyContainer.length || textListCopyContainer.length)) {
     recenter = true;
   }
-
   // first fetch to save values
   await fetchKetcherData(editor);
 
