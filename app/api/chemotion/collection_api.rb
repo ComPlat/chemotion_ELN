@@ -28,9 +28,9 @@ module Chemotion
         end
 
         id = params[:id].to_i
-        if collection = Collection.own_collections_for(current_user).find(id)
+        if collection = Collection.own_collections_for(current_user).find_by(id: id)
           present collection, with: Entities::OwnCollectionEntity, root: :collection
-        elsif collection = Collection.shared_collections_for(current_user).find(id) # find_by breaks, no idea why
+        elsif collection = Collection.shared_collections_for(current_user).find_by(id: id) # find_by breaks, no idea why
           present collection, with: Entities::SharedCollectionEntity, root: :collection
         else
           raise ActiveRecord::RecordNotFound
