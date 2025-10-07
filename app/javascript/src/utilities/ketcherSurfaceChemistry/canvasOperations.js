@@ -468,7 +468,7 @@ export const saveMoveCanvas = async (editor, data, isFetchRequired, isMoveRequir
 };
 
 const centerPositionCanvas = async (editor) => {
-  if (textList?.length) return;
+  if(false)
   try {
     await editor._structureDef.editor.editor.renderAndRecoordinateStruct();
     await fetchKetcherData(editor);
