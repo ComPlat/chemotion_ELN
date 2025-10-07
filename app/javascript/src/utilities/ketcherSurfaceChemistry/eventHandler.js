@@ -57,7 +57,7 @@ const eventOperationHandlers = {
     addEventToFILOStack(EventNames.DELETE_TEXT);
   },
   [EventNames.ADD_BOND]: async () => {
-    addEventToFILOStack(EventNames.DELETE_TEXT);
+    addEventToFILOStack(EventNames.ADD_BOND);
   }
 };
 
