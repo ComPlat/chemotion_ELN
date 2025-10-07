@@ -172,6 +172,10 @@ export default class ManagingModalSharing extends React.Component {
         element_detail_level: elementDetailLevel
       },
     };
+    // wird für manage collections und sharing button in navi verwendet
+    // create == shared button
+    // create share == manage collection
+    // wird zukünftig gleich sein
 
     if (this.props.collAction === "Create") {
       const uiState = UIStore.getState();
@@ -193,11 +197,11 @@ export default class ManagingModalSharing extends React.Component {
       CollectionActions.updateSharedCollection(params);
     }
 
-    if (this.props.collAction === 'EditSync') {
+    if (this.props.collAction === 'EditShare') {
       CollectionActions.editSync(params);
     }
 
-    if (this.props.collAction === 'CreateSync') {
+    if (this.props.collAction === 'Create Shared') {
       const userIds = this.state.selectedUsers;
       const fullParams = {
         ...params,
