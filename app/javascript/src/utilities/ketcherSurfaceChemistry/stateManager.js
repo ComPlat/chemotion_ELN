@@ -1,6 +1,7 @@
 /* eslint-disable import/no-mutable-exports */
 import { KET_TAGS } from 'src/utilities/ketcherSurfaceChemistry/constants';
 import { imageNodeCounter } from 'src/components/structureEditor/KetcherEditor';
+import { centerPositionCanvas, onTemplateMove } from 'src/utilities/ketcherSurfaceChemistry/canvasOperations';
 
 export let FILOStack = []; // a stack to main a list of event triggered
 export const uniqueEvents = new Set(); // list of unique event from the canvas
@@ -107,9 +108,11 @@ export const textListCopyContainerSetter = (data) => {
 };
 
 // keep a copy of imageList and textList
-export const fetchAndReplace = () => {
-  imageListCopyContainerSetter([...imagesList]);
-  textListCopyContainerSetter([...textList]);
+export const fetchAndReplace = (editorLoc) => {
+  centerPositionCanvas(editorLoc);
+  setTimeout(() => {
+    onTemplateMove(editorLoc, false);
+  }, 500);
 };
 
 export const eventUpsertImageDecrement = () => {

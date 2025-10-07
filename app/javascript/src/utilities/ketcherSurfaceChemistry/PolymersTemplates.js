@@ -41,21 +41,24 @@ const processAtomLines = async (linesCopy, atomStarts, atomsCount) => {
 };
 
 // helper to combine and prepare alias into a polymer list
-const templateAliasesPrepare = async (aliasesList, atomAliasList) => {
+const templateAliasesPrepare = async (aliasesList) => {
   let counter = 0;
-  for (let i = 1; i < aliasesList.length; i += 2) {
+  const polymersCombination = [];
+  for (let i = 0; i < aliasesList.length; i++) {
     if (ALIAS_PATTERNS.threeParts.test(aliasesList[i])) {
       const templateId = parseInt(aliasesList[i].split('_')[1]);
       const imagePlace = parseInt(aliasesList[i].split('_')[2]);
       const { height, width } = imagesList[imagePlace].boundingBox;
       if (templateId) {
-        atomAliasList[counter] += templateId === KET_TAGS.templateSurface ? 's' : `/${templateId}`;
-        atomAliasList[counter] += `/${height.toFixed(2)}-${width.toFixed(2)}`;
+        let idx = aliasesList[counter].split("_")[2]
+        idx += templateId === KET_TAGS.templateSurface ? 's' : `/${templateId}`;
+        idx += `/${height.toFixed(2)}-${width.toFixed(2)}`;
+        polymersCombination.push(idx)
         counter++;
       }
     }
   }
-  return atomAliasList.join(' ');
+  return polymersCombination.join(' ');
 };
 
 /* attaching polymers list is ketcher rails standards to a molfile
@@ -83,9 +86,10 @@ const reAttachPolymerList = async ({
   // 0/3/1.30-1.28 7/1/0.90-0.91 => 2 aliases combined with space to form a string
   // 0/3/1.30-1.28 => what a single alias has atomIndex/template#/height-width
   const preparedAliasPolymerLine = await templateAliasesPrepare(aliasesList, atomAliasList);
+  if (!preparedAliasPolymerLine.length) return lines;
   const collectedLines = [KET_TAGS.polymerIdentifier, preparedAliasPolymerLine];
   linesCopy.splice(lineCopy.length, 0, ...collectedLines);
   return linesCopy;
 };
 
-export { addPolymerTags, reAttachPolymerList };
+export { addPolymerTags, reAttachPolymerList, templateAliasesPrepare };
