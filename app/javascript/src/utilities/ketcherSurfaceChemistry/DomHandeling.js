@@ -94,8 +94,12 @@ const updateTemplatesInTheCanvas = async (iframeRef) => {
       textElements.forEach((textElem) => {
         const { textContent } = textElem; // Get the text content of the <text> element
         if (textContent === KET_TAGS.inspiredLabel) {
-          // Check if it matches the pattern
           textElem.setAttribute('fill', 'transparent'); // Set fill to transparent
+          const tspans = textElem.querySelectorAll('tspan');
+          tspans.forEach((tspan) => {
+            tspan.setAttribute('fill', 'transparent');
+            tspan.style.fill = 'transparent'; // For good measure
+          });
         }
       });
     }
