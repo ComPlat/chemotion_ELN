@@ -21,7 +21,7 @@ module Chemotion
         end
 
         post do
-          cid = fetch_collection_id_w_current_user(params[:currentCollection][:id], false)
+          cid = Collection.accessible_for(current_user).find(params[:currentCollection][:id])
           sel = {}
           has_sel = {}
 
