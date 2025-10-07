@@ -9,7 +9,6 @@ import { Select } from 'src/components/common/Select';
 import StructureEditor from 'src/models/StructureEditor';
 import EditorAttrs from 'src/components/structureEditor/StructureEditorSet';
 import CommonTemplatesList from 'src/components/ketcher-templates/CommonTemplatesList';
-import CommonTemplatesFetcher from 'src/fetchers/CommonTemplateFetcher';
 import { transformSvgIdsAndReferences } from 'src/utilities/SvgUtils';
 import { createEditors, notifyError, initEditor } from 'src/components/structureEditor/EditorsInstances';
 import EditorRenderer from 'src/components/structureEditor/EditorRenderer';
@@ -169,7 +168,7 @@ export default class StructureEditorModal extends React.Component {
         const updatedSvg = await transformSvgIdsAndReferences(svgElement);
         this.handleStructureSave(ket2Molfile, updatedSvg, editorId.id);
       } catch (error) {
-        console.error('Error during save operation for Ketcher2:', error);
+        console.error('Error during save operation for Ketcher:', error);
       }
     }
   }
@@ -248,7 +247,7 @@ export default class StructureEditorModal extends React.Component {
             fnChange={this.handleEditorSelection}
             options={editorOptions}
           />
-          {editor.id === 'ketcher2' && (
+          {editor.id === 'ketcher' && (
             <CommonTemplatesList />
           )}
         </Modal.Header>
@@ -277,17 +276,6 @@ export default class StructureEditorModal extends React.Component {
     );
   }
 }
-
-StructureEditorModal.propTypes = {
-  molfile: PropTypes.string,
-  showModal: PropTypes.bool,
-  hasChildren: PropTypes.bool,
-  hasParent: PropTypes.bool,
-  onCancel: PropTypes.func,
-  onSave: PropTypes.func,
-  submitBtnText: PropTypes.string,
-  cancelBtnText: PropTypes.string,
-};
 
 StructureEditorModal.defaultProps = {
   molfile: '\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n',
