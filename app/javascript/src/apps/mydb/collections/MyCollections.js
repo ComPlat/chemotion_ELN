@@ -1,4 +1,4 @@
-import React, { useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import Tree from 'react-ui-tree';
 import { Button, ButtonGroup, Form } from 'react-bootstrap';
 import ManagingModalSharing from 'src/components/managingActions/ManagingModalSharing';
@@ -11,19 +11,20 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 const MyCollections = () => {
   const collectionsStore = useContext(StoreContext).collections;
   const ownCollections = collectionsStore.ownCollections;
-  const tree = { id: -1, children: ownCollections };
+  const [isChanged, setIsChanged] = useState(false);
+  const [tree, setTree] = useState({ id: -1, children: ownCollections });
+  const [sharingModal, setSharingModal] = useState({ action: null, show: false, node: {} });
 
   const handleChange = (tree) => {
     console.log('change', tree);
-    // this.setState({
-    //   tree,
-    //   isChange: true
-    // });
+    setIsChanged(true);
+    // setTree(tree) ????
   }
 
-  const handleLabelChange = (node) => (e) => {
-    console.log('label change', e, node);
-    // node.label = e.target.value;
+  const handleLabelChange = (e, node) => {
+    console.log('label change', e.target.value, 'node', node.label);
+    // kann nicht upgedated werden, muss über den store passieren (action)
+    //node.label = e.target.value;
     // this.forceUpdate();
   }
 
@@ -80,10 +81,29 @@ const MyCollections = () => {
     //CollectionActions.bulkUpdateUnsharedCollections(params);
   }
 
-  const doSync = (node, action) => {
+  const addCollectionShares = (node) => {
+    console.log(node);
+    setSharingModal({ action: 'Create Shared', show: true, node: node });
+  }
+
+  const editCollectionShares = (node) => {
+    // 'EditShare'
+    // wird in syncedCollectionsUsersModal verwendet
+  }
+
+  const handleSharingModalHide = () => {
+    setSharingModal({ action: null, show: false, node: {} });
+  }
+
+  const openSyncListModal = (node) => {
     //     this.setState({
-    //       sharingModal: { show: true, action },
-    //       active: node,
+    //       syncListModalNodeId: node.id,
+    //     });
+  }
+
+  const closeSyncListModal = () => {
+    //     this.setState({
+    //       syncListModalNodeId: null,
     //     });
   }
 
@@ -137,10 +157,9 @@ const MyCollections = () => {
   const actions = (node) => {
     if (node.id == -1) {
       // const { isChange } = this.state;
-      const isChange = false;
       return (
         <div>
-          {isChange && (
+          {isChanged && (
             <Button
               id="save-collections-button"
               size="sm"
@@ -165,7 +184,7 @@ const MyCollections = () => {
           size="sm"
           variant="primary"
           disabled={node.isNew === true}
-          onClick={() => doSync(node, 'CreateSync')}
+          onClick={() => addCollectionShares(node)}
         >
           <i className="fa fa-plus" />
           <i className="fa fa-share-alt ms-1" />
@@ -217,28 +236,13 @@ const MyCollections = () => {
     );
   }
 
-  //{active.id !== null && sharingModal.show && (
-  //      <ManagingModalSharing
-  //        title={sharingModal.action === 'CreateSync'
-  //          ? `Synchronize '${active.label}'`
-  //          : 'Edit Synchronization'}
-  //        collectionId={active.id}
-  //        onHide={this.handleModalHide}
-  //        permissionLevel={active.permission_level}
-  //        sampleDetailLevel={active.sample_detail_level}
-  //        reactionDetailLevel={active.reaction_detail_level}
-  //        wellplateDetailLevel={active.wellplate_detail_level}
-  //        screenDetailLevel={active.screen_detail_level}
-  //        selectUsers={sharingModal.action === 'CreateSync'}
-  //        collAction={sharingModal.action}
-  //      />
-  //    )}
+ 
 
   //{syncListModalNodeId && (
   //      <SyncedCollectionsUsersModal
   //        node={this.findNodeById(tree, syncListModalNodeId)}
   //        updateSync={(collection) => {
-  //          this.doSync(collection, 'EditSync');
+  //          editCollectionShares(collection);
   //        }}
   //        deleteSync={(collection) => {
   //          CollectionActions.deleteSync({ id: collection.id, is_syncd: false });
@@ -255,6 +259,22 @@ const MyCollections = () => {
         onChange={handleChange}
         renderNode={renderNode}
       />
+      {Object.keys(sharingModal.node).length >= 1 && sharingModal.show && (
+        <ManagingModalSharing
+          title={sharingModal.action === 'Create Shared'
+            ? `Collection Share of '${sharingModal.node.label}'`
+            : 'Edit Collection Share'}
+          collectionId={sharingModal.node.id}
+          onHide={handleSharingModalHide}
+          permissionLevel={sharingModal.node.permission_level}
+          sampleDetailLevel={sharingModal.node.sample_detail_level}
+          reactionDetailLevel={sharingModal.node.reaction_detail_level}
+          wellplateDetailLevel={sharingModal.node.wellplate_detail_level}
+          screenDetailLevel={sharingModal.node.screen_detail_level}
+          selectUsers={sharingModal.action === 'Create Shared'}
+          collAction={sharingModal.action}
+        />
+      )}
     </div>
   );
 }

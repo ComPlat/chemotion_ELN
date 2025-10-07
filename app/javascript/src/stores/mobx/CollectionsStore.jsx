@@ -4,20 +4,23 @@ import { flow, types } from 'mobx-state-tree';
 import CollectionsFetcher from 'src/fetchers/CollectionsFetcher';
 import UserStore from 'src/stores/alt/stores/UserStore';
 
-export const OwnCollection = types.model({
+export const Collection = types.model({
   ancestry: types.string,
-  children: types.array(types.late(() => OwnCollection)),
+  children: types.array(types.late(() => Collection)),
   id: types.identifierNumber,
   inventory_id: types.maybeNull(types.integer),
   inventory_name: types.maybeNull(types.string),
   inventory_prefix: types.maybeNull(types.string),
   label: types.string,
-  locked: types.boolean,
+  is_locked: types.boolean,
+  owner: types.maybeNull(types.string),
+  permission_level: types.maybeNull(types.integer), // temp for testing
   position: types.maybeNull(types.number),
+  shared: types.maybeNull(types.boolean),
   tabs_segment: types.optional(types.frozen({}), {}),
 }).actions(self => ({
   addChild(collection) {
-    if (self.isParentOf(collection)) {
+    if (self.id === 0 || self.isParentOf(collection)) {
       self.children.push(collection)
       self.sortChildren()
     } else if (self.isAncestorOf(collection)) {
@@ -45,19 +48,6 @@ export const OwnCollection = types.model({
   isParentOf(collection) { return self.id == collection.ancestorIds.findLast(id => true) },
 }));
 
-export const SharedCollection = types.model({
-  ancestry: types.string,
-  id: types.identifierNumber,
-  inventory_id: types.maybeNull(types.integer),
-  inventory_name: types.maybeNull(types.string),
-  inventory_prefix: types.maybeNull(types.string),
-  label: types.string,
-  locked: types.boolean,
-  owner: types.string,
-  position: types.maybeNull(types.number),
-  tabs_segment: types.optional(types.frozen({}), {}),
-});
-
 const recursively_sort_by_position = (tree) => {
   tree.sort((a, b) => { a.position - b.position })
 }
@@ -72,51 +62,60 @@ const presort = (a, b) => {
 
 export const CollectionsStore = types
   .model({
-    all_collection: types.maybeNull(OwnCollection),
-    chemotion_repository_collection: types.maybeNull(OwnCollection),
+    all_collection: types.maybeNull(Collection),
+    chemotion_repository_collection: types.maybeNull(Collection),
     current_user_id: types.maybeNull(types.integer),
-    own_collections: types.array(OwnCollection),
-    shared_with_me_collections: types.map(types.array(SharedCollection)),
+    own_collections: types.array(Collection),
+    shared_with_me_collections: types.array(Collection),
   })
   .actions(self => ({
     fetchCollections: flow(function* fetchCollections() {
       let all_collections = yield CollectionsFetcher.fetchCollections();
-      const own_collections_tree = []
       self.own_collections.clear();
       self.shared_with_me_collections.clear();
 
       // basic presorting, so we can assume that parent objects are encountered before child objects when iterating the collection array
       all_collections.own.sort(presort);
       all_collections.own.forEach(collection => {
-        if (collection.label == 'All') {
-          self.all_collection = OwnCollection.create(collection);
-        } else if (collection.label == 'chemotion-repository.net') {
-          self.chemotion_repository_collection = OwnCollection.create(collection);
+        const chemRepoCollectionLabels = ['chemotion-repository.net', 'transferred']
+        if (collection.is_locked && (collection.label == 'All' || !chemRepoCollectionLabels.includes(collection.label))) {
+          return
+        }
+
+        if (collection.label == 'chemotion-repository.net') {
+          self.chemotion_repository_collection = Collection.create(collection);
         } else {
-          self.addOwnCollection(OwnCollection.create(collection))
+          const collectionItem = Collection.create(collection)
+
+          const ownOrChemRepoCollection =
+            (self.chemotion_repository_collection && collectionItem.ancestorIds.includes(self.chemotion_repository_collection.id))
+              ? self.chemotion_repository_collection.children
+              : self.own_collections
+          
+          self.addCollection(collectionItem, ownOrChemRepoCollection)
         }
       });
 
       // group shared collections by owner
-      all_collections.shared_with_me
-        .map(collection => { return SharedCollection.create(collection) })
-        .forEach(shared_collection => {
-          if (self.shared_with_me_collections[shared_collection.owner] === undefined) {
-            self.shared_with_me_collections[shared_collection.owner] = []
-          }
-          self.shared_with_me_collections[shared_collection.owner].push(shared_collection)
-        })
-      // sort shared collections by label within their groups
-      self.shared_with_me_collections.keys().forEach(owner => {
-        self.shared_with_me_collections[owner].sort((a, b) => {
-          const label_a = a.label.toUpperCase()
-          const label_ = ba.label.toUpperCase()
-          if (label_a < label_b) { return -1; }
-          if (label_a > label_b) { return 1; }
-          return 0;
-        })
-      })
+      const sharedWithMeCollections = self.presortSharedWithMeCollections(all_collections.shared_with_me)
+
+      sharedWithMeCollections.forEach((collection, i) => {
+        if (i === 0 || i > 0 && sharedWithMeCollections[i - 1].owner !== collection.owner) {
+          const ownerCollection = { ancestry: '/', id: 0, label: collection.owner, is_locked: true, owner: collection.owner }
+          self.shared_with_me_collections.push(Collection.create(ownerCollection))
+        }
+        const parentOwnerIndex = self.shared_with_me_collections.findIndex(element => element.owner == collection.owner)
+        if (parentOwnerIndex !== -1) {
+          self.shared_with_me_collections[parentOwnerIndex].addChild(collection)
+        }
+      });
     }),
+    presortSharedWithMeCollections(collections) {
+      return collections
+        .sort(presort)
+        .sort((a, b) => (a.owner > b.owner) ? 1 : ((b.owner > a.owner) ? -1 : 0))
+        .filter((c) => !c.is_locked)
+    },
     getCurrentUserId() {
       if (Object.keys(self.current_user).length < 1) {
         return self.current_user = (UserStore.getState() && UserStore.getState().currentUser) || {};
@@ -127,10 +126,12 @@ export const CollectionsStore = types
     descendantIds(collection) {
       return collection.children.flatMap(child => [child.id].concat(self.descendantIds(child)))
     },
-    addOwnCollection(collection) {
-      if (collection.isRootCollection) {
-        self.own_collections.push(collection)
-        self.ownCollections.sort((a, b) => {
+    addCollection(collection, ownOrSharedCollection) {
+      const parentIndex = ownOrSharedCollection.findIndex(element => element.isAncestorOf(collection))
+
+      if (collection.isRootCollection || parentIndex === -1) {
+        ownOrSharedCollection.push(collection)
+        ownOrSharedCollection.sort((a, b) => {
           if (a.position != null && b.position != null) { return a.position - b.position }
           else if (a.position != null && b.position == null) { return -1 }
           else if (a.position == null && b.position != null) { return 1 }
@@ -140,9 +141,7 @@ export const CollectionsStore = types
           else { console.debug('unsortable collections:', a, b); return 0 }
         })
       } else {
-        const parentIndex = self.own_collections.findIndex(element => element.isAncestorOf(collection))
-
-        self.own_collections[parentIndex].addChild(collection)
+        ownOrSharedCollection[parentIndex].addChild(collection)
       }
     },
   }))

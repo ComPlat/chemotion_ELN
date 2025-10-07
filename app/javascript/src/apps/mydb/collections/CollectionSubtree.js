@@ -21,7 +21,7 @@ function CollectionSubtree({ root, sharedWithMe, level }) {
 
   const isVisible = (node, currentCollection) => {
     const descendantIds = collectionsStore.descendantIds(node);
-    if (descendantIds) {
+    if (descendantIds && currentCollection?.id) {
       return descendantIds.indexOf(parseInt(currentCollection.id)) > -1;
     }
     return false;
@@ -40,11 +40,10 @@ function CollectionSubtree({ root, sharedWithMe, level }) {
   }, []);
 
   const handleTakeOwnership = () => {
-    // TODO: add takeOwnership endpoint
-    // CollectionActions.takeOwnership({ root.id });
+    // TODO: determine what should happen if take ownership is possible
   }
 
-  const handleClick = () => {
+  const handleClick = (node, e) => {
     const { currentElement } = ElementStore.getState();
     // When currentElement is an array, use the first item (special handling for vessel templates)
     const element = Array.isArray(currentElement) && currentElement.length > 0 ? currentElement[0] : currentElement;
@@ -52,14 +51,20 @@ function CollectionSubtree({ root, sharedWithMe, level }) {
     if (uiState.showCollectionManagement) {
       UIActions.toggleCollectionManagement();
     }
-    setVisible(visible || isVisible(root, uiState.currentCollection));
+    
+    if (node.is_locked) {
+      toggleExpansion(e);
+    } else {
+      setVisible(visible || isVisible(node, uiState.currentCollection));
 
-    aviatorNavigationWithCollectionId(root.id, element?.type, (element?.isNew ? 'new' : element?.id), true, true);
+      aviatorNavigationWithCollectionId(node.id, element?.type, (element?.isNew ? 'new' : element?.id), true, true);
+    }
   }
 
   const canTakeOwnership = () => {
-    const isTakeOwnershipAllowed = root.permission_level === 5;
-    return sharedWithMe && isTakeOwnershipAllowed;
+    return false;
+    // const isTakeOwnershipAllowed = root.permission_level === 5;
+    // return sharedWithMe && isTakeOwnershipAllowed;
   }
 
   const toggleExpansion = (e) => {
@@ -72,7 +77,7 @@ function CollectionSubtree({ root, sharedWithMe, level }) {
       <div
         id={`tree-id-${root.label}`}
         className={`tree-view_item ${selected ? 'tree-view_item--selected' : ''}`}
-        onClick={() => handleClick()}
+        onClick={(e) => handleClick(root, e)}
         style={{ paddingLeft: `${((level - 0.5) * 12) - 4}px` }}
       >
         {children.length > 0 ? (
