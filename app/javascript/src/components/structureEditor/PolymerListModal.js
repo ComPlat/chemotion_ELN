@@ -38,8 +38,6 @@ function InlineSVG({ src }) {
   );
 }
 
-export default InlineSVG;
-
 function PolymerListModal({
   loading, onShapeSelection, title, onCloseClick
 }) {
