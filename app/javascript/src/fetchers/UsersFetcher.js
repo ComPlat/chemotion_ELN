@@ -303,8 +303,8 @@ export default class UsersFetcher {
     return promise;
   }
 
-  static fetchUserKetcher2Options() {
-    const promise = fetch('/api/v1/profiles/editors/ketcher2-options', {
+  static fetchUserKetcherOptions() {
+    const promise = fetch('/api/v1/profiles/editors/ketcher-options', {
       credentials: 'same-origin',
       headers: { Accept: 'application/json', 'Content-Type': 'application/json' }
     }).then(response => response.json()).then(json => json)
@@ -314,9 +314,9 @@ export default class UsersFetcher {
     return promise;
   }
 
-  static updateUserKetcher2Options(list) {
+  static updateUserKetcherOptions(list) {
     const data = JSON.parse(list);
-    const promise = fetch('/api/v1/profiles/editors/ketcher2-options', {
+    const promise = fetch('/api/v1/profiles/editors/ketcher-options', {
       credentials: 'same-origin',
       method: 'PUT',
       headers: {

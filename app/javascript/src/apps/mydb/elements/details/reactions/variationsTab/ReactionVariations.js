@@ -30,7 +30,6 @@ import columnDefinitionsReducer
   from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsReducers';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 
-let processedSegments = null;
 export default function ReactionVariations({ reaction, onReactionChange, isActive }) {
   if (reaction.isNew) {
     return (
@@ -56,36 +55,27 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   const [selectedColumns, setSelectedColumns] = useState(getVariationsColumns(reactionVariations));
   const [columnDefinitions, setColumnDefinitions] = useReducer(columnDefinitionsReducer, {});
   const initialGridState = useMemo(() => getInitialGridState(reaction.id), []);
+  const [segments, setSegments] = useState(null);
 
   useEffect(() => {
-    // Fetch data only once when component mounts
-
-    const handleprocessedSegments = () => {
-      const initialColumnDefinitions = getColumnDefinitions(
-        selectedColumns,
-        reactionMaterials,
-        gasMode,
-        getInitialEntryDefinitions(reaction.id)
-      );
-      setColumnDefinitions({
-        type: 'set_updated',
-        update: initialColumnDefinitions,
-      });
-    };
-    const fetchData = async () => {
+    const fetchSegments = async () => {
       try {
-        processedSegments = await getSegmentsForVariations(reaction);
-        handleprocessedSegments();
+        const initialSegments = await getSegmentsForVariations(reaction);
+        setSegments(initialSegments);
+
+        const initialColumnDefinitions = getColumnDefinitions(
+          selectedColumns,
+          reactionMaterials,
+          gasMode,
+          getInitialEntryDefinitions(reaction.id),
+          initialSegments
+        );
+        setColumnDefinitions({ type: 'set_updated', update: initialColumnDefinitions });
       } catch (error) {
         console.error('Error fetching segments:', error);
       }
     };
-
-    if (processedSegments === null) {
-      fetchData();
-    } else {
-      handleprocessedSegments();
-    }
+    fetchSegments();
   }, []);
 
   useEffect(() => {
@@ -244,7 +234,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
         createVariationsRow(
           {
             materials: reactionMaterials,
-            processedSegments,
+            segments,
             selectedColumns,
             variations: reactionVariations,
             reactionHasPolymers,
@@ -288,7 +278,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
       materials: reactionMaterials,
       selectedColumns: columns,
       variations: reactionVariations,
-      processedSegments,
+      segments,
       reactionHasPolymers,
       durationValue,
       durationUnit,
@@ -308,7 +298,8 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
         type: 'apply_column_selection',
         materials: reactionMaterials,
         selectedColumns: columns,
-        gasMode
+        gasMode,
+        segments
       }
     );
 
@@ -353,7 +344,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
 
   const columnSelectControl = () => {
     const availableColumns = {
-      segmentData: (processedSegments ?? []).map((a) => [a.key, a.label, a.group]),
+      segmentData: (segments ?? []).map((a) => [a.key, a.label, a.group]),
       ...getReactionMaterialsIDs(reactionMaterials),
       properties: ['duration', 'temperature'].map((x) => [x, toUpperCase(x)]),
       metadata: ['notes', 'analyses'].map((x) => [x, toUpperCase(x)]),
@@ -363,7 +354,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
       selectedColumns,
       availableColumns,
       applyColumnSelection,
-      processedSegments === null,
+      segments === null,
     );
   };
 
