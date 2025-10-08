@@ -27,7 +27,12 @@ module Reactable
   }.freeze
 
   def update_equivalent
-    return if weight_percentage.present? && weight_percentage != 0
+    if weight_percentage.present? && weight_percentage.to_f.positive? &&
+       !reference
+      ## nullify equivalent if weight percentage is used & material is not reference
+      update!(equivalent: nil)
+      return
+    end
 
     ref_record = ReactionsSample.find_by(reaction_id: reaction_id, reference: true)
     return if ref_record.nil? ||
@@ -64,13 +69,14 @@ module Reactable
       return nil if gas_phase_data.nil? || gas_phase_data['ppm'].nil? || gas_phase_data['temperature'].nil?
 
       temperature_in_kelvin = convert_temperature_to_kelvin(gas_phase_data['temperature'])
-      update_attribute :equivalent, calculate_equivalent_for_gas_material(
+      update!(equivalent: calculate_equivalent_for_gas_material(
         sample.purity || 1,
         temperature_in_kelvin,
         gas_phase_data['ppm'],
-      )
+      ))
     else
-      update_attribute :equivalent, ref_amount.zero? ? 0 : amount / ref_amount
+      # Persist equivalent using update! so model validations run (don't skip validations)
+      update!(equivalent: (ref_amount.zero? ? 0 : amount / ref_amount))
     end
   end
 

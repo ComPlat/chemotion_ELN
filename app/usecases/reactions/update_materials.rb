@@ -97,7 +97,8 @@ module Usecases
         subsample = parent_sample.create_subsample(@current_user, @reaction.collections, true, 'reaction')
         subsample.short_label = fixed_label if fixed_label
 
-        if @reaction.weight_percentage && subsample.weight_percentage.present?
+        if @reaction.weight_percentage && subsample.weight_percentage.present? &&
+           sample.weight_percentage.to_f.positive?
           assign_weight_percentage_amounts(subsample)
         else
           subsample.target_amount_value = sample.target_amount_value
@@ -182,7 +183,8 @@ module Usecases
         )
         if sample.gas_type == 'gas' && update_gas_material
           set_mole_value_gas_product(existing_sample, sample)
-        elsif @reaction.weight_percentage && sample.weight_percentage.present?
+        elsif @reaction.weight_percentage && sample.weight_percentage.present? &&
+              sample.weight_percentage.to_f.positive?
           assign_weight_percentage_amounts(existing_sample)
         else
           existing_sample.target_amount_value = sample.target_amount_value
@@ -329,14 +331,28 @@ module Usecases
       # @return [Sample]
       def assign_weight_percentage_amounts(target_sample)
         ref_record = find_weight_percentage_reference_record
+
+        return nil if ref_record.nil?
+
         # Find the ReactionsSample record for this target_sample to get weight_percentage
         target_reactions_sample = ReactionsSample.find_by(reaction_id: @reaction.id, sample_id: target_sample.id)
+        return nil if target_reactions_sample.nil?
+
         calculated_value = update_amount_using_weight_percentage(target_reactions_sample, ref_record)
 
-        target_sample.target_amount_value = calculated_value
-        target_sample.target_amount_unit = ref_record&.sample&.target_amount_unit
-        target_sample.real_amount_value = calculated_value
-        target_sample.real_amount_unit = ref_record&.sample&.real_amount_unit
+        # When the reaction uses the weight-percentage scheme, the sample's
+        # amounts (both target and real) cannot be independently input — they are
+        # computed as a fraction of the reaction-level amount of weight percentage
+        # reference material. Therefore we assign the same calculated
+        # value to both `target_amount_value` and `real_amount_value`, and copy
+        # the corresponding units from the reference sample so the record is
+        # internally consistent using backend logic and UI reaction scheme display logic.
+        unless calculated_value.nil?
+          target_sample.target_amount_value = calculated_value
+          target_sample.target_amount_unit = ref_record&.sample&.target_amount_unit
+          target_sample.real_amount_value = calculated_value
+          target_sample.real_amount_unit = ref_record&.sample&.real_amount_unit
+        end
 
         target_sample
       end
