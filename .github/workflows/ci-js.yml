@@ -13,12 +13,13 @@ on:
     branches:
       - main
 
-permissions:
-  contents: read
-
 jobs:
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+
 #    strategy:
 #      matrix:
 #        node-version: [22.20.0]
@@ -26,7 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Get Node version from .tool-versions
+      - name: Get Nodejs version from .tool-versions
         id: node_version
         run: |
           echo "NODE_VERSION=$(grep '^nodejs' .tool-versions | awk '{print $2}')" >> $GITHUB_OUTPUT
@@ -37,7 +38,7 @@ jobs:
           path: tmp/main
           fetch-depth: 1
 
-      - name: Use Node ${{ steps.node_versions.outputs.NODE_VERSION }}
+      - name: Setup Nodejs
         uses: actions/setup-node@v4
         with:
           node-version: ${{ steps.node_version.outputs.NODE_VERSION }}
