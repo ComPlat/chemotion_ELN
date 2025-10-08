@@ -357,23 +357,18 @@ describe Chemotion::SampleAPI do
       end
     end
 
-    context 'when molecule_sort is enabled' do
-      let!(:sample) { create(:sample, collections: [personal_collection]) }
-      let!(:sample2) { create(:sample, collections: [personal_collection]) }
+    context 'with molecule_sort' do
+      let(:molecules) { create_list(:molecule, 2) { |m, i| m.sum_formular = "C#{i}" } }
+      let(:samples) { create_list(:sample, 2, collections: [personal_collection]) { |s, i| s.molecule = molecules[i] } }
 
       it 'returns samples in the right order' do
+        sample_ids = samples.map(&:id)
+        # ascending order of C with molecule_sort enabled
         get '/api/v1/samples', params: { molecule_sort: 1 }
-        expect(JSON.parse(response.body)['samples'].pluck('id')).to eq([sample.id, sample2.id])
-      end
-    end
-
-    context 'when molecule_sort is disabled' do
-      let!(:sample) { create(:sample, collections: [personal_collection]) }
-      let!(:sample2) { create(:sample, collections: [personal_collection]) }
-
-      it 'returns samples in the right order' do
+        expect(JSON.parse(response.body)['samples'].pluck('id')).to eq(sample_ids)
+        # descending order of sample.updated_at with molecule_sort disabled
         get '/api/v1/samples', params: { molecule_sort: 0 }
-        expect(JSON.parse(response.body)['samples'].pluck('id')).to eq([sample2.id, sample.id])
+        expect(JSON.parse(response.body)['samples'].pluck('id')).to eq(sample_ids.reverse)
       end
     end
 
