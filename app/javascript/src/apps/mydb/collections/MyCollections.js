@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useContext } from 'react';
 import Tree from 'react-ui-tree';
 import { Button, ButtonGroup, Form } from 'react-bootstrap';
+import { cloneDeep } from 'lodash';
 import ManagingModalSharing from 'src/components/managingActions/ManagingModalSharing';
-import CollectionStore from 'src/stores/alt/stores/CollectionStore';
-import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import SyncedCollectionsUsersModal from 'src/apps/mydb/collections/SyncedCollectionsUsersModal';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
@@ -12,13 +11,12 @@ const MyCollections = () => {
   const collectionsStore = useContext(StoreContext).collections;
   const ownCollections = collectionsStore.ownCollections;
   const [isChanged, setIsChanged] = useState(false);
-  const [tree, setTree] = useState({ id: -1, children: ownCollections });
+  const [tree, setTree] = useState({ label: 'My Collections', id: -1, children: cloneDeep(ownCollections) });
   const [sharingModal, setSharingModal] = useState({ action: null, show: false, node: {} });
 
   const handleChange = (tree) => {
-    console.log('change', tree);
     setIsChanged(true);
-    // setTree(tree) ????
+    setTree(tree)
   }
 
   const handleLabelChange = (e, node) => {
@@ -207,13 +205,7 @@ const MyCollections = () => {
   const label = (node) => {
     if (node.id == -1) {
       return (
-        <Form.Control
-          value="My Collections"
-          size="sm"
-          type="text"
-          className="ms-3 w-75"
-          disabled
-        />
+        <div className="ms-3 mb-2 fs-5">{node.label}</div>
       );
     }
     return (
@@ -252,7 +244,7 @@ const MyCollections = () => {
   //    )}
 
   return (
-    <div className="tree">
+    <div className="tree mt-2">
       <Tree
         paddingLeft={20}
         tree={tree}
