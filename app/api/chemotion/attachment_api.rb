@@ -4,6 +4,7 @@ require 'barby'
 require 'barby/barcode/qr_code'
 require 'barby/outputter/svg_outputter'
 require 'digest'
+require 'mini_magick'
 
 module Chemotion
   class AttachmentAPI < Grape::API # rubocop:disable Metrics/ClassLength
@@ -265,19 +266,34 @@ module Chemotion
       desc 'Download the attachment file'
       params do
         optional :annotated, type: Boolean, desc: 'Return annotated image if possible'
+        optional :convert_tif, type: Boolean, desc: 'Convert TIFF to PNG'
       end
       get ':attachment_id' do
         content_type @attachment.content_type || 'application/octet-stream'
-        header['Content-Disposition'] = "attachment; filename=\"#{@attachment.filename}\""
-        env['api.format'] = :binary
         file = @attachment.attachment
-        if params[:annotated] && @attachment.annotated?
-          annotation = @attachment.annotated_file_location.presence
-          header['Content-Disposition'] = "attachment; filename=\"#{@attachment.annotated_filename}\""
-          file = File.open(annotation)
-        end
 
-        body file.read
+        # Use annotated file if requested
+        file = File.open(@attachment.annotated_file_location.presence) if params[:annotated] && @attachment.annotated?
+
+        # Check if we need to convert TIFF
+        is_tiff = @attachment.content_type == 'image/tiff' ||
+                  @attachment.filename.downcase.end_with?('.tif', '.tiff')
+
+        if is_tiff && params[:convert_tif]
+          image = MiniMagick::Image.read(file)
+          image.format 'png' # or 'jpeg'
+
+          content_type 'image/png'
+          header['Content-Disposition'] =
+            "attachment; filename=\"#{@attachment.filename.sub(/\.(tif|tiff)$/i, '.png')}\""
+          env['api.format'] = :binary
+
+          body image.to_blob
+        else
+          header['Content-Disposition'] = "attachment; filename=\"#{@attachment.filename}\""
+          env['api.format'] = :binary
+          body file.read
+        end
       ensure
         file&.close
       end
@@ -288,7 +304,7 @@ module Chemotion
         content_type('application/zip, application/octet-stream')
         filename = CGI.escape("#{@container.parent&.name&.gsub(/\s+/, '_')}-#{@container.name.gsub(/\s+/, '_')}.zip")
         header('Content-Disposition', "attachment; filename=\"#{filename}\"")
-        zip = Zip::OutputStream.write_buffer do |zip| # rubocop:disable Lint/ShadowingOuterLocalVariable
+        zip = Zip::OutputStream.write_buffer do |zip|
           file_text = ''
           @container.attachments.each do |att|
             zip.put_next_entry att.filename
