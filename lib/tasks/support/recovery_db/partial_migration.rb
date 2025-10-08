@@ -30,7 +30,8 @@ module RecoveryDB
                                                     collections_research_plans collections_device_descriptions
                                                     sync_collections_users users_devices devices collections_elements
                                                     elements element_klasses elements_elements elements_samples
-                                                    segment_klasses segments user_labels users_admins users_groups])
+                                                    segment_klasses segments user_labels users_admins users_groups
+                                                    molecule_names])
       end
 
       def run
@@ -235,8 +236,9 @@ module RecoveryDB
             attrs['collection_id'] = new_collection_id
           end
 
-          # Leave shared_by_id (sharer) as-is — will fix later
-          SyncCollectionsUser.create!(attrs)
+          # Leave shared_by_id (sharer) as-is and skip validations — will be fixed later
+          record = SyncCollectionsUser.new(attrs)
+          record.save!(validate: false)
         end
       end
 
@@ -267,12 +269,14 @@ module RecoveryDB
           element_key = [main_model.name, original_id]
 
           unless created_elements.key?(element_key)
-            created_elements[element_key] = restore_element(
-              recovery_element_model, main_model, original_id, new_user_id, created_elements
+            new_element_id = restore_element(
+              recovery_element_model, main_model, original_id, new_user_id, created_elements, new_collection
             )
           end
-          new_element = main_model.find(created_elements[element_key])
-          next unless new_element
+          next unless new_element_id
+
+          created_elements[element_key] = new_element_id
+          new_element = main_model.find(new_element_id)
 
           join_model.create!(
             collection: new_collection,
@@ -307,20 +311,61 @@ module RecoveryDB
         attributes
       end
 
-      def restore_element(recovery_model, main_model, original_id, new_user_id, created_elements)
+      def restore_element(recovery_model, main_model, original_id, new_user_id, created_elements, new_collection)
         original = recovery_model.find_by(id: original_id)
         return nil unless original
 
         attributes = original.attributes.except(*attributes_to_exclude)
         attributes = process_text_columns_attributes(main_model, attributes)
 
+        if main_model == Sample
+          molecule_info = handle_molecule(original, new_user_id)
+          attributes['molecule_id'] = molecule_info[:molecule_id]
+          attributes['molecule_name_id'] = molecule_info[:molecule_name_id]
+        end
+
         new_record = main_model.new(attributes)
         assign_creator_or_user(new_record, new_user_id)
         new_record.save(validate: false)
-        restore_associations(main_model, original_id, new_record.id, new_user_id, created_elements)
+        restore_associations(main_model, original_id, new_record.id, new_user_id, created_elements, new_collection)
         new_record.id
       rescue ActiveRecord::RecordInvalid => e
         Rails.logger.error "Failed to restore #{main_model.name} #{original_id}: #{e.message}"
+        raise
+      end
+
+      def handle_molecule(original_sample, new_user_id)
+        result = { molecule_id: nil, molecule_name_id: nil }
+        molfile = original_sample.molfile
+        molecule = if molfile.present?
+                     Molecule.find_or_create_by_molfile(molfile)
+                   else
+                     Molecule.find_or_create_dummy
+                   end
+        result[:molecule_id] = molecule.id
+
+        if original_sample.molecule_name_id
+          old_molecule_name = RecoveryDB::Models::MoleculeName.find(original_sample.molecule_name_id)
+
+          molecule_name = MoleculeName.find_by(molecule_id: molecule.id, name: old_molecule_name.name)
+
+          if molecule_name.present?
+            result[:molecule_name_id] = molecule_name.id
+          else
+            mol_name_attrs = old_molecule_name.attributes.except(*attributes_to_exclude)
+            mol_name_attrs['molecule_id'] = molecule.id
+            mol_name_attrs['user_id'] = new_user_id
+
+            new_molecule_name = MoleculeName.create!(mol_name_attrs)
+            result[:molecule_name_id] = new_molecule_name.id
+          end
+        else
+          Rails.logger.warn "Sample #{original_sample.id} has no molecule_name_id — skipping molecule_name restoration."
+        end
+
+        result
+      rescue StandardError => e
+        Rails.logger.error "Failed to handle molecule for Sample #{original_sample.id}: #{e.message}"
         raise
       end
 
@@ -333,14 +378,12 @@ module RecoveryDB
         end
       end
 
-      def restore_associations(main_model, original_id, new_id, new_user_id, created_elements)
+      def restore_associations(main_model, original_id, new_id, new_user_id, created_elements, new_collection)
         restore_container(main_model, original_id, new_id, new_user_id)
         restore_attachments(main_model, original_id, new_id, new_user_id)
         if main_model == Reaction
-          created_samples = created_elements.each_with_object({}) do |((type, old_id), new_id), result|
-            result[old_id] = new_id if type == 'Sample'
-          end
-          restore_reactions_samples(original_id, new_id, created_samples)
+          restore_reactions_samples(original_id, new_id, created_elements, new_user_id,
+                                    new_collection)
         end
         restore_wells(original_id, new_id) if main_model == Wellplate
         restore_links(new_id, created_elements) if main_model == ResearchPlan
@@ -424,19 +467,33 @@ module RecoveryDB
           attrs[:version] = '/'
 
           Attachment.create!(attrs)
-        rescue ActiveRecord::RecordInvalid => e
-          Rails.logger.error "Failed to restore Attachment #{attachment.id}:#{e.record.errors.full_messages.join(', ')}"
+        rescue StandardError => e
+          Rails.logger.error "Failed to restore Attachment #{attachment.id}:#{e.message}"
           raise
         end
       end
 
-      def restore_reactions_samples(original_reaction_id, new_reaction_id, created_samples)
+      def restore_reactions_samples(original_reaction_id, new_reaction_id, created_elements, new_user_id,
+                                    new_collection)
+        created_samples = created_elements.each_with_object({}) do |((type, old_id), new_id), result|
+          result[old_id] = new_id if type == 'Sample'
+        end
         reactions_samples = RecoveryDB::Models::ReactionsSample.where(reaction_id: original_reaction_id)
         reactions_samples.each do |reaction_sample|
           attrs = reaction_sample.attributes.except(*attributes_to_exclude, 'reaction_id', 'sample_id')
-          new_sample_id = created_samples[reaction_sample.sample_id]
-          raise "Missing created sample for ID #{reaction_sample.sample_id}" unless new_sample_id
+          sample_key = ['Sample', reaction_sample.sample_id]
+          unless created_elements.key?(sample_key)
+            created_elements[sample_key] = restore_element(RecoveryDB::Models::Sample, Sample,
+                                                           reaction_sample.sample_id, new_user_id,
+                                                           created_elements, new_collection)
+            new_sample = Sample.find(created_elements[sample_key])
+            CollectionsSample.create!(
+              collection: new_collection,
+              sample: new_sample,
+            )
+          end
 
+          new_sample_id = created_elements[sample_key]
           new_reaction_sample = ReactionsSample.new(attrs)
           new_reaction_sample.sample_id = new_sample_id
           new_reaction_sample.reaction_id = new_reaction_id
@@ -495,20 +552,27 @@ module RecoveryDB
 
         linkable_types = %w[sample reaction]
 
-        rp_body.each do |b|
-          next unless linkable_types.include?(b['type'])
+        updated_body = rp_body.filter_map do |b|
+          if linkable_types.include?(b['type'])
+            key_name = "#{b['type']}_id"
+            old_id = b['value'][key_name]
+            element_key = [b['type'].capitalize, old_id]
 
-          key_name = "#{b['type']}_id"
-          old_id = b['value'][key_name]
-          element_key = [b['type'].capitalize, old_id]
+            new_id = created_elements[element_key]
 
-          new_id = created_elements[element_key]
-          raise "Missing mapping for #{element_key.inspect}" unless new_id
-
-          b['value'][key_name] = new_id
+            if new_id
+              b['value'][key_name] = new_id
+              b
+            else
+              Rails.logger.warn "Removed broken link block: #{element_key.inspect} not found"
+              nil # exclude this block
+            end
+          else
+            b # keep non-linkable blocks
+          end
         end
 
-        research_plan.update!(body: rp_body)
+        research_plan.update!(body: updated_body)
       end
 
       def restore_collection_elements_labimotion(old_collection, new_collection, _new_user_id, created_elements)
@@ -715,7 +779,7 @@ module RecoveryDB
 
       def attributes_to_exclude
         %w[
-          id created_at updated_at deleted_at user_id ancestry attachable_id
+          id created_at updated_at deleted_at user_id ancestry attachable_id molecule_id
           containable_id containable_type parent_id log_data identifier
           element_klass_id user_ids admin_ids segment_klass_id element_id
         ]
