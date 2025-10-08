@@ -3,7 +3,7 @@ import Tree from 'react-ui-tree';
 import {
   Button, Modal, Col, Row
 } from 'react-bootstrap';
-import _ from 'lodash';
+import { cloneDeep, isEmpty } from 'lodash';
 import { List } from 'immutable';
 import TabLayoutEditor from 'src/apps/mydb/elements/tabLayout/TabLayoutEditor';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -17,8 +17,8 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 const CollectionTabs = () => {
   const collectionsStore = useContext(StoreContext).collections;
   const ownCollections = collectionsStore.ownCollections;
-  const tree = { label: 'My Collections', id: -1, children: ownCollections };
   const [showModal, setShowModal] = useState(false);
+  const [tree, setTree] = useState({ label: 'My Collections', id: -1, children: cloneDeep(ownCollections) });
   const [profileData, setProfileData] = useState({});
   const [currentCollection, setCurrentCollection] = useState({});
   const [layouts, setLayouts] = useState(allElnElmentsWithLabel.reduce((acc, { name }) => {
@@ -50,6 +50,10 @@ const CollectionTabs = () => {
     return () => UserStore.unlisten(onUserStoreChange);
   }, []);
 
+  const handleChange = (tree) => {
+    setTree(tree);
+  }
+
   const handleSave = () => {
     const layoutSegments = allElnElmentsWithLabel.reduce((acc, { name }) => {
       const layout = filterTabLayout(layouts[name]);
@@ -74,7 +78,7 @@ const CollectionTabs = () => {
   const onClickCollection = (node) => {
     const layouts = allElnElmentsWithLabel.reduce((acc, { name }) => {
       let layout;
-      if (_.isEmpty(node.tabs_segment[name])) {
+      if (isEmpty(node.tabs_segment[name])) {
         layout = (profileData && profileData[`layout_detail_${name}`]) || {};
       } else {
         layout = JSON.parse(node.tabs_segment)[name];
@@ -91,12 +95,16 @@ const CollectionTabs = () => {
   const renderNode = (node) => {
     if (node.is_locked || node.id < 1) {
       return (
-        <div className="ms-3 mb-2">{node.label}</div>
+        <div className="ms-3 mb-2 fs-5">{node.label}</div>
       );
     }
 
     return (
-      <div className="d-flex align-items-center justify-content-between mb-2 bg-dark-subtle">
+      <div
+        className="d-flex align-items-center justify-content-between mb-2 bg-dark-subtle"
+        draggable={false}
+        onMouseDown={(e) => e.stopPropagation()}
+      >
         <div className="ms-3">{node.label}</div>
         <Button
           size="sm"
@@ -111,12 +119,11 @@ const CollectionTabs = () => {
   }
 
   return (
-    <div className="tree">
+    <div className="tree mt-2">
       <Tree
         paddingLeft={30}
         tree={tree}
-        isElementDetails
-        onChange={() => {}}
+        onChange={handleChange}
         renderNode={renderNode}
       />
       {

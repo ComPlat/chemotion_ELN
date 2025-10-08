@@ -396,6 +396,8 @@ const aviatorNavigation = (type, id, silent = true, showOrNew = false, params = 
   if (showOrNew) {
     if (Object.keys(params).length >= 1) {
       return elementShowOrNew(params);
+    } else if (type === 'collection') {
+      return collectionShow({ params: { collectionID: id } });
     } else {
       return elementShowOrNew(defaultParamsForAviatorNavigation(currentCollection.id, type, id));
     }
