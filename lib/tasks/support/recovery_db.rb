@@ -4,7 +4,7 @@ module RecoveryDB
 
     MODEL_NAMES = %w[
       User Profile Collection Sample Reaction ReactionsSample Wellplate Well
-      Screen ResearchPlan DeviceDescription Attachment
+      Screen ResearchPlan DeviceDescription Attachment MoleculeName
       Container ContainerHierarchy CollectionsSample
       CollectionsReaction CollectionsWellplate CollectionsScreen
       CollectionsResearchPlan CollectionsDeviceDescription Labimotion::ElementsSample
