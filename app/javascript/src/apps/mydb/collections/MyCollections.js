@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import Tree from 'react-ui-tree';
-import { Button, ButtonGroup, Form } from 'react-bootstrap';
+import { Button, ButtonGroup, Form, OverlayTrigger, Popover } from 'react-bootstrap';
 import { cloneDeep } from 'lodash';
 import ManagingModalSharing from 'src/components/managingActions/ManagingModalSharing';
 import SyncedCollectionsUsersModal from 'src/apps/mydb/collections/SyncedCollectionsUsersModal';
@@ -9,61 +9,46 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 
 const MyCollections = () => {
   const collectionsStore = useContext(StoreContext).collections;
-  const ownCollections = collectionsStore.ownCollections;
-  const [isChanged, setIsChanged] = useState(false);
-  const [tree, setTree] = useState({ label: 'My Collections', id: -1, children: cloneDeep(ownCollections) });
+  const [isModified, setIsModified] = useState(false);
+  const [tree, setTree] = useState({ label: 'My Collections', id: -1, children: cloneDeep(collectionsStore.own_collections) });
   const [sharingModal, setSharingModal] = useState({ action: null, show: false, node: {} });
 
+  useEffect(() => {
+    if (collectionsStore.update_tree) {
+      collectionsStore.setUpdateTree(false);
+      setTree({ label: 'My Collections', id: -1, children: cloneDeep(collectionsStore.own_collections) });
+    }
+  }, [collectionsStore.update_tree])
+
   const handleChange = (tree) => {
-    setIsChanged(true);
     setTree(tree)
   }
 
-  const handleLabelChange = (e, node) => {
-    console.log('label change', e.target.value, 'node', node.label);
-    // kann nicht upgedated werden, muss über den store passieren (action)
-    //node.label = e.target.value;
-    // this.forceUpdate();
+  const addCollectionNode = (node) => {
+    collectionsStore.addCollectionNode(node);
   }
 
-  const addSubcollection = (node) => {
-    console.log('add collection', node);
-    collectionsStore.addCollection(node, true);
-    //if (node.children) {
-    //  node.children.push({
-    //    id: Math.random(),
-    //    label: 'New Collection',
-    //    isNew: true
-    //  });
-    //} else {
-    //  node.children = [{
-    //    id: Math.random(),
-    //    label: 'New Collection',
-    //    isNew: true
-    //  }];
-    //}
-    //this.forceUpdate();
+  const changeCollectionLabel = (e, node) => {
+    collectionsStore.updateCollectionLabel(e.target.value, node);
+    setIsModified(true);
   }
 
   const deleteCollection = (node) => {
-    console.log('delete', node);
-    //     const syncUsers = node.sync_collections_users ?? [];
-    //     if (syncUsers.length === 0) return null;
+    collectionsStore.deleteCollectionNode(node);
+    //     const children = node.children || [];
+    //     const parent = this.findParentById(this.state.tree, node.id);
     // 
-    //     return (
-    //       <Button
-    //         id={`sync-users-button_${node.id}`}
-    //         className="d-flex align-items-center gap-1"
-    //         onClick={() => this.openSyncListModal(node)}
-    //         size="sm"
-    //         variant="warning"
-    //         disabled={node.isNew === true}
-    //       >
-    //         <i className="fa fa-users" />
-    //         <i className="fa fa-share-alt" />
-    //         {`(${syncUsers.length})`}
-    //       </Button>
-    //     );
+    //     this.removeNodeById(parent, node.id);
+    //     this.appendChildrenToParent(parent, children);
+    // 
+    //     if (!node.isNew) {
+    //       const deleted_ids = this.state.deleted_ids.concat([node.id]);
+    // 
+    //       this.setState({
+    //         deleted_ids
+    //       });
+    //     }
+    //     this.forceUpdate();
   }
 
   // TODO: confirmation before start the updating process?
@@ -125,27 +110,12 @@ const MyCollections = () => {
     //     );
   }
 
-  const addSubcollectionButton = (node) => {
-    return (
-      <Button
-        id={`add-subcollection-to-collection_${node.id}`}
-        size="sm"
-        variant="success"
-        onClick={() => addSubcollection(node)}
-      >
-        <i className="fa fa-plus" />
-      </Button>
-    );
-  }
-
   const addCollectionButton = (node) => {
     return (
       <Button
-        id="add-new-collection-button"
         size="sm"
         variant="success"
-        onClick={() => addSubcollection(node)}
-        onMouseDown={(e) => { e.stopPropagation(); }}
+        onClick={() => addCollectionNode(node)}
       >
         <i className="fa fa-plus" />
       </Button>
@@ -154,10 +124,9 @@ const MyCollections = () => {
 
   const actions = (node) => {
     if (node.id == -1) {
-      // const { isChange } = this.state;
       return (
         <div>
-          {isChanged && (
+          {isModified && (
             <Button
               id="save-collections-button"
               size="sm"
@@ -172,6 +141,31 @@ const MyCollections = () => {
         </div>
       );
     }
+
+    const popover = (
+      <Popover>
+        <Popover.Body>
+          <div className="mb-2">Do you really want to delete "{node.label}"?</div>
+          <ButtonGroup>
+            <Button
+              variant="danger"
+              size="sm"
+              className="me-2"
+              onClick={() => deleteCollection(node)}
+            >
+              Yes
+            </Button>
+            <Button
+              variant="warning"
+              size="sm"
+              onClick={() => {}}
+            >
+              No
+            </Button>
+          </ButtonGroup>
+        </Popover.Body>
+      </Popover>
+    );
 
     return (
       <ButtonGroup>
@@ -188,16 +182,19 @@ const MyCollections = () => {
           <i className="fa fa-share-alt ms-1" />
         </Button>
     
-        {addSubcollectionButton(node)}
+        {addCollectionButton(node)}
     
-        <Button
-          size="sm"
-          variant="danger"
-          id={`delete-collection-button_${node.id}`}
-          onClick={() => deleteCollection(node)}
+        <OverlayTrigger
+          animation
+          placement="bottom"
+          root
+          trigger="focus"
+          overlay={popover}
         >
-          <i className="fa fa-trash-o" />
-        </Button>
+          <Button size="sm" variant="danger">
+            <i className="fa fa-trash-o" />
+          </Button>
+        </OverlayTrigger>
       </ButtonGroup>
     );
   }
@@ -214,7 +211,7 @@ const MyCollections = () => {
         size="sm"
         type="text"
         value={node.label || ''}
-        onChange={(e) => { handleLabelChange(e, node); }}
+        onChange={(e) => { changeCollectionLabel(e, node); }}
       />
     );
   }
