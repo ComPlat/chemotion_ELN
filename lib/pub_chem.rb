@@ -137,6 +137,56 @@ module PubChem
     [cas]
   end
 
+  def self.get_smiles_from_identifier(identifier)
+    return nil unless valid_identifier?(identifier)
+
+    fetch_smiles_from_pubchem(identifier.strip)
+  rescue StandardError => e
+    Rails.logger.error ["with identifier: #{identifier}", e.message, *e.backtrace].join($INPUT_RECORD_SEPARATOR)
+    nil
+  end
+
+  def self.valid_identifier?(identifier)
+    identifier.is_a?(String) && !identifier.strip.empty?
+  end
+
+  def self.fetch_smiles_from_pubchem(identifier)
+    url = build_smiles_url(identifier)
+    options = { timeout: 10, headers: { 'Content-Type' => 'application/json' } }
+
+    resp = HTTParty.get(url, options)
+    return nil unless resp.success?
+
+    parse_smiles_response(resp.body)
+  end
+
+  def self.build_smiles_url(identifier)
+    encoded_id = URI.encode_www_form_component(identifier)
+    properties = 'IsomericSMILES,CanonicalSMILES,SMILES,ConnectivitySMILES'
+    "#{http_s}#{PUBCHEM_HOST}/rest/pug/compound/name/#{encoded_id}/property/#{properties}/JSON"
+  end
+
+  def self.parse_smiles_response(response_body)
+    result = JSON.parse(response_body)
+    return nil if fault_response?(result)
+
+    extract_smiles_property(result)
+  end
+
+  def self.fault_response?(result)
+    return false unless result['Fault']
+
+    Rails.logger.warn "PubChem API error: #{result['Fault']['Code']} - #{result['Fault']['Message']}"
+    true
+  end
+
+  def self.extract_smiles_property(result)
+    props = result.dig('PropertyTable', 'Properties', 0)
+    return nil unless props.is_a?(Hash)
+
+    props['IsomericSMILES'] || props['CanonicalSMILES'] || props['SMILES'] || props['ConnectivitySMILES']
+  end
+
   def self.get_lcss_from_cid(cid)
     return nil unless cid
     return nil unless cid.is_a? Integer

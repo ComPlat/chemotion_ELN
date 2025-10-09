@@ -6,13 +6,20 @@ import {
 import PropTypes from 'prop-types';
 import uuid from 'uuid';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
-import BaseFetcher from 'src/fetchers/BaseFetcher';
+import CasLookupFetcher from 'src/fetchers/CasLookupFetcher';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import MatrixCheck from 'src/components/common/MatrixCheck';
+import UserStore from 'src/stores/alt/stores/UserStore';
 import { validateCas } from 'src/utilities/CasValidation';
 
-const apiCall = (cas, src = 'cas') => (src === 'cas' ? `https://commonchemistry.cas.org/api/detail?cas_rn=${cas}` : `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${cas}/property/CanonicalSMILES/JSON`);
-function FastInput(props) {
-  const [value, setValue] = useState(null);
+function FastInput({ fnHandle }) {
+  const [value, setValue] = useState('');
+
+  const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
+  const componentEnabled = MatrixCheck(currentUser.matrix, 'fastInput');
+
+  if (!componentEnabled) return null;
+
   const notify = (_params) => {
     NotificationActions.add({
       title: _params.title,
@@ -27,46 +34,48 @@ function FastInput(props) {
 
   const searchSmile = () => {
     LoadingActions.start();
-    props.fnHandle(value);
+    fnHandle(value);
   };
 
   const searchCas = (cas) => {
-    let params = {
-      apiEndpoint: apiCall(cas),
-      requestMethod: 'get',
-      jsonTranformation: json => json
-    };
     LoadingActions.start();
-    BaseFetcher.withoutBodyData(params).then((cjson) => {
-      if (cjson.message) {
-        params = {
-          apiEndpoint: apiCall(cas, 'pubchem'),
-          requestMethod: 'get',
-          jsonTranformation: json => json
-        };
-        BaseFetcher.withoutBodyData(params).then((pjson) => {
-          if (pjson.Fault) {
-            notify({ title: 'CAS Error', lvl: 'error', msg: pjson.Fault.Code });
-          } else {
-            props.fnHandle(pjson.PropertyTable.Properties[0].CanonicalSMILES, cas);
-          }
-        }).catch((err) => {
-          notify({ title: 'CAS Error', lvl: 'error', msg: err });
+    CasLookupFetcher.fetchByCas(cas)
+      .then((result) => {
+        fnHandle(result.smiles, result.cas);
+
+        if (result.source === 'pubchem') {
+          notify({
+            title: 'Info',
+            lvl: 'info',
+            msg: 'Data retrieved from PubChem',
+          });
+        }
+      })
+      .catch((err) => {
+        const errorMsg = err.message || err.toString() || 'Failed to look up data';
+
+        notify({
+          title: 'CAS Lookup Error',
+          lvl: 'error',
+          msg: `Unable to retrieve data: ${errorMsg}`,
         });
-      } else {
-        props.fnHandle(cjson.smile, cas);
-      }
-    }).catch((err) => {
-      notify({ title: 'CAS Error', lvl: 'error', msg: err });
-    }).finally(() => {
-      LoadingActions.stop();
-    });
+      })
+      .finally(() => {
+        LoadingActions.stop();
+      });
   };
 
   const searchString = (e) => {
     const input = value;
-    if (!input) return;
     if (e.key === 'Enter' || e.type === 'click') {
+      if (!input.trim()) {
+        notify({
+          title: 'Input Error',
+          lvl: 'error',
+          msg: 'CAS/SMILES input is required',
+        });
+        return;
+      }
       const getCas = validateCas(input, false);
       if (getCas !== 'smile') {
         searchCas(getCas);
@@ -96,7 +105,7 @@ function FastInput(props) {
             onChange={updateValue}
             value={value}
             onKeyPress={(e) => searchString(e)}
-            placeholder="fast create by CAS/Smiles..."
+            placeholder="Fast create by CAS/Smiles..."
           />
           <Button
             variant="light"

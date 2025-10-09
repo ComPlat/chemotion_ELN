@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: matrices
@@ -42,9 +44,19 @@ class Matrice < ApplicationRecord
   end
 
   def self.molecule_viewer
-    rec = find_by(name: 'moleculeViewer')
-    { feature_enabled: rec&.enabled || false }.merge(rec&.configs || {}).deep_symbolize_keys
+    configs_for('moleculeViewer')
   end
+
+  def self.fast_input
+    configs_for('fastInput')
+  end
+
+  def self.configs_for(name)
+    rec = find_by(name: name)
+    { feature_enabled: rec&.enabled || false }.merge(rec&.configs || {}).deep_symbolize_keys.with_indifferent_access
+  end
+
+  private_class_method :configs_for
 
   private
 
