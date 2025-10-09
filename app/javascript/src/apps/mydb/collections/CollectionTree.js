@@ -124,7 +124,12 @@ function CollectionTree({ isCollapsed }) {
                   {collections.length === 0
                     ? <div className="text-muted text-center p-2">No collections</div>
                     : collections.map((collection) => {
-                      return <CollectionSubtree key={collection.id} root={collection} sharedWithMe={sharedWithMe} level={1} />
+                      return <CollectionSubtree
+                        key={`${collection.id}-${collection.label}`}
+                        root={collection}
+                        sharedWithMe={sharedWithMe}
+                        level={1}
+                      />
                     })}
                 </div>
               )}

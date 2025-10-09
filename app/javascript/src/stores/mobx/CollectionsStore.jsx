@@ -43,6 +43,7 @@ export const Collection = types.model({
   get ancestorIds() { return self.ancestry.split('/').filter(Number).map(element => parseInt(element)) },
   get isRootCollection() { return self.ancestry == '/' },
   isAncestorOf(collection) {
+    if (!collection.ancestorIds) { return false }
     return collection.ancestorIds.indexOf(self.id) != -1
   },
   isParentOf(collection) { return self.id == collection.ancestorIds.findLast(id => true) },
@@ -67,16 +68,37 @@ export const CollectionsStore = types
     current_user_id: types.maybeNull(types.integer),
     own_collections: types.array(Collection),
     shared_with_me_collections: types.array(Collection),
+    update_tree: types.maybeNull(types.boolean, false),
   })
   .actions(self => ({
     fetchCollections: flow(function* fetchCollections() {
       let all_collections = yield CollectionsFetcher.fetchCollections();
-      self.own_collections.clear();
-      self.shared_with_me_collections.clear();
+      self.own_collections.clear()
+      self.shared_with_me_collections.clear()
 
+      self.setOwnCollections(all_collections.own)
+      self.setSharedWithMeCollections(all_collections.shared_with_me)
+    }),
+    addCollectionNode: flow(function* addCollectionNode(collection) {
+      const params = { 
+        label: 'New Collection', parent_id: (collection.id == -1 ? '' : collection.id), inventory_id: collection.inventory_id
+      }
+      let collectionItem = yield CollectionsFetcher.addCollection(params)
+      if (collectionItem) {
+        self.addCollection(Collection.create(collectionItem), self.own_collections)
+        self.update_tree = true;
+      }
+    }),
+    deleteCollectionNode: flow(function* deleteCollectionNode(collection) {
+      let all_collections = yield CollectionsFetcher.deleteCollection(collection.id)
+      self.own_collections.clear()
+      self.setOwnCollections(all_collections.collections)
+      self.update_tree = true;
+    }),
+    setOwnCollections(collections) {
       // basic presorting, so we can assume that parent objects are encountered before child objects when iterating the collection array
-      all_collections.own.sort(presort);
-      all_collections.own.forEach(collection => {
+      collections.sort(presort);
+      collections.forEach(collection => {
         const chemRepoCollectionLabels = ['chemotion-repository.net', 'transferred']
         if (collection.is_locked && (collection.label == 'All' || !chemRepoCollectionLabels.includes(collection.label))) {
           return
@@ -95,9 +117,10 @@ export const CollectionsStore = types
           self.addCollection(collectionItem, ownOrChemRepoCollection)
         }
       });
-
+    },
+    setSharedWithMeCollections(collections) {
       // group shared collections by owner
-      const sharedWithMeCollections = self.presortSharedWithMeCollections(all_collections.shared_with_me)
+      const sharedWithMeCollections = self.presortSharedWithMeCollections(collections)
 
       sharedWithMeCollections.forEach((collection, i) => {
         if (i === 0 || i > 0 && sharedWithMeCollections[i - 1].owner !== collection.owner) {
@@ -109,7 +132,7 @@ export const CollectionsStore = types
           self.shared_with_me_collections[parentOwnerIndex].addChild(collection)
         }
       });
-    }),
+    },
     presortSharedWithMeCollections(collections) {
       return collections
         .sort(presort)
@@ -122,6 +145,13 @@ export const CollectionsStore = types
       } else {
         return self.current_user;
       }
+    },
+    allDescendantIds() {
+      let allDescendantIds = [];
+      self.own_collections.forEach((collection) => {
+        allDescendantIds.push(self.descendantIds(collection))
+      })
+      return allDescendantIds.flat(Infinity);
     },
     descendantIds(collection) {
       return collection.children.flatMap(child => [child.id].concat(self.descendantIds(child)))
@@ -143,6 +173,22 @@ export const CollectionsStore = types
       } else {
         ownOrSharedCollection[parentIndex].addChild(collection)
       }
+    },
+    changeLabelInTree(collections, node, label) {
+      collections.find((c) => {
+        if (c.id == node.id) {
+          c.label = label;
+        } else if (c.children.length >= 1) {
+          self.changeLabelInTree(c.children, node, label);
+        }
+      })
+    },
+    updateCollectionLabel(label, collection) {
+      self.changeLabelInTree(self.own_collections, collection, label)
+      self.update_tree = true
+    },
+    setUpdateTree(value) {
+      self.update_tree = value
     },
   }))
   .views(self => ({
