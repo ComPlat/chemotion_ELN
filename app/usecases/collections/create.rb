@@ -33,12 +33,9 @@ module Usecases
       end
 
       def create_collection(parent:, label:, inventory:)
-        # the new child collection will be created with position 0, 
-        # the position will be adjusted to 1 afterwards
-
         current_user.collections.create!(
           parent: parent,
-          position: parent.children.map(&:position).max + 1,
+          position: parent.children.count + 1,
           label: label,
           inventory: inventory
         )
