@@ -454,8 +454,11 @@ module RecoveryDB
       end
 
       def restore_attachments(element_type, old_element_id, new_element_id, new_user_id)
-        attachments = RecoveryDB::Models::Attachment.where(attachable_type: element_type.name,
-                                                           attachable_id: old_element_id)
+        attachments = RecoveryDB::Models::Attachment.where(
+          attachable_type: element_type.name,
+          attachable_id: old_element_id,
+        )
+
         attachments.each do |attachment|
           attrs = attachment.attributes.with_indifferent_access.except(
             :id, :attachable_id, :created_by, :created_by_type, :log_data, :version
@@ -466,11 +469,30 @@ module RecoveryDB
           attrs[:created_by_type] = 'User'
           attrs[:version] = '/'
 
-          Attachment.create!(attrs)
+          changed = fix_conversion_derivative_in_attrs!(attrs)
+          new_attachment = Attachment.create!(attrs)
+          if changed
+            attacher = new_attachment.attachment_attacher
+            attacher.set(new_attachment.attachment)
+            attacher.create_derivatives
+            new_attachment.attachment_data = attacher.get
+            new_attachment.save!
+          end
         rescue StandardError => e
-          Rails.logger.error "Failed to restore Attachment #{attachment.id}:#{e.message}"
+          Rails.logger.error "Failed to restore Attachment #{attachment.id}: #{e.message}"
           raise
         end
+      end
+
+      def fix_conversion_derivative_in_attrs!(attrs)
+        return false unless attrs.dig('attachment_data', 'metadata', 'mime_type') == 'image/tiff'
+        return false unless attrs.dig('attachment_data', 'derivatives', 'conversion', 'id')&.start_with?('/')
+
+        attrs['attachment_data']['derivatives'].delete('conversion')
+        true
+      rescue StandardError => e
+        Rails.logger.error("Failed to fix 'conversion' in attributes: #{e.message}")
+        false
       end
 
       def restore_reactions_samples(original_reaction_id, new_reaction_id, created_elements, new_user_id,
