@@ -35,14 +35,22 @@ class SpectraActions {
     };
   }
 
-  SaveToFile(spcInfo, peaksStr, shift, scan, thres, integration, multiplicity, predict, cb, keepPred = false, waveLengthStr, cyclicvolta, curveIdx = 0, simulatenmr = false, previousSpcInfos, isSaveCombined = false, axesUnitsStr, detector, dscMetaData) {
+  SaveToFile(spcInfo, peaksStr, shift, scan, thres, integration, multiplicity, predict, cb, keepPred = false, waveLengthStr, cyclicvolta, curveIdx = 0, simulatenmr = false, previousSpcInfos, isSaveCombined = false, axesUnitsStr, detector, dscMetaData, onSaved) {
     return (dispatch) => {
       AttachmentFetcher.saveSpectrum(spcInfo.idx, peaksStr, shift, scan, thres, integration, multiplicity, predict, keepPred, waveLengthStr, cyclicvolta, curveIdx, simulatenmr, previousSpcInfos, isSaveCombined, axesUnitsStr, detector, dscMetaData)
         .then((fetchedFiles) => {
           dispatch({ fetchedFiles, spcInfo });
-          cb();
+          if (onSaved) {
+            onSaved(fetchedFiles, spcInfo);
+          }
+          if (cb) {
+            cb();
+          }
         }).catch((errorMessage) => {
           console.log(errorMessage); // eslint-disable-line
+          if (onSaved) {
+            onSaved(null, spcInfo, errorMessage);
+          }
         });
     };
   }
