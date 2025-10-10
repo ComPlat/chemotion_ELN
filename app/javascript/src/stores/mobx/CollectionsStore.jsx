@@ -45,17 +45,26 @@ export const Collection = types.model({
   },
 })).views(self => ({
   get ancestorIds() { return self.ancestry.split('/').filter(Number).map(element => parseInt(element)) },
+  find(collection_id) {
+    if (collection_id == self.id) return self;
+    if (collection.children.length == 0) return null;
+
+    let collection = null
+    for (let i = 0; i < self.children.length; i++) {
+      collection = self.children[i].find(collection_id)
+      if (collection) return collection;
+    }
+
+    return null;
+  },
   get isRootCollection() { return self.ancestry == '/' },
   isAncestorOf(collection) {
     if (!collection.ancestorIds) { return false }
     return collection.ancestorIds.indexOf(self.id) != -1
   },
   isParentOf(collection) { return self.id == collection.ancestorIds.findLast(id => true) },
+  get idAndDescendantIds() { return [self.id].concat(self.children.flatMap(child => child.idAndDescendantIds)) },
 }));
-
-const recursively_sort_by_position = (tree) => {
-  tree.sort((a, b) => { a.position - b.position })
-}
 
 const presort = (a, b) => {
   const number_of_parents_a = a.ancestry.split('/').filter(Number).length;
@@ -67,7 +76,6 @@ const presort = (a, b) => {
 
 export const CollectionsStore = types
   .model({
-    all_collection: types.maybeNull(Collection),
     chemotion_repository_collection: types.maybeNull(Collection),
     current_user_id: types.maybeNull(types.integer),
     own_collections: types.array(Collection),
@@ -125,22 +133,19 @@ export const CollectionsStore = types
       // basic presorting, so we can assume that parent objects are encountered before child objects when iterating the collection array
       collections.sort(presort);
       collections.forEach(collection => {
-        const chemRepoCollectionLabels = ['chemotion-repository.net', 'transferred']
-        if (collection.is_locked && (collection.label == 'All' || !chemRepoCollectionLabels.includes(collection.label))) {
-          return
-        }
-
-        if (collection.label == 'chemotion-repository.net') {
+        if (collection.is_locked && collection.label == 'All') {
+          // do nothing and skip this collection
+        } else if (collection.label == 'chemotion-repository.net') {
           self.chemotion_repository_collection = Collection.create(collection);
         } else {
           const collectionItem = Collection.create(collection)
 
-          const ownOrChemRepoCollection =
+          const collectionTree =
             (self.chemotion_repository_collection && collectionItem.ancestorIds.includes(self.chemotion_repository_collection.id))
               ? self.chemotion_repository_collection.children
               : self.own_collections
           
-          self.addCollectionItem(collectionItem, ownOrChemRepoCollection)
+          self.addCollectionToTree(collectionItem, collectionTree)
         }
       });
     },
@@ -172,24 +177,14 @@ export const CollectionsStore = types
         return self.current_user;
       }
     },
-    allDescendantIds() {
-      let allDescendantIds = [];
-      self.own_collections.forEach((collection) => {
-        allDescendantIds.push(self.descendantIds(collection))
-      })
-      return allDescendantIds.flat(Infinity);
-    },
-    descendantIds(collection) {
-      return collection.children.flatMap(child => [child.id].concat(self.descendantIds(child)))
-    },
-    addCollectionItem(collection, ownOrSharedCollection) {
-      const parentIndex = ownOrSharedCollection.findIndex(element => element.isAncestorOf(collection))
+    addCollectionToTree(collection, collectionTree) {
+      const parentIndex = collectionTree.findIndex(element => element.isAncestorOf(collection))
 
       if (collection.isRootCollection || parentIndex === -1) {
         if (parentIndex === -1 && !collection.isRootCollection) { collection.resetAncestry() }
 
-        ownOrSharedCollection.push(collection)
-        ownOrSharedCollection.sort((a, b) => {
+        collectionTree.push(collection)
+        collectionTree.sort((a, b) => {
           if (a.position != null && b.position != null) { return a.position - b.position }
           else if (a.position != null && b.position == null) { return -1 }
           else if (a.position == null && b.position != null) { return 1 }
@@ -199,7 +194,7 @@ export const CollectionsStore = types
           else { console.debug('unsortable collections:', a, b); return 0 }
         })
       } else {
-        ownOrSharedCollection[parentIndex].addChild(collection)
+        collectionTree[parentIndex].addChild(collection)
       }
     },
     changeTabsSegmentInTree(collections, node) {
@@ -239,6 +234,30 @@ export const CollectionsStore = types
     },
   }))
   .views(self => ({
+    find(collection_id) {
+      let collection = null
+      // search under chemotion repository collection if present
+      if (self.chemotion_repository_collection) {
+        collection = self.chemotion_repository_collection.find(collection_id)
+        if (collection) return collection;
+      }
+      // search in own collections
+      for (let i = 0; i < self.own_collections.length; i++) {
+        collection = self.own_collections[i].find(collection_id)
+        if (collection) return collection;
+      }
+      // search shared collections next
+      for (let i = 0; i < self.shared_with_me_collections.length; i++) {
+        collection = self.shared_with_me_collections[i].find(collection_id)
+        if (collection) return collection;
+      }
+
+      return null;
+    },
     get ownCollections() { return values(self.own_collections) },
     get sharedWithMeCollections() { return values(self.shared_with_me_collections) },
+    isOwnCollection(collection_id) { return self.ownCollectionIds.indexOf(collection_id) != -1 },
+    isSharedCollection(collection_id) { return self.sharedCollectionIds.indexOf(collection_id) != -1 },
+    get ownCollectionIds() { return self.own_collections.flatMap(collection => collection.idAndDescendantIds) },
+    get sharedCollectionIds() { return self.shared_collections.flatMap(collection => collection.idAndDescendantIds) },
   }));

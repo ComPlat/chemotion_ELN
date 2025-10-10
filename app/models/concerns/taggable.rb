@@ -91,31 +91,16 @@ module Taggable
   end
   # Populate Collections tag
   def collection_tag
-    klass = Labimotion::Utils.col_by_element(self.class.name).underscore.pluralize
-    klass = 'collections_celllines' if klass == 'collections_cellline_samples'
-    return unless respond_to?(klass)
+    collections_join_relation = Labimotion::Utils.col_by_element(self.class.name).underscore.pluralize
+    collections_join_relation = 'collections_celllines' if collections_join_relation == 'collections_cellline_samples'
+    return unless respond_to?(collections_join_relation)
 
-    cols = []
-    send(klass).each do |cc|
-      next unless c = cc.collection
-      next if c.label == 'All' && c.is_locked
+    send(collections_join_relation).map do |join_entry|
+      next unless collection = join_entry.collection
+      next if collection.label == 'All' && collection.is_locked
 
-      cols.push({
-                  name: c.label, is_shared: c.is_shared, user_id: c.user_id,
-                  id: c.id, shared_by_id: c.shared_by_id,
-                  is_synchronized: false
-                })
-      next unless c.is_synchronized
-
-      c.sync_collections_users&.each do |syn|
-        cols.push({
-                    name: c.label, is_shared: c.is_shared, user_id: syn.user_id,
-                    id: syn.id, shared_by_id: syn.shared_by_id,
-                    is_synchronized: c.is_synchronized
-                  })
-      end
-    end
-    cols
+      { id: collection.id }
+    end.compact
   end
 
   def grouped_analyses
