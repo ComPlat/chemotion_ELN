@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import propTypes from 'prop-types';
 import { Tabs, Tab, Modal } from 'react-bootstrap';
 
@@ -7,6 +7,7 @@ import SharedWithMeCollections from 'src/apps/mydb/collections/SharedWithMeColle
 import CollectionTabs from 'src/apps/mydb/collections/CollectionTabs';
 
 function CollectionManagementModal({ show, onHide }) {
+  const [activeKey, setActiveKey] = useState('own');
   return (
     <Modal
       show={show}
@@ -20,15 +21,15 @@ function CollectionManagementModal({ show, onHide }) {
         Collection Management
       </Modal.Header>
       <Modal.Body>
-        <Tabs defaultActiveKey={0} id="collection-management-tab" className="surface-tabs">
-          <Tab eventKey={0} title="My Collections">
-            <MyCollections />
+        <Tabs activeKey={activeKey} id="collection-management-tab" onSelect={(key) => setActiveKey(key)} className="surface-tabs">
+          <Tab eventKey="own" title="My Collections">
+            <MyCollections activeKey={activeKey} />
           </Tab>
-          <Tab eventKey={2} title="Collections shared with me ">
+          <Tab eventKey="shared" title="Collections shared with me ">
             <SharedWithMeCollections />
           </Tab>
-          <Tab eventKey={4} title="Collection Tabs">
-            <CollectionTabs />
+          <Tab eventKey="tabs" title="Collection Tabs">
+            <CollectionTabs activeKey={activeKey} />
           </Tab>
         </Tabs>
       </Modal.Body>

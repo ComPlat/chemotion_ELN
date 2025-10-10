@@ -7,18 +7,16 @@ import { cloneDeep, isEmpty } from 'lodash';
 import { List } from 'immutable';
 import TabLayoutEditor from 'src/apps/mydb/elements/tabLayout/TabLayoutEditor';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import UserActions from 'src/stores/alt/actions/UserActions';
 import { capitalizeWords } from 'src/utilities/textHelper';
 import { filterTabLayout, getArrayFromLayout } from 'src/utilities/CollectionTabsHelper';
 import { allElnElmentsWithLabel } from 'src/apps/generic/Utils';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
-const CollectionTabs = () => {
+const CollectionTabs = ({ activeKey }) => {
   const collectionsStore = useContext(StoreContext).collections;
-  const ownCollections = collectionsStore.ownCollections;
   const [showModal, setShowModal] = useState(false);
-  const [tree, setTree] = useState({ label: 'My Collections', id: -1, children: cloneDeep(ownCollections) });
+  const [tree, setTree] = useState({});
   const [profileData, setProfileData] = useState({});
   const [currentCollection, setCurrentCollection] = useState({});
   const [layouts, setLayouts] = useState(allElnElmentsWithLabel.reduce((acc, { name }) => {
@@ -31,24 +29,24 @@ const CollectionTabs = () => {
   };
 
   useEffect(() => {
-    // Langt das??? Sind die daten aktuell nach dem Speichern der tabs?
-    //const { profile } = UserStore.getState();
-    //if (profile && profile.data) {
-    //  setProfileData(profile.data)
-    //}
-    UserActions.fetchProfile();
-
-    const onUserStoreChange = (state) => {
-      const data = (state.profile && state.profile.data) || {};
-      if (!data) {
-        UserActions.fetchProfile();
-      }
-      setProfileData(data);
+    const { profile } = UserStore.getState();
+    if (profile && profile.data) {
+      setProfileData(profile.data)
     }
-
-    UserStore.listen(onUserStoreChange);
-    return () => UserStore.unlisten(onUserStoreChange);
   }, []);
+
+  useEffect(() => {
+    if (activeKey == 'tabs') {
+      setTree({ label: 'My Collections', id: -1, children: cloneDeep(collectionsStore.own_collections) });
+    }
+  }, [activeKey]);
+
+  useEffect(() => {
+    if (collectionsStore.update_tree && activeKey == 'tabs') {
+      collectionsStore.setUpdateTree(false);
+      setTree({ label: 'My Collections', id: -1, children: cloneDeep(collectionsStore.own_collections) });
+    }
+  }, [collectionsStore.update_tree]);
 
   const handleChange = (tree) => {
     setTree(tree);
@@ -60,28 +58,18 @@ const CollectionTabs = () => {
       acc[name] = layout;
       return acc;
     }, {});
-    
-    // TODO: save tabs segments of currentCollection
-
-    //    const { currentCollection: cCol, layouts } = this.state;
-    //    CollectionActions.createTabsSegment({ layoutSegments, currentCollectionId: cCol.id });
-    //    this.setState({ showModal: false });
-    //    if (cCol.ancestry) {
-    //      this.state.tree.children.find((c) => c.id === parseInt(cCol.ancestry)).children.find((ch) => ch.id === cCol.id).tabs_segment = layoutSegments;
-    //    } else {
-    //      this.state.tree.children.find((c) => c.id === cCol.id).tabs_segment = layoutSegments;
-    //    }
-
+    collectionsStore.updateCollection(currentCollection, layoutSegments);
     setShowModal(false);
   }
 
   const onClickCollection = (node) => {
+    const tabsSegment = typeof (node.tabs_segment) == 'string' ? JSON.parse(node.tabs_segment) : node.tabs_segment;
     const layouts = allElnElmentsWithLabel.reduce((acc, { name }) => {
       let layout;
-      if (isEmpty(node.tabs_segment[name])) {
+      if (isEmpty(tabsSegment[name])) {
         layout = (profileData && profileData[`layout_detail_${name}`]) || {};
       } else {
-        layout = JSON.parse(node.tabs_segment)[name];
+        layout = tabsSegment[name];
       };
       acc[name] = getArrayFromLayout(layout, name, false);
       return acc;
