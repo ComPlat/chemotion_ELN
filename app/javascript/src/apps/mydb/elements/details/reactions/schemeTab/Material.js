@@ -812,10 +812,6 @@ class Material extends Component {
     const metricPrefixesMolConc = ['m', 'n'];
     const metricMolConc = (material.metrics && material.metrics.length > 3 && metricPrefixes.indexOf(material.metrics[3]) > -1) ? material.metrics[3] : 'm';
 
-    const inputsStyle = {
-      paddingRight: 2,
-      paddingLeft: 2,
-    };
     const isAmountDisabledByWeightPercentage = reaction.weight_percentage
       && material.weight_percentage > 0;
 
@@ -907,12 +903,7 @@ class Material extends Component {
   }
 
   toggleTarget(isTarget) {
-    /*
-    allow switching target/real for all materials
-    if (this.props.materialGroup !== 'products') {
-      this.handleAmountTypeChange(!isTarget ? 'target' : 'real');
-    }
-    */
+    // allow switching target/real for all materials
     this.handleAmountTypeChange(!isTarget ? 'target' : 'real');
   }
 
@@ -990,10 +981,9 @@ class Material extends Component {
   }
 
   switchTargetReal() {
-    const { reaction, material, materialGroup } = this.props;
-    const isProduct = materialGroup === 'products';
-    const isTarget = !isProduct && material.amountType === 'target';
-    const isDisabled = isProduct || !permitOn(reaction);
+    const { reaction, material } = this.props;
+    const isTarget = material.amountType === 'target';
+    const isDisabled = !permitOn(reaction);
 
     return (
       <Button
