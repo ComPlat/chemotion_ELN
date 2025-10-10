@@ -47,7 +47,7 @@ export const Collection = types.model({
   get ancestorIds() { return self.ancestry.split('/').filter(Number).map(element => parseInt(element)) },
   find(collection_id) {
     if (collection_id == self.id) return self;
-    if (collection.children.length == 0) return null;
+    if (self.children.length == 0) return null;
 
     let collection = null
     for (let i = 0; i < self.children.length; i++) {
@@ -97,12 +97,12 @@ export const CollectionsStore = types
       }
       const collectionItem = yield CollectionsFetcher.addCollection(params)
       if (collectionItem) {
-        self.addCollectionItem(Collection.create(collectionItem), self.own_collections)
+        self.addCollectionToTree(Collection.create(collectionItem), self.own_collections)
         self.update_tree = true
       }
     }),
     bulkUpdateCollection: flow(function* bulkUpdateCollection(collections) {
-      const params = { collections: self.prepareForBulkUpdate(collections, []) }
+      const params = { collections: collections }
       const all_collections = yield CollectionsFetcher.buldUpdateForOwnCollections(params);
       if (all_collections) {
         self.own_collections.clear()
@@ -133,7 +133,7 @@ export const CollectionsStore = types
       // basic presorting, so we can assume that parent objects are encountered before child objects when iterating the collection array
       collections.sort(presort);
       collections.forEach(collection => {
-        if (collection.is_locked && collection.label == 'All') {
+        if (collection.is_locked && (collection.label == 'All' || collection.label !== 'chemotion-repository.net')) {
           // do nothing and skip this collection
         } else if (collection.label == 'chemotion-repository.net') {
           self.chemotion_repository_collection = Collection.create(collection);
@@ -222,16 +222,6 @@ export const CollectionsStore = types
     setUpdateTree(value) {
       self.update_tree = value
     },
-    prepareForBulkUpdate(collections, paramsArray) {
-      collections.forEach((collection) => {
-        if (collection.children.length > 0) {
-          paramsArray.push({ id: collection.id, label: collection.label, children: self.prepareForBulkUpdate(collection.children, []) })
-        } else {
-          paramsArray.push({ id: collection.id, label: collection.label, children: collection.children })
-        }
-      })
-      return paramsArray
-    },
   }))
   .views(self => ({
     find(collection_id) {
@@ -259,5 +249,6 @@ export const CollectionsStore = types
     isOwnCollection(collection_id) { return self.ownCollectionIds.indexOf(collection_id) != -1 },
     isSharedCollection(collection_id) { return self.sharedCollectionIds.indexOf(collection_id) != -1 },
     get ownCollectionIds() { return self.own_collections.flatMap(collection => collection.idAndDescendantIds) },
-    get sharedCollectionIds() { return self.shared_collections.flatMap(collection => collection.idAndDescendantIds) },
+    get sharedCollectionIds() { return self.shared_with_me_collections.flatMap(collection => collection.idAndDescendantIds) },
+    descendantIds(collection) { return collection.children.flatMap(collection => collection.idAndDescendantIds) },
   }));

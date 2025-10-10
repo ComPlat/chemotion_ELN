@@ -7,34 +7,47 @@ import SyncedCollectionsUsersModal from 'src/apps/mydb/collections/SyncedCollect
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
-const MyCollections = () => {
+const MyCollections = ({ activeKey }) => {
   const collectionsStore = useContext(StoreContext).collections;
   const [isModified, setIsModified] = useState(false);
   const [tree, setTree] = useState({ label: 'My Collections', id: -1, children: cloneDeep(collectionsStore.own_collections) });
   const [sharingModal, setSharingModal] = useState({ action: null, show: false, node: {} });
 
   useEffect(() => {
-    if (collectionsStore.update_tree) {
+    if ((collectionsStore.update_tree || isModified) && activeKey == 'own') {
       collectionsStore.setUpdateTree(false);
       setTree({ label: 'My Collections', id: -1, children: cloneDeep(collectionsStore.own_collections) });
     }
-  }, [collectionsStore.update_tree])
+  }, [collectionsStore.update_tree, isModified])
 
   const handleChange = (tree) => {
-    setTree(tree)
+    setTree(tree);
+    setIsModified(true);
   }
 
-  const addCollectionNode = (node) => {
-    collectionsStore.addCollectionNode(node);
+  const addCollection = (node) => {
+    collectionsStore.addCollection(node);
+    setIsModified(false);
   }
 
   const changeCollectionLabel = (e, node) => {
+    // TODO: close modal and tree is changed - reset own_collections
+    // change order of tree and change label after removes new order
     collectionsStore.updateCollectionLabel(e.target.value, node);
     setIsModified(true);
   }
 
+  const bulkUpdate = () => {
+    // filter empty objects
+    const collections = tree.children.filter((child) => child.label);
+    collectionsStore.bulkUpdateCollection(collections);
+    setIsModified(false);
+  }
+
   const deleteCollection = (node) => {
-    collectionsStore.deleteCollectionNode(node);
+    collectionsStore.deleteCollection(node);
+    setIsModified(false);
+
     //     const children = node.children || [];
     //     const parent = this.findParentById(this.state.tree, node.id);
     // 
@@ -49,19 +62,6 @@ const MyCollections = () => {
     //       });
     //     }
     //     this.forceUpdate();
-  }
-
-  // TODO: confirmation before start the updating process?
-  const bulkUpdate = () => {
-    // filter empty objects
-    const collections = tree.children.filter((child) => child.label);
-    
-    //const params = {
-    //  collections,
-    //  deleted_ids: this.state.deleted_ids
-    //};
-    
-    //CollectionActions.bulkUpdateUnsharedCollections(params);
   }
 
   const addCollectionShares = (node) => {
@@ -113,9 +113,10 @@ const MyCollections = () => {
   const addCollectionButton = (node) => {
     return (
       <Button
+        id={`add-new-collection-button${node.id !== -1 ? `-${node.id}` : ''}`}
         size="sm"
         variant="success"
-        onClick={() => addCollectionNode(node)}
+        onClick={() => addCollection(node)}
       >
         <i className="fa fa-plus" />
       </Button>
@@ -129,10 +130,11 @@ const MyCollections = () => {
           {isModified && (
             <Button
               id="save-collections-button"
+              className="me-2"
               size="sm"
               variant="warning"
               onMouseDown={(e) => e.stopPropagation()}
-              onClick={bulkUpdate()}
+              onClick={() => bulkUpdate()}
             >
               Save
             </Button>
