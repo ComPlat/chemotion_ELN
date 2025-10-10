@@ -2,6 +2,7 @@ import { keys, values } from 'mobx';
 import { flow, types } from 'mobx-state-tree';
 
 import CollectionsFetcher from 'src/fetchers/CollectionsFetcher';
+import CollectionSharesFetcher from 'src/fetchers/CollectionSharesFetcher';
 import UserStore from 'src/stores/alt/stores/UserStore';
 
 export const Collection = types.model({
@@ -38,7 +39,10 @@ export const Collection = types.model({
       else if (a.label.toUpperCase() > b.label.toUpperCase()) { return 1 }
       else { console.debug('unsortable collections:', a, b); return 0 }
     })
-  }
+  },
+  resetAncestry() {
+    self.ancestry = '/'
+  },
 })).views(self => ({
   get ancestorIds() { return self.ancestry.split('/').filter(Number).map(element => parseInt(element)) },
   get isRootCollection() { return self.ancestry == '/' },
@@ -72,28 +76,50 @@ export const CollectionsStore = types
   })
   .actions(self => ({
     fetchCollections: flow(function* fetchCollections() {
-      let all_collections = yield CollectionsFetcher.fetchCollections();
+      const all_collections = yield CollectionsFetcher.fetchCollections();
       self.own_collections.clear()
       self.shared_with_me_collections.clear()
 
       self.setOwnCollections(all_collections.own)
       self.setSharedWithMeCollections(all_collections.shared_with_me)
     }),
-    addCollectionNode: flow(function* addCollectionNode(collection) {
+    addCollection: flow(function* addCollection(collection) {
       const params = { 
         label: 'New Collection', parent_id: (collection.id == -1 ? '' : collection.id), inventory_id: collection.inventory_id
       }
-      let collectionItem = yield CollectionsFetcher.addCollection(params)
+      const collectionItem = yield CollectionsFetcher.addCollection(params)
       if (collectionItem) {
-        self.addCollection(Collection.create(collectionItem), self.own_collections)
-        self.update_tree = true;
+        self.addCollectionItem(Collection.create(collectionItem), self.own_collections)
+        self.update_tree = true
       }
     }),
-    deleteCollectionNode: flow(function* deleteCollectionNode(collection) {
-      let all_collections = yield CollectionsFetcher.deleteCollection(collection.id)
+    bulkUpdateCollection: flow(function* bulkUpdateCollection(collections) {
+      const params = { collections: self.prepareForBulkUpdate(collections, []) }
+      const all_collections = yield CollectionsFetcher.buldUpdateForOwnCollections(params);
+      if (all_collections) {
+        self.own_collections.clear()
+        self.setOwnCollections(all_collections)
+        self.update_tree = true
+      }
+    }),
+    updateCollection: flow(function* updateCollection(collection, tabs_segment) {
+      const params = { label: collection.label, tabs_segment: tabs_segment }
+      const collectionItem = yield CollectionsFetcher.updateCollection(collection.id, params)
+      if (collectionItem) {
+        self.changeTabsSegmentInTree(self.own_collections, collectionItem)
+        self.update_tree = true
+        return self.own_collections
+      }
+    }),
+    deleteCollection: flow(function* deleteCollection(collection) {
+      const all_collections = yield CollectionsFetcher.deleteCollection(collection.id)
       self.own_collections.clear()
-      self.setOwnCollections(all_collections.collections)
-      self.update_tree = true;
+      self.setOwnCollections(all_collections)
+      self.update_tree = true
+    }),
+    getSharedWith: flow(function* getSharedWith(collectionId) {
+      const sharedWith = yield CollectionSharesFetcher.getCollectionSharedWith(collectionId)
+      console.log(sharedWith)
     }),
     setOwnCollections(collections) {
       // basic presorting, so we can assume that parent objects are encountered before child objects when iterating the collection array
@@ -114,7 +140,7 @@ export const CollectionsStore = types
               ? self.chemotion_repository_collection.children
               : self.own_collections
           
-          self.addCollection(collectionItem, ownOrChemRepoCollection)
+          self.addCollectionItem(collectionItem, ownOrChemRepoCollection)
         }
       });
     },
@@ -156,10 +182,12 @@ export const CollectionsStore = types
     descendantIds(collection) {
       return collection.children.flatMap(child => [child.id].concat(self.descendantIds(child)))
     },
-    addCollection(collection, ownOrSharedCollection) {
+    addCollectionItem(collection, ownOrSharedCollection) {
       const parentIndex = ownOrSharedCollection.findIndex(element => element.isAncestorOf(collection))
 
       if (collection.isRootCollection || parentIndex === -1) {
+        if (parentIndex === -1 && !collection.isRootCollection) { collection.resetAncestry() }
+
         ownOrSharedCollection.push(collection)
         ownOrSharedCollection.sort((a, b) => {
           if (a.position != null && b.position != null) { return a.position - b.position }
@@ -173,6 +201,15 @@ export const CollectionsStore = types
       } else {
         ownOrSharedCollection[parentIndex].addChild(collection)
       }
+    },
+    changeTabsSegmentInTree(collections, node) {
+      collections.find((c) => {
+        if (c.id == node.id) {
+          c.tabs_segment = node.tabs_segment;
+        } else if (c.children.length >= 1) {
+          self.changeTabsSegmentInTree(c.children, node);
+        }
+      })
     },
     changeLabelInTree(collections, node, label) {
       collections.find((c) => {
@@ -189,6 +226,16 @@ export const CollectionsStore = types
     },
     setUpdateTree(value) {
       self.update_tree = value
+    },
+    prepareForBulkUpdate(collections, paramsArray) {
+      collections.forEach((collection) => {
+        if (collection.children.length > 0) {
+          paramsArray.push({ id: collection.id, label: collection.label, children: self.prepareForBulkUpdate(collection.children, []) })
+        } else {
+          paramsArray.push({ id: collection.id, label: collection.label, children: collection.children })
+        }
+      })
+      return paramsArray
     },
   }))
   .views(self => ({
