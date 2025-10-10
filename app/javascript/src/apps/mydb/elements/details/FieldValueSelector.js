@@ -18,6 +18,7 @@ function FieldValueSelector({
   disableSpecificField,
   disabled,
   weightPercentageReference,
+  className,
 }) {
   const [selectedField, setSelectedField] = useState(onFirstRenderField || fieldOptions[0]);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -111,7 +112,7 @@ function FieldValueSelector({
   }
 
   return (
-    <div className="position-relative" style={{ zIndex: showDropdown ? 1050 : 'auto' }}>
+    <div className={`${className} position-relative`} style={{ zIndex: showDropdown ? 2200 : 'auto' }}>
       <OverlayTrigger
         placement="top"
         overlay={(
@@ -178,6 +179,7 @@ FieldValueSelector.propTypes = {
   disableSpecificField: PropTypes.bool,
   disabled: PropTypes.bool,
   weightPercentageReference: PropTypes.bool,
+  className: PropTypes.string,
 };
 
 FieldValueSelector.defaultProps = {
@@ -185,6 +187,7 @@ FieldValueSelector.defaultProps = {
   disableSpecificField: false,
   disabled: false,
   weightPercentageReference: false,
+  className: '',
 };
 
 export default FieldValueSelector;

@@ -349,6 +349,7 @@ class Material extends Component {
     return (reaction.weight_percentage ? this.customFieldValueSelector()
       : (
         <NumeralInputWithUnitsCompo
+          className="reaction-material__equivalent-input"
           size="sm"
           precision={4}
           value={material.equivalent}
@@ -381,6 +382,7 @@ class Material extends Component {
 
     return (
       <FieldValueSelector
+        className="reaction-material__equivalent-input"
         fieldOptions={['molar mass', 'weight percentage']}
         onFirstRenderField={fieldToShow}
         value={valueToShow}

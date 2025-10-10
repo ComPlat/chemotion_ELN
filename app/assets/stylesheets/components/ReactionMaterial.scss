@@ -54,14 +54,15 @@ $rm-sizes: (
   "square": 1.9rem,
   "small-numeral": 3.5rem,
   "numeral": 4rem,
+  "middle-numeral": 5.3rem,
   "numeral-with-units": 6.4rem,
   "large-numeral-with-units": 7.2rem,
 );
 
 $rm-columns: (
   "ratio": map-get($rm-sizes, "small-numeral"),
-  "equivalent": map-get($rm-sizes, "small-numeral"),
-  "yield": map-get($rm-sizes, "small-numeral"),
+  "equivalent": map-get($rm-sizes, "middle-numeral"),
+  "yield": map-get($rm-sizes, "middle-numeral"),
   "volume": map-get($rm-sizes, "numeral-with-units"),
   "mass": map-get($rm-sizes, "numeral-with-units"),
   "molarity": map-get($rm-sizes, "numeral-with-units"),
