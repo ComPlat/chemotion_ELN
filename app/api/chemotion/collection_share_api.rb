@@ -41,7 +41,7 @@ module Chemotion
           share.save
         end
 
-        present {}, status: 204
+        status 204
       end
 
       desc 'Update a collection share'
@@ -76,7 +76,7 @@ module Chemotion
 
         share.destroy
 
-        present {}, status: 204
+        status 204
       end
     end
   end

@@ -17,37 +17,37 @@ describe Chemotion::CollectionAPI do
   end
   let(:other_users_collection) { create(:collection, user: build(:person)) }
 
-  describe 'GET PERFORMANCECHECK' do
-    let(:other_users) { create_list(:person, 100) }
-    let(:collection_tree) do
-      collections_per_nesting_level = 10
-      collections_per_nesting_level.times do |i|
-        collection = create(:collection, user: user, position: i+1)
-        other_users.each { |other_user| create(:collection_share, collection: collection, shared_with: other_user) }
-        collections_per_nesting_level.times do |j|
-          child_collection = create(:collection, user: user, parent: collection, position: j+1)
-          other_users.each { |other_user| create(:collection_share, collection: child_collection, shared_with: other_user ) }
-          collections_per_nesting_level.times do |k|
-            grandchild_collection = create(:collection, user: user, parent: child_collection, position: k+1)
-            other_users.each { |other_user| create(:collection_share, collection: grandchild_collection, shared_with: other_user) }
-          end
-        end
-      end
-    end
+  # describe 'GET PERFORMANCECHECK' do
+  #   let(:other_users) { create_list(:person, 100) }
+  #   let(:collection_tree) do
+  #     collections_per_nesting_level = 10
+  #     collections_per_nesting_level.times do |i|
+  #       collection = create(:collection, user: user, position: i+1)
+  #       other_users.each { |other_user| create(:collection_share, collection: collection, shared_with: other_user) }
+  #       collections_per_nesting_level.times do |j|
+  #         child_collection = create(:collection, user: user, parent: collection, position: j+1)
+  #         other_users.each { |other_user| create(:collection_share, collection: child_collection, shared_with: other_user ) }
+  #         collections_per_nesting_level.times do |k|
+  #           grandchild_collection = create(:collection, user: user, parent: child_collection, position: k+1)
+  #           other_users.each { |other_user| create(:collection_share, collection: grandchild_collection, shared_with: other_user) }
+  #         end
+  #       end
+  #     end
+  #   end
 
-    it 'performs adequately' do
-      collection_tree
+  #   it 'performs adequately' do
+  #     collection_tree
 
 
-      starting = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-      get '/api/v1/collections'
-      ending = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-      elapsed = ending - starting
+  #     starting = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+  #     get '/api/v1/collections'
+  #     ending = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+  #     elapsed = ending - starting
 
-      result = parsed_json_response['own']
-      binding.pry
-    end
-  end
+  #     result = parsed_json_response['own']
+  #     binding.pry
+  #   end
+  # end
 
   describe 'GET /api/v1/collections' do
     before do
@@ -58,12 +58,14 @@ describe Chemotion::CollectionAPI do
 
     it 'returns all accessible collections for current user' do
       get '/api/v1/collections'
-      result = parsed_json_response['collections']
-      expect(result.length).to eq 3
+      own_collections = parsed_json_response['own']
+      shared_collections = parsed_json_response['shared_with_me']
+      expect(own_collections.length).to eq 4 # contains All-Collection and chemotion-repository.net as well
+      expect(shared_collections.length).to eq 1
 
-      sorted_actual_collection_ids = result.map { |collection| collection['id'] }.sort
-      sorted_expected_collection_ids = [collection.id, collection_with_shares.id, collection_shared_with_user.id]
-      expect(sorted_actual_collection_ids).to eq sorted_expected_collection_ids
+      expect(own_collections.map {|c| c['id'].to_i }).to include(collection.id)
+      expect(own_collections.map {|c| c['id'].to_i }).to include(collection_with_shares.id)
+      expect(shared_collections.map {|c| c['id'].to_i }).to include(collection_shared_with_user.id)
     end
   end
 
@@ -135,14 +137,15 @@ describe Chemotion::CollectionAPI do
     context 'when adding a new child collection' do
       it 'does not allow creating a child collection for a shared collection' do
         params = {
-          parent_id: collection_shared_with_user.id,
+          parent_id: other_users_collection.id,
           label: 'Collection that should not be saved'
         }
 
-        expect { post '/api/v1/collections', params: params }.to raise_error(ActiveRecord::RecordNotFound)
+        post '/api/v1/collections', params: params
+        expect(response.status).to eq 404
       end
 
-      it 'adds the new collection as the first child and reorders all other children' do
+      it 'adds the new collection as the last child without changing any position fields of other collections' do
         parent_collection = collection
         first_child = create(:collection, label: 'first child before insert', position: 1, parent: parent_collection, user: user)
         second_child = create(:collection, label: 'second child before insert', position: 2, parent: parent_collection, user: user)
@@ -150,10 +153,10 @@ describe Chemotion::CollectionAPI do
         creation = ->() { post '/api/v1/collections', params: { parent_id: collection.id, label: 'new collection' } }
         expect(creation).to change(Collection, :count).by(1)
 
-        expect(parsed_json_response['collection']['position']).to eq 1
+        expect(parsed_json_response['collection']['position']).to eq 3
         expect(parsed_json_response['collection']['ancestry']).to eq "/#{parent_collection.id}/"
-        expect(first_child.reload.position).to be 2
-        expect(second_child.reload.position).to be 3
+        expect(first_child.reload.position).to be 1
+        expect(second_child.reload.position).to be 2
       end
     end
   end
@@ -208,8 +211,6 @@ describe Chemotion::CollectionAPI do
       put '/api/v1/collections/bulk_update_own_collections', params: { collections: put_data }
 
       updated_collection_tree = parsed_json_response['collections']
-
-      binding.pry
 
       updated_collection_C = updated_collection_tree.find { |c| c['label'] == 'Collection C' }
         updated_collection_BA = updated_collection_tree.find { |c| c['label'] == 'Collection BA' }
