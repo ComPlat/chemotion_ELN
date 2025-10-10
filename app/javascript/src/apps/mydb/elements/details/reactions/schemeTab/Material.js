@@ -267,6 +267,7 @@ class Material extends Component {
       ? 100 : material.conversion_rate;
     return (
       <NumeralInputWithUnitsCompo
+        className="reaction-material__yield-input"
         precision={4}
         value={allowedConversionRateValue || 'n.d.'}
         unit="%"
@@ -330,6 +331,7 @@ class Material extends Component {
     return (reaction.weight_percentage ? this.customFieldValueSelector()
       : (
         <NumeralInputWithUnitsCompo
+          className="reaction-material__equivalent-input"
           size="sm"
           precision={4}
           value={material.equivalent}
@@ -362,6 +364,7 @@ class Material extends Component {
 
     return (
       <FieldValueSelector
+        className="reaction-material__equivalent-input"
         fieldOptions={['molar mass', 'weight percentage']}
         onFirstRenderField={fieldToShow}
         value={valueToShow}
