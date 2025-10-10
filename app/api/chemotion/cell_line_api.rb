@@ -23,13 +23,17 @@ module Chemotion
       get do
         scope = if params[:collection_id]
                   begin
-                    Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids)
-                              .find(params[:collection_id]).cellline_samples
+                    Collection.accessible_for(current_user)
+                              .find(params[:collection_id])
+                              .cellline_samples
                   rescue ActiveRecord::RecordNotFound
                     CelllineSample.none
                   end
                 else
                   # All collection of current_user
+                  # TODO: Question? Only own collections or shared as well?
+                  # TODO: Question 2: When using .none, why join at all? It does not return any records anyway
+                  # TODO: Other thought... having seen the "All collection of current_user" comment... is this maybe the case for displaying the "All" collection? Which has a collection id though...
                   CelllineSample.none.joins(:collections).where(collections: { user_id: current_user.id }).distinct
                 end.order('created_at DESC')
 
@@ -60,12 +64,7 @@ module Chemotion
         requires :id, type: Integer, desc: 'id of cell line sample to load'
       end
       get ':id' do
-        use_case = Usecases::CellLines::Load.new(params[:id], current_user)
-        begin
-          cell_line_sample = use_case.execute!
-        rescue StandardError => e
-          error!(e, 400)
-        end
+        cell_line_sample = Collection.accessible_for(current_user).cellline_samples.find(params[:id])
         return present cell_line_sample, with: Entities::CellLineSampleEntity
       end
 

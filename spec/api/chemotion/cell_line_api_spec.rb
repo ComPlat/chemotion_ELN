@@ -8,8 +8,7 @@ describe Chemotion::CellLineAPI do
   include_context 'api request authorization context'
 
   describe 'GET /api/v1/cell_lines/' do
-    let(:collection) { create(:collection) }
-    let!(:user) { create(:user, collections: [collection]) }
+    let(:collection) { create(:collection, user: user) }
     let(:material) { create(:cellline_material) }
     let!(:cell_line) { create(:cellline_sample, collections: [collection], cellline_material: material) }
     let!(:cell_line2) do
@@ -123,9 +122,8 @@ describe Chemotion::CellLineAPI do
   end
 
   describe 'GET /api/v1/cell_lines/{:id}' do
+    let(:collection) { create(:collection, user: user) }
     let(:cell_line) { create(:cellline_sample, collections: [collection]) }
-    let(:user) { create(:user, collections: [collection]) }
-    let(:collection) { create(:collection) }
 
     context 'when cell line exists' do
       before do
@@ -253,8 +251,7 @@ describe Chemotion::CellLineAPI do
   end
 
   describe 'POST /api/v1/cell_lines/copy' do
-    let(:collection) { create(:collection, label: 'other collection') }
-    let!(:user) { create(:user, collections: [collection]) }
+    let(:collection) { create(:collection, user: user, label: 'other collection') }
     let!(:cell_line) { create(:cellline_sample, collections: [collection]) }
     let(:allow_creation) { true }
     let(:container_param)  do
@@ -332,8 +329,7 @@ describe Chemotion::CellLineAPI do
   end
 
   describe 'POST /api/v1/cell_lines/split' do
-    let(:collection) { create(:collection, label: 'other collection') }
-    let!(:user) { create(:user, collections: [collection]) }
+    let(:collection) { create(:collection, user: user, label: 'other collection') }
     let!(:cell_line) { create(:cellline_sample, collections: [collection]) }
     let(:allow_creation) { true }
     let(:params) do
