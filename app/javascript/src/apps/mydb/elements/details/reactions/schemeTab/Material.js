@@ -197,12 +197,12 @@ class Material extends Component {
     const { materialGroup, reaction } = this.props;
 
     return (
-      <div className="reaction-material__ref-input">
+      <div>
         {
           materialGroup === 'products'
             ? this.renderProductReference(material, reaction)
             : (
-              <td>
+              <div>
                 {reaction.weight_percentage ? (
                   this.renderNestedReferenceRadios(material, reaction)
                 ) : (
@@ -216,7 +216,7 @@ class Material extends Component {
                     className="m-1"
                   />
                 )}
-              </td>
+              </div>
             )
         }
       </div>
@@ -1447,7 +1447,7 @@ class Material extends Component {
   renderProductReference(material, reaction) {
     return (
       reaction.weight_percentage ? (
-        <td>
+        <div>
           <OverlayTrigger
             placement="top"
             overlay={(
@@ -1466,13 +1466,14 @@ class Material extends Component {
               className="custom-radio m-1"
             />
           </OverlayTrigger>
-        </td>
-      ) : <td aria-label="Empty cell" />
+        </div>
+      ) : <div aria-label="Empty cell" />
     );
   }
 
   renderNestedReferenceRadios(material, reaction) {
     const isDisabled = !permitOn(reaction);
+    console.log(material.weight_percentage_reference);
 
     const outerClassNames = [
       'nested-radio-outer',

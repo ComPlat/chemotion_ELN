@@ -405,7 +405,7 @@ export default class ReactionDetailsScheme extends React.Component {
     switch (changeEvent.type) {
       case 'referenceChanged':
       case 'weightPercentageReferenceChanged':
-        this.onReactionChange(
+        onReactionChange(
           this.updatedReactionForReferenceChange(changeEvent, changeEvent.type)
         );
         break;
@@ -445,7 +445,7 @@ export default class ReactionDetailsScheme extends React.Component {
         );
         break;
       case 'weightPercentageChanged':
-        this.onReactionChange(
+        onReactionChange(
           this.updatedReactionForWeightPercentageChange(changeEvent)
         );
         break;
