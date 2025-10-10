@@ -7,6 +7,7 @@ import {
 } from 'react-bootstrap';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { aviatorNavigationWithCollectionId } from 'src/utilities/routesUtils';
+import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
 function ElementCollectionLabels({ element, placement }) {
@@ -24,7 +25,7 @@ function ElementCollectionLabels({ element, placement }) {
     aviatorNavigationWithCollectionId(label.id, element.type, element.id);
   }
 
-  const formatLabels = (labels)  =>{
+  const formatLabels = (labels) => {
     return labels.map((label, index) => {
       const collectionFromStore = collectionsStore.find(label.id)
       if (!collectionFromStore) return (<span />);
@@ -49,8 +50,8 @@ function ElementCollectionLabels({ element, placement }) {
     );
   }
 
-  const ownCollections = labels.filter(label => collectionsStore.isOwnCollection(label.id))
-  const sharedCollections = labels.filter(label => collectionsStore.isSharedCollection(label.id))
+  const ownCollections = element.tag.taggable_data.collection_labels.filter(label => collectionsStore.isOwnCollection(label.id))
+  const sharedCollections = element.tag.taggable_data.collection_labels.filter(label => collectionsStore.isSharedCollection(label.id))
 
   const collectionOverlay = (
     <Popover className="scrollable-popover" id="element-collections">
