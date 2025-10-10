@@ -53,21 +53,6 @@ module Chemotion
         present collection, with: Entities::OwnCollectionEntity, root: :collection
       end
 
-      desc 'Update a single own collection'
-      params do
-        requires :id, type: Integer
-        optional :label, type: String
-        optional :tabs_segment, type: Hash
-      end
-      put '/:id' do
-        collection = Collection.own_collections_for(current_user).find(params[:id])
-        attributes = { label: params[:label], tabs_segment: params[:tabs_segment] }.compact
-
-        collection.update(attributes)
-
-        present collection, with: Entities::OwnCollectionEntity, root: :collection
-      end
-
       desc 'Updates the tree of own collections, updating the labels and ancestry/position'
       params do
         requires :collections, type: Array do
@@ -82,6 +67,21 @@ module Chemotion
         own_collections = Collection.connection.exec_query(Collection.serialized_own_collections_for(current_user).to_sql)
 
         present own_collections, with: Entities::OwnCollectionEntity, root: :collections
+      end
+
+      desc 'Update a single own collection'
+      params do
+        requires :id, type: Integer
+        optional :label, type: String
+        optional :tabs_segment, type: Hash
+      end
+      put '/:id' do
+        collection = Collection.own_collections_for(current_user).find(params[:id])
+        attributes = { label: params[:label], tabs_segment: params[:tabs_segment] }.compact
+
+        collection.update(attributes)
+
+        present collection, with: Entities::OwnCollectionEntity, root: :collection
       end
 
       desc 'Deletes an own collection (shared collections can not be deleted, only the share rejected)'
