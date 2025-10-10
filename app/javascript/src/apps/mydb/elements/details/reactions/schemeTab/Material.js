@@ -989,10 +989,6 @@ class Material extends Component {
       </Tooltip>
     );
 
-    let disableFieldWithValidWeightPercentage = false;
-    if (reaction.weight_percentage && material.decoupled) {
-      disableFieldWithValidWeightPercentage = !!material.weight_percentage && !(material.weight_percentage > 0);
-    }
     const isAmountDisabledByWeightPercentage = reaction.weight_percentage
       && material.weight_percentage > 0;
     return (
@@ -1197,12 +1193,7 @@ class Material extends Component {
   }
 
   toggleTarget(isTarget) {
-    /*
-    allow switching target/real for all materials
-    if (this.props.materialGroup !== 'products') {
-      this.handleAmountTypeChange(!isTarget ? 'target' : 'real');
-    }
-    */
+    // allow switching target/real for all materials
     this.handleAmountTypeChange(!isTarget ? 'target' : 'real');
   }
 
@@ -1280,10 +1271,9 @@ class Material extends Component {
   }
 
   switchTargetReal() {
-    const { reaction, material, materialGroup } = this.props;
-    const isProduct = materialGroup === 'products';
-    const isTarget = !isProduct && material.amountType === 'target';
-    const isDisabled = isProduct || !permitOn(reaction);
+    const { reaction, material } = this.props;
+    const isTarget = material.amountType === 'target';
+    const isDisabled = !permitOn(reaction);
 
     return (
       <Button
