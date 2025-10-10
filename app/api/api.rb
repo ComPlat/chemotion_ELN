@@ -224,6 +224,7 @@ class API < Grape::API
   mount Chemotion::VesselAPI
   mount Chemotion::SequenceBasedMacromoleculeAPI
   mount Chemotion::SequenceBasedMacromoleculeSampleAPI
+  mount Chemotion::CollectionShareAPI
 
   if Rails.env.development?
     add_swagger_documentation(info: {
