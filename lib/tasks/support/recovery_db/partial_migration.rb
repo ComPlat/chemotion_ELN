@@ -31,7 +31,7 @@ module RecoveryDB
                                                     sync_collections_users users_devices devices collections_elements
                                                     elements element_klasses elements_elements elements_samples
                                                     segment_klasses segments user_labels users_admins users_groups
-                                                    molecule_names])
+                                                    molecule_names inventories])
       end
 
       def run
@@ -45,17 +45,27 @@ module RecoveryDB
         restore_element_klasses(created_elements)
         rec_users.each do |recovery_user|
           ActiveRecord::Base.transaction do
-            new_user = restore_user(recovery_user, created_elements)
+            temp_elements = created_elements.deep_dup
+            new_user = restore_user(recovery_user, temp_elements)
             user_id_map[recovery_user.id] = new_user.id
+            created_elements.merge!(temp_elements) # Only keep them if all succeeded
           rescue StandardError => e
             Rails.logger.error("Restoring user #{recovery_user.id} failed: #{e.message}")
             raise ActiveRecord::Rollback
           end
         end
+
         restore_sharing_and_synchronization(user_id_map)
         restore_user_admin(user_id_map)
         restore_user_group(user_id_map)
         @mount.destroy!
+
+        missing_user_ids = @user_ids - user_id_map.keys
+        Rails.logger.info do
+          msg = "#{user_id_map.size} of #{@user_ids.size} users restored."
+          msg += " Missing user IDs: #{missing_user_ids.join(', ')}" unless missing_user_ids.empty?
+          msg
+        end
       end
 
       def restore_element_klasses(created_elements)
@@ -99,13 +109,13 @@ module RecoveryDB
           handle_name_abbreviation(user_attributes)
           new_user = User.new(user_attributes)
           # Skip validations (e.g. password) when restoring
-          new_user.save(validate: false)
+          new_user.save!(validate: false)
           restore_profile(old_user, new_user)
           restore_user_label(old_user, new_user)
           restore_collections(old_user, new_user, created_elements)
           restore_sync_collection_users(
+            new_user: new_user,
             old_user_id: old_user.id,
-            new_user_id: new_user.id,
           )
           restore_elements_elements(created_elements, old_user, new_user)
           restore_elements_samples(created_elements, old_user, new_user)
@@ -190,8 +200,14 @@ module RecoveryDB
             end
           end
 
-          new_collection = build_new_collection(old_collection, new_user, id_map)
+          new_collection = build_new_collection(old_collection, new_user, id_map, created_elements)
           new_collection.save!
+
+          restore_sync_collection_users(
+            new_user: new_user,
+            old_collection_id: old_collection.id,
+            new_collection: new_collection,
+          )
 
           id_map[old_collection.id] = new_collection
           restore_collection_elements(old_collection, new_collection, new_user.id, created_elements)
@@ -201,14 +217,14 @@ module RecoveryDB
         end
       end
 
-      def build_new_collection(old_collection, new_user, id_map)
+      def build_new_collection(old_collection, new_user, id_map, created_elements)
         attributes = old_collection.attributes.except(*attributes_to_exclude)
         new_collection = Collection.new(attributes.merge(user_id: new_user.id))
-        restore_sync_collection_users(
-          new_user_id: new_user.id,
-          old_collection_id: old_collection.id,
-          new_collection_id: new_collection.id,
-        )
+
+        if old_collection.inventory_id.present?
+          new_inventory_id = restore_inventory(old_collection.inventory_id, created_elements)
+          new_collection.inventory_id = new_inventory_id
+        end
 
         return new_collection if old_collection.ancestry.blank?
 
@@ -218,11 +234,27 @@ module RecoveryDB
         new_collection
       end
 
-      def restore_sync_collection_users(new_user_id, old_user_id: nil, old_collection_id: nil, new_collection_id: nil)
-        # Build query conditions
+      def restore_inventory(old_inventory_id, created_elements)
+        inventory_key = ['Inventory', old_inventory_id]
+        new_inventory_id = created_elements[inventory_key]
+        unless new_inventory_id
+          old_inventory = RecoveryDB::Models::Inventory.find(old_inventory_id)
+          attributes = old_inventory.attributes.except(*attributes_to_exclude)
+          new_inventory = Inventory.create!(attributes)
+          new_inventory_id = new_inventory.id
+
+          created_elements[inventory_key] = new_inventory_id
+        end
+        new_inventory_id
+      rescue ActiveRecord::RecordInvalid => e
+        Rails.logger.error("Failed to restore inventory #{old_inventory_id}: #{e.message}")
+        raise
+      end
+
+      def restore_sync_collection_users(new_user:, old_user_id: nil, old_collection_id: nil, new_collection: nil)
         conditions = {}
         conditions[:user_id] = old_user_id if old_user_id
-        conditions[:collection_id] = old_collection_id if old_collection_id
+        conditions[:collection_id] = old_collection_id
         conditions[:shared_by_id] = @user_ids
 
         sync_collections = RecoveryDB::Models::SyncCollectionsUser.where(conditions)
@@ -230,14 +262,22 @@ module RecoveryDB
         sync_collections.find_each do |sync_collection|
           attrs = sync_collection.attributes.except(*attributes_to_exclude)
 
-          attrs['user_id'] = new_user_id
-          # Replace collection_id only if it matches the provided old_collection_id
-          if old_collection_id && sync_collection.collection_id == old_collection_id
-            attrs['collection_id'] = new_collection_id
-          end
+          # Decide if collection should be assigned
+          collection_id = if old_collection_id && sync_collection.collection_id == old_collection_id
+                            new_collection&.id
+                          end
 
-          # Leave shared_by_id (sharer) as-is and skip validations — will be fixed later
+          # Prevent duplicate insert
+          existing = SyncCollectionsUser.find_by(
+            user_id: new_user.id,
+            collection_id: collection_id,
+            shared_by_id: attrs['shared_by_id'],
+          )
+          next if existing
+
           record = SyncCollectionsUser.new(attrs)
+          record.user = new_user
+          record.collection = new_collection if collection_id
           record.save!(validate: false)
         end
       end
@@ -267,17 +307,17 @@ module RecoveryDB
         join_records.each do |join_record|
           original_id = join_record.public_send(foreign_key)
           element_key = [main_model.name, original_id]
+          new_element_id = created_elements[element_key]
 
-          unless created_elements.key?(element_key)
+          unless new_element_id
             new_element_id = restore_element(
               recovery_element_model, main_model, original_id, new_user_id, created_elements, new_collection
             )
+            created_elements[element_key] = new_element_id if new_element_id
           end
           next unless new_element_id
 
-          created_elements[element_key] = new_element_id
           new_element = main_model.find(new_element_id)
-
           join_model.create!(
             collection: new_collection,
             model_name.underscore.to_sym => new_element,
@@ -285,32 +325,40 @@ module RecoveryDB
         end
       end
 
-      def serialized_text_columns_for(model)
-        model.columns.select do |column|
-          column.type == :text && model.type_for_attribute(column.name).is_a?(ActiveRecord::Type::Serialized)
-        end.map(&:name)
+      def serialized_field(value)
+        JSON.parse(value)
+      rescue JSON::ParserError
+        begin
+          YAML.safe_load(
+            value,
+            permitted_classes: [ActiveSupport::HashWithIndifferentAccess, Hash, Array, Hashie::Mash],
+            aliases: true,
+          )
+        rescue Psych::SyntaxError
+          Rails.logger.warn("Failed to parse serialized field: #{e.message}")
+          nil
+        end
       end
 
       def process_text_columns_attributes(model, attributes)
-        serialized_text_columns = serialized_text_columns_for(model)
+        attributes = attributes.transform_keys(&:to_s)
 
-        serialized_text_columns.each do |field|
+        serialized_fields = model.attribute_types.select do |_, type|
+          type.is_a?(ActiveRecord::Type::Serialized)
+        end.keys
+
+        serialized_fields.each do |field|
           value = attributes[field]
           next unless value.is_a?(String)
 
-          begin
-            parsed = JSON.parse(value)
-          rescue JSON::ParserError
-            parsed = YAML.safe_load(value, permitted_classes: [ActiveSupport::HashWithIndifferentAccess, Hash, Array],
-                                           aliases: true)
-          end
-
+          parsed = serialized_field(value)
           attributes[field] = parsed if parsed.is_a?(Hash) || parsed.is_a?(Array)
         end
 
         attributes
       end
 
+      # rubocop:disable Metrics/ParameterLists
       def restore_element(recovery_model, main_model, original_id, new_user_id, created_elements, new_collection)
         original = recovery_model.find_by(id: original_id)
         return nil unless original
@@ -329,10 +377,11 @@ module RecoveryDB
         new_record.save(validate: false)
         restore_associations(main_model, original_id, new_record.id, new_user_id, created_elements, new_collection)
         new_record.id
-      rescue ActiveRecord::RecordInvalid => e
+      rescue StandardError => e
         Rails.logger.error "Failed to restore #{main_model.name} #{original_id}: #{e.message}"
         raise
       end
+      # rubocop:enable Metrics/ParameterLists
 
       def handle_molecule(original_sample, new_user_id)
         result = { molecule_id: nil, molecule_name_id: nil }
@@ -342,6 +391,8 @@ module RecoveryDB
                    else
                      Molecule.find_or_create_dummy
                    end
+
+        molecule ||= Molecule.find_or_create_dummy
         result[:molecule_id] = molecule.id
 
         if original_sample.molecule_name_id
@@ -759,7 +810,10 @@ module RecoveryDB
       end
 
       def restore_synchronization(user_id_map)
-        collections = Collection.synchronized.where(user_id: user_id_map.values).includes(:sync_collections_users)
+        collections = Collection.synchronized
+                                .where(user_id: user_id_map.values)
+                                .includes(:sync_collections_users)
+
         collections.find_each do |collection|
           collection.sync_collections_users.each do |sync_user|
             new_user_id = user_id_map[sync_user.shared_by_id]
@@ -769,6 +823,8 @@ module RecoveryDB
             else
               sync_user.destroy
             end
+          rescue ActiveRecord::RecordInvalid => e
+            Rails.logger.error("Skipping sync_user #{sync_user.id}: #{e.message}")
           end
 
           collection.update!(is_synchronized: false) if collection.sync_collections_users.reload.empty?
@@ -802,8 +858,8 @@ module RecoveryDB
       def attributes_to_exclude
         %w[
           id created_at updated_at deleted_at user_id ancestry attachable_id molecule_id
-          containable_id containable_type parent_id log_data identifier
-          element_klass_id user_ids admin_ids segment_klass_id element_id
+          containable_id containable_type parent_id log_data identifier collection_id
+          element_klass_id user_ids admin_ids segment_klass_id element_id inventory_id
         ]
       end
 
