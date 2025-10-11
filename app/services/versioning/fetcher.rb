@@ -18,6 +18,8 @@ module Versioning
 
     def versions
       case record
+      when ::Collection
+        Versioning::Fetchers::CollectionFetcher.call(collection: record)
       when ::Sample
         Versioning::Fetchers::SampleFetcher.call(sample: record)
       when ::Reaction
