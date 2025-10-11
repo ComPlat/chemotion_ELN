@@ -142,7 +142,7 @@ const AnalysesContainer = ({ readonly }) => {
       {
         containers.length > 0 ? (
           <div>
-            <div className="d-flex justify-content-between align-items-center mb-3">
+            <div className="d-flex justify-content-between align-items-center mb-3 sticky-top bg-white p-2 border-bottom">
               {modeButton()}
               <ButtonToolbar className="gap-2">
                 <CommentButton

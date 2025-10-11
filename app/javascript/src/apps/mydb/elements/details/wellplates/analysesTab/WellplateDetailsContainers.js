@@ -160,7 +160,7 @@ export default class WellplateDetailsContainers extends Component {
 
     if (analyses_container.length != 1 || analyses_container[0].children.length == 0) {
       return (
-        <div className='d-flex justify-content-between align-items-center my-2 mx-3'>
+        <div className='d-flex justify-content-between align-items-center my-2 mx-3 sticky-top bg-white p-2 border-bottom'>
           <p className='m-0'>
             There are currently no Analyses.
           </p>
@@ -174,7 +174,7 @@ export default class WellplateDetailsContainers extends Component {
 
     return (
       <div>
-        <div className="d-flex justify-content-end my-2 mx-3">
+        <div className="d-flex justify-content-end my-2 mx-3 sticky-top bg-white p-2 border-bottom">
           <ButtonToolbar className="gap-2">
             <CommentButton toggleCommentBox={this.toggleCommentBox} size="xsm" />
             {this.addButton()}

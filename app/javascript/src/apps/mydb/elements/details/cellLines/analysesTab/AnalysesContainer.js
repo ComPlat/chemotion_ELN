@@ -194,7 +194,7 @@ class AnalysesContainer extends Component {
     const { currentElement } = ElementStore.getState();
     return (
       <div className="analysis-container">
-        <div className="d-flex justify-content-between mb-3">
+        <div className="d-flex justify-content-between mb-3 sticky-top bg-white p-2 border-bottom">
           {this.renderModeButton()}
           <ButtonToolbar className="gap-2">
             <CommentButton toggleCommentBox={this.toggleCommentBox} size="xsm" disable={false} />
