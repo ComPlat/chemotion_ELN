@@ -117,6 +117,7 @@ class Collection < ApplicationRecord
       shared_collections_for(user).select(
         [
           'collections.*',
+          'collection_shares.id AS collection_share_id',
           'collection_shares.permission_level AS permission_level',
           'inventories.name AS inventory_name',
           'inventories.prefix AS inventory_prefix',
