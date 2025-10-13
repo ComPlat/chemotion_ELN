@@ -15,5 +15,6 @@ module Entities
     expose! :owner
     expose! :is_locked
     expose! :permission_level
+    expose! :collection_share_id
   end
 end
