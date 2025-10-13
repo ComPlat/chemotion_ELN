@@ -1,7 +1,7 @@
 import 'whatwg-fetch';
 
 export default class CollectionSharesFetcher {
-  static getCollectionSharedWith(collectionId) {
+  static getCollectionSharedWithUsers(collectionId) {
     return fetch(`/api/v1/collection_shares.json?collection_id=${collectionId}`,
       { ...this._httpOptions() })
       .then(response => response.json())
