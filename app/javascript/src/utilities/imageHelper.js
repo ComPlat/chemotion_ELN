@@ -58,7 +58,6 @@ const getAttachmentFromContainer = (container) => {
  * @returns {Promise<string>} A promise that resolves to a base64 image source string or a fallback SVG path.
  */
 const fetchImageSrcByAttachmentId = async (id) => {
-  console.log('preferred-attachment-id', id);
   try {
     if (!id) {
       return '/images/wild_card/no_attachment.svg';
