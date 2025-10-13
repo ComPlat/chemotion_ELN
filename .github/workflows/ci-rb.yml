@@ -23,7 +23,7 @@ jobs:
       PRONTO_PULL_REQUEST_ID: ${{ github.event.pull_request.number }}
     steps:
       - name: checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - run: |
           git fetch --no-tags --prune --unshallow origin +refs/heads/*:refs/remotes/origin/*
 
@@ -73,10 +73,50 @@ jobs:
 
     env:
       RAILS_ENV: test
+      YARN_CACHE_FOLDER: /home/runner/.cache/yarn
 
     steps:
       - name: checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+
+      - name: Setup Nodejs
+        id: setup_node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .tool-versions
+          #node-version: ${{ matrix.node-version }}
+      - run: corepack enable
+
+ 
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+          path: tmp/main
+          fetch-depth: 1
+
+      - name: compute cache key based on main's yarn.lock
+        id: cache_key
+        run: |
+          echo "key=${{ steps.setup_node.outputs.node-version }}-${{ hashFiles('tmp/main/yarn.lock') }}" >> $GITHUB_OUTPUT
+
+
+      - name: Detect Yarn cache dir
+        id: yarndir
+        run: |
+          if yarn --version | grep -q '^1\.'; then
+            DIR="$(yarn cache dir)"
+          else
+            DIR="$(yarn config get cacheFolder)"
+          fi
+          echo "dir=$DIR" >> $GITHUB_OUTPUT
+
+      - name: Restore dependency cache (from main)
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ steps.yarndir.outputs.dir }}
+          key: ${{ steps.cache_key.outputs.key }}
+          restore-keys: |
+            ${{ steps.setup_node.outputs.node-version }}-
 
       - name: create user for datacollectors testing
         run: |
@@ -109,7 +149,12 @@ jobs:
         run: bundle install
 
       - name: yarn install
-        run:  ./prepare-nodejspkg.sh
+        run: |
+          if yarn --version | grep -q '^1\.'; then
+            yarn install --frozen-lockfile
+          else
+            yarn install --immutable
+          fi
 
       - name: prepare postgres
         run: |
@@ -125,8 +170,6 @@ jobs:
           eval `ssh-agent`
           RAILS_ENV=test bundle exec rspec --exclude-pattern spec/{features}/**/*_spec.rb spec
 
-      - name: Setup LCOV
-        uses: hrishikesh-kadam/setup-lcov@v1
       - name: coverage rspec unit
         if: github.event.pull_request && (github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name) && (github.triggering_actor != 'dependabot[bot]')  # don't run on PRs from forks because of missing write permission: https://github.com/orgs/community/discussions/26829
         uses: zgosalvez/github-actions-report-lcov@v4
