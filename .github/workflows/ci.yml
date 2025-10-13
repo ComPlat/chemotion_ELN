@@ -10,6 +10,7 @@ on:
       - 'yarn.lock'
       - 'spec/javascripts/**'
       - '.tool-versions' # ignore changes to .tool-versions for now as it is mostly updated for nodejs version updates
+      - '**/.js'
   push:
     branches:
       - main
