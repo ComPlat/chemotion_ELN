@@ -44,15 +44,13 @@ jobs:
           node-version: ${{ steps.node_version.outputs.NODE_VERSION }}
           #node-version: ${{ matrix.node-version }}
 
+      - name: compute cache key based on main's yarn.lock
+        id: cache_key
+        run: |
+          echo "key=v${{ steps.node_version.outputs.NODE_VERSION }}-${{ hashFiles('tmp/main/yarn.lock') }}" >> $GITHUB_OUTPUT
+
       - name: Enable Corepack (Yarn)
         run: corepack enable
-
-
-      # Get the yarn.lock from origin/main and hash it
-      - name: Compute main yarn.lock hash
-        id: mainlock
-        run: |
-          echo "hash=$(sha256sum tmp/main/yarn.lock | cut -d' ' -f1)" >> $GITHUB_OUTPUT
 
       # Figure out Yarn cache directory (works for v1 and v2+/Berry)
       - name: Detect Yarn cache dir
@@ -70,11 +68,10 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: ${{ steps.yarndir.outputs.dir }}
-          key: yarn-main-${{ runner.os }}-${{ steps.node_version.outputs.NODE_VERSION }}-${{ steps.mainlock.outputs.hash }}
-
+          key: ${{ steps.cache_key.outputs.key }}
           # Optional: allow fallback to previous main caches if hash changed recently
           restore-keys: |
-            yarn-main-${{ runner.os }}-${{ steps.node_version.outputs.NODE_VERSION }}-
+            v${{ steps.node_version.outputs.NODE_VERSION }}-
 
       - name: Install deps
         run: |
@@ -90,7 +87,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: ${{ steps.yarndir.outputs.dir }}
-          key: yarn-main-${{ runner.os }}-${{ steps.node_version.outputs.NODE_VERSION }}-${{ steps.mainlock.outputs.hash }}
+          key: ${{ steps.cache_key.outputs.key }}
 
       - name: Tests
         run: yarn test
