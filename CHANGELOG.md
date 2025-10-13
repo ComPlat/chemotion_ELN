@@ -2,6 +2,26 @@
 
 ## Latest
 
+
+## [v2.1.1]
+> (2025-10-00)
+
+
+* Refactor:
+  * sample FastInput with new CAS API (#2705)
+
+* Fixes
+  * ensure tiff attachment can be previewed (#2693)
+  * fix(spectra): missing 1H operations and crash on multi spectra (#2695)
+  * history formaters (#2566)
+
+* Chore
+  * Bump Chem-spectra-app serice to [1.3.2](https://github.com/ComPlat/chem-spectra-app/releases/tag/v1.3.2)
+
+* Test
+  * fix flaky sample api test (#2699)
+
+
 ## [v2.1.0]
 > (2025-08-24)
 
