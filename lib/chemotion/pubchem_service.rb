@@ -19,6 +19,14 @@ module Chemotion::PubchemService
     interpret_record records, true
   end
 
+  # Fetch SMILES from PubChem by identifier
+  # @param identifier [String] identifier
+  # @return [Hash] { smiles: String, nil }
+  def self.smiles_from_identifier(identifier)
+    smiles = PubChem.get_smiles_from_identifier(identifier)
+    { smiles: smiles }
+  end
+
   def self.interpret_record(record, as_array = false)
     record = JSON.parse(record) if record.is_a?(String)
     result = {
