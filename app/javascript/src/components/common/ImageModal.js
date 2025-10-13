@@ -41,6 +41,14 @@ export default class ImageModal extends Component {
     }
   }
 
+  // keyboard handler extracted from inline render for thumbnails
+  handleThumbKeyDown = (e, thumb) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      this.handleSetPreferred(thumb);
+    }
+  };
+
   handleModalClose(e) {
     stopEvent(e);
     this.setState({ showModal: false });
@@ -75,7 +83,6 @@ export default class ImageModal extends Component {
   }
 
   buildImageSrcArrayFromThumbnails(thumbnails) {
-    console.log(thumbnails);
     if (thumbnails && thumbnails.length > 0) {
       return thumbnails.map(({ id, thumbnail }) => ({
         id,
@@ -87,11 +94,15 @@ export default class ImageModal extends Component {
 
   fetchThumbnails() {
     const { ChildrenAttachmentsIds } = this.props;
-    console.log('ChildrenAttachmentsIds', ChildrenAttachmentsIds);
     if (ChildrenAttachmentsIds && ChildrenAttachmentsIds.length > 0) {
-      AttachmentFetcher.fetchThumbnails(ChildrenAttachmentsIds).then((result) => {
-        this.setState({ thumbnails: this.buildImageSrcArrayFromThumbnails(result.thumbnails) });
-      });
+      AttachmentFetcher.fetchThumbnails(ChildrenAttachmentsIds)
+        .then((result) => {
+          this.setState({ thumbnails: this.buildImageSrcArrayFromThumbnails(result.thumbnails) });
+        })
+        .catch((err) => {
+          console.error('Failed to fetch thumbnails', err);
+          this.setState({ thumbnails: [] });
+        });
     }
   }
 
@@ -104,18 +115,31 @@ export default class ImageModal extends Component {
     // render image of preferred attachment thumbnail if available
     if (preferredThumbnail) {
       this.setState({ isLoading: true });
-      const src = await fetchImageSrcByAttachmentId(preferredThumbnail);
-      this.setState({ thumbnail: src, fetchSrc: src, isLoading: false });
-      return;
+      try {
+        const src = await fetchImageSrcByAttachmentId(preferredThumbnail);
+        this.setState({ thumbnail: src, fetchSrc: src, isLoading: false });
+        return;
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('Failed to fetch preferred thumbnail', err);
+        this.setState({ isLoading: false });
+      }
     }
-    if (attachment?.thumb) {
-      const src = await fetchImageSrcByAttachmentId(attachment.id);
-      this.setState({ thumbnail: src });
-    } else if (attachment?.is_new || attachment?.is_pending) {
-      const previewSrc = isImage ? attachment?.file?.preview : defaultUnavailable;
-      this.setState({ thumbnail: previewSrc });
-    } else {
-      this.setState({ thumbnail: defaultNoAttachment });
+
+    try {
+      if (attachment?.thumb) {
+        const src = await fetchImageSrcByAttachmentId(attachment.id);
+        this.setState({ thumbnail: src });
+      } else if (attachment?.is_new || attachment?.is_pending) {
+        const previewSrc = isImage ? attachment?.file?.preview : defaultUnavailable;
+        this.setState({ thumbnail: previewSrc });
+      } else {
+        this.setState({ thumbnail: defaultNoAttachment });
+      }
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to fetch image thumbnail', err);
+      this.setState({ thumbnail: defaultUnavailable, isLoading: false });
     }
   }
 
@@ -192,10 +216,7 @@ export default class ImageModal extends Component {
                   tabIndex={0}
                   onClick={() => this.handleSetPreferred(thumb)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      this.handleSetPreferred(thumb);
-                    }
+                    this.handleThumbKeyDown(e, thumb);
                   }}
                 >
                   <img
