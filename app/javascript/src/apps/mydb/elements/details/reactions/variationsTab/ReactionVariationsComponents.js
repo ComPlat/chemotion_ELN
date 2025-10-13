@@ -650,6 +650,12 @@ MaterialEntrySelection.propTypes = {
   onChange: PropTypes.func.isRequired,
 };
 
+function ToolHeader() {
+  return (
+    <span>Tools</span>
+  );
+}
+
 function MenuHeader({
   column, context, setSort, names, gasType = 'off'
 }) {
@@ -719,7 +725,7 @@ function MenuHeader({
   return (
     <div className="d-grid gap-1">
       <span
-        className="header-title"
+        className="ag-header-cell-text"
         onClick={() => setName(names[(names.indexOf(name) + 1) % names.length])}
       >
         {`${name} ${gasType !== 'off' ? `(${gasType})` : ''}`}
@@ -821,5 +827,6 @@ export {
   NoteCellEditor,
   MaterialOverlay,
   MenuHeader,
+  ToolHeader,
   ColumnSelection,
 };
