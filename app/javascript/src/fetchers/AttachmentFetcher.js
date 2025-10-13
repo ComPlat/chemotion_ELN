@@ -17,38 +17,33 @@ const fileFromAttachment = (attachment, containerId) => {
 
 export default class AttachmentFetcher {
   static fetchImageAttachment(params) {
-    // remove id from params and build the query string with the rest of the params
-    const urlParams = new URLSearchParams(
-      Object.keys(params)
-        .filter((key) => key !== 'id')
-        .map((key) => [key, params[key]])
-    );
+    let url = '/api/v1/attachments/image/';
 
-    const url = `/api/v1/attachments/${params.id}${urlParams.toString() === '' ? '' : `?${urlParams}`}`;
+    if (params.id) {
+      url += encodeURIComponent(params.id);
+    } else if (params.identifier) {
+      const urlParams = new URLSearchParams({ identifier: params.identifier });
+      url += `-1?${urlParams}`;
+    } else {
+      throw new Error('Either id or identifier must be provided.');
+    }
+
     return fetch(url, {
       credentials: 'same-origin',
       method: 'GET',
     })
-      .then((response) => response.blob())
-      .then((blob) => ({ type: blob.type, data: URL.createObjectURL(blob) }))
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-  }
-
-  static fetchImageAttachmentByIdentifier(params) {
-    const urlParams = new URLSearchParams({
-      identifier: params.identifier,
-    });
-
-    return fetch(`/api/v1/attachments/image/-1?${urlParams}`, {
-      credentials: 'same-origin',
-      method: 'GET',
-    })
-      .then((response) => response.blob())
-      .then((blob) => ({ type: blob.type, data: URL.createObjectURL(blob) }))
-      .catch((errorMessage) => {
-        console.log(errorMessage);
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error ${response.status}`);
+        }
+        return response.blob();
+      })
+      .then((blob) => ({
+        type: blob.type,
+        data: URL.createObjectURL(blob),
+      }))
+      .catch((error) => {
+        console.error('Failed to fetch image attachment:', error);
       });
   }
 
