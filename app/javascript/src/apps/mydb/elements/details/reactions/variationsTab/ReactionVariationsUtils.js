@@ -13,7 +13,7 @@ import {
   PropertyFormatter, PropertyParser,
   MaterialFormatter, MaterialParser,
   EquivalentParser, GasParser, FeedstockParser,
-  NoteCellRenderer, NoteCellEditor, MenuHeader, RowToolsCellRenderer
+  NoteCellRenderer, NoteCellEditor, MenuHeader, RowToolsCellRenderer, ToolHeader
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import UserStore from 'src/stores/alt/stores/UserStore';
 
@@ -534,13 +534,13 @@ function updateColumnDefinitions(columnDefinitions, field, property, newValue) {
 function getColumnDefinitions(selectedColumns, materials, gasMode, externalEntryDefs = {}) {
   return [
     {
-      headerName: 'Tools',
-      field: 'tools',
+      headerComponent: ToolHeader,
       cellRenderer: RowToolsCellRenderer,
       lockPosition: 'left',
       sortable: false,
       maxWidth: 100,
-      cellDataType: false,
+      cellDataType: false
+
     },
     {
       headerName: 'Metadata',
