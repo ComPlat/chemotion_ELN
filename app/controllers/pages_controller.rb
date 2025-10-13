@@ -29,7 +29,7 @@ class PagesController < ApplicationController
       sfc = ScifinderNCredential.find_by(created_by: current_user.id)
       ScifinderNCredential.create!(provider_authorize.merge(created_by: current_user.id)) if sfc.blank?
       sfc.update!(provider_authorize) if sfc.present?
-      redirect_to root_path
+      redirect_to pages_settings_path
     rescue StandardError
       redirect_to '/500.html'
     end
@@ -39,7 +39,7 @@ class PagesController < ApplicationController
     @user = current_user
 
     if params[:reactions_count].present?
-      @user.counters['reactions'] = params[:reactions_count].to_i
+      @user.counters['reactions'] = params[:reactions_count].to_i.to_s
       @user.reaction_name_prefix = params[:reaction_name_prefix]
     end
 
