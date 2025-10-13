@@ -92,7 +92,7 @@ export default class ImageModal extends Component {
     try {
       const { attachment } = this.props;
       if (!attachment) throw new Error('Attachment is not provided');
-      AttachmentFetcher.fetchImageAttachment({ id: attachment.id, annotated: true }).then(
+      AttachmentFetcher.fetchImageAttachmentByIdentifier({ identifier: attachment.identifier, annotated: true }).then(
         (result) => {
           if (!result?.data) throw new Error('Attachment is not provided');
           this.setState({ fetchSrc: result.data, isPdf: result.type === 'application/pdf' });
@@ -226,6 +226,7 @@ ImageModal.propTypes = {
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     filename: PropTypes.string,
     thumb: PropTypes.bool,
+    identifier: PropTypes.string,
   }).isRequired,
   showPop: PropTypes.bool.isRequired,
   popObject: PropTypes.shape({
