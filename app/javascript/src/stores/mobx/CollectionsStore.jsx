@@ -3,7 +3,6 @@ import { flow, types } from 'mobx-state-tree';
 
 import CollectionsFetcher from 'src/fetchers/CollectionsFetcher';
 import CollectionSharesFetcher from 'src/fetchers/CollectionSharesFetcher';
-import UserStore from 'src/stores/alt/stores/UserStore';
 
 export const Collection = types.model({
   ancestry: types.string,
@@ -66,6 +65,28 @@ export const Collection = types.model({
   get idAndDescendantIds() { return [self.id].concat(self.children.flatMap(child => child.idAndDescendantIds)) },
 }));
 
+export const SharedWithUser = types.model({
+  celllinesample_detail_level: types.number,
+  devicedescription_detail_level: types.number,
+  element_detail_level: types.number,
+  id: types.identifierNumber,
+  permission_level: types.number,
+  reaction_detail_level: types.number,
+  researchplan_detail_level: types.number,
+  sample_detail_level: types.number,
+  screen_detail_level: types.number,
+  sequencebasedmacromoleculesample_detail_level: types.number,
+  shared_with: types.string,
+  shared_with_id: types.number,
+  shared_with_type: types.string,
+  wellplate_detail_level: types.number,
+});
+
+export const CollectionShares = types.model({
+  id: types.identifierNumber,
+  shared_with_users: types.array(types.late(() => SharedWithUser)),
+});
+
 const presort = (a, b) => {
   const number_of_parents_a = a.ancestry.split('/').filter(Number).length;
   const number_of_parents_b = b.ancestry.split('/').filter(Number).length;
@@ -77,9 +98,9 @@ const presort = (a, b) => {
 export const CollectionsStore = types
   .model({
     chemotion_repository_collection: types.maybeNull(Collection),
-    current_user_id: types.maybeNull(types.integer),
     own_collections: types.array(Collection),
     shared_with_me_collections: types.array(Collection),
+    collection_shares: types.array(CollectionShares),
     update_tree: types.maybeNull(types.boolean, false),
   })
   .actions(self => ({
@@ -125,9 +146,14 @@ export const CollectionsStore = types
       self.setOwnCollections(all_collections)
       self.update_tree = true
     }),
-    getSharedWith: flow(function* getSharedWith(collectionId) {
-      const sharedWith = yield CollectionSharesFetcher.getCollectionSharedWith(collectionId)
-      console.log(sharedWith)
+    getSharedWithUsers: flow(function* getSharedWithUsers(collectionId) {
+      const sharedWithUsers = yield CollectionSharesFetcher.getCollectionSharedWithUsers(collectionId)
+      if (sharedWithUsers) {
+        const collectionSharesIndex = self.collection_shares.findIndex((user) => user.id == collectionId)
+        if (self.collection_shares.length < 1 || collectionSharesIndex == -1) {
+          self.collection_shares.push({ id: collectionId, shared_with_users: sharedWithUsers })
+        }
+      }
     }),
     setOwnCollections(collections) {
       // basic presorting, so we can assume that parent objects are encountered before child objects when iterating the collection array
@@ -169,13 +195,6 @@ export const CollectionsStore = types
         .sort(presort)
         .sort((a, b) => (a.owner > b.owner) ? 1 : ((b.owner > a.owner) ? -1 : 0))
         .filter((c) => !c.is_locked)
-    },
-    getCurrentUserId() {
-      if (Object.keys(self.current_user).length < 1) {
-        return self.current_user = (UserStore.getState() && UserStore.getState().currentUser) || {};
-      } else {
-        return self.current_user;
-      }
     },
     addCollectionToTree(collection, collectionTree) {
       const parentIndex = collectionTree.findIndex(element => element.isAncestorOf(collection))
@@ -251,4 +270,5 @@ export const CollectionsStore = types
     get ownCollectionIds() { return self.own_collections.flatMap(collection => collection.idAndDescendantIds) },
     get sharedCollectionIds() { return self.shared_with_me_collections.flatMap(collection => collection.idAndDescendantIds) },
     descendantIds(collection) { return collection.children.flatMap(collection => collection.idAndDescendantIds) },
+    sharedWithUsers(collection_id) { return self.collection_shares.find((share) => share.id == collection_id) },
   }));
