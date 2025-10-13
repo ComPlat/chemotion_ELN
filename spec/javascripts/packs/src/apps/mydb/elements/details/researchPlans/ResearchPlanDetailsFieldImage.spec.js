@@ -54,7 +54,7 @@ describe('ResearchPlanDetailsFieldImage', () => {
 
     it('image from attachment on server in view mode', async () => {
       sinon
-        .stub(AttachmentFetcher, 'fetchImageAttachmentByIdentifier')
+        .stub(AttachmentFetcher, 'fetchImageAttachment')
         .callsFake(() => new Promise(() => 'srcToImage'));
 
       const rp = ResearchPlan.buildEmpty();
