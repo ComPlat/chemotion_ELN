@@ -55,23 +55,4 @@ class PagesController < ApplicationController
   def profiles
     @profile = current_user&.profile
   end
-
-  def update_profiles
-    @profile = current_user.profile
-    @profile.assign_attributes(profile_params)
-
-    if @profile.save
-      flash['success'] = 'Settings updated successfully.'
-      redirect_to pages_settings_path
-    else
-      flash.now['danger'] = 'Not saved! Please check input fields.'
-      render 'profile'
-    end
-  end
-
-  private
-
-  def profile_params
-    params.require(:profile).permit(:show_external_name, :show_sample_name, :show_sample_short_label, :curation)
-  end
 end
