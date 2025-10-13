@@ -68,6 +68,24 @@ export default class ChemicalFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(params)
+    }).then((response) => {
+      if (response.ok) {
+        return response.json();
+      }
+      return response.json().then((errorData) => {
+        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+      });
+    }).catch((errorMessage) => {
+      console.error(errorMessage);
+      throw errorMessage;
+    });
+  }
+
+  static saveManualAttachedSafetySheet(params) {
+    return fetch('/api/v1/chemicals/save_manual_sds', {
+      credentials: 'same-origin',
+      method: 'post',
+      body: params
     }).then((response) => response.json())
       .then((json) => json)
       .catch((errorMessage) => { console.log(errorMessage); });
