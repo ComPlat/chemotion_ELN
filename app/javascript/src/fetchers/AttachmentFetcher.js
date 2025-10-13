@@ -39,7 +39,6 @@ export default class AttachmentFetcher {
   static fetchImageAttachmentByIdentifier(params) {
     const urlParams = new URLSearchParams({
       identifier: params.identifier,
-      annotated: params.annotated,
     });
 
     return fetch(`/api/v1/attachments/image/-1?${urlParams}`, {
