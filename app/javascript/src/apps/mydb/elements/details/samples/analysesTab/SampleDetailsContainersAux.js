@@ -218,7 +218,6 @@ function AnalysesHeader({
   const attachmentsIds = container?.children?.flatMap((child) => (child.attachments
     || []).map((att) => Number(att.id))) || [];
   const onChangePreferredThumbnail = (currentPreferredThumbnail) => {
-    // Handle the change of preferred thumbnail
     if (currentPreferredThumbnail !== preferredThumbnail) {
       // Handle the change of preferred thumbnail
       container.extended_metadata = {
