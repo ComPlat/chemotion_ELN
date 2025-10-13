@@ -102,8 +102,8 @@ function CollectionSubtree({ root, sharedWithMe, level }) {
             onClick={() => handleTakeOwnership()}
           />
         )}
-        {(sharedUsers && sharedUsers.length > 0) && (
-          <OverlayTrigger placement="top" overlay={<UserInfosTooltip users={sharedUsers} />}>
+        {(root.shared) && (
+          <OverlayTrigger placement="top" overlay={<UserInfosTooltip collectionId={root.id} />}>
             <i className="fa fa-share-alt" />
           </OverlayTrigger>
         )}
