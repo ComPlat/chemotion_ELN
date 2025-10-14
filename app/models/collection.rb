@@ -127,6 +127,18 @@ class Collection < ApplicationRecord
     end
   )
 
+  scope(
+    :shared_with_minimum_permission_level,
+    lambda do |user, permission_level|
+      joins(:collection_shares)
+        .merge(
+          CollectionShare
+            .shared_with(user)
+            .with_minimum_permission_level(permission_level)
+        )
+    end
+  )
+
   default_scope { ordered }
   SQL_INVENT_JOIN = 'LEFT JOIN ' \
                     'inventories  ' \
