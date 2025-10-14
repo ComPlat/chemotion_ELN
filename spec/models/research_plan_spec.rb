@@ -4,13 +4,14 @@
 #
 # Table name: research_plans
 #
-#  id         :integer          not null, primary key
-#  body       :jsonb
-#  created_by :integer          not null
-#  deleted_at :datetime
-#  name       :string           not null
-#  created_at :datetime         not null
-#  updated_at :datetime         not null
+#  id          :integer          not null, primary key
+#  body        :jsonb
+#  created_by  :integer          not null
+#  deleted_at  :datetime
+#  name        :string           not null
+#  short_label :string
+#  created_at  :datetime         not null
+#  updated_at  :datetime         not null
 #
 require 'rails_helper'
 
