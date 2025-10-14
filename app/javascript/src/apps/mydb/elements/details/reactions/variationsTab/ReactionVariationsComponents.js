@@ -1,5 +1,5 @@
 /* eslint-disable react/display-name */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Select from 'react-select';
 import { AgGridReact } from 'ag-grid-react';
 import {
@@ -8,8 +8,8 @@ import {
 import PropTypes from 'prop-types';
 import { cloneDeep, isEqual } from 'lodash';
 import {
-  getVariationsRowName, convertUnit, getStandardUnits, getUserFacingUnit, getCurrentEntry,
-  getUserFacingEntryName
+  getVariationsRowName, convertUnit, getUserFacingUnit, getCurrentEntry,
+  getUserFacingEntryName, convertGenericUnit, PLACEHOLDER_CELL_TEXT
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   getReferenceMaterial, getCatalystMaterial, getFeedstockMaterial, getMolFromGram, getGramFromMol,
@@ -21,6 +21,7 @@ import {
 } from 'src/utilities/UnitsConversion';
 
 function MaterialEntry({ children, entry, isMain }) {
+  // TODO: Determine width dynamically based on length of `entry` string.
   function getEntryWidth() {
     switch (entry) {
       case 'temperature':
@@ -29,7 +30,7 @@ function MaterialEntry({ children, entry, isMain }) {
       case 'turnoverFrequency':
         return 140;
       default:
-        return 110;
+        return 130;
     }
   }
   return (
@@ -125,6 +126,143 @@ function PropertyParser({
   return updatedCellData;
 }
 
+function convertGenericValueToDisplayUnit(entryData, entryDef) {
+  const { displayUnit } = entryDef;
+  const { quantity, value, unit } = entryData;
+  const valueInDisplayUnit = convertGenericUnit(value, unit, displayUnit, quantity);
+
+  return parseFloat(Number(valueInDisplayUnit).toPrecision(4));
+}
+
+function SegmentParser({
+  oldValue: cellData, newValue, colDef
+}) {
+  const currentEntry = getCurrentEntry(colDef.entryDefs);
+  const entryData = cellData[currentEntry];
+  const updatedCellData = { ...cellData, [currentEntry]: { ...entryData, value: newValue } };
+
+  switch (entryData.type) {
+    case 'system-defined': {
+      const { displayUnit } = colDef.entryDefs[currentEntry];
+      const { quantity, unit } = entryData;
+      let convertedValue = parseNumericString(newValue);
+      convertedValue = convertGenericUnit(convertedValue, displayUnit, unit, quantity);
+      return { ...cellData, [currentEntry]: { ...entryData, value: convertedValue } };
+    }
+    case 'select':
+    case 'text':
+    case 'integer': // TODO: enforce integer entry.
+    default: return updatedCellData;
+  }
+}
+
+function SegmentFormatter({ value: cellData, colDef }) {
+  const { entryDefs } = colDef;
+  const currentEntry = getCurrentEntry(entryDefs);
+  const entryData = cellData[currentEntry];
+  const { value, type } = entryData;
+  const updatedValue = value ?? PLACEHOLDER_CELL_TEXT;
+
+  switch (type) {
+    case 'system-defined': {
+      return convertGenericValueToDisplayUnit(entryData, entryDefs[currentEntry]) ?? PLACEHOLDER_CELL_TEXT;
+    }
+    case 'select':
+    case 'text':
+    case 'integer':
+    default: return updatedValue;
+  }
+}
+
+function SegmentRenderer({
+  value: cellData, colDef,
+}) {
+  const { entryDefs } = colDef;
+  return (
+    <ol className="list-group list-group-horizontal w-100">
+      {Object.entries(entryDefs).map(([entry, entryDef]) => {
+        const entryData = cellData[entry];
+        if (!(entryData && typeof entryData === 'object' && 'value' in entryData && entryDef.isSelected)) {
+          return null;
+        }
+        return (
+          <MaterialEntry key={entry} entry={entry} isMain={entryDef.isMain}>
+            {entryData.type === 'system-defined' ? convertGenericValueToDisplayUnit(entryData, entryDef)
+              : entryData.value ?? PLACEHOLDER_CELL_TEXT}
+          </MaterialEntry>
+        );
+      })}
+    </ol>
+  );
+}
+
+SegmentRenderer.propTypes = {
+  value: PropTypes.arrayOf(PropTypes.shape({
+    value: PropTypes.number.isRequired,
+    unit: PropTypes.string.isRequired,
+  })).isRequired,
+  colDef: PropTypes.shape({
+    entryDefs: PropTypes.objectOf(
+      PropTypes.shape({
+        isMain: PropTypes.bool.isRequired,
+        isSelected: PropTypes.bool.isRequired,
+        displayUnit: PropTypes.string.isRequired
+      })
+    ).isRequired
+  }).isRequired
+};
+
+function SegmentSelectEditor({
+  value: cellData, colDef, onValueChange, stopEditing
+}) {
+  const currentEntry = getCurrentEntry(colDef.entryDefs);
+  const entryData = cellData?.[currentEntry];
+
+  if (!entryData) return null;
+
+  const { value: selected, options = [] } = entryData;
+
+  const optionElements = useMemo(
+    () => options.map((option) => <option key={option} value={option} selected={option === selected}>{option}</option>),
+    [options, selected]
+  );
+
+  useEffect(() => stopEditing, [stopEditing]);
+
+  const handleChange = (event) => {
+    const updatedEntryData = { ...entryData, value: event.target.value };
+    onValueChange({ ...cellData, [currentEntry]: updatedEntryData });
+  };
+
+  return (
+    <select
+      className="form-select w-100 h-100"
+      value={selected}
+      onChange={handleChange}
+    >
+      {optionElements}
+    </select>
+  );
+}
+
+SegmentSelectEditor.propTypes = {
+  value: PropTypes.arrayOf(PropTypes.shape({
+    value: PropTypes.number.isRequired,
+    unit: PropTypes.string.isRequired,
+  })).isRequired,
+  colDef: PropTypes.shape({
+    entryDefs: PropTypes.objectOf(
+      PropTypes.shape({
+        isMain: PropTypes.bool.isRequired,
+        isSelected: PropTypes.bool.isRequired,
+        displayUnit: PropTypes.string.isRequired
+      })
+    ).isRequired
+  }).isRequired,
+  onValueChange: PropTypes.func.isRequired,
+  stopEditing: PropTypes.func.isRequired,
+};
+
 function convertValueToDisplayUnit(value, unit, displayUnit) {
   const valueInDisplayUnit = convertUnit(Number(value), unit, displayUnit);
 
@@ -144,6 +282,7 @@ function MaterialFormatter({ value: cellData, colDef }) {
 
   return convertValueToDisplayUnit(cellData[currentEntry].value, cellData[currentEntry].unit, displayUnit);
 }
+
 function MaterialRenderer({ value: cellData, colDef }) {
   const { entryDefs } = colDef;
   return (
@@ -384,7 +523,7 @@ function NoteCellRenderer(props) {
         </Tooltip>
       )}
     >
-      <span>{props.value ? props.value : '_'}</span>
+      <span>{props.value || PLACEHOLDER_CELL_TEXT}</span>
     </OverlayTrigger>
   );
 }
@@ -590,7 +729,7 @@ function MaterialEntrySelection({ entryDefs, onChange }) {
             </thead>
             <tbody>
               {Object.entries(entryDefs).map(([entry, entryDef]) => {
-                const units = getStandardUnits(entry);
+                const { units } = entryDef;
                 return (
                   <tr key={entry}>
                     <td className="text-center">
@@ -829,4 +968,8 @@ export {
   MenuHeader,
   ToolHeader,
   ColumnSelection,
+  SegmentFormatter,
+  SegmentParser,
+  SegmentRenderer,
+  SegmentSelectEditor,
 };

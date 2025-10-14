@@ -10,6 +10,7 @@ export default function columnDefinitionsReducer(columnDefinitions, action) {
         columnDefinitions,
         action.selectedColumns,
         action.materials,
+        action.segments,
         action.gasMode
       );
       updatedColumnDefinitions = removeObsoleteColumnDefinitions(

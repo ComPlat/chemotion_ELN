@@ -10,6 +10,7 @@ module Entities
       :reactants,
       :products,
       :solvents,
+      :segments,
     )
     expose :starting_materials, as: :startingMaterials
 
@@ -21,6 +22,10 @@ module Entities
 
     def metadata
       object[:metadata]&.slice(:notes, :analyses) || {}
+    end
+
+    def segments
+      object[:segments] || {}
     end
 
     def materials(material_type, entity)

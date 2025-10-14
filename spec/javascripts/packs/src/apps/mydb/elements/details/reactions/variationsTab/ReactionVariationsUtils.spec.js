@@ -2,7 +2,7 @@ import expect from 'expect';
 import {
   convertUnit, createVariationsRow, copyVariationsRow, updateVariationsRow, updateColumnDefinitions,
   removeObsoleteColumnsFromVariations, removeObsoleteColumnDefinitions, addMissingColumnDefinitions,
-  addMissingColumnsToVariations, getVariationsColumns
+  addMissingColumnsToVariations, getVariationsColumns, convertGenericUnit
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   getReactionMaterials, getMaterialColumnGroupChild
@@ -25,6 +25,10 @@ describe('ReactionVariationsUtils', () => {
     expect(convertUnit(1, '°F', '°C')).toBeCloseTo(-17.2, 0.1);
     expect(convertUnit(1, 'Second(s)', 'Minute(s)')).toBeCloseTo(0.0167, 0.00001);
     expect(convertUnit(1, 'Minute(s)', 'Second(s)')).toBe(60);
+  });
+  it('converts generic units', () => {
+    expect(convertGenericUnit(1, 'g_l', 'mg_l', 'concentration')).toBe(1000);
+    expect(convertGenericUnit(1, 'mg_l', 'g_l', 'concentration')).toBe(0.001);
   });
   it('creates a row in the variations table with selected materials', async () => {
     const reaction = await setUpReaction();
@@ -72,6 +76,7 @@ describe('ReactionVariationsUtils', () => {
 
     updatedVariations = addMissingColumnsToVariations({
       materials: {},
+      segments: {},
       selectedColumns: { properties: ['temperature', 'duration'], metadata: ['notes', 'analyses'] },
       variations: updatedVariations,
       durationValue: 42,
