@@ -2,7 +2,8 @@ import expect from 'expect';
 import {
   convertUnit, createVariationsRow, copyVariationsRow, updateVariationsRow, updateColumnDefinitions,
   removeObsoleteColumnsFromVariations, removeObsoleteColumnDefinitions, addMissingColumnDefinitions,
-  addMissingColumnsToVariations, getVariationsColumns
+  addMissingColumnsToVariations, getVariationsColumns, convertGenericUnit, getColumnDefinitions,
+  getUserFacingEntryName, getSegmentData, formatReactionSegments
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   getReactionMaterials, getMaterialColumnGroupChild
@@ -14,6 +15,7 @@ import {
   getColumnDefinitionsMaterialIDs,
   getReactionMaterialsIDs
 } from 'helper/reactionVariationsHelpers';
+import { reactionVariationSegments, reactionSegments } from 'fixture/reaction';
 
 describe('ReactionVariationsUtils', () => {
   it('converts units', () => {
@@ -25,6 +27,10 @@ describe('ReactionVariationsUtils', () => {
     expect(convertUnit(1, '°F', '°C')).toBeCloseTo(-17.2, 0.1);
     expect(convertUnit(1, 'Second(s)', 'Minute(s)')).toBeCloseTo(0.0167, 0.00001);
     expect(convertUnit(1, 'Minute(s)', 'Second(s)')).toBe(60);
+  });
+  it('converts generic units', () => {
+    expect(convertGenericUnit(1, 'g_l', 'mg_l', 'concentration')).toBe(1000);
+    expect(convertGenericUnit(1, 'mg_l', 'g_l', 'concentration')).toBe(0.001);
   });
   it('creates a row in the variations table with selected materials', async () => {
     const reaction = await setUpReaction();
@@ -72,6 +78,7 @@ describe('ReactionVariationsUtils', () => {
 
     updatedVariations = addMissingColumnsToVariations({
       materials: {},
+      segments: {},
       selectedColumns: { properties: ['temperature', 'duration'], metadata: ['notes', 'analyses'] },
       variations: updatedVariations,
       durationValue: 42,
@@ -209,5 +216,42 @@ describe('ReactionVariationsUtils', () => {
     expect(emptyVariationsColumns.startingMaterials).toEqual([]);
     expect(emptyVariationsColumns.properties).toEqual([]);
     expect(emptyVariationsColumns.metadata).toEqual([]);
+  });
+  it('gets column definitions', async () => {
+    const selectedColumns = {
+      startingMaterials: [],
+      reactants: [],
+      products: [],
+      solvents: [],
+      properties: [],
+      metadata: [],
+      segments: [
+        'foo',
+      ]
+    };
+    const columnDefinitions = getColumnDefinitions(selectedColumns, {}, reactionVariationSegments, false);
+    const segmentColumnDefinitions = columnDefinitions.find((colDef) => colDef.groupId === 'segments');
+    const segmentColumnChild = segmentColumnDefinitions.children[0];
+    const { entryDefs } = segmentColumnChild;
+    expect(Object.keys(entryDefs)).toEqual(Object.keys(reactionVariationSegments.foo));
+    expect(entryDefs['layer<layera>field<fielda>'].displayUnit).toBe('ng_l');
+    expect(entryDefs['layer<layera>field<fielda>'].units).toEqual(['ng_l', 'mg_l', 'g_l']);
+    expect(entryDefs['layer<layera>field<fieldb>'].units).toEqual([null]);
+  });
+  it('gets segment data', () => {
+    const segmentDataFoo = getSegmentData(reactionVariationSegments.foo);
+    expect(Object.keys(segmentDataFoo)).toEqual(Object.keys(reactionVariationSegments.foo));
+    expect(segmentDataFoo['layer<layera>field<fielda>'].quantity).toBe('concentration');
+    const segmentDataBar = getSegmentData(reactionVariationSegments.bar);
+    expect(Object.keys(segmentDataBar)).toEqual(Object.keys(reactionVariationSegments.bar));
+    expect(segmentDataBar['layer<bar>field<a>'].options).toEqual(['optiona', 'optionb', 'optionc']);
+  });
+  it('formats entry names', () => {
+    expect(getUserFacingEntryName('fooBar')).toBe('foo bar');
+    expect(getUserFacingEntryName('layer<foo>field<bar>')).toBe('layer: foo, field: bar');
+  });
+  it('formats reaction segments', () => {
+    const formattedSegment = formatReactionSegments(reactionSegments);
+    expect(formattedSegment).toEqual(reactionVariationSegments);
   });
 });

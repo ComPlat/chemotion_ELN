@@ -12,11 +12,15 @@ import {
 import {
   PropertyFormatter, PropertyParser,
   MaterialFormatter, MaterialParser,
+  SegmentFormatter, SegmentParser, SegmentRenderer, SegmentSelectEditor,
   EquivalentParser, GasParser, FeedstockParser,
   NoteCellRenderer, NoteCellEditor, MenuHeader, RowToolsCellRenderer, ToolHeader
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import GenericSgsFetcher from 'src/fetchers/GenericSgsFetcher';
+import { genUnits } from 'generic-ui-core';
 
+const PLACEHOLDER_CELL_TEXT = '_';
 const REACTION_VARIATIONS_TAB_KEY = 'reactionVariationsTab';
 const temperatureUnits = ['°C', 'K', '°F'];
 const durationUnits = ['Second(s)', 'Minute(s)', 'Hour(s)', 'Day(s)', 'Week(s)'];
@@ -66,6 +70,12 @@ const cellDataTypes = {
     valueFormatter: MaterialFormatter,
     valueParser: FeedstockParser,
   },
+  segment: {
+    extendsDataType: 'object',
+    baseDataType: 'object',
+    valueFormatter: SegmentFormatter,
+    valueParser: SegmentParser,
+  },
 };
 
 function convertUnit(value, fromUnit, toUnit) {
@@ -101,6 +111,18 @@ function convertUnit(value, fromUnit, toUnit) {
   return value;
 }
 
+const convertGenericUnit = (value, fromUnit, toUnit, genericQuantity) => {
+  // https://github.com/LabIMotion/chem-generic-ui/blob/f335a10fb3deb99bf2bc53e48551ee8367025994/src/components/fields/InputUnit.js#L25
+  const unitConfigs = genUnits(genericQuantity);
+  if (!unitConfigs || unitConfigs.length === 0) return null;
+
+  const fromUnitConfig = unitConfigs.find((config) => config.key === fromUnit);
+  const toUnitConfig = unitConfigs.find((config) => config.key === toUnit);
+  if (!fromUnitConfig || !toUnitConfig) return null;
+
+  return value * (toUnitConfig.nm / fromUnitConfig.nm);
+};
+
 function getStandardUnits(entry) {
   switch (entry) {
     case 'volume':
@@ -118,6 +140,12 @@ function getStandardUnits(entry) {
     default:
       return [null];
   }
+}
+
+function getGenericStandardUnits(genericQuantity) {
+  const unitConfigs = genUnits(genericQuantity);
+  if (!unitConfigs || unitConfigs.length === 0) return [null];
+  return unitConfigs.map((config) => config.key);
 }
 
 function getUserFacingUnit(unit) {
@@ -183,7 +211,18 @@ function getStandardValue(entry, material) {
   }
 }
 
+function parseGenericEntryName(entry) {
+  const genericEntryMatch = entry.match(/(?:layer<([^>]*)>)?(?:field<([^>]*)>)?/);
+  if ((genericEntryMatch[1] || genericEntryMatch[2])) {
+    return { layer: genericEntryMatch[1], field: genericEntryMatch[2] };
+  }
+  return null;
+}
+
 function getCellDataType(entry, gasType = 'off') {
+  if (parseGenericEntryName(entry)) {
+    return 'segment';
+  }
   switch (entry) {
     case 'temperature':
     case 'duration':
@@ -217,7 +256,20 @@ function getEntryDefs(entries) {
     defs[entry] = {
       isMain: entry === entries[0],
       isSelected: entry === entries[0],
-      displayUnit: getStandardUnits(entry)[0]
+      displayUnit: getStandardUnits(entry)[0],
+      units: getStandardUnits(entry),
+    };
+    return defs;
+  }, {});
+}
+
+function getGenericEntryDefs(segment) {
+  return Object.entries(segment).reduce((defs, [entryKey, entry]) => {
+    defs[entryKey] = {
+      isMain: entryKey === Object.keys(segment)[0],
+      isSelected: entryKey === Object.keys(segment)[0],
+      displayUnit: entry.value_system || null,
+      units: entry.type === 'system-defined' ? getGenericStandardUnits(entry.option_layers) : [null],
     };
     return defs;
   }, {});
@@ -228,8 +280,12 @@ function getCurrentEntry(entryDefs) {
 }
 
 function getUserFacingEntryName(entry) {
-  // E.g., 'turnoverNumber' -> 'turnover number'
-  return entry.split(/(?=[A-Z])/).join(' ').toLowerCase();
+  const genericEntryMatch = parseGenericEntryName(entry);
+  if (genericEntryMatch) {
+    return `layer: ${genericEntryMatch.layer}, field: ${genericEntryMatch.field}`;
+  }
+
+  return entry.split(/(?=[A-Z])/).join(' ').toLowerCase(); // E.g., 'turnoverNumber' -> 'turnover number'
 }
 
 function getVariationsRowName(reactionLabel, variationsRowId) {
@@ -269,8 +325,25 @@ function getMetaData(metadataType) {
   }
 }
 
+function getSegmentData(segment) {
+  return Object.fromEntries(
+    Object.entries(segment).map(([layerField, layerFieldData]) => [
+      layerField,
+      {
+        type: layerFieldData.type,
+        label: layerFieldData.label,
+        ...(layerFieldData.options && { options: layerFieldData.options.map((option) => option.label) }),
+        value: layerFieldData.options ? layerFieldData.options[0].label : null,
+        unit: layerFieldData.value_system || null,
+        quantity: layerFieldData.option_layers || null,
+      }
+    ])
+  );
+}
+
 function createVariationsRow({
   materials,
+  segments,
   selectedColumns,
   variations,
   reactionHasPolymers = false,
@@ -295,6 +368,9 @@ function createVariationsRow({
     metadata: Object.fromEntries(
       selectedColumns.metadata.map((metadataType) => [metadataType, getMetaData(metadataType)])
     ),
+    segments: Object.fromEntries(
+      selectedColumns.segments.map((segmentLabel) => [segmentLabel, getSegmentData(segments[segmentLabel])])
+    ),
   };
   Object.keys(materialTypes).forEach((materialType) => {
     row[materialType] = {};
@@ -312,8 +388,12 @@ function copyVariationsRow(row, variations) {
   const copiedRow = cloneDeep(row);
   copiedRow.id = getSequentialId(variations);
   copiedRow.uuid = undefined; // UUID is generated server-side.
-  copiedRow.metadata.notes = getMetaData('notes');
-  copiedRow.metadata.analyses = getMetaData('analyses');
+  if (Object.hasOwn(copiedRow.metadata, 'notes')) {
+    copiedRow.metadata.notes = getMetaData('notes');
+  }
+  if (Object.hasOwn(copiedRow.metadata, 'analyses')) {
+    copiedRow.metadata.analyses = getMetaData('analyses');
+  }
 
   return copiedRow;
 }
@@ -350,6 +430,7 @@ function updateVariationsRow(row, field, value, reactionHasPolymers) {
 
 function addMissingColumnsToVariations({
   materials,
+  segments,
   selectedColumns,
   variations,
   reactionHasPolymers = false,
@@ -386,6 +467,9 @@ function addMissingColumnsToVariations({
         }
         if (columnGroupID === 'metadata') {
           row.metadata[childID] = getMetaData(childID);
+        }
+        if (columnGroupID === 'segments') {
+          row[columnGroupID][childID] = getSegmentData(segments[childID]);
         }
       });
     });
@@ -463,7 +547,34 @@ function getMetadataColumnGroupChild(metadataType) {
   }
 }
 
-function addMissingColumnDefinitions(columnDefinitions, selectedColumns, materials, gasMode) {
+function getSegmentEditor({ colDef: { entryDefs }, value: cellData }) {
+  const currentEntry = getCurrentEntry(entryDefs);
+  switch (cellData[currentEntry].type) {
+    case 'select':
+      return { component: SegmentSelectEditor };
+    case 'integer':
+    case 'text':
+    case 'system-defined':
+    default:
+      return { component: 'agTextCellEditor' };
+  }
+}
+
+function getSegmentColumnGroupChild(segmentLabel, segment, externalEntryDefs = undefined) {
+  return {
+    field: `segments.${segmentLabel}`,
+    headerComponent: MenuHeader,
+    headerComponentParams: {
+      names: [segmentLabel],
+    },
+    entryDefs: externalEntryDefs || getGenericEntryDefs(segment),
+    cellDataType: 'segment',
+    cellRenderer: SegmentRenderer,
+    cellEditorSelector: (params) => getSegmentEditor(params),
+  };
+}
+
+function addMissingColumnDefinitions(columnDefinitions, selectedColumns, materials, segments, gasMode) {
   const updatedColumnDefinitions = cloneDeep(columnDefinitions);
 
   Object.entries(selectedColumns).forEach(([columnGroupID, columnGroupChildIDs]) => {
@@ -484,6 +595,9 @@ function addMissingColumnDefinitions(columnDefinitions, selectedColumns, materia
       }
       if (columnGroupID === 'metadata') {
         columnGroup.children.push(getMetadataColumnGroupChild(childID));
+      }
+      if (columnGroupID === 'segments') {
+        columnGroup.children.push(getSegmentColumnGroupChild(childID, segments[childID]));
       }
     });
   });
@@ -532,7 +646,7 @@ function updateColumnDefinitions(columnDefinitions, field, property, newValue) {
   return updatedColumnDefinitions;
 }
 
-function getColumnDefinitions(selectedColumns, materials, gasMode, externalEntryDefs = {}) {
+function getColumnDefinitions(selectedColumns, materials, segments, gasMode, externalEntryDefs = {}) {
   return [
     {
       headerComponent: ToolHeader,
@@ -540,7 +654,8 @@ function getColumnDefinitions(selectedColumns, materials, gasMode, externalEntry
       lockPosition: 'left',
       sortable: false,
       maxWidth: 100,
-      cellDataType: false
+      cellDataType: false,
+      rowDrag: true,
 
     },
     {
@@ -557,6 +672,13 @@ function getColumnDefinitions(selectedColumns, materials, gasMode, externalEntry
         (entry) => getPropertyColumnGroupChild(entry, gasMode, externalEntryDefs[`properties.${entry}`])
       )
     },
+    {
+      headerName: 'Generic Segments',
+      groupId: 'segments',
+      children: selectedColumns.segments.map(
+        (entry) => getSegmentColumnGroupChild(entry, segments[entry], externalEntryDefs[`segments.${entry}`])
+      )
+    }
   ].concat(
     Object.entries(materialTypes).map(([materialType, { label }]) => ({
       headerName: label,
@@ -584,8 +706,11 @@ function getVariationsColumns(variations) {
   }, {});
   const propertyColumns = Object.keys(variationsRow ? variationsRow.properties : {});
   const metadataColumns = Object.keys(variationsRow ? variationsRow.metadata : {});
+  const segmentColumns = Object.keys(variationsRow ? variationsRow.segments : {});
 
-  return { ...materialColumns, properties: propertyColumns, metadata: metadataColumns };
+  return {
+    ...materialColumns, properties: propertyColumns, metadata: metadataColumns, segments: segmentColumns
+  };
 }
 
 function getGridStateId(reactionId) {
@@ -626,6 +751,66 @@ const persistTableLayout = (reactionId, event, columnDefinitions) => {
   localStorage.setItem(getEntryDefinitionsId(reactionId), JSON.stringify(entryDefs));
 };
 
+function formatReactionSegments(segments) {
+  return segments.reduce((acc, segment) => {
+    const segmentLabel = segment.label;
+    const layers = segment.properties_release?.layers ?? {};
+
+    Object.values(layers).forEach((layer) => {
+      const layerKey = layer.key;
+
+      (layer.fields ?? [])
+        .filter((field) => ['integer', 'system-defined', 'select', 'text'].includes(field.type))
+        .forEach((field) => {
+          const entryKey = `layer<${layerKey}>field<${field.field}>`;
+          acc[segmentLabel] ??= {};
+          acc[segmentLabel][entryKey] ??= {};
+          acc[segmentLabel][entryKey] = field;
+
+          if (field.type === 'select') {
+            acc[segmentLabel][entryKey].options = segment.properties_release?.select_options?.[
+              field.option_layers
+            ]?.options ?? [];
+          }
+        });
+    });
+
+    return acc;
+  }, {});
+}
+
+async function getReactionSegments(reaction) {
+  try {
+    const { klass: segments } = await GenericSgsFetcher.listSegmentKlass(
+      { is_active: true },
+      true
+    );
+
+    const segmentLabels = new Set(
+      segments
+        .filter((s) => s.element_klass.name === 'reaction' && s.is_active)
+        .map((s) => s.label)
+    ); // Segments that can be added to a reaction.
+    const selectedSegmentLabels = new Set(
+      (reaction?.segments ?? []).map((s) => s.klass_label)
+    ); // Segment that are currently added to the reaction.
+    // We want the segments that are currently added to the reaction to occur in the selection first,
+    // followed by the segments that could be added to a reaction, but aren't currently added to the reaction.
+    const orderedSegmentLabels = [
+      ...selectedSegmentLabels,
+      ...[...segmentLabels].filter((label) => !selectedSegmentLabels.has(label))
+    ];
+    const orderedSegments = orderedSegmentLabels.map(
+      (label) => segments.find((segment) => segment.label === label)
+    ).filter(Boolean);
+
+    return formatReactionSegments(orderedSegments);
+  } catch (error) {
+    console.error('Error fetching segments:', error);
+    return {};
+  }
+}
+
 export {
   massUnits,
   volumeUnits,
@@ -635,6 +820,7 @@ export {
   concentrationUnits,
   getStandardUnits,
   convertUnit,
+  convertGenericUnit,
   materialTypes,
   cellDataTypes,
   getVariationsRowName,
@@ -653,11 +839,16 @@ export {
   removeObsoleteColumnDefinitions,
   getMetadataColumnGroupChild,
   getPropertyColumnGroupChild,
+  PLACEHOLDER_CELL_TEXT,
   REACTION_VARIATIONS_TAB_KEY,
   getInitialGridState,
   getInitialEntryDefinitions,
   persistTableLayout,
   getEntryDefs,
   getCurrentEntry,
-  getUserFacingEntryName
+  getUserFacingEntryName,
+  getReactionSegments,
+  parseGenericEntryName,
+  getSegmentData,
+  formatReactionSegments
 };
