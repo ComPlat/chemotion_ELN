@@ -3,7 +3,7 @@ import Tree from 'react-ui-tree';
 import {
   Button, Modal, Col, Row
 } from 'react-bootstrap';
-import { cloneDeep, isEmpty } from 'lodash';
+import { isEmpty } from 'lodash';
 import { List } from 'immutable';
 import TabLayoutEditor from 'src/apps/mydb/elements/tabLayout/TabLayoutEditor';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -13,16 +13,16 @@ import { allElnElmentsWithLabel } from 'src/apps/generic/Utils';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
-const CollectionTabs = ({ activeKey }) => {
+const CollectionTabs = () => {
   const collectionsStore = useContext(StoreContext).collections;
   const [showModal, setShowModal] = useState(false);
-  const [tree, setTree] = useState({});
   const [profileData, setProfileData] = useState({});
   const [currentCollection, setCurrentCollection] = useState({});
   const [layouts, setLayouts] = useState(allElnElmentsWithLabel.reduce((acc, { name }) => {
     acc[name] = { visible: List(), hidden: List() };
     return acc;
   }, {}));
+  const tree = collectionsStore.own_collection_tree;
   const tabTitlesMap = {
     qc_curation: 'QC & curation',
     nmr_sim: 'NMR Simulation'
@@ -35,21 +35,8 @@ const CollectionTabs = ({ activeKey }) => {
     }
   }, []);
 
-  useEffect(() => {
-    if (activeKey == 'tabs') {
-      setTree({ label: 'My Collections', id: -1, children: cloneDeep(collectionsStore.own_collections) });
-    }
-  }, [activeKey]);
-
-  useEffect(() => {
-    if (collectionsStore.update_tree && activeKey == 'tabs') {
-      collectionsStore.setUpdateTree(false);
-      setTree({ label: 'My Collections', id: -1, children: cloneDeep(collectionsStore.own_collections) });
-    }
-  }, [collectionsStore.update_tree]);
-
   const handleChange = (tree) => {
-    setTree(tree);
+    collectionsStore.setOwnCollectionTree(tree);
   }
 
   const handleSave = () => {

@@ -11,6 +11,14 @@ export default class CollectionSharesFetcher {
       .catch(errorMessage => console.log(errorMessage));
   }
 
+  static deleteCollectionShare(collectionId) {
+    return fetch(
+      `/api/v1/collection_shares/${collectionId}`,
+      { ...this._httpOptions('DELETE') }
+    ).then(response => response)
+      .catch(errorMessage => console.log(errorMessage));
+  }
+
   static _httpOptions(method = 'GET') {
     return {
       credentials: 'same-origin',

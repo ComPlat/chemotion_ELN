@@ -1,13 +1,20 @@
-import React, { useState } from 'react';
+import React, { useContext } from 'react';
 import propTypes from 'prop-types';
 import { Tabs, Tab, Modal } from 'react-bootstrap';
 
 import MyCollections from 'src/apps/mydb/collections/MyCollections';
 import SharedWithMeCollections from 'src/apps/mydb/collections/SharedWithMeCollections';
 import CollectionTabs from 'src/apps/mydb/collections/CollectionTabs';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
 function CollectionManagementModal({ show, onHide }) {
-  const [activeKey, setActiveKey] = useState('own');
+  const collectionsStore = useContext(StoreContext).collections;
+
+  const closeModal = () => {
+    collectionsStore.setUpdateTree(false);
+    onHide();
+  }
+
   return (
     <Modal
       show={show}
@@ -15,21 +22,21 @@ function CollectionManagementModal({ show, onHide }) {
       centered
       size="xxxl"
       contentClassName="vh-90"
-      onHide={onHide}
+      onHide={closeModal}
     >
       <Modal.Header closeButton>
         Collection Management
       </Modal.Header>
       <Modal.Body>
-        <Tabs activeKey={activeKey} id="collection-management-tab" onSelect={(key) => setActiveKey(key)} className="surface-tabs">
-          <Tab eventKey="own" title="My Collections">
-            <MyCollections activeKey={activeKey} />
+        <Tabs defaultActiveKey={0} id="collection-management-tab" className="surface-tabs">
+          <Tab eventKey="0" title="My Collections">
+            <MyCollections />
           </Tab>
-          <Tab eventKey="shared" title="Collections shared with me ">
+          <Tab eventKey="1" title="Collections shared with me ">
             <SharedWithMeCollections />
           </Tab>
-          <Tab eventKey="tabs" title="Collection Tabs">
-            <CollectionTabs activeKey={activeKey} />
+          <Tab eventKey="2" title="Collection Tabs">
+            <CollectionTabs />
           </Tab>
         </Tabs>
       </Modal.Body>

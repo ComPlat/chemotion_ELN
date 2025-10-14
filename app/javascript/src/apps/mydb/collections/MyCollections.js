@@ -1,52 +1,47 @@
 import React, { useState, useEffect, useContext } from 'react';
 import Tree from 'react-ui-tree';
-import { Button, ButtonGroup, Form, OverlayTrigger, Popover } from 'react-bootstrap';
 import { cloneDeep } from 'lodash';
+import { Button, ButtonGroup, Form, OverlayTrigger, Popover } from 'react-bootstrap';
 import ManagingModalSharing from 'src/components/managingActions/ManagingModalSharing';
 import SyncedCollectionsUsersModal from 'src/apps/mydb/collections/SyncedCollectionsUsersModal';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
-const MyCollections = ({ activeKey }) => {
+const MyCollections = () => {
   const collectionsStore = useContext(StoreContext).collections;
-  const [isModified, setIsModified] = useState(false);
-  const [tree, setTree] = useState({ label: 'My Collections', id: -1, children: cloneDeep(collectionsStore.own_collections) });
   const [sharingModal, setSharingModal] = useState({ action: null, show: false, node: {} });
+  const tree = collectionsStore.own_collection_tree;
+  const [clonedTree, setClonedTree] = useState(cloneDeep(tree));
 
   useEffect(() => {
-    if ((collectionsStore.update_tree || isModified) && activeKey == 'own') {
-      collectionsStore.setUpdateTree(false);
-      setTree({ label: 'My Collections', id: -1, children: cloneDeep(collectionsStore.own_collections) });
-    }
-  }, [collectionsStore.update_tree, isModified])
+    setClonedTree(cloneDeep(tree));
+  }, [tree])
 
   const handleChange = (tree) => {
-    setTree(tree);
-    setIsModified(true);
+    collectionsStore.setOwnCollectionTree(tree);
+    collectionsStore.setUpdateTree(true);
   }
 
   const addCollection = (node) => {
     collectionsStore.addCollection(node);
-    setIsModified(false);
   }
 
   const changeCollectionLabel = (e, node) => {
     // TODO: close modal and tree is changed - reset own_collections
     // change order of tree and change label after removes new order
     collectionsStore.updateCollectionLabel(e.target.value, node);
-    setIsModified(true);
+    collectionsStore.setUpdateTree(true);
   }
 
   const bulkUpdate = () => {
     // filter empty objects
     const collections = tree.children.filter((child) => child.label);
     collectionsStore.bulkUpdateCollection(collections);
-    setIsModified(false);
+    collectionsStore.setUpdateTree(false);
   }
 
   const deleteCollection = (node) => {
     collectionsStore.deleteCollection(node);
-    setIsModified(false);
 
     //     const children = node.children || [];
     //     const parent = this.findParentById(this.state.tree, node.id);
@@ -91,6 +86,9 @@ const MyCollections = ({ activeKey }) => {
   }
 
   const renderSyncButton = (node) => {
+    // onMouseDown={(e) => e.stopPropagation()}
+
+
     //     const syncUsers = node.sync_collections_users ?? [];
     //     if (syncUsers.length === 0) return null;
     // 
@@ -116,6 +114,7 @@ const MyCollections = ({ activeKey }) => {
         id={`add-new-collection-button${node.id !== -1 ? `-${node.id}` : ''}`}
         size="sm"
         variant="success"
+        onMouseDown={(e) => e.stopPropagation()}
         onClick={() => addCollection(node)}
       >
         <i className="fa fa-plus" />
@@ -127,7 +126,7 @@ const MyCollections = ({ activeKey }) => {
     if (node.id == -1) {
       return (
         <div>
-          {isModified && (
+          {collectionsStore.update_tree && (
             <Button
               id="save-collections-button"
               className="me-2"
@@ -153,6 +152,7 @@ const MyCollections = ({ activeKey }) => {
               variant="danger"
               size="sm"
               className="me-2"
+              onMouseDown={(e) => e.stopPropagation()}
               onClick={() => deleteCollection(node)}
             >
               Yes
@@ -160,6 +160,7 @@ const MyCollections = ({ activeKey }) => {
             <Button
               variant="warning"
               size="sm"
+              onMouseDown={(e) => e.stopPropagation()}
               onClick={() => {}}
             >
               No
@@ -178,6 +179,7 @@ const MyCollections = ({ activeKey }) => {
           size="sm"
           variant="primary"
           disabled={node.isNew === true}
+          onMouseDown={(e) => e.stopPropagation()}
           onClick={() => addCollectionShares(node)}
         >
           <i className="fa fa-plus" />
@@ -193,7 +195,7 @@ const MyCollections = ({ activeKey }) => {
           trigger="focus"
           overlay={popover}
         >
-          <Button size="sm" variant="danger">
+          <Button size="sm" variant="danger" onMouseDown={(e) => e.stopPropagation()}>
             <i className="fa fa-trash-o" />
           </Button>
         </OverlayTrigger>
@@ -246,7 +248,7 @@ const MyCollections = ({ activeKey }) => {
     <div className="tree mt-2">
       <Tree
         paddingLeft={20}
-        tree={tree}
+        tree={clonedTree}
         onChange={handleChange}
         renderNode={renderNode}
       />
