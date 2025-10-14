@@ -8,7 +8,7 @@ module Chemotion
     helpers CellLineApiParamsHelpers
 
     rescue_from ActiveRecord::RecordNotFound do
-      error!('Ressource not found', 401)
+      error!('Resource not found', 404)
     end
     resource :cell_lines do
       desc 'return cell lines of a collection'
@@ -64,8 +64,10 @@ module Chemotion
         requires :id, type: Integer, desc: 'id of cell line sample to load'
       end
       get ':id' do
-        cell_line_sample = Collection.accessible_for(current_user).cellline_samples.find(params[:id])
-        return present cell_line_sample, with: Entities::CellLineSampleEntity
+        cellline_sample = CelllineSample.find(params[:id])
+        error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, cellline_sample).read?
+
+        present cellline_sample, with: Entities::CellLineSampleEntity
       end
 
       desc 'Create a new Cell line sample'

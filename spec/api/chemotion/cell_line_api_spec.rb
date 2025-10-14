@@ -145,12 +145,12 @@ describe Chemotion::CellLineAPI do
         get '/api/v1/cell_lines/-1'
       end
 
-      it 'returns correct http status 400' do
-        expect(response).to have_http_status :bad_request
+      it 'returns correct http status 404' do
+        expect(response).to have_http_status :not_found
       end
 
       it 'correct error message' do
-        expect(parsed_json_response['error']).to eq 'id not valid'
+        expect(parsed_json_response['error']).to eq 'Resource not found'
       end
     end
   end
@@ -229,7 +229,7 @@ describe Chemotion::CellLineAPI do
       end
 
       it 'returns correct response code' do
-        expect(response).to have_http_status :unauthorized
+        expect(response).to have_http_status :not_found
       end
     end
 
