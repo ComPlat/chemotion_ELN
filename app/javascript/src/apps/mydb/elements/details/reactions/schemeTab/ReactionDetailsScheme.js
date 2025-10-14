@@ -439,7 +439,7 @@ export default class ReactionDetailsScheme extends React.Component {
         );
         break;
       case 'componentReferenceChanged':
-        this.onReactionChange(
+        onReactionChange(
           this.updatedReactionForComponentReferenceChange(changeEvent),
           { schemaChanged: true }
         );
