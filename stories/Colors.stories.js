@@ -10,6 +10,9 @@ const baseColors = [
   { title: 'chemstrap-blue', description: 'Primary' },
   { title: 'chemstrap-blue-dark', description: 'Primary – active' },
   { title: 'chemstrap-blue-dull', description: 'Draggable surfaces' },
+];
+
+const semanticColors = [
   { title: 'chemstrap-red', description: 'Danger' },
   { title: 'chemstrap-green', description: 'Success' },
   { title: 'chemstrap-orange', description: 'Warning' },
@@ -58,6 +61,17 @@ export default {
           <Subtitle>Base Colors</Subtitle>
           <ColorPalette>
             {baseColors.map((color) => (
+              <ColorItem
+                key={color.title}
+                title={color.title}
+                subtitle={color.description}
+                colors={[getColorValue(color.title)]}
+              />
+            ))}
+          </ColorPalette>
+          <Subtitle>Semantic Colors</Subtitle>
+          <ColorPalette>
+            {semanticColors.map((color) => (
               <ColorItem
                 key={color.title}
                 title={color.title}

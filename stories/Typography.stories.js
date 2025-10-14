@@ -41,7 +41,7 @@ export function Typography() {
       <p><strong>This line rendered as bold text.</strong></p>
       <p><em>This line rendered as italicized text.</em></p>
       <p className="condensed-text-width">
-        This line rendered as condensed. The class&nbsp;
+        This line rendered as condensed. Use the class&nbsp;
         <strong>condensed-text-width</strong>
         , when different pieces of information need to be presented next to each other in compact form.
       </p>
