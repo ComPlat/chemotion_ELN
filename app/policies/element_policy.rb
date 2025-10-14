@@ -62,11 +62,6 @@ class ElementPolicy
 
   private
 
-
-  def user_ids
-    user.group_ids + [user.id]
-  end
-
   def record_is_in_own_collection?
     record.collections.where(user: user).any?
   end
