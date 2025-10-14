@@ -2,13 +2,14 @@
 #
 # Table name: research_plans
 #
-#  id         :integer          not null, primary key
-#  name       :string           not null
-#  created_by :integer          not null
-#  deleted_at :datetime
-#  created_at :datetime         not null
-#  updated_at :datetime         not null
-#  body       :jsonb
+#  id          :integer          not null, primary key
+#  body        :jsonb
+#  created_by  :integer          not null
+#  deleted_at  :datetime
+#  name        :string           not null
+#  short_label :string
+#  created_at  :datetime         not null
+#  updated_at  :datetime         not null
 #
 
 class ResearchPlan < ApplicationRecord
