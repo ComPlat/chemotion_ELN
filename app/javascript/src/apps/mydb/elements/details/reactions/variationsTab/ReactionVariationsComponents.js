@@ -20,6 +20,57 @@ import {
   calculateGasMoles, calculateTON, calculateFeedstockMoles, calculateFeedstockVolume, calculateGasVolume
 } from 'src/utilities/UnitsConversion';
 
+function SegmentFormatter() {
+  return '';
+}
+
+function SegmentParser() {
+  return '';
+}
+
+function SegmentRenderer({ value: cellData, colDef }) {
+  const { entryDefs } = colDef;
+  return (
+    <ol className="list-group list-group-horizontal w-100">
+      {Object.entries(entryDefs).map(([entry, entryDef]) => {
+        const entryData = cellData[entry];
+        if (!(entryData && typeof entryData === 'object' && 'value' in entryData && entryDef.isSelected)) {
+          return null;
+        }
+        switch (entryData.type) {
+          case 'integer':
+          case 'text':
+            return (
+              <MaterialEntry key={entry} entry={entry} isMain={entryDef.isMain}>
+                {entryData.value}
+              </MaterialEntry>
+            );
+          case 'system-defined':
+          case 'select':
+          default:
+            return <div>TODO</div>;
+        }
+      })}
+    </ol>
+  );
+}
+
+SegmentRenderer.propTypes = {
+  value: PropTypes.arrayOf(PropTypes.shape({
+    value: PropTypes.number.isRequired,
+    unit: PropTypes.string.isRequired,
+  })).isRequired,
+  colDef: PropTypes.shape({
+    entryDefs: PropTypes.objectOf(
+      PropTypes.shape({
+        isMain: PropTypes.bool.isRequired,
+        isSelected: PropTypes.bool.isRequired,
+        displayUnit: PropTypes.string.isRequired
+      })
+    ).isRequired
+  }).isRequired
+};
+
 function MaterialEntry({ children, entry, isMain }) {
   function getEntryWidth() {
     switch (entry) {
@@ -829,4 +880,7 @@ export {
   MenuHeader,
   ToolHeader,
   ColumnSelection,
+  SegmentFormatter,
+  SegmentParser,
+  SegmentRenderer,
 };

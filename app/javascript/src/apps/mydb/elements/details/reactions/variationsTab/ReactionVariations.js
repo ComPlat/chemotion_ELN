@@ -13,7 +13,8 @@ import Reaction from 'src/models/Reaction';
 import {
   createVariationsRow, copyVariationsRow, updateVariationsRow, getVariationsColumns, materialTypes,
   addMissingColumnsToVariations, removeObsoleteColumnsFromVariations, getColumnDefinitions,
-  removeObsoleteColumnDefinitions, getInitialGridState, getInitialEntryDefinitions, persistTableLayout, cellDataTypes
+  removeObsoleteColumnDefinitions, getInitialGridState, getInitialEntryDefinitions, persistTableLayout, cellDataTypes,
+  getReactionSegments
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   getReactionAnalyses, updateAnalyses
@@ -41,6 +42,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   const reactionHasPolymers = reaction.hasPolymers();
   const reactionShortLabel = reaction.short_label;
   const reactionMaterials = getReactionMaterials(reaction);
+  const [reactionSegments, setReactionSegments] = useState(new Map());
   const [previousReactionMaterials, setPreviousReactionMaterials] = useState(reactionMaterials);
   const gasMode = reaction.gaseous;
   const [previousGasMode, setPreviousGasMode] = useState(gasMode);
@@ -50,13 +52,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   const { userText: temperatureValue = null, valueUnit: temperatureUnit = 'None' } = reaction.temperature ?? {};
   const vesselVolume = GasPhaseReactionStore.getState().reactionVesselSizeValue;
   const [selectedColumns, setSelectedColumns] = useState(getVariationsColumns(reactionVariations));
-  const initialColumnDefinitions = useMemo(() => getColumnDefinitions(
-    selectedColumns,
-    reactionMaterials,
-    gasMode,
-    getInitialEntryDefinitions(reaction.id)
-  ), []);
-  const [columnDefinitions, setColumnDefinitions] = useReducer(columnDefinitionsReducer, initialColumnDefinitions);
+  const [columnDefinitions, setColumnDefinitions] = useReducer(columnDefinitionsReducer, []);
   const initialGridState = useMemo(() => getInitialGridState(reaction.id), []);
 
   const defaultColumnDefinitions = {
@@ -71,6 +67,22 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
       gridRef.current.api.autoSizeAllColumns();
     }
   }, [isActive]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const segments = await getReactionSegments();
+      const initialColumnDefinitions = getColumnDefinitions(
+        selectedColumns,
+        reactionMaterials,
+        segments,
+        gasMode,
+        getInitialEntryDefinitions(reaction.id)
+      );
+      setReactionSegments(segments);
+      setColumnDefinitions({ type: 'set_updated', update: initialColumnDefinitions });
+    };
+    fetchData();
+  }, []);
 
   const setReactionVariations = (updatedReactionVariations) => {
     reaction.variations = updatedReactionVariations;
@@ -214,6 +226,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
         createVariationsRow(
           {
             materials: reactionMaterials,
+            segments: reactionSegments,
             selectedColumns,
             variations: reactionVariations,
             reactionHasPolymers,
@@ -251,6 +264,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   const applyColumnSelection = (columns) => {
     let updatedReactionVariations = addMissingColumnsToVariations({
       materials: reactionMaterials,
+      segments: reactionSegments,
       selectedColumns: columns,
       variations: reactionVariations,
       reactionHasPolymers,
@@ -271,6 +285,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
       {
         type: 'apply_column_selection',
         materials: reactionMaterials,
+        segments: reactionSegments,
         selectedColumns: columns,
         gasMode
       }
@@ -352,6 +367,10 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
           selectedColumns,
           {
             ...getReactionMaterialsIDsToLabels(reactionMaterials),
+            segments: Object.keys(reactionSegments).reduce((acc, segmentLabel) => {
+              acc[segmentLabel] = segmentLabel;
+              return acc;
+            }, {}),
             properties: { duration: 'Duration', temperature: 'Temperature' },
             metadata: { notes: 'Notes', analyses: 'Analyses' }
           },

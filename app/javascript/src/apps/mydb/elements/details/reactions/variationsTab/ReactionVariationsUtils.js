@@ -12,10 +12,12 @@ import {
 import {
   PropertyFormatter, PropertyParser,
   MaterialFormatter, MaterialParser,
+  SegmentFormatter, SegmentParser, SegmentRenderer,
   EquivalentParser, GasParser, FeedstockParser,
   NoteCellRenderer, NoteCellEditor, MenuHeader, RowToolsCellRenderer, ToolHeader
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import GenericSgsFetcher from 'src/fetchers/GenericSgsFetcher';
 
 const REACTION_VARIATIONS_TAB_KEY = 'reactionVariationsTab';
 const temperatureUnits = ['°C', 'K', '°F'];
@@ -65,6 +67,12 @@ const cellDataTypes = {
     baseDataType: 'object',
     valueFormatter: MaterialFormatter,
     valueParser: FeedstockParser,
+  },
+  segment: {
+    extendsDataType: 'object',
+    baseDataType: 'object',
+    valueFormatter: SegmentFormatter,
+    valueParser: SegmentParser,
   },
 };
 
@@ -208,7 +216,7 @@ function getCellDataType(entry, gasType = 'off') {
     case 'yield':
       return 'yield';
     default:
-      return null;
+      return 'segment';
   }
 }
 
@@ -269,8 +277,24 @@ function getMetaData(metadataType) {
   }
 }
 
+function getSegmentData(segment) {
+  return Object.fromEntries(
+    Object.entries(segment).map(([layerField, layerFieldData]) => [
+      layerField,
+      {
+        type: layerFieldData.type,
+        label: layerFieldData.label,
+        ...(layerFieldData.options && { options: layerFieldData.options }),
+        value: null,
+        unit: null
+      }
+    ])
+  );
+}
+
 function createVariationsRow({
   materials,
+  segments,
   selectedColumns,
   variations,
   reactionHasPolymers = false,
@@ -294,6 +318,9 @@ function createVariationsRow({
     ),
     metadata: Object.fromEntries(
       selectedColumns.metadata.map((metadataType) => [metadataType, getMetaData(metadataType)])
+    ),
+    segments: Object.fromEntries(
+      selectedColumns.segments.map((segmentLabel) => [segmentLabel, getSegmentData(segments[segmentLabel])])
     ),
   };
   Object.keys(materialTypes).forEach((materialType) => {
@@ -349,6 +376,7 @@ function updateVariationsRow(row, field, value, reactionHasPolymers) {
 
 function addMissingColumnsToVariations({
   materials,
+  segments,
   selectedColumns,
   variations,
   reactionHasPolymers = false,
@@ -385,6 +413,9 @@ function addMissingColumnsToVariations({
         }
         if (columnGroupID === 'metadata') {
           row.metadata[childID] = getMetaData(childID);
+        }
+        if (Object.keys(segments).includes(columnGroupID)) {
+          row[columnGroupID][childID] = getSegmentData(segments[columnGroupID][childID]);
         }
       });
     });
@@ -462,7 +493,20 @@ function getMetadataColumnGroupChild(metadataType) {
   }
 }
 
-function addMissingColumnDefinitions(columnDefinitions, selectedColumns, materials, gasMode) {
+function getSegmentColumnGroupChild(segmentLabel, segment) {
+  return {
+    field: `segments.${segmentLabel}`,
+    headerComponent: MenuHeader,
+    headerComponentParams: {
+      names: [segmentLabel],
+    },
+    entryDefs: getEntryDefs(Object.keys(segment)),
+    cellDataType: 'segment',
+    cellRenderer: SegmentRenderer,
+  };
+}
+
+function addMissingColumnDefinitions(columnDefinitions, selectedColumns, materials, segments, gasMode) {
   const updatedColumnDefinitions = cloneDeep(columnDefinitions);
 
   Object.entries(selectedColumns).forEach(([columnGroupID, columnGroupChildIDs]) => {
@@ -483,6 +527,9 @@ function addMissingColumnDefinitions(columnDefinitions, selectedColumns, materia
       }
       if (columnGroupID === 'metadata') {
         columnGroup.children.push(getMetadataColumnGroupChild(childID));
+      }
+      if (columnGroupID === 'segments') {
+        columnGroup.children.push(getSegmentColumnGroupChild(childID, segments[childID]));
       }
     });
   });
@@ -531,7 +578,7 @@ function updateColumnDefinitions(columnDefinitions, field, property, newValue) {
   return updatedColumnDefinitions;
 }
 
-function getColumnDefinitions(selectedColumns, materials, gasMode, externalEntryDefs = {}) {
+function getColumnDefinitions(selectedColumns, materials, segments, gasMode, externalEntryDefs = {}) {
   return [
     {
       headerComponent: ToolHeader,
@@ -556,6 +603,13 @@ function getColumnDefinitions(selectedColumns, materials, gasMode, externalEntry
         (entry) => getPropertyColumnGroupChild(entry, gasMode, externalEntryDefs[`properties.${entry}`])
       )
     },
+    {
+      headerName: 'Generic Segments',
+      groupId: 'segments',
+      children: selectedColumns.segments.map(
+        (entry) => getSegmentColumnGroupChild(entry, segments[entry])
+      )
+    }
   ].concat(
     Object.entries(materialTypes).map(([materialType, { label }]) => ({
       headerName: label,
@@ -583,8 +637,11 @@ function getVariationsColumns(variations) {
   }, {});
   const propertyColumns = Object.keys(variationsRow ? variationsRow.properties : {});
   const metadataColumns = Object.keys(variationsRow ? variationsRow.metadata : {});
+  const segmentColumns = Object.keys(variationsRow ? variationsRow.segments : {});
 
-  return { ...materialColumns, properties: propertyColumns, metadata: metadataColumns };
+  return {
+    ...materialColumns, properties: propertyColumns, metadata: metadataColumns, segments: segmentColumns
+  };
 }
 
 function getGridStateId(reactionId) {
@@ -625,6 +682,58 @@ const persistTableLayout = (reactionId, event, columnDefinitions) => {
   localStorage.setItem(getEntryDefinitionsId(reactionId), JSON.stringify(entryDefs));
 };
 
+async function getReactionSegments(reaction) {
+  try {
+    const { klass: segments } = await GenericSgsFetcher.listSegmentKlass(
+      { is_active: true },
+      true
+    );
+
+    const segmentsForReactions = segments.filter(
+      (segment) => segment.element_klass.name === 'reaction' && segment.is_active
+    );
+
+    const reactionIndex = (reaction?.segments ?? []).reduce((acc, segment) => {
+      acc[segment.klass_label] = segment;
+      return acc;
+    }, {});
+
+    return segmentsForReactions.reduce((acc, segment) => {
+      const segmentLabel = segment.label;
+      const segmentInReactionInstance = reactionIndex[segmentLabel];
+
+      const layers = segmentInReactionInstance?.properties?.layers
+        ?? segment.properties_release?.layers
+        ?? {};
+
+      Object.values(layers).forEach((layer) => {
+        const layerLabel = layer.label;
+
+        (layer.fields ?? [])
+          .filter((field) => ['integer', 'system-defined', 'select', 'text'].includes(field.type))
+          .forEach((field) => {
+            const entryKey = `${layerLabel}_${field.label}`;
+            acc[segmentLabel] ??= {};
+            acc[segmentLabel][entryKey] ??= {};
+            acc[segmentLabel][entryKey] = field;
+            acc[segmentLabel][entryKey].layerLabel = layerLabel;
+
+            if (field.type === 'select') {
+              acc[segmentLabel][entryKey].options = segment.properties_release?.select_options?.[
+                field.option_layers
+              ]?.options ?? [];
+            }
+          });
+      });
+
+      return acc;
+    }, {});
+  } catch (error) {
+    console.error('Error fetching segments:', error);
+    return {};
+  }
+}
+
 export {
   massUnits,
   volumeUnits,
@@ -658,5 +767,6 @@ export {
   persistTableLayout,
   getEntryDefs,
   getCurrentEntry,
-  getUserFacingEntryName
+  getUserFacingEntryName,
+  getReactionSegments,
 };
