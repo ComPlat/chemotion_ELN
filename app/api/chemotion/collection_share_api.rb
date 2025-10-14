@@ -71,8 +71,8 @@ module Chemotion
         requires :id
       end
       delete '/:id' do
-        share = CollectionShare.shared_by(current_user).find_by(params[:id])
-        share ||= CollectionShare.shared_with(current_user).find_by(params[:id])
+        share = CollectionShare.shared_by(current_user).find_by(id: params[:id])
+        share ||= CollectionShare.shared_with(current_user).find_by(id: params[:id])
 
         share.destroy
 

@@ -1,5 +1,6 @@
 import { keys, values } from 'mobx';
 import { flow, types } from 'mobx-state-tree';
+import { cloneDeep } from 'lodash';
 
 import CollectionsFetcher from 'src/fetchers/CollectionsFetcher';
 import CollectionSharesFetcher from 'src/fetchers/CollectionSharesFetcher';
@@ -7,6 +8,7 @@ import CollectionSharesFetcher from 'src/fetchers/CollectionSharesFetcher';
 export const Collection = types.model({
   ancestry: types.string,
   children: types.array(types.late(() => Collection)),
+  collection_share_id: types.maybeNull(types.number),
   id: types.identifierNumber,
   inventory_id: types.maybeNull(types.integer),
   inventory_name: types.maybeNull(types.string),
@@ -99,7 +101,9 @@ export const CollectionsStore = types
   .model({
     chemotion_repository_collection: types.maybeNull(Collection),
     own_collections: types.array(Collection),
+    own_collection_tree: types.maybeNull(types.frozen({})),
     shared_with_me_collections: types.array(Collection),
+    shared_with_me_collection_tree: types.maybeNull(types.frozen({})),
     collection_shares: types.array(CollectionShares),
     update_tree: types.maybeNull(types.boolean, false),
   })
@@ -111,6 +115,8 @@ export const CollectionsStore = types
 
       self.setOwnCollections(all_collections.own)
       self.setSharedWithMeCollections(all_collections.shared_with_me)
+      self.setOwnCollectionTree()
+      self.setSharedWithMeCollectionTree()
     }),
     addCollection: flow(function* addCollection(collection) {
       const params = { 
@@ -119,7 +125,7 @@ export const CollectionsStore = types
       const collectionItem = yield CollectionsFetcher.addCollection(params)
       if (collectionItem) {
         self.addCollectionToTree(Collection.create(collectionItem), self.own_collections)
-        self.update_tree = true
+        self.setOwnCollectionTree()
       }
     }),
     bulkUpdateCollection: flow(function* bulkUpdateCollection(collections) {
@@ -128,7 +134,7 @@ export const CollectionsStore = types
       if (all_collections) {
         self.own_collections.clear()
         self.setOwnCollections(all_collections)
-        self.update_tree = true
+        self.setOwnCollectionTree()
       }
     }),
     updateCollection: flow(function* updateCollection(collection, tabs_segment) {
@@ -136,7 +142,7 @@ export const CollectionsStore = types
       const collectionItem = yield CollectionsFetcher.updateCollection(collection.id, params)
       if (collectionItem) {
         self.changeTabsSegmentInTree(self.own_collections, collectionItem)
-        self.update_tree = true
+        self.setOwnCollectionTree()
         return self.own_collections
       }
     }),
@@ -144,7 +150,7 @@ export const CollectionsStore = types
       const all_collections = yield CollectionsFetcher.deleteCollection(collection.id)
       self.own_collections.clear()
       self.setOwnCollections(all_collections)
-      self.update_tree = true
+      self.setOwnCollectionTree()
     }),
     getSharedWithUsers: flow(function* getSharedWithUsers(collectionId) {
       const sharedWithUsers = yield CollectionSharesFetcher.getCollectionSharedWithUsers(collectionId)
@@ -153,6 +159,14 @@ export const CollectionsStore = types
         if (self.collection_shares.length < 1 || collectionSharesIndex == -1) {
           self.collection_shares.push({ id: collectionId, shared_with_users: sharedWithUsers })
         }
+      }
+    }),
+    deleteCollectionShare: flow(function* deleteCollectionShare(collectionShareId) {
+      const response = yield CollectionSharesFetcher.deleteCollectionShare(collectionShareId)
+      if (response.status === '204') {
+        const collections = self.deleteFromSharedWithMeCollections(self.shared_with_me_collections, collectionShareId)
+        self.shared_with_me_collections = collections
+        self.setSharedWithMeCollectionTree()
       }
     }),
     setOwnCollections(collections) {
@@ -189,6 +203,14 @@ export const CollectionsStore = types
           self.shared_with_me_collections[parentOwnerIndex].addChild(collection)
         }
       });
+    },
+    setOwnCollectionTree(tree) {
+      const children = tree ? tree.children : cloneDeep(self.own_collections)
+      self.own_collection_tree = { label: 'My Collections', id: -1, children: children }
+    },
+    setSharedWithMeCollectionTree(tree) {
+      const children = tree ? tree.children : cloneDeep(self.shared_with_me_collections)
+      self.shared_with_me_collection_tree = { label: 'Collections shared with me', id: -1, children: children }
     },
     presortSharedWithMeCollections(collections) {
       return collections
@@ -235,8 +257,15 @@ export const CollectionsStore = types
       })
     },
     updateCollectionLabel(label, collection) {
-      self.changeLabelInTree(self.own_collections, collection, label)
-      self.update_tree = true
+      self.changeLabelInTree(self.own_collection_tree.children, collection, label)
+      self.setOwnCollectionTree(self.own_collection_tree)
+    },
+    deleteFromSharedWithMeCollections(collections, collectionShareId) {
+      return collections
+        .filter(c => c.collection_share_id !== collectionShareId)
+        .map((c) => {
+          return { ...c, children: self.deleteFromSharedWithMeCollections(c.children, collectionShareId) }
+        })
     },
     setUpdateTree(value) {
       self.update_tree = value
