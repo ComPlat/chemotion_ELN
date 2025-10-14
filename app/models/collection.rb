@@ -34,7 +34,7 @@ class Collection < ApplicationRecord
   acts_as_paranoid
   belongs_to :user, optional: true
   belongs_to :inventory, optional: true
-  has_ancestry
+  has_ancestry orphan_strategy: :adopt
 
   has_many :collections_samples, dependent: :destroy
   has_many :collections_reactions, dependent: :destroy
