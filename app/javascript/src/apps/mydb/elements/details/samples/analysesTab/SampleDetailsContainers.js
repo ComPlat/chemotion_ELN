@@ -39,6 +39,7 @@ export default class SampleDetailsContainers extends Component {
     this.handleAdd = this.handleAdd.bind(this);
     this.handleMove = this.handleMove.bind(this);
     this.toggleAddToReport = this.toggleAddToReport.bind(this);
+    this.updateContainerPreferredThumbnail = this.updateContainerPreferredThumbnail.bind(this);
     this.handleToggleMode = this.handleToggleMode.bind(this);
     this.isEqCId = this.isEqCId.bind(this);
     this.indexedContainers = this.indexedContainers.bind(this);
@@ -157,6 +158,10 @@ export default class SampleDetailsContainers extends Component {
     this.handleChange(container);
   }
 
+  updateContainerPreferredThumbnail() {
+    this.handleChange();
+  }
+
   handleToggleMode(mode) {
     this.setState({ mode });
   }
@@ -194,6 +199,7 @@ export default class SampleDetailsContainers extends Component {
             activeAnalysis={activeAnalysis}
             handleChange={this.handleChange}
             handleCommentTextChange={this.handleCommentTextChange}
+            updateContainerPreferredThumbnail={this.updateContainerPreferredThumbnail}
           />
           <ViewSpectra
             sample={sample}
