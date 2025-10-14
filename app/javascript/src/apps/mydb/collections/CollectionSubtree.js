@@ -13,7 +13,6 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 function CollectionSubtree({ root, sharedWithMe, level }) {
   const collectionsStore = useContext(StoreContext).collections;
   const uiState = UIStore.getState();
-  const sharedUsers = root.shares;
   const children = root.children || [];
 
   const [selected, setSelected] = useState(false);
