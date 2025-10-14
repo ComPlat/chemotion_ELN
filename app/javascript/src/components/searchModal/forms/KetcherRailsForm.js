@@ -25,7 +25,12 @@ function KetcherRailsform() {
     : 0.65 * window.innerHeight;
 
   useEffect(() => {
-    setEditor(getEditorById('ketcher'));
+    const loadEditor = async () => {
+      const editorInstance = await getEditorById('ketcher');
+      setEditor(editorInstance);
+    };
+
+    loadEditor();
   }, []);
 
   const handleSearchTypeChange = (e) => {

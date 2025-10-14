@@ -11,7 +11,7 @@ import EditorAttrs from 'src/components/structureEditor/StructureEditorSet';
 import CommonTemplatesList from 'src/components/ketcher-templates/CommonTemplatesList';
 import CommonTemplatesFetcher from 'src/fetchers/CommonTemplateFetcher';
 import { transformSvgIdsAndReferences } from 'src/utilities/SvgUtils';
-import { createEditors, notifyError, initEditor } from 'src/components/structureEditor/EditorsInstances';
+import { createEditors, notifyError, initEditor, getEditorById } from 'src/components/structureEditor/EditorsInstances';
 import EditorRenderer from 'src/components/structureEditor/EditorRenderer';
 
 function EditorList(props) {
@@ -82,22 +82,36 @@ export default class StructureEditorModal extends React.Component {
       showWarning: props.hasChildren || props.hasParent || false,
       molfile: props.molfile,
       matriceConfigs: [],
-      editor: initEditor(),
+      editor: null,
       commonTemplatesList: [],
       selectedShape: null,
       selectedCommonTemplate: null,
       deleteAllowed: true,
     };
-    this.editors = createEditors();
+    this.editors = {};
     this.handleEditorSelection = this.handleEditorSelection.bind(this);
     this.resetEditor = this.resetEditor.bind(this);
     this.updateEditor = this.updateEditor.bind(this);
     this.ketcherRef = React.createRef();
   }
 
-  componentDidMount() {
-    this.resetEditor(this.editors);
-    this.fetchCommonTemplates();
+  async componentDidMount() {
+    try {
+      const [editor, editors] = await Promise.all([
+        initEditor(),
+        createEditors(),
+      ]);
+
+      this.editors = editors;
+
+      this.setState({ editor }, () => {
+        this.resetEditor(this.editors);
+        this.fetchCommonTemplates();
+        this.initializeEditors();
+      });
+    } catch (error) {
+      console.error('Failed to initialize editor(s):', error);
+    }
   }
 
   componentDidUpdate(prevProps) {
@@ -173,6 +187,12 @@ export default class StructureEditorModal extends React.Component {
     );
   }
 
+  async initializeEditors() {
+    if (!Object.keys(this.editors).length) {
+      this.editors = { ketcher: await getEditorById('ketcher') };
+    }
+  }
+
   async saveKetcher(editorId) {
     if (this.ketcherRef?.current) {
       const { onSaveFileK2SC } = this.ketcherRef.current;
@@ -235,7 +255,7 @@ export default class StructureEditorModal extends React.Component {
     const handleSaveBtn = !onSave ? null : this.handleSaveBtn.bind(this);
 
     const submitAddons = this.props.submitAddons ? this.props.submitAddons : '';
-    const { editor, showWarning, molfile, selectedCommonTemplate, commonTemplatesList, selectedShape, showModal } =
+    const { editor, showWarning, molfile, selectedCommonTemplate, commonTemplatesList, showModal } =
       this.state;
     const iframeHeight = showWarning ? '0px' : '630px';
     const iframeStyle = showWarning ? { border: 'none' } : {};
