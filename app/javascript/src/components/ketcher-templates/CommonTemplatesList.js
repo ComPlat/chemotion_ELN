@@ -33,7 +33,7 @@ const CommonTemplatesList = memo(({ options, onClickHandle, selectedItem }) => {
   const handleSearch = useCallback(
     debounce((query) => {
       const lowerCaseQuery = query.toLowerCase();
-      const filtered = options.filter((item) => item.name.toLowerCase().includes(lowerCaseQuery));
+      const filtered = options?.filter((item) => item.name.toLowerCase().includes(lowerCaseQuery));
       setFilteredOptions(filtered);
     }, 300),
     [options]
@@ -73,16 +73,16 @@ const CommonTemplatesList = memo(({ options, onClickHandle, selectedItem }) => {
             type="text"
             placeholder="Search templates by Name..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => setSearchQuery(e.target.value || '')}
           />
-          {filteredOptions.length != options.length && (
+          {filteredOptions?.length != options?.length && (
             <div className="my-2">
-              {`${filteredOptions.length} out of ${options.length} templates found`}
+              {`${filteredOptions?.length} out of ${options?.length} templates found`}
             </div>
           )}
           <Card className="mt-2">
             <Card.Body className="d-flex flex-column gap-2 overflow-y-scroll vh-50">
-              {filteredOptions.map((item, idx) => (
+              {filteredOptions?.map((item, idx) => (
                 <Button
                   key={idx}
                   className="d-flex gap-2 w-100 align-items-baseline"

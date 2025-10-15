@@ -154,6 +154,7 @@ class API < Grape::API
   }.freeze
 
   mount Chemotion::LiteratureAPI
+  mount Chemotion::CasLookupAPI
   mount Chemotion::ContainerAPI
   mount Chemotion::MoleculeAPI
   mount Chemotion::CollectionAPI

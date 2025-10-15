@@ -38,8 +38,6 @@ function InlineSVG({ src }) {
   );
 }
 
-export default InlineSVG;
-
 function PolymerListModal({
   loading, onShapeSelection, title, onCloseClick
 }) {
@@ -159,7 +157,7 @@ function PolymerListModal({
                                 variant="normal"
                                 onClick={async () => {
                                   if (shape.template_id) {
-                                    onShapeSelection(shape.template_id);
+                                    onShapeSelection(shape.template_id, true);
                                   }
                                 }}
                               >

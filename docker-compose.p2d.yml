@@ -1,6 +1,6 @@
 services:
   db:
-    image: ptrxyz/chemotion:db-2.0.1
+    image: ptrxyz/internal:db-2.1.0-pre
     restart: unless-stopped
     hostname: db
     environment:
@@ -20,6 +20,10 @@ services:
       - CONFIG_ROLE=combine
       - SECRET_KEY_BASE=pleasechangeme
       - RUBYOPT=-W0
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
     depends_on:
       - db
     ports:
@@ -40,8 +44,8 @@ services:
       - ../files/pullin:/shared
     healthcheck:
       disable: true
-    tty: true         # Equivalent to `docker run -t`
-    stdin_open: true  # Equivalent to `docker run -i`
+    tty: true # Equivalent to `docker run -t`
+    stdin_open: true # Equivalent to `docker run -i`
     command: ["bash"]
 
 networks:

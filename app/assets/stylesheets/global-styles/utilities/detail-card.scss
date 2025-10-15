@@ -3,6 +3,7 @@
   @extend .flex-column;
 
   @extend .border-0;
+  @extend .h-100;
 
   & > .card-header {
     @extend .surface-tab__header;
@@ -16,6 +17,7 @@
   & > &__scroll-container {
     @extend .flex-grow-1;
     @extend .overflow-y-auto;
+    @extend .h-0;
     @extend .pt-1;
 
     > .card-body {

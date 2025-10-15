@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="10 34 90 50" width="90" height="50">
+  <!-- Rounded rect with pattern fill -->
+  <rect x="14" y="42" width="80" height="35" rx="5" ry="5" fill="url(#e5d213f4-5ac2-47a1-b0f1-e0849c62302b)" stroke="#1b1918" stroke-width="0.6"/>
+
+  <!-- Stripes pattern -->
+  <pattern patternUnits="userSpaceOnUse" width="3" height="10" id="e5d213f4-5ac2-47a1-b0f1-e0849c62302b">
+    <rect width="2" height="10" fill="#d3c3a0"/>
+  </pattern>
+</svg>

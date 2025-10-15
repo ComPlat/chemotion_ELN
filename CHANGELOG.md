@@ -1,5 +1,59 @@
 # Chemotion_ELN Changelog
+
 ## Latest
+
+## [v2.1.0]
+> (2025-08-24)
+
+* Features and enhancements
+  * search sample by custom molecule name  ([#2603](https://github.com/ComPlat/chemotion_ELN/pull/2603))
+  * enhance history tracker for reaction variations  ([#2375](https://github.com/ComPlat/chemotion_ELN/pull/2375))
+  * track device description changes  ([#2573](https://github.com/ComPlat/chemotion_ELN/pull/2573))
+  * improve dataset save action for element analysis  ([#2468](https://github.com/ComPlat/chemotion_ELN/pull/2468))
+  * create multiple analyses by uploading multiple files and folders at once  ([#2526](https://github.com/ComPlat/chemotion_ELN/pull/2526))
+
+* Bug fixes
+  * tooltip issue while transmitting data to repository  ([#2570](https://github.com/ComPlat/chemotion_ELN/pull/2570))
+  * persist coefficient value on material change in reaction scheme  ([#2563](https://github.com/ComPlat/chemotion_ELN/pull/2563))
+  * message api param  ([#2599](https://github.com/ComPlat/chemotion_ELN/pull/2599))
+  * checkbox state when collapsing/expanding the elements in List  ([#2604](https://github.com/ComPlat/chemotion_ELN/pull/2604))
+  * custom labels getting deleted from reactions  ([#2593](https://github.com/ComPlat/chemotion_ELN/pull/2593))
+  * import chemical lost option  ([#2607](https://github.com/ComPlat/chemotion_ELN/pull/2607))
+  * chemical export queries with select all samples  ([#2605](https://github.com/ComPlat/chemotion_ELN/pull/2605))
+  * invalid statement in advanced search  ([#2613](https://github.com/ComPlat/chemotion_ELN/pull/2613))
+  * no attachment handling in ImageModal to prevent crashes  ([#2618](https://github.com/ComPlat/chemotion_ELN/pull/2618))
+  * rendering short label link in research plan table  ([#2601](https://github.com/ComPlat/chemotion_ELN/pull/2601))
+  * resolve research plan table column renaming and short label link…  ([#2627](https://github.com/ComPlat/chemotion_ELN/pull/2627))
+  * advanced search listing for non sample elements  ([#2633](https://github.com/ComPlat/chemotion_ELN/pull/2633))
+  * tabs navigation in advanced search result  ([#2639](https://github.com/ComPlat/chemotion_ELN/pull/2639))
+  * reaction-variations: ensure safe serialization of metadata  ([#2629](https://github.com/ComPlat/chemotion_ELN/pull/2629))
+  * handle report generation request with an empty selection of items  ([#2644](https://github.com/ComPlat/chemotion_ELN/pull/2644))
+  * toggle well and user-label colors  ([#2536](https://github.com/ComPlat/chemotion_ELN/pull/2536))
+
+
+  ChemSpectra and NMRIUM
+  * bump react-spectra-editor to 1.4.0  ([#2634](https://github.com/ComPlat/chemotion_ELN/pull/2634))
+  * render one Spectra modal per analyses-list  ([#2572](https://github.com/ComPlat/chemotion_ELN/pull/2572))
+  * only strip last extension in fname_wo_ext to preserve internal dots  ([#2581](https://github.com/ComPlat/chemotion_ELN/pull/2581))
+  * Display Unicode unit labels correctly  ([#2660](https://github.com/ComPlat/chemotion_ELN/pull/2660))
+
+
+* Performance improvements
+  * add indices to improve sample serialization  ([#2554](https://github.com/ComPlat/chemotion_ELN/pull/2554))
+
+* Styles
+  * change group name in device description list  ([#2589](https://github.com/ComPlat/chemotion_ELN/pull/2589))
+  * improve yield/conversion rate toggle button implementation  ([#2620](https://github.com/ComPlat/chemotion_ELN/pull/2620))
+
+* Chores
+  * update annotate gem  ([#2575](https://github.com/ComPlat/chemotion_ELN/pull/2575))
+  * remove unused files  ([#2586](https://github.com/ComPlat/chemotion_ELN/pull/2586))
+  * Bump thor from 1.3.2 to 1.4.0  ([#2609](https://github.com/ComPlat/chemotion_ELN/pull/2609))
+  * bump nodejs engine from 22.16.0 to 22.17.1  ([#2626](https://github.com/ComPlat/chemotion_ELN/pull/2626))
+  * bump nodejs to minor 22.18 and other packages  ([#2648](https://github.com/ComPlat/chemotion_ELN/pull/2648))
+  * Bump tmp from 0.2.1 to 0.2.5  ([#2650](https://github.com/ComPlat/chemotion_ELN/pull/2650))
+  * bump service dependencies  ([#2641](https://github.com/ComPlat/chemotion_ELN/pull/2641))
+  * Bump jspdf from 3.0.0 to 3.0.1  ([#2656](https://github.com/ComPlat/chemotion_ELN/pull/2656))
 
 ## [v2.0.1]
 > (2025-06-04)

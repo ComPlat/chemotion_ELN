@@ -1,0 +1,95 @@
+name: CI - JS testing
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'app/javascript/**'
+      - 'package.json'
+      - 'yarn.lock'
+      - 'spec/javascripts/**'
+      - '.tool-versions'
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+
+#    strategy:
+#      matrix:
+#        node-version: [22.20.0]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get Nodejs version from .tool-versions
+        id: node_version
+        run: |
+          echo "NODE_VERSION=$(grep '^nodejs' .tool-versions | awk '{print $2}')" >> $GITHUB_OUTPUT
+
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          path: tmp/main
+          fetch-depth: 1
+
+      - name: Setup Nodejs
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ steps.node_version.outputs.NODE_VERSION }}
+          #node-version: ${{ matrix.node-version }}
+
+      - name: compute cache key based on main's yarn.lock
+        id: cache_key
+        run: |
+          echo "key=v${{ steps.node_version.outputs.NODE_VERSION }}-${{ hashFiles('tmp/main/yarn.lock') }}" >> $GITHUB_OUTPUT
+
+      - name: Enable Corepack (Yarn)
+        run: corepack enable
+
+      # Figure out Yarn cache directory (works for v1 and v2+/Berry)
+      - name: Detect Yarn cache dir
+        id: yarndir
+        run: |
+          if yarn --version | grep -q '^1\.'; then
+            DIR="$(yarn cache dir)"
+          else
+            DIR="$(yarn config get cacheFolder)"
+          fi
+          echo "dir=$DIR" >> $GITHUB_OUTPUT
+
+      # ---- Restore-only on PRs & pushes ----
+      - name: Restore dependency cache (from main)
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ steps.yarndir.outputs.dir }}
+          key: ${{ steps.cache_key.outputs.key }}
+          # Optional: allow fallback to previous main caches if hash changed recently
+          restore-keys: |
+            v${{ steps.node_version.outputs.NODE_VERSION }}-
+
+      - name: Install deps
+        run: |
+          if yarn --version | grep -q '^1\.'; then
+            yarn install --frozen-lockfile
+          else
+            yarn install --immutable
+          fi
+
+      # ---- Save cache only on main branch pushes ----
+      - name: Save dependency cache (update main cache)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ steps.yarndir.outputs.dir }}
+          key: ${{ steps.cache_key.outputs.key }}
+
+      - name: Tests
+        run: yarn test
+
+

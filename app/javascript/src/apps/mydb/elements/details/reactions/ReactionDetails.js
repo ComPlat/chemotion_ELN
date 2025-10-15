@@ -7,7 +7,6 @@ import PropTypes from 'prop-types';
 import {
   Button, Tabs, Tab, OverlayTrigger, Tooltip, ButtonToolbar, ButtonGroup
 } from 'react-bootstrap';
-import SvgFileZoomPan from 'react-svg-file-zoom-pan-latest';
 import { findIndex, isEmpty } from 'lodash';
 
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
@@ -58,6 +57,7 @@ import { ShowUserLabels } from 'src/components/UserLabels';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 // eslint-disable-next-line import/no-named-as-default
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
+import ReactionSchemeGraphic from 'src/apps/mydb/elements/details/reactions/ReactionSchemeGraphic';
 
 const handleProductClick = (product) => {
   const uri = Aviator.getCurrentURI();
@@ -88,18 +88,12 @@ export default class ReactionDetails extends Component {
     const { reaction } = props;
     this.state = {
       reaction,
-      literatures: reaction.literatures,
       activeTab: UIStore.getState().reaction.activeTab,
       activeAnalysisTab: UIStore.getState().reaction.activeAnalysisTab,
       visible: Immutable.List(),
       sfn: UIStore.getState().hasSfn,
       currentUser: (UserStore.getState() && UserStore.getState().currentUser) || {},
     };
-
-    // remarked because of #466 reaction load image issue (Paggy 12.07.2018)
-    // if(reaction.hasMaterials()) {
-    //   this.updateReactionSvg();
-    // }
 
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.handleReactionChange = this.handleReactionChange.bind(this);
@@ -108,7 +102,7 @@ export default class ReactionDetails extends Component {
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
     this.handleGaseousChange = this.handleGaseousChange.bind(this);
     if (!reaction.reaction_svg_file) {
-      this.updateReactionSvg();
+      this.updateGraphic();
     }
   }
 
@@ -175,8 +169,8 @@ export default class ReactionDetails extends Component {
   handleReactionChange(reaction, options = {}) {
     reaction.updateMaxAmountOfProducts();
     reaction.changed = true;
-    if (options.schemaChanged) {
-      this.setState({ reaction }, () => this.updateReactionSvg());
+    if (options.updateGraphic) {
+      this.setState({ reaction }, () => this.updateGraphic());
     } else {
       this.setState({ reaction });
     }
@@ -184,12 +178,20 @@ export default class ReactionDetails extends Component {
 
   handleInputChange(type, event) {
     let value;
-    if (type === 'temperatureUnit' || type === 'temperatureData'
-      || type === 'description' || type === 'role'
-      || type === 'observation' || type === 'durationUnit'
-      || type === 'duration' || type === 'rxno'
-      || type === 'vesselSizeAmount' || type === 'vesselSizeUnit'
-      || type === 'gaseous') {
+    if (
+      type === 'temperatureUnit'
+      || type === 'temperatureData'
+      || type === 'description'
+      || type === 'role'
+      || type === 'observation'
+      || type === 'durationUnit'
+      || type === 'duration'
+      || type === 'rxno'
+      || type === 'vesselSizeAmount'
+      || type === 'vesselSizeUnit'
+      || type === 'gaseous'
+      || type === 'conditions'
+    ) {
       value = event;
     } else if (type === 'rfValue') {
       value = rfValueFormat(event.target.value) || '';
@@ -310,27 +312,6 @@ export default class ReactionDetails extends Component {
         </Tabs>
       </div>
     );
-  }
-
-  reactionSVG(reaction) {
-    if (!reaction.svgPath) {
-      return false;
-    }
-    const svgProps = reaction.svgPath.substr(reaction.svgPath.length - 4) === '.svg'
-      ? { svgPath: reaction.svgPath }
-      : { svg: reaction.reaction_svg_file };
-    if (reaction.hasMaterials()) {
-      return (
-        <div>
-          <SvgFileZoomPan
-            duration={300}
-            resize
-            // eslint-disable-next-line react/jsx-props-no-spreading
-            {...svgProps}
-          />
-        </div>
-      );
-    }
   }
 
   reactionHeader(reaction) {
@@ -459,7 +440,7 @@ export default class ReactionDetails extends Component {
     );
   }
 
-  updateReactionSvg() {
+  updateGraphic() {
     const { reaction } = this.state;
     const materialsSvgPaths = {
       starting_materials: reaction.starting_materials.map((material) => material.svgPath),
@@ -518,7 +499,7 @@ export default class ReactionDetails extends Component {
     const tabContentsMap = {
       scheme: (
         <Tab eventKey="scheme" title="Scheme" key={`scheme_${reaction.id}`}>
-          <ButtonGroup size="sm">
+          <ButtonGroup>
             <ButtonGroupToggleButton
               active={!reaction.gaseous}
               onClick={this.handleGaseousChange}
@@ -633,7 +614,13 @@ export default class ReactionDetails extends Component {
         header={this.reactionHeader(reaction)}
         footer={this.reactionFooter()}
       >
-        {this.reactionSVG(reaction)}
+        <ReactionSchemeGraphic
+          reaction={reaction}
+          onToggleLabel={(materialId) => {
+            reaction.toggleShowLabelForSample(materialId);
+            this.handleReactionChange(reaction, { updateGraphic: true });
+          }}
+        />
         {this.state.sfn && <ScifinderSearch el={reaction} />}
         <div className="tabs-container--with-borders">
           <ElementDetailSortTab

@@ -30,11 +30,9 @@ import {
 } from 'src/utilities/ketcherSurfaceChemistry/constants';
 import { deepCompareContent, filterTextList } from 'src/utilities/ketcherSurfaceChemistry/TextNode';
 import {
-  buttonClickForRectangleSelection,
   updateImagesInTheCanvas,
   undoKetcher,
   redoKetcher,
-  attachClickListeners,
   imageNodeForTextNodeSetter,
   selectedImageForTextNode,
   makeTransparentByTitle,
@@ -126,7 +124,6 @@ const onAtomDelete = async (editor) => {
       removeFrom = 'atom-removal';
     }
     const missingList = removeFrom === 'image-removal' ? imagesDifferencesContainer : aliasDifferences;
-    if (missingList.length < 1) return;
     dataRes = await removeAtomFromData(dataRes, missingList);
 
     imageNodeCounter = imagesList.length - 1;
@@ -184,7 +181,6 @@ const KetcherEditor = forwardRef((props, ref) => {
     },
     [EventNames.ADD_TEXT]: async () => {
       await onAddText(editor, selectedImageForTextNode);
-      await buttonClickForRectangleSelection(iframeRef);
       imageNodeForTextNodeSetter(null);
     },
     [EventNames.DELETE_TEXT]: async () => onDeleteText(editor),
@@ -193,16 +189,19 @@ const KetcherEditor = forwardRef((props, ref) => {
       oldImagePack = [...imagesList];
       await onImageAddedOrCopied();
     },
+    [EventNames.ADD_BOND]: async () => {
+      onTemplateMove(editor);
+    }
   };
 
   // DOM button events with scope
   const buttonEvents = {
-    [getButtonSelector(ButtonSelectors.CLEAN_UP)]: async () => fetchAndReplace(),
-    [getButtonSelector(ButtonSelectors.CALCULATE_CIP)]: async () => fetchAndReplace(),
-    [getButtonSelector(ButtonSelectors.LAYOUT)]: async () => fetchAndReplace(),
-    [getButtonSelector(ButtonSelectors.EXPLICIT_HYDROGENS)]: async () => fetchAndReplace(),
-    [getButtonSelector(ButtonSelectors.AROMATIZE)]: async () => fetchAndReplace(),
-    [getButtonSelector(ButtonSelectors.VIEWER_3D)]: async () => fetchAndReplace(),
+    [getButtonSelector(ButtonSelectors.CLEAN_UP)]: async () => fetchAndReplace(editor),
+    [getButtonSelector(ButtonSelectors.CALCULATE_CIP)]: async () => fetchAndReplace(editor),
+    [getButtonSelector(ButtonSelectors.LAYOUT)]: async () => fetchAndReplace(editor),
+    [getButtonSelector(ButtonSelectors.EXPLICIT_HYDROGENS)]: async () => fetchAndReplace(editor),
+    [getButtonSelector(ButtonSelectors.AROMATIZE)]: async () => fetchAndReplace(editor),
+    [getButtonSelector(ButtonSelectors.VIEWER_3D)]: async () => fetchAndReplace(editor),
     [getButtonSelector(ButtonSelectors.OPEN)]: async () => imageNodeForTextNodeSetter(null),
     [getButtonSelector(ButtonSelectors.SAVE)]: async () => imageNodeForTextNodeSetter(null),
     [getButtonSelector(ButtonSelectors.UNDO)]: async () => undoKetcher(editor),
@@ -221,7 +220,6 @@ const KetcherEditor = forwardRef((props, ref) => {
       editor,
       resetStore,
       loadContent,
-      attachClickListeners,
       buttonEvents,
     });
     return cleanup;
@@ -267,7 +265,9 @@ const KetcherEditor = forwardRef((props, ref) => {
     // Subscribes to the `selectionChange` event
     editor._structureDef.editor.editor.subscribe('selectionChange', async () => {
       const currentSelection = editor._structureDef.editor.editor._selection;
+
       if (currentSelection?.images) {
+        canvasSelectionsSetter(currentSelection);
         imageNodeForTextNodeSetter(editor._structureDef.editor.editor._selection?.images);
       }
     });
@@ -332,7 +332,7 @@ const KetcherEditor = forwardRef((props, ref) => {
    * @param {string} tempId - The ID of the selected template to be added to the canvas.
    * @param {boolean} [imageToBeAdded=true] - Determines whether the shape should be added as an image.
    */
-  const onShapeSelection = async (tempId, imageToBeAdded = true) => {
+  const onShapeSelection = async (tempId, imageToBeAdded) => {
     await onPasteNewShapes(editor, tempId, imageToBeAdded, iframeRef);
     setShowShapes(false);
   };
@@ -348,7 +348,7 @@ const KetcherEditor = forwardRef((props, ref) => {
         loading={showShapes}
         onShapeSelection={onShapeSelection}
         onCloseClick={() => setShowShapes(false)}
-        title='Surface Chemistry Templates'
+        title="Surface Chemistry Templates"
       />
       <iframe
         ref={iframeRef}

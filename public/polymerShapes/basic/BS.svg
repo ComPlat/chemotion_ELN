@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0.18 42.01 113.61 30.61" width="113.61" height="30.61">
+  <!-- Checkerboard Pattern -->
+  <pattern id="checkerboard" patternUnits="userSpaceOnUse" width="2" height="2" patternTransform="scale(10)">
+    <rect width="1" height="1" fill="#565555"/>
+    <rect x="1" y="1" width="1" height="1" fill="#565555"/>
+  </pattern>
+
+  <!-- Path with Checkerboard Pattern -->
+  <path d="M1.03 48.83v17.01q0,5.67 5.58,5.67h95.38q5.58,0 5.58,-5.67V48.83q0,-5.67 -5.58,-5.67H6.61q-5.58,0 -5.58,5.67z" 
+        fill="url(#checkerboard)" 
+        stroke="#1b1918" 
+        stroke-width="0.57"/>
+</svg>

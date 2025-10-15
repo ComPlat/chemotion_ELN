@@ -1,8 +1,8 @@
 shared:
   :editors:
-    :ketcher2:
-      :label: 'Ketcher 2'
-      :extSrc: '/editors/ketcher2/standalone/index.html'
+    :ketcher:
+      :label: 'Ketcher'
+      :extSrc: '/editors/ketcher/standalone/index.html'
     :chemdraw:
       :label: 'ChemDrawJS'
       :license: 'license file'

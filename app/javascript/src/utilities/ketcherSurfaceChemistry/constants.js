@@ -12,8 +12,8 @@ const LAYERING_FLAGS = Object.freeze({
 const KET_TAGS = Object.freeze({
   inspiredLabel: 'A',
   RGroupTag: 'R#',
-  templateSurface: 5,
-  templateBead: 1,
+  templateSurface: 60,
+  templateBead: 8,
   polymerIdentifier: '> <PolymersList>',
   textNodeIdentifier: '> <TextNode>',
   textNodeIdentifierClose: '> </TextNode>',
@@ -61,6 +61,7 @@ export const EventNames = {
   UPSERT_IMAGE: 'Upsert image',
   DELETE_IMAGE: 'Delete image',
   LOAD_CANVAS: 'Load canvas',
+  ADD_BOND: 'Add bond',
 };
 
 // DOM element handlers

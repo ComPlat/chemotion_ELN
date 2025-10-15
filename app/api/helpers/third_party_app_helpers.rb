@@ -34,10 +34,11 @@ module ThirdPartyAppHelpers
 
   # desc: find records from the payload
   def parse_payload(payload = @payload)
-    # TODO: implement attachment authorization
     @attachment = Attachment.find(payload['attID']&.to_i)
     @user = User.find(payload['userID']&.to_i)
     @app = payload['appID'].to_i.zero? ? ThirdPartyApp.new : ThirdPartyApp.find(payload['appID']&.to_i)
+
+    error!('No read access to attachment', 403) unless read_access?(@attachment, @user)
   rescue ActiveRecord::RecordNotFound
     error!('Record not found', 404)
   end

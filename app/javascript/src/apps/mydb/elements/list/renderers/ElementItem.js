@@ -49,12 +49,10 @@ function ElementItem({ element, renderItem }) {
     <div
       className={cs(
         'element-list-item',
-        { 'element-list-item--selected': isSelected },
+        { 'is-selected': isSelected },
       )}
     >
-      <div className="element-list-item-drag-handle">
-        <ElementDragHandle element={element} />
-      </div>
+      <ElementDragHandle element={element} />
       <div className="element-list-item-checkbox">
         <ElementCheckbox element={element} />
       </div>

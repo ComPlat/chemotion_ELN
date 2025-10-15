@@ -1,7 +1,5 @@
 /* eslint-disable no-underscore-dangle */
-import {
-  eventLoadCanvas,
-} from 'src/components/structureEditor/KetcherEditor';
+import { eventLoadCanvas } from 'src/components/structureEditor/KetcherEditor';
 import {
   FILOStack,
   FILOStackSetter,
@@ -10,7 +8,7 @@ import {
   uniqueEvents,
   allowProcessing,
   allowProcessingSetter,
-  eventUpsertImageDecrement
+  eventUpsertImageDecrement,
 } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
 import { eventCollectDeletedAtoms } from 'src/utilities/ketcherSurfaceChemistry/AtomsAndMolManipulation';
 import { EventNames } from 'src/utilities/ketcherSurfaceChemistry/constants';
@@ -57,6 +55,9 @@ const eventOperationHandlers = {
   },
   [EventNames.DELETE_TEXT]: async () => {
     addEventToFILOStack(EventNames.DELETE_TEXT);
+  },
+  [EventNames.ADD_BOND]: async () => {
+    addEventToFILOStack(EventNames.ADD_BOND);
   }
 };
 
@@ -81,23 +82,25 @@ const processFILOStack = async (eventHandlers) => {
 
 // main function to capture all events from editor
 const handleEventCapture = async (editor, data, eventHandlers) => {
-  allowProcessingSetter(true);
+  if (data) {
+    allowProcessingSetter(true);
 
-  const selection = editor._structureDef.editor.editor._selection;
-  if (selection?.images || selection?.texts) {
-    addEventToFILOStack(EventNames.MOVE_ATOM);
-  }
-
-  // eslint-disable-next-line no-restricted-syntax
-  for (const eventItem of data) {
-    const operationHandler = eventOperationHandlers[eventItem?.operation];
-    if (operationHandler) {
-      // eslint-disable-next-line no-await-in-loop
-      await operationHandler(eventItem);
+    const selection = editor._structureDef.editor.editor._selection;
+    if (selection?.images || selection?.texts) {
+      addEventToFILOStack(EventNames.MOVE_ATOM);
     }
-  }
-  if (allowProcessing) {
-    processFILOStack(eventHandlers);
+
+    // eslint-disable-next-line no-restricted-syntax
+    for (const eventItem of data) {
+      const operationHandler = eventOperationHandlers[eventItem?.operation];
+      if (operationHandler) {
+        // eslint-disable-next-line no-await-in-loop
+        await operationHandler(eventItem);
+      }
+    }
+    if (allowProcessing) {
+      processFILOStack(eventHandlers);
+    }
   }
 };
 
