@@ -3,6 +3,7 @@
 module Entities
   class SampleEntity < ApplicationEntity
     # rubocop:disable Layout/ExtraSpacing
+    # rubocop:disable Layout/LineLength, Layout/ExtraSpacing, Metrics/BlockLength
     # Level 0 attributes and relations
     with_options(anonymize_below: 0) do
       expose! :can_copy,        unless: :displayed_in_list

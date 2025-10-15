@@ -645,7 +645,7 @@ const KetcherEditor = forwardRef((props, ref) => {
         src={editor?.extSrc}
         title={editor?.label}
         height={iH}
-        width='100%'
+        width="100%"
         style={iS}
       />
     </div>

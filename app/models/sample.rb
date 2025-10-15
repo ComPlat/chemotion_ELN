@@ -92,7 +92,7 @@ class Sample < ApplicationRecord
   SAMPLE_TYPES = [
     SAMPLE_TYPE_MICROMOLECULE,
     SAMPLE_TYPE_MIXTURE,
-    SAMPLE_TYPE_HETEROGENEOUSMATERIAL
+    SAMPLE_TYPE_HETEROGENEOUSMATERIAL,
   ].freeze
 
   multisearchable against: %i[
