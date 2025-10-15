@@ -22,6 +22,7 @@ module Entities
       expose! :tag,                     anonymize_with: nil, using: 'Entities::ElementTagEntity'
       expose! :wellplates,              anonymize_with: [],  using: 'Entities::WellplateEntity'
       expose! :segments,                anonymize_with: [],  using: 'Labimotion::SegmentEntity'
+      expose! :short_label
     end
     # rubocop:enable Layout/ExtraSpacing
 
@@ -37,7 +38,7 @@ module Entities
       displayed_in_list? ? nil : object.container
     end
 
-    def is_restricted # rubocop:disable Naming/PredicateName
+    def is_restricted
       detail_levels[ResearchPlan] < 10
     end
 
