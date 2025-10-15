@@ -47,6 +47,7 @@ class ResearchPlan < ApplicationRecord
   }
   scope :by_literature_ids, ->(ids) { joins(:literals).where(literals: { literature_id: ids }) }
 
+  before_create :set_short_label
   after_create :create_root_container
 
   has_one :container, as: :containable
@@ -107,6 +108,14 @@ class ResearchPlan < ApplicationRecord
     end
 
     save!
+  end
+
+  def set_short_label
+    prefix = 'RP'
+    counter = creator.increment_counter 'research_plans' # rubocop:disable Rails/SkipsModelValidations
+    user_label = creator.name_abbreviation
+
+    self.short_label = "#{user_label}-#{prefix}#{counter}"
   end
 
   private

@@ -32,5 +32,10 @@ RSpec.describe ResearchPlan, type: :model do
       research_plan.creator = nil
       expect(research_plan.valid?).to be(false)
     end
+
+    it 'has correct short label' do
+      expected_label = "#{research_plan.creator.name_abbreviation}-RP1"
+      expect(research_plan.short_label).to eq(expected_label)
+    end
   end
 end
