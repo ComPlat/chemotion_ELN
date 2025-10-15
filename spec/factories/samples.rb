@@ -11,12 +11,11 @@ FactoryBot.define do
       force_attributes { nil }
     end
 
-    #  molfile "\n  Ketcher 05301616272D 1   1.00000     0.00000     0\n\n  2  1  0     0  0            999 V2000\n    1.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n  1  2  1  0     0  0\nM  END\n"
     callback(:before_create) do |sample|
       sample.creator = FactoryBot.build(:user) unless sample.creator
       sample.collections << FactoryBot.build(:collection) # if sample.collections.blank?
       sample.molecule = FactoryBot.create(:molecule) unless sample.molecule || sample.molfile
-      sample.container = FactoryBot.create(:container, :with_analysis) unless sample.container
+      sample.container = FactoryBot.create(:container, :with_analysis) unless sample.association(:container).reader
     end
 
     trait :with_residues do
@@ -35,7 +34,9 @@ FactoryBot.define do
         sample.creator = creator unless sample.creator
         sample.collections << FactoryBot.create(:collection, user_id: creator.id) if sample.collections.blank?
         sample.molecule = FactoryBot.build(:molecule) unless sample.molecule
-        sample.container = FactoryBot.create(:container, :with_analysis) unless sample.container
+        unless sample.association(:container).reader
+          sample.association(:container).target = FactoryBot.create(:container, :with_analysis)
+        end
       end
     end
 
@@ -53,7 +54,7 @@ FactoryBot.define do
       end
       after(:build) do |sample|
         sample.molecule = FactoryBot.build(:molecule) unless sample.molecule
-        sample.container = FactoryBot.create(:container, :with_analysis) unless sample.container
+        sample.container = FactoryBot.create(:container, :with_analysis) unless sample.association(:container).reader
       end
     end
     after(:create) do |sample, evaluator|
@@ -61,55 +62,35 @@ FactoryBot.define do
     end
   end
 
-  factory :sample_without_analysis, class: Sample do
-    sequence(:name) { |i| "Sample #{i}" }
-
+  factory :sample_without_analysis, parent: :valid_sample do
     target_amount_value { 100 }
     target_amount_unit { 'mg' }
-    callback(:before_create) do |sample|
-      sample.creator = FactoryBot.build(:user) unless sample.creator
-      sample.collections << FactoryBot.build(:collection) # if sample.collections.blank?
-      sample.molecule = FactoryBot.build(:molecule) unless sample.molecule
+    callback(:after_create) do |sample|
+      sample.analyses.each(&:destroy)
     end
   end
 
-  factory :sample_with_image_in_analysis, class: Sample do
-    sequence(:name) { |i| "Sample #{i}" }
-
-    target_amount_value { 100 }
-    target_amount_unit { 'mg' }
+  factory :sample_with_image_in_analysis, parent: :sample_without_analysis do
     callback(:before_create) do |sample|
-      user =  sample.creator || FactoryBot.create(:user)
-      sample.creator = user
-      sample.collections << FactoryBot.build(:collection) # if sample.collections.blank?
-      sample.molecule = FactoryBot.create(:molecule) unless sample.molecule || sample.molfile
-      sample.container = FactoryBot.create(:container, :with_analysis) unless sample.container
+      container = sample.association(:container).reader
       attachment = FactoryBot.create(:attachment, :with_image,
-        attachable_id: sample.container.children[0].children[0],
-        created_for: user.id,
-        attachable_type: 'Container')
-        sample.container.children[0].children[0].attachments<<attachment;
+                                     created_for: sample.creator.id,
+                                     attachable_id: container.children[0].children[0].id,
+                                     attachable_type: 'Container')
+      # FIXME: container-dataset level is missing
+      container.children[0].children[0].attachments << attachment
     end
   end
 
-  factory :sample_with_annotated_image_in_analysis, class: Sample do
-    sequence(:name) { |i| "Sample #{i}" }
-
-    target_amount_value { 100 }
-    target_amount_unit { 'mg' }
-
+  factory :sample_with_annotated_image_in_analysis, parent: :sample_without_analysis do
     callback(:before_create) do |sample|
-      user =  sample.creator || FactoryBot.create(:user)
-      sample.creator = user
-      sample.collections << FactoryBot.build(:collection) # if sample.collections.blank?
-      sample.molecule = FactoryBot.create(:molecule) unless sample.molecule || sample.molfile
-      sample.container = FactoryBot.create(:container, :with_analysis) unless sample.container
-
+      container = sample.association(:container).reader
       attachment = FactoryBot.create(:attachment, :with_annotation,
-        attachable_id: sample.container.children[0].children[0].id,
-        created_for: user.id,
-        attachable_type: 'Container'
-      )
+                                     created_for: sample.creator.id,
+                                     attachable_id: container.children[0].children[0].id,
+                                     attachable_type: 'Container')
+      # FIXME: container-dataset level is missing
+      container.children[0].children[0].attachments << attachment
     end
   end
 

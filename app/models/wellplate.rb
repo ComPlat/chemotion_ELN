@@ -24,6 +24,7 @@
 class Wellplate < ApplicationRecord
   has_logidze
   acts_as_paranoid
+  include Containerable
   include ElementUIStateScopes
   include PgSearch::Model
   include Collectable
@@ -88,8 +89,6 @@ class Wellplate < ApplicationRecord
 
   has_many :comments, as: :commentable, dependent: :destroy
 
-  has_one :container, as: :containable
-
   before_save :description_to_plain_text
 
   accepts_nested_attributes_for :collections_wellplates
@@ -110,7 +109,6 @@ class Wellplate < ApplicationRecord
       Collection.where(id: collection_ids) | Collection.where(user_id: user, label: 'All', is_locked: true)
     )
     subwellplate.collections << collections
-    subwellplate.container = Container.create_root_container
     subwellplate.save! && subwellplate
 
     # Split Wells and Samples
