@@ -79,7 +79,7 @@ export default class SampleForm extends React.Component {
     const prevComponents = this.props.sample?.components || [];
     const currentComponents = this.state?.components || [];
 
-    if (prevComponents.length !== currentComponents.length) {
+    if (JSON.stringify(prevComponents) !== JSON.stringify(currentComponents)) {
       this.setState({ components: this.props.sample.components });
     }
 

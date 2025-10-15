@@ -1037,6 +1037,95 @@ function processJsonMolecules(jsonData, verticalThreshold = 1) {
   return finalCombinedString;
 }
 
+// Check if V2000 molfile is empty (0 atoms)
+const isMolfileEmpty = (molfile) => {
+  if (!molfile || typeof molfile !== 'string') return true;
+  const match = molfile.match(/^\s*(\d+)\s+\d+.*V2000$/m);
+  return match ? parseInt(match[1], 10) === 0 : true;
+};
+
+// The complete processing function
+function processJsonMolecules(jsonData, verticalThreshold = 1) {
+  const result = [];
+  const combinedParts = [];
+
+  const nodeRefs = jsonData.root.nodes
+    .filter((n) => n.$ref && jsonData[n.$ref]?.type === 'molecule')
+    .map((n) => n.$ref);
+
+  nodeRefs.forEach((ref, molIndex) => {
+    const mol = jsonData[ref];
+    if (!mol || !mol.atoms) {
+      result.push(`Mol ${molIndex + 1}: (no atoms)`);
+      return;
+    }
+
+    // ✅ Filter atoms with alias and extract alias part
+    const validAtoms = mol.atoms
+      .map((atom) => {
+        if (!atom.alias) return null;
+        const aliasParts = atom.alias.split('_');
+        if (aliasParts.length < 2) return null;
+        return {
+          aliasPart: aliasParts[2],
+          y: atom.location[1]
+        };
+      })
+      .filter((atom) => atom !== null);
+
+    if (validAtoms.length === 0) {
+      result.push(`Mol ${molIndex + 1}: (no atoms)`);
+      return;
+    }
+
+    const used = new Set();
+    const verticalPairs = [];
+
+    // Step 1: Pair vertical-close atoms using aliasPart
+    for (let i = 0; i < validAtoms.length; i++) {
+      if (used.has(i)) continue;
+
+      let closestIndex = -1;
+      let minDiff = Infinity;
+
+      for (let j = 0; j < validAtoms.length; j++) {
+        if (i === j || used.has(j)) continue;
+
+        const yDiff = Math.abs(validAtoms[i].y - validAtoms[j].y);
+        if (yDiff < verticalThreshold && yDiff < minDiff) {
+          minDiff = yDiff;
+          closestIndex = j;
+        }
+      }
+
+      if (closestIndex !== -1) {
+        const top = validAtoms[i].y > validAtoms[closestIndex].y ? i : closestIndex;
+        const bottom = top === i ? closestIndex : i;
+
+        verticalPairs.push(`${validAtoms[top].aliasPart}_${validAtoms[bottom].aliasPart}`);
+        used.add(i);
+        used.add(closestIndex);
+      }
+    }
+
+    // Step 2: Unused atoms → add aliasParts directly
+    const unusedStrings = validAtoms
+      .map((atom, i) => (!used.has(i) ? atom.aliasPart : null))
+      .filter((p) => p !== null);
+
+    // Combine for this molecule
+    const connString = [...verticalPairs, ...unusedStrings].join('/');
+    result.push(`Mol ${molIndex + 1}: ${connString}`);
+    if (connString) combinedParts.push(connString);
+  });
+
+  // Step 3: Final combined output
+  const finalCombinedString = combinedParts.join('/');
+  result.push(`Combined: ${finalCombinedString}`);
+
+  return finalCombinedString;
+}
+
 const replaceAliasesWithIndexesAndCollectComponents = async (comboString) => {
   const textNodeStructureModified = {};
   const textNodeStructureForComponents = [];
@@ -1066,13 +1155,6 @@ const replaceAliasesWithIndexesAndCollectComponents = async (comboString) => {
     .filter(Boolean) // remove empty parts
     .join('/');
   return { replacedString, textNodeStructureForComponents };
-};
-
-// Check if V2000 molfile is empty (0 atoms)
-const isMolfileEmpty = (molfile) => {
-  if (!molfile || typeof molfile !== 'string') return true;
-  const match = molfile.match(/^\s*(\d+)\s+\d+.*V2000$/m);
-  return match ? parseInt(match[1], 10) === 0 : true;
 };
 
 const onFinalCanvasSave = async (editor, iframeRef) => {

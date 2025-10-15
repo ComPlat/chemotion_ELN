@@ -1,5 +1,5 @@
 development:
-  :indigo_service_url: 'http://indigo_service/'
+  :indigo_service_url: 'https://indigo.chemserv.scc.kit.edu/'
 
 production:
-  :indigo_service_url: 'http://indigo_service/'
+  :indigo_service_url: 'https://indigo.chemserv.scc.kit.edu/'
