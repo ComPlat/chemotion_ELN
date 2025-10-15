@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: research_plans
@@ -13,6 +15,8 @@
 #
 
 class ResearchPlan < ApplicationRecord
+  PREFIX = 'RP'
+
   has_logidze
   acts_as_paranoid
   include ElementUIStateScopes
@@ -111,11 +115,10 @@ class ResearchPlan < ApplicationRecord
   end
 
   def set_short_label
-    prefix = 'RP'
     counter = creator.increment_counter 'research_plans' # rubocop:disable Rails/SkipsModelValidations
     user_label = creator.name_abbreviation
 
-    self.short_label = "#{user_label}-#{prefix}#{counter}"
+    self.short_label = "#{user_label}-#{PREFIX}#{counter}"
   end
 
   private
