@@ -13,6 +13,8 @@ import CommonTemplatesFetcher from 'src/fetchers/CommonTemplateFetcher';
 import { transformSvgIdsAndReferences } from 'src/utilities/SvgUtils';
 import { createEditors, notifyError, initEditor } from 'src/components/structureEditor/EditorsInstances';
 import EditorRenderer from 'src/components/structureEditor/EditorRenderer';
+import Component from 'src/models/Component';
+import uuid from 'uuid';
 
 function EditorList(props) {
   const { options, fnChange, value } = props;

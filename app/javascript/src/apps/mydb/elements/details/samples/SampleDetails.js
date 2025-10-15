@@ -314,7 +314,7 @@ export default class SampleDetails extends React.Component {
     sample.contains_residues = molfile?.indexOf(' R# ') > -1;
     sample.formulaChanged = true;
     sample.components = components;
-    if (textNodesFormula.length > 0) sample.name = textNodesFormula;
+    if (textNodesFormula?.length > 0) sample.name = textNodesFormula;
     this.setState({ loadingMolecule: true });
 
     const fetchError = (errorMessage) => {

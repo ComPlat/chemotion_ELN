@@ -23,7 +23,6 @@ import {
   ImagesToBeUpdatedSetter,
   imagesList,
   mols,
-  allAtoms,
   textList,
   textListSetter,
   textNodeStruct,
@@ -44,6 +43,7 @@ import {
   fetchSurfaceChemistryImageData,
   placeAtomOnImage,
 } from 'src/utilities/ketcherSurfaceChemistry/Ketcher2SurfaceChemistryUtils';
+import { findTemplateIdCategoryFromTemplates } from 'src/utilities/ketcherSurfaceChemistry/iconBaseProvider';
 
 // function when a canvas is saved using main "SAVE" button
 const arrangePolymers = async (canvasData, editor) => {
