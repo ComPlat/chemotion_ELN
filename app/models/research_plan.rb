@@ -47,10 +47,11 @@ class ResearchPlan < ApplicationRecord
   }
   scope :by_literature_ids, ->(ids) { joins(:literals).where(literals: { literature_id: ids }) }
 
+  before_create :set_short_label
   after_create :create_root_container
 
   has_one :container, as: :containable
-  has_one :research_plan_metadata, dependent: :destroy, foreign_key: :research_plan_id
+  has_one :research_plan_metadata, dependent: :destroy
   has_many :collections_research_plans, inverse_of: :research_plan, dependent: :destroy
   has_many :collections, through: :collections_research_plans
   has_many :attachments, as: :attachable
@@ -82,13 +83,13 @@ class ResearchPlan < ApplicationRecord
   end
 
   def create_root_container
-    if self.container == nil
-      self.container = Container.create_root_container
-    end
+    return unless container.nil?
+
+    self.container = Container.create_root_container
   end
 
   def analyses
-    self.container ? self.container.analyses : Container.none
+    container ? container.analyses : Container.none
   end
 
   def svg_files
@@ -109,6 +110,14 @@ class ResearchPlan < ApplicationRecord
     end
 
     save!
+  end
+
+  def set_short_label
+    prefix = 'RP'
+    counter = creator.increment_counter 'research_plans' # rubocop:disable Rails/SkipsModelValidations
+    user_label = creator.name_abbreviation
+
+    self.short_label = "#{user_label}-#{prefix}#{counter}"
   end
 
   private
