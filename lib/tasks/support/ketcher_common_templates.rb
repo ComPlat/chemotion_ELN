@@ -5,9 +5,8 @@ require 'logger'
 
 class CommonTemplateExporter
   TABLE_NAME = 'ketcherails_common_templates'
-  MODEL_CLASS = 'KetcherailsCommonTemplate'.constantize
   OUTPUT_DIR = 'public/common_templates'
-  OUTPUT_FILE = File.join('uploads/common_templates', 'user.json')
+  OUTPUT_FILE = File.join('uploads/common_templates', 'instance.json')
   DEFAULT_TEMPLATES_PATH = File.join('uploads/common_templates', 'default.json')
   LOGFILE = 'log/ketcher_common_templates.log'
 
@@ -20,8 +19,9 @@ class CommonTemplateExporter
   end
 
   def export
-    if table_exists?(TABLE_NAME) && MODEL_CLASS.exists?
-      templates = MODEL_CLASS.all.as_json
+    if table_exists?(TABLE_NAME)
+      ketcherails_common_template_class = Class.new(ApplicationRecord) { self.table_name = TABLE_NAME }
+      templates = ketcherails_common_template_class.all.as_json
       source = 'database'
     elsif File.exist?(DEFAULT_TEMPLATES_PATH)
       templates = File.empty?(DEFAULT_TEMPLATES_PATH) ? [] : JSON.parse(File.read(DEFAULT_TEMPLATES_PATH))
