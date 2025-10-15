@@ -103,28 +103,8 @@ $shades: 6;
   @return $colors;
 }
 
-@function activeShades($saturation-mod, $lightness-mod, $string) {
-  $colors: ();
-  @each $name, $color in $silicon-shades {
-    $hue: hue($color);
-    $saturation: saturation($color) + $saturation-mod;
-    $lightness: lightness($color) + $lightness-mod;
-    $new-color: hsl($hue, $saturation, $lightness);
-    $colors: map-merge(
-      $colors,
-      (
-        $name: $new-color,
-      )
-    );
-  }
-  @return $colors;
-}
-
 $silicon-shades: mapShades($chemstrap-silicon, $shades);
 $carbon-shades: mapShades($chemstrap-carbon, $shades);
-$blue-shades: mapShades($chemstrap-blue, $shades);
-$hover-shades: activeShades(10, -3, "hover");
-$active-shades: activeShades(17, -8, "active");
 
 /* Text-size styles */
 .fs-7 {

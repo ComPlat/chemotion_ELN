@@ -1,5 +1,5 @@
 import React from 'react';
-import { Title, Subtitle, Canvas, ColorPalette, ColorItem } from '@storybook/blocks';
+import { Title, Subtitle, Canvas, ColorPalette, ColorItem, Markdown, Source } from '@storybook/blocks';
 import { getColorValue } from './componentAttributes';
 
 // Base colors array. Color values are fetched dynamically from CSS custom properties.
@@ -58,6 +58,16 @@ export default {
       page: () => (
         <>
           <Title />
+          <Markdown>
+            {`
+  We aim for a significantly simplified color scheme in the interface.
+  
+  **Chemstrap-white** for the application background, **chemstrap-carbon** for text and borders,
+  and **chemstrap-silicon** for surfaces.
+
+  Primary interactions and active states are highlighted with accents from the **chemstrap-blue** color family.
+            `}
+          </Markdown>
           <Subtitle>Base Colors</Subtitle>
           <ColorPalette>
             {baseColors.map((color) => (
@@ -70,6 +80,16 @@ export default {
             ))}
           </ColorPalette>
           <Subtitle>Semantic Colors</Subtitle>
+          <Markdown>
+            {`
+  The colors **chemstrap-red**, **chemstrap-green**, and **chemstrap-orange** are used sparingly,
+  and only where their connotations are unambiguous:
+
+  - **Red:** destructive action or error
+  - **Green:** productive action or success message
+  - **Orange:** warning or caution
+            `}
+          </Markdown>
           <ColorPalette>
             {semanticColors.map((color) => (
               <ColorItem
@@ -81,7 +101,39 @@ export default {
             ))}
           </ColorPalette>
           <Subtitle>Shades</Subtitle>
+          <Markdown>
+            {`
+  Text, border and surface colors come in different shades to indicate hierarchy and interactivity.
+
+  When setting surface colors we try to achieve differentiation with as litte contrast as possible.
+  The second lightest shade is sufficient to create a clear visual distinction against the application background.
+  if you want to display nested surfaces, choose the next darker shade.
+
+  Regular text is set in the base color. Use the two darkest shades for less important text, lighter shades do not
+  provide enough contrast against the application background.
+
+  The third lightest shade is the default border color. Use darker shades if extra contrast is needed for darker
+  backgrounds.
+            `}
+          </Markdown>
           <Canvas of={Shades} />
+          <Markdown>
+            {`
+We provided utility classes for all shades of surface, text and border colors.
+
+| Surface classes       | Text color classes     | Border color classes     |
+|----------------------|-----------------------|--------------------------|
+| \`.surface-base\`      | \`.text-base\`<br/>**(only nescessary to overwrite)**| \`.border-base\`                               |
+| \`.surface-lighten1\`  | \`.text-lighten1\`                               | \`.border-lighten1\`                           |
+| \`.surface-lighten2\`  | \`.text-lighten2\`                               | \`.border-lighten2\`                           |
+| \`.surface-lighten3\`  | \`.text-lighten3\`                               | \`.border-lighten3\`<br/>**(or simply**\`.border\`**)**|
+| \`.surface-lighten4\`  | \`.text-lighten4\`                               | \`.border-lighten4\`                           |
+| \`.surface-lighten5\`  | \`.text-lighten5\`                               | \`.border-lighten5\`                           |
+
+**Note:** These utility classes are intended for exceptional cases only. In most situations you should
+rely on the default colors provided by the component.
+            `}
+          </Markdown>
         </>
       ),
     },
