@@ -97,12 +97,14 @@ class Material extends Component {
   componentDidMount() {
     const { material } = this.props;
     this.fetchMixtureComponentsIfNeeded(material);
+    this.restoreAccordionState(material);
   }
 
   componentDidUpdate(prevProps) {
     const { material } = this.props;
     if (prevProps.material.id !== material.id) {
       this.fetchMixtureComponentsIfNeeded(material);
+      this.restoreAccordionState(material);
     }
   }
 
@@ -550,7 +552,14 @@ class Material extends Component {
   }
 
   toggleComponentsAccordion() {
-    this.setState((prevState) => ({ showComponents: !prevState.showComponents }));
+    this.setState((prevState, props) => {
+      const nextOpen = !prevState.showComponents;
+      try {
+        const key = this.accordionStorageKey(props.material?.id);
+        if (key) { window.localStorage.setItem(key, nextOpen ? 'true' : 'false'); }
+      } catch (e) { /* ignore storage errors */ }
+      return { showComponents: nextOpen };
+    });
   }
 
   /**
@@ -604,6 +613,26 @@ class Material extends Component {
         mixtureComponentsLoading: false,
       });
     }
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  accordionStorageKey(materialId) {
+    if (!materialId) { return null; }
+    return `mixture_components_accordion_open:${materialId}`;
+  }
+
+  restoreAccordionState(material) {
+    try {
+      const key = this.accordionStorageKey(material?.id);
+      if (!key) { return; }
+      const saved = window.localStorage.getItem(key);
+      if (saved === 'true' || saved === 'false') {
+        const showComponents = saved === 'true';
+        if (this.state.showComponents !== showComponents) {
+          this.setState({ showComponents });
+        }
+      }
+    } catch (e) { /* ignore storage errors */ }
   }
 
   handleAmountTypeChange(e) {

@@ -1996,6 +1996,19 @@ export default class Sample extends Element {
         totalMass += density * componentVolumeML;
       }
     });
+
+    // Include sample solvents' contribution based on their volumes
+    // Assumes solvent entries may provide amount_l (L) and optional density (g/mL)
+    if (Array.isArray(this.solvent) && this.solvent.length > 0) {
+      this.solvent.forEach((solv) => {
+        if (!solv) { return; }
+
+        const density = (solv.density && solv.density > 0) ? solv.density : 1; // g/mL
+        const volumeL = parseFloat(solv.amount_l ?? solv.amount_l ?? 0) || 0; // L
+        const volumeML = volumeL * 1000; // mL
+        totalMass += density * volumeML; // g
+      });
+    }
     this.sample_details.total_mixture_mass_g = totalMass;
 
     // Only update density here for safety, but the main update should be after amount_l changes
