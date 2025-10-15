@@ -20,7 +20,7 @@ class CommonTemplateExporter
   end
 
   def export
-    if MODEL_CLASS.exists?
+    if table_exists?(TABLE_NAME) && MODEL_CLASS.exists?
       templates = MODEL_CLASS.all.as_json
       source = 'database'
     elsif File.exist?(DEFAULT_TEMPLATES_PATH)
@@ -35,4 +35,10 @@ class CommonTemplateExporter
     File.write(OUTPUT_FILE, JSON.pretty_generate(templates))
     @logger.info "#{templates.length} Common Templates exported from #{source || 'fallback'} to #{OUTPUT_FILE}"
   end
+end
+
+def table_exists?(table_name)
+  ActiveRecord::Base.connection.data_source_exists?(table_name)
+rescue StandardError
+  false
 end
