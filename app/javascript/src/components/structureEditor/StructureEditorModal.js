@@ -96,18 +96,21 @@ export default class StructureEditorModal extends React.Component {
   }
 
   async componentDidMount() {
+    // Initialize editors and set up the default editor
     try {
+      // Wait for both the default editor and all available editors to initialize
       const [editor, editors] = await Promise.all([
-        initEditor(),
-        createEditors(),
+        initEditor(), // Initializes the default editor instance
+        createEditors(), // Creates all available editor instances
       ]);
 
-      this.editors = editors;
+      this.editors = editors; // Store all editor instances
 
+      // Set the default editor in state and perform additional setup
       this.setState({ editor }, () => {
-        this.resetEditor(this.editors);
-        this.fetchCommonTemplates();
-        this.initializeEditors();
+        this.resetEditor(this.editors); // Ensure the selected editor is valid
+        this.fetchCommonTemplates(); // Load common templates for Ketcher
+        this.initializeEditors(); // Finalize editor initialization
       });
     } catch (error) {
       console.error('Failed to initialize editor(s):', error);
@@ -187,9 +190,19 @@ export default class StructureEditorModal extends React.Component {
     );
   }
 
+  /**
+   * Initializes all available structure editors.
+   * Ensures editors are loaded and available for selection.
+   */
   async initializeEditors() {
     if (!Object.keys(this.editors).length) {
-      this.editors = { ketcher: await getEditorById('ketcher') };
+      try {
+        // Load the Ketcher editor if editors are not initialized
+        this.editors = { ketcher: await getEditorById('ketcher') };
+      } catch (error) {
+        notifyError(`Failed to initialize Ketcher editor: ${error}`);
+        this.editors = { ketcher: null };
+      }
     }
   }
 
