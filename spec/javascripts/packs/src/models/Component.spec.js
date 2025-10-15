@@ -32,17 +32,23 @@ describe('Component', () => {
 
   describe('calculateVolumeForLiquid', () => {
     it('should calculate volume from density when density is provided', () => {
-      component.amount_mol = 1; // 1 mol
-      component.amount_l = 1; // 1 L
-      component.calculateVolumeForLiquid(1); // Call with purity 1
-      expect(component.amount_l).toBe(1);
+      component.density = 1.0; // g/mL
+      component.amount_mol = 2; // mol
+      const purity = 1;
+
+      component.calculateVolumeForLiquid(purity);
+
+      // amount_l = (amount_mol * molecular_weight) / (density * 1000 * purity)
+      const expectedAmountL = (component.amount_mol * component.molecule.molecular_weight)
+        / (component.density * 1000 * purity);
+      expect(component.amount_l).toBeCloseTo(expectedAmountL, 6);
     });
 
     it('should calculate volume from starting/stock concentration when stock is provided', () => {
       component.density = 0;
-      component.starting_molarity_value = 0.5; // 1 M
-      component.amount_mol = 2; // 1 mol
-      component.amount_l = 1; // 1 L
+      component.starting_molarity_value = 0.5; // 0.5 M
+      component.amount_mol = 2; // mol
+      component.amount_l = 1;
       component.calculateVolumeForLiquid(1);
       expect(component.amount_l).toBe(2 / 0.5);
     });
@@ -357,27 +363,31 @@ describe('Component', () => {
     });
 
     it('creates a component with correct properties from sample data', () => {
-      const component = Component.createFromSampleData(
+      const createdComponent = Component.createFromSampleData(
         mockComponentData,
         mockParentId,
         mockMaterialGroup,
         mockSample
       );
 
-      expect(component).toBeInstanceOf(Component);
-      expect(component.parent_id).toBe(mockParentId);
-      expect(component.material_group).toBe(mockMaterialGroup);
-      expect(component.starting_molarity_value).toBe(mockComponentData.component_properties.molarity_value);
-      expect(component.molarity_value).toBe(0);
-      expect(component.reference).toBe(false);
-      expect(component.id).toMatch(/^comp_/);
-      expect(component.amount_g).toBe(mockComponentData.component_properties.amount_g);
-      expect(component.amount_l).toBe(mockComponentData.component_properties.amount_l);
+      expect(createdComponent).toBeInstanceOf(Component);
+      expect(createdComponent.parent_id).toBe(mockParentId);
+      expect(createdComponent.material_group).toBe(mockMaterialGroup);
+      expect(createdComponent.starting_molarity_value)
+        .toBe(mockComponentData.component_properties.molarity_value);
+      expect(createdComponent.molarity_value).toBe(0);
+      expect(createdComponent.reference).toBe(false);
+      expect(createdComponent.id).toMatch(/^comp_/);
+      expect(createdComponent.amount_g).toBe(mockComponentData.component_properties.amount_g);
+      expect(createdComponent.amount_l).toBe(mockComponentData.component_properties.amount_l);
 
       // Update molecule comparison to check individual properties instead of full object
-      expect(component.molecule.id).toBe(mockComponentData.component_properties.molecule.id);
-      expect(component.molecule.iupac_name).toBe(mockComponentData.component_properties.molecule.iupac_name);
-      expect(component.molecule.molecular_weight).toBe(mockComponentData.component_properties.molecule.molecular_weight);
+      expect(createdComponent.molecule.id)
+        .toBe(mockComponentData.component_properties.molecule.id);
+      expect(createdComponent.molecule.iupac_name)
+        .toBe(mockComponentData.component_properties.molecule.iupac_name);
+      expect(createdComponent.molecule.molecular_weight)
+        .toBe(mockComponentData.component_properties.molecule.molecular_weight);
     });
 
     it('handles liquid components correctly', () => {
@@ -422,7 +432,7 @@ describe('Component', () => {
     });
 
     it('preserves molecule data from the original component', () => {
-      const component = Component.createFromSampleData(
+      const createdComponent = Component.createFromSampleData(
         mockComponentData,
         mockParentId,
         mockMaterialGroup,
@@ -430,10 +440,71 @@ describe('Component', () => {
       );
 
       // Update molecule comparison to check individual properties instead of full object
-      expect(component.molecule.id).toBe(mockComponentData.component_properties.molecule.id);
-      expect(component.molecule.iupac_name).toBe(mockComponentData.component_properties.molecule.iupac_name);
-      expect(component.molecule.molecular_weight).toBe(mockComponentData.component_properties.molecule.molecular_weight);
-      expect(component.molecule.id).toBe(mockComponentData.component_properties.molecule_id);
+      expect(createdComponent.molecule.id)
+        .toBe(mockComponentData.component_properties.molecule.id);
+      expect(createdComponent.molecule.iupac_name)
+        .toBe(mockComponentData.component_properties.molecule.iupac_name);
+      expect(createdComponent.molecule.molecular_weight)
+        .toBe(mockComponentData.component_properties.molecule.molecular_weight);
+      expect(createdComponent.molecule.id)
+        .toBe(mockComponentData.component_properties.molecule_id);
+    });
+  });
+
+  describe('calculateRelativeMolecularWeight', () => {
+    it('returns null when sample is not a mixture', () => {
+      const sample = {
+        isMixture: () => false,
+        total_mixture_mass_g: 100
+      };
+
+      component.amount_mol = 2;
+      const result = component.calculateRelativeMolecularWeight(sample);
+
+      expect(result).toBe(null);
+      expect(component.component_properties && component.component_properties.relative_molecular_weight)
+        .toBe(undefined);
+    });
+
+    it('calculates and assigns relative molecular weight for mixtures', () => {
+      const sample = {
+        isMixture: () => true,
+        total_mixture_mass_g: 36 // grams
+      };
+
+      component.id = 'c1';
+      component.name = 'Water';
+      component.amount_mol = 2; // mol
+
+      const result = component.calculateRelativeMolecularWeight(sample);
+
+      expect(result).toEqual({
+        id: 'c1',
+        name: 'Water',
+        amount_mol: 2,
+        relative_molecular_weight: 18
+      });
+
+      expect(component.component_properties).toBeTruthy();
+      expect(component.component_properties.relative_molecular_weight).toBe(18);
+    });
+
+    it('sets relative molecular weight to 0 when inputs are zero or missing', () => {
+      const sample = {
+        isMixture: () => true,
+        total_mixture_mass_g: 0
+      };
+
+      component.amount_mol = 0;
+      const result = component.calculateRelativeMolecularWeight(sample);
+
+      expect(result).toEqual({
+        id: component.id,
+        name: 'Unknown',
+        amount_mol: 0,
+        relative_molecular_weight: 0
+      });
+      expect(component.component_properties.relative_molecular_weight).toBe(0);
     });
   });
 });
