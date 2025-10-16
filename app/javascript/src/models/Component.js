@@ -10,6 +10,9 @@ import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 export default class Component extends Sample {
   constructor(props) {
     super(props);
+    this.calcWeightRatioWithoutWeight = this.calcWeightRatioWithoutWeight.bind(this);
+    this.weightRatioBasedExpCalc = this.weightRatioBasedExpCalc.bind(this);
+    this.parseComponentSource = this.parseComponentSource.bind(this);
   }
 
   /**
@@ -582,9 +585,46 @@ export default class Component extends Sample {
 
       NotificationActions.add({
         message: `Your input makes the purity ${purity.toFixed(2)}. Purity value should be > 0 and <= 1.`,
-        level: 'error'
+        level: 'error',
       });
     }
+  }
+
+  weightRatioBasedExpCalc(weightRatioExpStateValue, stateValue) {
+    if (stateValue <= 0 || weightRatioExpStateValue <= 0) return 0;
+    const value = weightRatioExpStateValue / stateValue;
+    return value;
+  }
+
+  /**
+   * exp molar ratios (calc)/ molar mass
+   */
+  calcWeightRatioWithoutWeight = (components) => {
+    let sum = 0;
+    components.forEach((item) => {
+      const { weightRatioCalc } = this.parseComponentSource(item.source);
+      if (!isNaN(weightRatioCalc)) sum += weightRatioCalc;
+    });
+    return 100 - sum;
+  };
+
+  parseComponentSource(source) {
+    let sourceContent = '';
+    let weightRatioContent = 0;
+    let compContent = '';
+    if (source && source.length) {
+      if (source.indexOf('%') !== -1) {
+        const parts = source.split(' ');
+        sourceContent = parts.slice(1).join(' ') || '';
+        weightRatioContent = parseFloat(source?.split('wt%')[0]?.split(' ')[1]) || 0;
+        compContent = source?.split('%')[1]?.trim() || '';
+      } else {
+        const parts = source.split('-');
+        sourceContent = source;
+        compContent = parts[1];
+      }
+    }
+    return { source: sourceContent, component: compContent, weightRatioCalc: weightRatioContent };
   }
 
   /**
@@ -611,7 +651,13 @@ export default class Component extends Sample {
         material_group: this.material_group,
         reference: this.reference,
         purity: this.purity,
-      }
+
+        // Heterogeneous Material
+        template_category: this.template_category,
+        source: this.source,
+        molar_mass: this.molar_mass,
+        weight_ratio_exp: this.weight_ratio_exp,
+      },
     };
   }
 

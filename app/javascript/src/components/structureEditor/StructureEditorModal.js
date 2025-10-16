@@ -13,6 +13,8 @@ import CommonTemplatesFetcher from 'src/fetchers/CommonTemplateFetcher';
 import { transformSvgIdsAndReferences } from 'src/utilities/SvgUtils';
 import { createEditors, notifyError, initEditor } from 'src/components/structureEditor/EditorsInstances';
 import EditorRenderer from 'src/components/structureEditor/EditorRenderer';
+import Component from 'src/models/Component';
+import uuid from 'uuid';
 
 function EditorList(props) {
   const { options, fnChange, value } = props;
@@ -157,9 +159,8 @@ export default class StructureEditorModal extends React.Component {
     }
   }
 
-  handleStructureSave(molfile, svg, editorId, info = null) {
+  handleStructureSave(molfile, svg, editorId, components, textNodesFormula, info = null) {
     const { hasChildren, hasParent, onSave } = this.props;
-
     this.setState(
       {
         showModal: false,
@@ -167,11 +168,27 @@ export default class StructureEditorModal extends React.Component {
       },
       () => {
         if (onSave) {
-          onSave(molfile, svg, info, editorId);
+          onSave(molfile, components, textNodesFormula, svg, info, editorId);
         }
       }
     );
   }
+
+  postComponents(components) {
+    return components?.map(
+      (comp, idx) => new Component({
+        id: uuid(),
+        name: 'HeterogeneousMaterial',
+        position: idx,
+        molecule: { id: Math.random().toFixed(2) * 100 }, // TODO: should be discussion, duplication is not concerned in this case
+        template_category: Object.values(comp)[0],
+        source: Object.keys(comp)[0],
+        molar_mass: 0,
+        weight_ratio_exp: 0
+      })
+    );
+  }
+
 
   async saveKetcher(editorId) {
     if (this.ketcherRef?.current) {
@@ -182,10 +199,12 @@ export default class StructureEditorModal extends React.Component {
         return;
       }
       try {
-        // Call onSaveFileK2SC and get the required data
-        const { ket2Molfile, svgElement } = await onSaveFileK2SC();
-        const updatedSvg = await transformSvgIdsAndReferences(svgElement);
-        this.handleStructureSave(ket2Molfile, updatedSvg, editorId.id);
+      const {
+        ket2Molfile, svgElement, componentsList, textNodesFormula
+      } = await onSaveFileK2SC();
+      const updatedSvg = await transformSvgIdsAndReferences(svgElement);
+      const components = componentsList ? this.postComponents(componentsList) : [];
+      this.handleStructureSave(ket2Molfile, updatedSvg, editorId.id, components, textNodesFormula);
       } catch (error) {
         console.error('Error during save operation for Ketcher2:', error);
       }
