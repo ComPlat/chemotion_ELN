@@ -91,3 +91,6 @@ VOLUME [ "/chemotion/app", "/chemotion/data" ]
 
 # TODO:remove this before merging to main
 ADD https://github.com/haditariq/ketcher-build-holder.git /chemotion/app/public/editors/ketcher2/standalone
+
+# Copy config example into actual config
+RUN cp config/structure_editors.yml.example config/structure_editors.yml
