@@ -7,7 +7,8 @@ import {
   Title,
   Subtitle,
   Primary,
-  Canvas
+  Canvas,
+  Markdown,
 } from '@storybook/blocks';
 
 const sizes = sizeAttributes;
@@ -104,8 +105,34 @@ export default {
         <>
           <Title />
           <Subtitle>Layout</Subtitle>
+          <Markdown>
+            {`
+  Some best practices for layouting forms in the ELN:
+
+  - keep vertical spacing consistent
+    - the \`mb-3\` helper class provides good rhythm for most cases
+  - group related fields in a row
+    - often it is more effective to apply the grid classes
+    (\`row\` and \`col\`) directly than to import the dedicated grid components
+  - use the ButtonToolbar component to contain the form actions
+    - \`justify-content-end\` and \`gap-3\` provide good default alignment and spacing
+  - use the light button variant for secondary actions like "Cancel"
+  - use the primary button variant for the main action like "Save"
+            `}
+          </Markdown>
           <Primary />
           <Subtitle>Sizing</Subtitle>
+          <Markdown>
+            {`
+  Given the high density of ELN UI, we extended Bootstrap's standard sizing with extra small and extra
+  extra small options.
+  
+  Extra extra small form elements should be used sparingly, large form elements
+  are not recommended at all.
+  
+  Avoid mixing sizes within a form, unless you want to emphasize a particular hierarchy.
+            `}
+          </Markdown>
           <Canvas of={Sizing} />
         </>
       ),

@@ -3,7 +3,8 @@ import {
   Title,
   Subtitle,
   Primary,
-  Canvas
+  Canvas,
+  Markdown,
 } from '@storybook/blocks';
 
 export function Typography() {
@@ -79,6 +80,12 @@ export default {
       page: () => (
         <>
           <Title />
+          <Markdown>
+            {`
+  This is the default styling for text elements in the ELN.
+  The styling might vary within certain components.
+            `}
+          </Markdown>
           <Subtitle>Text formats</Subtitle>
           <Primary />
           <Subtitle>Supported but rare</Subtitle>
