@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'roo'
+require 'tempfile'
 
 # rubocop:disable Metrics/ClassLength
 module Import
@@ -15,8 +16,22 @@ module Import
     DENSITY_UNIT = %r{g/mL|g/ml}i.freeze
     FLASH_POINT_UNIT = /°C|F|K/i.freeze
 
-    def initialize(file_path, collection_id, user_id, file_name, import_type)
-      @file_path = file_path
+    def initialize(attachment, collection_id, user_id, file_name, import_type)
+      @__tmp_file = nil
+
+      if attachment.respond_to?(:read_file) && attachment.respond_to?(:filename)
+        begin
+          ext = File.extname(attachment.filename).presence || '.csv'
+          tmp = Tempfile.new(['import', ext])
+          tmp.binmode
+          tmp.write(attachment.read_file)
+          tmp.rewind
+          @__tmp_file = tmp
+          @file_path = tmp.path
+        rescue StandardError => _e
+          raise 'Failed to read the attachment file.'
+        end
+      end
       @collection_id = collection_id
       @current_user_id = user_id
       @file_name = file_name
@@ -49,6 +64,18 @@ module Import
         process_all_rows
       rescue StandardError => e
         error_process(e.message)
+      end
+      ensure
+        # Clean up any tempfile we created from an Attachment
+        if @__tmp_file
+          begin
+            @__tmp_file.close!
+          rescue StandardError
+            # ignore cleanup errors
+          ensure
+            @__tmp_file = nil
+          end
+        end
       end
     end
 

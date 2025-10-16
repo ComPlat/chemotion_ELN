@@ -20,34 +20,32 @@ class ImportSamplesJob < ApplicationJob
 
   def perform(params)
     @user_id = params[:user_id]
-    file_path = params[:file_path]
-    file_format = File.extname(params[:file_name])
+    file_format = File.extname(params[:attachment]&.filename)
     begin
       case file_format
       when '.xlsx', '.csv'
-        import = Import::ImportSamples.new(
-          file_path,
+        @result = Import::ImportSamples.new(
+          params[:attachment],
           params[:collection_id],
-          @user_id, params[:file_name],
-          params[:import_type]
-        )
-        @result = import.process
+          @user_id,
+          params[:attachment].filename,
+          params[:import_type],
+        ).process
       when '.sdf'
-        sdf_import = Import::ImportSdf.new(
+        sdf_args = {
           collection_id: params[:collection_id],
           current_user_id: @user_id,
           rows: params[:sdf_rows],
           mapped_keys: params[:mapped_keys],
-        )
+          attachment: params[:attachment],
+        }
+        sdf_import = Import::ImportSdf.new(sdf_args)
         sdf_import.create_samples
         @result = {}
         @result[:message] = sdf_import.message
       end
     rescue StandardError => e
       Delayed::Worker.logger.error e
-    ensure
-      # Clean up the temporary file after processing
-      FileUtils.rm(file_path) if file_path && File.exist?(file_path)
     end
   end
 end

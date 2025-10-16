@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'charlock_holmes'
+require 'tempfile'
 
 class Import::ImportSdf < Import::ImportSamples
   attr_reader  :collection_id, :current_user_id, :processed_mol, :file_path,
@@ -14,7 +15,22 @@ class Import::ImportSdf < Import::ImportSamples
     @message = { error: [], info: [], error_messages: [] }
     @collection_id = args[:collection_id]
     @current_user_id = args[:current_user_id]
-    @file_path = args[:file_path]
+    @file_path = nil
+    @__tmp_file = nil
+
+    if args[:attachment].is_a?(Attachment)
+      begin
+        ext = File.extname(args[:attachment].filename).presence || '.sdf'
+        tmp = Tempfile.new(['import_sdf', ext])
+        tmp.binmode
+        tmp.write(args[:attachment].read_file)
+        tmp.rewind
+        @__tmp_file = tmp
+        @file_path = tmp.path
+      rescue StandardError => e
+        @message[:error] << "Failed to create tempfile from attachment: #{e.message}"
+      end
+    end
     @inchi_array = args[:inchikeys] || []
     @rows = args[:rows] || []
     @custom_data_keys = {}
@@ -57,14 +73,26 @@ class Import::ImportSdf < Import::ImportSamples
 
   def read_data
     if file_path
-      size = File.size(file_path)
-      if size.to_f < SIZE_LIMIT * 10**6
-        file_data = File.read(file_path)
-        detection = CharlockHolmes::EncodingDetector.detect(file_data)
-        encoded_file = CharlockHolmes::Converter.convert file_data, detection[:encoding], 'UTF-8'
-        @raw_data = encoded_file.split(/\${4}\r?\n/)
-      else
-        @message[:error] << "File too large (over #{SIZE_LIMIT}MB). "
+      begin
+        size = File.size(file_path)
+        if size.to_f < SIZE_LIMIT * 10**6
+          file_data = File.read(file_path)
+          detection = CharlockHolmes::EncodingDetector.detect(file_data)
+          encoded_file = CharlockHolmes::Converter.convert file_data, detection[:encoding], 'UTF-8'
+          @raw_data = encoded_file.split(/\${4}\r?\n/)
+        else
+          @message[:error] << "File too large (over #{SIZE_LIMIT}MB). "
+        end
+      ensure
+        if @__tmp_file
+          begin
+            @__tmp_file.close!
+          rescue StandardError => _e
+            # ignore cleanup errors
+          ensure
+            @__tmp_file = nil
+          end
+        end
       end
     end
     @raw_data.pop if @raw_data[-1].blank?

@@ -66,8 +66,14 @@ module Chemotion
       namespace :import do
         desc 'Import Samples from a File'
 
-        before do
+        after_validation do
           error!('401 Unauthorized', 401) unless current_user.collections.find(params[:currentCollectionId])
+        end
+
+        params do
+          requires :currentCollectionId, type: Integer, desc: 'Collection id'
+          requires :import_type, type: String
+          optional :data, type: String, desc: 'Validated data as JSON string'
         end
 
         post do
@@ -120,10 +126,29 @@ module Chemotion
 
           # From here, the original logic continues
           if params[:file].present?
+
+            att = Attachment.new(
+              filename: "#{SecureRandom.hex}-#{params[:file][:filename]}",
+              file_path: params[:file][:tempfile].path,
+              filesize: params[:file][:tempfile].size,
+              created_by: current_user.id,
+              created_for: current_user.id,
+              content_type: params[:file][:type],
+            )
+
+            begin
+              att.save!
+            ensure
+              # Close and delete the original tempfile that was used to create the Attachment
+              if params[:file] && params[:file][:tempfile]
+                params[:file][:tempfile]&.close
+                params[:file][:tempfile]&.unlink
+              end
+            end
             extname = File.extname(params[:file][:filename])
             if /\.(sdf?|mol)/i.match?(extname)
               sdf_import = Import::ImportSdf.new(
-                file_path: params[:file][:tempfile].path,
+                attachment: att,
                 collection_id: params[:currentCollectionId],
                 current_user_id: current_user.id,
               )
@@ -137,20 +162,13 @@ module Chemotion
               }
             end
             # Creates the Samples from the XLS/CSV file. Empty Array if not successful
-            file_size = params[:file][:tempfile].size
-            file = params[:file]
-            if file_size < 25_000
+            SMALL_IMPORT_SIZE = 25_000
+            if att.filesize && att.filesize > SMALL_IMPORT_SIZE
               import = Import::ImportSamples.new(
-                params[:file][:tempfile].path,
-                params[:currentCollectionId], current_user.id, file['filename'], params[:import_type]
+                att,
+                params[:currentCollectionId], current_user.id, att.filename, params[:import_type]
               )
               import_result = import.process
-
-              # Clean up temporary file
-              if params[:data].present? && File.exist?(file[:tempfile].path)
-                file[:tempfile].close
-                File.delete(file[:tempfile].path)
-              end
 
               if %w[ok warning].include?(import_result[:status])
                 # the FE does not actually use the returned data, just the number of elements.
@@ -158,16 +176,10 @@ module Chemotion
               end
               import_result
             else
-              temp_filename = "#{SecureRandom.hex}-#{file['filename']}"
-              # Create a new file in the tmp folder
-              tmp_file_path = File.join('tmp', temp_filename)
-              # Write the contents of the uploaded file to the temporary file
-              File.binwrite(tmp_file_path, file[:tempfile].read)
               parameters = {
                 collection_id: params[:currentCollectionId],
                 user_id: current_user.id,
-                file_name: file['filename'],
-                file_path: tmp_file_path,
+                attachment: att,
                 import_type: params[:import_type],
               }
               ImportSamplesJob.perform_later(parameters)
