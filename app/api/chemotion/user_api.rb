@@ -99,6 +99,20 @@ module Chemotion
         end
       end
 
+      namespace :reaction_short_label do
+        params do
+          requires :reactions_count, type: Integer
+          requires :reaction_name_prefix, type: String
+        end
+
+        put do
+          current_user.reaction_name_prefix = params[:reaction_name_prefix]
+          current_user.counters ||= {}
+          current_user.counters['reactions'] = params[:reactions_count].to_s
+          current_user.save!
+        end
+      end
+
       desc 'Log out current_user'
       delete 'sign_out' do
         status 204
@@ -121,7 +135,7 @@ module Chemotion
             requires :last_name, type: String
             optional :email, type: String, regexp: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i
             requires :name_abbreviation, type: String
-            optional :users, type: Array[Integer]
+            optional :users, type: [Integer]
           end
         end
 

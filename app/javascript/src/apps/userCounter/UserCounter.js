@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
-import uuid from 'uuid';
 import {
-  Card, Row, Col, Table, Button, Form
+  Card, Table, Button, Form, Alert
 } from 'react-bootstrap';
 
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
@@ -12,7 +11,7 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 class UserCounter extends Component {
   constructor(props) {
     super(props);
-    this.state = { currentUser: null, klasses: [] };
+    this.state = { currentUser: null, klasses: [], successMessage: null };
     this.onChange = this.onChange.bind(this);
     this.fetchKlasses = this.fetchKlasses.bind(this);
     this.handleCounterChange = this.handleCounterChange.bind(this);
@@ -23,15 +22,6 @@ class UserCounter extends Component {
     UserStore.listen(this.onChange);
     UserActions.fetchCurrentUser();
     this.fetchKlasses();
-  }
-
-  onChange(state) {
-    const newId = state.currentUser ? state.currentUser.id : null;
-    const oldId = this.state.currentUser ? this.state.currentUser.id : null;
-    if (newId !== oldId) {
-      this.setState({ currentUser: state.currentUser });
-      this.fetchKlasses();
-    }
   }
 
   handleCounterChange(key, value) {
@@ -50,11 +40,21 @@ class UserCounter extends Component {
       counter: counters[type] || 0,
     })
       .then(() => {
-        document.location.href = '/';
+        this.setState({ successMessage: 'Settings updated successfully!' });
+        setTimeout(() => this.setState({ successMessage: '' }), 3000);
       })
       .catch((errorMessage) => {
         console.log(errorMessage);
       });
+  }
+
+  onChange(state) {
+    const newId = state.currentUser ? state.currentUser.id : null;
+    const oldId = this.state.currentUser ? this.state.currentUser.id : null;
+    if (newId !== oldId) {
+      this.setState({ currentUser: state.currentUser });
+      this.fetchKlasses();
+    }
   }
 
   fetchKlasses() {
@@ -65,7 +65,7 @@ class UserCounter extends Component {
   }
 
   render() {
-    const { currentUser, klasses = [] } = this.state;
+    const { currentUser, klasses = [], successMessage } = this.state;
     if (klasses.length === 0) return null;
 
     const counterBody = klasses
@@ -118,6 +118,20 @@ class UserCounter extends Component {
               {counterBody}
             </tbody>
           </Table>
+          {successMessage && (
+          <Alert
+            variant="success"
+            style={{
+              position: 'fixed',
+              bottom: '0px',
+              left: '35vw',
+              width: '30vw',
+              zIndex: 1050, // Bootstrap modal uses 1050, so this ensures it stays on top
+            }}
+          >
+            {successMessage}
+          </Alert>
+          )}
         </Card.Body>
       </Card>
     );
