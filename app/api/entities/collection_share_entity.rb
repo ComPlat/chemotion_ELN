@@ -3,6 +3,7 @@
 module Entities
   class CollectionShareEntity < ApplicationEntity
     expose! :id
+    expose! :collection_id
     expose! :shared_with
     expose! :shared_with_id
     expose! :shared_with_type

@@ -36,12 +36,12 @@ module Chemotion
         collection = Collection.own_collections_for(current_user).find(params[:collection_id])
 
         params[:user_ids].each do |user_id|
-          share = CollectionShare.find_or_initialize_by(collection: collection, user_id: user_id)
+          share = CollectionShare.find_or_initialize_by(collection: collection, shared_with_id: user_id)
           share.assign_attributes(declared(params).except(:collection_id, :user_ids))
           share.save
         end
 
-        status 204
+        { status:  204 }
       end
 
       desc 'Update a collection share'
@@ -61,7 +61,7 @@ module Chemotion
       put '/:id' do
         share = CollectionShare.shared_by(current_user).find(params[:id])
 
-        share.update(declared(params.except(:id)))
+        share.update(declared(params))
 
         present share, with: Entities::CollectionShareEntity, root: :collection_share
       end
