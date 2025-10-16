@@ -132,6 +132,13 @@ export default class SampleForm extends React.Component {
     this.props.sample.setMolecularMass(mass);
   }
 
+  handleMixtureVolumeChanged(e) {
+    const { sample } = this.props;
+
+    const totalVolume = e && (e.value || e.value === 0) ? e.value : e;
+    sample.setTotalMixtureVolume(totalVolume);
+  }
+
   handleMixtureComponentChanged(sample) {
     this.props.handleSampleChanged(sample);
   }
@@ -417,6 +424,8 @@ export default class SampleForm extends React.Component {
       this.handleDensityChanged(e);
     } else if (/molecular_mass/.test(field)) {
       this.handleMolecularMassChanged(e);
+    } else if (field === 'total_mixture_volume_l') {
+      this.handleMixtureVolumeChanged(e);
     } else if (field === 'xref_flash_point') {
       const object = { value: e, unit };
       sample.xref = { ...sample.xref, flash_point: object };
@@ -684,6 +693,12 @@ export default class SampleForm extends React.Component {
           metric = metricPrefixes.indexOf(prefixAmountL) > -1 ? prefixAmountL : 'm';
           break;
         }
+        case 'total_mixture_volume_l': {
+          const isAmountLValid = sample.metrics && sample.metrics.length > 3;
+          const prefixAmountL = isAmountLValid ? sample.metrics[3] : 'm';
+          metric = metricPrefixes.indexOf(prefixAmountL) > -1 ? prefixAmountL : 'm';
+          break;
+        }
         case 'molecular_mass': {
           metric = 'n';
           break;
@@ -764,13 +779,13 @@ export default class SampleForm extends React.Component {
    * @param {Object} sample - The sample object
    * @returns {JSX.Element|false} The rendered input or false if not applicable
    */
-  totalAmount(sample) {
+  totalMixtureVolume(sample) {
     const isDisabled = !sample.can_update;
 
     if (!sample.isMethodDisabled('amount_value') && !sample.contains_residues) {
       return this.numInput(
         sample,
-        'amount_l',
+        'total_mixture_volume_l',
         'l',
         ['m', 'u', 'n'],
         5,
@@ -1085,7 +1100,7 @@ export default class SampleForm extends React.Component {
                 <div className="me-3">
                   {this.totalRequiredAmount()}
                 </div>
-                {this.totalAmount(sample)}
+                {this.totalMixtureVolume(sample)}
               </Col>
             </Row>
 

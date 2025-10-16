@@ -109,7 +109,7 @@ export default class SampleDetailsComponents extends React.Component {
     const { sample } = this.props;
     const { amount, concType, lockColumn } = changeEvent;
 
-    const totalVolume = sample.amount_l;
+    const totalVolume = sample.total_mixture_volume_l;
 
     switch (amount.unit) {
       case 'l':

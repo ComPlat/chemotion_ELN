@@ -514,6 +514,17 @@ export default class ReactionDetailsScheme extends React.Component {
   updatedReactionForAmountUnitChange(changeEvent) {
     const { sampleID, amount } = changeEvent;
     const updatedSample = this.props.reaction.sampleById(sampleID);
+
+    // --- Validate mixture mass before applying the change ---
+    const exceedsMassLimit = updatedSample.validateMixtureMass(amount);
+    if (exceedsMassLimit) {
+      const totalMixtureMass = updatedSample?.total_mixture_mass_g;
+      NotificationActions.add({
+        message: `Entered mass exceeds the available mixture mass for this sample. (Available: ${totalMixtureMass?.toFixed(3)} g)`,
+        level: 'warning',
+      });
+    }
+
     // normalize to milligram
     // updatedSample.setAmountAndNormalizeToGram(amount);
     // setAmount should be called first before updating feedstock mole and volume values
@@ -803,7 +814,7 @@ export default class ReactionDetailsScheme extends React.Component {
       return;
     }
 
-    updatedSample.calculateMassFromReferenceComponent(referenceComponent);
+    // updatedSample.calculateMassFromReferenceComponent(referenceComponent);
 
     // (3) Equivalent calculation using Sample method
     const { reaction } = this.props;
