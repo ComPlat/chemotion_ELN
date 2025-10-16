@@ -61,7 +61,7 @@ module Chemotion
       put '/:id' do
         share = CollectionShare.shared_by(current_user).find(params[:id])
 
-        share.update(declared(params))
+        share.update(declared(params).except(:id))
 
         present share, with: Entities::CollectionShareEntity, root: :collection_share
       end
