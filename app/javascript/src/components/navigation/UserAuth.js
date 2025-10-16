@@ -21,6 +21,7 @@ import { UserLabelModal } from 'src/components/UserLabels';
 import GroupElement from 'src/components/navigation/GroupElement';
 import { formatDate } from 'src/utilities/timezoneHelper';
 import Affiliations from 'src/apps/userSettings/Affiliations';
+import AccountProfile from 'src/apps/userSettings/AccountProfile';
 
 export default class UserAuth extends Component {
   constructor(props) {
@@ -315,7 +316,7 @@ export default class UserAuth extends Component {
   };
 
   renderSettings() {
-    const { showSettings } = this.state;
+    const { showSettings, currentUser } = this.state;
 
     return (
       <Modal
@@ -325,12 +326,8 @@ export default class UserAuth extends Component {
         centered
       >
         <Modal.Header closeButton />
-        <Modal.Body style={{ padding: 0, overflow: 'hidden' }}>
-          <iframe
-            title="settings"
-            src="/pages/settings"
-            style={{ width: '100%', height: '100%', border: 'none' }}
-          />
+        <Modal.Body style={{ padding: 0 }}>
+          <AccountProfile currentUser={currentUser} />
         </Modal.Body>
       </Modal>
     );
