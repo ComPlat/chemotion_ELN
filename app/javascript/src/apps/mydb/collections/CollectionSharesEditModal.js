@@ -10,7 +10,7 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 const CollectionSharesEditModal = ({ node, updateNode, deleteNode, onHide }) => {
   const collectionsStore = useContext(StoreContext).collections;
   const sharedWithUsers = collectionsStore.sharedWithUsers(node.id);
-  const users = sharedWithUsers !== undefined ? sharedWithUsers.shared_with_users : [];
+  const collectionShares = sharedWithUsers !== undefined ? sharedWithUsers.shared_with_users : [];
 
   useEffect(() => {
     if (sharedWithUsers === undefined) {
@@ -31,21 +31,21 @@ const CollectionSharesEditModal = ({ node, updateNode, deleteNode, onHide }) => 
         </Modal.Title>
       </Modal.Header>
       <Modal.Body className="d-flex flex-column gap-2">
-        {users.map((user) => (
+        {collectionShares.map((collectionShare) => (
           <div
-            key={user.id}
+            key={collectionShare.id}
             className="d-flex gap-3 justify-content-between align-items-center"
           >
             <span className="d-flex gap-2 align-items-baseline">
-              <UserInfoIcon type={user.shared_with_type} />
-              {user.shared_with}
-              <PermissionIcons pl={user.permission_level} />
+              <UserInfoIcon type={collectionShare.shared_with_type} />
+              {collectionShare.shared_with}
+              <PermissionIcons pl={collectionShare.permission_level} />
             </span>
             <ButtonGroup>
               <Button
                 size="sm"
                 variant="primary"
-                onClick={() => updateNode(node, user)}
+                onClick={() => updateNode(node, collectionShare)}
               >
                 <i className="fa fa-share-alt me-1" />
                 edit
@@ -53,7 +53,7 @@ const CollectionSharesEditModal = ({ node, updateNode, deleteNode, onHide }) => 
               <Button
                 size="sm"
                 variant="danger"
-                onClick={() => deleteNode(node, user)}
+                onClick={() => deleteNode(node, collectionShare)}
               >
                 <i className="fa fa-share-alt me-1" />
                 <i className="fa fa-trash-o" />
