@@ -169,9 +169,7 @@ module Chemotion
               )
               import_result = import.process
 
-              if %w[ok warning].include?(import_result[:status])
-                import_result[:data] = import_result[:data].map(&:id)
-              end
+              import_result[:data] = import_result[:data].map(&:id) if %w[ok warning].include?(import_result[:status])
               import_result
             else
               parameters = {

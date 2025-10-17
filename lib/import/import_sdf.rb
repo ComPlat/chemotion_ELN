@@ -75,7 +75,7 @@ class Import::ImportSdf < Import::ImportSamples
     if file_path
       begin
         size = File.size(file_path)
-        if size.to_f < SIZE_LIMIT * 10**6
+        if size.to_f < SIZE_LIMIT * (10**6)
           file_data = File.read(file_path)
           detection = CharlockHolmes::EncodingDetector.detect(file_data)
           encoded_file = CharlockHolmes::Converter.convert file_data, detection[:encoding], 'UTF-8'
