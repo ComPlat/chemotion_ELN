@@ -22,7 +22,7 @@ function EditorList(props) {
         name="editorSelection"
         options={options}
         onChange={fnChange}
-        value={options.find((opt) => opt.value === value)}
+        value={options?.find((opt) => opt?.value === value)}
       />
     </Form.Group>
   );
@@ -68,7 +68,6 @@ export default class StructureEditorModal extends React.Component {
       molfile: props.molfile,
       matriceConfigs: [],
       editor: null,
-      commonTemplatesList: [],
       selectedShape: null,
       selectedCommonTemplate: null,
       deleteAllowed: true,
@@ -94,7 +93,6 @@ export default class StructureEditorModal extends React.Component {
       // Set the default editor in state and perform additional setup
       this.setState({ editor }, () => {
         this.resetEditor(this.editors); // Ensure the selected editor is valid
-        this.fetchCommonTemplates(); // Load common templates for Ketcher
         this.initializeEditors(); // Finalize editor initialization
       });
     } catch (error) {
@@ -243,7 +241,6 @@ export default class StructureEditorModal extends React.Component {
     this.setState({ showWarning: false });
   }
 
-
   render() {
     const { cancelBtnText, submitBtnText, onSave } = this.props;
     const handleSaveBtn = !onSave ? null : this.handleSaveBtn.bind(this);
@@ -280,11 +277,11 @@ export default class StructureEditorModal extends React.Component {
         onHide={this.handleCancelBtn.bind(this)}>
         <Modal.Header closeButton className="gap-3">
           <EditorList
-            value={editor.id}
+            value={editor?.id}
             fnChange={this.handleEditorSelection}
             options={editorOptions}
           />
-          {editor.id === 'ketcher' && (
+          {editor?.id === 'ketcher' && (
             <CommonTemplatesList />
           )}
         </Modal.Header>
