@@ -509,8 +509,6 @@ GEM
     public_suffix (5.1.1)
     puma (5.6.9)
       nio4r (~> 2.0)
-    pundit (2.5.0)
-      activesupport (>= 3.0.0)
     raabro (1.4.0)
     racc (1.8.1)
     rack (2.2.22)
@@ -893,7 +891,6 @@ DEPENDENCIES
   pry-byebug
   pry-rails
   puma (< 6.0.0)
-  pundit
   rack
   rack-cors
   rails (~> 6.1.7.7)
