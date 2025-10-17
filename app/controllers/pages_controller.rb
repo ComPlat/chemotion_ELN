@@ -34,8 +34,4 @@ class PagesController < ApplicationController
       redirect_to '/500.html'
     end
   end
-
-  def profiles
-    @profile = current_user&.profile
-  end
 end
