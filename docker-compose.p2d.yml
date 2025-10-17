@@ -45,6 +45,8 @@ services:
     ports:
       - 8002:80
     command: supervisord -n
+    networks:
+      - chemotion
   
   configure:
     image: ptrxyz/chemotion:eln-2.0.1 # same as the base image in Dockerfile.p2d for efficiency
