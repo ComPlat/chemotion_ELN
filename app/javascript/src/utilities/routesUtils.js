@@ -22,13 +22,6 @@ const collectionShow = (e) => {
   const collectionId = e.params['collectionID'];
   const collectionPromise = CollectionsFetcher.fetchByCollectionId(collectionId);
 
-
-  //if (collectionId === 'all') {
-  //  collectionPromise = CollectionStore.findAllCollection();
-  //} else {
-  //  collectionPromise = CollectionStore.findById(collectionId);
-  //}
-
   collectionPromise.then((collection) => {
     if (currentSearchSelection) {
       UIActions.selectCollectionWithoutUpdating(collection);

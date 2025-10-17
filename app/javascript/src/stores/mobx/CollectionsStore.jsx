@@ -158,15 +158,30 @@ export const CollectionsStore = types
         const collectionSharesIndex = self.collection_shares.findIndex((user) => user.id == collectionId)
         if (self.collection_shares.length < 1 || collectionSharesIndex == -1) {
           self.collection_shares.push({ id: collectionId, shared_with_users: sharedWithUsers })
+        } else {
+          self.collection_shares[collectionSharesIndex].shared_with_users = sharedWithUsers
         }
       }
     }),
-    deleteCollectionShare: flow(function* deleteCollectionShare(collectionShareId) {
+    addCollectionShare: flow(function* addCollectionShare(params) {
+      const response = yield CollectionSharesFetcher.addCollectionShare(params)
+      // collection.shared = true
+      if (response.status === 204) {
+        self.fetchCollections()
+        self.getSharedWithUsers(params.collection_id)
+      }
+    }),
+    updateCollectionShare: flow(function* updateCollectionShare(collectionShareId, params) {
+      const collectionShare = yield CollectionSharesFetcher.updateCollectionShare(collectionShareId, params)
+      if (collectionShare) {
+        self.getSharedWithUsers(collectionShare.collection_id)
+      }
+    }),
+    deleteCollectionShare: flow(function* deleteCollectionShare(collectionShareId, collectionId) {
       const response = yield CollectionSharesFetcher.deleteCollectionShare(collectionShareId)
-      if (response.status === '204') {
-        const collections = self.deleteFromSharedWithMeCollections(self.shared_with_me_collections, collectionShareId)
-        self.shared_with_me_collections = collections
-        self.setSharedWithMeCollectionTree()
+      if (response.status === 204) {
+        self.fetchCollections()
+        self.getSharedWithUsers(collectionId)
       }
     }),
     setOwnCollections(collections) {

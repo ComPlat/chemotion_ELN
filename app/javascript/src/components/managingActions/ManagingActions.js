@@ -96,9 +96,8 @@ export default class ManagingActions extends React.Component {
     if (typeof currentCollection === 'undefined' || currentCollection == null) {
       return false;
     }
-    const { id, is_sync_to_me } = currentCollection;
-    return this.state.currentCollection.id !== id ||
-      this.state.currentCollection.is_sync_to_me !== is_sync_to_me;
+    const { id } = currentCollection;
+    return this.state.currentCollection.id !== id;
   }
 
   showModal(type) {
