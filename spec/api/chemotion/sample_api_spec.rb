@@ -158,6 +158,7 @@ describe Chemotion::SampleAPI do
         {
           currentCollectionId: collection.id,
           file: fixture_file_upload(Rails.root.join('spec/fixtures/import_sample_data.sdf'), 'chemical/x-mdl-sdfile'),
+          import_type: 'sample',
         }
       end
 

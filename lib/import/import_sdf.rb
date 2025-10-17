@@ -73,30 +73,27 @@ class Import::ImportSdf < Import::ImportSamples
 
   def read_data
     if file_path
-      begin
-        size = File.size(file_path)
-        if size.to_f < SIZE_LIMIT * (10**6)
-          file_data = File.read(file_path)
-          detection = CharlockHolmes::EncodingDetector.detect(file_data)
-          encoded_file = CharlockHolmes::Converter.convert file_data, detection[:encoding], 'UTF-8'
-          @raw_data = encoded_file.split(/\${4}\r?\n/)
-        else
-          @message[:error] << "File too large (over #{SIZE_LIMIT}MB). "
-        end
-      ensure
-        if @__tmp_file
-          begin
-            @__tmp_file.close!
-          rescue StandardError => _e
-            # ignore cleanup errors
-          ensure
-            @__tmp_file = nil
-          end
-        end
+      size = File.size(file_path)
+      if size.to_f < SIZE_LIMIT * (10**6)
+        file_data = File.read(file_path)
+        detection = CharlockHolmes::EncodingDetector.detect(file_data)
+        encoded_file = CharlockHolmes::Converter.convert file_data, detection[:encoding], 'UTF-8'
+        @raw_data = encoded_file.split(/\${4}\r?\n/)
+      else
+        @message[:error] << "File too large (over #{SIZE_LIMIT}MB). "
       end
     end
     @raw_data.pop if @raw_data[-1].blank?
-    raw_data
+  end
+
+  def cleanup_tempfile
+    return unless @__tmp_file
+
+    begin
+      @__tmp_file.close! unless @__tmp_file.closed?
+    ensure
+      @__tmp_file = nil
+    end
   end
 
   def message
@@ -287,6 +284,7 @@ class Import::ImportSdf < Import::ImportSamples
     @message[:error] << 'Could not create the samples! ' if samples.empty?
     @message[:info] << "Created #{s} sample#{s <= 1 && '' || 's'}. " if samples
     @message[:info] << 'Import successful! ' if ids.size == @count
+    cleanup_tempfile
     samples
   end
 
