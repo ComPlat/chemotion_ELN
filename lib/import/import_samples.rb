@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'roo'
-require 'tempfile'
 
 # rubocop:disable Metrics/ClassLength
 module Import
@@ -10,28 +9,14 @@ module Import
   class ImportSamples
     attr_reader :xlsx, :sheet, :component_sheet, :header, :component_header, :sample_components_data,
                 :mandatory_check, :mandatory_component_check, :rows,
-                :unprocessable, :processed, :file_path, :collection_id, :current_user_id, :file_name
+                :unprocessable, :processed, :collection_id, :current_user_id, :file_name
 
     MOLARITY_UNIT = %r{m/L|mol/L|M}i.freeze
     DENSITY_UNIT = %r{g/mL|g/ml}i.freeze
     FLASH_POINT_UNIT = /°C|F|K/i.freeze
 
     def initialize(attachment, collection_id, user_id, file_name, import_type)
-      @__tmp_file = nil
-
-      if attachment.respond_to?(:read_file) && attachment.respond_to?(:filename)
-        begin
-          ext = File.extname(attachment.filename).presence || '.csv'
-          tmp = Tempfile.new(['import', ext])
-          tmp.binmode
-          tmp.write(attachment.read_file)
-          tmp.rewind
-          @__tmp_file = tmp
-          @file_path = tmp.path
-        rescue StandardError => _e
-          raise 'Failed to read the attachment file.'
-        end
-      end
+      @attachment = attachment
       @collection_id = collection_id
       @current_user_id = user_id
       @file_name = file_name
@@ -65,16 +50,11 @@ module Import
       rescue StandardError => e
         error_process(e.message)
       end
-    ensure
-      # Clean up any tempfile we created from an Attachment
-      if @__tmp_file
-        @__tmp_file.close!
-        @__tmp_file.unlink
-      end
     end
 
     def read_file
-      @xlsx = Roo::Spreadsheet.open(file_path)
+      file = @attachment.attachment_attacher.get.to_io
+      @xlsx = Roo::Spreadsheet.open(file, extension: @attachment.extname)
       @sheet = xlsx.sheet(0)
       @header = sheet.row(1)
 
