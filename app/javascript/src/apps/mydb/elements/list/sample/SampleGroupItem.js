@@ -88,6 +88,7 @@ function SampleGroupItem({ sample, showDetails }) {
         <CommentIcon commentCount={sample.comment_count} />
         <ShowUserLabels element={sample} />
         <XvialIcon label={sample.external_label} />
+        {showMixtureIcon(sample)}
         <div className="d-flex align-items-center gap-1 ms-auto">
           <ElementReactionLabels element={sample} />
           <ElementWellplateLabels element={sample} />
@@ -96,7 +97,6 @@ function SampleGroupItem({ sample, showDetails }) {
           <ElementAnalysesLabels element={sample} />
         </div>
         {showDecoupledIcon(sample)}
-        {showMixtureIcon(sample)}
         <TopSecretIcon element={sample} />
       </div>
     </div>
