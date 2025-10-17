@@ -18,7 +18,7 @@ class RemoveAncestryIndices < ActiveRecord::Migration[6.1]
       reversible do |dir|
         dir.up do
           remove_index(table_name, [column_name]) if index_exists?(table_name, [column_name])
-          remove_index(table_name, name: index_name) if index_exists?(table_name, name: index_name)
+          remove_index(table_name, [column_name], name: index_name) if index_exists?(table_name, [column_name], name: index_name)
         end
         dir.down do
           add_index(table_name, [column_name], name: index_name) unless index_exists?(table_name, [column_name])
