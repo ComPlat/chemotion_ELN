@@ -10,7 +10,7 @@ import StructureEditor from 'src/models/StructureEditor';
 import EditorAttrs from 'src/components/structureEditor/StructureEditorSet';
 import CommonTemplatesList from 'src/components/ketcher-templates/CommonTemplatesList';
 import { transformSvgIdsAndReferences } from 'src/utilities/SvgUtils';
-import { createEditors, notifyError, initEditor } from 'src/components/structureEditor/EditorsInstances';
+import { createEditors, notifyError, initEditor, getEditorById } from 'src/components/structureEditor/EditorsInstances';
 import EditorRenderer from 'src/components/structureEditor/EditorRenderer';
 
 function EditorList(props) {
@@ -22,7 +22,7 @@ function EditorList(props) {
         name="editorSelection"
         options={options}
         onChange={fnChange}
-        value={options.find((opt) => opt.value === value)}
+        value={options?.find((opt) => opt?.value === value)}
       />
     </Form.Group>
   );
@@ -67,18 +67,37 @@ export default class StructureEditorModal extends React.Component {
       showWarning: props.hasChildren || props.hasParent || false,
       molfile: props.molfile,
       matriceConfigs: [],
-      editor: initEditor(),
-      deleteAllowed: true
+      editor: null,
+      selectedShape: null,
+      selectedCommonTemplate: null,
+      deleteAllowed: true,
     };
-    this.editors = createEditors();
+    this.editors = {};
     this.handleEditorSelection = this.handleEditorSelection.bind(this);
     this.resetEditor = this.resetEditor.bind(this);
     this.updateEditor = this.updateEditor.bind(this);
     this.ketcherRef = React.createRef();
   }
 
-  componentDidMount() {
-    this.resetEditor(this.editors);
+  async componentDidMount() {
+    // Initialize editors and set up the default editor
+    try {
+      // Wait for both the default editor and all available editors to initialize
+      const [editor, editors] = await Promise.all([
+        initEditor(), // Initializes the default editor instance
+        createEditors(), // Creates all available editor instances
+      ]);
+
+      this.editors = editors; // Store all editor instances
+
+      // Set the default editor in state and perform additional setup
+      this.setState({ editor }, () => {
+        this.resetEditor(this.editors); // Ensure the selected editor is valid
+        this.initializeEditors(); // Finalize editor initialization
+      });
+    } catch (error) {
+      console.error('Failed to initialize editor(s):', error);
+    }
   }
 
   componentDidUpdate(prevProps) {
@@ -154,6 +173,22 @@ export default class StructureEditorModal extends React.Component {
     );
   }
 
+  /**
+   * Initializes all available structure editors.
+   * Ensures editors are loaded and available for selection.
+   */
+  async initializeEditors() {
+    if (!Object.keys(this.editors).length) {
+      try {
+        // Load the Ketcher editor if editors are not initialized
+        this.editors = { ketcher: await getEditorById('ketcher') };
+      } catch (error) {
+        notifyError(`Failed to initialize Ketcher editor: ${error}`);
+        this.editors = { ketcher: null };
+      }
+    }
+  }
+
   async saveKetcher(editorId) {
     if (this.ketcherRef?.current) {
       const { onSaveFileK2SC } = this.ketcherRef.current;
@@ -206,7 +241,6 @@ export default class StructureEditorModal extends React.Component {
     this.setState({ showWarning: false });
   }
 
-
   render() {
     const { cancelBtnText, submitBtnText, onSave } = this.props;
     const handleSaveBtn = !onSave ? null : this.handleSaveBtn.bind(this);
@@ -243,11 +277,11 @@ export default class StructureEditorModal extends React.Component {
         onHide={this.handleCancelBtn.bind(this)}>
         <Modal.Header closeButton className="gap-3">
           <EditorList
-            value={editor.id}
+            value={editor?.id}
             fnChange={this.handleEditorSelection}
             options={editorOptions}
           />
-          {editor.id === 'ketcher' && (
+          {editor?.id === 'ketcher' && (
             <CommonTemplatesList />
           )}
         </Modal.Header>

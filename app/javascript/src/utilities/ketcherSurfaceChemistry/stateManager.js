@@ -85,13 +85,15 @@ export const templateListSetter = async (data) => {
 // Set base64-encoded SVG templates by template_id
 export const setBase64TemplateHashSetter = async (data) => {
   const templateHash = {};
-  data?.forEach((group) => {
-    group.subTabs.forEach((subTab) => {
-      subTab.shapes.forEach((shape) => {
-        templateHash[shape.template_id] = shape.iconName;
+  if (Object.keys(data).length > 0) {
+    data?.forEach((group) => {
+      group.subTabs.forEach((subTab) => {
+        subTab.shapes.forEach((shape) => {
+          templateHash[shape.template_id] = shape.iconName;
+        });
       });
     });
-  });
+  }
   templatesBaseHashWithTemplateId = templateHash;
 };
 
