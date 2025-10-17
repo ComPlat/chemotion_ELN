@@ -3,6 +3,8 @@ import PropTypes from 'prop-types';
 import Formula from 'src/components/common/Formula';
 import ClipboardCopyText from 'src/components/common/ClipboardCopyText';
 
+const MWPrecision = 6;
+
 /**
  * Formats stereo information into a readable string
  * @param {Object} stereo - Stereo information object
@@ -48,16 +50,35 @@ const getPolymerName = (polymerType, decoupled) => {
 };
 
 /**
- * Extracts and formats the titles of components for mixture samples
- * @param {Array} components - Array of component objects
- * @returns {string} Formatted components title
+ * Builds a list of component titles with their IUPAC name and exact molecular weight
+ * and shows the total mixture mass if available.
+ *
+ * @param {Object} sample - The parent sample containing components and sample_details.
+ * @returns {JSX.Element} A JSX fragment containing total mass (if present) and component names/weights.
  */
-const getComponentsTitle = (components) => components.map((comp) => comp.molecule.iupac_name).join('/');
+const getComponentsTitle = (sample) => {
+  const components = sample.components || [];
 
+  return (
+    <>
+      {components.map((component) => {
+        const name = component.iupacName;
+        const mwText = component.molecularWeightText;
+        return (
+          <div key={component.molecule?.id || component.id || name}>
+            {name}
+            {mwText}
+          </div>
+        );
+      })}
+    </>
+  );
+};
 /**
- * Component to display sample name with formula and additional information
+ * Component to display the sample name with formula and additional information
  */
 function SampleName({ sample }) {
+  /* eslint-disable camelcase */
   const {
     contains_residues,
     polymer_type,
@@ -94,11 +115,11 @@ function SampleName({ sample }) {
 
   // Handle mixture case
   if (sample.isMixture() && components) {
-    const title = getComponentsTitle(components);
+    const title = getComponentsTitle(sample);
 
     return (
       <div>
-        <p className="mb-2">
+        <p className="mb-2 small">
           Components:
           {title}
         </p>
@@ -114,6 +135,7 @@ function SampleName({ sample }) {
       {moleculeName}
     </div>
   );
+  /* eslint-enable camelcase */
 }
 
 SampleName.propTypes = {
@@ -122,7 +144,7 @@ SampleName.propTypes = {
     polymer_type: PropTypes.string,
     molecule_formula: PropTypes.string,
     decoupled: PropTypes.bool,
-    stereo: PropTypes.object,
+    stereo: PropTypes.shape({}),
     components: PropTypes.arrayOf(
       PropTypes.shape({
         molecule: PropTypes.shape({

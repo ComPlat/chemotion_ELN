@@ -60,7 +60,7 @@ import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSo
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import MeasurementsTab from 'src/apps/mydb/elements/details/samples/measurementsTab/MeasurementsTab';
 import { validateCas } from 'src/utilities/CasValidation';
-import ChemicalTab from 'src/components/ChemicalTab';
+import ChemicalTab from 'src/components/chemicals/ChemicalTab';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
 import CommentSection from 'src/components/comments/CommentSection';
@@ -123,6 +123,7 @@ export default class SampleDetails extends React.Component {
       materialGroup: null,
       showStructureEditor: false,
       loadingMolecule: false,
+      loadingComponentDeletion: false,
       showChemicalIdentifiers: false,
       activeTab: UIStore.getState().sample.activeTab,
       qrCodeSVG: '',
@@ -175,6 +176,7 @@ export default class SampleDetails extends React.Component {
     this.handleStructureEditorSave = this.handleStructureEditorSave.bind(this);
     this.handleStructureEditorCancel = this.handleStructureEditorCancel.bind(this);
     this.splitSmiles = this.splitSmiles.bind(this);
+    this.setComponentDeletionLoading = this.setComponentDeletionLoading.bind(this);
   }
 
   componentDidMount() {
@@ -212,7 +214,7 @@ export default class SampleDetails extends React.Component {
 
     // Sync casInputValue when CAS changes
     const currentCas = sample.xref?.cas ?? '';
-    
+
     this.setState({
       sample,
       smileReadonly,
@@ -326,6 +328,18 @@ export default class SampleDetails extends React.Component {
       sample.molecule = result;
       sample.molecule_id = result.id;
       if (result.inchikey === 'DUMMY') { sample.decoupled = true; }
+
+      // Handle temporary SVG file from structure editor
+      if (result.temp_svg) {
+        // For mixture samples, clear any existing sample_svg_file to preserve combined molecule SVG
+        // This ensures the combined molecule SVG is always displayed
+        if (sample.isMixture()) {
+          sample.sample_svg_file = null;
+        } else {
+          sample.sample_svg_file = result.temp_svg;
+        }
+      }
+
       this.setState({
         sample,
         smileReadonly: true,
@@ -801,6 +815,7 @@ export default class SampleDetails extends React.Component {
           customizableField={this.customizableField}
           enableSampleDecoupled={this.enableSampleDecoupled}
           decoupleMolecule={this.decoupleMolecule}
+          setComponentDeletionLoading={this.setComponentDeletionLoading}
         />
         <div className="mb-2">
           {this.chemicalIdentifiersItem(sample)}
@@ -1285,7 +1300,7 @@ export default class SampleDetails extends React.Component {
   }
 
   svgOrLoading(sample) {
-    const svgPath = this.state.loadingMolecule
+    const svgPath = (this.state.loadingMolecule || this.state.loadingComponentDeletion)
       ? '/images/wild_card/loading-bubbles.svg'
       : sample.svgPath;
 
@@ -1363,6 +1378,16 @@ export default class SampleDetails extends React.Component {
   hideStructureEditor() {
     this.setState({
       showStructureEditor: false
+    });
+  }
+
+  /**
+   * Sets the loading state for component deletion
+   * @param {boolean} loading - Whether component deletion is in progress
+   */
+  setComponentDeletionLoading(loading) {
+    this.setState({
+      loadingComponentDeletion: loading
     });
   }
 
