@@ -161,9 +161,8 @@ module Chemotion
                 collection_id: sdf_import.collection_id
               }
             end
-            # Creates the Samples from the XLS/CSV file. Empty Array if not successful
             SMALL_IMPORT_SIZE = 25_000
-            if att.filesize && att.filesize > SMALL_IMPORT_SIZE
+            if att.filesize < SMALL_IMPORT_SIZE
               import = Import::ImportSamples.new(
                 att,
                 params[:currentCollectionId], current_user.id, att.filename, params[:import_type]
@@ -171,7 +170,6 @@ module Chemotion
               import_result = import.process
 
               if %w[ok warning].include?(import_result[:status])
-                # the FE does not actually use the returned data, just the number of elements.
                 import_result[:data] = import_result[:data].map(&:id)
               end
               import_result

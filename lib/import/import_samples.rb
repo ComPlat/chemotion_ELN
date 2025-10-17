@@ -65,17 +65,11 @@ module Import
       rescue StandardError => e
         error_process(e.message)
       end
-      ensure
-        # Clean up any tempfile we created from an Attachment
-        if @__tmp_file
-          begin
-            @__tmp_file.close!
-          rescue StandardError
-            # ignore cleanup errors
-          ensure
-            @__tmp_file = nil
-          end
-        end
+    ensure
+      # Clean up any tempfile we created from an Attachment
+      if @__tmp_file
+        @__tmp_file.close!
+        @__tmp_file.unlink
       end
     end
 
@@ -319,7 +313,7 @@ module Import
       smiles = (check['smiles'] && row['smiles'].presence) ||
                (check['cano_smiles'] && row['cano_smiles'].presence) ||
                (check['canonical_smiles'] && row['canonical_smiles'].presence) ||
-              (check['canonical smiles'] && row['canonical smiles'].presence)
+               (check['canonical smiles'] && row['canonical smiles'].presence)
 
       inchikey = Chemotion::OpenBabelService.smiles_to_inchikey smiles
       ori_molf = Chemotion::OpenBabelService.smiles_to_molfile smiles
