@@ -13,7 +13,7 @@ function SharedWithMeCollections() {
   }
 
   const rejectShared = (node) => {
-    collectionsStore.deleteCollectionShare(node.collection_share_id);
+    collectionsStore.deleteCollectionShare(node.collection_share_id, node.id);
   }
 
   const renderNode = (node) => {
