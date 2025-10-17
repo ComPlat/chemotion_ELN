@@ -2,23 +2,17 @@
 
 require 'securerandom'
 describe ImportSamplesJob, active_job: true do
-
   context 'when import file format is xlsx' do
-    let(:file_path) { 'spec/fixtures/import/sample_import_template.xlsx' }
-    let(:file) { File.open('spec/fixtures/import/sample_import_template.xlsx') }
-    let(:file_name) { File.basename(file) }
-    let(:tmp_file_name) { "#{SecureRandom.hex}-#{file_name}" }
-    let(:tmp_file_path) { File.join('tmp', tmp_file_name) }
+    let(:attachment) { create(:attachment, :with_sample_import_template) }
     let(:import_samples_instance) { instance_double(Import::ImportSamples) }
     let(:parameters) do
       {
         collection_id: create(:collection).id,
         user_id: create(:user).id,
-        file_name: file_name,
-        file_path: tmp_file_path,
+        attachment: attachment,
+        import_type: 'sample',
         sdf_rows: [],
         mapped_keys: {},
-        file_format: File.extname(file_name),
       }
     end
     let(:import_job) { described_class.perform_later(parameters) }
@@ -77,8 +71,11 @@ describe ImportSamplesJob, active_job: true do
   end
 
   context 'when import file format is sdf' do
-    let(:file_path) { 'spec/fixtures/import_sample_data.sdf' }
-    let(:file_name) { 'import_sample_data.sdf' }
+    let(:attachment) do
+      create(:attachment,
+             filename: 'import_sample_data.sdf',
+             file_path: 'spec/fixtures/import_sample_data.sdf')
+    end
     let(:import_samples_instance) { instance_double(Import::ImportSdf) }
     let(:result_message) do
       { message: 'no rows to import' }
@@ -87,7 +84,7 @@ describe ImportSamplesJob, active_job: true do
       {
         collection_id: create(:collection).id,
         user_id: create(:user).id,
-        file_name: 'dummy.sdf',
+        attachment: attachment,
         sdf_rows: [],
         mapped_keys: {},
       }

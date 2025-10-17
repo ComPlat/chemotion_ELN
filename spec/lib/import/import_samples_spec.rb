@@ -7,7 +7,12 @@ RSpec.describe 'Import::ImportSamples' do
   let(:collection_id) { create(:collection).id }
   let(:file_path) { 'spec/fixtures/import/sample_import_template.xlsx' }
   let(:file_name) { File.basename(file_path) }
-  let(:importer) { Import::ImportSamples.new(file_path, collection_id, user_id, file_name, 'sample') }
+  let(:attachment) do
+    create(:attachment, :with_sample_import_template,
+           created_by: user_id,
+           created_for: user_id)
+  end
+  let(:importer) { Import::ImportSamples.new(attachment, collection_id, user_id, attachment.filename, 'sample') }
   let(:sample) { create(:sample) }
 
   before do
