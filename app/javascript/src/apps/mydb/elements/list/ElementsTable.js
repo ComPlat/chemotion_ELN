@@ -614,12 +614,8 @@ export default class ElementsTable extends React.Component {
     } else if (type === 'cell_line') {
       displayCollapseButton = true;
     } else if (type === 'sequence_based_macromolecule_sample') {
-      typeSpecificHeader = (
-        <>
-          <SequenceBasedMacromoleculeSampleListHeader />
-          {this.collapseButton()}
-        </>
-      );
+      typeSpecificHeader = <SequenceBasedMacromoleculeSampleListHeader />;
+      displayCollapseButton = true;
     } else if (genericEl) {
       typeSpecificHeader = this.renderGenericElementsHeader();
     } else if (type === 'vessel') {

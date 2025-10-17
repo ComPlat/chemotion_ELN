@@ -31,6 +31,7 @@ function DeviceDescriptionListHeader() {
       value={selectedValue}
       clearable={false}
       onChange={(e) => handleGroupSelect(e)}
+      size="sm"
     />
   );
 }
