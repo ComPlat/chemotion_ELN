@@ -20,6 +20,7 @@ module Usecases
           screen_ids: [],
           research_plan_ids: [],
           element_ids: [],
+          sequence_based_macromolecule_sample_ids: [],
         }
         @user_samples = Sample.by_collection_id(@collection_id)
         @user_reactions = Reaction.by_collection_id(@collection_id)
@@ -27,6 +28,7 @@ module Usecases
         @user_screens = Screen.by_collection_id(@collection_id)
         @user_research_plans = ResearchPlan.by_collection_id(@collection_id)
         @user_elements = Labimotion::Element.by_collection_id(@collection_id)
+        @user_sequence_based_macromolecule_samples = SequenceBasedMacromoleculeSample.by_collection_id(@collection_id)
       end
 
       def perform!
@@ -41,6 +43,7 @@ module Usecases
         return '' if @conditions[:error] != ''
 
         group_by_model_name = %w[ResearchPlan Wellplate].include?(@conditions[:model_name].to_s)
+        is_sbmm_sample_model = @conditions[:model_name] == SequenceBasedMacromoleculeSample
 
         scope = @conditions[:model_name].by_collection_id(@collection_id.to_i)
                                         .where(query_with_condition)
@@ -48,6 +51,7 @@ module Usecases
         scope = @shared_methods.order_by_molecule(scope) if @conditions[:model_name] == Sample
         scope = scope.group("#{@conditions[:model_name].table_name}.id") if group_by_model_name
         scope = scope.group('samples.id, molecules.sum_formular') if @conditions[:model_name] == Sample
+        scope = @shared_methods.order_and_group_for_sequence_based_macromolecule(scope) if is_sbmm_sample_model
         scope.pluck(:id)
       end
 
@@ -132,6 +136,8 @@ module Usecases
         sample_ids = Labimotion::ElementsSample.where(element_id: @elements[:element_ids]).pluck(:sample_id)
         @elements[:sample_ids] = @user_samples.where(id: sample_ids).uniq.pluck(:id)
       end
+
+      def sequencebasedmacromoleculesample_relations_element_ids; end
       # rubocop:enable Metrics/AbcSize
     end
   end

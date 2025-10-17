@@ -101,6 +101,7 @@ module Chemotion
                          Comment.screen_sections.values +
                          Comment.research_plan_sections.values +
                          Comment.device_description_sections.values +
+                         Comment.sequence_based_macromolecule_sample_sections.values +
                          Comment.header_sections.values
       end
 

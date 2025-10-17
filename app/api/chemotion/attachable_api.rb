@@ -28,8 +28,6 @@ module Chemotion
         attachable_id = params[:attachable_id]
 
         if params.fetch(:files, []).any?
-          attach_ary = []
-          rp_attach_ary = []
           params[:files].each_with_index do |file, index|
             next unless (tempfile = file[:tempfile])
 
@@ -47,10 +45,6 @@ module Chemotion
 
             begin
               a.save!
-              attach_ary.push(a.id)
-              if a.attachable_type.in?(%w[ResearchPlan Wellplate DeviceDescription Labimotion::Element])
-                rp_attach_ary.push(a.id)
-              end
             rescue StandardError
               status 413
             ensure
@@ -60,8 +54,8 @@ module Chemotion
           end
         end
         if params[:del_files].any?
-          Attachment.where('id IN (?) AND attachable_type = (?)', params[:del_files].map!(&:to_i),
-                           attachable_type).update_all(attachable_id: nil)
+          Attachment.where(id: params[:del_files].map!(&:to_i), attachable_type: attachable_type)
+                    .update_all(attachable_id: nil)
         end
         true
       end

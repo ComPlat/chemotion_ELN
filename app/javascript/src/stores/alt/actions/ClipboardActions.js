@@ -6,6 +6,8 @@ import DeviceDescriptionFetcher from 'src/fetchers/DeviceDescriptionFetcher';
 import DeviceDescription from 'src/models/DeviceDescription';
 import Sample from 'src/models/Sample';
 import Component from 'src/models/Component';
+import SequenceBasedMacromoleculeSamplesFetcher from 'src/fetchers/SequenceBasedMacromoleculeSamplesFetcher';
+import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';
 
 /**
  * Fetches components for a sample (if mixture) and adds them to the sample instance.
@@ -84,6 +86,19 @@ class ClipboardActions {
     };
   }
 
+  fetchSequenceBasedMacromoleculeSamplesByUIState(params, action) {
+    return (dispatch) => {
+      SequenceBasedMacromoleculeSamplesFetcher.fetchSequenceBasedMacromoleculeSamplesByUIStateAndLimit(params)
+        .then((result) => {
+          dispatch(
+            { sequence_based_macromolecule_samples: result, collection_id: params.ui_state.collection_id, action: action }
+          );
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
   fetchElementAndBuildCopy(sample, collectionId, action) {
     sample.collection_id = collectionId;
     return (
@@ -91,10 +106,19 @@ class ClipboardActions {
     );
   }
 
-  fetchDeviceDescriptionAndBuildCopy(deviceDescription, collectionId, action) {
+  fetchDeviceDescriptionAndBuildCopy(deviceDescription, collectionId) {
     const newDeviceDescription = new DeviceDescription(deviceDescription);
     newDeviceDescription.collection_id = collectionId;
-    return { device_descriptions: [newDeviceDescription], collection_id: collectionId, action };
+    return { device_descriptions: [newDeviceDescription], collection_id: collectionId };
+  }
+
+  fetchSequenceBasedMacromoleculeSamplesAndBuildCopy(sequence_based_macromolecule_sample, collection_id) {
+    const newSequenceBasedMacromoleculeSample =
+      new SequenceBasedMacromoleculeSample(sequence_based_macromolecule_sample.serializeForCopy());
+    newSequenceBasedMacromoleculeSample.collection_id = collection_id;
+    return (
+      { sequence_based_macromolecule_samples: [newSequenceBasedMacromoleculeSample], collection_id: collection_id }
+    )
   }
 }
 

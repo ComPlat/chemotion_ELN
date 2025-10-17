@@ -1,0 +1,570 @@
+<?xml version="1.0" encoding="UTF-8"  standalone="no" ?>
+<uniprot xmlns="http://uniprot.org/uniprot" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://uniprot.org/uniprot http://www.uniprot.org/docs/uniprot.xsd">
+<entry dataset="Swiss-Prot" created="1989-10-01" modified="2024-10-02" version="143" xmlns="http://uniprot.org/uniprot">
+  <accession>P12345</accession>
+  <accession>G1SKL2</accession>
+  <name>AATM_RABIT</name>
+  <protein>
+    <recommendedName>
+      <fullName>Aspartate aminotransferase, mitochondrial</fullName>
+      <shortName>mAspAT</shortName>
+      <ecNumber evidence="3">2.6.1.1</ecNumber>
+      <ecNumber evidence="3">2.6.1.7</ecNumber>
+    </recommendedName>
+    <alternativeName>
+      <fullName>Fatty acid-binding protein</fullName>
+      <shortName>FABP-1</shortName>
+    </alternativeName>
+    <alternativeName>
+      <fullName>Glutamate oxaloacetate transaminase 2</fullName>
+    </alternativeName>
+    <alternativeName>
+      <fullName>Kynurenine aminotransferase 4</fullName>
+    </alternativeName>
+    <alternativeName>
+      <fullName>Kynurenine aminotransferase IV</fullName>
+    </alternativeName>
+    <alternativeName>
+      <fullName>Kynurenine--oxoglutarate transaminase 4</fullName>
+    </alternativeName>
+    <alternativeName>
+      <fullName>Kynurenine--oxoglutarate transaminase IV</fullName>
+    </alternativeName>
+    <alternativeName>
+      <fullName>Plasma membrane-associated fatty acid-binding protein</fullName>
+      <shortName>FABPpm</shortName>
+    </alternativeName>
+    <alternativeName>
+      <fullName>Transaminase A</fullName>
+    </alternativeName>
+  </protein>
+  <gene>
+    <name type="primary">GOT2</name>
+  </gene>
+  <organism>
+    <name type="scientific">Oryctolagus cuniculus</name>
+    <name type="common">Rabbit</name>
+    <dbReference type="NCBI Taxonomy" id="9986"/>
+    <lineage>
+      <taxon>Eukaryota</taxon>
+      <taxon>Metazoa</taxon>
+      <taxon>Chordata</taxon>
+      <taxon>Craniata</taxon>
+      <taxon>Vertebrata</taxon>
+      <taxon>Euteleostomi</taxon>
+      <taxon>Mammalia</taxon>
+      <taxon>Eutheria</taxon>
+      <taxon>Euarchontoglires</taxon>
+      <taxon>Glires</taxon>
+      <taxon>Lagomorpha</taxon>
+      <taxon>Leporidae</taxon>
+      <taxon>Oryctolagus</taxon>
+    </lineage>
+  </organism>
+  <reference key="1">
+    <citation type="submission" date="2009-08" db="EMBL/GenBank/DDBJ databases">
+      <title>Genome Sequence of Oryctolagus cuniculus (European rabbit).</title>
+      <authorList>
+        <consortium name="The Genome Sequencing Platform"/>
+        <person name="Di Palma F."/>
+        <person name="Heiman D."/>
+        <person name="Young S."/>
+        <person name="Gnerre S."/>
+        <person name="Johnson J."/>
+        <person name="Lander E.S."/>
+        <person name="Lindblad-Toh K."/>
+      </authorList>
+    </citation>
+    <scope>NUCLEOTIDE SEQUENCE [LARGE SCALE GENOMIC DNA]</scope>
+    <source>
+      <strain>Thorbecke</strain>
+    </source>
+  </reference>
+  <reference key="2">
+    <citation type="journal article" date="1985" name="J. Biochem." volume="97" first="1337" last="1345">
+      <title>Aspartate aminotransferase isozymes from rabbit liver. Purification and properties.</title>
+      <authorList>
+        <person name="Kuramitsu S."/>
+        <person name="Inoue K."/>
+        <person name="Kondo K."/>
+        <person name="Aki K."/>
+        <person name="Kagamiyama H."/>
+      </authorList>
+      <dbReference type="PubMed" id="4030726"/>
+      <dbReference type="DOI" id="10.1093/oxfordjournals.jbchem.a135186"/>
+    </citation>
+    <scope>PROTEIN SEQUENCE OF 30-59</scope>
+    <source>
+      <tissue>Liver</tissue>
+    </source>
+  </reference>
+  <comment type="function">
+    <text evidence="2">Catalyzes the irreversible transamination of the L-tryptophan metabolite L-kynurenine to form kynurenic acid (KA). As a member of the malate-aspartate shuttle, it has a key role in the intracellular NAD(H) redox balance. Is important for metabolite exchange between mitochondria and cytosol, and for amino acid metabolism. Facilitates cellular uptake of long-chain free fatty acids.</text>
+  </comment>
+  <comment type="catalytic activity">
+    <reaction evidence="3">
+      <text>2-oxoglutarate + L-aspartate = L-glutamate + oxaloacetate</text>
+      <dbReference type="Rhea" id="RHEA:21824"/>
+      <dbReference type="ChEBI" id="CHEBI:16452"/>
+      <dbReference type="ChEBI" id="CHEBI:16810"/>
+      <dbReference type="ChEBI" id="CHEBI:29985"/>
+      <dbReference type="ChEBI" id="CHEBI:29991"/>
+      <dbReference type="EC" id="2.6.1.1"/>
+    </reaction>
+  </comment>
+  <comment type="catalytic activity">
+    <reaction evidence="3">
+      <text>2-oxoglutarate + L-kynurenine = H2O + kynurenate + L-glutamate</text>
+      <dbReference type="Rhea" id="RHEA:65560"/>
+      <dbReference type="ChEBI" id="CHEBI:15377"/>
+      <dbReference type="ChEBI" id="CHEBI:16810"/>
+      <dbReference type="ChEBI" id="CHEBI:29985"/>
+      <dbReference type="ChEBI" id="CHEBI:57959"/>
+      <dbReference type="ChEBI" id="CHEBI:58454"/>
+      <dbReference type="EC" id="2.6.1.7"/>
+    </reaction>
+  </comment>
+  <comment type="cofactor">
+    <cofactor evidence="1">
+      <name>pyridoxal 5'-phosphate</name>
+      <dbReference type="ChEBI" id="CHEBI:597326"/>
+    </cofactor>
+  </comment>
+  <comment type="subunit">
+    <text evidence="1">Homodimer.</text>
+  </comment>
+  <comment type="subcellular location">
+    <subcellularLocation>
+      <location evidence="1">Mitochondrion matrix</location>
+    </subcellularLocation>
+    <subcellularLocation>
+      <location evidence="1">Cell membrane</location>
+    </subcellularLocation>
+  </comment>
+  <comment type="miscellaneous">
+    <text>In eukaryotes there are cytoplasmic, mitochondrial and chloroplastic isozymes.</text>
+  </comment>
+  <comment type="similarity">
+    <text evidence="7">Belongs to the class-I pyridoxal-phosphate-dependent aminotransferase family.</text>
+  </comment>
+  <dbReference type="EC" id="2.6.1.1" evidence="3"/>
+  <dbReference type="EC" id="2.6.1.7" evidence="3"/>
+  <dbReference type="EMBL" id="AAGW02052878">
+    <property type="status" value="NOT_ANNOTATED_CDS"/>
+    <property type="molecule type" value="Genomic_DNA"/>
+  </dbReference>
+  <dbReference type="PIR" id="B27103">
+    <property type="entry name" value="B27103"/>
+  </dbReference>
+  <dbReference type="RefSeq" id="XP_002711597.1">
+    <property type="nucleotide sequence ID" value="XM_002711551.3"/>
+  </dbReference>
+  <dbReference type="AlphaFoldDB" id="P12345"/>
+  <dbReference type="SMR" id="P12345"/>
+  <dbReference type="STRING" id="9986.ENSOCUP00000047949"/>
+  <dbReference type="PaxDb" id="9986-ENSOCUP00000003357"/>
+  <dbReference type="GeneID" id="100348732"/>
+  <dbReference type="KEGG" id="ocu:100348732"/>
+  <dbReference type="CTD" id="2806"/>
+  <dbReference type="eggNOG" id="KOG1411">
+    <property type="taxonomic scope" value="Eukaryota"/>
+  </dbReference>
+  <dbReference type="HOGENOM" id="CLU_032440_1_2_1"/>
+  <dbReference type="InParanoid" id="P12345"/>
+  <dbReference type="OMA" id="VGACTIV"/>
+  <dbReference type="OrthoDB" id="1123851at2759"/>
+  <dbReference type="TreeFam" id="TF300641"/>
+  <dbReference type="Proteomes" id="UP000001811">
+    <property type="component" value="Unplaced"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0005759">
+    <property type="term" value="C:mitochondrial matrix"/>
+    <property type="evidence" value="ECO:0007669"/>
+    <property type="project" value="UniProtKB-SubCell"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0005739">
+    <property type="term" value="C:mitochondrion"/>
+    <property type="evidence" value="ECO:0000250"/>
+    <property type="project" value="UniProtKB"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0005886">
+    <property type="term" value="C:plasma membrane"/>
+    <property type="evidence" value="ECO:0007669"/>
+    <property type="project" value="UniProtKB-SubCell"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0016212">
+    <property type="term" value="F:kynurenine-oxoglutarate transaminase activity"/>
+    <property type="evidence" value="ECO:0007669"/>
+    <property type="project" value="UniProtKB-EC"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0004069">
+    <property type="term" value="F:L-aspartate:2-oxoglutarate aminotransferase activity"/>
+    <property type="evidence" value="ECO:0000250"/>
+    <property type="project" value="UniProtKB"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0030170">
+    <property type="term" value="F:pyridoxal phosphate binding"/>
+    <property type="evidence" value="ECO:0007669"/>
+    <property type="project" value="InterPro"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0006103">
+    <property type="term" value="P:2-oxoglutarate metabolic process"/>
+    <property type="evidence" value="ECO:0000250"/>
+    <property type="project" value="UniProtKB"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0006533">
+    <property type="term" value="P:aspartate catabolic process"/>
+    <property type="evidence" value="ECO:0007669"/>
+    <property type="project" value="TreeGrafter"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0006531">
+    <property type="term" value="P:aspartate metabolic process"/>
+    <property type="evidence" value="ECO:0000250"/>
+    <property type="project" value="UniProtKB"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0006536">
+    <property type="term" value="P:glutamate metabolic process"/>
+    <property type="evidence" value="ECO:0000250"/>
+    <property type="project" value="UniProtKB"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0006869">
+    <property type="term" value="P:lipid transport"/>
+    <property type="evidence" value="ECO:0007669"/>
+    <property type="project" value="UniProtKB-KW"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0006457">
+    <property type="term" value="P:protein folding"/>
+    <property type="evidence" value="ECO:0000304"/>
+    <property type="project" value="HGNC"/>
+  </dbReference>
+  <dbReference type="CDD" id="cd00609">
+    <property type="entry name" value="AAT_like"/>
+    <property type="match status" value="1"/>
+  </dbReference>
+  <dbReference type="Gene3D" id="3.90.1150.10">
+    <property type="entry name" value="Aspartate Aminotransferase, domain 1"/>
+    <property type="match status" value="1"/>
+  </dbReference>
+  <dbReference type="Gene3D" id="3.40.640.10">
+    <property type="entry name" value="Type I PLP-dependent aspartate aminotransferase-like (Major domain)"/>
+    <property type="match status" value="1"/>
+  </dbReference>
+  <dbReference type="InterPro" id="IPR004839">
+    <property type="entry name" value="Aminotransferase_I/II"/>
+  </dbReference>
+  <dbReference type="InterPro" id="IPR000796">
+    <property type="entry name" value="Asp_trans"/>
+  </dbReference>
+  <dbReference type="InterPro" id="IPR004838">
+    <property type="entry name" value="NHTrfase_class1_PyrdxlP-BS"/>
+  </dbReference>
+  <dbReference type="InterPro" id="IPR015424">
+    <property type="entry name" value="PyrdxlP-dep_Trfase"/>
+  </dbReference>
+  <dbReference type="InterPro" id="IPR015421">
+    <property type="entry name" value="PyrdxlP-dep_Trfase_major"/>
+  </dbReference>
+  <dbReference type="InterPro" id="IPR015422">
+    <property type="entry name" value="PyrdxlP-dep_Trfase_small"/>
+  </dbReference>
+  <dbReference type="PANTHER" id="PTHR11879">
+    <property type="entry name" value="ASPARTATE AMINOTRANSFERASE"/>
+    <property type="match status" value="1"/>
+  </dbReference>
+  <dbReference type="PANTHER" id="PTHR11879:SF22">
+    <property type="entry name" value="ASPARTATE AMINOTRANSFERASE, MITOCHONDRIAL"/>
+    <property type="match status" value="1"/>
+  </dbReference>
+  <dbReference type="Pfam" id="PF00155">
+    <property type="entry name" value="Aminotran_1_2"/>
+    <property type="match status" value="1"/>
+  </dbReference>
+  <dbReference type="PRINTS" id="PR00799">
+    <property type="entry name" value="TRANSAMINASE"/>
+  </dbReference>
+  <dbReference type="SUPFAM" id="SSF53383">
+    <property type="entry name" value="PLP-dependent transferases"/>
+    <property type="match status" value="1"/>
+  </dbReference>
+  <dbReference type="PROSITE" id="PS00105">
+    <property type="entry name" value="AA_TRANSFER_CLASS_1"/>
+    <property type="match status" value="1"/>
+  </dbReference>
+  <proteinExistence type="evidence at protein level"/>
+  <keyword id="KW-0007">Acetylation</keyword>
+  <keyword id="KW-0032">Aminotransferase</keyword>
+  <keyword id="KW-1003">Cell membrane</keyword>
+  <keyword id="KW-0903">Direct protein sequencing</keyword>
+  <keyword id="KW-0445">Lipid transport</keyword>
+  <keyword id="KW-0472">Membrane</keyword>
+  <keyword id="KW-0488">Methylation</keyword>
+  <keyword id="KW-0496">Mitochondrion</keyword>
+  <keyword id="KW-0944">Nitration</keyword>
+  <keyword id="KW-0597">Phosphoprotein</keyword>
+  <keyword id="KW-0663">Pyridoxal phosphate</keyword>
+  <keyword id="KW-1185">Reference proteome</keyword>
+  <keyword id="KW-0808">Transferase</keyword>
+  <keyword id="KW-0809">Transit peptide</keyword>
+  <keyword id="KW-0813">Transport</keyword>
+  <feature type="transit peptide" description="Mitochondrion" evidence="6">
+    <location>
+      <begin position="1"/>
+      <end position="29"/>
+    </location>
+  </feature>
+  <feature type="chain" id="PRO_0000123886" description="Aspartate aminotransferase, mitochondrial">
+    <location>
+      <begin position="30"/>
+      <end position="430"/>
+    </location>
+  </feature>
+  <feature type="binding site" evidence="1">
+    <location>
+      <position position="65"/>
+    </location>
+    <ligand>
+      <name>substrate</name>
+    </ligand>
+  </feature>
+  <feature type="binding site" evidence="1">
+    <location>
+      <position position="162"/>
+    </location>
+    <ligand>
+      <name>substrate</name>
+    </ligand>
+  </feature>
+  <feature type="binding site" evidence="1">
+    <location>
+      <position position="215"/>
+    </location>
+    <ligand>
+      <name>substrate</name>
+    </ligand>
+  </feature>
+  <feature type="binding site" evidence="1">
+    <location>
+      <position position="407"/>
+    </location>
+    <ligand>
+      <name>substrate</name>
+    </ligand>
+  </feature>
+  <feature type="modified residue" description="Phosphothreonine" evidence="2">
+    <location>
+      <position position="48"/>
+    </location>
+  </feature>
+  <feature type="modified residue" description="N6-acetyllysine" evidence="4">
+    <location>
+      <position position="59"/>
+    </location>
+  </feature>
+  <feature type="modified residue" description="N6-acetyllysine; alternate" evidence="2">
+    <location>
+      <position position="73"/>
+    </location>
+  </feature>
+  <feature type="modified residue" description="N6-succinyllysine; alternate" evidence="4">
+    <location>
+      <position position="73"/>
+    </location>
+  </feature>
+  <feature type="modified residue" description="N6-acetyllysine" evidence="4">
+    <location>
+      <position position="82"/>
+    </location>
+  </feature>
+  <feature type="modified residue" description="N6-acetyllysine; alternate" evidence="2">
+    <location>
+      <position position="90"/>
+    </location>
+  </feature>
+  <feature type="modified residue" description="N6-succinyllysine; alternate" evidence="4">
+    <location>
+      <position position="90"/>
+    </location>
+  </feature>
+  <feature type="modified residue" description="3'-nitrotyrosine; alternate" evidence="4">
+    <location>
+      <position position="96"/>
+    </location>
+  </feature>
+  <feature type="modified residue" description="Phosphotyrosine; alternate" evidence="2">
+    <location>
+      <position position="96"/>
+    </location>
+  </feature>
+  <feature type="modified residue" description="N6-acetyllysine; alternate" evidence="4">
+    <location>
+      <position position="122"/>
+    </location>
+  </feature>
+  <feature type="modified residue" description="N6-succinyllysine; alternate" evidence="4">
+    <location>
+      <position position="122"/>
+    </location>
+  </feature>
+  <feature type="modified residue" description="Phosphoserine" evidence="2">
+    <location>
+      <position position="143"/>
+    </location>
+  </feature>
+  <feature type="modified residue" description="N6-acetyllysine; alternate" evidence="2">
+    <location>
+      <position position="159"/>
+    </location>
+  </feature>
+  <feature type="modified residue" description="N6-succinyllysine; alternate" evidence="4">
+    <location>
+      <position position="159"/>
+    </location>
+  </feature>
+  <feature type="modified residue" description="N6-acetyllysine; alternate" evidence="4">
+    <location>
+      <position position="185"/>
+    </location>
+  </feature>
+  <feature type="modified residue" description="N6-succinyllysine; alternate" evidence="4">
+    <location>
+      <position position="185"/>
+    </location>
+  </feature>
+  <feature type="modified residue" description="N6-succinyllysine" evidence="4">
+    <location>
+      <position position="227"/>
+    </location>
+  </feature>
+  <feature type="modified residue" description="N6-acetyllysine" evidence="2">
+    <location>
+      <position position="234"/>
+    </location>
+  </feature>
+  <feature type="modified residue" description="N6-(pyridoxal phosphate)lysine; alternate" evidence="1">
+    <location>
+      <position position="279"/>
+    </location>
+  </feature>
+  <feature type="modified residue" description="N6-acetyllysine; alternate" evidence="4">
+    <location>
+      <position position="279"/>
+    </location>
+  </feature>
+  <feature type="modified residue" description="N6-acetyllysine; alternate" evidence="2">
+    <location>
+      <position position="296"/>
+    </location>
+  </feature>
+  <feature type="modified residue" description="N6-succinyllysine; alternate" evidence="4">
+    <location>
+      <position position="296"/>
+    </location>
+  </feature>
+  <feature type="modified residue" description="N6-acetyllysine" evidence="4">
+    <location>
+      <position position="302"/>
+    </location>
+  </feature>
+  <feature type="modified residue" description="N6-acetyllysine; alternate" evidence="4">
+    <location>
+      <position position="309"/>
+    </location>
+  </feature>
+  <feature type="modified residue" description="N6-succinyllysine; alternate" evidence="5">
+    <location>
+      <position position="309"/>
+    </location>
+  </feature>
+  <feature type="modified residue" description="Asymmetric dimethylarginine" evidence="4">
+    <location>
+      <position position="313"/>
+    </location>
+  </feature>
+  <feature type="modified residue" description="N6-acetyllysine; alternate" evidence="4">
+    <location>
+      <position position="338"/>
+    </location>
+  </feature>
+  <feature type="modified residue" description="N6-succinyllysine; alternate" evidence="4">
+    <location>
+      <position position="338"/>
+    </location>
+  </feature>
+  <feature type="modified residue" description="N6-acetyllysine" evidence="4">
+    <location>
+      <position position="345"/>
+    </location>
+  </feature>
+  <feature type="modified residue" description="N6-acetyllysine; alternate" evidence="4">
+    <location>
+      <position position="363"/>
+    </location>
+  </feature>
+  <feature type="modified residue" description="N6-succinyllysine; alternate" evidence="4">
+    <location>
+      <position position="363"/>
+    </location>
+  </feature>
+  <feature type="modified residue" description="N6-acetyllysine" evidence="4">
+    <location>
+      <position position="364"/>
+    </location>
+  </feature>
+  <feature type="modified residue" description="N6-acetyllysine" evidence="4">
+    <location>
+      <position position="387"/>
+    </location>
+  </feature>
+  <feature type="modified residue" description="N6-acetyllysine; alternate" evidence="2">
+    <location>
+      <position position="396"/>
+    </location>
+  </feature>
+  <feature type="modified residue" description="N6-succinyllysine; alternate" evidence="4">
+    <location>
+      <position position="396"/>
+    </location>
+  </feature>
+  <feature type="modified residue" description="N6-acetyllysine; alternate" evidence="2">
+    <location>
+      <position position="404"/>
+    </location>
+  </feature>
+  <feature type="modified residue" description="N6-succinyllysine; alternate" evidence="4">
+    <location>
+      <position position="404"/>
+    </location>
+  </feature>
+  <evidence type="ECO:0000250" key="1"/>
+  <evidence type="ECO:0000250" key="2">
+    <source>
+      <dbReference type="UniProtKB" id="P00505"/>
+    </source>
+  </evidence>
+  <evidence type="ECO:0000250" key="3">
+    <source>
+      <dbReference type="UniProtKB" id="P00507"/>
+    </source>
+  </evidence>
+  <evidence type="ECO:0000250" key="4">
+    <source>
+      <dbReference type="UniProtKB" id="P05202"/>
+    </source>
+  </evidence>
+  <evidence type="ECO:0000250" key="5">
+    <source>
+      <dbReference type="UniProtKB" id="P12344"/>
+    </source>
+  </evidence>
+  <evidence type="ECO:0000269" key="6">
+    <source>
+      <dbReference type="PubMed" id="4030726"/>
+    </source>
+  </evidence>
+  <evidence type="ECO:0000305" key="7"/>
+  <sequence length="430" mass="47409" checksum="12F54284974D27A5" modified="2013-09-18" version="2" precursor="true">MALLHSARVLSGVASAFHPGLAAAASARASSWWAHVEMGPPDPILGVTEAYKRDTNSKKMNLGVGAYRDDNGKPYVLPSVRKAEAQIAAKGLDKEYLPIGGLAEFCRASAELALGENSEVVKSGRFVTVQTISGTGALRIGASFLQRFFKFSRDVFLPKPSWGNHTPIFRDAGMQLQSYRYYDPKTCGFDFTGALEDISKIPEQSVLLLHACAHNPTGVDPRPEQWKEIATVVKKRNLFAFFDMAYQGFASGDGDKDAWAVRHFIEQGINVCLCQSYAKNMGLYGERVGAFTVICKDADEAKRVESQLKILIRPMYSNPPIHGARIASTILTSPDLRKQWLQEVKGMADRIIGMRTQLVSNLKKEGSTHSWQHITDQIGMFCFTGLKPEQVERLTKEFSIYMTKDGRISVAGVTSGNVGYLAHAIHQVTK</sequence>
+</entry>
+<copyright>
+Copyrighted by the UniProt Consortium, see https://www.uniprot.org/terms Distributed under the Creative Commons Attribution (CC BY 4.0) License
+</copyright>
+</uniprot>

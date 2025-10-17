@@ -1,0 +1,746 @@
+<?xml version="1.0" encoding="UTF-8"  standalone="no" ?>
+<uniprot xmlns="http://uniprot.org/uniprot" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://uniprot.org/uniprot http://www.uniprot.org/docs/uniprot.xsd">
+<entry dataset="Swiss-Prot" created="2002-03-05" modified="2024-11-27" version="183" xmlns="http://uniprot.org/uniprot">
+  <accession>O75783</accession>
+  <accession>A2IDC0</accession>
+  <accession>A2IDC1</accession>
+  <accession>Q0VAX4</accession>
+  <accession>Q9NQ85</accession>
+  <name>RHBL1_HUMAN</name>
+  <protein>
+    <recommendedName>
+      <fullName>Rhomboid-related protein 1</fullName>
+      <shortName>RRP</shortName>
+      <ecNumber>3.4.21.105</ecNumber>
+    </recommendedName>
+    <alternativeName>
+      <fullName>Rhomboid-like protein 1</fullName>
+    </alternativeName>
+  </protein>
+  <gene>
+    <name type="primary">RHBDL1</name>
+    <name type="synonym">RHBDL</name>
+  </gene>
+  <organism>
+    <name type="scientific">Homo sapiens</name>
+    <name type="common">Human</name>
+    <dbReference type="NCBI Taxonomy" id="9606"/>
+    <lineage>
+      <taxon>Eukaryota</taxon>
+      <taxon>Metazoa</taxon>
+      <taxon>Chordata</taxon>
+      <taxon>Craniata</taxon>
+      <taxon>Vertebrata</taxon>
+      <taxon>Euteleostomi</taxon>
+      <taxon>Mammalia</taxon>
+      <taxon>Eutheria</taxon>
+      <taxon>Euarchontoglires</taxon>
+      <taxon>Primates</taxon>
+      <taxon>Haplorrhini</taxon>
+      <taxon>Catarrhini</taxon>
+      <taxon>Hominidae</taxon>
+      <taxon>Homo</taxon>
+    </lineage>
+  </organism>
+  <reference key="1">
+    <citation type="journal article" date="1998" name="FEBS Lett." volume="429" first="337" last="340">
+      <title>Characterization of a mammalian cDNA encoding a protein with high sequence similarity to the Drosophila regulatory protein Rhomboid.</title>
+      <authorList>
+        <person name="Pascall J.C."/>
+        <person name="Brown K.D."/>
+      </authorList>
+      <dbReference type="PubMed" id="9662444"/>
+      <dbReference type="DOI" id="10.1016/s0014-5793(98)00622-x"/>
+    </citation>
+    <scope>NUCLEOTIDE SEQUENCE [MRNA] (ISOFORMS 1 AND 2)</scope>
+    <source>
+      <tissue>Leukemia</tissue>
+    </source>
+  </reference>
+  <reference key="2">
+    <citation type="journal article" date="2001" name="Hum. Mol. Genet." volume="10" first="339" last="352">
+      <title>Sequence, structure and pathology of the fully annotated terminal 2 Mb of the short arm of human chromosome 16.</title>
+      <authorList>
+        <person name="Daniels R.J."/>
+        <person name="Peden J.F."/>
+        <person name="Lloyd C."/>
+        <person name="Horsley S.W."/>
+        <person name="Clark K."/>
+        <person name="Tufarelli C."/>
+        <person name="Kearney L."/>
+        <person name="Buckle V.J."/>
+        <person name="Doggett N.A."/>
+        <person name="Flint J."/>
+        <person name="Higgs D.R."/>
+      </authorList>
+      <dbReference type="PubMed" id="11157797"/>
+      <dbReference type="DOI" id="10.1093/hmg/10.4.339"/>
+    </citation>
+    <scope>NUCLEOTIDE SEQUENCE [LARGE SCALE GENOMIC DNA] (ISOFORM 1)</scope>
+  </reference>
+  <reference key="3">
+    <citation type="submission" date="2005-09" db="EMBL/GenBank/DDBJ databases">
+      <authorList>
+        <person name="Mural R.J."/>
+        <person name="Istrail S."/>
+        <person name="Sutton G.G."/>
+        <person name="Florea L."/>
+        <person name="Halpern A.L."/>
+        <person name="Mobarry C.M."/>
+        <person name="Lippert R."/>
+        <person name="Walenz B."/>
+        <person name="Shatkay H."/>
+        <person name="Dew I."/>
+        <person name="Miller J.R."/>
+        <person name="Flanigan M.J."/>
+        <person name="Edwards N.J."/>
+        <person name="Bolanos R."/>
+        <person name="Fasulo D."/>
+        <person name="Halldorsson B.V."/>
+        <person name="Hannenhalli S."/>
+        <person name="Turner R."/>
+        <person name="Yooseph S."/>
+        <person name="Lu F."/>
+        <person name="Nusskern D.R."/>
+        <person name="Shue B.C."/>
+        <person name="Zheng X.H."/>
+        <person name="Zhong F."/>
+        <person name="Delcher A.L."/>
+        <person name="Huson D.H."/>
+        <person name="Kravitz S.A."/>
+        <person name="Mouchard L."/>
+        <person name="Reinert K."/>
+        <person name="Remington K.A."/>
+        <person name="Clark A.G."/>
+        <person name="Waterman M.S."/>
+        <person name="Eichler E.E."/>
+        <person name="Adams M.D."/>
+        <person name="Hunkapiller M.W."/>
+        <person name="Myers E.W."/>
+        <person name="Venter J.C."/>
+      </authorList>
+    </citation>
+    <scope>NUCLEOTIDE SEQUENCE [LARGE SCALE GENOMIC DNA]</scope>
+  </reference>
+  <reference key="4">
+    <citation type="journal article" date="2004" name="Nature" volume="432" first="988" last="994">
+      <title>The sequence and analysis of duplication-rich human chromosome 16.</title>
+      <authorList>
+        <person name="Martin J."/>
+        <person name="Han C."/>
+        <person name="Gordon L.A."/>
+        <person name="Terry A."/>
+        <person name="Prabhakar S."/>
+        <person name="She X."/>
+        <person name="Xie G."/>
+        <person name="Hellsten U."/>
+        <person name="Chan Y.M."/>
+        <person name="Altherr M."/>
+        <person name="Couronne O."/>
+        <person name="Aerts A."/>
+        <person name="Bajorek E."/>
+        <person name="Black S."/>
+        <person name="Blumer H."/>
+        <person name="Branscomb E."/>
+        <person name="Brown N.C."/>
+        <person name="Bruno W.J."/>
+        <person name="Buckingham J.M."/>
+        <person name="Callen D.F."/>
+        <person name="Campbell C.S."/>
+        <person name="Campbell M.L."/>
+        <person name="Campbell E.W."/>
+        <person name="Caoile C."/>
+        <person name="Challacombe J.F."/>
+        <person name="Chasteen L.A."/>
+        <person name="Chertkov O."/>
+        <person name="Chi H.C."/>
+        <person name="Christensen M."/>
+        <person name="Clark L.M."/>
+        <person name="Cohn J.D."/>
+        <person name="Denys M."/>
+        <person name="Detter J.C."/>
+        <person name="Dickson M."/>
+        <person name="Dimitrijevic-Bussod M."/>
+        <person name="Escobar J."/>
+        <person name="Fawcett J.J."/>
+        <person name="Flowers D."/>
+        <person name="Fotopulos D."/>
+        <person name="Glavina T."/>
+        <person name="Gomez M."/>
+        <person name="Gonzales E."/>
+        <person name="Goodstein D."/>
+        <person name="Goodwin L.A."/>
+        <person name="Grady D.L."/>
+        <person name="Grigoriev I."/>
+        <person name="Groza M."/>
+        <person name="Hammon N."/>
+        <person name="Hawkins T."/>
+        <person name="Haydu L."/>
+        <person name="Hildebrand C.E."/>
+        <person name="Huang W."/>
+        <person name="Israni S."/>
+        <person name="Jett J."/>
+        <person name="Jewett P.B."/>
+        <person name="Kadner K."/>
+        <person name="Kimball H."/>
+        <person name="Kobayashi A."/>
+        <person name="Krawczyk M.-C."/>
+        <person name="Leyba T."/>
+        <person name="Longmire J.L."/>
+        <person name="Lopez F."/>
+        <person name="Lou Y."/>
+        <person name="Lowry S."/>
+        <person name="Ludeman T."/>
+        <person name="Manohar C.F."/>
+        <person name="Mark G.A."/>
+        <person name="McMurray K.L."/>
+        <person name="Meincke L.J."/>
+        <person name="Morgan J."/>
+        <person name="Moyzis R.K."/>
+        <person name="Mundt M.O."/>
+        <person name="Munk A.C."/>
+        <person name="Nandkeshwar R.D."/>
+        <person name="Pitluck S."/>
+        <person name="Pollard M."/>
+        <person name="Predki P."/>
+        <person name="Parson-Quintana B."/>
+        <person name="Ramirez L."/>
+        <person name="Rash S."/>
+        <person name="Retterer J."/>
+        <person name="Ricke D.O."/>
+        <person name="Robinson D.L."/>
+        <person name="Rodriguez A."/>
+        <person name="Salamov A."/>
+        <person name="Saunders E.H."/>
+        <person name="Scott D."/>
+        <person name="Shough T."/>
+        <person name="Stallings R.L."/>
+        <person name="Stalvey M."/>
+        <person name="Sutherland R.D."/>
+        <person name="Tapia R."/>
+        <person name="Tesmer J.G."/>
+        <person name="Thayer N."/>
+        <person name="Thompson L.S."/>
+        <person name="Tice H."/>
+        <person name="Torney D.C."/>
+        <person name="Tran-Gyamfi M."/>
+        <person name="Tsai M."/>
+        <person name="Ulanovsky L.E."/>
+        <person name="Ustaszewska A."/>
+        <person name="Vo N."/>
+        <person name="White P.S."/>
+        <person name="Williams A.L."/>
+        <person name="Wills P.L."/>
+        <person name="Wu J.-R."/>
+        <person name="Wu K."/>
+        <person name="Yang J."/>
+        <person name="DeJong P."/>
+        <person name="Bruce D."/>
+        <person name="Doggett N.A."/>
+        <person name="Deaven L."/>
+        <person name="Schmutz J."/>
+        <person name="Grimwood J."/>
+        <person name="Richardson P."/>
+        <person name="Rokhsar D.S."/>
+        <person name="Eichler E.E."/>
+        <person name="Gilna P."/>
+        <person name="Lucas S.M."/>
+        <person name="Myers R.M."/>
+        <person name="Rubin E.M."/>
+        <person name="Pennacchio L.A."/>
+      </authorList>
+      <dbReference type="PubMed" id="15616553"/>
+      <dbReference type="DOI" id="10.1038/nature03187"/>
+    </citation>
+    <scope>NUCLEOTIDE SEQUENCE [LARGE SCALE GENOMIC DNA]</scope>
+  </reference>
+  <reference key="5">
+    <citation type="journal article" date="2004" name="Genome Res." volume="14" first="2121" last="2127">
+      <title>The status, quality, and expansion of the NIH full-length cDNA project: the Mammalian Gene Collection (MGC).</title>
+      <authorList>
+        <consortium name="The MGC Project Team"/>
+      </authorList>
+      <dbReference type="PubMed" id="15489334"/>
+      <dbReference type="DOI" id="10.1101/gr.2596504"/>
+    </citation>
+    <scope>NUCLEOTIDE SEQUENCE [LARGE SCALE MRNA] (ISOFORM 1)</scope>
+  </reference>
+  <comment type="function">
+    <text evidence="1">May be involved in regulated intramembrane proteolysis and the subsequent release of functional polypeptides from their membrane anchors.</text>
+  </comment>
+  <comment type="catalytic activity">
+    <reaction>
+      <text>Cleaves type-1 transmembrane domains using a catalytic dyad composed of serine and histidine that are contributed by different transmembrane domains.</text>
+      <dbReference type="EC" id="3.4.21.105"/>
+    </reaction>
+  </comment>
+  <comment type="interaction">
+    <interactant intactId="EBI-12104986">
+      <id>O75783</id>
+    </interactant>
+    <interactant intactId="EBI-348517">
+      <id>O95870</id>
+      <label>ABHD16A</label>
+    </interactant>
+    <organismsDiffer>false</organismsDiffer>
+    <experiments>3</experiments>
+  </comment>
+  <comment type="interaction">
+    <interactant intactId="EBI-12104986">
+      <id>O75783</id>
+    </interactant>
+    <interactant intactId="EBI-715495">
+      <id>P05090</id>
+      <label>APOD</label>
+    </interactant>
+    <organismsDiffer>false</organismsDiffer>
+    <experiments>3</experiments>
+  </comment>
+  <comment type="interaction">
+    <interactant intactId="EBI-12104986">
+      <id>O75783</id>
+    </interactant>
+    <interactant intactId="EBI-12003442">
+      <id>Q8WVX3-2</id>
+      <label>C4orf3</label>
+    </interactant>
+    <organismsDiffer>false</organismsDiffer>
+    <experiments>3</experiments>
+  </comment>
+  <comment type="interaction">
+    <interactant intactId="EBI-12104986">
+      <id>O75783</id>
+    </interactant>
+    <interactant intactId="EBI-372265">
+      <id>P21964</id>
+      <label>COMT</label>
+    </interactant>
+    <organismsDiffer>false</organismsDiffer>
+    <experiments>3</experiments>
+  </comment>
+  <comment type="interaction">
+    <interactant intactId="EBI-12104986">
+      <id>O75783</id>
+    </interactant>
+    <interactant intactId="EBI-713304">
+      <id>Q9H0Q3</id>
+      <label>FXYD6</label>
+    </interactant>
+    <organismsDiffer>false</organismsDiffer>
+    <experiments>3</experiments>
+  </comment>
+  <comment type="interaction">
+    <interactant intactId="EBI-12104986">
+      <id>O75783</id>
+    </interactant>
+    <interactant intactId="EBI-10171774">
+      <id>P60410</id>
+      <label>KRTAP10-8</label>
+    </interactant>
+    <organismsDiffer>false</organismsDiffer>
+    <experiments>3</experiments>
+  </comment>
+  <comment type="interaction">
+    <interactant intactId="EBI-12104986">
+      <id>O75783</id>
+    </interactant>
+    <interactant intactId="EBI-14065470">
+      <id>Q9BYR9</id>
+      <label>KRTAP2-4</label>
+    </interactant>
+    <organismsDiffer>false</organismsDiffer>
+    <experiments>3</experiments>
+  </comment>
+  <comment type="interaction">
+    <interactant intactId="EBI-12104986">
+      <id>O75783</id>
+    </interactant>
+    <interactant intactId="EBI-22311199">
+      <id>Q3LI67</id>
+      <label>KRTAP6-3</label>
+    </interactant>
+    <organismsDiffer>false</organismsDiffer>
+    <experiments>3</experiments>
+  </comment>
+  <comment type="interaction">
+    <interactant intactId="EBI-12104986">
+      <id>O75783</id>
+    </interactant>
+    <interactant intactId="EBI-11956541">
+      <id>Q9GZY8-5</id>
+      <label>MFF</label>
+    </interactant>
+    <organismsDiffer>false</organismsDiffer>
+    <experiments>3</experiments>
+  </comment>
+  <comment type="interaction">
+    <interactant intactId="EBI-12104986">
+      <id>O75783</id>
+    </interactant>
+    <interactant intactId="EBI-723396">
+      <id>Q969W0</id>
+      <label>SPTSSA</label>
+    </interactant>
+    <organismsDiffer>false</organismsDiffer>
+    <experiments>3</experiments>
+  </comment>
+  <comment type="interaction">
+    <interactant intactId="EBI-12104986">
+      <id>O75783</id>
+    </interactant>
+    <interactant intactId="EBI-11988865">
+      <id>A5PKU2</id>
+      <label>TUSC5</label>
+    </interactant>
+    <organismsDiffer>false</organismsDiffer>
+    <experiments>3</experiments>
+  </comment>
+  <comment type="interaction">
+    <interactant intactId="EBI-12104986">
+      <id>O75783</id>
+    </interactant>
+    <interactant intactId="EBI-2107455">
+      <id>Q08AM6</id>
+      <label>VAC14</label>
+    </interactant>
+    <organismsDiffer>false</organismsDiffer>
+    <experiments>3</experiments>
+  </comment>
+  <comment type="subcellular location">
+    <subcellularLocation>
+      <location>Membrane</location>
+      <topology>Multi-pass membrane protein</topology>
+    </subcellularLocation>
+  </comment>
+  <comment type="alternative products">
+    <event type="alternative splicing"/>
+    <isoform>
+      <id>O75783-1</id>
+      <name>1</name>
+      <sequence type="displayed"/>
+    </isoform>
+    <isoform>
+      <id>O75783-2</id>
+      <name>2</name>
+      <sequence type="described" ref="VSP_005372"/>
+    </isoform>
+  </comment>
+  <comment type="tissue specificity">
+    <text>Detected in heart, brain, skeletal muscle and kidney.</text>
+  </comment>
+  <comment type="similarity">
+    <text evidence="5">Belongs to the peptidase S54 family.</text>
+  </comment>
+  <dbReference type="EC" id="3.4.21.105"/>
+  <dbReference type="EMBL" id="Y17108">
+    <property type="protein sequence ID" value="CAA76629.1"/>
+    <property type="molecule type" value="mRNA"/>
+  </dbReference>
+  <dbReference type="EMBL" id="AJ272344">
+    <property type="protein sequence ID" value="CAC00640.1"/>
+    <property type="molecule type" value="mRNA"/>
+  </dbReference>
+  <dbReference type="EMBL" id="AE006464">
+    <property type="protein sequence ID" value="AAK61241.1"/>
+    <property type="molecule type" value="Genomic_DNA"/>
+  </dbReference>
+  <dbReference type="EMBL" id="Z92544">
+    <property type="status" value="NOT_ANNOTATED_CDS"/>
+    <property type="molecule type" value="Genomic_DNA"/>
+  </dbReference>
+  <dbReference type="EMBL" id="CH471112">
+    <property type="protein sequence ID" value="EAW85760.1"/>
+    <property type="molecule type" value="Genomic_DNA"/>
+  </dbReference>
+  <dbReference type="EMBL" id="BC120874">
+    <property type="protein sequence ID" value="AAI20875.1"/>
+    <property type="molecule type" value="mRNA"/>
+  </dbReference>
+  <dbReference type="EMBL" id="BC120875">
+    <property type="protein sequence ID" value="AAI20876.1"/>
+    <property type="molecule type" value="mRNA"/>
+  </dbReference>
+  <dbReference type="CCDS" id="CCDS10418.1">
+    <molecule id="O75783-1"/>
+  </dbReference>
+  <dbReference type="CCDS" id="CCDS61779.1">
+    <molecule id="O75783-2"/>
+  </dbReference>
+  <dbReference type="RefSeq" id="NP_001265649.1">
+    <molecule id="O75783-2"/>
+    <property type="nucleotide sequence ID" value="NM_001278720.1"/>
+  </dbReference>
+  <dbReference type="RefSeq" id="NP_001265650.1">
+    <property type="nucleotide sequence ID" value="NM_001278721.1"/>
+  </dbReference>
+  <dbReference type="RefSeq" id="NP_001305662.1">
+    <molecule id="O75783-1"/>
+    <property type="nucleotide sequence ID" value="NM_001318733.1"/>
+  </dbReference>
+  <dbReference type="AlphaFoldDB" id="O75783"/>
+  <dbReference type="SMR" id="O75783"/>
+  <dbReference type="BioGRID" id="114495">
+    <property type="interactions" value="18"/>
+  </dbReference>
+  <dbReference type="IntAct" id="O75783">
+    <property type="interactions" value="16"/>
+  </dbReference>
+  <dbReference type="STRING" id="9606.ENSP00000219551"/>
+  <dbReference type="MEROPS" id="S54.005"/>
+  <dbReference type="iPTMnet" id="O75783"/>
+  <dbReference type="PhosphoSitePlus" id="O75783"/>
+  <dbReference type="BioMuta" id="RHBDL1"/>
+  <dbReference type="MassIVE" id="O75783"/>
+  <dbReference type="PaxDb" id="9606-ENSP00000344206"/>
+  <dbReference type="PeptideAtlas" id="O75783"/>
+  <dbReference type="ProteomicsDB" id="50193">
+    <molecule id="O75783-1"/>
+  </dbReference>
+  <dbReference type="ProteomicsDB" id="50194">
+    <molecule id="O75783-2"/>
+  </dbReference>
+  <dbReference type="Antibodypedia" id="22802">
+    <property type="antibodies" value="32 antibodies from 13 providers"/>
+  </dbReference>
+  <dbReference type="DNASU" id="9028"/>
+  <dbReference type="Ensembl" id="ENST00000219551.2">
+    <molecule id="O75783-1"/>
+    <property type="protein sequence ID" value="ENSP00000219551.2"/>
+    <property type="gene ID" value="ENSG00000103269.14"/>
+  </dbReference>
+  <dbReference type="Ensembl" id="ENST00000352681.8">
+    <molecule id="O75783-2"/>
+    <property type="protein sequence ID" value="ENSP00000344206.3"/>
+    <property type="gene ID" value="ENSG00000103269.14"/>
+  </dbReference>
+  <dbReference type="GeneID" id="9028"/>
+  <dbReference type="KEGG" id="hsa:9028"/>
+  <dbReference type="MANE-Select" id="ENST00000352681.8">
+    <molecule id="O75783-2"/>
+    <property type="protein sequence ID" value="ENSP00000344206.3"/>
+    <property type="RefSeq nucleotide sequence ID" value="NM_001278720.2"/>
+    <property type="RefSeq protein sequence ID" value="NP_001265649.1"/>
+  </dbReference>
+  <dbReference type="UCSC" id="uc002cir.2">
+    <molecule id="O75783-1"/>
+    <property type="organism name" value="human"/>
+  </dbReference>
+  <dbReference type="AGR" id="HGNC:10007"/>
+  <dbReference type="CTD" id="9028"/>
+  <dbReference type="DisGeNET" id="9028"/>
+  <dbReference type="GeneCards" id="RHBDL1"/>
+  <dbReference type="HGNC" id="HGNC:10007">
+    <property type="gene designation" value="RHBDL1"/>
+  </dbReference>
+  <dbReference type="HPA" id="ENSG00000103269">
+    <property type="expression patterns" value="Tissue enriched (brain)"/>
+  </dbReference>
+  <dbReference type="MIM" id="603264">
+    <property type="type" value="gene"/>
+  </dbReference>
+  <dbReference type="neXtProt" id="NX_O75783"/>
+  <dbReference type="OpenTargets" id="ENSG00000103269"/>
+  <dbReference type="PharmGKB" id="PA34382"/>
+  <dbReference type="VEuPathDB" id="HostDB:ENSG00000103269"/>
+  <dbReference type="eggNOG" id="KOG2289">
+    <property type="taxonomic scope" value="Eukaryota"/>
+  </dbReference>
+  <dbReference type="GeneTree" id="ENSGT00940000160651"/>
+  <dbReference type="HOGENOM" id="CLU_048023_2_1_1"/>
+  <dbReference type="InParanoid" id="O75783"/>
+  <dbReference type="OMA" id="VFMCYGV"/>
+  <dbReference type="OrthoDB" id="2872779at2759"/>
+  <dbReference type="PhylomeDB" id="O75783"/>
+  <dbReference type="TreeFam" id="TF313540"/>
+  <dbReference type="PathwayCommons" id="O75783"/>
+  <dbReference type="SignaLink" id="O75783"/>
+  <dbReference type="BioGRID-ORCS" id="9028">
+    <property type="hits" value="13 hits in 1027 CRISPR screens"/>
+  </dbReference>
+  <dbReference type="GenomeRNAi" id="9028"/>
+  <dbReference type="Pharos" id="O75783">
+    <property type="development level" value="Tdark"/>
+  </dbReference>
+  <dbReference type="PRO" id="PR:O75783"/>
+  <dbReference type="Proteomes" id="UP000005640">
+    <property type="component" value="Chromosome 16"/>
+  </dbReference>
+  <dbReference type="RNAct" id="O75783">
+    <property type="molecule type" value="protein"/>
+  </dbReference>
+  <dbReference type="Bgee" id="ENSG00000103269">
+    <property type="expression patterns" value="Expressed in right hemisphere of cerebellum and 95 other cell types or tissues"/>
+  </dbReference>
+  <dbReference type="ExpressionAtlas" id="O75783">
+    <property type="expression patterns" value="baseline and differential"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0016020">
+    <property type="term" value="C:membrane"/>
+    <property type="evidence" value="ECO:0000304"/>
+    <property type="project" value="ProtInc"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0005886">
+    <property type="term" value="C:plasma membrane"/>
+    <property type="evidence" value="ECO:0000304"/>
+    <property type="project" value="ProtInc"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0004252">
+    <property type="term" value="F:serine-type endopeptidase activity"/>
+    <property type="evidence" value="ECO:0000318"/>
+    <property type="project" value="GO_Central"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0006508">
+    <property type="term" value="P:proteolysis"/>
+    <property type="evidence" value="ECO:0007669"/>
+    <property type="project" value="UniProtKB-KW"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0007165">
+    <property type="term" value="P:signal transduction"/>
+    <property type="evidence" value="ECO:0000304"/>
+    <property type="project" value="ProtInc"/>
+  </dbReference>
+  <dbReference type="FunFam" id="1.20.1540.10:FF:000006">
+    <property type="entry name" value="rhomboid-related protein 1 isoform X1"/>
+    <property type="match status" value="1"/>
+  </dbReference>
+  <dbReference type="Gene3D" id="1.10.238.10">
+    <property type="entry name" value="EF-hand"/>
+    <property type="match status" value="1"/>
+  </dbReference>
+  <dbReference type="Gene3D" id="1.20.1540.10">
+    <property type="entry name" value="Rhomboid-like"/>
+    <property type="match status" value="1"/>
+  </dbReference>
+  <dbReference type="InterPro" id="IPR011992">
+    <property type="entry name" value="EF-hand-dom_pair"/>
+  </dbReference>
+  <dbReference type="InterPro" id="IPR022764">
+    <property type="entry name" value="Peptidase_S54_rhomboid_dom"/>
+  </dbReference>
+  <dbReference type="InterPro" id="IPR035952">
+    <property type="entry name" value="Rhomboid-like_sf"/>
+  </dbReference>
+  <dbReference type="InterPro" id="IPR051739">
+    <property type="entry name" value="Rhomboid_IM_Serine_Proteases"/>
+  </dbReference>
+  <dbReference type="PANTHER" id="PTHR45840">
+    <property type="entry name" value="RHOMBOID-RELATED PROTEIN"/>
+    <property type="match status" value="1"/>
+  </dbReference>
+  <dbReference type="PANTHER" id="PTHR45840:SF4">
+    <property type="entry name" value="RHOMBOID-RELATED PROTEIN 1"/>
+    <property type="match status" value="1"/>
+  </dbReference>
+  <dbReference type="Pfam" id="PF01694">
+    <property type="entry name" value="Rhomboid"/>
+    <property type="match status" value="1"/>
+  </dbReference>
+  <dbReference type="SUPFAM" id="SSF47473">
+    <property type="entry name" value="EF-hand"/>
+    <property type="match status" value="1"/>
+  </dbReference>
+  <dbReference type="SUPFAM" id="SSF144091">
+    <property type="entry name" value="Rhomboid-like"/>
+    <property type="match status" value="1"/>
+  </dbReference>
+  <proteinExistence type="evidence at protein level"/>
+  <keyword id="KW-0025">Alternative splicing</keyword>
+  <keyword id="KW-0378">Hydrolase</keyword>
+  <keyword id="KW-0472">Membrane</keyword>
+  <keyword id="KW-0645">Protease</keyword>
+  <keyword id="KW-1267">Proteomics identification</keyword>
+  <keyword id="KW-1185">Reference proteome</keyword>
+  <keyword id="KW-0720">Serine protease</keyword>
+  <keyword id="KW-0812">Transmembrane</keyword>
+  <keyword id="KW-1133">Transmembrane helix</keyword>
+  <feature type="chain" id="PRO_0000206173" description="Rhomboid-related protein 1">
+    <location>
+      <begin position="1"/>
+      <end position="438"/>
+    </location>
+  </feature>
+  <feature type="transmembrane region" description="Helical" evidence="2">
+    <location>
+      <begin position="196"/>
+      <end position="216"/>
+    </location>
+  </feature>
+  <feature type="transmembrane region" description="Helical" evidence="2">
+    <location>
+      <begin position="262"/>
+      <end position="282"/>
+    </location>
+  </feature>
+  <feature type="transmembrane region" description="Helical" evidence="2">
+    <location>
+      <begin position="284"/>
+      <end position="304"/>
+    </location>
+  </feature>
+  <feature type="transmembrane region" description="Helical" evidence="2">
+    <location>
+      <begin position="308"/>
+      <end position="328"/>
+    </location>
+  </feature>
+  <feature type="transmembrane region" description="Helical" evidence="2">
+    <location>
+      <begin position="340"/>
+      <end position="359"/>
+    </location>
+  </feature>
+  <feature type="transmembrane region" description="Helical" evidence="2">
+    <location>
+      <begin position="372"/>
+      <end position="392"/>
+    </location>
+  </feature>
+  <feature type="transmembrane region" description="Helical" evidence="2">
+    <location>
+      <begin position="405"/>
+      <end position="425"/>
+    </location>
+  </feature>
+  <feature type="region of interest" description="Disordered" evidence="3">
+    <location>
+      <begin position="1"/>
+      <end position="62"/>
+    </location>
+  </feature>
+  <feature type="active site" description="Nucleophile" evidence="1">
+    <location>
+      <position position="312"/>
+    </location>
+  </feature>
+  <feature type="active site" evidence="1">
+    <location>
+      <position position="377"/>
+    </location>
+  </feature>
+  <feature type="splice variant" id="VSP_005372" description="In isoform 2." evidence="4">
+    <original>MGRVEDGGTTEELEDWDPGTSALPAPGIKQGPREQTGTGPLSQKCWEPEPDAPSQPGPALWSRGRARTQALAGGSSL</original>
+    <variation>MDRSSLLQLIQE</variation>
+    <location>
+      <begin position="1"/>
+      <end position="77"/>
+    </location>
+  </feature>
+  <evidence type="ECO:0000250" key="1"/>
+  <evidence type="ECO:0000255" key="2"/>
+  <evidence type="ECO:0000256" key="3">
+    <source>
+      <dbReference type="SAM" id="MobiDB-lite"/>
+    </source>
+  </evidence>
+  <evidence type="ECO:0000303" key="4">
+    <source>
+      <dbReference type="PubMed" id="9662444"/>
+    </source>
+  </evidence>
+  <evidence type="ECO:0000305" key="5"/>
+  <sequence length="438" mass="48314" checksum="A7644AD39644A2F6" modified="1998-11-01" version="1">MGRVEDGGTTEELEDWDPGTSALPAPGIKQGPREQTGTGPLSQKCWEPEPDAPSQPGPALWSRGRARTQALAGGSSLQQLDPENTGFIGADTFTGLVHSHELPLDPAKLDMLVALAQSNEQGQVCYQELVDLISSKRSSSFKRAIANGQRALPRDGPLDEPGLGVYKRFVRYVAYEILPCEVDRRWYFYRHRSCPPPVFMASVTLAQIIVFLCYGARLNKWVLQTYHPEYMKSPLVYHPGHRARAWRFLTYMFMHVGLEQLGFNALLQLMIGVPLEMVHGLLRISLLYLAGVLAGSLTVSITDMRAPVVGGSGGVYALCSAHLANVVMNWAGMRCPYKLLRMVLALVCMSSEVGRAVWLRFSPPLPASGPQPSFMAHLAGAVVGVSMGLTILRSYEERLRDQCGWWVVLLAYGTFLLFAVFWNVFAYDLLGAHIPPPP</sequence>
+</entry>
+<copyright>
+Copyrighted by the UniProt Consortium, see https://www.uniprot.org/terms Distributed under the Creative Commons Attribution (CC BY 4.0) License
+</copyright>
+</uniprot>

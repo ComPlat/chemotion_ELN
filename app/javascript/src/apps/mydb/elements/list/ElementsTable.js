@@ -27,6 +27,8 @@ import VesselContainer from 'src/apps/mydb/elements/list/vessel/VesselContainer'
 import VesselTemplateGroupView from 'src/apps/mydb/elements/list/vessel/VesselTemplateGroupView';
 import DeviceDescriptionList from 'src/apps/mydb/elements/list/deviceDescriptions/DeviceDescriptionList';
 import DeviceDescriptionListHeader from 'src/apps/mydb/elements/list/deviceDescriptions/DeviceDescriptionListHeader';
+import SequenceBasedMacromoleculeSampleList from 'src/apps/mydb/elements/list/sequenceBasedMacromoleculeSamples/SequenceBasedMacromoleculeSampleList';
+import SequenceBasedMacromoleculeSampleListHeader from 'src/apps/mydb/elements/list/sequenceBasedMacromoleculeSamples/SequenceBasedMacromoleculeSampleListHeader';
 
 export default class ElementsTable extends React.Component {
   constructor(props) {
@@ -607,11 +609,12 @@ export default class ElementsTable extends React.Component {
     } else if (type === 'reaction') {
       typeSpecificHeader = this.renderReactionsHeader();
     } else if (type === 'device_description') {
-      typeSpecificHeader = (
-        <DeviceDescriptionListHeader />
-      );
+      typeSpecificHeader = <DeviceDescriptionListHeader />;
       displayCollapseButton = true;
     } else if (type === 'cell_line') {
+      displayCollapseButton = true;
+    } else if (type === 'sequence_based_macromolecule_sample') {
+      typeSpecificHeader = <SequenceBasedMacromoleculeSampleListHeader />;
       displayCollapseButton = true;
     } else if (genericEl) {
       typeSpecificHeader = this.renderGenericElementsHeader();
@@ -725,6 +728,12 @@ export default class ElementsTable extends React.Component {
           />
         );
       }
+    } else if (type === 'sequence_based_macromolecule_sample') {
+      elementsTableEntries = (
+        <SequenceBasedMacromoleculeSampleList
+          elements={elements}
+        />
+      );
     } else {
       elementsTableEntries = (
         <ElementsTableEntries
