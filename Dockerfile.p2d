@@ -88,3 +88,11 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=300s --retries=3 \
     CMD /embed/health.sh || exit 1
 
 VOLUME [ "/chemotion/app", "/chemotion/data" ]
+
+# TODO:remove this before merging to main
+ADD https://github.com/haditariq/ketcher-build-holder.git /chemotion/app/public/editors/ketcher/standalone
+
+# Copy config example into actual config
+RUN cp config/structure_editors.yml.example config/structure_editors.yml
+
+RUN cp config/indigo_service.yml.example config/indigo_service.yml
