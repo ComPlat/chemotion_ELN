@@ -41,6 +41,8 @@ module Chemotion
           share.save
         end
 
+        collection.update(shared: true)
+
         { status:  204 }
       end
 
@@ -74,7 +76,11 @@ module Chemotion
         share = CollectionShare.shared_by(current_user).find_by(id: params[:id])
         share ||= CollectionShare.shared_with(current_user).find_by(id: params[:id])
 
+        collection = share.collection
+
         share.destroy
+
+        collection.update(shared: false) if CollectionShare.where(collection: collection).none?
 
         status 204
       end
