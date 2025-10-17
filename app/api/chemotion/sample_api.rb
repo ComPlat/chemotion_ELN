@@ -141,8 +141,15 @@ module Chemotion
             ensure
               # Close and delete the original tempfile that was used to create the Attachment
               if params[:file] && params[:file][:tempfile]
-                params[:file][:tempfile]&.close
-                params[:file][:tempfile]&.unlink
+                tempfile = params[:file][:tempfile]
+                tempfile.close if tempfile.respond_to?(:close) && !tempfile.closed?
+                # Only unlink if it's a Tempfile or if it responds to unlink
+                if tempfile.respond_to?(:unlink)
+                  tempfile.unlink
+                elsif tempfile.respond_to?(:path) && File.exist?(tempfile.path)
+                  # For regular File objects, delete using File.delete
+                  File.delete(tempfile.path)
+                end
               end
             end
             extname = File.extname(params[:file][:filename])
