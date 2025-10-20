@@ -57,9 +57,8 @@ jobs:
         shell: bash
 
     container:
-      image: complat/chemotion_eln_runner:latest
+      image: complat/chemotion_eln_runner:r3-v2.0.1-100-g2eba489c3
       ## options: --user root
-
 
     services:
       postgres:
@@ -77,6 +76,7 @@ jobs:
     env:
       RAILS_ENV: test
       YARN_CACHE_FOLDER: /home/runner/.cache/yarn
+      BUNDLE_WITHOUT: vscode
 
     steps:
       - name: checkout repository
@@ -91,7 +91,18 @@ jobs:
           cache-dependency-path: 'yarn.lock'
           package-manager-cache: false
 
-      - run: corepack enable
+      - run: |
+          corepack enable
+          corepack install
+          yarn --version
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .tool-versions
+          cache: 'yarn'
+          cache-dependency-path: 'yarn.lock'
+          package-manager-cache: false
+
 
       - uses: actions/checkout@v5
         with:
@@ -150,7 +161,7 @@ jobs:
           bundle config set without ''
 
       - name: bundle install
-        run: bundle install
+        run: bundle install --without vscode
 
       - name: yarn install
         run: |
