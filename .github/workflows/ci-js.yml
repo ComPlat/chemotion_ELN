@@ -25,29 +25,25 @@ jobs:
 #        node-version: [22.20.0]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - name: Get Nodejs version from .tool-versions
-        id: node_version
-        run: |
-          echo "NODE_VERSION=$(grep '^nodejs' .tool-versions | awk '{print $2}')" >> $GITHUB_OUTPUT
-
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: main
           path: tmp/main
           fetch-depth: 1
 
       - name: Setup Nodejs
-        uses: actions/setup-node@v4
+        id: setup_node
+        uses: actions/setup-node@v5
         with:
-          node-version: ${{ steps.node_version.outputs.NODE_VERSION }}
+          node-version-file: .tool-versions
           #node-version: ${{ matrix.node-version }}
 
       - name: compute cache key based on main's yarn.lock
         id: cache_key
         run: |
-          echo "key=v${{ steps.node_version.outputs.NODE_VERSION }}-${{ hashFiles('tmp/main/yarn.lock') }}" >> $GITHUB_OUTPUT
+          echo "key=${{ steps.setup_node.outputs.node-version }}-${{ hashFiles('tmp/main/yarn.lock') }}" >> $GITHUB_OUTPUT
 
       - name: Enable Corepack (Yarn)
         run: corepack enable
@@ -71,7 +67,7 @@ jobs:
           key: ${{ steps.cache_key.outputs.key }}
           # Optional: allow fallback to previous main caches if hash changed recently
           restore-keys: |
-            v${{ steps.node_version.outputs.NODE_VERSION }}-
+            ${{ steps.setup_node.outputs.node-version }}-
 
       - name: Install deps
         run: |
