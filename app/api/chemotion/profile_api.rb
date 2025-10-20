@@ -114,6 +114,7 @@ module Chemotion
         optional :show_external_name, type: Boolean
         optional :show_sample_name, type: Boolean
         optional :show_sample_short_label, type: Boolean
+        optional :curation, type: Integer, default: 2
       end
       put do
         declared_params = declared(params, include_missing: false)
@@ -147,6 +148,7 @@ module Chemotion
           show_external_name: declared_params[:show_external_name],
           show_sample_name: declared_params[:show_sample_name],
           show_sample_short_label: declared_params[:show_sample_short_label],
+          curation: declared_params[:curation],
         }
         (current_user.profile.update!(**new_profile) &&
           new_profile) || error!('profile update failed', 500)

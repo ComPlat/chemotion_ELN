@@ -1,7 +1,6 @@
 /* eslint-disable react/forbid-prop-types */
 import React, { useState, useEffect } from 'react';
-import ReactDOM from 'react-dom';
-import TreeSelect from 'antd/lib/tree-select';
+import { TreeSelect } from 'antd';
 import {
   Alert, Button, Card, Row, Col, Form, Modal, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
@@ -285,6 +284,7 @@ function InventoryLabelSettings() {
               treeData={options}
               onChange={(selectedOptions) => handleSelectOptionChange(selectedOptions)}
               value={selectedCollections}
+              dropdownStyle={{ maxHeight: '250px', zIndex: '500000' }}
             />
           </Col>
         </Row>
@@ -395,7 +395,4 @@ function InventoryLabelSettings() {
   );
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  const domElement = document.getElementById('InventoryLabelSettings');
-  if (domElement) { ReactDOM.render(<InventoryLabelSettings />, domElement); }
-});
+export default InventoryLabelSettings;
