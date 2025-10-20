@@ -119,16 +119,7 @@ class UserCounter extends Component {
             </tbody>
           </Table>
           {successMessage && (
-          <Alert
-            variant="success"
-            style={{
-              position: 'fixed',
-              bottom: '0px',
-              left: '35vw',
-              width: '30vw',
-              zIndex: 1050, // Bootstrap modal uses 1050, so this ensures it stays on top
-            }}
-          >
+          <Alert variant="success">
             {successMessage}
           </Alert>
           )}
