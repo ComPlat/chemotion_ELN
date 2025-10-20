@@ -367,11 +367,6 @@ export default class Sample extends Element {
       this.calculateTotalMixtureMass();
     }
 
-    // Calculate relative molecular weight for each component if this is a mixture
-    if (this.isMixture() && this.hasComponents()) {
-      this.calculateRelativeMolecularWeightsForComponents();
-    }
-
     this.applyMixturePropertiesToSample(splitSample);
 
     // Todo ???
@@ -1678,6 +1673,9 @@ export default class Sample extends Element {
       tmpSolvents.splice(filteredIndex, 1);
     }
     this.solvent = tmpSolvents;
+
+    // Recalculate the total mixture mass after deleting solvent
+    this.calculateTotalMixtureMass();
   }
 
   updateSolvent(solventToUpdate) {
@@ -1702,6 +1700,9 @@ export default class Sample extends Element {
       }
     }
     this.solvent = tmpSolvents;
+
+    // Recalculate the total mixture mass after updating solvent list
+    this.calculateTotalMixtureMass();
   }
 
   /**
@@ -1765,8 +1766,6 @@ export default class Sample extends Element {
 
       this.calculateTotalMixtureMass();
 
-      // Calculate relative molecular weights for all components after adding a new one
-      this.calculateRelativeMolecularWeightsForComponents();
       // Ensure reference and equivalents are consistent after add
       this.updateMixtureComponentEquivalent();
     }
@@ -1810,9 +1809,6 @@ export default class Sample extends Element {
 
     // Recalculate total mixture mass after component deletion
     this.calculateTotalMixtureMass();
-
-    // Recalculate relative molecular weights after component deletion
-    this.calculateRelativeMolecularWeightsForComponents();
   }
 
   // callback function for handleTotalVolumeChangeforMixtures

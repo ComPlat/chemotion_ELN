@@ -78,7 +78,7 @@ class ReactionMaterialComponentsGroup extends React.Component {
           <NumeralInputWithUnitsCompo
             value={component.relative_molecular_weight || 0}
             unit="g/mol"
-            precision={2}
+            precision={4}
             disabled
             size="sm"
           />

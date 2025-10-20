@@ -950,4 +950,75 @@ describe('Sample', async () => {
       expect(serialized.molecule_name_id).toBeNull();
     });
   });
+
+  describe('Sample.calculateTotalMixtureMass()', () => {
+    it('sums solids (g), liquids (density*g/mL*volume*mL) and solvents (density*volume)', () => {
+      const s = new Sample();
+      s.sample_type = 'Mixture';
+      // Components: one solid (amount_g), one liquid (density, amount_l)
+      s.components = [
+        { material_group: 'solid', amount_g: 12.5 },
+        { material_group: 'liquid', density: 0.8, amount_l: 0.01 } // 0.8 g/mL * 10 mL = 8 g
+      ];
+      // Solvents contribute by amount_l and optional density
+      s.solvent = [
+        { amount_l: 0.002, density: 1.2 }, // 1.2 g/mL * 2 mL = 2.4 g
+        { amount_l: 0.001 } // default density 1.0 g/mL -> 1 g
+      ];
+
+      s.calculateTotalMixtureMass();
+
+      const expected = 12.5 + 8 + 2.4 + 1; // 23.9 g
+      expect(s.sample_details.total_mixture_mass_g).toBeCloseTo(expected, 6);
+    });
+
+    it('does not error when not a mixture or has no components', () => {
+      const s1 = new Sample();
+      s1.sample_type = 'Micromolecule';
+      s1.components = [];
+      expect(() => s1.calculateTotalMixtureMass()).not.toThrow();
+
+      const s2 = new Sample();
+      s2.sample_type = 'Mixture';
+      s2.components = [];
+      expect(() => s2.calculateTotalMixtureMass()).not.toThrow();
+    });
+
+    it('updates density when total volume is provided afterwards', () => {
+      const s = new Sample();
+      s.sample_type = 'Mixture';
+      s.components = [
+        { material_group: 'liquid', density: 1.0, amount_l: 0.005, handleTotalVolumeChanges: () => {} } // 5 mL -> 5 g
+      ];
+
+      s.calculateTotalMixtureMass(); // sets total_mixture_mass_g = 5
+      s.setTotalMixtureVolume(0.01); // 10 mL -> density should be 5 g / 10 mL = 0.5 g/mL
+
+      expect(s.density).toBeCloseTo(0.5, 6);
+    });
+  });
+
+  describe('Sample.updateMixtureDensity()', () => {
+    it('sets density = total_mass_g / total_volume_mL for liquid mixtures with volume', () => {
+      const s = new Sample();
+      s.sample_type = 'Mixture';
+      s.components = [{ material_group: 'liquid' }];
+      s.sample_details = { total_mixture_mass_g: 7.5, total_mixture_volume_l: 0.015 }; // 15 mL
+
+      s.updateMixtureDensity();
+
+      // 7.5 g / 15 mL = 0.5 g/mL
+      expect(s.density).toBeCloseTo(0.5, 6);
+    });
+
+    it('resets density to 0 when volume is missing', () => {
+      const s = new Sample();
+      s.sample_type = 'Mixture';
+      s.components = [{ material_group: 'liquid' }];
+      s.sample_details = { total_mixture_mass_g: 7.5, total_mixture_volume_l: 0 };
+
+      s.updateMixtureDensity();
+      expect(s.density).toBe(0);
+    });
+  });
 });
