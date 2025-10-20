@@ -24,6 +24,7 @@ import { UserLabelModal } from 'src/components/UserLabels';
 import GroupElement from 'src/components/navigation/GroupElement';
 import { formatDate } from 'src/utilities/timezoneHelper';
 import Affiliations from 'src/apps/userSettings/Affiliations';
+import AccountProfile from 'src/apps/userSettings/AccountProfile';
 
 export default class UserAuth extends Component {
   constructor(props) {
@@ -37,6 +38,7 @@ export default class UserAuth extends Component {
       selectedUsers: null,
       showSubscription: false,
       showAffiliations: false,
+      showSettings: false,
       currentSubscriptions: [],
       showDeviceMetadataModal: false,
       device: {},
@@ -57,6 +59,9 @@ export default class UserAuth extends Component {
     this.handleAffiliationsShow = this.handleAffiliationsShow.bind(this);
     this.handleAffiliationsHide = this.handleAffiliationsHide.bind(this);
     this.renderAffiliations = this.renderAffiliations.bind(this);
+    this.handleSettingsShow = this.handleSettingsShow.bind(this);
+    this.handleSettingsHide = this.handleSettingsHide.bind(this);
+    this.renderSettings = this.renderSettings.bind(this);
 
     this.promptTextCreator = this.promptTextCreator.bind(this);
 
@@ -287,6 +292,7 @@ export default class UserAuth extends Component {
   handleAffiliationsShow() {
     this.setState({ showAffiliations: true });
   }
+
   handleAffiliationsHide = () => {
     this.setState({ showAffiliations: false });
   };
@@ -295,14 +301,46 @@ export default class UserAuth extends Component {
     return this.state.showAffiliations ? (
       <Affiliations
         show={this.state.showAffiliations}
-        onHide={this.handleAffiliationsHide} />
+        onHide={this.handleAffiliationsHide}
+      />
     ) : null;
+  }
 
+  // eslint-disable-next-line class-methods-use-this
+  handleSettingsShow() {
+    this.setState({ showSettings: true });
+  }
+
+  handleSettingsHide = () => {
+    UserActions.fetchCurrentUser();
+    const { currentUser } = this.state;
+    UserActions.updateUserProfile(currentUser.profile);
+    this.setState({ showSettings: false });
+  };
+
+  renderSettings() {
+    const { showSettings, currentUser } = this.state;
+
+    return (
+      <Modal
+        fullscreen
+        show={showSettings}
+        onHide={this.handleSettingsHide}
+        centered
+      >
+        <Modal.Header closeButton />
+        <Modal.Body style={{ padding: 0 }}>
+          <AccountProfile currentUser={currentUser} />
+        </Modal.Body>
+      </Modal>
+    );
   }
 
   // render modal
   renderModal() {
-    const { showModal, currentUser, currentGroups, currentDevices } = this.state;
+    const {
+      showModal, currentUser, currentGroups, currentDevices
+    } = this.state;
 
     const tBodyGroups = currentGroups.map((g) => (
       <GroupElement
@@ -614,7 +652,7 @@ export default class UserAuth extends Component {
             id="bg-nested-dropdown"
             className="me-5 ms-3"
           >
-            <NavDropdown.Item eventKey="1" href="/pages/settings">
+            <NavDropdown.Item eventKey="1" onClick={this.handleSettingsShow} >
               Account &amp; Profile
             </NavDropdown.Item>
             {currentUser.is_templates_moderator && (
@@ -625,8 +663,7 @@ export default class UserAuth extends Component {
             <NavDropdown.Item eventKey="3" href="/users/edit">
               Change Password
             </NavDropdown.Item>
-            <NavDropdown.Item
-              onClick={this.handleAffiliationsShow}>
+            <NavDropdown.Item eventKey="4" onClick={this.handleAffiliationsShow} >
               My Affiliations
             </NavDropdown.Item>
             <NavDropdown.Item onClick={this.handleShow}>My Groups & Devices</NavDropdown.Item>
@@ -657,6 +694,7 @@ export default class UserAuth extends Component {
         </Nav>
         {this.renderModal()}
         {this.renderAffiliations()}
+        {this.renderSettings()}
         <UserLabelModal
           showLabelModal={showLabelModal}
           onHide={() => this.handleLabelClose()}
