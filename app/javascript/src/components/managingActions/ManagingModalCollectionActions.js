@@ -5,8 +5,11 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionUtils from 'src/models/collection/CollectionUtils';
 import { Select } from 'src/components/common/Select';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
 export default class ManagingModalCollectionActions extends React.Component {
+  static contextType = StoreContext;
+
   constructor(props) {
     super(props);
     this.state = {
@@ -21,13 +24,15 @@ export default class ManagingModalCollectionActions extends React.Component {
   handleSubmit() {
     const { selected, newLabel } = this.state;
     const { action, onHide } = this.props;
+    console.log(UIStore.getState());
+    // da wird alles übergeben, was im uiStore drin ist => too much
 
-    action({
-      ui_state: UIStore.getState(),
-      collection_id: selected?.id,
-      is_sync_to_me: selected?.is_sync_to_me,
-      newLabel
-    });
+    //action({
+    //  ui_state: UIStore.getState(),
+    //  collection_id: selected?.id,
+    //  is_sync_to_me: selected?.is_sync_to_me,
+    //  newLabel
+    //});
     onHide();
   }
 
@@ -52,28 +57,16 @@ export default class ManagingModalCollectionActions extends React.Component {
   }
 
   collectionOptions() {
-    const cState = CollectionStore.getState();
-    const cUnshared = [...cState.lockedRoots, ...cState.unsharedRoots];
-
-    let cShared = [];
-    let cSynced = [];
-    if (this.props.listSharedCollections) {
-      cShared = cState.sharedRoots.flatMap((sharedR) => sharedR.children);
-      cSynced = cState.syncInRoots
-        .flatMap((syncInR) => syncInR.children)
-        .filter(CollectionUtils.isWritable);
-    }
+    const ownCollections = this.context.collections.own_collections;
+    const sharedWithMeCollections = this.context.collections.shared_with_me_collections;
+    const shared = sharedWithMeCollections.flatMap((c) => c.children).filter((c) => c.permission_level >= 1)
 
     return [
-      ...this.makeList(cUnshared),
+      ...this.makeList(ownCollections),
       {
-        label: 'Shared Collections',
-        options: this.makeList(cShared),
+        label: 'Shared with me collections',
+        options: this.makeList(shared),
       },
-      {
-        label: 'Synced Collections',
-        options: this.makeList(cSynced),
-      }
     ];
   }
 
