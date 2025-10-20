@@ -50,8 +50,8 @@ module Chemotion
         desc 'Build PDF with element bar & qr code'
         params do
           requires(:element_type, type: String, values: %w[
-            sample reaction wellplate screen device_description sequence_based_macromolecule_sample
-          ])
+                     sample reaction wellplate screen device_description sequence_based_macromolecule_sample
+                   ])
           # TODO: check coerce with  type Array[Integer] not working with before do
           requires :ids, type: Array # , coerce_with: ->(val) { val.split(/,/).map(&:to_i) }
           requires :width, type: Integer
@@ -101,10 +101,10 @@ module Chemotion
         desc 'Build PDF with analyses codes of one analysis type'
         params do
           requires(:element_type, type: String, values: %w[
-            sample reaction wellplate screen device_description sequence_based_macromolecule_sample
-          ])
+                     sample reaction wellplate screen device_description sequence_based_macromolecule_sample
+                   ])
           requires :id, type: Integer, desc: 'Element id'
-          requires :analyses_ids, type: Array[String]
+          requires :analyses_ids, type: [String]
           requires :size, type: String, values: %w[small big]
         end
 

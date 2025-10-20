@@ -30,12 +30,12 @@ module Entities
     expose! :changed
     expose! :errors
 
-    expose! :heterologous_expression, if: ->(object, options) { !uniprot_protein? }
-    expose! :organism, if: ->(object, options) { !uniprot_protein? }
-    expose! :taxon_id, if: ->(object, options) { !uniprot_protein? }
-    expose! :strain, if: ->(object, options) { !uniprot_protein? }
-    expose! :tissue, if: ->(object, options) { !uniprot_protein? }
-    expose! :localisation, if: ->(object, options) { !uniprot_protein? }
+    expose! :heterologous_expression, if: ->(_object, _options) { !uniprot_protein? }
+    expose! :organism, if: ->(_object, _options) { !uniprot_protein? }
+    expose! :taxon_id, if: ->(_object, _options) { !uniprot_protein? }
+    expose! :strain, if: ->(_object, _options) { !uniprot_protein? }
+    expose! :tissue, if: ->(_object, _options) { !uniprot_protein? }
+    expose! :localisation, if: ->(_object, _options) { !uniprot_protein? }
 
     expose! :obtained_by
     expose! :supplier
@@ -48,7 +48,7 @@ module Entities
     expose! :comments, using: 'Entities::CommentEntity'
     expose! :comment_count
     expose! :container, using: 'Entities::ContainerEntity'
-    expose! :sequence_based_macromolecule, using: "Entities::SequenceBasedMacromoleculeEntity"
+    expose! :sequence_based_macromolecule, using: 'Entities::SequenceBasedMacromoleculeEntity'
     expose! :tag, using: 'Entities::ElementTagEntity'
 
     expose_timestamps
@@ -62,9 +62,11 @@ module Entities
     end
 
     # The UI needs this field to track changes
+    # rubocop:disable Naming/PredicateMethod
     def changed
       false
     end
+    # rubocop:enable Naming/PredicateMethod
 
     def can_update
       options[:policy].try(:update?) || false

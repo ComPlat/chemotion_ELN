@@ -112,6 +112,7 @@ module CollectionHelpers
     fetch_collection_by_ui_state_params_and_pl(2)
   end
 
+  # rubocop:disable Metrics/AbcSize
   def set_var(c_id = params[:collection_id], is_sync = params[:is_sync])
     @c_id = fetch_collection_id_w_current_user(c_id, is_sync)
     @c = Collection.find_by(id: @c_id)
@@ -143,5 +144,6 @@ module CollectionHelpers
     @dl_dd = @dl[:devicedescription_detail_level]
     @dl_sbmms = @dl[:sequencebasedmacromoleculesample_detail_level]
   end
+  # rubocop:enable Metrics/AbcSize
 end
 # rubocop:enable Metrics/ModuleLength, Style/OptionalBooleanParameter, Naming/MethodParameterName, Layout/LineLength

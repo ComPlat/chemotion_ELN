@@ -19,18 +19,20 @@ module Entities
     expose! :link_uniprot
     expose! :link_pdb
     expose! :pdb_doi
-    expose! :heterologous_expression, if: ->(object, options) { uniprot_protein? }
-    expose! :organism, if: ->(object, options) { uniprot_protein? }
-    expose! :taxon_id, if: ->(object, options) { uniprot_protein? }
-    expose! :strain, if: ->(object, options) { uniprot_protein? }
-    expose! :tissue, if: ->(object, options) { uniprot_protein? }
-    expose! :localisation, if: ->(object, options) { uniprot_protein? }
+    expose! :heterologous_expression, if: ->(_object, _options) { uniprot_protein? }
+    expose! :organism, if: ->(_object, _options) { uniprot_protein? }
+    expose! :taxon_id, if: ->(_object, _options) { uniprot_protein? }
+    expose! :strain, if: ->(_object, _options) { uniprot_protein? }
+    expose! :tissue, if: ->(_object, _options) { uniprot_protein? }
+    expose! :localisation, if: ->(_object, _options) { uniprot_protein? }
     expose! :own_identifier
     expose! :other_identifier
     expose! :parent, using: 'Entities::SequenceBasedMacromoleculeEntity'
 
-    expose! :protein_sequence_modifications, using: 'Entities::ProteinSequenceModificationsEntity', unless: :uniprot_protein?
-    expose! :post_translational_modifications, using: 'Entities::PostTranslationalModificationsEntity', unless: :uniprot_protein?
+    expose! :protein_sequence_modifications, using: 'Entities::ProteinSequenceModificationsEntity',
+                                             unless: :uniprot_protein?
+    expose! :post_translational_modifications, using: 'Entities::PostTranslationalModificationsEntity',
+                                               unless: :uniprot_protein?
     expose! :attachments, using: 'Entities::AttachmentEntity'
     expose_timestamps
 
@@ -57,7 +59,7 @@ module Entities
     end
 
     def sequence_length
-      (object.sequence || "").length
+      (object.sequence || '').length
     end
   end
 end

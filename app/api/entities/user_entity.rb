@@ -14,7 +14,8 @@ module Entities
     expose :cell_lines_count, documentation: { type: 'Integer', desc: 'Cellline Samples count' }
     expose :device_descriptions_count, documentation: { type: 'Integer', desc: 'Device Descriptions count' }
     expose :vessels_count, documentation: { type: 'Integer', desc: 'Vessel instances count' }
-    expose :sequence_based_macromolecule_samples_count, documentation: { type: 'Integer', desc: 'Sequence-based macromolecule samples count' }
+    expose :sequence_based_macromolecule_samples_count,
+           documentation: { type: 'Integer', desc: 'Sequence-based macromolecule samples count' }
     expose :type, if: ->(obj, _opts) { obj.respond_to? :type }
     expose :reaction_name_prefix, if: ->(obj, _opts) { obj.respond_to? :reaction_name_prefix }
     expose :layout, if: ->(obj, _opts) { obj.respond_to? :layout }

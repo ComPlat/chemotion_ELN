@@ -15,7 +15,7 @@ class API < Grape::API
   # source: http://funonrails.com/2014/03/api-authentication-using-devise-token/
   helpers do # rubocop:disable Metrics/BlockLength
     def present(*args)
-      options = args.count > 1 ? args.extract_options! : {}
+      options = args.many? ? args.extract_options! : {}
 
       options[:current_user] = current_user
 
@@ -147,7 +147,8 @@ class API < Grape::API
   # TODO: unify ELEMENTS and ELEMENT_CLASS. ELEMENTS is only used to iterate over ELEMENT_CLASS, which can be simply
   #       replaced by ELEMENT_CLASS.keys if required
   ELEMENTS = %w[
-    research_plan screen wellplate reaction sample cell_line device_description sequence_based_macromolecule_sample vessel
+    research_plan screen wellplate reaction sample cell_line device_description
+    sequence_based_macromolecule_sample vessel
   ].freeze
 
   ELEMENT_CLASS = {

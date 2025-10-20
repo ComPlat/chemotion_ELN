@@ -158,7 +158,7 @@ module Chemotion
             DeviceDescription.joins(:collections)
                              .where(collections: { user_id: current_user.id }).distinct
           end
-        scope = scope.order('updated_at DESC')
+        scope = scope.order(updated_at: :desc)
 
         from = params[:from_date]
         to = params[:to_date]
