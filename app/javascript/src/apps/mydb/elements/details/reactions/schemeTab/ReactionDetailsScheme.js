@@ -520,8 +520,11 @@ export default class ReactionDetailsScheme extends React.Component {
     if (exceedsMassLimit) {
       const totalMixtureMass = updatedSample?.total_mixture_mass_g;
       NotificationActions.add({
-        message: `Entered mass exceeds the available mixture mass for this sample. (Available: ${totalMixtureMass?.toFixed(3)} g)`,
+        title: 'Mass Exceeded',
+        message: `Entered mass exceeds the available mixture mass for this sample. ` +
+          `(Available: ${totalMixtureMass?.toFixed(3)} g)`,
         level: 'warning',
+        autoDismiss: 5,
       });
     }
 
@@ -529,6 +532,9 @@ export default class ReactionDetailsScheme extends React.Component {
     // updatedSample.setAmountAndNormalizeToGram(amount);
     // setAmount should be called first before updating feedstock mole and volume values
     updatedSample.setAmount(amount);
+
+    // Update mixture components' amount_mol based on new total mass and reference component
+    updatedSample.updateMixtureComponentAmounts();
 
     if (updatedSample.gas_type === 'catalyst') {
       GasPhaseReactionActions.setCatalystReferenceMole(updatedSample.amount_mol);

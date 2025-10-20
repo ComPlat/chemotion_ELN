@@ -140,7 +140,7 @@ const formatDisplayValue = (val, precision) => {
 
   const absVal = Math.abs(val);
   // Show as fixed if in a reasonable range, else use scientific
-  if ((absVal >= 0.001 && absVal < 1e9) || absVal === 0) {
+  if ((absVal >= 1e-6 && absVal < 1e9) || absVal === 0) {
     // Always use dot as decimal separator, no thousands separator
     return Number(val).toLocaleString('en-US', {
       maximumFractionDigits: precision,

@@ -660,6 +660,50 @@ export default class Sample extends Element {
   }
 
   /**
+   * Updates the `amount_mol` values of all components in a mixture sample
+   * based on the current total mass (`amount_g`) and the reference component's
+   * molecular weight and equivalents.
+   *
+   * This method:
+   * - Checks that the sample is a valid mixture and has defined components.
+   * - Identifies the reference component to determine the base molecular weight.
+   * - Calculates the total moles for the mixture from total mass and molecular weight.
+   * - Updates each component’s `amount_mol` proportionally according to its equivalent
+   *   relative to the reference component.
+   *
+   * No updates occur if the mixture or reference data are invalid.
+   *
+   * @method updateMixtureComponentAmounts
+   * @memberof Sample
+   *
+   * @example
+   * // Assuming `sample` is a mixture with components
+   * sample.amount_g = 10;
+   * sample.updateMixtureComponentAmounts();
+   * console.log(sample.components[0].amount_mol); // updated molar amount
+   *
+   * @returns {void}
+   */
+  updateMixtureComponentAmounts() {
+    if (!(this.isMixture && this.hasComponents)) return;
+
+    const referenceComponent = this.reference_component;
+    const relMw = referenceComponent && (referenceComponent.relative_molecular_weight
+      || referenceComponent.component_properties?.relative_molecular_weight);
+    const totalMassG = this.amount_g;
+
+
+    if (Number.isFinite(relMw) && relMw > 0 && Number.isFinite(totalMassG) && totalMassG >= 0) {
+      const totalMoles = totalMassG / relMw;
+      this.components.forEach((component) => {
+        const isRef = !!component.reference;
+        const eq = Number.isFinite(component.equivalent) ? component.equivalent : (isRef ? 1 : 0);
+        component.amount_mol = isRef ? totalMoles : (totalMoles * eq);
+      });
+    }
+  }
+
+  /**
    * Sets the amount and unit for the sample.
    * For mixture samples with components, automatically triggers recalculation of:
    * - Component volumes (when setting liters)

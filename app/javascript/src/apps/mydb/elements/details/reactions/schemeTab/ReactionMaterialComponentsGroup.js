@@ -68,7 +68,7 @@ class ReactionMaterialComponentsGroup extends React.Component {
             unit="mol"
             metricPrefix={metricMol}
             metricPrefixes={metricPrefixesMol}
-            precision={4}
+            precision={6}
             disabled
             size="sm"
           />
@@ -78,7 +78,7 @@ class ReactionMaterialComponentsGroup extends React.Component {
           <NumeralInputWithUnitsCompo
             value={component.relative_molecular_weight || 0}
             unit="g/mol"
-            precision={4}
+            precision={6}
             disabled
             size="sm"
           />
@@ -90,7 +90,7 @@ class ReactionMaterialComponentsGroup extends React.Component {
             unit="mol/l"
             metricPrefix={metricMolConc}
             metricPrefixes={metricPrefixesMolConc}
-            precision={4}
+            precision={6}
             disabled
             size="sm"
           />
@@ -98,7 +98,7 @@ class ReactionMaterialComponentsGroup extends React.Component {
         {/* Ratio */}
         <td>
           <NumeralInputWithUnitsCompo
-            precision={4}
+            precision={6}
             value={component.equivalent || 0}
             disabled
             size="sm"
