@@ -56,7 +56,10 @@ jobs:
       run:
         shell: bash
 
-    container: complat/chemotion_eln_runner:latest
+    container:
+      image: complat/chemotion_eln_runner:latest
+      ## options: --user root
+
 
     services:
       postgres:
@@ -81,13 +84,15 @@ jobs:
 
       - name: Setup Nodejs
         id: setup_node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version-file: .tool-versions
-          #node-version: ${{ matrix.node-version }}
+          cache: '' # disable default caching since yarn is missing there
+          cache-dependency-path: 'yarn.lock'
+          package-manager-cache: false
+
       - run: corepack enable
 
- 
       - uses: actions/checkout@v5
         with:
           ref: main
@@ -98,7 +103,6 @@ jobs:
         id: cache_key
         run: |
           echo "key=${{ steps.setup_node.outputs.node-version }}-${{ hashFiles('tmp/main/yarn.lock') }}" >> $GITHUB_OUTPUT
-
 
       - name: Detect Yarn cache dir
         id: yarndir
