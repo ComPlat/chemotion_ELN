@@ -91,6 +91,17 @@ function ElementDragHandle({ element, sourceType: sourceTypeProp }) {
     }
   }
 
+  // Disable dragging when:
+  // - resolved sourceType is MOLECULE
+  // - element represents a sample
+  // - and that sample is a Mixture
+  if (sourceType === DragDropItemTypes.MOLECULE
+    && element?.type === 'sample'
+    && ((typeof element.isMixture === 'function' && element.isMixture())
+      || element?.sample_type === 'Mixture')) {
+    return <DragHandle enabled={false} />;
+  }
+
   const hasDropTarget = (type) => {
     // Generic elements may contain drop targets for any element type.
     if (isCurrentElementGeneric) return true;
