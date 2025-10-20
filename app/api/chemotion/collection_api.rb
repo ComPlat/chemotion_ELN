@@ -258,7 +258,8 @@ module Chemotion
           share_cell_lines = ElementsPolicy.new(current_user, cell_lines).share?
           share_device_descriptions = ElementsPolicy.new(current_user, device_descriptions).share?
           share_vessels = ElementsPolicy.new(current_user, vessels).share?
-          share_sequence_based_macromolecule_samples = ElementsPolicy.new(current_user, sequence_based_macromolecule_samples).share?
+          share_sequence_based_macromolecule_samples =
+            ElementsPolicy.new(current_user, sequence_based_macromolecule_samples).share?
           share_elements = !(elements&.length > 0)
           elements.each do |k, v|
             share_elements = ElementsPolicy.new(current_user, v).share?

@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/ClassLength
 module Chemotion
   class SequenceBasedMacromoleculeSampleAPI < Grape::API
     include Grape::Kaminari
+
     helpers ParamsHelpers
     helpers ContainerHelpers
     helpers CollectionHelpers
@@ -15,10 +15,10 @@ module Chemotion
             type: 'SbmmUpdateNotAllowed',
             message: conflict.message,
             original_sbmm: Entities::SequenceBasedMacromoleculeEntity.represent(conflict.original_sbmm),
-            requested_changes: Entities::SequenceBasedMacromoleculeEntity.represent(conflict.requested_changes)
-          }
+            requested_changes: Entities::SequenceBasedMacromoleculeEntity.represent(conflict.requested_changes),
+          },
         },
-        403
+        403,
       )
     end
 
@@ -29,16 +29,16 @@ module Chemotion
             type: 'ForbiddenUniprotDerivationChange',
             message: error.message,
             original_sbmm: Entities::SequenceBasedMacromoleculeEntity.represent(error.original_sbmm),
-            requested_changes: Entities::SequenceBasedMacromoleculeEntity.represent(error.requested_changes)
-          }
+            requested_changes: Entities::SequenceBasedMacromoleculeEntity.represent(error.requested_changes),
+          },
         },
-        400
+        400,
       )
     end
 
     rescue_from Grape::Exceptions::ValidationErrors do |exception|
       errors = []
-      exception.each do |parameters, error|
+      exception.map do |parameters, error|
         errors << { parameters: parameters, message: error.to_s }
       end
       error!(errors, 422)
@@ -200,4 +200,3 @@ module Chemotion
     end
   end
 end
-# rubocop:enable Metrics/ClassLength

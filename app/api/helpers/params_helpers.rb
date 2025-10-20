@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+
+# rubocop:disable Metrics/ModuleLength, Metrics/BlockLength
 module ParamsHelpers
   extend Grape::API::Helpers
 
@@ -134,7 +137,8 @@ module ParamsHelpers
   params :sbmm_params do
     requires :sbmm_type, type: String, desc: 'SBMM Type', values: %w[protein], allow_blank: false
     optional :sbmm_subtype, type: String, desc: 'SBMM Subtype', values: %w[unmodified glycoprotein], allow_blank: true
-    requires :uniprot_derivation, type: String, desc: 'Existence in Uniprot', values: %w[uniprot uniprot_modified uniprot_unknown], allow_blank: false
+    requires :uniprot_derivation, type: String, desc: 'Existence in Uniprot',
+                                  values: %w[uniprot uniprot_modified uniprot_unknown], allow_blank: false
 
     optional :other_identifier, type: String, desc: 'Freetext field for a custom external identifier'
 
@@ -142,7 +146,8 @@ module ParamsHelpers
       requires :primary_accession, type: String, desc: 'Uniprot accession code', allow_blank: false
     end
     given(uniprot_derivation: ->(derivation) { derivation == 'uniprot_modified' }) do
-      requires :parent_identifier, type: String, desc: 'Uniprot accession or SBMM ID of parent record', allow_blank: false
+      requires :parent_identifier, type: String, desc: 'Uniprot accession or SBMM ID of parent record',
+                                   allow_blank: false
     end
 
     given(uniprot_derivation: ->(derivation) { derivation != 'uniprot' }) do
@@ -189,7 +194,8 @@ module ParamsHelpers
     optional :amount_as_used_mass_unit, type: String, values: %w[g kg µg mg], default: 'g'
     optional :activity_value, type: Float
     optional :activity_unit, type: String, values: %w[U mU kat mkat µkat nkat], default: 'U'
-    optional :container, type: Hash # TODO: Container Params als eigene Klasse definieren und überall wo benötigt einbinden
+    # TODO: Container Params als eigene Klasse definieren und überall wo benötigt einbinden
+    optional :container, type: Hash
     optional :obtained_by, type: String, values: %w[purchased self_produced], allow_blank: true
     optional :supplier, type: String
     optional :formulation, type: String, values: %w[dissolved solid], allow_blank: true
@@ -201,7 +207,9 @@ module ParamsHelpers
       use :sbmm_params
     end
 
-    given(sequence_based_macromolecule_attributes: ->(sbmm_attributes) { sbmm_attributes[:uniprot_derivation] != 'uniprot' }) do
+    given(sequence_based_macromolecule_attributes: lambda { |sbmm_attributes|
+      sbmm_attributes[:uniprot_derivation] != 'uniprot'
+    }) do
       optional :heterologous_expression, type: String, values: %w[yes no unknown], default: 'unknown', allow_blank: true
       optional :organism, type: String
       optional :taxon_id, type: String
@@ -216,11 +224,12 @@ module ParamsHelpers
     your_page = params[:page]
     per_page_recs = params[:per_page]
     total_recs = scope.size
-    your_recs = your_page.to_i * per_page_recs.to_i
-    total_page = (total_recs.to_f / per_page_recs.to_f).ceil
+    _your_recs = your_page.to_i * per_page_recs.to_i
+    total_page = (total_recs.to_f / per_page_recs).ceil
 
     your_page = 1 if total_recs.positive? && your_page > total_page
 
     params[:page] = your_page
   end
 end
+# rubocop:enable Metrics/ModuleLength, Metrics/BlockLength

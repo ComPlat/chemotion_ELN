@@ -77,8 +77,8 @@ class SequenceBasedMacromolecule < ApplicationRecord
                          }
   scope :search_in_name, lambda { |text|
                            if text
-                             where("LOWER(systematic_name) LIKE '%#{text.downcase}%' \
-                              OR LOWER(short_name) LIKE '%#{text.downcase}%'")
+                             where('LOWER(systematic_name) LIKE ? OR LOWER(short_name) LIKE ?',
+                                   "%#{text.downcase}%", "%#{text.downcase}%")
                            else
                              none
                            end
