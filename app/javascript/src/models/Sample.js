@@ -2450,6 +2450,85 @@ export default class Sample extends Element {
         targetSample.setAmount({ value: this.sample_details.total_mixture_mass_g, unit: 'g' });
       }
     }
+  /**
+   * Calculate and apply this sample's amount based on a provided target amount of weight percentage reference and
+   * the sample's stored weight percentage.
+   *
+   * Behavior:
+   * - Expects `targetAmount` to be an object { value: Number, unit: String } representing
+   *   the total target mass for the product reference material (e.g. { value: 10, unit: 'g' }).
+   * - If `this.weight_percentage` is set and > 0 the sample's amount will be set to
+   *   `targetAmount.value * this.weight_percentage` using `setAmount` to preserve unit handling.
+   * - If this sample is not the reference material, its `equivalent` will be set to 0.
+   *
+   * Guard clauses / validation/ Side-effects:
+   * - If `targetAmount` is missing, has no value, or value <= 0 the method returns early.
+   * - If `targetAmount.unit` is not present the method returns early (no unit to assign).
+   * - Mutates sample amount (via `setAmount`) and possibly `equivalent`.
+   *
+   * @param {Object} targetAmount - Target amount object ({ value: Number, unit: String }).
+   * @returns {Sample} The updated sample instance (for chaining).
+   */
+  calculateWeightPercentageBasedOnAmount(targetAmount) {
+    // guard clauses kept inside model, expect targetAmount: { value, unit }
+    if (!targetAmount || !targetAmount.value || targetAmount.value <= 0) return this;
+
+    if (this.weight_percentage && this.weight_percentage > 0) {
+      if (!targetAmount.unit) return this;
+
+      const amountValue = targetAmount.value * this.weight_percentage;
+      this.setAmount({
+        value: amountValue,
+        unit: targetAmount.unit,
+      });
+
+      // set equivalent to zero only if sample is not a reference material
+      if (!this.reference) {
+        this.equivalent = 0;
+      }
+    }
+    return this;
+  }
+
+  /**
+   * Update equivalent (yield) for samples flagged as `weight_percentage_reference`.
+   *
+   * Behavior:
+   * - This method only acts on samples where `weight_percentage_reference` is truthy.
+   * - For samples with `amountType === 'target'` the equivalent is set to the string
+   *   `'n.d'` (not determined).
+   * - For samples with `amountType === 'real'` the method attempts to compute a yield
+   *   by converting the sample's `target_amount_value` to moles and comparing the
+   *   sample's actual `amount_mol` against that target mole value.
+   *   - If `targetValue` (converted target in mol) is non-null and `target_amount_value > 0`,
+   *     the yield is calculated as `amount_mol / targetValue` and clamped to a maximum of 1.
+   *   - Otherwise equivalent is set to `'n.d'`.
+   *
+   * Guard clauses / side-effects:
+   * - If the sample is not flagged as `weight_percentage_reference` the method returns early.
+   * - Mutates `equivalent` property on the sample instance.
+   *
+   * @returns {Sample} Returns the sample instance (`this`) for chaining and safe use in
+   *                   functional iterators (map/forEach).
+   */
+  updateYieldForWeightPercentageReference() {
+    if (!this.weight_percentage_reference) return this;
+
+    if (this.amountType === 'target') {
+      this.equivalent = 'n.d';
+      return this;
+    }
+
+    if (this.amountType === 'real') {
+      const targetValue = this.convertGramToUnit(this.target_amount_value, 'mol');
+      if (targetValue !== null && this.target_amount_value > 0) {
+        const calculatedYield = this.amount_mol / targetValue;
+        this.equivalent = calculatedYield > 1 ? 1 : calculatedYield;
+      } else {
+        this.equivalent = 'n.d';
+      }
+    }
+    return this;
   }
 
   isGas() {
