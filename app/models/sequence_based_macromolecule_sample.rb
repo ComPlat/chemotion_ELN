@@ -46,7 +46,7 @@
 #
 # Indexes
 #
-#  idx_sbmm_samples_ancestry    (ancestry) WHERE (deleted_at IS NULL)
+#  idx_sbmm_samples_ancestry    (ancestry)
 #  idx_sbmm_samples_deleted_at  (deleted_at)
 #  idx_sbmm_samples_sbmm        (sequence_based_macromolecule_id)
 #  idx_sbmm_samples_user        (user_id)
