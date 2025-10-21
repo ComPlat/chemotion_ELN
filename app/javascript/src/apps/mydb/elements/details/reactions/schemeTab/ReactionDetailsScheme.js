@@ -142,7 +142,26 @@ export default class ReactionDetailsScheme extends React.Component {
     }
 
     if (splitSample.isMixture()) {
-      this.handleMixtureSample(splitSample, srcSample, reaction, tagMaterial, tagGroup)
+      ComponentsFetcher.fetchComponentsBySampleId(srcSample.id)
+        .then(async (components) => {
+          const sampleComponents = components.map(Component.deserializeData);
+          await splitSample.initialComponents(sampleComponents);
+          const comp = sampleComponents.find((component) => component.amount_mol > 0 && component.molarity_value > 0);
+          if (comp) {
+            const amountMol = Number(comp.amount_mol);
+            const molarity = Number(comp.molarity_value);
+
+            if (Number.isFinite(amountMol) && Number.isFinite(molarity) && molarity > 0) {
+              splitSample.target_amount_value = amountMol / molarity;
+              splitSample.target_amount_unit = 'l';
+            }
+          }
+          reaction.addMaterialAt(splitSample, null, tagMaterial, tagGroup);
+          onReactionChange(reaction, { updateGraphic: true });
+        })
+        .catch((errorMessage) => {
+          console.log(errorMessage);
+        });
     } else {
       this.insertSolventExtLabel(splitSample, tagGroup, extLabel);
       reaction.addMaterialAt(splitSample, null, tagMaterial, tagGroup);
@@ -150,63 +169,63 @@ export default class ReactionDetailsScheme extends React.Component {
     }
   }
 
-  handleMixtureSample(splitSample, srcSample, reaction, tagMaterial, tagGroup) {
-    if (srcSample.components && srcSample.components.length > 0) {
-      this.handleMixtureWithLoadedComponents(splitSample, srcSample, reaction, tagMaterial, tagGroup);
-    } else {
-      this.handleMixtureWithApiComponents(splitSample, srcSample, reaction, tagMaterial, tagGroup);
-    }
-  }
+  // handleMixtureSample(splitSample, srcSample, reaction, tagMaterial, tagGroup) {
+  //   if (srcSample.components && srcSample.components.length > 0) {
+  //     this.handleMixtureWithLoadedComponents(splitSample, srcSample, reaction, tagMaterial, tagGroup);
+  //   } else {
+  //     this.handleMixtureWithApiComponents(splitSample, srcSample, reaction, tagMaterial, tagGroup);
+  //   }
+  // }
 
-  handleMixtureWithLoadedComponents(splitSample, srcSample, reaction, tagMaterial, tagGroup) {
-    const sampleComponents = this.copyComponents(srcSample.components, splitSample.id);
-    splitSample.components = sampleComponents;
+  // handleMixtureWithLoadedComponents(splitSample, srcSample, reaction, tagMaterial, tagGroup) {
+  //   const sampleComponents = this.copyComponents(srcSample.components, splitSample.id);
+  //   splitSample.components = sampleComponents;
+  //
+  //   this.setTargetAmountFromComponents(splitSample, sampleComponents);
+  //   this.addSampleToReaction(splitSample, srcSample, reaction, tagMaterial, tagGroup);
+  // }
 
-    this.setTargetAmountFromComponents(splitSample, sampleComponents);
-    this.addSampleToReaction(splitSample, srcSample, reaction, tagMaterial, tagGroup);
-  }
+  // handleMixtureWithApiComponents(splitSample, srcSample, reaction, tagMaterial, tagGroup) {
+  //   ComponentsFetcher.fetchComponentsBySampleId(srcSample.id)
+  //   .then(async (components) => {
+  //     const sampleComponents = components.map(Component.deserializeData);
+  //     await splitSample.initialComponents(sampleComponents);
+  //
+  //     this.setTargetAmountFromComponents(splitSample, sampleComponents);
+  //
+  //     // Apply mixture properties after components are loaded
+  //     srcSample.applyMixturePropertiesToSample(splitSample);
+  //
+  //     this.addSampleToReaction(splitSample, srcSample, reaction, tagMaterial, tagGroup);
+  //   })
+  //   .catch((error) => {
+  //     console.error('Failed to fetch components:', error);
+  //     // Still add the sample even if components fail to load
+  //     this.addSampleToReaction(splitSample, srcSample, reaction, tagMaterial, tagGroup);
+  //   });
+  // }
 
-  handleMixtureWithApiComponents(splitSample, srcSample, reaction, tagMaterial, tagGroup) {
-    ComponentsFetcher.fetchComponentsBySampleId(srcSample.id)
-    .then(async (components) => {
-      const sampleComponents = components.map(Component.deserializeData);
-      await splitSample.initialComponents(sampleComponents);
+  // setTargetAmountFromComponents(splitSample, sampleComponents) {
+  //   const validComponent = sampleComponents.find(
+  //     (component) => component.amount_mol > 0 && component.molarity_value > 0
+  //   );
+  //
+  //   if (validComponent) {
+  //     splitSample.target_amount_value = validComponent.amount_mol / validComponent.molarity_value;
+  //     splitSample.target_amount_unit = 'l';
+  //   }
+  // }
 
-      this.setTargetAmountFromComponents(splitSample, sampleComponents);
-
-      // Apply mixture properties after components are loaded
-      srcSample.applyMixturePropertiesToSample(splitSample);
-
-      this.addSampleToReaction(splitSample, srcSample, reaction, tagMaterial, tagGroup);
-    })
-    .catch((error) => {
-      console.error('Failed to fetch components:', error);
-      // Still add the sample even if components fail to load
-      this.addSampleToReaction(splitSample, srcSample, reaction, tagMaterial, tagGroup);
-    });
-  }
-
-  setTargetAmountFromComponents(splitSample, sampleComponents) {
-    const validComponent = sampleComponents.find(
-      (component) => component.amount_mol > 0 && component.molarity_value > 0
-    );
-
-    if (validComponent) {
-      splitSample.target_amount_value = validComponent.amount_mol / validComponent.molarity_value;
-      splitSample.target_amount_unit = 'l';
-    }
-  }
-
-  addSampleToReaction(splitSample, srcSample, reaction, tagMaterial, tagGroup) {
-    const { onReactionChange } = this.props;
-
-    if (splitSample.isMixture()) {
-      srcSample.applyMixturePropertiesToSample(splitSample);
-      splitSample.applyReferenceProperties(reaction, tagGroup);
-    }
-    reaction.addMaterialAt(splitSample, null, tagMaterial, tagGroup);
-    onReactionChange(reaction, { updateGraphic: true });
-  }
+  // addSampleToReaction(splitSample, srcSample, reaction, tagMaterial, tagGroup) {
+  //   const { onReactionChange } = this.props;
+  //
+  //   if (splitSample.isMixture()) {
+  //     srcSample.applyMixturePropertiesToSample(splitSample);
+  //     splitSample.applyReferenceProperties(reaction, tagGroup);
+  //   }
+  //   reaction.addMaterialAt(splitSample, null, tagMaterial, tagGroup);
+  //   onReactionChange(reaction, { updateGraphic: true });
+  // }
 
   insertSolventExtLabel(splitSample, materialGroup, externalLabel) {
     if (externalLabel && materialGroup === 'solvents' && !splitSample.external_label) {
@@ -518,11 +537,15 @@ export default class ReactionDetailsScheme extends React.Component {
     // --- Validate mixture mass before applying the change ---
     const exceedsMassLimit = updatedSample.validateMixtureMass(amount);
     if (exceedsMassLimit) {
-      const totalMixtureMass = updatedSample?.total_mixture_mass_g;
+      const totalMixtureMassG = updatedSample?.total_mixture_mass_g;
+      const totalMixtureMassMg = Number.isFinite(totalMixtureMassG)
+        ? totalMixtureMassG * 1000
+        : null;
+
       NotificationActions.add({
         title: 'Mass Exceeded',
-        message: `Entered mass exceeds the available mixture mass for this sample. ` +
-          `(Available: ${totalMixtureMass?.toFixed(3)} g)`,
+        message: 'Entered mass exceeds the available mixture mass for this sample. '
+          + `(Available: ${totalMixtureMassMg?.toFixed(3)} mg)`,
         level: 'warning',
         autoDismiss: 5,
       });
@@ -820,8 +843,6 @@ export default class ReactionDetailsScheme extends React.Component {
       return;
     }
 
-    // updatedSample.calculateMassFromReferenceComponent(referenceComponent);
-
     // (3) Equivalent calculation using Sample method
     const { reaction } = this.props;
     const { referenceMaterial } = reaction;
@@ -873,8 +894,8 @@ export default class ReactionDetailsScheme extends React.Component {
       mFull = referenceM.amount_mol * mwb;
       const maxTheoAmount = mFull * (updatedS.coefficient || 1.0 / referenceM.coefficient || 1.0);
       if (updatedS.amount_g > maxTheoAmount) {
-        errorMsg = 'Experimental mass value is larger than possible\n' +
-          'by 100% conversion! Please check your data.';
+        errorMsg = 'Experimental mass value is larger than possible\n'
+          + 'by 100% conversion! Please check your data.';
       }
     } else {
       const mwa = referenceM.decoupled ? (referenceM.molecular_mass || 0) : referenceM.molecule.molecular_weight;
@@ -885,16 +906,16 @@ export default class ReactionDetailsScheme extends React.Component {
 
       if (deltaM > 0) { // expect weight gain
         if (massExperimental > mFull) {
-          errorMsg = 'Experimental mass value is larger than possible\n' +
-            'by 100% conversion! Please check your data.';
+          errorMsg = 'Experimental mass value is larger than possible\n'
+            + 'by 100% conversion! Please check your data.';
         } else if (massExperimental < massA) {
-          errorMsg = 'Material loss! ' +
-            'Experimental mass value is less than possible!\n' +
-            'Please check your data.';
+          errorMsg = 'Material loss! '
+            + 'Experimental mass value is less than possible!\n'
+            + 'Please check your data.';
         }
       } else if (massExperimental < mFull) { // expect weight loss
-        errorMsg = 'Experimental mass value is less than possible\n' +
-          'by 100% conversion! Please check your data.';
+        errorMsg = 'Experimental mass value is less than possible\n'
+          + 'by 100% conversion! Please check your data.';
       }
     }
 
@@ -1056,25 +1077,20 @@ export default class ReactionDetailsScheme extends React.Component {
     return (sample.amount_mol / feedstockMolValue);
   }
 
-  // eslint-disable-next-line class-methods-use-this
   // Handle mixture samples differently
+  // eslint-disable-next-line class-methods-use-this
   handleEquivalentBasedAmountUpdate(sample, newAmountMol) {
-    if (sample.isMixture() && sample.hasComponents()) {
-      // For mixture samples, we need to use the reference component's relative molecular weight
-      // to calculate the correct mass from the new amount_mol
-      const referenceComponent = sample.reference_component;
-      if (referenceComponent && referenceComponent.relative_molecular_weight) {
-        const newAmountG = newAmountMol * referenceComponent.relative_molecular_weight;
-        sample.setAmount({ value: newAmountG, unit: 'g' });
-      } else {
-        // Fallback if no reference component or relative molecular weight
-        sample.setAmountAndNormalizeToGram({
-          value: newAmountMol,
-          unit: 'mol',
-        });
-      }
+    if (
+      sample.isMixture()
+      && sample.hasComponents()
+      && sample.reference_component
+      && sample.reference_component.relative_molecular_weight
+    ) {
+      // For mixture samples with a valid reference component, calculate mass from mol amount
+      const newAmountG = newAmountMol * sample.reference_component.relative_molecular_weight;
+      sample.setAmount({ value: newAmountG, unit: 'g' });
     } else {
-      // For regular samples, use the standard method
+      // For regular samples or mixtures without reference MW, fall back to standard method
       sample.setAmountAndNormalizeToGram({
         value: newAmountMol,
         unit: 'mol',

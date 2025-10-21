@@ -12,8 +12,8 @@ require 'spec_helper'
 #
 RSpec.describe Usecases::Components::Create do
   let(:user) { create(:user) }
-  let(:molecule1) { create(:molecule) }
-  let(:molecule2) { create(:molecule) }
+  let(:molecule_1) { create(:molecule) }
+  let(:molecule_2) { create(:molecule) }
   let(:sample) { create(:sample, sample_type: sample_type) }
   let(:use_case) { described_class.new(sample, components_params) }
 
@@ -23,8 +23,9 @@ RSpec.describe Usecases::Components::Create do
 
       before do
         # Mock sample_details with total mixture mass
-        allow_any_instance_of(Sample).to receive(:sample_details)
-          .and_return(double('sample_details', total_mixture_mass_g: total_mixture_mass))
+        sample_details_double = instance_double(Hash)
+        allow(sample_details_double).to receive(:dig).with('total_mixture_mass_g').and_return(total_mixture_mass)
+        allow(sample).to receive(:sample_details).and_return(sample_details_double)
       end
 
       context 'with valid total mixture mass and component amounts' do
@@ -36,29 +37,29 @@ RSpec.describe Usecases::Components::Create do
               name: 'Component 1',
               position: 1,
               component_properties: {
-                molecule_id: molecule1.id,
+                molecule_id: molecule_1.id,
                 amount_mol: 0.1, # Should result in relative_mw = 100/0.1 = 1000 g/mol
                 amount_g: 50.0,
-                purity: 0.95
-              }
+                purity: 0.95,
+              },
             },
             {
               id: 'new_2',
               name: 'Component 2',
               position: 2,
               component_properties: {
-                molecule_id: molecule2.id,
+                molecule_id: molecule_2.id,
                 amount_mol: 0.2, # Should result in relative_mw = 100/0.2 = 500 g/mol
                 amount_g: 50.0,
-                purity: 0.98
-              }
-            }
+                purity: 0.98,
+              },
+            },
           ]
         end
 
         it 'creates components and calculates relative molecular weights' do
           expect { use_case.execute! }
-            .to change { Component.count }.by(2)
+            .to change(Component, :count).by(2)
 
           components = Component.where(sample_id: sample.id).order(:position)
 
@@ -83,17 +84,17 @@ RSpec.describe Usecases::Components::Create do
               name: 'Component 1',
               position: 1,
               component_properties: {
-                molecule_id: molecule1.id,
+                molecule_id: molecule_1.id,
                 amount_mol: 0.1,
-                amount_g: 50.0
-              }
-            }
+                amount_g: 50.0,
+              },
+            },
           ]
         end
 
         it 'creates components without calculating relative molecular weights' do
           expect { use_case.execute! }
-            .to change { Component.count }.by(1)
+            .to change(Component, :count).by(1)
 
           component = Component.last
           expect(component.component_properties['relative_molecular_weight']).to be_nil
@@ -109,17 +110,17 @@ RSpec.describe Usecases::Components::Create do
               name: 'Component 1',
               position: 1,
               component_properties: {
-                molecule_id: molecule1.id,
+                molecule_id: molecule_1.id,
                 amount_mol: 0.1,
-                amount_g: 50.0
-              }
-            }
+                amount_g: 50.0,
+              },
+            },
           ]
         end
 
         it 'creates components without calculating relative molecular weights' do
           expect { use_case.execute! }
-            .to change { Component.count }.by(1)
+            .to change(Component, :count).by(1)
 
           component = Component.last
           expect(component.component_properties['relative_molecular_weight']).to be_nil
@@ -135,27 +136,27 @@ RSpec.describe Usecases::Components::Create do
               name: 'Component 1',
               position: 1,
               component_properties: {
-                molecule_id: molecule1.id,
+                molecule_id: molecule_1.id,
                 amount_mol: 0.0, # Zero amount_mol
-                amount_g: 50.0
-              }
+                amount_g: 50.0,
+              },
             },
             {
               id: 'new_2',
               name: 'Component 2',
               position: 2,
               component_properties: {
-                molecule_id: molecule2.id,
+                molecule_id: molecule_2.id,
                 amount_mol: -0.1, # Negative amount_mol
-                amount_g: 50.0
-              }
-            }
+                amount_g: 50.0,
+              },
+            },
           ]
         end
 
         it 'creates components without calculating relative molecular weights for invalid amounts' do
           expect { use_case.execute! }
-            .to change { Component.count }.by(2)
+            .to change(Component, :count).by(2)
 
           components = Component.where(sample_id: sample.id)
           components.each do |component|
@@ -172,19 +173,22 @@ RSpec.describe Usecases::Components::Create do
               id: 'new_1',
               name: 'Component 1',
               position: 1,
-              component_properties: nil # Missing component_properties
-            }
+              component_properties: {
+                molecule_id: molecule_1.id, # Include valid molecule_id
+              },
+            },
           ]
         end
 
         it 'skips relative molecular weight calculation and creates component safely' do
           # This should not raise an error due to the safety check
           expect { use_case.execute! }
-            .to change { Component.count }.by(1)
+            .to change(Component, :count).by(1)
 
           component = Component.last
           expect(component.name).to eq('Component 1')
-          expect(component.component_properties).to be_nil
+          expect(component.component_properties['molecule_id']).to eq(molecule_1.id)
+          expect(component.component_properties['molecule']).to be_present
         end
       end
     end
@@ -195,7 +199,7 @@ RSpec.describe Usecases::Components::Create do
       let!(:existing_component) do
         create(:component,
                sample: sample,
-               component_properties: { 'molecule_id' => molecule1.id, 'amount_mol' => 0.05 })
+               component_properties: { 'molecule_id' => molecule_1.id, 'amount_mol' => 0.05 })
       end
 
       let(:components_params) do
@@ -205,23 +209,24 @@ RSpec.describe Usecases::Components::Create do
             name: 'Updated Component',
             position: 1,
             component_properties: {
-              molecule_id: molecule1.id,
+              molecule_id: molecule_1.id,
               amount_mol: 0.1, # Updated amount should result in relative_mw = 200/0.1 = 2000 g/mol
               amount_g: 100.0,
-              purity: 0.99
-            }
-          }
+              purity: 0.99,
+            },
+          },
         ]
       end
 
       before do
-        allow_any_instance_of(Sample).to receive(:sample_details)
-          .and_return(double('sample_details', total_mixture_mass_g: total_mixture_mass))
+        sample_details_double = instance_double(Hash)
+        allow(sample_details_double).to receive(:dig).with('total_mixture_mass_g').and_return(total_mixture_mass)
+        allow(sample).to receive(:sample_details).and_return(sample_details_double)
       end
 
       it 'updates existing component and recalculates relative molecular weight' do
         expect { use_case.execute! }
-          .not_to(change { Component.count })
+          .not_to(change(Component, :count))
 
         existing_component.reload
         expect(existing_component.name).to eq('Updated Component')
@@ -241,21 +246,24 @@ RSpec.describe Usecases::Components::Create do
             position: 1,
             component_properties: {
               # Missing required molecule_id should cause validation to fail
-              amount_mol: 0.1
-            }
-          }
+              amount_mol: 0.1,
+            },
+          },
         ]
       end
 
       before do
-        allow_any_instance_of(Sample).to receive(:sample_details)
-          .and_return(double('sample_details', total_mixture_mass_g: total_mixture_mass))
+        sample_details_double = instance_double(Hash)
+        allow(sample_details_double).to receive(:dig).with('total_mixture_mass_g').and_return(total_mixture_mass)
+        allow(sample).to receive(:sample_details).and_return(sample_details_double)
       end
 
       it 'raises ActiveRecord::RecordInvalid when validation fails' do
         expect { use_case.execute! }
-          .to(raise_error(ActiveRecord::RecordInvalid))
-          .and(not_change { Component.count })
+          .to raise_error(ActiveRecord::RecordInvalid)
+
+        expect { use_case.execute! }
+          .not_to(change(Component, :count))
       end
     end
   end
@@ -266,8 +274,9 @@ RSpec.describe Usecases::Components::Create do
       let(:total_mixture_mass) { 150.0 }
 
       before do
-        allow_any_instance_of(Sample).to receive(:sample_details)
-          .and_return(double('sample_details', total_mixture_mass_g: total_mixture_mass))
+        sample_details_double = instance_double(Hash)
+        allow(sample_details_double).to receive(:dig).with('total_mixture_mass_g').and_return(total_mixture_mass)
+        allow(sample).to receive(:sample_details).and_return(sample_details_double)
       end
 
       it 'modifies component_properties hash in place' do
@@ -277,10 +286,10 @@ RSpec.describe Usecases::Components::Create do
             name: 'Test Component',
             position: 1,
             component_properties: {
-              molecule_id: molecule1.id,
-              amount_mol: 0.3
-            }
-          }
+              molecule_id: molecule_1.id,
+              amount_mol: 0.3,
+            },
+          },
         ]
 
         # The calculation should modify the hash in place

@@ -164,11 +164,14 @@ export default class SampleForm extends React.Component {
     this.props.sample.setMolecularMass(mass);
   }
 
-  handleMixtureVolumeChanged(e) {
-    const { sample } = this.props;
-
+  handleAmountLChanged(e, sample) {
+    // Your specific function logic here
+    // For example, you can call sample.setTotalMixtureVolume or any other custom logic
     const totalVolume = e && (e.value || e.value === 0) ? e.value : e;
     sample.setTotalMixtureVolume(totalVolume);
+
+    // Call the standard field change handler
+    this.handleFieldChanged('amount_l', e);
   }
 
   handleMixtureComponentChanged(sample) {
@@ -456,8 +459,6 @@ export default class SampleForm extends React.Component {
       this.handleDensityChanged(e);
     } else if (/molecular_mass/.test(field)) {
       this.handleMolecularMassChanged(e);
-    } else if (field === 'total_mixture_volume_l') {
-      this.handleMixtureVolumeChanged(e);
     } else if (field === 'xref_flash_point') {
       const object = { value: e, unit };
       sample.xref = { ...sample.xref, flash_point: object };
@@ -725,12 +726,6 @@ export default class SampleForm extends React.Component {
           metric = metricPrefixes.indexOf(prefixAmountL) > -1 ? prefixAmountL : 'm';
           break;
         }
-        case 'total_mixture_volume_l': {
-          const isAmountLValid = sample.metrics && sample.metrics.length > 3;
-          const prefixAmountL = isAmountLValid ? sample.metrics[3] : 'm';
-          metric = metricPrefixes.indexOf(prefixAmountL) > -1 ? prefixAmountL : 'm';
-          break;
-        }
         case 'molecular_mass': {
           metric = 'n';
           break;
@@ -812,24 +807,62 @@ export default class SampleForm extends React.Component {
    * @returns {JSX.Element|false} The rendered input or false if not applicable
    */
   totalMixtureVolume(sample) {
-    const isDisabled = !sample.can_update;
+    const isDisabled = sample.isMethodDisabled('amount_value') ||
+      sample.contains_residues ||
+      !sample.can_update;
 
-    if (!sample.isMethodDisabled('amount_value') && !sample.contains_residues) {
-      return this.numInput(
-        sample,
-        'total_mixture_volume_l',
-        'l',
-        ['m', 'u', 'n'],
-        5,
-        'Total volume',
-        'l',
-        isDisabled,
-        '',
-        false,
-        false,
-        true
+    const metricPrefixes = ['m', 'u', 'n'];
+    const prefix = sample.metrics?.[3] && metricPrefixes.includes(sample.metrics[3])
+      ? sample.metrics[3]
+      : 'm';
+
+    if (!isDisabled) {
+      return (
+        <NumeralInputWithUnitsCompo
+          value={sample.amount_l}
+          unit="l"
+          label="Total volume"
+          metricPrefix={prefix}
+          metricPrefixes={metricPrefixes}
+          precision={5}
+          title="Total volume"
+          variant="light"
+          id="numInput_total_mixture_volume_l"
+          showInfoTooltipTotalVol
+          onChange={(e) => this.handleAmountLChanged(e, sample)}
+        />
       );
     }
+  }
+
+  /**
+   * Renders the mixture density display.
+   * @param {Object} sample - The sample object
+   * @returns {JSX.Element} The rendered density display
+   */
+  totalMixtureDensity(sample) {
+    const isDisabled = !sample.can_update;
+
+    if (isDisabled) return null;
+
+    const density = sample.density || 0;
+
+    return (
+      <div className="me-3">
+        <NumeralInputWithUnitsCompo
+          value={density}
+          unit="g/ml"
+          label="Density"
+          metricPrefix="n"
+          metricPrefixes={['n']}
+          precision={3}
+          title="Mixture density"
+          variant="light"
+          id="numInput_total_mixture_density"
+          disabled={true}
+        />
+      </div>
+    );
   }
 
   /**
@@ -864,17 +897,15 @@ export default class SampleForm extends React.Component {
    */
   totalMixtureMass() {
     const { sample } = this.props;
-    const massG = sample.total_mixture_mass_g;
-
-    if (massG === null) return null;
+    const massG = sample.amount_g || sample.total_mixture_mass_g;
 
     return (
       <div className="me-3">
         <NumeralInputWithUnitsCompo
-          value={massG}
+          value={massG || 0}
           unit="g"
           label="Total mixture mass"
-          metricPrefix="m"
+          metricPrefix="n"
           metricPrefixes={['m', 'n', 'u']}
           precision={6}
           title="Total mixture mass"
@@ -1162,6 +1193,7 @@ export default class SampleForm extends React.Component {
                   {this.totalRequiredAmount()}
                 </div>
                 {this.totalMixtureMass()}
+                {this.totalMixtureDensity(sample)}
                 {this.totalMixtureVolume(sample)}
               </Col>
             </Row>

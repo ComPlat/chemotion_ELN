@@ -40,7 +40,10 @@ module Usecases
 
       def add_molecule_data_to_components
         # Extract all molecule IDs from components
-        molecule_ids = @components.map { |comp| comp.dig(:component_properties, :molecule_id)&.to_i }.compact.uniq
+        molecule_ids = @components.filter_map do |comp|
+          comp.dig(:component_properties, :molecule_id)&.to_i
+        end.uniq
+
         return if molecule_ids.empty?
 
         # Bulk load molecules
@@ -71,6 +74,11 @@ module Usecases
         @components.each do |component_params|
           component_properties = component_params[:component_properties]
           next unless component_properties
+
+          # Only calculate relative molecular weight if it doesn't exist yet
+          # This preserves existing relative_molecular_weight values when amount_g changes
+          existing_relative_mw = component_properties[:relative_molecular_weight]
+          next if existing_relative_mw && existing_relative_mw > 0
 
           amount_mol = component_properties[:amount_mol].to_f
           next if amount_mol <= 0

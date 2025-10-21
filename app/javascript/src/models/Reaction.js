@@ -460,7 +460,7 @@ export default class Reaction extends Element {
     copy.short_label = Reaction.buildReactionShortLabel();
     copy.starting_materials = this.starting_materials.map(sample => {
       const copiedSample = Sample.copyFromSampleAndCollectionId(sample, copy.collection_id);
-      copiedSample._real_amount_value = null; 
+      copiedSample._real_amount_value = null;
       return copiedSample;
     });
     copy.reactants = this.reactants.map(

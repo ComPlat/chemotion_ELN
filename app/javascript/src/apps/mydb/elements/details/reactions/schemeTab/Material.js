@@ -163,20 +163,9 @@ class Material extends Component {
       ? material.metrics[3]
       : 'm';
 
-    const isMixture = material.isMixture && material.isMixture();
-
-    let value;
-    if (isMixture) {
-      // For mixtures, find the reference component and use its concentration
-      const referenceComponent = mixtureComponents.find((component) => component.reference);
-      value = referenceComponent ? referenceComponent.concn : 'n.d';
-    } else {
-      value = material.concn;
-    }
-
     return (
       <NumeralInputWithUnitsCompo
-        value={value}
+        value={material.concn}
         className="reaction-material__concentration-input"
         unit="mol/l"
         metricPrefix={metricMolConc}
@@ -595,17 +584,17 @@ class Material extends Component {
       this.setState({ mixtureComponentsLoading: true });
 
       ComponentsFetcher.fetchComponentsBySampleId(material.id)
-      .then((components) => {
-        const componentsList = components.map(ComponentModel.deserializeData);
-        this.setState({
-          mixtureComponents: componentsList,
-          mixtureComponentsLoading: false,
+        .then((components) => {
+          const componentsList = components.map(ComponentModel.deserializeData);
+          this.setState({
+            mixtureComponents: componentsList,
+            mixtureComponentsLoading: false,
+          });
+        })
+        .catch((error) => {
+          console.error('Error fetching components:', error);
+          this.setState({ mixtureComponentsLoading: false });
         });
-      })
-      .catch((error) => {
-        console.error('Error fetching components:', error);
-        this.setState({ mixtureComponentsLoading: false });
-      });
     } else {
       // No components and no ID, clear state
       this.setState({
@@ -978,12 +967,13 @@ class Material extends Component {
             <Accordion.Item eventKey="components">
               <Accordion.Header>Components</Accordion.Header>
               <Accordion.Body>
-                <div className="mixture-components-row" style={{ padding: 0, background: '#f8f9fa' }}>
+                <div className="mixture-components-row">
                   {mixtureComponentsLoading ? (
                     <div className="text-center">Loading components...</div>
                   ) : (
                     <ReactionMaterialComponentsGroup
                       components={mixtureComponents}
+                      solvents={material.solvent}
                       sampleId={material.id}
                       onComponentReferenceChange={this.handleComponentReferenceChange}
                     />

@@ -48,15 +48,8 @@ class ReactionMaterialComponentsGroup extends React.Component {
         </td>
         {/* Component Name */}
         <td>
-          <div
-            style={{ display: 'inline-block', maxWidth: '100%' }}>
-            <span style={{
-              display: 'block',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              maxWidth: '100%'
-            }}>
+          <div className="component-name-container">
+            <span className="component-name-text">
               {component.molecule_iupac_name || component.molecule?.sum_formular || component.name}
             </span>
           </div>
@@ -108,30 +101,100 @@ class ReactionMaterialComponentsGroup extends React.Component {
     );
   }
 
-  render() {
-    const { components } = this.props;
-    if (!components) {
-      return null;
-    }
-    if (components.length === 0) {
-      return <div className="text-center">No components found for this mixture.</div>;
-    }
+  // eslint-disable-next-line class-methods-use-this
+  renderSolventRow(solvent) {
+    const metricPrefixes = ['m', 'n', 'u'];
+    const hasValidMetrics = solvent.metrics && solvent.metrics.length > 2;
+    const isValidPrefix = hasValidMetrics && metricPrefixes.includes(solvent.metrics[1]);
+    const metric = isValidPrefix ? solvent.metrics[1] : 'm';
+
+    const ratioValue = Number.isFinite(Number(solvent.ratio)) ? Number(solvent.ratio) : 1;
+    const purityValue = Number.isFinite(Number(solvent.purity)) ? Number(solvent.purity) : 1.0;
+
     return (
-      <Table responsive className="mixture-components-table">
-        <thead>
-          <tr>
-            <th>Ref</th>
-            <th>Component</th>
-            <th>Amount</th>
-            <th>Rel. MW</th>
-            <th>Conc</th>
-            <th>Ratio</th>
-          </tr>
-        </thead>
-        <tbody>
-          {components.map((component) => this.renderComponentRow(component))}
-        </tbody>
-      </Table>
+      <tr key={`${solvent.label}-${solvent.inchikey}`}>
+        <td>{solvent.label}</td>
+        <td>
+          <NumeralInputWithUnitsCompo
+            value={solvent.amount_l || 0}
+            unit="l"
+            metricPrefix={metric}
+            metricPrefixes={metricPrefixes}
+            precision={3}
+            disabled
+            size="sm"
+          />
+        </td>
+        <td>
+          <NumeralInputWithUnitsCompo
+            value={ratioValue}
+            precision={1}
+            disabled
+            size="sm"
+          />
+        </td>
+        <td>
+          <NumeralInputWithUnitsCompo
+            value={purityValue}
+            precision={3}
+            disabled
+            size="sm"
+          />
+        </td>
+        <td>{solvent.vendor || ''}</td>
+      </tr>
+    );
+  }
+
+  render() {
+    const { components, solvents } = this.props;
+
+    return (
+      <>
+        {/* Components Table */}
+        {components && components.length > 0 && (
+          <Table responsive className="mixture-components-table">
+            <thead>
+              <tr>
+                <th>Ref</th>
+                <th>Component</th>
+                <th>Amount</th>
+                <th>Rel. MW</th>
+                <th>Conc</th>
+                <th>Ratio</th>
+              </tr>
+            </thead>
+            <tbody>
+              {components.map((component) => this.renderComponentRow(component))}
+            </tbody>
+          </Table>
+        )}
+
+        {/* Solvents Table */}
+        {solvents && solvents.length > 0 && (
+          <>
+            <div className="mt-3 mb-2 fw-bold">Solvents</div>
+            <Table responsive className="mixture-solvents-table">
+              <thead>
+                <tr>
+                  <th>Label</th>
+                  <th>Volume</th>
+                  <th>Ratio</th>
+                  <th>Purity</th>
+                </tr>
+              </thead>
+              <tbody>
+                {solvents.map((solvent) => this.renderSolventRow(solvent))}
+              </tbody>
+            </Table>
+          </>
+        )}
+
+        {/* No data message */}
+        {(!components || components.length === 0) && (!solvents || solvents.length === 0) && (
+          <div className="text-center">No components or solvents found for this mixture.</div>
+        )}
+      </>
     );
   }
 }
@@ -149,11 +212,21 @@ ReactionMaterialComponentsGroup.propTypes = {
     reference: PropTypes.bool,
     relative_molecular_weight: PropTypes.number,
     metrics: PropTypes.arrayOf(PropTypes.string)
-  })).isRequired
+  })),
+  solvents: PropTypes.arrayOf(PropTypes.shape({
+    label: PropTypes.string,
+    amount_l: PropTypes.number,
+    scaled_amount_l: PropTypes.number,
+    ratio: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    purity: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    metrics: PropTypes.arrayOf(PropTypes.string),
+  }))
 };
 
 ReactionMaterialComponentsGroup.defaultProps = {
   onComponentReferenceChange: null,
+  components: [],
+  solvents: [],
 };
 
 export default ReactionMaterialComponentsGroup;

@@ -21,6 +21,12 @@
   }
 }
 
+// Style for mixture components row
+.mixture-components-row {
+  padding: 0;
+  background: #f8f9fa;
+}
+
 @function gap($count) {
   @return calc(#{$count} * 0.5rem);
 }

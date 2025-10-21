@@ -117,7 +117,7 @@ module Usecases
           :type, :molecule, :collection_id, :short_label, :waste, :show_label, :coefficient, :user_labels,
           :boiling_point_lowerbound, :boiling_point_upperbound,
           :melting_point_lowerbound, :melting_point_upperbound, :segments, :gas_type,
-          :gas_phase_data, :conversion_rate, :components
+          :gas_phase_data, :conversion_rate, :components, :solvent
         ).merge(created_by: @current_user.id,
                 boiling_point: rangebound(sample.boiling_point_lowerbound, sample.boiling_point_upperbound),
                 melting_point: rangebound(sample.melting_point_lowerbound, sample.melting_point_upperbound))
@@ -190,6 +190,11 @@ module Usecases
         existing_sample.short_label = fixed_label if fixed_label
         existing_sample.name = sample.name if sample.name
         existing_sample.dry_solvent = sample.dry_solvent
+        # Handle components for mixture samples using the proper use case
+        if sample.sample_type == Sample::SAMPLE_TYPE_MIXTURE && sample.components.present?
+          Usecases::Components::Create.new(existing_sample, sample.components).execute!
+        end
+        existing_sample.solvent = sample.solvent
 
         if r = existing_sample.residues[0]
           r.assign_attributes sample.residues_attributes[0]

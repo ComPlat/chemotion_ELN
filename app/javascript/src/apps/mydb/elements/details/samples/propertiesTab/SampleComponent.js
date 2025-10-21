@@ -492,7 +492,7 @@ class SampleComponent extends Component {
             disabled={!permitOn(sample) || lockAmountColumnSolids}
             onChange={(e) => this.handleAmountChange(e, material.amount_g, '', lockAmountColumnSolids)}
             onMetricsChange={this.handleMetricsChange}
-            variant={material.error_mass ? 'danger' : massBsStyle}
+            variant={material.amount_unit === 'g' ? 'primary' : 'light'}
             name="molecular-weight"
           />
         </div>
