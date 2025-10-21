@@ -89,6 +89,12 @@ const routes = {
     },
     '/:vesselID': 'showOrNew'
   },
+  '/sequence_based_macromolecule_sample': {
+    target: {
+      showOrNew: routesUtils.sequenceBasedMacromoleculeSampleShowOrNew
+    },
+    '/:sequence_based_macromolecule_sampleID': 'showOrNew'
+  },
   '/devicesAnalysis': {
     target: {
       create: routesUtils.devicesAnalysisCreate,

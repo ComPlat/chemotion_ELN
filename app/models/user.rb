@@ -76,6 +76,7 @@ class User < ApplicationRecord
   has_many :created_vessels, class_name: 'Vessel', inverse_of: :creator, dependent: nil
   has_many :cellline_samples, through: :collections
   has_many :device_descriptions, through: :collections
+  has_many :sequence_based_macromolecule_samples, through: :collections
 
   has_many :samples_created, foreign_key: :created_by, class_name: 'Sample'
 
@@ -269,7 +270,9 @@ class User < ApplicationRecord
   end
 
   # The element models for which the counters that can be incremented
-  COUNTER_KEYS = %w[samples reactions wellplates celllines device_descriptions].freeze
+  COUNTER_KEYS = %w[
+    samples reactions wellplates celllines device_descriptions sequence_based_macromolecule_samples
+  ].freeze
 
   # Increment a counter for a given key
   #   - samples, reactions, wellplates, celllines, device_descriptions

@@ -158,7 +158,7 @@ module Chemotion
             DeviceDescription.joins(:collections)
                              .where(collections: { user_id: current_user.id }).distinct
           end
-        scope.order('created_at DESC')
+        scope = scope.order(updated_at: :desc)
 
         from = params[:from_date]
         to = params[:to_date]
@@ -277,6 +277,8 @@ module Chemotion
           error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, device_description).read?
 
           device_description_with_entity(device_description)
+        rescue ActiveRecord::RecordNotFound
+          error!('404 Not Found', 404)
         end
       end
 
