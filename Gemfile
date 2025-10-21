@@ -18,6 +18,7 @@ gem 'charlock_holmes'
 gem 'closure_tree'
 gem 'countries'
 
+gem 'daemons'
 gem 'delayed_cron_job'
 gem 'delayed_job_active_record'
 gem 'devise'
