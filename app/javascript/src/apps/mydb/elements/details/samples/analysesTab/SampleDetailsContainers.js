@@ -17,7 +17,6 @@ import {
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import { UploadField } from 'src/apps/mydb/elements/details/analyses/UploadField';
 import {
-  buildEmptyAnalyContainer,
   sortedContainers,
   indexedContainers,
   addNewAnalyses
@@ -43,8 +42,7 @@ export default class SampleDetailsContainers extends Component {
     this.handleToggleMode = this.handleToggleMode.bind(this);
     this.isEqCId = this.isEqCId.bind(this);
     this.indexedContainers = this.indexedContainers.bind(this);
-    this.buildEmptyAnalyContainer = this.buildEmptyAnalyContainer.bind(this);
-    this.sortedContainers = this.sortedContainers.bind(this);
+    this.getSortedContainers = this.getSortedContainers.bind(this);
   }
 
   componentDidMount() {
@@ -88,7 +86,7 @@ export default class SampleDetailsContainers extends Component {
   handleMove(source, target) {
     const { sample } = this.props;
 
-    const sortedConts = this.sortedContainers(sample);
+    const sortedConts = this.getSortedContainers(sample);
     const newSortConts = reOrderArr(source, target, this.isEqCId, sortedConts);
     const newIndexedConts = this.indexedContainers(newSortConts);
 
@@ -96,14 +94,14 @@ export default class SampleDetailsContainers extends Component {
     this.props.setState((prevState) => ({ ...prevState, sample }));
   }
 
-  sortedContainers(sample) {
-    sortedContainers(sample);
+  // eslint-disable-next-line class-methods-use-this
+  getSortedContainers(sample) {
+    return sortedContainers(sample);
   }
 
-  buildEmptyAnalyContainer = () => buildEmptyAnalyContainer();
-
+  // eslint-disable-next-line class-methods-use-this
   isEqCId(container, tagEl) {
-    return container.id === tagEl.cId;
+    return container.id === tagEl.id;
   }
 
   indexedContainers(containers) {
