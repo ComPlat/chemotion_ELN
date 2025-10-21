@@ -2,6 +2,7 @@
 
 require 'rails_helper'
 
+# rubocop:disable RSpec/MultipleExpectations, RSpec/NestedGroups
 describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
   include_context 'api request authorization context'
 
@@ -183,25 +184,26 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
       it 'ignores some attributes that are available for non-uniprot proteins' do
         post_data = post_for_uniprot_sbmm
         post_data.merge(
-          heterologous_expression: "no",
-          organism: "SomeOrganism",
-          taxon_id: "SomeTaxonId",
-          strain: "SomeStrain",
-          tissue: "SomeTissue",
-          localisation: "SomeLocalisation"
+          heterologous_expression: 'no',
+          organism: 'SomeOrganism',
+          taxon_id: 'SomeTaxonId',
+          strain: 'SomeStrain',
+          tissue: 'SomeTissue',
+          localisation: 'SomeLocalisation',
         )
 
         post '/api/v1/sequence_based_macromolecule_samples', params: post_data, as: :json
 
         expect(response.status).to eq 201
 
-        sample = SequenceBasedMacromoleculeSample.find(parsed_json_response["sequence_based_macromolecule_sample"]["id"])
-        expect(sample.heterologous_expression).not_to eq "no"
-        expect(sample.organism).not_to eq "SomeOrganism"
-        expect(sample.taxon_id).not_to eq "SomeTaxonId"
-        expect(sample.strain).not_to eq "SomeStrain"
-        expect(sample.tissue).not_to eq "SomeTissue"
-        expect(sample.localisation).not_to eq "SomeLocalisation"
+        sample =
+          SequenceBasedMacromoleculeSample.find(parsed_json_response['sequence_based_macromolecule_sample']['id'])
+        expect(sample.heterologous_expression).not_to eq 'no'
+        expect(sample.organism).not_to eq 'SomeOrganism'
+        expect(sample.taxon_id).not_to eq 'SomeTaxonId'
+        expect(sample.strain).not_to eq 'SomeStrain'
+        expect(sample.tissue).not_to eq 'SomeTissue'
+        expect(sample.localisation).not_to eq 'SomeLocalisation'
       end
     end
 
@@ -303,15 +305,18 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
           data[:sequence_based_macromolecule_attributes].delete(:uniprot_derivation) # key and value must be present
           data
         end
+
         it 'throws an error' do
           post '/api/v1/sequence_based_macromolecule_samples', params: post_data, as: :json
           expected_result = {
-            "error" => [
-              { "parameters" => ["sequence_based_macromolecule_attributes[sbmm_type]"], "message" => "is missing" },
-              { "parameters" => ["sequence_based_macromolecule_attributes[sbmm_type]"], "message" => "is empty" },
-              { "parameters" => ["sequence_based_macromolecule_attributes[uniprot_derivation]"], "message" => "is missing" },
-              { "parameters" => ["sequence_based_macromolecule_attributes[uniprot_derivation]"], "message" => "is empty" }
-            ]
+            'error' => [
+              { 'parameters' => ['sequence_based_macromolecule_attributes[sbmm_type]'], 'message' => 'is missing' },
+              { 'parameters' => ['sequence_based_macromolecule_attributes[sbmm_type]'], 'message' => 'is empty' },
+              { 'parameters' => ['sequence_based_macromolecule_attributes[uniprot_derivation]'],
+                'message' => 'is missing' },
+              { 'parameters' => ['sequence_based_macromolecule_attributes[uniprot_derivation]'],
+                'message' => 'is empty' },
+            ],
           }
           expect(parsed_json_response).to eq expected_result
         end
@@ -323,43 +328,51 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
             sequence_based_macromolecule_attributes: {
               post_translational_modification_attributes: {
                 acetylation_enabled: true,
-                acetylation_lysin_number: nil
-              }
-            }
+                acetylation_lysin_number: nil,
+              },
+            },
           )
         end
+
+        # rubocop:disable Layout/LineLength
         it 'throws an error' do
           post '/api/v1/sequence_based_macromolecule_samples', params: post_data, as: :json
           expected_result = {
-            "error" => [
-              { "parameters" => ["sequence_based_macromolecule_attributes[post_translational_modification_attributes][acetylation_lysin_number]"], "message" => "is empty" },
-            ]
+            'error' => [
+              {
+                'parameters' =>
+                  ['sequence_based_macromolecule_attributes[post_translational_modification_attributes][acetylation_lysin_number]'],
+                'message' => 'is empty',
+              },
+            ],
           }
           expect(parsed_json_response).to eq expected_result
         end
+        # rubocop:enable Layout/LineLength
       end
 
       it 'allows usage of some attributes that are only available for non-uniprot proteins' do
         post_data = post_for_modified_sbmm
         post_data.merge!(
-          heterologous_expression: "no",
-          organism: "SomeOrganism",
-          taxon_id: "SomeTaxonId",
-          strain: "SomeStrain",
-          tissue: "SomeTissue",
-          localisation: "SomeLocalisation"
+          heterologous_expression: 'no',
+          organism: 'SomeOrganism',
+          taxon_id: 'SomeTaxonId',
+          strain: 'SomeStrain',
+          tissue: 'SomeTissue',
+          localisation: 'SomeLocalisation',
         )
 
         post '/api/v1/sequence_based_macromolecule_samples', params: post_data, as: :json
         expect(response.status).to eq 201
 
-        sample = SequenceBasedMacromoleculeSample.find(parsed_json_response["sequence_based_macromolecule_sample"]["id"])
-        expect(sample.heterologous_expression).to eq "no"
-        expect(sample.organism).to eq "SomeOrganism"
-        expect(sample.taxon_id).to eq "SomeTaxonId"
-        expect(sample.strain).to eq "SomeStrain"
-        expect(sample.tissue).to eq "SomeTissue"
-        expect(sample.localisation).to eq "SomeLocalisation"
+        sample =
+          SequenceBasedMacromoleculeSample.find(parsed_json_response['sequence_based_macromolecule_sample']['id'])
+        expect(sample.heterologous_expression).to eq 'no'
+        expect(sample.organism).to eq 'SomeOrganism'
+        expect(sample.taxon_id).to eq 'SomeTaxonId'
+        expect(sample.strain).to eq 'SomeStrain'
+        expect(sample.tissue).to eq 'SomeTissue'
+        expect(sample.localisation).to eq 'SomeLocalisation'
       end
 
       context 'when the given SBMM already exists' do
@@ -399,7 +412,7 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
             create(
               :sequence_based_macromolecule_sample,
               sequence_based_macromolecule: existing_sbmm,
-              user: other_user
+              user: other_user,
             )
           end
 
@@ -412,8 +425,8 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
               post_for_modified_sbmm[:sequence_based_macromolecule_attributes].deep_merge!(
                 short_name: 'BlaKeks',
                 post_translational_modification_attributes: {
-                  phosphorylation_ser_details: 'Hallo Welt'
-                }
+                  phosphorylation_ser_details: 'Hallo Welt',
+                },
               )
               post_for_modified_sbmm
             end
@@ -422,8 +435,8 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
               post '/api/v1/sequence_based_macromolecule_samples', params: post_data_with_sbmm_modification, as: :json
 
               expect(response.status).to eq 403
-              original_sbmm = parsed_json_response.dig("error", "original_sbmm")
-              requested_changes = parsed_json_response.dig("error", "requested_changes")
+              original_sbmm = parsed_json_response.dig('error', 'original_sbmm')
+              requested_changes = parsed_json_response.dig('error', 'requested_changes')
               expect(original_sbmm).not_to eq requested_changes
             end
 
@@ -444,11 +457,13 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
                 post '/api/v1/sequence_based_macromolecule_samples', params: post_for_modified_sbmm, as: :json
                 existing_sbmm.reload
               end.to change(SequenceBasedMacromoleculeSample, :count).by(1)
-                 .and change(PostTranslationalModification, :count).by(0)
-                 .and change(ProteinSequenceModification, :count).by(0)
+                 .and not_change(PostTranslationalModification, :count)
+                 .and not_change(ProteinSequenceModification, :count)
 
-              sample_id = parsed_json_response.dig("sequence_based_macromolecule_sample", "id")
-              expect(SequenceBasedMacromoleculeSample.find(sample_id).sequence_based_macromolecule_id).to eq existing_sbmm.id
+              sample_id = parsed_json_response.dig('sequence_based_macromolecule_sample', 'id')
+              expect(
+                SequenceBasedMacromoleculeSample.find(sample_id).sequence_based_macromolecule_id,
+              ).to eq existing_sbmm.id
             end
           end
         end
@@ -583,7 +598,7 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
           create(
             :modified_uniprot_sbmm,
             sequence: 'FOOBAR',
-            parent: sbmm.parent
+            parent: sbmm.parent,
           )
         end
 
@@ -621,15 +636,18 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
           data[:sequence_based_macromolecule_attributes].delete(:uniprot_derivation) # key and value must be present
           data
         end
+
         it 'throws an error' do
           put "/api/v1/sequence_based_macromolecule_samples/#{sbmm_sample.id}", params: post_data, as: :json
           expected_result = {
-            "error" => [
-              { "parameters" => ["sequence_based_macromolecule_attributes[sbmm_type]"], "message" => "is missing" },
-              { "parameters" => ["sequence_based_macromolecule_attributes[sbmm_type]"], "message" => "is empty" },
-              { "parameters" => ["sequence_based_macromolecule_attributes[uniprot_derivation]"], "message" => "is missing" },
-              { "parameters" => ["sequence_based_macromolecule_attributes[uniprot_derivation]"], "message" => "is empty" }
-            ]
+            'error' => [
+              { 'parameters' => ['sequence_based_macromolecule_attributes[sbmm_type]'], 'message' => 'is missing' },
+              { 'parameters' => ['sequence_based_macromolecule_attributes[sbmm_type]'], 'message' => 'is empty' },
+              { 'parameters' => ['sequence_based_macromolecule_attributes[uniprot_derivation]'],
+                'message' => 'is missing' },
+              { 'parameters' => ['sequence_based_macromolecule_attributes[uniprot_derivation]'],
+                'message' => 'is empty' },
+            ],
           }
           expect(parsed_json_response).to eq expected_result
         end
@@ -641,21 +659,28 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
             sequence_based_macromolecule_attributes: {
               post_translational_modification_attributes: {
                 acetylation_enabled: true,
-                acetylation_lysin_number: nil
-              }
-            }
+                acetylation_lysin_number: nil,
+              },
+            },
           )
         end
+
+        # rubocop:disable Layout/LineLength
         it 'throws an error' do
           put "/api/v1/sequence_based_macromolecule_samples/#{sbmm_sample.id}", params: post_data, as: :json
           expected_result = {
-            "error" => [
-              { "parameters" => ["sequence_based_macromolecule_attributes[post_translational_modification_attributes][acetylation_lysin_number]"], "message" => "is empty" },
-            ]
+            'error' => [
+              {
+                'parameters' =>
+                  ['sequence_based_macromolecule_attributes[post_translational_modification_attributes][acetylation_lysin_number]'],
+                'message' => 'is empty',
+              },
+            ],
           }
           expect(parsed_json_response).to eq expected_result
         end
       end
+      # rubocop:enable Layout/LineLength
 
       context 'when updating the full name' do
         it 'saves the change' do
@@ -666,7 +691,7 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
             put "/api/v1/sequence_based_macromolecule_samples/#{sbmm_sample.id}", params: put_data, as: :json
             sbmm_sample.reload
             sbmm.reload
-          end.to change(sbmm, :systematic_name).to("BLABLA")
+          end.to change(sbmm, :systematic_name).to('BLABLA')
         end
       end
     end
@@ -719,3 +744,4 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
     end
   end
 end
+# rubocop:enable RSpec/MultipleExpectations, RSpec/NestedGroups

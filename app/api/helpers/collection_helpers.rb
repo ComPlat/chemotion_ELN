@@ -61,7 +61,7 @@ module CollectionHelpers
   # if current user is entitled to write into the destination collection
   def fetch_collection_id_for_assign(prms = params, pl = 1)
     c_id = prms[:collection_id]
-    if !prms[:newCollection].blank?
+    if prms[:newCollection].present?
       c = Collection.create(
         user_id: current_user.id, label: prms[:newCollection],
       )

@@ -28,12 +28,13 @@ module Uniprot
     end
 
     def short_name
-      dig('proteinDescription', 'recommendedName', 'shortNames', 0, 'value') || full_name # fallback required as short_name is a mandatory db field
+      # fallback required as short_name is a mandatory db field
+      dig('proteinDescription', 'recommendedName', 'shortNames', 0, 'value') || full_name
     end
 
     def ec_numbers
-      dig('proteinDescription', 'recommendedName', 'ecNumbers')&.map { |entry| entry['value'] } ||
-        dig('proteinDescription', 'submissionNames', 0, 'ecNumbers')&.map { |entry| entry['value'] } ||
+      dig('proteinDescription', 'recommendedName', 'ecNumbers')&.pluck('value') ||
+        dig('proteinDescription', 'submissionNames', 0, 'ecNumbers')&.pluck('value') ||
         []
     end
 

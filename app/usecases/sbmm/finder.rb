@@ -7,6 +7,7 @@ module Usecases
       #   This method is intended to be used in the SBMM Sample API, which already has parameter validation
       #   Therefore, any missing or malformed parameters will likely make this method crash or create corrupt data.
       #   Don't use it in other places without proper parameter validation!
+      # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
       def find_or_initialize_by(params)
         params[:sequence] = SequenceBasedMacromolecule.normalize_sequence(params[:sequence]) if params[:sequence]
         psm_params = params.delete(:protein_sequence_modification_attributes)
@@ -15,13 +16,15 @@ module Usecases
         if params[:uniprot_derivation] == 'uniprot_modified'
           parent_identifier = params.delete(:parent_identifier)
           parent = if SequenceBasedMacromolecule.valid_accession?(parent_identifier)
-            parent_sbmm = SequenceBasedMacromolecule.uniprot.find_by(primary_accession: parent_identifier)
-            parent_sbmm ||= Uniprot::Converter.new(Uniprot::Client.new.get(parent_identifier)).to_sequence_based_macromolecule
-            parent_sbmm.sbmm_type ||= params[:sbmm_type] # must be the same as the child's type, as type can not change when modifying proteins
-            parent_sbmm
-          else
-            SequenceBasedMacromolecule.find(parent_identifier.to_i)
-          end
+                     parent_sbmm = SequenceBasedMacromolecule.uniprot.find_by(primary_accession: parent_identifier)
+                     parent_sbmm ||= Uniprot::Converter.new(Uniprot::Client.new.get(parent_identifier))
+                                                       .to_sequence_based_macromolecule
+                     # must be the same as the child's type, as type can not change when modifying proteins
+                     parent_sbmm.sbmm_type ||= params[:sbmm_type]
+                     parent_sbmm
+                   else
+                     SequenceBasedMacromolecule.find(parent_identifier.to_i)
+                   end
         end
 
         if params[:uniprot_derivation] == 'uniprot'
@@ -35,13 +38,13 @@ module Usecases
           sbmm = SequenceBasedMacromolecule.non_uniprot.with_modifications.find_by(
             sequence: params[:sequence],
             post_translational_modification: ptm_params.slice(*ptm_attrs),
-            protein_sequence_modification: psm_params.slice(*psm_attrs)
+            protein_sequence_modification: psm_params.slice(*psm_attrs),
           )
 
           sbmm ||= SequenceBasedMacromolecule.new(
             sequence: params[:sequence],
             post_translational_modification_attributes: ptm_params,
-            protein_sequence_modification_attributes: psm_params
+            protein_sequence_modification_attributes: psm_params,
           )
         end
 
@@ -54,6 +57,7 @@ module Usecases
 
         sbmm
       end
+      # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
 
       def find_in_eln(id:)
         SequenceBasedMacromolecule.find(id)
@@ -62,11 +66,11 @@ module Usecases
       # returns an instance of SequenceBasedMacromolecule
       def find_in_uniprot(primary_accession:)
         uniprot_entry = Uniprot::Client.new.get(primary_accession)
-        
+
         Uniprot::Converter.new(uniprot_entry).to_sequence_based_macromolecule
       end
 
-      # returns an instance of 
+      # returns an instance of
       def search_in_eln(search_term:, search_field:)
         case search_field
         when 'ec'
@@ -87,8 +91,8 @@ module Usecases
         return [] if search_field == 'sequence'
 
         Uniprot::Client.new.search(
-          search_term: search_term, 
-          search_field: search_field
+          search_term: search_term,
+          search_field: search_field,
         )
       end
     end

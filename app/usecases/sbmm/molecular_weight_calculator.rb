@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Usecases
   module Sbmm
     class MolecularWeightCalculator
@@ -18,7 +20,7 @@ module Usecases
       end
 
       def sum_of_amino_acid_weights
-        normalized_sequence.chars.reduce(0) { |result, letter| result += weights[letter.to_sym].to_f }
+        normalized_sequence.chars.reduce(0) { |result, letter| result + weights[letter.to_sym].to_f }
       end
 
       def peptid_bindings
@@ -47,8 +49,8 @@ module Usecases
           W: 204.23,
           Y: 181.19,
           V: 117.15,
-          water_molecule: 18.02
-       }
+          water_molecule: 18.02,
+        }
       end
     end
   end

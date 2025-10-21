@@ -14,7 +14,7 @@ RSpec.describe SbmmMailer, type: :mailer do
       sbmm
     end
 
-    it "renders the body correctly" do
+    it 'renders the body correctly' do
       sbmm.short_name = 'Hallo Welt'
       sbmm.post_translational_modification.phosphorylation_ser_details = 'Foo Bar'
 

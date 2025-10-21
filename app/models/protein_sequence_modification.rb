@@ -26,16 +26,16 @@
 #  idx_sbmm_psm_deleted_at  (deleted_at)
 #
 class ProteinSequenceModification < ApplicationRecord
-  has_many :sequence_based_macromolecules # questionable... should actually be a belongs_to relation now
+  has_many :sequence_based_macromolecules, dependent: nil # questionable... should actually be a belongs_to relation now
 
   def self.attributes_for_sbmm_uniqueness
-    [
-      :modification_c_terminal,
-      :modification_deletion,
-      :modification_insertion,
-      :modification_mutation,
-      :modification_n_terminal,
-      :modification_other,
+    %i[
+      modification_c_terminal
+      modification_deletion
+      modification_insertion
+      modification_mutation
+      modification_n_terminal
+      modification_other
     ]
   end
 end

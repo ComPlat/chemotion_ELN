@@ -54,11 +54,11 @@ require 'rails_helper'
 
 describe SequenceBasedMacromolecule do
   describe '.with_ec_number' do
-    it "returns only SBMM records that have the matching ec number" do
-      sbmm1 = create(:uniprot_sbmm, ec_numbers: ["1.2.3", "1.2.4"])
-      sbmm2 = create(:uniprot_sbmm, ec_numbers: ["1.2.1", "1.2.4"])
+    it 'returns only SBMM records that have the matching ec number' do
+      sbmm1 = create(:uniprot_sbmm, ec_numbers: ['1.2.3', '1.2.4'])
+      create(:uniprot_sbmm, ec_numbers: ['1.2.1', '1.2.4'])
 
-      result = described_class.with_ec_number("1.2.3")
+      result = described_class.with_ec_number('1.2.3')
 
       expect(result.count).to eq 1
       expect(result.first.id).to be sbmm1.id
@@ -69,7 +69,7 @@ describe SequenceBasedMacromolecule do
     it 'finds the result in a case-insensitive way' do
       sbmm1 = create(:uniprot_sbmm, short_name: 'Insulin')
       sbmm2 = create(:uniprot_sbmm, short_name: 'Some insulin-producing Protein')
-      sbmm3 = create(:uniprot_sbmm, short_name: 'Some other protein')
+      create(:uniprot_sbmm, short_name: 'Some other protein')
 
       result = described_class.search_in_name('insulin')
 
@@ -84,8 +84,8 @@ describe SequenceBasedMacromolecule do
       attributes = {
         short_name: 'BlaKeks',
         protein_sequence_modification_attributes: {
-          modification_c_terminal_details: 'Some Details'
-        }
+          modification_c_terminal_details: 'Some Details',
+        },
       }
 
       sbmm.assign_attributes(attributes)
@@ -100,7 +100,7 @@ describe SequenceBasedMacromolecule do
       sbmm = build(:uniprot_sbmm)
       sbmm.molecular_weight = nil
 
-      expect { sbmm.save! }.to change(sbmm, :molecular_weight).from(nil).to(47409.34)
+      expect { sbmm.save! }.to change(sbmm, :molecular_weight).from(nil).to(47_409.34)
     end
   end
 end

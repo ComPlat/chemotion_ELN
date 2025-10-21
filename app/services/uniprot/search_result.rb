@@ -39,8 +39,8 @@ module Uniprot
     end
 
     def ec_numbers
-      dig('proteinDescription', 'recommendedName', 'ecNumbers')&.map { |ecNumber| ecNumber['value'] } ||
-        dig('proteinDescription', 'submissionNames', 0, 'ecNumbers')&.map { |ecNumber| ecNumber['value'] } ||
+      dig('proteinDescription', 'recommendedName', 'ecNumbers')&.pluck('value') ||
+        dig('proteinDescription', 'submissionNames', 0, 'ecNumbers')&.pluck('value') ||
         []
     end
 

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module SbmmSpecHelpers
   def serialize_sbmm_sample_as_api_input(sbmm_sample)
     data = Entities::SequenceBasedMacromoleculeSampleEntity.represent(sbmm_sample).serializable_hash

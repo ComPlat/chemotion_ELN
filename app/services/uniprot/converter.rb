@@ -8,8 +8,9 @@ module Uniprot
       @entry = uniprot_entry
     end
 
+    # rubocop:disable Metrics/AbcSize
     def to_sequence_based_macromolecule
-      sbmm = SequenceBasedMacromolecule.new(
+      SequenceBasedMacromolecule.new(
         uniprot_source: entry.raw_response,
         uniprot_derivation: 'uniprot',
         accessions: entry.accessions,
@@ -24,8 +25,9 @@ module Uniprot
         taxon_id: entry.taxon_id,
         strain: entry.strain,
         tissue: entry.tissue,
-        localisation: entry.localisation
+        localisation: entry.localisation,
       )
     end
+    # rubocop:enable Metrics/AbcSize
   end
 end

@@ -3,17 +3,17 @@
 FactoryBot.define do
   factory :protein_sequence_modification do
     modification_n_terminal { true }
-    modification_n_terminal_details { "Something else" }
+    modification_n_terminal_details { 'Something else' }
     modification_c_terminal { false }
-    modification_c_terminal_details { }
+    modification_c_terminal_details { nil }
     modification_insertion { false }
-    modification_insertion_details { }
+    modification_insertion_details { nil }
     modification_deletion { false }
-    modification_deletion_details { }
+    modification_deletion_details { nil }
     modification_mutation { false }
-    modification_mutation_details { }
+    modification_mutation_details { nil }
     modification_other { false }
-    modification_other_details { }
-    deleted_at { }
+    modification_other_details { nil }
+    deleted_at { nil }
   end
 end

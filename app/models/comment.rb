@@ -88,7 +88,7 @@ class Comment < ApplicationRecord
     screen: 'screen_header',
     research_plan: 'research_plan_header',
     device_description: 'device_description_header',
-    sequence_based_macromolecule_sample: 'sequence_based_macromolecule_sample_header'
+    sequence_based_macromolecule_sample: 'sequence_based_macromolecule_sample_header',
   }, _prefix: true
 
   belongs_to :commentable, polymorphic: true
