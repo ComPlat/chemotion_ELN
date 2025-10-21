@@ -1,4 +1,4 @@
-FROM ptrxyz/internal:eln-2.1.0-pre
+FROM ptrxyz/chemotion:eln-2.1.1
 
 ARG REMOTE=https://github.com/ComPlat/chemotion_ELN.git
 ARG BUNDLER_VERSION=2.4.22
@@ -72,7 +72,8 @@ ADD https://payload.chemserv.scc.kit.edu/initialize.sh /initialize.sh
 
 ADD https://payload.chemserv.scc.kit.edu/converter.yml /chemotion/app/config/converter.yml
 ADD https://payload.chemserv.scc.kit.edu/spectra.yml /chemotion/app/config/spectra.yml
-ADD https://payload.chemserv.scc.kit.edu/ketcher.yml /chemotion/app/config/ketcher_service.yml
+# stop check for ketcherails
+RUN sed -i '/# add ketcherails templates if needed/,$d' /embed/scripts/dbcheck.sh 
 
 RUN chmod +x /embed/run.sh && \
     chmod +x /embed/health.sh && \
