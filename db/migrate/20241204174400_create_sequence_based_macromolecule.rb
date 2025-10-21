@@ -5,7 +5,7 @@ class CreateSequenceBasedMacromolecule < ActiveRecord::Migration[6.1]
       t.jsonb :uniprot_source, null: true
       t.belongs_to :parent, index: { name: "#{index_prefix}_parent" }, null: true
       t.string :sbmm_type, null: false
-      t.string :sbmm_subtype, null: false
+      t.string :sbmm_subtype, null: true
       t.string :uniprot_derivation, null: false
       t.string :primary_accession, null: true, index: { name: "#{index_prefix}_primary_accession" }
       t.string :accessions, null: true, index: { name: "#{index_prefix}_accessions" }, array: true
