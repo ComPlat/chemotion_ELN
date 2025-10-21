@@ -1055,6 +1055,59 @@ export default class Reaction extends Element {
     return moles;
   }
 
+  /**
+   * Calculates the combined volume of all reaction materials (solvent + starting_materials + reactants + products).
+   *
+   * @method calculateCombinedReactionVolume
+   * @memberof Reaction
+   * @returns {number|null} Combined volume in liters, or null if invalid
+   */
+  calculateCombinedReactionVolume() {
+    let totalVolume = 0;
+
+    // Add solvent volume
+    if (Number.isFinite(this.solventVolume) && this.solventVolume > 0) {
+      totalVolume += this.solventVolume;
+    }
+
+    // Add volumes from starting materials, reactants, and products
+    const allMaterials = [
+      ...(this.starting_materials || []),
+      ...(this.reactants || []),
+      ...(this.products || [])
+    ];
+
+    allMaterials.forEach((material) => {
+      if (material && Number.isFinite(material.amount_l) && material.amount_l > 0) {
+        totalVolume += material.amount_l;
+      }
+    });
+
+    return totalVolume > 0 ? totalVolume : null;
+  }
+
+  /**
+   * Updates concentrations for all materials in the reaction when volumes change.
+   * This should be called whenever any material's amount_l changes.
+   *
+   * @method updateAllConcentrations
+   * @memberof Reaction
+   * @returns {void}
+   */
+  updateAllConcentrations() {
+    const allMaterials = [
+      ...(this.starting_materials || []),
+      ...(this.reactants || []),
+      ...(this.products || [])
+    ];
+
+    allMaterials.forEach((material) => {
+      if (material && typeof material.updateConcentrationFromSolvent === 'function') {
+        material.updateConcentrationFromSolvent(this);
+      }
+    });
+  }
+
   isFeedstockMaterialPresent() {
     const materials = [...this.starting_materials, ...this.reactants];
     return materials.some((material) => material.gas_type === 'feedstock');

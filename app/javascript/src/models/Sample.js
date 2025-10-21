@@ -692,7 +692,6 @@ export default class Sample extends Element {
       || referenceComponent.component_properties?.relative_molecular_weight);
     const totalMassG = this.amount_g;
 
-
     if (Number.isFinite(relMw) && relMw > 0 && Number.isFinite(totalMassG) && totalMassG >= 0) {
       const totalMoles = totalMassG / relMw;
       this.components.forEach((component) => {
@@ -700,6 +699,48 @@ export default class Sample extends Element {
         const eq = Number.isFinite(component.equivalent) ? component.equivalent : (isRef ? 1 : 0);
         component.amount_mol = isRef ? totalMoles : (totalMoles * eq);
       });
+    }
+  }
+
+  /**
+   * Updates the sample's concentration (`concn`) based on its total amount in moles
+   * and the combined volume of all reaction materials.
+   *
+   * - For mixtures: calculates concentration as `amount_mol / combinedVolume`.
+   * - For non-mixtures: calculates concentration as `amount_mol / combinedVolume`.
+   * - If any required data is missing or invalid, `concn` is set to `null`.
+   *
+   * Formula:
+   *   concn = amount_mol / (reaction.solventVolume + volumes of all materials)
+   *
+   * @method updateConcentrationFromSolvent
+   * @memberof Sample
+   * @param {Object} reaction - The reaction object containing the solvent volume.
+   * @returns {void}
+   */
+  updateConcentrationFromSolvent(reaction) {
+    const combinedVolume = reaction ? reaction.calculateCombinedReactionVolume() : null;
+
+    if (!combinedVolume || combinedVolume <= 0) {
+      this.concn = null;
+      return;
+    }
+
+    // Handle mixtures
+    if (this.isMixture && typeof this.isMixture === 'function' ? this.isMixture() : this.isMixture) {
+      if (Number.isFinite(this.amount_mol) && this.amount_mol >= 0) {
+        this.concn = this.amount_mol / combinedVolume;
+      } else {
+        this.concn = null;
+      }
+      return; // only execute for mixtures
+    }
+
+    // Handle non-mixture samples
+    if (Number.isFinite(this.amount_mol) && this.amount_mol >= 0) {
+      this.concn = this.amount_mol / reaction.solventVolume;
+    } else {
+      this.concn = null;
     }
   }
 
@@ -727,6 +768,27 @@ export default class Sample extends Element {
     // Set the basic amount properties
     this.amount_value = amount.value;
     this.amount_unit = amount.unit;
+
+    // Notify parent reaction if this sample belongs to one and volume changed
+    this.notifyReactionOfVolumeChange(amount);
+  }
+
+  /**
+   * Notifies the parent reaction when volume changes occur.
+   * This triggers concentration updates for all materials in the reaction.
+   *
+   * @private
+   * @param {Object} amount - The amount object containing value and unit
+   * @returns {void}
+   */
+  notifyReactionOfVolumeChange(amount) {
+    // Only notify if this sample belongs to a reaction and the unit is liters
+    if (this.belongTo && this.belongTo.type === 'reaction' && amount.unit === 'l') {
+      const reaction = this.belongTo;
+      if (typeof reaction.updateAllConcentrations === 'function') {
+        reaction.updateAllConcentrations();
+      }
+    }
   }
 
   /**
@@ -758,7 +820,7 @@ export default class Sample extends Element {
     // totalVolume = amount_mol / final concentration of the component
     const totalVolume = (amount ?? 0) / totalConcentration;
 
-    this.setTotalMixtureVolume(totalVolume)
+    this.setTotalMixtureVolume(totalVolume);
     this.updateMixtureComponentVolume(totalVolume);
   }
 
@@ -1493,7 +1555,7 @@ export default class Sample extends Element {
    * Sets the total mixture volume (L) into sample_details.
    * @param totalVolume
    */
-  setTotalMixtureVolume(totalVolume){
+  setTotalMixtureVolume(totalVolume) {
     if (!this.sample_details) {
       this.sample_details = {};
     }
