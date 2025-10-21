@@ -4,17 +4,17 @@
 #
 # Table name: chemicals
 #
-#  id                              :bigint           not null, primary key
-#  cas                             :text
-#  chemical_data                   :jsonb
-#  deleted_at                      :datetime
-#  updated_at                      :datetime
-#  sample_id                       :integer
-#  sequence_based_macromolecule_id :bigint
+#  id                                     :bigint           not null, primary key
+#  cas                                    :text
+#  chemical_data                          :jsonb
+#  deleted_at                             :datetime
+#  updated_at                             :datetime
+#  sample_id                              :integer
+#  sequence_based_macromolecule_sample_id :bigint
 #
 # Foreign Keys
 #
-#  fk_rails_...  (sequence_based_macromolecule_id => sequence_based_macromolecules.id)
+#  fk_rails_...  (sequence_based_macromolecule_sample_id => sequence_based_macromolecule_samples.id)
 #
 
 class Chemical < ApplicationRecord
@@ -29,7 +29,7 @@ class Chemical < ApplicationRecord
   private
 
   def only_one_parent
-    return unless sample_id.present? && sequence_based_macromolecule_id.present?
+    return unless sample_id.present? && sequence_based_macromolecule_sample_id.present?
 
     errors.add(
       :base,
@@ -38,7 +38,7 @@ class Chemical < ApplicationRecord
   end
 
   def at_least_one_parent
-    return if sample_id.present? || sequence_based_macromolecule_id.present?
+    return if sample_id.present? || sequence_based_macromolecule_sample_id.present?
 
     errors.add(
       :base,
