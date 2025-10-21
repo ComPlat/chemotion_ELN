@@ -63,5 +63,5 @@ RSpec.configure do |config|
   config.include ActiveSupport::Testing::TimeHelpers
   config.include SbmmSpecHelpers
 
-  config.file_fixture_path = "spec/fixtures"
+  config.file_fixture_path = 'spec/fixtures'
 end

@@ -44,6 +44,8 @@ RSpec.describe Usecases::Search::AllElementsSearch do
       CollectionsSequenceBasedMacromoleculeSample.create!(sequence_based_macromolecule_sample: sbmm_sample_modified,
                                                           collection: collection)
       PgSearch::Multisearch.rebuild(Sample)
+      PgSearch::Multisearch.rebuild(SequenceBasedMacromolecule)
+      PgSearch::Multisearch.rebuild(SequenceBasedMacromoleculeSample)
     end
 
     it 'searches all elements for given substring' do

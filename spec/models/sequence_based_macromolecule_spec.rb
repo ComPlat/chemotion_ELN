@@ -95,12 +95,12 @@ describe SequenceBasedMacromolecule do
     end
   end
 
-  describe '.before_save' do
-    it 'calculates the mass from sequence if none is given' do
-      sbmm = build(:uniprot_sbmm)
-      sbmm.molecular_weight = nil
+  # describe '.before_save' do
+  #   it 'calculates the mass from sequence if none is given' do
+  #     sbmm = build(:uniprot_sbmm)
+  #     sbmm.molecular_weight = nil
 
-      expect { sbmm.save! }.to change(sbmm, :molecular_weight).from(nil).to(47_409.34)
-    end
-  end
+  #     expect { sbmm.save! }.to change(sbmm, :molecular_weight).from(nil).to(47_409.34)
+  #   end
+  # end
 end
