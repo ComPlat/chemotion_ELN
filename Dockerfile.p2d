@@ -94,5 +94,7 @@ ADD https://github.com/haditariq/ketcher-build-holder.git /chemotion/app/public/
 
 # Copy config example into actual config
 RUN cp config/structure_editors.yml.example config/structure_editors.yml
-
 RUN cp config/indigo_service.yml.example config/indigo_service.yml
+
+# Remove ketcherails related lines from dbcheck.sh
+RUN sed -i '/# add ketcherails templates if needed/,$d' /embed/scripts/dbcheck.sh
