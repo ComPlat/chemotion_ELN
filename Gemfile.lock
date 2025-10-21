@@ -193,6 +193,7 @@ GEM
     csv (3.3.5)
     cypress-on-rails (1.17.0)
       rack
+    daemons (1.4.1)
     database_cleaner (2.1.0)
       database_cleaner-active_record (>= 2, < 3)
     database_cleaner-active_record (2.2.1)
@@ -823,6 +824,7 @@ DEPENDENCIES
   closure_tree
   countries
   cypress-on-rails
+  daemons
   database_cleaner
   database_cleaner-active_record
   debase
