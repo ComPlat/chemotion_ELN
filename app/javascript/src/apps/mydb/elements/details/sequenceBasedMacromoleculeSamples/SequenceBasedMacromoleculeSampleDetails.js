@@ -69,11 +69,11 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
     }
   }, [alertRef.current]);
 
-  const sbmmInventoryTab = (ind) => (
-    <Tab eventKey={ind} title="Inventory" key={`Inventory${sbmmSample.id.toString()}`}>
+  const sbmmInventoryTab = (eventKey) => (
+    <Tab eventKey={eventKey} title="Inventory" key={`Inventory${sbmmSample.id.toString()}`}>
       {
-          !sbmmSample.isNew && <CommentSection section="sbmm_sample_inventory" element={sbmmSample} />
-        }
+        !sbmmSample.isNew && <CommentSection section="sbmm_sample_inventory" element={sbmmSample} />
+      }
       <ListGroupItem>
         <ChemicalTab
           sample={sbmmSample}
@@ -124,7 +124,7 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
         <Tab eventKey={key} title={title} key={`${key}_${sbmmSample.id}`} disabled={disabled(i)}>
           {
             !sbmmSample.isNew
-              && <CommentSection section={`sequence_based_macromolecule_sample_${key}`} element={sbmmSample} />
+            && <CommentSection section={`sequence_based_macromolecule_sample_${key}`} element={sbmmSample} />
           }
           {React.createElement(tabContentComponents[key], {
             key: `${sbmmSample.id}-${key}`,

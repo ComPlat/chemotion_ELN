@@ -173,7 +173,7 @@ ActiveRecord::Schema.define(version: 2026_01_20_183627) do
     t.datetime "updated_at"
     t.datetime "deleted_at"
     t.jsonb "log_data"
-    t.bigint "sequence_based_macromolecule_id"
+    t.bigint "sequence_based_macromolecule_sample_id"
   end
 
   create_table "code_logs", id: :uuid, default: -> { "uuid_generate_v4()" }, force: :cascade do |t|
@@ -1769,7 +1769,7 @@ ActiveRecord::Schema.define(version: 2026_01_20_183627) do
     t.index ["wellplate_id"], name: "index_wells_on_wellplate_id"
   end
 
-  add_foreign_key "chemicals", "sequence_based_macromolecules"
+  add_foreign_key "chemicals", "sequence_based_macromolecule_samples"
   add_foreign_key "collections", "inventories"
   add_foreign_key "collections_sequence_based_macromolecule_samples", "collections"
   add_foreign_key "collections_sequence_based_macromolecule_samples", "sequence_based_macromolecule_samples"

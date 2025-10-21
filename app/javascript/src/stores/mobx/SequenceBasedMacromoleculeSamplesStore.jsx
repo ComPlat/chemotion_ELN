@@ -108,13 +108,6 @@ export const SequenceBasedMacromoleculeSamplesStore = types
     editChemical(value) {
       self.isChemicalEdited = value;
     },
-    saveSampleOrInventory(closeView) {
-      if (self.active_tab_key === 'inventory' && self.saveInventoryAction) {
-        self.setSaveInventoryAction(true);
-      } else {
-        self.saveSample(self.sequence_based_macromolecule_sample);
-      }
-    },
     searchForSequenceBasedMacromolecule: flow(function* searchForSequenceBasedMacromolecule(search_term, search_field) {
       let result = yield SequenceBasedMacromoleculesFetcher.searchForSequenceBasedMacromolecule(search_term, search_field);
       if (result?.search_results) {
