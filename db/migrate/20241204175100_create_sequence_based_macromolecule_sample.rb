@@ -35,7 +35,7 @@ class CreateSequenceBasedMacromoleculeSample < ActiveRecord::Migration[6.1]
       t.belongs_to :sequence_based_macromolecule, foreign_key: true, index: { name: "#{index_prefix}_sbmm" }
       t.belongs_to :user, foreign_key: true, index: { name: "#{index_prefix}_user" }
 
-      t.string :ancestry, null: false, default: '/', collation: 'C', index: { name: "#{index_prefix}_ancestry" }
+      t.string :ancestry, null: false, default: '/', collation: 'C', index: { name: "#{index_prefix}_ancestry", opclass: :varchar_pattern_ops, unique: false }
 
       t.string :heterologous_expression, null: false, default: 'unknown'
       t.string :organism, null: true, default: ''
