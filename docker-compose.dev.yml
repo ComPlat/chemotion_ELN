@@ -113,13 +113,10 @@ services:
     command: './run-js-dev.sh'
 
   storybook:
-    build:
-      context: '.'
-      dockerfile: 'Dockerfile.chemotion-dev'
     depends_on:
-      app:
-        condition: service_healthy
-    image: ${DOCKER_DEV_IMAGE:-}
+      webpacker:
+        condition: service_started
+    image: *chemotion_eln_dev
     env_file:
       - ./.env
       #- ./.env.development
