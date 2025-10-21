@@ -136,6 +136,10 @@ group :development do
   gem 'web-console'
 end
 
+group :rubocop do
+  eval_gemfile 'Gemfile.cop.rb' if File.exist?('Gemfile.cop.rb')
+end
+
 group :vscode do
   gem 'debase'
   gem 'ruby-debug-ide'
@@ -159,12 +163,6 @@ group :development, :test do
   gem 'pry', '>= 0.14.2'
   gem 'pry-byebug'
   gem 'pry-rails'
-
-  gem 'rubocop', require: false
-  gem 'rubocop-performance', require: false
-  gem 'rubocop-rails', require: false
-  gem 'rubocop-rspec', require: false
-
   gem 'rspec'
   gem 'rspec-rails'
   gem 'ruby_jard'
