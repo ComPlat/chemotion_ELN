@@ -25,7 +25,6 @@ class CollectionsSequenceBasedMacromoleculeSample < ApplicationRecord
   acts_as_paranoid
   belongs_to :collection
   belongs_to :sequence_based_macromolecule_sample
-  validates :collection, :sequence_based_macromolecule_sample, presence: true
 
   include Tagging
   include Collecting
@@ -41,6 +40,7 @@ class CollectionsSequenceBasedMacromoleculeSample < ApplicationRecord
   def self.delete_in_collection_with_filter(sample_ids, collection_ids)
     [collection_ids].flatten.each do |cid|
       next unless cid.is_a?(Integer)
+
       # TODO: copy and adapt logic from CollectionsSample when SBMM-Sample gets relations to reaction/wellplate
       delete_in_collection(sample_ids, cid)
     end

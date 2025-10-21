@@ -201,7 +201,7 @@ class SequenceBasedMacromoleculeSample < ApplicationRecord
   end
 
   def counter_for_split_short_label
-    element_children = children.with_deleted.order('created_at')
+    element_children = children.with_deleted.order(:created_at)
     last_child_label = element_children.where('short_label LIKE ?', "#{short_label}-%").last&.short_label
     last_child_counter = (last_child_label&.match(/^#{short_label}-(\d+)/) && ::Regexp.last_match(1).to_i) || 0
 

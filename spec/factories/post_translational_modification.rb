@@ -4,7 +4,7 @@ FactoryBot.define do
   factory :post_translational_modification do
     phosphorylation_enabled { true }
     phosphorylation_ser_enabled { true }
-    phosphorylation_ser_details { "Something something" }
+    phosphorylation_ser_details { 'Something something' }
     phosphorylation_thr_enabled { false }
     phosphorylation_thr_details { '' }
     phosphorylation_tyr_enabled { false }
@@ -39,7 +39,7 @@ FactoryBot.define do
 
     other_modifications_enabled { false }
     other_modifications_details { '' }
-    
-    deleted_at { }
+
+    deleted_at { nil }
   end
 end

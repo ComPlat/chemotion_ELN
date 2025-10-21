@@ -5,6 +5,7 @@ module Uniprot
     UNIPROT_BASE_URL = 'https://rest.uniprot.org'
 
     include HTTParty
+
     base_uri UNIPROT_BASE_URL
     format :json
 
@@ -23,17 +24,17 @@ module Uniprot
     def search(search_term:, search_field: :accession, raw: false)
       search_params = {
         query: "#{search_field}:#{search_term}",
-        fields: "id,accession,ec,protein_name,organism_name",
-        sort: "accession desc",
-        size: 10
+        fields: 'id,accession,ec,protein_name,organism_name',
+        sort: 'accession desc',
+        size: 10,
       }
       uniprot_result = handle_response do
-        self.class.get("/uniprotkb/search", query: search_params)
+        self.class.get('/uniprotkb/search', query: search_params)
       end
 
       return uniprot_result if raw
 
-      uniprot_result["results"].map { |result| Uniprot::SearchResult.new(result) }
+      uniprot_result['results'].map { |result| Uniprot::SearchResult.new(result) }
     end
 
     private

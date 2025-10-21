@@ -5,7 +5,6 @@ require 'rails_helper'
 describe Uniprot::Client do
   subject(:client) { described_class.new }
 
-
   describe '#get' do
     let(:body_data) do
       file = Rails.root.join("spec/fixtures/uniprot/#{uniprot_id}.json")

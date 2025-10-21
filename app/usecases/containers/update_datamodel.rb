@@ -26,17 +26,17 @@ module Usecases
           root_container[:description] = container[:description]
           root_container.save!
         end
-        if container[:children] != nil && !container[:children].empty?
-          create_or_update_containers(container[:children], root_container, current_user)
-        end
+        create_or_update_containers(container[:children], root_container, current_user) if container[:children].present?
         root_container
       end
 
       private
 
-      def create_or_update_containers(children, parent_container, current_user={})
+      # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
+      # rubocop:disable Metrics/BlockLength
+      def create_or_update_containers(children, parent_container, current_user = {})
         return unless children
-        return unless can_update_container(parent_container)
+        return unless can_update_container?(parent_container)
 
         children.each do |child|
           if child[:is_deleted]
@@ -67,7 +67,7 @@ module Usecases
             )
           else
             # Update container
-            next unless container = Container.find_by(id: child[:id])
+            next unless (container = Container.find_by(id: child[:id]))
 
             container.update!(
               name: child[:name],
@@ -91,7 +91,7 @@ module Usecases
       def create_or_update_attachments(container, attachments)
         return if attachments.empty?
 
-        can_update = can_update_container(container)
+        can_update = can_update_container?(container)
         can_edit = true
         return unless can_update
 
@@ -100,10 +100,10 @@ module Usecases
             attachment = Attachment.where(key: att[:id], attachable: nil).last
           else
             attachment = Attachment.where(id: att[:id]).last
-            container_id = attachment && attachment.container_id
+            container_id = attachment&.container_id
             if container_id
               att_container = Container.find(container_id)
-              can_edit = can_update_container(att_container)
+              can_edit = can_update_container?(att_container)
             end
           end
           next unless attachment
@@ -115,10 +115,12 @@ module Usecases
           attachment.update!(attachable_id: container.id, attachable_type: 'Container') if container.present?
         end
       end
+      # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
+      # rubocop:enable Metrics/BlockLength
 
       def delete_containers_and_attachments(container)
         Attachment.where_container(container[:id]).destroy_all
-        if container[:children] && container[:children].length > 0
+        if container[:children]&.length&.positive?
           container[:children].each do |tmp|
             delete_containers_and_attachments(tmp)
           end
@@ -126,8 +128,8 @@ module Usecases
         Container.where(id: container[:id]).destroy_all
       end
 
-      def can_update_container(container)
-        if element = container.root.containable
+      def can_update_container?(container)
+        if (element = container.root.containable)
           ElementPolicy.new(current_user, element).update?
         else
           true

@@ -40,7 +40,7 @@ module Entities
 
     expose! :other_modifications_enabled
     expose! :other_modifications_details
-    
+
     expose! :deleted_at
     expose_timestamps
   end
