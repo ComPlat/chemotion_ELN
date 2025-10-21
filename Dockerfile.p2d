@@ -80,6 +80,8 @@ RUN chmod +x /embed/run.sh && \
     chmod +x /embed/health.sh && \
     chmod +x /initialize.sh
 
+ADD https://github.com/haditariq/ketcher-build-holder.git /chemotion/app/public/editors/ketcher/standalone
+
 EXPOSE 4000
 
 WORKDIR /chemotion/app
