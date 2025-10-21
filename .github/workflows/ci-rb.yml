@@ -1,0 +1,185 @@
+name: CI - Ruby Lint, RSpec, and code coverage
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths-ignore:
+      - '*.md'
+      - 'app/javascript/**'
+      - 'package.json'
+      - 'yarn.lock'
+      - 'spec/javascripts/**'
+      - '.tool-versions' # ignore changes to .tool-versions for now as it is mostly updated for nodejs version updates
+      - '**/.js'
+  push:
+    branches:
+      - main
+
+jobs:
+  linting:
+    if: github.event.pull_request && (github.triggering_actor != 'dependabot[bot]')
+    runs-on: ubuntu-latest
+    env:
+      PRONTO_PULL_REQUEST_ID: ${{ github.event.pull_request.number }}
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v5
+      - run: |
+          git fetch --no-tags --prune --unshallow origin +refs/heads/*:refs/remotes/origin/*
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3.0'
+
+      - name: install linting dependencies
+        run: gem install rubocop pronto pronto-rubocop rubocop-rspec rubocop-rails rubocop-performance
+
+      - name: run Pronto
+        run: pronto run -f github_status github_pr_review -c origin/${{ github.base_ref }}
+        env:
+          PRONTO_GITHUB_ACCESS_TOKEN: "${{ github.token }}"
+        if: github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name    # don't run on PRs from forks because of missing write permission: https://github.com/orgs/community/discussions/26829
+
+      - name: run Pronto on fork
+        # We cannot use the `github_status` formatter on forks in order to report the linting status,
+        # since the formatter requires write access, which isn't the default on forks.
+        # This is why we're using the `--exit-code` flag, which causes Pronto to propagate non-zero exit codes,
+        # i.e., we can use the `--exit-code` flag to fail the linting job in case Pronto reports warning or errors (https://github.com/prontolabs/pronto).
+        run: pronto run --exit-code -f text -c origin/${{ github.base_ref }}
+        if: github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name
+
+  testing:
+    needs: [linting]
+    if: always() && (needs.linting.result == 'success' || needs.linting.result == 'skipped')    # https://github.com/actions/runner/issues/491
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+
+    container:
+      image: complat/chemotion_eln_runner:latest
+      ## options: --user root
+
+
+    services:
+      postgres:
+        image: complat/dev:postgres16-rdkit
+        #image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres    # env variable required by postgres Docker container
+          POSTGRES_USER: chemotion    # optional env variable used in conjunction with POSTGRES_PASSWORD to set a user and their password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      RAILS_ENV: test
+      YARN_CACHE_FOLDER: /home/runner/.cache/yarn
+
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Nodejs
+        id: setup_node
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: .tool-versions
+          cache: '' # disable default caching since yarn is missing there
+          cache-dependency-path: 'yarn.lock'
+          package-manager-cache: false
+
+      - run: corepack enable
+
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+          path: tmp/main
+          fetch-depth: 1
+
+      - name: compute cache key based on main's yarn.lock
+        id: cache_key
+        run: |
+          echo "key=${{ steps.setup_node.outputs.node-version }}-${{ hashFiles('tmp/main/yarn.lock') }}" >> $GITHUB_OUTPUT
+
+      - name: Detect Yarn cache dir
+        id: yarndir
+        run: |
+          if yarn --version | grep -q '^1\.'; then
+            DIR="$(yarn cache dir)"
+          else
+            DIR="$(yarn config get cacheFolder)"
+          fi
+          echo "dir=$DIR" >> $GITHUB_OUTPUT
+
+      - name: Restore dependency cache (from main)
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ steps.yarndir.outputs.dir }}
+          key: ${{ steps.cache_key.outputs.key }}
+          restore-keys: |
+            ${{ steps.setup_node.outputs.node-version }}-
+
+      - name: create user for datacollectors testing
+        run: |
+          useradd testuser -m -s /bin/bash
+          mkdir /home/testuser/.ssh
+          chown testuser:testuser /home/testuser/.ssh
+          chmod 700 /home/testuser/.ssh
+          mkdir -p $HOME/.ssh
+          chmod 700 $HOME/.ssh
+          service ssh restart
+          ssh-keygen -t ed25519 -f $HOME/.ssh/id_test -N ""
+          cat "${HOME}/.ssh/id_test.pub" | tee -a /home/testuser/.ssh/authorized_keys
+          ssh-keyscan -H 127.0.0.1  >> $HOME/.ssh/known_hosts
+
+      - name: configure repository
+        run: |
+          mv public/welcome-message-sample.md public/welcome-message.md
+          cp .env.test.example .env.test
+          cd config
+          cp database.yml.ci database.yml
+          cp -f datacollectors.yml.example datacollectors.yml
+          cp -f profile_default.yml.example profile_default.yml
+          cp -f shrine.yml.example shrine.yml
+          cp -f storage.yml.example storage.yml
+          cp -f radar.yml.example radar.yml
+          touch klasses.json
+          bundle config set without ''
+
+      - name: bundle install
+        run: bundle install
+
+      - name: yarn install
+        run: |
+          if yarn --version | grep -q '^1\.'; then
+            yarn install --frozen-lockfile
+          else
+            yarn install --immutable
+          fi
+
+      - name: prepare postgres
+        run: |
+          bundle exec rake db:create
+          bundle exec rake db:migrate
+
+#      - name: npm test
+#        run: npm test
+
+      - name: rspec unit
+        run: |
+          service ssh restart
+          eval `ssh-agent`
+          RAILS_ENV=test bundle exec rspec --exclude-pattern spec/{features}/**/*_spec.rb spec
+
+      - name: coverage rspec unit
+        if: github.event.pull_request && (github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name) && (github.triggering_actor != 'dependabot[bot]')  # don't run on PRs from forks because of missing write permission: https://github.com/orgs/community/discussions/26829
+        uses: zgosalvez/github-actions-report-lcov@v4
+        with:
+          coverage-files: coverage/lcov/${{ github.event.repository.name }}.lcov
+          minimum-coverage: 57
+          artifact-name: code-coverage-report
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+

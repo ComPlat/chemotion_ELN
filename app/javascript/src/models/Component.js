@@ -13,10 +13,34 @@ export default class Component extends Sample {
   }
 
   /**
+   * Returns the IUPAC name of the molecule or 'Unknown' if not available.
+   * @returns {string} The molecule's IUPAC name or 'Unknown'.
+   */
+  get iupacName() {
+    return this.molecule?.iupac_name || 'Unknown';
+  }
+
+  /**
    * @returns {boolean} True if density is given and starting molarity is not set.
    */
   get has_density() {
     return this.density > 0 && this.starting_molarity_value === 0;
+  }
+
+  /**
+   * Returns a formatted molecular weight string for display, including units.
+   *
+   * The value is formatted to a fixed number of decimal places defined by `MWPrecision`.
+   * If the molecular weight is missing or not a finite number, an empty string is returned.
+   *
+   * @returns {string} The formatted molecular weight text (e.g., " (180.16 g/mol)") or an empty string.
+   */
+  get molecularWeightText() {
+    const mw = this.molecule.molecular_weight;
+    const MWPrecision = 2;
+    return (typeof mw === 'number' && Number.isFinite(mw))
+      ? ` (${mw.toFixed(MWPrecision)} g/mol)`
+      : '';
   }
 
   /** @type {number} */
@@ -27,6 +51,16 @@ export default class Component extends Sample {
   /** @param {number} amount_mol */
   set amount_mol(amount_mol) {
     this._amount_mol = amount_mol;
+  }
+
+  /** @type {number} */
+  get relative_molecular_weight() {
+    return this._relative_molecular_weight;
+  }
+
+  /** @param {number} relative_molecular_weight */
+  set relative_molecular_weight(relative_molecular_weight) {
+    this._relative_molecular_weight = relative_molecular_weight;
   }
 
   /** @type {number} */
@@ -588,24 +622,61 @@ export default class Component extends Sample {
   }
 
   /**
+   * Calculates the relative molecular weight for this component based on its mass contribution
+   * to the total mixture mass.
+   *
+   * Formula: relative MW = total_mixture_mass_g / amount_mol_component (g/mol)
+   *
+   * @param {Sample} sample - The parent sample containing mixture details
+   * @returns {Object} Component summary with id, name, amount_mol, and relative_molecular_weight
+   */
+  calculateRelativeMolecularWeight(sample) {
+    if (!sample.isMixture() || !this) {
+      return null;
+    }
+
+    const totalMixtureMass = sample.total_mixture_mass_g || 0;
+    const componentAmountMol = this.amount_mol || 0;
+
+    const relativeMW = (totalMixtureMass > 0 && componentAmountMol > 0)
+      ? totalMixtureMass / componentAmountMol
+      : 0;
+
+    // Ensure component_properties exists
+    this.component_properties = this.component_properties || {};
+
+    // Assign calculated value
+    this.component_properties.relative_molecular_weight = relativeMW;
+
+    // Return summary for reporting/debugging
+    return {
+      id: this.id,
+      name: this.name || 'Unknown',
+      amount_mol: componentAmountMol,
+      relative_molecular_weight: relativeMW
+    };
+  }
+
+  /**
    * Serializes the component into a plain object.
    * @returns {Object} Serialized component data.
    */
   serializeComponent() {
     return {
       id: this.id,
-      name: this.name || this.molecule.iupac_name,
+      name: this.name || (this.molecule ? this.molecule.iupac_name : ''),
       position: this.position,
       component_properties: {
         amount_mol: this.amount_mol,
         amount_l: this.amount_l,
         amount_g: this.amount_g,
+        relative_molecular_weight: this.relative_molecular_weight,
         density: this.density,
         molarity_unit: this.molarity_unit,
         molarity_value: this.molarity_value,
         starting_molarity_value: this.starting_molarity_value,
         starting_molarity_unit: this.starting_molarity_unit,
-        molecule_id: this.molecule.id,
+        molecule_id: this.molecule ? this.molecule.id : this.molecule_id,
         equivalent: this.equivalent,
         parent_id: this.parent_id,
         material_group: this.material_group,
@@ -654,8 +725,16 @@ export default class Component extends Sample {
    */
   static deserializeData(component) {
     const { component_properties, ...rest } = component;
-    const sampleData = { ...rest, ...component_properties };
+    const { molecule, ...otherProperties } = component_properties || {};
+    const sampleData = { ...rest, ...otherProperties };
 
-    return new Component(sampleData);
+    const comp = new Component(sampleData);
+
+    // Set the molecule if it exists in component_properties
+    if (molecule) {
+      comp.molecule = molecule;
+    }
+
+    return comp;
   }
 }

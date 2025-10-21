@@ -42,7 +42,7 @@ ELN_VERSION=2.0.1
 IMG_SPECTRA=${SERVICE_REPO}:spectra-${ELN_VERSION}
 IMG_CONVERTER=${SERVICE_REPO}:converter-${ELN_VERSION}
 IMG_KETCHERSVC=${SERVICE_REPO}:ketchersvc-${ELN_VERSION}
-
+IMG_INDIGO=epmlsop/indigo-service:latest
 
 ## Map ports to host
 #HOST_PORT_DG=5432

@@ -39,7 +39,7 @@ const updateAtom = (atomLocation, templateType, imageCounter) => ({
   location: atomLocation
 });
 
-// helper function to process ketcher-rails files and adding image to ketcher2 canvas
+// helper function to process ketcher-rails files and adding image to ketcher canvas
 const addingPolymersToKetcher = async (railsPolymersList, data) => {
   try {
     const polymerList = railsPolymersList.split(' ');
@@ -53,7 +53,11 @@ const addingPolymersToKetcher = async (railsPolymersList, data) => {
       for (let atomIndex = 0; atomIndex < molecule.atoms.length; atomIndex++) {
         const atom = molecule.atoms[atomIndex];
         const polymerItem = polymerList[visitedAtoms];
-        const aliasPass = (atom.type === KET_TAGS.rgLabel || ALIAS_PATTERNS.threeParts.test(atom.alias));
+        const aliasPass = (
+          atom.type === KET_TAGS.rgLabel
+          || atom.label === KET_TAGS.inspiredLabel
+          || ALIAS_PATTERNS.threeParts.test(atom.alias)
+        );
         if (polymerItem && aliasPass) {
           // counters
           imageUsedCounterSetter(imageNodeCounter + 1);

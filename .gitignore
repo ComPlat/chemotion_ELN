@@ -49,6 +49,7 @@
 /config/converter.yml
 /config/ketcher_service.yml
 /config/structure_editors.yml
+/config/indigo_service.yml
 !/config/data_collector_keys/.keep
 
 /config/database.yml
@@ -122,6 +123,7 @@
 /public/default_editors
 
 /uploads/*
+!uploads/common_templates/default.json
 !/public/attachments/.keep
 
 /public/json/*

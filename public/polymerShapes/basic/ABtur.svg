@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="29.1 43.86 53.97 26.99" width="53.97" height="26.99">
+  <defs>
+    <pattern id="stripes" patternUnits="userSpaceOnUse" width="6" height="10">
+      <rect width="2" height="10" fill="#a9cdc2"/>
+    </pattern>
+  </defs>
+  <path d="M29.83 59.28v10.31h51.53v-10.31l-14.17-14.17h-23.18z" fill="url(#stripes)" stroke="#1b1918" stroke-width="0.57"/>
+</svg>

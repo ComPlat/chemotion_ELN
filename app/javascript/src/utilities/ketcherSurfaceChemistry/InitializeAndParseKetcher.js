@@ -33,6 +33,9 @@ import {
   centerPositionCanvas,
   saveMoveCanvas,
 } from 'src/utilities/ketcherSurfaceChemistry/canvasOperations';
+import {
+  attachClickListeners
+} from 'src/utilities/ketcherSurfaceChemistry/DomHandeling';
 
 const loadTemplates = async () => {
   fetch('/json/surfaceChemistryShapes.json').then((response) => {
@@ -63,13 +66,12 @@ const setupEditorIframe = ({
   editor,
   resetStore,
   loadContent,
-  attachClickListeners,
   buttonEvents,
 }) => {
   resetStore();
   const iframe = iframeRef.current;
   const handleIframeLoad = () => {
-    attachClickListeners(iframeRef, buttonEvents);
+    attachClickListeners(iframeRef, buttonEvents, editor);
     setBase64TemplateHashSetter(allTemplates);
   };
 
@@ -107,8 +109,8 @@ const hasKetcherData = async (molfile) => {
 
   try {
     const lines = molfile.trim().split('\n');
-    const polymerLine = lines.reverse().find((line) => line.includes(KET_TAGS.polymerIdentifier));
-    return polymerLine ? lines[lines.indexOf(polymerLine) - 1]?.trim() || null : null;
+    const polymerLine = lines.find((line) => line.includes(KET_TAGS.polymerIdentifier));
+    return polymerLine ? lines[lines.indexOf(polymerLine) + 1]?.trim() || null : null;
   } catch (err) {
     console.error('Error processing molfile');
     return null;
@@ -206,7 +208,6 @@ const prepareKetcherData = async (editor, initMol) => {
 const applyKetcherData = async (polymerTag, fileContent, textNodes, editor) => {
   try {
     let molfileContent = fileContent;
-
     if (polymerTag) {
       const { molfileData } = await addPolymerTags(polymerTag, fileContent);
       molfileContent = molfileData;

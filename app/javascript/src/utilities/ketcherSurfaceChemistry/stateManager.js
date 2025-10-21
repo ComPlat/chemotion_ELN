@@ -1,6 +1,7 @@
 /* eslint-disable import/no-mutable-exports */
 import { KET_TAGS } from 'src/utilities/ketcherSurfaceChemistry/constants';
 import { imageNodeCounter } from 'src/components/structureEditor/KetcherEditor';
+import { centerPositionCanvas, onTemplateMove } from 'src/utilities/ketcherSurfaceChemistry/canvasOperations';
 
 export let FILOStack = []; // a stack to main a list of event triggered
 export const uniqueEvents = new Set(); // list of unique event from the canvas
@@ -8,7 +9,7 @@ export let ImagesToBeUpdated = false;
 export let imagesList = []; // image list has all nodes matching type === image
 export let mols = []; // mols has list of molecules present in ket2 format ['mol0', 'mol1']
 export let allNodes = []; // contains a list of latestData.root.nodes list
-export let allAtoms = []; // contains list of all atoms present in a ketcher2 format
+export let allAtoms = []; // contains list of all atoms present in a ketcher format
 export let reloadCanvas = false; // flag to re-render canvas
 export let canvasSelection = null; // contains list of images, atoms, bonds selected in the canvas
 export let deletedAtoms = []; // has a list of deleted atoms on delete "atom event"
@@ -84,13 +85,15 @@ export const templateListSetter = async (data) => {
 // Set base64-encoded SVG templates by template_id
 export const setBase64TemplateHashSetter = async (data) => {
   const templateHash = {};
-  data?.forEach((group) => {
-    group.subTabs.forEach((subTab) => {
-      subTab.shapes.forEach((shape) => {
-        templateHash[shape.template_id] = shape.iconName;
+  if (Object.keys(data).length > 0) {
+    data?.forEach((group) => {
+      group.subTabs.forEach((subTab) => {
+        subTab.shapes.forEach((shape) => {
+          templateHash[shape.template_id] = shape.iconName;
+        });
       });
     });
-  });
+  }
   templatesBaseHashWithTemplateId = templateHash;
 };
 
@@ -107,9 +110,11 @@ export const textListCopyContainerSetter = (data) => {
 };
 
 // keep a copy of imageList and textList
-export const fetchAndReplace = () => {
-  imageListCopyContainerSetter([...imagesList]);
-  textListCopyContainerSetter([...textList]);
+export const fetchAndReplace = (editorLoc) => {
+  centerPositionCanvas(editorLoc);
+  setTimeout(() => {
+    onTemplateMove(editorLoc, false);
+  }, 500);
 };
 
 export const eventUpsertImageDecrement = () => {

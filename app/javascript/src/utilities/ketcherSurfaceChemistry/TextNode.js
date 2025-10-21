@@ -82,7 +82,7 @@ const findByKeyAndUpdateTextNodePosition = async (textNodeKey, atom) => {
     const content = JSON.parse(text.data.content); // Parse content
     if (content.blocks[0].key === textNodeKey) {
       const split = atom.alias.split('_')[2];
-      const positionX = (atom.location[0] + imagesList[split].boundingBox.width / 2);
+      const positionX = (atom.location[0] + imagesList[split].boundingBox.width / 2) + 0.1;
       text.data.position = {
         x: positionX,
         y: atom.location[1],

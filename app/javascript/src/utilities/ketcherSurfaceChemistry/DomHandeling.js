@@ -6,13 +6,19 @@
 
 // DOM functions
 // Function to attach click listeners based on titles
-import { KET_TAGS, LAYERING_FLAGS, EventNames, KET_DOM_TAG } from 'src/utilities/ketcherSurfaceChemistry/constants';
+import {
+  KET_TAGS, LAYERING_FLAGS, EventNames, KET_DOM_TAG
+} from 'src/utilities/ketcherSurfaceChemistry/constants';
 import { fetchKetcherData } from 'src/utilities/ketcherSurfaceChemistry/InitializeAndParseKetcher';
 import {
   PolymerListIconKetcherToolbarButton,
-  specialCharButton,
 } from 'src/components/structureEditor/PolymerListModal';
-import { ImagesToBeUpdated, ImagesToBeUpdatedSetter } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
+import {
+  ImagesToBeUpdated,
+  ImagesToBeUpdatedSetter,
+  canvasSelection,
+  canvasSelectionsSetter
+} from 'src/utilities/ketcherSurfaceChemistry/stateManager';
 import { saveMoveCanvas } from 'src/utilities/ketcherSurfaceChemistry/canvasOperations';
 import { handleAddAtom } from 'src/utilities/ketcherSurfaceChemistry/AtomsAndMolManipulation';
 
@@ -88,8 +94,12 @@ const updateTemplatesInTheCanvas = async (iframeRef) => {
       textElements.forEach((textElem) => {
         const { textContent } = textElem; // Get the text content of the <text> element
         if (textContent === KET_TAGS.inspiredLabel) {
-          // Check if it matches the pattern
           textElem.setAttribute('fill', 'transparent'); // Set fill to transparent
+          const tspans = textElem.querySelectorAll('tspan');
+          tspans.forEach((tspan) => {
+            tspan.setAttribute('fill', 'transparent');
+            tspan.style.fill = 'transparent'; // For good measure
+          });
         }
       });
     }
@@ -179,27 +189,6 @@ export const imageNodeForTextNodeSetter = async (data) => {
   selectedImageForTextNode = data;
 };
 
-// newButton.title = 'Text Node Special Char';
-const updateCharValue = async (iframeDocument) => {
-  // Find element with class .textNodeChar
-  const el = iframeDocument.querySelector("[title='Text Node Special Char']");
-
-  if (el) {
-    el.style.position = 'relative';
-    const circle = iframeDocument.createElement('span');
-    circle.style.width = '10px';
-    circle.style.height = '10px';
-    // circle.style.backgroundColor = '#337ab7';
-    circle.style.borderRadius = '50%';
-    circle.style.position = 'absolute';
-    circle.style.top = '2px';
-    circle.style.right = '2px';
-    el.appendChild(circle);
-  } else {
-    console.warn('Element with class "textNodeChar" not found in iframe.');
-  }
-};
-
 // helper function to add mutation observers to DOM elements
 const attachClickListeners = (iframeRef, buttonEvents) => {
   // Main function to attach listeners and observers
@@ -221,6 +210,8 @@ const attachClickListeners = (iframeRef, buttonEvents) => {
 
     const cancelButton = iframeDocument.querySelector('.Dialog-module_cancel__8d83c');
     const crossButton = iframeDocument.querySelector('.Dialog-module_buttonTop__91ha8');
+    const textModalPopup = iframeDocument.querySelector('.Dialog-module_body__EWh4H');
+    const isTextModal = iframeDocument.querySelector('.Text-module_controlPanel__agLDc');
 
     if (cancelButton) {
       cancelButton?.addEventListener('click', () => {
@@ -235,6 +226,18 @@ const attachClickListeners = (iframeRef, buttonEvents) => {
 
     if (!LAYERING_FLAGS.skipTemplateName) {
       await updateTemplatesInTheCanvas(iframeRef);
+    }
+
+    if (isTextModal
+      && textModalPopup
+      && !textModalPopup.querySelector('.appended-text')
+      && canvasSelection?.images.length > 0
+    ) {
+      const newText = document.createElement('div');
+      newText.classList.add('appended-text');
+      newText.textContent = 'Input structure examples: Pt 1wt.% Pt, γ-Al2O3';
+      textModalPopup.appendChild(newText);
+      canvasSelectionsSetter(null);
     }
   });
 
@@ -253,12 +256,9 @@ const attachClickListeners = (iframeRef, buttonEvents) => {
     // Ensure iframe content is loaded before adding the button
     if (iframeRef?.current?.contentWindow?.document?.readyState === 'complete') {
       PolymerListIconKetcherToolbarButton(iframeDocument);
-      specialCharButton(iframeDocument);
     } else if (iframeRef?.current?.onload) {
       iframeRef.current.onload = PolymerListIconKetcherToolbarButton;
-      iframeRef.current.onload = specialCharButton;
     }
-    updateCharValue(iframeDocument);
   }, 1000);
 
   // Cleanup function
@@ -285,5 +285,4 @@ export {
   runImageLayering,
   attachClickListeners,
   addTextNodeDescriptionOnTextPopup,
-  updateCharValue,
 };
