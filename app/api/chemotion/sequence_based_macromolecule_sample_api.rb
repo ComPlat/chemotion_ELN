@@ -5,7 +5,6 @@ module Chemotion
     include Grape::Kaminari
 
     helpers ParamsHelpers
-    helpers ContainerHelpers
     helpers CollectionHelpers
 
     rescue_from ::Usecases::Sbmm::Errors::SbmmUpdateNotAllowedError do |conflict|

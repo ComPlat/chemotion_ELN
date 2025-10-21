@@ -2,6 +2,7 @@
 
 require 'rails_helper'
 
+# rubocop:disable RSpec/MultipleExpectations
 describe Entities::SequenceBasedMacromoleculeSampleEntity do
   describe '.represent' do
     subject(:entity) { described_class.represent(sbmm_sample) }
@@ -23,8 +24,8 @@ describe Entities::SequenceBasedMacromoleculeSampleEntity do
             localisation: 'Irgendwo',
             organism: 'Ailurus Fulgens',
             strain: 'SomeStrain',
-            tissue: 'Zewa'
-          )
+            tissue: 'Zewa',
+          ),
         )
       end
 
@@ -55,8 +56,8 @@ describe Entities::SequenceBasedMacromoleculeSampleEntity do
             localisation: 'Irgendwo',
             organism: 'Ailurus Fulgens',
             strain: 'SomeStrain',
-            tissue: 'Zewa'
-          )
+            tissue: 'Zewa',
+          ),
         )
       end
 
@@ -71,3 +72,4 @@ describe Entities::SequenceBasedMacromoleculeSampleEntity do
     end
   end
 end
+# rubocop:enable RSpec/MultipleExpectations

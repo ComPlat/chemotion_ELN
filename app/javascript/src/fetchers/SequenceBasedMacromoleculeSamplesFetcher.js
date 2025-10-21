@@ -136,7 +136,7 @@ export default class SequenceBasedMacromoleculeSamplesFetcher {
       .catch(errorMessage => console.log(errorMessage));
 
     const tasks = [];
-    tasks.push(AttachmentFetcher.uploadNewAttachmentsForContainer(sequenceBasedMacromoleculeSample.container).then(() => promise()));
+    tasks.push(AttachmentFetcher.uploadNewAttachmentsForContainer(sequenceBasedMacromoleculeSample.container));
     if (newSampleAttachmentFiles.length > 0 || deletedSampleAttachmentFiles.length > 0) {
       tasks.push(
         AttachmentFetcher.updateAttachables(
