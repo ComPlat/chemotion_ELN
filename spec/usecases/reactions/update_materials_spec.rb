@@ -205,6 +205,220 @@ describe Usecases::Reactions::UpdateMaterials do
       end
     end
   end
+
+  describe 'weight-percentage validation methods' do
+    let(:reaction_with_weight_percentage) do
+      create(:reaction, name: 'WP Reaction', collections: [collection], weight_percentage: true)
+    end
+    let(:reference_record) do
+      ReactionsProductSample.find_by(reaction: reaction_with_weight_percentage, sample: reference_sample)
+    end
+    let(:test_material) do
+      OpenStruct.new(
+        weight_percentage: 0.3,
+        target_amount_value: 30.0,
+        target_amount_unit: 'g',
+      )
+    end
+    let(:class_instance_wp) do
+      described_class.new(reaction_with_weight_percentage, {}, user, vessel_size)
+    end
+    let(:reference_sample) { create(:sample, target_amount_value: 100.0, target_amount_unit: 'g') }
+    let(:material_sample) { create(:sample, target_amount_value: 50.0, target_amount_unit: 'g') }
+
+    before do
+      create(:reactions_product_sample,
+             reaction: reaction_with_weight_percentage,
+             sample: reference_sample,
+             weight_percentage_reference: true)
+    end
+
+    describe '#find_weight_percentage_reference_record' do
+      it 'finds the weight percentage reference record for the reaction' do
+        result = class_instance_wp.send(:find_weight_percentage_reference_record)
+        expect(result).to eq(reference_record)
+        expect(result.weight_percentage_reference).to be true
+      end
+
+      it 'returns nil when no weight percentage reference exists' do
+        reference_record.update(weight_percentage_reference: false)
+        result = class_instance_wp.send(:find_weight_percentage_reference_record)
+        expect(result).to be_nil
+      end
+    end
+
+    describe '#skip_weight_percentage_update?' do
+      it 'returns true when weight percentage is nil' do
+        material = OpenStruct.new(weight_percentage: nil)
+        result = class_instance_wp.send(:skip_weight_percentage_update?, material)
+        expect(result).to be true
+      end
+
+      it 'returns true when weight percentage is zero' do
+        material = OpenStruct.new(weight_percentage: 0.0)
+        result = class_instance_wp.send(:skip_weight_percentage_update?, material)
+        expect(result).to be true
+      end
+
+      it 'returns false when weight percentage is positive' do
+        result = class_instance_wp.send(:skip_weight_percentage_update?, test_material)
+        expect(result).to be false
+      end
+    end
+
+    describe '#valid_reference_target_amount?' do
+      it 'returns true for positive non-zero amounts' do
+        result = class_instance_wp.send(:valid_reference_target_amount?, 100.5)
+        expect(result).to be true
+      end
+
+      it 'returns false for nil amounts' do
+        result = class_instance_wp.send(:valid_reference_target_amount?, nil)
+        expect(result).to be false
+      end
+
+      it 'returns false for zero amounts' do
+        result = class_instance_wp.send(:valid_reference_target_amount?, 0.0)
+        expect(result).to be false
+      end
+    end
+
+    describe '#apply_weight_percentage' do
+      it 'calculates the correct amount using weight percentage' do
+        result = class_instance_wp.send(:apply_weight_percentage, 100.0, 0.25)
+        expect(result).to eq(25.0)
+      end
+
+      it 'works with decimal weight percentages' do
+        result = class_instance_wp.send(:apply_weight_percentage, 200.0, 0.15)
+        expect(result).to eq(30.0)
+      end
+    end
+
+    describe '#update_amount_using_weight_percentage' do
+      it 'calculates amount when all conditions are met' do
+        result = class_instance_wp.send(:update_amount_using_weight_percentage, test_material, reference_record)
+        expect(result).to eq(30.0) # 100.0 * 0.3 = 30.0
+      end
+
+      it 'returns nil when reference record is nil' do
+        result = class_instance_wp.send(:update_amount_using_weight_percentage, test_material, nil)
+        expect(result).to be_nil
+      end
+
+      it 'returns nil when reference has no sample' do
+        reference_record.update(sample: nil)
+        result = class_instance_wp.send(:update_amount_using_weight_percentage, test_material, reference_record)
+        expect(result).to be_nil
+      end
+
+      it 'returns nil when reference target amount is zero' do
+        reference_sample.update(target_amount_value: 0.0)
+        result = class_instance_wp.send(:update_amount_using_weight_percentage, test_material, reference_record)
+        expect(result).to be_nil
+      end
+
+      it 'returns nil when material has no weight percentage' do
+        material_without_wp = OpenStruct.new(weight_percentage: nil)
+        result = class_instance_wp.send(:update_amount_using_weight_percentage, material_without_wp, reference_record)
+        expect(result).to be_nil
+      end
+    end
+
+    describe '#assign_weight_percentage_amounts' do
+      let(:target_sample) { create(:sample, target_amount_value: 100, real_amount_value: 0.0) }
+      let(:target_reactions_sample) do
+        ReactionsProductSample.find_by(reaction: reaction_with_weight_percentage, sample: target_sample)
+      end
+      let(:source_sample) { OpenStruct.new(target_amount_unit: 'mg', real_amount_unit: 'mg', weight_percentage: 0.4) }
+
+      before do
+        create(:reactions_product_sample,
+               reaction: reaction_with_weight_percentage,
+               sample: target_sample,
+               weight_percentage: 15.0)
+      end
+
+      it 'assigns calculated amounts to target sample' do
+        # The assign_weight_percentage_amounts method calls update_amount_using_weight_percentage
+        # which gets weight_percentage from the target_reactions_sample, not target_sample
+        allow(class_instance_wp).to receive(:update_amount_using_weight_percentage)
+          .with(target_reactions_sample, reference_record).and_return(40.0)
+
+        result = class_instance_wp.send(:assign_weight_percentage_amounts, target_sample)
+        expect(result).to eq(target_sample)
+        expect(target_sample.target_amount_value).to eq(40.0)
+        expect(target_sample.target_amount_unit).to eq(reference_sample.target_amount_unit)
+      end
+
+      it 'preserves reference record units' do
+        reference_sample.update(target_amount_unit: 'mg', real_amount_unit: 'mg')
+        allow(class_instance_wp).to receive(:update_amount_using_weight_percentage)
+          .with(target_reactions_sample, reference_record).and_return(40.0)
+
+        class_instance_wp.send(:assign_weight_percentage_amounts, target_sample)
+
+        expect(target_sample.target_amount_unit).to eq('mg')
+        expect(target_sample.real_amount_unit).to eq('mg')
+      end
+    end
+  end
+
+  describe 'integration with weight-percentage workflow' do
+    let(:reaction_with_wp) do
+      create(:reaction, name: 'WP Integration', collections: [collection], weight_percentage: true)
+    end
+    let(:wp_reference_record) do
+      ReactionsProductSample.find_by(reaction: reaction_with_wp, sample: wp_reference_sample)
+    end
+    let(:wp_materials) do
+      {
+        'reactants' => [
+          {
+            'id' => sample2.id,
+            'name' => 'wp_reactant',
+            'target_amount_unit' => 'g',
+            'target_amount_value' => 60.0,
+            'equivalent' => 0.5,
+            'reference' => false,
+            'is_new' => false,
+            'weight_percentage' => 0.25,
+            'molfile' => molfile,
+            'container' => root_container,
+          },
+        ],
+      }
+    end
+    let(:wp_reference_sample) { create(:sample, target_amount_value: 200.0, target_amount_unit: 'g') }
+
+    before do
+      create(:reactions_product_sample,
+             reaction: reaction_with_wp,
+             sample: wp_reference_sample,
+             weight_percentage_reference: true)
+    end
+
+    it 'applies weight percentage calculations during reaction update', :svg_update do
+      allow(SVG::ReactionComposer).to receive(:new)
+
+      # Create a reactions sample with weight percentage to simulate the flow
+      create(:reactions_reactant_sample,
+             reaction: reaction_with_wp,
+             sample: sample2,
+             weight_percentage: 0.25)
+
+      described_class.new(reaction_with_wp, wp_materials, user, vessel_size).execute!
+
+      # Find the updated sample
+      updated_sample = Sample.find(sample2.id)
+
+      # Verify that weight percentage calculation was applied
+      # 200.0 * 0.25 = 50.0
+      expect(updated_sample.target_amount_value).to eq(50.0)
+      expect(updated_sample.real_amount_value).to eq(50.0)
+      expect(updated_sample.target_amount_unit).to eq(wp_reference_sample.target_amount_unit)
+    end
+  end
 end
 
 # rubocop:enable Style/OpenStructUse, RSpec/MultipleMemoizedHelpers
