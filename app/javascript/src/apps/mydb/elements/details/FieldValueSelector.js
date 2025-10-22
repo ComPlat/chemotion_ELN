@@ -9,6 +9,32 @@ import {
 import { metPreConv } from 'src/utilities/metricPrefix';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
+/**
+ * FieldValueSelector Component
+ *
+ * A dual-purpose input component that allows users to:
+ * 1. Select between different field types (e.g., 'molar mass' vs 'weight percentage')
+ * 2. Enter and validate numeric values for the selected field type
+ *
+ * Key features:
+ * - Dynamic field switching via dropdown
+ * - Real-time validation (e.g., weight percentage must be between 0 and 1)
+ * - Comma/dot decimal separator normalization
+ * - Display formatting with precision control
+ * - Conditional disabling based on reference material state
+ *
+ * @param {Object} props - Component properties
+ * @param {string[]} props.fieldOptions - Array of available field types to choose from
+ * @param {string} props.value - Initial/current numeric value
+ * @param {Function} props.onFieldChange - Callback when field type changes (field) => void
+ * @param {Function} props.onChange - Callback when value changes (numericValue) => void
+ * @param {string} props.onFirstRenderField - Initial field type to display
+ * @param {boolean} props.disableSpecificField - Disable input field
+ * @param {boolean} props.disabled - Disable other (equivalent) field(s)
+ * @param {boolean} props.weightPercentageReference - Whether sample is weight % reference
+ * @param {string} props.className - Additional CSS classes
+ * @returns {JSX.Element} The rendered component
+ */
 function FieldValueSelector({
   fieldOptions,
   value,
@@ -26,6 +52,13 @@ function FieldValueSelector({
   const [displayValue, setDisplayValue] = useState('');
   const [isEditing, setIsEditing] = useState(false);
 
+  /**
+   * Formats a numeric value for display with 4 significant digits.
+   * Normalizes comma decimal separators to dots before parsing.
+   *
+   * @param {string|number} val - The value to format
+   * @returns {string} Formatted value or 'n.d.' if invalid
+   */
   const formatValue = (val) => {
     const normalizedVal = val?.toString().replace(',', '.');
     const numValue = parseFloat(normalizedVal);
@@ -41,12 +74,25 @@ function FieldValueSelector({
     setDisplayValue(formatValue(value));
   }, [onFirstRenderField, value]);
 
+  /**
+   * Handles field type change (e.g., switching from 'molar mass' to 'weight percentage').
+   * Closes the dropdown and notifies parent component.
+   *
+   * @param {string} field - The newly selected field type
+   */
   const handleFieldChange = (field) => {
     setSelectedField(field);
     setShowDropdown(false);
     onFieldChange(field);
   };
 
+  /**
+   * Validates that a value is within the valid range for weight percentage (0 to 1).
+   * Normalizes comma to dot before parsing.
+   *
+   * @param {string} initialValidValue - The value to validate
+   * @returns {boolean} True if valid (between 0 and 1), false otherwise
+   */
   const validRange = (initialValidValue) => {
     const num = parseFloat(initialValidValue.toString().replace(',', '.'));
     if (!Number.isNaN(num) && num >= 0 && num <= 1) {
@@ -55,6 +101,15 @@ function FieldValueSelector({
     return false;
   };
 
+  /**
+   * Handles input value changes with validation.
+   * - Strips non-numeric characters (except comma/dot)
+   * - Validates weight percentage range (0-1)
+   * - Shows error notification if invalid
+   * - Updates internal state for editing
+   *
+   * @param {Event} e - The input change event
+   */
   const handleValueChange = (e) => {
     const val = e.target.value;
     // Allow only digits, commas, dots, and valid floats/integers
@@ -80,6 +135,18 @@ function FieldValueSelector({
     setIsEditing(true);
   };
 
+  /**
+   * Handles blur event (user leaves the input field).
+   * - Formats the value for display
+   * - Calls parent onChange callback with parsed float value
+   * - Exits editing mode
+   */
+  /**
+   * Handles blur event (user leaves the input field).
+   * - Formats the value for display
+   * - Calls parent onChange callback with parsed float value
+   * - Exits editing mode
+   */
   const handleBlur = () => {
     if (isEditing && internalValue !== '') {
       // Round the normalized value to fix floating point precision issues
@@ -92,6 +159,10 @@ function FieldValueSelector({
     }
   };
 
+  /**
+   * Handles focus event (user clicks into the input field).
+   * Shows the raw internal value for editing rather than the formatted display value.
+   */
   const handleFocus = () => {
     // When focusing, show the raw value for editing
     setDisplayValue(internalValue);
