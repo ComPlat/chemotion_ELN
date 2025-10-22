@@ -44,54 +44,6 @@ const collectionShow = (e) => {
   });
 };
 
-const scollectionShow = (e) => {
-  UserActions.fetchCurrentUser();
-  const { profile } = UserStore.getState();
-  if (!profile) {
-    UserActions.fetchProfile();
-  }
-  const uiState = UIStore.getState();
-  const currentSearchSelection = uiState.currentSearchSelection;
-  const currentSearchByID = uiState.currentSearchByID;
-  const collectionId = e.params['collectionID'];
-  let collectionPromise = null;
-  collectionPromise = CollectionStore.findBySId(collectionId);
-
-  collectionPromise.then((result) => {
-    const collection = result.sync_collections_user;
-
-    if (currentSearchSelection) {
-      UIActions.selectCollectionWithoutUpdating(collection);
-      ElementActions.fetchBasedOnSearchSelectionAndCollection({
-        selection: currentSearchSelection,
-        collectionId: collection.id,
-        isSync: !!collection.is_sync_to_me
-      });
-    } else {
-      UIActions.selectCollection(collection);
-      if (currentSearchByID) {
-        UIActions.clearSearchById();
-      }
-    }
-
-    // if (!e.params['sampleID'] && !e.params['reactionID'] && !e.params['wellplateID'] && !e.params['screenID']) {
-    UIActions.uncheckAllElements({ type: 'sample', range: 'all' });
-    UIActions.uncheckAllElements({ type: 'reaction', range: 'all' });
-    UIActions.uncheckAllElements({ type: 'wellplate', range: 'all' });
-    UIActions.uncheckAllElements({ type: 'screen', range: 'all' });
-    UIActions.uncheckAllElements({ type: 'device_description', range: 'all' });
-    UIActions.uncheckAllElements({ type: 'vessel', range: 'all' });
-    UIActions.uncheckAllElements({ type: 'sequence_based_macromolecule_sample', range: 'all' });
-    elementNames(false).then((klassArray) => {
-      klassArray.forEach((klass) => {
-        UIActions.uncheckAllElements({ type: klass, range: 'all' });
-      });
-    });
-
-    // }
-  });
-};
-
 const reportShowReport = () => {
   ElementActions.showReportContainer();
 };
@@ -415,12 +367,12 @@ const aviatorNavigationWithCollectionId = (collectionId, type, id, silent = true
   const withId = id ? `/${id}` : '';
   const withType = type ? `/${type}` : '';
   const url = `/collection/${collectionId}${withType}${withId}`;
-  const isGenericEl = (UserStore.getState().genericEls || []).some(({ name }) => name === type);
 
   Aviator.navigate(url, { silent: silent });
 
   if (showOrNew) {
     if (type && id) {
+      collectionShow({ params: { collectionID: collectionId } });
       return elementShowOrNew(defaultParamsForAviatorNavigation(collectionId, type, id));
     } else {
       return collectionShow({ params: { collectionID: collectionId } });
@@ -431,7 +383,6 @@ const aviatorNavigationWithCollectionId = (collectionId, type, id, silent = true
 
 export {
   collectionShow,
-  scollectionShow,
   reportShowReport,
   sampleShowOrNew,
   reactionShow,
