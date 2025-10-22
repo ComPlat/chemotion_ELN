@@ -362,7 +362,7 @@ export default class ReactionDetailsScheme extends React.Component {
    * Workflow:
    * 1. Retrieves the target amount from WeightPercentageReactionStore
    * 2. Validates that target amount exists and has a positive value
-   * 3. Updates starting materials and reactants by calling calculateWeightPercentageBasedOnAmount()
+   * 3. Updates starting materials and reactants by calling calculateAmountBasedOnWeightPercentage()
    *    which sets their amount_g = targetAmount.value * weight_percentage
    * 4. Updates products by calling updateYieldForWeightPercentageReference()
    *    which recalculates yield/equivalent based on target vs actual amounts
@@ -384,7 +384,7 @@ export default class ReactionDetailsScheme extends React.Component {
     if (!targetAmount || !targetAmount.value || targetAmount.value <= 0) return;
 
     [...reaction.starting_materials, ...reaction.reactants].forEach((sample) => {
-      sample.calculateWeightPercentageBasedOnAmount(targetAmount);
+      sample.calculateAmountBasedOnWeightPercentage(targetAmount);
     });
     [...reaction.products].forEach((sample) => {
       sample.updateYieldForWeightPercentageReference();

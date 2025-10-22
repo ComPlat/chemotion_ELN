@@ -28,7 +28,7 @@ import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercen
  * Related components:
  * - ReactionDetailsScheme: Triggers updateReactionMaterials() on store changes
  * - Material: Reads store to determine if weight percentage field should be enabled
- * - Sample: Uses calculateWeightPercentageBasedOnAmount() with values from this store
+ * - Sample: Uses calculateAmountBasedOnWeightPercentage() with values from this store
  */
 class WeightPercentageReactionStore {
   constructor() {

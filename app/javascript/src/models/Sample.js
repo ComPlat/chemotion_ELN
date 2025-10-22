@@ -2471,7 +2471,7 @@ export default class Sample extends Element {
    * @param {Object} targetAmount - Target amount object ({ value: Number, unit: String }).
    * @returns {Sample} The updated sample instance (for chaining).
    */
-  calculateWeightPercentageBasedOnAmount(targetAmount) {
+  calculateAmountBasedOnWeightPercentage(targetAmount) {
     // guard clauses kept inside model, expect targetAmount: { value, unit }
     if (!targetAmount || !targetAmount.value || targetAmount.value <= 0) return this;
 
