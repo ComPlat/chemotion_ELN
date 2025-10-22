@@ -1001,7 +1001,7 @@ export default class ReactionDetailsScheme extends React.Component {
             level: 'error'
           });
         } else {
-          sample.weightPercentage = updatedSample.weight_percentage;
+          sample.weight_percentage = updatedSample.weight_percentage;
         }
       }
       return sample;
