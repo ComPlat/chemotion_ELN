@@ -2450,6 +2450,8 @@ export default class Sample extends Element {
         targetSample.setAmount({ value: this.sample_details.total_mixture_mass_g, unit: 'g' });
       }
     }
+  }
+
   /**
    * Calculate and apply this sample's amount based on a provided target amount of weight percentage reference and
    * the sample's stored weight percentage.

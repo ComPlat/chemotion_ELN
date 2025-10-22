@@ -721,7 +721,7 @@ export default class SampleForm extends React.Component {
     const feedstockSample = sample.isFeedstock() && field === 'amount_g';
     const weightPercentageSample = sample.weight_percentage > 0;
     const overlayMessage = weightPercentageSample
-      ? 'Amount field is is disabled for samples that belong to reactions with weight percentage. '
+      ? 'Amount field is disabled for samples that belong to reactions with weight percentage. '
         + 'To change the amount, please edit the material sample amount field using weight percentage field in the reaction scheme tab and save the reaction.'
       : null;
     let metric;

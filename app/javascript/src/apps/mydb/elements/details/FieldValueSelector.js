@@ -178,7 +178,7 @@ function FieldValueSelector({
       tooltipMessage = 'weight percentage field is disabled for reference material';
     } else {
       tooltipMessage = 'select a reference material for weight percentage calculation'
-      + 'and assign target amount to enable weight percentage field';
+      + ' and assign target amount to enable weight percentage field';
     }
   }
 
