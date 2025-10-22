@@ -22,6 +22,7 @@ gem 'daemons'
 gem 'delayed_cron_job'
 gem 'delayed_job_active_record'
 gem 'devise'
+gem 'dmtx' # Data Matrix barcodes required by barby https://github.com/toretore/barby/wiki/Symbologies
 gem 'dotenv-rails', require: 'dotenv/rails-now'
 
 gem 'ed25519'
