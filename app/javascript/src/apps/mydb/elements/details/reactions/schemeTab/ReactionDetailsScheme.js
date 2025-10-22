@@ -353,6 +353,30 @@ export default class ReactionDetailsScheme extends React.Component {
     });
   }
 
+  /**
+   * Updates reaction materials based on weight percentage calculations.
+   *
+   * This method recalculates the amounts of all starting materials, reactants, and yield for products
+   * when weight percentage mode is enabled and a target amount is set for the product weight percentage reference.
+   *
+   * Workflow:
+   * 1. Retrieves the target amount from WeightPercentageReactionStore
+   * 2. Validates that target amount exists and has a positive value
+   * 3. Updates starting materials and reactants by calling calculateWeightPercentageBasedOnAmount()
+   *    which sets their amount_g = targetAmount.value * weight_percentage
+   * 4. Updates products by calling updateYieldForWeightPercentageReference()
+   *    which recalculates yield/equivalent based on target vs actual amounts
+   *
+   * Guard clauses:
+   * - Returns early if targetAmount is missing, null, or <= 0
+   * - Individual sample methods handle their own validation
+   *
+   * Side effects:
+   * - Mutates sample amounts and equivalents in the reaction object
+   * - Triggered by weight percentage field changes or target amount updates
+   *
+   * @returns {void}
+   */
   updateReactionMaterials() {
     const { reaction } = this.props;
     const { targetAmount } = WeightPercentageReactionStore.getState();
@@ -1342,6 +1366,20 @@ export default class ReactionDetailsScheme extends React.Component {
     });
   }
 
+  /**
+   * Updates the sample's weight percentage in a reaction when a sample's weight percentage changes.
+   *
+   * This method is called when a user modifies the weight percentage value of a sample
+   * in the reaction scheme.
+   *
+   * Key behaviors:
+   * - Only modifies the specific sample that changed
+   * - Mutates the updated sample's weight percentage property
+   *
+   * @param {Array<Sample>} samples - Array of all samples in the current material group
+   * @param {Sample} updatedSample - The sample whose weight percentage was changed
+   * @returns {Array<Sample>} The updated samples array
+   */
   updatedSamplesForWeightPercentageChange(samples, updatedSample) {
     return samples.map((sample) => {
       if (sample.id === updatedSample.id) {

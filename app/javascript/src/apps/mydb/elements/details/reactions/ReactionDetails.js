@@ -519,6 +519,24 @@ export default class ReactionDetails extends Component {
     }
   }
 
+  /**
+   * Updates the weight percentage reference material and target amount in the store.
+   *
+   * This method is called when the reaction is in weight percentage mode to synchronize
+   * the Alt.js store with the current weight percentage reference material from the reaction.
+   *
+   * Workflow:
+   * 1. Retrieves the current weight percentage reference material and target amount
+   * 2. Dispatches actions to update the WeightPercentageReactionStore
+   *
+   * Store updates:
+   * - setWeightPercentageReference: Updates which material is the weight percentage reference
+   * - setTargetAmountWeightPercentageReference: Updates the target amount for calculations
+   *
+   * Note: Wrapped in Promise.resolve() to ensure async execution and avoid state conflicts
+   *
+   * @param {Object} reaction - The reaction object containing weight percentage reference data
+   */
   // eslint-disable-next-line class-methods-use-this
   updateWeightPercentageReference(reaction) {
     Promise.resolve().then(() => {

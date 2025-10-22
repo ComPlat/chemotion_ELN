@@ -363,6 +363,20 @@ class Material extends Component {
     );
   }
 
+  /**
+   * Renders a dual-purpose field selector/input for equivalent or weight percentage values.
+   *
+   * This component allows users to switch between two modes:
+   * 1. Molar mass mode: Shows and edits the material's equivalent value
+   * 2. Weight percentage mode: Shows and edits the material's weight percentage value
+   *
+   * Weight percentage field is conditionally disabled when:
+   * - No weight percentage reference material is set in the reaction
+   * - Target amount weight percentage reference materialis invalid (NaN or 0)
+   * - Current material is itself the weight percentage reference
+   *
+   * @returns {JSX.Element} FieldValueSelector component with mode switching capability
+   */
   customFieldValueSelector() {
     const { material, reaction, lockEquivColumn } = this.props;
     const { fieldToShow } = this.state;
@@ -1436,6 +1450,16 @@ class Material extends Component {
     );
   }
 
+  /**
+   * Renders a radio button for selecting this product material as the weight percentage reference.
+   *
+   * This radio button appears only when weight percentage mode is enabled for the reaction.
+   * When checked, this material becomes the reference product used for weight percentage calculations.
+   *
+   * @param {Object} material - The current material to render the reference radio for
+   * @param {Object} reaction - The parent reaction object
+   * @returns {JSX.Element} Radio button with tooltip or empty div if weight percentage mode is disabled
+   */
   renderProductReference(material, reaction) {
     return (
       reaction.weight_percentage ? (
@@ -1463,6 +1487,31 @@ class Material extends Component {
     );
   }
 
+  /**
+   * Renders a nested dual-radio system for selecting material and weight percentage references.
+   *
+   * This creates a two-level radio button structure:
+   * - Outer radio: Selects this material as the weight percentage reference
+   * - Inner radio: Selects this material as the limiting reagent reference (standard reference)
+   *
+   * Visual hierarchy:
+   * - Outer circle: Weight percentage reference selection (affects amount calculations)
+   * - Inner circle: Standard reference selection (affects equivalent calculations)
+   *
+   * Interaction:
+   * - Clicking outer radio: Sets weight percentage reference
+   * - Clicking inner radio: Sets standard reference (prevents event propagation to outer)
+   * - Supports keyboard navigation (Enter/Space keys)
+   *
+   * Styling:
+   * - Dynamic class names based on checked state and disabled state
+   * - Outer gets 'checked' class when material.weight_percentage_reference is true
+   * - Inner gets 'checked' class when material.reference is true
+   *
+   * @param {Object} material - The current material to render reference radios for
+   * @param {Object} reaction - The parent reaction object
+   * @returns {JSX.Element} Nested radio button structure with accessibility support
+   */
   renderNestedReferenceRadios(material, reaction) {
     const isDisabled = !permitOn(reaction);
     console.log(material.weight_percentage_reference);
