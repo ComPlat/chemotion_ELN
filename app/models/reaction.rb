@@ -5,13 +5,6 @@
 # Table name: reactions
 #
 #  id                     :integer          not null, primary key
-#  conditions             :string
-#  created_by             :integer
-#  dangerous_products     :string           default([]), is an Array
-#  deleted_at             :datetime
-#  description            :text
-#  duration               :string
-#  gaseous                :boolean          default(FALSE)
 #  name                   :string
 #  observation            :text
 #  origin                 :jsonb
@@ -38,9 +31,16 @@
 #  variations             :jsonb
 #  vessel_size            :jsonb
 #  volume                 :decimal(10, 4)
-#  weight_percentage      :boolean
 #  created_at             :datetime         not null
 #  updated_at             :datetime         not null
+#  description            :text
+#  dangerous_products     :string           default([]), is an Array
+#  deleted_at             :datetime
+#  created_by             :integer
+#  duration               :string
+#  conditions             :string
+#  gaseous                :boolean          default(FALSE)
+#  weight_percentage      :boolean          default(FALSE)
 #
 # Indexes
 #

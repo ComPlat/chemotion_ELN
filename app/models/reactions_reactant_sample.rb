@@ -2,24 +2,24 @@
 #
 # Table name: reactions_samples
 #
-#  id                          :integer          not null, primary key
-#  coefficient                 :float            default(1.0)
-#  conversion_rate             :float
-#  deleted_at                  :datetime
-#  equivalent                  :float
-#  gas_phase_data              :jsonb
-#  gas_type                    :integer          default("off")
-#  position                    :integer
-#  reference                   :boolean
-#  show_label                  :boolean          default(FALSE), not null
-#  type                        :string
-#  waste                       :boolean          default(FALSE)
+#  id              :integer          not null, primary key
+#  reaction_id     :integer
+#  sample_id       :integer
+#  reference       :boolean
+#  equivalent      :float
+#  position        :integer
+#  type            :string
+#  deleted_at      :datetime
+#  waste           :boolean          default(FALSE)
+#  coefficient     :float            default(1.0)
+#  show_label      :boolean          default(FALSE), not null
+#  gas_type        :integer          default("off")
+#  gas_phase_data  :jsonb
+#  conversion_rate :float
 #  weight_percentage           :float
 #  weight_percentage_reference :boolean          default(FALSE)
-#  created_at                  :datetime
-#  updated_at                  :datetime
-#  reaction_id                 :integer
-#  sample_id                   :integer
+#  created_at      :datetime
+#  updated_at      :datetime
 #
 # Indexes
 #

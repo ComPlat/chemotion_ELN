@@ -216,7 +216,6 @@ class Sample < ApplicationRecord
   before_save :attach_svg, :init_elemental_compositions,
               :set_loading_from_ea
   before_save :auto_set_short_label
-  ## before_save :update_amount_using_weight_percentage
   before_create :check_molecule_name
   before_create :set_boiling_melting_points
   after_create :create_root_container

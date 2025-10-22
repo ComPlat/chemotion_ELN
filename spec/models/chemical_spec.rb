@@ -4,17 +4,12 @@
 #
 # Table name: chemicals
 #
-#  id                              :bigint           not null, primary key
-#  cas                             :text
-#  chemical_data                   :jsonb
-#  deleted_at                      :datetime
-#  updated_at                      :datetime
-#  sample_id                       :integer
-#  sequence_based_macromolecule_id :bigint
-#
-# Foreign Keys
-#
-#  fk_rails_...  (sequence_based_macromolecule_id => sequence_based_macromolecules.id)
+#  id            :bigint           not null, primary key
+#  cas           :text
+#  chemical_data :jsonb
+#  deleted_at    :datetime
+#  updated_at    :datetime
+#  sample_id     :integer
 #
 require 'rails_helper'
 
