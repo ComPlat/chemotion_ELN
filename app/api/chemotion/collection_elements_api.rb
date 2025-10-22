@@ -25,13 +25,14 @@ module Chemotion
           collection_id: params[:collection_id],
           ui_state: params[:ui_state].except(:currentCollection)
         )
-
-        # TODO: determine return value
       end
 
       desc 'Removes elements from a collection'
       delete :collection_id do
-
+        Usecases::Collections::RemoveElements.new(current_user).perform!(
+          collection_id: params[:collection_id],
+          ui_state: params[:ui_state].except(:currentCollection)
+        )
       end
     end
   end
