@@ -1,5 +1,6 @@
 import alt from 'src/stores/alt/alt';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
+import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
 
 class SpectraActions {
   ToggleModal() {
@@ -109,19 +110,72 @@ class SpectraActions {
     return null;
   }
 
-  LoadSpectraForNMRDisplayer(spcInfos) {
-    const idxs = spcInfos && spcInfos.map(si => si.idx);
-    if (idxs.length === 0) {
-      return null;
-    }
+  LoadSpectraForNMRDisplayer(spcInfos = []) {
+    if (spcInfos.length === 0) return null;
+  
+    // Split input between .nmrium and JCAMP files
+    const nmriumInfos = spcInfos.filter(si =>
+      si.label?.toLowerCase().endsWith('.nmrium'),
+    );
+  
+    const jcampExtensions = ['.jdx', '.dx', '.jcamp'];
+    const zipExtensions = ['.zip'];
+    const jdxInfos = spcInfos.filter(si =>
+      jcampExtensions.some(ext => si.label?.toLowerCase().endsWith(ext)),
+    );
+    const zipInfos = spcInfos.filter(si =>
+      zipExtensions.some(ext => si.label?.toLowerCase().endsWith(ext)),
+    );
+  
+    return async (dispatch) => {
+      try {
+        // Fetch .nmrium
+        const nmriumIds = nmriumInfos.map(si => si.idx);
+        const nmriumFilesResponse = nmriumIds.length > 0
+          ? await AttachmentFetcher.fetchFiles(nmriumIds)
+          : [];
+  
+        // Fetch JCAMP files
+        const jdxIds = jdxInfos.map(si => si.idx);
+        const jdxUrls = await Promise.all(
+          jdxIds.map(id => ThirdPartyAppFetcher.getHandlerUrl(id, 3))
+        );
 
-    return (dispatch) => {
-      AttachmentFetcher.fetchFiles(idxs)
-        .then((fetchedFiles) => {
-          dispatch({ fetchedFiles, spcInfos });
-        }).catch((errorMessage) => {
-          console.log(errorMessage); // eslint-disable-line
+        // Fetch ZIP files
+        const zipIds = zipInfos.map(si => {
+          return si.idx;
         });
+        const zipUrls = await Promise.all(
+          zipIds.map(id => ThirdPartyAppFetcher.getHandlerUrl(id, 3))
+        );
+  
+        // Construct list of fetched spectra
+        const fetchedSpectra = [
+          ...nmriumInfos.map((info, i) => ({
+            id: info.idx,
+            label: info.label,
+            kind: 'nmrium',
+            file: nmriumFilesResponse.files[i]?.file,
+          })),
+          ...jdxInfos.map((info, i) => ({
+            id: info.idx,
+            label: info.label,
+            kind: 'jcamp',
+            url: jdxUrls[i],
+          })),
+          ...zipInfos.map((info, i) => ({
+            id: info.idx,
+            label: info.label,
+            kind: 'zip',
+            url: zipUrls[i],
+          })),
+        ].filter(entry => entry.file || entry.url);
+  
+        dispatch({ fetchedSpectra, spcInfos });
+  
+      } catch (error) {
+        console.error('LoadSpectraForNMRDisplayer failed:', error);
+      }
     };
   }
 }
