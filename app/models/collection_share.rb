@@ -31,10 +31,23 @@
 #  fk_rails_...  (shared_with_id => users.id)
 #
 class CollectionShare < ApplicationRecord
+  # most permission levels are directed at the elements, except pass ownership, this refers to the collection itself
+  PERMISSION_LEVELS = {
+    read_elements: 0,
+    write_elements: 1,
+    share_collection: 2,
+    delete_elements: 3,
+    import_elements: 4,
+    pass_ownership: 6
+  }
   belongs_to :collection
   belongs_to :shared_with, class_name: "User"
 
   scope :shared_by, ->(user) { joins(:collection).where(collections: { user: user }) }
   scope :shared_with, ->(user) { where(shared_with: user) }
   scope :with_minimum_permission_level, ->(permission_level) { where("collection_shares.permission_level >= ?", permission_level) }
+
+  def self.permission_level(key)
+    PERMISSION_LEVELS[key] || -1
+  end
 end
