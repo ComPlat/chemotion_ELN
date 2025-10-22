@@ -26,7 +26,8 @@ module Usecases
 
       def check_access_to_elements(ui_state)
         ui_state.each do |class_string, ui_selections|
-          element_class = API::ELEMENT_CLASS[class_string] || Labimotion::ElementKlass.find(name: class_string).elements
+          element_class = API::ELEMENT_CLASS[class_string] || Labimotion::ElementKlass.find(name: class_string)&&.elements
+          next unless element_class
           scope = element_class.by_ui_state(ui_selections)
 
           policy = ElementsPolicy.new(current_user, scope)
