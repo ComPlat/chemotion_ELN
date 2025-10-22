@@ -4,17 +4,19 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Popover } from 'react-bootstrap';
 import Immutable from 'immutable';
-import _, { isEmpty } from 'lodash';
+import { isEmpty, set } from 'lodash';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import TabLayoutEditor from 'src/apps/mydb/elements/tabLayout/TabLayoutEditor';
 import ConfigOverlayButton from 'src/components/common/ConfigOverlayButton';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import { capitalizeWords } from 'src/utilities/textHelper';
 import { filterTabLayout, getArrayFromLayout } from 'src/utilities/CollectionTabsHelper';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
 export default class ElementDetailSortTab extends Component {
+  static contextType = StoreContext;
+
   constructor(props) {
     super(props);
     this.state = {
@@ -42,7 +44,7 @@ export default class ElementDetailSortTab extends Component {
     const { currentCollection } = UIStore.getState();
     const collectionTabs = currentCollection?.tabs_segment;
     let layout;
-    if (!collectionTabs || _.isEmpty(collectionTabs[`${type}`])) {
+    if (!collectionTabs || isEmpty(collectionTabs[`${type}`])) {
       layout = state.profile && state.profile.data && state.profile.data[`layout_detail_${type}`];
     } else {
       layout = collectionTabs[`${type}`];
@@ -70,15 +72,14 @@ export default class ElementDetailSortTab extends Component {
     const { currentCollection } = UIStore.getState();
     const { type } = this.props;
     let tabSegment = currentCollection?.tabs_segment;
-    _.set(tabSegment, `${type}`, layout);
+    set(tabSegment, `${type}`, layout);
     tabSegment = { ...tabSegment, [`${type}`]: layout };
-    if (currentCollection && !currentCollection.is_sync_to_me) {
-      CollectionActions.updateTabsSegment({ segment: tabSegment, cId: currentCollection.id });
-    }
+
+    this.context.collections.updateCollection(currentCollection, tabSegment);
 
     const userProfile = UserStore.getState().profile;
     const layoutName = `data.layout_detail_${type}`;
-    _.set(userProfile, layoutName, layout);
+    set(userProfile, layoutName, layout);
 
     UserActions.updateUserProfile(userProfile);
   }
@@ -91,7 +92,9 @@ export default class ElementDetailSortTab extends Component {
     const { visible, hidden } = this.state;
     const { tabTitles } = this.props;
     const { currentCollection } = UIStore.getState();
-    const tabs = currentCollection?.tabs_segment;
+    const isOwnCollection = this.context.collections.isOwnCollection(currentCollection?.id);
+    const allCollection = currentCollection.is_locked && currentCollection.label === 'All';
+    if (!isOwnCollection && !allCollection) { return null; }
 
     const popoverSettings = (
       <Popover>
@@ -100,14 +103,12 @@ export default class ElementDetailSortTab extends Component {
           <TabLayoutEditor
             visible={visible}
             hidden={hidden}
-            getItemComponent={({item}) => (<div>{tabTitles[item] ?? capitalizeWords(item)}</div>)}
+            getItemComponent={({ item }) => (<div>{tabTitles[item] ?? capitalizeWords(item)}</div>)}
             onLayoutChange={this.onLayoutChange}
           />
         </Popover.Body>
       </Popover>
     );
-
-    const buttonRef = React.createRef(null);
 
     return (
       <ConfigOverlayButton onToggle={this.toggleTabLayoutContainer} popoverSettings={popoverSettings} />
