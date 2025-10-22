@@ -15,7 +15,7 @@ module Chemotion
         analysis.save!
         
         params[:experiments].map {|experiment|
-          new_experiment = AnalysesExperiment.create({
+          new_experiment = AnalysesExperiment.create(
             devices_analysis_id: analysis.id,
             holder_id: experiment.holder_id,
             status: experiment.status,
@@ -29,7 +29,7 @@ module Chemotion
             sample_id: experiment.sample_id,
             devices_sample_id: experiment.devices_sample_id,
             sample_analysis_id: experiment.sample_analysis_id,
-          })
+          )
           analysis.analyses_experiments << new_experiment
         }
 

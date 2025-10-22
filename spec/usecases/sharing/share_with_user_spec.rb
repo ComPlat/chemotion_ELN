@@ -39,7 +39,7 @@ RSpec.describe Usecases::Sharing::ShareWithUser do
     }
   end
 
-  subject { described_class.new(params) }
+  subject { described_class.new(**params) }
 
   before do
     CollectionsSample.create!(collection: collection, sample: sample_1)

@@ -277,7 +277,7 @@ class Import::ImportSdf < Import::ImportSamples
     babel_info_array.map.with_index do |babel_info, i|
       if babel_info[:inchikey].present?
         mf = molfiles[i]
-        m = Molecule.find_or_create_by_molfile(mf, babel_info)
+        m = Molecule.find_or_create_by_molfile(mf, **babel_info)
         process_molfile_opt_data(mf).merge(
           inchikey: m.inchikey, svg: "molecules/#{m.molecule_svg_file}", name: m.iupac_name, molfile: mf
         )

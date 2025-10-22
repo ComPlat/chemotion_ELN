@@ -14,7 +14,7 @@ module Chemotion
           Chemotion::ChemicalsService.handle_exceptions do
             attributes = declared(params, include_missing: false)
             if params[:chemical_data].present? || params[:cas].present?
-              Chemical.find_by(sample_id: params[:sample_id]).update!(attributes)
+              Chemical.find_by(sample_id: params[:sample_id]).update!(**attributes)
             else
               status 204
             end
@@ -44,7 +44,7 @@ module Chemotion
         post do
           Chemotion::ChemicalsService.handle_exceptions do
             attributes = declared(params, include_missing: false)
-            Chemical.create!(attributes)
+            Chemical.create!(**attributes)
           end
         end
       end

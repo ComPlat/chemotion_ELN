@@ -121,7 +121,7 @@ class Molecule < ApplicationRecord
     babel_info_array = Chemotion::OpenBabelService.molecule_info_from_molfiles(molfiles_array)
     babel_info_array.map.with_index do |babel_info, i|
       if babel_info[:inchikey]
-        Molecule.find_or_create_by_molfile(molfiles_array[i], babel_info)
+        Molecule.find_or_create_by_molfile(molfiles_array[i], **babel_info)
       else
         nil
       end
