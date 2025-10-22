@@ -548,7 +548,7 @@ module Reporter
         sample_hash[:weight_percentage] = if is_weight_percentage_scheme && s.weight_percentage.present? && !is_product
                                             valid_digit(s.weight_percentage, digit)
                                           else
-                                            '' 
+                                            ''
                                           end
 
         if is_product

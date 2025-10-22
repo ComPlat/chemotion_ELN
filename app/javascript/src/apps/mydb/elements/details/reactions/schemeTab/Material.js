@@ -268,8 +268,10 @@ class Material extends Component {
     } else if (refMaterial && (refMaterial.decoupled || material.decoupled)) {
       calculateYield = 'n.a.';
     } else if (material.purity < 1 && isNumeric(material.equivalent) && material.equivalent > 1) {
-      const eq = (material.purity / 100) * material.amount_g <= 1 ? material.amount_g : 1;
-      calculateYield = `${(((material.purity / 100) * (eq * 1000)) * 100).toFixed(1)}%`;
+      const stoichiometryCoeff = (material.coefficient || 1.0) / (refMaterial?.coefficient || 1.0);
+      const maxAmount = (refMaterial.amount_mol || 0) * stoichiometryCoeff * material.molecule_molecular_weight;
+      const eq = maxAmount !== 0 ? (material.amount_g * (material.purity || 1)) / maxAmount : 0;
+      calculateYield = `${(eq * 100).toFixed(1)}%`;
     } else if (isNumeric(material.equivalent)) {
       const eq = material.equivalent <= 1 ? material.equivalent : 1;
       calculateYield = `${((eq || 0) * 100).toFixed(0)}%`;
