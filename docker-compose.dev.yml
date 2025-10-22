@@ -112,6 +112,21 @@ services:
     working_dir: "/home/ubuntu/app"
     command: './run-js-dev.sh'
 
+  storybook:
+    depends_on:
+      webpacker:
+        condition: service_started
+    image: *chemotion_eln_dev
+    env_file:
+      - ./.env
+      #- ./.env.development
+    volumes: *common-volumes
+    ports: # expose storybook dev server port to host machine
+      - "6006:6006"
+    working_dir: "/home/ubuntu/app"
+    command: 'yarn run storybook'
+
+
 volumes:
   database:
     name: ${VOLUME_NAME_DB:-chemotion_eln_database}
