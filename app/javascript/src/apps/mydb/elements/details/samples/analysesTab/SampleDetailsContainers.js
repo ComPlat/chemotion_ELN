@@ -42,7 +42,6 @@ export default class SampleDetailsContainers extends Component {
     this.handleToggleMode = this.handleToggleMode.bind(this);
     this.isEqCId = this.isEqCId.bind(this);
     this.indexedContainers = this.indexedContainers.bind(this);
-    this.getSortedContainers = this.getSortedContainers.bind(this);
   }
 
   componentDidMount() {
@@ -86,17 +85,12 @@ export default class SampleDetailsContainers extends Component {
   handleMove(source, target) {
     const { sample } = this.props;
 
-    const sortedConts = this.getSortedContainers(sample);
+    const sortedConts = sortedContainers(sample);
     const newSortConts = reOrderArr(source, target, this.isEqCId, sortedConts);
     const newIndexedConts = this.indexedContainers(newSortConts);
 
     sample.analysesContainers()[0].children = newIndexedConts;
     this.props.setState((prevState) => ({ ...prevState, sample }));
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  getSortedContainers(sample) {
-    return sortedContainers(sample);
   }
 
   // eslint-disable-next-line class-methods-use-this
