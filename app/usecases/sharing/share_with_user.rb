@@ -11,7 +11,7 @@ module Usecases
 
       def execute! # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/AbcSize, Metrics/MethodLength
         ActiveRecord::Base.transaction do # rubocop:disable Metrics/BlockLength
-          c = Collection.create(@collection_attributes)
+          c = Collection.create(**@collection_attributes)
           sample_ids = @params.fetch(:sample_ids, [])
           reaction_ids =  @params.fetch(:reaction_ids, [])
           wellplate_ids = @params.fetch(:wellplate_ids, [])

@@ -375,7 +375,7 @@ class Sample < ApplicationRecord
         chemical_data: chemical_data,
         sample_id: subsample_id,
       }
-      chemical = Chemical.new(attributes)
+      chemical = Chemical.new(**attributes)
       chemical.save!
     # create chemical entry for subsample in a reaction
     when 'reaction'
@@ -386,7 +386,7 @@ class Sample < ApplicationRecord
           chemical_data: update_chemical_data,
           sample_id: subsample_id,
         }
-        chemical = Chemical.new(attributes)
+        chemical = Chemical.new(**attributes)
         chemical.save!
       end
     end
@@ -484,7 +484,7 @@ class Sample < ApplicationRecord
     self.molfile_version = babel_info[:version]
     return unless molecule&.inchikey != inchikey || molecule.is_partial != is_partial
 
-    self.molecule = Molecule.find_or_create_by_molfile(molfile, babel_info)
+    self.molecule = Molecule.find_or_create_by_molfile(molfile, **babel_info)
   end
 
   def find_or_create_fingerprint
@@ -666,7 +666,7 @@ class Sample < ApplicationRecord
     if (item = elemental_compositions.find { |i| i.composition_type == d_type })
       item.assign_attributes attrs
     else
-      elemental_compositions << ElementalComposition.new(attrs)
+      elemental_compositions << ElementalComposition.new(**attrs)
     end
   end
 
@@ -762,7 +762,7 @@ class Sample < ApplicationRecord
     if molecule_name&.new_record? && molecule.persisted? && molecule_name.name.present?
       att = molecule_name.attributes.slice('user_id', 'description', 'name')
       att['molecule_id'] = molecule.id
-      mn = MoleculeName.find_or_create_by(att)
+      mn = MoleculeName.find_or_create_by(**att)
     else
       target = molecule_iupac_name || molecule_sum_formular
       mn = molecule.molecule_names.find_by(name: target)
