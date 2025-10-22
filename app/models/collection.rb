@@ -6,17 +6,18 @@
 #
 # Table name: collections
 #
-#  id                     :integer          not null, primary key
-#  ancestry               :string           default("/"), not null
-#  deleted_at             :datetime
-#  label                  :text             not null
-#  position               :integer
-#  tabs_segment           :jsonb
-#  wellplate_detail_level :integer          default(10)
-#  created_at             :datetime         not null
-#  updated_at             :datetime         not null
-#  inventory_id           :bigint
-#  user_id                :integer          not null
+#  id           :integer          not null, primary key
+#  ancestry     :string           default("/"), not null
+#  deleted_at   :datetime
+#  is_locked    :boolean          default(FALSE)
+#  label        :text             not null
+#  position     :integer
+#  shared       :boolean          default(FALSE), not null
+#  tabs_segment :jsonb
+#  created_at   :datetime         not null
+#  updated_at   :datetime         not null
+#  inventory_id :bigint
+#  user_id      :integer          not null
 #
 # Indexes
 #
