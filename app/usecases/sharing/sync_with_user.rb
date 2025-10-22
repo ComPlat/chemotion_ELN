@@ -40,7 +40,7 @@ module Usecases
             is_shared: true
           }
 
-          rc = Collection.find_or_create_by(root_collection_attributes)
+          rc = Collection.find_or_create_by(**root_collection_attributes)
           sync_collections_user.update(fake_ancestry: rc.id.to_s)
 
           # SendSharingNotificationJob.perform_later(@user, '')

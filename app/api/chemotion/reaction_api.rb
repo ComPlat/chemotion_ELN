@@ -191,7 +191,7 @@ module Chemotion
           attributes.delete(:container)
           attributes.delete(:segments)
 
-          reaction.update!(attributes)
+          reaction.update!(**attributes)
           reaction.touch
           reaction_vessel_size = attributes[:vessel_size]
           reaction = Usecases::Reactions::UpdateMaterials.new(
@@ -261,7 +261,7 @@ module Chemotion
 
         collection = current_user.collections.find_by(id: collection_id)
         attributes[:created_by] = current_user.id
-        reaction = Reaction.create!(attributes)
+        reaction = Reaction.create!(**attributes)
         recent_ols_term_update('rxno', [params[:rxno]]) if params[:rxno].present?
 
         if literatures.present?
@@ -284,8 +284,8 @@ module Chemotion
               element_id: reaction.id,
               category: 'detail',
             }
-            unless Literal.find_by(lattributes)
-              Literal.create(lattributes)
+            unless Literal.find_by(**lattributes)
+              Literal.create(**lattributes)
               reaction.touch
             end
           end

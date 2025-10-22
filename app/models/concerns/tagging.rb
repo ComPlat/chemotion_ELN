@@ -44,7 +44,7 @@ module Tagging
       element = 'vessel'
     end
 
-    element && send(element)&.update_tag!(args)
+    element && send(element)&.update_tag!(**args)
   end
 end
 # rubocop: enable Metrics/CyclomaticComplexity

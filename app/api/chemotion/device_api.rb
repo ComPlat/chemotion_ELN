@@ -10,9 +10,9 @@ module Chemotion
       end
       post do
         attributes = declared(params, include_missing: false)
-        device = Device.new(attributes.except!(:samples))
+        device = Device.new(**attributes.except!(:samples))
         params[:samples].map {|s|
-          sample = DevicesSample.create({sample_id: s.sample_id, device_id: device.id, types: s.types})
+          sample = DevicesSample.create(sample_id: s.sample_id, device_id: device.id, types: s.types)
           device.devices_samples << sample
         }
         device.save!
@@ -101,7 +101,7 @@ module Chemotion
               sample = DevicesSample.find_by(id: s.id)
               params = {sample_id: s.sample_id, device_id: device.id, types: s.types}
               if sample.nil?
-                sample = DevicesSample.create!(params)
+                sample = DevicesSample.create!(**params)
                 device.devices_samples << sample
               else
                 # were types deleted?
@@ -112,7 +112,7 @@ module Chemotion
                   experiment.destroy!
                 }
                 
-                sample.update!(params)
+                sample.update!(**params)
               end
               sample.id
             }
@@ -121,7 +121,7 @@ module Chemotion
               device.devices_samples.find_by(id: sample_id).destroy
             }
 
-            device.update(attributes.except!(:samples))
+            device.update(**attributes.except!(:samples))
             # FIXME how to prevent this?
             Device.find(params[:id])
           end

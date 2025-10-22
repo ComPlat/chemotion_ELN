@@ -144,7 +144,7 @@ describe Chemotion::CellLineAPI do
 
     context 'when cell does not line exist' do
       before do
-        get '/api/v1/cell_lines/-1'
+        get '/api/v1/cell_lines/0'
       end
 
       it 'returns correct http status 400' do
@@ -227,7 +227,7 @@ describe Chemotion::CellLineAPI do
   describe 'GET /api/v1/cell_lines/material' do
     context 'when material does not exist' do
       before do
-        get '/api/v1/cell_lines/material/-1'
+        get '/api/v1/cell_lines/material/0'
       end
 
       it 'returns correct response code' do
@@ -256,7 +256,6 @@ describe Chemotion::CellLineAPI do
     let(:collection) { create(:collection, label: 'other collection') }
     let!(:user) { create(:user, collections: [collection]) }
     let!(:cell_line) { create(:cellline_sample, collections: [collection]) }
-    let(:allow_creation) { true }
     let(:container_param)  do
       { 'name' => 'new',
         'children' =>
@@ -288,12 +287,12 @@ describe Chemotion::CellLineAPI do
     end
 
     before do
-      allow_any_instance_of(ElementsPolicy).to receive(:update?).and_return(allow_creation)
+      allow_any_instance_of(ElementsPolicy).to receive(:update?).and_return(true)
       post '/api/v1/cell_lines/copy', params: params
     end
 
     context 'when cell line not accessable' do
-      let(:params) { { id: '-1', collection_id: collection.id, container: container_param } }
+      let(:params) { { id: '0', collection_id: collection.id, container: container_param } }
 
       it 'returns correct response code 400' do
         expect(response).to have_http_status :bad_request
@@ -301,10 +300,8 @@ describe Chemotion::CellLineAPI do
     end
 
     context 'when user only has read access' do
-      let(:allow_creation) { false }
-
       before do
-        allow_any_instance_of(ElementPolicy).to receive(:update?).and_return(false)
+        allow_any_instance_of(ElementsPolicy).to receive(:update?).and_return(false)
         post '/api/v1/cell_lines/copy', params: params
       end
 

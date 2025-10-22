@@ -246,7 +246,7 @@ module Chemotion
         author_id: current_user.id,
       }
 
-      report = Report.create(attributes)
+      report = Report.create(**attributes)
       current_user.reports << report
       begin
         report.create_docx

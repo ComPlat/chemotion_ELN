@@ -68,9 +68,9 @@ module Chemotion
           label = nil
           if params[:id].present?
             label = UserLabel.find(params[:id])
-            label.update!(attr)
+            label.update!(**attr)
           else
-            label = UserLabel.create!(attr)
+            label = UserLabel.create!(**attr)
           end
           present label, with: Entities::UserLabelEntity
         end
