@@ -1479,7 +1479,7 @@ class Material extends Component {
               checked={material.weight_percentage_reference}
               onChange={(e) => this.handleReferenceChange(e, 'weightPercentageReferenceChanged')}
               size="sm"
-              className="custom-radio m-1"
+              className="reaction-material__custom-radio m-1"
             />
           </OverlayTrigger>
         </div>
@@ -1496,7 +1496,7 @@ class Material extends Component {
    *
    * Visual hierarchy:
    * - Outer circle: Weight percentage reference selection (affects amount calculations)
-   * - Inner circle: Standard reference selection (affects equivalent calculations)
+   * - Inner circle: Standard reference selection (affects amount calculations)
    *
    * Interaction:
    * - Clicking outer radio: Sets weight percentage reference
@@ -1514,16 +1514,15 @@ class Material extends Component {
    */
   renderNestedReferenceRadios(material, reaction) {
     const isDisabled = !permitOn(reaction);
-    console.log(material.weight_percentage_reference);
 
     const outerClassNames = [
-      'nested-radio-outer',
+      'reaction-material__nested-radio-outer',
       material.weight_percentage_reference ? 'checked' : '',
       isDisabled ? 'disabled' : ''
     ].filter(Boolean).join(' ');
 
     const innerClassNames = [
-      'nested-radio-inner',
+      'reaction-material__nested-radio-inner',
       material.reference ? 'checked' : '',
       isDisabled ? 'disabled' : ''
     ].filter(Boolean).join(' ');
@@ -1563,7 +1562,7 @@ class Material extends Component {
           </Tooltip>
         )}
       >
-        <div className="nested-radio-container m-1">
+        <div className="reaction-material__nested-radio-container m-1">
           <div
             className={outerClassNames}
             onClick={handleOuterClick}
