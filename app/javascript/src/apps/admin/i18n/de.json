@@ -1,0 +1,14 @@
+{
+    "userManagement": "Benutzerverwaltung",
+    "devices": "Geräte",
+    "groups": "Gruppen",
+    "UIFeatures": "UI-Funktionen",
+    "textTemplates": "Textvorlagen",
+    "messagePublish": "Nachrichten senden",
+    "loadOLSTerms": "OLS-Begriffe laden",
+    "delayedJobs": "Verzögerte Jobs",
+    "thirdPartyApps": "Apps von Drittanbietern",
+    "diskAvailable" : "verfügbarer Speicherplatz (MB)",
+    "diskPercentUsed": "belegter Speicherplatz (%)",
+    "defaultUserAllocatedSpace": "Standard-Speicherplatz pro Benutzer (MB)"
+}

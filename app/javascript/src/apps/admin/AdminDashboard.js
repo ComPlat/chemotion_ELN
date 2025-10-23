@@ -2,9 +2,11 @@ import React from 'react';
 import {
   InputGroup, Card, Form, Button
 } from 'react-bootstrap';
+import propType from 'prop-types';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
+import { injectIntl, FormattedMessage } from 'react-intl';
 
-export default class AdminDashboard extends React.Component {
+class AdminDashboard extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -51,37 +53,56 @@ export default class AdminDashboard extends React.Component {
     const {
       diskAvailable, diskPercentUsed, allocatedUserSpace
     } = this.state;
+    const { intl } = this.props;
+
     const className = diskPercentUsed > 80 ? 'text-danger' : '';
+
+    const formattedDiskAvailable = intl.formatNumber(diskAvailable);
+    const formattedDiskPercentUsed = intl.formatNumber(diskPercentUsed / 100, {
+      style: 'percent',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
 
     return (
       <Card style={{ width: '30rem' }}>
         <Card.Body className="p-0">
-          <InputGroup.Text>Disk Available (MB)</InputGroup.Text>
+
+          {/* Available disk space */}
+          <InputGroup.Text>
+            <FormattedMessage id="diskAvailable" />
+          </InputGroup.Text>
           <Form.Control
             type="text"
-            defaultValue={diskAvailable || ''}
             readOnly
+            value={formattedDiskAvailable || ''}
           />
-          <InputGroup.Text>Disk Percent Used (%)</InputGroup.Text>
+
+          {/* Disk percent used */}
+          <InputGroup.Text>
+            <FormattedMessage id="diskPercentUsed" />
+          </InputGroup.Text>
           <Form.Control
             type="text"
             className={className}
-            defaultValue={`${diskPercentUsed}%` || ''}
             readOnly
+            value={formattedDiskPercentUsed || ''}
           />
-          <InputGroup.Text>Default User Allocated Space (MB)</InputGroup.Text>
+
+          {/* Allocated space per user */}
+          <InputGroup.Text>
+            <FormattedMessage id="defaultUserAllocatedSpace" />
+          </InputGroup.Text>
           <InputGroup>
             <Form.Control
               type="number"
               min="0"
-              defaultValue={allocatedUserSpace || ''}
-              onChange={(event) => this.setState({ allocatedUserSpace: event.target.value })}
+              value={allocatedUserSpace || 0}
+              onChange={(event) => this.setState({ allocatedUserSpace: Number(event.target.value) })}
             />
-            <Button
-              variant="warning"
-              onClick={() => this.handleSaveBtn()}
-            >
-              Save
+            <InputGroup.Text>MB</InputGroup.Text>
+            <Button variant="warning" onClick={this.handleSaveBtn}>
+              <FormattedMessage id="save" defaultMessage="Save" />
             </Button>
           </InputGroup>
         </Card.Body>
@@ -97,3 +118,11 @@ export default class AdminDashboard extends React.Component {
     return (<div />);
   }
 }
+AdminDashboard.propTypes = {
+  intl: propType.shape({
+    formatMessage: propType.func.isRequired,
+    formatNumber: propType.func.isRequired,
+  }).isRequired
+};
+
+export default injectIntl(AdminDashboard);
