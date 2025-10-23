@@ -1,0 +1,16 @@
+{
+    "dashboard": "Dashboard",
+    "userManagement": "User Management",
+    "devices": "Devices",
+    "groups": "Groups",
+    "UIFeatures": "UI Features",
+    "textTemplates": "Text Templates",
+    "messagePublish": "Message Publish",
+    "loadOLSTerms": "Load OLS Terms",
+    "delayedJobs": "Delayed Jobs",
+    "ChemSpectraLayouts": "ChemSpectra Layouts",
+    "thirdPartyApps": "Third Party Apps",
+    "diskAvailable": "Disk Available (MB)",
+    "diskPercentUsed": "Disk Percent Used (%)",
+    "defaultUserAllocatedSpace": "Default User Allocated Space (MB)"
+}
