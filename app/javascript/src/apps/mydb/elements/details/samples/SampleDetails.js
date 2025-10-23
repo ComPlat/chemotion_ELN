@@ -801,7 +801,6 @@ export default class SampleDetails extends React.Component {
 
   samplePropertiesTab(ind) {
     const { sample } = this.state;
-
     return (
       <Tab eventKey={ind} title="Properties" key={`Props${sample.id.toString()}`}>
         {!sample.isNew && <CommentSection section="sample_properties" element={sample} />}
