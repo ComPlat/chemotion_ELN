@@ -264,6 +264,10 @@ class Import::ImportSdf < Import::ImportSamples
     @message[:error] << 'Could not create the samples! ' if samples.empty?
     @message[:info] << "Created #{s} sample#{s <= 1 && '' || 's'}. " if samples
     @message[:info] << 'Import successful! ' if ids.size == @count
+
+    # Clean up attachment if import was successful
+    @attachment.destroy if @message[:error].empty? && @attachment.present?
+
     samples
   end
 

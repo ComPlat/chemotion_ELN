@@ -604,8 +604,12 @@ module Import
         write_to_db
         if processed.empty?
           no_success
+        elsif @unprocessable.empty?
+          # Clean up attachment if import was successful
+          @attachment.destroy if @attachment.present?
+          success
         else
-          @unprocessable.empty? ? success : warning
+          warning
         end
       rescue StandardError => e
         warning(e.message)
