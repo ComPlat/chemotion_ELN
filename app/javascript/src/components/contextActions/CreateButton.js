@@ -11,6 +11,7 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ClipboardActions from 'src/stores/alt/actions/ClipboardActions';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 import MatrixCheck from 'src/components/common/MatrixCheck';
+import UIActions from 'src/stores/alt/actions/UIActions';
 
 const elementList = () => {
   const elements = [
@@ -279,6 +280,9 @@ export default class CreateButton extends React.Component {
     const genericEls = (UserStore.getState() && UserStore.getState().genericEls) || [];
     if (genericEls.find(el => el.name == type)) {
       e.klassType = 'GenericEl';
+    }
+    if (type === 'sample') {
+      UIActions.selectTab(0);
     }
     elementShowOrNew(e);
   }
