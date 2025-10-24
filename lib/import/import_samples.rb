@@ -167,11 +167,11 @@ module Import
       component_attributes.values.any? { |v| !v.nil? && v != '' } && structure?(component_attributes)
     end
 
-    def extract_molfile_and_molecule(row)
+    def extract_molfile_and_molecule(row, index)
       if molfile?(row)
         get_data_from_molfile(row)
       elsif smiles?(row)
-        get_data_from_smiles(row)
+        get_data_from_smiles(row, index)
       end
     end
 
@@ -183,25 +183,25 @@ module Import
       rows << row.each_pair { |k, v| v && row[k] = v.to_s }
     end
 
-    def process_row_data(row)
+    def process_row_data(row, index)
       is_decoupled = row['decoupled']
       return Molecule.find_or_create_dummy if is_decoupled && !structure?(row)
 
-      molecule, molfile = extract_molfile_and_molecule(row)
+      molecule, molfile = extract_molfile_and_molecule(row, index)
       return if molfile.nil? || molecule.nil?
 
       [molecule, molfile]
     end
 
-    def process_component_row_data(component_row)
-      molecule, molfile = extract_molfile_and_molecule(component_row)
+    def process_component_row_data(component_row, index)
+      molecule, molfile = extract_molfile_and_molecule(component_row, index)
       return nil if molfile.nil? || molecule.nil?
 
       molecule
     end
 
-    def molecule_not_exist(molecule)
-      @unprocessable << { row: row, index: i } if molecule.nil?
+    def molecule_not_exist(molecule, row, index)
+      @unprocessable << { row: row, index: index } if molecule.nil?
       molecule.nil?
     end
 
@@ -210,8 +210,8 @@ module Import
       begin
         ActiveRecord::Base.transaction do
           rows.map.with_index do |row, i|
-            molecule, molfile = process_row_data(row)
-            if molecule_not_exist(molecule)
+            molecule, molfile = process_row_data(row, i)
+            if molecule_not_exist(molecule, row, i)
               unprocessable_count += 1
               next
             end
@@ -272,9 +272,9 @@ module Import
       [molecule, molfile]
     end
 
-    def assign_molecule_data(molfile_coord, babel_info, inchikey, row)
+    def assign_molecule_data(molfile_coord, babel_info, inchikey, row, index)
       if inchikey.blank?
-        @unprocessable << { row: row, index: i }
+        @unprocessable << { row: row, index: index }
         go_to_next = true
       else
         molecule = Molecule.find_or_create_by(inchikey: inchikey, is_partial: false) do |molecul|
@@ -287,7 +287,7 @@ module Import
       [molecule, molfile_coord, go_to_next]
     end
 
-    def get_data_from_smiles(row)
+    def get_data_from_smiles(row, index)
       check = determine_sheet(xlsx)
 
       smiles = (check['smiles'] && row['smiles'].presence) ||
@@ -299,7 +299,7 @@ module Import
       ori_molf = Chemotion::OpenBabelService.smiles_to_molfile smiles
       babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(ori_molf)
       molfile_coord = Chemotion::OpenBabelService.add_molfile_coordinate(ori_molf)
-      assign_molecule_data(molfile_coord, babel_info, inchikey, row)
+      assign_molecule_data(molfile_coord, babel_info, inchikey, row, index)
     end
 
     def included_fields
@@ -554,9 +554,9 @@ module Import
       begin
         ActiveRecord::Base.transaction do
           sample_components_data.each_with_index do |component_data, index|
-            molecule = process_component_row_data(component_data)
+            molecule = process_component_row_data(component_data, index)
 
-            if molecule_not_exist(molecule)
+            if molecule_not_exist(molecule, component_data, index)
               unprocessable_count += 1
               next
             end
