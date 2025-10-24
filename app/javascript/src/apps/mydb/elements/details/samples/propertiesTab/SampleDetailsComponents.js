@@ -223,9 +223,6 @@ export default class SampleDetailsComponents extends React.Component {
 
     // Update sample total mass for the reaction scheme
     sample.calculateTotalMixtureMass();
-
-    // Calculate relative molecular weight
-    currentComponent.calculateRelativeMolecularWeight(sample);
   }
 
   /**
@@ -254,9 +251,6 @@ export default class SampleDetailsComponents extends React.Component {
 
     // update sample total mass for the reaction scheme
     sample.calculateTotalMixtureMass();
-
-    // Calculate relative molecular weight
-    currentComponent.calculateRelativeMolecularWeight(sample);
   }
 
   /**
@@ -436,12 +430,12 @@ export default class SampleDetailsComponents extends React.Component {
    */
   async deleteMixtureComponent(component) {
     const { sample } = this.state;
-    
+
     // Set loading state for component deletion
     if (this.props.setComponentDeletionLoading) {
       this.props.setComponentDeletionLoading(true);
     }
-    
+
     try {
       await sample.deleteMixtureComponent(component);
       this.props.onChange(sample);

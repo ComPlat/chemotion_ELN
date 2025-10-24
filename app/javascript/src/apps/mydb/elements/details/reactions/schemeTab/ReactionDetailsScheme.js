@@ -74,6 +74,40 @@ export default class ReactionDetailsScheme extends React.Component {
 
     TextTemplateActions.fetchTextTemplates('reaction');
     TextTemplateActions.fetchTextTemplates('reactionDescription');
+
+    // Deserialize components for any existing samples in the reaction
+    this.deserializeReactionMaterialComponents();
+  }
+
+  componentDidUpdate(prevProps) {
+    const { reaction } = this.props;
+    // Deserialize components when reaction data changes (e.g., after save/reload)
+    if (prevProps.reaction !== reaction) {
+      this.deserializeReactionMaterialComponents();
+    }
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  deserializeReactionMaterialComponents() {
+    const { reaction } = this.props;
+
+    // Helper function to deserialize components in a materials array
+    const deserializeComponentsInMaterials = (materials) => {
+      materials.forEach((sample) => {
+        if (sample.components && Array.isArray(sample.components) && sample.components.length > 0) {
+          // Check if components need deserialization (have component_properties)
+          const needsDeserialization = sample.components.some((comp) => comp.component_properties);
+          if (needsDeserialization) {
+            sample.components = sample.components.map(Component.deserializeData);
+          }
+        }
+      });
+    };
+
+    // Deserialize components for all material groups
+    deserializeComponentsInMaterials(reaction.starting_materials || []);
+    deserializeComponentsInMaterials(reaction.reactants || []);
+    deserializeComponentsInMaterials(reaction.products || []);
   }
 
   componentWillUnmount() {
@@ -103,7 +137,7 @@ export default class ReactionDetailsScheme extends React.Component {
       }
     }
     splitSample.show_label = (splitSample.decoupled && !splitSample.molfile) ? true : splitSample.show_label;
-    if (tagGroup == 'solvents') {
+    if (tagGroup === 'solvents') {
       splitSample.reference = false;
     }
 
@@ -114,8 +148,13 @@ export default class ReactionDetailsScheme extends React.Component {
           await splitSample.initialComponents(sampleComponents);
           const comp = sampleComponents.find((component) => component.amount_mol > 0 && component.molarity_value > 0);
           if (comp) {
-            splitSample.target_amount_value = comp.amount_mol / comp.molarity_value;
-            splitSample.target_amount_unit = 'l';
+            const amountMol = Number(comp.amount_mol);
+            const molarity = Number(comp.molarity_value);
+
+            if (Number.isFinite(amountMol) && Number.isFinite(molarity) && molarity > 0) {
+              splitSample.target_amount_value = amountMol / molarity;
+              splitSample.target_amount_unit = 'l';
+            }
           }
           reaction.addMaterialAt(splitSample, null, tagMaterial, tagGroup);
           onReactionChange(reaction, { updateGraphic: true });
@@ -129,6 +168,64 @@ export default class ReactionDetailsScheme extends React.Component {
       onReactionChange(reaction, { updateGraphic: true });
     }
   }
+
+  // handleMixtureSample(splitSample, srcSample, reaction, tagMaterial, tagGroup) {
+  //   if (srcSample.components && srcSample.components.length > 0) {
+  //     this.handleMixtureWithLoadedComponents(splitSample, srcSample, reaction, tagMaterial, tagGroup);
+  //   } else {
+  //     this.handleMixtureWithApiComponents(splitSample, srcSample, reaction, tagMaterial, tagGroup);
+  //   }
+  // }
+
+  // handleMixtureWithLoadedComponents(splitSample, srcSample, reaction, tagMaterial, tagGroup) {
+  //   const sampleComponents = this.copyComponents(srcSample.components, splitSample.id);
+  //   splitSample.components = sampleComponents;
+  //
+  //   this.setTargetAmountFromComponents(splitSample, sampleComponents);
+  //   this.addSampleToReaction(splitSample, srcSample, reaction, tagMaterial, tagGroup);
+  // }
+
+  // handleMixtureWithApiComponents(splitSample, srcSample, reaction, tagMaterial, tagGroup) {
+  //   ComponentsFetcher.fetchComponentsBySampleId(srcSample.id)
+  //   .then(async (components) => {
+  //     const sampleComponents = components.map(Component.deserializeData);
+  //     await splitSample.initialComponents(sampleComponents);
+  //
+  //     this.setTargetAmountFromComponents(splitSample, sampleComponents);
+  //
+  //     // Apply mixture properties after components are loaded
+  //     srcSample.applyMixturePropertiesToSample(splitSample);
+  //
+  //     this.addSampleToReaction(splitSample, srcSample, reaction, tagMaterial, tagGroup);
+  //   })
+  //   .catch((error) => {
+  //     console.error('Failed to fetch components:', error);
+  //     // Still add the sample even if components fail to load
+  //     this.addSampleToReaction(splitSample, srcSample, reaction, tagMaterial, tagGroup);
+  //   });
+  // }
+
+  // setTargetAmountFromComponents(splitSample, sampleComponents) {
+  //   const validComponent = sampleComponents.find(
+  //     (component) => component.amount_mol > 0 && component.molarity_value > 0
+  //   );
+  //
+  //   if (validComponent) {
+  //     splitSample.target_amount_value = validComponent.amount_mol / validComponent.molarity_value;
+  //     splitSample.target_amount_unit = 'l';
+  //   }
+  // }
+
+  // addSampleToReaction(splitSample, srcSample, reaction, tagMaterial, tagGroup) {
+  //   const { onReactionChange } = this.props;
+  //
+  //   if (splitSample.isMixture()) {
+  //     srcSample.applyMixturePropertiesToSample(splitSample);
+  //     splitSample.applyReferenceProperties(reaction, tagGroup);
+  //   }
+  //   reaction.addMaterialAt(splitSample, null, tagMaterial, tagGroup);
+  //   onReactionChange(reaction, { updateGraphic: true });
+  // }
 
   insertSolventExtLabel(splitSample, materialGroup, externalLabel) {
     if (externalLabel && materialGroup === 'solvents' && !splitSample.external_label) {
@@ -360,6 +457,12 @@ export default class ReactionDetailsScheme extends React.Component {
           this.updatedReactionForConversionRateChange(changeEvent)
         );
         break;
+      case 'componentReferenceChanged':
+        onReactionChange(
+          this.updatedReactionForComponentReferenceChange(changeEvent),
+          { schemaChanged: true }
+        );
+        break;
       default:
         break;
     }
@@ -430,13 +533,39 @@ export default class ReactionDetailsScheme extends React.Component {
   updatedReactionForAmountUnitChange(changeEvent) {
     const { sampleID, amount } = changeEvent;
     const updatedSample = this.props.reaction.sampleById(sampleID);
+
+    // --- Validate mixture mass before applying the change ---
+    const exceedsMassLimit = updatedSample.validateMixtureMass(amount);
+    if (exceedsMassLimit) {
+      const totalMixtureMassG = updatedSample?.total_mixture_mass_g;
+      const totalMixtureMassMg = Number.isFinite(totalMixtureMassG)
+        ? totalMixtureMassG * 1000
+        : null;
+
+      NotificationActions.add({
+        title: 'Mass Exceeded',
+        message: 'Entered mass exceeds the available mixture mass for this sample. '
+          + `(Available: ${totalMixtureMassMg?.toFixed(3)} mg)`,
+        level: 'warning',
+        autoDismiss: 5,
+      });
+    }
+
     // normalize to milligram
     // updatedSample.setAmountAndNormalizeToGram(amount);
     // setAmount should be called first before updating feedstock mole and volume values
     updatedSample.setAmount(amount);
 
+    // Update mixture components' amount_mol based on new total mass and reference component
+    updatedSample.updateMixtureComponentAmounts();
+
     if (updatedSample.gas_type === 'catalyst') {
       GasPhaseReactionActions.setCatalystReferenceMole(updatedSample.amount_mol);
+    }
+
+    // Reset the reference component changed flag after amount/unit changes are processed
+    if (updatedSample.sample_details) {
+      updatedSample.sample_details.reference_component_changed = false;
     }
 
     return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample);
@@ -639,6 +768,89 @@ export default class ReactionDetailsScheme extends React.Component {
     return this.updatedReactionWithSample(this.updatedSamplesForConversionRateChange.bind(this), updatedSample);
   }
 
+  updatedReactionForComponentReferenceChange(changeEvent) {
+    const { reaction } = this.props;
+    const { sampleID, componentId } = changeEvent;
+
+    // Find the sample that contains the component
+    const updatedSample = reaction.sampleById(sampleID);
+
+    if (!updatedSample || !updatedSample.isMixture() || !updatedSample.hasComponents()) {
+      return reaction;
+    }
+
+    const referenceComponentIndex = updatedSample.components.findIndex(
+      (component) => component.id === componentId
+    );
+
+    // Handle case where a reference component is not found
+    if (referenceComponentIndex === -1) {
+      console.warn(`Component with id ${componentId} not found in sample ${sampleID}`);
+      return reaction;
+    }
+
+    // Set the reference component to true and all others to false
+    updatedSample.components.forEach((component, index) => {
+      // eslint-disable-next-line no-param-reassign
+      component.reference = (index === referenceComponentIndex);
+    });
+
+    // Initialize sample details and set reference molecular weight
+    updatedSample.initializeSampleDetails();
+    const referenceComponent = updatedSample.components[referenceComponentIndex];
+
+    if (referenceComponent?.molecule?.molecular_weight) {
+      updatedSample.sample_details.reference_molecular_weight = referenceComponent.molecule.molecular_weight;
+    }
+
+    // Set the reference relative molecular weight
+    const relativeWeight = referenceComponent.component_properties?.relative_molecular_weight;
+    if (relativeWeight) {
+      updatedSample.sample_details.reference_relative_molecular_weight = relativeWeight;
+    }
+
+    // Mark that the reference component has been changed (for calculation logic)
+    updatedSample.sample_details.reference_component_changed = true;
+
+    // Perform calculations when the reference component changes
+    this.calculateMixturePropertiesFromReferenceComponentChange(updatedSample, referenceComponent);
+
+    // Mark the sample as changed for persistence
+    updatedSample.changed = true;
+
+    return reaction;
+  }
+
+  /**
+   * Calculates mixture properties when the reference component changes.
+   * Implements:
+   * (1) Volume calculation: Volume = mmol of parent sample / concentration of the reference component
+   * (2) Mass calculation: Mass = mmol of parent sample / relative molecular mass of reference component
+   * (3) Equivalent calculation: Equivalent = sample.amount_mol / reference_sample.amount_mol
+   * @param {Sample} updatedSample - The mixture sample being updated
+   * @param {Component} referenceComponent - The new reference component
+   */
+  calculateMixturePropertiesFromReferenceComponentChange(updatedSample, referenceComponent) {
+    if (!updatedSample || !referenceComponent) {
+      console.warn('Missing sample or reference component for calculation');
+      return;
+    }
+
+    // Get the parent sample amount in mol for validation
+    const parentAmountMol = updatedSample.amount_mol;
+    if (parentAmountMol <= 0) {
+      console.warn('Sample amount (mol) is zero or negative, cannot calculate properties');
+      return;
+    }
+
+    // (3) Equivalent calculation using Sample method
+    const { reaction } = this.props;
+    const { referenceMaterial } = reaction;
+    if (referenceMaterial) {
+      updatedSample.calculateEquivalentFromReferenceMaterial(referenceMaterial);
+    }
+  }
+
   calculateEquivalent(refM, updatedSample) {
     if (!refM.contains_residues) {
       NotificationActions.add({
@@ -682,8 +894,8 @@ export default class ReactionDetailsScheme extends React.Component {
       mFull = referenceM.amount_mol * mwb;
       const maxTheoAmount = mFull * (updatedS.coefficient || 1.0 / referenceM.coefficient || 1.0);
       if (updatedS.amount_g > maxTheoAmount) {
-        errorMsg = 'Experimental mass value is larger than possible\n' +
-          'by 100% conversion! Please check your data.';
+        errorMsg = 'Experimental mass value is larger than possible\n'
+          + 'by 100% conversion! Please check your data.';
       }
     } else {
       const mwa = referenceM.decoupled ? (referenceM.molecular_mass || 0) : referenceM.molecule.molecular_weight;
@@ -694,16 +906,16 @@ export default class ReactionDetailsScheme extends React.Component {
 
       if (deltaM > 0) { // expect weight gain
         if (massExperimental > mFull) {
-          errorMsg = 'Experimental mass value is larger than possible\n' +
-            'by 100% conversion! Please check your data.';
+          errorMsg = 'Experimental mass value is larger than possible\n'
+            + 'by 100% conversion! Please check your data.';
         } else if (massExperimental < massA) {
-          errorMsg = 'Material loss! ' +
-            'Experimental mass value is less than possible!\n' +
-            'Please check your data.';
+          errorMsg = 'Material loss! '
+            + 'Experimental mass value is less than possible!\n'
+            + 'Please check your data.';
         }
       } else if (massExperimental < mFull) { // expect weight loss
-        errorMsg = 'Experimental mass value is less than possible\n' +
-          'by 100% conversion! Please check your data.';
+        errorMsg = 'Experimental mass value is less than possible\n'
+          + 'by 100% conversion! Please check your data.';
       }
     }
 
@@ -865,6 +1077,27 @@ export default class ReactionDetailsScheme extends React.Component {
     return (sample.amount_mol / feedstockMolValue);
   }
 
+  // Handle mixture samples differently
+  // eslint-disable-next-line class-methods-use-this
+  handleEquivalentBasedAmountUpdate(sample, newAmountMol) {
+    if (
+      sample.isMixture()
+      && sample.hasComponents()
+      && sample.reference_component
+      && sample.reference_component.relative_molecular_weight
+    ) {
+      // For mixture samples with a valid reference component, calculate mass from mol amount
+      const newAmountG = newAmountMol * sample.reference_component.relative_molecular_weight;
+      sample.setAmount({ value: newAmountG, unit: 'g' });
+    } else {
+      // For regular samples or mixtures without reference MW, fall back to standard method
+      sample.setAmountAndNormalizeToGram({
+        value: newAmountMol,
+        unit: 'mol',
+      });
+    }
+  }
+
   updatedSamplesForEquivalentChange(samples, updatedSample, materialGroup) {
     const { reaction: { referenceMaterial } } = this.props;
     let stoichiometryCoeff = 1.0;
@@ -874,10 +1107,8 @@ export default class ReactionDetailsScheme extends React.Component {
         sample.equivalent = updatedSample.equivalent;
         if (referenceMaterial && referenceMaterial.amount_value
           && updatedSample.gas_type !== 'feedstock') {
-          sample.setAmountAndNormalizeToGram({
-            value: updatedSample.equivalent * referenceMaterial.amount_mol,
-            unit: 'mol',
-          });
+          const newAmountMol = updatedSample.equivalent * referenceMaterial.amount_mol;
+          this.handleEquivalentBasedAmountUpdate(sample, newAmountMol);
         } else if (sample.amount_value && updatedSample.gas_type !== 'feedstock') {
           sample.setAmountAndNormalizeToGram({
             value: updatedSample.equivalent * sample.amount_mol,
@@ -1102,7 +1333,6 @@ export default class ReactionDetailsScheme extends React.Component {
     } else {
       const { referenceMaterial } = reaction;
       reaction.products.map((sample) => {
-        sample.concn = sample.amount_mol / reaction.solventVolume;
         if (typeof (referenceMaterial) !== 'undefined' && referenceMaterial) {
           if (sample.contains_residues) {
             sample.maxAmount = referenceMaterial.amount_g + (referenceMaterial.amount_mol
@@ -1112,13 +1342,9 @@ export default class ReactionDetailsScheme extends React.Component {
       });
     }
 
+    // Update concentrations for all materials when volumes change
     if ((typeof (lockEquivColumn) !== 'undefined' && !lockEquivColumn) || !reaction.changed) {
-      reaction.starting_materials.map((sample) => {
-        sample.concn = sample.amount_mol / reaction.solventVolume;
-      });
-      reaction.reactants.map((sample) => {
-        sample.concn = sample.amount_mol / reaction.solventVolume;
-      });
+      reaction.updateAllConcentrations();
     }
 
     // if no reference material then mark first starting material
