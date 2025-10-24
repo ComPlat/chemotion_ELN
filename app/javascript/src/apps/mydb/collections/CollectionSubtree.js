@@ -13,6 +13,7 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 function CollectionSubtree({ root, sharedWithMe, level }) {
   const collectionsStore = useContext(StoreContext).collections;
   const uiState = UIStore.getState();
+  const currentCollection = uiState.currentCollection;
   const children = root.children || [];
 
   const [selected, setSelected] = useState(false);
@@ -36,7 +37,7 @@ function CollectionSubtree({ root, sharedWithMe, level }) {
   useEffect(() => {
     UIStore.listen(onUiStoreChange);
     return () => UIStore.unlisten(onUiStoreChange);
-  }, []);
+  }, [currentCollection]);
 
   const handleTakeOwnership = () => {
     // TODO: determine what should happen if take ownership is possible

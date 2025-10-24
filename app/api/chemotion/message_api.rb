@@ -125,7 +125,7 @@ module Chemotion
             message_from: current_user.id,
             message_to: params[:user_ids],
           )
-          status 204 if message
+          { status: 204 } if message
         end
       end
     end

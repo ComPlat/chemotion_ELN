@@ -1314,30 +1314,6 @@ class ElementActions {
     };
   }
 
-  updateElementsCollection(params) {
-    return (dispatch) => {
-      CollectionsFetcher.updateElementsCollection(params)
-        .then(() => { dispatch(); })
-        .catch((errorMessage) => { console.log(errorMessage); });
-    };
-  }
-
-  assignElementsCollection(params) {
-    return (dispatch) => {
-      CollectionsFetcher.assignElementsCollection(params)
-        .then(() => { dispatch(); })
-        .catch((errorMessage) => { console.log(errorMessage); });
-    };
-  }
-
-  removeElementsCollection(params) {
-    return (dispatch) => {
-      CollectionsFetcher.removeElementsCollection(params)
-        .then(() => { dispatch(); })
-        .catch((errorMessage) => { console.log(errorMessage); });
-    };
-  }
-
   changeSorting(sort) {
     return sort;
   }
@@ -1374,6 +1350,10 @@ class ElementActions {
 
   refreshComputedProp(cprop) {
     return cprop;
+  }
+
+  refreshElementsAfterCollectionChanges(collectionId) {
+    return collectionId;
   }
 
   // -- Private Note --

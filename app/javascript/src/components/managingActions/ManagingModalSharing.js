@@ -8,12 +8,11 @@ import SharingShortcuts from 'src/components/managingActions/SharingShortcuts';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
-import MatrixCheck from 'src/components/common/MatrixCheck';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
 import { selectUserOptionFormater } from 'src/utilities/selectHelper';
-import { elementNames, allElnElements } from 'src/apps/generic/Utils';
+import { filterParamsFromUIState } from 'src/utilities/collectionUtilities';
 
 const defaultProps = {
   title: 'Sharing of Elements',
@@ -46,105 +45,6 @@ const ManagingModalSharing = (props) => {
   const canSubmit = !showUserSelect || selectedUsers != null && selectedUsers.length > 0
   const submitTitle = shareType == 'edit' ? 'Edit Permissions' : 'Create Shared Collection';
 
-  const isElementSelectionEmpty = (element) => {
-    return !element.checkedAll &&
-      element.checkedIds.size == 0 &&
-      element.uncheckedIds.size == 0;
-  }
-
-  const isSelectionEmpty = (uiState) => {
-    let isMainElementSelectionEmpty = false;
-    let isElementSelectionEmpty = false;
-
-    allElnElements.map((element) => {
-      isMainElementSelectionEmpty = isMainElementSelectionEmpty && isElementSelectionEmpty(uiState[element]);
-    });
-
-    //const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
-    if (MatrixCheck(currentUser.matrix, 'genericElement')) {
-
-      // eslint-disable-next-line no-unused-expressions
-      elementNames(false).then((klassArray) => {
-        klassArray.forEach((klass) => {
-          isElementSelectionEmpty = isElementSelectionEmpty && isElementSelectionEmpty(uiState[`${klass}`]);
-        });
-      });
-    }
-
-    return isMainElementSelectionEmpty && isElementSelectionEmpty;
-  }
-
-  const filterParamsWholeCollection = (uiState) => {
-    let collectionId = uiState.currentCollection.id;
-
-    let filterParams = {
-      currentSearchSelection: uiState.currentSearchSelection
-    };
-    allElnElements.map((element) => {
-      if (uiState[element] === undefined) { return }
-
-      filterParams[element] = {
-        all: true,
-        included_ids: [],
-        excluded_ids: [],
-        collection_id: collectionId,
-      };
-    });
-
-    allElnElements.map((element) => {
-      filterParams[element] = {
-        all: true,
-        included_ids: [],
-        excluded_ids: [],
-        collection_id: collectionId,
-      };
-    });
-
-    elementNames(false).then((klassArray) => {
-      klassArray.forEach((klass) => {
-        filterParams[`${klass}`] = {
-          all: true,
-          included_ids: [],
-          excluded_ids: [],
-          collection_id: collectionId
-        };
-      });
-    });
-
-    return filterParams;
-  }
-
-  const filterParamsFromUIState = (uiState) => {
-    let collectionId = uiState.currentCollection.id;
-
-    let filterParams = {
-      currentSearchSelection: uiState.currentSearchSelection
-    };
-
-    allElnElements.map((element) => {
-      if (uiState[element] === undefined) { return }
-      filterParams[element] = {
-        all: uiState[element].checkedAll,
-        included_ids: uiState[element].checkedIds,
-        excluded_ids: uiState[element].uncheckedIds,
-        collection_id: collectionId,
-      };
-    });
-
-    elementNames(false).then((klassArray) => {
-      klassArray.forEach((klass) => {
-        filterParams[`${klass}`] = {
-          all: uiState[`${klass}`].checkedAll,
-          included_ids: uiState[`${klass}`].checkedIds,
-          excluded_ids: uiState[`${klass}`].uncheckedIds,
-          collection_id: collectionId
-        };
-      });
-    });
-
-    return filterParams;
-  }
-
   const handleSharing = () => {
     const permissionsParams = {
       permission_level: permissions.permissionLevel,
@@ -160,27 +60,14 @@ const ManagingModalSharing = (props) => {
     }
 
     if (shareType === 'new') {
-      // create new collection with elements with shares
-      
-      //const currentCollection = uiState.currentCollection;
-      //this.isSelectionEmpty(uiState)
-      console.log(filterParamsFromUIState(uiState));
-
-      // don't need to check if isSelectionEmpty - in uiState all = true will set automatic
-      // you can't open sharing modal without selecting elements
-
-      //   const uiState = UIStore.getState();
-      //   const currentCollection = uiState.currentCollection;
-      //   const filterParams =
-      //     this.isSelectionEmpty(uiState)
-      //       ? this.filterParamsWholeCollection(uiState)
-      //       : this.filterParamsFromUIState(uiState);
-      //   const fullParams = {
-      //     ...params,
-      //     elements_filter: filterParams,
-      //     user_ids: this.state.selectedUsers,
-      //     currentCollection
-      //   };
+      // create new collection with shared elements
+      const params = {
+        uiState: filterParamsFromUIState(uiState),
+        users: selectedUsers,
+        permissions: permissionsParams,
+        currentUser: currentUser,
+      };
+      collectionsStore.collectionShareForElements(params)
 
     } else if (shareType === 'create') {
       // create collection share of collectionId
@@ -189,7 +76,7 @@ const ManagingModalSharing = (props) => {
         user_ids: selectedUsers.map(u => u.id),
         ...permissionsParams
       }
-      collectionsStore.addCollectionShare(params);
+      collectionsStore.addCollectionShare(params, currentUser, false);
     } else if (shareType === 'edit') {
       // edit permissions of collection share
       const params = {

@@ -284,9 +284,6 @@ class ElementStore {
       handleFetchMetadata: ElementActions.fetchMetadata,
       handleDeleteElements: ElementActions.deleteElements,
 
-      handleUpdateElementsCollection: ElementActions.updateElementsCollection,
-      handleAssignElementsCollection: ElementActions.assignElementsCollection,
-      handleRemoveElementsCollection: ElementActions.removeElementsCollection,
       handleSplitAsSubsamples: ElementActions.splitAsSubsamples,
       handleSplitElements: ElementActions.splitElements,
       handleSplitAsSubwellplates: ElementActions.splitAsSubwellplates,
@@ -321,6 +318,7 @@ class ElementStore {
       ],
       handleUpdateEmbeddedResearchPlan: ElementActions.updateEmbeddedResearchPlan,
       handleRefreshComputedProp: ElementActions.refreshComputedProp,
+      handleRefreshElementsAfterCollectionChanges: ElementActions.refreshElementsAfterCollectionChanges,
     });
   }
 
@@ -612,24 +610,8 @@ class ElementStore {
     ElementActions.deleteElementsByUIState(params);
   }
 
-  handleUpdateElementsCollection() {
-    CollectionActions.fetchUnsharedCollectionRoots();
+  handleRefreshElementsAfterCollectionChanges() {
     UIActions.uncheckWholeSelection.defer();
-    this.fetchElementsByCollectionIdandLayout();
-  }
-
-  handleAssignElementsCollection() {
-    CollectionActions.fetchUnsharedCollectionRoots();
-    UIActions.uncheckWholeSelection.defer();
-    this.fetchElementsByCollectionIdandLayout();
-  }
-
-  handleRemoveElementsCollection() {
-    // CollectionActions.fetchUnsharedCollectionRoots();
-    // UIActions.clearSearchSelection.defer()
-    UIActions.uncheckWholeSelection.defer();
-    this.waitFor(UIStore.dispatchToken);
-
     this.fetchElementsByCollectionIdandLayout();
   }
 

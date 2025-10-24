@@ -1,137 +1,115 @@
-import React from 'react';
+import React, { useState, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Form, Button, Modal } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import CollectionStore from 'src/stores/alt/stores/CollectionStore';
-import CollectionUtils from 'src/models/collection/CollectionUtils';
+import { filterParamsFromUIState } from 'src/utilities/collectionUtilities';
 import { Select } from 'src/components/common/Select';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
-export default class ManagingModalCollectionActions extends React.Component {
-  static contextType = StoreContext;
+const ManagingModalCollectionActions = ({ title, action, onHide, listSharedCollections }) => {
+  const collectionsStore = useContext(StoreContext).collections;
+  const [selectedCollection, setSelectedCollection] = useState('');
+  const [collectionLabel, setCollectionLabel] = useState('');
 
-  constructor(props) {
-    super(props);
-    this.state = {
-      newLabel: null,
-      selected: null,
-    };
-    this.onSelectChange = this.onSelectChange.bind(this);
-    this.onInputChange = this.onInputChange.bind(this);
-    this.handleSubmit = this.handleSubmit.bind(this);
-  }
+  const handleSubmit = () => {
+    const uiState = filterParamsFromUIState(UIStore.getState());
+    let collectionParams = { id: selectedCollection?.id }
+    if (collectionLabel) {
+      collectionParams = { label: collectionLabel, parent_id: '', inventory_id: '' }
+    }
 
-  handleSubmit() {
-    const { selected, newLabel } = this.state;
-    const { action, onHide } = this.props;
-    console.log(UIStore.getState());
-    // da wird alles übergeben, was im uiStore drin ist => too much
-
-    //action({
-    //  ui_state: UIStore.getState(),
-    //  collection_id: selected?.id,
-    //  is_sync_to_me: selected?.is_sync_to_me,
-    //  newLabel
-    //});
+    if (action == 'move') {
+      collectionsStore.moveElementsToCollection(collectionParams, uiState);
+    } else if (action == 'assign') {
+      collectionsStore.assignElementsToCollection(collectionParams, uiState);
+    }
     onHide();
   }
 
-  onSelectChange(selected) {
-    this.setState({ selected });
-  }
-
-  onInputChange(e) {
-    const val = e.target && e.target.value;
-    this.setState({ newLabel: val });
-  }
-
-  makeList(collections, tree = [], depth = 0) {
+  const makeList = (collections, tree = [], depth = 0) => {
     if (!Array.isArray(collections)) return tree;
 
     collections.forEach((collection) => {
       tree.push(collection);
-      this.makeList(collection.children, tree, depth + 1);
+      makeList(collection.children, tree, depth + 1);
     });
 
     return tree;
   }
 
-  collectionOptions() {
-    const ownCollections = this.context.collections.own_collections;
-    const sharedWithMeCollections = this.context.collections.shared_with_me_collections;
-    const shared = sharedWithMeCollections.flatMap((c) => c.children).filter((c) => c.permission_level >= 1)
+  const collectionOptions = () => {
+    const ownCollections = collectionsStore.own_collections;
+    let shared = [];
+    if (listSharedCollections) {
+      const sharedWithMeCollections = collectionsStore.shared_with_me_collections;
+      shared = sharedWithMeCollections.flatMap((c) => c.children).filter((c) => c.permission_level >= 1)
+    }
 
     return [
-      ...this.makeList(ownCollections),
+      ...makeList(ownCollections),
       {
         label: 'Shared with me collections',
-        options: this.makeList(shared),
+        options: makeList(shared),
       },
     ];
   }
 
-  submitButton() {
-    const { newLabel, selected } = this.state;
-    const l = newLabel && newLabel.length;
-    return l && l > 0 ? (
-      <Button variant="warning" onClick={this.handleSubmit}>
-        Create collection &lsquo;{newLabel}&rsquo; and Submit
+  const optionLabel = ({ label, depth }) => (
+    <span style={{ paddingLeft: `${depth * 10}px` }}>
+      {label}
+    </span>
+  );
+
+  const submitButton = () => {
+    return collectionLabel ? (
+      <Button variant="warning" onClick={handleSubmit}>
+        Create collection "{collectionLabel}" and Submit
       </Button>
     ) : (
-      <Button variant="warning" onClick={this.handleSubmit} disabled={!selected}>
+      <Button variant="warning" onClick={handleSubmit} disabled={!selectedCollection}>
         Submit
       </Button>
     );
   }
 
-  render() {
-    const { title, onHide } = this.props;
-    const { selected } = this.state;
-    const options = this.collectionOptions();
+  return (
+    <Modal show centered onHide={onHide}>
+      <Modal.Header closeButton>
+        <Modal.Title>{title}</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <Form>
+          <Form.Group className="mb-3">
+            <Form.Label>Select a Collection</Form.Label>
+            <Select
+              options={collectionOptions()}
+              value={selectedCollection}
+              getOptionValue={(o) => o.id}
+              formatOptionLabel={optionLabel}
+              onChange={(selected) => setSelectedCollection(selected)}
+            />
+          </Form.Group>
 
-    const optionLabel = ({ label, depth }) => (
-      <span style={{ paddingLeft: `${depth * 10}px` }}>
-        {label}
-      </span>
-    );
-
-    return (
-      <Modal show centered onHide={onHide}>
-        <Modal.Header closeButton>
-          <Modal.Title>{title}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group className="mb-3">
-              <Form.Label>Select a Collection</Form.Label>
-              <Select
-                options={options}
-                value={selected}
-                getOptionValue={(o) => o.id}
-                formatOptionLabel={optionLabel}
-                onChange={this.onSelectChange}
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label>or Create a new Collection</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="-- Please insert collection name --"
-                onChange={this.onInputChange}
-              />
-            </Form.Group>
-            {this.submitButton()}
-          </Form>
-        </Modal.Body>
-      </Modal>
-    );
-  }
+          <Form.Group className="mb-3">
+            <Form.Label>or Create a new Collection</Form.Label>
+            <Form.Control
+              type="text"
+              placeholder="-- Please insert collection name --"
+              onChange={(e) => setCollectionLabel(e.target && e.target.value)}
+            />
+          </Form.Group>
+          {submitButton()}
+        </Form>
+      </Modal.Body>
+    </Modal>
+  );
 }
+
+export default ManagingModalCollectionActions;
 
 ManagingModalCollectionActions.propTypes = {
   title: PropTypes.string.isRequired,
-  action: PropTypes.func.isRequired,
+  action: PropTypes.string.isRequired,
   onHide: PropTypes.func.isRequired,
   listSharedCollections: PropTypes.bool.isRequired,
 };
