@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  Row, Col, Nav, NavItem, Container
+  Row, Col, Nav, NavItem, Container, Button, InputGroup
 } from 'react-bootstrap';
 import BaseNavigation from 'src/components/navigation/BaseNavigation';
 import Notifications from 'src/components/Notifications';
@@ -25,7 +25,7 @@ class AdminHome extends React.Component {
     super();
     this.state = {
       pageIndex: 0,
-      locale: 'de',
+      locale: 'en',
     };
     this.handleSelect = this.handleSelect.bind(this);
   }
@@ -71,61 +71,67 @@ class AdminHome extends React.Component {
     return (
       <Nav className="flex-column fs-5 gap-3 mt-2" variant="pills" activeKey={pageIndex} onSelect={this.handleSelect}>
         <NavItem>
+          <InputGroup>
+            <Button onClick={() => this.setState({ locale: 'en' })}>English</Button>
+            <Button onClick={() => this.setState({ locale: 'de' })}>Deutsch</Button>
+          </InputGroup>
+        </NavItem>
+        <NavItem>
           <Nav.Link eventKey={0}>
-            <FormattedMessage id="dashboard" />
+            <FormattedMessage id="navigation-dashboard" />
           </Nav.Link>
         </NavItem>
         <NavItem>
           <Nav.Link eventKey={1}>
-            <FormattedMessage id="userManagement" />
+            <FormattedMessage id="navigation-user_management" />
           </Nav.Link>
         </NavItem>
         <NavItem>
           <Nav.Link eventKey={9}>
-            <FormattedMessage id="devices" />
+            <FormattedMessage id="navigation-devices" />
           </Nav.Link>
         </NavItem>
         <NavItem>
           <Nav.Link eventKey={4}>
-            <FormattedMessage id="groups" />
+            <FormattedMessage id="navigation-groups" />
           </Nav.Link>
         </NavItem>
         <NavItem>
           <Nav.Link eventKey={7}>
-            <FormattedMessage id="UIFeatures" />
+            <FormattedMessage id="navigation-UI_features" />
           </Nav.Link>
         </NavItem>
         <NavItem>
           <Nav.Link eventKey={8}>
-            <FormattedMessage id="textTemplates" />
+            <FormattedMessage id="navigation-text_templates" />
           </Nav.Link>
         </NavItem>
         <NavItem>
           <Nav.Link eventKey={2}>
-            <FormattedMessage id="messagePublish" />
+            <FormattedMessage id="navigation-message_publish" />
           </Nav.Link>
         </NavItem>
         <NavItem>
           <Nav.Link eventKey={5}>
-            <FormattedMessage id="loadOLSTerms" />
+            <FormattedMessage id="navigation-load_OLS_terms" />
           </Nav.Link>
         </NavItem>
         {/* <NavItem>
-          <Nav.Link eventKey={12}>Report-template Management</Nav.Link>
-        </NavItem> */}
+      <Nav.Link eventKey={12}>Report-template Management</Nav.Link>
+    </NavItem> */}
         <NavItem>
           <Nav.Link eventKey={13}>
-            <FormattedMessage id="delayedJobs" />
+            <FormattedMessage id="navigation-delayed_jobs" />
           </Nav.Link>
         </NavItem>
         <NavItem>
           <Nav.Link eventKey={14}>
-            <FormattedMessage id="ChemSpectraLayouts" />
+            <FormattedMessage id="navigation-ChemSpectra_layouts" />
           </Nav.Link>
         </NavItem>
         <NavItem>
           <Nav.Link eventKey={15}>
-            <FormattedMessage id="thirdPartyApps" />
+            <FormattedMessage id="navigation-third_party_apps" />
           </Nav.Link>
         </NavItem>
       </Nav>

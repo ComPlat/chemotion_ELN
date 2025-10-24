@@ -70,7 +70,7 @@ class AdminDashboard extends React.Component {
 
           {/* Available disk space */}
           <InputGroup.Text>
-            <FormattedMessage id="diskAvailable" />
+            <FormattedMessage id="dashboard-disk_available" />
           </InputGroup.Text>
           <Form.Control
             type="text"
@@ -80,7 +80,7 @@ class AdminDashboard extends React.Component {
 
           {/* Disk percent used */}
           <InputGroup.Text>
-            <FormattedMessage id="diskPercentUsed" />
+            <FormattedMessage id="dashboard-disk_percent_used" />
           </InputGroup.Text>
           <Form.Control
             type="text"
@@ -91,7 +91,7 @@ class AdminDashboard extends React.Component {
 
           {/* Allocated space per user */}
           <InputGroup.Text>
-            <FormattedMessage id="defaultUserAllocatedSpace" />
+            <FormattedMessage id="dashboard-default_user_allocated_space" />
           </InputGroup.Text>
           <InputGroup>
             <Form.Control
