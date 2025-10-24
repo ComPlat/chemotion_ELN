@@ -54,6 +54,11 @@ function ReportUtilButton() {
             Reference Manager
           </Dropdown.Item>
 
+          <Dropdown.Item onClick={ElementActions.showExplorerDetails} title="Explorer">
+            Explorer
+          </Dropdown.Item>
+          
+
           {enableComputedProps && (
             <>
               <Dropdown.Item onClick={ElementActions.showComputedPropsGraph} title="Graph">

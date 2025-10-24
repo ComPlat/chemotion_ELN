@@ -260,6 +260,7 @@ class ElementStore {
           ElementActions.generateEmptyVessel,
           ElementActions.generateEmptyVesselTemplate,
           ElementActions.showReportContainer,
+          ElementActions.showExplorerDetails,
           ElementActions.showFormatContainer,
           ElementActions.showComputedPropsGraph,
           ElementActions.showComputedPropsTasks,
