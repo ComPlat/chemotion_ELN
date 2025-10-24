@@ -74,6 +74,12 @@ export default class ModalExport extends React.Component {
           { value: 'solubility', text: 'solubility', checked: false },
           { value: 'color', text: 'color', checked: false },
           { value: 'form', text: 'form', checked: false },
+          { value: 'height', text: 'Height', checked: false },
+          { value: 'width', text: 'Width', checked: false },
+          { value: 'length', text: 'Length', checked: false },
+          { value: 'state', text: 'State', checked: false },
+          { value: 'color', text: 'Color', checked: false },
+          { value: 'storage_condition', text: 'Storage Conditions', checked: false },
         ],
         molecule: [
           { value: 'cano_smiles', text: 'canonical smiles', checked: true },
@@ -157,6 +163,7 @@ export default class ModalExport extends React.Component {
           { value: 'material group', text: 'material group', checked: false },
           { value: 'canonical smiles', text: 'canonical smiles', checked: false },
           { value: 'InChI', text: 'InChIkey', checked: false },
+          { value: 'composition table', text: 'Composition Table', checked: false },
         ],
       },
       checkedAllColumns: {
