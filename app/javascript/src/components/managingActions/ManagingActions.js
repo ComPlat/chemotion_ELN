@@ -9,10 +9,12 @@ import ManagingModalSharing from 'src/components/managingActions/ManagingModalSh
 import ManagingModalCollectionActions from 'src/components/managingActions/ManagingModalCollectionActions';
 import ManagingModalDelete from 'src/components/managingActions/ManagingModalDelete';
 import ManagingModalRemove from 'src/components/managingActions/ManagingModalRemove';
-import ElementActions from 'src/stores/alt/actions/ElementActions';
 import { elementNames } from 'src/apps/generic/Utils';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
 export default class ManagingActions extends React.Component {
+  static contextType = StoreContext;
+
   constructor(props) {
     super(props);
     const { currentUser, genericEls } = UserStore.getState();
@@ -136,7 +138,7 @@ export default class ManagingActions extends React.Component {
       case 'move':
         return <ManagingModalCollectionActions
           title="Move to Collection"
-          action={ElementActions.updateElementsCollection}
+          action="move"
           listSharedCollections={true}
           onHide={this.hideModal}
         />;
@@ -144,7 +146,7 @@ export default class ManagingActions extends React.Component {
       case 'assign':
         return <ManagingModalCollectionActions
           title="Assign to Collection"
-          action={ElementActions.assignElementsCollection}
+          action="assign"
           listSharedCollections={false}
           onHide={this.hideModal}
         />;

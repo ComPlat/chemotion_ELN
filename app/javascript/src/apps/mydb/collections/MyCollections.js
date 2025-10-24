@@ -33,7 +33,10 @@ const MyCollections = () => {
   }
 
   const addCollection = (node) => {
-    collectionsStore.addCollection(node);
+    const params = { 
+      label: 'New Collection', parent_id: (node.id == -1 ? '' : node.id), inventory_id: node.inventory_id
+    }
+    collectionsStore.addCollection(params, true);
   }
 
   const changeCollectionLabel = (e, node) => {
@@ -49,7 +52,7 @@ const MyCollections = () => {
   }
 
   const deleteCollection = (node) => {
-    collectionsStore.deleteCollection(node);
+    collectionsStore.deleteCollection(node.id);
   }
 
   const openCollectionSharesModal = (node) => {
