@@ -180,6 +180,7 @@ class API < Grape::API
   mount Chemotion::DevicesAnalysisAPI
   mount Chemotion::GateAPI
   mount Chemotion::ElementAPI
+  mount Chemotion::ExplorerAPI
   mount Chemotion::ChemSpectraAPI
   mount Chemotion::InstrumentAPI
   mount Chemotion::MessageAPI
