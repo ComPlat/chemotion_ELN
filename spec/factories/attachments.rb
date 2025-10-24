@@ -113,5 +113,11 @@ FactoryBot.define do
     trait :with_components_collection_zip do
       file_path { Rails.root.join('spec/fixtures/import/collection_components.zip') }
     end
+
+    trait :with_sample_import_template do
+      filename { 'sample_import_template.xlsx' }
+      file_path { Rails.root.join('spec/fixtures/import/sample_import_template.xlsx') }
+      content_type { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }
+    end
   end
 end

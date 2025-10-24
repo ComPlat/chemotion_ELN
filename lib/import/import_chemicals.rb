@@ -74,7 +74,9 @@ module Import
     end
 
     def self.process_column(chemical, column_header, value)
-      map_column = CHEMICAL_FIELDS.find { |e| e == column_header.downcase.rstrip }
+      map_column = CHEMICAL_FIELDS.find do |e|
+        e.downcase.rstrip.gsub(/\s+/, '_') == column_header.downcase.rstrip.gsub(/\s+/, '_')
+      end
       key = to_snake_case(column_header)
       formatted_value = value.strip
       build_chemical_data(map_column, chemical, key, formatted_value)

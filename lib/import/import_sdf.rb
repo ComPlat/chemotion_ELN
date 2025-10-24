@@ -3,7 +3,7 @@
 require 'charlock_holmes'
 
 class Import::ImportSdf < Import::ImportSamples
-  attr_reader  :collection_id, :current_user_id, :processed_mol, :file_path,
+  attr_reader  :collection_id, :current_user_id, :processed_mol,
                :inchi_array, :raw_data, :rows, :custom_data_keys, :mapped_keys, :unprocessable_samples
 
   SIZE_LIMIT = 40 # MB
@@ -14,7 +14,7 @@ class Import::ImportSdf < Import::ImportSamples
     @message = { error: [], info: [], error_messages: [] }
     @collection_id = args[:collection_id]
     @current_user_id = args[:current_user_id]
-    @file_path = args[:file_path]
+    @attachment = args[:attachment]
     @inchi_array = args[:inchikeys] || []
     @rows = args[:rows] || []
     @custom_data_keys = {}
@@ -56,19 +56,24 @@ class Import::ImportSdf < Import::ImportSamples
   end
 
   def read_data
-    if file_path
-      size = File.size(file_path)
-      if size.to_f < SIZE_LIMIT * 10**6
-        file_data = File.read(file_path)
+    return unless @attachment
+
+    begin
+      file = @attachment.attachment_attacher.get.to_io
+      file.rewind
+      file_data = file.read
+      size = file_data.bytesize
+      if size.to_f < SIZE_LIMIT * (10**6)
         detection = CharlockHolmes::EncodingDetector.detect(file_data)
         encoded_file = CharlockHolmes::Converter.convert file_data, detection[:encoding], 'UTF-8'
         @raw_data = encoded_file.split(/\${4}\r?\n/)
       else
         @message[:error] << "File too large (over #{SIZE_LIMIT}MB). "
       end
+    rescue StandardError => e
+      @message[:error] << "Failed to read attachment file: #{e.message}"
     end
     @raw_data.pop if @raw_data[-1].blank?
-    raw_data
   end
 
   def message
@@ -259,6 +264,10 @@ class Import::ImportSdf < Import::ImportSamples
     @message[:error] << 'Could not create the samples! ' if samples.empty?
     @message[:info] << "Created #{s} sample#{s <= 1 && '' || 's'}. " if samples
     @message[:info] << 'Import successful! ' if ids.size == @count
+
+    # Clean up attachment if import was successful
+    @attachment.destroy if @message[:error].empty? && @attachment.present?
+
     samples
   end
 
