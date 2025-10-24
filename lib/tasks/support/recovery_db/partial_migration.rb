@@ -479,14 +479,21 @@ module RecoveryDB
       end
 
       def restore_descendants(old_base_id, id_map)
-        descendants = RecoveryDB::Models::Container
-                      .joins('INNER JOIN container_hierarchies ON containers.id = container_hierarchies.descendant_id')
-                      .where(container_hierarchies: { ancestor_id: old_base_id })
-                      .where.not(containers: { id: id_map.keys }) # Skip already cloned or pre-created
-                      .order('container_hierarchies.generations ASC')
+        generations = RecoveryDB::Models::ContainerHierarchy
+                      .where(ancestor_id: old_base_id)
+                      .distinct
+                      .pluck(:generations)
+                      .sort
 
-        descendants.in_batches(of: 500) do |batch|
-          batch.each do |old_container|
+        generations.each do |generation|
+          descendants = RecoveryDB::Models::Container
+                        .joins(
+                          'INNER JOIN container_hierarchies ON containers.id = container_hierarchies.descendant_id',
+                        )
+                        .where(container_hierarchies: { ancestor_id: old_base_id, generations: generation })
+                        .where.not(containers: { id: id_map.keys })
+
+          descendants.find_each(batch_size: 500) do |old_container|
             new_container = Container.new(old_container.attributes.except(*attributes_to_exclude))
             new_container.parent_id = id_map[old_container.parent_id]
             new_container.save!
@@ -518,7 +525,6 @@ module RecoveryDB
           attrs[:attachable_id] = new_element_id
           attrs[:created_by] = new_user_id
           attrs[:created_by_type] = 'User'
-          attrs[:version] = '/'
 
           changed = fix_conversion_derivative_in_attrs!(attrs)
           new_attachment = Attachment.create!(attrs)
