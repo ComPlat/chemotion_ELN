@@ -97,12 +97,12 @@ class AdminDashboard extends React.Component {
             <Form.Control
               type="number"
               min="0"
-              value={allocatedUserSpace || 0}
-              onChange={(event) => this.setState({ allocatedUserSpace: Number(event.target.value) })}
+              defaultValue={allocatedUserSpace || ''}
+              onChange={(event) => this.setState({ allocatedUserSpace: event.target.value })}
             />
             <InputGroup.Text>MB</InputGroup.Text>
             <Button variant="warning" onClick={this.handleSaveBtn}>
-              <FormattedMessage id="save" defaultMessage="Save" />
+              Save
             </Button>
           </InputGroup>
         </Card.Body>
