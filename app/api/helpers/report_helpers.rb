@@ -635,6 +635,12 @@ module ReportHelpers
         dry_solvent: ['s."dry_solvent"', '"dry_solvent"', 0],
         flash_point: ['s."flash_point"', '"flash point"', 0],
         refractive_index: ['s."refractive_index"', '"refractive index"', 0],
+        height: ['s."height"', '"height"', 0],
+        width: ['s."width"', '"width"', 0],
+        length: ['s."length"', '"length"', 0],
+        storage_condition: ['s."storage_condition"', '"storage condition"', 0],
+        state: ['s."state"', '"state"', 0],
+        color: ['s."color"', '"color"', 0],
       },
       sample_id: {
         external_label: ['s.external_label', '"sample external label"', 0],
