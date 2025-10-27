@@ -18,3 +18,16 @@
 .multiple-row-fields .dnd-zone + button {
   @extend .my-auto;
 }
+
+.secondary-toggle-headline {
+  @extend .rounded;
+  @extend .surface-lighten4;
+  @extend .text-body;
+  @extend .py-2;
+  padding-top: 0.75rem !important;
+  padding-bottom: 0.75rem !important;
+}
+
+.secondary-toggle-headline.active {
+  @extend .surface-lighten2;
+}

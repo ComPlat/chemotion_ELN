@@ -1,0 +1,202 @@
+{
+  "results": [
+    {
+      "entryType": "UniProtKB unreviewed (TrEMBL)",
+      "primaryAccession": "X2BBW9",
+      "uniProtkbId": "X2BBW9_CAPTE",
+      "organism": {
+        "scientificName": "Capitella teleta",
+        "commonName": "Polychaete worm",
+        "taxonId": 283909,
+        "evidences": [
+          {
+            "evidenceCode": "ECO:0000313",
+            "source": "EnsemblMetazoa",
+            "id": "CapteP93247"
+          },
+          {
+            "evidenceCode": "ECO:0000313",
+            "source": "Proteomes",
+            "id": "UP000014760"
+          }
+        ],
+        "lineage": [
+          "Eukaryota",
+          "Metazoa",
+          "Spiralia",
+          "Lophotrochozoa",
+          "Annelida",
+          "Polychaeta",
+          "Sedentaria",
+          "Scolecida",
+          "Capitellidae",
+          "Capitella"
+        ]
+      },
+      "proteinDescription": {
+        "recommendedName": {
+          "fullName": {
+            "evidences": [
+              {
+                "evidenceCode": "ECO:0000256",
+                "source": "ARBA",
+                "id": "ARBA00012751"
+              }
+            ],
+            "value": "kynurenine--oxoglutarate transaminase"
+          },
+          "ecNumbers": [
+            {
+              "evidences": [
+                {
+                  "evidenceCode": "ECO:0000256",
+                  "source": "ARBA",
+                  "id": "ARBA00012751"
+                }
+              ],
+              "value": "2.6.1.7"
+            }
+          ]
+        }
+      },
+      "extraAttributes": {
+        "uniParcId": "UPI000356A007"
+      }
+    },
+    {
+      "entryType": "UniProtKB unreviewed (TrEMBL)",
+      "primaryAccession": "W8C121",
+      "uniProtkbId": "W8C121_CERCA",
+      "organism": {
+        "scientificName": "Ceratitis capitata",
+        "commonName": "Mediterranean fruit fly",
+        "synonyms": [
+          "Tephritis capitata"
+        ],
+        "taxonId": 7213,
+        "evidences": [
+          {
+            "evidenceCode": "ECO:0000313",
+            "source": "EMBL",
+            "id": "JAB99406.1"
+          }
+        ],
+        "lineage": [
+          "Eukaryota",
+          "Metazoa",
+          "Ecdysozoa",
+          "Arthropoda",
+          "Hexapoda",
+          "Insecta",
+          "Pterygota",
+          "Neoptera",
+          "Endopterygota",
+          "Diptera",
+          "Brachycera",
+          "Muscomorpha",
+          "Tephritoidea",
+          "Tephritidae",
+          "Ceratitis",
+          "Ceratitis"
+        ]
+      },
+      "proteinDescription": {
+        "recommendedName": {
+          "fullName": {
+            "evidences": [
+              {
+                "evidenceCode": "ECO:0000256",
+                "source": "ARBA",
+                "id": "ARBA00012751"
+              }
+            ],
+            "value": "kynurenine--oxoglutarate transaminase"
+          },
+          "ecNumbers": [
+            {
+              "evidences": [
+                {
+                  "evidenceCode": "ECO:0000256",
+                  "source": "ARBA",
+                  "id": "ARBA00012751"
+                }
+              ],
+              "value": "2.6.1.7"
+            }
+          ]
+        },
+        "flag": "Fragment"
+      },
+      "extraAttributes": {
+        "uniParcId": "UPI0003E8E1E8"
+      }
+    },
+    {
+      "entryType": "UniProtKB unreviewed (TrEMBL)",
+      "primaryAccession": "W8BRD0",
+      "uniProtkbId": "W8BRD0_CERCA",
+      "organism": {
+        "scientificName": "Ceratitis capitata",
+        "commonName": "Mediterranean fruit fly",
+        "synonyms": [
+          "Tephritis capitata"
+        ],
+        "taxonId": 7213,
+        "evidences": [
+          {
+            "evidenceCode": "ECO:0000313",
+            "source": "EMBL",
+            "id": "JAB99408.1"
+          }
+        ],
+        "lineage": [
+          "Eukaryota",
+          "Metazoa",
+          "Ecdysozoa",
+          "Arthropoda",
+          "Hexapoda",
+          "Insecta",
+          "Pterygota",
+          "Neoptera",
+          "Endopterygota",
+          "Diptera",
+          "Brachycera",
+          "Muscomorpha",
+          "Tephritoidea",
+          "Tephritidae",
+          "Ceratitis",
+          "Ceratitis"
+        ]
+      },
+      "proteinDescription": {
+        "recommendedName": {
+          "fullName": {
+            "evidences": [
+              {
+                "evidenceCode": "ECO:0000256",
+                "source": "ARBA",
+                "id": "ARBA00012751"
+              }
+            ],
+            "value": "kynurenine--oxoglutarate transaminase"
+          },
+          "ecNumbers": [
+            {
+              "evidences": [
+                {
+                  "evidenceCode": "ECO:0000256",
+                  "source": "ARBA",
+                  "id": "ARBA00012751"
+                }
+              ],
+              "value": "2.6.1.7"
+            }
+          ]
+        }
+      },
+      "extraAttributes": {
+        "uniParcId": "UPI000329AA76"
+      }
+    }
+  ]
+}
