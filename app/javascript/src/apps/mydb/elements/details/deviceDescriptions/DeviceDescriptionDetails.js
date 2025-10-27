@@ -29,7 +29,7 @@ import DetailActions from 'src/stores/alt/actions/DetailActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import CollectionUtils from 'src/models/collection/CollectionUtils';
+import { collectionHasPermission } from 'src/utilities/collectionUtilities';
 import PropertiesForm from 'src/apps/mydb/elements/details/deviceDescriptions/propertiesTab/PropertiesForm';
 import AttachmentForm from 'src/apps/mydb/elements/details/deviceDescriptions/attachmentsTab/AttachmentForm';
 import AnalysesContainer from 'src/apps/mydb/elements/details/deviceDescriptions/analysesTab/AnalysesContainer';
@@ -85,7 +85,7 @@ function DeviceDescriptionDetails({ openedFromCollectionId }) {
     history: 'History',
   };
 
-  const isReadOnly = () => CollectionUtils.isReadOnly(currentCollection, currentUser.id);
+  const isReadOnly = () => !collectionHasPermission(currentCollection, 0);
 
   const disabled = (index) => (!!(deviceDescription.isNew && index !== 0));
 

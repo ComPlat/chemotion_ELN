@@ -64,17 +64,14 @@ export default class CreateButton extends React.Component {
     const {
       label,
       is_locked,
-      is_shared,
-      is_synchronized,
-      is_sync_to_me,
+      collection_share_id,
       permission_level
     } = currentCollection;
 
-    const newIsDisabled = (
-      (label === 'All' && is_locked)
-      || (is_shared && is_synchronized === false)
-      || (is_sync_to_me && permission_level < PermissionConst.Write)
-    );
+    const newIsDisabled = permission_level !== undefined
+      ? (collection_share_id && permission_level < PermissionConst.Write)
+      : (label === 'All' && is_locked);
+
     this.setState({ isDisabled: newIsDisabled });
   }
 
