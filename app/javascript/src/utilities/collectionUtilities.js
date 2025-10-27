@@ -41,4 +41,32 @@ const filterParamsFromUIState = (uiState) => {
   return filterParams;
 }
 
-export { isElementSelectionEmpty, filterParamsFromUIState }
+const makeList = (collections, tree = [], depth = 0) => {
+  if (!Array.isArray(collections)) return tree;
+
+  collections.forEach((collection) => {
+    tree.push(collection);
+    makeList(collection.children, tree, depth + 1);
+  });
+
+  return tree;
+}
+
+const collectionOptions = (store, showSharedCollections) => {
+  const ownCollections = store.own_collections;
+  let shared = [];
+  if (showSharedCollections) {
+    const sharedWithMeCollections = store.shared_with_me_collections;
+    shared = sharedWithMeCollections.flatMap((c) => c.children).filter((c) => c.permission_level >= 1)
+  }
+
+  return [
+    ...makeList(ownCollections),
+    {
+      label: 'Shared with me collections',
+      options: makeList(shared),
+    },
+  ];
+}
+
+export { isElementSelectionEmpty, filterParamsFromUIState, collectionOptions }
