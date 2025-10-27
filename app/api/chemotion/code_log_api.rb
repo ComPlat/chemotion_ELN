@@ -70,7 +70,7 @@ module Chemotion
           error!('401 Unauthorized', 401) unless ElementsPolicy.new(
             current_user,
             params[:element_type].classify.constantize.where(id: ids),
-          ).read?
+          ).read_all?
         end
 
         get do
