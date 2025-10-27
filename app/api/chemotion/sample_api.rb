@@ -68,129 +68,70 @@ module Chemotion
 
         after_validation do
           error!('401 Unauthorized', 401) unless current_user.collections.find(params[:currentCollectionId])
+          if params[:data].present?
+            tempfile = Tempfile.new(['validated_data', '.csv'])
+            params[:file] = { tempfile: tempfile, filename: 'validated_data.csv' }
+            tempfile.binmode
+            CSV.open(tempfile, 'wb') do |csv|
+              # Add headers - get keys from the first row
+              first_row = params[:data].first
+              error!('Invalid data format: rows must be objects', 400) unless first_row.is_a?(Hash)
+
+              headers = first_row.keys
+              csv << headers
+              # Add data rows
+              params[:data].each { |row| csv << headers.map { |header| row[header] } }
+            end
+            tempfile.rewind
+          end
+
+          @att = Attachment.create(
+            file_path: params[:file][:tempfile].path,
+            filename: params[:file][:filename],
+            created_by: current_user.id,
+            created_for: current_user.id,
+            attachable_type: 'Container',
+          )
+        ensure
+          params[:file][:tempfile].close! if params[:file] && params[:file][:tempfile]
         end
 
         params do
           requires :currentCollectionId, type: Integer, desc: 'Collection id'
           requires :import_type, type: String
-          optional :data, type: String, desc: 'Validated data as JSON string'
+          optional :file, type: File, desc: 'File upload'
+          optional :data, type: JSON, desc: 'Validated data '
+          at_least_one_of :file, :data
         end
 
         post do
-          # Check if we're receiving data after client validation
-          if params[:data].present?
-            # Handle the direct cleaned data case
-            collection_id = params[:currentCollectionId]
-            import_type = params[:import_type]
+          ## 2-step SDF Import
+          if /\.(sdf?|mol)/i.match?(@att.extname)
+            sdf_import = Import::ImportSdf.new(
+              attachment: @att,
+              collection_id: params[:currentCollectionId],
+              current_user_id: current_user.id,
+            )
 
-            temp_filename = "#{SecureRandom.hex}-validated_data"
-            tmp_file_path = File.join('tmp', temp_filename)
-
-            # parse data if it's a string (JSON)
-            if params[:data].is_a?(String)
-              begin
-                params[:data] = JSON.parse(params[:data])
-              rescue JSON::ParserError => e
-                Rails.logger.error("Failed to parse data: #{e.message}")
-                error!("Invalid data format: #{e.message}", 400)
-              end
-            end
-
-            file_path = "#{tmp_file_path}.csv"
-            CSV.open(file_path, 'wb') do |csv|
-              unless params[:data].empty?
-                # Add headers - get keys from the first row
-                first_row = params[:data].first
-
-                if first_row.is_a?(Hash)
-                  headers = first_row.keys
-                  csv << headers
-
-                  # Add data rows
-                  params[:data].each do |row|
-                    csv << headers.map { |header| row[header] }
-                  end
-                else
-                  error!('Invalid data format: rows must be objects', 400)
-                end
-              end
-            end
-
-            # Create a file parameter structure that mimics an uploaded file
-            params[:file] = {
-              tempfile: File.open(file_path),
-              filename: 'validated_data.csv',
-              type: 'text/csv',
+            sdf_import.find_or_create_mol_by_batch
+            @att.really_destroy!
+            return {
+              sdf: true, message: sdf_import.message,
+              data: sdf_import.processed_mol, status: sdf_import.status,
+              custom_data_keys: sdf_import.custom_data_keys.keys,
+              mapped_keys: sdf_import.mapped_keys,
+              collection_id: sdf_import.collection_id
             }
           end
 
-          # From here, the original logic continues
-          if params[:file].present?
-
-            att = Attachment.new(
-              filename: "#{SecureRandom.hex}-#{params[:file][:filename]}",
-              file_path: params[:file][:tempfile].path,
-              filesize: params[:file][:tempfile].size,
-              created_by: current_user.id,
-              created_for: current_user.id,
-              content_type: params[:file][:type],
-            )
-
-            begin
-              att.save!
-            ensure
-              # Close and delete the original tempfile that was used to create the Attachment
-              if params[:file] && params[:file][:tempfile]
-                tempfile = params[:file][:tempfile]
-                tempfile.close if tempfile.respond_to?(:close) && !tempfile.closed?
-                # Only unlink if it's a Tempfile or if it responds to unlink
-                if tempfile.respond_to?(:unlink)
-                  tempfile.unlink
-                elsif tempfile.respond_to?(:path) && File.exist?(tempfile.path)
-                  # For regular File objects, delete using File.delete
-                  File.delete(tempfile.path)
-                end
-              end
-            end
-            extname = File.extname(params[:file][:filename])
-            if /\.(sdf?|mol)/i.match?(extname)
-              sdf_import = Import::ImportSdf.new(
-                attachment: att,
-                collection_id: params[:currentCollectionId],
-                current_user_id: current_user.id,
-              )
-              sdf_import.find_or_create_mol_by_batch
-              return {
-                sdf: true, message: sdf_import.message,
-                data: sdf_import.processed_mol, status: sdf_import.status,
-                custom_data_keys: sdf_import.custom_data_keys.keys,
-                mapped_keys: sdf_import.mapped_keys,
-                collection_id: sdf_import.collection_id
-              }
-            end
-            SMALL_IMPORT_SIZE = 25_000
-            if att.filesize < SMALL_IMPORT_SIZE
-              import = Import::ImportSamples.new(
-                att,
-                params[:currentCollectionId], current_user.id, att.filename, params[:import_type]
-              )
-              import_result = import.process
-
-              import_result[:data] = import_result[:data].map(&:id) if %w[ok warning].include?(import_result[:status])
-              import_result
-            else
-              parameters = {
-                collection_id: params[:currentCollectionId],
-                user_id: current_user.id,
-                attachment: att,
-                import_type: params[:import_type],
-              }
-              ImportSamplesJob.perform_later(parameters)
-              { status: 'in progress', message: 'Importing samples in background' }
-            end
-          else
-            error!('No file or data provided', 400)
-          end
+          ## async CSV/xlx Import
+          ImportSamplesJob.perform_later(
+            collection_id: params[:currentCollectionId],
+            user_id: current_user.id,
+            attachment: @att,
+            import_type: params[:import_type],
+          )
+          { status: 'in progress', message: 'Importing samples in the background' }
         end
       end
 
