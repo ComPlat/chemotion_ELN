@@ -161,18 +161,6 @@ module Chemotion
         end
       end
 
-      namespace :indigo do
-        desc 'render Molfile structure'
-        params do
-          requires :struct, type: String, desc: 'molfile'
-          optional :output_format, type: String, desc: 'output format for molfile', default: 'image/svg+xml'
-        end
-        post 'structure/render' do
-          client = IndigoService.new(params[:struct], params[:output_format])
-          client.render_structure
-        end
-      end
-
       namespace :molecular_weight do
         desc 'Calculate the molecular mass from the molecular_formula for decoupled sample'
         params do
@@ -180,8 +168,10 @@ module Chemotion
         end
         get do
           formula = params[:molecular_formula]
-          total_mass = Chemotion::Calculations.mw_from_formula(formula)
-          total_mass
+          SumFormula.new(formula).molecular_weight
+        rescue StandardError => e
+          Rails.logger.error ["with formula: #{formula}", e.message, *e.backtrace].join($INPUT_RECORD_SEPARATOR)
+          0.0
         end
       end
 

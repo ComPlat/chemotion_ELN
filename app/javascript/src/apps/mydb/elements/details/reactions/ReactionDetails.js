@@ -58,7 +58,7 @@ import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButt
 // eslint-disable-next-line import/no-named-as-default
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 import ReactionSchemeGraphic from 'src/apps/mydb/elements/details/reactions/ReactionSchemeGraphic';
-import SamplesFetcher from 'src/fetchers/SamplesFetcher';
+import IndigoServiceFetcher from 'src/fetchers/IndigoFetcher';
 
 const handleProductClick = (product) => {
   const uri = Aviator.getCurrentURI();
@@ -333,7 +333,7 @@ export default class ReactionDetails extends Component {
         materials.map(async (material) => {
           const checksum = material?._checksum;
           if (!alreadyProcessed[type].includes(checksum)) {
-            const newSVGPath = await SamplesFetcher.renderSampleSvgWithIndigo({
+            const newSVGPath = await IndigoServiceFetcher.renderSampleSvgWithIndigo({
               molfile: material.molfile,
               svg_path: material.sample_svg_file,
             });
