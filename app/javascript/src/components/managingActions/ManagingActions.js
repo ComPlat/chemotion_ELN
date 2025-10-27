@@ -139,7 +139,7 @@ export default class ManagingActions extends React.Component {
         return <ManagingModalCollectionActions
           title="Move to Collection"
           action="move"
-          listSharedCollections={true}
+          withShared={true}
           onHide={this.hideModal}
         />;
 
@@ -147,7 +147,7 @@ export default class ManagingActions extends React.Component {
         return <ManagingModalCollectionActions
           title="Assign to Collection"
           action="assign"
-          listSharedCollections={false}
+          withShared={false}
           onHide={this.hideModal}
         />;
 

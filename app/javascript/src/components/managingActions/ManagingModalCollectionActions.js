@@ -3,10 +3,10 @@ import PropTypes from 'prop-types';
 import { Form, Button, Modal } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { filterParamsFromUIState } from 'src/utilities/collectionUtilities';
-import { Select } from 'src/components/common/Select';
+import CollectionSelect from 'src/components/common/CollectionSelect';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
-const ManagingModalCollectionActions = ({ title, action, onHide, listSharedCollections }) => {
+const ManagingModalCollectionActions = ({ title, action, onHide, withShared }) => {
   const collectionsStore = useContext(StoreContext).collections;
   const [selectedCollection, setSelectedCollection] = useState('');
   const [collectionLabel, setCollectionLabel] = useState('');
@@ -25,40 +25,6 @@ const ManagingModalCollectionActions = ({ title, action, onHide, listSharedColle
     }
     onHide();
   }
-
-  const makeList = (collections, tree = [], depth = 0) => {
-    if (!Array.isArray(collections)) return tree;
-
-    collections.forEach((collection) => {
-      tree.push(collection);
-      makeList(collection.children, tree, depth + 1);
-    });
-
-    return tree;
-  }
-
-  const collectionOptions = () => {
-    const ownCollections = collectionsStore.own_collections;
-    let shared = [];
-    if (listSharedCollections) {
-      const sharedWithMeCollections = collectionsStore.shared_with_me_collections;
-      shared = sharedWithMeCollections.flatMap((c) => c.children).filter((c) => c.permission_level >= 1)
-    }
-
-    return [
-      ...makeList(ownCollections),
-      {
-        label: 'Shared with me collections',
-        options: makeList(shared),
-      },
-    ];
-  }
-
-  const optionLabel = ({ label, depth }) => (
-    <span style={{ paddingLeft: `${depth * 10}px` }}>
-      {label}
-    </span>
-  );
 
   const submitButton = () => {
     return collectionLabel ? (
@@ -81,12 +47,10 @@ const ManagingModalCollectionActions = ({ title, action, onHide, listSharedColle
         <Form>
           <Form.Group className="mb-3">
             <Form.Label>Select a Collection</Form.Label>
-            <Select
-              options={collectionOptions()}
+            <CollectionSelect
               value={selectedCollection}
-              getOptionValue={(o) => o.id}
-              formatOptionLabel={optionLabel}
-              onChange={(selected) => setSelectedCollection(selected)}
+              withShared={withShared}
+              onChange={setSelectedCollection}
             />
           </Form.Group>
 

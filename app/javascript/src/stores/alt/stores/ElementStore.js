@@ -8,7 +8,6 @@ import Aviator from 'aviator';
 import alt from 'src/stores/alt/alt';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
-import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
