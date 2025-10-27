@@ -54,24 +54,20 @@ module Chemotion
       end
 
       after_validation do
-        if params.fetch(:currentCollection, {}).fetch(:id, 0).zero?
+        collection_id = params.fetch(:currentCollection, {}).fetch(:id, 0)
+        if collection_id.zero? # no or malformed collection id was given
           @collection = Collection.get_all_collection_for_user(current_user)
-        else
-          pl = case request.request_method
-               when 'POST' then -1
-               when 'DELETE' then 2
-               else 5
-               end
-
-          @collection = Collection.where(
-            'id = ? AND ((user_id in (?) AND (is_shared IS NOT TRUE OR permission_level > ?)) OR shared_by_id = ?)',
-            params[:currentCollection][:id],
-            user_ids,
-            pl,
-            current_user.id,
-          ).first
+        elsif @collection = current_user.collections.find_by(id: collection_id)
+        elsif collection_share = CollectionShare.where(collection_id: collection_id, shared_with_id: user_ids)
+          permission_level = case request.request_method
+                             when 'POST' then -1
+                             when 'DELETE' then 2
+                             else 5
+                             end
+          error!('403 Forbidden', 403) unless collection_share.permission_level >= permission_level
+          @collection = collection_share.collection
         end
-        error!('401 Unauthorized', 401) unless @collection
+        error!('404 Record Not Found', 404) unless @collection
       end
 
       desc 'delete element from ui state selection.'
