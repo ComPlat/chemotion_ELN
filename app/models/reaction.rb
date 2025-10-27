@@ -38,6 +38,7 @@
 #  plain_text_observation :text
 #  vessel_size            :jsonb
 #  gaseous                :boolean          default(FALSE)
+#  weight_percentage      :boolean          default(FALSE)
 #
 # Indexes
 #
