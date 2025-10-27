@@ -61,6 +61,11 @@ FactoryBot.define do
       file_path { Rails.root.join('spec/fixtures/upload.tif') }
     end
 
+    trait :with_cif_file do
+      filename { 'upload.cif' }
+      file_path { Rails.root.join('spec/fixtures/upload.cif') }
+    end
+
     trait :with_annotation do
       filename { 'upload.jpg' }
       file_path { Rails.root.join('spec/fixtures/upload.jpg') }
@@ -112,6 +117,10 @@ FactoryBot.define do
 
     trait :with_components_collection_zip do
       file_path { Rails.root.join('spec/fixtures/import/collection_components.zip') }
+    end
+
+    trait :with_sbmm_sample_collection_zip do
+      file_path { Rails.root.join('spec/fixtures/import/collection_sbmm_samples.zip') }
     end
   end
 end

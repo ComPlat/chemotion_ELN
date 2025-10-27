@@ -76,6 +76,7 @@ class ElementPermissionProxy
   end
 
   def max_detail_level_by_element_class
+    # TODO: as long as we don't have any outliers, this method could just return 10
     case element
     when Sample
       10
@@ -94,6 +95,8 @@ class ElementPermissionProxy
     when DeviceDescription
       10
     when Vessel
+      10
+    when SequenceBasedMacromoleculeSample
       10
     end
   end
