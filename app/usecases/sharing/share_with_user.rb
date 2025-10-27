@@ -19,11 +19,16 @@ module Usecases
           research_plan_ids = @params.fetch(:research_plan_ids, [])
           element_ids = @params.fetch(:element_ids, [])
           cell_line_ids = @params.fetch(:cell_line_ids, [])
+          device_description_ids = @params.fetch(:device_description_ids, [])
+          sequence_based_macromolecule_sample_ids = @params.fetch(:sequence_based_macromolecule_sample_ids, [])
 
           # Reactions and Wellplates have associated Samples
-          associated_sample_ids = Sample.associated_by_user_id_and_reaction_ids(@current_user_id, reaction_ids).map(&:id) + Sample.associated_by_user_id_and_wellplate_ids(@current_user_id, wellplate_ids).map(&:id)
+          associated_sample_ids =
+            Sample.associated_by_user_id_and_reaction_ids(@current_user_id, reaction_ids).map(&:id) +
+            Sample.associated_by_user_id_and_wellplate_ids(@current_user_id, wellplate_ids).map(&:id)
           # Screens have associated Wellplates
-          associated_wellplate_ids = Wellplate.associated_by_user_id_and_screen_ids(@current_user_id, screen_ids).map(&:id)
+          associated_wellplate_ids = Wellplate.associated_by_user_id_and_screen_ids(@current_user_id, screen_ids)
+                                              .map(&:id)
 
           sample_ids = (sample_ids + associated_sample_ids).uniq
           wellplate_ids = (wellplate_ids + associated_wellplate_ids).uniq
@@ -34,7 +39,7 @@ module Usecases
             user_id: @collection_attributes[:user_id],
             shared_by_id: @current_user_id,
             is_locked: true,
-            is_shared: true
+            is_shared: true,
           }
 
           rc = Collection.only_deleted.find_by(**root_collection_attributes)&.restore
@@ -63,6 +68,15 @@ module Usecases
 
           cell_line_ids.each do |cell_line_id|
             CollectionsCellline.create(collection_id: c.id, cellline_sample_id: cell_line_id)
+          end
+
+          device_description_ids.each do |device_description_id|
+            CollectionsDeviceDescription.create(collection_id: c.id, device_description_id: device_description_id)
+          end
+
+          sequence_based_macromolecule_sample_ids.each do |sbmm_sample_id|
+            CollectionsSequenceBasedMacromoleculeSample.create(collection_id: c.id,
+                                                               sequence_based_macromolecule_sample_id: sbmm_sample_id)
           end
 
           element_ids.each do |k, ids|

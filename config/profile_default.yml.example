@@ -8,7 +8,8 @@ development:
       :research_plan: 5
       :cell_line: -1000
       :device_description: -1100
-      :vessel: -1100
+      :sequence_based_macromolecule_sample: -1200
+      :vessel: -1300
     :layout_detail_research_plan:
       :research_plan:
         1
@@ -67,6 +68,13 @@ development:
         4
       :maintainance:
         5
+    :layout_detail_sequence_based_macromolecule_sample:
+      :properties:
+        1
+      :analyses:
+        2
+      :attachments:
+        3
 
 production:
   :layout:
@@ -78,7 +86,8 @@ production:
       :research_plan: 5
       :cell_line: -1000
       :device_description: -1100
-      :vessel: -1100
+      :sequence_based_macromolecule_sample: -1200
+      :vessel: -1300
     :layout_detail_research_plan:
       :research_plan:
         1
@@ -137,6 +146,13 @@ production:
         4
       :maintainance:
         5
+    :layout_detail_sequence_based_macromolecule_sample:
+      :properties:
+        1
+      :analyses:
+        2
+      :attachments:
+        3
 
 test:
   :layout:
@@ -148,7 +164,8 @@ test:
       :research_plan: 5
       :cell_line: -1000
       :device_description: -1100
-      :vessel: -1100
+      :sequence_based_macromolecule_sample: -1200
+      :vessel: -1300
     :layout_detail_research_plan:
       :research_plan:
         1
@@ -207,3 +224,10 @@ test:
         4
       :maintainance:
         5
+    :layout_detail_sequence_based_macromolecule_sample:
+      :properties:
+        1
+      :analyses:
+        2
+      :attachments:
+        3

@@ -12,16 +12,7 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import { capitalizeWords } from 'src/utilities/textHelper';
 import { filterTabLayout, getArrayFromLayout } from 'src/utilities/CollectionTabsHelper';
-
-const elements = [
-  { name: 'sample', label: 'Sample' },
-  { name: 'reaction', label: 'Reaction' },
-  { name: 'wellplate', label: 'Wellplate' },
-  { name: 'screen', label: 'Screen' },
-  { name: 'research_plan', label: 'Research Plan' },
-  { name: 'device_description', label: 'Device description' },
-  { name: 'vessel', label: 'Vessel' }
-];
+import { allElnElmentsWithLabel } from 'src/apps/generic/Utils';
 
 export default class CollectionTabs extends React.Component {
   constructor(props) {
@@ -31,7 +22,7 @@ export default class CollectionTabs extends React.Component {
       profileData: {},
       showModal: false,
       currentCollection: {},
-      layouts: elements.reduce((acc, { name }) => {
+      layouts: allElnElmentsWithLabel.reduce((acc, { name }) => {
         acc[name] = { visible: List(), hidden: List() };
         return acc;
       }, {}),
@@ -84,7 +75,7 @@ export default class CollectionTabs extends React.Component {
   onClickCollection(node) {
     const { profileData } = this.state;
 
-    const layouts = elements.reduce((acc, { name }) => {
+    const layouts = allElnElmentsWithLabel.reduce((acc, { name }) => {
       let layout;
       if (_.isEmpty(node.tabs_segment[name])) {
         layout = (profileData && profileData[`layout_detail_${name}`]) || {};
@@ -110,7 +101,7 @@ export default class CollectionTabs extends React.Component {
 
   handleSave() {
     const { currentCollection: cCol, layouts } = this.state;
-    const layoutSegments = elements.reduce((acc, { name }) => {
+    const layoutSegments = allElnElmentsWithLabel.reduce((acc, { name }) => {
       const layout = filterTabLayout(layouts[name]);
       acc[name] = layout;
       return acc;
@@ -175,7 +166,7 @@ export default class CollectionTabs extends React.Component {
           </Modal.Header>
           <Modal.Body>
             <Row>
-              {elements.map(({ name, label }) => (
+              {allElnElmentsWithLabel.map(({ name, label }) => (
                 <Col key={name}>
                   <h4>{label}</h4>
                   <TabLayoutEditor
@@ -185,7 +176,7 @@ export default class CollectionTabs extends React.Component {
                       <div>{tabTitlesMap[item] ?? capitalizeWords(item)}</div>
                     )}
                     onLayoutChange={(visible, hidden) => {
-                      this.setState(({layouts}) => ({
+                      this.setState(({ layouts }) => ({
                         layouts: {
                           ...layouts,
                           [name]: { visible, hidden }

@@ -1,0 +1,4123 @@
+{
+    "entryType": "UniProtKB reviewed (Swiss-Prot)",
+    "primaryAccession": "P12346",
+    "secondaryAccessions":
+    [
+        "Q63602",
+        "Q64628",
+        "Q64630",
+        "Q7TNX0"
+    ],
+    "uniProtkbId": "TRFE_RAT",
+    "entryAudit":
+    {
+        "firstPublicDate": "1989-10-01",
+        "lastAnnotationUpdateDate": "2025-06-18",
+        "lastSequenceUpdateDate": "2007-01-09",
+        "entryVersion": 193,
+        "sequenceVersion": 3
+    },
+    "annotationScore": 5.0,
+    "organism":
+    {
+        "scientificName": "Rattus norvegicus",
+        "commonName": "Rat",
+        "taxonId": 10116,
+        "lineage":
+        [
+            "Eukaryota",
+            "Metazoa",
+            "Chordata",
+            "Craniata",
+            "Vertebrata",
+            "Euteleostomi",
+            "Mammalia",
+            "Eutheria",
+            "Euarchontoglires",
+            "Glires",
+            "Rodentia",
+            "Myomorpha",
+            "Muroidea",
+            "Muridae",
+            "Murinae",
+            "Rattus"
+        ]
+    },
+    "proteinExistence": "1: Evidence at protein level",
+    "proteinDescription":
+    {
+        "recommendedName":
+        {
+            "fullName":
+            {
+                "value": "Serotransferrin"
+            },
+            "shortNames":
+            [
+                {
+                    "value": "Transferrin"
+                }
+            ]
+        },
+        "alternativeNames":
+        [
+            {
+                "fullName":
+                {
+                    "value": "Beta-1 metal-binding globulin"
+                }
+            },
+            {
+                "fullName":
+                {
+                    "value": "Liver regeneration-related protein LRRG03"
+                }
+            },
+            {
+                "fullName":
+                {
+                    "value": "Siderophilin"
+                }
+            }
+        ],
+        "flag": "Precursor"
+    },
+    "genes":
+    [
+        {
+            "geneName":
+            {
+                "value": "Tf"
+            }
+        }
+    ],
+    "comments":
+    [
+        {
+            "texts":
+            [
+                {
+                    "value": "Transferrins are iron binding transport proteins which can bind two Fe(3+) ions in association with the binding of an anion, usually bicarbonate. It is responsible for the transport of iron from sites of absorption and heme degradation to those of storage and utilization. Serum transferrin may also have a further role in stimulating cell proliferation"
+                }
+            ],
+            "commentType": "FUNCTION"
+        },
+        {
+            "texts":
+            [
+                {
+                    "evidences":
+                    [
+                        {
+                            "evidenceCode": "ECO:0000250",
+                            "source": "UniProtKB",
+                            "id": "P02787"
+                        }
+                    ],
+                    "value": "Monomer. Part of a complex composed of SLC40A1/ferroportin, TF/transferrin and HEPH/hephaestin that transfers iron from cells to transferrin"
+                }
+            ],
+            "commentType": "SUBUNIT"
+        },
+        {
+            "commentType": "SUBCELLULAR LOCATION",
+            "subcellularLocations":
+            [
+                {
+                    "location":
+                    {
+                        "value": "Secreted",
+                        "id": "SL-0243"
+                    }
+                }
+            ]
+        },
+        {
+            "commentType": "ALTERNATIVE PRODUCTS",
+            "events":
+            [
+                "Alternative splicing"
+            ],
+            "isoforms":
+            [
+                {
+                    "name":
+                    {
+                        "value": "1"
+                    },
+                    "isoformIds":
+                    [
+                        "P12346-1"
+                    ],
+                    "isoformSequenceStatus": "Displayed"
+                },
+                {
+                    "name":
+                    {
+                        "value": "2"
+                    },
+                    "isoformIds":
+                    [
+                        "P12346-2"
+                    ],
+                    "sequenceIds":
+                    [
+                        "VSP_011840"
+                    ],
+                    "isoformSequenceStatus": "Described"
+                }
+            ]
+        },
+        {
+            "texts":
+            [
+                {
+                    "value": "Expressed by the liver and secreted in plasma"
+                }
+            ],
+            "commentType": "TISSUE SPECIFICITY"
+        },
+        {
+            "texts":
+            [
+                {
+                    "evidences":
+                    [
+                        {
+                            "evidenceCode": "ECO:0000255",
+                            "source": "PROSITE-ProRule",
+                            "id": "PRU00741"
+                        }
+                    ],
+                    "value": "Belongs to the transferrin family"
+                }
+            ],
+            "commentType": "SIMILARITY"
+        }
+    ],
+    "features":
+    [
+        {
+            "type": "Signal",
+            "location":
+            {
+                "start":
+                {
+                    "value": 1,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 19,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "",
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000269",
+                    "source": "PubMed",
+                    "id": "3046665"
+                },
+                {
+                    "evidenceCode": "ECO:0000269",
+                    "source": "PubMed",
+                    "id": "500689"
+                }
+            ]
+        },
+        {
+            "type": "Chain",
+            "location":
+            {
+                "start":
+                {
+                    "value": 20,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 698,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "Serotransferrin",
+            "featureId": "PRO_0000035718"
+        },
+        {
+            "type": "Domain",
+            "location":
+            {
+                "start":
+                {
+                    "value": 25,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 347,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "Transferrin-like 1",
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000255",
+                    "source": "PROSITE-ProRule",
+                    "id": "PRU00741"
+                }
+            ]
+        },
+        {
+            "type": "Domain",
+            "location":
+            {
+                "start":
+                {
+                    "value": 360,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 683,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "Transferrin-like 2",
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000255",
+                    "source": "PROSITE-ProRule",
+                    "id": "PRU00741"
+                }
+            ]
+        },
+        {
+            "type": "Binding site",
+            "location":
+            {
+                "start":
+                {
+                    "value": 82,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 82,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "",
+            "featureCrossReferences":
+            [
+                {
+                    "database": "ChEBI",
+                    "id": "CHEBI:29034"
+                }
+            ],
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000255",
+                    "source": "PROSITE-ProRule",
+                    "id": "PRU00741"
+                }
+            ],
+            "ligand":
+            {
+                "name": "Fe(3+)",
+                "id": "ChEBI:CHEBI:29034",
+                "label": "1"
+            }
+        },
+        {
+            "type": "Binding site",
+            "location":
+            {
+                "start":
+                {
+                    "value": 114,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 114,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "",
+            "featureCrossReferences":
+            [
+                {
+                    "database": "ChEBI",
+                    "id": "CHEBI:29034"
+                }
+            ],
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000255",
+                    "source": "PROSITE-ProRule",
+                    "id": "PRU00741"
+                }
+            ],
+            "ligand":
+            {
+                "name": "Fe(3+)",
+                "id": "ChEBI:CHEBI:29034",
+                "label": "1"
+            }
+        },
+        {
+            "type": "Binding site",
+            "location":
+            {
+                "start":
+                {
+                    "value": 139,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 139,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "",
+            "featureCrossReferences":
+            [
+                {
+                    "database": "ChEBI",
+                    "id": "CHEBI:17544"
+                }
+            ],
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000255",
+                    "source": "PROSITE-ProRule",
+                    "id": "PRU00741"
+                }
+            ],
+            "ligand":
+            {
+                "name": "hydrogencarbonate",
+                "id": "ChEBI:CHEBI:17544",
+                "label": "1"
+            }
+        },
+        {
+            "type": "Binding site",
+            "location":
+            {
+                "start":
+                {
+                    "value": 143,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 143,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "",
+            "featureCrossReferences":
+            [
+                {
+                    "database": "ChEBI",
+                    "id": "CHEBI:17544"
+                }
+            ],
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000255",
+                    "source": "PROSITE-ProRule",
+                    "id": "PRU00741"
+                }
+            ],
+            "ligand":
+            {
+                "name": "hydrogencarbonate",
+                "id": "ChEBI:CHEBI:17544",
+                "label": "1"
+            }
+        },
+        {
+            "type": "Binding site",
+            "location":
+            {
+                "start":
+                {
+                    "value": 145,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 145,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "",
+            "featureCrossReferences":
+            [
+                {
+                    "database": "ChEBI",
+                    "id": "CHEBI:17544"
+                }
+            ],
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000255",
+                    "source": "PROSITE-ProRule",
+                    "id": "PRU00741"
+                }
+            ],
+            "ligand":
+            {
+                "name": "hydrogencarbonate",
+                "id": "ChEBI:CHEBI:17544",
+                "label": "1"
+            }
+        },
+        {
+            "type": "Binding site",
+            "location":
+            {
+                "start":
+                {
+                    "value": 146,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 146,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "",
+            "featureCrossReferences":
+            [
+                {
+                    "database": "ChEBI",
+                    "id": "CHEBI:17544"
+                }
+            ],
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000255",
+                    "source": "PROSITE-ProRule",
+                    "id": "PRU00741"
+                }
+            ],
+            "ligand":
+            {
+                "name": "hydrogencarbonate",
+                "id": "ChEBI:CHEBI:17544",
+                "label": "1"
+            }
+        },
+        {
+            "type": "Binding site",
+            "location":
+            {
+                "start":
+                {
+                    "value": 207,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 207,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "",
+            "featureCrossReferences":
+            [
+                {
+                    "database": "ChEBI",
+                    "id": "CHEBI:29034"
+                }
+            ],
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000255",
+                    "source": "PROSITE-ProRule",
+                    "id": "PRU00741"
+                }
+            ],
+            "ligand":
+            {
+                "name": "Fe(3+)",
+                "id": "ChEBI:CHEBI:29034",
+                "label": "1"
+            }
+        },
+        {
+            "type": "Binding site",
+            "location":
+            {
+                "start":
+                {
+                    "value": 268,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 268,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "",
+            "featureCrossReferences":
+            [
+                {
+                    "database": "ChEBI",
+                    "id": "CHEBI:29034"
+                }
+            ],
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000255",
+                    "source": "PROSITE-ProRule",
+                    "id": "PRU00741"
+                }
+            ],
+            "ligand":
+            {
+                "name": "Fe(3+)",
+                "id": "ChEBI:CHEBI:29034",
+                "label": "1"
+            }
+        },
+        {
+            "type": "Binding site",
+            "location":
+            {
+                "start":
+                {
+                    "value": 410,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 410,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "",
+            "featureCrossReferences":
+            [
+                {
+                    "database": "ChEBI",
+                    "id": "CHEBI:29034"
+                }
+            ],
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000255",
+                    "source": "PROSITE-ProRule",
+                    "id": "PRU00741"
+                }
+            ],
+            "ligand":
+            {
+                "name": "Fe(3+)",
+                "id": "ChEBI:CHEBI:29034",
+                "label": "2"
+            }
+        },
+        {
+            "type": "Binding site",
+            "location":
+            {
+                "start":
+                {
+                    "value": 447,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 447,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "",
+            "featureCrossReferences":
+            [
+                {
+                    "database": "ChEBI",
+                    "id": "CHEBI:29034"
+                }
+            ],
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000255",
+                    "source": "PROSITE-ProRule",
+                    "id": "PRU00741"
+                }
+            ],
+            "ligand":
+            {
+                "name": "Fe(3+)",
+                "id": "ChEBI:CHEBI:29034",
+                "label": "2"
+            }
+        },
+        {
+            "type": "Binding site",
+            "location":
+            {
+                "start":
+                {
+                    "value": 473,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 473,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "",
+            "featureCrossReferences":
+            [
+                {
+                    "database": "ChEBI",
+                    "id": "CHEBI:17544"
+                }
+            ],
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000255",
+                    "source": "PROSITE-ProRule",
+                    "id": "PRU00741"
+                }
+            ],
+            "ligand":
+            {
+                "name": "hydrogencarbonate",
+                "id": "ChEBI:CHEBI:17544",
+                "label": "2"
+            }
+        },
+        {
+            "type": "Binding site",
+            "location":
+            {
+                "start":
+                {
+                    "value": 477,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 477,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "",
+            "featureCrossReferences":
+            [
+                {
+                    "database": "ChEBI",
+                    "id": "CHEBI:17544"
+                }
+            ],
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000255",
+                    "source": "PROSITE-ProRule",
+                    "id": "PRU00741"
+                }
+            ],
+            "ligand":
+            {
+                "name": "hydrogencarbonate",
+                "id": "ChEBI:CHEBI:17544",
+                "label": "2"
+            }
+        },
+        {
+            "type": "Binding site",
+            "location":
+            {
+                "start":
+                {
+                    "value": 479,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 479,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "",
+            "featureCrossReferences":
+            [
+                {
+                    "database": "ChEBI",
+                    "id": "CHEBI:17544"
+                }
+            ],
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000255",
+                    "source": "PROSITE-ProRule",
+                    "id": "PRU00741"
+                }
+            ],
+            "ligand":
+            {
+                "name": "hydrogencarbonate",
+                "id": "ChEBI:CHEBI:17544",
+                "label": "2"
+            }
+        },
+        {
+            "type": "Binding site",
+            "location":
+            {
+                "start":
+                {
+                    "value": 480,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 480,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "",
+            "featureCrossReferences":
+            [
+                {
+                    "database": "ChEBI",
+                    "id": "CHEBI:17544"
+                }
+            ],
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000255",
+                    "source": "PROSITE-ProRule",
+                    "id": "PRU00741"
+                }
+            ],
+            "ligand":
+            {
+                "name": "hydrogencarbonate",
+                "id": "ChEBI:CHEBI:17544",
+                "label": "2"
+            }
+        },
+        {
+            "type": "Binding site",
+            "location":
+            {
+                "start":
+                {
+                    "value": 536,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 536,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "",
+            "featureCrossReferences":
+            [
+                {
+                    "database": "ChEBI",
+                    "id": "CHEBI:29034"
+                }
+            ],
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000255",
+                    "source": "PROSITE-ProRule",
+                    "id": "PRU00741"
+                }
+            ],
+            "ligand":
+            {
+                "name": "Fe(3+)",
+                "id": "ChEBI:CHEBI:29034",
+                "label": "2"
+            }
+        },
+        {
+            "type": "Binding site",
+            "location":
+            {
+                "start":
+                {
+                    "value": 604,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 604,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "",
+            "featureCrossReferences":
+            [
+                {
+                    "database": "ChEBI",
+                    "id": "CHEBI:29034"
+                }
+            ],
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000255",
+                    "source": "PROSITE-ProRule",
+                    "id": "PRU00741"
+                }
+            ],
+            "ligand":
+            {
+                "name": "Fe(3+)",
+                "id": "ChEBI:CHEBI:29034",
+                "label": "2"
+            }
+        },
+        {
+            "type": "Modified residue",
+            "location":
+            {
+                "start":
+                {
+                    "value": 42,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 42,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "Dimethylated arginine",
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000269",
+                    "source": "PubMed",
+                    "id": "15047867"
+                }
+            ]
+        },
+        {
+            "type": "Modified residue",
+            "location":
+            {
+                "start":
+                {
+                    "value": 388,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 388,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "Phosphoserine",
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000250",
+                    "source": "UniProtKB",
+                    "id": "P02787"
+                }
+            ]
+        },
+        {
+            "type": "Modified residue",
+            "location":
+            {
+                "start":
+                {
+                    "value": 685,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 685,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "Phosphoserine",
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000250",
+                    "source": "UniProtKB",
+                    "id": "P02787"
+                }
+            ]
+        },
+        {
+            "type": "Glycosylation",
+            "location":
+            {
+                "start":
+                {
+                    "value": 512,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 512,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "N-linked (GlcNAc...) asparagine",
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000255"
+                }
+            ],
+            "featureId": ""
+        },
+        {
+            "type": "Disulfide bond",
+            "location":
+            {
+                "start":
+                {
+                    "value": 28,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 67,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "",
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000255",
+                    "source": "PROSITE-ProRule",
+                    "id": "PRU00741"
+                }
+            ]
+        },
+        {
+            "type": "Disulfide bond",
+            "location":
+            {
+                "start":
+                {
+                    "value": 38,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 58,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "",
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000255",
+                    "source": "PROSITE-ProRule",
+                    "id": "PRU00741"
+                }
+            ]
+        },
+        {
+            "type": "Disulfide bond",
+            "location":
+            {
+                "start":
+                {
+                    "value": 137,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 213,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "",
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000255",
+                    "source": "PROSITE-ProRule",
+                    "id": "PRU00741"
+                }
+            ]
+        },
+        {
+            "type": "Disulfide bond",
+            "location":
+            {
+                "start":
+                {
+                    "value": 156,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 350,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "",
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000255",
+                    "source": "PROSITE-ProRule",
+                    "id": "PRU00741"
+                }
+            ]
+        },
+        {
+            "type": "Disulfide bond",
+            "location":
+            {
+                "start":
+                {
+                    "value": 177,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 193,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "",
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000255",
+                    "source": "PROSITE-ProRule",
+                    "id": "PRU00741"
+                }
+            ]
+        },
+        {
+            "type": "Disulfide bond",
+            "location":
+            {
+                "start":
+                {
+                    "value": 180,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 196,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "",
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000255",
+                    "source": "PROSITE-ProRule",
+                    "id": "PRU00741"
+                }
+            ]
+        },
+        {
+            "type": "Disulfide bond",
+            "location":
+            {
+                "start":
+                {
+                    "value": 190,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 198,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "",
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000255",
+                    "source": "PROSITE-ProRule",
+                    "id": "PRU00741"
+                }
+            ]
+        },
+        {
+            "type": "Disulfide bond",
+            "location":
+            {
+                "start":
+                {
+                    "value": 246,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 260,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "",
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000255",
+                    "source": "PROSITE-ProRule",
+                    "id": "PRU00741"
+                }
+            ]
+        },
+        {
+            "type": "Disulfide bond",
+            "location":
+            {
+                "start":
+                {
+                    "value": 363,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 395,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "",
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000255",
+                    "source": "PROSITE-ProRule",
+                    "id": "PRU00741"
+                }
+            ]
+        },
+        {
+            "type": "Disulfide bond",
+            "location":
+            {
+                "start":
+                {
+                    "value": 373,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 386,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "",
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000255",
+                    "source": "PROSITE-ProRule",
+                    "id": "PRU00741"
+                }
+            ]
+        },
+        {
+            "type": "Disulfide bond",
+            "location":
+            {
+                "start":
+                {
+                    "value": 420,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 693,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "",
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000255",
+                    "source": "PROSITE-ProRule",
+                    "id": "PRU00741"
+                }
+            ]
+        },
+        {
+            "type": "Disulfide bond",
+            "location":
+            {
+                "start":
+                {
+                    "value": 435,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 656,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "",
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000255",
+                    "source": "PROSITE-ProRule",
+                    "id": "PRU00741"
+                }
+            ]
+        },
+        {
+            "type": "Disulfide bond",
+            "location":
+            {
+                "start":
+                {
+                    "value": 471,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 542,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "",
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000255",
+                    "source": "PROSITE-ProRule",
+                    "id": "PRU00741"
+                }
+            ]
+        },
+        {
+            "type": "Disulfide bond",
+            "location":
+            {
+                "start":
+                {
+                    "value": 495,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 684,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "",
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000255",
+                    "source": "PROSITE-ProRule",
+                    "id": "PRU00741"
+                }
+            ]
+        },
+        {
+            "type": "Disulfide bond",
+            "location":
+            {
+                "start":
+                {
+                    "value": 505,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 519,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "",
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000255",
+                    "source": "PROSITE-ProRule",
+                    "id": "PRU00741"
+                }
+            ]
+        },
+        {
+            "type": "Disulfide bond",
+            "location":
+            {
+                "start":
+                {
+                    "value": 516,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 525,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "",
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000255",
+                    "source": "PROSITE-ProRule",
+                    "id": "PRU00741"
+                }
+            ]
+        },
+        {
+            "type": "Disulfide bond",
+            "location":
+            {
+                "start":
+                {
+                    "value": 582,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 596,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "",
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000255",
+                    "source": "PROSITE-ProRule",
+                    "id": "PRU00741"
+                }
+            ]
+        },
+        {
+            "type": "Disulfide bond",
+            "location":
+            {
+                "start":
+                {
+                    "value": 634,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 639,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "",
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000255",
+                    "source": "PROSITE-ProRule",
+                    "id": "PRU00741"
+                }
+            ]
+        },
+        {
+            "type": "Alternative sequence",
+            "location":
+            {
+                "start":
+                {
+                    "value": 65,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 266,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "in isoform 2",
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000303",
+                    "source": "PubMed",
+                    "id": "6236811"
+                }
+            ],
+            "featureId": "VSP_011840",
+            "alternativeSequence":
+            {}
+        },
+        {
+            "type": "Sequence conflict",
+            "location":
+            {
+                "start":
+                {
+                    "value": 57,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 57,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "in Ref. 1; CAA54403",
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000305"
+                }
+            ],
+            "alternativeSequence":
+            {
+                "originalSequence": "A",
+                "alternativeSequences":
+                [
+                    "P"
+                ]
+            }
+        },
+        {
+            "type": "Sequence conflict",
+            "location":
+            {
+                "start":
+                {
+                    "value": 110,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 110,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "in Ref. 1; CAA54403",
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000305"
+                }
+            ],
+            "alternativeSequence":
+            {
+                "originalSequence": "P",
+                "alternativeSequences":
+                [
+                    "R"
+                ]
+            }
+        },
+        {
+            "type": "Sequence conflict",
+            "location":
+            {
+                "start":
+                {
+                    "value": 318,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 318,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "in Ref. 1; CAA54403",
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000305"
+                }
+            ],
+            "alternativeSequence":
+            {
+                "originalSequence": "A",
+                "alternativeSequences":
+                [
+                    "R"
+                ]
+            }
+        },
+        {
+            "type": "Sequence conflict",
+            "location":
+            {
+                "start":
+                {
+                    "value": 321,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 323,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "in Ref. 2; BAA07458",
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000305"
+                }
+            ],
+            "alternativeSequence":
+            {
+                "originalSequence": "LLR",
+                "alternativeSequences":
+                [
+                    "CYG"
+                ]
+            }
+        },
+        {
+            "type": "Sequence conflict",
+            "location":
+            {
+                "start":
+                {
+                    "value": 324,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 354,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "in Ref. 1; CAA54403",
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000305"
+                }
+            ],
+            "alternativeSequence":
+            {
+                "originalSequence": "VPPRMDYRLYLGHSYVTAIRNQREGVCPEGS",
+                "alternativeSequences":
+                [
+                    "APKDGLQAVPRPQLCHCHSKSAGSCPDA"
+                ]
+            }
+        },
+        {
+            "type": "Sequence conflict",
+            "location":
+            {
+                "start":
+                {
+                    "value": 353,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 353,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "in Ref. 2; BAA07458",
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000305"
+                }
+            ],
+            "alternativeSequence":
+            {
+                "originalSequence": "G",
+                "alternativeSequences":
+                [
+                    "A"
+                ]
+            }
+        },
+        {
+            "type": "Sequence conflict",
+            "location":
+            {
+                "start":
+                {
+                    "value": 379,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 379,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "in Ref. 1; CAA54403 and 2; BAA07458",
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000305"
+                }
+            ],
+            "alternativeSequence":
+            {
+                "originalSequence": "S",
+                "alternativeSequences":
+                [
+                    "T"
+                ]
+            }
+        },
+        {
+            "type": "Sequence conflict",
+            "location":
+            {
+                "start":
+                {
+                    "value": 380,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 380,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "in Ref. 1; CAA54403",
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000305"
+                }
+            ],
+            "alternativeSequence":
+            {
+                "originalSequence": "S",
+                "alternativeSequences":
+                [
+                    "G"
+                ]
+            }
+        },
+        {
+            "type": "Sequence conflict",
+            "location":
+            {
+                "start":
+                {
+                    "value": 691,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 691,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "in Ref. 6; AAA42267",
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000305"
+                }
+            ],
+            "alternativeSequence":
+            {
+                "originalSequence": "E",
+                "alternativeSequences":
+                [
+                    "D"
+                ]
+            }
+        },
+        {
+            "type": "Sequence conflict",
+            "location":
+            {
+                "start":
+                {
+                    "value": 696,
+                    "modifier": "EXACT"
+                },
+                "end":
+                {
+                    "value": 697,
+                    "modifier": "EXACT"
+                }
+            },
+            "description": "in Ref. 6; AAA42267",
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000305"
+                }
+            ],
+            "alternativeSequence":
+            {
+                "originalSequence": "HK",
+                "alternativeSequences":
+                [
+                    "TA"
+                ]
+            }
+        }
+    ],
+    "keywords":
+    [
+        {
+            "id": "KW-0025",
+            "category": "Coding sequence diversity",
+            "name": "Alternative splicing"
+        },
+        {
+            "id": "KW-0903",
+            "category": "Technical term",
+            "name": "Direct protein sequencing"
+        },
+        {
+            "id": "KW-1015",
+            "category": "PTM",
+            "name": "Disulfide bond"
+        },
+        {
+            "id": "KW-0325",
+            "category": "PTM",
+            "name": "Glycoprotein"
+        },
+        {
+            "id": "KW-0406",
+            "category": "Biological process",
+            "name": "Ion transport"
+        },
+        {
+            "id": "KW-0408",
+            "category": "Ligand",
+            "name": "Iron"
+        },
+        {
+            "id": "KW-0410",
+            "category": "Biological process",
+            "name": "Iron transport"
+        },
+        {
+            "id": "KW-0479",
+            "category": "Ligand",
+            "name": "Metal-binding"
+        },
+        {
+            "id": "KW-0488",
+            "category": "PTM",
+            "name": "Methylation"
+        },
+        {
+            "id": "KW-0597",
+            "category": "PTM",
+            "name": "Phosphoprotein"
+        },
+        {
+            "id": "KW-1185",
+            "category": "Technical term",
+            "name": "Reference proteome"
+        },
+        {
+            "id": "KW-0677",
+            "category": "Domain",
+            "name": "Repeat"
+        },
+        {
+            "id": "KW-0964",
+            "category": "Cellular component",
+            "name": "Secreted"
+        },
+        {
+            "id": "KW-0732",
+            "category": "Domain",
+            "name": "Signal"
+        },
+        {
+            "id": "KW-0813",
+            "category": "Biological process",
+            "name": "Transport"
+        }
+    ],
+    "references":
+    [
+        {
+            "referenceNumber": 1,
+            "citation":
+            {
+                "id": "7717992",
+                "citationType": "journal article",
+                "authors":
+                [
+                    "Escriva H.",
+                    "Pierce A.",
+                    "Coddeville B.",
+                    "Gonzalez F.",
+                    "Benaissa M.",
+                    "Leger D.",
+                    "Wieruszeski J.-M.",
+                    "Spik G.",
+                    "Pamblanco M."
+                ],
+                "citationCrossReferences":
+                [
+                    {
+                        "database": "PubMed",
+                        "id": "7717992"
+                    },
+                    {
+                        "database": "DOI",
+                        "id": "10.1042/bj3070047"
+                    }
+                ],
+                "title": "Rat mammary-gland transferrin: nucleotide sequence, phylogenetic analysis and glycan structure.",
+                "publicationDate": "1995",
+                "journal": "Biochem. J.",
+                "firstPage": "47",
+                "lastPage": "55",
+                "volume": "307"
+            },
+            "referencePositions":
+            [
+                "NUCLEOTIDE SEQUENCE [MRNA] (ISOFORM 1)"
+            ],
+            "referenceComments":
+            [
+                {
+                    "value": "Wistar",
+                    "type": "STRAIN"
+                },
+                {
+                    "value": "Mammary gland",
+                    "type": "TISSUE"
+                }
+            ]
+        },
+        {
+            "referenceNumber": 2,
+            "citation":
+            {
+                "id": "8829802",
+                "citationType": "journal article",
+                "authors":
+                [
+                    "Hosino A.",
+                    "Hisayasu S.",
+                    "Shimada T."
+                ],
+                "citationCrossReferences":
+                [
+                    {
+                        "database": "PubMed",
+                        "id": "8829802"
+                    },
+                    {
+                        "database": "DOI",
+                        "id": "10.1016/0305-0491(95)02068-3"
+                    }
+                ],
+                "title": "Complete sequence analysis of rat transferrin and expression of transferrin but not lactoferrin in the digestive glands.",
+                "publicationDate": "1996",
+                "journal": "Comp. Biochem. Physiol.",
+                "firstPage": "491",
+                "lastPage": "497",
+                "volume": "113B"
+            },
+            "referencePositions":
+            [
+                "NUCLEOTIDE SEQUENCE [MRNA] (ISOFORM 1)"
+            ],
+            "referenceComments":
+            [
+                {
+                    "value": "Wistar",
+                    "type": "STRAIN"
+                },
+                {
+                    "value": "Liver",
+                    "type": "TISSUE"
+                }
+            ]
+        },
+        {
+            "referenceNumber": 3,
+            "citation":
+            {
+                "id": "CI-AUBJHLHHAQ0BL",
+                "citationType": "submission",
+                "authors":
+                [
+                    "Xu C.S.",
+                    "Li W.Q.",
+                    "Li Y.C.",
+                    "Han H.P.",
+                    "Wang G.P.",
+                    "Chai L.Q.",
+                    "Yuan J.Y.",
+                    "Yang K.J.",
+                    "Yan H.M.",
+                    "Chang C.F.",
+                    "Zhao L.F.",
+                    "Ma H.",
+                    "Wang L.",
+                    "Wang S.F.",
+                    "Shi J.B.",
+                    "Rahman S.",
+                    "Wang Q.N.",
+                    "Zhang J.B."
+                ],
+                "title": "Liver regeneration after PH.",
+                "publicationDate": "JUN-2003",
+                "submissionDatabase": "EMBL/GenBank/DDBJ databases"
+            },
+            "referencePositions":
+            [
+                "NUCLEOTIDE SEQUENCE [LARGE SCALE MRNA] (ISOFORM 1)"
+            ]
+        },
+        {
+            "referenceNumber": 4,
+            "citation":
+            {
+                "id": "15489334",
+                "citationType": "journal article",
+                "authoringGroup":
+                [
+                    "The MGC Project Team"
+                ],
+                "citationCrossReferences":
+                [
+                    {
+                        "database": "PubMed",
+                        "id": "15489334"
+                    },
+                    {
+                        "database": "DOI",
+                        "id": "10.1101/gr.2596504"
+                    }
+                ],
+                "title": "The status, quality, and expansion of the NIH full-length cDNA project: the Mammalian Gene Collection (MGC).",
+                "publicationDate": "2004",
+                "journal": "Genome Res.",
+                "firstPage": "2121",
+                "lastPage": "2127",
+                "volume": "14"
+            },
+            "referencePositions":
+            [
+                "NUCLEOTIDE SEQUENCE [LARGE SCALE MRNA] (ISOFORM 1)"
+            ],
+            "referenceComments":
+            [
+                {
+                    "value": "Testis",
+                    "type": "TISSUE"
+                }
+            ]
+        },
+        {
+            "referenceNumber": 5,
+            "citation":
+            {
+                "id": "6236811",
+                "citationType": "journal article",
+                "authors":
+                [
+                    "Aldred A.R.",
+                    "Howlett G.J.",
+                    "Schreiber G."
+                ],
+                "citationCrossReferences":
+                [
+                    {
+                        "database": "PubMed",
+                        "id": "6236811"
+                    },
+                    {
+                        "database": "DOI",
+                        "id": "10.1016/0006-291x(84)91185-9"
+                    }
+                ],
+                "title": "Synthesis of rat transferrin in Escherichia coli containing a recombinant bacteriophage.",
+                "publicationDate": "1984",
+                "journal": "Biochem. Biophys. Res. Commun.",
+                "firstPage": "960",
+                "lastPage": "965",
+                "volume": "122"
+            },
+            "referencePositions":
+            [
+                "NUCLEOTIDE SEQUENCE [MRNA] OF 7-295 (ISOFORM 2)"
+            ]
+        },
+        {
+            "referenceNumber": 6,
+            "citation":
+            {
+                "id": "3023031",
+                "citationType": "journal article",
+                "authors":
+                [
+                    "Huggenvik J.I.",
+                    "Idzerda R.L.",
+                    "Haywood L.",
+                    "Lee D.C.",
+                    "McKnight G.S.",
+                    "Griswold M.D."
+                ],
+                "citationCrossReferences":
+                [
+                    {
+                        "database": "PubMed",
+                        "id": "3023031"
+                    },
+                    {
+                        "database": "DOI",
+                        "id": "10.1210/endo-120-1-332"
+                    }
+                ],
+                "title": "Transferrin messenger ribonucleic acid: molecular cloning and hormonal regulation in rat Sertoli cells.",
+                "publicationDate": "1987",
+                "journal": "Endocrinology",
+                "firstPage": "332",
+                "lastPage": "340",
+                "volume": "120"
+            },
+            "referencePositions":
+            [
+                "NUCLEOTIDE SEQUENCE [MRNA] OF 521-698"
+            ]
+        },
+        {
+            "referenceNumber": 7,
+            "citation":
+            {
+                "id": "500689",
+                "citationType": "journal article",
+                "authors":
+                [
+                    "Schreiber G.",
+                    "Dryburgh H.",
+                    "Millership A.",
+                    "Matsuda Y.",
+                    "Inglis A.",
+                    "Phillips J.",
+                    "Edwards K.",
+                    "Maggs J."
+                ],
+                "citationCrossReferences":
+                [
+                    {
+                        "database": "PubMed",
+                        "id": "500689"
+                    },
+                    {
+                        "database": "DOI",
+                        "id": "10.1016/s0021-9258(19)86420-7"
+                    }
+                ],
+                "title": "The synthesis and secretion of rat transferrin.",
+                "publicationDate": "1979",
+                "journal": "J. Biol. Chem.",
+                "firstPage": "12013",
+                "lastPage": "12019",
+                "volume": "254"
+            },
+            "referencePositions":
+            [
+                "PROTEIN SEQUENCE OF 20-47"
+            ]
+        },
+        {
+            "referenceNumber": 8,
+            "citation":
+            {
+                "id": "3046665",
+                "citationType": "journal article",
+                "authors":
+                [
+                    "Purves L.R.",
+                    "Purves M.",
+                    "Linton N.",
+                    "Brandt W.",
+                    "Johnson G.",
+                    "Jacobs P."
+                ],
+                "citationCrossReferences":
+                [
+                    {
+                        "database": "PubMed",
+                        "id": "3046665"
+                    },
+                    {
+                        "database": "DOI",
+                        "id": "10.1016/0304-4165(88)90081-5"
+                    }
+                ],
+                "title": "Properties of the transferrin associated with rat intestinal mucosa.",
+                "publicationDate": "1988",
+                "journal": "Biochim. Biophys. Acta",
+                "firstPage": "318",
+                "lastPage": "327",
+                "volume": "966"
+            },
+            "referencePositions":
+            [
+                "PROTEIN SEQUENCE OF 20-30 AND 642-653"
+            ]
+        },
+        {
+            "referenceNumber": 9,
+            "citation":
+            {
+                "id": "1791188",
+                "citationType": "journal article",
+                "authors":
+                [
+                    "Cavanaugh P.G.",
+                    "Nicolson G.L."
+                ],
+                "citationCrossReferences":
+                [
+                    {
+                        "database": "PubMed",
+                        "id": "1791188"
+                    },
+                    {
+                        "database": "DOI",
+                        "id": "10.1002/jcb.240470312"
+                    }
+                ],
+                "title": "Lung-derived growth factor that stimulates the growth of lung-metastasizing tumor cells: identification as transferrin.",
+                "publicationDate": "1991",
+                "journal": "J. Cell. Biochem.",
+                "firstPage": "261",
+                "lastPage": "271",
+                "volume": "47"
+            },
+            "referencePositions":
+            [
+                "PROTEIN SEQUENCE OF 89-102; 232-243 AND 404-411"
+            ]
+        },
+        {
+            "referenceNumber": 10,
+            "citation":
+            {
+                "id": "CI-BJAQPU600GB7N",
+                "citationType": "submission",
+                "authors":
+                [
+                    "Lubec G.",
+                    "Afjehi-Sadat L.",
+                    "Kang S.U."
+                ],
+                "publicationDate": "JUL-2007",
+                "submissionDatabase": "UniProtKB"
+            },
+            "referencePositions":
+            [
+                "PROTEIN SEQUENCE OF 144-162; 240-251; 332-343; 588-609; 616-624; 630-642 AND 660-682",
+                "IDENTIFICATION BY MASS SPECTROMETRY"
+            ],
+            "referenceComments":
+            [
+                {
+                    "value": "Sprague-Dawley",
+                    "type": "STRAIN"
+                },
+                {
+                    "value": "Brain",
+                    "type": "TISSUE"
+                },
+                {
+                    "value": "Spinal cord",
+                    "type": "TISSUE"
+                }
+            ]
+        },
+        {
+            "referenceNumber": 11,
+            "citation":
+            {
+                "id": "15047867",
+                "citationType": "journal article",
+                "authors":
+                [
+                    "Wu C.C.",
+                    "MacCoss M.J.",
+                    "Mardones G.",
+                    "Finnigan C.",
+                    "Mogelsvang S.",
+                    "Yates J.R. III",
+                    "Howell K.E."
+                ],
+                "citationCrossReferences":
+                [
+                    {
+                        "database": "PubMed",
+                        "id": "15047867"
+                    },
+                    {
+                        "database": "DOI",
+                        "id": "10.1091/mbc.e04-02-0101"
+                    }
+                ],
+                "title": "Organellar proteomics reveals Golgi arginine dimethylation.",
+                "publicationDate": "2004",
+                "journal": "Mol. Biol. Cell",
+                "firstPage": "2907",
+                "lastPage": "2919",
+                "volume": "15"
+            },
+            "referencePositions":
+            [
+                "METHYLATION AT ARG-42",
+                "IDENTIFICATION BY MASS SPECTROMETRY"
+            ]
+        }
+    ],
+    "uniProtKBCrossReferences":
+    [
+        {
+            "database": "EMBL",
+            "id": "X77158",
+            "properties":
+            [
+                {
+                    "key": "ProteinId",
+                    "value": "CAA54403.1"
+                },
+                {
+                    "key": "Status",
+                    "value": "-"
+                },
+                {
+                    "key": "MoleculeType",
+                    "value": "mRNA"
+                }
+            ]
+        },
+        {
+            "database": "EMBL",
+            "id": "D38380",
+            "properties":
+            [
+                {
+                    "key": "ProteinId",
+                    "value": "BAA07458.1"
+                },
+                {
+                    "key": "Status",
+                    "value": "-"
+                },
+                {
+                    "key": "MoleculeType",
+                    "value": "mRNA"
+                }
+            ]
+        },
+        {
+            "database": "EMBL",
+            "id": "AY327504",
+            "properties":
+            [
+                {
+                    "key": "ProteinId",
+                    "value": "AAP97736.1"
+                },
+                {
+                    "key": "Status",
+                    "value": "-"
+                },
+                {
+                    "key": "MoleculeType",
+                    "value": "mRNA"
+                }
+            ]
+        },
+        {
+            "database": "EMBL",
+            "id": "BC087021",
+            "properties":
+            [
+                {
+                    "key": "ProteinId",
+                    "value": "AAH87021.1"
+                },
+                {
+                    "key": "Status",
+                    "value": "-"
+                },
+                {
+                    "key": "MoleculeType",
+                    "value": "mRNA"
+                }
+            ]
+        },
+        {
+            "database": "EMBL",
+            "id": "M26113",
+            "properties":
+            [
+                {
+                    "key": "ProteinId",
+                    "value": "AAA42266.1"
+                },
+                {
+                    "key": "Status",
+                    "value": "-"
+                },
+                {
+                    "key": "MoleculeType",
+                    "value": "mRNA"
+                }
+            ]
+        },
+        {
+            "database": "EMBL",
+            "id": "M27966",
+            "properties":
+            [
+                {
+                    "key": "ProteinId",
+                    "value": "AAA42267.1"
+                },
+                {
+                    "key": "Status",
+                    "value": "-"
+                },
+                {
+                    "key": "MoleculeType",
+                    "value": "mRNA"
+                }
+            ]
+        },
+        {
+            "database": "PIR",
+            "id": "S49163",
+            "properties":
+            [
+                {
+                    "key": "EntryName",
+                    "value": "S49163"
+                }
+            ]
+        },
+        {
+            "database": "RefSeq",
+            "id": "NP_001013128.1",
+            "properties":
+            [
+                {
+                    "key": "NucleotideSequenceId",
+                    "value": "NM_001013110.1"
+                }
+            ],
+            "isoformId": "P12346-1"
+        },
+        {
+            "database": "AlphaFoldDB",
+            "id": "P12346",
+            "properties":
+            [
+                {
+                    "key": "Description",
+                    "value": "-"
+                }
+            ]
+        },
+        {
+            "database": "SMR",
+            "id": "P12346",
+            "properties":
+            [
+                {
+                    "key": "Description",
+                    "value": "-"
+                }
+            ]
+        },
+        {
+            "database": "BioGRID",
+            "id": "246945",
+            "properties":
+            [
+                {
+                    "key": "Interactions",
+                    "value": "4"
+                }
+            ]
+        },
+        {
+            "database": "FunCoup",
+            "id": "P12346",
+            "properties":
+            [
+                {
+                    "key": "Number of interactors",
+                    "value": "420"
+                }
+            ]
+        },
+        {
+            "database": "IntAct",
+            "id": "P12346",
+            "properties":
+            [
+                {
+                    "key": "Interactions",
+                    "value": "2"
+                }
+            ]
+        },
+        {
+            "database": "MINT",
+            "id": "P12346",
+            "properties":
+            [
+                {
+                    "key": "Description",
+                    "value": "-"
+                }
+            ]
+        },
+        {
+            "database": "STRING",
+            "id": "10116.ENSRNOP00000012725",
+            "properties":
+            [
+                {
+                    "key": "Description",
+                    "value": "-"
+                }
+            ]
+        },
+        {
+            "database": "Allergome",
+            "id": "1417",
+            "properties":
+            [
+                {
+                    "key": "AllergenName",
+                    "value": "Rat n Transferrin"
+                }
+            ]
+        },
+        {
+            "database": "MEROPS",
+            "id": "S60.970",
+            "properties":
+            [
+                {
+                    "key": "Description",
+                    "value": "-"
+                }
+            ]
+        },
+        {
+            "database": "GlyConnect",
+            "id": "557",
+            "properties":
+            [
+                {
+                    "key": "glycosylation",
+                    "value": "6 N-Linked glycans"
+                }
+            ]
+        },
+        {
+            "database": "GlyCosmos",
+            "id": "P12346",
+            "properties":
+            [
+                {
+                    "key": "glycosylation",
+                    "value": "1 site, 15 glycans"
+                }
+            ]
+        },
+        {
+            "database": "GlyGen",
+            "id": "P12346",
+            "properties":
+            [
+                {
+                    "key": "glycosylation",
+                    "value": "2 sites, 15 N-linked glycans (2 sites)"
+                }
+            ]
+        },
+        {
+            "database": "iPTMnet",
+            "id": "P12346",
+            "properties":
+            [
+                {
+                    "key": "Description",
+                    "value": "-"
+                }
+            ]
+        },
+        {
+            "database": "PhosphoSitePlus",
+            "id": "P12346",
+            "properties":
+            [
+                {
+                    "key": "Description",
+                    "value": "-"
+                }
+            ]
+        },
+        {
+            "database": "SwissPalm",
+            "id": "P12346",
+            "properties":
+            [
+                {
+                    "key": "Description",
+                    "value": "-"
+                }
+            ]
+        },
+        {
+            "database": "PaxDb",
+            "id": "10116-ENSRNOP00000012725",
+            "properties":
+            [
+                {
+                    "key": "Description",
+                    "value": "-"
+                }
+            ]
+        },
+        {
+            "database": "Ensembl",
+            "id": "ENSRNOT00000045628.6",
+            "properties":
+            [
+                {
+                    "key": "ProteinId",
+                    "value": "ENSRNOP00000045637.2"
+                },
+                {
+                    "key": "GeneId",
+                    "value": "ENSRNOG00000030625.7"
+                }
+            ],
+            "isoformId": "P12346-1"
+        },
+        {
+            "database": "GeneID",
+            "id": "24825",
+            "properties":
+            [
+                {
+                    "key": "Description",
+                    "value": "-"
+                }
+            ]
+        },
+        {
+            "database": "KEGG",
+            "id": "rno:24825",
+            "properties":
+            [
+                {
+                    "key": "Description",
+                    "value": "-"
+                }
+            ]
+        },
+        {
+            "database": "UCSC",
+            "id": "RGD:3845",
+            "properties":
+            [
+                {
+                    "key": "OrganismName",
+                    "value": "rat"
+                }
+            ],
+            "isoformId": "P12346-1"
+        },
+        {
+            "database": "AGR",
+            "id": "RGD:3845",
+            "properties":
+            [
+                {
+                    "key": "Description",
+                    "value": "-"
+                }
+            ]
+        },
+        {
+            "database": "CTD",
+            "id": "7018",
+            "properties":
+            [
+                {
+                    "key": "Description",
+                    "value": "-"
+                }
+            ]
+        },
+        {
+            "database": "RGD",
+            "id": "3845",
+            "properties":
+            [
+                {
+                    "key": "GeneName",
+                    "value": "Tf"
+                }
+            ]
+        },
+        {
+            "database": "eggNOG",
+            "id": "KOG0090",
+            "properties":
+            [
+                {
+                    "key": "ToxonomicScope",
+                    "value": "Eukaryota"
+                }
+            ]
+        },
+        {
+            "database": "GeneTree",
+            "id": "ENSGT00940000154388",
+            "properties":
+            [
+                {
+                    "key": "Description",
+                    "value": "-"
+                }
+            ]
+        },
+        {
+            "database": "HOGENOM",
+            "id": "CLU_011309_1_0_1",
+            "properties":
+            [
+                {
+                    "key": "Description",
+                    "value": "-"
+                }
+            ]
+        },
+        {
+            "database": "InParanoid",
+            "id": "P12346",
+            "properties":
+            [
+                {
+                    "key": "Description",
+                    "value": "-"
+                }
+            ]
+        },
+        {
+            "database": "OrthoDB",
+            "id": "38548at9989",
+            "properties":
+            [
+                {
+                    "key": "Description",
+                    "value": "-"
+                }
+            ]
+        },
+        {
+            "database": "PhylomeDB",
+            "id": "P12346",
+            "properties":
+            [
+                {
+                    "key": "Description",
+                    "value": "-"
+                }
+            ]
+        },
+        {
+            "database": "Reactome",
+            "id": "R-RNO-114608",
+            "properties":
+            [
+                {
+                    "key": "PathwayName",
+                    "value": "Platelet degranulation"
+                }
+            ]
+        },
+        {
+            "database": "Reactome",
+            "id": "R-RNO-381426",
+            "properties":
+            [
+                {
+                    "key": "PathwayName",
+                    "value": "Regulation of Insulin-like Growth Factor (IGF) transport and uptake by Insulin-like Growth Factor Binding Proteins (IGFBPs)"
+                }
+            ]
+        },
+        {
+            "database": "Reactome",
+            "id": "R-RNO-8856825",
+            "properties":
+            [
+                {
+                    "key": "PathwayName",
+                    "value": "Cargo recognition for clathrin-mediated endocytosis"
+                }
+            ]
+        },
+        {
+            "database": "Reactome",
+            "id": "R-RNO-8856828",
+            "properties":
+            [
+                {
+                    "key": "PathwayName",
+                    "value": "Clathrin-mediated endocytosis"
+                }
+            ]
+        },
+        {
+            "database": "Reactome",
+            "id": "R-RNO-8957275",
+            "properties":
+            [
+                {
+                    "key": "PathwayName",
+                    "value": "Post-translational protein phosphorylation"
+                }
+            ]
+        },
+        {
+            "database": "Reactome",
+            "id": "R-RNO-917937",
+            "properties":
+            [
+                {
+                    "key": "PathwayName",
+                    "value": "Iron uptake and transport"
+                }
+            ]
+        },
+        {
+            "database": "Reactome",
+            "id": "R-RNO-917977",
+            "properties":
+            [
+                {
+                    "key": "PathwayName",
+                    "value": "Transferrin endocytosis and recycling"
+                }
+            ]
+        },
+        {
+            "database": "PRO",
+            "id": "PR:P12346",
+            "properties":
+            [
+                {
+                    "key": "Description",
+                    "value": "-"
+                }
+            ]
+        },
+        {
+            "database": "Proteomes",
+            "id": "UP000002494",
+            "properties":
+            [
+                {
+                    "key": "Component",
+                    "value": "Chromosome 8"
+                }
+            ]
+        },
+        {
+            "database": "Bgee",
+            "id": "ENSRNOG00000030625",
+            "properties":
+            [
+                {
+                    "key": "ExpressionPatterns",
+                    "value": "Expressed in liver and 19 other cell types or tissues"
+                }
+            ]
+        },
+        {
+            "database": "ExpressionAtlas",
+            "id": "P12346",
+            "properties":
+            [
+                {
+                    "key": "ExpressionPatterns",
+                    "value": "baseline and differential"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0016324",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "C:apical plasma membrane"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "ISO:RGD"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0045178",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "C:basal part of cell"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "ISO:RGD"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0009925",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "C:basal plasma membrane"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "ISO:RGD"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0005604",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "C:basement membrane"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "IDA:RGD"
+                }
+            ],
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000314",
+                    "source": "PubMed",
+                    "id": "1723977"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0009986",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "C:cell surface"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "ISO:RGD"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0051286",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "C:cell tip"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "IDA:RGD"
+                }
+            ],
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000314",
+                    "source": "PubMed",
+                    "id": "17373738"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0005905",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "C:clathrin-coated pit"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "ISO:RGD"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0031410",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "C:cytoplasmic vesicle"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "ISO:RGD"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0030425",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "C:dendrite"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "IDA:RGD"
+                }
+            ],
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000314",
+                    "source": "PubMed",
+                    "id": "26109571"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0097433",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "C:dense body"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "ISO:RGD"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0005769",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "C:early endosome"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "ISO:RGD"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0030139",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "C:endocytic vesicle"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "ISO:RGD"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0005768",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "C:endosome"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "ISO:RGD"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0005576",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "C:extracellular region"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "ISO:RGD"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0005615",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "C:extracellular space"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "IDA:RGD"
+                }
+            ],
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000314",
+                    "source": "PubMed",
+                    "id": "17350134"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:1990712",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "C:HFE-transferrin receptor complex"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "ISO:RGD"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0005770",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "C:late endosome"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "ISO:RGD"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0016020",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "C:membrane"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "ISO:RGD"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0048471",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "C:perinuclear region of cytoplasm"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "ISO:RGD"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0005886",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "C:plasma membrane"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "IBA:GO_Central"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0055037",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "C:recycling endosome"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "ISO:RGD"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0031982",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "C:vesicle"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "ISO:RGD"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0030120",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "C:vesicle coat"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "ISO:RGD"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0019899",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "F:enzyme binding"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "ISO:RGD"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0008199",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "F:ferric iron binding"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "IDA:RGD"
+                }
+            ],
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000314",
+                    "source": "PubMed",
+                    "id": "17373738"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0008198",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "F:ferrous iron binding"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "ISO:RGD"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0034986",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "F:iron chaperone activity"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "ISO:RGD"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:1990459",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "F:transferrin receptor binding"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "ISO:RGD"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0044325",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "F:transmembrane transporter binding"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "ISO:RGD"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0007015",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "P:actin filament organization"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "ISO:RGD"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0006953",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "P:acute-phase response"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "IEP:RGD"
+                }
+            ],
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000270",
+                    "source": "PubMed",
+                    "id": "17417667"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0019731",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "P:antibacterial humoral response"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "IBA:GO_Central"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0006915",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "P:apoptotic process"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "ISS:UniProtKB"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0071320",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "P:cellular response to cAMP"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "IEP:UniProtKB"
+                }
+            ],
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000270",
+                    "source": "PubMed",
+                    "id": "15831523"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0071372",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "P:cellular response to follicle-stimulating hormone stimulus"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "IEP:UniProtKB"
+                }
+            ],
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000270",
+                    "source": "PubMed",
+                    "id": "15831523"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0071281",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "P:cellular response to iron ion"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "ISO:RGD"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0070371",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "P:ERK1 and ERK2 cascade"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "ISO:RGD"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0006879",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "P:intracellular iron ion homeostasis"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "ISO:RGD"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0006826",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "P:iron ion transport"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "IDA:RGD"
+                }
+            ],
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000314",
+                    "source": "PubMed",
+                    "id": "17373738"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0060586",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "P:multicellular organismal-level iron ion homeostasis"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "ISO:RGD"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0030316",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "P:osteoclast differentiation"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "ISO:RGD"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0045780",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "P:positive regulation of bone resorption"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "ISO:RGD"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:2000147",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "P:positive regulation of cell motility"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "ISO:RGD"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0045893",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "P:positive regulation of DNA-templated transcription"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "ISO:RGD"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0031643",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "P:positive regulation of myelination"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "IDA:RGD"
+                }
+            ],
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000314",
+                    "source": "PubMed",
+                    "id": "16480980"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0070447",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "P:positive regulation of oligodendrocyte progenitor proliferation"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "IDA:RGD"
+                }
+            ],
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000314",
+                    "source": "PubMed",
+                    "id": "23368675"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0042327",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "P:positive regulation of phosphorylation"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "ISO:RGD"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0032436",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "P:positive regulation of proteasomal ubiquitin-dependent protein catabolic process"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "ISO:RGD"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0048260",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "P:positive regulation of receptor-mediated endocytosis"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "ISO:RGD"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0034756",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "P:regulation of iron ion transport"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "ISO:RGD"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0009617",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "P:response to bacterium"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "ISO:RGD"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0001666",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "P:response to hypoxia"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "IEP:RGD"
+                }
+            ],
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000270",
+                    "source": "PubMed",
+                    "id": "16479386"
+                }
+            ]
+        },
+        {
+            "database": "GO",
+            "id": "GO:0010288",
+            "properties":
+            [
+                {
+                    "key": "GoTerm",
+                    "value": "P:response to lead ion"
+                },
+                {
+                    "key": "GoEvidenceType",
+                    "value": "IEP:RGD"
+                }
+            ],
+            "evidences":
+            [
+                {
+                    "evidenceCode": "ECO:0000270",
+                    "source": "PubMed",
+                    "id": "23007736"
+                }
+            ]
+        },
+        {
+            "database": "CDD",
+            "id": "cd13617",
+            "properties":
+            [
+                {
+                    "key": "EntryName",
+                    "value": "PBP2_transferrin_C"
+                },
+                {
+                    "key": "MatchStatus",
+                    "value": "1"
+                }
+            ]
+        },
+        {
+            "database": "CDD",
+            "id": "cd13618",
+            "properties":
+            [
+                {
+                    "key": "EntryName",
+                    "value": "PBP2_transferrin_N"
+                },
+                {
+                    "key": "MatchStatus",
+                    "value": "1"
+                }
+            ]
+        },
+        {
+            "database": "FunFam",
+            "id": "3.40.190.10:FF:000095",
+            "properties":
+            [
+                {
+                    "key": "EntryName",
+                    "value": "Lactotransferrin"
+                },
+                {
+                    "key": "MatchStatus",
+                    "value": "1"
+                }
+            ]
+        },
+        {
+            "database": "FunFam",
+            "id": "3.40.190.10:FF:000105",
+            "properties":
+            [
+                {
+                    "key": "EntryName",
+                    "value": "Serotransferrin"
+                },
+                {
+                    "key": "MatchStatus",
+                    "value": "1"
+                }
+            ]
+        },
+        {
+            "database": "Gene3D",
+            "id": "3.40.190.10",
+            "properties":
+            [
+                {
+                    "key": "EntryName",
+                    "value": "Periplasmic binding protein-like II"
+                },
+                {
+                    "key": "MatchStatus",
+                    "value": "4"
+                }
+            ]
+        },
+        {
+            "database": "InterPro",
+            "id": "IPR030685",
+            "properties":
+            [
+                {
+                    "key": "EntryName",
+                    "value": "Serotransferrin_mammal"
+                }
+            ]
+        },
+        {
+            "database": "InterPro",
+            "id": "IPR016357",
+            "properties":
+            [
+                {
+                    "key": "EntryName",
+                    "value": "Transferrin"
+                }
+            ]
+        },
+        {
+            "database": "InterPro",
+            "id": "IPR001156",
+            "properties":
+            [
+                {
+                    "key": "EntryName",
+                    "value": "Transferrin-like_dom"
+                }
+            ]
+        },
+        {
+            "database": "InterPro",
+            "id": "IPR018195",
+            "properties":
+            [
+                {
+                    "key": "EntryName",
+                    "value": "Transferrin_Fe_BS"
+                }
+            ]
+        },
+        {
+            "database": "PANTHER",
+            "id": "PTHR11485:SF31",
+            "properties":
+            [
+                {
+                    "key": "EntryName",
+                    "value": "SEROTRANSFERRIN"
+                },
+                {
+                    "key": "MatchStatus",
+                    "value": "1"
+                }
+            ]
+        },
+        {
+            "database": "PANTHER",
+            "id": "PTHR11485",
+            "properties":
+            [
+                {
+                    "key": "EntryName",
+                    "value": "TRANSFERRIN"
+                },
+                {
+                    "key": "MatchStatus",
+                    "value": "1"
+                }
+            ]
+        },
+        {
+            "database": "Pfam",
+            "id": "PF00405",
+            "properties":
+            [
+                {
+                    "key": "EntryName",
+                    "value": "Transferrin"
+                },
+                {
+                    "key": "MatchStatus",
+                    "value": "2"
+                }
+            ]
+        },
+        {
+            "database": "PIRSF",
+            "id": "PIRSF500682",
+            "properties":
+            [
+                {
+                    "key": "EntryName",
+                    "value": "Serotransferrin"
+                },
+                {
+                    "key": "MatchStatus",
+                    "value": "1"
+                }
+            ]
+        },
+        {
+            "database": "PIRSF",
+            "id": "PIRSF002549",
+            "properties":
+            [
+                {
+                    "key": "EntryName",
+                    "value": "Transferrin"
+                },
+                {
+                    "key": "MatchStatus",
+                    "value": "1"
+                }
+            ]
+        },
+        {
+            "database": "PRINTS",
+            "id": "PR00422",
+            "properties":
+            [
+                {
+                    "key": "EntryName",
+                    "value": "TRANSFERRIN"
+                }
+            ]
+        },
+        {
+            "database": "SMART",
+            "id": "SM00094",
+            "properties":
+            [
+                {
+                    "key": "EntryName",
+                    "value": "TR_FER"
+                },
+                {
+                    "key": "MatchStatus",
+                    "value": "2"
+                }
+            ]
+        },
+        {
+            "database": "SUPFAM",
+            "id": "SSF53850",
+            "properties":
+            [
+                {
+                    "key": "EntryName",
+                    "value": "Periplasmic binding protein-like II"
+                },
+                {
+                    "key": "MatchStatus",
+                    "value": "2"
+                }
+            ]
+        },
+        {
+            "database": "PROSITE",
+            "id": "PS00205",
+            "properties":
+            [
+                {
+                    "key": "EntryName",
+                    "value": "TRANSFERRIN_LIKE_1"
+                },
+                {
+                    "key": "MatchStatus",
+                    "value": "1"
+                }
+            ]
+        },
+        {
+            "database": "PROSITE",
+            "id": "PS00206",
+            "properties":
+            [
+                {
+                    "key": "EntryName",
+                    "value": "TRANSFERRIN_LIKE_2"
+                },
+                {
+                    "key": "MatchStatus",
+                    "value": "2"
+                }
+            ]
+        },
+        {
+            "database": "PROSITE",
+            "id": "PS00207",
+            "properties":
+            [
+                {
+                    "key": "EntryName",
+                    "value": "TRANSFERRIN_LIKE_3"
+                },
+                {
+                    "key": "MatchStatus",
+                    "value": "2"
+                }
+            ]
+        },
+        {
+            "database": "PROSITE",
+            "id": "PS51408",
+            "properties":
+            [
+                {
+                    "key": "EntryName",
+                    "value": "TRANSFERRIN_LIKE_4"
+                },
+                {
+                    "key": "MatchStatus",
+                    "value": "2"
+                }
+            ]
+        }
+    ],
+    "sequence":
+    {
+        "value": "MRFAVGALLACAALGLCLAVPDKTVKWCAVSEHENTKCISFRDHMKTVLPADGPRLACVKKTSYQDCIKAISGGEADAITLDGGWVYDAGLTPNNLKPVAAEFYGSLEHPQTHYLAVAVVKKGTDFQLNQLQGKKSCHTGLGRSAGWIIPIGLLFCNLPEPRKPLEKAVASFFSGSCVPCADPVAFPQLCQLCPGCGCSPTQPFFGYVGAFKCLRDGGGDVAFVKHTTIFEVLPQKADRDQYELLCLDNTRKPVDQYEDCYLARIPSHAVVARNGDGKEDLIWEILKVAQEHFGKGKSKDFQLFGSPLGKDLLFKDSAFGLLRVPPRMDYRLYLGHSYVTAIRNQREGVCPEGSIDSAPVKWCALSHQERAKCDEWSVSSNGQIECESAESTEDCIDKIVNGEADAMSLDGGHAYIAGQCGLVPVMAENYDISSCTNPQSDVFPKGYYAVAVVKASDSSINWNNLKGKKSCHTGVDRTAGWNIPMGLLFSRINHCKFDEFFSQGCAPGYKKNSTLCDLCIGPAKCAPNNREGYNGYTGAFQCLVEKGDVAFVKHQTVLENTNGKNTAAWAKDLKQEDFQLLCPDGTKKPVTEFATCHLAQAPNHVVVSRKEKAARVSTVLTAQKDLFWKGDKDCTGNFCLFRSSTKDLLFRDDTKCLTKLPEGTTYEEYLGAEYLQAVGNIRKCSTSRLLEACTFHKS",
+        "length": 698,
+        "molWeight": 76395,
+        "crc64": "B91ABB41CA447194",
+        "md5": "E966FF9084110C5FAF4E2BB802A7CDD0"
+    },
+    "extraAttributes":
+    {
+        "countByCommentType":
+        {
+            "FUNCTION": 1,
+            "SUBUNIT": 1,
+            "SUBCELLULAR LOCATION": 1,
+            "ALTERNATIVE PRODUCTS": 2,
+            "TISSUE SPECIFICITY": 1,
+            "SIMILARITY": 1
+        },
+        "countByFeatureType":
+        {
+            "Signal": 1,
+            "Chain": 1,
+            "Domain": 2,
+            "Binding site": 16,
+            "Modified residue": 3,
+            "Glycosylation": 1,
+            "Disulfide bond": 18,
+            "Alternative sequence": 1,
+            "Sequence conflict": 10
+        },
+        "uniParcId": "UPI000019BB37"
+    }
+}
