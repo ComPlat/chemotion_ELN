@@ -58,6 +58,7 @@ import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButt
 // eslint-disable-next-line import/no-named-as-default
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 import ReactionSchemeGraphic from 'src/apps/mydb/elements/details/reactions/ReactionSchemeGraphic';
+import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 
 const handleProductClick = (product) => {
   const uri = Aviator.getCurrentURI();
@@ -314,6 +315,77 @@ export default class ReactionDetails extends Component {
         </Tabs>
       </div>
     );
+  }
+
+  async getSvgFromIndigo(reaction) {
+    const { _starting_materials, _solvents, _products, _reactants } = reaction;
+
+    const alreadyProcessed = {
+      _starting_materials: [],
+      _solvents: [],
+      _products: [],
+      _reactants: [],
+    };
+    LoadingActions.start();
+
+    const processMaterials = async (materials, type) => {
+      const results = await Promise.all(
+        materials.map(async (material) => {
+          const checksum = material?._checksum;
+          if (!alreadyProcessed[type].includes(checksum)) {
+            const newSVGPath = await SamplesFetcher.renderSampleSvgWithIndigo({
+              molfile: material.molfile,
+              svg_path: material.sample_svg_file,
+            });
+            if (!newSVGPath) {
+              return material;
+            }
+            material.sample_svg_file = newSVGPath;
+            alreadyProcessed[type].push(checksum);
+          }
+          return material;
+        })
+      );
+      return results;
+    };
+
+    reaction._starting_materials = await processMaterials(_starting_materials, '_starting_materials');
+    reaction._solvents = await processMaterials(_solvents, '_solvents');
+    reaction._products = await processMaterials(_products, '_products');
+    reaction._reactants = await processMaterials(_reactants, '_reactants');
+
+    reaction.changed = true;
+    this.setState({ reaction });
+    if (reaction && reaction.isNew) {
+      ElementActions.createReaction(reaction);
+    } else {
+      ElementActions.updateReaction(reaction, false);
+    }
+    LoadingActions.stop();
+  }
+
+  reactionSVG(reaction) {
+    if (!reaction.svgPath) {
+      console.log("no reaction svg");
+      return false;
+    }
+
+    if (reaction.hasMaterials()) {
+      return (
+        <div>
+          <div style={{ textAlign: 'end' }}>
+            <Button
+              variant="success"
+              size="xxsm"
+              disabled={false}
+              onClick={() => this.getSvgFromIndigo(reaction)}
+            >
+              <i className="fa fa-refresh" />
+            </Button>
+          </div>
+        </div>
+      );
+    }
   }
 
   reactionHeader(reaction) {
@@ -623,6 +695,7 @@ export default class ReactionDetails extends Component {
         header={this.reactionHeader(reaction)}
         footer={this.reactionFooter()}
       >
+        {this.reactionSVG(reaction)}
         <ReactionSchemeGraphic
           reaction={reaction}
           onToggleLabel={(materialId) => {
