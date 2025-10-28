@@ -141,25 +141,26 @@ class Collection < ApplicationRecord
   )
 
   default_scope { ordered }
-  SQL_INVENT_JOIN = 'LEFT JOIN ' \
-                    'inventories  ' \
-                    'ON collections.inventory_id = inventories.id'
   SQL_INVENT_SELECT = 'inventory_id,' \
                       'row_to_json(inventories) AS inventory,' \
                       'JSON_AGG(collections) AS collections'
   SQL_INVENT_FROM = '(select c.id,c."label",c.inventory_id,c.deleted_at,' \
-                    'c.is_locked,c.is_shared,c.user_id from collections c) collections'
+                    'c.is_locked,c.user_id from collections c) collections'
 
   # group by inventory_id for collections owned by user_id
   # @param user_id [Integer] user id
   # @return [ActiveRecord()] array of {inventory_id, inventory, collections: []}
-  scope :inventory_collections, lambda { |user_id|
-    unscoped.unlocked.unshared.where(user_id: user_id, deleted_at: nil)
-            .joins(SQL_INVENT_JOIN)
-            .select(SQL_INVENT_SELECT)
-            .from(SQL_INVENT_FROM)
-            .group(:inventory_id, :inventories)
-  }
+  scope(
+    :inventory_collections,
+    lambda do |user|
+      unscoped
+        .unlocked
+        .own_collections_for(user)
+        .select(SQL_INVENT_SELECT)
+        .from(SQL_INVENT_FROM)
+        .group(:inventory_id, :inventories)
+    end
+  )
 
   def self.get_all_collection_for_user(user_id)
     find_by(user_id: user_id, label: 'All', is_locked: true)
