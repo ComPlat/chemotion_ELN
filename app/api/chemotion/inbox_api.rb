@@ -97,23 +97,28 @@ module Chemotion
           search_string.chomp!(' EA')
           search_string.sub!(/-?[a-zA-Z]$/, '')
           search_string.sub!(/^[a-zA-Z0-9]+-/, '')
-          collection_ids = Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids).map(&:id)
+
+          collection_ids = Collection.own_collections_for(current_user).ids
+          collection_ids += Collection.shared_with_minimum_permission_level(
+            current_user, CollectionShare.permission_level(:write)
+          ).ids
+
           samples = Sample.by_exact_name(search_string)
                           .joins(:collections_samples)
-                          .where(collections_samples: { collection_id: collection_ids }).uniq
-          samples.select { |s| ElementPolicy.new(current_user, s).update? }
-
-          ids = samples.pluck(:id)
-          rs = ReactionsSample.where(sample_id: ids)
-          res = samples.map do |s|
+                          .where(collections_samples: { collection_id: collection_ids.uniq })
+                          .uniq!(:id)
+          reaction_samples = ReactionsSample.where(sample_id: samples.pluck(:id))
+          results = samples.map do |sample|
             {
-              id: s.id,
-              name: s.name,
-              short_label: s.short_label,
-              type: rs.find { |r| r.sample_id == s.id }&.type&.sub(/^Reactions/, '')&.sub(/Sample/, ''),
+              id: sample.id,
+              name: sample.name,
+              short_label: sample.short_label,
+              type: reaction_samples.find { |reaction__sample| reaction_sample.sample_id == sample.id }
+                                    &.type&.sub(/^Reactions/, '')
+                                    &.sub(/Sample/, ''),
             }
           end
-          { samples: res }
+          { samples: results }
         end
 
         desc 'assign attachment to sample'
