@@ -66,9 +66,7 @@ module Chemotion
             resp_body['error'] = e
             error!(resp_body, 503)
           end
-          unless (@collection = Collection.find_by(
-            id: params[:id], user_id: current_user.id, is_shared: false,
-          ))
+          unless @collection = Collection.find_by(id: params[:id], user_id: current_user.id)
             resp_body['error'] = 'Unauthorized Access to Collection'
             error!(resp_body, 401)
           end
@@ -134,9 +132,7 @@ module Chemotion
           end
           @user = Person.find_by(email: @auth_token[:iss])
           error!('Unauthorized', 401) unless @user
-          @collection = Collection.find_by(
-            id: @auth_token[:collection], user_id: @user.id, is_shared: false,
-          )
+          @collection = Collection.find_by(id: @auth_token[:collection], user_id: @user.id)
           error!('Unauthorized access to collection', 401) unless @collection
         end
 
@@ -169,16 +165,14 @@ module Chemotion
           requires :token, type: String, desc: 'token'
         end
         after_validation do
-          error!('401 Unauthorized', 401) unless (@collec = Collection.find_by(
-            id: params[:collection_id], user_id: current_user.id,
-            is_shared: false
-          ))
+          @collection = Collection.find_by(id: params[:collection_id], user_id: current_user.id)
+          error!('401 Unauthorized', 401) unless @collection
         end
         post do
           AuthenticationKey.create!(
             user_id: current_user.id,
             fqdn: params[:destination],
-            role: "gate out #{@collec.id}",
+            role: "gate out #{@collection.id}",
             token: params[:token],
           )
           nil
@@ -215,16 +209,14 @@ module Chemotion
         end
 
         after_validation do
-          error!('401 Unauthorized', 401) unless (@collec = Collection.find_by(
-            id: params[:collection_id], user_id: current_user.id,
-            is_shared: false
-          ))
+          @collection = Collection.find_by(id: params[:collection_id], user_id: current_user.id)
+          error!('401 Unauthorized', 401) unless @collection
         end
 
         get 'new' do
           payload = {
-            collection: @collec.id,
-            # label: @collec.label[0..20],
+            collection: @collection.id,
+            # label: @collection.label[0..20],
             iss: current_user.email,
             exp: 7.days.from_now.to_i,
           }
