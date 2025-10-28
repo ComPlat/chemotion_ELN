@@ -4,13 +4,9 @@ describe Chemotion::DeviceDescriptionAPI do
   include_context 'api request authorization context'
 
   let(:user) { create(:user) }
-  let(:collection) { create(:collection, user_id: user.id, devicedescription_detail_level: 10) }
-  let(:device_description) do
-    create(:device_description, :with_ontologies, collection_id: collection.id, created_by: collection.user_id)
-  end
-  let(:device_description2) do
-    create(:device_description, :with_ontologies, collection_id: collection.id, created_by: collection.user_id)
-  end
+  let(:collection) { create(:collection, user: user) }
+  let(:device_description) { create(:device_description, :with_ontologies, creator: collection.user) }
+  let(:device_description2) { create(:device_description, :with_ontologies, creator: collection.user) }
   let(:device_description_collection) do
     create(:collections_device_description, device_description: device_description, collection: collection)
   end
@@ -18,9 +14,7 @@ describe Chemotion::DeviceDescriptionAPI do
   let(:segment_klass) { create(:segment_klass, :with_ontology_properties_template, element_klass: element_klass) }
 
   describe 'GET /api/v1/device_descriptions/' do
-    before do
-      CollectionsDeviceDescription.create!(device_description: device_description, collection: collection)
-    end
+    before { device_description_collection }
 
     let(:params) do
       { collection_id: collection.id }
@@ -52,10 +46,6 @@ describe Chemotion::DeviceDescriptionAPI do
   end
 
   describe 'GET /api/v1/device_descriptions/:id' do
-    before do
-      device_description
-    end
-
     it 'fetches an device description by id' do
       get "/api/v1/device_descriptions/#{device_description.id}"
 

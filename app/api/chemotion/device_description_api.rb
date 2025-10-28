@@ -151,7 +151,7 @@ module Chemotion
         scope =
           if params[:collection_id]
             begin
-              Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids)
+              Collection.accessible_for(current_user)
                         .find(params[:collection_id]).device_descriptions
             rescue ActiveRecord::RecordNotFound
               DeviceDescription.none
@@ -224,10 +224,11 @@ module Chemotion
         end
 
         before do
-          cid = fetch_collection_id_w_current_user(params[:ui_state][:collection_id], false)
+          collection = Collection.accessible_for(current_user).find(params[:ui_state][:collection_id])
           @device_descriptions =
-            DeviceDescription.by_collection_id(cid).by_ui_state(params[:ui_state]).for_user(current_user.id)
-          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, @device_descriptions).read?
+            DeviceDescription.by_collection_id(collection.id).by_ui_state(params[:ui_state]).for_user(current_user.id)
+          # does this check make sense? There should never be an element within an accessible collection that can not be read
+          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, @device_descriptions).read_all?
         end
 
         post do
