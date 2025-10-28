@@ -23,7 +23,7 @@ describe Chemotion::InventoryAPI do
         'Bräse North Camp',
         0,
         [collection.id],
-        user.id,
+        user,
       ).to_json
     end
 
@@ -43,7 +43,7 @@ describe Chemotion::InventoryAPI do
     end
 
     let(:expected_response) do
-      { inventory_collections: Collection.inventory_collections(collection.user_id) }.to_json
+      { inventory_collections: Collection.inventory_collections(collection.user) }.to_json
     end
 
     it 'fetch own collections for user' do
