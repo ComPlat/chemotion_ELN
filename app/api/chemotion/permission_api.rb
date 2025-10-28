@@ -58,44 +58,44 @@ module Chemotion
           deletion_allowed = true
           sharing_allowed = true
           if params[:currentCollection][:is_shared]
-            deletion_allowed = has_sel['sample'] ? ElementsPolicy.new(current_user, sel['sample']).destroy? : true
+            deletion_allowed = has_sel['sample'] ? ElementsPolicy.new(current_user, sel['sample']).destroy_all? : true
             deletion_allowed &&= (if has_sel['reaction']
                                     ElementsPolicy.new(current_user,
-                                                       sel['reaction']).destroy?
+                                                       sel['reaction']).destroy_all?
                                   else
                                     true
                                   end)
             deletion_allowed &&= (if has_sel['wellplate']
                                     ElementsPolicy.new(current_user,
-                                                       sel['wellplate']).destroy?
+                                                       sel['wellplate']).destroy_all?
                                   else
                                     true
                                   end)
             deletion_allowed &&= (if has_sel['screen']
                                     ElementsPolicy.new(current_user,
-                                                       sel['screen']).destroy?
+                                                       sel['screen']).destroy_all?
                                   else
                                     true
                                   end)
             if deletion_allowed
               sharing_allowed = true
             else
-              sharing_allowed = has_sel['sample'] ? ElementsPolicy.new(current_user, sel['sample']).share? : true
+              sharing_allowed = has_sel['sample'] ? ElementsPolicy.new(current_user, sel['sample']).share_all? : true
               sharing_allowed = if sharing_allowed && has_sel['reaction']
                                   ElementsPolicy.new(current_user,
-                                                     sel['reaction']).share?
+                                                     sel['reaction']).share_all?
                                 else
                                   true
                                 end
               sharing_allowed = if sharing_allowed && has_sel['wellplate']
                                   ElementsPolicy.new(current_user,
-                                                     sel['wellplate']).share?
+                                                     sel['wellplate']).share_all?
                                 else
                                   true
                                 end
               sharing_allowed = if sharing_allowed && has_sel['screen']
                                   ElementsPolicy.new(current_user,
-                                                     sel['screen']).share?
+                                                     sel['screen']).share_all?
                                 else
                                   true
                                 end
