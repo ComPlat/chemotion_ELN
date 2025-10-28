@@ -52,8 +52,10 @@ function DeviceDataCollectorTab() {
       .then((result) => {
         setLocalCollectorValues(result.listLocalCollector);
       });
-    devicesStore.changeDevice('datacollector_authentication', 'password');
-  }, []);
+    if (!device?.datacollector_authentication) {
+      devicesStore.changeDevice('datacollector_authentication', 'password');
+    }
+  }, [device]);
 
   const methodOptions = [
     { value: 'filewatchersftp', label: 'filewatchersftp' },
