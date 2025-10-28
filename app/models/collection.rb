@@ -156,6 +156,7 @@ class Collection < ApplicationRecord
       unscoped
         .unlocked
         .own_collections_for(user)
+        .where(deleted_at: nil)
         .select(SQL_INVENT_SELECT)
         .from(SQL_INVENT_FROM)
         .group(:inventory_id, :inventories)
