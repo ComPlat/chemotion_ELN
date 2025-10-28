@@ -2,7 +2,8 @@
 
 module ApiHelpers
   def parsed_json_response
-    JSON.parse(response.body).with_indifferent_access
+    parsed_response = JSON.parse(response.body)
+    parsed_response.is_a?(Hash) ? parsed_response.with_indifferent_access : parsed_response
   end
 end
 
