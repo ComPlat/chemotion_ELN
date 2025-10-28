@@ -1,5 +1,8 @@
+/* eslint-disable react/prop-types */
 import React, { useState, useEffect, useContext } from 'react';
-import { Form, InputGroup, Tooltip, OverlayTrigger, Button } from 'react-bootstrap';
+import {
+  Form, InputGroup, Tooltip, OverlayTrigger, Button
+} from 'react-bootstrap';
 import { Select } from 'src/components/common/Select';
 import { startsWith, endsWith } from 'lodash';
 
@@ -8,10 +11,41 @@ import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { copyToClipboard } from 'src/utilities/clipboard';
 
-const DeviceDataCollectorTab = () => {
+function ListLocalCollector({ localCollectorValues }) {
+  return (
+    <div className="mt-3 p-2 border-1 border-danger border-dashed">
+      {localCollectorValues.map((c) => (
+        <div key={c.path}>
+          <Form.Label className="fw-bold">Local Collector Dir Configuration</Form.Label>
+          <Form.Group>
+            <InputGroup>
+              <OverlayTrigger placement="right" overlay={<Tooltip id="copy_tooltip">copy to clipboard</Tooltip>}>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="btn-xxsm"
+                  onClick={() => copyToClipboard(c.path)}
+                >
+                  <i className="fa fa-clipboard" />
+                </Button>
+              </OverlayTrigger>
+              <Form.Control
+                value={c.path}
+                readOnly
+                className="border-0 h-25"
+              />
+            </InputGroup>
+          </Form.Group>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function DeviceDataCollectorTab() {
   const devicesStore = useContext(StoreContext).devices;
   const [localCollectorValues, setLocalCollectorValues] = useState([]);
-  const device = devicesStore.device;
+  const { device } = devicesStore;
 
   useEffect(() => {
     AdminFetcher.fetchLocalCollector()
@@ -38,23 +72,24 @@ const DeviceDataCollectorTab = () => {
   let authenticationValue = { value: 'password', label: 'password' };
 
   if (device && device.datacollector_method) {
-    methodValue = methodOptions.filter(f => f.value == device.datacollector_method);
+    methodValue = methodOptions.filter((f) => f.value === device.datacollector_method);
   }
   if (device && device.datacollector_authentication) {
-    authenticationValue = authenticationOptions.filter(f => f.value == device.datacollector_authentication);
+    authenticationValue = authenticationOptions.filter((f) => f.value === device.datacollector_authentication);
   }
 
   const methodValueCheck = methodValue ? methodValue[0].value : '';
-  const readonlyKeyName = authenticationValue !== null && authenticationValue[0] && authenticationValue[0].value == 'password';
+  const readonlyKeyName = authenticationValue !== null
+    && authenticationValue[0] && authenticationValue[0].value === 'password';
   const userValue = device && device.datacollector_user ? device.datacollector_user : '';
   const hostValue = device && device.datacollector_host ? device.datacollector_host : '';
   const keyFileValue = device && device.datacollector_key_name ? device.datacollector_key_name : '';
-  const numberOfFilesValue = device && device.datacollector_number_of_files ? device.datacollector_number_of_files : '1';
+  const numberOfFilesValue = device
+    && device.datacollector_number_of_files ? device.datacollector_number_of_files : '1';
   const dir = device && device.datacollector_dir ? device.datacollector_dir : '';
-  const userLevelSelected = device && device.datacollector_user_level_selected ? device.datacollector_user_level_selected : false;
-  const dirValue = userLevelSelected && dir ? `${dir}/{UserSubDirectories}` : (dir ? dir : '');
-
-  const userLevelLabel = (<>Enable user level data collection <i className="fa fa-info-circle" /></>);
+  const userLevelSelected = device
+    && device.datacollector_user_level_selected ? device.datacollector_user_level_selected : false;
+  const dirValue = userLevelSelected && dir ? `${dir}/{UserSubDirectories}` : (dir || '');
 
   const onChange = (field, value) => {
     let newValue = '';
@@ -62,36 +97,7 @@ const DeviceDataCollectorTab = () => {
       newValue = ['datacollector_method', 'datacollector_authentication'].includes(field) ? value.value : value;
     }
     devicesStore.changeDevice(field, newValue);
-  }
-
-  const ListLocalCollector = () => (
-    <div className="mt-3 p-2 border-1 border-danger border-dashed">
-      {localCollectorValues.map((c, i) => (
-        <div key={`list-collector-${i}`}>
-          <Form.Label className="fw-bold">Local Collector Dir Configurtaion</Form.Label>
-          <Form.Group>
-            <InputGroup>
-              <OverlayTrigger placement="right" overlay={<Tooltip id="copy_tooltip">copy to clipboard</Tooltip>}>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="btn-xxsm"
-                  onClick={() => copyToClipboard(c.path)}
-                >
-                  <i className="fa fa-clipboard" />
-                </Button>
-              </OverlayTrigger>
-              <Form.Control
-                value={c.path}
-                readOnly
-                className="border-0 h-25"
-              />
-            </InputGroup>
-          </Form.Group>
-        </div>
-      ))}
-    </div>
-  );
+  };
 
   return (
     <Form className="d-flex justify-content-between flex-wrap">
@@ -180,7 +186,11 @@ const DeviceDataCollectorTab = () => {
           </Form.Text>
         </div>
 
-        {endsWith(methodValueCheck, 'local') && <ListLocalCollector />}
+        {endsWith(methodValueCheck, 'local') && (
+        <ListLocalCollector
+          localCollectorValues={localCollectorValues}
+        />
+        )}
       </Form.Group>
 
       <Form.Group className="w-100 mb-4">
