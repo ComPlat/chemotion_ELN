@@ -166,12 +166,5 @@ class Collection < ApplicationRecord
   def self.get_all_collection_for_user(user_id)
     find_by(user_id: user_id, label: 'All', is_locked: true)
   end
-
-  def self.delete_set(user_id, deleted_ids)
-    (
-      Collection.where(id: deleted_ids, user_id: user_id, is_shared: false, is_locked: false) |
-      Collection.where(id: deleted_ids, shared_by_id: user_id)
-    ).each(&:destroy)
-  end
 end
 # rubocop:enable Metrics/AbcSize, Rails/HasManyOrHasOneDependent,Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
