@@ -11,20 +11,18 @@ describe Chemotion::MeasurementsAPI do
     end
 
     describe 'GET /api/v1/measurements/' do
-      let(:root_sample) { create(:sample, creator: user) }
-      let(:child_sample) { create(:sample, creator: user, parent: root_sample) }
+      let(:root_sample) { create(:sample, creator: user, collections: [collection]) }
+      let(:child_sample) { create(:sample, creator: user, parent: root_sample, collections: [collection]) }
       let(:research_plan1) { create(:research_plan) }
       let(:research_plan2) { create(:research_plan) }
       let(:root_sample_measurement) { create(:measurement, source: research_plan1, sample: root_sample) }
       let(:child_sample_measurement) { create(:measurement, source: research_plan2, sample: child_sample) }
-      let(:collection) { create(:collection, user_id: user.id, is_shared: true, permission_level: 3) }
+      let(:collection) { create(:collection, user_id: user.id) }
 
       context 'when requesting measurements' do
         before do
           root_sample_measurement
           child_sample_measurement
-          CollectionsSample.create!(sample: root_sample, collection: collection)
-          CollectionsSample.create!(sample: child_sample, collection: collection)
         end
 
         it 'requires at least a sample_id' do
@@ -70,9 +68,9 @@ describe Chemotion::MeasurementsAPI do
     end
 
     describe 'POST /api/v1/measurements/bulk_create_from_raw_data' do
-      let(:collection) { create(:collection, user_id: user.id, is_shared: true, permission_level: 3) }
-      let(:sample) { create(:sample, creator: user) }
-      let(:wellplate) { create(:wellplate, :with_random_wells, number_of_readouts: 3, sample: sample) }
+      let(:collection) { create(:collection, user_id: user.id) }
+      let(:sample) { create(:sample, creator: user, collections: [collection]) }
+      let(:wellplate) { create(:wellplate, :with_random_wells, number_of_readouts: 3, sample: sample, collections: [collection]) }
       let(:raw_data) do
         wellplate.wells.map do |well|
           well.readouts.map.with_index do |readout, readout_index|
@@ -86,7 +84,7 @@ describe Chemotion::MeasurementsAPI do
           end
         end.flatten
       end
-      let(:research_plan) { create(:research_plan) }
+      let(:research_plan) { create(:research_plan, collections: [collection]) }
       let(:params) do
         { raw_data: raw_data, source_type: 'research_plan', source_id: research_plan.id }
       end
@@ -94,9 +92,9 @@ describe Chemotion::MeasurementsAPI do
       let(:execute_request) { post "/api/v1/measurements/bulk_create_from_raw_data", params: params, as: :json }
 
       before do
-        CollectionsResearchPlan.create(research_plan: research_plan, collection: collection)
-        CollectionsWellplate.create!(wellplate: wellplate, collection: collection)
-        CollectionsSample.create!(sample: sample, collection: collection)
+        research_plan
+        wellplate
+        sample
       end
 
       it 'creates measurements from the given well' do
@@ -114,24 +112,24 @@ describe Chemotion::MeasurementsAPI do
       end
 
       it 'returns the data in the right format' do
-      execute_request
+        execute_request
 
-      expect(parsed_response).to have_key('measurements')
+        expect(parsed_response).to have_key('measurements')
 
-      all_results_match_expected_structure = parsed_response['measurements'].all? do |measurement|
-        measurement.key?('errors') &&
-          measurement.key?('uuid') &&
-          measurement.key?('sample_identifier') &&
-          measurement.key?('unit') &&
-          measurement.key?('value') &&
-          measurement.key?('source_type') &&
-          measurement.key?('source_id')
+        all_results_match_expected_structure = parsed_response['measurements'].all? do |measurement|
+          measurement.key?('errors') &&
+            measurement.key?('uuid') &&
+            measurement.key?('sample_identifier') &&
+            measurement.key?('unit') &&
+            measurement.key?('value') &&
+            measurement.key?('source_type') &&
+            measurement.key?('source_id')
+        end
       end
-    end
     end
 
     describe 'DELETE /api/v1/measurements/MEASUREMENT_ID' do
-      let(:root_sample) { create(:sample, creator: user) }
+      let(:root_sample) { create(:sample, creator: user, collections: [create(:collection, user: user)]) }
       let(:research_plan) { create(:research_plan) }
       let(:root_sample_measurement) { create(:measurement, source: research_plan, sample: root_sample) }
 
