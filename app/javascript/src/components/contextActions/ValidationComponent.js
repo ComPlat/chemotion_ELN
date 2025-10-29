@@ -407,8 +407,7 @@ function ValidationComponent({
                 Data related to chemical structures like Canonical SMILES, molfile and other chemical
                 {' '}
                 identifiers cannot be validated at this step.
-              </p>
-              <p className="text-muted small mb-0">
+                {' '}
                 If structure-related data is invalid, you will receive an informative notification message after the
                 {' '}
                 import process completes.
@@ -444,11 +443,16 @@ function ValidationComponent({
         )}
 
         {isValidated && isDataValid && (
-          <Alert variant="success">
-            <Alert.Heading>✅ Data is Valid!</Alert.Heading>
-            <p>
-              All rows have passed validation successfully. You can now import the data.
-            </p>
+          <Alert variant="success" className="mr-5">
+            <div>
+              <Alert.Heading className="mb-0 me-3">
+                <i className="fa fa-check-circle me-1" />
+                Data is Valid:
+              </Alert.Heading>
+              <p className="mb-0 mt-1 ps-5">
+                All rows have passed validation successfully. You can now import the data.
+              </p>
+            </div>
 
             {conversionMessages.length > 0 && (
               <div className="mt-3 mb-3">
@@ -463,8 +467,8 @@ function ValidationComponent({
               </div>
             )}
 
-            <div className="d-flex align-items-center mt-3">
-              <div className="me-3">
+            <div className="d-flex align-items-center">
+              <div className="mb-0 ps-5">
                 Click on
                 {' '}
                 <strong>Import Data</strong>

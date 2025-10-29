@@ -220,7 +220,8 @@ module Import
             sample_save(row, molfile, molecule)
           rescue StandardError => _e
             unprocessable_count += 1
-            @unprocessable << { row: row, index: i }
+            # Only add to unprocessable if not already added by molecule_not_exist
+            @unprocessable << { row: row, index: i } unless @unprocessable.any? { |u| u[:index] == i }
           end
         end
       rescue StandardError => _e
@@ -276,7 +277,6 @@ module Import
 
     def assign_molecule_data(molfile_coord, babel_info, inchikey, row, index)
       if inchikey.blank?
-        @unprocessable << { row: row, index: index }
         go_to_next = true
       else
         molecule = Molecule.find_or_create_by(inchikey: inchikey, is_partial: false) do |molecul|
@@ -605,7 +605,7 @@ module Import
       begin
         write_to_db
         if processed.empty?
-          no_success
+          no_success('No samples could be processed from file')
         elsif @unprocessable.empty?
           # Clean up attachment if import was successful
           @attachment.destroy if @attachment.present?
