@@ -28,6 +28,7 @@ const layoutsWillShowMulti = [
   FN.LIST_LAYOUT.C13,
   FN.LIST_LAYOUT.UVVIS,
   FN.LIST_LAYOUT.HPLC_UVVIS,
+  FN.LIST_LAYOUT.LC_MS,
 ];
 
 class ViewSpectra extends React.Component {
@@ -145,7 +146,7 @@ class ViewSpectra extends React.Component {
     if (spcs && spcs.length > 0) {
       const spc = spcs[0];
       const { jcamp } = spc;
-      if (layoutsWillShowMulti.includes(jcamp.layout)) {
+      if (layoutsWillShowMulti.includes(jcamp.layout) && jcamp.layout !== FN.LIST_LAYOUT.LC_MS) {
         return true;
       }
     }
@@ -180,11 +181,30 @@ class ViewSpectra extends React.Component {
     }
   }
 
+  loadEntity(curveIdx = 0) {
+    let { jcamp, listMuliSpcs } = this.getContent() || {};
+
+    if (!jcamp && listMuliSpcs && listMuliSpcs.length > 0) {
+      jcamp = listMuliSpcs[curveIdx]?.jcamp;
+    }
+
+    if (!jcamp) return {};
+    const { entity } = FN.buildData(jcamp);
+    return entity || {};
+  }
+
   getSpcInfo(curveIdx = 0) {
     const { spcInfos, spcIdx, arrSpcIdx } = this.state;
     let selectedIdx = spcIdx;
     if (arrSpcIdx.length > 0) {
       selectedIdx = arrSpcIdx[curveIdx];
+    }
+
+    if (arrSpcIdx.length > 0) {
+      const uvvisPeakFile = spcInfos.find(info => info.label && info.label.match(/_uvvis\.peak\.jdx$/i));
+      if (uvvisPeakFile && curveIdx === 0) {
+        selectedIdx = uvvisPeakFile.idx;
+      }
     }
     const sis = spcInfos.filter(x => x.idx === selectedIdx);
     const si = sis.length > 0 ? sis[0] : spcInfos[0];
@@ -212,35 +232,33 @@ class ViewSpectra extends React.Component {
     isIntensity, integration, curveSt, waveLength
   }) {
     const layoutOpsObj = SpectraOps[layout];
-    if (!layoutOpsObj) {
-      return [];
-    }
-
+    if (!layoutOpsObj) return [];
     const { curveIdx } = curveSt;
-    const { shifts } = shift;
-    const selectedShift = shifts[curveIdx];
-
-    const { integrations } = integration;
-    const selectedIntegration = integrations[curveIdx];
-
+    const selectedShift = shift?.shifts?.[curveIdx];
+    const selectedIntegration = integration?.integrations?.[curveIdx];
     if (!selectedShift || !selectedIntegration) {
       return [];
     }
 
-    const content = this.getContent();
-    let built = content?.jcamp ? FN.buildData(content.jcamp) : null;
-
-    if (!built) {
-      const listMuliSpcs = content?.listMuliSpcs;
-      if (Array.isArray(listMuliSpcs) && listMuliSpcs.length) {
-        const spc = listMuliSpcs[curveIdx] || listMuliSpcs[0];
-        if (spc?.jcamp) built = FN.buildData(spc.jcamp);
+    const loadEntitySafe = (idx) => {
+      let e = this.loadEntity(idx || 0);
+      if (e && e.features) return e;
+      const content = this.getContent();
+      let built = content?.jcamp ? FN.buildData(content.jcamp) : null;
+      if (!built) {
+        const listMuliSpcs = content?.listMuliSpcs;
+        if (Array.isArray(listMuliSpcs) && listMuliSpcs.length) {
+          const spc = listMuliSpcs[idx] || listMuliSpcs[0];
+          if (spc?.jcamp) built = FN.buildData(spc.jcamp);
+        }
       }
-    }
-    const entity = built?.entity;
-    if (!entity) return [];
+      return built?.entity || {};
+    };
 
+    const entity = loadEntitySafe(curveIdx);
     const features = entity?.features;
+    if (!features) return [];
+  
     const f0 = Array.isArray(features)
       ? features[0]
       : (features?.editPeak || features?.autoPeak || features) || {};
@@ -268,12 +286,9 @@ class ViewSpectra extends React.Component {
       waveLength,
       temperature
     });
-    let solventDecimal = decimal
-    if (FN.is13CLayout(layout)) {
-      solventDecimal = 2
-    }
 
-    const { label, value, name } = selectedShift.ref;
+    let solventDecimal = FN.is13CLayout(layout) ? 2 : decimal;
+    const { label, value, name } = selectedShift.ref || {};
     const solvent = label ? `${name.split('(')[0].trim()} [${value.toFixed(solventDecimal)} ppm], ` : '';
     return [
       ...layoutOpsObj.head(freqStr, solvent),
@@ -287,26 +302,29 @@ class ViewSpectra extends React.Component {
     integration, multiplicity, layout, curveSt
   }) {
     const { curveIdx } = curveSt;
-    const { shifts } = shift;
-    const selectedShift = shifts[curveIdx];
-    const { integrations } = integration;
-    const selectedIntegration = integrations[curveIdx];
-    const { multiplicities } = multiplicity;
-    const selectedMutiplicity = multiplicities[curveIdx];
-    const content = this.getContent();
-    let built = content?.jcamp ? FN.buildData(content.jcamp) : null;
-
-    if (!built) {
-      const listMuliSpcs = content?.listMuliSpcs;
-      if (Array.isArray(listMuliSpcs) && listMuliSpcs.length) {
-        const spc = listMuliSpcs[curveIdx] || listMuliSpcs[0];
-        if (spc?.jcamp) built = FN.buildData(spc.jcamp);
+    const selectedShift = shift?.shifts?.[curveIdx];
+    const selectedIntegration = integration?.integrations?.[curveIdx];
+    const selectedMultiplicity = multiplicity?.multiplicities?.[curveIdx];
+    if (!selectedShift || !selectedIntegration || !selectedMultiplicity) return [];
+  
+    const loadEntitySafe = (idx) => {
+      let e = this.loadEntity(idx || 0);
+      if (e && e.features) return e;
+      const content = this.getContent();
+      let built = content?.jcamp ? FN.buildData(content.jcamp) : null;
+      if (!built) {
+        const listMuliSpcs = content?.listMuliSpcs;
+        if (Array.isArray(listMuliSpcs) && listMuliSpcs.length) {
+          const spc = listMuliSpcs[idx] || listMuliSpcs[0];
+          if (spc?.jcamp) built = FN.buildData(spc.jcamp);
+        }
       }
-    }
-    const entity = built?.entity;
-    if (!entity) return [];
+      return built?.entity || {};
+    };
 
+    const entity = loadEntitySafe(curveIdx);
     const features = entity?.features;
+    if (!features) return [];
     const f0 = Array.isArray(features)
       ? features[0]
       : (features?.editPeak || features?.autoPeak || features) || {};
@@ -318,17 +336,17 @@ class ViewSpectra extends React.Component {
     const freqStr = freq ? `${parseInt(freq, 10)} MHz, ` : '';
     // multiplicity
     const { refArea, refFactor, stack: isStack } = selectedIntegration;
-    const shiftVal = selectedMutiplicity.shift;
-    const ms = selectedMutiplicity.stack || [];
+    const shiftVal = selectedMultiplicity.shift;
+    const ms = selectedMultiplicity.stack || [];
     const is = isStack || [];
 
     const macs = ms.map((m) => {
-      const { peaks, mpyType, xExtent } = m;
+      const { peaks, mpyType, xExtent } = m || {};
       const { xL, xU } = xExtent || {};
       const it = is.find((i) => i.xL === xL && i.xU === xU) || { area: 0 };
-      const area = refArea ? (it.area * refFactor) / refArea : 0;
-      const center = FN.calcMpyCenter(peaks, shiftVal, mpyType);
-      const xs = (m.peaks || []).map(p => p.x).sort((a, b) => a - b);
+      const area = refArea ? (it.area * (refFactor || 0)) / refArea : 0;
+      const center = FN.calcMpyCenter(peaks || [], shiftVal, mpyType);
+      const xs = (peaks || []).map(p => p.x).sort((a, b) => a - b);
       const [aIdx, bIdx] = isAscend ? [0, xs.length - 1] : [xs.length - 1, 0];
       const mxA = mpyType === 'm' && xs.length ? (xs[aIdx] - shiftVal).toFixed(decimal) : 0;
       const mxB = mpyType === 'm' && xs.length ? (xs[bIdx] - shiftVal).toFixed(decimal) : 0;
@@ -362,7 +380,7 @@ class ViewSpectra extends React.Component {
           ];
     }));
     couplings = couplings.slice(0, couplings.length - 1);
-    const { label, value, name } = selectedShift.ref;
+    const { label, value, name } = selectedShift.ref || {};
     const solvent = label ? `${name.split('(')[0].trim()} [${value.toFixed(decimal)} ppm], ` : '';
     return [
       { attributes: { script: 'super' }, insert: layout.slice(0, -1) },
@@ -513,14 +531,41 @@ class ViewSpectra extends React.Component {
   }
 
   buildSerializedPayload(payload, curveIdx) {
+    const { layout } = payload;
     const hasShiftArray = Array.isArray(payload?.shift?.shifts);
     const fPeaks = payload?.peaks && hasShiftArray ? FN.rmRef(payload.peaks, payload.shift, curveIdx) : payload?.peaks;
     const selectedShift = payload.shift?.shifts ? payload.shift.shifts[curveIdx] : payload.shift;
     const selectedIntegration = payload.integration?.integrations ? payload.integration.integrations[curveIdx] : payload.integration;
     const selectedMultiplicity = payload.multiplicity?.multiplicities ? payload.multiplicity.multiplicities[curveIdx] : payload.multiplicity;
 
+    let peaksStr;
+    if (layout === FN.LIST_LAYOUT.LC_MS && Array.isArray(payload.lcms_peaks) && payload.lcms_peaks.length > 0) {
+      const dict = {};
+      payload.lcms_peaks.forEach((p) => {
+        const key = String(p.wavelength);
+        if (!dict[key]) dict[key] = [];
+        dict[key].push({ x: p.x, y: p.y });
+      });
+      peaksStr = JSON.stringify(dict);
+    } else {
+      peaksStr = FN.toPeakStr(fPeaks);
+    }
+
+    let integrationStr;
+    if (layout === FN.LIST_LAYOUT.LC_MS && Array.isArray(payload.lcms_integrals) && payload.lcms_integrals.length > 0) {
+      const dict = {};
+      payload.lcms_integrals.forEach((i) => {
+        const key = String(i.wavelength);
+        if (!dict[key]) dict[key] = [];
+        dict[key].push([i.from, i.to, i.value, i.integral]);
+      });
+      integrationStr = JSON.stringify(dict);
+    } else {
+      integrationStr = JSON.stringify(selectedIntegration);
+    }
+
     return {
-      peaksStr: FN.toPeakStr(fPeaks),
+      peaksStr,
       predict: JSON.stringify(rmRefreshed(payload.analysis)),
       waveLengthStr: JSON.stringify(payload.waveLength),
       cyclicvolta: JSON.stringify(payload.cyclicvoltaSt),
@@ -528,7 +573,7 @@ class ViewSpectra extends React.Component {
       detector: JSON.stringify(payload.detectorSt),
       dscMetaDataStr: JSON.stringify(payload.dscMetaData),
       selectedShift,
-      integrationStr: JSON.stringify(selectedIntegration),
+      integrationStr,
       multiplicityStr: JSON.stringify(selectedMultiplicity),
     };
   }
@@ -779,6 +824,13 @@ class ViewSpectra extends React.Component {
           ...baseOps,
           { name: 'save', value: this.writeCommon },
           { name: 'save & close', value: this.writeCloseCommon },
+        ];
+      } else if (FN.isLCMsLayout(et.layout)) {
+        return [
+          { name: 'save', value: this.saveOp },
+          { name: 'save & close', value: this.saveCloseOp },
+          { name: 'write peak & save', value: this.writePeakOp },
+          { name: 'write peak, save & close', value: this.writeClosePeakOp },
         ];
       } else {
         baseOps = [
