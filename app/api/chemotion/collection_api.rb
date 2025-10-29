@@ -97,6 +97,22 @@ module Chemotion
 
         present own_collections, with: Entities::OwnCollectionEntity, root: :collections
       end
+
+      desc 'Export selected collections to zip archive'
+      params do
+        requires :collection_ids, type: Array[Integer]
+      end
+      post '/export' do
+        collection_ids = params[:collection_ids].uniq
+        all_collection_ids = Collection.own_collections_for(current_user).pluck(:id)
+
+        error!('Select the collections you want to export.', 403) if collection_ids.empty?
+        error!('401 Unauthorized', 401) if all_collection_ids & collection_ids != collection_ids
+
+        ExportCollectionsJob.perform_now(collection_ids, 'zip', false, current_user.id)
+
+        { status: 204 }
+      end
     end
   end
 end

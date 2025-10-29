@@ -105,6 +105,7 @@ const presort = (a, b) => {
 export const CollectionsStore = types
   .model({
     chemotion_repository_collection: types.maybeNull(Collection),
+    locked_collection: types.array(Collection),
     own_collections: types.array(Collection),
     own_collection_tree: types.maybeNull(types.frozen({})),
     shared_with_me_collections: types.array(Collection),
@@ -156,6 +157,15 @@ export const CollectionsStore = types
       self.own_collections.clear()
       self.setOwnCollections(all_collections)
       self.setOwnCollectionTree()
+    }),
+    exportCollections: flow(function* exportCollections(collectionIds, currentUser) {
+      const response = yield CollectionsFetcher.exportCollections(collectionIds);
+
+      if (response.error) {
+        const errorMessage =
+          (response.error.includes('invalid') ? 'You do not have the right to export all selected collections' : response.error)
+        NotificationActions.add({ title: 'Export Collection', message: errorMessage, level: 'error', autoDismiss: 10 })
+      }
     }),
     useOrCreateCollection: flow(function* useOrCreateCollection(collectionParams) {
       let collectionId = collectionParams?.id
@@ -294,10 +304,16 @@ export const CollectionsStore = types
       // basic presorting, so we can assume that parent objects are encountered before child objects when iterating the collection array
       collections.sort(presort);
       collections.forEach((collection) => {
-        if (collection.is_locked && (collection.label == 'All' || collection.label !== 'chemotion-repository.net')) {
+        if (collection.is_locked && ['All', 'chemotion-repository.net', 'transferred'].includes(collection.label)
+          && self.locked_collection.findIndex((c) => c.label === collection.label) === -1) {
+          self.locked_collection.push(Collection.create(collection))
+        }
+
+        if (collection.is_locked && (collection.label == 'All' || (collection.label !== 'chemotion-repository.net'
+          && collection.label !== 'transferred'))) {
           // do nothing and skip this collection
         } else if (collection.label == 'chemotion-repository.net') {
-          self.chemotion_repository_collection = Collection.create(collection);
+          self.chemotion_repository_collection = Collection.create(collection)
         } else {
           const collectionItem = Collection.create(collection)
 

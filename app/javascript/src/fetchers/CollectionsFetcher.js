@@ -70,6 +70,17 @@ export default class CollectionsFetcher {
       .catch(errorMessage => console.log(errorMessage));
   }
 
+  static exportCollections(collectionIds) {
+    return fetch('/api/v1/collections/export',
+      {
+        ...this._httpOptions('POST'),
+        body: JSON.stringify(collectionIds)
+      }
+    )
+      .then(response => response.json())
+      .catch(errorMessage => console.log(errorMessage));
+  }
+
   static _httpOptions(method = 'GET') {
     return {
       credentials: 'same-origin',

@@ -235,4 +235,34 @@ describe Chemotion::CollectionAPI do
         expect(updated_collection_BB).to include("id" => collection_BB.id, "label" => "Collection BB", "ancestry" => "/#{collection_B.id}/", "position" => 1)
     end
   end
+
+  describe 'POST /api/v1/collections/export' do
+    before {
+      collection
+      collection_with_shares
+      other_users_collection
+    }
+    context 'when exporting collections' do
+      it 'exports the collections' do
+        params = { collection_ids: [collection.id, collection_with_shares.id] }
+        post '/api/v1/collections/export', params: params
+
+        expect(parsed_json_response['status']).to eq 204
+      end
+
+      it 'does not export collections with empty collection ids' do
+        params = { collection_ids: [] }.to_json
+        post '/api/v1/collections/export', params: params, headers: { 'CONTENT_TYPE' => 'application/json' }
+
+        expect(response.status).to eq 403
+      end
+
+      it 'does not export collection of wrong ownership' do
+        params = { collection_ids: [other_users_collection.id] }
+        post '/api/v1/collections/export', params: params
+
+        expect(response.status).to eq 401
+      end
+    end
+  end
 end
