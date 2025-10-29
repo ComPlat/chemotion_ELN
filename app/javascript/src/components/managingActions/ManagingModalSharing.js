@@ -53,10 +53,10 @@ const ManagingModalSharing = (props) => {
       sample_detail_level: permissions.sampleDetailLevel,
       screen_detail_level: permissions.screenDetailLevel,
       wellplate_detail_level: permissions.wellplateDetailLevel,
-      celllinesample_detail_level: 0,
-      devicedescription_detail_level: 0,
-      sequencebasedmacromoleculesample_detail_level: 0,
-      researchplan_detail_level: 0,
+      celllinesample_detail_level: 10,
+      devicedescription_detail_level: 10,
+      sequencebasedmacromoleculesample_detail_level: 10,
+      researchplan_detail_level: 10,
     }
 
     if (shareType === 'new') {
