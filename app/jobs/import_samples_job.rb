@@ -11,6 +11,7 @@ class ImportSamplesJob < ApplicationJob
       message_from: @user_id,
       message_to: [@user_id],
       data_args: { message: @result[:message] },
+      collection_id: @collection_id,
       level: 'info',
       autoDismiss: 5,
     )
@@ -20,20 +21,21 @@ class ImportSamplesJob < ApplicationJob
 
   def perform(params)
     @user_id = params[:user_id]
+    @collection_id = params[:collection_id]
     file_format = File.extname(params[:attachment]&.filename)
     begin
       case file_format
       when '.xlsx', '.csv'
         @result = Import::ImportSamples.new(
           params[:attachment],
-          params[:collection_id],
+          @collection_id,
           @user_id,
           params[:attachment].filename,
           params[:import_type],
         ).process
       when '.sdf'
         sdf_args = {
-          collection_id: params[:collection_id],
+          collection_id: @collection_id,
           current_user_id: @user_id,
           rows: params[:sdf_rows],
           mapped_keys: params[:mapped_keys],

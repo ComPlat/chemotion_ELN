@@ -18,6 +18,8 @@ module Import
     def initialize(attachment, collection_id, user_id, file_name, import_type)
       @attachment = attachment
       @collection_id = collection_id
+      @collection = Collection.find(collection_id)
+      @all_collection = Collection.get_all_collection_for_user(user_id)
       @current_user_id = user_id
       @file_name = file_name
       @import_type = import_type
@@ -523,8 +525,8 @@ module Import
     def validate_sample_and_save(sample, stereo, row)
       handle_sample_solvent_column(sample, row)
       sample.validate_stereo(stereo)
-      sample.collections << Collection.find(collection_id)
-      sample.collections << Collection.get_all_collection_for_user(current_user_id)
+      sample.collections << @collection
+      sample.collections << @all_collection
       sample.inventory_sample = true if @import_type == 'chemical'
       chemical = ImportChemicals.build_chemical(row, header) if @import_type == 'chemical'
       sample.sample_type = Sample::SAMPLE_TYPE_MIXTURE if sample_has_components?(row)
@@ -699,7 +701,7 @@ module Import
 
     def success
       { status: 'ok',
-        message: "samples in file: #{@file_name} have been imported successfully",
+        message: "samples in file: #{@file_name} have been imported successfully in collection '#{@collection.label}'.",
         data: processed }
     end
   end
