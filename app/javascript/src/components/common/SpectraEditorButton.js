@@ -68,20 +68,17 @@ export default function SpectraEditorButton({
                   <i className="fa fa-refresh me-1" />
                   Reprocess
                 </Dropdown.Item>
-                {hasEditedJcamp
-                  && (
-                    <Dropdown.Item
-                      id="regenerate-edited-spectra"
-                      key="regenerate-edited-spectra"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        confirmRegenerateEdited(event);
-                      }}
-                    >
-                      <i className="fa fa-refresh me-1" />
-                      Regenerate .edit.jdx files
-                    </Dropdown.Item>
-                  )}
+                  <Dropdown.Item
+                    id="regenerate-edited-spectra"
+                    key="regenerate-edited-spectra"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      confirmRegenerateEdited(event);
+                    }}
+                  >
+                    <i className="fa fa-refresh me-1" />
+                    Regenerate .edit.jdx files
+                  </Dropdown.Item>
               </Dropdown.Menu>
             </Dropdown>
           </ButtonGroup>

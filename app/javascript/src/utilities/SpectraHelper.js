@@ -1,5 +1,5 @@
 import { FN } from '@complat/react-spectra-editor';
-const acceptables = ['jdx', 'dx', 'jcamp', 'mzml', 'mzxml', 'raw', 'cdf', 'zip'];
+const acceptables = ['jdx', 'dx', 'jcamp', 'mzml', 'mzxml', 'raw', 'cdf'];
 
 const JcampIds = (container) => {
   let origJcampIds = [];
