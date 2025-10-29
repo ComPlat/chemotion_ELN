@@ -255,11 +255,25 @@ module Import
         # look for the molecule for this sample and add the molecule name
         # neither the Molecule or the MoleculeName are created if they already exist
         molfile = fields.fetch('molfile')
-        molecule = if fields.fetch('decoupled',
-                                   nil) && molfile.blank?
-                     Molecule.find_or_create_dummy
-                   else
+
+        # Check the associated Molecule for cano_smiles
+        cano_smiles = nil
+        if fields.fetch('molecule_id').present?
+          molecule_uuid = fields.fetch('molecule_id')
+          molecule_data = @data.fetch('Molecule', {}).fetch(molecule_uuid, {})
+          cano_smiles = molecule_data.fetch('cano_smiles', nil) if molecule_data.present?
+        end
+
+        # Priority: molfile > cano_smiles > dummy (if decoupled and both blank)
+        molecule = if molfile.present?
+                     # Always use molfile if available (highest priority)
                      Molecule.find_or_create_by_molfile(molfile)
+                   elsif cano_smiles.present?
+                     # Use cano_smiles if molfile is missing but cano_smiles is available
+                     Molecule.find_or_create_by_cano_smiles(cano_smiles)
+                   elsif fields.fetch('decoupled', nil)
+                     # Create dummy only for decoupled samples with no structure data
+                     Molecule.find_or_create_dummy
                    end
         unless (fields.fetch('decoupled', nil) && molfile.blank?) || molecule_name_name.blank?
           molecule.create_molecule_name_by_user(molecule_name_name, @current_user_id)
@@ -597,10 +611,21 @@ module Import
         ).first
 
         if attachable.present? && attachment.present?
+          # Check source field to determine transferred status
+          source_value = @data['source'] || ''
+          transferred_status = source_value != 'smart-add'
+
+          # For ZIP files, reset aasm_state to allow processing if from smart-add
+          aasm_state = if attachment.content_type == 'application/zip' && source_value == 'smart-add'
+                         'queueing'
+                       else
+                         fields.fetch('aasm_state')
+                       end
+
           attachment.update!(
             attachable: attachable,
-            transferred: true,
-            aasm_state: fields.fetch('aasm_state'),
+            transferred: transferred_status,
+            aasm_state: aasm_state,
             filename: fields.fetch('filename'),
             # checksum: fields.fetch('checksum'),
             # created_at: fields.fetch('created_at'),
