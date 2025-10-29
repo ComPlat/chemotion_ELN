@@ -849,27 +849,27 @@ export default class ModalImport extends React.Component {
 
   dropzoneOrfilePreview() {
     const { file, importAsChemical, importWithColumnMapping } = this.state;
-    if (file) {
-      return (
-        <div className="d-flex justify-content-between">
-          {file.name}
-          <Button size="sm" variant="danger" onClick={() => this.handleAttachmentRemove()}>
-            <i className="fa fa-trash-o" />
-          </Button>
-        </div>
-      );
-    }
     return (
       <>
-        <Dropzone
-          onDrop={(attachmentFile) => this.handleFileDrop(attachmentFile)}
-          style={{ height: 50, width: '100%', border: '3px dashed lightgray' }}
-          accept=".csv,.tsv,.txt,.xlsx,.xls,.sdf"
-        >
-          <div style={{ textAlign: 'center', paddingTop: 12, color: 'gray' }}>
-            Drop File, or Click to Select. (Supported formats: CSV, TSV, Excel, SDF)
+        {file ? (
+          <div className="d-flex justify-content-between p-2 border rounded bg-light">
+            <span className="p-1">{file.name}</span>
+            <Button size="sm" variant="danger" onClick={() => this.handleAttachmentRemove()}>
+              <i className="fa fa-trash-o" />
+            </Button>
           </div>
-        </Dropzone>
+        ) : (
+          <Dropzone
+            onDrop={(attachmentFile) => this.handleFileDrop(attachmentFile)}
+            style={{ height: 50, width: '100%', border: '3px dashed lightgray' }}
+            accept=".csv,.tsv,.txt,.xlsx,.xls,.sdf"
+          >
+            <div style={{ textAlign: 'center', paddingTop: 12, color: 'gray' }}>
+              Drop File, or Click to Select. (Supported formats: CSV, TSV, Excel, SDF)
+            </div>
+          </Dropzone>
+        )}
+
         <div style={{ paddingTop: 12 }}>
           <Form.Check
             id="modal-check-import-as-chemical"
