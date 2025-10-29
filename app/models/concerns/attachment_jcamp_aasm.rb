@@ -137,18 +137,39 @@ module AttachmentJcampProcess
         key: SecureRandom.uuid,
       )
     end
-    att.save!
-    att.set_edited if ext != 'png' && to_edit
-    att.set_image if ext == 'png'
-    if ext == 'json'
-      att.set_json
-      att.thumb = false
+  
+    if ext != 'png'
+      if to_edit
+        att.set_edited
+      elsif addon == 'peak'
+        att.set_force_peaked
+      else
+        filename_lower = att.filename.to_s.downcase
+        
+        if filename_lower.match?(/lcms.*\.jdx$/i)
+          
+          is_uvvis_raw = (
+            filename_lower.match?(/lcms.*[._]uvvis\.jdx$/i) ||
+            filename_lower == 'lcms_uvvis.jdx' ||
+            filename_lower == 'lcms.uvvis.jdx'
+          ) && !filename_lower.include?('peak') && !filename_lower.include?('edit')
+                    
+          if is_uvvis_raw
+            att.set_non_jcamp if att.may_set_non_jcamp?
+          else
+            att.set_force_peaked if att.may_set_force_peaked?
+          end
+        end
+      end
+    else
+      att.set_image
     end
-    att.set_csv if ext == 'csv'
+    att.set_json  if ext == 'json'
+    att.set_csv   if ext == 'csv'
     att.set_nmrium if ext == 'nmrium'
-    att.update!(
-      attachable_id: attachable_id, attachable_type: 'Container'
-    )
+    att.thumb = false if ext == 'json'
+  
+    att.update!(attachable_id: attachable_id, attachable_type: 'Container')
     att
   end
   # rubocop:enable Metrics/AbcSize
@@ -370,20 +391,38 @@ module AttachmentJcampProcess
     jcamp_att = nil
     tmp_to_be_deleted = []
     tmp_img_to_deleted = []
+  
+    base = filename_parts.first
+    suffixes = %w[uvvis.peak uvvis tic_plus tic_minus mz_plus mz_minus]
+
+    wanted = {
+      0 => "#{base}_uvvis.peak",
+      1 => "#{base}_uvvis",
+      2 => "#{base}_tic_plus",
+      3 => "#{base}_tic_minus",
+      4 => "#{base}_mz_plus",
+      5 => "#{base}_mz_minus"
+    }
+  
     arr_jcamp.each_with_index do |jcamp, idx|
-      file_name_to_generate = idx == 0 ? 'peak' : "processed_#{idx}"
-
-      curr_jcamp_att = generate_jcamp_att(jcamp, file_name_to_generate)
+      stem   = wanted[idx] || "#{base}_processed_#{idx}"
+      addon  = stem.sub(/^#{base}_/, '')
+  
+      curr_jcamp_att = generate_jcamp_att(jcamp, addon)
+      curr_jcamp_att.update!(filename: "#{stem}.jdx")
       curr_jcamp_att.auto_infer_n_clear_json(spc_type, is_regen)
-      jcamp_att = curr_jcamp_att if idx == 0
-
+      jcamp_att ||= curr_jcamp_att
+  
       curr_tmp_img = arr_img[idx]
-      img_att = generate_img_att(curr_tmp_img, file_name_to_generate)
-
-      tmp_to_be_deleted.push(jcamp, curr_tmp_img)
-      tmp_img_to_deleted.push(img_att)
+      if curr_tmp_img
+        img_att = generate_img_att(curr_tmp_img, addon)
+        img_att.update!(filename: "#{stem}.png")
+        tmp_img_to_deleted << img_att
+        tmp_to_be_deleted << curr_tmp_img
+      end
+  
+      tmp_to_be_deleted << jcamp
     end
-
     set_done
     delete_tmps(tmp_to_be_deleted)
     delete_related_arr_img(tmp_img_to_deleted)
