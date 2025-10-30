@@ -3,9 +3,11 @@ import PropTypes from 'prop-types';
 import { Button, ButtonToolbar, Modal } from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
 
-import CollectionActions from 'src/stores/alt/actions/CollectionActions';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
 export default class ModalImportCollection extends React.Component {
+  static contextType = StoreContext;
+
   constructor(props) {
     super(props);
     this.state = {
@@ -21,7 +23,8 @@ export default class ModalImportCollection extends React.Component {
     let params = {
       file: file
     }
-    CollectionActions.importCollectionsFromFile(params);
+
+    this.context.collections.importCollections(params);
     setTimeout(() => {
       this.setState({ processing: false });
       onHide();
@@ -38,6 +41,7 @@ export default class ModalImportCollection extends React.Component {
 
   dropzoneOrfilePreview() {
     const { file } = this.state;
+
     if (file) {
       return (
         <div className="d-flex justify-content-between">

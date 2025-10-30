@@ -265,4 +265,21 @@ describe Chemotion::CollectionAPI do
       end
     end
   end
+
+  describe 'POST /api/v1/collections/import' do
+    context 'when importing collections' do
+      let(:file_upload) do
+        {
+          file: fixture_file_upload(
+            Rails.root.join('spec/fixtures/import/2541a423-11d9-4c76-a7e1-0da470644012.zip'), 'application/gzip'
+          ),
+        }
+      end
+
+      it 'imports the collections' do
+        post '/api/v1/collections/import', params: file_upload
+        expect(parsed_json_response['status']).to eq 204
+      end
+    end
+  end
 end

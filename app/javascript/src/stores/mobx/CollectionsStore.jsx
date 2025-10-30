@@ -167,6 +167,15 @@ export const CollectionsStore = types
         NotificationActions.add({ title: 'Export Collection', message: errorMessage, level: 'error', autoDismiss: 10 })
       }
     }),
+    importCollections: flow(function* importCollections(params) {
+      const response = yield CollectionsFetcher.importCollections(params)
+
+      if (response.error) {
+        NotificationActions.add({ title: 'Import Collection', message: response.error, level: 'error', autoDismiss: 10 })
+      } else {
+        NotificationActions.notifyExImportStatus('Collection import', response.status);
+      }
+    }),
     useOrCreateCollection: flow(function* useOrCreateCollection(collectionParams) {
       let collectionId = collectionParams?.id
       let isNewCollection = false
