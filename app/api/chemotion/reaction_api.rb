@@ -34,14 +34,17 @@ module Chemotion
       get do
         scope = if params[:collection_id]
                   begin
-                    Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids)
+                    Collection.accessible_for(current_user)
                               .find(params[:collection_id])
                               .reactions
                   rescue ActiveRecord::RecordNotFound
                     Reaction.none
                   end
                 else
-                  Reaction.joins(:collections).where(collections: { user_id: current_user.id }).distinct
+                  Reaction
+                    .joins(:collections)
+                    .merge(Collection.unscope(:order).own_collections_for(current_user))
+                    .distinct
                 end
 
         from = params[:from_date]
