@@ -688,6 +688,11 @@ export default class SampleForm extends React.Component {
     const disableFieldsForGasTypeSample = ['amount_l', 'amount_g', 'amount_mol'];
     const gasSample = sample.gas_type === 'gas' && disableFieldsForGasTypeSample.includes(field);
     const feedstockSample = sample.gas_type === 'feedstock' && field === 'amount_g';
+    const weightPercentageSample = sample.weight_percentage > 0;
+    const overlayMessage = weightPercentageSample
+      ? 'Amount field is disabled for samples that belong to reactions with weight percentage. '
+        + 'To change the amount, please edit the material sample amount field using weight percentage field in the reaction scheme tab and save the reaction.'
+      : null;
     let metric;
     if (unit === 'l') {
       metric = prefixes[1];
@@ -744,6 +749,7 @@ export default class SampleForm extends React.Component {
         onMetricsChange={(e) => this.handleMetricsChange(e)}
         id={`numInput_${field}`}
         showInfoTooltipTotalVol={showInfoTooltipTotalVol}
+        overlayMessage={overlayMessage}
       />
     );
   }
@@ -872,7 +878,8 @@ export default class SampleForm extends React.Component {
   }
 
   sampleAmount(sample) {
-    const isDisabled = !sample.can_update;
+    const belongsToWeightPercentageReaction = sample.weight_percentage > 0;
+    const isDisabled = !sample.can_update || belongsToWeightPercentageReaction;
     const volumeBlocked = !sample.has_density && !sample.has_molarity;
 
     return (
@@ -940,18 +947,6 @@ export default class SampleForm extends React.Component {
     );
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  assignAmountType(reaction, sample) {
-    // eslint-disable-next-line no-underscore-dangle
-    reaction._products.map((s) => {
-      if (s.id === sample.id) {
-        // eslint-disable-next-line no-param-reassign
-        sample.amountType = 'real';
-      }
-      return sample;
-    });
-  }
-
   /**
    * Renders the sample type selection input.
    * Allows the user to select the type of sample (e.g., Mixture, Micromolecule).
@@ -1005,13 +1000,7 @@ export default class SampleForm extends React.Component {
     const isPolymer = (sample.molfile || '').indexOf(' R# ') !== -1;
     const isDisabled = !sample.can_update;
     const polyDisabled = isPolymer || isDisabled;
-    const molarityBlocked = isDisabled ? true : this.state.molarityBlocked;
     const { selectedSampleType } = this.state;
-
-    if (sample.belongTo !== undefined && sample.belongTo !== null) {
-      // assign amount type for product samples of reaction to real
-      this.assignAmountType(sample.belongTo, sample);
-    }
 
     return (
       <Form>
