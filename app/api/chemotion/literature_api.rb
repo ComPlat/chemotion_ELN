@@ -115,8 +115,8 @@ module Chemotion
           litype: params[:ref][:litype],
           category: 'detail',
         }
-        unless Literal.find_by(attributes)
-          Literal.create(attributes)
+        unless Literal.find_by(**attributes)
+          Literal.create(**attributes)
           @element.touch
         end
 

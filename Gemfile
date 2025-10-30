@@ -22,6 +22,7 @@ gem 'daemons'
 gem 'delayed_cron_job'
 gem 'delayed_job_active_record'
 gem 'devise'
+gem 'dmtx' # Data Matrix barcodes required by barby https://github.com/toretore/barby/wiki/Symbologies
 gem 'dotenv-rails', require: 'dotenv/rails-now'
 
 gem 'ed25519'
@@ -136,6 +137,10 @@ group :development do
   gem 'web-console'
 end
 
+group :rubocop do
+  eval_gemfile 'Gemfile.cop.rb' if File.exist?('Gemfile.cop.rb')
+end
+
 group :vscode do
   gem 'debase'
   gem 'ruby-debug-ide'
@@ -159,12 +164,6 @@ group :development, :test do
   gem 'pry', '>= 0.14.2'
   gem 'pry-byebug'
   gem 'pry-rails'
-
-  gem 'rubocop', require: false
-  gem 'rubocop-performance', require: false
-  gem 'rubocop-rails', require: false
-  gem 'rubocop-rspec', require: false
-
   gem 'rspec'
   gem 'rspec-rails'
   gem 'ruby_jard'

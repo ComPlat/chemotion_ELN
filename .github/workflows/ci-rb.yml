@@ -21,6 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PRONTO_PULL_REQUEST_ID: ${{ github.event.pull_request.number }}
+      BUNDLE_GEMFILE: Gemfile.cop.rb
     steps:
       - name: checkout repository
         uses: actions/checkout@v5
@@ -29,13 +30,13 @@ jobs:
 
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.3.0'
+          ruby-version: '3.3.8'
+          bundler-cache: true
 
-      - name: install linting dependencies
-        run: gem install rubocop pronto pronto-rubocop rubocop-rspec rubocop-rails rubocop-performance
+      - run: BUNDLE_GEMFILE=Gemfile.cop.rb bundle install --jobs 4 --retry 3
 
       - name: run Pronto
-        run: pronto run -f github_status github_pr_review -c origin/${{ github.base_ref }}
+        run: bundle exec pronto run -f github_status github_pr_review -c origin/${{ github.base_ref }}
         env:
           PRONTO_GITHUB_ACCESS_TOKEN: "${{ github.token }}"
         if: github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name    # don't run on PRs from forks because of missing write permission: https://github.com/orgs/community/discussions/26829
@@ -45,7 +46,7 @@ jobs:
         # since the formatter requires write access, which isn't the default on forks.
         # This is why we're using the `--exit-code` flag, which causes Pronto to propagate non-zero exit codes,
         # i.e., we can use the `--exit-code` flag to fail the linting job in case Pronto reports warning or errors (https://github.com/prontolabs/pronto).
-        run: pronto run --exit-code -f text -c origin/${{ github.base_ref }}
+        run: bundle exec pronto run --exit-code -f text -c origin/${{ github.base_ref }}
         if: github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name
 
   testing:
@@ -57,9 +58,8 @@ jobs:
         shell: bash
 
     container:
-      image: complat/chemotion_eln_runner:latest
+      image: complat/chemotion_eln_runner:r3-v2.0.1-100-g2eba489c3
       ## options: --user root
-
 
     services:
       postgres:
@@ -91,7 +91,18 @@ jobs:
           cache-dependency-path: 'yarn.lock'
           package-manager-cache: false
 
-      - run: corepack enable
+      - run: |
+          corepack enable
+          corepack install
+          yarn --version
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .tool-versions
+          cache: 'yarn'
+          cache-dependency-path: 'yarn.lock'
+          package-manager-cache: false
+
 
       - uses: actions/checkout@v5
         with:
@@ -139,18 +150,13 @@ jobs:
         run: |
           mv public/welcome-message-sample.md public/welcome-message.md
           cp .env.test.example .env.test
-          cd config
-          cp database.yml.ci database.yml
-          cp -f datacollectors.yml.example datacollectors.yml
-          cp -f profile_default.yml.example profile_default.yml
-          cp -f shrine.yml.example shrine.yml
-          cp -f storage.yml.example storage.yml
-          cp -f radar.yml.example radar.yml
-          touch klasses.json
-          bundle config set without ''
+          ./prepare-config.sh
+          cp -f config/database.yml.ci config/database.yml
+          cp -f config/profile_default.yml.example config/profile_default.yml
+          bundle config set without 'vscode rubocop'
 
       - name: bundle install
-        run: bundle install
+        run: BUNDLE_WITHOUT='vscode rubocop' bundle install --jobs 4 --retry 3 --without rubocop vscode
 
       - name: yarn install
         run: |
@@ -172,7 +178,7 @@ jobs:
         run: |
           service ssh restart
           eval `ssh-agent`
-          RAILS_ENV=test bundle exec rspec --exclude-pattern spec/{features}/**/*_spec.rb spec
+          RAILS_ENV=test timeout --signal=SIGKILL 10m bundle exec rspec --exclude-pattern spec/{features}/**/*_spec.rb spec
 
       - name: coverage rspec unit
         if: github.event.pull_request && (github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name) && (github.triggering_actor != 'dependabot[bot]')  # don't run on PRs from forks because of missing write permission: https://github.com/orgs/community/discussions/26829

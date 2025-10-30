@@ -38,7 +38,7 @@ module Usecases
               else
                 c.update(user_id: new_owner_id)
               end
-              rc = Collection.find_or_create_by(root_collection_attributes)
+              rc = Collection.find_or_create_by(**root_collection_attributes)
               sc&.update(user_id: previous_owner_id, shared_by_id: new_owner_id, fake_ancestry: rc.id.to_s)
 
               sc_all.each do |sc|
@@ -52,7 +52,7 @@ module Usecases
                   is_locked: true,
                   is_shared: true
                 }
-                rca = Collection.find_or_create_by(root_collection_attrs)
+                rca = Collection.find_or_create_by(**root_collection_attrs)
                 sc.update(shared_by_id: new_owner_id, fake_ancestry: rca.id.to_s)
               end
             end
