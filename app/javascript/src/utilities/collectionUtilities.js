@@ -72,7 +72,7 @@ const collectionOptions = (store, showSharedCollections) => {
 const collectionHasPermission = (collection, permissionLevel) => {
   if (collection.permission_level === undefined) { return true }
 
-  return collection.collection_share_id && collection.permission_level < permissionLevel;
+  return collection.collection_share_id && collection.permission_level <= permissionLevel;
 }
 
 export { isElementSelectionEmpty, filterParamsFromUIState, collectionOptions, collectionHasPermission }
