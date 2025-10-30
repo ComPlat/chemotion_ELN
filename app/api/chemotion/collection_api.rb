@@ -113,6 +113,36 @@ module Chemotion
 
         { status: 204 }
       end
+
+      desc 'Import collections from zip archive'
+      params do
+        requires :file, type: File
+      end
+      post '/import' do
+        file = params[:file]
+        if tempfile = file[:tempfile]
+          attachment = Attachment.new(
+            bucket: file[:container_id],
+            filename: file[:filename],
+            key: File.basename(file[:tempfile].path),
+            file_path: file[:tempfile],
+            created_by: current_user.id,
+            created_for: current_user.id,
+            content_type: file[:type]
+          )
+          begin
+            attachment.save!
+           rescue StandardError
+            error!('413 Content Too Large', 413)
+          ensure
+            tempfile.close
+            tempfile.unlink
+          end
+          # run the asyncronous import job and return its id to the client
+          ImportCollectionsJob.perform_now(attachment, current_user.id)
+          { status: 204 }
+        end
+      end
     end
   end
 end
