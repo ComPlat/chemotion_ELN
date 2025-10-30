@@ -1773,6 +1773,13 @@ class ElementStore {
   handleFetchMetadata(metadata) {
     this.changeCurrentElement(metadata);
   }
+
+  static isCurrentElement(element) {
+    const currentElement = this.state?.currentElement;
+    return !!element && !!currentElement
+         && currentElement.type === element.type
+         && currentElement.id === element.id;
+  }
 }
 
 export default alt.createStore(ElementStore, 'ElementStore');
