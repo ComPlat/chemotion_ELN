@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Tooltip, OverlayTrigger } from 'react-bootstrap';
+import ElementStore from 'src/stores/alt/stores/ElementStore';
 
 function ReactionStatus({ element }) {
   if (element.type !== 'reaction' || !element.status) {
@@ -8,9 +9,10 @@ function ReactionStatus({ element }) {
   }
 
   let icon;
+  const isSelected = ElementStore.isCurrentElement(element);
   switch (element.status) {
     case 'Planned':
-      icon = (<i className="fa fa-clock-o c-bs-warning" />);
+      icon = (<i className="fa fa-clock-o text-warning" />);
       break;
     case 'Running': {
       icon = (
@@ -18,24 +20,24 @@ function ReactionStatus({ element }) {
           style={{ width: '12px', height: '14px', lineHeight: '14px' }}
           className="fa fa-stack"
         >
-          <i className="fa fa-stack-1x fa-hourglass-1 running-1 c-bs-warning" />
-          <i className="fa fa-stack-1x fa-hourglass-2 running-2 c-bs-warning" />
-          <i className="fa fa-stack-1x fa-hourglass-3 running-3 c-bs-warning" />
+          <i className="fa fa-stack-1x fa-hourglass-1 running-1 text-warning" />
+          <i className="fa fa-stack-1x fa-hourglass-2 running-2 text-warning" />
+          <i className="fa fa-stack-1x fa-hourglass-3 running-3 text-warning" />
         </span>
       );
       break;
     }
     case 'Done':
-      icon = (<i className="fa fa-hourglass-3 c-bs-primary" />);
+      icon = (<i className={`fa fa-hourglass-3 ${isSelected ? 'text-white' : 'text-primary'}`} />);
       break;
     case 'Analyses Pending':
-      icon = (<i className="fa fa-ellipsis-h c-bs-primary" />);
+      icon = (<i className={`fa fa-ellipsis-h ${isSelected ? 'text-white' : 'text-primary'}`} />);
       break;
     case 'Successful':
-      icon = (<i className="fa fa-check-circle-o c-bs-success" />);
+      icon = (<i className="fa fa-check-circle-o text-success" />);
       break;
     case 'Not Successful':
-      icon = (<i className="fa fa-times-circle-o c-bs-danger" />);
+      icon = (<i className="fa fa-times-circle-o text-danger" />);
       break;
     default:
       return null;
@@ -57,6 +59,7 @@ function ReactionStatus({ element }) {
 
 ReactionStatus.propTypes = {
   element: PropTypes.shape({
+    id: PropTypes.number,
     type: PropTypes.string,
     status: PropTypes.string,
   }).isRequired,
