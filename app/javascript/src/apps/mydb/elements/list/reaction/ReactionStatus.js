@@ -9,7 +9,7 @@ function ReactionStatus({ element }) {
   }
 
   let icon;
-  const isSelected = ElementStore.getState().currentElement?.id === element.id;
+  const isSelected = ElementStore.isCurrentElement(element);
   switch (element.status) {
     case 'Planned':
       icon = (<i className="fa fa-clock-o text-warning" />);
