@@ -1,7 +1,4 @@
 import 'whatwg-fetch';
-import BaseFetcher from 'src/fetchers/BaseFetcher';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
-import { downloadBlob } from 'src/utilities/FetcherHelper';
 
 export default class CollectionsFetcher {
   static fetchCollections() {
@@ -79,6 +76,19 @@ export default class CollectionsFetcher {
     )
       .then(response => response.json())
       .catch(errorMessage => console.log(errorMessage));
+  }
+
+  static importCollections(params) {
+    const data = new FormData();
+    data.append('file', params.file);
+
+    return fetch('/api/v1/collections/import/', {
+      credentials: 'same-origin',
+      method: 'POST',
+      body: data
+    })
+      .then(response => response.json())
+      .catch((errorMessage) => { console.log(errorMessage); });
   }
 
   static _httpOptions(method = 'GET') {
