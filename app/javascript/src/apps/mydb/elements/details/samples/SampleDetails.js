@@ -842,6 +842,7 @@ export default class SampleDetails extends React.Component {
           <InputGroup.Text>CAS</InputGroup.Text>
           <CreatableSelect
             name="cas"
+            isClearable
             options={options}
             onChange={(e) => this.updateCas(e)}
             onMenuOpen={() => this.onCasSelectOpen(casArr)}
@@ -850,6 +851,8 @@ export default class SampleDetails extends React.Component {
             onBlur={() => this.isCASNumberValid(cas || '', true)}
             isDisabled={!sample.can_update}
             className="flex-grow-1"
+            placeholder="select or enter"
+            allowCreateWhileLoading
           />
           <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
             <Button
