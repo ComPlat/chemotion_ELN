@@ -50,4 +50,8 @@ class ImportSamplesJob < ApplicationJob
       Delayed::Worker.logger.error e
     end
   end
+
+  def max_attempts
+    1
+  end
 end
