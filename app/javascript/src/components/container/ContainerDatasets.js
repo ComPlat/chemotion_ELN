@@ -116,11 +116,6 @@ export default class ContainerDatasets extends Component {
     const { rootContainer, index } = this.props;
     const { modal } = this.state;
 
-    const newChild = updatedContainer?.children?.[0]?.children?.[index];
-    if (!newChild || !rootContainer?.children?.[0]) {
-      console.log("Invalid container structure");
-      return;
-    }
     const updatedRoot = { ...rootContainer };
     updatedRoot.children[0].children = [...updatedContainer.children[0].children];
     if (!shouldClose) {
