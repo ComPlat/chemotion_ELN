@@ -30,7 +30,7 @@ module AttachmentJcampAasm
       end
 
       event :set_force_peaked do
-        transitions from: %i[queueing regenerating nmrium], to: :peaked
+        transitions from: %i[idle queueing regenerating nmrium], to: :peaked
       end
 
       event :set_edited do
