@@ -241,17 +241,12 @@ export default class StructureEditorModal extends React.Component {
     this.setState({ showWarning: false });
   }
 
-  render() {
-    const { cancelBtnText, submitBtnText, onSave } = this.props;
-    const handleSaveBtn = !onSave ? null : this.handleSaveBtn.bind(this);
-
-    const submitAddons = this.props.submitAddons ? this.props.submitAddons : '';
-    const {
-      editor, showWarning, molfile, showModal
-    } = this.state;
+  renderEditor() {
+    const { editor, showWarning, molfile } = this.state;
     const iframeHeight = showWarning ? '0px' : '630px';
     const iframeStyle = showWarning ? { border: 'none' } : {};
-    let useEditor = !showWarning && editor && this.editors[editor?.id] && (
+
+    return !showWarning && editor && this.editors[editor?.id] && (
       <EditorRenderer
         type={editor?.id}
         editor={this.editors[editor?.id]}
@@ -262,6 +257,15 @@ export default class StructureEditorModal extends React.Component {
         forwardedRef={this.ketcherRef}
       />
     );
+  }
+
+  render() {
+    const { cancelBtnText, submitBtnText, onSave } = this.props;
+    const handleSaveBtn = !onSave ? null : this.handleSaveBtn.bind(this);
+
+    const submitAddons = this.props.submitAddons ? this.props.submitAddons : '';
+    const { editor, showWarning, showModal } = this.state;
+
     const editorOptions = Object.keys(this.editors).map((e) => ({
       value: e,
       name: this.editors[e]?.label,
@@ -271,16 +275,19 @@ export default class StructureEditorModal extends React.Component {
     return (
       <Modal
         centered
-        className={!this.state.showWarning && 'modal-xxxl'}
+        className={!showWarning && 'modal-xxxl'}
         show={showModal}
         onLoad={this.initializeEditor.bind(this)}
-        onHide={this.handleCancelBtn.bind(this)}>
+        onHide={this.handleCancelBtn.bind(this)}
+      >
         <Modal.Header closeButton className="gap-3">
-          <EditorList
-            value={editor?.id}
-            fnChange={this.handleEditorSelection}
-            options={editorOptions}
-          />
+          {editor?.id && (
+            <EditorList
+              value={editor?.id}
+              fnChange={this.handleEditorSelection}
+              options={editorOptions}
+            />
+          )}
           {editor?.id === 'ketcher' && (
             <CommonTemplatesList />
           )}
@@ -289,7 +296,7 @@ export default class StructureEditorModal extends React.Component {
           {showWarning && (
             <WarningBox handleCancelBtn={this.handleCancelBtn.bind(this)} hideWarning={this.hideWarning.bind(this)} />
           )}
-          {useEditor}
+          {this.renderEditor()}
         </Modal.Body>
         {!showWarning && (
           <Modal.Footer className="modal-footer border-0">
