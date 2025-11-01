@@ -2,6 +2,7 @@
 
 # rubocop:disable Metrics/ClassLength, Lint/UselessAssignment
 require 'open-uri'
+require 'csv'
 
 module Chemotion
   class SampleAPI < Grape::API
@@ -65,19 +66,55 @@ module Chemotion
       namespace :import do
         desc 'Import Samples from a File'
 
-        before do
+        after_validation do
           error!('401 Unauthorized', 401) unless current_user.collections.find(params[:currentCollectionId])
+          if params[:data].present?
+            tempfile = Tempfile.new(['validated_data', '.csv'])
+            params[:file] = { tempfile: tempfile, filename: 'validated_data.csv' }
+            tempfile.binmode
+            CSV.open(tempfile, 'wb') do |csv|
+              # Add headers - get keys from the first row
+              first_row = params[:data].first
+              error!('Invalid data format: rows must be objects', 400) unless first_row.is_a?(Hash)
+
+              headers = first_row.keys
+              csv << headers
+              # Add data rows
+              params[:data].each { |row| csv << headers.map { |header| row[header] } }
+            end
+            tempfile.rewind
+          end
+
+          @att = Attachment.create(
+            file_path: params[:file][:tempfile].path,
+            filename: params[:file][:filename],
+            created_by: current_user.id,
+            created_for: current_user.id,
+            attachable_type: 'Container',
+          )
+        ensure
+          params[:file][:tempfile].close! if params[:file] && params[:file][:tempfile]
         end
+
+        params do
+          requires :currentCollectionId, type: Integer, desc: 'Collection id'
+          requires :import_type, type: String
+          optional :file, type: File, desc: 'File upload'
+          optional :data, type: JSON, desc: 'Validated data '
+          at_least_one_of :file, :data
+        end
+
         post do
-          # Create a temp file in the tmp folder and sdf delayed job, and pass it to sdf delayed job
-          extname = File.extname(params[:file][:filename])
-          if /\.(sdf?|mol)/i.match?(extname)
+          ## 2-step SDF Import
+          if /\.(sdf?|mol)/i.match?(@att.extname)
             sdf_import = Import::ImportSdf.new(
-              file_path: params[:file][:tempfile].path,
+              attachment: @att,
               collection_id: params[:currentCollectionId],
               current_user_id: current_user.id,
             )
+
             sdf_import.find_or_create_mol_by_batch
+            @att.really_destroy!
             return {
               sdf: true, message: sdf_import.message,
               data: sdf_import.processed_mol, status: sdf_import.status,
@@ -86,38 +123,15 @@ module Chemotion
               collection_id: sdf_import.collection_id
             }
           end
-          # Creates the Samples from the XLS/CSV file. Empty Array if not successful
-          file_size = params[:file][:tempfile].size
-          file = params[:file]
-          if file_size < 25_000
-            import = Import::ImportSamples.new(
-              params[:file][:tempfile].path,
-              params[:currentCollectionId], current_user.id, file['filename'], params[:import_type]
-            )
-            import_result = import.process
-            if import_result[:status] == 'ok' || import_result[:status] == 'warning'
-              # the FE does not actually use the returned data, just the number of elements.
-              # see ElementStore.js handleImportSamplesFromFile or NotificationStore.js
-              # handleNotificationImportSamplesFromFile **
-              import_result[:data] = import_result[:data].map(&:id)
-            end
-            import_result
-          else
-            temp_filename = "#{SecureRandom.hex}-#{file['filename']}"
-            # Create a new file in the tmp folder
-            tmp_file_path = File.join('tmp', temp_filename)
-            # Write the contents of the uploaded file to the temporary file
-            File.binwrite(tmp_file_path, file[:tempfile].read)
-            parameters = {
-              collection_id: params[:currentCollectionId],
-              user_id: current_user.id,
-              file_name: file['filename'],
-              file_path: tmp_file_path,
-              import_type: params[:import_type],
-            }
-            ImportSamplesJob.perform_later(parameters)
-            { status: 'in progress', message: 'Importing samples in background' }
-          end
+
+          ## async CSV/xlx Import
+          ImportSamplesJob.perform_later(
+            collection_id: params[:currentCollectionId],
+            user_id: current_user.id,
+            attachment: @att,
+            import_type: params[:import_type],
+          )
+          { status: 'in progress', message: 'Importing samples in the background' }
         end
       end
 
