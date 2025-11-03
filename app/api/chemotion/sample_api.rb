@@ -62,9 +62,10 @@ module Chemotion
         end
 
         before do
-          cid = fetch_collection_id_w_current_user(params[:ui_state][:collection_id], false)
-          @samples = Sample.by_collection_id(cid).by_ui_state(params[:ui_state]).for_user(current_user.id)
-          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, @samples).read?
+          collection = Collection.accessible_for(current_user).find(params[:ui_state][:collection_id])
+          @samples = Sample.by_collection_id(collection.id).by_ui_state(params[:ui_state]).for_user(current_user.id)
+          # TODO: is this check really feasible? If a sample is available to a user, it is always readable to some extent.
+          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, @samples).read_all?
         end
 
         # we are using POST because the fetchers don't support GET requests with body data
@@ -597,7 +598,7 @@ module Chemotion
         sample = Sample.new(attributes)
 
         if params[:collection_id]
-          collection = current_user.collections.where(id: params[:collection_id]).take
+          collection = Collection.accessible_for(current_user).find_by(id: params[:collection_id])
           sample.collections << collection if collection.present?
         end
 
