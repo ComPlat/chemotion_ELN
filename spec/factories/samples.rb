@@ -68,7 +68,7 @@ FactoryBot.define do
     target_amount_unit { 'mg' }
     callback(:before_create) do |sample|
       sample.creator = FactoryBot.build(:user) unless sample.creator
-      sample.collections << FactoryBot.build(:collection) # if sample.collections.blank?
+      sample.collections << FactoryBot.build(:collection) if sample.collections.blank?
       sample.molecule = FactoryBot.build(:molecule) unless sample.molecule
     end
   end
@@ -81,7 +81,7 @@ FactoryBot.define do
     callback(:before_create) do |sample|
       user =  sample.creator || FactoryBot.create(:user)
       sample.creator = user
-      sample.collections << FactoryBot.build(:collection) # if sample.collections.blank?
+      sample.collections << FactoryBot.build(:collection) if sample.collections.blank?
       sample.molecule = FactoryBot.create(:molecule) unless sample.molecule || sample.molfile
       sample.container = FactoryBot.create(:container, :with_analysis) unless sample.container
       attachment = FactoryBot.create(:attachment, :with_image,
