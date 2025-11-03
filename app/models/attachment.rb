@@ -1,5 +1,39 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: attachments
+#
+#  id              :integer          not null, primary key
+#  attachable_id   :integer
+#  filename        :string
+#  identifier      :uuid
+#  checksum        :string
+#  storage         :string(20)       default("tmp")
+#  created_by      :integer          not null
+#  created_for     :integer
+#  version         :string           default("/"), not null
+#  created_at      :datetime         not null
+#  updated_at      :datetime         not null
+#  content_type    :string
+#  bucket          :string
+#  key             :string(500)
+#  thumb           :boolean          default(FALSE)
+#  folder          :string
+#  attachable_type :string
+#  aasm_state      :string
+#  deleted_at      :datetime
+#  filesize        :bigint
+#  attachment_data :jsonb
+#  con_state       :integer
+#  created_by_type :string
+#
+# Indexes
+#
+#  index_attachments_on_attachable_type_and_attachable_id  (attachable_type,attachable_id)
+#  index_attachments_on_identifier                         (identifier) UNIQUE
+#  index_attachments_on_version                            (version) WHERE (deleted_at IS NULL)
+#
 # rubocop:disable Metrics/ClassLength
 class Attachment < ApplicationRecord
   has_logidze

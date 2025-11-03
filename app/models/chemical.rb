@@ -8,6 +8,8 @@
 #  sample_id     :integer
 #  cas           :text
 #  chemical_data :jsonb
+#  updated_at    :datetime
+#  deleted_at    :datetime
 #
 
 class Chemical < ApplicationRecord

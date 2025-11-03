@@ -1,5 +1,44 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: collections
+#
+#  id                             :integer          not null, primary key
+#  user_id                        :integer          not null
+#  ancestry                       :string           default("/"), not null
+#  label                          :text             not null
+#  shared_by_id                   :integer
+#  is_shared                      :boolean          default(FALSE)
+#  permission_level               :integer          default(0)
+#  sample_detail_level            :integer          default(10)
+#  reaction_detail_level          :integer          default(10)
+#  wellplate_detail_level         :integer          default(10)
+#  created_at                     :datetime         not null
+#  updated_at                     :datetime         not null
+#  position                       :integer
+#  screen_detail_level            :integer          default(10)
+#  is_locked                      :boolean          default(FALSE)
+#  deleted_at                     :datetime
+#  is_synchronized                :boolean          default(FALSE), not null
+#  researchplan_detail_level      :integer          default(10)
+#  element_detail_level           :integer          default(10)
+#  tabs_segment                   :jsonb
+#  celllinesample_detail_level    :integer          default(10)
+#  inventory_id                   :bigint
+#  devicedescription_detail_level :integer          default(10)
+#
+# Indexes
+#
+#  index_collections_on_ancestry      (ancestry) WHERE (deleted_at IS NULL)
+#  index_collections_on_deleted_at    (deleted_at)
+#  index_collections_on_inventory_id  (inventory_id)
+#  index_collections_on_user_id       (user_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (inventory_id => inventories.id)
+#
 # rubocop:disable Metrics/AbcSize, Rails/HasManyOrHasOneDependent, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
 
 class Collection < ApplicationRecord
