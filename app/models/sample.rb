@@ -18,7 +18,7 @@
 #  impurities          :string           default("")
 #  location            :string           default("")
 #  is_top_secret       :boolean          default(FALSE)
-#  ancestry            :string
+#  ancestry            :string           default("/"), not null
 #  external_label      :string           default("")
 #  created_by          :integer
 #  short_label         :string
@@ -49,6 +49,7 @@
 #
 # Indexes
 #
+#  index_samples_on_ancestry          (ancestry) WHERE (deleted_at IS NULL)
 #  index_samples_on_deleted_at        (deleted_at)
 #  index_samples_on_identifier        (identifier)
 #  index_samples_on_inventory_sample  (inventory_sample)
@@ -56,7 +57,6 @@
 #  index_samples_on_sample_id         (molecule_id)
 #  index_samples_on_user_id           (user_id)
 #
-
 # rubocop:disable Metrics/ClassLength
 class Sample < ApplicationRecord
   attr_accessor :skip_inventory_label_update

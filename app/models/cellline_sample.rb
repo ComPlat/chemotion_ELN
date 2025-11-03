@@ -18,15 +18,15 @@
 #  created_at           :datetime         not null
 #  updated_at           :datetime         not null
 #  short_label          :string
-#  ancestry             :string
+#  ancestry             :string           default("/"), not null
 #
 # Indexes
 #
-#  index_cellline_samples_on_ancestry  (ancestry)
+#  index_cellline_samples_on_ancestry  (ancestry) WHERE (deleted_at IS NULL)
 #
 class CelllineSample < ApplicationRecord
   acts_as_paranoid
-  has_ancestry
+  has_ancestry orphan_strategy: :adopt
 
   include ElementUIStateScopes
   include Taggable
@@ -60,4 +60,3 @@ class CelllineSample < ApplicationRecord
     self.container = Container.create_root_container if container.nil?
   end
 end
-# rubocop:enable Rails/InverseOf, Rails/HasManyOrHasOneDependent

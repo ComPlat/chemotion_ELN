@@ -12,7 +12,7 @@
 #  storage         :string(20)       default("tmp")
 #  created_by      :integer          not null
 #  created_for     :integer
-#  version         :string
+#  version         :string           default("/"), not null
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
 #  content_type    :string
@@ -22,6 +22,7 @@
 #  folder          :string
 #  attachable_type :string
 #  aasm_state      :string
+#  deleted_at      :datetime
 #  filesize        :bigint
 #  attachment_data :jsonb
 #  con_state       :integer
@@ -31,8 +32,8 @@
 #
 #  index_attachments_on_attachable_type_and_attachable_id  (attachable_type,attachable_id)
 #  index_attachments_on_identifier                         (identifier) UNIQUE
+#  index_attachments_on_version                            (version) WHERE (deleted_at IS NULL)
 #
-
 # rubocop:disable Metrics/ClassLength
 class Attachment < ApplicationRecord
   has_logidze
@@ -44,7 +45,7 @@ class Attachment < ApplicationRecord
 
   attr_accessor :file_data, :file_path, :thumb_path, :thumb_data, :duplicated, :transferred
 
-  has_ancestry ancestry_column: :version
+  has_ancestry ancestry_column: :version, orphan_strategy: :adopt
 
   validate :check_file_size
 
