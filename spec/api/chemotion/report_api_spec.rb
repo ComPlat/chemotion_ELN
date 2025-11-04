@@ -25,18 +25,11 @@ describe Chemotion::ReportAPI do
     let!(:rp3) { create(:report, :downloadable, user: user) }
 
     let!(:rp_others) { create(:report, user: other) }
-    let!(:s1) { create(:sample) }
-    let!(:s2) { create(:sample) }
-    let!(:r1) { create(:reaction) }
-    let!(:r2) { create(:reaction) }
-    let!(:c)  { create(:collection, user_id: user.id) }
-
-    before do
-      CollectionsSample.create!(sample: s1, collection: c)
-      CollectionsSample.create!(sample: s2, collection: c)
-      CollectionsReaction.create!(reaction: r1, collection: c)
-      CollectionsReaction.create!(reaction: r2, collection: c)
-    end
+    let!(:s1) { create(:sample, collections: [collection]) }
+    let!(:s2) { create(:sample, collections: [collection]) }
+    let!(:r1) { create(:reaction, collections: [collection]) }
+    let!(:r2) { create(:reaction, collections: [collection]) }
+    let!(:collection)  { create(:collection, user_id: user.id) }
 
     describe 'GET /api/v1/reports/docx' do
       before do
@@ -65,10 +58,10 @@ describe Chemotion::ReportAPI do
       end
       let(:samples) do
         [
-          create(:sample, name: 'Sample 20001', molfile: molfiles[0]),
-          create(:sample, name: 'Sample 20002', molfile: molfiles[1]),
-          create(:sample, name: 'Sample 20002', molfile: molfiles[2]),
-          create(:sample, name: 'Sample 30001', molfile: molfiles[3]),
+          create(:sample, name: 'Sample 20001', molfile: molfiles[0], collections: [collection]),
+          create(:sample, name: 'Sample 20002', molfile: molfiles[1], collections: [collection]),
+          create(:sample, name: 'Sample 20002', molfile: molfiles[2], collections: [collection]),
+          create(:sample, name: 'Sample 30001', molfile: molfiles[3], collections: [collection]),
         ]
       end
       let(:no_checked) do
@@ -90,7 +83,7 @@ describe Chemotion::ReportAPI do
             },
             reaction: no_checked,
             wellplate: no_checked,
-            currentCollection: c.id,
+            currentCollection: collection.id,
             isSync: false,
           },
           columns: {
@@ -105,7 +98,6 @@ describe Chemotion::ReportAPI do
       end
 
       it 'returns correct sdf with different molfile format(ing)s' do
-        samples.each { |sample| CollectionsSample.create!(sample: sample, collection: c) }
         # 0 with V2000 molfile that contains no dollar sign
         # 1 with V2000 molfile that contains dollar sign' do
         # 2 with V2000 molfile that contains ' do
@@ -148,9 +140,9 @@ describe Chemotion::ReportAPI do
              params: params, as: :json, headers: headers
       end
 
-      let(:c) { create(:collection, user_id: user.id) }
-      let(:sample1) { create(:sample) }
-      let(:sample2) { create(:sample) }
+      let(:collection) { create(:collection, user_id: user.id) }
+      let(:sample1) { create(:sample, collections: [collection]) }
+      let(:sample2) { create(:sample, collections: [collection]) }
 
       let(:headers) do
         {
@@ -171,7 +163,7 @@ describe Chemotion::ReportAPI do
             uncheckedIds: [],
             checkedAll: false,
           },
-          currentCollection: c.id,
+          currentCollection: collection.id,
           isSync: false,
         }
       end
@@ -211,11 +203,7 @@ describe Chemotion::ReportAPI do
       end
 
       describe 'when sample1 is selected' do
-        before do
-          CollectionsSample.create!(sample: sample1, collection: c)
-          CollectionsSample.create!(sample: sample2, collection: c)
-          make_request
-        end
+        before { make_request }
 
         let(:params) do
           {
@@ -239,13 +227,9 @@ describe Chemotion::ReportAPI do
     end
 
     describe 'POST /api/v1/reports/export_reactions_from_selections' do
-      let!(:c1) { create(:collection, user_id: user.id) }
-      let!(:c2) do
-        create(
-          :collection,
-          user_id: user.id + 1, is_shared: true, sample_detail_level: 0,
-        )
-      end
+      let(:other_user) { create(:person) }
+      let!(:c1) { create(:collection, user: user) }
+      let!(:c2) { create(:collection, user: other_user) }
 
       let!(:mf) { build(:molfile, type: 'test_2') }
 
