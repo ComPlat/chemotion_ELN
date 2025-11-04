@@ -10,7 +10,7 @@ import { aviatorNavigationWithCollectionId } from 'src/utilities/routesUtils';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
-function CollectionSubtree({ root, sharedWithMe, level }) {
+function CollectionSubtree({ root, sharedWithMe, isExpanded, level }) {
   const collectionsStore = useContext(StoreContext).collections;
   const uiState = UIStore.getState();
   const currentCollection = uiState.currentCollection;
@@ -19,9 +19,15 @@ function CollectionSubtree({ root, sharedWithMe, level }) {
   const [selected, setSelected] = useState(false);
   const [visible, setVisible] = useState(false);
 
+  if (visible) {
+    collectionsStore.addToggledTreeItem(root.id, root.label);
+  }
+
   const isVisible = (node, currentCollection) => {
     const descendantIds = collectionsStore.descendantIds(node);
-    if (descendantIds && currentCollection?.id) {
+    if (collectionsStore.toggled_tree_items.indexOf(`${node.id}-${node.label}`) > -1) {
+      return true;
+    } else if (descendantIds && currentCollection?.id) {
       return descendantIds.indexOf(parseInt(currentCollection.id)) > -1;
     }
     return false;
@@ -35,9 +41,13 @@ function CollectionSubtree({ root, sharedWithMe, level }) {
   }
 
   useEffect(() => {
+    if (sharedWithMe || isExpanded) {
+      onUiStoreChange(uiState);
+    }
+
     UIStore.listen(onUiStoreChange);
     return () => UIStore.unlisten(onUiStoreChange);
-  }, [currentCollection]);
+  }, [currentCollection, sharedWithMe, isExpanded]);
 
   const handleTakeOwnership = () => {
     // TODO: determine what should happen if take ownership is possible
@@ -53,7 +63,7 @@ function CollectionSubtree({ root, sharedWithMe, level }) {
     }
     
     if (node.is_locked) {
-      toggleExpansion(e);
+      toggleExpansion(e, node);
     } else {
       setVisible(visible || isVisible(node, uiState.currentCollection));
 
@@ -67,8 +77,15 @@ function CollectionSubtree({ root, sharedWithMe, level }) {
     // return sharedWithMe && isTakeOwnershipAllowed;
   }
 
-  const toggleExpansion = (e) => {
+  const toggleExpansion = (e, node) => {
     e.stopPropagation();
+
+    if (visible) {
+      collectionsStore.removeToggledTreeItem(node.id, node.label);
+    } else {
+      collectionsStore.addToggledTreeItem(node.id, node.label);
+    }
+    
     setVisible(!visible);
   }
 
@@ -83,7 +100,7 @@ function CollectionSubtree({ root, sharedWithMe, level }) {
         {children.length > 0 ? (
           <ChevronIcon
             direction={visible ? 'down' : 'right'}
-            onClick={(e) => toggleExpansion(e)}
+            onClick={(e) => toggleExpansion(e, root)}
           />
         )
           : (<i className="fa fa-fw" />)}
@@ -111,7 +128,13 @@ function CollectionSubtree({ root, sharedWithMe, level }) {
       {visible && (
         <div className="tree-view">
           {children.map((child) => (
-            <CollectionSubtree key={child.id} root={child} sharedWithMe={sharedWithMe} level={level + 1} />
+            <CollectionSubtree
+              key={child.id}
+              root={child}
+              sharedWithMe={sharedWithMe}
+              isExpanded={isExpanded}
+              level={level + 1}
+            />
           ))}
         </div>
       )}
@@ -123,6 +146,7 @@ export default observer(CollectionSubtree);
 
 CollectionSubtree.propTypes = {
   sharedWithMe: PropTypes.bool,
+  isExpanded: PropTypes.bool,
   root: PropTypes.object,
-  level: PropTypes.number
+  level: PropTypes.number,
 };
