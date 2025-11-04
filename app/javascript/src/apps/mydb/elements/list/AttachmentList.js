@@ -15,12 +15,6 @@ import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
 export const attachmentThumbnail = (attachment) => (
   <div className="attachment-row-image">
     <ImageModal
-      imageStyle={{
-        width: '45px',
-        height: '45px',
-        objectFit: 'contain',
-      }}
-      alt="thumbnail"
       attachment={attachment}
       showPop
       popObject={{}}
@@ -28,13 +22,6 @@ export const attachmentThumbnail = (attachment) => (
     />
     <div className="large-preview-modal">
       <ImageModal
-        imageStyle={{
-          width: '400px',
-          height: '400px',
-          backgroundColor: '#FFF',
-          objectFit: 'contain',
-        }}
-        alt="thumbnail"
         attachment={attachment}
         popObject={{}}
         disableClick

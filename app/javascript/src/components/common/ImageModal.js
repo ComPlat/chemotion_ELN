@@ -122,9 +122,11 @@ export default class ImageModal extends Component {
 
   render() {
     const {
-      showPop, popObject, imageStyle, attachment
+      showPop, popObject, attachment
     } = this.props;
-    const { pageIndex, numOfPages, isPdf, fetchSrc, thumbnail } = this.state;
+    const {
+      pageIndex, numOfPages, isPdf, fetchSrc, thumbnail
+    } = this.state;
 
     if (showPop) {
       return (
@@ -132,7 +134,7 @@ export default class ImageModal extends Component {
           <img
             src={thumbnail}
             alt={attachment?.filename}
-            style={{ cursor: 'default', ...imageStyle }}
+            style={{ cursor: 'default' }}
             onError={this.handleImageError}
 
           />
@@ -152,7 +154,6 @@ export default class ImageModal extends Component {
           <img
             src={thumbnail}
             alt={attachment?.filename}
-            style={{ ...imageStyle }}
             role="button"
           />
         </div>
@@ -233,10 +234,8 @@ ImageModal.propTypes = {
     title: PropTypes.string,
   }).isRequired,
   disableClick: PropTypes.bool,
-  imageStyle: PropTypes.object,
 };
 
 ImageModal.defaultProps = {
-  imageStyle: {},
   disableClick: false,
 };
