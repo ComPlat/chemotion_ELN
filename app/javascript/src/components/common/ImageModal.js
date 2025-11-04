@@ -4,10 +4,7 @@ import PropTypes from 'prop-types';
 import { Modal, Button } from 'react-bootstrap';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import { stopEvent } from 'src/utilities/DomHelper';
-import { Document, Page, pdfjs } from 'react-pdf';
 import { fetchImageSrcByAttachmentId } from 'src/utilities/imageHelper';
-
-pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
 
 export default class ImageModal extends Component {
   constructor(props) {
@@ -16,8 +13,6 @@ export default class ImageModal extends Component {
       fetchSrc: '',
       showModal: false,
       isPdf: false,
-      pageIndex: 1,
-      numOfPages: 0,
       thumbnail: ''
     };
 
@@ -26,27 +21,10 @@ export default class ImageModal extends Component {
     this.handleModalShow = this.handleModalShow.bind(this);
     this.handleImageError = this.handleImageError.bind(this);
     this.fetchImageThumbnail = this.fetchImageThumbnail.bind(this);
-    this.onDocumentLoadSuccess = this.onDocumentLoadSuccess.bind(this);
-    this.previousPage = this.previousPage.bind(this);
-    this.nextPage = this.nextPage.bind(this);
-    this.changePage = this.changePage.bind(this);
   }
 
   componentDidMount() {
     this.fetchImageThumbnail();
-  }
-
-  shouldComponentUpdate(nextProps, nextState) {
-    if (
-      this.state.numOfPages === nextState.numOfPages
-      && this.state.numOfPages !== 0
-      && this.state.pageIndex === nextState.pageIndex
-      && this.state.showModal === nextState.showModal
-    ) {
-      return false;
-    }
-
-    return true;
   }
 
   componentDidUpdate(prevProps) {
@@ -70,22 +48,6 @@ export default class ImageModal extends Component {
 
   handleImageError() {
     this.setState({ fetchSrc: '/images/wild_card/not_available.svg' });
-  }
-
-  onDocumentLoadSuccess(numPages) {
-    this.setState({ numOfPages: numPages });
-  }
-
-  changePage(offset) {
-    this.setState((prevState) => ({ pageIndex: prevState.pageIndex + offset }));
-  }
-
-  previousPage() {
-    this.changePage(-1);
-  }
-
-  nextPage() {
-    this.changePage(1);
   }
 
   fetchImage() {
@@ -125,7 +87,7 @@ export default class ImageModal extends Component {
       showPop, popObject, attachment
     } = this.props;
     const {
-      pageIndex, numOfPages, isPdf, fetchSrc, thumbnail
+      isPdf, fetchSrc, thumbnail
     } = this.state;
 
     if (showPop) {
@@ -167,45 +129,31 @@ export default class ImageModal extends Component {
           <Modal.Header closeButton>
             <Modal.Title>{popObject.title}</Modal.Title>
           </Modal.Header>
-          <Modal.Body style={{ overflow: 'auto', position: 'relative' }}>
+          <Modal.Body style={{ overflow: 'auto', position: 'relative', minHeight: '400px' }}>
             {isPdf && fetchSrc ? (
-              <div>
-                <Document
-                  file={{ url: fetchSrc }}
-                  onLoadSuccess={(pdf) => this.onDocumentLoadSuccess(pdf.numPages)}
-                >
-                  <Page pageNumber={pageIndex} renderAnnotationLayer={false} renderTextLayer={false} />
-                </Document>
-                <div>
-                  <p>
-                    Page
-                    {' '}
-                    {pageIndex || (numOfPages ? 1 : '--')}
-                    {' '}
-                    of
-                    {' '}
-                    {numOfPages || '--'}
-                  </p>
-                  <button
-                    type="button"
-                    disabled={pageIndex <= 1}
-                    onClick={this.previousPage}
-                  >
-                    Previous
-                  </button>
-                  <button
-                    type="button"
-                    disabled={pageIndex >= numOfPages}
-                    onClick={this.nextPage}
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
+              <iframe
+                src={fetchSrc}
+                width="100%"
+                height="600px"
+                style={{ border: 'none' }}
+                title="PDF Viewer"
+              >
+                <p>
+                  Your browser does not support PDFs.
+                  <a href={fetchSrc} target="_blank" rel="noopener noreferrer">
+                    Download the PDF
+                  </a>
+                </p>
+              </iframe>
             ) : (
               <img
-                src={this.state.fetchSrc}
-                style={{ display: 'block', maxHeight: '100%', maxWidth: '100%' }}
+                src={fetchSrc}
+                style={{
+                  display: 'block',
+                  maxHeight: '80vh',
+                  maxWidth: '100%',
+                  margin: '0 auto'
+                }}
                 alt={attachment?.filename}
                 onError={this.handleImageError}
               />
