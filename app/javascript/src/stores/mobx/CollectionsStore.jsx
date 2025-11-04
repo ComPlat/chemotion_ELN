@@ -112,6 +112,7 @@ export const CollectionsStore = types
     shared_with_me_collection_tree: types.maybeNull(types.frozen({})),
     collection_shares: types.array(CollectionShares),
     update_tree: types.maybeNull(types.boolean, false),
+    toggled_tree_items: types.array(types.string, []),
   })
   .actions(self => ({
     fetchCollections: flow(function* fetchCollections() {
@@ -415,6 +416,15 @@ export const CollectionsStore = types
     },
     setUpdateTree(value) {
       self.update_tree = value
+    },
+    addToggledTreeItem(id, label) {
+      if (self.toggled_tree_items.indexOf(`${id}-${label}`) === -1) {
+        self.toggled_tree_items.push(`${id}-${label}`)
+      }
+    },
+    removeToggledTreeItem(id, label) {
+      const toggledTreeItems = self.toggled_tree_items.filter((i) => i !== `${id}-${label}`)
+      self.toggled_tree_items = toggledTreeItems
     },
   }))
   .views(self => ({

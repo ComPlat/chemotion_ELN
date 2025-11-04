@@ -128,6 +128,7 @@ function CollectionTree({ isCollapsed }) {
                         key={`${collection.id}-${collection.label}`}
                         root={collection}
                         sharedWithMe={sharedWithMe}
+                        isExpanded={isExpanded}
                         level={1}
                       />
                     })}
