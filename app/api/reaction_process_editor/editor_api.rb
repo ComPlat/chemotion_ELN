@@ -21,6 +21,7 @@ module ReactionProcessEditor
         user: current_user.reaction_process_defaults&.default_conditions.to_h,
         select_options: {
           FORMS: { CONDITION: SELECT_OPTIONS::Forms::Condition.new.select_options },
+          samples: SELECT_OPTIONS::Models::Materials.new.sample_options_for_user(user: current_user),
         },
       }.deep_stringify_keys }
     end

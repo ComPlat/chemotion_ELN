@@ -25,6 +25,7 @@ module Entities
       expose! :gas_type
       expose! :gas_phase_data
       expose! :user_labels
+      expose! :editor_link_target
     end
 
     # Level 1 attributes
@@ -154,6 +155,11 @@ module Entities
       intermediate = ReactionsIntermediateSample.find_by(sample_id: object.id)
 
       intermediate&.reaction_process_step&.step_number
+    end
+
+    def editor_link_target
+      # The link to the Reaction Process Editor (external to the ELN).
+      "#{ENV.fetch('REACTION_PROCESS_EDITOR_HOSTNAME')}/samples/#{object.id}?auth=#{object.creator.jti_auth_token}"
     end
   end
 end

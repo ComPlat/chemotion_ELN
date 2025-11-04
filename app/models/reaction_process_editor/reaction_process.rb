@@ -4,20 +4,25 @@
 #
 # Table name: reaction_processes
 #
-#  id                 :uuid             not null, primary key
-#  automation_ordinal :integer
-#  default_conditions :jsonb
-#  deleted_at         :datetime
-#  created_at         :datetime         not null
-#  updated_at         :datetime         not null
-#  reaction_id        :integer
+#  id                  :uuid             not null, primary key
+#  automation_ordinal  :integer
+#  default_conditions  :jsonb
+#  deleted_at          :datetime
+#  sample_initial_info :jsonb
+#  created_at          :datetime         not null
+#  updated_at          :datetime         not null
+#  reaction_id         :integer
+#  sample_id           :integer
+#  user_id             :integer
 #
 
 module ReactionProcessEditor
   class ReactionProcess < ApplicationRecord
     acts_as_paranoid
 
-    belongs_to :reaction, optional: false
+    belongs_to :user
+    belongs_to :reaction, optional: true
+    belongs_to :sample, optional: true
 
     has_one :provenance, dependent: :destroy
 
@@ -26,10 +31,20 @@ module ReactionProcessEditor
 
     has_many :reaction_process_vessels, dependent: :destroy
 
-    delegate :creator, :reaction_svg_file, :short_label, :collections, to: :reaction
+    delegate :reaction_svg_file, :short_label, :collections, to: :reaction, allow_nil: true
+
+    before_save :set_initial_automation_ordinal
+
+    def creator
+      user || sample&.creator || reaction&.creator
+    end
+
+    def sample_reaction
+      sample&.reactions&.first
+    end
 
     def user_default_conditions
-      creator.reaction_process_defaults&.default_conditions.to_h
+      creator&.reaction_process_defaults&.default_conditions.to_h
     end
 
     def reaction_default_conditions
@@ -50,6 +65,16 @@ module ReactionProcessEditor
       next_ordinal = (automation_ordinal || 0) + 1
       update({ automation_ordinal: next_ordinal })
       next_ordinal
+    end
+
+    def set_initial_automation_ordinal
+      update({ automation_ordinal: 0 }) unless automation_ordinal
+    end
+
+    def ord_filename
+      model = reaction || sample
+
+      "#{Time.zone.today.iso8601}-#{model.class}-#{model.id}-#{model.short_label}.kit-ord.json"
     end
   end
 end

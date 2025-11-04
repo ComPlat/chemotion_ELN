@@ -75,6 +75,7 @@ class User < ApplicationRecord
   has_many :collections
   has_many :samples, -> { unscope(:order).distinct }, through: :collections
   has_many :reactions, through: :collections
+  has_many :reaction_processes, dependent: nil
   has_many :wellplates, through: :collections
   has_many :screens, through: :collections
   has_many :research_plans, through: :collections
