@@ -311,6 +311,7 @@ function createVariationsRow({
 function copyVariationsRow(row, variations) {
   const copiedRow = cloneDeep(row);
   copiedRow.id = getSequentialId(variations);
+  copiedRow.uuid = undefined; // UUID is generated server-side.
   copiedRow.metadata.notes = getMetaData('notes');
   copiedRow.metadata.analyses = getMetaData('analyses');
 
