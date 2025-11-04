@@ -20,7 +20,7 @@ describe ReactionProcessEditor::ReactionAPI, '.get /reaction_process' do
       reaction_default_conditions: { 'reaction_process_id' => reaction_process.id },
       reaction_process_steps: [],
       samples_preparations: [],
-      user_default_conditions: Hash,
+      user_reaction_default_conditions: Hash,
       select_options: Hash }.deep_stringify_keys
   end
 
@@ -40,12 +40,14 @@ describe ReactionProcessEditor::ReactionAPI, '.get /reaction_process' do
     end
 
     it 'triggers UseCase ReactionProcess::FindOrCreate' do
-      allow(Usecases::ReactionProcessEditor::ReactionProcesses::FindOrCreate).to receive(:execute!)
+      allow(Usecases::ReactionProcessEditor::ReactionProcesses::FindOrCreateByReaction).to receive(:execute!)
       get_reaction_process_request
 
-      expect(Usecases::ReactionProcessEditor::ReactionProcesses::FindOrCreate).to have_received(:execute!).with(
-        reaction: reaction,
-      )
+      expect(Usecases::ReactionProcessEditor::ReactionProcesses::FindOrCreateByReaction).to have_received(:execute!)
+        .with(
+          reaction: reaction,
+          current_user: reaction.creator,
+        )
     end
   end
 

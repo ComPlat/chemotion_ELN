@@ -10,6 +10,8 @@ import ChemrepoLabels from 'src/apps/mydb/elements/labels/ChemrepoLabels';
 import PubchemLabels from 'src/components/pubchem/PubchemLabels';
 import ComputedPropLabel from 'src/apps/mydb/elements/labels/ComputedPropLabel';
 
+import SampleEditorLink from 'src/apps/mydb/elements/details/reactions/reactionProcessEditor/SampleEditorLink';
+
 function MoleculeHeader({ sample }) {
   const [showPreviews, setShowPreviews] = useState(UIStore.getState().showPreviews);
 
@@ -46,6 +48,7 @@ function MoleculeHeader({ sample }) {
             )}
             <div className="flex-grow-1 sample-group-molecule-header__name">
               <SampleName sample={sample} />
+              <SampleEditorLink sample={sample} />
               <div className="d-flex align-items-center gap-1 h5">
                 {sample.molecule.chem_repo && sample.molecule.chem_repo.id && (
                   <ChemrepoLabels chemrepoId={sample.molecule.chem_repo.id} />

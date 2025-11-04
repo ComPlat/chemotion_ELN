@@ -44,7 +44,9 @@ module Entities
         end
 
         def preparable_samples(reaction_process)
-          reaction = reaction_process.reaction
+          reaction = reaction_process.reaction || reaction_process.sample_reaction
+
+          return [reaction_process.sample].compact unless reaction
 
           (reaction.reactions_starting_material_samples +
           reaction.reactions_reactant_samples +

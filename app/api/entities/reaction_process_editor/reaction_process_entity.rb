@@ -5,15 +5,16 @@ module Entities
     class ReactionProcessEntity < Grape::Entity
       SELECT_OPTIONS = SelectOptions::Models::Custom
 
-      expose :id, :short_label
+      expose :id, :short_label, :sample_initial_info
 
       expose :reaction_process_steps, using: 'Entities::ReactionProcessEditor::ReactionProcessStepEntity'
       expose :samples_preparations, using: 'Entities::ReactionProcessEditor::SamplePreparationEntity'
       expose :reaction_process_vessels, using: 'Entities::ReactionProcessEditor::ReactionProcessVesselEntity'
       expose :provenance, using: 'Entities::ReactionProcessEditor::ProvenanceEntity'
+      expose :sample, using: 'Entities::ReactionProcessEditor::SampleEntity'
 
       expose :reaction_svg_file
-      expose :reaction_default_conditions, :user_default_conditions
+      expose :reaction_default_conditions, :user_reaction_default_conditions
 
       expose :select_options
 
@@ -42,7 +43,7 @@ module Entities
         object.reaction_default_conditions.merge({ reaction_process_id: object.id })
       end
 
-      def user_default_conditions
+      def user_reaction_default_conditions
         SelectOptions::Forms::Condition::GLOBAL_DEFAULTS
           .merge(object.user_default_conditions)
       end

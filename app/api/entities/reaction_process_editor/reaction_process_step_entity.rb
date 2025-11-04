@@ -27,7 +27,7 @@ module Entities
       end
 
       def reaction_id
-        reaction.id
+        reaction&.id
       end
     end
   end

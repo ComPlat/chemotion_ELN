@@ -279,6 +279,10 @@ class Sample < ApplicationRecord
   belongs_to :creator, foreign_key: :created_by, class_name: 'User'
   belongs_to :molecule, optional: true
 
+  has_one :reaction_process,
+          class_name: 'ReactionProcessEditor::ReactionProcess',
+          inverse_of: :sample, dependent: :destroy
+
   accepts_nested_attributes_for :molecule_name
   accepts_nested_attributes_for :collections_samples
   accepts_nested_attributes_for :molecule, update_only: true
@@ -505,7 +509,7 @@ class Sample < ApplicationRecord
   def get_svg_path
     if sample_svg_file.present?
       "/images/samples/#{sample_svg_file}"
-    elsif molecule&.molecule_svg_file&.present?
+    elsif molecule&.molecule_svg_file.present?
       "/images/molecules/#{molecule.molecule_svg_file}"
     end
   end
