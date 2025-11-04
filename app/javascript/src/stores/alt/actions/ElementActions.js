@@ -1270,7 +1270,7 @@ class ElementActions {
   // - ...
   deleteElementsByUIState(params) {
     return (dispatch) => {
-      UIFetcher.fetchByUIState(params, 'DELETE')
+      UIFetcher.deleteElementsByUIState(params)
         .then((result) => { dispatch(result); })
         .catch((errorMessage) => { console.log(errorMessage); });
     };
