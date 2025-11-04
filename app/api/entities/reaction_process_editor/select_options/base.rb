@@ -76,6 +76,8 @@ module Entities
         def solvent_options_for(reaction_process:)
           reaction = reaction_process.reaction
 
+          return sample_minimal_options(Medium::DiverseSolvent.all, 'DIVERSE_SOLVENT') unless reaction
+
           solvents = (reaction.solvents + reaction.purification_solvents).uniq
 
           sample_minimal_options(solvents,

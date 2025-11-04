@@ -6,8 +6,8 @@ module Usecases
       class FindOrCreate
         def self.execute!(reaction_process:)
           reaction_process.provenance || reaction_process.create_provenance(
-            email: reaction_process.creator.email,
-            username: reaction_process.creator.name,
+            email: reaction_process.creator&.email,
+            username: reaction_process.creator&.name,
           )
         end
       end
