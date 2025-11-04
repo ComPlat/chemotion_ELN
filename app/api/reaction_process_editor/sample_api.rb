@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
 module ReactionProcessEditor
-  class ReactionAPI < Grape::API
+  class SampleAPI < Grape::API
     helpers StrongParamsHelpers
 
     rescue_from :all
 
-    namespace :reactions do
+    namespace :samples do
       get do
         reactions = if params[:collection_id]
                       begin
@@ -24,20 +24,20 @@ module ReactionProcessEditor
 
       route_param :id do
         before do
-          @reaction = Reaction.find_by(id: params[:id])
-          error!('404 Not Found', 404) unless @reaction
+          @sample = Sample.find_by(id: params[:id])
+          error!('404 Not Found', 404) unless @sample
 
-          @element_policy = ElementPolicy.new(current_user, @reaction)
+          @element_policy = ElementPolicy.new(current_user, @sample)
           error!('404 Not Found', 404) unless current_user && @element_policy.read?
         end
 
         desc 'Create associated reaction procedure unless existant'
         get :reaction_process do
-          present Usecases::ReactionProcessEditor::ReactionProcesses::FindOrCreateByReaction.execute!(
-            reaction: @reaction,
+          present Usecases::ReactionProcessEditor::ReactionProcesses::FindOrCreateBySample.execute!(
+            sample: @sample,
             current_user: current_user,
           ),
-                  with: Entities::ReactionProcessEditor::ReactionProcessEntity,
+                  with: Entities::ReactionProcessEditor::SampleProcessEntity,
                   root: :reaction_process
         end
       end
