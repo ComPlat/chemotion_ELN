@@ -3,7 +3,7 @@
 module OrdKit
   module Exporter
     module Reactions
-      class ReactionProcessExporter < OrdKit::Exporter::Base
+      class ReactionProcessStepsExporter < OrdKit::Exporter::Base
         def to_ord
           start_times = process_steps.inject([0]) { |starts, rps| starts << (starts.last + rps.duration.to_i) }
 

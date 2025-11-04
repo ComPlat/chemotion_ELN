@@ -18,7 +18,7 @@ describe ReactionProcessEditor::ReactionProcessAPI, '.get' do
       reaction_default_conditions: { 'reaction_process_id' => reaction_process.id },
       reaction_process_steps: [],
       samples_preparations: [],
-      user_default_conditions: Hash,
+      user_reaction_default_conditions: Hash,
       select_options: Hash }.deep_stringify_keys
   end
 
