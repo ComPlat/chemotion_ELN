@@ -31,7 +31,7 @@ $border-radius: 0.3rem;
 $body-bg: $chemstrap-white;
 $body-color: $chemstrap-carbon;
 $font-family-sans-serif: "Roboto", sans-serif;
-$font-size-root: 14px;
+$font-size-root: clamp(12px, 0.9vw, 16px);
 $font-size-base: 1rem;
 $heading-color: $body-color;
 $h1-font-size: $font-size-base * 2;
