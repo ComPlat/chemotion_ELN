@@ -58,7 +58,7 @@ module Chemotion
         if collection_id.zero? # no or malformed collection id was given
           @collection = Collection.get_all_collection_for_user(current_user)
         elsif @collection = current_user.collections.find_by(id: collection_id)
-        elsif collection_share = CollectionShare.where(collection_id: collection_id, shared_with_id: user_ids)
+        elsif collection_share = CollectionShare.find_by(collection_id: collection_id, shared_with_id: user_ids)
           permission_level = case request.request_method
                              when 'POST' then -1
                              when 'DELETE' then 2
@@ -102,35 +102,6 @@ module Chemotion
         end
 
         { selecteds: params[:selecteds].reject { |sel| deleted.fetch(sel['type'], []).include?(sel['id']) } }
-      end
-
-      desc 'return selected elements from the list. (only samples an reactions)'
-      post do
-        result = { 'samples' => [], 'reactions' => [] }
-
-        # TODO: optimize for performance
-        #       The calculator is not really a good way to check for large amounts of elements,
-        #       as it will fetch all containing collections for EACH element.
-        #       The more elements are selected, the more SQL queries get executed.
-        if params['sample'][:checkedAll] || params['sample'][:checkedIds].any?
-          result['samples'] = @collection.samples.by_ui_state(params['sample']).map do |sample|
-            calculator = ElementDetailLevelCalculator.new(user: current_user, element: sample)
-
-            Entities::SampleEntity.represent(sample, detail_levels: calculator.detail_levels)
-          end
-        end
-
-        if params['reaction'][:checkedAll] || params['reaction'][:checkedIds].any?
-          result['reactions'] = @collection.reactions.by_ui_state(params['reaction']).map do |reaction|
-            calculator = ElementDetailLevelCalculator.new(user: current_user, element: reaction)
-
-            Entities::ReactionEntity.represent(reaction, detail_levels: calculator.detail_levels)
-          end
-        end
-
-        # TODO: fallback if sample are not in owned collection and currentCollection is missing
-        # (case when cloning report)
-        result
       end
 
       namespace :load_report do
