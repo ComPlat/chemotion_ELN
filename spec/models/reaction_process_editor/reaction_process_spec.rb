@@ -4,13 +4,16 @@
 #
 # Table name: reaction_processes
 #
-#  id                 :uuid             not null, primary key
-#  automation_ordinal :integer
-#  default_conditions :jsonb
-#  deleted_at         :datetime
-#  created_at         :datetime         not null
-#  updated_at         :datetime         not null
-#  reaction_id        :integer
+#  id                  :uuid             not null, primary key
+#  automation_ordinal  :integer
+#  default_conditions  :jsonb
+#  deleted_at          :datetime
+#  sample_initial_info :jsonb
+#  created_at          :datetime         not null
+#  updated_at          :datetime         not null
+#  reaction_id         :integer
+#  sample_id           :integer
+#  user_id             :integer
 #
 require 'rails_helper'
 
@@ -19,14 +22,13 @@ RSpec.describe ReactionProcessEditor::ReactionProcess do
 
   it_behaves_like 'acts_as_paranoid soft-deletable model', :reaction_process
 
-  it { is_expected.to belong_to(:reaction) }
+  it { is_expected.to belong_to(:reaction).optional }
   it { is_expected.to have_many(:reaction_process_vessels).dependent(:destroy) }
 
   it { is_expected.to have_many(:reaction_process_steps).dependent(:destroy) }
   it { is_expected.to have_many(:samples_preparations).dependent(:destroy) }
   it { is_expected.to have_one(:provenance).dependent(:destroy) }
 
-  it { is_expected.to delegate_method(:creator).to(:reaction) }
   it { is_expected.to delegate_method(:reaction_svg_file).to(:reaction) }
   it { is_expected.to delegate_method(:short_label).to(:reaction) }
   it { is_expected.to delegate_method(:collections).to(:reaction) }
