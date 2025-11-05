@@ -140,6 +140,18 @@ class Collection < ApplicationRecord
     end
   )
 
+  scope(
+    :shared_with_minimum_detail_level,
+    lambda do |user, detail_level_field, detail_level|
+      joins(:collection_shares)
+        .merge(
+          CollectionShare
+            .shared_with(user)
+            .with_minimum_detail_level(detail_level_field, detail_level)
+        )
+    end
+  )
+
   default_scope { ordered }
   SQL_INVENT_SELECT = 'inventory_id,' \
                       'row_to_json(inventories) AS inventory,' \
