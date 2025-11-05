@@ -51,7 +51,8 @@ module Export
         DESC
 
         # create a zip buffer
-        zip = Zip::OutputStream.write_buffer do |zipping| # rubocop:disable Metrics/BlockLength
+        Zip.write_zip64_support = true
+        Zip::OutputStream.open(@file_path) do |zipping| # rubocop:disable Metrics/BlockLength
           # write the json file into the zip file
           export_json = to_json_data
           export_json_checksum = Digest::SHA256.hexdigest(export_json)
@@ -66,18 +67,23 @@ module Export
           zipping.write schema_json
           description += "#{schema_json_checksum} schema.json\n"
           # write all attachemnts into an attachments directory
+          dir_path = Pathname.new('attachments')
           @attachments.each do |attachment|
-            attachment_path = File.join('attachments', "#{attachment.identifier}#{File.extname(attachment.filename)}")
-            next if attachment.attachment_attacher.file.blank?
+            uploaded_file = attachment.attachment
+            next unless uploaded_file.exists?
 
-            zipping.put_next_entry attachment_path
-            zipping.write attachment.attachment_attacher.file.read if attachment.attachment_attacher.file.present?
+            attachment_path = dir_path.join("#{attachment.identifier}#{File.extname(attachment.filename)}")
+            zipping.put_next_entry attachment_path.to_s
+            uploaded_file.stream(zipping)
             description += "#{attachment.checksum} #{attachment_path}\n"
             next unless attachment.annotated_image?
 
-            annotation_path = attachment.attachment(:annotation).url
+            annotation = attachment.attachment(:annotation)
             zipping.put_next_entry "#{attachment_path}_annotation"
-            zipping.write File.read(annotation_path)
+            annotation.stream(zipping)
+          ensure
+            uploaded_file.to_io.close if uploaded_file.respond_to?(:to_io)
+            annotation.to_io.close if annotation.respond_to?(:to_io)
           end
           # write all the images into an images directory
           @images.each do |file_path|
@@ -93,10 +99,6 @@ module Export
           zipping.write description
         end
 
-        zip.set_encoding('UTF-8')
-        zip.rewind
-        # write the zip file to public/zip/
-        File.write(@file_path, zip.read)
         @file_path
       end
     end
