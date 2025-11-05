@@ -3,15 +3,29 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Accordion } from 'react-bootstrap';
-import { AiHeader, AiHeaderDeleted } from 'src/components/generic/GenericContainer';
+import {
+  AiHeader,
+  AiHeaderDeleted,
+} from 'src/components/generic/GenericContainer';
 
-const GenericContainerSet = (props) => {
+function GenericContainerSet(props) {
   const {
-    ae, readOnly, generic, fnUndo, fnChange, fnSelect, fnRemove, noAct, linkedAis, handleSubmit, activeKey
+    ae,
+    readOnly,
+    generic,
+    fnUndo,
+    fnChange,
+    fnSelect,
+    fnRemove,
+    noAct,
+    linkedAis,
+    handleSubmit,
+    activeKey,
   } = props;
-  // if (ae.length < 1 || ae[0].children.length < 0 || ae[0].children.filter(x => linkedAis.includes(x.id).length < 1)) return null;
   if (ae.length < 1 || ae[0].children.length < 0) return null;
-  const ais = noAct ? ae[0].children.filter(x => linkedAis.includes(x.id)) : ae[0].children;
+  const ais = noAct
+    ? ae[0].children.filter((x) => linkedAis.includes(x.id))
+    : ae[0].children;
 
   return (
     <Accordion
@@ -19,6 +33,7 @@ const GenericContainerSet = (props) => {
       className="flex-grow-1"
       onSelect={fnSelect}
       activeKey={activeKey}
+      alwaysOpen={false}
     >
       {ais.map((container, key) => {
         if (container.is_deleted) {
@@ -26,7 +41,7 @@ const GenericContainerSet = (props) => {
             <AiHeaderDeleted
               key={key}
               container={container}
-              idx={key}
+              idx={String(key)}
               fnUndo={fnUndo}
               noAct={noAct}
               readOnly={readOnly}
@@ -37,7 +52,7 @@ const GenericContainerSet = (props) => {
           <AiHeader
             key={key}
             container={container}
-            idx={key}
+            idx={String(key)}
             generic={generic}
             readOnly={readOnly}
             fnChange={fnChange}
@@ -49,7 +64,7 @@ const GenericContainerSet = (props) => {
       })}
     </Accordion>
   );
-};
+}
 
 GenericContainerSet.propTypes = {
   ae: PropTypes.array.isRequired,
@@ -61,11 +76,16 @@ GenericContainerSet.propTypes = {
   fnUndo: PropTypes.func,
   fnRemove: PropTypes.func,
   noAct: PropTypes.bool,
-  linkedAis: PropTypes.array
+  linkedAis: PropTypes.array,
+  activeKey: PropTypes.string,
 };
 
 GenericContainerSet.defaultProps = {
-  fnUndo: () => {}, fnRemove: () => {}, noAct: false, linkedAis: []
+  fnUndo: () => {},
+  fnRemove: () => {},
+  noAct: false,
+  linkedAis: [],
+  activeKey: '0',
 };
 
 export default GenericContainerSet;

@@ -7,12 +7,12 @@ describe 'GenericAPI' do
   let!(:u_admin) { create(:user, first_name: 'Admin', last_name: 'System') }
   let!(:u1) { create(:generic_user, first_name: 'Amy', last_name: 'Happy') }
   let(:params_c) { { 'name' => 'Element', 'label' => 'Element Label', 'klass_prefix' => 'E', 'properties_template' => { 'version' => '1.0.0' } } }
-  let!(:ek) { create(:element_klass) }
-  let!(:el) { create(:element) }
-  let!(:sk) { create(:segment_klass) }
-  let!(:sg) { create(:segment) }
-  let!(:dk) { create(:dataset_klass) }
-  let!(:ds) { create(:dataset) }
+  let!(:ek) { create(:element_klass, name: 'ElementKlass2') }
+  let!(:el) { create(:element, element_klass: ek) }
+  let!(:sk) { create(:segment_klass, label: 'SegmentKlass2') }
+  let!(:sg) { create(:segment, segment_klass: sk) }
+  let!(:dk) { create(:dataset_klass, ols_term_id: 'CHMO:0000292') }
+  let!(:ds) { create(:dataset, dataset_klass: dk) }
   let(:c1) { create(:collection, user_id: u1.id) }
   let!(:el_pop) do
     {

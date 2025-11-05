@@ -46,6 +46,10 @@ module ContainerHelpers
                                        end
       end
 
+      if extended_metadata.key?('general_description') && extended_metadata['general_description'].is_a?(Hash)
+        extended_metadata['general_description'] = extended_metadata['general_description'].to_json
+      end
+
       if child[:is_new]
         # Create container
         container = parent_container.children.create(

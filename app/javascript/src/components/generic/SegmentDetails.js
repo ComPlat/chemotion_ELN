@@ -1,8 +1,8 @@
 /* eslint-disable no-restricted-globals */
 import React from 'react';
 import { findIndex, cloneDeep } from 'lodash';
-import Aviator from 'aviator';
 import { OverlayTrigger, Tooltip, Tab } from 'react-bootstrap';
+import { browseElement } from 'chem-generic-ui';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import GenericSGDetails from 'src/components/generic/GenericSGDetails';
@@ -12,19 +12,10 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 
 const onNaviClick = (type, id) => {
   const { currentCollection, isSync } = UIStore.getState();
-  const collectionUrl = !isNaN(id)
-    ? `${currentCollection.id}/${type}/${id}`
-    : `${currentCollection.id}/${type}`;
-  Aviator.navigate(
-    isSync ? `/scollection/${collectionUrl}` : `/collection/${collectionUrl}`,
-    { silent: true },
-  );
-  if (type === 'reaction') {
-    ElementActions.fetchReactionById(id);
-  } else if (type === 'sample') {
-    ElementActions.fetchSampleById(id);
-  } else {
-    ElementActions.fetchGenericElById(id);
+  const { genericEls = [] } = UserStore.getState();
+  const elementAction = browseElement(currentCollection, isSync, type, id, genericEls);
+  if (elementAction != null && ElementActions[elementAction]) {
+    ElementActions[elementAction](id);
   }
 };
 

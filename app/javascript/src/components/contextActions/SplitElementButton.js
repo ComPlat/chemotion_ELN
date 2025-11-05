@@ -14,9 +14,11 @@ export default class SplitElementButton extends React.Component {
     const userState = UserStore.getState();
     this.state = {
       currentCollection: uiState.currentCollection,
-      currentUser: {},
       genericEls: [],
-      showGenericEls: MatrixCheck(userState.currentUser?.matrix, 'genericEl'),
+      showGenericEls: MatrixCheck(
+        userState.currentUser?.matrix,
+        'genericElement',
+      ),
       layout: {},
       selectedElements: {},
     };
@@ -43,13 +45,20 @@ export default class SplitElementButton extends React.Component {
     const newCurrentUser = state.currentUser;
     const newGenericEls = state.genericEls;
 
-    if (typeof newLayout !== 'undefined' && newLayout !== null && newLayout !== layout) {
+    if (
+      typeof newLayout !== 'undefined' &&
+      newLayout !== null &&
+      newLayout !== layout
+    ) {
       this.setState({ layout: newLayout });
     }
 
-    const newShowGenericEls = MatrixCheck(newCurrentUser?.matrix, 'genericEl');
+    const newShowGenericEls = MatrixCheck(
+      newCurrentUser?.matrix,
+      'genericElement',
+    );
     if (newShowGenericEls !== showGenericEls) {
-      this.setState({ currentUser: newCurrentUser });
+      this.setState({ showGenericEls: newShowGenericEls });
     }
 
     if (newGenericEls !== genericEls) {
@@ -174,9 +183,7 @@ export default class SplitElementButton extends React.Component {
             onClick={() => this.splitElements(`${el.name}`)}
             disabled={!selectedElements[el.name]}
           >
-            Split
-            {' '}
-            {el.label}
+            Split {el.label}
           </Dropdown.Item>
         ))}
       </DropdownButton>

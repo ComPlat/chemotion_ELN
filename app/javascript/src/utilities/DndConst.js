@@ -4,6 +4,7 @@ const DragDropItemTypes = {
   WELL: 'well',
   ELEMENT: 'element',
   SAMPLE: 'sample',
+  SCREEN: 'screen',
   MATERIAL: 'material',
   REACTION: 'reaction',
   WELLPLATE: 'wellplate',

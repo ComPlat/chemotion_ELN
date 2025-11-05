@@ -27,46 +27,9 @@ $color-default: #777;
   padding: 5px 10px 5px 10px !important;
 }
 
-.panel_generic_properties {
-  border-left: unset !important;
-  border-right: unset !important;
-  border-bottom: unset !important;
-  line-height: 10px !important;
-  box-shadow: unset !important;
-  margin-bottom: unset !important;
-  font-size: small;
-  .panel-title {
-    font-weight: bold;
-    }
-  .default_style {
-    font-size: 14px;
-    line-height: normal;
-    }
-}
-
 .panel_generic_properties_body {
   padding-left: unset !important;
   padding-right: unset !important;
-}
-
-@mixin generic_panel_header {
-  font-weight: bold;
-  padding: 10px 0px !important;
-}
-
-.panel_generic_heading {
-  @include generic_panel_header;
-}
-
-.panel_generic_heading_bu {
-  @include generic_panel_header;
-  text-decoration: underline;
-}
-
-.panel_generic_heading_bui {
-  @include generic_panel_header;
-  text-decoration: underline;
-  font-style: italic;
 }
 
 .text_generic_properties {

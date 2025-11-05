@@ -132,7 +132,7 @@ export default class ContainerComponent extends Component {
 
   render() {
     const { container, textTemplate } = this.state;
-    const { readOnly, disabled, onChange, rootContainer,index  } = this.props;
+    const { readOnly, disabled, onChange, rootContainer, index, element } = this.props;
 
     let quill = (<span />);
     if (readOnly || disabled) {
@@ -209,6 +209,7 @@ export default class ContainerComponent extends Component {
           <Form.Label>Datasets</Form.Label>
           <ContainerDatasets
             container={container}
+            element={element}
             readOnly={readOnly}
             disabled={disabled}
             onChange={onChange}
@@ -233,6 +234,7 @@ export default class ContainerComponent extends Component {
 ContainerComponent.propTypes = {
   ontologyName: PropTypes.string,
   analysisMethodTitle: PropTypes.string,
+  element: PropTypes.object,
   templateType: PropTypes.string,
   onChange: PropTypes.func.isRequired,
   readOnly: PropTypes.bool,
@@ -246,5 +248,6 @@ ContainerComponent.defaultProps = {
   templateType: '',
   readOnly: false,
   disabled: false,
-  container: {}
+  container: {},
+  element: {}
 };

@@ -109,13 +109,13 @@ const AnalysesContainer = ({ readonly }) => {
                 <Card.Body>
                   <ContainerComponent
                     disabled={readonly}
+                    element={deviceDescription}
                     readOnly={readonly}
                     templateType="deviceDescription"
                     container={container}
                     onChange={(cont) => handleContainerChanged(cont)}
                     rootContainer={deviceDescription.container}
                     index={index}
-                    
                   />
                   <ViewSpectra
                     sample={deviceDescription}

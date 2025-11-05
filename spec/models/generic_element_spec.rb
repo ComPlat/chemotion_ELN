@@ -5,8 +5,8 @@ require 'digest'
 
 RSpec.describe 'Generic Elements', type: :model do
   context 'with Generic Elements' do
-    let!(:ek) { create(:element_klass) }
-    let!(:el) { create(:element) }
+    let!(:ek) { create(:element_klass, name: 'element5') }
+    let!(:el) { create(:element, element_klass: ek) }
 
     describe 'creation' do
       it 'is possible to create a valid element klass and related element' do
