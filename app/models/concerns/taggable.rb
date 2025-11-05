@@ -50,45 +50,6 @@ module Taggable
     inchikey? && tag.taggable_data&.fetch('pubchem_cid', nil)
   end
 
-  def collection_id(c)
-    if c.is_synchronized
-      SyncCollectionsUser.where(collection_id: c.id).first.id
-    else
-      c.id
-    end
-  end
-
-  # Populate resources tag
-  def resources_tag
-    return unless is_a?(Sample)
-
-    resources = []
-    reactions_samples&.includes(:reaction)&.each do |rs|
-      next unless r = rs.reaction
-      next if r.deleted_at.present?
-
-      resources.push({
-                       resource_type: 'Reaction',
-                       resource_id: r.id,
-                       resource_short_label: r.short_label,
-                     })
-    end
-    elements_samples&.each do |es|
-      e = Labimotion::Element.find_by(id: es.element_id)
-      next if e.nil? || e.deleted_at.present?
-
-      ek = e.element_klass
-      next if ek.nil?
-
-      resources.push({
-                       resource_type: ek.label,
-                       resource_id: e.id,
-                       resource_short_label: e.short_label,
-                     })
-    end
-
-    resources
-  end
   # Populate Collections tag
   def collection_tag
     collections_join_relation = Labimotion::Utils.col_by_element(self.class.name).underscore.pluralize
