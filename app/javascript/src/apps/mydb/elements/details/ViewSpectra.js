@@ -391,7 +391,7 @@ class ViewSpectra extends React.Component {
   writeCommon({
     peaks, shift, scan, thres, analysis, layout, isAscend, decimal, body,
     keepPred, isIntensity, multiplicity, integration, cyclicvoltaSt, curveSt,
-    waveLength, axesUnitsSt, detectorSt, dscMetaData,
+    waveLength, axesUnitsSt, detectorSt, dscMetaData, lcms_peaks, lcms_integrals,
   }, isMpy = false) {
     const { sample, handleSampleChanged } = this.props;
     const si = this.getSpcInfo();
@@ -437,7 +437,7 @@ class ViewSpectra extends React.Component {
 
     const cb = () => (
       this.saveOp({
-        peaks, shift, scan, thres, analysis, keepPred, integration, multiplicity, cyclicvoltaSt, curveSt, layout, waveLength, axesUnitsSt, detectorSt, dscMetaData,
+        peaks, shift, scan, thres, analysis, keepPred, integration, multiplicity, cyclicvoltaSt, curveSt, layout, waveLength, axesUnitsSt, detectorSt, dscMetaData, lcms_peaks, lcms_integrals,
       })
     );
     handleSampleChanged(sample, cb);
@@ -478,7 +478,7 @@ class ViewSpectra extends React.Component {
     peaks, shift, scan, thres, analysis, keepPred,
     integration, multiplicity, waveLength, cyclicvoltaSt,
     curveSt, simulatenmr = false, layout, axesUnitsSt,
-    detectorSt, dscMetaData,
+    detectorSt, dscMetaData, lcms_peaks, lcms_integrals,
   }) {
     const { handleSubmit } = this.props;
     const { curveIdx } = curveSt;
@@ -519,6 +519,8 @@ class ViewSpectra extends React.Component {
     const cyclicvolta = JSON.stringify(cyclicvoltaSt);
     const axesUnitsStr = JSON.stringify(axesUnitsSt);
     const detector = JSON.stringify(detectorSt);
+    const lcms_peaksStr = JSON.stringify(lcms_peaks);
+    const lcms_integralsStr = JSON.stringify(lcms_integrals);
 
     const { shifts } = shift;
     const selectedShift = shifts[curveIdx];
@@ -549,14 +551,16 @@ class ViewSpectra extends React.Component {
       axesUnitsStr,
       detector,
       JSON.stringify(dscMetaData),
+      lcms_peaksStr,
+      lcms_integralsStr,
     );
   }
 
   refreshOp({
-    peaks, shift, scan, thres, analysis, keepPred, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt, layout, axesUnitsSt, detectorSt
+    peaks, shift, scan, thres, analysis, keepPred, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt, layout, axesUnitsSt, detectorSt, lcms_peaks, lcms_integrals
   }) {
     this.saveOp({
-      peaks, shift, scan, thres, analysis, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt, simulatenmr: true, layout, axesUnitsSt, detectorSt
+      peaks, shift, scan, thres, analysis, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt, simulatenmr: true, layout, axesUnitsSt, detectorSt, lcms_peaks, lcms_integrals
     });
   }
 
@@ -582,10 +586,10 @@ class ViewSpectra extends React.Component {
   }
 
   saveCloseOp({
-    peaks, shift, scan, thres, analysis, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt, layout, axesUnitsSt, detectorSt, dscMetaData,
+    peaks, shift, scan, thres, analysis, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt, layout, axesUnitsSt, detectorSt, dscMetaData, lcms_peaks, lcms_integrals
   }) {
     this.saveOp({
-      peaks, shift, scan, thres, analysis, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt, layout, axesUnitsSt, detectorSt, dscMetaData,
+      peaks, shift, scan, thres, analysis, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt, layout, axesUnitsSt, detectorSt, dscMetaData, lcms_peaks, lcms_integrals,
     });
     this.closeOp();
   }
