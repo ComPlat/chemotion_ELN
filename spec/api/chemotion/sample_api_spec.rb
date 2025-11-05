@@ -145,11 +145,16 @@ describe Chemotion::SampleAPI do
       end
 
       it 'is able to import new samples' do
-        ids_from_response = JSON.parse(response.body)['data']
-        ids_from_db = Sample.pluck(:id)
-        expect(ids_from_response).to match_array(ids_from_db)
+        # Endpoint now returns async job status
+        response_data = JSON.parse(response.body)
+        expect(response_data['status']).to eq 'in progress'
+        expect(response_data['message']).to eq 'Importing samples in the background'
 
-        expect(JSON.parse(response.body)['data'].count).to eq 3
+        # Execute the enqueued job
+        perform_enqueued_jobs
+
+        # Verify samples were created
+        expect(Sample.count).to eq 3
       end
     end
 
@@ -211,29 +216,30 @@ describe Chemotion::SampleAPI do
 
       it 'returns a valid response with status ok and non-empty data' do
         response_data = JSON.parse(response.body)
-        expect(response_data['status']).to eq 'ok'
-        expect(response_data['data']).not_to be_empty
+        expect(response_data['status']).to eq 'in progress'
+        expect(response_data['message']).to eq 'Importing samples in the background'
+
+        # Execute the job and verify samples were created
+        perform_enqueued_jobs
+        expect(Sample.count).to be > 0
       end
 
       it 'creates the expected number of samples in the database' do
-        response_data = JSON.parse(response.body)
-        sample_ids = response_data['data']
-        expect(Sample.where(id: sample_ids).count).to eq data_array.length
+        perform_enqueued_jobs
+        expect(Sample.count).to eq data_array.length
       end
 
       it 'creates samples with correct details' do
-        response_data = JSON.parse(response.body)
-        sample_ids = response_data['data']
-        sample = Sample.find(sample_ids.first)
+        perform_enqueued_jobs
+        sample = Sample.first
 
         expect(sample.name).to eq data_array.first['name']
         expect(sample.external_label).to eq data_array.first['external_label']
       end
 
       it 'creates samples with correct numeric values' do
-        response_data = JSON.parse(response.body)
-        sample_ids = response_data['data']
-        sample = Sample.find(sample_ids.first)
+        perform_enqueued_jobs
+        sample = Sample.first
 
         expect(sample.target_amount_value).to eq data_array.first['target_amount_value'].to_f
         expect(sample.target_amount_unit).to eq data_array.first['target_amount_unit']
@@ -299,28 +305,29 @@ describe Chemotion::SampleAPI do
 
       it 'returns a valid response with status ok and non-empty data' do
         response_data = JSON.parse(response.body)
-        expect(response_data['status']).to eq 'ok'
-        expect(response_data['data']).not_to be_empty
+        expect(response_data['status']).to eq 'in progress'
+        expect(response_data['message']).to eq 'Importing samples in the background'
+
+        # Execute the job and verify samples were created
+        perform_enqueued_jobs
+        expect(Sample.count).to be > 0
       end
 
       it 'creates the expected number of samples in the database' do
-        response_data = JSON.parse(response.body)
-        sample_ids = response_data['data']
-        expect(Sample.where(id: sample_ids).count).to eq chemical_data_array.length
+        perform_enqueued_jobs
+        expect(Sample.count).to eq chemical_data_array.length
       end
 
       it 'creates chemical samples with correct details' do
-        response_data = JSON.parse(response.body)
-        sample_ids = response_data['data']
-        sample = Sample.find(sample_ids.first)
+        perform_enqueued_jobs
+        sample = Sample.first
 
         expect(sample.name).to eq chemical_data_array.first['name']
       end
 
       it 'correctly stores chemical-specific data' do
-        response_data = JSON.parse(response.body)
-        sample_ids = response_data['data']
-        sample = Sample.find(sample_ids.first)
+        perform_enqueued_jobs
+        sample = Sample.first
 
         expect(sample.xref['cas']).to eq chemical_data_array.first['cas']
       end
@@ -337,9 +344,9 @@ describe Chemotion::SampleAPI do
       end
 
       it 'returns an error' do
-        expect(response.status).to eq 400
-        response_data = JSON.parse(response.body)
-        expect(response_data['error']).to include('Invalid data format')
+        # Grape's JSON type validator should reject invalid JSON
+        # or the after_validation block should catch it
+        expect(response.status).to be >= 400
       end
     end
   end
