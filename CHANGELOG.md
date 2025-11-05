@@ -2,6 +2,9 @@
 
 ## Latest
 
+* Styles
+  * Rename 'Devices' button to 'Remote Devices' in Admin UI ([#2758](https://github.com/ComPlat/chemotion_ELN/pull/2758))
+
 ## [v2.1.0]
 > (2025-08-24)
 
