@@ -45,7 +45,14 @@ class CollectionShare < ApplicationRecord
 
   scope :shared_by, ->(user) { joins(:collection).where(collections: { user_id: [user.id, *user.group_ids] }) }
   scope :shared_with, ->(user) { where(shared_with_id: [user.id, *user.group_ids]) }
-  scope :with_minimum_permission_level, ->(permission_level) { where("collection_shares.permission_level >= ?", permission_level) }
+  scope(
+    :with_minimum_permission_level,
+    ->(permission_level) { where("collection_shares.permission_level >= ?", permission_level) }
+  )
+  scope(
+    :with_minimum_detail_level,
+    ->(detail_level_field, detail_level) { where("#{detail_level_field} >= ?", detail_level) }
+  )
 
   def self.permission_level(key)
     PERMISSION_LEVELS[key] || -1

@@ -25,7 +25,8 @@ class ElementPolicy
 
   def copy?
     return false unless user_and_record_present?
-    record_is_in_own_collection? || record_shared_with_minimum_permission_level?(1)
+    record_is_in_own_collection? ||
+      (record_shared_with_minimum_permission_level?(1) && record_shared_with_minimum_detail_level?(1))
   end
 
   def share?
@@ -36,6 +37,11 @@ class ElementPolicy
   def destroy?
     return false unless user_and_record_present?
     record_is_in_own_collection? || record_shared_with_minimum_permission_level?(3)
+  end
+
+  def read_dataset?
+    return false unless user_and_record_present?
+    record_is_in_own_collection? || record_shared_with_minimum_detail_level?(3)
   end
 
   def import?
@@ -62,6 +68,14 @@ class ElementPolicy
     record
       .collections
       .shared_with_minimum_permission_level(user, permission_level)
+      .any?
+  end
+
+  def record_shared_with_minimum_detail_level?(detail_level)
+    detail_level_field = "#{Labimotion::Utils.element_name_dc(record.class.to_s)}_detail_level"
+    record
+      .collections
+      .shared_with_minimum_detail_level(user, detail_level_field, detail_level)
       .any?
   end
 end
