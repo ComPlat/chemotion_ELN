@@ -52,7 +52,7 @@ module Export
 
         # create a zip buffer
         Zip.write_zip64_support = true
-        Zip::OutputStream.open(@file_path) do |zipping|
+        Zip::OutputStream.open(@file_path) do |zipping| # rubocop:disable Metrics/BlockLength
           # write the json file into the zip file
           export_json = to_json_data
           export_json_checksum = Digest::SHA256.hexdigest(export_json)
