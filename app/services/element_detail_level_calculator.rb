@@ -45,12 +45,12 @@ class ElementDetailLevelCalculator
     end
   end
 
-  # All collections containing the element that belong to the user or were shared to them
+  # All collections containing the element that belong to the user
   def user_collections_with_element
     @user_collections_with_element ||= element.collections.where(user_id: user_ids)
   end
 
-  # All collections containing the element that were synced to the current user
+  # All collections containing the element that were shared with the current user
   def shared_collections_with_element
     @shared_collections_with_element ||= element.collections.shared_collections_for(user)
   end
