@@ -3,7 +3,7 @@
 module Entities
   class SampleReportEntity < SampleEntity
     with_options(anonymize_below: 0) do
-      expose :collections,                              using: 'Entities::CollectionEntity'
+      expose :collections
     end
 
     with_options(anonymize_below: 2) do
@@ -19,6 +19,14 @@ module Entities
     expose_timestamps
 
     private
+
+    def collections
+      if object.collections.first.is_a?(CollectionShare)
+        Entities::SharedCollectionEntity.represent(object.collections)
+      else
+        Entities::OwnCollectionEntity.represent(object.collections)
+      end
+    end
 
     def literatures
       Entities::LiteratureEntity.represent(
