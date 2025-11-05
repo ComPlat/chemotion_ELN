@@ -32,10 +32,7 @@ shared_examples_for 'taggable_element_before_and_after_collection_update' do
     expect(
       inst.collections << coll && inst.save! && inst.reload &&
       inst.tag.taggable_data['collection_labels']
-    ).to include(
-      'name' => coll.label, 'is_shared' => false, 'user_id' => coll.user_id,
-      'id' => coll.id, 'shared_by_id' => nil, 'is_synchronized' => false
-    )
+    ).to include('id' => coll.id)
   end
 end
 

@@ -14,7 +14,7 @@ FactoryBot.define do
     #  molfile "\n  Ketcher 05301616272D 1   1.00000     0.00000     0\n\n  2  1  0     0  0            999 V2000\n    1.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n  1  2  1  0     0  0\nM  END\n"
     callback(:before_create) do |sample|
       sample.creator = FactoryBot.build(:user) unless sample.creator
-      sample.collections << FactoryBot.build(:collection) if sample.collections.blank?
+      sample.collections << FactoryBot.build(:collection, user: sample.creator) if sample.collections.blank?
       sample.molecule = FactoryBot.create(:molecule) unless sample.molecule || sample.molfile
       sample.container = FactoryBot.create(:container, :with_analysis) unless sample.container
     end

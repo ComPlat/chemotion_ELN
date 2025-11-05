@@ -80,10 +80,6 @@ class User < ApplicationRecord
 
   has_many :samples_created, foreign_key: :created_by, class_name: 'Sample'
 
-  has_many :sync_out_collections_users, foreign_key: :shared_by_id, class_name: 'SyncCollectionsUser'
-  has_many :sync_in_collections_users, class_name: 'SyncCollectionsUser'
-  has_many :sharing_collections, through: :sync_out_collections_users, source: :collection
-  has_many :shared_collections,  through: :sync_in_collections_users, source: :collection
   has_many :users_devices, dependent: :destroy
   has_many :devices, through: :users_devices
   # belongs_to :selected_device, class_name: 'Device'
@@ -235,14 +231,6 @@ class User < ApplicationRecord
     )
   end
 
-  def owns_collections?(collections)
-    collections.pluck(:user_id).uniq == [id]
-  end
-
-  def owns_unshared_collections?(collections)
-    owns_collections?(collections) && collections.pluck(:is_shared).none?
-  end
-
   def name
     "#{first_name} #{last_name}"
   end
@@ -305,10 +293,6 @@ class User < ApplicationRecord
 
   def all_collections
     Collection.where('user_id IN (?) ', [id] + group_ids)
-  end
-
-  def all_sync_in_collections_users
-    SyncCollectionsUser.where('user_id IN (?) ', [id] + group_ids)
   end
 
   def current_affiliations
