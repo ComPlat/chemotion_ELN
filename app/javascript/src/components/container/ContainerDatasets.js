@@ -84,8 +84,8 @@ export default class ContainerDatasets extends Component {
         container.children[datasetId] = datasetContainer;
       }
     });
-
-    this.props.onChange(container);
+    // DON'T call this.props.onChange here! It causes infinite re-render loop
+    //  this.props.onChange(container);
   }
 
   handleModalHide() {
@@ -113,20 +113,68 @@ export default class ContainerDatasets extends Component {
   }
 
   updateContainerState(updatedContainer, shouldClose = false) {
-    const { rootContainer, index } = this.props;
-    const { modal } = this.state;
-    const { datasetContainer } = modal;
-    const newChild = updatedContainer?.children?.[0]?.children?.[index];
-    if (!newChild || !rootContainer?.children?.[0]) {
-      console.log("Invalid container structure");
+    const { rootContainer } = this.props;
+    const { modal, container: currentContainer } = this.state;
+
+    // Safety check: Verify we have a current container
+    if (!currentContainer) {
+      this.handleModalHide();
       return;
     }
+
+    // Safety checks for server response structure
+    if (!updatedContainer || !updatedContainer.children || !Array.isArray(updatedContainer.children)) {
+      this.handleModalHide();
+      return;
+    }
+
+    if (!updatedContainer.children[0] || !updatedContainer.children[0].children
+        || !Array.isArray(updatedContainer.children[0].children)) {
+      this.handleModalHide();
+      return;
+    }
+
+    // Safety check for rootContainer
+    if (!rootContainer || !rootContainer.children || !rootContainer.children[0]) {
+      this.handleModalHide();
+      return;
+    }
+
     const updatedRoot = { ...rootContainer };
-    updatedRoot.children[0].children[index] = newChild;
+    updatedRoot.children[0].children = [...updatedContainer.children[0].children];
+
+    const analysesContainer = updatedContainer.children[0].children;
+
     if (!shouldClose) {
-      const container = updatedContainer.children[0].children[index];
+      // Find container by ID instead of index (index can be stale after deletions)
+      const container = analysesContainer.find((a) => a.id === currentContainer.id);
+      if (!container) {
+        this.handleModalHide();
+        this.props.onChange(updatedRoot);
+        return;
+      }
       const selectedIndex = modal?.selectedIndex;
-      const attachments = container?.children?.[selectedIndex]?.attachments || [];
+      // Safety check: verify dataset index is valid
+      if (selectedIndex === null || selectedIndex === undefined) {
+        this.handleModalHide();
+        this.props.onChange(updatedRoot);
+        return;
+      }
+
+      if (!container.children || !Array.isArray(container.children)) {
+        this.handleModalHide();
+        this.props.onChange(updatedRoot);
+        return;
+      }
+
+      const dataset = container.children[selectedIndex];
+      if (!dataset) {
+        this.handleModalHide();
+        this.props.onChange(updatedRoot);
+        return;
+      }
+
+      const attachments = dataset.attachments || [];
 
       this.setState({
         container,
