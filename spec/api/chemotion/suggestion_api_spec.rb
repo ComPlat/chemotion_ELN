@@ -4,8 +4,11 @@ require 'rails_helper'
 
 describe Chemotion::SuggestionAPI do
   let!(:user) { create(:person, first_name: 'tam', last_name: 'M') }
-  let!(:collection) { create(:collection, user: user, is_shared: true, permission_level: 1, sample_detail_level: 10) }
-
+  let(:collection) { create(:collection, user: user) }
+  let(:material) { create(:cellline_material) }
+  let!(:sample) { create(:sample, name: 'search-example', collections: [collection]) }
+  let(:query) { 'query' }
+  let(:json_response) { JSON.parse(response.body) }
   let(:params) do
     {
       collection_id: collection.id,
