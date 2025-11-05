@@ -61,8 +61,9 @@ export default class ContainerCompareAnalyses extends Component {
   componentDidUpdate(prevProps) {  
     if (prevProps.container !== this.props.container) {
       const { menuItems } = this.buildSelectAnalysesMenu();
-      const { analyses_compared } = this.props.container.extended_metadata || {};
-      const selectedFiles = analyses_compared ? analyses_compared.map((item) => item.file.id) : [];
+      const extendedMetadata = this.props.container.extended_metadata || {};
+      const analyses_compared = Array.isArray(extendedMetadata.analyses_compared) ? extendedMetadata.analyses_compared : [];
+      const selectedFiles = analyses_compared.length > 0 ? analyses_compared.map((item) => item.file.id) : [];
 
       let selectedLayout = analyses_compared.length > 0 ? analyses_compared[0].layout : null;
       let filteredMenuItems = menuItems;
@@ -77,6 +78,7 @@ export default class ContainerCompareAnalyses extends Component {
       });
     }
   }
+
 
   onChange(container) {
     this.props.onChange(container);
