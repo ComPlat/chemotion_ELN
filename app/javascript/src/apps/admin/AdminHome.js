@@ -61,7 +61,7 @@ class AdminHome extends React.Component {
           <Nav.Link eventKey={1}>User Management</Nav.Link>
         </NavItem>
         <NavItem>
-          <Nav.Link eventKey={9}>Devices</Nav.Link>
+          <Nav.Link eventKey={9}>Remote Devices</Nav.Link>
         </NavItem>
         <NavItem>
           <Nav.Link eventKey={4}>Groups</Nav.Link>
