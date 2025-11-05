@@ -123,7 +123,7 @@ module Export
       row_image_width = DEFAULT_ROW_WIDTH
       row_length = @headers.size
       samples.each_with_index do |sample, row|
-        if (sample['shared_sync'] == 'f' || sample['shared_sync'] == false || sample['dl_s'] = 10)
+        if (sample['is_shared'] == 'f' || sample['is_shared'] == false || sample['dl_s'] = 10)
           data = (@row_headers & HEADERS_SAMPLE_ID).map { |column| sample[column] }
           data[row_length - 1] = nil
           analyses = prepare_sample_analysis_data(sample)
@@ -186,7 +186,7 @@ module Export
 
     def filter_with_permission_and_detail_level(sample)
       # return all data if sample/chemical in own collection
-      if sample['shared_sync'] == 'f' || sample['shared_sync'] == false
+      if sample['is_shared'] == 'f' || sample['is_shared'] == false
         headers = @headers
         reference_values = ['melting pt', 'boiling pt']
         data = headers.map do |column|

@@ -57,7 +57,7 @@ module Export
     end
 
     def filter_with_permission_and_detail_level(sample)
-      if sample['shared_sync'] == 'f' || sample['shared_sync'] == false
+      if sample['is_shared'] == 'f' || sample['is_shared'] == false
         data = validate_molfile(sample['molfile'])
         return nil unless data.presence
 
