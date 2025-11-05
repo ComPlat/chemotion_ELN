@@ -3,8 +3,10 @@
 require 'rails_helper'
 
 RSpec.describe 'Export::ExportExcel' do
+  let(:user) { create(:user) }
+  let!(:collection)  { create(:collection, user_id: user.id) }
   let(:exporter) { Export::ExportExcel.new }
-  let(:sample_json) { create(:sample).as_json }
+  let(:sample_json) { create(:sample, collections: [collection]).as_json }
 
   before do
     stub_requests
@@ -19,7 +21,7 @@ RSpec.describe 'Export::ExportExcel' do
     let(:headers) { '@headers =["melting pt", "flash point", "refractive index", "molarity"]' }
 
     before do
-      sample_json['shared_sync'] = 'f'
+      sample_json['is_shared'] = 'f'
       sample_json['melting pt'] = melting_point
       sample_json['flash_point'] = flash_point
       sample_json['refractive_index'] = refractive_index

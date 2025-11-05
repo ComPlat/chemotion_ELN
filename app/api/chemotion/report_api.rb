@@ -55,7 +55,6 @@ module Chemotion
           force_molfile_selection
         end
         c_id = params[:uiState][:currentCollection]
-        c_id = SyncCollectionsUser.find(c_id)&.collection_id if params[:uiState][:isSync]
 
         table_params = {
           ui_state: params[:uiState],
@@ -111,22 +110,21 @@ module Chemotion
         content_type('text/csv')
         filename = CGI.escape("reaction_smiles_#{time_now}.csv")
         header 'Content-Disposition', "attachment; filename=\"#{filename}\""
-        real_coll_id = fetch_collection_id_w_current_user(
-          params[:uiState][:currentCollection], params[:uiState][:isSync]
-        )
+        collection = Collection.accessible_for(current_user).find(params[:uiState][:currentCollection])
 
-        p_t = params[:uiState][:reaction]
-        return status 204 unless p_t && (p_t[:checkedAll] || p_t[:checkedIds].to_a.present?)
+        reaction_state = params[:uiState][:reaction]
+        return status 204 unless reaction_state && (reaction_state[:checkedAll] || reaction_state[:checkedIds].to_a.present?)
 
         results = reaction_smiles_hash(
-          real_coll_id,
-          (p_t[:checkedAll] && p_t[:uncheckedIds]) || p_t[:checkedIds],
-          p_t[:checkedAll],
+          collection.id,
+          (reaction_state[:checkedAll] && reaction_state[:uncheckedIds]) || reaction_state[:checkedIds],
+          reaction_state[:checkedAll],
         ) || {}
         smiles_construct = "r_smiles_#{params[:exportType]}"
         results.map { |_, v| send(smiles_construct, v) }.join("\r\n")
       end
 
+      # not usesed anymore???
       params do
         requires :id, type: String
       end
@@ -152,6 +150,7 @@ module Chemotion
         requires :id, type: String
       end
 
+      # not usesed anymore???
       get :excel_reaction do
         env['api.format'] = :binary
         content_type('application/vnd.ms-excel')
@@ -201,10 +200,10 @@ module Chemotion
       end
       route_param :id do
         delete do
-          rp = current_user.reports.find(params[:id])
-          att = rp.attachments.first
-          att&.destroy!
-          rp.destroy!
+          report = current_user.reports.find(params[:id])
+          attachment = report.attachments.first
+          attachment&.destroy!
+          report.destroy!
         end
       end
     end
