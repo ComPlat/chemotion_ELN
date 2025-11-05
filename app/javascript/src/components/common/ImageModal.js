@@ -1,7 +1,9 @@
 /* eslint-disable react/destructuring-assignment */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Modal, Button } from 'react-bootstrap';
+import {
+  Modal, Button, OverlayTrigger, Tooltip
+} from 'react-bootstrap';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import { stopEvent } from 'src/utilities/DomHelper';
 import { fetchImageSrcByAttachmentId } from 'src/utilities/imageHelper';
@@ -39,11 +41,9 @@ export default class ImageModal extends Component {
   }
 
   handleModalShow(e) {
-    if (!this.props.disableClick) {
-      stopEvent(e);
-      this.fetchImage();
-      this.setState({ showModal: true });
-    }
+    stopEvent(e);
+    this.fetchImage();
+    this.setState({ showModal: true });
   }
 
   handleImageError() {
@@ -82,27 +82,24 @@ export default class ImageModal extends Component {
     }
   }
 
+  showPopObject() {
+    const { thumbnail } = this.state;
+    const { attachment } = this.props;
+
+    return (
+      <Tooltip id="popObject" className="large-preview-modal">
+        <img src={thumbnail} alt={attachment?.filename} />
+      </Tooltip>
+    );
+  }
+
   render() {
     const {
-      showPop, popObject, attachment
+      popObject, attachment
     } = this.props;
     const {
       isPdf, fetchSrc, thumbnail
     } = this.state;
-
-    if (showPop) {
-      return (
-        <div className="preview-table">
-          <img
-            src={thumbnail}
-            alt={attachment?.filename}
-            style={{ cursor: 'default' }}
-            onError={this.handleImageError}
-
-          />
-        </div>
-      );
-    }
 
     return (
       <div>
@@ -113,11 +110,15 @@ export default class ImageModal extends Component {
           role="button"
           tabIndex={0}
         >
-          <img
-            src={thumbnail}
-            alt={attachment?.filename}
-            role="button"
-          />
+          <OverlayTrigger
+            placement="right"
+            overlay={this.showPopObject()}
+          >
+            <img
+              src={thumbnail}
+              alt={attachment?.filename}
+            />
+          </OverlayTrigger>
         </div>
         <Modal
           centered
@@ -176,14 +177,14 @@ ImageModal.propTypes = {
     filename: PropTypes.string,
     thumb: PropTypes.bool,
     identifier: PropTypes.string,
+    is_new: PropTypes.bool,
+    is_pending: PropTypes.bool,
+    file: PropTypes.shape({
+      type: PropTypes.string,
+      preview: PropTypes.string,
+    })
   }).isRequired,
-  showPop: PropTypes.bool.isRequired,
   popObject: PropTypes.shape({
     title: PropTypes.string,
   }).isRequired,
-  disableClick: PropTypes.bool,
-};
-
-ImageModal.defaultProps = {
-  disableClick: false,
 };
