@@ -1,0 +1,93 @@
+Ketcher 11182013472D 1   1.00000     0.00000     0
+
+  4  3  0     0  0            999 V2000
+   -1.2991    0.2500    0.0000 I   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4330   -0.2500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4330    0.2500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2991   -0.2500    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0     0  0
+  2  3  1  0     0  0
+  3  4  1  0     0  0
+M  END
+
+>  <IS_TOP_SECRET>
+false
+
+>  <DECOUPLED>
+false
+
+>  <MOLECULAR_MASS_(DECOUPLED)>
+
+
+>  <SUM_FORMULA_(DECOUPLED)>
+
+
+>  <STEREO_ABS>
+
+
+>  <STEREO_REL>
+
+
+>  <CAS>
+624-70-4
+
+>  <SAMPLE_NAME>
+CU1-R1-A
+
+>  <MOLECULE_NAME>
+1-chloro-2-iodoethane
+
+>  <EXTERNAL_LABEL>
+CU1-Nicky
+
+>  <SHORT_LABEL>
+CU1-212
+
+>  <REAL_AMOUNT>
+
+
+>  <REAL_UNIT>
+g
+
+>  <TARGET_AMOUNT>
+0.0
+
+>  <TARGET_UNIT>
+g
+
+>  <MOLARITY>
+0.0 M
+
+>  <DENSITY>
+0.8 g/mL
+
+>  <PURITY>
+1.0
+
+>  <SOLVENT>
+Benzene
+
+>  <LOCATION>
+room 23
+
+>  <DRY_SOLVENT>
+false
+
+
+>  <MELTING_PT>
+300.0 - 400.0
+
+>  <BOILING_PT>
+100.0 - 200.0
+
+>  <REFRACTIVE_INDEX>
+0.76
+
+>  <FLASH_POINT>
+23 °C
+
+
+>  <CANONICAL_SMILES>
+ClCCI
+
+$$$$

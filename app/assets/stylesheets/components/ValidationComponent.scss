@@ -1,0 +1,16 @@
+/* ValidationComponent styles */
+
+// Variables for better maintainability
+$invalid-row-bg-color: rgba(255, 0, 0, 0.2);
+$invalid-row-hover-bg-color: rgba(255, 0, 0, 0.3);
+
+// Main invalid row styles - scoped to AG-Grid to avoid global pollution
+.ag-theme-alpine {
+  .invalid-row {
+    background-color: $invalid-row-bg-color !important;
+
+    &:hover {
+      background-color: $invalid-row-hover-bg-color !important;
+    }
+  }
+}

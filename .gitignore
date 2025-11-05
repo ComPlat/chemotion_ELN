@@ -148,11 +148,12 @@
 /public/docx/*
 !/public/docx/.keep
 
-/public/xlsx/*
-!/public/xlsx/.keep
 
-/public/csv/*
+!/public/xlsx/.keep
+!/public/sdf/.keep
+
 !/public/csv/.keep
+!/public/tsv/.keep
 
 /public/html/*
 !/public/html/.keep
