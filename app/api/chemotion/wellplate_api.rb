@@ -38,13 +38,13 @@ module Chemotion
         end
         # we are using POST because the fetchers don't support GET requests with body data
         post do
-          cid = fetch_collection_id_w_current_user(params[:ui_state][:collection_id], false)
+          cid = Collection.accessible_for(current_user).find(params[:ui_state][:collection_id]).id
           wellplates = Wellplate
                        .includes_for_list_display
                        .by_collection_id(cid)
                        .by_ui_state(params[:ui_state])
                        .for_user(current_user.id)
-          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, wellplates).read?
+          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, wellplates).read_all?
 
           present wellplates, with: Entities::WellplateEntity, root: :wellplates, displayed_in_list: true
         end
@@ -65,7 +65,7 @@ module Chemotion
       get do
         scope = if params[:collection_id]
                   begin
-                    Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids)
+                    Collection.accessible_for(current_user)
                               .find(params[:collection_id]).wellplates
                   rescue ActiveRecord::RecordNotFound
                     Wellplate.none
