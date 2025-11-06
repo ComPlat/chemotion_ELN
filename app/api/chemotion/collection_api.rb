@@ -109,7 +109,7 @@ module Chemotion
         error!('Select the collections you want to export.', 403) if collection_ids.empty?
         error!('401 Unauthorized', 401) if all_collection_ids & collection_ids != collection_ids
 
-        ExportCollectionsJob.perform_now(collection_ids, 'zip', false, current_user.id)
+        ExportCollectionsJob.perform_later(collection_ids, 'zip', false, current_user.id)
 
         { status: 204 }
       end
