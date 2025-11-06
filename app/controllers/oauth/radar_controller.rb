@@ -9,7 +9,7 @@ class Oauth::RadarController < ApplicationController
     end
 
     # check if the collection exists and belongs to the user
-    collection = Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids).find_by(id: collection_id)
+    collection = Collection.accessible_for(current_user).find_by(id: collection_id)
     unless collection
       @error = 'You are not allowed to access this collection.'
       return render status: 403
@@ -41,7 +41,7 @@ class Oauth::RadarController < ApplicationController
     access_token = session[:radar_access_token]
 
     # get the collection and check if it exists and belongs to the user
-    collection = Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids).find_by(id: collection_id)
+    collection = Collection.accessible_for(current_user).find_by(id: collection_id)
     unless collection
       @error = 'You are not allowed to access this collection.'
       return render status: 403
@@ -96,7 +96,7 @@ class Oauth::RadarController < ApplicationController
     collection_id = session[:radar_collection_id]
 
     # get the collection and check if it exists and belongs to the user
-    collection = Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids).find_by(id: collection_id)
+    collection = Collection.accessible_for(current_user).find_by(id: collection_id)
     unless collection
       @error = 'You are not allowed to access this collection.'
       return render status: 403
