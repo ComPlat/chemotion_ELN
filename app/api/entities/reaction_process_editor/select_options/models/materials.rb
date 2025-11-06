@@ -31,8 +31,9 @@ module Entities
             diverse_solvents = Medium::DiverseSolvent.all
 
             intermediates = reaction.intermediate_samples
+            molecular_entities = reaction.sample_molecules
             {
-              MOLECULAR_ENTITIES: samples_info_options(samples, 'MOLECULAR_ENTITY'),
+              MOLECULAR_ENTITY: molecular_entity_options(molecular_entities),
               ADDITIVE: samples_info_options(Medium::Additive.all, 'ADDITIVE'),
               DIVERSE_SOLVENT: samples_info_options(diverse_solvents, 'DIVERSE_SOLVENT'),
               INTERMEDIATE: samples_info_options(intermediates, 'SAMPLE'),
