@@ -1,3 +1,5 @@
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 import React, { Component } from 'react';
 import SVG from 'react-inlinesvg';
 
@@ -13,6 +15,7 @@ import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollec
 import ReactionRole from 'src/apps/mydb/elements/list/reaction/ReactionRole';
 import ReactionVariations from 'src/apps/mydb/elements/list/reaction/ReactionVariations';
 import ReactionStatus from 'src/apps/mydb/elements/list/reaction/ReactionStatus';
+import ImageModal from 'src/components/common/ImageModal';
 
 export default class ElementsTableEntries extends Component {
   constructor(props) {
@@ -57,14 +60,19 @@ export default class ElementsTableEntries extends Component {
       );
     }
     if (element.type === 'research_plan' || element.element_klass) {
-      if (element.thumb_svg !== 'not available') {
+      if (element.preview_attachment !== 'not available') {
         return (
           <div
             className="flex-grow-1"
             style={svgContainerStyle}
             onClick={showDetails}
           >
-            <img src={`data:image/png;base64,${element.thumb_svg}`} alt="" role="button" />
+            <div className="attachment-row-image">
+              <ImageModal
+                attachment={element.preview_attachment}
+                popObject={{}}
+              />
+            </div>
           </div>
         );
       }
