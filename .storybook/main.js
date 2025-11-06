@@ -1,7 +1,7 @@
 /** @type { import('@storybook/react-webpack5').StorybookConfig } */
 import path from 'path';
 
-const BASE_URL = process.env.PUBLIC_URL || 'localhost:3000';
+const BASE_URL = process.env.PUBLIC_URL || 'http://localhost:3000';
 
 const config = {
   stories: [
