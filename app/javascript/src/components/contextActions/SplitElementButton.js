@@ -46,9 +46,9 @@ export default class SplitElementButton extends React.Component {
     const newGenericEls = state.genericEls;
 
     if (
-      typeof newLayout !== 'undefined' &&
-      newLayout !== null &&
-      newLayout !== layout
+      typeof newLayout !== 'undefined'
+      && newLayout !== null
+      && newLayout !== layout
     ) {
       this.setState({ layout: newLayout });
     }
@@ -74,7 +74,7 @@ export default class SplitElementButton extends React.Component {
     }
 
     const splitableElements = [
-      'sample', 'wellplate', 'device_description', 'sequence_based_macromolecule_sample',
+      'sample', 'wellplate', 'cell_line', 'device_description', 'sequence_based_macromolecule_sample',
       ...genericEls.map((el) => el.name)
     ];
 
@@ -99,11 +99,6 @@ export default class SplitElementButton extends React.Component {
     ElementActions.splitElements(UIStore.getState(), name);
   }
 
-  noSelected(name) {
-    const { selectedElements } = this.state;
-    return !selectedElements[name];
-  }
-
   isAllCollection() {
     const { currentCollection } = this.state;
     return currentCollection && currentCollection.label === 'All';
@@ -114,8 +109,8 @@ export default class SplitElementButton extends React.Component {
   }
 
   splitSelectionAsSubDeviceDescription() {
-    const uiState = UIStore.getState()
-    let params = {
+    const uiState = UIStore.getState();
+    const params = {
       ui_state: {
         device_description: {
           all: uiState.device_description.checkedAll,
@@ -125,7 +120,7 @@ export default class SplitElementButton extends React.Component {
         currentCollectionId: uiState.currentCollection.id,
         isSync: uiState.isSync,
       }
-    }
+    };
 
     ElementActions.splitAsSubDeviceDescription(params);
   }
@@ -148,7 +143,9 @@ export default class SplitElementButton extends React.Component {
   }
 
   render() {
-    const { layout, genericEls, showGenericEls, selectedElements } = this.state;
+    const {
+      layout, genericEls, showGenericEls, selectedElements
+    } = this.state;
 
     const sortedLayout = Object.entries(layout)
       .filter((o) => o[1] && o[1] > 0)
@@ -176,25 +173,25 @@ export default class SplitElementButton extends React.Component {
       >
         <Dropdown.Item
           onClick={() => this.splitSelectionAsSubsamples()}
-          disabled={!selectedElements['sample']}
+          disabled={!selectedElements.sample}
         >
           Split Sample
         </Dropdown.Item>
         <Dropdown.Item
           onClick={() => this.splitSelectionAsSubwellplates()}
-          disabled={!selectedElements['wellplate']}
+          disabled={!selectedElements.wellplate}
         >
           Split Wellplate
         </Dropdown.Item>
         <Dropdown.Item
           onClick={() => ElementActions.splitAsSubCellLines(UIStore.getState())}
-          disabled={this.noSelected('cell_line') || this.isAllCollection()}
+          disabled={!selectedElements.cell_line}
         >
           Split Cell line
         </Dropdown.Item>
         <Dropdown.Item
           onClick={() => this.splitSelectionAsSubDeviceDescription()}
-          disabled={this.noSelected('device_description') || this.isAllCollection()}
+          disabled={!selectedElements.device_description}
         >
           Split Device Description
         </Dropdown.Item>
@@ -211,7 +208,9 @@ export default class SplitElementButton extends React.Component {
             onClick={() => this.splitElements(`${el.name}`)}
             disabled={!selectedElements[el.name]}
           >
-            Split {el.label}
+            Split
+            {' '}
+            {el.label}
           </Dropdown.Item>
         ))}
       </DropdownButton>
