@@ -22,13 +22,13 @@ module Usecases
       private
 
       def user_ids
-        event = params[:eventable_type].constantize.find(params[:eventable_id])
-        collections = event.collections
+        eventable = params[:eventable_type].constantize.find(params[:eventable_id])
+        collections = eventable.collections
 
-        ids = collections.map(&:user_id)
-        ids += SyncCollectionsUser.where(collection_id: collections.map(&:id)).pluck(:user_id, :shared_by_id).flatten
+        ids = collections.map(&:user_id) # collection owners
+        ids += CollectionShare.where(collection_id: collections.ids).pluck(:shared_with_id)
 
-        ids
+        ids.uniq
       end
     end
   end

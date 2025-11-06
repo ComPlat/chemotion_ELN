@@ -3,19 +3,25 @@
 describe Chemotion::CalendarEntryAPI do
   include_context 'api request authorization context'
 
-  let(:creator) { user }
-  let(:calendar_entry) { create(:calendar_entry, :wellplate, creator: creator) }
-  let(:wellplate) { calendar_entry.eventable }
+  let(:user_collection) { create(:collection, user: user) }
+  let(:other_user) { create(:person) }
+  let(:other_user_collection) { create(:collection, user: other_user) }
+  let(:shared_collection) do
+    create(:collection, user: user).tap do |collection|
+      create(:collection_share, collection: collection, shared_with: other_user)
+    end
+  end
+  let(:wellplate) { create(:wellplate, collections: [user_collection]) }
+  let(:calendar_entry) { create(:calendar_entry, eventable: wellplate, creator: user) }
 
   describe 'GET /api/v1/calendar_entries' do
     let(:time) { Time.zone.parse('2023-06-01 13:00:00') }
-    let(:another_user) { create(:person) }
-    let(:reaction) { create(:reaction) }
+    let(:reaction) { create(:reaction, collections: [user_collection, other_user_collection, shared_collection]) }
     let(:own_sample_calendar_entry_in_range) do
       create(
         :calendar_entry,
-        :sample,
-        creator: creator,
+        eventable: create(:sample, creator: user, collections: [user_collection]),
+        creator: user,
         start_time: time + 30.minutes,
         end_time: time + 1.hour,
       )
@@ -23,9 +29,8 @@ describe Chemotion::CalendarEntryAPI do
     let(:own_reaction_calendar_entry_in_range) do
       create(
         :calendar_entry,
-        :reaction,
         eventable: reaction,
-        creator: creator,
+        creator: user,
         start_time: time + 30.minutes,
         end_time: time + 1.hour,
       )
@@ -33,9 +38,8 @@ describe Chemotion::CalendarEntryAPI do
     let(:other_reaction_calendar_entry_in_range) do
       create(
         :calendar_entry,
-        :reaction,
         eventable: reaction,
-        creator: another_user,
+        creator: other_user,
         start_time: time + 30.minutes,
         end_time: time + 1.hour,
       )
@@ -48,7 +52,7 @@ describe Chemotion::CalendarEntryAPI do
         :calendar_entry,
         :reaction,
         eventable: reaction,
-        creator: creator,
+        creator: user,
         start_time: time + 2.hours,
         end_time: time + 3.hours,
       )
@@ -57,28 +61,10 @@ describe Chemotion::CalendarEntryAPI do
       other_sample_calendar_entry_in_range = create(
         :calendar_entry,
         :sample,
-        creator: another_user,
+        creator: other_user,
         start_time: time + 30.minutes,
         end_time: time + 1.hour,
       )
-
-      collection = create(:collection, user_id: creator.id)
-      reaction.collections_reactions.create(collection_id: collection.id)
-      own_sample_calendar_entry_in_range.eventable.collections_samples.create(collection_id: collection.id)
-
-      another_collection = create(:collection, user_id: another_user.id)
-      reaction.collections_reactions.create(collection_id: another_collection.id)
-      other_sample_calendar_entry_in_range.eventable.collections_samples.create(collection_id: another_collection.id)
-
-      shared_collection = create(
-        :collection,
-        user_id: creator.id,
-        shared_by_id: another_user.id,
-        is_shared: true,
-        is_locked: true,
-        parent: another_collection,
-      )
-      reaction.collections_reactions.create(collection_id: shared_collection.id)
     end
 
     context 'with eventable type set' do
@@ -207,17 +193,15 @@ describe Chemotion::CalendarEntryAPI do
     end
 
     it 'returns users who have access to given eventable record' do
-      collection = create(:collection, user_id: creator.id)
+      another_user = create(:person)
+      collection = create(:collection, user: user).tap do |collection|
+        create(:collection_share, collection: collection, shared_with: another_user)
+      end
       wellplate.collections_wellplates.create(collection_id: collection.id)
-
-      _another_user = create(:person)
-
-      sync_user = create(:person)
-      _sync_collection = collection.sync_collections_users.create(user: sync_user, sharer: creator)
 
       get '/api/v1/calendar_entries/eventable_users', params: params
 
-      expect(parsed_json_response['users'].pluck('id')).to eq [sync_user.id]
+      expect(parsed_json_response['users'].pluck('id')).to eq [another_user.id]
     end
   end
 
@@ -229,9 +213,6 @@ describe Chemotion::CalendarEntryAPI do
     end
 
     it 'returns an ical file' do
-      collection = create(:collection, user_id: creator.id)
-      wellplate.collections_wellplates.create(collection_id: collection.id)
-
       get '/api/v1/calendar_entries/ical', params: params
 
       expect(response.header['Content-Type']).to include 'text/calendar'
