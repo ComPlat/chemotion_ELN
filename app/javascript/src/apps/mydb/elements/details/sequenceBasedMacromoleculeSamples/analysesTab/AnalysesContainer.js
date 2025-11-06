@@ -95,6 +95,7 @@ const AnalysesContainer = ({ readonly }) => {
                   <Card.Body>
                     <ContainerComponent
                       disabled={readonly}
+                      element={sequenceBasedMacromoleculeSample}
                       readOnly={readonly}
                       templateType="sbmmSample"
                       container={container}
