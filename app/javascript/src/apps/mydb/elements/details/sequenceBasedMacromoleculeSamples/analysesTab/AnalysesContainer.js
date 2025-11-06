@@ -90,29 +90,31 @@ const AnalysesContainer = ({ readonly }) => {
           </Card.Header>
           {
             !container.is_deleted && sbmmStore.analysis_mode === 'edit' && (
-              <Accordion.Collapse eventKey={container.id}>
-                <Card.Body>
-                  <ContainerComponent
-                    disabled={readonly}
-                    readOnly={readonly}
-                    templateType="sbmmSample"
-                    container={container}
-                    onChange={() => sbmmStore.changeAnalysisContainerContent(container)}
-                    rootContainer={sbmmSample.container}
-                    index={index}
-                  />
-                  <ViewSpectra
-                    sample={sbmmSample}
-                    handleSampleChanged={handleSpectraChange}
-                    handleSubmit={handleSpectraSubmit}
-                  />
-                  <NMRiumDisplayer
-                    sample={sbmmSample}
-                    handleSampleChanged={handleSpectraChange}
-                    handleSubmit={handleSpectraSubmit}
-                  />
-                </Card.Body>
-              </Accordion.Collapse>
+              <>
+                <Accordion.Collapse eventKey={container.id}>
+                  <Card.Body>
+                    <ContainerComponent
+                      disabled={readonly}
+                      readOnly={readonly}
+                      templateType="sbmmSample"
+                      container={container}
+                      onChange={() => sbmmStore.changeAnalysisContainerContent(container)}
+                      rootContainer={sbmmSample.container}
+                      index={index}
+                    />
+                  </Card.Body>
+                </Accordion.Collapse>
+                <ViewSpectra
+                  sample={sbmmSample}
+                  handleSampleChanged={handleSpectraChange}
+                  handleSubmit={handleSpectraSubmit}
+                />
+                <NMRiumDisplayer
+                  sample={sbmmSample}
+                  handleSampleChanged={handleSpectraChange}
+                  handleSubmit={handleSpectraSubmit}
+                />
+              </>
             )
           }
         </Card>
