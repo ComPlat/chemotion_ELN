@@ -31,6 +31,23 @@ module Entities
           end
         end
 
+        def molecular_entity_options(molecules)
+          molecules.map do |molecule|
+            molecule_option(molecule)
+          end
+        end
+
+        def molecule_option(molecule)
+          return {} unless molecule
+
+          {
+            id: molecule.id,
+            value: molecule.id,
+            label: molecule.iupac_name,
+            svg_file: molecule.molecule_svg_file,
+          }
+        end
+
         def samples_info_options(samples, acts_as)
           samples.map do |sample|
             sample_info_option(sample, acts_as)
@@ -54,7 +71,7 @@ module Entities
                 mg: sample.amount_mg,
                 ml: sample.amount_ml,
               },
-              sample_svg_file: sample&.sample_svg_file,
+              svg_file: sample&.sample_svg_file,
               icon: sample&.sample_svg_file,
             },
           )
