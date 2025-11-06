@@ -93,7 +93,7 @@ export default class ElementDetailSortTab extends Component {
     const { tabTitles } = this.props;
     const { currentCollection } = UIStore.getState();
     const isOwnCollection = this.context.collections.isOwnCollection(currentCollection?.id);
-    const allCollection = currentCollection.is_locked && currentCollection.label === 'All';
+    const allCollection = currentCollection?.is_locked && currentCollection.label === 'All';
     if (!isOwnCollection && !allCollection) { return null; }
 
     const popoverSettings = (
