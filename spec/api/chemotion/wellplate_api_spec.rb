@@ -347,7 +347,7 @@ describe Chemotion::WellplateAPI do
   describe 'GET /api/v1/wellplates/template' do
     context 'when wellplate does not exit' do
       before do
-        get '/api/v1/wellplates/template/-1', params: {}
+        get '/api/v1/wellplates/template/0', params: {}
       end
 
       it 'return 401 status code' do

@@ -25,7 +25,7 @@ RSpec.describe Chemotion::ManualSdsService do
 
   let(:file_paths) { ['testvendor_ABC123.pdf', '/safety_sheets/testvendor_ABC123.pdf'] }
 
-  let(:factory_service) { described_class.new(valid_params) }
+  let(:factory_service) { described_class.new(**valid_params) }
 
   describe '.create_manual_sds' do
     let(:service_instance) { instance_double(described_class) }
@@ -45,7 +45,7 @@ RSpec.describe Chemotion::ManualSdsService do
 
   describe '#initialize' do
     let(:params) { valid_params.merge(chemical_data: '{"key": "value"}') }
-    let(:service) { described_class.new(params) }
+    let(:service) { described_class.new(**params) }
 
     it 'sets sample_id correctly' do
       expect(service.instance_variable_get(:@sample_id)).to eq(1)
@@ -79,7 +79,7 @@ RSpec.describe Chemotion::ManualSdsService do
   describe '#create' do
     shared_examples 'validation error' do |missing_param, error_message|
       let(:params) { valid_params.except(missing_param) }
-      let(:service) { described_class.new(params) }
+      let(:service) { described_class.new(**params) }
 
       it "returns error when #{missing_param} is missing" do
         expect(service.create).to eq({ error: error_message })
@@ -92,7 +92,7 @@ RSpec.describe Chemotion::ManualSdsService do
 
     shared_examples 'invalid JSON error' do |param, value, error_message|
       let(:params) { valid_params.merge(param => value) }
-      let(:service) { described_class.new(params) }
+      let(:service) { described_class.new(**params) }
 
       it "returns error for invalid #{param}" do
         expect(service.create).to eq({ error: error_message })
@@ -107,7 +107,7 @@ RSpec.describe Chemotion::ManualSdsService do
 
   # File processing tests
   describe 'file processing' do
-    let(:service) { described_class.new(valid_params) }
+    let(:service) { described_class.new(**valid_params) }
 
     context 'when file processing succeeds' do
       before do
@@ -139,7 +139,7 @@ RSpec.describe Chemotion::ManualSdsService do
     end
 
     context 'when file processing raises an exception' do
-      let(:error_service) { described_class.new(valid_params) }
+      let(:error_service) { described_class.new(**valid_params) }
 
       it 'returns an error when processing raises an exception' do
         allow(Chemotion::GenerateFileHashUtils).to receive(:generate_full_hash).and_raise(StandardError, 'File error')
@@ -149,7 +149,7 @@ RSpec.describe Chemotion::ManualSdsService do
   end
 
   describe 'private utility methods' do
-    let(:service) { described_class.new(valid_params) }
+    let(:service) { described_class.new(**valid_params) }
 
     describe '#parse_json_param' do
       it 'returns the original object if not a string' do
@@ -167,7 +167,7 @@ RSpec.describe Chemotion::ManualSdsService do
   end
 
   describe 'file hash and deduplication functionality' do
-    let(:service) { described_class.new(valid_params) }
+    let(:service) { described_class.new(**valid_params) }
 
     describe '#compute_file_hash' do
       it 'delegates to GenerateFileHashUtils and returns hash' do

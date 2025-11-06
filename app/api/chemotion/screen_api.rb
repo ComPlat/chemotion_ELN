@@ -190,7 +190,7 @@ module Chemotion
           component_graph_data: params[:component_graph_data],
         }
 
-        screen = Screen.create(attributes)
+        screen = Screen.create(**attributes)
 
         screen.container = update_datamodel(params[:container])
         update_element_labels(screen, params[:user_labels], current_user.id)

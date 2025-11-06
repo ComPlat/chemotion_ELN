@@ -83,7 +83,7 @@ describe Chemotion::ThirdPartyAppAPI do
 
     context 'when update is not possible' do
       before do
-        put '/api/v1/third_party_apps/admin/-1', params: { url: 'changedUrl', name: 'changedName' }
+        put '/api/v1/third_party_apps/admin/0', params: { url: 'changedUrl', name: 'changedName' }
       end
 
       it 'status code is 404' do
@@ -132,7 +132,7 @@ describe Chemotion::ThirdPartyAppAPI do
 
     context 'when 3PA is not available' do
       before do
-        get '/api/v1/third_party_apps/-1'
+        get '/api/v1/third_party_apps/0'
       end
 
       it 'Response code is 404' do
