@@ -1,0 +1,14 @@
+.mixture-components-table {
+  .component-name-container {
+    display: inline-block;
+    max-width: 100%;
+  }
+
+  .component-name-text {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+}

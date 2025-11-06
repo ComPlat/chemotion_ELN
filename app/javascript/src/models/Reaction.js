@@ -460,7 +460,7 @@ export default class Reaction extends Element {
     copy.short_label = Reaction.buildReactionShortLabel();
     copy.starting_materials = this.starting_materials.map(sample => {
       const copiedSample = Sample.copyFromSampleAndCollectionId(sample, copy.collection_id);
-      copiedSample._real_amount_value = null; 
+      copiedSample._real_amount_value = null;
       return copiedSample;
     });
     copy.reactants = this.reactants.map(
@@ -714,19 +714,15 @@ export default class Reaction extends Element {
   }
 
   _coerceToSamples(samples) {
-    return samples && samples.map(s => new Sample(s)) || []
+    return samples && samples.map((s) => new Sample(s)) || []
   }
 
   sampleById(sampleID) {
-    return this.samples.find((sample) => {
-      return sample.id == sampleID;
-    })
+    return this.samples.find((sample) => sample.id == sampleID)
   }
 
   get referenceMaterial() {
-    return this.samples.find((sample) => {
-      return sample.reference;
-    })
+    return this.samples.find((sample) => sample.reference);
   }
 
   get sampleCount() {
@@ -1057,6 +1053,57 @@ export default class Reaction extends Element {
       moles = (amount * purity) / molecularWeight;
     }
     return moles;
+  }
+
+  /**
+   * Calculates the combined volume of all reaction materials (solvent + starting_materials + reactants + products).
+   *
+   * @method calculateCombinedReactionVolume
+   * @memberof Reaction
+   * @returns {number|null} Combined volume in liters, or null if invalid
+   */
+  calculateCombinedReactionVolume() {
+    let totalVolume = 0;
+
+    // Add solvent volume
+    if (Number.isFinite(this.solventVolume) && this.solventVolume > 0) {
+      totalVolume += this.solventVolume;
+    }
+
+    // Add volumes from starting materials, reactants, and products
+    const allMaterials = [
+      ...(this.starting_materials || []),
+      ...(this.reactants || []),
+      ...(this.products || [])
+    ];
+
+    allMaterials.forEach((material) => {
+      if (material && Number.isFinite(material.amount_l) && material.amount_l > 0) {
+        totalVolume += material.amount_l;
+      }
+    });
+
+    return totalVolume > 0 ? totalVolume : null;
+  }
+
+  /**
+   * Updates concentrations for all materials in the reaction when volumes change.
+   * This should be called whenever any material's amount_l changes.
+   *
+   * @method updateAllConcentrations
+   * @memberof Reaction
+   * @returns {void}
+   */
+  updateAllConcentrations() {
+    const allMaterials = [
+      ...(this.starting_materials || []),
+      ...(this.reactants || []),
+      ...(this.products || [])
+    ];
+
+    allMaterials.forEach((material) => {
+      material.updateConcentrationFromSolvent(this);
+    });
   }
 
   isFeedstockMaterialPresent() {

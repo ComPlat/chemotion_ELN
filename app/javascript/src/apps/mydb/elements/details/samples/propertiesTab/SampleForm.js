@@ -164,6 +164,16 @@ export default class SampleForm extends React.Component {
     this.props.sample.setMolecularMass(mass);
   }
 
+  handleMixtureAmountLChanged(e, sample) {
+    // Your specific function logic here
+    // For example, you can call sample.setTotalMixtureVolume or any other custom logic
+    const totalVolume = e && (e.value || e.value === 0) ? e.value : e;
+    sample.setTotalMixtureVolume(totalVolume);
+
+    // Call the standard field change handler
+    this.handleFieldChanged('amount_l', e);
+  }
+
   handleMixtureComponentChanged(sample) {
     this.props.handleSampleChanged(sample);
   }
@@ -796,25 +806,63 @@ export default class SampleForm extends React.Component {
    * @param {Object} sample - The sample object
    * @returns {JSX.Element|false} The rendered input or false if not applicable
    */
-  totalAmount(sample) {
-    const isDisabled = !sample.can_update;
+  totalMixtureVolume(sample) {
+    const isDisabled = sample.isMethodDisabled('amount_value') ||
+      sample.contains_residues ||
+      !sample.can_update;
 
-    if (!sample.isMethodDisabled('amount_value') && !sample.contains_residues) {
-      return this.numInput(
-        sample,
-        'amount_l',
-        'l',
-        ['m', 'u', 'n'],
-        5,
-        'Total volume',
-        'l',
-        isDisabled,
-        '',
-        false,
-        false,
-        true
+    const metricPrefixes = ['m', 'u', 'n'];
+    const prefix = sample.metrics?.[3] && metricPrefixes.includes(sample.metrics[3])
+      ? sample.metrics[3]
+      : 'm';
+
+    if (!isDisabled) {
+      return (
+        <NumeralInputWithUnitsCompo
+          value={sample.amount_l}
+          unit="l"
+          label="Total volume"
+          metricPrefix={prefix}
+          metricPrefixes={metricPrefixes}
+          precision={5}
+          title="Total volume"
+          variant="light"
+          id="numInput_total_mixture_volume_l"
+          showInfoTooltipTotalVol
+          onChange={(e) => this.handleMixtureAmountLChanged(e, sample)}
+        />
       );
     }
+  }
+
+  /**
+   * Renders the mixture density display.
+   * @param {Object} sample - The sample object
+   * @returns {JSX.Element} The rendered density display
+   */
+  totalMixtureDensity(sample) {
+    const isDisabled = !sample.can_update;
+
+    if (isDisabled) return null;
+
+    const density = sample.density || 0;
+
+    return (
+      <div>
+        <NumeralInputWithUnitsCompo
+          value={density}
+          unit="g/ml"
+          label="Mixture density"
+          metricPrefix="n"
+          metricPrefixes={['n']}
+          precision={3}
+          title="Mixture density"
+          variant="light"
+          id="numInput_total_mixture_density"
+          disabled={true}
+        />
+      </div>
+    );
   }
 
   /**
@@ -849,14 +897,12 @@ export default class SampleForm extends React.Component {
    */
   totalMixtureMass() {
     const { sample } = this.props;
-    const massG = sample.total_mixture_mass_g;
-
-    if (massG === null) return null;
+    const massG = sample.amount_g || sample.total_mixture_mass_g;
 
     return (
-      <div className="me-3">
+      <div>
         <NumeralInputWithUnitsCompo
-          value={massG}
+          value={massG || 0}
           unit="g"
           label="Total mixture mass"
           metricPrefix="m"
@@ -1141,13 +1187,18 @@ export default class SampleForm extends React.Component {
           <>
             <br/>
             <h5>Mixture components:</h5>
-            <Row className="mb-4 justify-content-end">
-              <Col xs={10} className="d-flex align-items-center justify-content-end">
-                <div className="me-3">
-                  {this.totalRequiredAmount()}
-                </div>
+            <Row className="mb-4 g-2">
+              <Col xs={12} sm={6} lg={3}>
                 {this.totalMixtureMass()}
-                {this.totalAmount(sample)}
+              </Col>
+              <Col xs={12} sm={6} lg={3}>
+                {this.totalMixtureDensity(sample)}
+              </Col>
+              <Col xs={12} sm={6} lg={3}>
+                {this.totalRequiredAmount()}
+              </Col>
+              <Col xs={12} sm={6} lg={3}>
+                {this.totalMixtureVolume(sample)}
               </Col>
             </Row>
 
