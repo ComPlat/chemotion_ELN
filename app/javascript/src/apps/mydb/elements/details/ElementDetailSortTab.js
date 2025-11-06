@@ -174,7 +174,7 @@ export default class ElementDetailSortTab extends Component {
 =======
     const { currentCollection } = UIStore.getState();
     const isOwnCollection = this.context.collections.isOwnCollection(currentCollection?.id);
-    const allCollection = currentCollection.is_locked && currentCollection.label === 'All';
+    const allCollection = currentCollection?.is_locked && currentCollection.label === 'All';
     if (!isOwnCollection && !allCollection) { return null; }
 >>>>>>> 1473ac081 (Fix routes, remove collection action from element detail sort tab)
 
