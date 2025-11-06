@@ -72,15 +72,12 @@ describe Chemotion::ResearchPlanAPI do
     end
 
     describe 'POST /api/v1/research_plans/:id/import_wellplate/:wellplate_id' do
-      let(:collection) { create(:collection, user_id: user.id, is_shared: true, permission_level: 3) }
-      let(:wellplate) { create(:wellplate, :with_random_wells, number_of_readouts: 3) }
-      let(:research_plan) { create(:research_plan, creator: user) }
+      let(:collection) { create(:collection, user: user) }
+      let(:wellplate) { create(:wellplate, :with_random_wells, number_of_readouts: 3, collections: [collection]) }
+      let(:research_plan) { create(:research_plan, creator: user, collections: [collection]) }
       let(:params) { { research_plan_id: research_plan.id } }
 
       before do
-        CollectionsWellplate.create!(wellplate: wellplate, collection: collection)
-        CollectionsResearchPlan.create!(research_plan: research_plan, collection: collection)
-
         post "/api/v1/research_plans/#{research_plan.id}/import_wellplate/#{wellplate.id}", params: params, as: :json
       end
 
