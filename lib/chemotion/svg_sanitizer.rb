@@ -1,76 +1,108 @@
 # frozen_string_literal: true
 
-require 'uri'
 require 'nokogiri'
 
 module Chemotion
   class SvgSanitizer
-    # SAFE_TAGS = %w[
-    #   svg
-    #   g
-    #   path
-    #   rect
-    #   circle
-    #   ellipse
-    #   line
-    #   polyline
-    #   polygon
-    #   text
-    #   tspan
-    #   defs
-    #   use
-    #   clipPath
-    #   symbol
-    #   feColorMatrix
-    #   filter
-    #   feImage
-    #   feComposite
-    #   mask
-    # ]
-    SAFE_ATTRIBUTES = %w[
-      d fill fill-opacity fill-rule filter font font-size height href id
-      mask stroke stroke-linecap stroke-linejoin stroke-miterlimit
-      stroke-opacity stroke-width style text-anchor transform version viewBox
-      width x y dy xmlns xmlns:xlink xlink:href preserveAspectRatio
-      stroke-dasharray clip-path opacity rx ry cx cy r
-      in in2 operator values result k1 k2 k3 k4 color-interpolation-filters
-      stdDeviation flood-color flood-opacity gradientUnits stop-color
-      stop-opacity patternUnits
-    ]
+    BLOCKED_TAGS = %w[
+      script foreignobject iframe embed object audio video style link meta
+    ].freeze
 
-    def self.sanitize(svg_string)
-      doc = Nokogiri::XML(svg_string) { |config| config.recover }
-      doc.traverse do |node|
-        # unless SAFE_TAGS.include?(node.name)
-        #   node.remove
-        #   next
-        # end
+    BLOCKED_ATTRIBUTES = %w[
+      onabort onclick ondblclick onerror onfocus onkeydown onkeypress
+      onkeyup onload onmousedown onmousemove onmouseout onmouseover
+      onmouseup onreset onresize onscroll onselect onsubmit onunload
+      onchange oninput onanimationstart onanimationend onanimationiteration
+      onblur oncancel oncanplay oncontextmenu
+    ].freeze
 
-        node.attribute_nodes.each do |attr|
-          attr_name = attr.node_name # includes namespace if present, e.g., "xlink:href"
+    BLOCKED_SCHEMES = %w[javascript vbscript livescript mocha data file about mhtml].freeze
 
-          unless SAFE_ATTRIBUTES.include?(attr_name)
-            attr.remove
-            next
-          end
-
-          # Remove javascript: URIs (even within styles)
-          if %w[href xlink:href].include?(attr.name) && attr.value =~ /^\s*javascript:/i
-            attr.remove
-            next
-          end
-
-          # Sanitize style attribute URLs
-          if attr.name == 'style' && attr.value =~ /url\(['"]?\s*javascript:/i
-            attr.remove
-            next
-          end
-        end
+    class << self
+      def sanitize(svg_string)
+        doc = parse_svg(svg_string)
+        clean_document(doc)
+        format_output(doc)
       end
 
-      # Explicitly remove dangerous nodes/attrs
-      doc.xpath('//script|//foreignObject|//@onload').each(&:remove)
-      doc.to_xml
+      private
+
+      def parse_svg(svg_string)
+        Nokogiri::XML(svg_string, &:recover)
+      end
+
+      def clean_document(doc)
+        doc.traverse { |node| process_node(node) }
+      end
+
+      def process_node(node)
+        return unless node.element?
+
+        return node.remove if blocked_tag?(node)
+
+        clean_attributes(node)
+      end
+
+      def blocked_tag?(node)
+        BLOCKED_TAGS.include?(node.name.downcase)
+      end
+
+      def clean_attributes(node)
+        node.attribute_nodes.each { |attr| check_and_clean_attribute(node, attr) }
+      end
+
+      def check_and_clean_attribute(node, attr)
+        attribute = AttributeValidator.new(attr)
+        return unless attribute.valid?
+
+        remove_if_dangerous(node, attribute)
+      end
+
+      def remove_if_dangerous(node, attribute)
+        node.remove_attribute(attribute.name) if attribute.dangerous?
+      end
+
+      def format_output(doc)
+        doc.to_xml(save_with: Nokogiri::XML::Node::SaveOptions::NO_DECLARATION)
+      end
+    end
+
+    # Encapsulates attribute validation logic
+    class AttributeValidator
+      attr_reader :name, :value
+
+      def initialize(attr)
+        @name = attr.name.downcase
+        @value = attr.value.to_s.strip
+      end
+
+      def valid?
+        name && value
+      end
+
+      def dangerous?
+        dangerous_name? || dangerous_value?
+      end
+
+      private
+
+      def dangerous_name?
+        name.start_with?('on') || BLOCKED_ATTRIBUTES.include?(name)
+      end
+
+      def dangerous_value?
+        dangerous_scheme? || contains_javascript?
+      end
+
+      def dangerous_scheme?
+        return false unless value =~ /\A([a-z0-9+-]+):/i
+
+        BLOCKED_SCHEMES.include?(::Regexp.last_match(1).downcase)
+      end
+
+      def contains_javascript?
+        value.match?(/\bjavascript\s*:/i)
+      end
     end
   end
 end
