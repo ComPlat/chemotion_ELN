@@ -178,7 +178,7 @@ export default class TemplateManagement extends React.Component {
           onDrop={attachment_file => this.handleFileDrop(attachment_file)}
           className='d-flex align-items-center justify-content-center dnd-zone'
         >
-          <div className='text-center pt-3 text-secondary fs-6'>
+          <div className='text-center pt-3 text-lighten2 fs-6'>
             Drop File, or Click to Select.
           </div>
         </Dropzone>

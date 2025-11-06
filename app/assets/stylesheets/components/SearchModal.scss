@@ -1,6 +1,4 @@
 .accordion.search-modal {
-  --bs-accordion-active-bg: var(--bs-info);
-  --bs-accordion-btn-bg: var(--bs-secondary-border-subtle);
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -13,8 +11,6 @@
 .accordion.search-modal .accordion-button {
   font-size: 1.2rem;
   color: var(--bs-gray-800);
-  background-color: var(--bs-secondary-border-subtle);
-  background-color: color-mix(in srgb, var(--bs-info) 70%, var(--bs-gray-800));
 }
 
 .accordion.search-modal .accordion-button.active {
@@ -44,7 +40,10 @@
   overflow: hidden;
 }
 
-.advanced-search-content-header, .advanced-search-buttons, .result-content-header, .draggable-modal-form-buttons {
+.advanced-search-content-header,
+.advanced-search-buttons,
+.result-content-header,
+.draggable-modal-form-buttons {
   flex: 0 0 auto;
 }
 
@@ -61,7 +60,8 @@
   margin-top: 0;
 }
 
-.advanced-search-buttons, .draggable-modal-form-buttons {
+.advanced-search-buttons,
+.draggable-modal-form-buttons {
   gap: 0.5rem;
 }
 
@@ -73,7 +73,8 @@
   align-self: flex-start;
 }
 
-.advanced-search-toggle-elements, .advanced-search-result-toggle-elements {
+.advanced-search-toggle-elements,
+.advanced-search-result-toggle-elements {
   flex-wrap: wrap;
 
   .btn-outline-dark {
@@ -97,13 +98,15 @@
   .btn-check:checked + .btn,
   :not(.btn-check) + .btn:active,
   .btn:first-child:active,
-  .btn.active, .btn.show {
+  .btn.active,
+  .btn.show {
     --bs-btn-active-bg: var(--bs-info);
     --bs-btn-active-color: var(--bs-primary);
     --bs-btn-hover-color: var(--bs-gray-500);
   }
 
-  .btn-check + .btn:hover, :not(.btn-check) + btn:hover {
+  .btn-check + .btn:hover,
+  :not(.btn-check) + btn:hover {
     color: var(--bs-gray-600);
   }
 
@@ -152,7 +155,7 @@
 }
 
 .advanced-detail-switch-label .advanced-detail-switch-button {
-  content: '';
+  content: "";
   position: absolute;
   top: 2px;
   right: 2px;
@@ -250,7 +253,8 @@
   }
 }
 
-.detail-search-headline, .detail-search-segment-headline {
+.detail-search-headline,
+.detail-search-segment-headline {
   flex-basis: 100%;
   font-weight: 700;
   font-size: 1.15em;
