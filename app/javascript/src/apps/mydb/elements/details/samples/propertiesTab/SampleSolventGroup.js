@@ -11,7 +11,16 @@ import { ionic_liquids } from 'src/components/staticDropdownOptions/ionic_liquid
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 
-function SolventDetails({ solvent, deleteSolvent, onChangeSolvent, sampleType }) {
+function SolventDetails({
+  solvent, deleteSolvent, onChangeSolvent, sampleType
+}) {
+  const [purityInput, setPurityInput] = React.useState(solvent?.purity ?? 1.0);
+
+  // Update when solvent prop changes (important if parent updates solvents)
+  React.useEffect(() => {
+    setPurityInput(solvent.purity ?? 1.0);
+  }, [solvent.purity]);
+
   if (!solvent) {
     return null;
   }
@@ -31,8 +40,41 @@ function SolventDetails({ solvent, deleteSolvent, onChangeSolvent, sampleType })
     onChangeSolvent(solvent);
   };
 
+  /**
+   * Handles purity input changes while typing.
+   * Updates the input field state to show what the user types (including invalid values)
+   * and displays an error notification if the parsed value is outside the valid range (0-1).
+   *
+   * @param {React.ChangeEvent<HTMLInputElement>} event - The change event from the input field
+   */
   const changePurity = (event) => {
-    solvent.purity = event.target.value;
+    const { value } = event.target;
+    setPurityInput(value);
+
+    const num = parseFloat(value);
+    if (!Number.isNaN(num) && (num < 0 || num > 1)) {
+      NotificationActions.add({
+        message: 'Purity value should be ≥ 0 and ≤ 1',
+        level: 'error',
+      });
+    }
+  };
+
+  /**
+   * Handles purity input blur event.
+   * Validates the current input value and commits it to the solvent object.
+   * If the value is invalid (NaN, < 0, or > 1), it resets to the default value of 1.0.
+   * Updates both the local state and the solvent object, then notifies the parent component.
+   */
+  const handlePurityBlur = () => {
+    let num = parseFloat(purityInput);
+
+    if (Number.isNaN(num) || num < 0 || num > 1) {
+      num = 1.0; // Reset to default valid value
+    }
+
+    solvent.purity = num;
+    setPurityInput(num); // Update input field
     onChangeSolvent(solvent);
   };
 
@@ -72,7 +114,7 @@ function SolventDetails({ solvent, deleteSolvent, onChangeSolvent, sampleType })
       )}
       <td>
         <Form.Control
-          type="number"
+          type="text"
           name="solvent_ratio"
           value={solvent.ratio}
           onChange={changeRatio}
@@ -80,10 +122,11 @@ function SolventDetails({ solvent, deleteSolvent, onChangeSolvent, sampleType })
       </td>
       <td>
         <Form.Control
-          type="number"
+          type="text"
           name="solvent_purity"
-          value={solvent.purity || 1.0}
+          value={purityInput}
           onChange={changePurity}
+          onBlur={handlePurityBlur}
         />
       </td>
       <td>
@@ -106,7 +149,7 @@ function SolventDetails({ solvent, deleteSolvent, onChangeSolvent, sampleType })
             justifyContent: 'center'
           }}
         >
-          <i className="fa fa-trash-o fa-lg"/>
+          <i className="fa fa-trash-o fa-lg" />
         </Button>
       </td>
     </tr>

@@ -19,6 +19,12 @@ import ComponentStore from 'src/stores/alt/stores/ComponentStore';
 import ComponentActions from 'src/stores/alt/actions/ComponentActions';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
+import {
+  getMetricMol,
+  getMetricMolConc,
+  metricPrefixesMol,
+  metricPrefixesMolConc
+} from 'src/utilities/MetricsUtils';
 
 /**
  * Drag source specification for material drag-and-drop.
@@ -396,17 +402,19 @@ class SampleComponent extends Component {
    */
   generateMolecularWeightTooltipText(material) {
     const molecularWeight = material.decoupled
-      ? (material.molecular_mass) : (material.molecule && material.molecule.molecular_weight);
+      ? material.molecular_mass
+      : (material.molecule && material.molecule.molecular_weight);
 
-    let tooltipText = molecularWeight ? `molar mass: ${molecularWeight.toFixed(6)} g/mol` : 'molar mass: N/A';
-
-    // Add relative molecular weight if available
     const relativeMolecularWeight = material.component_properties?.relative_molecular_weight;
-    if (relativeMolecularWeight && relativeMolecularWeight > 0) {
-      tooltipText += `\nrelative molecular weight: ${relativeMolecularWeight.toFixed(6)} g/mol`;
-    }
 
-    return tooltipText;
+    return (
+      <>
+        <div>molar mass: {molecularWeight ? molecularWeight.toFixed(6) : "N/A"} g/mol</div>
+        {relativeMolecularWeight > 0 && (
+          <div>relative molecular weight: {relativeMolecularWeight.toFixed(6)} g/mol</div>
+        )}
+      </>
+    );
   }
 
   /**
@@ -484,7 +492,7 @@ class SampleComponent extends Component {
             disabled={!permitOn(sample) || lockAmountColumnSolids}
             onChange={(e) => this.handleAmountChange(e, material.amount_g, '', lockAmountColumnSolids)}
             onMetricsChange={this.handleMetricsChange}
-            variant={material.error_mass ? 'danger' : massBsStyle}
+            variant={material.amount_unit === 'g' ? 'primary' : 'light'}
             name="molecular-weight"
           />
         </div>
@@ -635,7 +643,7 @@ class SampleComponent extends Component {
           checked={material.reference}
           onChange={(e) => this.handleReferenceChange(e)}
           size="xsm"
-          className="m-0"
+          className="m-0 ms-2"
         />
       </td>
     );
@@ -695,11 +703,8 @@ class SampleComponent extends Component {
     const {
       sample, material, deleteMaterial, connectDragSource, connectDropTarget, activeTab, enableComponentPurity
     } = props;
-    const metricPrefixes = ['m', 'n', 'u'];
-    const metricPrefixesMol = ['m', 'n'];
-    const metricMol = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[2]) > -1) ? material.metrics[2] : 'm';
-    const metricPrefixesMolConc = ['m', 'n'];
-    const metricMolConc = (material.metrics && material.metrics.length > 3 && metricPrefixes.indexOf(material.metrics[3]) > -1) ? material.metrics[3] : 'm';
+    const metricMol = getMetricMol(material);
+    const metricMolConc = getMetricMolConc(material);
 
     return (
       <tr className="general-material">
@@ -766,11 +771,9 @@ class SampleComponent extends Component {
     } = props;
     const metricPrefixes = ['m', 'n', 'u'];
     const metric = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[0]) > -1) ? material.metrics[0] : 'm';
-    const metricPrefixesMol = ['m', 'n'];
-    const metricMol = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[2]) > -1) ? material.metrics[2] : 'm';
-    const massBsStyle = material.amount_unit === 'g' ? 'primary' : 'light';
-    const metricPrefixesMolConc = ['m', 'n'];
-    const metricMolConc = (material.metrics && material.metrics.length > 3 && metricPrefixes.indexOf(material.metrics[3]) > -1) ? material.metrics[3] : 'm';
+    const metricMol = getMetricMol(material);
+    const massBsStyle = material.amount_unit === 'g' ? 'success' : 'light';
+    const metricMolConc = getMetricMolConc(material);
 
     return (
       <tr className="general-material">
