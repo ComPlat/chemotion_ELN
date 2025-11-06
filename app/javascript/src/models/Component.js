@@ -36,7 +36,7 @@ export default class Component extends Sample {
    * @returns {string} The formatted molecular weight text (e.g., " (180.16 g/mol)") or an empty string.
    */
   get molecularWeightText() {
-    const mw = this.molecule.molecular_weight;
+    const mw = this.molecule?.molecular_weight;
     const MWPrecision = 2;
     return (typeof mw === 'number' && Number.isFinite(mw))
       ? ` (${mw.toFixed(MWPrecision)} g/mol)`

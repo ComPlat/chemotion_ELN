@@ -3,6 +3,7 @@ import alt from 'src/stores/alt/alt';
 
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
+import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import UIFetcher from 'src/fetchers/UIFetcher';
@@ -408,6 +409,9 @@ class ElementActions {
       SamplesFetcher.create(params)
         .then((result) => {
           dispatch({ element: result, closeView, components: params.components })
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+          LoadingActions.stop();
         });
     };
   }
@@ -417,6 +421,9 @@ class ElementActions {
       SamplesFetcher.create(sample)
         .then((newSample) => {
           dispatch({ newSample, reaction, materialGroup, components: sample.components })
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+          LoadingActions.stop();
         });
     };
   }
@@ -468,6 +475,8 @@ class ElementActions {
           dispatch({ reaction, sample: newSample, closeView, components: sample.components })
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -479,6 +488,8 @@ class ElementActions {
           dispatch({ element: result, closeView, components: params.components })
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -659,6 +670,10 @@ class ElementActions {
       ReactionsFetcher.create(params)
         .then((result) => {
           dispatch(result)
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -670,6 +685,8 @@ class ElementActions {
           dispatch({ element: result, closeView })
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -819,6 +836,8 @@ class ElementActions {
           dispatch(wellplate)
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
