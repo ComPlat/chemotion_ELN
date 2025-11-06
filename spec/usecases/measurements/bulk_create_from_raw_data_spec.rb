@@ -4,7 +4,7 @@ require 'rails_helper'
 
 describe Usecases::Measurements::BulkCreateFromRawData do
   let(:current_user) { create(:person) }
-  let(:collection) { create(:collection, user_id: current_user.id, is_shared: true, permission_level: 3) }
+  let(:collection) { create(:collection, user_id: current_user.id, ) }
   # we use a hack to speed up the test: assigning the transient attribute :sample to the wellplate factory, we assign the
   # same sample to all wells. This is not a regular case in practice, but sufficient for testing purposes
   let(:sample) { build(:valid_sample, creator: current_user, collections: [collection]) }
