@@ -67,14 +67,15 @@ module Entities
       expose! :segments,                unless: :displayed_in_list, anonymize_with: [],   using: 'Labimotion::SegmentEntity'
       expose! :short_label
       expose! :showed_name
-      expose! :solvent,                 unless: :displayed_in_list, anonymize_with: []
+      expose! :solvent
       expose! :stereo
       expose! :tag,                                                 anonymize_with: nil,  using: 'Entities::ElementTagEntity'
       expose! :target_amount_unit,      unless: :displayed_in_list
       expose! :target_amount_value,     unless: :displayed_in_list
       expose! :xref
       expose! :sample_type
-      expose! :sample_details,          unless: :displayed_in_list
+      expose! :sample_details
+      expose! :components,              unless: :displayed_in_list, using:     'Entities::ComponentEntity'
     end
     # rubocop:enable Layout/LineLength, Layout/ExtraSpacing, Metrics/BlockLength
 
