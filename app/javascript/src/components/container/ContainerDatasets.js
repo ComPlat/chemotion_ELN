@@ -192,7 +192,7 @@ export default class ContainerDatasets extends Component {
 
   render() {
     const { container, modal } = this.state;
-    const { disabled, readOnly, rootContainer, } = this.props;
+    const { disabled, readOnly, rootContainer, element } = this.props;
     if (container.children.length > 0) {
       const kind = container.extended_metadata && container.extended_metadata.kind;
       return (
@@ -231,6 +231,7 @@ export default class ContainerDatasets extends Component {
               datasetContainer={modal.datasetContainer}
               analysisContainer={modal.analysisContainer}
               disabled={disabled}
+              element={element}
               rootContainer={rootContainer}
               updateContainerState={(cont, shouldClose) => this.updateContainerState(cont, shouldClose)}
               isContainerNew={container?.is_new}
@@ -260,6 +261,7 @@ export default class ContainerDatasets extends Component {
 ContainerDatasets.propTypes = {
   container: PropTypes.object.isRequired,
   rootContainer: PropTypes.object.isRequired,
+  element: PropTypes.object,
   onChange: PropTypes.func.isRequired,
   readOnly: PropTypes.bool,
   disabled: PropTypes.bool,
@@ -268,4 +270,5 @@ ContainerDatasets.propTypes = {
 ContainerDatasets.defaultProps = {
   readOnly: false,
   disabled: false,
+  element: {}
 };

@@ -29,6 +29,7 @@ module Taggable
     data['pubchem_cid'] = pubchem_tag if args[:pubchem_tag]
     data['analyses'] = analyses_tag if args[:analyses_tag]
     data['collection_labels'] = collection_tag if args[:collection_tag]
+    data['resources'] = resources_tag if args[:resources_tag]
     tag.taggable_data = remove_blank_value(data)
   end
 
@@ -57,6 +58,37 @@ module Taggable
     end
   end
 
+  # Populate resources tag
+  def resources_tag
+    return unless is_a?(Sample)
+
+    resources = []
+    reactions_samples&.includes(:reaction)&.each do |rs|
+      next unless r = rs.reaction
+      next if r.deleted_at.present?
+
+      resources.push({
+                       resource_type: 'Reaction',
+                       resource_id: r.id,
+                       resource_short_label: r.short_label,
+                     })
+    end
+    elements_samples&.each do |es|
+      e = Labimotion::Element.find_by(id: es.element_id)
+      next if e.nil? || e.deleted_at.present?
+
+      ek = e.element_klass
+      next if ek.nil?
+
+      resources.push({
+                       resource_type: ek.label,
+                       resource_id: e.id,
+                       resource_short_label: e.short_label,
+                     })
+    end
+
+    resources
+  end
   # Populate Collections tag
   def collection_tag
     klass = Labimotion::Utils.col_by_element(self.class.name).underscore.pluralize

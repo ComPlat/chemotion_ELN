@@ -202,7 +202,7 @@ export default class ResearchPlanDetailsContainers extends Component {
       return (
         <div className="analysis-header w-100 d-flex gap-3 lh-base">
           <div className="preview border d-flex align-items-center">
-            <ImageModal         
+            <ImageModal
               attachment={attachment}
               popObject={{
                 title: container.name,
@@ -305,6 +305,7 @@ export default class ResearchPlanDetailsContainers extends Component {
                         <Card.Body>
                           <ContainerComponent
                             templateType="researchPlan"
+                            element={researchPlan}
                             readOnly={readOnly}
                             disabled={readOnly}
                             container={container}
