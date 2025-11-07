@@ -277,7 +277,9 @@ const prepareSvg = async (editor) => {
     const parser = new DOMParser();
     const canvasDataMol = await editor.structureDef.editor.getMolfile('V2000');
 
-    const svgBlob = await editor.structureDef.editor.generateImage(canvasDataMol, generateImageParams);
+    const svgBlob = await editor.structureDef.editor.generateImage(canvasDataMol, generateImageParams)
+      .catch((err) => { throw new Error(err); });
+
     const svgString = await new Response(svgBlob).text();
     const doc = parser.parseFromString(svgString, 'image/svg+xml');
     const uses = doc.querySelectorAll('*');
@@ -318,10 +320,9 @@ const prepareSvg = async (editor) => {
       }
     });
     const updatedSVGString = new XMLSerializer().serializeToString(doc);
-    return updatedSVGString;
+    return { svg: updatedSVGString };
   } catch (e) {
-    console.error('prepareSvg', e);
-    return '';
+    return { svg: null, message: e.message };
   }
 };
 
@@ -399,27 +400,33 @@ const onTemplateMove = async (editor, recenter = false) => {
   textListCopyContainerSetter([]);
 };
 
+const attachSVG = async (data, editor) => ({
+  ...data,
+  svgElement: await prepareSvg(editor)
+});
+
 const onFinalCanvasSave = async (editor, iframeRef) => {
+  let ket2Lines = [];
+  let textNodesFormula = '';
+
   try {
-    let textNodesFormula = '';
-    let ket2Lines = [];
     await centerPositionCanvas(editor);
-    const canvasDataMol = await editor.structureDef.editor.getMolfile('V2000');
+    const canvasDataMol = await editor.structureDef.editor.getMolfile('V2000').catch((err) => { throw new Error(err); });
     await reArrangeImagesOnCanvas(iframeRef); // assemble image on the canvas
     ket2Lines = await arrangePolymers(canvasDataMol, editor); // polymers added
     await arrangeTextNodes(ket2Lines); // text node
     if (textList?.length) textNodesFormula = await assembleTextDescriptionFormula(ket2Lines, editor); // process string labels
     ket2Lines.push(KET_TAGS.fileEndIdentifier);
-    const svgElement = await prepareSvg(editor);
     resetStore();
-    return {
+    return attachSVG({
       ket2Molfile: ket2Lines.join('\n'),
-      svgElement,
       textNodesFormula,
-    };
+    }, editor);
   } catch (e) {
-    console.error('onSaveFileK2SC', e);
-    return e.message;
+    return attachSVG({
+      ket2Molfile: '',
+      textNodesFormula: '',
+    }, editor);
   }
 };
 

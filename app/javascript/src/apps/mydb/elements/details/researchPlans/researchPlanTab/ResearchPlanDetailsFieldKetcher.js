@@ -5,6 +5,7 @@ import PropTypes from 'prop-types';
 import SVG from 'react-inlinesvg';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import StructureEditorModal from 'src/components/structureEditor/StructureEditorModal';
+import { Alert } from 'react-bootstrap';
 
 export default class ResearchPlanDetailsFieldKetcher extends Component {
   constructor(props) {
@@ -35,7 +36,7 @@ export default class ResearchPlanDetailsFieldKetcher extends Component {
   }
 
   handleStructureEditorSave(sdf_file, svg_file, config = null) {
-    let { field, onChange } = this.state;
+    const { field, onChange } = this.state;
 
     field.value = {
       sdf_file,
@@ -63,6 +64,17 @@ export default class ResearchPlanDetailsFieldKetcher extends Component {
     this.hideStructureEditor();
   }
 
+  onSVGStructureError = (errorMessage) => {
+    if (this.errorTimer) {
+      clearTimeout(this.errorTimer);
+    }
+    this.setState({ ketcherSVGError: errorMessage });
+    this.errorTimer = setTimeout(() => {
+      this.setState({ ketcherSVGError: null });
+      this.errorTimer = null;
+    }, 5000);
+  };
+
   renderStructureEditorModal(field) {
     const { showStructureEditor } = this.state;
     const molfile = field.value.sdf_file;
@@ -74,12 +86,14 @@ export default class ResearchPlanDetailsFieldKetcher extends Component {
         onSave={this.handleStructureEditorSave.bind(this)}
         onCancel={this.handleStructureEditorCancel.bind(this)}
         molfile={molfile}
+        onSVGStructureError={this.onSVGStructureError}
+
       />
     );
   }
 
   renderEdit() {
-    const { field } = this.state;
+    const { field, ketcherSVGError } = this.state;
     let svgPath;
     if (field.value.svg_file) {
       svgPath = `/images/research_plans/${field.value.svg_file}`;
@@ -87,11 +101,28 @@ export default class ResearchPlanDetailsFieldKetcher extends Component {
       svgPath = '/images/wild_card/no_image_180.svg';
     }
     return (
-      <div className="border border-info border-3 text-center" onClick={this.showStructureEditor.bind(this)}>
-        <i className="fa fa-pencil fa-lg pull-right bg-info p-2" />
-        <SVG key={svgPath} src={svgPath} className="molecule-mid" />
-        {this.renderStructureEditorModal(field)}
+      <div>
+        {ketcherSVGError?.length > 0 && (
+          <Alert
+            variant="danger"
+            show={ketcherSVGError?.length > 0}
+            dismissible
+            onClose={() => this.setState({ ketcherSVGError: null })}
+          >
+            <strong>SVG generation failed.</strong>
+            {' '}
+            Falling back to the previous SVG.
+            <br />
+            <small className="text-muted">{ketcherSVGError}</small>
+          </Alert>
+        )}
+        <div className="border border-info border-3 text-center" onClick={this.showStructureEditor.bind(this)}>
+          <i className="fa fa-pencil fa-lg pull-right bg-info p-2" />
+          <SVG key={svgPath} src={svgPath} className="molecule-mid" />
+          {this.renderStructureEditorModal(field)}
+        </div>
       </div>
+
     );
   }
 
