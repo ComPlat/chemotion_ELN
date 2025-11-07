@@ -1,0 +1,1163 @@
+<?xml version="1.0" encoding="UTF-8"  standalone="no" ?>
+<uniprot xmlns="http://uniprot.org/uniprot" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://uniprot.org/uniprot http://www.uniprot.org/docs/uniprot.xsd">
+<entry dataset="Swiss-Prot" created="1989-10-01" modified="2024-07-24" version="190" xmlns="http://uniprot.org/uniprot">
+  <accession>P12346</accession>
+  <accession>Q63602</accession>
+  <accession>Q64628</accession>
+  <accession>Q64630</accession>
+  <accession>Q7TNX0</accession>
+  <name>TRFE_RAT</name>
+  <protein>
+    <recommendedName>
+      <fullName>Serotransferrin</fullName>
+      <shortName>Transferrin</shortName>
+    </recommendedName>
+    <alternativeName>
+      <fullName>Beta-1 metal-binding globulin</fullName>
+    </alternativeName>
+    <alternativeName>
+      <fullName>Liver regeneration-related protein LRRG03</fullName>
+    </alternativeName>
+    <alternativeName>
+      <fullName>Siderophilin</fullName>
+    </alternativeName>
+  </protein>
+  <gene>
+    <name type="primary">Tf</name>
+  </gene>
+  <organism>
+    <name type="scientific">Rattus norvegicus</name>
+    <name type="common">Rat</name>
+    <dbReference type="NCBI Taxonomy" id="10116"/>
+    <lineage>
+      <taxon>Eukaryota</taxon>
+      <taxon>Metazoa</taxon>
+      <taxon>Chordata</taxon>
+      <taxon>Craniata</taxon>
+      <taxon>Vertebrata</taxon>
+      <taxon>Euteleostomi</taxon>
+      <taxon>Mammalia</taxon>
+      <taxon>Eutheria</taxon>
+      <taxon>Euarchontoglires</taxon>
+      <taxon>Glires</taxon>
+      <taxon>Rodentia</taxon>
+      <taxon>Myomorpha</taxon>
+      <taxon>Muroidea</taxon>
+      <taxon>Muridae</taxon>
+      <taxon>Murinae</taxon>
+      <taxon>Rattus</taxon>
+    </lineage>
+  </organism>
+  <reference key="1">
+    <citation type="journal article" date="1995" name="Biochem. J." volume="307" first="47" last="55">
+      <title>Rat mammary-gland transferrin: nucleotide sequence, phylogenetic analysis and glycan structure.</title>
+      <authorList>
+        <person name="Escriva H."/>
+        <person name="Pierce A."/>
+        <person name="Coddeville B."/>
+        <person name="Gonzalez F."/>
+        <person name="Benaissa M."/>
+        <person name="Leger D."/>
+        <person name="Wieruszeski J.-M."/>
+        <person name="Spik G."/>
+        <person name="Pamblanco M."/>
+      </authorList>
+      <dbReference type="PubMed" id="7717992"/>
+      <dbReference type="DOI" id="10.1042/bj3070047"/>
+    </citation>
+    <scope>NUCLEOTIDE SEQUENCE [MRNA] (ISOFORM 1)</scope>
+    <source>
+      <strain>Wistar</strain>
+      <tissue>Mammary gland</tissue>
+    </source>
+  </reference>
+  <reference key="2">
+    <citation type="journal article" date="1996" name="Comp. Biochem. Physiol." volume="113B" first="491" last="497">
+      <title>Complete sequence analysis of rat transferrin and expression of transferrin but not lactoferrin in the digestive glands.</title>
+      <authorList>
+        <person name="Hosino A."/>
+        <person name="Hisayasu S."/>
+        <person name="Shimada T."/>
+      </authorList>
+      <dbReference type="PubMed" id="8829802"/>
+      <dbReference type="DOI" id="10.1016/0305-0491(95)02068-3"/>
+    </citation>
+    <scope>NUCLEOTIDE SEQUENCE [MRNA] (ISOFORM 1)</scope>
+    <source>
+      <strain>Wistar</strain>
+      <tissue>Liver</tissue>
+    </source>
+  </reference>
+  <reference key="3">
+    <citation type="submission" date="2003-06" db="EMBL/GenBank/DDBJ databases">
+      <title>Liver regeneration after PH.</title>
+      <authorList>
+        <person name="Xu C.S."/>
+        <person name="Li W.Q."/>
+        <person name="Li Y.C."/>
+        <person name="Han H.P."/>
+        <person name="Wang G.P."/>
+        <person name="Chai L.Q."/>
+        <person name="Yuan J.Y."/>
+        <person name="Yang K.J."/>
+        <person name="Yan H.M."/>
+        <person name="Chang C.F."/>
+        <person name="Zhao L.F."/>
+        <person name="Ma H."/>
+        <person name="Wang L."/>
+        <person name="Wang S.F."/>
+        <person name="Shi J.B."/>
+        <person name="Rahman S."/>
+        <person name="Wang Q.N."/>
+        <person name="Zhang J.B."/>
+      </authorList>
+    </citation>
+    <scope>NUCLEOTIDE SEQUENCE [LARGE SCALE MRNA] (ISOFORM 1)</scope>
+  </reference>
+  <reference key="4">
+    <citation type="journal article" date="2004" name="Genome Res." volume="14" first="2121" last="2127">
+      <title>The status, quality, and expansion of the NIH full-length cDNA project: the Mammalian Gene Collection (MGC).</title>
+      <authorList>
+        <consortium name="The MGC Project Team"/>
+      </authorList>
+      <dbReference type="PubMed" id="15489334"/>
+      <dbReference type="DOI" id="10.1101/gr.2596504"/>
+    </citation>
+    <scope>NUCLEOTIDE SEQUENCE [LARGE SCALE MRNA] (ISOFORM 1)</scope>
+    <source>
+      <tissue>Testis</tissue>
+    </source>
+  </reference>
+  <reference key="5">
+    <citation type="journal article" date="1984" name="Biochem. Biophys. Res. Commun." volume="122" first="960" last="965">
+      <title>Synthesis of rat transferrin in Escherichia coli containing a recombinant bacteriophage.</title>
+      <authorList>
+        <person name="Aldred A.R."/>
+        <person name="Howlett G.J."/>
+        <person name="Schreiber G."/>
+      </authorList>
+      <dbReference type="PubMed" id="6236811"/>
+      <dbReference type="DOI" id="10.1016/0006-291x(84)91185-9"/>
+    </citation>
+    <scope>NUCLEOTIDE SEQUENCE [MRNA] OF 7-295 (ISOFORM 2)</scope>
+  </reference>
+  <reference key="6">
+    <citation type="journal article" date="1987" name="Endocrinology" volume="120" first="332" last="340">
+      <title>Transferrin messenger ribonucleic acid: molecular cloning and hormonal regulation in rat Sertoli cells.</title>
+      <authorList>
+        <person name="Huggenvik J.I."/>
+        <person name="Idzerda R.L."/>
+        <person name="Haywood L."/>
+        <person name="Lee D.C."/>
+        <person name="McKnight G.S."/>
+        <person name="Griswold M.D."/>
+      </authorList>
+      <dbReference type="PubMed" id="3023031"/>
+      <dbReference type="DOI" id="10.1210/endo-120-1-332"/>
+    </citation>
+    <scope>NUCLEOTIDE SEQUENCE [MRNA] OF 521-698</scope>
+  </reference>
+  <reference key="7">
+    <citation type="journal article" date="1979" name="J. Biol. Chem." volume="254" first="12013" last="12019">
+      <title>The synthesis and secretion of rat transferrin.</title>
+      <authorList>
+        <person name="Schreiber G."/>
+        <person name="Dryburgh H."/>
+        <person name="Millership A."/>
+        <person name="Matsuda Y."/>
+        <person name="Inglis A."/>
+        <person name="Phillips J."/>
+        <person name="Edwards K."/>
+        <person name="Maggs J."/>
+      </authorList>
+      <dbReference type="PubMed" id="500689"/>
+      <dbReference type="DOI" id="10.1016/s0021-9258(19)86420-7"/>
+    </citation>
+    <scope>PROTEIN SEQUENCE OF 20-47</scope>
+  </reference>
+  <reference key="8">
+    <citation type="journal article" date="1988" name="Biochim. Biophys. Acta" volume="966" first="318" last="327">
+      <title>Properties of the transferrin associated with rat intestinal mucosa.</title>
+      <authorList>
+        <person name="Purves L.R."/>
+        <person name="Purves M."/>
+        <person name="Linton N."/>
+        <person name="Brandt W."/>
+        <person name="Johnson G."/>
+        <person name="Jacobs P."/>
+      </authorList>
+      <dbReference type="PubMed" id="3046665"/>
+      <dbReference type="DOI" id="10.1016/0304-4165(88)90081-5"/>
+    </citation>
+    <scope>PROTEIN SEQUENCE OF 20-30 AND 642-653</scope>
+  </reference>
+  <reference key="9">
+    <citation type="journal article" date="1991" name="J. Cell. Biochem." volume="47" first="261" last="271">
+      <title>Lung-derived growth factor that stimulates the growth of lung-metastasizing tumor cells: identification as transferrin.</title>
+      <authorList>
+        <person name="Cavanaugh P.G."/>
+        <person name="Nicolson G.L."/>
+      </authorList>
+      <dbReference type="PubMed" id="1791188"/>
+      <dbReference type="DOI" id="10.1002/jcb.240470312"/>
+    </citation>
+    <scope>PROTEIN SEQUENCE OF 89-102; 232-243 AND 404-411</scope>
+  </reference>
+  <reference key="10">
+    <citation type="submission" date="2007-07" db="UniProtKB">
+      <authorList>
+        <person name="Lubec G."/>
+        <person name="Afjehi-Sadat L."/>
+        <person name="Kang S.U."/>
+      </authorList>
+    </citation>
+    <scope>PROTEIN SEQUENCE OF 144-162; 240-251; 332-343; 588-609; 616-624; 630-642 AND 660-682</scope>
+    <scope>IDENTIFICATION BY MASS SPECTROMETRY</scope>
+    <source>
+      <strain>Sprague-Dawley</strain>
+      <tissue>Brain</tissue>
+      <tissue>Spinal cord</tissue>
+    </source>
+  </reference>
+  <reference key="11">
+    <citation type="journal article" date="2004" name="Mol. Biol. Cell" volume="15" first="2907" last="2919">
+      <title>Organellar proteomics reveals Golgi arginine dimethylation.</title>
+      <authorList>
+        <person name="Wu C.C."/>
+        <person name="MacCoss M.J."/>
+        <person name="Mardones G."/>
+        <person name="Finnigan C."/>
+        <person name="Mogelsvang S."/>
+        <person name="Yates J.R. III"/>
+        <person name="Howell K.E."/>
+      </authorList>
+      <dbReference type="PubMed" id="15047867"/>
+      <dbReference type="DOI" id="10.1091/mbc.e04-02-0101"/>
+    </citation>
+    <scope>METHYLATION AT ARG-42</scope>
+    <scope>IDENTIFICATION BY MASS SPECTROMETRY</scope>
+  </reference>
+  <comment type="function">
+    <text>Transferrins are iron binding transport proteins which can bind two Fe(3+) ions in association with the binding of an anion, usually bicarbonate. It is responsible for the transport of iron from sites of absorption and heme degradation to those of storage and utilization. Serum transferrin may also have a further role in stimulating cell proliferation.</text>
+  </comment>
+  <comment type="subunit">
+    <text evidence="1">Monomer. Part of a complex composed of SLC40A1/ferroportin, TF/transferrin and HEPH/hephaestin that transfers iron from cells to transferrin.</text>
+  </comment>
+  <comment type="subcellular location">
+    <subcellularLocation>
+      <location>Secreted</location>
+    </subcellularLocation>
+  </comment>
+  <comment type="alternative products">
+    <event type="alternative splicing"/>
+    <isoform>
+      <id>P12346-1</id>
+      <name>1</name>
+      <sequence type="displayed"/>
+    </isoform>
+    <isoform>
+      <id>P12346-2</id>
+      <name>2</name>
+      <sequence type="described" ref="VSP_011840"/>
+    </isoform>
+  </comment>
+  <comment type="tissue specificity">
+    <text>Expressed by the liver and secreted in plasma.</text>
+  </comment>
+  <comment type="similarity">
+    <text evidence="3">Belongs to the transferrin family.</text>
+  </comment>
+  <dbReference type="EMBL" id="X77158">
+    <property type="protein sequence ID" value="CAA54403.1"/>
+    <property type="molecule type" value="mRNA"/>
+  </dbReference>
+  <dbReference type="EMBL" id="D38380">
+    <property type="protein sequence ID" value="BAA07458.1"/>
+    <property type="molecule type" value="mRNA"/>
+  </dbReference>
+  <dbReference type="EMBL" id="AY327504">
+    <property type="protein sequence ID" value="AAP97736.1"/>
+    <property type="molecule type" value="mRNA"/>
+  </dbReference>
+  <dbReference type="EMBL" id="BC087021">
+    <property type="protein sequence ID" value="AAH87021.1"/>
+    <property type="molecule type" value="mRNA"/>
+  </dbReference>
+  <dbReference type="EMBL" id="M26113">
+    <property type="protein sequence ID" value="AAA42266.1"/>
+    <property type="molecule type" value="mRNA"/>
+  </dbReference>
+  <dbReference type="EMBL" id="M27966">
+    <property type="protein sequence ID" value="AAA42267.1"/>
+    <property type="molecule type" value="mRNA"/>
+  </dbReference>
+  <dbReference type="PIR" id="S49163">
+    <property type="entry name" value="S49163"/>
+  </dbReference>
+  <dbReference type="RefSeq" id="NP_001013128.1">
+    <molecule id="P12346-1"/>
+    <property type="nucleotide sequence ID" value="NM_001013110.1"/>
+  </dbReference>
+  <dbReference type="AlphaFoldDB" id="P12346"/>
+  <dbReference type="SMR" id="P12346"/>
+  <dbReference type="BioGRID" id="246945">
+    <property type="interactions" value="4"/>
+  </dbReference>
+  <dbReference type="IntAct" id="P12346">
+    <property type="interactions" value="2"/>
+  </dbReference>
+  <dbReference type="MINT" id="P12346"/>
+  <dbReference type="STRING" id="10116.ENSRNOP00000012725"/>
+  <dbReference type="Allergome" id="1417">
+    <property type="allergen name" value="Rat n Transferrin"/>
+  </dbReference>
+  <dbReference type="MEROPS" id="S60.970"/>
+  <dbReference type="GlyConnect" id="557">
+    <property type="glycosylation" value="6 N-Linked glycans"/>
+  </dbReference>
+  <dbReference type="GlyCosmos" id="P12346">
+    <property type="glycosylation" value="1 site, 15 glycans"/>
+  </dbReference>
+  <dbReference type="GlyGen" id="P12346">
+    <property type="glycosylation" value="2 sites, 15 N-linked glycans (2 sites)"/>
+  </dbReference>
+  <dbReference type="iPTMnet" id="P12346"/>
+  <dbReference type="PhosphoSitePlus" id="P12346"/>
+  <dbReference type="SwissPalm" id="P12346"/>
+  <dbReference type="PaxDb" id="10116-ENSRNOP00000012725"/>
+  <dbReference type="Ensembl" id="ENSRNOT00000045628.6">
+    <molecule id="P12346-1"/>
+    <property type="protein sequence ID" value="ENSRNOP00000045637.2"/>
+    <property type="gene ID" value="ENSRNOG00000030625.7"/>
+  </dbReference>
+  <dbReference type="Ensembl" id="ENSRNOT00055020136">
+    <molecule id="P12346-1"/>
+    <property type="protein sequence ID" value="ENSRNOP00055016222"/>
+    <property type="gene ID" value="ENSRNOG00055011836"/>
+  </dbReference>
+  <dbReference type="Ensembl" id="ENSRNOT00060014522">
+    <molecule id="P12346-1"/>
+    <property type="protein sequence ID" value="ENSRNOP00060011180"/>
+    <property type="gene ID" value="ENSRNOG00060008627"/>
+  </dbReference>
+  <dbReference type="Ensembl" id="ENSRNOT00065012315">
+    <molecule id="P12346-1"/>
+    <property type="protein sequence ID" value="ENSRNOP00065009015"/>
+    <property type="gene ID" value="ENSRNOG00065007831"/>
+  </dbReference>
+  <dbReference type="GeneID" id="24825"/>
+  <dbReference type="KEGG" id="rno:24825"/>
+  <dbReference type="UCSC" id="RGD:3845">
+    <molecule id="P12346-1"/>
+    <property type="organism name" value="rat"/>
+  </dbReference>
+  <dbReference type="AGR" id="RGD:3845"/>
+  <dbReference type="CTD" id="7018"/>
+  <dbReference type="RGD" id="3845">
+    <property type="gene designation" value="Tf"/>
+  </dbReference>
+  <dbReference type="eggNOG" id="KOG0090">
+    <property type="taxonomic scope" value="Eukaryota"/>
+  </dbReference>
+  <dbReference type="GeneTree" id="ENSGT00940000154388"/>
+  <dbReference type="HOGENOM" id="CLU_011309_1_0_1"/>
+  <dbReference type="InParanoid" id="P12346"/>
+  <dbReference type="OrthoDB" id="2906687at2759"/>
+  <dbReference type="PhylomeDB" id="P12346"/>
+  <dbReference type="Reactome" id="R-RNO-114608">
+    <property type="pathway name" value="Platelet degranulation"/>
+  </dbReference>
+  <dbReference type="Reactome" id="R-RNO-381426">
+    <property type="pathway name" value="Regulation of Insulin-like Growth Factor (IGF) transport and uptake by Insulin-like Growth Factor Binding Proteins (IGFBPs)"/>
+  </dbReference>
+  <dbReference type="Reactome" id="R-RNO-8856825">
+    <property type="pathway name" value="Cargo recognition for clathrin-mediated endocytosis"/>
+  </dbReference>
+  <dbReference type="Reactome" id="R-RNO-8856828">
+    <property type="pathway name" value="Clathrin-mediated endocytosis"/>
+  </dbReference>
+  <dbReference type="Reactome" id="R-RNO-8957275">
+    <property type="pathway name" value="Post-translational protein phosphorylation"/>
+  </dbReference>
+  <dbReference type="Reactome" id="R-RNO-917937">
+    <property type="pathway name" value="Iron uptake and transport"/>
+  </dbReference>
+  <dbReference type="Reactome" id="R-RNO-917977">
+    <property type="pathway name" value="Transferrin endocytosis and recycling"/>
+  </dbReference>
+  <dbReference type="PRO" id="PR:P12346"/>
+  <dbReference type="Proteomes" id="UP000002494">
+    <property type="component" value="Chromosome 8"/>
+  </dbReference>
+  <dbReference type="Bgee" id="ENSRNOG00000030625">
+    <property type="expression patterns" value="Expressed in liver and 19 other cell types or tissues"/>
+  </dbReference>
+  <dbReference type="ExpressionAtlas" id="P12346">
+    <property type="expression patterns" value="baseline and differential"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0016324">
+    <property type="term" value="C:apical plasma membrane"/>
+    <property type="evidence" value="ECO:0000266"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0045178">
+    <property type="term" value="C:basal part of cell"/>
+    <property type="evidence" value="ECO:0000266"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0009925">
+    <property type="term" value="C:basal plasma membrane"/>
+    <property type="evidence" value="ECO:0000266"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0005604">
+    <property type="term" value="C:basement membrane"/>
+    <property type="evidence" value="ECO:0000314"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0009986">
+    <property type="term" value="C:cell surface"/>
+    <property type="evidence" value="ECO:0000266"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0051286">
+    <property type="term" value="C:cell tip"/>
+    <property type="evidence" value="ECO:0000314"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0005905">
+    <property type="term" value="C:clathrin-coated pit"/>
+    <property type="evidence" value="ECO:0000266"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0031410">
+    <property type="term" value="C:cytoplasmic vesicle"/>
+    <property type="evidence" value="ECO:0000266"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0030425">
+    <property type="term" value="C:dendrite"/>
+    <property type="evidence" value="ECO:0000314"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0097433">
+    <property type="term" value="C:dense body"/>
+    <property type="evidence" value="ECO:0000266"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0005769">
+    <property type="term" value="C:early endosome"/>
+    <property type="evidence" value="ECO:0000266"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0030139">
+    <property type="term" value="C:endocytic vesicle"/>
+    <property type="evidence" value="ECO:0000266"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0005768">
+    <property type="term" value="C:endosome"/>
+    <property type="evidence" value="ECO:0000266"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0005576">
+    <property type="term" value="C:extracellular region"/>
+    <property type="evidence" value="ECO:0000266"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0005615">
+    <property type="term" value="C:extracellular space"/>
+    <property type="evidence" value="ECO:0000314"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:1990712">
+    <property type="term" value="C:HFE-transferrin receptor complex"/>
+    <property type="evidence" value="ECO:0000266"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0005770">
+    <property type="term" value="C:late endosome"/>
+    <property type="evidence" value="ECO:0000266"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0016020">
+    <property type="term" value="C:membrane"/>
+    <property type="evidence" value="ECO:0000266"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0048471">
+    <property type="term" value="C:perinuclear region of cytoplasm"/>
+    <property type="evidence" value="ECO:0000266"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0005886">
+    <property type="term" value="C:plasma membrane"/>
+    <property type="evidence" value="ECO:0000318"/>
+    <property type="project" value="GO_Central"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0055037">
+    <property type="term" value="C:recycling endosome"/>
+    <property type="evidence" value="ECO:0000266"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0031982">
+    <property type="term" value="C:vesicle"/>
+    <property type="evidence" value="ECO:0000266"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0030120">
+    <property type="term" value="C:vesicle coat"/>
+    <property type="evidence" value="ECO:0000266"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0008199">
+    <property type="term" value="F:ferric iron binding"/>
+    <property type="evidence" value="ECO:0000314"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0008198">
+    <property type="term" value="F:ferrous iron binding"/>
+    <property type="evidence" value="ECO:0000266"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0034986">
+    <property type="term" value="F:iron chaperone activity"/>
+    <property type="evidence" value="ECO:0000266"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:1990459">
+    <property type="term" value="F:transferrin receptor binding"/>
+    <property type="evidence" value="ECO:0000266"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0007015">
+    <property type="term" value="P:actin filament organization"/>
+    <property type="evidence" value="ECO:0000266"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0006953">
+    <property type="term" value="P:acute-phase response"/>
+    <property type="evidence" value="ECO:0000270"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0019731">
+    <property type="term" value="P:antibacterial humoral response"/>
+    <property type="evidence" value="ECO:0000318"/>
+    <property type="project" value="GO_Central"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0006915">
+    <property type="term" value="P:apoptotic process"/>
+    <property type="evidence" value="ECO:0000250"/>
+    <property type="project" value="UniProtKB"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0071320">
+    <property type="term" value="P:cellular response to cAMP"/>
+    <property type="evidence" value="ECO:0000270"/>
+    <property type="project" value="UniProtKB"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0071372">
+    <property type="term" value="P:cellular response to follicle-stimulating hormone stimulus"/>
+    <property type="evidence" value="ECO:0000270"/>
+    <property type="project" value="UniProtKB"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0071281">
+    <property type="term" value="P:cellular response to iron ion"/>
+    <property type="evidence" value="ECO:0000266"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0070371">
+    <property type="term" value="P:ERK1 and ERK2 cascade"/>
+    <property type="evidence" value="ECO:0000266"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0006879">
+    <property type="term" value="P:intracellular iron ion homeostasis"/>
+    <property type="evidence" value="ECO:0000266"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0006826">
+    <property type="term" value="P:iron ion transport"/>
+    <property type="evidence" value="ECO:0000314"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0030316">
+    <property type="term" value="P:osteoclast differentiation"/>
+    <property type="evidence" value="ECO:0000266"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0045780">
+    <property type="term" value="P:positive regulation of bone resorption"/>
+    <property type="evidence" value="ECO:0000266"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:2000147">
+    <property type="term" value="P:positive regulation of cell motility"/>
+    <property type="evidence" value="ECO:0000266"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0045893">
+    <property type="term" value="P:positive regulation of DNA-templated transcription"/>
+    <property type="evidence" value="ECO:0000266"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0031643">
+    <property type="term" value="P:positive regulation of myelination"/>
+    <property type="evidence" value="ECO:0000314"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0070447">
+    <property type="term" value="P:positive regulation of oligodendrocyte progenitor proliferation"/>
+    <property type="evidence" value="ECO:0000314"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0042327">
+    <property type="term" value="P:positive regulation of phosphorylation"/>
+    <property type="evidence" value="ECO:0000266"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0048260">
+    <property type="term" value="P:positive regulation of receptor-mediated endocytosis"/>
+    <property type="evidence" value="ECO:0000266"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0034756">
+    <property type="term" value="P:regulation of iron ion transport"/>
+    <property type="evidence" value="ECO:0000266"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0009617">
+    <property type="term" value="P:response to bacterium"/>
+    <property type="evidence" value="ECO:0000266"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0001666">
+    <property type="term" value="P:response to hypoxia"/>
+    <property type="evidence" value="ECO:0000270"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0010288">
+    <property type="term" value="P:response to lead ion"/>
+    <property type="evidence" value="ECO:0000270"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0014070">
+    <property type="term" value="P:response to organic cyclic compound"/>
+    <property type="evidence" value="ECO:0000270"/>
+    <property type="project" value="RGD"/>
+  </dbReference>
+  <dbReference type="CDD" id="cd13617">
+    <property type="entry name" value="PBP2_transferrin_C"/>
+    <property type="match status" value="1"/>
+  </dbReference>
+  <dbReference type="CDD" id="cd13618">
+    <property type="entry name" value="PBP2_transferrin_N"/>
+    <property type="match status" value="1"/>
+  </dbReference>
+  <dbReference type="Gene3D" id="3.40.190.10">
+    <property type="entry name" value="Periplasmic binding protein-like II"/>
+    <property type="match status" value="4"/>
+  </dbReference>
+  <dbReference type="InterPro" id="IPR030685">
+    <property type="entry name" value="Serotransferrin_mammal"/>
+  </dbReference>
+  <dbReference type="InterPro" id="IPR016357">
+    <property type="entry name" value="Transferrin"/>
+  </dbReference>
+  <dbReference type="InterPro" id="IPR001156">
+    <property type="entry name" value="Transferrin-like_dom"/>
+  </dbReference>
+  <dbReference type="InterPro" id="IPR018195">
+    <property type="entry name" value="Transferrin_Fe_BS"/>
+  </dbReference>
+  <dbReference type="PANTHER" id="PTHR11485:SF31">
+    <property type="entry name" value="SEROTRANSFERRIN"/>
+    <property type="match status" value="1"/>
+  </dbReference>
+  <dbReference type="PANTHER" id="PTHR11485">
+    <property type="entry name" value="TRANSFERRIN"/>
+    <property type="match status" value="1"/>
+  </dbReference>
+  <dbReference type="Pfam" id="PF00405">
+    <property type="entry name" value="Transferrin"/>
+    <property type="match status" value="2"/>
+  </dbReference>
+  <dbReference type="PIRSF" id="PIRSF500682">
+    <property type="entry name" value="Serotransferrin"/>
+    <property type="match status" value="1"/>
+  </dbReference>
+  <dbReference type="PIRSF" id="PIRSF002549">
+    <property type="entry name" value="Transferrin"/>
+    <property type="match status" value="1"/>
+  </dbReference>
+  <dbReference type="PRINTS" id="PR00422">
+    <property type="entry name" value="TRANSFERRIN"/>
+  </dbReference>
+  <dbReference type="SMART" id="SM00094">
+    <property type="entry name" value="TR_FER"/>
+    <property type="match status" value="2"/>
+  </dbReference>
+  <dbReference type="SUPFAM" id="SSF53850">
+    <property type="entry name" value="Periplasmic binding protein-like II"/>
+    <property type="match status" value="2"/>
+  </dbReference>
+  <dbReference type="PROSITE" id="PS00205">
+    <property type="entry name" value="TRANSFERRIN_LIKE_1"/>
+    <property type="match status" value="1"/>
+  </dbReference>
+  <dbReference type="PROSITE" id="PS00206">
+    <property type="entry name" value="TRANSFERRIN_LIKE_2"/>
+    <property type="match status" value="2"/>
+  </dbReference>
+  <dbReference type="PROSITE" id="PS00207">
+    <property type="entry name" value="TRANSFERRIN_LIKE_3"/>
+    <property type="match status" value="2"/>
+  </dbReference>
+  <dbReference type="PROSITE" id="PS51408">
+    <property type="entry name" value="TRANSFERRIN_LIKE_4"/>
+    <property type="match status" value="2"/>
+  </dbReference>
+  <proteinExistence type="evidence at protein level"/>
+  <keyword id="KW-0025">Alternative splicing</keyword>
+  <keyword id="KW-0903">Direct protein sequencing</keyword>
+  <keyword id="KW-1015">Disulfide bond</keyword>
+  <keyword id="KW-0325">Glycoprotein</keyword>
+  <keyword id="KW-0406">Ion transport</keyword>
+  <keyword id="KW-0408">Iron</keyword>
+  <keyword id="KW-0410">Iron transport</keyword>
+  <keyword id="KW-0479">Metal-binding</keyword>
+  <keyword id="KW-0488">Methylation</keyword>
+  <keyword id="KW-0597">Phosphoprotein</keyword>
+  <keyword id="KW-1185">Reference proteome</keyword>
+  <keyword id="KW-0677">Repeat</keyword>
+  <keyword id="KW-0964">Secreted</keyword>
+  <keyword id="KW-0732">Signal</keyword>
+  <keyword id="KW-0813">Transport</keyword>
+  <feature type="signal peptide" evidence="5 6">
+    <location>
+      <begin position="1"/>
+      <end position="19"/>
+    </location>
+  </feature>
+  <feature type="chain" id="PRO_0000035718" description="Serotransferrin">
+    <location>
+      <begin position="20"/>
+      <end position="698"/>
+    </location>
+  </feature>
+  <feature type="domain" description="Transferrin-like 1" evidence="3">
+    <location>
+      <begin position="25"/>
+      <end position="347"/>
+    </location>
+  </feature>
+  <feature type="domain" description="Transferrin-like 2" evidence="3">
+    <location>
+      <begin position="360"/>
+      <end position="683"/>
+    </location>
+  </feature>
+  <feature type="binding site" evidence="3">
+    <location>
+      <position position="82"/>
+    </location>
+    <ligand>
+      <name>Fe(3+)</name>
+      <dbReference type="ChEBI" id="CHEBI:29034"/>
+      <label>1</label>
+    </ligand>
+  </feature>
+  <feature type="binding site" evidence="3">
+    <location>
+      <position position="114"/>
+    </location>
+    <ligand>
+      <name>Fe(3+)</name>
+      <dbReference type="ChEBI" id="CHEBI:29034"/>
+      <label>1</label>
+    </ligand>
+  </feature>
+  <feature type="binding site" evidence="3">
+    <location>
+      <position position="139"/>
+    </location>
+    <ligand>
+      <name>hydrogencarbonate</name>
+      <dbReference type="ChEBI" id="CHEBI:17544"/>
+      <label>1</label>
+    </ligand>
+  </feature>
+  <feature type="binding site" evidence="3">
+    <location>
+      <position position="143"/>
+    </location>
+    <ligand>
+      <name>hydrogencarbonate</name>
+      <dbReference type="ChEBI" id="CHEBI:17544"/>
+      <label>1</label>
+    </ligand>
+  </feature>
+  <feature type="binding site" evidence="3">
+    <location>
+      <position position="145"/>
+    </location>
+    <ligand>
+      <name>hydrogencarbonate</name>
+      <dbReference type="ChEBI" id="CHEBI:17544"/>
+      <label>1</label>
+    </ligand>
+  </feature>
+  <feature type="binding site" evidence="3">
+    <location>
+      <position position="146"/>
+    </location>
+    <ligand>
+      <name>hydrogencarbonate</name>
+      <dbReference type="ChEBI" id="CHEBI:17544"/>
+      <label>1</label>
+    </ligand>
+  </feature>
+  <feature type="binding site" evidence="3">
+    <location>
+      <position position="207"/>
+    </location>
+    <ligand>
+      <name>Fe(3+)</name>
+      <dbReference type="ChEBI" id="CHEBI:29034"/>
+      <label>1</label>
+    </ligand>
+  </feature>
+  <feature type="binding site" evidence="3">
+    <location>
+      <position position="268"/>
+    </location>
+    <ligand>
+      <name>Fe(3+)</name>
+      <dbReference type="ChEBI" id="CHEBI:29034"/>
+      <label>1</label>
+    </ligand>
+  </feature>
+  <feature type="binding site" evidence="3">
+    <location>
+      <position position="410"/>
+    </location>
+    <ligand>
+      <name>Fe(3+)</name>
+      <dbReference type="ChEBI" id="CHEBI:29034"/>
+      <label>2</label>
+    </ligand>
+  </feature>
+  <feature type="binding site" evidence="3">
+    <location>
+      <position position="447"/>
+    </location>
+    <ligand>
+      <name>Fe(3+)</name>
+      <dbReference type="ChEBI" id="CHEBI:29034"/>
+      <label>2</label>
+    </ligand>
+  </feature>
+  <feature type="binding site" evidence="3">
+    <location>
+      <position position="473"/>
+    </location>
+    <ligand>
+      <name>hydrogencarbonate</name>
+      <dbReference type="ChEBI" id="CHEBI:17544"/>
+      <label>2</label>
+    </ligand>
+  </feature>
+  <feature type="binding site" evidence="3">
+    <location>
+      <position position="477"/>
+    </location>
+    <ligand>
+      <name>hydrogencarbonate</name>
+      <dbReference type="ChEBI" id="CHEBI:17544"/>
+      <label>2</label>
+    </ligand>
+  </feature>
+  <feature type="binding site" evidence="3">
+    <location>
+      <position position="479"/>
+    </location>
+    <ligand>
+      <name>hydrogencarbonate</name>
+      <dbReference type="ChEBI" id="CHEBI:17544"/>
+      <label>2</label>
+    </ligand>
+  </feature>
+  <feature type="binding site" evidence="3">
+    <location>
+      <position position="480"/>
+    </location>
+    <ligand>
+      <name>hydrogencarbonate</name>
+      <dbReference type="ChEBI" id="CHEBI:17544"/>
+      <label>2</label>
+    </ligand>
+  </feature>
+  <feature type="binding site" evidence="3">
+    <location>
+      <position position="536"/>
+    </location>
+    <ligand>
+      <name>Fe(3+)</name>
+      <dbReference type="ChEBI" id="CHEBI:29034"/>
+      <label>2</label>
+    </ligand>
+  </feature>
+  <feature type="binding site" evidence="3">
+    <location>
+      <position position="604"/>
+    </location>
+    <ligand>
+      <name>Fe(3+)</name>
+      <dbReference type="ChEBI" id="CHEBI:29034"/>
+      <label>2</label>
+    </ligand>
+  </feature>
+  <feature type="modified residue" description="Dimethylated arginine" evidence="4">
+    <location>
+      <position position="42"/>
+    </location>
+  </feature>
+  <feature type="modified residue" description="Phosphoserine" evidence="1">
+    <location>
+      <position position="388"/>
+    </location>
+  </feature>
+  <feature type="modified residue" description="Phosphoserine" evidence="1">
+    <location>
+      <position position="685"/>
+    </location>
+  </feature>
+  <feature type="glycosylation site" description="N-linked (GlcNAc...) asparagine" evidence="2">
+    <location>
+      <position position="512"/>
+    </location>
+  </feature>
+  <feature type="disulfide bond" evidence="3">
+    <location>
+      <begin position="28"/>
+      <end position="67"/>
+    </location>
+  </feature>
+  <feature type="disulfide bond" evidence="3">
+    <location>
+      <begin position="38"/>
+      <end position="58"/>
+    </location>
+  </feature>
+  <feature type="disulfide bond" evidence="3">
+    <location>
+      <begin position="137"/>
+      <end position="213"/>
+    </location>
+  </feature>
+  <feature type="disulfide bond" evidence="3">
+    <location>
+      <begin position="156"/>
+      <end position="350"/>
+    </location>
+  </feature>
+  <feature type="disulfide bond" evidence="3">
+    <location>
+      <begin position="177"/>
+      <end position="193"/>
+    </location>
+  </feature>
+  <feature type="disulfide bond" evidence="3">
+    <location>
+      <begin position="180"/>
+      <end position="196"/>
+    </location>
+  </feature>
+  <feature type="disulfide bond" evidence="3">
+    <location>
+      <begin position="190"/>
+      <end position="198"/>
+    </location>
+  </feature>
+  <feature type="disulfide bond" evidence="3">
+    <location>
+      <begin position="246"/>
+      <end position="260"/>
+    </location>
+  </feature>
+  <feature type="disulfide bond" evidence="3">
+    <location>
+      <begin position="363"/>
+      <end position="395"/>
+    </location>
+  </feature>
+  <feature type="disulfide bond" evidence="3">
+    <location>
+      <begin position="373"/>
+      <end position="386"/>
+    </location>
+  </feature>
+  <feature type="disulfide bond" evidence="3">
+    <location>
+      <begin position="420"/>
+      <end position="693"/>
+    </location>
+  </feature>
+  <feature type="disulfide bond" evidence="3">
+    <location>
+      <begin position="435"/>
+      <end position="656"/>
+    </location>
+  </feature>
+  <feature type="disulfide bond" evidence="3">
+    <location>
+      <begin position="471"/>
+      <end position="542"/>
+    </location>
+  </feature>
+  <feature type="disulfide bond" evidence="3">
+    <location>
+      <begin position="495"/>
+      <end position="684"/>
+    </location>
+  </feature>
+  <feature type="disulfide bond" evidence="3">
+    <location>
+      <begin position="505"/>
+      <end position="519"/>
+    </location>
+  </feature>
+  <feature type="disulfide bond" evidence="3">
+    <location>
+      <begin position="516"/>
+      <end position="525"/>
+    </location>
+  </feature>
+  <feature type="disulfide bond" evidence="3">
+    <location>
+      <begin position="582"/>
+      <end position="596"/>
+    </location>
+  </feature>
+  <feature type="disulfide bond" evidence="3">
+    <location>
+      <begin position="634"/>
+      <end position="639"/>
+    </location>
+  </feature>
+  <feature type="splice variant" id="VSP_011840" description="In isoform 2." evidence="7">
+    <location>
+      <begin position="65"/>
+      <end position="266"/>
+    </location>
+  </feature>
+  <feature type="sequence conflict" description="In Ref. 1; CAA54403." evidence="8" ref="1">
+    <original>A</original>
+    <variation>P</variation>
+    <location>
+      <position position="57"/>
+    </location>
+  </feature>
+  <feature type="sequence conflict" description="In Ref. 1; CAA54403." evidence="8" ref="1">
+    <original>P</original>
+    <variation>R</variation>
+    <location>
+      <position position="110"/>
+    </location>
+  </feature>
+  <feature type="sequence conflict" description="In Ref. 1; CAA54403." evidence="8" ref="1">
+    <original>A</original>
+    <variation>R</variation>
+    <location>
+      <position position="318"/>
+    </location>
+  </feature>
+  <feature type="sequence conflict" description="In Ref. 2; BAA07458." evidence="8" ref="2">
+    <original>LLR</original>
+    <variation>CYG</variation>
+    <location>
+      <begin position="321"/>
+      <end position="323"/>
+    </location>
+  </feature>
+  <feature type="sequence conflict" description="In Ref. 1; CAA54403." evidence="8" ref="1">
+    <original>VPPRMDYRLYLGHSYVTAIRNQREGVCPEGS</original>
+    <variation>APKDGLQAVPRPQLCHCHSKSAGSCPDA</variation>
+    <location>
+      <begin position="324"/>
+      <end position="354"/>
+    </location>
+  </feature>
+  <feature type="sequence conflict" description="In Ref. 2; BAA07458." evidence="8" ref="2">
+    <original>G</original>
+    <variation>A</variation>
+    <location>
+      <position position="353"/>
+    </location>
+  </feature>
+  <feature type="sequence conflict" description="In Ref. 1; CAA54403 and 2; BAA07458." evidence="8" ref="1 2">
+    <original>S</original>
+    <variation>T</variation>
+    <location>
+      <position position="379"/>
+    </location>
+  </feature>
+  <feature type="sequence conflict" description="In Ref. 1; CAA54403." evidence="8" ref="1">
+    <original>S</original>
+    <variation>G</variation>
+    <location>
+      <position position="380"/>
+    </location>
+  </feature>
+  <feature type="sequence conflict" description="In Ref. 6; AAA42267." evidence="8" ref="6">
+    <original>E</original>
+    <variation>D</variation>
+    <location>
+      <position position="691"/>
+    </location>
+  </feature>
+  <feature type="sequence conflict" description="In Ref. 6; AAA42267." evidence="8" ref="6">
+    <original>HK</original>
+    <variation>TA</variation>
+    <location>
+      <begin position="696"/>
+      <end position="697"/>
+    </location>
+  </feature>
+  <evidence type="ECO:0000250" key="1">
+    <source>
+      <dbReference type="UniProtKB" id="P02787"/>
+    </source>
+  </evidence>
+  <evidence type="ECO:0000255" key="2"/>
+  <evidence type="ECO:0000255" key="3">
+    <source>
+      <dbReference type="PROSITE-ProRule" id="PRU00741"/>
+    </source>
+  </evidence>
+  <evidence type="ECO:0000269" key="4">
+    <source>
+      <dbReference type="PubMed" id="15047867"/>
+    </source>
+  </evidence>
+  <evidence type="ECO:0000269" key="5">
+    <source>
+      <dbReference type="PubMed" id="3046665"/>
+    </source>
+  </evidence>
+  <evidence type="ECO:0000269" key="6">
+    <source>
+      <dbReference type="PubMed" id="500689"/>
+    </source>
+  </evidence>
+  <evidence type="ECO:0000303" key="7">
+    <source>
+      <dbReference type="PubMed" id="6236811"/>
+    </source>
+  </evidence>
+  <evidence type="ECO:0000305" key="8"/>
+  <sequence length="698" mass="76395" checksum="B91ABB41CA447194" modified="2007-01-09" version="3" precursor="true">MRFAVGALLACAALGLCLAVPDKTVKWCAVSEHENTKCISFRDHMKTVLPADGPRLACVKKTSYQDCIKAISGGEADAITLDGGWVYDAGLTPNNLKPVAAEFYGSLEHPQTHYLAVAVVKKGTDFQLNQLQGKKSCHTGLGRSAGWIIPIGLLFCNLPEPRKPLEKAVASFFSGSCVPCADPVAFPQLCQLCPGCGCSPTQPFFGYVGAFKCLRDGGGDVAFVKHTTIFEVLPQKADRDQYELLCLDNTRKPVDQYEDCYLARIPSHAVVARNGDGKEDLIWEILKVAQEHFGKGKSKDFQLFGSPLGKDLLFKDSAFGLLRVPPRMDYRLYLGHSYVTAIRNQREGVCPEGSIDSAPVKWCALSHQERAKCDEWSVSSNGQIECESAESTEDCIDKIVNGEADAMSLDGGHAYIAGQCGLVPVMAENYDISSCTNPQSDVFPKGYYAVAVVKASDSSINWNNLKGKKSCHTGVDRTAGWNIPMGLLFSRINHCKFDEFFSQGCAPGYKKNSTLCDLCIGPAKCAPNNREGYNGYTGAFQCLVEKGDVAFVKHQTVLENTNGKNTAAWAKDLKQEDFQLLCPDGTKKPVTEFATCHLAQAPNHVVVSRKEKAARVSTVLTAQKDLFWKGDKDCTGNFCLFRSSTKDLLFRDDTKCLTKLPEGTTYEEYLGAEYLQAVGNIRKCSTSRLLEACTFHKS</sequence>
+</entry>
+<copyright>
+Copyrighted by the UniProt Consortium, see https://www.uniprot.org/terms Distributed under the Creative Commons Attribution (CC BY 4.0) License
+</copyright>
+</uniprot>

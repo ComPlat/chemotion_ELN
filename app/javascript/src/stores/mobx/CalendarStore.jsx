@@ -13,6 +13,7 @@ const CalendarTypes = {
   ResearchPlan: ['handover', 'reminder', 'report'],
   Screen: ['reminder', 'report'],
   DeviceDescription: ['reminder', 'report'],
+  SequenceBasedMacromoleculeSample: ['reminder', 'report'],
   // Element all types like default
 };
 

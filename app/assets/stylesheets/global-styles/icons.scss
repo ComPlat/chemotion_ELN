@@ -173,7 +173,9 @@
 .icon-cell_line,
 .icon-device_description,
 .icon-vessel,
-.icon-vessel_template {
+.icon-vessel_template,
+.icon-sequence_based_macromolecule,
+.icon-sequence_based_macromolecule_sample {
   font-style: inherit;
   &:before {
     font-family: FontAwesome;
@@ -198,4 +200,9 @@
 
 .icon-vessel_template:before {
   content: "\f0ae";
+}
+
+.icon-sequence_based_macromolecule:before,
+.icon-sequence_based_macromolecule_sample:before {
+  content: "\f0c1";
 }

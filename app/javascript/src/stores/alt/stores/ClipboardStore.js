@@ -8,6 +8,7 @@ class ClipboardStore {
       samples: [],
       wellplates: [],
       device_descriptions: [],
+      sequence_based_macromolecules_samples: [],
     };
 
     this.bindListeners({
@@ -17,6 +18,10 @@ class ClipboardStore {
       handleFetchWellplatesByUIState: ClipboardActions.fetchWellplatesByUIState,
       handleFetchDeviceDescriptionAndBuildCopy: [
         ClipboardActions.fetchDeviceDescriptionAndBuildCopy, ClipboardActions.fetchDeviceDescriptionsByUIState
+      ],
+      handleFetchSequenceBasedMacromoleculeSamplesAndBuildCopy: [
+        ClipboardActions.fetchSequenceBasedMacromoleculeSamplesAndBuildCopy,
+        ClipboardActions.fetchSequenceBasedMacromoleculeSamplesByUIState
       ],
     })
   }
@@ -52,6 +57,13 @@ class ClipboardStore {
     Aviator.navigate(result.isSync
       ? `/scollection/${result.collection_id}/device_description/copy`
       : `/collection/${result.collection_id}/device_description/copy`);
+  }
+
+  handleFetchSequenceBasedMacromoleculeSamplesAndBuildCopy(result) {
+    this.state.sequence_based_macromolecule_samples = result.sequence_based_macromolecule_samples;
+    Aviator.navigate(result.isSync
+      ? `/scollection/${result.collection_id}/sequence_based_macromolecule_sample/copy`
+      : `/collection/${result.collection_id}/sequence_based_macromolecule_sample/copy`);
   }
 }
 

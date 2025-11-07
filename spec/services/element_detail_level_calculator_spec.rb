@@ -44,6 +44,7 @@ describe ElementDetailLevelCalculator do
         Wellplate => 0,
         CelllineSample => 0,
         DeviceDescription => 0,
+        SequenceBasedMacromoleculeSample => 0,
       })
     end
 

@@ -91,26 +91,28 @@ export const SearchStore = types
     // within an action
     loadSearchResults: flow(function* loadSearchResults(params) {
       let result = yield SearchFetcher.fetchBasedOnSearchSelectionAndCollection(params);
-      self.search_results.clear();
-      self.tab_search_results.clear();
-      Object.entries(result).forEach(([key, value]) => {
-        let errorExists = self.result_error_messages.find((e) => { return e == value.error });
-        if (value.error !== undefined && value.error !== '' && errorExists === undefined) {
-          self.result_error_messages.push(value.error);
-        }
-        let searchResult = SearchResult.create({
-          id: key,
-          results: {
-            ids: value.ids,
-            page: value.page,
-            pages: value.pages,
-            per_page: value.perPage,
-            total_elements: value.totalElements
+      if (result) {
+        self.search_results.clear();
+        self.tab_search_results.clear();
+        Object.entries(result).forEach(([key, value]) => {
+          let errorExists = self.result_error_messages.find((e) => { return e == value.error });
+          if (value.error !== undefined && value.error !== '' && errorExists === undefined) {
+            self.result_error_messages.push(value.error);
           }
-        })
-        self.search_results.set(searchResult.id, searchResult)
-        self.addSearchResult(key, value, value.ids.slice(0, 15))
-      });
+          let searchResult = SearchResult.create({
+            id: key,
+            results: {
+              ids: value.ids,
+              page: value.page,
+              pages: value.pages,
+              per_page: value.perPage,
+              total_elements: value.totalElements
+            }
+          })
+          self.search_results.set(searchResult.id, searchResult)
+          self.addSearchResult(key, value, value.ids.slice(0, 15))
+        });
+      }
     }),
     loadSearchResultTab: flow(function* loadSearchResultTab(params) {
       let result = yield SearchFetcher.fetchBasedOnSearchResultIds(params);
@@ -209,7 +211,7 @@ export const SearchStore = types
           ids: ids.length > 0 ? ids : result.ids,
           page: result.page
         }
-      })
+      });
       self.tab_search_results.set(tabSearchResult.id, tabSearchResult)
     },
     showSearchResults() {
@@ -272,8 +274,12 @@ export const SearchStore = types
     },
     removeErrorMessage(message) {
       let neededFieldsMessage = 'Please fill out all needed fields';
-      let error_messages = self.error_messages.filter((m) => { return m != message && m != neededFieldsMessage });
-      self.error_messages = error_messages;
+      if (message === undefined) {
+        self.error_messages = [];
+      } else {
+        let error_messages = self.error_messages.filter((m) => { return m != message && m != neededFieldsMessage });
+        self.error_messages = error_messages;
+      }
     },
     changeTabCurrentPage(key, index, id) {
       const tabs = [...self.tab_current_page];

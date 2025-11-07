@@ -12,7 +12,7 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import { selectUserOptionFormater } from 'src/utilities/selectHelper';
-import { elementNames } from 'src/apps/generic/Utils';
+import { elementNames, allElnElements } from 'src/apps/generic/Utils';
 
 export default class ManagingModalSharing extends React.Component {
 
@@ -68,6 +68,8 @@ export default class ManagingModalSharing extends React.Component {
     let isScreenSelectionEmpty = this.isElementSelectionEmpty(uiState.screen);
     let isCelllineSelectionEmpty = this.isElementSelectionEmpty(uiState.cell_line);
     let isVesselSelectionEmpty = this.isElementSelectionEmpty(uiState.vessel);
+    let isDeviceDescriptionSelectionEmpty = this.isElementSelectionEmpty(uiState.device_description);
+    let isSequenceBasedMacromoleculeSampleSelectionEmpty = this.isElementSelectionEmpty(uiState.sequence_based_macromolecule_sample);
 
     let isElementSelectionEmpty = false;
 
@@ -82,51 +84,32 @@ export default class ManagingModalSharing extends React.Component {
       });
     }
 
-
     return isSampleSelectionEmpty &&
       isReactionSelectionEmpty &&
       isWellplateSelectionEmpty &&
       isScreenSelectionEmpty &&
       isCelllineSelectionEmpty &&
       isVesselSelectionEmpty &&
+      isDeviceDescriptionSelectionEmpty &&
+      isSequenceBasedMacromoleculeSampleSelectionEmpty &&
       isElementSelectionEmpty;
   }
 
   filterParamsWholeCollection(uiState) {
     let collectionId = uiState.currentCollection.id;
+
     let filterParams = {
-      sample: {
-        all: true,
-        included_ids: [],
-        excluded_ids: [],
-        collection_id: collectionId
-      },
-      reaction: {
-        all: true,
-        included_ids: [],
-        excluded_ids: [],
-        collection_id: collectionId
-      },
-      wellplate: {
-        all: true,
-        included_ids: [],
-        excluded_ids: [],
-        collection_id: collectionId
-      },
-      screen: {
-        all: true,
-        included_ids: [],
-        excluded_ids: [],
-        collection_id: collectionId
-      },
-      research_plan: {
-        all: true,
-        included_ids: [],
-        excluded_ids: [],
-        collection_id: collectionId
-      },
       currentSearchSelection: uiState.currentSearchSelection
     };
+
+    allElnElements.map((element) => {
+      filterParams[element] = {
+        all: true,
+        included_ids: [],
+        excluded_ids: [],
+        collection_id: collectionId,
+      };
+    });
 
     elementNames(false).then((klassArray) => {
       klassArray.forEach((klass) => {
@@ -146,50 +129,17 @@ export default class ManagingModalSharing extends React.Component {
     let collectionId = uiState.currentCollection.id;
 
     let filterParams = {
-      sample: {
-        all: uiState.sample.checkedAll,
-        included_ids: uiState.sample.checkedIds,
-        excluded_ids: uiState.sample.uncheckedIds,
-        collection_id: collectionId
-      },
-      reaction: {
-        all: uiState.reaction.checkedAll,
-        included_ids: uiState.reaction.checkedIds,
-        excluded_ids: uiState.reaction.uncheckedIds,
-        collection_id: collectionId
-      },
-      wellplate: {
-        all: uiState.wellplate.checkedAll,
-        included_ids: uiState.wellplate.checkedIds,
-        excluded_ids: uiState.wellplate.uncheckedIds,
-        collection_id: collectionId
-      },
-      screen: {
-        all: uiState.screen.checkedAll,
-        included_ids: uiState.screen.checkedIds,
-        excluded_ids: uiState.screen.uncheckedIds,
-        collection_id: collectionId
-      },
-      research_plan: {
-        all: uiState.research_plan.checkedAll,
-        included_ids: uiState.research_plan.checkedIds,
-        excluded_ids: uiState.research_plan.uncheckedIds,
-        collection_id: collectionId
-      },
-      cell_line: {
-        all: uiState.cell_line.checkedAll,
-        included_ids: uiState.cell_line.checkedIds,
-        excluded_ids: uiState.cell_line.uncheckedIds,
-        collection_id: collectionId
-      },
-      vessel: {
-        all: uiState.vessel.checkedAll,
-        included_ids: uiState.vessel.checkedIds,
-        excluded_ids: uiState.vessel.uncheckedIds,
-        collection_id: collectionId
-      },
       currentSearchSelection: uiState.currentSearchSelection
     };
+
+    allElnElements.map((element) => {
+      filterParams[element] = {
+        all: uiState[element].checkedAll,
+        included_ids: uiState[element].checkedIds,
+        excluded_ids: uiState[element].uncheckedIds,
+        collection_id: collectionId,
+      };
+    });
 
     elementNames(false).then((klassArray) => {
       klassArray.forEach((klass) => {
