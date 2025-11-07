@@ -38,11 +38,11 @@ function ExportImportButton() {
     }
 
     const {
-      label, is_locked, is_shared, permission_level
+      label, is_locked, shared, permission_level
     } = currentCollection;
     const newIsDisabled = (
       (label === 'All' && is_locked)
-      || (is_shared === true && permission_level < PermissionConst.ImportElements)
+      || (shared === true && permission_level < PermissionConst.ImportElements)
     );
     setIsDisabled(newIsDisabled);
     setHasRadar(storeHasRadar);

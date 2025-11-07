@@ -11,9 +11,9 @@ import MatrixCheck from 'src/components/common/MatrixCheck';
 import UIStore from 'src/stores/alt/stores/UIStore';
 
 const onNaviClick = (type, id) => {
-  const { currentCollection, isSync } = UIStore.getState();
+  const { currentCollection } = UIStore.getState();
   const { genericEls = [] } = UserStore.getState();
-  browseElement(currentCollection, isSync, type, id, genericEls, true);
+  browseElement(currentCollection, false, type, id, genericEls, true);
 };
 
 class GenericDSDetails extends Component {

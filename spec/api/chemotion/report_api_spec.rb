@@ -84,7 +84,6 @@ describe Chemotion::ReportAPI do
             reaction: no_checked,
             wellplate: no_checked,
             currentCollection: collection.id,
-            isSync: false,
           },
           columns: {
             analyses: [],
@@ -163,7 +162,6 @@ describe Chemotion::ReportAPI do
             checkedAll: false,
           },
           currentCollection: collection.id,
-          isSync: false,
         }
       end
 
@@ -290,7 +288,6 @@ describe Chemotion::ReportAPI do
               checkedAll: false,
             },
             currentCollection: collection.id,
-            isSync: false,
           },
           columns: {},
         }

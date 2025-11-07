@@ -134,7 +134,6 @@ export default class SplitElementButton extends React.Component {
           excluded_ids: uiState.sequence_based_macromolecule_sample.uncheckedIds,
         },
         currentCollectionId: uiState.currentCollection.id,
-        isSync: uiState.isSync,
       }
     }
 

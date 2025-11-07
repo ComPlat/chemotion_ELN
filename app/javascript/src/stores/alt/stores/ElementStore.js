@@ -1090,11 +1090,7 @@ class ElementStore {
   }
 
   handleSplitAsSubSequenceBasedMacromoleculeSample(uiState) {
-    ElementActions.fetchSequenceBasedMacromoleculeSamplesByCollectionId(
-      uiState.currentCollectionId,
-      {},
-      uiState.isSync,
-    );
+    this.handleRefreshElements('sequence_based_macromolecule_sample');
   }
 
   // -- Reactions --
