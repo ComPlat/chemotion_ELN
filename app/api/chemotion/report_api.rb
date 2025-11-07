@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/ClassLength
 module Chemotion
   class ReportAPI < Grape::API
     helpers ReportHelpers
@@ -17,10 +18,6 @@ module Chemotion
 
       def time_now
         Time.zone.now.strftime('%Y-%m-%dT%H-%M-%S')
-      end
-
-      def is_int?
-        self == /\A[-+]?\d+\z/
       end
     end
 
@@ -113,7 +110,9 @@ module Chemotion
         collection = Collection.accessible_for(current_user).find(params[:uiState][:currentCollection])
 
         reaction_state = params[:uiState][:reaction]
-        return status 204 unless reaction_state && (reaction_state[:checkedAll] || reaction_state[:checkedIds].to_a.present?)
+        unless reaction_state && (reaction_state[:checkedAll] || reaction_state[:checkedIds].to_a.present?)
+          return status 204
+        end
 
         results = reaction_smiles_hash(
           collection.id,
@@ -177,8 +176,6 @@ module Chemotion
       end
 
       desc 'return all reports of the user'
-      params do
-      end
       get :all do
         reports = current_user.reports.order(updated_at: :desc)
         present reports, with: Entities::ReportEntity, root: :archives, current_user: current_user
@@ -271,7 +268,7 @@ module Chemotion
         if report
           # set readed
           ru = report.reports_users.find { |r| r.user_id == current_user.id }
-          ru.touch :downloaded_at
+          ru.touch :downloaded_at # rubocop:disable Rails/SkipsModelValidations
           # send file
           att = report.attachments.first
           content_type att.content_type
@@ -286,3 +283,4 @@ module Chemotion
     end
   end
 end
+# rubocop:enable Metrics/ClassLength
