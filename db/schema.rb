@@ -411,6 +411,9 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
     t.jsonb "admin_ids", default: {}
     t.jsonb "user_ids", default: {}
     t.string "version"
+    t.jsonb "super_class_of", default: {}, null: false
+    t.index ["ols_term_id"], name: "dataset_klasses_on_ols_term_id_ukey", unique: true
+    t.index ["super_class_of"], name: "index_dataset_klasses_on_super_class_of", using: :gin
   end
 
   create_table "dataset_klasses_revisions", id: :serial, force: :cascade do |t|
@@ -659,7 +662,10 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
     t.string "uuid"
     t.string "klass_uuid"
     t.jsonb "properties_release"
-    t.string "ancestry"
+    t.string "ancestry", default: "/", null: false, collation: "C"
+    t.index ["ancestry"], name: "index_elements_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
+    t.index ["name"], name: "index_elements_on_name_trigram", opclass: :gin_trgm_ops, using: :gin
+    t.index ["short_label"], name: "index_elements_on_short_label_trigram", opclass: :gin_trgm_ops, using: :gin
   end
 
   create_table "elements_elements", force: :cascade do |t|
@@ -745,101 +751,6 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["prefix"], name: "index_inventories_on_prefix", unique: true
-  end
-
-  create_table "ketcherails_amino_acids", id: :serial, force: :cascade do |t|
-    t.integer "moderated_by"
-    t.integer "suggested_by"
-    t.string "name", null: false
-    t.text "molfile", null: false
-    t.integer "aid", default: 1, null: false
-    t.integer "aid2", default: 1, null: false
-    t.integer "bid", default: 1, null: false
-    t.string "icon_path"
-    t.string "sprite_class"
-    t.string "status"
-    t.text "notes"
-    t.datetime "approved_at"
-    t.datetime "rejected_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.string "icon_file_name"
-    t.string "icon_content_type"
-    t.integer "icon_file_size"
-    t.datetime "icon_updated_at"
-    t.index ["moderated_by"], name: "index_ketcherails_amino_acids_on_moderated_by"
-    t.index ["name"], name: "index_ketcherails_amino_acids_on_name"
-    t.index ["suggested_by"], name: "index_ketcherails_amino_acids_on_suggested_by"
-  end
-
-  create_table "ketcherails_atom_abbreviations", id: :serial, force: :cascade do |t|
-    t.integer "moderated_by"
-    t.integer "suggested_by"
-    t.string "name", null: false
-    t.text "molfile", null: false
-    t.integer "aid", default: 1, null: false
-    t.integer "bid", default: 1, null: false
-    t.string "icon_path"
-    t.string "sprite_class"
-    t.string "status"
-    t.text "notes"
-    t.datetime "approved_at"
-    t.datetime "rejected_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.string "icon_file_name"
-    t.string "icon_content_type"
-    t.integer "icon_file_size"
-    t.datetime "icon_updated_at"
-    t.string "rtl_name"
-    t.index ["moderated_by"], name: "index_ketcherails_atom_abbreviations_on_moderated_by"
-    t.index ["name"], name: "index_ketcherails_atom_abbreviations_on_name"
-    t.index ["suggested_by"], name: "index_ketcherails_atom_abbreviations_on_suggested_by"
-  end
-
-  create_table "ketcherails_common_templates", id: :serial, force: :cascade do |t|
-    t.integer "moderated_by"
-    t.integer "suggested_by"
-    t.string "name", null: false
-    t.text "molfile", null: false
-    t.string "icon_path"
-    t.string "sprite_class"
-    t.text "notes"
-    t.datetime "approved_at"
-    t.datetime "rejected_at"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.integer "template_category_id"
-    t.string "status"
-    t.string "icon_file_name"
-    t.string "icon_content_type"
-    t.integer "icon_file_size"
-    t.datetime "icon_updated_at"
-    t.index ["moderated_by"], name: "index_ketcherails_common_templates_on_moderated_by"
-    t.index ["name"], name: "index_ketcherails_common_templates_on_name"
-    t.index ["suggested_by"], name: "index_ketcherails_common_templates_on_suggested_by"
-  end
-
-  create_table "ketcherails_custom_templates", id: :serial, force: :cascade do |t|
-    t.integer "user_id", null: false
-    t.string "name", null: false
-    t.text "molfile", null: false
-    t.string "icon_path"
-    t.string "sprite_class"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.index ["user_id"], name: "index_ketcherails_custom_templates_on_user_id"
-  end
-
-  create_table "ketcherails_template_categories", id: :serial, force: :cascade do |t|
-    t.string "name", null: false
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.string "icon_file_name"
-    t.string "icon_content_type"
-    t.integer "icon_file_size"
-    t.datetime "icon_updated_at"
-    t.string "sprite_class"
   end
 
   create_table "layer_tracks", force: :cascade do |t|
@@ -1375,9 +1286,9 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
     t.jsonb "solvent"
     t.boolean "dry_solvent", default: false
     t.boolean "inventory_sample", default: false
-    t.jsonb "log_data"
     t.string "sample_type", default: "Micromolecule"
     t.jsonb "sample_details"
+    t.jsonb "log_data"
     t.index ["ancestry"], name: "index_samples_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
     t.index ["identifier"], name: "index_samples_on_identifier"
@@ -2042,8 +1953,8 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
        RETURNS TABLE(literatures text)
        LANGUAGE sql
       AS $function$
-         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2
-         where l.literature_id = l2.id
+         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2 
+         where l.literature_id = l2.id 
          and l.element_type = $1 and l.element_id = $2
        $function$
   SQL
@@ -2143,7 +2054,7 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
               where collection_id in (select id from collections where user_id = userId)
           ) s;
           used_space = COALESCE(used_space_samples,0);
-
+          
           select sum(calculate_element_space(r.reaction_id, 'Reaction')) into used_space_reactions from (
               select distinct reaction_id
               from collections_reactions
