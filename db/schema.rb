@@ -206,26 +206,14 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
     t.integer "user_id", null: false
     t.string "ancestry", default: "/", null: false, collation: "C"
     t.text "label", null: false
-    t.integer "shared_by_id"
-    t.boolean "is_shared", default: false
-    t.integer "permission_level", default: 0
-    t.integer "sample_detail_level", default: 10
-    t.integer "reaction_detail_level", default: 10
-    t.integer "wellplate_detail_level", default: 10
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "position"
-    t.integer "screen_detail_level", default: 10
     t.boolean "is_locked", default: false
     t.datetime "deleted_at"
-    t.boolean "is_synchronized", default: false, null: false
-    t.integer "researchplan_detail_level", default: 10
-    t.integer "element_detail_level", default: 10
     t.jsonb "tabs_segment", default: {}
-    t.integer "celllinesample_detail_level", default: 10
     t.bigint "inventory_id"
-    t.integer "devicedescription_detail_level", default: 10
-    t.integer "sequencebasedmacromoleculesample_detail_level", default: 10
+    t.boolean "shared", default: false, null: false
     t.index ["ancestry"], name: "index_collections_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
     t.index ["deleted_at"], name: "index_collections_on_deleted_at"
     t.index ["inventory_id"], name: "index_collections_on_inventory_id"
@@ -430,6 +418,9 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
     t.jsonb "admin_ids", default: {}
     t.jsonb "user_ids", default: {}
     t.string "version"
+    t.jsonb "super_class_of", default: {}, null: false
+    t.index ["ols_term_id"], name: "dataset_klasses_on_ols_term_id_ukey", unique: true
+    t.index ["super_class_of"], name: "index_dataset_klasses_on_super_class_of", using: :gin
   end
 
   create_table "dataset_klasses_revisions", id: :serial, force: :cascade do |t|
@@ -678,7 +669,10 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
     t.string "uuid"
     t.string "klass_uuid"
     t.jsonb "properties_release"
-    t.string "ancestry"
+    t.string "ancestry", default: "/", null: false, collation: "C"
+    t.index ["ancestry"], name: "index_elements_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
+    t.index ["name"], name: "index_elements_on_name_trigram", opclass: :gin_trgm_ops, using: :gin
+    t.index ["short_label"], name: "index_elements_on_short_label_trigram", opclass: :gin_trgm_ops, using: :gin
   end
 
   create_table "elements_elements", force: :cascade do |t|
@@ -1611,29 +1605,6 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["channel_id", "user_id"], name: "index_subscriptions_on_channel_id_and_user_id", unique: true
-  end
-
-  create_table "sync_collections_users", id: :serial, force: :cascade do |t|
-    t.integer "user_id"
-    t.integer "collection_id"
-    t.integer "shared_by_id"
-    t.integer "permission_level", default: 0
-    t.integer "sample_detail_level", default: 0
-    t.integer "reaction_detail_level", default: 0
-    t.integer "wellplate_detail_level", default: 0
-    t.integer "screen_detail_level", default: 0
-    t.string "fake_ancestry"
-    t.integer "researchplan_detail_level", default: 10
-    t.string "label"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.integer "element_detail_level", default: 10
-    t.integer "celllinesample_detail_level", default: 10
-    t.integer "devicedescription_detail_level", default: 10
-    t.integer "sequencebasedmacromoleculesample_detail_level", default: 10
-    t.index ["collection_id"], name: "index_sync_collections_users_on_collection_id"
-    t.index ["shared_by_id", "user_id", "fake_ancestry"], name: "index_sync_collections_users_on_shared_by_id"
-    t.index ["user_id", "fake_ancestry"], name: "index_sync_collections_users_on_user_id_and_fake_ancestry"
   end
 
   create_table "text_templates", id: :serial, force: :cascade do |t|
@@ -2770,20 +2741,6 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
       CREATE TRIGGER lab_trg_layers_changes AFTER UPDATE ON public.layers FOR EACH ROW EXECUTE FUNCTION lab_record_layers_changes()
   SQL
 
-  create_view "v_samples_collections", sql_definition: <<-SQL
-      SELECT cols.id AS cols_id,
-      cols.user_id AS cols_user_id,
-      cols.sample_detail_level AS cols_sample_detail_level,
-      cols.wellplate_detail_level AS cols_wellplate_detail_level,
-      cols.shared_by_id AS cols_shared_by_id,
-      cols.is_shared AS cols_is_shared,
-      samples.id AS sams_id,
-      samples.name AS sams_name
-     FROM ((collections cols
-       JOIN collections_samples col_samples ON (((col_samples.collection_id = cols.id) AND (col_samples.deleted_at IS NULL))))
-       JOIN samples ON (((samples.id = col_samples.sample_id) AND (samples.deleted_at IS NULL))))
-    WHERE (cols.deleted_at IS NULL);
-  SQL
   create_view "literal_groups", sql_definition: <<-SQL
       SELECT lits.element_type,
       lits.element_id,
