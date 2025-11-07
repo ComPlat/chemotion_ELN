@@ -49,6 +49,11 @@ services:
     image: ${DOCKER_PG_IMAGE:-postgres:16}
     environment:
       - 'POSTGRES_HOST_AUTH_METHOD=trust'
+    command: >
+      postgres
+      -c wal_level=logical
+      -c max_replication_slots=4
+      -c max_wal_senders=4
     expose: # expose port to app container
       - '5432'
     ports: # expose port to host machine in case we want to use external db gui tools
@@ -126,12 +131,100 @@ services:
     working_dir: "/home/ubuntu/app"
     command: 'yarn run storybook'
 
+  sequin:
+    build:
+      context: .
+      dockerfile: Dockerfile.sequin
+    image: sequinstream/sequin:dev
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - PG_URL=postgresql://postgres@postgres:5432/sequin_dev
+      - REDIS_URL=redis://redis:6379/0
+      # Secrets MUST be provided via environment variables or an env file
+      # (no hard-coded defaults). For production, use a secrets manager
+      # or `.env.production` and never commit that file to git.
+      - SECRET_KEY_BASE=${SECRET_KEY_BASE}
+      - VAULT_KEY=${VAULT_KEY}
+      - SENTRY_DSN=${SENTRY_DSN}
+      - PHX_HOST=localhost
+      - PORT=7376
+      - SELF_HOSTED=${SELF_HOSTED:-true}
+    ports:
+      - "${HOST_PORT_SEQUIN:-7376}:7376"  # Sequin API/UI
+    volumes:
+      - sequin_data:/var/lib/sequin
+    networks:
+      - default
+      - chemotion
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7376/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    expose:
+      - '6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - chemotion
+
+  opensearch:
+    image: opensearchproject/opensearch:2.11.1
+    environment:
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+      # Disable security plugin for dev environment
+      - DISABLE_SECURITY_PLUGIN=true
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    ports:
+      - "${HOST_PORT_OPENSEARCH:-9200}:9200"  # REST API
+      - "${HOST_PORT_OPENSEARCH_PERF:-9600}:9600"  # Performance Analyzer
+    expose:
+      - '9200'
+      - '9600'
+    volumes:
+      - opensearch_data:/usr/share/opensearch/data
+    networks:
+      - default
+      - chemotion
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
 
 volumes:
   database:
     name: ${VOLUME_NAME_DB:-chemotion_eln_database}
   homedir:
     name: ${VOLUME_NAME_HOMEDIR:-chemotion_eln_homedir}
+  sequin_data:
+    name: ${VOLUME_NAME_SEQUIN:-chemotion_eln_sequin_data}
+  redis_data:
+    name: ${VOLUME_NAME_REDIS:-chemotion_eln_redis_data}
+  opensearch_data:
+    name: ${VOLUME_NAME_OPENSEARCH:-chemotion_eln_opensearch_data}
 
 networks:
   chemotion:

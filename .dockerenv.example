@@ -49,3 +49,8 @@ IMG_INDIGO=epmlsop/indigo-service:1.34.0-rc.1
 #HOST_PORT_APP=3000
 #HOST_PORT_WEBPACK=3035
 
+
+## CDC and Search Infrastructure
+#HOST_PORT_SEQUIN=7376
+#VOLUME_NAME_SEQUIN=chemotion_eln_sequin_data
+#VOLUME_NAME_REDIS=chemotion_eln_redis_data

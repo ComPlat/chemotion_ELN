@@ -1,0 +1,115 @@
+# Dockerfile for building Sequin locally for development
+# This skips the Sentry packaging step which requires a DSN
+
+ARG ELIXIR_VERSION=1.18.4
+ARG OTP_VERSION=27.3.4.2
+ARG DEBIAN_VERSION=bookworm-20250630-slim
+
+ARG BUILDER_IMAGE="hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-debian-${DEBIAN_VERSION}"
+ARG RUNNER_IMAGE="hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-debian-${DEBIAN_VERSION}"
+
+# ---- CLI Build Stage ----
+FROM golang:1.24.2-bullseye AS cli-builder
+
+ARG SEQUIN_CLI_VERSION=0.13.1
+RUN git clone --depth 1 --branch v${SEQUIN_CLI_VERSION} https://github.com/sequinstream/sequin.git /tmp/sequin \
+    && cd /tmp/sequin/cli \
+    && go build -o /sequin-cli
+
+# ---- Elixir Build Stage ----
+FROM ${BUILDER_IMAGE} AS builder
+
+ARG SELF_HOSTED=1
+ENV SELF_HOSTED=${SELF_HOSTED}
+
+# Set SENTRY_DSN for build
+ARG SENTRY_DSN=https://dummy@sentry.io/0
+ENV SENTRY_DSN=${SENTRY_DSN}
+
+# Install build dependencies
+RUN apt-get update -y && apt-get install -y build-essential git curl \
+    && apt-get clean && rm -f /var/lib/apt/lists/*_*
+
+# Install nodejs
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && apt-get install -y nodejs
+
+WORKDIR /app
+
+# Install hex and rebar
+RUN mix local.hex --force && \
+    mix local.rebar --force
+
+# Set build environment
+ENV MIX_ENV="prod"
+ENV LANG=C.UTF-8
+ENV ERL_FLAGS="+JPperf true"
+
+# Clone Sequin source
+RUN git clone https://github.com/sequinstream/sequin.git .
+
+# Install mix dependencies
+RUN mix deps.get --only $MIX_ENV
+RUN mkdir -p config
+
+# Compile dependencies
+RUN mix deps.compile
+
+# Compile assets
+WORKDIR /app/assets
+RUN npm install
+
+WORKDIR /app
+RUN mix assets.deploy
+
+# Compile the release
+RUN mix compile
+
+# NOTE: Skip sentry.package_source_code for development builds
+# This step requires a valid SENTRY_DSN which we don't need for local dev
+
+# Build release
+RUN mix release
+
+# ---- App Stage ----
+FROM ${RUNNER_IMAGE} AS app
+
+RUN apt-get update -y && \
+    apt-get install -y libstdc++6 openssl libncurses5 locales ca-certificates curl ssh jq telnet netcat-openbsd htop vim \
+    && apt-get clean && rm -f /var/lib/apt/lists/*_*
+
+# Copy the Sequin CLI
+COPY --from=cli-builder /sequin-cli /usr/local/bin/sequin
+RUN chmod +x /usr/local/bin/sequin
+
+ARG SELF_HOSTED=1
+ENV SELF_HOSTED=${SELF_HOSTED}
+
+# Set the locale
+RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && locale-gen
+
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US:en
+ENV LC_ALL=en_US.UTF-8
+
+# Create non-root user
+RUN useradd --create-home app
+WORKDIR /home/app
+COPY --from=builder --chown=app /app/_build .
+
+# Note: We'll need to get .iex.exs and start_commands.sh from the repo
+COPY --from=builder /app/.iex.exs .
+COPY --from=builder /app/scripts/start_commands.sh /scripts/start_commands.sh
+RUN chmod +x /scripts/start_commands.sh
+
+# Copy custom entrypoint that can generate development secrets at container start
+COPY docker/sequin-entrypoint.sh /usr/local/bin/sequin-entrypoint.sh
+RUN chmod +x /usr/local/bin/sequin-entrypoint.sh
+
+RUN ln -s /home/app/prod/rel/sequin/bin/sequin /usr/local/bin/sequin-server
+
+USER app
+
+EXPOSE 7376
+
+ENTRYPOINT ["/usr/local/bin/sequin-entrypoint.sh"]
+
