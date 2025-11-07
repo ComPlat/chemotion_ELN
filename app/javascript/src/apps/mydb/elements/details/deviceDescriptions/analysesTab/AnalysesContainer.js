@@ -1,7 +1,6 @@
 import React, { useContext, useEffect } from 'react';
 import {
-  Form, Button, ButtonGroup, ButtonToolbar,
-  OverlayTrigger, Tooltip, Accordion, Card,
+  Button, ButtonGroup, ButtonToolbar, Accordion, Card,
 } from 'react-bootstrap';
 
 import ContainerComponent from 'src/components/container/ContainerComponent';
@@ -164,7 +163,6 @@ function AnalysesContainer({ readonly }) {
             ) : (
               <AnalysesSortableContainer
                 readonly={readonly}
-                key={`analyses-sortable-${container.id}`}
               />
             )}
           </div>
