@@ -117,16 +117,6 @@ const AnalysesContainer = ({ readonly }) => {
                     rootContainer={deviceDescription.container}
                     index={index}
                   />
-                  <ViewSpectra
-                    sample={deviceDescription}
-                    handleSampleChanged={handleSpectraChange}
-                    handleSubmit={handleSpectraSubmit}
-                  />
-                  <NMRiumDisplayer
-                    sample={deviceDescription}
-                    handleSampleChanged={handleSpectraChange}
-                    handleSubmit={handleSpectraSubmit}
-                  />
                 </Card.Body>
               </Accordion.Collapse>
             )
@@ -158,9 +148,21 @@ const AnalysesContainer = ({ readonly }) => {
               handleCommentTextChange={deviceDescriptionsStore.changeAnalysisComment}
             />
             {mode === 'edit' ? (
+              <>
               <Accordion className="border rounded overflow-hidden">
                 {analysisContainer()}
               </Accordion>
+              <ViewSpectra
+                sample={deviceDescription}
+                handleSampleChanged={handleSpectraChange}
+                handleSubmit={handleSpectraSubmit}
+              />
+              <NMRiumDisplayer
+                sample={deviceDescription}
+                handleSampleChanged={handleSpectraChange}
+                handleSubmit={handleSpectraSubmit}
+              />
+              </>
             ) : (
               <AnalysesSortableContainer
                 readonly={readonly}

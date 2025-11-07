@@ -105,16 +105,6 @@ const AnalysesContainer = ({ readonly }) => {
                     />
                   </Card.Body>
                 </Accordion.Collapse>
-                <ViewSpectra
-                  sample={sbmmSample}
-                  handleSampleChanged={handleSpectraChange}
-                  handleSubmit={handleSpectraSubmit}
-                />
-                <NMRiumDisplayer
-                  sample={sbmmSample}
-                  handleSampleChanged={handleSpectraChange}
-                  handleSubmit={handleSpectraSubmit}
-                />
               </>
             )
           }
@@ -145,9 +135,21 @@ const AnalysesContainer = ({ readonly }) => {
               handleCommentTextChange={sbmmStore.changeAnalysisComment}
             />
             {sbmmStore.analysis_mode === 'edit' ? (
+              <>
               <Accordion className="border rounded overflow-hidden">
                 {analysisContainer()}
               </Accordion>
+              <ViewSpectra
+                sample={sbmmSample}
+                handleSampleChanged={handleSpectraChange}
+                handleSubmit={handleSpectraSubmit}
+              />
+              <NMRiumDisplayer
+                sample={sbmmSample}
+                handleSampleChanged={handleSpectraChange}
+                handleSubmit={handleSpectraSubmit}
+              />
+              </>
             ) : (
               <AnalysesSortableContainer
                 readonly={readonly}
