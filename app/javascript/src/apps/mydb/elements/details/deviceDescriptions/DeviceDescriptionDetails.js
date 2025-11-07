@@ -149,7 +149,7 @@ function DeviceDescriptionDetails() {
 
   const deviceDescriptionHeader = () => {
     const titleTooltip = formatTimeStampsOfElement(deviceDescription || {});
-    const defCol = currentCollection && currentCollection.is_shared === false
+    const defCol = currentCollection && currentCollection.shared === false
       && currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
 
     return (
