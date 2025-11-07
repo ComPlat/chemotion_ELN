@@ -53,9 +53,7 @@ class ClipboardStore {
 
   handleFetchSequenceBasedMacromoleculeSamplesAndBuildCopy(result) {
     this.state.sequence_based_macromolecule_samples = result.sequence_based_macromolecule_samples;
-    Aviator.navigate(result.isSync
-      ? `/scollection/${result.collection_id}/sequence_based_macromolecule_sample/copy`
-      : `/collection/${result.collection_id}/sequence_based_macromolecule_sample/copy`);
+    Aviator.navigate(`/collection/${result.collection_id}/sequence_based_macromolecule_sample/copy`);
   }
 }
 

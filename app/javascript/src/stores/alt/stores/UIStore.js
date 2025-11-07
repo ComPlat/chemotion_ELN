@@ -434,7 +434,7 @@ class UIStore {
             );
           }
 
-          if (!isSync && layout.sequence_based_macromolecule_sample && layout.sequence_based_macromolecule_sample > 0) {
+          if (layout.sequence_based_macromolecule_sample && layout.sequence_based_macromolecule_sample > 0) {
             ElementActions.fetchSequenceBasedMacromoleculeSamplesByCollectionId(
               collection.id,
               Object.assign(params, { page: state.sequence_based_macromolecule_sample.page }),
