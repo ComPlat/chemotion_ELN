@@ -8,23 +8,30 @@ import ReactFlow, {
   Handle, 
   Position
 } from 'reactflow';
-// import DetailActions from 'src/stores/alt/actions/DetailActions';
+import { Button } from 'react-bootstrap';
+import DetailActions from 'src/stores/alt/actions/DetailActions';
 
-// const CloseBtn = ({ explorer }) => {
-//   const onClickToClose = () => DetailActions.close(explorer);
-//   return (
-//     <Button
-//       variant="danger"
-//       size="xxsm"
-//       onClick={onClickToClose}
-//       style={{ position: 'absolute', top: 10, right: 10, zIndex: 10 }}
-//     >
-//       <i className="fa fa-times" />
-//     </Button>
-//   );
-// };
 
-// 🟢 Molecule node (circle)
+const clickToClose = (explorer) => {
+  console.log('Close button clicked for explorer:', explorer);
+  DetailActions.close(explorer, true);
+};
+
+const CloseBtn = ({ explorer }) => {
+  const onClickToClose = () => clickToClose(explorer);
+  return (
+    <Button
+      variant="danger"
+      size="xxsm"
+      onClick={onClickToClose}
+      style={{ position: 'absolute', top: 10, right: 10, zIndex: 10 }}
+    >
+      <i className="fa fa-times" />
+    </Button>
+  );
+};
+
+// Molecule node (circle)
 // const MoleculeNode = ({ data }) => (
 //   <div
 //     style={{
@@ -47,7 +54,7 @@ import ReactFlow, {
 //   </div>
 // );
 
-// // 🟦 Sample node (rectangle)
+// // Sample node (rectangle)
 // const SampleNode = ({ data }) => (
 //   <div
 //     style={{
@@ -90,7 +97,6 @@ export default function ExplorerComponent({ nodes, edges }) {
       className="explorer-graph-container"
       style={{ height: '80vh', width: '100%', backgroundColor: '#f8f9fa' }}
     >
-      <h4 className="p-2">Sample Explorer</h4>
 
       <ReactFlow
         nodes={rfNodes}
@@ -109,3 +115,5 @@ export default function ExplorerComponent({ nodes, edges }) {
     </div>
   );
 }
+
+export { CloseBtn };
