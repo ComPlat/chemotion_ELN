@@ -5,7 +5,7 @@ require 'rails_helper'
 # rubocop:disable Rspec/MultipleMemoizedHelpers, Rspec/NestedGroups, RSpec/IndexedLet
 describe Chemotion::ReportAPI do
   let(:user) { create(:user) }
-  let!(:collection)  { create(:collection, user_id: user.id) }
+  let!(:collection) { create(:collection, user_id: user.id) }
   let(:warden_authentication_instance) { instance_double(WardenAuthentication) }
 
   before do
@@ -26,8 +26,8 @@ describe Chemotion::ReportAPI do
     let!(:rp3) { create(:report, :downloadable, user: user) }
 
     let!(:rp_others) { create(:report, user: other) }
-    let!(:s1) { create(:sample, collections: [collection]) }
-    let!(:s2) { create(:sample, collections: [collection]) }
+    let(:s1) { create(:sample, collections: [collection]) }
+    let(:s2) { create(:sample, collections: [collection]) }
     let!(:r1) { create(:reaction, collections: [collection]) }
     let!(:r2) { create(:reaction, collections: [collection]) }
 
@@ -235,38 +235,38 @@ describe Chemotion::ReportAPI do
 
       let!(:molfile) { build(:molfile, type: 'test_2') }
 
-      let!(:sample_0) do
+      let!(:sample0) do
         build(:sample, created_by: user.id, molfile: molfile, collections: [collection])
       end
 
-      let!(:sample_1) do
+      let!(:sample1) do
         build(:sample, created_by: user.id, molfile: molfile, collections: [collection])
       end
 
-      let!(:sample_2) do
+      let!(:sample2) do
         build(:sample, created_by: user.id, molfile: molfile, collections: [collection])
       end
 
-      let!(:sample_3) do
+      let!(:sample3) do
         build(:sample, created_by: user.id, molfile: molfile, collections: [collection])
       end
 
-      let!(:sample_4) do
+      let!(:sample4) do
         build(:sample, created_by: user.id, molfile: molfile, collections: [collection])
       end
 
-      let(:smiles_0) { sample_0.molecule.cano_smiles }
-      let(:smiles_1) { sample_1.molecule.cano_smiles }
-      let(:smiles_2) { sample_2.molecule.cano_smiles }
-      let(:smiles_3) { sample_3.molecule.cano_smiles }
-      let(:smiles_4) { sample_4.molecule.cano_smiles }
+      let(:smiles0) { sample0.molecule.cano_smiles }
+      let(:smiles1) { sample1.molecule.cano_smiles }
+      let(:smiles2) { sample2.molecule.cano_smiles }
+      let(:smiles3) { sample3.molecule.cano_smiles }
+      let(:smiles4) { sample4.molecule.cano_smiles }
       let!(:reaction) do
         build(:valid_reaction,
               name: 'Reaction 0',
-              starting_materials: [sample_0, sample_1],
-              solvents: [sample_2],
-              reactants: [sample_3],
-              products: [sample_4],
+              starting_materials: [sample0, sample1],
+              solvents: [sample2],
+              reactants: [sample3],
+              products: [sample4],
               collections: [collection, collection_with_shares])
       end
 
@@ -305,11 +305,11 @@ describe Chemotion::ReportAPI do
       before do
         collection
         collection_with_shares
-        sample_0.save!
-        sample_1.save!
-        sample_2.save!
-        sample_3.save!
-        sample_4.save!
+        sample0.save!
+        sample1.save!
+        sample2.save!
+        sample3.save!
+        sample4.save!
         reaction.save!
       end
 
@@ -326,41 +326,41 @@ describe Chemotion::ReportAPI do
       describe 'ReportHelpers' do
         it 'concats the smiles SM>>P' do
           expect(subj.r_smiles_0(result.first.second)).to eq(
-            "#{[smiles_0, smiles_1].join('.')}>>#{smiles_4}",
+            "#{[smiles0, smiles1].join('.')}>>#{smiles4}",
           )
         end
 
         it 'concats the smiles SM.R>>P' do
           expect(subj.r_smiles_1(result.first.second)).to eq(
-            "#{[smiles_0, smiles_1, smiles_2].join('.')}>>#{smiles_4}",
+            "#{[smiles0, smiles1, smiles2].join('.')}>>#{smiles4}",
           )
         end
 
         it 'concats the smiles SM.R.S>>P' do
           expect(subj.r_smiles_2(result.first.second)).to eq(
-            "#{[smiles_0, smiles_1, smiles_2, smiles_3].join('.')}>>#{smiles_4}",
+            "#{[smiles0, smiles1, smiles2, smiles3].join('.')}>>#{smiles4}",
           )
         end
 
         it 'concats the smiles SM>R>P' do
           expect(subj.r_smiles_3(result.first.second)).to eq(
-            "#{[smiles_0, smiles_1].join('.')}>#{smiles_2}>#{smiles_4}",
+            "#{[smiles0, smiles1].join('.')}>#{smiles2}>#{smiles4}",
           )
         end
 
         it 'concats the smiles SM>R.S>P' do
           expect(subj.r_smiles_4(result.first.second)).to eq(
-            "#{[smiles_0, smiles_1].join('.')}>#{[smiles_2, smiles_3].join('.')}>#{smiles_4}",
+            "#{[smiles0, smiles1].join('.')}>#{[smiles2, smiles3].join('.')}>#{smiles4}",
           )
         end
 
         context 'with user owned reaction,' do
           it 'queries the cano_smiles from reaction associated samples' do
             expect(result.fetch(reaction.id.to_s)).to eq(
-              '0' => [smiles_0, smiles_1],
-              '1' => [smiles_2],
-              '2' => [smiles_3],
-              '3' => [smiles_4],
+              '0' => [smiles0, smiles1],
+              '1' => [smiles2],
+              '2' => [smiles3],
+              '3' => [smiles4],
             )
           end
         end
