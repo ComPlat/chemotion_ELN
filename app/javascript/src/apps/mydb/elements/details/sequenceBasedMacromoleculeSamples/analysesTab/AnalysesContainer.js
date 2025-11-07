@@ -5,8 +5,6 @@ import {
 } from 'react-bootstrap';
 
 import ContainerComponent from 'src/components/container/ContainerComponent';
-import AnalysisHeader from './AnalysisHeader';
-import AnalysesSortableContainer from './AnalysesSortableContainer';
 import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
 import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
@@ -16,8 +14,10 @@ import { CommentButton, CommentBox } from 'src/components/common/AnalysisComment
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import AnalysisHeader from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/analysesTab/AnalysisHeader';
+import AnalysesSortableContainer from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/analysesTab/AnalysesSortableContainer';
 
-const AnalysesContainer = ({ readonly }) => {
+function AnalysesContainer({ readonly }) {
   const sbmmStore = useContext(StoreContext).sequenceBasedMacromoleculeSamples;
   const sbmmSample = sbmmStore.sequence_based_macromolecule_sample;
   const containers = sbmmSample.container.children[0].children;
@@ -28,30 +28,28 @@ const AnalysesContainer = ({ readonly }) => {
 
   const handleSpectraChange = () => {
     // TODO: spectra change
-  }
+  };
 
   const handleSpectraSubmit = () => {
     // TODO: spectra submit
-  }
+  };
 
-  const addButton = () => {
-    return (
-      <div className="add-button">
-        <Button
-          size="xsm"
-          variant="success"
-          onClick={() => sbmmStore.addEmptyAnalysisContainer()}
-          disabled={readonly}
-        >
-          <i className="fa fa-plus me-1" />
-          Add analysis
-        </Button>
-      </div>
-    );
-  }
+  const addButton = () => (
+    <div className="add-button">
+      <Button
+        size="xsm"
+        variant="success"
+        onClick={() => sbmmStore.addEmptyAnalysisContainer()}
+        disabled={readonly}
+      >
+        <i className="fa fa-plus me-1" />
+        Add analysis
+      </Button>
+    </div>
+  );
 
   const modeButton = () => {
-    const isReadonly = !readonly && containers.length < 1 ? true : false;
+    const isReadonly = !!(!readonly && containers.length < 1);
 
     return (
       <ButtonGroup>
@@ -75,10 +73,10 @@ const AnalysesContainer = ({ readonly }) => {
         </ButtonGroupToggleButton>
       </ButtonGroup>
     );
-  }
+  };
 
   const analysisContainer = () => {
-    let items = [];
+    const items = [];
 
     containers.forEach((container, index) => {
       items.push(
@@ -90,29 +88,27 @@ const AnalysesContainer = ({ readonly }) => {
           </Card.Header>
           {
             !container.is_deleted && sbmmStore.analysis_mode === 'edit' && (
-              <>
-                <Accordion.Collapse eventKey={container.id}>
-                  <Card.Body>
-                    <ContainerComponent
-                      disabled={readonly}
-                      element={sbmmSample}
-                      readOnly={readonly}
-                      templateType="sbmmSample"
-                      container={container}
-                      onChange={() => sbmmStore.changeAnalysisContainerContent(container)}
-                      rootContainer={sbmmSample.container}
-                      index={index}
-                    />
-                  </Card.Body>
-                </Accordion.Collapse>
-              </>
+              <Accordion.Collapse eventKey={container.id}>
+                <Card.Body>
+                  <ContainerComponent
+                    disabled={readonly}
+                    element={sbmmSample}
+                    readOnly={readonly}
+                    templateType="sbmmSample"
+                    container={container}
+                    onChange={() => sbmmStore.changeAnalysisContainerContent(container)}
+                    rootContainer={sbmmSample.container}
+                    index={index}
+                  />
+                </Card.Body>
+              </Accordion.Collapse>
             )
           }
         </Card>
       );
     });
     return items;
-  }
+  };
 
   return (
     <>
@@ -136,19 +132,19 @@ const AnalysesContainer = ({ readonly }) => {
             />
             {sbmmStore.analysis_mode === 'edit' ? (
               <>
-              <Accordion className="border rounded overflow-hidden">
-                {analysisContainer()}
-              </Accordion>
-              <ViewSpectra
-                sample={sbmmSample}
-                handleSampleChanged={handleSpectraChange}
-                handleSubmit={handleSpectraSubmit}
-              />
-              <NMRiumDisplayer
-                sample={sbmmSample}
-                handleSampleChanged={handleSpectraChange}
-                handleSubmit={handleSpectraSubmit}
-              />
+                <Accordion className="border rounded overflow-hidden">
+                  {analysisContainer()}
+                </Accordion>
+                <ViewSpectra
+                  sample={sbmmSample}
+                  handleSampleChanged={handleSpectraChange}
+                  handleSubmit={handleSpectraSubmit}
+                />
+                <NMRiumDisplayer
+                  sample={sbmmSample}
+                  handleSampleChanged={handleSpectraChange}
+                  handleSubmit={handleSpectraSubmit}
+                />
               </>
             ) : (
               <AnalysesSortableContainer
@@ -158,8 +154,8 @@ const AnalysesContainer = ({ readonly }) => {
             )}
           </div>
         ) : (
-          <div className='d-flex justify-content-between align-items-center'>
-            <p className='m-0'>There are currently no Analyses.</p>
+          <div className="d-flex justify-content-between align-items-center">
+            <p className="m-0">There are currently no Analyses.</p>
             {addButton()}
           </div>
         )
