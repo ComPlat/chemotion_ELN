@@ -44,7 +44,8 @@ function ReactionsDisplay({
   activeAnalysis,
   handleChange,
   handleCommentTextChange,
-  rootContainer
+  rootContainer,
+  updateContainerPreferredThumbnail
 }) {
   const [commentBoxVisible, setCommentBoxVisible] = useState(false);
 
@@ -92,6 +93,7 @@ function ReactionsDisplay({
                       handleRemove={handleRemove}
                       handleSubmit={handleSubmit}
                       toggleAddToReport={toggleAddToReport}
+                      updateContainerPreferredThumbnail={updateContainerPreferredThumbnail}
                     />
                   </AccordionHeaderWithButtons>
                 </Card.Header>
@@ -133,6 +135,7 @@ function ReactionsDisplay({
                 handleSubmit={handleSubmit}
                 handleUndo={handleUndo}
                 toggleAddToReport={toggleAddToReport}
+                updateContainerPreferredThumbnail={updateContainerPreferredThumbnail}
               />
             );
           })}
