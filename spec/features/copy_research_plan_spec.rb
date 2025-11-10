@@ -5,23 +5,26 @@ require 'rails_helper'
 describe 'Copy research plans' do
   let!(:user_one) { create(:user, first_name: 'Hello', last_name: 'Complat', account_active: true) }
   let!(:user_two) { create(:user, first_name: 'User2', last_name: 'Complat', account_active: true) }
-  let(:rp_one) { create(:research_plan, creator: user_one, name: 'RP 1', body: []) }
-  let!(:col_one) { create(:collection, user_id: user_one.id, label: 'Col1') }
+  let!(:col_one) { create(:collection, user: user_one, label: 'Col1') }
+  let(:rp_one) { create(:research_plan, creator: user_one, name: 'RP 1', body: [], collections: [col_one]) }
 
-  let(:rp_two) { create(:research_plan, creator: user_one, name: 'RP 2', body: []) }
-  let!(:root_share) { create(:collection, user: user_one, shared_by_id: user_two.id, is_shared: true, is_locked: true) }
-  let!(:col_share) do
-    create(:collection, user: user_one, label: 'share-col', permission_level: 10, shared_by_id: user_two.id,
-                        is_shared: true, ancestry: root_share.id.to_s)
+  let!(:root_share) do
+    create(:collection, user: user_two).tap do |collection|
+      create(:collection_share, collection: collection, shared_with: user_one)
+    end
   end
+  let!(:col_share) do
+    create(:collection, user: user_two, label: 'share-col', parent: root_share).tap do |collection|
+      create(:collection_share, collection: collection, shared_with: user_one)
+    end
+  end
+  let(:rp_two) { create(:research_plan, creator: user_one, name: 'RP 2', body: [], collections: [col_share]) }
 
   before do
     sign_in(user_one)
     fp = Rails.public_path.join('images', 'molecules', 'molecule.svg')
     svg_path = Rails.root.join('spec/fixtures/images/molecule.svg')
     `ln -s #{svg_path} #{fp} ` unless File.exist?(fp)
-    CollectionsResearchPlan.find_or_create_by!(research_plan: rp_one, collection: col_one)
-    CollectionsResearchPlan.find_or_create_by!(research_plan: rp_two, collection: col_share)
   end
 
   it 'new research plan', :js do
