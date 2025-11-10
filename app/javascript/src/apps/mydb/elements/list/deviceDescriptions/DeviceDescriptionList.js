@@ -22,7 +22,8 @@ function ListItemHeader({
   if (groupKey !== '[empty]' && groupKey !== '[other]' && !groupedByValue.includes('ontology')) {
     groupName = `${groupDeviceName} - ${groupKey} ${groupType}`;
   } else if (groupKey === '[empty]') {
-    groupName = '[missing serial no]';
+    const emptyType = groupedByValue.includes('ontology') ? 'ontology' : 'serial no';
+    groupName = `[missing ${emptyType}]`;
   }
 
   return (
@@ -70,7 +71,7 @@ function DeviceDescriptionList({
 
     switch (groupedByValue) {
       case 'ontology': {
-        const keys = element?.ontologies ? element?.ontologies.map((ontology) => ontology?.data.label) : '';
+        const keys = element?.ontologies ? element?.ontologies.map((ontology) => ontology?.data.label).join(' - ') : '';
         return identifierKey(keys);
       }
       case 'ontology_combined': {
