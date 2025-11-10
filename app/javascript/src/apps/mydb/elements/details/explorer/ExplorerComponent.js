@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useState, useMemo} from 'react';
 import ReactFlow, {
   MiniMap,
   Controls,
@@ -31,56 +31,6 @@ const CloseBtn = ({ explorer }) => {
   );
 };
 
-// Molecule node (circle)
-// const MoleculeNode = ({ data }) => (
-//   <div
-//     style={{
-//       backgroundColor: '#d4edda',
-//       border: '2px solid #28a745',
-//       borderRadius: '50%',
-//       width: 80,
-//       height: 80,
-//       display: 'flex',
-//       alignItems: 'center',
-//       justifyContent: 'center',
-//       fontWeight: 600,
-//       color: '#155724',
-//       position: 'relative', // ⬅️ required for absolute Handles
-//     }}
-//   >
-//     {data?.label || 'Molecule'}
-//     <Handle type="source" position="bottom" />
-//     <Handle type="target" position="bottom" />
-//   </div>
-// );
-
-// // Sample node (rectangle)
-// const SampleNode = ({ data }) => (
-//   <div
-//     style={{
-//       backgroundColor: '#cce5ff',
-//       border: '2px solid #007bff',
-//       borderRadius: '8px',
-//       padding: '10px 15px',
-//       fontWeight: 600,
-//       color: '#004085',
-//       minWidth: 100,
-//       textAlign: 'center',
-//     }}
-//   >
-//     {data?.label || 'Sample'}
-//     <Handle type="source" position="top" />
-//     <Handle type="target" position="top" />
-//   </div>
-// );
-
-// // Register node types
-// const nodeTypes = {
-//   moleculeNode: MoleculeNode,
-//   sampleNode: SampleNode,
-// };
-
-
 export default function ExplorerComponent({ nodes, edges }) {
   const [rfNodes, setRfNodes, onNodesChange] = useNodesState(nodes);
   const [rfEdges, setRfEdges, onEdgesChange] = useEdgesState(edges);
@@ -92,15 +42,81 @@ export default function ExplorerComponent({ nodes, edges }) {
   //   [onNodeClick]
   // );
 
+  const [activeFilters, setActiveFilters] = useState([
+    'molecule',
+    'sample',
+    'splitsample',
+    'reaction',
+  ]);
+
+  const handleFilterChange = (type) => {
+    setActiveFilters((prev) =>
+      prev.includes(type)
+        ? prev.filter((f) => f !== type)
+        : [...prev, type]
+    );
+  };
+
+  const nodeMap = useMemo(() => {
+  const map = {};
+  rfNodes.forEach((n) => (map[n.id] = n));
+  return map;
+}, [rfNodes]);
+
+const filteredNodes = useMemo(
+  () => rfNodes.filter((node) => activeFilters.includes(node.type)),
+  [rfNodes, activeFilters]
+);
+
+const filteredEdges = useMemo(() => {
+  return rfEdges.filter((edge) => {
+    const sourceNode = nodeMap[edge.source];
+    const targetNode = nodeMap[edge.target];
+    return (
+      sourceNode &&
+      targetNode &&
+      activeFilters.includes(sourceNode.type) &&
+      activeFilters.includes(targetNode.type)
+    );
+  });
+}, [rfEdges, nodeMap, activeFilters]);
+
   return (
     <div
       className="explorer-graph-container"
       style={{ height: '80vh', width: '100%', backgroundColor: '#f8f9fa' }}
     >
 
+      <div
+        style={{
+          position: 'absolute',
+          top: 10,
+          right: 50,
+          zIndex: 10,
+          background: 'white',
+          padding: '8px 12px',
+          borderRadius: 6,
+          boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+          display: 'flex',
+          gap: '10px',
+        }}
+      >
+        {['molecule', 'sample', 'splitsample', 'reaction'].map((type) => (
+          <label key={type} style={{ textTransform: 'capitalize' }}>
+            <input
+              type="checkbox"
+              checked={activeFilters.includes(type)}
+              onChange={() => handleFilterChange(type)}
+              style={{ marginRight: 4 }}
+            />
+            {type}
+          </label>
+        ))}
+      </div>
+
       <ReactFlow
-        nodes={rfNodes}
-        edges={rfEdges}
+        nodes={filteredNodes}
+        edges={filteredEdges}
         // nodeTypes={nodeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
