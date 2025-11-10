@@ -50,9 +50,9 @@ const tabInfoHash = {
     title: 'Explorer',
     iconEl: (
       <span>
-        <i className="fa fa-file-text-o" />
-        &nbsp;&nbsp;
-        <i className="fa fa-pencil" />
+        <i className="fa fa-project-diagram" />
+        {/* &nbsp;&nbsp;
+        <i className="fa fa-pencil" /> */}
       </span>
     )
   },
