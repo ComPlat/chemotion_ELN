@@ -4,14 +4,6 @@ module Chemotion
   class PermissionAPI < Grape::API
     helpers CollectionHelpers
     helpers ParamsHelpers
-    helpers do
-      def non_empty(filter)
-        return true if filter.all
-        return true if filter.included_ids.any?
-
-        false
-      end
-    end
 
     resource :permissions do
       namespace :status do
@@ -21,86 +13,51 @@ module Chemotion
         end
 
         post do
-          cid = Collection.accessible_for(current_user).find(params[:currentCollection][:id])
-          sel = {}
-          has_sel = {}
+          collection = Collection.accessible_for(current_user).find(params[:currentCollection][:id])
+          selected_elements = {}
 
           API::ELEMENTS.each do |element|
             ui_state = params[element]
 
+            element_model = API::ELEMENT_CLASS[element]
+            selected_elements[element_model] = []
+
             if ui_state && (ui_state[:checkedAll] || ui_state[:checkedIds].present?)
-              element_klass = API::ELEMENT_CLASS[element]
-              sel[element_klass.model_name.param_key] = element_klass.by_collection_id(cid)
-                                                                     .by_ui_state(ui_state)
-                                                                     .for_user_n_groups(user_ids)
+              selected_elements[element_model] =
+                collection.send(element_model.model_name.route_key).by_ui_state(ui_state)
             end
-            has_sel[element] = sel[element].present?
           end
-          is_top_secret = has_sel['sample'] ? sel['sample'].pluck(:is_top_secret).any? : false
-          is_top_secret ||= if has_sel['reaction']
-                              sel['reaction'].lazy.flat_map(&:samples).map(&:is_top_secret).any?
-                            else
-                              false
-                            end
 
-          is_top_secret ||= if has_sel['wellplate']
-                              sel['wellplate'].lazy.flat_map(&:samples).map(&:is_top_secret).any?
-                            else
-                              false
-                            end
-
-          is_top_secret ||= if has_sel['screen']
-                              sel['screen'].lazy.flat_map(&:wellplates).flat_map(&:samples).map(&:is_top_secret).any?
-                            else
-                              false
-                            end
+          # checking if the selected elements include any one element that is top secret
+          is_top_secret = false
+          is_top_secret ||= selected_elements[Sample].any?(&:is_top_secret?)
+          is_top_secret ||= selected_elements[Reaction].lazy.flat_map(&:samples).any?(&:is_top_secret?)
+          is_top_secret ||= selected_elements[Wellplate].lazy.flat_map(&:samples).any?(&:is_top_secret?)
+          is_top_secret ||= selected_elements[Screen].lazy.flat_map(&:wellplates).flat_map(&:samples).any?(&:is_top_secret?)
 
           deletion_allowed = true
           sharing_allowed = true
-          if params[:currentCollection][:is_shared]
-            deletion_allowed = has_sel['sample'] ? ElementsPolicy.new(current_user, sel['sample']).destroy_all? : true
-            deletion_allowed &&= (if has_sel['reaction']
-                                    ElementsPolicy.new(current_user,
-                                                       sel['reaction']).destroy_all?
-                                  else
-                                    true
-                                  end)
-            deletion_allowed &&= (if has_sel['wellplate']
-                                    ElementsPolicy.new(current_user,
-                                                       sel['wellplate']).destroy_all?
-                                  else
-                                    true
-                                  end)
-            deletion_allowed &&= (if has_sel['screen']
-                                    ElementsPolicy.new(current_user,
-                                                       sel['screen']).destroy_all?
-                                  else
-                                    true
-                                  end)
-            if deletion_allowed
-              sharing_allowed = true
-            else
-              sharing_allowed = has_sel['sample'] ? ElementsPolicy.new(current_user, sel['sample']).share_all? : true
-              sharing_allowed = if sharing_allowed && has_sel['reaction']
-                                  ElementsPolicy.new(current_user,
-                                                     sel['reaction']).share_all?
-                                else
-                                  true
-                                end
-              sharing_allowed = if sharing_allowed && has_sel['wellplate']
-                                  ElementsPolicy.new(current_user,
-                                                     sel['wellplate']).share_all?
-                                else
-                                  true
-                                end
-              sharing_allowed = if sharing_allowed && has_sel['screen']
-                                  ElementsPolicy.new(current_user,
-                                                     sel['screen']).share_all?
-                                else
-                                  true
-                                end
+
+          if collection.user != current_user # collection was shared to user
+            # set deletion_allowed to false if any of the elements is not allowed to be mass deleted
+            [Sample, Reaction, Screen, Wellplate].each do |element_class|
+              next if selected_elements[element_class].none?
+
+              deletion_allowed &&= ElementsPolicy.new(current_user, selected_elements[element_class]).destroy_all?
+            end
+
+            # permission for deletion includes permission for sharing,
+            # so we have to check if the lower permissions for sharing are satisfied
+            # when mass deletion is forbidden
+            if !deletion_allowed
+              [Sample, Reaction, Screen, Wellplate].each do |element_class|
+                next if selected_elements[element_class].none?
+
+                sharing_allowed &&= ElementsPolicy.new(current_user, selected_elements[element_class]).share_all?
+              end
             end
           end
+
           { deletion_allowed: deletion_allowed, sharing_allowed: sharing_allowed, is_top_secret: is_top_secret }
         end
       end
