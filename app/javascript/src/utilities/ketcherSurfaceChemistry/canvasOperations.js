@@ -320,9 +320,9 @@ const prepareSvg = async (editor) => {
       }
     });
     const updatedSVGString = new XMLSerializer().serializeToString(doc);
-    return { svg: updatedSVGString };
+    return { svg: updatedSVGString, message: null };
   } catch (e) {
-    return { svg: null, message: e.message };
+    return { svg: null, message: e?.message || 'Unknown error in prepareSvg' };
   }
 };
 

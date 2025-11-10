@@ -205,7 +205,7 @@ export default class StructureEditorModal extends React.Component {
       try {
         // Call onSaveFileK2SC and get the required data
         const { ket2Molfile, svgElement } = await onSaveFileK2SC();
-        const { svg: preparedSvg, message: svgFailedMessage } = svgElement;
+        const { svg: preparedSvg, message: svgFailedMessage } = svgElement || {};
         const updatedSvg = await transformSvgIdsAndReferences(preparedSvg);
         this.handleStructureSave(ket2Molfile, updatedSvg, editorId.id);
         onSVGStructureError(svgFailedMessage);
