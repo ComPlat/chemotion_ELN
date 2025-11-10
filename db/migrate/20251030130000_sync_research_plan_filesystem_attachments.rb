@@ -4,7 +4,7 @@ class SyncResearchPlanFilesystemAttachments < ActiveRecord::Migration[6.1]
   disable_ddl_transaction! # safer for large datasets
 
   def up
-    base_dir = Rails.root.join('public', 'images', 'research_plans')
+    base_dir = Rails.public_path.join('images/research_plans')
     unless Dir.exist?(base_dir)
       say "Directory not found: #{base_dir}", true
       return
@@ -23,12 +23,12 @@ class SyncResearchPlanFilesystemAttachments < ActiveRecord::Migration[6.1]
         image_fields = extract_image_fields(body)
         next if image_fields.empty?
 
-        found_identifiers = []
+        found_identifiers = {}
 
         image_fields.each do |public_name, field|
           attachment = Attachment.find_by(
             identifier: public_name,
-            attachable_type: 'ResearchPlan'
+            attachable_type: 'ResearchPlan',
           )
 
           if attachment
@@ -36,12 +36,12 @@ class SyncResearchPlanFilesystemAttachments < ActiveRecord::Migration[6.1]
               # Associate existing orphaned attachment
               attachment.update_columns(
                 attachable_id: research_plan.id,
-                updated_at: Time.current
+                updated_at: Time.current,
               )
               associated_count += 1
             end
             # Already exists (associated or orphaned)
-            found_identifiers << public_name
+            found_identifiers[public_name] = attachment.identifier
           else
             # Create new attachment record
             file_path = base_dir.join(public_name)
@@ -58,32 +58,33 @@ class SyncResearchPlanFilesystemAttachments < ActiveRecord::Migration[6.1]
             creator = research_plan.created_by
 
             attachment = Attachment.new(
-              identifier: public_name,
               attachable_type: 'ResearchPlan',
               attachable_id: research_plan.id,
               filename: file_name,
               file_path: file_path.to_s,
               created_by: creator,
-              created_for: creator
+              created_for: creator,
             )
 
             if attachment.save(validate: false)
               created_count += 1
-              found_identifiers << public_name
+              found_identifiers[public_name] = attachment.identifier
             else
               say "Failed to create attachment for #{public_name}", true
             end
           end
         end
 
+        update_public_names(research_plan, body, found_identifiers) unless found_identifiers.empty?
+
         # Clean up image fields that have no file or attachment
-        cleaned_fields += remove_missing_image_fields(research_plan, body, found_identifiers)
+        cleaned_fields += remove_missing_image_fields(research_plan, body, found_identifiers.values)
       end
 
-      puts "→ Associated existing attachments: #{associated_count}"
-      puts "→ Created new attachments: #{created_count}"
-      puts "→ Missing image files: #{missing_files}"
-      puts "→ Cleaned broken image fields: #{cleaned_fields}"
+      Rails.logger.debug { "→ Associated existing attachments: #{associated_count}" }
+      Rails.logger.debug { "→ Created new attachments: #{created_count}" }
+      Rails.logger.debug { "→ Missing image files: #{missing_files}" }
+      Rails.logger.debug { "→ Cleaned broken image fields: #{cleaned_fields}" }
 
       associated_count + created_count + cleaned_fields
     end
@@ -94,6 +95,24 @@ class SyncResearchPlanFilesystemAttachments < ActiveRecord::Migration[6.1]
   end
 
   private
+
+  # update public name in body
+  def update_public_names(research_plan, body, found_identifiers_map)
+    changed = false
+    body.each do |field|
+      next unless field['type'] == 'image'
+
+      old_public_name = field.dig('value', 'public_name')
+      new_public_name = found_identifiers_map[old_public_name]
+      next unless new_public_name
+
+      field['value']['public_name'] = new_public_name
+      changed = true
+    end
+    return unless changed
+
+    research_plan.update_columns(body: body, updated_at: Time.current)
+  end
 
   # Extract image fields and map public_name => field
   def extract_image_fields(body)
@@ -114,11 +133,11 @@ class SyncResearchPlanFilesystemAttachments < ActiveRecord::Migration[6.1]
       public_name.present? && found_identifiers.exclude?(public_name)
     end
 
-    if new_body.size != body.size
+    if new_body.size == body.size
+      0
+    else
       research_plan.update_columns(body: new_body, updated_at: Time.current)
       body.size - new_body.size
-    else
-      0
     end
   end
 end
