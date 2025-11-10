@@ -8,16 +8,26 @@ class EnableLogicalReplicationAndPublication < ActiveRecord::Migration[6.1]
     # Note: This should ideally be set at PostgreSQL server startup
     # We're documenting it here for clarity
 
+    # Set replica identity to FULL for tables with column-level publications
+    # This allows logical replication to work with column lists by including
+    # the old values of all columns (not just the primary key) in the WAL.
+    # FULL identity is needed when the publication's column list doesn't include
+    # all columns that would be part of the default replica identity.
+    execute "ALTER TABLE containers REPLICA IDENTITY FULL;"
+    execute "ALTER TABLE samples REPLICA IDENTITY FULL;"
+    execute "ALTER TABLE reactions REPLICA IDENTITY FULL;"
+
     # Create a publication for Change Data Capture
     # This tracks INSERT, UPDATE, DELETE operations on specified tables
-    # Column-level filtering reduces replication overhead by excluding large binary fields
+    # Note: When using REPLICA IDENTITY FULL with column lists, ALL columns must be included
+    # Column filtering should be done on the Sequin consumer side instead
     # Use IF NOT EXISTS equivalent for idempotency
     unless publication_exists?('sequin_cdc_publication')
       execute <<-SQL
         CREATE PUBLICATION sequin_cdc_publication FOR TABLE
-          containers (id, name, container_type, description, extended_metadata, created_at, updated_at, containable_id, containable_type, parent_id),
-          samples (id, name, external_label, short_label, description, molfile_version, sample_type, created_at, updated_at, deleted_at, molecule_id, created_by, user_id),
-          reactions (id, name, description, status, short_label, created_at, updated_at, deleted_at, created_by, rinchi_short_key, rxno)
+          containers,
+          samples,
+          reactions
         WITH (publish = 'insert,update,delete');
       SQL
     end
@@ -54,5 +64,10 @@ class EnableLogicalReplicationAndPublication < ActiveRecord::Migration[6.1]
     execute <<-SQL
       DROP PUBLICATION IF EXISTS sequin_cdc_publication;
     SQL
+
+    # Restore default replica identity (using primary key)
+    execute "ALTER TABLE containers REPLICA IDENTITY DEFAULT;"
+    execute "ALTER TABLE samples REPLICA IDENTITY DEFAULT;"
+    execute "ALTER TABLE reactions REPLICA IDENTITY DEFAULT;"
   end
 end

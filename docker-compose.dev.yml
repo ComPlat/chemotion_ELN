@@ -135,51 +135,39 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.sequin
-    image: sequinstream/sequin:dev
+    image: chemotion_eln_sequin_dev
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_healthy
     environment:
       - PG_URL=postgresql://postgres@postgres:5432/sequin_dev
-      - REDIS_URL=redis://redis:6379/0
-      # Secrets MUST be provided via environment variables or an env file
-      # (no hard-coded defaults). For production, use a secrets manager
-      # or `.env.production` and never commit that file to git.
-      - SECRET_KEY_BASE=${SECRET_KEY_BASE}
-      - VAULT_KEY=${VAULT_KEY}
-      - SENTRY_DSN=${SENTRY_DSN}
-      - PHX_HOST=localhost
+      - REDIS_URL=redis://127.0.0.1:6379/0
+      - SECRET_KEY_BASE_FILE=/secrets/secret_key_base
+      - VAULT_KEY_FILE=/secrets/vault_key
+      - SENTRY_DSN_FILE=/secrets/sentry_dsn
+      - PHX_HOST=0.0.0.0
       - PORT=7376
       - SELF_HOSTED=${SELF_HOSTED:-true}
+      - CONFIG_FILE_PATH=/etc/sequin/sequin.yaml
+      - FEATURE_PROVISION_DEFAULT_USER=disabled  # Disable default admin@sequinstream.com
+      - SEQUIN_ADMIN_PASSWORD_FILE=/secrets/sequin_admin_password
     ports:
       - "${HOST_PORT_SEQUIN:-7376}:7376"  # Sequin API/UI
     volumes:
+      # Mount configuration files from sequin-deploy into the container at /etc/sequin
+      # (read-only). Keep the data volume for Sequin state under /var/lib/sequin.
+      - ./sequin-deploy/config:/etc/sequin:ro
+      - ./secrets:/secrets:ro
       - sequin_data:/var/lib/sequin
     networks:
       - default
       - chemotion
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:7376/health"]
+      test: ["CMD", "curl", "-f", "http://0.0.0.0:7376/health"]
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 30s
-
-  redis:
-    image: redis:7-alpine
-    expose:
-      - '6379'
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - chemotion
 
   opensearch:
     image: opensearchproject/opensearch:2.11.1
@@ -208,7 +196,7 @@ services:
       - default
       - chemotion
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://0.0.0.0:9200/_cluster/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -221,8 +209,6 @@ volumes:
     name: ${VOLUME_NAME_HOMEDIR:-chemotion_eln_homedir}
   sequin_data:
     name: ${VOLUME_NAME_SEQUIN:-chemotion_eln_sequin_data}
-  redis_data:
-    name: ${VOLUME_NAME_REDIS:-chemotion_eln_redis_data}
   opensearch_data:
     name: ${VOLUME_NAME_OPENSEARCH:-chemotion_eln_opensearch_data}
 
