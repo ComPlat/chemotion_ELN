@@ -13,7 +13,7 @@ import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralIn
 import SampleName from 'src/components/common/SampleName';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import { UrlSilentNavigation, SampleCode } from 'src/utilities/ElementUtils';
-import { correctPrefix, validDigit } from 'src/utilities/MathUtils';
+import { formatDisplayValue, correctPrefix, validDigit } from 'src/utilities/MathUtils';
 import Reaction from 'src/models/Reaction';
 import Sample from 'src/models/Sample';
 import { permitCls, permitOn } from 'src/components/common/uis';
@@ -22,6 +22,7 @@ import { calculateFeedstockMoles } from 'src/utilities/UnitsConversion';
 import cs from 'classnames';
 import DragHandle from 'src/components/common/DragHandle';
 import DeleteButton from 'src/components/common/DeleteButton';
+import { metPreConv } from 'src/utilities/metricPrefix';
 
 const notApplicableInput = (className) => (
   <div>
@@ -92,7 +93,7 @@ class Material extends Component {
     const tooltip = has_density || has_molarity ?
       (
         <Tooltip id="density_info">
-          {has_density ? `density = ${density}` : `molarity = ${molarity_value} ${molarity_unit}`}
+          {has_density ? `density: ${density}` : `molarity = ${molarity_value} ${molarity_unit}`}
         </Tooltip>
       )
       : <Tooltip id="density_info">no density or molarity defined</Tooltip>;
@@ -128,12 +129,12 @@ class Material extends Component {
       return false;
     }
     if (!material.contains_residues) {
-      return notApplicableInput('reaction-material__loading-input');
+      return notApplicableInput('reaction-material__loading-data');
     }
 
     return (
       <NumeralInputWithUnitsCompo
-        className="reaction-material__loading-input"
+        className="reaction-material__loading-data"
         value={material.loading}
         unit="mmol/g"
         metricPrefix="n"
@@ -154,7 +155,7 @@ class Material extends Component {
   materialRef(material) {
     const { materialGroup, reaction } = this.props;
     return (
-      <div className="reaction-material__ref-input">
+      <div className="reaction-material__ref-data">
         {materialGroup !== 'products'
           && (
             <Form.Check
@@ -239,7 +240,7 @@ class Material extends Component {
             )}
           >
             <Form.Control
-              className="reaction-material__yield-input"
+              className="reaction-material__yield-data"
               name="yield"
               type="text"
               bsClass="bs-form--compact form-control"
@@ -261,7 +262,7 @@ class Material extends Component {
     }
     return (
       <NumeralInputWithUnitsCompo
-        className="reaction-material__equivalent-input"
+        className="reaction-material__equivalent-data"
         size="sm"
         precision={4}
         value={material.equivalent}
@@ -339,8 +340,8 @@ class Material extends Component {
 
   gaseousProductRow(material) {
     return (
-      <div className="reaction-material__gaseous-fields-input">
-        <div className="reaction-material__ref-input" />
+      <div className="reaction-material__gaseous-fields-data">
+        <div className="reaction-material__ref-data" />
         {this.gaseousInputFields('time', material)}
         {this.gaseousInputFields('temperature', material)}
         {this.gaseousInputFields('part_per_million', material)}
@@ -603,13 +604,16 @@ class Material extends Component {
       <OverlayTrigger
         delay="100"
         placement="top"
-        overlay={
-          <Tooltip id="molecular-weight-info">{this.generateMolecularWeightTooltipText(material, reaction)}</Tooltip>
-        }
+        overlay={(
+          <Tooltip id="molecular-weight-info">
+            {'molar mass: '}
+            {this.molarWeightValue(material, reaction)}
+          </Tooltip>
+        )}
       >
         <div>
           <NumeralInputWithUnitsCompo
-            className="reaction-material__mass-input"
+            className="reaction-material__mass-data"
             value={material.amount_g}
             unit="g"
             metricPrefix={metric}
@@ -687,7 +691,7 @@ class Material extends Component {
           >
             <div>
               <NumeralInputWithUnitsCompo
-                className="reaction-material__coefficient-input"
+                className="reaction-material__coefficient-data"
                 size="sm"
                 value={material.coefficient ?? 1}
                 onChange={this.handleCoefficientChange}
@@ -695,12 +699,12 @@ class Material extends Component {
               />
             </div>
           </OverlayTrigger>
-          <div className="reaction-material__amount-input">
+          <div className="reaction-material__amount-data">
             {this.massField(material, metricPrefixes, reaction, massBsStyle, metric)}
-            {this.materialVolume(material, 'reaction-material__volume-input')}
+            {this.materialVolume(material, 'reaction-material__volume-data')}
             <NumeralInputWithUnitsCompo
               value={material.amount_mol}
-              className="reaction-material__molarity-input"
+              className="reaction-material__molarity-data"
               unit="mol"
               metricPrefix={metricMol}
               metricPrefixes={metricPrefixes}
@@ -714,10 +718,24 @@ class Material extends Component {
               size="sm"
             />
           </div>
+          <div className="reaction-material__molar-mass-data">
+            <OverlayTrigger
+              placement="top"
+              overlay={<Tooltip id="molar-weight-details">{this.molarWeightValue(material, reaction)}</Tooltip>}
+            >
+              <span>{this.molarWeightValue(material, reaction, true)}</span>
+            </OverlayTrigger>
+          </div>
+          <div className="reaction-material__density-data">
+            {material.has_density ? material.density : 'undefined'}
+          </div>
+          <div className="reaction-material__purity-data">
+            {material.purity}
+          </div>
           {this.materialLoading(material, showLoadingColumn)}
           <NumeralInputWithUnitsCompo
             value={material.concn}
-            className="reaction-material__concentration-input"
+            className="reaction-material__concentration-data"
             unit="mol/l"
             metricPrefix={metricMolConc}
             metricPrefixes={metricPrefixesMolConc}
@@ -728,7 +746,7 @@ class Material extends Component {
             size="sm"
           />
           {this.equivalentOrYield(material)}
-          <div className="reaction-material__delete-input">
+          <div className="reaction-material__delete-data">
             <DeleteButton
               disabled={!permitOn(reaction)}
               onClick={() => deleteMaterial(material)}
@@ -745,19 +763,25 @@ class Material extends Component {
     );
   }
 
-  generateMolecularWeightTooltipText(sample, reaction) {
+  molarWeightValue(sample, reaction, formatted = false) {
     const isProduct = reaction.products.includes(sample);
-    let molecularWeight = sample.decoupled ?
-      (sample.molecular_mass) : (sample.molecule && sample.molecule.molecular_weight);
-
+    let molecularWeight = sample.decoupled
+      ? (sample.molecular_mass) : (sample.molecule && sample.molecule.molecular_weight);
     if (sample.isMixture() && sample.reference_molecular_weight) {
       molecularWeight = sample.reference_molecular_weight.toFixed(4);
     }
-    let theoreticalMassPart = "";
+    let theoreticalMassPart = '';
     if (isProduct && sample.maxAmount) {
       theoreticalMassPart = `, max theoretical mass: ${Math.round(sample.maxAmount * 10000) / 10} mg`;
     }
-    return `molar mass: ${molecularWeight} g/mol` + theoreticalMassPart;
+    // Define metricPrefix and currentPrecision
+    const metricPrefix = 'n';
+    const currentPrecision = 4;
+    const formattedValue = formatDisplayValue(
+      metPreConv(molecularWeight, metricPrefix, metricPrefix),
+      currentPrecision
+    );
+    return `${formatted ? formattedValue : molecularWeight} g/mol${formatted ? '' : theoreticalMassPart}`;
   }
 
   toggleTarget(isTarget) {
@@ -781,7 +805,7 @@ class Material extends Component {
       <div ref={dropRef} className={this.rowClassNames()}>
         {this.dragHandle()}
         {this.materialNameWithIupac(material)}
-        <div className="reaction-material__dry-solvent-input">
+        <div className="reaction-material__dry-solvent-data">
           <OverlayTrigger placement="top" overlay={drySolvTooltip}>
             <Form.Check
               type="checkbox"
@@ -792,7 +816,7 @@ class Material extends Component {
           </OverlayTrigger>
         </div>
         {this.switchTargetReal()}
-        <InputGroup className="reaction-material__solvent-label-input">
+        <InputGroup className="reaction-material__solvent-label-data">
           <OverlayTrigger
             placement="top"
             overlay={(
@@ -823,9 +847,9 @@ class Material extends Component {
             </Button>
           </OverlayTrigger>
         </InputGroup>
-        {this.materialVolume(material, 'reaction-material__solvent-volume-input')}
+        {this.materialVolume(material, 'reaction-material__solvent-volume-data')}
         <Form.Control
-          className="reaction-material__volume-ratio-input"
+          className="reaction-material__volume-ratio-data"
           type="text"
           size="sm"
           value={reaction.volumeRatioByMaterialId(material.id)}
@@ -847,7 +871,7 @@ class Material extends Component {
 
     return (
       <Button
-        className="reaction-material__target-input"
+        className="reaction-material__target-data"
         disabled={isDisabled}
         onClick={() => this.toggleTarget(isTarget)}
         variant={isTarget ? 'primary' : 'light'}
