@@ -47,7 +47,6 @@ module Chemotion
       desc 'Get a list of SBMM-Samples, filtered by collection'
       params do
         optional :collection_id, type: Integer
-        optional :sync_collection_id, type: Integer
         optional :list_order, type: String, values: %w[sbmm sbmm_sequence]
         optional(:filter, type: Hash) do
           optional :timestamp_field, type: String, default: 'created_at', values: %w[created_at updated_at]

@@ -76,7 +76,6 @@ class SequenceBasedMacromoleculeSample < ApplicationRecord
                                                               dependent: :destroy
   has_many :collections, through: :collections_sequence_based_macromolecule_samples
   has_many :comments, as: :commentable, inverse_of: :commentable, dependent: :destroy
-  has_many :sync_collections_users, through: :collections
 
   belongs_to :sequence_based_macromolecule
   belongs_to :user
