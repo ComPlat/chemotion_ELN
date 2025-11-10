@@ -64,7 +64,7 @@ $rm-columns: (
       #{3 * map-get($rm-sizes, "square")} + #{map-get(
           $rm-sizes,
           "large-numeral-with-units"
-        )} + #{map-get($rm-sizes, "numeral")} + #{gap(5)}
+        )} + #{map-get($rm-sizes, "numeral")} + #{gap(4)}
     ),
   // ref, target, amount, coefficient, concentration, equivalence + gaps
 );
