@@ -68,7 +68,7 @@ export default {
   argTypes: {
     variant: {
       control: { type: 'select' },
-      options: ['light', 'primary', 'success', 'danger'],
+      options: ['light', 'primary', 'success', 'danger', 'plain', 'neat'],
       description: 'Visual style of the button',
       table: {
         type: { summary: 'string' },
@@ -113,31 +113,14 @@ Light.parameters = {
   }
 };
 
-export function Sizes() {
-  return (
-    <div className="d-flex mb-3 gap-3 align-items-center">
-      {sizes.map((size) => (
-        <Button key={size} size={size} variant="light">
-          {size.toUpperCase()}
-        </Button>
-      ))}
-    </div>
-  );
-}
-Sizes.parameters = {
-  docs: {
-    description: {
-      story: `
-  Given the high density of ELN UI, we extended Bootstrap's standard sizing with extra small and extra
-  extra small options. Extra extra small buttons should be used sparingly, large buttons are not recommended at all.
-      `
-    }
-  }
-};
-
 export function ButtonVariants() {
   return renderVariantsAndStates(
-    [{ name: 'light', label: 'Default' }, { name: 'primary', label: 'Main Action' }],
+    [
+      { name: 'light', label: 'Default' },
+      { name: 'primary', label: 'Main Action' },
+      { name: 'plain', label: 'plain' },
+      { name: 'neat', label: 'no padding' }
+    ],
   );
 }
 ButtonVariants.parameters = {
@@ -154,6 +137,9 @@ ButtonVariants.parameters = {
   prominent.<br />
   Use **primary** variant is to be used for the main function within the given context (e.g. the submit or save
   button in a form).
+
+  For a link like appearance with no background or border use the **plain** variant.<br />
+  For buttons that require no padding (e.g. icon only buttons) use the **neat** variant.
 
   **Note**: When no variant is specified, Bootstrap defaults to the primary variant. However, in our design system we
   prefer to use the light variant as the default. Therefore, we recommend to explicitly set the variant to light
@@ -207,6 +193,38 @@ DeprecatedVariants.parameters = {
 
   **Secondary**, **warning** and **info** variants or helper-classes might still be used for other components
   such as badges and alerts where they are more appropriate.
+      `
+    }
+  }
+};
+export function Sizes() {
+  return (
+    <>
+      <div className="d-flex mb-3 gap-3 align-items-center">
+        {sizes.map((size) => (
+          <Button key={size} size={size} variant="light">
+            {size.toUpperCase()}
+          </Button>
+        ))}
+      </div>
+      <div className="d-flex mb-3 gap-3 align-items-center">
+        {sizes.map((size) => (
+          <Button key={size} size={size} variant="neat">
+            <i className="icon-pubchem" />
+          </Button>
+        ))}
+      </div>
+    </>
+  );
+}
+Sizes.parameters = {
+  docs: {
+    description: {
+      story: `
+  Given the high density of ELN UI, we extended Bootstrap's standard sizing with extra small and extra
+  extra small options. Extra extra small buttons should be used sparingly, large buttons are not recommended at all.
+
+  Icons inside of buttons with variant **neat** are scaled up to improve their visibility as a standalone element.
       `
     }
   }

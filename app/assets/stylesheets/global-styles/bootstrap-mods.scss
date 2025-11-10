@@ -73,6 +73,49 @@ h6 {
   }
 }
 
+.btn-plain,
+.btn-neat {
+  @include button-variant(
+    transparent,
+    transparent,
+    $chemstrap-blue,
+    transparent,
+    transparent,
+    mix($chemstrap-blue, $chemstrap-blue-dark, 50),
+    transparent,
+    transparent,
+    $chemstrap-blue-dark,
+    transparent,
+    transparent,
+    map-get($carbon-shades, lighten1)
+  );
+}
+
+// button variant neat with no background or border
+.btn-neat {
+  padding: 0 !important;
+  &.btn-lg i {
+    font-size: 2rem;
+    line-height: 1em;
+  }
+  &.btn-md i {
+    font-size: 1.5rem;
+    line-height: 1em;
+  }
+  &.btn-sm i {
+    font-size: 1.25rem;
+    line-height: 1em;
+  }
+  &.btn-xsm i {
+    font-size: 1.125rem;
+    line-height: 1em;
+  }
+  &.btn-xxsm i {
+    font-size: 1rem;
+    line-height: 1em;
+  }
+}
+
 @mixin xsm-form-elements {
   padding: 3px 5px;
   font-size: 12px;
