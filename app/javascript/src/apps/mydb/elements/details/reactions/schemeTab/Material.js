@@ -682,83 +682,86 @@ class Material extends Component {
       <div ref={dropRef} className={this.rowClassNames()}>
         {this.dragHandle()}
         {this.materialNameWithIupac(material)}
-        <div className="d-flex gap-2 py-1 align-items-start">
-          {this.materialRef(material)}
-          {this.switchTargetReal()}
-          <OverlayTrigger
-            placement="top"
-            overlay={<Tooltip id="reaction-coefficient-info"> Reaction Coefficient </Tooltip>}
-          >
-            <div>
-              <NumeralInputWithUnitsCompo
-                className="reaction-material__coefficient-data"
-                size="sm"
-                value={material.coefficient ?? 1}
-                onChange={this.handleCoefficientChange}
-                name="coefficient"
-              />
-            </div>
-          </OverlayTrigger>
-          <div className="reaction-material__amount-data">
-            {this.massField(material, metricPrefixes, reaction, massBsStyle, metric)}
-            {this.materialVolume(material, 'reaction-material__volume-data')}
-            <NumeralInputWithUnitsCompo
-              value={material.amount_mol}
-              className="reaction-material__molarity-data"
-              unit="mol"
-              metricPrefix={metricMol}
-              metricPrefixes={metricPrefixes}
-              precision={4}
-              disabled={!permitOn(reaction)
-                || (this.props.materialGroup === 'products'
-                || (!material.reference && this.props.lockEquivColumn))}
-              onChange={e => this.handleAmountUnitChange(e, material.amount_mol)}
-              onMetricsChange={this.handleMetricsChange}
-              variant={material.amount_unit === 'mol' ? 'primary' : 'light'}
-              size="sm"
-            />
-          </div>
-          <div className="reaction-material__molar-mass-data">
+        <div className="d-flex flex-column gap-1 py-1">
+          {/* Flex container with flex-column because products can display extra rows */}
+          <div className="d-flex gap-2 align-items-start">
+            {this.materialRef(material)}
+            {this.switchTargetReal()}
             <OverlayTrigger
               placement="top"
-              overlay={<Tooltip id="molar-weight-details">{this.molarWeightValue(material, reaction)}</Tooltip>}
+              overlay={<Tooltip id="reaction-coefficient-info"> Reaction Coefficient </Tooltip>}
             >
-              <span>{this.molarWeightValue(material, reaction, true)}</span>
+              <div>
+                <NumeralInputWithUnitsCompo
+                  className="reaction-material__coefficient-data"
+                  size="sm"
+                  value={material.coefficient ?? 1}
+                  onChange={this.handleCoefficientChange}
+                  name="coefficient"
+                />
+              </div>
             </OverlayTrigger>
-          </div>
-          <div className="reaction-material__density-data">
-            {material.has_density ? material.density : 'undefined'}
-          </div>
-          <div className="reaction-material__purity-data">
-            {material.purity}
-          </div>
-          {this.materialLoading(material, showLoadingColumn)}
-          <NumeralInputWithUnitsCompo
-            value={material.concn}
-            className="reaction-material__concentration-data"
-            unit="mol/l"
-            metricPrefix={metricMolConc}
-            metricPrefixes={metricPrefixesMolConc}
-            precision={4}
-            disabled
-            onChange={e => this.handleAmountUnitChange(e, material.concn)}
-            onMetricsChange={this.handleMetricsChange}
-            size="sm"
-          />
-          {this.equivalentOrYield(material)}
-          <div className="reaction-material__delete-data">
-            <DeleteButton
-              disabled={!permitOn(reaction)}
-              onClick={() => deleteMaterial(material)}
+            <div className="reaction-material__amount-data">
+              {this.massField(material, metricPrefixes, reaction, massBsStyle, metric)}
+              {this.materialVolume(material, 'reaction-material__volume-data')}
+              <NumeralInputWithUnitsCompo
+                value={material.amount_mol}
+                className="reaction-material__molarity-data"
+                unit="mol"
+                metricPrefix={metricMol}
+                metricPrefixes={metricPrefixes}
+                precision={4}
+                disabled={!permitOn(reaction)
+                  || (this.props.materialGroup === 'products'
+                  || (!material.reference && this.props.lockEquivColumn))}
+                onChange={e => this.handleAmountUnitChange(e, material.amount_mol)}
+                onMetricsChange={this.handleMetricsChange}
+                variant={material.amount_unit === 'mol' ? 'primary' : 'light'}
+                size="sm"
+              />
+            </div>
+            <div className="reaction-material__molar-mass-data">
+              <OverlayTrigger
+                placement="top"
+                overlay={<Tooltip id="molar-weight-details">{this.molarWeightValue(material, reaction)}</Tooltip>}
+              >
+                <span>{this.molarWeightValue(material, reaction, true)}</span>
+              </OverlayTrigger>
+            </div>
+            <div className="reaction-material__density-data">
+              {material.has_density ? material.density : 'undefined'}
+            </div>
+            <div className="reaction-material__purity-data">
+              {material.purity}
+            </div>
+            {this.materialLoading(material, showLoadingColumn)}
+            <NumeralInputWithUnitsCompo
+              value={material.concn}
+              className="reaction-material__concentration-data"
+              unit="mol/l"
+              metricPrefix={metricMolConc}
+              metricPrefixes={metricPrefixesMolConc}
+              precision={4}
+              disabled
+              onChange={e => this.handleAmountUnitChange(e, material.concn)}
+              onMetricsChange={this.handleMetricsChange}
+              size="sm"
             />
+            {this.equivalentOrYield(material)}
+            <div className="reaction-material__delete-data">
+              <DeleteButton
+                disabled={!permitOn(reaction)}
+                onClick={() => deleteMaterial(material)}
+              />
+            </div>
           </div>
+          {materialGroup === 'products' && (
+            <>
+              {material.gas_type === 'gas' && reaction.gaseous && this.gaseousProductRow(material)}
+              {material.adjusted_loading && material.error_mass && <MaterialCalculations material={material} />}
+            </>
+          )}
         </div>
-        {materialGroup === 'products' && (
-          <>
-            {material.gas_type === 'gas' && reaction.gaseous && this.gaseousProductRow(material)}
-            {material.adjusted_loading && material.error_mass && <MaterialCalculations material={material} />}
-          </>
-        )}
       </div>
     );
   }
