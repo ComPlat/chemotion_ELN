@@ -210,6 +210,7 @@ class Material extends Component {
       ? 100 : material.conversion_rate;
     return (
       <NumeralInputWithUnitsCompo
+        className="reaction-material__yield-data"
         precision={4}
         value={allowedConversionRateValue || 'n.d.'}
         unit="%"
