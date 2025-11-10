@@ -1,0 +1,58 @@
+# Sequin configuration for Chemotion ELN CDC
+# Minimal YAML to create admin user on first boot
+# Sources and sinks will be configured via UI after login
+
+# Account and user setup (self-hosted only)
+account:
+  name: "Chemotion"
+
+users:
+  - email: "admin@chemotion.local"
+    password: "${SEQUIN_ADMIN_PASSWORD}"  # Loaded from /secrets/sequin_admin_password
+
+# PostgreSQL source database configuration
+databases:
+  - name: sequin-chemotion-dev-postgres
+    type: postgres
+    hostname: postgres
+    port: 5432
+    database: chemotion_dev
+    username: postgres
+    password: "not_used"  # postgres uses POSTGRES_HOST_AUTH_METHOD=trust
+    pool_size: 10
+    ssl: false
+    slot_name: sequin_slot
+    publication_name: sequin_cdc_publication
+
+# OpenSearch sink configuration (using Elasticsearch-compatible API)
+sinks:
+  - name: "opensearch-chemotion-cdc"
+    database: "sequin-chemotion-dev-postgres"
+
+    # Source configuration - only sync specific tables
+    source:
+      include_tables:
+        - "public.containers"
+        - "public.samples"
+        - "public.reactions"
+
+    # Status
+    status: "active"
+
+    # Actions to capture
+    actions:
+      - insert
+      - update
+      - delete
+
+    # Message grouping
+    message_grouping: true
+
+    # Elasticsearch/OpenSearch destination
+    destination:
+      type: "elasticsearch"
+      endpoint_url: "http://opensearch:9200"
+      index_name: "chemotion-cdc"
+      auth_type: "api_key"
+      auth_value: "dummy_key_for_dev"
+      batch_size: 100
