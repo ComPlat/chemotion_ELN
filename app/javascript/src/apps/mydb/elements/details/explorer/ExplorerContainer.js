@@ -1,9 +1,59 @@
 import React, { Component } from 'react';
 import ExplorerComponent from './ExplorerComponent';
 import ExplorerFetcher from 'src/fetchers/ExplorerFetcher';
-import DetailActions from 'src/stores/alt/actions/DetailActions';
+import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
+// import DetailActions from 'src/stores/alt/actions/DetailActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
+import { CloseBtn } from 'src/apps/mydb/elements/details/explorer/ExplorerComponent';
 import { captureConsoleIntegration } from '@sentry/react';
+
+
+/**
+ * Position nodes in a structured layered layout:
+ * - Molecules → left column
+ * - Samples → middle column
+ * - Reactions → right column
+ */
+function positionNodes(samples, reactions, molecules) {
+  const spacingX = 300;
+  const spacingY = 150;
+
+  const splitSamples = samples.filter((s) => s.ancestry && s.ancestry !== '/');
+  const normalSamples = samples.filter((s) => !s.ancestry || s.ancestry === '/');
+
+  const moleculeNodes = molecules.map((m, i) => ({
+    id: `molecule-${m.id}`,
+    type: 'molecule',
+    position: { x: 0 * spacingX, y: i * spacingY },
+    data: { label: m.iupac_name || m.cano_smiles || m.inchikey || 'Molecule' },
+    style: { backgroundColor: '#B3E5FC', border: '2px solid #0288D1'},
+  }));
+
+  const sampleNodes = normalSamples.map((s, i) => ({
+    id: `sample-${s.id}`,
+    type: 'sample',
+    position: { x: 1 * spacingX, y: i * spacingY },
+    data: { label: s.short_label || 'Sample' },
+    style: { backgroundColor: '#fce5b3ff', border: '2px solid #eb9800ff'},
+  }));
+  
+  const splitSampleNodes = splitSamples.map((s, i) => ({
+    id: `sample-${s.id}`,
+    type: 'splitsample',
+    position: { x: 2 * spacingX, y: i * spacingY },
+    data: { label: s.short_label || 'Split Sample' },
+    style: { backgroundColor: '#fce5b3ff', border: '2px solid #e6dccaff'},
+  }));
+
+  const reactionNodes = reactions.map((r, i) => ({
+    id: `reaction-${r.id}`,
+    type: 'reaction',
+    position: { x: 3 * spacingX, y: i * spacingY },
+    data: { label: r.name || r.short_label || 'Reaction' },
+  }));
+
+  return [...moleculeNodes, ...sampleNodes, ...splitSampleNodes, ...reactionNodes];
+}
 
 export default class ExplorerContainer extends Component {
   constructor(props) {
@@ -30,58 +80,34 @@ export default class ExplorerContainer extends Component {
 
       const { samples, reactions, molecules } = response;
 
-      // --- Transform into React Flow compatible nodes and edges ---
-      const sampleNodes = samples.map((s) => ({
-        id: `sample-${s.id}`,
-        type: 'default',
-        position: { x: Math.random() * 400, y: Math.random() * 400 },
-        data: { label: ` ${s.short_label || 'Sample'}` },
-      }));
+      // --- Use structured layered layout ---
+      const positionedNodes = positionNodes(samples, reactions, molecules);
 
-      const reactionNodes = reactions.map((r) => ({
-        id: `reaction-${r.id}`,
-        type: 'default',
-        position: { x: Math.random() * 400 + 400, y: Math.random() * 400 },
-        data: { label: `⚗️ ${r.name || r.short_label || 'Reaction'}` },
-      }));
-
-      const moleculeNodes = molecules.map((m) => ({
-        id: `molecule-${m.id}`,
-        type: 'default',
-        position: { x: Math.random() * 400 + 200, y: Math.random() * 400 + 300 },
-        data: { label: ` ${m.iupac_name || m.cano_smiles || m.inchikey || 'Molecule'}` },
-      }));
-
-
-      // Example edges: link samples → molecules and reactions → samples
+      // --- Build edges ---
       const edges = [
         ...samples
           .filter((s) => s.molecule_id && (!s.ancestry || s.ancestry === '/'))
           .map((s) => ({
             id: `edge-sample-${s.id}-mol-${s.molecule_id}`,
-            source: `sample-${s.id}`,
-            target: `molecule-${s.molecule_id}`,
+            source: `molecule-${s.molecule_id}`,
+            target: `sample-${s.id}`,
           })),
       ];
 
-      // Parent Sample → Split Sample (ancestry) edges
       const ancestryEdges = [
         ...samples
-        .filter((s) => s.ancestry && s.ancestry !== '/')
-        .map((child) => {
-          const parentId = child.ancestry.split('/').filter(Boolean).pop();
-          return {
-            id: `edge-parent-${parentId}-child-${child.id}`,
-            source: `sample-${parentId}`,
-            target: `sample-${child.id}`,
-            // type: 'smoothstep',
-            // animated: true,
-            label: 'split from',
-          };
-        }),
+          .filter((s) => s.ancestry && s.ancestry !== '/')
+          .map((child) => {
+            const parentId = child.ancestry.split('/').filter(Boolean).pop();
+            return {
+              id: `edge-parent-${parentId}-child-${child.id}`,
+              source: `sample-${parentId}`,
+              target: `sample-${child.id}`,
+              label: 'split from',
+            };
+          }),
       ];
 
-      // Starting Material → Reaction
       const startingEdges = reactions.flatMap((r) =>
         (r.starting_material_ids || []).map((sid) => ({
           id: `edge-starting-${sid}-to-reaction-${r.id}`,
@@ -93,7 +119,6 @@ export default class ExplorerContainer extends Component {
         }))
       );
 
-      // Reaction → Product
       const productEdges = reactions.flatMap((r) =>
         (r.product_ids || []).map((sid) => ({
           id: `edge-reaction-${r.id}-to-product-${sid}`,
@@ -106,7 +131,7 @@ export default class ExplorerContainer extends Component {
       );
 
       this.setState({
-        nodes: [...sampleNodes, ...moleculeNodes, ...reactionNodes],
+        nodes: positionedNodes,
         edges: [...edges, ...ancestryEdges, ...startingEdges, ...productEdges],
         isLoading: false,
       });
@@ -116,20 +141,33 @@ export default class ExplorerContainer extends Component {
     }
   }
 
+  explorerHeader(explorer) {
+    return (
+      <div className='d-flex align-items-center justify-content-between'>
+        <h4 className="p-2">Explorer</h4>
+        <div className="d-flex gap-1">
+          <CloseBtn key="closeBtn" explorer={explorer} />
+        </div>
+      </div>
+    );
+  }
+
   render() {
     const { isLoading, error, nodes, edges } = this.state;
-    // const { explorer } = this.props;
-    // console.log(explorer);
+    const { explorer } = this.props;
+    console.log(explorer);
 
     if (isLoading) return <div>Loading Explorer Graph...</div>;
     if (error) return <div className="text-danger">Failed to load data: {error.message}</div>;
 
     return (
-      <ExplorerComponent
-        // explorer={explorer}
-        nodes={nodes}
-        edges={edges}
-      />
+      <DetailCard header={this.explorerHeader(explorer)}>
+        <ExplorerComponent
+          explorer={explorer}
+          nodes={nodes}
+          edges={edges}
+        />
+      </DetailCard>
     );
   }
 }
