@@ -15,7 +15,7 @@ export default function ConfigOverlayButton({ popoverSettings, onToggle}) {
         <Button
           size="xsm"
           variant="light"
-          className="m-2"
+          className="m-1"
         >
           <i className="fa fa-sliders" />
         </Button>
