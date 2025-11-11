@@ -103,6 +103,47 @@ describe Chemotion::Sanitizer do
       expect(result).to eq(svg_reaction_remapped)
     end
   end
+
+  describe 'scrub_svg with dangerous tags' do
+    it 'removes <script> tags' do
+      svg = '<svg><script>alert("xss")</script><circle/></svg>'
+      sanitized = sanitizer.scrub_svg(svg)
+      expect(sanitized).not_to include('<script>')
+      expect(sanitized).to include('<circle')
+    end
+
+    it 'removes <iframe> tags' do
+      svg = '<svg><iframe src="https://malicious.com"/></svg>'
+      sanitized = sanitizer.scrub_svg(svg)
+      expect(sanitized).not_to include('<iframe>')
+    end
+
+    it 'removes <embed> tags' do
+      svg = '<svg><embed src="evil.swf"/></svg>'
+      sanitized = sanitizer.scrub_svg(svg)
+      expect(sanitized).not_to include('<embed>')
+    end
+
+    it 'removes onclick attributes' do
+      svg = '<svg><circle onclick="alert(1)"/></svg>'
+      sanitized = sanitizer.scrub_svg(svg)
+      expect(sanitized).not_to include('onclick')
+      expect(sanitized).to include('<circle')
+    end
+
+    it 'removes javascript: URLs' do
+      svg = '<svg><a href="javascript:alert(1)">Click</a></svg>'
+      sanitized = sanitizer.scrub_svg(svg)
+      expect(sanitized).not_to include('javascript:')
+    end
+
+    it 'keeps safe SVG elements and attributes' do
+      svg = '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="red"/></svg>'
+      sanitized = sanitizer.scrub_svg(svg)
+      expect(sanitized).to include('<circle')
+      expect(sanitized).to include('fill="red"')
+    end
+  end
 end
 # rubocop:enable RSpec/MultipleMemoizedHelpers
 # rubocop:enable Rspec/IndexedLet

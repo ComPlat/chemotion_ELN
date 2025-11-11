@@ -278,7 +278,7 @@ export default class StructureEditorModal extends React.Component {
 
   async handleSaveStructureKet2(structure, editor) {
     try {
-      const molfile = await structure.editor.getMolfile();
+      const molfile = await structure.editor.getMolfile('V2000');
       const imgfile = await structure.editor.generateImage(molfile, { outputFormat: 'svg' });
       const text = await imgfile.text();
       const updatedSvg = await transformSvgIdsAndReferences(text);

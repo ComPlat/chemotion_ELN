@@ -28,6 +28,8 @@ module Chemotion
                    Loofah.scrub_xml_fragment(result, :strip)
                  when :html
                    Loofah.scrub_html5_fragment(result, :strip)
+                 when :svg
+                   Chemotion::SvgSanitizer.sanitize(result)
                  else
                    Loofah.scrub_fragment(result, :strip)
                  end.to_s
@@ -85,9 +87,8 @@ module Chemotion
       @current_node.xpath('svg:defs//svg:g[@id]', svg_namespace).each do |element|
         # Check if the element has an id attribute or skip if it has a unique id ending
         # (from SecureRandom.hex(4))
-        next if !element['id'] || element['id'].match?(/_[0-9a-f]{8}$/)
+        next if !element['id'] || element['id'].exclude?('glyph') || element['id'].match?(/_[0-9a-f]{8}$/)
 
-        # Generate a new id, store the mapping, and update the element's id
         new_id = "#{element['id']}_#{SecureRandom.hex(4)}"
         @id_map[element['id']] = new_id
         element['id'] = new_id
