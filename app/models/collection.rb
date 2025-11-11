@@ -92,6 +92,19 @@ class Collection < ApplicationRecord
     end
   )
 
+  # temp for labimotion
+  scope(
+    :belongs_to_or_shared_by,
+    lambda do |user_ids, group_ids|
+      user_and_group_ids = [user_ids, group_ids]
+      left_joins(:collection_shares)
+      .left_joins(:inventory)
+      .where(user_id: user_and_group_ids)
+      .or(where(collection_shares: { shared_with_id: user_and_group_ids }))
+      .distinct
+    end
+  )
+
   scope :own_collections_for, ->(user) { left_joins(:inventory).where(user_id: [user.id, *user.group_ids]) }
   scope(
     :serialized_own_collections_for,
