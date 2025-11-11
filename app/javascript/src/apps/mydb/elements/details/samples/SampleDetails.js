@@ -140,6 +140,7 @@ export default class SampleDetails extends React.Component {
       saveInventoryAction: false,
       isChemicalEdited: false,
       currentUser,
+      ketcherError: null
     };
 
     this.enableComputedProps = MatrixCheck(currentUser.matrix, 'computedProp');
@@ -283,13 +284,26 @@ export default class SampleDetails extends React.Component {
     }
   }
 
-  handleStructureEditorSave(molfile, svgFile = null, config = null, editor = 'ketcher') {
+  handleStructureEditorSave(molfile, svgFile = null, config = null, editor = 'ketcher', errorMessage = null) {
     const { sample } = this.state;
     sample.molfile = molfile;
     const smiles = (config && sample.molecule) ? config.smiles : null;
-    sample.contains_residues = molfile.indexOf(' R# ') > -1;
+    sample.contains_residues = molfile?.indexOf(' R# ') > -1;
     sample.formulaChanged = true;
     this.setState({ loadingMolecule: true });
+
+    if (errorMessage) {
+      this.setState({ ketcherError: errorMessage }, () => {
+        if (this.errorTimer) {
+          clearTimeout(this.errorTimer);
+        }
+        this.setState({ ketcherError: errorMessage });
+        this.errorTimer = setTimeout(() => {
+          this.setState({ ketcherError: null });
+          this.errorTimer = null;
+        }, 5000);
+      });
+    }
 
     const fetchError = (errorMessage) => {
       NotificationActions.add({
@@ -1333,6 +1347,25 @@ export default class SampleDetails extends React.Component {
     );
   }
 
+  renderKetcherError() {
+    const ketcherError = this.state?.ketcherError;
+    if (!ketcherError) return null;
+    return (
+      <Alert
+        variant="danger"
+        show={ketcherError?.length > 0}
+        dismissible
+        onClose={() => this.setState({ ketcherSVGError: null })}
+      >
+        <strong>
+          Ketcher2 error:
+          {' '}
+        </strong>
+        <small className="text-muted">{ketcherError}</small>
+      </Alert>
+    );
+  }
+
   render() {
     const { sample } = this.state;
     const { visible, isChemicalEdited } = this.state;
@@ -1425,6 +1458,7 @@ export default class SampleDetails extends React.Component {
           {messageBlock}
         </Card.Header>
         <Card.Body>
+          {this.renderKetcherError()}
           {this.sampleInfo(sample)}
           <ElementDetailSortTab
             type="sample"
