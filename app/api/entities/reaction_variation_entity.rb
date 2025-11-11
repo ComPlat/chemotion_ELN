@@ -10,9 +10,9 @@ module Entities
       :reactants,
       :products,
       :solvents,
+      :segments,
     )
     expose :starting_materials, as: :startingMaterials
-    expose :segment_data, as: :segmentData
 
     def properties
       object[:properties].slice(:duration, :temperature).transform_values do |value|
@@ -20,12 +20,12 @@ module Entities
       end
     end
 
-    def segment_data
-      object[:segmentData]
-    end
-
     def metadata
       object[:metadata]&.slice(:notes, :analyses) || {}
+    end
+
+    def segments
+      object[:segments] || {}
     end
 
     def materials(material_type, entity)
