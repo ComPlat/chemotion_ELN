@@ -318,7 +318,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
     setPreviousAllReactionAnalyses(allReactionAnalyses);
   }
 
-  if (!asyncDataLoaded) {
+  if (!asyncDataLoaded || !isActive) {
     return null;
   }
 
