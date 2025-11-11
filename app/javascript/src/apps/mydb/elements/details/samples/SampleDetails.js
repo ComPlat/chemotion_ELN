@@ -1355,7 +1355,7 @@ export default class SampleDetails extends React.Component {
         variant="danger"
         show={ketcherError?.length > 0}
         dismissible
-        onClose={() => this.setState({ ketcherSVGError: null })}
+        onClose={() => this.setState({ ketcherError: null })}
       >
         <strong>
           Ketcher2 error:
