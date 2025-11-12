@@ -14,6 +14,13 @@ describe Chemotion::SampleTaskAPI do
       ],
     )
   end
+  let(:forbidden_sample) do
+    create(
+      :sample,
+      creator: other_user,
+      collections: [create(:collection, user: other_user)]
+    )
+  end
   let(:new_sample_task) { create(:sample_task, :single_scan, creator: user, sample: sample) }
   let(:only_sample_missing) { create(:sample_task, :single_scan, :with_scan_results, creator: user) }
   let(:only_scan_result_missing) { create(:sample_task_with_incomplete_scan_results, creator: user, sample: sample) }
@@ -110,7 +117,7 @@ describe Chemotion::SampleTaskAPI do
     context 'when the sample can not be found' do
       let(:params) do
         {
-          sample_id: 0,
+          sample_id: forbidden_sample.id,
         }
       end
 
