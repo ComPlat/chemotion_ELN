@@ -13,14 +13,15 @@ describe ElementDetailLevelCalculator do
         :collection_share,
         collection: collection,
         shared_with: user,
+        celllinesample_detail_level: 2,
+        devicedescription_detail_level: 2,
         element_detail_level: 2,
         reaction_detail_level: 2,
         researchplan_detail_level: 2,
         sample_detail_level: 2,
+        sequencebasedmacromoleculesample_detail_level: 2,
         screen_detail_level: 2,
         wellplate_detail_level: 2,
-        celllinesample_detail_level: 2,
-        devicedescription_detail_level: 2
       )
     end
   end
@@ -46,7 +47,7 @@ describe ElementDetailLevelCalculator do
     context 'when element is in a collection shared with the user' do
       let(:element_collections) { [other_users_shared_collection] }
       it 'returns the configured detail levels' do
-        expect(calculator.detail_levels.values.max).to be 2
+        expect(calculator.detail_levels.values.max).to eq 2
       end
     end
   end
