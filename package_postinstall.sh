@@ -33,6 +33,12 @@ rm -f ./public/svgedit && ln -s "$node_modules_folder"/svgedit/dist/editor ./pub
 
 yellow "Finished adding symbolic link to svg editor in public folder"
 
+# move molviewer to public folder
+yellow "Adding symbolic link to jsmol in public folder"
+node_modules_folder="$(node -e 'const p = require.resolve("react"); console.log(p.slice(0, p.indexOf("react")))')"
+rm -rf ./public/jsmol && ln -s "$node_modules_folder"react-molviewer/dist/jsmol ./public/jsmol
+yellow "Finished adding symbolic link to jsmol in public folder"
+
 # d3js source files
 src_d3=(
   "@complat/react-spectra-editor/dist/components/common/draw.js"
