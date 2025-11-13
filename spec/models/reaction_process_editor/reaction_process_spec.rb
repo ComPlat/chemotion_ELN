@@ -4,16 +4,17 @@
 #
 # Table name: reaction_processes
 #
-#  id                  :uuid             not null, primary key
-#  automation_ordinal  :integer
-#  default_conditions  :jsonb
-#  deleted_at          :datetime
-#  sample_initial_info :jsonb
-#  created_at          :datetime         not null
-#  updated_at          :datetime         not null
-#  reaction_id         :integer
-#  sample_id           :integer
-#  user_id             :integer
+#  id                         :uuid             not null, primary key
+#  automation_ordinal         :integer
+#  default_conditions         :jsonb
+#  deleted_at                 :datetime
+#  sample_setup               :jsonb
+#  created_at                 :datetime         not null
+#  updated_at                 :datetime         not null
+#  reaction_id                :integer
+#  reaction_process_vessel_id :uuid
+#  sample_id                  :integer
+#  user_id                    :integer
 #
 require 'rails_helper'
 
