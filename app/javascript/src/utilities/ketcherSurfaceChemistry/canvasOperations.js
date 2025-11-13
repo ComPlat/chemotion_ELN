@@ -306,9 +306,10 @@ const prepareSvg = async (editor) => {
           const useEach = use.getAttributeNS('http://www.w3.org/1999/xlink', 'href')?.replace('#', '');
           isGroupMatching.push(matchingGlyphs.indexOf(useEach) !== -1);
         });
-        usesList.forEach((use) => {
-          use.style.fill = 'transparent';
-        });
+        // NOT TO BE REMOVED, JUST HIDE
+        // usesList.forEach((use) => {
+        //   use.style.fill = 'transparent';
+        // });
       }
     });
 
@@ -411,7 +412,8 @@ const onFinalCanvasSave = async (editor, iframeRef) => {
 
   try {
     await centerPositionCanvas(editor);
-    const canvasDataMol = await editor.structureDef.editor.getMolfile('V2000').catch((err) => { throw new Error(err); });
+    const canvasDataMol = await editor.structureDef.editor.getMolfile('V2000')
+      .catch((err) => { throw new Error(err); });
     await reArrangeImagesOnCanvas(iframeRef); // assemble image on the canvas
     ket2Lines = await arrangePolymers(canvasDataMol, editor); // polymers added
     await arrangeTextNodes(ket2Lines); // text node
