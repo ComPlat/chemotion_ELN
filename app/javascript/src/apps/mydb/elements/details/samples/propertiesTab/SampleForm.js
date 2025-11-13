@@ -807,9 +807,11 @@ export default class SampleForm extends React.Component {
    * @returns {JSX.Element|false} The rendered input or false if not applicable
    */
   totalMixtureVolume(sample) {
-    const isDisabled = sample.isMethodDisabled('amount_value') ||
-      sample.contains_residues ||
-      !sample.can_update;
+    const isDisabled = sample.isMethodDisabled('amount_value')
+      || sample.gas_type === 'gas'
+      || sample.gas_type === 'feedstock'
+      || sample.contains_residues
+      || !sample.can_update;
 
     const metricPrefixes = ['m', 'u', 'n'];
     const prefix = sample.metrics?.[3] && metricPrefixes.includes(sample.metrics[3])
@@ -845,7 +847,9 @@ export default class SampleForm extends React.Component {
 
     if (isDisabled) return null;
 
-    const density = sample.density || 0;
+    // Pass null/undefined when density is not set, so it displays as "n.d."
+    // Only pass the actual value if density is set (including 0)
+    const density = (sample.density != null && sample.density !== '') ? sample.density : null;
 
     return (
       <div>
@@ -859,7 +863,7 @@ export default class SampleForm extends React.Component {
           title="Mixture density"
           variant="light"
           id="numInput_total_mixture_density"
-          disabled={true}
+          disabled
         />
       </div>
     );

@@ -137,9 +137,18 @@ class SampleComponent extends Component {
     super(props);
 
     const componentState = ComponentStore.getState();
+    const { sample } = this.props;
     this.state = {
-      lockAmountColumn: componentState.lockAmountColumn,
-      lockAmountColumnSolids: componentState.lockAmountColumnSolids,
+      lockAmountColumn: ComponentStore.getLockStateForSample(
+        componentState,
+        'lockAmountColumn',
+        sample?.id
+      ),
+      lockAmountColumnSolids: ComponentStore.getLockStateForSample(
+        componentState,
+        'lockAmountColumnSolids',
+        sample?.id
+      ),
       lockedComponents: componentState.lockedComponents,
     };
 
@@ -328,7 +337,12 @@ class SampleComponent extends Component {
    * @param {Object} state - The new component store state
    */
   onComponentStoreChange(state) {
-    this.setState({ ...state });
+    const { sample } = this.props;
+    this.setState({
+      lockAmountColumn: ComponentStore.getLockStateForSample(state, 'lockAmountColumn', sample?.id),
+      lockAmountColumnSolids: ComponentStore.getLockStateForSample(state, 'lockAmountColumnSolids', sample?.id),
+      lockedComponents: state.lockedComponents,
+    });
   }
 
   /**

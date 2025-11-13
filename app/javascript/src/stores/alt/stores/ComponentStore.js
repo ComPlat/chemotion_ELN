@@ -11,25 +11,42 @@ class ComponentStore {
    */
   constructor() {
     this.state = {
-      lockAmountColumn: true,
-      lockAmountColumnSolids: false,
+      // Store lock states per sample ID: { sampleId: { lockAmountColumn: bool, lockAmountColumnSolids: bool } }
+      lockAmountColumnBySample: {},
+      lockAmountColumnSolidsBySample: {},
       lockedComponents: [],
+      lockReactionEquivColumnByReaction: {}, // Lock state for reaction equivalent column per reaction ID
     };
 
     this.bindListeners({
       handleToggleLockState: ComponentActions.toggleLockState,
       handleToggleComponentLock: ComponentActions.toggleComponentLock,
+      handleToggleReactionEquivLock: ComponentActions.toggleReactionEquivLock,
     });
   }
 
   /**
-   * Handles toggling the lock state for amount columns.
-   * @param {Object} param0 - Object containing key and value to update.
-   * @param {string} param0.key - The key in the state to update.
+   * Handles toggling the lock state for amount columns per sample.
+   * @param {Object} param0 - Object containing key, value, and sampleId to update.
+   * @param {string} param0.key - The key in the state to update ('lockAmountColumn' or 'lockAmountColumnSolids').
    * @param {boolean} param0.value - The new value for the key.
+   * @param {string|number} param0.sampleId - The ID of the sample to update.
    */
-  handleToggleLockState({ key, value }) {
-    this.setState({ [key]: value });
+  handleToggleLockState({ key, value, sampleId }) {
+    if (!sampleId) {
+      console.warn('toggleLockState: sampleId is required');
+      return;
+    }
+
+    const stateKey = key === 'lockAmountColumn' ? 'lockAmountColumnBySample' : 'lockAmountColumnSolidsBySample';
+    const currentState = this.state[stateKey] || {};
+
+    this.setState({
+      [stateKey]: {
+        ...currentState,
+        [sampleId]: value,
+      },
+    });
   }
 
   /**
@@ -56,6 +73,78 @@ class ComponentStore {
       });
     }
   }
+
+  /**
+   * Handles toggling the lock state for the reaction equivalent column.
+   * @param {Object} param0 - Object containing lockState and reactionId.
+   * @param {boolean} param0.lockState - The new lock state (true/false).
+   * @param {string|number} param0.reactionId - The ID of the reaction to update.
+   */
+  handleToggleReactionEquivLock({ lockState, reactionId }) {
+    if (!reactionId) {
+      console.warn('toggleReactionEquivLock: reactionId is required');
+      return;
+    }
+
+    const currentState = this.state.lockReactionEquivColumnByReaction || {};
+
+    this.setState({
+      lockReactionEquivColumnByReaction: {
+        ...currentState,
+        [reactionId]: lockState,
+      },
+    });
+  }
 }
 
-export default alt.createStore(ComponentStore, 'ComponentStore');
+const store = alt.createStore(ComponentStore, 'ComponentStore');
+
+/**
+ * Helper function to get lock state for a specific sample.
+ * This can be called with the state object returned by ComponentStore.getState().
+ * @param {Object} state - The state object from ComponentStore.getState().
+ * @param {string} key - The key to get ('lockAmountColumn' or 'lockAmountColumnSolids').
+ * @param {string|number} sampleId - The ID of the sample.
+ * @returns {boolean} The lock state for the sample, or default value if not set.
+ */
+const getLockStateForSample = (state, key, sampleId) => {
+  if (!sampleId) {
+    // Return default values if no sampleId provided (backward compatibility)
+    return key === 'lockAmountColumn';
+  }
+
+  const stateKey = key === 'lockAmountColumn' ? 'lockAmountColumnBySample' : 'lockAmountColumnSolidsBySample';
+  const sampleStates = state[stateKey] || {};
+  const value = sampleStates[sampleId];
+
+  // Return default values if not set for this sample
+  if (value === undefined) {
+    return key === 'lockAmountColumn';
+  }
+
+  return value;
+};
+
+/**
+ * Helper function to get lock state for a specific reaction.
+ * This can be called with the state object returned by ComponentStore.getState().
+ * @param {Object} state - The state object from ComponentStore.getState().
+ * @param {string|number} reactionId - The ID of the reaction.
+ * @returns {boolean} The lock state for the reaction, or false if not set.
+ */
+const getLockStateForReaction = (state, reactionId) => {
+  if (!reactionId) {
+    // Return default value if no reactionId provided
+    return false;
+  }
+
+  const value = state.lockReactionEquivColumnByReaction[reactionId];
+
+  return value ?? false;
+};
+
+// Attach the helper functions to the store instance
+store.getLockStateForSample = getLockStateForSample;
+store.getLockStateForReaction = getLockStateForReaction;
+
+export default store;

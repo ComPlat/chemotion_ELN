@@ -210,12 +210,23 @@ export default class Component extends Sample {
   /**
    * Calculates mass or updates purity for solid based on lock flag.
    * @param {number} purity
+   * @param {boolean} [lockAmountColumnSolids] - Optional lock state. If not provided, will be retrieved from store using parent_id as sampleId.
    */
-  calculateMassFromAmount(purity) {
+  calculateMassFromAmount(purity, lockAmountColumnSolids = null) {
     // mass_g = (amount_mol * molecular_weight) / purity
-    const { lockAmountColumnSolids } = ComponentStore.getState();
+    let lockState = lockAmountColumnSolids;
+    if (lockState === null) {
+      // Try to get lock state from store using parent_id as sample ID
+      try {
+        const componentState = ComponentStore.getState();
+        lockState = ComponentStore.getLockStateForSample(componentState, 'lockAmountColumnSolids', this.parent_id);
+      } catch (e) {
+        // Fallback to false if store is not available
+        lockState = false;
+      }
+    }
 
-    if (lockAmountColumnSolids) {
+    if (lockState) {
       this.updatePurityFromAmount();
     } else {
       this.amount_g = ((this.amount_mol ?? 0) * this.molecule_molecular_weight) / purity;
@@ -594,9 +605,8 @@ export default class Component extends Sample {
           this.calculateTargetConcentration(totalVolume);
         }
       } else {
-        // mass is not locked
-        // mass_g = (amount_mol * molecular_weight) / purity
-        this.amount_g = ((this.amount_mol ?? 0) * this.molecule_molecular_weight) / this.purity;
+        // mass is not locked - pass lockAmountColumnSolids to calculateMassFromAmount
+        this.calculateMassFromAmount(this.purity, lockAmountColumnSolids);
       }
     }
   }

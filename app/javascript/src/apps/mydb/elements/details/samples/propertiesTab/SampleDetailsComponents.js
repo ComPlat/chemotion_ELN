@@ -288,7 +288,12 @@ export default class SampleDetailsComponents extends React.Component {
   updatePurity(changeEvent) {
     const { sample } = this.props;
     const { sampleID, amount, materialGroup } = changeEvent;
-    const { lockAmountColumnSolids } = ComponentStore.getState() || { lockAmountColumnSolids: false };
+    const componentState = ComponentStore.getState();
+    const lockAmountColumnSolids = ComponentStore.getLockStateForSample(
+      componentState,
+      'lockAmountColumnSolids',
+      sample?.id
+    );
 
     const purity = amount.value;
     const referenceComponent = sample.reference_component;
