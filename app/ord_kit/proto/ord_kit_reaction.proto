@@ -49,6 +49,17 @@ message Reaction {
   ReactionProvenance provenance = 2;
   ReactionConditions conditions = 3;
   repeated ReactionStep reaction_steps = 4;
+  optional SampleSetup sample_setup = 5;
+}
+
+/**
+ * SampleSetup
+ * The initial state of a Process. based only on a Sample alone.
+ *
+ **/
+message SampleSetup {
+  Compound sample = 1;
+  optional VesselTemplate vessel_template = 2;
 }
 
 /**
@@ -227,9 +238,7 @@ message ReactionProcessAction {
       ReactionConditions starter_conditions = 1;
       repeated ReactionConditionLimits limits = 2;
     }
-    message FromFraction {
-      repeated PoolingFraction fraction = 1;
-    }
+    message FromFraction { repeated PoolingFraction fraction = 1; }
 
     Automation.AutomationMode automation_mode = 1;
     oneof origin {
@@ -369,7 +378,8 @@ message ReactionProcessAction {
     oneof type {
       ActionAnalysisSpectroscopy spectroscopy = 1;
       ActionAnalysisSpectrometry spectrometry = 2;
-      ActionPurificationChromatography chromatography = 3; // for now identical, ActionAnalysisChr. might diverge soon.
+      ActionPurificationChromatography chromatography =
+          3; // for now identical, ActionAnalysisChr. might diverge soon.
     }
   }
 
@@ -382,7 +392,7 @@ message ReactionProcessAction {
     Percentage percentage = 6;
   }
 
-  message ActionDiscard {  PoolingFraction fraction = 1;  }
+  message ActionDiscard { PoolingFraction fraction = 1; }
   message ActionDefineFraction { PoolingFraction fraction = 1; }
   message ActionWait { TimeSpan duration = 1; }
 
