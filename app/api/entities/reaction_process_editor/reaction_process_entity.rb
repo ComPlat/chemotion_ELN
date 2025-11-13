@@ -5,13 +5,15 @@ module Entities
     class ReactionProcessEntity < Grape::Entity
       SELECT_OPTIONS = SelectOptions::Models::Custom
 
-      expose :id, :short_label, :sample_initial_info
+      expose :id, :short_label, :sample_setup
 
       expose :reaction_process_steps, using: 'Entities::ReactionProcessEditor::ReactionProcessStepEntity'
       expose :samples_preparations, using: 'Entities::ReactionProcessEditor::SamplePreparationEntity'
       expose :reaction_process_vessels, using: 'Entities::ReactionProcessEditor::ReactionProcessVesselEntity'
       expose :provenance, using: 'Entities::ReactionProcessEditor::ProvenanceEntity'
       expose :sample, using: 'Entities::ReactionProcessEditor::SampleEntity'
+
+      expose :reaction_process_vessel, using: 'Entities::ReactionProcessEditor::ReactionProcessVesselEntity'
 
       expose :reaction_svg_file
       expose :reaction_default_conditions, :user_reaction_default_conditions

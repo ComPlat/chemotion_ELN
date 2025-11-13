@@ -35,6 +35,7 @@ module OrdKit
           when 'DIVERSE_SOLVENTS'
             diverse_solvent_fields
           else
+            # TODO: "FROM_FRACTION" missing
             {}
           end
         end

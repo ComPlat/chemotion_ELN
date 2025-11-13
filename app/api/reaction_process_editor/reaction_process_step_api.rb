@@ -6,7 +6,7 @@ module ReactionProcessEditor
 
     helpers StrongParamsHelpers
 
-    rescue_from :all
+    #   rescue_from :all
 
     namespace :reaction_process_steps do
       route_param :id do
