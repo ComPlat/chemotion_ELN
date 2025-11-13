@@ -4,7 +4,6 @@ import { ButtonToolbar } from 'react-bootstrap';
 import Attachment from 'src/models/Attachment';
 
 import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
-import { last, findKey } from 'lodash';
 import SaveEditedImageWarning from 'src/apps/mydb/elements/details/researchPlans/SaveEditedImageWarning';
 import {
   undoButton,
@@ -25,56 +24,18 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
-const AttachmentForm = ({ readonly }) => {
+function AttachmentForm({ readonly }) {
   const deviceDescriptionsStore = useContext(StoreContext).deviceDescriptions;
-  let deviceDescription = deviceDescriptionsStore.device_description;
+  const deviceDescription = deviceDescriptionsStore.device_description;
   const { thirdPartyApps } = UIStore.getState() || [];
-
-  useEffect(() => {
-    createAttachmentPreviewImage();
-  }, []);
-
-  useEffect(() => {
-    if (deviceDescription.updated) {
-      createAttachmentPreviewImage();
-    }
-  }, [deviceDescription.attachments]);
-
-  const createAttachmentPreviewImage = () => {
-    const attachments = deviceDescription.attachments.map((attachment) => {
-      if (attachment.preview !== undefined && attachment.preview !== '') { return attachment; }
-
-      attachment.preview = attachment.thumb
-        ? `/api/v1/attachments/${attachment.id}`
-        : '/images/wild_card/not_available.svg';
-      return attachment;
-    });
-    deviceDescriptionsStore.setFilteredAttachments(attachments);
-  }
-
-  const handleSortChange = (e) => {
-    deviceDescriptionsStore.setAttachmentSortBy(e.target.value);
-    filterAndSortAttachments();
-  }
-
-  const toggleSortDirection = () => {
-    const sortDirection = deviceDescriptionsStore.attachment_sort_direction === 'asc' ? 'desc' : 'asc';
-    deviceDescriptionsStore.setAttachmentSortDirectory(sortDirection);
-    filterAndSortAttachments();
-  }
-
-  const handleFilterChange = (e) => {
-    deviceDescriptionsStore.setAttachmentFilterText(e.target.value);
-    filterAndSortAttachments();
-  }
 
   const filterAndSortAttachments = () => {
     const filterText = deviceDescriptionsStore.attachment_filter_text.toLowerCase();
     const sortBy = deviceDescriptionsStore.attachment_sort_by;
 
-    const filteredAttachments = deviceDescription.attachments.filter((attachment) => {
-      return attachment.filename.toLowerCase().includes(filterText)
-    });
+    const filteredAttachments = deviceDescription.attachments.filter(
+      (attachment) => attachment.filename.toLowerCase().includes(filterText)
+    );
 
     filteredAttachments.sort((a, b) => {
       let comparison = 0;
@@ -98,17 +59,55 @@ const AttachmentForm = ({ readonly }) => {
     });
 
     deviceDescriptionsStore.setFilteredAttachments(filteredAttachments);
-  }
+  };
+
+  const createAttachmentPreviewImage = () => {
+    const attachments = deviceDescription.attachments.map((attachment) => {
+      if (attachment.preview !== undefined && attachment.preview !== '') { return attachment; }
+
+      attachment.preview = attachment.thumb
+        ? `/api/v1/attachments/${attachment.id}`
+        : '/images/wild_card/not_available.svg';
+      return attachment;
+    });
+    deviceDescriptionsStore.setFilteredAttachments(attachments);
+  };
+
+  const handleSortChange = (e) => {
+    deviceDescriptionsStore.setAttachmentSortBy(e.target.value);
+    filterAndSortAttachments();
+  };
+
+  useEffect(() => {
+    createAttachmentPreviewImage();
+  }, []);
+
+  useEffect(() => {
+    if (deviceDescription.updated) {
+      createAttachmentPreviewImage();
+    }
+  }, [deviceDescription.attachments]);
+
+  const toggleSortDirection = () => {
+    const sortDirection = deviceDescriptionsStore.attachment_sort_direction === 'asc' ? 'desc' : 'asc';
+    deviceDescriptionsStore.setAttachmentSortDirectory(sortDirection);
+    filterAndSortAttachments();
+  };
+
+  const handleFilterChange = (e) => {
+    deviceDescriptionsStore.setAttachmentFilterText(e.target.value);
+    filterAndSortAttachments();
+  };
 
   const handleAttachmentDrop = (files) => {
     const newAttachments = files.map((file) => Attachment.fromFile(file));
     const updatedAttachments = deviceDescription.attachments.concat(newAttachments);
     deviceDescriptionsStore.changeDeviceDescription('attachments', updatedAttachments);
     deviceDescriptionsStore.setFilteredAttachments(deviceDescriptionsStore.device_description.attachments);
-  }
+  };
 
   const updateEditedAttachment = (attachment) => {
-    let attachments = [];
+    const attachments = [];
     deviceDescription.attachments.map((currentAttachment) => {
       if (currentAttachment.id === attachment.id) {
         attachments.push(attachment);
@@ -118,84 +117,65 @@ const AttachmentForm = ({ readonly }) => {
     });
     deviceDescriptionsStore.changeDeviceDescription('attachments', attachments);
     deviceDescriptionsStore.setFilteredAttachments(deviceDescriptionsStore.device_description.attachments);
-  }
+  };
 
   const handleEditAnnotation = (annotation) => {
-    let selectedAttachment = { ...deviceDescriptionsStore.attachment_selected };
+    const selectedAttachment = { ...deviceDescriptionsStore.attachment_selected };
     selectedAttachment.updatedAnnotation = annotation;
     updateEditedAttachment(selectedAttachment);
-  }
+  };
 
   const onUndoDelete = (attachment) => {
     const index = deviceDescription.attachments.indexOf(attachment);
     deviceDescriptionsStore.changeAttachment(index, 'is_deleted', false);
-  }
+  };
 
   const onDelete = (attachment) => {
     const index = deviceDescription.attachments.indexOf(attachment);
     deviceDescriptionsStore.changeAttachment(index, 'is_deleted', true);
-  }
-
-  const documentType = (filename) => {
-    const ext = last(filename.split('.'));
-    const docType = findKey(deviceDescriptionsStore.attachment_extension, (o) => o.includes(ext));
-
-    if (typeof docType === 'undefined' || !docType) {
-      return null;
-    }
-
-    return docType;
-  }
+  };
 
   const showImportConfirm = (attachmentId) => {
     deviceDescriptionsStore.attachment_show_import_confirm[attachmentId] = true;
     deviceDescriptionsStore.setShowImportConfirm(deviceDescriptionsStore.attachment_show_import_confirm);
-  }
+  };
 
   const hideImportConfirm = (attachmentId) => {
     deviceDescriptionsStore.attachment_show_import_confirm[attachmentId] = false;
     deviceDescriptionsStore.setShowImportConfirm(deviceDescriptionsStore.attachment_show_import_confirm);
-  }
+  };
 
   const confirmAttachmentImport = (attachment) => {
     hideImportConfirm(attachment.id);
-  }
+  };
 
   const openAnnotateModal = (attachment) => {
     deviceDescriptionsStore.toogleAttachmentModal();
     deviceDescriptionsStore.setAttachmentSelected(attachment);
-  }
+  };
 
-  const attachmentRowActions = (attachment) => {
-    const updatedAt = new Date(attachment.updated_at).getTime() + 15 * 60 * 1000;
-    const isEditing = attachment.aasm_state === 'oo_editing' && new Date().getTime() < updatedAt;
-    const editDisable =
-      !deviceDescriptionsStore.attachment_editor || attachment.aasm_state === 'oo_editing'
-      || attachment.is_new || documentType(attachment.filename) === null;
-
-    return (
-      <ButtonToolbar className="gap-1">
-        {downloadButton(attachment)}
-        <ThirdPartyAppButton attachment={attachment} options={thirdPartyApps} />
-        <EditButton attachment={attachment} onChange={updateEditedAttachment} />
-        {annotateButton(attachment, () => openAnnotateModal(attachment))}
-        {importButton(
-          attachment,
-          deviceDescriptionsStore.attachment_show_import_confirm,
-          deviceDescription.changed,
-          showImportConfirm,
-          hideImportConfirm,
-          confirmAttachmentImport
-        )}
-        <div className="ms-2">
-          {removeButton(attachment, onDelete, readonly)}
-        </div>
-      </ButtonToolbar>
-    );
-  }
+  const attachmentRowActions = (attachment) => (
+    <ButtonToolbar className="gap-1">
+      {downloadButton(attachment)}
+      <ThirdPartyAppButton attachment={attachment} options={thirdPartyApps} />
+      <EditButton attachment={attachment} onChange={updateEditedAttachment} />
+      {annotateButton(attachment, () => openAnnotateModal(attachment))}
+      {importButton(
+        attachment,
+        deviceDescriptionsStore.attachment_show_import_confirm,
+        deviceDescription.changed,
+        showImportConfirm,
+        hideImportConfirm,
+        confirmAttachmentImport
+      )}
+      <div className="ms-2">
+        {removeButton(attachment, onDelete, readonly)}
+      </div>
+    </ButtonToolbar>
+  );
 
   const showList = () => {
-    let attachmentList = [];
+    const attachmentList = [];
 
     deviceDescriptionsStore.filteredAttachments.map((attachment) => {
       const rowTextClass = attachment.is_deleted ? ' text-decoration-line-through' : '';
@@ -236,10 +216,10 @@ const AttachmentForm = ({ readonly }) => {
             </div>
           )}
         </div>
-      )
+      );
     });
     return attachmentList;
-  }
+  };
 
   const showFilter = () => {
     if (deviceDescription.attachments.length === 0) { return null; }
@@ -253,7 +233,7 @@ const AttachmentForm = ({ readonly }) => {
         true
       )
     );
-  }
+  };
 
   const renderImageEditModal = () => {
     if (!deviceDescriptionsStore.attachment_image_edit_modal_shown) { return null; }
@@ -269,10 +249,10 @@ const AttachmentForm = ({ readonly }) => {
             handleEditAnnotation(newAnnotation);
           }
         }
-        handleOnClose={() => { deviceDescriptionsStore.toogleAttachmentModal() }}
+        handleOnClose={() => { deviceDescriptionsStore.toogleAttachmentModal(); }}
       />
     );
-  }
+  };
 
   return (
     <div className="p-3">
