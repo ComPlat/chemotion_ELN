@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2025_10_20_172458) do
+ActiveRecord::Schema.define(version: 2025_11_12_173158) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -1168,7 +1168,8 @@ ActiveRecord::Schema.define(version: 2025_10_20_172458) do
     t.integer "automation_ordinal"
     t.integer "sample_id"
     t.integer "user_id"
-    t.jsonb "sample_initial_info", default: {}
+    t.jsonb "sample_setup", default: {}
+    t.uuid "reaction_process_vessel_id"
   end
 
   create_table "reactions", id: :serial, force: :cascade do |t|
