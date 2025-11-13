@@ -44,7 +44,7 @@ module Entities
             id: molecule.id,
             value: molecule.id,
             label: molecule.iupac_name,
-            svg_file: molecule.molecule_svg_file,
+            sample_svg_file: molecule.molecule_svg_file,
           }
         end
 
@@ -71,7 +71,7 @@ module Entities
                 mg: sample.amount_mg,
                 ml: sample.amount_ml,
               },
-              svg_file: sample&.sample_svg_file,
+              sample_svg_file: sample&.sample_svg_file,
               icon: sample&.sample_svg_file,
             },
           )
