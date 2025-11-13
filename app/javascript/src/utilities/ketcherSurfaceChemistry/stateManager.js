@@ -18,6 +18,7 @@ export let textNodeStruct = {}; // contains a list of original text when tool ba
 export let imageListCopyContainer = [];
 export let textListCopyContainer = [];
 export let { editor } = window; // reference to the editor
+export let canvasIframeRef = null;
 export let allTemplates = {}; // contains all templates
 export let templatesBaseHashWithTemplateId = {}; // contains all templates
 export let allowProcessing = true;
@@ -111,7 +112,7 @@ export const textListCopyContainerSetter = (data) => {
 export const fetchAndReplace = (editorLoc) => {
   centerPositionCanvas(editorLoc);
   setTimeout(() => {
-    onTemplateMove(editorLoc, false);
+    onTemplateMove(editorLoc, null, { syncImagesOnly: false });
   }, 500);
 };
 
@@ -125,6 +126,10 @@ export const eventUpsertImageSetter = (count) => {
 
 export const setEditor = (ref) => {
   editor = ref;
+};
+
+export const canvasIframeRefSetter = (ref) => {
+  canvasIframeRef = ref;
 };
 
 export const resetKetcherStore = () => {

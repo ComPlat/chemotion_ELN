@@ -1,8 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="29.1 43.86 53.97 26.99" width="53.97" height="26.99">
-  <defs>
-    <pattern id="stripes" patternUnits="userSpaceOnUse" width="6" height="10">
-      <rect width="2" height="10" fill="#a9cdc2"/>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" id="svg_9f8e7d6c" viewBox="28.57328712 43.76648648 53.97176456 26.98555384" version="1.1" style="max-height:500px" width="53.97176456" height="26.98555384">
+  <defs id="defs_1a2b3c4d">
+    <linearGradient id="grad_x9y8z7w6">
+      <stop id="stop_q1r2s3t4" offset="0" style="stop-color:#000000;stop-opacity:1"/>
+    </linearGradient>
+
+    <pattern patternTransform="matrix(1.4142135,1.4142135,-1.4142135,1.4142135,116.21273,-15.10581)" id="pattern_m5n6o7p8" preserveAspectRatio="xMidYMid" xlink:href="#pattern_q9r0s1t2"/>
+    <pattern patternTransform="matrix(1.4142135,1.4142135,-1.4142135,1.4142135,116.21273,-15.10581)" id="pattern_q9r0s1t2" preserveAspectRatio="xMidYMid" xlink:href="#pattern_u3v4w5x6"/>
+    <pattern y="0" x="0" patternTransform="matrix(1.4142135,1.4142135,-1.4142135,1.4142135,-94.5377,-0.1057797)" id="pattern_u3v4w5x6" preserveAspectRatio="xMidYMid" xlink:href="#pattern_y7z8a9b0"/>
+    <pattern y="0" x="0" style="fill:#a9cdc2" id="pattern_y7z8a9b0" preserveAspectRatio="xMidYMid" patternTransform="scale(2)" height="10" width="3" patternUnits="userSpaceOnUse">
+      <rect id="rect_c1d2e3f4" height="10" width="2" y="0" x="0" style="stroke:none"/>
     </pattern>
   </defs>
-  <path d="M29.83 59.28v10.31h51.53v-10.31l-14.17-14.17h-23.18z" fill="url(#stripes)" stroke="#1b1918" stroke-width="0.57"/>
+
+  <path id="path_g5h6i7j8" style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#1b1918;stroke-width:0.5669;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1" d="m 29.833405,59.276127 v 10.3113 h 51.5252 v -10.3113 l -14.1732,-14.1732 h -23.1788 z"/>
+  <path id="path_k9l0m1n2" style="font-variation-settings:normal;vector-effect:none;fill:url(#pattern_m5n6o7p8);fill-opacity:1;fill-rule:evenodd;stroke:#1b1918;stroke-width:0.5669;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000" d="m 29.833405,59.276127 v 10.3113 h 51.5252 v -10.3113 l -14.1732,-14.1732 h -23.1788 z"/>
 </svg>

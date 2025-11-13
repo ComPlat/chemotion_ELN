@@ -484,6 +484,7 @@ module Import
         location
         melting_point
         purity
+        height
       ].freeze
       return unless included_fields.include?(db_column) || additional_columns.include?(db_column)
 

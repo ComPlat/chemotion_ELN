@@ -4,7 +4,9 @@
 /* eslint-disable react/forbid-prop-types */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Form, Button, ButtonToolbar, Modal, Card } from 'react-bootstrap';
+import {
+  Form, Button, ButtonToolbar, Modal, Card
+} from 'react-bootstrap';
 import { Select } from 'src/components/common/Select';
 import StructureEditor from 'src/models/StructureEditor';
 import EditorAttrs from 'src/components/structureEditor/StructureEditorSet';
@@ -14,6 +16,7 @@ import { transformSvgIdsAndReferences } from 'src/utilities/SvgUtils';
 import { createEditors, notifyError, initEditor } from 'src/components/structureEditor/EditorsInstances';
 import EditorRenderer from 'src/components/structureEditor/EditorRenderer';
 import Component from 'src/models/Component';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import uuid from 'uuid';
 
 function EditorList(props) {
@@ -95,6 +98,7 @@ export default class StructureEditorModal extends React.Component {
     this.resetEditor = this.resetEditor.bind(this);
     this.updateEditor = this.updateEditor.bind(this);
     this.ketcherRef = React.createRef();
+    this.alertForInvalidSources = this.alertForInvalidSources.bind(this);
   }
 
   componentDidMount() {
@@ -174,6 +178,29 @@ export default class StructureEditorModal extends React.Component {
     );
   }
 
+  alertForInvalidSources(components) {
+    const wtPercentRegex = /^\d+(?:\.\d+)?wt\.%\s+[a-z]+$/;
+    const hyphenRegex = /^[a-z]+-[a-z0-9]+$/;
+    const collectSources = [];
+    components.forEach(({ source }) => {
+      if (!source) {
+        collectSources.push(source);
+        return;
+      }
+      const s = source.trim().toLowerCase();
+      const isValid = wtPercentRegex.test(s) || hyphenRegex.test(s);
+      if (!isValid) collectSources.push(source);
+    });
+    if (collectSources.length) {
+      NotificationActions.add({
+        title: 'Invalid components labels',
+        message: `Invalid sources: ${collectSources.join(', ')}. Please follow the format: "Pd 1wt.% Pd" or "Y-Ai204".`,
+        level: 'error',
+        position: 'tc'
+      });
+    }
+  }
+
   postComponents(components) {
     return components?.map(
       (comp, idx) => new Component({
@@ -204,6 +231,7 @@ export default class StructureEditorModal extends React.Component {
         const updatedSvg = await transformSvgIdsAndReferences(svgElement);
         const components = componentsList ? this.postComponents(componentsList) : [];
         this.handleStructureSave(ket2Molfile, updatedSvg, editorId.id, components, textNodesFormula);
+        this.alertForInvalidSources(components);
       } catch (error) {
         console.error('Error during save operation for Ketcher2:', error);
       }
@@ -253,11 +281,12 @@ export default class StructureEditorModal extends React.Component {
     const handleSaveBtn = !onSave ? null : this.handleSaveBtn.bind(this);
 
     const submitAddons = this.props.submitAddons ? this.props.submitAddons : '';
-    const { editor, showWarning, molfile, selectedCommonTemplate, commonTemplatesList, selectedShape, showModal } =
-      this.state;
-    const iframeHeight = showWarning ? '0px' : '630px';
+    const {
+      editor, showWarning, molfile, selectedCommonTemplate, commonTemplatesList, showModal
+    } = this.state;
+    const iframeHeight = showWarning ? '0px' : '680px';
     const iframeStyle = showWarning ? { border: 'none' } : {};
-    let useEditor = !showWarning && editor && this.editors[editor?.id] && (
+    const useEditor = !showWarning && editor && this.editors[editor?.id] && (
       <EditorRenderer
         type={editor?.id}
         editor={this.editors[editor?.id]}
@@ -280,7 +309,8 @@ export default class StructureEditorModal extends React.Component {
         className={!this.state.showWarning && 'modal-xxxl'}
         show={showModal}
         onLoad={this.initializeEditor.bind(this)}
-        onHide={this.handleCancelBtn.bind(this)}>
+        onHide={this.handleCancelBtn.bind(this)}
+      >
         <Modal.Header closeButton className="gap-3">
           <EditorList value={editor?.id} fnChange={this.handleEditorSelection} options={editorOptions} />
           {editor?.id === 'ketcher' && (

@@ -128,18 +128,18 @@ const deepCompareNumbers = async (oldArray, newArray) => {
 };
 
 // filter text nodes by key, key as in text key
-const filterTextList = async (aliasDifferences, data) => {
-  const keys = Object.values(textNodeStruct);
-  const valueList = [];
-  if (aliasDifferences.length) {
-    textList.forEach((item) => {
-      if (keys.indexOf(JSON.parse(item.data.content).blocks[0].key) !== -1) {
-        valueList.push(item);
-      }
-    });
-    return [...removeTextFromData(data), ...valueList];
+const filterTextList = async (_aliasDifferences, data) => {
+  const activeKeys = new Set(Object.values(textNodeStruct));
+  if (!activeKeys.size) {
+    return removeTextFromData(data);
   }
-  return [...removeTextFromData(data)];
+
+  const retainedTextNodes = textList.filter((item) => {
+    const { key } = JSON.parse(item.data.content).blocks[0];
+    return activeKeys.has(key);
+  });
+
+  return [...removeTextFromData(data), ...retainedTextNodes];
 };
 
 export {
