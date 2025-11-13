@@ -30,7 +30,7 @@ module Reactable
     ref_record = ReactionsSample.find_by(reaction_id: reaction_id, reference: true)
     return if ref_record.nil? ||
               ref_record.id == id ||
-              ref_record.sample&.sample_type == Sample::SAMPLE_TYPE_MIXTURE
+              sample&.sample_type == Sample::SAMPLE_TYPE_MIXTURE
 
     amount = sample.real_amount_value && sample.real_amount_value != 0 ? sample.amount_mmol(:real) : sample.amount_mmol
 
