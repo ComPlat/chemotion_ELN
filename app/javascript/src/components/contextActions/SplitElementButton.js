@@ -51,9 +51,12 @@ export default class SplitElementButton extends React.Component {
       this.setState({ layout: newLayout });
     }
 
-    const newShowGenericEls = MatrixCheck(newCurrentUser?.matrix, 'genericEl');
+    const newShowGenericEls = MatrixCheck(
+      newCurrentUser?.matrix,
+      'genericElement',
+    );
     if (newShowGenericEls !== showGenericEls) {
-      this.setState({ currentUser: newCurrentUser });
+      this.setState({ showGenericEls: newShowGenericEls });
     }
 
     if (newGenericEls !== genericEls) {
