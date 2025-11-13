@@ -5,6 +5,7 @@ import PropTypes from 'prop-types';
 import SVG from 'react-inlinesvg';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import StructureEditorModal from 'src/components/structureEditor/StructureEditorModal';
+import {Alert} from "react-bootstrap";
 
 export default class ResearchPlanDetailsFieldKetcher extends Component {
   constructor(props) {
@@ -19,7 +20,9 @@ export default class ResearchPlanDetailsFieldKetcher extends Component {
       onChange,
       showStructureEditor: false,
       loadingMolecule: false,
+      ketcherError: null
     };
+    this.renderKetcherError = this.renderKetcherError.bind(this);
   }
 
   showStructureEditor() {
@@ -34,8 +37,21 @@ export default class ResearchPlanDetailsFieldKetcher extends Component {
     });
   }
 
-  handleStructureEditorSave(sdf_file, svg_file, config = null) {
+  handleStructureEditorSave(sdf_file, svg_file, config = null, _, errorMessage = null) {
     let { field, onChange } = this.state;
+
+    if (errorMessage) {
+      this.setState({ ketcherError: errorMessage }, () => {
+        if (this.errorTimer) {
+          clearTimeout(this.errorTimer);
+        }
+        this.setState({ ketcherError: errorMessage });
+        this.errorTimer = setTimeout(() => {
+          this.setState({ ketcherError: null });
+          this.errorTimer = null;
+        }, 5000);
+      });
+    }
 
     field.value = {
       sdf_file,
@@ -78,6 +94,25 @@ export default class ResearchPlanDetailsFieldKetcher extends Component {
     );
   }
 
+  renderKetcherError() {
+    const { ketcherError } = this.state;
+    if (!ketcherError) return null;
+    return (
+      <Alert
+        variant="danger"
+        show={ketcherError?.length > 0}
+        dismissible
+        onClose={() => this.setState({ ketcherError: null })}
+      >
+        <strong>
+          Ketcher2 error:
+          {' '}
+        </strong>
+        <small className="text-muted">{ketcherError}</small>
+      </Alert>
+    );
+  }
+
   renderEdit() {
     const { field } = this.state;
     let svgPath;
@@ -87,11 +122,15 @@ export default class ResearchPlanDetailsFieldKetcher extends Component {
       svgPath = '/images/wild_card/no_image_180.svg';
     }
     return (
-      <div className="border border-info border-3 text-center" onClick={this.showStructureEditor.bind(this)}>
-        <i className="fa fa-pencil fa-lg pull-right bg-info p-2" />
-        <SVG key={svgPath} src={svgPath} className="molecule-mid" />
-        {this.renderStructureEditorModal(field)}
+      <div>
+        {this.renderKetcherError()}
+        <div className="border border-info border-3 text-center" onClick={this.showStructureEditor.bind(this)}>
+          <i className="fa fa-pencil fa-lg pull-right bg-info p-2" />
+          <SVG key={svgPath} src={svgPath} className="molecule-mid" />
+          {this.renderStructureEditorModal(field)}
+        </div>
       </div>
+
     );
   }
 

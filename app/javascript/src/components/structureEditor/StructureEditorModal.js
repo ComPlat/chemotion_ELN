@@ -228,6 +228,7 @@ export default class StructureEditorModal extends React.Component {
     this.handleEditorSelection = this.handleEditorSelection.bind(this);
     this.resetEditor = this.resetEditor.bind(this);
     this.updateEditor = this.updateEditor.bind(this);
+    this.generateSVGKet2 = this.generateSVGKet2.bind(this);
   }
 
   componentDidMount() {
@@ -278,17 +279,23 @@ export default class StructureEditorModal extends React.Component {
 
   async handleSaveStructureKet2(structure, editor) {
     try {
-      const molfile = await structure.editor.getMolfile();
-      const imgfile = await structure.editor.generateImage(molfile, { outputFormat: 'svg' });
-      const text = await imgfile.text();
-      const updatedSvg = await transformSvgIdsAndReferences(text);
-      this.handleStructureSave(molfile, updatedSvg, editor.id);
+      const molfile = await structure.editor.getMolfile('V2000');
+      const svg = await this.generateSVGKet2(structure, molfile);
+      this.handleStructureSave(molfile, svg, editor.id);
     } catch (error) {
-      console.error('Error saving structure:', error);
+      // Attempt to at least get the molfile, even if SVG generation fails
+      let molfile = null;
+      try {
+        molfile = await structure.editor.getMolfile('V2000');
+      } catch (molfileError) {
+        console.error('Error retrieving molfile after failure:', molfileError);
+      }
+
+      this.handleStructureSave(molfile, null, editor.id, null, error.message);
     }
   }
 
-  handleStructureSave(molfile, svg, editorId, info = null) {
+  handleStructureSave(molfile, svg, editorId, info = null, errorMessage = null) {
     const { hasChildren, hasParent, onSave } = this.props;
 
     this.setState(
@@ -298,10 +305,22 @@ export default class StructureEditorModal extends React.Component {
       },
       () => {
         if (onSave) {
-          onSave(molfile, svg, info, editorId);
+          onSave(molfile, svg, info, editorId, errorMessage);
         }
       }
     );
+  }
+
+  async generateSVGKet2(structure, molfile) {
+    try {
+      const imageFile = await structure.editor.generateImage(molfile, { outputFormat: 'svg' });
+      const svgText = await imageFile.text();
+      const transformedSvg = await transformSvgIdsAndReferences(svgText);
+      return transformedSvg;
+    } catch (error) {
+      console.error('Error generating SVG:', error);
+      throw new Error(`SVG generation failed: ${error.message}`);
+    }
   }
 
   initializeEditor() {
