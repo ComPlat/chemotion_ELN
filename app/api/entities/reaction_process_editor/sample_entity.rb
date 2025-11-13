@@ -5,6 +5,7 @@ module Entities
     class SampleEntity < Grape::Entity
       expose :id
       expose :short_label
+      expose :name
       expose :sample_svg_file
       expose :metrics
       expose :location
@@ -12,7 +13,7 @@ module Entities
 
       expose :target_amount
       expose :amounts
-      expose :icon
+      expose :svg_file
 
       expose :intermediate_type
 
@@ -36,7 +37,7 @@ module Entities
         }
       end
 
-      def icon
+      def svg_file
         object.sample_svg_file
       end
     end
