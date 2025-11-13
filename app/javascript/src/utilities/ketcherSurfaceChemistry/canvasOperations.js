@@ -1060,66 +1060,59 @@ function processJsonMolecules(jsonData, verticalThreshold = 1) {
       return;
     }
 
-    // ✅ Filter atoms with alias and extract alias part
+    // Extract alias parts and y positions
     const validAtoms = mol.atoms
       .map((atom) => {
         if (!atom.alias) return null;
         const aliasParts = atom.alias.split('_');
-        if (aliasParts.length < 2) return null;
+        if (aliasParts.length < 3) return null;
         return {
           aliasPart: aliasParts[2],
           y: atom.location[1]
         };
       })
-      .filter((atom) => atom !== null);
+      .filter(Boolean);
 
     if (validAtoms.length === 0) {
       result.push(`Mol ${molIndex + 1}: (no atoms)`);
       return;
     }
 
-    const used = new Set();
-    const verticalPairs = [];
+    // Sort by y descending (highest first)
+    validAtoms.sort((a, b) => b.y - a.y);
 
-    // Step 1: Pair vertical-close atoms using aliasPart
+    const used = new Set();
+    const parts = [];
+
     for (let i = 0; i < validAtoms.length; i++) {
       if (used.has(i)) continue;
 
-      let closestIndex = -1;
-      let minDiff = Infinity;
-
-      for (let j = 0; j < validAtoms.length; j++) {
-        if (i === j || used.has(j)) continue;
+      let paired = false;
+      for (let j = i + 1; j < validAtoms.length; j++) {
+        if (used.has(j)) continue;
 
         const yDiff = Math.abs(validAtoms[i].y - validAtoms[j].y);
-        if (yDiff < verticalThreshold && yDiff < minDiff) {
-          minDiff = yDiff;
-          closestIndex = j;
+        if (yDiff <= verticalThreshold) {
+          // Pair them with '_' and put the higher component first
+          parts.push(`${validAtoms[i].aliasPart}_${validAtoms[j].aliasPart}`);
+          used.add(i);
+          used.add(j);
+          paired = true;
+          break;
         }
       }
 
-      if (closestIndex !== -1) {
-        const top = validAtoms[i].y > validAtoms[closestIndex].y ? i : closestIndex;
-        const bottom = top === i ? closestIndex : i;
-
-        verticalPairs.push(`${validAtoms[top].aliasPart}_${validAtoms[bottom].aliasPart}`);
+      if (!paired) {
+        parts.push(validAtoms[i].aliasPart);
         used.add(i);
-        used.add(closestIndex);
       }
     }
 
-    // Step 2: Unused atoms → add aliasParts directly
-    const unusedStrings = validAtoms
-      .map((atom, i) => (!used.has(i) ? atom.aliasPart : null))
-      .filter((p) => p !== null);
-
-    // Combine for this molecule
-    const connString = [...verticalPairs, ...unusedStrings].join('/');
+    const connString = parts.join('/');
     result.push(`Mol ${molIndex + 1}: ${connString}`);
     if (connString) combinedParts.push(connString);
   });
 
-  // Step 3: Final combined output
   const finalCombinedString = combinedParts.join('/');
   result.push(`Combined: ${finalCombinedString}`);
 

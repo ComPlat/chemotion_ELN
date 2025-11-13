@@ -163,7 +163,7 @@ export default class ModalExport extends React.Component {
           { value: 'material group', text: 'material group', checked: false },
           { value: 'canonical smiles', text: 'canonical smiles', checked: false },
           { value: 'InChI', text: 'InChIkey', checked: false },
-          { value: 'composition table', text: 'Composition Table', checked: false },
+          { value: 'composition_table', text: 'Composition Table', checked: false },
         ],
       },
       checkedAllColumns: {
