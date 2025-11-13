@@ -1159,6 +1159,8 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
     t.boolean "gaseous", default: false
     t.jsonb "vessel_size", default: {"unit"=>"ml", "amount"=>nil}
     t.jsonb "log_data"
+    t.decimal "volume", precision: 10, scale: 4
+    t.boolean "use_reaction_volume_for_concentration", default: false, null: false
     t.index ["deleted_at"], name: "index_reactions_on_deleted_at"
     t.index ["rinchi_short_key"], name: "index_reactions_on_rinchi_short_key", order: :desc
     t.index ["rinchi_web_key"], name: "index_reactions_on_rinchi_web_key"
