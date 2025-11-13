@@ -29,7 +29,7 @@ describe Entities::ResearchPlanEntity do
           is_restricted: false,
           body: research_plan.body,
           name: research_plan.name,
-          thumb_svg: research_plan.thumb_svg,
+          preview_attachment: research_plan.preview_attachment,
           type: 'research_plan',
         )
       end
@@ -66,7 +66,7 @@ describe Entities::ResearchPlanEntity do
           is_restricted: true,
           body: research_plan.body,
           name: research_plan.name,
-          thumb_svg: research_plan.thumb_svg,
+          preview_attachment: research_plan.preview_attachment,
           type: 'research_plan',
         )
       end
