@@ -328,7 +328,8 @@ export default class StructureEditorModal extends React.Component {
         className={!showWarning && 'modal-xxxl'}
         show={showModal}
         onLoad={this.initializeEditor.bind(this)}
-        onHide={this.handleCancelBtn.bind(this)}>
+        onHide={this.handleCancelBtn.bind(this)}
+      >
         <Modal.Header closeButton className="gap-3">
           {editor?.id && (
             <EditorList

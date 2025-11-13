@@ -207,6 +207,11 @@ module ReportHelpers
     when :components
       sheet_name = :"#{table}_components"
       export.generate_components_sheet_with_samples(sheet_name, result, columns_params)
+      if columns_params.include?('composition_table')
+        Rails.logger.info("Generating composition table for components sheet, #{columns_params}")
+        sheet_name = "#{table}_composition_table"
+        export.generate_composition_table_components_sheet_with_samples(sheet_name, result)
+      end
     else
       export.generate_sheet_with_samples(table, result)
     end
@@ -772,6 +777,7 @@ module ReportHelpers
 
   def build_column_query(sel, user_id = 0, attrs = EXP_MAP_ATTR)
     selection = []
+    composition_table_properties = %w[source molar_mass molecule_id weight_ratio_exp template_category].freeze
     attrs.each_key do |table|
       sel.symbolize_keys.fetch(table, []).each do |col|
         custom_column_query(table, col, selection, user_id, attrs)
@@ -781,6 +787,11 @@ module ReportHelpers
     selection = Export::ExportChemicals.build_chemical_column_query(selection, sel) if sel[:chemicals].present?
 
     if sel[:components].present?
+      if sel[:components].include?('composition_table')
+        composition_table_properties.each do |field|
+          sel[:components] << field unless sel[:components].include?(field)
+        end
+      end
       return Export::ExportComponents.build_component_column_query(selection, sel)
     end
 

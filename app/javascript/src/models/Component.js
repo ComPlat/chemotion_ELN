@@ -666,17 +666,17 @@ export default class Component extends Sample {
     let compContent = '';
     if (source && source.length) {
       if (source.indexOf('%') !== -1) {
-        const parts = source.split(' ');
-        sourceContent = parts.slice(1).join(' ') || '';
-        weightRatioContent = parseFloat(source?.split('wt%')[0]?.split(' ')[1]) || 0;
-        compContent = source?.split('%')[1]?.trim() || '';
+        const parts = source.trim();
+        const match = parts?.match(/^\d+/);
+        weightRatioContent = match ? Number(match[0]) : 0;
+        compContent = source?.trim() || 'asdf';
       } else {
         const parts = source.split('-');
         sourceContent = source;
         compContent = parts[1];
       }
     }
-    return { source: sourceContent, component: compContent, weightRatioCalc: weightRatioContent };
+    return { source: source, component: compContent, weightRatioCalc: weightRatioContent };
   }
 
   /**

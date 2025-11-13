@@ -19,6 +19,7 @@ import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButt
 import SampleDetailsComponents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsComponents';
 import { SAMPLE_TYPE_HETEROGENEOUS_MATERIAL } from 'src/models/Sample';
 import Component from 'src/models/Component';
+import buildHeteroMaterialRows from 'src/utilities/sampleHeterogeneousCompositions';
 
 const stateOptions = [
   { value: 'solid_powder', label: 'Solid Powder' },
@@ -1134,7 +1135,6 @@ export default class SampleForm extends React.Component {
           <Col>{this.textInput(sample, 'storage_condition', 'Storage Conditions')}</Col>
         </Row>
         <Row>{this.heteroMaterialTable(sample)}</Row>
-        <Row>{this.sampleDescription(sample)}</Row>
       </>
     );
   }
@@ -1157,49 +1157,7 @@ export default class SampleForm extends React.Component {
 
   heteroMaterialTable() {
     const { components } = this.state;
-
-    const rowsData = [];
-    let totalMolarCalc = 0;
-    let totalMolarExp = 0;
-
-    components?.forEach((item, index) => {
-      const {
-        source,
-        template_category,
-        name,
-        parseComponentSource,
-        calcWeightRatioWithoutWeight,
-        weightRatioBasedExpCalc,
-      } = new Component(item);
-
-      // convert numeric fields safely to integers
-      const molar_mass = parseFloat(item.molar_mass, 10) || 0;
-      const weight_ratio_exp = parseFloat(item.weight_ratio_exp, 10) || 0;
-      if (name !== 'HeterogeneousMaterial') return;
-
-      const molarMassStateValue = parseFloat(components[index]?.molar_mass) || 0;
-      const weightRatioExpStateValue = parseFloat(components[index]?.weight_ratio_exp) || 0;
-
-      const { weightRatioCalc, component, source: sourceAlias } = parseComponentSource(source);
-      const weightRatioCalcProcessed = weightRatioCalc > 0 ? weightRatioCalc : calcWeightRatioWithoutWeight(components);
-      const molarRatioCalcMM = parseFloat(weightRatioBasedExpCalc(weightRatioCalcProcessed, molarMassStateValue));
-      const weightRatioCalcMM = parseFloat(weightRatioBasedExpCalc(weightRatioExpStateValue, molarMassStateValue));
-
-      totalMolarCalc += molarRatioCalcMM || 0;
-      totalMolarExp += weightRatioCalcMM || 0;
-
-      rowsData.push({
-        index,
-        template_category,
-        component,
-        sourceAlias,
-        molar_mass,
-        weight_ratio_exp,
-        weightRatioCalcProcessed,
-        molarRatioCalcMM: molarRatioCalcMM.toFixed(7),
-        weightRatioCalcMM: weightRatioCalcMM.toFixed(7),
-      });
-    });
+    const { rowsData, totalMolarCalc, totalMolarExp } = buildHeteroMaterialRows(components);
 
     return (
       <>
@@ -1207,8 +1165,6 @@ export default class SampleForm extends React.Component {
         <Table responsive hover bordered>
           <thead>
             <tr>
-              <th>Category</th>
-              <th>Component</th>
               <th>Source</th>
               <th>Weight ratio exp.</th>
               <th>Molar Mass (g/mol)</th>
@@ -1220,42 +1176,36 @@ export default class SampleForm extends React.Component {
             </tr>
           </thead>
           <tbody>
-            {rowsData.map((row) => {
-              const molarRatioCalcPercent = totalMolarCalc > 0 ? (row.molarRatioCalcMM / totalMolarCalc).toFixed(7) : '-';
-              const molarRatioExpPercent = totalMolarExp > 0 ? (row.weightRatioCalcMM / totalMolarExp).toFixed(7) : '-';
-              return (
-                <tr key={`component${row.template_category}`}>
-                  <td>{row.template_category || ''}</td>
-                  <td>{row.component || ''}</td>
-                  <td>{row.sourceAlias || ''}</td>
-                  <td>
-                    <Form.Control
-                      type="number"
-                      value={row.weight_ratio_exp}
-                      onChange={(e) => {
-                        const newValue = e.target.value;
-                        this.handleComponentFieldChanged(row.index, 'weight_ratio_exp', newValue);
-                      }}
-                    />
-                  </td>
-                  <td>
-                    <Form.Control
-                      type="number"
-                      value={row.molar_mass}
-                      onChange={(e) => {
-                        const newValue = e.target.value;
-                        this.handleComponentFieldChanged(row.index, 'molar_mass', newValue);
-                      }}
-                    />
-                  </td>
-                  <td>{row.weightRatioCalcProcessed}</td>
-                  <td>{row.molarRatioCalcMM || '-'}</td>
-                  <td>{row.weightRatioCalcMM || '-'}</td>
-                  <td>{molarRatioCalcPercent}</td>
-                  <td>{molarRatioExpPercent}</td>
-                </tr>
-              );
-            })}
+            {rowsData.map((row) => (
+              <tr key={`component${row.template_category}`}>
+                <td>{row.sourceAlias || ''}</td>
+                <td>
+                  <Form.Control
+                    type="number"
+                    value={row.weight_ratio_exp}
+                    onChange={(e) => {
+                      const newValue = e.target.value;
+                      this.handleComponentFieldChanged(row.index, 'weight_ratio_exp', newValue);
+                    }}
+                  />
+                </td>
+                <td>
+                  <Form.Control
+                    type="number"
+                    value={row.molar_mass}
+                    onChange={(e) => {
+                      const newValue = e.target.value;
+                      this.handleComponentFieldChanged(row.index, 'molar_mass', newValue);
+                    }}
+                  />
+                </td>
+                <td>{row.weightRatioCalcProcessed}</td>
+                <td>{row.molarRatioCalcMM !== undefined && row.molarRatioCalcMM !== null ? row.molarRatioCalcMM : '-'}</td>
+                <td>{row.weightRatioCalcMM !== undefined && row.weightRatioCalcMM !== null ? row.weightRatioCalcMM : '-'}</td>
+                <td>{row.molarRatioExpPercent !== undefined && row.molarRatioExpPercent !== '-' ? row.molarRatioExpPercent : '-'}</td>
+                <td>{row.molarRatioCalcPercent !== undefined && row.molarRatioCalcPercent !== '-' ? row.molarRatioCalcPercent : '-'}</td>
+              </tr>
+            ))}
           </tbody>
         </Table>
       </>

@@ -87,7 +87,7 @@ module Export
       when :sample_analyses
         generate_headers_sample_id
         add_analyses_header(selected_columns)
-      when :sample_components
+      when :sample_components, :sample_composition_table
         generate_headers_sample_id
         add_components_header(selected_columns)
       when :sample, :sample_chemicals
