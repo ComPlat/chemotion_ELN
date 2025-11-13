@@ -17,22 +17,12 @@ module Chemotion
 
       private
 
-      def allow_image_tag
-        # Allow the <img> tag and all its attributes
-        Loofah::Scrubber.new do |node|
-          if node.name == 'img'
-            node.attributes.each do |attr_name, attr_value|
-              node[attr_name] = attr_value.value
-            end
-          end
-        end
-      end
-
       def base_scrub_ml(fragment, type: :xml, encoding: nil, remap_glyph_ids: false)
         result = encoding ? fragment.encode(encoding) : fragment
 
         # Loofah will remove node having rgb function as value in svg
         # though rgb is an allowed css function
+
         result = transform_rgb_to_hex(result)
         result =
           case type
@@ -40,15 +30,13 @@ module Chemotion
             Loofah.scrub_xml_fragment(result, :strip)
           when :html
             Loofah.scrub_html5_fragment(result, :strip)
+          when :svg
+            Chemotion::SvgSanitizer.sanitize(result)
           else
-            if Loofah.fragment(result).css('image').any?
-              scrubber = allow_image_tag
-              Loofah.fragment(result).scrub!(scrubber)
-            else
-              Loofah.scrub_fragment(result, :strip)
-            end
+            Loofah.scrub_fragment(result, :strip)
           end.to_s
 
+        # Fix some camelcase attributes
         result = camelcase_attributes(result)
         result = new(result).transform_defs_glyph_ids_and_references if remap_glyph_ids
         result
@@ -99,7 +87,9 @@ module Chemotion
 
     def map_defs_ids
       @current_node.xpath('svg:defs//svg:g[@id]', svg_namespace).each do |element|
-        next if !element['id'] || element['id'].match?(/_[0-9a-f]{8}$/)
+        # Check if the element has an id attribute or skip if it has a unique id ending
+        # (from SecureRandom.hex(4))
+        next if !element['id'] || element['id'].exclude?('glyph') || element['id'].match?(/_[0-9a-f]{8}$/)
 
         new_id = "#{element['id']}_#{SecureRandom.hex(4)}"
         @id_map[element['id']] = new_id
