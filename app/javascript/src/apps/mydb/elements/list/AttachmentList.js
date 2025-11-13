@@ -1,11 +1,11 @@
 import React, {
-  useState, useEffect, useMemo, useCallback
+  useState, useEffect, useMemo, useCallback, useContext
 } from 'react';
 import {
   Button, OverlayTrigger, Tooltip, Dropdown, Overlay, ButtonGroup
 } from 'react-bootstrap';
 import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
-import { values } from 'lodash';
+import { values, last, findKey } from 'lodash';
 import uuid from 'uuid';
 import mime from 'mime-types';
 import SpinnerPencilIcon from 'src/components/common/SpinnerPencilIcon';
@@ -15,6 +15,7 @@ import ImageModal from 'src/components/common/ImageModal';
 import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import EditorFetcher from 'src/fetchers/EditorFetcher';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
 export const attachmentThumbnail = (attachment) => (
   <div className="attachment-row-image">
@@ -154,7 +155,8 @@ export const annotateButton = (attachment, onClick) => (
  *  - disabled: boolean
  *  - onChange: function
  */
-export const EditButton = ({ attachment, disabled, onChange }) => {
+export function EditButton({ attachment, disabled, onChange }) {
+  const deviceDescriptionsStore = useContext(StoreContext).deviceDescriptions;
   const { docserver } = UIStore.getState() || {};
   const extensionsObj = docserver.extensions || {};
   // Previously "attachmentEditor" -> now available at UserStore.editorConfig.available (bool)
@@ -173,7 +175,8 @@ export const EditButton = ({ attachment, disabled, onChange }) => {
         {disabled ? (
           <span>
             Editing is only available for these files:&nbsp;
-            <strong>{exts}</strong>.
+            <strong>{exts}</strong>
+            .
             <br />
             Or you are not authorized to edit this file.
           </span>
@@ -185,13 +188,23 @@ export const EditButton = ({ attachment, disabled, onChange }) => {
     [disabled]
   );
 
+  const documentType = (filename) => {
+    const ext = last(filename.split('.'));
+    const docType = findKey(deviceDescriptionsStore.attachment_extension, (o) => o.includes(ext));
+
+    if (typeof docType === 'undefined' || !docType) {
+      return null;
+    }
+
+    return docType;
+  };
+
   const handleEdit = useCallback(() => {
     if (editDisable) return;
 
     const fileType = last(attachment.filename.split('.'));
-    const docType = this.documentType(attachment.filename);
+    const docType = documentType(attachment.filename);
     const forceStop = attachment.edit_state === 'editing';
-
 
     EditorFetcher.startEditing({ attachmentId: attachment.id, forceStop })
       .then((result) => {
@@ -215,8 +228,6 @@ export const EditButton = ({ attachment, disabled, onChange }) => {
           onChange(attachment);
         }
       });
-
-
   }, [attachment, editDisable]);
 
   return (
@@ -233,7 +244,7 @@ export const EditButton = ({ attachment, disabled, onChange }) => {
       </Button>
     </OverlayTrigger>
   );
-};
+}
 
 export const importButton = (
   attachment,
@@ -377,7 +388,8 @@ const noChoice = [<Dropdown.Item key={uuid.v4()} disabled>None Available</Dropdo
 
 export function ThirdPartyAppButton({ attachment, options = [] }) {
   const [menuItems, setMenuItems] = useState([]);
-  const contentType = mime.contentType(attachment.content_type) ? attachment.content_type : mime.lookup(attachment.filename);
+  const contentType = mime.contentType(attachment.content_type)
+    ? attachment.content_type : mime.lookup(attachment.filename);
 
   useEffect(() => {
     const generatedMenuItems = () => {
