@@ -75,6 +75,7 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
     t.integer "con_state"
     t.jsonb "log_data"
     t.string "created_by_type"
+    t.integer "edit_state", default: 0
     t.index ["attachable_type", "attachable_id"], name: "index_attachments_on_attachable_type_and_attachable_id"
     t.index ["identifier"], name: "index_attachments_on_identifier", unique: true
     t.index ["version"], name: "index_attachments_on_version", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
