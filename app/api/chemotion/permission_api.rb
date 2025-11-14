@@ -33,7 +33,9 @@ module Chemotion
           is_top_secret ||= selected_elements[Sample].any?(&:is_top_secret?)
           is_top_secret ||= selected_elements[Reaction].lazy.flat_map(&:samples).any?(&:is_top_secret?)
           is_top_secret ||= selected_elements[Wellplate].lazy.flat_map(&:samples).any?(&:is_top_secret?)
-          is_top_secret ||= selected_elements[Screen].lazy.flat_map(&:wellplates).flat_map(&:samples).any?(&:is_top_secret?)
+          is_top_secret ||= selected_elements[Screen].lazy.flat_map(&:wellplates)
+                                                          .flat_map(&:samples)
+                                                          .any?(&:is_top_secret?)
 
           deletion_allowed = true
           sharing_allowed = true
@@ -49,7 +51,7 @@ module Chemotion
             # permission for deletion includes permission for sharing,
             # so we have to check if the lower permissions for sharing are satisfied
             # when mass deletion is forbidden
-            if !deletion_allowed
+            unless deletion_allowed
               [Sample, Reaction, Screen, Wellplate].each do |element_class|
                 next if selected_elements[element_class].none?
 

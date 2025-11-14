@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# desc: Helper methods for GrapeAPI::ReportAPI
+# rubocop:disable Metrics/ModuleLength, Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 module ReportHelpers
   extend Grape::API::Helpers
 
@@ -875,3 +875,4 @@ module ReportHelpers
     DEFAULT_COLUMNS_WELLPLATE
   end
 end
+# rubocop:enable Metrics/ModuleLength, Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity

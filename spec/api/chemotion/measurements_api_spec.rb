@@ -70,7 +70,9 @@ describe Chemotion::MeasurementsAPI do
     describe 'POST /api/v1/measurements/bulk_create_from_raw_data' do
       let(:collection) { create(:collection, user_id: user.id) }
       let(:sample) { create(:sample, creator: user, collections: [collection]) }
-      let(:wellplate) { create(:wellplate, :with_random_wells, number_of_readouts: 3, sample: sample, collections: [collection]) }
+      let(:wellplate) do
+        create(:wellplate, :with_random_wells, number_of_readouts: 3, sample: sample, collections: [collection])
+      end
       let(:raw_data) do
         wellplate.wells.map do |well|
           well.readouts.map.with_index do |readout, readout_index|
@@ -116,7 +118,8 @@ describe Chemotion::MeasurementsAPI do
 
         expect(parsed_response).to have_key('measurements')
 
-        all_results_match_expected_structure = parsed_response['measurements'].all? do |measurement|
+        # check if all results match expected structure
+        parsed_response['measurements'].all? do |measurement|
           measurement.key?('errors') &&
             measurement.key?('uuid') &&
             measurement.key?('sample_identifier') &&

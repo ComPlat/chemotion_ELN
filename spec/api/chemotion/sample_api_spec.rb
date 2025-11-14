@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-# rubocop:disable RSpec/MultipleMemoizedHelpers
-
+# rubocop:disable RSpec/MultipleMemoizedHelpers, RSpec/IndexedLet, RSpec/MultipleExpectations, RSpec/NestedGroups, RSpec/ContextWording, RSpec/AnyInstance
+# rubocop:disable Layout/LineLength
 require 'rails_helper'
 
 describe Chemotion::SampleAPI do
@@ -18,9 +18,9 @@ describe Chemotion::SampleAPI do
   end
 
   describe 'POST /api/v1/samples/ui_state/' do
-    let(:sample_1) { create(:sample, collections: [collection]) }
-    let(:sample_2) { create(:sample, collections: [collection]) }
-    let(:limit)    { 1 }
+    let(:sample1) { create(:sample, collections: [collection]) }
+    let(:sample2) { create(:sample, collections: [collection]) }
+    let(:limit) { 1 }
 
     before do
       post '/api/v1/samples/ui_state/', params: params, as: :json
@@ -31,7 +31,7 @@ describe Chemotion::SampleAPI do
         {
           ui_state: {
             all: false,
-            included_ids: [sample_1.id, sample_2.id],
+            included_ids: [sample1.id, sample2.id],
             excluded_ids: [],
             collection_id: collection.id,
           },
@@ -49,7 +49,7 @@ describe Chemotion::SampleAPI do
         {
           ui_state: {
             all: false,
-            included_ids: [sample_1.id, sample_2.id],
+            included_ids: [sample1.id, sample2.id],
             excluded_ids: [],
             collection_id: collection.id,
           },
@@ -85,11 +85,12 @@ describe Chemotion::SampleAPI do
       s1
       s2
       post '/api/v1/samples/subsamples', params: params, as: :json
-      expect(response.status).to eq 201
     end
 
     # TODO: Cleanup this
     it 'is able to split Samples into Subsamples' do
+      expect(response.status).to eq 201
+
       s3 = subsamples[0]
       s4 = subsamples[1]
       except_attr = %w[
@@ -415,8 +416,6 @@ describe Chemotion::SampleAPI do
           JSON.parse(response.body)['status'],
         ).to eq 'ok'
 
-        collection_sample = CollectionsSample.where(collection_id: collection.id)
-
         molecule = Molecule.find_by(inchikey: 'DTHMTBUWTGVEFG-DDWIOCJRSA-N')
         sample = Sample.find_by(molecule_id: molecule.id)
 
@@ -485,8 +484,6 @@ describe Chemotion::SampleAPI do
           JSON.parse(response.body)['status'],
         ).to eq 'ok'
 
-        collection_sample = CollectionsSample.where(collection_id: collection.id)
-
         molecule = Molecule.find_by(inchikey: 'DTHMTBUWTGVEFG-DDWIOCJRSA-N')
         sample = Sample.find_by(molecule_id: molecule.id)
 
@@ -549,8 +546,10 @@ describe Chemotion::SampleAPI do
     end
 
     context 'when collection_id is given' do
-      let!(:sample) { create(:sample, collections: [personal_collection]) }
-      let!(:sample2) { create(:sample, collections: [personal_collection]) }
+      before do
+        create(:sample, collections: [personal_collection])
+        create(:sample, collections: [personal_collection])
+      end
 
       it 'returns samples' do
         get '/api/v1/samples', params: { collection_id: personal_collection.id }
@@ -560,6 +559,7 @@ describe Chemotion::SampleAPI do
 
     context 'when collection_id is given and no samples found' do
       let(:empty_collection) { create(:collection, label: 'empty collection', user: user) }
+
       before do
         empty_collection
       end
@@ -702,7 +702,7 @@ describe Chemotion::SampleAPI do
           :sample,
           name: 'old2',
           target_amount_value: 0.2,
-          collections: [other_user_collection, collection_shared_with_user]
+          collections: [other_user_collection, collection_shared_with_user],
         )
       end
       let(:cas) { '58-08-2' }
@@ -785,7 +785,7 @@ describe Chemotion::SampleAPI do
           expect(sample.xref['inventory_label']).to eq expected_label
         end
 
-        def expected_inventory_label(inventory_collection)
+        def expected_inventory_label(collection)
           inventory = Inventory.find_by(id: collection.inventory_id)
           "#{inventory['prefix']}-#{inventory['counter']}"
         end
@@ -808,7 +808,7 @@ describe Chemotion::SampleAPI do
     end
 
     context 'when permissions are inappropriate' do
-      let(:other_users_sample) { create(:sample, collections: [other_user_collection])}
+      let(:other_users_sample) { create(:sample, collections: [other_user_collection]) }
       let(:params) do
         {
           name: 'updated name',
@@ -913,22 +913,6 @@ describe Chemotion::SampleAPI do
     context 'when parameters are valid' do
       let(:s1) { create(:sample, name: 'test', collections: [collection]) }
 
-      let!(:params) do
-        {
-          name: 'test',
-          target_amount_value: 0,
-          target_amount_unit: 'g',
-          molarity_value: nil,
-          molarity_unit: 'M',
-          description: 'Test Sample',
-          purity: 1,
-          solvent: '',
-          location: '',
-          molfile: '',
-          is_top_secret: false,
-        }
-      end
-
       before do
         delete "/api/v1/samples/#{s1.id}"
       end
@@ -975,7 +959,7 @@ describe Chemotion::SampleAPI do
 
     let(:sample_upd_1_params) do
       JSON.parse(
-        Rails.root.join('spec', 'fixtures', 'sample_update_1_params.json').read,
+        Rails.root.join('spec/fixtures/sample_update_1_params.json').read,
       ).deep_symbolize_keys
     end
 
@@ -1068,11 +1052,15 @@ describe Chemotion::SampleAPI do
 
           it 'has not created a dataset for the corresponding analysis' do
             expect(cont_s2_analysis.children.count).to eq(1)
-            expect do
-              put("/api/v1/samples/#{s1.id}.json",
-                  params: sample_upd_1_params.to_json,
-                  headers: { 'CONTENT_TYPE' => 'application/json' })
-            end.not_to change { s2.analyses.first.children.count }
+            count_before = s2.analyses.first.children.count
+
+            put("/api/v1/samples/#{s1.id}.json",
+                params: sample_upd_1_params.to_json,
+                headers: { 'CONTENT_TYPE' => 'application/json' })
+
+            s2.reload!
+            count_after = s2.analyses.first.children.count
+            expect(count_before - count_after).to eq 0
           end
         end
       end
@@ -1249,5 +1237,5 @@ describe Chemotion::SampleAPI do
     end
   end
 end
-
-# rubocop:enable RSpec/MultipleMemoizedHelpers
+# rubocop:enable Layout/LineLength
+# rubocop:enable RSpec/MultipleMemoizedHelpers, RSpec/IndexedLet, RSpec/MultipleExpectations, RSpec/NestedGroups, RSpec/ContextWording, RSpec/AnyInstance

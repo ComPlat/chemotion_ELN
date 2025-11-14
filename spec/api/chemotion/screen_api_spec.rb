@@ -2,6 +2,7 @@
 
 require 'rails_helper'
 
+# rubocop:disable RSpec/MultipleMemoizedHelpers
 describe Chemotion::ScreenAPI do
   include_context 'api request authorization context'
 
@@ -24,7 +25,7 @@ describe Chemotion::ScreenAPI do
     create(
       :screen,
       collections: [collection],
-      component_graph_data: { some_dummy: 'data', with_nested: { but_cool: 'Stuff' } }
+      component_graph_data: { some_dummy: 'data', with_nested: { but_cool: 'Stuff' } },
     )
   end
   let(:another_screen) { create(:screen, collections: [collection]) }
@@ -35,6 +36,7 @@ describe Chemotion::ScreenAPI do
         screen
         another_screen
       end
+
       it 'returns a list of screens' do
         get '/api/v1/screens', headers: request_headers
         expect(parsed_json_response['screens'].length).to eq(2)
@@ -208,3 +210,4 @@ describe Chemotion::ScreenAPI do
     end
   end
 end
+# rubocop:enable RSpec/MultipleMemoizedHelpers

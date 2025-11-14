@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# rubocop:disable RSpec/MultipleMemoizedHelpers
 describe Chemotion::CalendarEntryAPI do
   include_context 'api request authorization context'
 
@@ -220,3 +221,4 @@ describe Chemotion::CalendarEntryAPI do
     end
   end
 end
+# rubocop:enable RSpec/MultipleMemoizedHelpers

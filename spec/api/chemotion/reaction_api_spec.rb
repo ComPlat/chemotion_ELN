@@ -2,6 +2,7 @@
 
 require 'rails_helper'
 
+# rubocop:disable RSpec/IndexedLet, RSpec/MultipleExpectations, RSpec/MultipleMemoizedHelpers
 describe Chemotion::ReactionAPI do
   include_context 'api request authorization context'
 
@@ -9,15 +10,15 @@ describe Chemotion::ReactionAPI do
   let(:other_user) { create(:person) }
 
   describe 'GET /api/v1/reactions' do
-    let!(:collection_1) do
+    let!(:collection1) do
       create(:collection, label: 'C1', user: user)
     end
-    let!(:collection_2) do
+    let!(:collection2) do
       create(:collection, label: 'C2', user: user)
     end
-    let!(:reaction_1) { create(:reaction, name: 'reaction_1', collections: [collection_1]) }
-    let!(:reaction_2) { create(:reaction, name: 'reaction_2', collections: [collection_1]) }
-    let!(:reaction_3) { create(:reaction, name: 'reaction_3', collections: [collection_2]) }
+    let!(:reaction1) { create(:reaction, name: 'reaction1', collections: [collection1]) }
+    let!(:reaction2) { create(:reaction, name: 'reaction2', collections: [collection1]) }
+    let!(:reaction3) { create(:reaction, name: 'reaction3', collections: [collection2]) }
 
     context 'without params' do
       before { get '/api/v1/reactions' }
@@ -26,36 +27,34 @@ describe Chemotion::ReactionAPI do
         expect(response.status).to eq 200
 
         reactions = parsed_json_response['reactions']
-        expect(reactions.pluck('id', 'name')).to match_array(
-          [
-            [reaction_1.id, reaction_1.name],
-            [reaction_2.id, reaction_2.name],
-            [reaction_3.id, reaction_3.name]
-          ]
+        expect(reactions.pluck('id', 'name')).to contain_exactly(
+          [reaction1.id, reaction1.name],
+          [reaction2.id, reaction2.name],
+          [reaction3.id, reaction3.name],
         )
         expect(reactions.first).to include(
-          'id' => reaction_3.id,
-          'name' => reaction_3.name,
+          'id' => reaction3.id,
+          'name' => reaction3.name,
           'type' => 'reaction',
           'tag' => include(
-            'taggable_id' => reaction_3.id,
+            'taggable_id' => reaction3.id,
             'taggable_type' => 'Reaction',
             'taggable_data' => include(
               'collection_labels' => include(
-                'id' => collection_2.id,
+                'id' => collection2.id,
               ),
-            )
-          )
+            ),
+          ),
         )
       end
     end
 
     context 'with ID of collection' do
-      before { get '/api/v1/reactions', params: { collection_id: collection_1.id } }
+      before { get '/api/v1/reactions', params: { collection_id: collection1.id } }
 
       it 'returns serialized reaction' do
         reactions = JSON.parse(response.body)['reactions']
-        expect(reactions.pluck('id')).to eq([reaction_2.id, reaction_1.id])
+        expect(reactions.pluck('id')).to eq([reaction2.id, reaction1.id])
       end
     end
 
@@ -99,7 +98,6 @@ describe Chemotion::ReactionAPI do
       end
 
       before do
-        Reaction
         Reaction.skip_callback(:save, :before, :generate_rinchis)
         reaction1
         reaction2
@@ -166,20 +164,20 @@ describe Chemotion::ReactionAPI do
 
   describe 'GET /api/v1/reactions/:id' do
     context 'with appropriate permissions' do
-      let(:collection_1) do
+      let(:collection1) do
         create(:collection, user: other_user).tap do |collection|
           create(
             :collection_share,
             shared_with: user,
             collection: collection,
-            permission_level: CollectionShare.permission_level(:read_elements)
+            permission_level: CollectionShare.permission_level(:read_elements),
           )
         end
       end
-      let(:reaction_1) { create(:reaction, collections: [collection_1]) }
+      let(:reaction1) { create(:reaction, collections: [collection1]) }
 
       before do
-        get "/api/v1/reactions/#{reaction_1.id}"
+        get "/api/v1/reactions/#{reaction1.id}"
       end
 
       it 'is allowed to read reaction' do
@@ -188,11 +186,11 @@ describe Chemotion::ReactionAPI do
     end
 
     context 'with inappropriate permissions' do
-      let(:collection_1) { create(:collection, user: other_user) }
-      let(:reaction_1) { create(:reaction, collections: [collection_1]) }
+      let(:collection1) { create(:collection, user: other_user) }
+      let(:reaction1) { create(:reaction, collections: [collection1]) }
 
       before do
-        get "/api/v1/reactions/#{reaction_1.id}"
+        get "/api/v1/reactions/#{reaction1.id}"
       end
 
       it 'is not allowed to read reaction' do
@@ -203,38 +201,38 @@ describe Chemotion::ReactionAPI do
 
   describe 'DELETE /api/v1/reactions' do
     context 'with valid parameters' do
-      let(:collection_1) { create(:collection, user_id: user.id) }
-      let(:reaction_1) { create(:reaction, name: 'test', created_by: user.id, collections: [collection_1]) }
-      let(:params) { { id: reaction_1.id, collection_id: collection_1.id } }
+      let(:collection1) { create(:collection, user_id: user.id) }
+      let(:reaction1) { create(:reaction, name: 'test', created_by: user.id, collections: [collection1]) }
+      let(:params) { { id: reaction1.id, collection_id: collection1.id } }
 
       before do
-        delete "/api/v1/reactions/#{reaction_1.id}", params: params
+        delete "/api/v1/reactions/#{reaction1.id}", params: params
       end
 
       it 'is able to delete a reaction' do
-        reaction_id = reaction_1.id
+        reaction_id = reaction1.id
         r = Reaction.find_by(name: 'test')
         expect(r).to be_nil
         a = CollectionsReaction.where(reaction_id: reaction_id)
-        expect(a).to match_array([])
+        expect(a).to be_empty
         a = ReactionsProductSample.where(reaction_id: reaction_id)
-        expect(a).to match_array([])
+        expect(a).to be_empty
         a = ReactionsReactantSample.where(reaction_id: reaction_id)
-        expect(a).to match_array([])
+        expect(a).to be_empty
         a = ReactionsStartingMaterialSample.where(reaction_id: reaction_id)
-        expect(a).to match_array([])
+        expect(a).to be_empty
       end
     end
   end
 
   describe 'PUT /api/v1/reactions' do
-    let(:collection_1) { create(:collection, label: 'Collection #1', user: user) }
-    let(:sample1) { create(:sample, name: 'Sample 1', collections: [collection_1]) }
-    let(:sample2) { create(:sample, name: 'Sample 2', collections: [collection_1]) }
-    let(:sample3) { create(:sample, name: 'Sample 3', collections: [collection_1]) }
-    let(:sample4) { create(:sample, name: 'Sample 4', collections: [collection_1]) }
+    let(:collection1) { create(:collection, label: 'Collection #1', user: user) }
+    let(:sample1) { create(:sample, name: 'Sample 1', collections: [collection1]) }
+    let(:sample2) { create(:sample, name: 'Sample 2', collections: [collection1]) }
+    let(:sample3) { create(:sample, name: 'Sample 3', collections: [collection1]) }
+    let(:sample4) { create(:sample, name: 'Sample 4', collections: [collection1]) }
 
-    let(:reaction1) { create(:reaction, name: 'reaction_1', collections: [collection_1]) }
+    let(:reaction1) { create(:reaction, name: 'reaction1', collections: [collection1]) }
     let(:reaction_container) do
       {
         'name' => 'new',
@@ -452,14 +450,14 @@ describe Chemotion::ReactionAPI do
   end
 
   describe 'POST /api/v1/reactions' do
-    let(:collection_1) { create(:collection, label: 'Collection #1', user: user) }
-    let(:sample1) { create(:sample, name: 'Sample 1', container: create(:container), collections: [collection_1]) }
-    let(:molfile_1) { sample1.molecule.molfile }
+    let(:collection1) { create(:collection, label: 'Collection #1', user: user) }
+    let(:sample1) { create(:sample, name: 'Sample 1', container: create(:container), collections: [collection1]) }
+    let(:molfile1) { sample1.molecule.molfile }
 
     context 'when adding reaction to collection' do
       let(:params) do
         {
-          'collection_id' => collection_1.id,
+          'collection_id' => collection1.id,
           'container' => new_root_container,
           'literatures' => {
             'foo' => { 'title' => 'Foo', 'url' => 'foo.com' },
@@ -477,15 +475,11 @@ describe Chemotion::ReactionAPI do
               'is_new' => true,
               'is_split' => true,
               'molfile' => build(:molfile, type: 'test_2'),
-              'molecule' => { molfile: molfile_1 },
+              'molecule' => { molfile: molfile1 },
               'container' => new_root_container,
             ],
           },
         }
-      end
-
-      before do
-        allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(user) # log in as receiver
       end
 
       it 'links reaction to collection' do
@@ -494,7 +488,7 @@ describe Chemotion::ReactionAPI do
         end.to change(CollectionsReaction, :count).by(2)
 
         reaction_id = JSON.parse(response.body)['reaction']['id']
-        match = CollectionsReaction.where(collection_id: collection_1.id, reaction_id: reaction_id).first
+        match = CollectionsReaction.where(collection_id: collection1.id, reaction_id: reaction_id).first
         expect(match).not_to be_nil
       end
     end
@@ -503,7 +497,7 @@ describe Chemotion::ReactionAPI do
       let(:params) do
         {
           'name' => 'r001',
-          'collection_id' => collection_1.id,
+          'collection_id' => collection1.id,
           'container' => new_root_container,
           'materials' => {
             'products' => [
@@ -517,7 +511,7 @@ describe Chemotion::ReactionAPI do
               'is_new' => true,
               'is_split' => true,
               'molfile' => build(:molfile, type: 'test_2'),
-              'molecule' => { molfile: molfile_1 },
+              'molecule' => { molfile: molfile1 },
               'container' => new_root_container,
             ],
             'reactants' => [
@@ -530,7 +524,7 @@ describe Chemotion::ReactionAPI do
               'equivalent' => 2,
               'is_new' => true,
               'is_split' => false,
-              'molfile' => molfile_1,
+              'molfile' => molfile1,
               'container' => new_root_container,
             ],
           },
@@ -639,7 +633,7 @@ describe Chemotion::ReactionAPI do
       let(:params) do
         {
           'name' => ' Copy',
-          'collection_id' => collection_1.id,
+          'collection_id' => collection1.id,
           'container' => new_container,
           'materials' => {
             'products' => [
@@ -651,8 +645,8 @@ describe Chemotion::ReactionAPI do
               'equivalent' => 1,
               'is_new' => true,
               'is_split' => true,
-              # 'molecule' => { molfile: molfile_1 },
-              'molfile' => molfile_1,
+              # 'molecule' => { molfile: molfile1 },
+              'molfile' => molfile1,
               'container' => new_container,
             ],
           },
@@ -670,3 +664,4 @@ describe Chemotion::ReactionAPI do
     end
   end
 end
+# rubocop:enable RSpec/IndexedLet, RSpec/MultipleExpectations, RSpec/MultipleMemoizedHelpers

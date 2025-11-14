@@ -17,7 +17,7 @@ module Chemotion
         present collection.collection_shares, with: Entities::CollectionShareEntity, root: :collection_shares
       end
 
-      desc 'Creates collection shares for one collection and one or more users. Existing shares are updated with the given data'
+      desc 'Creates collection shares for one collection and one or more users. Existing shares are updated'
       params do
         requires :collection_id, type: Integer
         requires :user_ids, type: Array[Integer]
@@ -43,7 +43,7 @@ module Chemotion
 
         collection.update(shared: true)
 
-        { status:  204 }
+        { status: 204 }
       end
 
       desc 'Update a collection share'

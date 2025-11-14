@@ -23,7 +23,7 @@ module Usecases
           parent: parent,
           position: position,
           label: label,
-          inventory: inventory
+          inventory: inventory,
         )
       end
 
@@ -40,10 +40,6 @@ module Usecases
         return unless inventory_id
 
         Inventory.find(inventory_id)
-      end
-
-      def create_collection(parent:, label:, inventory:)
-
       end
     end
   end

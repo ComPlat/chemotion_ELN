@@ -8,10 +8,6 @@ describe Chemotion::CollectionShareAPI do
   let(:collection) { create(:collection, user: user) }
   let(:collection_share) { create(:collection_share, shared_with: other_user, collection: collection) }
 
-  describe 'GET /api/v1/collection_shares?collection_id=:id' do
-
-  end
-
   describe 'POST /api/v1/collection_shares' do
     let(:create_params) do
       {
@@ -32,7 +28,7 @@ describe Chemotion::CollectionShareAPI do
 
     it 'creates a new share for the collection' do
       expect do
-        post "/api/v1/collection_shares/", params: create_params
+        post '/api/v1/collection_shares/', params: create_params
         collection.reload
       end.to change(CollectionShare, :count).by(create_params[:user_ids].length)
          .and change(collection, :shared?).from(false).to(true)

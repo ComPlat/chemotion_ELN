@@ -2,6 +2,7 @@
 
 require 'rails_helper'
 
+# rubocop:disable RSpec/MultipleMemoizedHelpers
 describe Chemotion::WellplateAPI do
   include_context 'api request authorization context'
 
@@ -16,7 +17,7 @@ describe Chemotion::WellplateAPI do
         collection: collection,
         shared_with: user,
         permission_level: 3,
-        wellplate_detail_level: 10
+        wellplate_detail_level: 10,
       )
     end
   end
@@ -95,13 +96,11 @@ describe Chemotion::WellplateAPI do
         expect(JSON.parse(response.body)['wellplates'].size).to eq(1)
       end
 
-      context 'when no wellplates found' do
-        it 'returns no wellplates' do
-          params = params = { collection_id: empty_collection.id }
+      it 'returns no wellplates for empty collections' do
+        params = { collection_id: empty_collection.id }
 
-          get '/api/v1/wellplates/', params: params
-          expect(JSON.parse(response.body)['wellplates'].size).to eq(0)
-        end
+        get '/api/v1/wellplates/', params: params
+        expect(JSON.parse(response.body)['wellplates'].size).to eq(0)
       end
     end
   end
@@ -353,3 +352,4 @@ describe Chemotion::WellplateAPI do
     end
   end
 end
+# rubocop:enable RSpec/MultipleMemoizedHelpers

@@ -57,8 +57,9 @@ module Chemotion
         collection_id = params.fetch(:currentCollection, {}).fetch(:id, 0)
         if collection_id.zero? # no or malformed collection id was given
           @collection = Collection.get_all_collection_for_user(current_user)
-        elsif @collection = current_user.collections.find_by(id: collection_id)
-        elsif collection_share = CollectionShare.find_by(collection_id: collection_id, shared_with_id: user_ids)
+        elsif (@collection = current_user.collections.find_by(id: collection_id))
+          # empty block body to keep rubocop happy
+        elsif (collection_share = CollectionShare.find_by(collection_id: collection_id, shared_with_id: user_ids))
           permission_level = case request.request_method
                              when 'POST' then -1
                              when 'DELETE' then 2

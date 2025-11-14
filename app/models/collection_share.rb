@@ -38,20 +38,20 @@ class CollectionShare < ApplicationRecord
     share_collection: 2,
     delete_elements: 3,
     import_elements: 4,
-    pass_ownership: 6
-  }
+    pass_ownership: 6,
+  }.freeze
   belongs_to :collection
-  belongs_to :shared_with, class_name: "User"
+  belongs_to :shared_with, class_name: 'User'
 
   scope :shared_by, ->(user) { joins(:collection).where(collections: { user_id: [user.id, *user.group_ids] }) }
   scope :shared_with, ->(user) { where(shared_with_id: [user.id, *user.group_ids]) }
   scope(
     :with_minimum_permission_level,
-    ->(permission_level) { where("collection_shares.permission_level >= ?", permission_level) }
+    ->(permission_level) { where(collection_shares: { permission_level: permission_level.. }) },
   )
   scope(
     :with_minimum_detail_level,
-    ->(detail_level_field, detail_level) { where("#{detail_level_field} >= ?", detail_level) }
+    ->(detail_level_field, detail_level) { where("#{detail_level_field} >= ?", detail_level) },
   )
 
   def self.permission_level(key)

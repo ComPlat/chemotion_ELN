@@ -63,8 +63,7 @@ module Chemotion
 
         before do
           collection = Collection.accessible_for(current_user).find(params[:ui_state][:collection_id])
-          @samples = Sample.by_collection_id(collection.id).by_ui_state(params[:ui_state]).for_user(current_user.id)
-          # TODO: is this check really feasible? If a sample is available to a user, it is always readable to some extent.
+          @samples = Sample.by_collection_id(collection.id).by_ui_state(params[:ui_state])
           error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, @samples).read_all?
         end
 

@@ -18,7 +18,7 @@ describe Chemotion::SampleTaskAPI do
     create(
       :sample,
       creator: other_user,
-      collections: [create(:collection, user: other_user)]
+      collections: [create(:collection, user: other_user)],
     )
   end
   let(:new_sample_task) { create(:sample_task, :single_scan, creator: user, sample: sample) }
