@@ -5,6 +5,8 @@
 module Chemotion
   # Editor API
   class EditorAPI < Grape::API
+    helpers AttachmentHelpers
+
     namespace :editor do
       desc 'get editor config'
       get :initial do
@@ -20,9 +22,7 @@ module Chemotion
 
         after_validation do
           @attachment = Attachment.find_by(id: params[:id])
-          # TODO: Check ElementPolicy for other elements than ResearchPlan
-          # lower permissions for read only access?
-          error!('401 Unauthorized', 401) unless @attachment && ElementPolicy.new(current_user, @attachment.attachable).update?
+          error!('401 Unauthorized', 401) unless @attachment && read_access?(@attachment, current_user)
         end
 
         get 'start' do
@@ -45,7 +45,7 @@ module Chemotion
               fileType: file_extension,
               key: token,
               title: @attachment.filename,
-              url: "#{Rails.application.config.root_url}/api/v1/public/download?token=#{token}",
+              url: "#{Rails.configuration.editors.docserver[:callback_server]}/api/v1/public/download?token=#{token}",
               permissions: {
                 download: true,
                 edit: true,
@@ -54,7 +54,7 @@ module Chemotion
               },
             },
             editorConfig: {
-              callbackUrl: "#{Rails.application.config.root_url}/api/v1/public/callback",
+              callbackUrl: "#{Rails.configuration.editors.docserver[:callback_server]}/api/v1/public/callback",
               mode: 'edit',
               lang: 'en',
               customization: {

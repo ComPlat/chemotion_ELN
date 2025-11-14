@@ -1,11 +1,11 @@
 import React, {
-  useState, useEffect, useMemo, useCallback, useContext
+  useState, useEffect, useMemo, useCallback
 } from 'react';
 import {
   Button, OverlayTrigger, Tooltip, Dropdown, Overlay, ButtonGroup
 } from 'react-bootstrap';
 import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
-import { values, last, findKey } from 'lodash';
+import { values, last } from 'lodash';
 import uuid from 'uuid';
 import mime from 'mime-types';
 import SpinnerPencilIcon from 'src/components/common/SpinnerPencilIcon';
@@ -15,7 +15,6 @@ import ImageModal from 'src/components/common/ImageModal';
 import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import EditorFetcher from 'src/fetchers/EditorFetcher';
-import { StoreContext } from 'src/stores/mobx/RootStore';
 
 export const attachmentThumbnail = (attachment) => (
   <div className="attachment-row-image">
@@ -156,7 +155,6 @@ export const annotateButton = (attachment, onClick) => (
  *  - onChange: function
  */
 export function EditButton({ attachment, disabled, onChange }) {
-  const deviceDescriptionsStore = useContext(StoreContext).deviceDescriptions;
   const { docserver } = UIStore.getState() || {};
   const extensionsObj = docserver.extensions || {};
   // Previously "attachmentEditor" -> now available at UserStore.editorConfig.available (bool)
@@ -189,14 +187,23 @@ export function EditButton({ attachment, disabled, onChange }) {
   );
 
   const documentType = (filename) => {
-    const ext = last(filename.split('.'));
-    const docType = findKey(deviceDescriptionsStore.attachment_extension, (o) => o.includes(ext));
+    const extension = filename.split('.').pop()?.toLowerCase();
 
-    if (typeof docType === 'undefined' || !docType) {
-      return null;
-    }
+    if (!extension) return 'unknown';
 
-    return docType;
+    const textExts = ['doc', 'docx', 'txt', 'odt', 'rtf'];
+    const spreadsheetExts = ['xls', 'xlsx', 'ods', 'csv'];
+    const presentationExts = ['ppt', 'pptx', 'odp'];
+    const pdfExts = ['pdf'];
+    const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'bmp'];
+
+    if (textExts.includes(extension)) return 'text';
+    if (spreadsheetExts.includes(extension)) return 'spreadsheet';
+    if (presentationExts.includes(extension)) return 'presentation';
+    if (pdfExts.includes(extension)) return 'pdf';
+    if (imageExts.includes(extension)) return 'image';
+
+    return 'unknown';
   };
 
   const handleEdit = useCallback(() => {
@@ -209,9 +216,13 @@ export function EditButton({ attachment, disabled, onChange }) {
     EditorFetcher.startEditing({ attachmentId: attachment.id, forceStop })
       .then((result) => {
         if (!forceStop && result.token) {
-          const url = `/editor?id=${attachment.id}&docType=${docType}
-          &fileType=${fileType}&title=${attachment.filename}&key=${result.token}
-          &only_office_token=${result.only_office_token}`;
+          const url = `/editor?id=${attachment.id}`
+            + `&docType=${docType}`
+            + `&fileType=${fileType}`
+            + `&title=${attachment.filename}`
+            + `&key=${result.token}`
+            + `&only_office_token=${result.only_office_token}`;
+
           window.open(url, '_blank');
 
           attachment.edit_state = 'editing';

@@ -59,7 +59,7 @@
                     type: "desktop",
                     token: only_office_token,
                     document: {
-                        key: "<%= params[:token] %>",
+                        key: key,
                         title: title,
                         url: callback_server + '/api/v1/public/download?token=' + key ,
                         fileType: "<%= params[:fileType] %>",
@@ -74,6 +74,7 @@
                             review: false,
                         },
                     },
+                    documentType: docType,
                     editorConfig: {
                         mode: "edit",
                         lang: "en",
