@@ -33,7 +33,8 @@ module Chemotion
                   # All collection of current_user
                   # TODO: Question? Only own collections or shared as well?
                   # TODO: Question 2: When using .none, why join at all? It does not return any records anyway
-                  # TODO: Other thought... having seen the "All collection of current_user" comment... is this maybe the case for displaying the "All" collection? Which has a collection id though...
+                  # TODO: Other thought... having seen the "All collection of current_user" comment...
+                  #       is this maybe the case for displaying the "All" collection? Which has a collection id though
                   CelllineSample.none.joins(:collections).where(collections: { user_id: current_user.id }).distinct
                 end.order('created_at DESC')
 

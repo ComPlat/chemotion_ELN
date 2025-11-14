@@ -24,9 +24,9 @@ module Usecases
         @collections_permitted_to_update ||= Collection.own_collections_for(current_user).ids
       end
 
-      def add_collection_and_children_to_linear_tree(collection, parent_ids: [], position:)
+      def add_collection_and_children_to_linear_tree(collection, position:, parent_ids: [])
         collection_id = collection[:id].to_i
-        raise Errors::UpdateForbidden.new unless collection_id.in?(collections_permitted_to_update)
+        raise Errors::UpdateForbidden, 'Update forbidden' unless collection_id.in?(collections_permitted_to_update)
 
         ancestry = wrap_parent_ids(parent_ids)
         entry = {
@@ -34,7 +34,7 @@ module Usecases
           label: collection[:label],
           position: position,
           ancestry: ancestry,
-          user_id: current_user.id
+          user_id: current_user.id,
         }
 
         add_collection_to_linear_tree(entry)
@@ -42,8 +42,12 @@ module Usecases
         (collection[:children] || []).each_with_index do |child_collection, index|
           # IMPORTANT: this must return a new Array, otherwise the recursion breaks the parent structure
           parent_ids_of_child = parent_ids + [collection_id]
-          
-          add_collection_and_children_to_linear_tree(child_collection, parent_ids: parent_ids_of_child, position: index + 1)
+
+          add_collection_and_children_to_linear_tree(
+            child_collection,
+            parent_ids: parent_ids_of_child,
+            position: index + 1,
+          )
         end
       end
 
@@ -66,7 +70,7 @@ module Usecases
       def wrap_parent_ids(array_of_ids)
         return '/' if array_of_ids.blank?
 
-        '/' + array_of_ids.join('/') + '/'
+        "/#{array_of_ids.join('/')}/"
       end
     end
   end

@@ -109,13 +109,14 @@ module Chemotion
                           .uniq!(:id)
           reaction_samples = ReactionsSample.where(sample_id: samples.pluck(:id))
           results = samples.map do |sample|
+            reaction_sample = reaction_samples.find { |reaction_sample| reaction_sample.sample_id == sample.id }
+            type = reaction_sample ? reaction_sample.type.sub(/^Reactions/, '').sub('Sample', '') : nil
+
             {
               id: sample.id,
               name: sample.name,
               short_label: sample.short_label,
-              type: reaction_samples.find { |reaction__sample| reaction_sample.sample_id == sample.id }
-                                    &.type&.sub(/^Reactions/, '')
-                                    &.sub(/Sample/, ''),
+              type: type
             }
           end
           { samples: results }

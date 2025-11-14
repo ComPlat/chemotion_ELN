@@ -66,7 +66,7 @@ module Chemotion
             resp_body['error'] = e
             error!(resp_body, 503)
           end
-          unless @collection = Collection.find_by(id: params[:id], user_id: current_user.id)
+          unless (@collection = Collection.find_by(id: params[:id], user_id: current_user.id))
             resp_body['error'] = 'Unauthorized Access to Collection'
             error!(resp_body, 401)
           end

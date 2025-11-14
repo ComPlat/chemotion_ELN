@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-# rubocop:disable Rspec/MultipleMemoizedHelpers, Rspec/NestedGroups, RSpec/IndexedLet
+# rubocop:disable RSpec/MultipleMemoizedHelpers, RSpec/NestedGroups, RSpec/IndexedLet
 describe Chemotion::ReportAPI do
   let(:user) { create(:user) }
   let!(:collection) { create(:collection, user_id: user.id) }
@@ -517,4 +517,4 @@ describe Chemotion::ReportAPI do
     end
   end
 end
-# rubocop:enable Rspec/MultipleMemoizedHelpers, Rspec/NestedGroups, RSpec/IndexedLet
+# rubocop:enable RSpec/MultipleMemoizedHelpers, RSpec/NestedGroups, RSpec/IndexedLet

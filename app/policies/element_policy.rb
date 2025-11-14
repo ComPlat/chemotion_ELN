@@ -15,42 +15,50 @@ class ElementPolicy
   # 2. the user has been shared a collection containing the element with an according permission level
   def read?
     return false unless user_and_record_present?
+
     record_is_in_own_collection? || record_shared_with_minimum_permission_level?(0)
   end
 
   def update?
     return false unless user_and_record_present?
+
     record_is_in_own_collection? || record_shared_with_minimum_permission_level?(1)
   end
 
   def copy?
     return false unless user_and_record_present?
+
     record_is_in_own_collection? ||
       (record_shared_with_minimum_permission_level?(1) && record_shared_with_minimum_detail_level?(1))
   end
 
   def share?
     return false unless user_and_record_present?
+
     record_is_in_own_collection? || record_shared_with_minimum_permission_level?(2)
   end
 
   def destroy?
     return false unless user_and_record_present?
+
     record_is_in_own_collection? || record_shared_with_minimum_permission_level?(3)
   end
 
   def read_dataset?
     return false unless user_and_record_present?
+
     record_is_in_own_collection? || record_shared_with_minimum_detail_level?(3)
   end
 
   def import?
     return false unless user_and_record_present?
+
     record_is_in_own_collection? || record_shared_with_minimum_permission_level?(4)
   end
 
   def pass_ownership?
     return false unless user_and_record_present?
+
     record_is_in_own_collection? || record_shared_with_minimum_permission_level?(6)
   end
 

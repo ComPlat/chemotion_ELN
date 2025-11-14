@@ -14,9 +14,8 @@ module Usecases
       def execute! # rubocop:disable Metrics/AbcSize
         ActiveRecord::Base.transaction do
           wellplate = Wellplate.create(
-            params.except(:collection_id, :wells, :segments, :size, :user_labels).merge(
-              collections: [collection]
-            )
+            params.except(:collection_id, :wells, :segments, :size, :user_labels)
+                  .merge(collections: [collection]),
           )
           wellplate.set_short_label(user: current_user)
           wellplate.reload

@@ -44,9 +44,9 @@ class ElementsPolicy
   end
 
   def record_ids_that_should_be_inaccessible
-    @record_ids_that_should_be_inaccessible ||= records_scope.distinct.ids - record_ids_from_own_collections - record_ids_from_shared_collections
+    @record_ids_that_should_be_inaccessible ||=
+      records_scope.distinct.ids - record_ids_from_own_collections - record_ids_from_shared_collections
   end
-
 
   def records_only_from_own_collections?
     record_ids_from_shared_collections.none?
@@ -59,7 +59,7 @@ class ElementsPolicy
   def scope_for_shared_records
     records_scope
       .joins(collections: [:collection_shares])
-      .where.not(collections: { user: user }) # to prevent looking at circle shares (own collections that have been reshared to owner by someone else)
+      .where.not(collections: { user: user }) # to prevent looking at circular shares
       .where(collection_shares: { shared_with: user })
       .distinct
   end
@@ -82,13 +82,14 @@ class ElementsPolicy
   end
 
   def maximum_permission_levels_for_shared_records
-    @maximum_permission_levels_for_shared_records ||= records_class.connection.execute(
-      Arel.sql(
-        scope_for_shared_records
-          .select("#{records_table}.id, MAX(collection_shares.permission_level) AS maximum_permission_level")
-          .group("#{records_table}.id")
-          .to_sql
-      )
-    ).to_h { |entry| [entry['id'], entry['maximum_permission_level']] }
+    sql = Arel.sql(
+      scope_for_shared_records
+        .select("#{records_table}.id, MAX(collection_shares.permission_level) AS maximum_permission_level")
+        .group("#{records_table}.id")
+        .to_sql
+    )
+    @maximum_permission_levels_for_shared_records ||= records_class.connection.execute(sql).to_h do |entry|
+      [entry['id'], entry['maximum_permission_level']]
+    end
   end
 end

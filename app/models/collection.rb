@@ -74,7 +74,7 @@ class Collection < ApplicationRecord
         .select('collections.id, COUNT(collections.id)')
         .group('collections.id')
         .having('COUNT(collection.id) > 1')
-    end
+    end,
   )
 
   # returns the users own collections and those shared with him
@@ -89,7 +89,7 @@ class Collection < ApplicationRecord
       .where(user_id: user_and_group_ids)
       .or(where(collection_shares: { shared_with_id: user_and_group_ids }))
       .distinct
-    end
+    end,
   )
 
   # temp for labimotion
@@ -102,7 +102,7 @@ class Collection < ApplicationRecord
       .where(user_id: user_and_group_ids)
       .or(where(collection_shares: { shared_with_id: user_and_group_ids }))
       .distinct
-    end
+    end,
   )
 
   scope :own_collections_for, ->(user) { left_joins(:inventory).where(user_id: [user.id, *user.group_ids]) }
@@ -112,7 +112,7 @@ class Collection < ApplicationRecord
       own_collections_for(user).select(
         'collections.*, inventories.name AS inventory_name, inventories.prefix AS inventory_prefix'
       )
-    end
+    end,
   )
 
   scope(
@@ -123,7 +123,7 @@ class Collection < ApplicationRecord
         .left_joins(:inventory)
         .where(collection_shares: { shared_with_id: [user.id, *user.group_ids] })
         .distinct
-    end
+    end,
   )
   scope(
     :serialized_shared_collections_for,
@@ -135,10 +135,10 @@ class Collection < ApplicationRecord
           'collection_shares.permission_level AS permission_level',
           'inventories.name AS inventory_name',
           'inventories.prefix AS inventory_prefix',
-          'concat(users.first_name, chr(32), users.last_name, chr(40), users.name_abbreviation, chr(41)) AS owner'
+          'concat(users.first_name, chr(32), users.last_name, chr(40), users.name_abbreviation, chr(41)) AS owner',
         ].join(', ')
       )
-    end
+    end,
   )
 
   scope(
@@ -150,7 +150,7 @@ class Collection < ApplicationRecord
             .shared_with(user)
             .with_minimum_permission_level(permission_level)
         )
-    end
+    end,
   )
 
   scope(
@@ -162,7 +162,7 @@ class Collection < ApplicationRecord
             .shared_with(user)
             .with_minimum_detail_level(detail_level_field, detail_level)
         )
-    end
+    end,
   )
 
   default_scope { ordered }
@@ -185,7 +185,7 @@ class Collection < ApplicationRecord
         .select(SQL_INVENT_SELECT)
         .from(SQL_INVENT_FROM)
         .group(:inventory_id, :inventories)
-    end
+    end,
   )
 
   def self.get_all_collection_for_user(user_id)

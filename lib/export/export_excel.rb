@@ -1,5 +1,6 @@
 require 'export_table'
 
+# rubocop:disable Metrics/ClassLength
 module Export
   class ExportExcel < ExportTable
     DEFAULT_ROW_WIDTH = 100
@@ -96,7 +97,9 @@ module Export
 
         # Add each component row
         components.each do |component|
-          component_row = @headers.map { |column| Export::ExportComponents.format_component_value(column, component[column]) }
+          component_row = @headers.map do |column|
+            Export::ExportComponents.format_component_value(column, component[column])
+          end
           sheet.add_row(component_row, sz: 12) if component_row.compact.present?
         end
       end
@@ -105,6 +108,7 @@ module Export
     end
 
     #TODO: implement better detail level filter
+    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
     def generate_analyses_sheet_with_samples(table, samples = nil, selected_columns)
       @samples = samples
       return if samples.nil? # || samples.count.zero?
@@ -123,21 +127,21 @@ module Export
       row_image_width = DEFAULT_ROW_WIDTH
       row_length = @headers.size
       samples.each_with_index do |sample, row|
-        if (sample['is_shared'] == 'f' || sample['is_shared'] == false || sample['dl_s'] = 10)
-          data = (@row_headers & HEADERS_SAMPLE_ID).map { |column| sample[column] }
-          data[row_length - 1] = nil
-          analyses = prepare_sample_analysis_data(sample)
-          sheet.add_row(data, style: light_grey) if analyses.present?
-          analyses.each do |an|
-            data = @headers.map { |column| an[column] }
+        next unless sample['is_shared'] == 'f' || sample['is_shared'] == false || sample['dl_s'] == 10
+
+        data = (@row_headers & HEADERS_SAMPLE_ID).map { |column| sample[column] }
+        data[row_length - 1] = nil
+        analyses = prepare_sample_analysis_data(sample)
+        sheet.add_row(data, style: light_grey) if analyses.present?
+        analyses.each do |an|
+          data = @headers.map { |column| an[column] }
+          sheet.add_row(data, sz: 12) if data.compact.present?
+          (an['datasets'] || []).map do |dataset|
+            data = @headers.map { |column| dataset[column] }
             sheet.add_row(data, sz: 12) if data.compact.present?
-            (an['datasets'] || []).map do |dataset|
-              data = @headers.map { |column| dataset[column] }
+            (dataset['attachments'] || []).map do |att|
+              data = @headers.map { |column| att[column] }
               sheet.add_row(data, sz: 12) if data.compact.present?
-              (dataset['attachments'] || []).map do |att|
-                data = @headers.map { |column| att[column] }
-                sheet.add_row(data, sz: 12) if data.compact.present?
-              end
             end
           end
         end
@@ -145,6 +149,7 @@ module Export
       # end
       @samples = nil
     end
+    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
 
     def read
       @xfile.to_stream.read
@@ -184,6 +189,7 @@ module Export
       output
     end
 
+    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
     def filter_with_permission_and_detail_level(sample)
       # return all data if sample/chemical in own collection
       if sample['is_shared'] == 'f' || sample['is_shared'] == false
@@ -224,6 +230,7 @@ module Export
       end
       data
     end
+    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
 
     def svg_path(sample)
       sample_svg_path = sample['image'].presence
@@ -263,3 +270,4 @@ module Export
     end
   end
 end
+# rubocop:enable Metrics/ClassLength
