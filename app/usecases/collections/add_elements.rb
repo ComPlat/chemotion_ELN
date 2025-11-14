@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Usecases
   module Collections
     class AddElements
@@ -14,27 +16,35 @@ module Usecases
         add_elements_to_collection(ui_state)
       end
 
+      # rubocop:disable Rails/FindByOrAssignmentMemoization
       def find_collection(collection_id)
         @collection = Collection.own_collections_for(current_user).find_by(id: collection_id)
         @collection ||= Collection.shared_with_minimum_permission_level(
           current_user,
-          CollectionShare.permission_level(:import_elements)
+          CollectionShare.permission_level(:import_elements),
         ).find_by(id: collection_id)
 
-        raise Errors::InsufficientPermissionError.new('You do not have the right to add elements to this collection') unless @collection
+        return unless @collection.nil?
+
+        raise Errors::InsufficientPermissionError, 'You do not have the right to add elements to this collection'
       end
+      # rubocop:enable Rails/FindByOrAssignmentMemoization
 
       def check_access_to_elements(ui_state)
         ui_state.each do |class_string, ui_selections|
-          element_class = API::ELEMENT_CLASS[class_string] || Labimotion::ElementKlass.find_by(name: class_string).elements
+          element_class =
+            API::ELEMENT_CLASS[class_string] || Labimotion::ElementKlass.find_by(name: class_string).elements
           next unless element_class
 
           scope = element_class.by_ui_state(ui_selections)
 
           policy = ElementsPolicy.new(current_user, scope)
-          return if policy.share_all?
+          next if policy.share_all?
 
-          raise Errors::InsufficientPermissionError.new("You do not have the right to add #{class_string} to this collection")
+          raise(
+            Errors::InsufficientPermissionError,
+            "You don't have the right to add #{class_string} to this collection",
+          )
         end
       end
 

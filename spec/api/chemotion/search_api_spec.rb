@@ -15,9 +15,20 @@ describe Chemotion::SearchAPI do
   let(:sample_d) { create(:sample, name: 'Iron', creator: user, collections: [other_collection]) }
   let(:sample_e) { create(:sample, name: 'Methonol', creator: user, molfile: mof3000_2, collections: [collection]) }
   let(:sample_f) { create(:sample, name: 'Dekan', creator: user, molfile: mof3000_1, collections: [collection]) }
-  let(:wellplate) { create(:wellplate, name: 'Wellplate', wells: [build(:well, sample: sample_a)], collections: [collection]) }
-  let(:other_wellplate) { create(:wellplate, name: 'Other Wellplate', wells: [build(:well, sample: sample_b)], collections: [other_collection]) }
-  let(:reaction) { create(:reaction, name: 'Reaction', samples: [sample_a, sample_b], creator: user, collections: [collection]) }
+  let(:wellplate) do
+    create(:wellplate, name: 'Wellplate', wells: [build(:well, sample: sample_a)], collections: [collection])
+  end
+  let(:other_wellplate) do
+    create(
+      :wellplate,
+      name: 'Other Wellplate',
+      wells: [build(:well, sample: sample_b)],
+      collections: [other_collection],
+    )
+  end
+  let(:reaction) do
+    create(:reaction, name: 'Reaction', samples: [sample_a, sample_b], creator: user, collections: [collection])
+  end
   let(:invalid_reaction_with_duration) do
     create(:reaction, name: 'invalid Reaction', creator: user, duration: 'Day(s)', collections: [collection])
   end
@@ -41,13 +52,22 @@ describe Chemotion::SearchAPI do
                       collections: [collection])
   end
 
-  let(:reaction_with_duration) { create(:reaction, name: 'invalid Reaction', creator: user, duration: '1.33 Day(s)', collections: [collection]) }
-  let(:other_reaction) { create(:reaction, name: 'Other Reaction', samples: [sample_c, sample_d], creator: user, collections: [other_collection]) }
+  let(:reaction_with_duration) do
+    create(:reaction, name: 'invalid Reaction', creator: user, duration: '1.33 Day(s)', collections: [collection])
+  end
+  let(:other_reaction) do
+    create(
+      :reaction,
+      name: 'Other Reaction',
+      samples: [sample_c, sample_d],
+      creator: user,
+      collections: [other_collection],
+    )
+  end
   let(:screen) { create(:screen, name: 'Screen', collections: [collection]) }
   let(:other_screen) { create(:screen, name: 'Other Screen', collections: [other_collection]) }
   let!(:cell_line) { create(:cellline_sample, name: 'another-cellline-search-example', collections: [collection]) }
   let!(:mof3000) { Rails.root.join('spec/fixtures/mof_v3000_1.mol').read }
-  let!(:mof3000_two) { Rails.root.join('spec/fixtures/mof_v3000_2.mol').read }
 
   let(:sbmm_sample_uniprot) do
     create(

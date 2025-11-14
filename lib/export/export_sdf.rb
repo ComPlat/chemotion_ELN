@@ -56,8 +56,9 @@ module Export
       data
     end
 
+    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength
     def filter_with_permission_and_detail_level(sample)
-      if sample['is_shared'] == 'f' || sample['is_shared'] == false
+      if sample['is_shared'].in?(['f', false])
         data = validate_molfile(sample['molfile'])
         return nil unless data.presence
 
@@ -86,6 +87,7 @@ module Export
       end
       data.concat("\$\$\$\$\n")
     end
+    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength
 
     def extract_reference_values(raw_value)
       regex = /[\[\]()]/

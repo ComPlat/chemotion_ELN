@@ -88,12 +88,12 @@ module Taggable
     collections_join_relation = 'collections_celllines' if collections_join_relation == 'collections_cellline_samples'
     return unless respond_to?(collections_join_relation)
 
-    send(collections_join_relation).map do |join_entry|
+    send(collections_join_relation).filter_map do |join_entry|
       next unless collection = join_entry.collection
       next if collection.label == 'All' && collection.is_locked
 
       { id: collection.id }
-    end.compact
+    end
   end
 
   def grouped_analyses

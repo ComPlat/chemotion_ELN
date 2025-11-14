@@ -12,17 +12,17 @@ describe Chemotion::InboxAPI do
 
     describe 'samples resource' do
       let(:collection) { create(:collection, user: user) }
-      let(:sample_1) { create(:sample, name: 'JB-R581-A', collections: [collection]) }
-      let(:sample_2) { create(:sample, name: 'JB-R23-A', collections: [collection]) }
-      let(:sample_3) { create(:sample, name: 'JB-R23-B', collections: [collection]) }
+      let(:sample_a) { create(:sample, name: 'JB-R581-A', collections: [collection]) }
+      let(:sample_b) { create(:sample, name: 'JB-R23-A', collections: [collection]) }
+      let(:sample_c) { create(:sample, name: 'JB-R23-B', collections: [collection]) }
 
       describe 'get samples by sample name' do
         let(:search_string) { 'R23' }
 
         before do
-          sample_1
-          sample_2
-          sample_3
+          sample_a
+          sample_b
+          sample_c
           get "/api/v1/inbox/samples?search_string=#{search_string}"
         end
 
@@ -42,7 +42,7 @@ describe Chemotion::InboxAPI do
         end
 
         describe 'post attachment' do
-          before { post "/api/v1/inbox/samples/#{sample_2.id}", params: params, as: :json }
+          before { post "/api/v1/inbox/samples/#{sample_b.id}", params: params, as: :json }
 
           it 'return moved samples' do
             expect(JSON.parse(response.body)['container']['container_type']).to eq('dataset')

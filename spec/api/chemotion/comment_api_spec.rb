@@ -8,6 +8,7 @@ RSpec.shared_examples 'an unauthorized response' do
   end
 end
 
+# rubocop:disable RSpec/MultipleMemoizedHelpers
 describe Chemotion::CommentAPI do
   let!(:unauthorized_user) { create(:person) }
   let!(:authorized_user) { create(:person) }
@@ -417,3 +418,4 @@ describe Chemotion::CommentAPI do
     end
   end
 end
+# rubocop:enable RSpec/MultipleMemoizedHelpers

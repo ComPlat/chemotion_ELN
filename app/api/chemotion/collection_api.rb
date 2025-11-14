@@ -6,13 +6,19 @@ module Chemotion
 
     resource :collections do
       get '/' do
-        own_collections = Collection.connection.exec_query(Collection.serialized_own_collections_for(current_user).to_sql).map do |collection|
-          Entities::OwnCollectionEntity.represent(collection, current_user: current_user).serializable_hash
-        end
+        own_collections =
+          Collection.connection.exec_query(
+            Collection.serialized_own_collections_for(current_user).to_sql
+          ).map do |collection|
+            Entities::OwnCollectionEntity.represent(collection, current_user: current_user).serializable_hash
+          end
 
-        shared_collections = Collection.connection.exec_query(Collection.serialized_shared_collections_for(current_user).to_sql).map do |collection|
-          Entities::SharedCollectionEntity.represent(collection, current_user: current_user).serializable_hash
-        end
+        shared_collections =
+          Collection.connection.exec_query(
+            Collection.serialized_shared_collections_for(current_user).to_sql
+          ).map do |collection|
+            Entities::SharedCollectionEntity.represent(collection, current_user: current_user).serializable_hash
+          end
 
         { own: own_collections, shared_with_me: shared_collections }
       end
@@ -28,9 +34,9 @@ module Chemotion
         end
 
         id = params[:id].to_i
-        if collection = Collection.own_collections_for(current_user).find_by(id: id)
+        if (collection = Collection.own_collections_for(current_user).find_by(id: id))
           present collection, with: Entities::OwnCollectionEntity, root: :collection
-        elsif collection = Collection.serialized_shared_collections_for(current_user).find_by(id: id) # find_by breaks, no idea why
+        elsif (collection = Collection.serialized_shared_collections_for(current_user).find_by(id: id))
           present collection, with: Entities::SharedCollectionEntity, root: :collection
         else
           raise ActiveRecord::RecordNotFound
@@ -47,7 +53,7 @@ module Chemotion
         collection = Usecases::Collections::Create.new(current_user).perform!(
           parent_id: params[:parent_id],
           label: params[:label],
-          inventory_id: params[:inventory_id]
+          inventory_id: params[:inventory_id],
         )
 
         present collection, with: Entities::OwnCollectionEntity, root: :collection
@@ -58,13 +64,16 @@ module Chemotion
         requires :collections, type: Array do
           requires :id, type: Integer
           optional :label, type: String
-          optional :children, type: Array, default: [] # children have the same structure, but Grape cannot declare recursive structures
+          optional :children, type: Array, default: [] # children have the same structure,
+                                                       # but Grape cannot declare recursive structures
         end
       end
       put '/bulk_update_own_collections' do
         Usecases::Collections::UpdateTree.new(current_user).perform!(collections: params[:collections])
 
-        own_collections = Collection.connection.exec_query(Collection.serialized_own_collections_for(current_user).to_sql)
+        own_collections = Collection.connection.exec_query(
+          Collection.serialized_own_collections_for(current_user).to_sql
+        )
 
         present own_collections, with: Entities::OwnCollectionEntity, root: :collections
       end
@@ -93,7 +102,9 @@ module Chemotion
 
         collection.destroy
 
-        own_collections = Collection.connection.exec_query(Collection.serialized_own_collections_for(current_user).to_sql)
+        own_collections = Collection.connection.exec_query(
+          Collection.serialized_own_collections_for(current_user).to_sql
+        )
 
         present own_collections, with: Entities::OwnCollectionEntity, root: :collections
       end
@@ -120,7 +131,7 @@ module Chemotion
       end
       post '/import' do
         file = params[:file]
-        if tempfile = file[:tempfile]
+        if (tempfile = file[:tempfile])
           attachment = Attachment.new(
             bucket: file[:container_id],
             filename: file[:filename],
@@ -128,11 +139,11 @@ module Chemotion
             file_path: file[:tempfile],
             created_by: current_user.id,
             created_for: current_user.id,
-            content_type: file[:type]
+            content_type: file[:type],
           )
           begin
             attachment.save!
-           rescue StandardError
+          rescue StandardError
             error!('413 Content Too Large', 413)
           ensure
             tempfile.close

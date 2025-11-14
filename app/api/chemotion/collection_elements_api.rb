@@ -23,7 +23,7 @@ module Chemotion
       post do
         Usecases::Collections::AddElements.new(current_user).perform!(
           collection_id: params[:collection_id],
-          ui_state: params[:ui_state].except(:currentCollection)
+          ui_state: params[:ui_state].except(:currentCollection),
         )
         { status: 204 }
       end
@@ -32,7 +32,7 @@ module Chemotion
       delete '/:collection_id' do
         Usecases::Collections::RemoveElements.new(current_user).perform!(
           collection_id: params[:collection_id],
-          ui_state: params[:ui_state].except(:currentCollection)
+          ui_state: params[:ui_state].except(:currentCollection),
         )
         status 204
       end

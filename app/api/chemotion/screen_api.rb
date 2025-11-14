@@ -26,7 +26,7 @@ module Chemotion
         screen_scope = Screen.none
         if params[:collection_id]
           begin
-            screen_scope =Collection.accessible_for(current_user).find(params[:collection_id]).screens
+            screen_scope = Collection.accessible_for(current_user).find(params[:collection_id]).screens
           rescue ActiveRecord::RecordNotFound
             Screen.none
           end
@@ -40,10 +40,10 @@ module Chemotion
         user_label = params[:user_label]
         by_created_at = params[:filter_created_at] || false
 
-        screen_scope = screen_scope.created_time_from(Time.at(from)) if from && by_created_at
-        screen_scope = screen_scope.created_time_to(Time.at(to) + 1.day) if to && by_created_at
-        screen_scope = screen_scope.updated_time_from(Time.at(from)) if from && !by_created_at
-        screen_scope = screen_scope.updated_time_to(Time.at(to) + 1.day) if to && !by_created_at
+        screen_scope = screen_scope.created_time_from(Time.zone.at(from)) if from && by_created_at
+        screen_scope = screen_scope.created_time_to(Time.zone.at(to) + 1.day) if to && by_created_at
+        screen_scope = screen_scope.updated_time_from(Time.zone.at(from)) if from && !by_created_at
+        screen_scope = screen_scope.updated_time_to(Time.zone.at(to) + 1.day) if to && !by_created_at
         screen_scope = screen_scope.by_user_label(user_label) if user_label
 
         reset_pagination_page(screen_scope)
