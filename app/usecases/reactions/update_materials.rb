@@ -73,7 +73,7 @@ module Usecases
               end
 
               if sample.components.present? && sample.sample_type == Sample::SAMPLE_TYPE_MIXTURE
-                Usecases::Components::Create.new(modified_sample.id, sample.components).execute!
+                Usecases::Components::Create.new(modified_sample, sample.components).execute!
               end
 
               modified_sample.save_segments(segments: sample.segments, current_user_id: @current_user.id) if sample.segments
@@ -117,7 +117,7 @@ module Usecases
           :type, :molecule, :collection_id, :short_label, :waste, :show_label, :coefficient, :user_labels,
           :boiling_point_lowerbound, :boiling_point_upperbound,
           :melting_point_lowerbound, :melting_point_upperbound, :segments, :gas_type,
-          :gas_phase_data, :conversion_rate
+          :gas_phase_data, :conversion_rate, :components, :solvent
         ).merge(created_by: @current_user.id,
                 boiling_point: rangebound(sample.boiling_point_lowerbound, sample.boiling_point_upperbound),
                 melting_point: rangebound(sample.melting_point_lowerbound, sample.melting_point_upperbound))
@@ -132,9 +132,7 @@ module Usecases
         container_info = attributes[:container]
         attributes.delete(:container)
         attributes.delete(:segments)
-        new_sample = Sample.new(
-          attributes
-        )
+        new_sample = Sample.new(attributes)
 
         new_sample.short_label = fixed_label if fixed_label
         new_sample.xref['inventory_label'] = nil if new_sample.xref['inventory_label']
@@ -192,6 +190,11 @@ module Usecases
         existing_sample.short_label = fixed_label if fixed_label
         existing_sample.name = sample.name if sample.name
         existing_sample.dry_solvent = sample.dry_solvent
+        # Handle components for mixture samples using the proper use case
+        if sample.sample_type == Sample::SAMPLE_TYPE_MIXTURE && sample.components.present?
+          Usecases::Components::Create.new(existing_sample, sample.components).execute!
+        end
+        existing_sample.solvent = sample.solvent
 
         if r = existing_sample.residues[0]
           r.assign_attributes sample.residues_attributes[0]
