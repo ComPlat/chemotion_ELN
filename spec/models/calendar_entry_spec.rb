@@ -241,7 +241,7 @@ RSpec.describe 'CalendarEntry' do
   end
 
   describe 'collection_for' do
-    it 'returns the first collection  that contains this entry of a given user' do
+    it 'returns the first collection that contains this entry of a given user' do
       entry = create(:calendar_entry, :reaction)
 
       reaction = entry.eventable
