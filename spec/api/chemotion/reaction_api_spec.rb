@@ -70,39 +70,43 @@ describe Chemotion::ReactionAPI do
     context 'with sort_column' do
       let(:collection) { create(:collection, user: user) }
       let(:reaction1) do
-        create(
+        build(
           :reaction,
           updated_at: Time.current,
           rxno: 'A',
           rinchi_short_key: 'C',
           collections: [collection],
+          creator: user,
         )
       end
       let(:reaction2) do
-        create(
+        build(
           :reaction,
           updated_at: 1.minute.ago,
           rxno: 'C',
           rinchi_short_key: 'B',
           collections: [collection],
+          creator: user,
         )
       end
       let(:reaction3) do
-        create(
+        build(
           :reaction,
           updated_at: 1.minute.from_now,
           rxno: 'B',
           rinchi_short_key: 'A',
           collections: [collection],
+          creator: user,
         )
       end
 
       before do
-        Reaction.skip_callback(:save, :before, :generate_rinchis)
-        reaction1
-        reaction2
-        reaction3
-        Reaction.set_callback(:save, :before, :generate_rinchis)
+        allow(reaction1).to receive(:generate_rinchis).and_return(nil)
+        reaction1.save!
+        allow(reaction2).to receive(:generate_rinchis).and_return(nil)
+        reaction2.save!
+        allow(reaction3).to receive(:generate_rinchis).and_return(nil)
+        reaction3.save!
       end
 
       it 'returns sorted reactions per default by short_label' do
