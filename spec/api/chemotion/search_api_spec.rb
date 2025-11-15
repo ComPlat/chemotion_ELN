@@ -67,7 +67,8 @@ describe Chemotion::SearchAPI do
   let(:screen) { create(:screen, name: 'Screen', collections: [collection]) }
   let(:other_screen) { create(:screen, name: 'Other Screen', collections: [other_collection]) }
   let!(:cell_line) { create(:cellline_sample, name: 'another-cellline-search-example', collections: [collection]) }
-  let!(:mof3000) { Rails.root.join('spec/fixtures/mof_v3000_1.mol').read }
+  let!(:mof3000_1) { Rails.root.join('spec/fixtures/mof_v3000_1.mol').read }
+  let!(:mof3000_2) { Rails.root.join('spec/fixtures/mof_v3000_2.mol').read }
 
   let(:sbmm_sample_uniprot) do
     create(
@@ -548,7 +549,7 @@ describe Chemotion::SearchAPI do
       end
 
       context 'when searching a molfile in samples in wrong collection' do
-        let(:molfile) { mof3000 }
+        let(:molfile) { mof3000_1 }
         let(:params) do
           {
             selection: {
