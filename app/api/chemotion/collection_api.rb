@@ -8,14 +8,14 @@ module Chemotion
       get '/' do
         own_collections =
           Collection.connection.exec_query(
-            Collection.serialized_own_collections_for(current_user).to_sql
+            Collection.serialized_own_collections_for(current_user).to_sql,
           ).map do |collection|
             Entities::OwnCollectionEntity.represent(collection, current_user: current_user).serializable_hash
           end
 
         shared_collections =
           Collection.connection.exec_query(
-            Collection.serialized_shared_collections_for(current_user).to_sql
+            Collection.serialized_shared_collections_for(current_user).to_sql,
           ).map do |collection|
             Entities::SharedCollectionEntity.represent(collection, current_user: current_user).serializable_hash
           end
@@ -64,15 +64,14 @@ module Chemotion
         requires :collections, type: Array do
           requires :id, type: Integer
           optional :label, type: String
-          optional :children, type: Array, default: [] # children have the same structure,
-                                                       # but Grape cannot declare recursive structures
+          optional :children, type: Array, default: [] # children have the same structure
         end
       end
       put '/bulk_update_own_collections' do
         Usecases::Collections::UpdateTree.new(current_user).perform!(collections: params[:collections])
 
         own_collections = Collection.connection.exec_query(
-          Collection.serialized_own_collections_for(current_user).to_sql
+          Collection.serialized_own_collections_for(current_user).to_sql,
         )
 
         present own_collections, with: Entities::OwnCollectionEntity, root: :collections
@@ -103,7 +102,7 @@ module Chemotion
         collection.destroy
 
         own_collections = Collection.connection.exec_query(
-          Collection.serialized_own_collections_for(current_user).to_sql
+          Collection.serialized_own_collections_for(current_user).to_sql,
         )
 
         present own_collections, with: Entities::OwnCollectionEntity, root: :collections

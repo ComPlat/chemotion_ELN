@@ -77,7 +77,7 @@ module Chemotion
 
         @attachment = Attachment.find_by(identifier: params[:identifier]) if @attachment.nil? && params[:identifier]
 
-        # rubocop:disable Performance/StringInclude
+        # rubocop:disable Performance/StringInclude, Metrics/BlockNesting
         case request.env['REQUEST_METHOD']
         when /delete/i
           error!('401 Unauthorized', 401) unless writable?(@attachment)
@@ -134,7 +134,7 @@ module Chemotion
           end
           error!('401 Unauthorized', 401) unless can_dwnld
         end
-        # rubocop:enable Performance/StringInclude
+        # rubocop:enable Performance/StringInclude, Metrics/BlockNesting
       end
 
       desc 'Bulk Delete Attachments'

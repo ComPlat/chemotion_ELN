@@ -1,6 +1,6 @@
 require 'export_table'
 
-# rubocop:disable Metrics/ClassLength
+# rubocop:disable Metrics/ClassLength, Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 module Export
   class ExportExcel < ExportTable
     DEFAULT_ROW_WIDTH = 100
@@ -127,7 +127,7 @@ module Export
       row_image_width = DEFAULT_ROW_WIDTH
       row_length = @headers.size
       samples.each_with_index do |sample, row|
-        next unless sample['is_shared'] == 'f' || sample['is_shared'] == false || sample['dl_s'] == 10
+        next unless sample['is_shared'].in?(['f', false]) || sample['dl_s'] == 10
 
         data = (@row_headers & HEADERS_SAMPLE_ID).map { |column| sample[column] }
         data[row_length - 1] = nil
@@ -192,7 +192,7 @@ module Export
     # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
     def filter_with_permission_and_detail_level(sample)
       # return all data if sample/chemical in own collection
-      if sample['is_shared'] == 'f' || sample['is_shared'] == false
+      if sample['is_shared'].in?(['f', false])
         headers = @headers
         reference_values = ['melting pt', 'boiling pt']
         data = headers.map do |column|
@@ -270,4 +270,4 @@ module Export
     end
   end
 end
-# rubocop:enable Metrics/ClassLength
+# rubocop:enable Metrics/ClassLength, Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity

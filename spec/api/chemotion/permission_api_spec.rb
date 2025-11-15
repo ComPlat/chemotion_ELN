@@ -2,6 +2,7 @@
 
 require 'rails_helper'
 
+# rubocop:disable Naming/VariableNumber, RSpec/NestedGroups
 describe Chemotion::PermissionAPI do
   include_context 'api request authorization context'
   let(:other_user)                         { create(:person) }
@@ -25,23 +26,23 @@ describe Chemotion::PermissionAPI do
           sample: {
             checkedAll: true,
             checkedIds: [],
-            uncheckedIds: []
+            uncheckedIds: [],
           },
           reaction: {
             checkedAll: true,
             checkedIds: [],
-            uncheckedIds: [reaction_1.id]
+            uncheckedIds: [reaction_1.id],
           },
           wellplate: {
             checkedAll: false,
             checkedIds: [wellplate_1.id],
-            uncheckedIds: []
+            uncheckedIds: [],
           },
           screen: {
             checkedAll: false,
             checkedIds: [screen_1.id],
-            uncheckedIds: []
-          }
+            uncheckedIds: [],
+          },
         }
       end
 
@@ -49,9 +50,12 @@ describe Chemotion::PermissionAPI do
         post '/api/v1/permissions/status', params: params
 
         expect(response.status).to eq 201
-        expect(parsed_json_response['is_top_secret']).to eq false
-        expect(parsed_json_response['sharing_allowed']).to eq true
-        expect(parsed_json_response['deletion_allowed']).to eq true
+        expected_result = {
+          'is_top_secret' => false,
+          'sharing_allowed' => true,
+          'deletion_allowed' => true,
+        }
+        expect(parsed_json_response).to eq expected_result
       end
     end
 
@@ -65,8 +69,8 @@ describe Chemotion::PermissionAPI do
           sample: {
             checkedAll: false,
             checkedIds: [sample.id, top_secret_sample.id],
-            uncheckedIds: []
-          }
+            uncheckedIds: [],
+          },
         }
       end
 
@@ -74,9 +78,12 @@ describe Chemotion::PermissionAPI do
         post '/api/v1/permissions/status', params: params
 
         expect(response.status).to eq 201
-        expect(parsed_json_response['is_top_secret']).to eq true
-        expect(parsed_json_response['sharing_allowed']).to eq true
-        expect(parsed_json_response['deletion_allowed']).to eq true
+        expected_result = {
+          'is_top_secret' => true,
+          'sharing_allowed' => true,
+          'deletion_allowed' => true,
+        }
+        expect(parsed_json_response).to eq expected_result
       end
     end
 
@@ -88,8 +95,8 @@ describe Chemotion::PermissionAPI do
           sample: {
             checkedAll: false,
             checkedIds: [sample.id],
-            uncheckedIds: []
-          }
+            uncheckedIds: [],
+          },
         }
       end
 
@@ -101,8 +108,8 @@ describe Chemotion::PermissionAPI do
         let(:permission_level) { CollectionShare.permission_level(:delete_elements) }
 
         it 'returns deletion_allowed=true and sharing_allowed=true' do
-          expect(parsed_json_response['deletion_allowed']).to eq true
-          expect(parsed_json_response['sharing_allowed']).to eq true
+          expect(parsed_json_response['deletion_allowed']).to be true
+          expect(parsed_json_response['sharing_allowed']).to be true
         end
       end
 
@@ -110,8 +117,8 @@ describe Chemotion::PermissionAPI do
         let(:permission_level) { CollectionShare.permission_level(:share_collection) }
 
         it 'returns deletion_allowed=false and sharing_allowed=true' do
-          expect(parsed_json_response['deletion_allowed']).to eq false
-          expect(parsed_json_response['sharing_allowed']).to eq true
+          expect(parsed_json_response['deletion_allowed']).to be false
+          expect(parsed_json_response['sharing_allowed']).to be true
         end
       end
 
@@ -119,10 +126,11 @@ describe Chemotion::PermissionAPI do
         let(:permission_level) { CollectionShare.permission_level(:write_elements) }
 
         it 'returns deletion_allowed=false and sharing_allowed=false' do
-          expect(parsed_json_response['deletion_allowed']).to eq false
-          expect(parsed_json_response['sharing_allowed']).to eq false
+          expect(parsed_json_response['deletion_allowed']).to be false
+          expect(parsed_json_response['sharing_allowed']).to be false
         end
       end
     end
   end
 end
+# rubocop:enable Naming/VariableNumber, RSpec/NestedGroups

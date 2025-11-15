@@ -36,7 +36,7 @@ class Oauth::RadarController < ApplicationController
     redirect_to action: 'select'
   end
 
-  # rubocop:disable Metrics/AbcSize, Metrics/MethodLength, MetricsPerceivedComplexity
+  # rubocop:disable Metrics/AbcSize, Metrics/MethodLength, Metrics/PerceivedComplexity
   def select
     collection_id = session[:radar_collection_id]
     access_token = session[:radar_access_token]
@@ -92,7 +92,7 @@ class Oauth::RadarController < ApplicationController
 
     render
   end
-  # rubocop:enable Metrics/AbcSize, Metrics/MethodLength, MetricsPerceivedComplexity
+  # rubocop:enable Metrics/AbcSize, Metrics/MethodLength, Metrics/PerceivedComplexity
 
   def export
     collection_id = session[:radar_collection_id]

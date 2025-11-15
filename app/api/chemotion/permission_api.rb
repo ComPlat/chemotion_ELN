@@ -33,9 +33,10 @@ module Chemotion
           is_top_secret ||= selected_elements[Sample].any?(&:is_top_secret?)
           is_top_secret ||= selected_elements[Reaction].lazy.flat_map(&:samples).any?(&:is_top_secret?)
           is_top_secret ||= selected_elements[Wellplate].lazy.flat_map(&:samples).any?(&:is_top_secret?)
-          is_top_secret ||= selected_elements[Screen].lazy.flat_map(&:wellplates)
-                                                          .flat_map(&:samples)
-                                                          .any?(&:is_top_secret?)
+          is_top_secret ||= selected_elements[Screen].lazy
+                                                     .flat_map(&:wellplates)
+                                                     .flat_map(&:samples)
+                                                     .any?(&:is_top_secret?)
 
           deletion_allowed = true
           sharing_allowed = true
