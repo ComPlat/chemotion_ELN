@@ -4,7 +4,7 @@ require 'rails_helper'
 
 RSpec.describe 'Export::ExportExcel' do
   let(:user) { create(:user) }
-  let!(:collection)  { create(:collection, user_id: user.id) }
+  let!(:collection) { create(:collection, user_id: user.id) }
   let(:exporter) { Export::ExportExcel.new }
   let(:sample_json) { create(:sample, collections: [collection]).as_json }
 

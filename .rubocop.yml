@@ -42,6 +42,9 @@ RSpec/MultipleExpectations:
 Style/Documentation:
   Enabled: false
 
+Style/RedundantArrayConstructor:
+  Enabled: false
+
 Style/TrailingCommaInArrayLiteral:
   Enabled: true
   EnforcedStyleForMultiline: comma
