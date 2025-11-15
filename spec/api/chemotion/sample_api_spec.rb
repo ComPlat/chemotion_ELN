@@ -1058,7 +1058,7 @@ describe Chemotion::SampleAPI do
                 params: sample_upd_1_params.to_json,
                 headers: { 'CONTENT_TYPE' => 'application/json' })
 
-            s2.reload!
+            s2.reload
             count_after = s2.analyses.first.children.count
             expect(count_before - count_after).to eq 0
           end
