@@ -54,17 +54,17 @@ export default class CopyElementModal extends React.Component {
     }
 
     if (element.type === 'sample') {
-      ClipboardActions.fetchElementAndBuildCopy(element, selectedCol, 'copy_sample');
+      ClipboardActions.fetchElementAndBuildCopy(element, selectedCol.id, 'copy_sample');
     } else if (element.type === 'reaction') {
-      ElementActions.copyReaction(element, selectedCol);
+      ElementActions.copyReaction(element, selectedCol.id);
     } else if (element.type === 'research_plan') {
-      ElementActions.copyResearchPlan(element, selectedCol);
+      ElementActions.copyResearchPlan(element, selectedCol.id);
     } else if (element.type === 'device_description') {
-      ClipboardActions.fetchDeviceDescriptionAndBuildCopy(element, selectedCol);
+      ClipboardActions.fetchDeviceDescriptionAndBuildCopy(element, selectedCol.id);
     } else if (element.type === 'sequence_based_macromolecule_sample') {
-      ClipboardActions.fetchSequenceBasedMacromoleculeSamplesAndBuildCopy(element, selectedCol);
+      ClipboardActions.fetchSequenceBasedMacromoleculeSamplesAndBuildCopy(element, selectedCol.id);
     } else {
-      ElementActions.copyElement(element, selectedCol);
+      ElementActions.copyElement(element, selectedCol.id);
     }
 
     this.setState({ showModal: false });
@@ -96,6 +96,7 @@ export default class CopyElementModal extends React.Component {
             <Form.Label>Copy to Collection</Form.Label>
             <CollectionSelect
               value={selectedCol}
+              withShared={false}
               onChange={this.onColSelectChange}
             />
           </Modal.Body>
@@ -114,7 +115,6 @@ CopyElementModal.propTypes = {
   element: PropTypes.object.isRequired,
   defCol: PropTypes.number
 };
-
 
 CopyElementModal.defaultProps = {
   defCol: null
