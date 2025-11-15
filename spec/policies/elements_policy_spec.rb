@@ -26,10 +26,10 @@ RSpec.describe ElementsPolicy do
   let(:sample_9) { create(:sample, name: 'Sample 9', creator: user_3, collections: [user_3_collection]) }
 
   let(:permission_level) { 0 }
-  let(:collection_share_to_user_1) do
+  let(:collection_shared_to_user_1) do
     create(:collection_share, collection: user_2_collection, shared_with: user_1, permission_level: permission_level)
   end
-  let(:collection_share_to_user_2) do
+  let(:collection_shared_to_user_2) do
     create(:collection_share, collection: user_3_collection, shared_with: user_2, permission_level: 2)
   end
 
@@ -43,6 +43,8 @@ RSpec.describe ElementsPolicy do
     sample_7
     sample_8
     sample_9
+    collection_shared_to_user_1
+    collection_shared_to_user_2
   end
 
   describe '#allowed?' do
