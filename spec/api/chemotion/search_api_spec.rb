@@ -3,7 +3,7 @@
 require 'rails_helper'
 
 # rubocop:disable RSpec/MultipleMemoizedHelpers, RSpec/MultipleExpectations,  RSpec/NestedGroups
-
+# rubocop:disable RSpec/IndexedLet, Naming/VariableNumber
 describe Chemotion::SearchAPI do
   include_context 'api request authorization context'
 
@@ -707,4 +707,5 @@ describe Chemotion::SearchAPI do
     pending 'TODO: Add missing spec'
   end
 end
+# rubocop:enable RSpec/IndexedLet, Naming/VariableNumber
 # rubocop:enable RSpec/MultipleMemoizedHelpers, RSpec/MultipleExpectations, RSpec/NestedGroups
