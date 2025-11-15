@@ -227,7 +227,6 @@ module Chemotion
           collection = Collection.accessible_for(current_user).find(params[:ui_state][:collection_id])
           @device_descriptions =
             DeviceDescription.by_collection_id(collection.id).by_ui_state(params[:ui_state]).for_user(current_user.id)
-          # does this check make sense? There should never be an element within an accessible collection that can not be read
           error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, @device_descriptions).read_all?
         end
 

@@ -304,7 +304,7 @@ describe Chemotion::SuggestionAPI do
     let(:query) { 'query' }
 
     it 'returns unauthorized error' do
-      get '/api/v1/suggestions/all', params:{ collection_id: collection.id, query: query }
+      get '/api/v1/suggestions/all', params: { collection_id: collection.id, query: query }
 
       expect(response).to have_http_status(:unauthorized)
     end

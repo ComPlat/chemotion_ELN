@@ -110,7 +110,7 @@ class Collection < ApplicationRecord
     :serialized_own_collections_for,
     lambda do |user|
       own_collections_for(user).select(
-        'collections.*, inventories.name AS inventory_name, inventories.prefix AS inventory_prefix'
+        'collections.*, inventories.name AS inventory_name, inventories.prefix AS inventory_prefix',
       )
     end,
   )
@@ -136,7 +136,7 @@ class Collection < ApplicationRecord
           'inventories.name AS inventory_name',
           'inventories.prefix AS inventory_prefix',
           'concat(users.first_name, chr(32), users.last_name, chr(40), users.name_abbreviation, chr(41)) AS owner',
-        ].join(', ')
+        ].join(', '),
       )
     end,
   )
@@ -148,7 +148,7 @@ class Collection < ApplicationRecord
         .merge(
           CollectionShare
             .shared_with(user)
-            .with_minimum_permission_level(permission_level)
+            .with_minimum_permission_level(permission_level),
         )
     end,
   )
@@ -160,7 +160,7 @@ class Collection < ApplicationRecord
         .merge(
           CollectionShare
             .shared_with(user)
-            .with_minimum_detail_level(detail_level_field, detail_level)
+            .with_minimum_detail_level(detail_level_field, detail_level),
         )
     end,
   )

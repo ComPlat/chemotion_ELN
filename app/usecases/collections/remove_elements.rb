@@ -33,7 +33,7 @@ module Usecases
       def prevent_removal_from_all_collection!
         return unless collection.label == 'All' && collection.is_locked
 
-        raise Errors::InsufficientPermissionError.new('You can not delete from an ALL-Collection')
+        raise Errors::InsufficientPermissionError, 'You can not delete from an ALL-Collection'
       end
 
       def remove_elements_from_collection(ui_state)

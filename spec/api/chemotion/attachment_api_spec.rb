@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable Rspec/NestedGroups
+# rubocop:disable RSpec/NestedGroups
 # rubocop:disable RSpec/MultipleMemoizedHelpers
 # rubocop:disable RSpec/AnyInstance
 # rubocop:disable RSpec/BeforeAfterAll
@@ -779,7 +779,7 @@ class ThumbnailerMock
     tmp_path
   end
 end
-# rubocop:enable Rspec/NestedGroups
+# rubocop:enable RSpec/NestedGroups
 # rubocop:enable RSpec/MultipleMemoizedHelpers
 # rubocop:enable RSpec/AnyInstance
 # rubocop:enable RSpec/BeforeAfterAll

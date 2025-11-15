@@ -24,9 +24,7 @@ module Chemotion
       get do
         scope = if params[:collection_id]
           begin
-            Collection.accessible_for(current_user)
-                      .find(params[:collection_id])
-                      .research_plans
+            Collection.accessible_for(current_user).find(params[:collection_id]).research_plans
           rescue ActiveRecord::RecordNotFound
             ResearchPlan.none
           end

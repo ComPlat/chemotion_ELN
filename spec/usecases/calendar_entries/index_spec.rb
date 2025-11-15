@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-# rubocop:disable RSpec/MultipleMemoizedHelpers
+# rubocop:disable RSpec/MultipleMemoizedHelpers, RSpec/IndexedLet
 RSpec.describe Usecases::CalendarEntries::Index do
   describe '#perform!' do
     let(:time) { Time.zone.parse('2023-06-01 13:00:00') }
@@ -201,4 +201,4 @@ RSpec.describe Usecases::CalendarEntries::Index do
     end
   end
 end
-# rubocop:enable RSpec/MultipleMemoizedHelpers
+# rubocop:enable RSpec/MultipleMemoizedHelpers, RSpec/IndexedLet

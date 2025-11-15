@@ -86,7 +86,7 @@ class ElementsPolicy
       scope_for_shared_records
         .select("#{records_table}.id, MAX(collection_shares.permission_level) AS maximum_permission_level")
         .group("#{records_table}.id")
-        .to_sql
+        .to_sql,
     )
     @maximum_permission_levels_for_shared_records ||= records_class.connection.execute(sql).to_h do |entry|
       [entry['id'], entry['maximum_permission_level']]

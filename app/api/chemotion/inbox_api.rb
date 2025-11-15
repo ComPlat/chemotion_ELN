@@ -116,7 +116,7 @@ module Chemotion
               id: sample.id,
               name: sample.name,
               short_label: sample.short_label,
-              type: type
+              type: type,
             }
           end
           { samples: results }

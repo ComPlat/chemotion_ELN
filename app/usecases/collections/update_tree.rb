@@ -56,15 +56,15 @@ module Usecases
       end
 
       def save_linear_tree_structure!
-        # result = nil
-        # Collection.transaction do
-        #   result = Collection.upsert_all(linear_tree_structure, returning: :id)
-        # end
-
-        linear_tree_structure.each do |entry|
-          Collection.update(entry.delete(:id), entry)
+        if Rails::VERSION::MAJOR > 6
+          Collection.transaction do
+            Collection.upsert_all(linear_tree_structure, returning: :id)
+          end
+        else
+          linear_tree_structure.each do |entry|
+            Collection.update(entry.delete(:id), entry)
+          end
         end
-        true
       end
 
       def wrap_parent_ids(array_of_ids)
