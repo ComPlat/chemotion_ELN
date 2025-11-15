@@ -22,15 +22,15 @@ module Chemotion
       end
       paginate per_page: 7, offset: 0, max_per_page: 100
       get do
-        scope = if params[:collection_id]
+        if params[:collection_id]
           begin
-            Collection.accessible_for(current_user).find(params[:collection_id]).research_plans
+            scope = Collection.accessible_for(current_user).find(params[:collection_id]).research_plans
           rescue ActiveRecord::RecordNotFound
-            ResearchPlan.none
+            scope = ResearchPlan.none
           end
         else
           # All collection of current_user
-          ResearchPlan.joins(:collections).where('collections.user_id = ?', current_user.id).distinct
+          ResearchPlan.joins(:collections).where(collections: { user_id: current_user.id }).distinct
         end.order('research_plans.created_at DESC')
 
         from = params[:from_date]
@@ -39,10 +39,10 @@ module Chemotion
         by_created_at = params[:filter_created_at] || false
 
         scope = scope.includes_for_list_display
-        scope = scope.created_time_from(Time.at(from)) if from && by_created_at
-        scope = scope.created_time_to(Time.at(to) + 1.day) if to && by_created_at
-        scope = scope.updated_time_from(Time.at(from)) if from && !by_created_at
-        scope = scope.updated_time_to(Time.at(to) + 1.day) if to && !by_created_at
+        scope = scope.created_time_from(Time.zone.at(from)) if from && by_created_at
+        scope = scope.created_time_to(Time.zone.at(to) + 1.day) if to && by_created_at
+        scope = scope.updated_time_from(Time.zone.at(from)) if from && !by_created_at
+        scope = scope.updated_time_to(Time.zone.at(to) + 1.day) if to && !by_created_at
         scope = scope.by_user_label(user_label) if user_label
 
         reset_pagination_page(scope)
@@ -89,7 +89,7 @@ module Chemotion
         Usecases::Attachments::Copy.execute!(clone_attachs, research_plan, current_user.id) if clone_attachs
 
         if params[:collection_id]
-          collection = current_user.collections.where(id: params[:collection_id]).take
+          collection = current_user.collections.find(params[:collection_id])
           research_plan.collections << collection
         end
 
