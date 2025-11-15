@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# rubocop:disable Rails/SkipsModelValidations
 module Usecases
   module Collections
     class UpdateTree
@@ -75,3 +76,4 @@ module Usecases
     end
   end
 end
+# rubocop:enable Rails/SkipsModelValidations
