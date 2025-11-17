@@ -1,12 +1,10 @@
 # frozen_string_literal: true
 
-# rubocop: disable Metrics/ClassLength
-
 module Chemotion
   class PublicAPI < Grape::API
     helpers do
       def send_notification(attachment, user, status, has_error = false)
-        data_args = { 'filename': attachment.filename, 'comment': 'the file has been updated' }
+        data_args = { filename: attachment.filename, comment: 'the file has been updated' }
         level = 'success'
         if has_error
           data_args['comment'] = ' an error has occurred, the file is not changed.'
@@ -43,7 +41,6 @@ module Chemotion
           { token: token }
         end
       end
-
 
       namespace :omniauth_providers do
         desc 'get omniauth providers'
@@ -124,11 +121,16 @@ module Chemotion
             # prevent saving if the file is not locked for editing
             error!('401 Unauthorized', 401) if @attachment.not_editing?
 
-            @attachment.file_data = open(@url).read
+            response = Faraday.get(@url)
+            raise 'Bad response' unless response.success?
+
+            @attachment.file_data = response.body
             @attachment.rewrite_file_data!
             @attachment.editing_end!
+            @attachment.save!
           else
             @attachment.editing_end!
+            @attachment.save!
           end
           send_notification(@attachment, @user, @status) unless @status <= 1
           # rescue StandardError => err
@@ -182,5 +184,3 @@ module Chemotion
     end
   end
 end
-
-# rubocop: enable Metrics/ClassLength

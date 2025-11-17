@@ -160,7 +160,7 @@ export function EditButton({ attachment, disabled, onChange }) {
   const extensionsObj = docserver.extensions || {};
   // Previously "attachmentEditor" -> now available at UserStore.editorConfig.available (bool)
   const attachmentEditor = Boolean(docserver?.available);
-  const editDisable = disabled || !attachmentEditor;
+  const editDisable = disabled || !attachmentEditor || attachment.edit_state === 'editing';
 
   const extsList = useMemo(
     () => values(extensionsObj).join(','),
