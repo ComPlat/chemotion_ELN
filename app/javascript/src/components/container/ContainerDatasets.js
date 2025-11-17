@@ -56,7 +56,7 @@ export default class ContainerDatasets extends Component {
       datasetContainer.attachments.push(attachment);
     });
     container.children.push(datasetContainer);
-    let index = container.children.length - 1;
+    const index = container.children.length - 1;
     this.handleModalOpen(datasetContainer, index);
     this.props.onChange(container);
   }
@@ -75,18 +75,22 @@ export default class ContainerDatasets extends Component {
     this.props.onChange(container);
   }
 
-  handleChange(datasetContainer) {
-    const { container } = this.state;
+  handleChange = (datasetContainer) => {
+    this.setState((prevState) => {
+      const newChildren = prevState.container.children.map(
+        (child) => (child.id === datasetContainer.id ? datasetContainer : child)
+      );
 
-    container.children.find((dataset) => {
-      if (dataset.id === datasetContainer.id) {
-        const datasetId = container.children.indexOf(dataset);
-        container.children[datasetId] = datasetContainer;
-      }
+      const newContainer = {
+        ...prevState.container,
+        children: newChildren
+      };
+
+      // DON'T call this.props.onChange here! It causes infinite re-render loop
+
+      return { container: newContainer };
     });
-    // DON'T call this.props.onChange here! It causes infinite re-render loop
-    //  this.props.onChange(container);
-  }
+  };
 
   handleModalHide() {
     const { modal } = this.state;
@@ -192,7 +196,9 @@ export default class ContainerDatasets extends Component {
 
   render() {
     const { container, modal } = this.state;
-    const { disabled, readOnly, rootContainer, element } = this.props;
+    const {
+      disabled, readOnly, rootContainer, element
+    } = this.props;
     if (container.children.length > 0) {
       const kind = container.extended_metadata && container.extended_metadata.kind;
       return (
@@ -200,7 +206,7 @@ export default class ContainerDatasets extends Component {
           <div className="border rounded p-2 mb-2">
             <div className="list-group">
               {container.children.map((datasetContainer, key) => (
-                <div key={key} className="list-group-item" >
+                <div key={key} className="list-group-item">
                   <ContainerDatasetField
                     kind={kind}
                     datasetContainer={datasetContainer}
@@ -213,7 +219,7 @@ export default class ContainerDatasets extends Component {
                   />
                 </div>
               ))}
-              <div key="attachmentdropzone" className="list-group-item" >
+              <div key="attachmentdropzone" className="list-group-item">
                 <AttachmentDropzone
                   handleAddWithAttachments={(attachments) => this.handleAddWithAttachments(attachments)}
                 />
@@ -241,7 +247,7 @@ export default class ContainerDatasets extends Component {
       );
     }
     return (
-      <div className='bg-gray-200'>
+      <div className="bg-gray-200">
         <div className="border rounded p-2 mb-2">
           <p>There are currently no Datasets.</p>
           <div className="list-group">

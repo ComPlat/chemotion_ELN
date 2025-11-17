@@ -15,6 +15,7 @@ import ImageModal from 'src/components/common/ImageModal';
 import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import EditorFetcher from 'src/fetchers/EditorFetcher';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 export const attachmentThumbnail = (attachment) => (
   <div className="attachment-row-image">
@@ -160,7 +161,6 @@ export function EditButton({ attachment, disabled, onChange }) {
   // Previously "attachmentEditor" -> now available at UserStore.editorConfig.available (bool)
   const attachmentEditor = Boolean(docserver?.available);
   const editDisable = disabled || !attachmentEditor;
-  const isEditing = Boolean(attachment.aasm_state === 'oo_editing' && new Date().getTime());
 
   const extsList = useMemo(
     () => values(extensionsObj).join(','),
@@ -215,28 +215,31 @@ export function EditButton({ attachment, disabled, onChange }) {
 
     EditorFetcher.startEditing({ attachmentId: attachment.id, forceStop })
       .then((result) => {
+        const newAttachment = { ...attachment };
+
         if (!forceStop && result.token) {
-          const url = `/editor?id=${attachment.id}`
-            + `&docType=${docType}`
-            + `&fileType=${fileType}`
-            + `&title=${attachment.filename}`
-            + `&key=${result.token}`
-            + `&only_office_token=${result.only_office_token}`;
+          const url = `/editor?id=${newAttachment.id}`
+          + `&docType=${docType}`
+          + `&fileType=${fileType}`
+          + `&title=${newAttachment.filename}`
+          + `&key=${result.token}`
+          + `&only_office_token=${result.only_office_token}`;
 
-          window.open(url, '_blank');
+          newAttachment.edit_state = 'editing';
+          newAttachment.updated_at = new Date();
 
-          attachment.edit_state = 'editing';
-          attachment.updated_at = new Date();
+          onChange(newAttachment); // <-- UI updates here first
 
-          onChange(attachment);
+          setTimeout(() => {
+            window.open(url, '_blank'); // <-- new tab opens AFTER state flush
+          }, 0);
         } else if (forceStop) {
-          attachment.edit_state = 'not_editing';
-          attachment.updated_at = new Date();
-          onChange(attachment);
+          newAttachment.edit_state = 'not_editing';
+          newAttachment.updated_at = new Date();
+          onChange(newAttachment);
         } else {
-          // alert('Unauthorized to edit this file.');
           NotificationActions.add({ message: 'Cannot edit this file.', level: 'error', position: 'tc' });
-          onChange(attachment);
+          onChange(newAttachment);
         }
       });
   }, [attachment, editDisable]);
@@ -250,7 +253,7 @@ export function EditButton({ attachment, disabled, onChange }) {
         onClick={handleEdit}
       >
         <SpinnerPencilIcon
-          spinningLock={isEditing}
+          spinningLock={attachment.edit_state === 'editing'}
         />
       </Button>
     </OverlayTrigger>
