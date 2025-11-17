@@ -200,7 +200,7 @@ class ResearchPlanDetailsAttachments extends Component {
     const {
       filteredAttachments, sortDirection,
     } = this.state;
-    const { researchPlan } = this.props;
+    const { researchPlan, onEdit } = this.props;
     const { currentUser } = UserStore.getState();
 
     let combinedAttachments = filteredAttachments;
@@ -274,7 +274,7 @@ class ResearchPlanDetailsAttachments extends Component {
                       <ButtonToolbar className="gap-1">
                         {downloadButton(attachment)}
                         <ThirdPartyAppButton attachment={attachment} options={thirdPartyApps} />
-                        <EditButton attachment={attachment} onEdit={this.onEdit} />
+                        <EditButton attachment={attachment} onChange={onEdit} />
                         {annotateButton(attachment, () => {
                           this.setState({
                             imageEditModalShown: true,

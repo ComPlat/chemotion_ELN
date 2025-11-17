@@ -106,17 +106,12 @@ function AttachmentForm({ readonly }) {
     deviceDescriptionsStore.setFilteredAttachments(deviceDescriptionsStore.device_description.attachments);
   };
 
-  const updateEditedAttachment = (attachment) => {
-    const attachments = [];
-    deviceDescription.attachments.map((currentAttachment) => {
-      if (currentAttachment.id === attachment.id) {
-        attachments.push(attachment);
-      } else {
-        attachments.push(currentAttachment);
-      }
-    });
-    deviceDescriptionsStore.changeDeviceDescription('attachments', attachments);
-    deviceDescriptionsStore.setFilteredAttachments(deviceDescriptionsStore.device_description.attachments);
+  const updateEditedAttachment = (updatedAttachment) => {
+    const newAttachments = deviceDescription.attachments.map(
+      (a) => (a.id === updatedAttachment.id ? updatedAttachment : a)
+    );
+    deviceDescriptionsStore.changeDeviceDescription('attachments', newAttachments);
+    deviceDescriptionsStore.setFilteredAttachments(newAttachments);
   };
 
   const handleEditAnnotation = (annotation) => {

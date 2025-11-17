@@ -65,7 +65,6 @@ export class WellplateDetailsAttachments extends Component {
     };
     this.createAttachmentPreviews = this.createAttachmentPreviews.bind(this);
 
-    this.handleEdit = this.handleEdit.bind(this);
     this.handleFilterChange = this.handleFilterChange.bind(this);
     this.handleSortChange = this.handleSortChange.bind(this);
     this.toggleSortDirection = this.toggleSortDirection.bind(this);
