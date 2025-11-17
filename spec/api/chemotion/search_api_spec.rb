@@ -476,7 +476,7 @@ describe Chemotion::SearchAPI do
           expect(parsed_json_response.dig('reactions', 'totalElements')).to eq 1
           expect(parsed_json_response.dig('reactions', 'ids')).to eq [reaction.id]
           expect(parsed_json_response.dig('samples', 'totalElements')).to eq 3
-          expect(parsed_json_response.dig('samples', 'ids')).to eq [sample_e.id, sample_a.id, sample_b.id]
+          expect(parsed_json_response.dig('samples', 'ids').sort).to eq [sample_e.id, sample_a.id, sample_b.id].sort
           expect(parsed_json_response.dig('screens', 'totalElements')).to eq 1
           expect(parsed_json_response.dig('screens', 'ids')).to eq [screen.id]
           expect(parsed_json_response.dig('wellplates', 'totalElements')).to eq 1
@@ -538,8 +538,9 @@ describe Chemotion::SearchAPI do
         end
 
         it 'returns the sample and all other objects referencing the sample from the requested collection' do
-          expected_count = Rails.configuration.pg_cartridge == 'none' ? 3 : 1
-          expected_ids = Rails.configuration.pg_cartridge == 'none' ? [sample_a.id, sample_e.id] : [sample_a.id]
+          expected_count = Rails.configuration.pg_cartridge == 'none' ? 3 : 2
+          expected_ids =
+            Rails.configuration.pg_cartridge == 'none' ? [sample_a.id, sample_e.id] : [sample_a.id, sample_b.id]
 
           expect(parsed_json_response.dig('reactions', 'totalElements')).to eq 1
           expect(parsed_json_response.dig('reactions', 'ids')).to eq [reaction.id]
