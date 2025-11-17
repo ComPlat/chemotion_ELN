@@ -269,6 +269,7 @@ describe Chemotion::SearchAPI do
           value: search_term,
           sub_values: [],
           unit: '',
+          available_options: [],
         },
       ]
     end
@@ -287,7 +288,7 @@ describe Chemotion::SearchAPI do
     end
 
     context 'when searching a name in samples in correct collection' do
-      let(:search_term) { 'SampleA' }
+      let(:search_term) { 'Water' }
 
       it 'returns the sample and all other objects referencing the sample from the requested collection' do
         expect(parsed_json_response.dig('reactions', 'totalElements')).to eq 1
@@ -315,6 +316,7 @@ describe Chemotion::SearchAPI do
               value: search_term,
               sub_values: [],
               unit: '',
+              available_options: [],
             },
           ]
         end
@@ -345,6 +347,7 @@ describe Chemotion::SearchAPI do
             value: '12.0',
             sub_values: [],
             unit: 'Hour(s)',
+            available_options: [],
           },
         ]
       end
@@ -472,8 +475,8 @@ describe Chemotion::SearchAPI do
         it 'returns the sample' do
           expect(parsed_json_response.dig('reactions', 'totalElements')).to eq 1
           expect(parsed_json_response.dig('reactions', 'ids')).to eq [reaction.id]
-          expect(parsed_json_response.dig('samples', 'totalElements')).to eq 2
-          expect(parsed_json_response.dig('samples', 'ids')).to eq [sample_e.id, sample_a.id]
+          expect(parsed_json_response.dig('samples', 'totalElements')).to eq 3
+          expect(parsed_json_response.dig('samples', 'ids')).to eq [sample_e.id, sample_a.id, sample_b.id]
           expect(parsed_json_response.dig('screens', 'totalElements')).to eq 1
           expect(parsed_json_response.dig('screens', 'ids')).to eq [screen.id]
           expect(parsed_json_response.dig('wellplates', 'totalElements')).to eq 1
@@ -484,12 +487,13 @@ describe Chemotion::SearchAPI do
 
     context 'when search_by_fingerprint_sub' do
       context 'when searching with explicit hydrogen' do
-        let(:aromatic_molfiles) { build_list(:molfile, 2, type: :aromatics) }
+        let(:aromatic_molfiles) { build_list(:molfile, 2, { type: :aromatics }) }
         let(:query_molfile) { build(:molfile, type: :aromatic_explicit_hydrogen) }
         let(:aromatic_collection) { create(:collection, user: user) }
         let(:aromatic_samples) do
-          create_list(:sample, 2, collections: [aromatic_collection]) do |sample, i|
+          create_list(:sample, 2) do |sample, i|
             sample.molfile = aromatic_molfiles[i]
+            sample.collections = [aromatic_collection]
           end
         end
         let(:params) do
@@ -534,7 +538,7 @@ describe Chemotion::SearchAPI do
         end
 
         it 'returns the sample and all other objects referencing the sample from the requested collection' do
-          expected_count = Rails.configuration.pg_cartridge == 'none' ? 2 : 1
+          expected_count = Rails.configuration.pg_cartridge == 'none' ? 3 : 1
           expected_ids = Rails.configuration.pg_cartridge == 'none' ? [sample_a.id, sample_e.id] : [sample_a.id]
 
           expect(parsed_json_response.dig('reactions', 'totalElements')).to eq 1
@@ -616,7 +620,7 @@ describe Chemotion::SearchAPI do
     let(:url) { '/api/v1/search/samples' }
 
     context 'when searching a sample in correct collection' do
-      let(:search_term) { 'SampleA' }
+      let(:search_term) { 'Water' }
       let(:params) do
         {
           selection: {
