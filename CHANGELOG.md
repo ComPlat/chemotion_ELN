@@ -2,6 +2,38 @@
 
 ## Latest
 
+## [v2.2.0]
+> (2025-11-17)
+
+### feat and perf:
+ - enhance export of large collections [#2756](https://github.com/ComPlat/chemotion_ELN/pull/2756)
+ - enhance collection import with SMILES support and conditional attachment handling. [#2692](https://github.com/ComPlat/chemotion_ELN/pull/2692)
+ - add db indices to improve sample serialization -  (port [#2754](https://github.com/ComPlat/chemotion_ELN/pull/2754), [#2778](https://github.com/ComPlat/chemotion_ELN/pull/2778))
+ - navigation: account and profile page as modal in mydb page [#2688](https://github.com/ComPlat/chemotion_ELN/pull/2688)
+
+### fixes:
+  - analysis duplication [#2736](https://github.com/ComPlat/chemotion_ELN/pull/2736)
+  - datacollector: ensure recipient is a user [#2733](https://github.com/ComPlat/chemotion_ELN/pull/2733)
+  - polymer SVG node loss, handle save prompt delay on crash, and refine SVG glyph IDs [#2774](https://github.com/ComPlat/chemotion_ELN/pull/2774)
+ 
+#### UI/UX
+  - device settings for data collector [#2732](https://github.com/ComPlat/chemotion_ELN/pull/2732)
+  - fix: set activeTab to properties tab on create sample action [#2608](https://github.com/ComPlat/chemotion_ELN/pull/2608)
+  - split button disable for cell-line and generic-elements [#2762](https://github.com/ComPlat/chemotion_ELN/pull/2762)
+  - reaction status icons contrast (port [#2734](https://github.com/ComPlat/chemotion_ELN/pull/2734))
+  - selected element to match current element [#2746](https://github.com/ComPlat/chemotion_ELN/pull/2746)
+  - drag and drop sorting of sample analyses - v2.x [#2726](https://github.com/ComPlat/chemotion_ELN/pull/2726)
+  - reorder DnD backends to prioritize touch support on hybrid and mobile devices [#2776](https://github.com/ComPlat/chemotion_ELN/pull/2776)
+  - navigation to page about  [#2722](https://github.com/ComPlat/chemotion_ELN/pull/2722)
+  - allow entering and selection of cas nummer in cas field in sample properties tab [#2737](https://github.com/ComPlat/chemotion_ELN/pull/2737)
+  - spectra: color contrast when displaying multiple spectra
+  - spectra: prefer processed peaks and auto select single spectrum on load [#2753](https://github.com/ComPlat/chemotion_ELN/pull/2753)
+
+  
+### chore & test:
+   - bump nodejs to 22.21.1
+   - migration to sync research plan attachments ([#2744](https://github.com/ComPlat/chemotion_ELN/pull/2744), [#2773](https://github.com/ComPlat/chemotion_ELN/pull/2773))
+   - fix TPA api test [#2662](https://github.com/ComPlat/chemotion_ELN/pull/2662)
 
 ## [v2.1.1]
 > (2025-10-00)
