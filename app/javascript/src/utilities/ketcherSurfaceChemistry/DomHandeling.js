@@ -17,7 +17,8 @@ import {
   ImagesToBeUpdated,
   ImagesToBeUpdatedSetter,
   canvasSelection,
-  canvasSelectionsSetter
+  canvasSelectionsSetter,
+  canvasIframeRef
 } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
 import { saveMoveCanvas } from 'src/utilities/ketcherSurfaceChemistry/canvasOperations';
 import { handleAddAtom } from 'src/utilities/ketcherSurfaceChemistry/AtomsAndMolManipulation';
@@ -176,11 +177,15 @@ const addTextNodeDescriptionOnTextPopup = async (node) => {
 };
 
 // add all the images at the end of the canvas
-const runImageLayering = async (iframeRef) => {
+const runImageLayering = async (iframeRef = canvasIframeRef) => {
+  const targetIframe = iframeRef || canvasIframeRef;
+  if (!targetIframe) return;
   if (ImagesToBeUpdated && !LAYERING_FLAGS.skipImageLayering) {
     setTimeout(async () => {
-      await updateImagesInTheCanvas(iframeRef);
-    }, [100]);
+      await makeTransparentByTitle(targetIframe);
+      await updateImagesInTheCanvas(targetIframe);
+      ImagesToBeUpdatedSetter(false);
+    }, 100);
   }
 };
 

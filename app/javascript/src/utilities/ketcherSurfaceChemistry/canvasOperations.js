@@ -18,6 +18,7 @@ import { findAtomByImageIndex, handleAddAtom } from 'src/utilities/ketcherSurfac
 import {
   imageNodeForTextNodeSetter,
   buttonClickForRectangleSelection,
+  runImageLayering,
 } from 'src/utilities/ketcherSurfaceChemistry/DomHandeling';
 import {
   ImagesToBeUpdatedSetter,
@@ -42,6 +43,7 @@ import {
   reArrangeImagesOnCanvas,
   fetchSurfaceChemistryImageData,
   placeAtomOnImage,
+  placeImageOnAtoms,
 } from 'src/utilities/ketcherSurfaceChemistry/Ketcher2SurfaceChemistryUtils';
 import { findTemplateIdCategoryFromTemplates } from 'src/utilities/ketcherSurfaceChemistry/iconBaseProvider';
 
@@ -229,29 +231,55 @@ const prepareSvg = async (editor) => {
   return updatedSVGString;
 };
 
+const applyCanvasDataToEditor = async (editor, dataCopy, recenter = false) => {
+  if (!editor || !editor.structureDef) {
+    console.error('Editor is undefined');
+    return;
+  }
+
+  const serialized = JSON.stringify(dataCopy);
+  if (recenter) {
+    await editor.structureDef.editor.setMolecule(serialized);
+    return;
+  }
+  await editor.structureDef.editor.setMolecule(serialized, { rescale: false });
+};
+
 /* istanbul ignore next */
 // save molfile with source, should_fetch, should_move
-const saveMoveCanvas = async (editor, data, isFetchRequired, isMoveRequired, recenter = false) => {
+const saveMoveCanvas = async (
+  editor,
+  data,
+  isFetchRequired,
+  isMoveRequired,
+  recenter = false,
+  moveOptions = {}
+) => {
   const dataCopy = data || latestData;
-  if (editor) {
-    if (recenter) {
-      await editor.structureDef.editor.setMolecule(JSON.stringify(dataCopy));
-    } else {
-      await editor.structureDef.editor.setMolecule(JSON.stringify(dataCopy), {
-        rescale: false,
-      });
-    }
-
-    if (isFetchRequired) {
-      fetchKetcherData(editor);
-    }
-
-    if (isMoveRequired) {
-      onTemplateMove(editor, recenter);
-    }
-  } else {
+  if (!editor || !editor.structureDef) {
     console.error('Editor is undefined');
+    return;
   }
+  if (!dataCopy) {
+    console.warn('saveMoveCanvas called without canvas data');
+    return;
+  }
+
+  if (isMoveRequired) {
+    await applyCanvasDataToEditor(editor, dataCopy, recenter);
+    if (isFetchRequired) {
+      await fetchKetcherData(editor);
+    }
+    await onTemplateMove(editor, recenter, moveOptions);
+    return;
+  }
+
+  await applyCanvasDataToEditor(editor, dataCopy, recenter);
+
+  if (isFetchRequired) {
+    await fetchKetcherData(editor);
+  }
+  await runImageLayering();
 };
 
 const centerPositionCanvas = async (editor) => {
@@ -267,8 +295,9 @@ const centerPositionCanvas = async (editor) => {
   }
 };
 
-const onTemplateMove = async (editor, recenter = false) => {
+const onTemplateMove = async (editor, recenter = false, options = {}) => {
   if (!editor || !editor.structureDef) return;
+  const { syncImagesOnly = false } = options;
 
   // for tool bar button events
   if (!recenter && (imageListCopyContainer.length || textListCopyContainer.length)) {
@@ -285,11 +314,22 @@ const onTemplateMove = async (editor, recenter = false) => {
   await fetchKetcherData(editor);
 
   let imageNodes = [];
-  imageNodes = await placeAtomOnImage(molCopy, imageListCopy);
+  if (syncImagesOnly) {
+    imageNodes = await placeImageOnAtoms(molCopy, imageListCopy);
+  } else {
+    imageNodes = await placeAtomOnImage(molCopy, imageListCopy);
+  }
   latestData.root.nodes = imageNodes;
-  const textNodes = await placeTextOnAtoms(molCopy, textListCopy);
-  latestData.root.nodes = textNodes;
-  await saveMoveCanvas(editor, latestData, true, false, recenter);
+
+  if (!syncImagesOnly) {
+    const textNodes = await placeTextOnAtoms(molCopy, textListCopy);
+    latestData.root.nodes = textNodes;
+  } else if (textListCopy?.length) {
+    const nodesWithoutText = latestData.root.nodes.filter((node) => node.type !== 'text');
+    latestData.root.nodes = [...nodesWithoutText, ...textListCopy];
+  }
+  await applyCanvasDataToEditor(editor, latestData, recenter);
+  await fetchKetcherData(editor);
 
   // clear required
   ImagesToBeUpdatedSetter(true); // perform image layer in DOM
@@ -297,6 +337,7 @@ const onTemplateMove = async (editor, recenter = false) => {
   deletedAtomsSetter([]);
   imageListCopyContainerSetter([]);
   textListCopyContainerSetter([]);
+  await runImageLayering();
 };
 
 // The complete processing function

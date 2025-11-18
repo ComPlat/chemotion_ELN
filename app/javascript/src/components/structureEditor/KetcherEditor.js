@@ -23,19 +23,17 @@ import {
   filterImagesByDifferences,
 } from 'src/utilities/ketcherSurfaceChemistry/AtomsAndMolManipulation';
 import {
-  LAYERING_FLAGS,
   EventNames,
   ButtonSelectors,
   getButtonSelector,
 } from 'src/utilities/ketcherSurfaceChemistry/constants';
 import { deepCompareContent, filterTextList } from 'src/utilities/ketcherSurfaceChemistry/TextNode';
 import {
-  updateImagesInTheCanvas,
+  runImageLayering,
   undoKetcher,
   redoKetcher,
   imageNodeForTextNodeSetter,
   selectedImageForTextNode,
-  makeTransparentByTitle,
 } from 'src/utilities/ketcherSurfaceChemistry/DomHandeling';
 import {
   onAddAtom,
@@ -48,7 +46,6 @@ import {
 } from 'src/utilities/ketcherSurfaceChemistry/canvasOperations';
 import { handleEventCapture } from 'src/utilities/ketcherSurfaceChemistry/eventHandler';
 import {
-  ImagesToBeUpdated,
   ImagesToBeUpdatedSetter,
   imagesList,
   resetKetcherStore,
@@ -59,6 +56,7 @@ import {
   eventUpsertImageSetter,
   upsertImageCalled,
   imagesListSetter,
+  canvasIframeRefSetter,
 } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
 
 export let latestData = null; // latestData contains the updated ket2 format always
@@ -164,6 +162,10 @@ const KetcherEditor = forwardRef((props, ref) => {
   // const [showSpecialCharModal, setSpecialCharModal] = useState(false);
 
   const iframeRef = useRef();
+  useEffect(() => {
+    canvasIframeRefSetter(iframeRef);
+    return () => canvasIframeRefSetter(null);
+  }, [iframeRef]);
   const initMol = molfile || '\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n';
 
   // action based on event-name
@@ -226,20 +228,6 @@ const KetcherEditor = forwardRef((props, ref) => {
   }, [editor]);
 
   /**
-   * Ensures that all images are layered correctly on the canvas.
-   * @async
-   * @function runImageLayering
-   */
-  const runImageLayering = async () => {
-    if (ImagesToBeUpdated && !LAYERING_FLAGS.skipImageLayering) {
-      setTimeout(async () => {
-        await makeTransparentByTitle(iframeRef);
-        await updateImagesInTheCanvas(iframeRef);
-      }, [100]);
-    }
-  };
-
-  /**
    * Sets up listeners for changes in the editor's content and selection.
    *
    * This function performs the following actions:
@@ -257,8 +245,7 @@ const KetcherEditor = forwardRef((props, ref) => {
       const result = await eventData;
       if (result) {
         await handleEventCapture(editor, result, eventHandlers);
-        await runImageLayering(); // post all the images at the end of the canvas not duplicate
-        await makeTransparentByTitle(iframeRef);
+        await runImageLayering(iframeRef); // post all the images at the end of the canvas not duplicate
       }
     });
 

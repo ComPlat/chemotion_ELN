@@ -99,7 +99,7 @@ const placeImageOnAtoms = async (mols_, imagesList_) => {
           }
           const boundingBox = {
             x: atom.location[0] - imageCoordinates.width / 2,
-            y: atom.location[1] + imageCoordinates.width / 2,
+            y: atom.location[1] + imageCoordinates.height / 2,
             z: atom.location[2],
             width: imageCoordinates.width,
             height: imageCoordinates.height

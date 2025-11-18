@@ -218,7 +218,7 @@ const applyKetcherData = async (polymerTag, fileContent, textNodes, editor) => {
         molfileContent.root.nodes.push(...textNodeList);
       }
     }
-    saveMoveCanvas(editor, molfileContent, true, true);
+    saveMoveCanvas(editor, molfileContent, true, true, false, { syncImagesOnly: true });
     setTimeout(() => {
       centerPositionCanvas(editor);
     }, 10);
