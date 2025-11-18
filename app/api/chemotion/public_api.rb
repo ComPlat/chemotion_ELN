@@ -48,7 +48,7 @@ module Chemotion
           res = {}
           config = Devise.omniauth_configs
           extra_rules = Matrice.extra_rules
-          config.each do |k, _v|
+          config.each_key do |k|
             res[k] = { icon: File.basename(config[k].options[:icon] || ''), label: config[k].options[:label] }
           end
           { omniauth_providers: res, extra_rules: extra_rules }
@@ -106,7 +106,9 @@ module Chemotion
         params do
           optional :key, type: String, desc: 'token'
           optional :status, type: Integer, desc: 'status (see description)'
-          optional :url, type: String, desc: 'file url'
+          optional :url, type: String, desc: 'file url', values: lambda { |v|
+            v.start_with?(Rails.configuration.editors.docserver[:uri])
+          }
         end
         get do
           status 200

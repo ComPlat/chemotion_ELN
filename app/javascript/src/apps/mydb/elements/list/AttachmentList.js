@@ -157,7 +157,7 @@ export const annotateButton = (attachment, onClick) => (
  */
 export function EditButton({ attachment, disabled, onChange }) {
   const { docserver } = UIStore.getState() || {};
-  const extensionsObj = docserver.extensions || {};
+  const extensionsObj = docserver?.extensions || {};
   // Previously "attachmentEditor" -> now available at UserStore.editorConfig.available (bool)
   const attachmentEditor = Boolean(docserver?.available);
   const editDisable = disabled || !attachmentEditor || attachment.edit_state === 'editing';
