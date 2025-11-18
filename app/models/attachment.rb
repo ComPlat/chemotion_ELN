@@ -270,9 +270,27 @@ class Attachment < ApplicationRecord
     )
   end
 
+  def annotated_filename
+    return '' unless annotated?
+
+    # NB: original tiff file are converted to png for the annotation background layer
+    extension_of_annotation = content_type == 'image/tiff' ? '.png' : File.extname(filename)
+    "#{File.basename(filename, '.*')}_annotated#{extension_of_annotation}"
+  end
+
   def file_extension
     extname = File.extname(filename.to_s)
     extname && extname[1..-1]
+  end
+
+  def thumbnail_base64
+    return nil unless thumb
+
+    thumbnail_data = read_thumbnail
+    Base64.encode64(thumbnail_data)
+  rescue TypeError, Errno::ENOENT
+    Rails.logger.error "Thumbnail data is not available for attachment #{id} but thumb is set to true"
+    nil
   end
 
   def editable_document?
