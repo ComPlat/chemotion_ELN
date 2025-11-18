@@ -34,7 +34,8 @@ module Chemotion
           third_party_apps: Entities::ThirdPartyAppEntity.represent(ThirdPartyApp.all),
           pg_cartridge: Chemotion::Application.config.pg_cartridge,
           version: Chemotion::Application.config.version,
-          docserver:  { available: (docserver && docserver[:enable]) || false, extensions: docserver && docserver[:ext] }
+          docserver: { available: (docserver && docserver[:enable]) || false,
+                       extensions: docserver && docserver[:ext] },
         }
       end
     end

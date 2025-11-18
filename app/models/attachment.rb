@@ -280,7 +280,7 @@ class Attachment < ApplicationRecord
 
   def file_extension
     extname = File.extname(filename.to_s)
-    extname && extname[1..-1]
+    extname && extname[1..]
   end
 
   def thumbnail_base64
@@ -293,11 +293,16 @@ class Attachment < ApplicationRecord
     nil
   end
 
+  def preview
+    base64_data = thumbnail_base64
+    base64_data ? "data:image/png;base64,#{base64_data}" : nil
+  end
+
   def editable_document?
-    return false unless file_extension.present?
+    return false if file_extension.blank?
 
     available_extensions = Rails.configuration.editors&.available_extensions
-    return false unless available_extensions.present?
+    return false if available_extensions.blank?
 
     available_extensions.include?(file_extension.downcase)
   end
