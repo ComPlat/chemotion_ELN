@@ -14,12 +14,13 @@ import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralIn
 function SolventDetails({
   solvent, deleteSolvent, onChangeSolvent, sampleType
 }) {
-  const [purityInput, setPurityInput] = React.useState(solvent?.purity ?? 1.0);
+  const currentPurity = solvent?.purity ?? 1.0;
+  const [purityInput, setPurityInput] = React.useState(currentPurity);
 
   // Update when solvent prop changes (important if parent updates solvents)
   React.useEffect(() => {
-    setPurityInput(solvent.purity ?? 1.0);
-  }, [solvent.purity]);
+    setPurityInput(currentPurity);
+  }, [currentPurity]);
 
   if (!solvent) {
     return null;

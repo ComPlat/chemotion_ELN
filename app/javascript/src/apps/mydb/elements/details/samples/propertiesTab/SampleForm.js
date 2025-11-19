@@ -13,7 +13,7 @@ import DetailActions from 'src/stores/alt/actions/DetailActions';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 import NumericInputUnit from 'src/apps/mydb/elements/details/NumericInputUnit';
 import TextRangeWithAddon from 'src/apps/mydb/elements/details/samples/propertiesTab/TextRangeWithAddon';
-import { solventOptions, SampleTypesOptions } from 'src/components/staticDropdownOptions/options';
+import { SampleTypesOptions } from 'src/components/staticDropdownOptions/options';
 import SampleDetailsSolvents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsSolvents';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import InventoryFetcher from 'src/fetchers/InventoryFetcher';
@@ -106,7 +106,12 @@ export default class SampleForm extends React.Component {
   }
 
   handleAmountChanged(amount) {
-    this.props.sample.setAmount(amount);
+    const { sample } = this.props;
+
+    // sample.initializeSampleDetails?.();
+    // sample.sample_details.reference_component_changed = false;
+
+    sample.setAmount(amount);
   }
 
   handleMolarityChanged(molarity) {
@@ -115,7 +120,7 @@ export default class SampleForm extends React.Component {
   }
 
   handleSampleTypeChanged(sampleType) {
-    const { sample } = this.props;
+    const { sample, handleSampleChanged } = this.props;
 
     // selectedSampleType = {label: 'Single molecule', value: 'Micromolecule'}
     sample.updateSampleType(sampleType.value);
@@ -126,7 +131,7 @@ export default class SampleForm extends React.Component {
       this.createComponentsFromCurrentSample(sample);
     }
 
-    this.props.handleSampleChanged(sample);
+    handleSampleChanged(sample);
   }
 
   /**
@@ -807,9 +812,11 @@ export default class SampleForm extends React.Component {
    * @returns {JSX.Element|false} The rendered input or false if not applicable
    */
   totalMixtureVolume(sample) {
-    const isDisabled = sample.isMethodDisabled('amount_value') ||
-      sample.contains_residues ||
-      !sample.can_update;
+    const isDisabled = sample.isMethodDisabled('amount_value')
+      || sample.gas_type === 'gas'
+      || sample.gas_type === 'feedstock'
+      || sample.contains_residues
+      || !sample.can_update;
 
     const metricPrefixes = ['m', 'u', 'n'];
     const prefix = sample.metrics?.[3] && metricPrefixes.includes(sample.metrics[3])
@@ -845,7 +852,9 @@ export default class SampleForm extends React.Component {
 
     if (isDisabled) return null;
 
-    const density = sample.density || 0;
+    // Pass null/undefined when density is not set, so it displays as "n.d."
+    // Only pass the actual value if density is set (including 0)
+    const density = (sample.density != null && sample.density !== '') ? sample.density : null;
 
     return (
       <div>
@@ -859,7 +868,7 @@ export default class SampleForm extends React.Component {
           title="Mixture density"
           variant="light"
           id="numInput_total_mixture_density"
-          disabled={true}
+          disabled
         />
       </div>
     );

@@ -191,6 +191,8 @@ export default class ReactionDetails extends Component {
       || type === 'vesselSizeUnit'
       || type === 'gaseous'
       || type === 'conditions'
+      || type === 'volume'
+      || type === 'useReactionVolumeForConcentration'
     ) {
       value = event;
     } else if (type === 'rfValue') {

@@ -5,12 +5,13 @@ import alt from 'src/stores/alt/alt';
  */
 class ComponentActions {
   /**
-   * Toggles the lock state for a column based on the action type.
+   * Toggles the lock state for a column based on the action type, per sample.
    * @param {boolean} lockState - The new lock state (true/false).
    * @param {string} actionType - The type of action (e.g., 'amount', 'amountSolids').
-   * @returns {Object} An object with the key to lock and its new value.
+   * @param {string|number} sampleId - The ID of the sample to update.
+   * @returns {Object} An object with the key to lock, its new value, and sampleId.
    */
-  toggleLockState(lockState, actionType) {
+  toggleLockState(lockState, actionType, sampleId) {
     const lockKeyMapping = {
       amount: 'lockAmountColumn',
       amountSolids: 'lockAmountColumnSolids',
@@ -21,6 +22,7 @@ class ComponentActions {
     return {
       key,
       value: lockState,
+      sampleId,
     };
   }
 
@@ -34,6 +36,19 @@ class ComponentActions {
     return {
       componentId,
       lockConc: !lockConc,
+    };
+  }
+
+  /**
+   * Toggles the lock state for the reaction equivalent column.
+   * @param {boolean} lockState - The new lock state (true/false).
+   * @param {string|number} reactionId - The ID of the reaction to update.
+   * @returns {Object} An object with the lock state and reactionId.
+   */
+  toggleReactionEquivLock(lockState, reactionId) {
+    return {
+      lockState,
+      reactionId,
     };
   }
 }

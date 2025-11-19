@@ -299,7 +299,7 @@ class Material extends Component {
 
   gaseousInputFields(field, material) {
     const gasPhaseData = material.gas_phase_data || {};
-    const { value, unit, isTimeField } = this.getFieldData(field, gasPhaseData);
+    const { value, unit } = this.getFieldData(field, gasPhaseData);
     const readOnly = this.isFieldReadOnly(field);
 
     const updateValue = this.getFormattedValue(value);
@@ -790,25 +790,29 @@ class Material extends Component {
   }
 
   handleAddToDesc(material) {
-    if (this.props.onChange) {
+    const { onChange } = this.props;
+
+    if (onChange) {
       const event = {
         type: 'addToDesc',
         paragraph: this.createParagraph(material),
       };
-      this.props.onChange(event);
+      onChange(event);
     }
   }
 
   handleDrySolventChange(event) {
     const value = event.target.checked;
-    if (this.props.onChange) {
+    const { onChange, materialGroup } = this.props;
+
+    if (onChange) {
       const e = {
         type: 'drysolventChanged',
-        materialGroup: this.props.materialGroup,
+        materialGroup,
         sampleID: this.materialId(),
         dry_solvent: value,
       };
-      this.props.onChange(e);
+      onChange(e);
     }
   }
 
@@ -817,7 +821,9 @@ class Material extends Component {
   }
 
   material() {
-    return this.props.material;
+    const { material } = this.props;
+
+    return material;
   }
 
   massField(material, metricPrefixes, reaction, massBsStyle, metric) {
