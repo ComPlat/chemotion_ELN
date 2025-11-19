@@ -58,7 +58,6 @@ describe('Component', () => {
   describe('handleVolumeChange', () => {
     const amount = { value: 10, unit: 'ml' };
     const totalVolume = 2; // L
-    const referenceComponent = null; // No reference component for simplicity
 
     it('should update volume and calculate amount when the component is liquid', () => {
       component.material_group = 'liquid';
@@ -67,7 +66,7 @@ describe('Component', () => {
       const expectedAmountMol = (amount.value * component.density * 1000 * component.purity)
         / component.molecule.molecular_weight;
 
-      component.handleVolumeChange(amount, totalVolume, referenceComponent);
+      component.handleVolumeChange(amount, totalVolume);
 
       expect(component.amount_l).toBe(amount.value);
       expect(Math.abs(component.amount_mol - expectedAmountMol)).toBeLessThanOrEqual(0.0001);
@@ -78,7 +77,7 @@ describe('Component', () => {
 
       const expectedAmountMol = (amount.value * component.purity) / component.molecule_molecular_weight;
 
-      component.handleVolumeChange(amount, totalVolume, referenceComponent);
+      component.handleVolumeChange(amount, totalVolume);
 
       expect(component.amount_g).toBe(amount.value);
       expect(Math.abs(component.amount_mol - expectedAmountMol)).toBeLessThanOrEqual(0.0001);
@@ -89,14 +88,12 @@ describe('Component', () => {
     it('should handle starting concentration change', () => {
       const amount = { value: 2, unit: 'mol/l' };
       const totalVolume = 10; // L
-      const referenceComponent = null; // No reference component
 
       component.handleConcentrationChange(
         amount,
         totalVolume,
         'startingConc',
-        false,
-        referenceComponent
+        false
       );
       expect(component.starting_molarity_value).toBe(amount.value);
       expect(component.molarity_value).toBe(0); // Should reset amount to 0
@@ -105,14 +102,12 @@ describe('Component', () => {
     it('should handle target concentration change', () => {
       const amount = { value: 1, unit: 'mol/l' };
       const totalVolume = 10; // L
-      const referenceComponent = null;
 
       component.handleConcentrationChange(
         amount,
         totalVolume,
         'targetConc',
-        false,
-        referenceComponent
+        false
       );
       expect(component.molarity_value).toBe(amount.value);
       expect(component.amount_mol).toBe(component.concn * totalVolume);
@@ -122,7 +117,6 @@ describe('Component', () => {
   describe('handleTotalVolumeChanges', () => {
     it('should handle total volume changes, when conc. is not locked and recalculate target conc.', () => {
       const totalVolume = 10; // L
-      const referenceComponent = null; // No reference component
       component.amount_mol = 2;
 
       // Mock store state for unlocked concentration
@@ -132,13 +126,12 @@ describe('Component', () => {
 
       const expectedResult = component.amount_mol / totalVolume;
 
-      component.handleTotalVolumeChanges(totalVolume, referenceComponent);
+      component.handleTotalVolumeChanges(totalVolume);
       expect(component.molarity_value).toEqual(expectedResult); // Concentration should be recalculated
     });
 
     it('should handle total volume changes when conc. is locked: recalculate amount and volume', () => {
       const totalVolume = 10; // L
-      const referenceComponent = null;
       const originalMolarityValue = component.molarity_value;
       component.density = 1.5;
 
@@ -147,7 +140,7 @@ describe('Component', () => {
         lockedComponents: [component.id],
       });
 
-      component.handleTotalVolumeChanges(totalVolume, referenceComponent);
+      component.handleTotalVolumeChanges(totalVolume);
 
       const expectedAmountMol = component.concn * totalVolume;
       const expectedAmountL = (component.amount_mol * component.molecule.molecular_weight)
@@ -462,7 +455,7 @@ describe('Component', () => {
 
       expect(result).toBe(null);
       expect(component.component_properties && component.component_properties.relative_molecular_weight)
-      .toBe(undefined);
+        .toBe(undefined);
     });
 
     it('calculates and assigns relative molecular weight for mixtures', () => {
@@ -710,6 +703,13 @@ describe('Component', () => {
   });
 
   describe('updateRatioFromReference', () => {
+    beforeEach(() => {
+      // Mock store state for unlocked concentration
+      ComponentStore.getState = () => ({
+        lockedComponents: [],
+      });
+    });
+
     it('should set ratio to 1 when no reference component', () => {
       component.equivalent = 2.0;
 
@@ -776,10 +776,13 @@ describe('Component', () => {
       component.amount_mol = 0.1;
       component.amount_g = 2.0;
       component.molecule.molecular_weight = 18.015;
+      component.parent_id = 'sample_123';
 
-      // Mock store state
+      // Mock store state with proper structure
       ComponentStore.getState = () => ({
-        lockAmountColumnSolids: true,
+        lockAmountColumnSolidsBySample: {
+          sample_123: true,
+        },
       });
 
       component.calculateMassFromAmount(component.purity);
@@ -938,12 +941,11 @@ describe('Component', () => {
     it('should handle NaN values in handleVolumeChange', () => {
       const amount = { value: NaN, unit: 'ml' };
       const totalVolume = 2;
-      const referenceComponent = null;
 
       const originalAmountL = component.amount_l;
       const originalAmountMol = component.amount_mol;
 
-      component.handleVolumeChange(amount, totalVolume, referenceComponent);
+      component.handleVolumeChange(amount, totalVolume);
 
       expect(component.amount_l).toBe(originalAmountL);
       expect(component.amount_mol).toBe(originalAmountMol);
@@ -952,12 +954,11 @@ describe('Component', () => {
     it('should handle invalid unit in handleVolumeChange', () => {
       const amount = { value: 10, unit: null };
       const totalVolume = 2;
-      const referenceComponent = null;
 
       const originalAmountL = component.amount_l;
       const originalAmountMol = component.amount_mol;
 
-      component.handleVolumeChange(amount, totalVolume, referenceComponent);
+      component.handleVolumeChange(amount, totalVolume);
 
       expect(component.amount_l).toBe(originalAmountL);
       expect(component.amount_mol).toBe(originalAmountMol);
@@ -966,11 +967,10 @@ describe('Component', () => {
     it('should handle NaN values in handleAmountChange', () => {
       const amount = { value: NaN, unit: 'mol' };
       const totalVolume = 2;
-      const referenceComponent = null;
 
       const originalAmountMol = component.amount_mol;
 
-      component.handleAmountChange(amount, totalVolume, referenceComponent);
+      component.handleAmountChange(amount, totalVolume);
 
       expect(component.amount_mol).toBe(originalAmountMol);
     });
@@ -978,11 +978,10 @@ describe('Component', () => {
     it('should handle invalid unit in handleAmountChange', () => {
       const amount = { value: 10, unit: 'g' };
       const totalVolume = 2;
-      const referenceComponent = null;
 
       const originalAmountMol = component.amount_mol;
 
-      component.handleAmountChange(amount, totalVolume, referenceComponent);
+      component.handleAmountChange(amount, totalVolume);
 
       expect(component.amount_mol).toBe(originalAmountMol);
     });
@@ -990,12 +989,11 @@ describe('Component', () => {
     it('should handle locked column in handleConcentrationChange', () => {
       const amount = { value: 1, unit: 'mol/l' };
       const totalVolume = 10;
-      const referenceComponent = null;
       const lockColumn = true;
 
       const originalMolarityValue = component.molarity_value;
 
-      component.handleConcentrationChange(amount, totalVolume, 'targetConc', lockColumn, referenceComponent);
+      component.handleConcentrationChange(amount, totalVolume, 'targetConc', lockColumn);
 
       expect(component.molarity_value).toBe(originalMolarityValue);
     });

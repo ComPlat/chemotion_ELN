@@ -373,6 +373,43 @@ describe Chemotion::ReactionAPI do
       end
     end
 
+    context 'when updating volume and use_reaction_volume' do
+      let(:params) do
+        {
+          'id' => reaction1.id,
+          'name' => 'test reaction',
+          'volume' => 0.5,
+          'use_reaction_volume' => true,
+          'container' => reaction_container,
+          'materials' => {
+            'starting_materials' => [
+              {
+                'id' => sample1.id,
+                'target_amount_unit' => 'mg',
+                'target_amount_value' => 76.09596,
+                'equivalent' => 1,
+                'reference' => true,
+                'is_new' => false,
+              },
+            ],
+          },
+        }
+      end
+      let(:r) { Reaction.find(reaction1.id) }
+
+      before do
+        put "/api/v1/reactions/#{reaction1.id}", params: params, as: :json
+      end
+
+      it 'updates the volume attribute' do
+        expect(r.volume).to eq(0.5)
+      end
+
+      it 'updates the use_reaction_volume attribute' do
+        expect(r.use_reaction_volume).to be(true)
+      end
+    end
+
     context 'when creating new materials' do
       let(:params) do
         {
@@ -571,6 +608,49 @@ describe Chemotion::ReactionAPI do
         expect(reactant_association.attributes).to include(
           'reference' => false, 'equivalent' => 2,
         )
+      end
+    end
+
+    context 'when creating reaction with volume and use_reaction_volume' do
+      let(:params) do
+        {
+          'name' => 'r002',
+          'collection_id' => collection1.id,
+          'volume' => 0.75,
+          'use_reaction_volume' => false,
+          'container' => new_root_container,
+          'materials' => {
+            'products' => [
+              'id' => 'd4ca4ec0-6d8e-11e5-b2f1-c9913eb3e335',
+              'name' => 'New Subsample 1',
+              'target_amount_unit' => 'mg',
+              'target_amount_value' => 76.09596,
+              'parent_id' => sample1.id,
+              'reference' => true,
+              'equivalent' => 1,
+              'is_new' => true,
+              'is_split' => true,
+              'molfile' => build(:molfile, type: 'test_2'),
+              'molecule' => { molfile: molfile_1 },
+              'container' => new_root_container,
+            ],
+          },
+        }
+      end
+      let(:r) { Reaction.find_by(name: 'r002') }
+
+      before do
+        post('/api/v1/reactions.json',
+             params: params.to_json,
+             headers: { 'CONTENT_TYPE' => 'application/json' })
+      end
+
+      it 'creates reaction with volume attribute' do
+        expect(r.volume).to eq(0.75)
+      end
+
+      it 'creates reaction with use_reaction_volume attribute' do
+        expect(r.use_reaction_volume).to be(false)
       end
     end
 

@@ -972,23 +972,26 @@ describe('Sample', async () => {
       expect(s.sample_details.total_mixture_mass_g).toBeCloseTo(expected, 6);
     });
 
-    it('when total volume IS present, skips solvents and adds 1 g/mL * total volume', () => {
+    it('when total volume IS present, skips solvents and adds remaining volume mass after subtracting liquid components', () => {
       const s = new Sample();
       s.sample_type = 'Mixture';
       s.components = [
         { material_group: 'solid', amount_g: 12.5 },
-        { material_group: 'liquid', density: 0.8, amount_l: 0.01 } // 8 g
+        { material_group: 'liquid', density: 0.8, amount_l: 0.01 } // 0.8 g/mL * 10 mL = 8 g
       ];
       s.solvent = [
         { amount_l: 0.002, density: 1.2 }, // would be 2.4 g if counted
         { amount_l: 0.001 } // would be 1 g if counted
       ];
-      // Provide total volume = 10 mL, which should cause step 4 and skip solvents
+      // Provide total volume = 10 mL
+      // Calculation: solid (12.5) + liquid component (8) + remaining volume (10 - 8 = 2) = 22.5 g
       s.sample_details = { total_mixture_volume_l: 0.01 };
 
       s.calculateTotalMixtureMass();
 
-      const expected = 12.5 + 8 + 10; // = 30.5 g (solvents ignored)
+      // Expected: 12.5 (solid) + 8 (liquid component) + (10 - 8) (remaining volume mass) = 22.5 g
+      // The code subtracts liquid component mass from total volume mass, then adds the remainder
+      const expected = 12.5 + 8 + (10 - 8); // = 22.5 g (solvents ignored)
       expect(s.sample_details.total_mixture_mass_g).toBeCloseTo(expected, 6);
     });
 
@@ -1008,13 +1011,49 @@ describe('Sample', async () => {
       const s = new Sample();
       s.sample_type = 'Mixture';
       s.components = [
-        { material_group: 'liquid', density: 1.0, amount_l: 0.005, handleTotalVolumeChanges: () => {} } // 5 mL -> 5 g
+        { material_group: 'liquid', density: 1.0, amount_l: 0.005, handleTotalVolumeChanges: () => {} } // 1.0 g/mL * 5 mL = 5 g
       ];
 
-      s.calculateTotalMixtureMass(); // sets total_mixture_mass_g = 5
-      s.setTotalMixtureVolume(0.01); // 10 mL; mass becomes 5 g + 10 g (step 4) => 15 g
+      s.calculateTotalMixtureMass(); // sets total_mixture_mass_g = 5 (no total volume yet)
+      s.setTotalMixtureVolume(0.01); // 10 mL; recalculates: 5 g (component) + (10 - 5) g (remaining volume) = 10 g
 
-      expect(s.density).toBeCloseTo(1.5, 6);
+      // density = total_mass_g / total_volume_mL = 10 g / 10 mL = 1.0 g/mL
+      expect(s.density).toBeCloseTo(1.0, 6);
+    });
+  });
+
+  describe('Sample.total_mixture_mass_g getter', () => {
+    it('returns the total mixture mass when set and valid', () => {
+      const s = new Sample();
+      s.sample_details = { total_mixture_mass_g: 0.45 };
+      expect(s.total_mixture_mass_g).toBe(0.45);
+    });
+
+    it('returns null when total_mixture_mass_g is not set', () => {
+      const s = new Sample();
+      s.sample_details = {};
+      expect(s.total_mixture_mass_g).toBeNull();
+    });
+
+    it('returns null when total_mixture_mass_g is null', () => {
+      const s = new Sample();
+      s.sample_details = { total_mixture_mass_g: null };
+      expect(s.total_mixture_mass_g).toBeNull();
+    });
+
+    it('returns null when total_mixture_mass_g is not a finite number', () => {
+      const s = new Sample();
+      s.sample_details = { total_mixture_mass_g: Infinity };
+      expect(s.total_mixture_mass_g).toBeNull();
+      
+      s.sample_details = { total_mixture_mass_g: NaN };
+      expect(s.total_mixture_mass_g).toBeNull();
+    });
+
+    it('returns null when sample_details is undefined', () => {
+      const s = new Sample();
+      s.sample_details = undefined;
+      expect(s.total_mixture_mass_g).toBeNull();
     });
   });
 
@@ -1039,6 +1078,126 @@ describe('Sample', async () => {
 
       s.updateMixtureDensity();
       expect(s.density).toBe(0);
+    });
+  });
+
+  describe('Sample.updateConcentrationFromSolvent()', () => {
+    let sample;
+    let reaction;
+
+    beforeEach(() => {
+      // Create sample with amount_mol by setting amount_value and amount_unit to 'mol'
+      // amount_mol getter returns amount_value when amount_unit === 'mol' for mixtures
+      sample = new Sample({
+        amount_value: 0.1,
+        amount_unit: 'mol',
+        sample_type: 'Mixture'
+      });
+      reaction = {
+        volume: 0.5,
+        use_reaction_volume: false,
+        calculateCombinedReactionVolume: () => 0.2,
+        solventVolume: 0.1
+      };
+    });
+
+    it('uses reaction volume when checkbox is checked', () => {
+      reaction.use_reaction_volume = true;
+      reaction.volume = 0.5;
+
+      sample.updateConcentrationFromSolvent(reaction);
+
+      expect(sample.concn).toBeCloseTo(0.2, 5); // 0.1 mol / 0.5 L = 0.2 mol/L
+    });
+
+    it('uses combined volume when checkbox is unchecked', () => {
+      reaction.use_reaction_volume = false;
+      reaction.calculateCombinedReactionVolume = () => 0.2;
+
+      sample.updateConcentrationFromSolvent(reaction);
+
+      expect(sample.concn).toBeCloseTo(0.5, 5); // 0.1 mol / 0.2 L = 0.5 mol/L
+    });
+
+    it('sets concn to null when volume is null and combined volume is also null', () => {
+      reaction.use_reaction_volume = true;
+      reaction.volume = null;
+      // When reaction.volume is null, it falls back to calculateCombinedReactionVolume
+      reaction.calculateCombinedReactionVolume = () => null;
+
+      sample.updateConcentrationFromSolvent(reaction);
+
+      expect(sample.concn).toBe(null);
+    });
+
+    it('sets concn to null when volume is 0 and combined volume is also null', () => {
+      reaction.use_reaction_volume = true;
+      reaction.volume = 0;
+      // When reaction.volume is 0, it falls back to calculateCombinedReactionVolume
+      reaction.calculateCombinedReactionVolume = () => null;
+
+      sample.updateConcentrationFromSolvent(reaction);
+
+      expect(sample.concn).toBe(null);
+    });
+
+    it('sets concn to null when combined volume is null', () => {
+      reaction.use_reaction_volume = false;
+      reaction.calculateCombinedReactionVolume = () => null;
+
+      sample.updateConcentrationFromSolvent(reaction);
+
+      expect(sample.concn).toBe(null);
+    });
+
+    it('works for both mixtures and non-mixtures', () => {
+      // Test for mixture - amount_mol getter returns amount_value when amount_unit === 'mol' for mixtures
+      const mixtureSample = new Sample({
+        amount_value: 0.1,
+        amount_unit: 'mol',
+        sample_type: 'Mixture',
+      });
+      reaction.use_reaction_volume = true;
+      reaction.volume = 0.5;
+
+      mixtureSample.updateConcentrationFromSolvent(reaction);
+      expect(mixtureSample.concn).toBeCloseTo(0.2, 5);
+
+      // Test for non-mixture - for non-mixtures, amount_mol is calculated differently
+      // We'll use a sample with amount_value in grams and molecular weight to get amount_mol
+      const nonMixtureSample = new Sample({
+        amount_value: 18.015, // 1 mol of water in grams
+        amount_unit: 'g',
+        sample_type: 'Micromolecule',
+        molecule: { molecular_weight: 18.015 }
+      });
+      reaction.use_reaction_volume = true;
+      reaction.volume = 0.5;
+
+      nonMixtureSample.updateConcentrationFromSolvent(reaction);
+      // 18.015 g / 18.015 g/mol = 1 mol, so concn = 1 mol / 0.5 L = 2 mol/L
+      expect(nonMixtureSample.concn).toBeCloseTo(2.0, 5);
+    });
+
+    it('sets concn to null when amount_mol is invalid', () => {
+      // Create sample with invalid amount_mol by not setting amount_value
+      const sampleWithNullMol = new Sample({
+        amount_value: null,
+        amount_unit: 'mol',
+        sample_type: 'Mixture',
+      });
+      reaction.use_reaction_volume = true;
+      reaction.volume = 0.5;
+
+      sampleWithNullMol.updateConcentrationFromSolvent(reaction);
+
+      expect(sampleWithNullMol.concn).toBe(null);
+    });
+
+    it('sets concn to null when reaction is null', () => {
+      sample.updateConcentrationFromSolvent(null);
+
+      expect(sample.concn).toBe(null);
     });
   });
 });
