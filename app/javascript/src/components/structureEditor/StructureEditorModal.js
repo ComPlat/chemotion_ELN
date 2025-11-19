@@ -179,18 +179,24 @@ export default class StructureEditorModal extends React.Component {
   }
 
   alertForInvalidSources(components) {
-    // Regex for chemical compositions like "Pt 1wt.% pt, y-ai203"
-    const regex = /\b[A-Z][a-z]?(?:\s*\d+(?:\.\d+)?wt\.%)?(?:\s*,\s*[A-Z][a-z]?(?:-\w+)?(?:\d*)?)*\b/i;
+    const wtPercentRegex = /^[a-z]+\s+\d+(?:\.\d+)?wt\.%\s+[a-z]+$/;
+    const hyphenRegex = /^[a-z]+-[a-z0-9]+$/;
     const collectSources = [];
-    components.forEach((component) => {
-      const { source } = component;
-      if (!source || !regex.test(source)) {
+    components.forEach(({ source }) => {
+      if (!source) {
         collectSources.push(source);
+        return;
       }
+      const s = source.trim().toLowerCase();
+      const isValid = wtPercentRegex.test(s) || hyphenRegex.test(s);
+      if (!isValid) collectSources.push(source);
     });
     if (collectSources.length) {
       NotificationActions.add({
-        title: 'Invalid components labels', message: `Invalid sources: ${collectSources.join(', ')}. Please follow the format: "Pt 1wt.% pt or y-ai203" otherwise it may effect composition calculations.`, level: 'error', position: 'tc'
+        title: 'Invalid components labels',
+        message: `Invalid sources: ${collectSources.join(', ')}. Please follow the format: "Pd 1wt.% Pd" or "Y-Ai204".`,
+        level: 'error',
+        position: 'tc'
       });
     }
   }

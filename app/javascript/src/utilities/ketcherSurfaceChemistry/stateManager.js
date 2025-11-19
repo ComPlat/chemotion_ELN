@@ -112,7 +112,7 @@ export const textListCopyContainerSetter = (data) => {
 export const fetchAndReplace = (editorLoc) => {
   centerPositionCanvas(editorLoc);
   setTimeout(() => {
-    onTemplateMove(editorLoc, false);
+    onTemplateMove(editorLoc, null, { syncImagesOnly: false });
   }, 500);
 };
 
