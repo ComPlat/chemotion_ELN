@@ -19,6 +19,7 @@ import {
   calculateTONPerTimeValue,
   determineTONFrequencyValue,
 } from 'src/utilities/UnitsConversion';
+import ComponentStore from 'src/stores/alt/stores/ComponentStore';
 
 const SAMPLE_TYPE_MIXTURE = 'Mixture';
 const SAMPLE_TYPE_MICROMOLECULE = 'Micromolecule';
@@ -734,26 +735,29 @@ export default class Sample extends Element {
    * @returns {void}
    */
   updateConcentrationFromSolvent(reaction) {
-    const combinedVolume = reaction ? reaction.calculateCombinedReactionVolume() : null;
-
-    if (!combinedVolume || combinedVolume <= 0) {
+    if (!reaction) {
       this.concn = null;
       return;
     }
 
-    // Handle mixtures
-    if (this.isMixture && typeof this.isMixture === 'function' ? this.isMixture() : this.isMixture) {
-      if (Number.isFinite(this.amount_mol) && this.amount_mol >= 0) {
-        this.concn = this.amount_mol / combinedVolume;
-      } else {
-        this.concn = null;
-      }
-      return; // only execute for mixtures for now
+    // Determine which volume to use based on checkbox state
+    let volumeToUse = null;
+    if (reaction.use_reaction_volume_for_concentration && reaction.volume != null && reaction.volume > 0) {
+      // Use reaction volume input when checkbox is checked
+      volumeToUse = reaction.volume;
+    } else {
+      // Use sum of materials volume when checkbox is unchecked or default
+      volumeToUse = reaction.calculateCombinedReactionVolume();
     }
 
-    // Handle non-mixture samples
+    if (!volumeToUse || volumeToUse <= 0) {
+      this.concn = null;
+      return;
+    }
+
+    // Calculate concentration for all samples (mixtures and non-mixtures)
     if (Number.isFinite(this.amount_mol) && this.amount_mol >= 0) {
-      this.concn = this.amount_mol / reaction.solventVolume;
+      this.concn = this.amount_mol / volumeToUse;
     } else {
       this.concn = null;
     }
@@ -1007,13 +1011,15 @@ export default class Sample extends Element {
   }
 
   get amount_mol() {
-    if (this.amount_unit === 'mol' && (this.gas_type === 'gas'
-    || this.gas_type === 'feedstock' || this.isMixture())) return this.amount_value;
-
-    // For mixture samples, use the mixture-specific calculation
+    // For mixtures, always use calculateMixtureAmountMol() to respect reference_component_changed flag
+    // This ensures that when reference component is switched, amount_mol updates correctly
+    // even if amount_unit is 'mol'
     if (this.isMixture()) {
       return this.calculateMixtureAmountMol();
     }
+
+    if (this.amount_unit === 'mol' && (this.gas_type === 'gas'
+    || this.gas_type === 'feedstock')) return this.amount_value;
 
     return this.convertGramToUnit(this.amount_g, 'mol');
   }
@@ -1238,6 +1244,25 @@ export default class Sample extends Element {
   }
 
   /**
+   * Gets the lockReactionEquivColumn state from ComponentStore for a specific reaction.
+   * @param {string|number} [reactionId] - Optional reaction ID. If not provided, tries to get from sample's belongTo property.
+   * @returns {boolean} The lock state for reaction equivalent column, or false if not available.
+   */
+  // eslint-disable-next-line class-methods-use-this
+  getLockReactionEquivColumn(reactionId) {
+    // If reactionId is provided, use it; otherwise try to get from sample's belongTo property
+    const id = reactionId || (this.belongTo && this.belongTo.id);
+    if (!id) return false;
+
+    try {
+      const componentState = ComponentStore.getState();
+      return ComponentStore.getLockStateForReaction(componentState, id) ?? false;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Converts a mixture's molar amount to grams using the reference component context.
    *
    * Calculation rules (evaluated in order):
@@ -1271,22 +1296,37 @@ export default class Sample extends Element {
     }
 
     const hasReferenceChanged = this.sample_details?.reference_component_changed || false;
+    const lockReactionEquivColumn = this.getLockReactionEquivColumn();
     const relMolWeight = referenceComponent.relative_molecular_weight;
     const prevMol = this.sample_details?.previous_amount_mol;
     const prevG = this.sample_details?.previous_amount_g;
 
-    // Case 1: Direct calculation using relative molecular weight (most reliable)
-    if (!hasReferenceChanged && relMolWeight && relMolWeight > 0) {
+    // Case 1: When reference component has changed
+    if (hasReferenceChanged) {
+      // If equivalent is locked, recalculate amount_g using new reference component's relMolWeight
+      // Otherwise, preserve the previous amount_g (amount_g remains fixed)
+      if (lockReactionEquivColumn && relMolWeight && relMolWeight > 0 && Number.isFinite(currentMol)) {
+        // Recalculate amount_g from amount_mol using new reference component's relative molecular weight
+        return currentMol * relMolWeight;
+      }
+      // Equivalent not locked: preserve amount_g (only if prevG is valid)
+      if (Number.isFinite(prevG) && prevG > 0) {
+        return prevG;
+      }
+    }
+
+    // Case 2: Direct calculation using relative molecular weight (most reliable)
+    if (relMolWeight && relMolWeight > 0) {
       return currentMol * relMolWeight;
     }
 
-    // Case 2: Ratio-based recalculation (fallback when relMolWeight not available)
+    // Case 3: Ratio-based recalculation (fallback when relMolWeight not available)
     // Only use ratio if BOTH previous values are valid and > 0
     if (Number.isFinite(prevMol) && prevMol > 0 && Number.isFinite(prevG) && prevG > 0) {
       return prevG * (currentMol / prevMol);
     }
 
-    // Case 3: Cannot determine - return 'n.d'
+    // Case 4: Cannot determine - return 'n.d'
     return 'n.d';
   }
 
@@ -1306,15 +1346,24 @@ export default class Sample extends Element {
 
     // Check if the reference component has been changed (flag set during reference change)
     const hasReferenceChanged = this.sample_details?.reference_component_changed || false;
+    const lockReactionEquivColumn = this.getLockReactionEquivColumn();
 
     // Get the reference component's relative molecular weight
     const relMolWeight = referenceComponent.relative_molecular_weight;
 
     let result;
 
-    // Case 1: Initial case - when the reference has been changed, use amount_mol of reference component
+    // Case 1: Initial case - when the reference has been changed
     if (hasReferenceChanged) {
-      result = referenceComponent.amount_mol || 0;
+      // If equivalent is locked, preserve the current amount_mol from sample_details
+      // Otherwise, use amount_mol of reference component
+      if (lockReactionEquivColumn) {
+        // Return the amount_mol stored in sample_details
+        result = this.sample_details?.previous_amount_mol || 0;
+      } else {
+        // Equivalent not locked, use amount_mol of reference component
+        result = referenceComponent.amount_mol || 0;
+      }
 
       // Don't reset the flag immediately - let it persist for the calculation chain
       // The flag will be reset externally after all calculations are complete
@@ -2278,7 +2327,7 @@ export default class Sample extends Element {
     }
     this.sample_details.total_mixture_mass_g = totalMass;
 
-    // Only update density here for safety, but the main update should be after amount_l changes
+    // Calculation of the density in g/ml = total mass/total volume. So density is recalculated here.
     this.updateMixtureDensity();
 
     // Update relative molecular weights after total mass calculation
