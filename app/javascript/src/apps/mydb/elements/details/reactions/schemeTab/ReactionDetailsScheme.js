@@ -2,7 +2,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  Form, Row, Col, Button, InputGroup
+  Form, Row, Col, Button, InputGroup, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
 import { Select } from 'src/components/common/Select';
 import Delta from 'quill-delta';
@@ -35,17 +35,23 @@ import {
 } from 'src/utilities/UnitsConversion';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
+import ComponentStore from 'src/stores/alt/stores/ComponentStore';
+import ComponentActions from 'src/stores/alt/actions/ComponentActions';
 import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
 import Component from 'src/models/Component';
 import { parseNumericString } from 'src/utilities/MathUtils';
+import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 
 export default class ReactionDetailsScheme extends React.Component {
   constructor(props) {
     super(props);
 
     const textTemplate = TextTemplateStore.getState().reactionDescription;
+    const { reaction } = props;
+    const lockEquivColumn = this.getReactionEquivLockState(reaction);
+
     this.state = {
-      lockEquivColumn: false,
+      lockEquivColumn,
       displayYieldField: null,
       reactionDescTemplate: textTemplate.toJS(),
     };
@@ -67,6 +73,9 @@ export default class ReactionDetailsScheme extends React.Component {
     this.updateVesselSize = this.updateVesselSize.bind(this);
     this.updateVesselSizeOnBlur = this.updateVesselSizeOnBlur.bind(this);
     this.changeVesselSizeUnit = this.changeVesselSizeUnit.bind(this);
+    this.reactionVolume = this.reactionVolume.bind(this);
+    this.updateVolume = this.updateVolume.bind(this);
+    this.handleVolumeCheckboxChange = this.handleVolumeCheckboxChange.bind(this);
   }
 
   componentDidMount() {
@@ -84,6 +93,9 @@ export default class ReactionDetailsScheme extends React.Component {
     // Deserialize components when reaction data changes (e.g., after save/reload)
     if (prevProps.reaction !== reaction) {
       this.deserializeReactionMaterialComponents();
+      // Update lock state when reaction changes
+      const lockEquivColumn = this.getReactionEquivLockState(reaction);
+      this.setState({ lockEquivColumn });
     }
   }
 
@@ -149,8 +161,6 @@ export default class ReactionDetailsScheme extends React.Component {
           const sampleComponents = components.map(Component.deserializeData);
           await splitSample.initialComponents(sampleComponents);
 
-          this.setTargetAmountForMixture(splitSample, sampleComponents);
-
           // Set equivalent for mixture relative to reference material
           this.setEquivalentForMixture(splitSample, tagGroup);
 
@@ -167,20 +177,6 @@ export default class ReactionDetailsScheme extends React.Component {
     }
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  setTargetAmountForMixture(splitSample, components) {
-    const comp = components.find((component) => component.amount_mol > 0 && component.molarity_value > 0);
-    if (!comp) return;
-
-    const amountMol = Number(comp.amount_mol);
-    const molarity = Number(comp.molarity_value);
-
-    if (Number.isFinite(amountMol) && Number.isFinite(molarity) && molarity > 0) {
-      splitSample.target_amount_value = amountMol / molarity;
-      splitSample.target_amount_unit = 'l';
-    }
-  }
-
   insertSolventExtLabel(splitSample, materialGroup, externalLabel) {
     if (externalLabel && materialGroup === 'solvents' && !splitSample.external_label) {
       splitSample.external_label = externalLabel;
@@ -194,13 +190,31 @@ export default class ReactionDetailsScheme extends React.Component {
   }
 
   switchEquiv() {
-    const { lockEquivColumn } = this.state;
-    this.setState({ lockEquivColumn: !lockEquivColumn });
+    const { reaction } = this.props;
+    const currentLockState = this.getReactionEquivLockState(reaction);
+    const newLockState = !currentLockState;
+    ComponentActions.toggleReactionEquivLock(newLockState, reaction.id);
+    // Also update local state for UI rendering
+    this.setState({ lockEquivColumn: newLockState });
   }
 
   switchYield = (shouldDisplayYield) => {
     this.setState({ displayYieldField: !!shouldDisplayYield });
   };
+
+  /**
+   * Gets the current lock state for the reaction's equivalent column from ComponentStore.
+   * @param {Reaction} reaction - The reaction object
+   * @returns {boolean} The lock state for the reaction's equivalent column
+   */
+  // eslint-disable-next-line class-methods-use-this
+  getReactionEquivLockState(reaction) {
+    if (!reaction || !reaction.id) {
+      return false;
+    }
+    const componentState = ComponentStore.getState();
+    return ComponentStore.getLockStateForReaction(componentState, reaction.id);
+  }
 
   renderGPDnD() {
     const { reaction } = this.props;
@@ -475,8 +489,15 @@ export default class ReactionDetailsScheme extends React.Component {
   }
 
   updatedReactionForAmountChange(changeEvent) {
+    const { reaction } = this.props;
     const { sampleID, amount } = changeEvent;
-    const updatedSample = this.props.reaction.sampleById(sampleID);
+    const updatedSample = reaction.sampleById(sampleID);
+
+    // When amount_g or amount_l is manually changed by user, clear the reference_component_changed flag
+    // so that amount_mol will be calculated from amount_g instead of using reference component's amount_mol
+    // Only do this for user-initiated changes, not programmatic changes (like during reference component switch)
+    updatedSample.initializeSampleDetails?.();
+    updatedSample.sample_details.reference_component_changed = false;
 
     // normalize to milligram
     updatedSample.setAmountAndNormalizeToGram(amount);
@@ -494,9 +515,6 @@ export default class ReactionDetailsScheme extends React.Component {
     // setAmount should be called first before updating feedstock mole and volume values
     updatedSample.setAmount(amount);
 
-    // Update mixture components' amount_mol based on new total mass and reference component
-    updatedSample.updateMixtureComponentAmounts();
-
     // --- Validate mixture mass ---
     this.warnIfMixtureMassExceeded(updatedSample, updatedSample.amount_g);
 
@@ -504,25 +522,30 @@ export default class ReactionDetailsScheme extends React.Component {
       GasPhaseReactionActions.setCatalystReferenceMole(updatedSample.amount_mol);
     }
 
-    // Reset the reference component changed flag after amount/unit changes are processed
-    if (updatedSample.sample_details) {
-      updatedSample.sample_details.reference_component_changed = false;
-    }
+    // When any amount changes (mass, volume, or mol), recalculate all concentrations
+    // This is necessary because:
+    // 1. If volume (amount_l) changes directly, the combined reaction volume changes
+    // 2. If mass or mol changes, it may affect amount_l (via density/conversion), changing the combined volume
+    // In all cases, all material concentrations need to be recalculated
+    reaction.updateAllConcentrations();
 
     return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample);
   }
 
   updatedReactionForMetricsChange(changeEvent) {
+    const { reaction } = this.props;
     const { sampleID, metricUnit, metricPrefix } = changeEvent;
-    const updatedSample = this.props.reaction.sampleById(sampleID);
+    const updatedSample = reaction.sampleById(sampleID);
+
     updatedSample.setUnitMetrics(metricUnit, metricPrefix);
 
     return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample);
   }
 
   updatedReactionForLoadingChange(changeEvent) {
+    const { reaction } = this.props;
     const { sampleID, amountType } = changeEvent;
-    const updatedSample = this.props.reaction.sampleById(sampleID);
+    const updatedSample = reaction.sampleById(sampleID);
 
     updatedSample.amountType = amountType;
 
@@ -530,8 +553,9 @@ export default class ReactionDetailsScheme extends React.Component {
   }
 
   updatedReactionForAmountTypeChange(changeEvent) {
+    const { reaction } = this.props;
     const { sampleID, amountType } = changeEvent;
-    const updatedSample = this.props.reaction.sampleById(sampleID);
+    const updatedSample = reaction.sampleById(sampleID);
 
     updatedSample.amountType = amountType;
 
@@ -539,8 +563,9 @@ export default class ReactionDetailsScheme extends React.Component {
   }
 
   updatedReactionForCoefficientChange(changeEvent) {
+    const { reaction } = this.props;
     const { sampleID, coefficient } = changeEvent;
-    const updatedSample = this.props.reaction.sampleById(sampleID);
+    const updatedSample = reaction.sampleById(sampleID);
 
     updatedSample.coefficient = coefficient;
     this.updatedReactionForEquivalentChange(changeEvent);
@@ -581,6 +606,11 @@ export default class ReactionDetailsScheme extends React.Component {
     const updatedSample = reaction.sampleById(sampleID);
 
     updatedSample.equivalent = equivalent;
+
+    // When equivalent is 0, reset all amounts to 0
+    if (equivalent === 0 || equivalent === '0') {
+      updatedSample.setAmount({ value: 0, unit: 'g' });
+    }
 
     return this.updatedReactionWithSample(this.updatedSamplesForEquivalentChange.bind(this), updatedSample);
   }
@@ -758,14 +788,17 @@ export default class ReactionDetailsScheme extends React.Component {
       return reaction;
     }
 
+    // Store the current amount_mol and amount_g BEFORE switching reference component
+    // This ensures we preserve the values calculated with the OLD reference component
+    updatedSample.initializeSampleDetails();
+    updatedSample.storePreviousAmountState();
+
     // Set the reference component to true and all others to false
     updatedSample.components.forEach((component, index) => {
       // eslint-disable-next-line no-param-reassign
       component.reference = (index === referenceComponentIndex);
     });
 
-    // Initialize sample details and set reference molecular weight
-    updatedSample.initializeSampleDetails();
     const referenceComponent = updatedSample.components[referenceComponentIndex];
 
     if (referenceComponent?.molecule?.molecular_weight) {
@@ -783,6 +816,13 @@ export default class ReactionDetailsScheme extends React.Component {
 
     // Perform calculations when the reference component changes
     this.calculateMixturePropertiesFromReferenceComponentChange(updatedSample, referenceComponent);
+
+    // If the updated sample is the reference material, update equivalents of all other samples
+    // This ensures that when reference sample's amount_mol changes (due to reference component switch),
+    // other samples' equivalents are recalculated, just like when amount_g or amount_l changes
+    if (reaction.referenceMaterial && updatedSample.id === reaction.referenceMaterial.id) {
+      return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample);
+    }
 
     // Mark the sample as changed for persistence
     updatedSample.changed = true;
@@ -812,7 +852,63 @@ export default class ReactionDetailsScheme extends React.Component {
     const { reaction } = this.props;
     if (!reaction) return;
 
-    // Calculate equivalent relative to the reaction’s reference material since the amount_mol gets updated
+    // Query ComponentStore directly to get the current lock state for this reaction
+    // This ensures we always have the latest state, even if it was changed elsewhere
+    const lockEquivColumn = this.getReactionEquivLockState(reaction);
+
+    // Ensure the sample has the reaction reference for lock state checks
+    if (!updatedSample.belongTo) {
+      updatedSample.belongTo = reaction;
+    }
+
+    if (lockEquivColumn) {
+      this.handleReferenceComponentChangeWithLockedEquiv(updatedSample, referenceComponent);
+    } else {
+      this.handleReferenceComponentChangeWithUnlockedEquiv(updatedSample, referenceComponent, reaction);
+    }
+  }
+
+  /**
+   * Handles reference component change when equivalent is locked.
+   * Keeps amount_mol and equivalent unchanged, recalculates amount_g from preserved amount_mol.
+   * @param {Sample} updatedSample - The mixture sample being updated
+   * @param {Component} referenceComponent - The new reference component
+   */
+  // eslint-disable-next-line class-methods-use-this
+  handleReferenceComponentChangeWithLockedEquiv(updatedSample, referenceComponent) {
+    const preservedAmountMol = updatedSample.sample_details?.previous_amount_mol;
+    const newRelMolWeight = referenceComponent.relative_molecular_weight;
+
+    if (Number.isFinite(preservedAmountMol) && preservedAmountMol > 0
+        && newRelMolWeight && newRelMolWeight > 0) {
+      const newAmountG = preservedAmountMol * newRelMolWeight;
+      updatedSample.setAmount({ value: newAmountG, unit: 'g' });
+    }
+  }
+
+  /**
+   * Handles reference component change when equivalent is NOT locked.
+   * Recalculates amount_mol from preserved amount_g and updates equivalent.
+   * @param {Sample} updatedSample - The mixture sample being updated
+   * @param {Component} referenceComponent - The new reference component
+   * @param {Reaction} reaction - The reaction containing the sample
+   */
+  // eslint-disable-next-line class-methods-use-this
+  handleReferenceComponentChangeWithUnlockedEquiv(updatedSample, referenceComponent, reaction) {
+    const preservedAmountG = updatedSample.sample_details?.previous_amount_g;
+    const newRelMolWeight = referenceComponent.relative_molecular_weight;
+
+    if (updatedSample.amount_unit === 'mol' && Number.isFinite(preservedAmountG) && preservedAmountG > 0
+        && newRelMolWeight && newRelMolWeight > 0) {
+      // Calculate new amount_mol from preserved amount_g and new reference component's relMolWeight
+      const newAmountMol = preservedAmountG / newRelMolWeight;
+      updatedSample.amount_value = newAmountMol;
+    } else if (updatedSample.amount_unit === 'mol' && referenceComponent.amount_mol != null) {
+      // Fallback: use reference component's amount_mol if we can't calculate from preserved amount_g
+      updatedSample.amount_value = referenceComponent.amount_mol;
+    }
+
+    // Calculate equivalent relative to the reaction's reference material since the amount_mol gets updated
     const referenceMaterial = reaction?.referenceMaterial;
     if (referenceMaterial?.amount_mol > 0) {
       updatedSample.calculateEquivalentFromReferenceMaterial?.(referenceMaterial);
@@ -1028,6 +1124,14 @@ export default class ReactionDetailsScheme extends React.Component {
           sample.maxAmount = referenceMaterial.amount_mol * stoichiometryCoeff * sample.molecule_molecular_weight / (sample.purity || 1);
         }
       }
+
+      // For mixture samples, when amount_g changes, update components' amount_mol
+      // This ensures that when the reference sample changes and causes amount_g to update,
+      // the components within the mixture are recalculated based on the new total mass
+      if (sample.isMixture() && sample.hasComponents()) {
+        sample.updateMixtureComponentAmounts();
+      }
+
       return sample;
     });
   }
@@ -1309,6 +1413,125 @@ export default class ReactionDetailsScheme extends React.Component {
     );
   }
 
+  reactionVolume() {
+    const { reaction } = this.props;
+    const isDisabled = !permitOn(reaction) || reaction.isMethodDisabled('volume');
+
+    const metricPrefixes = ['m', 'u', 'n'];
+    // Use default prefix 'm' (milli) - the component handles conversion to base unit (liters)
+    const prefix = 'm';
+
+    if (!isDisabled) {
+      // Pass undefined explicitly when null/empty to avoid default value of 0
+      // The component will show empty instead of "n.d." when value is undefined
+      const volumeValue = (reaction.volume != null && reaction.volume !== '')
+        ? reaction.volume
+        : undefined;
+
+      return (
+        <Form.Group>
+          <Form.Label>Reaction volume</Form.Label>
+          <NumeralInputWithUnitsCompo
+            value={volumeValue}
+            unit="l"
+            metricPrefix={prefix}
+            metricPrefixes={metricPrefixes}
+            precision={5}
+            title="Reaction volume"
+            variant="primary"
+            id="numInput_reaction_volume_l"
+            onChange={(e) => this.updateVolume(e)}
+            onMetricsChange={(e) => this.updateVolume(e)}
+          />
+          <div className="mt-2">
+            <Form.Check
+              type="checkbox"
+              id="use_reaction_volume"
+              checked={reaction.use_reaction_volume || false}
+              onChange={this.handleVolumeCheckboxChange}
+              label={(
+                <span>
+                  Calculate Conc
+                  <OverlayTrigger
+                    placement="top"
+                    overlay={(
+                      <Tooltip id="volume-calculation-tooltip">
+                        <div>
+                          <strong>Concentration Calculation Method:</strong>
+                          <br />
+                          <strong>When checked:</strong>
+                          {' Concentration calculations will use the reaction volume value entered above.'}
+                          <br />
+                          <strong>When unchecked:</strong>
+                          {' Concentration calculations will be based on the sum of volumes from all reaction materials '}
+                          (solvents, starting materials, and reactants).
+                        </div>
+                      </Tooltip>
+                    )}
+                  >
+                    <i className="ms-1 fa fa-info-circle" />
+                  </OverlayTrigger>
+                </span>
+              )}
+            />
+          </div>
+        </Form.Group>
+      );
+    }
+    return null;
+  }
+
+  updateVolume(e) {
+    const { reaction, onInputChange } = this.props;
+    if (e && e.value !== undefined) {
+      // NumeralInputWithUnitsCompo converts the value to base unit (liters) automatically
+      const newVolume = e.value === '' ? null : e.value;
+      onInputChange('volume', newVolume);
+
+      // If a valid reaction volume is set, automatically enable it for concentration calculation
+      // and recalculate concentrations for all materials
+      if (newVolume != null && newVolume > 0) {
+        // Enable the checkbox if not already enabled
+        if (!reaction.use_reaction_volume) {
+          reaction.use_reaction_volume = true;
+          onInputChange('useReactionVolumeForConcentration', true);
+        }
+
+        // Recalculate concentrations for all materials
+        reaction.updateAllConcentrations();
+      }
+    }
+  }
+
+  handleVolumeCheckboxChange(event) {
+    const { checked } = event.target;
+    const { reaction, onInputChange } = this.props;
+
+    // Show notification if checkbox is selected but volume is 0 or null
+    if (checked && (reaction.volume == null || reaction.volume === 0 || reaction.volume === '')) {
+      NotificationActions.add({
+        title: 'Reaction Volume Required',
+        message: 'Please enter a reaction volume value before enabling concentration calculation '
+          + 'based on reaction volume.',
+        level: 'warning',
+        position: 'tc',
+        dismissible: 'button',
+        autoDismiss: 5,
+      });
+      // Don't update the checkbox if volume is invalid
+      return;
+    }
+
+    // Update the reaction property
+    reaction.use_reaction_volume = checked;
+
+    // Trigger update through onInputChange
+    onInputChange('useReactionVolumeForConcentration', checked);
+
+    // Recalculate concentrations when checkbox state changes
+    reaction.updateAllConcentrations();
+  }
+
   render() {
     const {
       lockEquivColumn,
@@ -1326,6 +1549,7 @@ export default class ReactionDetailsScheme extends React.Component {
     } else {
       const { referenceMaterial } = reaction;
       reaction.products.map((sample) => {
+        sample.updateConcentrationFromSolvent(reaction);
         if (typeof (referenceMaterial) !== 'undefined' && referenceMaterial) {
           if (sample.contains_residues) {
             sample.maxAmount = referenceMaterial.amount_g + (referenceMaterial.amount_mol
@@ -1337,7 +1561,12 @@ export default class ReactionDetailsScheme extends React.Component {
 
     // Update concentrations for all materials when volumes change
     if ((typeof (lockEquivColumn) !== 'undefined' && !lockEquivColumn) || !reaction.changed) {
-      reaction.updateAllConcentrations();
+      reaction.starting_materials.forEach((sample) => {
+        sample.updateConcentrationFromSolvent(reaction);
+      });
+      reaction.reactants.forEach((sample) => {
+        sample.updateConcentrationFromSolvent(reaction);
+      });
     }
 
     // if no reference material then mark first starting material
@@ -1431,7 +1660,7 @@ export default class ReactionDetailsScheme extends React.Component {
           onInputChange={onInputChange}
         />
         <Row className="mb-3">
-          <Col sm={4}>
+          <Col sm={3}>
             <Form.Group className="">
               <Form.Label className="text-nowrap">Type (Name Reaction Ontology)</Form.Label>
               <OlsTreeSelect
@@ -1442,11 +1671,14 @@ export default class ReactionDetailsScheme extends React.Component {
               />
             </Form.Group>
           </Col>
-          <Col sm={4}>
+          <Col sm={3}>
             {this.renderRole()}
           </Col>
-          <Col sm={4}>
+          <Col sm={3}>
             {this.reactionVesselSize()}
+          </Col>
+          <Col sm={3}>
+            {this.reactionVolume()}
           </Col>
         </Row>
         <Row className="mb-3">

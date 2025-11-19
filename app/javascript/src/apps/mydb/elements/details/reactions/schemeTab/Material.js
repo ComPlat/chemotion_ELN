@@ -301,7 +301,7 @@ class Material extends Component {
 
   gaseousInputFields(field, material) {
     const gasPhaseData = material.gas_phase_data || {};
-    const { value, unit, isTimeField } = this.getFieldData(field, gasPhaseData);
+    const { value, unit } = this.getFieldData(field, gasPhaseData);
     const readOnly = this.isFieldReadOnly(field);
 
     const updateValue = this.getFormattedValue(value);
@@ -466,7 +466,7 @@ class Material extends Component {
 
   materialVolume(material, className) {
     if (material.contains_residues) {
-      return notApplicableInput();
+      return notApplicableInput(className);
     }
     const {
       density, molarity_value, molarity_unit, has_density, has_molarity
@@ -474,7 +474,7 @@ class Material extends Component {
     const tooltip = has_density || has_molarity ? (
       <Tooltip id="density_info">
         {has_density
-          ? `density = ${density}`
+          ? `density: ${density}`
           : `molarity = ${molarity_value} ${molarity_unit}`}
       </Tooltip>
     ) : (
@@ -646,15 +646,17 @@ class Material extends Component {
   }
 
   handleAmountUnitChange(e, value) {
+    const { materialGroup, onChange } = this.props;
     if (e.value === value) return;
-    if (this.props.onChange && e) {
+
+    if (onChange && e) {
       const event = {
         amount: e,
         type: 'amountUnitChanged',
-        materialGroup: this.props.materialGroup,
+        materialGroup,
         sampleID: this.materialId(),
       };
-      this.props.onChange(event);
+      onChange(event);
     }
   }
 
@@ -703,15 +705,16 @@ class Material extends Component {
   }
 
   handleEquivalentChange(e) {
+    const { onChange, materialGroup } = this.props;
     const equivalent = e.value;
-    if (this.props.onChange && e) {
+    if (onChange && e) {
       const event = {
         type: 'equivalentChanged',
-        materialGroup: this.props.materialGroup,
+        materialGroup,
         sampleID: this.materialId(),
         equivalent,
       };
-      this.props.onChange(event);
+      onChange(event);
     }
   }
 
@@ -792,25 +795,29 @@ class Material extends Component {
   }
 
   handleAddToDesc(material) {
-    if (this.props.onChange) {
+    const { onChange } = this.props;
+
+    if (onChange) {
       const event = {
         type: 'addToDesc',
         paragraph: this.createParagraph(material),
       };
-      this.props.onChange(event);
+      onChange(event);
     }
   }
 
   handleDrySolventChange(event) {
     const value = event.target.checked;
-    if (this.props.onChange) {
+    const { onChange, materialGroup } = this.props;
+
+    if (onChange) {
       const e = {
         type: 'drysolventChanged',
-        materialGroup: this.props.materialGroup,
+        materialGroup,
         sampleID: this.materialId(),
         dry_solvent: value,
       };
-      this.props.onChange(e);
+      onChange(e);
     }
   }
 
@@ -819,7 +826,9 @@ class Material extends Component {
   }
 
   material() {
-    return this.props.material;
+    const { material } = this.props;
+
+    return material;
   }
 
   massField(material, metricPrefixes, reaction, massBsStyle, metric) {
@@ -1021,10 +1030,6 @@ class Material extends Component {
     if (isProduct && sample.maxAmount) {
       theoreticalMassPart = `, max theoretical mass: ${Math.round(sample.maxAmount * 10000) / 10} mg`;
     }
-    let densityPart = '';
-    if (sample.isMixture() && sample.density != null && sample.density > 0) {
-      densityPart = `, density: ${sample.density.toFixed(4)} g/mL`;
-    }
     // Define metricPrefix and currentPrecision
     const metricPrefix = 'n';
     const currentPrecision = 4;
@@ -1032,11 +1037,7 @@ class Material extends Component {
       metPreConv(molecularWeight, metricPrefix, metricPrefix),
       currentPrecision
     );
-    return (
-      `${formatted ? formattedValue : molecularWeight} g/mol`
-      + `${formatted ? '' : densityPart}`
-      + `${formatted ? '' : theoreticalMassPart}`
-    );
+    return `${formatted ? formattedValue : molecularWeight} g/mol${formatted ? '' : theoreticalMassPart}`;
   }
 
   toggleTarget(isTarget) {

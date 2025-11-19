@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2025_11_05_150500) do
+ActiveRecord::Schema.define(version: 202501151333346) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -1160,7 +1160,7 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
     t.jsonb "vessel_size", default: {"unit"=>"ml", "amount"=>nil}
     t.jsonb "log_data"
     t.decimal "volume", precision: 10, scale: 4
-    t.boolean "use_reaction_volume_for_concentration", default: false, null: false
+    t.boolean "use_reaction_volume", default: false, null: false
     t.index ["deleted_at"], name: "index_reactions_on_deleted_at"
     t.index ["rinchi_short_key"], name: "index_reactions_on_rinchi_short_key", order: :desc
     t.index ["rinchi_web_key"], name: "index_reactions_on_rinchi_web_key"

@@ -137,9 +137,18 @@ class SampleComponent extends Component {
     super(props);
 
     const componentState = ComponentStore.getState();
+    const { sample } = this.props;
     this.state = {
-      lockAmountColumn: componentState.lockAmountColumn,
-      lockAmountColumnSolids: componentState.lockAmountColumnSolids,
+      lockAmountColumn: ComponentStore.getLockStateForSample(
+        componentState,
+        'lockAmountColumn',
+        sample?.id
+      ),
+      lockAmountColumnSolids: ComponentStore.getLockStateForSample(
+        componentState,
+        'lockAmountColumnSolids',
+        sample?.id
+      ),
       lockedComponents: componentState.lockedComponents,
     };
 
@@ -328,7 +337,12 @@ class SampleComponent extends Component {
    * @param {Object} state - The new component store state
    */
   onComponentStoreChange(state) {
-    this.setState({ ...state });
+    const { sample } = this.props;
+    this.setState({
+      lockAmountColumn: ComponentStore.getLockStateForSample(state, 'lockAmountColumn', sample?.id),
+      lockAmountColumnSolids: ComponentStore.getLockStateForSample(state, 'lockAmountColumnSolids', sample?.id),
+      lockedComponents: state.lockedComponents,
+    });
   }
 
   /**
@@ -378,21 +392,13 @@ class SampleComponent extends Component {
   }
 
   /**
-   * Returns the material component for this instance.
-   * @returns {Object} The material component
-   */
-  component() {
-    const { material } = this.props;
-
-    return material;
-  }
-
-  /**
    * Returns the ID of the material component.
    * @returns {number|string} The component ID
    */
   componentId() {
-    return this.component().id;
+    const { material } = this.props;
+
+    return material.id;
   }
 
   /**
@@ -492,7 +498,7 @@ class SampleComponent extends Component {
             disabled={!permitOn(sample) || lockAmountColumnSolids}
             onChange={(e) => this.handleAmountChange(e, material.amount_g, '', lockAmountColumnSolids)}
             onMetricsChange={this.handleMetricsChange}
-            variant={material.amount_unit === 'g' ? 'primary' : 'light'}
+            variant={material.error_mass ? 'error' : massBsStyle}
             name="molecular-weight"
           />
         </div>
@@ -547,8 +553,8 @@ class SampleComponent extends Component {
    */
   componentRatio(material) {
     const { sample } = this.props;
-    // Only disable if user cannot edit, concentration is locked, or the material has a truthy reference
-    const isDisabled = !permitOn(sample) || material.isComponentConcentrationLocked() || !!material.reference;
+    // Disable ratio control only when user cannot edit or if component is reference
+    const isDisabled = !permitOn(sample) || !!material.reference;
 
     return (
       <td style={{ verticalAlign: 'top' }}>
@@ -772,7 +778,7 @@ class SampleComponent extends Component {
     const metricPrefixes = ['m', 'n', 'u'];
     const metric = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[0]) > -1) ? material.metrics[0] : 'm';
     const metricMol = getMetricMol(material);
-    const massBsStyle = material.amount_unit === 'g' ? 'success' : 'light';
+    const massBsStyle = material.amount_unit === 'g' ? 'primary' : 'light';
     const metricMolConc = getMetricMolConc(material);
 
     return (

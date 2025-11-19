@@ -4,6 +4,9 @@ import Sample from 'src/models/Sample';
 import ComponentStore from 'src/stores/alt/stores/ComponentStore';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
+// Constants
+const MW_PRECISION = 2;
+
 /**
  * Represents a Component in the mixture, extending Sample.
  */
@@ -30,16 +33,15 @@ export default class Component extends Sample {
   /**
    * Returns a formatted molecular weight string for display, including units.
    *
-   * The value is formatted to a fixed number of decimal places defined by `MWPrecision`.
+   * The value is formatted to a fixed number of decimal places defined by `MW_PRECISION`.
    * If the molecular weight is missing or not a finite number, an empty string is returned.
    *
    * @returns {string} The formatted molecular weight text (e.g., " (180.16 g/mol)") or an empty string.
    */
   get molecularWeightText() {
     const mw = this.molecule?.molecular_weight;
-    const MWPrecision = 2;
     return (typeof mw === 'number' && Number.isFinite(mw))
-      ? ` (${mw.toFixed(MWPrecision)} g/mol)`
+      ? ` (${mw.toFixed(MW_PRECISION)} g/mol)`
       : '';
   }
 
@@ -108,9 +110,8 @@ export default class Component extends Sample {
    * Handles volume input changes and recalculates dependent values.
    * @param {Object} amount - Contains value and unit.
    * @param {number} totalVolume - Total volume of the mixture.
-   * @param {Object} referenceComponent - Reference component for ratio calculations.
    */
-  handleVolumeChange(amount, totalVolume, referenceComponent) {
+  handleVolumeChange(amount, totalVolume) {
     if (!amount.unit || Number.isNaN(amount.value)) return;
 
     this.setVolumeOrMass(amount);
@@ -119,11 +120,7 @@ export default class Component extends Sample {
 
     this.calculateAmount(purity);
 
-    this.updateRatioFromReference(referenceComponent);
-
-    if (totalVolume && totalVolume > 0) {
-      this.calculateTargetConcentration(totalVolume);
-    }
+    this.calculateTargetConcentration(totalVolume);
   }
 
   /**
@@ -175,9 +172,8 @@ export default class Component extends Sample {
    * Handles molar amount change and recalculates dependent fields.
    * @param {{value: number, unit: string}} amount
    * @param {number} totalVolume
-   * @param {Component} referenceComponent
    */
-  handleAmountChange(amount, totalVolume, referenceComponent) {
+  handleAmountChange(amount, totalVolume) {
     if (Number.isNaN(amount.value) || amount.unit !== 'mol') return;
 
     this.amount_mol = amount.value;
@@ -190,11 +186,7 @@ export default class Component extends Sample {
       this.calculateMassFromAmount(purity);
     }
 
-    this.updateRatioFromReference(referenceComponent);
-
-    if (totalVolume && totalVolume > 0) {
-      this.calculateTargetConcentration(totalVolume);
-    }
+    this.calculateTargetConcentration(totalVolume);
   }
 
   /**
@@ -210,12 +202,23 @@ export default class Component extends Sample {
   /**
    * Calculates mass or updates purity for solid based on lock flag.
    * @param {number} purity
+   * @param {boolean} [lockAmountColumnSolids] - Optional lock state. If not provided, will be retrieved from store using parent_id as sampleId.
    */
-  calculateMassFromAmount(purity) {
+  calculateMassFromAmount(purity, lockAmountColumnSolids = null) {
     // mass_g = (amount_mol * molecular_weight) / purity
-    const { lockAmountColumnSolids } = ComponentStore.getState();
+    let lockState = lockAmountColumnSolids;
+    if (lockState === null) {
+      // Try to get lock state from store using parent_id as sample ID
+      try {
+        const componentState = ComponentStore.getState();
+        lockState = ComponentStore.getLockStateForSample(componentState, 'lockAmountColumnSolids', this.parent_id);
+      } catch (e) {
+        // Fallback to false if store is not available
+        lockState = false;
+      }
+    }
 
-    if (lockAmountColumnSolids) {
+    if (lockState) {
       this.updatePurityFromAmount();
     } else {
       this.amount_g = ((this.amount_mol ?? 0) * this.molecule_molecular_weight) / purity;
@@ -231,15 +234,14 @@ export default class Component extends Sample {
    * @param {number} totalVolume
    * @param {string} concType - 'startingConc' or other
    * @param {boolean} lockColumn
-   * @param {Object} referenceComponent
    */
-  handleConcentrationChange(amount, totalVolume, concType, lockColumn, referenceComponent) {
+  handleConcentrationChange(amount, totalVolume, concType, lockColumn) {
     if (!amount.unit || Number.isNaN(amount.value) || amount.unit !== 'mol/l' || lockColumn) { return; }
 
     if (concType === 'startingConc') {
       this.handleStartingConcChange(amount);
     } else {
-      this.handleTargetConcChange(amount, totalVolume, referenceComponent);
+      this.handleTargetConcChange(amount, totalVolume);
     }
   }
 
@@ -256,11 +258,10 @@ export default class Component extends Sample {
    * Sets the target concentration and updates related fields.
    * @param {{value: number, unit: string}} amount
    * @param {number} totalVolume
-   * @param {Component} referenceComponent
    */
-  handleTargetConcChange(amount, totalVolume, referenceComponent) {
+  handleTargetConcChange(amount, totalVolume) {
     this.setTargetConcentration(amount);
-    this.handleTargetConcUpdates(totalVolume, referenceComponent);
+    this.handleTargetConcUpdates(totalVolume);
   }
 
   /**
@@ -347,23 +348,20 @@ export default class Component extends Sample {
    * @param {number} totalVolume
    */
   calculateTargetConcentration(totalVolume) {
-    const lockedConcentration = this.isComponentConcentrationLocked();
+    if (this.isComponentConcentrationLocked()) return;
 
-    if (!lockedConcentration) {
-      // totalConc_mol/l = amount_mol/totalVolume_l
-      const concentration = totalVolume > 0 ? (this.amount_mol ?? 0) / totalVolume : 0;
-      this.molarity_value = concentration;
-      this.concn = concentration;
-      this.molarity_unit = 'M';
-    }
+    const concentration = totalVolume > 0 ? (this.amount_mol ?? 0) / totalVolume : null;
+
+    this.molarity_value = concentration;
+    this.concn = concentration;
+    this.molarity_unit = 'M';
   }
 
   /**
    * Handles updates related to target concentration changes.
    * @param {number} totalVolume - The total volume of the mixture.
-   * @param {Component} referenceComponent - The reference component for ratio-based calculations.
    */
-  handleTargetConcUpdates(totalVolume, referenceComponent) {
+  handleTargetConcUpdates(totalVolume) {
     const purity = this.purity || 1.0;
 
     // Calculate Amount (mol): Both solid and liquid
@@ -387,14 +385,14 @@ export default class Component extends Sample {
    * Total Volume changes -> total concentration changes -> amount changes ->volume changes
    * @param {number} totalVolume - The new total volume.
    */
-  handleTotalVolumeChanges(totalVolume, referenceComponent) {
+  handleTotalVolumeChanges(totalVolume) {
     const lockedConcentration = this.isComponentConcentrationLocked();
 
     if (lockedConcentration) {
       // Case 2: Total volume updated; Total Conc. is locked; thus ratio is also locked
       // Amount recalculated
       // Volume recalculated
-      this.handleTargetConcUpdates(totalVolume, referenceComponent);
+      this.handleTargetConcUpdates(totalVolume);
     } else {
       // Case 3: Total volume updated; Total Conc. is not locked
       // Recalculate the total conc. Amount, Volume stay the same
@@ -503,9 +501,7 @@ export default class Component extends Sample {
     }
 
     // Total concentration calculation
-    if (totalVolume && totalVolume > 0) {
-      this.calculateTargetConcentration(totalVolume);
-    }
+    this.calculateTargetConcentration(totalVolume);
   }
 
   // Case 1(Solids): Mass given -> Calculate Amount
@@ -581,22 +577,17 @@ export default class Component extends Sample {
       this.amount_mol = (previous_amount * this.purity) / prevPurity;
       this.updateRatioFromReference(referenceComponent);
 
-      if (totalVolume && totalVolume > 0) {
-        this.calculateTargetConcentration(totalVolume);
-      }
+      this.calculateTargetConcentration(totalVolume);
     } else if (materialGroup === 'solid') {
       if (lockAmountColumnSolids) {
         // Amount [mol] = amount [g] * purity / molar mass [g/mol]
         this.amount_mol = (this.amount_g * this.purity) / this.molecule_molecular_weight;
         this.updateRatioFromReference(referenceComponent);
 
-        if (totalVolume && totalVolume > 0) {
-          this.calculateTargetConcentration(totalVolume);
-        }
+        this.calculateTargetConcentration(totalVolume);
       } else {
-        // mass is not locked
-        // mass_g = (amount_mol * molecular_weight) / purity
-        this.amount_g = ((this.amount_mol ?? 0) * this.molecule_molecular_weight) / this.purity;
+        // mass is not locked - pass lockAmountColumnSolids to calculateMassFromAmount
+        this.calculateMassFromAmount(this.purity, lockAmountColumnSolids);
       }
     }
   }

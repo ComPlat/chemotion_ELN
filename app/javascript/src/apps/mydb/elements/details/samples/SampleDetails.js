@@ -988,7 +988,7 @@ export default class SampleDetails extends React.Component {
     const timesTag = (
       <i className="fa fa-times" />
     );
-    const hasComponents = !sample.isMixture() || (sample.hasComponents());
+    const hasComponents = !sample.isMixture() || sample.hasComponents();
     const sampleUpdateCondition = !this.sampleIsValid() || !sample.can_update || !hasComponents;
 
     const elementToSave = activeTab === 'inventory' ? 'Chemical' : 'Sample';
@@ -1358,7 +1358,7 @@ export default class SampleDetails extends React.Component {
     let mw;
 
     if (sample.isMixture() && sample.sample_details) {
-      mw = sample.total_molecular_weight;
+      mw = sample.total_mixture_mass_g;
     } else {
       mw = sample.molecule_molecular_weight;
     }
