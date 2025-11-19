@@ -2,10 +2,7 @@ import React, { Component } from 'react';
 import { Accordion } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import { DropTarget } from 'react-dnd';
-import Aviator from 'aviator';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
-import UIStore from 'src/stores/alt/stores/UIStore';
-import { wellplateShowOrNew } from 'src/utilities/routesUtils';
 import EmbeddedWellplate from 'src/apps/mydb/elements/details/researchPlans/wellplatesTab/EmbeddedWellplate';
 
 const target = {
@@ -30,14 +27,6 @@ const collect = (connect, monitor) => ({
 });
 
 class ResearchPlanWellplates extends Component {
-  handleWellplateClick(wellplate) { // eslint-disable-line class-methods-use-this
-    const { currentCollection, isSync } = UIStore.getState();
-    const wellplateID = wellplate.id;
-    const uri = `/${isSync ? 's' : ''}collection/${currentCollection.id}/wellplate/${wellplateID}`;
-    Aviator.navigate(uri, { silent: true });
-    wellplateShowOrNew({ params: { wellplateID } });
-  }
-
   renderDropZone() {
     const { isOver, connectDropTarget } = this.props;
     let className = 'mb-3 dnd-zone';

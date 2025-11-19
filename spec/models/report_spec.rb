@@ -34,9 +34,9 @@ require 'rails_helper'
 
 RSpec.describe Report, type: :report do
   let(:user) { create(:user) }
-  let(:c1) { create(:collection, label: 'C1', user: user, is_shared: false) }
-  let(:r1) { create(:reaction, name: 'r1') }
-  let(:r2) { create(:reaction, name: 'r2') }
+  let(:collection) { create(:collection, user: user) }
+  let(:reaction1) { create(:reaction, name: 'r1', collections: [collection]) } # rubocop:disable RSpec/IndexedLet
+  let(:reaction2) { create(:reaction, name: 'r2', collections: [collection]) } # rubocop:disable RSpec/IndexedLet
   let!(:rp1) do
     create(:report, :downloadable, user: user, file_name: 'ELN_Report_1')
   end
@@ -56,8 +56,8 @@ RSpec.describe Report, type: :report do
   end
 
   before do
-    CollectionsReaction.create!(reaction: r1, collection: c1)
-    CollectionsReaction.create!(reaction: r2, collection: c1)
+    reaction1
+    reaction2
     Delayed::Worker.delay_jobs = false
   end
 
@@ -67,7 +67,7 @@ RSpec.describe Report, type: :report do
 
   describe '.create_reaction_docx' do
     it 'returns a Docx string & file name' do
-      params = { template: 'single_reaction', id: r1.id }
+      params = { template: 'single_reaction', id: reaction1.id }
       docx, file_name = described_class.create_reaction_docx(user, [user.id], params)
       expect(docx.class).to eq(String)
       expect(file_name).to include('ELN_Reaction_')
@@ -87,7 +87,7 @@ RSpec.describe Report, type: :report do
         sample_settings: {},
         reaction_settings: {},
         si_reaction_settings: {},
-        objects: [{ 'id' => r1.id, 'type' => 'reaction' }],
+        objects: [{ 'id' => reaction1.id, 'type' => 'reaction' }],
         img_format: 'png',
         template: template,
         author_id: user.id,

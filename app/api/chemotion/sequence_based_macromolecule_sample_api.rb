@@ -47,7 +47,6 @@ module Chemotion
       desc 'Get a list of SBMM-Samples, filtered by collection'
       params do
         optional :collection_id, type: Integer
-        optional :sync_collection_id, type: Integer
         optional :list_order, type: String, values: %w[sbmm sbmm_sequence]
         optional(:filter, type: Hash) do
           optional :timestamp_field, type: String, default: 'created_at', values: %w[created_at updated_at]
@@ -145,16 +144,15 @@ module Chemotion
             optional :from_date, type: Date
             optional :to_date, type: Date
             optional :collection_id, type: Integer
-            optional :is_sync_to_me, type: Boolean, default: false
           end
           optional :limit, type: Integer, desc: 'Limit number of SBMM samples'
         end
 
         before do
-          cid = fetch_collection_id_w_current_user(params[:ui_state][:collection_id], params[:ui_state][:is_sync_to_me])
-          @sbmm_samples = SequenceBasedMacromoleculeSample.by_collection_id(cid).by_ui_state(params[:ui_state])
+          collection = Collection.accessible_for(current_user).find(params[:ui_state][:collection_id])
+          @sbmm_samples = SequenceBasedMacromoleculeSample.by_collection_id(collection).by_ui_state(params[:ui_state])
                                                           .for_user(current_user.id)
-          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, @sbmm_samples).read?
+          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, @sbmm_samples).read_all?
         end
 
         # we are using POST because the fetchers don't support GET requests with body data
@@ -176,7 +174,6 @@ module Chemotion
               optional :excluded_ids, type: Array
             end
             requires :currentCollectionId, type: Integer
-            optional :isSync, type: Boolean, default: false
           end
         end
         post do
