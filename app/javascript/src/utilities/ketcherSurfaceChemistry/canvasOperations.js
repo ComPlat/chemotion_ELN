@@ -269,55 +269,62 @@ const replaceAliasWithRG = async (data) => {
 // prepare svg
 // TODO: fix or remove after image fixes from ketcher epam
 const prepareSvg = async (editor) => {
-  const regex = /source-\d+/;
-  const A_PATH_ONE = '';
-  const A_PATH_TWO = '';
-  const struct = await replaceAliasWithRG({ ...latestData });
-  const generateImageParams = { outputFormat: 'svg' };
-  const parser = new DOMParser();
-  const data = JSON.stringify(struct);
-  const svgBlob = await editor.structureDef.editor.generateImage(data, generateImageParams);
-  const svgString = await new Response(svgBlob).text();
-  const doc = parser.parseFromString(svgString, 'image/svg+xml');
-  const uses = doc.querySelectorAll('*');
-  const glyphs = doc.querySelectorAll("g[id^='glyph-']");
-  const matchingGlyphs = [];
-  const moves = [];
+  try {
+    const regex = /source-\d+/;
+    const A_PATH_ONE = '';
+    const A_PATH_TWO = '';
+    const generateImageParams = {outputFormat: 'svg'};
+    const parser = new DOMParser();
+    const canvasDataMol = await editor.structureDef.editor.getMolfile('V2000');
 
-  glyphs.forEach((glyph) => {
-    const path = glyph.querySelector('path');
-    if (!path) return;
+    const svgBlob = await editor.structureDef.editor.generateImage(canvasDataMol, generateImageParams)
+      .catch((err) => { throw new Error(err); });
 
-    const d = path.getAttribute('d').trim();
-    if (d.includes(A_PATH_ONE.trim()) || d.includes(A_PATH_TWO.trim())) {
-      matchingGlyphs.push(glyph.getAttribute('id'));
-    }
-  });
+    const svgString = await new Response(svgBlob).text();
+    const doc = parser.parseFromString(svgString, 'image/svg+xml');
+    const uses = doc.querySelectorAll('*');
+    const glyphs = doc.querySelectorAll("g[id^='glyph-']");
+    const matchingGlyphs = [];
+    const moves = [];
 
-  const groups = doc.querySelectorAll('g');
-  groups.forEach((group) => {
-    const usesList = group.querySelectorAll('*');
-    if (usesList.length === 2) {
-      const isGroupMatching = [];
-      usesList.forEach((use) => {
-        const useEach = use.getAttributeNS('http://www.w3.org/1999/xlink', 'href').replace('#', '');
-        isGroupMatching.push(matchingGlyphs.indexOf(useEach) !== -1);
-      });
-      usesList.forEach((use) => {
-        use.style.fill = 'transparent';
-      });
-    }
-  });
+    glyphs.forEach((glyph) => {
+      const path = glyph.querySelector('path');
+      if (!path) return;
 
-  uses.forEach((useElement) => {
-    const xlinkHref = useElement.getAttributeNS('http://www.w3.org/1999/xlink', 'href');
-    if (regex.test(xlinkHref)) {
-      // useElement.remove();
-      moves.push(useElement);
-    }
-  });
-  const updatedSVGString = new XMLSerializer().serializeToString(doc);
-  return updatedSVGString;
+      const d = path.getAttribute('d').trim();
+      if (d.includes(A_PATH_ONE.trim()) || d.includes(A_PATH_TWO.trim())) {
+        matchingGlyphs.push(glyph.getAttribute('id'));
+      }
+    });
+
+    const groups = doc.querySelectorAll('g');
+    groups.forEach((group) => {
+      const usesList = group.querySelectorAll('*');
+      if (usesList.length === 2) {
+        const isGroupMatching = [];
+        usesList.forEach((use) => {
+          const useEach = use.getAttributeNS('http://www.w3.org/1999/xlink', 'href')?.replace('#', '');
+          isGroupMatching.push(matchingGlyphs.indexOf(useEach) !== -1);
+        });
+        // NOT TO BE REMOVED, JUST HIDE
+        // usesList.forEach((use) => {
+        //   use.style.fill = 'transparent';
+        // });
+      }
+    });
+
+    uses.forEach((useElement) => {
+      const xlinkHref = useElement.getAttributeNS('http://www.w3.org/1999/xlink', 'href');
+      if (regex.test(xlinkHref)) {
+        // useElement.remove();
+        moves.push(useElement);
+      }
+    });
+    const updatedSVGString = new XMLSerializer().serializeToString(doc);
+    return { svg: updatedSVGString, message: null };
+  } catch (e) {
+    return { svg: null, message: e?.message || 'Unknown error in prepareSvg' };
+  }
 };
 
 /* istanbul ignore next */
@@ -378,8 +385,12 @@ const onTemplateMove = async (editor, recenter = false) => {
   let imageNodes = [];
   imageNodes = await placeAtomOnImage(molCopy, imageListCopy);
   latestData.root.nodes = imageNodes;
-  const textNodes = await placeTextOnAtoms(molCopy, textListCopy);
-  latestData.root.nodes = textNodes;
+
+  if (textListCopy.length > 0) {
+    const textNodes = await placeTextOnAtoms(molCopy, textListCopy);
+    latestData.root.nodes = textNodes;
+  }
+
   await saveMoveCanvas(editor, latestData, true, false, recenter);
 
   // clear required
@@ -390,27 +401,34 @@ const onTemplateMove = async (editor, recenter = false) => {
   textListCopyContainerSetter([]);
 };
 
+const attachSVG = async (data, editor) => ({
+  ...data,
+  svgElement: await prepareSvg(editor)
+});
+
 const onFinalCanvasSave = async (editor, iframeRef) => {
+  let ket2Lines = [];
+  let textNodesFormula = '';
+
   try {
-    let textNodesFormula = '';
-    let ket2Lines = [];
     await centerPositionCanvas(editor);
-    const canvasDataMol = await editor.structureDef.editor.getMolfile('V2000');
+    const canvasDataMol = await editor.structureDef.editor.getMolfile('V2000')
+      .catch((err) => { throw new Error(err); });
     await reArrangeImagesOnCanvas(iframeRef); // assemble image on the canvas
     ket2Lines = await arrangePolymers(canvasDataMol, editor); // polymers added
     await arrangeTextNodes(ket2Lines); // text node
     if (textList?.length) textNodesFormula = await assembleTextDescriptionFormula(ket2Lines, editor); // process string labels
     ket2Lines.push(KET_TAGS.fileEndIdentifier);
-    const svgElement = await prepareSvg(editor);
     resetStore();
-    return {
+    return attachSVG({
       ket2Molfile: ket2Lines.join('\n'),
-      svgElement,
       textNodesFormula,
-    };
+    }, editor);
   } catch (e) {
-    console.error('onSaveFileK2SC', e);
-    return e.message;
+    return attachSVG({
+      ket2Molfile: '',
+      textNodesFormula: '',
+    }, editor);
   }
 };
 
