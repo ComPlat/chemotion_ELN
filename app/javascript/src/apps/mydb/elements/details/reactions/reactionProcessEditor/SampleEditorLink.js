@@ -1,5 +1,5 @@
 import React from 'react'
-import { Tooltip, OverlayTrigger, Nav } from 'react-bootstrap';
+import { Tooltip, OverlayTrigger } from 'react-bootstrap';
 
 const SampleEditorLink = ({ sample }) => {
 	return (
@@ -8,9 +8,9 @@ const SampleEditorLink = ({ sample }) => {
 				placement="bottom"
 				overlay={<Tooltip id="editReaction">Edit Sample</Tooltip>}
 			>
-				<Nav.Link href={sample.editor_link_target} target="_blank" className="btn btn-xs btn-success button-right">
+				<a href={sample.editor_link_target} target="_blank" className="btn btn-xxsm btn-success button-right">
 					<i className="fa fa-edit" />
-				</Nav.Link>
+				</a>
 			</OverlayTrigger>
 		</>
 	)

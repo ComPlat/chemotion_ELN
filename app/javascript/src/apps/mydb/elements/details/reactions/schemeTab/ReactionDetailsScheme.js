@@ -361,13 +361,18 @@ export default class ReactionDetailsScheme extends React.Component {
         );
         break;
       case 'reactionStepChanged':
-        this.onReactionChange(
+        onReactionChange(
           this.updatedReactionForReactionStepChange(changeEvent)
         );
         break;
       case 'reactionIntermediateTypeChanged':
-        this.onReactionChange(
+        onReactionChange(
           this.updatedReactionForReactionIntermediateTypeChange(changeEvent)
+        );
+        break;
+      case 'showLabelChange':
+        onReactionChange(
+          this.updatedReactionForShowLabelChange(changeEvent)
         );
         break;
       default:
@@ -649,13 +654,13 @@ export default class ReactionDetailsScheme extends React.Component {
     return this.updatedReactionWithSample(this.updatedSamplesForConversionRateChange.bind(this), updatedSample);
   }
 
-  updatedReactionForReactionStepChange(changeEvent) {
-    const { sampleID, reactionStep } = changeEvent;
+  updatedReactionForShowLabelChange(changeEvent) {
+    const { sampleID, show_label } = changeEvent;
     const updatedSample = this.props.reaction.sampleById(sampleID);
 
-    updatedSample.reaction_step = reactionStep;
+    updatedSample.show_label = show_label;
 
-    return this.updatedReactionWithSample(this.updatedSamplesForReactionStepChange.bind(this), updatedSample);
+    return this.updatedReactionWithSample(this.updatedSamplesForShowLabelChange.bind(this), updatedSample);
   }
 
   updatedReactionForReactionIntermediateTypeChange(changeEvent) {
@@ -958,8 +963,13 @@ export default class ReactionDetailsScheme extends React.Component {
     });
   }
 
-  updatedSamplesForShowLabelChange(samples) {
-    return samples;
+  updatedSamplesForShowLabelChange(samples, updatedSample) {
+    return samples.map((sample) => {
+      if (sample.id === updatedSample.id) {
+        sample.show_label = updatedSample.show_label;
+      }
+      return sample;
+    });
   }
 
   /* eslint-disable class-methods-use-this, no-param-reassign */
@@ -1247,7 +1257,7 @@ export default class ReactionDetailsScheme extends React.Component {
             dropSample={this.dropSample}
             // showLoadingColumn={!!reaction.hasPolymers()}
             onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
-            // switchEquiv={this.switchEquiv}
+            switchEquiv={this.switchEquiv}
             // lockEquivColumn={lockEquivColumn}
             headIndex={reaction.intermediate_samples.length}
           />

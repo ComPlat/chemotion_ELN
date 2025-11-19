@@ -180,7 +180,6 @@ class Material extends Component {
             size="sm"
             precision={1}
             value={material.reaction_step}
-            onChange={e => this.handleStepChange(e)}
           />
         </td>
       </OverlayTrigger>
@@ -209,13 +208,13 @@ class Material extends Component {
   materialShowLabel(material) {
     return (
       <Button
-        className="p-1 ms-1"
+        className="reaction-material__label-structure-input"
         onClick={e => this.handleShowLabelChange(e)}
         variant={material.show_label ? 'primary' : 'light'}
         size="sm"
         title={material.show_label ? 'Switch to structure' : 'Switch to label'}
       >
-        {material.show_label ? 'l' : 's'}
+        {material.show_label ? 'L' : 'S'}
       </Button>
     );
   }
@@ -574,12 +573,11 @@ class Material extends Component {
     }
   }
 
-  handleStepChange(e) {
-    const reactionStep = e.value;
+  handleintermediateTypeChange(intermediateType) {
     if (this.props.onChange) {
       const event = {
-        reactionStep,
-        type: 'reactionStepChanged',
+        intermediateType,
+        type: 'reactionIntermediateTypeChanged',
         materialGroup: this.props.materialGroup,
         sampleID: this.materialId()
       };
@@ -587,11 +585,11 @@ class Material extends Component {
     }
   }
 
-  handleintermediateTypeChange(intermediateType) {
+  handleShowLabelChange(intermediateType) {
     if (this.props.onChange) {
       const event = {
         intermediateType,
-        type: 'reactionIntermediateTypeChanged',
+        type: 'showLabelChange',
         materialGroup: this.props.materialGroup,
         sampleID: this.materialId()
       };
@@ -834,61 +832,6 @@ class Material extends Component {
     return `molar mass: ${molecularWeight} g/mol` + theoreticalMassPart;
   }
 
-  intermediateMaterial() {
-    const { material, deleteMaterial, connectDragSource, connectDropTarget, reaction } = this.props;
-    const massBsStyle = material.amount_unit === 'g' ? 'success' : 'default';
-    // const mol = material.amount_mol;
-    const mw = material.decoupled ?
-      (material.molecular_mass) : (material.molecule && material.molecule.molecular_weight);
-
-    const inputsStyle = {
-      paddingRight: 2,
-      paddingLeft: 2,
-    };
-
-    const metricPrefixes = ['m', 'n', 'u'];
-    const metric = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[0]) > -1) ? material.metrics[0] : 'm';
-
-    return (
-      <tr className="intermediate-material">
-        {compose(connectDragSource, connectDropTarget)(
-          <td className={`drag-source ${permitCls(reaction)}`} >
-            <span className="text-info fa fa-arrows" />
-          </td>,
-          { dropEffect: 'copy' }
-        )}
-
-          <td style={{ width: '27%', maxWidth: '50px' }}>
-            {this.materialNameWithIupac(material)}
-          </td>
-
-          <td style={{ inputsStyle }}>
-            {this.materialShowLabel(material)}
-          </td>
-
-          {this.materialStep(material)}
-          {this.materialIntermediateType(material)}
-
-          <td style={{ width: '15%', maxWidth: '50px' }}>
-            {this.amountField(material, metricPrefixes, reaction, massBsStyle, metric)}
-          </td>
-
-          {this.materialVolume(material)}
-
-          <td>
-            <Button
-              disabled={!permitOn(reaction)}
-              variant="danger"
-              size="sm"
-              onClick={() => deleteMaterial(material)}
-            >
-              <i className="fa fa-trash-o" />
-            </Button>
-          </td>
-        </tr>
-    );
-  }
-
   toggleTarget(isTarget) {
     if (this.props.materialGroup !== 'products') {
       this.handleAmountTypeChange(!isTarget ? 'target' : 'real');
@@ -964,6 +907,68 @@ class Material extends Component {
           disabled={!permitOn(reaction)}
           onClick={() => deleteMaterial(material)}
         />
+      </div>
+    );
+  }
+
+  intermediateMaterial() {
+    const {
+      material,
+      deleteMaterial,
+      reaction,
+      dropRef,
+    } = this.props;
+
+    // const mw = material.decoupled ?
+    //   (material.molecular_mass) : (material.molecule && material.molecule.molecular_weight);
+    // const drySolvTooltip = <Tooltip>Dry Solvent</Tooltip>;
+    const massBsStyle = material.amount_unit === 'g' ? 'primary' : 'light';
+    const metricPrefixes = ['m', 'n', 'u'];
+    const metric = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[0]) > -1) ? material.metrics[0] : 'm';
+    const metricMol = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[2]) > -1) ? material.metrics[2] : 'm';
+
+    return (
+      <div ref={dropRef} className={this.rowClassNames()}>
+        {this.dragHandle()}
+        {this.materialNameWithIupac(material)}
+        <div className="d-flex gap-2 py-1 align-items-start">
+          {this.materialShowLabel(material)}
+          <div className="reaction-material__intermediate-label-input">
+            {material.external_label}
+          </div>
+          <div className="reaction-material__reaction-step-input">
+            {this.materialStep(material)}
+          </div>
+          <div className="reaction-material__intermediate-type-input">
+            {this.materialIntermediateType(material)}
+
+          </div>
+
+          <div className="reaction-material__amount-input">
+            {console.log(material)}
+            {this.massField(material, metricPrefixes, reaction, massBsStyle, metric)}
+            {this.materialVolume(material, 'reaction-material__volume-input')}
+            <NumeralInputWithUnitsCompo
+              value={material.amount_mol}
+              className="reaction-material__molarity-input"
+              unit="mol"
+              metricPrefix={metricMol}
+              metricPrefixes={metricPrefixes}
+              precision={4}
+              disabled={!permitOn(reaction)
+                  || (!material.reference && this.props.lockEquivColumn)
+                || !material}
+              onChange={e => this.handleAmountUnitChange(e, material.amount_mol)}
+              onMetricsChange={this.handleMetricsChange}
+              variant={material.amount_unit === 'mol' ? 'primary' : 'light'}
+              size="sm"
+            />
+          </div>
+          <DeleteButton
+            disabled={!permitOn(reaction)}
+            onClick={() => deleteMaterial(material)}
+          />
+        </div>
       </div>
     );
   }
@@ -1113,10 +1118,8 @@ class Material extends Component {
 
   render() {
     const { materialGroup } = this.props;
-
-    const sp = materialGroup === 'solvents' || materialGroup === 'purification_solvents';
     let component;
-    if (sp) {
+    if (['solvents', 'purification_solvents'].includes(materialGroup)) {
       component = this.solventMaterial();
     } else if (materialGroup === 'intermediate_samples') {
       component = this.intermediateMaterial();
