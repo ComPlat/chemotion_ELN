@@ -152,10 +152,10 @@ const findTextNodesNotConnectedWithTemplates = (updatedTextList) => {
 };
 
 // place text nodes on atom with matching aliases
-const placeTextOnAtoms = async (mols_) => {
+const placeTextOnAtoms = async () => {
   try {
     const updatedTextList = [];
-    for (const item of mols_) {
+    for (const item of mols) {
       for (const atom of latestData[item].atoms) {
         const textNodeKey = textNodeStruct[atom.alias];
 

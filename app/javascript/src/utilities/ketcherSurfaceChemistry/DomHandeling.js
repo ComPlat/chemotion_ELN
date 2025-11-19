@@ -64,6 +64,53 @@ const makeTransparentByTitle = (iframeRef) => {
   });
 };
 
+const addGreenCircleOnCanvasImages = async (imageElements, iframeDocument = null, iframeRef = null) => {
+  imageElements.forEach((img) => {
+    // Create circle overlay element
+    const circle = iframeDocument.createElement('div');
+    circle.className = '__green-circle-overlay';
+    circle.style.position = 'absolute';
+    circle.style.border = '1px solid rgb(22,119,130)';
+    circle.style.borderRadius = '50%';
+    circle.style.pointerEvents = 'none';
+    circle.style.opacity = '0';
+    circle.style.transition = 'opacity 0.15s';
+    circle.style.zIndex = '999999'; // above canvas
+    circle.style.background = 'transparent';
+
+    // Append circle to iframe body
+    iframeDocument.body.appendChild(circle);
+
+    const positionCircle = () => {
+      const rect = img.getBoundingClientRect();
+
+      const size = 26; // match r=13 → 26px diameter
+
+      circle.style.width = `${size}px`;
+      circle.style.height = `${size}px`;
+
+      circle.style.left = `${rect.left + iframeRef.current.contentWindow.scrollX
+        + rect.width / 2 - size / 2}px`;
+
+      circle.style.top = `${rect.top + iframeRef.current.contentWindow.scrollY
+        + rect.height / 2 - size / 2}px`;
+    };
+
+    img.addEventListener('mouseenter', () => {
+      positionCircle();
+      circle.style.opacity = '1';
+    });
+
+    img.addEventListener('mouseleave', () => {
+      circle.style.opacity = '0';
+    });
+
+    // Keep circle aligned on resize/scroll inside iframe
+    iframeRef.current.contentWindow.addEventListener('scroll', positionCircle);
+    iframeRef.current.contentWindow.addEventListener('resize', positionCircle);
+  });
+};
+
 /* istanbul ignore next */
 // helper function to update DOM images using layering technique
 const updateImagesInTheCanvas = async (iframeRef) => {
@@ -79,6 +126,8 @@ const updateImagesInTheCanvas = async (iframeRef) => {
       imageElements.forEach((img) => {
         svg?.appendChild(img);
       });
+      iframeDocument.querySelectorAll('.__green-circle-overlay').forEach((el) => el.remove());
+      await addGreenCircleOnCanvasImages(imageElements, iframeDocument, iframeRef);
     }
     ImagesToBeUpdatedSetter(false);
   }
@@ -106,6 +155,7 @@ const updateTemplatesInTheCanvas = async (iframeRef) => {
     }
   }
 };
+
 // helper function to handle ketcher undo DOM element
 const undoKetcher = (editor) => {
   try {
@@ -236,11 +286,11 @@ const attachClickListeners = (iframeRef, buttonEvents) => {
     if (isTextModal
       && textModalPopup
       && !textModalPopup.querySelector('.appended-text')
-      && canvasSelection?.images.length > 0
+      && (canvasSelection?.images?.length ?? 0) > 0
     ) {
       const newText = document.createElement('div');
       newText.classList.add('appended-text');
-      newText.textContent = 'Input structure examples: Pt 1wt.% Pt, γ-Al2O3';
+      newText.textContent = 'Input structure examples: Pt 1wt.% Pt or γ-Al2O3';
       textModalPopup.appendChild(newText);
       canvasSelectionsSetter(null);
     }
