@@ -27,15 +27,6 @@ module Chemotion
       route_param :sample_id do
         get do
           components = Component.where(sample_id: params[:sample_id])
-          molecule_ids = components
-                         .filter_map { |component| component.component_properties['molecule_id'] }.uniq
-          molecules = Molecule.where(id: molecule_ids).index_by(&:id)
-
-          components.each do |component|
-            molecule_id = component.component_properties['molecule_id']
-            component.component_properties['molecule'] = molecules[molecule_id]
-          end
-
           present components, with: Entities::ComponentEntity
         end
       end
@@ -71,7 +62,7 @@ module Chemotion
         authorize_sample_update!(sample)
 
         ActiveRecord::Base.transaction do
-          Usecases::Components::Create.new(sample.id, params[:components]).execute!
+          Usecases::Components::Create.new(sample, params[:components]).execute!
           Usecases::Components::DeleteRemovedComponents.new(sample.id, params[:components]).execute!
         end
         present Component.where(sample_id: sample.id), with: Entities::ComponentEntity
