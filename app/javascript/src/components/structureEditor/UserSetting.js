@@ -14,7 +14,12 @@ function UserSetting() {
 
   const initProfile = () => {
     UsersFetcher.fetchProfile().then((result) => {
-      setEditor((prev) => ({ ...prev, default: (result?.data?.default_structure_editor || DEFAULT_EDITOR) }));
+      const userDefault = result?.data?.default_structure_editor || DEFAULT_EDITOR;
+      setEditor({
+        default: userDefault,
+        selected: userDefault,
+        changing: false
+      });
     }).catch((error) => {
       console.log(error);
       setEditor((prev) => ({ ...prev, default: DEFAULT_EDITOR }));
@@ -34,7 +39,7 @@ function UserSetting() {
     const seenLabels = new Set();
     const result = [];
 
-    const firstOption = { value: 'ketcher', label: 'ketcher' };
+    const firstOption = { value: '', label: 'Select an option' };
     if (!seenLabels.has(firstOption.label)) {
       result.push(firstOption);
       seenLabels.add(firstOption.label);
@@ -92,7 +97,11 @@ function UserSetting() {
               name="editor selection"
               options={options}
               onChange={onChange}
-              value={options.find(({value}) => value == editor?.selected)}
+              value={
+                  options.find(({ value }) => value === editor?.selected)
+                  || options.find(({ value }) => value === editor?.default)
+                  || options[0]
+                }
             />
           </Col>
         </Row>

@@ -1,5 +1,5 @@
 /* eslint-disable max-len */
-import { PropTypes } from 'mobx-react';
+import PropTypes from 'prop-types';
 import React, { useState, useEffect } from 'react';
 import {
   Accordion, Button, Card, Form, Modal, Spinner
@@ -287,7 +287,7 @@ export {
 
 PolymerListModal.propTypes = {
   loading: PropTypes.bool,
-  title: PropTypes.String,
+  title: PropTypes.string,
   onCloseClick: PropTypes.func,
   onShapeSelection: PropTypes.func
 };

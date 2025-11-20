@@ -178,6 +178,7 @@ class Molecule < ApplicationRecord
   end
 
   def attach_svg(svg_data)
+    svg_data = svg_data.to_s if svg_data.is_a?(Nokogiri::XML::Document)
     return unless svg_data =~ /\A\s*<\?xml/
 
     svg_file_name = if is_partial
