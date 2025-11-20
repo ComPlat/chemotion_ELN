@@ -1050,10 +1050,10 @@ export default class SampleForm extends React.Component {
                   />
                 </td>
                 <td>{row.weightRatioCalcProcessed}</td>
-                <td>{row.molarRatioCalcMM || '-'}</td>
-                <td>{row.weightRatioCalcMM || '-'}</td>
-                <td>{totalMolarCalc}</td>
-                <td>{totalMolarExp}</td>
+                <td>{row.molarRatioCalcMM !== undefined && row.molarRatioCalcMM !== null ? row.molarRatioCalcMM : '-'}</td>
+                <td>{row.weightRatioCalcMM !== undefined && row.weightRatioCalcMM !== null ? row.weightRatioCalcMM : '-'}</td>
+                <td>{row.molarRatioExpPercent !== undefined && row.molarRatioExpPercent !== '-' ? row.molarRatioExpPercent : '-'}</td>
+                <td>{row.molarRatioCalcPercent !== undefined && row.molarRatioCalcPercent !== '-' ? row.molarRatioCalcPercent : '-'}</td>
               </tr>
             ))}
           </tbody>

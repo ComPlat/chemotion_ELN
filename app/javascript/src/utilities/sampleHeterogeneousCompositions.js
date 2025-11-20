@@ -12,7 +12,6 @@ const buildHeteroMaterialRows = (components) => {
       name,
       parseComponentSource,
       calcWeightRatioWithoutWeight,
-      weightRatioBasedExpCalc,
     } = new Component(item);
 
     // Only process heterogeneous materials
@@ -26,18 +25,28 @@ const buildHeteroMaterialRows = (components) => {
 
     const { weightRatioCalc, component, source: sourceAlias } = parseComponentSource(source);
 
-    const weightRatioCalcProcessed =
-      weightRatioCalc > 0 ? weightRatioCalc : calcWeightRatioWithoutWeight(components);
+    // Ensure weightRatioCalc is a float
+    const weightRatioCalcFloat = parseFloat(weightRatioCalc) || 0;
+    const weightRatioCalcProcessed = weightRatioCalcFloat > 0
+      ? weightRatioCalcFloat
+      : parseFloat(calcWeightRatioWithoutWeight(components)) || 0;
 
-    const molarRatioCalcMM = parseFloat(
-      weightRatioBasedExpCalc(weightRatioCalcProcessed, molarMassStateValue)
-    );
-    const weightRatioCalcMM = parseFloat(
-      weightRatioBasedExpCalc(weightRatioExpStateValue, molarMassStateValue)
-    );
+    // Calculate molar ratio (weight ratio / molar mass) for summing totals
+    // This represents moles = weight / molar_mass
+    // Ensure all calculations maintain float precision
+    const molarRatioCalcMM = molarMassStateValue > 0
+      ? parseFloat((weightRatioCalcProcessed / molarMassStateValue).toFixed(10))
+      : 0.0;
+    const molarRatioExpMM = molarMassStateValue > 0
+      ? parseFloat((weightRatioExpStateValue / molarMassStateValue).toFixed(10))
+      : 0.0;
 
-    totalMolarCalc += molarRatioCalcMM || 0;
-    totalMolarExp += weightRatioCalcMM || 0;
+    // Accumulate totals as floats
+    totalMolarCalc = parseFloat((totalMolarCalc + (molarRatioCalcMM || 0.0)).toFixed(10));
+    totalMolarExp = parseFloat((totalMolarExp + (molarRatioExpMM || 0.0)).toFixed(10));
+
+    // Calculate Column 8: weight ratio (calc)/molar mass = weightRatioCalcProcessed / molarMassStateValue
+    const weightRatioCalcMMValue = molarRatioCalcMM; // This is already weightRatioCalcProcessed / molarMassStateValue
 
     rowsData.push({
       index,
@@ -47,21 +56,56 @@ const buildHeteroMaterialRows = (components) => {
       molar_mass,
       weight_ratio_exp,
       weightRatioCalcProcessed,
-      molarRatioCalcMM,
-      weightRatioCalcMM,
+      molarRatioCalcMM: weightRatioCalcMMValue, // Column 8: weight ratio (calc)/molar mass
+      // Store original for percentage and column 9 calculations
+      originalMolarRatioCalcMM: molarRatioCalcMM,
+      originalMolarRatioExpMM: molarRatioExpMM,
+      molarMassStateValue, // Store for column 9 calculation
     });
   });
 
-  // Compute molar ratio percentages per row
-  const rowsWithPercentages = rowsData.map((row) => ({
-    ...row,
-    molarRatioCalcPercent:
-      totalMolarCalc > 0 ? (row.molarRatioCalcMM / totalMolarCalc).toFixed(3) : '-',
-    molarRatioExpPercent:
-      totalMolarExp > 0 ? (row.weightRatioCalcMM / totalMolarExp).toFixed(3) : '-',
-  }));
+  // Compute molar ratio percentages per row and Column 9: molar ratio (calc)/molar mass
+  // Column 9 uses the molar ratio calc percentage (as decimal) divided by molar mass
+  // Ensure all intermediate calculations maintain float precision
+  const rowsWithPercentages = rowsData.map((row) => {
+    const molarRatioCalcPercentDecimal = totalMolarCalc > 0
+      ? parseFloat((row.originalMolarRatioCalcMM / totalMolarCalc).toFixed(10))
+      : 0.0;
+    const molarRatioExpPercentDecimal = totalMolarExp > 0
+      ? parseFloat((row.originalMolarRatioExpMM / totalMolarExp).toFixed(10))
+      : 0.0;
 
-  return { rowsData: rowsWithPercentages, totalMolarCalc, totalMolarExp };
+    // Column 9: molar ratio (calc)/molar mass
+    // Formula: Weight ratio exp / Molar Mass
+    // This is: weight_ratio_exp / molarMassStateValue
+    let weightRatioCalcMM = null;
+    if (row.molarMassStateValue > 0) {
+      // Calculate as: experimental weight ratio / molar mass
+      const weightRatioExp = parseFloat(row.weight_ratio_exp) || 0.0;
+      weightRatioCalcMM = parseFloat((weightRatioExp / row.molarMassStateValue).toFixed(10));
+    }
+
+    // Format all decimal values with toFixed(3)
+    return {
+      ...row,
+      molarRatioCalcPercent:
+        totalMolarCalc > 0 ? parseFloat(molarRatioCalcPercentDecimal.toFixed(3)) : '-',
+      molarRatioExpPercent:
+        totalMolarExp > 0 ? parseFloat(molarRatioExpPercentDecimal.toFixed(3)) : '-',
+      molarRatioCalcMM: row.molarRatioCalcMM !== undefined && row.molarRatioCalcMM !== null
+        ? parseFloat(row.molarRatioCalcMM.toFixed(3))
+        : 0.0, // Column 8: weight ratio (calc)/molar mass
+      weightRatioCalcMM: weightRatioCalcMM !== null
+        ? parseFloat(weightRatioCalcMM.toFixed(3))
+        : null, // Column 9: molar ratio (calc)/molar mass
+    };
+  });
+
+  return {
+    rowsData: rowsWithPercentages,
+    totalMolarCalc: parseFloat(totalMolarCalc.toFixed(3)),
+    totalMolarExp: parseFloat(totalMolarExp.toFixed(3)),
+  };
 };
 
 export default buildHeteroMaterialRows;
