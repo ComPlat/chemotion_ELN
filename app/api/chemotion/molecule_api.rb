@@ -294,8 +294,11 @@ module Chemotion
       end
       post :svg do
         svg = params[:svg_file]
-        processor = Chemotion::KetcherSvgProcessor.new(svg) unless params[:is_chemdraw]
-        processor = Chemotion::ChemdrawSvgProcessor.new svg if params[:is_chemdraw]
+        processor = if params[:is_chemdraw]
+                      Chemotion::ChemdrawSvgProcessor.new(svg)
+                    else
+                      Chemotion::KetcherSvgProcessor.new(svg)
+                    end
         svg = processor.centered_and_scaled_svg
         molecule = Molecule.find(params[:id])
         molecule.attach_svg(svg)
