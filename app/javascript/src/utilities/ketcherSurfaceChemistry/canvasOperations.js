@@ -12,7 +12,7 @@ import {
   imageNodeCounter,
   latestDataSetter
 } from 'src/components/structureEditor/KetcherEditor';
-import { ALIAS_PATTERNS, KET_TAGS } from 'src/utilities/ketcherSurfaceChemistry/constants';
+import { ALIAS_PATTERNS, KET_TAGS, KET_DOM_TAG } from 'src/utilities/ketcherSurfaceChemistry/constants';
 import { fetchKetcherData } from 'src/utilities/ketcherSurfaceChemistry/InitializeAndParseKetcher';
 import { findAtomByImageIndex, handleAddAtom } from 'src/utilities/ketcherSurfaceChemistry/AtomsAndMolManipulation';
 import {
@@ -194,11 +194,7 @@ const replaceAliasWithRG = async (data) => {
 };
 
 // prepare svg
-// TODO: fix or remove after image fixes from ketcher epam
 const prepareSvg = async (editor) => {
-  const regex = /source-\d+/;
-  const A_PATH_ONE = '';
-  const A_PATH_TWO = '';
   const struct = await replaceAliasWithRG({ ...latestData });
   const generateImageParams = { outputFormat: 'svg' };
   const parser = new DOMParser();
@@ -206,46 +202,46 @@ const prepareSvg = async (editor) => {
   const svgBlob = await editor.structureDef.editor.generateImage(data, generateImageParams);
   const svgString = await new Response(svgBlob).text();
   const doc = parser.parseFromString(svgString, 'image/svg+xml');
-  const uses = doc.querySelectorAll('*');
-  const glyphs = doc.querySelectorAll("g[id^='glyph-']");
-  const matchingGlyphs = [];
-  const moves = [];
+  return new XMLSerializer().serializeToString(doc);
+};
 
-  glyphs.forEach((glyph) => {
-    const path = glyph.querySelector('path');
-    if (!path) return;
+// function to get SVG from canvas element without modification
+const getSvgFromCanvas = async (iframeRef) => {
+  const iframeDocument = iframeRef?.current?.contentWindow?.document;
+  if (!iframeDocument) {
+    console.warn('iframe document not available');
+    return null;
+  }
 
-    const d = path.getAttribute('d').trim();
-    if (d.includes(A_PATH_ONE.trim()) || d.includes(A_PATH_TWO.trim())) {
-      matchingGlyphs.push(glyph.getAttribute('id'));
-    }
-  });
+  const canvasElement = iframeDocument.querySelector('[data-testid="canvas"]');
+  if (!canvasElement) {
+    console.warn('Canvas element with data-testid="canvas" not found');
+    return null;
+  }
 
-  const groups = doc.querySelectorAll('g');
-  groups.forEach((group) => {
-    const usesList = group.querySelectorAll('*');
-    if (usesList.length === 2) {
-      const isGroupMatching = [];
-      usesList.forEach((use) => {
-        const useEach = use.getAttributeNS('http://www.w3.org/1999/xlink', 'href').replace('#', '');
-        isGroupMatching.push(matchingGlyphs.indexOf(useEach) !== -1);
-      });
-      usesList.forEach((use) => {
-        use.style.fill = 'transparent';
-      });
-    }
-  });
+  // Clone the element to avoid modifying the original
+  const clonedCanvas = canvasElement.cloneNode(true);
 
-  uses.forEach((useElement) => {
-    const xlinkHref = useElement.getAttributeNS('http://www.w3.org/1999/xlink', 'href');
-    if (regex.test(xlinkHref)) {
-      // useElement.remove();
-      moves.push(useElement);
-    }
-  });
+  // Process images similar to updateImagesInTheCanvas - move images to the end for proper layering
+  const imageElements = Array.from(clonedCanvas.querySelectorAll(KET_DOM_TAG.imageTag));
+  if (imageElements.length > 0) {
+    // Remove all images from their current positions
+    imageElements.forEach((img) => {
+      if (img.parentNode) {
+        img.parentNode.removeChild(img);
+      }
+    });
 
-  const updatedSVGString = new XMLSerializer().serializeToString(doc);
-  return updatedSVGString;
+    // Re-append all images at the end to ensure they appear on top
+    imageElements.forEach((img) => {
+      clonedCanvas.appendChild(img);
+    });
+  }
+
+  const serializer = new XMLSerializer();
+  const svgString = serializer.serializeToString(clonedCanvas);
+
+  return svgString;
 };
 
 const applyCanvasDataToEditor = async (editor, dataCopy, recenter = false) => {
@@ -485,7 +481,7 @@ const onFinalCanvasSave = async (editor, iframeRef) => {
       textNodesFormula = replacedString;
     }
     ket2Lines.push(KET_TAGS.fileEndIdentifier);
-    const svgElement = await prepareSvg(editor);
+    const svgElement = imagesList.length ? await getSvgFromCanvas(iframeRef) : await prepareSvg(editor);
     resetStore();
     return {
       ket2Molfile: ket2Lines.join('\n'),
@@ -547,5 +543,5 @@ export {
   onFinalCanvasSave,
   onPasteNewShapes,
   getTitleSelector,
-  saveMoveCanvas
+  saveMoveCanvas,
 };
