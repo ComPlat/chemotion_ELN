@@ -200,6 +200,9 @@ const prepareKetcherData = async (editor, initMol) => {
     const fileContent = JSON.parse(ketFile.struct);
     textNodeStructSetter({});
     await applyKetcherData(polymerTag, fileContent, textNodes, editor);
+    setTimeout(async () => {
+      await centerPositionCanvas(editor);
+    }, 10);
   } catch (err) {
     console.error('Error preparing Ketcher data:', err.message);
   }
@@ -219,9 +222,6 @@ const applyKetcherData = async (polymerTag, fileContent, textNodes, editor) => {
       }
     }
     saveMoveCanvas(editor, molfileContent, true, true, false, { syncImagesOnly: true });
-    setTimeout(() => {
-      centerPositionCanvas(editor);
-    }, 10);
     ImagesToBeUpdatedSetter(true);
     return { molfileContent, polymerTag };
   } catch (err) {

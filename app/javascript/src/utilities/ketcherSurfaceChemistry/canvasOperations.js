@@ -469,7 +469,7 @@ const onFinalCanvasSave = async (editor, iframeRef) => {
     let textNodesFormula = '';
     let componentsListContainer = '';
     let ket2Lines = [];
-    await centerPositionCanvas(editor);
+
     const canvasDataMol = await editor.structureDef.editor.getMolfile('V2000');
     const ketFormatData = JSON.parse(await editor.structureDef.editor.getKet());
     await reArrangeImagesOnCanvas(iframeRef); // assemble image on the canvas
