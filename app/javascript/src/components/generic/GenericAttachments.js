@@ -18,7 +18,7 @@ import {
   downloadButton,
   removeButton,
   annotateButton,
-  editButton,
+  EditButton,
   customDropzone,
   sortingAndFilteringUI,
   formatFileSize,
@@ -37,8 +37,6 @@ class GenericAttachments extends Component {
     this.thirdPartyApps = thirdPartyApps;
 
     this.state = {
-      attachmentEditor: false,
-      extension: null,
       imageEditModalShown: false,
       showImportConfirm: [],
       filteredAttachments: [...props.attachments],
@@ -46,7 +44,6 @@ class GenericAttachments extends Component {
       sortBy: 'name',
       sortDirection: 'asc',
     };
-    this.editorInitial = this.editorInitial.bind(this);
     this.createAttachmentPreviews = this.createAttachmentPreviews.bind(this);
     this.handleEdit = this.handleEdit.bind(this);
     this.onImport = this.onImport.bind(this);
@@ -59,7 +56,6 @@ class GenericAttachments extends Component {
   }
 
   componentDidMount() {
-    this.editorInitial();
     this.createAttachmentPreviews();
   }
 
@@ -69,29 +65,6 @@ class GenericAttachments extends Component {
       this.createAttachmentPreviews();
       this.setState({ filteredAttachments: [...attachments] }, this.filterAndSortAttachments);
     }
-  }
-
-  handleEdit(attachment) {
-    const fileType = last(attachment.filename.split('.'));
-    const docType = this.documentType(attachment.filename);
-
-    EditorFetcher.startEditing({ attachment_id: attachment.id })
-      .then((result) => {
-        if (result.token) {
-          const url = `/editor?id=${attachment.id}&docType=${docType}
-          &fileType=${fileType}&title=${attachment.filename}&key=${result.token}
-          &only_office_token=${result.only_office_token}`;
-          window.open(url, '_blank');
-
-          attachment.aasm_state = 'oo_editing';
-          attachment.updated_at = new Date();
-
-          this.props.onEdit(attachment);
-        } else {
-          // eslint-disable-next-line no-alert
-          alert('Unauthorized to edit this file.');
-        }
-      });
   }
 
   onImport(attachment) {
@@ -172,28 +145,6 @@ class GenericAttachments extends Component {
     });
   }
 
-  documentType(filename) {
-    const { extension } = this.state;
-
-    const ext = last(filename.split('.'));
-    const docType = findKey(extension, (o) => o.includes(ext));
-
-    if (typeof docType === 'undefined' || !docType) {
-      return null;
-    }
-
-    return docType;
-  }
-
-  editorInitial() {
-    EditorFetcher.initial().then((result) => {
-      this.setState({
-        attachmentEditor: result.installed,
-        extension: result.ext,
-      });
-    });
-  }
-
   showImportConfirm(attachmentId) {
     const { showImportConfirm } = this.state;
     showImportConfirm[attachmentId] = true;
@@ -233,7 +184,7 @@ class GenericAttachments extends Component {
 
   render() {
     const {
-      filteredAttachments, sortDirection, attachmentEditor, extension
+      filteredAttachments, sortDirection
     } = this.state;
     const {
       onDelete, onDrop, onUndoDelete, attachments, genericEl, readOnly
@@ -307,16 +258,7 @@ class GenericAttachments extends Component {
                     <ButtonToolbar className="gap-1">
                       {downloadButton(attachment)}
                       <ThirdPartyAppButton attachment={attachment} options={this.thirdPartyApps} />
-                      {editButton(
-                        attachment,
-                        extension,
-                        attachmentEditor,
-                        attachment.aasm_state === 'oo_editing' && new Date().getTime()
-                        < (new Date(attachment.updated_at).getTime() + 15 * 60 * 1000),
-                        !attachmentEditor || attachment.aasm_state === 'oo_editing'
-                        || attachment.is_new || this.documentType(attachment.filename) === null,
-                        this.handleEdit
-                      )}
+                      <EditButton attachment={attachment} onChange={this.props.onEdit} />
                       {annotateButton(attachment, () => {
                         this.setState({
                           imageEditModalShown: true,
