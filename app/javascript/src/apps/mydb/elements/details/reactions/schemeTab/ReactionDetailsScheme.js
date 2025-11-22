@@ -31,6 +31,7 @@ import {
   convertTime,
   convertTurnoverFrequency,
   calculateFeedstockMoles,
+  calculateGasMoles,
 } from 'src/utilities/UnitsConversion';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
@@ -269,8 +270,9 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   handleTemplateChange(state) {
+    const desc = state.reactionDescription;
     this.setState({
-      reactionDescTemplate: state.reactionDescription.toJS()
+      reactionDescTemplate: desc?.toJS ? desc.toJS() : desc
     });
   }
 
@@ -357,6 +359,11 @@ export default class ReactionDetailsScheme extends Component {
       case 'conversionRateChanged':
         this.onReactionChange(
           this.updatedReactionForConversionRateChange(changeEvent)
+        );
+        break;
+      case 'VesselSizeChanged':
+        this.onReactionChange(
+          this.updatedReactionForVesselSizeChange()
         );
         break;
       default:
@@ -582,7 +589,8 @@ export default class ReactionDetailsScheme extends Component {
       }
       if (field === 'temperature' || field === 'part_per_million') {
         const vesselVolume = GasPhaseReactionStore.getState().reactionVesselSizeValue;
-        updatedSample.amount_value = updatedSample.updateGasMoles(vesselVolume);
+        const moles = updatedSample.updateGasMoles(vesselVolume);
+        updatedSample.setAmount({ value: moles, unit: 'mol' });
         const equivalent = this.calculateEquivalentForGasProduct(updatedSample);
         updatedSample.equivalent = equivalent;
         if (equivalent > 1) {
@@ -645,6 +653,10 @@ export default class ReactionDetailsScheme extends Component {
     }
 
     return this.updatedReactionWithSample(this.updatedSamplesForConversionRateChange.bind(this), updatedSample);
+  }
+
+  updatedReactionForVesselSizeChange() {
+    return this.updatedReactionWithSample(this.updatedSamplesForVesselSizeChange.bind(this));
   }
 
   calculateEquivalent(refM, updatedSample) {
@@ -855,6 +867,10 @@ export default class ReactionDetailsScheme extends Component {
         if (typeof (referenceMaterial) !== 'undefined' && referenceMaterial) {
           sample.maxAmount = referenceMaterial.amount_mol * stoichiometryCoeff * sample.molecule_molecular_weight / (sample.purity || 1);
         }
+        // Update TON values for gas products when catalyst amount changes
+        if (updatedSample && updatedSample.gas_type === 'catalyst' && sample.gas_type === 'gas') {
+          sample.updateTONValue(sample.amount_mol);
+        }
       }
       return sample;
     });
@@ -880,8 +896,7 @@ export default class ReactionDetailsScheme extends Component {
       stoichiometryCoeff = (sample.coefficient || 1.0) / (referenceMaterial?.coefficient || 1.0);
       if (sample.id === updatedSample.id && updatedSample.equivalent) {
         sample.equivalent = updatedSample.equivalent;
-        if (referenceMaterial && referenceMaterial.amount_value
-          && updatedSample.gas_type !== 'feedstock') {
+        if (referenceMaterial && referenceMaterial.amount_value) {
           sample.setAmountAndNormalizeToGram({
             value: updatedSample.equivalent * referenceMaterial.amount_mol,
             unit: 'mol',
@@ -1039,6 +1054,23 @@ export default class ReactionDetailsScheme extends Component {
     });
   }
 
+  updatedSamplesForVesselSizeChange(samples) {
+    const vesselSize = GasPhaseReactionStore.getState().reactionVesselSizeValue;
+    return samples.map((sample) => {
+      if (sample.gas_type === 'gas' && sample.gas_phase_data) {
+        const { part_per_million, temperature } = sample.gas_phase_data;
+        let temperatureInKelvin = temperature.value;
+        if (temperature.unit !== 'K') {
+          temperatureInKelvin = convertTemperature(temperature.value, temperature.unit);
+        }
+        const moles = calculateGasMoles(vesselSize, part_per_million, temperatureInKelvin);
+        sample.setAmount({ value: moles, unit: 'mol' });
+        sample.updateTONValue(moles);
+      }
+      return sample;
+    });
+  }
+
   updatedReactionWithSample(updateFunction, updatedSample, type) {
     const { reaction } = this.props;
     reaction.starting_materials = updateFunction(reaction.starting_materials, updatedSample, 'starting_materials', type);
@@ -1052,6 +1084,10 @@ export default class ReactionDetailsScheme extends Component {
     const { onInputChange } = this.props;
     const { value } = e.target;
     onInputChange('vesselSizeAmount', value);
+    const event = {
+      type: 'VesselSizeChanged',
+    };
+    this.handleMaterialsChange(event);
   }
 
   updateVesselSizeOnBlur(e) {
@@ -1079,7 +1115,7 @@ export default class ReactionDetailsScheme extends Component {
           <Form.Control
             name="reaction_vessel_size"
             type="text"
-            value={reaction.vessel_size?.amount || ''}
+            value={reaction.vessel_size?.amount ?? ''}
             disabled={false}
             onChange={(event) => this.updateVesselSize(event)}
             onBlur={(event) => this.updateVesselSizeOnBlur(event, reaction.vessel_size.unit)}
