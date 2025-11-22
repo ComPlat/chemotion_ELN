@@ -1063,7 +1063,7 @@ export default class Sample extends Element {
     const temperatureInKelvin = convertTemperatureToKelvin(temperature);
 
     if (!temperatureInKelvin || temperatureInKelvin === 0 || !part_per_million || part_per_million === 0
-      || !volume) {
+      || !volume || volume === 0) {
       this.updateTONValue(null);
       return null;
     }
@@ -1163,12 +1163,14 @@ export default class Sample extends Element {
           return amount_g;
         case 'l': {
           if (this.gas_type && this.gas_type !== 'off' && this.gas_type !== 'catalyst') {
+            const vesselVolume = this.fetchReactionVesselSizeFromStore();
             return calculateVolumeForFeedstockOrGas(
-              amount_g,
-              molecularWeight,
+              vesselVolume,
               purity,
               this.gas_type,
-              this.gas_phase_data
+              this.gas_phase_data,
+              amount_g,
+              molecularWeight
             );
           }
 
@@ -1179,9 +1181,7 @@ export default class Sample extends Element {
           if (this.has_molarity) {
             const molarity = this.molarity_value;
             return (amount_g * purity) / (molarity * molecularWeight);
-          }
-
-          if (this.has_density) {
+          } if (this.has_density || this.gas_type !== 'gas') {
             const { density } = this;
             return amount_g / (density * 1000);
           }
@@ -1227,6 +1227,13 @@ export default class Sample extends Element {
     } else {
       switch (amount_unit) {
         case 'g':
+          if (this.gas_type && this.gas_type === 'gas') {
+            const { part_per_million, temperature } = this.gas_phase_data;
+            const vesselSize = this.fetchReactionVesselSizeFromStore();
+            const temperatureInKelvin = convertTemperatureToKelvin(temperature);
+            const moles = calculateGasMoles(vesselSize, part_per_million, temperatureInKelvin);
+            return this.molecule_molecular_weight * moles;
+          }
           return amount_value;
         case 'mg':
           return amount_value / 1000.0;
@@ -1241,7 +1248,7 @@ export default class Sample extends Element {
           if (this.has_molarity) {
             const molecularWeight = this.molecule_molecular_weight;
             return amount_value * this.molarity_value * molecularWeight;
-          } if (this.has_density) {
+          } if (this.has_density || this.gas_type !== 'gas') {
             return amount_value * (this.density || 1.0) * 1000;
           }
           return 0;

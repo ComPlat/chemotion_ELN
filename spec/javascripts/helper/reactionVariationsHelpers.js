@@ -31,6 +31,19 @@ async function setUpReaction() {
   reaction.starting_materials[0].reference = true;
   reaction.reactants = [await setUpMaterial()];
 
+  // Ensure molecule_molecular_weight is set as a property on ALL materials, not just a getter
+  // This is needed because cloneDeep in getReactionMaterials won't preserve getters
+  [reaction.starting_materials, reaction.reactants, reaction.products].flat().forEach((material) => {
+    if (material && material.molecule && material.molecule.molecular_weight) {
+      Object.defineProperty(material, 'molecule_molecular_weight', {
+        value: material.molecule.molecular_weight,
+        writable: true,
+        enumerable: true,
+        configurable: true
+      });
+    }
+  });
+
   const materials = getReactionMaterials(reaction);
   const materialIDs = getReactionMaterialsIDs(materials);
 
@@ -64,13 +77,26 @@ async function setUpGaseousReaction() {
   reaction.products[0].gas_type = 'gas';
   reaction.products[0].gas_phase_data = {
     time: { unit: 'h', value: 1 },
-    temperature: { unit: 'K', value: 1 },
+    temperature: { unit: 'K', value: 298 }, // Room temperature in Kelvin for realistic calculations
     turnover_number: 1,
-    part_per_million: 1,
+    part_per_million: 10000, // 1% concentration for meaningful values
     turnover_frequency: { unit: 'TON/h', value: 1 }
   };
   reaction.products[0].amount_unit = 'mol';
   reaction.products[0].amount_value = 1;
+
+  // Ensure molecule_molecular_weight is set as a property on ALL materials, not just a getter
+  // This is needed because cloneDeep in getReactionMaterials won't preserve getters
+  [reaction.starting_materials, reaction.reactants, reaction.products].flat().forEach((material) => {
+    if (material && material.molecule && material.molecule.molecular_weight) {
+      Object.defineProperty(material, 'molecule_molecular_weight', {
+        value: material.molecule.molecular_weight,
+        writable: true,
+        enumerable: true,
+        configurable: true
+      });
+    }
+  });
 
   const materials = getReactionMaterials(reaction);
   const materialIDs = getReactionMaterialsIDs(materials);
