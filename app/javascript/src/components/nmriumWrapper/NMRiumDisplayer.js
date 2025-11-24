@@ -216,14 +216,16 @@ export default class NMRiumDisplayer extends React.Component {
   
     this.iframeRef.current?.contentWindow.postMessage({ type: 'nmr-wrapper:load', data: { type: 'url', data: [`${zip.url}/file.zip`] } },'*');
   
-    const nmriumState = await this.waitForNMRiumDataWithSpectra(8000);
+    const nmriumState = await this.waitForNMRiumDataWithSpectra(30000);
     if (!nmriumState) {
       LoadingActions.stop.defer();
       return;
     }
     
     const cleaned = cleaningNMRiumData(nmriumState);
-  
+
+    // Patch the zip name in the nmrium data
+    if (zip?.label) this.patchZipName(cleaned, zip?.label);
     if (molfile) { cleaned.molecules = [{ molfile }]; }
   
     this.iframeRef.current?.contentWindow.postMessage({ type: 'nmr-wrapper:load', data: { type: 'nmrium', data: cleaned } },'*');
@@ -232,6 +234,15 @@ export default class NMRiumDisplayer extends React.Component {
     }
   
     LoadingActions.stop.defer();
+  }
+
+  patchZipName(nmriumData, zipLabel) {
+    if (!nmriumData) return;
+    nmriumData.spectra.forEach((s) => {
+      if (s.info) {
+        s.info.name = zipLabel;
+      }
+    });
   }
 
   async waitForNMRiumDataWithSpectra(timeoutMs = 5000) {
@@ -257,7 +268,7 @@ export default class NMRiumDisplayer extends React.Component {
       const fileContent = await this.readFileContent(nmrium.file);
       const nmriumObj = JSON.parse(fileContent);
   
-      this.patchJcampReference(nmriumObj, jdx?.url, zip?.url);
+      this.patchZipAndJcampReference(nmriumObj, jdx?.url, zip?.url, zip?.label);
       if (molfile) {
         nmriumObj.molecules = [{ molfile }];
       }
@@ -286,7 +297,7 @@ export default class NMRiumDisplayer extends React.Component {
     throw new Error('Unsupported .nmrium file format');
   }
   
-  patchJcampReference(nmriumObj, jdxUrl, zipUrl) {
+  patchZipAndJcampReference(nmriumObj, jdxUrl, zipUrl, zipLabel) {
     if (!jdxUrl && !zipUrl) return;
 
     const jdxUrlWithFile = jdxUrl !== undefined ? `${jdxUrl}/file.jdx` : undefined;
@@ -300,9 +311,22 @@ export default class NMRiumDisplayer extends React.Component {
 
     nmriumObj.spectra.forEach((s) => {
       if (!s) return;
-      delete s.sourceSelector.files;
+      if (jdxUrl) delete s.sourceSelector.files;
+
       nmriumObj.source.entries[0].relativePath = relativePath;
       nmriumObj.source.entries[0].baseURL = baseURL;
+
+      if (zipUrl && s.info) {
+        s.info.name = zipLabel;
+      }
+
+      // Patch the zip references in the nmrium data
+      if (zipUrl && Array.isArray(s?.sourceSelector?.files)) {
+        const marker = '/file.zip/';
+        s.sourceSelector.files = s.sourceSelector.files.map(
+          (f) => f.includes(marker) ? `${relativePath}/${f.split(marker)[1]}` : f
+        );
+      }
     });
   }
 
