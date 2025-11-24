@@ -2,12 +2,20 @@ import Reaction from 'src/models/Reaction';
 import Sample from 'src/models/Sample';
 import Molecule from 'src/models/Molecule';
 
+let nextTestId = 100000;
+
+function genId() {
+  const id = nextTestId;
+  nextTestId += 1;
+  return id;
+}
+
 /**
  * Factory to create a gas phase reaction with feedstock, catalyst, and gas product
  */
-export function createGasPhaseReaction(overrides = {}) {
+export function createGasPhaseReaction() {
   const defaultReaction = {
-    id: 55,
+    id: genId(),
     short_label: 'TEST-R1',
     name: 'Gas Phase Test Reaction',
     gaseous: true,
@@ -43,7 +51,6 @@ export function createGasPhaseReaction(overrides = {}) {
     solvents: [],
     purification_solvents: [],
     products: [],
-    ...overrides
   };
 
   return new Reaction(defaultReaction);
@@ -54,7 +61,7 @@ export function createGasPhaseReaction(overrides = {}) {
  */
 export function createFeedstockSample(overrides = {}) {
   const molecule = new Molecule({
-    id: 1,
+    id: genId(),
     cano_smiles: 'Cn1cnc2c1c(=O)n(C)c(=O)n2C',
     sum_formular: 'C8H10N4O2',
     molecular_weight: 194.19,
@@ -64,22 +71,22 @@ export function createFeedstockSample(overrides = {}) {
   });
 
   const defaultSample = {
-    id: 1,
+    id: genId(),
     type: 'sample',
     short_label: 'feedstock',
     name: 'Test Feedstock',
     external_label: '',
-    target_amount_value: 0.1,
+    target_amount_value: 0.0,
     target_amount_unit: 'g',
-    real_amount_value: 0.0019,
-    real_amount_unit: 'g',
+    real_amount_value: 0.04143,
+    real_amount_unit: 'mol',
     purity: 1.0,
     density: 0,
     molarity_value: 0,
     molarity_unit: 'M',
     metrics: 'mmm',
     coefficient: 1,
-    equivalent: 0.00001,
+    equivalent: 3401.477832,
     reference: false,
     gas_type: 'feedstock',
     gas_phase_data: {
@@ -93,10 +100,10 @@ export function createFeedstockSample(overrides = {}) {
     position: 0,
     show_label: false,
     waste: false,
-    ...overrides
   };
+  const attrs = { ...defaultSample, ...overrides };
 
-  return new Sample(defaultSample);
+  return new Sample(attrs);
 }
 
 /**
@@ -104,7 +111,7 @@ export function createFeedstockSample(overrides = {}) {
  */
 export function createCatalystSample(overrides = {}) {
   const molecule = new Molecule({
-    id: 2129,
+    id: genId(),
     cano_smiles: '[C-]#[C-].[Ca+2]',
     sum_formular: 'C2Ca',
     molecular_weight: 64.0994,
@@ -114,7 +121,7 @@ export function createCatalystSample(overrides = {}) {
   });
 
   const defaultSample = {
-    id: 2,
+    id: genId(),
     type: 'sample',
     short_label: 'catalyst',
     name: 'Test Catalyst',
@@ -129,7 +136,7 @@ export function createCatalystSample(overrides = {}) {
     molarity_unit: 'M',
     metrics: 'mmm',
     coefficient: 1,
-    equivalent: 0.22829268292682928,
+    equivalent: 19.2118226,
     reference: false,
     gas_type: 'catalyst',
     gas_phase_data: {
@@ -143,10 +150,11 @@ export function createCatalystSample(overrides = {}) {
     position: 1,
     show_label: false,
     waste: null,
-    ...overrides
   };
 
-  return new Sample(defaultSample);
+  const attrs = { ...defaultSample, ...overrides };
+
+  return new Sample(attrs);
 }
 
 /**
@@ -154,7 +162,7 @@ export function createCatalystSample(overrides = {}) {
  */
 export function createGasProductSample(overrides = {}) {
   const molecule = new Molecule({
-    id: 3,
+    id: genId(),
     cano_smiles: 'O=CC=Cc1ccccc1',
     sum_formular: 'C9H8O',
     molecular_weight: 132.15922,
@@ -168,7 +176,7 @@ export function createGasProductSample(overrides = {}) {
   // ppm = 10000, V = 10L (10000ml), T = 298K
   // Mol = 10000 × 10 / (0.0821 × 298 × 1000000) = 0.00408733824358901
   const defaultSample = {
-    id: 11287,
+    id: genId(),
     type: 'sample',
     short_label: 'CU1-10754',
     name: 'CU1-R15-A',
@@ -183,7 +191,7 @@ export function createGasProductSample(overrides = {}) {
     molarity_unit: 'M',
     metrics: 'mmm',
     coefficient: 1,
-    equivalent: 0.00029400000000000004,
+    equivalent: 0.0986564866905385,
     reference: false,
     gas_type: 'gas',
     gas_phase_data: {
@@ -197,10 +205,10 @@ export function createGasProductSample(overrides = {}) {
     position: 0,
     show_label: false,
     waste: null,
-    ...overrides
   };
+  const attrs = { ...defaultSample, ...overrides };
 
-  return new Sample(defaultSample);
+  return new Sample(attrs);
 }
 
 /**
@@ -208,7 +216,7 @@ export function createGasProductSample(overrides = {}) {
  */
 export function createReferenceMaterial(overrides = {}) {
   const molecule = new Molecule({
-    id: 951,
+    id: genId(),
     cano_smiles: '[Cl-].[Cl-].[Ca+2]',
     sum_formular: 'CaCl2',
     molecular_weight: 110.984,
@@ -218,14 +226,14 @@ export function createReferenceMaterial(overrides = {}) {
   });
 
   const defaultSample = {
-    id: 11285,
+    id: genId(),
     type: 'sample',
     short_label: 'CU1-10749-1',
     name: 'CU1-R1-A',
     external_label: '',
     target_amount_value: 0.010474200000000001,
     target_amount_unit: 'g',
-    real_amount_value: 1.025,
+    real_amount_value: 0.00001218,
     real_amount_unit: 'mol',
     purity: 1.0,
     density: 0,
@@ -233,7 +241,7 @@ export function createReferenceMaterial(overrides = {}) {
     molarity_unit: 'M',
     metrics: 'mmm',
     coefficient: 1,
-    equivalent: 1.0,
+    equivalent: 1,
     reference: true,
     gas_type: 'off',
     gas_phase_data: {
@@ -247,10 +255,10 @@ export function createReferenceMaterial(overrides = {}) {
     position: 0,
     show_label: false,
     waste: false,
-    ...overrides
   };
+  const attrs = { ...defaultSample, ...overrides };
 
-  return new Sample(defaultSample);
+  return new Sample(attrs);
 }
 
 /**

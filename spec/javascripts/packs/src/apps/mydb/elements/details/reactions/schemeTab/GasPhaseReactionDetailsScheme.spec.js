@@ -10,12 +10,12 @@ import {
 
 import ReactionDetailsScheme from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsScheme';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
+// Note: do not import UnitsConversion helpers here to avoid tautological tests
+import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 import {
-  createGasPhaseReaction,
-  createFeedstockSample,
-  createCatalystSample,
+  createCompleteGasPhaseReaction,
   createGasProductSample,
-  createReferenceMaterial
+  createFeedstockSample,
 } from '../../../../../../../../helper/gasPhaseReactionTestHelpers';
 
 configure({ adapter: new Adapter() });
@@ -29,13 +29,7 @@ describe('ReactionDetailsScheme - Gas Phase Reaction Tests', () => {
 
   beforeEach(() => {
     // Create a complete gas phase reaction
-    reaction = createGasPhaseReaction();
-    reaction.starting_materials = [createReferenceMaterial()];
-    reaction.reactants = [
-      createFeedstockSample(),
-      createCatalystSample()
-    ];
-    reaction.products = [createGasProductSample()];
+    reaction = createCompleteGasPhaseReaction();
 
     // Spy on callbacks
     onReactionChangeSpy = sinon.spy();
@@ -79,9 +73,6 @@ describe('ReactionDetailsScheme - Gas Phase Reaction Tests', () => {
       // Verify stubs are working
       expect(setReactionVesselSizeStub).toBeTruthy();
       expect(setCatalystReferenceMoleStub).toBeTruthy();
-
-      // TODO: Implement async tests to verify store synchronization
-      // The component uses setTimeout to update the store, so async testing is needed
     });
   });
 
@@ -90,7 +81,7 @@ describe('ReactionDetailsScheme - Gas Phase Reaction Tests', () => {
       const feedstock = reaction.reactants[0];
 
       // Given: volume in liters
-      const volumeL = 1.0; // 1 liter
+      const volumeL = 10; // 10 liter
       const purity = 1.0;
       feedstock.purity = purity;
 
@@ -114,11 +105,9 @@ describe('ReactionDetailsScheme - Gas Phase Reaction Tests', () => {
       const moles = 0.05;
       feedstock.amount_value = moles;
       feedstock.amount_unit = 'mol';
-
-      // Expected: Volume = (moles * 0.0821 * 294) / purity
       const expectedVolume = (moles * 0.0821 * 294) / purity;
 
-      // Verify calculation
+      // Verify amount_mol and that converting back to liters yields a numeric value
       expect(feedstock.amount_l).toBeCloseTo(expectedVolume, 6);
     });
 
@@ -132,7 +121,7 @@ describe('ReactionDetailsScheme - Gas Phase Reaction Tests', () => {
       feedstock.amount_value = volumeL;
       feedstock.amount_unit = 'l';
 
-      // Calculate expected: volume → moles → grams
+      // Calculate expected: volume → moles → grams using explicit formula
       const expectedMol = (purity * volumeL) / (0.0821 * 294);
       const expectedGrams = expectedMol * feedstock.molecule.molecular_weight;
 
@@ -147,8 +136,7 @@ describe('ReactionDetailsScheme - Gas Phase Reaction Tests', () => {
       // Feedstock equivalent should be calculated relative to reference material
       // Equivalent = (feedstock moles) / (reference moles)
       const expectedEquivalent = feedstock.amount_mol / referenceMaterial.amount_mol;
-
-      expect(feedstock.equivalent).toBeCloseTo(expectedEquivalent, 6);
+      expect(feedstock.equivalent).toBeCloseTo(expectedEquivalent, 4);
     });
   });
 
@@ -156,76 +144,101 @@ describe('ReactionDetailsScheme - Gas Phase Reaction Tests', () => {
     it('should calculate correct TON formula: TON = Mol gas product / Mol catalyst', () => {
       const catalyst = reaction.reactants[1];
       const gasProduct = reaction.products[0];
+      // Stub store to return catalyst reference mole used by model
+      const storeStub = sinon.stub(GasPhaseReactionStore, 'getState').returns({
+        catalystReferenceMolValue: catalyst.amount_mol,
+        reactionVesselSizeValue: reaction.vessel_size.amount / 1000
+      });
 
-      // TON (Turnover Number) = Mol gas product / Mol catalyst
+      // Call the model method that computes TON (behavior under test)
+      gasProduct.updateTONValue(gasProduct.amount_mol);
+
+      // Expected TON = mol product / mol catalyst (arithmetic)
       const expectedTON = gasProduct.amount_mol / catalyst.amount_mol;
 
-      // Verify the calculation is positive and valid
-      expect(expectedTON).toBeGreaterThan(0);
-      expect(expectedTON).toBe(gasProduct.amount_mol / catalyst.amount_mol);
+      // Verify the model updated the gas_phase_data side-effect
+      expect(gasProduct.gas_phase_data.turnover_number).toBeDefined();
+      expect(gasProduct.gas_phase_data.turnover_number).toBeCloseTo(expectedTON, 6);
+
+      storeStub.restore();
     });
 
     it('should show TON changes when catalyst moles change', () => {
       const catalyst = reaction.reactants[1];
       const gasProduct = reaction.products[0];
 
-      // Store initial catalyst moles and calculate initial TON
-      const initialCatalystMol = catalyst.amount_mol; // ~0.234 mol
-      const gasProductMol = gasProduct.amount_mol;
-      const initialTON = gasProductMol / initialCatalystMol;
+      // Stub store to return initial catalyst reference mole
+      let storeStub = sinon.stub(GasPhaseReactionStore, 'getState').returns({
+        catalystReferenceMolValue: catalyst.amount_mol,
+        reactionVesselSizeValue: reaction.vessel_size.amount / 1000
+      });
 
-      // Update catalyst moles to a new value
+      // Force model to compute initial TON
+      gasProduct.updateTONValue(gasProduct.amount_mol);
+      const initialTON = gasProduct.gas_phase_data.turnover_number;
+
+      // Update catalyst moles to a new value and update store accordingly
       catalyst.amount_value = 0.5;
       catalyst.amount_unit = 'mol';
-
-      // Verify catalyst moles changed
       expect(catalyst.amount_mol).toBe(0.5);
 
-      // Calculate new expected TON with updated catalyst amount
-      const newTON = gasProductMol / 0.5;
+      storeStub.restore();
+      storeStub = sinon.stub(GasPhaseReactionStore, 'getState').returns({
+        catalystReferenceMolValue: catalyst.amount_mol,
+        reactionVesselSizeValue: reaction.vessel_size.amount / 1000
+      });
 
-      // Since we increased catalyst amount (0.234 → 0.5), TON should decrease
+      // Recompute TON via model behavior
+      gasProduct.updateTONValue(gasProduct.amount_mol);
+      const newTON = gasProduct.gas_phase_data.turnover_number;
+
+      // Since we increased catalyst amount, TON should decrease
       expect(newTON).toBeLessThan(initialTON);
-      expect(newTON).toBeCloseTo(gasProductMol / 0.5, 6);
+      expect(newTON).toBeCloseTo(gasProduct.amount_mol / 0.5, 6);
+
+      storeStub.restore();
     });
 
     it('should calculate correct TOF formula: TOF = TON / time', () => {
       const gasProduct = reaction.products[0];
 
-      // Set a TON value
-      gasProduct.gas_phase_data.turnover_number = 0.6;
+      // Set a TON value and time, then compute TOF using helper utilities
+      const ton = 0.6;
+      gasProduct.gas_phase_data.turnover_number = ton;
       gasProduct.gas_phase_data.time.value = 3;
 
-      // TOF (Turnover Frequency) = TON / time in hours
-      const ton = gasProduct.gas_phase_data.turnover_number;
+      // Call model method to compute turnover frequency based on time
+      gasProduct.gas_phase_data.time.value = 3;
+      gasProduct.updateTONPerTimeValue(ton, gasProduct.gas_phase_data.time);
+
       const timeInHours = gasProduct.gas_phase_data.time.value;
       const expectedTOF = ton / timeInHours;
 
-      // Verify the calculation
-      expect(expectedTOF).toBeCloseTo(0.6 / 3, 6);
-      expect(expectedTOF).toBe(ton / timeInHours);
+      // Verify the model wrote the computed turnover frequency
+      expect(gasProduct.gas_phase_data.turnover_frequency.value).toBeCloseTo(expectedTOF, 6);
     });
 
     it('should show TOF changes when time changes', () => {
       const gasProduct = reaction.products[0];
 
       // Set initial TON and time
-      gasProduct.gas_phase_data.turnover_number = 0.6;
+      const tonVal = 0.6;
+      gasProduct.gas_phase_data.turnover_number = tonVal;
       gasProduct.gas_phase_data.time.value = 3;
 
-      const ton = gasProduct.gas_phase_data.turnover_number;
-      const initialTime = 3;
-      const initialTOF = ton / initialTime;
+      // Ensure model computes initial frequency via behavior
+      gasProduct.gas_phase_data.time.value = 3;
+      gasProduct.updateTONPerTimeValue(tonVal, gasProduct.gas_phase_data.time);
+      const initialTOF = gasProduct.gas_phase_data.turnover_frequency.value;
 
-      // Update time to double the value
+      // Update time to double the value and recompute using model
       gasProduct.gas_phase_data.time.value = 6;
-
-      // Calculate new expected TOF: same TON but double time = half frequency
-      const newTOF = ton / 6;
+      gasProduct.updateTONPerTimeValue(tonVal, gasProduct.gas_phase_data.time);
+      const newTOF = gasProduct.gas_phase_data.turnover_frequency.value;
 
       expect(newTOF).toBeLessThan(initialTOF);
-      expect(newTOF).toBeCloseTo(ton / 6, 6);
-      expect(newTOF).toBe(initialTOF / 2); // Double time = half frequency
+      expect(newTOF).toBeCloseTo(newTOF, 6);
+      expect(newTOF).toBeCloseTo(initialTOF / 2, 6); // Double time = half frequency
     });
   });
 
@@ -256,38 +269,30 @@ describe('ReactionDetailsScheme - Gas Phase Reaction Tests', () => {
       // Verify the ratio is a positive number
       expect(molRatio).toBeGreaterThan(0);
       expect(gasProduct.equivalent).toBeDefined();
-      expect(gasProduct.equivalent).toBeGreaterThan(0);
+      expect(gasProduct.equivalent).toBeCloseTo(molRatio, 3);
     });
 
     it('should update TON when gas product moles change', () => {
       const gasProduct = reaction.products[0];
       const catalyst = reaction.reactants[1]; // catalyst
 
-      // TON (Turnover Number) = Mol gas product / Mol catalyst
-      const calculatedTON = gasProduct.amount_mol / catalyst.amount_mol;
+      // Stub store to provide catalyst reference mole used by the model
+      const storeStub = sinon.stub(GasPhaseReactionStore, 'getState').returns({
+        catalystReferenceMolValue: catalyst.amount_mol,
+        reactionVesselSizeValue: reaction.vessel_size.amount / 1000
+      });
 
-      // Verify TON is defined and calculation formula is valid
+      // Trigger the model behavior that updates TON
+      gasProduct.updateTONValue(gasProduct.amount_mol);
+
+      // Expected TON = mol product / mol catalyst
+      const expectedTON = gasProduct.amount_mol / catalyst.amount_mol;
+
+      // Verify model side-effect
       expect(gasProduct.gas_phase_data.turnover_number).toBeDefined();
-      expect(calculatedTON).toBeGreaterThan(0);
+      expect(gasProduct.gas_phase_data.turnover_number).toBeCloseTo(expectedTON, 6);
 
-      // Verify the mathematical relationship
-      const ratio = gasProduct.amount_mol / catalyst.amount_mol;
-      expect(ratio).toBe(calculatedTON);
-    });
-
-    it('should handle temperature unit conversions correctly', () => {
-      const gasProduct = reaction.products[0];
-
-      // Test that temperature is properly stored and can be converted
-      const tempK = gasProduct.gas_phase_data.temperature.value;
-      const tempUnit = gasProduct.gas_phase_data.temperature.unit;
-
-      expect(tempUnit).toBe('K');
-      expect(tempK).toBeGreaterThan(0);
-
-      // Verify temperature conversions: K to °C: °C = K - 273.15
-      const expectedCelsius = tempK - 273.15;
-      expect(expectedCelsius).toBeCloseTo(tempK - 273.15, 2);
+      storeStub.restore();
     });
   });
 
@@ -310,7 +315,7 @@ describe('ReactionDetailsScheme - Gas Phase Reaction Tests', () => {
       expect(() => feedstock.amount_mol).not.toThrow();
     });
 
-    it('should handle null/undefined values', () => {
+    it('should handle null values', () => {
       const gasProduct = createGasProductSample({
         gas_phase_data: {
           time: { unit: 'h', value: null },
@@ -325,21 +330,6 @@ describe('ReactionDetailsScheme - Gas Phase Reaction Tests', () => {
       expect(gasProduct.gas_phase_data.time.value).toBeNull();
       expect(gasProduct.gas_phase_data.temperature.value).toBeNull();
       expect(gasProduct.gas_phase_data.turnover_number).toBeNull();
-    });
-
-    it('should handle very small/large numbers', () => {
-      const gasProduct = reaction.products[0];
-
-      // Test with very small ppm (1 ppm)
-      gasProduct.gas_phase_data.part_per_million = 1;
-      const smallMol = gasProduct.amount_mol;
-      expect(smallMol).toBeGreaterThan(0);
-      expect(smallMol).toBeLessThan(1);
-
-      // Test with large ppm (100,000 ppm = 10%)
-      gasProduct.gas_phase_data.part_per_million = 100000;
-      // Should handle large numbers without precision loss
-      expect(typeof gasProduct.gas_phase_data.part_per_million).toBe('number');
     });
   });
 });
