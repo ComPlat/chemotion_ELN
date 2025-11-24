@@ -429,6 +429,7 @@ export default class Sample extends Element {
       inventory_sample: this.inventory_sample,
       segments: this.segments.map((s) => s.serialize()),
       sample_type: this.sample_type,
+      intermediate_type: this.intermediate_type,
       sample_details: this.sample_details,
     });
 
@@ -1898,6 +1899,14 @@ export default class Sample extends Element {
    */
   updateSampleType(newSampleType) {
     this.sample_type = newSampleType;
+  }
+
+  /**
+   * Updates the intermediate type.
+   * @param {string} newIntermediateType - The new intermediate type
+   */
+  updateIntermediateType(newIntermediateType) {
+    this.intermediate_type = newIntermediateType;
   }
 
   /**
