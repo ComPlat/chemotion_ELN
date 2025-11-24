@@ -422,6 +422,7 @@ module Chemotion
           @element_policy = ElementPolicy.new(current_user, @sample)
           error!('401 Unauthorized', 401) unless @element_policy.update?
         end
+
         put do
           attributes = declared(params, include_missing: false)
           # attributes[:solvent] = params[:solvent].to_json
@@ -479,6 +480,9 @@ module Chemotion
           # save to profile
           kinds = @sample.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
           recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
+
+          Usecases::ReactionProcessEditor::Samples::UpdateIntermediateType
+            .execute!(sample: @sample, intermediate_type: params[:intermediate_type])
 
           present(
             @sample,

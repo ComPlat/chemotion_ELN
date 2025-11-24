@@ -63,6 +63,7 @@ $rm-columns: (
   "ratio": map-get($rm-sizes, "small-numeral"),
   "equivalent": map-get($rm-sizes, "middle-numeral"),
   "yield": map-get($rm-sizes, "middle-numeral"),
+  "reaction-step": map-get($rm-sizes, "square"),
   "volume": map-get($rm-sizes, "numeral-with-units"),
   "mass": map-get($rm-sizes, "numeral-with-units"),
   "molarity": map-get($rm-sizes, "numeral-with-units"),
@@ -80,6 +81,9 @@ $rm-columns: (
   "ref": map-get($rm-sizes, "square"),
   "target": map-get($rm-sizes, "square"),
   "dry-solvent": map-get($rm-sizes, "square"),
+  "label-structure": map-get($rm-sizes, "square"),
+  "intermediate-label": calc(#{map-get($rm-sizes, "large-numeral-with-units")} + #{gap(0)}),
+  "intermediate-type": map-get($rm-sizes, "large-numeral-with-units"),
   "delete": map-get($rm-sizes, "square"),
   "gaseous-fields": calc(
       #{3 * map-get($rm-sizes, "square")} +
@@ -176,6 +180,18 @@ $rm-columns: (
   }
   &__dry-solvent {
     @include align-header-data(map-get($rm-columns, "dry-solvent"));
+  }
+  &__label-structure {
+    @include align-header-input(map-get($rm-columns, "label-structure"));
+  }
+  &__intermediate-label {
+    @include align-header-input(map-get($rm-columns, "intermediate-label"));
+  }
+  &__intermediate-type {
+    @include align-header-input(map-get($rm-columns, "intermediate-type"));
+  }
+  &__reaction-step {
+    @include align-header-input(map-get($rm-columns, "reaction-step"));
   }
   &__gaseous-fields {
     &-data {
