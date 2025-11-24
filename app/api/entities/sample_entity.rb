@@ -27,6 +27,7 @@ module Entities
       expose! :user_labels
       expose! :weight_percentage
       expose! :editor_link_target
+      expose! :intermediate_type
     end
 
     # Level 1 attributes
@@ -154,17 +155,23 @@ module Entities
       object.reactions_samples.pick(:weight_percentage)
     end
 
-    def reaction_step
-      # Enhancement for IntermediateSamples as saved by the ReactionProcessEditor
-      # We want to present the position of the ReactionProcessStep in which the object (Sample) was saved.
-      intermediate = ReactionsIntermediateSample.find_by(sample_id: object.id)
+    def intermediate_type
+      intermediate_sample&.intermediate_type
+    end
 
-      intermediate&.reaction_process_step&.step_number
+    def reaction_step
+      # Enhancement for IntermediateSamples which originate from the ReactionProcessEditor
+      # We want to present the position of the ReactionProcessStep in which the object (Sample) was saved.
+      intermediate_sample&.reaction_process_step&.step_number
     end
 
     def editor_link_target
       # The link to the Reaction Process Editor (external to the ELN).
       "#{ENV.fetch('REACTION_PROCESS_EDITOR_HOSTNAME')}/samples/#{object.id}?auth=#{object.creator.jti_auth_token}"
+    end
+
+    def intermediate_sample
+      ReactionsIntermediateSample.find_by(sample_id: object.id)
     end
   end
 end

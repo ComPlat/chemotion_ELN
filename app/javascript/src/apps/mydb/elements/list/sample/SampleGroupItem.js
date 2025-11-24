@@ -13,6 +13,8 @@ import CommentIcon from 'src/components/comments/CommentIcon';
 import { ShowUserLabels } from 'src/components/UserLabels';
 
 import Sample from 'src/models/Sample';
+import SampleEditorLink from 'src/apps/mydb/elements/details/reactions/reactionProcessEditor/SampleEditorLink';
+
 
 function TopSecretIcon({ element }) {
   if (element.type === 'sample' && element.is_top_secret === true) {
@@ -84,6 +86,7 @@ function SampleGroupItem({ sample, showDetails }) {
       {sample.title()}
 
       <div className="d-flex align-items-center gap-1 flex-wrap">
+        <SampleEditorLink sample={sample} />
         {showInventoryLabelIcon(sample)}
         <CommentIcon commentCount={sample.comment_count} />
         <ShowUserLabels element={sample} />
@@ -98,6 +101,7 @@ function SampleGroupItem({ sample, showDetails }) {
         </div>
         {showDecoupledIcon(sample)}
         <TopSecretIcon element={sample} />
+
       </div>
     </div>
   );
