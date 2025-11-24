@@ -413,7 +413,7 @@ describe Chemotion::SampleAPI do
           JSON.parse(response.body)['status'],
         ).to eq 'ok'
 
-        collection_sample = CollectionsSample.where(collection_id: collection.id)
+        CollectionsSample.where(collection_id: collection.id)
 
         molecule = Molecule.find_by(inchikey: 'DTHMTBUWTGVEFG-DDWIOCJRSA-N')
         sample = Sample.find_by(molecule_id: molecule.id)
@@ -483,7 +483,7 @@ describe Chemotion::SampleAPI do
           JSON.parse(response.body)['status'],
         ).to eq 'ok'
 
-        collection_sample = CollectionsSample.where(collection_id: collection.id)
+        CollectionsSample.where(collection_id: collection.id)
 
         molecule = Molecule.find_by(inchikey: 'DTHMTBUWTGVEFG-DDWIOCJRSA-N')
         sample = Sample.find_by(molecule_id: molecule.id)
@@ -978,7 +978,7 @@ describe Chemotion::SampleAPI do
       xit 'should be able to delete samples when "all" is false' do
         sample_ids = [sample_1.id, sample_2.id]
         array = Sample.where(id: sample_ids).to_a
-        expect(array).to match_array([sample_1, sample_2])
+        expect(array).to contain_exactly(sample_1, sample_2)
         CollectionsSample.create(sample_id: sample_1.id, collection_id: 1)
         CollectionsSample.create(sample_id: sample_2.id, collection_id: 1)
         s = Sample.find_by(id: sample_3.id)
@@ -987,23 +987,23 @@ describe Chemotion::SampleAPI do
         s = Sample.find_by(id: sample_3.id)
         expect(s).not_to be_nil
         array = Sample.where(id: sample_ids).to_a
-        expect(array).to match_array([])
+        expect(array).to be_empty
         a = Well.where(sample_id: sample_ids).to_a
-        expect(a).to match_array([])
+        expect(a).to be_empty
         a = CollectionsSample.where(sample_id: sample_ids).to_a
-        expect(a).to match_array([])
+        expect(a).to be_empty
         a = ReactionsProductSample.where(sample_id: sample_ids).to_a
-        expect(a).to match_array([])
+        expect(a).to be_empty
         a = ReactionsReactantSample.where(sample_id: sample_ids).to_a
-        expect(a).to match_array([])
+        expect(a).to be_empty
         a = ReactionsStartingMaterialSample.where(sample_id: sample_ids).to_a
-        expect(a).to match_array([])
+        expect(a).to be_empty
       end
 
       xit 'should be able to delete samples when "all" is true' do
         sample_ids = [sample_1.id, sample_2.id]
         array = Sample.where(id: sample_ids).to_a
-        expect(array).to match_array([sample_1, sample_2])
+        expect(array).to contain_exactly(sample_1, sample_2)
         CollectionsSample.create(sample_id: sample_1.id, collection_id: 1)
         CollectionsSample.create(sample_id: sample_2.id, collection_id: 1)
         s = Sample.find_by(id: sample_3.id)
@@ -1012,18 +1012,46 @@ describe Chemotion::SampleAPI do
         s = Sample.find_by(id: sample_3.id)
         expect(s).not_to be_nil
         array = Sample.where(id: sample_ids).to_a
-        expect(array).to match_array([])
+        expect(array).to be_empty
         a = Well.where(sample_id: sample_ids).to_a
-        expect(a).to match_array([])
+        expect(a).to be_empty
         a = CollectionsSample.where(sample_id: sample_ids).to_a
-        expect(a).to match_array([])
+        expect(a).to be_empty
         a = ReactionsProductSample.where(sample_id: sample_ids).to_a
-        expect(a).to match_array([])
+        expect(a).to be_empty
         a = ReactionsReactantSample.where(sample_id: sample_ids).to_a
-        expect(a).to match_array([])
+        expect(a).to be_empty
         a = ReactionsStartingMaterialSample.where(sample_id: sample_ids).to_a
-        expect(a).to match_array([])
+        expect(a).to be_empty
       end
+    end
+  end
+
+  describe 'when updating intermediate_type' do
+    let!(:sample) { create(:sample, user: user) }
+    let!(:intermediate_sample) { create :reactions_intermediate_sample, sample: sample }
+    let(:put_sample_api_call) { put "/api/v1/samples/#{sample.id}", params: params, as: :json }
+    let(:params) do
+      { intermediate_type: 'NEW_INTERMEDIATE_TYPE',
+        container: {
+          attachments: [],
+          children: [],
+          is_new: true,
+          is_deleted: false,
+          name: 'new',
+        } }
+    end
+
+    it 'updates ReactionIntermediateSample' do
+      CollectionsSample.create!(sample: sample, collection: collection)
+      Rails.logger.info(put_sample_api_call)
+      Rails.logger.info('put_sample_api_call')
+      intermediate_sample.reload
+      expect(intermediate_sample.intermediate_type).to eq 'NEW_INTERMEDIATE_TYPE'
+      Rails.logger.info('WHATTHEFUCK')
+      expect { put_sample_api_call }
+        .to change(intermediate_sample, :intermediate_type)
+        .to('NEW_INTERMEDIATE_TYPE')
     end
   end
 
@@ -1065,7 +1093,7 @@ describe Chemotion::SampleAPI do
 
     let(:sample_upd_1_params) do
       JSON.parse(
-        Rails.root.join('spec', 'fixtures', 'sample_update_1_params.json').read,
+        Rails.root.join('spec/fixtures/sample_update_1_params.json').read,
       ).deep_symbolize_keys
     end
 
@@ -1164,7 +1192,7 @@ describe Chemotion::SampleAPI do
               put("/api/v1/samples/#{s1.id}.json",
                   params: sample_upd_1_params.to_json,
                   headers: { 'CONTENT_TYPE' => 'application/json' })
-            end.not_to change { s2.analyses.first.children.count }
+            end.not_to(change { s2.analyses.first.children.count })
           end
         end
       end
