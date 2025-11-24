@@ -142,7 +142,7 @@ class Sample < ApplicationRecord
   }
   scope :by_exact_name, lambda { |query|
                           sanitized_query = "^([a-zA-Z0-9]+-)?#{sanitize_sql_like(query)}(-?[a-zA-Z])$"
-                          where('lower(name) ~* lower(?) or lower(external_label) ~* lower(?)',
+                          where('lower(samples.name) ~* lower(?) or lower(samples.external_label) ~* lower(?)',
                                 sanitized_query, sanitized_query)
                         }
   scope :by_short_label, ->(query) { where('short_label ILIKE ?', "%#{sanitize_sql_like(query)}%") }
@@ -262,7 +262,6 @@ class Sample < ApplicationRecord
   has_many :residues, dependent: :destroy
   has_many :elemental_compositions, dependent: :destroy
 
-  has_many :sync_collections_users, through: :collections
   composed_of :amount, mapping: %w[amount_value amount_unit]
 
   has_ancestry orphan_strategy: :adopt

@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import {
   Button, Modal, Card, Row, Col
@@ -7,7 +6,6 @@ import {
 import 'whatwg-fetch';
 import _ from 'lodash';
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
-import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
 import ReportActions from 'src/stores/alt/actions/ReportActions';
@@ -27,7 +25,7 @@ const changeUrl = (url, urlTitle) => (url ? (
   <span />
 ));
 
-const handleNotification = (nots, act, needCallback = true) => {
+const handleNotification = (nots, act, needCallback = true, context) => {
   nots.forEach((n) => {
     if (act === 'rem') {
       NotificationActions.removeByUid(n.id);
@@ -74,16 +72,17 @@ const handleNotification = (nots, act, needCallback = true) => {
 
       const { currentPage, itemsPerPage } = InboxStore.getState();
 
-      const { currentCollection } = UIStore.getState();
-      const currentCollectionId = currentCollection ? currentCollection.id : null;
+      const refreshCollectionActions = [
+        'CollectionActions.fetchRemoteCollectionRoots',
+        'CollectionActions.fetchSyncInCollectionRoots',
+        'RefreshChemotionCollection',
+        'CollectionActions.fetchUnsharedCollectionRoots',
+      ];
+      if (refreshCollectionActions.includes(n.content.action) || n.subject == 'Shared Collection With Me') {
+        context.collections.fetchCollections();
+      }
 
       switch (n.content.action) {
-        case 'CollectionActions.fetchRemoteCollectionRoots':
-          CollectionActions.fetchRemoteCollectionRoots();
-          break;
-        case 'CollectionActions.fetchSyncInCollectionRoots':
-          CollectionActions.fetchSyncInCollectionRoots();
-          break;
         case 'InboxActions.fetchInbox':
           InboxActions.fetchInbox({ currentPage, itemsPerPage });
           break;
@@ -92,13 +91,6 @@ const handleNotification = (nots, act, needCallback = true) => {
           break;
         case 'ElementActions.refreshComputedProp':
           ElementActions.refreshComputedProp(n.content.cprop);
-          break;
-        case 'RefreshChemotionCollection':
-          CollectionActions.fetchUnsharedCollectionRoots();
-          break;
-        case 'CollectionActions.fetchUnsharedCollectionRoots':
-          CollectionActions.fetchUnsharedCollectionRoots();
-          CollectionActions.fetchSyncInCollectionRoots();
           break;
         case 'ElementActions.fetchResearchPlanById':
           ElementActions.fetchResearchPlanById(
@@ -125,7 +117,7 @@ const handleNotification = (nots, act, needCallback = true) => {
   });
 };
 
-const createUpgradeNotification = (serverVersion, localVersion) => {
+const createUpgradeNotification = (serverVersion, localVersion, context) => {
   const content = [
     'Dear ELNer,',
     'A new version has been released. Please reload this page to enjoy the latest updates.',
@@ -147,7 +139,7 @@ const createUpgradeNotification = (serverVersion, localVersion) => {
     updated_at: infoTimeString,
     content: contentJson,
   };
-  handleNotification([not], 'add', false);
+  handleNotification([not], 'add', false, context);
 };
 
 export default class NoticeButton extends React.Component {
@@ -186,10 +178,10 @@ export default class NoticeButton extends React.Component {
     const remMessages = _.filter(nots, (o) => !_.includes(nextNotIds, o.id));
 
     if (Object.keys(newMessages).length > 0) {
-      handleNotification(newMessages, 'add');
+      handleNotification(newMessages, 'add', true, this.context);
     }
     if (Object.keys(remMessages).length > 0) {
-      handleNotification(remMessages, 'rem');
+      handleNotification(remMessages, 'rem', true, this.context);
     }
     if (
       nextState.serverVersion
@@ -206,7 +198,7 @@ export default class NoticeButton extends React.Component {
         nextState.localVersion.indexOf('.js')
       );
       if (serverVer !== localVer) {
-        createUpgradeNotification(serverVer, localVer);
+        createUpgradeNotification(serverVer, localVer, this.context);
       }
     }
 

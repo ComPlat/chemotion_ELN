@@ -31,7 +31,6 @@ const SearchResultTabContent = ({ list, tabResult, openDetail }) => {
     const uiState = UIStore.getState();
     const { currentCollection } = uiState;
     const collectionId = currentCollection ? currentCollection.id : null;
-    const isSync = currentCollection ? currentCollection.is_sync_to_me : false;
 
     const selection = {
       elementType: 'by_ids',
@@ -49,7 +48,6 @@ const SearchResultTabContent = ({ list, tabResult, openDetail }) => {
     searchStore.loadSearchResultTab({
       selection,
       collectionId: collectionId,
-      isSync: isSync,
       page_size: tabResult.per_page,
       page: index,
       moleculeSort: true,

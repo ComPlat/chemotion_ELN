@@ -2,9 +2,10 @@
 
 require 'rails_helper'
 
-# rubocop:disable Rspec/MultipleMemoizedHelpers, Rspec/NestedGroups, RSpec/IndexedLet
+# rubocop:disable RSpec/MultipleMemoizedHelpers, RSpec/NestedGroups, RSpec/IndexedLet
 describe Chemotion::ReportAPI do
   let(:user) { create(:user) }
+  let!(:collection) { create(:collection, user_id: user.id) }
   let(:warden_authentication_instance) { instance_double(WardenAuthentication) }
 
   before do
@@ -25,18 +26,10 @@ describe Chemotion::ReportAPI do
     let!(:rp3) { create(:report, :downloadable, user: user) }
 
     let!(:rp_others) { create(:report, user: other) }
-    let!(:s1) { create(:sample) }
-    let!(:s2) { create(:sample) }
-    let!(:r1) { create(:reaction) }
-    let!(:r2) { create(:reaction) }
-    let!(:c)  { create(:collection, user_id: user.id) }
-
-    before do
-      CollectionsSample.create!(sample: s1, collection: c)
-      CollectionsSample.create!(sample: s2, collection: c)
-      CollectionsReaction.create!(reaction: r1, collection: c)
-      CollectionsReaction.create!(reaction: r2, collection: c)
-    end
+    let(:s1) { create(:sample, collections: [collection]) }
+    let(:s2) { create(:sample, collections: [collection]) }
+    let!(:r1) { create(:reaction, collections: [collection]) }
+    let!(:r2) { create(:reaction, collections: [collection]) }
 
     describe 'GET /api/v1/reports/docx' do
       before do
@@ -65,10 +58,10 @@ describe Chemotion::ReportAPI do
       end
       let(:samples) do
         [
-          create(:sample, name: 'Sample 20001', molfile: molfiles[0]),
-          create(:sample, name: 'Sample 20002', molfile: molfiles[1]),
-          create(:sample, name: 'Sample 20002', molfile: molfiles[2]),
-          create(:sample, name: 'Sample 30001', molfile: molfiles[3]),
+          create(:sample, name: 'Sample 20001', molfile: molfiles[0], collections: [collection]),
+          create(:sample, name: 'Sample 20002', molfile: molfiles[1], collections: [collection]),
+          create(:sample, name: 'Sample 20002', molfile: molfiles[2], collections: [collection]),
+          create(:sample, name: 'Sample 30001', molfile: molfiles[3], collections: [collection]),
         ]
       end
       let(:no_checked) do
@@ -90,8 +83,7 @@ describe Chemotion::ReportAPI do
             },
             reaction: no_checked,
             wellplate: no_checked,
-            currentCollection: c.id,
-            isSync: false,
+            currentCollection: collection.id,
           },
           columns: {
             analyses: [],
@@ -105,7 +97,6 @@ describe Chemotion::ReportAPI do
       end
 
       it 'returns correct sdf with different molfile format(ing)s' do
-        samples.each { |sample| CollectionsSample.create!(sample: sample, collection: c) }
         # 0 with V2000 molfile that contains no dollar sign
         # 1 with V2000 molfile that contains dollar sign' do
         # 2 with V2000 molfile that contains ' do
@@ -148,9 +139,8 @@ describe Chemotion::ReportAPI do
              params: params, as: :json, headers: headers
       end
 
-      let(:c) { create(:collection, user_id: user.id) }
-      let(:sample1) { create(:sample) }
-      let(:sample2) { create(:sample) }
+      let(:sample1) { create(:sample, collections: [collection]) }
+      let(:sample2) { create(:sample, collections: [collection]) }
 
       let(:headers) do
         {
@@ -171,8 +161,7 @@ describe Chemotion::ReportAPI do
             uncheckedIds: [],
             checkedAll: false,
           },
-          currentCollection: c.id,
-          isSync: false,
+          currentCollection: collection.id,
         }
       end
 
@@ -211,11 +200,7 @@ describe Chemotion::ReportAPI do
       end
 
       describe 'when sample1 is selected' do
-        before do
-          CollectionsSample.create!(sample: sample1, collection: c)
-          CollectionsSample.create!(sample: sample2, collection: c)
-          make_request
-        end
+        before { make_request }
 
         let(:params) do
           {
@@ -239,49 +224,48 @@ describe Chemotion::ReportAPI do
     end
 
     describe 'POST /api/v1/reports/export_reactions_from_selections' do
-      let!(:c1) { create(:collection, user_id: user.id) }
-      let!(:c2) do
-        create(
-          :collection,
-          user_id: user.id + 1, is_shared: true, sample_detail_level: 0,
-        )
+      let!(:other_user) { create(:person) }
+      let!(:collection_with_shares) do
+        create(:collection, user: other_user, shared: true).tap do |other_collection|
+          create(:collection_share, collection: other_collection, shared_with: user, sample_detail_level: 0)
+        end
       end
 
-      let!(:mf) { build(:molfile, type: 'test_2') }
+      let!(:molfile) { build(:molfile, type: 'test_2') }
 
-      let!(:s0) do
-        build(:sample, created_by: user.id, molfile: mf, collections: [c1])
+      let!(:sample0) do
+        build(:sample, created_by: user.id, molfile: molfile, collections: [collection])
       end
 
-      let!(:s1) do
-        build(:sample, created_by: user.id, molfile: mf, collections: [c1])
+      let!(:sample1) do
+        build(:sample, created_by: user.id, molfile: molfile, collections: [collection])
       end
 
-      let!(:s2) do
-        build(:sample, created_by: user.id, molfile: mf, collections: [c1])
+      let!(:sample2) do
+        build(:sample, created_by: user.id, molfile: molfile, collections: [collection])
       end
 
-      let!(:s3) do
-        build(:sample, created_by: user.id, molfile: mf, collections: [c1])
+      let!(:sample3) do
+        build(:sample, created_by: user.id, molfile: molfile, collections: [collection])
       end
 
-      let!(:s4) do
-        build(:sample, created_by: user.id, molfile: mf, collections: [c1])
+      let!(:sample4) do
+        build(:sample, created_by: user.id, molfile: molfile, collections: [collection])
       end
 
-      let(:smi0) { s0.molecule.cano_smiles }
-      let(:smi1) { s1.molecule.cano_smiles }
-      let(:smi2) { s2.molecule.cano_smiles }
-      let(:smi3) { s3.molecule.cano_smiles }
-      let(:smi4) { s4.molecule.cano_smiles }
-      let!(:rxn) do
+      let(:smiles0) { sample0.molecule.cano_smiles }
+      let(:smiles1) { sample1.molecule.cano_smiles }
+      let(:smiles2) { sample2.molecule.cano_smiles }
+      let(:smiles3) { sample3.molecule.cano_smiles }
+      let(:smiles4) { sample4.molecule.cano_smiles }
+      let!(:reaction) do
         build(:valid_reaction,
               name: 'Reaction 0',
-              starting_materials: [s0, s1],
-              solvents: [s2],
-              reactants: [s3],
-              products: [s4],
-              collections: [c1, c2])
+              starting_materials: [sample0, sample1],
+              solvents: [sample2],
+              reactants: [sample3],
+              products: [sample4],
+              collections: [collection, collection_with_shares])
       end
 
       let(:params) do
@@ -294,7 +278,7 @@ describe Chemotion::ReportAPI do
               checkedAll: false,
             },
             reaction: {
-              checkedIds: [rxn.id],
+              checkedIds: [reaction.id],
               uncheckedIds: [],
               checkedAll: false,
             },
@@ -303,28 +287,27 @@ describe Chemotion::ReportAPI do
               uncheckedIds: [],
               checkedAll: false,
             },
-            currentCollection: c1.id,
-            isSync: false,
+            currentCollection: collection.id,
           },
           columns: {},
         }
       end
 
       let(:subj) { Class.new { |inst| inst.extend(ReportHelpers) } }
-      let(:result) { subj.reaction_smiles_hash(c1.id, rxn.id, false, user.id) }
+      let(:result) { subj.reaction_smiles_hash(collection.id, reaction.id, false, user.id) }
       let(:result_for_shared) do
-        subj.reaction_smiles_hash(c2.id, rxn.id, false, user.id + 1)
+        subj.reaction_smiles_hash(collection_with_shares.id, reaction.id, false, other_user.id)
       end
 
       before do
-        c1.save!
-        c2.save!
-        s0.save!
-        s1.save!
-        s2.save!
-        s3.save!
-        s4.save!
-        rxn.save!
+        collection
+        collection_with_shares
+        sample0.save!
+        sample1.save!
+        sample2.save!
+        sample3.save!
+        sample4.save!
+        reaction.save!
       end
 
       it 'returns a txt file with reaction smiles' do
@@ -340,48 +323,48 @@ describe Chemotion::ReportAPI do
       describe 'ReportHelpers' do
         it 'concats the smiles SM>>P' do
           expect(subj.r_smiles_0(result.first.second)).to eq(
-            "#{[smi0, smi1].join('.')}>>#{smi4}",
+            "#{[smiles0, smiles1].join('.')}>>#{smiles4}",
           )
         end
 
         it 'concats the smiles SM.R>>P' do
           expect(subj.r_smiles_1(result.first.second)).to eq(
-            "#{[smi0, smi1, smi2].join('.')}>>#{smi4}",
+            "#{[smiles0, smiles1, smiles2].join('.')}>>#{smiles4}",
           )
         end
 
         it 'concats the smiles SM.R.S>>P' do
           expect(subj.r_smiles_2(result.first.second)).to eq(
-            "#{[smi0, smi1, smi2, smi3].join('.')}>>#{smi4}",
+            "#{[smiles0, smiles1, smiles2, smiles3].join('.')}>>#{smiles4}",
           )
         end
 
         it 'concats the smiles SM>R>P' do
           expect(subj.r_smiles_3(result.first.second)).to eq(
-            "#{[smi0, smi1].join('.')}>#{smi2}>#{smi4}",
+            "#{[smiles0, smiles1].join('.')}>#{smiles2}>#{smiles4}",
           )
         end
 
         it 'concats the smiles SM>R.S>P' do
           expect(subj.r_smiles_4(result.first.second)).to eq(
-            "#{[smi0, smi1].join('.')}>#{[smi2, smi3].join('.')}>#{smi4}",
+            "#{[smiles0, smiles1].join('.')}>#{[smiles2, smiles3].join('.')}>#{smiles4}",
           )
         end
 
         context 'with user owned reaction,' do
           it 'queries the cano_smiles from reaction associated samples' do
-            expect(result.fetch(rxn.id.to_s)).to eq(
-              '0' => [smi0, smi1],
-              '1' => [smi2],
-              '2' => [smi3],
-              '3' => [smi4],
+            expect(result.fetch(reaction.id.to_s)).to eq(
+              '0' => [smiles0, smiles1],
+              '1' => [smiles2],
+              '2' => [smiles3],
+              '3' => [smiles4],
             )
           end
         end
 
         context 'with shared reaction,' do
           it 'returns * as smiles for hidden structure' do
-            expect(result_for_shared.fetch(rxn.id.to_s)).to eq(
+            expect(result_for_shared.fetch(reaction.id.to_s)).to eq(
               '0' => ['*', '*'],
               '1' => ['*'],
               '2' => ['*'],
@@ -534,4 +517,4 @@ describe Chemotion::ReportAPI do
     end
   end
 end
-# rubocop:enable Rspec/MultipleMemoizedHelpers, Rspec/NestedGroups, RSpec/IndexedLet
+# rubocop:enable RSpec/MultipleMemoizedHelpers, RSpec/NestedGroups, RSpec/IndexedLet

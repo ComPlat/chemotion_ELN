@@ -65,10 +65,7 @@ module Usecases
         collections = []
         return collections unless params[:collection_id]
 
-        if (sync_collection = current_user.all_sync_in_collections_users.find_by(id: params[:collection_id]))
-          collections << Collection.find(sync_collection['collection_id'])
-          collections << Collection.get_all_collection_for_user(sync_collection['shared_by_id'])
-        elsif (own_collection = current_user.collections.find_by(id: params[:collection_id]))
+        if (own_collection = current_user.collections.find_by(id: params[:collection_id]))
           collections << own_collection
           collections << Collection.get_all_collection_for_user(current_user.id)
         end
