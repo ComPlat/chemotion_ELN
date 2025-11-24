@@ -16,6 +16,7 @@ import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import GeneralProperties from 'src/apps/mydb/elements/details/cellLines/propertiesTab/GeneralProperties';
 import AnalysesContainer from 'src/apps/mydb/elements/details/cellLines/analysesTab/AnalysesContainer';
 import DetailsTabLiteratures from 'src/apps/mydb/elements/details/literature/DetailsTabLiteratures';
+import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 
 class CellLineDetails extends React.Component {
   // eslint-disable-next-line react/static-property-placement
@@ -187,8 +188,9 @@ class CellLineDetails extends React.Component {
     const { cellLineItem } = this.props;
 
     if (!cellLineItem) { return (null); }
-    // eslint-disable-next-line react/destructuring-assignment
-    this.context.cellLineDetailsStore.convertCellLineToModel(cellLineItem);
+    const { cellLineDetailsStore } = this.context;
+    cellLineDetailsStore.convertCellLineToModel(cellLineItem);
+    const mobXItem = cellLineDetailsStore.cellLines(cellLineItem.id);
     const { readOnly } = this.state;
     const { activeTab } = this.state;
     return (
@@ -197,7 +199,13 @@ class CellLineDetails extends React.Component {
         footer={this.renderFooterContent()}
       >
         <div className="tabs-container--with-borders">
-          <Tabs activeKey={activeTab} onSelect={(event) => this.handleTabChange(event)} id="cell-line-details-tab">
+          <Tabs
+            activeKey={activeTab}
+            onSelect={(event) => this.handleTabChange(event)}
+            id="cell-line-details-tab"
+            mountOnEnter
+            unmountOnExit
+          >
             <Tab eventKey="tab1" title="Properties" key="tab1">
               <GeneralProperties
                 item={cellLineItem}
@@ -215,6 +223,15 @@ class CellLineDetails extends React.Component {
                 readOnly={readOnly}
                 element={cellLineItem}
                 literatures={cellLineItem.is_new ? cellLineItem.literatures : null}
+              />
+            </Tab>
+            <Tab eventKey="tab4" title="History" key="tab4" disabled={cellLineItem.is_new}>
+              <VersionsTable
+                type="cellline_samples"
+                id={parseInt(cellLineItem.id, 10)}
+                element={cellLineItem}
+                parent={cellLineDetailsStore}
+                isEdited={mobXItem.changed}
               />
             </Tab>
           </Tabs>
