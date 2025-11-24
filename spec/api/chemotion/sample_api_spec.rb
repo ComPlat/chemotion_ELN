@@ -924,6 +924,34 @@ describe Chemotion::SampleAPI do
     end
   end
 
+  describe 'when updating intermediate_type' do
+    let!(:sample) { create(:sample, user: user) }
+    let!(:intermediate_sample) { create :reactions_intermediate_sample, sample: sample }
+    let(:put_sample_api_call) { put "/api/v1/samples/#{sample.id}", params: params, as: :json }
+    let(:params) do
+      { intermediate_type: 'NEW_INTERMEDIATE_TYPE',
+        container: {
+          attachments: [],
+          children: [],
+          is_new: true,
+          is_deleted: false,
+          name: 'new',
+        } }
+    end
+
+    it 'updates ReactionIntermediateSample' do
+      CollectionsSample.create!(sample: sample, collection: collection)
+      Rails.logger.info(put_sample_api_call)
+      Rails.logger.info('put_sample_api_call')
+      intermediate_sample.reload
+      expect(intermediate_sample.intermediate_type).to eq 'NEW_INTERMEDIATE_TYPE'
+      Rails.logger.info('WHATTHEFUCK')
+      expect { put_sample_api_call }
+        .to change(intermediate_sample, :intermediate_type)
+        .to('NEW_INTERMEDIATE_TYPE')
+    end
+  end
+
   # TODO: Check these specs and remove everything that is already covered by the specs above
   #       Refactor the rest to match the spec structure as shown above
   context 'legacy specs previously contained in spec/api/attachment_api_spec.rb' do

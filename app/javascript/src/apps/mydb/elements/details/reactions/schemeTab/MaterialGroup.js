@@ -341,34 +341,49 @@ function GeneralMaterialGroup({
           {contents}
         </div>
       )}
-    </ReorderableMaterialContainer>
+    </ReorderableMaterialContainer >
   );
 
   const intermediatesTable = (
-    <table className="w-100 m-2">
-      <colgroup>
-        <col style={{ width: '4%' }} />
-        <col style={{ width: '16%' }} />
-        <col style={{ width: '4%' }} />
-        <col style={{ width: '6%' }} />
-        <col style={{ width: '20%' }} />
-        <col style={{ width: '27%' }} />
-        <col style={{ width: '23%' }} />
-      </colgroup>
-      <thead>
-        <tr>
-          <th>{addSampleButton}</th>
-          <th>{headers.group}</th>
-          <th>{headers.show_label}</th>
-          <th>{headers.reaction_step}</th>
-          <th>{headers.intermediate_type}</th>
-          {!isReactants && <th>{headers.amount}</th>}
-          <th> </th>
-          <th> </th>
-        </tr>
-      </thead>
-        {contents}
-    </table>
+    <ReorderableMaterialContainer
+      materials={materials}
+      materialGroup={materialGroup}
+      onDrop={onDrop}
+      onReorder={onReorder}
+      renderMaterial={({ index, ...props }) => getMaterialComponent({
+        ...props,
+        index: headIndex + index
+      })}
+    >
+      {({
+        contents, dropRef, isOver, canDrop
+      }) => (
+        <div
+          ref={dropRef}
+          className={materialGroupClassNames({
+            isEmpty: materials.length === 0,
+            isOver,
+            canDrop
+          })}
+        >
+          <div className="pseudo-table__row pseudo-table__row-header">
+            <div className="pseudo-table__cell pseudo-table__cell-title">
+              <div className="material-group__header-title">
+                {addSampleButton}
+                {"Intermediates"}
+              </div>
+            </div>
+            <div className="reaction-material__reaction-step-header">Step</div>
+
+            <div className="reaction-material__intermediate-type-header">Type</div>
+            <div className="reaction-material__amount-header">Amount</div>
+            <div className="reaction-material__delete-header" />
+          </div>
+          {contents}
+        </div>
+      )
+      }
+    </ReorderableMaterialContainer >
   );
 
   return (
