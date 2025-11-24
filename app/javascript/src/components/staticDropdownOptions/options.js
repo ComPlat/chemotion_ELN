@@ -684,3 +684,10 @@ export const SampleTypesOptions = [
   { label: 'Single molecule', value: 'Micromolecule' },
   { label: 'Mixture', value: 'Mixture' },
 ]
+
+export const IntermediateTypeOptions = [
+  { value: 'PURE', label: 'Pure' },
+  { value: 'CRUDE', label: 'Crude' },
+  { value: 'MIXTURE', label: 'Mixture' },
+  { value: 'INTERMEDIATE', label: 'Intermediate' }
+]

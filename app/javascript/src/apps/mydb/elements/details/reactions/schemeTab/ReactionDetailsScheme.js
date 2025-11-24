@@ -496,8 +496,13 @@ export default class ReactionDetailsScheme extends React.Component {
         );
         break;
       case 'reactionIntermediateTypeChanged':
-        this.onReactionChange(
+        onReactionChange(
           this.updatedReactionForReactionIntermediateTypeChange(changeEvent)
+        );
+        break;
+      case 'showLabelChange':
+        onReactionChange(
+          this.updatedReactionForShowLabelChange(changeEvent)
         );
         break;
       default:
@@ -1054,6 +1059,14 @@ export default class ReactionDetailsScheme extends React.Component {
       updatedSample.calculateEquivalentFromReferenceMaterial?.(referenceMaterial);
     }
   }
+  updatedReactionForShowLabelChange(changeEvent) {
+    const { sampleID, show_label } = changeEvent;
+    const updatedSample = this.props.reaction.sampleById(sampleID);
+
+    updatedSample.show_label = show_label;
+
+    return this.updatedReactionWithSample(this.updatedSamplesForShowLabelChange.bind(this), updatedSample);
+  }
 
   updatedReactionForVesselSizeChange() {
     return this.updatedReactionWithSample(this.updatedSamplesForVesselSizeChange.bind(this));
@@ -1426,6 +1439,15 @@ export default class ReactionDetailsScheme extends React.Component {
     return samples.map((sample) => {
       if (sample.id === updatedSample.id) {
         sample.dry_solvent = updatedSample.dry_solvent;
+      }
+      return sample;
+    });
+  }
+
+  updatedSamplesForShowLabelChange(samples, updatedSample) {
+    return samples.map((sample) => {
+      if (sample.id === updatedSample.id) {
+        sample.show_label = updatedSample.show_label;
       }
       return sample;
     });
@@ -1907,7 +1929,7 @@ export default class ReactionDetailsScheme extends React.Component {
             dropSample={this.dropSample}
             // showLoadingColumn={!!reaction.hasPolymers()}
             onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
-            // switchEquiv={this.switchEquiv}
+            switchEquiv={this.switchEquiv}
             // lockEquivColumn={lockEquivColumn}
             headIndex={reaction.intermediate_samples.length}
           />

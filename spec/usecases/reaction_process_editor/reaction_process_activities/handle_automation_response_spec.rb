@@ -5,7 +5,7 @@ RSpec.describe Usecases::ReactionProcessEditor::ReactionProcessActivities::Handl
     described_class.execute!(activity: activity, response_json: upload_file)
   end
 
-  let(:upload_file) { fixture_file_upload('reaction_process_editor/automation_responses/hs-15-2-plates-response.json') }
+  let(:upload_file) { fixture_file_upload('files/reaction_process_editor/automation_responses/hs-15-2-plates-response.json') }
 
   let(:expected_automation_response) do
     { vialPlates: [
