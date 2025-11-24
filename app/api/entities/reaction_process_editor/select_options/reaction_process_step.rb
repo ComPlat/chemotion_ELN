@@ -12,10 +12,6 @@ module Entities
             FORMS: {
               REMOVE: { removable_samples: removable_samples(reaction_process_step) },
               SAVE: { origins: save_sample_origins(reaction_process_step) },
-              TRANSFER: {
-                transferable_samples: transferable_samples(reaction_process_step),
-                targets: transfer_targets(reaction_process_step),
-              },
             },
           }
         end
@@ -46,27 +42,9 @@ module Entities
           titlecase_options_for(reaction_process_step.mounted_equipment)
         end
 
-        def transferable_samples(reaction_process_step)
-          reaction_process = reaction_process_step.reaction_process
-
-          transferable = saved_samples(reaction_process) + [reaction_process.sample]
-
-          transferable.compact.map do |sample|
-            sample_info_option(sample, 'SAMPLE')
-          end
-        end
-
         def saved_samples(reaction_process)
           Sample.where(id: reaction_process.saved_sample_ids)
                 .includes(%i[molecule residues])
-        end
-
-        def transfer_targets(reaction_process_step)
-          reaction_process_step.siblings.map do |process_step|
-            { value: process_step.id,
-              label: process_step.label,
-              saved_sample_ids: process_step.saved_sample_ids }
-          end
         end
 
         def step_fractions_options(reaction_process_step)

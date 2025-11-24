@@ -7,6 +7,7 @@ module Entities
         class Purification < Base
           def select_options_for(reaction_process:)
             {
+              CENTRIFUGATION: SelectOptions::Forms::Purification::Centrifugation.new.select_options,
               CHROMATOGRAPHY: SelectOptions::Forms::Purification::Chromatography.new.select_options,
               CRYSTALLIZATION: SelectOptions::Forms::Purification::Crystallization.new.select_options,
               EXTRACTION: SelectOptions::Forms::Purification::Extraction
