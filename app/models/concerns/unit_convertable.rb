@@ -76,13 +76,27 @@ module UnitConvertable
     end
   end
 
-  def amount_mmol(type = 'target')
+  def calculate_feedstock_mmol(liters)
+    return 0 if liters <= 0
+
+    purity_factor = purity || 1.0
+    ideal_gas_constant = 0.0821
+    default_temp_k = 294.0
+
+    (liters * purity_factor * 1000) / (ideal_gas_constant * default_temp_k)
+  end
+
+  def amount_mmol(type = 'target', gas_type = nil)
     value = self["#{type}_amount_value"] || 0.0
     unit = self["#{type}_amount_unit"]
     return value * 1000 if unit == 'mol'
 
-    val_g = self.convert_to_gram(value, unit)
-    self.convert_to_unit(val_g, 'mol', true)
+    if gas_type == 'feedstock' && unit == 'l'
+      calculate_feedstock_mmol(value)
+    else
+      val_g = self.convert_to_gram(value, unit)
+      self.convert_to_unit(val_g, 'mol', true)
+    end
   end
 
   def amount_mg(type = 'target')
