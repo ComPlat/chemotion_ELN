@@ -38,7 +38,7 @@ module Entities
       displayed_in_list? ? nil : object.container
     end
 
-    def is_restricted
+    def is_restricted # rubocop:disable Naming
       detail_levels[ResearchPlan] < 10
     end
 
