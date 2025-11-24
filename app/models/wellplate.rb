@@ -22,6 +22,8 @@
 #
 
 class Wellplate < ApplicationRecord
+  PREFIX = 'WP'
+
   has_logidze
   acts_as_paranoid
   include ElementUIStateScopes
@@ -152,11 +154,10 @@ class Wellplate < ApplicationRecord
   end
 
   def set_short_label(user:)
-    prefix = 'WP'
     counter = user.increment_counter 'wellplates'
     user_label = user.name_abbreviation
 
-    update(short_label: "#{user_label}-#{prefix}#{counter}")
+    update(short_label: "#{user_label}-#{PREFIX}#{counter}")
   end
 
   def size
