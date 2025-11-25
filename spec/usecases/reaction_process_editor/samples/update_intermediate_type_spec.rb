@@ -12,6 +12,8 @@ RSpec.describe Usecases::ReactionProcessEditor::Samples::UpdateIntermediateType 
   let!(:new_intermediate_type) { 'New Intermediate Type' }
 
   it 'sets intermediate_type' do
-    expect { usecase }.to change(reaction_intermediate_sample, :intermediate_type).to(new_intermediate_type)
+    expect { usecase }.to change {
+      reaction_intermediate_sample.reload.intermediate_type
+    }.from('OLD').to(new_intermediate_type)
   end
 end
