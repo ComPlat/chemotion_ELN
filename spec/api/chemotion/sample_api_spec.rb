@@ -1044,13 +1044,8 @@ describe Chemotion::SampleAPI do
 
     it 'updates ReactionIntermediateSample' do
       CollectionsSample.create!(sample: sample, collection: collection)
-      Rails.logger.info(put_sample_api_call)
-      Rails.logger.info('put_sample_api_call')
-      intermediate_sample.reload
-      expect(intermediate_sample.intermediate_type).to eq 'NEW_INTERMEDIATE_TYPE'
-      Rails.logger.info('WHATTHEFUCK')
       expect { put_sample_api_call }
-        .to change(intermediate_sample, :intermediate_type)
+        .to change { intermediate_sample.reload.intermediate_type }
         .to('NEW_INTERMEDIATE_TYPE')
     end
   end
