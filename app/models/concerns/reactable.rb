@@ -42,7 +42,7 @@ module Reactable
     else
       condition = sample.real_amount_value && sample.real_amount_value != 0
       ref_record_condition = ref_record.sample.real_amount_value && ref_record.sample.real_amount_value != 0
-      amount = condition ? sample.amount_mmol(:real, self.gas_type) : sample.amount_mmol(nil, self.gas_type)
+      amount = condition ? sample.amount_mmol(:real, gas_type) : sample.amount_mmol('target', gas_type)
       ref_amount = ref_record_condition ? ref_record.sample.amount_mmol(:real) : ref_record.sample.amount_mmol
     end
     if gas_type == 'gas'

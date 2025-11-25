@@ -199,14 +199,14 @@ const calculateTONPerTimeValue = (timeValue, timeUnit) => {
  * Determine TON frequency value based on tonValue and a time resolution object.
  *
  * @param {number|string} tonValue - numeric TON value (may be string); returns null if missing/invalid.
- * @param {string} tonFrequencyUnit - one of TON_UNITS.* constants.
+ * @param {string} tonFrequencyUnit - one of TON_UNITS.
  * @param {object} timeValues - object with numeric fields { hours, minutes, seconds } (may be strings).
  * @param {number|null} defaultValue - fallback to return when time resolution is not available or zero.
  * @returns {number|null} - computed frequency or defaultValue, or null for invalid input.
  */
 const determineTONFrequencyValue = (tonValue, tonFrequencyUnit, timeValues, defaultValue = null) => {
   // Validate / normalize tonValue
-  if (tonValue == null) return null; // undefined or null -> invalid input
+  if (tonValue === null || tonValue === undefined) return null; // undefined or null -> invalid input
   const ton = Number(tonValue);
   if (Number.isNaN(ton)) return null; // invalid numeric input
   if (ton === 0) return 0;
@@ -218,7 +218,7 @@ const determineTONFrequencyValue = (tonValue, tonFrequencyUnit, timeValues, defa
   const hours = tv.hours != null ? Number(tv.hours) : null;
 
   // Helper: safe division, returns defaultValue on invalid denominator
-  const safeDiv = (denom) => (denom && !Number.isNaN(denom) ? ton / denom : defaultValue);
+  const safeDiv = (denom) => (denom != null && !Number.isNaN(denom) && denom !== 0 ? ton / denom : defaultValue);
 
   switch (tonFrequencyUnit) {
     case TON_UNITS.PER_SECOND:

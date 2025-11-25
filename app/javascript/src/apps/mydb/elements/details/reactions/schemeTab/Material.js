@@ -372,10 +372,12 @@ class Material extends Component {
 
   // eslint-disable-next-line class-methods-use-this
   getFormattedValue(value) {
-    if (!value && value !== 0) {
-      return 'n.d';
-    }
-    return value || 0;
+    if (value == null || value === '') return 'n.d';
+
+    const num = Number(value);
+    if (Number.isNaN(num)) return 'n.d';
+
+    return num;
   }
 
   gaseousProductRow(material) {

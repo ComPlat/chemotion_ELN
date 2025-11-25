@@ -205,9 +205,7 @@ describe('ReactionDetailsScheme - Gas Phase Reaction Tests', () => {
       // Set a TON value and time, then compute TOF using helper utilities
       const ton = 0.6;
       gasProduct.gas_phase_data.turnover_number = ton;
-      gasProduct.gas_phase_data.time.value = 3;
 
-      // Call model method to compute turnover frequency based on time
       gasProduct.gas_phase_data.time.value = 3;
       gasProduct.updateTONPerTimeValue(ton, gasProduct.gas_phase_data.time);
 
@@ -225,9 +223,6 @@ describe('ReactionDetailsScheme - Gas Phase Reaction Tests', () => {
       const tonVal = 0.6;
       gasProduct.gas_phase_data.turnover_number = tonVal;
       gasProduct.gas_phase_data.time.value = 3;
-
-      // Ensure model computes initial frequency via behavior
-      gasProduct.gas_phase_data.time.value = 3;
       gasProduct.updateTONPerTimeValue(tonVal, gasProduct.gas_phase_data.time);
       const initialTOF = gasProduct.gas_phase_data.turnover_frequency.value;
 
@@ -237,7 +232,6 @@ describe('ReactionDetailsScheme - Gas Phase Reaction Tests', () => {
       const newTOF = gasProduct.gas_phase_data.turnover_frequency.value;
 
       expect(newTOF).toBeLessThan(initialTOF);
-      expect(newTOF).toBeCloseTo(newTOF, 6);
       expect(newTOF).toBeCloseTo(initialTOF / 2, 6); // Double time = half frequency
     });
   });
