@@ -75,11 +75,13 @@ describe('Testing React Utility Functions', () => {
 
   it('should calculate volume for feedstock or gas correctly', () => {
     const gasPhaseData = { part_per_million: 1000, temperature: { value: 21, unit: TEMPERATURE_UNITS.CELSIUS } };
-    // Parameters: vesselVolume, purity, gasType, gasPhaseData, amountInGram, molecularWeight
-    // For gas: volume = (moles * R * T), where moles = (ppm * V) / (R * T * 1e6)
-    // vesselVolume=10L, ppm=1000, T=294K => moles=0.000414 => volume=0.01L
+    // Parameters: reactionVesselSize, purity, gasType, gasPhaseData, amountInGram, molecularWeight
+    // For gas: Calculate GAS PRODUCT VOLUME (not vessel volume!) from concentration
+    //   moles = (ppm * reactionVesselSize) / (R * T * 1e6)
+    //   gasProductVolume = moles * R * T
+    //   reactionVesselSize=10L, ppm=1000, T=294K => moles=0.000414 => gasProductVolume=0.01L
     // For feedstock: volume = (moles * R * 294K) / purity, where moles = amountInGram / molecularWeight
-    // amountInGram=10g, molecularWeight=2g/mol, purity=0.5 => moles=5 => volume=241.374L
+    //   amountInGram=10g, molecularWeight=2g/mol, purity=0.5 => moles=5 => volume=241.374L
     const gasResult = calculateVolumeForFeedstockOrGas(10, 0.5, 'gas', gasPhaseData, null, null);
     assert.strictEqual(gasResult, 0.01);
     const feedstockResult = calculateVolumeForFeedstockOrGas(10, 0.5, 'feedstock', null, 10, 2);
@@ -146,7 +148,7 @@ describe('Testing React Utility Functions', () => {
 
   it('should handle invalid inputs for volume calculation for feedstock or gas', () => {
     const gasPhaseData = { part_per_million: 1000, temperature: { value: 'invalid', unit: TEMPERATURE_UNITS.CELSIUS } };
-    // Parameters: vesselVolume, purity, gasType, gasPhaseData, amountInGram, molecularWeight
+    // Parameters: reactionVesselSize, purity, gasType, gasPhaseData, amountInGram, molecularWeight
     // Invalid temperature should cause calculateGasVolume to return 0
     assert.strictEqual(calculateVolumeForFeedstockOrGas(10, 0.5, 'gas', gasPhaseData, null, null), 0);
   });

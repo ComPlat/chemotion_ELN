@@ -125,8 +125,28 @@ const calculateMolesFromMoleculeWeight = (amountGram, molecularWeight) => (amoun
 const calculateGasMoles = (volume, ppm, temperatureInKelvin) => (ppm * volume)
   / (IDEAL_GAS_CONSTANT * temperatureInKelvin * PARTS_PER_MILLION_FACTOR);
 
+/**
+ * Calculate the volume of feedstock or gas product.
+ *
+ * IMPORTANT: For gas type, this function calculates the ACTUAL GAS PRODUCT VOLUME,
+ * NOT the vessel volume. The vessel volume (reactionVesselSize) is used as input
+ * along with the gas concentration (ppm) to determine how much gas is present,
+ * then the ideal gas law is applied to calculate the gas product's volume.
+ *
+ * @param {number} reactionVesselSize - The size of the reaction vessel in liters.
+ *   For gas type: used to calculate moles of gas from ppm concentration.
+ *   For feedstock: not used (can be null).
+ * @param {number} purity - Purity factor for feedstock calculations.
+ * @param {string} gasType - Type of gas calculation: 'gas' or 'feedstock'.
+ * @param {object} gasPhaseData - Gas phase data containing { part_per_million, temperature }.
+ * @param {number} amountInGram - Amount in grams for feedstock calculations.
+ * @param {number} molecularWeight - Molecular weight for feedstock calculations.
+ * @returns {number} The calculated volume:
+ *   - For 'gas': the gas PRODUCT volume (distinct from vessel size).
+ *   - For 'feedstock': the feedstock volume.
+ */
 const calculateVolumeForFeedstockOrGas = (
-  vesselVolume,
+  reactionVesselSize,
   purity,
   gasType,
   gasPhaseData,
@@ -137,7 +157,9 @@ const calculateVolumeForFeedstockOrGas = (
   const temperatureInKelvin = convertTemperatureToKelvin(temperature);
   let molAmount;
   if (gasType === 'gas') {
-    molAmount = calculateGasMoles(vesselVolume, part_per_million, temperatureInKelvin);
+    // Calculate moles of gas based on concentration (ppm) in the reaction vessel
+    molAmount = calculateGasMoles(reactionVesselSize, part_per_million, temperatureInKelvin);
+    // Return the gas product volume (NOT the vessel size)
     return calculateGasVolume(molAmount, gasPhaseData);
   }
   molAmount = amountInGram / molecularWeight;
