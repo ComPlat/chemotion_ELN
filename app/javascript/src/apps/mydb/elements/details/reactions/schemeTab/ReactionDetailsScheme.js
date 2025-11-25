@@ -32,6 +32,7 @@ import {
   convertTurnoverFrequency,
   calculateFeedstockMoles,
   calculateGasMoles,
+  convertTemperatureToKelvin,
 } from 'src/utilities/UnitsConversion';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
@@ -1061,7 +1062,7 @@ export default class ReactionDetailsScheme extends Component {
         const { part_per_million, temperature } = sample.gas_phase_data;
         let temperatureInKelvin = temperature.value;
         if (temperature.unit !== 'K') {
-          temperatureInKelvin = convertTemperature(temperature.value, temperature.unit);
+          temperatureInKelvin = convertTemperatureToKelvin({value: temperature.value, unit: temperature.unit});
         }
         const moles = calculateGasMoles(vesselSize, part_per_million, temperatureInKelvin);
         sample.setAmount({ value: moles, unit: 'mol' });

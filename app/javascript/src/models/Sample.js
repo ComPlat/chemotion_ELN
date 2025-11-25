@@ -766,7 +766,7 @@ export default class Sample extends Element {
       tonValue,
       tonFrequencyUnit,
       timeValues,
-      value
+      null
     );
   }
 
@@ -791,6 +791,7 @@ export default class Sample extends Element {
   // Menge (mg) = Menge (mmol)  * Molmasse (g/mol) / Reinheit
 
   convertGramToUnit(amount_g = 0, unit) {
+    const gasPhaseCondition = (this.gas_type === 'gas' || this.gas_type === 'feedstock');
     const purity = this.purity || 1.0;
     const molecularWeight = this.molecule_molecular_weight;
     if (this.contains_residues) {
@@ -808,7 +809,7 @@ export default class Sample extends Element {
         case 'g':
           return amount_g;
         case 'l': {
-          if (this.gas_type && this.gas_type !== 'off' && this.gas_type !== 'catalyst') {
+          if (this.gas_type && gasPhaseCondition) {
             const vesselVolume = this.fetchReactionVesselSizeFromStore();
             return calculateVolumeForFeedstockOrGas(
               vesselVolume,
@@ -819,10 +820,10 @@ export default class Sample extends Element {
               molecularWeight
             );
           }
-          if (this.has_molarity) {
+          if (this.has_molarity && !gasPhaseCondition) {
             const molarity = this.molarity_value;
             return (amount_g * purity) / (molarity * molecularWeight);
-          } if (this.has_density || this.gas_type !== 'gas') {
+          } if (this.has_density && !gasPhaseCondition) {
             const { density } = this;
             return amount_g / (density * 1000);
           }
