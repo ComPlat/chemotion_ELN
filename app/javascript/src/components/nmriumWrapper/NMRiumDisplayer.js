@@ -1,11 +1,9 @@
 import React from 'react';
-import base64 from 'base-64';
 import SpectraStore from 'src/stores/alt/stores/SpectraStore';
 import SpectraActions from 'src/stores/alt/actions/SpectraActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import { Modal, Button } from 'react-bootstrap';
 import UIFetcher from 'src/fetchers/UIFetcher';
-import { parseBase64ToArrayBuffer } from 'src/utilities/FetcherHelper';
 import Attachment from 'src/models/Attachment';
 import { SpectraOps } from 'src/utilities/quillToolbarSymbol';
 import { FN } from '@complat/react-spectra-editor';
@@ -17,294 +15,427 @@ export default class NMRiumDisplayer extends React.Component {
 
     this.state = {
       ...SpectraStore.getState(),
+      isIframeLoaded: false,
+      nmriumWrapperHost: '',
+      nmriumOrigin: '',
       nmriumData: null,
       is2D: false,
+      molFile: null,
     };
 
+    this.hasSentToNMRium = false;
     this.iframeRef = React.createRef();
 
     this.onChange = this.onChange.bind(this);
     this.receiveMessage = this.receiveMessage.bind(this);
-    this.handleNMRDisplayerLoaded = this.handleNMRDisplayerLoaded.bind(this);
-    this.sendJcampDataToNMRDisplayer = this.sendJcampDataToNMRDisplayer.bind(this);
-    this.loadNMRDisplayerHostInfo = this.loadNMRDisplayerHostInfo.bind(this);
+    this.handleIframeLoad = this.handleIframeLoad.bind(this);
     this.requestDataToBeSaved = this.requestDataToBeSaved.bind(this);
-    this.requestPreviewImage = this.requestPreviewImage.bind(this);
     this.savingNMRiumWrapperData = this.savingNMRiumWrapperData.bind(this);
-    this.saveOp = this.saveOp.bind(this);
+    this.resetNMRiumState = this.resetNMRiumState.bind(this);
 
+    this.buildPeaksBody = this.buildPeaksBody.bind(this);
     this.findDisplayingSpectra = this.findDisplayingSpectra.bind(this);
     this.findDisplayingSpectrumID = this.findDisplayingSpectrumID.bind(this);
-    this.buildPeaksBody = this.buildPeaksBody.bind(this);
-    this.readNMRiumData = this.readNMRiumData.bind(this);
-
-    this.loadNMRDisplayerHostInfo();
+    this.prepareAnalysisMetadata = this.prepareAnalysisMetadata.bind(this);
+    this.prepareImageAttachment = this.prepareImageAttachment.bind(this);
+    this.prepareNMRiumDataAttachment = this.prepareNMRiumDataAttachment.bind(this);
   }
 
   componentDidMount() {
     SpectraStore.listen(this.onChange);
 
     window.addEventListener('message', this.receiveMessage);
+    this.loadWrapperHost();
   }
 
   componentWillUnmount() {
     SpectraStore.unlisten(this.onChange);
+    window.removeEventListener('message', this.receiveMessage);
   }
 
-  handleNMRDisplayerLoaded() {
-    const isIframeLoaded = true;
-    this.setState({
+  componentDidUpdate() {
+    const {
+      showModalNMRDisplayer,
+      fetchedSpectra,
+      spcInfos,
       isIframeLoaded,
-    }, () => {
-      this.sendJcampDataToNMRDisplayer();
-    });
-  }
+    } = this.state;
 
-  onChange(newState) {
-    const origState = this.state;
-    this.setState({ ...origState, ...newState });
-    const { showModalNMRDisplayer } = newState;
-    if (showModalNMRDisplayer) {
-      this.sendJcampDataToNMRDisplayer();
+    // Check for presence of both nmrium and jcamp files 
+    const nmriumCount = fetchedSpectra?.filter((s) =>
+      s.label?.toLowerCase().endsWith('.nmrium')
+    ).length || 0;
+
+    const jcampExtensions = ['.jdx', '.dx', '.jcamp'];
+    const zipExtensions = ['.zip'];
+    const jdxCount = fetchedSpectra?.filter((s) =>
+      jcampExtensions.some((ext) => s.label?.toLowerCase().endsWith(ext))
+    ).length || 0;
+
+    const expectedJdxCount = spcInfos?.filter((si) =>
+      jcampExtensions.some((ext) => si.label?.toLowerCase().endsWith(ext))
+    ).length || 0;
+
+    const zipCount = fetchedSpectra?.filter((s) =>
+      zipExtensions.some((ext) => s.label?.toLowerCase().endsWith(ext))
+    ).length || 0;
+
+    const expectedZipCount = spcInfos?.filter((si) =>
+      zipExtensions.some((ext) => si.label?.toLowerCase().endsWith(ext))
+    ).length || 0;
+
+    // Ensure loaded files match requested spectra
+    const currentIds = spcInfos?.map((si) => si.idx).sort().join(',') || '';
+    const fetchedIds = fetchedSpectra?.map((fs) => fs.id).sort().join(',') || '';
+
+    const fetchedSpectraReady =
+      fetchedSpectra?.length > 0 &&
+      (
+        (nmriumCount > 0 && jdxCount > 0) ||
+        (nmriumCount === 0 && jdxCount === expectedJdxCount) ||
+        (zipCount > 0 && zipCount === expectedZipCount)
+      ) &&
+      fetchedIds === currentIds;
+
+    const shouldSend =
+      showModalNMRDisplayer &&
+      isIframeLoaded &&
+      fetchedSpectraReady &&
+      !this.hasSentToNMRium;
+
+    if (shouldSend) {
+      this.trySendUrlsToNMRium();
     }
   }
 
-  getSpcInfo() {
-    const { spcInfos, spcIdx } = this.state;
-    const sis = spcInfos.filter((x) => x.idx === spcIdx);
-    const si = sis.length > 0 ? sis[0] : spcInfos[0];
-    return si;
-  }
+  onChange(newState) {
+    const prevIds = (this.state.fetchedSpectra || []).map(s => s.id).join(',');
+    const nextIds = (newState.fetchedSpectra || []).map(s => s.id).join(',');
 
-  loadNMRDisplayerHostInfo() {
-    UIFetcher.fetchNMRDisplayerHost().then((response) => {
-      const { nmrium_url } = response;
-      if (nmrium_url) {
-        const url = new URL(nmrium_url);
-        const nmriumOrigin = url.origin;
-        const nmriumWrapperHost = nmrium_url;
-        this.setState({ nmriumWrapperHost, nmriumOrigin });
+    const hasChanged = prevIds !== nextIds;
+
+    this.setState(newState, () => {
+      if (hasChanged) {
+        this.hasSentToNMRium = false;
       }
     });
   }
 
+  loadWrapperHost() {
+    UIFetcher.fetchNMRDisplayerHost().then(({ nmrium_url }) => {
+      if (!nmrium_url) return;
+      const origin = new URL(nmrium_url).origin;
+      this.setState({ nmriumWrapperHost: nmrium_url, nmriumOrigin: origin });
+    });
+  }
+
+  handleIframeLoad() {
+    this.setState({ isIframeLoaded: true });
+  }
+
   receiveMessage(event) {
     const { nmriumWrapperHost, nmriumOrigin } = this.state;
-    if (nmriumWrapperHost === undefined || nmriumWrapperHost === '') {
-      return;
+    if (!nmriumWrapperHost || event.origin !== nmriumOrigin || !event.data) return;
+
+    const { type, data } = event.data;
+
+    if (type === 'nmr-wrapper:data-change') {
+      const rawState = data?.state || data;
+      const cleanedData = cleaningNMRiumData(rawState);
+      if (!cleanedData) return;
+
+      const spectra = cleanedData?.spectra || cleanedData?.data?.spectra || [];
+      const is2D = spectra.some((spc) => spc?.info?.dimension === 2);
+
+      const version = cleanedData?.version ?? cleanedData?.data?.version ?? 1;
+      const nmriumData = version > 3 && cleanedData.data ? cleanedData.data : cleanedData;
+
+      this.setState({ nmriumData, is2D });
     }
 
-    const is2DNMR = (data) => {
-      const spectra = data?.spectra || [];
-      return spectra.some((spc) => spc.info?.dimension === 2);
-    };
-    
-    if (event.origin === nmriumOrigin && event.data) {
-      const eventData = event.data;
-      const eventDataType = eventData.type;
-
-      if (eventDataType === 'nmr-wrapper:data-change') {
-        const nmrWrapperActionType = eventData.data.actionType;
-        if (nmrWrapperActionType !== '') {
-          let nmriumData = (eventData.data?.state || eventData.data) || null;
-          nmriumData = cleaningNMRiumData(nmriumData);
-          if (!nmriumData) {
-            return;
-          }
-          const { version } = nmriumData;
-          if (version > 3) {
-            const is2D = is2DNMR(nmriumData.data);
-            if (is2D) {
-              this.setState({ nmriumData, is2D });
-            } else {
-              this.setState({ nmriumData: nmriumData.data, is2D });
-            }
-          } else {
-            const is2D = is2DNMR(nmriumData);
-            this.setState({ nmriumData, is2D });
-          }
-        }
-      } else if (eventDataType === 'nmr-wrapper:action-response') {
-        const nmrWrapperDataType = eventData.data.type;
-        if (nmrWrapperDataType === 'exportSpectraViewerAsBlob') {
-          const blobData = eventData.data.data.blob;
-          this.savingNMRiumWrapperData(blobData);
-        }
+    if (type === 'nmr-wrapper:action-response') {
+      const blob = data?.data?.blob;
+      if (data?.type === 'exportSpectraViewerAsBlob' && blob) {
+        this.savingNMRiumWrapperData(blob);
       }
     }
   }
 
   requestDataToBeSaved() {
-    this.requestPreviewImage();
+    const iframe = this.iframeRef.current;
+    if (!iframe) return;
+
+    iframe.contentWindow.postMessage(
+      {
+        type: 'nmr-wrapper:action-request',
+        data: { type: 'exportSpectraViewerAsBlob' },
+      },
+      '*'
+    );
   }
 
-  requestPreviewImage() {
-    const iframeCurrent = this.iframeRef.current;
-    if (!iframeCurrent) {
-      return;
-    }
-    const { contentWindow } = iframeCurrent;
-    const dataToBeSent = {
-      type: 'exportSpectraViewerAsBlob',
-    };
-    contentWindow.postMessage({ type: 'nmr-wrapper:action-request', data: dataToBeSent }, '*');
-  }
-
-  sendJcampDataToNMRDisplayer() {
-    LoadingActions.start.defer();
-    const { fetchedFiles, isIframeLoaded, spcInfos } = this.state;
-    if (isIframeLoaded && fetchedFiles && fetchedFiles.files && fetchedFiles.files.length > 0) {
-      LoadingActions.stop.defer();
-
-      const listFileContents = fetchedFiles.files;
-      if (this.iframeRef.current
-        && listFileContents.length > 0
-        && listFileContents.length === spcInfos.length) {
-        const dataToBeSent = this.buildDataToBeSent(listFileContents, spcInfos);
-        const { contentWindow } = this.iframeRef.current;
-        if (contentWindow) {
-          contentWindow.postMessage({ type: 'nmr-wrapper:load', data: dataToBeSent }, '*');
-        }
-      }
-    } else {
-      LoadingActions.stop.defer();
-    }
-  }
-
-  buildDataToBeSent(files, spectraInfos) {
+  async trySendUrlsToNMRium() {
+    const { isIframeLoaded, fetchedSpectra, showModalNMRDisplayer } = this.state;
     const { sample } = this.props;
-    const nmriumData = this.readNMRiumData(files, spectraInfos);
-    if (nmriumData) {
-      const data = { data: nmriumData, type: 'nmrium' };
-      return data;
-    }
 
-    const data = { data: [], type: 'file' };
-    for (let index = 0; index < files.length; index += 1) {
-      if (files[index] !== null) {
-        const fileToBeShowed = files[index].file;
-        const bufferData = parseBase64ToArrayBuffer(fileToBeShowed);
-        const spcInfo = spectraInfos[index];
-        const fileName = spcInfo.label;
-        const blobToBeSent = new Blob([bufferData]);
-        const dataItem = new File([blobToBeSent], fileName);
-        data.data.push(dataItem);
-      }
-    }
-    if (sample) {
-      const { molfile } = sample;
-      if (molfile) {
-        const fileName = `${sample.id}.mol`;
-        const blobToBeSent = new Blob([molfile]);
-        const dataItem = new File([blobToBeSent], fileName);
-        data.data.push(dataItem);
-      }
-    }
-    return data;
-  }
+    if (!isIframeLoaded || !showModalNMRDisplayer || !fetchedSpectra?.length || this.hasSentToNMRium) return;
 
-  readNMRiumData(files, spectraInfos) {
-    const arrNMRiumSpecs = spectraInfos.filter((spc) => spc.label.includes('.nmrium'));
-    if (!arrNMRiumSpecs || arrNMRiumSpecs.length === 0) {
-      return false;
-    }
+    this.hasSentToNMRium = true;
+    LoadingActions.start.defer();
 
-    const nmriumSpec = arrNMRiumSpecs[0];
-    const arrNMRiumFiles = files.filter((file) => file !== null && file.id === nmriumSpec.idx);
-    if (!arrNMRiumFiles || arrNMRiumFiles.length === 0) {
-      return false;
-    }
+    const nmrium = fetchedSpectra.find((s) => s.kind === 'nmrium');
+    const jdx = fetchedSpectra.find((s) => s.kind === 'jcamp');
+    const zip = fetchedSpectra.find((s) => s.kind === 'zip');
+    const molfile = sample?.molfile || null;
 
-    const nmriumDataEncoded = arrNMRiumFiles[0].file;
-    const decodedData = base64.decode(nmriumDataEncoded);
-    const nmriumData = JSON.parse(decodedData);
-    return nmriumData;
-  }
-
-  savingNMRiumWrapperData(imageBlobData = false) {
-    const { nmriumData, is2D } = this.state;
-    if (nmriumData === null || !imageBlobData) {
+    // If we have a .nmrium file, patch it and send it
+    if (nmrium?.file) {
+      await this.sendPatchedNmrium(nmrium, jdx, zip, molfile, sample);
+      LoadingActions.stop.defer();
       return;
     }
+
+    // Fallback: only .jdx/.zip file available
+    if (jdx?.url) {
+      // get file extension from jdx.label
+      const fileExtension = jdx.label?.split('.').pop()?.toLowerCase() || 'jdx';
+      const jdxUrlWithFile = `${jdx.url}/file.${fileExtension}`;
+      const payload = {
+        type: 'nmrium',
+        data: {
+          spectra: [{
+            id: crypto.randomUUID(),
+            source: { jcampURL: jdxUrlWithFile },
+            display: { name: jdx.label || 'spectrum' },
+          }],
+          molecules: molfile ? [{ molfile }] : [],
+        },
+      };
+      this.iframeRef.current?.contentWindow.postMessage({ type: 'nmr-wrapper:load', data: payload }, '*');
+    } else if (zip?.url) {
+
+      this.iframeRef.current?.contentWindow.postMessage({ type: 'nmr-wrapper:load', data: { type: 'url', data: [`${zip.url}/file.zip`] } }, '*');
+
+      const nmriumState = await this.waitForNMRiumDataWithSpectra(30000);
+      if (!nmriumState) {
+        LoadingActions.stop.defer();
+        return;
+      }
+
+      const cleaned = cleaningNMRiumData(nmriumState);
+
+      if (zip?.label) this.patchZipName(cleaned, zip?.label);
+      if (molfile) { cleaned.molecules = [{ molfile }]; }
+
+      this.iframeRef.current?.contentWindow.postMessage({ type: 'nmr-wrapper:load', data: { type: 'nmrium', data: cleaned } }, '*');
+    } else {
+      console.warn('No usable .nmrium or .jdx file for display.');
+    }
+
+    LoadingActions.stop.defer();
+  }
+
+  patchZipName(nmriumData, zipLabel) {
+    if (!nmriumData) return;
+    nmriumData.spectra.forEach((s) => {
+      if (s.info) {
+        s.info.name = zipLabel;
+      }
+    });
+  }
+
+  async waitForNMRiumDataWithSpectra(timeoutMs = 5000) {
+    const start = Date.now();
+    return new Promise((resolve) => {
+      const check = () => {
+        const current = this.state.nmriumData;
+        const spectra = current?.spectra || current?.data?.spectra || [];
+        if (Array.isArray(spectra) && spectra.length > 0) {
+          resolve(current?.data || current);
+        } else if (Date.now() - start >= timeoutMs) {
+          resolve(null);
+        } else {
+          setTimeout(check, 100);
+        }
+      };
+      check();
+    });
+  }
+
+  async sendPatchedNmrium(nmrium, jdx, zip, molfile) {
+    try {
+      const fileContent = await this.readFileContent(nmrium.file);
+      const nmriumObj = JSON.parse(fileContent);
+
+      this.patchZipAndJcampReference(nmriumObj, jdx?.url, zip?.url, zip?.label);
+      if (molfile) {
+        nmriumObj.molecules = [{ molfile }];
+      }
+
+      const patchedFile = this.buildPatchedNmriumFile(nmrium.label, nmriumObj);
+      const fileList = [patchedFile];
+
+      const updatedSpectra = this.state.fetchedSpectra.filter((s) => s.kind === 'jcamp' || s.kind === 'zip');
+      updatedSpectra.push({ ...nmrium, file: patchedFile });
+      this.setState({ fetchedSpectra: updatedSpectra });
+
+      const payload = { type: 'file', data: fileList };
+      this.iframeRef.current?.contentWindow.postMessage({ type: 'nmr-wrapper:load', data: payload }, '*');
+    } catch (err) {
+      console.error('Failed to parse/patch .nmrium:', err);
+    }
+  }
+
+  async readFileContent(file) {
+    if (file instanceof Blob) {
+      return await file.text();
+    }
+    if (typeof file === 'string') {
+      return atob(file);
+    }
+    throw new Error('Unsupported .nmrium file format');
+  }
+
+  patchZipAndJcampReference(nmriumObj, jdxUrl, zipUrl, zipLabel) {
+    if (!jdxUrl && !zipUrl) return;
+
+    const jdxUrlWithFile = jdxUrl !== undefined ? `${jdxUrl}/file.jdx` : undefined;
+    const zipUrlWithFile = zipUrl !== undefined ? `${zipUrl}/file.zip` : undefined;
+    const preferredUrl = jdxUrlWithFile !== undefined ? jdxUrlWithFile : zipUrlWithFile;
+
+    const u = new URL(preferredUrl);
+
+    let baseURL = u.origin;
+    let relativePath = u.pathname;
+
+    nmriumObj.spectra.forEach((s) => {
+      if (!s) return;
+      if (jdxUrl) delete s.sourceSelector.files;
+
+      nmriumObj.source.entries[0].relativePath = relativePath;
+      nmriumObj.source.entries[0].baseURL = baseURL;
+
+      if (zipUrl && s.info) {
+        s.info.name = zipLabel;
+      }
+
+      // Patch the zip references in the nmrium data
+      if (zipUrl && Array.isArray(s?.sourceSelector?.files)) {
+        const marker = '/file.zip/';
+        s.sourceSelector.files = s.sourceSelector.files.map(
+          (f) => f.includes(marker) ? `${relativePath}/${f.split(marker)[1]}` : f
+        );
+      }
+    });
+  }
+
+  buildPatchedNmriumFile(label, contentObj) {
+    const blob = new Blob([JSON.stringify(contentObj)], { type: 'application/json' });
+    return new File([blob], label || 'spectrum.nmrium');
+  }
+
+  async savingNMRiumWrapperData(imageBlobData) {
+    const { nmriumData, is2D } = this.state;
+    const { sample, handleSampleChanged } = this.props;
+
+    if (!nmriumData || !imageBlobData || !sample) return;
 
     const specInfo = this.getSpcInfo();
-    if (!specInfo) {
-      return;
-    }
+    if (!specInfo) return;
 
-    const { label } = specInfo;
-    const specLabelParts = label.split('.');
-    const fileNameWithoutExt = specLabelParts[0];
+    const baseName = specInfo.label?.split('.')[0] || 'spectrum';
 
-    const imageAttachment = this.prepareImageAttachment(imageBlobData, fileNameWithoutExt);
-    const nmriumAttachment = this.prepareNMRiunDataAttachment(nmriumData, fileNameWithoutExt);
-    const listFileNameToBeDeleted = [imageAttachment.filename, nmriumAttachment.filename];
-    const datasetToBeUpdated = this.prepareDatasets(listFileNameToBeDeleted);
-    if (!datasetToBeUpdated) {
-      return;
-    }
+    const imageAttachment = this.prepareImageAttachment(imageBlobData, baseName);
+    const nmriumAttachment = this.prepareNMRiumDataAttachment(nmriumData, baseName);
 
+    const dataset = this.prepareDatasets([imageAttachment.filename, nmriumAttachment.filename]);
+    if (!dataset) return;
+
+    // Generate peak annotations for export
     if (!is2D) {
       this.prepareAnalysisMetadata(nmriumData);
     }
 
-    const { sample, handleSampleChanged } = this.props;
+    dataset.attachments.push(imageAttachment, nmriumAttachment);
 
-    datasetToBeUpdated.attachments.push(imageAttachment);
-    datasetToBeUpdated.attachments.push(nmriumAttachment);
-
-    const cb = () => (
-      this.saveOp()
-    );
     LoadingActions.start.defer();
-    handleSampleChanged(sample, cb);
+    handleSampleChanged(sample, () => this.saveOp());
   }
 
-  prepareDatasets(fileNameToBeDeleted = []) {
-    const specInfo = this.getSpcInfo();
+  saveOp() {
+    this.resetNMRiumState();
+    SpectraActions.ToggleModalNMRDisplayer.defer();
+
+    const { handleSubmit } = this.props;
+    if (handleSubmit) handleSubmit();
+  }
+
+  getSpcInfo() {
+    const { spcInfos, spcIdx } = this.state;
+    return spcInfos.find((spc) => spc.idx === spcIdx) || spcInfos[0];
+  }
+
+  prepareDatasets(fileNamesToDelete = []) {
     const { sample } = this.props;
+    const specInfo = this.getSpcInfo();
 
-    const datasetContainers = sample.datasetContainers();
-    const listDatasetFiltered = datasetContainers.filter((e) => specInfo.idDt === e.id);
-    if (listDatasetFiltered.length === 0) {
-      return false;
-    }
+    if (!sample || !specInfo) return false;
 
-    const datasetToBeUpdated = listDatasetFiltered[0];
-    const datasetAttachments = datasetToBeUpdated.attachments;
-    datasetAttachments.forEach((att) => {
-      if (fileNameToBeDeleted.includes(att.filename)) {
+    const dataset = sample.datasetContainers().find(ds => ds.id === specInfo.idDt);
+    if (!dataset) return false;
+
+    dataset.attachments.forEach(att => {
+      if (fileNamesToDelete.includes(att.filename)) {
         att.is_deleted = true;
       }
     });
-    datasetToBeUpdated.attachments = datasetAttachments;
-    return datasetToBeUpdated;
+
+    return dataset;
   }
 
-  prepareNMRiunDataAttachment(nmriumData, fileNameNoExt) {
-    const spaceIndent = 0;
-    const dataAsJson = JSON.stringify(
+  prepareImageAttachment(blob, baseName) {
+    const fileName = `${baseName}.svg`;
+    blob.name = fileName;
+
+    const attachment = Attachment.fromFile(blob);
+    attachment.thumb = true;
+
+    return attachment;
+  }
+
+  prepareNMRiumDataAttachment(nmriumData, baseName) {
+    const json = JSON.stringify(
       nmriumData,
       (key, value) => (ArrayBuffer.isView(value) ? Array.from(value) : value),
-      spaceIndent,
+      0
     );
-    const blobData = new Blob([dataAsJson], { type: 'text/plain' });
-    const fileName = `${fileNameNoExt}.nmrium`;
-    blobData.name = fileName;
-    const dataAttachment = Attachment.fromFile(blobData);
-    return dataAttachment;
+
+    const blob = new Blob([json], { type: 'text/plain' });
+    blob.name = `${baseName}.nmrium`;
+
+    return Attachment.fromFile(blob);
   }
 
-  prepareImageAttachment(blobData, fileNameNoExt) {
-    const fileName = `${fileNameNoExt}.svg`;
-    const blobDataToBeSaved = blobData;
-    blobDataToBeSaved.name = fileName;
-    const imageAttachment = Attachment.fromFile(blobDataToBeSaved);
-    imageAttachment.thumb = true;
-    return imageAttachment;
+  resetNMRiumState() {
+    this.hasSentToNMRium = false;
+    this.nmriumWrapperHost = null;
+    this.nmriumOrigin = null;
+
+    this.setState({
+      isIframeLoaded: false,
+      showModalNMRDisplayer: false,
+      fetchedSpectra: [],
+      spcInfos: [],
+      spcIdx: null,
+      nmriumData: null,
+      is2D: false,
+      molFile: null,
+    });
   }
 
   prepareAnalysisMetadata(nmriumData) {
+    if (!nmriumData) return;
+
     const buildPeaksBodyObject = this.buildPeaksBody(nmriumData);
     const { peaksBody, layout } = buildPeaksBodyObject;
 
@@ -341,154 +472,95 @@ export default class NMRiumDisplayer extends React.Component {
   }
 
   buildPeaksBody(nmriumData) {
-    const displayingSpectra = this.findDisplayingSpectra(nmriumData);
-    if (displayingSpectra.length <= 0) {
-      return { peaksBody: '', layout: '' };
-    }
-    const firstSpectrum = displayingSpectra[0];
-    let layout = firstSpectrum.nucleus;
-    const { info } = firstSpectrum;
-    if (info) {
-      const { dimension, nucleus } = info;
-      if (dimension === 2) {
-        return { peaksBody: '', layout: '' };
-      }
-      layout = nucleus;
-    }
+    const spectra = this.findDisplayingSpectra(nmriumData);
+    if (spectra.length === 0) return { peaksBody: '', layout: '' };
 
-    const firstSpectrumPeaks = firstSpectrum.peaks;
-    const { values } = firstSpectrumPeaks;
-    const peaks = values;
-    const shift = { shifts: [{ enable: false, peak: false, ref: { label: false, name: '---', value: 0 } }] };
-    const decimal = 2;
+    const spectrum = spectra[0];
+    const { info, peaks, nucleus } = spectrum;
+
+    // Ignore 2D spectra
+    if (info?.dimension === 2) return { peaksBody: '', layout: '' };
+
+    const layout = info?.nucleus || nucleus;
+    if (!layout || !peaks?.values?.length) return { peaksBody: '', layout: '' };
+
+    const shift = {
+      shifts: [{ enable: false, peak: false, ref: { label: false, name: '---', value: 0 } }],
+    };
+
     const peaksBody = FN.peaksBody({
-      peaks, layout, decimal, shift
+      peaks: peaks.values,
+      layout,
+      decimal: 2,
+      shift,
     });
+
     return { peaksBody, layout };
   }
 
   findDisplayingSpectra(nmriumData) {
-    const { spectra, correlations } = nmriumData;
-    const displayingSpectrumID = this.findDisplayingSpectrumID(correlations);
-    if (displayingSpectrumID) {
-      const displayingSpectra = spectra.filter((spectrum) => {
-        const { id } = spectrum;
-        return id === displayingSpectrumID;
-      });
-      return displayingSpectra;
+    const root = nmriumData?.data || nmriumData;
+    if (!root?.spectra) return [];
+
+    const { spectra, correlations } = root;
+    const idToDisplay = this.findDisplayingSpectrumID(correlations);
+
+    if (idToDisplay) {
+      return spectra.filter((s) => s.id === idToDisplay);
     }
 
-    const nonFIDSpectra = spectra.filter((spectrum) => {
-      const { info } = spectrum;
-      const { isFid } = info;
-      return isFid === false;
-    });
-    return nonFIDSpectra;
+    return spectra.filter((s) => s?.info?.isFid === false);
   }
 
   findDisplayingSpectrumID(correlations) {
-    if (!correlations) {
-      return false;
-    }
-
     try {
-      const { values } = correlations;
-      if (values.length > 0) {
-        const firstValue = values[0];
-        const { link } = firstValue;
-        if (link.length > 0) {
-          const firstLink = link[0];
-          const { experimentID } = firstLink;
-          return experimentID;
-        }
-      }
-      return false;
-    } catch (error) {
-      return false;
+      const links = correlations?.values?.[0]?.link;
+      return links?.[0]?.experimentID || null;
+    } catch {
+      return null;
     }
-  }
-
-  saveOp() {
-    SpectraActions.ToggleModalNMRDisplayer.defer();
-    const { handleSubmit } = this.props;
-    handleSubmit();
-  }
-
-  renderNMRium(nmriumWrapperHost) {
-    return (
-      <Modal.Body>
-        <iframe
-          id="nmrium_wrapper"
-          className="spectra-editor"
-          src={nmriumWrapperHost}
-          allowFullScreen
-          ref={this.iframeRef}
-          onLoad={this.handleNMRDisplayerLoaded}
-        />
-      </Modal.Body>
-    );
-  }
-
-  renderModalTitle() {
-    const { nmriumData } = this.state;
-    const { sample } = this.props;
-    let readOnly = false;
-    if (sample.hasOwnProperty('can_update')) {
-      readOnly = !(sample.can_update);
-    }
-    let hasSpectra = false;
-    if (nmriumData) {
-      const { version } = nmriumData;
-      if (version > 3) {
-        hasSpectra = nmriumData.data.spectra.length > 0;
-      } else {
-        hasSpectra = nmriumData.spectra.length > 0;
-      }
-    }
-
-    return (
-      <Modal.Header className="gap-2 justify-content-end">
-        {hasSpectra && !readOnly ? 
-          (
-            <Button
-              variant="success"
-              size="sm"
-              onClick={() => {
-                this.requestDataToBeSaved();
-              }}
-            >
-              <i className="fa fa-floppy-o me-1" />
-              Close with Save
-            </Button>
-          ) : null
-        }
-        <Button
-          variant="danger"
-          size="sm"
-          onClick={() => {
-            SpectraActions.ToggleModalNMRDisplayer.defer();
-          }}
-        >
-          <i className="fa fa-times me-1" />
-          Close without Save
-        </Button>
-      </Modal.Header>
-    );
   }
 
   render() {
-    const { showModalNMRDisplayer, nmriumWrapperHost } = this.state;
+    const { showModalNMRDisplayer, nmriumWrapperHost, nmriumData } = this.state;
+    const { sample } = this.props;
+
+    const canSave = sample?.can_update && nmriumData;
 
     return (
-      <Modal
-        centered
-        show={showModalNMRDisplayer}
-        size="xxxl"
-        animation
-        onHide={this.closeOp}
-      >
-        {this.renderModalTitle()}
-        {this.renderNMRium(nmriumWrapperHost)}
+      <Modal centered show={showModalNMRDisplayer} size="xxxl" animation>
+        <Modal.Header className="gap-2 justify-content-end">
+
+          {canSave && (
+            <Button variant="success" size="sm" onClick={this.requestDataToBeSaved}>
+              <i className="fa fa-floppy-o me-1" />
+              Close with Save
+            </Button>
+          )}
+
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={() => {
+              this.resetNMRiumState();
+              SpectraActions.ToggleModalNMRDisplayer.defer();
+            }}
+          >
+            <i className="fa fa-times me-1" />
+            Close without Save
+          </Button>
+        </Modal.Header>
+
+        <Modal.Body>
+          <iframe
+            id="nmrium_wrapper"
+            className="spectra-editor"
+            src={nmriumWrapperHost}
+            allowFullScreen
+            ref={this.iframeRef}
+            onLoad={this.handleIframeLoad}
+          />
+        </Modal.Body>
       </Modal>
     );
   }
