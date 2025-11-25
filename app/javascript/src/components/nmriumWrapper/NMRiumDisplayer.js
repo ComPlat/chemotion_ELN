@@ -224,7 +224,6 @@ export default class NMRiumDisplayer extends React.Component {
     
     const cleaned = cleaningNMRiumData(nmriumState);
 
-    // Patch the zip name in the nmrium data
     if (zip?.label) this.patchZipName(cleaned, zip?.label);
     if (molfile) { cleaned.molecules = [{ molfile }]; }
   
