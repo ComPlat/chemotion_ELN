@@ -20,6 +20,8 @@ module Entities
 
       expose :select_options
 
+      expose :initial_sample_transfers, using: 'Entities::ReactionProcessEditor::ReactionProcessActivityEntity'
+
       private
 
       delegate :reaction, to: :object
@@ -28,6 +30,16 @@ module Entities
         @reaction_process_steps ||= object.reaction_process_steps
                                           .includes(%i[reaction_process_activities reaction_process_vessel])
                                           .order('position')
+      end
+
+      def initial_sample_transfers
+        return [] unless object.sample
+
+        reaction_process_steps.map do |process_step|
+          process_step.reaction_process_activities.select do |activity|
+            activity.transfer?(sample_id: object.sample_id)
+          end
+        end.flatten
       end
 
       def samples_preparations
