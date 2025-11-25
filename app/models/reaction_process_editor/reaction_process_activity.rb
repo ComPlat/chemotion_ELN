@@ -54,8 +54,9 @@ module ReactionProcessEditor
       %w[REMOVE].include?(activity_name)
     end
 
-    def transfer?
-      %w[TRANSFER].include?(activity_name)
+    def transfer?(sample_id: nil)
+      %w[TRANSFER].include?(activity_name) &&
+        (sample_id.nil? || workup['sample_id'] == sample_id)
     end
 
     def condition?

@@ -13,6 +13,7 @@ module Entities
       expose :preconditions
 
       expose :transfer_source_step_name # supportive piggyback required in TRANSFER only
+      expose :transfer_target_step_name # supportive piggyback required in TRANSFER only
 
       private
 
@@ -27,6 +28,12 @@ module Entities
           .find_by(reaction: object.reaction, sample: object.sample)
           &.reaction_process_step
           &.name
+      end
+
+      def transfer_target_step_name
+        return unless object.transfer?
+
+        object.reaction_process_step&.name
       end
 
       def preconditions

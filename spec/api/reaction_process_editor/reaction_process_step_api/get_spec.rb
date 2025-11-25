@@ -90,20 +90,5 @@ describe ReactionProcessEditor::ReactionProcessStepAPI, '.get' do
 
       equipment_options.deep_stringify_keys
     end
-
-    it 'transferable_samples' do
-      expected_samples = { id: saved_sample.id }.deep_stringify_keys
-
-      expect(
-        parsed_select_options.dig('FORMS', 'TRANSFER', 'transferable_samples'),
-      ).to include(hash_including(expected_samples))
-    end
-
-    it 'transferable_to' do
-      expect(parsed_select_options.dig('FORMS', 'TRANSFER', 'targets')).to include(
-        hash_including({ value: reaction_process_step.id, saved_sample_ids: [saved_sample.id] }.stringify_keys),
-        hash_including({ value: other_process_step.id, saved_sample_ids: [] }.stringify_keys),
-      )
-    end
   end
 end

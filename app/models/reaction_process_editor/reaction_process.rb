@@ -32,8 +32,8 @@ module ReactionProcessEditor
 
     has_many :reaction_process_vessels, dependent: :destroy
 
-    # relevant as SampleSetup for sample process (no-reaction process). If one day SampleSetup gets extended we might
-    # want to introduce a Model SampleSetup carrying that reaction_process_vessel.
+    # relevant as SampleSetup only for sample processes (="no-reaction process"). If one day SampleSetup gets extended
+    #  we might want to introduce a separate model SampleSetup which then carries this reaction_process_vessel.
     belongs_to :reaction_process_vessel, optional: true
 
     delegate :reaction_svg_file, :short_label, :collections, to: :reaction, allow_nil: true
