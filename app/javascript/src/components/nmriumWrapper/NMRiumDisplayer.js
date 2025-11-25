@@ -60,18 +60,18 @@ export default class NMRiumDisplayer extends React.Component {
       spcInfos,
       isIframeLoaded,
     } = this.state;
-  
+
     // Check for presence of both nmrium and jcamp files 
     const nmriumCount = fetchedSpectra?.filter((s) =>
       s.label?.toLowerCase().endsWith('.nmrium')
     ).length || 0;
-  
+
     const jcampExtensions = ['.jdx', '.dx', '.jcamp'];
     const zipExtensions = ['.zip'];
     const jdxCount = fetchedSpectra?.filter((s) =>
       jcampExtensions.some((ext) => s.label?.toLowerCase().endsWith(ext))
     ).length || 0;
-  
+
     const expectedJdxCount = spcInfos?.filter((si) =>
       jcampExtensions.some((ext) => si.label?.toLowerCase().endsWith(ext))
     ).length || 0;
@@ -83,11 +83,11 @@ export default class NMRiumDisplayer extends React.Component {
     const expectedZipCount = spcInfos?.filter((si) =>
       zipExtensions.some((ext) => si.label?.toLowerCase().endsWith(ext))
     ).length || 0;
-  
+
     // Ensure loaded files match requested spectra
     const currentIds = spcInfos?.map((si) => si.idx).sort().join(',') || '';
     const fetchedIds = fetchedSpectra?.map((fs) => fs.id).sort().join(',') || '';
-  
+
     const fetchedSpectraReady =
       fetchedSpectra?.length > 0 &&
       (
@@ -96,13 +96,13 @@ export default class NMRiumDisplayer extends React.Component {
         (zipCount > 0 && zipCount === expectedZipCount)
       ) &&
       fetchedIds === currentIds;
-  
+
     const shouldSend =
       showModalNMRDisplayer &&
       isIframeLoaded &&
       fetchedSpectraReady &&
       !this.hasSentToNMRium;
-  
+
     if (shouldSend) {
       this.trySendUrlsToNMRium();
     }
@@ -111,16 +111,16 @@ export default class NMRiumDisplayer extends React.Component {
   onChange(newState) {
     const prevIds = (this.state.fetchedSpectra || []).map(s => s.id).join(',');
     const nextIds = (newState.fetchedSpectra || []).map(s => s.id).join(',');
-  
+
     const hasChanged = prevIds !== nextIds;
-  
+
     this.setState(newState, () => {
       if (hasChanged) {
         this.hasSentToNMRium = false;
       }
     });
   }
-  
+
   loadWrapperHost() {
     UIFetcher.fetchNMRDisplayerHost().then(({ nmrium_url }) => {
       if (!nmrium_url) return;
@@ -136,23 +136,23 @@ export default class NMRiumDisplayer extends React.Component {
   receiveMessage(event) {
     const { nmriumWrapperHost, nmriumOrigin } = this.state;
     if (!nmriumWrapperHost || event.origin !== nmriumOrigin || !event.data) return;
-  
+
     const { type, data } = event.data;
-  
+
     if (type === 'nmr-wrapper:data-change') {
       const rawState = data?.state || data;
       const cleanedData = cleaningNMRiumData(rawState);
       if (!cleanedData) return;
-  
+
       const spectra = cleanedData?.spectra || cleanedData?.data?.spectra || [];
       const is2D = spectra.some((spc) => spc?.info?.dimension === 2);
-  
+
       const version = cleanedData?.version ?? cleanedData?.data?.version ?? 1;
       const nmriumData = version > 3 && cleanedData.data ? cleanedData.data : cleanedData;
-  
+
       this.setState({ nmriumData, is2D });
     }
-  
+
     if (type === 'nmr-wrapper:action-response') {
       const blob = data?.data?.blob;
       if (data?.type === 'exportSpectraViewerAsBlob' && blob) {
@@ -160,11 +160,11 @@ export default class NMRiumDisplayer extends React.Component {
       }
     }
   }
-  
+
   requestDataToBeSaved() {
     const iframe = this.iframeRef.current;
     if (!iframe) return;
-  
+
     iframe.contentWindow.postMessage(
       {
         type: 'nmr-wrapper:action-request',
@@ -177,24 +177,24 @@ export default class NMRiumDisplayer extends React.Component {
   async trySendUrlsToNMRium() {
     const { isIframeLoaded, fetchedSpectra, showModalNMRDisplayer } = this.state;
     const { sample } = this.props;
-  
+
     if (!isIframeLoaded || !showModalNMRDisplayer || !fetchedSpectra?.length || this.hasSentToNMRium) return;
-  
+
     this.hasSentToNMRium = true;
     LoadingActions.start.defer();
-  
+
     const nmrium = fetchedSpectra.find((s) => s.kind === 'nmrium');
     const jdx = fetchedSpectra.find((s) => s.kind === 'jcamp');
     const zip = fetchedSpectra.find((s) => s.kind === 'zip');
     const molfile = sample?.molfile || null;
-  
+
     // If we have a .nmrium file, patch it and send it
     if (nmrium?.file) {
       await this.sendPatchedNmrium(nmrium, jdx, zip, molfile, sample);
       LoadingActions.stop.defer();
       return;
     }
-  
+
     // Fallback: only .jdx/.zip file available
     if (jdx?.url) {
       // get file extension from jdx.label
@@ -213,26 +213,25 @@ export default class NMRiumDisplayer extends React.Component {
       };
       this.iframeRef.current?.contentWindow.postMessage({ type: 'nmr-wrapper:load', data: payload }, '*');
     } else if (zip?.url) {
-  
-    this.iframeRef.current?.contentWindow.postMessage({ type: 'nmr-wrapper:load', data: { type: 'url', data: [`${zip.url}/file.zip`] } },'*');
-  
-    const nmriumState = await this.waitForNMRiumDataWithSpectra(30000);
-    if (!nmriumState) {
-      LoadingActions.stop.defer();
-      return;
-    }
-    
-    const cleaned = cleaningNMRiumData(nmriumState);
 
-    // Patch the zip name in the nmrium data
-    if (zip?.label) this.patchZipName(cleaned, zip?.label);
-    if (molfile) { cleaned.molecules = [{ molfile }]; }
-  
-    this.iframeRef.current?.contentWindow.postMessage({ type: 'nmr-wrapper:load', data: { type: 'nmrium', data: cleaned } },'*');
+      this.iframeRef.current?.contentWindow.postMessage({ type: 'nmr-wrapper:load', data: { type: 'url', data: [`${zip.url}/file.zip`] } }, '*');
+
+      const nmriumState = await this.waitForNMRiumDataWithSpectra(30000);
+      if (!nmriumState) {
+        LoadingActions.stop.defer();
+        return;
+      }
+
+      const cleaned = cleaningNMRiumData(nmriumState);
+
+      if (zip?.label) this.patchZipName(cleaned, zip?.label);
+      if (molfile) { cleaned.molecules = [{ molfile }]; }
+
+      this.iframeRef.current?.contentWindow.postMessage({ type: 'nmr-wrapper:load', data: { type: 'nmrium', data: cleaned } }, '*');
     } else {
       console.warn('No usable .nmrium or .jdx file for display.');
     }
-  
+
     LoadingActions.stop.defer();
   }
 
@@ -267,19 +266,19 @@ export default class NMRiumDisplayer extends React.Component {
     try {
       const fileContent = await this.readFileContent(nmrium.file);
       const nmriumObj = JSON.parse(fileContent);
-  
+
       this.patchZipAndJcampReference(nmriumObj, jdx?.url, zip?.url, zip?.label);
       if (molfile) {
         nmriumObj.molecules = [{ molfile }];
       }
-  
+
       const patchedFile = this.buildPatchedNmriumFile(nmrium.label, nmriumObj);
       const fileList = [patchedFile];
-  
+
       const updatedSpectra = this.state.fetchedSpectra.filter((s) => s.kind === 'jcamp' || s.kind === 'zip');
       updatedSpectra.push({ ...nmrium, file: patchedFile });
       this.setState({ fetchedSpectra: updatedSpectra });
-  
+
       const payload = { type: 'file', data: fileList };
       this.iframeRef.current?.contentWindow.postMessage({ type: 'nmr-wrapper:load', data: payload }, '*');
     } catch (err) {
@@ -296,7 +295,7 @@ export default class NMRiumDisplayer extends React.Component {
     }
     throw new Error('Unsupported .nmrium file format');
   }
-  
+
   patchZipAndJcampReference(nmriumObj, jdxUrl, zipUrl, zipLabel) {
     if (!jdxUrl && !zipUrl) return;
 
@@ -338,27 +337,27 @@ export default class NMRiumDisplayer extends React.Component {
   async savingNMRiumWrapperData(imageBlobData) {
     const { nmriumData, is2D } = this.state;
     const { sample, handleSampleChanged } = this.props;
-  
+
     if (!nmriumData || !imageBlobData || !sample) return;
-  
+
     const specInfo = this.getSpcInfo();
     if (!specInfo) return;
-  
+
     const baseName = specInfo.label?.split('.')[0] || 'spectrum';
-  
+
     const imageAttachment = this.prepareImageAttachment(imageBlobData, baseName);
     const nmriumAttachment = this.prepareNMRiumDataAttachment(nmriumData, baseName);
-  
+
     const dataset = this.prepareDatasets([imageAttachment.filename, nmriumAttachment.filename]);
     if (!dataset) return;
-  
+
     // Generate peak annotations for export
     if (!is2D) {
       this.prepareAnalysisMetadata(nmriumData);
     }
-  
+
     dataset.attachments.push(imageAttachment, nmriumAttachment);
-  
+
     LoadingActions.start.defer();
     handleSampleChanged(sample, () => this.saveOp());
   }
@@ -366,62 +365,62 @@ export default class NMRiumDisplayer extends React.Component {
   saveOp() {
     this.resetNMRiumState();
     SpectraActions.ToggleModalNMRDisplayer.defer();
-  
+
     const { handleSubmit } = this.props;
     if (handleSubmit) handleSubmit();
   }
-  
+
   getSpcInfo() {
     const { spcInfos, spcIdx } = this.state;
     return spcInfos.find((spc) => spc.idx === spcIdx) || spcInfos[0];
   }
-  
+
   prepareDatasets(fileNamesToDelete = []) {
     const { sample } = this.props;
     const specInfo = this.getSpcInfo();
-  
+
     if (!sample || !specInfo) return false;
-  
+
     const dataset = sample.datasetContainers().find(ds => ds.id === specInfo.idDt);
     if (!dataset) return false;
-  
+
     dataset.attachments.forEach(att => {
       if (fileNamesToDelete.includes(att.filename)) {
         att.is_deleted = true;
       }
     });
-  
+
     return dataset;
   }
 
   prepareImageAttachment(blob, baseName) {
     const fileName = `${baseName}.svg`;
     blob.name = fileName;
-  
+
     const attachment = Attachment.fromFile(blob);
     attachment.thumb = true;
-  
+
     return attachment;
   }
-  
+
   prepareNMRiumDataAttachment(nmriumData, baseName) {
     const json = JSON.stringify(
       nmriumData,
       (key, value) => (ArrayBuffer.isView(value) ? Array.from(value) : value),
       0
     );
-  
+
     const blob = new Blob([json], { type: 'text/plain' });
     blob.name = `${baseName}.nmrium`;
-  
+
     return Attachment.fromFile(blob);
-  }  
+  }
 
   resetNMRiumState() {
     this.hasSentToNMRium = false;
     this.nmriumWrapperHost = null;
     this.nmriumOrigin = null;
-  
+
     this.setState({
       isIframeLoaded: false,
       showModalNMRDisplayer: false,
@@ -432,8 +431,8 @@ export default class NMRiumDisplayer extends React.Component {
       is2D: false,
       molFile: null,
     });
-  }  
-  
+  }
+
   prepareAnalysisMetadata(nmriumData) {
     if (!nmriumData) return;
 
@@ -475,44 +474,44 @@ export default class NMRiumDisplayer extends React.Component {
   buildPeaksBody(nmriumData) {
     const spectra = this.findDisplayingSpectra(nmriumData);
     if (spectra.length === 0) return { peaksBody: '', layout: '' };
-  
+
     const spectrum = spectra[0];
     const { info, peaks, nucleus } = spectrum;
-  
+
     // Ignore 2D spectra
     if (info?.dimension === 2) return { peaksBody: '', layout: '' };
-  
+
     const layout = info?.nucleus || nucleus;
     if (!layout || !peaks?.values?.length) return { peaksBody: '', layout: '' };
-  
+
     const shift = {
       shifts: [{ enable: false, peak: false, ref: { label: false, name: '---', value: 0 } }],
     };
-  
+
     const peaksBody = FN.peaksBody({
       peaks: peaks.values,
       layout,
       decimal: 2,
       shift,
     });
-  
+
     return { peaksBody, layout };
   }
-  
+
   findDisplayingSpectra(nmriumData) {
     const root = nmriumData?.data || nmriumData;
     if (!root?.spectra) return [];
-  
+
     const { spectra, correlations } = root;
     const idToDisplay = this.findDisplayingSpectrumID(correlations);
-  
+
     if (idToDisplay) {
       return spectra.filter((s) => s.id === idToDisplay);
     }
-  
+
     return spectra.filter((s) => s?.info?.isFid === false);
   }
-  
+
   findDisplayingSpectrumID(correlations) {
     try {
       const links = correlations?.values?.[0]?.link;
@@ -520,25 +519,25 @@ export default class NMRiumDisplayer extends React.Component {
     } catch {
       return null;
     }
-  }  
+  }
 
   render() {
     const { showModalNMRDisplayer, nmriumWrapperHost, nmriumData } = this.state;
     const { sample } = this.props;
-  
+
     const canSave = sample?.can_update && nmriumData;
-  
+
     return (
       <Modal centered show={showModalNMRDisplayer} size="xxxl" animation>
         <Modal.Header className="gap-2 justify-content-end">
-  
+
           {canSave && (
             <Button variant="success" size="sm" onClick={this.requestDataToBeSaved}>
               <i className="fa fa-floppy-o me-1" />
               Close with Save
             </Button>
           )}
-  
+
           <Button
             variant="danger"
             size="sm"
@@ -551,7 +550,7 @@ export default class NMRiumDisplayer extends React.Component {
             Close without Save
           </Button>
         </Modal.Header>
-  
+
         <Modal.Body>
           <iframe
             id="nmrium_wrapper"
