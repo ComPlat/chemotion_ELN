@@ -238,6 +238,12 @@ const getSvgFromCanvas = async (iframeRef) => {
     });
   }
 
+  // Apply a scale transform for 20% zoom
+  // Get existing transform attribute, append scale(1.2)
+  const existingTransform = clonedCanvas.getAttribute('transform') || '';
+  const scaleTransform = 'scale(1.5)';
+  clonedCanvas.setAttribute('transform', `${existingTransform} ${scaleTransform}`.trim());
+
   const serializer = new XMLSerializer();
   const svgString = serializer.serializeToString(clonedCanvas);
 
