@@ -1062,7 +1062,7 @@ export default class ReactionDetailsScheme extends Component {
         const { part_per_million, temperature } = sample.gas_phase_data;
         let temperatureInKelvin = temperature.value;
         if (temperature.unit !== 'K') {
-          temperatureInKelvin = convertTemperatureToKelvin({value: temperature.value, unit: temperature.unit});
+          temperatureInKelvin = convertTemperatureToKelvin({ value: temperature.value, unit: temperature.unit });
         }
         const moles = calculateGasMoles(vesselSize, part_per_million, temperatureInKelvin);
         sample.setAmount({ value: moles, unit: 'mol' });
