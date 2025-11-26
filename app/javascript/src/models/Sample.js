@@ -811,13 +811,21 @@ export default class Sample extends Element {
         case 'l': {
           if (this.gas_type && gasPhaseCondition) {
             const vesselVolume = this.fetchReactionVesselSizeFromStore();
+            let moles;
+            if (this.decoupled && this.amount_unit === 'mol') {
+              moles = this.amount_value;
+            } else {
+              if (!molecularWeight || molecularWeight <= 0) {
+                moles = 0;
+              }
+              moles = amount_g / molecularWeight;
+            }
             return calculateVolumeForFeedstockOrGas(
               vesselVolume,
               purity,
               this.gas_type,
               this.gas_phase_data,
-              amount_g,
-              molecularWeight
+              moles
             );
           }
           if (this.has_molarity && !gasPhaseCondition) {
@@ -830,7 +838,7 @@ export default class Sample extends Element {
           return 0;
         }
         case 'mol': {
-          if (this.gas_type && this.gas_type !== 'off' && this.gas_type !== 'catalyst') {
+          if (this.gas_type && gasPhaseCondition) {
             return this.calculateFeedstockOrGasMoles(purity, this.gas_type);
           }
           if (this.has_molarity) {
@@ -862,6 +870,7 @@ export default class Sample extends Element {
           return amountValue;
       }
     } else {
+      const gasPhaseCondition = (this.gas_type === 'gas' || this.gas_type === 'feedstock');
       switch (amount_unit) {
         case 'g':
           if (this.gas_type && this.gas_type === 'gas') {
@@ -876,16 +885,16 @@ export default class Sample extends Element {
           return amount_value / 1000.0;
         case 'l': {
           // amount in  gram for feedstock gas material is calculated according to equation of molecular weight x moles
-          if (this.gas_type && this.gas_type !== 'off' && this.gas_type !== 'catalyst') {
+          if (this.gas_type && gasPhaseCondition) {
             const molecularWeight = this.molecule_molecular_weight;
             const purity = this.purity || 1.0;
             const moles = this.calculateFeedstockOrGasMoles(purity, this.gas_type, amount_value);
             return moles * molecularWeight;
           }
-          if (this.has_molarity) {
+          if (this.has_molarity && !gasPhaseCondition) {
             const molecularWeight = this.molecule_molecular_weight;
             return amount_value * this.molarity_value * molecularWeight;
-          } if (this.has_density || this.gas_type !== 'gas') {
+          } if (this.has_density && !gasPhaseCondition) {
             return amount_value * (this.density || 1.0) * 1000;
           }
           return 0;

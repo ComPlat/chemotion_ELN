@@ -26,11 +26,8 @@ function getGramFromMol(mol, material) {
     return (mol / material.aux.loading) * 1e4;
   }
   const { molecularWeight } = material.aux;
-  const purity = material.aux.purity ?? 1.0;
-  // Only guard against division by zero for purity
-  if (purity === 0) {
-    return 0;
-  }
+  const purity = material.aux.purity || 1.0;
+
   return (mol / purity) * molecularWeight;
 }
 

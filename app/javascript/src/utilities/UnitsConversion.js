@@ -122,25 +122,29 @@ const calculateGasVolume = (molAmount, gasPhaseData) => {
 
 const calculateMolesFromMoleculeWeight = (amountGram, molecularWeight) => (amountGram / molecularWeight);
 
-const calculateGasMoles = (volume, ppm, temperatureInKelvin) => (ppm * volume)
-  / (IDEAL_GAS_CONSTANT * temperatureInKelvin * PARTS_PER_MILLION_FACTOR);
+const calculateGasMoles = (volume, ppm, temperatureInKelvin) => {
+  if (!temperatureInKelvin || temperatureInKelvin <= 0) {
+    return 0;
+  }
+  return (
+    (ppm * volume) / (IDEAL_GAS_CONSTANT * temperatureInKelvin * PARTS_PER_MILLION_FACTOR)
+  );
+};
 
 const calculateVolumeForFeedstockOrGas = (
   vesselVolume,
   purity,
   gasType,
   gasPhaseData,
-  amountInGram,
-  molecularWeight
+  moles = null
 ) => {
   const { part_per_million, temperature } = gasPhaseData || {};
   const temperatureInKelvin = convertTemperatureToKelvin(temperature);
-  let molAmount;
+  let molAmount = moles;
   if (gasType === 'gas') {
     molAmount = calculateGasMoles(vesselVolume, part_per_million, temperatureInKelvin);
     return calculateGasVolume(molAmount, gasPhaseData);
   }
-  molAmount = amountInGram / molecularWeight;
   return calculateFeedstockVolume(molAmount, purity);
 };
 
