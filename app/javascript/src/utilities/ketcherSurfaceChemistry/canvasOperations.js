@@ -438,20 +438,20 @@ const replaceAliasesWithIndexesAndCollectComponents = async (comboString) => {
   const textNodeStructureModified = {};
   const textNodeStructureForComponents = [];
 
-  Object.keys(textNodeStruct).forEach((alias) => {
+  for (const alias of Object.keys(textNodeStruct)) {
     const keyText = textNodeStruct[alias];
     const parts = alias.split('_');
-    const textListAlias = textList;
-
-    textListAlias.forEach(async (item) => {
+    for (const item of textList) {
       const { key, text } = JSON.parse(item.data.content).blocks[0];
       if (key === keyText) {
         textNodeStructureModified[parts[2]] = text;
         const categoryName = await findTemplateIdCategoryFromTemplates(parts[1]);
         textNodeStructureForComponents.push({ [text]: categoryName });
       }
-    });
-  });
+    }
+  }
+
+  console.log('textNodeStructureForComponents', textNodeStructureForComponents);
 
   // Split by / first, then split by _ and flatten
   const replacedString = comboString
