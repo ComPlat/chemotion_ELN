@@ -397,7 +397,7 @@ class Material extends Component {
 
   gaseousInputFields(field, material) {
     const gasPhaseData = material.gas_phase_data || {};
-    const { value, unit, isTimeField } = this.getFieldData(field, gasPhaseData);
+    const { value, unit } = this.getFieldData(field, gasPhaseData);
     const readOnly = this.isFieldReadOnly(field);
 
     const updateValue = this.getFormattedValue(value);

@@ -215,6 +215,7 @@ module Usecases
       def associate_sample_with_reaction(sample, modified_sample, material_group)
         reactions_sample_klass = "Reactions#{material_group.camelize}Sample"
         existing_association = ReactionsSample.find_by(sample_id: modified_sample.id)
+        weight_percentage = sample.weight_percentage_reference ? 1 : sample.weight_percentage
         if existing_association
           existing_association.update!(
             reaction_id: @reaction.id,
@@ -229,7 +230,7 @@ module Usecases
             gas_phase_data: sample.gas_phase_data,
             conversion_rate: sample.conversion_rate,
             weight_percentage_reference: sample.weight_percentage_reference,
-            weight_percentage: sample.weight_percentage,
+            weight_percentage: weight_percentage,
           )
         # sample was moved to other materialgroup
         else
@@ -247,7 +248,7 @@ module Usecases
             gas_phase_data: sample.gas_phase_data,
             conversion_rate: sample.conversion_rate,
             weight_percentage_reference: sample.weight_percentage_reference,
-            weight_percentage: sample.weight_percentage,
+            weight_percentage: weight_percentage,
           )
         end
       end
