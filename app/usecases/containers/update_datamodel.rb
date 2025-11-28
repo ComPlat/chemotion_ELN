@@ -53,7 +53,7 @@ module Usecases
                                            end
           end
 
-          if extended_metadata.key?('general_description') && extended_metadata['general_description'].is_a?(Hash)
+          if extended_metadata&.key?('general_description') && extended_metadata['general_description'].is_a?(Hash)
             extended_metadata['general_description'] = extended_metadata['general_description'].to_json
           end
 
