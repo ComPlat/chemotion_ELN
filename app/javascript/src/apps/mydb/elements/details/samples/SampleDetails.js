@@ -384,6 +384,10 @@ export default class SampleDetails extends React.Component {
     if (!decoupleCheck(sample)) return;
     if (!rangeCheck('boiling_point', sample)) return;
     if (!rangeCheck('melting_point', sample)) return;
+
+    // Prepare mixture samples for saving using Sample.js method
+    sample.prepareMixtureForSave();
+
     if (sample.belongTo && sample.belongTo.type === 'reaction') {
       const reaction = sample.belongTo;
       reaction.editedSample = sample;
@@ -1354,7 +1358,7 @@ export default class SampleDetails extends React.Component {
     let mw;
 
     if (sample.isMixture() && sample.sample_details) {
-      mw = sample.total_molecular_weight;
+      mw = sample.total_mixture_mass_g;
     } else {
       mw = sample.molecule_molecular_weight;
     }

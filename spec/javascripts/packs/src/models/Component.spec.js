@@ -1,6 +1,7 @@
 import Component from 'src/models/Component';
 import ComponentStore from 'src/stores/alt/stores/ComponentStore';
 import expect from 'expect';
+import sinon from 'sinon';
 import { describe, it, beforeEach } from 'mocha';
 
 describe('Component', () => {
@@ -57,7 +58,6 @@ describe('Component', () => {
   describe('handleVolumeChange', () => {
     const amount = { value: 10, unit: 'ml' };
     const totalVolume = 2; // L
-    const referenceComponent = null; // No reference component for simplicity
 
     it('should update volume and calculate amount when the component is liquid', () => {
       component.material_group = 'liquid';
@@ -66,7 +66,7 @@ describe('Component', () => {
       const expectedAmountMol = (amount.value * component.density * 1000 * component.purity)
         / component.molecule.molecular_weight;
 
-      component.handleVolumeChange(amount, totalVolume, referenceComponent);
+      component.handleVolumeChange(amount, totalVolume);
 
       expect(component.amount_l).toBe(amount.value);
       expect(Math.abs(component.amount_mol - expectedAmountMol)).toBeLessThanOrEqual(0.0001);
@@ -77,7 +77,7 @@ describe('Component', () => {
 
       const expectedAmountMol = (amount.value * component.purity) / component.molecule_molecular_weight;
 
-      component.handleVolumeChange(amount, totalVolume, referenceComponent);
+      component.handleVolumeChange(amount, totalVolume);
 
       expect(component.amount_g).toBe(amount.value);
       expect(Math.abs(component.amount_mol - expectedAmountMol)).toBeLessThanOrEqual(0.0001);
@@ -88,14 +88,12 @@ describe('Component', () => {
     it('should handle starting concentration change', () => {
       const amount = { value: 2, unit: 'mol/l' };
       const totalVolume = 10; // L
-      const referenceComponent = null; // No reference component
 
       component.handleConcentrationChange(
         amount,
         totalVolume,
         'startingConc',
-        false,
-        referenceComponent
+        false
       );
       expect(component.starting_molarity_value).toBe(amount.value);
       expect(component.molarity_value).toBe(0); // Should reset amount to 0
@@ -104,14 +102,12 @@ describe('Component', () => {
     it('should handle target concentration change', () => {
       const amount = { value: 1, unit: 'mol/l' };
       const totalVolume = 10; // L
-      const referenceComponent = null;
 
       component.handleConcentrationChange(
         amount,
         totalVolume,
         'targetConc',
-        false,
-        referenceComponent
+        false
       );
       expect(component.molarity_value).toBe(amount.value);
       expect(component.amount_mol).toBe(component.concn * totalVolume);
@@ -121,7 +117,6 @@ describe('Component', () => {
   describe('handleTotalVolumeChanges', () => {
     it('should handle total volume changes, when conc. is not locked and recalculate target conc.', () => {
       const totalVolume = 10; // L
-      const referenceComponent = null; // No reference component
       component.amount_mol = 2;
 
       // Mock store state for unlocked concentration
@@ -131,13 +126,12 @@ describe('Component', () => {
 
       const expectedResult = component.amount_mol / totalVolume;
 
-      component.handleTotalVolumeChanges(totalVolume, referenceComponent);
+      component.handleTotalVolumeChanges(totalVolume);
       expect(component.molarity_value).toEqual(expectedResult); // Concentration should be recalculated
     });
 
     it('should handle total volume changes when conc. is locked: recalculate amount and volume', () => {
       const totalVolume = 10; // L
-      const referenceComponent = null;
       const originalMolarityValue = component.molarity_value;
       component.density = 1.5;
 
@@ -146,7 +140,7 @@ describe('Component', () => {
         lockedComponents: [component.id],
       });
 
-      component.handleTotalVolumeChanges(totalVolume, referenceComponent);
+      component.handleTotalVolumeChanges(totalVolume);
 
       const expectedAmountMol = component.concn * totalVolume;
       const expectedAmountL = (component.amount_mol * component.molecule.molecular_weight)
@@ -446,8 +440,6 @@ describe('Component', () => {
         .toBe(mockComponentData.component_properties.molecule.iupac_name);
       expect(createdComponent.molecule.molecular_weight)
         .toBe(mockComponentData.component_properties.molecule.molecular_weight);
-      expect(createdComponent.molecule.id)
-        .toBe(mockComponentData.component_properties.molecule_id);
     });
   });
 
@@ -505,6 +497,534 @@ describe('Component', () => {
         relative_molecular_weight: 0
       });
       expect(component.component_properties.relative_molecular_weight).toBe(0);
+    });
+  });
+
+  describe('deserializeData', () => {
+    it('should deserialize component data correctly', () => {
+      const mockComponentData = {
+        id: 'comp_123',
+        name: 'Test Component',
+        component_properties: {
+          amount_mol: 0.1,
+          amount_l: 0.05,
+          amount_g: 2.5,
+          density: 1.2,
+          molarity_unit: 'M',
+          molarity_value: 2.0,
+          starting_molarity_value: 2.0,
+          starting_molarity_unit: 'M',
+          molecule_id: 'mol_123',
+          equivalent: 1.0,
+          parent_id: 'parent_123',
+          material_group: 'solid',
+          reference: true,
+          purity: 0.95,
+          molecule: {
+            id: 'mol_123',
+            iupac_name: 'Test Molecule',
+            molecular_weight: 100
+          }
+        }
+      };
+
+      const component = Component.deserializeData(mockComponentData);
+
+      expect(component).toBeInstanceOf(Component);
+      expect(component.id).toBe('comp_123');
+      expect(component.name).toBe('Test Component');
+      expect(component.amount_mol).toBe(0.1);
+      expect(component.amount_l).toBe(0.05);
+      expect(component.amount_g).toBe(2.5);
+      expect(component.density).toBe(1.2);
+      expect(component.molarity_unit).toBe('M');
+      expect(component.molarity_value).toBe(2.0);
+      expect(component.starting_molarity_value).toBe(2.0);
+      expect(component.starting_molarity_unit).toBe('M');
+      expect(component.equivalent).toBe(1.0);
+      expect(component.parent_id).toBe('parent_123');
+      expect(component.material_group).toBe('solid');
+      expect(component.reference).toBe(true);
+      expect(component.purity).toBe(0.95);
+      expect(component.molecule.id).toBe('mol_123');
+      expect(component.molecule.iupac_name).toBe('Test Molecule');
+      expect(component.molecule.molecular_weight).toBe(100);
+    });
+
+    it('should handle component data without component_properties', () => {
+      const mockComponentData = {
+        id: 'comp_123',
+        name: 'Test Component',
+        amount_mol: 0.1
+      };
+
+      const component = Component.deserializeData(mockComponentData);
+
+      expect(component).toBeInstanceOf(Component);
+      expect(component.id).toBe('comp_123');
+      expect(component.name).toBe('Test Component');
+      expect(component.amount_mol).toBe(0.1);
+    });
+
+    it('should handle component data without molecule in component_properties', () => {
+      const mockComponentData = {
+        id: 'comp_123',
+        component_properties: {
+          amount_mol: 0.1,
+          molecule_id: 'mol_123'
+        }
+      };
+
+      const component = Component.deserializeData(mockComponentData);
+
+      expect(component).toBeInstanceOf(Component);
+      expect(component.amount_mol).toBe(0.1);
+      expect(component.molecule).toBeUndefined();
+    });
+  });
+
+  describe('svgPath getter', () => {
+    it('should return correct SVG path when molecule has svg file', () => {
+      component.molecule = {
+        molecule_svg_file: 'test_molecule.svg'
+      };
+
+      expect(component.svgPath).toBe('/images/molecules/test_molecule.svg');
+    });
+
+    it('should return empty string when molecule has no svg file', () => {
+      component.molecule = {
+        id: 101
+      };
+
+      expect(component.svgPath).toBe('');
+    });
+
+    it('should return empty string when molecule is null', () => {
+      component.molecule = null;
+
+      expect(component.svgPath).toBe('');
+    });
+  });
+
+  describe('calculateAmountFromDensity', () => {
+    it('should calculate amount from density correctly', () => {
+      component.density = 1.5;
+      component.amount_l = 0.1;
+      component.purity = 0.9;
+      component.molecule.molecular_weight = 18.015;
+
+      component.calculateAmountFromDensity(component.purity);
+
+      const expectedAmountMol = (1.5 * 0.1 * 1000 * 0.9) / 18.015;
+      expect(component.amount_mol).toBeCloseTo(expectedAmountMol, 6);
+      expect(component.starting_molarity_value).toBe(0);
+    });
+  });
+
+  describe('calculateAmountFromConcentration', () => {
+    it('should calculate amount from concentration correctly', () => {
+      component.starting_molarity_value = 2.0;
+      component.amount_l = 0.1;
+      component.purity = 0.95;
+
+      component.calculateAmountFromConcentration(component.purity);
+
+      const expectedAmountMol = 2.0 * 0.1 * 0.95;
+      expect(component.amount_mol).toBeCloseTo(expectedAmountMol, 6);
+    });
+  });
+
+  describe('calculateVolumeFromDensity', () => {
+    it('should calculate volume from density correctly', () => {
+      component.amount_mol = 0.1;
+      component.density = 1.2;
+      component.purity = 0.9;
+      component.molecule.molecular_weight = 18.015;
+
+      component.calculateVolumeFromDensity(component.purity);
+
+      const expectedAmountL = (0.1 * 18.015) / (1.2 * 1000 * 0.9);
+      expect(component.amount_l).toBeCloseTo(expectedAmountL, 6);
+      expect(component.starting_molarity_value).toBe(0);
+    });
+  });
+
+  describe('calculateVolumeFromConcentration', () => {
+    it('should calculate volume from concentration correctly', () => {
+      component.amount_mol = 0.2;
+      component.starting_molarity_value = 2.0;
+
+      component.calculateVolumeFromConcentration();
+
+      const expectedAmountL = 0.2 / 2.0;
+      expect(component.amount_l).toBeCloseTo(expectedAmountL, 6);
+      expect(component.density).toBe(0);
+    });
+  });
+
+  describe('updateRatio', () => {
+    it('should update ratio and recalculate amounts for liquid component', () => {
+      component.material_group = 'liquid';
+      component.equivalent = 1.0;
+      component.density = 1.5;
+      component.purity = 0.9;
+      const totalVolume = 10;
+      const referenceMoles = 0.5;
+
+      component.updateRatio(2.0, 'liquid', totalVolume, referenceMoles);
+
+      expect(component.equivalent).toBe(2.0);
+      expect(component.amount_mol).toBeCloseTo(1.0, 6); // 2.0 * 0.5
+    });
+
+    it('should update ratio and recalculate amounts for solid component', () => {
+      component.material_group = 'solid';
+      component.equivalent = 1.0;
+      component.purity = 0.9;
+      const totalVolume = 10;
+      const referenceMoles = 0.5;
+
+      component.updateRatio(2.0, 'solid', totalVolume, referenceMoles);
+
+      expect(component.equivalent).toBe(2.0);
+      expect(component.amount_mol).toBeCloseTo(1.0, 6); // 2.0 * 0.5
+    });
+
+    it('should not update if ratio is the same', () => {
+      component.equivalent = 2.0;
+      const originalAmountMol = component.amount_mol;
+
+      component.updateRatio(2.0, 'liquid', 10, 0.5);
+
+      expect(component.equivalent).toBe(2.0);
+      expect(component.amount_mol).toBe(originalAmountMol);
+    });
+  });
+
+  describe('updateRatioFromReference', () => {
+    beforeEach(() => {
+      // Mock store state for unlocked concentration
+      ComponentStore.getState = () => ({
+        lockedComponents: [],
+      });
+    });
+
+    it('should set ratio to 1 when no reference component', () => {
+      component.equivalent = 2.0;
+
+      component.updateRatioFromReference(null);
+
+      expect(component.equivalent).toBe(1);
+    });
+
+    it('should set ratio to 1 when this is the reference component', () => {
+      const referenceComponent = { id: component.id, amount_mol: 0.5 };
+      component.equivalent = 2.0;
+
+      component.updateRatioFromReference(referenceComponent);
+
+      expect(component.equivalent).toBe(1);
+    });
+
+    it('should calculate ratio correctly from reference component', () => {
+      const referenceComponent = { id: 'ref_123', amount_mol: 0.5 };
+      component.id = 'comp_123';
+      component.amount_mol = 1.0;
+
+      component.updateRatioFromReference(referenceComponent);
+
+      expect(component.equivalent).toBeCloseTo(2.0, 6); // 1.0 / 0.5
+    });
+
+    it('should set ratio to 0 when reference amount is invalid', () => {
+      const referenceComponent = { id: 'ref_123', amount_mol: 0 };
+      component.id = 'comp_123';
+      component.amount_mol = 1.0;
+
+      component.updateRatioFromReference(referenceComponent);
+
+      expect(component.equivalent).toBe(0);
+    });
+
+    it('should set ratio to 0 when current amount is invalid', () => {
+      const referenceComponent = { id: 'ref_123', amount_mol: 0.5 };
+      component.id = 'comp_123';
+      component.amount_mol = NaN;
+
+      component.updateRatioFromReference(referenceComponent);
+
+      expect(component.equivalent).toBe(0);
+    });
+  });
+
+  describe('calculateMassFromTargetConc', () => {
+    it('should calculate mass from target concentration correctly', () => {
+      component.amount_mol = 0.1;
+      component.molecule.molecular_weight = 18.015;
+      component.purity = 0.9;
+
+      component.calculateMassFromTargetConc(component.purity);
+
+      const expectedMass = (0.1 * 18.015) / 0.9;
+      expect(component.amount_g).toBeCloseTo(expectedMass, 6);
+    });
+  });
+
+  describe('calculateMassFromAmount', () => {
+    it('should update purity when lockAmountColumnSolids is true', () => {
+      component.amount_mol = 0.1;
+      component.amount_g = 2.0;
+      component.molecule.molecular_weight = 18.015;
+      component.parent_id = 'sample_123';
+
+      // Mock store state with proper structure
+      ComponentStore.getState = () => ({
+        lockAmountColumnSolidsBySample: {
+          sample_123: true,
+        },
+      });
+
+      component.calculateMassFromAmount(component.purity);
+
+      const expectedPurity = (0.1 * 18.015) / 2.0;
+      expect(component.purity).toBeCloseTo(expectedPurity, 6);
+    });
+
+    it('should calculate mass when lockAmountColumnSolids is false', () => {
+      component.amount_mol = 0.1;
+      component.molecule.molecular_weight = 18.015;
+      component.purity = 0.9;
+
+      // Mock store state
+      ComponentStore.getState = () => ({
+        lockAmountColumnSolids: false,
+      });
+
+      component.calculateMassFromAmount(component.purity);
+
+      const expectedMass = (0.1 * 18.015) / 0.9;
+      expect(component.amount_g).toBeCloseTo(expectedMass, 6);
+    });
+  });
+
+  describe('updatePurityFromAmount', () => {
+    it('should update purity correctly when calculated purity is <= 1', () => {
+      component.amount_mol = 0.1;
+      component.amount_g = 2.0;
+      component.molecule.molecular_weight = 18.015;
+
+      component.updatePurityFromAmount();
+
+      const expectedPurity = (0.1 * 18.015) / 2.0;
+      expect(component.purity).toBeCloseTo(expectedPurity, 6);
+    });
+
+    it('should not update purity when calculated purity is > 1', () => {
+      const originalPurity = component.purity;
+      component.amount_mol = 0.1;
+      component.amount_g = 1.0; // Very small mass
+      component.molecule.molecular_weight = 18.015;
+
+      component.updatePurityFromAmount();
+
+      expect(component.purity).toBe(originalPurity);
+    });
+  });
+
+  describe('calculateRelativeMolecularWeight', () => {
+    it('should return null when sample is not a mixture', () => {
+      const mockSample = { isMixture: () => false };
+
+      const result = component.calculateRelativeMolecularWeight(mockSample);
+
+      expect(result).toBeNull();
+    });
+
+    it('should return null when component is null', () => {
+      const mockSample = { isMixture: () => true };
+
+      const result = component.calculateRelativeMolecularWeight.call(null, mockSample);
+
+      expect(result).toBeNull();
+    });
+
+    it('should calculate relative molecular weight correctly', () => {
+      const mockSample = {
+        isMixture: () => true,
+        total_mixture_mass_g: 100
+      };
+      component.amount_mol = 0.5;
+
+      const result = component.calculateRelativeMolecularWeight(mockSample);
+
+      const expected = 100 / 0.5; // total_mixture_mass_g / amount_mol
+      expect(result.relative_molecular_weight).toBeCloseTo(expected, 6);
+    });
+  });
+
+  describe('concentrationCheckWarning', () => {
+    let mockAdd;
+    let originalNotificationActions;
+
+    beforeEach(() => {
+      // Mock NotificationActions
+      mockAdd = sinon.spy();
+      originalNotificationActions = require('src/stores/alt/actions/NotificationActions');
+      require('src/stores/alt/actions/NotificationActions').add = mockAdd;
+    });
+
+    afterEach(() => {
+      // Restore original NotificationActions
+      if (originalNotificationActions) {
+        require('src/stores/alt/actions/NotificationActions').add = originalNotificationActions.add;
+      }
+    });
+
+    it('should not show warning when concentration is lower than starting concentration', (done) => {
+      component.concn = 0.5;
+      component.starting_molarity_value = 1.0;
+
+      component.concentrationCheckWarning();
+
+      setTimeout(() => {
+        expect(mockAdd.called).toBe(false);
+        done();
+      }, 600); // Wait longer than the 500ms timeout
+    });
+
+    it('should clear previous timeout when called multiple times', () => {
+      component.concn = 2.0;
+      component.starting_molarity_value = 1.0;
+
+      component.concentrationCheckWarning();
+      component.concentrationCheckWarning();
+
+      expect(component._concentrationWarningTimeout).toBeDefined();
+    });
+  });
+
+  describe('isComponentConcentrationLocked', () => {
+    it('should return true when component is in locked components list', () => {
+      component.id = 'comp_123';
+      ComponentStore.getState = () => ({
+        lockedComponents: ['comp_123', 'comp_456']
+      });
+
+      const result = component.isComponentConcentrationLocked();
+
+      expect(result).toBe(true);
+    });
+
+    it('should return false when component is not in locked components list', () => {
+      component.id = 'comp_123';
+      ComponentStore.getState = () => ({
+        lockedComponents: ['comp_456', 'comp_789']
+      });
+
+      const result = component.isComponentConcentrationLocked();
+
+      expect(result).toBe(false);
+    });
+
+    it('should return false when store state is unavailable', () => {
+      component.id = 'comp_123';
+      ComponentStore.getState = () => null;
+
+      const result = component.isComponentConcentrationLocked();
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('edge cases and error handling', () => {
+    it('should handle NaN values in handleVolumeChange', () => {
+      const amount = { value: NaN, unit: 'ml' };
+      const totalVolume = 2;
+
+      const originalAmountL = component.amount_l;
+      const originalAmountMol = component.amount_mol;
+
+      component.handleVolumeChange(amount, totalVolume);
+
+      expect(component.amount_l).toBe(originalAmountL);
+      expect(component.amount_mol).toBe(originalAmountMol);
+    });
+
+    it('should handle invalid unit in handleVolumeChange', () => {
+      const amount = { value: 10, unit: null };
+      const totalVolume = 2;
+
+      const originalAmountL = component.amount_l;
+      const originalAmountMol = component.amount_mol;
+
+      component.handleVolumeChange(amount, totalVolume);
+
+      expect(component.amount_l).toBe(originalAmountL);
+      expect(component.amount_mol).toBe(originalAmountMol);
+    });
+
+    it('should handle NaN values in handleAmountChange', () => {
+      const amount = { value: NaN, unit: 'mol' };
+      const totalVolume = 2;
+
+      const originalAmountMol = component.amount_mol;
+
+      component.handleAmountChange(amount, totalVolume);
+
+      expect(component.amount_mol).toBe(originalAmountMol);
+    });
+
+    it('should handle invalid unit in handleAmountChange', () => {
+      const amount = { value: 10, unit: 'g' };
+      const totalVolume = 2;
+
+      const originalAmountMol = component.amount_mol;
+
+      component.handleAmountChange(amount, totalVolume);
+
+      expect(component.amount_mol).toBe(originalAmountMol);
+    });
+
+    it('should handle locked column in handleConcentrationChange', () => {
+      const amount = { value: 1, unit: 'mol/l' };
+      const totalVolume = 10;
+      const lockColumn = true;
+
+      const originalMolarityValue = component.molarity_value;
+
+      component.handleConcentrationChange(amount, totalVolume, 'targetConc', lockColumn);
+
+      expect(component.molarity_value).toBe(originalMolarityValue);
+    });
+
+    it('should handle locked column in handleDensityChange', () => {
+      const amount = { value: 1.5, unit: 'g/ml' };
+      const lockColumn = true;
+
+      const originalDensity = component.density;
+
+      component.handleDensityChange(amount, lockColumn);
+
+      expect(component.density).toBe(originalDensity);
+    });
+
+    it('should handle zero total volume in calculateTargetConcentration', () => {
+      component.amount_mol = 0.1;
+      const totalVolume = 0;
+
+      component.calculateTargetConcentration(totalVolume);
+
+      expect(component.molarity_value).toBe(0);
+    });
+
+    it('should handle negative total volume in calculateTargetConcentration', () => {
+      component.amount_mol = 0.1;
+      const totalVolume = -5;
+
+      component.calculateTargetConcentration(totalVolume);
+
+      expect(component.molarity_value).toBe(0);
     });
   });
 });

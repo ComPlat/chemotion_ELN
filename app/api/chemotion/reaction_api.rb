@@ -169,6 +169,8 @@ module Chemotion
         optional :user_labels, type: Array
         optional :variations, type: [Hash]
         optional :vessel_size, type: Hash
+        optional :volume, type: BigDecimal
+        optional :use_reaction_volume, type: Boolean
         optional :gaseous, type: Boolean
       end
       route_param :id do
@@ -245,6 +247,8 @@ module Chemotion
         optional :rxno, type: String
         optional :variations, type: [Hash]
         optional :vessel_size, type: Hash
+        optional :volume, type: BigDecimal
+        optional :use_reaction_volume, type: Boolean
         optional :gaseous, type: Boolean
       end
 

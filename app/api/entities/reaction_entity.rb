@@ -48,6 +48,8 @@ module Entities
       expose! :tlc_solvents,                                unless: :displayed_in_list
       expose! :variations,            anonymize_with: [],                               using: 'Entities::ReactionVariationEntity'
       expose! :vessel_size
+      expose! :volume
+      expose! :use_reaction_volume
       expose! :gaseous
     end
 
