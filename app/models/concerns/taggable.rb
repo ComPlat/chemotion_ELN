@@ -68,9 +68,9 @@ module Taggable
       next if r.deleted_at.present?
 
       resources.push({
-                       resource_type: 'Reaction',
-                       resource_id: r.id,
-                       resource_short_label: r.short_label,
+                       resource_context_type: 'Reaction',
+                       resource_context_id: r.id,
+                       resource_context_label: r.short_label,
                      })
     end
     elements_samples&.each do |es|
@@ -81,9 +81,9 @@ module Taggable
       next if ek.nil?
 
       resources.push({
-                       resource_type: ek.label,
-                       resource_id: e.id,
-                       resource_short_label: e.short_label,
+                       resource_context_type: ek.label,
+                       resource_context_id: e.id,
+                       resource_context_label: e.short_label,
                      })
     end
 
