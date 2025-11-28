@@ -290,7 +290,7 @@ const attachClickListeners = (iframeRef, buttonEvents) => {
     ) {
       const newText = document.createElement('div');
       newText.classList.add('appended-text');
-      newText.textContent = 'Input structure examples: Pt 1wt.% Pt or γ-Al2O3';
+      newText.textContent = 'Input structure examples: 1wt.% Pt or γ-Al2O3';
       textModalPopup.appendChild(newText);
       canvasSelectionsSetter(null);
     }

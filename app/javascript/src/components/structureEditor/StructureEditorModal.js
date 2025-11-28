@@ -179,7 +179,7 @@ export default class StructureEditorModal extends React.Component {
   }
 
   alertForInvalidSources(components) {
-    const wtPercentRegex = /^[a-z]+\s+\d+(?:\.\d+)?wt\.%\s+[a-z]+$/;
+    const wtPercentRegex = /^\d+(?:\.\d+)?wt\.%\s+[a-z]+$/;
     const hyphenRegex = /^[a-z]+-[a-z0-9]+$/;
     const collectSources = [];
     components.forEach(({ source }) => {

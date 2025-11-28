@@ -1011,8 +1011,6 @@ export default class SampleForm extends React.Component {
         <Table responsive hover bordered>
           <thead>
             <tr>
-              <th>Category</th>
-              <th>Component</th>
               <th>Source</th>
               <th>Weight ratio exp.</th>
               <th>Molar Mass (g/mol)</th>
@@ -1026,8 +1024,6 @@ export default class SampleForm extends React.Component {
           <tbody>
             {rowsData.map((row) => (
               <tr key={`component${row.template_category}`}>
-                <td>{row.template_category || ''}</td>
-                <td>{row.component || ''}</td>
                 <td>{row.sourceAlias || ''}</td>
                 <td>
                   <Form.Control

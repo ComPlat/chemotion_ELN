@@ -1,11 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" id="svg51" viewBox="40.71693414600001 43.45195737768 33.56227376 29.253247440000003" version="1.1" style="max-height: 500px" width="33.56227376" height="29.253247440000003">
-  <defs id="defs51">
-    <linearGradient id="swatch152">
-      <stop id="stop152" offset="0" style="stop-color:#000000;stop-opacity:1;"/>
+<svg xmlns="http://www.w3.org/2000/svg" id="svg_dc9592" viewBox="40.716934146 43.451957378 33.56227376 29.25324744" version="1.1" style="max-height: 500px" width="33.56227376" height="29.25324744">
+  <defs id="defs_dc9592">
+    <linearGradient id="grad_dc9592">
+      <stop id="stop_dc9592" offset="0" style="stop-color:#000000;stop-opacity:1;"/>
     </linearGradient>
   </defs>
   
-    
-  
-  <path id="path17" style="fill:#dc9592;fill-rule:evenodd;stroke:#1b1918;stroke-width:0.5669;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none" d="m 57.180102,44.011919 a 15.5906,14.1732 0 0 1 15.5906,14.1732 15.5906,14.1732 0 1 1 -15.5906,-14.1732 z"/>
+  <path id="path_dc9592" style="fill:#dc9592;fill-rule:evenodd;stroke:#1b1918;stroke-width:0.5669;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none" d="m 57.180102,44.011919 a 15.5906,14.1732 0 0 1 15.5906,14.1732 15.5906,14.1732 0 1 1 -15.5906,-14.1732 z"/>
 </svg>

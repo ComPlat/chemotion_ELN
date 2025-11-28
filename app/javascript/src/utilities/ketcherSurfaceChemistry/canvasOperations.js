@@ -451,8 +451,6 @@ const replaceAliasesWithIndexesAndCollectComponents = async (comboString) => {
     }
   }
 
-  console.log('textNodeStructureForComponents', textNodeStructureForComponents);
-
   // Split by / first, then split by _ and flatten
   const replacedString = comboString
     .split('/')
