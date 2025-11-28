@@ -109,7 +109,7 @@ class Material extends Component {
   }
 
   materialVolume(material, className) {
-    const { reaction, materialGroup, lockEquivColumn} = this.props;
+    const { reaction, materialGroup, lockEquivColumn } = this.props;
     if (material.contains_residues) { return notApplicableInput(className); }
     const { density, molarity_value, molarity_unit, has_density, has_molarity } = material;
     const tooltip = has_density || has_molarity ?
@@ -123,7 +123,7 @@ class Material extends Component {
     const metricPrefixes = ['m', 'n', 'u'];
     const metric = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[1]) > -1) ? material.metrics[1] : 'm';
     const isAmountDisabledByWeightPercentage = reaction.weight_percentage
-      && material.weight_percentage > 0;
+      && material.weight_percentage > 0 && !material.weight_percentage_reference;
     return (
       <OverlayTrigger placement="top" overlay={tooltip}>
         <div>
@@ -626,12 +626,16 @@ class Material extends Component {
     if (field === 'weight percentage') {
       if (material.reference) {
         this.handleEquivalentChange({ value: 1 });
-      } else {
+      } else if (!material.weight_percentage_reference) {
         this.handleEquivalentChange({ value: 0 });
       }
     } else if (field === 'molar mass') {
       if (!material.reference) {
-        this.handleWeightPercentageChange(null);
+        if (material.weight_percentage_reference) {
+          this.handleWeightPercentageChange(1);
+        } else {
+          this.handleWeightPercentageChange(null);
+        }
       }
     }
   }
@@ -754,7 +758,7 @@ class Material extends Component {
   massField(material, metricPrefixes, reaction, massBsStyle, metric) {
     const { lockEquivColumn, materialGroup } = this.props;
     const isAmountDisabledByWeightPercentage = reaction.weight_percentage
-      && material.weight_percentage > 0;
+      && material.weight_percentage > 0 && !material.weight_percentage_reference;
     return (
       <OverlayTrigger
         delay="100"
@@ -832,7 +836,7 @@ class Material extends Component {
     const metricMolConc = (material.metrics && material.metrics.length > 3 && metricPrefixes.indexOf(material.metrics[3]) > -1) ? material.metrics[3] : 'm';
 
     const isAmountDisabledByWeightPercentage = reaction.weight_percentage
-      && material.weight_percentage > 0;
+      && material.weight_percentage > 0 && !material.weight_percentage_reference;
 
     return (
       <div ref={dropRef} className={this.rowClassNames()}>
