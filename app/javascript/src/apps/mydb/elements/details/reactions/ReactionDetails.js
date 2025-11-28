@@ -59,6 +59,7 @@ import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButt
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 import ReactionSchemeGraphic from 'src/apps/mydb/elements/details/reactions/ReactionSchemeGraphic';
 import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
+import isEqual from 'lodash/isEqual';
 
 const handleProductClick = (product) => {
   const uri = Aviator.getCurrentURI();
@@ -121,16 +122,39 @@ export default class ReactionDetails extends Component {
     if (MatrixCheck(currentUser.matrix, commentActivation) && !reaction.isNew) {
       CommentActions.fetchComments(reaction);
     }
+
+    // If opened in weight percentage mode, ensure store is synchronized on mount
+    if (reaction && reaction.weight_percentage) {
+      this.updateWeightPercentageReference(reaction);
+    }
   }
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps, prevState) {
     const { reaction } = this.props;
-    if (reaction !== prevProps.reaction) {
-      this.setState({ reaction });
-      // Update gas phase store when reaction changes (e.g., loading new reaction)
-      setTimeout(() => {
-        this.updateReactionVesselSize(reaction);
-      }, 0);
+
+    // If props changed, update local state and then sync store if weight_percentage
+    if (!isEqual(reaction, prevProps.reaction)) {
+      this.setState({ reaction }, () => {
+        if (this.state.reaction && this.state.reaction.weight_percentage) {
+          this.updateWeightPercentageReference(this.state.reaction);
+        }
+        // Update gas phase store when reaction changes (e.g., loading new reaction)
+        setTimeout(() => {
+          this.updateReactionVesselSize(reaction);
+        }, 0);
+      });
+      return;
+    }
+
+    // If the reaction stored in state toggled into weight_percentage, sync the store
+    const prevReactionState = prevState && prevState.reaction;
+    const currReactionState = this.state.reaction;
+    if (
+      currReactionState
+      && currReactionState.weight_percentage
+      && (!prevReactionState || !prevReactionState.weight_percentage)
+    ) {
+      this.updateWeightPercentageReference(currReactionState);
     }
   }
 
@@ -539,13 +563,16 @@ export default class ReactionDetails extends Component {
    */
   // eslint-disable-next-line class-methods-use-this
   updateWeightPercentageReference(reaction) {
-    Promise.resolve().then(() => {
-      const { weightPercentageReference, amountTarget } = reaction.findWeightPercentageReferenceMaterial();
-      if (weightPercentageReference) {
-        WeightPercentageReactionActions.setWeightPercentageReference(weightPercentageReference);
-        WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(amountTarget);
-      }
-    });
+    if (!reaction) return;
+
+    const { weightPercentageReference, targetAmount } = reaction.findWeightPercentageReferenceMaterial();
+    if (!weightPercentageReference) return;
+
+    // Ensure we don't dispatch while another Alt dispatch is in progress.
+    setTimeout(() => {
+      WeightPercentageReactionActions.setWeightPercentageReference(weightPercentageReference);
+      WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(targetAmount);
+    }, 0);
   }
 
   render() {
@@ -556,7 +583,6 @@ export default class ReactionDetails extends Component {
       schemeType = 'gaseous';
     } else if (reaction.weight_percentage) {
       schemeType = 'weight percentage';
-      this.updateWeightPercentageReference(reaction);
     }
     const tabContentsMap = {
       scheme: (

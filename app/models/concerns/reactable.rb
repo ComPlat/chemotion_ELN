@@ -28,8 +28,8 @@ module Reactable
 
   def update_equivalent
     if weight_percentage.present? && weight_percentage.to_f.positive? &&
-       !reference
-      ## nullify equivalent if weight percentage is used & material is not reference
+       !reference && !weight_percentage_reference
+      ## nullify equivalent if weight percentage is used & material is not reference and not weight percentage reference
       update!(equivalent: nil)
       return
     end

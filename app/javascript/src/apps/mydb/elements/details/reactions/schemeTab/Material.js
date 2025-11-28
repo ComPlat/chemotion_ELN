@@ -860,12 +860,16 @@ class Material extends Component {
     if (field === 'weight percentage') {
       if (material.reference) {
         this.handleEquivalentChange({ value: 1 });
-      } else {
+      } else if (!material.weight_percentage_reference) {
         this.handleEquivalentChange({ value: 0 });
       }
     } else if (field === 'molar mass') {
       if (!material.reference) {
-        this.handleWeightPercentageChange(null);
+        if (material.weight_percentage_reference) {
+          this.handleWeightPercentageChange(1);
+        } else {
+          this.handleWeightPercentageChange(null);
+        }
       }
     }
   }
@@ -1008,7 +1012,7 @@ class Material extends Component {
     );
 
     const isAmountDisabledByWeightPercentage = reaction.weight_percentage
-      && material.weight_percentage > 0;
+      && material.weight_percentage > 0 && !material.weight_percentage_reference;
     return (
       <OverlayTrigger
         delay="100"
@@ -1081,7 +1085,6 @@ class Material extends Component {
 
     const { showComponents, mixtureComponentsLoading } = this.state;
     const isMixture = material.isMixture && material.isMixture();
-
     // Always get fresh components from material, syncing with state
     const existingComponents = Array.isArray(material.components) ? material.components : [];
     const currentComponents = existingComponents.map((comp) => (

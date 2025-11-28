@@ -381,7 +381,7 @@ export default class ReactionDetailsScheme extends React.Component {
     const { reaction } = this.props;
     const { targetAmount } = WeightPercentageReactionStore.getState();
 
-    if (!targetAmount || !targetAmount.value || targetAmount.value <= 0) return;
+    if (!targetAmount || targetAmount.value == null || targetAmount.unit == null) return;
 
     [...reaction.starting_materials, ...reaction.reactants].forEach((sample) => {
       sample.calculateAmountBasedOnWeightPercentage(targetAmount);

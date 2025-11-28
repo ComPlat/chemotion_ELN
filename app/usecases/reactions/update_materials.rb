@@ -98,7 +98,7 @@ module Usecases
         subsample.short_label = fixed_label if fixed_label
 
         if @reaction.weight_percentage && subsample.weight_percentage.present? &&
-           sample.weight_percentage.to_f.positive?
+           subsample.weight_percentage.to_f.positive? && !subsample.weight_percentage_reference
           assign_weight_percentage_amounts(subsample)
         else
           subsample.target_amount_value = sample.target_amount_value
@@ -184,7 +184,7 @@ module Usecases
         if sample.gas_type == 'gas' && update_gas_material
           set_mole_value_gas_product(existing_sample, sample)
         elsif @reaction.weight_percentage && sample.weight_percentage.present? &&
-              sample.weight_percentage.to_f.positive?
+              sample.weight_percentage.to_f.positive? && !sample.weight_percentage_reference
           assign_weight_percentage_amounts(existing_sample)
         else
           existing_sample.target_amount_value = sample.target_amount_value
@@ -312,7 +312,7 @@ module Usecases
       # @param ref_target_amount_value [Numeric, nil]
       # @return [Boolean]
       def valid_reference_target_amount?(ref_target_amount_value)
-        !ref_target_amount_value.nil? && !ref_target_amount_value.zero?
+        !ref_target_amount_value.nil?
       end
 
       # Apply the reference's target amount multiplied by the local weight
