@@ -101,8 +101,15 @@ const buildHeteroMaterialRows = (components) => {
     };
   });
 
+  // Sort by Weight ratio calc./% (smallest on top)
+  const sortedRows = rowsWithPercentages.sort((a, b) => {
+    const aVal = parseFloat(a.weightRatioCalcProcessed) || 0;
+    const bVal = parseFloat(b.weightRatioCalcProcessed) || 0;
+    return aVal - bVal;
+  });
+
   return {
-    rowsData: rowsWithPercentages,
+    rowsData: sortedRows,
     totalMolarCalc: parseFloat(totalMolarCalc.toFixed(3)),
     totalMolarExp: parseFloat(totalMolarExp.toFixed(3)),
   };

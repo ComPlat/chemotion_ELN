@@ -207,20 +207,40 @@ const prepareSvg = async (editor) => {
 
 // function to get SVG from canvas element without modification
 const getSvgFromCanvas = async (iframeRef) => {
-  const iframeDocument = iframeRef?.current?.contentWindow?.document;
-  if (!iframeDocument) {
-    console.warn('iframe document not available');
-    return null;
-  }
+  try {
+    const iframeDocument = iframeRef?.current?.contentWindow?.document;
+    if (!iframeDocument) {
+      console.warn('getSvgFromCanvas: iframe document not available');
+      return null;
+    }
 
-  const canvasElement = iframeDocument.querySelector('[data-testid="canvas"]');
-  if (!canvasElement) {
-    console.warn('Canvas element with data-testid="canvas" not found');
-    return null;
-  }
+    const canvasElement = iframeDocument.querySelector('[data-testid="canvas"]');
+    if (!canvasElement) {
+      console.warn('getSvgFromCanvas: Canvas element not found');
+      return null;
+    }
 
   // Clone the element to avoid modifying the original
   const clonedCanvas = canvasElement.cloneNode(true);
+
+  // Remove layer placeholder rectangles (they inflate bounding box)
+  const layerClasses = [
+    'backgroundLayer', 'imagesLayer', 'selectionPlateLayer',
+    'selectionPointsLayer', 'hoveringLayer', 'atomLayer',
+    'bondSkeletonLayer', 'warningsLayer', 'dataLayer',
+    'additionalInfoLayer', 'indicesLayer'
+  ];
+  layerClasses.forEach((cls) => {
+    const el = clonedCanvas.querySelector(`.${cls}`);
+    if (el) el.remove();
+  });
+
+  // Also remove desc and hidden text elements
+  const descEl = clonedCanvas.querySelector('desc');
+  if (descEl) descEl.remove();
+  Array.from(clonedCanvas.querySelectorAll('text')).forEach((txt) => {
+    if (txt.style.display === 'none') txt.remove();
+  });
 
   // Process images similar to updateImagesInTheCanvas - move images to the end for proper layering
   const imageElements = Array.from(clonedCanvas.querySelectorAll(KET_DOM_TAG.imageTag));
@@ -238,16 +258,78 @@ const getSvgFromCanvas = async (iframeRef) => {
     });
   }
 
-  // Apply a scale transform for 20% zoom
-  // Get existing transform attribute, append scale(1.2)
-  const existingTransform = clonedCanvas.getAttribute('transform') || '';
-  const scaleTransform = 'scale(1.5)';
-  clonedCanvas.setAttribute('transform', `${existingTransform} ${scaleTransform}`.trim());
+  // Calculate bounding box from ORIGINAL canvas (getBBox needs DOM-attached elements)
+  let minX = Infinity; let minY = Infinity; let maxX = -Infinity; let
+    maxY = -Infinity;
+  const visibleElements = canvasElement.querySelectorAll('path, image, text');
+  visibleElements.forEach((el) => {
+    // Skip layer placeholders and hidden elements
+    if (el.classList && layerClasses.some((cls) => el.classList.contains(cls))) return;
+    if (el.style.display === 'none') return;
+    try {
+      const elBbox = el.getBBox();
+      if (elBbox.width > 0 && elBbox.height > 0) {
+        minX = Math.min(minX, elBbox.x);
+        minY = Math.min(minY, elBbox.y);
+        maxX = Math.max(maxX, elBbox.x + elBbox.width);
+        maxY = Math.max(maxY, elBbox.y + elBbox.height);
+      }
+    } catch (e) { /* ignore elements that can't get bbox */ }
+  });
 
-  const serializer = new XMLSerializer();
-  const svgString = serializer.serializeToString(clonedCanvas);
+  // Fallback if no valid bbox found
+  if (minX === Infinity || maxX === -Infinity) {
+    const fallbackBbox = canvasElement.getBBox();
+    minX = fallbackBbox.x;
+    minY = fallbackBbox.y;
+    maxX = fallbackBbox.x + fallbackBbox.width;
+    maxY = fallbackBbox.y + fallbackBbox.height;
+  }
 
-  return svgString;
+  const padding = 5;
+  const contentX = minX - padding;
+  const contentY = minY - padding;
+  const contentWidth = (maxX - minX) + (padding * 2);
+  const contentHeight = (maxY - minY) + (padding * 2);
+
+  // Output dimensions
+  const outputWidth = 325;
+  const outputHeight = 250;
+  const outputAspect = outputWidth / outputHeight;
+  const contentAspect = contentWidth / contentHeight;
+
+  // Adjust viewBox to center content and fill the output while preserving aspect ratio
+  let viewBoxX; let viewBoxY; let viewBoxWidth; let
+    viewBoxHeight;
+
+  if (contentAspect > outputAspect) {
+    // Content is wider - fit to width, center vertically
+    viewBoxWidth = contentWidth;
+    viewBoxHeight = contentWidth / outputAspect;
+    viewBoxX = contentX;
+    viewBoxY = contentY - (viewBoxHeight - contentHeight) / 2;
+  } else {
+    // Content is taller - fit to height, center horizontally
+    viewBoxHeight = contentHeight;
+    viewBoxWidth = contentHeight * outputAspect;
+    viewBoxX = contentX - (viewBoxWidth - contentWidth) / 2;
+    viewBoxY = contentY;
+  }
+
+  // Set viewBox to fit the content centered, output size to 325x250
+  clonedCanvas.setAttribute('viewBox', `${viewBoxX} ${viewBoxY} ${viewBoxWidth} ${viewBoxHeight}`);
+  clonedCanvas.setAttribute('width', `${outputWidth}`);
+  clonedCanvas.setAttribute('height', `${outputHeight}`);
+  clonedCanvas.removeAttribute('transform');
+
+    const serializer = new XMLSerializer();
+    const svgString = serializer.serializeToString(clonedCanvas);
+
+    return svgString;
+  } catch (error) {
+    console.error('getSvgFromCanvas: Error generating SVG', error);
+    return null;
+  }
 };
 
 const applyCanvasDataToEditor = async (editor, dataCopy, recenter = false) => {
