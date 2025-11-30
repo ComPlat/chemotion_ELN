@@ -25,27 +25,27 @@ module OrdKit
           end
 
           def conditions
-            conditions_workup = { TEMPERATURE: workup['add_sample_temperature'],
-                                  PRESSURE: workup['add_sample_pressure'] }.stringify_keys
+            conditions_workup = { TEMPERATURE: workup['TEMPERATURE'],
+                                  PRESSURE: workup['PRESSURE'] }.stringify_keys
             OrdKit::Exporter::Conditions::ReactionConditionsExporter.new(conditions_workup).to_ord
           end
 
           def addition_temperature
-            return if workup['add_sample_temperature_value'].blank?
+            return if workup['TEMPERATURE']&.value.blank?
 
-            OrdKit::Exporter::Metrics::TemperatureExporter.new(workup['add_sample_temperature']).to_ord
+            OrdKit::Exporter::Metrics::TemperatureExporter.new(workup['TEMPERATURE']).to_ord
           end
 
           def addition_pressure
-            return if workup['add_sample_pressure'].blank?
+            return if workup['PRESSURE'].blank?
 
-            OrdKit::Exporter::Metrics::PressureExporter.new(workup['add_sample_pressure']).to_ord
+            OrdKit::Exporter::Metrics::PressureExporter.new(workup['PRESSURE']).to_ord
           end
 
           def flow_rate
-            return if workup['add_sample_velocity'].blank?
+            return if workup['VELOCITY'].blank?
 
-            OrdKit::Exporter::Metrics::FlowRateExporter.new(workup['add_sample_velocity']).to_ord
+            OrdKit::Exporter::Metrics::FlowRateExporter.new(workup['VELOCITY']).to_ord
           end
 
           def addition_speed
