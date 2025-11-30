@@ -5,6 +5,7 @@ module OrdKit
     module Actions
       class PurificationActionExporter < OrdKit::Exporter::Actions::Base
         PURIFICATION_EXPORTER = {
+          CENTRIFUGATION: OrdKit::Exporter::Actions::Purification::CentrifugationExporter,
           CHROMATOGRAPHY: OrdKit::Exporter::Actions::Purification::ChromatographyExporter,
           CRYSTALLIZATION: OrdKit::Exporter::Actions::Purification::CrystallizationExporter,
           EXTRACTION: OrdKit::Exporter::Actions::Purification::ExtractionExporter,
