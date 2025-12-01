@@ -5,7 +5,7 @@ import React, { Component } from 'react';
 import Aviator from 'aviator';
 import PropTypes from 'prop-types';
 import {
-  Button, Tabs, Tab, OverlayTrigger, Tooltip, ButtonToolbar, ButtonGroup
+  Button, Tabs, Tab, OverlayTrigger, Tooltip, ButtonToolbar, Dropdown
 } from 'react-bootstrap';
 import { findIndex, isEmpty } from 'lodash';
 
@@ -58,6 +58,8 @@ import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButt
 // eslint-disable-next-line import/no-named-as-default
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 import ReactionSchemeGraphic from 'src/apps/mydb/elements/details/reactions/ReactionSchemeGraphic';
+import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
+import isEqual from 'lodash/isEqual';
 
 const handleProductClick = (product) => {
   const uri = Aviator.getCurrentURI();
@@ -100,7 +102,7 @@ export default class ReactionDetails extends Component {
     this.handleSubmit = this.handleSubmit.bind(this);
     this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
-    this.handleGaseousChange = this.handleGaseousChange.bind(this);
+    this.handleReactionSchemeChange = this.handleReactionSchemeChange.bind(this);
     if (!reaction.reaction_svg_file) {
       this.updateGraphic();
     }
@@ -118,12 +120,35 @@ export default class ReactionDetails extends Component {
     if (MatrixCheck(currentUser.matrix, commentActivation) && !reaction.isNew) {
       CommentActions.fetchComments(reaction);
     }
+
+    // If opened in weight percentage mode, ensure store is synchronized on mount
+    if (reaction && reaction.weight_percentage) {
+      this.updateWeightPercentageReference(reaction);
+    }
   }
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps, prevState) {
     const { reaction } = this.props;
-    if (reaction !== prevProps.reaction) {
-      this.setState({ reaction });
+
+    // If props changed, update local state and then sync store if weight_percentage
+    if (!isEqual(reaction, prevProps.reaction)) {
+      this.setState({ reaction }, () => {
+        if (this.state.reaction && this.state.reaction.weight_percentage) {
+          this.updateWeightPercentageReference(this.state.reaction);
+        }
+      });
+      return;
+    }
+
+    // If the reaction stored in state toggled into weight_percentage, sync the store
+    const prevReactionState = prevState && prevState.reaction;
+    const currReactionState = this.state.reaction;
+    if (
+      currReactionState
+      && currReactionState.weight_percentage
+      && (!prevReactionState || !prevReactionState.weight_percentage)
+    ) {
+      this.updateWeightPercentageReference(currReactionState);
     }
   }
 
@@ -191,6 +216,8 @@ export default class ReactionDetails extends Component {
       || type === 'vesselSizeUnit'
       || type === 'gaseous'
       || type === 'conditions'
+      || type === 'weight_percentage'
+      || type === 'default'
     ) {
       value = event;
     } else if (type === 'rfValue') {
@@ -465,9 +492,17 @@ export default class ReactionDetails extends Component {
       });
   }
 
-  handleGaseousChange() {
-    const { reaction } = this.state;
-    this.handleInputChange('gaseous', !reaction.gaseous);
+  handleReactionSchemeChange(type) {
+    if (type === 'default') {
+      this.handleInputChange('weight_percentage', false);
+      this.handleInputChange('gaseous', false);
+    } else if (type === 'weight_percentage') {
+      this.handleInputChange('weight_percentage', true);
+      this.handleInputChange('gaseous', false);
+    } else if (type === 'gaseous') {
+      this.handleInputChange('gaseous', true);
+      this.handleInputChange('weight_percentage', false);
+    }
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -493,26 +528,80 @@ export default class ReactionDetails extends Component {
     });
   }
 
+  /**
+   * Updates the weight percentage reference material and target amount in the store.
+   *
+   * This method is called when the reaction is in weight percentage mode to synchronize
+   * the Alt.js store with the current weight percentage reference material from the reaction.
+   *
+   * Workflow:
+   * 1. Retrieves the current weight percentage reference material and target amount
+   * 2. Dispatches actions to update the WeightPercentageReactionStore
+   *
+   * Store updates:
+   * - setWeightPercentageReference: Updates which material is the weight percentage reference
+   * - setTargetAmountWeightPercentageReference: Updates the target amount for calculations
+   *
+   * Note: Wrapped in Promise.resolve() to ensure async execution and avoid state conflicts
+   *
+   * @param {Object} reaction - The reaction object containing weight percentage reference data
+   */
+  // eslint-disable-next-line class-methods-use-this
+  updateWeightPercentageReference(reaction) {
+    if (!reaction) return;
+
+    const { weightPercentageReference, targetAmount } = reaction.findWeightPercentageReferenceMaterial();
+    if (!weightPercentageReference) return;
+
+    // Ensure we don't dispatch while another Alt dispatch is in progress.
+    setTimeout(() => {
+      WeightPercentageReactionActions.setWeightPercentageReference(weightPercentageReference);
+      WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(targetAmount);
+    }, 0);
+  }
+
   render() {
     const { reaction, visible, activeTab } = this.state;
     this.updateReactionVesselSize(reaction);
+    let schemeType = 'default';
+    if (reaction.gaseous) {
+      schemeType = 'gaseous';
+    } else if (reaction.weight_percentage) {
+      schemeType = 'weight percentage';
+    }
     const tabContentsMap = {
       scheme: (
         <Tab eventKey="scheme" title="Scheme" key={`scheme_${reaction.id}`}>
-          <ButtonGroup>
-            <ButtonGroupToggleButton
-              active={!reaction.gaseous}
-              onClick={this.handleGaseousChange}
-            >
-              Default Scheme
-            </ButtonGroupToggleButton>
-            <ButtonGroupToggleButton
-              active={reaction.gaseous}
-              onClick={this.handleGaseousChange}
-            >
-              Gas Scheme
-            </ButtonGroupToggleButton>
-          </ButtonGroup>
+          <Dropdown>
+            <Dropdown.Toggle variant="info" size="sm" id="scheme-type-dropdown">
+              <i className="fa fa-cog" />
+              <span className="ms-1">
+                Current Scheme (
+                {schemeType}
+                )
+              </span>
+            </Dropdown.Toggle>
+            <Dropdown.Menu>
+              <Dropdown.Item
+                active={!reaction.gaseous && !reaction.weight_percentage}
+                onClick={() => this.handleReactionSchemeChange('default')}
+              >
+                Default Scheme
+              </Dropdown.Item>
+              <Dropdown.Item
+                active={reaction.gaseous}
+                onClick={() => this.handleReactionSchemeChange('gaseous')}
+              >
+                Gas Scheme
+              </Dropdown.Item>
+              <Dropdown.Item
+                active={reaction.weight_percentage}
+                onClick={() => this.handleReactionSchemeChange('weight_percentage')}
+              >
+                Weight Percentage Scheme
+              </Dropdown.Item>
+            </Dropdown.Menu>
+          </Dropdown>
           {
             !reaction.isNew && <CommentSection section="reaction_scheme" element={reaction} />
           }

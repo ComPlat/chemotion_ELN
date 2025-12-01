@@ -206,7 +206,6 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
     t.integer "celllinesample_detail_level", default: 10
     t.bigint "inventory_id"
     t.integer "devicedescription_detail_level", default: 10
-    t.integer "sequencebasedmacromoleculesample_detail_level", default: 10
     t.index ["ancestry"], name: "index_collections_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
     t.index ["deleted_at"], name: "index_collections_on_deleted_at"
     t.index ["inventory_id"], name: "index_collections_on_inventory_id"
@@ -275,16 +274,6 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
     t.index ["collection_id"], name: "index_collections_screens_on_collection_id"
     t.index ["deleted_at"], name: "index_collections_screens_on_deleted_at"
     t.index ["screen_id", "collection_id"], name: "index_collections_screens_on_screen_id_and_collection_id", unique: true
-  end
-
-  create_table "collections_sequence_based_macromolecule_samples", force: :cascade do |t|
-    t.bigint "collection_id"
-    t.bigint "sequence_based_macromolecule_sample_id"
-    t.datetime "deleted_at"
-    t.index ["collection_id", "sequence_based_macromolecule_sample_id"], name: "idx_collections_sbmm_sample_unique_joins", unique: true
-    t.index ["collection_id"], name: "idx_collections_sbmm_sample_collection"
-    t.index ["deleted_at"], name: "idx_collections_sbmm_sample_deleted_at"
-    t.index ["sequence_based_macromolecule_sample_id"], name: "idx_collections_sbmm_sample_sample"
   end
 
   create_table "collections_vessels", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1031,45 +1020,6 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
     t.index ["searchable_type", "searchable_id"], name: "index_pg_search_documents_on_searchable_type_and_searchable_id"
   end
 
-  create_table "post_translational_modifications", force: :cascade do |t|
-    t.boolean "phosphorylation_enabled", default: false, null: false
-    t.boolean "phosphorylation_ser_enabled", default: false, null: false
-    t.string "phosphorylation_ser_details", default: ""
-    t.boolean "phosphorylation_thr_enabled", default: false, null: false
-    t.string "phosphorylation_thr_details", default: ""
-    t.boolean "phosphorylation_tyr_enabled", default: false, null: false
-    t.string "phosphorylation_tyr_details", default: ""
-    t.boolean "glycosylation_enabled", default: false, null: false
-    t.boolean "glycosylation_n_linked_asn_enabled", default: false, null: false
-    t.string "glycosylation_n_linked_asn_details", default: ""
-    t.boolean "glycosylation_o_linked_lys_enabled", default: false, null: false
-    t.string "glycosylation_o_linked_lys_details", default: ""
-    t.boolean "glycosylation_o_linked_ser_enabled", default: false, null: false
-    t.string "glycosylation_o_linked_ser_details", default: ""
-    t.boolean "glycosylation_o_linked_thr_enabled", default: false, null: false
-    t.string "glycosylation_o_linked_thr_details", default: ""
-    t.boolean "acetylation_enabled", default: false, null: false
-    t.float "acetylation_lysin_number"
-    t.boolean "hydroxylation_enabled", default: false, null: false
-    t.boolean "hydroxylation_lys_enabled", default: false, null: false
-    t.string "hydroxylation_lys_details", default: "t"
-    t.boolean "hydroxylation_pro_enabled", default: false, null: false
-    t.string "hydroxylation_pro_details", default: "t"
-    t.boolean "methylation_enabled", default: false, null: false
-    t.boolean "methylation_arg_enabled", default: false, null: false
-    t.string "methylation_arg_details", default: ""
-    t.boolean "methylation_glu_enabled", default: false, null: false
-    t.string "methylation_glu_details", default: ""
-    t.boolean "methylation_lys_enabled", default: false, null: false
-    t.string "methylation_lys_details", default: ""
-    t.boolean "other_modifications_enabled", default: false, null: false
-    t.string "other_modifications_details", default: ""
-    t.datetime "deleted_at"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
-    t.index ["deleted_at"], name: "idx_sbmm_ptm_deleted_at"
-  end
-
   create_table "predictions", id: :serial, force: :cascade do |t|
     t.string "predictable_type"
     t.integer "predictable_id"
@@ -1103,25 +1053,6 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
     t.boolean "show_sample_short_label", default: false
     t.index ["deleted_at"], name: "index_profiles_on_deleted_at"
     t.index ["user_id"], name: "index_profiles_on_user_id"
-  end
-
-  create_table "protein_sequence_modifications", force: :cascade do |t|
-    t.boolean "modification_n_terminal", default: false, null: false
-    t.string "modification_n_terminal_details", default: ""
-    t.boolean "modification_c_terminal", default: false, null: false
-    t.string "modification_c_terminal_details", default: ""
-    t.boolean "modification_insertion", default: false, null: false
-    t.string "modification_insertion_details", default: ""
-    t.boolean "modification_deletion", default: false, null: false
-    t.string "modification_deletion_details", default: ""
-    t.boolean "modification_mutation", default: false, null: false
-    t.string "modification_mutation_details", default: ""
-    t.boolean "modification_other", default: false, null: false
-    t.string "modification_other_details", default: ""
-    t.datetime "deleted_at"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
-    t.index ["deleted_at"], name: "idx_sbmm_psm_deleted_at"
   end
 
   create_table "reactions", id: :serial, force: :cascade do |t|
@@ -1159,6 +1090,7 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
     t.boolean "gaseous", default: false
     t.jsonb "vessel_size", default: {"unit"=>"ml", "amount"=>nil}
     t.jsonb "log_data"
+    t.boolean "weight_percentage"
     t.index ["deleted_at"], name: "index_reactions_on_deleted_at"
     t.index ["rinchi_short_key"], name: "index_reactions_on_rinchi_short_key", order: :desc
     t.index ["rinchi_web_key"], name: "index_reactions_on_rinchi_web_key"
@@ -1183,6 +1115,8 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.jsonb "log_data"
+    t.boolean "weight_percentage_reference", default: false
+    t.float "weight_percentage"
     t.index ["reaction_id"], name: "index_reactions_samples_on_reaction_id"
     t.index ["sample_id"], name: "index_reactions_samples_on_sample_id"
   end
@@ -1611,7 +1545,6 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
     t.integer "element_detail_level", default: 10
     t.integer "celllinesample_detail_level", default: 10
     t.integer "devicedescription_detail_level", default: 10
-    t.integer "sequencebasedmacromoleculesample_detail_level", default: 10
     t.index ["collection_id"], name: "index_sync_collections_users_on_collection_id"
     t.index ["shared_by_id", "user_id", "fake_ancestry"], name: "index_sync_collections_users_on_shared_by_id"
     t.index ["user_id", "fake_ancestry"], name: "index_sync_collections_users_on_user_id_and_fake_ancestry"
@@ -1812,16 +1745,12 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
   end
 
   add_foreign_key "collections", "inventories"
-  add_foreign_key "collections_sequence_based_macromolecule_samples", "collections"
-  add_foreign_key "collections_sequence_based_macromolecule_samples", "sequence_based_macromolecule_samples"
   add_foreign_key "components", "samples"
   add_foreign_key "layer_tracks", "layers", column: "identifier", primary_key: "identifier"
   add_foreign_key "literals", "literatures"
   add_foreign_key "report_templates", "attachments"
   add_foreign_key "sample_tasks", "samples"
   add_foreign_key "sample_tasks", "users", column: "creator_id"
-  add_foreign_key "sequence_based_macromolecule_samples", "sequence_based_macromolecules"
-  add_foreign_key "sequence_based_macromolecule_samples", "users"
   create_function :user_instrument, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.user_instrument(user_id integer, sc text)
        RETURNS TABLE(instrument text)
