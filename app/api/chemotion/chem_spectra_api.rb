@@ -187,6 +187,7 @@ module Chemotion
         params do
           requires :spectra_ids, type: [Integer]
           requires :front_spectra_idx, type: Integer # index of front spectra
+          requires :container_id, type: Integer
           optional :extras, type: String
         end
         post 'combine_spectra' do
@@ -194,14 +195,53 @@ module Chemotion
 
           list_file = []
           list_file_names = []
-          container_id = -1
-          combined_image_filename = ''
+          target_container_id = pm[:container_id]
+
+          if pm[:extras].present?
+            extras = JSON.parse(pm[:extras])
+            if extras['deleted_attachment_ids'].present?
+              Attachment.where(id: extras['deleted_attachment_ids']).destroy_all
+            end
+          end
+
+          target_container = Container.find_by(id: target_container_id)
+          if target_container
+            dataset_name = "Comparison #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}"
+            dataset_container = Container.create(
+              name: dataset_name,
+              container_type: 'dataset',
+              parent_id: target_container.id
+            )
+            target_container_id = dataset_container.id
+          end
+          
+          new_attachment_ids = []
+          
+          tempfiles = []
           Attachment.where(id: pm[:spectra_ids]).each do |att|
-            container = att.container
-            combined_image_filename = "#{container.name}.new_combined.png"
-            container_id = att.attachable_id
+            next unless att.attachment.present?
+
             list_file_names.push(att.filename)
-            list_file.push(att.abs_path)
+            
+            tempfile = att.attachment.download
+            tempfiles << tempfile
+            list_file.push(tempfile.path)
+
+            base = File.basename(att.filename, '.*')
+            base_no_compared = base.sub(/_compared_\d{8,14}\z/, '')
+            new_filename = "#{base_no_compared}_#{Time.now.strftime('compared_%Y%m%d%H%M%S')}#{File.extname(att.filename)}"
+
+            new_att = Attachment.new(
+              filename: new_filename,
+              created_by: current_user.id,
+              created_for: current_user.id,
+              attachable_type: 'Container',
+              attachable_id: target_container_id
+            )
+            
+            new_att.file_path = tempfile.path
+            new_att.save!
+            new_attachment_ids << new_att.id
           end
 
           _, image = Chemotion::Jcamp::CombineImg.combine(
@@ -210,20 +250,35 @@ module Chemotion
 
           content_type('application/json')
           unless image.nil?
-            att = Attachment.find_by(filename: combined_image_filename, attachable_id: container_id)
-            att.destroy! unless att.nil?
+            combined_image_filename = "combined_#{Time.now.strftime('compared_%Y%m%d%H%M')}.png"
+            
+            existing_att = Attachment.find_by(filename: combined_image_filename, attachable_id: target_container_id)
+            existing_att.destroy! if existing_att.present?
+
             att = Attachment.new(
               filename: combined_image_filename,
               created_by: current_user.id,
               created_for: current_user.id,
               file_path: image.path,
               attachable_type: 'Container',
-              attachable_id: container_id,
+              attachable_id: target_container_id,
             )
             att.save!
+            new_attachment_ids << att.id
+          end
+          
+          tempfiles.each do |tf|
+            tf.close
+            tf.unlink
           end
 
-          { status: true }
+          dataset = Container.find_by(id: target_container_id)
+          dataset_json = dataset ? dataset.as_json(include: :attachments) : nil
+          { status: true, new_attachment_ids: new_attachment_ids, dataset_id: target_container_id, dataset: dataset_json }
+        rescue StandardError => e
+          Rails.logger.error "Error in combine_spectra: #{e.message}"
+          Rails.logger.error e.backtrace.join("\n")
+          error!({ error: 'Server Error', message: e.message }, 500)
         end
       end
 
