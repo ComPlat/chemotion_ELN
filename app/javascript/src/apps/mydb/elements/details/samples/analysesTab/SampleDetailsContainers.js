@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  OverlayTrigger, Button, Tooltip, ButtonGroup
+  OverlayTrigger, Button, Tooltip
 } from 'react-bootstrap';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -131,7 +131,7 @@ export default class SampleDetailsContainers extends Component {
       return null;
     }
     return (
-      <ButtonGroup>
+      <>
         <UploadField
           disabled={!sample.can_update}
           element={sample}
@@ -160,7 +160,7 @@ export default class SampleDetailsContainers extends Component {
           <i className="fa fa-plus me-1" />
           Add analysis
         </Button>
-      </ButtonGroup>
+      </>
     );
   }
 
