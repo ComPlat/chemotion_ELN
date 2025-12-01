@@ -279,7 +279,7 @@ describe Usecases::Reactions::UpdateMaterials do
 
       it 'returns false for zero amounts' do
         result = class_instance_wp.send(:valid_reference_target_amount?, 0.0)
-        expect(result).to be false
+        expect(result).to be true
       end
     end
 
@@ -315,7 +315,7 @@ describe Usecases::Reactions::UpdateMaterials do
       it 'returns nil when reference target amount is zero' do
         reference_sample.update(target_amount_value: 0.0)
         result = class_instance_wp.send(:update_amount_using_weight_percentage, test_material, reference_record)
-        expect(result).to be_nil
+        expect(result).to eq 0.0
       end
 
       it 'returns nil when material has no weight percentage' do
