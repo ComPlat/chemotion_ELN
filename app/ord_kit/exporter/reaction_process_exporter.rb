@@ -8,7 +8,7 @@ module OrdKit
       # (which is a sequential Integer which we do not want to publish). cbuggle, 2022-02-11.
       def to_ord
         OrdKit::Reaction.new(
-          reaction_id: model.reaction&.id,
+          reaction_id: model.id,
           conditions: conditions,
           provenance: OrdKit::Exporter::Reactions::ReactionProvenanceExporter.new(
             model.provenance,
