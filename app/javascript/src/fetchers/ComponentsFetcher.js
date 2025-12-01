@@ -29,7 +29,7 @@ export default class ComponentsFetcher {
    * @returns {Promise<Object>} A promise resolving to the updated components response
    */
   static saveOrUpdateComponents(sample, components) {
-    const serializedComponents = components.map((component) => component.serializeComponent());
+    const serializedComponents = components?.length ? components.map((component) => component.serializeComponent()) : [];
     return fetch('/api/v1/components', {
       credentials: 'same-origin',
       method: 'PUT',
