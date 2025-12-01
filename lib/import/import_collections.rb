@@ -121,6 +121,7 @@ module Import
         import_attachments
         import_literals
       end
+      reprocess_reaction_svgs
     end
 
     def import!
@@ -722,6 +723,23 @@ module Import
 
         # add literal to the @instances map
         update_instances!(uuid, literal)
+      end
+    end
+
+    def reprocess_reaction_svgs
+      return unless @instances.key?('Reaction')
+
+      source_value = @data['source'] || ''
+      return unless source_value == 'smart-add'
+
+      @instances['Reaction'].each_value do |reaction|
+        begin
+          reaction.update_svg_file!
+          reaction.save!
+        rescue StandardError => e
+          Rails.logger.error("Failed to reprocess SVG for reaction #{reaction.id}: #{e.message}")
+          Rails.logger.error(e.backtrace)
+        end
       end
     end
 
