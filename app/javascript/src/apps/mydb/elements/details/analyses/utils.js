@@ -6,6 +6,7 @@ import { reOrderArr } from 'src/utilities/DndControl';
 function buildEmptyAnalyContainer(isComparison = false) {
   const newContainer = ElementContainer.buildEmpty();
   newContainer.container_type = 'analysis';
+  newContainer.name = isComparison ? 'new comparison' : 'new analysis';
   newContainer.extended_metadata.content = { ops: [{ insert: '\n' }] };
   newContainer.extended_metadata.is_comparison = isComparison;
   return newContainer;
