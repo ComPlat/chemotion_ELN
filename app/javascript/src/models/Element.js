@@ -6,7 +6,7 @@ export default class Element {
 
   constructor(args) {
     Object.assign(this, args);
-    if(!this.id) {
+    if (!this.id) {
       this.id = Element.buildID();
       this.is_new = true
     }
@@ -87,7 +87,7 @@ export default class Element {
     }
     _.merge(params, extraParams);
     let paramsWithoutNullEntries = _.omit(params, _.isNull);
-    let cleanParams = _.omit(paramsWithoutNullEntries, (x) => { return x == '***'})
+    let cleanParams = _.omit(paramsWithoutNullEntries, (x) => { return x == '***' })
     return cleanParams;
   }
 
@@ -126,19 +126,41 @@ export default class Element {
   getAnalysisContainersComparable() {
     const result = {};
     const analysisContainers = this.analysisContainers();
+
     analysisContainers.forEach((aic) => {
       const { extended_metadata } = aic;
-      const layout = (extended_metadata && extended_metadata.kind) ? extended_metadata.kind : '';
-      if (layout !== '') {
-        const splittedStr = layout.split('|');
-        const cleanedLayout = splittedStr.length > 1 ? splittedStr[1] : layout;
-        let listAics = result[cleanedLayout] ? result[cleanedLayout] : [];
-        const dts = aic.children.filter(el => ~el.container_type.indexOf('dataset'));
-        const aicWithDataset = Object.assign({}, aic, { children: dts });
-        listAics.push(aicWithDataset);
-        result[cleanedLayout] = listAics;
+
+      let layout = null;
+
+      if (!extended_metadata?.is_comparison) {
+        if (extended_metadata?.kind) {
+          layout = extended_metadata.kind;
+        } else {
+          layout = null;
+        }
       }
+
+      else {
+        if (aic.comparable_info?.layout) {
+          layout = aic.comparable_info.layout;
+        } else {
+          layout = null;
+        }
+      }
+
+      let cleaned = null;
+      if (layout) {
+        const parts = layout.split('|');
+        cleaned = parts.length > 1 ? parts[1] : layout;
+        cleaned = cleaned.replace(/^Type:\s*/i, '').trim();
+      }
+
+      const key = cleaned || null;
+
+      if (!result[key]) result[key] = [];
+      result[key].push(aic);
     });
+
     return result;
   }
 

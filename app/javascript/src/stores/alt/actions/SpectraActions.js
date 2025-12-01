@@ -146,11 +146,17 @@ class SpectraActions {
     };
   }
 
-  SaveMultiSpectraComparison(jcampIds, containerId, curveIdx=0, editedDataSpectra = []) {
+  SaveMultiSpectraComparison(jcampIds, containerId, curveIdx = 0, editedDataSpectra = [], cb = () => { }) {
     return (dispatch) => {
       AttachmentFetcher.combineSpectra(jcampIds, containerId, curveIdx, editedDataSpectra)
-        .then(() => {
-          dispatch();
+        .then((response) => {
+          if (response && response.new_attachment_ids) {
+            dispatch(response);
+          } else {
+            dispatch({ new_attachment_ids: [] });
+          }
+          const datasetId = response && response.dataset_id ? response.dataset_id : null;
+          if (typeof cb === 'function') cb(response);
         }).catch((errorMessage) => {
           console.log(errorMessage); // eslint-disable-line
         })

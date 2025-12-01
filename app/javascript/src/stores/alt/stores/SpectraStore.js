@@ -39,6 +39,7 @@ class SpectraStore {
       handleToggleModalNMRDisplayer: SpectraActions.ToggleModalNMRDisplayer,
       handleLoadSpectraForNMRDisplayer: SpectraActions.LoadSpectraForNMRDisplayer,
       handleLoadSpectraCompare: SpectraActions.LoadSpectraCompare,
+      handleSaveMultiSpectraComparison: SpectraActions.SaveMultiSpectraComparison,
     });
   }
 
@@ -70,7 +71,7 @@ class SpectraStore {
     if (returnFiles === null || returnFiles === undefined) {
       return [];
     }
-    return returnFiles.sort(function(a, b) {
+    return returnFiles.sort(function (a, b) {
       return b.idx - a.idx;
     });
   }
@@ -112,7 +113,7 @@ class SpectraStore {
     if (newArrSpcIdx.length <= 1) {
       newArrSpcIdx = [];
     }
-    
+
     this.setState({
       spcInfos: sortedSpcInfo,
       spcMetas,
@@ -133,7 +134,7 @@ class SpectraStore {
     }
     const { fetchedFiles } = payload;
     const spcMetas = this.decodeSpectra(fetchedFiles);
-    
+
     this.setState({
       spectraCompare: spcMetas,
       fetched: true,
@@ -242,7 +243,13 @@ class SpectraStore {
     });
   }
 
-  
+  handleSaveMultiSpectraComparison(response) {
+    if (response && response.new_attachment_ids) {
+      this.setState({
+        newAttachmentIds: response.new_attachment_ids,
+      });
+    }
+  }
 }
 
 export default alt.createStore(SpectraStore, 'SpectraStore');

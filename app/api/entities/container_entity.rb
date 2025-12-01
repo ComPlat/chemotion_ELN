@@ -14,7 +14,7 @@ module Entities
     expose :comparable_info, if: ->(object, _options) { object.container_type == 'analysis' }
 
     expose :attachments, using: 'Entities::AttachmentEntity', if: lambda { |object, _options|
-                                                                    object.container_type == 'dataset'
+                                                                    object.container_type == 'dataset' || (object.container_type == 'analysis' && object.extended_metadata['is_comparison'] == 'true')
                                                                   }
     expose :code_log, using: 'Entities::CodeLogEntity', if: ->(object, _options) { object.container_type == 'analysis' }
     expose :children, using: 'Entities::ContainerEntity', unless: lambda { |object, _options|

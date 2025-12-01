@@ -46,6 +46,8 @@ module ContainerHelpers
                                        end
       end
 
+      old_analyses_compared = nil
+
       if child[:is_new]
         # Create container
         container = parent_container.children.create(
@@ -57,47 +59,9 @@ module ContainerHelpers
       else
         # Update container
         next unless container = Container.find_by(id: child[:id])
+        old_analyses_compared = JSON.parse(container.extended_metadata['analyses_compared'].gsub('=>', ':')) rescue nil
       end 
-      if extended_metadata['analyses_compared'].present?
-        analyses_compared = extended_metadata['analyses_compared']
-        list_file = []
-        list_file_names = []
-        combined_image_filename = "#{container.name}.new_combined.png"
-        created_by_user = -1
 
-        analyses_compared.each do |attachment_info|
-          attachment = Attachment.find_by(id: attachment_info['file']['id'])
-          unless attachment.nil?
-            created_by_user = attachment.created_by
-            list_file_names.push(attachment.filename)
-            list_file.push(attachment.abs_path)
-          end
-        end
-        if list_file.any?
-
-          _, image = Chemotion::Jcamp::CombineImg.combine(
-            list_file, 0, list_file_names, nil
-          )
-
-          unless image.nil?
-            att = Attachment.find_by(filename: combined_image_filename, attachable_id: container.id)
-            att.destroy! unless att.nil?
-            att = Attachment.new(
-              filename: combined_image_filename,
-              created_by: created_by_user,
-              created_for: created_by_user,
-              file_path: image.path,
-              attachable_type: 'Container',
-              attachable_id: container.id,
-            )
-            att.save!
-          end
-        end
-      else
-        combined_image_filename = "#{container.name}.new_combined.png"
-        att = Attachment.find_by(filename: combined_image_filename, attachable_id: container.id)
-        att&.destroy!
-      end
 
         container.update!(
           name: child[:name],
@@ -114,6 +78,74 @@ module ContainerHelpers
         container.save_dataset(dataset_klass_id: klass_id, properties: properties, element: parent_container&.root&.containable, current_user: current_user) # rubocop:disable Layout/LineLength
       end
       create_or_update_containers(child[:children], container, current_user)
+
+      dataset_being_deleted = child[:children]&.any? { |c| c[:container_type] == 'dataset' && c[:is_deleted] }
+
+      if dataset_being_deleted && extended_metadata['analyses_compared'].present?
+        extended_metadata.delete('analyses_compared')
+        container.update!(extended_metadata: extended_metadata)
+      end
+
+      if extended_metadata['analyses_compared'].present? && (extended_metadata['analyses_compared'] != old_analyses_compared)
+        analyses_compared = extended_metadata['analyses_compared']
+        list_file = []
+        list_file_names = []
+        combined_image_filename = "#{container.name}.new_combined.png"
+        created_by_user = -1
+
+        analyses_compared.each do |attachment_info|
+          attachment = Attachment.find_by(id: attachment_info['file']['id'])
+          unless attachment.nil?
+            created_by_user = attachment.created_by
+            list_file_names.push(attachment.filename)
+            list_file.push(attachment.abs_path)
+          end
+        end
+
+        dataset_child = container.children.find_by(container_type: 'dataset')
+        unless dataset_child
+          dataset_child = container.children.create(
+            name: 'Comparison ' + Time.now.strftime('%Y-%m-%d %H:%M:%S'),
+            container_type: 'dataset'
+          )
+        end
+        target_container_id = dataset_child.id
+
+        if list_file.any?
+
+          _, image = Chemotion::Jcamp::CombineImg.combine(
+            list_file, 0, list_file_names, nil
+          )
+
+          unless image.nil?
+            if target_container_id != container.id
+              att_old = Attachment.find_by(filename: combined_image_filename, attachable_id: container.id)
+              att_old&.destroy!
+            end
+
+            att = Attachment.find_by(filename: combined_image_filename, attachable_id: target_container_id)
+            att.destroy! unless att.nil?
+            att = Attachment.new(
+              filename: combined_image_filename,
+              created_by: created_by_user,
+              created_for: created_by_user,
+              file_path: image.path,
+              attachable_type: 'Container',
+              attachable_id: target_container_id,
+            )
+            att.save!
+          end
+        end
+      else
+        combined_image_filename = "#{container.name}.new_combined.png"
+        att = Attachment.find_by(filename: combined_image_filename, attachable_id: container.id)
+        att&.destroy!
+        dataset_child = container.children.find_by(container_type: 'dataset')
+        if dataset_child
+           att = Attachment.find_by(filename: combined_image_filename, attachable_id: dataset_child.id)
+           att&.destroy!
+        end
+      end
     end
   end
 
@@ -171,11 +203,17 @@ module ContainerHelpers
     list_attachments = []
     list_dataset = []
     list_analyses = []
-    layout = ''
+    layout = nil
     if object.extended_metadata['analyses_compared'].present?
       analyses_compared = JSON.parse(object.extended_metadata['analyses_compared'].gsub('=>', ':'))
       analyses_compared.each do |attachment_info|
-        layout = attachment_info['layout']
+        raw_layout = attachment_info['layout']
+        # Convertir "null", "Unknown", "", ou valeurs vides en nil
+        if raw_layout.nil? || raw_layout.to_s.strip.empty? || raw_layout.to_s.strip.downcase == 'null' || raw_layout.to_s.strip == 'Unknown'
+          layout = nil
+        else
+          layout = raw_layout
+        end
         attachment = attachment_info['file']['id']
         dataset = attachment_info['dataset']['id']
         analyis = attachment_info['analysis']['id']

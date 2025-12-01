@@ -136,7 +136,7 @@ export default class SampleDetailsContainers extends Component {
       return null;
     }
     return (
-      <ButtonGroup>
+      <>
         <UploadField
           disabled={!sample.can_update}
           element={sample}
@@ -152,15 +152,15 @@ export default class SampleDetailsContainers extends Component {
           Add comparisons
         </Button>
         <Button
-            size="xsm"
-            variant="success"
-            onClick={() => this.handleAdd(false)}
-            disabled={!sample.can_update}
-          >
-            <i className="fa fa-plus me-1" />
-            Add analysis
-          </Button>
-      </ButtonGroup>
+          size="xsm"
+          variant="success"
+          onClick={() => this.handleAdd(false)}
+          disabled={!sample.can_update}
+        >
+          <i className="fa fa-plus me-1" />
+          Add analysis
+        </Button>
+      </>
     );
   }
 

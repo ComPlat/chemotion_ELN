@@ -22,7 +22,7 @@ function RndNoAnalyses({ addButton }) {
     <div className='d-flex justify-content-between align-items-center'>
       <p className='m-0'>There are currently no Analyses.</p>
       <ButtonToolbar className="gap-2">
-      {addButton()}
+        {addButton()}
       </ButtonToolbar>
     </div>
   );
@@ -51,6 +51,72 @@ function ReactionsDisplay({
 
   const toggleCommentBox = () => setCommentBoxVisible((prev) => !prev);
 
+  const analyses = [];
+  const comparisons = [];
+
+  orderContainers.forEach((container, index) => {
+    if (container.extended_metadata && container.extended_metadata.is_comparison) {
+      comparisons.push(container);
+    } else {
+      analyses.push(container);
+    }
+  });
+
+  const renderContainerCard = (container, i, isFirstTab) => {
+    const id = container.id || `fake_${i}`;
+    return (
+      <Card
+        key={`${id}CRowEdit`}
+        className={"rounded-0 border-0" + (isFirstTab ? '' : ' border-top')}
+      >
+        <Card.Header className="rounded-0 p-0 border-bottom-0">
+          <AccordionHeaderWithButtons eventKey={id}>
+            <AnalysesHeader
+              sample={sample}
+              container={container}
+              mode={mode}
+              handleUndo={handleUndo}
+              readOnly={readOnly}
+              isDisabled={isDisabled}
+              handleRemove={handleRemove}
+              handleSubmit={handleSubmit}
+              toggleAddToReport={toggleAddToReport}
+            />
+          </AccordionHeaderWithButtons>
+        </Card.Header>
+        {!container.is_deleted && (
+          <Accordion.Collapse eventKey={id}>
+            <Card.Body>
+              {container.extended_metadata && container.extended_metadata.is_comparison ? (
+                <ContainerCompareAnalyses
+                  templateType="sample"
+                  readOnly={readOnly}
+                  sample={sample}
+                  container={container}
+                  rootContainer={rootContainer}
+                  index={i}
+                  handleSubmit={handleSubmit}
+                  disabled={isDisabled}
+                  onChange={handleChange}
+                />
+              ) : (
+                <ContainerComponent
+                  templateType="sample"
+                  readOnly={readOnly}
+                  container={container}
+                  rootContainer={rootContainer}
+                  index={i}
+                  disabled={isDisabled}
+                  onChange={handleChange}
+                />
+              )}
+            </Card.Body>
+          </Accordion.Collapse>
+        )}
+      </Card>
+    );
+  };
+
   return (
     <div>
       <div className="d-flex justify-content-between align-items-center mb-3">
@@ -66,67 +132,33 @@ function ReactionsDisplay({
         handleCommentTextChange={handleCommentTextChange}
       />
       {mode === 'edit' ? (
-        <Accordion
-          id="editable-analysis-list"
-          onSelect={handleAccordionOpen}
-          activeKey={activeAnalysis}
-          className='border rounded overflow-hidden'
-        >
-          {orderContainers.map((container, i) => {
-            const id = container.id || `fake_${i}`;
-            const isActiveTab = activeAnalysis === id;
-            const isFirstTab = i === 0;
-            return (
-              <Card
-                key={`${id}CRowEdit`}
-                className={"rounded-0 border-0" + (isFirstTab ? '' : ' border-top')}
-              >
-                <Card.Header className="rounded-0 p-0 border-bottom-0">
-                  <AccordionHeaderWithButtons eventKey={id}>
-                    <AnalysesHeader
-                      sample={sample}
-                      container={container}
-                      mode={mode}
-                      handleUndo={handleUndo}
-                      readOnly={readOnly}
-                      isDisabled={isDisabled}
-                      handleRemove={handleRemove}
-                      handleSubmit={handleSubmit}
-                      toggleAddToReport={toggleAddToReport}
-                    />
-                  </AccordionHeaderWithButtons>
-                </Card.Header>
-                {!container.is_deleted && (
-                  <Accordion.Collapse eventKey={id}>
-                    <Card.Body>
-                      {container.extended_metadata && container.extended_metadata.is_comparison ? (
-                        <ContainerCompareAnalyses
-                          templateType="sample"
-                          readOnly={readOnly}
-                          sample={sample}
-                          container={container}
-                          handleSubmit={handleSubmit}
-                          disabled={isDisabled}
-                          onChange={handleChange}
-                        />
-                      ) : (
-                        <ContainerComponent
-                          templateType="sample"
-                          readOnly={readOnly}
-                          container={container}
-                          rootContainer={rootContainer}
-                          index={i}
-                          disabled={isDisabled}
-                          onChange={handleChange}
-                        />
-                      )}
-                    </Card.Body>
-                  </Accordion.Collapse>
-                )}
-              </Card>
-            );
-          })}
-        </Accordion>
+        <>
+          {analyses.length > 0 && (
+            <Accordion
+              id="editable-analysis-list"
+              onSelect={handleAccordionOpen}
+              activeKey={activeAnalysis}
+              className='border rounded overflow-hidden'
+            >
+              {analyses.map((container, i) => renderContainerCard(container, i, i === 0))}
+            </Accordion>
+          )}
+
+          {analyses.length > 0 && comparisons.length > 0 && (
+            <div style={{ height: '1rem' }} />
+          )}
+
+          {comparisons.length > 0 && (
+            <Accordion
+              id="editable-comparison-list"
+              onSelect={handleAccordionOpen}
+              activeKey={activeAnalysis}
+              className='border rounded overflow-hidden'
+            >
+              {comparisons.map((container, i) => renderContainerCard(container, i, i === 0))}
+            </Accordion>
+          )}
+        </>
       ) : (
         <div>
           {orderContainers.map((container, i) => {
