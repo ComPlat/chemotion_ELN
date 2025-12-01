@@ -19,7 +19,7 @@ export default function SpectraCompareButton({
           variant="info"
           size="xxsm"
           onClick={toggleSpectraModal}
-          disabled={!(spcInfos.length > 0) && (spectraCompare.length > 0)}
+          disabled={!(spcInfos.length > 1) && (spectraCompare.length > 1)}
         >
           <i className="fa fa-area-chart" />
         </Button>
