@@ -388,7 +388,8 @@ const centerPositionCanvas = async (editor) => {
     const clone = editor._structureDef.editor.editor.struct().clone();
     await editor._structureDef.editor.editor.renderAndRecoordinateStruct(clone);
     await fetchKetcherData(editor);
-    saveMoveCanvas(editor, latestData, true, true, false);
+    // syncImagesOnly: true ensures images follow the re-centered atom positions
+    saveMoveCanvas(editor, latestData, true, true, false, { syncImagesOnly: true });
     await fetchKetcherData(editor);
   } catch (err) {
     await fetchKetcherData(editor);
@@ -422,13 +423,9 @@ const onTemplateMove = async (editor, recenter = false, options = {}) => {
   }
   latestData.root.nodes = imageNodes;
 
-  if (!syncImagesOnly) {
-    const textNodes = await placeTextOnAtoms();
-    latestData.root.nodes = textNodes;
-  } else if (textListCopy?.length) {
-    const nodesWithoutText = latestData.root.nodes.filter((node) => node.type !== 'text');
-    latestData.root.nodes = [...nodesWithoutText, ...textListCopy];
-  }
+  // Always reposition text nodes to follow atom positions
+  const textNodes = await placeTextOnAtoms();
+  latestData.root.nodes = textNodes;
   await applyCanvasDataToEditor(editor, latestData, recenter);
   await fetchKetcherData(editor);
 

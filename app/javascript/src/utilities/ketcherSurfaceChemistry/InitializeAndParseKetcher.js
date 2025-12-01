@@ -200,9 +200,10 @@ const prepareKetcherData = async (editor, initMol) => {
     const fileContent = JSON.parse(ketFile.struct);
     textNodeStructSetter({});
     await applyKetcherData(polymerTag, fileContent, textNodes, editor);
+    // Increased timeout to ensure canvas is fully rendered before centering
     setTimeout(async () => {
       await centerPositionCanvas(editor);
-    }, 10);
+    }, 100);
   } catch (err) {
     console.error('Error preparing Ketcher data:', err.message);
   }
