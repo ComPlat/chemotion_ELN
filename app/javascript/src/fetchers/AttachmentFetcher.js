@@ -540,8 +540,7 @@ export default class AttachmentFetcher {
     );
   }
 
-  static combineSpectra(jcampIds, containerId, curveIdx, editedDataSpectra, extraParams = null) {
-    const extras = JSON.stringify(decamelizeKeys(extraParams))
+  static combineSpectra(jcampIds, containerId, curveIdx, editedDataSpectra) {
     const promise = fetch(
       '/api/v1/chemspectra/file/combine_spectra',
       {
@@ -555,7 +554,6 @@ export default class AttachmentFetcher {
         body: JSON.stringify({
           spectra_ids: jcampIds,
           front_spectra_idx: curveIdx,
-          extras: extras,
           container_id: containerId,
           edited_data_spectra: editedDataSpectra,
         }),
