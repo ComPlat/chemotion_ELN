@@ -162,6 +162,16 @@ const onAddText = async (editor, selectedImageForTextNode) => {
     // sync positions between atom alias, and text-node
     const { width } = imagesList[selectedImageForTextNode[0]]?.boundingBox || 10;
     const lastTextNode = textList[textList.length - 1];
+    const lastTextKey = JSON.parse(lastTextNode.data.content).blocks[0].key;
+
+    // Skip if this text is already associated with another alias (e.g., from paste operation)
+    const alreadyAssociated = Object.entries(textNodeStruct)
+      .some(([existingAlias, key]) => key === lastTextKey && existingAlias !== alias);
+
+    if (alreadyAssociated) {
+      imageNodeForTextNodeSetter(null);
+      return true;
+    }
 
     lastTextNode.data.position = {
       x: atomLocation[0] + width / 2,
@@ -169,7 +179,7 @@ const onAddText = async (editor, selectedImageForTextNode) => {
       z: atomLocation[2],
     };
     textList[textList.length - 1] = lastTextNode;
-    textNodeStruct[alias] = JSON.parse(lastTextNode.data.content).blocks[0].key;
+    textNodeStruct[alias] = lastTextKey;
     saveMoveCanvas(editor, latestData, true, true, false);
   }
   imageNodeForTextNodeSetter(null);

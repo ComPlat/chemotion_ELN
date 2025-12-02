@@ -1,6 +1,6 @@
 services:
   db:
-    image: ptrxyz/internal:db-2.1.0-pre
+    image: ptrxyz/chemotion:db-2.1.1
     restart: unless-stopped
     hostname: db
     environment:
@@ -36,7 +36,7 @@ services:
       - ../files/pullin:/shared
 
   configure:
-    image: ptrxyz/chemotion:eln-2.0.1 # same as the base image in Dockerfile.p2d for efficiency
+    image: ptrxyz/chemotion:eln-2.1.1 # same as the base image in Dockerfile.p2d for efficiency
     profiles:
       - configure
     restart: no
