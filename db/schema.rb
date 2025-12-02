@@ -1169,6 +1169,7 @@ ActiveRecord::Schema.define(version: 2026_01_20_183627) do
     t.datetime "updated_at", precision: 6, null: false
     t.datetime "deleted_at"
     t.string "vesselable_type"
+    t.string "cleanup"
   end
 
   create_table "reaction_processes", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|

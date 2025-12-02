@@ -5,6 +5,7 @@
 # Table name: reaction_process_vessels
 #
 #  id                  :uuid             not null, primary key
+#  cleanup             :string
 #  deleted_at          :datetime
 #  preparations        :string           default([]), is an Array
 #  vesselable_type     :string

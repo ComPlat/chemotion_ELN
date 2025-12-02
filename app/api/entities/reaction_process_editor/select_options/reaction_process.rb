@@ -7,7 +7,7 @@ module Entities
         def select_options_for(reaction_process:)
           {
             samples_preparations: sample_preparation_options(reaction_process),
-            vessel_preparations: SelectOptions::Models::Vessels.new.preparations,
+            vessel_preparations: SelectOptions::Models::Vessels.new.preparation_options,
             step_name_suggestions: step_name_suggestions(reaction_process),
             materials: SelectOptions::Models::Materials.new.select_options_for(reaction_process: reaction_process),
             equipment: SelectOptions::Models::Equipment.new.all,

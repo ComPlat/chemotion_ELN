@@ -3,7 +3,7 @@
 module Entities
   module ReactionProcessEditor
     class ReactionProcessVesselEntity < Grape::Entity
-      expose(:id, :vesselable_id, :vesselable_type, :preparations)
+      expose(:id, :vesselable_id, :vesselable_type, :preparations, :cleanup)
 
       expose :step_names
 

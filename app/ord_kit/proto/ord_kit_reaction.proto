@@ -752,6 +752,16 @@ message VesselAttachment {
   string details = 2;
 }
 
+message VesselCleanup {
+  enum VesselCleanupType {
+    UNSPECIFIED = 0;
+    WASTE = 1;
+    REMOVE = 2;
+    STORAGE = 3;
+  }
+  VesselCleanupType type = 1;
+}
+
 message VesselPreparation {
   enum VesselPreparationType {
     UNSPECIFIED = 0;
