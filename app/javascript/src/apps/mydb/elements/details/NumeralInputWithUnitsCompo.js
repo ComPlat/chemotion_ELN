@@ -149,7 +149,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
       size, variant, disabled, label, unit, name, showInfoTooltipTotalVol, showInfoTooltipRequiredVol, className
     } = this.props;
     const {
-      showString, value, metricPrefix,currentPrecision, valueString, block
+      showString, value, metricPrefix, currentPrecision, valueString, block
     } = this.state;
     const mp = metPrefSymbols[metricPrefix];
     const nanOrInfinity = Number.isNaN(value) || !Number.isFinite(value);

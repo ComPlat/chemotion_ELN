@@ -104,7 +104,7 @@ function SampleName({ sample }) {
 
     return (
       <div>
-        <p className="mb-2">
+        <p className="mb-2 fix-font-size">
           {polymerName}
           <ClipboardCopyText text={sumFormulaCom} clipText={clipText} />
         </p>
@@ -129,7 +129,7 @@ function SampleName({ sample }) {
 
   return (
     <div>
-      <p className="mb-1">
+      <p className="mb-1 fix-font-size">
         <ClipboardCopyText text={sumFormulaCom} clipText={clipText} />
       </p>
       {moleculeName}
