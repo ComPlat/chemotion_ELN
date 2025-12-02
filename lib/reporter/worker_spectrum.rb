@@ -79,8 +79,9 @@ module Reporter
           att = Attachment.find(att[:id])
           can_dwnld = if att
                         element = att.container.root.containable
-                        can_read = ElementPolicy.new(@author, element).read?
-                        can_read && ElementPermissionProxy.new(@author, element, user_ids).read_dataset?
+                        policy = ElementPolicy.new(@author, element)
+                        can_read = policy.read?
+                        can_read && policy.read_dataset?
                       end
           can_dwnld ? { obj: att, kind: kind } : nil
         end

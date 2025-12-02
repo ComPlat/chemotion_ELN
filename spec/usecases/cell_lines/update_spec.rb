@@ -4,10 +4,10 @@ require 'spec_helper'
 
 RSpec.describe Usecases::CellLines::Update do
   describe 'execute!' do
-    let(:user) { create(:user, collections: [collection]) }
+    let(:user) { create(:user) }
     let(:cell_line_sample) { use_case.execute! }
     let(:use_case) { described_class.new(params, user) }
-    let(:collection) { create(:collection) }
+    let(:collection) { create(:collection, user: user) }
     let(:original_cellline_sample) { create(:cellline_sample, collections: [collection]) }
     let(:params) do
       {
@@ -73,9 +73,13 @@ RSpec.describe Usecases::CellLines::Update do
     end
 
     context 'when changing a cell line in a shared collection' do
-      let(:user) { create(:user) }
-      let(:sharring_user) { create(:user, collections: [collection]) }
-      let(:sharred_collection) { create(:collection) }
+      let(:other_user) { create(:user) }
+      let(:collection) do
+        create(:collection, user: user).tap do |collection|
+          create(:collection_share, collection: collection, shared_with: other_user)
+        end
+      end
+      let(:use_case) { described_class.new(params, other_user) }
 
       let(:params) do
         {
@@ -86,19 +90,6 @@ RSpec.describe Usecases::CellLines::Update do
           passage: original_cellline_sample.passage,
           unit: original_cellline_sample.unit,
         }
-      end
-
-      before do
-        Usecases::Sharing::ShareWithUser.new(
-          user_ids: [user.id],
-          cell_line_ids: [original_cellline_sample.id],
-          collection_attributes: {
-            user_id: user.id,
-            label: 'shared_collection',
-            permission_level: 10,
-            shared_by_id: sharring_user.id,
-          },
-        ).execute!
       end
 
       it 'amount was changed to 5000' do

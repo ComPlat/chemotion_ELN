@@ -45,7 +45,6 @@ function KetcherRailsform() {
     const uiState = UIStore.getState();
     const { currentCollection } = uiState;
     const collectionId = currentCollection ? currentCollection.id : null;
-    const isSync = currentCollection ? currentCollection.is_sync_to_me : false;
     let tanimoto = searchStore.ketcherRailsValues.tanimotoThreshold;
     if (tanimoto <= 0 || tanimoto > 1) { tanimoto = 0.3; }
 
@@ -59,7 +58,7 @@ function KetcherRailsform() {
       structure_search: true
     };
     searchStore.loadSearchResults({
-      selection, collectionId, isSync, moleculeSort: true
+      selection, collectionId, moleculeSort: true
     });
     searchStore.clearSearchAndTabResults();
     searchValuesByMolfile();
