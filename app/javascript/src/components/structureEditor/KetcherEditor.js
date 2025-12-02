@@ -233,6 +233,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     [getButtonSelector(ButtonSelectors.LAYOUT)]: async () => fetchAndReplace(editor),
     [getButtonSelector(ButtonSelectors.EXPLICIT_HYDROGENS)]: async () => fetchAndReplace(editor),
     [getButtonSelector(ButtonSelectors.AROMATIZE)]: async () => fetchAndReplace(editor),
+    [getButtonSelector(ButtonSelectors.DEAROMATIZE)]: async () => fetchAndReplace(editor),
     [getButtonSelector(ButtonSelectors.VIEWER_3D)]: async () => fetchAndReplace(editor),
     [getButtonSelector(ButtonSelectors.OPEN)]: async () => imageNodeForTextNodeSetter(null),
     [getButtonSelector(ButtonSelectors.SAVE)]: async () => imageNodeForTextNodeSetter(null),

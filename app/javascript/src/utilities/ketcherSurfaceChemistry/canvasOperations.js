@@ -401,8 +401,8 @@ const onTemplateMove = async (editor, recenter = false, options = {}) => {
   if (!editor || !editor.structureDef) return;
   const { syncImagesOnly = false } = options;
 
-  // for tool bar button events
-  if (!recenter && (imageListCopyContainer.length || textListCopyContainer.length)) {
+  // for tool bar button events - but skip recentering when only syncing images
+  if (!recenter && !syncImagesOnly && (imageListCopyContainer.length || textListCopyContainer.length)) {
     recenter = true;
   }
   // first fetch to save values

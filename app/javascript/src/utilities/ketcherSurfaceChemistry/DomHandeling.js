@@ -230,13 +230,20 @@ const addTextNodeDescriptionOnTextPopup = async (node) => {
 const runImageLayering = async (iframeRef = canvasIframeRef) => {
   const targetIframe = iframeRef || canvasIframeRef;
   if (!targetIframe) return;
-  if (ImagesToBeUpdated && !LAYERING_FLAGS.skipImageLayering) {
-    setTimeout(async () => {
-      await makeTransparentByTitle(targetIframe);
-      await updateImagesInTheCanvas(targetIframe);
-      ImagesToBeUpdatedSetter(false);
-    }, 100);
-  }
+  if (!ImagesToBeUpdated || LAYERING_FLAGS.skipImageLayering) return;
+
+  // Hybrid approach: RAF + minimum delay for reliability
+  // RAF syncs with render cycle, timeout ensures minimum wait
+  await Promise.all([
+    new Promise((resolve) => {
+      requestAnimationFrame(() => requestAnimationFrame(resolve));
+    }),
+    new Promise((resolve) => setTimeout(resolve, 50)) // Minimum 50ms
+  ]);
+
+  await makeTransparentByTitle(targetIframe);
+  await updateImagesInTheCanvas(targetIframe);
+  ImagesToBeUpdatedSetter(false);
 };
 
 // set image count
