@@ -394,11 +394,13 @@ const addAtomAliasHelper = async (processedAtoms) => {
           removableIndices.push(atom);
         }
       }
+
       if (removableIndices.length) {
         mol.atoms?.splice(mol.atoms.length - removableIndices.length, removableIndices.length);
         mol.bonds?.splice(mol.bonds.length - removableIndices.length, removableIndices.length);
       }
     }
+
     const d = { ...latestData };
     const molsList = removeImagesFromData(d);
     d.root.nodes = [...molsList, ...newImageNodes];
