@@ -181,12 +181,6 @@ $rm-columns: (
   &__dry-solvent {
     @include align-header-data(map-get($rm-columns, "dry-solvent"));
   }
-  &__label-structure {
-    @include align-header-input(map-get($rm-columns, "label-structure"));
-  }
-  &__intermediate-label {
-    @include align-header-input(map-get($rm-columns, "intermediate-label"));
-  }
   &__intermediate-type {
     @include align-header-input(map-get($rm-columns, "intermediate-type"));
   }

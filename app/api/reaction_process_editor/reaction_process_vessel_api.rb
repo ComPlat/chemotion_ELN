@@ -18,6 +18,7 @@ module ReactionProcessEditor
         params do
           requires :reaction_process_vessel, type: Hash do
             optional :preparations, type: Array, desc: 'The preparations of the vessel for this reaction.'
+            optional :cleanup
             optional :vesselable_id
             optional :vesselable_type
           end

@@ -4,6 +4,8 @@ module Entities
   module ReactionProcessEditor
     class VesselableEntity < Grape::Entity
       expose(:id,
+             :value,
+             :label,
              :vesselable_type,
              :vesselable_id,
              :name,
@@ -28,6 +30,14 @@ module Entities
 
       def vesselable_id
         object.id
+      end
+
+      def value
+        object.id
+      end
+
+      def label
+        is_vessel_template ? object.name : object.short_label
       end
 
       def vesselable_type
