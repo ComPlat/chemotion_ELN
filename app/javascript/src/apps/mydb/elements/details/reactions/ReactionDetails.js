@@ -458,11 +458,18 @@ export default class ReactionDetails extends Component {
       temperature = `${temperature} ${reaction.temperature.valueUnit}`;
     }
 
-    ReactionSvgFetcher.fetchByMaterialsSvgPaths(materialsSvgPaths, temperature, solvents, reaction.duration, reaction.conditions)
-      .then((result) => {
+    ReactionSvgFetcher.fetchByMaterialsSvgPaths(
+      materialsSvgPaths,
+      temperature,
+      solvents,
+      reaction.duration,
+      reaction.conditions
+    ).then((result) => {
+      if (result.reaction_svg !== reaction.reaction_svg_file) {
         reaction.reaction_svg_file = result.reaction_svg;
-        this.setState(reaction);
-      });
+        this.handleReactionChange(reaction, { updateGraphic: true });
+      }
+    });
   }
 
   handleGaseousChange() {
