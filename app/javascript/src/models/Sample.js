@@ -1168,11 +1168,10 @@ export default class Sample extends Element {
             let moles;
             if (this.decoupled && this.amount_unit === 'mol') {
               moles = this.amount_value;
+            } else if (!molecularWeight || molecularWeight <= 0) {
+              moles = 0;
             } else {
-              if (!molecularWeight || molecularWeight <= 0) {
-                moles = 0;
-              }
-              moles = amount_g / molecularWeight;
+              moles = (amount_g * purity) / molecularWeight;
             }
             return calculateVolumeForFeedstockOrGas(
               vesselVolume,
