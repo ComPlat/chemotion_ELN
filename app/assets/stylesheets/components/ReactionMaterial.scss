@@ -6,6 +6,27 @@
   }
 }
 
+// Reduce header height for the components accordion in Reaction Material
+.mixture-components-accordion {
+  --bs-accordion-btn-padding-y: 0.25rem; // default ~0.75rem
+  --bs-accordion-btn-padding-x: 0.75rem;
+
+  .accordion-header {
+    margin: 0; // remove extra header margins
+  }
+
+  .accordion-button {
+    padding: var(--bs-accordion-btn-padding-y) var(--bs-accordion-btn-padding-x);
+    min-height: 32px;
+  }
+}
+
+// Style for mixture components row
+.mixture-components-row {
+  padding: 0;
+  background: #f8f9fa;
+}
+
 @mixin static-scheme-data {
   &-data {
     @extend .align-self-stretch;
