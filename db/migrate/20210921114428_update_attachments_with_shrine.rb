@@ -9,9 +9,12 @@
 # Before that, the files that are not in the legacy primary_store (eg tmp) will be moved to it.
 #
 
+class MigrationAttachment < ActiveRecord::Base
+  self.table_name = 'attachments'
+end
 class UpdateAttachmentsWithShrine < ActiveRecord::Migration[5.2]
   def change
-    return unless Attachment.new.respond_to?(:store)
+    return unless MigrationAttachment.new.respond_to?(:store)
 
     # compare shrine.yml with storage.yml
     shrine_storage = Rails.application.config_for :shrine
@@ -22,14 +25,14 @@ class UpdateAttachmentsWithShrine < ActiveRecord::Migration[5.2]
     end
 
     # move files from tmp to primary_store
-    Attachment.where.not(storage: primary_store).find_each do |att|
+    MigrationAttachment.where.not(storage: primary_store).find_each do |att|
       next unless att.store.file_exist?
 
       att.update(storage: primary_store)
     end
 
     # update attachments with shrine attachment_data
-    Attachment.where(attachment_data: [nil]).find_each do |att|
+    MigrationAttachment.where(attachment_data: [nil]).find_each do |att|
       begin
         next unless att.store.file_exist?
 

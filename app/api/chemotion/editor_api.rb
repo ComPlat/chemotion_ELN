@@ -5,47 +5,47 @@
 module Chemotion
   # Editor API
   class EditorAPI < Grape::API
-    # rubocop:disable Metrics/BlockLength
+    helpers AttachmentHelpers
+
     namespace :editor do
-      namespace :initial do
-        get do
-          docserver = Rails.configuration.editors&.docserver
-          { installed: docserver && docserver[:enable] || false, ext: docserver && docserver[:ext] }
-        end
+      desc 'get editor config'
+      get :initial do
+        docserver = Rails.configuration.editors&.docserver
+        { installed: (docserver && docserver[:enable]) || false, ext: docserver && docserver[:ext] }
       end
 
-      namespace :start do
-        desc 'start editing a document'
+      route_param :id do
+        desc 'start/stop editing a document'
         params do
-          requires :attachment_id, type: Integer, desc: 'attachment id'
+          requires :id, type: Integer, desc: 'attachment id'
         end
-        before do
-          @attachment = Attachment.find_by(id: params[:attachment_id])
-          if %w[ResearchPlan Labimotion::Element].include?(@attachment.attachable_type)
-            error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, @attachment.attachable).update?
-          else
-            error!('401 Unauthorized', 401)
-          end
-          # error!('401 Unauthorized', 401) if @attachment.oo_editing?
+
+        after_validation do
+          @attachment = Attachment.find_by(id: params[:id])
+          error!('401 Unauthorized', 401) unless @attachment && read_access?(@attachment, current_user)
         end
-        post do
+
+        get 'start' do
+          error!('401 Unauthorized', 401) unless @attachment.editable_document?
+          error!('401 Document is already being edited', 401) if @attachment.editing?
           payload = {
             att_id: @attachment.id,
             user_id: current_user.id,
             exp: (Time.zone.now + 15.minutes).to_i,
           }
-          @attachment.oo_editing_start!
-          token = JWT.encode payload, Rails.application.secrets.secret_key_base
+          @attachment.editing_start!
+          file_extension = @attachment.editable_document? && @attachment.file_extension
+          token = JsonWebToken.encode(payload)
           only_office_payload = {
             width: '100%',
-            height: '950px',
+            height: '100%',
             type: 'desktop',
             document: {
               att_id: @attachment.id,
-              fileType: 'docx',
+              fileType: file_extension,
               key: token,
               title: @attachment.filename,
-              url: "#{Application.config.root_url}/api/v1/public/download?token=#{token}",
+              url: "#{Rails.configuration.editors.docserver[:callback_server]}/api/v1/public/download?token=#{token}",
               permissions: {
                 download: true,
                 edit: true,
@@ -54,7 +54,7 @@ module Chemotion
               },
             },
             editorConfig: {
-              callbackUrl: "#{Application.config.root_url}/api/v1/public/callback",
+              callbackUrl: "#{Rails.configuration.editors.docserver[:callback_server]}/api/v1/public/callback",
               mode: 'edit',
               lang: 'en',
               customization: {
@@ -87,6 +87,11 @@ module Chemotion
           only_office_token = JWT.encode only_office_payload, Rails.application.secrets.only_office_secret_key_base
 
           { token: token, only_office_token: only_office_token }
+        end
+
+        get :end do
+          @attachment.editing_end!
+          { message: 'ok' }
         end
       end
     end
