@@ -45,7 +45,18 @@ module Entities
         if object.extended_metadata['is_comparison'].present?
           metadata[:is_comparison] = object.extended_metadata['is_comparison'] == 'true'
         end
-        metadata[:analyses_compared] = JSON.parse(object.extended_metadata['analyses_compared'].gsub('=>', ':')) if object.extended_metadata['analyses_compared'].present?
+        if object.extended_metadata['analyses_compared'].present?
+          raw_ac = object.extended_metadata['analyses_compared']
+          metadata[:analyses_compared] = if raw_ac.is_a?(String)
+                                           begin
+                                             JSON.parse(raw_ac.gsub('=>', ':').gsub(/\bnil\b/, 'null'))
+                                           rescue StandardError
+                                             []
+                                           end
+                                         else
+                                           raw_ac
+                                         end
+        end
       end
     end
 
@@ -116,7 +127,18 @@ module Entities
       list_analyses = []
       layout = ''
       if object.extended_metadata['analyses_compared'].present?
-        analyses_compared = JSON.parse(object.extended_metadata['analyses_compared'].gsub('=>', ':'))
+        raw_ac = object.extended_metadata['analyses_compared']
+        analyses_compared = if raw_ac.is_a?(String)
+                              begin
+                                JSON.parse(raw_ac.gsub('=>', ':').gsub(/\bnil\b/, 'null'))
+                              rescue StandardError
+                                []
+                              end
+                            else
+                              raw_ac
+                            end
+        analyses_compared = [] unless analyses_compared.is_a?(Array)
+
         analyses_compared.each do |attachment_info|
           layout = attachment_info['layout']
           attachment = Attachment.find_by(id: attachment_info['file']['id'])

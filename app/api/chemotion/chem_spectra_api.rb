@@ -193,44 +193,60 @@ module Chemotion
         post 'combine_spectra' do
           pm = to_rails_snake_case(params)
 
-          list_file = []
-          list_file_names = []
-          target_container_id = pm[:container_id]
-
+          extras = nil
           if pm[:extras].present?
-            extras = JSON.parse(pm[:extras])
+            begin
+              extras = JSON.parse(pm[:extras])
+            rescue
+              extras = {}
+            end
+
             if extras['deleted_attachment_ids'].present?
               Attachment.where(id: extras['deleted_attachment_ids']).destroy_all
             end
           end
 
-          target_container = Container.find_by(id: target_container_id)
-          if target_container
-            dataset_name = "Comparison #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}"
-            dataset_container = Container.create(
-              name: dataset_name,
-              container_type: 'dataset',
-              parent_id: target_container.id
-            )
-            target_container_id = dataset_container.id
+          origin_container = Container.find_by(id: pm[:container_id])
+
+          holder =
+            if origin_container && origin_container.container_type == 'dataset'
+              origin_container.parent
+            else
+              origin_container
+            end
+
+          unless holder
+            error!({ error: 'Container not found' }, 404)
           end
-          
+
+          list_file = []
+          list_file_names = []
+
+          dataset_name = "Comparison #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}"
+
+          dataset_container = Container.create(
+            name: dataset_name,
+            container_type: 'dataset',
+            parent_id: holder.id
+          )
+
+          target_container_id = dataset_container.id
+
           new_attachment_ids = []
-          
           tempfiles = []
+
           Attachment.where(id: pm[:spectra_ids]).each do |att|
             next unless att.attachment.present?
 
-            list_file_names.push(att.filename)
-            
             tempfile = att.attachment.download
             tempfiles << tempfile
-            list_file.push(tempfile.path)
 
             base = File.basename(att.filename, '.*')
-            base_no_compared = base.sub(/_compared_\d{8,14}\z/, '')
-            new_filename = "#{base_no_compared}_#{Time.now.strftime('compared_%Y%m%d%H%M%S')}#{File.extname(att.filename)}"
+            base_no_compared = base.sub(/_compared_[0-9:\-]+\z/, '')
+            new_filename = "#{base_no_compared}_compared_#{Time.now.strftime('%Y-%m-%d-%H:%M:%S')}#{File.extname(att.filename)}"
 
+            list_file_names << new_filename
+            
             new_att = Attachment.new(
               filename: new_filename,
               created_by: current_user.id,
@@ -238,49 +254,126 @@ module Chemotion
               attachable_type: 'Container',
               attachable_id: target_container_id
             )
-            
-            new_att.file_path = tempfile.path
+
+            edited_data = nil
+            if pm[:edited_data_spectra].present?
+              pm[:edited_data_spectra].each do |data|
+                if data.dig(:si, :idx) == att.id
+                  edited_data = data
+                  break
+                end
+              end
+            end
+
+            final_file_path = tempfile.path
+
+            if edited_data
+              mol_tempfile = Tempfile.new(['mol', '.mol'])
+
+              create_params = {
+                peaks_str: edited_data[:peaks_str],
+                integration: edited_data[:integration],
+                multiplicity: edited_data[:multiplicity],
+                scan: edited_data[:scan],
+                thres: edited_data[:thres],
+                wave_length: edited_data[:wave_length_str],
+                cyclic_volta: edited_data[:cyclicvolta],
+                curve_idx: edited_data[:curve_idx],
+              }
+
+              if edited_data[:selected_shift]
+                create_params[:shift_select_x] = edited_data[:selected_shift][:peak].try(:[], :x)
+                create_params[:shift_ref_name] = edited_data[:selected_shift][:ref].try(:[], :name)
+                create_params[:shift_ref_value] = edited_data[:selected_shift][:ref].try(:[], :value)
+              end
+
+              new_jcamp, _ = Chemotion::Jcamp::Create.spectrum(
+                tempfile.path, mol_tempfile.path, false, create_params
+              )
+
+              if new_jcamp && File.exist?(new_jcamp.path)
+                final_file_path = new_jcamp.path
+              end
+
+              mol_tempfile.close
+              mol_tempfile.unlink
+            end
+
+            new_att.file_path = final_file_path
+            list_file << final_file_path
+
             new_att.save!
             new_attachment_ids << new_att.id
           end
 
           _, image = Chemotion::Jcamp::CombineImg.combine(
-            list_file, pm[:front_spectra_idx], list_file_names, pm[:extras]
+            list_file, pm[:front_spectra_idx], list_file_names, extras
           )
 
-          content_type('application/json')
-          unless image.nil?
-            combined_image_filename = "combined_#{Time.now.strftime('compared_%Y%m%d%H%M')}.png"
-            
-            existing_att = Attachment.find_by(filename: combined_image_filename, attachable_id: target_container_id)
-            existing_att.destroy! if existing_att.present?
+          if image.present?
+            combined_image_filename = "combined_image_#{Time.now.strftime('%Y-%m-%d %H:%M:%S')}.png"
 
-            att = Attachment.new(
+            att_img = Attachment.new(
               filename: combined_image_filename,
               created_by: current_user.id,
               created_for: current_user.id,
               file_path: image.path,
               attachable_type: 'Container',
-              attachable_id: target_container_id,
+              attachable_id: target_container_id
             )
-            att.save!
-            new_attachment_ids << att.id
+            att_img.save!
+            new_attachment_ids << att_img.id
           end
+
+          selected_layout =
+            extras && (extras['layout'] || extras['layout_key'] || extras['layout_name'])
+
+          valid_attachment_ids = Attachment.where(id: new_attachment_ids).reject do |att|
+            att.filename.downcase.end_with?('.png', '.jpg', '.jpeg', '.gif')
+          end.map(&:id)
+
+          analyses_compared = valid_attachment_ids.map do |aid|
+            {
+              file:    { id: aid },
+              dataset: { id: target_container_id },
+              analysis:{ id: target_container_id },
+              layout:  selected_layout
+            }
+          end
+
+          ds_meta = dataset_container.extended_metadata || {}
+          ds_meta['is_comparison'] = true
+          ds_meta['analyses_compared'] = analyses_compared
           
+          selected_layout =
+            extras && (extras['layout'] || extras['layout_key'] || extras['layout_name'])
+          
+          ds_meta['kind'] = selected_layout if selected_layout.present?
+          
+          dataset_container.update_column(:extended_metadata, ds_meta)        
+
           tempfiles.each do |tf|
             tf.close
             tf.unlink
           end
 
           dataset = Container.find_by(id: target_container_id)
-          dataset_json = dataset ? dataset.as_json(include: :attachments) : nil
-          { status: true, new_attachment_ids: new_attachment_ids, dataset_id: target_container_id, dataset: dataset_json }
+          dataset_json = Entities::ContainerEntity.represent(dataset).as_json
+
+          {
+            status: true,
+            new_attachment_ids: new_attachment_ids,
+            dataset_id: target_container_id,
+            dataset: dataset_json,
+            analyses_compared: analyses_compared
+          }
         rescue StandardError => e
           Rails.logger.error "Error in combine_spectra: #{e.message}"
           Rails.logger.error e.backtrace.join("\n")
           error!({ error: 'Server Error', message: e.message }, 500)
         end
       end
+
 
       resource :predict do
         desc 'Predict NMR by peaks'

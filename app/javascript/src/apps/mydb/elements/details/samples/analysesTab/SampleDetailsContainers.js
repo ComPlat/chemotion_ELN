@@ -60,11 +60,24 @@ export default class SampleDetailsContainers extends Component {
     this.handleChange();
   }
 
-  handleChange() {
+  handleChange = (updatedContainer) => {
     const { sample, handleSampleChanged } = this.props;
+  
+    if (updatedContainer) {
+      const analysesRoot = sample.analysesContainers()[0];
+  
+      if (analysesRoot && Array.isArray(analysesRoot.children)) {
+        const idx = analysesRoot.children.findIndex(c => c.id === updatedContainer.id);
+  
+        if (idx !== -1) {
+          analysesRoot.children[idx] = updatedContainer;
+        }
+      }
+    }
+  
     handleSampleChanged(sample);
-  }
-
+  };
+  
   onUIStoreChange(state) {
     const { activeAnalysis } = this.state;
     if (state.sample.activeAnalysis !== activeAnalysis) {
@@ -80,6 +93,28 @@ export default class SampleDetailsContainers extends Component {
       this.handleAccordionOpen(newContainer.id),
     );
   }
+
+  handleContainerChanged = (updatedContainer) => {
+    const { sample, handleSampleChanged } = this.props;
+  
+    const replaceRecursively = (node) => {
+      if (!node || !node.children) return;
+  
+      node.children = node.children.map(child => {
+        if (child.id === updatedContainer.id) {
+          return updatedContainer;
+        }
+        replaceRecursively(child);
+        return child;
+      });
+    };
+  
+    const root = sample.container;
+    replaceRecursively(root);
+  
+    handleSampleChanged(sample);
+  };
+  
 
   handleMove(source, target) {
     const { sample } = this.props;
@@ -221,6 +256,7 @@ export default class SampleDetailsContainers extends Component {
             elementData={sample}
             handleSampleChanged={handleSampleChanged}
             handleSubmit={handleSubmit}
+            handleContainerChanged={this.handleContainerChanged}
           />
         </div>
       );

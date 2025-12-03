@@ -236,8 +236,14 @@ const AnalysesHeader = ({
 
   const attachment = getAttachmentFromContainer(container);
   const is_comparison = container.extended_metadata && container.extended_metadata.is_comparison;
-  const comparisonLayout = container.comparable_info && container.comparable_info.layout ? container.comparable_info.layout : '';
-  const comparisonSpectraNames = container.comparable_info && container.comparable_info.list_attachments ? container.comparable_info.list_attachments.map((attachment) => attachment.filename).join(', ') : '';
+  const comparisonLayout = container.extended_metadata.kind || '';
+  
+  const comparisonSpectraNames = container.comparable_info && container.comparable_info.list_attachments 
+    ? container.comparable_info.list_attachments
+        .filter(att => !att.filename.toLowerCase().match(/\.(png|jpg|jpeg|gif)$/i))
+        .map((attachment) => attachment.filename)
+        .join(', ') 
+    : '';
 
   return (
     <div className={`analysis-header w-100 d-flex gap-3 lh-base ${mode === 'edit' ? '' : 'order pe-2'}`}>
@@ -245,6 +251,7 @@ const AnalysesHeader = ({
         {deleted ?
           <i className="fa fa-ban text-body-tertiary fs-2 text-center d-block" /> :
           <ImageModal
+            key={attachment?.id}
             attachment={attachment}
             popObject={{
               title: container.name,

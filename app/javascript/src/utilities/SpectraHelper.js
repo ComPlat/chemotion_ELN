@@ -331,10 +331,13 @@ const BuildSpectraComparedInfos = (sample, container) => {
 }
 
 const BuildSpectraComparedSelection = (sample, comparisonContainer) => {
-
   if (!sample) return { menuItems: [], selectedFiles: [] };
 
-  let targetLayout = comparisonContainer?.comparable_info?.layout || null;
+  let targetLayout =
+  comparisonContainer?.extended_metadata?.kind
+  || comparisonContainer?.comparable_info?.layout
+  || null;
+
   if (targetLayout) {
     targetLayout = targetLayout.replace(/^Type:\s*/i, '').split('|').pop().trim();
     if (targetLayout === 'null' || targetLayout === 'Not specified') {
@@ -344,23 +347,45 @@ const BuildSpectraComparedSelection = (sample, comparisonContainer) => {
     targetLayout = null;
   }
 
+  // FIX : accept également les fichiers "peak_compared_xxx.jdx"
   const filteredAttachments = (dataset) => {
-    if (!dataset) return false;
-    return dataset.attachments.filter((attch) =>
-      attch.filename.match(/[._](edit|peak|compared)(_[0-9]+)?\.(jdx|dx|jcamp)$/i)
-    );
+    if (!dataset || !Array.isArray(dataset.attachments)) return [];
+  
+    return dataset.attachments.filter((attch) => {
+      const ext = attch.filename.split('.').pop().toLowerCase();
+      const isJcamp = ['jdx','dx','jcamp'].includes(ext);
+      const allowed = attch.filename.match(/(peak|edit|compared)/i);
+      return isJcamp && allowed;
+    });
   };
+  
+  const comparisonDatasets = comparisonContainer.children || [];
+  let comparisonFiles = [];
+
+  comparisonDatasets.forEach(ds => {
+    const att = filteredAttachments(ds);
+    comparisonFiles.push(...att);
+  });
 
   const listComparible = sample.getAnalysisContainersComparable();
   const listKeys = Object.keys(listComparible);
 
-  const menuItems = listKeys.map((layoutKey) => {
+  let menuItems = listKeys.map((layoutKey) => {
+    const listAics = listComparible[layoutKey].map((aicOrigin) => {
 
-    const listAics = listComparible[layoutKey].map((aic) => {
+      const aic = (comparisonContainer && aicOrigin.id === comparisonContainer.id)
+        ? comparisonContainer
+        : aicOrigin;
 
-      const aicLayout = aic.comparable_info?.layout
-        ? aic.comparable_info.layout.replace(/^Type:\s*/i, '').split('|').pop().trim()
-        : (layoutKey || null);
+      const rawLayout =
+      aic.extended_metadata?.kind
+      || aic.comparable_info?.layout
+      || layoutKey
+      || null;
+      
+      const aicLayout = rawLayout
+        ? rawLayout.replace(/^Type:\s*/i, '').split('|').pop().trim()
+        : null;
 
       const disableAIC = targetLayout && aicLayout !== targetLayout;
 
@@ -391,12 +416,13 @@ const BuildSpectraComparedSelection = (sample, comparisonContainer) => {
         title: aic.comparable_info?.is_comparison
           ? `Comparison: ${aic.name}`
           : `Analysis: ${aic.name}`,
-        key: aic.id,
-        value: aic.id,
+        key: aic?.id,
+        value: aic?.id,
         disabled: disableAIC,
         checkable: false,
         children: subSubMenu
       };
+
     }).filter(node => node.children?.length > 0);
 
     if (listAics.length === 0) return null;
@@ -413,122 +439,105 @@ const BuildSpectraComparedSelection = (sample, comparisonContainer) => {
     };
   }).filter(Boolean);
 
-  const allAICs =
-    typeof sample.analysisContainers === 'function'
-      ? sample.analysisContainers()
-      : (sample.analysisContainers || []);
+  let selectedFiles = [];
 
-  let targetComparison = null;
-  if (comparisonContainer?.comparable_info?.is_comparison) {
-    targetComparison = comparisonContainer;
+  if (comparisonContainer.extended_metadata?.analyses_compared) {
+    const rawSelected = comparisonContainer.extended_metadata.analyses_compared.map(a => a.file.id);
+
+    const fileIdsInTree = new Set();
+
+    const collectFileIds = (nodes) => {
+      if (!nodes) return;
+      nodes.forEach((node) => {
+        if (node.children && node.children.length > 0) {
+          collectFileIds(node.children);
+        } else {
+          fileIdsInTree.add(node.key);
+        }
+      });
+    };
+
+    collectFileIds(menuItems);
+
+    selectedFiles = rawSelected.filter(id => fileIdsInTree.has(id));
   }
-
-  const selectedSet = new Set();
-  if (targetComparison) {
-    const jdxAttachments = targetComparison.attachments?.filter((att) => {
-      const ext = att.filename.split('.').pop().toLowerCase();
-      return ['jdx', 'dx', 'jcamp'].includes(ext);
-    }) || [];
-
-    if (jdxAttachments.length > 0) {
-      jdxAttachments.forEach(att => selectedSet.add(att.id));
-    } else {
-      (targetComparison.comparable_info.list_attachments || [])
-        .forEach(att => selectedSet.add(att.id));
-    }
-  }
-
-  const validIds = new Set();
-  const collectIds = (nodes) => {
-    nodes?.forEach((n) => {
-      if (n.children?.length) collectIds(n.children);
-      if (!n.children && n.key != null) validIds.add(n.key);
-    });
-  };
-  menuItems.forEach(item => collectIds(item.children));
-
-  const selectedFiles = [...selectedSet].filter(id => validIds.has(id));
 
   return { menuItems, selectedFiles };
 };
 
+
 const GetSelectedComparedAnalyses = (container, treeData, selectedFiles, extra) => {
-  if (!selectedFiles || !extra) {
-    return [];
-  }
+  if (!Array.isArray(selectedFiles) || !extra) return [];
 
-  const labels = Array.isArray(extra) ? extra : (extra.allCheckedNodes || []);
+  const checked = extra.checkedNodes || extra.allCheckedNodes || [];
 
-  if (selectedFiles.length > labels.length) {
-    console.error('Selected files and labels do not match');
-    return [];
-  }
-
-  const getParentNode = (key, tree) => {
-    let parentNode;
-    for (let i = 0; i < tree.length; i++) {
-      const node = tree[i];
+  const findNode = (key, tree) => {
+    for (const node of tree) {
+      if (node.key === key) return node;
       if (node.children) {
-        if (node.children.some(item => item.key === key)) {
-          parentNode = node;
-        } else if (getParentNode(key, node.children)) {
-          parentNode = getParentNode(key, node.children);
-        }
+        const found = findNode(key, node.children);
+        if (found) return found;
       }
     }
-    return parentNode;
-  }
+    return null;
+  };
 
-  const selectedData = selectedFiles.map((fileID, idx) => {
-    const dataset = getParentNode(fileID, treeData);
-    const analysis = dataset ? getParentNode(dataset.key, treeData) : null;
-    const layout = analysis ? getParentNode(analysis.key, treeData) : null;
+  const findParent = (key, tree) => {
+    for (const node of tree) {
+      if (node.children?.some(c => c.key === key)) return node;
+      if (node.children) {
+        const found = findParent(key, node.children);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
 
-    const labelNode = labels.find(node => node.value === fileID);
-    const filename = labelNode ? labelNode.title : `File ${fileID}`;
+  return selectedFiles.map(fileID => {
+    const fileNode = findNode(fileID, treeData);
+    const datasetNode = findParent(fileID, treeData);
+    const analysisNode = datasetNode ? findParent(datasetNode.key, treeData) : null;
+    const layoutNode = analysisNode ? findParent(analysisNode.key, treeData) : null;
 
-    const result = {
-      file: { name: filename, id: fileID },
-      dataset: dataset ? { name: dataset.title, id: dataset.key } : { name: 'Unknown', id: null },
-      analysis: analysis ? { name: analysis.title, id: analysis.key } : { name: 'Unknown', id: null },
-      layout: layout ? layout.title : 'Unknown',
+    return {
+      file: { id: fileID, name: fileNode?.title || `File ${fileID}` },
+      dataset: datasetNode ? { id: datasetNode.key, name: datasetNode.title } : { id: null, name: null },
+      analysis: analysisNode ? { id: analysisNode.key, name: analysisNode.title } : { id: null, name: null },
+      layout: layoutNode ? layoutNode.title : null,
     };
-
-    return result;
   });
-
-  return selectedData;
 };
 
 const ProcessSampleWithComparisonAnalyses = (sample, spectraStore) => {
   const { spcIdx, prevIdx } = spectraStore;
   const newSample = new Sample(sample);
+
   const comparableContainers = newSample.getAnalysisContainersComparable();
-  const listComparibleKeys = Object.keys(comparableContainers);
-  let comparisonContainers = [];
-  listComparibleKeys.forEach((layout) => {
-    const listAics = comparableContainers[layout];
-    comparisonContainers = listAics.filter((aic) => {
-      const { comparable_info } = aic;
-      return comparable_info ? comparable_info.is_comparison : false;
+  const categories = Object.keys(comparableContainers);
+
+  categories.forEach((layout) => {
+    comparableContainers[layout].forEach((container) => {
+      const metadata = container.extended_metadata;
+      const cmp = metadata.analyses_compared;
+
+      if (!cmp) return;
+
+      const updated = cmp.map(entry => {
+        const file = entry.file;
+
+        if (file.id === prevIdx && !spectraStore.newAttachmentIds) {
+          return {
+            ...entry,
+            file: { ...file, id: spcIdx }
+          };
+        }
+        return entry;
+      });
+
+      metadata.analyses_compared = updated;
     });
   });
 
-  comparisonContainers.forEach((container) => {
-    const { extended_metadata } = container;
-    const { analyses_compared } = extended_metadata;
-    if (analyses_compared) {
-      const newListAtts = analyses_compared.map((att) => {
-        const { file } = att;
-        if (file.id === prevIdx && !spectraStore.newAttachmentIds) {
-          const newFileInfo = Object.assign({}, file, { id: spcIdx });
-          return Object.assign({}, att, { file: newFileInfo });
-        }
-        return att;
-      });
-      extended_metadata.analyses_compared = newListAtts;
-    }
-  });
   return newSample;
 };
 

@@ -127,22 +127,20 @@ export default class Element {
     const result = {};
     const analysisContainers = this.analysisContainers();
 
-    analysisContainers.forEach((aic) => {
+    analysisContainers.forEach((aic, idx) => {
       const { extended_metadata } = aic;
 
       let layout = null;
 
-      if (!extended_metadata?.is_comparison) {
+      if (!extended_metadata?.is_comparison && !aic.comparable_info?.is_comparison) {
         if (extended_metadata?.kind) {
           layout = extended_metadata.kind;
         } else {
           layout = null;
         }
-      }
-
-      else {
-        if (aic.comparable_info?.layout) {
-          layout = aic.comparable_info.layout;
+      } else {
+        if (aic.comparable_info?.layout || aic.extended_metadata?.kind) {
+          layout = aic.comparable_info?.layout || aic.extended_metadata?.kind;
         } else {
           layout = null;
         }
