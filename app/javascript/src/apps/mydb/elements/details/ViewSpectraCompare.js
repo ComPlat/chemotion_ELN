@@ -5,7 +5,7 @@ import SpectraStore from 'src/stores/alt/stores/SpectraStore';
 import { SpectraEditor, FN } from '@complat/react-spectra-editor';
 import TreeSelect from 'antd/lib/tree-select';
 
-import { BuildSpectraComparedSelection, GetSelectedComparedAnalyses, BuildSpectraComparedInfos } from 'src/utilities/SpectraHelper';
+import { BuildSpectraComparedSelection, GetSelectedComparedAnalyses, BuildSpectraComparedInfos, ProcessSampleWithComparisonAnalyses } from 'src/utilities/SpectraHelper';
 import PropTypes from 'prop-types';
 
 const rmRefreshed = (analysis) => {
@@ -40,41 +40,24 @@ class ViewSpectraCompare extends React.Component {
 
   componentDidUpdate(prevProps) {
     if (this.props.elementData !== prevProps.elementData) {
-      const { container } = this.state;
-      const { handleSampleChanged, elementData } = this.props;
-      const activeContainer = container || this.props.elementData.container;
-
-      let { menuItems, selectedFiles } = BuildSpectraComparedSelection(this.props.elementData, activeContainer);
-      menuItems = this.filterMenuItemsBySelectedLayout(activeContainer, menuItems);
-
-      if (activeContainer && activeContainer.extended_metadata && selectedFiles.length > 0) {
-        const currentAnalysesCompared = activeContainer.extended_metadata.analyses_compared || [];
-
-        const currentFileIds = currentAnalysesCompared.map(a => a.file.id);
-        const filesChanged = selectedFiles.some(id => !currentFileIds.includes(id));
-
-        if (filesChanged && currentAnalysesCompared.length === selectedFiles.length) {
-          const updatedAnalysesCompared = currentAnalysesCompared.map((analysis, idx) => {
-            if (idx < selectedFiles.length) {
-              return {
-                ...analysis,
-                file: {
-                  ...analysis.file,
-                  id: selectedFiles[idx]
-                }
-              };
-            }
-            return analysis;
-          });
-
-          activeContainer.extended_metadata.analyses_compared = updatedAnalysesCompared;
-          handleSampleChanged(elementData);
-        }
-      }
-
-      this.setState({ menuItems });
+  
+      const updatedContainer = this.props.elementData.container;
+      this.setState({ container: updatedContainer });
+  
+      let { menuItems, selectedFiles } =
+        BuildSpectraComparedSelection(this.props.elementData, this.props.elementData.container);
+    
+  
+      menuItems = this.filterMenuItemsBySelectedLayout(updatedContainer, menuItems);
+  
+      this.setState({
+        container: this.props.elementData.container,
+        menuItems,
+        selectedFilesIds: selectedFiles
+      });
     }
   }
+  
 
   componentWillUnmount() {
     SpectraStore.unlisten(this.onChange);
@@ -89,14 +72,19 @@ class ViewSpectraCompare extends React.Component {
     ) {
       const selectedLayout = container.extended_metadata.analyses_compared[0]?.layout ?? null;
       if (selectedLayout) {
-        return menuItems.filter(item => item.title === selectedLayout);
+        return menuItems.map((item) => {
+          if (item.title !== selectedLayout) {
+            return { ...item, disabled: true };
+          }
+          return item;
+        });
       }
     }
     return menuItems;
   }
 
   onChange(newState) {
-    let { menuItems } = BuildSpectraComparedSelection(this.props.elementData, newState.container || this.props.elementData.container);
+    let { menuItems, selectedFiles } = BuildSpectraComparedSelection(this.props.elementData, newState.container || this.props.elementData.container);
     menuItems = this.filterMenuItemsBySelectedLayout(newState.container, menuItems);
 
     if (!this.state.originalAnalyses && newState?.container?.extended_metadata?.analyses_compared) {
@@ -107,31 +95,45 @@ class ViewSpectraCompare extends React.Component {
 
     this.setState({
       ...newState,
-      menuItems
+      menuItems,
+      selectedFilesIds: selectedFiles
     });
   }
 
   handleChangeSelectAnalyses(treeData, selectedFiles, info) {
-    const { elementData, handleSampleChanged } = this.props;
+    const { elementData } = this.props;
     const { container, originalAnalyses } = this.state;
-    const selectedData = GetSelectedComparedAnalyses(container, treeData, selectedFiles, info);
-    container.extended_metadata.analyses_compared = selectedData;
-    handleSampleChanged(elementData);
-    const spcCompareInfo = BuildSpectraComparedInfos(elementData, container);
+  
+    const selectedData = GetSelectedComparedAnalyses(
+      container,
+      treeData,
+      selectedFiles,
+      info
+    );
+  
+    const spcCompareInfo = BuildSpectraComparedInfos(elementData, {
+      ...container,
+      extended_metadata: {
+        ...container.extended_metadata,
+        analyses_compared: selectedData
+      }
+    });
+  
     if (spcCompareInfo) {
       SpectraActions.LoadSpectraCompare.defer(spcCompareInfo);
     }
-
+  
     let { menuItems } = BuildSpectraComparedSelection(elementData);
     menuItems = this.filterMenuItemsBySelectedLayout(container, menuItems);
+  
     const originalCount = originalAnalyses?.length || 0;
     const currentCount = selectedData?.length || 0;
-
+  
     this.setState({
       menuItems,
       showUndo: currentCount < originalCount
     });
-  }
+  }  
 
   handleUndo() {
     const { elementData, handleSampleChanged } = this.props;
@@ -163,93 +165,137 @@ class ViewSpectraCompare extends React.Component {
   }
 
   saveOp(params) {
-    const { spectraCompare } = this.state;
+    const { spectraCompare, container } = this.state;
     const {
       peaks, shift, scan, thres, analysis, keepPred,
       integration, multiplicity, waveLength, cyclicvoltaSt, curveSt
     } = params;
 
     const { curveIdx } = curveSt;
-    const { handleSubmit } = this.props;
+    const { handleSubmit, handleSampleChanged, elementData, handleContainerChanged } = this.props;
 
-    const editedDataSpectra = [];
-
-    spectraCompare.forEach((si, idx) => {
+    const editedDataSpectra = spectraCompare.map((si, idx) => {
       const selectedShift = shift.shifts[idx];
       const selectedIntegration = integration.integrations[idx];
       const selectedMultiplicity = multiplicity.multiplicities[idx];
 
       const fPeaks = FN.rmRef(peaks, shift);
-      const peaksStr = FN.toPeakStr(fPeaks);
-      const predict = JSON.stringify(rmRefreshed(analysis));
-      const waveLengthStr = JSON.stringify(waveLength);
-      const cyclicvolta = JSON.stringify(cyclicvoltaSt);
-      const editedIntegration = JSON.stringify(selectedIntegration);
-      const editedMultiplicity = JSON.stringify(selectedMultiplicity);
 
-      const editedData = {
+      return {
         si,
-        peaksStr,
+        peaksStr: FN.toPeakStr(fPeaks),
         selectedShift,
         scan,
         thres,
-        integration: editedIntegration,
-        multiplicity: editedMultiplicity,
-        predict,
-        handleSubmit,
+        integration: JSON.stringify(selectedIntegration),
+        multiplicity: JSON.stringify(selectedMultiplicity),
+        predict: JSON.stringify(rmRefreshed(analysis)),
         keepPred,
-        waveLengthStr,
-        cyclicvolta,
+        waveLengthStr: JSON.stringify(waveLength),
+        cyclicvolta: JSON.stringify(cyclicvoltaSt),
         curveIdx
       };
-
-      editedDataSpectra.push(editedData);
     });
 
     SpectraActions.ToggleCompareModal.defer(null);
-    const { container } = this.state;
+
     let selectedFiles = [];
-    if (container) {
-      const { analyses_compared } = container.extended_metadata;
-      if (analyses_compared) {
-        selectedFiles = analyses_compared.map(analysis => (
-          analysis.file.id
-        ));
-      }
+    if (container?.extended_metadata?.analyses_compared) {
+      selectedFiles = container.extended_metadata.analyses_compared.map(a => a.file.id);
     }
+
     const cb = (response) => {
-      const { dataset } = response;
-      if (dataset) {
-        const { elementData, handleSampleChanged } = this.props;
 
-        const findAndAdd = (container) => {
-          if (container.id === dataset.parent_id) {
-            const idx = container.children.findIndex((c) => c.id === dataset.id);
-            if (idx > -1) {
-              container.children[idx] = dataset;
-            } else {
-              container.children.push(dataset);
-            }
-            return true;
-          }
-          if (container.children) {
-            for (let i = 0; i < container.children.length; i += 1) {
-              if (findAndAdd(container.children[i])) return true;
-            }
-          }
-          return false;
-        };
-
-        if (elementData.container) {
-          findAndAdd(elementData.container);
-        }
-
-        handleSampleChanged(elementData);
+      if (!response) {
+        handleSubmit();
+        return;
       }
+
+      const { dataset, analyses_compared } = response;
+      const updatedContainer = { ...container };
+
+      updatedContainer.extended_metadata = {
+        ...(updatedContainer.extended_metadata || {}),
+        analyses_compared: analyses_compared || [],
+        is_comparison: true,
+        kind: updatedContainer.extended_metadata?.kind || null,
+    };
+    
+
+      const currentChildren = updatedContainer.children ? [...updatedContainer.children] : [];
+      const existingIndex = currentChildren.findIndex((c) => c.id === dataset.id);
+
+      if (existingIndex > -1) {
+        currentChildren[existingIndex] = dataset;
+      } else {
+        currentChildren.push(dataset);
+      }
+      updatedContainer.children = currentChildren;
+
+      updatedContainer.comparable_info = {
+        ...(updatedContainer.comparable_info || {}),
+        list_attachments: dataset.attachments || [],
+        list_dataset: updatedContainer.comparable_info?.list_dataset || [],
+        list_analyses: updatedContainer.comparable_info?.list_analyses || [],
+        layout: updatedContainer.comparable_info?.layout || null,
+        is_comparison: true
+      };
+
+      if (!updatedContainer.extended_metadata.kind) {
+        updatedContainer.extended_metadata.kind =
+          updatedContainer.comparable_info?.layout
+            ?.replace(/^Type:\s*/i, '')
+            ?.trim()
+            || null;
+      }
+      
+      let { menuItems, selectedFiles } = BuildSpectraComparedSelection(elementData, updatedContainer);
+      menuItems = this.filterMenuItemsBySelectedLayout(updatedContainer, menuItems);
+
+      this.setState({
+        container: updatedContainer,
+        menuItems,
+        selectedFilesIds: selectedFiles,
+      });
+
+      handleContainerChanged(updatedContainer);
+      const updatedSample = ProcessSampleWithComparisonAnalyses(
+        elementData,
+        { container: updatedContainer }
+      );
+      handleSampleChanged(updatedSample);
+      updatedSample
+      .analysisContainers()
+      .filter(c => c.id === updatedContainer.id)
+      .forEach(c => {
+          c.comparable_info = {
+            ...c.comparable_info,
+            layout: updatedContainer.comparable_info?.layout
+          };
+      });
+
       handleSubmit();
     };
-    SpectraActions.SaveMultiSpectraComparison(selectedFiles, container.id, curveIdx, editedDataSpectra, cb);
+    
+
+    let targetContainerId = container.id;
+    if (
+      container?.extended_metadata?.analyses_compared?.length > 0 &&
+      container.extended_metadata.analyses_compared[0].dataset?.id
+    ) {
+      targetContainerId = container.extended_metadata.analyses_compared[0].dataset.id;
+    }
+
+    SpectraActions.SaveMultiSpectraComparison(
+      selectedFiles,
+      targetContainerId,
+      curveIdx,
+      editedDataSpectra,
+      cb
+    );
   }
+
+  
 
   buildOpsByLayout(et) {
     return [
@@ -275,17 +321,20 @@ class ViewSpectraCompare extends React.Component {
   }
 
   renderTitle() {
-    const { menuItems } = this.state;
-    const { container } = this.state;
+    const { menuItems, container, selectedFilesIds } = this.state;
     let modalTitle = '';
-    let selectedFiles = [];
+    let selectedFiles = selectedFilesIds;
+
     if (container) {
       modalTitle = container.name;
-      const { analyses_compared } = container.extended_metadata;
-      if (analyses_compared) {
-        selectedFiles = analyses_compared.map((analysis) => (
-          analysis.file.id
-        ));
+      
+      if (selectedFiles === undefined) {
+        const { analyses_compared } = container.extended_metadata;
+        if (analyses_compared) {
+          selectedFiles = analyses_compared.map((analysis) => (
+            analysis.file.id
+          ));
+        }
       }
     }
 
@@ -296,13 +345,13 @@ class ViewSpectraCompare extends React.Component {
         </span>
         <div className="d-flex gap-1 align-items-center">
           <TreeSelect
-            style={{ width: 300 }}
+            style={{ width: 800 }}
             placeholder="Please select"
             treeCheckable={true}
             treeData={menuItems}
             value={selectedFiles}
             onChange={(value, label, extra) => this.handleChangeSelectAnalyses(menuItems, value, extra)}
-            maxTagCount={1}
+            maxTagCount={2}
             getPopupContainer={(triggerNode) => triggerNode.parentNode}
           />
           <Button
@@ -395,6 +444,7 @@ ViewSpectraCompare.propTypes = {
   elementData: PropTypes.object.isRequired,
   handleSampleChanged: PropTypes.func.isRequired,
   handleSubmit: PropTypes.func.isRequired,
+  handleContainerChanged: PropTypes.func.isRequired,
 };
 
 export default ViewSpectraCompare;
