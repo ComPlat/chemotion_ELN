@@ -1,0 +1,14 @@
+{
+    "navigation-user_management": "Benutzerverwaltung",
+    "navigation-devices": "Geräte",
+    "navigation-groups": "Gruppen",
+    "navigation-UI_features": "UI-Funktionen",
+    "navigation-text_templates": "Textvorlagen",
+    "navigation-message_publish": "Nachrichten senden",
+    "navigation-load_OLS_terms": "OLS-Begriffe laden",
+    "navigation-delayed_jobs": "Verzögerte Jobs",
+    "navigation-third_party_apps": "Apps von Drittanbietern",
+    "dashboard-disk_available" : "verfügbarer Speicherplatz (MB)",
+    "dashboard-disk_percent_used": "belegter Speicherplatz (%)",
+    "dashboard-default_user_allocated_space": "Standard-Speicherplatz pro Benutzer (MB)"
+}
