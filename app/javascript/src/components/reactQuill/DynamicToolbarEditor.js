@@ -11,6 +11,24 @@ class DynamicToolbarEditor extends React.Component {
     this.toolbarId = `_${Math.random().toString(36).substr(2, 9)}`;
     this.modules = {
       toolbar: { container: `#${this.toolbarId}` },
+      keyboard: {
+        bindings: {
+          subscript: {
+            key: 188,
+            shortKey: true,
+            handler(range, context) {
+              this.quill.format('script', context.format.script === 'sub' ? false : 'sub');
+            }
+          },
+          superscript: {
+            key: 190,
+            shortKey: true,
+            handler(range, context) {
+              this.quill.format('script', context.format.script === 'super' ? false : 'super');
+            }
+          }
+        }
+      }
     };
   }
 
