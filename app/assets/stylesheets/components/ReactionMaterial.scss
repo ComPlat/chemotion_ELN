@@ -182,10 +182,10 @@ $rm-columns: (
     @include align-header-data(map-get($rm-columns, "dry-solvent"));
   }
   &__intermediate-type {
-    @include align-header-input(map-get($rm-columns, "intermediate-type"));
+    @include align-header-data(map-get($rm-columns, "intermediate-type"));
   }
   &__reaction-step {
-    @include align-header-input(map-get($rm-columns, "reaction-step"));
+    @include align-header-data(map-get($rm-columns, "reaction-step"));
   }
   &__gaseous-fields {
     &-data {
