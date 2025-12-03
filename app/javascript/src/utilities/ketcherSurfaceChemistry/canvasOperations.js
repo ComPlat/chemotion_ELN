@@ -205,14 +205,19 @@ const replaceAliasWithRG = async (data) => {
 
 // prepare svg
 const prepareSvg = async (editor) => {
-  const struct = await replaceAliasWithRG({ ...latestData });
-  const generateImageParams = { outputFormat: 'svg' };
-  const parser = new DOMParser();
-  const data = JSON.stringify(struct);
-  const svgBlob = await editor.structureDef.editor.generateImage(data, generateImageParams);
-  const svgString = await new Response(svgBlob).text();
-  const doc = parser.parseFromString(svgString, 'image/svg+xml');
-  return new XMLSerializer().serializeToString(doc);
+  try {
+    const struct = await replaceAliasWithRG({ ...latestData });
+    const generateImageParams = { outputFormat: 'svg' };
+    const parser = new DOMParser();
+    const data = JSON.stringify(struct);
+    const svgBlob = await editor.structureDef.editor.generateImage(data, generateImageParams);
+    const svgString = await new Response(svgBlob).text();
+    const doc = parser.parseFromString(svgString, 'image/svg+xml');
+    const svg = new XMLSerializer().serializeToString(doc);
+    return { svg, message: null };
+  } catch (e) {
+    return { svg: null, message: e?.message || 'Unknown error in prepareSvg' };
+  }
 };
 
 // function to get SVG from canvas element without modification
@@ -220,125 +225,123 @@ const getSvgFromCanvas = async (iframeRef) => {
   try {
     const iframeDocument = iframeRef?.current?.contentWindow?.document;
     if (!iframeDocument) {
-      console.warn('getSvgFromCanvas: iframe document not available');
-      return null;
+      return { svg: null, message: 'iframe document not available' };
     }
 
     const canvasElement = iframeDocument.querySelector('[data-testid="canvas"]');
     if (!canvasElement) {
-      console.warn('getSvgFromCanvas: Canvas element not found');
-      return null;
+      return { svg: null, message: 'Canvas element not found' };
     }
 
-  // Clone the element to avoid modifying the original
-  const clonedCanvas = canvasElement.cloneNode(true);
+    // Clone the element to avoid modifying the original
+    const clonedCanvas = canvasElement.cloneNode(true);
 
-  // Remove layer placeholder rectangles (they inflate bounding box)
-  const layerClasses = [
-    'backgroundLayer', 'imagesLayer', 'selectionPlateLayer',
-    'selectionPointsLayer', 'hoveringLayer', 'atomLayer',
-    'bondSkeletonLayer', 'warningsLayer', 'dataLayer',
-    'additionalInfoLayer', 'indicesLayer'
-  ];
-  layerClasses.forEach((cls) => {
-    const el = clonedCanvas.querySelector(`.${cls}`);
-    if (el) el.remove();
-  });
-
-  // Also remove desc and hidden text elements
-  const descEl = clonedCanvas.querySelector('desc');
-  if (descEl) descEl.remove();
-  Array.from(clonedCanvas.querySelectorAll('text')).forEach((txt) => {
-    if (txt.style.display === 'none') txt.remove();
-  });
-
-  // Process images similar to updateImagesInTheCanvas - move images to the end for proper layering
-  const imageElements = Array.from(clonedCanvas.querySelectorAll(KET_DOM_TAG.imageTag));
-  if (imageElements.length > 0) {
-    // Remove all images from their current positions
-    imageElements.forEach((img) => {
-      if (img.parentNode) {
-        img.parentNode.removeChild(img);
-      }
+    // Remove layer placeholder rectangles (they inflate bounding box)
+    const layerClasses = [
+      'backgroundLayer', 'imagesLayer', 'selectionPlateLayer',
+      'selectionPointsLayer', 'hoveringLayer', 'atomLayer',
+      'bondSkeletonLayer', 'warningsLayer', 'dataLayer',
+      'additionalInfoLayer', 'indicesLayer'
+    ];
+    layerClasses.forEach((cls) => {
+      const el = clonedCanvas.querySelector(`.${cls}`);
+      if (el) el.remove();
     });
 
-    // Re-append all images at the end to ensure they appear on top
-    imageElements.forEach((img) => {
-      clonedCanvas.appendChild(img);
+    // Also remove desc and hidden text elements
+    const descEl = clonedCanvas.querySelector('desc');
+    if (descEl) descEl.remove();
+    Array.from(clonedCanvas.querySelectorAll('text')).forEach((txt) => {
+      if (txt.style.display === 'none') txt.remove();
     });
-  }
 
-  // Calculate bounding box from ORIGINAL canvas (getBBox needs DOM-attached elements)
-  let minX = Infinity; let minY = Infinity; let maxX = -Infinity; let
-    maxY = -Infinity;
-  const visibleElements = canvasElement.querySelectorAll('path, image, text');
-  visibleElements.forEach((el) => {
-    // Skip layer placeholders and hidden elements
-    if (el.classList && layerClasses.some((cls) => el.classList.contains(cls))) return;
-    if (el.style.display === 'none') return;
-    try {
-      const elBbox = el.getBBox();
-      if (elBbox.width > 0 && elBbox.height > 0) {
-        minX = Math.min(minX, elBbox.x);
-        minY = Math.min(minY, elBbox.y);
-        maxX = Math.max(maxX, elBbox.x + elBbox.width);
-        maxY = Math.max(maxY, elBbox.y + elBbox.height);
-      }
-    } catch (e) { /* ignore elements that can't get bbox */ }
-  });
+    // Process images similar to updateImagesInTheCanvas - move images to the end for proper layering
+    const imageElements = Array.from(clonedCanvas.querySelectorAll(KET_DOM_TAG.imageTag));
+    if (imageElements.length > 0) {
+      // Remove all images from their current positions
+      imageElements.forEach((img) => {
+        if (img.parentNode) {
+          img.parentNode.removeChild(img);
+        }
+      });
 
-  // Fallback if no valid bbox found
-  if (minX === Infinity || maxX === -Infinity) {
-    const fallbackBbox = canvasElement.getBBox();
-    minX = fallbackBbox.x;
-    minY = fallbackBbox.y;
-    maxX = fallbackBbox.x + fallbackBbox.width;
-    maxY = fallbackBbox.y + fallbackBbox.height;
-  }
+      // Re-append all images at the end to ensure they appear on top
+      imageElements.forEach((img) => {
+        clonedCanvas.appendChild(img);
+      });
+    }
 
-  const padding = 5;
-  const contentX = minX - padding;
-  const contentY = minY - padding;
-  const contentWidth = (maxX - minX) + (padding * 2);
-  const contentHeight = (maxY - minY) + (padding * 2);
+    // Calculate bounding box from ORIGINAL canvas (getBBox needs DOM-attached elements)
+    let minX = Infinity; let minY = Infinity; let maxX = -Infinity; let
+      maxY = -Infinity;
+    const visibleElements = canvasElement.querySelectorAll('path, image, text');
+    visibleElements.forEach((el) => {
+      // Skip layer placeholders and hidden elements
+      if (el.classList && layerClasses.some((cls) => el.classList.contains(cls))) return;
+      if (el.style.display === 'none') return;
+      try {
+        const elBbox = el.getBBox();
+        if (elBbox.width > 0 && elBbox.height > 0) {
+          minX = Math.min(minX, elBbox.x);
+          minY = Math.min(minY, elBbox.y);
+          maxX = Math.max(maxX, elBbox.x + elBbox.width);
+          maxY = Math.max(maxY, elBbox.y + elBbox.height);
+        }
+      } catch (e) { /* ignore elements that can't get bbox */ }
+    });
 
-  // Output dimensions
-  const outputWidth = 325;
-  const outputHeight = 250;
-  const outputAspect = outputWidth / outputHeight;
-  const contentAspect = contentWidth / contentHeight;
+    // Fallback if no valid bbox found
+    if (minX === Infinity || maxX === -Infinity) {
+      const fallbackBbox = canvasElement.getBBox();
+      minX = fallbackBbox.x;
+      minY = fallbackBbox.y;
+      maxX = fallbackBbox.x + fallbackBbox.width;
+      maxY = fallbackBbox.y + fallbackBbox.height;
+    }
 
-  // Adjust viewBox to center content and fill the output while preserving aspect ratio
-  let viewBoxX; let viewBoxY; let viewBoxWidth; let
-    viewBoxHeight;
+    const padding = 5;
+    const contentX = minX - padding;
+    const contentY = minY - padding;
+    const contentWidth = (maxX - minX) + (padding * 2);
+    const contentHeight = (maxY - minY) + (padding * 2);
 
-  if (contentAspect > outputAspect) {
-    // Content is wider - fit to width, center vertically
-    viewBoxWidth = contentWidth;
-    viewBoxHeight = contentWidth / outputAspect;
-    viewBoxX = contentX;
-    viewBoxY = contentY - (viewBoxHeight - contentHeight) / 2;
-  } else {
-    // Content is taller - fit to height, center horizontally
-    viewBoxHeight = contentHeight;
-    viewBoxWidth = contentHeight * outputAspect;
-    viewBoxX = contentX - (viewBoxWidth - contentWidth) / 2;
-    viewBoxY = contentY;
-  }
+    // Output dimensions
+    const outputWidth = 325;
+    const outputHeight = 250;
+    const outputAspect = outputWidth / outputHeight;
+    const contentAspect = contentWidth / contentHeight;
 
-  // Set viewBox to fit the content centered, output size to 325x250
-  clonedCanvas.setAttribute('viewBox', `${viewBoxX} ${viewBoxY} ${viewBoxWidth} ${viewBoxHeight}`);
-  clonedCanvas.setAttribute('width', `${outputWidth}`);
-  clonedCanvas.setAttribute('height', `${outputHeight}`);
-  clonedCanvas.removeAttribute('transform');
+    // Adjust viewBox to center content and fill the output while preserving aspect ratio
+    let viewBoxX; let viewBoxY; let viewBoxWidth; let
+      viewBoxHeight;
+
+    if (contentAspect > outputAspect) {
+      // Content is wider - fit to width, center vertically
+      viewBoxWidth = contentWidth;
+      viewBoxHeight = contentWidth / outputAspect;
+      viewBoxX = contentX;
+      viewBoxY = contentY - (viewBoxHeight - contentHeight) / 2;
+    } else {
+      // Content is taller - fit to height, center horizontally
+      viewBoxHeight = contentHeight;
+      viewBoxWidth = contentHeight * outputAspect;
+      viewBoxX = contentX - (viewBoxWidth - contentWidth) / 2;
+      viewBoxY = contentY;
+    }
+
+    // Set viewBox to fit the content centered, output size to 325x250
+    clonedCanvas.setAttribute('viewBox', `${viewBoxX} ${viewBoxY} ${viewBoxWidth} ${viewBoxHeight}`);
+    clonedCanvas.setAttribute('width', `${outputWidth}`);
+    clonedCanvas.setAttribute('height', `${outputHeight}`);
+    clonedCanvas.removeAttribute('transform');
 
     const serializer = new XMLSerializer();
     const svgString = serializer.serializeToString(clonedCanvas);
 
-    return svgString;
+    return { svg: svgString, message: null };
   } catch (error) {
     console.error('getSvgFromCanvas: Error generating SVG', error);
-    return null;
+    return { svg: null, message: error?.message || 'Unknown error in getSvgFromCanvas' };
   }
 };
 
@@ -555,11 +558,6 @@ const replaceAliasesWithIndexesAndCollectComponents = async (comboString) => {
   return { replacedString, textNodeStructureForComponents };
 };
 
-const attachSVG = async (data, editor) => ({
-  ...data,
-  svgElement: await prepareSvg(editor)
-});
-
 const onFinalCanvasSave = async (editor, iframeRef) => {
   try {
     let textNodesFormula = '';
@@ -585,15 +583,17 @@ const onFinalCanvasSave = async (editor, iframeRef) => {
     resetStore();
     return {
       ket2Molfile: ket2Lines.join('\n'),
-      textNodesFormula,
       svgElement,
+      textNodesFormula,
       componentsList: componentsListContainer,
     };
   } catch (e) {
-    return attachSVG({
+    return {
       ket2Molfile: '',
+      svgElement : {svg: null, message: e?.message || 'Unknown error in prepareSvg' },
       textNodesFormula: '',
-    }, editor);
+      componentsList: [],
+    };
   }
 };
 
@@ -639,7 +639,6 @@ export {
   onDeleteText,
   arrangeTextNodes,
   onAddText,
-  prepareSvg,
   centerPositionCanvas,
   onTemplateMove,
   onFinalCanvasSave,
