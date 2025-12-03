@@ -152,7 +152,7 @@ module ContainerHelpers
           created_by_user = attachment.created_by
           
           base = File.basename(attachment.filename, '.*')
-          base_no_compared = base.sub(/_compared_\d{8,14}\z/, '')
+          base_no_compared = base.sub(/_compared_[0-9:\-]+\z/, '')
           new_filename = "#{base_no_compared}_compared_#{Time.now.strftime('%Y-%m-%d-%H:%M:%S')}#{File.extname(attachment.filename)}"
 
           new_att = Attachment.new(

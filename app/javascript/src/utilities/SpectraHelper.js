@@ -347,7 +347,6 @@ const BuildSpectraComparedSelection = (sample, comparisonContainer) => {
     targetLayout = null;
   }
 
-  // FIX : accept également les fichiers "peak_compared_xxx.jdx"
   const filteredAttachments = (dataset) => {
     if (!dataset || !Array.isArray(dataset.attachments)) return [];
   
