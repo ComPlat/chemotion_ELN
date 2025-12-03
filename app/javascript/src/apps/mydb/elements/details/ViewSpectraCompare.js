@@ -3,7 +3,7 @@ import { Button, Modal, Card } from 'react-bootstrap';
 import SpectraActions from 'src/stores/alt/actions/SpectraActions';
 import SpectraStore from 'src/stores/alt/stores/SpectraStore';
 import { SpectraEditor, FN } from '@complat/react-spectra-editor';
-import TreeSelect from 'antd/lib/tree-select';
+import { TreeSelect } from 'antd';
 
 import { BuildSpectraComparedSelection, GetSelectedComparedAnalyses, BuildSpectraComparedInfos, ProcessSampleWithComparisonAnalyses } from 'src/utilities/SpectraHelper';
 import PropTypes from 'prop-types';
@@ -18,11 +18,20 @@ class ViewSpectraCompare extends React.Component {
   constructor(props) {
     super(props);
 
+    const initialState = SpectraStore.getState();
+    const container = initialState.container || props.elementData.container;
+    const { menuItems, selectedFiles } = BuildSpectraComparedSelection(props.elementData, container);
+
     this.state = {
-      ...SpectraStore.getState(),
-      originalAnalyses: null,
+      ...initialState,
+      container,
+      menuItems,
+      selectedFilesIds: selectedFiles,
+      originalAnalyses: container?.extended_metadata?.analyses_compared ? [...container.extended_metadata.analyses_compared] : null,
       showUndo: false,
     };
+
+    this.state.menuItems = this.filterMenuItemsBySelectedLayout(container, menuItems);
 
     this.onChange = this.onChange.bind(this);
     this.closeOp = this.closeOp.bind(this);
@@ -40,18 +49,14 @@ class ViewSpectraCompare extends React.Component {
 
   componentDidUpdate(prevProps) {
     if (this.props.elementData !== prevProps.elementData) {
-  
       const updatedContainer = this.props.elementData.container;
-      this.setState({ container: updatedContainer });
-  
       let { menuItems, selectedFiles } =
-        BuildSpectraComparedSelection(this.props.elementData, this.props.elementData.container);
-    
-  
+        BuildSpectraComparedSelection(this.props.elementData, updatedContainer);
+
       menuItems = this.filterMenuItemsBySelectedLayout(updatedContainer, menuItems);
   
       this.setState({
-        container: this.props.elementData.container,
+        container: updatedContainer,
         menuItems,
         selectedFilesIds: selectedFiles
       });
@@ -84,17 +89,38 @@ class ViewSpectraCompare extends React.Component {
   }
 
   onChange(newState) {
-    let { menuItems, selectedFiles } = BuildSpectraComparedSelection(this.props.elementData, newState.container || this.props.elementData.container);
-    menuItems = this.filterMenuItemsBySelectedLayout(newState.container, menuItems);
+    const storeContainer = newState.container;
+    const localContainer = this.state.container;
+    const isOpening = newState.showCompareModal && !this.state.showCompareModal;
+    const isDifferent = storeContainer && localContainer && storeContainer.id !== localContainer.id;
 
-    if (!this.state.originalAnalyses && newState?.container?.extended_metadata?.analyses_compared) {
-      this.setState({
-        originalAnalyses: [...newState.container.extended_metadata.analyses_compared],
-      });
+    let containerToUse;
+
+    if (isOpening || isDifferent) {
+      containerToUse = storeContainer || this.props.elementData.container;
+      if (containerToUse?.extended_metadata?.analyses_compared) {
+        this.setState({
+          originalAnalyses: [...containerToUse.extended_metadata.analyses_compared],
+        });
+      } else {
+        this.setState({ originalAnalyses: null });
+      }
+    } else {
+      containerToUse = localContainer || storeContainer || this.props.elementData.container;
+
+      if (!this.state.originalAnalyses && newState?.container?.extended_metadata?.analyses_compared) {
+        this.setState({
+          originalAnalyses: [...newState.container.extended_metadata.analyses_compared],
+        });
+      }
     }
+
+    let { menuItems, selectedFiles } = BuildSpectraComparedSelection(this.props.elementData, containerToUse);
+    menuItems = this.filterMenuItemsBySelectedLayout(containerToUse, menuItems);
 
     this.setState({
       ...newState,
+      container: containerToUse,
       menuItems,
       selectedFilesIds: selectedFiles
     });
@@ -110,30 +136,35 @@ class ViewSpectraCompare extends React.Component {
       selectedFiles,
       info
     );
-  
-    const spcCompareInfo = BuildSpectraComparedInfos(elementData, {
+
+    const updatedContainer = {
       ...container,
       extended_metadata: {
         ...container.extended_metadata,
         analyses_compared: selectedData
       }
-    });
+    };
+  
+    const spcCompareInfo = BuildSpectraComparedInfos(elementData, updatedContainer);
   
     if (spcCompareInfo) {
       SpectraActions.LoadSpectraCompare.defer(spcCompareInfo);
     }
   
-    let { menuItems } = BuildSpectraComparedSelection(elementData);
-    menuItems = this.filterMenuItemsBySelectedLayout(container, menuItems);
+    let { menuItems: updatedMenuItems, selectedFiles: updatedSelectedFiles } = BuildSpectraComparedSelection(elementData, updatedContainer);
+    updatedMenuItems = this.filterMenuItemsBySelectedLayout(updatedContainer, updatedMenuItems);
   
     const originalCount = originalAnalyses?.length || 0;
     const currentCount = selectedData?.length || 0;
   
     this.setState({
-      menuItems,
+      container: updatedContainer,
+      menuItems: updatedMenuItems,
+      selectedFilesIds: updatedSelectedFiles,
       showUndo: currentCount < originalCount
     });
-  }  
+  }
+  
 
   handleUndo() {
     const { elementData, handleSampleChanged } = this.props;
@@ -149,11 +180,12 @@ class ViewSpectraCompare extends React.Component {
         SpectraActions.LoadSpectraCompare.defer(spcCompareInfo);
       }
 
-      let { menuItems } = BuildSpectraComparedSelection(elementData);
+      let { menuItems, selectedFiles } = BuildSpectraComparedSelection(elementData, container);
       menuItems = this.filterMenuItemsBySelectedLayout(container, menuItems);
 
       this.setState({
         menuItems,
+        selectedFilesIds: selectedFiles,
         showUndo: false
       });
     }
