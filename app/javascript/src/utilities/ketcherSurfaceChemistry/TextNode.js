@@ -181,10 +181,10 @@ const findByKeyAndUpdateTextNodePosition = async (textNodeKey, atom) => {
       let positionX;
       if (bestSide === 'right') {
         // Place text on right side (original behavior)
-        positionX = (atom.location[0] + imageWidth / 2) + 0.05;
+        positionX = (atom.location[0] + imageWidth / 2) + 0.1;
       } else {
         // Place text on left side - need to offset by text width (with extra spacing)
-        positionX = (atom.location[0] - imageWidth / 2) - estimatedTextWidth - 0.4;
+        positionX = (atom.location[0] - imageWidth / 2) - estimatedTextWidth - 0.17;
       }
 
       text.data.position = {
