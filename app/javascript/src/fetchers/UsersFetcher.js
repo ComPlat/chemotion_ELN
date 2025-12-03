@@ -331,4 +331,23 @@ export default class UsersFetcher {
     });
     return promise;
   }
+
+  static updateReactionShortLabel(params) {
+    const promise = fetch('/api/v1/users/reaction_short_label', {
+      credentials: 'same-origin',
+      method: 'PUT',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    })
+      .then((response) => response.json())
+      .catch((error) => {
+        console.error('Fetch error in updateReactionShortLabel:', error);
+        throw error;
+      });
+
+    return promise;
+  }
 }

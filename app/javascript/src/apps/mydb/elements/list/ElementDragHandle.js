@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { useDrag } from 'react-dnd';
 import { getEmptyImage } from 'react-dnd-html5-backend';
 import { observer } from 'mobx-react';
+import { useDnD } from 'chem-generic-ui';
 
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -18,6 +19,8 @@ function inferElementSourceType(element) {
       return DragDropItemTypes.SAMPLE;
     case 'wellplate':
       return DragDropItemTypes.WELLPLATE;
+    case 'screen':
+      return DragDropItemTypes.SCREEN;
     case 'reaction':
       if (element.role === 'gp') {
         return DragDropItemTypes.GENERALPROCEDURE;
@@ -29,6 +32,10 @@ function inferElementSourceType(element) {
       return DragDropItemTypes.DEVICE_DESCRIPTION;
     case 'cell_line':
       return DragDropItemTypes.CELL_LINE;
+    case 'sequence_based_macromolecule': 
+      return DragDropItemTypes.SEQUENCE_BASED_MACROMOLECULE;
+    case 'sequence_based_macromolecule_sample':
+      return DragDropItemTypes.SEQUENCE_BASED_MACROMOLECULE_SAMPLE;
     default:
       return null;
   }
@@ -56,8 +63,8 @@ EnabledHandle.propTypes = {
 };
 
 function ElementDragHandle({ element, sourceType: sourceTypeProp }) {
-  const [currentElementType, setCurrentElementType] = useState(
-    ElementStore.getState().currentElement?.type || null
+  const [currentElement, setCurrentElement] = useState(
+    ElementStore.getState().currentElement || {}
   );
   const [genericEls, setGenericEls] = useState(
     UserStore.getState().genericEls || []
@@ -65,11 +72,11 @@ function ElementDragHandle({ element, sourceType: sourceTypeProp }) {
   const { inbox_visible: sampleTaskInboxVisible } = useContext(StoreContext).sampleTasks;
 
   useEffect(() => {
-    const updateCurrentElementType = ({ currentElement }) => {
-      setCurrentElementType(currentElement?.type || null);
+    const updateCurrentElement = ({ currentElement: selectedElement }) => {
+      setCurrentElement(selectedElement || {});
     };
-    ElementStore.listen(updateCurrentElementType);
-    return () => ElementStore.unlisten(updateCurrentElementType);
+    ElementStore.listen(updateCurrentElement);
+    return () => ElementStore.unlisten(updateCurrentElement);
   }, []);
 
   useEffect(() => {
@@ -80,21 +87,24 @@ function ElementDragHandle({ element, sourceType: sourceTypeProp }) {
     return () => UserStore.unlisten(updateGenericEls);
   }, []);
 
-  const isCurrentElementGeneric = currentElementType && genericEls.some((el) => el.name === currentElementType);
+  const currentElementType = currentElement?.type || null;
 
   let sourceType = sourceTypeProp ?? inferElementSourceType(element);
-  if (isCurrentElementGeneric) {
-    // Generic elements support SAMPLE and MOLECULE types natively.
-    // All other types are supported as ELEMENT.
-    if (![DragDropItemTypes.SAMPLE, DragDropItemTypes.MOLECULE].includes(sourceType)) {
-      sourceType = DragDropItemTypes.ELEMENT;
-    }
+  if (element.type && genericEls.some((el) => el.name === element.type)) {
+    sourceType = DragDropItemTypes.ELEMENT;
+  }
+
+  // Disable dragging when:
+  // - resolved sourceType is MOLECULE
+  // - element represents a sample
+  // - and that sample is a Mixture
+  if (sourceType === DragDropItemTypes.MOLECULE
+    && element?.type === 'sample'
+    && (element.isMixture() || element?.sample_type === 'Mixture')) {
+    return <DragHandle enabled={false} />;
   }
 
   const hasDropTarget = (type) => {
-    // Generic elements may contain drop targets for any element type.
-    if (isCurrentElementGeneric) return true;
-
     switch (type) {
       case DragDropItemTypes.SAMPLE:
         return sampleTaskInboxVisible || [
@@ -103,27 +113,34 @@ function ElementDragHandle({ element, sourceType: sourceTypeProp }) {
           'research_plan',
           'sample',
           'wellplate',
-        ].includes(currentElementType);
+        ].includes(currentElementType) || useDnD(currentElement, genericEls);
       case DragDropItemTypes.MOLECULE:
         return sampleTaskInboxVisible || [
           'sample',
           'reaction'
-        ].includes(currentElementType);
+        ].includes(currentElementType) || useDnD(currentElement, genericEls);
+      case DragDropItemTypes.ELEMENT:
+        return useDnD(currentElement, genericEls);
       case DragDropItemTypes.WELLPLATE:
-        return ['screen', 'research_plan'].includes(currentElementType);
+        return ['screen', 'research_plan'].includes(currentElementType) || useDnD(currentElement, genericEls);
+      case DragDropItemTypes.SCREEN:
+        return useDnD(currentElement, genericEls);
       case DragDropItemTypes.REACTION:
-        return currentElementType === 'research_plan';
+        return currentElementType === 'research_plan' || useDnD(currentElement, genericEls);
       case DragDropItemTypes.RESEARCH_PLAN:
-        return currentElementType === 'screen';
+        return currentElementType === 'screen' || useDnD(currentElement, genericEls);
       case DragDropItemTypes.GENERALPROCEDURE:
-        return currentElementType === 'reaction';
+        return currentElementType === 'reaction' || useDnD(currentElement, genericEls);
       case DragDropItemTypes.DEVICE_DESCRIPTION:
-        return currentElementType === 'device_description';
+        return currentElementType === 'device_description' || useDnD(currentElement, genericEls);
+      case DragDropItemTypes.SEQUENCE_BASED_MACROMOLECULE:
+        return currentElementType === 'sequence_based_macromolecule' || useDnD(currentElement, genericEls);
+      // case DragDropItemTypes.SEQUENCE_BASED_MACROMOLECULE_SAMPLE:
+      //   return currentElementType === 'sequence_based_macromolecule_sample' || useDnD(currentElement, genericEls);
       default:
         return false;
     }
   };
-
   return (sourceType !== null && hasDropTarget(sourceType))
     ? <EnabledHandle element={element} sourceType={sourceType} />
     : <DragHandle enabled={false} />;

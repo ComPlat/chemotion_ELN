@@ -39,12 +39,6 @@ node_modules_folder="$(node -e 'const p = require.resolve("react"); console.log(
 rm -rf ./public/jsmol && ln -s "$node_modules_folder"react-molviewer/dist/jsmol ./public/jsmol
 yellow "Finished adding symbolic link to jsmol in public folder"
 
-
-# copy pdfjs worker to public folder
-node_modules_folder_pdfjs="$(node -e 'const p = require.resolve("pdfjs-dist/build/pdf.worker"); console.log(p.slice(0, p.indexOf("pdfjs-dist/build/pdf.worker")))')"
-rm -f ./public/pdf.worker.min.js && ln -s "$node_modules_folder_pdfjs"pdfjs-dist/build/pdf.worker.min.js ./public/pdf.worker.min.js
-yellow "Finished adding symbolic link to pdf worker in public folder"
-
 # d3js source files
 src_d3=(
   "@complat/react-spectra-editor/dist/components/common/draw.js"

@@ -1,0 +1,747 @@
+# frozen_string_literal: true
+
+require 'rails_helper'
+
+# rubocop:disable RSpec/MultipleExpectations, RSpec/NestedGroups
+describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
+  include_context 'api request authorization context'
+
+  describe 'INDEX /api/v1/sequence_based_macromolecule_samples' do
+    let(:collection) { create(:collection, user_id: logged_in_user.id) }
+    # rubocop:disable RSpec/IndexedLet
+    let(:sbmm_sample1) do
+      create(
+        :sequence_based_macromolecule_sample,
+        sequence_based_macromolecule: build(:uniprot_sbmm, systematic_name: 'Zoological Phenomenon Protein'),
+        user: logged_in_user,
+      )
+    end
+    let(:sbmm_sample2) do
+      create(
+        :sequence_based_macromolecule_sample,
+        sequence_based_macromolecule: build(
+          :modified_uniprot_sbmm,
+          systematic_name: 'Foobar',
+          parent: sbmm_sample1.sequence_based_macromolecule,
+        ),
+        user: logged_in_user,
+      )
+    end
+    let(:sbmm_sample3) do
+      create(
+        :sequence_based_macromolecule_sample,
+        sequence_based_macromolecule: build(:non_uniprot_sbmm, systematic_name: 'Alphanumeric Ape Protein'),
+        user: logged_in_user,
+      )
+    end
+    # rubocop:enable RSpec/IndexedLet
+
+    before do
+      sbmm_sample1
+      sbmm_sample2
+      sbmm_sample3
+      CollectionsSequenceBasedMacromoleculeSample.create!(sequence_based_macromolecule_sample: sbmm_sample1,
+                                                          collection: collection)
+      CollectionsSequenceBasedMacromoleculeSample.create!(sequence_based_macromolecule_sample: sbmm_sample2,
+                                                          collection: collection)
+      CollectionsSequenceBasedMacromoleculeSample.create!(sequence_based_macromolecule_sample: sbmm_sample3,
+                                                          collection: collection)
+    end
+
+    it 'returns a list view of all SBMM-Samples' do
+      get '/api/v1/sequence_based_macromolecule_samples', params: { collection_id: collection.id }
+
+      expect(response.status).to be 200
+      list = parsed_json_response['sequence_based_macromolecule_samples']
+      expect(list.size).to eq 3
+      ids = list.pluck('id')
+      expected_ids = [sbmm_sample3.id, sbmm_sample2.id, sbmm_sample1.id]
+      expect(ids).to eq expected_ids
+    end
+  end
+
+  describe 'GET /api/v1/sequence_based_macromolecule_samples/:id' do
+    let(:sample) do
+      create(
+        :sequence_based_macromolecule_sample,
+        sequence_based_macromolecule: build(:modified_uniprot_sbmm),
+        user: logged_in_user, # from context above
+      )
+    end
+    let(:collection) { create(:collection, user_id: user.id) }
+    let(:collections_sbmm_sample) do
+      CollectionsSequenceBasedMacromoleculeSample.create!(
+        sequence_based_macromolecule_sample: sample,
+        collection: collection,
+      )
+    end
+
+    before do
+      collections_sbmm_sample
+    end
+
+    it 'returns the given SBMM-Sample' do
+      get "/api/v1/sequence_based_macromolecule_samples/#{sample.id}"
+      expect(response.status).to eq 200
+
+      result = parsed_json_response['sequence_based_macromolecule_sample']
+      expect(result['id']).to eq sample.id
+    end
+
+    it 'returns the SBMM as part of the sample data' do
+      get "/api/v1/sequence_based_macromolecule_samples/#{sample.id}"
+
+      expect(response.status).to eq 200
+      result = parsed_json_response['sequence_based_macromolecule_sample']
+      sbmm = result['sequence_based_macromolecule']
+
+      expect(sbmm['uniprot_derivation']).to eq 'uniprot_modified'
+    end
+
+    it "returns the parent of the sample's SBMM if present" do
+      get "/api/v1/sequence_based_macromolecule_samples/#{sample.id}"
+
+      expect(response.status).to eq 200
+      result = parsed_json_response['sequence_based_macromolecule_sample']
+      sbmm = result['sequence_based_macromolecule']
+      parent_sbmm = sbmm['parent']
+
+      expect(sbmm['uniprot_derivation']).to eq 'uniprot_modified'
+      expect(parent_sbmm['uniprot_derivation']).to eq 'uniprot'
+    end
+  end
+
+  describe 'POST /api/v1/sequence_based_macromolecule_samples' do
+    before do
+      stub_request(:get, 'https://rest.uniprot.org/uniprotkb/P12345')
+        .to_return(status: 200,
+                   body: file_fixture('uniprot/P12345.json').read,
+                   headers: { 'Content-Type' => 'application/json' })
+    end
+
+    context 'when creating a sample for a Uniprot SBMM' do
+      let(:post_for_uniprot_sbmm) do
+        {
+          name: 'Testsample',
+          external_label: 'Testlabel',
+          function_or_application: 'Testing',
+          concentration_value: '0.5',
+          container: {
+            is_new: true,
+            containable_type: 'root',
+            extended_metadata: {
+              report: true,
+            },
+            description: '',
+            is_deleted: false,
+            attachments: [],
+            name: 'root',
+            children: [{
+              name: 'new',
+              containable_type: 'analyses',
+              children: [],
+              attachments: [],
+              is_deleted: false,
+              description: '',
+              extended_metadata: {
+                report: true,
+              },
+            }],
+          },
+          sequence_based_macromolecule_attributes: {
+            sbmm_type: 'protein',
+            sbmm_subtype: 'unmodified',
+            uniprot_derivation: 'uniprot',
+            primary_accession: 'P12345',
+          },
+        }
+      end
+
+      it 'creates a SBMM-Sample record' do
+        expect do
+          post '/api/v1/sequence_based_macromolecule_samples', params: post_for_uniprot_sbmm, as: :json
+        end.to change(SequenceBasedMacromoleculeSample, :count).by(1)
+      end
+
+      it 'creates the SBMM record if necessary' do
+        expect do
+          post '/api/v1/sequence_based_macromolecule_samples', params: post_for_uniprot_sbmm, as: :json
+        end.to change(SequenceBasedMacromolecule, :count).by(1)
+      end
+
+      it 'uses existing SBMM records if possible' do
+        expect do
+          post '/api/v1/sequence_based_macromolecule_samples', params: post_for_uniprot_sbmm, as: :json
+        end.to change(SequenceBasedMacromolecule, :count).by(1)
+                                                         .and change(SequenceBasedMacromoleculeSample, :count).by(1)
+
+        expect do
+          post '/api/v1/sequence_based_macromolecule_samples', params: post_for_uniprot_sbmm, as: :json
+        end.to not_change(SequenceBasedMacromolecule, :count)
+           .and change(SequenceBasedMacromoleculeSample, :count).by(1)
+      end
+
+      it 'ignores some attributes that are available for non-uniprot proteins' do
+        post_data = post_for_uniprot_sbmm
+        post_data.merge(
+          heterologous_expression: 'no',
+          organism: 'SomeOrganism',
+          taxon_id: 'SomeTaxonId',
+          strain: 'SomeStrain',
+          tissue: 'SomeTissue',
+          localisation: 'SomeLocalisation',
+        )
+
+        post '/api/v1/sequence_based_macromolecule_samples', params: post_data, as: :json
+
+        expect(response.status).to eq 201
+
+        sample =
+          SequenceBasedMacromoleculeSample.find(parsed_json_response['sequence_based_macromolecule_sample']['id'])
+        expect(sample.heterologous_expression).not_to eq 'no'
+        expect(sample.organism).not_to eq 'SomeOrganism'
+        expect(sample.taxon_id).not_to eq 'SomeTaxonId'
+        expect(sample.strain).not_to eq 'SomeStrain'
+        expect(sample.tissue).not_to eq 'SomeTissue'
+        expect(sample.localisation).not_to eq 'SomeLocalisation'
+      end
+    end
+
+    context 'when creating a sample for a modified SBMM' do
+      let(:post_for_modified_sbmm) do
+        {
+          name: 'Testsample',
+          external_label: 'Testlabel',
+          function_or_application: 'Testing',
+          concentration_value: '0.5',
+          container: {
+            is_new: true,
+            containable_type: 'root',
+            extended_metadata: {
+              report: true,
+            },
+            description: '',
+            is_deleted: false,
+            attachments: [],
+            name: 'root',
+            children: [{
+              name: 'new',
+              containable_type: 'analyses',
+              children: [],
+              attachments: [],
+              is_deleted: false,
+              description: '',
+              extended_metadata: {
+                report: true,
+              },
+            }],
+          },
+          sequence_based_macromolecule_attributes: {
+            sbmm_type: 'protein',
+            sbmm_subtype: 'unmodified',
+            uniprot_derivation: 'uniprot_modified',
+            molecular_weight: 123,
+            parent_identifier: 'P12345',
+            sequence: 'MDIFIEDSEQENCE',
+            short_name: 'FooBar',
+            own_identifier: 'bla',
+            other_identifier: 'keks',
+            protein_sequence_modification_attributes: {
+              modification_n_terminal: true,
+              modification_n_terminal_details: 'Some details',
+            },
+            post_translational_modification_attributes: {
+              phosphorylation_enabled: true,
+              phosphorylation_ser_enabled: true,
+            },
+          },
+        }
+      end
+
+      context 'when the uniprot SBMM is not in ELN' do
+        before do
+          stub_request(:get, 'https://rest.uniprot.org/uniprotkb/P12345')
+            .to_return(status: 200,
+                       body: file_fixture('uniprot/P12345.json').read,
+                       headers: { 'Content-Type' => 'application/json' })
+        end
+
+        it 'fetches the uniprot SBMM and creates a record for it' do
+          expect(SequenceBasedMacromolecule.find_by(primary_accession: 'P12345')).to be_nil
+          expect do
+            post '/api/v1/sequence_based_macromolecule_samples', params: post_for_modified_sbmm, as: :json
+          end.to change(SequenceBasedMacromolecule, :count).by(2)
+             .and change(SequenceBasedMacromoleculeSample, :count).by(1)
+
+          expect(SequenceBasedMacromolecule.find_by(primary_accession: 'P12345')).not_to be_nil
+        end
+      end
+
+      it 'creates a new SBMM with reference to the parent SBMM' do
+        create(:uniprot_sbmm)
+
+        post '/api/v1/sequence_based_macromolecule_samples', params: post_for_modified_sbmm, as: :json
+        expect(response.status).to eq 201
+
+        result = parsed_json_response['sequence_based_macromolecule_sample']
+
+        expect(result['sequence_based_macromolecule']['sequence']).to eq 'MDIFIEDSEQENCE'
+        expect(result['sequence_based_macromolecule']['parent']['primary_accession']).to eq 'P12345'
+      end
+
+      it 'creates a new sample under the new SBMM' do
+        create(:uniprot_sbmm)
+        expect do
+          post '/api/v1/sequence_based_macromolecule_samples', params: post_for_modified_sbmm, as: :json
+        end.to change(SequenceBasedMacromolecule, :count).by(1)
+           .and change(SequenceBasedMacromoleculeSample, :count).by(1)
+      end
+
+      context 'when required fields are missing (i.e. even the key is not present)' do
+        let(:post_data) do
+          data = post_for_modified_sbmm.dup
+          data.delete(:name) # key and value must be present
+          data[:sequence_based_macromolecule_attributes].delete(:sbmm_type) # key and value must be present
+          data[:sequence_based_macromolecule_attributes].delete(:uniprot_derivation) # key and value must be present
+          data
+        end
+
+        it 'throws an error' do
+          post '/api/v1/sequence_based_macromolecule_samples', params: post_data, as: :json
+          expected_result = {
+            'error' => [
+              { 'parameters' => ['sequence_based_macromolecule_attributes[sbmm_type]'], 'message' => 'is missing' },
+              { 'parameters' => ['sequence_based_macromolecule_attributes[sbmm_type]'], 'message' => 'is empty' },
+              { 'parameters' => ['sequence_based_macromolecule_attributes[uniprot_derivation]'],
+                'message' => 'is missing' },
+              { 'parameters' => ['sequence_based_macromolecule_attributes[uniprot_derivation]'],
+                'message' => 'is empty' },
+            ],
+          }
+          expect(parsed_json_response).to eq expected_result
+        end
+      end
+
+      context 'when required fields are present but the value is nil' do
+        let(:post_data) do
+          post_for_modified_sbmm.deep_merge(
+            sequence_based_macromolecule_attributes: {
+              post_translational_modification_attributes: {
+                acetylation_enabled: true,
+                acetylation_lysin_number: nil,
+              },
+            },
+          )
+        end
+
+        # rubocop:disable Layout/LineLength
+        it 'throws an error' do
+          post '/api/v1/sequence_based_macromolecule_samples', params: post_data, as: :json
+          expected_result = {
+            'error' => [
+              {
+                'parameters' =>
+                  ['sequence_based_macromolecule_attributes[post_translational_modification_attributes][acetylation_lysin_number]'],
+                'message' => 'is empty',
+              },
+            ],
+          }
+          expect(parsed_json_response).to eq expected_result
+        end
+        # rubocop:enable Layout/LineLength
+      end
+
+      it 'allows usage of some attributes that are only available for non-uniprot proteins' do
+        post_data = post_for_modified_sbmm
+        post_data.merge!(
+          heterologous_expression: 'no',
+          organism: 'SomeOrganism',
+          taxon_id: 'SomeTaxonId',
+          strain: 'SomeStrain',
+          tissue: 'SomeTissue',
+          localisation: 'SomeLocalisation',
+        )
+
+        post '/api/v1/sequence_based_macromolecule_samples', params: post_data, as: :json
+        expect(response.status).to eq 201
+
+        sample =
+          SequenceBasedMacromoleculeSample.find(parsed_json_response['sequence_based_macromolecule_sample']['id'])
+        expect(sample.heterologous_expression).to eq 'no'
+        expect(sample.organism).to eq 'SomeOrganism'
+        expect(sample.taxon_id).to eq 'SomeTaxonId'
+        expect(sample.strain).to eq 'SomeStrain'
+        expect(sample.tissue).to eq 'SomeTissue'
+        expect(sample.localisation).to eq 'SomeLocalisation'
+      end
+
+      context 'when the given SBMM already exists' do
+        let(:existing_sbmm) do
+          # same params as in :post_for_modified_sbmm
+          create(
+            :modified_uniprot_sbmm,
+            sbmm_type: 'protein',
+            sbmm_subtype: 'unmodified',
+            uniprot_derivation: 'uniprot_modified',
+            molecular_weight: 123,
+            parent: build(:uniprot_sbmm),
+            sequence: 'MDIFIEDSEQENCE',
+            short_name: 'FooBar',
+            own_identifier: 'bla',
+            other_identifier: 'keks',
+            protein_sequence_modification: build(
+              :protein_sequence_modification,
+              modification_n_terminal: true,
+              modification_n_terminal_details: 'Some details',
+            ),
+            post_translational_modification: build(
+              :post_translational_modification,
+              phosphorylation_enabled: true,
+              phosphorylation_ser_enabled: true,
+            ),
+          )
+        end
+
+        before do
+          existing_sbmm
+        end
+
+        context 'when there is more than one user using the SBMM' do
+          let(:other_user) { create(:person) }
+          let(:other_sample) do
+            create(
+              :sequence_based_macromolecule_sample,
+              sequence_based_macromolecule: existing_sbmm,
+              user: other_user,
+            )
+          end
+
+          before do
+            other_sample
+          end
+
+          context 'when the params contain changes to the SBMM' do
+            let(:post_data_with_sbmm_modification) do
+              post_for_modified_sbmm[:sequence_based_macromolecule_attributes].deep_merge!(
+                short_name: 'BlaKeks',
+                post_translational_modification_attributes: {
+                  phosphorylation_ser_details: 'Hallo Welt',
+                },
+              )
+              post_for_modified_sbmm
+            end
+
+            it 'rejects the creation for non admin users' do
+              post '/api/v1/sequence_based_macromolecule_samples', params: post_data_with_sbmm_modification, as: :json
+
+              expect(response.status).to eq 403
+              original_sbmm = parsed_json_response.dig('error', 'original_sbmm')
+              requested_changes = parsed_json_response.dig('error', 'requested_changes')
+              expect(original_sbmm).not_to eq requested_changes
+            end
+
+            context 'when the current user is an admin' do
+              let(:user) { create(:admin) }
+
+              it 'allows the creation' do
+                post '/api/v1/sequence_based_macromolecule_samples', params: post_data_with_sbmm_modification, as: :json
+
+                expect(response.status).to eq 201
+              end
+            end
+          end
+
+          context 'when the params do not contain changes to the SBMM' do
+            it 'saves the sample and assigns it to the existing SBMM' do
+              expect do
+                post '/api/v1/sequence_based_macromolecule_samples', params: post_for_modified_sbmm, as: :json
+                existing_sbmm.reload
+              end.to change(SequenceBasedMacromoleculeSample, :count).by(1)
+                 .and not_change(PostTranslationalModification, :count)
+                 .and not_change(ProteinSequenceModification, :count)
+
+              sample_id = parsed_json_response.dig('sequence_based_macromolecule_sample', 'id')
+              expect(
+                SequenceBasedMacromoleculeSample.find(sample_id).sequence_based_macromolecule_id,
+              ).to eq existing_sbmm.id
+            end
+          end
+        end
+      end
+    end
+
+    context 'when creating a sample for a modified SBMM based on a non-uniprot SBMM' do
+      let(:non_uniprot_sbmm) { create(:non_uniprot_sbmm) }
+      let(:post_for_child_of_non_uniprot_sbmm) do
+        {
+          name: 'Testsample',
+          external_label: 'Testlabel',
+          function_or_application: 'Testing',
+          concentration_value: '0.5',
+          container: {
+            is_new: true,
+            containable_type: 'root',
+            extended_metadata: {
+              report: true,
+            },
+            description: '',
+            is_deleted: false,
+            attachments: [],
+            name: 'root',
+            children: [{
+              name: 'new',
+              containable_type: 'analyses',
+              children: [],
+              attachments: [],
+              is_deleted: false,
+              description: '',
+              extended_metadata: {
+                report: true,
+              },
+            }],
+          },
+          sequence_based_macromolecule_attributes: {
+            sbmm_type: 'protein',
+            sbmm_subtype: 'unmodified',
+            uniprot_derivation: 'uniprot_modified',
+            molecular_weight: 123,
+            parent_identifier: non_uniprot_sbmm.id,
+            sequence: 'MDIFIEDSEQENCE',
+            short_name: 'FooBar',
+            protein_sequence_modification_attributes: {
+              modification_n_terminal: true,
+              modification_n_terminal_details: 'Some details',
+            },
+            post_translational_modification_attributes: {
+              phosphorylation_enabled: true,
+              phosphorylation_ser_enabled: true,
+            },
+          },
+        }
+      end
+
+      it 'creates a new SBMM with the provided data' do
+        non_uniprot_sbmm # create this before, so it does not mess up our count
+        expect do
+          post '/api/v1/sequence_based_macromolecule_samples', params: post_for_child_of_non_uniprot_sbmm, as: :json
+        end.to change(SequenceBasedMacromolecule, :count).by(1)
+                                                         .and change(SequenceBasedMacromoleculeSample, :count).by(1)
+
+        sample = parsed_json_response['sequence_based_macromolecule_sample']
+        sbmm = sample['sequence_based_macromolecule']
+        parent_sbmm = sbmm['parent']
+
+        expect(sbmm['uniprot_derivation']).to eq 'uniprot_modified'
+        expect(parent_sbmm['uniprot_derivation']).to eq 'uniprot_unknown'
+      end
+    end
+  end
+
+  describe 'PUT /api/v1/sequence_based_macromolecule_samples/:id' do
+    let(:sbmm) do
+      create(:modified_uniprot_sbmm)
+    end
+    let(:sbmm_sample) do
+      sample = create(
+        :sequence_based_macromolecule_sample,
+        amount_as_used_mass_value: 123,
+        amount_as_used_mass_unit: 'mg',
+        sequence_based_macromolecule: sbmm,
+        user: logged_in_user,
+      )
+      sample.collections << create(:collection, user_id: logged_in_user.id)
+      sample
+    end
+
+    context 'when updating only the sample' do
+      let(:put_data) do
+        serialize_sbmm_sample_as_api_input(sbmm_sample).merge(amount_as_used_mass_value: 12_345)
+      end
+
+      before do
+        sbmm_sample
+      end
+
+      it 'returns a 200 success' do
+        put "/api/v1/sequence_based_macromolecule_samples/#{sbmm_sample.id}", params: put_data, as: :json
+        expect(response.status).to eq 200
+      end
+
+      it 'does not touch the SBMM' do
+        expect do
+          put "/api/v1/sequence_based_macromolecule_samples/#{sbmm_sample.id}", params: put_data, as: :json
+          sbmm_sample.reload
+        end.to change(sbmm_sample, :amount_as_used_mass_value).from(123).to(12_345)
+           .and not_change(sbmm, :updated_at)
+      end
+    end
+
+    context 'when updating SBMM data as well' do
+      context 'when the given SBMM does not yet exist' do
+        it 'creates a new SBMM and switches the sample to the new SBMM' do
+          put_data = serialize_sbmm_sample_as_api_input(sbmm_sample) # original data
+          put_data[:sequence_based_macromolecule_attributes][:sequence] = 'BLABLA'
+
+          expect do
+            put "/api/v1/sequence_based_macromolecule_samples/#{sbmm_sample.id}", params: put_data, as: :json
+            sbmm_sample.reload
+            sbmm.reload
+          end.to change(sbmm_sample, :sequence_based_macromolecule_id)
+             .and change(SequenceBasedMacromolecule, :count).by(1) # make sure we create a new SBMM
+             .and not_change(sbmm, :sequence) # make sure we don't update the original SBMM
+        end
+      end
+
+      context 'when an SBMM with the updated data (key fields only) already exists' do
+        # sbmm and other_sbmm should only be different on sequence
+        let(:other_sbmm) do
+          create(
+            :modified_uniprot_sbmm,
+            sequence: 'FOOBAR',
+            parent: sbmm.parent,
+          )
+        end
+
+        let(:put_data) do
+          put_data = serialize_sbmm_sample_as_api_input(sbmm_sample)
+          put_data[:sequence_based_macromolecule_attributes][:sequence] = other_sbmm.sequence
+          put_data
+        end
+
+        before do
+          # this has to exist before the test or it will be created in the expect block and thus mislead the counter
+          other_sbmm
+        end
+
+        it 'returns a 200 code' do
+          put "/api/v1/sequence_based_macromolecule_samples/#{sbmm_sample.id}", params: put_data, as: :json
+          expect(response.status).to eq 200
+        end
+
+        it 'assigns the sample to the other SBMM without changing anything else' do
+          expect do
+            put "/api/v1/sequence_based_macromolecule_samples/#{sbmm_sample.id}", params: put_data, as: :json
+            sbmm_sample.reload
+          end.to change(sbmm_sample, :sequence_based_macromolecule_id).from(sbmm.id).to(other_sbmm.id)
+             .and not_change(sbmm, :updated_at) # TODO: find less brittle way of finding out if any data was changed
+             .and not_change(other_sbmm, :updated_at)
+        end
+      end
+
+      context 'when required fields are missing (i.e. even the key is not present)' do
+        let(:post_data) do
+          data = serialize_sbmm_sample_as_api_input(sbmm_sample)
+          data.delete(:name) # key and value must be present
+          data[:sequence_based_macromolecule_attributes].delete(:sbmm_type) # key and value must be present
+          data[:sequence_based_macromolecule_attributes].delete(:uniprot_derivation) # key and value must be present
+          data
+        end
+
+        it 'throws an error' do
+          put "/api/v1/sequence_based_macromolecule_samples/#{sbmm_sample.id}", params: post_data, as: :json
+          expected_result = {
+            'error' => [
+              { 'parameters' => ['sequence_based_macromolecule_attributes[sbmm_type]'], 'message' => 'is missing' },
+              { 'parameters' => ['sequence_based_macromolecule_attributes[sbmm_type]'], 'message' => 'is empty' },
+              { 'parameters' => ['sequence_based_macromolecule_attributes[uniprot_derivation]'],
+                'message' => 'is missing' },
+              { 'parameters' => ['sequence_based_macromolecule_attributes[uniprot_derivation]'],
+                'message' => 'is empty' },
+            ],
+          }
+          expect(parsed_json_response).to eq expected_result
+        end
+      end
+
+      context 'when required fields are present but the value is nil' do
+        let(:post_data) do
+          serialize_sbmm_sample_as_api_input(sbmm_sample).deep_merge(
+            sequence_based_macromolecule_attributes: {
+              post_translational_modification_attributes: {
+                acetylation_enabled: true,
+                acetylation_lysin_number: nil,
+              },
+            },
+          )
+        end
+
+        # rubocop:disable Layout/LineLength
+        it 'throws an error' do
+          put "/api/v1/sequence_based_macromolecule_samples/#{sbmm_sample.id}", params: post_data, as: :json
+          expected_result = {
+            'error' => [
+              {
+                'parameters' =>
+                  ['sequence_based_macromolecule_attributes[post_translational_modification_attributes][acetylation_lysin_number]'],
+                'message' => 'is empty',
+              },
+            ],
+          }
+          expect(parsed_json_response).to eq expected_result
+        end
+      end
+      # rubocop:enable Layout/LineLength
+
+      context 'when updating the full name' do
+        it 'saves the change' do
+          put_data = serialize_sbmm_sample_as_api_input(sbmm_sample) # original data
+          put_data[:sequence_based_macromolecule_attributes][:full_name] = 'BLABLA'
+
+          expect do
+            put "/api/v1/sequence_based_macromolecule_samples/#{sbmm_sample.id}", params: put_data, as: :json
+            sbmm_sample.reload
+            sbmm.reload
+          end.to change(sbmm, :systematic_name).to('BLABLA')
+        end
+      end
+    end
+  end
+
+  describe 'POST /api/v1/sequence_based_macromolecule_samples/sub_sequence_based_macromolecule_samples' do
+    let(:sample) do
+      create(
+        :sequence_based_macromolecule_sample,
+        sequence_based_macromolecule: build(:modified_uniprot_sbmm),
+        user: logged_in_user, # from context above
+      )
+    end
+    let(:collection) { create(:collection, user_id: user.id) }
+    let(:collections_sbmm_sample) do
+      CollectionsSequenceBasedMacromoleculeSample.create!(
+        sequence_based_macromolecule_sample: sample,
+        collection: collection,
+      )
+    end
+
+    before do
+      collections_sbmm_sample
+    end
+
+    context 'when creating a split of a SBMM Sample' do
+      let(:post_for_split) do
+        {
+          ui_state: {
+            sequence_based_macromolecule_sample: {
+              all: false,
+              included_ids: [sample.id],
+              excluded_ids: [],
+            },
+            currentCollectionId: collection.id,
+            isSync: false,
+          },
+        }
+      end
+
+      it 'creates a SBMM Sample with a sub short label' do
+        expect do
+          post '/api/v1/sequence_based_macromolecule_samples/sub_sequence_based_macromolecule_samples',
+               params: post_for_split, as: :json
+        end.to change(SequenceBasedMacromoleculeSample, :count).by(1)
+
+        sbmm_sample = SequenceBasedMacromoleculeSample.last
+        expect(sbmm_sample['short_label']).to eq "#{sample.short_label}-1"
+      end
+    end
+  end
+end
+# rubocop:enable RSpec/MultipleExpectations, RSpec/NestedGroups

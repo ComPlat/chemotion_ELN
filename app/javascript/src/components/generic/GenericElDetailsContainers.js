@@ -1,3 +1,4 @@
+/* eslint-disable no-bitwise */
 /* eslint-disable react/forbid-prop-types */
 /* eslint-disable react/no-array-index-key */
 import React, { Component } from 'react';
@@ -11,7 +12,7 @@ export default class GenericElDetailsContainers extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      activeContainer: 0
+      activeContainer: null,
     };
     this.handleAccordionOpen = this.handleAccordionOpen.bind(this);
     this.handleAdd = this.handleAdd.bind(this);
@@ -38,7 +39,7 @@ export default class GenericElDetailsContainers extends Component {
   }
 
   handleAccordionOpen(key) {
-    this.setState({ activeContainer: key });
+    this.setState({ activeContainer: String(key) });
   }
 
   handleAdd() {
@@ -54,16 +55,15 @@ export default class GenericElDetailsContainers extends Component {
     }
 
     genericEl.container.children
-      // eslint-disable-next-line no-bitwise
-      .filter((element) => ~element.container_type.indexOf("analyses"))[0]
+      .filter((element) => ~element.container_type.indexOf('analyses'))[0]
       .children.push(container);
 
-    const newKey = genericEl.container.children.filter(
-      // eslint-disable-next-line no-bitwise
-      (element) => ~element.container_type.indexOf('analyses')
-    )[0].children.length - 1;
+    const newKey =
+      genericEl.container.children.filter(
+        (element) => ~element.container_type.indexOf('analyses'),
+      )[0].children.length - 1;
 
-    this.handleAccordionOpen(newKey);
+    this.handleAccordionOpen(String(newKey));
     handleElChanged(genericEl);
   }
 
@@ -94,29 +94,45 @@ export default class GenericElDetailsContainers extends Component {
     return null;
   }
 
+  renderNoAnalysesMessage() {
+    return (
+      <div className="d-flex align-items-center justify-content-between mb-2 mt-4 mx-3">
+        <span className="ms-3"> There are currently no Analyses. </span>
+        <div>{this.addButton()}</div>
+      </div>
+    );
+  }
+
   renderNoAct(genericEl, readOnly) {
     const { linkedAis, handleSubmit } = this.props;
+    const { activeContainer } = this.state;
     if (linkedAis.length < 1) return null; // if layer has no linked analyses
     if (genericEl.container != null) {
       const analysesContainer = genericEl.container.children.filter(
-        // eslint-disable-next-line no-bitwise
-        (element) => ~element.container_type.indexOf("analyses")
+        (element) => ~element.container_type.indexOf('analyses'),
       );
-      if (analysesContainer.length === 1 && analysesContainer[0].children.length > 0) {
+      if (
+        analysesContainer.length === 1 &&
+        analysesContainer[0].children.length > 0
+      ) {
         return (
           <div className="gen_linked_container_group">
-            <h4><Badge bg="dark">Linked Analyses</Badge></h4>
+            <h4>
+              <Badge bg="dark">Linked Analyses</Badge>
+            </h4>
             <div className="mb-2 me-1 d-flex justify-content-between align-items-center">
               <GenericContainerSet
                 ae={analysesContainer}
                 readOnly={readOnly}
                 generic={genericEl}
                 fnChange={this.handleChange}
+                fnSelect={this.handleAccordionOpen}
                 fnUndo={this.handleUndo}
                 fnRemove={this.handleRemove}
                 noAct
                 linkedAis={linkedAis}
                 handleSubmit={handleSubmit}
+                activeKey={activeContainer}
               />
             </div>
           </div>
@@ -128,19 +144,19 @@ export default class GenericElDetailsContainers extends Component {
   }
 
   render() {
-    const {
-      genericEl, readOnly, noAct, handleSubmit
-    } = this.props;
+    const { genericEl, readOnly, noAct, handleSubmit } = this.props;
     const { activeContainer } = this.state;
 
     if (noAct) return this.renderNoAct(genericEl, readOnly);
 
     if (genericEl.container != null && genericEl.container.children) {
       const analysesContainer = genericEl.container.children.filter(
-        // eslint-disable-next-line no-bitwise
-        (element) => ~element.container_type.indexOf("analyses")
+        (element) => ~element.container_type.indexOf('analyses'),
       );
-      if (analysesContainer.length === 1 && analysesContainer[0].children.length > 0) {
+      if (
+        analysesContainer.length === 1 &&
+        analysesContainer[0].children.length > 0
+      ) {
         return (
           <div>
             <div className="mb-2 me-1 d-flex justify-content-end">
@@ -160,19 +176,9 @@ export default class GenericElDetailsContainers extends Component {
           </div>
         );
       }
-      return (
-        <div className="d-flex align-items-center justify-content-between mb-2 mt-4 mx-3">
-          <span className="ms-3"> There are currently no Analyses. </span>
-          <div>{this.addButton()}</div>
-        </div>
-      );
+      return this.renderNoAnalysesMessage();
     }
-    return (
-      <div className="d-flex align-items-center justify-content-between mb-2 mt-4 mx-3">
-        <span className="ms-3"> There are currently no Analyses. </span>
-        <div>{this.addButton()}</div>
-      </div>
-    );
+    return this.renderNoAnalysesMessage();
   }
 }
 
@@ -182,6 +188,6 @@ GenericElDetailsContainers.propTypes = {
   handleElChanged: PropTypes.func.isRequired,
   handleSubmit: PropTypes.func.isRequired,
   noAct: PropTypes.bool,
-  linkedAis: PropTypes.array
+  linkedAis: PropTypes.array,
 };
 GenericElDetailsContainers.defaultProps = { noAct: false, linkedAis: [] };

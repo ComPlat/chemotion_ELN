@@ -123,6 +123,7 @@ export default class SampleDetails extends React.Component {
       materialGroup: null,
       showStructureEditor: false,
       loadingMolecule: false,
+      loadingComponentDeletion: false,
       showChemicalIdentifiers: false,
       activeTab: UIStore.getState().sample.activeTab,
       qrCodeSVG: '',
@@ -182,6 +183,7 @@ export default class SampleDetails extends React.Component {
     this.handleStructureEditorSave = this.handleStructureEditorSave.bind(this);
     this.handleStructureEditorCancel = this.handleStructureEditorCancel.bind(this);
     this.splitSmiles = this.splitSmiles.bind(this);
+    this.setComponentDeletionLoading = this.setComponentDeletionLoading.bind(this);
   }
 
   componentDidMount() {
@@ -334,6 +336,18 @@ export default class SampleDetails extends React.Component {
       sample.molecule = result;
       sample.molecule_id = result.id;
       if (result.inchikey === 'DUMMY') { sample.decoupled = true; }
+
+      // Handle temporary SVG file from structure editor
+      if (result.temp_svg) {
+        // For mixture samples, clear any existing sample_svg_file to preserve combined molecule SVG
+        // This ensures the combined molecule SVG is always displayed
+        if (sample.isMixture()) {
+          sample.sample_svg_file = null;
+        } else {
+          sample.sample_svg_file = result.temp_svg;
+        }
+      }
+
       this.setState({
         sample,
         smileReadonly: true,
@@ -357,7 +371,7 @@ export default class SampleDetails extends React.Component {
     } else {
       fetchMolecule(() => MoleculesFetcher.fetchBySmi(smiles, svgFile, molfile, editor));
     }
-   }
+  }
 
   handleStructureEditorCancel() {
     this.hideStructureEditor();
@@ -377,6 +391,10 @@ export default class SampleDetails extends React.Component {
     if (!decoupleCheck(sample)) return;
     if (!rangeCheck('boiling_point', sample)) return;
     if (!rangeCheck('melting_point', sample)) return;
+
+    // Prepare mixture samples for saving using Sample.js method
+    sample.prepareMixtureForSave();
+
     if (sample.belongTo && sample.belongTo.type === 'reaction') {
       const reaction = sample.belongTo;
       reaction.editedSample = sample;
@@ -479,6 +497,17 @@ export default class SampleDetails extends React.Component {
     );
   }
 
+  onSVGStructureError = (errorMessage) => {
+    if (this.errorTimer) {
+      clearTimeout(this.errorTimer);
+    }
+    this.setState({ ketcherSVGError: errorMessage });
+    this.errorTimer = setTimeout(() => {
+      this.setState({ ketcherSVGError: null });
+      this.errorTimer = null;
+    }, 5000);
+  };
+
   structureEditorModal(sample) {
     const { molfile } = sample;
     const hasParent = sample && sample.parent_id;
@@ -493,6 +522,7 @@ export default class SampleDetails extends React.Component {
         hasParent={hasParent}
         hasChildren={hasChildren}
         sample={sample}
+        onSVGStructureError={this.onSVGStructureError}
       />
     );
   }
@@ -811,6 +841,7 @@ export default class SampleDetails extends React.Component {
           customizableField={this.customizableField}
           enableSampleDecoupled={this.enableSampleDecoupled}
           decoupleMolecule={this.decoupleMolecule}
+          setComponentDeletionLoading={this.setComponentDeletionLoading}
         />
         <div className="mb-2">
           {this.chemicalIdentifiersItem(sample)}
@@ -966,7 +997,7 @@ export default class SampleDetails extends React.Component {
     const timesTag = (
       <i className="fa fa-times" />
     );
-    const hasComponents = !sample.isMixture() || (sample.hasComponents());
+    const hasComponents = !sample.isMixture() || sample.hasComponents();
     const sampleUpdateCondition = !this.sampleIsValid() || !sample.can_update || !hasComponents;
 
     const elementToSave = activeTab === 'inventory' ? 'Chemical' : 'Sample';
@@ -1295,7 +1326,7 @@ export default class SampleDetails extends React.Component {
   }
 
   svgOrLoading(sample) {
-    const svgPath = this.state.loadingMolecule
+    const svgPath = (this.state.loadingMolecule || this.state.loadingComponentDeletion)
       ? '/images/wild_card/loading-bubbles.svg'
       : sample.svgPath;
 
@@ -1336,7 +1367,7 @@ export default class SampleDetails extends React.Component {
     let mw;
 
     if (sample.isMixture() && sample.sample_details) {
-      mw = sample.total_molecular_weight;
+      mw = sample.total_mixture_mass_g;
     } else {
       mw = sample.molecule_molecular_weight;
     }
@@ -1373,6 +1404,16 @@ export default class SampleDetails extends React.Component {
   hideStructureEditor() {
     this.setState({
       showStructureEditor: false
+    });
+  }
+
+  /**
+   * Sets the loading state for component deletion
+   * @param {boolean} loading - Whether component deletion is in progress
+   */
+  setComponentDeletionLoading(loading) {
+    this.setState({
+      loadingComponentDeletion: loading
     });
   }
 
@@ -1523,7 +1564,7 @@ export default class SampleDetails extends React.Component {
       }
     });
 
-    const { pageMessage } = this.state;
+    const { pageMessage, ketcherSVGError } = this.state;
     const messageBlock = (pageMessage
       && (pageMessage.error.length > 0 || pageMessage.warning.length > 0)) ? (
         <Alert variant="warning" style={{ marginBottom: 'unset', padding: '5px', marginTop: '10px' }}>
@@ -1559,6 +1600,20 @@ export default class SampleDetails extends React.Component {
         header={this.sampleHeader(sample)}
         footer={this.sampleFooter()}
       >
+        {ketcherSVGError?.length > 0 && (
+          <Alert
+            variant="danger"
+            show={ketcherSVGError?.length > 0}
+            dismissible
+            onClose={() => this.setState({ ketcherSVGError: null })}
+          >
+            <strong>SVG generation failed.</strong>
+            {' '}
+            Falling back to the previous SVG.
+            <br />
+            <small className="text-muted">{ketcherSVGError}</small>
+          </Alert>
+        )}
         {this.sampleInfo(sample)}
         {this.state.sfn && <ScifinderSearch el={sample} />}
         <div className="tabs-container--with-borders">

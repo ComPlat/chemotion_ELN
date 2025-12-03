@@ -1,24 +1,17 @@
 const isEqId = (a, b) => a.id === b.id;
 
-const findArrIndex = (tagEl, criteria, arr = []) => {
-  let elIndex;
-  arr.forEach((el, i) => {
-    if (criteria(el, tagEl)) {
-      elIndex = i;
-    }
-  });
-  return elIndex;
-};
-
 const reOrderArr = (sourceTagEl, targetTagEl, criteria, arr = []) => {
-  const sourceIndex = findArrIndex(sourceTagEl, criteria, arr);
-  const targetIndex = findArrIndex(targetTagEl, criteria, arr);
-  const arrWoSource = [...arr.slice(0, sourceIndex),
-    ...arr.slice(sourceIndex + 1)];
-  const newArr = [...arrWoSource.slice(0, targetIndex),
-    arr[sourceIndex],
-    ...arrWoSource.slice(targetIndex)]
-    .filter(o => o != null) || [];
+  const sourceIndex = arr.findIndex((el) => criteria(el, sourceTagEl));
+  const targetIndex = arr.findIndex((el) => criteria(el, targetTagEl));
+
+  if (sourceIndex === -1 || targetIndex === -1 || sourceIndex === targetIndex) {
+    return arr;
+  }
+
+  const newArr = [...arr];
+  const [moved] = newArr.splice(sourceIndex, 1);
+  newArr.splice(targetIndex, 0, moved);
+
   return newArr;
 };
 

@@ -51,7 +51,8 @@ module Export
         DESC
 
         # create a zip buffer
-        zip = Zip::OutputStream.write_buffer do |zipping| # rubocop:disable Metrics/BlockLength
+        Zip.write_zip64_support = true
+        Zip::OutputStream.open(@file_path) do |zipping| # rubocop:disable Metrics/BlockLength
           # write the json file into the zip file
           export_json = to_json_data
           export_json_checksum = Digest::SHA256.hexdigest(export_json)
@@ -66,18 +67,23 @@ module Export
           zipping.write schema_json
           description += "#{schema_json_checksum} schema.json\n"
           # write all attachemnts into an attachments directory
+          dir_path = Pathname.new('attachments')
           @attachments.each do |attachment|
-            attachment_path = File.join('attachments', "#{attachment.identifier}#{File.extname(attachment.filename)}")
-            next if attachment.attachment_attacher.file.blank?
+            uploaded_file = attachment.attachment
+            next unless uploaded_file.exists?
 
-            zipping.put_next_entry attachment_path
-            zipping.write attachment.attachment_attacher.file.read if attachment.attachment_attacher.file.present?
+            attachment_path = dir_path.join("#{attachment.identifier}#{File.extname(attachment.filename)}")
+            zipping.put_next_entry attachment_path.to_s
+            uploaded_file.stream(zipping)
             description += "#{attachment.checksum} #{attachment_path}\n"
             next unless attachment.annotated_image?
 
-            annotation_path = attachment.attachment(:annotation).url
+            annotation = attachment.attachment(:annotation)
             zipping.put_next_entry "#{attachment_path}_annotation"
-            zipping.write File.read(annotation_path)
+            annotation.stream(zipping)
+          ensure
+            uploaded_file.to_io.close if uploaded_file.respond_to?(:to_io)
+            annotation.to_io.close if annotation.respond_to?(:to_io)
           end
           # write all the images into an images directory
           @images.each do |file_path|
@@ -93,10 +99,6 @@ module Export
           zipping.write description
         end
 
-        zip.set_encoding('UTF-8')
-        zip.rewind
-        # write the zip file to public/zip/
-        File.write(@file_path, zip.read)
         @file_path
       end
     end
@@ -104,7 +106,7 @@ module Export
 
     def prepare_data # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
       # get the collections from the database, in order of ancestry, but with empty ancestry first
-      collections = Collection.order(Arel.sql("NULLIF(ancestry, '') ASC NULLS FIRST")).find(@collection_ids)
+      collections = Collection.order(ancestry: :asc).find(@collection_ids)
       # add decendants for nested collections
       if @nested
         descendants = []
@@ -128,16 +130,83 @@ module Export
         fetch_components collection
         fetch_reactions collection
         fetch_elements collection
-        fetch_wellplates collection if @gt == false
-        fetch_screens collection if @gt == false
-        fetch_research_plans collection if @gt == false
-        add_cell_line_material_to_package collection if @gt == false
-        add_cell_line_sample_to_package collection if @gt == false
+
+        if @gt == false
+          fetch_wellplates collection
+          fetch_screens collection
+          fetch_research_plans collection
+          add_cell_line_material_to_package collection
+          add_cell_line_sample_to_package collection
+          fetch_sequence_based_macromolecule_samples collection
+        end
+
         fetch_segments
       end
     end
 
     private
+
+    def fetch_sequence_based_macromolecule_samples(collection)
+      # get sbmm samples in order of ancestry, but with empty ancestry first
+      sbmm_samples = collection.sequence_based_macromolecule_samples
+                               .order(ancestry: :asc)
+      # fetch sbmm samples
+      fetch_many(sbmm_samples, {
+                   'sequence_based_macromolecule_id' => 'SequenceBasedMacromolecule',
+                   'user_id' => 'User',
+                 })
+      fetch_many(collection.collections_sequence_based_macromolecule_samples, {
+                   'collection_id' => 'Collection',
+                   'sequence_based_macromolecule_sample_id' => 'SequenceBasedMacromoleculeSample',
+                 })
+
+      # loop over sbmm samples and fetch sbmm sample properties
+      sbmm_samples.each do |sbmm_sample|
+        fetch_sequence_based_macromolecule(sbmm_sample)
+
+        # fetch containers, attachments and literature
+        fetch_containers(sbmm_sample)
+
+        fetch_many(sbmm_sample.attachments, {
+                     'attachable_id' => 'SequenceBasedMacromoleculeSample',
+                     'created_by' => 'User',
+                     'created_for' => 'User',
+                   })
+
+        # add attachments to the list of attachments
+        @attachments += sbmm_sample.attachments
+      end
+    end
+
+    def fetch_sequence_based_macromolecule(sbmm_sample)
+      sbmm = sbmm_sample.sequence_based_macromolecule
+      fetch_sequence_based_macromolecule_or_parent_and_attachments(sbmm)
+
+      fetch_sequence_based_macromolecule_or_parent_and_attachments(sbmm.parent) if sbmm.parent
+
+      return unless sbmm_sample.sequence_based_macromolecule.post_translational_modification
+
+      fetch_one(sbmm.protein_sequence_modification)
+
+      return unless sbmm_sample.sequence_based_macromolecule.post_translational_modification
+
+      fetch_one(sbmm.post_translational_modification)
+    end
+
+    def fetch_sequence_based_macromolecule_or_parent_and_attachments(sbmm)
+      fetch_one(sbmm, {
+                  'parent_id' => 'SequenceBasedMacromolecule',
+                  'protein_sequence_modification_id' => 'ProteinSequenceModification',
+                  'post_translational_modification_id' => 'PostTranslationalModification',
+                })
+      fetch_many(sbmm.attachments, {
+                   'attachable_id' => 'SequenceBasedMacromolecule',
+                   'created_by' => 'User',
+                   'created_for' => 'User',
+                 })
+      # add sbmm attachments to the list of attachments
+      @attachments += sbmm.attachments
+    end
 
     def add_cell_line_material_to_package(collection)
       type = 'CelllineMaterial'
@@ -192,7 +261,7 @@ module Export
 
     def fetch_samples(collection)
       # get samples in order of ancestry, but with empty ancestry first
-      samples = collection.samples.order(Arel.sql("NULLIF(ancestry, '') ASC NULLS FIRST"))
+      samples = collection.samples.order(ancestry: :asc)
       # fetch samples
       fetch_many(samples, {
                    'molecule_name_id' => 'MoleculeName',
@@ -505,7 +574,7 @@ module Export
         # replace ids in the ancestry field
         if instance.respond_to?(:ancestry)
           ancestor_uuids = []
-          instance.ancestor_ids.each do |ancestor_id|
+          instance.ancestor_ids.map do |ancestor_id|
             ancestor_uuids << uuid(type, ancestor_id)
           end
           update['ancestry'] = ancestor_uuids.join('/')

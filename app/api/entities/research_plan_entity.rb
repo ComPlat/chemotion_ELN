@@ -10,7 +10,7 @@ module Entities
       expose! :id
       expose! :is_restricted
       expose! :name
-      expose! :thumb_svg
+      expose! :preview_attachment
       expose! :type
       expose! :comment_count
       expose! :user_labels

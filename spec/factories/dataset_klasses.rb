@@ -3,7 +3,6 @@
 FactoryBot.define do
   factory :dataset_klass, class: 'Labimotion::DatasetKlass' do
     label { 'dataset' }
-    ols_term_id { 'CHMO:0000292' }
     created_by { 0 }
     properties_template do
       {

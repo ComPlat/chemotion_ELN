@@ -4,6 +4,9 @@ import Sample from 'src/models/Sample';
 import ComponentStore from 'src/stores/alt/stores/ComponentStore';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
+// Constants
+const MW_PRECISION = 2;
+
 /**
  * Represents a Component in the mixture, extending Sample.
  */
@@ -16,10 +19,33 @@ export default class Component extends Sample {
   }
 
   /**
+   * Returns the IUPAC name of the molecule or 'Unknown' if not available.
+   * @returns {string} The molecule's IUPAC name or 'Unknown'.
+   */
+  get iupacName() {
+    return this.molecule?.iupac_name || 'Unknown';
+  }
+
+  /**
    * @returns {boolean} True if density is given and starting molarity is not set.
    */
   get has_density() {
     return this.density > 0 && this.starting_molarity_value === 0;
+  }
+
+  /**
+   * Returns a formatted molecular weight string for display, including units.
+   *
+   * The value is formatted to a fixed number of decimal places defined by `MW_PRECISION`.
+   * If the molecular weight is missing or not a finite number, an empty string is returned.
+   *
+   * @returns {string} The formatted molecular weight text (e.g., " (180.16 g/mol)") or an empty string.
+   */
+  get molecularWeightText() {
+    const mw = this.molecule?.molecular_weight;
+    return (typeof mw === 'number' && Number.isFinite(mw))
+      ? ` (${mw.toFixed(MW_PRECISION)} g/mol)`
+      : '';
   }
 
   /** @type {number} */
@@ -30,6 +56,16 @@ export default class Component extends Sample {
   /** @param {number} amount_mol */
   set amount_mol(amount_mol) {
     this._amount_mol = amount_mol;
+  }
+
+  /** @type {number} */
+  get relative_molecular_weight() {
+    return this._relative_molecular_weight;
+  }
+
+  /** @param {number} relative_molecular_weight */
+  set relative_molecular_weight(relative_molecular_weight) {
+    this._relative_molecular_weight = relative_molecular_weight;
   }
 
   /** @type {number} */
@@ -77,9 +113,8 @@ export default class Component extends Sample {
    * Handles volume input changes and recalculates dependent values.
    * @param {Object} amount - Contains value and unit.
    * @param {number} totalVolume - Total volume of the mixture.
-   * @param {Object} referenceComponent - Reference component for ratio calculations.
    */
-  handleVolumeChange(amount, totalVolume, referenceComponent) {
+  handleVolumeChange(amount, totalVolume) {
     if (!amount.unit || Number.isNaN(amount.value)) return;
 
     this.setVolumeOrMass(amount);
@@ -88,11 +123,7 @@ export default class Component extends Sample {
 
     this.calculateAmount(purity);
 
-    this.updateRatioFromReference(referenceComponent);
-
-    if (totalVolume && totalVolume > 0) {
-      this.calculateTargetConcentration(totalVolume);
-    }
+    this.calculateTargetConcentration(totalVolume);
   }
 
   /**
@@ -144,9 +175,8 @@ export default class Component extends Sample {
    * Handles molar amount change and recalculates dependent fields.
    * @param {{value: number, unit: string}} amount
    * @param {number} totalVolume
-   * @param {Component} referenceComponent
    */
-  handleAmountChange(amount, totalVolume, referenceComponent) {
+  handleAmountChange(amount, totalVolume) {
     if (Number.isNaN(amount.value) || amount.unit !== 'mol') return;
 
     this.amount_mol = amount.value;
@@ -159,11 +189,7 @@ export default class Component extends Sample {
       this.calculateMassFromAmount(purity);
     }
 
-    this.updateRatioFromReference(referenceComponent);
-
-    if (totalVolume && totalVolume > 0) {
-      this.calculateTargetConcentration(totalVolume);
-    }
+    this.calculateTargetConcentration(totalVolume);
   }
 
   /**
@@ -179,12 +205,23 @@ export default class Component extends Sample {
   /**
    * Calculates mass or updates purity for solid based on lock flag.
    * @param {number} purity
+   * @param {boolean} [lockAmountColumnSolids] - Optional lock state. If not provided, will be retrieved from store using parent_id as sampleId.
    */
-  calculateMassFromAmount(purity) {
+  calculateMassFromAmount(purity, lockAmountColumnSolids = null) {
     // mass_g = (amount_mol * molecular_weight) / purity
-    const { lockAmountColumnSolids } = ComponentStore.getState();
+    let lockState = lockAmountColumnSolids;
+    if (lockState === null) {
+      // Try to get lock state from store using parent_id as sample ID
+      try {
+        const componentState = ComponentStore.getState();
+        lockState = ComponentStore.getLockStateForSample(componentState, 'lockAmountColumnSolids', this.parent_id);
+      } catch (e) {
+        // Fallback to false if store is not available
+        lockState = false;
+      }
+    }
 
-    if (lockAmountColumnSolids) {
+    if (lockState) {
       this.updatePurityFromAmount();
     } else {
       this.amount_g = ((this.amount_mol ?? 0) * this.molecule_molecular_weight) / purity;
@@ -200,15 +237,14 @@ export default class Component extends Sample {
    * @param {number} totalVolume
    * @param {string} concType - 'startingConc' or other
    * @param {boolean} lockColumn
-   * @param {Object} referenceComponent
    */
-  handleConcentrationChange(amount, totalVolume, concType, lockColumn, referenceComponent) {
+  handleConcentrationChange(amount, totalVolume, concType, lockColumn) {
     if (!amount.unit || Number.isNaN(amount.value) || amount.unit !== 'mol/l' || lockColumn) { return; }
 
     if (concType === 'startingConc') {
       this.handleStartingConcChange(amount);
     } else {
-      this.handleTargetConcChange(amount, totalVolume, referenceComponent);
+      this.handleTargetConcChange(amount, totalVolume);
     }
   }
 
@@ -225,11 +261,10 @@ export default class Component extends Sample {
    * Sets the target concentration and updates related fields.
    * @param {{value: number, unit: string}} amount
    * @param {number} totalVolume
-   * @param {Component} referenceComponent
    */
-  handleTargetConcChange(amount, totalVolume, referenceComponent) {
+  handleTargetConcChange(amount, totalVolume) {
     this.setTargetConcentration(amount);
-    this.handleTargetConcUpdates(totalVolume, referenceComponent);
+    this.handleTargetConcUpdates(totalVolume);
   }
 
   /**
@@ -316,23 +351,20 @@ export default class Component extends Sample {
    * @param {number} totalVolume
    */
   calculateTargetConcentration(totalVolume) {
-    const lockedConcentration = this.isComponentConcentrationLocked();
+    if (this.isComponentConcentrationLocked()) return;
 
-    if (!lockedConcentration) {
-      // totalConc_mol/l = amount_mol/totalVolume_l
-      const concentration = totalVolume > 0 ? (this.amount_mol ?? 0) / totalVolume : 0;
-      this.molarity_value = concentration;
-      this.concn = concentration;
-      this.molarity_unit = 'M';
-    }
+    const concentration = totalVolume > 0 ? (this.amount_mol ?? 0) / totalVolume : null;
+
+    this.molarity_value = concentration;
+    this.concn = concentration;
+    this.molarity_unit = 'M';
   }
 
   /**
    * Handles updates related to target concentration changes.
    * @param {number} totalVolume - The total volume of the mixture.
-   * @param {Component} referenceComponent - The reference component for ratio-based calculations.
    */
-  handleTargetConcUpdates(totalVolume, referenceComponent) {
+  handleTargetConcUpdates(totalVolume) {
     const purity = this.purity || 1.0;
 
     // Calculate Amount (mol): Both solid and liquid
@@ -356,14 +388,14 @@ export default class Component extends Sample {
    * Total Volume changes -> total concentration changes -> amount changes ->volume changes
    * @param {number} totalVolume - The new total volume.
    */
-  handleTotalVolumeChanges(totalVolume, referenceComponent) {
+  handleTotalVolumeChanges(totalVolume) {
     const lockedConcentration = this.isComponentConcentrationLocked();
 
     if (lockedConcentration) {
       // Case 2: Total volume updated; Total Conc. is locked; thus ratio is also locked
       // Amount recalculated
       // Volume recalculated
-      this.handleTargetConcUpdates(totalVolume, referenceComponent);
+      this.handleTargetConcUpdates(totalVolume);
     } else {
       // Case 3: Total volume updated; Total Conc. is not locked
       // Recalculate the total conc. Amount, Volume stay the same
@@ -472,9 +504,7 @@ export default class Component extends Sample {
     }
 
     // Total concentration calculation
-    if (totalVolume && totalVolume > 0) {
-      this.calculateTargetConcentration(totalVolume);
-    }
+    this.calculateTargetConcentration(totalVolume);
   }
 
   // Case 1(Solids): Mass given -> Calculate Amount
@@ -550,22 +580,17 @@ export default class Component extends Sample {
       this.amount_mol = (previous_amount * this.purity) / prevPurity;
       this.updateRatioFromReference(referenceComponent);
 
-      if (totalVolume && totalVolume > 0) {
-        this.calculateTargetConcentration(totalVolume);
-      }
+      this.calculateTargetConcentration(totalVolume);
     } else if (materialGroup === 'solid') {
       if (lockAmountColumnSolids) {
         // Amount [mol] = amount [g] * purity / molar mass [g/mol]
         this.amount_mol = (this.amount_g * this.purity) / this.molecule_molecular_weight;
         this.updateRatioFromReference(referenceComponent);
 
-        if (totalVolume && totalVolume > 0) {
-          this.calculateTargetConcentration(totalVolume);
-        }
+        this.calculateTargetConcentration(totalVolume);
       } else {
-        // mass is not locked
-        // mass_g = (amount_mol * molecular_weight) / purity
-        this.amount_g = ((this.amount_mol ?? 0) * this.molecule_molecular_weight) / this.purity;
+        // mass is not locked - pass lockAmountColumnSolids to calculateMassFromAmount
+        this.calculateMassFromAmount(this.purity, lockAmountColumnSolids);
       }
     }
   }
@@ -628,24 +653,61 @@ export default class Component extends Sample {
   }
 
   /**
+   * Calculates the relative molecular weight for this component based on its mass contribution
+   * to the total mixture mass.
+   *
+   * Formula: relative MW = total_mixture_mass_g / amount_mol_component (g/mol)
+   *
+   * @param {Sample} sample - The parent sample containing mixture details
+   * @returns {Object} Component summary with id, name, amount_mol, and relative_molecular_weight
+   */
+  calculateRelativeMolecularWeight(sample) {
+    if (!sample.isMixture() || !this) {
+      return null;
+    }
+
+    const totalMixtureMass = sample.total_mixture_mass_g || 0;
+    const componentAmountMol = this.amount_mol || 0;
+
+    const relativeMW = (totalMixtureMass > 0 && componentAmountMol > 0)
+      ? totalMixtureMass / componentAmountMol
+      : 0;
+
+    // Ensure component_properties exists
+    this.component_properties = this.component_properties || {};
+
+    // Assign calculated value
+    this.component_properties.relative_molecular_weight = relativeMW;
+
+    // Return summary for reporting/debugging
+    return {
+      id: this.id,
+      name: this.name || 'Unknown',
+      amount_mol: componentAmountMol,
+      relative_molecular_weight: relativeMW
+    };
+  }
+
+  /**
    * Serializes the component into a plain object.
    * @returns {Object} Serialized component data.
    */
   serializeComponent() {
     return {
       id: this.id,
-      name: this.name || this.molecule.iupac_name,
+      name: this.name || (this.molecule ? this.molecule.iupac_name : ''),
       position: this.position,
       component_properties: {
         amount_mol: this.amount_mol,
         amount_l: this.amount_l,
         amount_g: this.amount_g,
+        relative_molecular_weight: this.relative_molecular_weight,
         density: this.density,
         molarity_unit: this.molarity_unit,
         molarity_value: this.molarity_value,
         starting_molarity_value: this.starting_molarity_value,
         starting_molarity_unit: this.starting_molarity_unit,
-        molecule_id: this.molecule.id,
+        molecule_id: this.molecule ? this.molecule.id : this.molecule_id,
         equivalent: this.equivalent,
         parent_id: this.parent_id,
         material_group: this.material_group,
@@ -700,8 +762,16 @@ export default class Component extends Sample {
    */
   static deserializeData(component) {
     const { component_properties, ...rest } = component;
-    const sampleData = { ...rest, ...component_properties };
+    const { molecule, ...otherProperties } = component_properties || {};
+    const sampleData = { ...rest, ...otherProperties };
 
-    return new Component(sampleData);
+    const comp = new Component(sampleData);
+
+    // Set the molecule if it exists in component_properties
+    if (molecule) {
+      comp.molecule = molecule;
+    }
+
+    return comp;
   }
 }

@@ -36,6 +36,7 @@ module Datacollector
 
       raise Errors::DatacollectorError, "Sender not found #{from}" unless validate(@sender)
       raise Errors::DatacollectorError, "Recipient not found #{to}" unless validate(@recipient)
+      raise Errors::DatacollectorError, 'Recipient can only be a User' unless valid_recipient?(@recipient)
       raise Errors::DatacollectorError, 'User can only send to self' if @sender.is_a?(User) && @recipient != @sender
 
       prepare_containers

@@ -91,7 +91,7 @@ export default class ResearchPlan extends Element {
           type: 'ketcher',
           value: {
             svg_file: null,
-            thumb_svg: null
+            preview_attachment: null
           }
         });
         break;

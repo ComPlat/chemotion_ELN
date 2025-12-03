@@ -1,0 +1,225 @@
+# frozen_string_literal: true
+
+# == Schema Information
+#
+# Table name: sequence_based_macromolecule_samples
+#
+#  id                              :bigint           not null, primary key
+#  activity_per_mass_unit          :string           default("U/g"), not null
+#  activity_per_mass_value         :float
+#  activity_per_volume_unit        :string           default("U/L"), not null
+#  activity_per_volume_value       :float
+#  activity_unit                   :string           default("U"), not null
+#  activity_value                  :float
+#  amount_as_used_mass_unit        :string           default("g"), not null
+#  amount_as_used_mass_value       :float
+#  amount_as_used_mol_unit         :string           default("mol"), not null
+#  amount_as_used_mol_value        :float
+#  ancestry                        :string           default("/"), not null
+#  concentration_unit              :string           default("ng/L"), not null
+#  concentration_value             :float
+#  deleted_at                      :datetime
+#  external_label                  :string
+#  formulation                     :string           default("")
+#  function_or_application         :string
+#  heterologous_expression         :string           default("unknown"), not null
+#  localisation                    :string           default("")
+#  molarity_unit                   :string           default("mol/L"), not null
+#  molarity_value                  :float
+#  name                            :string           not null
+#  obtained_by                     :string           default("")
+#  organism                        :string           default("")
+#  purification_method             :string           default("")
+#  purity                          :float
+#  purity_detection                :string           default("")
+#  short_label                     :string           not null
+#  strain                          :string           default("")
+#  supplier                        :string           default("")
+#  tissue                          :string           default("")
+#  volume_as_used_unit             :string           default("L"), not null
+#  volume_as_used_value            :float
+#  created_at                      :datetime         not null
+#  updated_at                      :datetime         not null
+#  sequence_based_macromolecule_id :bigint
+#  taxon_id                        :string           default("")
+#  user_id                         :bigint
+#
+# Indexes
+#
+#  idx_sbmm_samples_ancestry    (ancestry)
+#  idx_sbmm_samples_deleted_at  (deleted_at)
+#  idx_sbmm_samples_sbmm        (sequence_based_macromolecule_id)
+#  idx_sbmm_samples_user        (user_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (sequence_based_macromolecule_id => sequence_based_macromolecules.id)
+#  fk_rails_...  (user_id => users.id)
+#
+class SequenceBasedMacromoleculeSample < ApplicationRecord
+  acts_as_paranoid
+
+  include ElementUIStateScopes
+  include PgSearch::Model
+  include Collectable
+  include ElementCodes
+  include AnalysisCodes
+  include Taggable
+
+  before_create :auto_assign_short_label
+
+  has_one :container, as: :containable, inverse_of: :containable, dependent: :nullify
+  has_ancestry orphan_strategy: :adopt
+
+  has_many :attachments, as: :attachable, inverse_of: :attachable, dependent: :nullify
+  has_many :collections_sequence_based_macromolecule_samples, inverse_of: :sequence_based_macromolecule_sample,
+                                                              dependent: :destroy
+  has_many :collections, through: :collections_sequence_based_macromolecule_samples
+  has_many :comments, as: :commentable, inverse_of: :commentable, dependent: :destroy
+  has_many :sync_collections_users, through: :collections
+
+  belongs_to :sequence_based_macromolecule
+  belongs_to :user
+
+  scope :created_by, ->(user_id) { where(user_id: user_id) }
+  scope :not_created_by, ->(user_id) { where.not(user_id: user_id) }
+  scope :includes_for_list_display, -> { includes(:sequence_based_macromolecule) }
+  scope :in_sbmm_order, lambda {
+                          joins(:sequence_based_macromolecule)
+                            .order(updated_at: :desc, 'sequence_based_macromolecules.short_name' => :asc)
+                        }
+  scope :in_sbmm_sequence_order, lambda {
+                                   joins(:sequence_based_macromolecule)
+                                     .order('sequence_based_macromolecules.sequence' => :asc)
+                                 }
+
+  multisearchable against: %i[
+    name short_label organism taxon_id strain tissue
+  ]
+
+  pg_search_scope :search_by_sbmm_sample_name, against: :name
+  pg_search_scope :search_by_sbmm_sample_short_label, against: :short_label
+  pg_search_scope :search_by_sbmm_sample_organism, against: :organism
+  pg_search_scope :search_by_sbmm_sample_taxon_id, against: :taxon_id
+  pg_search_scope :search_by_sbmm_sample_strain, against: :strain
+  pg_search_scope :search_by_sbmm_sample_tissue, against: :tissue
+
+  pg_search_scope :search_by_sbmm_systematic_name, associated_against: {
+    sequence_based_macromolecule: :systematic_name,
+  }
+  pg_search_scope :search_by_sbmm_short_name, associated_against: {
+    sequence_based_macromolecule: :short_name,
+  }
+  pg_search_scope :search_by_sbmm_other_identifier, associated_against: {
+    sequence_based_macromolecule: :other_identifier,
+  }
+  pg_search_scope :search_by_sbmm_own_identifier, associated_against: {
+    sequence_based_macromolecule: :own_identifier,
+  }
+  pg_search_scope :search_by_sbmm_ec_numbers, associated_against: {
+    sequence_based_macromolecule: :ec_numbers,
+  }
+  pg_search_scope :search_by_sbmm_organism, associated_against: {
+    sequence_based_macromolecule: :organism,
+  }
+  pg_search_scope :search_by_sbmm_taxon_id, associated_against: {
+    sequence_based_macromolecule: :taxon_id,
+  }
+  pg_search_scope :search_by_sbmm_strain, associated_against: {
+    sequence_based_macromolecule: :strain,
+  }
+  pg_search_scope :search_by_sbmm_tissue, associated_against: {
+    sequence_based_macromolecule: :tissue,
+  }
+
+  pg_search_scope :search_by_substring, against: %i[
+    name short_label organism taxon_id strain tissue
+  ], associated_against: {
+    sequence_based_macromolecule: %i[
+      systematic_name short_name other_identifier own_identifier ec_numbers organism taxon_id strain tissue
+    ],
+  }, using: { trigram: { threshold: 0.0001 } }
+
+  def self.search_text_filter(term, field)
+    Arel.sql(
+      "COALESCE(array_agg(DISTINCT #{field}) FILTER (WHERE #{field} ILIKE '#{term}'), '{}')",
+    )
+  end
+
+  def self.search_array_filter(term, table, field)
+    Arel.sql(
+      'COALESCE(' \
+      "(SELECT array_agg(DISTINCT val) FROM #{table} s, unnest(s.#{field}) val WHERE val ILIKE '#{term}'), '{}'" \
+      ')',
+    )
+  end
+
+  def self.by_search_fields(query)
+    term = "%#{sanitize_sql_like(query)}%"
+
+    json_expr = Arel.sql(
+      'jsonb_build_object(' \
+      "'sbmm_sample_name', #{search_text_filter(term, 'sequence_based_macromolecule_samples.name')}, " \
+      "'sbmm_sample_short_label', #{search_text_filter(term, 'sequence_based_macromolecule_samples.short_label')}, " \
+      "'sbmm_sample_organism', #{search_text_filter(term, 'sequence_based_macromolecule_samples.organism')}, " \
+      "'sbmm_sample_taxon_id', #{search_text_filter(term, 'sequence_based_macromolecule_samples.taxon_id')}, " \
+      "'sbmm_sample_strain', #{search_text_filter(term, 'sequence_based_macromolecule_samples.strain')}, " \
+      "'sbmm_sample_tissue', #{search_text_filter(term, 'sequence_based_macromolecule_samples.tissue')}, " \
+      "'sbmm_systematic_name', #{search_text_filter(term, 'sequence_based_macromolecules.systematic_name')}, " \
+      "'sbmm_short_name', #{search_text_filter(term, 'sequence_based_macromolecules.short_name')}, " \
+      "'sbmm_other_identifier', #{search_text_filter(term, 'sequence_based_macromolecules.other_identifier')}, " \
+      "'sbmm_own_identifier', #{search_text_filter(term, 'sequence_based_macromolecules.own_identifier')}, " \
+      "'sbmm_ec_numbers', #{search_array_filter(term, 'sequence_based_macromolecules', 'ec_numbers')}, " \
+      "'sbmm_organism', #{search_text_filter(term, 'sequence_based_macromolecules.organism')}, " \
+      "'sbmm_taxon_id', #{search_text_filter(term, 'sequence_based_macromolecules.taxon_id')}, " \
+      "'sbmm_strain', #{search_text_filter(term, 'sequence_based_macromolecules.strain')}, " \
+      "'sbmm_tissue', #{search_text_filter(term, 'sequence_based_macromolecules.tissue')}" \
+      ')',
+    )
+
+    select(json_expr.as('result')).joins(:sequence_based_macromolecule).take.result
+  end
+
+  def self.user_count_for_sbmm(sbmm_id:, except_user_id: nil)
+    scope = where(sequence_based_macromolecule_id: sbmm_id)
+    scope = scope.not_created_by(except_user_id) if except_user_id.present?
+    scope.distinct.count(:user_id)
+  end
+
+  def analyses
+    container&.analyses || []
+  end
+
+  def auto_assign_short_label
+    return if short_label
+    return unless user
+
+    prefix = 'sbmmS'
+    abbr = user.name_abbreviation
+    self.short_label = "#{abbr}-#{prefix}#{user.counters['sequence_based_macromolecule_samples'].to_i.succ}"
+    user.increment_counter 'sequence_based_macromolecule_samples' # rubocop:disable Rails/SkipsModelValidations
+  end
+
+  def counter_for_split_short_label
+    element_children = children.with_deleted.order(:created_at)
+    last_child_label = element_children.where('short_label LIKE ?', "#{short_label}-%").last&.short_label
+    last_child_counter = (last_child_label&.match(/^#{short_label}-(\d+)/) && ::Regexp.last_match(1).to_i) || 0
+
+    [last_child_counter, element_children.count].max
+  end
+
+  def all_collections(user, collection_ids)
+    Collection.where(id: collection_ids) | Collection.where(user_id: user, label: 'All', is_locked: true)
+  end
+
+  def create_sub_sequence_based_macromolecule_sample(user, collection_ids)
+    sub_sbmm_sample = dup
+    sub_sbmm_sample.short_label = "#{short_label}-#{counter_for_split_short_label + 1}"
+    sub_sbmm_sample.parent = self
+    sub_sbmm_sample.user_id = user.id
+    sub_sbmm_sample.collections << all_collections(user, collection_ids)
+    sub_sbmm_sample.container = Container.create_root_container
+    sub_sbmm_sample.save!
+    sub_sbmm_sample
+  end
+end

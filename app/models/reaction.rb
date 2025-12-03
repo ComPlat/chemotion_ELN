@@ -183,10 +183,10 @@ class Reaction < ApplicationRecord
   end
 
   def temperature_display
-    userText = temperature['userText']
+    userText = (temperature && temperature['userText']) || ''
     return userText if userText != ''
 
-    return '' if temperature['data'].empty?
+    return '' if !temperature || !temperature['data'] || temperature['data'].empty?
 
     arrayData = temperature['data']
     maxTemp = (arrayData.max_by { |x| x['value'] })['value']

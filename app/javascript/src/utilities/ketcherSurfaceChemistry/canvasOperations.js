@@ -434,8 +434,10 @@ const onTemplateMove = async (editor, recenter = false, options = {}) => {
   latestData.root.nodes = imageNodes;
 
   // Always reposition text nodes to follow atom positions
-  const textNodes = await placeTextOnAtoms();
-  latestData.root.nodes = textNodes;
+  if (textListCopy.length > 0) {
+    const textNodes = await placeTextOnAtoms(molCopy, textListCopy);
+    latestData.root.nodes = textNodes;
+  }
   await applyCanvasDataToEditor(editor, latestData, recenter);
   await fetchKetcherData(editor);
 
@@ -553,6 +555,11 @@ const replaceAliasesWithIndexesAndCollectComponents = async (comboString) => {
   return { replacedString, textNodeStructureForComponents };
 };
 
+const attachSVG = async (data, editor) => ({
+  ...data,
+  svgElement: await prepareSvg(editor)
+});
+
 const onFinalCanvasSave = async (editor, iframeRef) => {
   try {
     let textNodesFormula = '';
@@ -578,13 +585,15 @@ const onFinalCanvasSave = async (editor, iframeRef) => {
     resetStore();
     return {
       ket2Molfile: ket2Lines.join('\n'),
-      svgElement,
       textNodesFormula,
+      svgElement,
       componentsList: componentsListContainer,
     };
   } catch (e) {
-    console.error('onSaveFileK2SC', e);
-    return e.message;
+    return attachSVG({
+      ket2Molfile: '',
+      textNodesFormula: '',
+    }, editor);
   }
 };
 

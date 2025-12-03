@@ -125,7 +125,12 @@ export default class SampleForm extends React.Component {
   }
 
   handleAmountChanged(amount) {
-    this.props.sample.setAmount(amount);
+    const { sample } = this.props;
+
+    // sample.initializeSampleDetails?.();
+    // sample.sample_details.reference_component_changed = false;
+
+    sample.setAmount(amount);
   }
 
   handleMolarityChanged(molarity) {
@@ -134,12 +139,44 @@ export default class SampleForm extends React.Component {
   }
 
   handleSampleTypeChanged(sampleType) {
-    const { sample } = this.props;
+    const { sample, handleSampleChanged } = this.props;
 
     // selectedSampleType = {label: 'Single molecule', value: 'Micromolecule'}
     sample.updateSampleType(sampleType.value);
     this.setState({ selectedSampleType: sampleType });
-    this.props.handleSampleChanged(sample);
+
+    // If switching to Mixture, create component(s) from the current sample
+    if (sampleType.value === 'Mixture' && sample.molecule && sample.molfile) {
+      this.createComponentsFromCurrentSample(sample);
+    }
+
+    handleSampleChanged(sample);
+  }
+
+  /**
+   * Creates components from the current sample when switching to Mixture type.
+   * Uses the new method from Sample model.
+   * @param {Sample} sample - The sample to create components from
+   */
+  createComponentsFromCurrentSample(sample) {
+    // Use the new method from Sample model
+    sample.createComponentsFromCurrentSample('ketcher')
+      .then((result) => {
+        if (result) {
+          this.props.handleSampleChanged(sample);
+        }
+      })
+      .catch((errorMessage) => {
+        // Show error notification
+        NotificationActions.add({
+          title: 'Error Creating Components',
+          message: `Failed to create components: ${errorMessage}`,
+          level: 'error',
+          position: 'tc',
+          dismissible: 'button',
+          autoDismiss: 10
+        });
+      });
   }
 
   handleDensityChanged(density) {
@@ -149,6 +186,16 @@ export default class SampleForm extends React.Component {
 
   handleMolecularMassChanged(mass) {
     this.props.sample.setMolecularMass(mass);
+  }
+
+  handleMixtureAmountLChanged(e, sample) {
+    // Your specific function logic here
+    // For example, you can call sample.setTotalMixtureVolume or any other custom logic
+    const totalVolume = e && (e.value || e.value === 0) ? e.value : e;
+    sample.setTotalMixtureVolume(totalVolume);
+
+    // Call the standard field change handler
+    this.handleFieldChanged('amount_l', e);
   }
 
   handleMixtureComponentChanged(sample) {
@@ -583,6 +630,20 @@ export default class SampleForm extends React.Component {
     );
   }
 
+  /**
+   * Renders the inventory label input section with the text input and next label button.
+   * @param {Object} sample - The sample object
+   * @returns {JSX.Element} The rendered inventory label section
+   */
+  inventoryLabelSection(sample) {
+    return (
+      <>
+        {this.textInput(sample, 'xref_inventory_label', 'Inventory label')}
+        {this.nextInventoryLabel(sample)}
+      </>
+    );
+  }
+
   inputWithUnit(sample, field, label) {
     const value = sample.xref && sample.xref[field.split('xref_')[1]] ? sample.xref[field.split('xref_')[1]].value : '';
     const unit = sample.xref && sample.xref[field.split('xref_')[1]] ? sample.xref[field.split('xref_')[1]].unit : '°C';
@@ -746,25 +807,67 @@ export default class SampleForm extends React.Component {
    * @param {Object} sample - The sample object
    * @returns {JSX.Element|false} The rendered input or false if not applicable
    */
-  totalAmount(sample) {
-    const isDisabled = !sample.can_update;
+  totalMixtureVolume(sample) {
+    const isDisabled = sample.isMethodDisabled('amount_value')
+      || sample.gas_type === 'gas'
+      || sample.gas_type === 'feedstock'
+      || sample.contains_residues
+      || !sample.can_update;
 
-    if (!sample.isMethodDisabled('amount_value') && !sample.contains_residues) {
-      return this.numInput(
-        sample,
-        'amount_l',
-        'l',
-        ['m', 'u', 'n'],
-        5,
-        'Total volume',
-        'l',
-        isDisabled,
-        '',
-        false,
-        false,
-        true
+    const metricPrefixes = ['m', 'u', 'n'];
+    const prefix = sample.metrics?.[3] && metricPrefixes.includes(sample.metrics[3])
+      ? sample.metrics[3]
+      : 'm';
+
+    if (!isDisabled) {
+      return (
+        <NumeralInputWithUnitsCompo
+          value={sample.amount_l}
+          unit="l"
+          label="Total volume"
+          metricPrefix={prefix}
+          metricPrefixes={metricPrefixes}
+          precision={5}
+          title="Total volume"
+          variant="light"
+          id="numInput_total_mixture_volume_l"
+          showInfoTooltipTotalVol
+          onChange={(e) => this.handleMixtureAmountLChanged(e, sample)}
+        />
       );
     }
+  }
+
+  /**
+   * Renders the mixture density display.
+   * @param {Object} sample - The sample object
+   * @returns {JSX.Element} The rendered density display
+   */
+  totalMixtureDensity(sample) {
+    const isDisabled = !sample.can_update;
+
+    if (isDisabled) return null;
+
+    // Pass null/undefined when density is not set, so it displays as "n.d."
+    // Only pass the actual value if density is set (including 0)
+    const density = (sample.density != null && sample.density !== '') ? sample.density : null;
+
+    return (
+      <div>
+        <NumeralInputWithUnitsCompo
+          value={density}
+          unit="g/ml"
+          label="Mixture density"
+          metricPrefix="n"
+          metricPrefixes={['n']}
+          precision={3}
+          title="Mixture density"
+          variant="light"
+          id="numInput_total_mixture_density"
+          disabled
+        />
+      </div>
+    );
   }
 
   /**
@@ -788,8 +891,34 @@ export default class SampleForm extends React.Component {
         disabled
         variant="light"
         id="numInput_amount_l"
-        showInfoTooltipRequiredVol={true}
+        showInfoTooltipRequiredVol
       />
+    );
+  }
+
+  /**
+   * Renders the total mixture mass using NumeralInputWithUnitsCompo, similar to Required volume.
+   * @returns {JSX.Element|null}
+   */
+  totalMixtureMass() {
+    const { sample } = this.props;
+    const massG = sample.amount_g || sample.total_mixture_mass_g;
+
+    return (
+      <div>
+        <NumeralInputWithUnitsCompo
+          value={massG || 0}
+          unit="g"
+          label="Total mixture mass"
+          metricPrefix="m"
+          metricPrefixes={['m', 'n', 'u']}
+          precision={6}
+          title="Total mixture mass"
+          disabled
+          variant="light"
+          id="numInput_total_mixture_mass_g"
+        />
+      </div>
     );
   }
 
@@ -923,6 +1052,7 @@ export default class SampleForm extends React.Component {
             onChange={this.handleMixtureComponentChanged}
             enableComponentLabel={enableComponentLabel}
             enableComponentPurity={enableComponentPurity}
+            setComponentDeletionLoading={this.props.setComponentDeletionLoading}
           />
         </Col>
       </Row>
@@ -1087,91 +1217,124 @@ export default class SampleForm extends React.Component {
               {enableSampleDecoupled && <Col xs={2}>{this.decoupledCheckbox(sample)}</Col>}
             </Row>
 
-            <Row className="align-items-end mb-4">
-              <Col>{this.textInput(sample, 'short_label', 'Short label', true)}</Col>
-              <Col>{this.textInput(sample, 'external_label', 'External label')}</Col>
-              <Col className="d-flex align-items-end">
-                {this.textInput(sample, 'xref_inventory_label', 'Inventory label')}
-                {this.nextInventoryLabel(sample)}
-              </Col>
-              <Col>{this.textInput(sample, 'location', 'Location')}</Col>
-              <Col xs={2}>{this.drySolventCheckbox(sample)}</Col>
-            </Row>
-
-            {sample.decoupled && (
-              <Row className="mb-4">
-                <Col>
-                  {this.numInput(sample, 'molecular_mass', 'g/mol', ['m', 'n'], 5, 'Molecular mass', '', isDisabled)}
-                </Col>
+              <Row className="align-items-end mb-4">
+                <Col>{this.textInput(sample, 'short_label', 'Short label', true)}</Col>
+                <Col>{this.textInput(sample, 'external_label', 'External label')}</Col>
                 <Col className="d-flex align-items-end">
-                  {this.textInput(sample, 'sum_formula', 'Sum formula')}
-                  {this.btnCalculateMolecularMass()}
-                  {this.markUndefinedButton()}
+                  {this.inventoryLabelSection(sample)}
+                </Col>
+                <Col>{this.textInput(sample, 'location', 'Location')}</Col>
+                <Col xs={2}>{this.drySolventCheckbox(sample)}</Col>
+              </Row>
+
+              {sample.decoupled && (
+                <Row className="mb-4">
+                  <Col>
+                    {this.numInput(sample, 'molecular_mass', 'g/mol', ['m', 'n'], 5, 'Molecular mass', '', isDisabled)}
+                  </Col>
+                  <Col className="d-flex align-items-end">
+                    {this.textInput(sample, 'sum_formula', 'Sum formula')}
+                    {this.btnCalculateMolecularMass()}
+                    {this.markUndefinedButton()}
+                  </Col>
+                </Row>
+              )}
+
+              <Row className="align-items-center g-2 mb-4">
+                <Col xs={6} className="d-flex align-items-end gap-2">
+                  {this.infoButton()}
+                  {this.sampleAmount(sample)}
+                </Col>
+                {sample.contains_residues && (
+                  <Col>{this.attachedAmountInput(sample)}</Col>
+                )}
+                <Col>
+                  {this.densityMolarityInput(sample)}
+                </Col>
+                <Col className="gap-2">
+                  {
+                    this.numInputWithoutTable(sample, 'purity', 'n', ['n'], 5, 'Purity/Concentration', '', isDisabled)
+                  }
                 </Col>
               </Row>
-            )}
 
-            <Row className="align-items-center g-2 mb-4">
-              <Col xs={6} className="d-flex align-items-end gap-2">
-                {this.infoButton()}
-                {this.sampleAmount(sample)}
-              </Col>
-              {sample.contains_residues && <Col>{this.attachedAmountInput(sample)}</Col>}
-              <Col>{this.densityMolarityInput(sample)}</Col>
-              <Col className="gap-2">
-                {this.numInputWithoutTable(sample, 'purity', 'n', ['n'], 5, 'Purity/Concentration', '', isDisabled)}
-              </Col>
-            </Row>
+              <Row className="mb-4">
+                <Col>{this.textInput(sample, 'xref_form', 'Form')}</Col>
+                <Col>{this.textInput(sample, 'xref_color', 'Color')}</Col>
+                <Col>{this.textInput(sample, 'xref_solubility', 'Soluble in')}</Col>
+              </Row>
+              <Row className="align-items-end mb-4">
+                <Col>
+                  <TextRangeWithAddon
+                    field="melting_point"
+                    label="Melting point"
+                    addon="°C"
+                    value={sample.melting_point_display}
+                    disabled={polyDisabled}
+                    onChange={this.handleRangeChanged}
+                    tipOnText="Use space-separated value to input a Temperature range"
+                  />
+                </Col>
 
-            <Row className="mb-4">
-              <Col>{this.textInput(sample, 'xref_form', 'Form')}</Col>
-              <Col>{this.textInput(sample, 'xref_color', 'Color')}</Col>
-              <Col>{this.textInput(sample, 'xref_solubility', 'Soluble in')}</Col>
-            </Row>
-            <Row className="align-items-end mb-4">
-              <Col>
-                <TextRangeWithAddon
-                  field="melting_point"
-                  label="Melting point"
-                  addon="°C"
-                  value={sample.melting_point_display}
-                  disabled={polyDisabled}
-                  onChange={this.handleRangeChanged}
-                  tipOnText="Use space-separated value to input a Temperature range"
-                />
-              </Col>
-
-              <Col>
-                <TextRangeWithAddon
-                  field="boiling_point"
-                  label="Boiling point"
-                  addon="°C"
-                  value={sample.boiling_point_display}
-                  disabled={polyDisabled}
-                  onChange={this.handleRangeChanged}
-                  tipOnText="Use space-separated value to input a Temperature range"
-                />
-              </Col>
-              <Col>{this.inputWithUnit(sample, 'xref_flash_point', 'Flash point')}</Col>
-              <Col>{this.textInput(sample, 'xref_refractive_index', 'Refractive index')}</Col>
-            </Row>
-          </>
-        ) : (
-          <Row>
-            <Col md={4}>{this.textInput(sample, 'name', 'Name')}</Col>
-            <Col md={4}>{this.textInput(sample, 'external_label', 'External label')}</Col>
-            <Col md={4}>{this.textInput(sample, 'xref_inventory_label', 'Inventory label')}</Col>
-          </Row>
-        )}
+                <Col>
+                  <TextRangeWithAddon
+                    field="boiling_point"
+                    label="Boiling point"
+                    addon="°C"
+                    value={sample.boiling_point_display}
+                    disabled={polyDisabled}
+                    onChange={this.handleRangeChanged}
+                    tipOnText="Use space-separated value to input a Temperature range"
+                  />
+                </Col>
+                <Col>{this.inputWithUnit(sample, 'xref_flash_point', 'Flash point')}</Col>
+                <Col>{this.textInput(sample, 'xref_refractive_index', 'Refractive index')}</Col>
+              </Row>
+            </>
+          ) : (
+            <>
+              <Row className="align-items-end mb-4">
+                <Col md={4}>
+                  {this.textInput(sample, 'name', 'Name')}
+                </Col>
+                <Col md={4}>
+                  {this.textInput(sample, 'external_label', 'External label')}
+                </Col>
+                <Col md={4} className="d-flex align-items-end">
+                  {this.inventoryLabelSection(sample)}
+                </Col>
+              </Row>
+              <Row className="align-items-end mb-4">
+                <Col md={4}>
+                  {this.textInput(sample, 'short_label', 'Short label', true)}
+                </Col>
+                <Col md={4}>
+                  {this.textInput(sample, 'location', 'Location')}
+                </Col>
+                <Col md={4}>
+                  {this.drySolventCheckbox(sample)}
+                </Col>
+              </Row>
+            </>
+          )
+        }
 
         {selectedSampleType?.value === 'Mixture' && (
           <>
             <br />
             <h5>Mixture components:</h5>
-            <Row className="mb-4 justify-content-end">
-              <Col xs={10} className="d-flex align-items-center justify-content-end">
-                <div className="me-3">{this.totalRequiredAmount()}</div>
-                {this.totalAmount(sample)}
+            <Row className="mb-4 g-2">
+              <Col xs={12} sm={6} lg={3}>
+                {this.totalMixtureMass()}
+              </Col>
+              <Col xs={12} sm={6} lg={3}>
+                {this.totalMixtureDensity(sample)}
+              </Col>
+              <Col xs={12} sm={6} lg={3}>
+                {this.totalRequiredAmount()}
+              </Col>
+              <Col xs={12} sm={6} lg={3}>
+                {this.totalMixtureVolume(sample)}
               </Col>
             </Row>
 

@@ -23,6 +23,7 @@ const EditModeRow = ({ container, handleChange, element, readOnly, index, rootCo
         <ContainerComponent
           analysisMethodTitle="Type (BioAssay Ontology)"
           ontologyName="bao"
+          element={element}
           templateType="researchPlan"
           readOnly={readOnly}
           disabled={false}

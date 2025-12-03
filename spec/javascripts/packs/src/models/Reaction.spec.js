@@ -139,5 +139,93 @@ describe('Reaction', () => {
       expect(copy.starting_materials).toEqual([]);
     });
   });
+
+  describe('Reaction.buildEmpty()', () => {
+    it('should initialize volume as null', () => {
+      const emptyReaction = Reaction.buildEmpty(1);
+      expect(emptyReaction.volume).toBe(null);
+    });
+
+    it('should initialize use_reaction_volume as false', () => {
+      const emptyReaction = Reaction.buildEmpty(1);
+      expect(emptyReaction.use_reaction_volume).toBe(false);
+    });
+  });
+
+  describe('Reaction.serialize()', () => {
+    it('should include volume in serialized output', () => {
+      reaction.volume = 0.5;
+      const serialized = reaction.serialize();
+      expect(serialized.volume).toBe(0.5);
+    });
+
+    it('should include use_reaction_volume in serialized output', () => {
+      reaction.use_reaction_volume = true;
+      const serialized = reaction.serialize();
+      expect(serialized.use_reaction_volume).toBe(true);
+    });
+  });
+
+  describe('Reaction.calculateCombinedReactionVolume()', () => {
+    it('calculates combined volume from solvents and materials', async() => {
+      const solvent = await SampleFactory.build('reactionConcentrations.water_100g');
+      const startingMaterial = await SampleFactory.build('reactionConcentrations.water_100g');
+      const reactant = await SampleFactory.build('reactionConcentrations.water_100g');
+      
+      // Set amount_l by setting amount_value and amount_unit to 'l'
+      // amount_l getter returns amount_value when amount_unit === 'l'
+      solvent.amount_value = 0.1;
+      solvent.amount_unit = 'l';
+      startingMaterial.amount_value = 0.05;
+      startingMaterial.amount_unit = 'l';
+      reactant.amount_value = 0.03;
+      reactant.amount_unit = 'l';
+      
+      reaction.solvents = [solvent];
+      reaction.starting_materials = [startingMaterial];
+      reaction.reactants = [reactant];
+      reaction.products = [];
+
+      const result = reaction.calculateCombinedReactionVolume();
+      expect(result).toBeCloseTo(0.18, 5);
+    });
+
+    it('returns null when no volumes are present', () => {
+      reaction.solvents = [];
+      reaction.starting_materials = [];
+      reaction.reactants = [];
+      reaction.products = [];
+
+      const result = reaction.calculateCombinedReactionVolume();
+      expect(result).toBe(null);
+    });
+  });
+
+  describe('Reaction.updateAllConcentrations()', () => {
+    it('calls updateConcentrationFromSolvent for all materials', async() => {
+      const material1 = await SampleFactory.build('reactionConcentrations.water_100g');
+      const material2 = await SampleFactory.build('reactionConcentrations.water_100g');
+      let material1Called = false;
+      let material2Called = false;
+      material1.updateConcentrationFromSolvent = (r) => {
+        material1Called = true;
+        expect(r).toBe(reaction);
+      };
+      material2.updateConcentrationFromSolvent = (r) => {
+        material2Called = true;
+        expect(r).toBe(reaction);
+      };
+
+      reaction.starting_materials = [material1];
+      reaction.reactants = [material2];
+      reaction.volume = 0.5;
+      reaction.use_reaction_volume = false;
+
+      reaction.updateAllConcentrations();
+
+      expect(material1Called).toBe(true);
+      expect(material2Called).toBe(true);
+    });
+  });
 });
 

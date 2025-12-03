@@ -5,8 +5,8 @@ require 'digest'
 
 RSpec.describe 'Generic Datasets', type: :model do
   context 'with Generic Datasets' do
-    let!(:dk) { create(:dataset_klass) }
-    let!(:ds) { create(:dataset) }
+    let!(:dk) { create(:dataset_klass, ols_term_id: 'CHMO:0000593') }
+    let!(:ds) { create(:dataset, dataset_klass: dk) }
 
     describe 'creation' do
       it 'is possible to create a valid datasets' do

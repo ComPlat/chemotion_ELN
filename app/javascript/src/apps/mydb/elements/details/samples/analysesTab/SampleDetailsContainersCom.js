@@ -100,6 +100,7 @@ function ReactionsDisplay({
                     <Card.Body>
                       <ContainerComponent
                         templateType="sample"
+                        element={sample}
                         readOnly={readOnly}
                         container={container}
                         rootContainer={rootContainer}

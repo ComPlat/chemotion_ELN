@@ -172,6 +172,7 @@ export default class ScreenDetailsContainers extends Component {
           <ContainerComponent
             disabled={readOnly}
             readOnly={readOnly}
+            element={screen}
             templateType="screen"
             container={container}
             onChange={() => this.handleChange()}

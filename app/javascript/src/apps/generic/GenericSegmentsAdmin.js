@@ -11,30 +11,10 @@ import GenericSgsFetcher from 'src/fetchers/GenericSgsFetcher';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 import GenericKlassFetcher from 'src/fetchers/GenericKlassFetcher';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
-import { FunctionLocation, GenericMenu, Unauthorized } from 'src/apps/generic/GenericUtils';
+import { GenericMenu, Unauthorized } from 'src/apps/generic/GenericUtils';
 import { notification, submit } from 'src/apps/generic/Utils';
 
 const FN_ID = 'GenericSegments';
-
-const validateInput = (element) => {
-  if (element.klass_element === '') {
-    notification({
-      title: 'Create Segment Error',
-      lvl: 'error',
-      msg: 'Please select Element.',
-    });
-    return false;
-  }
-  if (element.label === '') {
-    notification({
-      title: 'Create Segment Error',
-      lvl: 'error',
-      msg: 'Please input Segment Label.',
-    });
-    return false;
-  }
-  return true;
-};
 
 export default class GenericSegmentsAdmin extends React.Component {
   constructor(props) {
@@ -96,7 +76,6 @@ export default class GenericSegmentsAdmin extends React.Component {
       notification(notify);
       return;
     }
-    if (!validateInput(element)) return;
     GenericSgsFetcher.createKlass(element)
       .then((result) => {
         if (result.error) {
@@ -122,7 +101,6 @@ export default class GenericSegmentsAdmin extends React.Component {
       });
   }
 
-
   handleUpdateKlass(_response) {
     const { element, notify } = _response;
     if (!notify.isSuccess) {
@@ -130,7 +108,6 @@ export default class GenericSegmentsAdmin extends React.Component {
       return;
     }
     const inputs = element;
-    if (!validateInput(inputs)) return;
     GenericSgsFetcher.updateSegmentKlass(inputs)
       .then((result) => {
         if (result.error) {
@@ -298,13 +275,11 @@ export default class GenericSegmentsAdmin extends React.Component {
   }
 
   handleUploadKlass(_response) {
-    const { elements } = this.state;
     const { element, notify } = _response;
     if (!notify.isSuccess) {
       notification(notify);
       return;
     }
-    if (!validateInput(element)) return;
     LoadingActions.start();
     GenericSgsFetcher.uploadKlass(element)
       .then(result => {
@@ -390,7 +365,6 @@ export default class GenericSegmentsAdmin extends React.Component {
       <div className="vw-90 my-auto mx-auto">
         <GenericMenu userName={user.name} text={FN_ID} />
         <div className="mt-3">
-          <FunctionLocation name={FN_ID} />
           {this.renderGrid()}
         </div>
         <Notifications />

@@ -1,4 +1,6 @@
-export default {
+import SequenceBasedMacromoleculeSampleData from "./SequenceBasedMacromoleculeSampleData";
+
+const basicElnElements = {
   fields: {
     samples: [
       {
@@ -647,3 +649,5 @@ export default {
     ],
   }
 }
+
+export default Object.assign({}, basicElnElements, SequenceBasedMacromoleculeSampleData);

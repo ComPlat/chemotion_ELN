@@ -119,6 +119,7 @@ module Chemotion
         optional :show_external_name, type: Boolean
         optional :show_sample_name, type: Boolean
         optional :show_sample_short_label, type: Boolean
+        optional :curation, type: Integer, default: 2
       end
       put do
         declared_params = declared(params, include_missing: false)
@@ -134,7 +135,7 @@ module Chemotion
         declared_params[:data] = declared_params[:data].merge(generic_layouts)
 
         data = current_user.profile.data || {}
-        data['layout'] = {
+        data['layout'] ||= {
           'sample' => 1,
           'reaction' => 2,
           'wellplate' => 3,
@@ -142,8 +143,9 @@ module Chemotion
           'research_plan' => 5,
           'cell_line' => -1000,
           'device_description' => -1100,
-          'vessel' => -1100,
-        } if data['layout'].nil?
+          'sequence_based_macromolecule_sample' => -1200,
+          'vessel' => -1300,
+        }
 
         layout = data['layout'].select { |e| available_ements.include?(e) }
         data['layout'] = layout.sort_by { |_k, v| v }.to_h
@@ -155,6 +157,7 @@ module Chemotion
           show_external_name: declared_params[:show_external_name],
           show_sample_name: declared_params[:show_sample_name],
           show_sample_short_label: declared_params[:show_sample_short_label],
+          curation: declared_params[:curation],
         }
         (current_user.profile.update!(**new_profile) &&
           new_profile) || error!('profile update failed', 500)

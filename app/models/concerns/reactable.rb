@@ -27,9 +27,10 @@ module Reactable
   }.freeze
 
   def update_equivalent
-    ref_record = ReactionsSample.where(reaction_id: reaction_id, reference: true).first
-    return unless ref_record
-    return unless ref_record.id != id
+    ref_record = ReactionsSample.find_by(reaction_id: reaction_id, reference: true)
+    return if ref_record.nil? ||
+              ref_record.id == id ||
+              sample&.sample_type == Sample::SAMPLE_TYPE_MIXTURE
 
     amount = sample.real_amount_value && sample.real_amount_value != 0 ? sample.amount_mmol(:real) : sample.amount_mmol
 

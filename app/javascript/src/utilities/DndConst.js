@@ -4,6 +4,7 @@ const DragDropItemTypes = {
   WELL: 'well',
   ELEMENT: 'element',
   SAMPLE: 'sample',
+  SCREEN: 'screen',
   MATERIAL: 'material',
   REACTION: 'reaction',
   WELLPLATE: 'wellplate',
@@ -20,7 +21,9 @@ const DragDropItemTypes = {
   GENERIC_GRID: 'generic_grid',
   CELL_LINE: 'cell_line',
   DEVICE_DESCRIPTION: 'device_description',
-  VESSEL: 'vessel'
+  VESSEL: 'vessel',
+  SEQUENCE_BASED_MACROMOLECULE: 'sequence_based_macromolecule',
+  SEQUENCE_BASED_MACROMOLECULE_SAMPLE: 'sequence_based_macromolecule_sample',
 };
 
 const dropTargetTypes = [

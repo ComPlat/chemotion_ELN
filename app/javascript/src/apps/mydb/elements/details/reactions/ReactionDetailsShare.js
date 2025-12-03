@@ -80,6 +80,12 @@ const setReactionByType = (reaction, type, value) => {
     case 'gaseous':
       reaction.gaseous = value;
       break;
+    case 'volume':
+      reaction.volume = value;
+      break;
+    case 'useReactionVolumeForConcentration':
+      reaction.use_reaction_volume = value;
+      break;
   }
 
   return { newReaction: reaction, options: options }

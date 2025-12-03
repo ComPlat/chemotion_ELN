@@ -27,6 +27,7 @@ function buildWrappedComponent(name, BaseComponent) {
     styles = {},
     components: customComponents = {},
     isInputEditable = false,
+    usePortal = true,
     ...props
   }, ref) => {
     const styleDefaults = {
@@ -41,10 +42,12 @@ function buildWrappedComponent(name, BaseComponent) {
         width: 'max-content',
         maxWidth: '400px',
       },
-      menuPortal: {
-        position: 'fixed',
-        zIndex: 9000,
-      }
+      ...(usePortal && {
+        menuPortal: {
+          position: 'fixed',
+          zIndex: 9000,
+        },
+      })
     };
 
     const stylesWithOverrides = {

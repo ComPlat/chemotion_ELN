@@ -5,7 +5,7 @@ require 'digest'
 
 RSpec.describe 'Generic Segmenets', type: :model do
   context 'with Generic Segmenets' do
-    let!(:sk) { create(:segment_klass) }
+    let!(:sk) { create(:segment_klass, label: 'segment_klass6') }
     let!(:sg) { create(:segment) }
 
     describe 'creation' do

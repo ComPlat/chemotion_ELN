@@ -18,7 +18,9 @@ module Datacollector
       errors = []
       raise Errors::DatacollectorError, "Sender not found #{from}" unless Correspondence.validate(@sender)
 
-      correspondences = (to_list.presence || [@sender]).filter_map do |receiver|
+      recipients = to_list.presence
+      recipients ||=  Correspondence.valid_recipient?(@sender) ? [@sender] : []
+      correspondences = recipients.filter_map do |receiver|
         Correspondence.new(@sender, receiver)
       rescue Errors::DatacollectorError => e
         errors << e.message

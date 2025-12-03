@@ -95,11 +95,16 @@ class SpectraStore {
     spcMetas.sort((a, b) => {
       return sortedSpcIdxs.indexOf(a.idx) - sortedSpcIdxs.indexOf(b.idx);
     });
-    let newArrSpcIdx = spcMetas.map(spci => (
-      spci.idx
-    )).filter(r => r !== null);
-    if (newArrSpcIdx.length <= 1) {
-      newArrSpcIdx = [];
+    let newArrSpcIdx = [];
+    if (spcMetas.length >= 1) {
+      const spcInfoWithLabel = sortedSpcInfo.find(
+        info => typeof info.label === "string" && info.label.toLowerCase().includes('processed')
+      );
+      if (spcInfoWithLabel) {
+        newArrSpcIdx = [spcInfoWithLabel.idx];
+      } else {
+        newArrSpcIdx = spcMetas.map(spc => spc.idx);
+      }
     }
     
     this.setState({
@@ -205,10 +210,21 @@ class SpectraStore {
     })
   }
 
-  handleLoadSpectraForNMRDisplayer({ fetchedFiles, spcInfos }) {
+  handleLoadSpectraForNMRDisplayer(payload) {
+    if (!payload) {
+      this.setState({
+        spcInfos: [],
+        fetchedSpectra: null,
+        fetched: false,
+      });
+      return;
+    }
+  
+    const { fetchedSpectra, spcInfos } = payload;
+  
     this.setState({
-      spcInfos,
-      fetchedFiles,
+      spcInfos: spcInfos || [],
+      fetchedSpectra: fetchedSpectra || null,
       fetched: true,
     });
   }

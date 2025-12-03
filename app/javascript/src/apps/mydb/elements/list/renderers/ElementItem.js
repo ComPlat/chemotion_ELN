@@ -34,11 +34,11 @@ export function showDetails(element) {
 }
 
 function ElementItem({ element, renderItem }) {
-  const [isSelected, setElementSelected] = useState(ElementStore.getState().currentElement?.id === element.id);
+  const [isSelected, setElementSelected] = useState(ElementStore.isCurrentElement(element));
 
   useEffect(() => {
-    const updateIsSelected = (state) => {
-      setElementSelected(state.currentElement?.id === element.id);
+    const updateIsSelected = () => {
+      setElementSelected(ElementStore.isCurrentElement(element));
     };
 
     ElementStore.listen(updateIsSelected);

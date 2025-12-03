@@ -1,17 +1,17 @@
 /* eslint-disable lines-between-class-members */
 /* eslint-disable no-param-reassign */
 /* eslint-disable react/destructuring-assignment */
-import { StoreContext } from 'src/stores/mobx/RootStore';
-import { observer } from 'mobx-react';
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
+import { observer } from 'mobx-react';
+import { Button, ButtonToolbar } from 'react-bootstrap';
+import { last, findKey } from 'lodash';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import EditorFetcher from 'src/fetchers/EditorFetcher';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import PropTypes from 'prop-types';
 import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
-import { Button, ButtonToolbar } from 'react-bootstrap';
-import { last, findKey } from 'lodash';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import SaveEditedImageWarning from 'src/apps/mydb/elements/details/researchPlans/SaveEditedImageWarning';
 import {
@@ -241,7 +241,8 @@ class GenericAttachments extends Component {
 
     let combinedAttachments = filteredAttachments;
     if (this.context.attachmentNotificationStore) {
-      combinedAttachments =  this.context.attachmentNotificationStore.getCombinedAttachments(filteredAttachments, "genericEl", genericEl);
+      combinedAttachments = this.context.attachmentNotificationStore
+        .getCombinedAttachments(filteredAttachments, 'genericEl', genericEl);
     }
     combinedAttachments = combinedAttachments.filter(Boolean);
 

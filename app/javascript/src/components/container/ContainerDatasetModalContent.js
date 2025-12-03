@@ -622,7 +622,9 @@ export class ContainerDatasetModalContent extends Component {
 
   renderMetadata() {
     const { datasetContainer, instruments } = this.state;
-    const { readOnly, disabled, kind } = this.props;
+    const {
+      readOnly, disabled, kind, element
+    } = this.props;
     const termId = absOlsTermId(kind);
     const klasses = (UserStore.getState() && UserStore.getState().dsKlasses) || [];
     let klass = {};
@@ -636,10 +638,11 @@ export class ContainerDatasetModalContent extends Component {
     } else if (klass.ols_term_id !== undefined) {
       genericDS = GenericDS.buildEmpty(cloneDeep(klass), datasetContainer.id);
     }
+
     return (
       <>
         <div ref={this.overlayContainerRef} style={{ position: 'relative' }}>
-          <Form.Group controlId="datasetInstrument">
+          <Form.Group controlId="datasetInstrument" className="ms-3 me-3">
             <Form.Label>Instrument</Form.Label>
             <CreatableSelect
               isClearable
@@ -668,7 +671,7 @@ export class ContainerDatasetModalContent extends Component {
             />
           </Form.Group>
         </div>
-        <Form.Group controlId="datasetDescription">
+        <Form.Group controlId="datasetDescription" className="ms-3 me-3">
           <Form.Label>Description</Form.Label>
           <Form.Control
             as="textarea"
@@ -679,10 +682,16 @@ export class ContainerDatasetModalContent extends Component {
           />
         </Form.Group>
         <GenericDSDetails
+          element={element}
           genericDS={genericDS}
           klass={klass}
           kind={kind}
           onChange={this.handleDSChange}
+          datasetContainer={this.state.datasetContainer}
+          onDatasetChange={(updatedContainer) => {
+            this.setState({ datasetContainer: updatedContainer });
+            this.props.onChange(updatedContainer);
+          }}
         />
       </>
     );
@@ -726,6 +735,12 @@ ContainerDatasetModalContent.propTypes = {
       thumb: PropTypes.bool.isRequired
     })),
   }).isRequired,
+  element: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    name: PropTypes.string,
+    type: PropTypes.string,
+    short_label: PropTypes.string,
+  }),
   onChange: PropTypes.func.isRequired,
   handleContainerSubmit: PropTypes.func.isRequired,
   isNew: PropTypes.bool.isRequired,
@@ -759,6 +774,7 @@ ContainerDatasetModalContent.defaultProps = {
   attachments: [],
   kind: null,
   onInstrumentChange: () => { },
+  element: {},
 };
 
 export default observer(ContainerDatasetModalContent);

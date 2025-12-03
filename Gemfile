@@ -18,6 +18,7 @@ gem 'charlock_holmes'
 gem 'closure_tree'
 gem 'countries'
 
+gem 'daemons'
 gem 'delayed_cron_job'
 gem 'delayed_job_active_record'
 gem 'devise'
@@ -55,10 +56,8 @@ gem 'jwt'
 
 gem 'kaminari'
 gem 'kaminari-grape'
-# gem 'ketcherails', git: 'https://github.com/complat/ketcher-rails.git', branch: 'upgrade-to-rails-6'
-gem 'ketcherails', git: 'https://github.com/complat/ketcher-rails.git', ref: 'd4ae864a0e2d9e853eac8e4fc4ce7e3ab8174f80'
 
-gem 'labimotion', '2.0.0'
+gem 'labimotion', '2.1.0.rc13'
 gem 'logidze'
 
 gem 'mimemagic', '0.3.10'

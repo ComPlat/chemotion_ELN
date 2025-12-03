@@ -16,7 +16,7 @@ module Tagging
     case klass
     when 'ReactionsProductSample', 'ReactionsStartingMaterialSample',
       'ReactionsSolventSample', 'ReactionsReactantSample'
-      args = { reaction_tag: reaction_id }
+      args = { reaction_tag: reaction_id, resources_tag: true }
       element = 'sample'
     when 'Well'
       args = { wellplate_tag: wellplate_id }
@@ -27,9 +27,9 @@ module Tagging
 
       args = if deleted_at.nil?
                { element_tag: { type: el.element_klass.name,
-                                id: element_id } }
+                                id: element_id }, resources_tag: true }
              else
-               { element_tag: {} }
+               { element_tag: {}, resources_tag: true }
              end
       element = 'sample'
     when 'CollectionsReaction', 'CollectionsWellplate', 'CollectionsSample', 'Labimotion::CollectionsElement',

@@ -16,6 +16,7 @@ describe Datacollector::Correspondence do
   let(:person) { create(:person) }
   let(:device) { create(:device, :file_local, user_identifiers: [person.name_abbreviation]) }
 
+  # rubocop:disable RSpec/NestedGroups
   describe described_class do
     subject(:correspondence) { described_class.new(device, person) }
 
@@ -35,7 +36,16 @@ describe Datacollector::Correspondence do
         expect(container).to be_a(Container)
         expect(person.container.descendants).to include(container)
       end
+
+      context 'when the arguments are not valid' do
+        subject(:correspondence) { described_class.new(device, device) }
+
+        it 'raises a Errors::DatacollectorError' do
+          expect { correspondence }.to raise_error(Errors::DatacollectorError)
+        end
+      end
     end
+    # rubocop:enable RSpec/NestedGroups
 
     describe '#sender_container' do
       it 'has the proper name and container_type' do

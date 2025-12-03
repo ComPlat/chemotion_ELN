@@ -6,18 +6,19 @@ import { AnalysesHeader } from 'src/apps/mydb/elements/details/samples/analysesT
 
 const orderSource = {
   beginDrag(props) {
-    const { container, sample } = props;
-    return { cId: container.id, sId: sample.id };
+    return {
+      container: props.container,
+    };
   },
 };
 
 const orderTarget = {
   drop(targetProps, monitor) {
-    const { container, sample, handleMove } = targetProps;
-    const tgTag = { cId: container.id, sId: sample.id };
-    const scTag = monitor.getItem();
-    if (tgTag.sId === scTag.sId && tgTag.cId !== scTag.cId) {
-      handleMove(scTag, tgTag);
+    const source = monitor.getItem().container;
+    const target = targetProps.container;
+
+    if (source.id !== target.id) {
+      targetProps.handleMove(source, target);
     }
   },
 };

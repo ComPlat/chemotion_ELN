@@ -36,7 +36,7 @@ function NavHead() {
         <NavDropdown.Item as="a" eventKey="16" href={isOnMydb ? '/home' : '/mydb'} target="_self">
           {isOnMydb ? 'Home' : 'ELN'}
         </NavDropdown.Item>
-        <NavDropdown.Item as="a" eventKey="17" href="/about" target="_self">
+        <NavDropdown.Item as="a" eventKey="17" href="/about" target="_blank">
           About
         </NavDropdown.Item>
       </NavDropdown>

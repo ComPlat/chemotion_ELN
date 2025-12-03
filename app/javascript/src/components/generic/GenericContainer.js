@@ -219,6 +219,7 @@ function AiHeader(props) {
         <Card.Body>
           <ContainerComponent
             templateType={generic.type}
+            element={generic}
             readOnly={readOnly}
             disabled={readOnly}
             container={container}
@@ -241,6 +242,4 @@ AiHeader.propTypes = {
   handleSubmit: PropTypes.func.isRequired,
 };
 
-export {
-  AiHeader, AiHeaderDeleted
-};
+export { AiHeader, AiHeaderDeleted };

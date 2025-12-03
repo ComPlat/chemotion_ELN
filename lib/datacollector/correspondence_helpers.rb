@@ -36,6 +36,10 @@ module Datacollector
       end
     end
 
+    def valid_recipient?(obj)
+      obj.is_a?(User)
+    end
+
     # Find a device by email or name abbreviation
     # @param [String] The email or name abbreviation
     def find_device(raw_identifier)

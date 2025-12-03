@@ -1,5 +1,5 @@
 import React, { useContext, useEffect } from 'react';
-import { Tab, Pagination, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { Tab, Pagination, OverlayTrigger, Tooltip, Badge } from 'react-bootstrap';
 import { observer } from 'mobx-react';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { StoreContext } from 'src/stores/mobx/RootStore';
@@ -134,16 +134,17 @@ const SearchResultTabContent = ({ list, tabResult, openDetail }) => {
     const tooltip = <Tooltip id="detailTip">Open detail</Tooltip>;
 
     if (['screen', 'research_plan'].includes(object.type) || object.short_label === undefined) { 
-      names = object.name;
+      names = [object.name];
     } else if (object.type == 'sample') {
       let infos = [];
       if (object.external_label) { infos.push(object.external_label) }
       if (object.xref && object.inventory_label) { infos.push(object.inventory_label) }
       if (object.xref && object.xref.cas) { infos.push(object.xref.cas) }
-      names = [object.short_label, object.name].concat(infos).join(" | ");
+      names = [object.short_label, object.name].concat(infos);
     } else {
-      names = [object.short_label, object.name].join(" | ");
+      names = [object.short_label, object.name];
     }
+    names = names.filter((e) => e).join(' | ');
 
     return (
       <OverlayTrigger placement="top" overlay={tooltip}>
@@ -154,6 +155,58 @@ const SearchResultTabContent = ({ list, tabResult, openDetail }) => {
     );
   }
 
+  const sampleAndReactionList = (object, i, elements) => {
+    const previous = elements[i - 1];
+    const previousMolecule = previous ? previous.molecule_formula : '';
+    const sampleNameOrEmpty = object.type === 'sample' ? <SampleName sample={object} /> : '';
+    const svg = previousMolecule !== object.molecule_formula || object.type == 'reaction' ? svgPreview(object) : '';
+
+    const header = previousMolecule !== object.molecule_formula && (
+      <div key={`${object.short_name}-${i}`} className={`search-result-molecule ${object.type}`}>
+        {svg}
+        {sampleNameOrEmpty}
+      </div>
+    );
+
+    return (
+      <div key={`${list.key}-${i}`} className="search-result-tab-content-list" onClick={copyToClipboard}>
+        {header}
+        <span className="search-result-tab-content-list-name">
+          {shortLabelWithMoreInfos(object)}
+        </span>
+      </div>
+    )
+  }
+
+  const sbmmList = (object, i, elements) => {
+    const previous = elements[i - 1];
+    const previousSbmm = previous ? previous.sequence_based_macromolecule.id : '';
+    const badgeTitle = object.sequence_based_macromolecule.uniprot_derivation.split('_').slice(-1)[0];
+
+    const header = previousSbmm !== object.sequence_based_macromolecule.id && (
+      <div
+        key={`${object.sequence_based_macromolecule.short_name}-${i}`}
+        className="search-result-molecule pt-2 fw-bold fs-5"
+      >
+        {object.sbmmShortLabel()} {object.sequence_based_macromolecule.short_name}
+      </div>
+    );
+
+    return (
+      <div key={`${list.key}-${i}`} className="search-result-tab-content-list">
+        {header}
+        <div className="search-result-tab-content-list-name">
+          <div className="d-flex align-items-center gap-2">
+            <Badge bg="info" className="border border-active bg-opacity-25 text-active rounded">
+              {badgeTitle}
+            </Badge>
+            {shortLabelWithMoreInfos(object)}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   const tabContentList = () => {
     let contentList = <div key={list.index} className="search-result-tab-content-list-white">No results</div>;
     let resultsByPage = searchStore.tabSearchResultValues.find(val => val.id == `${list.key}s-${currentPageNumber}`);
@@ -161,23 +214,10 @@ const SearchResultTabContent = ({ list, tabResult, openDetail }) => {
 
     if (tabResultByPage.elements.length > 0) {
       contentList = tabResultByPage.elements.map((object, i, elements) => {
-        const previous = elements[i - 1];
-        const previousMolecule = previous ? previous.molecule_formula : '';
-        const sampleNameOrEmpty = object.type === 'sample' ? <SampleName sample={object} /> : '';
-        const moleculeName = previous && previousMolecule == object.molecule_formula ? '' : sampleNameOrEmpty;
-
         if (['sample', 'reaction'].includes(object.type)) {
-          return (
-            <div key={`${list.key}-${i}`} className="search-result-tab-content-list" onClick={copyToClipboard}>
-              <div key={moleculeName} className={`search-result-molecule ${object.type}`}>
-                {moleculeName || object.type == 'reaction' ? svgPreview(object) : ''}
-                {moleculeName}
-              </div>
-              <span className="search-result-tab-content-list-name">
-                {shortLabelWithMoreInfos(object)}
-              </span>
-            </div>
-          )
+          return sampleAndReactionList(object, i, elements);
+        } else if (object.type === 'sequence_based_macromolecule_sample') {
+          return sbmmList(object, i, elements);
         } else {
           return (
             <div key={`${list.key}-${i}`} className="search-result-tab-content-list-white">
@@ -185,7 +225,7 @@ const SearchResultTabContent = ({ list, tabResult, openDetail }) => {
                 {shortLabelWithMoreInfos(object)}
               </div>
             </div>
-          )
+          );
         }
       });
     } else if (tabResult.total_elements != 0) {

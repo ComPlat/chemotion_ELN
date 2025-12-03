@@ -36,10 +36,6 @@ Rails.application.routes.draw do
   end
 
   authenticate :user do
-    get 'pages/settings', to: 'pages#settings'
-    get 'pages/profiles', to: 'pages#profiles'
-    patch 'pages/update_profiles', to: 'pages#update_profiles'
-    patch 'pages/update_user', to: 'pages#update_user'
     get 'sfn_cb', to: 'pages#sfn_cb'
     get 'command_n_control', to: 'pages#cnc'
     get 'mydb/*any', to: 'pages#welcome'
@@ -79,8 +75,6 @@ Rails.application.routes.draw do
   root to: redirect('home')
 
   get 'test', to: 'pages#test'
-
-  get '/styleguide', to: 'pages#styleguide' if Rails.env.development?
 end
 
 # rubocop: enable Metrics/BlockLength, Layout/LineLength, Style/FrozenStringLiteralComment

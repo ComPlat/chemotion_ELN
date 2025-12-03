@@ -65,6 +65,7 @@ class Device < ApplicationRecord
   validate :name_abbreviation_length, on: :create
   validate :name_abbreviation_format, on: :create
   validate :mail_checker
+  validates :email, uniqueness: { message: 'already exists' }, allow_blank: true
 
   with_options unless: :datacollector_values_present? do
     validate :datacollector_check_basics
@@ -75,6 +76,7 @@ class Device < ApplicationRecord
   end
 
   before_save :encrypt_novnc_password
+  before_save :normalize_email
 
   scope :by_user_ids, ->(ids) { joins(:users_devices).merge(UsersDevice.by_user_ids(ids)) }
   scope :by_name, ->(query) { where('LOWER(name) ILIKE ?', "%#{sanitize_sql_like(query.downcase)}%") }
@@ -219,6 +221,10 @@ class Device < ApplicationRecord
   def encrypt_novnc_password
     password = novnc_password.blank? ? '' : encrypt_value(novnc_password)
     self.novnc_password = password
+  end
+
+  def normalize_email
+    self.email = nil if email.blank?
   end
 
   def info

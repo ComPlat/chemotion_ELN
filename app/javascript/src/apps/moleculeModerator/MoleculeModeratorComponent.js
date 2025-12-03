@@ -1,7 +1,10 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import SVG from 'react-inlinesvg';
-import { Card, Container, Col, Button, Row, Table, Popover, ButtonGroup, Modal, OverlayTrigger, Tooltip, Form, InputGroup } from 'react-bootstrap';
+import {
+  Card, Container, Col, Button, Row, Table, Popover, ButtonGroup, Modal, OverlayTrigger, Tooltip, Form, InputGroup,
+  Alert
+} from 'react-bootstrap';
 import { findIndex } from 'lodash';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import StructureEditorModal from 'src/components/structureEditor/StructureEditorModal';
@@ -13,7 +16,9 @@ export default class MoleculeModeratorComponent extends Component {
       show: false,
       isNew: false,
       molName: {},
-      molNames: (this.props.molecule && this.props.molecule.molecule_names) || []
+      molNames: (props.molecule && props.molecule.molecule_names) || [],
+      ketcherSVGError: null,
+      showAlert: false
     };
     this.handleStructureEditorSave = this.handleStructureEditorSave.bind(this);
     this.handleStructureEditorCancel = this.handleStructureEditorCancel.bind(this);
@@ -24,6 +29,12 @@ export default class MoleculeModeratorComponent extends Component {
     this.handleMolNameChange = this.handleMolNameChange.bind(this);
     this.onSaveName = this.onSaveName.bind(this);
     this.onAddName = this.onAddName.bind(this);
+    this.renderEditor = this.renderEditor.bind(this);
+    this.onSVGStructureError = this.onSVGStructureError.bind(this);
+  }
+
+  componentDidMount() {
+    this.mounted = true;
   }
 
   componentDidUpdate(prevProps) {
@@ -262,23 +273,49 @@ export default class MoleculeModeratorComponent extends Component {
     );
   }
 
-  render() {
-    const { molecule, handleEditor, showStructureEditor } = this.props;
+  onSVGStructureError(errorMessage) {
+    if (this.errorTimer) {
+      clearTimeout(this.errorTimer);
+      this.errorTimer = null;
+    }
 
-    const componentEditor = (
+    this.setState({
+      ketcherSVGError: errorMessage,
+      showAlert: true
+    }, () => {
+      this.errorTimer = setTimeout(() => {
+        if (this.mounted) {
+          this.setState({
+            ketcherSVGError: null,
+            showAlert: false
+          });
+        }
+      }, 5000);
+    });
+  }
+
+  renderEditor() {
+    const { molecule, showStructureEditor } = this.props;
+    return (
       <div className="search-structure-draw">
         <StructureEditorModal
           showModal={showStructureEditor}
           onSave={this.handleStructureEditorSave}
           onCancel={this.handleStructureEditorCancel}
           molfile={molecule.molfile}
+          onSVGStructureError={this.onSVGStructureError}
         />
       </div>
     );
+  }
+
+  render() {
+    const { ketcherSVGError, showAlert } = this.state;
+    const { molecule, handleEditor } = this.props;
 
     return (
       <>
-        {componentEditor}
+        {this.renderEditor()}
         <Container>
           <Card>
             <Card.Header>
@@ -298,12 +335,28 @@ export default class MoleculeModeratorComponent extends Component {
             </Card.Header>
             <Card.Body>
               <Row className="mb-3">
+                {ketcherSVGError && showAlert && (
+                  <Alert
+                    variant="danger"
+                    dismissible
+                    onClose={() => this.setState({
+                      ketcherSVGError: null,
+                      showAlert: false
+                    })}
+                  >
+                    <strong>SVG generation failed.</strong>
+                    {' '}
+                    Falling back to the previous SVG.
+                    <br />
+                    <small className="text-muted">{ketcherSVGError}</small>
+                  </Alert>
+                )}
                 <Col>
                   <Button variant="primary" size="sm" onClick={() => handleEditor(true)}>
                     Open Editor
                     <i className="fa fa-pencil ms-1" aria-hidden="true" />
                   </Button>
-  &nbsp;
+                  &nbsp;
                   <Button variant="warning" size="sm" onClick={() => this.handleSave()}>
                     Update molfile and svg
                     <i className="fa fa-floppy-o ms-1" aria-hidden="true" />

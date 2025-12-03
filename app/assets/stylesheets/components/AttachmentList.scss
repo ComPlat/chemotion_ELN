@@ -40,19 +40,34 @@
   @extend .position-relative;
   @extend .border;
   @extend .rounded;
+
+  width: 45px;
+  height: 45px;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
 }
 
-.attachment-row-image .large-preview-modal {
-  position: absolute;
-  left: 1000%;
-  top: -300%;
-  @extend .rounded;
-  background-color: $body-bg;
-  object-fit: contain;
-  @extend .border;
-  @extend .invisible;
-  z-index: 10;
+.large-preview-modal {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 4px;
+  width: 400px;
+  height: 400px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
 }
+
+
 
 .attachment-row-image:hover .large-preview-modal {
   @extend .visible;

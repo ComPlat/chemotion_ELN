@@ -10,7 +10,7 @@ import Notifications from 'src/components/Notifications';
 import GenericDSsFetcher from 'src/fetchers/GenericDSsFetcher';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
-import { FunctionLocation, GenericMenu, Unauthorized } from 'src/apps/generic/GenericUtils';
+import { GenericMenu, Unauthorized } from 'src/apps/generic/GenericUtils';
 import { notification, submit } from 'src/apps/generic/Utils';
 
 const FN_ID = 'GenericDatasets';
@@ -30,6 +30,7 @@ export default class GenericDatasetsAdmin extends React.Component {
     this.handleSubmit = this.handleSubmit.bind(this);
     this.delRevision = this.delRevision.bind(this);
     this.fetchRevisions = this.fetchRevisions.bind(this);
+    this.fetchElements = this.fetchElements.bind(this);
   }
 
   componentDidMount() {
@@ -187,7 +188,6 @@ export default class GenericDatasetsAdmin extends React.Component {
       <div className="vw-90 my-auto mx-auto">
         <GenericMenu userName={user.name} text={FN_ID} />
         <div className="mt-3">
-          <FunctionLocation name={FN_ID} />
           {this.renderGrid()}
         </div>
         <Notifications />

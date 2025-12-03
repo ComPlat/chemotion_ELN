@@ -25,12 +25,12 @@ Sentry.init({
 const backendOptions = {
   backends: [
     {
-      backend: HTML5Backend, // Mouse Drag Support
-    },
-    {
       backend: TouchBackend, // Touch Drag Support
       options: { enableMouseEvents: true },
       transition: TouchTransition, // Detects if touch is used
+    },
+    {
+      backend: HTML5Backend, // Mouse Drag Support
     },
   ],
 };
