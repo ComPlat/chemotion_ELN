@@ -151,7 +151,7 @@ export default class ContainerDatasetModal extends Component {
           size="xl"
           onHide={() => (disabled ? onHide() : this.handleModalClose())}
         >
-          <Modal.Header>
+          <Modal.Header closeButton>
             <Modal.Title className="d-flex justify-content-between align-items-center w-100">
               {this.state.isNameEditing ? (
                 <div className="d-flex flex-grow-1 align-items-center">
