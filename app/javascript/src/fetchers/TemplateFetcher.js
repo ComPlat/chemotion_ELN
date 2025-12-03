@@ -6,12 +6,9 @@ export default class TemplateFetcher {
       credentials: 'same-origin',
     })
       .then((response) => {
-        if (!response.ok) throw new Error('Failed to load common templates');
+        if (!response.ok) return [];
         return response.json();
       })
-      .catch((error) => {
-        console.error('Error loading templates:', error);
-        return [];
-      });
+      .catch(() => []);
   }
 }
