@@ -155,6 +155,7 @@ export default class SampleDetails extends React.Component {
       width: props.sample.width || '',
       length: props.sample.length || '',
       storage_condition: props.sample.storage_condition || '',
+      ketcherSVGError: null
     };
 
     this.enableComputedProps = MatrixCheck(currentUser.matrix, 'computedProp');
