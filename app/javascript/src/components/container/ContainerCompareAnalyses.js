@@ -61,18 +61,32 @@ export default class ContainerCompareAnalyses extends Component {
     TextTemplateStore.unlisten(this.handleTemplateChange);
   }
 
+  getComparedIds(container) {
+    if (!container?.extended_metadata?.analyses_compared) return [];
+    return container.extended_metadata.analyses_compared
+      .map(a => a.file?.id)
+      .filter(Boolean)
+      .sort();
+  }
+
   componentDidUpdate(prevProps) {
-    if (prevProps.container !== this.props.container) {
-      const { menuItems } = this.buildSelectAnalysesMenu();
-      const extendedMetadata = this.props.container.extended_metadata || {};
-      const analyses_compared = Array.isArray(extendedMetadata.analyses_compared) ? extendedMetadata.analyses_compared : [];
-      const selectedFiles = analyses_compared.length > 0 ? analyses_compared.map((item) => item.file.id) : [];
-
-      let filteredMenuItems = menuItems;
-
+    const prevList = prevProps.container?.extended_metadata?.analyses_compared || [];
+    const currList = this.props.container?.extended_metadata?.analyses_compared || [];
+  
+    const prevIds = prevList.map(a => a.file.id).sort();
+    const currIds = currList.map(a => a.file.id).sort();
+  
+    const idsChanged = JSON.stringify(prevIds) !== JSON.stringify(currIds);
+  
+    if (prevProps.container !== this.props.container || idsChanged) {
+      const updatedContainer = this.props.container;
+  
+      let { menuItems, selectedFiles } =
+        BuildSpectraComparedSelection(this.props.sample, updatedContainer);
+  
       this.setState({
-        container: this.props.container,
-        menuItems: filteredMenuItems,
+        container: updatedContainer,
+        menuItems,
         selectedFilesIds: selectedFiles
       });
     }
@@ -118,23 +132,20 @@ export default class ContainerCompareAnalyses extends Component {
   }
 
   handleChangeSelectAnalyses(treeData, selectedFiles, info) {
-    const { container, selectedFilesIds } = this.state;
+    const { container } = this.props;
+  
     const selectedData = GetSelectedComparedAnalyses(container, treeData, selectedFiles, info);
-    let newSelectedFilesIds = [];
-    if (selectedFilesIds.length < selectedFiles.length) {
-      newSelectedFilesIds = Array.from(new Set([...selectedFilesIds, ...selectedFiles]));
-    } else {
-      newSelectedFilesIds = [...selectedFiles];
-    }
-    let { menuItems } = this.buildSelectAnalysesMenu();
-
-    this.setState({
-      selectedFilesIds: newSelectedFilesIds,
-      menuItems
-    });
+  
+    container.extended_metadata = container.extended_metadata || {};
     container.extended_metadata.analyses_compared = selectedData;
+  
+    this.setState({
+      selectedFilesIds: selectedFiles,
+    });
+  
     this.onChange(container);
   }
+  
 
   // eslint-disable-next-line class-methods-use-this
   updateTextTemplates(textTemplate) {
@@ -144,9 +155,23 @@ export default class ContainerCompareAnalyses extends Component {
 
   buildSelectAnalysesMenu() {
     const { sample, container } = this.props;
-    const { menuItems, selectedFiles } = BuildSpectraComparedSelection(sample, container);
+  
+    let { menuItems, selectedFiles } = BuildSpectraComparedSelection(sample, container);
+  
+    const selectedLayout = container.extended_metadata?.analyses_compared?.[0]?.layout ?? null;
+  
+    if (selectedLayout) {
+      menuItems = menuItems.map((item) => {
+        if (item.title !== selectedLayout) {
+          return { ...item, disabled: true };
+        }
+        return item;
+      });
+    }
+  
     return { menuItems, selectedFiles };
   }
+  
 
   render() {
     const { container, menuItems, selectedFilesIds } = this.state;
