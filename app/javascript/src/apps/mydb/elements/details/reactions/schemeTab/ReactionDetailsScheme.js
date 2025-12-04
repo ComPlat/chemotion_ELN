@@ -239,6 +239,11 @@ export default class ReactionDetailsScheme extends Component {
       }
     }
 
+    if (reaction.gaseous && material.isCatalyst()) {
+      GasPhaseReactionActions.setCatalystReferenceMole(null);
+      this.updatedReactionForCatalystDeletion();
+    }
+
     this.onReactionChange(reaction, { schemaChanged: true });
   }
 
@@ -451,7 +456,7 @@ export default class ReactionDetailsScheme extends Component {
     // setAmount should be called first before updating feedstock mole and volume values
     updatedSample.setAmount(amount);
 
-    if (updatedSample.gas_type === 'catalyst') {
+    if (updatedSample.isCatalyst()) {
       GasPhaseReactionActions.setCatalystReferenceMole(updatedSample.amount_mol);
     }
 
@@ -505,7 +510,7 @@ export default class ReactionDetailsScheme extends Component {
 
   calculateEquivalentForProduct(sample, referenceMaterial, stoichiometryCoeff) {
     const vesselVolume = GasPhaseReactionStore.getState().reactionVesselSizeValue;
-    if (sample.gas_type === 'gas') {
+    if (sample.isGas()) {
       const result = this.calculateEquivalentForGasProduct(sample, vesselVolume);
       const equivalent = result > 1 ? 1 : result;
       return { ...sample, equivalent };
@@ -560,7 +565,13 @@ export default class ReactionDetailsScheme extends Component {
     if (updatedSample.gas_type === 'catalyst') {
       GasPhaseReactionActions.setCatalystReferenceMole(updatedSample.amount_mol);
     }
-    return this.updatedReactionWithSample(this.updatedSamplesForGasTypeChange.bind(this), updatedSample);
+    return this.updatedReactionWithSample(this.updatedSamplesForGasTypeChange.bind(this), updatedSample, value);
+  }
+
+  updatedReactionForCatalystDeletion() {
+    const { reaction } = this.props;
+    reaction.products = this.updatedSamplesForCatalystDeletion(reaction.products);
+    return reaction;
   }
 
   updatedReactionForGasProductFieldsChange(changeEvent) {
@@ -797,7 +808,7 @@ export default class ReactionDetailsScheme extends Component {
               }
               sample.maxAmount = referenceMaterial.amount_mol * stoichiometryCoeff * sample.molecule_molecular_weight / (sample.purity || 1);
               // yield taking into account stoichiometry:
-              if (updatedSample.gas_type === 'gas') {
+              if (updatedSample.isGas()) {
                 const equivalent = this.calculateEquivalentForGasProduct(sample, vesselVolume);
                 sample.equivalent = equivalent > 1 ? 1 : equivalent;
               } else if (!lockEquivColumn) {
@@ -869,7 +880,7 @@ export default class ReactionDetailsScheme extends Component {
           sample.maxAmount = referenceMaterial.amount_mol * stoichiometryCoeff * sample.molecule_molecular_weight / (sample.purity || 1);
         }
         // Update TON values for gas products when catalyst amount changes
-        if (updatedSample && updatedSample.gas_type === 'catalyst' && sample.gas_type === 'gas') {
+        if (updatedSample && updatedSample.isCatalyst() && sample.isGas()) {
           sample.updateTONValue(sample.amount_mol);
         }
       }
@@ -992,20 +1003,32 @@ export default class ReactionDetailsScheme extends Component {
     });
   }
 
-  updatedSamplesForGasTypeChange(samples, updatedSample) {
+  updatedSamplesForGasTypeChange(samples, updatedSample, materialGroup, prevGasType) {
     return samples.map((sample) => {
       if (sample.id === updatedSample.id) {
         sample.gas_type = updatedSample.gas_type;
         sample.equivalent = updatedSample.equivalent;
       } else if (sample.id !== updatedSample.id) {
-        if ((updatedSample.gas_type === 'feedstock' && sample.gas_type === 'feedstock')
-        || (updatedSample.gas_type === 'catalyst' && sample.gas_type === 'catalyst')) {
+        if ((updatedSample.gas_type === 'feedstock' && sample.isFeedstock())
+        || (updatedSample.gas_type === 'catalyst' && sample.isCatalyst())) {
           sample.gas_type = 'off';
         }
-        if (sample.gas_type === 'gas') {
+        if (sample.isGas()) {
           const equivalent = this.calculateEquivalentForGasProduct(sample);
           sample.equivalent = equivalent;
+          if ((prevGasType === 'CAT' && updatedSample.gas_type === 'off') || updatedSample.isCatalyst()) {
+            sample.updateTONValue(sample.amount_mol);
+          }
         }
+      }
+      return sample;
+    });
+  }
+
+  updatedSamplesForCatalystDeletion(samples) {
+    return samples.map((sample) => {
+      if (sample.isGas()) {
+        sample.updateTONValue(sample.amount_mol);
       }
       return sample;
     });
@@ -1058,7 +1081,7 @@ export default class ReactionDetailsScheme extends Component {
   updatedSamplesForVesselSizeChange(samples) {
     const vesselSize = GasPhaseReactionStore.getState().reactionVesselSizeValue;
     return samples.map((sample) => {
-      if (sample.gas_type === 'gas' && sample.gas_phase_data) {
+      if (sample.isGas() && sample.gas_phase_data) {
         const { part_per_million, temperature } = sample.gas_phase_data;
         let temperatureInKelvin = temperature.value;
         if (temperature.unit !== 'K') {

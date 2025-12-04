@@ -720,8 +720,8 @@ export default class Sample extends Element {
   }
 
   get amount_mol() {
-    if (this.amount_unit === 'mol' && (this.gas_type === 'gas'
-    || this.gas_type === 'feedstock')) return this.amount_value;
+    if (this.amount_unit === 'mol' && (this.isGas()
+    || this.isFeedstock())) return this.amount_value;
     return this.convertGramToUnit(this.amount_g, 'mol');
   }
 
@@ -791,7 +791,7 @@ export default class Sample extends Element {
   // Menge (mg) = Menge (mmol)  * Molmasse (g/mol) / Reinheit
 
   convertGramToUnit(amount_g = 0, unit) {
-    const gasPhaseCondition = (this.gas_type === 'gas' || this.gas_type === 'feedstock');
+    const gasPhaseCondition = (this.isGas() || this.isFeedstock());
     const purity = this.purity || 1.0;
     const molecularWeight = this.molecule_molecular_weight;
     if (this.contains_residues) {
@@ -869,10 +869,10 @@ export default class Sample extends Element {
           return amountValue;
       }
     } else {
-      const gasPhaseCondition = (this.gas_type === 'gas' || this.gas_type === 'feedstock');
+      const gasPhaseCondition = (this.isGas() || this.isFeedstock());
       switch (amount_unit) {
         case 'g':
-          if (this.gas_type && this.gas_type === 'gas') {
+          if (this.gas_type && this.isGas()) {
             const { part_per_million, temperature } = this.gas_phase_data;
             const vesselSize = this.fetchReactionVesselSizeFromStore();
             const temperatureInKelvin = convertTemperatureToKelvin(temperature);
@@ -1202,6 +1202,18 @@ export default class Sample extends Element {
       tmpSolvents[filteredIndex] = solventToUpdate;
     }
     this.solvent = tmpSolvents;
+  }
+
+  isGas() {
+    return this.gas_type === 'gas';
+  }
+
+  isFeedstock() {
+    return this.gas_type === 'feedstock';
+  }
+
+  isCatalyst() {
+    return this.gas_type === 'catalyst';
   }
 }
           
