@@ -404,8 +404,10 @@ ActiveRecord::Schema.define(version: 2026_01_08_155328) do
     t.jsonb "user_ids", default: {}
     t.string "version"
     t.jsonb "super_class_of", default: {}, null: false
+    t.jsonb "metadata", default: {}, null: false
     t.index ["ols_term_id"], name: "dataset_klasses_on_ols_term_id_ukey", unique: true
     t.index ["super_class_of"], name: "index_dataset_klasses_on_super_class_of", using: :gin
+    t.check_constraint "jsonb_typeof(metadata) = 'object'::text", name: "chk_dataset_klasses_metadata"
   end
 
   create_table "dataset_klasses_revisions", id: :serial, force: :cascade do |t|
@@ -419,7 +421,10 @@ ActiveRecord::Schema.define(version: 2026_01_08_155328) do
     t.datetime "updated_at"
     t.datetime "deleted_at"
     t.string "version"
+    t.integer "submitted", default: 0, null: false
+    t.jsonb "metadata", default: {}, null: false
     t.index ["dataset_klass_id"], name: "index_dataset_klasses_revisions_on_dataset_klass_id"
+    t.check_constraint "jsonb_typeof(metadata) = 'object'::text", name: "chk_dataset_klasses_revisions_metadata"
   end
 
   create_table "datasets", id: :serial, force: :cascade do |t|
@@ -433,6 +438,8 @@ ActiveRecord::Schema.define(version: 2026_01_08_155328) do
     t.string "klass_uuid"
     t.datetime "deleted_at"
     t.jsonb "properties_release"
+    t.jsonb "metadata", default: {}, null: false
+    t.check_constraint "jsonb_typeof(metadata) = 'object'::text", name: "chk_datasets_metadata"
   end
 
   create_table "datasets_revisions", id: :serial, force: :cascade do |t|
@@ -445,7 +452,9 @@ ActiveRecord::Schema.define(version: 2026_01_08_155328) do
     t.datetime "updated_at"
     t.datetime "deleted_at"
     t.jsonb "properties_release"
+    t.jsonb "metadata", default: {}, null: false
     t.index ["dataset_id"], name: "index_datasets_revisions_on_dataset_id"
+    t.check_constraint "jsonb_typeof(metadata) = 'object'::text", name: "chk_datasets_revisions_metadata"
   end
 
   create_table "delayed_jobs", id: :serial, force: :cascade do |t|
@@ -613,6 +622,8 @@ ActiveRecord::Schema.define(version: 2026_01_08_155328) do
     t.jsonb "admin_ids", default: {}
     t.jsonb "user_ids", default: {}
     t.string "version"
+    t.jsonb "metadata", default: {}, null: false
+    t.check_constraint "jsonb_typeof(metadata) = 'object'::text", name: "chk_element_klasses_metadata"
   end
 
   create_table "element_klasses_revisions", id: :serial, force: :cascade do |t|
@@ -626,7 +637,10 @@ ActiveRecord::Schema.define(version: 2026_01_08_155328) do
     t.datetime "updated_at"
     t.datetime "deleted_at"
     t.string "version"
+    t.integer "submitted", default: 0, null: false
+    t.jsonb "metadata", default: {}, null: false
     t.index ["element_klass_id"], name: "index_element_klasses_revisions_on_element_klass_id"
+    t.check_constraint "jsonb_typeof(metadata) = 'object'::text", name: "chk_element_klasses_revisions_metadata"
   end
 
   create_table "element_tags", id: :serial, force: :cascade do |t|
@@ -662,9 +676,11 @@ ActiveRecord::Schema.define(version: 2026_01_08_155328) do
     t.string "klass_uuid"
     t.jsonb "properties_release"
     t.string "ancestry", default: "/", null: false, collation: "C"
+    t.jsonb "metadata", default: {}, null: false
     t.index ["ancestry"], name: "index_elements_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
     t.index ["name"], name: "index_elements_on_name_trigram", opclass: :gin_trgm_ops, using: :gin
     t.index ["short_label"], name: "index_elements_on_short_label_trigram", opclass: :gin_trgm_ops, using: :gin
+    t.check_constraint "jsonb_typeof(metadata) = 'object'::text", name: "chk_elements_metadata"
   end
 
   create_table "elements_elements", force: :cascade do |t|
@@ -689,7 +705,9 @@ ActiveRecord::Schema.define(version: 2026_01_08_155328) do
     t.datetime "updated_at"
     t.datetime "deleted_at"
     t.jsonb "properties_release"
+    t.jsonb "metadata", default: {}, null: false
     t.index ["element_id"], name: "index_elements_revisions_on_element_id"
+    t.check_constraint "jsonb_typeof(metadata) = 'object'::text", name: "chk_elements_revisions_metadata"
   end
 
   create_table "elements_samples", id: :serial, force: :cascade do |t|
@@ -1894,8 +1912,8 @@ ActiveRecord::Schema.define(version: 2026_01_08_155328) do
        RETURNS TABLE(literatures text)
        LANGUAGE sql
       AS $function$
-         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2 
-         where l.literature_id = l2.id 
+         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2
+         where l.literature_id = l2.id
          and l.element_type = $1 and l.element_id = $2
        $function$
   SQL
@@ -1995,7 +2013,7 @@ ActiveRecord::Schema.define(version: 2026_01_08_155328) do
               where collection_id in (select id from collections where user_id = userId)
           ) s;
           used_space = COALESCE(used_space_samples,0);
-          
+
           select sum(calculate_element_space(r.reaction_id, 'Reaction')) into used_space_reactions from (
               select distinct reaction_id
               from collections_reactions

@@ -34,6 +34,8 @@ class GenericSGDetails extends Component {
   handleRetrieveRevision(revision, cb) {
     const { segment, onChange } = this.props;
     segment.properties = revision;
+    segment.properties = revision.properties;
+    segment.metadata = revision.metadata;
     segment.changed = true;
     cb();
     onChange(segment);
