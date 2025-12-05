@@ -364,8 +364,43 @@ module Reporter
 
       def assigned_metric_pref(material, index, metric_prefixes = %w[m n u])
         metrics = material.metrics
+        return 'm' if metrics.nil? || !metrics.is_a?(Array)
+
         (metrics.length > index) && (metric_prefixes.include? metrics[index]) ? metrics[index] : 'm'
       end
+
+      # def component_unit_conversion(component)
+      #   # Use the same approach as unit_conversion for materials
+      #   # Components have metrics property like materials do
+      #   comp = OpenStruct.new(component)
+      #   mmol_unit = met_pref(assigned_metric_pref(comp, 2, %w[m n]), 'mol')
+      #   # Concentration unit uses index 3 of metrics array
+      #   conc_unit = met_pref(assigned_metric_pref(comp, 3, %w[m n]), 'mol/l')
+      #
+      #   [mmol_unit, conc_unit]
+      # end
+
+      # def assigned_component_amount(component)
+      #   # For components, we only need amount_mol and concentration (molarity_value)
+      #   comp = OpenStruct.new(component)
+      #   comp_props = comp.component_properties || {}
+      #
+      #   # Get amount_mol (stored in base unit: mol)
+      #   amount_mol = comp_props[:amount_mol] || comp_props['amount_mol'] || 0
+      #
+      #   # Get concentration (molarity_value, stored in base unit: mol/l)
+      #   conc = comp_props[:molarity_value] || comp_props['molarity_value'] || nil
+      #
+      #   # Convert amount_mol using metric prefix at index 2 (mol units)
+      #   # Start from 'n' (base unit, no prefix) and convert to user-selected prefix
+      #   amount_mol = met_pre_conv(amount_mol, 'n', assigned_metric_pref(comp, 2, %w[m n])) if amount_mol.present? && amount_mol != 0
+      #
+      #   # Convert concentration using metric prefix at index 3 (mol/l units)
+      #   # Start from 'n' (base unit, no prefix) and convert to user-selected prefix
+      #   conc = met_pre_conv(conc, 'n', assigned_metric_pref(comp, 3, %w[m n])) if conc.present? && conc != 0
+      #
+      #   [amount_mol, conc]
+      # end
 
       def material_hash(material, is_product=false)
         s = OpenStruct.new(material)
@@ -401,7 +436,50 @@ module Reporter
                              })
         end
 
+        # Process mixture components and set mixture-related flags
+        process_mixture_components(s, sample_hash)
+
         sample_hash
+      end
+
+      def process_mixture_components(material, sample_hash)
+        # Check if material is a mixture with components
+        # Always set components to an empty array to avoid nil errors in Sablon templates
+        # This ensures s.components is always enumerable (never nil) for template conditionals
+        sample_hash[:components] = []
+
+        if material.sample_type == 'Mixture' || material.components.present?
+          components = material.components || []
+          # Only set components if there are actual components to display
+          if components.present? && components.any?
+            sample_hash[:components] = components.map do |comp|
+              comp_props = comp[:component_properties] || {}
+              comp_mol = comp[:molecule] || {}
+
+              # Extract component data directly from component_properties without conversion
+              # Values are used as-is from the component data structure
+              # Supports both symbol and string keys for flexibility
+
+              {
+                name: comp[:name] || comp_mol[:iupac_name] || '',
+                amount_mol: valid_digit(comp_props[:amount_mol] || comp_props['amount_mol'], digit),
+                amount_mol_unit: 'mol',
+                concn: valid_digit(comp_props[:molarity_value] || comp_props['molarity_value'], digit),
+                concn_unit: comp_props[:molarity_unit] || comp_props['molarity_unit'] || 'mol/l',
+                equivalent: valid_digit(comp_props[:equivalent] || comp_props['equivalent'], digit),
+                purity: valid_digit(comp_props[:purity] || comp_props['purity'], digit),
+                reference: comp_props[:reference] || comp_props['reference'] || false,
+                molecular_weight: valid_digit(comp_mol[:molecular_weight] || comp_mol['molecular_weight'], digit),
+                relative_molecular_weight: valid_digit(comp_props[:relative_molecular_weight] || comp_props['relative_molecular_weight'], digit),
+              }
+            end
+          end
+        end
+
+        # Always set is_mixture flag explicitly for Sablon template conditionals
+        # Set to true if sample_type is 'Mixture' OR if components are present and not empty
+        # This flag is used in Word templates with «s.is_mixture:if» conditionals
+        sample_hash[:is_mixture] = material.sample_type == 'Mixture' || (material.components.present? && material.components.any?)
       end
 
       def starting_materials
