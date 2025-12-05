@@ -199,7 +199,7 @@ export default class ReactionDescriptionEditor extends React.Component {
           onHide={this.onCloseTemplateCreator}
         >
           <span className="ql-formats">
-            <button>
+            <button title="Template Settings">
               <span className="fa fa-cog" />
             </button>
           </span>
