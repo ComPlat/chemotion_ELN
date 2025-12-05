@@ -319,8 +319,66 @@ module Reporter
         end
       end
 
+      # Calculates the amount in moles for a mixture sample
+      # This is a shadow of the JavaScript calculateMixtureAmountMol() function
+      # Takes into account reference_component_changed flag
+      # @param sample [Sample] the mixture sample to calculate amount for
+      # @return [Float, nil] the amount in moles, or nil if calculation is not possible
+      def calculate_mixture_amount_mol(sample, mass)
+        return nil unless sample.sample_type == Sample::SAMPLE_TYPE_MIXTURE
+
+        # Find the reference component
+        reference_component = find_reference_component(sample)
+        return nil unless reference_component
+
+        sample_details = sample.sample_details&.transform_keys(&:to_sym) || {}
+        # Check if the reference component has been changed (flag set during reference change)
+        # Default to false when the flag is not set
+        has_reference_changed = sample_details[:reference_component_changed]
+
+        # Normalize component properties
+        component_props = normalize_component_properties(reference_component)
+
+        rel_mol_weight = component_props[:relative_molecular_weight]
+        ref_amount_mol = component_props[:amount_mol]
+
+        if rel_mol_weight&.to_f&.positive? && !has_reference_changed
+          # Case 2: Based on amount_g/amount_l changes - use total mass / relative molecular weight
+          # Only calculate from mass when relative molecular weight is available
+          # and reference hasn't been changed
+          mass ? (mass.to_f / rel_mol_weight) : nil
+        else
+          # Case 1 & 3: Use amount_mol of the reference component
+          # Case 1: When reference has been changed (initial case)
+          # Case 3: Fallback when relative molecular weight is not available
+          # Return nil if ref_amount_mol is missing to indicate missing data
+          ref_amount_mol&.to_f
+        end
+      end
+
+      # Normalizes component properties by converting keys to symbols
+      # @param component [Hash] the component hash
+      # @return [Hash] normalized component properties with symbol keys
+      def normalize_component_properties(component)
+        props = component[:component_properties] || component['component_properties'] || {}
+        props.transform_keys(&:to_sym)
+      end
+
+      # Finds the reference component from the components array
+      # @param sample [Sample] the sample containing components
+      # @return [Hash, nil] the reference component or nil if not found
+      def find_reference_component(sample)
+        return nil unless sample.components && sample.components.is_a?(Array)
+
+        sample.components.find do |component|
+          component_props = normalize_component_properties(component)
+          component_props[:reference] == true
+        end
+      end
+
       # Calculates the amount in millimoles for a sample, handling both regular and gas samples
       # For gas samples, calculates based on vessel volume and gas phase data
+      # For mixture samples, uses calculate_amount_mmol_for_mixture
       # @param sample [Sample] the sample to calculate amount for
       # @return [Float, 0] the amount in millimoles, or 0 if mole_value is nil
       # @note For gas samples, the calculation uses:
@@ -328,8 +386,10 @@ module Reporter
       #   - Gas phase data (part per million and temperature)
       #   - Converts the result to millimoles (multiplies by 1000)
       def calculate_amount_mmol(sample)
+        # Return real_amount_mmol if available (unless it's a gas sample)
         return sample.real_amount_mmol unless sample.gas_type == 'gas'
 
+        # Handle gas samples
         vessel_volume = calculate_vessel_volume(@obj.vessel_size)
         return unless vessel_volume
 
@@ -345,7 +405,15 @@ module Reporter
       def assigned_amount(s, is_product = false)
         mass = s.real_amount_g == 0.0 && !is_product ? s.amount_g : s.real_amount_g
         vol = s.real_amount_ml == 0.0 && !is_product ? s.amount_ml : s.real_amount_ml
-        mmol = s.real_amount_mmol == 0.0 && !is_product ? s.amount_mmol : calculate_amount_mmol(s)
+        mmol = if s.sample_type == Sample::SAMPLE_TYPE_MIXTURE
+                 # Always use special function (returns moles, convert to millimoles)
+                 mixture_mol = calculate_mixture_amount_mol(s, mass)
+                 mixture_mol.is_a?(Numeric) ? mixture_mol * 1000.0 : nil
+               elsif s.real_amount_mmol == 0.0 && !is_product
+                 s.amount_mmol
+               else
+                 calculate_amount_mmol(s)
+               end
 
         mass = met_pre_conv(mass, 'n', assigned_metric_pref(s, 0))
         vol = met_pre_conv(vol, 'm', assigned_metric_pref(s, 1))
@@ -364,7 +432,85 @@ module Reporter
 
       def assigned_metric_pref(material, index, metric_prefixes = %w[m n u])
         metrics = material.metrics
+
         (metrics.length > index) && (metric_prefixes.include? metrics[index]) ? metrics[index] : 'm'
+      end
+
+      # Get metric prefix for a component from its component_properties
+      # @param comp_props [Hash] component properties hash with symbol keys
+      # @param index [Integer] index in metrics string (2 for amount_mol, 3 for concn)
+      # @param metric_prefixes [Array] valid metric prefixes
+      # @param parent_material [OpenStruct] parent material (sample) for fallback
+      # @return [String] metric prefix character
+      def component_metric_pref(comp_props, index, metric_prefixes, parent_material = nil)
+        # Try to get metrics from component properties first
+        metrics = comp_props[:metrics]
+
+        # If not found in component, fall back to parent material metrics
+
+        metrics = parent_material&.metrics || 'mmmm' if metrics.blank?
+
+        # Default to 'm' if still not found
+        return 'm' if metrics.blank?
+
+        # Extract character at index and validate
+        (metrics.length > index) && (metric_prefixes.include? metrics[index]) ? metrics[index] : 'm'
+      end
+
+      # Get converted amount_mol and concn values for a component
+      # Similar to assigned_amount for normal samples
+      # @param comp_props [Hash] component properties hash with symbol keys
+      # @param parent_material [OpenStruct] parent material (sample) for fallback metrics
+      # @return [Array] [amount_mol_value, concn_value]
+      def component_assigned_amount(comp_props, parent_material = nil)
+        # Get raw values (in base units: mol and mol/l)
+        amount_mol = (comp_props[:amount_mol] || 0).to_f
+        concn = (comp_props[:molarity_value] || comp_props[:concn] || 0).to_f
+
+        # Get metric prefixes from component metrics string
+        # Index 2 for amount_mol, index 3 for concn
+        amount_mol_prefix = component_metric_pref(comp_props, 2, %w[m n], parent_material)
+        concn_prefix = component_metric_pref(comp_props, 3, %w[m n], parent_material)
+
+        # Convert from base units (mol, mol/l) to target metric prefix
+        # Base unit for mol is 'n' (none), base unit for mol/l is 'n' (none)
+        amount_mol_value = met_pre_conv(amount_mol, 'n', amount_mol_prefix)
+        concn_value = met_pre_conv(concn, 'n', concn_prefix)
+
+        [amount_mol_value, concn_value]
+      end
+
+      # Get unit strings for component amount_mol and concn
+      # Similar to unit_conversion for normal samples
+      # @param comp_props [Hash] component properties hash with symbol keys
+      # @param parent_material [OpenStruct] parent material (sample) for fallback metrics
+      # @return [Array] [amount_mol_unit, concn_unit]
+      def component_unit_conversion(comp_props, parent_material = nil)
+        # Get metric prefixes from component metrics string
+        # Index 2 for amount_mol, index 3 for concn
+        amount_mol_prefix = component_metric_pref(comp_props, 2, %w[m n], parent_material)
+        concn_prefix = component_metric_pref(comp_props, 3, %w[m n], parent_material)
+
+        # Build unit strings
+        amount_mol_unit = met_pref(amount_mol_prefix, 'mol')
+        concn_unit = met_pref(concn_prefix, 'mol/l')
+
+        [amount_mol_unit, concn_unit]
+      end
+
+      # Gets the molecular weight for a sample, using reference_relative_molecular_weight for mixtures
+      # @param sample [OpenStruct] the sample object
+      # @param molecule [Hash] the molecule hash containing molecular_weight
+      # @return [Float, nil] the molecular weight to use
+      def get_molecular_weight(sample, molecule)
+        # For mixtures, use reference_relative_molecular_weight if available
+        # Otherwise fall back to regular molecular_weight
+        if sample.sample_type == Sample::SAMPLE_TYPE_MIXTURE && sample.sample_details
+          sample_details = sample.sample_details.transform_keys(&:to_sym)
+          sample_details[:reference_relative_molecular_weight] || molecule[:molecular_weight]
+        else
+          molecule[:molecular_weight]
+        end
       end
 
       def material_hash(material, is_product=false)
@@ -372,20 +518,21 @@ module Reporter
         m = s.molecule
         mass, vol, mmol = assigned_amount(s, is_product)
         mass_unit, vol_unit, mmol_unit = unit_conversion(s)
+
         sample_hash = {
           name: s.name,
           iupac_name: s.molecule_name_hash[:label].presence || m[:iupac_name],
           short_label: s.name.presence || s.external_label.presence || s.short_label.presence,
           formular: s.decoupled ? s.sum_formula : m[:sum_formular],
-          mol_w: valid_digit(m[:molecular_weight], digit),
-          mass: valid_digit(mass, digit),
+          mol_w: format_scientific(get_molecular_weight(s, m), digit),
+          mass: format_scientific(mass, digit),
           mass_unit: mass_unit,
-          vol: valid_digit(vol, digit),
+          vol: format_scientific(vol, digit),
           vol_unit: vol_unit,
-          density: valid_digit(s.density, digit),
-          mol: valid_digit(mmol, digit),
+          density: format_scientific(s.density, digit),
+          mol: format_scientific(mmol, digit),
           mmol_unit: mmol_unit,
-          equiv: valid_digit(s.equivalent, digit),
+          equiv: format_scientific(s.equivalent, digit),
           molecule_name_hash: s[:molecule_name_hash],
         }
 
@@ -401,7 +548,80 @@ module Reporter
                              })
         end
 
+        # Process mixture components and set mixture-related flags
+        process_mixture_components(s, sample_hash)
+
         sample_hash
+      end
+
+      def process_mixture_components(material, sample_hash)
+        # Check if material is a mixture with components
+        # Always set components to an empty array to avoid nil errors in Sablon templates
+        # This ensures s.components is always enumerable (never nil) for template conditionals
+        sample_hash[:components] = []
+
+        if material.sample_type == Sample::SAMPLE_TYPE_MIXTURE || material.components.present?
+          components = material.components || []
+          # Only set components if there are actual components to display
+          if components.present? && components.any?
+            sample_hash[:components] = components.map do |comp|
+              comp_props = normalize_component_properties(comp)
+              comp_mol = (comp_props[:molecule] || {}).transform_keys(&:to_sym)
+
+              # Get converted amounts and units using similar functions as normal samples.
+              # Pass the original material object directly; it already exposes `metrics`.
+              amount_mol_value, concn_value = component_assigned_amount(comp_props, material)
+              amount_mol_unit, concn_unit = component_unit_conversion(comp_props, material)
+
+              {
+                name: comp_mol[:iupac_name] || comp[:name] || '',
+                iupac_name: comp_mol[:iupac_name] || '',
+                amount_mol: format_scientific(amount_mol_value, digit),
+                amount_mol_unit: amount_mol_unit,
+                concn: format_scientific(concn_value, digit),
+                concn_unit: concn_unit,
+                equivalent: format_scientific(comp_props[:equivalent], digit),
+                purity: format_scientific(comp_props[:purity], digit),
+                reference: comp_props[:reference] || false,
+                molecular_weight: format_scientific(comp_mol[:molecular_weight], digit),
+                relative_molecular_weight: format_scientific(comp_props[:relative_molecular_weight], digit),
+              }
+            end
+          end
+        end
+
+        # Always set is_mixture flag explicitly for Sablon template conditionals
+        # Set to true if sample_type is 'Mixture' OR if components are present and not empty
+        # This flag is used in Word templates with «s.is_mixture:if» conditionals
+        sample_hash[:is_mixture] = material.sample_type == Sample::SAMPLE_TYPE_MIXTURE ||
+                                   (material.components.present? && material.components.any?)
+      end
+
+      # Format numbers similar to UI: use scientific notation for very small or very large numbers
+      # Matches JavaScript formatDisplayValue behavior
+      # (see: js/ui/utils/formatDisplayValue.js, function formatDisplayValue):
+      # scientific notation outside range 0.0001 to 1e8
+      def format_scientific(input_num, precision)
+        return 'n.d.' if input_num.nil? || input_num.to_s.empty?
+
+        num = input_num.to_f
+        return 'n.d.' if num.nan? || !num.finite?
+
+        abs_val = num.abs
+
+        # Use scientific notation for values outside reasonable range (0.0001 to 1e8)
+        # Zero is displayed as regular format
+        if abs_val == 0.0 || (abs_val >= 0.0001 && abs_val < 1e8)
+          # Use regular formatting for values in reasonable range
+          valid_digit(input_num, precision)
+        else
+          # Use scientific notation for very small or very large numbers
+          # Format: 1.23e+05 or 1.23e-05 (with precision-1 significant digits after decimal)
+          # Ruby's %e format gives us scientific notation with uppercase E
+          formatted = format("%.#{precision - 1}e", num)
+          # Convert uppercase E to lowercase e to match UI format
+          formatted.tr('E', 'e')
+        end
       end
 
       def starting_materials
