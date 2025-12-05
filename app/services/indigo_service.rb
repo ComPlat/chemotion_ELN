@@ -25,7 +25,20 @@ class IndigoService
   def initialize(struct, output_format = 'image/svg+xml', options = nil)
     @struct = struct
     @output_format = output_format
-    @options = options || { 'render-coloring' => true }
+    @options = {
+      'render-coloring' => false,
+      # 'render-base-color' => '0.0, 0.0, 0.0',
+      # 'render-bond-line-width' => 1,
+      # 'render-relative-thickness' => 1.3,
+      'render-bond-length' => 40,
+      # 'render-implicit-hydrogens-visible' => true,
+      # 'render-label-mode' => 'hetero',
+      # 'render-margins' => 10,
+      # 'render-stereo-style' => 'old',
+      # Font settings - match your example
+      'render-font-size' => 22,
+      # 'render-font-family' => 'Arial',
+    }
     @service_url = Rails.configuration.indigo_service.indigo_service_url
   end
 
