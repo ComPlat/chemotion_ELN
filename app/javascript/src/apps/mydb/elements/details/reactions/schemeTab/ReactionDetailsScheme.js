@@ -806,7 +806,7 @@ export default class ReactionDetailsScheme extends React.Component {
     }
 
     // Set the reference relative molecular weight
-    const relativeWeight = referenceComponent.component_properties?.relative_molecular_weight;
+    const relativeWeight = referenceComponent.relative_molecular_weight;
     if (relativeWeight) {
       updatedSample.sample_details.reference_relative_molecular_weight = relativeWeight;
     }
