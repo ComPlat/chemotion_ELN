@@ -1668,7 +1668,7 @@ export default class Sample extends Element {
   get reference_relative_molecular_weight() {
     if (!this.reference_component) { return null; }
 
-    return this.reference_component.component_properties?.relative_molecular_weight;
+    return this.reference_component.relative_molecular_weight;
   }
 
   /**

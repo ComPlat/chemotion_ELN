@@ -1023,8 +1023,8 @@ class Material extends Component {
     let molecularWeight = sample.decoupled
       ? sample.molecular_mass
       : (sample.molecule && sample.molecule.molecular_weight);
-    if (sample.isMixture() && sample.reference_molecular_weight) {
-      molecularWeight = sample.reference_molecular_weight.toFixed(4);
+    if (sample.isMixture() && sample.reference_relative_molecular_weight) {
+      molecularWeight = sample.reference_relative_molecular_weight.toFixed(4);
     }
     let theoreticalMassPart = '';
     if (isProduct && sample.maxAmount) {
