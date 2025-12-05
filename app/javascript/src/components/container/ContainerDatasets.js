@@ -76,19 +76,13 @@ export default class ContainerDatasets extends Component {
   }
 
   handleChange = (datasetContainer) => {
-    this.setState((prevState) => {
-      const newChildren = prevState.container.children.map(
-        (child) => (child.id === datasetContainer.id ? datasetContainer : child)
-      );
+    const { container } = this.state;
 
-      const newContainer = {
-        ...prevState.container,
-        children: newChildren
-      };
-
-      // DON'T call this.props.onChange here! It causes infinite re-render loop
-
-      return { container: newContainer };
+    container.children.find((dataset) => {
+      if (dataset.id === datasetContainer.id) {
+        const datasetId = container.children.indexOf(dataset);
+        container.children[datasetId] = datasetContainer;
+      }
     });
   };
 
