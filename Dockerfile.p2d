@@ -1,4 +1,4 @@
-FROM ptrxyz/chemotion:eln-2.1.1
+FROM ptrxyz/chemotion:eln-2.2.0
 
 ARG REMOTE=https://github.com/ComPlat/chemotion_ELN.git
 ARG BUNDLER_VERSION=2.4.22
@@ -21,7 +21,7 @@ WORKDIR /chemotion/app
 
 RUN cp .version /bk.version
 
-RUN --mount=type=bind,source=.git/shallow,target=/.current_hash,readonly \
+RUN --mount=type=bind,source=.git/ORIG_HEAD,target=/.current_hash,readonly \
     git remote add origin ${REMOTE} && \
     git fetch && \
     git checkout $(cat /.current_hash)
