@@ -1303,7 +1303,7 @@ export default class Sample extends Element {
       return 0;
     }
 
-    const hasReferenceChanged = this.sample_details?.reference_component_changed || true;
+    const hasReferenceChanged = this.sample_details?.reference_component_changed || false;
     const lockReactionEquivColumn = this.getLockReactionEquivColumn();
     const relMolWeight = referenceComponent.relative_molecular_weight;
     const prevMol = this.sample_details?.previous_amount_mol;
@@ -1355,7 +1355,7 @@ export default class Sample extends Element {
     // Check if the reference component has been changed (flag set during reference change)
     // Default to false when the flag is not set, so we only treat it as "changed"
     // when some other logic explicitly marks it as true.
-    const hasReferenceChanged = this.sample_details?.reference_component_changed ?? false;
+    const hasReferenceChanged = this.sample_details?.reference_component_changed || false;
     const lockReactionEquivColumn = this.getLockReactionEquivColumn();
 
     // Get the reference component's relative molecular weight
