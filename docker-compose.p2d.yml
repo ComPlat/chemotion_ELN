@@ -32,6 +32,7 @@ services:
       - chemotion
     env_file:
       - path: .env # see https://github.com/Dokploy/dokploy/issues/385 for more details
+        required: false # Makes the file optional. Default value is 'true'
     volumes:
       - ../files/pullin:/shared
 

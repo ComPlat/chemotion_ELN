@@ -74,7 +74,7 @@ ADD https://payload.chemserv.scc.kit.edu/converter.yml /chemotion/app/config/con
 ADD https://payload.chemserv.scc.kit.edu/spectra.yml /chemotion/app/config/spectra.yml
 ADD https://payload.chemserv.scc.kit.edu/indigo.yml /chemotion/app/config/indigo_service.yml
 # stop check for ketcherails
-RUN sed -i '/# add ketcherails templates if needed/,$d' /embed/scripts/dbcheck.sh
+RUN sed -i '/# add ketcherails templates if needed/,$d' /embed/scripts/dbcheck.sh 
 
 RUN chmod +x /embed/run.sh && \
     chmod +x /embed/health.sh && \
@@ -92,8 +92,3 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=300s --retries=3 \
     CMD /embed/health.sh || exit 1
 
 VOLUME [ "/chemotion/app", "/chemotion/data" ]
-
-# Copy config example into actual config
-RUN cp config/structure_editors.yml.example config/structure_editors.yml
-
-RUN cp config/indigo_service.yml.example config/indigo_service.yml
