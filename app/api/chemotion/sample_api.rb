@@ -619,6 +619,46 @@ module Chemotion
           sample.destroy
         end
       end
+
+       desc 'replace sample svg file with indigo'
+      params do
+        requires :svg_path, type: String, desc: 'existing svg file path'
+        requires :molfile, type: String, desc: 'Sample molfile'
+      end
+      post 'render-svg-indigo' do
+        molfile = params[:molfile]
+        svg_filename = params[:svg_path]
+
+        if molfile.blank? || svg_filename.blank?
+          status 400
+          body 'molfile and svg_path are required.'
+          return
+        end
+
+        # Basic molfile format validation (starts with a name line and has at least 4 lines)
+        lines = molfile.lines
+        if lines.size < 4 || !lines[3].match?(/^\s*\d+\s+\d+/)
+          status 422
+          body 'Invalid molfile format.'
+          return
+        end
+
+        svg = IndigoService.new(molfile, 'image/svg+xml').render_structure
+
+        if svg.present?
+          filename = File.basename(svg_filename)
+          svg_dir = Rails.public_path.join('images', 'samples')
+          FileUtils.mkdir_p(svg_dir)
+
+          svg_path = svg_dir.join(filename)
+          File.write(svg_path, svg)
+
+          present filename
+        else
+          status 500
+          body 'Failed to generate SVG.'
+        end
+      end
     end
   end
 end
