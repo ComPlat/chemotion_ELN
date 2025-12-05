@@ -1,11 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" id="svg51" viewBox="11.066479456 33.79702510632 90.02853164000001 47.39479624" version="1.1" style="max-height: 500px" width="90.02853164000001" height="47.39479624">
-  <defs id="defs51">
-    <linearGradient id="swatch152">
-      <stop id="stop152" offset="0" style="stop-color:#000000;stop-opacity:1;"/>
+<svg xmlns="http://www.w3.org/2000/svg" id="svg_a1f4c7" viewBox="11.066479456 33.79702510632 90.02853164000001 47.39479624" version="1.1" style="max-height: 500px" width="90.02853164000001" height="47.39479624">
+  <defs id="defs_d8b3e2">
+    <linearGradient id="grad_7c5f1a">
+      <stop id="stop_3e9b4d" offset="0" style="stop-color:#000000;stop-opacity:1;"/>
     </linearGradient>
   </defs>
   
-    
-  
-  <path id="path25-8" style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#a9cdc2;fill-opacity:1;fill-rule:evenodd;stroke:#1b1918;stroke-width:2.9999;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:2.9999, 2.9999, 2.9999, 2.9999;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1" d="m 13.783477,41.952131 v 31.1807 q 0,5.6693 5.6693,5.6693 h 73.700797 q 5.6693,0 5.6693,-5.6693 v -31.1807 q 0,-5.6693 -5.6693,-5.6693 H 19.452777 q -5.6693,0 -5.6693,5.6693 z"/>
+  <path id="path_5d2a8f" style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#a9cdc2;fill-opacity:1;fill-rule:evenodd;stroke:#1b1918;stroke-width:2.9999;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:2.9999, 2.9999, 2.9999, 2.9999;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1" d="m 13.783477,41.952131 v 31.1807 q 0,5.6693 5.6693,5.6693 h 73.700797 q 5.6693,0 5.6693,-5.6693 v -31.1807 q 0,-5.6693 -5.6693,-5.6693 H 19.452777 q -5.6693,0 -5.6693,5.6693 z"/>
 </svg>

@@ -1,12 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="11.6986067405 34.882796802 88.4411268 45.127102640000004" width="88.4411268" height="45.127102640000004">
-  <!-- Background Rectangle (White) -->
-  <rect x="11.6986067405" y="34.882796802" width="88.4411268" height="45.127102640000004" style="fill:white;"/>
-
-  <!-- Your original path element with random pattern -->
-  <path style="fill:url(#pattern-08b1f074-e15e-4527-9a47-7d4584f0ad3e);fill-opacity:1;fill-rule:evenodd;stroke:#1b1918;stroke-width:0.5669;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" d="m 13.783477,41.952131 v 31.1807 q 0,5.6693 5.6693,5.6693 h 73.700797 q 5.6693,0 5.6693,-5.6693 v -31.1807 q 0,-5.6693 -5.6693,-5.6693 H 19.452777 q -5.6693,0 -5.6693,5.6693 z"/>
-
-  <!-- Random pattern definition -->
-  <pattern patternUnits="userSpaceOnUse" width="3" height="10" id="pattern-08b1f074-e15e-4527-9a47-7d4584f0ad3e">
-    <rect width="2" height="10" fill="#a9cdc2"/>
-  </pattern>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" id="svg51" viewBox="12.4724666 35.1492508 87.53403832 44.90033328" version="1.1" style="max-height: 500px" width="87.53403832" height="44.90033328">
+  <defs id="defs_8f3b2a">
+    <linearGradient id="grad_a9d2f4">
+      <stop id="stop_7c1e5b" offset="0" style="stop-color:#000000;stop-opacity:1;"/>
+    </linearGradient>
+    <pattern patternTransform="matrix(1.4142135,1.4142135,-1.4142135,1.4142135,-94.5377,-0.1057795)" id="pattern_4b2c1f" preserveAspectRatio="xMidYMid" xlink:href="#pattern_9e7a3d"/>
+    <pattern patternTransform="matrix(1.4142135,1.4142135,-1.4142135,1.4142135,-94.5377,-0.1057797)" id="pattern_9e7a3d" preserveAspectRatio="xMidYMid" xlink:href="#pattern_2c5b6a"/>
+    <pattern y="0" x="0" patternTransform="matrix(1.4142135,1.4142135,-1.4142135,1.4142135,-94.5377,-0.1057797)" id="pattern_2c5b6a" preserveAspectRatio="xMidYMid" xlink:href="#stripes_5f8d1c"/>
+    <pattern y="0" x="0" style="fill:#a9cdc2" id="stripes_5f8d1c" preserveAspectRatio="xMidYMid" patternTransform="scale(2)" height="10" width="3" patternUnits="userSpaceOnUse">
+      <rect id="rect_1a9f8b" height="10" width="2" y="0" x="0" style="stroke:none"/>
+    </pattern>
+  </defs>
+  
+  <path id="path_7d3c2e" style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#1b1918;stroke-width:0.5669;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1" d="m 13.783477,41.952131 v 31.1807 q 0,5.6693 5.6693,5.6693 h 73.700797 q 5.6693,0 5.6693,-5.6693 v -31.1807 q 0,-5.6693 -5.6693,-5.6693 H 19.452777 q -5.6693,0 -5.6693,5.6693 z"/>
+  <path id="path_3f5b7c" style="font-variation-settings:normal;vector-effect:none;fill:url(#pattern_4b2c1f);fill-opacity:1;fill-rule:evenodd;stroke:#1b1918;stroke-width:0.5669;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000" d="m 13.783477,41.952131 v 31.1807 q 0,5.6693 5.6693,5.6693 h 73.700797 q 5.6693,0 5.6693,-5.6693 v -31.1807 q 0,-5.6693 -5.6693,-5.6693 H 19.452777 q -5.6693,0 -5.6693,5.6693 z"/>
 </svg>

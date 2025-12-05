@@ -147,6 +147,13 @@ export default class SampleDetails extends React.Component {
       currentUser,
       showRedirectWarning: redirectedFromMixture || false,
       casInputValue: '',
+      // Heterogeneous sample props
+      state: props.sample.state || '',
+      color: props.sample.color || '',
+      height: props.sample.height || '',
+      width: props.sample.width || '',
+      length: props.sample.length || '',
+      storage_condition: props.sample.storage_condition || '',
       ketcherSVGError: null
     };
 
@@ -215,7 +222,6 @@ export default class SampleDetails extends React.Component {
 
     // Sync casInputValue when CAS changes
     const currentCas = sample.xref?.cas ?? '';
-
     this.setState({
       sample,
       smileReadonly,
@@ -304,12 +310,14 @@ export default class SampleDetails extends React.Component {
     }
   }
 
-  handleStructureEditorSave(molfile, svgFile = null, config = null, editor = 'ketcher') {
+  handleStructureEditorSave(molfile, components, textNodesFormula, svgFile = null, config = null, editor = 'ketcher') {
     const { sample } = this.state;
     sample.molfile = molfile;
     const smiles = (config && sample.molecule) ? config.smiles : null;
     sample.contains_residues = molfile?.indexOf(' R# ') > -1;
     sample.formulaChanged = true;
+    sample.components = components;
+    if (textNodesFormula?.length > 0) sample.name = textNodesFormula;
     this.setState({ loadingMolecule: true });
 
     const fetchError = (errorMessage) => {
@@ -403,8 +411,11 @@ export default class SampleDetails extends React.Component {
     } else if (sample.isNew) {
       ElementActions.createSample(sample, closeView);
     } else {
+      // TODO: upate sample params
       sample.cleanBoilingMelting();
-      ElementActions.updateSample(new Sample(sample), closeView);
+      const newSample = new Sample(sample);
+      newSample.components = sample.components;
+      ElementActions.updateSample(newSample, closeView);
     }
 
     if (sample.is_new || closeView) {
@@ -821,7 +832,6 @@ export default class SampleDetails extends React.Component {
 
   samplePropertiesTab(ind) {
     const { sample } = this.state;
-
     return (
       <Tab eventKey={ind} title="Properties" key={`Props${sample.id.toString()}`}>
         {!sample.isNew && <CommentSection section="sample_properties" element={sample} />}

@@ -68,6 +68,12 @@ export default class ModalExport extends React.Component {
           { value: 'updated_at', text: 'updated at', checked: false },
           { value: 'user_labels', text: 'user labels', checked: false },
           { value: 'literature', text: 'literature', checked: false },
+          { value: 'height', text: 'Height', checked: false },
+          { value: 'width', text: 'Width', checked: false },
+          { value: 'length', text: 'Length', checked: false },
+          { value: 'state', text: 'State', checked: false },
+          { value: 'color', text: 'Color', checked: false },
+          { value: 'storage_condition', text: 'Storage Conditions', checked: false },
         ],
         molecule: [
           { value: 'cano_smiles', text: 'canonical smiles', checked: true },
@@ -151,6 +157,7 @@ export default class ModalExport extends React.Component {
           { value: 'material group', text: 'material group', checked: false },
           { value: 'canonical smiles', text: 'canonical smiles', checked: false },
           { value: 'InChI', text: 'InChIkey', checked: false },
+          { value: 'composition_table', text: 'Composition Table', checked: false },
         ],
       },
       checkedAllColumns: {
