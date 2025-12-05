@@ -68,7 +68,8 @@ export default class SampleDetailsComponents extends React.Component {
    * @param {string} action - The action to perform ('merge' or 'move')
    */
   handleModalAction(action) {
-    const { droppedMaterial, sample } = this.state;
+    const { droppedMaterial } = this.state;
+    const { sample, onChange } = this.props;
 
     if (droppedMaterial) {
       const {
@@ -77,7 +78,7 @@ export default class SampleDetailsComponents extends React.Component {
       this.dropMaterial(srcMat, srcGroup, tagMat, tagGroup, action);
     }
     this.handleModalClose();
-    this.props.onChange(sample);
+    onChange(sample);
   }
 
   /**
@@ -89,23 +90,11 @@ export default class SampleDetailsComponents extends React.Component {
   }
 
   /**
-   * Updates total volume only if component concentration is locked
-   * @param {Object} component - The component to check
-   * @param {Sample} sample - The parent sample
-   */
-  updateTotalVolumeIfConcentrationLocked(component, sample) {
-    if (component.isComponentConcentrationLocked()) {
-      sample.updateTotalVolume(component.amount_mol, component.concn);
-    }
-  }
-
-  /**
    * Handles changes to component amount and units.
    * @param {Object} changeEvent - The change event
    * @param {Object} currentComponent - The component being modified
-   * @param {Object} referenceComponent - The reference component
    */
-  handleAmountUnitChange(changeEvent, currentComponent, referenceComponent) {
+  handleAmountUnitChange(changeEvent, currentComponent) {
     const { sample } = this.props;
     const { amount, concType, lockColumn } = changeEvent;
 
@@ -115,17 +104,17 @@ export default class SampleDetailsComponents extends React.Component {
       case 'l':
       case 'g':
         // volume/mass given, update amount
-        currentComponent.handleVolumeChange(amount, totalVolume, referenceComponent);
+        currentComponent.handleVolumeChange(amount, totalVolume);
         this.updateTotalVolumeIfConcentrationLocked(currentComponent, sample);
         break;
       case 'mol':
         // amount given, update volume/mass
-        currentComponent.handleAmountChange(amount, totalVolume, referenceComponent);
+        currentComponent.handleAmountChange(amount, totalVolume);
         this.updateTotalVolumeIfConcentrationLocked(currentComponent, sample);
         break;
       case 'mol/l':
         // starting conc./target concentration changes
-        currentComponent.handleConcentrationChange(amount, totalVolume, concType, lockColumn, referenceComponent);
+        currentComponent.handleConcentrationChange(amount, totalVolume, concType, lockColumn);
         break;
       default:
         break;
@@ -140,14 +129,11 @@ export default class SampleDetailsComponents extends React.Component {
   handleReferenceComponentUpdateFromPurity(lockAmountColumnSolids, materialGroup) {
     const { sample } = this.props;
 
-    if (materialGroup === 'liquid') {
+    // Update equivalent only if:
+    // - Liquid: Always update
+    // - Solid: Update if amount column is locked (user has manually entered a value)
+    if (materialGroup === 'liquid' || (materialGroup === 'solid' && lockAmountColumnSolids)) {
       sample.updateMixtureComponentEquivalent();
-    } else if (materialGroup === 'solid') {
-      if (lockAmountColumnSolids) {
-        sample.updateMixtureComponentEquivalent();
-      } else {
-        sample.updateMixtureMolecularWeight();
-      }
     }
   }
 
@@ -156,14 +142,9 @@ export default class SampleDetailsComponents extends React.Component {
    * @param {Object} changeEvent - The change event containing the type and data
    */
   onChangeComponent(changeEvent) {
-    const { sample } = this.state;
+    const { sample, onChange } = this.props;
 
-    sample.components = sample.components.map((component) => {
-      if (!(component instanceof Component)) {
-        return new Component(component);
-      }
-      return component;
-    });
+    sample.components = this.normalizeComponents(sample.components);
 
     switch (changeEvent.type) {
       case 'amountChanged':
@@ -191,7 +172,59 @@ export default class SampleDetailsComponents extends React.Component {
         break;
     }
     checkComponentVolumeAndNotify(sample);
-    this.props.onChange(sample);
+    onChange(sample);
+  }
+
+  /**
+   * Normalizes components array to ensure all items are Component instances.
+   * @param {Array} components - Array of components to normalize
+   * @returns {Array} Array of Component instances
+   */
+  // eslint-disable-next-line class-methods-use-this
+  normalizeComponents(components) {
+    if (!components || !Array.isArray(components)) {
+      return [];
+    }
+
+    return components.map((component) => {
+      if (!(component instanceof Component)) {
+        return new Component(component);
+      }
+      return component;
+    });
+  }
+
+  /**
+   * Finds a component by ID with validation.
+   * @param {Sample} sample - The sample containing components
+   * @param {string} componentID - The component ID to find
+   * @returns {Object|null} The component if found, null otherwise
+   */
+  // eslint-disable-next-line class-methods-use-this
+  findComponentById(sample, componentID) {
+    if (!sample || !sample.components) {
+      console.error('Sample or components not found');
+      return null;
+    }
+
+    const componentIndex = sample.components.findIndex((component) => component.id === componentID);
+    if (componentIndex === -1) {
+      console.error('Component not found:', componentID);
+      return null;
+    }
+
+    return sample.components[componentIndex];
+  }
+
+  /**
+   * Updates total volume only if component concentration is locked
+   * @param {Object} component - The component to check
+   * @param {Sample} sample - The parent sample
+   */
+  updateTotalVolumeIfConcentrationLocked(component, sample) {
+    if (component.isComponentConcentrationLocked()) {
+      sample.updateTotalVolume(component.amount_mol, component.concn);
+    }
   }
 
   /**
@@ -202,10 +235,10 @@ export default class SampleDetailsComponents extends React.Component {
     const { sample } = this.props;
     const { sampleID, amount } = changeEvent;
 
-    const componentIndex = sample.components.findIndex((component) => component.id === sampleID);
-    const currentComponent = sample.components[componentIndex];
-
-    const referenceComponent = sample.reference_component;
+    const currentComponent = this.findComponentById(sample, sampleID);
+    if (!currentComponent) {
+      return;
+    }
 
     // Set active amount unit for highlighting consistency
     if (amount && amount.unit) {
@@ -213,19 +246,21 @@ export default class SampleDetailsComponents extends React.Component {
     }
 
     // Handle different units of measurement
-    this.handleAmountUnitChange(changeEvent, currentComponent, referenceComponent);
+    this.handleAmountUnitChange(changeEvent, currentComponent);
 
-    // Check if the component is the reference component
-    if (referenceComponent && referenceComponent.id === sampleID) {
-      // Update ratio of other non-reference components
+    const referenceComponent = sample.reference_component;
+    const isReferenceComponent = referenceComponent && referenceComponent.id === sampleID;
+
+    if (isReferenceComponent) {
+      // Reference changed → refresh every component ratio
       sample.updateMixtureComponentEquivalent();
+    } else if (referenceComponent) {
+      // Non-reference changed → only update its own equivalent against the reference
+      currentComponent.updateRatioFromReference(referenceComponent);
     }
 
     // Update sample total mass for the reaction scheme
     sample.calculateTotalMixtureMass();
-
-    // Calculate relative molecular weight
-    currentComponent.calculateRelativeMolecularWeight(sample);
   }
 
   /**
@@ -235,28 +270,19 @@ export default class SampleDetailsComponents extends React.Component {
   updateDensity(changeEvent) {
     const { sample } = this.props;
     const { sampleID, amount, lockColumn } = changeEvent;
-    const componentIndex = sample.components.findIndex(
-      (component) => component.id === sampleID
-    );
 
-    if (componentIndex === -1) {
-      console.error('Component not found');
+    const currentComponent = this.findComponentById(sample, sampleID);
+    if (!currentComponent) {
       return;
     }
 
-    const currentComponent = sample.components[componentIndex];
-    const totalVolume = sample.amount_l;
-
-    currentComponent.handleDensityChange(amount, lockColumn, totalVolume);
+    currentComponent.handleDensityChange(amount, lockColumn);
 
     // update components ratio
     sample.updateMixtureComponentEquivalent();
 
     // update sample total mass for the reaction scheme
     sample.calculateTotalMixtureMass();
-
-    // Calculate relative molecular weight
-    currentComponent.calculateRelativeMolecularWeight(sample);
   }
 
   /**
@@ -267,21 +293,22 @@ export default class SampleDetailsComponents extends React.Component {
     const { sample } = this.props;
     const { sampleID, newRatio, materialGroup } = changeEvent;
 
-    const componentIndex = sample.components.findIndex(
-      (component) => component.id === sampleID
-    );
+    const currentComponent = this.findComponentById(sample, sampleID);
+    if (!currentComponent) {
+      return;
+    }
+
     const refIndex = sample.components.findIndex(
       (component) => component.reference === true
     );
 
-    if (componentIndex === -1 || refIndex === -1) {
-      console.error('Component or reference component not found');
+    if (refIndex === -1) {
+      console.error('Reference component not found');
       return;
     }
 
     const referenceMoles = sample.components[refIndex].amount_mol;
     const totalVolume = sample.amount_l;
-    const currentComponent = sample.components[componentIndex];
 
     currentComponent.updateRatio(newRatio, materialGroup, totalVolume, referenceMoles);
     this.updateTotalVolumeIfConcentrationLocked(currentComponent, sample);
@@ -294,19 +321,21 @@ export default class SampleDetailsComponents extends React.Component {
   updatePurity(changeEvent) {
     const { sample } = this.props;
     const { sampleID, amount, materialGroup } = changeEvent;
-    const { lockAmountColumnSolids } = ComponentStore.getState() || { lockAmountColumnSolids: false };
+    const componentState = ComponentStore.getState();
+    const lockAmountColumnSolids = ComponentStore.getLockStateForSample(
+      componentState,
+      'lockAmountColumnSolids',
+      sample?.id
+    );
 
     const purity = amount.value;
     const referenceComponent = sample.reference_component;
     const totalVolume = sample.amount_l;
 
-    const componentIndex = sample.components.findIndex((component) => component.id === sampleID);
-    if (componentIndex === -1) {
-      console.error('Component not found');
+    const currentComponent = this.findComponentById(sample, sampleID);
+    if (!currentComponent) {
       return;
     }
-
-    const currentComponent = sample.components[componentIndex];
     currentComponent.setPurity(purity, totalVolume, referenceComponent, lockAmountColumnSolids, materialGroup);
 
     this.updateTotalVolumeIfConcentrationLocked(currentComponent, sample);
@@ -339,7 +368,7 @@ export default class SampleDetailsComponents extends React.Component {
    * @param {boolean} [isNewSample=false] - Whether this is a new sample
    */
   dropSample(srcSample, tagMaterial, tagGroup, extLabel, isNewSample = false) {
-    const { sample } = this.state;
+    const { sample } = this.props;
     const { currentCollection } = UIStore.getState();
     let splitSample;
 
@@ -389,14 +418,16 @@ export default class SampleDetailsComponents extends React.Component {
    * @param {Object} changeEvent - The change event
    */
   updateComponentName(changeEvent) {
-    const { sample } = this.props;
+    const { sample, onChange } = this.props;
     const { sampleID, newName } = changeEvent;
-    const componentIndex = this.props.sample.components.findIndex(
-      (component) => component.id === sampleID
-    );
-    sample.components[componentIndex].name = newName;
 
-    this.props.onChange(sample);
+    const currentComponent = this.findComponentById(sample, sampleID);
+    if (!currentComponent) {
+      return;
+    }
+
+    currentComponent.name = newName;
+    onChange(sample);
   }
 
   /**
@@ -408,21 +439,17 @@ export default class SampleDetailsComponents extends React.Component {
    * @param {string} action - The action to perform ('move' or 'merge')
    */
   dropMaterial(srcMat, srcGroup, tagMat, tagGroup, action) {
-    const { sample } = this.state;
-    sample.components = sample.components.map((component) => {
-      if (!(component instanceof Component)) {
-        return new Component(component);
-      }
-      return component;
-    });
+    const { sample, onChange } = this.props;
+
+    sample.components = this.normalizeComponents(sample.components);
 
     if (action === 'move') {
       sample.moveMaterial(srcMat, srcGroup, tagMat, tagGroup);
-      this.props.onChange(sample);
+      onChange(sample);
     } else if (action === 'merge') {
       sample.mergeComponents(srcMat, srcGroup, tagMat, tagGroup)
         .then(() => {
-          this.props.onChange(sample);
+          onChange(sample);
         })
         .catch((error) => {
           console.error('Error merging components:', error);
@@ -435,21 +462,17 @@ export default class SampleDetailsComponents extends React.Component {
    * @param {Object} component - The component to delete
    */
   async deleteMixtureComponent(component) {
-    const { sample } = this.state;
-    
+    const { sample, onChange, setComponentDeletionLoading } = this.props;
+
     // Set loading state for component deletion
-    if (this.props.setComponentDeletionLoading) {
-      this.props.setComponentDeletionLoading(true);
-    }
-    
+    setComponentDeletionLoading(true);
+
     try {
       await sample.deleteMixtureComponent(component);
-      this.props.onChange(sample);
+      onChange(sample);
     } finally {
       // Clear loading state
-      if (this.props.setComponentDeletionLoading) {
-        this.props.setComponentDeletionLoading(false);
-      }
+      setComponentDeletionLoading(false);
     }
   }
 
@@ -460,7 +483,13 @@ export default class SampleDetailsComponents extends React.Component {
   updateSampleForReferenceChanged(changeEvent) {
     const { sample } = this.props;
     const { sampleID } = changeEvent;
-    const componentIndex = this.props.sample.components.findIndex(
+
+    // Validate component exists
+    if (!this.findComponentById(sample, sampleID)) {
+      return;
+    }
+
+    const componentIndex = sample.components.findIndex(
       (component) => component.id === sampleID
     );
 
@@ -530,7 +559,7 @@ export default class SampleDetailsComponents extends React.Component {
     const minPadding = { padding: '1px 2px 2px 0px' };
 
     if (sample && sample.components) {
-      sample.components = sample.components.map((component) => (component instanceof Component ? component : new Component(component)));
+      sample.components = this.normalizeComponents(sample.components);
     }
 
     const liquids = sample.components
@@ -591,4 +620,5 @@ SampleDetailsComponents.propTypes = {
   canDrop: PropTypes.bool.isRequired,
   enableComponentLabel: PropTypes.bool.isRequired,
   enableComponentPurity: PropTypes.bool.isRequired,
+  setComponentDeletionLoading: PropTypes.func.isRequired,
 };

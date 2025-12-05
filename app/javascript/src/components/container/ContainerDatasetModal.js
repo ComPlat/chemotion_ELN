@@ -86,7 +86,7 @@ export default class ContainerDatasetModal extends Component {
 
   render() {
     const {
-      show, onHide, onChange, readOnly, disabled, kind, datasetContainer, rootContainer,
+      show, onHide, onChange, readOnly, disabled, kind, datasetContainer, rootContainer, element,
       isContainerNew
     } = this.props;
 
@@ -144,12 +144,14 @@ export default class ContainerDatasetModal extends Component {
     if (show) {
       return (
         <Modal
+          enforceFocus={false}
+          backdrop={false}
           centered
           show={show}
           size="xl"
           onHide={() => (disabled ? onHide() : this.handleModalClose())}
         >
-          <Modal.Header>
+          <Modal.Header closeButton>
             <Modal.Title className="d-flex justify-content-between align-items-center w-100">
               {this.state.isNameEditing ? (
                 <div className="d-flex flex-grow-1 align-items-center">
@@ -192,13 +194,13 @@ export default class ContainerDatasetModal extends Component {
                 </div>
               )}
             </Modal.Title>
-
           </Modal.Header>
           <Modal.Body>
             <ContainerDatasetModalContent
               ref={this.datasetInput}
               readOnly={readOnly}
               datasetContainer={datasetContainer}
+              element={element}
               kind={kind}
               onModalHide={() => onHide()}
               onChange={onChange}
@@ -210,7 +212,6 @@ export default class ContainerDatasetModal extends Component {
           <Modal.Footer
             className="d-flex justify-content-end align-items-center modal-footer border-0"
           >
-
             {
               !isNew && !isContainerNew
               && (
@@ -224,7 +225,7 @@ export default class ContainerDatasetModal extends Component {
               )
             }
             <Button
-              variant={isNew ? "primary" : "warning"}
+              variant={isNew ? 'primary' : 'warning'}
               className="align-self-center"
               onClick={() => this.handleSave(true)}
             >
@@ -248,6 +249,12 @@ ContainerDatasetModal.propTypes = {
       instrument: PropTypes.string,
     }),
   }).isRequired,
+  element: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    name: PropTypes.string,
+    type: PropTypes.string,
+    short_label: PropTypes.string,
+  }),
   onHide: PropTypes.func.isRequired,
   onChange: PropTypes.func.isRequired,
   readOnly: PropTypes.bool,
@@ -263,4 +270,5 @@ ContainerDatasetModal.defaultProps = {
   readOnly: false,
   disabled: false,
   kind: null,
+  element: {},
 };

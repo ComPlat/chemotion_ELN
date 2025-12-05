@@ -21,7 +21,7 @@ describe Labimotion::GenericElementAPI do
 
       context 'with sort_column' do
         let(:collection) { create(:collection, user: user, is_shared: false) }
-        let(:element_klass) { create(:element_klass) }
+        let(:element_klass) { create(:element_klass, name: 'ElementKlass4') }
         let(:element1) do
           properties = element_klass.properties_release
           properties['layers']['gen']['fields'][0]['value'] = nil # type field

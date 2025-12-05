@@ -165,11 +165,11 @@ GEM
       rack-test (>= 0.6.3)
       regexp_parser (>= 1.5, < 3.0)
       xpath (~> 3.2)
-    caxlsx (4.2.0)
+    caxlsx (4.4.0)
       htmlentities (~> 4.3, >= 4.3.4)
       marcel (~> 1.0)
       nokogiri (~> 1.10, >= 1.10.4)
-      rubyzip (>= 1.3.0, < 3)
+      rubyzip (>= 2.4, < 4)
     charlock_holmes (0.7.9)
     chemical_elements (0.1.0)
     childprocess (5.1.0)
@@ -361,8 +361,9 @@ GEM
       rexml (>= 3.3.9)
     kramdown-parser-gfm (1.1.0)
       kramdown (~> 2.0)
-    labimotion (2.0.0)
-      rails (~> 6.1.7)
+    labimotion (2.1.0.rc13)
+      caxlsx (~> 4.0)
+      rails (>= 6.1, < 8.0)
     language_server-protocol (3.17.0.5)
     latex-decode (0.4.0)
     launchy (3.1.1)
@@ -428,6 +429,8 @@ GEM
       net-protocol
     net-ssh (6.1.0)
     nio4r (2.7.4)
+    nokogiri (1.15.7-aarch64-linux)
+      racc (~> 1.4)
     nokogiri (1.15.7-x86_64-linux)
       racc (~> 1.4)
     oauth2 (2.0.12)
@@ -797,6 +800,7 @@ GEM
     zeitwerk (2.6.18)
 
 PLATFORMS
+  aarch64-linux
   x86_64-linux
 
 DEPENDENCIES
@@ -860,7 +864,7 @@ DEPENDENCIES
   jwt
   kaminari
   kaminari-grape
-  labimotion (= 2.0.0)
+  labimotion (= 2.1.0.rc13)
   launchy
   listen
   logidze

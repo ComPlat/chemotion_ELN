@@ -31,7 +31,7 @@ $border-radius: 0.3rem;
 $body-bg: $chemstrap-white;
 $body-color: $chemstrap-carbon;
 $font-family-sans-serif: "Roboto", sans-serif;
-$font-size-root: 14px;
+$font-size-root: clamp(12px, 0.95vw, 16px);
 $font-size-base: 1rem;
 $heading-color: $body-color;
 $h1-font-size: $font-size-base * 2;
@@ -41,6 +41,8 @@ $h4-font-size: $font-size-base * 1.25;
 $h5-font-size: $font-size-base * 1.125;
 $h6-font-size: $font-size-base;
 $enable-negative-margins: true;
+
+$nav-link-padding-y: 0.33333rem;
 
 $table-bg: transparent;
 $card-bg: $chemstrap-white;

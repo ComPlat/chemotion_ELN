@@ -5,7 +5,7 @@ require 'digest'
 
 RSpec.describe Labimotion::ElementKlass do
   let!(:ek) { create(:element_klass, name: 'element') }
-  let!(:el) { create(:element) }
+  let!(:el) { create(:element, element_klass: ek) }
 
   describe 'creation' do
     it 'is possible to create a valid element klass and related element' do

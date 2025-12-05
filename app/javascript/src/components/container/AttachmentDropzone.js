@@ -10,7 +10,7 @@ class AttachmentDropzone extends Component {
 
     return connectDropTarget(
       <div>
-        <span className="text-secondary fst-italic p-1">Drop File(s) from the inbox</span>
+        <span className="text-lighten2 fst-italic p-1">Drop File(s) from the inbox</span>
         {isOver && canDrop && <ColoredOverlay color="green" />}
       </div>
     );

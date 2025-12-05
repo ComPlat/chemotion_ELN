@@ -9,15 +9,17 @@ module Import
   class ImportSamples
     attr_reader :xlsx, :sheet, :component_sheet, :header, :component_header, :sample_components_data,
                 :mandatory_check, :mandatory_component_check, :rows,
-                :unprocessable, :processed, :file_path, :collection_id, :current_user_id, :file_name
+                :unprocessable, :processed, :collection_id, :current_user_id, :file_name
 
     MOLARITY_UNIT = %r{m/L|mol/L|M}i.freeze
     DENSITY_UNIT = %r{g/mL|g/ml}i.freeze
     FLASH_POINT_UNIT = /°C|F|K/i.freeze
 
-    def initialize(file_path, collection_id, user_id, file_name, import_type)
-      @file_path = file_path
+    def initialize(attachment, collection_id, user_id, file_name, import_type)
+      @attachment = attachment
       @collection_id = collection_id
+      @collection = Collection.find(collection_id)
+      @all_collection = Collection.get_all_collection_for_user(user_id)
       @current_user_id = user_id
       @file_name = file_name
       @import_type = import_type
@@ -53,7 +55,8 @@ module Import
     end
 
     def read_file
-      @xlsx = Roo::Spreadsheet.open(file_path)
+      file = @attachment.attachment_attacher.get.to_io
+      @xlsx = Roo::Spreadsheet.open(file, extension: @attachment.extname)
       @sheet = xlsx.sheet(0)
       @header = sheet.row(1)
 
@@ -80,10 +83,10 @@ module Import
 
     def check_required_fields
       @mandatory_check = {}
-      ['molfile', 'smiles', 'cano_smiles', 'canonical smiles', 'decoupled'].each do |check|
+      header_fields = ['molfile', 'smiles', 'cano_smiles', 'canonical_smiles', 'canonical smiles', 'decoupled']
+      header_fields.each do |check|
         @mandatory_check[check] = true if header.find { |e| /^\s*#{check}?/i =~ e }
       end
-
       message = 'Column headers should have: molfile, or Smiles (or cano_smiles, canonical smiles)'
       raise message if mandatory_check.empty?
     end
@@ -166,11 +169,11 @@ module Import
       component_attributes.values.any? { |v| !v.nil? && v != '' } && structure?(component_attributes)
     end
 
-    def extract_molfile_and_molecule(row)
+    def extract_molfile_and_molecule(row, index)
       if molfile?(row)
         get_data_from_molfile(row)
       elsif smiles?(row)
-        get_data_from_smiles(row)
+        get_data_from_smiles(row, index)
       end
     end
 
@@ -182,25 +185,25 @@ module Import
       rows << row.each_pair { |k, v| v && row[k] = v.to_s }
     end
 
-    def process_row_data(row)
+    def process_row_data(row, index)
       is_decoupled = row['decoupled']
       return Molecule.find_or_create_dummy if is_decoupled && !structure?(row)
 
-      molecule, molfile = extract_molfile_and_molecule(row)
+      molecule, molfile = extract_molfile_and_molecule(row, index)
       return if molfile.nil? || molecule.nil?
 
       [molecule, molfile]
     end
 
-    def process_component_row_data(component_row)
-      molecule, molfile = extract_molfile_and_molecule(component_row)
+    def process_component_row_data(component_row, index)
+      molecule, molfile = extract_molfile_and_molecule(component_row, index)
       return nil if molfile.nil? || molecule.nil?
 
       molecule
     end
 
-    def molecule_not_exist(molecule)
-      @unprocessable << { row: row, index: i } if molecule.nil?
+    def molecule_not_exist(molecule, row, index)
+      @unprocessable << { row: row, index: index } if molecule.nil?
       molecule.nil?
     end
 
@@ -209,15 +212,16 @@ module Import
       begin
         ActiveRecord::Base.transaction do
           rows.map.with_index do |row, i|
-            molecule, molfile = process_row_data(row)
-            if molecule_not_exist(molecule)
+            molecule, molfile = process_row_data(row, i)
+            if molecule_not_exist(molecule, row, i)
               unprocessable_count += 1
               next
             end
             sample_save(row, molfile, molecule)
           rescue StandardError => _e
             unprocessable_count += 1
-            @unprocessable << { row: row, index: i }
+            # Only add to unprocessable if not already added by molecule_not_exist
+            @unprocessable << { row: row, index: i } unless @unprocessable.any? { |u| u[:index] == i }
           end
         end
       rescue StandardError => _e
@@ -236,7 +240,7 @@ module Import
     end
 
     def smiles?(row)
-      keys = ['smiles', 'cano_smiles', 'canonical smiles']
+      keys = ['smiles', 'cano_smiles', 'canonical_smiles', 'canonical smiles']
 
       header_present = keys.any? { |key| determine_sheet(xlsx)[key] }
       cell_present = keys.any? { |key| row[key].to_s.present? }
@@ -254,7 +258,7 @@ module Import
         molfile_smiles = Chemotion::OpenBabelService.canon_smiles_to_smiles molfile_smiles if check['smiles']
       end
       if molfile_smiles.blank? && (molfile_smiles != row['cano_smiles'] &&
-         molfile_smiles != row['smiles'] && molfile_smiles != row['canonical smiles'])
+         molfile_smiles != row['smiles'] && molfile_smiles != row['canonical_smiles'])
         @unprocessable << { row: row, index: i }
         go_to_next = true
       end
@@ -262,16 +266,17 @@ module Import
     end
 
     def get_data_from_molfile(row)
-      molfile = row['molfile'].to_s
+      molfile = row['molfile'].to_s.strip
+      molfile = "\n#{molfile}" unless molfile.start_with?("\n")
+      molfile = "#{molfile}\n" unless molfile.end_with?("\n")
       babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
       inchikey = babel_info[:inchikey]
       molecule = Molecule.find_or_create_by_molfile(molfile, babel_info) if inchikey.presence
       [molecule, molfile]
     end
 
-    def assign_molecule_data(molfile_coord, babel_info, inchikey, row)
+    def assign_molecule_data(molfile_coord, babel_info, inchikey, _row, _index)
       if inchikey.blank?
-        @unprocessable << { row: row, index: i }
         go_to_next = true
       else
         molecule = Molecule.find_or_create_by(inchikey: inchikey, is_partial: false) do |molecul|
@@ -284,18 +289,19 @@ module Import
       [molecule, molfile_coord, go_to_next]
     end
 
-    def get_data_from_smiles(row)
+    def get_data_from_smiles(row, index)
       check = determine_sheet(xlsx)
 
       smiles = (check['smiles'] && row['smiles'].presence) ||
                (check['cano_smiles'] && row['cano_smiles'].presence) ||
+               (check['canonical_smiles'] && row['canonical_smiles'].presence) ||
                (check['canonical smiles'] && row['canonical smiles'].presence)
 
       inchikey = Chemotion::OpenBabelService.smiles_to_inchikey smiles
       ori_molf = Chemotion::OpenBabelService.smiles_to_molfile smiles
       babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(ori_molf)
       molfile_coord = Chemotion::OpenBabelService.add_molfile_coordinate(ori_molf)
-      assign_molecule_data(molfile_coord, babel_info, inchikey, row)
+      assign_molecule_data(molfile_coord, babel_info, inchikey, row, index)
     end
 
     def included_fields
@@ -303,7 +309,7 @@ module Import
     end
 
     def construct_solvents_array(solvents)
-      solvents_array = solvents.split('-')
+      solvents_array = solvents.split('/')
       solvents_array.map(&:capitalize)
     end
 
@@ -408,18 +414,23 @@ module Import
       array = ["\"cas\""]
       conditions = map_column.nil? || array.include?(map_column[1])
       db_column = conditions ? field : (map_column[0].sub('s.', '').delete!('"') || map_column[0].sub('s.', ''))
-      molecule.create_molecule_name_by_user(row[field], current_user_id) if field == 'molecule name'
+      if field == 'molecule name' && row[field].present?
+        molecule.create_molecule_name_by_user(row[field], current_user_id)
+      end
       process_sample_fields(sample, db_column, field, row)
     end
     # rubocop:enable Style/StringLiterals
 
     def process_value(value, db_column)
       fields_with_units = %w[density molarity flash_point].freeze
+      fields_with_float_values = %w[real_amount_value target_amount_value purity refractive_index molecular_mass].freeze
       comparison_values = %w[melting_point boiling_point].freeze
       if comparison_values.include?(db_column)
         format_to_interval_syntax(value)
       elsif fields_with_units.include?(db_column)
         to_value_unit_format(value, db_column)
+      elsif fields_with_float_values.include?(db_column)
+        value.to_f
       else
         value
       end
@@ -432,7 +443,7 @@ module Import
 
     def extract_numerical_value(value)
       cleaned_value = clean_value(value)
-      numerical_match = cleaned_value.scan(/\b\d+(?:\.\d+)?\b/).first if cleaned_value
+      numerical_match = cleaned_value.scan(/[-+]?\d+(?:\.\d+)?/).first if cleaned_value
       numerical_match&.to_f
     end
 
@@ -492,14 +503,14 @@ module Import
       value = process_value(val, db_column)
       handle_sample_fields(sample, db_column, value) unless value.nil?
       sample[db_column] = '' if excluded_column.include?(db_column) && val.nil?
-      sample[db_column] = assign_decoupled_value(val) if %w[decoupled].include?(db_column)
+      sample[db_column] = assign_boolean_value(val) if %w[decoupled is_top_secret dry_solvent].include?(db_column)
     end
 
-    def assign_decoupled_value(value)
+    def assign_boolean_value(value)
       return false if value.nil?
 
       if value.is_a?(String)
-        return false unless value.casecmp('yes').zero? || value == '1'
+        return false unless value.casecmp('yes').zero? || value == '1' || value.casecmp('true').zero?
 
         value = true
       end
@@ -514,8 +525,8 @@ module Import
     def validate_sample_and_save(sample, stereo, row)
       handle_sample_solvent_column(sample, row)
       sample.validate_stereo(stereo)
-      sample.collections << Collection.find(collection_id)
-      sample.collections << Collection.get_all_collection_for_user(current_user_id)
+      sample.collections << @collection
+      sample.collections << @all_collection
       sample.inventory_sample = true if @import_type == 'chemical'
       chemical = ImportChemicals.build_chemical(row, header) if @import_type == 'chemical'
       sample.sample_type = Sample::SAMPLE_TYPE_MIXTURE if sample_has_components?(row)
@@ -545,9 +556,9 @@ module Import
       begin
         ActiveRecord::Base.transaction do
           sample_components_data.each_with_index do |component_data, index|
-            molecule = process_component_row_data(component_data)
+            molecule = process_component_row_data(component_data, index)
 
-            if molecule_not_exist(molecule)
+            if molecule_not_exist(molecule, component_data, index)
               unprocessable_count += 1
               next
             end
@@ -594,9 +605,13 @@ module Import
       begin
         write_to_db
         if processed.empty?
-          no_success
+          no_success('No samples could be processed from file')
+        elsif @unprocessable.empty?
+          # Clean up attachment if import was successful
+          @attachment.destroy if @attachment.present?
+          success
         else
-          @unprocessable.empty? ? success : warning
+          warning
         end
       rescue StandardError => e
         warning(e.message)
@@ -618,7 +633,7 @@ module Import
         # 'solvent',
         'impurities',
         # 'location',
-        'is_top_secret',
+        # 'is_top_secret',
         # 'dry_solvent',
         'ancestry',
         # 'external_label',
@@ -686,7 +701,7 @@ module Import
 
     def success
       { status: 'ok',
-        message: "samples in file: #{@file_name} have been imported successfully",
+        message: "samples in file: #{@file_name} have been imported successfully in collection '#{@collection.label}'.",
         data: processed }
     end
   end

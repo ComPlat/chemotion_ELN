@@ -3,8 +3,6 @@ import PropTypes from 'prop-types';
 import Formula from 'src/components/common/Formula';
 import ClipboardCopyText from 'src/components/common/ClipboardCopyText';
 
-const MWPrecision = 6;
-
 /**
  * Formats stereo information into a readable string
  * @param {Object} stereo - Stereo information object
@@ -61,11 +59,13 @@ const getComponentsTitle = (sample) => {
 
   return (
     <>
-      {components.map((component) => {
+      {components.map((component, index) => {
         const name = component.iupacName;
         const mwText = component.molecularWeightText;
+        const key = component.id
+          || `${name || 'component'}-${index}`;
         return (
-          <div key={component.molecule?.id || component.id || name}>
+          <div key={key}>
             {name}
             {mwText}
           </div>
@@ -104,7 +104,7 @@ function SampleName({ sample }) {
 
     return (
       <div>
-        <p className="mb-2">
+        <p className="mb-2 fix-font-size">
           {polymerName}
           <ClipboardCopyText text={sumFormulaCom} clipText={clipText} />
         </p>
@@ -129,7 +129,7 @@ function SampleName({ sample }) {
 
   return (
     <div>
-      <p className="mb-1">
+      <p className="mb-1 fix-font-size">
         <ClipboardCopyText text={sumFormulaCom} clipText={clipText} />
       </p>
       {moleculeName}

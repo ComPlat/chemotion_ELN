@@ -126,9 +126,8 @@ function parseNumericStringOrNum(numberString) {
   return parseNumericString(numberString);
 }
 
-
 /**
- * Format a number for display, using fixed notation for values between 0.001 and 1e5,
+ * Format a number for display, using fixed notation for values between 1e-5 and 1e8,
  * and scientific notation otherwise. Returns 'n.d.' for invalid values.
  *
  * @param {number} val - The value to format
@@ -140,7 +139,7 @@ const formatDisplayValue = (val, precision) => {
 
   const absVal = Math.abs(val);
   // Show as fixed if in a reasonable range, else use scientific
-  if ((absVal >= 0.001 && absVal < 1e5) || absVal === 0) {
+  if ((absVal >= 0.0001 && absVal < 1e8) || absVal === 0) {
     // Always use dot as decimal separator, no thousands separator
     return Number(val).toLocaleString('en-US', {
       maximumFractionDigits: precision,

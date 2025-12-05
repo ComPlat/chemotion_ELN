@@ -1,0 +1,383 @@
+<?xml version="1.0" encoding="UTF-8"  standalone="no" ?>
+<uniprot xmlns="http://uniprot.org/uniprot" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://uniprot.org/uniprot http://www.uniprot.org/docs/uniprot.xsd">
+<entry dataset="Swiss-Prot" created="1989-10-01" modified="2024-07-24" version="59" xmlns="http://uniprot.org/uniprot">
+  <accession>P12347</accession>
+  <name>PER_ACEAT</name>
+  <protein>
+    <recommendedName>
+      <fullName>Period clock protein</fullName>
+    </recommendedName>
+    <alternativeName>
+      <fullName>p230</fullName>
+    </alternativeName>
+  </protein>
+  <organism>
+    <name type="scientific">Acetabularia acetabulum</name>
+    <name type="common">Mermaid's wine glass</name>
+    <name type="synonym">Acetabularia mediterranea</name>
+    <dbReference type="NCBI Taxonomy" id="35845"/>
+    <lineage>
+      <taxon>Eukaryota</taxon>
+      <taxon>Viridiplantae</taxon>
+      <taxon>Chlorophyta</taxon>
+      <taxon>Ulvophyceae</taxon>
+      <taxon>TCBD clade</taxon>
+      <taxon>Dasycladales</taxon>
+      <taxon>Polyphysaceae</taxon>
+      <taxon>Acetabularia</taxon>
+    </lineage>
+  </organism>
+  <geneLocation type="chloroplast"/>
+  <reference key="1">
+    <citation type="journal article" date="1987" name="Mol. Gen. Genet." volume="209" first="1" last="7">
+      <title>Sequence homology to the Drosophila per locus in higher plant nuclear DNA and in Acetabularia chloroplast DNA.</title>
+      <authorList>
+        <person name="Li-Weber M."/>
+        <person name="de Groot E.J."/>
+        <person name="Schweiger H.G."/>
+      </authorList>
+      <dbReference type="PubMed" id="17186616"/>
+      <dbReference type="DOI" id="10.1007/bf00329828"/>
+    </citation>
+    <scope>NUCLEOTIDE SEQUENCE [GENOMIC DNA]</scope>
+  </reference>
+  <comment type="subcellular location">
+    <subcellularLocation>
+      <location>Plastid</location>
+      <location>Chloroplast</location>
+    </subcellularLocation>
+  </comment>
+  <dbReference type="EMBL" id="X05806">
+    <property type="protein sequence ID" value="CAC34964.3"/>
+    <property type="molecule type" value="Genomic_DNA"/>
+  </dbReference>
+  <dbReference type="PIR" id="S00273">
+    <property type="entry name" value="S00273"/>
+  </dbReference>
+  <dbReference type="AlphaFoldDB" id="P12347"/>
+  <dbReference type="SMR" id="P12347"/>
+  <dbReference type="GO" id="GO:0009507">
+    <property type="term" value="C:chloroplast"/>
+    <property type="evidence" value="ECO:0007669"/>
+    <property type="project" value="UniProtKB-SubCell"/>
+  </dbReference>
+  <dbReference type="GO" id="GO:0048511">
+    <property type="term" value="P:rhythmic process"/>
+    <property type="evidence" value="ECO:0007669"/>
+    <property type="project" value="UniProtKB-KW"/>
+  </dbReference>
+  <dbReference type="InterPro" id="IPR052258">
+    <property type="entry name" value="Diverse_Func_Domain-Protein"/>
+  </dbReference>
+  <dbReference type="PANTHER" id="PTHR37612">
+    <property type="entry name" value="FIBROIN HEAVY CHAIN FIB-H LIKE PROTEIN"/>
+    <property type="match status" value="1"/>
+  </dbReference>
+  <dbReference type="PANTHER" id="PTHR37612:SF20">
+    <property type="entry name" value="PER-HEXAMER REPEAT PROTEIN 5-RELATED"/>
+    <property type="match status" value="1"/>
+  </dbReference>
+  <proteinExistence type="predicted"/>
+  <keyword id="KW-0090">Biological rhythms</keyword>
+  <keyword id="KW-0150">Chloroplast</keyword>
+  <keyword id="KW-0934">Plastid</keyword>
+  <keyword id="KW-0677">Repeat</keyword>
+  <feature type="chain" id="PRO_0000217415" description="Period clock protein">
+    <location>
+      <begin position="1"/>
+      <end position="174"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="1">
+    <location>
+      <begin position="49"/>
+      <end position="50"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="2">
+    <location>
+      <begin position="51"/>
+      <end position="52"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="3">
+    <location>
+      <begin position="53"/>
+      <end position="54"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="4">
+    <location>
+      <begin position="55"/>
+      <end position="56"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="5">
+    <location>
+      <begin position="57"/>
+      <end position="58"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="6">
+    <location>
+      <begin position="59"/>
+      <end position="60"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="7">
+    <location>
+      <begin position="61"/>
+      <end position="62"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="8">
+    <location>
+      <begin position="63"/>
+      <end position="64"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="9">
+    <location>
+      <begin position="65"/>
+      <end position="66"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="10">
+    <location>
+      <begin position="67"/>
+      <end position="68"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="11">
+    <location>
+      <begin position="69"/>
+      <end position="70"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="12">
+    <location>
+      <begin position="71"/>
+      <end position="72"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="13">
+    <location>
+      <begin position="73"/>
+      <end position="74"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="14">
+    <location>
+      <begin position="75"/>
+      <end position="76"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="15">
+    <location>
+      <begin position="77"/>
+      <end position="78"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="16">
+    <location>
+      <begin position="79"/>
+      <end position="80"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="17">
+    <location>
+      <begin position="81"/>
+      <end position="82"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="18">
+    <location>
+      <begin position="83"/>
+      <end position="84"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="19">
+    <location>
+      <begin position="85"/>
+      <end position="86"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="20">
+    <location>
+      <begin position="87"/>
+      <end position="88"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="21">
+    <location>
+      <begin position="89"/>
+      <end position="90"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="22">
+    <location>
+      <begin position="91"/>
+      <end position="92"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="23">
+    <location>
+      <begin position="93"/>
+      <end position="94"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="24">
+    <location>
+      <begin position="95"/>
+      <end position="96"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="25">
+    <location>
+      <begin position="97"/>
+      <end position="98"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="26">
+    <location>
+      <begin position="99"/>
+      <end position="100"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="27">
+    <location>
+      <begin position="101"/>
+      <end position="102"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="28">
+    <location>
+      <begin position="103"/>
+      <end position="104"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="29">
+    <location>
+      <begin position="105"/>
+      <end position="106"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="30">
+    <location>
+      <begin position="107"/>
+      <end position="108"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="31">
+    <location>
+      <begin position="109"/>
+      <end position="110"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="32">
+    <location>
+      <begin position="111"/>
+      <end position="112"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="33">
+    <location>
+      <begin position="113"/>
+      <end position="114"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="34">
+    <location>
+      <begin position="115"/>
+      <end position="116"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="35">
+    <location>
+      <begin position="117"/>
+      <end position="118"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="36">
+    <location>
+      <begin position="119"/>
+      <end position="120"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="37">
+    <location>
+      <begin position="121"/>
+      <end position="122"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="38">
+    <location>
+      <begin position="123"/>
+      <end position="124"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="39">
+    <location>
+      <begin position="125"/>
+      <end position="126"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="40">
+    <location>
+      <begin position="127"/>
+      <end position="128"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="41">
+    <location>
+      <begin position="129"/>
+      <end position="130"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="42">
+    <location>
+      <begin position="131"/>
+      <end position="132"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="43">
+    <location>
+      <begin position="133"/>
+      <end position="134"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="44">
+    <location>
+      <begin position="135"/>
+      <end position="136"/>
+    </location>
+  </feature>
+  <feature type="repeat" description="45">
+    <location>
+      <begin position="137"/>
+      <end position="138"/>
+    </location>
+  </feature>
+  <feature type="region of interest" description="Disordered" evidence="1">
+    <location>
+      <begin position="46"/>
+      <end position="134"/>
+    </location>
+  </feature>
+  <feature type="region of interest" description="45 X 2 AA tandem repeats of G-[TA]">
+    <location>
+      <begin position="49"/>
+      <end position="138"/>
+    </location>
+  </feature>
+  <evidence type="ECO:0000256" key="1">
+    <source>
+      <dbReference type="SAM" id="MobiDB-lite"/>
+    </source>
+  </evidence>
+  <sequence length="174" mass="16878" checksum="E6C06770E9DDCB5D" modified="2001-08-29" version="2">MCLPFFTSINSSGLFKAVSWRIIESFLLELFFIFYSSFSWSSSLSSSEGTGAGTGTGTGTGTGTGTGTGTGTGTGTGTGTGTGTGTGTGTGTGTGTGTGTGTGTGTGTGTGTGTGTGTGTGTGTGTGTGTGTGTGTGTIWEGELVFFYAECKGYPKIKGVFWVVSFFYDTAKNV</sequence>
+</entry>
+<copyright>
+Copyrighted by the UniProt Consortium, see https://www.uniprot.org/terms Distributed under the Creative Commons Attribution (CC BY 4.0) License
+</copyright>
+</uniprot>

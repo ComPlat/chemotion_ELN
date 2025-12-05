@@ -10,47 +10,10 @@ import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 import GenericKlassFetcher from 'src/fetchers/GenericKlassFetcher';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
-import { FunctionLocation, GenericMenu, Unauthorized } from 'src/apps/generic/GenericUtils';
+import { GenericMenu, Unauthorized } from 'src/apps/generic/GenericUtils';
 import { notification, submit } from 'src/apps/generic/Utils';
 
 const FN_ID = 'GenericElements';
-
-const validateKlass = (klass) => /\b[a-z]{3,5}\b/g.test(klass);
-const validateInput = (element) => {
-  if (element.name === '') {
-    notification({
-      title: `Element [${element.name}]`,
-      lvl: 'error',
-      msg: 'Please input Element.',
-    });
-    return false;
-  }
-  if (element.klass_prefix === '') {
-    notification({
-      title: `Element [${element.name}]`,
-      lvl: 'error',
-      msg: 'Please input Prefix.',
-    });
-    return false;
-  }
-  if (element.label === '') {
-    notification({
-      title: `Element [${element.name}]`,
-      lvl: 'error',
-      msg: 'Please input Element Label.',
-    });
-    return false;
-  }
-  if (element.icon_name === '') {
-    notification({
-      title: `Element [${element.name}]`,
-      lvl: 'error',
-      msg: 'Please input Icon.',
-    });
-    return false;
-  }
-  return true;
-};
 
 export default class GenericElementsAdmin extends React.Component {
   constructor(props) {
@@ -63,7 +26,6 @@ export default class GenericElementsAdmin extends React.Component {
       repoData: [],
       user: {},
     };
-
     this.fetchElements = this.fetchElements.bind(this);
     this.handleShowState = this.handleShowState.bind(this);
     this.closeModal = this.closeModal.bind(this);
@@ -119,25 +81,6 @@ export default class GenericElementsAdmin extends React.Component {
       return;
     }
     element.is_generic = true;
-    if (!validateInput(element)) return;
-    if (!validateKlass(element.name)) {
-      notification({
-        title: `Element [${element.name}]`,
-        lvl: 'error',
-        msg: 'This Element is invalid, please try a different one.',
-      });
-      return;
-    }
-    const { elements } = this.state;
-    const existKlass = elements.filter((el) => el.name === element.name);
-    if (existKlass.length > 0) {
-      notification({
-        title: `Element [${element.name}]`,
-        lvl: 'error',
-        msg: 'This Element is already taken. Please choose another one.',
-      });
-      return;
-    }
     LoadingActions.start();
     GenericElsFetcher.createElementKlass(element)
       .then((result) => {
@@ -171,7 +114,6 @@ export default class GenericElementsAdmin extends React.Component {
       return;
     }
     const inputs = element;
-    if (!validateInput(element)) return;
     LoadingActions.start();
     GenericElsFetcher.updateElementKlass(inputs)
       .then((result) => {
@@ -271,7 +213,7 @@ export default class GenericElementsAdmin extends React.Component {
   }
 
   closeModal(cb = () => {}) {
-    this.handleShowState("modal", "", cb);
+    this.handleShowState('modal', '', cb);
   }
 
   // eslint-disable-next-line class-methods-use-this, react/sort-comp
@@ -288,30 +230,9 @@ export default class GenericElementsAdmin extends React.Component {
   }
 
   handleUploadKlass(_response) {
-    const { elements } = this.state;
     const { element, notify } = _response;
     if (!notify.isSuccess) {
       notification(notify);
-      return;
-    }
-    if (!validateInput(element)) return;
-    if (!validateKlass(element.name)) {
-      notification({
-        title: `Element [${element.name}]`,
-        lvl: 'error',
-        msg: 'This Element is invalid, please try a different one.',
-      });
-      return;
-    }
-    const existKlass = elements.filter(
-      (el) => el.name === element.name && el.identifier !== element.identifier
-    );
-    if (existKlass.length > 0) {
-      notification({
-        title: `Element [${element.name}]`,
-        lvl: 'error',
-        msg: 'This Element is already taken. The Element name must be unique. Please choose another one.',
-      });
       return;
     }
     LoadingActions.start();
@@ -461,7 +382,6 @@ export default class GenericElementsAdmin extends React.Component {
       <div className="vw-90 my-auto mx-auto">
         <GenericMenu userName={user.name} text={FN_ID} />
         <div className="mt-3">
-          <FunctionLocation name={FN_ID} />
           {this.renderGrid()}
         </div>
         <Notifications />

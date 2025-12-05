@@ -10,7 +10,8 @@
   },
   "extends": [
     "airbnb",
-    "plugin:react/recommended"
+    "plugin:react/recommended",
+    "plugin:storybook/recommended"
   ],
   "rules": {
     "no-console": ["off"],

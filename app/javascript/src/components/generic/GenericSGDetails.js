@@ -47,7 +47,7 @@ class GenericSGDetails extends Component {
         generic={segment}
         fnChange={onChange}
         extLayers={[]}
-        genId={0}
+        genId={segment.id}
         isPreview={false}
         isSearch={isSearch}
         isActiveWF

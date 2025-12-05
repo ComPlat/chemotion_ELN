@@ -1,8 +1,48 @@
-@mixin align-header-input($width) {
+@mixin align-header-data($width) {
   &-header,
-  &-input {
+  &-data {
     min-width: $width;
     max-width: $width;
+  }
+}
+
+// Reduce header height for the components accordion in Reaction Material
+.mixture-components-accordion {
+  --bs-accordion-btn-padding-y: 0.25rem; // default ~0.75rem
+  --bs-accordion-btn-padding-x: 0.75rem;
+
+  .accordion-header {
+    margin: 0; // remove extra header margins
+  }
+
+  .accordion-button {
+    padding: var(--bs-accordion-btn-padding-y) var(--bs-accordion-btn-padding-x);
+    min-height: 32px;
+  }
+}
+
+// Style for mixture components row
+.mixture-components-row {
+  padding: 0;
+  background: #f8f9fa;
+}
+
+@mixin static-scheme-data {
+  &-data {
+    @extend .align-self-stretch;
+    @extend .d-flex;
+    @extend .align-items-center;
+    @extend .px-1;
+    font-size: 0.875rem;
+  }
+}
+
+@mixin optional-scheme-column($min-width) {
+  @container material-group (width < #{$min-width}) {
+    &-header,
+    &-data {
+      display: none !important;
+    }
   }
 }
 
@@ -29,6 +69,9 @@ $rm-columns: (
   "coefficient": map-get($rm-sizes, "square"),
   "amount": calc(#{3 * map-get($rm-sizes, "numeral-with-units")} + #{gap(2)}),
   // volume, mass, molarity + gap
+  "molar-mass": map-get($rm-sizes, "numeral-with-units"),
+  "density": map-get($rm-sizes, "numeral"),
+  "purity": map-get($rm-sizes, "numeral"),
   "solvent-label": calc(#{map-get($rm-sizes, "square")} + #{gap(1)}),
   // coefficient + gap
   "concentration": map-get($rm-sizes, "large-numeral-with-units"),
@@ -42,7 +85,7 @@ $rm-columns: (
       #{3 * map-get($rm-sizes, "square")} + #{map-get(
           $rm-sizes,
           "large-numeral-with-units"
-        )} + #{map-get($rm-sizes, "numeral")} + #{gap(5)}
+        )} + #{map-get($rm-sizes, "numeral")} + #{gap(4)}
     ),
   // ref, target, amount, coefficient, concentration, equivalence + gaps
 );
@@ -65,35 +108,50 @@ $rm-columns: (
     @extend .text-truncate;
   }
   &__volume-ratio {
-    @include align-header-input(map-get($rm-columns, "ratio"));
+    @include align-header-data(map-get($rm-columns, "ratio"));
   }
   &__equivalent {
-    @include align-header-input(map-get($rm-columns, "equivalent"));
+    @include align-header-data(map-get($rm-columns, "equivalent"));
   }
   &__yield {
-    @include align-header-input(map-get($rm-columns, "yield"));
+    @include align-header-data(map-get($rm-columns, "yield"));
   }
   &__volume {
-    @include align-header-input(map-get($rm-columns, "volume"));
+    @include align-header-data(map-get($rm-columns, "volume"));
   }
   &__mass {
-    @include align-header-input(map-get($rm-columns, "mass"));
+    @include align-header-data(map-get($rm-columns, "mass"));
   }
   &__molarity {
-    @include align-header-input(map-get($rm-columns, "molarity"));
+    @include align-header-data(map-get($rm-columns, "molarity"));
   }
   &__loading {
-    @include align-header-input(map-get($rm-columns, "loading"));
+    @include align-header-data(map-get($rm-columns, "loading"));
   }
   &__amount {
-    @include align-header-input(map-get($rm-columns, "amount"));
-    &-input {
+    @include align-header-data(map-get($rm-columns, "amount"));
+    &-data {
       @extend .d-flex;
       @extend .gap-2;
     }
   }
+  &__molar-mass {
+    @include align-header-data(map-get($rm-columns, "molar-mass"));
+    @include static-scheme-data;
+    @include optional-scheme-column(60rem);
+  }
+  &__density {
+    @include align-header-data(map-get($rm-columns, "density"));
+    @include static-scheme-data;
+    @include optional-scheme-column(64.5rem);
+  }
+  &__purity {
+    @include align-header-data(map-get($rm-columns, "purity"));
+    @include static-scheme-data;
+    @include optional-scheme-column(69rem);
+  }
   &__solvent-label {
-    @include align-header-input(
+    @include align-header-data(
       calc(
         #{map-get($rm-columns, "amount")} + #{map-get(
             $rm-columns,
@@ -103,32 +161,32 @@ $rm-columns: (
     );
   }
   &__concentration {
-    @include align-header-input(map-get($rm-columns, "concentration"));
+    @include align-header-data(map-get($rm-columns, "concentration"));
   }
   &__solvent-volume {
-    @include align-header-input(map-get($rm-columns, "solvent-volume"));
+    @include align-header-data(map-get($rm-columns, "solvent-volume"));
   }
   &__coefficient {
-    @include align-header-input(map-get($rm-columns, "coefficient"));
+    @include align-header-data(map-get($rm-columns, "coefficient"));
   }
   &__delete {
-    @include align-header-input(map-get($rm-columns, "delete"));
+    @include align-header-data(map-get($rm-columns, "delete"));
   }
   &__ref {
-    @include align-header-input(map-get($rm-columns, "ref"));
+    @include align-header-data(map-get($rm-columns, "ref"));
   }
   &__target {
-    @include align-header-input(map-get($rm-columns, "target"));
+    @include align-header-data(map-get($rm-columns, "target"));
   }
   &__dry-solvent {
-    @include align-header-input(map-get($rm-columns, "dry-solvent"));
+    @include align-header-data(map-get($rm-columns, "dry-solvent"));
   }
   &__gaseous-fields {
-    &-input {
+    &-data {
       @extend .d-flex;
       @extend .gap-2;
     }
-    @include align-header-input(
+    @include align-header-data(
       calc(
         #{map-get($rm-columns, "amount")} + #{map-get(
             $rm-columns,
@@ -141,15 +199,15 @@ $rm-columns: (
 
 @container material-group (width < 49.25rem) {
   .reaction-material {
-    &__amount-input {
+    &__amount-data {
       flex-direction: column; // not extending bootstrap utilities in this context to avoid side effects
       padding-bottom: 0.5rem; // not extending bootstrap utilities in this context to avoid side effects
     }
     &__amount {
-      @include align-header-input(map-get($rm-sizes, "numeral-with-units"));
+      @include align-header-data(map-get($rm-sizes, "numeral-with-units"));
     }
     &__solvent-label {
-      @include align-header-input(
+      @include align-header-data(
         calc(
           #{map-get($rm-sizes, "numeral-with-units")} + #{map-get(
               $rm-columns,
@@ -159,7 +217,7 @@ $rm-columns: (
       ); // amount, coefficient + gap
     }
     &__gaseous-fields {
-      @include align-header-input(
+      @include align-header-data(
         calc(
           #{map-get($rm-sizes, "numeral-with-units")} + #{map-get(
               $rm-columns,
@@ -168,7 +226,7 @@ $rm-columns: (
         )
       );
       // ref, target, amount, coefficient, concentration, equivalence + gaps
-      &-input .reaction-material__ref-input {
+      &-data .reaction-material__ref-data {
         display: none;
       }
     }

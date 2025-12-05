@@ -10,28 +10,6 @@ $special-button-variant-colors: (
     "border-active": map-get($carbon-shades, lighten1),
     "text-active": $body-color,
   ),
-  "paper": (
-    "bg-default": $chemstrap-white,
-    "border-default": $chemstrap-white,
-    "text-default": $body-color,
-    "bg-hover": map-get($silicon-shades, lighten5),
-    "border-hover": map-get($carbon-shades, lighten5),
-    "text-hover": $body-color,
-    "bg-active": map-get($silicon-shades, lighten4),
-    "border-active": map-get($silicon-shades, lighten4),
-    "text-active": $body-color,
-  ),
-  "knock-out": (
-    "bg-default": transparent,
-    "border-default": transparent,
-    "text-default": map-get($carbon-shades, lighten2),
-    "bg-hover": transparent,
-    "border-hover": transparent,
-    "text-hover": $body-color,
-    "bg-active": transparent,
-    "border-active": transparent,
-    "text-active": $chemstrap-blue-dark,
-  ),
 );
 
 $simple-button-variants: (
@@ -95,18 +73,61 @@ h6 {
   }
 }
 
+.btn-plain,
+.btn-neat {
+  @include button-variant(
+    transparent,
+    transparent,
+    $chemstrap-blue,
+    transparent,
+    transparent,
+    mix($chemstrap-blue, $chemstrap-blue-dark, 50),
+    transparent,
+    transparent,
+    $chemstrap-blue-dark,
+    transparent,
+    transparent,
+    map-get($carbon-shades, lighten1)
+  );
+}
+
+// button variant neat with no background or border
+.btn-neat {
+  padding: 0 !important;
+  &.btn-lg i {
+    font-size: 2rem;
+    line-height: 1em;
+  }
+  &.btn-md i {
+    font-size: 1.5rem;
+    line-height: 1em;
+  }
+  &.btn-sm i {
+    font-size: 1.25rem;
+    line-height: 1em;
+  }
+  &.btn-xsm i {
+    font-size: 1.125rem;
+    line-height: 1em;
+  }
+  &.btn-xxsm i {
+    font-size: 1rem;
+    line-height: 1em;
+  }
+}
+
 @mixin xsm-form-elements {
-  padding: 1px 5px;
+  padding: 3px 5px;
   font-size: 12px;
-  line-height: 1.5;
+  line-height: 1.25;
   border-radius: 3px;
   @include condensed-text-width;
 }
 
 @mixin xxsm-form-elements {
-  padding: 3px 4px;
+  padding: 1px 4px;
   font-size: 12px;
-  line-height: 1;
+  line-height: 1.25;
   border-radius: 2.5px;
   @include condensed-text-width;
 }
@@ -120,6 +141,14 @@ h6 {
 }
 
 .btn-xxsm {
+  @include xxsm-form-elements;
+}
+
+.form-control-xsm {
+  @include xsm-form-elements;
+}
+
+.form-control-xxsm {
   @include xxsm-form-elements;
 }
 

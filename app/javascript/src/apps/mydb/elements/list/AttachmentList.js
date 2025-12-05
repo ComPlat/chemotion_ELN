@@ -15,31 +15,11 @@ import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
 export const attachmentThumbnail = (attachment) => (
   <div className="attachment-row-image">
     <ImageModal
-      imageStyle={{
-        width: '45px',
-        height: '45px',
-        objectFit: 'contain',
-      }}
-      alt="thumbnail"
       attachment={attachment}
-      showPop
-      popObject={{}}
-      disableClick
+      popObject={{
+        title: attachment?.filename,
+      }}
     />
-    <div className="large-preview-modal">
-      <ImageModal
-        imageStyle={{
-          width: '400px',
-          height: '400px',
-          backgroundColor: '#FFF',
-          objectFit: 'contain',
-        }}
-        alt="thumbnail"
-        attachment={attachment}
-        popObject={{}}
-        disableClick
-      />
-    </div>
   </div>
 );
 
@@ -208,7 +188,7 @@ export const importButton = (
   hideImportConfirmFunction,
   confirmAttachmentImportFunction
 ) => {
-  if (showImportConfirm.length === 0) { return null }
+  if (showImportConfirm.length === 0) { return null; }
 
   const show = showImportConfirm[attachment.id];
   const extension = attachment.filename.split('.').pop();

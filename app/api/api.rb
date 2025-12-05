@@ -15,7 +15,7 @@ class API < Grape::API
   # source: http://funonrails.com/2014/03/api-authentication-using-devise-token/
   helpers do # rubocop:disable Metrics/BlockLength
     def present(*args)
-      options = args.count > 1 ? args.extract_options! : {}
+      options = args.many? ? args.extract_options! : {}
 
       options[:current_user] = current_user
 
@@ -136,11 +136,20 @@ class API < Grape::API
     'screens' => %w[name collaborator requirements conditions result content plain_text_description],
     'research_plans' => %w[name body content],
     'elements' => %w[name short_label],
+    'sequence_based_macromolecule_samples' => %w[
+      name function_or_application obtained_by supplier concentration_value molarity_value activity_per_volume_value
+      activity_per_mass_value formulation purity purity_detection purification_method organism taxon_id strain tissue
+    ],
   }.freeze
 
   TARGET = Rails.env.production? ? 'https://www.chemotion-repository.net/' : 'http://localhost:3000/'
 
-  ELEMENTS = %w[research_plan screen wellplate reaction sample cell_line device_description vessel].freeze
+  # TODO: unify ELEMENTS and ELEMENT_CLASS. ELEMENTS is only used to iterate over ELEMENT_CLASS, which can be simply
+  #       replaced by ELEMENT_CLASS.keys if required
+  ELEMENTS = %w[
+    research_plan screen wellplate reaction sample cell_line device_description
+    sequence_based_macromolecule_sample vessel
+  ].freeze
 
   ELEMENT_CLASS = {
     'research_plan' => ResearchPlan,
@@ -151,6 +160,7 @@ class API < Grape::API
     'cell_line' => CelllineSample,
     'device_description' => DeviceDescription,
     'vessel' => Vessel,
+    'sequence_based_macromolecule_sample' => SequenceBasedMacromoleculeSample,
   }.freeze
 
   mount Chemotion::LiteratureAPI
@@ -212,6 +222,8 @@ class API < Grape::API
   mount Chemotion::VersionAPI
   mount Chemotion::ComponentAPI
   mount Chemotion::VesselAPI
+  mount Chemotion::SequenceBasedMacromoleculeAPI
+  mount Chemotion::SequenceBasedMacromoleculeSampleAPI
 
   if Rails.env.development?
     add_swagger_documentation(info: {

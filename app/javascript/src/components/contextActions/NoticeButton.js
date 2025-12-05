@@ -15,6 +15,7 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import CalendarActions from 'src/stores/alt/actions/CalendarActions';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
 import { formatDate } from 'src/utilities/timezoneHelper';
+import UIStore from 'src/stores/alt/stores/UIStore';
 
 import SidebarButton from 'src/apps/mydb/layout/sidebar/SidebarButton';
 
@@ -73,6 +74,9 @@ const handleNotification = (nots, act, needCallback = true) => {
 
       const { currentPage, itemsPerPage } = InboxStore.getState();
 
+      const { currentCollection } = UIStore.getState();
+      const currentCollectionId = currentCollection ? currentCollection.id : null;
+
       switch (n.content.action) {
         case 'CollectionActions.fetchRemoteCollectionRoots':
           CollectionActions.fetchRemoteCollectionRoots();
@@ -106,6 +110,13 @@ const handleNotification = (nots, act, needCallback = true) => {
             n.content.eventable_type,
             n.content.eventable_id
           );
+          break;
+        case 'RefreshSampleList':
+          if (currentCollectionId && currentCollectionId === n.content?.collection_id) {
+            ElementActions.fetchSamplesByCollectionId(
+              parseInt(currentCollection.id, 10)
+            );
+          }
           break;
         default:
         //

@@ -8,7 +8,8 @@ module Import
   class ImportCollections # rubocop:disable Metrics/ClassLength
     attr_reader :log_file_path
 
-    def initialize(att, current_user_id, gate = false, col_id = nil, origin = nil, logger = nil) # rubocop:disable Style/OptionalBooleanParameter
+    # rubocop:disable Style/OptionalBooleanParameter , Metrics/ParameterLists
+    def initialize(att, current_user_id, gate = false, col_id = nil, origin = nil, logger = nil)
       @att = att
       @current_user_id = current_user_id
       @gt = gate
@@ -21,6 +22,7 @@ module Import
       @tmp_dir = Dir.mktmpdir
       @logger, @log_file_path = initialize_logger(logger)
     end
+    # rubocop:enable Style/OptionalBooleanParameter , Metrics/ParameterLists
 
     def execute
       extract
@@ -97,23 +99,29 @@ module Import
         gate_collection if @gt == true
         import_collections if @gt == false
         import_samples
-        import_chemicals if @gt == false
-        import_components if @gt == false
         import_residues
         import_reactions
         import_reactions_samples
-        CelllineImporter.new(@data, @current_user_id, @instances).execute if @gt == false
         import_elements
-        import_wellplates if @gt == false
-        import_wells if @gt == false
-        import_research_plans if @gt == false
-        import_screens if @gt == false
+
+        if @gt == false
+          import_chemicals
+          import_components
+          import_wellplates
+          import_wells
+          import_research_plans
+          import_screens
+          Import::Helpers::CelllineImporter.new(@data, @current_user_id, @instances).execute
+          Import::Helpers::SequenceBasedMacromoleculeSampleImporter.new(@data, @current_user_id, @instances).execute
+        end
+
         import_containers
         import_segments
         import_datasets
         import_attachments
         import_literals
       end
+      reprocess_reaction_svgs
     end
 
     def import!
@@ -255,11 +263,25 @@ module Import
         # look for the molecule for this sample and add the molecule name
         # neither the Molecule or the MoleculeName are created if they already exist
         molfile = fields.fetch('molfile')
-        molecule = if fields.fetch('decoupled',
-                                   nil) && molfile.blank?
-                     Molecule.find_or_create_dummy
-                   else
+
+        # Check the associated Molecule for cano_smiles
+        cano_smiles = nil
+        if fields.fetch('molecule_id').present?
+          molecule_uuid = fields.fetch('molecule_id')
+          molecule_data = @data.fetch('Molecule', {}).fetch(molecule_uuid, {})
+          cano_smiles = molecule_data.fetch('cano_smiles', nil) if molecule_data.present?
+        end
+
+        # Priority: molfile > cano_smiles > dummy (if decoupled and both blank)
+        molecule = if molfile.present?
+                     # Always use molfile if available (highest priority)
                      Molecule.find_or_create_by_molfile(molfile)
+                   elsif cano_smiles.present?
+                     # Use cano_smiles if molfile is missing but cano_smiles is available
+                     Molecule.find_or_create_by_cano_smiles(cano_smiles)
+                   elsif fields.fetch('decoupled', nil)
+                     # Create dummy only for decoupled samples with no structure data
+                     Molecule.find_or_create_dummy
                    end
         unless (fields.fetch('decoupled', nil) && molfile.blank?) || molecule_name_name.blank?
           molecule.create_molecule_name_by_user(molecule_name_name, @current_user_id)
@@ -597,15 +619,30 @@ module Import
         ).first
 
         if attachable.present? && attachment.present?
-          attachment.update!(
-            attachable: attachable,
-            transferred: true,
-            aasm_state: fields.fetch('aasm_state'),
-            filename: fields.fetch('filename'),
-            # checksum: fields.fetch('checksum'),
-            # created_at: fields.fetch('created_at'),
-            # updated_at: fields.fetch('updated_at')
-          )
+          # Check source field to determine transferred status
+          source_value = @data['source'] || ''
+          transferred_status = source_value != 'smart-add'
+
+          # For ZIP files, reset aasm_state to allow processing if from smart-add
+          aasm_state = if attachment.content_type == 'application/zip' && source_value == 'smart-add'
+                         'queueing'
+                       else
+                         fields.fetch('aasm_state')
+                       end
+
+          if attachable_type == 'SequenceBasedMacromolecule' && attachable.attachments.present?
+            attachment.destroy
+          else
+            attachment.update!(
+              attachable: attachable,
+              transferred: transferred_status,
+              aasm_state: aasm_state,
+              filename: fields.fetch('filename'),
+              # checksum: fields.fetch('checksum'),
+              # created_at: fields.fetch('created_at'),
+              # updated_at: fields.fetch('updated_at')
+            )
+          end
         end
         # TODO: if attachment.checksum != fields.fetch('checksum')
 
@@ -634,7 +671,9 @@ module Import
     end
 
     def import_datasets
+      # rubocop:disable Performance/MethodObjectAsBlock
       Labimotion::Import.import_datasets(@data, @instances, @gt, @current_user_id, &method(:update_instances!))
+      # rubocop:enable Performance/MethodObjectAsBlock
     rescue StandardError => e
       Rails.logger.error(e.backtrace)
     end
@@ -687,8 +726,25 @@ module Import
       end
     end
 
+    def reprocess_reaction_svgs
+      return unless @instances.key?('Reaction')
+
+      source_value = @data['source'] || ''
+      return unless source_value == 'smart-add'
+
+      @instances['Reaction'].each_value do |reaction|
+        begin
+          reaction.update_svg_file!
+          reaction.save!
+        rescue StandardError => e
+          Rails.logger.error("Failed to reprocess SVG for reaction #{reaction.id}: #{e.message}")
+          Rails.logger.error(e.backtrace)
+        end
+      end
+    end
+
     def fetch_ancestry(type, ancestry)
-      return if ancestry.blank?
+      return if ancestry == '/' || ancestry.blank?
 
       parents = ancestry.split('/')
       parent_uuid = parents[-1]

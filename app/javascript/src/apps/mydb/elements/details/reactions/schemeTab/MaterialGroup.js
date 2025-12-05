@@ -27,6 +27,9 @@ const headers = {
   mass: 'Mass',
   reaction_coefficient: 'Coef',
   amount: 'Amount',
+  molar_mass: 'MW',
+  density: 'd',
+  purity: 'Purity',
   loading: 'Loading',
   concn: 'Conc',
   vol: 'Vol',
@@ -283,6 +286,9 @@ function GeneralMaterialGroup({
               <div className="reaction-material__coefficient-header">{groupHeaders.reaction_coefficient}</div>
             </OverlayTrigger>
             <div className="reaction-material__amount-header">{groupHeaders.amount}</div>
+            <div className="reaction-material__molar-mass-header">{groupHeaders.molar_mass}</div>
+            <div className="reaction-material__density-header">{groupHeaders.density}</div>
+            <div className="reaction-material__purity-header">{groupHeaders.purity}</div>
             {showLoadingColumn && <div className="reaction-material__loading-header">{groupHeaders.loading}</div>}
             <div className="reaction-material__concentration-header">{groupHeaders.concn}</div>
             <div className="reaction-material__equivalent-header">

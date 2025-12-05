@@ -148,11 +148,12 @@
 /public/docx/*
 !/public/docx/.keep
 
-/public/xlsx/*
-!/public/xlsx/.keep
 
-/public/csv/*
+!/public/xlsx/.keep
+!/public/sdf/.keep
+
 !/public/csv/.keep
+!/public/tsv/.keep
 
 /public/html/*
 !/public/html/.keep
@@ -221,16 +222,14 @@ public/sprite.png
 
 #svgeditor
 /public/svgedit
-# pdf worker
-/public/pdf.worker.min.js
 
 !spec/fixtures/import/sample_import_template.xlsx
-
-# pdf worker
-public/pdf.worker.min.js
 
 # Sentry Config File
 .env.sentry-build-plugin*
 
 # Changes from Shakapacker Installation
 .yarn-integrity
+
+*storybook.log
+storybook-static

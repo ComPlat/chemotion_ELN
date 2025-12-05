@@ -15,15 +15,6 @@ FactoryBot.define do
     end
     password { 'testtest' }
     password_confirmation { 'testtest' }
-    counters do
-      {
-        samples: 0,
-        reactions: 0,
-        wellplates: 0,
-        celllines: 0,
-        device_descriptions: 0,
-      }
-    end
 
     callback(:after_create) do |user|
       profile = user.profile
@@ -36,8 +27,9 @@ FactoryBot.define do
           'screen' => 4,
           'research_plan' => 5,
           'cell_line' => -1000,
-          'device_descriptions' => -1100,
-          'vessel' => -1100,
+          'device_description' => -1100,
+          'sequence_based_macromolecule_sample' => -1200,
+          'vessel' => -1300,
         }
         profile.update_columns(data: data) # rubocop:disable Rails/SkipsModelValidations
       end

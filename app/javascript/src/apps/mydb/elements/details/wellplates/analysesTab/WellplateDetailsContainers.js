@@ -210,6 +210,7 @@ export default class WellplateDetailsContainers extends Component {
                       <Card.Body>
                         <ContainerComponent
                           templateType="wellplate"
+                          element={wellplate}
                           readOnly={readOnly}
                           container={container}
                           onChange={container => this.handleChange(container)}

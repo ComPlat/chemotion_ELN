@@ -219,7 +219,7 @@ export default class GenericEl extends Element {
       .filter(f => f.required && !f.type.includes('drag_'));
     const vaildFields =
       fields.length ===
-      fields.filter(f => f.value && f.value.trim() !== '').length;
+      fields.filter(f => f.value && f.value.toString().trim() !== '').length;
 
     return validName && vaildFieldsDrag && vaildFields;
   }

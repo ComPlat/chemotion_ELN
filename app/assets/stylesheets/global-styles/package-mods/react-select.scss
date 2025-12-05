@@ -14,7 +14,7 @@
 
 @mixin fa-based-remove-icon {
   @include hide-svg;
-  @extend .text-secondary;
+  @extend .text-lighten2;
   @extend .fa;
   @extend .fa-times-circle;
 }
@@ -172,9 +172,9 @@
   &.form-select-xsm {
     .chemotion-select {
       &__indicator.chemotion-select__dropdown-indicator {
-        background-size: 8px 6px;
-        width: 0.5rem;
-        height: 0.5rem;
+        background-size: 10px 7.5px;
+        width: 0.625rem;
+        height: 0.625rem;
       }
     }
   }
@@ -189,14 +189,14 @@
     }
     &__control,
     &__option {
-      padding: 3px 2px 3px 4px;
+      padding: 1px 2px 1px 4px;
     }
     &[multiple],
     &[size]:not([size="1"]) {
       padding-right: 4px;
     }
     &__menu {
-      padding: 3px 0;
+      padding: 1px 0;
     }
   }
 
@@ -210,14 +210,14 @@
     }
     &__control,
     &__option {
-      padding: 1px 3px 1px 5px;
+      padding: 3px 3px 3px 5px;
     }
     &[multiple],
     &[size]:not([size="1"]) {
       padding-right: 5px;
     }
     &__menu {
-      padding: 1px 0;
+      padding: 3px 0;
     }
   }
 
@@ -225,6 +225,7 @@
     &__control,
     &__menu {
       @include font-size($form-select-font-size-sm);
+      border-radius: var(--bs-border-radius-sm);
     }
     &__control,
     &__option {

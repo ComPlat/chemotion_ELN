@@ -229,6 +229,7 @@ export default class AutoCompleteInput extends React.Component {
     }
 
     let selection = { name: value, search_by_method: 'substring' };
+
     if (suggestions && suggestionFocus != null && suggestions[suggestionFocus]) {
       let selectedSuggestion = suggestions[suggestionFocus];
       let selectedName = selectedSuggestion.name;
@@ -284,7 +285,22 @@ export default class AutoCompleteInput extends React.Component {
       conditions: { icon: 'icon-screen', label: 'Condition' },
       element_short_label: { icon: 'icon-element', label: 'Element Short Label' },
       cell_line_material_name: { icon: 'icon-cell_line', label: 'Cell line name' },
-      cell_line_sample_name: { icon: 'icon-cell_line', label: 'Cell line sample name' }
+      cell_line_sample_name: { icon: 'icon-cell_line', label: 'Cell line sample name' },
+      sbmm_sample_name: { icon: 'icon-sequence_based_macromolecule_sample', label: 'Sequence Based Macromolecule Sample name' },
+      sbmm_sample_short_label: { icon: 'icon-sequence_based_macromolecule_sample', label: 'Sequence Based Macromolecule Sample short label' },
+      sbmm_sample_organism: { icon: 'icon-sequence_based_macromolecule_sample', label: 'Sequence Based Macromolecule Sample organism' },
+      sbmm_sample_taxon_id: { icon: 'icon-sequence_based_macromolecule_sample', label: 'Sequence Based Macromolecule Sample taxon ID' },
+      sbmm_sample_strain: { icon: 'icon-sequence_based_macromolecule_sample', label: 'Sequence Based Macromolecule Sample strain' },
+      sbmm_sample_tissue: { icon: 'icon-sequence_based_macromolecule_sample', label: 'Sequence Based Macromolecule Sample tissue' },
+      sbmm_systematic_name: { icon: 'icon-sequence_based_macromolecule_sample', label: 'Sequence Based Macromolecule full name' },
+      sbmm_short_name: { icon: 'icon-sequence_based_macromolecule_sample', label: 'Sequence Based Macromolecule short name' },
+      sbmm_other_identifier: { icon: 'icon-sequence_based_macromolecule_sample', label: 'Sequence Based Macromolecule other reference ID' },
+      sbmm_own_identifier: { icon: 'icon-sequence_based_macromolecule_sample', label: 'Sequence Based Macromolecule own ID' },
+      sbmm_ec_numbers: { icon: 'icon-sequence_based_macromolecule_sample', label: 'Sequence Based Macromolecule ec numbers' },
+      sbmm_organism: { icon: 'icon-sequence_based_macromolecule_sample', label: 'Sequence Based Macromolecule organism' },
+      sbmm_taxon_id: { icon: 'icon-sequence_based_macromolecule_sample', label: 'Sequence Based Macromolecule taxon ID' },
+      sbmm_strain: { icon: 'icon-sequence_based_macromolecule_sample', label: 'Sequence Based Macromolecule strain' },
+      sbmm_tissue: { icon: 'icon-sequence_based_macromolecule_sample', label: 'Sequence Based Macromolecule tissue' },
     };
 
     if (suggestions) {

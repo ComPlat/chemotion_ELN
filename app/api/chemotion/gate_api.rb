@@ -102,7 +102,11 @@ module Chemotion
             @resp_body
           end
           post do
-            TransferRepoJob.perform_later(@collection.id, current_user.id, @url, @req_headers)
+            if Rails.env.development?
+              TransferRepoJob.perform_now(@collection.id, current_user.id, @url, @req_headers)
+            else
+              TransferRepoJob.perform_later(@collection.id, current_user.id, @url, @req_headers)
+            end
             status 202
           end
         end

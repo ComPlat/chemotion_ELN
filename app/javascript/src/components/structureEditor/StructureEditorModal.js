@@ -4,13 +4,17 @@
 /* eslint-disable react/forbid-prop-types */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Form, Button, ButtonToolbar, Modal, Card } from 'react-bootstrap';
+import {
+  Form, Button, ButtonToolbar, Modal, Card
+} from 'react-bootstrap';
 import { Select } from 'src/components/common/Select';
 import StructureEditor from 'src/models/StructureEditor';
 import EditorAttrs from 'src/components/structureEditor/StructureEditorSet';
 import CommonTemplatesList from 'src/components/ketcher-templates/CommonTemplatesList';
 import { transformSvgIdsAndReferences } from 'src/utilities/SvgUtils';
-import { createEditors, notifyError, initEditor, getEditorById } from 'src/components/structureEditor/EditorsInstances';
+import {
+  createEditors, notifyError, initEditor, getEditorById
+} from 'src/components/structureEditor/EditorsInstances';
 import EditorRenderer from 'src/components/structureEditor/EditorRenderer';
 
 function EditorList(props) {
@@ -191,6 +195,7 @@ export default class StructureEditorModal extends React.Component {
 
   async saveKetcher(editorId) {
     if (this.ketcherRef?.current) {
+      const { onSVGStructureError } = this.props;
       const { onSaveFileK2SC } = this.ketcherRef.current;
       // Ensure the function exists before calling it
       if (typeof onSaveFileK2SC !== 'function') {
@@ -200,8 +205,10 @@ export default class StructureEditorModal extends React.Component {
       try {
         // Call onSaveFileK2SC and get the required data
         const { ket2Molfile, svgElement } = await onSaveFileK2SC();
-        const updatedSvg = await transformSvgIdsAndReferences(svgElement);
+        const { svg: preparedSvg, message: svgFailedMessage } = svgElement || {};
+        const updatedSvg = await transformSvgIdsAndReferences(preparedSvg);
         this.handleStructureSave(ket2Molfile, updatedSvg, editorId.id);
+        onSVGStructureError(svgFailedMessage);
       } catch (error) {
         console.error('Error during save operation for Ketcher:', error);
       }
@@ -241,17 +248,12 @@ export default class StructureEditorModal extends React.Component {
     this.setState({ showWarning: false });
   }
 
-  render() {
-    const { cancelBtnText, submitBtnText, onSave } = this.props;
-    const handleSaveBtn = !onSave ? null : this.handleSaveBtn.bind(this);
-
-    const submitAddons = this.props.submitAddons ? this.props.submitAddons : '';
-    const {
-      editor, showWarning, molfile, showModal
-    } = this.state;
+  renderEditor() {
+    const { editor, showWarning, molfile } = this.state;
     const iframeHeight = showWarning ? '0px' : '630px';
     const iframeStyle = showWarning ? { border: 'none' } : {};
-    let useEditor = !showWarning && editor && this.editors[editor?.id] && (
+
+    return !showWarning && editor && this.editors[editor?.id] && (
       <EditorRenderer
         type={editor?.id}
         editor={this.editors[editor?.id]}
@@ -262,6 +264,15 @@ export default class StructureEditorModal extends React.Component {
         forwardedRef={this.ketcherRef}
       />
     );
+  }
+
+  render() {
+    const { cancelBtnText, submitBtnText, onSave } = this.props;
+    const handleSaveBtn = !onSave ? null : this.handleSaveBtn.bind(this);
+
+    const submitAddons = this.props.submitAddons ? this.props.submitAddons : '';
+    const { editor, showWarning, showModal } = this.state;
+
     const editorOptions = Object.keys(this.editors).map((e) => ({
       value: e,
       name: this.editors[e]?.label,
@@ -271,16 +282,19 @@ export default class StructureEditorModal extends React.Component {
     return (
       <Modal
         centered
-        className={!this.state.showWarning && 'modal-xxxl'}
+        className={!showWarning && 'modal-xxxl'}
         show={showModal}
         onLoad={this.initializeEditor.bind(this)}
-        onHide={this.handleCancelBtn.bind(this)}>
+        onHide={this.handleCancelBtn.bind(this)}
+      >
         <Modal.Header closeButton className="gap-3">
-          <EditorList
-            value={editor?.id}
-            fnChange={this.handleEditorSelection}
-            options={editorOptions}
-          />
+          {editor?.id && (
+            <EditorList
+              value={editor?.id}
+              fnChange={this.handleEditorSelection}
+              options={editorOptions}
+            />
+          )}
           {editor?.id === 'ketcher' && (
             <CommonTemplatesList />
           )}
@@ -289,7 +303,7 @@ export default class StructureEditorModal extends React.Component {
           {showWarning && (
             <WarningBox handleCancelBtn={this.handleCancelBtn.bind(this)} hideWarning={this.hideWarning.bind(this)} />
           )}
-          {useEditor}
+          {this.renderEditor()}
         </Modal.Body>
         {!showWarning && (
           <Modal.Footer className="modal-footer border-0">
@@ -320,6 +334,8 @@ StructureEditorModal.propTypes = {
   onSave: PropTypes.func,
   submitBtnText: PropTypes.string,
   cancelBtnText: PropTypes.string,
+  onSVGStructureError: PropTypes.func,
+
 };
 
 StructureEditorModal.defaultProps = {
@@ -331,4 +347,5 @@ StructureEditorModal.defaultProps = {
   onSave: () => {},
   submitBtnText: 'Save',
   cancelBtnText: 'Cancel',
+  onSVGStructureError: () => {},
 };

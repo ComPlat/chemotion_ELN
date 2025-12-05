@@ -147,6 +147,7 @@ export default class SampleDetails extends React.Component {
       currentUser,
       showRedirectWarning: redirectedFromMixture || false,
       casInputValue: '',
+      ketcherSVGError: null
     };
 
     this.enableComputedProps = MatrixCheck(currentUser.matrix, 'computedProp');
@@ -363,7 +364,7 @@ export default class SampleDetails extends React.Component {
     } else {
       fetchMolecule(() => MoleculesFetcher.fetchBySmi(smiles, svgFile, molfile, editor));
     }
-   }
+  }
 
   handleStructureEditorCancel() {
     this.hideStructureEditor();
@@ -383,6 +384,10 @@ export default class SampleDetails extends React.Component {
     if (!decoupleCheck(sample)) return;
     if (!rangeCheck('boiling_point', sample)) return;
     if (!rangeCheck('melting_point', sample)) return;
+
+    // Prepare mixture samples for saving using Sample.js method
+    sample.prepareMixtureForSave();
+
     if (sample.belongTo && sample.belongTo.type === 'reaction') {
       const reaction = sample.belongTo;
       reaction.editedSample = sample;
@@ -482,6 +487,17 @@ export default class SampleDetails extends React.Component {
     );
   }
 
+  onSVGStructureError = (errorMessage) => {
+    if (this.errorTimer) {
+      clearTimeout(this.errorTimer);
+    }
+    this.setState({ ketcherSVGError: errorMessage });
+    this.errorTimer = setTimeout(() => {
+      this.setState({ ketcherSVGError: null });
+      this.errorTimer = null;
+    }, 5000);
+  };
+
   structureEditorModal(sample) {
     const { molfile } = sample;
     const hasParent = sample && sample.parent_id;
@@ -496,6 +512,7 @@ export default class SampleDetails extends React.Component {
         hasParent={hasParent}
         hasChildren={hasChildren}
         sample={sample}
+        onSVGStructureError={this.onSVGStructureError}
       />
     );
   }
@@ -971,7 +988,7 @@ export default class SampleDetails extends React.Component {
     const timesTag = (
       <i className="fa fa-times" />
     );
-    const hasComponents = !sample.isMixture() || (sample.hasComponents());
+    const hasComponents = !sample.isMixture() || sample.hasComponents();
     const sampleUpdateCondition = !this.sampleIsValid() || !sample.can_update || !hasComponents;
 
     const elementToSave = activeTab === 'inventory' ? 'Chemical' : 'Sample';
@@ -1341,7 +1358,7 @@ export default class SampleDetails extends React.Component {
     let mw;
 
     if (sample.isMixture() && sample.sample_details) {
-      mw = sample.total_molecular_weight;
+      mw = sample.total_mixture_mass_g;
     } else {
       mw = sample.molecule_molecular_weight;
     }
@@ -1538,7 +1555,7 @@ export default class SampleDetails extends React.Component {
       }
     });
 
-    const { pageMessage } = this.state;
+    const { pageMessage, ketcherSVGError } = this.state;
     const messageBlock = (pageMessage
       && (pageMessage.error.length > 0 || pageMessage.warning.length > 0)) ? (
         <Alert variant="warning" style={{ marginBottom: 'unset', padding: '5px', marginTop: '10px' }}>
@@ -1574,6 +1591,20 @@ export default class SampleDetails extends React.Component {
         header={this.sampleHeader(sample)}
         footer={this.sampleFooter()}
       >
+        {ketcherSVGError?.length > 0 && (
+          <Alert
+            variant="danger"
+            show={ketcherSVGError?.length > 0}
+            dismissible
+            onClose={() => this.setState({ ketcherSVGError: null })}
+          >
+            <strong>SVG generation failed.</strong>
+            {' '}
+            Falling back to the previous SVG.
+            <br />
+            <small className="text-muted">{ketcherSVGError}</small>
+          </Alert>
+        )}
         {this.sampleInfo(sample)}
         {this.state.sfn && <ScifinderSearch el={sample} />}
         <div className="tabs-container--with-borders">

@@ -14,9 +14,11 @@ export default class SplitElementButton extends React.Component {
     const userState = UserStore.getState();
     this.state = {
       currentCollection: uiState.currentCollection,
-      currentUser: {},
       genericEls: [],
-      showGenericEls: MatrixCheck(userState.currentUser?.matrix, 'genericEl'),
+      showGenericEls: MatrixCheck(
+        userState.currentUser?.matrix,
+        'genericElement',
+      ),
       layout: {},
       selectedElements: {},
     };
@@ -43,13 +45,20 @@ export default class SplitElementButton extends React.Component {
     const newCurrentUser = state.currentUser;
     const newGenericEls = state.genericEls;
 
-    if (typeof newLayout !== 'undefined' && newLayout !== null && newLayout !== layout) {
+    if (
+      typeof newLayout !== 'undefined'
+      && newLayout !== null
+      && newLayout !== layout
+    ) {
       this.setState({ layout: newLayout });
     }
 
-    const newShowGenericEls = MatrixCheck(newCurrentUser?.matrix, 'genericEl');
+    const newShowGenericEls = MatrixCheck(
+      newCurrentUser?.matrix,
+      'genericElement',
+    );
     if (newShowGenericEls !== showGenericEls) {
-      this.setState({ currentUser: newCurrentUser });
+      this.setState({ showGenericEls: newShowGenericEls });
     }
 
     if (newGenericEls !== genericEls) {
@@ -64,7 +73,12 @@ export default class SplitElementButton extends React.Component {
       this.setState({ currentCollection: newCurrentCollection });
     }
 
-    const newSelectedElements = ['sample', 'wellplate', ...genericEls.map((el) => el.name)].reduce(
+    const splitableElements = [
+      'sample', 'wellplate', 'cell_line', 'device_description', 'sequence_based_macromolecule_sample',
+      ...genericEls.map((el) => el.name)
+    ];
+
+    const newSelectedElements = splitableElements.reduce(
       (acc, el) => {
         const { checkedIds, checkedAll } = state[el] || {};
         const hasSelected = checkedIds?.size > 0 || checkedAll === true;
@@ -85,11 +99,6 @@ export default class SplitElementButton extends React.Component {
     ElementActions.splitElements(UIStore.getState(), name);
   }
 
-  noSelected(name) {
-    const { selectedElements } = this.state;
-    return !selectedElements[name];
-  }
-
   isAllCollection() {
     const { currentCollection } = this.state;
     return currentCollection && currentCollection.label === 'All';
@@ -100,8 +109,8 @@ export default class SplitElementButton extends React.Component {
   }
 
   splitSelectionAsSubDeviceDescription() {
-    const uiState = UIStore.getState()
-    let params = {
+    const uiState = UIStore.getState();
+    const params = {
       ui_state: {
         device_description: {
           all: uiState.device_description.checkedAll,
@@ -111,13 +120,32 @@ export default class SplitElementButton extends React.Component {
         currentCollectionId: uiState.currentCollection.id,
         isSync: uiState.isSync,
       }
-    }
+    };
 
     ElementActions.splitAsSubDeviceDescription(params);
   }
 
+  splitSelectionAsSubSequenceBasedMacromoleculeSample() {
+    const uiState = UIStore.getState()
+    let params = {
+      ui_state: {
+        sequence_based_macromolecule_sample: {
+          all: uiState.sequence_based_macromolecule_sample.checkedAll,
+          included_ids: uiState.sequence_based_macromolecule_sample.checkedIds,
+          excluded_ids: uiState.sequence_based_macromolecule_sample.uncheckedIds,
+        },
+        currentCollectionId: uiState.currentCollection.id,
+        isSync: uiState.isSync,
+      }
+    }
+
+    ElementActions.splitAsSubSequenceBasedMacromoleculeSample(params);
+  }
+
   render() {
-    const { layout, genericEls, showGenericEls, selectedElements } = this.state;
+    const {
+      layout, genericEls, showGenericEls, selectedElements
+    } = this.state;
 
     const sortedLayout = Object.entries(layout)
       .filter((o) => o[1] && o[1] > 0)
@@ -145,27 +173,33 @@ export default class SplitElementButton extends React.Component {
       >
         <Dropdown.Item
           onClick={() => this.splitSelectionAsSubsamples()}
-          disabled={!selectedElements['sample']}
+          disabled={!selectedElements.sample}
         >
           Split Sample
         </Dropdown.Item>
         <Dropdown.Item
           onClick={() => this.splitSelectionAsSubwellplates()}
-          disabled={!selectedElements['wellplate']}
+          disabled={!selectedElements.wellplate}
         >
           Split Wellplate
         </Dropdown.Item>
         <Dropdown.Item
           onClick={() => ElementActions.splitAsSubCellLines(UIStore.getState())}
-          disabled={this.noSelected('cell_line') || this.isAllCollection()}
+          disabled={!selectedElements.cell_line}
         >
           Split Cell line
         </Dropdown.Item>
         <Dropdown.Item
           onClick={() => this.splitSelectionAsSubDeviceDescription()}
-          disabled={this.noSelected('device_description') || this.isAllCollection()}
+          disabled={!selectedElements.device_description}
         >
           Split Device Description
+        </Dropdown.Item>
+        <Dropdown.Item
+          onClick={() => this.splitSelectionAsSubSequenceBasedMacromoleculeSample()}
+          disabled={!selectedElements.sequence_based_macromolecule_sample}
+        >
+          Split Sequence Based Macromolecule Sample
         </Dropdown.Item>
         {sortedGenericEls.map((el) => (
           <Dropdown.Item

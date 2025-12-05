@@ -19,8 +19,6 @@ class PagesController < ApplicationController
 
   def editor; end
 
-  def styleguide; end
-
   def sfn_cb
     code = params[:code]
     sf_verifer = request.env.dig('action_dispatch.request.unsigned_session_cookie', 'omniauth.pkce.verifier')

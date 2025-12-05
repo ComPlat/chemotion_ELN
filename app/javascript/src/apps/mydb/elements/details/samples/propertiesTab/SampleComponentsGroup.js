@@ -19,9 +19,14 @@ class SampleComponentsGroup extends React.Component {
     super(props);
 
     const componentState = ComponentStore.getState();
+    const { sample } = this.props;
     this.state = {
-      lockAmountColumn: componentState.lockAmountColumn,
-      lockAmountColumnSolids: componentState.lockAmountColumnSolids,
+      lockAmountColumn: ComponentStore.getLockStateForSample(componentState, 'lockAmountColumn', sample?.id),
+      lockAmountColumnSolids: ComponentStore.getLockStateForSample(
+        componentState,
+        'lockAmountColumnSolids',
+        sample?.id
+      ),
     };
     this.onComponentStoreChange = this.onComponentStoreChange.bind(this);
   }
@@ -35,7 +40,11 @@ class SampleComponentsGroup extends React.Component {
   }
 
   onComponentStoreChange(state) {
-    this.setState({ ...state });
+    const { sample } = this.props;
+    this.setState({
+      lockAmountColumn: ComponentStore.getLockStateForSample(state, 'lockAmountColumn', sample?.id),
+      lockAmountColumnSolids: ComponentStore.getLockStateForSample(state, 'lockAmountColumnSolids', sample?.id),
+    });
   }
 
   /**
@@ -75,9 +84,10 @@ class SampleComponentsGroup extends React.Component {
    */
   renderSwitchAmountButton(lockState, materialGroup, actionType) {
     const updatedActionType = materialGroup === 'solid' ? `${actionType}Solids` : actionType;
+    const { sample } = this.props;
 
     const handleClick = () => {
-      ComponentActions.toggleLockState(!lockState, updatedActionType);
+      ComponentActions.toggleLockState(!lockState, updatedActionType, sample?.id);
     };
 
     return (

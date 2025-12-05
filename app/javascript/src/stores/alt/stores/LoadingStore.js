@@ -41,6 +41,8 @@ class LoadingStore {
           ElementActions.createVesselTemplate,
           ElementActions.updateVessel,
           ElementActions.updateVesselTemplate,
+          ElementActions.createSequenceBasedMacromoleculeSample,
+          ElementActions.updateSequenceBasedMacromoleculeSample,
           ElementActions.storeMetadata,
           InboxActions.fetchInbox,
           InboxActions.fetchInboxContainer,

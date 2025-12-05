@@ -15,6 +15,7 @@ const isLayoutCollapsed = (layout) => layout[0] === 0;
 
 function Elements() {
   const { deviceDescriptions } = useContext(StoreContext);
+  const { sequenceBasedMacromoleculeSamples } = useContext(StoreContext);
   const [showDetailView, setShowDetailView] = useState(false);
   const [isCollapsed, setCollapsed] = useState(true);
   const [returnLayout, setReturnLayout] = useState(null);
@@ -24,6 +25,9 @@ function Elements() {
     const onElementStoreChange = ({ currentElement }) => {
       if (currentElement && currentElement.type === 'device_description') {
         deviceDescriptions.addDeviceDescriptionToOpen(currentElement);
+      }
+      if (currentElement && currentElement.type === 'sequence_based_macromolecule_sample') {
+        sequenceBasedMacromoleculeSamples.addSequenceBasedMacromoleculeSampleToOpen(currentElement);
       }
       setShowDetailView(currentElement !== null);
     };
@@ -88,7 +92,7 @@ function Elements() {
             className="w-0"
           >
             <div className="h-100 pt-4 px-4 overflow-x-auto">
-              <div className="h-100" style={{ minWidth: '600px' }}>
+              <div className="h-100" style={{ minWidth: '520px' }}>
                 <ElementDetails />
               </div>
             </div>

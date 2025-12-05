@@ -75,8 +75,6 @@ Rails.application.routes.draw do
   root to: redirect('home')
 
   get 'test', to: 'pages#test'
-
-  get '/styleguide', to: 'pages#styleguide' if Rails.env.development?
 end
 
 # rubocop: enable Metrics/BlockLength, Layout/LineLength, Style/FrozenStringLiteralComment

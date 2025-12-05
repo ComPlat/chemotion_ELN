@@ -3,7 +3,7 @@ class RefreshElementTagJob < ApplicationJob
 
   def perform
     Sample.all.find_each(batch_size: 30) do |sample|
-      sample.update_tag!(collection_tag: true, analyses_tag: true)
+      sample.update_tag!(collection_tag: true, analyses_tag: true, resources_tag: true)
     end
     Reaction.all.find_each(batch_size: 30) do |reaction|
       reaction.update_tag!(collection_tag: true)

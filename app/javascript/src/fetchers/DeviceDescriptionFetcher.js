@@ -9,7 +9,7 @@ export default class DeviceDescriptionFetcher {
   }
 
   static fetchDeviceDescriptionsByUIStateAndLimit(params) {
-    const limit = params.limit ? limit : null;
+    const limit = params.limit ? params.limit : null;
 
     return fetch('/api/v1/device_descriptions/ui_state/',
       {
@@ -41,6 +41,7 @@ export default class DeviceDescriptionFetcher {
     ).then(response => response.json())
       .then((json) => {
         if (json.error) {
+          const id = deviceDescriptionId;
           return new DeviceDescription({ id: `${id}:error:DeviceDescription ${id} is not accessible!`, is_new: true });
         } else {
           const deviceDescription = new DeviceDescription(json.device_description);

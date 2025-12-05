@@ -40,6 +40,18 @@ module Entities
           metadata[:hyperlinks] =
             JSON.parse(object.extended_metadata['hyperlinks'])
         end
+        if object.extended_metadata && object.extended_metadata['general_description'].present?
+          general_desc = object.extended_metadata['general_description']
+          metadata[:general_description] = if general_desc.is_a?(String)
+                                             begin
+                                               JSON.parse(general_desc)
+                                             rescue JSON::ParserError
+                                               general_desc
+                                             end
+                                           else
+                                             general_desc
+                                           end
+        end
       end
     end
     # rubocop:enable Metrics/AbcSize

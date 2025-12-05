@@ -145,7 +145,7 @@ const searchValuesByFilters = (store) => {
     filters.map((val) => {
       let table = val.field.table || val.table;
       let value = val.value;
-      table = table.charAt(0).toUpperCase() + table.slice(1, -1).replace('_', ' ');
+      table = table.charAt(0).toUpperCase() + table.slice(1, -1).replace(/_/g, ' ');
       value = value && value !== true ? value.replace(/[\n\r]/g, ' OR ') : value;
 
       if (val.field.sub_fields && val.field.sub_fields.length >= 1 && val.sub_values.length >= 1) {
