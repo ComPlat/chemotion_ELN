@@ -2402,41 +2402,6 @@ export default class Sample extends Element {
   }
 
   /**
-   * Applies reference-based properties (specifically `equivalent`) to the current sample
-   * when added to a reaction. This logic is only applied for **mixture** samples.
-   *
-   * - If the sample is marked as a reference, its equivalent is set to `1`.
-   * - If the sample is not a reference and a valid `referenceMaterial` exists
-   *   with `amount_mol > 0`, the equivalent is calculated as:
-   *     `this.amount_mol / referenceMaterial.amount_mol`
-   *   This is only done for tagGroups: `"starting_materials"` or `"reactants"`.
-   *
-   * @param {Object} reaction - The reaction object containing the reference material.
-   * @param {string} tagGroup - The group the sample belongs to (e.g., 'starting_materials', 'reactants').
-   */
-  applyReferenceProperties(reaction, tagGroup) {
-    if (!this.isMixture()) return;
-    const { referenceMaterial } = reaction;
-
-    // Reference sample: set equivalent to 1
-    if (this.reference) {
-      this.equivalent = 1;
-      return;
-    }
-
-    // Non-reference sample: copy from referenceMaterial if valid
-    if (
-      referenceMaterial
-      && referenceMaterial.amount_mol > 0
-      && (tagGroup === 'starting_materials' || tagGroup === 'reactants')
-    ) {
-      // Always set equivalent to 1 for mixture samples in reactants/starting_materials
-      // regardless of isNew status to ensure proper initialization
-      this.equivalent = this.amount_mol / referenceMaterial.amount_mol;
-    }
-  }
-
-  /**
    * Applies mixture properties from sample_details to a target sample.
    * Maps total_mixture_mass_g to amount_g.
    * and calculates amount_l based on mass and density.

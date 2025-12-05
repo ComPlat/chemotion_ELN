@@ -1056,7 +1056,12 @@ export default class ReactionDetailsScheme extends React.Component {
                 const equivalent = this.calculateEquivalentForGasProduct(sample, vesselVolume);
                 sample.equivalent = equivalent > 1 ? 1 : equivalent;
               } else if (!lockEquivColumn) {
-                sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol / stoichiometryCoeff;
+                if (referenceMaterial.amount_mol > 0) {
+                  sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol / stoichiometryCoeff;
+                } else {
+                  // Set equivalent to 0 when reference material has no values (amount_mol = 0)
+                  sample.equivalent = 0.0;
+                }
               }
             } else {
               if (!lockEquivColumn) {
@@ -1087,7 +1092,12 @@ export default class ReactionDetailsScheme extends React.Component {
             // calculate equivalent, don't touch real amount
             sample.maxAmount = referenceMaterial.amount_mol * stoichiometryCoeff * sample.molecule_molecular_weight / (sample.purity || 1);
             // yield taking into account stoichiometry:
-            sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol / stoichiometryCoeff;
+            if (referenceMaterial.amount_mol > 0) {
+              sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol / stoichiometryCoeff;
+            } else {
+              // Set equivalent to 0 when reference material has no values (amount_mol = 0)
+              sample.equivalent = 0.0;
+            }
           } else {
             //sample.amount_mol = sample.equivalent * referenceMaterial.amount_mol;
             if (referenceMaterial && referenceMaterial.amount_value && updatedSample.gas_type !== 'feedstock' && sample.gas_type !== 'gas') {
@@ -1101,7 +1111,12 @@ export default class ReactionDetailsScheme extends React.Component {
 
         if ((materialGroup === 'starting_materials' || materialGroup === 'reactants') && !sample.reference && !lockEquivColumn) {
           // eslint-disable-next-line no-param-reassign
-          sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol;
+          if (referenceMaterial.amount_mol > 0) {
+            sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol;
+          } else {
+            // Set equivalent to 0 when reference material has no values (amount_mol = 0)
+            sample.equivalent = 0.0;
+          }
         } else if (materialGroup === 'products'
           && (sample.equivalent < 0.0 || isNaN(sample.equivalent) || !isFinite(sample.equivalent))
           && sample.gas_type !== 'gas') {
@@ -1256,12 +1271,15 @@ export default class ReactionDetailsScheme extends React.Component {
       } else {
         if (sample.amount_value) {
           const referenceAmount = referenceMaterial.amount_mol;
-          if (referenceMaterial && referenceAmount) {
+          if (referenceMaterial && referenceAmount > 0) {
             if (materialGroup === 'products') {
               sample.equivalent = sample.amount_mol * (referenceMaterial.coefficient || 1) / (referenceAmount * (sample.coefficient || 1));
             } else {
               sample.equivalent = sample.amount_mol / referenceAmount;
             }
+          } else if ((materialGroup === 'starting_materials' || materialGroup === 'reactants') && referenceMaterial) {
+            // Set equivalent to 0 when reference material has no values (amount_mol = 0 or undefined)
+            sample.equivalent = 0.0;
           }
         }
         sample.reference = false;
@@ -1381,8 +1399,8 @@ export default class ReactionDetailsScheme extends React.Component {
     if (refMol > 0 && typeof splitSample.amount_mol === 'number') {
       splitSample.equivalent = splitSample.amount_mol / refMol;
     } else {
-      // Fallback to 1 to avoid NaN/Infinity when reference has no mol amount yet
-      splitSample.equivalent = 1.0;
+      // Set equivalent to 0 when reference has no mol amount (no values defined)
+      splitSample.equivalent = 0.0;
     }
   }
 
