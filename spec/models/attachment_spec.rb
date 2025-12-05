@@ -19,6 +19,7 @@
 #  created_by_type :string
 #  created_for     :integer
 #  deleted_at      :datetime
+#  edit_state      :integer          default("not_editing")
 #  filename        :string
 #  filesize        :bigint
 #  folder          :string

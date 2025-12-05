@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 begin
   editors_config = Rails.application.config_for :editors
 
@@ -11,7 +13,10 @@ begin
     else
       config.editors = nil
     end
+    available_extensions = config.editors.docserver&.fetch(:ext, [])&.flatten(2)&.filter { |ext| ext.is_a?(String) }
+    config.editors.available_extensions = available_extensions
   end
+
 rescue StandardError => e
   Rails.logger.error e.message
   Rails.application.configure do

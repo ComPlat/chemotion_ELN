@@ -3,20 +3,18 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import EditorFetcher from 'src/fetchers/EditorFetcher';
 import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
 import Utils from 'src/utilities/Functions';
 import {
   Button, ButtonGroup, OverlayTrigger, Popover, Alert
 } from 'react-bootstrap';
-import { last, findKey } from 'lodash';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import SaveEditedImageWarning from 'src/apps/mydb/elements/details/researchPlans/SaveEditedImageWarning';
 import {
   downloadButton,
   removeButton,
   annotateButton,
-  editButton,
+  EditButton,
   importButton,
   customDropzone,
   sortingAndFilteringUI,
@@ -58,8 +56,6 @@ export class WellplateDetailsAttachments extends Component {
 
     this.state = {
       onImport,
-      attachmentEditor: false,
-      extension: null,
       imageEditModalShown: false,
       showImportConfirm: [],
       filteredAttachments: [...props.attachments],
@@ -67,10 +63,8 @@ export class WellplateDetailsAttachments extends Component {
       sortBy: 'name',
       sortDirection: 'asc',
     };
-    this.editorInitial = this.editorInitial.bind(this);
     this.createAttachmentPreviews = this.createAttachmentPreviews.bind(this);
 
-    this.handleEdit = this.handleEdit.bind(this);
     this.handleFilterChange = this.handleFilterChange.bind(this);
     this.handleSortChange = this.handleSortChange.bind(this);
     this.toggleSortDirection = this.toggleSortDirection.bind(this);
@@ -86,7 +80,6 @@ export class WellplateDetailsAttachments extends Component {
       return acc;
     }, {});
     this.setState({ showImportConfirm: updatedImportConfirm });
-    this.editorInitial();
     this.createAttachmentPreviews();
   }
 
@@ -96,28 +89,6 @@ export class WellplateDetailsAttachments extends Component {
       this.createAttachmentPreviews();
       this.setState({ filteredAttachments: [...attachments] }, this.filterAndSortAttachments);
     }
-  }
-
-  handleEdit(attachment) {
-    const fileType = last(attachment.filename.split('.'));
-    const docType = this.documentType(attachment.filename);
-
-    EditorFetcher.startEditing({ attachment_id: attachment.id })
-      .then((result) => {
-        if (result.token) {
-          const url = `/editor?id=${attachment.id}&docType=${docType}
-          &fileType=${fileType}&title=${attachment.filename}&key=${result.token}
-          &only_office_token=${result.only_office_token}`;
-          window.open(url, '_blank');
-
-          attachment.aasm_state = 'oo_editing';
-          attachment.updated_at = new Date();
-
-          this.props.onEdit(attachment);
-        } else {
-          alert('Unauthorized to edit this file.');
-        }
-      });
   }
 
   handleTemplateDownload() { // eslint-disable-line class-methods-use-this
@@ -193,28 +164,6 @@ export class WellplateDetailsAttachments extends Component {
     });
   }
 
-  documentType(filename) {
-    const { extension } = this.state;
-
-    const ext = last(filename.split('.'));
-    const docType = findKey(extension, (o) => o.includes(ext));
-
-    if (typeof docType === 'undefined' || !docType) {
-      return null;
-    }
-
-    return docType;
-  }
-
-  editorInitial() {
-    EditorFetcher.initial().then((result) => {
-      this.setState({
-        attachmentEditor: result.installed,
-        extension: result.ext,
-      });
-    });
-  }
-
   showImportConfirm(attachmentId) {
     const { showImportConfirm } = this.state;
     showImportConfirm[attachmentId] = true;
@@ -279,7 +228,7 @@ export class WellplateDetailsAttachments extends Component {
 
   render() {
     const {
-      filteredAttachments, sortDirection, attachmentEditor, extension
+      filteredAttachments, sortDirection
     } = this.state;
     const { onUndoDelete, attachments, wellplate } = this.props;
     const { currentUser } = UserStore.getState();
@@ -354,16 +303,7 @@ export class WellplateDetailsAttachments extends Component {
                     <>
                       {downloadButton(attachment)}
                       <ThirdPartyAppButton attachment={attachment} options={this.thirdPartyApps} />
-                      {editButton(
-                        attachment,
-                        extension,
-                        attachmentEditor,
-                        attachment.aasm_state === 'oo_editing' && new Date().getTime()
-                        < (new Date(attachment.updated_at).getTime() + 15 * 60 * 1000),
-                        !attachmentEditor || attachment.aasm_state === 'oo_editing'
-                        || attachment.is_new || this.documentType(attachment.filename) === null,
-                        this.handleEdit
-                      )}
+                      <EditButton attachment={attachment} onChange={this.props.onEdit} />
                       {annotateButton(attachment, () => {
                         this.setState({
                           imageEditModalShown: true,

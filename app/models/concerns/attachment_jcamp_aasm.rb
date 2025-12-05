@@ -9,7 +9,6 @@ module AttachmentJcampAasm
 
   # rubocop:disable Metrics/BlockLength
   included do
-    include AASM
     before_create :init_aasm
     before_update :require_peaks_generation?
 
@@ -19,15 +18,6 @@ module AttachmentJcampAasm
       state :peaked, :edited, :backup, :image, :json, :csv, :nmrium
       state :failure
       state :non_jcamp
-      state :oo_editing
-
-      event :oo_editing_start do
-        transitions from: %i[oo_editing non_jcamp idle], to: :oo_editing
-      end
-
-      event :oo_editing_end do
-        transitions from: :oo_editing, to: :non_jcamp
-      end
 
       event :set_queueing do
         transitions from: %i[idle done backup failure non_jcamp queueing regenerating nmrium],
