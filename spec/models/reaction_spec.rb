@@ -34,8 +34,10 @@
 #  timestamp_stop         :string
 #  tlc_description        :text
 #  tlc_solvents           :string
+#  use_reaction_volume    :boolean          default(FALSE), not null
 #  variations             :jsonb
 #  vessel_size            :jsonb
+#  volume                 :decimal(10, 4)
 #  created_at             :datetime         not null
 #  updated_at             :datetime         not null
 #

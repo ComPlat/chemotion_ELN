@@ -5,39 +5,41 @@
 # Table name: reactions
 #
 #  id                     :integer          not null, primary key
-#  name                   :string
-#  created_at             :datetime         not null
-#  updated_at             :datetime         not null
-#  description            :text
-#  timestamp_start        :string
-#  timestamp_stop         :string
-#  observation            :text
-#  purification           :string           default([]), is an Array
-#  dangerous_products     :string           default([]), is an Array
-#  tlc_solvents           :string
-#  tlc_description        :text
-#  rf_value               :string
-#  temperature            :jsonb
-#  status                 :string
-#  reaction_svg_file      :string
-#  solvent                :string
-#  deleted_at             :datetime
-#  short_label            :string
-#  created_by             :integer
-#  role                   :string
-#  origin                 :jsonb
-#  rinchi_string          :text
-#  rinchi_long_key        :text
-#  rinchi_short_key       :string
-#  rinchi_web_key         :string
-#  duration               :string
-#  rxno                   :string
 #  conditions             :string
-#  variations             :jsonb
+#  created_by             :integer
+#  dangerous_products     :string           default([]), is an Array
+#  deleted_at             :datetime
+#  description            :text
+#  duration               :string
+#  gaseous                :boolean          default(FALSE)
+#  name                   :string
+#  observation            :text
+#  origin                 :jsonb
 #  plain_text_description :text
 #  plain_text_observation :text
+#  purification           :string           default([]), is an Array
+#  reaction_svg_file      :string
+#  rf_value               :string
+#  rinchi_long_key        :text
+#  rinchi_short_key       :string
+#  rinchi_string          :text
+#  rinchi_web_key         :string
+#  role                   :string
+#  rxno                   :string
+#  short_label            :string
+#  solvent                :string
+#  status                 :string
+#  temperature            :jsonb
+#  timestamp_start        :string
+#  timestamp_stop         :string
+#  tlc_description        :text
+#  tlc_solvents           :string
+#  use_reaction_volume    :boolean          default(FALSE), not null
+#  variations             :jsonb
 #  vessel_size            :jsonb
-#  gaseous                :boolean          default(FALSE)
+#  volume                 :decimal(10, 4)
+#  created_at             :datetime         not null
+#  updated_at             :datetime         not null
 #
 # Indexes
 #

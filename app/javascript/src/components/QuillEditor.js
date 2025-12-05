@@ -138,6 +138,24 @@ export default class QuillEditor extends React.Component {
               specialCharacters: this.specialCharacters,
             }
           },
+          keyboard: {
+            bindings: {
+              subscript: {
+                key: 188,
+                shortKey: true,
+                handler(range, context) {
+                  this.quill.format('script', context.format.script === 'sub' ? false : 'sub');
+                }
+              },
+              superscript: {
+                key: 190,
+                shortKey: true,
+                handler(range, context) {
+                  this.quill.format('script', context.format.script === 'super' ? false : 'super');
+                }
+              }
+            }
+          }
         },
         theme: this.theme,
         readOnly: this.readOnly,

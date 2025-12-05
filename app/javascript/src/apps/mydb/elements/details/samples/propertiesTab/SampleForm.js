@@ -353,14 +353,24 @@ export default class SampleForm extends React.Component {
     let moleculeNames = newMolecule ? [] : [mno];
     if (sample && mnos) { moleculeNames = moleculeNames.concat(mnos); }
 
-    const formattedOptions = moleculeNames.filter(name => name).map(name => {
+    const formattedOptions = moleculeNames.filter((name) => name).map((name) => {
       if (typeof name === 'string') {
-        return { label: name, value: name };
+        return { label: name, value: name, type: '' };
       }
       return {
         label: name.label || name.value || name.name || String(name),
-        value: name.value || name.label || name.name || String(name)
+        value: name.value || name.label || name.name || String(name),
+        type: name.desc || ''
       };
+    }).filter((name, _, names) => {
+      if (name.type === 'alternate' || name.type?.startsWith('defined by user')) {
+        const hasMainVersion = names.some(
+          (other) => other.label === name.label
+            && !(other.type === 'alternate' || other.type?.toLowerCase().startsWith('defined by user'))
+        );
+        return !hasMainVersion;
+      }
+      return true;
     });
 
     return (
@@ -379,6 +389,12 @@ export default class SampleForm extends React.Component {
               const value = selectedOption ? selectedOption.label : '';
               this.setState({ moleculeNameInputValue: value });
               this.updateMolName(selectedOption);
+            }}
+            formatOptionLabel={(option, { context }) => {
+              if (context === 'menu') {
+                return option.type ? `${option.label}(${option.type})` : option.label;
+              }
+              return option.label;
             }}
             onInputChange={(inputValue, { action }) => {
               if (action === 'input-change') {
@@ -421,7 +437,7 @@ export default class SampleForm extends React.Component {
 
   fetchNextInventoryLabel() {
     const { currentCollection } = UIStore.getState();
-    if(this.matchSelectedCollection(currentCollection)) {
+    if (this.matchSelectedCollection(currentCollection)) {
       InventoryFetcher.fetchInventoryOfCollection(currentCollection.id)
         .then((result) => {
           if (result && result.prefix && result.counter !== undefined) {
@@ -1056,7 +1072,9 @@ export default class SampleForm extends React.Component {
   }
 
   render() {
-    const { enableSampleDecoupled, sample = {}, customizableField, handleSampleChanged } = this.props;
+    const {
+      enableSampleDecoupled, sample = {}, customizableField, handleSampleChanged
+    } = this.props;
     const isPolymer = (sample.molfile || '').indexOf(' R# ') !== -1;
     const isDisabled = !sample.can_update;
     const polyDisabled = isPolymer || isDisabled;
@@ -1194,7 +1212,7 @@ export default class SampleForm extends React.Component {
 
         {selectedSampleType?.value === 'Mixture' && (
           <>
-            <br/>
+            <br />
             <h5>Mixture components:</h5>
             <Row className="mb-4 g-2">
               <Col xs={12} sm={6} lg={3}>
