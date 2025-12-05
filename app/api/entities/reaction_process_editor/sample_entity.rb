@@ -5,6 +5,7 @@ module Entities
     class SampleEntity < Grape::Entity
       expose :id
       expose :short_label
+      expose :external_label
       expose :name
       expose :sample_svg_file
       expose :metrics
