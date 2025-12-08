@@ -17,9 +17,9 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import MoleculeFetcher from 'src/fetchers/MoleculesFetcher';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 import SampleDetailsComponents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsComponents';
-import { SAMPLE_TYPE_HETEROGENEOUS_MATERIAL } from 'src/models/Sample';
+import { SAMPLE_TYPE_HIERARCHICAL_MATERIAL } from 'src/models/Sample';
 import Component from 'src/models/Component';
-import buildHeteroMaterialRows from 'src/utilities/sampleHeterogeneousCompositions';
+import buildHierarchicalMaterialRows from 'src/utilities/sampleHierarchicalCompositions';
 
 const stateOptions = [
   { value: 'solid_powder', label: 'Solid Powder' },
@@ -1114,10 +1114,10 @@ export default class SampleForm extends React.Component {
     );
   }
 
-  heterogeneousMaterialComponentsList(sample) {
+  hierarchicalMaterialComponentsList(sample) {
     return (
       <>
-        <h5 className="mt-4">Heterogeneous material components:</h5>
+        <h5 className="mt-4">Hierarchical material components:</h5>
         <Row className="align-items-end mb-4">
           <Col>{this.moleculeInput()}</Col>
           <Col>{this.textInput(sample, 'short_label', 'Short label', true)}</Col>
@@ -1134,7 +1134,7 @@ export default class SampleForm extends React.Component {
           <Col>{this.textInput(sample, 'color', 'Color')}</Col>
           <Col>{this.textInput(sample, 'storage_condition', 'Storage Conditions')}</Col>
         </Row>
-        <Row>{this.heteroMaterialTable(sample)}</Row>
+        <Row>{this.hierarchicalMaterialTable(sample)}</Row>
       </>
     );
   }
@@ -1155,9 +1155,9 @@ export default class SampleForm extends React.Component {
     );
   }
 
-  heteroMaterialTable() {
+  hierarchicalMaterialTable() {
     const { components } = this.state;
-    const { rowsData, totalMolarCalc, totalMolarExp } = buildHeteroMaterialRows(components);
+    const { rowsData} = buildHierarchicalMaterialRows(components);
 
     return (
       <>
@@ -1224,7 +1224,7 @@ export default class SampleForm extends React.Component {
     return (
       <Form>
         <Row className="align-items-end mb-4">{this.sampleTypeInput()}</Row>
-        {selectedSampleType?.value !== 'Mixture' && selectedSampleType?.value !== SAMPLE_TYPE_HETEROGENEOUS_MATERIAL ? (
+        {selectedSampleType?.value !== 'Mixture' && selectedSampleType?.value !== SAMPLE_TYPE_HIERARCHICAL_MATERIAL ? (
           <>
             <Row className="align-items-end mb-4">
               <Col>{this.moleculeInput()}</Col>
@@ -1369,8 +1369,8 @@ export default class SampleForm extends React.Component {
           </>
         )}
 
-        {selectedSampleType?.value === SAMPLE_TYPE_HETEROGENEOUS_MATERIAL
-          && this.heterogeneousMaterialComponentsList(sample)}
+        {selectedSampleType?.value === SAMPLE_TYPE_HIERARCHICAL_MATERIAL
+          && this.hierarchicalMaterialComponentsList(sample)}
 
         <Row>
           <SampleDetailsSolvents sample={sample} onChange={handleSampleChanged} />

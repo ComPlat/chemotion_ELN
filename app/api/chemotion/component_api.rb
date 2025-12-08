@@ -54,11 +54,11 @@ module Chemotion
             optional :reference, type: Boolean, desc: 'reference comp. for ratio calculations'
             optional :purity, type: Float, desc: 'Component purity'
 
-            # params Heterogeneous Material
-            optional :template_category, type: String, desc: 'template for Heterogeneous Material e.g basic, semantic'
-            optional :source, type: String, desc: 'source(textNode label) for Heterogeneous Material'
-            optional :molar_mass, type: Float, desc: 'Molar mass value for Heterogeneous Material'
-            optional :weight_ratio_exp, type: Float, desc: 'Weight ratio exp. for Heterogeneous Material'
+            # params Hierarchical Material
+            optional :template_category, type: String, desc: 'template for Hierarchical Material e.g basic, semantic'
+            optional :source, type: String, desc: 'source(textNode label) for Hierarchical Material'
+            optional :molar_mass, type: Float, desc: 'Molar mass value for Hierarchical Material'
+            optional :weight_ratio_exp, type: Float, desc: 'Weight ratio exp. for Hierarchical Material'
           end
         end
       end

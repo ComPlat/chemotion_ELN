@@ -1,6 +1,6 @@
 import Component from 'src/models/Component';
 
-const buildHeteroMaterialRows = (components) => {
+const buildHierarchicalMaterialRows = (components) => {
   const rowsData = [];
   let totalMolarCalc = 0;
   let totalMolarExp = 0;
@@ -14,8 +14,8 @@ const buildHeteroMaterialRows = (components) => {
       calcWeightRatioWithoutWeight,
     } = new Component(item);
 
-    // Only process heterogeneous materials
-    if (name !== 'HeterogeneousMaterial') return;
+    // Only process hierarchical materials
+    if (name !== 'HierarchicalMaterial') return;
 
     // Safe numeric conversions
     const molar_mass = parseFloat(item.molar_mass, 10) || 0;
@@ -115,4 +115,5 @@ const buildHeteroMaterialRows = (components) => {
   };
 };
 
-export default buildHeteroMaterialRows;
+export default buildHierarchicalMaterialRows;
+
