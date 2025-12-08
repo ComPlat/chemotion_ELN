@@ -302,7 +302,7 @@ class ElementActions {
     };
   }
 
-  fetchReactionsByCollectionId(id, queryParams = {} = false) {
+  fetchReactionsByCollectionId(id, queryParams = {}) {
     return (dispatch) => {
       ReactionsFetcher.fetchByCollectionId(id, queryParams)
         .then((result) => {

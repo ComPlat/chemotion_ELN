@@ -7,7 +7,6 @@ module Entities
     expose! :shared_with
     expose! :shared_with_id
     expose! :shared_with_type
-    expose! :shared_with_id
     expose! :permission_level # TODO: wie kommuniziert man sauber die Möglichkeiten die das FE freigeben soll?
     expose! :celllinesample_detail_level
     expose! :devicedescription_detail_level
