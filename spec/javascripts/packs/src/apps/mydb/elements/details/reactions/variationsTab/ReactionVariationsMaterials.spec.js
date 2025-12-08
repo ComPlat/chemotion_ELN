@@ -1,14 +1,14 @@
 import expect from 'expect';
 import {
   getReactionMaterials, updateVariationsRowOnReferenceMaterialChange, removeObsoleteMaterialColumns,
-  updateVariationsRowOnCatalystMaterialChange, getMaterialColumnGroupChild, getReactionMaterialsIDs,
+  updateVariationsRowOnCatalystMaterialChange, getMaterialColumnGroupChild,
   updateColumnDefinitionsMaterialsOnAuxChange, updateVariationsOnAuxChange, cellIsEditable, getReactionMaterialsHashes
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   EquivalentParser
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import {
-  setUpReaction, setUpGaseousReaction, getColumnDefinitionsMaterialIDs, getColumnGroupChild, getMaterialIdsAsList
+  setUpReaction, setUpGaseousReaction, getColumnDefinitionsMaterialIDs, getColumnGroupChild, getReactionMaterialsIDs
 } from 'helper/reactionVariationsHelpers';
 import {
   materialTypes, getCurrentEntry, getEntryDefs,
@@ -131,7 +131,6 @@ describe('ReactionVariationsMaterials', () => {
     const updatedColumnDefinitions = updateColumnDefinitionsMaterialsOnAuxChange(
       columnDefinitions,
       reactionMaterials,
-      getMaterialIdsAsList(reactionMaterials),
       true
     );
 
@@ -197,7 +196,7 @@ describe('ReactionVariationsMaterials', () => {
   it('removes obsolete material columns', async () => {
     const reaction = await setUpReaction();
     const materials = getReactionMaterials(reaction);
-    const columns = getMaterialIdsAsList(materials);
+    const columns = getReactionMaterialsIDs(materials);
     materials.products.pop();
 
     expect(columns.products.length).toEqual(2);

@@ -4,24 +4,23 @@ import { metPreConv as convertAmount } from 'src/utilities/metricPrefix';
 import {
   updateVariationsRowOnReferenceMaterialChange,
   updateVariationsRowOnCatalystMaterialChange,
-  getMaterialData, getMaterialColumnGroupChild, computeDerivedQuantitiesVariationsRow,
+  getMaterialData, getMaterialColumnGroupChild, computeDerivedQuantitiesVariationsRow
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
-  AnalysesCellRenderer, AnalysesCellEditor, getAnalysesOverlay, AnalysisOverlay,
+  AnalysesCellRenderer, AnalysesCellEditor, getAnalysesOverlay, AnalysisOverlay
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import {
   PropertyFormatter, PropertyParser,
   MaterialFormatter, MaterialParser,
-  SegmentFormatter, SegmentParser,
+  SegmentFormatter, SegmentParser, SegmentRenderer, SegmentSelectEditor,
   EquivalentParser, GasParser, FeedstockParser,
-  NoteCellRenderer, NoteCellEditor, RowToolsCellRenderer
+  NoteCellRenderer, NoteCellEditor, MenuHeader, RowToolsCellRenderer, ToolHeader
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
-import {
-  MenuHeader, SectionMenuHeader
-} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsTableHeader';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import GenericSgsFetcher from 'src/fetchers/GenericSgsFetcher';
+import { genUnits } from 'generic-ui-core';
 
+const PLACEHOLDER_CELL_TEXT = '_';
 const REACTION_VARIATIONS_TAB_KEY = 'reactionVariationsTab';
 const temperatureUnits = ['°C', 'K', '°F'];
 const durationUnits = ['Second(s)', 'Minute(s)', 'Hour(s)', 'Day(s)', 'Week(s)'];
@@ -30,22 +29,10 @@ const volumeUnits = ['l', 'ml', 'μl'];
 const amountUnits = ['mol', 'mmol'];
 const concentrationUnits = ['ppm'];
 const materialTypes = {
-  startingMaterials: {
-    label: 'Starting materials',
-    reactionAttributeName: 'starting_materials',
-  },
-  reactants: {
-    label: 'Reactants',
-    reactionAttributeName: 'reactants',
-  },
-  products: {
-    label: 'Products',
-    reactionAttributeName: 'products',
-  },
-  solvents: {
-    label: 'Solvents',
-    reactionAttributeName: 'solvents',
-  },
+  startingMaterials: { label: 'Starting materials', reactionAttributeName: 'starting_materials' },
+  reactants: { label: 'Reactants', reactionAttributeName: 'reactants' },
+  products: { label: 'Products', reactionAttributeName: 'products' },
+  solvents: { label: 'Solvents', reactionAttributeName: 'solvents' }
 };
 const cellDataTypes = {
   property: {
@@ -53,12 +40,6 @@ const cellDataTypes = {
     baseDataType: 'object',
     valueFormatter: PropertyFormatter,
     valueParser: PropertyParser,
-  },
-  segmentData: {
-    extendsDataType: 'object',
-    baseDataType: 'object',
-    valueFormatter: SegmentFormatter,
-    valueParser: SegmentParser,
   },
   material: {
     extendsDataType: 'object',
@@ -89,6 +70,12 @@ const cellDataTypes = {
     valueFormatter: MaterialFormatter,
     valueParser: FeedstockParser,
   },
+  segment: {
+    extendsDataType: 'object',
+    baseDataType: 'object',
+    valueFormatter: SegmentFormatter,
+    valueParser: SegmentParser,
+  },
 };
 
 function convertUnit(value, fromUnit, toUnit) {
@@ -109,31 +96,32 @@ function convertUnit(value, fromUnit, toUnit) {
     return convertDuration(value, fromUnit, toUnit);
   }
   if (massUnits.includes(fromUnit) && massUnits.includes(toUnit)) {
-    const amountUnitPrefixes = {
-      g: 'n',
-      mg: 'm',
-      μg: 'u',
-    };
+    const amountUnitPrefixes = { g: 'n', mg: 'm', μg: 'u' };
     return convertAmount(value, amountUnitPrefixes[fromUnit], amountUnitPrefixes[toUnit]);
   }
   if (volumeUnits.includes(fromUnit) && volumeUnits.includes(toUnit)) {
-    const amountUnitPrefixes = {
-      l: 'n',
-      ml: 'm',
-      μl: 'u',
-    };
+    const amountUnitPrefixes = { l: 'n', ml: 'm', μl: 'u' };
     return convertAmount(value, amountUnitPrefixes[fromUnit], amountUnitPrefixes[toUnit]);
   }
   if (amountUnits.includes(fromUnit) && amountUnits.includes(toUnit)) {
-    const amountUnitPrefixes = {
-      mol: 'n',
-      mmol: 'm',
-    };
+    const amountUnitPrefixes = { mol: 'n', mmol: 'm' };
     return convertAmount(value, amountUnitPrefixes[fromUnit], amountUnitPrefixes[toUnit]);
   }
 
   return value;
 }
+
+const convertGenericUnit = (value, fromUnit, toUnit, genericQuantity) => {
+  // https://github.com/LabIMotion/chem-generic-ui/blob/f335a10fb3deb99bf2bc53e48551ee8367025994/src/components/fields/InputUnit.js#L25
+  const unitConfigs = genUnits(genericQuantity);
+  if (!unitConfigs || unitConfigs.length === 0) return null;
+
+  const fromUnitConfig = unitConfigs.find((config) => config.key === fromUnit);
+  const toUnitConfig = unitConfigs.find((config) => config.key === toUnit);
+  if (!fromUnitConfig || !toUnitConfig) return null;
+
+  return value * (toUnitConfig.nm / fromUnitConfig.nm);
+};
 
 function getStandardUnits(entry) {
   switch (entry) {
@@ -152,6 +140,12 @@ function getStandardUnits(entry) {
     default:
       return [null];
   }
+}
+
+function getGenericStandardUnits(genericQuantity) {
+  const unitConfigs = genUnits(genericQuantity);
+  if (!unitConfigs || unitConfigs.length === 0) return [null];
+  return unitConfigs.map((config) => config.key);
 }
 
 function getUserFacingUnit(unit) {
@@ -199,17 +193,11 @@ function getStandardValue(entry, material) {
     case 'equivalent':
       return (material.reference ?? false) ? 1 : 0;
     case 'temperature': {
-      const {
-        value = null,
-        unit = null,
-      } = material.gas_phase_data?.temperature ?? {};
+      const { value = null, unit = null } = material.gas_phase_data?.temperature ?? {};
       return convertUnit(value, unit, getStandardUnits('temperature')[0]);
     }
     case 'duration': {
-      const {
-        value = null,
-        unit = null,
-      } = material.gas_phase_data?.time ?? {};
+      const { value = null, unit = null } = material.gas_phase_data?.time ?? {};
       return convertUnit(value, getInternalUnit(unit), getStandardUnits('duration')[0]);
     }
     case 'concentration':
@@ -223,7 +211,18 @@ function getStandardValue(entry, material) {
   }
 }
 
+function parseGenericEntryName(entry) {
+  const genericEntryMatch = entry.match(/(?:layer<([^>]*)>)?(?:field<([^>]*)>)?/);
+  if ((genericEntryMatch[1] || genericEntryMatch[2])) {
+    return { layer: genericEntryMatch[1], field: genericEntryMatch[2] };
+  }
+  return null;
+}
+
 function getCellDataType(entry, gasType = 'off') {
+  if (parseGenericEntryName(entry)) {
+    return 'segment';
+  }
   switch (entry) {
     case 'temperature':
     case 'duration':
@@ -257,7 +256,20 @@ function getEntryDefs(entries) {
     defs[entry] = {
       isMain: entry === entries[0],
       isSelected: entry === entries[0],
-      displayUnit: getStandardUnits(entry)[0]
+      displayUnit: getStandardUnits(entry)[0],
+      units: getStandardUnits(entry),
+    };
+    return defs;
+  }, {});
+}
+
+function getGenericEntryDefs(segment) {
+  return Object.entries(segment).reduce((defs, [entryKey, entry]) => {
+    defs[entryKey] = {
+      isMain: entryKey === Object.keys(segment)[0],
+      isSelected: entryKey === Object.keys(segment)[0],
+      displayUnit: entry.value_system || null,
+      units: entry.type === 'system-defined' ? getGenericStandardUnits(entry.option_layers) : [null],
     };
     return defs;
   }, {});
@@ -268,8 +280,12 @@ function getCurrentEntry(entryDefs) {
 }
 
 function getUserFacingEntryName(entry) {
-  // E.g., 'turnoverNumber' -> 'turnover number'
-  return entry.split(/(?=[A-Z])/).join(' ').toLowerCase();
+  const genericEntryMatch = parseGenericEntryName(entry);
+  if (genericEntryMatch) {
+    return `layer: ${genericEntryMatch.layer}, field: ${genericEntryMatch.field}`;
+  }
+
+  return entry.split(/(?=[A-Z])/).join(' ').toLowerCase(); // E.g., 'turnoverNumber' -> 'turnover number'
 }
 
 function getVariationsRowName(reactionLabel, variationsRowId) {
@@ -286,7 +302,7 @@ function getPropertyData(propertyType, durationValue, durationUnit, temperatureV
     case 'temperature':
       return {
         value: convertUnit(temperatureValue, temperatureUnit, getStandardUnits('temperature')[0]),
-        unit: getStandardUnits('temperature')[0],
+        unit: getStandardUnits('temperature')[0]
       };
     case 'duration':
       return {
@@ -294,20 +310,8 @@ function getPropertyData(propertyType, durationValue, durationUnit, temperatureV
         unit: getStandardUnits('duration')[0],
       };
     default:
-      return {
-        value: null,
-        unit: null,
-      };
+      return { value: null, unit: null };
   }
-}
-
-function getSegmentData(type, value) {
-  if (type === 'select') {
-    return value;
-  }
-  return {
-    value,
-  };
 }
 
 function getMetaData(metadataType) {
@@ -321,18 +325,34 @@ function getMetaData(metadataType) {
   }
 }
 
+function getSegmentData(segment) {
+  return Object.fromEntries(
+    Object.entries(segment).map(([layerField, layerFieldData]) => [
+      layerField,
+      {
+        type: layerFieldData.type,
+        label: layerFieldData.label,
+        ...(layerFieldData.options && { options: layerFieldData.options.map((option) => option.label) }),
+        value: layerFieldData.options ? layerFieldData.options[0].label : null,
+        unit: layerFieldData.value_system || null,
+        quantity: layerFieldData.option_layers || null,
+      }
+    ])
+  );
+}
+
 function createVariationsRow({
   materials,
+  segments,
   selectedColumns,
   variations,
-  segments,
   reactionHasPolymers = false,
   durationValue = null,
   durationUnit = 'None',
   temperatureValue = null,
   temperatureUnit = 'None',
   gasMode = false,
-  vesselVolume = null,
+  vesselVolume = null
 }) {
   const row = {
     id: getSequentialId(variations),
@@ -342,30 +362,23 @@ function createVariationsRow({
         durationValue,
         durationUnit,
         temperatureValue,
-        temperatureUnit,
-      )]),
+        temperatureUnit
+      )])
     ),
     metadata: Object.fromEntries(
-      selectedColumns.metadata.map((metadataType) => [metadataType, getMetaData(metadataType)]),
+      selectedColumns.metadata.map((metadataType) => [metadataType, getMetaData(metadataType)])
     ),
-    segmentData: Object.fromEntries(
-      selectedColumns.segmentData.map((metadataType) => {
-        const {
-          type,
-          value,
-        } = segments.find((x) => x.key === metadataType).field;
-        return [metadataType, getSegmentData(type, value)];
-      }),
+    segments: Object.fromEntries(
+      selectedColumns.segments.map((segmentLabel) => [segmentLabel, getSegmentData(segments[segmentLabel])])
     ),
   };
-  Object.keys(materialTypes)
-    .forEach((materialType) => {
-      row[materialType] = {};
-      selectedColumns[materialType].forEach((materialID) => {
-        const material = materials[materialType].find((m) => m.id.toString() === materialID.toString());
-        row[materialType][materialID] = getMaterialData(material, materialType, gasMode, vesselVolume);
-      });
+  Object.keys(materialTypes).forEach((materialType) => {
+    row[materialType] = {};
+    selectedColumns[materialType].forEach((materialID) => {
+      const material = materials[materialType].find((m) => m.id.toString() === materialID.toString());
+      row[materialType][materialID] = getMaterialData(material, materialType, gasMode, vesselVolume);
     });
+  });
 
   // Compute dependent values that aren't supplied by initial data.
   return computeDerivedQuantitiesVariationsRow(row, reactionHasPolymers, gasMode);
@@ -374,8 +387,13 @@ function createVariationsRow({
 function copyVariationsRow(row, variations) {
   const copiedRow = cloneDeep(row);
   copiedRow.id = getSequentialId(variations);
-  copiedRow.metadata.notes = getMetaData('notes');
-  copiedRow.metadata.analyses = getMetaData('analyses');
+  copiedRow.uuid = undefined; // UUID is generated server-side.
+  if (Object.hasOwn(copiedRow.metadata, 'notes')) {
+    copiedRow.metadata.notes = getMetaData('notes');
+  }
+  if (Object.hasOwn(copiedRow.metadata, 'analyses')) {
+    copiedRow.metadata.analyses = getMetaData('analyses');
+  }
 
   return copiedRow;
 }
@@ -412,182 +430,66 @@ function updateVariationsRow(row, field, value, reactionHasPolymers) {
 
 function addMissingColumnsToVariations({
   materials,
+  segments,
   selectedColumns,
   variations,
-  segments,
   reactionHasPolymers = false,
   durationValue = null,
   durationUnit = 'None',
   temperatureValue = null,
   temperatureUnit = 'None',
   gasMode = false,
-  vesselVolume = null,
+  vesselVolume = null
 }) {
-  return cloneDeep(variations)
-    .map((row) => {
-      const newRow = { ...row };
+  const updatedVariations = cloneDeep(variations);
+  updatedVariations.forEach((row) => {
+    Object.entries(selectedColumns).forEach(([columnGroupID, columnGroupChildIDs]) => {
+      columnGroupChildIDs.forEach((childID) => {
+        if (row[columnGroupID][childID]) { return; }
 
-      Object.entries(selectedColumns)
-        .forEach(([columnGroupID, columnGroupChildIDs]) => {
-          columnGroupChildIDs.forEach((childID) => {
-            if (newRow[columnGroupID]?.[childID]) {
-              return;
-            }
-
-            if (Object.keys(materialTypes)
-              .includes(columnGroupID)) {
-              const material = materials[columnGroupID].find(
-                (m) => m.id.toString() === childID.toString(),
-              );
-              newRow[columnGroupID] = {
-                ...newRow[columnGroupID],
-                [childID]: getMaterialData(material, columnGroupID, gasMode, vesselVolume),
-              };
-            }
-
-            if (columnGroupID === 'properties') {
-              newRow.properties = {
-                ...newRow.properties,
-                [childID]: getPropertyData(
-                  childID,
-                  durationValue,
-                  durationUnit,
-                  temperatureValue,
-                  temperatureUnit,
-                ),
-              };
-            }
-
-            if (columnGroupID === 'segmentData') {
-              const {
-                type,
-                value,
-              } = segments.find((x) => x.key === childID).field;
-              newRow.segmentData = {
-                ...newRow.segmentData,
-                [childID]: getSegmentData(type, value),
-              };
-            }
-
-            if (columnGroupID === 'metadata') {
-              newRow.metadata = {
-                ...newRow.metadata,
-                [childID]: getMetaData(childID),
-              };
-            }
-          });
-        });
-
-      return computeDerivedQuantitiesVariationsRow(
-        newRow,
-        reactionHasPolymers,
-        gasMode,
-      );
+        if (Object.keys(materialTypes).includes(columnGroupID)) {
+          const material = materials[columnGroupID].find((m) => m.id.toString() === childID.toString());
+          row[columnGroupID][childID] = getMaterialData(
+            material,
+            columnGroupID,
+            gasMode,
+            vesselVolume
+          );
+        }
+        if (columnGroupID === 'properties') {
+          row.properties[childID] = getPropertyData(
+            childID,
+            durationValue,
+            durationUnit,
+            temperatureValue,
+            temperatureUnit
+          );
+        }
+        if (columnGroupID === 'metadata') {
+          row.metadata[childID] = getMetaData(childID);
+        }
+        if (columnGroupID === 'segments') {
+          row[columnGroupID][childID] = getSegmentData(segments[childID]);
+        }
+      });
     });
+    return computeDerivedQuantitiesVariationsRow(row, reactionHasPolymers, gasMode);
+  });
+
+  return updatedVariations;
 }
 
 function removeObsoleteColumnsFromVariations(variations, selectedColumns) {
-  return cloneDeep(variations)
-    .map((row) => {
-      const newRow = { ...row };
-
-      Object.entries(selectedColumns)
-        .forEach(([columnGroupID, columnGroupChildIDs]) => {
-          newRow[columnGroupID] = Object.fromEntries(
-            Object.entries(newRow[columnGroupID] || {})
-              .filter(([key]) => columnGroupChildIDs.includes(key)),
-          );
-        });
-
-      return newRow;
+  const updatedVariations = cloneDeep(variations);
+  updatedVariations.forEach((row) => {
+    Object.entries(selectedColumns).forEach(([columnGroupID, columnGroupChildIDs]) => {
+      row[columnGroupID] = Object.fromEntries(
+        Object.entries(row[columnGroupID]).filter(([key, value]) => columnGroupChildIDs.includes(key))
+      );
     });
-}
-
-const processSegmentsForVariations = (segments, reaction) => {
-  const result = [];
-  segments.forEach((seg) => {
-    const key = seg.label;
-    const inRea = reaction.segments.find((x) => x.klass_label === seg.label);
-    const layers = inRea ? inRea.properties.layers ?? [] : seg.properties_release.layers ?? [];
-
-    Object.values(layers)
-      .forEach((layer) => {
-        layer.fields.forEach((field) => {
-          if (['integer', 'system-defined', 'select', 'text'].includes(field.type)) {
-            const options = [];
-            if (field.type === 'select') {
-              options.push(seg.properties_release.select_options[field.option_layers].options ?? []);
-            }
-            result.push({
-              key: `${key}___${layer.key}___${field.field}`,
-              label: `${layer.label}: ${field.label}`,
-              group: key,
-              layer,
-              field,
-              options,
-            });
-          }
-        });
-      });
   });
-  return result;
-};
 
-const getSegmentsForVariations = (reaction) => {
-  // Fetch the segment data, preprocess it and strip irrelevant information.
-  // The data is loaded only once when the component mounts, using the 'soft reload'
-  // argument from the 'GenericSegmentFetcher.listSegmentKlass' method.
-
-  const fetchData = async () => {
-    try {
-      const res = await GenericSgsFetcher.listSegmentKlass({ is_active: true }, true);
-      const reactionsSegments = res.klass.filter((k) => k.element_klass.name === 'reaction' && k.is_active);
-      return processSegmentsForVariations(reactionsSegments, reaction);
-    } catch (error) {
-      console.error('Error fetching segments:', error);
-      return [];
-    }
-  };
-
-  return fetchData();
-};
-
-function getSegmentColumnGroupChild(propertyType, segmentsForVariations) {
-  if (!segmentsForVariations) {
-    return {};
-  }
-
-  const segFieldDef = segmentsForVariations.find((item) => item.key === propertyType);
-
-  const { field, layer } = segFieldDef;
-  const defaultDef = {
-    field: `segmentData.${propertyType}`,
-    cellDataType: 'segmentData',
-    headerComponent: SectionMenuHeader,
-    entryDefs: {
-      displayUnit: field.value_system
-    },
-    headerComponentParams: {
-      names: [field.label]
-    },
-    cellEditorParams: {
-      options: segFieldDef.options,
-      fieldType: field.type,
-      genericField: field,
-      genericLayer: layer
-    },
-  };
-  if (segFieldDef.field.type === 'select') {
-    return {
-      ...defaultDef,
-      cellEditor: 'agSelectCellEditor',
-      cellEditorParams: {
-        ...defaultDef.cellEditorParams,
-        values: segFieldDef.options[0]?.map((x) => x.label) ?? [],
-      },
-    };
-  }
-  return defaultDef;
+  return updatedVariations;
 }
 
 function getPropertyColumnGroupChild(propertyType, gasMode, externalEntryDefs = undefined) {
@@ -600,7 +502,7 @@ function getPropertyColumnGroupChild(propertyType, gasMode, externalEntryDefs = 
         headerComponent: MenuHeader,
         headerComponentParams: {
           names: ['T'],
-        },
+        }
       };
     case 'duration':
       return {
@@ -611,7 +513,7 @@ function getPropertyColumnGroupChild(propertyType, gasMode, externalEntryDefs = 
         headerComponent: MenuHeader,
         headerComponentParams: {
           names: ['t'],
-        },
+        }
       };
     default:
       return {};
@@ -645,35 +547,60 @@ function getMetadataColumnGroupChild(metadataType) {
   }
 }
 
-function addMissingColumnDefinitions(columnDefinitions, selectedColumns, materials, gasMode, segments = []) {
+function getSegmentEditor({ colDef: { entryDefs }, value: cellData }) {
+  const currentEntry = getCurrentEntry(entryDefs);
+  switch (cellData[currentEntry].type) {
+    case 'select':
+      return { component: SegmentSelectEditor };
+    case 'integer':
+    case 'text':
+    case 'system-defined':
+    default:
+      return { component: 'agTextCellEditor' };
+  }
+}
+
+function getSegmentColumnGroupChild(segmentLabel, segment, externalEntryDefs = undefined) {
+  return {
+    field: `segments.${segmentLabel}`,
+    headerComponent: MenuHeader,
+    headerComponentParams: {
+      names: [segmentLabel],
+    },
+    entryDefs: externalEntryDefs || getGenericEntryDefs(segment),
+    cellDataType: 'segment',
+    cellRenderer: SegmentRenderer,
+    cellEditorSelector: (params) => getSegmentEditor(params),
+  };
+}
+
+function addMissingColumnDefinitions(columnDefinitions, selectedColumns, materials, segments, gasMode) {
   const updatedColumnDefinitions = cloneDeep(columnDefinitions);
 
-  Object.entries(selectedColumns)
-    .forEach(([columnGroupID, columnGroupChildIDs]) => {
-      const columnGroup = updatedColumnDefinitions.find(
-        (currentColumnGroup) => currentColumnGroup.groupId === columnGroupID,
-      );
-      columnGroupChildIDs.forEach((childID) => {
-        if (columnGroup.children.some((child) => child.field === `${columnGroupID}.${childID}`)) {
-          return;
-        }
+  Object.entries(selectedColumns).forEach(([columnGroupID, columnGroupChildIDs]) => {
+    const columnGroup = updatedColumnDefinitions.find(
+      (currentColumnGroup) => currentColumnGroup.groupId === columnGroupID
+    );
+    columnGroupChildIDs.forEach((childID) => {
+      if (columnGroup.children.some((child) => child.field === `${columnGroupID}.${childID}`)) {
+        return;
+      }
 
-        if (Object.keys(materialTypes)
-          .includes(columnGroupID)) {
-          const material = materials[columnGroupID].find((m) => m.id.toString() === childID.toString());
-          columnGroup.children.push(getMaterialColumnGroupChild(material, columnGroupID, gasMode));
-        }
-        if (columnGroupID === 'properties') {
-          columnGroup.children.push(getPropertyColumnGroupChild(childID, gasMode));
-        }
-        if (columnGroupID === 'metadata') {
-          columnGroup.children.push(getMetadataColumnGroupChild(childID));
-        }
-        if (columnGroupID === 'segmentData') {
-          columnGroup.children.push(getSegmentColumnGroupChild(childID, segments));
-        }
-      });
+      if (Object.keys(materialTypes).includes(columnGroupID)) {
+        const material = materials[columnGroupID].find((m) => m.id.toString() === childID.toString());
+        columnGroup.children.push(getMaterialColumnGroupChild(material, columnGroupID, gasMode));
+      }
+      if (columnGroupID === 'properties') {
+        columnGroup.children.push(getPropertyColumnGroupChild(childID, gasMode));
+      }
+      if (columnGroupID === 'metadata') {
+        columnGroup.children.push(getMetadataColumnGroupChild(childID));
+      }
+      if (columnGroupID === 'segments') {
+        columnGroup.children.push(getSegmentColumnGroupChild(childID, segments[childID]));
+      }
     });
+  });
 
   return updatedColumnDefinitions;
 }
@@ -681,19 +608,16 @@ function addMissingColumnDefinitions(columnDefinitions, selectedColumns, materia
 function removeObsoleteColumnDefinitions(columnDefinitions, selectedColumns) {
   const updatedColumnDefinitions = cloneDeep(columnDefinitions);
 
-  Object.entries(selectedColumns)
-    .forEach(([columnGroupID, columnGroupChildIDs]) => {
-      const columnGroup = updatedColumnDefinitions.find(
-        (currentColumnGroup) => currentColumnGroup.groupId === columnGroupID,
-      );
+  Object.entries(selectedColumns).forEach(([columnGroupID, columnGroupChildIDs]) => {
+    const columnGroup = updatedColumnDefinitions.find(
+      (currentColumnGroup) => currentColumnGroup.groupId === columnGroupID
+    );
 
-      columnGroup.children = columnGroup.children.filter((child) => {
-        const childID = child.field.split('.')
-          .splice(1)
-          .join('.'); // Ensure that IDs that contain "." are handled correctly.
-        return columnGroupChildIDs.includes(childID);
-      });
+    columnGroup.children = columnGroup.children.filter((child) => {
+      const childID = child.field.split('.').splice(1).join('.'); // Ensure that IDs that contain "." are handled correctly.
+      return columnGroupChildIDs.includes(childID);
     });
+  });
 
   return updatedColumnDefinitions;
 }
@@ -722,22 +646,23 @@ function updateColumnDefinitions(columnDefinitions, field, property, newValue) {
   return updatedColumnDefinitions;
 }
 
-function getColumnDefinitions(selectedColumns, materials, gasMode, externalEntryDefs = {}, segments = []) {
+function getColumnDefinitions(selectedColumns, materials, segments, gasMode, externalEntryDefs = {}) {
   return [
     {
-      headerName: 'Tools',
-      field: 'tools',
+      headerComponent: ToolHeader,
       cellRenderer: RowToolsCellRenderer,
       lockPosition: 'left',
       sortable: false,
       maxWidth: 100,
       cellDataType: false,
+      rowDrag: true,
+
     },
     {
       headerName: 'Metadata',
       groupId: 'metadata',
       marryChildren: true,
-      children: selectedColumns.metadata.map((entry) => getMetadataColumnGroupChild(entry)),
+      children: selectedColumns.metadata.map((entry) => getMetadataColumnGroupChild(entry))
     },
     {
       headerName: 'Properties',
@@ -745,14 +670,15 @@ function getColumnDefinitions(selectedColumns, materials, gasMode, externalEntry
       marryChildren: true,
       children: selectedColumns.properties.map(
         (entry) => getPropertyColumnGroupChild(entry, gasMode, externalEntryDefs[`properties.${entry}`])
-      ),
+      )
     },
     {
-      headerName: 'Segments',
-      groupId: 'segmentData',
-      marryChildren: true,
-      children: selectedColumns.segmentData.map((entry) => getSegmentColumnGroupChild(entry, segments)),
-    },
+      headerName: 'Generic Segments',
+      groupId: 'segments',
+      children: selectedColumns.segments.map(
+        (entry) => getSegmentColumnGroupChild(entry, segments[entry], externalEntryDefs[`segments.${entry}`])
+      )
+    }
   ].concat(
     Object.entries(materialTypes).map(([materialType, { label }]) => ({
       headerName: label,
@@ -774,20 +700,16 @@ function getColumnDefinitions(selectedColumns, materials, gasMode, externalEntry
 
 function getVariationsColumns(variations) {
   const variationsRow = variations[0];
-  const materialColumns = Object.entries(materialTypes)
-    .reduce((materialsByType, [materialType]) => ({
-      ...materialsByType,
-      [materialType]: Object.keys(variationsRow ? variationsRow[materialType] : [])
-    }), {});
+  const materialColumns = Object.entries(materialTypes).reduce((materialsByType, [materialType]) => {
+    materialsByType[materialType] = Object.keys(variationsRow ? variationsRow[materialType] : []);
+    return materialsByType;
+  }, {});
   const propertyColumns = Object.keys(variationsRow ? variationsRow.properties : {});
   const metadataColumns = Object.keys(variationsRow ? variationsRow.metadata : {});
-  const segmentDataColumns = Object.keys(variationsRow ? variationsRow.segmentData ?? {} : {});
+  const segmentColumns = Object.keys(variationsRow ? variationsRow.segments : {});
 
   return {
-    ...materialColumns,
-    properties: propertyColumns,
-    metadata: metadataColumns,
-    segmentData: segmentDataColumns,
+    ...materialColumns, properties: propertyColumns, metadata: metadataColumns, segments: segmentColumns
   };
 }
 
@@ -829,6 +751,66 @@ const persistTableLayout = (reactionId, event, columnDefinitions) => {
   localStorage.setItem(getEntryDefinitionsId(reactionId), JSON.stringify(entryDefs));
 };
 
+function formatReactionSegments(segments) {
+  return segments.reduce((acc, segment) => {
+    const segmentLabel = segment.label;
+    const layers = segment.properties_release?.layers ?? {};
+
+    Object.values(layers).forEach((layer) => {
+      const layerKey = layer.key;
+
+      (layer.fields ?? [])
+        .filter((field) => ['integer', 'system-defined', 'select', 'text'].includes(field.type))
+        .forEach((field) => {
+          const entryKey = `layer<${layerKey}>field<${field.field}>`;
+          acc[segmentLabel] ??= {};
+          acc[segmentLabel][entryKey] ??= {};
+          acc[segmentLabel][entryKey] = field;
+
+          if (field.type === 'select') {
+            acc[segmentLabel][entryKey].options = segment.properties_release?.select_options?.[
+              field.option_layers
+            ]?.options ?? [];
+          }
+        });
+    });
+
+    return acc;
+  }, {});
+}
+
+async function getReactionSegments(reaction) {
+  try {
+    const { klass: segments } = await GenericSgsFetcher.listSegmentKlass(
+      { is_active: true },
+      true
+    );
+
+    const segmentLabels = new Set(
+      segments
+        .filter((s) => s.element_klass.name === 'reaction' && s.is_active)
+        .map((s) => s.label)
+    ); // Segments that can be added to a reaction.
+    const selectedSegmentLabels = new Set(
+      (reaction?.segments ?? []).map((s) => s.klass_label)
+    ); // Segment that are currently added to the reaction.
+    // We want the segments that are currently added to the reaction to occur in the selection first,
+    // followed by the segments that could be added to a reaction, but aren't currently added to the reaction.
+    const orderedSegmentLabels = [
+      ...selectedSegmentLabels,
+      ...[...segmentLabels].filter((label) => !selectedSegmentLabels.has(label))
+    ];
+    const orderedSegments = orderedSegmentLabels.map(
+      (label) => segments.find((segment) => segment.label === label)
+    ).filter(Boolean);
+
+    return formatReactionSegments(orderedSegments);
+  } catch (error) {
+    console.error('Error fetching segments:', error);
+    return {};
+  }
+}
+
 export {
   massUnits,
   volumeUnits,
@@ -838,6 +820,7 @@ export {
   concentrationUnits,
   getStandardUnits,
   convertUnit,
+  convertGenericUnit,
   materialTypes,
   cellDataTypes,
   getVariationsRowName,
@@ -853,15 +836,19 @@ export {
   addMissingColumnsToVariations,
   removeObsoleteColumnsFromVariations,
   addMissingColumnDefinitions,
-  getSegmentsForVariations,
   removeObsoleteColumnDefinitions,
   getMetadataColumnGroupChild,
   getPropertyColumnGroupChild,
+  PLACEHOLDER_CELL_TEXT,
   REACTION_VARIATIONS_TAB_KEY,
   getInitialGridState,
   getInitialEntryDefinitions,
   persistTableLayout,
   getEntryDefs,
   getCurrentEntry,
-  getUserFacingEntryName
+  getUserFacingEntryName,
+  getReactionSegments,
+  parseGenericEntryName,
+  getSegmentData,
+  formatReactionSegments
 };

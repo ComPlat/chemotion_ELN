@@ -5,46 +5,44 @@ import React, {
 } from 'react';
 import {
   Button, OverlayTrigger, Tooltip, Alert,
-  ButtonGroup, Modal
+  ButtonGroup
 } from 'react-bootstrap';
-import { cloneDeep, isEqual } from 'lodash';
+import { isEqual } from 'lodash';
 import PropTypes from 'prop-types';
 import Reaction from 'src/models/Reaction';
 import {
   createVariationsRow, copyVariationsRow, updateVariationsRow, getVariationsColumns, materialTypes,
-  addMissingColumnsToVariations, removeObsoleteColumnsFromVariations, getColumnDefinitions, getSegmentsForVariations,
-  removeObsoleteColumnDefinitions, getInitialGridState, getInitialEntryDefinitions, persistTableLayout, cellDataTypes
+  addMissingColumnsToVariations, removeObsoleteColumnsFromVariations, getColumnDefinitions,
+  removeObsoleteColumnDefinitions, getInitialGridState, getInitialEntryDefinitions, persistTableLayout, cellDataTypes,
+  getReactionSegments
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   getReactionAnalyses, updateAnalyses
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import {
-  updateVariationsOnAuxChange, getReactionMaterials, getReactionMaterialsIDs,
+  updateVariationsOnAuxChange, getReactionMaterials, getReactionMaterialsIDsToLabels,
   removeObsoleteMaterialColumns, updateColumnDefinitionsMaterialsOnAuxChange, getReactionMaterialsHashes
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
-  ColumnSelection, toUpperCase
+  ColumnSelection,
+  RemoveVariationsModal
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
-
 import columnDefinitionsReducer
   from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsReducers';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 
 export default function ReactionVariations({ reaction, onReactionChange, isActive }) {
-  if (reaction.isNew) {
-    return (
-      <Alert variant="info">
-        Save the reaction to enable the variations tab.
-      </Alert>
-    );
-  }
-
   const gridRef = useRef(null);
   const reactionVariations = reaction.variations;
+  const setReactionVariations = (updatedReactionVariations) => {
+    reaction.variations = updatedReactionVariations;
+    onReactionChange(reaction);
+  };
   const reactionHasPolymers = reaction.hasPolymers();
   const reactionShortLabel = reaction.short_label;
   const reactionMaterials = getReactionMaterials(reaction);
   const [previousReactionMaterials, setPreviousReactionMaterials] = useState(reactionMaterials);
+  const [reactionSegments, setReactionSegments] = useState(new Map());
   const gasMode = reaction.gaseous;
   const [previousGasMode, setPreviousGasMode] = useState(gasMode);
   const allReactionAnalyses = getReactionAnalyses(reaction);
@@ -53,30 +51,9 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   const { userText: temperatureValue = null, valueUnit: temperatureUnit = 'None' } = reaction.temperature ?? {};
   const vesselVolume = GasPhaseReactionStore.getState().reactionVesselSizeValue;
   const [selectedColumns, setSelectedColumns] = useState(getVariationsColumns(reactionVariations));
-  const [columnDefinitions, setColumnDefinitions] = useReducer(columnDefinitionsReducer, {});
+  const [columnDefinitions, setColumnDefinitions] = useReducer(columnDefinitionsReducer, []);
   const initialGridState = useMemo(() => getInitialGridState(reaction.id), []);
-  const [segments, setSegments] = useState(null);
-
-  useEffect(() => {
-    const fetchSegments = async () => {
-      try {
-        const initialSegments = await getSegmentsForVariations(reaction);
-        setSegments(initialSegments);
-
-        const initialColumnDefinitions = getColumnDefinitions(
-          selectedColumns,
-          reactionMaterials,
-          gasMode,
-          getInitialEntryDefinitions(reaction.id),
-          initialSegments
-        );
-        setColumnDefinitions({ type: 'set_updated', update: initialColumnDefinitions });
-      } catch (error) {
-        console.error('Error fetching segments:', error);
-      }
-    };
-    fetchSegments();
-  }, []);
+  const [asyncDataLoaded, setAsyncDataLoaded] = useState(false);
 
   useEffect(() => {
     // Auto-size columns when the parent tab is (re-)entered.
@@ -85,38 +62,152 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
     }
   }, [isActive]);
 
-  const defaultColumnDefinitions = {
-    editable: true,
-    sortable: true,
-    resizable: false,
+  useEffect(() => {
+    const fetchData = async () => {
+      const segments = await getReactionSegments(reaction);
+      const updatedSelectedColumns = {
+        ...selectedColumns, segments: selectedColumns.segments.filter((segment) => Object.hasOwn(segments, segment))
+      };
+      const updatedReactionVariations = removeObsoleteColumnsFromVariations(reactionVariations, updatedSelectedColumns);
+      const updatedColumnDefinitions = getColumnDefinitions(
+        updatedSelectedColumns,
+        reactionMaterials,
+        segments,
+        gasMode,
+        getInitialEntryDefinitions(reaction.id)
+      );
+      setReactionSegments(segments);
+      setSelectedColumns(updatedSelectedColumns);
+      setReactionVariations(updatedReactionVariations);
+      setColumnDefinitions({ type: 'set_updated', update: updatedColumnDefinitions });
+      setAsyncDataLoaded(true);
+    };
+    fetchData();
+  }, []);
+
+  const addRow = () => {
+    setReactionVariations(
+      [
+        ...reactionVariations,
+        createVariationsRow(
+          {
+            materials: reactionMaterials,
+            segments: reactionSegments,
+            selectedColumns,
+            variations: reactionVariations,
+            reactionHasPolymers,
+            durationValue,
+            durationUnit,
+            temperatureValue,
+            temperatureUnit,
+            gasMode,
+            vesselVolume
+          }
+        )
+      ]
+    );
   };
 
-  const setReactionVariations = (updatedReactionVariations) => {
-    // eslint-disable-next-line no-param-reassign
-    reaction.variations = updatedReactionVariations;
-    onReactionChange(reaction);
+  const copyRow = useCallback((data) => {
+    const copiedRow = copyVariationsRow(data, reactionVariations);
+    setReactionVariations(
+      [...reactionVariations, copiedRow]
+    );
+  }, [reactionVariations]);
+
+  const removeRow = useCallback((data) => {
+    setReactionVariations(reactionVariations.filter((row) => row.id !== data.id));
+  }, [reactionVariations]);
+
+  const updateRow = useCallback(({ data: oldRow, colDef, newValue }) => {
+    const { field } = colDef;
+    const updatedRow = updateVariationsRow(oldRow, field, newValue, reactionHasPolymers);
+    setReactionVariations(
+      reactionVariations.map((row) => (row.id === oldRow.id ? updatedRow : row))
+    );
+  }, [reactionVariations, reactionHasPolymers]);
+
+  const applyColumnSelection = (columns) => {
+    let updatedReactionVariations = addMissingColumnsToVariations({
+      materials: reactionMaterials,
+      segments: reactionSegments,
+      selectedColumns: columns,
+      variations: reactionVariations,
+      reactionHasPolymers,
+      durationValue,
+      durationUnit,
+      temperatureValue,
+      temperatureUnit,
+      gasMode,
+      vesselVolume
+    });
+    updatedReactionVariations = removeObsoleteColumnsFromVariations(
+      updatedReactionVariations,
+      columns
+    );
+    setReactionVariations(updatedReactionVariations);
+
+    setColumnDefinitions(
+      {
+        type: 'apply_column_selection',
+        materials: reactionMaterials,
+        segments: reactionSegments,
+        selectedColumns: columns,
+        gasMode
+      }
+    );
+
+    setSelectedColumns(columns);
+  };
+
+  const addVariation = () => (
+    <OverlayTrigger
+      placement="bottom"
+      overlay={(
+        <Tooltip>
+          Add row with current data from &quot;Scheme&quot; tab.
+          <br />
+          Changes in &quot;Scheme&quot; tab are not applied to
+          {' '}
+          <i>existing</i>
+          {' '}
+          rows.
+        </Tooltip>
+          )}
+    >
+      <Button size="sm" variant="success" onClick={addRow} className="mb-2">
+        <i className="fa fa-plus me-1" />
+        {' '}
+        Add variation
+      </Button>
+    </OverlayTrigger>
+  );
+
+  const fitColumnToContent = (event) => {
+    const { column } = event;
+    gridRef.current.api.autoSizeColumns([column], false);
   };
 
   /*
-    What follows is a series of imperative state updates that keep the "Variations" tab in sync with the "Scheme" tab.
-    This pattern isn't nice, but the best I could do according to
-    https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes and
-    https://react.dev/reference/react/useState#storing-information-from-previous-renders.
-    It would be preferable to refactor this to a more declarative approach, using a store for example.
-    */
+  What follows is a series of imperative state updates that keep the "Variations" tab in sync with the "Scheme" tab.
+  This pattern isn't nice, but the best I could do according to
+  https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes and
+  https://react.dev/reference/react/useState#storing-information-from-previous-renders.
+  It would be preferable to refactor this to a more declarative approach, using a store for example.
+  */
 
   /*
-    Update materials according to "Scheme" tab.
-    */
+  Update materials according to "Scheme" tab.
+  */
   if (!isEqual(
     getReactionMaterialsHashes(reactionMaterials, gasMode, vesselVolume),
     getReactionMaterialsHashes(previousReactionMaterials, gasMode, vesselVolume)
   )) {
     /*
-        Keep set of materials up-to-date.
-        Materials could have been added or removed in the "Scheme" tab.
-        We need to only *remove* obsolete materials, not *add* missing ones, since users add materials manually.
-        */
+    Keep set of materials up-to-date.
+    Materials could have been added or removed in the "Scheme" tab.
+    We need to only *remove* obsolete materials, not *add* missing ones, since users add materials manually.
+    */
     const updatedSelectedColumns = removeObsoleteMaterialColumns(
       reactionMaterials,
       selectedColumns
@@ -227,192 +318,51 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
     setPreviousAllReactionAnalyses(allReactionAnalyses);
   }
 
-  const addRow = () => {
-    setReactionVariations(
-      [
-        ...reactionVariations,
-        createVariationsRow(
-          {
-            materials: reactionMaterials,
-            segments,
-            selectedColumns,
-            variations: reactionVariations,
-            reactionHasPolymers,
-            durationValue,
-            durationUnit,
-            temperatureValue,
-            temperatureUnit,
-            gasMode,
-            vesselVolume
-          }
-        )
-      ]
-    );
-  };
+  if (!asyncDataLoaded || !isActive) {
+    return null;
+  }
 
-  const copyRow = useCallback((data) => {
-    const copiedRow = copyVariationsRow(data, reactionVariations);
-    setReactionVariations(
-      [...reactionVariations, copiedRow]
-    );
-  }, [reactionVariations]);
-
-  const removeRow = useCallback((data) => {
-    setReactionVariations(reactionVariations.filter((row) => row.id !== data.id));
-  }, [reactionVariations]);
-
-  const updateRow = useCallback(({
-    data: oldRow,
-    colDef,
-    newValue,
-  }) => {
-    const { field } = colDef;
-    const updatedRow = updateVariationsRow(oldRow, field, newValue, reactionHasPolymers);
-    setReactionVariations(
-      reactionVariations.map((row) => (row.id === oldRow.id ? updatedRow : row))
-    );
-  }, [reactionVariations, reactionHasPolymers]);
-
-  const applyColumnSelection = (columns) => {
-    let updatedReactionVariations = addMissingColumnsToVariations({
-      materials: reactionMaterials,
-      selectedColumns: columns,
-      variations: reactionVariations,
-      segments,
-      reactionHasPolymers,
-      durationValue,
-      durationUnit,
-      temperatureValue,
-      temperatureUnit,
-      gasMode,
-      vesselVolume
-    });
-    updatedReactionVariations = removeObsoleteColumnsFromVariations(
-      updatedReactionVariations,
-      columns
-    );
-    setReactionVariations(updatedReactionVariations);
-
-    setColumnDefinitions(
-      {
-        type: 'apply_column_selection',
-        materials: reactionMaterials,
-        selectedColumns: columns,
-        gasMode,
-        segments
-      }
-    );
-
-    setSelectedColumns(columns);
-  };
-
-  const removeAllVariations = () => {
-    const [showModal, setShowModal] = useState(false);
-
-    const handleClose = () => setShowModal(false);
-    const handleShow = () => setShowModal(true);
-    const handleConfirm = () => {
-      setReactionVariations([]);
-      handleClose();
-    };
-
+  if (reaction.isNew) {
     return (
-      <>
-        <Button size="sm" variant="danger" onClick={handleShow} className="mb-2">
-          <i className="fa fa-trash me-1" />
-          {' '}
-          Remove all variations
-        </Button>
-
-        <Modal show={showModal} onHide={handleClose}>
-          <Modal.Header closeButton>
-            <Modal.Title>Confirm Removal</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>Are you sure you want to remove all variations?</Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={handleClose}>
-              Keep variations
-            </Button>
-            <Button variant="danger" onClick={handleConfirm}>
-              Remove variations
-            </Button>
-          </Modal.Footer>
-        </Modal>
-      </>
+      <Alert variant="info">
+        Save the reaction to enable the variations tab.
+      </Alert>
     );
-  };
+  }
 
-  const columnSelectControl = () => {
-    const availableColumns = {
-      segmentData: (segments ?? []).map((a) => [a.key, a.label, a.group]),
-      ...getReactionMaterialsIDs(reactionMaterials),
-      properties: ['duration', 'temperature'].map((x) => [x, toUpperCase(x)]),
-      metadata: ['notes', 'analyses'].map((x) => [x, toUpperCase(x)]),
-    };
-
-    return ColumnSelection(
-      selectedColumns,
-      availableColumns,
-      applyColumnSelection,
-      segments === null,
-    );
-  };
-
-  const addVariation = () => (
-    <OverlayTrigger
-      placement="bottom"
-      overlay={(
-        <Tooltip>
-          Add row with current data from &quot;Scheme&quot; tab.
-          <br />
-          Changes in &quot;Scheme&quot; tab are not applied to
-          {' '}
-          <i>existing</i>
-          {' '}
-          rows.
-        </Tooltip>
-            )}
-    >
-      <Button size="sm" variant="success" onClick={addRow} className="mb-2">
-        <i className="fa fa-plus me-1" />
-        {' '}
-        Add variation
-      </Button>
-    </OverlayTrigger>
-  );
-
-  const fitColumnToContent = (event) => {
-    const { column } = event;
-    gridRef.current.api.autoSizeColumns([column], false);
-  };
-
-  function mainGrid() {
-    if (Object.keys(columnDefinitions).length > 0) {
-      const columnDefinitionsWithSeperatedSegments = columnDefinitions.reduce((currentColumnDefinition, columnDefinition) => {
-        if (columnDefinition.headerName === 'Segments') {
-          columnDefinition.children.reduce((currentColumnGroup, ch) => currentColumnGroup.add(ch.field.split('___')[0].slice('segmentData.'.length)), new Set())
-            .forEach((column) => {
-              const newX = cloneDeep(columnDefinition);
-              newX.headerName = column;
-              newX.children = newX.children.filter((newCh) => newCh.field.startsWith(`segmentData.${column}`));
-              currentColumnDefinition.push(newX);
-            });
-        } else {
-          currentColumnDefinition.push(columnDefinition);
-        }
-        return currentColumnDefinition;
-      }, []);
-      return (
+  return (
+    <div>
+      <ButtonGroup>
+        {addVariation()}
+        <RemoveVariationsModal onRemoveAll={() => setReactionVariations([])} />
+        <ColumnSelection
+          selectedColumns={selectedColumns}
+          availableColumns={{
+            ...getReactionMaterialsIDsToLabels(reactionMaterials),
+            segments: Object.keys(reactionSegments).reduce((acc, segmentLabel) => {
+              acc[segmentLabel] = segmentLabel;
+              return acc;
+            }, {}),
+            properties: { duration: 'Duration', temperature: 'Temperature' },
+            metadata: { notes: 'Notes', analyses: 'Analyses' }
+          }}
+          onApply={applyColumnSelection}
+        />
+      </ButtonGroup>
+      <div className="ag-theme-alpine ag-theme-reaction-variations">
         <AgGridReact
           ref={gridRef}
           initialState={initialGridState}
           rowData={reactionVariations}
-          rowDragEntireRow
           rowDragManaged
           headerHeight={110}
-          columnDefs={columnDefinitionsWithSeperatedSegments}
+          columnDefs={columnDefinitions}
           suppressPropertyNamesCheck
-          defaultColDef={defaultColumnDefinitions}
+          defaultColDef={{
+            editable: true,
+            sortable: true,
+            resizable: false,
+          }}
           dataTypeDefinitions={cellDataTypes}
           tooltipShowDelay={0}
           domLayout="autoHeight"
@@ -423,15 +373,14 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
             setColumnDefinitions,
             reactionHasPolymers,
             reactionShortLabel,
-            allReactionAnalyses,
-            setReactionVariations,
+            allReactionAnalyses
           }}
-                    /*
-                    IMPORTANT: In conjunction with `onCellEditRequest`,
-                    `readOnlyEdit` ensures that all edits of `reaction.variations` go through `updateRow`,
-                    rather than the grid mutating `reaction.variations` directly on user edits.
-                    I.e., we take explicit control of state manipulation.
-                    */
+          /*
+          IMPORTANT: In conjunction with `onCellEditRequest`,
+          `readOnlyEdit` ensures that all edits of `reaction.variations` go through `updateRow`,
+          rather than the grid mutating `reaction.variations` directly on user edits.
+          I.e., we take explicit control of state manipulation.
+          */
           readOnlyEdit
           onCellEditRequest={updateRow}
           onCellValueChanged={(event) => fitColumnToContent(event)}
@@ -441,21 +390,6 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
           onFirstDataRendered={() => gridRef.current.api.autoSizeAllColumns()}
           onComponentStateChanged={() => gridRef.current.api.autoSizeAllColumns()}
         />
-      );
-    }
-
-    return (<p>loading...</p>);
-  }
-
-  return (
-    <div>
-      <ButtonGroup>
-        {addVariation()}
-        {removeAllVariations()}
-        {columnSelectControl()}
-      </ButtonGroup>
-      <div className="ag-theme-alpine ag-theme-reaction-variations">
-        {mainGrid()}
       </div>
     </div>
   );

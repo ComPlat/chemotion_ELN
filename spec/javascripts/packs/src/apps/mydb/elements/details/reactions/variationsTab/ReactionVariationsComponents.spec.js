@@ -1,7 +1,8 @@
 import expect from 'expect';
 import { getEntryDefs } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
-  EquivalentParser, PropertyFormatter, PropertyParser, MaterialFormatter, MaterialParser, FeedstockParser, GasParser
+  EquivalentParser, PropertyFormatter, PropertyParser, MaterialFormatter, MaterialParser, FeedstockParser, GasParser,
+  SegmentParser, SegmentFormatter
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import { setUpReaction, setUpGaseousReaction } from 'helper/reactionVariationsHelpers';
 
@@ -20,6 +21,57 @@ describe('ReactionVariationsComponents', async () => {
       colDef.entryDefs.amount.displayUnit = 'mmol';
 
       expect(MaterialFormatter({ value: cellData, colDef })).toEqual(1235);
+    });
+    it('SegmentFormatter returns number string with correct precision', () => {
+      const entryName = 'layer<foo>field<bar>';
+      const cellData = {
+        [entryName]: {
+          type: 'system-defined',
+          unit: 'g_l',
+          label: 'bar',
+          value: 1.2345,
+          quantity: 'concentration'
+        }
+      };
+      const colDef = {
+        entryDefs: {
+          [entryName]: {
+            isMain: true,
+            isSelected: true,
+            displayUnit: 'mg_l',
+            units: [
+              'ng_l',
+              'mg_l',
+              'g_l'
+            ]
+          }
+        }
+      };
+
+      expect(SegmentFormatter({ value: cellData, colDef })).toBe(1235);
+    });
+    it('SegmentFormatter returns string ', () => {
+      const cellData = {
+        'layer<foo>field<bar>': {
+          type: 'text',
+          unit: null,
+          label: 'bar',
+          value: 'baz',
+          quantity: null
+        }
+      };
+      const colDef = {
+        entryDefs: {
+          'layer<foo>field<bar>': {
+            isMain: true,
+            isSelected: true,
+            displayUnit: null,
+            units: [null]
+          }
+        }
+      };
+
+      expect(SegmentFormatter({ value: cellData, colDef })).toEqual('baz');
     });
   });
   describe('EquivalentParser', async () => {
@@ -328,6 +380,64 @@ describe('ReactionVariationsComponents', async () => {
       expect(updatedCellData.yield.value).not.toBe(cellData.yield.value);
       expect(updatedCellData.turnoverNumber.value).not.toBe(cellData.turnoverNumber.value);
       expect(updatedCellData.turnoverFrequency.value).not.toBe(cellData.turnoverFrequency.value);
+    });
+  });
+  describe('SegmentParser', async () => {
+    it('rejects non-integer value for type integer', () => {
+      const entryName = 'layer<foo>field<bar>';
+      const cellData = {
+        [entryName]: {
+          type: 'integer',
+          unit: null,
+          label: 'bar',
+          value: 1.2345,
+          quantity: null
+        }
+      };
+      const colDef = {
+        entryDefs: {
+          [entryName]: {
+            isMain: true,
+            isSelected: true,
+            displayUnit: null,
+            units: [null]
+          }
+        }
+      };
+      const newValue = 'foo';
+      const updatedCellData = SegmentParser({ oldValue: cellData, newValue, colDef });
+
+      expect(updatedCellData[entryName].value).toEqual(null);
+    });
+    it('converts unit for type system-defined', () => {
+      const entryName = 'layer<foo>field<bar>';
+      const cellData = {
+        [entryName]: {
+          type: 'system-defined',
+          unit: 'g_l',
+          label: 'bar',
+          value: 1.2345,
+          quantity: 'concentration'
+        }
+      };
+      const colDef = {
+        entryDefs: {
+          [entryName]: {
+            isMain: true,
+            isSelected: true,
+            displayUnit: 'mg_l',
+            units: [
+              'ng_l',
+              'mg_l',
+              'g_l'
+            ]
+          }
+        }
+      };
+      const newValue = '4.2';
+      const updatedCellData = SegmentParser({ oldValue: cellData, newValue, colDef });
+
+      expect(updatedCellData[entryName].value).toBeCloseTo(0.0042, 4);
     });
   });
 });
