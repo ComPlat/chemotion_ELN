@@ -720,8 +720,8 @@ export default class Sample extends Element {
   }
 
   get amount_mol() {
-    if (this.amount_unit === 'mol' && (this.gas_type === 'gas'
-    || this.gas_type === 'feedstock')) return this.amount_value;
+    if (this.amount_unit === 'mol' && (this.isGas()
+    || this.isFeedstock())) return this.amount_value;
     return this.convertGramToUnit(this.amount_g, 'mol');
   }
 
@@ -746,7 +746,7 @@ export default class Sample extends Element {
     const temperatureInKelvin = convertTemperatureToKelvin(temperature);
 
     if (!temperatureInKelvin || temperatureInKelvin === 0 || !part_per_million || part_per_million === 0
-      || !volume) {
+      || !volume || volume === 0) {
       this.updateTONValue(null);
       return null;
     }
@@ -766,7 +766,7 @@ export default class Sample extends Element {
       tonValue,
       tonFrequencyUnit,
       timeValues,
-      value
+      null
     );
   }
 
@@ -791,6 +791,7 @@ export default class Sample extends Element {
   // Menge (mg) = Menge (mmol)  * Molmasse (g/mol) / Reinheit
 
   convertGramToUnit(amount_g = 0, unit) {
+    const gasPhaseCondition = (this.isGas() || this.isFeedstock());
     const purity = this.purity || 1.0;
     const molecularWeight = this.molecule_molecular_weight;
     if (this.contains_residues) {
@@ -808,26 +809,35 @@ export default class Sample extends Element {
         case 'g':
           return amount_g;
         case 'l': {
-          if (this.gas_type && this.gas_type !== 'off' && this.gas_type !== 'catalyst') {
+          if (this.gas_type && gasPhaseCondition) {
+            const vesselVolume = this.fetchReactionVesselSizeFromStore();
+            let moles;
+            if (this.decoupled && this.amount_unit === 'mol') {
+              moles = this.amount_value;
+            } else if (!molecularWeight || molecularWeight <= 0) {
+              moles = 0;
+            } else {
+              moles = (amount_g * purity) / molecularWeight;
+            }
             return calculateVolumeForFeedstockOrGas(
-              amount_g,
-              molecularWeight,
+              vesselVolume,
               purity,
               this.gas_type,
-              this.gas_phase_data
+              this.gas_phase_data,
+              moles
             );
           }
-          if (this.has_molarity) {
+          if (this.has_molarity && !gasPhaseCondition) {
             const molarity = this.molarity_value;
             return (amount_g * purity) / (molarity * molecularWeight);
-          } if (this.has_density) {
+          } if (this.has_density && !gasPhaseCondition) {
             const { density } = this;
             return amount_g / (density * 1000);
           }
           return 0;
         }
         case 'mol': {
-          if (this.gas_type && this.gas_type !== 'off' && this.gas_type !== 'catalyst') {
+          if (this.gas_type && gasPhaseCondition) {
             return this.calculateFeedstockOrGasMoles(purity, this.gas_type);
           }
           if (this.has_molarity) {
@@ -859,23 +869,31 @@ export default class Sample extends Element {
           return amountValue;
       }
     } else {
+      const gasPhaseCondition = (this.isGas() || this.isFeedstock());
       switch (amount_unit) {
         case 'g':
+          if (this.gas_type && this.isGas()) {
+            const { part_per_million, temperature } = this.gas_phase_data;
+            const vesselSize = this.fetchReactionVesselSizeFromStore();
+            const temperatureInKelvin = convertTemperatureToKelvin(temperature);
+            const moles = calculateGasMoles(vesselSize, part_per_million, temperatureInKelvin);
+            return this.molecule_molecular_weight * moles;
+          }
           return amount_value;
         case 'mg':
           return amount_value / 1000.0;
         case 'l': {
           // amount in  gram for feedstock gas material is calculated according to equation of molecular weight x moles
-          if (this.gas_type && this.gas_type !== 'off' && this.gas_type !== 'catalyst') {
+          if (this.gas_type && gasPhaseCondition) {
             const molecularWeight = this.molecule_molecular_weight;
             const purity = this.purity || 1.0;
             const moles = this.calculateFeedstockOrGasMoles(purity, this.gas_type, amount_value);
             return moles * molecularWeight;
           }
-          if (this.has_molarity) {
+          if (this.has_molarity && !gasPhaseCondition) {
             const molecularWeight = this.molecule_molecular_weight;
             return amount_value * this.molarity_value * molecularWeight;
-          } if (this.has_density) {
+          } if (this.has_density && !gasPhaseCondition) {
             return amount_value * (this.density || 1.0) * 1000;
           }
           return 0;
@@ -1184,6 +1202,18 @@ export default class Sample extends Element {
       tmpSolvents[filteredIndex] = solventToUpdate;
     }
     this.solvent = tmpSolvents;
+  }
+
+  isGas() {
+    return this.gas_type === 'gas';
+  }
+
+  isFeedstock() {
+    return this.gas_type === 'feedstock';
+  }
+
+  isCatalyst() {
+    return this.gas_type === 'catalyst';
   }
 }
           

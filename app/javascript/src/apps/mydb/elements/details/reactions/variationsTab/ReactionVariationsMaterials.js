@@ -25,7 +25,10 @@ function getGramFromMol(mol, material) {
   if (material.aux.loading) {
     return (mol / material.aux.loading) * 1e4;
   }
-  return (mol / (material.aux.purity ?? 1.0)) * material.aux.molecularWeight;
+  const { molecularWeight } = material.aux;
+  const purity = material.aux.purity || 1.0;
+
+  return (mol / purity) * molecularWeight;
 }
 
 function getVolumeFromGram(gram, material) {
