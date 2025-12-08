@@ -195,13 +195,11 @@ export function EditButton({ attachment, disabled, onChange }) {
     const spreadsheetExts = ['xls', 'xlsx', 'ods', 'csv'];
     const presentationExts = ['ppt', 'pptx', 'odp'];
     const pdfExts = ['pdf'];
-    const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'bmp'];
 
-    if (textExts.includes(extension)) return 'text';
-    if (spreadsheetExts.includes(extension)) return 'spreadsheet';
-    if (presentationExts.includes(extension)) return 'presentation';
+    if (textExts.includes(extension)) return 'word';
+    if (spreadsheetExts.includes(extension)) return 'cell';
+    if (presentationExts.includes(extension)) return 'slide';
     if (pdfExts.includes(extension)) return 'pdf';
-    if (imageExts.includes(extension)) return 'image';
 
     return 'unknown';
   };
