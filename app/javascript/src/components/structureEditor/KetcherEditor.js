@@ -23,19 +23,17 @@ import {
   filterImagesByDifferences,
 } from 'src/utilities/ketcherSurfaceChemistry/AtomsAndMolManipulation';
 import {
-  LAYERING_FLAGS,
   EventNames,
   ButtonSelectors,
   getButtonSelector,
 } from 'src/utilities/ketcherSurfaceChemistry/constants';
 import { deepCompareContent, filterTextList } from 'src/utilities/ketcherSurfaceChemistry/TextNode';
 import {
-  updateImagesInTheCanvas,
+  runImageLayering,
   undoKetcher,
   redoKetcher,
   imageNodeForTextNodeSetter,
   selectedImageForTextNode,
-  makeTransparentByTitle,
 } from 'src/utilities/ketcherSurfaceChemistry/DomHandeling';
 import {
   onAddAtom,
@@ -48,7 +46,6 @@ import {
 } from 'src/utilities/ketcherSurfaceChemistry/canvasOperations';
 import { handleEventCapture } from 'src/utilities/ketcherSurfaceChemistry/eventHandler';
 import {
-  ImagesToBeUpdated,
   ImagesToBeUpdatedSetter,
   imagesList,
   resetKetcherStore,
@@ -59,6 +56,7 @@ import {
   eventUpsertImageSetter,
   upsertImageCalled,
   imagesListSetter,
+  canvasIframeRefSetter,
 } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
 
 export let latestData = null; // latestData contains the updated ket2 format always
@@ -150,8 +148,15 @@ const onAtomDelete = async (editor) => {
  * @param {Object} editor - The Ketcher editor instance.
  */
 export const eventLoadCanvas = async (editor) => {
-  if (editor && editor.structureDef) {
-    if (reloadCanvas) onTemplateMove(editor, null, true);
+  try {
+    if (editor && editor.structureDef) {
+      if (reloadCanvas) {
+        await onTemplateMove(editor, true, {});
+      }
+      ImagesToBeUpdatedSetter(true);
+    }
+  } catch (err) {
+    console.error('eventLoadCanvas error:', err);
     ImagesToBeUpdatedSetter(true);
   }
 };
@@ -164,33 +169,60 @@ const KetcherEditor = forwardRef((props, ref) => {
   // const [showSpecialCharModal, setSpecialCharModal] = useState(false);
 
   const iframeRef = useRef();
+  const eventCleanupRef = useRef(() => {});
+  useEffect(() => {
+    canvasIframeRefSetter(iframeRef);
+    return () => canvasIframeRefSetter(null);
+  }, [iframeRef]);
   const initMol = molfile || '\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n';
 
   // action based on event-name
   const eventHandlers = {
-    [EventNames.MOVE_IMAGE]: async () => onTemplateMove(editor),
-    [EventNames.MOVE_ATOM]: async () => {
-      oldImagePack = [...imagesList];
-      await onTemplateMove(editor, null, false);
+    [EventNames.MOVE_IMAGE]: async () => {
+      if (editor && editor.structureDef) {
+        await onTemplateMove(editor);
+      }
     },
-    [EventNames.ADD_ATOM]: async () => onAddAtom(editor),
+    [EventNames.MOVE_ATOM]: async () => {
+      if (editor && editor.structureDef) {
+        oldImagePack = [...imagesList];
+        await onTemplateMove(editor, null, false);
+      }
+    },
+    [EventNames.ADD_ATOM]: async () => {
+      if (editor && editor.structureDef) {
+        await onAddAtom(editor);
+      }
+    },
     [EventNames.DELETE_ATOM]: async () => {
-      oldImagePack = [...imagesList];
-      await onAtomDelete(editor);
-      canvasSelectionsSetter(null);
+      if (editor && editor.structureDef) {
+        oldImagePack = [...imagesList];
+        await onAtomDelete(editor);
+        canvasSelectionsSetter(null);
+      }
     },
     [EventNames.ADD_TEXT]: async () => {
-      await onAddText(editor, selectedImageForTextNode);
-      imageNodeForTextNodeSetter(null);
+      if (editor && editor.structureDef && selectedImageForTextNode) {
+        await onAddText(editor, selectedImageForTextNode);
+        imageNodeForTextNodeSetter(null);
+      }
     },
-    [EventNames.DELETE_TEXT]: async () => onDeleteText(editor),
+    [EventNames.DELETE_TEXT]: async () => {
+      if (editor && editor.structureDef) {
+        await onDeleteText(editor);
+      }
+    },
     [EventNames.UPSERT_IMAGE]: async () => {
-      await fetchKetcherData(editor);
-      oldImagePack = [...imagesList];
-      await onImageAddedOrCopied();
+      if (editor && editor.structureDef) {
+        await fetchKetcherData(editor);
+        oldImagePack = [...imagesList];
+        await onImageAddedOrCopied();
+      }
     },
     [EventNames.ADD_BOND]: async () => {
-      onTemplateMove(editor);
+      if (editor && editor.structureDef) {
+        await onTemplateMove(editor);
+      }
     }
   };
 
@@ -201,6 +233,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     [getButtonSelector(ButtonSelectors.LAYOUT)]: async () => fetchAndReplace(editor),
     [getButtonSelector(ButtonSelectors.EXPLICIT_HYDROGENS)]: async () => fetchAndReplace(editor),
     [getButtonSelector(ButtonSelectors.AROMATIZE)]: async () => fetchAndReplace(editor),
+    [getButtonSelector(ButtonSelectors.DEAROMATIZE)]: async () => fetchAndReplace(editor),
     [getButtonSelector(ButtonSelectors.VIEWER_3D)]: async () => fetchAndReplace(editor),
     [getButtonSelector(ButtonSelectors.OPEN)]: async () => imageNodeForTextNodeSetter(null),
     [getButtonSelector(ButtonSelectors.SAVE)]: async () => imageNodeForTextNodeSetter(null),
@@ -215,6 +248,8 @@ const KetcherEditor = forwardRef((props, ref) => {
 
   // attach click listeners to the iframe and initialize the editor
   useEffect(() => {
+    if (!editor) return () => {};
+
     const cleanup = setupEditorIframe({
       iframeRef,
       editor,
@@ -222,22 +257,16 @@ const KetcherEditor = forwardRef((props, ref) => {
       loadContent,
       buttonEvents,
     });
-    return cleanup;
-  }, [editor]);
 
-  /**
-   * Ensures that all images are layered correctly on the canvas.
-   * @async
-   * @function runImageLayering
-   */
-  const runImageLayering = async () => {
-    if (ImagesToBeUpdated && !LAYERING_FLAGS.skipImageLayering) {
-      setTimeout(async () => {
-        await makeTransparentByTitle(iframeRef);
-        await updateImagesInTheCanvas(iframeRef);
-      }, [100]);
-    }
-  };
+    return () => {
+      if (cleanup) cleanup();
+      // Cleanup event subscriptions when component unmounts
+      if (eventCleanupRef.current) {
+        eventCleanupRef.current();
+        eventCleanupRef.current = () => {};
+      }
+    };
+  }, [editor]);
 
   /**
    * Sets up listeners for changes in the editor's content and selection.
@@ -250,27 +279,55 @@ const KetcherEditor = forwardRef((props, ref) => {
    * 2. Subscribes to the `selectionChange` event in the editor to handle selection updates.
    *    - Updates the `imageNodeForTextNode` state with the currently selected images.
    * @function onEditorContentChange
+   * @returns {Function} Cleanup function to unsubscribe from events
    */
   const onEditorContentChange = () => {
-    editor._structureDef.editor.editor.subscribe('change', async (eventData) => {
-      canvasSelectionsSetter(editor._structureDef.editor.editor._selection);
-      const result = await eventData;
-      if (result) {
-        await handleEventCapture(editor, result, eventHandlers);
-        await runImageLayering(); // post all the images at the end of the canvas not duplicate
-        await makeTransparentByTitle(iframeRef);
-      }
-    });
+    if (!editor?._structureDef?.editor?.editor) {
+      return () => {}; // Return no-op cleanup if editor not ready
+    }
 
-    // Subscribes to the `selectionChange` event
-    editor._structureDef.editor.editor.subscribe('selectionChange', async () => {
-      const currentSelection = editor._structureDef.editor.editor._selection;
-
-      if (currentSelection?.images) {
-        canvasSelectionsSetter(currentSelection);
-        imageNodeForTextNodeSetter(editor._structureDef.editor.editor._selection?.images);
+    const changeHandler = async (eventData) => {
+      try {
+        if (editor?._structureDef?.editor?.editor?._selection) {
+          canvasSelectionsSetter(editor._structureDef.editor.editor._selection);
+        }
+        const result = await eventData;
+        if (result && editor?.structureDef) {
+          await handleEventCapture(editor, result, eventHandlers);
+          await runImageLayering(iframeRef); // post all the images at the end of the canvas not duplicate
+        }
+      } catch (err) {
+        console.error('Error in change event handler:', err);
       }
-    });
+    };
+
+    const selectionChangeHandler = async () => {
+      try {
+        const currentSelection = editor?._structureDef?.editor?.editor?._selection;
+
+        if (currentSelection?.images) {
+          canvasSelectionsSetter(currentSelection);
+          imageNodeForTextNodeSetter(currentSelection.images);
+        }
+      } catch (err) {
+        console.error('Error in selectionChange event handler:', err);
+      }
+    };
+
+    editor._structureDef.editor.editor.subscribe('change', changeHandler);
+    editor._structureDef.editor.editor.subscribe('selectionChange', selectionChangeHandler);
+
+    // Return cleanup function to unsubscribe
+    return () => {
+      try {
+        if (editor?._structureDef?.editor?.editor) {
+          editor._structureDef.editor.editor.unsubscribe('change', changeHandler);
+          editor._structureDef.editor.editor.unsubscribe('selectionChange', selectionChangeHandler);
+        }
+      } catch (err) {
+        console.error('Error unsubscribing from events:', err);
+      }
+    };
   };
 
   /**
@@ -286,12 +343,17 @@ const KetcherEditor = forwardRef((props, ref) => {
    * @param {Object} event - The event object containing data about the editor initialization.
    */
   const loadContent = async (event) => {
-    if (event.data.eventType === 'init') {
-      window.editor = editor;
-      if (editor && editor.structureDef) {
-        onEditorContentChange(editor);
-        await prepareKetcherData(editor, initMol);
+    try {
+      if (event?.data?.eventType === 'init') {
+        window.editor = editor;
+        if (editor && editor.structureDef) {
+          // Store cleanup function in ref for later use
+          eventCleanupRef.current = onEditorContentChange(editor);
+          await prepareKetcherData(editor, initMol);
+        }
       }
+    } catch (err) {
+      console.error('Error in loadContent:', err);
     }
   };
 
@@ -309,14 +371,28 @@ const KetcherEditor = forwardRef((props, ref) => {
    * @returns {Promise<void>} This function does not return any value.
    */
   const onImageAddedOrCopied = async () => {
-    const imagesAddedList = imagesList.slice(upsertImageCalled);
-    imagesAddedList.forEach(async (item) => {
-      const templateId = await findTemplateByPayload(item.data);
-      if (templateId != null) {
-        await onShapeSelection(templateId, false);
+    try {
+      if (!editor || !editor.structureDef) return;
+
+      const imagesAddedList = imagesList.slice(upsertImageCalled);
+      // Use for...of instead of forEach to properly await async operations
+      for (const item of imagesAddedList) {
+        try {
+          if (item?.data) {
+            const templateId = await findTemplateByPayload(item.data);
+            if (templateId != null) {
+              await onShapeSelection(templateId, false);
+            }
+          }
+        } catch (err) {
+          console.error('Error processing image item:', err);
+        }
       }
-    });
-    eventUpsertImageSetter(0);
+      eventUpsertImageSetter(0);
+    } catch (err) {
+      console.error('Error in onImageAddedOrCopied:', err);
+      eventUpsertImageSetter(0);
+    }
   };
 
   /**

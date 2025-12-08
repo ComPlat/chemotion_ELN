@@ -24,6 +24,7 @@ import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 const SAMPLE_TYPE_MIXTURE = 'Mixture';
 const SAMPLE_TYPE_MICROMOLECULE = 'Micromolecule';
+export const SAMPLE_TYPE_HIERARCHICAL_MATERIAL = 'HierarchicalMaterial';
 
 const prepareRangeBound = (args = {}, field) => {
   const argsNew = args;
@@ -71,8 +72,12 @@ export default class Sample extends Element {
   ) {
     const newSample = sample.buildCopy();
     newSample.collection_id = collection_id;
-    if (sample.name) { newSample.name = sample.name; }
-    if (sample.external_label) { newSample.external_label = sample.external_label; }
+    if (sample.name) {
+      newSample.name = sample.name;
+    }
+    if (sample.external_label) {
+      newSample.external_label = sample.external_label;
+    }
     if (structure_only) {
       newSample.filterSampleData();
       newSample.filterResidueData(true);
@@ -120,7 +125,7 @@ export default class Sample extends Element {
     this.elemental_compositions.push({
       composition_type: 'found',
       data: {},
-      description: 'Experimental'
+      description: 'Experimental',
     });
     return this;
   }
@@ -133,13 +138,13 @@ export default class Sample extends Element {
         custom_info: {
           formula: 'CH',
           loading: null,
-          polymer_type: (this.decoupled ? 'self_defined' : 'polystyrene'),
+          polymer_type: this.decoupled ? 'self_defined' : 'polystyrene',
           loading_type: 'external',
           external_loading: 0.0,
-          reaction_product: (this.reaction_product ? true : null),
-          cross_linkage: null
-        }
-      }
+          reaction_product: this.reaction_product ? true : null,
+          cross_linkage: null,
+        },
+      },
     ];
   }
 
@@ -151,7 +156,7 @@ export default class Sample extends Element {
           Object.assign(residue.custom_info, {
             external_loading: 0.0,
             loading: null,
-            loading_type: 'external'
+            loading_type: 'external',
           });
         });
       } else {
@@ -161,13 +166,13 @@ export default class Sample extends Element {
             residue_type: 'polymer',
             custom_info: {
               formula: 'CH',
-              loading: (residue.custom_info ? residue.custom_info.loading : null),
-              polymer_type: (this.decoupled ? 'self_defined' : 'polystyrene'),
+              loading: residue.custom_info ? residue.custom_info.loading : null,
+              polymer_type: this.decoupled ? 'self_defined' : 'polystyrene',
               loading_type: 'external',
               external_loading: 0.0,
-              reaction_product: (this.reaction_product ? true : null),
-              cross_linkage: null
-            }
+              reaction_product: this.reaction_product ? true : null,
+              cross_linkage: null,
+            },
           });
         });
       }
@@ -189,7 +194,9 @@ export default class Sample extends Element {
 
   static buildNewShortLabel() {
     const { currentUser } = UserStore.getState();
-    if (!currentUser) { return 'NEW SAMPLE'; }
+    if (!currentUser) {
+      return 'NEW SAMPLE';
+    }
     return `${currentUser.initials}-${currentUser.samples_count + 1}`;
   }
 
@@ -216,10 +223,12 @@ export default class Sample extends Element {
       molfile: '',
       molecule: { id: '_none_' },
       residues: [],
-      elemental_compositions: [{
-        composition_type: 'found',
-        data: {}
-      }],
+      elemental_compositions: [
+        {
+          composition_type: 'found',
+          data: {},
+        },
+      ],
       imported_readout: '',
       attached_amount_mg: '', // field for polymers calculations
       container: Container.init(),
@@ -234,7 +243,13 @@ export default class Sample extends Element {
       xref: {},
       sample_type: SAMPLE_TYPE_MICROMOLECULE,
       components: [],
-      ancestor_ids: []
+      ancestor_ids: [],
+      state: '',
+      color: '',
+      height: '',
+      width: '',
+      length: '',
+      storage_condition: '',
     });
 
     sample.short_label = Sample.buildNewShortLabel();
@@ -264,6 +279,18 @@ export default class Sample extends Element {
     return this.sample_type?.toString() === SAMPLE_TYPE_MIXTURE;
   }
 
+  /**
+   * Determines whether the sample is of type "HierarchicalMaterial".
+   *
+   * Checks the `sample_type` property against the constant
+   * `SAMPLE_TYPE_HIERARCHICAL_MATERIAL`.
+   *
+   * @returns {boolean} True if the sample type matches "HierarchicalMaterial"; otherwise false.
+   */
+  isHierarchicalMaterial() {
+    return this.sample_type?.toString() === SAMPLE_TYPE_HIERARCHICAL_MATERIAL;
+  }
+  
   /**
    * Checks whether a mixture sample is liquid based on the following criteria:
    * - solvents are present
@@ -350,8 +377,12 @@ export default class Sample extends Element {
     splitSample.starting_molarity_value = this.molarity_value;
     splitSample.molarity_value = 0;
 
-    if (this.name) { splitSample.name = this.name; }
-    if (this.external_label) { splitSample.external_label = this.external_label; }
+    if (this.name) {
+      splitSample.name = this.name;
+    }
+    if (this.external_label) {
+      splitSample.external_label = this.external_label;
+    }
     if (this.elemental_compositions) {
       splitSample.elemental_compositions = this.elemental_compositions;
     }
@@ -430,6 +461,12 @@ export default class Sample extends Element {
       segments: this.segments.map((s) => s.serialize()),
       sample_type: this.sample_type,
       sample_details: this.sample_details,
+      state: this.state,
+      color: this.color || '',
+      height: this.height || '',
+      width: this.width || '',
+      length: this.length || '',
+      storage_condition: this.storage_condition || '',
     });
 
     return serialized;
@@ -461,14 +498,20 @@ export default class Sample extends Element {
       }
 
       this.elemental_compositions.map((item) => {
-        if (item.composition_type == 'formula') { item._destroy = true; }
+        if (item.composition_type == 'formula') {
+          item._destroy = true;
+        }
       });
     } else {
       // this.sample_svg_file = '';
-      if (this.residues.length) { this.residues[0]._destroy = true; } // delete residue info
+      if (this.residues.length) {
+        this.residues[0]._destroy = true;
+      } // delete residue info
 
       this.elemental_compositions.map((item) => {
-        if (item.composition_type == 'loading') { item._destroy = true; }
+        if (item.composition_type == 'loading') {
+          item._destroy = true;
+        }
       });
     }
   }
@@ -487,9 +530,10 @@ export default class Sample extends Element {
     const { short_label } = this;
 
     if (show_external_name) {
-      return (external_label ? <span className={extLabelClass}>{external_label}</span> : short_label);
-    } if (show_sample_name) {
-      return (name ? <span className={extLabelClass}>{name}</span> : short_label);
+      return external_label ? <span className={extLabelClass}>{external_label}</span> : short_label;
+    }
+    if (show_sample_name) {
+      return name ? <span className={extLabelClass}>{name}</span> : short_label;
     }
     return short_label;
   }
@@ -633,7 +677,7 @@ export default class Sample extends Element {
       this[`${field}_display`] = lower.toString();
       this[field] = lower.toString().concat('...', Number.POSITIVE_INFINITY);
     } else {
-      this[`${field}_display`] = (lower.toString().concat(' – ', upper)).trim();
+      this[`${field}_display`] = lower.toString().concat(' – ', upper).trim();
       this[field] = lower.toString().concat('..', upper);
     }
   }
@@ -924,21 +968,21 @@ export default class Sample extends Element {
   }
 
   defaultAmountType() {
-    return (this.real_amount_value ? 'real' : 'target');
+    return this.real_amount_value ? 'real' : 'target';
   }
 
   get defined_part_amount() {
     const mw = this.molecule_molecular_weight;
-    return this.amount_mol * mw / 1000.0;
+    return (this.amount_mol * mw) / 1000.0;
   }
 
   // amount proxy
 
   get amount() {
-    return ({
+    return {
       value: this.amount_value,
-      unit: this.amount_unit
-    });
+      unit: this.amount_unit,
+    };
   }
 
   get amount_value() {
@@ -1052,8 +1096,7 @@ export default class Sample extends Element {
     const { part_per_million, temperature } = this.gas_phase_data;
     const temperatureInKelvin = convertTemperatureToKelvin(temperature);
 
-    if (!temperatureInKelvin || temperatureInKelvin === 0 || !part_per_million || part_per_million === 0
-      || !volume) {
+    if (!temperatureInKelvin || temperatureInKelvin === 0 || !part_per_million || part_per_million === 0 || !volume) {
       this.updateTONValue(null);
       return null;
     }
@@ -1170,7 +1213,6 @@ export default class Sample extends Element {
             const molarity = this.molarity_value;
             return (amount_g * purity) / (molarity * molecularWeight);
           }
-
           if (this.has_density) {
             const { density } = this;
             return amount_g / (density * 1000);
@@ -1231,7 +1273,8 @@ export default class Sample extends Element {
           if (this.has_molarity) {
             const molecularWeight = this.molecule_molecular_weight;
             return amount_value * this.molarity_value * molecularWeight;
-          } if (this.has_density) {
+          }
+          if (this.has_density) {
             return amount_value * (this.density || 1.0) * 1000;
           }
           return 0;
@@ -1400,8 +1443,7 @@ export default class Sample extends Element {
   }
 
   get molecule_iupac_name() {
-    return this.molecule_name_hash && this.molecule_name_hash.label
-        || this.molecule && this.molecule.iupac_name;
+    return (this.molecule_name_hash && this.molecule_name_hash.label) || (this.molecule && this.molecule.iupac_name);
   }
 
   set molecule_iupac_name(iupac_name) {
@@ -1427,7 +1469,7 @@ export default class Sample extends Element {
 
   get molecule_formula() {
     if (this.decoupled) {
-      return (this.sum_formula && this.sum_formula.length) ? this.sum_formula : '';
+      return this.sum_formula && this.sum_formula.length ? this.sum_formula : '';
     }
 
     if (this.isMixture()) {
@@ -1498,7 +1540,9 @@ export default class Sample extends Element {
   }
 
   set loading(loading) {
-    if (this.contains_residues) { this.residues[0].custom_info.loading = loading; }
+    if (this.contains_residues) {
+      this.residues[0].custom_info.loading = loading;
+    }
   }
 
   get external_loading() {
@@ -1522,8 +1566,12 @@ export default class Sample extends Element {
 
   get isValid() {
     const isValidMixture = this.isMixture() && this.components?.length > 0;
-    return (this && ((this.molfile && !this.decoupled) || this.decoupled || isValidMixture)
-      && !this.error_loading && !this.error_polymer_type);
+    return (
+      this &&
+      ((this.molfile && !this.decoupled) || this.decoupled || isValidMixture) &&
+      !this.error_loading &&
+      !this.error_polymer_type
+    );
   }
 
   get svgPath() {
@@ -1538,7 +1586,8 @@ export default class Sample extends Element {
       return `/images/samples/${this.sample_svg_file}`;
     }
     return this.molecule && this.molecule.molecule_svg_file
-      ? `/images/molecules/${this.molecule.molecule_svg_file}` : '';
+      ? `/images/molecules/${this.molecule.molecule_svg_file}`
+      : '';
   }
   // todo: have a dedicated Material Sample subclass
 
@@ -1633,10 +1682,10 @@ export default class Sample extends Element {
    * @returns {Object|null} The reference component or null if not found
    */
   get reference_component() {
-    if (!this.components || this.components.length < 1) { return null; }
-    return this.components.find(
-      (component) => component.reference === true
-    );
+    if (!this.components || this.components.length < 1) {
+      return null;
+    }
+    return this.components.find((component) => component.reference === true);
   }
 
   /**
@@ -1687,7 +1736,9 @@ export default class Sample extends Element {
    * @returns {number|null} The reference molarity value or null if not set
    */
   get reference_molarity_value() {
-    if (!this.reference_component) { return null; }
+    if (!this.reference_component) {
+      return null;
+    }
 
     return this.reference_component.molarity_value;
   }
@@ -1715,7 +1766,9 @@ export default class Sample extends Element {
    * @returns {string|null} The reference molarity unit or null if not set
    */
   get reference_molarity_unit() {
-    if (!this.reference_component) { return null; }
+    if (!this.reference_component) {
+      return null;
+    }
 
     return this.reference_component.molarity_unit;
   }
@@ -1726,15 +1779,14 @@ export default class Sample extends Element {
       equivalent: this.equivalent,
       position: this.position,
       reference: this.reference || false,
-      show_label: (this.decoupled && !this.molfile) ? true : (this.show_label || false),
+      show_label: this.decoupled && !this.molfile ? true : this.show_label || false,
       waste: this.waste,
       coefficient: this.coefficient,
       gas_type: this.gas_type || false,
       gas_phase_data: this.gas_phase_data,
       conversion_rate: this.conversion_rate,
-      components: this.components && this.components.length > 0
-        ? this.components.map((s) => s.serializeComponent())
-        : [],
+      components:
+        this.components && this.components.length > 0 ? this.components.map((s) => s.serializeComponent()) : [],
     };
     _.merge(params, extra_params);
     return params;
@@ -1742,9 +1794,7 @@ export default class Sample extends Element {
 
   // Container & Analyses routines
   addAnalysis(analysis) {
-    this.container.children.filter(
-      (element) => ~element.container_type.indexOf('analyses')
-    )[0].children.push(analysis);
+    this.container.children.filter((element) => ~element.container_type.indexOf('analyses'))[0].children.push(analysis);
   }
 
   attachments() {
@@ -1759,7 +1809,7 @@ export default class Sample extends Element {
   calculateMaxAmount(referenceSample) {
     const refAmount = referenceSample.amount_mol;
     const sampleCoeff = this.coefficient || 1.0;
-    const refCoeff = (referenceSample.coefficient || 1.0);
+    const refCoeff = referenceSample.coefficient || 1.0;
     const coeffQuotient = sampleCoeff / refCoeff;
 
     this.maxAmount = refAmount * coeffQuotient * this.molecule_molecular_weight;
@@ -1791,7 +1841,7 @@ export default class Sample extends Element {
         temperature: { unit: 'K', value: null },
         turnover_number: null,
         part_per_million: null,
-        turnover_frequency: { unit: 'TON/h', value: null }
+        turnover_frequency: { unit: 'TON/h', value: null },
       };
     }
     this._gas_phase_data = gas_phase_data || initializeGasPhaseData;
@@ -1817,11 +1867,19 @@ export default class Sample extends Element {
         Object.assign(tmpSolvents, this.solvent);
       }
       const solventData = {
-        label: molecule.iupac_name, smiles: molecule.cano_smiles, inchikey: molecule.inchikey, ratio: 1
+        label: molecule.iupac_name,
+        smiles: molecule.cano_smiles,
+        inchikey: molecule.inchikey,
+        ratio: 1,
       };
-      const filtered = tmpSolvents.find((solv) => (solv && solv.label === solventData.label
-            && solv.smiles === solventData.smiles
-            && solv.inchikey && solventData.inchikey));
+      const filtered = tmpSolvents.find(
+        (solv) =>
+          solv &&
+          solv.label === solventData.label &&
+          solv.smiles === solventData.smiles &&
+          solv.inchikey &&
+          solventData.inchikey
+      );
       if (!filtered) {
         tmpSolvents.push(solventData);
       }
@@ -1835,9 +1893,12 @@ export default class Sample extends Element {
       Object.assign(tmpSolvents, this.solvent);
     }
 
-    const filteredIndex = tmpSolvents.findIndex((solv) => (solv.label === solventToDelete.label
-            && solv.smiles === solventToDelete.smiles
-            && solv.inchikey === solventToDelete.inchikey));
+    const filteredIndex = tmpSolvents.findIndex(
+      (solv) =>
+        solv.label === solventToDelete.label &&
+        solv.smiles === solventToDelete.smiles &&
+        solv.inchikey === solventToDelete.inchikey
+    );
     if (filteredIndex >= 0) {
       tmpSolvents.splice(filteredIndex, 1);
     }
@@ -1853,8 +1914,9 @@ export default class Sample extends Element {
       Object.assign(tmpSolvents, this.solvent);
     }
 
-    const filteredIndex = tmpSolvents.findIndex((solv) => (solv.smiles === solventToUpdate.smiles
-              && solv.inchikey && solventToUpdate.inchikey));
+    const filteredIndex = tmpSolvents.findIndex(
+      (solv) => solv.smiles === solventToUpdate.smiles && solv.inchikey && solventToUpdate.inchikey
+    );
     if (filteredIndex >= 0) {
       tmpSolvents[filteredIndex] = solventToUpdate;
 
@@ -1910,9 +1972,12 @@ export default class Sample extends Element {
    */
   async addMixtureComponent(newComponent) {
     const tmpComponents = [...(this.components || [])];
-    const isNew = !tmpComponents.some((component) => component.molecule.iupac_name === newComponent.molecule.iupac_name
-                                || component.molecule.inchikey === newComponent.molecule.inchikey
-                                || component.molecule_cano_smiles.split('.').includes(newComponent.molecule_cano_smiles)); // check if this component is already part of a merged component (e.g. ionic compound)
+    const isNew = !tmpComponents.some(
+      (component) =>
+        component.molecule.iupac_name === newComponent.molecule.iupac_name ||
+        component.molecule.inchikey === newComponent.molecule.inchikey ||
+        component.molecule_cano_smiles.split('.').includes(newComponent.molecule_cano_smiles)
+    ); // check if this component is already part of a merged component (e.g. ionic compound)
 
     if (!newComponent.material_group) {
       newComponent.material_group = 'liquid';
@@ -1952,9 +2017,7 @@ export default class Sample extends Element {
    */
   async deleteMixtureComponent(componentToDelete) {
     const tmpComponents = [...(this.components || [])];
-    const filteredComponents = tmpComponents.filter(
-      (comp) => comp !== componentToDelete
-    );
+    const filteredComponents = tmpComponents.filter((comp) => comp !== componentToDelete);
     this.components = filteredComponents;
 
     // Clear sample_svg_file for mixture samples to ensure combined molecule SVG is used
@@ -2082,9 +2145,7 @@ export default class Sample extends Element {
         component.equivalent = 1;
       } else {
         const currentMol = component.amount_mol ?? 0;
-        component.equivalent = currentMol && !Number.isNaN(currentMol)
-          ? currentMol / referenceMol
-          : 0;
+        component.equivalent = currentMol && !Number.isNaN(currentMol) ? currentMol / referenceMol : 0;
       }
     });
   }
