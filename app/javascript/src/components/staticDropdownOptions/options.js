@@ -683,5 +683,5 @@ export const colorOptions = [
 export const SampleTypesOptions = [
   { label: 'Single molecule', value: 'Micromolecule' },
   { label: 'Mixture', value: 'Mixture' },
-  { label: 'Heterogeneous material', value: 'HeterogeneousMaterial' },
+  { label: 'Hierarchical material', value: 'HierarchicalMaterial' },
 ]

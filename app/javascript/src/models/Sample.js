@@ -24,7 +24,7 @@ import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 const SAMPLE_TYPE_MIXTURE = 'Mixture';
 const SAMPLE_TYPE_MICROMOLECULE = 'Micromolecule';
-export const SAMPLE_TYPE_HETEROGENEOUS_MATERIAL = 'HeterogeneousMaterial';
+export const SAMPLE_TYPE_HIERARCHICAL_MATERIAL = 'HierarchicalMaterial';
 
 const prepareRangeBound = (args = {}, field) => {
   const argsNew = args;
@@ -285,6 +285,18 @@ export default class Sample extends Element {
     return this.sample_type?.toString() === SAMPLE_TYPE_MIXTURE;
   }
 
+  /**
+   * Determines whether the sample is of type "HierarchicalMaterial".
+   *
+   * Checks the `sample_type` property against the constant
+   * `SAMPLE_TYPE_HIERARCHICAL_MATERIAL`.
+   *
+   * @returns {boolean} True if the sample type matches "HierarchicalMaterial"; otherwise false.
+   */
+  isHierarchicalMaterial() {
+    return this.sample_type?.toString() === SAMPLE_TYPE_HIERARCHICAL_MATERIAL;
+  }
+  
   /**
    * Checks whether a mixture sample is liquid based on the following criteria:
    * - solvents are present
