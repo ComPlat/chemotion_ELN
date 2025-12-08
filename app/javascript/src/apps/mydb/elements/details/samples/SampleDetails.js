@@ -147,7 +147,7 @@ export default class SampleDetails extends React.Component {
       currentUser,
       showRedirectWarning: redirectedFromMixture || false,
       casInputValue: '',
-      // Heterogeneous sample props
+      // Hierarchical sample props
       state: props.sample.state || '',
       color: props.sample.color || '',
       height: props.sample.height || '',

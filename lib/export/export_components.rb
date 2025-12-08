@@ -29,7 +29,7 @@ module Export
       # molecule_inchistring: ['m.inchistring', '"inchistring"', 10],
       # molecule_molecular_weight: ['m.molecular_weight', '"MW"', 0],
 
-      # heterogeneous material properties could be added here
+      # hierachical material properties could be added here
       'source' => ['comp."component_properties"->>\'source\'', '"source"', 10],
       'molar_mass' => ['comp."component_properties"->>\'molar_mass\'', '"molar_mass"', 10],
       'molecule_id' => ['comp."component_properties"->>\'molecule_id\'', '"molecule_id"', 10],

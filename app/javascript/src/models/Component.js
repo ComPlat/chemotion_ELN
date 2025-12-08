@@ -714,7 +714,7 @@ export default class Component extends Sample {
         reference: this.reference,
         purity: this.purity,
 
-        // Heterogeneous Material
+        // Hierarchical Material
         template_category: this.template_category,
         source: this.source,
         molar_mass: this.molar_mass,

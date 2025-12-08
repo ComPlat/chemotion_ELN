@@ -368,13 +368,13 @@ module Chemotion
         optional :sample_type, type: String, default: 'Micromolecule', values: Sample::SAMPLE_TYPES
         optional :sample_details, type: Hash, desc: 'extra params for mixtures or polymers'
 
-        # Heterogeneous sample params
-        optional :state, type: String, desc: 'state of the Heterogeneous sample'
-        optional :color, type: String, desc: 'color of the Heterogeneous sample'
-        optional :height, type: String, desc: 'dimension of the Heterogeneous sample HXWXL'
-        optional :width, type: String, desc: 'dimension of the Heterogeneous sample HXWXL'
-        optional :length, type: String, desc: 'dimension of the Heterogeneous sample HXWXL'
-        optional :storage_condition, type: String, desc: 'storage condition of the Heterogeneous sample'
+        # Hierarchical sample params
+        optional :state, type: String, desc: 'state of the Hierarchical sample'
+        optional :color, type: String, desc: 'color of the Hierarchical sample'
+        optional :height, type: String, desc: 'dimension of the Hierarchical sample HXWXL'
+        optional :width, type: String, desc: 'dimension of the Hierarchical sample HXWXL'
+        optional :length, type: String, desc: 'dimension of the Hierarchical sample HXWXL'
+        optional :storage_condition, type: String, desc: 'storage condition of the Hierarchical sample'
       end
 
       route_param :id do
