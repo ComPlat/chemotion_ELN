@@ -1,12 +1,10 @@
 # frozen_string_literal: true
 
-# rubocop: disable Metrics/ClassLength
-
 module Chemotion
   class PublicAPI < Grape::API
     helpers do
       def send_notification(attachment, user, status, has_error = false)
-        data_args = { 'filename': attachment.filename, 'comment': 'the file has been updated' }
+        data_args = { filename: attachment.filename, comment: 'the file has been updated' }
         level = 'success'
         if has_error
           data_args['comment'] = ' an error has occurred, the file is not changed.'
@@ -44,14 +42,13 @@ module Chemotion
         end
       end
 
-
       namespace :omniauth_providers do
         desc 'get omniauth providers'
         get do
           res = {}
           config = Devise.omniauth_configs
           extra_rules = Matrice.extra_rules
-          config.each do |k, _v|
+          config.each_key do |k|
             res[k] = { icon: File.basename(config[k].options[:icon] || ''), label: config[k].options[:label] }
           end
           { omniauth_providers: res, extra_rules: extra_rules }
@@ -65,10 +62,11 @@ module Chemotion
         end
         get do
           content_type 'application/octet-stream'
-          payload = JWT.decode(params[:token], Rails.application.secrets.secret_key_base) unless params[:token].nil?
-          error!('401 Unauthorized', 401) if payload&.length == 0
-          att_id = payload[0]['att_id']&.to_i
-          user_id = payload[0]['user_id']&.to_i
+          payload = JsonWebToken.decode(params[:token])
+          error!('401 Unauthorized', 401) if payload.empty?
+
+          att_id = payload['att_id']&.to_i
+          user_id = payload['user_id']&.to_i
           @attachment = Attachment.find_by(id: att_id)
           @user = User.find_by(id: user_id)
           error!('401 Unauthorized', 401) if @attachment.nil? || @user.nil?
@@ -88,26 +86,29 @@ module Chemotion
         # 4 - document is closed with no changes,
         # 6 - document is being edited, but the current document state is saved,
         # 7 - error has occurred while force saving the document.
-        before do
+        after_validation do
           error!('401 Unauthorized', 401) if params[:key].nil?
-          payload = JWT.decode(params[:key], Rails.application.secrets.secret_key_base) unless params[:key].nil?
+          payload = JsonWebToken.decode(params[:key])
           error!('401 Unauthorized', 401) if payload.empty?
           @status = params[:status].is_a?(Integer) ? params[:status] : 0
 
           if @status > 1
-            attach_id = payload[0]['att_id']&.to_i
+            attach_id = payload['att_id']&.to_i
             @url = params[:url]
-            @attachment = Attachment.find_by(id: attach_id)
-            user_id = payload[0]['user_id']&.to_i
+            @attachment = Attachment.editing.find_by(id: attach_id)
+            error!("404 Not Found, edited attachment id: #{attach_id}", 404) unless @attachment
+            user_id = payload['user_id']&.to_i
             @user = User.find_by(id: user_id)
-            error!('401 Unauthorized', 401) if @attachment.nil? || @user.nil?
+            error!('401 Unauthorized', 401) if @user.nil?
           end
         end
 
         params do
           optional :key, type: String, desc: 'token'
           optional :status, type: Integer, desc: 'status (see description)'
-          optional :url, type: String, desc: 'file url'
+          optional :url, type: String, desc: 'file url', values: lambda { |v|
+            v.start_with?(Rails.configuration.editors.docserver[:uri])
+          }
         end
         get do
           status 200
@@ -119,11 +120,19 @@ module Chemotion
           case @status
           when 1
           when 2
-            @attachment.file_data = open(@url).read
+            # prevent saving if the file is not locked for editing
+            error!('401 Unauthorized', 401) if @attachment.not_editing?
+
+            response = Faraday.get(@url)
+            raise 'Bad response' unless response.success?
+
+            @attachment.file_data = response.body
             @attachment.rewrite_file_data!
-            @attachment.oo_editing_end!
+            @attachment.editing_end!
+            @attachment.save!
           else
-            @attachment.oo_editing_end!
+            @attachment.editing_end!
+            @attachment.save!
           end
           send_notification(@attachment, @user, @status) unless @status <= 1
           # rescue StandardError => err
@@ -177,5 +186,3 @@ module Chemotion
     end
   end
 end
-
-# rubocop: enable Metrics/ClassLength

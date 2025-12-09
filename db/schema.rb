@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2025_11_05_150500) do
+ActiveRecord::Schema.define(version: 2025_11_13_082219) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -75,6 +75,7 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
     t.integer "con_state"
     t.jsonb "log_data"
     t.string "created_by_type"
+    t.integer "edit_state", default: 0
     t.index ["attachable_type", "attachable_id"], name: "index_attachments_on_attachable_type_and_attachable_id"
     t.index ["identifier"], name: "index_attachments_on_identifier", unique: true
     t.index ["version"], name: "index_attachments_on_version", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
@@ -411,6 +412,9 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
     t.jsonb "admin_ids", default: {}
     t.jsonb "user_ids", default: {}
     t.string "version"
+    t.jsonb "super_class_of", default: {}, null: false
+    t.index ["ols_term_id"], name: "dataset_klasses_on_ols_term_id_ukey", unique: true
+    t.index ["super_class_of"], name: "index_dataset_klasses_on_super_class_of", using: :gin
   end
 
   create_table "dataset_klasses_revisions", id: :serial, force: :cascade do |t|
@@ -659,7 +663,10 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
     t.string "uuid"
     t.string "klass_uuid"
     t.jsonb "properties_release"
-    t.string "ancestry"
+    t.string "ancestry", default: "/", null: false, collation: "C"
+    t.index ["ancestry"], name: "index_elements_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
+    t.index ["name"], name: "index_elements_on_name_trigram", opclass: :gin_trgm_ops, using: :gin
+    t.index ["short_label"], name: "index_elements_on_short_label_trigram", opclass: :gin_trgm_ops, using: :gin
   end
 
   create_table "elements_elements", force: :cascade do |t|

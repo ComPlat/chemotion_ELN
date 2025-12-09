@@ -16,6 +16,7 @@
 #  created_by_type :string
 #  created_for     :integer
 #  deleted_at      :datetime
+#  edit_state      :integer          default("not_editing")
 #  filename        :string
 #  filesize        :bigint
 #  folder          :string
@@ -39,10 +40,26 @@
 class Attachment < ApplicationRecord
   has_logidze
   acts_as_paranoid
+  include AASM
   include AttachmentJcampAasm
   include AttachmentJcampProcess
   include Labimotion::AttachmentConverter
   include AttachmentUploader::Attachment(:attachment)
+
+  enum edit_state: { not_editing: 0, editing: 1 }
+
+  aasm(:document, column: :edit_state) do
+    state :not_editing, initial: true
+    state :editing
+
+    event :editing_start do
+      transitions from: :not_editing, to: :editing
+    end
+
+    event :editing_end do
+      transitions from: %i[editing not_editing], to: :not_editing
+    end
+  end
 
   attr_accessor :file_data, :file_path, :thumb_path, :thumb_data, :duplicated, :transferred
 
@@ -253,13 +270,17 @@ class Attachment < ApplicationRecord
     )
   end
 
-  # @return [String] build annotation file name based on the original file name
   def annotated_filename
     return '' unless annotated?
 
     # NB: original tiff file are converted to png for the annotation background layer
     extension_of_annotation = content_type == 'image/tiff' ? '.png' : File.extname(filename)
     "#{File.basename(filename, '.*')}_annotated#{extension_of_annotation}"
+  end
+
+  def file_extension
+    extname = File.extname(filename.to_s)
+    extname && extname[1..]
   end
 
   def thumbnail_base64
@@ -275,6 +296,15 @@ class Attachment < ApplicationRecord
   def preview
     base64_data = thumbnail_base64
     base64_data ? "data:image/png;base64,#{base64_data}" : nil
+  end
+
+  def editable_document?
+    return false if file_extension.blank?
+
+    available_extensions = Rails.configuration.editors&.available_extensions
+    return false if available_extensions.blank?
+
+    available_extensions.include?(file_extension.downcase)
   end
 
   private
