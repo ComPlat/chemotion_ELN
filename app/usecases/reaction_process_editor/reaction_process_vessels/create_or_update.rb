@@ -16,6 +16,7 @@ module Usecases
           )
 
           reaction_process_vessel.update(preparations: reaction_process_vessel_params['preparations'])
+          reaction_process_vessel.update(cleanup: reaction_process_vessel_params['cleanup'])
 
           reaction_process_vessel
         end

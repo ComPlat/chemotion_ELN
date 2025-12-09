@@ -10,7 +10,8 @@ RSpec.describe Usecases::ReactionProcessEditor::ReactionProcessVessels::CreateOr
   let!(:vessel) { create(:vessel) }
 
   let(:reaction_process_vessel_params) do
-    { vesselable_id: vessel.id, vesselable_type: 'Vessel', preparations: ['DRIED'] }.deep_stringify_keys
+    { vesselable_id: vessel.id, vesselable_type: 'Vessel', preparations: ['DRIED'],
+      cleanup: 'WASTE' }.deep_stringify_keys
   end
 
   it 'creates ReactionProcessVessel' do
@@ -22,13 +23,22 @@ RSpec.describe Usecases::ReactionProcessEditor::ReactionProcessVessels::CreateOr
            }.from(nil)
   end
 
-  it 'updates attributes' do
+  it 'updates preparations' do
     expect do
       create_or_update
     end.to change {
              ReactionProcessEditor::ReactionProcessVessel.find_by(reaction_process_id: reaction_process.id,
                                                                   vesselable_id: vessel.id)&.preparations
            }.to(['DRIED'])
+  end
+
+  it 'updates cleanup' do
+    expect do
+      create_or_update
+    end.to change {
+             ReactionProcessEditor::ReactionProcessVessel.find_by(reaction_process_id: reaction_process.id,
+                                                                  vesselable_id: vessel.id)&.cleanup
+           }.to('WASTE')
   end
 
   context 'with existing ReactionProcessVessel' do
