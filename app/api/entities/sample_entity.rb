@@ -2,7 +2,7 @@
 
 module Entities
   class SampleEntity < ApplicationEntity
-    # rubocop:disable Layout/LineLength, Layout/ExtraSpacing
+    # rubocop:disable Layout/ExtraSpacing
     # Level 0 attributes and relations
     with_options(anonymize_below: 0) do
       expose! :can_copy,        unless: :displayed_in_list
@@ -67,7 +67,7 @@ module Entities
       expose! :segments,                unless: :displayed_in_list, anonymize_with: [],   using: 'Labimotion::SegmentEntity'
       expose! :short_label
       expose! :showed_name
-      expose! :solvent
+      expose! :solvent,                 unless: :displayed_in_list, anonymize_with: []
       expose! :stereo
       expose! :tag,                                                 anonymize_with: nil,  using: 'Entities::ElementTagEntity'
       expose! :target_amount_unit,      unless: :displayed_in_list
@@ -77,7 +77,7 @@ module Entities
       expose! :sample_details
       expose! :components,              unless: :displayed_in_list, anonymize_with: [],   using: 'Entities::ComponentEntity'
     end
-    # rubocop:enable Layout/LineLength, Layout/ExtraSpacing, Metrics/BlockLength
+    # rubocop:enable Layout/ExtraSpacing, Metrics/BlockLength
 
     expose_timestamps
 
@@ -99,7 +99,7 @@ module Entities
       object.new_record? ? 0 : object.children.count.to_i
     end
 
-    def is_restricted # rubocop:disable Naming/PredicateName
+    def is_restricted
       detail_levels[Sample] < 10
     end
 
