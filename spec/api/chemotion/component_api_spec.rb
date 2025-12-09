@@ -9,10 +9,14 @@ describe Chemotion::ComponentAPI do
   let!(:molecule) { create(:molecule) }
   let!(:molecule1) { create(:molecule) }
   let!(:component) do
-    create(:component, sample_id: sample.id, component_properties: { 'molecule_id' => molecule.id })
+    component_props = { 'molecule_id' => molecule.id }
+    component_props['molecule'] = Entities::MoleculeEntity.represent(molecule, current_user: user).as_json
+    create(:component, sample_id: sample.id, component_properties: component_props)
   end
   let!(:new_component) do
-    create(:component, sample_id: sample.id, component_properties: { 'molecule_id' => molecule1.id })
+    component_props = { 'molecule_id' => molecule1.id }
+    component_props['molecule'] = Entities::MoleculeEntity.represent(molecule1, current_user: user).as_json
+    create(:component, sample_id: sample.id, component_properties: component_props)
   end
 
   describe 'GET /api/v1/components/:sample_id' do
