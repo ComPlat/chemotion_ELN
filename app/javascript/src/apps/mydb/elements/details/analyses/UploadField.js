@@ -4,38 +4,76 @@ import React, {
 import {
   Modal, Button, Container, Row, Col, ListGroup, Badge
 } from 'react-bootstrap';
-import ElementContainer from 'src/models/Container';
-import Dropzone from 'react-dropzone';
 import JSZip from 'jszip';
-import Attachment from 'src/models/Attachment';
 import {
   addNewAnalyses,
   createAnalsesForSingelFiles,
   createAttachements,
   createDataset
 } from 'src/apps/mydb/elements/details/analyses/utils';
-import { ZipFileContainer, FileContainer, traverseDirectory } from 'src/apps/mydb/elements/details/analyses/FileManager';
+import {
+  ZipFileContainer, FileContainer, traverseDirectory, VirtualFolderNode
+} from 'src/apps/mydb/elements/details/analyses/FileManager';
 import { FileTree, ToggleSwitch } from 'src/apps/mydb/elements/details/analyses/GeneralComponents';
 import { AdvancedAnalysesList } from 'src/apps/mydb/elements/details/analyses/AdvancedComponents';
+import PropTypes from 'prop-types';
 
-function FolderDropzone({ handleChange }) {
+async function handleZipFile(zipFile) {
+  const zip = await JSZip.loadAsync(zipFile);
+  const rootFileName = zipFile.name.replace(/\.zip$/, '');
+
+  const files = new VirtualFolderNode(rootFileName, '');
+
+  const readFilePromises = Object.entries(zip.files).map(async ([, entry]) => {
+    if (entry.dir) return; // skip directories
+
+    const segments = `${rootFileName}/${entry.name}`.split('/');
+    const fileName = segments.pop(); // "file.txt"
+    const path = segments;
+
+    const blob = await entry.async('blob');
+
+    // Convert blob to File for API consistency
+    const file = new File([blob], fileName, { type: blob.type });
+
+    files.addFile({ path, file });
+  });
+  await Promise.all(readFilePromises);
+
+  return files.clean();
+}
+
+function FolderDropzone({ handleChange, unzip = true, flatFileList = false }) {
   const dropRef = useRef(null);
-
   useEffect(() => {
     const dropArea = dropRef.current;
 
     function handleDrop(e) {
       e.preventDefault();
       const filePromises = [];
-      for (let i = 0; i < e.dataTransfer.items.length; i++) {
+      for (let i = 0; i < e.dataTransfer.items.length; i += 1) {
         const item = e.dataTransfer.items[i].webkitGetAsEntry();
         if (item) {
-          filePromises.push(traverseDirectory(item));
+          if (!flatFileList && unzip && item.isFile && item.name.endsWith('zip')) {
+            filePromises.push(new Promise((resolve) => {
+              item.file((file) => {
+                resolve(handleZipFile(file));
+              });
+            }));
+          } else {
+            filePromises.push(traverseDirectory(item));
+          }
         }
       }
 
-      Promise.all(filePromises).then((files) => {
-        handleChange(files.flat().filter(Boolean));
+      Promise.all(filePromises).then(async (files) => {
+        const filteredFiles = files.flat().filter(Boolean);
+        if (flatFileList) {
+          const flatFiles = await Promise.all(filteredFiles.map((f) => f.getFile()));
+          handleChange(flatFiles);
+        } else {
+          handleChange(filteredFiles);
+        }
       });
     }
 
@@ -62,16 +100,30 @@ function FolderDropzone({ handleChange }) {
     <label
       htmlFor="folder-input"
       className="folder-dropzone"
+      style={{ flex: 1 }}
       ref={dropRef}
     >
       <input
         id="folder-input"
         type="file"
         multiple
-        onChange={(event) => {
+        onChange={async (event) => {
           const files = Array.from(event.target.files);
+          if (!flatFileList && unzip && files.length === 1 && files[0].name.endsWith('.zip')) {
+            const container = await handleZipFile(files[0]);
+            handleChange([container]);
+            return;
+          }
+
+          // eslint-disable-next-line no-param-reassign,no-return-assign
           files.forEach((x) => x.isFile = true);
-          handleChange(files.map((x) => new FileContainer(x)));
+          const preparedFiles = files.map((x) => new FileContainer(x));
+          if (flatFileList) {
+            const flatFiles = await Promise.all(preparedFiles.map((f) => f.getFile()));
+            handleChange(flatFiles);
+          } else {
+            handleChange(preparedFiles);
+          }
         }}
         style={{ display: 'none' }}
       />
@@ -82,17 +134,27 @@ function FolderDropzone({ handleChange }) {
   );
 }
 
+FolderDropzone.propTypes = {
+  // eslint-disable-next-line react/forbid-prop-types
+  handleChange: PropTypes.func.isRequired,
+  unzip: PropTypes.bool,
+  flatFileList: PropTypes.bool,
+};
+
+FolderDropzone.defaultProps = {
+  unzip: true,
+  flatFileList: false,
+};
+
 function FileListDisplay({ files }) {
   if (!files.length) return <p className="text-muted">No files selected.</p>;
-  const group = null;
-  const color = null;
   return (
     <ListGroup style={{
       maxHeight: '400px',
       overflowY: 'auto',
     }}
     >
-      {files.map((file, index) => (
+      {files.map((file) => (
         <ListGroup.Item key={file.name} className="d-flex justify-content-between align-items-center">
 
           <div style={{ overflow: 'auto' }} key={`DIVV__${file.name}`} className="flex-grow-1 me-3">
@@ -114,6 +176,10 @@ function FileListDisplay({ files }) {
   );
 }
 
+FileListDisplay.propTypes = {
+  files: PropTypes.arrayOf(File).isRequired,
+};
+
 function UploadButton({
   files, handleClose, element, setElement
 }) {
@@ -129,8 +195,9 @@ function UploadButton({
     });
   });
 
-  const multyFileHandle = useCallback(async () => {
+  const multiFileHandle = useCallback(async () => {
     const pList = [];
+    // eslint-disable-next-line react/prop-types
     files.forEach((fileContainer) => {
       pList.push(fileContainer.getFile().then((file) => {
         createAnalsesForSingelFiles(element, [file], file.name);
@@ -143,7 +210,7 @@ function UploadButton({
     });
   });
 
-  const multyFileOneAnaHandle = useCallback(async () => {
+  const multiFileOneAnaHandle = useCallback(async () => {
     const pList = [];
     const newContainer = addNewAnalyses(element);
     files.forEach((fileContainer) => {
@@ -170,8 +237,9 @@ function UploadButton({
         Create one analysis with a single dataset containing all files and folders zipped together.
       </p>
       <hr />
-      <Button onClick={multyFileHandle}>
-        Multiple Analyses ({files.length}
+      <Button onClick={multiFileHandle}>
+        Multiple Analyses (
+        {files.length}
         )
       </Button>
       <p>
@@ -179,8 +247,9 @@ function UploadButton({
         analyses, one for each listed files or folders (folders will be zipped).
       </p>
       <hr />
-      <Button onClick={multyFileOneAnaHandle}>
-        Single Analysis - multiple ({files.length}
+      <Button onClick={multiFileOneAnaHandle}>
+        Single Analysis - multiple (
+        {files.length}
         ) datasets
       </Button>
       <p>
@@ -191,7 +260,15 @@ function UploadButton({
   );
 }
 
-function UploadField({ disabled, element, setElement }) {
+UploadButton.propTypes = {
+  files: PropTypes.arrayOf(File).isRequired,
+  // eslint-disable-next-line react/forbid-prop-types
+  element: PropTypes.object.isRequired,
+  handleClose: PropTypes.func.isRequired,
+  setElement: PropTypes.func.isRequired,
+};
+
+function UploadField({ disabled = false, element, setElement }) {
   const wrappedSetElement = (newElement) => {
     const newElementValue = typeof newElement === 'function' ? newElement(element) : newElement;
     setElement(newElementValue);
@@ -215,7 +292,8 @@ function UploadField({ disabled, element, setElement }) {
         });
 
         return;
-      } if (items[0].isDirectory) {
+      }
+      if (items[0].isDirectory) {
         setListedFiles(items[0].getNext());
         return;
       }
@@ -225,11 +303,11 @@ function UploadField({ disabled, element, setElement }) {
   }, []);
 
   const content = () => {
-    const [consumedPaths, setComsumedPaths] = useState([]);
+    const [consumedPaths, setConsumedPaths] = useState([]);
 
     const handleSetConsumedPaths = useCallback((paths) => {
       FileContainer.markeAllByPaths(listedFiles, paths);
-      setComsumedPaths(paths);
+      setConsumedPaths(paths);
     });
     if (isAdvanced && listedFiles.length > 0) {
       return (
@@ -270,8 +348,11 @@ function UploadField({ disabled, element, setElement }) {
               Create multiple analyses at once from selected files and/or folders that will be uploaded.
             </p>
             <p>
+              Simple .zip files will be unpacked directly and can be processed as folders.
+            </p>
+            <p>
               Advanced mode: add and name as many analyses with as many datasets as needed,
-      and associate each selected file or folder individualy by dragging and dropping them into the datasets.
+              and associate each selected file or folder individualy by dragging and dropping them into the datasets.
             </p>
           </Col>
         </Row>
@@ -311,7 +392,7 @@ function UploadField({ disabled, element, setElement }) {
         </Modal.Body>
         <Modal.Footer>
           <ToggleSwitch
-            disabled={listedFiles.length == 0}
+            disabled={listedFiles.length === 0}
             isChecked={isAdvanced}
             setIsChecked={setisAdvanced}
             label="Advanced mode"
@@ -322,6 +403,18 @@ function UploadField({ disabled, element, setElement }) {
   );
 }
 
+UploadField.propTypes = {
+  disabled: PropTypes.bool,
+  // eslint-disable-next-line react/forbid-prop-types
+  element: PropTypes.object.isRequired,
+  setElement: PropTypes.func.isRequired,
+};
+
+UploadField.defaultProps = {
+  disabled: false,
+};
+
 export {
-  UploadField
+  UploadField,
+  FolderDropzone
 };
