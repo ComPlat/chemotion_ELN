@@ -259,11 +259,10 @@ RSpec.describe Usecases::Components::Create do
       end
 
       it 'raises ActiveRecord::RecordInvalid when validation fails' do
-        expect { use_case.execute! }
-          .to raise_error(ActiveRecord::RecordInvalid)
-
-        expect { use_case.execute! }
-          .not_to(change(Component, :count))
+        expect do
+          expect { use_case.execute! }
+            .to raise_error(ActiveRecord::RecordInvalid)
+        end.not_to change(Component, :count)
       end
     end
   end
