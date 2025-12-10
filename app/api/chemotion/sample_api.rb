@@ -620,7 +620,7 @@ module Chemotion
         end
       end
 
-       desc 'replace sample svg file with indigo'
+      desc 'replace sample svg file with indigo'
       params do
         requires :svg_path, type: String, desc: 'existing svg file path'
         requires :molfile, type: String, desc: 'Sample molfile'
