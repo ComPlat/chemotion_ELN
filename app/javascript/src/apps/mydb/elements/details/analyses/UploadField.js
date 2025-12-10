@@ -54,7 +54,7 @@ function FolderDropzone({ handleChange, unzip = true, flatFileList = false }) {
       for (let i = 0; i < e.dataTransfer.items.length; i += 1) {
         const item = e.dataTransfer.items[i].webkitGetAsEntry();
         if (item) {
-          if (!flatFileList && unzip && item.isFile && item.name.endsWith('zip')) {
+          if (!flatFileList && unzip && item.isFile && item.name.endsWith('.zip')) {
             filePromises.push(new Promise((resolve) => {
               item.file((file) => {
                 resolve(handleZipFile(file));
