@@ -352,7 +352,7 @@ function UploadField({ disabled = false, element, setElement }) {
             </p>
             <p>
               Advanced mode: add and name as many analyses with as many datasets as needed,
-              and associate each selected file or folder individualy by dragging and dropping them into the datasets.
+              and associate each selected file or folder individually by dragging and dropping them into the datasets.
             </p>
           </Col>
         </Row>
