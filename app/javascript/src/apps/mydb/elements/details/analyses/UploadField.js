@@ -54,7 +54,7 @@ function FolderDropzone({ handleChange, unzip = true, flatFileList = false }) {
       for (let i = 0; i < e.dataTransfer.items.length; i += 1) {
         const item = e.dataTransfer.items[i].webkitGetAsEntry();
         if (item) {
-          if (!flatFileList && unzip && item.isFile && item.name.endsWith('zip')) {
+          if (!flatFileList && unzip && item.isFile && item.name.endsWith('.zip')) {
             filePromises.push(new Promise((resolve) => {
               item.file((file) => {
                 resolve(handleZipFile(file));
@@ -352,7 +352,7 @@ function UploadField({ disabled = false, element, setElement }) {
             </p>
             <p>
               Advanced mode: add and name as many analyses with as many datasets as needed,
-              and associate each selected file or folder individualy by dragging and dropping them into the datasets.
+              and associate each selected file or folder individually by dragging and dropping them into the datasets.
             </p>
           </Col>
         </Row>
