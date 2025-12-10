@@ -447,8 +447,9 @@ export class ContainerDatasetModalContent extends Component {
   customDropzone() {
     return (
       <FolderDropzone
-        handleChange={async (files) => this.handleFileDrop(await Promise.all(files.map((f) => f.getFile())))}
+        handleChange={async (files) => this.handleFileDrop(files)}
         unzip={false}
+        flatFileList
       >
         Drop files here, or click to upload.
       </FolderDropzone>

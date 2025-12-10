@@ -25,16 +25,16 @@ class FileContainer {
     this.file = file;
     this.name = file.name;
     this.depth = depth;
-    this.fullPath = fullPath || file.name;
+    this.fullPath = (fullPath || file.name).replace(/^\/|\/$/g, '');
     this.subFiles = [];
     this.marked = false;
   }
 
-  static markeAllByPaths(fileContainreList, paths) {
-    fileContainreList.forEach((file) => {
+  static markAllByPaths(fileContainerList, paths) {
+    fileContainerList.forEach((file) => {
       // eslint-disable-next-line no-param-reassign
       file.marked = paths.includes(file.fullPath);
-      FileContainer.markeAllByPaths(file.subFiles, paths);
+      FileContainer.markAllByPaths(file.subFiles, paths);
     });
   }
 
@@ -142,10 +142,11 @@ class VirtualFolderNode {
   }
 
   addFile({ path, file }) {
-    if (path.shift() !== this.name) {
-      throw new Error('Wrong dir Path');
+    if (path[0] !== this.name) {
+      throw new Error(`Expected path to start with '${this.name}' but got '${path[0]}'`);
     }
-    if (path.length === 0) {
+    const relPath = path.slice(1);
+    if (relPath.length === 0) {
       const fp = `${this.fullPath}/${this.name}/${file.name}`;
       // eslint-disable-next-line no-param-reassign
       file.isDirectory = false;
@@ -154,13 +155,13 @@ class VirtualFolderNode {
       this.subFiles.push(new FileContainer(file, fp, this.depth + 1));
       return;
     }
-    let item = this.subFiles.find((obj) => obj.name === path[0]);
+    let item = this.subFiles.find((obj) => obj.name === relPath[0]);
     if (!item) {
       const fp = `${this.fullPath}/${this.name}`;
-      item = new VirtualFolderNode(path[0], fp, this.depth + 1);
+      item = new VirtualFolderNode(relPath[0], fp, this.depth + 1);
       this.subFiles.push(item);
     }
-    item.addFile({ path, file });
+    item.addFile({ path: relPath, file });
   }
 
   clean() {

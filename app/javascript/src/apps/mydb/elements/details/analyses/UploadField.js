@@ -177,7 +177,7 @@ function FileListDisplay({ files }) {
 }
 
 FileListDisplay.propTypes = {
-  files: PropTypes.arrayOf(File).isRequired,
+  files: PropTypes.arrayOf(FileContainer).isRequired,
 };
 
 function UploadButton({
@@ -303,10 +303,10 @@ function UploadField({ disabled = false, element, setElement }) {
   }, []);
 
   const content = () => {
-    const [consumedPaths, setConsumedPaths] = useState([]);
+    const [, setConsumedPaths] = useState([]);
 
     const handleSetConsumedPaths = useCallback((paths) => {
-      FileContainer.markeAllByPaths(listedFiles, paths);
+      FileContainer.markAllByPaths(listedFiles, paths);
       setConsumedPaths(paths);
     });
     if (isAdvanced && listedFiles.length > 0) {
