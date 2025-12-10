@@ -21,15 +21,44 @@ class IndigoService
   #
   # @param struct [String] The chemical structure data.
   # @param output_format [String] The output format (default: 'image/svg+xml').
-  # @param options [Hash, nil] Rendering options (default: coloring enabled, 300x300 image).
+  # @param options [Hash] Additional rendering options. Can include:
+  #   - :scale [Numeric] Scale factor for rendering (default: 100). Used to calculate
+  #     bond length and font size dynamically.
+  #   - Any other Indigo rendering options that will be merged with calculated values.
   def initialize(struct, output_format = 'image/svg+xml', options = nil)
     @struct = struct
     @output_format = output_format
+    
+    # Extract scale from options or use default
+    scale = 100
+    # font_size = (3.0 * (scale / 8))
+    bond_length = (scale / 1.5)
+    unit = 'px'
+    
     @options = {
       'render-coloring' => false,
-      'render-bond-length' => 26,
-      'render-font-size' => 16,
+
+      # font
+      'render-font-size' => 30,
+
+      # bond
+      'render-bond-spacing' => 0.15,
+      'render-bond-length' => bond_length,
+      'render-bond-thickness' => 2.2,
+
+      # units
+      'render-font-size-unit' => unit,
+      'render-hash-spacing-unit' => unit,
+      'render-bond-thickness-unit' => unit,
+
+      # others
+      'render-margins' => "7,7"
+
+      # XX not possible to set in the options
+      # 'render-font' => '30px "Arial"',
+      # 'font-family' => 'Arial', 
     }
+    
     @service_url = Rails.configuration.indigo_service.indigo_service_url
   end
 
