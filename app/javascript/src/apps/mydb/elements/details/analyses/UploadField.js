@@ -2,7 +2,7 @@ import React, {
   useState, useCallback, useRef, useEffect
 } from 'react';
 import {
-  Modal, Button, Container, Row, Col, ListGroup, Badge
+  OverlayTrigger, Modal, Button, Container, Row, Col, ListGroup, Badge, Tooltip
 } from 'react-bootstrap';
 import ElementContainer from 'src/models/Container';
 import Dropzone from 'react-dropzone';
@@ -293,7 +293,11 @@ function UploadField({ disabled, element, setElement }) {
 
   return (
     <>
-      <Button
+      <OverlayTrigger
+        placement="top"
+        overlay={<Tooltip id="annotate_tooltip">Create multiple analyses at once from selected files and/or folders that will be uploaded.</Tooltip>}
+      >
+        <Button
         size="xsm"
         variant="success"
         disabled={disabled}
@@ -301,6 +305,7 @@ function UploadField({ disabled, element, setElement }) {
       >
         Analyses from upload
       </Button>
+      </OverlayTrigger>
 
       <Modal size="xl" show={show} onHide={handleClose}>
         <Modal.Header closeButton>
