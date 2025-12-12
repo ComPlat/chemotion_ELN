@@ -133,7 +133,7 @@ module ContainerHelpers
 
         list_file = []
         list_file_names = []
-        combined_image_filename = "combined_image_#{Time.now.strftime('%Y-%m-%d-%H:%M:%S')}.png"
+        combined_image_filename = "combined_image.png"
 
         created_by_user = -1
 

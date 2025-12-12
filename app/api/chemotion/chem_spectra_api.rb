@@ -208,162 +208,131 @@ module Chemotion
 
           origin_container = Container.find_by(id: pm[:container_id])
 
-          holder =
-            if origin_container && origin_container.container_type == 'dataset'
-              origin_container.parent
-            else
+          dataset_container =
+            if origin_container.container_type == 'dataset'
               origin_container
+            else
+              origin_container.children.find { |c| c.container_type == 'dataset' }
             end
 
-          unless holder
-            error!({ error: 'Container not found' }, 404)
+          is_update_mode = dataset_container.present?
+
+          unless is_update_mode
+            holder =
+              if origin_container && origin_container.container_type == 'dataset'
+                origin_container.parent
+              else
+                origin_container
+              end
+
+            unless holder
+              error!({ error: 'Container not found' }, 404)
+            end
+
+            dataset_container = Container.create!(
+              name: "Comparison #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}",
+              container_type: 'dataset',
+              parent_id: holder.id
+            )
+
+            pm[:spectra_ids].each do |att_id|
+              att = Attachment.find_by(id: att_id)
+              next unless att
+
+              new_att = Attachment.new(
+                filename: att.filename,
+                created_by: current_user.id,
+                created_for: current_user.id,
+                attachable_type: 'Container',
+                attachable_id: dataset_container.id
+              )
+
+              if att.attachment.present?
+                temp = att.attachment.download
+                new_att.file_path = temp.path
+                new_att.save!
+                temp.close
+                temp.unlink
+              end
+            end
           end
-
-          list_file = []
-          list_file_names = []
-
-          dataset_name = "Comparison #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}"
-
-          dataset_container = Container.create(
-            name: dataset_name,
-            container_type: 'dataset',
-            parent_id: holder.id
-          )
 
           target_container_id = dataset_container.id
 
-          new_attachment_ids = []
-          tempfiles = []
+          if is_update_mode && pm[:edited_data_spectra].present?
+            dataset_attachments = dataset_container.attachments.index_by(&:id)
 
-          Attachment.where(id: pm[:spectra_ids]).each do |att|
-            next unless att.attachment.present?
+            pm[:edited_data_spectra].each do |data|
+              target_att = dataset_attachments[data.dig(:si, :idx)]
+              next unless target_att
 
-            tempfile = att.attachment.download
-            tempfiles << tempfile
+              mol = Tempfile.new(['mol', '.mol'])
+              begin
+                new_jcamp, _ = Chemotion::Jcamp::Create.spectrum(
+                  target_att.abs_path,
+                  mol.path,
+                  false,
+                  data
+                )
 
-            base = File.basename(att.filename, '.*')
-            base_no_compared = base.sub(/_compared_[0-9:\-]+\z/, '')
-            new_filename = "#{base_no_compared}_compared_#{Time.now.strftime('%Y-%m-%d-%H:%M:%S')}#{File.extname(att.filename)}"
-
-            list_file_names << new_filename
-            
-            new_att = Attachment.new(
-              filename: new_filename,
-              created_by: current_user.id,
-              created_for: current_user.id,
-              attachable_type: 'Container',
-              attachable_id: target_container_id
-            )
-
-            edited_data = nil
-            if pm[:edited_data_spectra].present?
-              pm[:edited_data_spectra].each do |data|
-                if data.dig(:si, :idx) == att.id
-                  edited_data = data
-                  break
+                if new_jcamp && File.exist?(new_jcamp.path)
+                  FileUtils.cp(new_jcamp.path, target_att.abs_path)
                 end
+              rescue StandardError => e
+                Rails.logger.error "Failed to update spectrum #{target_att.id}: #{e.message}"
+              ensure
+                mol.close
+                mol.unlink
               end
             end
-
-            final_file_path = tempfile.path
-
-            if edited_data
-              mol_tempfile = Tempfile.new(['mol', '.mol'])
-
-              create_params = {
-                peaks_str: edited_data[:peaks_str],
-                integration: edited_data[:integration],
-                multiplicity: edited_data[:multiplicity],
-                scan: edited_data[:scan],
-                thres: edited_data[:thres],
-                wave_length: edited_data[:wave_length_str],
-                cyclic_volta: edited_data[:cyclicvolta],
-                curve_idx: edited_data[:curve_idx],
-              }
-
-              if edited_data[:selected_shift]
-                create_params[:shift_select_x] = edited_data[:selected_shift][:peak].try(:[], :x)
-                create_params[:shift_ref_name] = edited_data[:selected_shift][:ref].try(:[], :name)
-                create_params[:shift_ref_value] = edited_data[:selected_shift][:ref].try(:[], :value)
-              end
-
-              new_jcamp, _ = Chemotion::Jcamp::Create.spectrum(
-                tempfile.path, mol_tempfile.path, false, create_params
-              )
-
-              if new_jcamp && File.exist?(new_jcamp.path)
-                final_file_path = new_jcamp.path
-              end
-
-              mol_tempfile.close
-              mol_tempfile.unlink
-            end
-
-            new_att.file_path = final_file_path
-            list_file << final_file_path
-
-            new_att.save!
-            new_attachment_ids << new_att.id
           end
+
+          spectra_attachments = dataset_container.attachments.reject { |a| a.filename.to_s.downcase.end_with?('.png', '.jpg') }
 
           _, image = Chemotion::Jcamp::CombineImg.combine(
-            list_file, pm[:front_spectra_idx], list_file_names, extras
+            spectra_attachments.map(&:abs_path),
+            pm[:front_spectra_idx],
+            spectra_attachments.map(&:filename),
+            extras
           )
 
-          if image.present?
-            combined_image_filename = "combined_image_#{Time.now.strftime('%Y-%m-%d %H:%M:%S')}.png"
+          if image
+            dataset_container.attachments.where(filename: 'combined_image.png').destroy_all
 
-            att_img = Attachment.new(
-              filename: combined_image_filename,
-              created_by: current_user.id,
-              created_for: current_user.id,
+            Attachment.create!(
+              filename: 'combined_image.png',
               file_path: image.path,
               attachable_type: 'Container',
-              attachable_id: target_container_id
+              attachable_id: dataset_container.id,
+              created_by: current_user.id,
+              created_for: current_user.id
             )
-            att_img.save!
-            new_attachment_ids << att_img.id
           end
 
-          selected_layout =
-            extras && (extras['layout'] || extras['layout_key'] || extras['layout_name'])
+          final_attachments = dataset_container.attachments.reload
+          analyses_compared = final_attachments
+                                .reject { |a| a.filename.to_s.downcase.end_with?('.png') }
+                                .map do |a|
+                                  {
+                                    file: { id: a.id },
+                                    dataset: { id: dataset_container.id },
+                                    analysis: { id: dataset_container.id }
+                                  }
+                                end
 
-          valid_attachment_ids = Attachment.where(id: new_attachment_ids).reject do |att|
-            att.filename.downcase.end_with?('.png', '.jpg', '.jpeg', '.gif')
-          end.map(&:id)
-
-          analyses_compared = valid_attachment_ids.map do |aid|
+          dataset_container.update_column(
+            :extended_metadata,
             {
-              file:    { id: aid },
-              dataset: { id: target_container_id },
-              analysis:{ id: target_container_id },
-              layout:  selected_layout
+              is_comparison: true,
+              analyses_compared: analyses_compared
             }
-          end
+          )
 
-          ds_meta = dataset_container.extended_metadata || {}
-          ds_meta['is_comparison'] = true
-          ds_meta['analyses_compared'] = analyses_compared
-          
-          selected_layout =
-            extras && (extras['layout'] || extras['layout_key'] || extras['layout_name'])
-          
-          ds_meta['kind'] = selected_layout if selected_layout.present?
-          
-          dataset_container.update_column(:extended_metadata, ds_meta)        
-
-          tempfiles.each do |tf|
-            tf.close
-            tf.unlink
-          end
-
-          dataset = Container.find_by(id: target_container_id)
-          dataset_json = Entities::ContainerEntity.represent(dataset).as_json
+          dataset_json = Entities::ContainerEntity.represent(dataset_container).as_json
 
           {
             status: true,
-            new_attachment_ids: new_attachment_ids,
-            dataset_id: target_container_id,
+            dataset_id: dataset_container.id,
             dataset: dataset_json,
             analyses_compared: analyses_compared
           }
