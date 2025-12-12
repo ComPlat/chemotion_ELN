@@ -4,7 +4,7 @@ module Entities
   module ReactionProcessEditor
     module SelectOptions
       module Forms
-        class Purification
+        module Purification
           class Centrifugation < Base
             def select_options
               { automation_modes: SelectOptions::Models::Custom.new.automation_modes }
