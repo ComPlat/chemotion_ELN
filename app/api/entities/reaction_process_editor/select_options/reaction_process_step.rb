@@ -4,6 +4,9 @@ module Entities
   module ReactionProcessEditor
     module SelectOptions
       class ReactionProcessStep < Base
+        PURIFICATION_ACTION_NAMES = %w[PURIFICATION EXTRACTION CHROMATOGRAPHY
+                                       CRYSTALLIZATION FILTRATION CENTRIFUGATION].freeze
+
         def select_options_for(reaction_process_step:)
           {
             added_materials: added_materials(reaction_process_step),
@@ -65,15 +68,15 @@ module Entities
           reaction_process_step
             .reaction_process_activities
             .includes([:reaction_process_vessel])
-            .where(activity_name: 'PURIFICATION')
+            .where(activity_name: PURIFICATION_ACTION_NAMES)
             .order(:position)
             .map do |purification|
-            purification_step_options = purification.workup && purification.workup['purification_steps']
+            purification_steps = purification.workup && purification.workup['purification_steps']
 
             { value: purification.id,
-              label: "#{purification.position + 1} #{purification.workup['purification_type']&.titlecase}",
-              purification_type: purification.workup['purification_type'],
-              purification_steps: purification_step_options&.map&.with_index do |purification_step, index|
+              label: "#{purification.position + 1} #{purification.activity_name&.titlecase}",
+              activity_name: purification.activity_name,
+              purification_steps: purification_steps&.map&.with_index do |purification_step, index|
                 option_for_purification_step(purification_step, purification, index)
               end }
           end
