@@ -30,32 +30,41 @@ class IndigoService
     @output_format = output_format
     
     # Extract scale from options or use default
-    scale = 100
-    # font_size = (3.0 * (scale / 8))
-    bond_length = (scale / 1.5)
+    scale_factor = 45
+    bond_length = scale_factor * 0.75
+    bond_spacing = scale_factor / 6.0
+    bond_shift = scale_factor / 1.5
+    label_font_size = (3.5 * (scale_factor / 8.0)).ceil # change the scale factor to 9.0 to get the correct font size from 6.0
+    sub_font_size = (0.7 * label_font_size).ceil  
+    
+    stereo_bond_width = 8
+    bond_thickness = 1.3
     unit = 'px'
     
     @options = {
       'render-coloring' => false,
 
       # font
-      'render-font-size' => 30,
+      'render-font-size' => label_font_size,
 
       # bond
-      'render-bond-spacing' => 0.15,
+      # 'render-bond-spacing' => bond_spacing,
       'render-bond-length' => bond_length,
-      'render-bond-thickness' => 2.2,
-
+      'render-bond-thickness' => bond_thickness,
+      'render-stereo-bond-width' => stereo_bond_width,
+      
       # units
       'render-font-size-unit' => unit,
       'render-hash-spacing-unit' => unit,
       'render-bond-thickness-unit' => unit,
+      'render-font-size-sub-unit' => unit,
+      'render-hash-spacing' => 1.5,
 
       # others
-      'render-margins' => "7,7"
+      'render-margins' => "8,8"
 
       # XX not possible to set in the options
-      # 'render-font' => '30px "Arial"',
+      # 'render-font' => '30px "Roboto"',
       # 'font-family' => 'Arial', 
     }
     
@@ -73,7 +82,7 @@ class IndigoService
     svg_body = response.body
     return nil unless valid_indigo_svg?(svg_body)
 
-    svg_body
+    Chemotion::Sanitizer.scrub_svg(svg_body, remap_glyph_ids: true)
   end
 
   # Fetches information about the Indigo service.
