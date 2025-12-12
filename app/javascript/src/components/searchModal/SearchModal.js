@@ -7,12 +7,14 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 import TextSearch from './forms/TextSearch';
 import KetcherRailsForm from './forms/KetcherRailsForm';
 import PublicationSearch from './forms/PublicationSearch';
+import OpenSearchAnalysis from './forms/OpenSearchAnalysis';
 import NoFormSelected from './forms/NoFormSelected';
 
 const Components = {
   advanced: TextSearch,
   ketcher: KetcherRailsForm,
   publication: PublicationSearch,
+  opensearch: OpenSearchAnalysis,
   empty: NoFormSelected
 }
 
@@ -37,6 +39,11 @@ const SearchModal = () => {
       value: 'publication',
       label: 'PublicationSearch',
       id: 2,
+    },
+    {
+      value: 'opensearch',
+      label: 'Analysis Explorer',
+      id: 3,
     },
   ];
 
@@ -70,6 +77,7 @@ const SearchModal = () => {
   let searchTypeTextClass = searchStore.searchModalSelectedForm.value === 'advanced' ? 'active' : 'text-bg-paper';
   let searchTypePublicationClass = searchStore.searchModalSelectedForm.value === 'publication' ? 'active' : 'text-bg-paper';
   let searchTypeStructureClass = searchStore.searchModalSelectedForm.value === 'ketcher' ? 'active' : 'text-bg-paper';
+  let searchTypeOpenSearchClass = searchStore.searchModalSelectedForm.value === 'opensearch' ? 'active' : 'text-bg-paper';
 
   return (
     <Draggable handle=".modal-header" onDrag={handleDrag}>
@@ -118,6 +126,14 @@ const SearchModal = () => {
                 >
                   <i className="icon-pubchem me-1" />
                   Structure search
+                </Button>
+                <Button
+                  onClick={(e) => searchStore.changeSearchModalSelectedForm(FormData[3])}
+                  className={searchTypeOpenSearchClass}
+                  variant="outline-dark"
+                >
+                  <i className="fa fa-flask me-1" />
+                  Analysis Explorer
                 </Button>
               </ButtonGroup>
               <Button className="order-1 order-lg-2 ms-auto ms-lg-5 pt-2 align-self-start bg-transparent border-0">

@@ -24,6 +24,100 @@ databases:
     slot_name: sequin_slot
     publication_name: sequin_cdc_publication
 
+# HTTP Endpoints configuration for webhook sinks
+http_endpoints:
+  - name: "chemotion-converter-cdc-endpoint"
+    url: "http://converter:4000"
+    headers:
+      Content-Type: "application/json"
+    encrypted_headers:
+      Authorization: "Bearer ${CONVERTER_CDC_SECRET_KEY}"
+
+# Transform functions to filter fields before sending to sinks
+functions:
+  # Transform function for containers - only include fields needed for analysis parsing
+  # Note: containable_id is the sample_id when containable_type='Sample'
+  - name: "transform-container-for-analysis"
+    type: "transform"
+    code: |-
+      def transform(action, record, changes, metadata) do
+        %{
+          id: record["id"],
+          name: record["name"],
+          container_type: record["container_type"],
+          description: record["description"],
+          extended_metadata: record["extended_metadata"],
+          plain_text_content: record["plain_text_content"],
+          containable_id: record["containable_id"],
+          containable_type: record["containable_type"],
+          parent_id: record["parent_id"],
+          created_at: record["created_at"],
+          updated_at: record["updated_at"],
+          deleted_at: record["deleted_at"]
+        }
+      end
+
+  # Transform function for samples - only include essential fields
+  - name: "transform-sample-minimal"
+    type: "transform"
+    code: |-
+      def transform(action, record, changes, metadata) do
+        %{
+          id: record["id"],
+          name: record["name"],
+          short_label: record["short_label"],
+          description: record["description"],
+          sample_type: record["sample_type"],
+          external_label: record["external_label"],
+          created_at: record["created_at"],
+          updated_at: record["updated_at"]
+        }
+      end
+
+  # Transform function for reactions - only include essential fields
+  - name: "transform-reaction-minimal"
+    type: "transform"
+    code: |-
+      def transform(action, record, changes, metadata) do
+        %{
+          id: record["id"],
+          name: record["name"],
+          short_label: record["short_label"],
+          description: record["description"],
+          status: record["status"],
+          role: record["role"],
+          observation: record["observation"],
+          conditions: record["conditions"],
+          created_at: record["created_at"],
+          updated_at: record["updated_at"]
+        }
+      end
+
+  # Filter function - only process analysis containers (not analyses, dataset, or root)
+  - name: "filter-containers-with-content"
+    type: "filter"
+    code: |-
+      def filter(action, record, changes, metadata) do
+        # Always process deletes
+        if action == :delete do
+          true
+        else
+          # For containers, only process 'analysis' type containers with content
+          table = metadata["table_name"]
+          if table == "containers" do
+            # Only process containers of type 'analysis' (singular)
+            # This excludes: 'analyses', 'dataset', 'root' container types
+            is_analysis = record["container_type"] == "analysis"
+            has_extended_metadata = record["extended_metadata"] != nil and record["extended_metadata"] != ""
+            has_plain_text = record["plain_text_content"] != nil and record["plain_text_content"] != ""
+            is_analysis and (has_extended_metadata or has_plain_text)
+          else
+            # For samples and reactions, always process
+            true
+          end
+        end
+      end
+
 # OpenSearch sink configuration (using Elasticsearch-compatible API)
 sinks:
   - name: "opensearch-chemotion-cdc"
@@ -37,7 +131,7 @@ sinks:
         - "public.reactions"
 
     # Status
-    status: "active"
+    status: "disabled"
 
     # Actions to capture
     actions:
@@ -56,3 +150,39 @@ sinks:
       auth_type: "api_key"
       auth_value: "dummy_key_for_dev"
       batch_size: 100
+
+  # Webhook sink for Chemotion Converter - transforms analysis data before OpenSearch indexing
+  - name: "converter-chemotion-cdc-webhook"
+    database: "sequin-chemotion-dev-postgres"
+
+    # Source configuration - focus on containers table for analysis data transformation
+    # Containers hold the analysis content that needs to be parsed
+    source:
+      include_tables:
+        - "public.containers"
+
+    # Status
+    status: "active"
+
+    # Actions to capture
+    actions:
+      - insert
+      - update
+      - delete
+
+    # Apply transform to filter out unnecessary fields
+    transform: "transform-container-for-analysis"
+
+    # Apply filter to only process containers with content
+    filter: "filter-containers-with-content"
+
+    # Message grouping - ensures ordered delivery per row
+    message_grouping: true
+
+    # Webhook destination to Chemotion Converter
+    destination:
+      type: "webhook"
+      http_endpoint: "chemotion-converter-cdc-endpoint"
+      http_endpoint_path: "/cdc/webhook"
+      batch_size: 10
+      request_timeout_ms: 30000

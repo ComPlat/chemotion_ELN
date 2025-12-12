@@ -2,7 +2,9 @@
 import React, { Component } from 'react';
 import { Map } from 'immutable';
 import PropTypes from 'prop-types';
-import { Col, Form, Row } from 'react-bootstrap';
+import {
+  Button, Col, Form, OverlayTrigger, Row, Tooltip
+} from 'react-bootstrap';
 import { Select } from 'src/components/common/Select';
 
 import TextTemplateStore from 'src/stores/alt/stores/TextTemplateStore';
@@ -14,6 +16,7 @@ import OlsTreeSelect from 'src/components/OlsComponent';
 import { confirmOptions } from 'src/components/staticDropdownOptions/options';
 
 import AnalysisEditor from 'src/components/container/AnalysisEditor';
+import AnalysisParserModal from 'src/components/container/AnalysisParserModal';
 import HyperLinksSection from 'src/components/common/HyperLinksSection';
 
 export default class ContainerComponent extends Component {
@@ -24,7 +27,8 @@ export default class ContainerComponent extends Component {
     const textTemplate = TextTemplateStore.getState()[templateType] || Map();
     this.state = {
       container,
-      textTemplate: textTemplate && textTemplate.toJS()
+      textTemplate: textTemplate && textTemplate.toJS(),
+      showParserModal: false
     };
 
     this.handleInputChange = this.handleInputChange.bind(this);
@@ -34,6 +38,8 @@ export default class ContainerComponent extends Component {
 
     this.handleAddLink = this.handleAddLink.bind(this);
     this.handleRemoveLink = this.handleRemoveLink.bind(this);
+    this.openParserModal = this.openParserModal.bind(this);
+    this.closeParserModal = this.closeParserModal.bind(this);
   }
 
   componentDidMount() {
@@ -125,6 +131,14 @@ export default class ContainerComponent extends Component {
     this.setState({ container });
   }
 
+  openParserModal() {
+    this.setState({ showParserModal: true });
+  }
+
+  closeParserModal() {
+    this.setState({ showParserModal: false });
+  }
+
   updateTextTemplates(textTemplate) {
     const { templateType } = this.props;
     TextTemplateActions.updateTextTemplates(templateType, textTemplate);
@@ -190,9 +204,35 @@ export default class ContainerComponent extends Component {
         </Col>
         <Col sm={12} className="mb-2">
           <Form.Group>
-            <Form.Label>Content</Form.Label>
+            <div className="d-flex align-items-center mb-1">
+              <Form.Label className="mb-0">Content</Form.Label>
+              {container.extended_metadata?.content && (
+                <OverlayTrigger
+                  placement="top"
+                  overlay={<Tooltip id="parse-content-tooltip">View Parsed Analysis Data</Tooltip>}
+                >
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="p-0 ms-0"
+                    onClick={this.openParserModal}
+                    aria-label="View parsed analysis JSON"
+                  >
+                    <span className="d-inline-flex align-items-center gap-2" style={{ lineHeight: 1, height: '1.5rem' }}>
+                      <i className="fa fa-file-code text-primary fs-5" aria-hidden="true" />
+                      <span className="badge bg-success text-white fw-bold" style={{ fontSize: '0.78rem', lineHeight: 1 }}>JSON</span>
+                    </span>
+                  </Button>
+                </OverlayTrigger>
+              )}
+            </div>
             {quill}
           </Form.Group>
+          <AnalysisParserModal
+            show={this.state.showParserModal}
+            onHide={this.closeParserModal}
+            content={container.extended_metadata?.content}
+          />
           <Form.Group className="my-3">
             <Form.Label>Description</Form.Label>
             <Form.Control

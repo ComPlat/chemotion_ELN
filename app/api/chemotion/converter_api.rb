@@ -61,6 +61,20 @@ module Chemotion
           res
         end
       end
+
+      resource :parse_analysis do
+        desc 'Parse analysis content and return structured data'
+        params do
+          requires :content, desc: 'Analysis content (Quill delta JSON object or plain text string)'
+        end
+        post do
+          # Convert content to JSON string if it's a hash/object
+          content = params[:content]
+          content = content.to_json if content.is_a?(Hash) || content.is_a?(ActionController::Parameters)
+          result = Analyses::ContentParser.parse(content)
+          result
+        end
+      end
     end
   end
 end

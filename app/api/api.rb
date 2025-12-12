@@ -3,6 +3,7 @@
 # module API
 require 'grape-entity'
 require 'grape-swagger'
+require_relative 'chemotion/opensearch_api'
 
 class API < Grape::API
   include LogidzeModule
@@ -224,6 +225,8 @@ class API < Grape::API
   mount Chemotion::VesselAPI
   mount Chemotion::SequenceBasedMacromoleculeAPI
   mount Chemotion::SequenceBasedMacromoleculeSampleAPI
+  mount Chemotion::ConverterAPI
+  mount Chemotion::OpenSearchAPI
 
   if Rails.env.development?
     add_swagger_documentation(info: {
