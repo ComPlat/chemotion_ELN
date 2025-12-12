@@ -18,6 +18,10 @@ class Versioning::Fetchers::SampleFetcher
       Versioning::Serializers::ElementalCompositionSerializer.call(elemental_composition)
     end
 
+    sample.components.with_log_data.each do |component|
+      versions += Versioning::Serializers::ComponentSerializer.call(component, ["Component: #{component.name}"])
+    end
+
     analyses_container = sample.container.children.where(container_type: :analyses).first
     analyses_container.children.where(container_type: :analysis).with_deleted.with_log_data.each do |analysis|
       versions += Versioning::Serializers::ContainerSerializer.call(analysis, ["Analysis: #{analysis.name}"])

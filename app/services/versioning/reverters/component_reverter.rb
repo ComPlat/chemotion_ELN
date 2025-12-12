@@ -1,0 +1,27 @@
+# frozen_string_literal: true
+
+module Versioning
+  module Reverters
+    class ComponentReverter < Versioning::Reverters::BaseReverter
+      def self.scope
+        Component.with_deleted
+      end
+
+      def field_definitions
+        {
+          component_properties: handle_json,
+        }.with_indifferent_access
+      end
+
+      private
+
+      def handle_json
+        lambda do |value|
+          return {} if value.blank?
+
+          value
+        end
+      end
+    end
+  end
+end
