@@ -52,27 +52,11 @@ module Usecases
         def self.activity_setup_for_action_name(activity_name)
           ontology = ONTOLOGY_IDS[activity_name] || {}
 
-          # TODO: Enhance with all applicable   settings, eg. automation_mode, filtration_mode
-          # "automation_mode"=>"AUTOMATED", "filtration_mode"=>"KEEP_PRECIPITATE"
-
-          # TODO: Create Sample for ADD, allow ADD.
-
-          if %w[CHROMATOGRAPHY FILTRATION EXTRACTION CRYSTALLIZATION].include?(activity_name)
-            { activity_name: 'PURIFICATION',
-              workup: { purification_type: activity_name,
-                        action: ontology['action'],
-                        class: ontology['class'],
-                        automated: ontology['automated'] } }
-          elsif %w[ANALYSIS_CHROMATOGRAPHY ANALYSIS_SPECTROSCOPY].include?(activity_name)
-            { activity_name: 'ANALYSIS',
-              workup: {
-                analysis_type: activity_name.delete_prefix('ANALYSIS_'),
-                action: ontology['action'],
-                class: ontology['class'],
-              } }
-          else
-            { activity_name: activity_name, workup: {} }
-          end
+          { activity_name: activity_name,
+            workup: {
+              action: ontology['action'],
+              class: ontology['class'],
+            } }
         end
 
         def self.assign_remove_workup(fraction:, consuming_activity:)

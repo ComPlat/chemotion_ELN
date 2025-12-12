@@ -16,7 +16,7 @@ describe ReactionProcessEditor::ReactionProcessActivityAPI, '.create_fraction_ac
   let(:pooling_group_params) do
     { fractions: [
       { consuming_activity_name: 'DISCARD', vials: %w[1 2] },
-      { consuming_activity_name: 'EVAPORATE', vials: %w[3] },
+      { consuming_activity_name: 'EVAPORATION', vials: %w[3] },
     ] }
   end
 
@@ -37,7 +37,7 @@ describe ReactionProcessEditor::ReactionProcessActivityAPI, '.create_fraction_ac
     expect(Usecases::ReactionProcessEditor::ReactionProcessSteps::AppendFractionActivity)
       .to have_received(:execute!)
       .with({ parent_activity: anything,
-              fraction_params: { consuming_activity_name: 'EVAPORATE', vials: %w[3] },
+              fraction_params: { consuming_activity_name: 'EVAPORATION', vials: %w[3] },
               index: 1 })
   end
 

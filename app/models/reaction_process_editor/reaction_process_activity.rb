@@ -68,7 +68,7 @@ module ReactionProcessEditor
     end
 
     def removes_compound?
-      %w[REMOVE EVAPORATION DISCARD].include?(activity_name)
+      %w[REMOVE EVAPORATE DISCARD].include?(activity_name)
     end
 
     def can_carry_compound?

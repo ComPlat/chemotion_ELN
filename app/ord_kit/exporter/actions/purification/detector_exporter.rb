@@ -25,9 +25,7 @@ module OrdKit
           def detector_conditons(detector)
             conditions_workup = detector_conditions_workup(detector)
 
-            # conditions_workup&.keys do |analysis_type|
             Conditions::ReactionConditionsExporter.new(conditions_workup).to_ord
-            # end
           end
 
           def detector_conditions_workup(detector)
