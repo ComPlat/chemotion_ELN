@@ -15,15 +15,7 @@ module Entities
         consuming_activity = object.consuming_activity
         activity_name = consuming_activity&.activity_name
 
-        return 'DEFINE_FRACTION' unless consuming_activity
-
-        if activity_name == 'ANALYSIS'
-          "#{activity_name}_#{consuming_activity.workup['analysis_type']}"
-        elsif activity_name == 'PURIFICATION'
-          consuming_activity.workup['purification_type']
-        else
-          activity_name
-        end
+        activity_name || 'DEFINE_FRACTION'
       end
     end
   end

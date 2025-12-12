@@ -4,7 +4,7 @@ module Entities
   module ReactionProcessEditor
     module SelectOptions
       module Forms
-        class Purification
+        module Purification
           class Filtration < Base
             def select_options_for(reaction_process:)
               {
