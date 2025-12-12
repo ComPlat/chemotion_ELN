@@ -20,6 +20,7 @@ import InboxActions from 'src/stores/alt/actions/InboxActions';
 import InstrumentsFetcher from 'src/fetchers/InstrumentsFetcher';
 import HyperLinksSection from 'src/components/common/HyperLinksSection';
 import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
+import { FolderDropzone } from 'src/apps/mydb/elements/details/analyses/UploadField';
 import PropTypes from 'prop-types';
 import {
   downloadButton,
@@ -393,12 +394,13 @@ export class ContainerDatasetModalContent extends Component {
 
   customDropzone() {
     return (
-      <Dropzone
-        onDrop={(files) => this.handleFileDrop(files)}
-        className="attachment-dropzone"
+      <FolderDropzone
+        handleChange={async (files) => this.handleFileDrop(files)}
+        unzip={false}
+        flatFileList
       >
         Drop files here, or click to upload.
-      </Dropzone>
+      </FolderDropzone>
     );
   }
 
