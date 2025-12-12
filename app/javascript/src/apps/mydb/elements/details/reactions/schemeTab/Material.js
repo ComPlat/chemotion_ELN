@@ -464,6 +464,17 @@ class Material extends Component {
     }
   };
 
+  handleComponentMetricsChange = (changeEvent) => {
+    const { onChange, material, materialGroup } = this.props;
+    if (onChange) {
+      onChange({
+        ...changeEvent,
+        sampleID: material.id,
+        materialGroup
+      });
+    }
+  };
+
   materialVolume(material, className) {
     if (material.contains_residues) {
       return notApplicableInput(className);
@@ -1007,6 +1018,7 @@ class Material extends Component {
                       solvents={material.solvent}
                       sampleId={material.id}
                       onComponentReferenceChange={this.handleComponentReferenceChange}
+                      onComponentMetricsChange={this.handleComponentMetricsChange}
                     />
                   )}
                 </div>

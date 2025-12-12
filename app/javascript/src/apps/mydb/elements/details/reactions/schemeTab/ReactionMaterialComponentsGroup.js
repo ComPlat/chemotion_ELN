@@ -24,6 +24,19 @@ class ReactionMaterialComponentsGroup extends React.Component {
     }
   };
 
+  handleComponentMetricsChange = (component, metricUnit, metricPrefix) => {
+    const { onComponentMetricsChange, sampleId } = this.props;
+    if (onComponentMetricsChange) {
+      onComponentMetricsChange({
+        type: 'ComponentMetricsChanged',
+        componentId: component.id,
+        sampleId,
+        metricUnit,
+        metricPrefix,
+      });
+    }
+  };
+
   renderComponentRow(component) {
     const { sampleId } = this.props;
 
@@ -71,6 +84,7 @@ class ReactionMaterialComponentsGroup extends React.Component {
             precision={6}
             disabled
             size="sm"
+            onMetricsChange={(e) => this.handleComponentMetricsChange(component, e.metricUnit, e.metricPrefix)}
           />
         </td>
         {/* Relative MW */}
@@ -93,6 +107,7 @@ class ReactionMaterialComponentsGroup extends React.Component {
             precision={6}
             disabled
             size="sm"
+            onMetricsChange={(e) => this.handleComponentMetricsChange(component, e.metricUnit, e.metricPrefix)}
           />
         </td>
         {/* Ratio */}
@@ -209,6 +224,7 @@ class ReactionMaterialComponentsGroup extends React.Component {
 ReactionMaterialComponentsGroup.propTypes = {
   sampleId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   onComponentReferenceChange: PropTypes.func,
+  onComponentMetricsChange: PropTypes.func,
   components: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     amount_g: PropTypes.number,
@@ -232,6 +248,7 @@ ReactionMaterialComponentsGroup.propTypes = {
 
 ReactionMaterialComponentsGroup.defaultProps = {
   onComponentReferenceChange: null,
+  onComponentMetricsChange: null,
   components: [],
   solvents: [],
 };

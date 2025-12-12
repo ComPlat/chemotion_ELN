@@ -431,6 +431,11 @@ export default class ReactionDetailsScheme extends React.Component {
           { schemaChanged: true }
         );
         break;
+      case 'ComponentMetricsChanged':
+        onReactionChange(
+          this.updatedReactionForComponentMetricsChange(changeEvent)
+        );
+        break;
       default:
         break;
     }
@@ -538,6 +543,37 @@ export default class ReactionDetailsScheme extends React.Component {
     const updatedSample = reaction.sampleById(sampleID);
 
     updatedSample.setUnitMetrics(metricUnit, metricPrefix);
+
+    return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample);
+  }
+
+  updatedReactionForComponentMetricsChange(changeEvent) {
+    const { reaction } = this.props;
+    const {
+      sampleId,
+      componentId,
+      metricUnit,
+      metricPrefix
+    } = changeEvent;
+
+    // Find the sample that contains the component
+    const updatedSample = reaction.sampleById(sampleId);
+
+    if (!updatedSample || !updatedSample.isMixture() || !updatedSample.hasComponents()) {
+      return reaction;
+    }
+
+    // Find the component within the sample
+    const componentIndex = updatedSample.components.findIndex(
+      (component) => component.id === componentId || component.parent_id === componentId
+    );
+
+    if (componentIndex !== -1) {
+      // Update the component's metrics
+      updatedSample.components[componentIndex].setUnitMetrics(metricUnit, metricPrefix);
+      // Mark the sample as changed so the reaction save button activates
+      updatedSample.changed = true;
+    }
 
     return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample);
   }
