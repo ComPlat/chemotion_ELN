@@ -4,7 +4,7 @@ module Entities
   module ReactionProcessEditor
     module SelectOptions
       module Forms
-        class Analysis
+        module Analysis
           class Spectroscopy < Base
             def select_options
               { spectroscopy_types: spectroscopy_types_options,

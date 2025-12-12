@@ -4,7 +4,7 @@ module Entities
   module ReactionProcessEditor
     module SelectOptions
       module Forms
-        class Analysis
+        module Analysis
           class Chromatography < SelectOptions::Forms::Purification::Chromatography
           end
         end
