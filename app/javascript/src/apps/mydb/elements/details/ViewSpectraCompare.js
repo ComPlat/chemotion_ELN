@@ -310,12 +310,16 @@ class ViewSpectraCompare extends React.Component {
     };
     
 
-    let targetContainerId = container.id;
-    if (
-      container?.extended_metadata?.analyses_compared?.length > 0 &&
-      container.extended_metadata.analyses_compared[0].dataset?.id
-    ) {
-      targetContainerId = container.extended_metadata.analyses_compared[0].dataset.id;
+    let targetContainerId;
+
+    const datasetChild = container.children?.find(
+      c => c.container_type === 'dataset'
+    );
+    
+    if (datasetChild) {
+      targetContainerId = datasetChild.id;
+    } else {
+      targetContainerId = container.id;
     }
 
     SpectraActions.SaveMultiSpectraComparison(
@@ -356,6 +360,7 @@ class ViewSpectraCompare extends React.Component {
     const { menuItems, container, selectedFilesIds } = this.state;
     let modalTitle = '';
     let selectedFiles = selectedFilesIds;
+    const isComparison = container?.extended_metadata?.is_comparison;
 
     if (container) {
       modalTitle = container.name;
@@ -376,7 +381,7 @@ class ViewSpectraCompare extends React.Component {
           {modalTitle}
         </span>
         <div className="d-flex gap-1 align-items-center">
-          <TreeSelect
+          {/* <TreeSelect
             style={{ width: 800 }}
             placeholder="Please select"
             treeCheckable={true}
@@ -385,7 +390,8 @@ class ViewSpectraCompare extends React.Component {
             onChange={(value, label, extra) => this.handleChangeSelectAnalyses(menuItems, value, extra)}
             maxTagCount={2}
             getPopupContainer={(triggerNode) => triggerNode.parentNode}
-          />
+            disabled={isComparison}
+          /> */}
           <Button
             className="ms-auto"
             size="sm"
