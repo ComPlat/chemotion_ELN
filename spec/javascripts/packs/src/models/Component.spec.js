@@ -313,6 +313,8 @@ describe('Component', () => {
           material_group: 'solid',
           reference: undefined, // Not set in this case
           purity: 0.9,
+          metrics: 'mmmm', // Default metrics string for unit preservation
+          relative_molecular_weight: undefined, // Not set in this case
         }
       });
     });
