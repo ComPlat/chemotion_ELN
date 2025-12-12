@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Col, FormLabel, FormControl, Row } from 'react-bootstrap';
+import { Col, FormLabel, FormControl, Row, Form } from 'react-bootstrap';
 import TextTemplateStore from 'src/stores/alt/stores/TextTemplateStore';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import { Select } from 'src/components/common/Select';
@@ -10,6 +10,9 @@ import { BuildSpectraComparedSelection, GetSelectedComparedAnalyses } from 'src/
 
 import ContainerDatasets from 'src/components/container/ContainerDatasets';
 import Container from 'src/models/Container';
+import QuillViewer from 'src/components/QuillViewer';
+import AnalysisEditor from 'src/components/container/AnalysisEditor';
+import HyperLinksSection from 'src/components/common/HyperLinksSection';
 
 export default class ContainerCompareAnalyses extends Component {
   constructor(props) {
@@ -31,6 +34,8 @@ export default class ContainerCompareAnalyses extends Component {
     this.handleTemplateChange = this.handleTemplateChange.bind(this);
     this.buildSelectAnalysesMenu = this.buildSelectAnalysesMenu.bind(this);
     this.handleChangeSelectAnalyses = this.handleChangeSelectAnalyses.bind(this);
+    this.handleAddLink = this.handleAddLink.bind(this);
+    this.handleRemoveLink = this.handleRemoveLink.bind(this);
 
   }
 
@@ -79,13 +84,10 @@ export default class ContainerCompareAnalyses extends Component {
     const idsChanged = JSON.stringify(prevIds) !== JSON.stringify(currIds);
   
     if (prevProps.container !== this.props.container || idsChanged) {
-      const updatedContainer = this.props.container;
-  
-      let { menuItems, selectedFiles } =
-        BuildSpectraComparedSelection(this.props.sample, updatedContainer);
+      const { menuItems, selectedFiles } = this.buildSelectAnalysesMenu(this.props.container);
   
       this.setState({
-        container: updatedContainer,
+        container: this.props.container,
         menuItems,
         selectedFilesIds: selectedFiles
       });
@@ -138,9 +140,21 @@ export default class ContainerCompareAnalyses extends Component {
   
     container.extended_metadata = container.extended_metadata || {};
     container.extended_metadata.analyses_compared = selectedData;
-  
+
+    if (selectedData.length > 0) {
+      const layout = selectedData[0].layout;
+      if (layout) {
+        container.extended_metadata.kind = layout.replace(/^Type:\s*/i, '').trim();
+      }
+    } else {
+      container.extended_metadata.kind = null;
+    }
+
+    const { menuItems } = this.buildSelectAnalysesMenu(container);
+
     this.setState({
       selectedFilesIds: selectedFiles,
+      menuItems
     });
   
     this.onChange(container);
@@ -153,12 +167,12 @@ export default class ContainerCompareAnalyses extends Component {
     TextTemplateActions.updateTextTemplates(templateType, textTemplate);
   }
 
-  buildSelectAnalysesMenu() {
-    const { sample, container } = this.props;
+  buildSelectAnalysesMenu(currentContainer = this.props.container) {
+    const { sample } = this.props;
   
-    let { menuItems, selectedFiles } = BuildSpectraComparedSelection(sample, container);
+    let { menuItems, selectedFiles } = BuildSpectraComparedSelection(sample, currentContainer);
   
-    const selectedLayout = container.extended_metadata?.analyses_compared?.[0]?.layout ?? null;
+    const selectedLayout = currentContainer.extended_metadata?.analyses_compared?.[0]?.layout ?? null;
   
     if (selectedLayout) {
       menuItems = menuItems.map((item) => {
@@ -171,19 +185,71 @@ export default class ContainerCompareAnalyses extends Component {
   
     return { menuItems, selectedFiles };
   }
-  
+
+  handleAddLink(link) {
+    const { container } = this.state;
+    let { hyperlinks } = container.extended_metadata;
+    if (hyperlinks == null) {
+      container.extended_metadata.hyperlinks = [link];
+    } else {
+      if (typeof hyperlinks === 'string' || hyperlinks instanceof String) {
+        hyperlinks = JSON.parse(hyperlinks);
+      }
+
+      hyperlinks.push(link);
+      container.extended_metadata.hyperlinks = hyperlinks;
+    }
+    this.setState({ container });
+    this.onChange(container);
+  }
+
+  handleRemoveLink(link) {
+    const { container } = this.state;
+    let { hyperlinks } = container.extended_metadata;
+    if (typeof hyperlinks === 'string' || hyperlinks instanceof String) {
+      hyperlinks = JSON.parse(hyperlinks);
+    }
+
+    const index = hyperlinks.indexOf(link);
+    if (index !== -1) {
+      hyperlinks.splice(index, 1);
+      container.extended_metadata.hyperlinks = hyperlinks;
+    }
+
+    this.setState({ container });
+    this.onChange(container);
+  }
+
 
   render() {
-    const { container, menuItems, selectedFilesIds } = this.state;
+    const { container, menuItems, selectedFilesIds, textTemplate } = this.state;
     const { readOnly, disabled } = this.props;
+    const isComparison = container?.extended_metadata?.is_comparison;
     const attachments = container.attachments || [];
-
+    const children = container.children || [];
     // Map status value to react-select option object for controlled value
     let selectedStatus = null;
     if (container && container.extended_metadata && container.extended_metadata.status) {
       selectedStatus = (confirmOptions || []).find(
         (opt) => opt && opt.value === container.extended_metadata.status
       ) || null;
+    }
+
+    let quill = (<span />);
+    if (readOnly || disabled) {
+      quill = (
+        <QuillViewer value={container.extended_metadata.content} />
+      );
+    } else {
+      quill = (
+        <AnalysisEditor
+          height="12em"
+          template={textTemplate}
+          analysis={container}
+          updateTextTemplates={this.updateTextTemplates}
+          onChangeContent={(e) => this.handleInputChange('content', e)}
+        />
+      );
     }
 
     return (
@@ -224,8 +290,28 @@ export default class ContainerCompareAnalyses extends Component {
               treeData={menuItems}
               getPopupContainer={triggerNode => triggerNode.parentNode}
               onChange={this.handleChangeSelectAnalyses.bind(this, menuItems)}
+              disabled={disabled || (isComparison && children.length > 0)}
+              maxTagCount={2}
             />
           </div>
+        </Col>
+        <Col md={12} className="mb-2">
+          <Form.Group>
+            <FormLabel>Content</FormLabel>
+            {quill}
+          </Form.Group>
+          <Form.Group className="my-3">
+            <FormLabel>Description</FormLabel>
+            <FormControl
+              as="textarea"
+              rows={3}
+              label="Description"
+              value={container.description || ''}
+              disabled={readOnly || disabled}
+              // eslint-disable-next-line react/jsx-no-bind
+              onChange={(e) => this.handleInputChange('description', e)}
+            />
+          </Form.Group>
         </Col>
         <Col md={12}>
           <div className="mt-3">
@@ -237,8 +323,18 @@ export default class ContainerCompareAnalyses extends Component {
               onChange={this.onChange}
               rootContainer={this.props.rootContainer}
               index={this.props.index}
+              canAdd={false}
             />
           </div>
+        </Col>
+        <Col md={12}>
+          <HyperLinksSection
+            data={container.extended_metadata.hyperlinks ?? []}
+            onAddLink={this.handleAddLink}
+            onRemoveLink={this.handleRemoveLink}
+            readOnly={readOnly}
+            disabled={disabled}
+          />
         </Col>
       </div>
     );
