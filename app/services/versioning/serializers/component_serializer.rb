@@ -10,7 +10,7 @@ module Versioning
       def field_definitions
         {
           component_properties: {
-            label: 'data',
+            label: 'Component Properties',
             revert: %i[component_properties],
             formatter: json_formatter,
             kind: :json,
