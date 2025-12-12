@@ -673,6 +673,7 @@ export default class Component extends Sample {
         material_group: this.material_group,
         reference: this.reference,
         purity: this.purity,
+        metrics: this.metrics || 'mmmm', // Preserve metrics for unit display
       }
     };
   }
@@ -700,6 +701,13 @@ export default class Component extends Sample {
     component.reference = false;
     component.id = `comp_${Math.random().toString(36).substr(2, 9)}`;
 
+    // Initialize metrics from component_properties if available, otherwise use default
+    if (component_properties && component_properties.metrics) {
+      component.metrics = component_properties.metrics;
+    } else {
+      component.metrics = 'mmmm'; // Default: all metric prefixes set to 'm' (milli)
+    }
+
     if (materialGroup === 'solid') {
       component.setAmount({ value: component.amount_g, unit: 'g' }, sample.amount_l);
     } else if (materialGroup === 'liquid') {
@@ -724,6 +732,13 @@ export default class Component extends Sample {
     // Set the molecule if it exists in component_properties
     if (molecule) {
       comp.molecule = molecule;
+    }
+
+    // Restore metrics from component_properties if available, otherwise use default
+    if (component_properties && component_properties.metrics) {
+      comp.metrics = component_properties.metrics;
+    } else if (!comp.metrics) {
+      comp.metrics = 'mmmm'; // Default: all metric prefixes set to 'm' (milli)
     }
 
     return comp;
