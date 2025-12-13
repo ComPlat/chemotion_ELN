@@ -68,7 +68,7 @@ module ReactionProcessEditor
     end
 
     def removes_compound?
-      %w[REMOVE EVAPORATE DISCARD].include?(activity_name)
+      %w[REMOVE EVAPORATION DISCARD].include?(activity_name)
     end
 
     def can_carry_compound?
@@ -111,7 +111,7 @@ module ReactionProcessEditor
     private
 
     def validate_workup
-      validate_workup_sample if %w[ADD SAVE].include?(activity_name)
+      validate_workup_sample if %w[SAVE].include?(activity_name)
     end
 
     def validate_workup_sample
