@@ -180,15 +180,6 @@ export default class SampleDetailsContainers extends Component {
         <Button
           size="xsm"
           variant="success"
-          onClick={() => this.handleAdd(true)}
-          disabled={!sample.can_update}
-        >
-          <i className="fa fa-plus me-1" />
-          Add comparisons
-        </Button>
-        <Button
-          size="xsm"
-          variant="success"
           onClick={() => this.handleAdd(false)}
           disabled={!sample.can_update}
         >
@@ -234,6 +225,7 @@ export default class SampleDetailsContainers extends Component {
             handleRemove={this.handleRemove}
             handleSubmit={handleSubmit}
             handleMove={this.handleMove}
+            handleAdd={this.handleAdd}
             handleAccordionOpen={this.handleAccordionOpen}
             handleUndo={this.handleUndo}
             toggleAddToReport={this.toggleAddToReport}

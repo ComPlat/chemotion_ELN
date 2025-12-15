@@ -1,6 +1,8 @@
 /* eslint-disable react/prop-types */
 import React, { useState } from 'react';
-import { ButtonToolbar, Accordion, Card } from 'react-bootstrap';
+import {
+  ButtonToolbar, Accordion, Card, Button, OverlayTrigger, Tooltip,
+} from 'react-bootstrap';
 import ContainerComponent from 'src/components/container/ContainerComponent';
 import ContainerCompareAnalyses from 'src/components/container/ContainerCompareAnalyses';
 import ContainerRow from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainersDnd';
@@ -45,7 +47,8 @@ function ReactionsDisplay({
   activeAnalysis,
   handleChange,
   handleCommentTextChange,
-  rootContainer
+  rootContainer,
+  handleAdd,
 }) {
   const [commentBoxVisible, setCommentBoxVisible] = useState(false);
 
@@ -144,9 +147,26 @@ function ReactionsDisplay({
             </Accordion>
           )}
 
-          {analyses.length > 0 && comparisons.length > 0 && (
-            <div style={{ height: '1rem' }} />
-          )}
+          <div className="d-flex justify-content-between align-items-center mb-3 mt-4 border-top pt-3">
+            <div className="d-flex align-items-center gap-2">
+              <h6 className="m-0 fw-bold">Spectra comparison</h6>
+              <OverlayTrigger
+                placement="right"
+                overlay={<Tooltip id="comparison-info-tooltip">Example text for now</Tooltip>}
+              >
+                <i className="fa fa-info-circle text-info" style={{ cursor: 'pointer' }} />
+              </OverlayTrigger>
+            </div>
+            <Button
+              size="xsm"
+              variant="success"
+              onClick={() => handleAdd(true)}
+              disabled={isDisabled}
+            >
+              <i className="fa fa-plus me-1" />
+              Add comparisons
+            </Button>
+          </div>
 
           {comparisons.length > 0 && (
             <Accordion
