@@ -94,25 +94,29 @@ module Chemotion
         get do
           search_string = params[:search_string]
           search_string.chomp!(File.extname(search_string))
+          base_name = search_string.dup
           search_string.chomp!(' EA')
           search_string.sub!(/-?[a-zA-Z]$/, '')
           search_string.sub!(/^[a-zA-Z0-9]+-/, '')
           collection_ids = Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids).map(&:id)
           samples = Sample.by_exact_name(search_string)
                           .joins(:collections_samples)
-                          .where(collections_samples: { collection_id: collection_ids }).uniq
-          samples.select { |s| ElementPolicy.new(current_user, s).update? }
+                          .where(collections_samples: { collection_id: collection_ids })
 
-          ids = samples.pluck(:id)
-          rs = ReactionsSample.where(sample_id: ids)
+          samples = samples.or(Sample.by_short_label(base_name)).includes(:reactions).distinct
+          samples = samples.select { |s| ElementPolicy.new(current_user, s).update? }
+
           res = samples.map do |s|
             {
               id: s.id,
               name: s.name,
               short_label: s.short_label,
-              type: rs.find { |r| r.sample_id == s.id }&.type&.sub(/^Reactions/, '')&.sub(/Sample/, ''),
+              type: s.reactions_samples.map do |rs|
+                rs.type.sub(/^Reactions/, '').sub('Sample', '')
+              end.first,
             }
           end
+
           { samples: res }
         end
 
