@@ -162,13 +162,22 @@ class AttachmentContainer extends Component {
             onClick={() => handleAttachmentDownload(attachment)}
           />
           {largerInbox && (
-            <MoveToAnalysisButton
-              attachment={attachment}
-              largerInbox={largerInbox}
-              sourceType={sourceType}
-            />
+            <>
+              <MoveToAnalysisButton
+                attachment={attachment}
+                largerInbox={largerInbox}
+                sourceType={sourceType}
+                elementType="sample"
+              />
+              <MoveToAnalysisButton
+                attachment={attachment}
+                largerInbox={largerInbox}
+                sourceType={sourceType}
+                elementType="reaction"
+              />
+            </>
           )}
-          <OverlayTrigger placement="top" overlay={filenameTooltip} >
+          <OverlayTrigger placement="top" overlay={filenameTooltip}>
             <span>
               <i className="text-primary fa fa-arrows mx-1" />
               {attachment.filename}
