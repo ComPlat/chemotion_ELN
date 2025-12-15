@@ -41,6 +41,7 @@ class ViewSpectraCompare extends React.Component {
     this.handleChangeSelectAnalyses = this.handleChangeSelectAnalyses.bind(this);
     this.buildOpsByLayout = this.buildOpsByLayout.bind(this);
     this.handleUndo = this.handleUndo.bind(this);
+    this.limitMenuItemsToSelection = this.limitMenuItemsToSelection.bind(this);
   }
 
   componentDidMount() {
@@ -66,6 +67,24 @@ class ViewSpectraCompare extends React.Component {
 
   componentWillUnmount() {
     SpectraStore.unlisten(this.onChange);
+  }
+
+  limitMenuItemsToSelection(menuItems, allowedIds) {
+    if (!menuItems) return [];
+    
+    return menuItems.reduce((acc, item) => {
+      if (!item.children) {
+        if (allowedIds.includes(item.value)) {
+          acc.push(item);
+        }
+      } else {
+        const filteredChildren = this.limitMenuItemsToSelection(item.children, allowedIds);
+        if (filteredChildren.length > 0) {
+          acc.push({ ...item, children: filteredChildren });
+        }
+      }
+      return acc;
+    }, []);
   }
 
   filterMenuItemsBySelectedLayout(container, menuItems) {
@@ -374,6 +393,15 @@ class ViewSpectraCompare extends React.Component {
         }
       }
     }
+    
+    
+    let filteredMenuItems = menuItems;
+    const refAnalyses = this.state.originalAnalyses || container?.extended_metadata?.analyses_compared;
+
+    if (refAnalyses) {
+        const allowedIds = refAnalyses.map(a => a.file.id);
+        filteredMenuItems = this.limitMenuItemsToSelection(menuItems, allowedIds);
+    }
 
     return (
       <Modal.Header className="justify-content-between align-items-baseline">
@@ -381,17 +409,16 @@ class ViewSpectraCompare extends React.Component {
           {modalTitle}
         </span>
         <div className="d-flex gap-1 align-items-center">
-          {/* <TreeSelect
+          <TreeSelect
             style={{ width: 800 }}
             placeholder="Please select"
             treeCheckable={true}
-            treeData={menuItems}
+            treeData={filteredMenuItems}
             value={selectedFiles}
-            onChange={(value, label, extra) => this.handleChangeSelectAnalyses(menuItems, value, extra)}
+            onChange={(value, label, extra) => this.handleChangeSelectAnalyses(filteredMenuItems, value, extra)}
             maxTagCount={2}
             getPopupContainer={(triggerNode) => triggerNode.parentNode}
-            disabled={isComparison}
-          /> */}
+          />
           <Button
             className="ms-auto"
             size="sm"
