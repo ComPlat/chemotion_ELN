@@ -1922,8 +1922,9 @@ ActiveRecord::Schema.define(version: 2026_01_20_183627) do
     t.datetime "deleted_at"
     t.float "weight_amount"
     t.string "weight_unit"
+    t.string "automation_modes", array: true
     t.index ["deleted_at"], name: "index_vessel_templates_on_deleted_at"
-    t.index ["name"], name: "index_vessel_templates_on_name", unique: true
+    t.index ["name"], name: "index_vessel_templates_on_name"
   end
 
   create_table "vessels", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|

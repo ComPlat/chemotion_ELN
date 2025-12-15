@@ -58,8 +58,8 @@ module Import
         amount = method_csv['Default Inj. Vol.'].to_i
         unit = 'mcl'
 
-        if (amount > 1000)
-          amount = amount / 1000
+        if amount > 1000
+          amount /= 1000
           unit = 'ml'
         end
 
@@ -68,7 +68,7 @@ module Import
           detectors: detectors(method_csv['Detectors']),
           mobile_phase: mobile_phase_options(method_csv['Solvent']),
           stationary_phase: [method_csv['Stationary Phase']],
-          default_inject_volume: { value: amount, unit: unit},
+          default_inject_volume: { value: amount, unit: unit },
           description: method_csv['Description'],
           steps: steps(method_csv),
         }

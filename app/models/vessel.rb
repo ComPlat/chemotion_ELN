@@ -43,5 +43,5 @@ class Vessel < ApplicationRecord
                                 class_name: 'ReactionProcessEditor::ReactionProcess'
 
   delegate :details, :material_details, :material_type, :vessel_type, :volume_amount, :volume_unit,
-           to: :vessel_template
+           :automation_modes, to: :vessel_template
 end
