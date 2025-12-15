@@ -13,6 +13,7 @@ module Entities
              :description,
              :short_label,
              :details,
+             :automation_modes,
              :material_details,
              :material_type,
              :vessel_type,
@@ -34,6 +35,10 @@ module Entities
 
       def value
         object.id
+      end
+
+      def automation_modes
+        object.automation_modes
       end
 
       def label

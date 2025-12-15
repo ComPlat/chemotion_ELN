@@ -1,4 +1,0 @@
-Method Name;Detectors;Solvent;Stationary Phase;Default Inj. Vol.;Description;Steps
-ChemASAP_Analyt_LC-SFC-MS_CO2-MeOH_iso-20-5min.lcm;PDA (210,230,256,280,366,400,450), ELSD (30), MS (1000,700);"CHEBI:16526 (); CHEBI:17790 (); CHEBI:17790 (0,1% CHEBI:30751)";Interchim, UP6OH-150/046, OH 6um 150x4.6mm;5000;SFC with 20% MeOH, 5min Isocratic separation;
-ChemASAP_Analyt_LC-SFC-MS_CO2-MeOH_iso-10-10min.lcm;PDA (210,230,256,280,366,400,450), ELSD (30), MS (1000,700);"CHEBI:16526 (); CHEBI:17790 (); CHEBI:17790 (0,1% CHEBI:30751)";Interchim, UP6OH-150/046, OH 6um 150x4.6mm;5000;SFC with 10% MeOH, 10min Isocratic separation;
-ChemASAP_Analyt_LC-SFC-MS_CO2-ACN_iso-10-20min.lcm;PDA (210,230,256,280,366,400,450), ELSD (30), MS (1000,700);"CHEBI:16526 (); CHEBI:38472 (); CHEBI:17790 (0,1% CHEBI:30751)";VDSpher 100 Diol, OH 10um 250x4.6mm;10000;SFC with 10% ACN, 20min Isocratic separation;
