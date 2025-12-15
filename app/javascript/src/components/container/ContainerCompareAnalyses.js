@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Col, FormLabel, FormControl, Row, Form } from 'react-bootstrap';
+import {
+  Col, FormLabel, FormControl, Row, Form, Button,
+} from 'react-bootstrap';
 import TextTemplateStore from 'src/stores/alt/stores/TextTemplateStore';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import { Select } from 'src/components/common/Select';
@@ -24,10 +26,14 @@ export default class ContainerCompareAnalyses extends Component {
       container,
       selectedFilesIds: [],
       menuItems: null,
-      textTemplate: textTemplate && textTemplate.toJS()
+      textTemplate: textTemplate && textTemplate.toJS(),
+      unsavedChanges: false,
+      initialSelectedFilesIds: [],
     };
 
     this.onChange = this.onChange.bind(this);
+    this.handleSave = this.handleSave.bind(this);
+    this.handleReset = this.handleReset.bind(this);
     this.handleInputChange = this.handleInputChange.bind(this);
     this.updateTextTemplates = this.updateTextTemplates.bind(this);
 
@@ -51,7 +57,8 @@ export default class ContainerCompareAnalyses extends Component {
 
     this.setState({
       menuItems,
-      selectedFilesIds: selectedFiles
+      selectedFilesIds: selectedFiles,
+      initialSelectedFilesIds: selectedFiles,
     });
   }
 
@@ -89,7 +96,9 @@ export default class ContainerCompareAnalyses extends Component {
       this.setState({
         container: this.props.container,
         menuItems,
-        selectedFilesIds: selectedFiles
+        selectedFilesIds: selectedFiles,
+        initialSelectedFilesIds: selectedFiles,
+        unsavedChanges: false,
       });
     }
   }
@@ -152,12 +161,78 @@ export default class ContainerCompareAnalyses extends Component {
 
     const { menuItems } = this.buildSelectAnalysesMenu(container);
 
+    const currentIds = selectedFiles.sort();
+    const initialIds = this.state.initialSelectedFilesIds.sort();
+    const hasChanges = JSON.stringify(currentIds) !== JSON.stringify(initialIds);
+
     this.setState({
       selectedFilesIds: selectedFiles,
-      menuItems
+      menuItems,
+      unsavedChanges: hasChanges,
     });
   
     this.onChange(container);
+  }
+
+  handleSave() {
+    const { handleSubmit } = this.props;
+    if (handleSubmit) {
+      handleSubmit();
+    }
+    this.setState((prevState) => ({
+      unsavedChanges: false,
+      initialSelectedFilesIds: prevState.selectedFilesIds,
+    }));
+  }
+
+  handleReset() {
+    // eslint-disable-next-line no-alert
+    if (!window.confirm('Are you sure you want to reset this comparison? This will remove all generated datasets and clear all fields.')) {
+      return;
+    }
+
+    const { container, handleSubmit } = this.props;
+
+    if (container.children && container.children.length > 0) {
+      container.children.forEach(child => {
+        child.is_deleted = true;
+        child._destroy = true;
+      });
+    }
+
+    container.description = '';
+    container.preview_img = null;
+
+    if (container.comparable_info) {
+      container.comparable_info.layout = null;
+      container.comparable_info.list_analyses = [];
+      container.comparable_info.list_attachments = [];
+      container.comparable_info.list_dataset = [];
+    }
+    
+    if (container.extended_metadata) {
+      container.extended_metadata.analyses_compared = [];
+      container.extended_metadata.status = undefined;
+      container.extended_metadata.content = { ops: [{ insert: '\n' }] };
+      container.extended_metadata.hyperlinks = [];
+      container.extended_metadata.kind = null;
+    }
+
+    const { menuItems } = this.buildSelectAnalysesMenu(container);
+    
+    this.setState({
+      container,
+      selectedFilesIds: [],
+      initialSelectedFilesIds: [],
+      menuItems,
+      unsavedChanges: false,
+    });
+
+    this.onChange(container);
+    
+    if (handleSubmit) {
+      handleSubmit();
+    }
   }
   
 
@@ -281,7 +356,34 @@ export default class ContainerCompareAnalyses extends Component {
         </Row>
         <Col md={12}>
           <div style={{ marginBottom: 11 }}>
-            <FormLabel>Analyses</FormLabel>
+            <div className="d-flex align-items-center gap-3 mb-1">
+              <FormLabel className="mb-1">Selection of datasets to be compared</FormLabel>
+              {(isComparison && children.length > 0) ? (
+                <Button
+                  variant="danger"
+                  size="xsm"
+                  onClick={this.handleReset}
+                  title="Reset comparison"
+                  disabled={disabled}
+                  className="px-2"
+                >
+                  <i className="fa fa-times me-1" />
+                  Reset
+                </Button>
+              ) : (
+                <Button
+                  variant="warning"
+                  size="xsm"
+                  onClick={this.handleSave}
+                  title="Save changes"
+                  disabled={!this.state.unsavedChanges || disabled}
+                  className="px-2"
+                >
+                  <i className="fa fa-check me-1" />
+                  Apply
+                </Button>
+              )}
+            </div>
             <TreeSelect
               style={{ width: '100%' }}
               placeholder="Please select"
