@@ -5,6 +5,7 @@
 # Table name: vessel_templates
 #
 #  id               :uuid             not null, primary key
+#  automation_modes :string           is an Array
 #  deleted_at       :datetime
 #  details          :string
 #  material_details :string
@@ -21,7 +22,7 @@
 # Indexes
 #
 #  index_vessel_templates_on_deleted_at  (deleted_at)
-#  index_vessel_templates_on_name        (name) UNIQUE
+#  index_vessel_templates_on_name        (name)
 #
 require 'rails_helper'
 

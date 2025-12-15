@@ -34,7 +34,8 @@ module Import
 
         vessel_template = VesselTemplate.find_or_initialize_by(name: csv['Name'])
 
-        vessel = Vessel.find_or_initialize_by(vessel_template: vessel_template, short_label: short_label, creator: current_user)
+        vessel = Vessel.find_or_initialize_by(vessel_template: vessel_template, short_label: short_label,
+                                              creator: current_user)
 
         amount, unit = csv['Vol.'].scan(/(.*) (.*)/)[0]
 
@@ -43,6 +44,7 @@ module Import
           material_type: csv['Material'],
           volume_amount: amount,
           volume_unit: unit,
+          automation_modes: csv['Mode'].split(MODE_SEPARATOR),
         )
 
         if csv['Vessel/Template'] == 'Vessel'
@@ -54,8 +56,8 @@ module Import
         end
       rescue StandardError => e
         Rails.logger.error("Failed to import Vessel with short_label: #{short_label}: \n #{e.inspect}")
-        Rails.logger.error(vessel.errors.full_messages)
-        Rails.logger.error(vessel_template.errors.full_messages)
+        Rails.logger.error(vessel&.errors&.full_messages)
+        Rails.logger.error(vessel_template&.errors&.full_messages)
       end
 
       def ontology_files
