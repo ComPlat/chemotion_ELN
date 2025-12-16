@@ -30,11 +30,11 @@ import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
 // eslint-disable-next-line max-len
-import {AnalysisVariationLink} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
-import {truncateText} from 'src/utilities/textHelper';
+import { AnalysisVariationLink } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
+import { truncateText } from 'src/utilities/textHelper';
 import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWithButtons';
-import {CommentButton, CommentBox} from 'src/components/common/AnalysisCommentBoxComponent';
-import {UploadField} from 'src/apps/mydb/elements/details/analyses/UploadField';
+import { CommentButton, CommentBox } from 'src/components/common/AnalysisCommentBoxComponent';
+import { UploadField } from 'src/apps/mydb/elements/details/analyses/UploadField';
 
 const nmrMsg = (reaction, container) => {
   const ols = container.extended_metadata?.kind?.split('|')[0].trim();
