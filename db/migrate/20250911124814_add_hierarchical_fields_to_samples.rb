@@ -1,4 +1,4 @@
-class AddHeterogeneousFieldsToSamples < ActiveRecord::Migration[6.1]
+class AddHierarchicalFieldsToSamples < ActiveRecord::Migration[6.1]
   def change
     add_column :samples, :state, :string, comment: 'state of the Hierarchical sample'
     add_column :samples, :color, :string, comment: 'color of the Hierarchical sample'
