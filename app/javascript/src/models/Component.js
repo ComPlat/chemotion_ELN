@@ -246,12 +246,16 @@ export default class Component extends Sample {
   }
 
   /**
-   * Sets the starting concentration and resets row.
+   * Sets the starting concentration and updates volume from existing amount.
+   * Keeps amount_mol as-is and derives amount_l using the new stock concentration.
    * @param {{value: number, unit: string}} amount
    */
   handleStartingConcChange(amount) {
     this.setStartingConc(amount);
-    this.resetRowFields();
+
+    if (this.material_group === 'liquid' && (this.amount_mol ?? 0) > 0 && (this.starting_molarity_value ?? 0) > 0) {
+      this.calculateVolumeFromConcentration();
+    }
   }
 
   /**
@@ -412,7 +416,11 @@ export default class Component extends Sample {
 
     this.setDensity(amount, lockColumn);
 
-    this.resetRowFields();
+    const purity = this.purity || 1.0;
+
+    if (this.material_group === 'liquid' && (this.amount_mol ?? 0) > 0 && this.density > 0) {
+      this.calculateVolumeFromDensity(purity);
+    }
   }
 
   /**
