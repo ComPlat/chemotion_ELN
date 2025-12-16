@@ -739,8 +739,11 @@ module ReportHelpers
 
   def custom_column_query(table, col, selection, user_id, attrs)
     column_map = {
-      'user_labels' => "labels_by_user_sample(#{user_id}, s_id) as user_labels",
-      'literature' => "literatures_by_element('Sample', s_id) as literatures",
+      # Use samples table alias `s.id` for functions that operate on sample IDs.
+      # This works across all export queries, including components exports
+      # where `s_id` is not selected.
+      'user_labels' => "labels_by_user_sample(#{user_id}, s.id) as user_labels",
+      'literature' => "literatures_by_element('Sample', s.id) as literatures",
       'cas' => "s.xref->>'cas' as cas",
       'refractive_index' => "s.xref->>'refractive_index' as refractive_index",
       'flash_point' => "s.xref->>'flash_point' as flash_point",
