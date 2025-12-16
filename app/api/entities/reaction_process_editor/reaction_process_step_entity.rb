@@ -5,7 +5,7 @@ module Entities
     class ReactionProcessStepEntity < Grape::Entity
       expose(
         :id, :name, :position, :locked, :reaction_process_id, :reaction_id,
-        :label, :final_conditions, :select_options, :step_automation_status, :automation_status
+        :label, :final_conditions, :select_options, :actual_automation_status, :automation_status, :automation_mode
       )
 
       expose :activities, using: 'Entities::ReactionProcessEditor::ReactionProcessActivityEntity'

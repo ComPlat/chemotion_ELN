@@ -119,6 +119,8 @@ module ReactionProcessEditor
             requires :reaction_process_step, type: Hash do
               optional :name
               optional :locked
+              optional :automation_mode
+              optional :automation_status
             end
           end
 
