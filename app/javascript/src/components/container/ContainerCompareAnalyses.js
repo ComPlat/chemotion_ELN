@@ -354,6 +354,24 @@ export default class ContainerCompareAnalyses extends Component {
             </div>
           </Col>
         </Row>
+        <Col md={12} className="mb-2">
+          <Form.Group>
+            <FormLabel>Content</FormLabel>
+            {quill}
+          </Form.Group>
+          <Form.Group className="my-3">
+            <FormLabel>Description</FormLabel>
+            <FormControl
+              as="textarea"
+              rows={3}
+              label="Description"
+              value={container.description || ''}
+              disabled={readOnly || disabled}
+              // eslint-disable-next-line react/jsx-no-bind
+              onChange={(e) => this.handleInputChange('description', e)}
+            />
+          </Form.Group>
+        </Col>
         <Col md={12}>
           <div style={{ marginBottom: 11 }}>
             <div className="d-flex align-items-center gap-3 mb-1">
@@ -396,24 +414,6 @@ export default class ContainerCompareAnalyses extends Component {
               maxTagCount={2}
             />
           </div>
-        </Col>
-        <Col md={12} className="mb-2">
-          <Form.Group>
-            <FormLabel>Content</FormLabel>
-            {quill}
-          </Form.Group>
-          <Form.Group className="my-3">
-            <FormLabel>Description</FormLabel>
-            <FormControl
-              as="textarea"
-              rows={3}
-              label="Description"
-              value={container.description || ''}
-              disabled={readOnly || disabled}
-              // eslint-disable-next-line react/jsx-no-bind
-              onChange={(e) => this.handleInputChange('description', e)}
-            />
-          </Form.Group>
         </Col>
         <Col md={12}>
           <div className="mt-3">
