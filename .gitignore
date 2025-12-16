@@ -233,3 +233,6 @@ public/sprite.png
 
 *storybook.log
 storybook-static
+
+# Reaction Process Editor enhancement branch, data sources.
+/data/reaction-process-editor/*/*.xlsx
