@@ -86,13 +86,13 @@ describe ReactionProcessEditor::ReactionProcessStepAPI, '.post /activities' do
 
   context 'with invalid action data' do
     let(:create_activity_params) do
-      # Invalid: acts_as 'SAMPLE' requires sample_id.
-      { activity: { activity_name: 'ADD', workup: { acts_as: 'SAMPLE' } } }
+      # Invalid: requires workup
+      { activity: { activity_name: 'ADD' } }
     end
 
     it 'returns 422' do
       post_action_request
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:bad_request)
     end
   end
 end

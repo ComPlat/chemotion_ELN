@@ -58,7 +58,7 @@ module ReactionProcessEditor
       return 'STEP_COMPLETED' if reaction_process_activities.all?(&:automation_completed?)
       return 'STEP_CAN_RUN' if predecessors.none?(&:halts_automation?)
 
-      automation_status || 'STEP_HALT_BY_PRECEDING'
+      automation_status.presence || 'STEP_HALT_BY_PRECEDING'
     end
 
     # We assemble an Array of activity_preconditions which the ReactionActionEntity then indexes by its position.
