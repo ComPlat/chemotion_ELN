@@ -229,6 +229,16 @@ export default class ReactionDetailsContainers extends Component {
     this.setState({ activeContainer: key });
   }
 
+  // eslint-disable-next-line class-methods-use-this
+  renderAnalysesHint() {
+    return (
+      <span className="text-muted me-3 small" style={{ maxWidth: '60%' }}>
+        This tab can be used for reaction-related data (e.g., process control, in situ).
+        For sample data (e.g., characterization), use the sample analysis tab.
+      </span>
+    );
+  }
+
   addButton() {
     const { readOnly, reaction, handleReactionChange } = this.props;
     if (!readOnly) {
@@ -362,10 +372,7 @@ export default class ReactionDetailsContainers extends Component {
         return (
           <div>
             <div className="d-flex justify-content-between align-items-center mb-3">
-              <span className="text-muted me-3 small" style={{ maxWidth: '60%' }}>
-                This tab can be used for reaction-related data (e.g., process control, in situ).
-                For sample data (e.g., characterization), use the sample analysis tab.
-              </span>
+              {this.renderAnalysesHint()}
               <ButtonToolbar className="gap-2">
                 <CommentButton toggleCommentBox={this.toggleCommentBox} size="xsm" />
                 {this.addButton()}
@@ -434,10 +441,15 @@ export default class ReactionDetailsContainers extends Component {
       }
 
       return (
-        <div className="d-flex align-items-center justify-content-between mb-2 mt-4 mx-3">
-          <span className="ms-3"> There are currently no Analyses. </span>
-          <div className="gap-2 btn-toolbar">
-            {this.addButton()}
+        <div>
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            {this.renderAnalysesHint()}
+            <ButtonToolbar className="gap-2">
+              {this.addButton()}
+            </ButtonToolbar>
+          </div>
+          <div className="d-flex align-items-center">
+            <span className="ms-3"> There are currently no Analyses. </span>
           </div>
         </div>
       );
@@ -445,7 +457,10 @@ export default class ReactionDetailsContainers extends Component {
 
     return (
       <div className="m-4">
-        There are currently no Analyses.
+        {this.renderAnalysesHint()}
+        <div className="mt-2">
+          There are currently no Analyses.
+        </div>
       </div>
     );
   }
