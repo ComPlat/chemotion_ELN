@@ -1561,9 +1561,9 @@ class Material extends Component {
         placement="top"
         overlay={(
           <Tooltip id="nested-reference-tooltip">
-            Outer: Weight % Reference
+            Outer Circle: Select Weight % Reference
             <br />
-            Inner: Molar Reference
+            Inner Circle: Select Molar Reference
           </Tooltip>
         )}
       >

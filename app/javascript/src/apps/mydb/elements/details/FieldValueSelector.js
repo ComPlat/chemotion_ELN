@@ -169,16 +169,28 @@ function FieldValueSelector({
     setIsEditing(true);
   };
 
-  let tooltipMessage = `Current field: ${selectedField}`;
-  if (selectedField === 'weight percentage') {
-    tooltipMessage = `${tooltipMessage} in decimal format (e.g.: 0.5 = 50%)`;
-  }
+  let tooltipMessage = (
+    <div>
+      {`current: equiv. based on ${selectedField}`}
+      {selectedField === 'weight percentage' && ' in decimal format (e.g.: 0.5 = 50%)'}
+    </div>
+  );
+
   if (disableSpecificField && selectedField === 'weight percentage') {
     if (weightPercentageReference) {
-      tooltipMessage = 'weight percentage field is disabled for reference material';
+      tooltipMessage = (<div>weight percentage field is disabled for reference material</div>);
     } else {
-      tooltipMessage = 'select a reference material for weight percentage calculation'
-      + ' and assign target amount to enable weight percentage field';
+      tooltipMessage = (
+        <div>
+          To use the weight percentage feature:
+          <br />
+          1- select a reference material (upon selection marked as green circle).
+          <br />
+          2- assign a target amount to this reference.
+          <br />
+          3- edit the weight percentage field and assign a value between 0 and 1 interval.
+        </div>
+      );
     }
   }
 

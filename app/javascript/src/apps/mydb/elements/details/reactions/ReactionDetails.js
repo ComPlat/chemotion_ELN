@@ -1,11 +1,11 @@
 /* eslint-disable react/sort-comp */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable react/require-default-props */
-import React, { Component } from 'react';
+import React, { Component, createRef } from 'react';
 import Aviator from 'aviator';
 import PropTypes from 'prop-types';
 import {
-  Button, Tabs, Tab, OverlayTrigger, Tooltip, ButtonToolbar, Dropdown
+  Button, Tabs, Tab, OverlayTrigger, Tooltip, ButtonToolbar, Dropdown, Modal, Overlay
 } from 'react-bootstrap';
 import { findIndex, isEmpty } from 'lodash';
 
@@ -54,12 +54,12 @@ import { commentActivation } from 'src/utilities/CommentHelper';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 import { ShowUserLabels } from 'src/components/UserLabels';
-import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 // eslint-disable-next-line import/no-named-as-default
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 import ReactionSchemeGraphic from 'src/apps/mydb/elements/details/reactions/ReactionSchemeGraphic';
 import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
 import isEqual from 'lodash/isEqual';
+import DocumentationButton from 'src/components/common/DocumentationButton';
 
 const handleProductClick = (product) => {
   const uri = Aviator.getCurrentURI();
@@ -103,9 +103,25 @@ export default class ReactionDetails extends Component {
     this.onTabPositionChanged = this.onTabPositionChanged.bind(this);
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
     this.handleReactionSchemeChange = this.handleReactionSchemeChange.bind(this);
+    this.openWtInfoModal = this.openWtInfoModal.bind(this);
+    this.closeWtInfoModal = this.closeWtInfoModal.bind(this);
+    this.confirmSchemeChange = this.confirmSchemeChange.bind(this);
+    this.cancelSchemeChange = this.cancelSchemeChange.bind(this);
+    this.state.showWtInfoModal = false;
+    this.state.showSchemeChangeConfirm = false;
+    this.state.pendingSchemeType = null;
+    this.schemeDropdownRef = createRef();
     if (!reaction.reaction_svg_file) {
       this.updateGraphic();
     }
+  }
+
+  openWtInfoModal() {
+    this.setState({ showWtInfoModal: true });
+  }
+
+  closeWtInfoModal() {
+    this.setState({ showWtInfoModal: false });
   }
 
   componentDidMount() {
@@ -164,8 +180,11 @@ export default class ReactionDetails extends Component {
     const nextActiveTab = nextState.activeTab;
     const nextActiveAnalysisTab = nextState.activeAnalysisTab;
     const nextVisible = nextState.visible;
+    const nextShowSchemeChangeConfirm = nextState.showSchemeChangeConfirm;
+    const nextShowWtInfoModal = nextState.showWtInfoModal;
     const {
-      reaction: reactionFromCurrentState, activeTab, visible, activeAnalysisTab
+      reaction: reactionFromCurrentState, activeTab, visible, activeAnalysisTab,
+      showSchemeChangeConfirm, showWtInfoModal
     } = this.state;
     return (
       reactionFromNextProps.id !== reactionFromCurrentState.id
@@ -175,6 +194,8 @@ export default class ReactionDetails extends Component {
       || nextActiveTab !== activeTab || nextVisible !== visible
       || nextActiveAnalysisTab !== activeAnalysisTab
       || reactionFromNextState !== reactionFromCurrentState
+      || nextShowSchemeChangeConfirm !== showSchemeChangeConfirm
+      || nextShowWtInfoModal !== showWtInfoModal
     );
   }
 
@@ -514,15 +535,136 @@ export default class ReactionDetails extends Component {
   }
 
   handleReactionSchemeChange(type) {
+    const { reaction } = this.state;
+
+    // If switching FROM weight_percentage to another scheme, show confirmation
+    if (reaction.weight_percentage && type !== 'weight_percentage') {
+      this.setState({
+        showSchemeChangeConfirm: true,
+        pendingSchemeType: type,
+      });
+      return;
+    }
+
+    this.applySchemeChange(type);
+  }
+
+  /**
+   * Applies the scheme change without confirmation.
+   * Called directly when not switching from weight_percentage, or after user confirms.
+   *
+   * @param {string} type - The scheme type to switch to ('default', 'gaseous', 'weight_percentage')
+   */
+  applySchemeChange(type) {
+    const { reaction } = this.state;
+
     if (type === 'default') {
+      // Reset weight_percentage_reference for all materials when leaving weight percentage mode
+      this.resetWeightPercentagedependencies(reaction);
+      // Recalculate equivalents for starting materials and reactants
+      this.recalculateEquivalentsForMaterials(reaction);
+
       this.handleInputChange('weight_percentage', false);
       this.handleInputChange('gaseous', false);
     } else if (type === 'weight_percentage') {
       this.handleInputChange('weight_percentage', true);
       this.handleInputChange('gaseous', false);
+      this.assignWeightPercentageReference(reaction);
     } else if (type === 'gaseous') {
+      // Reset weight percentage data when switching to gaseous from weight_percentage
+      this.resetWeightPercentagedependencies(reaction);
+      this.recalculateEquivalentsForMaterials(reaction);
+
       this.handleInputChange('gaseous', true);
       this.handleInputChange('weight_percentage', false);
+    }
+  }
+
+  /**
+   * Confirms the pending scheme change and applies it.
+   * Called when user clicks "Confirm" in the scheme change confirmation dialog.
+   */
+  confirmSchemeChange() {
+    const { pendingSchemeType } = this.state;
+    this.setState({
+      showSchemeChangeConfirm: false,
+      pendingSchemeType: null,
+    }, () => {
+      if (pendingSchemeType) {
+        this.applySchemeChange(pendingSchemeType);
+      }
+    });
+  }
+
+  /**
+   * Cancels the pending scheme change.
+   * Called when user clicks "Discard" in the scheme change confirmation dialog.
+   */
+  cancelSchemeChange() {
+    this.setState({
+      showSchemeChangeConfirm: false,
+      pendingSchemeType: null,
+    });
+  }
+
+  /**
+   * Resets weight_percentage_reference to false for all materials in the reaction.
+   * Called when switching from weight percentage scheme to default or gaseous scheme.
+   *
+   * @param {Object} reaction - The reaction object containing materials
+   */
+  // eslint-disable-next-line class-methods-use-this
+  resetWeightPercentagedependencies(reaction) {
+    const allMaterials = [
+      ...reaction.starting_materials,
+      ...reaction.reactants,
+      ...reaction.products,
+      ...reaction.solvents,
+    ];
+
+    allMaterials.forEach((material) => {
+      material.weight_percentage_reference = false;
+      material.weight_percentage = null;
+    });
+  }
+
+  /**
+   * Recalculates equivalent values for starting materials and reactants.
+   * Uses the reference material's moles to compute each material's equivalent.
+   *
+   * Formula: equivalent = material.amount_mol / referenceMaterial.amount_mol
+   *
+   * @param {Object} reaction - The reaction object containing materials
+   */
+  // eslint-disable-next-line class-methods-use-this
+  recalculateEquivalentsForMaterials(reaction) {
+    const referenceMaterial = reaction.referenceMaterial;
+    if (!referenceMaterial || !referenceMaterial.amount_mol) {
+      return;
+    }
+
+    const materialsToUpdate = [
+      ...reaction.starting_materials,
+      ...reaction.reactants,
+    ];
+
+    materialsToUpdate.forEach((material) => {
+      if (!material.reference && material.amount_mol) {
+        material.equivalent = material.amount_mol / referenceMaterial.amount_mol;
+      }
+    });
+  }
+
+  /**
+   * Assigns weight_percentage_reference of the first product to true for a reaction.
+   * Called when switching from default or gaseous scheme to weight percentage scheme.
+   *
+   * @param {Object} reaction - The reaction object containing materials
+   */
+  // eslint-disable-next-line class-methods-use-this
+  assignWeightPercentageReference(reaction) {
+    if (reaction.products.length > 0) {
+      reaction.products[0].weight_percentage_reference = true;
     }
   }
 
@@ -576,47 +718,122 @@ export default class ReactionDetails extends Component {
   }
 
   render() {
-    const { reaction, visible, activeTab } = this.state;
+    const {
+      reaction, visible, activeTab, showSchemeChangeConfirm
+    } = this.state;
     this.updateReactionVesselSize(reaction);
-    let schemeType = 'default';
+    let schemeType = 'Default';
+    let documentationLink;
+    let documentComponent = null;
     if (reaction.gaseous) {
-      schemeType = 'gaseous';
+      schemeType = 'Gaseous';
+      documentationLink = 'https://chemotion.net/docs/eln/ui/elements/reactions'
+        + '?_highlight=weight&_highlight=p#gas-phase-reaction-scheme';
+      documentComponent = (
+        <DocumentationButton
+          link={documentationLink}
+          overlayMessage="Click to open link to the documentation of the gas phase feature"
+          className="ms-3 flex-shrink-0"
+        />
+      );
     } else if (reaction.weight_percentage) {
-      schemeType = 'weight percentage';
+      schemeType = 'Weight Percentage';
+      documentationLink = 'https://chemotion.net/docs/eln/ui/elements/reactions'
+        + '?_highlight=weight&_highlight=p#weight-percentage-reaction-scheme';
+      documentComponent = (
+        <DocumentationButton
+          link={documentationLink}
+          overlayMessage="Click to open link to the documentation of the weight percentage feature"
+          className="ms-3 flex-shrink-0"
+          omitDocumentationWord
+        />
+      );
     }
     const tabContentsMap = {
       scheme: (
         <Tab eventKey="scheme" title="Scheme" key={`scheme_${reaction.id}`}>
-          <Dropdown>
-            <Dropdown.Toggle variant="info" size="sm" id="scheme-type-dropdown">
-              <i className="fa fa-cog" />
-              <span className="ms-1">
-                Current Scheme (
-                {schemeType}
-                )
-              </span>
-            </Dropdown.Toggle>
-            <Dropdown.Menu>
-              <Dropdown.Item
-                active={!reaction.gaseous && !reaction.weight_percentage}
-                onClick={() => this.handleReactionSchemeChange('default')}
-              >
-                Default Scheme
-              </Dropdown.Item>
-              <Dropdown.Item
-                active={reaction.gaseous}
-                onClick={() => this.handleReactionSchemeChange('gaseous')}
-              >
-                Gas Scheme
-              </Dropdown.Item>
-              <Dropdown.Item
-                active={reaction.weight_percentage}
-                onClick={() => this.handleReactionSchemeChange('weight_percentage')}
-              >
-                Weight Percentage Scheme
-              </Dropdown.Item>
-            </Dropdown.Menu>
-          </Dropdown>
+          <div className="d-flex align-items-center">
+            <Dropdown ref={this.schemeDropdownRef}>
+              <Dropdown.Toggle variant="info" size="sm" id="scheme-type-dropdown">
+                <i className="fa fa-cog" />
+                <span className="ms-1">
+                  Current Scheme:&nbsp;
+                  {schemeType}
+                </span>
+              </Dropdown.Toggle>
+              <Dropdown.Menu>
+                <Dropdown.Item
+                  active={!reaction.gaseous && !reaction.weight_percentage}
+                  onClick={() => this.handleReactionSchemeChange('default')}
+                >
+                  Default Scheme
+                </Dropdown.Item>
+                <Dropdown.Item
+                  active={reaction.gaseous}
+                  onClick={() => this.handleReactionSchemeChange('gaseous')}
+                >
+                  Gas Scheme
+                </Dropdown.Item>
+                <Dropdown.Item
+                  active={reaction.weight_percentage}
+                  onClick={() => this.handleReactionSchemeChange('weight_percentage')}
+                >
+                  Weight Percentage Scheme
+                </Dropdown.Item>
+              </Dropdown.Menu>
+            </Dropdown>
+            <Overlay
+              target={() => this.schemeDropdownRef.current}
+              show={showSchemeChangeConfirm}
+              placement="bottom"
+              rootClose
+              onHide={() => this.cancelSchemeChange()}
+            >
+              <Tooltip placement="bottom" className="in" id="scheme-change-confirm-tooltip">
+                Any Assigned Weight percentage reference and wt% values in wt% fields
+                <br />
+                of materials will be deleted.
+                <br />
+                Switch scheme?
+                <br />
+                <ButtonToolbar className="gap-2 justify-content-center mt-1">
+                  <Button
+                    variant="danger"
+                    size="xxsm"
+                    onClick={() => this.confirmSchemeChange()}
+                  >
+                    Confirm
+                  </Button>
+                  <Button
+                    variant="warning"
+                    size="xxsm"
+                    onClick={() => this.cancelSchemeChange()}
+                  >
+                    Discard
+                  </Button>
+                </ButtonToolbar>
+              </Tooltip>
+            </Overlay>
+            {reaction.weight_percentage && (
+              <>
+                <OverlayTrigger
+                  placement="top"
+                  overlay={<Tooltip id="wt-info-tooltip">Weight percentage scheme info</Tooltip>}
+                >
+                  <Button
+                    variant="outline-info"
+                    size="sm"
+                    className="ms-2 d-flex justify-content-center"
+                    onClick={this.openWtInfoModal}
+                    title="Weight percentage scheme info"
+                  >
+                    <i className="fa fa-info-circle" />
+                  </Button>
+                </OverlayTrigger>
+                {documentComponent}
+              </>
+            )}
+          </div>
           {
             !reaction.isNew && <CommentSection section="reaction_scheme" element={reaction} />
           }
@@ -725,6 +942,32 @@ export default class ReactionDetails extends Component {
             this.handleReactionChange(reaction, { updateGraphic: true });
           }}
         />
+        <Modal show={this.state.showWtInfoModal} onHide={this.closeWtInfoModal} centered>
+          <Modal.Header closeButton>
+            <Modal.Title>Weight Percentage Reaction Scheme</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <p>
+              The weight percentage scheme lets you set a reference material and a
+              target mass. Other materials can be assigned a weight percentage
+              (wt%) in the interval [0,1], and their mass will be computed as equal to
+              target_mass * wt%.
+            </p>
+            <p>
+              <strong>Key points: </strong>
+              select a reference material, set its target amount, enter
+              wt% for desired starting materials/reactants, and the system will
+              automatically recalculate amounts of those materials.
+            </p>
+            <p>
+              For full details and examples see the
+              <a href={documentationLink} target="_blank" rel="noreferrer" className="ms-1">documentation</a>
+            </p>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={this.closeWtInfoModal}>Close</Button>
+          </Modal.Footer>
+        </Modal>
         {this.state.sfn && <ScifinderSearch el={reaction} />}
         <div className="tabs-container--with-borders">
           <ElementDetailSortTab

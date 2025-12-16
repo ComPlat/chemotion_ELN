@@ -17,7 +17,7 @@ module UnitConvertable
         amount_g
       when 'l'
         if has_molarity
-          mol_weight = (decoupled? ? molecular_mass : molecule.molecular_weight) || 0
+          mol_weight = (decoupled? ? molecular_mass : molecule&.molecular_weight) || 0
           secure_purity = purity || 1.0
           mol_weight.zero? ? 0 : (amount_g * secure_purity) / (molarity_value * mol_weight)
         elsif has_density
@@ -26,7 +26,7 @@ module UnitConvertable
           0
         end
       when 'mol'
-        mol_weight = (decoupled? ? molecular_mass : molecule.molecular_weight) || 0
+        mol_weight = (decoupled? ? molecular_mass : molecule&.molecular_weight) || 0
         mol_weight.zero? ? 0 : amount_g * (purity || 1.0) / mol_weight
       else
         amount_g
@@ -60,7 +60,7 @@ module UnitConvertable
         value / 1000.0;
       when 'l'
         if has_molarity
-          mol_weight = (decoupled? ? molecular_mass : molecule.molecular_weight) || 0
+          mol_weight = (decoupled? ? molecular_mass : molecule&.molecular_weight) || 0
           value * molarity_value * mol_weight
         elsif has_density
           value * (density || 1.0) * 1000
@@ -68,7 +68,7 @@ module UnitConvertable
           0
         end
       when 'mol'
-        mol_weight = (decoupled? ? molecular_mass : molecule.molecular_weight) || 0
+        mol_weight = (decoupled? ? molecular_mass : molecule&.molecular_weight) || 0
         value / (purity || 1.0) * mol_weight
       else
         value
@@ -117,7 +117,7 @@ module UnitConvertable
   end
 
   def amount_ml(type = 'target')
-    return if self.molecule.is_partial
+    return if self.molecule&.is_partial
 
     value = self["#{type}_amount_value"] || 0.0
     unit = self["#{type}_amount_unit"]
