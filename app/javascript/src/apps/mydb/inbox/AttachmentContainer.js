@@ -1,12 +1,14 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { DragSource } from 'react-dnd';
-import { Button, ButtonGroup, ButtonToolbar, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import {
+  Button, ButtonGroup, ButtonToolbar, OverlayTrigger, Tooltip
+} from 'react-bootstrap';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import Utils from 'src/utilities/Functions';
 
-import MoveToAnalysisButton from 'src/apps/mydb/inbox/MoveToAnalysisButton';
+import MoveToAnalysis from 'src/apps/mydb/inbox/MoveToAnalysis';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
 import ArrayUtils from 'src/utilities/ArrayUtils';
 import { formatDate } from 'src/utilities/timezoneHelper';
@@ -22,7 +24,7 @@ const collectSource = (connect, monitor) => ({
   isDragging: monitor.isDragging()
 });
 
-const handleAttachmentDownload = attachment => Utils.downloadFile({
+const handleAttachmentDownload = (attachment) => Utils.downloadFile({
   contents: `/api/v1/attachments/${attachment && attachment.id}`, name: attachment && attachment.filename
 });
 
@@ -53,7 +55,7 @@ class AttachmentContainer extends Component {
   }
 
   toggleTooltip() {
-    this.setState(prevState => ({ ...prevState, deletingTooltip: !prevState.deletingTooltip }));
+    this.setState((prevState) => ({ ...prevState, deletingTooltip: !prevState.deletingTooltip }));
   }
 
   toggleAttachmentsCheckbox(id) {
@@ -84,7 +86,6 @@ class AttachmentContainer extends Component {
     const { checkedIds } = this.state;
     return (isSelected || ArrayUtils.isValInArray(checkedIds || [], attachment.id));
   }
-
 
   render() {
     const {
@@ -131,7 +132,8 @@ class AttachmentContainer extends Component {
         <i
           className="fa fa-trash-o mt-1"
           onClick={() => this.toggleTooltip()}
-          role="button" />
+          role="button"
+        />
       </OverlayTrigger>
     );
 
@@ -162,20 +164,11 @@ class AttachmentContainer extends Component {
             onClick={() => handleAttachmentDownload(attachment)}
           />
           {largerInbox && (
-            <>
-              <MoveToAnalysisButton
-                attachment={attachment}
-                largerInbox={largerInbox}
-                sourceType={sourceType}
-                elementType="sample"
-              />
-              <MoveToAnalysisButton
-                attachment={attachment}
-                largerInbox={largerInbox}
-                sourceType={sourceType}
-                elementType="reaction"
-              />
-            </>
+            <MoveToAnalysis
+              attachment={attachment}
+              largerInbox={largerInbox}
+              sourceType={sourceType}
+            />
           )}
           <OverlayTrigger placement="top" overlay={filenameTooltip}>
             <span>
@@ -192,7 +185,8 @@ class AttachmentContainer extends Component {
             >
               {formatDate(attachment.created_at)}
             </span>
-          )}
+          )
+}
       </div>,
       { dropEffect: 'move' }
     );
@@ -200,7 +194,7 @@ class AttachmentContainer extends Component {
 }
 
 export default DragSource(
-  props => props.sourceType,
+  (props) => props.sourceType,
   dataSource,
   collectSource
 )(AttachmentContainer);
