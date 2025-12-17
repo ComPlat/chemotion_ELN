@@ -765,6 +765,23 @@ export default class Sample extends Element {
   }
 
   /**
+   * Handles mixture-specific logic when amount changes.
+   * Captures previous state, clears reference_component_changed flag, and updates component amounts.
+   * @returns {void}
+   */
+  handleMixtureAmountChange() {
+    // When amount_g or amount_l is manually changed by user, clear the reference_component_changed flag
+    // so that amount_mol will be calculated from amount_g instead of using reference component's amount_mol
+    // Only do this for user-initiated changes, not programmatic changes (like during reference component switch)
+    // For mixture samples, always capture the previous state before changing amount
+    this.storePreviousAmountState();
+    this.sample_details.reference_component_changed = false;
+
+    // Update mixture components' amount_mol based on new total mass and reference component
+    this.updateMixtureComponentAmounts();
+  }
+
+  /**
    * Sets the amount and unit for the sample.
    * For mixture samples with components, automatically triggers recalculation of:
    * - Component volumes (when setting liters)
@@ -780,16 +797,9 @@ export default class Sample extends Element {
     // Validate input parameters - early return if invalid
     if (!amount.unit || Number.isNaN(amount.value)) return;
 
-    // For mixture samples, always capture the previous state before changing amount
+    // For mixture samples, handle mixture-specific logic before setting amount
     if (this.isMixture()) {
-      // When amount_g or amount_l is manually changed by user, clear the reference_component_changed flag
-      // so that amount_mol will be calculated from amount_g instead of using reference component's amount_mol
-      // Only do this for user-initiated changes, not programmatic changes (like during reference component switch)
-      this.storePreviousAmountState();
-      this.sample_details.reference_component_changed = false;
-
-      // Update mixture components' amount_mol based on new total mass and reference component
-      this.updateMixtureComponentAmounts();
+      this.handleMixtureAmountChange();
     }
 
     // Set the basic amount properties
@@ -1303,7 +1313,7 @@ export default class Sample extends Element {
       return 0;
     }
 
-    const hasReferenceChanged = this.sample_details?.reference_component_changed || true;
+    const hasReferenceChanged = this.sample_details?.reference_component_changed || false;
     const lockReactionEquivColumn = this.getLockReactionEquivColumn();
     const relMolWeight = referenceComponent.relative_molecular_weight;
     const prevMol = this.sample_details?.previous_amount_mol;
@@ -1355,7 +1365,7 @@ export default class Sample extends Element {
     // Check if the reference component has been changed (flag set during reference change)
     // Default to false when the flag is not set, so we only treat it as "changed"
     // when some other logic explicitly marks it as true.
-    const hasReferenceChanged = this.sample_details?.reference_component_changed ?? false;
+    const hasReferenceChanged = this.sample_details?.reference_component_changed || false;
     const lockReactionEquivColumn = this.getLockReactionEquivColumn();
 
     // Get the reference component's relative molecular weight
@@ -1668,7 +1678,7 @@ export default class Sample extends Element {
   get reference_relative_molecular_weight() {
     if (!this.reference_component) { return null; }
 
-    return this.reference_component.component_properties?.relative_molecular_weight;
+    return this.reference_component.relative_molecular_weight;
   }
 
   /**
@@ -2311,7 +2321,10 @@ export default class Sample extends Element {
       });
     }
     this.sample_details.total_mixture_mass_g = totalMass;
-    this.setAmount({ value: totalMass, unit: 'g' });
+    // Set amount directly without triggering updateMixtureComponentAmounts()
+    // to preserve user's amount_mol inputs when calculating total mass
+    this.amount_value = totalMass;
+    this.amount_unit = 'g';
 
     // Calculation of the density in g/ml = total mass/total volume. So density is recalculated here.
     this.updateMixtureDensity();
@@ -2399,41 +2412,6 @@ export default class Sample extends Element {
 
     this.equivalent = parentAmountMol / referenceMaterial.amount_mol;
     return true;
-  }
-
-  /**
-   * Applies reference-based properties (specifically `equivalent`) to the current sample
-   * when added to a reaction. This logic is only applied for **mixture** samples.
-   *
-   * - If the sample is marked as a reference, its equivalent is set to `1`.
-   * - If the sample is not a reference and a valid `referenceMaterial` exists
-   *   with `amount_mol > 0`, the equivalent is calculated as:
-   *     `this.amount_mol / referenceMaterial.amount_mol`
-   *   This is only done for tagGroups: `"starting_materials"` or `"reactants"`.
-   *
-   * @param {Object} reaction - The reaction object containing the reference material.
-   * @param {string} tagGroup - The group the sample belongs to (e.g., 'starting_materials', 'reactants').
-   */
-  applyReferenceProperties(reaction, tagGroup) {
-    if (!this.isMixture()) return;
-    const { referenceMaterial } = reaction;
-
-    // Reference sample: set equivalent to 1
-    if (this.reference) {
-      this.equivalent = 1;
-      return;
-    }
-
-    // Non-reference sample: copy from referenceMaterial if valid
-    if (
-      referenceMaterial
-      && referenceMaterial.amount_mol > 0
-      && (tagGroup === 'starting_materials' || tagGroup === 'reactants')
-    ) {
-      // Always set equivalent to 1 for mixture samples in reactants/starting_materials
-      // regardless of isNew status to ensure proper initialization
-      this.equivalent = this.amount_mol / referenceMaterial.amount_mol;
-    }
   }
 
   /**

@@ -89,6 +89,8 @@ describe('Component', () => {
       const amount = { value: 2, unit: 'mol/l' };
       const totalVolume = 10; // L
 
+      const previousMolarity = component.molarity_value;
+
       component.handleConcentrationChange(
         amount,
         totalVolume,
@@ -96,7 +98,9 @@ describe('Component', () => {
         false
       );
       expect(component.starting_molarity_value).toBe(amount.value);
-      expect(component.molarity_value).toBe(0); // Should reset amount to 0
+      // Starting concentration change should not forcibly reset total concentration;
+      // it only updates starting_molarity_* and leaves molarity_value unchanged.
+      expect(component.molarity_value).toBe(previousMolarity);
     });
 
     it('should handle target concentration change', () => {
@@ -184,23 +188,22 @@ describe('Component', () => {
   });
 
   describe('handleDensityChange', () => {
-    it('should set density and reset other attributes of the component', () => {
+    it('should set density and recompute volume for liquids without changing amount_mol', () => {
       const density = { unit: 'g/ml', value: 2.0 };
-      component.amount_l = 2.0;
+      component.material_group = 'liquid';
       component.amount_mol = 0.5;
-      component.purity = 0.5;
+      component.purity = 1.0;
 
       component.handleDensityChange(density, false);
 
       expect(component.density).toEqual(2.0);
       expect(component.starting_molarity_value).toBe(0);
+      expect(component.amount_mol).toBe(0.5);
 
-      // resetRowFields
-      expect(component.amount_l).toBe(0);
-      expect(component.amount_mol).toBe(0);
-      expect(component.molarity_value).toBe(0);
-      expect(component.equivalent).toBe(1.0);
-      expect(component.purity).toBe(1.0);
+      // amount_l is derived from existing amount_mol and new density
+      const expectedAmountL = (component.amount_mol * component.molecule.molecular_weight)
+        / (component.density * 1000 * component.purity);
+      expect(component.amount_l).toBeCloseTo(expectedAmountL, 6);
     });
   });
 
@@ -271,6 +274,28 @@ describe('Component', () => {
     });
   });
 
+  describe('handleStartingConcChange', () => {
+    it('should set starting concentration and recompute volume for liquids without changing amount_mol', () => {
+      const startingConc = { unit: 'mol/l', value: 2.0 };
+      component.material_group = 'liquid';
+      component.amount_mol = 1.0;
+      component.amount_l = 0.0;
+
+      component.handleStartingConcChange(startingConc);
+
+      expect(component.starting_molarity_value).toBe(2.0);
+      expect(component.starting_molarity_unit).toBe('mol/l');
+      expect(component.density).toBe(0);
+
+      // amount_mol should remain unchanged
+      expect(component.amount_mol).toBe(1.0);
+
+      // amount_l is derived from existing amount_mol and new starting concentration
+      const expectedAmountL = component.amount_mol / component.starting_molarity_value;
+      expect(component.amount_l).toBeCloseTo(expectedAmountL, 6);
+    });
+  });
+
   describe('serializeComponent', () => {
     it('should return a serialized object of the  component', () => {
       // Create a mock molecule object
@@ -313,6 +338,8 @@ describe('Component', () => {
           material_group: 'solid',
           reference: undefined, // Not set in this case
           purity: 0.9,
+          metrics: 'mmmm', // Default metrics string for unit preservation
+          relative_molecular_weight: undefined, // Not set in this case
         }
       });
     });
