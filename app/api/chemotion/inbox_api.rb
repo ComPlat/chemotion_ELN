@@ -92,19 +92,11 @@ module Chemotion
           requires :search_string, type: String, desc: 'Search String'
         end
         get do
-          search_string = params[:search_string]
-          search_string.chomp!(File.extname(search_string))
-          base_name = search_string.dup
-          search_string.chomp!(' EA')
-          search_string.sub!(/-?[a-zA-Z]$/, '')
-          search_string.sub!(/^[a-zA-Z0-9]+-/, '')
-          collection_ids = Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids).map(&:id)
-          samples = Sample.by_exact_name(search_string)
-                          .joins(:collections_samples)
-                          .where(collections_samples: { collection_id: collection_ids })
-
-          samples = samples.or(Sample.by_short_label(base_name)).includes(:reactions).distinct
-          samples = samples.select { |s| ElementPolicy.new(current_user, s).update? }
+          samples = InboxSearchElements.call(
+            search_string: params[:search_string],
+            current_user: current_user,
+            element: :sample,
+          )
 
           res = samples.map do |s|
             {
@@ -159,10 +151,12 @@ module Chemotion
           requires :search_string, type: String, desc: 'Search String'
         end
         get do
-          search_string = params[:search_string]
-          search_string.chomp!(File.extname(search_string))
-          reactions = Reaction.by_name(search_string).or(Reaction.by_short_label(search_string))
-          reactions = reactions.select { |r| ElementPolicy.new(current_user, r).update? }
+          reactions = InboxSearchElements.call(
+            search_string: params[:search_string],
+            current_user: current_user,
+            element: :reaction,
+          )
+
           res = reactions.map do |r|
             {
               id: r.id,
