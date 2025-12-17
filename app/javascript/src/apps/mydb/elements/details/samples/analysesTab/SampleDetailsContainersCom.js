@@ -181,7 +181,41 @@ function ReactionsDisplay({
         </>
       ) : (
         <div>
-          {orderContainers.map((container, i) => {
+          {analyses.map((container, i) => {
+            const id = container.id || `fake_${i}`;
+            return (
+              <ContainerRow
+                sample={sample}
+                mode={mode}
+                container={container}
+                readOnly={readOnly}
+                isDisabled={isDisabled}
+                key={`${id}CRowOrder`}
+                addButton={addButton}
+                handleMove={handleMove}
+                handleRemove={handleRemove}
+                handleSubmit={handleSubmit}
+                handleUndo={handleUndo}
+                toggleAddToReport={toggleAddToReport}
+              />
+            );
+          })}
+          
+          {comparisons.length > 0 && <div className="my-3 border-top" />}
+
+          {comparisons.length > 0 && (
+            <div className="d-flex align-items-center gap-2 mb-3 mt-3">
+              <h6 className="m-0 fw-bold">Spectra comparison</h6>
+              <OverlayTrigger
+                placement="right"
+                overlay={<Tooltip id="comparison-info-tooltip">Example text for now</Tooltip>}
+              >
+                <i className="fa fa-info-circle text-info" style={{ cursor: 'pointer' }} />
+              </OverlayTrigger>
+            </div>
+          )}
+          
+          {comparisons.map((container, i) => {
             const id = container.id || `fake_${i}`;
             return (
               <ContainerRow

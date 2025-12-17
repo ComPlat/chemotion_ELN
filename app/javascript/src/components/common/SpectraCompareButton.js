@@ -30,7 +30,7 @@ export default function SpectraCompareButton({
 
 SpectraCompareButton.propTypes = {
   sample: PropTypes.object,
-  spectraCompare: PropTypes.object,
+  spectraCompare: PropTypes.array,
   spcInfos: PropTypes.array,
   toggleSpectraModal: PropTypes.func.isRequired,
 };
