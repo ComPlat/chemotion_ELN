@@ -37,6 +37,7 @@ const ButtonSelectors = {
   LAYOUT: 'Layout (Ctrl+L)',
   EXPLICIT_HYDROGENS: 'Add/Remove explicit hydrogens',
   AROMATIZE: 'Aromatize (Alt+A)',
+  DEAROMATIZE: 'Dearomatize (Ctrl+Alt+A)',
   VIEWER_3D: '3D Viewer',
   OPEN: 'Open... (Ctrl+O)',
   SAVE: 'Save as... (Ctrl+S)',

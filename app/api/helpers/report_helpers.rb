@@ -207,6 +207,11 @@ module ReportHelpers
     when :components
       sheet_name = :"#{table}_components"
       export.generate_components_sheet_with_samples(sheet_name, result, columns_params)
+      if columns_params.include?('composition_table')
+        Rails.logger.info("Generating composition table for components sheet, #{columns_params}")
+        sheet_name = "#{table}_composition_table"
+        export.generate_composition_table_components_sheet_with_samples(sheet_name, result)
+      end
     else
       export.generate_sheet_with_samples(table, result)
     end
@@ -659,6 +664,12 @@ module ReportHelpers
         dry_solvent: ['s."dry_solvent"', '"dry_solvent"', 0],
         flash_point: ['s."flash_point"', '"flash point"', 0],
         refractive_index: ['s."refractive_index"', '"refractive index"', 0],
+        height: (begin; Sample.column_names.include?('height') ? ['s."height"', '"height"', 0] : nil; rescue; nil; end),
+        width: (begin; Sample.column_names.include?('width') ? ['s."width"', '"width"', 0] : nil; rescue; nil; end),
+        length: (begin; Sample.column_names.include?('length') ? ['s."length"', '"length"', 0] : nil; rescue; nil; end),
+        storage_condition: (begin; Sample.column_names.include?('storage_condition') ? ['s."storage_condition"', '"storage condition"', 0] : nil; rescue; nil; end),
+        state: (begin; Sample.column_names.include?('state') ? ['s."state"', '"state"', 0] : nil; rescue; nil; end),
+        color: (begin; Sample.column_names.include?('color') ? ['s."color"', '"color"', 0] : nil; rescue; nil; end),
       },
       sample_id: {
         external_label: ['s.external_label', '"sample external label"', 0],
@@ -740,7 +751,7 @@ module ReportHelpers
   def custom_column_query(table, col, selection, user_id, attrs)
     column_map = {
       'user_labels' => "labels_by_user_sample(#{user_id}, s_id) as user_labels",
-      'literature' => "literatures_by_element('Sample', s_id) as literatures",
+      # 'literature' => "literatures_by_element('Sample', s_id) as literatures",
       'cas' => "s.xref->>'cas' as cas",
       'refractive_index' => "s.xref->>'refractive_index' as refractive_index",
       'flash_point' => "s.xref->>'flash_point' as flash_point",
@@ -749,12 +760,15 @@ module ReportHelpers
     if column_map[col]
       selection << column_map[col]
     elsif (s = attrs[table][col.to_sym])
+      # Skip if the column definition is nil (column doesn't exist)
+      return if s.nil?
       selection << "#{s[1] && s[0]} as #{s[1] || s[0]}"
     end
   end
 
   def build_column_query(sel, user_id = 0, attrs = EXP_MAP_ATTR)
     selection = []
+    composition_table_properties = %w[source molar_mass molecule_id weight_ratio_exp template_category].freeze
     attrs.each_key do |table|
       sel.symbolize_keys.fetch(table, []).each do |col|
         custom_column_query(table, col, selection, user_id, attrs)
@@ -764,6 +778,11 @@ module ReportHelpers
     selection = Export::ExportChemicals.build_chemical_column_query(selection, sel) if sel[:chemicals].present?
 
     if sel[:components].present?
+      if sel[:components].include?('composition_table')
+        composition_table_properties.each do |field|
+          sel[:components] << field unless sel[:components].include?(field)
+        end
+      end
       return Export::ExportComponents.build_component_column_query(selection, sel)
     end
 

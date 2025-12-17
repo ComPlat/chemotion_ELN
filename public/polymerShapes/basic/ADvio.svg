@@ -1,11 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" id="svg51" viewBox="40.71693414600001 43.45195737768 33.56227376 29.253247440000003" version="1.1" style="max-height: 500px" width="33.56227376" height="29.253247440000003">
-  <defs id="defs51">
-    <linearGradient id="swatch152">
-      <stop id="stop152" offset="0" style="stop-color:#000000;stop-opacity:1;"/>
+<svg xmlns="http://www.w3.org/2000/svg" id="svg_cea5cd" viewBox="40.71693415 43.45195738 33.56227376 29.25324744" version="1.1" style="max-height: 500px" width="33.56227376" height="29.25324744">
+  <defs id="defs_cea5cd">
+    <linearGradient id="grad_cea5cd">
+      <stop id="stop_cea5cd" offset="0" style="stop-color:#000000;stop-opacity:1;"/>
     </linearGradient>
   </defs>
   
-    
-  
-  <path id="path17" style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#cea5cd;fill-opacity:1;fill-rule:evenodd;stroke:#1b1918;stroke-width:0.5669;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1" d="m 57.180102,44.011919 a 15.5906,14.1732 0 0 1 15.5906,14.1732 15.5906,14.1732 0 1 1 -15.5906,-14.1732 z"/>
+  <path id="path_cea5cd" style="fill:#cea5cd;fill-rule:evenodd;stroke:#1b1918;stroke-width:0.5669;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none" d="m 57.180102,44.011919 a 15.5906,14.1732 0 0 1 15.5906,14.1732 15.5906,14.1732 0 1 1 -15.5906,-14.1732 z"/>
 </svg>

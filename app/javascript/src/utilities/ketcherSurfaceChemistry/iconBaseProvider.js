@@ -31,6 +31,25 @@ const findIconNameCategoryFromTemplates = async (iconName) => {
   return 'basic';
 };
 
+export const findTemplateIdCategoryFromTemplates = async (templateId) => {
+  const allTemplates = await loadTemplates();
+  if (!allTemplates) {
+    return 'basic';
+  }
+  for (const category of Object.keys(allTemplates)) {
+    for (const tab of allTemplates[category]) {
+      for (const subTab of tab.subTabs) {
+        for (const shape of subTab.shapes) {
+          if (shape.template_id === parseInt(templateId)) {
+            return category;
+          }
+        }
+      }
+    }
+  }
+  return 'basic';
+};
+
 const checkFileExists = async (url) => {
   try {
     const response = await fetch(url, { method: 'HEAD' });

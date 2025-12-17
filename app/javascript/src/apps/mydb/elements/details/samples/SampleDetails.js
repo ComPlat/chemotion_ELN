@@ -147,8 +147,25 @@ export default class SampleDetails extends React.Component {
       currentUser,
       showRedirectWarning: redirectedFromMixture || false,
       casInputValue: '',
+      // Hierarchical sample props
+      state: props.sample.state || '',
+      color: props.sample.color || '',
+      height: props.sample.height || '',
+      width: props.sample.width || '',
+      length: props.sample.length || '',
+      storage_condition: props.sample.storage_condition || '',
       ketcherSVGError: null
     };
+
+    // Initialize hierarchical material fields on sample object if they are null
+    if (props.sample.sample_type === 'HierarchicalMaterial') {
+      props.sample.state = props.sample.state ?? '';
+      props.sample.color = props.sample.color ?? '';
+      props.sample.height = props.sample.height ?? '';
+      props.sample.width = props.sample.width ?? '';
+      props.sample.length = props.sample.length ?? '';
+      props.sample.storage_condition = props.sample.storage_condition ?? '';
+    }
 
     this.enableComputedProps = MatrixCheck(currentUser.matrix, 'computedProp');
     this.enableSampleDecoupled = MatrixCheck(currentUser.matrix, 'sampleDecoupled');
@@ -203,7 +220,7 @@ export default class SampleDetails extends React.Component {
 
   componentDidUpdate(prevProps) {
     const { sample } = this.props;
-    if (sample === prevProps.sample) { return };
+    if (sample === prevProps.sample) { return; }
 
     const smileReadonly = !(
       (sample.isNew
@@ -215,6 +232,16 @@ export default class SampleDetails extends React.Component {
 
     // Sync casInputValue when CAS changes
     const currentCas = sample.xref?.cas ?? '';
+
+    // Initialize hierarchical material fields if they are null
+    if (sample.sample_type === 'HierarchicalMaterial') {
+      sample.state = sample.state ?? '';
+      sample.color = sample.color ?? '';
+      sample.height = sample.height ?? '';
+      sample.width = sample.width ?? '';
+      sample.length = sample.length ?? '';
+      sample.storage_condition = sample.storage_condition ?? '';
+    }
 
     this.setState({
       sample,
@@ -304,12 +331,14 @@ export default class SampleDetails extends React.Component {
     }
   }
 
-  handleStructureEditorSave(molfile, svgFile = null, config = null, editor = 'ketcher') {
+  handleStructureEditorSave(molfile, components, textNodesFormula, svgFile = null, config = null, editor = 'ketcher') {
     const { sample } = this.state;
     sample.molfile = molfile;
     const smiles = (config && sample.molecule) ? config.smiles : null;
     sample.contains_residues = molfile?.indexOf(' R# ') > -1;
     sample.formulaChanged = true;
+    sample.components = components;
+    if (textNodesFormula?.length > 0) sample.name = textNodesFormula;
     this.setState({ loadingMolecule: true });
 
     const fetchError = (errorMessage) => {
@@ -403,8 +432,11 @@ export default class SampleDetails extends React.Component {
     } else if (sample.isNew) {
       ElementActions.createSample(sample, closeView);
     } else {
+      // TODO: upate sample params
       sample.cleanBoilingMelting();
-      ElementActions.updateSample(new Sample(sample), closeView);
+      const newSample = new Sample(sample);
+      newSample.components = sample.components;
+      ElementActions.updateSample(newSample, closeView);
     }
 
     if (sample.is_new || closeView) {
@@ -821,7 +853,6 @@ export default class SampleDetails extends React.Component {
 
   samplePropertiesTab(ind) {
     const { sample } = this.state;
-
     return (
       <Tab eventKey={ind} title="Properties" key={`Props${sample.id.toString()}`}>
         {!sample.isNew && <CommentSection section="sample_properties" element={sample} />}
