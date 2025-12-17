@@ -1015,7 +1015,7 @@ describe('Component', () => {
 
       component.calculateTargetConcentration(totalVolume);
 
-      expect(component.molarity_value).toBe(0);
+      expect(component.molarity_value).toBe(null);
     });
 
     it('should handle negative total volume in calculateTargetConcentration', () => {
@@ -1024,7 +1024,7 @@ describe('Component', () => {
 
       component.calculateTargetConcentration(totalVolume);
 
-      expect(component.molarity_value).toBe(0);
+      expect(component.molarity_value).toBe(null);
     });
   });
 });

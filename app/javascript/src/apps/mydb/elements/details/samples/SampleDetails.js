@@ -157,6 +157,16 @@ export default class SampleDetails extends React.Component {
       ketcherSVGError: null
     };
 
+    // Initialize hierarchical material fields on sample object if they are null
+    if (props.sample.sample_type === 'HierarchicalMaterial') {
+      props.sample.state = props.sample.state ?? '';
+      props.sample.color = props.sample.color ?? '';
+      props.sample.height = props.sample.height ?? '';
+      props.sample.width = props.sample.width ?? '';
+      props.sample.length = props.sample.length ?? '';
+      props.sample.storage_condition = props.sample.storage_condition ?? '';
+    }
+
     this.enableComputedProps = MatrixCheck(currentUser.matrix, 'computedProp');
     this.enableSampleDecoupled = MatrixCheck(currentUser.matrix, 'sampleDecoupled');
     this.enableNmrSim = MatrixCheck(currentUser.matrix, 'nmrSim');
@@ -210,7 +220,7 @@ export default class SampleDetails extends React.Component {
 
   componentDidUpdate(prevProps) {
     const { sample } = this.props;
-    if (sample === prevProps.sample) { return };
+    if (sample === prevProps.sample) { return; }
 
     const smileReadonly = !(
       (sample.isNew
@@ -222,6 +232,17 @@ export default class SampleDetails extends React.Component {
 
     // Sync casInputValue when CAS changes
     const currentCas = sample.xref?.cas ?? '';
+
+    // Initialize hierarchical material fields if they are null
+    if (sample.sample_type === 'HierarchicalMaterial') {
+      sample.state = sample.state ?? '';
+      sample.color = sample.color ?? '';
+      sample.height = sample.height ?? '';
+      sample.width = sample.width ?? '';
+      sample.length = sample.length ?? '';
+      sample.storage_condition = sample.storage_condition ?? '';
+    }
+
     this.setState({
       sample,
       smileReadonly,

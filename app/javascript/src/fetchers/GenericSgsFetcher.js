@@ -1,11 +1,6 @@
 import GenericBaseFetcher from 'src/fetchers/GenericBaseFetcher';
 
 export default class GenericSgsFetcher extends GenericBaseFetcher {
-  static genericSegs = {
-    active: null,
-    all: null,
-  };
-
   static exec(path, method) {
     return super.exec(`segments/${path}`, method);
   }
@@ -37,19 +32,24 @@ export default class GenericSgsFetcher extends GenericBaseFetcher {
     return this.exec('fetch_repo_generic_template_list', 'GET');
   }
 
+  static segmentCache = {
+    active: null,
+    all: null,
+  };
+
   static listSegmentKlass(params = {}, soft = false) {
-    const key = params.is_active ? 'active' : 'all';
-    if (!soft || !this.genericSegs[key]) {
+    const cacheType = params.is_active ? 'active' : 'all';
+    if (!soft || !this.segmentCache[cacheType]) {
       const api = params.is_active === undefined
         ? 'list_segment_klass.json'
         : `list_segment_klass.json?is_active=${params.is_active}`;
-      return this.exec(api, 'GET').then((res) => {
-        this.genericSegs[key] = res;
-        return this.genericSegs[key];
+      return this.exec(api, 'GET').then((result) => {
+        this.segmentCache[cacheType] = result;
+        return this.segmentCache[cacheType];
       });
     }
 
-    return Promise.resolve(this.genericSegs[key]);
+    return Promise.resolve(this.segmentCache[cacheType]);
   }
 
   static syncTemplate(params) {
@@ -62,14 +62,11 @@ export default class GenericSgsFetcher extends GenericBaseFetcher {
 
   static updateSegmentTemplate(params) {
     return super.updateTemplate(
-      {
-        ...params,
-        klass: 'SegmentKlass',
-      },
-      'update_segment_template',
+      { ...params, klass: 'SegmentKlass' },
+      'update_segment_template'
     );
   }
-
+  
   static uploadKlass(params) {
     return this.execData(params, 'upload_klass');
   }
@@ -80,21 +77,18 @@ export default class GenericSgsFetcher extends GenericBaseFetcher {
       credentials: 'same-origin',
       headers: {
         Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-    })
-      .then((response) => {
-        if (response.ok) {
-          fileName = getFileName(response);
-          return response.blob();
-        }
-      })
-      .then((blob) => {
-        downloadBlob(fileName, blob);
-      })
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+        'Content-Type': 'application/json'
+      }
+    }).then((response) => {
+      if (response.ok) {
+        fileName = getFileName(response);
+        return response.blob();
+      }
+    }).then((blob) => {
+      downloadBlob(fileName, blob);
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
     return promise;
   }
 

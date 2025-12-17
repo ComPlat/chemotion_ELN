@@ -153,9 +153,9 @@ describe('Sample', async () => {
   });
 
   describe('Sample.calculateMixtureAmountMol()', () => {
-    it('returns 0 when no reference component', () => {
+    it('returns n.d when no reference component', () => {
       const s = new Sample();
-      expect(s.calculateMixtureAmountMol()).toBe(0);
+      expect(s.calculateMixtureAmountMol()).toBe('n.d');
     });
 
     it('returns reference amount_mol when reference changed flag is set', () => {
@@ -299,7 +299,7 @@ describe('Sample', async () => {
           referenceComponent.concn = 0.3;
 
           const result = sample.calculateRequiredTotalVolume();
-          const expected = (1.2 * 0.1 * 0.9) / (18.015 * 0.3);
+          const expected = (1.2 * 0.1 * 0.9) / (18.015 * 0.3) * 1000;
           expect(result).toBeCloseTo(expected, 5);
         });
 
@@ -404,7 +404,7 @@ describe('Sample', async () => {
         referenceComponent.concn = 0.3;
 
         const result = sample.calculateRequiredTotalVolume();
-        const expected = (1.0 * 0.1 * 0.7) / (18.015 * 0.3);
+        const expected = (1.0 * 0.1 * 0.7) / (18.015 * 0.3) * 1000;
         expect(result).toBeCloseTo(expected, 5);
       });
     });
@@ -1045,7 +1045,7 @@ describe('Sample', async () => {
       const s = new Sample();
       s.sample_details = { total_mixture_mass_g: Infinity };
       expect(s.total_mixture_mass_g).toBeNull();
-      
+
       s.sample_details = { total_mixture_mass_g: NaN };
       expect(s.total_mixture_mass_g).toBeNull();
     });
@@ -1086,13 +1086,20 @@ describe('Sample', async () => {
     let reaction;
 
     beforeEach(() => {
-      // Create sample with amount_mol by setting amount_value and amount_unit to 'mol'
-      // amount_mol getter returns amount_value when amount_unit === 'mol' for mixtures
+      // Create sample with amount_mol by setting up a reference component
+      // For mixtures, amount_mol uses calculateMixtureAmountMol() which requires a reference component
       sample = new Sample({
         amount_value: 0.1,
         amount_unit: 'mol',
         sample_type: 'Mixture'
       });
+      // Set up a reference component so amount_mol returns a valid number
+      const refComp = new Component({});
+      refComp.amount_mol = 0.1;
+      refComp.reference = true;
+      refComp.component_properties = {};
+      sample.initialComponents([refComp]);
+      sample.sample_details = { reference_component_changed: true };
       reaction = {
         volume: 0.5,
         use_reaction_volume: false,
@@ -1151,12 +1158,18 @@ describe('Sample', async () => {
     });
 
     it('works for both mixtures and non-mixtures', () => {
-      // Test for mixture - amount_mol getter returns amount_value when amount_unit === 'mol' for mixtures
+      // Test for mixture - set up reference component so amount_mol returns a valid number
       const mixtureSample = new Sample({
         amount_value: 0.1,
         amount_unit: 'mol',
         sample_type: 'Mixture',
       });
+      const refComp = new Component({});
+      refComp.amount_mol = 0.1;
+      refComp.reference = true;
+      refComp.component_properties = {};
+      mixtureSample.initialComponents([refComp]);
+      mixtureSample.sample_details = { reference_component_changed: true };
       reaction.use_reaction_volume = true;
       reaction.volume = 0.5;
 

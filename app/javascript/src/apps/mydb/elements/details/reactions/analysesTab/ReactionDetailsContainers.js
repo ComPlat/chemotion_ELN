@@ -3,10 +3,11 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
+  OverlayTrigger,
   Button,
   Accordion,
   Card,
-  ButtonToolbar,
+  ButtonToolbar, Tooltip,
 } from 'react-bootstrap';
 import Container from 'src/models/Container';
 import ContainerComponent from 'src/components/container/ContainerComponent';
@@ -29,11 +30,11 @@ import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
 // eslint-disable-next-line max-len
-import { AnalysisVariationLink } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
-import { truncateText } from 'src/utilities/textHelper';
+import {AnalysisVariationLink} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
+import {truncateText} from 'src/utilities/textHelper';
 import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWithButtons';
-import { CommentButton, CommentBox } from 'src/components/common/AnalysisCommentBoxComponent';
-import { UploadField } from 'src/apps/mydb/elements/details/analyses/UploadField';
+import {CommentButton, CommentBox} from 'src/components/common/AnalysisCommentBoxComponent';
+import {UploadField} from 'src/apps/mydb/elements/details/analyses/UploadField';
 
 const nmrMsg = (reaction, container) => {
   const ols = container.extended_metadata?.kind?.split('|')[0].trim();
@@ -238,13 +239,19 @@ export default class ReactionDetailsContainers extends Component {
             element={reaction}
             setElement={(reaction, cb = null) => handleReactionChange(reaction)}
           />
-          <Button
-            size="xsm"
-            variant="success"
-            onClick={this.handleAdd}
+
+          <OverlayTrigger
+            placement="top"
+            overlay={<Tooltip id="annotate_tooltip">Create and add empty analyses.</Tooltip>}
           >
-            Add analysis
-          </Button>
+            <Button
+              size="xsm"
+              variant="success"
+              onClick={this.handleAdd}
+            >
+              Add analysis
+            </Button>
+          </OverlayTrigger>
         </>
       );
     }
@@ -429,7 +436,7 @@ export default class ReactionDetailsContainers extends Component {
       return (
         <div className="d-flex align-items-center justify-content-between mb-2 mt-4 mx-3">
           <span className="ms-3"> There are currently no Analyses. </span>
-          <div>
+          <div className="gap-2 btn-toolbar">
             {this.addButton()}
           </div>
         </div>

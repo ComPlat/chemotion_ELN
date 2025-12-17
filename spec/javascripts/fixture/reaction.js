@@ -280,4 +280,302 @@ const reaction = {
   "checksum":"14e2fe74150827bc598c78141f3be1ace31839d42c03c64c4e35f6dff9338de9"
 }
 
-export default reaction
+const reactionVariationSegments = {
+  foo: {
+    'layer<layera>field<fielda>': {
+      type: 'system-defined',
+      field: 'fielda',
+      label: 'fielda',
+      default: '',
+      position: 1,
+      required: false,
+      sub_fields: [],
+      value_system: 'ng_l',
+      option_layers: 'concentration',
+      text_sub_fields: []
+    },
+    'layer<layera>field<fieldb>': {
+      type: 'text',
+      field: 'fieldb',
+      label: 'fieldb',
+      default: '',
+      position: 2,
+      sub_fields: [],
+      text_sub_fields: []
+    },
+    'layer<layerb>field<fielda>': {
+      type: 'text',
+      field: 'fielda',
+      label: 'fielda',
+      default: '',
+      position: 1,
+      sub_fields: [],
+      text_sub_fields: []
+    },
+    'layer<layerb>field<fieldb>': {
+      type: 'text',
+      field: 'fieldb',
+      label: 'fieldb',
+      default: '',
+      position: 2,
+      sub_fields: [],
+      text_sub_fields: []
+    }
+  },
+  bar: {
+    'layer<bar>field<baz>': {
+      type: 'text',
+      field: 'baz',
+      label: 'baz',
+      default: '',
+      position: 1,
+      sub_fields: [],
+      text_sub_fields: []
+    },
+    'layer<bar>field<a>': {
+      type: 'select',
+      field: 'a',
+      label: 'a',
+      default: '',
+      position: 2,
+      required: false,
+      sub_fields: [],
+      option_layers: 'selection',
+      text_sub_fields: [],
+      options: [
+                      {
+                          "key": "optiona",
+                          "label": "optiona"
+                      },
+                      {
+                          "key": "optionb",
+                          "label": "optionb"
+                      },
+                      {
+                          "key": "optionc",
+                          "label": "optionc"
+                      }
+                  ]
+    },
+    'layer<bar>field<b>': {
+      type: 'integer',
+      field: 'b',
+      label: 'b',
+      default: '',
+      position: 3,
+      sub_fields: [],
+      text_sub_fields: []
+    },
+    'layer<bar>field<integer>': {
+      type: 'text',
+      field: 'integer',
+      label: 'integer',
+      default: '',
+      position: 4,
+      sub_fields: [],
+      text_sub_fields: []
+    }
+  }
+}
+
+
+
+const reactionSegments = [
+  {
+      "label": "foo",
+      "properties_release": {
+          "pkg": {
+              "eln": {
+                  "branch": "heads/reaction-variations-generic-segments",
+                  "version": "post-v2.1.0",
+                  "describe_tag": "v2.0.1-115-ge11616b37-dirty",
+                  "base_revision": "a739d8be7abdb9338a9ad72ab30ddbac899f6c52",
+                  "current_revision": "e11616b37b7a9f8176608595bbb64722fbf1f0f2"
+              },
+              "name": "chem-generic-ui",
+              "version": "2.0.0",
+              "labimotion": "2.0.0"
+          },
+          "uuid": "4cc91be3-196b-465b-a1e0-fa94185cd764",
+          "klass": "SegmentKlass",
+          "layers": {
+              "layera": {
+                  "wf": false,
+                  "key": "layera",
+                  "cols": 1,
+                  "color": "none",
+                  "label": "",
+                  "style": "panel_generic_heading",
+                  "fields": [
+                      {
+                          "type": "system-defined",
+                          "field": "fielda",
+                          "label": "fielda",
+                          "default": "",
+                          "position": 1,
+                          "required": false,
+                          "sub_fields": [],
+                          "value_system": "ng_l",
+                          "option_layers": "concentration",
+                          "text_sub_fields": []
+                      },
+                      {
+                          "type": "text",
+                          "field": "fieldb",
+                          "label": "fieldb",
+                          "default": "",
+                          "position": 2,
+                          "sub_fields": [],
+                          "text_sub_fields": []
+                      }
+                  ],
+                  "position": 10,
+                  "timeRecord": "",
+                  "wf_position": 0
+              },
+              "layerb": {
+                  "wf": false,
+                  "key": "layerb",
+                  "cols": 1,
+                  "color": "none",
+                  "label": "",
+                  "style": "panel_generic_heading",
+                  "fields": [
+                      {
+                          "type": "text",
+                          "field": "fielda",
+                          "label": "fielda",
+                          "default": "",
+                          "position": 1,
+                          "sub_fields": [],
+                          "text_sub_fields": []
+                      },
+                      {
+                          "type": "text",
+                          "field": "fieldb",
+                          "label": "fieldb",
+                          "default": "",
+                          "position": 2,
+                          "sub_fields": [],
+                          "text_sub_fields": []
+                      }
+                  ],
+                  "position": 20,
+                  "timeRecord": "",
+                  "wf_position": 0
+              }
+          },
+          "version": "2.1",
+          "identifier": "8476b1c5-b9d4-477a-af6f-a85b0cf9658a",
+          "select_options": {}
+      },
+  },
+  {
+      "label": "bar",
+      "properties_release": {
+          "pkg": {
+              "eln": {
+                  "branch": "heads/reaction-variations-generic-segments",
+                  "version": "post-v2.1.0",
+                  "describe_tag": "v2.0.1-116-gbfaec9154-dirty",
+                  "base_revision": "a739d8be7abdb9338a9ad72ab30ddbac899f6c52",
+                  "current_revision": "bfaec91545a8c95f02c943899153867efe5888da"
+              },
+              "name": "chem-generic-ui",
+              "version": "2.0.0",
+              "labimotion": "2.0.0"
+          },
+          "uuid": "4a9d0a4f-08b2-4d62-b5d5-e6a6c5896b42",
+          "klass": "SegmentKlass",
+          "layers": {
+              "bar": {
+                  "wf": false,
+                  "key": "bar",
+                  "cols": 1,
+                  "color": "none",
+                  "label": "bar",
+                  "style": "panel_generic_heading",
+                  "fields": [
+                      {
+                          "type": "text",
+                          "field": "baz",
+                          "label": "baz",
+                          "default": "",
+                          "position": 1,
+                          "sub_fields": [],
+                          "text_sub_fields": []
+                      },
+                      {
+                          "type": "select",
+                          "field": "a",
+                          "label": "a",
+                          "default": "",
+                          "position": 2,
+                          "required": false,
+                          "sub_fields": [],
+                          "option_layers": "selection",
+                          "text_sub_fields": [],
+                          "options": [
+                              {
+                                  "key": "optiona",
+                                  "label": "optiona"
+                              },
+                              {
+                                  "key": "optionb",
+                                  "label": "optionb"
+                              },
+                              {
+                                  "key": "optionc",
+                                  "label": "optionc"
+                              }
+                          ]
+                      },
+                      {
+                          "type": "integer",
+                          "field": "b",
+                          "label": "b",
+                          "default": "",
+                          "position": 3,
+                          "sub_fields": [],
+                          "text_sub_fields": []
+                      },
+                      {
+                          "type": "text",
+                          "field": "integer",
+                          "label": "integer",
+                          "default": "",
+                          "position": 4,
+                          "sub_fields": [],
+                          "text_sub_fields": []
+                      }
+                  ],
+                  "position": 10,
+                  "timeRecord": "",
+                  "wf_position": 0
+              }
+          },
+          "version": "2.0",
+          "identifier": "6e838a1d-ee2c-4e9e-922d-cb84e981ccb5",
+          "select_options": {
+              "selection": {
+                  "options": [
+                      {
+                          "key": "optiona",
+                          "label": "optiona"
+                      },
+                      {
+                          "key": "optionb",
+                          "label": "optionb"
+                      },
+                      {
+                          "key": "optionc",
+                          "label": "optionc"
+                      }
+                  ]
+              }
+          }
+      },
+  }
+] 
+
+export { reaction, reactionVariationSegments, reactionSegments };

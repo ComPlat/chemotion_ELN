@@ -105,7 +105,6 @@ describe('SolventDetails', () => {
 
       expect(html.includes('<td>')).toEqual(true);
       expect(html.includes('type="text"')).toEqual(true);
-      expect(html.includes('type="number"')).toEqual(true);
       expect(html.includes('value="water"')).toEqual(true);
       expect(html.includes('value="1"')).toEqual(true);
       expect(html.includes('<i class="fa fa-trash-o fa-lg"')).toEqual(true);

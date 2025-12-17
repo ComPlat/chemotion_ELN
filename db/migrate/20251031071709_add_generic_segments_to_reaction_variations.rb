@@ -1,9 +1,9 @@
-class AddSegmentToReactionVariations < ActiveRecord::Migration[6.1]
+class AddGenericSegmentsToReactionVariations < ActiveRecord::Migration[6.1]
   def up
     Reaction.where.not('variations = ?', '[]').find_each do |reaction|
       variations = reaction.variations
       variations.each do |variation|
-        variation['segment_data'] ||= []
+        variation['segments'] ||= {}
       end
       reaction.update_column(:variations, variations)
     end
@@ -13,8 +13,8 @@ class AddSegmentToReactionVariations < ActiveRecord::Migration[6.1]
     Reaction.where.not('variations = ?', '[]').find_each do |reaction|
       variations = reaction.variations
       variations.each do |variation|
-        next unless variation['segment_data']
-        variation.delete('segment_data')
+        next unless variation['segments']
+        variation.delete('segments')
       end
       reaction.update_column(:variations, variations)
     end

@@ -664,12 +664,12 @@ module ReportHelpers
         dry_solvent: ['s."dry_solvent"', '"dry_solvent"', 0],
         flash_point: ['s."flash_point"', '"flash point"', 0],
         refractive_index: ['s."refractive_index"', '"refractive index"', 0],
-        height: ['s."height"', '"height"', 0],
-        width: ['s."width"', '"width"', 0],
-        length: ['s."length"', '"length"', 0],
-        storage_condition: ['s."storage_condition"', '"storage condition"', 0],
-        state: ['s."state"', '"state"', 0],
-        color: ['s."color"', '"color"', 0],
+        height: (begin; Sample.column_names.include?('height') ? ['s."height"', '"height"', 0] : nil; rescue; nil; end),
+        width: (begin; Sample.column_names.include?('width') ? ['s."width"', '"width"', 0] : nil; rescue; nil; end),
+        length: (begin; Sample.column_names.include?('length') ? ['s."length"', '"length"', 0] : nil; rescue; nil; end),
+        storage_condition: (begin; Sample.column_names.include?('storage_condition') ? ['s."storage_condition"', '"storage condition"', 0] : nil; rescue; nil; end),
+        state: (begin; Sample.column_names.include?('state') ? ['s."state"', '"state"', 0] : nil; rescue; nil; end),
+        color: (begin; Sample.column_names.include?('color') ? ['s."color"', '"color"', 0] : nil; rescue; nil; end),
       },
       sample_id: {
         external_label: ['s.external_label', '"sample external label"', 0],
@@ -751,7 +751,7 @@ module ReportHelpers
   def custom_column_query(table, col, selection, user_id, attrs)
     column_map = {
       'user_labels' => "labels_by_user_sample(#{user_id}, s_id) as user_labels",
-      'literature' => "literatures_by_element('Sample', s_id) as literatures",
+      # 'literature' => "literatures_by_element('Sample', s_id) as literatures",
       'cas' => "s.xref->>'cas' as cas",
       'refractive_index' => "s.xref->>'refractive_index' as refractive_index",
       'flash_point' => "s.xref->>'flash_point' as flash_point",
@@ -760,6 +760,8 @@ module ReportHelpers
     if column_map[col]
       selection << column_map[col]
     elsif (s = attrs[table][col.to_sym])
+      # Skip if the column definition is nil (column doesn't exist)
+      return if s.nil?
       selection << "#{s[1] && s[0]} as #{s[1] || s[0]}"
     end
   end

@@ -14,12 +14,13 @@ export default class ToolbarIcon extends React.Component {
   }
 
   render() {
-    const { icon } = this.props;
+    const { icon, title } = this.props;
     if (React.isValidElement(icon)) {
       return (
         <button
           style={{ width: 'auto' }}
           onClick={this.onClick}
+          title={title}
         >
           {icon}
         </button>
@@ -31,6 +32,7 @@ export default class ToolbarIcon extends React.Component {
         className={`ql_${icon}`}
         style={{ width: 'auto' }}
         onClick={this.onClick}
+        title={title}
       >
         <span>
           {icon.toUpperCase()}
@@ -45,10 +47,12 @@ ToolbarIcon.propTypes = {
     PropTypes.string,
     PropTypes.element
   ]),
-  onClick: PropTypes.func
+  onClick: PropTypes.func,
+  title: PropTypes.string
 };
 
 ToolbarIcon.defaultProps = {
   icon: <span />,
-  onClick: null
+  onClick: null,
+  title: ''
 };

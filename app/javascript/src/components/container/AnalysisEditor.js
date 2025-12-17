@@ -210,6 +210,7 @@ export default class AnalysisEditor extends React.Component {
         <ToolbarIcon
           icon={autoFormatIcon}
           onClick={this.autoFormatContent}
+          title="Auto Format"
         />
         <TextTemplateToolbar
           template={template}
@@ -223,7 +224,7 @@ export default class AnalysisEditor extends React.Component {
           overlay={templateCreatorPopover}
           onHide={this.onCloseTemplateCreator}
         >
-          <button className="ql-formats">
+          <button className="ql-formats" title="Template Settings">
             <i as="button" className="fa fa-cog" />
           </button>
         </OverlayTrigger>

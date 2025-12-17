@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Button } from 'react-bootstrap';
+import {OverlayTrigger, Button, Tooltip} from 'react-bootstrap';
 
 import Container from 'src/models/Container';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -139,6 +139,10 @@ export default class SampleDetailsContainers extends Component {
           element={sample}
           setElement={(sample, cb = null) => setState((prevState) => ({ ...prevState, sample }), cb)}
         />
+        <OverlayTrigger
+          placement="top"
+          overlay={<Tooltip id="annotate_tooltip">Create and add empty analyses.</Tooltip>}
+        >
         <Button
           size="xsm"
           variant="success"
@@ -148,6 +152,7 @@ export default class SampleDetailsContainers extends Component {
           <i className="fa fa-plus me-1" />
           Add analysis
         </Button>
+        </OverlayTrigger>
       </>
     );
   }

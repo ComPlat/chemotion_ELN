@@ -398,6 +398,12 @@ export default class SampleForm extends React.Component {
               this.setState({ moleculeNameInputValue: value });
               this.updateMolName(selectedOption);
             }}
+            formatOptionLabel={(option, { context }) => {
+              if (context === 'menu') {
+                return option.type ? `${option.label}(${option.type})` : option.label;
+              }
+              return option.label;
+            }}
             onInputChange={(inputValue, { action }) => {
               if (action === 'input-change') {
                 this.setState({ moleculeNameInputValue: inputValue });
