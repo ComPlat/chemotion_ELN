@@ -897,50 +897,52 @@ export default class SampleDetails extends React.Component {
     return (
       <div className="my-4">
         <InputGroup>
-          <InputGroup.Text>CAS</InputGroup.Text>
-          <CreatableSelect
-            name="cas"
-            isClearable
-            isInputEditable
-            inputValue={this.state.casInputValue}
-            options={options}
-            onChange={(selectedOption) => {
-              if (selectedOption) {
-                const value = selectedOption.value;
-                this.setState({ casInputValue: value });
-                this.updateCas(selectedOption);
-              } else {
-                this.setState({ casInputValue: '' });
-                this.updateCas(null);
-              }
-            }}
-            onInputChange={(inputValue, { action }) => {
-              if (action === 'input-change' || action === 'set-value') {
-                this.setState({ casInputValue: inputValue });
-              }
-            }}
-            onFocus={() => {
-              const currentCas = cas || '';
-              this.setState({ casInputValue: currentCas });
-            }}
-            onMenuOpen={() => this.onCasSelectOpen(casArr)}
-            isLoading={isCasLoading}
-            value={options.find(({ value }) => value === cas) || null}
-            onBlur={() => this.isCASNumberValid(cas || '', true)}
-            isDisabled={!sample.can_update}
-            className="flex-grow-1"
-            placeholder="Select or enter CAS number"
-            allowCreateWhileLoading
-            formatCreateLabel={(inputValue) => `Create "${inputValue}"`}
-          />
-          <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
-            <Button
-              variant="light"
-              onClick={() => copyToClipboard(cas)}
-            >
-              <i className="fa fa-clipboard" />
-            </Button>
-          </OverlayTrigger>
+          <div className="d-flex flex-grow-1">
+            <InputGroup.Text>CAS</InputGroup.Text>
+            <CreatableSelect
+              name="cas"
+              isClearable
+              isInputEditable
+              inputValue={this.state.casInputValue}
+              options={options}
+              onChange={(selectedOption) => {
+                if (selectedOption) {
+                  const value = selectedOption.value;
+                  this.setState({ casInputValue: value });
+                  this.updateCas(selectedOption);
+                } else {
+                  this.setState({ casInputValue: '' });
+                  this.updateCas(null);
+                }
+              }}
+              onInputChange={(inputValue, { action }) => {
+                if (action === 'input-change' || action === 'set-value') {
+                  this.setState({ casInputValue: inputValue });
+                }
+              }}
+              onFocus={() => {
+                const currentCas = cas || '';
+                this.setState({ casInputValue: currentCas });
+              }}
+              onMenuOpen={() => this.onCasSelectOpen(casArr)}
+              isLoading={isCasLoading}
+              value={options.find(({ value }) => value === cas) || null}
+              onBlur={() => this.isCASNumberValid(cas || '', true)}
+              isDisabled={!sample.can_update}
+              className="flex-grow-1"
+              placeholder="Select or enter CAS number"
+              allowCreateWhileLoading
+              formatCreateLabel={(inputValue) => `Create "${inputValue}"`}
+            />
+            <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
+              <Button
+                variant="light"
+                onClick={() => copyToClipboard(cas)}
+              >
+                <i className="fa fa-clipboard" />
+              </Button>
+            </OverlayTrigger>
+          </div>
         </InputGroup>
         {!validCas && errorMessage}
       </div>
