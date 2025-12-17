@@ -246,6 +246,26 @@ export default class ContainerCompareAnalyses extends Component {
     const { sample } = this.props;
   
     let { menuItems, selectedFiles } = BuildSpectraComparedSelection(sample, currentContainer);
+
+    if (menuItems) {
+      const nullTypeIndex = menuItems.findIndex((item) => item.title === 'Type: null');
+      if (nullTypeIndex !== -1) {
+        const nullBranch = menuItems[nullTypeIndex];
+        const idsToRemove = new Set();
+        const traverse = (nodes) => {
+          nodes.forEach((node) => {
+            if (node.children && node.children.length > 0) {
+              traverse(node.children);
+            } else {
+              idsToRemove.add(node.key);
+            }
+          });
+        };
+        if (nullBranch.children) traverse(nullBranch.children);
+        menuItems.splice(nullTypeIndex, 1);
+        selectedFiles = selectedFiles.filter((id) => !idsToRemove.has(id));
+      }
+    }
   
     const selectedLayout = currentContainer.extended_metadata?.analyses_compared?.[0]?.layout ?? null;
   
