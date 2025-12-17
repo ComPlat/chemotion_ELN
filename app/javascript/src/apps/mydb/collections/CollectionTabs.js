@@ -10,17 +10,16 @@ import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import CollectionTabLayoutEditor from 'src/apps/mydb/collections/CollectionTabLayoutEditor';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import UIActions from 'src/stores/alt/actions/UIActions';
 import { capitalizeWords } from 'src/utilities/textHelper';
 import { filterTabLayout, getArrayFromLayout } from 'src/utilities/CollectionTabsHelper';
 import { allElnElmentsWithLabel, allGenericElements } from 'src/apps/generic/Utils';
+import { getAvailableTabs, getTabDisplayName } from 'src/utilities/ElementTabRegistry';
 
-const tabTitlesMap = {
-  qc_curation: 'QC & curation',
-  nmr_sim: 'NMR Simulation'
-};
-
-function TabItemComponent({ item, tabTitlesMap }) {
-  return <div>{tabTitlesMap[item] ?? capitalizeWords(item)}</div>;
+function TabItemComponent({ item }) {
+  const displayName = getTabDisplayName(item);
+  return <div>{displayName ?? capitalizeWords(item)}</div>;
 }
 
 export default class CollectionTabs extends React.Component {
@@ -115,7 +114,7 @@ export default class CollectionTabs extends React.Component {
   onClickCollection(node) {
     const { profileData, allElements } = this.state;
 
-    const layouts = allElements.reduce((acc, { name }) => {
+    const layouts = allElements.reduce((acc, { name, isGeneric }) => {
       let layout;
       if (_.isEmpty(node.tabs_segment[name])) {
         layout = (profileData && profileData[`layout_detail_${name}`]) || {};
@@ -123,7 +122,31 @@ export default class CollectionTabs extends React.Component {
         layout = node.tabs_segment[name];
       }
 
-      const layoutData = getArrayFromLayout(layout, name, false);
+      // Get segment labels for this element type
+      const segmentKlasses = (UserStore.getState() && UserStore.getState().segmentKlasses) || [];
+      const segmentLabels = segmentKlasses
+        .filter((s) => s.element_klass && s.element_klass.name === name)
+        .map((s) => s.label);
+
+      // Get all available tabs from the registry (for non-generic elements)
+      const availableTabs = isGeneric
+        ? null // Generic elements use dynamic tabs
+        : getAvailableTabs(name, { segmentLabels });
+
+      // Ensure default tabs exist in layout (for backward compatibility)
+      if (!isGeneric && availableTabs) {
+        const defaultTabs = ['properties', 'analyses'];
+        const layoutKeys = Object.keys(layout);
+        const maxOrder = Math.max(0, ...layoutKeys.map(k => Math.abs(layout[k])));
+
+        defaultTabs.forEach((tab, idx) => {
+          if (!layoutKeys.includes(tab) && availableTabs.includes(tab)) {
+            layout[tab] = maxOrder + idx + 1;
+          }
+        });
+      }
+
+      const layoutData = getArrayFromLayout(layout, name, false, availableTabs);
 
       acc[name] = {
         visible: layoutData.visible,
@@ -180,6 +203,17 @@ export default class CollectionTabs extends React.Component {
           tabs_segment: layoutSegments
         };
       }
+    }
+
+    // Update UIStore if this is the currently active collection
+    const uiState = UIStore.getState();
+    if (uiState.currentCollection && uiState.currentCollection.id === cCol.id) {
+      const updatedCollection = {
+        ...uiState.currentCollection,
+        tabs_segment: layoutSegments,
+        clearSearch: true
+      };
+      UIActions.selectCollection(updatedCollection);
     }
 
     this.setState({ showModal: false, tree: { ...tree, children: newChildren } });
