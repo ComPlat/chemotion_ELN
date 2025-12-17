@@ -303,7 +303,7 @@ export default class CollectionTabs extends React.Component {
                 <CollectionTabLayoutEditor
                   visible={layouts[selectedCategory].visible}
                   hidden={layouts[selectedCategory].hidden}
-                  getItemComponent={({ item }) => <TabItemComponent item={item} tabTitlesMap={tabTitlesMap} />}
+                  getItemComponent={({ item }) => <TabItemComponent item={item} />}
                   onLayoutChange={(visible, hidden) => {
                     this.setState((prevState) => ({
                       layouts: {
