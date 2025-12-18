@@ -86,7 +86,6 @@ class Material extends Component {
       showComponents: false,
       mixtureComponents: [],
       mixtureComponentsLoading: false,
-      equivalentWeightPercentageFieldChange: 'molar mass',
       fieldToShow: 'molar mass',
     };
 
@@ -351,7 +350,7 @@ class Material extends Component {
     return (reaction.weight_percentage ? this.customFieldValueSelector()
       : (
         <NumeralInputWithUnitsCompo
-          className="reaction-material__equivalent-input"
+          className="reaction-material__equivalent-data"
           size="sm"
           precision={4}
           value={material.equivalent}
@@ -398,7 +397,7 @@ class Material extends Component {
 
     return (
       <FieldValueSelector
-        className="reaction-material__equivalent-input"
+        className="reaction-material__equivalent-data"
         fieldOptions={['molar mass', 'weight percentage']}
         onFirstRenderField={fieldToShow}
         value={valueToShow}
@@ -783,6 +782,7 @@ class Material extends Component {
   }
 
   handleAmountUnitChange(e, value, amountType = null) {
+    const { materialGroup, onChange } = this.props;
     if (e.value === value) return;
 
     if (onChange && e) {
