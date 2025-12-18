@@ -199,7 +199,7 @@ export default class MoveToAnalysisButton extends React.Component {
 
 MoveToAnalysisButton.propTypes = {
   attachment: PropTypes.shape({
-    id: PropTypes.string.isRequired,
+    id: PropTypes.number.isRequired,
     filename: PropTypes.string.isRequired,
   }).isRequired,
   sourceType: PropTypes.string,
