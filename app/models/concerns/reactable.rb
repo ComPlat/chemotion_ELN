@@ -75,8 +75,15 @@ module Reactable
         gas_phase_data['ppm'],
       ))
     else
-      # Persist equivalent using update! so model validations run (don't skip validations)
-      update!(equivalent: (ref_amount.zero? ? 0 : amount / ref_amount))
+      # compute equivalent safely (avoid calling `zero?` on nil)
+      equivalent_value = if ref_amount.nil? || amount.nil? || ref_amount.to_f.zero?
+                           0
+                         else
+                           amount / ref_amount
+                         end
+
+      # Persist equivalent using update! so model validations run
+      update!(equivalent: equivalent_value)
     end
   end
 
