@@ -18,7 +18,7 @@ function MoveToAnalysis({ attachment, sourceType }) {
 }
 MoveToAnalysis.propTypes = {
   attachment: PropTypes.shape({
-    id: PropTypes.string.isRequired,
+    id: PropTypes.number.isRequired,
     filename: PropTypes.string.isRequired,
   }).isRequired,
   sourceType: PropTypes.string,
