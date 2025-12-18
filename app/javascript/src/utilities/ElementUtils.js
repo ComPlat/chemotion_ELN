@@ -465,7 +465,7 @@ const getElementSegments = (elementName, tabs) => {
   let segmentKlasses = (UserStore.getState() && UserStore.getState().segmentKlasses) || [];
   const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
   let labels = segmentKlasses.filter(s => s.element_klass.name == elementName).map(s => s.label);
-  const defaultTabs = ['properties', 'analyses', 'attachments'];
+  const defaultTabs = ['properties', 'analyses'];
   const allTabs = _.uniq([...defaultTabs, ...tabs]);
   if (!MatrixCheck(currentUser.matrix, 'segment')) {
     return allTabs.filter((key) => !labels.includes(key));

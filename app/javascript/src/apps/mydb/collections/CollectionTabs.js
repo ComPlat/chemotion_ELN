@@ -13,12 +13,11 @@ import UserActions from 'src/stores/alt/actions/UserActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import { capitalizeWords } from 'src/utilities/textHelper';
-import { filterTabLayout, getArrayFromLayout } from 'src/utilities/CollectionTabsHelper';
+import { filterTabLayout, getArrayFromLayout, TAB_DISPLAY_NAMES } from 'src/utilities/CollectionTabsHelper';
 import { allElnElmentsWithLabel, allGenericElements } from 'src/apps/generic/Utils';
-import { getAvailableTabs, getTabDisplayName } from 'src/utilities/ElementTabRegistry';
 
 function TabItemComponent({ item }) {
-  const displayName = getTabDisplayName(item);
+  const displayName = TAB_DISPLAY_NAMES[item];
   return <div>{displayName ?? capitalizeWords(item)}</div>;
 }
 
@@ -117,7 +116,14 @@ export default class CollectionTabs extends React.Component {
     const layouts = allElements.reduce((acc, { name, isGeneric }) => {
       let layout;
       if (_.isEmpty(node.tabs_segment[name])) {
-        layout = (profileData && profileData[`layout_detail_${name}`]) || {};
+        // Use element-specific layout, or generic layout for generic elements, or empty
+        if (profileData && profileData[`layout_detail_${name}`]) {
+          layout = profileData[`layout_detail_${name}`];
+        } else if (isGeneric && profileData && profileData['layout_detail_generic']) {
+          layout = profileData['layout_detail_generic'];
+        } else {
+          layout = {};
+        }
       } else {
         layout = node.tabs_segment[name];
       }
@@ -128,22 +134,18 @@ export default class CollectionTabs extends React.Component {
         .filter((s) => s.element_klass && s.element_klass.name === name)
         .map((s) => s.label);
 
-      // Get all available tabs from the registry (for non-generic elements)
-      const availableTabs = isGeneric
-        ? null // Generic elements use dynamic tabs
-        : getAvailableTabs(name, { segmentLabels });
-
-      // Ensure default tabs exist in layout (for backward compatibility)
-      if (!isGeneric && availableTabs) {
-        const defaultTabs = ['properties', 'analyses'];
-        const layoutKeys = Object.keys(layout);
-        const maxOrder = Math.max(0, ...layoutKeys.map(k => Math.abs(layout[k])));
-
-        defaultTabs.forEach((tab, idx) => {
-          if (!layoutKeys.includes(tab) && availableTabs.includes(tab)) {
-            layout[tab] = maxOrder + idx + 1;
-          }
-        });
+      // Get all available tabs from profile data
+      let availableTabs = null;
+      if (isGeneric) {
+        // Generic elements use the generic layout as default
+        const defaultLayout = profileData['layout_detail_generic'] || {};
+        const tabsFromProfile = Object.keys(defaultLayout);
+        availableTabs = [...new Set([...tabsFromProfile, ...segmentLabels])];
+      } else {
+        // Standard elements use their specific layout
+        const defaultLayout = profileData[`layout_detail_${name}`] || {};
+        const tabsFromProfile = Object.keys(defaultLayout);
+        availableTabs = [...new Set([...tabsFromProfile, ...segmentLabels])];
       }
 
       const layoutData = getArrayFromLayout(layout, name, false, availableTabs);
