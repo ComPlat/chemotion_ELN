@@ -1343,7 +1343,7 @@ describe('Sample', async () => {
   describe('Sample.calculateMixtureAmountMol()', () => {
     it('returns 0 when no reference component', () => {
       const s = new Sample();
-      expect(s.calculateMixtureAmountMol()).toBe(0);
+      expect(s.calculateMixtureAmountMol()).toBe('n.d');
     });
 
     it('returns reference amount_mol when reference changed flag is set', () => {

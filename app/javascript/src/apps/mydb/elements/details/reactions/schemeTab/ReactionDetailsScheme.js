@@ -1336,10 +1336,6 @@ export default class ReactionDetailsScheme extends React.Component {
           && updatedSample.gas_type !== 'feedstock') {
           const newAmountMol = updatedSample.equivalent * referenceMaterial.amount_mol;
           this.handleEquivalentBasedAmountUpdate(sample, newAmountMol);
-          sample.setAmountAndNormalizeToGram({
-            value: updatedSample.equivalent * referenceMaterial.amount_mol,
-            unit: 'mol',
-          });
         } else if (sample.amount_value && updatedSample.gas_type !== 'feedstock') {
           sample.setAmountAndNormalizeToGram({
             value: updatedSample.equivalent * sample.amount_mol,
