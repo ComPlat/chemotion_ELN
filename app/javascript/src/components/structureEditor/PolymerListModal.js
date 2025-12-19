@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import {
   Accordion, Button, Card, Form, Modal, Spinner
 } from 'react-bootstrap';
+import QuillEditor from 'src/components/QuillEditor';
+import Delta from 'quill-delta';
 
 const PolymerShapes = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
   <!-- Square with border -->
@@ -305,6 +307,86 @@ function SpecialCharModal({
   );
 }
 
+function TextEditorModal({
+  loading = false,
+  title = 'Text Editor',
+  onCloseClick = null,
+  onApply = null,
+  initialValue = null
+}) {
+  const [editorValue, setEditorValue] = useState(initialValue || new Delta());
+
+  const handleChange = (value) => {
+    setEditorValue(value);
+  };
+
+  const handleApply = () => {
+    if (onApply) {
+      onApply(editorValue);
+    }
+    if (onCloseClick) {
+      onCloseClick();
+    }
+  };
+
+  const handleCancel = () => {
+    if (onCloseClick) {
+      onCloseClick();
+    }
+  };
+
+  return (
+    <Modal
+      centered
+      className="w-500 h-500 top-50 start-50 translate-middle"
+      // style={{ zIndex: '10000' }}
+      // contentClassName="border-1"
+      animation
+      show={loading}
+      onHide={onCloseClick}
+    >
+      <Modal.Header closeButton>
+        <Modal.Title>Add Label</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <style>
+          {`
+            .text-editor-quill .ql-editor.ql-blank::before {
+              content: '1wt.% Pt, γ-Al2O3 and more...';
+              color: #999;
+              font-style: Helvetica, Arial, sans-serif;
+            }
+          `}
+        </style>
+        <Form.Group className="mb-3">
+          <div className="text-editor-quill" style={{ border: '0px solid #ced4da', borderRadius: '4px' }}>
+            <QuillEditor
+              value={editorValue}
+              onChange={handleChange}
+              theme="snow"
+              height="200px"
+              disabled={false}
+              toolbarSymbol={[]}
+              toolbarDropdown={[]}
+              customToolbar=""
+            />
+          </div>
+          <div style={{
+            marginTop: '12px',
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: '8px'
+          }}>
+            <Button variant="primary" onClick={handleApply}>Apply</Button>
+            <Button variant="secondary" onClick={handleCancel}>Cancel</Button>
+          </div>
+        </Form.Group>
+      </Modal.Body>
+   
+    </Modal>
+  );
+}
+
 export {
   PolymerListModal, PolymerListIconKetcherToolbarButton, specialCharButton, SpecialCharModal, SolidSurfaceTemplatesIconTextButton
 };
@@ -314,4 +396,20 @@ PolymerListModal.propTypes = {
   title: PropTypes.string,
   onCloseClick: PropTypes.func,
   onShapeSelection: PropTypes.func
+};
+
+TextEditorModal.propTypes = {
+  loading: PropTypes.bool,
+  title: PropTypes.string,
+  onCloseClick: PropTypes.func,
+  onApply: PropTypes.func,
+  initialValue: PropTypes.shape({})
+};
+
+TextEditorModal.defaultProps = {
+  loading: false,
+  title: 'Text Editor',
+  onCloseClick: null,
+  onApply: null,
+  initialValue: null
 };
