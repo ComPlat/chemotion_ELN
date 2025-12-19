@@ -515,10 +515,18 @@ export default class Reaction extends Element {
     this.setPositions(group);
   }
 
-  addMaterialAt(srcMaterial, srcGp, tagMaterial, tagGp) {
+  addMaterialAt(srcMaterial, srcGp, tagMaterial, tagGp, srcIsWeightPercentageRef = false) {
     const materials = this[tagGp];
     const idx = materials.indexOf(tagMaterial);
     const newSrcMaterial = this.materialPolicy(srcMaterial, srcGp, tagGp);
+
+    // rebuild weight percentage reference
+    if (srcIsWeightPercentageRef) {
+      newSrcMaterial.weight_percentage_reference = true;
+      WeightPercentageReactionActions.setWeightPercentageReference(newSrcMaterial);
+      const amount = { value: newSrcMaterial.amount_value, unit: newSrcMaterial.amount_unit };
+      WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(amount);
+    }
 
     if (idx === -1) {
       this[tagGp] = [...materials, newSrcMaterial];
@@ -589,8 +597,9 @@ export default class Reaction extends Element {
     if (srcGp === tagGp) {
       this.swapMaterial(srcMaterial, tagMaterial, tagGp);
     } else {
+      const srcIsWeightPercentageRef = srcMaterial.weight_percentage_reference || false;
       this.deleteMaterial(srcMaterial, srcGp);
-      this.addMaterialAt(srcMaterial, srcGp, tagMaterial, tagGp);
+      this.addMaterialAt(srcMaterial, srcGp, tagMaterial, tagGp, srcIsWeightPercentageRef);
     }
   }
 
@@ -624,7 +633,6 @@ export default class Reaction extends Element {
       material.reaction_product = true;
       material.equivalent = 0;
       material.reference = false;
-      material.weight_percentage_reference = false;
 
       if (material.parent_id) {
         material.start_parent = material.parent_id;
@@ -643,11 +651,9 @@ export default class Reaction extends Element {
       // Temporary set true, to fit with server side logical
       material.isSplit = true;
       material.reaction_product = false;
-      material.weight_percentage_reference = false;
     } else if (newGroup == "starting_materials") {
       material.isSplit = true;
       material.reaction_product = false;
-      material.weight_percentage_reference = false;
 
       if (material.start_parent && material.parent_id == null) {
         material.parent_id = material.start_parent;

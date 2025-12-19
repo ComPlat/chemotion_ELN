@@ -615,7 +615,7 @@ class Material extends Component {
       ? material.metrics[1]
       : 'm';
     const isAmountDisabledByWeightPercentage = reaction.weight_percentage
-      && material.weight_percentage > 0;
+      && material.weight_percentage > 0 && materialGroup !== 'products' && !material.weight_percentage_reference;
 
     return (
       <OverlayTrigger placement="top" overlay={tooltip}>
@@ -632,7 +632,7 @@ class Material extends Component {
               || ((materialGroup !== 'products')
                 && !material.reference && lockEquivColumn)
               || material.gas_type === 'gas'}
-            onChange={(e) => this.handleAmountUnitChange(e, material.amount_l)}
+            onChange={(e) => this.handleAmountUnitChange(e, material.amount_l, material.amountType)}
             onMetricsChange={this.handleMetricsChange}
             variant={material.amount_unit === 'l' ? 'primary' : 'light'}
             size="sm"
@@ -647,7 +647,7 @@ class Material extends Component {
     const metricMol = getMetricMol(material);
 
     const isAmountDisabledByWeightPercentage = reaction.weight_percentage
-      && material.weight_percentage > 0;
+      && material.weight_percentage > 0 && materialGroup !== 'products' && !material.weight_percentage_reference;
 
     const isDisabled = !permitOn(reaction)
       || isAmountDisabledByWeightPercentage
@@ -663,7 +663,7 @@ class Material extends Component {
         metricPrefixes={metricPrefixesMol}
         precision={4}
         disabled={isDisabled}
-        onChange={(e) => this.handleAmountUnitChange(e, material.amount_mol)}
+        onChange={(e) => this.handleAmountUnitChange(e, material.amount_mol, material.amountType)}
         onMetricsChange={this.handleMetricsChange}
         variant={material.amount_unit === 'mol' ? 'primary' : 'light'}
         size="sm"
@@ -1012,7 +1012,7 @@ class Material extends Component {
     );
 
     const isAmountDisabledByWeightPercentage = reaction.weight_percentage
-      && material.weight_percentage > 0 && !material.weight_percentage_reference;
+      && material.weight_percentage > 0 && materialGroup !== 'products' && !material.weight_percentage_reference;
     return (
       <OverlayTrigger
         delay="100"

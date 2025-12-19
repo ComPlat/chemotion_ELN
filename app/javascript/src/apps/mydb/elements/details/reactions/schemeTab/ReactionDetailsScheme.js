@@ -1462,7 +1462,6 @@ export default class ReactionDetailsScheme extends React.Component {
   }
 
   updatedSamplesForWeightPercentageReferenceChange(samples, referenceMaterial) {
-    // if (materialGroup !== 'products') return samples;
     return samples.map((s) => {
       if (s.id === referenceMaterial.id) {
         s.weight_percentage_reference = true;

@@ -626,6 +626,8 @@ export default class ReactionDetails extends Component {
       material.weight_percentage_reference = false;
       material.weight_percentage = null;
     });
+    WeightPercentageReactionActions.setWeightPercentageReference(null);
+    WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(null);
   }
 
   /**
@@ -665,6 +667,11 @@ export default class ReactionDetails extends Component {
   assignWeightPercentageReference(reaction) {
     if (reaction.products.length > 0) {
       reaction.products[0].weight_percentage_reference = true;
+      WeightPercentageReactionActions.setWeightPercentageReference(reaction.products[0]);
+      const amountValue = reaction.products[0].amount_value;
+      const amountUnit = reaction.products[0].amount_unit;
+      const targetAmount = { value: amountValue, unit: amountUnit };
+      WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(targetAmount);
     }
   }
 
