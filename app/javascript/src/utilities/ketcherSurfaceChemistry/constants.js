@@ -43,7 +43,8 @@ const ButtonSelectors = {
   SAVE: 'Save as... (Ctrl+S)',
   UNDO: 'Undo (Ctrl+Z)',
   REDO: 'Redo (Ctrl+Shift+Z)',
-  POLYMER_LIST: 'Polymer List',
+  POLYMER_LIST: 'Solid Surface Templates',
+  ADD_LABEL: 'Add Label',
   CLEAR_CANVAS: 'Clear Canvas (Ctrl+Del)',
   TEXT_NODE_SPECIAL_CHAR: 'Text Node Special Char',
 };

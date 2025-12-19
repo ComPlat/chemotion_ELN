@@ -196,7 +196,7 @@ export default class StructureEditorModal extends React.Component {
     if (collectSources.length) {
       NotificationActions.add({
         title: 'Invalid components labels',
-        message: `Invalid sources: ${collectSources.join(', ')}. Please follow the format: "Pd 1wt.% Pd" or "Y-Ai204".`,
+        message: `Invalid sources: ${collectSources.join(', ')}. Please follow the format: "1wt.% Pd" or "Y-Ai204".`,
         level: 'error',
         position: 'tc'
       });

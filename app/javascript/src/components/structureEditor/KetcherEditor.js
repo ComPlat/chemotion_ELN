@@ -10,7 +10,7 @@
 import PropTypes from 'prop-types';
 import React, { useEffect, useRef, useImperativeHandle, forwardRef, useState } from 'react';
 import { findTemplateByPayload } from 'src/utilities/ketcherSurfaceChemistry/Ketcher2SurfaceChemistryUtils';
-import { PolymerListModal } from 'src/components/structureEditor/PolymerListModal';
+import { PolymerListModal, TextEditorModal } from 'src/components/structureEditor/PolymerListModal';
 import {
   fetchKetcherData,
   setupEditorIframe,
@@ -166,10 +166,11 @@ const KetcherEditor = forwardRef((props, ref) => {
   const { editor, iH, iS, molfile } = props;
 
   const [showShapes, setShowShapes] = useState(false);
+  const [addLabelPopup, setAddLabelPopup] = useState(false);
   // const [showSpecialCharModal, setSpecialCharModal] = useState(false);
 
   const iframeRef = useRef();
-  const eventCleanupRef = useRef(() => {});
+  const eventCleanupRef = useRef(() => { });
   useEffect(() => {
     canvasIframeRefSetter(iframeRef);
     return () => canvasIframeRefSetter(null);
@@ -240,6 +241,7 @@ const KetcherEditor = forwardRef((props, ref) => {
     [getButtonSelector(ButtonSelectors.UNDO)]: async () => undoKetcher(editor),
     [getButtonSelector(ButtonSelectors.REDO)]: () => redoKetcher(editor),
     [getButtonSelector(ButtonSelectors.POLYMER_LIST)]: async () => setShowShapes(!showShapes),
+    [getButtonSelector(ButtonSelectors.ADD_LABEL)]: async () => setAddLabelPopup(!addLabelPopup),
     [getButtonSelector(ButtonSelectors.CLEAR_CANVAS)]: async () => {
       resetStore();
       imageNodeForTextNodeSetter(null);
@@ -248,7 +250,7 @@ const KetcherEditor = forwardRef((props, ref) => {
 
   // attach click listeners to the iframe and initialize the editor
   useEffect(() => {
-    if (!editor) return () => {};
+    if (!editor) return () => { };
 
     const cleanup = setupEditorIframe({
       iframeRef,
@@ -263,7 +265,7 @@ const KetcherEditor = forwardRef((props, ref) => {
       // Cleanup event subscriptions when component unmounts
       if (eventCleanupRef.current) {
         eventCleanupRef.current();
-        eventCleanupRef.current = () => {};
+        eventCleanupRef.current = () => { };
       }
     };
   }, [editor]);
@@ -283,7 +285,7 @@ const KetcherEditor = forwardRef((props, ref) => {
    */
   const onEditorContentChange = () => {
     if (!editor?._structureDef?.editor?.editor) {
-      return () => {}; // Return no-op cleanup if editor not ready
+      return () => { }; // Return no-op cleanup if editor not ready
     }
 
     const changeHandler = async (eventData) => {
@@ -425,6 +427,25 @@ const KetcherEditor = forwardRef((props, ref) => {
         onShapeSelection={onShapeSelection}
         onCloseClick={() => setShowShapes(false)}
         title="Surface Chemistry Templates"
+      />
+
+      <TextEditorModal
+        loading={addLabelPopup}
+        onCloseClick={() => setAddLabelPopup(false)}
+        onApply={(contents) => {
+          // Convert Delta object to plain text
+          const deltaToText = (delta) => {
+            if (!delta || !delta.ops) return '';
+            return delta.ops
+              .filter((op) => typeof op.insert === 'string')
+              .map((op) => op.insert)
+              .join('');
+          };
+          const text = deltaToText(contents);
+          console.log('Text editor contents:', text);
+          setAddLabelPopup(false);
+        }}
+        title="Text Editor"
       />
       <iframe
         ref={iframeRef}
