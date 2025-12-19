@@ -523,6 +523,7 @@ export default class Reaction extends Element {
     // rebuild weight percentage reference
     if (srcIsWeightPercentageRef) {
       newSrcMaterial.weight_percentage_reference = true;
+      newSrcMaterial.weight_percentage = 1;
       WeightPercentageReactionActions.setWeightPercentageReference(newSrcMaterial);
       const amount = { value: newSrcMaterial.amount_value, unit: newSrcMaterial.amount_unit };
       WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(amount);
