@@ -176,7 +176,8 @@ const templateWithBoundingBox = async (templateType, atomLocation, templateSize)
 const fetchKetcherData = async (editor) => {
   try {
     if (!editor) throw new Error('Editor instance is invalid');
-    const data = JSON.parse(await editor.structureDef.editor.getKet());
+    const ketString = await editor.structureDef.editor.getKet();
+    const data = JSON.parse(ketString);
     await latestDataSetter(data);
     await loadKetcherData(data);
   } catch (err) {

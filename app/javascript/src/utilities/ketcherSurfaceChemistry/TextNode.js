@@ -192,6 +192,13 @@ const findByKeyAndUpdateTextNodePosition = async (textNodeKey, atom) => {
         y: atom.location[1],
         z: atom.location[2]
       };
+      // Update pos array to match new position
+      text.data.pos = [
+        { x: positionX, y: atom.location[1], z: atom.location[2] },
+        { x: positionX, y: atom.location[1] - 0.375, z: atom.location[2] },
+        { x: positionX + 0.71724853515625, y: atom.location[1] - 0.375, z: atom.location[2] },
+        { x: positionX + 0.71724853515625, y: atom.location[1], z: atom.location[2] }
+      ];
       return text;
     }
   }

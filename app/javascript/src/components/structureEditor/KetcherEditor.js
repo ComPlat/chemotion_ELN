@@ -8,9 +8,12 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable import/no-mutable-exports */
 import PropTypes from 'prop-types';
-import React, { useEffect, useRef, useImperativeHandle, forwardRef, useState } from 'react';
+import React, {
+  useEffect, useRef, useImperativeHandle, forwardRef, useState
+} from 'react';
 import { findTemplateByPayload } from 'src/utilities/ketcherSurfaceChemistry/Ketcher2SurfaceChemistryUtils';
-import { PolymerListModal, TextEditorModal } from 'src/components/structureEditor/PolymerListModal';
+import { PolymerListModal } from 'src/components/structureEditor/PolymerListModal';
+import TextEditorModal from 'src/components/structureEditor/TextEditorModal';
 import {
   fetchKetcherData,
   setupEditorIframe,
@@ -21,6 +24,7 @@ import {
   removeAtomFromData,
   analyzeAliasAndImageDifferences,
   filterImagesByDifferences,
+  findAtomByImageIndex,
 } from 'src/utilities/ketcherSurfaceChemistry/AtomsAndMolManipulation';
 import {
   EventNames,
@@ -43,6 +47,7 @@ import {
   onFinalCanvasSave,
   onPasteNewShapes,
   onAddText,
+  onAddTextFromEditor,
 } from 'src/utilities/ketcherSurfaceChemistry/canvasOperations';
 import { handleEventCapture } from 'src/utilities/ketcherSurfaceChemistry/eventHandler';
 import {
@@ -57,6 +62,8 @@ import {
   upsertImageCalled,
   imagesListSetter,
   canvasIframeRefSetter,
+  textNodeStruct,
+  textList,
 } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
 
 export let latestData = null; // latestData contains the updated ket2 format always
@@ -163,10 +170,13 @@ export const eventLoadCanvas = async (editor) => {
 
 /* istanbul ignore next */
 const KetcherEditor = forwardRef((props, ref) => {
-  const { editor, iH, iS, molfile } = props;
+  const {
+    editor, iH, iS, molfile
+  } = props;
 
   const [showShapes, setShowShapes] = useState(false);
   const [addLabelPopup, setAddLabelPopup] = useState(false);
+  const [selectedTextNodeContent, setSelectedTextNodeContent] = useState(null);
   // const [showSpecialCharModal, setSpecialCharModal] = useState(false);
 
   const iframeRef = useRef();
@@ -211,6 +221,9 @@ const KetcherEditor = forwardRef((props, ref) => {
     [EventNames.DELETE_TEXT]: async () => {
       if (editor && editor.structureDef) {
         await onDeleteText(editor);
+        // Update button state after text is deleted (re-enable if image no longer has label)
+        const currentSelection = editor?._structureDef?.editor?.editor?._selection;
+        await updateAddLabelButtonState(currentSelection?.images || null);
       }
     },
     [EventNames.UPSERT_IMAGE]: async () => {
@@ -224,6 +237,51 @@ const KetcherEditor = forwardRef((props, ref) => {
       if (editor && editor.structureDef) {
         await onTemplateMove(editor);
       }
+    }
+  };
+
+  // Function to update Add Label button disabled state
+  const updateAddLabelButtonState = async (imageIndexes, selectedTextKey = null) => {
+    try {
+      const iframeDocument = iframeRef?.current?.contentWindow?.document;
+      if (!iframeDocument) return;
+
+      const buttonSelector = getButtonSelector(ButtonSelectors.ADD_LABEL);
+      const button = iframeDocument.querySelector(buttonSelector);
+      if (!button) return;
+
+      // Default: button is disabled
+      let shouldEnable = false;
+
+      // Check if a text node is selected and has an associated image
+      if (selectedTextKey) {
+        // Check if this text key exists in textNodeStruct (meaning it has an associated image)
+        const hasAssociatedImage = Object.values(textNodeStruct).includes(selectedTextKey);
+        if (hasAssociatedImage) {
+          shouldEnable = true;
+        }
+      }
+
+      // If images are selected, check if any of them don't have labels yet
+      if (!shouldEnable && imageIndexes && imageIndexes.length > 0) {
+        // Check if the selected image already has a label
+        const imageIndex = imageIndexes[0];
+        const { alias } = await findAtomByImageIndex(imageIndex);
+
+        // Enable button only if image is selected AND doesn't have a label yet
+        if (alias && !textNodeStruct[alias]) {
+          shouldEnable = true;
+        }
+      }
+
+      button.disabled = !shouldEnable;
+      button.style.opacity = shouldEnable ? '1' : '0.5';
+      button.style.cursor = shouldEnable ? 'pointer' : 'not-allowed';
+
+      // Also set aria-disabled for accessibility
+      button.setAttribute('aria-disabled', !shouldEnable);
+    } catch (err) {
+      console.error('Error updating Add Label button state:', err);
     }
   };
 
@@ -241,10 +299,16 @@ const KetcherEditor = forwardRef((props, ref) => {
     [getButtonSelector(ButtonSelectors.UNDO)]: async () => undoKetcher(editor),
     [getButtonSelector(ButtonSelectors.REDO)]: () => redoKetcher(editor),
     [getButtonSelector(ButtonSelectors.POLYMER_LIST)]: async () => setShowShapes(!showShapes),
-    [getButtonSelector(ButtonSelectors.ADD_LABEL)]: async () => setAddLabelPopup(!addLabelPopup),
+    [getButtonSelector(ButtonSelectors.ADD_LABEL)]: async () => {
+      // Open modal if an image is selected OR if text with image is selected
+      if (selectedImageForTextNode && selectedImageForTextNode.length > 0) {
+        setAddLabelPopup(!addLabelPopup);
+      }
+    },
     [getButtonSelector(ButtonSelectors.CLEAR_CANVAS)]: async () => {
       resetStore();
       imageNodeForTextNodeSetter(null);
+      updateAddLabelButtonState(false);
     },
   };
 
@@ -259,6 +323,35 @@ const KetcherEditor = forwardRef((props, ref) => {
       loadContent,
       buttonEvents,
     });
+
+    // Initialize button state (disabled by default)
+    // Use multiple attempts to ensure button is found after iframe loads
+    const initializeButtonState = async () => {
+      for (let i = 0; i < 10; i++) {
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise((resolve) => {
+          setTimeout(() => {
+            resolve();
+          }, 200);
+        });
+        try {
+          // eslint-disable-next-line no-await-in-loop
+          await updateAddLabelButtonState(null);
+          // If button was found and disabled, break
+          const iframeDocument = iframeRef?.current?.contentWindow?.document;
+          if (iframeDocument) {
+            const buttonSelector = getButtonSelector(ButtonSelectors.ADD_LABEL);
+            const button = iframeDocument.querySelector(buttonSelector);
+            if (button && button.disabled) {
+              break;
+            }
+          }
+        } catch (err) {
+          // Continue trying
+        }
+      }
+    };
+    initializeButtonState();
 
     return () => {
       if (cleanup) cleanup();
@@ -306,11 +399,87 @@ const KetcherEditor = forwardRef((props, ref) => {
     const selectionChangeHandler = async () => {
       try {
         const currentSelection = editor?._structureDef?.editor?.editor?._selection;
+        let selectedTextContent = null;
 
-        if (currentSelection?.images) {
+        // Check if text nodes are selected
+        let selectedTextKey = null;
+        if (currentSelection?.texts && currentSelection.texts.length > 0) {
+          // selectedText is an index into the nodes array
+          const selectedTextIndex = currentSelection.texts[0];
+
+          // Try to get the text node from latestData.root.nodes first
+          let selectedTextNode = null;
+          if (latestData?.root?.nodes && latestData.root.nodes[selectedTextIndex]) {
+            const node = latestData.root.nodes[selectedTextIndex];
+            if (node.type === 'text') {
+              selectedTextNode = node;
+            }
+          }
+
+          // If not found in latestData, try to find it in textList by index
+          // (textList might have a different order, so we'll search by matching structure)
+          if (!selectedTextNode && textList && textList.length > 0) {
+            // Find text node in textList - we'll match by checking if index corresponds
+            // Since we don't have direct mapping, we'll search all text nodes
+            for (const textNode of textList) {
+              try {
+                const content = JSON.parse(textNode.data.content);
+                const textKey = content.blocks[0].key;
+                // Check if this text node is associated with an image
+                const hasAssociatedImage = Object.values(textNodeStruct).includes(textKey);
+                if (hasAssociatedImage) {
+                  selectedTextNode = textNode;
+                  break;
+                }
+              } catch (e) {
+                // Skip invalid nodes
+              }
+            }
+          }
+
+          // If we found a text node, extract its content
+          if (selectedTextNode) {
+            try {
+              const content = JSON.parse(selectedTextNode.data.content);
+              selectedTextKey = content.blocks[0].key;
+              // Extract the text content
+              selectedTextContent = content.blocks[0].text || '';
+
+              // Find associated image index from alias
+              for (const [alias, textKeyInStruct] of Object.entries(textNodeStruct)) {
+                if (textKeyInStruct === selectedTextKey) {
+                  // Extract image index from alias (last part after _)
+                  const aliasParts = alias.split('_');
+                  if (aliasParts.length >= 3) {
+                    const imageIndex = parseInt(aliasParts[2], 10);
+                    imageNodeForTextNodeSetter([imageIndex]);
+                  }
+                  break;
+                }
+              }
+            } catch (e) {
+              console.error('Error parsing selected text node content:', e);
+            }
+          }
+        } else if (currentSelection?.images) {
           canvasSelectionsSetter(currentSelection);
           imageNodeForTextNodeSetter(currentSelection.images);
+          selectedTextContent = null;
+          selectedTextKey = null;
+        } else {
+          imageNodeForTextNodeSetter(null);
+          selectedTextContent = null;
+          selectedTextKey = null;
         }
+
+        // Store selected text content for modal
+        setSelectedTextNodeContent(selectedTextContent);
+
+        // Update button disabled state based on image/text selection and existing labels
+        await updateAddLabelButtonState(
+          currentSelection?.images || null,
+          selectedTextKey
+        );
       } catch (err) {
         console.error('Error in selectionChange event handler:', err);
       }
@@ -318,6 +487,9 @@ const KetcherEditor = forwardRef((props, ref) => {
 
     editor._structureDef.editor.editor.subscribe('change', changeHandler);
     editor._structureDef.editor.editor.subscribe('selectionChange', selectionChangeHandler);
+
+    // Set Add Label button to disabled by default
+    updateAddLabelButtonState(null);
 
     // Return cleanup function to unsubscribe
     return () => {
@@ -431,8 +603,12 @@ const KetcherEditor = forwardRef((props, ref) => {
 
       <TextEditorModal
         loading={addLabelPopup}
-        onCloseClick={() => setAddLabelPopup(false)}
-        onApply={(contents) => {
+        initialText={selectedTextNodeContent}
+        onCloseClick={() => {
+          setAddLabelPopup(false);
+          setSelectedTextNodeContent(null);
+        }}
+        onApply={async (contents) => {
           // Convert Delta object to plain text
           const deltaToText = (delta) => {
             if (!delta || !delta.ops) return '';
@@ -442,10 +618,14 @@ const KetcherEditor = forwardRef((props, ref) => {
               .join('');
           };
           const text = deltaToText(contents);
-          console.log('Text editor contents:', text);
+
+          // Use the improved function that handles text node creation/update and positioning
+          await onAddTextFromEditor(editor, text, selectedImageForTextNode, selectedTextNodeContent !== null);
+          // Update button state after text is added/updated
+          await updateAddLabelButtonState(selectedImageForTextNode);
           setAddLabelPopup(false);
+          setSelectedTextNodeContent(null);
         }}
-        title="Text Editor"
       />
       <iframe
         ref={iframeRef}

@@ -14,7 +14,12 @@ import {
 } from 'src/components/structureEditor/KetcherEditor';
 import { ALIAS_PATTERNS, KET_TAGS, KET_DOM_TAG } from 'src/utilities/ketcherSurfaceChemistry/constants';
 import { fetchKetcherData } from 'src/utilities/ketcherSurfaceChemistry/InitializeAndParseKetcher';
-import { findAtomByImageIndex, handleAddAtom } from 'src/utilities/ketcherSurfaceChemistry/AtomsAndMolManipulation';
+import {
+  findAtomByImageIndex,
+  handleAddAtom,
+  removeTextFromData
+} from 'src/utilities/ketcherSurfaceChemistry/AtomsAndMolManipulation';
+import { findByKeyAndUpdateTextNodePosition } from 'src/utilities/ketcherSurfaceChemistry/TextNode';
 import {
   imageNodeForTextNodeSetter,
   buttonClickForRectangleSelection,
@@ -27,6 +32,7 @@ import {
   textList,
   textListSetter,
   textNodeStruct,
+  textNodeStructSetter,
   deletedAtomsSetter,
   reloadCanvasSetter,
   imageListCopyContainer,
@@ -151,6 +157,50 @@ const onDeleteText = async (editor) => {
   }
 };
 
+// Helper function to create a new text node from text content
+const createTextNodeFromContent = (text, defaultPosition = { x: 4.4, y: -10.4, z: 0 }) => {
+  if (!text || !text.trim()) {
+    return null;
+  }
+
+  // Generate unique key for text node (similar to draft.js format)
+  const generateKey = () => Math.random().toString(36).substring(2, 8);
+  const textKey = generateKey();
+
+  // Import forTextNodeHeader from TextNode utility
+  const forTextNodeHeader = (key, description) => JSON.stringify({
+    blocks: [
+      {
+        key,
+        text: description,
+        type: 'unstyled',
+        depth: 0,
+        inlineStyleRanges: [],
+        entityRanges: [],
+        data: {},
+      }
+    ],
+    entityMap: {}
+  });
+
+  // Create default pos array based on position
+  const defaultPos = [
+    { x: defaultPosition.x, y: defaultPosition.y, z: defaultPosition.z },
+    { x: defaultPosition.x, y: defaultPosition.y - 0.375, z: defaultPosition.z },
+    { x: defaultPosition.x + 0.71724853515625, y: defaultPosition.y - 0.375, z: defaultPosition.z },
+    { x: defaultPosition.x + 0.71724853515625, y: defaultPosition.y, z: defaultPosition.z }
+  ];
+
+  return {
+    type: 'text',
+    data: {
+      content: forTextNodeHeader(textKey, text.trim()),
+      position: defaultPosition,
+      pos: defaultPos
+    }
+  };
+};
+
 // function to add text nodes to canvas/struct
 const onAddText = async (editor, selectedImageForTextNode) => {
   if (editor && editor.structureDef && selectedImageForTextNode) {
@@ -184,6 +234,187 @@ const onAddText = async (editor, selectedImageForTextNode) => {
   }
   imageNodeForTextNodeSetter(null);
   return true;
+};
+
+// Function to add text node from Quill editor content (Delta format)
+const onAddTextFromEditor = async (editor, textContent, selectedImageForTextNode = null, isUpdate = false) => {
+  try {
+    if (!editor || !editor.structureDef) {
+      console.error('Editor is not available');
+      return false;
+    }
+
+    if (!textContent || !textContent.trim()) {
+      return false;
+    }
+
+    // Fetch latest data first to ensure we have current state
+    await fetchKetcherData(editor);
+
+    let textKey;
+    let updatedTextList;
+    let newTextNode;
+
+    // If updating existing text, find and update it
+    if (isUpdate && selectedImageForTextNode && selectedImageForTextNode.length > 0) {
+      const { alias } = await findAtomByImageIndex(selectedImageForTextNode[0]);
+      if (alias && textNodeStruct[alias]) {
+        // Find the existing text node with this key
+        const existingKey = textNodeStruct[alias];
+        updatedTextList = [...textList];
+        const existingNodeIndex = updatedTextList.findIndex((t) => {
+          try {
+            const content = JSON.parse(t.data.content);
+            return content.blocks[0].key === existingKey;
+          } catch (e) {
+            return false;
+          }
+        });
+
+        if (existingNodeIndex !== -1) {
+          // Update the existing text node content
+          const existingNode = updatedTextList[existingNodeIndex];
+          const existingContent = JSON.parse(existingNode.data.content);
+          existingContent.blocks[0].text = textContent.trim();
+          existingNode.data.content = JSON.stringify(existingContent);
+          textKey = existingKey;
+          newTextNode = existingNode;
+          textListSetter(updatedTextList);
+        } else {
+          // Existing node not found, create new one
+          newTextNode = createTextNodeFromContent(textContent);
+          if (!newTextNode) {
+            return false;
+          }
+          textKey = JSON.parse(newTextNode.data.content).blocks[0].key;
+          updatedTextList = [...textList, newTextNode];
+          textListSetter(updatedTextList);
+        }
+      } else {
+        // No existing text found, create new one
+        newTextNode = createTextNodeFromContent(textContent);
+        if (!newTextNode) {
+          return false;
+        }
+        textKey = JSON.parse(newTextNode.data.content).blocks[0].key;
+        updatedTextList = [...textList, newTextNode];
+        textListSetter(updatedTextList);
+      }
+    } else {
+      // Create new text node from content
+      newTextNode = createTextNodeFromContent(textContent);
+      if (!newTextNode) {
+        return false;
+      }
+      textKey = JSON.parse(newTextNode.data.content).blocks[0].key;
+      // Add text node to textList first (before positioning)
+      updatedTextList = [...textList, newTextNode];
+      textListSetter(updatedTextList);
+    }
+
+    // If there's a selected image, associate text with that atom
+    if (selectedImageForTextNode && selectedImageForTextNode.length > 0) {
+      const { atomLocation, alias } = await findAtomByImageIndex(selectedImageForTextNode[0]);
+
+      if (atomLocation && alias) {
+        // Find the atom in the latest data
+        let targetAtom = null;
+        for (const molName of mols) {
+          const mol = latestData[molName];
+          if (mol?.atoms) {
+            targetAtom = mol.atoms.find((a) => a.alias === alias);
+            if (targetAtom) break;
+          }
+        }
+
+        if (targetAtom) {
+          // Associate text node with atom alias in textNodeStruct FIRST
+          // This is required before calling findByKeyAndUpdateTextNodePosition
+          textNodeStruct[alias] = textKey;
+
+          // Update position using the smart positioning function
+          // This modifies textList directly, so we need to re-read it after
+          await findByKeyAndUpdateTextNodePosition(textKey, targetAtom);
+
+          // Re-read textList to get the updated node with correct position
+          // findByKeyAndUpdateTextNodePosition modifies textList in place
+          const finalTextList = [...textList];
+          const updatedNode = finalTextList.find((t) => {
+            try {
+              const content = JSON.parse(t.data.content);
+              return content.blocks[0].key === textKey;
+            } catch (e) {
+              return false;
+            }
+          });
+
+          if (updatedNode) {
+            // Update newTextNode with the positioned data
+            newTextNode.data.position = updatedNode.data.position;
+            // Recalculate pos array based on new position
+            const { x, y, z } = updatedNode.data.position;
+            const newPos = [
+              { x, y, z },
+              { x, y: y - 0.375, z },
+              { x: x + 0.71724853515625, y: y - 0.375, z },
+              { x: x + 0.71724853515625, y, z }
+            ];
+            newTextNode.data.pos = newPos;
+            // Also update the node in textList
+            updatedNode.data.pos = newPos;
+            textListSetter(finalTextList);
+          }
+        }
+      }
+    }
+
+    // Use placeTextOnAtoms to properly position all text nodes (including the new one)
+    // placeTextOnAtoms uses global textList and textNodeStruct, which we've already updated
+    // It returns ALL nodes (molecules, images, text) with text nodes positioned
+    if (latestData && latestData.root) {
+      // placeTextOnAtoms will:
+      // 1. Find all text nodes in textList that are associated with atoms (via textNodeStruct)
+      // 2. Position them using findByKeyAndUpdateTextNodePosition
+      // 3. Include unassociated text nodes
+      // 4. Return all nodes (molecules, images, positioned text nodes)
+      const allNodes = await placeTextOnAtoms();
+
+      if (allNodes && allNodes.length > 0) {
+        // placeTextOnAtoms already includes removeTextFromData, so it returns complete node list
+        latestData.root.nodes = allNodes;
+      } else {
+        // Fallback: if placeTextOnAtoms fails, manually add the text node
+        latestData.root.nodes = [
+          ...removeTextFromData(latestData),
+          newTextNode
+        ];
+      }
+
+      // Save and update canvas - this will trigger onTemplateMove which handles positioning
+      // IMPORTANT: Store textList before saveMoveCanvas because fetchKetcherData might overwrite it
+      // if Ketcher hasn't processed the text node yet
+      const textListBeforeSave = [...textList];
+      const textNodeStructBeforeSave = { ...textNodeStruct };
+
+      await saveMoveCanvas(editor, latestData, true, true, false);
+
+      // Restore textList if it was lost during fetchKetcherData
+      // This can happen if Ketcher hasn't processed the text node yet
+      if (textList.length < textListBeforeSave.length) {
+        textListSetter(textListBeforeSave);
+        textNodeStructSetter(textNodeStructBeforeSave);
+      }
+
+      // Ensure ImagesToBeUpdated is set to trigger rendering
+      // onTemplateMove already sets this, but we ensure it's set here too
+      ImagesToBeUpdatedSetter(true);
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error adding text from editor:', error);
+    return false;
+  }
 };
 
 // make all special atom to rg-labels6 temp
@@ -381,8 +612,19 @@ const saveMoveCanvas = async (
 
   if (isMoveRequired) {
     await applyCanvasDataToEditor(editor, dataCopy, recenter);
+
+    // IMPORTANT: Preserve textList from dataCopy before fetching
+    // Ketcher might not have processed the text node yet when we fetch back
+    const textNodesFromDataCopy = dataCopy?.root?.nodes?.filter((n) => n.type === 'text') || [];
+    const preservedTextList = textNodesFromDataCopy.length > 0 ? textNodesFromDataCopy : textList;
+
     if (isFetchRequired) {
       await fetchKetcherData(editor);
+
+      // Restore textList from dataCopy if it was lost during fetchKetcherData
+      if (preservedTextList.length > textList.length) {
+        textListSetter(preservedTextList);
+      }
     }
     await onTemplateMove(editor, recenter, moveOptions);
     return;
@@ -437,8 +679,9 @@ const onTemplateMove = async (editor, recenter = false, options = {}) => {
   latestData.root.nodes = imageNodes;
 
   // Always reposition text nodes to follow atom positions
-  if (textListCopy.length > 0) {
-    const textNodes = await placeTextOnAtoms(molCopy, textListCopy);
+  // placeTextOnAtoms uses global textList, not parameters
+  if (textListCopy.length > 0 || textList.length > 0) {
+    const textNodes = await placeTextOnAtoms();
     latestData.root.nodes = textNodes;
   }
   await applyCanvasDataToEditor(editor, latestData, recenter);
@@ -494,11 +737,17 @@ function processJsonMolecules(jsonData, verticalThreshold = 1) {
     const parts = [];
 
     for (let i = 0; i < validAtoms.length; i++) {
-      if (used.has(i)) continue;
+      if (used.has(i)) {
+        // eslint-disable-next-line no-continue
+        continue;
+      }
 
       let paired = false;
       for (let j = i + 1; j < validAtoms.length; j++) {
-        if (used.has(j)) continue;
+        if (used.has(j)) {
+          // eslint-disable-next-line no-continue
+          continue;
+        }
 
         const yDiff = Math.abs(validAtoms[i].y - validAtoms[j].y);
         if (yDiff <= verticalThreshold) {
@@ -539,6 +788,7 @@ const replaceAliasesWithIndexesAndCollectComponents = async (comboString) => {
       const { key, text } = JSON.parse(item.data.content).blocks[0];
       if (key === keyText) {
         textNodeStructureModified[parts[2]] = text;
+        // eslint-disable-next-line no-await-in-loop
         const categoryName = await findTemplateIdCategoryFromTemplates(parts[1]);
         textNodeStructureForComponents.push({ [text]: categoryName });
       }
@@ -579,7 +829,7 @@ const onFinalCanvasSave = async (editor, iframeRef) => {
       textNodesFormula = replacedString;
     }
     ket2Lines.push(KET_TAGS.fileEndIdentifier);
-    const svgElement = imagesList.length ? await getSvgFromCanvas(iframeRef) : await prepareSvg(editor);
+    const svgElement = imagesList.length > 0 ? await getSvgFromCanvas(iframeRef) : await prepareSvg(editor);
     resetStore();
     return {
       ket2Molfile: ket2Lines.join('\n'),
@@ -590,7 +840,7 @@ const onFinalCanvasSave = async (editor, iframeRef) => {
   } catch (e) {
     return {
       ket2Molfile: '',
-      svgElement : {svg: null, message: e?.message || 'Unknown error in prepareSvg' },
+      svgElement: { svg: null, message: e?.message || 'Unknown error in prepareSvg' },
       textNodesFormula: '',
       componentsList: [],
     };
@@ -639,6 +889,8 @@ export {
   onDeleteText,
   arrangeTextNodes,
   onAddText,
+  onAddTextFromEditor,
+  createTextNodeFromContent,
   centerPositionCanvas,
   onTemplateMove,
   onFinalCanvasSave,
