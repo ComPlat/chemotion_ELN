@@ -32,6 +32,49 @@ export default class OlsTreeSelect extends Component {
       .trim();
   }
 
+  combineChmoAndBao(chmos, bao) {
+    const chmoArray = chmos || [];
+    const baoArray = bao || [];
+
+    // Find "Recently selected" nodes in both arrays (typically the first element)
+    const chmoRecentlySelected = chmoArray.find(
+      (node) => node.title === '-- Recently selected --' || node.value === '-- Recently selected --'
+    );
+    const baoRecentlySelected = baoArray.find(
+      (node) => node.title === '-- Recently selected --' || node.value === '-- Recently selected --'
+    );
+
+    // Get other nodes (excluding "Recently selected")
+    const chmoOtherNodes = chmoArray.filter(
+      (node) => node.title !== '-- Recently selected --' && node.value !== '-- Recently selected --'
+    );
+    const baoOtherNodes = baoArray.filter(
+      (node) => node.title !== '-- Recently selected --' && node.value !== '-- Recently selected --'
+    );
+
+    // Merge "Recently selected" children if both exist
+    let mergedRecentlySelected = null;
+    if (chmoRecentlySelected || baoRecentlySelected) {
+      const chmoChildren = chmoRecentlySelected?.children || [];
+      const baoChildren = baoRecentlySelected?.children || [];
+      const mergedChildren = [...chmoChildren, ...baoChildren];
+
+      mergedRecentlySelected = {
+        ...(chmoRecentlySelected || baoRecentlySelected),
+        children: mergedChildren
+      };
+    }
+
+    // Combine: merged "Recently selected" first, then other nodes from both ontologies
+    const combined = [];
+    if (mergedRecentlySelected) {
+      combined.push(mergedRecentlySelected);
+    }
+    combined.push(...chmoOtherNodes, ...baoOtherNodes);
+
+    return combined;
+  }
+
   render() {
     const { rxnos, chmos, bao } = UserStore.getState();
     let treeData = [];
@@ -41,7 +84,8 @@ export default class OlsTreeSelect extends Component {
         treeData = rxnos;
         break;
       case 'chmo':
-        treeData = chmos;
+        // Combine CHMO and BAO ontology terms, merging "Recently selected" sections
+        treeData = this.combineChmoAndBao(chmos, bao);
         break;
       case 'bao':
         treeData = bao;
@@ -50,9 +94,14 @@ export default class OlsTreeSelect extends Component {
         break;
     }
 
+    // Expand both CHMO and BAO when selectName is 'chmo'
+    const expandedKeys = this.props.selectName === 'chmo'
+      ? ['chmo', 'bao']
+      : [this.props.selectName];
+
     return (
       <TreeSelect
-        treeDefaultExpandedKeys={[this.props.selectName]}
+        treeDefaultExpandedKeys={expandedKeys}
         name={this.props.selectName}
         showSearch
         className='w-100'
