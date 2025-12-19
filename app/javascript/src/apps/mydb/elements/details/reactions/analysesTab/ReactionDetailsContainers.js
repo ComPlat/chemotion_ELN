@@ -270,6 +270,9 @@ export default class ReactionDetailsContainers extends Component {
 
   handleCommentTextChange = (e) => {
     const { reaction } = this.props;
+    if (!reaction.container) {
+      reaction.container = Container.buildEmpty();
+    }
     reaction.container.description = e.target.value;
     this.handleChange(reaction.container);
   };
@@ -445,9 +448,15 @@ export default class ReactionDetailsContainers extends Component {
           <div className="d-flex justify-content-between align-items-center mb-3">
             {this.renderAnalysesHint()}
             <ButtonToolbar className="gap-2">
+              <CommentButton toggleCommentBox={this.toggleCommentBox} size="xsm" />
               {this.addButton()}
             </ButtonToolbar>
           </div>
+          <CommentBox
+            isVisible={commentBoxVisible}
+            value={reaction.container.description}
+            handleCommentTextChange={this.handleCommentTextChange}
+          />
           <div className="d-flex align-items-center">
             <span className="ms-3"> There are currently no Analyses. </span>
           </div>
@@ -457,7 +466,17 @@ export default class ReactionDetailsContainers extends Component {
 
     return (
       <div className="m-4">
-        {this.renderAnalysesHint()}
+        <div className="d-flex justify-content-between align-items-center mb-3">
+          {this.renderAnalysesHint()}
+          <ButtonToolbar className="gap-2">
+            <CommentButton toggleCommentBox={this.toggleCommentBox} size="xsm" />
+          </ButtonToolbar>
+        </div>
+        <CommentBox
+          isVisible={commentBoxVisible}
+          value={reaction.container?.description || ''}
+          handleCommentTextChange={this.handleCommentTextChange}
+        />
         <div className="mt-2">
           There are currently no Analyses.
         </div>
