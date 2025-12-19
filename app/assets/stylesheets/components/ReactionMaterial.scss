@@ -206,8 +206,8 @@ $rm-columns: (
   &__nested-radio-container {
     position: relative;
     display: inline-block;
-    width: 18px;
-    height: 18px;
+    width: 22px;
+    height: 22px;
   }
 
   &__nested-radio-outer {
@@ -245,8 +245,9 @@ $rm-columns: (
 
   &__nested-radio-inner {
     position: absolute;
-    top: 6px;
-    left: 6px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     width: 10px;
     height: 10px;
     border-radius: 50%;
