@@ -160,7 +160,7 @@ export default class OlsTerms extends React.Component {
           className="mt-3"
           onClick={() => this.handleClick()}
         >
-          Import Ontology Terms (the file name will be the OLS_name)
+          Import OLS Terms (the file name will be the OLS_name)
         </Button>
         <Row className="mt-4">
           <Col md={6}>
