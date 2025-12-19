@@ -123,12 +123,10 @@ module Chemotion
           error!('401 Unauthorized', 401) unless @attachment.created_for == current_user.id
         end
         post ':sample_id' do
-          analyses_container = @sample.container.children.find_by(container_type: 'analyses')
           analysis_name = @attachment.filename.chomp(File.extname(@attachment.filename))
 
-          new_analysis_container = analyses_container.children.create(container_type: 'analysis', name: analysis_name)
-          dataset = new_analysis_container.children.create(parent_id: new_analysis_container.id,
-                                                           container_type: 'dataset', name: analysis_name)
+          dataset = @sample.container.analyses_container.create_analysis_with_dataset!(name: analysis_name)
+
           @attachment.update!(attachable: dataset)
 
           @link = "#{Rails.application.config.root_url}/mydb/collection/all/sample/#{@sample.id}"
@@ -179,12 +177,10 @@ module Chemotion
           error!('401 Unauthorized', 401) unless @attachment.created_for == current_user.id
         end
         post ':reaction_id' do
-          analyses_container = @reaction.container.children.find_by(container_type: 'analyses')
           analysis_name = @attachment.filename.chomp(File.extname(@attachment.filename))
 
-          new_analysis_container = analyses_container.children.create(container_type: 'analysis', name: analysis_name)
-          dataset = new_analysis_container.children.create(parent_id: new_analysis_container.id,
-                                                           container_type: 'dataset', name: analysis_name)
+          dataset = @reaction.container.analyses_container.create_analysis_with_dataset!(name: analysis_name)
+
           @attachment.update!(attachable: dataset)
 
           @link = "#{Rails.application.config.root_url}/mydb/collection/all/reaction/#{@reaction.id}"

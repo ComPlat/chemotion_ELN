@@ -280,13 +280,9 @@ module Chemotion
 
             match = find_unique_match_for_filename(file[:filename], current_user)
 
-            if match && match.container&.children&.find_by(container_type: 'analyses') # auto assign to element
-              analyses_container = match.container.children.find_by(container_type: 'analyses')
+            if match # auto assign to element
               analysis_name = attach.filename.chomp(File.extname(attach.filename))
-              new_analysis_container = analyses_container.children.create(container_type: 'analysis',
-                                                                          name: analysis_name)
-              dataset = new_analysis_container.children.create(parent_id: new_analysis_container.id,
-                                                               container_type: 'dataset', name: analysis_name)
+              dataset = match.container.analyses_container.create_analysis_with_dataset!(name: analysis_name)
               attach.update!(attachable: dataset)
               type = match.model_name.singular
               @link = "#{Rails.application.config.root_url}/mydb/collection/all/#{type}/#{match.id}"
