@@ -16,13 +16,31 @@ function RndNotAvailable() {
   );
 }
 
-function RndNoAnalyses({ addButton }) {
+function RndNoAnalyses({
+  addButton,
+  toggleCommentBox,
+  commentBoxVisible,
+  containerDescription,
+  handleCommentTextChange
+}) {
   return (
-    <div className='d-flex justify-content-between align-items-center'>
-      <p className='m-0'>There are currently no Analyses.</p>
-      <ButtonToolbar className="gap-2">
-      {addButton()}
-      </ButtonToolbar>
+    <div>
+      <div className='d-flex justify-content-between align-items-center'>
+        <p className='m-0'>There are currently no Analyses.</p>
+        <ButtonToolbar className="gap-2">
+          {toggleCommentBox && (
+            <CommentButton toggleCommentBox={toggleCommentBox} size="xsm" />
+          )}
+          {addButton()}
+        </ButtonToolbar>
+      </div>
+      {toggleCommentBox && (
+        <CommentBox
+          isVisible={commentBoxVisible}
+          value={containerDescription}
+          handleCommentTextChange={handleCommentTextChange}
+        />
+      )}
     </div>
   );
 }

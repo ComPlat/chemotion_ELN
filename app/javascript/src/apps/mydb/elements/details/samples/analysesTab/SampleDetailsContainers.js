@@ -16,6 +16,7 @@ import {
 
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import { UploadField } from 'src/apps/mydb/elements/details/analyses/UploadField';
+import { CommentButton, CommentBox } from 'src/components/common/AnalysisCommentBoxComponent';
 import {
   sortedContainers,
   indexedContainers,
@@ -28,11 +29,13 @@ export default class SampleDetailsContainers extends Component {
     this.state = {
       activeAnalysis: UIStore.getState().sample.activeAnalysis,
       mode: 'edit',
+      commentBoxVisible: false,
     };
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.addButton = this.addButton.bind(this);
     this.handleChange = this.handleChange.bind(this);
     this.handleCommentTextChange = this.handleCommentTextChange.bind(this);
+    this.toggleCommentBox = this.toggleCommentBox.bind(this);
     this.handleUndo = this.handleUndo.bind(this);
     this.handleRemove = this.handleRemove.bind(this);
     this.handleAccordionOpen = this.handleAccordionOpen.bind(this);
@@ -55,10 +58,15 @@ export default class SampleDetailsContainers extends Component {
 
   handleCommentTextChange(e) {
     const { sample } = this.props;
-
+    if (!sample.container) {
+      sample.container = Container.buildEmpty();
+    }
     sample.container.description = e.target.value;
-
     this.handleChange();
+  }
+
+  toggleCommentBox() {
+    this.setState((prevState) => ({ commentBoxVisible: !prevState.commentBoxVisible }));
   }
 
   handleChange() {
@@ -213,9 +221,14 @@ export default class SampleDetailsContainers extends Component {
         </div>
       );
     }
+    const { commentBoxVisible } = this.state;
     return (
       <RndNoAnalyses
         addButton={this.addButton}
+        toggleCommentBox={this.toggleCommentBox}
+        commentBoxVisible={commentBoxVisible}
+        containerDescription={sample.container?.description || ''}
+        handleCommentTextChange={this.handleCommentTextChange}
       />
     );
   }

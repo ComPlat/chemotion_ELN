@@ -237,16 +237,36 @@ export default class ScreenDetailsContainers extends Component {
         );
       } else {
         return (
-          <div className="d-flex align-items-center justify-content-between my-2">
-            <span> There are currently no Analyses.</span>
-            {this.addButton()}
+          <div>
+            <div className="d-flex align-items-center justify-content-between my-2">
+              <span> There are currently no Analyses.</span>
+              <ButtonToolbar className="gap-2">
+                <CommentButton toggleCommentBox={this.toggleCommentBox} size="xxsm" />
+                {this.addButton()}
+              </ButtonToolbar>
+            </div>
+            <CommentBox
+              isVisible={commentBoxVisible}
+              value={screen.container.description}
+              handleCommentTextChange={this.handleCommentTextChange}
+            />
           </div>
         )
       }
     } else {
       return (
         <div className="m-4">
-          There are currently no Analyses.
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <span>There are currently no Analyses.</span>
+            <ButtonToolbar className="gap-2">
+              <CommentButton toggleCommentBox={this.toggleCommentBox} size="xxsm" />
+            </ButtonToolbar>
+          </div>
+          <CommentBox
+            isVisible={commentBoxVisible}
+            value={screen.container?.description || ''}
+            handleCommentTextChange={this.handleCommentTextChange}
+          />
         </div>
       )
     }

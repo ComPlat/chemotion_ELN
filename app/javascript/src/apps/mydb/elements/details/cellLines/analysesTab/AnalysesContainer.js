@@ -8,6 +8,7 @@ import {
   ButtonToolbar
 } from 'react-bootstrap';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
+import Container from 'src/models/Container';
 import OrderModeRow from 'src/apps/mydb/elements/details/cellLines/analysesTab/OrderModeRow';
 import EditModeRow from 'src/apps/mydb/elements/details/cellLines/analysesTab/EditModeRow';
 import PropTypes from 'prop-types';
@@ -75,6 +76,9 @@ class AnalysesContainer extends Component {
 
   handleCommentTextChange = (e) => {
     const { currentElement } = ElementStore.getState();
+    if (!currentElement.container) {
+      currentElement.container = Container.buildEmpty();
+    }
     currentElement.container.description = e.target.value;
     this.handleChange(true);
   };
@@ -203,7 +207,7 @@ class AnalysesContainer extends Component {
         </div>
         <CommentBox
           isVisible={commentBoxVisible}
-          value={currentElement.container.description}
+          value={currentElement.container?.description || ''}
           handleCommentTextChange={this.handleCommentTextChange}
         />
         {this.renderContainerPanel()}

@@ -16,6 +16,22 @@ import Container from 'src/models/Container';
 Enzyme.configure({ adapter: new Adapter() });
 
 describe('ReactionDetailsContainers', () => {
+  describe('renderAnalysesHint()', () => {
+    it('returns hint message with correct text and styling', () => {
+      const reaction = Reaction.buildEmpty();
+      const wrapper = shallow(React.createElement(ReactionDetailsContainers, { reaction, readOnly: false }));
+      const instance = wrapper.instance();
+      const hintElement = shallow(instance.renderAnalysesHint());
+
+      expect(hintElement.type()).toBe('span');
+      expect(hintElement.hasClass('text-muted')).toBe(true);
+      expect(hintElement.hasClass('me-3')).toBe(true);
+      expect(hintElement.hasClass('small')).toBe(true);
+      expect(hintElement.text()).toContain('This tab can be used for reaction-related data');
+      expect(hintElement.text()).toContain('For sample data (e.g., characterization), use the sample analysis tab.');
+    });
+  });
+
   describe('when it does not have any analysis', () => {
     const reaction = Reaction.buildEmpty();
     it('Render without any analysis and readonly', () => {
@@ -29,6 +45,24 @@ describe('ReactionDetailsContainers', () => {
       expect(wrapper.text()).toEqual(expect.stringContaining('There are currently no Analyses.'));
       const button = wrapper.find(Button);
       expect(button.text()).toEqual('Add analysis');
+    });
+
+    it('displays hint message when container is null', () => {
+      const reaction = Reaction.buildEmpty();
+      reaction.container = null;
+      const wrapper = shallow(React.createElement(ReactionDetailsContainers, { reaction, readOnly: false }));
+      const hintText = wrapper.text();
+      expect(hintText).toContain('This tab can be used for reaction-related data');
+      expect(hintText).toContain('For sample data (e.g., characterization), use the sample analysis tab.');
+    });
+
+    it('displays hint message when container exists but has no analyses', () => {
+      const reaction = Reaction.buildEmpty();
+      // Container exists but analyses container is empty
+      const wrapper = shallow(React.createElement(ReactionDetailsContainers, { reaction, readOnly: false }));
+      const hintText = wrapper.text();
+      expect(hintText).toContain('This tab can be used for reaction-related data');
+      expect(hintText).toContain('For sample data (e.g., characterization), use the sample analysis tab.');
     });
   });
 
@@ -61,6 +95,19 @@ describe('ReactionDetailsContainers', () => {
           React.createElement("i", { className: "fa fa-undo" })
         )
       ).html());
+    });
+
+    it('displays hint message when analyses exist', () => {
+      const analysis = Container.buildAnalysis();
+      reaction.container.children[0].children.push(analysis);
+
+      const wrapper = shallow(
+        React.createElement(ReactionDetailsContainers, { reaction, readOnly: false })
+      );
+
+      const hintText = wrapper.text();
+      expect(hintText).toContain('This tab can be used for reaction-related data');
+      expect(hintText).toContain('For sample data (e.g., characterization), use the sample analysis tab.');
     });
   });
 });
