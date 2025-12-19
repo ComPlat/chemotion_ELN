@@ -717,8 +717,8 @@ export default class SampleForm extends React.Component {
     const value = !isNaN(sample[field]) ? sample[field] : null;
     const metricPrefixes = ['m', 'n', 'u'];
     const disableFieldsForGasTypeSample = ['amount_l', 'amount_g', 'amount_mol'];
-    const gasSample = sample.gas_type === 'gas' && disableFieldsForGasTypeSample.includes(field);
-    const feedstockSample = sample.gas_type === 'feedstock' && field === 'amount_g';
+    const gasSample = sample.isGas() && disableFieldsForGasTypeSample.includes(field);
+    const feedstockSample = sample.isFeedstock() && field === 'amount_g';
     let metric;
     if (unit === 'l') {
       metric = prefixes[1];
