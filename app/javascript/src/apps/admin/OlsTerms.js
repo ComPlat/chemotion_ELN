@@ -7,26 +7,6 @@ import UsersFetcher from 'src/fetchers/UsersFetcher';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import { difference } from 'lodash';
 
-const checkItem = (enableIds, disableIds, enable, idkey, checkStrictly) => {
-  if (enable === true) {
-    if (!enableIds.includes(idkey)) {
-      enableIds.push(idkey);
-    }
-    if (disableIds.includes(idkey)) {
-      disableIds = disableIds.filter(r => r !== idkey);
-    }
-  } else {
-    if (enableIds.includes(idkey)) {
-      enableIds = enableIds.filter(r => r !== idkey);
-    }
-    if (!disableIds.includes(idkey)) {
-      disableIds.push(idkey);
-    }
-  }
-  return { enableIds, disableIds };
-};
-
-
 export default class OlsTerms extends React.Component {
   constructor(props) {
     super(props);
@@ -78,10 +58,10 @@ export default class OlsTerms extends React.Component {
       </div>
     ) : (
       <Dropzone
-          onDrop={attach => this.handleFileDrop(attach)}
-          className='d-flex align-items-center justify-content-center dnd-zone'
+        onDrop={(attach) => this.handleFileDrop(attach)}
+        className="d-flex align-items-center justify-content-center dnd-zone"
       >
-        <div className='text-lighten2 fs-4'>
+        <div className="text-lighten2 fs-4">
           Drop File, or Click to Select.
         </div>
       </Dropzone>
@@ -160,56 +140,81 @@ export default class OlsTerms extends React.Component {
   }
 
   render() {
+    const {
+      selectName,
+      checkStrictly,
+      expandedKeys,
+      autoExpandParent,
+      checkedKeys,
+      list,
+      enableIds,
+      disableIds
+    } = this.state;
+
     return (
-      <React.Fragment>
-          {this.dropzoneOrfilePreview()}
-        <Button variant="warning" size='md' className='mt-3' onClick={() => this.handleClick()}>Import OLS Terms (the file name will be the OLS_name)</Button>
-        <Row className="mt-4"
+      <>
+        {this.dropzoneOrfilePreview()}
+        <Button
+          variant="warning"
+          size="md"
+          className="mt-3"
+          onClick={() => this.handleClick()}
         >
+          Import Ontology Terms (the file name will be the OLS_name)
+        </Button>
+        <Row className="mt-4">
           <Col md={6}>
-            <DropdownButton variant='light' className='mb-3' id="dropdown-basic-button" title={this.state.selectName === '' ? 'Ols Terms' : this.state.selectName}>
+            <DropdownButton
+              variant="light"
+              className="mb-3"
+              id="dropdown-basic-button"
+              title={selectName === '' ? 'Ols Terms' : selectName}
+            >
               <Dropdown.Item key="rxno" onClick={() => this.handleSelectName('rxno')}>rxno</Dropdown.Item>
               <Dropdown.Item key="chmo" onClick={() => this.handleSelectName('chmo')}>chmo</Dropdown.Item>
+              <Dropdown.Item key="bao" onClick={() => this.handleSelectName('bao')}>bao</Dropdown.Item>
             </DropdownButton>
-            <h3>{this.state.selectName}</h3>
+            <h3>{selectName}</h3>
             <Button
               variant="primary"
               onClick={() => this.handleSaveBtn()}
-              className='me-3'
-            >Save
+              className="me-3"
+            >
+              Save
             </Button>
             <Button
               variant="primary"
               onClick={() => this.handleAssociateBtn()}
-              className='me-3'
-            >Switch mode
+              className="me-3"
+            >
+              Switch mode
             </Button>
-            <div className='fs-5 fw-bold d-inline-block'>
-              {this.state.checkStrictly === true ? 'Check Strictly' : 'Associated'}
+            <div className="fs-5 fw-bold d-inline-block">
+              {checkStrictly === true ? 'Check Strictly' : 'Associated'}
             </div>
 
             <Tree
-              name={this.state.selectName}
+              name={selectName}
               checkable
               onExpand={this.onExpand}
-              expandedKeys={this.state.expandedKeys}
-              autoExpandParent={this.state.autoExpandParent}
+              expandedKeys={expandedKeys}
+              autoExpandParent={autoExpandParent}
               onCheck={this.onCheck}
-              checkedKeys={this.state.checkedKeys}
-              checkStrictly={this.state.checkStrictly}
-              treeData={this.state.list}
+              checkedKeys={checkedKeys}
+              checkStrictly={checkStrictly}
+              treeData={list}
             />
           </Col>
           <Col md={6}>
             <div className="white-space-pre">
               <h3>enable list</h3>
-              {this.state.enableIds.join('\n')}
+              {enableIds.join('\n')}
               <h3>disable list</h3>
-              {this.state.disableIds.join('\n')}
+              {disableIds.join('\n')}
             </div>
           </Col>
         </Row>
-      </React.Fragment>
+      </>
     );
   }
 }
