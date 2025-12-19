@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import React, { useState } from 'react';
+import React from 'react';
 import { ButtonToolbar, Accordion, Card } from 'react-bootstrap';
 import ContainerComponent from 'src/components/container/ContainerComponent';
 import ContainerRow from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainersDnd';
@@ -25,11 +25,15 @@ function RndNoAnalyses({
 }) {
   return (
     <div>
-      <div className='d-flex justify-content-between align-items-center'>
-        <p className='m-0'>There are currently no Analyses.</p>
+      <div className="d-flex justify-content-between align-items-center">
+        <p className="m-0">There are currently no Analyses.</p>
         <ButtonToolbar className="gap-2">
           {toggleCommentBox && (
-            <CommentButton toggleCommentBox={toggleCommentBox} size="xsm" />
+            <CommentButton
+              toggleCommentBox={toggleCommentBox}
+              isVisible={commentBoxVisible}
+              size="xsm"
+            />
           )}
           {addButton()}
         </ButtonToolbar>
@@ -62,18 +66,20 @@ function ReactionsDisplay({
   activeAnalysis,
   handleChange,
   handleCommentTextChange,
-  rootContainer
+  rootContainer,
+  commentBoxVisible,
+  toggleCommentBox
 }) {
-  const [commentBoxVisible, setCommentBoxVisible] = useState(false);
-
-  const toggleCommentBox = () => setCommentBoxVisible((prev) => !prev);
-
   return (
     <div>
       <div className="d-flex justify-content-between align-items-center mb-3">
         {AnalysisModeToggle(mode, handleToggleMode, isDisabled)}
         <ButtonToolbar className="gap-2">
-          <CommentButton toggleCommentBox={toggleCommentBox} size="xsm" />
+          <CommentButton
+            toggleCommentBox={toggleCommentBox}
+            isVisible={commentBoxVisible}
+            size="xsm"
+          />
           {addButton()}
         </ButtonToolbar>
       </div>

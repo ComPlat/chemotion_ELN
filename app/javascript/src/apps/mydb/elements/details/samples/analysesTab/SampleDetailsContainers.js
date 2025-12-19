@@ -26,10 +26,12 @@ import {
 export default class SampleDetailsContainers extends Component {
   constructor(props) {
     super(props);
+    const { sample } = props;
+    const hasComment = sample.container?.description && sample.container.description.trim() !== '';
     this.state = {
       activeAnalysis: UIStore.getState().sample.activeAnalysis,
       mode: 'edit',
-      commentBoxVisible: false,
+      commentBoxVisible: hasComment,
     };
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.addButton = this.addButton.bind(this);
@@ -175,7 +177,7 @@ export default class SampleDetailsContainers extends Component {
   }
 
   render() {
-    const { activeAnalysis, mode } = this.state;
+    const { activeAnalysis, mode, commentBoxVisible } = this.state;
     const {
       readOnly, sample, handleSubmit, handleSampleChanged,
     } = this.props;
@@ -207,6 +209,8 @@ export default class SampleDetailsContainers extends Component {
             activeAnalysis={activeAnalysis}
             handleChange={this.handleChange}
             handleCommentTextChange={this.handleCommentTextChange}
+            commentBoxVisible={commentBoxVisible}
+            toggleCommentBox={this.toggleCommentBox}
           />
           <ViewSpectra
             sample={sample}
@@ -221,7 +225,7 @@ export default class SampleDetailsContainers extends Component {
         </div>
       );
     }
-    const { commentBoxVisible } = this.state;
+
     return (
       <RndNoAnalyses
         addButton={this.addButton}

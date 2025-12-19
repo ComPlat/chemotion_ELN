@@ -75,10 +75,12 @@ const nmrMsg = (reaction, container) => {
 export default class ReactionDetailsContainers extends Component {
   constructor(props) {
     super(props);
+    const { reaction } = props;
+    const hasComment = reaction.container?.description && reaction.container.description.trim() !== '';
 
     this.state = {
       activeContainer: UIStore.getState().reaction.activeAnalysis,
-      commentBoxVisible: false,
+      commentBoxVisible: hasComment,
     };
     this.containerRefs = {};
 
@@ -377,7 +379,11 @@ export default class ReactionDetailsContainers extends Component {
             <div className="d-flex justify-content-between align-items-center mb-3">
               {this.renderAnalysesHint()}
               <ButtonToolbar className="gap-2">
-                <CommentButton toggleCommentBox={this.toggleCommentBox} size="xsm" />
+                <CommentButton
+                  toggleCommentBox={this.toggleCommentBox}
+                  isVisible={commentBoxVisible}
+                  size="xsm"
+                />
                 {this.addButton()}
               </ButtonToolbar>
             </div>
@@ -448,7 +454,11 @@ export default class ReactionDetailsContainers extends Component {
           <div className="d-flex justify-content-between align-items-center mb-3">
             {this.renderAnalysesHint()}
             <ButtonToolbar className="gap-2">
-              <CommentButton toggleCommentBox={this.toggleCommentBox} size="xsm" />
+              <CommentButton
+                toggleCommentBox={this.toggleCommentBox}
+                isVisible={commentBoxVisible}
+                size="xsm"
+              />
               {this.addButton()}
             </ButtonToolbar>
           </div>
@@ -469,7 +479,11 @@ export default class ReactionDetailsContainers extends Component {
         <div className="d-flex justify-content-between align-items-center mb-3">
           {this.renderAnalysesHint()}
           <ButtonToolbar className="gap-2">
-            <CommentButton toggleCommentBox={this.toggleCommentBox} size="xsm" />
+            <CommentButton
+              toggleCommentBox={this.toggleCommentBox}
+              isVisible={commentBoxVisible}
+              size="xsm"
+            />
           </ButtonToolbar>
         </div>
         <CommentBox

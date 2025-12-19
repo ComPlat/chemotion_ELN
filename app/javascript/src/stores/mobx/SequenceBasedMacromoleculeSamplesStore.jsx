@@ -376,6 +376,9 @@ export const SequenceBasedMacromoleculeSamplesStore = types
     toggleAnalysisCommentBox() {
       self.analysis_comment_box = !self.analysis_comment_box;
     },
+    setAnalysisCommentBox(value) {
+      self.analysis_comment_box = value;
+    },
     changeAnalysisComment(e) {
       if (!e && !e?.target) { return null; }
 

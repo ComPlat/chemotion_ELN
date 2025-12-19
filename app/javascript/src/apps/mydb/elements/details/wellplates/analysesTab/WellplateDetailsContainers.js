@@ -13,10 +13,11 @@ export default class WellplateDetailsContainers extends Component {
   constructor(props) {
     super();
     const { wellplate } = props;
+    const hasComment = wellplate.container?.description && wellplate.container.description.trim() !== '';
     this.state = {
       wellplate,
       activeContainer: 0,
-      commentBoxVisible: false,
+      commentBoxVisible: hasComment,
     };
   }
 
@@ -151,9 +152,12 @@ export default class WellplateDetailsContainers extends Component {
         <div className="m-4">
           <div className="d-flex justify-content-between align-items-center mb-3">
             <p className="m-0">There are currently no Analyses.</p>
-            <ButtonToolbar className="gap-2">
-              <CommentButton toggleCommentBox={this.toggleCommentBox} size="xsm" />
-            </ButtonToolbar>
+            <CommentButton
+              toggleCommentBox={this.toggleCommentBox}
+              isVisible={commentBoxVisible}
+              size="sm"
+            />
+            <ButtonToolbar className="gap-2" />
           </div>
           <CommentBox
             isVisible={commentBoxVisible}
@@ -174,7 +178,11 @@ export default class WellplateDetailsContainers extends Component {
               There are currently no Analyses.
             </p>
             <ButtonToolbar className="gap-2">
-              <CommentButton toggleCommentBox={this.toggleCommentBox} size="xsm" />
+              <CommentButton
+                toggleCommentBox={this.toggleCommentBox}
+                isVisible={commentBoxVisible}
+                size="sm"
+              />
               {this.addButton()}
             </ButtonToolbar>
           </div>
@@ -191,7 +199,11 @@ export default class WellplateDetailsContainers extends Component {
       <div>
         <div className="d-flex justify-content-end my-2 mx-3">
           <ButtonToolbar className="gap-2">
-            <CommentButton toggleCommentBox={this.toggleCommentBox} size="xsm" />
+            <CommentButton
+              toggleCommentBox={this.toggleCommentBox}
+              isVisible={commentBoxVisible}
+              size="sm"
+            />
             {this.addButton()}
           </ButtonToolbar>
         </div>
