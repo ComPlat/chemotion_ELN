@@ -20,9 +20,11 @@ class AnalysesContainer extends Component {
 
   constructor() {
     super();
+    const { currentElement } = ElementStore.getState();
+    const hasComment = currentElement.container?.description && currentElement.container.description.trim() !== '';
     this.state = {
       mode: 'edit',
-      commentBoxVisible: false,
+      commentBoxVisible: hasComment,
     };
   }
 
@@ -201,7 +203,12 @@ class AnalysesContainer extends Component {
         <div className="d-flex justify-content-between mb-3">
           {this.renderModeButton()}
           <ButtonToolbar className="gap-2">
-            <CommentButton toggleCommentBox={this.toggleCommentBox} size="xsm" disable={false} />
+            <CommentButton
+              toggleCommentBox={this.toggleCommentBox}
+              isVisible={commentBoxVisible}
+              size="sm"
+              disable={false}
+            />
             {this.renderAddButton()}
           </ButtonToolbar>
         </div>

@@ -23,6 +23,11 @@ function AnalysesContainer({ readonly }) {
 
   useEffect(() => {
     TextTemplateActions.fetchTextTemplates('sbmmSample');
+    const description = sbmmSample.container?.description;
+    const hasComment = description && description.trim() !== '';
+    if (hasComment && !sbmmStore.analysis_comment_box) {
+      sbmmStore.setAnalysisCommentBox(true);
+    }
   }, []);
 
   const handleSpectraChange = () => {
@@ -119,6 +124,7 @@ function AnalysesContainer({ readonly }) {
               <ButtonToolbar className="gap-2">
                 <CommentButton
                   toggleCommentBox={sbmmStore.toggleAnalysisCommentBox}
+                  isVisible={sbmmStore.analysis_comment_box}
                   size="xsm"
                 />
                 {addButton()}
@@ -158,6 +164,7 @@ function AnalysesContainer({ readonly }) {
               <ButtonToolbar className="gap-2">
                 <CommentButton
                   toggleCommentBox={sbmmStore.toggleAnalysisCommentBox}
+                  isVisible={sbmmStore.analysis_comment_box}
                   size="xsm"
                 />
                 {addButton()}
