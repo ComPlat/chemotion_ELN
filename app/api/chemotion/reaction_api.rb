@@ -172,6 +172,7 @@ module Chemotion
         optional :volume, type: BigDecimal
         optional :use_reaction_volume, type: Boolean
         optional :gaseous, type: Boolean
+        optional :weight_percentage, type: Boolean
       end
       route_param :id do
         after_validation do
@@ -250,6 +251,7 @@ module Chemotion
         optional :volume, type: BigDecimal
         optional :use_reaction_volume, type: Boolean
         optional :gaseous, type: Boolean
+        optional :weight_percentage, type: Boolean
       end
 
       post do

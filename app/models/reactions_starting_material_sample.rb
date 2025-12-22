@@ -16,6 +16,8 @@
 #  gas_type        :integer          default("off")
 #  gas_phase_data  :jsonb
 #  conversion_rate :float
+#  weight_percentage           :float
+#  weight_percentage_reference :boolean          default(FALSE)
 #  created_at      :datetime
 #  updated_at      :datetime
 #

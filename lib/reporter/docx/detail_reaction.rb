@@ -16,6 +16,12 @@ module Reporter
       def content
         desc_content, clean_desc = description
         obs_content, clean_obs = observation
+
+        # Show weight percentage column if any material actually provides a (positive) value
+        show_wp = (starting_materials + reactants).any? do |m|
+          m && m[:weight_percentage].present? && m[:weight_percentage].to_f.positive?
+        end
+
         {
           title: title,
           short_label: short_label,
@@ -47,6 +53,8 @@ module Reporter
           synthesis_title_html: synthesis_title_html,
           synthesis_html: synthesis_html,
           variations: variations,
+          # flag for templates to show weight percentage column/header
+          show_weight_percentage: @obj.weight_percentage && show_wp,
         }
       end
 
@@ -518,6 +526,7 @@ module Reporter
         m = s.molecule
         mass, vol, mmol = assigned_amount(s, is_product)
         mass_unit, vol_unit, mmol_unit = unit_conversion(s)
+        is_weight_percentage_scheme = @obj.weight_percentage
 
         sample_hash = {
           name: s.name,
@@ -535,6 +544,12 @@ module Reporter
           equiv: format_scientific(s.equivalent, digit),
           molecule_name_hash: s[:molecule_name_hash],
         }
+
+        sample_hash[:weight_percentage] = if is_weight_percentage_scheme && s.weight_percentage.present? && !is_product
+                                            valid_digit(s.weight_percentage, digit)
+                                          else
+                                            ''
+                                          end
 
         if is_product
           equiv = s.equivalent.nil? || (s.equivalent*100).nan? ? "0%" : "#{valid_digit(s.equivalent * 100, 0)}%"

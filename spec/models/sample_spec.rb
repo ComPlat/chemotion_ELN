@@ -96,17 +96,17 @@ RSpec.describe Sample do
 
   describe 'deletion' do
     let(:sample) { create(:sample) }
-    let(:reaction1) { create(:reaction) }
-    let(:reaction2) { create(:reaction) }
+    let(:starting_material_reaction) { create(:reaction) }
+    let(:product_reaction) { create(:reaction) }
     let(:wellplate)  { create(:wellplate) }
     let(:well)       { create(:well, sample: sample, wellplate: wellplate) }
     let(:collection) { create(:collection) }
 
     before do
       # CollectionsSample.create!(sample: sample, collection: collection)
-      ReactionsStartingMaterialSample.create!(sample: sample, reaction: reaction1)
-      ReactionsReactantSample.create!(sample: sample, reaction: reaction1)
-      ReactionsProductSample.create!(sample: sample, reaction: reaction2)
+      ReactionsStartingMaterialSample.create!(sample: sample, reaction: starting_material_reaction)
+      ReactionsReactantSample.create!(sample: sample, reaction: starting_material_reaction)
+      ReactionsProductSample.create!(sample: sample, reaction: product_reaction)
       sample.destroy
       wellplate.reload
     end
@@ -131,29 +131,29 @@ RSpec.describe Sample do
   end
 
   describe 'for_ui_state scope' do
-    let(:c1) { create(:collection) }
-    let(:c2) { create(:collection) }
-    let(:s1) { create(:sample) }
-    let(:s2) { create(:sample) }
-    let(:s3) { create(:sample) }
+    let(:first_collection) { create(:collection) }
+    let(:second_collection) { create(:collection) }
+    let(:first_sample) { create(:sample) }
+    let(:second_sample) { create(:sample) }
+    let(:third_sample) { create(:sample) }
 
     let(:ui_state) do
       {
         all: true,
         included_ids: [],
         excluded_ids: [],
-        collection_id: c1.id,
+        collection_id: first_collection.id,
       }
     end
 
     before do
-      CollectionsSample.create!(collection: c1, sample: s1)
-      CollectionsSample.create!(collection: c1, sample: s2)
-      CollectionsSample.create!(collection: c2, sample: s3)
+      CollectionsSample.create!(collection: first_collection, sample: first_sample)
+      CollectionsSample.create!(collection: first_collection, sample: second_sample)
+      CollectionsSample.create!(collection: second_collection, sample: third_sample)
     end
 
     it 'returns samples according to ui_state' do
-      expect(described_class.for_ui_state(ui_state)).to match_array([s1, s2])
+      expect(described_class.for_ui_state(ui_state)).to contain_exactly(first_sample, second_sample)
     end
   end
 
@@ -334,6 +334,153 @@ RSpec.describe Sample do
       it 'short label is the user label' do
         expected_short_label = "#{sample.creator.name_abbreviation}-#{sample.creator.counters['samples']}"
         expect(sample.short_label).to eq expected_short_label
+      end
+    end
+  end
+
+  describe '#convert_amount_to_mol' do
+    let(:molecule) { create(:molecule, molecular_weight: 100.0) }
+    let(:sample) { create(:sample, molecule: molecule, purity: 1.0, density: 1.2, molarity_value: 0.5) }
+
+    context 'with grams unit' do
+      it 'converts grams to moles using molecular weight and purity' do
+        result = sample.convert_amount_to_mol(200, 'g')
+        expect(result).to eq(2.0) # (200g * 1.0) / 100g/mol = 2.0 mol
+      end
+
+      it 'returns nil when molecular weight is missing' do
+        sample.molecule.update(molecular_weight: nil)
+        result = sample.convert_amount_to_mol(200, 'g')
+        expect(result).to be_nil
+      end
+
+      it 'applies purity in conversion' do
+        sample.update(purity: 0.8)
+        result = sample.convert_amount_to_mol(100, 'g')
+        expect(result).to eq(0.8) # (100g * 0.8) / 100g/mol = 0.8 mol
+      end
+    end
+
+    context 'with mol unit' do
+      it 'returns the amount as-is for mol unit' do
+        result = sample.convert_amount_to_mol(2.5, 'mol')
+        expect(result).to eq(2.5)
+      end
+    end
+
+    context 'with liters unit and molarity with density' do
+      it 'converts liters to moles using density' do
+        result = sample.convert_amount_to_mol(2.0, 'l')
+        expect(result).to eq(24)
+      end
+
+      it 'convert using density when molarity is zero' do
+        sample.update(molarity_value: 0.0)
+        result = sample.convert_amount_to_mol(2.0, 'l')
+        expect(result).to eq(24)
+      end
+    end
+
+    context 'with liters unit but no molarity' do
+      before { sample.update(molarity_value: 0.0) }
+
+      it 'converts liters to moles using density and molecular weight' do
+        result = sample.convert_amount_to_mol(1.0, 'l')
+        # 1.0L * 1.2g/ml * 1000 * 1.0 / 100g/mol = 12.0 mol
+        expect(result).to eq(12.0)
+      end
+
+      it 'returns nil when density is missing' do
+        sample.update(density: 0.0)
+        result = sample.convert_amount_to_mol(1.0, 'l')
+        expect(result).to be_nil
+      end
+    end
+
+    context 'with invalid inputs' do
+      it 'returns nil for nil amount' do
+        result = sample.convert_amount_to_mol(nil, 'g')
+        expect(result).to be_nil
+      end
+
+      it 'returns nil for non-finite amount' do
+        result = sample.convert_amount_to_mol(Float::INFINITY, 'g')
+        expect(result).to be_nil
+      end
+
+      it 'returns nil for unknown unit' do
+        result = sample.convert_amount_to_mol(100, 'unknown')
+        expect(result).to be_nil
+      end
+    end
+  end
+
+  describe '#coerce_amount' do
+    let(:sample) { create(:sample) }
+
+    it 'converts valid numeric strings to float' do
+      result = sample.send(:coerce_amount, '123.45')
+      expect(result).to eq(123.45)
+    end
+
+    it 'converts integers to float' do
+      result = sample.send(:coerce_amount, 100)
+      expect(result).to eq(100.0)
+    end
+
+    it 'returns nil for nil input' do
+      result = sample.send(:coerce_amount, nil)
+      expect(result).to be_nil
+    end
+
+    it 'returns nil for non-finite numbers' do
+      result = sample.send(:coerce_amount, Float::INFINITY)
+      expect(result).to be_nil
+    end
+  end
+
+  describe 'unit conversion helper methods' do
+    let(:molecule) { create(:molecule, molecular_weight: 180.0) }
+    let(:sample) { create(:sample, molecule: molecule, purity: 0.9, density: 1.1, molarity_value: 2.0) }
+
+    describe '#convert_liters_to_moles' do
+      it 'uses molarity when available' do
+        sample.update(density: 0.0)
+        result = sample.send(:convert_liters_to_moles, 0.5)
+        expect(result).to eq(1.0) # 0.5L * 2.0mol/L = 1.0 mol
+      end
+
+      it 'uses density and molecular weight when no molarity' do
+        sample.update(molarity_value: 0.0)
+        result = sample.send(:convert_liters_to_moles, 1.0)
+        # 1.0L * 1.1g/ml * 1000 * 0.9 / 180g/mol = 5.5 mol
+        expect(result).to eq(5.5)
+      end
+    end
+
+    describe '#convert_grams_to_moles' do
+      it 'converts grams using molecular weight and purity' do
+        result = sample.send(:convert_grams_to_moles, 200)
+        expect(result).to eq(1.0) # (200g * 0.9) / 180g/mol = 1.0 mol
+      end
+    end
+
+    describe '#valid_molecular_weight?' do
+      it 'returns true for valid molecular weight' do
+        result = sample.send(:valid_molecular_weight?)
+        expect(result).to be true
+      end
+
+      it 'returns false when molecule is nil' do
+        molecule.update(molecular_weight: nil)
+        result = sample.send(:valid_molecular_weight?)
+        expect(result).to be false
+      end
+
+      it 'returns false when molecular weight is zero' do
+        sample.molecule.update(molecular_weight: 0.0)
+        result = sample.send(:valid_molecular_weight?)
+        expect(result).to be false
       end
     end
   end

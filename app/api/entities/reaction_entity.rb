@@ -51,6 +51,7 @@ module Entities
       expose! :volume
       expose! :use_reaction_volume
       expose! :gaseous
+      expose! :weight_percentage
     end
 
     expose_timestamps

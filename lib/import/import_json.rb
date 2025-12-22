@@ -379,7 +379,8 @@ class Import::ImportJson
         sample_id: new_el.id, reaction_id: new_data[r_uuid]['id'],
         reference: ref, equivalent: eq, position: el['r_position'],
         gas_type: el['r_gas_type'], gas_phase_data: el['r_gas_phase_data'],
-        conversion_rate: el['r_conversion_rate']
+        conversion_rate: el['r_conversion_rate'], weight_percentage_reference: el['r_weight_percentage_reference'],
+        weight_percentage: el['r_weight_percentage']
       ) && '201' || '500'
     else
       @log['samples'][el_uuid][klass.name] = '404'

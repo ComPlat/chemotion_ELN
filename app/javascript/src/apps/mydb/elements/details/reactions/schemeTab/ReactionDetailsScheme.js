@@ -43,6 +43,8 @@ import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
 import Component from 'src/models/Component';
 import { parseNumericString } from 'src/utilities/MathUtils';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
+import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
+import WeightPercentageReactionStore from 'src/stores/alt/stores/WeightPercentageReactionStore';
 
 export default class ReactionDetailsScheme extends React.Component {
   constructor(props) {
@@ -82,7 +84,6 @@ export default class ReactionDetailsScheme extends React.Component {
 
   componentDidMount() {
     TextTemplateStore.listen(this.handleTemplateChange);
-
     TextTemplateActions.fetchTextTemplates('reaction');
     TextTemplateActions.fetchTextTemplates('reactionDescription');
 
@@ -155,6 +156,7 @@ export default class ReactionDetailsScheme extends React.Component {
     // Solvents are never reference materials
     if (tagGroup === 'solvents') {
       splitSample.reference = false;
+      splitSample.weight_percentage_reference = false;
     }
 
     if (splitSample.isMixture()) {
@@ -351,13 +353,52 @@ export default class ReactionDetailsScheme extends React.Component {
     });
   }
 
+  /**
+   * Updates reaction materials based on weight percentage calculations.
+   *
+   * This method recalculates the amounts of all starting materials, reactants, and yield for products
+   * when weight percentage mode is enabled and a target amount is set for the product weight percentage reference.
+   *
+   * Workflow:
+   * 1. Retrieves the target amount from WeightPercentageReactionStore
+   * 2. Validates that target amount exists and has a positive value
+   * 3. Updates starting materials and reactants by calling calculateAmountBasedOnWeightPercentage()
+   *    which sets their amount_g = targetAmount.value * weight_percentage
+   * 4. Updates products by calling updateYieldForWeightPercentageReference()
+   *    which recalculates yield/equivalent based on target vs actual amounts
+   *
+   * Guard clauses:
+   * - Returns early if targetAmount is missing, null, or <= 0
+   * - Individual sample methods handle their own validation
+   *
+   * Side effects:
+   * - Mutates sample amounts and equivalents in the reaction object
+   * - Triggered by weight percentage field changes or target amount updates
+   *
+   * @returns {void}
+   */
+  updateReactionMaterials() {
+    const { reaction } = this.props;
+    const { targetAmount } = WeightPercentageReactionStore.getState();
+
+    if (!targetAmount || targetAmount.value == null || targetAmount.unit == null) return;
+
+    [...reaction.starting_materials, ...reaction.reactants].forEach((sample) => {
+      sample.calculateAmountBasedOnWeightPercentage(targetAmount);
+    });
+    [...reaction.products].forEach((sample) => {
+      sample.updateYieldForWeightPercentageReference();
+    });
+  }
+
   handleMaterialsChange(changeEvent) {
     const { onReactionChange } = this.props;
 
     switch (changeEvent.type) {
       case 'referenceChanged':
+      case 'weightPercentageReferenceChanged':
         onReactionChange(
-          this.updatedReactionForReferenceChange(changeEvent)
+          this.updatedReactionForReferenceChange(changeEvent, changeEvent.type)
         );
         break;
       case 'amountChanged':
@@ -393,6 +434,11 @@ export default class ReactionDetailsScheme extends React.Component {
       case 'equivalentChanged':
         onReactionChange(
           this.updatedReactionForEquivalentChange(changeEvent)
+        );
+        break;
+      case 'weightPercentageChanged':
+        onReactionChange(
+          this.updatedReactionForWeightPercentageChange(changeEvent)
         );
         break;
       case 'externalLabelChanged':
@@ -496,11 +542,19 @@ export default class ReactionDetailsScheme extends React.Component {
     return this.updatedReactionWithSample(this.updatedSamplesForDrySolventChange.bind(this), updatedSample);
   }
 
-  updatedReactionForReferenceChange(changeEvent) {
+  updatedReactionForReferenceChange(changeEvent, type) {
     const { sampleID } = changeEvent;
     const { reaction } = this.props;
     const sample = reaction.sampleById(sampleID);
-
+    if (type === 'weightPercentageReferenceChanged') {
+      reaction.markWeightPercentageSampleAsReference(sampleID);
+      WeightPercentageReactionActions.setWeightPercentageReference(sample);
+      WeightPercentageReactionActions.setTargetAmountWeightPercentageReference({
+        value: sample.target_amount_value,
+        unit: sample.target_amount_unit,
+      });
+      return this.updatedReactionWithSample(this.updatedSamplesForWeightPercentageReferenceChange.bind(this), sample);
+    }
     reaction.markSampleAsReference(sampleID);
 
     return this.updatedReactionWithSample(this.updatedSamplesForReferenceChange.bind(this), sample);
@@ -532,6 +586,17 @@ export default class ReactionDetailsScheme extends React.Component {
     // updatedSample.setAmountAndNormalizeToGram(amount);
     // setAmount should be called first before updating feedstock mole and volume values
     updatedSample.setAmount(amount);
+    if (
+      reaction.weight_percentage
+      && updatedSample.weight_percentage_reference
+      && changeEvent.amountType === 'target'
+    ) {
+      const amountUnitObject = {
+        value: amount.value,
+        unit: amount.unit,
+      };
+      WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(amountUnitObject);
+    }
 
     // --- Validate mixture mass ---
     this.warnIfMixtureMassExceeded(updatedSample, updatedSample.amount_g);
@@ -617,7 +682,10 @@ export default class ReactionDetailsScheme extends React.Component {
     const updatedSample = reaction.sampleById(sampleID);
 
     updatedSample.coefficient = coefficient;
-    this.updatedReactionForEquivalentChange(changeEvent);
+    // enable update of equivalent only if weight percentage is not set
+    if (!updatedSample.weight_percentage || updatedSample.weight_percentage === 0) {
+      this.updatedReactionForEquivalentChange(changeEvent);
+    }
 
     return this.updatedReactionWithSample(this.updatedSamplesForCoefficientChange.bind(this), updatedSample);
   }
@@ -662,6 +730,14 @@ export default class ReactionDetailsScheme extends React.Component {
     }
 
     return this.updatedReactionWithSample(this.updatedSamplesForEquivalentChange.bind(this), updatedSample);
+  }
+
+  updatedReactionForWeightPercentageChange(changeEvent) {
+    const { reaction } = this.props;
+    const { sampleID, weightPercentage } = changeEvent;
+    const updatedSample = reaction.sampleById(sampleID);
+    updatedSample.weight_percentage = weightPercentage;
+    return this.updatedReactionWithSample(this.updatedSamplesForWeightPercentageChange.bind(this), updatedSample);
   }
 
   calculateEquivalentForProduct(sample, referenceMaterial, stoichiometryCoeff) {
@@ -1286,6 +1362,36 @@ export default class ReactionDetailsScheme extends React.Component {
     });
   }
 
+  /**
+   * Updates the sample's weight percentage in a reaction when a sample's weight percentage changes.
+   *
+   * This method is called when a user modifies the weight percentage value of a sample
+   * in the reaction scheme.
+   *
+   * Key behaviors:
+   * - Only modifies the specific sample that changed
+   * - Mutates the updated sample's weight percentage property
+   *
+   * @param {Array<Sample>} samples - Array of all samples in the current material group
+   * @param {Sample} updatedSample - The sample whose weight percentage was changed
+   * @returns {Array<Sample>} The updated samples array
+   */
+  updatedSamplesForWeightPercentageChange(samples, updatedSample) {
+    return samples.map((sample) => {
+      if (sample.id === updatedSample.id) {
+        if (sample.weight_percentage > 1 || sample.weight_percentage < 0) {
+          NotificationActions.add({
+            message: 'Weight percentage should be between 0 and 1',
+            level: 'error'
+          });
+        } else {
+          sample.weight_percentage = updatedSample.weight_percentage;
+        }
+      }
+      return sample;
+    });
+  }
+
   updatedSamplesForExternalLabelChange(samples, updatedSample) {
     return samples.map((sample) => {
       if (sample.id === updatedSample.id) {
@@ -1348,6 +1454,19 @@ export default class ReactionDetailsScheme extends React.Component {
         sample.reference = false;
       }
       return sample;
+    });
+  }
+
+  updatedSamplesForWeightPercentageReferenceChange(samples, referenceMaterial) {
+    return samples.map((s) => {
+      if (s.id === referenceMaterial.id) {
+        s.weight_percentage_reference = true;
+        // set weight percentage of reference (weight percentage ref) material to null
+        s.weight_percentage = 1;
+      } else {
+        s.weight_percentage_reference = false;
+      }
+      return s;
     });
   }
 
@@ -1661,6 +1780,7 @@ export default class ReactionDetailsScheme extends React.Component {
       }
       reaction.editedSample = undefined;
     } else {
+      this.updateReactionMaterials();
       const { referenceMaterial } = reaction;
       reaction.products.map((sample) => {
         sample.updateConcentrationFromSolvent(reaction);

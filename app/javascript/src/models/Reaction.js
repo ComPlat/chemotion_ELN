@@ -13,6 +13,7 @@ import Container from 'src/models/Container';
 
 import UserStore from 'src/stores/alt/stores/UserStore';
 import Segment from 'src/models/Segment';
+import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
 
 const TemperatureUnit = ['°C', '°F', 'K'];
 
@@ -154,9 +155,9 @@ export default class Reaction extends Element {
       vessel_size: { amount: null, unit: 'ml' },
       volume: null,
       use_reaction_volume: false,
-      gaseous: false
+      gaseous: false,
+      weight_percentage: false
     });
-
     reaction.short_label = this.buildReactionShortLabel();
     reaction.rxno = '';
     return reaction;
@@ -225,7 +226,8 @@ export default class Reaction extends Element {
       vessel_size: this.vessel_size,
       volume: this.volume,
       use_reaction_volume: this.use_reaction_volume,
-      gaseous: this.gaseous
+      gaseous: this.gaseous,
+      weight_percentage: this.weight_percentage,
     });
   }
 
@@ -513,10 +515,19 @@ export default class Reaction extends Element {
     this.setPositions(group);
   }
 
-  addMaterialAt(srcMaterial, srcGp, tagMaterial, tagGp) {
+  addMaterialAt(srcMaterial, srcGp, tagMaterial, tagGp, srcIsWeightPercentageRef = false) {
     const materials = this[tagGp];
     const idx = materials.indexOf(tagMaterial);
     const newSrcMaterial = this.materialPolicy(srcMaterial, srcGp, tagGp);
+
+    // rebuild weight percentage reference
+    if (srcIsWeightPercentageRef) {
+      newSrcMaterial.weight_percentage_reference = true;
+      newSrcMaterial.weight_percentage = 1;
+      WeightPercentageReactionActions.setWeightPercentageReference(newSrcMaterial);
+      const amount = { value: newSrcMaterial.amount_value, unit: newSrcMaterial.amount_unit };
+      WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(amount);
+    }
 
     if (idx === -1) {
       this[tagGp] = [...materials, newSrcMaterial];
@@ -540,6 +551,27 @@ export default class Reaction extends Element {
       ...materials.slice(idx + 1),
     ];
 
+    // If deleted material is weight percentage reference, then set it to false
+    if (material.weight_percentage_reference) {
+      material.weight_percentage_reference = false;
+      WeightPercentageReactionActions.setWeightPercentageReference(null);
+      WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(null);
+      const refMaterial = [...this.starting_materials, ...this.reactants].filter(
+        (m) => m.reference === true
+      )[0];
+      // reset all weight percentage to null, since there is no weight percentage reference assigned
+      [...this.starting_materials, ...this.reactants].forEach(
+        (m) => {
+          m.weight_percentage = null;
+          // assign equivalent based on reference material
+          m.equivalent = m.amount_mol / refMaterial.amount_mol;
+        }
+      );
+    }
+
+    if (material.weight_percentage && material.weight_percentage > 0) {
+      material.weight_percentage = null;
+    }
     this.rebuildReference(material);
     this.setPositions(group);
   }
@@ -566,8 +598,9 @@ export default class Reaction extends Element {
     if (srcGp === tagGp) {
       this.swapMaterial(srcMaterial, tagMaterial, tagGp);
     } else {
+      const srcIsWeightPercentageRef = srcMaterial.weight_percentage_reference || false;
       this.deleteMaterial(srcMaterial, srcGp);
-      this.addMaterialAt(srcMaterial, srcGp, tagMaterial, tagGp);
+      this.addMaterialAt(srcMaterial, srcGp, tagMaterial, tagGp, srcIsWeightPercentageRef);
     }
   }
 
@@ -613,12 +646,13 @@ export default class Reaction extends Element {
     ) {
       if (newGroup === 'solvents') {
         material.reference = false;
+        material.weight_percentage_reference = false;
       }
 
       // Temporary set true, to fit with server side logical
       material.isSplit = true;
       material.reaction_product = false;
-    } else if (newGroup === 'starting_materials') {
+    } else if (newGroup == "starting_materials") {
       material.isSplit = true;
       material.reaction_product = false;
 
@@ -734,6 +768,12 @@ export default class Reaction extends Element {
     });
   }
 
+  markWeightPercentageSampleAsReference(sampleID) {
+    this.samples.forEach((sample) => {
+      sample.weight_percentage_reference = sample.id === sampleID;
+    });
+  }
+
   toggleShowLabelForSample(sampleID) {
     const sample = this.sampleById(sampleID);
     sample.show_label = ((sample.decoupled && !sample.molfile) ? true : !sample.show_label);
@@ -805,6 +845,8 @@ export default class Reaction extends Element {
           mat.gas_type = existingMat.gas_type;
           mat.gas_phase_data = existingMat.gas_phase_data;
           mat.coefficient = existingMat.coefficient;
+          mat.weight_percentage_reference = existingMat.weight_percentage_reference;
+          mat.weight_percentage = existingMat.weight_percentage;
 
           // Ensure all components are Component instances, not plain objects
           if (mat.hasComponents()) {
@@ -1117,5 +1159,24 @@ export default class Reaction extends Element {
     const materials = [...this.starting_materials, ...this.reactants];
     const feedstockMaterial = materials.find((material) => (material.gas_type === 'feedstock'));
     return feedstockMaterial;
+  }
+
+  findWeightPercentageReferenceMaterial() {
+    const result = {
+      weightPercentageReference: null,
+      targetAmount: null,
+    };
+    const materials = [...this.starting_materials, ...this.reactants, ...this.products];
+    if (materials && materials.length > 0) {
+      const reference = materials.find((material) => (material.weight_percentage_reference === true));
+      if (reference) {
+        result.weightPercentageReference = reference;
+        result.targetAmount = {
+          value: reference.target_amount_value,
+          unit: reference.target_amount_unit
+        };
+      }
+    }
+    return result;
   }
 }

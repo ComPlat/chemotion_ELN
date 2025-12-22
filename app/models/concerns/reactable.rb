@@ -27,6 +27,13 @@ module Reactable
   }.freeze
 
   def update_equivalent
+    if weight_percentage.present? && weight_percentage.to_f.positive? &&
+       !reference && !weight_percentage_reference
+      ## nullify equivalent if weight percentage is used & material is not reference and not weight percentage reference
+      update!(equivalent: nil)
+      return
+    end
+
     ref_record = ReactionsSample.find_by(reaction_id: reaction_id, reference: true)
     return if ref_record.nil? ||
               ref_record.id == id ||
@@ -36,9 +43,22 @@ module Reactable
 
     case self
     when ReactionsProductSample
-      amount = sample.amount_mmol(:real) if is_a? ReactionsProductSample
-      ref_amount = ref_record.sample.amount_mmol(:target) *
-                   (self[:coefficient] || 1.0) / (ref_record[:coefficient] || 1.0)
+      ## update yield (= real amount / target amount) for product sample if it is weight percentage reference
+      if weight_percentage_reference
+        amount = sample.convert_amount_to_mol(
+          sample.real_amount_value,
+          sample.real_amount_unit,
+        )
+
+        ref_amount = sample.convert_amount_to_mol(
+          sample.target_amount_value,
+          sample.target_amount_unit,
+        )
+      else
+        amount = sample.amount_mmol(:real) if is_a? ReactionsProductSample
+        ref_amount = ref_record.sample.amount_mmol(:target) *
+                    (self[:coefficient] || 1.0) / (ref_record[:coefficient] || 1.0)
+      end
     else
       condition = sample.real_amount_value && sample.real_amount_value != 0
       ref_record_condition = ref_record.sample.real_amount_value && ref_record.sample.real_amount_value != 0
@@ -49,13 +69,21 @@ module Reactable
       return nil if gas_phase_data.nil? || gas_phase_data['ppm'].nil? || gas_phase_data['temperature'].nil?
 
       temperature_in_kelvin = convert_temperature_to_kelvin(gas_phase_data['temperature'])
-      update_attribute :equivalent, calculate_equivalent_for_gas_material(
+      update!(equivalent: calculate_equivalent_for_gas_material(
         sample.purity || 1,
         temperature_in_kelvin,
         gas_phase_data['ppm'],
-      )
+      ))
     else
-      update_attribute :equivalent, ref_amount.zero? ? 0 : amount / ref_amount
+      # compute equivalent safely (avoid calling `zero?` on nil)
+      equivalent_value = if ref_amount.nil? || amount.nil? || ref_amount.to_f.zero?
+                           0
+                         else
+                           amount / ref_amount
+                         end
+
+      # Persist equivalent using update! so model validations run
+      update!(equivalent: equivalent_value)
     end
   end
 
