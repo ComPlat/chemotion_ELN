@@ -13,10 +13,11 @@ export default class WellplateDetailsContainers extends Component {
   constructor(props) {
     super();
     const { wellplate } = props;
+    const hasComment = wellplate.container?.description && wellplate.container.description.trim() !== '';
     this.state = {
       wellplate,
       activeContainer: 0,
-      commentBoxVisible: false,
+      commentBoxVisible: hasComment,
     };
   }
 
@@ -148,10 +149,21 @@ export default class WellplateDetailsContainers extends Component {
 
     if (wellplate.container == null) {
       return (
-        <div>
-          <p className='m-4'>
-            There are currently no Analyses.
-          </p>
+        <div className="m-4">
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <p className="m-0">There are currently no Analyses.</p>
+            <CommentButton
+              toggleCommentBox={this.toggleCommentBox}
+              isVisible={commentBoxVisible}
+              size="sm"
+            />
+            <ButtonToolbar className="gap-2" />
+          </div>
+          <CommentBox
+            isVisible={commentBoxVisible}
+            value={wellplate.container?.description || ''}
+            handleCommentTextChange={this.handleCommentTextChange}
+          />
         </div>
       )
     }
@@ -160,14 +172,25 @@ export default class WellplateDetailsContainers extends Component {
 
     if (analyses_container.length != 1 || analyses_container[0].children.length == 0) {
       return (
-        <div className='d-flex justify-content-between align-items-center my-2 mx-3'>
-          <p className='m-0'>
-            There are currently no Analyses.
-          </p>
-          <div>
-            {this.addButton()}
+        <div>
+          <div className='d-flex justify-content-between align-items-center my-2 mx-3'>
+            <p className='m-0'>
+              There are currently no Analyses.
+            </p>
+            <ButtonToolbar className="gap-2">
+              <CommentButton
+                toggleCommentBox={this.toggleCommentBox}
+                isVisible={commentBoxVisible}
+                size="sm"
+              />
+              {this.addButton()}
+            </ButtonToolbar>
           </div>
-
+          <CommentBox
+            isVisible={commentBoxVisible}
+            value={wellplate.container.description}
+            handleCommentTextChange={this.handleCommentTextChange}
+          />
         </div>
       )
     }
@@ -176,7 +199,11 @@ export default class WellplateDetailsContainers extends Component {
       <div>
         <div className="d-flex justify-content-end my-2 mx-3">
           <ButtonToolbar className="gap-2">
-            <CommentButton toggleCommentBox={this.toggleCommentBox} size="xsm" />
+            <CommentButton
+              toggleCommentBox={this.toggleCommentBox}
+              isVisible={commentBoxVisible}
+              size="sm"
+            />
             {this.addButton()}
           </ButtonToolbar>
         </div>

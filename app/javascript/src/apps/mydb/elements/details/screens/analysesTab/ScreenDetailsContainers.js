@@ -13,10 +13,11 @@ export default class ScreenDetailsContainers extends Component {
   constructor(props) {
     super(props);
     const { screen } = props;
+    const hasComment = screen.container?.description && screen.container.description.trim() !== '';
     this.state = {
       screen,
       activeContainer: 0,
-      commentBoxVisible: false,
+      commentBoxVisible: hasComment,
     };
     this.analysesContainer = screen.container.children.filter(element => ~element.container_type.indexOf('analyses'));
   }
@@ -203,7 +204,11 @@ export default class ScreenDetailsContainers extends Component {
             <div className="mb-2 me-1 d-flex flex-row-reverse">
               <ButtonToolbar className="gap-2">
                 <div className="mt-2">
-                  <CommentButton toggleCommentBox={this.toggleCommentBox} size="xxsm" />
+                  <CommentButton
+                    toggleCommentBox={this.toggleCommentBox}
+                    isVisible={commentBoxVisible}
+                    size="xxsm"
+                  />
                 </div>
                 {this.addButton()}
               </ButtonToolbar>
@@ -237,16 +242,48 @@ export default class ScreenDetailsContainers extends Component {
         );
       } else {
         return (
-          <div className="d-flex align-items-center justify-content-between my-2">
-            <span> There are currently no Analyses.</span>
-            {this.addButton()}
+          <div>
+            <div className="d-flex align-items-center justify-content-between my-2">
+              <span> There are currently no Analyses.</span>
+              <ButtonToolbar className="gap-2">
+                <div className="mt-2">
+                  <CommentButton
+                    toggleCommentBox={this.toggleCommentBox}
+                    isVisible={commentBoxVisible}
+                    size="xxsm"
+                  />
+                </div>
+                {this.addButton()}
+              </ButtonToolbar>
+            </div>
+            <CommentBox
+              isVisible={commentBoxVisible}
+              value={screen.container.description}
+              handleCommentTextChange={this.handleCommentTextChange}
+            />
           </div>
         )
       }
     } else {
       return (
         <div className="m-4">
-          There are currently no Analyses.
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <span>There are currently no Analyses.</span>
+            <ButtonToolbar className="gap-2">
+              <div className="mt-2">
+                <CommentButton
+                  toggleCommentBox={this.toggleCommentBox}
+                  isVisible={commentBoxVisible}
+                  size="xxsm"
+                />
+              </div>
+            </ButtonToolbar>
+          </div>
+          <CommentBox
+            isVisible={commentBoxVisible}
+            value={screen.container?.description || ''}
+            handleCommentTextChange={this.handleCommentTextChange}
+          />
         </div>
       )
     }

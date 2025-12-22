@@ -7,18 +7,23 @@ import {
   Tooltip,
 } from 'react-bootstrap';
 
-function CommentButton({ toggleCommentBox, size }) {
+function CommentButton({ toggleCommentBox, size, isVisible }) {
+  const buttonText = isVisible ? 'Hide comment' : 'Add comment';
+  const tooltipText = isVisible
+    ? 'Hide comment input box'
+    : 'General remarks related to all analytical data';
+
   return (
     <OverlayTrigger
       placement="top"
-      overlay={<Tooltip id="analysisCommentBox">General remarks related to all analytical data</Tooltip>}
+      overlay={<Tooltip id="analysisCommentBox">{tooltipText}</Tooltip>}
     >
       <Button
         size={size}
-        variant="primary"
+        variant={isVisible ? 'outline-secondary' : 'primary'}
         onClick={toggleCommentBox}
       >
-        Add comment
+        {buttonText}
       </Button>
     </OverlayTrigger>
   );
@@ -27,6 +32,11 @@ function CommentButton({ toggleCommentBox, size }) {
 CommentButton.propTypes = {
   toggleCommentBox: PropTypes.func.isRequired,
   size: PropTypes.string.isRequired,
+  isVisible: PropTypes.bool,
+};
+
+CommentButton.defaultProps = {
+  isVisible: false,
 };
 
 function CommentBox({ isVisible, value, handleCommentTextChange }) {
