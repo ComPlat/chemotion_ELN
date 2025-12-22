@@ -10,6 +10,11 @@ development:
       :device_description: -1100
       :sequence_based_macromolecule_sample: -1200
       :vessel: -1300
+    :layout_detail_generic:
+      :properties:
+        1
+      :analyses:
+        2
     :layout_detail_research_plan:
       :research_plan:
         1
@@ -19,6 +24,10 @@ development:
         3
       :attachments:
         4
+      :wellplates:
+        5
+      :metadata:
+        6
     :layout_detail_sample:
       :properties:
         1
@@ -30,6 +39,10 @@ development:
         4
       :results:
         5
+      :measurements:
+        -6
+      :history:
+        -7
     :layout_detail_reaction:
       :scheme:
         1
@@ -43,6 +56,8 @@ development:
         5
       :variations:
         6
+      :history:
+        -7
     :layout_detail_wellplate:
       :properties:
         1
@@ -52,11 +67,17 @@ development:
         3
       :list:
         4
+      :attachments:
+        5
+      :history:
+        -6
     :layout_detail_screen:
       :properties:
         1
       :analyses:
         2
+      :history:
+        -4
     :layout_detail_device_description:
       :properties:
         1
@@ -68,6 +89,8 @@ development:
         4
       :maintainance:
         5
+      :history:
+        -6
     :layout_detail_sequence_based_macromolecule_sample:
       :properties:
         1
@@ -75,6 +98,16 @@ development:
         2
       :attachments:
         3
+    :layout_detail_cell_line:
+      :properties:
+        1
+      :analyses:
+        2
+      :references:
+        3
+    :layout_detail_vessel:
+      :properties:
+        1
 
 production:
   :layout:
@@ -88,6 +121,11 @@ production:
       :device_description: -1100
       :sequence_based_macromolecule_sample: -1200
       :vessel: -1300
+    :layout_detail_generic:
+      :properties:
+        1
+      :analyses:
+        2
     :layout_detail_research_plan:
       :research_plan:
         1
@@ -97,6 +135,10 @@ production:
         3
       :attachments:
         4
+      :wellplates:
+        5
+      :metadata:
+        6
     :layout_detail_sample:
       :properties:
         1
@@ -108,6 +150,10 @@ production:
         4
       :results:
         5
+      :measurements:
+        -6
+      :history:
+        -7
     :layout_detail_reaction:
       :scheme:
         1
@@ -121,6 +167,8 @@ production:
         5
       :variations:
         6
+      :history:
+        -7
     :layout_detail_wellplate:
       :properties:
         1
@@ -130,11 +178,17 @@ production:
         3
       :list:
         4
+      :attachments:
+        5
+      :history:
+        -6
     :layout_detail_screen:
       :properties:
         1
       :analyses:
         2
+      :history:
+        -4
     :layout_detail_device_description:
       :properties:
         1
@@ -146,6 +200,8 @@ production:
         4
       :maintainance:
         5
+      :history:
+        -6
     :layout_detail_sequence_based_macromolecule_sample:
       :properties:
         1
@@ -153,6 +209,16 @@ production:
         2
       :attachments:
         3
+    :layout_detail_cell_line:
+      :properties:
+        1
+      :analyses:
+        2
+      :references:
+        3
+    :layout_detail_vessel:
+      :properties:
+        1
 
 test:
   :layout:
@@ -166,6 +232,11 @@ test:
       :device_description: -1100
       :sequence_based_macromolecule_sample: -1200
       :vessel: -1300
+    :layout_detail_generic:
+      :properties:
+        1
+      :analyses:
+        2
     :layout_detail_research_plan:
       :research_plan:
         1
@@ -175,6 +246,10 @@ test:
         3
       :attachments:
         4
+      :wellplates:
+        5
+      :metadata:
+        6
     :layout_detail_sample:
       :properties:
         1
@@ -186,6 +261,10 @@ test:
         4
       :results:
         5
+      :measurements:
+        -6
+      :history:
+        -7
     :layout_detail_reaction:
       :scheme:
         1
@@ -199,6 +278,8 @@ test:
         5
       :variations:
         6
+      :history:
+        -7
     :layout_detail_wellplate:
       :properties:
         1
@@ -208,11 +289,19 @@ test:
         3
       :list:
         4
+      :attachments:
+        5
+      :history:
+        -6
     :layout_detail_screen:
       :properties:
         1
       :analyses:
         2
+      :research_plans:
+        3
+      :history:
+        -4
     :layout_detail_device_description:
       :properties:
         1
@@ -224,6 +313,8 @@ test:
         4
       :maintainance:
         5
+      :history:
+        -6
     :layout_detail_sequence_based_macromolecule_sample:
       :properties:
         1
@@ -231,3 +322,13 @@ test:
         2
       :attachments:
         3
+    :layout_detail_cell_line:
+      :properties:
+        1
+      :analyses:
+        2
+      :references:
+        3
+    :layout_detail_vessel:
+      :properties:
+        1
