@@ -252,11 +252,22 @@ class Molecule < ApplicationRecord
   end
 
   def self.svg_reprocess(svg, struct)
-    return svg if indigo_disabled?
+    return svg if ketcher_service_disabled?
     return svg if svg_valid_and_not_openbabel?(svg)
 
-    rendered_svg = IndigoService.new(struct, 'image/svg+xml').render_structure
-    rendered_svg || Chemotion::OpenBabelService.svg_from_molfile(struct)
+    # Use KetcherService::RenderSvg to render SVG from molfile
+    rendered_svg = KetcherService::RenderSvg.svg(struct)
+
+    if rendered_svg&.present?
+      processor = Ketcherails::SVGProcessor.new(rendered_svg)
+      processor.centered_and_scaled_svg
+    else
+      Chemotion::OpenBabelService.svg_from_molfile(struct)
+    end
+  end
+
+  def self.ketcher_service_disabled?
+    Rails.configuration.ketcher_service&.disabled? || false
   end
 
   def self.indigo_disabled?
