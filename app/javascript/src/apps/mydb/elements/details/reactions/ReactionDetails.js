@@ -113,6 +113,8 @@ export default class ReactionDetails extends Component {
     UIStore.listen(this.onUIStoreChange);
     setTimeout(() => {
       GasPhaseReactionActions.gaseousReaction(reaction.gaseous);
+      // Initialize gas phase store with vessel size and catalyst values
+      this.updateReactionVesselSize(reaction);
     }, 0);
 
     if (MatrixCheck(currentUser.matrix, commentActivation) && !reaction.isNew) {
@@ -124,6 +126,10 @@ export default class ReactionDetails extends Component {
     const { reaction } = this.props;
     if (reaction !== prevProps.reaction) {
       this.setState({ reaction });
+      // Update gas phase store when reaction changes (e.g., loading new reaction)
+      setTimeout(() => {
+        this.updateReactionVesselSize(reaction);
+      }, 0);
     }
   }
 
@@ -204,6 +210,12 @@ export default class ReactionDetails extends Component {
     const { reaction } = this.state;
 
     const { newReaction, options } = setReactionByType(reaction, type, value);
+
+    // Update gas phase store synchronously for vessel size changes
+    // to ensure store is updated before gas calculations run during render
+    if (type === 'vesselSizeAmount' || type === 'vesselSizeUnit') {
+      this.updateReactionVesselSize(newReaction);
+    }
     this.handleReactionChange(newReaction, options);
   }
 
@@ -481,30 +493,23 @@ export default class ReactionDetails extends Component {
 
   // eslint-disable-next-line class-methods-use-this
   updateReactionVesselSize(reaction) {
-    Promise.resolve().then(() => {
-      const { catalystMoles, vesselSize } = reaction.findReactionVesselSizeCatalystMaterialValues();
+    const { catalystMoles, vesselSize } = reaction.findReactionVesselSizeCatalystMaterialValues();
 
-      if (vesselSize) {
-        GasPhaseReactionActions.setReactionVesselSize(vesselSize);
-      }
+    if (vesselSize) {
+      GasPhaseReactionActions.setReactionVesselSize(vesselSize);
+    } else {
+      GasPhaseReactionActions.setReactionVesselSize(null);
+    }
 
-      if (catalystMoles) {
-        GasPhaseReactionActions.setCatalystReferenceMole(catalystMoles);
-      }
-
-      if (!vesselSize) {
-        GasPhaseReactionActions.setReactionVesselSize(null);
-      }
-
-      if (!catalystMoles) {
-        GasPhaseReactionActions.setCatalystReferenceMole(null);
-      }
-    });
+    if (catalystMoles) {
+      GasPhaseReactionActions.setCatalystReferenceMole(catalystMoles);
+    } else {
+      GasPhaseReactionActions.setCatalystReferenceMole(null);
+    }
   }
 
   render() {
     const { reaction, visible, activeTab } = this.state;
-    this.updateReactionVesselSize(reaction);
     const tabContentsMap = {
       scheme: (
         <Tab eventKey="scheme" title="Scheme" key={`scheme_${reaction.id}`}>
