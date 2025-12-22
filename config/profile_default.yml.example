@@ -15,6 +15,8 @@ development:
         1
       :analyses:
         2
+      :attachments:
+        3
     :layout_detail_research_plan:
       :research_plan:
         1
@@ -126,6 +128,8 @@ production:
         1
       :analyses:
         2
+      :attachments:
+        3
     :layout_detail_research_plan:
       :research_plan:
         1
@@ -235,6 +239,8 @@ test:
     :layout_detail_generic:
       :properties:
         1
+      :attachments:
+        3
       :analyses:
         2
     :layout_detail_research_plan:
