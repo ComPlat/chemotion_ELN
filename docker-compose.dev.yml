@@ -126,6 +126,13 @@ services:
     working_dir: "/home/ubuntu/app"
     command: 'yarn run storybook'
 
+  ketchersvc:
+    environment:
+      - CONFIG_KETCHER_URL=http://eln:4000/ketcher/
+    image: ${IMG_KETCHERSVC}
+    networks:
+      - chemotion
+    restart: unless-stopped
 
 volumes:
   database:

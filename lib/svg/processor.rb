@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'digest'
+require 'fileutils'
 
 module SVG
   # SVG Processor
@@ -12,7 +13,7 @@ module SVG
                   when /chemdraw/i
                     Chemotion::ChemdrawSvgProcessor.new(svg)
                   when /ketcher/i
-                    Chemotion::KetcherSvgProcessor.new(svg)
+                    Ketcherails::SVGProcessor.new(svg)
                   else
                     Chemotion::ChemdrawSvgProcessor.new(svg)
                   end
