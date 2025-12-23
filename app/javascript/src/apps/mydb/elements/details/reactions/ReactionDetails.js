@@ -677,19 +677,24 @@ export default class ReactionDetails extends Component {
 
   // eslint-disable-next-line class-methods-use-this
   updateReactionVesselSize(reaction) {
+    if (!reaction) return;
+
     const { catalystMoles, vesselSize } = reaction.findReactionVesselSizeCatalystMaterialValues();
 
-    if (vesselSize) {
-      GasPhaseReactionActions.setReactionVesselSize(vesselSize);
-    } else {
-      GasPhaseReactionActions.setReactionVesselSize(null);
-    }
+    // Avoid dispatch while another Alt dispatch is in progress.
+    setTimeout(() => {
+      if (vesselSize) {
+        GasPhaseReactionActions.setReactionVesselSize(vesselSize);
+      } else {
+        GasPhaseReactionActions.setReactionVesselSize(null);
+      }
 
-    if (catalystMoles) {
-      GasPhaseReactionActions.setCatalystReferenceMole(catalystMoles);
-    } else {
-      GasPhaseReactionActions.setCatalystReferenceMole(null);
-    }
+      if (catalystMoles) {
+        GasPhaseReactionActions.setCatalystReferenceMole(catalystMoles);
+      } else {
+        GasPhaseReactionActions.setCatalystReferenceMole(null);
+      }
+    }, 0);
   }
 
   /**
