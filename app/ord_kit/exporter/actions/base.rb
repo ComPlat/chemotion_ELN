@@ -28,7 +28,8 @@ module OrdKit
               automation_status: automation_status,
               consumed_fraction: consumed_fraction,
               automation_ordinal: @action.automation_ordinal,
-              automation_mode: ontology_ord(workup['automation_mode']),
+              type: ontology_ord(workup['type']),
+              subtype: ontology_ord(workup['subtype']),
               device: ontology_ord(workup['device']),
               method: workup['method'],
             }.merge(action_type_attributes),
@@ -36,6 +37,7 @@ module OrdKit
         end
 
         private
+
         def ontology_ord(ontology_id)
           OrdKit::Exporter::Models::OntologyExporter.new(ontology_id).to_ord
         end

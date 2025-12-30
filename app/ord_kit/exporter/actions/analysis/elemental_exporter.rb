@@ -4,16 +4,13 @@ module OrdKit
   module Exporter
     module Actions
       module Analysis
-        class SpectroscopyExporter < Actions::Base
+        class ElementalExporter < Actions::Base
           private
 
           def action_type_attributes
-            { analysis_spectroscopy:
-            ReactionProcessAction::ActionAnalysisSpectroscopy.new({
-
-                                                                    molecular_entities: molecular_entities,
-                                                                    sample: sample,
-                                                                  }) }
+            { analysis_elemental:
+            ReactionProcessAction::ActionAnalysisElemental.new({ molecular_entities: molecular_entities,
+                                                                 sample: sample }) }
           end
 
           def sample

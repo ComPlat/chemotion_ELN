@@ -5,7 +5,7 @@ module OrdKit
     module Actions
       module Analysis
         class ChromatographyExporter < OrdKit::Exporter::Actions::Purification::ChromatographyExporter
-          # Analysis Chromatography is sufficiently similar to Purification to reuse exporter
+          # Chromatography for Analysis is compatible to Purification,  reuse exporter
         end
       end
     end

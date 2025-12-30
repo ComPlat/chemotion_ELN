@@ -8,8 +8,7 @@ module OrdKit
           StirringConditions.new(
             type: stirring_method_type,
             details: details,
-            rate: stirring_rate,
-            automation_mode: automation_mode,
+            speed: speed,
           )
         end
 
@@ -25,18 +24,11 @@ module OrdKit
           nil # n/a. Unkown in ELN.
         end
 
-        def stirring_rate
-          OrdKit::StirringConditions::StirringRate.new(
-            type: OrdKit::StirringConditions::StirringRate::StirringRateType::UNSPECIFIED,
-            details: nil, # n/a. Unkown in ELN.
-            rpm: workup.dig('speed', 'value').to_f,
+        def speed
+          OrdKit::Motion.new(
+            value: workup.dig('speed', 'value').to_f,
+            unit: OrdKit::Motion::MotionUnit::RPM,
           )
-        end
-
-        def automation_mode
-          Automation::AutomationMode.const_get workup['motion_mode'].to_s
-        rescue NameError
-          Automation::AutomationMode::UNSPECIFIED
         end
       end
     end
