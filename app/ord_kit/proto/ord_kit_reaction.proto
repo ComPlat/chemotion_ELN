@@ -7,8 +7,8 @@
 // allowing to store data describing the process of a chemical reaction
 // (loosely based on the original ORD Schema).
 //
-// v0.9.0
-// (draft, 12.08.2025)
+// v0.10.0
+// (draft, 30.12.2025)
 //
 //
 // Copyright 2020 Open Reaction Database Project Authors
@@ -83,7 +83,8 @@ message ReactionStep {
   // The indivdual actions defining the ReactionStep.
   repeated ReactionProcessAction actions = 6;
 
-  StepAutomationStatus step_automation_status = 7;
+  Ontology automation_mode = 7;
+  StepAutomationStatus automation_status = 8;
 }
 
 /**
@@ -119,6 +120,8 @@ message Ontology {
  *   }
  * }
  */
+
+//  # TODO: DELETEME
 message ReactionInput {
   // A component is any pure species that is added to the reaction, whether as
   // a pure substance or in a mixture/solution.
@@ -198,32 +201,56 @@ message ReactionProcessAction {
   TimeSpan duration = 5;
   repeated Equipment equipment = 6;
   optional VesselTemplate vessel_template = 7;
-  oneof action {
-    ActionAdd addition = 8;
-    ActionRemove removal = 9;
-    ReactionConditions conditions = 10;
-    ActionPurification purification = 11;
-    ActionAnalysis analysis = 12;
-    ActionTransfer transfer = 13;
-    ActionWait wait = 14;
-    ActionSaveSample save_sample = 15;
-    ActionDiscard discard = 16;
-    ActionDefineFraction define_fraction = 17;
-  }
-  optional AutomationStatus automation_status = 18;
-  optional PoolingFraction consumed_fraction = 19;
-  int32 automation_ordinal = 20;
 
-  Ontology automation_mode = 21;
-  optional Ontology device = 22;
-  optional string method = 23;
+  optional AutomationStatus automation_status = 26;
+  optional PoolingFraction consumed_fraction = 27;
+  int32 automation_ordinal = 28;
+
+  optional Ontology type = 29;
+  optional Ontology subtype = 30;
+  optional Ontology device = 31;
+  optional string method = 32;
+
+  oneof action {
+    ReactionConditions conditions = 8;
+    ActionAdd addition = 9;
+    ActionEvaporation evaporation = 10;
+    ActionGasExchange gas_exchange = 11;
+    ActionFiltration filtration = 12;
+    ActionChromatography chromatography = 13;
+    ActionExtraction extraction = 14;
+    ActionCrystallization crystallization = 15;
+    ActionCentrifugation centrifugation = 16;
+    ActionChromatography analysis_chromatography = 17;
+    ActionAnalysisSpectroscopy analysis_spectroscopy = 18;
+    ActionAnalysisElemental analysis_elemental = 19;
+    ActionTransfer transfer = 20;
+    ActionWait wait = 21;
+    ActionSaveSample save_sample = 22;
+    ActionDiscard discard = 23;
+    ActionDefineFraction define_fraction = 24;
+    ActionMixing mixing = 25;
+  }
 
   message ActionAdd {
     ReactionRole.ReactionRoleType reaction_role = 1;
     ReactionInput input = 2;
   }
 
-  message ActionRemove {
+  message ActionGasExchange { repeated OntologyMaterialWithRatio gas_type = 1; }
+
+  message ActionMixing { Motion speed = 1; }
+
+  message ActionTransfer {
+    ReactionRole.ReactionRoleType reaction_role = 1;
+    ReactionInput input = 2;
+    string transfer_source_reaction_step_id = 3;
+    string transfer_target_reaction_step_id = 4;
+    Amount amount = 5;
+    Percentage percentage = 6;
+  }
+
+  message ActionEvaporation {
     message FromDiverseSolvents {
       repeated CompoundWithRatio solvents = 1;
       Amount solvents_amount = 2;
@@ -240,7 +267,6 @@ message ReactionProcessAction {
     }
     message FromFraction { repeated PoolingFraction fraction = 1; }
 
-    Automation.AutomationMode automation_mode = 1;
     oneof origin {
       FromReaction from_reaction = 2;
       FromReaction from_reaction_step = 3;
@@ -252,7 +278,7 @@ message ReactionProcessAction {
     }
   }
 
-  message ActionPurificationCrystallization {
+  message ActionCrystallization {
     enum CrystallizationMode {
       UNSPECIFIED = 0;
       NONE = 1;
@@ -268,13 +294,13 @@ message ReactionProcessAction {
     CrystallizationMode crystallization_mode = 6;
   }
 
-  message ActionPurificationCentrifugation {
+  message ActionCentrifugation {
     Temperature temperature = 1;
     Motion motion = 2;
     Pressure pressure = 3;
   }
 
-  message ActionPurificationChromatography {
+  message ActionChromatography {
     message ChromatographyStep {
       enum Step {
         STEP_UNSPECIFIED = 0;
@@ -290,37 +316,33 @@ message ReactionProcessAction {
       }
 
       TimeSpan duration = 1;
-      repeated OntologySolventWithRatio solvents = 2;
+      repeated OntologyMaterialWithRatio solvents = 2;
       Amount amount = 3;
       FlowRate flow_rate = 4;
       Step step = 5;
       Prod prod = 6;
     }
 
-    Ontology automation_mode = 1;
-    Ontology type = 2;
-    Ontology subtype = 3;
-    optional Ontology device = 4;
-    repeated Ontology detectors = 6;
-    repeated Ontology mobile_phase = 7;
-    optional string method = 8;
-    string stationary_phase = 9;
-    TemperatureConditions stationary_phase_temperature = 10;
-    Volume volume = 11;
+    repeated Ontology detectors = 1;
+    repeated Ontology mobile_phase = 2;
+    optional string method = 3;
+    string stationary_phase = 4;
+    TemperatureConditions stationary_phase_temperature = 5;
+    Volume volume = 6;
 
-    optional Ontology material = 12;
-    optional Length diameter = 13;
-    optional Length height = 14;
-    optional Length filling_height = 15;
+    optional Ontology material = 7;
+    optional Length diameter = 8;
+    optional Length height = 9;
+    optional Length filling_height = 10;
 
-    repeated ChromatographyStep steps = 16;
-    repeated PoolingFraction fractions = 17;
+    repeated ChromatographyStep steps = 11;
+    repeated PoolingFraction fractions = 12;
 
-    repeated Compound molecular_entities = 18;
-    optional Compound sample = 19;
+    repeated Compound molecular_entities = 13;
+    optional Compound sample = 14;
   }
 
-  message ActionPurificationExtraction {
+  message ActionExtraction {
     message ExtractionStep {
       TimeSpan duration = 1;
       repeated CompoundWithRatio solvents = 2;
@@ -333,12 +355,11 @@ message ReactionProcessAction {
       ORGANIC = 2;
     }
 
-    Automation.AutomationMode automation_mode = 1;
     ExtractionPhase phase = 2;
     repeated ExtractionStep steps = 3;
   }
 
-  message ActionPurificationFiltration {
+  message ActionFiltration {
     enum FiltrationMode {
       UNSPECIFIED = 0;
       KEEP_SUPERNATANT = 1;
@@ -354,49 +375,16 @@ message ReactionProcessAction {
     }
     FiltrationMode filtration_mode = 1;
     repeated FiltrationStep steps = 2;
-    Automation.AutomationMode automation_mode = 5;
   }
 
-  message ActionPurification {
-    oneof type {
-      ActionPurificationFiltration filtration = 1;
-      ActionPurificationExtraction extraction = 2;
-      ActionPurificationCrystallization crystallization = 3;
-      ActionPurificationChromatography chromatography = 4;
-      ActionPurificationCentrifugation centrifugation = 5;
-    }
+  message ActionAnalysisElemental {
+    repeated Compound molecular_entities = 3;
+    Compound sample = 4;
   }
 
   message ActionAnalysisSpectroscopy {
-    Automation.AutomationMode automation_mode = 1;
-    string device = 2;
     repeated Compound molecular_entities = 3;
     Compound sample = 4;
-  }
-
-  message ActionAnalysisSpectrometry {
-    Automation.AutomationMode automation_mode = 1;
-    string device = 2;
-    repeated Compound molecular_entities = 3;
-    Compound sample = 4;
-  }
-
-  message ActionAnalysis {
-    oneof type {
-      ActionAnalysisSpectroscopy spectroscopy = 1;
-      ActionAnalysisSpectrometry spectrometry = 2;
-      ActionPurificationChromatography chromatography =
-          3; // for now identical, ActionAnalysisChr. might diverge soon.
-    }
-  }
-
-  message ActionTransfer {
-    ReactionRole.ReactionRoleType reaction_role = 1;
-    ReactionInput input = 2;
-    string transfer_source_reaction_step_id = 3;
-    string transfer_target_reaction_step_id = 4;
-    Amount amount = 5;
-    Percentage percentage = 6;
   }
 
   message ActionDiscard { PoolingFraction fraction = 1; }
@@ -471,7 +459,7 @@ message CompoundWithRatio {
   string ratio = 2;
 }
 
-message OntologySolventWithRatio {
+message OntologyMaterialWithRatio {
   Ontology solvent = 1;
   string ratio = 2;
 }
@@ -940,20 +928,9 @@ message StirringConditions {
     OTHER = 8;
   }
 
-  message StirringRate {
-    enum StirringRateType {
-      UNSPECIFIED = 0;
-      HIGH = 1;
-      MEDIUM = 2;
-      LOW = 3;
-    }
-    StirringRateType type = 1;
-    string details = 2;
-    int32 rpm = 3;
-  }
   StirringMethodType type = 1;
   string details = 2;
-  StirringRate rate = 3;
+  Motion speed = 3;
 
   Automation.AutomationMode automation_mode = 4;
 }
