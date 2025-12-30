@@ -12,8 +12,8 @@ module OrdKit
           return unless @ontology_id
 
           { id: @ontology_id,
-            label: ontology&.label || 'Error: Ontology undefined',
-            name: ontology&.name || 'Error: Ontology undefined' }
+            label: ontology&.label || 'Error: Ontology non-existant',
+            name: ontology&.name || 'Error: Ontology specified but non-existant' }
         end
 
         private

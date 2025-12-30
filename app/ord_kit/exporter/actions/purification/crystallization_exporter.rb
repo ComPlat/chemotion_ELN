@@ -4,8 +4,10 @@ module OrdKit
   module Exporter
     module Actions
       module Purification
-        class CrystallizationExporter < OrdKit::Exporter::Actions::Purification::Base
-          def to_ord
+        class CrystallizationExporter < OrdKit::Exporter::Actions::Base
+          private
+
+          def action_type_attributes
             {
               crystallization: {
                 # crystallization has only 1 purification_step but it is wrapped in an array for consistency.
@@ -22,10 +24,10 @@ module OrdKit
           end
 
           def crystallization_mode
-            ReactionProcessAction::ActionPurificationCrystallization::CrystallizationMode
+            ReactionProcessAction::ActionCrystallization::CrystallizationMode
               .const_get workup['crystallization_mode'].to_s
           rescue NameError
-            ReactionProcessAction::ActionPurificationCrystallization::CrystallizationMode::UNSPECIFIED
+            ReactionProcessAction::ActionCrystallization::CrystallizationMode::UNSPECIFIED
           end
         end
       end
