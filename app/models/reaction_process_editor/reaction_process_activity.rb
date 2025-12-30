@@ -71,7 +71,7 @@ module ReactionProcessEditor
       %w[REMOVE EVAPORATION DISCARD].include?(activity_name)
     end
 
-    def can_carry_compound?
+    def carries_compound?
       !removes_compound?
     end
 
@@ -88,23 +88,23 @@ module ReactionProcessEditor
     end
 
     def medium
-      return unless can_carry_medium?
+      return unless carries_medium?
 
       Medium::Medium.find_by(id: workup['sample_id'])
     end
 
     def sample
-      return unless can_carry_sample?
+      return unless carries_sample?
 
       Sample.find_by(id: workup['sample_id'])
     end
 
-    def can_carry_sample?
-      can_carry_compound? && !can_carry_medium?
+    def carries_sample?
+      carries_compound? && !carries_medium?
     end
 
-    def can_carry_medium?
-      can_carry_compound? &&
+    def carries_medium?
+      carries_compound? &&
         %w[ADDITIVE MEDIUM DIVERSE_SOLVENT MODIFIER].include?(workup['acts_as'])
     end
 
