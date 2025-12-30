@@ -6,7 +6,15 @@ module Import
       ROOT_DIR = ENV.fetch('REACTION_PROCESS_EDITOR_DATA_DIR', 'tmp/reaction_process_editor')
       FILES = 'vessels/*.csv'
 
-      # File format constants as discussed and defined with PHodapp, NJung, cbuggle, 18.11.2024
+      # CSV file constants as discussed and defined with PHodapp, NJung, cbuggle.
+      VESSEL_TEMPLATE_KEY = 'Vessel/Template'
+      SHORT_LABEL_KEY = 'ID (short-label)'
+      NAME_KEY = 'Short-Description (Name)'
+      VESSEL_TYPE_KEY = 'Type'
+      DESCRIPTION_KEY = 'Description (Details)'
+      MATERIAL_KEY = 'Material'
+      VOLUME_KEY = 'Vol.'
+      MODE_KEY = 'Mode'
       MODE_SEPARATOR = ';'
 
       def execute
@@ -24,33 +32,29 @@ module Import
 
       private
 
-      # def set_all_inactive
-      #   ::ReactionProcessEditor::Ontology.update_all(active: false)
-      # end
+      def create_from_csv(csv, current_user) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/AbcSize
+        name = csv[NAME_KEY]
+        return if name.blank?
 
-      def create_from_csv(csv, current_user) # rubocop:disable Metrics/AbcSize
-        short_label = csv['ShortLabel']
-        return if short_label.blank?
+        vessel_template = VesselTemplate.find_or_initialize_by(name: name)
 
-        vessel_template = VesselTemplate.find_or_initialize_by(name: csv['Name'])
-
-        vessel = Vessel.find_or_initialize_by(vessel_template: vessel_template, short_label: short_label,
-                                              creator: current_user)
-
-        amount, unit = csv['Vol.'].scan(/(.*) (.*)/)[0]
+        amount, unit = csv[VOLUME_KEY].scan(/(.*) (.*)/)[0]
 
         vessel_template.update!(
-          vessel_type: csv['Type'],
-          material_type: csv['Material'],
+          vessel_type: csv[VESSEL_TYPE_KEY],
+          material_type: csv[MATERIAL_KEY],
           volume_amount: amount,
           volume_unit: unit,
-          automation_modes: csv['Mode'].split(MODE_SEPARATOR),
+          automation_modes: csv[MODE_KEY].split(MODE_SEPARATOR),
+          details: csv[DESCRIPTION_KEY],
         )
 
-        if csv['Vessel/Template'] == 'Vessel'
-          Rails.logger.info("importing #{short_label}")
-          # TODO: Vessel model has no "mode" yet (though csv has).
-          vessel.name = short_label
+        if csv[VESSEL_TEMPLATE_KEY] == 'Vessel'
+          short_label = csv[SHORT_LABEL_KEY]
+          vessel = Vessel.find_or_initialize_by(vessel_template: vessel_template, short_label: short_label,
+                                                creator: current_user)
+
+          vessel.name = name
           vessel.creator = current_user
           vessel.save!
         end
@@ -62,6 +66,10 @@ module Import
 
       def ontology_files
         Rails.root.glob("#{ROOT_DIR}/#{FILES}")
+      end
+
+      def vessel_type(text)
+        text == 'Vessel' ? 'Vessel' : 'VesselTemplate'
       end
     end
   end
