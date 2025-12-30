@@ -4,35 +4,28 @@ module OrdKit
   module Exporter
     module Actions
       module Purification
-        class FiltrationExporter < OrdKit::Exporter::Actions::Purification::Base
-          def to_ord
+        class FiltrationExporter < OrdKit::Exporter::Actions::Base
+          private
+
+          def action_type_attributes
             {
-              filtration: OrdKit::ReactionProcessAction::ActionPurificationFiltration.new(
+              filtration: OrdKit::ReactionProcessAction::ActionFiltration.new(
                 filtration_mode: filtration_mode,
                 steps: steps,
-                automation_mode: automation_mode,
               ),
             }
           end
 
-          private
-
-          def automation_mode
-            Automation::AutomationMode.const_get workup['automation_mode'].to_s
-          rescue NameError
-            Automation::AutomationMode::UNSPECIFIED
-          end
-
           def filtration_mode
-            OrdKit::ReactionProcessAction::ActionPurificationFiltration::FiltrationMode
+            OrdKit::ReactionProcessAction::ActionFiltration::FiltrationMode
               .const_get workup['filtration_mode'].to_s
           rescue NameError
-            OrdKit::ReactionProcessAction::ActionPurificationFiltration::FiltrationMode::UNSPECIFIED
+            OrdKit::ReactionProcessAction::ActionFiltration::FiltrationMode::UNSPECIFIED
           end
 
           def steps
             Array(workup['purification_steps']).map do |filtration_step|
-              OrdKit::ReactionProcessAction::ActionPurificationFiltration::FiltrationStep.new(
+              OrdKit::ReactionProcessAction::ActionFiltration::FiltrationStep.new(
                 solvents: OrdKit::Exporter::Samples::SolventsWithRatioExporter.new(filtration_step['solvents']).to_ord,
                 amount: Metrics::AmountExporter.new(filtration_step['amount']).to_ord,
                 repetitions: filtration_step['repetitions']['value'],

@@ -20,12 +20,8 @@ module OrdKit
         TRANSFER: OrdKit::Exporter::Actions::TransferActionExporter,
         WAIT: OrdKit::Exporter::Actions::WaitActionExporter,
         SAVE: OrdKit::Exporter::Actions::SaveSampleActionExporter,
-        MIXING: OrdKit::Exporter::Actions::MixingExporter,
+        MIXING: OrdKit::Exporter::Actions::MixingActionExporter,
         GAS_EXCHANGE: OrdKit::Exporter::Actions::GasExchangeActionExporter,
-        # TODO: To be done are:
-        # MIXING
-        # GAS_EXCHANGE
-        # EVAPORATION
       }.stringify_keys
 
       def to_ord(starts_at:)
