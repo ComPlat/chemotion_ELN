@@ -53,15 +53,16 @@ module ReactionProcessEditor
     end
 
     def actual_automation_status
-      # actual_automation_status mostly determined by external conditions
-      # can be set to "STEP_MANUAL_PROCEED" / "STEP_HALT_BY_PRECEDING" as fallback if no other condition fullfilled.
+      # actual_automation_status is mostly determined by external conditions. When no other ondition precedes, fallback
+      # to `automation_status` which can manually be set to "STEP_MANUAL_PROCEED" / "STEP_HALT_BY_PRECEDING"
+      # (Maybe rename `automation_status` to 'manual_automation_status'?)
       return 'STEP_COMPLETED' if reaction_process_activities.all?(&:automation_completed?)
       return 'STEP_CAN_RUN' if predecessors.none?(&:halts_automation?)
 
       automation_status.presence || 'STEP_HALT_BY_PRECEDING'
     end
 
-    # We assemble an Array of activity_preconditions which the ReactionActionEntity then indexes by its position.
+    # We precalculate the Array of activity preconditions which the ReactionActionEntity then indexes by its position.
     def activity_preconditions
       @activity_preconditions ||= [reaction_process.initial_conditions] + calculate_activity_post_conditions
     end
@@ -78,7 +79,9 @@ module ReactionProcessEditor
         Medium::DiverseSolvent.find added_material_ids(material_type)
       when 'MEDIUM'
         Medium::Medium.find added_material_ids(material_type)
-      when 'SOLVENT'
+      when 'MODIFIER'
+        Medium::Modifier.find added_material_ids(material_type)
+      when 'SAMPLE', 'SOLVENT'
         Sample.find added_material_ids(material_type)
       else
         Medium::Medium.find added_material_ids(material_type)
@@ -87,7 +90,7 @@ module ReactionProcessEditor
     end
 
     def added_material_ids(material_type)
-      activities_adding_sample_acting_as(material_type).map { |activity| activity.workup['sample_id'] }
+      activities_adding_compound_acting_as(material_type).map { |activity| activity.workup['sample_id'] }
     end
 
     def saved_sample_ids
@@ -108,12 +111,14 @@ module ReactionProcessEditor
 
     private
 
-    def activities_adding_sample_acting_as(material_type)
-      reaction_process_activities
-        .select(&:adds_compound?)
-        .select do |activity|
+    def activities_adding_compound_acting_as(material_type)
+      activities_adding_compounds.select do |activity|
         activity.workup['acts_as'] == material_type
       end
+    end
+
+    def activities_adding_compounds
+      @activities_adding_compounds ||= reaction_process_activities.select(&:adds_compound?)
     end
 
     def calculate_activity_post_conditions
