@@ -13,7 +13,7 @@ module Entities
             mounted_equipment: mounted_equipment(reaction_process_step),
             saved_samples: saved_samples(reaction_process_step),
             FORMS: {
-              REMOVE: { removable_samples: removable_samples(reaction_process_step) },
+              EVAPORATION: { removable_samples: removable_samples(reaction_process_step) },
               SAVE: { origins: save_sample_origins(reaction_process_step) },
             },
           }
@@ -85,8 +85,8 @@ module Entities
         private
 
         def current_step_samples_options(reaction_process_step)
-          %w[SOLVENT MEDIUM ADDITIVE DIVERSE_SOLVENT MODIFIER].map do |material|
-            added_samples_acting_as(reaction_process_step, material)
+          %w[SOLVENT MEDIUM ADDITIVE DIVERSE_SOLVENT MODIFIER SAMPLE].map do |material|
+            added_compounds_acting_as(reaction_process_step, material)
           end.flatten.uniq
         end
 
@@ -120,7 +120,7 @@ module Entities
           )
         end
 
-        def added_samples_acting_as(reaction_process_step, acts_as)
+        def added_compounds_acting_as(reaction_process_step, acts_as)
           reaction_process_step.added_materials(acts_as).map do |sample|
             sample_minimal_option(sample, acts_as)
           end

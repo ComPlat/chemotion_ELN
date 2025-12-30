@@ -72,7 +72,7 @@ describe ReactionProcessEditor::ReactionProcessStepAPI, '.get' do
                                SOLVENT_FROM_FRACTION: [] }
                              .deep_stringify_keys
 
-      expect(parsed_select_options.dig('FORMS', 'REMOVE', 'removable_samples'))
+      expect(parsed_select_options.dig('FORMS', 'EVAPORATION', 'removable_samples'))
         .to include(expected_medium_hash)
     end
 
