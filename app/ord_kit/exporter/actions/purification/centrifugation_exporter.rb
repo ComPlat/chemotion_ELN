@@ -4,15 +4,17 @@ module OrdKit
   module Exporter
     module Actions
       module Purification
-        class CentrifugationExporter < Actions::Purification::Base
-          def to_ord
+        class CentrifugationExporter < Actions::Base
+          private
+
+          def action_type_attributes
             {
               centrifugation:
-              ReactionProcessAction::ActionPurificationCentrifugation.new({
-                                                                            pressure: Metrics::PressureExporter.new(workup['PRESSURE']).to_ord,
-                                                                            temperature: Metrics::TemperatureExporter.new(workup['TEMPERATURE']).to_ord,
-                                                                            motion: Metrics::MotionExporter.new(workup['MOTION']).to_ord,
-                                                                          }),
+              ReactionProcessAction::ActionCentrifugation.new({
+                                                                pressure: Metrics::PressureExporter.new(workup['PRESSURE']).to_ord,
+                                                                temperature: Metrics::TemperatureExporter.new(workup['TEMPERATURE']).to_ord,
+                                                                motion: Metrics::MotionExporter.new(workup['MOTION']).to_ord,
+                                                              }),
             }
           end
         end

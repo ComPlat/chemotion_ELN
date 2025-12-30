@@ -10,7 +10,7 @@ module OrdKit
 
         def to_ord
           Array(@solvents_workup).map do |solvent_workup|
-            OrdKit::OntologySolventWithRatio.new(
+            OrdKit::OntologyMaterialWithRatio.new(
               solvent: solvent_ord(solvent_workup),
               ratio: solvent_workup['ratio'].to_s,
             )

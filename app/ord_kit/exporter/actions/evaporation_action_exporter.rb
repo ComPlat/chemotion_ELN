@@ -3,24 +3,17 @@
 module OrdKit
   module Exporter
     module Actions
-      class RemoveActionExporter < OrdKit::Exporter::Actions::Base
+      class EvaporationActionExporter < OrdKit::Exporter::Actions::Base
         private
 
         def action_type_attributes
           {
-            removal: OrdKit::ReactionProcessAction::ActionRemove.new(
-              { automation_mode: automation_mode }.merge(remove_fields_per_origin),
-            ),
+            evaporation: OrdKit::ReactionProcessAction::ActionEvaporation.new(evaporation_fields_per_origin),
           }
         end
 
-        def automation_mode
-          Automation::AutomationMode.const_get workup['automation_mode'].to_s
-        rescue NameError
-          Automation::AutomationMode::UNSPECIFIED
-        end
-
-        def remove_fields_per_origin
+        # rubocop:disable Metrics/CyclomaticComplexity
+        def evaporation_fields_per_origin
           case workup['origin_type']
           when 'FROM_REACTION'
             { from_reaction: from_reaction_fields }.stringify_keys
@@ -34,14 +27,16 @@ module OrdKit
             stepwise_fields
           when 'DIVERSE_SOLVENTS'
             diverse_solvent_fields
+          when 'SOLVENT_FROM_FRACTION'
+            solvent_from_fraction_fields
           else
-            # TODO: "FROM_FRACTION" missing
             {}
           end
         end
+        # rubocop:enable Metrics/CyclomaticComplexity
 
         def from_reaction_fields
-          OrdKit::ReactionProcessAction::ActionRemove::FromReaction.new(
+          OrdKit::ReactionProcessAction::ActionEvaporation::FromReaction.new(
             samples: solvents_to_ord(workup['samples'] || []),
             amount: amount_to_ord(workup['amount']),
             solvents: OrdKit::Exporter::Samples::SolventsWithRatioExporter.new(workup['solvents']).to_ord,
@@ -50,7 +45,7 @@ module OrdKit
         end
 
         def from_sample_fields
-          OrdKit::ReactionProcessAction::ActionRemove::FromReaction.new(
+          OrdKit::ReactionProcessAction::ActionEvaporation::FromReaction.new(
             samples: solvents_to_ord(workup['samples'] || []),
             amount: amount_to_ord(workup['amount']),
             solvents: OrdKit::Exporter::Samples::SolventsWithRatioExporter.new(workup['solvents']).to_ord,
@@ -77,6 +72,15 @@ module OrdKit
             diverse_solvents: {
               solvents: solvents_with_ratio(workup['solvents']),
               solvents_amount: amount_to_ord(workup['solvents_amount']),
+            },
+          }
+        end
+
+        def solvent_from_fraction_fields
+          {
+            solvent_from_fraction_fields: {
+              sample: solvents_with_ratio(workup['samples']&.first),
+              solvents_amount: amount_to_ord(workup['amount']),
             },
           }
         end

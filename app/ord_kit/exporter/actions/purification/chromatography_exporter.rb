@@ -4,23 +4,20 @@ module OrdKit
   module Exporter
     module Actions
       module Purification
-        class ChromatographyExporter < Actions::Purification::Base
-          def to_ord
-            { chromatography: OrdKit::ReactionProcessAction::ActionPurificationChromatography.new(
+        class ChromatographyExporter < Actions::Base
+          private
+
+          def action_type_attributes
+            { chromatography: OrdKit::ReactionProcessAction::ActionChromatography.new(
               {
-                type: ontology_ord(workup['type']),
-                subtype: ontology_ord(workup['subtype']),
                 stationary_phase: workup['stationary_phase'],
                 steps: steps,
-                automation_mode: ontology_ord(workup['automation_mode']),
                 fractions: fractions,
                 molecular_entities: molecular_entities,
                 sample: sample,
               }.merge(automation_specific_fields),
             ) }
           end
-
-          private
 
           def sample
             OrdKit::Exporter::Compounds::SaveCompoundExporter.new(@action).to_ord if @action.sample
@@ -39,15 +36,19 @@ module OrdKit
           end
 
           def automation_mode_ontology
-            ReactionProcessEditor::Ontology.find_by(ontology_id: workup['automation_mode'])
+            ReactionProcessEditor::Ontology.find_by(ontology_id: action.reaction_process_step.automation_mode)
           end
 
           def automation_mode_manual?
-            %w[manual].include?(automation_mode_ontology&.label)
+            # %w[manual].include?(automation_mode_ontology&.label)
+            # TODO: Guess we need some "OntologyConstants" or something. cbuggle, 30.12.2025.
+            # automation_mode_ontology&.ontology_id == "NCIT:C63513"
+            ['NCIT:C63513'].include?(automation_mode_ontology&.ontology_id)
           end
 
           def automation_mode_automated?
-            %w[automated semi-automated].include?(automation_mode_ontology&.label)
+            # %w[automated semi-automated].include?(automation_mode_ontology&.label)
+            ['NCIT:C172484', 'NCIT:C70669'].include?(automation_mode_ontology&.ontology_id)
           end
 
           def automation_specific_fields
@@ -68,9 +69,7 @@ module OrdKit
 
           def automation_automated_fields
             {
-              device: ontology_ord(workup['device']),
               detectors: detectors,
-              method: workup['method'],
               mobile_phase: mobile_phase_ontologies(workup['mobile_phase']),
               stationary_phase_temperature: stationary_phase_temperature,
               volume: volume,
@@ -81,10 +80,6 @@ module OrdKit
             ontology_ids&.map { |ontology_id| ontology_ord(ontology_id) }
           end
 
-          def ontology_ord(ontology_id)
-            OrdKit::Exporter::Models::OntologyExporter.new(ontology_id).to_ord
-          end
-
           def detectors
             workup['detectors']&.map do |detector_ontology_id|
               ontology_ord(detector_ontology_id)
@@ -93,7 +88,7 @@ module OrdKit
 
           def steps
             Array(workup['purification_steps']).map do |chromatography_step|
-              OrdKit::ReactionProcessAction::ActionPurificationChromatography::ChromatographyStep.new(
+              OrdKit::ReactionProcessAction::ActionChromatography::ChromatographyStep.new(
                 solvents: solvents(chromatography_step),
                 amount: Metrics::AmountExporter.new(chromatography_step['amount']).to_ord,
                 step: ord_step(chromatography_step['step_mode']),
@@ -117,7 +112,7 @@ module OrdKit
           end
 
           def wavelengths
-            OrdKit::ReactionProcessAction::ActionPurificationChromatography::Automated::WavelengthList.new(
+            OrdKit::ReactionProcessAction::ActionChromatography::Automated::WavelengthList.new(
               peaks: Array(workup.dig('wavelengths', 'peaks')).map do |wavelength|
                        Metrics::WavelengthExporter.new(wavelength).to_ord
                      end,
@@ -130,17 +125,17 @@ module OrdKit
           end
 
           def ord_step(stepname)
-            OrdKit::ReactionProcessAction::ActionPurificationChromatography::ChromatographyStep::Step
+            OrdKit::ReactionProcessAction::ActionChromatography::ChromatographyStep::Step
               .const_get stepname.to_s
           rescue NameError
-            OrdKit::ReactionProcessAction::ActionPurificationChromatography::ChromatographyStep::Step::STEP_UNSPECIFIED
+            OrdKit::ReactionProcessAction::ActionChromatography::ChromatographyStep::Step::STEP_UNSPECIFIED
           end
 
           def ord_prod(prodname)
-            OrdKit::ReactionProcessAction::ActionPurificationChromatography::ChromatographyStep::Prod
+            OrdKit::ReactionProcessAction::ActionChromatography::ChromatographyStep::Prod
               .const_get prodname.to_s
           rescue NameError
-            OrdKit::ReactionProcessAction::ActionPurificationChromatography::ChromatographyStep::Prod::PROD_UNSPECIFIED
+            OrdKit::ReactionProcessAction::ActionChromatography::ChromatographyStep::Prod::PROD_UNSPECIFIED
           end
         end
       end
