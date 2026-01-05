@@ -11,7 +11,7 @@ module Chemotion
       @root = root
       @env = env
       @schmooze_dependencies = schmooze_dependencies.merge(
-        quillDeltaToHtml: 'quill-delta-to-html'
+        quillDeltaToHtml: 'quill-delta-to-html',
       )
       @schmooze_methods = schmooze_methods.merge(
         convert: lambda { |delta_ops = '[]'|
