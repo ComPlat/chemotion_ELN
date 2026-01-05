@@ -10,12 +10,15 @@ module Chemotion
       super
       @root = root
       @env = env
-      @schmooze_dependencies = schmooze_dependencies.merge(delta: 'quill-delta-to-html')
+      @schmooze_dependencies = schmooze_dependencies.merge(
+        quillDeltaToHtml: 'quill-delta-to-html'
+      )
       @schmooze_methods = schmooze_methods.merge(
         convert: lambda { |delta_ops = '[]'|
           <<~FUNCTION
             function(){
-              var converter = new delta(#{delta_ops.presence || '[]'}, {});
+              var QuillDeltaToHtmlConverter = quillDeltaToHtml.QuillDeltaToHtmlConverter;
+              var converter = new QuillDeltaToHtmlConverter(#{delta_ops.presence || '[]'}, {});
               return converter.convert();
             }
           FUNCTION
@@ -23,8 +26,9 @@ module Chemotion
         convert_from_file: lambda { |file_path|
           <<~FUNCTION
             function(){
+              var QuillDeltaToHtmlConverter = quillDeltaToHtml.QuillDeltaToHtmlConverter;
               var input = JSON.parse(fs.readFileSync('#{file_path}', 'utf8'));
-              var converter = new delta(input, {});
+              var converter = new QuillDeltaToHtmlConverter(input, {});
               return converter.convert();
             }
           FUNCTION
