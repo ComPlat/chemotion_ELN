@@ -129,6 +129,17 @@ export default class DeviceDescriptionFetcher {
       .catch(errorMessage => console.log(errorMessage));
   }
 
+  static fetchOntologiesByLabimotionSegmentKlasses() {
+    return fetch(
+      '/api/v1/device_descriptions/ontologies',
+      { ...this._httpOptions() }
+    ).then(response => response.json())
+      .then((json) => {
+        console.log(json)
+      })
+      .catch(errorMessage => console.log(errorMessage));
+  }
+
   static _httpOptions(method = 'GET') {
     return {
       credentials: 'same-origin',

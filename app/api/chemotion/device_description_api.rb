@@ -218,6 +218,13 @@ module Chemotion
         end
       end
 
+      # get ontologies by segment klasses
+      namespace :ontologies do
+        get do
+          Usecases::DeviceDescriptions::Ontologies.new.execute
+        end
+      end
+
       # get device descriptions by UI state
       namespace :ui_state do
         params do

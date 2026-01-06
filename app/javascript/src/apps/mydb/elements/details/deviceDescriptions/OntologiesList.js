@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal, Button, ListGroup, ButtonGroup, ButtonToolbar } from 'react-bootstrap';
-import OntologySelect from './OntologySelect';
+import OntologySelectByTib from './OntologySelectByTib';
 import OntologySortableList from './OntologySortableList';
 import DeviceDescriptionFetcher from 'src/fetchers/DeviceDescriptionFetcher';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
@@ -109,7 +109,7 @@ const OntologiesList = ({ store, element }) => {
         <Modal.Body>
           {
             store.show_ontology_select && (
-              <OntologySelect fnSelected={addOntology} store={store} element={element} />
+              <OntologySelectByTib fnSelected={addOntology} store={store} element={element} />
             )
           }
           {
@@ -139,6 +139,7 @@ const OntologiesList = ({ store, element }) => {
   }
 
   const addOntologyButton = () => {
+    DeviceDescriptionFetcher.fetchOntologiesByLabimotionSegmentKlasses();
     return (
       <Button
         size="xsm"
