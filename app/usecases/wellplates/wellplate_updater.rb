@@ -30,6 +30,11 @@ module Usecases
               sample_id = subsample.id
             end
             included_sample_ids << sample_id
+            # Update purity for samples after editing
+            if sample_id && sample[:purity].present?
+              db_sample = Sample.find(sample_id)
+              db_sample.update(purity: sample[:purity])
+            end
           end
 
           well_attributes = {

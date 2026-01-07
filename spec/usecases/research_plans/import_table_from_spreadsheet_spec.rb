@@ -28,6 +28,7 @@ RSpec.describe Usecases::ResearchPlans::ImportTableFromSpreadsheet do
         'Sample',
         'External Compound Label/ID',
         'Smiles',
+        'Concentration',
         'Readout1_Value',
         'Readout1_Unit',
         'Readout2_Value',

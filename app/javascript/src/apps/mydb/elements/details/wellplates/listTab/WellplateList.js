@@ -38,13 +38,26 @@ const WellplateList = ({ wells, readoutTitles, handleWellsChange }) => {
 
     return sample.molecule_formula;
   }
+  
+  const renderConcentration = (node) => {
+    const sample = node.data?.sample;
+    if (!sample) { return null; }
+
+    return sample?.purity ?? '';
+  };
 
   const updateRow = useCallback(({ data: oldRow, colDef, newValue }) => {
     const { field, cellRendererParams } = colDef;
     if (!oldRow.sample) { return null }
 
     const wellIndex = wellsList.indexOf(oldRow);
-    wellsList[wellIndex].readouts[cellRendererParams.index][field] = newValue;
+    
+    if (field === 'purity') {
+      wellsList[wellIndex].sample.purity = newValue;
+    } else {
+      wellsList[wellIndex].readouts[cellRendererParams.index][field] = newValue;
+    }
+    
     setWellsList(wellsList);
     handleWellsChange(wellsList);
   }, [wellsList, readoutTitles]);
@@ -91,6 +104,23 @@ const WellplateList = ({ wells, readoutTitles, handleWellsChange }) => {
       wrapText: true,
       cellClass: ["lh-base", "py-2", "border-end"],
     },
+    {
+      headerName: 'Concentration',
+      field: 'purity',
+      editable: (params) => params.data.sample,
+      valueGetter: (params) => {
+        if (params.data?.sample) {
+          return params.data.sample.purity;
+        }
+      },
+      valueParser: (params) => {
+        const val = parseFloat(params.newValue);
+        return Number.isNaN(val) || val < 0.0 || val > 1.0 ? undefined : val;
+      },
+      cellRenderer: renderConcentration,
+      wrapText: true,
+      cellClass: ['editable-cell', 'border-end', 'px-2'],
+    }
   ];
 
   readoutTitles && readoutTitles.map((title, index) => {

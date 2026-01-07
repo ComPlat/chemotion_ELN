@@ -6,7 +6,7 @@ module Usecases
       def initialize(wellplate)
         @wellplate = wellplate
         @header = ['Position', 'Sample', 'External Compound Label/ID',
-                   'Smiles',	'Readout1_Value', 'Readout1_Unit', 'Readout2_Value',	'Readout2_Unit']
+                   'Smiles', 'Concentration', 'Readout1_Value', 'Readout1_Unit', 'Readout2_Value',	'Readout2_Unit']
       end
 
       def execute!
@@ -51,7 +51,7 @@ module Usecases
         mock_value_gw = 1
         @wellplate.wells.sort_by(&:sortable_alphanumeric_position).each do |well|
           well_data = [well.sortable_alphanumeric_position, '', '', '',
-                       mock_value_mg.round(2), 'mg', mock_value_gw, 'GW']
+                       '', mock_value_mg.round(2), 'mg', mock_value_gw, 'GW']
           mock_value_gw += 1
           mock_value_mg += 0.01
           sheet.add_row(well_data, style: @data_style)

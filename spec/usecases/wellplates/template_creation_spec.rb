@@ -2,7 +2,7 @@
 
 RSpec.describe Usecases::Wellplates::TemplateCreation do
   let(:sheet) { template.workbook.worksheets[0] }
-  let(:header_row) { sheet.cells[0..7].map(&:value) }
+  let(:header_row) { sheet.cells[0..8].map(&:value) }
   let(:first_data_column) { sheet.rows[1..data_column_count + 1].map { |row| row.cells[0].value } }
 
   describe 'execute!' do
@@ -19,7 +19,7 @@ RSpec.describe Usecases::Wellplates::TemplateCreation do
       end
 
       it 'has correct header row' do
-        expect(header_row).to eq ['Position', 'Sample', 'External Compound Label/ID', 'Smiles',
+        expect(header_row).to eq ['Position', 'Sample', 'External Compound Label/ID', 'Smiles', 'Concentration',
                                   'Readout1_Value', 'Readout1_Unit', 'Readout2_Value', 'Readout2_Unit']
       end
 
