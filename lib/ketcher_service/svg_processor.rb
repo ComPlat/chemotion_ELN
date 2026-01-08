@@ -1,4 +1,5 @@
 module KetcherService
+  # rubocop:disable all
   class SVGProcessor
     attr_accessor :margins, :remove_internal_transform
     attr_reader :min,:max,:svg,:shift
@@ -226,4 +227,5 @@ module KetcherService
     end
 
   end #class SVGProcessor
+  # rubocop:enable all
 end #module KetcherRails
