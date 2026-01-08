@@ -127,7 +127,7 @@ module KetcherService
     end
 
     def viewbox
-      @viewbox = @svg.at_css("svg")["viewbox"]#.split(/,| /)
+      @viewbox = @svg.at_css("svg")["viewbox"]
     end
 
     def preserve_aspect_ratio(t="xMinYMin")
@@ -226,6 +226,6 @@ module KetcherService
       splitted
     end
 
-  end #class SVGProcessor
+  end
   # rubocop:enable all
-end #module KetcherRails
+end
