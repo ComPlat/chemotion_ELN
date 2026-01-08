@@ -134,9 +134,6 @@ export default class DeviceDescriptionFetcher {
       '/api/v1/device_descriptions/ontologies',
       { ...this._httpOptions() }
     ).then(response => response.json())
-      .then((json) => {
-        console.log(json)
-      })
       .catch(errorMessage => console.log(errorMessage));
   }
 

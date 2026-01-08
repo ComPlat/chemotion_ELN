@@ -71,6 +71,23 @@ const OntologySegmentsList = ({ store, element, isSelection }) => {
     );
   }
 
+  const displayGenericSegment = (segment) => {
+    const layersLayout = (
+      <GenInterface
+        generic={segment}
+        fnChange={handleSegmentsChange}
+        extLayers={[]}
+        genId={segment.id}
+        isPreview={false}
+        isSearch={false}
+        isActiveWF
+        fnNavi={() => {}}
+        expandAll={store.segment_expand_all}
+      />
+    );
+    return <div style={{ margin: '5px' }}>{layersLayout}</div>;
+  }
+
   const genericFormFields = (rows, ontology, index) => {
     ontology['segments'].forEach((segment, j) => {
       const segmentKlass = segmentKlasses.find(
@@ -105,40 +122,18 @@ const OntologySegmentsList = ({ store, element, isSelection }) => {
                 </div>
               </Accordion.Header>
               <Accordion.Body>
-                <div className="mb-3">
-                  <GenInterface
-                    generic={segmentElement}
-                    fnChange={handleSegmentsChange}
-                    extLayers={[]}
-                    genId={0}
-                    isPreview={false}
-                    isSearch={false}
-                    isActiveWF={false}
-                    fnNavi={() => {}}
-                    expandAll={store.segment_expand_all}
-                    key={`ontology-${index}-${j}`}
-                  />
-                </div>
+                {displayGenericSegment(segmentElement)}
               </Accordion.Body>
             </Accordion.Item>
           </Accordion>
         );
       } else {
         if (segment['show']) {
-          rows.push(segmentVersionToolbar(segmentElement, segmentKlass, index, j));
           rows.push(
-            <GenInterface
-              generic={segmentElement}
-              fnChange={handleSegmentsChange}
-              extLayers={[]}
-              genId={0}
-              isPreview={false}
-              isSearch={false}
-              isActiveWF={false}
-              fnNavi={() => {}}
-              expandAll={store.segment_expand_all}
-              key={`ontology-${index}-${j}`}
-            />
+            <div>
+              {segmentVersionToolbar(segmentElement, segmentKlass, index, j)}
+              {displayGenericSegment(segmentElement)}
+            </div>
           );
         }
       }
@@ -163,7 +158,7 @@ const OntologySegmentsList = ({ store, element, isSelection }) => {
         const accordionIdent = isSelection ? `segment-selection-${index}` : `segment-${index}`;
         let isActive = store.toggable_segments.findIndex(i => i === accordionIdent) === -1;
 
-        if (ontology.data.is_deleted) {
+        if (ontology.is_deleted) {
           deletedClass = ' text-decoration-line-through';
           isActive = false;
         }

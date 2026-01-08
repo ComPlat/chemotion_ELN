@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { Accordion } from 'react-bootstrap';
 import { toggleContent } from '../FormFields';
 import OntologiesList from '../OntologiesList';
@@ -10,6 +10,10 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 const DetailsForm = () => {
   const deviceDescriptionsStore = useContext(StoreContext).deviceDescriptions;
   let deviceDescription = deviceDescriptionsStore.device_description;
+
+  useEffect(() => {
+    deviceDescriptionsStore.getOntologiesFromSegmentKlasses();
+  }, []);
 
   return (
     <>

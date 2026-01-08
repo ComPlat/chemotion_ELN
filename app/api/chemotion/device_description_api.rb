@@ -67,6 +67,7 @@ module Chemotion
           optional :paths, type: Array
           optional :segments, type: Array
           optional :index, type: Integer
+          optional :is_deleted, type: Boolean
         end
         optional :segments, type: Array
         optional :setup_descriptions, type: Hash

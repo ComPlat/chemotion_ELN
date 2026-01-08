@@ -43,7 +43,7 @@ module Usecases
 
         ontology_params = []
         params[:ontologies].each do |ontology|
-          if ontology[:data][:is_deleted]
+          if ontology[:is_deleted]
             remove_segments_of_deleted_ontology(ontology)
           else
             ontology_params << ontology

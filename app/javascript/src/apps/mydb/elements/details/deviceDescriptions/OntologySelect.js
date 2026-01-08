@@ -1,39 +1,55 @@
-import React, { useState, useEffect } from 'react';
-import { AsyncSelect } from 'src/components/common/Select';
-import { Badge } from 'react-bootstrap';
+import React from 'react';
+import { Select } from 'src/components/common/Select';
 
-import { observer } from 'mobx-react';
-import { StoreContext } from 'src/stores/mobx/RootStore';
+const OntologySelect = ({ store, element }) => {
+  const ontologies = store.ontologies;
+  let options = [];
 
-const OntologySelect = (props) => {
-  const deviceDescriptionsStore = useContext(StoreContext).deviceDescriptions;
-  const deviceDescription = deviceDescriptionsStore.device_description;
+  if (ontologies.length >= 1) {
+    ontologies.map((ontology) => {
+      options.push({ label: ontology.label, value: ontology.short_form })
+    });
+  }
 
-  const constructOption = (data) => {
-    if (data) {
-      const desc = data.description?.join('') || '';
-      return {
-        value: data.id,
-        label: (
-          <div className="d-flex justify-content-between flex-wrap">
-            <div>{data.label}</div>
-            <div className="ms-auto">
-              <Badge bg="primary" className="me-1">
-                {data.short_form}
-              </Badge>
-              <Badge bg="info">
-                {data.ontology_prefix}
-              </Badge>
-            </div>
-            {desc && (
-              <div className="w-100 mt-1" style={{ fontSize: '11px' }}>{desc}</div>
-            )}
-          </div>
-        ),
+  const addOntology = (selected) => {
+    const ontology = ontologies.find((o) => o.short_form === selected.value);
+
+    if (ontology) {
+      const elementOntologies = element['ontologies'] || [];
+      const segments = ontology.segment_ids.map((s) => {
+        return { show: true, segment_klass_id: s }
+      });
+
+      const newOntology = {
+        data: ontology,
+        paths: [],
+        index: elementOntologies.length,
+        segments: segments,
       };
+
+      if (segments.length >= 1) {
+        store.setOntologyIndexForEdit(elementOntologies.length);
+        store.toggleOntologySelect();
+        store.toggleOntologyFormSelection();
+      } else {
+        store.toggleOntologyModal();
+      }
+
+      const value = elementOntologies.concat(newOntology);
+      store.changeDeviceDescription('ontologies', value);
+      
+    } else {
+      store.toggleOntologyModal();
     }
-    return data;
-  };
+  }
+
+  return (
+    <Select
+      options={options}
+      isClearable={true}
+      onChange={(selected) => addOntology(selected)}
+    />
+  );
 
 }
 
