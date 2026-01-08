@@ -806,18 +806,13 @@ class ElementStore {
     this.changeCurrentElement(sample);
   }
 
-  handleUpdateSampleForReaction({ reaction, sample, closeView, components }) {
+  handleUpdateSampleForReaction({ reaction, sample, closeView }) {
     // UserActions.fetchCurrentUser();
     ElementActions.handleSvgReactionChange(reaction);
-    if (sample.isMixture()) {
-      ComponentsFetcher.saveOrUpdateComponents(sample, components)
-        .then(async () => {
-          await sample.initialComponents(components);
-        })
-        .catch((errorMessage) => {
-          console.log(errorMessage);
-        });
-    }
+
+    // Components are already saved and initialized in the action before dispatch
+    // No need to do it again here
+
     if (closeView) {
       this.changeCurrentElement(reaction);
     } else {

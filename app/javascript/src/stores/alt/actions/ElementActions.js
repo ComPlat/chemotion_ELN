@@ -8,6 +8,7 @@ import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import UIFetcher from 'src/fetchers/UIFetcher';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
+import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import ReactionsFetcher from 'src/fetchers/ReactionsFetcher';
 import WellplatesFetcher from 'src/fetchers/WellplatesFetcher';
@@ -467,17 +468,35 @@ class ElementActions {
   }
 
   updateSampleForReaction(sample, reaction, closeView = true) {
-    return (dispatch) => {
-      SamplesFetcher.update(sample)
-        .then((newSample) => {
-          reaction.updateMaterial(newSample);
-          reaction.changed = true;
-          dispatch({ reaction, sample: newSample, closeView, components: sample.components })
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-          // Ensure loading stops even on error
-          LoadingActions.stop();
+    return async (dispatch) => {
+      try {
+        // Save components first if it's a mixture
+        if (sample.isMixture() && sample.components) {
+          await ComponentsFetcher.saveOrUpdateComponents(sample, sample.components);
+        }
+
+        // Update sample
+        const newSample = await SamplesFetcher.update(sample);
+
+        // Initialize components on newSample before updating material in reaction
+        if (sample.isMixture() && sample.components) {
+          newSample.initialComponents(sample.components);
+        }
+
+        // Update the material in the reaction and dispatch
+        reaction.updateMaterial(newSample);
+        reaction.changed = true;
+
+        dispatch({
+          reaction,
+          sample: newSample,
+          closeView,
         });
+      } catch (errorMessage) {
+        console.log(errorMessage);
+        // Ensure loading stops even on error
+        LoadingActions.stop();
+      }
     };
   }
 
