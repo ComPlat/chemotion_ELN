@@ -597,6 +597,7 @@ const basicSelectInputWithSpecialLabel = (element, store, field, label, options,
   const elementValue = elementFieldValue(element, store, field);
   let value = options.find((o) => { return o.value == elementValue });
   value = value === undefined ? (placeholder ? placeholder : '') : value;
+  const additonalClass = field == 'version_identifier_type' ? 'hide-border' : '';
 
   return (
     <Select
@@ -606,8 +607,8 @@ const basicSelectInputWithSpecialLabel = (element, store, field, label, options,
       value={value}
       isClearable={true}
       placeholder={placeholder}
-      className="select-in-inputgroup-text"
-      classNamePrefix="select-in-inputgroup-text"
+      className={`select-in-inputgroup-text ${additonalClass}`}
+      classNamePrefix={`select-in-inputgroup-text ${additonalClass}`}
       getOptionLabel={(option) => menuLabel(option, field, store)}
       onMenuOpen={() => changeMenuStatus(store, field, true)}
       onMenuClose={() => changeMenuStatus(store, field, false)}

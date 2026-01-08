@@ -128,7 +128,7 @@ const OntologySegmentsList = ({ store, element, isSelection }) => {
           </Accordion>
         );
       } else {
-        if (segment['show']) {
+        if (segment['show'] || segment['show'] === undefined) {
           rows.push(
             <div>
               {segmentVersionToolbar(segmentElement, segmentKlass, index, j)}

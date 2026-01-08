@@ -22,7 +22,8 @@ module Chemotion
         optional :name, type: String
         optional :short_label, type: String
         optional :device_type, type: String
-        optional :device_type_detail, type: String
+        optional :device_class, type: String
+        optional :device_class_detail, type: String
         optional :operation_mode, type: String
         optional :vendor_device_name, type: String
         optional :vendor_device_id, type: String
@@ -45,6 +46,12 @@ module Chemotion
           optional :type, type: String
           optional :comment, type: String
         end
+        optional :owner_institution, type: String
+        optional :owner_email, type: String
+        optional :owner_id, type: String
+        optional :inventory_id, type: String
+        optional :alternative_identifier, type: String
+        optional :vendor_id_type, type: String
         optional :university_campus, type: String
         optional :institute, type: String
         optional :building, type: String

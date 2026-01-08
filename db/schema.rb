@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2025_12_10_144345) do
+ActiveRecord::Schema.define(version: 2026_01_08_155328) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -467,6 +467,7 @@ ActiveRecord::Schema.define(version: 2025_12_10_144345) do
   create_table "device_descriptions", force: :cascade do |t|
     t.string "access_comments"
     t.string "access_options"
+    t.string "alternative_identifier"
     t.string "ancestry", default: "/", null: false, collation: "C"
     t.string "application_name"
     t.string "application_version"
@@ -477,13 +478,15 @@ ActiveRecord::Schema.define(version: 2025_12_10_144345) do
     t.datetime "deleted_at"
     t.text "description"
     t.text "description_for_methods_part"
+    t.string "device_class"
+    t.string "device_class_detail"
     t.integer "device_id"
     t.string "device_type"
-    t.string "device_type_detail"
     t.string "general_tags", default: [], null: false, array: true
     t.boolean "helpers_uploaded", default: false
     t.string "infrastructure_assignment"
     t.string "institute"
+    t.string "inventory_id"
     t.string "maintenance_contract_available"
     t.string "maintenance_scheduling"
     t.text "measures_after_full_shut_down"
@@ -493,6 +496,9 @@ ActiveRecord::Schema.define(version: 2025_12_10_144345) do
     t.string "operation_mode"
     t.jsonb "operators"
     t.jsonb "ontologies"
+    t.string "owner_id"
+    t.string "owner_email"
+    t.string "owner_institution"
     t.jsonb "planned_maintenance"
     t.text "policies_and_user_information"
     t.text "restart_after_planned_offline_period"
@@ -517,6 +523,7 @@ ActiveRecord::Schema.define(version: 2025_12_10_144345) do
     t.string "vendor_device_name"
     t.string "vendor_device_id"
     t.string "vendor_company_name"
+    t.string "vendor_id_type"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.jsonb "log_data"

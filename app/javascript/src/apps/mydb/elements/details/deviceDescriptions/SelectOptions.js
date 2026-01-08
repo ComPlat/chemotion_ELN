@@ -1,5 +1,5 @@
 const deviceDescriptionSelectOptions = {
-  device_type: [
+  device_class: [
     {
       value: 'stand-alone',
       label: 'stand-alone'
@@ -17,7 +17,7 @@ const deviceDescriptionSelectOptions = {
       label: 'setup'
     }
   ],
-  device_type_detail: [
+  device_class_detail: [
     {
       value: 'has variable components',
       label: 'has variable components'
@@ -39,6 +39,20 @@ const deviceDescriptionSelectOptions = {
     {
       value: 'integrated - automated',
       label: 'integrated - automated'
+    }
+  ],
+  device_type: [
+    {
+      value: 'device type name',
+      label: 'device type name'
+    },
+    {
+      value: 'device type ID',
+      label: 'device type ID'
+    },
+    {
+      value: 'ID type',
+      label: 'ID type'
     }
   ],
   device_tags: [
@@ -69,12 +83,22 @@ const deviceDescriptionSelectOptions = {
   ],
   operator_type: [
     {
-      "value": "technical",
-      "label": "technical"
+      value: 'technical',
+      label: 'technical'
     },
     {
-      "value": "administrative",
-      "label": "administrative"
+      value: 'administrative',
+      label: 'administrative'
+    }
+  ],
+  vendor_id_type: [
+    {
+      value: 'MID',
+      label: 'MID'
+    },
+    {
+      value: 'UID',
+      label: 'UID'
     }
   ],
   version_identifier_types: [
