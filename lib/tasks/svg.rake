@@ -54,7 +54,7 @@ namespace :svg do
         next
       end
 
-      svg = Ketcherails::SVGProcessor.new(svg)
+      svg = KetcherService::SVGProcessor.new(svg)
       svg = svg.centered_and_scaled_svg
       FileUtils.rm_f(svg_path) if svg_file_exists
 

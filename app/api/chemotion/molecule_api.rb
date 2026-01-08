@@ -298,7 +298,7 @@ module Chemotion
         processor = if params[:is_chemdraw]
                       Chemotion::ChemdrawSvgProcessor.new(svg)
                     else
-                      Ketcherails::SVGProcessor.new(svg)
+                      KetcherService::SVGProcessor.new(svg)
                     end
         svg = processor.centered_and_scaled_svg
         molecule = Molecule.find(params[:id])

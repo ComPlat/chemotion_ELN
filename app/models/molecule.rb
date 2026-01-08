@@ -259,7 +259,7 @@ class Molecule < ApplicationRecord
     rendered_svg = KetcherService::RenderSvg.svg(struct)
 
     if rendered_svg&.present?
-      processor = Ketcherails::SVGProcessor.new(rendered_svg)
+      processor = KetcherService::SVGProcessor.new(rendered_svg)
       processor.centered_and_scaled_svg
     else
       Chemotion::OpenBabelService.svg_from_molfile(struct)
