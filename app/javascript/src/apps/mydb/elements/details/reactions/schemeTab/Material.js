@@ -103,18 +103,7 @@ class Material extends Component {
     const { material } = this.props;
     this.fetchMixtureComponentsIfNeeded(material);
     this.restoreAccordionState(material);
-  }
 
-  componentDidUpdate(prevProps) {
-    const { material } = this.props;
-    if (prevProps.material.id !== material.id) {
-      this.fetchMixtureComponentsIfNeeded(material);
-      this.restoreAccordionState(material);
-    }
-  }
-
-  componentDidMount() {
-    const { material } = this.props;
     const isEmpty = (v) => (v === null || v === undefined || Number.isNaN(v) || v === 0);
 
     // Determine initial field based on data
@@ -128,6 +117,22 @@ class Material extends Component {
     this.setState({
       fieldToShow: initialField,
     });
+  }
+
+  componentDidUpdate(prevProps) {
+    const { material } = this.props;
+    // Check if material ID changed OR if components were added/removed
+    const materialIdChanged = prevProps.material.id !== material.id;
+    const prevComponentsCount = prevProps.material.components?.length || 0;
+    const currentComponentsCount = material.components?.length || 0;
+    const componentsChanged = prevComponentsCount !== currentComponentsCount;
+
+    if (materialIdChanged || componentsChanged) {
+      this.fetchMixtureComponentsIfNeeded(material);
+      if (materialIdChanged) {
+        this.restoreAccordionState(material);
+      }
+    }
   }
 
   handleMaterialClick(sample) {
@@ -717,6 +722,8 @@ class Material extends Component {
       ComponentsFetcher.fetchComponentsBySampleId(material.id)
         .then((components) => {
           const componentsList = components.map(ComponentModel.deserializeData);
+          // Initialize components on the material object so they persist
+          material.initialComponents(componentsList);
           this.setState({
             mixtureComponents: componentsList,
             mixtureComponentsLoading: false,
