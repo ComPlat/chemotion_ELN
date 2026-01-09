@@ -18,7 +18,7 @@ module Entities
           def transferable_samples(reaction_process)
             transferable = saved_samples(reaction_process) + [reaction_process.sample]
 
-            transferable.filter_map do |sample|
+            transferable.compact.filter_map do |sample|
               sample_info_option(sample, 'SAMPLE')
             end
           end
@@ -29,9 +29,10 @@ module Entities
           end
 
           def transfer_targets(reaction_process)
-            reaction_process.reaction_process_steps.map do |process_step|
+            reaction_process.reaction_process_steps.order(:position).map do |process_step|
               { value: process_step.id,
                 label: process_step.label,
+                automation_mode: process_step.automation_mode,
                 saved_sample_ids: process_step.saved_sample_ids }
             end
           end
