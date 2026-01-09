@@ -244,8 +244,8 @@ message ReactionProcessAction {
   message ActionTransfer {
     ReactionRole.ReactionRoleType reaction_role = 1;
     ReactionInput input = 2;
-    string transfer_source_reaction_step_id = 3;
-    string transfer_target_reaction_step_id = 4;
+    string source_reaction_step_id = 3;
+    string target_reaction_step_id = 4;
     Amount amount = 5;
     Percentage percentage = 6;
   }

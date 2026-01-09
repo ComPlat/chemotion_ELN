@@ -66,8 +66,8 @@ describe ReactionProcessEditor::ReactionProcessStepAPI, '.post /activities' do
       { activity:
        { activity_name: 'TRANSFER',
          workup: {
-           transfer_source_step_id: source_step.id,
-           transfer_target_step_id: reaction_process_step.id,
+           source_step_id: source_step.id,
+           target_step_id: reaction_process_step.id,
            sample_id: action_save.workup['sample_id'],
            intermediate_type: 'CRUDE',
          } } }
