@@ -197,7 +197,7 @@ module Chemotion
             mol = molecule.molfile.lines.first(2)
             if mol[1]&.strip&.match?('OpenBabel')
               svg = Molecule.svg_reprocess(svg, molecule.molfile)
-              svg_digest = "#{molecule.inchikey}#{Time.now}"
+              svg_digest = "#{molecule.inchikey}#{Time.zone.now}"
               svg_process = SVG::Processor.new.structure_svg('ketcher', svg, svg_digest, true)
             else
               svg_process = SVG::Processor.new.generate_svg_info('samples', molfile)

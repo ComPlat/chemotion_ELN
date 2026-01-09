@@ -234,7 +234,6 @@ module Chemotion
                       KetcherService::SVGProcessor.new(svg)
                     end
         svg = processor.centered_and_scaled_svg
-
         digest = Digest::SHA256.hexdigest svg
         digest = Digest::SHA256.hexdigest digest
         svg_file_name = "#{digest}.svg"

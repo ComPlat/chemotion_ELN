@@ -5,6 +5,13 @@ require 'net/http'
 require 'json'
 
 module KetcherService
+  # Checks if Ketcher service is disabled
+  #
+  # @return [Boolean] True if service is disabled, false otherwise
+  def self.disabled?
+    Rails.configuration.ketcher_service&.disabled? || false
+  end
+
   # Use Ketcher-as-a-Service to render molfiles to SVG
   module RenderSvg
     def self.call_render_service(url, request)
@@ -49,5 +56,3 @@ module KetcherService
     end
   end
 end
-
-

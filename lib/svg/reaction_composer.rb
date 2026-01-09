@@ -68,9 +68,6 @@ module SVG
       %w[starting_materials products].each do |g|
         svg_files = instance_variable_get("@#{g}").map do |r, _|
           mol_svg = Chemotion::OpenBabelService.mdl_to_trans_svg(r)
-          processor = KetcherService::SVGProcessor.new(mol_svg)
-          mol_svg = processor.centered_and_scaled_svg
-
           tmp_file = Tempfile.new
           tmp_file.write(mol_svg)
           tmp_file.close
@@ -82,8 +79,6 @@ module SVG
 
       reactant_svg = @reactants.map do |mdl|
         svg = Chemotion::OpenBabelService.mdl_to_trans_svg(mdl)
-        processor = KetcherService::SVGProcessor.new(svg)
-        svg = processor.centered_and_scaled_svg
         tmp_file = Tempfile.new
         tmp_file.write(svg)
         tmp_file.close
@@ -97,8 +92,6 @@ module SVG
       smi_arr.each do |g|
         svg_files = instance_variable_get("@#{g}").map do |r, _|
           mol_svg = Chemotion::OpenBabelService.smi_to_trans_svg(r)
-          processor = KetcherService::SVGProcessor.new(mol_svg)
-          mol_svg = processor.centered_and_scaled_svg
           tmp_file = Tempfile.new
           tmp_file.write(mol_svg)
           tmp_file.close
@@ -140,8 +133,6 @@ module SVG
       name_arr.each do |g|
         files[g.to_sym] = instance_variable_get("@#{g}").map do |r|
           mol_svg = Chemotion::OpenBabelService.smi_to_trans_svg(r)
-          processor = KetcherService::SVGProcessor.new(mol_svg)
-          mol_svg = processor.centered_and_scaled_svg
           tmp_file = Tempfile.new
           tmp_file.write(mol_svg)
           tmp_file.close
