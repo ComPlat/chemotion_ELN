@@ -22,10 +22,10 @@ export default {
     },
     {
       value: {
-        column: 'device_type',
-        label: 'Device type',
+        column: 'device_class',
+        label: 'Device class',
         type: 'select',
-        option_layers: "device_type",
+        option_layers: "device_class",
         table: 'device_descriptions',
         advanced: false,
       },
@@ -33,10 +33,10 @@ export default {
     },
     {
       value: {
-        column: 'device_type_detail',
-        label: 'Device type detail',
+        column: 'device_class_detail',
+        label: 'Device class detail',
         type: 'select',
-        option_layers: "device_type_detail",
+        option_layers: "device_class_detail",
         table: 'device_descriptions',
         advanced: false,
       },
@@ -55,6 +55,17 @@ export default {
     },
     {
       value: {
+        column: 'device_type',
+        label: 'Device type',
+        type: 'select',
+        option_layers: "device_type",
+        table: 'device_descriptions',
+        advanced: false,
+      },
+      label: 'Device type'
+    },
+    {
+      value: {
         type: 'headline',
         label: 'General Description',
       },
@@ -63,29 +74,29 @@ export default {
     {
       value: {
         type: 'segment-headline',
-        label: 'General information on the device from the vendor',
+        label: 'General information on the device from the manufacturer',
       },
-      label: 'General information on the device from the vendor',
+      label: 'General information on the device from the manufacturer',
     },
     {
       value: {
         column: 'vendor_device_name',
-        label: "Device's Name",
+        label: 'Model name',
         type: 'text',
         table: 'device_descriptions',
         advanced: true,
       },
-      label: "Device's Name"
+      label: 'Model name'
     },
     {
       value: {
         column: 'vendor_device_id',
-        label: "Device's ID",
+        label: 'Model ID',
         type: 'text',
         table: 'device_descriptions',
         advanced: true,
       },
-      label: "Device's ID"
+      label: 'Model ID'
     },
     {
       value: {
@@ -100,29 +111,39 @@ export default {
     {
       value: {
         type: 'segment-headline',
-        label: 'Details describing the vendor of the device',
+        label: 'Details describing the manufacturer of the device',
       },
-      label: 'Details describing the vendor of the device',
+      label: 'Details describing the manufacturer of the device',
     },
     {
       value: {
         column: 'vendor_company_name',
-        label: "Company's name - brand",
+        label: 'Manufacturer name',
         type: 'text',
         table: 'device_descriptions',
         advanced: true,
       },
-      label: "Company's name - brand"
+      label: 'Manufacturer name'
     },
     {
       value: {
         column: 'vendor_id',
-        label: "Vendor's ID",
+        label: 'Manufacturer ID',
         type: 'text',
         table: 'device_descriptions',
         advanced: false,
       },
-      label: "Vendor's ID"
+      label: 'Manufacturer ID'
+    },
+    {
+      value: {
+        column: 'vendor_id_type',
+        label: 'ID type',
+        type: 'text',
+        table: 'device_descriptions',
+        advanced: false,
+      },
+      label: 'ID type'
     },
     {
       value: {
@@ -274,6 +295,43 @@ export default {
     {
       value: {
         type: 'segment-headline',
+        label: 'Owner',
+      },
+      label: 'Owner',
+    },
+    {
+      value: {
+        column: 'owner_institution',
+        label: 'Institution',
+        type: 'text',
+        table: 'device_descriptions',
+        advanced: false,
+      },
+      label: 'Institution'
+    },
+    {
+      value: {
+        column: 'owner_email',
+        label: 'eMail',
+        type: 'text',
+        table: 'device_descriptions',
+        advanced: false,
+      },
+      label: 'eMail'
+    },
+    {
+      value: {
+        column: 'owner_id',
+        label: 'ID',
+        type: 'text',
+        table: 'device_descriptions',
+        advanced: false,
+      },
+      label: 'ID'
+    },
+    {
+      value: {
+        type: 'segment-headline',
         label: 'Location',
       },
       label: 'Location',
@@ -317,6 +375,26 @@ export default {
         advanced: false,
       },
       label: 'Room'
+    },
+    {
+      value: {
+        column: 'inventory_id',
+        label: 'Inventory ID',
+        type: 'text',
+        table: 'device_descriptions',
+        advanced: false,
+      },
+      label: 'Inventory ID'
+    },
+    {
+      value: {
+        column: 'alternative_identifier',
+        label: 'Alternative Identifier / Label',
+        type: 'text',
+        table: 'device_descriptions',
+        advanced: false,
+      },
+      label: 'Alternative Identifier / Label'
     },
     {
       value: {
