@@ -19,6 +19,11 @@ default: &default
   #  css_extract_ignore_order_warnings to true
   css_extract_ignore_order_warnings: false
 
+  # https://github.com/shakacode/shakapacker/blob/main/docs/v9_upgrade.md#breaking-changes
+  # https://github.com/shakacode/shakapacker/blob/main/docs/v9_upgrade.md#1-css-modules-configuration-changed-to-named-exports
+  # Keep v8 behavior temporarily using configuration file:
+  css_modules_export_mode: default
+
   public_root_path: public
   public_output_path: packs
   cache_path: tmp/shakapacker
@@ -37,7 +42,10 @@ default: &default
   cache_manifest: false
 
   # Select loader to use, available options are 'babel' (default), 'swc' or 'esbuild'
-  webpack_loader: 'babel'
+  # https://github.com/shakacode/shakapacker/blob/main/docs/v9_upgrade.md#breaking-changes
+  # https://github.com/shakacode/shakapacker/blob/main/docs/v9_upgrade.md#2-configuration-option-renamed-webpack_loader--javascript_transpiler
+  webpack_loader: 'babel' # deprecated in v9
+  javascript_transpiler: 'babel'
 
   # Raises an error if there is a mismatch in the shakapacker gem and npm package being used
   ensure_consistent_versioning: true
