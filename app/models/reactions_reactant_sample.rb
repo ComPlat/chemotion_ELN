@@ -2,8 +2,6 @@
 #
 # Table name: reactions_samples
 #
-#  weight_percentage           :float
-#  weight_percentage_reference :boolean          default(FALSE)
 #  id                           :integer          not null, primary key
 #  coefficient                  :float            default(1.0)
 #  conversion_rate              :float
@@ -17,6 +15,8 @@
 #  show_label                   :boolean          default(FALSE), not null
 #  type                         :string
 #  waste                        :boolean          default(FALSE)
+#  weight_percentage            :float
+#  weight_percentage_reference  :boolean          default(FALSE)
 #  created_at                   :datetime
 #  updated_at                   :datetime
 #  reaction_id                  :integer

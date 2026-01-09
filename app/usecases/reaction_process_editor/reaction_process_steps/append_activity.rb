@@ -9,7 +9,7 @@ module Usecases
             # TODO: assert the target step is in the same reaction?
             target_step = if activity_params['activity_name'] == 'TRANSFER'
                             ::ReactionProcessEditor::ReactionProcessStep
-                              .find(activity_params['workup']['transfer_target_step_id'])
+                              .find(activity_params['workup']['target_step_id'])
                           else
                             reaction_process_step
                           end

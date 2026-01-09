@@ -10,8 +10,8 @@ module OrdKit
           {
             transfer: OrdKit::ReactionProcessAction::ActionTransfer.new(
               input: sample,
-              transfer_source_reaction_step_id: workup['transfer_source_step_id'],
-              transfer_target_reaction_step_id: workup['transfer_target_step_id'],
+              source_reaction_step_id: workup['source_step_id'],
+              target_reaction_step_id: workup['target_step_id'],
               amount: amount,
               percentage: percentage,
             ),
