@@ -277,8 +277,8 @@ module Chemotion
           begin
             attach.save!
             attach_ary.push(attach.id)
-
-            match = find_unique_match_for_filename(file[:filename], current_user)
+            inbox_auto = current_user.profile&.data&.fetch('inbox_auto', true)
+            match = find_unique_match_for_filename(file[:filename], current_user) if inbox_auto
 
             if match # auto assign to element
               analysis_name = attach.filename.chomp(File.extname(attach.filename))
