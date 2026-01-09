@@ -24,10 +24,12 @@ module Entities
       def transfer_source_step_name
         return unless object.transfer?
 
-        ReactionsIntermediateSample
-          .find_by(reaction: object.reaction, sample: object.sample)
-          &.reaction_process_step
-          &.name
+        ::ReactionProcessEditor::ReactionProcessStep.find_by(id: object.workup['source_step_id'])&.name
+
+        # ReactionsIntermediateSample
+        #   .find_by(reaction: object.reaction, sample: object.sample)
+        #   &.reaction_process_step
+        #   &.name
       end
 
       def transfer_target_step_name
