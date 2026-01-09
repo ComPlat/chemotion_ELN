@@ -51,6 +51,7 @@ export const DeviceDescriptionsStore = types
     attachment_sort_by: types.optional(types.string, 'name'),
     attachment_sort_direction: types.optional(types.string, 'asc'),
     filtered_attachments: types.optional(types.array(types.frozen({})), []),
+    ontologies: types.optional(types.array(types.frozen({})), []),
     show_ontology_modal: types.optional(types.boolean, false),
     show_ontology_select: types.optional(types.boolean, true),
     show_ontology_form_selection: types.optional(types.boolean, false),
@@ -63,6 +64,12 @@ export const DeviceDescriptionsStore = types
     multi_row_fields: types.optional(types.array(types.string), multiRowFields),
   })
   .actions(self => ({
+    getOntologiesFromSegmentKlasses: flow(function* getOntologiesFromSegmentKlasses() {
+      let result = yield DeviceDescriptionFetcher.fetchOntologiesByLabimotionSegmentKlasses();
+      if (result) {
+        self.ontologies = result;
+      }
+    }),
     addDeviceDescriptionToOpen(device_description) {
       let openDeviceDescription = [...self.open_device_descriptions];
       const index = openDeviceDescription.findIndex(s => s.id === device_description.id);

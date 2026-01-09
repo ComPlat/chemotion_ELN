@@ -260,6 +260,10 @@
 }
 
 .select-in-inputgroup-text {
+  &.hide-border .chemotion-select__control {
+    border: none !important;
+  }
+
   &__control {
     @extend .d-flex;
     @extend .justify-content-between;
