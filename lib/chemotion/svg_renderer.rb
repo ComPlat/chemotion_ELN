@@ -62,7 +62,7 @@ module Chemotion
         nil
       end
     rescue StandardError => e
-      puts "KetcherService exception: #{e.message}"
+      Rails.logger.error("KetcherService exception: #{e.message}")
       nil
     end
 
@@ -80,7 +80,7 @@ module Chemotion
         nil
       end
     rescue StandardError => e
-      puts "❌ OpenBabelService failed: #{e.message}"
+      Rails.logger.error("❌ OpenBabelService failed: #{e.message}")
       nil
     end
 
