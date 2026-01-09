@@ -50,7 +50,7 @@ RSpec.describe Usecases::ReactionProcessEditor::ReactionProcessSteps::AppendActi
 
     context 'when created from Source Step' do
       let(:activity_params) do
-        { activity_name: 'TRANSFER', workup: { transfer_target_step_id: target_step.id } }.deep_stringify_keys
+        { activity_name: 'TRANSFER', workup: { target_step_id: target_step.id } }.deep_stringify_keys
       end
 
       it 'creates action in Target Step' do
@@ -70,7 +70,7 @@ RSpec.describe Usecases::ReactionProcessEditor::ReactionProcessSteps::AppendActi
 
     context 'when created from Target Step' do
       let(:activity_params) do
-        { activity_name: 'TRANSFER', workup: { transfer_target_step_id: process_step.id } }.deep_stringify_keys
+        { activity_name: 'TRANSFER', workup: { target_step_id: process_step.id } }.deep_stringify_keys
       end
 
       it 'respects position' do
