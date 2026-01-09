@@ -1,7 +1,7 @@
 import Element from 'src/models/Element';
 import Container from 'src/models/Container';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import { convertUnits, default_units } from 'src/components/staticDropdownOptions/units';
+import { convertUnits, defaultUnits } from 'src/components/staticDropdownOptions/units';
 
 export default class SequenceBasedMacromoleculeSample extends Element {
   constructor(args) {
@@ -20,7 +20,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
         newArgs._molarity_unit = newArgs.molarity_unit;
       }
       if (newArgs._molarity_value && newArgs._base_molarity_value && !newArgs._base_molarity_value) {
-        newArgs._base_molarity_value = convertUnits(newArgs.molarity_value, newArgs.molarity_unit, default_units.molarity);
+        newArgs._base_molarity_value = convertUnits(newArgs.molarity_value, newArgs.molarity_unit, defaultUnits.molarity);
       }
       if (!newArgs._activity_value) {
         newArgs._activity_value = newArgs.activity_value;
@@ -29,7 +29,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
         newArgs._activity_unit = newArgs.activity_unit;
       }
       if (newArgs._activity_value && newArgs._activity_unit && !newArgs._base_activity_value) {
-        newArgs._base_activity_value = convertUnits(newArgs.activity_value, newArgs.activity_unit, default_units.activity);
+        newArgs._base_activity_value = convertUnits(newArgs.activity_value, newArgs.activity_unit, defaultUnits.activity);
       }
       if (!newArgs._activity_per_mass_value) {
         newArgs._activity_per_mass_value = newArgs.activity_per_mass_value;
@@ -39,7 +39,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
       }
       if (newArgs._activity_per_mass_value && newArgs._activity_per_mass_unit && !newArgs._base_activity_per_mass_value) {
         newArgs._base_activity_per_mass_value =
-          convertUnits(newArgs.activity_per_mass_value, newArgs.activity_per_mass_unit, default_units.activity_per_mass);
+          convertUnits(newArgs.activity_per_mass_value, newArgs.activity_per_mass_unit, defaultUnits.activity_per_mass);
       }
       if (!newArgs._activity_per_volume_value) {
         newArgs._activity_per_volume_value = newArgs.activity_per_volume_value;
@@ -49,7 +49,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
       }
       if (newArgs._activity_per_volume_value && newArgs._activity_per_volume_unit && !newArgs._base_activity_per_volume_value) {
         newArgs._base_activity_per_volume_value =
-          convertUnits(newArgs.activity_per_volume_value, newArgs.activity_per_volume_unit, default_units.activity_per_volume);
+          convertUnits(newArgs.activity_per_volume_value, newArgs.activity_per_volume_unit, defaultUnits.activity_per_volume);
       }
       if (!newArgs._volume_as_used_value) {
         newArgs._volume_as_used_value = newArgs.volume_as_used_value;
@@ -59,7 +59,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
       }
       if (newArgs._volume_as_used_value && newArgs._volume_as_used_unit && !newArgs._base_volume_as_used_value) {
         newArgs._base_volume_as_used_value =
-          convertUnits(newArgs.volume_as_used_value, newArgs.volume_as_used_unit, default_units.volume_as_used);
+          convertUnits(newArgs.volume_as_used_value, newArgs.volume_as_used_unit, defaultUnits.volume_as_used);
       }
       if (!newArgs._amount_as_used_mass_value) {
         newArgs._amount_as_used_mass_value = newArgs.amount_as_used_mass_value;
@@ -69,7 +69,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
       }
       if (newArgs._amount_as_used_mass_value && newArgs._amount_as_used_mass_unit && !newArgs._base_amount_as_used_mass_value) {
         newArgs._base_amount_as_used_mass_value =
-          convertUnits(newArgs.amount_as_used_mass_value, newArgs.amount_as_used_mass_unit, default_units.amount_as_used_mass);
+          convertUnits(newArgs.amount_as_used_mass_value, newArgs.amount_as_used_mass_unit, defaultUnits.amount_as_used_mass);
       }
       if (!newArgs._amount_as_used_mol_value) {
         newArgs._amount_as_used_mol_value = newArgs.amount_as_used_mol_value;
@@ -79,56 +79,108 @@ export default class SequenceBasedMacromoleculeSample extends Element {
       }
       if (newArgs._amount_as_used_mol_value && newArgs._amount_as_used_mol_unit && !newArgs._base_amount_as_used_mol_value) {
         newArgs._base_amount_as_used_mol_value =
-          convertUnits(newArgs.amount_as_used_mol_value, newArgs.amount_as_used_mol_unit, default_units.amount_as_used_mol);
+          convertUnits(newArgs.amount_as_used_mol_value, newArgs.amount_as_used_mol_unit, defaultUnits.amount_as_used_mol);
       }
     }
     super(newArgs);
   }
 
+  /**
+   * Recalculates enzyme-related values depending on which field was updated.
+   *
+   * This method is only executed when `function_or_application` is set to `"enzyme"`.
+   * Each input type triggers recalculation of the dependent enzyme values
+   * according to standard enzyme activity formulas.
+   *
+   * Supported input types and their recalculations:
+   *
+   * - "volume_as_used":
+   *      amount [mol]   = volume [L] * molarity [mol/L]
+   *      activity [U]   = volume [L] * activity_per_volume [U/L]
+   *
+   * - "activity":
+   *      volume [L]     = activity [U] / activity_per_volume [U/L]
+   *      amount [mol]   = volume [L] * molarity [mol/L]
+   *
+   * - "amount_as_used_mol":
+   *      volume [L]     = amount [mol] / molarity [mol/L]
+   *      activity [U]   = volume [L] * activity_per_volume [U/L]
+   *
+   * - "amount_as_used_mass":
+   *      activity [U]   = mass [g] * activity_per_mass [U/g]
+   *
+   * - "molarity":
+   *      Recalculates amount if volume is available.
+   *
+   * - "activity_per_volume":
+   *      Recalculates activity based on current volume.
+   *
+   * - "activity_per_mass":
+   *      Recalculates activity based on mass.
+   *
+   * @param {string} type - The field that triggered the update.
+   *                        Must be one of:
+   *                        'volume_as_used',
+   *                        'activity',
+   *                        'amount_as_used_mol',
+   *                        'amount_as_used_mass',
+   *                        'molarity',
+   *                        'activity_per_volume',
+   *                        'activity_per_mass'.
+   *
+   * @returns {void|null} Returns null if the object is not an enzyme.
+   */
   calculateValues(type) {
-    // if the volume is added, we calculate the activity and the amount based on: 
-    //   amount [mol] = Volume [L] * molarity [mol/L] 
-    //   activity [U] = Volume [L] * activity_per_liter [U/L] 
-    // if the activity is added: 
-    //   Volume [L] = Activity [U] / activity_per_liter [U/L] 
-    //   amount [mol] = Volume [L] * molarity [mol/L]   
-    // if the amount (in mol) is added: 
-    //   volume [L] = amount [mol]  / molarity [mol/L] 
-    //   activity [U] = Volume [L] * activity_per_liter [U/L] 
-    // if the amount (in g) is added: 
-    //   Activity [U] = amount [g] * Activity in U/g [mol/L]
+    if (this.function_or_application !== 'enzyme') return null;
 
-    if (!this.function_or_application || this.function_or_application !== 'enzyme') { return null; }
+    switch (type) {
+      case 'volume_as_used':
+        if (this.base_volume_as_used_value > 0) {
+          this.calculateAmountAsUsed();
+          this.calculateActivity();
+        }
+        break;
 
-    if (type === 'volume_as_used' && this.base_volume_as_used_value > 0) {
-      this.calculateAmountAsUsed();
-      this.calculateActivity();
-    }
+      case 'activity':
+        if (this._base_activity_value > 0) {
+          this.calculateVolumeByActivity();
+          this.calculateAmountAsUsed();
+        }
+        break;
 
-    if (type === 'activity' && this._base_activity_value > 0) {
-      this.calculateVolumeByActivity();
-      this.calculateAmountAsUsed();
-    }
+      case 'amount_as_used_mol':
+        if (this.base_amount_as_used_mol_value > 0) {
+          this.calculateVolumeByAmount();
+          this.calculateActivity();
+        }
+        break;
 
-    if (type === 'amount_as_used_mol' && this.base_amount_as_used_mol_value > 0) {
-      this.calculateVolumeByAmount();
-      this.calculateActivity();
-    }
+      case 'amount_as_used_mass':
+        if (this.base_amount_as_used_mass_value > 0) {
+          this.calculateActivityByMass();
+        }
+        break;
 
-    if (type === 'amount_as_used_mass' && this.base_amount_as_used_mass_value > 0) {
-      this.calculateActivityByMass();
-    }
+      case 'molarity':
+        if (this.base_molarity_value > 0) {
+          this.calculateAmountAsUsed();
+        }
+        break;
 
-    if (type === 'molarity' && this.base_molarity_value > 0) {
-      this.calculateAmountAsUsed();
-    }
+      case 'activity_per_volume':
+        if (this.base_activity_per_volume_value > 0) {
+          this.calculateActivity();
+        }
+        break;
 
-    if (type === 'activity_per_volume' && this.base_activity_per_volume_value > 0) {
-      this.calculateActivity();
-    }
+      case 'activity_per_mass':
+        if (this.base_activity_per_mass_value > 0) {
+          this.calculateActivityByMass();
+        }
+        break;
 
-    if (type === 'activity_per_mass' && this.base_activity_per_mass_value > 0) {
-      this.calculateActivityByMass();
+      default:
+        break;
     }
   }
 
@@ -137,11 +189,11 @@ export default class SequenceBasedMacromoleculeSample extends Element {
 
     this._activity_value = convertUnits(
       parseFloat((this.base_volume_as_used_value * this.base_activity_per_volume_value).toFixed(8)),
-      default_units.activity,
+      defaultUnits.activity,
       this.activity_unit
     );
     this._base_activity_value =
-      convertUnits(this._activity_value, this.activity_unit, default_units.activity);
+      convertUnits(this._activity_value, this.activity_unit, defaultUnits.activity);
   }
 
   calculateActivityByMass() {
@@ -149,11 +201,11 @@ export default class SequenceBasedMacromoleculeSample extends Element {
 
     this._activity_value = convertUnits(
       parseFloat((this.base_amount_as_used_mass_value * this.base_activity_per_mass_value).toFixed(8)),
-      default_units.activity,
+      defaultUnits.activity,
       this.activity_unit
     );
     this._base_activity_value =
-      convertUnits(this._activity_value, this.activity_unit, default_units.activity);
+      convertUnits(this._activity_value, this.activity_unit, defaultUnits.activity);
   }
 
   calculateAmountAsUsed() {
@@ -163,11 +215,11 @@ export default class SequenceBasedMacromoleculeSample extends Element {
 
     this._amount_as_used_mol_value = convertUnits(
       parseFloat((this.base_volume_as_used_value * this.base_molarity_value).toFixed(8)),
-      default_units.amount_as_used_mol,
+      defaultUnits.amount_as_used_mol,
       this.amount_as_used_mol_unit
     );
     this._base_amount_as_used_mol_value =
-      convertUnits(this._amount_as_used_mol_value, this.amount_as_used_mol_unit, default_units.amount_as_used_mol);
+      convertUnits(this._amount_as_used_mol_value, this.amount_as_used_mol_unit, defaultUnits.amount_as_used_mol);
   }
 
   calculateVolumeByActivity() {
@@ -175,11 +227,11 @@ export default class SequenceBasedMacromoleculeSample extends Element {
 
     this._volume_as_used_value = convertUnits(
       parseFloat((this.base_activity_value / this.base_activity_per_volume_value).toFixed(8)),
-      default_units.volume_as_used,
+      defaultUnits.volume_as_used,
       this.volume_as_used_unit
     );
     this._base_volume_as_used_value =
-      convertUnits(this._volume_as_used_value, this.volume_as_used_unit, default_units.volume_as_used);
+      convertUnits(this._volume_as_used_value, this.volume_as_used_unit, defaultUnits.volume_as_used);
   }
 
   calculateVolumeByAmount() {
@@ -187,11 +239,11 @@ export default class SequenceBasedMacromoleculeSample extends Element {
 
     this._volume_as_used_value = convertUnits(
       parseFloat((this.base_amount_as_used_mol_value / this.base_molarity_value).toFixed(8)),
-      default_units.volume_as_used,
+      defaultUnits.volume_as_used,
       this.volume_as_used_unit
     );
     this._base_volume_as_used_value =
-      convertUnits(this._volume_as_used_value, this.volume_as_used_unit, default_units.volume_as_used);
+      convertUnits(this._volume_as_used_value, this.volume_as_used_unit, defaultUnits.volume_as_used);
   }
 
   get activity_value() {
@@ -200,7 +252,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
 
   set activity_value(value) {
     this._activity_value = value;
-    this._base_activity_value = convertUnits(this.activity_value, this.activity_unit, default_units.activity);
+    this._base_activity_value = convertUnits(this.activity_value, this.activity_unit, defaultUnits.activity);
     this.calculateValues('activity');
   }
 
@@ -213,7 +265,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
   }
 
   get activity_unit() {
-    return this._activity_unit || default_units.activity;
+    return this._activity_unit || defaultUnits.activity;
   }
 
   set activity_unit(value) {
@@ -228,7 +280,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
   set amount_as_used_mol_value(value) {
     this._amount_as_used_mol_value = value;
     this._base_amount_as_used_mol_value =
-      convertUnits(this.amount_as_used_mol_value, this.amount_as_used_mol_unit, default_units.amount_as_used_mol);
+      convertUnits(this.amount_as_used_mol_value, this.amount_as_used_mol_unit, defaultUnits.amount_as_used_mol);
 
     if (this.amount_as_used_mass_value !== undefined && value) {
       this._amount_as_used_mass_value = '';
@@ -247,7 +299,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
   }
 
   get amount_as_used_mol_unit() {
-    return this._amount_as_used_mol_unit || default_units.amount_as_used_mol;
+    return this._amount_as_used_mol_unit || defaultUnits.amount_as_used_mol;
   }
 
   set amount_as_used_mol_unit(value) {
@@ -262,7 +314,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
   set amount_as_used_mass_value(value) {
     this._amount_as_used_mass_value = value;
     this._base_amount_as_used_mass_value =
-      convertUnits(this.amount_as_used_mass_value, this.amount_as_used_mass_unit, default_units.amount_as_used_mass);
+      convertUnits(this.amount_as_used_mass_value, this.amount_as_used_mass_unit, defaultUnits.amount_as_used_mass);
 
     if (this.amount_as_used_mol_value !== undefined && value) {
       this._amount_as_used_mol_value = '';
@@ -281,7 +333,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
   }
 
   get amount_as_used_mass_unit() {
-    return this._amount_as_used_mass_unit || default_units.amount_as_used_mass;
+    return this._amount_as_used_mass_unit || defaultUnits.amount_as_used_mass;
   }
 
   set amount_as_used_mass_unit(value) {
@@ -298,7 +350,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
   }
 
   get concentration_unit() {
-    return this._concentration_unit || default_units.concentration;
+    return this._concentration_unit || defaultUnits.concentration;
   }
 
   set concentration_unit(value) {
@@ -320,7 +372,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
 
   set molarity_value(value) {
     this._molarity_value = value;
-    this._base_molarity_value = convertUnits(this.molarity_value, this.molarity_unit, default_units.molarity);
+    this._base_molarity_value = convertUnits(this.molarity_value, this.molarity_unit, defaultUnits.molarity);
     this.calculateValues('molarity');
   }
 
@@ -333,7 +385,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
   }
 
   get molarity_unit() {
-    return this._molarity_unit || default_units.molarity;
+    return this._molarity_unit || defaultUnits.molarity;
   }
 
   set molarity_unit(value) {
@@ -348,8 +400,8 @@ export default class SequenceBasedMacromoleculeSample extends Element {
   set activity_per_volume_value(value) {
     this._activity_per_volume_value = value;
     this._base_activity_per_volume_value =
-      convertUnits(this.activity_per_volume_value, this.activity_per_volume_unit, default_units.activity_per_volume);
-    
+      convertUnits(this.activity_per_volume_value, this.activity_per_volume_unit, defaultUnits.activity_per_volume);
+
     if (this.activity_per_mass_value !== undefined && value) {
       this._activity_per_mass_value = '';
       this._base_activity_per_mass_value = 0;
@@ -366,7 +418,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
   }
 
   get activity_per_volume_unit() {
-    return this._activity_per_volume_unit || default_units.activity_per_volume;
+    return this._activity_per_volume_unit || defaultUnits.activity_per_volume;
   }
 
   set activity_per_volume_unit(value) {
@@ -381,8 +433,8 @@ export default class SequenceBasedMacromoleculeSample extends Element {
   set activity_per_mass_value(value) {
     this._activity_per_mass_value = value;
     this._base_activity_per_mass_value =
-      convertUnits(this.activity_per_mass_value, this.activity_per_mass_unit, default_units.activity_per_mass);
-    
+      convertUnits(this.activity_per_mass_value, this.activity_per_mass_unit, defaultUnits.activity_per_mass);
+
     if (this.activity_per_volume_value !== undefined && value) {
       this._activity_per_volume_value = '';
       this._base_activity_per_volume_value = 0;
@@ -396,11 +448,11 @@ export default class SequenceBasedMacromoleculeSample extends Element {
   }
 
   set base_activity_per_mass_value(value) {
-    this._base_sactivity_per_mass_value = value;
+    this._base_activity_per_mass_value = value;
   }
 
   get activity_per_mass_unit() {
-    return this._activity_per_mass_unit || default_units.activity_per_mass;
+    return this._activity_per_mass_unit || defaultUnits.activity_per_mass;
   }
 
   set activity_per_mass_unit(value) {
@@ -415,7 +467,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
   set volume_as_used_value(value) {
     this._volume_as_used_value = value;
     this._base_volume_as_used_value =
-      convertUnits(this.volume_as_used_value, this.volume_as_used_unit, default_units.volume_as_used);
+      convertUnits(this.volume_as_used_value, this.volume_as_used_unit, defaultUnits.volume_as_used);
     this.calculateValues('volume_as_used');
   }
 
@@ -428,7 +480,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
   }
 
   get volume_as_used_unit() {
-    return this._volume_as_used_unit || default_units.volume_as_used;
+    return this._volume_as_used_unit || defaultUnits.volume_as_used;
   }
 
   set volume_as_used_unit(value) {
@@ -502,7 +554,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
       purity: '',
       purity_detection: '',
       purification_method: '',
-      
+
       sequence_based_macromolecule: {
         accessions: [],
         ec_numbers: [''],
@@ -733,7 +785,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
     const sbmmShortLabel = this.sbmmShortLabel();
     const sbmmShortName = withShortName ? ` ${this.sequence_based_macromolecule.short_name}` : '';
     const spacer = this.title() || !withShortName ? ' - ' : '';
-  
+
     return sbmmShortLabel ? `${spacer}${sbmmShortLabel}${sbmmShortName}` : '';
   }
 
