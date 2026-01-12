@@ -39,11 +39,25 @@ const WellplateList = ({ wells, readoutTitles, handleWellsChange }) => {
     return sample.molecule_formula;
   }
   
-  const renderConcentration = (node) => {
+  const renderMolarity = (node) => {
     const sample = node.data?.sample;
     if (!sample) { return null; }
 
-    return sample?.purity ?? '';
+    const value = sample?.molarity_value;
+    if (value === null || value === undefined || value === '') {
+      return '';
+    }
+
+    const formatted = parseFloat(value.toFixed(4));
+
+    return (
+      <div className="d-flex align-items-center">
+        <span className="flex-grow-1">{formatted}</span>
+        <span className="btn btn-light btn-sm px-2 d-flex align-items-center align-self-stretch rounded-0 border-0 border-start">
+          M
+        </span>
+      </div>
+    );
   };
 
   const updateRow = useCallback(({ data: oldRow, colDef, newValue }) => {
@@ -52,8 +66,8 @@ const WellplateList = ({ wells, readoutTitles, handleWellsChange }) => {
 
     const wellIndex = wellsList.indexOf(oldRow);
     
-    if (field === 'purity') {
-      wellsList[wellIndex].sample.purity = newValue;
+    if (field === 'molarity_value') {
+      wellsList[wellIndex].sample.molarity_value = newValue;
     } else {
       wellsList[wellIndex].readouts[cellRendererParams.index][field] = newValue;
     }
@@ -105,19 +119,19 @@ const WellplateList = ({ wells, readoutTitles, handleWellsChange }) => {
       cellClass: ["lh-base", "py-2", "border-end"],
     },
     {
-      headerName: 'Concentration',
-      field: 'purity',
+      headerName: 'Molarity (M)',
+      field: 'molarity_value',
       editable: (params) => params.data.sample,
       valueGetter: (params) => {
         if (params.data?.sample) {
-          return params.data.sample.purity;
+          return params.data.sample.molarity_value;
         }
       },
       valueParser: (params) => {
         const val = parseFloat(params.newValue);
-        return Number.isNaN(val) || val < 0.0 || val > 1.0 ? undefined : val;
+        return Number.isNaN(val) || val < 0.0 ? undefined : val;
       },
-      cellRenderer: renderConcentration,
+      cellRenderer: renderMolarity,
       wrapText: true,
       cellClass: ['editable-cell', 'border-end', 'px-2'],
     }

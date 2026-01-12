@@ -28,7 +28,7 @@ RSpec.describe Usecases::ResearchPlans::ImportTableFromSpreadsheet do
         'Sample',
         'External Compound Label/ID',
         'Smiles',
-        'Concentration',
+        'Molarity (M)',
         'Readout1_Value',
         'Readout1_Unit',
         'Readout2_Value',

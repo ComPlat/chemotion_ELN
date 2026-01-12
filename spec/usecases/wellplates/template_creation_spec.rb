@@ -19,7 +19,7 @@ RSpec.describe Usecases::Wellplates::TemplateCreation do
       end
 
       it 'has correct header row' do
-        expect(header_row).to eq ['Position', 'Sample', 'External Compound Label/ID', 'Smiles', 'Concentration',
+        expect(header_row).to eq ['Position', 'Sample', 'External Compound Label/ID', 'Smiles', 'Molarity (M)',
                                   'Readout1_Value', 'Readout1_Unit', 'Readout2_Value', 'Readout2_Unit']
       end
 

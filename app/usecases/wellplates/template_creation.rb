@@ -6,7 +6,7 @@ module Usecases
       def initialize(wellplate)
         @wellplate = wellplate
         @header = ['Position', 'Sample', 'External Compound Label/ID',
-                   'Smiles', 'Concentration', 'Readout1_Value', 'Readout1_Unit', 'Readout2_Value',	'Readout2_Unit']
+                   'Smiles', 'Molarity (M)', 'Readout1_Value', 'Readout1_Unit', 'Readout2_Value',	'Readout2_Unit']
       end
 
       def execute!

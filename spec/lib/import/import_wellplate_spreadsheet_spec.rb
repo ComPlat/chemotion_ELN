@@ -19,7 +19,7 @@ RSpec.describe 'ImportWellplateSpreadsheet' do
 
     context 'when headers are missing' do
       let(:expected_error_messsage) do
-        list = ["'Position' must be in cell A1.", "'Sample' must be in cell B1.", "'Concentration' must be in cell E1."]
+        list = ["'Position' must be in cell A1.", "'Sample' must be in cell B1.", "'Molarity' must be in cell E1."]
         list.join("\n")
       end
       let(:file_path) { Rails.root.join('spec/fixtures/import/wellplate_missing_headers.xlsx') }
@@ -53,7 +53,7 @@ RSpec.describe 'ImportWellplateSpreadsheet' do
 
     context 'with multiple errors in file' do
       let(:expected_error_messsage) do
-        list = ["'Position' must be in cell A1.", "'Smiles' must be in cell D1.", "'Concentration' must be in cell E1."]
+        list = ["'Position' must be in cell A1.", "'Smiles' must be in cell D1.", "'Molarity' must be in cell E1."]
         list.join("\n")
       end
       let(:file_path) { Rails.root.join('spec/fixtures/import/wellplate_multiple_errors.xlsx') }
@@ -88,7 +88,7 @@ RSpec.describe 'ImportWellplateSpreadsheet' do
       end
     end
 
-    context 'with concentration values' do
+    context 'with molarity values' do
       let(:file_path) { Rails.root.join('spec/fixtures/import/wellplate_import_template.xlsx') }
 
       before do
@@ -96,14 +96,14 @@ RSpec.describe 'ImportWellplateSpreadsheet' do
         wellplate.reload
       end
 
-      it 'imports concentration values as sample purity' do
+      it 'imports molarity values as sample molarity_value' do
         wellplate.wells.each do |well|
-          expect(well.sample.purity).to be_between(0.0, 1.0)
+          expect(well.sample.molarity_value).to be > 0.0
         end
       end
     end
 
-    context 'when concentration column is empty' do
+    context 'when molarity column is empty' do
       let(:file_path) { Rails.root.join('spec/fixtures/import/wellplate_import_template.xlsx') }
 
       before do
@@ -111,7 +111,7 @@ RSpec.describe 'ImportWellplateSpreadsheet' do
         wellplate.reload
       end
 
-      it 'imports wells successfully with concentration values' do
+      it 'imports wells successfully with molarity values' do
         expect(wellplate.wells.count).to eq 96
         expect(wellplate.readout_titles).to eq %w[Readout1 Readout2]
       end
