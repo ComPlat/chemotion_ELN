@@ -12,6 +12,8 @@ import MoveToAnalysis from 'src/apps/mydb/inbox/MoveToAnalysis';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
 import ArrayUtils from 'src/utilities/ArrayUtils';
 import { formatDate } from 'src/utilities/timezoneHelper';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import { selectCurrentUser } from 'src/utilities/CommentHelper';
 
 const dataSource = {
   beginDrag(props) {
@@ -154,6 +156,9 @@ class AttachmentContainer extends Component {
       </Tooltip>
     );
 
+    const currentUser = selectCurrentUser(UserStore.getState());
+    const showMoveToAnalysis = currentUser.profile?.data.inbox_manual;
+
     return connectDragSource(
       <div className="d-flex align-items-center overflow-hidden p-1">
         <ButtonToolbar className="gap-2">
@@ -163,7 +168,7 @@ class AttachmentContainer extends Component {
             className="fa fa-download mt-1"
             onClick={() => handleAttachmentDownload(attachment)}
           />
-          {largerInbox && (
+          {largerInbox && showMoveToAnalysis && (
             <MoveToAnalysis
               attachment={attachment}
               largerInbox={largerInbox}

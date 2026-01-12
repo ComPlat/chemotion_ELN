@@ -14,6 +14,7 @@ function AccountProfile({ currentUser }) {
   const [reactionPrefix, setReactionPrefix] = useState(currentUser.reaction_name_prefix || '');
   const [reactionsCount, setReactionsCount] = useState(currentUser.counters?.reactions || 0);
   const [inboxAuto, setInboxAuto] = useState(currentUser.profile?.data.inbox_auto !== false);
+  const [inboxManual, setInboxManual] = useState(currentUser.profile?.data.inbox_manual);
   const [curation, setCuration] = useState(currentUser.profile?.curation || 1);
   const [nextLabel, setNextLabel] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -47,15 +48,13 @@ function AccountProfile({ currentUser }) {
   const handleProfileInboxSubmit = useCallback((e) => {
     e.preventDefault();
 
-    console.log(
-      typeof currentUser.profile?.data.inbox_auto,
-      currentUser.profile?.data.inbox_auto
-    );
-
-    if (inboxAuto !== (currentUser.profile?.data.inbox_auto !== false)) {
+    const autoChanged = inboxAuto !== (currentUser.profile?.data.inbox_auto !== false);
+    const manualChanged = inboxManual !== currentUser.profile?.data.inbox_manual;
+    if (autoChanged || manualChanged) {
       const payload = {
         data: {
-          inbox_auto: inboxAuto
+          inbox_auto: inboxAuto,
+          inbox_manual: inboxManual,
         }
       };
 
@@ -68,7 +67,7 @@ function AccountProfile({ currentUser }) {
           console.error('Failed to update profile:', error);
         });
     }
-  }, [inboxAuto]);
+  }, [inboxAuto, inboxManual]);
 
   const handleProfileSubmit = useCallback((e) => {
     e.preventDefault();
@@ -192,6 +191,19 @@ function AccountProfile({ currentUser }) {
                 />
               </Col>
             </Row>
+            <Row className="mb-3">
+              <Form.Label column className="col-form-label col-3 offset-3">
+                Enable Manual Transfer Inbox to Element
+              </Form.Label>
+              <Col className="col-4">
+                <Form.Check
+                  type="switch"
+                  id="inbox_manual"
+                  onChange={(e) => setInboxManual(e.target.checked)}
+                  checked={inboxManual}
+                />
+              </Col>
+            </Row>
 
             <Row>
               <Col className="offset-8">
@@ -265,6 +277,7 @@ AccountProfile.propTypes = {
       curation: PropTypes.number.isRequired,
       data: PropTypes.shape({
         inbox_auto: PropTypes.bool,
+        inbox_manual: PropTypes.bool,
       })
     }).isRequired,
   }).isRequired,
