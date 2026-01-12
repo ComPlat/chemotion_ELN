@@ -85,7 +85,7 @@ const PropertiesForm = () => {
   ];
 
   const setupDescription = () => {
-    const type = deviceDescription.device_type;
+    const type = deviceDescription.device_class;
     if (!['setup', 'component'].includes(type)) { return ''; }
     const rowFields = type == 'setup' ? setupFields : componentFields;
     const label = type == 'setup' ? 'Component' : 'Setup';
