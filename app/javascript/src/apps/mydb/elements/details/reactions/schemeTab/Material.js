@@ -1196,7 +1196,7 @@ class Material extends Component {
     let molecularWeight = sample.decoupled
       ? sample.molecular_mass
       : (sample.molecule && sample.molecule.molecular_weight);
-    if (sample.isMixture() && sample.reference_relative_molecular_weight) {
+    if (sample.isMixture && sample.isMixture() && sample.reference_relative_molecular_weight) {
       molecularWeight = sample.reference_relative_molecular_weight.toFixed(4);
     }
     let theoreticalMassPart = '';
@@ -1362,7 +1362,7 @@ class Material extends Component {
     const { index, materialGroup, reaction } = this.props;
 
     // Check if the material is a mixture
-    const isMixture = material.isMixture();
+    const isMixture = material.isMixture && material.isMixture();
 
     // Skip shortLabel for reactants and solvents/purification_solvents, and mixtures
     const skipIupacName = (
