@@ -1,3 +1,7 @@
+.search-result-body {
+  max-height: 72vh;
+}
+
 .search-value-list {
   position: relative;
   max-height: 12vh;
@@ -20,7 +24,7 @@
 .search-result-tab-content-container {
   overflow-y: auto;
   min-height: 150px;
-  max-height: calc(85vh - 485px);
+  max-height: calc(83vh - 485px);
   height: 100vh;
   position: relative;
   border: 1px solid var(--bs-gray-600);
@@ -64,7 +68,7 @@
 }
 
 .search-result-molecule .preview-table {
-  max-width: 100px;
+  max-width: 140px;
   min-height: 100px;
   margin-right: 0.75rem;
   margin-bottom: 0.75rem;
