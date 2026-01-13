@@ -40,6 +40,7 @@ module Chemotion
         return rendered_svg
       end
 
+      puts '❌ IndigoService returned nil or empty, falling back to KetcherService'
       nil
     end
 

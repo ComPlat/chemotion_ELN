@@ -1,5 +1,5 @@
 development:
-  :url: 'http://ketchersvc:9000/render'
+  :url: 'http://ketchersvc:4000/render'
 
 production:
-  :url: 'http://ketchersvc:9000/render'
+  :url: 'http://ketchersvc:4000/render'
