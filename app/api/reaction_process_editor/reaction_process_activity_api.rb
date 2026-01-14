@@ -24,9 +24,11 @@ module ReactionProcessEditor
 
         desc 'Update a ReactionProcessActivity.'
         put do
-          present Usecases::ReactionProcessEditor::ReactionProcessActivities::Update.execute!(
+          Usecases::ReactionProcessEditor::ReactionProcessActivities::Update.execute!(
             activity: @activity, activity_params: permitted_params[:activity],
-          ), with: Entities::ReactionProcessEditor::ReactionProcessActivityEntity, root: :reaction_process_activity
+          )
+
+          status 204
         end
 
         desc 'Create and append an action for the fractions of a chromatography automation result.'
@@ -41,6 +43,8 @@ module ReactionProcessEditor
 
           @activity.workup['AUTOMATION_STATUS'] = 'HALT_RESOLVED_NEEDS_CONFIRMATION'
           @activity.save
+
+          status 201
         end
 
         desc 'Update Position of a ReactionProcessActivity'
@@ -54,6 +58,8 @@ module ReactionProcessEditor
         desc 'Delete a ReactionProcessActivity'
         delete do
           Usecases::ReactionProcessEditor::ReactionProcessActivities::Destroy.execute!(activity: @activity)
+
+          status 204
         end
       end
 
@@ -73,6 +79,8 @@ module ReactionProcessEditor
             activity: @activity,
             response_json: response_file,
           )
+
+          status 201
         rescue StandardError
           error!('422 Unprocessable Entity', 422)
         end
@@ -90,6 +98,8 @@ module ReactionProcessEditor
             activity: @activity,
             automation_status: params[:status],
           )
+
+          status 204
         end
       end
     end

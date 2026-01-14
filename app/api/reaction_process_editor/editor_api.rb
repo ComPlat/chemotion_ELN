@@ -36,6 +36,8 @@ module ReactionProcessEditor
         reaction_process_defaults = ::ReactionProcessEditor::ReactionProcessDefaults
                                     .find_or_initialize_by(user: current_user)
         reaction_process_defaults.update permitted_params
+
+        status 204
       end
     end
   end
