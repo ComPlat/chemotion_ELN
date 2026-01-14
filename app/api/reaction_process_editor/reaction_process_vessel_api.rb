@@ -28,8 +28,7 @@ module ReactionProcessEditor
         put do
           @reaction_process_vessel.update permitted_params[:reaction_process_vessel]
 
-          present @reaction_process_vessel, with: Entities::ReactionProcessEditor::ReactionProcessVesselEntity,
-                                            root: :reaction_process_vessel
+          status 204
         end
       end
     end
