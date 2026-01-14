@@ -24,7 +24,7 @@ export default class GenericElementsAdmin extends React.Component {
       show: { tab: '', modal: '' },
       revisions: [],
       repoData: [],
-      user: {},
+      currentUser: {},
     };
     this.fetchElements = this.fetchElements.bind(this);
     this.handleShowState = this.handleShowState.bind(this);
@@ -53,7 +53,7 @@ export default class GenericElementsAdmin extends React.Component {
             ? elementsResult.klass.filter((k) => k.is_generic)
             : [];
           if (userResult?.user) {
-            newState.user = userResult.user;
+            newState.currentUser = userResult.user;
           }
           return { ...prevState, ...newState };
         });
@@ -344,7 +344,7 @@ export default class GenericElementsAdmin extends React.Component {
   }
 
   renderGrid() {
-    const { elements = [], revisions } = this.state;
+    const { elements = [], revisions, currentUser } = this.state;
     const els = orderBy(
       elements,
       ['is_active', 'name', 'klass_prefix'],
@@ -368,19 +368,20 @@ export default class GenericElementsAdmin extends React.Component {
         }}
         genericType={Constants.GENERIC_TYPES.ELEMENT}
         gridData={els || []}
+        refSource={{ currentUser }}
       />
     );
   }
 
   render() {
-    const { user } = this.state;
-    if (!user.generic_admin?.elements) {
-      return <Unauthorized userName={user.name} text={FN_ID} />;
+    const { currentUser } = this.state;
+    if (!currentUser.generic_admin?.elements) {
+      return <Unauthorized userName={currentUser.name} text={FN_ID} />;
     }
 
     return (
       <div className="vw-90 my-auto mx-auto">
-        <GenericMenu userName={user.name} text={FN_ID} />
+        <GenericMenu userName={currentUser.name} text={FN_ID} />
         <div className="mt-3">
           {this.renderGrid()}
         </div>

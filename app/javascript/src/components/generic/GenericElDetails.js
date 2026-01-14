@@ -114,7 +114,8 @@ export default class GenericElDetails extends Component {
 
   handleRetrieveRevision(revision, cb) {
     const { genericEl } = this.state;
-    genericEl.properties = revision;
+    genericEl.properties = revision.properties;
+    genericEl.metadata = revision.metadata;
     genericEl.changed = true;
     this.setState({ genericEl }, cb);
   }

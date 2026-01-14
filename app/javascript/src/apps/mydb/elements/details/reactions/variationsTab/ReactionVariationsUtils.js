@@ -17,7 +17,6 @@ import {
   NoteCellRenderer, NoteCellEditor, MenuHeader, RowToolsCellRenderer, ToolHeader
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import GenericSgsFetcher from 'src/fetchers/GenericSgsFetcher';
 import { genUnits } from 'generic-ui-core';
 
 const PLACEHOLDER_CELL_TEXT = '_';
@@ -781,11 +780,7 @@ function formatReactionSegments(segments) {
 
 async function getReactionSegments(reaction) {
   try {
-    const { klass: segments } = await GenericSgsFetcher.listSegmentKlass(
-      { is_active: true },
-      true
-    );
-
+    const segments = UserStore.getState().segmentKlasses || [];
     const segmentLabels = new Set(
       segments
         .filter((s) => s.element_klass.name === 'reaction' && s.is_active)

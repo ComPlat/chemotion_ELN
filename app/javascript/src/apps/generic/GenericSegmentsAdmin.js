@@ -24,7 +24,7 @@ export default class GenericSegmentsAdmin extends React.Component {
       klasses: [],
       show: { tab: '', modal: '' },
       revisions: [],
-      user: {},
+      currentUser: {},
     };
 
     this.fetchElements = this.fetchElements.bind(this);
@@ -55,7 +55,7 @@ export default class GenericSegmentsAdmin extends React.Component {
         this.setState({
           elements: segmentResult.error ? [] : segmentResult.klass,
           klasses,
-          user: userResult.error ? {} : userResult.user
+          currentUser: userResult.error ? {} : userResult.user
         });
       } catch (error) {
         console.log(error);
@@ -330,7 +330,7 @@ export default class GenericSegmentsAdmin extends React.Component {
   }
 
   renderGrid() {
-    const { elements } = this.state;
+    const { elements, currentUser } = this.state;
     const els = orderBy(elements, ['is_active', 'label'], ['desc', 'asc']);
 
     return (
@@ -352,18 +352,19 @@ export default class GenericSegmentsAdmin extends React.Component {
           fnRevisions: this.fetchRevisions,
           revisions: this.state.revisions,
         }}
+        refSource={{ currentUser }}
       />
     );
   }
 
   render() {
-    const { user } = this.state;
-    if (!user.generic_admin?.segments) {
-      return <Unauthorized userName={user.name} text={FN_ID} />;
+    const { currentUser } = this.state;
+    if (!currentUser.generic_admin?.segments) {
+      return <Unauthorized userName={currentUser.name} text={FN_ID} />;
     }
     return (
       <div className="vw-90 my-auto mx-auto">
-        <GenericMenu userName={user.name} text={FN_ID} />
+        <GenericMenu userName={currentUser.name} text={FN_ID} />
         <div className="mt-3">
           {this.renderGrid()}
         </div>
