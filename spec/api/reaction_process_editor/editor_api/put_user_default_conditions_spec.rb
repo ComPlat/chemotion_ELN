@@ -23,9 +23,9 @@ describe ReactionProcessEditor::EditorAPI, '.put /user_default_conditions' do
   it_behaves_like 'authenticated API call'
 
   context 'when authorized' do
-    it 'responds 200' do
+    it 'responds 204' do
       api_call
-      expect(response).to have_http_status :ok
+      expect(response).to have_http_status :no_content
     end
 
     it 'updates user default_conditions' do

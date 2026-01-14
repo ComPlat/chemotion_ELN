@@ -36,8 +36,8 @@ describe ReactionProcessEditor::ReactionProcessVesselAPI, '.put' do
     }.to(new_preparations)
   end
 
-  it 'returns reaction_process_vessel' do
+  it 'returns http_status 204' do
     api_call
-    expect(parsed_json_response).to include(expected_response_hash)
+    expect(response).to have_http_status :no_content
   end
 end

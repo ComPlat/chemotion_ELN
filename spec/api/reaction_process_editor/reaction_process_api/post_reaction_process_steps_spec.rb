@@ -32,13 +32,6 @@ describe ReactionProcessEditor::ReactionProcessAPI, '.post /reaction_process_ste
     expect(response).to have_http_status :created
   end
 
-  it 'returns created step' do
-    api_call
-    expect(parsed_json_response).to include(
-      { reaction_process_step: hash_including({ name: 'The new Step' }.deep_stringify_keys) }.deep_stringify_keys,
-    )
-  end
-
   it 'creates ReactionProcessStep' do
     expect do
       api_call
@@ -84,9 +77,7 @@ describe ReactionProcessEditor::ReactionProcessAPI, '.post /reaction_process_ste
 
     it 'sets default name' do
       api_call
-      expect(parsed_json_response).to include(
-        { reaction_process_step: hash_including({ name: 'Step 1' }.deep_stringify_keys) }.deep_stringify_keys,
-      )
+      expect(created_process_step.name).to eq 'Step 1'
     end
   end
 end

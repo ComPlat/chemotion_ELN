@@ -15,7 +15,7 @@ module Entities
                     .merge({ value: method.label,
                              stationary_phase: stationary_phase_options(method),
                              mobile_phase: mobile_phase_options_for(method) })
-                    .merge(pseudo_ontology_option_for(base_ontology: method.ontology,
+                    .merge(pseudo_ontology_option_for(active: method.ontology&.active,
                                                       role: 'method',
                                                       value: method.label))
             end
@@ -25,7 +25,7 @@ module Entities
 
           def stationary_phase_options(method)
             method.stationary_phase&.map do |stationary_phase|
-              pseudo_ontology_option_for(base_ontology: method.ontology,
+              pseudo_ontology_option_for(active: method.ontology&.active,
                                          role: 'stationary_phase',
                                          value: stationary_phase)
             end

@@ -31,7 +31,7 @@ module Entities
 
         def removable_samples(reaction_process_step)
           {
-            FROM_REACTION: all_reaction_samples_options(reaction_process_step),
+            FROM_REACTION: all_reaction_samples_options(reaction_process_step.reaction_process),
             FROM_REACTION_STEP: current_step_samples_options(reaction_process_step),
             FROM_SAMPLE: saved_sample_with_solvents_options(reaction_process_step),
             DIVERSE_SOLVENTS: [],
@@ -53,6 +53,7 @@ module Entities
         def step_fractions_options(reaction_process_step)
           reaction_process_step
             .reaction_process_activities
+            .includes(:fractions)
             .order(:position)
             .map do |parent_activity|
               parent_activity.fractions.map do |fraction|
@@ -90,15 +91,18 @@ module Entities
           end.flatten.uniq
         end
 
-        def all_reaction_samples_options(reaction_process_step)
-          reaction_process_step.siblings.order(:position).map do |current_step|
-            current_step_samples_options(current_step)
-          end.flatten.uniq
+        def all_reaction_samples_options(reaction_process)
+          @all_reaction_samples_options ||=
+            reaction_process.reaction_process_steps.order(:position).map do |current_step|
+              current_step_samples_options(current_step)
+            end.flatten.uniq
         end
 
         def saved_sample_with_solvents_options(reaction_process_step)
           reaction_process_step.reaction_process_activities
-                               .includes([:reaction_process_vessel])
+                               .includes(%i[reaction_process_vessel
+                                            fractions
+                                            consumed_fraction])
                                .order(:position)
                                .select(&:saves_sample?)
                                .map do |action|

@@ -35,6 +35,8 @@ module ReactionProcessEditor
           Usecases::ReactionProcessEditor::ReactionProcessVessels::SweepUnused.execute!(
             reaction_process_id: @reaction_process.id,
           )
+
+          status 201
         end
 
         get :ord do
@@ -143,8 +145,9 @@ module ReactionProcessEditor
               reaction_process_id: @reaction_process.id,
             )
 
-            present new_step, with: Entities::ReactionProcessEditor::ReactionProcessStepEntity,
-                              root: :reaction_process_step
+            status 201
+            # present new_step, with: Entities::ReactionProcessEditor::ReactionProcessStepEntity,
+            #                   root: :reaction_process_step
           end
         end
       end
