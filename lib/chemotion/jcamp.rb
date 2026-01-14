@@ -203,7 +203,7 @@ module Chemotion
             body: {
               file: f
             },
-            multipart: true
+            multipart: true,
           )
         end
         response
@@ -235,7 +235,7 @@ module Chemotion
               list_file_names: list_file_names,
               extras: extras,
             },
-            multipart: true
+            multipart: true,
           )
         ensure
           files_to_read.each(&:close)
@@ -286,7 +286,7 @@ module Chemotion
             response = HTTParty.post(
               api_endpoint,
               body: body,
-              multipart: true
+              multipart: true,
             )
           end
           response
@@ -320,7 +320,7 @@ module Chemotion
               response = HTTParty.post(
                 api_endpoint,
                 body: body,
-                multipart: true
+                multipart: true,
               )
             end
           end
@@ -355,7 +355,7 @@ module Chemotion
               response = HTTParty.post(
                 api_endpoint,
                 body: body,
-                multipart: true
+                multipart: true,
               )
             end
           end
@@ -439,7 +439,7 @@ module Chemotion
             body: {
               file: f
             },
-            multipart: true
+            multipart: true,
           )
         end
         response
