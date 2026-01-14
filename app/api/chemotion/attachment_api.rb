@@ -48,13 +48,15 @@ module Chemotion
           element: :sample,
         )
 
+        variation = filename[/-v(\d+)(?=\.[^.]+$|$)/, 1] # Handling for variations with "ReactionName-vi"
+        search_string = filename.sub(/-v\d+(?=\.[^.]+$|$)/, '')
         reactions = InboxSearchElements.call(
-          search_string: filename,
+          search_string: search_string,
           current_user: user,
           element: :reaction,
         )
-        return reactions.first if samples.empty? && reactions.one?
-        return samples.first if reactions.empty? && samples.one?
+        return reactions.first, variation if samples.empty? && reactions.one?
+        return samples.first, nil if reactions.empty? && samples.one?
 
         nil
       end
@@ -278,7 +280,7 @@ module Chemotion
             attach.save!
             attach_ary.push(attach.id)
             inbox_auto = current_user.profile&.data&.fetch('inbox_auto', true)
-            match = find_unique_match_for_filename(file[:filename], current_user) if inbox_auto
+            match, variation = find_unique_match_for_filename(file[:filename], current_user) if inbox_auto
 
             if match # auto assign to element
               analysis_name = attach.filename.chomp(File.extname(attach.filename))
@@ -286,6 +288,8 @@ module Chemotion
               attach.update!(attachable: dataset)
               type = match.model_name.singular
               @link = "#{Rails.application.config.root_url}/mydb/collection/all/#{type}/#{match.id}"
+              match.assign_attachment_to_variation(variation, dataset.parent_id) if match.is_a?(Reaction)
+
               Message.create_msg_notification(
                 channel_subject: Channel::ASSIGN_INBOX_TO_SAMPLE,
                 message_from: current_user.id,

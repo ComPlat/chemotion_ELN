@@ -80,7 +80,7 @@ export default class MoveToAnalysisButton extends React.Component {
     return true;
   }
 
-  moveToAnalysis(elementId, attachmentId) {
+  moveToAnalysis(elementId, attachmentId, variation) {
     const { elementType } = this.props;
     if (elementType === 'sample') {
       InboxFetcher.assignToSampleAnalysis(elementId, attachmentId)
@@ -92,7 +92,7 @@ export default class MoveToAnalysisButton extends React.Component {
         });
     }
     if (elementType === 'reaction') {
-      InboxFetcher.assignToReactionAnalysis(elementId, attachmentId)
+      InboxFetcher.assignToReactionAnalysis(elementId, attachmentId, variation)
         .then(() => {
           this.removeAttachment();
         }).catch((errorMessage) => {
@@ -143,14 +143,15 @@ export default class MoveToAnalysisButton extends React.Component {
         <Button
           variant="success"
           size="sm"
-          onClick={() => this.moveToAnalysis(element.id, attachment.id)}
+          onClick={() => this.moveToAnalysis(element.id, attachment.id, element.variation)}
         >
           <i className="fa fa-arrow-circle-right gap-1" aria-hidden="true" />
-          {element.short_label}
-          {' '}
-          {element.name}
-          {' '}
-          {element.type}
+          {[
+            element.short_label,
+            element.name,
+            element.type,
+            element.variation && `V${element.variation}`,
+          ].filter(Boolean).join(' ')}
         </Button>
         <br />
       </div>
