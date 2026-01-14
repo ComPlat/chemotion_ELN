@@ -11,7 +11,7 @@ import {
   OverlayTrigger,
   Tooltip,
 } from 'react-bootstrap';
-import { cloneDeep, findIndex, merge } from 'lodash';
+import { cloneDeep, findIndex, merge, unionBy } from 'lodash';
 import Immutable from 'immutable';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { GenInterface, GenToolbar, browseElement } from 'chem-generic-ui';
@@ -29,6 +29,7 @@ import Attachment from 'src/models/Attachment';
 import CopyElementModal from 'src/components/common/CopyElementModal';
 import { notification, renderFlowModal } from 'src/apps/generic/Utils';
 import GenericAttachments from 'src/components/generic/GenericAttachments';
+import GenericElWellplates from 'src/components/generic/wellplatesTab/GenericElWellplates';
 import { SegmentTabs } from 'src/components/generic/SegmentDetails';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
@@ -79,6 +80,8 @@ export default class GenericElDetails extends Component {
     this.handleExport = this.handleExport.bind(this);
     this.handleExpandAll = this.handleExpandAll.bind(this);
     this.setAttachmentDeleted = this.setAttachmentDeleted.bind(this);
+    this.dropWellplate = this.dropWellplate.bind(this);
+    this.deleteWellplate = this.deleteWellplate.bind(this);
   }
 
   componentDidMount() {
@@ -254,6 +257,25 @@ export default class GenericElDetails extends Component {
     else this.setState({ genericEl });
   }
 
+  dropWellplate(wellplate) {
+    const { genericEl } = this.state;
+    genericEl.changed = true;
+    genericEl.wellplates = unionBy(genericEl.wellplates || [], [wellplate], 'id');
+    this.setState({ genericEl });
+  }
+
+  deleteWellplate(wellplateId) {
+    const { genericEl } = this.state;
+    genericEl.changed = true;
+    const wellplates = genericEl.wellplates || [];
+    const wellplateIndex = wellplates.findIndex(wp => wp.id === wellplateId);
+    if (wellplateIndex > -1) {
+      wellplates.splice(wellplateIndex, 1);
+    }
+    genericEl.wellplates = wellplates;
+    this.setState({ genericEl });
+  }
+
   /**
    * Changes the visible segment tabs
    * @param visible {Array} List of all visible segment tabs
@@ -413,6 +435,22 @@ export default class GenericElDetails extends Component {
     );
   }
 
+  wellplatesTab(ind) {
+    const { genericEl } = this.state;
+    return (
+      <Tab eventKey={ind} title="Wellplates" key={`Wellplates_${genericEl.id}`}>
+        <ListGroupItem className="pb-4">
+          <GenericElWellplates
+            genericEl={genericEl}
+            wellplates={genericEl.wellplates || []}
+            dropWellplate={this.dropWellplate}
+            deleteWellplate={this.deleteWellplate}
+          />
+        </ListGroupItem>
+      </Tab>
+    );
+  }
+
   header(genericEl) {
     const iconClass =
       (genericEl.element_klass && genericEl.element_klass.icon_name) || '';
@@ -509,6 +547,7 @@ export default class GenericElDetails extends Component {
       properties: this.propertiesTab.bind(this),
       analyses: this.containersTab.bind(this),
       attachments: this.attachmentsTab.bind(this),
+      wellplates: this.wellplatesTab.bind(this),
     };
 
     const segTabs = SegmentTabs(genericEl, this.handleSegmentsChange);
