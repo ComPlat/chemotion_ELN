@@ -149,26 +149,34 @@ module Chemotion
           requires :search_string, type: String, desc: 'Search String'
         end
         get do
+          original = params[:search_string].to_s
+
+          variation = original[/-v(\d+)(?=\.[^.]+$|$)/, 1] # Handling for variations with "ReactionName-vi"
+          search_string = original.sub(/-v\d+(?=\.[^.]+$|$)/, '')
+
           reactions = InboxSearchElements.call(
-            search_string: params[:search_string],
+            search_string: search_string,
             current_user: current_user,
             element: :reaction,
           )
 
-          res = reactions.map do |r|
-            {
-              id: r.id,
-              name: r.name,
-              short_label: r.short_label,
-              type: '',
-            }
-          end
-          { reactions: res }
+          {
+            reactions: reactions.map do |r|
+              {
+                id: r.id,
+                name: r.name,
+                short_label: r.short_label,
+                type: '',
+                variation: variation,
+              }
+            end,
+          }
         end
 
         desc 'assign attachment to reaction'
         params do
           requires :attachment_id, type: Integer, desc: 'Attachment ID'
+          optional :variation, type: Integer, desc: 'Variation Number'
         end
         before do
           @reaction = Reaction.find(params[:reaction_id])
@@ -178,12 +186,10 @@ module Chemotion
         end
         post ':reaction_id' do
           analysis_name = @attachment.filename.chomp(File.extname(@attachment.filename))
-
           dataset = @reaction.container.analyses_container.create_analysis_with_dataset!(name: analysis_name)
-
           @attachment.update!(attachable: dataset)
-
           @link = "#{Rails.application.config.root_url}/mydb/collection/all/reaction/#{@reaction.id}"
+          @reaction.assign_attachment_to_variation(params[:variation], dataset.parent_id)
 
           Message.create_msg_notification(
             channel_subject: Channel::ASSIGN_INBOX_TO_SAMPLE,
