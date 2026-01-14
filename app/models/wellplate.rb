@@ -84,6 +84,9 @@ class Wellplate < ApplicationRecord
   has_many :research_plans_wellplates, dependent: :destroy
   has_many :research_plans, through: :research_plans_wellplates
 
+  has_many :elements_wellplates, dependent: :destroy
+  has_many :elements, through: :elements_wellplates
+
   has_many :sync_collections_users, through: :collections
 
   has_many :comments, as: :commentable, dependent: :destroy
