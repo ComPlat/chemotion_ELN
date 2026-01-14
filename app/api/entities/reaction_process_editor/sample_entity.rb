@@ -21,9 +21,7 @@ module Entities
       private
 
       def intermediate_type
-        ReactionsIntermediateSample
-          .find_by(sample: object)
-          &.intermediate_type
+        object.reactions_intermediate_samples.first&.intermediate_type
       end
 
       def target_amount

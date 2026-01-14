@@ -79,10 +79,10 @@ module Entities
           reaction_ids = Reaction.where(creator: reaction_process.creator).ids
 
           procedure_ids = ::ReactionProcessEditor::ReactionProcess.where(reaction_id: reaction_ids).ids
-          process_steps = ::ReactionProcessEditor::ReactionProcessStep.where(reaction_process_id: procedure_ids).all
-          process_step_names = process_steps.filter_map(&:name).uniq
+          process_step_names = ::ReactionProcessEditor::ReactionProcessStep.where(reaction_process_id: procedure_ids)
+                                                                           .pluck(:name)
 
-          process_step_names.map.with_index { |name, idx| { value: idx, label: name } }
+          process_step_names.uniq.map.with_index { |name, idx| { value: idx, label: name } }
         end
       end
     end

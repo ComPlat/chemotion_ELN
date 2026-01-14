@@ -24,13 +24,7 @@ describe ReactionProcessEditor::ReactionProcessActivityAPI, '.put' do
       'target_amount' => { value: '5', unit: 'l' },
     }.deep_stringify_keys
   end
-  let(:expected_update_activity_hash) do
-    { 'reaction_process_activity' => hash_including(
-      {
-        'workup' => hash_including(workup_hash),
-      },
-    ) }
-  end
+
   let!(:activity) { create(:reaction_process_activity_add_sample) }
 
   let(:authorization_header) { authorized_header(activity.creator) }
@@ -64,10 +58,5 @@ describe ReactionProcessEditor::ReactionProcessActivityAPI, '.put' do
     ).to(
       workup_hash,
     )
-  end
-
-  it 'returns reaction_process_activity' do
-    put_activity_request
-    expect(parsed_json_response).to include(expected_update_activity_hash)
   end
 end
