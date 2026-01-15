@@ -246,15 +246,23 @@ export default class Component extends Sample {
   }
 
   /**
-   * Sets the starting concentration and updates volume from existing amount.
-   * Keeps amount_mol as-is and derives amount_l using the new stock concentration.
+   * Sets the starting concentration and updates volume from existing amount, or
+   * calculates amount from volume if volume was entered first.
    * @param {{value: number, unit: string}} amount
    */
   handleStartingConcChange(amount) {
     this.setStartingConc(amount);
 
-    if (this.material_group === 'liquid' && (this.amount_mol ?? 0) > 0 && (this.starting_molarity_value ?? 0) > 0) {
-      this.calculateVolumeFromConcentration();
+    if (this.material_group === 'liquid' && (this.starting_molarity_value ?? 0) > 0) {
+      const purity = this.purity || 1.0;
+
+      if ((this.amount_l ?? 0) > 0) {
+        // If volume is already set, calculate amount from volume and concentration
+        this.calculateAmountFromConcentration(purity);
+      } else if ((this.amount_mol ?? 0) > 0) {
+        // Otherwise, if amount_mol is set, calculate volume from amount and concentration
+        this.calculateVolumeFromConcentration();
+      }
     }
   }
 
@@ -408,6 +416,7 @@ export default class Component extends Sample {
 
   /**
    * Handles changes to the density field.
+   * Calculates volume from amount if amount is set, or calculates amount from volume if volume is set.
    * @param {{ value: number, unit: string }} amount - The new density value.
    * @param {boolean} lockColumn - Whether the column is locked from editing.
    */
@@ -416,10 +425,16 @@ export default class Component extends Sample {
 
     this.setDensity(amount, lockColumn);
 
-    const purity = this.purity || 1.0;
+    if (this.material_group === 'liquid' && this.density > 0) {
+      const purity = this.purity || 1.0;
 
-    if (this.material_group === 'liquid' && (this.amount_mol ?? 0) > 0 && this.density > 0) {
-      this.calculateVolumeFromDensity(purity);
+      if ((this.amount_l ?? 0) > 0) {
+        // If volume is already set, calculate amount from volume and density
+        this.calculateAmountFromDensity(purity);
+      } else if ((this.amount_mol ?? 0) > 0) {
+        // Otherwise, if amount_mol is set, calculate volume from amount and density
+        this.calculateVolumeFromDensity(purity);
+      }
     }
   }
 
