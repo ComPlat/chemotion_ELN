@@ -29,6 +29,13 @@ class IndigoService
     @service_url = Rails.configuration.indigo_service.indigo_service_url
   end
 
+  # Checks if Indigo service is disabled
+  #
+  # @return [Boolean] True if service is disabled, false otherwise
+  def self.disabled?
+    Rails.configuration.indigo_service&.disabled? || false
+  end
+
   # Renders the chemical structure using the Indigo service.
   #
   # @return [String, nil] The rendered SVG (or other format), or nil if rendering fails.

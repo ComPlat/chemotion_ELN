@@ -97,7 +97,6 @@ module Chemotion
       )
         clear = true if false
         {
-          multipart: true,
           file: file,
           molfile: molfile.size > 10 ? molfile : false,
           clear: clear,
@@ -140,12 +139,13 @@ module Chemotion
         url = Rails.configuration.spectra.chemspectra.url
         api_endpoint = "#{url}/zip_jcamp_n_img"
 
-        File.open(file_path, 'r') do |file|
-          File.open(mol_path, 'r') do |molfile|
+        File.open(file_path, 'rb') do |file|
+          File.open(mol_path, 'rb') do |molfile|
             body = build_body(file, molfile, is_regen, params)
             response = HTTParty.post(
               api_endpoint,
               body: body,
+              multipart: true,
               timeout: 120
             )
           end
@@ -197,13 +197,13 @@ module Chemotion
         url = Rails.configuration.spectra.chemspectra.url
         api_endpoint = "#{url}/zip_image"
         
-        File.open(path, 'r') do |f|
+        File.open(path, 'rb') do |f|
           response = HTTParty.post(
             api_endpoint,
             body: {
-              multipart: true,
               file: f
-            }
+            },
+            multipart: true
           )
         end
         response
@@ -225,17 +225,17 @@ module Chemotion
         url = Rails.configuration.spectra.chemspectra.url
         api_endpoint = "#{url}/combine_images"
 
-        files_to_read = files.map { |fname| File.open(fname) }
+        files_to_read = files.map { |fname| File.open(fname, 'rb') }
         begin
           response = HTTParty.post(
             api_endpoint,
             body: {
-              multipart: true,
               files: files_to_read,
               jcamp_idx: curve_idx,
               list_file_names: list_file_names,
               extras: extras,
             },
+            multipart: true
           )
         ensure
           files_to_read.each(&:close)
@@ -268,7 +268,6 @@ module Chemotion
 
         def self.build_body(molfile, layout, peaks, shift, spectrum)
           {
-            multipart: true,
             molfile: molfile,
             layout: layout,
             peaks: peaks,
@@ -282,11 +281,12 @@ module Chemotion
           url = Rails.configuration.spectra.chemspectra.url
           api_endpoint = "#{url}/predict/by_peaks_form"
           
-          File.open(molfile.path, 'r') do |file|
+          File.open(molfile.path, 'rb') do |file|
             body = build_body(file, layout, peaks, shift, spectrum)
             response = HTTParty.post(
               api_endpoint,
-              body: body
+              body: body,
+              multipart: true
             )
           end
           response
@@ -304,7 +304,6 @@ module Chemotion
 
         def self.build_body(molfile, spectrum)
           {
-            multipart: true,
             molfile: molfile,
             spectrum: spectrum
           }
@@ -315,12 +314,13 @@ module Chemotion
           url = Rails.configuration.spectra.chemspectra.url
           api_endpoint = "#{url}/predict/infrared"
 
-          File.open(molfile.path, 'r') do |f_molfile|
-            File.open(spectrum.path, 'r') do |f_spectrum|
+          File.open(molfile.path, 'rb') do |f_molfile|
+            File.open(spectrum.path, 'rb') do |f_spectrum|
               body = build_body(f_molfile, f_spectrum)
               response = HTTParty.post(
                 api_endpoint,
-                body: body
+                body: body,
+                multipart: true
               )
             end
           end
@@ -339,7 +339,6 @@ module Chemotion
 
         def self.build_body(molfile, spectrum)
           {
-            multipart: true,
             molfile: molfile,
             spectrum: spectrum
           }
@@ -350,12 +349,13 @@ module Chemotion
           url = Rails.configuration.spectra.chemspectra.url
           api_endpoint = "#{url}/predict/ms"
           
-          File.open(molfile.path, 'r') do |f_molfile|
-            File.open(spectrum.path, 'r') do |f_spectrum|
+          File.open(molfile.path, 'rb') do |f_molfile|
+            File.open(spectrum.path, 'rb') do |f_spectrum|
               body = build_body(f_molfile, f_spectrum)
               response = HTTParty.post(
                 api_endpoint,
-                body: body
+                body: body,
+                multipart: true
               )
             end
           end
@@ -383,7 +383,6 @@ module Chemotion
         file, molfile
       )
         {
-          multipart: true,
           file: file,
           molfile: molfile.size > 10 ? molfile : false,
           simulatenmr: true,
@@ -397,12 +396,13 @@ module Chemotion
         url = Rails.configuration.spectra.chemspectra.url
         api_endpoint = "#{url}/zip_jcamp_n_img"
         
-        File.open(file_path, 'r') do |file|
-          File.open(mol_path, 'r') do |molfile|
+        File.open(file_path, 'rb') do |file|
+          File.open(mol_path, 'rb') do |molfile|
             body = build_body(file, molfile)
             response = HTTParty.post(
               api_endpoint,
               body: body,
+              multipart: true,
               timeout: 120,
             )
           end
@@ -433,13 +433,13 @@ module Chemotion
         url = Rails.configuration.spectra.chemspectra.url
         api_endpoint = "#{url}/nmrium"
         
-        File.open(path, 'r') do |f|
+        File.open(path, 'rb') do |f|
           response = HTTParty.post(
             api_endpoint,
             body: {
-              multipart: true,
               file: f
-            }
+            },
+            multipart: true
           )
         end
         response
