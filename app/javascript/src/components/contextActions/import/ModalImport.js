@@ -5,7 +5,7 @@ import {
 } from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import readXlsxFile from 'read-excel-file';
+import readXlsxFile, { readSheetNames } from 'read-excel-file';
 import { parse as parseSdf } from 'sdf-parser';
 
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -649,9 +649,27 @@ export default class ModalImport extends React.Component {
     }
   }
 
-  parseExcelFile(file) {
+  async parseExcelFile(file) {
     // Use read-excel-file which works in the browser
-    readXlsxFile(file).then((rows) => {
+    // First get sheet names to check for 'sample' or 'sample_chemicals' sheets
+    try {
+      let rows;
+      try {
+        const sheetNames = await readSheetNames(file);
+        // Determine which sheet to use (matching import_samples.rb logic)
+        if (sheetNames.includes('sample')) {
+          rows = await readXlsxFile(file, { sheet: 'sample' });
+        } else if (sheetNames.includes('sample_chemicals')) {
+          rows = await readXlsxFile(file, { sheet: 'sample_chemicals' });
+        } else {
+          // If neither sheet exists, read the first sheet (default behavior)
+          rows = await readXlsxFile(file);
+        }
+      } catch (sheetError) {
+        // Fallback: if sheet detection fails, just read the file normally
+        rows = await readXlsxFile(file);
+      }
+
       if (rows.length > 0) {
         // First row contains headers
         const headers = rows[0];
@@ -667,14 +685,14 @@ export default class ModalImport extends React.Component {
       } else {
         throw new Error('Excel file appears to be empty');
       }
-    }).catch((error) => {
+    } catch (error) {
       NotificationActions.add({
         title: 'Error',
         message: `Failed to parse Excel file: ${error.message}`,
         level: 'error',
         dismissible: true,
       });
-    });
+    }
   }
 
   parseSdfFile(file) {
@@ -972,89 +990,92 @@ export default class ModalImport extends React.Component {
       importButtonText = 'Import';
     }
     return (
-      <Modal show onHide={onHide}>
-        <Modal.Header closeButton>
-          <Modal.Title>
-            Import samples from file
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {this.dropzoneOrfilePreview()}
-          {importWithColumnMapping && showColumnMapping && (
-            <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-              {isProcessing && (
-                <div className="text-center my-3">
-                  <div className="spinner-border text-primary" role="status">
-                    <span className="visually-hidden">Loading...</span>
-                  </div>
-                  <p className="mt-2">Processing data, please wait...</p>
-                </div>
-              )}
-              <ColumnMappingComponent
-                columnNames={columnNames || []}
-                modelName={importAsChemical ? 'chemical' : 'sample'}
-                disabled={isProcessing}
-                initialMappedColumns={mappedColumns}
-                onMappedColumnsChange={(columns) => this.setState({ mappedColumns: columns })}
-              />
-            </div>
-          )}
-          {showValidation && (
-            <ValidationComponent
-              rowData={rowData || []}
-              onRowDataChange={(data) => this.setState({ rowData: data })}
-              columnDefs={columnDefs || []}
-              onValidate={(invalidRows, rowsData) => this.handleValidation(invalidRows, rowsData)}
-              onImport={() => this.handleImportData()}
-              onCancel={(updatedRowData) => this.handleCancelValidation(updatedRowData)}
-            />
-          )}
-          <ButtonToolbar className="justify-content-end mt-2 gap-1">
-            <Button variant="primary" onClick={() => onHide()}>Cancel</Button>
-            <Button
-              variant="warning"
-              onClick={() => this.handleClick()}
-              disabled={this.isDisabled() || isProcessing}
-            >
-              {importButtonText}
-            </Button>
-          </ButtonToolbar>
-        </Modal.Body>
-
-        {/* Validation Cancellation Confirmation Modal */}
-        <Modal
-          show={showCancelConfirmation}
-          onHide={() => this.dismissCancelConfirmation()}
-          backdrop="static"
-          keyboard={false}
-          size="md"
-          centered
-          dialogClassName="confirmation-modal-wider"
-        >
-          <Modal.Header>
-            <Modal.Title as="h5">Confirm Cancellation</Modal.Title>
+      <>
+        <style>{'.modal-import-dialog{min-width:550px;}'}</style>
+        <Modal show onHide={onHide} dialogClassName="modal-import-dialog">
+          <Modal.Header closeButton>
+            <Modal.Title>
+              Import samples from file
+            </Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <div className="d-flex align-items-center mb-3">
-              <i className="fa fa-exclamation-triangle text-warning me-2" style={{ fontSize: '1.5rem' }} />
-              <p className="mb-0">
-                Any edits made during validation will not be preserved.
-              </p>
-            </div>
-            <p className="text-muted small">
-              Cancelling validation will return you to the column mapping screen.
-            </p>
+            {this.dropzoneOrfilePreview()}
+            {importWithColumnMapping && showColumnMapping && (
+              <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                {isProcessing && (
+                  <div className="text-center my-3">
+                    <div className="spinner-border text-primary" role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
+                    <p className="mt-2">Processing data, please wait...</p>
+                  </div>
+                )}
+                <ColumnMappingComponent
+                  columnNames={columnNames || []}
+                  modelName={importAsChemical ? 'chemical' : 'sample'}
+                  disabled={isProcessing}
+                  initialMappedColumns={mappedColumns}
+                  onMappedColumnsChange={(columns) => this.setState({ mappedColumns: columns })}
+                />
+              </div>
+            )}
+            {showValidation && (
+              <ValidationComponent
+                rowData={rowData || []}
+                onRowDataChange={(data) => this.setState({ rowData: data })}
+                columnDefs={columnDefs || []}
+                onValidate={(invalidRows, rowsData) => this.handleValidation(invalidRows, rowsData)}
+                onImport={() => this.handleImportData()}
+                onCancel={(updatedRowData) => this.handleCancelValidation(updatedRowData)}
+              />
+            )}
+            <ButtonToolbar className="justify-content-end mt-2 gap-1">
+              <Button variant="primary" onClick={() => onHide()}>Cancel</Button>
+              <Button
+                variant="warning"
+                onClick={() => this.handleClick()}
+                disabled={this.isDisabled() || isProcessing}
+              >
+                {importButtonText}
+              </Button>
+            </ButtonToolbar>
           </Modal.Body>
-          <Modal.Footer className="d-flex flex-row justify-content-between">
-            <Button variant="primary" onClick={() => this.dismissCancelConfirmation()}>
-              Continue Validation
-            </Button>
-            <Button variant="secondary" onClick={() => this.confirmCancelValidation()}>
-              Return to Column Mapping
-            </Button>
-          </Modal.Footer>
+
+          {/* Validation Cancellation Confirmation Modal */}
+          <Modal
+            show={showCancelConfirmation}
+            onHide={() => this.dismissCancelConfirmation()}
+            backdrop="static"
+            keyboard={false}
+            size="md"
+            centered
+            dialogClassName="confirmation-modal-wider"
+          >
+            <Modal.Header>
+              <Modal.Title as="h5">Confirm Cancellation</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <div className="d-flex align-items-center mb-3">
+                <i className="fa fa-exclamation-triangle text-warning me-2" style={{ fontSize: '1.5rem' }} />
+                <p className="mb-0">
+                  Any edits made during validation will not be preserved.
+                </p>
+              </div>
+              <p className="text-muted small">
+                Cancelling validation will return you to the column mapping screen.
+              </p>
+            </Modal.Body>
+            <Modal.Footer className="d-flex flex-row justify-content-between">
+              <Button variant="primary" onClick={() => this.dismissCancelConfirmation()}>
+                Continue Validation
+              </Button>
+              <Button variant="secondary" onClick={() => this.confirmCancelValidation()}>
+                Return to Column Mapping
+              </Button>
+            </Modal.Footer>
+          </Modal>
         </Modal>
-      </Modal>
+      </>
     );
   }
 }

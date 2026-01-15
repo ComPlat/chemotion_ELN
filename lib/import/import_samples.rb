@@ -46,6 +46,8 @@ module Import
       rescue StandardError => e
         return error_required_fields(e.message)
       end
+      # a flag is set to determine which sheet (sample_component, sample, or chemical_sample) is under processing
+      xlsx.default_sheet = xlsx.sheets.include?('sample_components') ? xlsx.sheets.first : xlsx.default_sheet
 
       begin
         process_all_rows
@@ -57,9 +59,25 @@ module Import
     def read_file
       file = @attachment.attachment_attacher.get.to_io
       @xlsx = Roo::Spreadsheet.open(file, extension: @attachment.extname)
-      @sheet = xlsx.sheet(0)
+      set_main_sheet
       @header = sheet.row(1)
 
+      load_component_sheet_if_exists
+    end
+
+    # Select the primary sheet (sample or sample_chemicals)
+    def set_main_sheet
+      @sheet = if xlsx.sheets.include?('sample')
+                 xlsx.sheet('sample')
+               elsif xlsx.sheets.include?('sample_chemicals')
+                 xlsx.sheet('sample_chemicals')
+               else
+                 xlsx.sheet(xlsx.sheets.first)
+               end
+    end
+
+    # Load the component sheet and headers when present
+    def load_component_sheet_if_exists
       return unless xlsx.sheets.include?('sample_components')
 
       # Get the sheet containing the sample components, if it exists
@@ -569,7 +587,6 @@ module Import
       rescue StandardError => _e
         raise 'More than 1 row can not be processed' if unprocessable_count.positive?
       end
-      xlsx.default_sheet = xlsx.sheets.first
     end
 
     def determine_sheet(xlsx)
@@ -596,9 +613,6 @@ module Import
 
     def process_all_rows
       (2..sheet.last_row).each do |data|
-        # a flag is set to determine which sheet is under processing
-        xlsx.default_sheet = xlsx.sheets.first
-
         process_row(data)
       end
 
