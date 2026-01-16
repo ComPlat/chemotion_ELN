@@ -13,6 +13,7 @@ module Entities
       expose! :products,                                                                using: 'Entities::ReactionMaterialEntity'
       expose! :purification_solvents, anonymize_with: [],                               using: 'Entities::ReactionMaterialEntity'
       expose! :reactants,                                                               using: 'Entities::ReactionMaterialEntity'
+      expose! :reactant_sbmm_samples, anonymize_with: [],                               using: 'Entities::ReactionSbmmMaterialEntity'
       expose! :role
       expose! :solvents,                                                                using: 'Entities::ReactionMaterialEntity'
       expose! :starting_materials,                                                      using: 'Entities::ReactionMaterialEntity'
@@ -84,6 +85,10 @@ module Entities
 
     def reactants
       displayed_in_list? ? [] : object.reactions_reactant_samples
+    end
+
+    def reactant_sbmm_samples
+      displayed_in_list? ? [] : object.reactions_reactant_sbmm_samples
     end
 
     def segments
