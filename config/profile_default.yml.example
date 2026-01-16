@@ -17,6 +17,8 @@ development:
         2
       :attachments:
         3
+      :wellplates:
+        -4
     :layout_detail_research_plan:
       :research_plan:
         1
@@ -130,6 +132,8 @@ production:
         2
       :attachments:
         3
+      :wellplates:
+        -4
     :layout_detail_research_plan:
       :research_plan:
         1
@@ -243,6 +247,8 @@ test:
         3
       :analyses:
         2
+      :wellplates:
+        -4
     :layout_detail_research_plan:
       :research_plan:
         1

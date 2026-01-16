@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Accordion } from 'react-bootstrap';
+import { Accordion, Button } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import { DropTarget } from 'react-dnd';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
@@ -33,6 +33,15 @@ class GenericElWellplates extends Component {
       selectedWellplates: [],
     };
     this.handleSelect = this.handleSelect.bind(this);
+    this.processWellplates = this.processWellplates.bind(this);
+  }
+
+  processWellplates() {
+    const { selectedWellplates } = this.state;
+    const { wellplates } = this.props;
+    const selected = wellplates.filter((wp) => selectedWellplates.includes(wp.id));
+    // TODO: Implement processing logic
+    console.log('Processing wellplates:', selected);
   }
 
   handleSelect(wellplateId, isChecked) {
@@ -72,6 +81,17 @@ class GenericElWellplates extends Component {
             />
           ))}
         </Accordion>
+         {selectedWellplates.length > 0 && (
+          <div className="mt-3">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={this.processWellplates}
+            >
+              Process Selected ({selectedWellplates.length})
+            </Button>
+          </div>
+        )}
       </div>
     );
   }
