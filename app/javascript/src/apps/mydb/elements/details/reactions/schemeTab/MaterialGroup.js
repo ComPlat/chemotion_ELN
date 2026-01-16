@@ -19,6 +19,7 @@ import { DragDropItemTypes } from 'src/utilities/DndConst';
 import ReorderableMaterialContainer
   from 'src/apps/mydb/elements/details/reactions/schemeTab/ReorderableMaterialContainer';
 import CreateButton from 'src/components/common/CreateButton';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 const headers = {
   ref: 'Ref',
@@ -39,7 +40,7 @@ const headers = {
 function MaterialGroup({
   materials, materialGroup, deleteMaterial, onChange,
   showLoadingColumn, reaction, headIndex,
-  dropMaterial, dropSample, switchEquiv, lockEquivColumn, displayYieldField,
+  dropMaterial, dropSample, dropSbmmSample, switchEquiv, lockEquivColumn, displayYieldField,
   switchYield
 }) {
   const getMaterialComponent = ({
@@ -76,6 +77,19 @@ function MaterialGroup({
     }
     if (item.type === DragDropItemTypes.MOLECULE) {
       dropSample(item.element, materials.at(index), materialGroup, null, true);
+    }
+    if (item.type === DragDropItemTypes.SEQUENCE_BASED_MACROMOLECULE_SAMPLE) {
+      // Handle SBMM drop - only for reactants group
+      if (materialGroup === 'reactants' && dropSbmmSample) {
+        dropSbmmSample(item.element, materials.at(index), materialGroup);
+      } else {
+        // Show notification if trying to drop SBMM into other groups
+        NotificationActions.add({
+          title: 'Invalid drop location',
+          message: 'SBMM samples can only be added to the Reactants group.',
+          level: 'warning'
+        });
+      }
     }
   };
 
