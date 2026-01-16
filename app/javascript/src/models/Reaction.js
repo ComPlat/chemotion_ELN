@@ -891,6 +891,7 @@ export default class Reaction extends Element {
   hasMaterials() {
     return this.starting_materials.length > 0
       || this.reactants.length > 0
+      || this.reactant_sbmm_samples.length > 0
       || this.solvents.length > 0
       || this.products.length > 0;
   }
