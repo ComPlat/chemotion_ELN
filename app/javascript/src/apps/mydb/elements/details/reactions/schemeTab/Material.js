@@ -1242,7 +1242,7 @@ class Material extends Component {
       molecularWeight = sample.molecule && sample.molecule.molecular_weight;
     }
 
-    if (sample.isMixture && sample.isMixture() && sample.reference_relative_molecular_weight) {
+    if (sample.isMixture?.() && sample.reference_relative_molecular_weight) {
       molecularWeight = sample.reference_relative_molecular_weight.toFixed(4);
     }
     let theoreticalMassPart = '';
