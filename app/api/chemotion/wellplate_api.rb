@@ -306,7 +306,7 @@ module Chemotion
 
           desc 'Update wellplates for a generic element'
           params do
-            requires :wellplate_ids, type: Array[Integer], desc: 'Wellplate IDs'
+            requires :wellplate_ids, type: Array, desc: 'Wellplate IDs'
           end
           put do
             element = Labimotion::Element.find(params[:element_id])
@@ -316,7 +316,9 @@ module Chemotion
             new_ids = params[:wellplate_ids] || []
 
             ids_to_remove = current_ids - new_ids
-            ElementsWellplate.where(element_id: element.id, wellplate_id: ids_to_remove).destroy_all if ids_to_remove.any?
+            if ids_to_remove.any?
+              ElementsWellplate.where(element_id: element.id, wellplate_id: ids_to_remove).destroy_all
+            end
 
             ids_to_add = new_ids - current_ids
             ids_to_add.each do |wellplate_id|
