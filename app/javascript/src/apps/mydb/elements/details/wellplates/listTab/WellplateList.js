@@ -38,13 +38,40 @@ const WellplateList = ({ wells, readoutTitles, handleWellsChange }) => {
 
     return sample.molecule_formula;
   }
+  
+  const renderMolarity = (node) => {
+    const sample = node.data?.sample;
+    if (!sample) { return null; }
+
+    const value = sample?.molarity_value;
+    if (value === null || value === undefined || value === '') {
+      return '';
+    }
+
+    const formatted = parseFloat(value.toFixed(4));
+
+    return (
+      <div className="d-flex align-items-center">
+        <span className="flex-grow-1">{formatted}</span>
+        <span className="btn btn-light btn-sm px-2 d-flex align-items-center align-self-stretch rounded-0 border-0 border-start">
+          M
+        </span>
+      </div>
+    );
+  };
 
   const updateRow = useCallback(({ data: oldRow, colDef, newValue }) => {
     const { field, cellRendererParams } = colDef;
     if (!oldRow.sample) { return null }
 
     const wellIndex = wellsList.indexOf(oldRow);
-    wellsList[wellIndex].readouts[cellRendererParams.index][field] = newValue;
+    
+    if (field === 'molarity_value') {
+      wellsList[wellIndex].sample.molarity_value = newValue;
+    } else {
+      wellsList[wellIndex].readouts[cellRendererParams.index][field] = newValue;
+    }
+    
     setWellsList(wellsList);
     handleWellsChange(wellsList);
   }, [wellsList, readoutTitles]);
@@ -91,6 +118,23 @@ const WellplateList = ({ wells, readoutTitles, handleWellsChange }) => {
       wrapText: true,
       cellClass: ["lh-base", "py-2", "border-end"],
     },
+    {
+      headerName: 'Molarity (M)',
+      field: 'molarity_value',
+      editable: (params) => params.data.sample,
+      valueGetter: (params) => {
+        if (params.data?.sample) {
+          return params.data.sample.molarity_value;
+        }
+      },
+      valueParser: (params) => {
+        const val = parseFloat(params.newValue);
+        return Number.isNaN(val) || val < 0.0 ? undefined : val;
+      },
+      cellRenderer: renderMolarity,
+      wrapText: true,
+      cellClass: ['editable-cell', 'border-end', 'px-2'],
+    }
   ];
 
   readoutTitles && readoutTitles.map((title, index) => {
