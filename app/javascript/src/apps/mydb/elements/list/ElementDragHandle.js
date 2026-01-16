@@ -122,7 +122,8 @@ function ElementDragHandle({ element, sourceType: sourceTypeProp }) {
       case DragDropItemTypes.ELEMENT:
         return useDnD(currentElement, genericEls);
       case DragDropItemTypes.WELLPLATE:
-        return ['screen', 'research_plan'].includes(currentElementType) || useDnD(currentElement, genericEls);
+        return ['screen', 'research_plan', ...genericEls.map((el) => el.name)].includes(currentElementType)
+          || useDnD(currentElement, genericEls);
       case DragDropItemTypes.SCREEN:
         return useDnD(currentElement, genericEls);
       case DragDropItemTypes.REACTION:

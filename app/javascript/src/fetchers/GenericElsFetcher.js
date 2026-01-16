@@ -57,7 +57,11 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
         if (json.error) {
           genericEl.type = null;
         }
-        return genericEl;
+        // Fetch wellplates for this element
+        return this.fetchWellplates(id).then((wellplatesData) => {
+          genericEl.wellplates = wellplatesData?.wellplates || [];
+          return genericEl;
+        });
       })
       .catch((errorMessage) => {
         console.log(errorMessage);
@@ -163,7 +167,8 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
         'Element',
         true,
         true
-      ).then(() => this.fetchById(json.element.id)))
+      ).then(() => this.updateWellplates(json.element.id, genericEl.wellplateIDs || []))
+        .then(() => this.fetchById(json.element.id)))
       .catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -249,5 +254,31 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
 
   static uploadKlass(params) {
     return this.execData(params, 'upload_klass');
+  }
+
+  static updateWellplates(elementId, wellplateIds) {
+    return fetch(`/api/v1/wellplates/by_generic_element/${elementId}`, {
+      credentials: 'same-origin',
+      method: 'put',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ wellplate_ids: wellplateIds }),
+    })
+      .then((response) => response.json())
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  static fetchWellplates(elementId) {
+    return fetch(`/api/v1/wellplates/by_generic_element/${elementId}`, {
+      credentials: 'same-origin',
+    })
+      .then((response) => response.json())
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
   }
 }
