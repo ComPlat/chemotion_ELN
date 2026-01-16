@@ -8,8 +8,10 @@ import 'moment-precise-range-plugin';
 
 import Element from 'src/models/Element';
 import Sample from 'src/models/Sample';
+import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';
 import Component from 'src/models/Component';
 import Container from 'src/models/Container';
+import { isSbmmSample } from 'src/utilities/ElementUtils';
 
 import UserStore from 'src/stores/alt/stores/UserStore';
 import Segment from 'src/models/Segment';
@@ -136,6 +138,7 @@ export default class Reaction extends Element {
       purification: '',
       purification_solvents: [],
       reactants: [],
+      reactant_sbmm_samples: [],
       rf_value: 0.00,
       role: '',
       user_labels: [],
@@ -202,7 +205,8 @@ export default class Reaction extends Element {
         reactants: this.reactants.map((s) => s.serializeMaterial()),
         solvents: this.solvents.map((s) => s.serializeMaterial()),
         purification_solvents: this.purification_solvents.map((s) => s.serializeMaterial()),
-        products: this.products.map((s) => s.serializeMaterial())
+        products: this.products.map((s) => s.serializeMaterial()),
+        reactant_sbmm_samples: (this.reactant_sbmm_samples || []).map((s) => s.serializeSbmmMaterial())
       },
       name: this.name,
       observation: this.observation,
@@ -440,6 +444,14 @@ export default class Reaction extends Element {
     this._reactants = this._coerceToSamples(samples);
   }
 
+  get reactant_sbmm_samples() {
+    return this._reactant_sbmm_samples || [];
+  }
+
+  set reactant_sbmm_samples(samples) {
+    this._reactant_sbmm_samples = this._coerceToSbmmSamples(samples);
+  }
+
   get products() {
     return this._products;
   }
@@ -579,15 +591,23 @@ export default class Reaction extends Element {
       material.weight_percentage_reference = false;
       WeightPercentageReactionActions.setWeightPercentageReference(null);
       WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(null);
-      const refMaterial = [...this.starting_materials, ...this.reactants].filter(
+      const allReactants = [...this.starting_materials, ...this.reactants, ...(this.reactant_sbmm_samples || [])];
+      const refMaterial = allReactants.filter(
         (m) => m.reference === true
       )[0];
+
+      const getMolAmount = (item) => (isSbmmSample(item) ? item.amount_as_used_mol_value : item.amount_mol) ?? 0;
+
+      const refAmountMol = getMolAmount(refMaterial) || 1;
+
       // reset all weight percentage to null, since there is no weight percentage reference assigned
-      [...this.starting_materials, ...this.reactants].forEach((m) => {
+      allReactants.forEach((m) => {
         m.weight_percentage = null;
+        const amountMol = getMolAmount(m);
+
         // assign equivalent based on reference material (guard against missing ref)
-        if (refMaterial && Number.isFinite(refMaterial.amount_mol) && Number.isFinite(m.amount_mol)) {
-          m.equivalent = m.amount_mol / refMaterial.amount_mol;
+        if (refMaterial && Number.isFinite(refAmountMol) && refAmountMol > 0 && Number.isFinite(amountMol)) {
+          m.equivalent = amountMol / refAmountMol;
         } else {
           m.equivalent = null;
         }
@@ -666,6 +686,7 @@ export default class Reaction extends Element {
       }
     } else if (
       newGroup === 'reactants'
+      || newGroup === 'reactant_sbmm_samples'
       || newGroup === 'solvents'
       || newGroup === 'purification_solvents'
     ) {
@@ -697,6 +718,13 @@ export default class Reaction extends Element {
   }
 
   shortLabelPolicy(material, oldGroup, newGroup) {
+    // For SBMM samples, preserve their original short_label (like starting_materials)
+    const isSbmm = isSbmmSample(material);
+    if (isSbmm && newGroup === 'reactant_sbmm_samples') {
+      // Preserve original short_label for SBMM samples - don't override it
+      return;
+    }
+
     if (oldGroup) {
       // Save previous short_label
       material[`short_label_${oldGroup}`] = material.short_label;
@@ -729,6 +757,13 @@ export default class Reaction extends Element {
 
   namePolicy(material, oldGroup, newGroup) {
     this.rebuildProductName();
+
+    // For SBMM samples, preserve their original name (like starting_materials)
+    const isSbmm = isSbmmSample(material);
+    if (isSbmm && newGroup === 'reactant_sbmm_samples') {
+      // Preserve original name for SBMM samples - don't override it
+      return;
+    }
 
     if (oldGroup && oldGroup === 'products') {
       // Blank name if FROM "products"
@@ -773,6 +808,17 @@ export default class Reaction extends Element {
 
   _coerceToSamples(samples) {
     return samples && samples.map((s) => new Sample(s)) || [];
+  }
+
+  _coerceToSbmmSamples(samples) {
+    if (!samples) return [];
+
+    return samples.map((s) => {
+      if (s instanceof SequenceBasedMacromoleculeSample) {
+        return s;
+      }
+      return new SequenceBasedMacromoleculeSample(s);
+    });
   }
 
   sampleById(sampleID) {

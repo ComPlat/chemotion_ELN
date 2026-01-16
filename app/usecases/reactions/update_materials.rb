@@ -39,6 +39,22 @@ class OSample < OpenStruct
   end
 end
 
+# SBMM Sample Structure
+class OSbmmSample < OpenStruct
+  def initialize(data)
+    data['show_label'] = false if data['show_label'].blank?
+    super
+  end
+
+  def is_new
+    to_boolean super
+  end
+
+  def to_boolean(string)
+    !!"#{string}".match(/^(true|t|yes|y|1)$/i)
+  end
+end
+
 module Usecases
   module Reactions
     class UpdateMaterials
@@ -54,6 +70,7 @@ module Usecases
           solvent: Array(materials['solvents']).map { |m| OSample.new(m) },
           purification_solvent: Array(materials['purification_solvents']).map { |m| OSample.new(m) },
           product: Array(materials['products']).map { |m| OSample.new(m) },
+          reactant_sbmm: Array(materials['reactant_sbmm_samples'] || []).map { |m| OSbmmSample.new(m) }
         }
         @current_user = user
         @vessel_size = vessel_size
@@ -78,44 +95,62 @@ module Usecases
         end
         ActiveRecord::Base.transaction do
           modified_sample_ids = []
+          modified_sbmm_ids = []
           @materials.each do |material_group, samples|
             material_group = material_group.to_s
-            fixed_label = material_group if %w[reactant solvent].include?(material_group)
-            samples.each_with_index do |sample, idx|
-              sample.position = idx if sample.position.nil?
-              sample.reference = false if material_group == 'solvent' && sample.reference == true
-              if sample.is_new
-                if sample.parent_id && material_group != 'product'
-                  modified_sample = create_sub_sample(
+            if material_group == 'reactant_sbmm'
+              # Handle SBMM samples
+              samples.each_with_index do |sbmm_data, idx|
+                sbmm_data.position = idx if sbmm_data.position.nil?
+
+                if sbmm_data.is_new
+                  modified_sbmm = create_sub_sbmm_sample(sbmm_data)
+                else
+                  modified_sbmm = update_existing_sbmm_sample(sbmm_data)
+                end
+
+                modified_sbmm_ids << modified_sbmm.id
+                associate_sbmm_with_reaction(sbmm_data, modified_sbmm)
+              end
+            else
+              fixed_label = material_group if %w[reactant solvent].include?(material_group)
+              samples.each_with_index do |sample, idx|
+                sample.position = idx if sample.position.nil?
+                sample.reference = false if material_group == 'solvent' && sample.reference == true
+                if sample.is_new
+                  if sample.parent_id && material_group != 'product'
+                    modified_sample = create_sub_sample(
+                      sample,
+                      fixed_label,
+                      weight_percentage_ref_record_target_amount,
+                    )
+                  else
+                    modified_sample = create_new_sample(sample, fixed_label, weight_percentage_ref_record_target_amount)
+                  end
+                else
+                  modified_sample = update_existing_sample(
                     sample,
                     fixed_label,
                     weight_percentage_ref_record_target_amount,
                   )
-                else
-                  modified_sample = create_new_sample(sample, fixed_label, weight_percentage_ref_record_target_amount)
                 end
-              else
-                modified_sample = update_existing_sample(
-                  sample,
-                  fixed_label,
-                  weight_percentage_ref_record_target_amount,
-                )
-              end
 
-              if sample.components.present? && sample.sample_type == Sample::SAMPLE_TYPE_MIXTURE
-                Usecases::Components::Create.new(modified_sample, sample.components).execute!
-              end
+                if sample.components.present? && sample.sample_type == Sample::SAMPLE_TYPE_MIXTURE
+                  Usecases::Components::Create.new(modified_sample, sample.components).execute!
+                end
 
-              if sample.segments
-                modified_sample.save_segments(segments: sample.segments,
-                                              current_user_id: @current_user.id)
-              end
-              modified_sample_ids << modified_sample.id
+                if sample.segments
+                  modified_sample.save_segments(segments: sample.segments,
+                                                current_user_id: @current_user.id)
+                end
+                modified_sample_ids << modified_sample.id
 
-              associate_sample_with_reaction(sample, modified_sample, material_group)
-            end
+                associate_sample_with_reaction(sample, modified_sample, material_group)
+                end
+              end
           end
           destroy_unused_samples(modified_sample_ids)
+          destroy_unused_sbmm_samples(modified_sbmm_ids)
         end
         @reaction.reload
         @reaction.save! # to update the SVG
@@ -298,6 +333,92 @@ module Usecases
         current_sample_ids = @reaction.reactions_samples.pluck(:sample_id)
         sample_ids_to_delete = current_sample_ids - modified_sample_ids
         Sample.where(id: sample_ids_to_delete).destroy_all
+      end
+
+      def destroy_unused_sbmm_samples(modified_sbmm_ids)
+        current_sbmm_ids = @reaction.reactions_reactant_sbmm_samples.pluck(:sequence_based_macromolecule_sample_id)
+        sbmm_ids_to_delete = current_sbmm_ids - modified_sbmm_ids
+        SequenceBasedMacromoleculeSample.where(id: sbmm_ids_to_delete).destroy_all
+      end
+
+      def create_sub_sbmm_sample(sbmm_data)
+        parent_sbmm = SequenceBasedMacromoleculeSample.find(sbmm_data.parent_id)
+        modified_sbmm = parent_sbmm.create_sub_sequence_based_macromolecule_sample(
+          @current_user,
+          @reaction.collections.pluck(:id)
+        )
+
+        # Update with reaction-specific data
+        modified_sbmm.update!(
+          name: sbmm_data.name,
+          external_label: sbmm_data.external_label,
+          amount_as_used_mass_value: sbmm_data.amount_as_used_mass_value,
+          amount_as_used_mass_unit: sbmm_data.amount_as_used_mass_unit,
+          amount_as_used_mol_value: sbmm_data.amount_as_used_mol_value,
+          amount_as_used_mol_unit: sbmm_data.amount_as_used_mol_unit,
+          volume_as_used_value: sbmm_data.volume_as_used_value,
+          volume_as_used_unit: sbmm_data.volume_as_used_unit,
+          activity_value: sbmm_data.activity_value,
+          activity_unit: sbmm_data.activity_unit,
+          activity_per_volume_value: sbmm_data.activity_per_volume_value,
+          activity_per_volume_unit: sbmm_data.activity_per_volume_unit,
+          activity_per_mass_value: sbmm_data.activity_per_mass_value,
+          activity_per_mass_unit: sbmm_data.activity_per_mass_unit,
+          concentration_value: sbmm_data.concentration_value,
+          concentration_unit: sbmm_data.concentration_unit,
+          molarity_value: sbmm_data.molarity_value,
+          molarity_unit: sbmm_data.molarity_unit,
+          purity: sbmm_data.purity,
+        )
+
+        modified_sbmm
+      end
+
+      def update_existing_sbmm_sample(sbmm_data)
+        existing_sbmm = SequenceBasedMacromoleculeSample.find(sbmm_data.id)
+        existing_sbmm.update!(
+          name: sbmm_data.name,
+          external_label: sbmm_data.external_label,
+          amount_as_used_mass_value: sbmm_data.amount_as_used_mass_value,
+          amount_as_used_mass_unit: sbmm_data.amount_as_used_mass_unit,
+          amount_as_used_mol_value: sbmm_data.amount_as_used_mol_value,
+          amount_as_used_mol_unit: sbmm_data.amount_as_used_mol_unit,
+          volume_as_used_value: sbmm_data.volume_as_used_value,
+          volume_as_used_unit: sbmm_data.volume_as_used_unit,
+          activity_value: sbmm_data.activity_value,
+          activity_unit: sbmm_data.activity_unit,
+          activity_per_volume_value: sbmm_data.activity_per_volume_value,
+          activity_per_volume_unit: sbmm_data.activity_per_volume_unit,
+          activity_per_mass_value: sbmm_data.activity_per_mass_value,
+          activity_per_mass_unit: sbmm_data.activity_per_mass_unit,
+          concentration_value: sbmm_data.concentration_value,
+          concentration_unit: sbmm_data.concentration_unit,
+          molarity_value: sbmm_data.molarity_value,
+          molarity_unit: sbmm_data.molarity_unit,
+          purity: sbmm_data.purity,
+        )
+        existing_sbmm
+      end
+
+      def associate_sbmm_with_reaction(sbmm_data, modified_sbmm)
+        existing_association = ReactionsReactantSbmmSample.find_by(
+          reaction_id: @reaction.id,
+          sequence_based_macromolecule_sample_id: modified_sbmm.id
+        )
+
+        if existing_association
+          existing_association.update!(
+            show_label: sbmm_data.show_label || false,
+            position: sbmm_data.position,
+          )
+        else
+          ReactionsReactantSbmmSample.create!(
+            sequence_based_macromolecule_sample_id: modified_sbmm.id,
+            reaction_id: @reaction.id,
+            show_label: sbmm_data.show_label || false,
+            position: sbmm_data.position,
+          )
+        end
       end
 
       def rangebound(lower, upper)

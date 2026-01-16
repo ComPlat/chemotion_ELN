@@ -10,6 +10,8 @@ import MaterialGroup from 'src/apps/mydb/elements/details/reactions/schemeTab/Ma
 import Sample from 'src/models/Sample';
 import Reaction from 'src/models/Reaction';
 import Molecule from 'src/models/Molecule';
+import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';
+import { isSbmmSample } from 'src/utilities/ElementUtils';
 import ReactionDetailsMainProperties from 'src/apps/mydb/elements/details/reactions/ReactionDetailsMainProperties';
 import ReactionDetailsPurification from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsPurification';
 import ReactionConditions from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionConditions';
@@ -70,6 +72,7 @@ export default class ReactionDetailsScheme extends React.Component {
     this.addSampleTo = this.addSampleTo.bind(this);
     this.dropMaterial = this.dropMaterial.bind(this);
     this.dropSample = this.dropSample.bind(this);
+    this.dropSbmmSample = this.dropSbmmSample.bind(this);
     this.switchEquiv = this.switchEquiv.bind(this);
     this.switchYield = this.switchYield.bind(this);
     this.updateTextTemplates = this.updateTextTemplates.bind(this);
@@ -187,6 +190,66 @@ export default class ReactionDetailsScheme extends React.Component {
     }
   }
 
+  dropSbmmSample(srcSbmmSample, tagMaterial) {
+    const { reaction, onReactionChange } = this.props;
+
+    // Create a split copy (like buildChildWithoutCounter for samples)
+    const splitSbmmSample = srcSbmmSample.buildChildWithoutCounter();
+
+    // Set reaction-specific properties
+    splitSbmmSample.show_label = true; // Similar to how samples handle decoupled
+
+    // Check if already in the group (by original ID or short_label)
+    const isAlreadyAdded = reaction.reactant_sbmm_samples?.some(
+      s => s.id === splitSbmmSample.id ||
+           (s.parent_id === srcSbmmSample.id && s.short_label === splitSbmmSample.short_label)
+    );
+
+    if (isAlreadyAdded) {
+      NotificationActions.add({
+        title: 'SBMM sample already added',
+        message: `${srcSbmmSample.name} is already in this reaction.`,
+        level: 'warning'
+      });
+      return;
+    }
+
+    // Add the SPLIT copy to reaction's reactant_sbmm_samples array
+    reaction.addMaterialAt(splitSbmmSample, null, tagMaterial, 'reactant_sbmm_samples');
+
+    // Debug: verify the SBMM was added
+    console.log('After addMaterialAt:', {
+      sbmmCount: reaction.reactant_sbmm_samples?.length,
+      sbmmSamples: reaction.reactant_sbmm_samples,
+      reactionId: reaction.id,
+      splitSbmmId: splitSbmmSample.id,
+      reactionChanged: reaction.changed
+    });
+
+    // Mark reaction as changed and update max amounts
+    // handleReactionChange will also set reaction.changed = true and update state
+    reaction.changed = true;
+    reaction.updateMaxAmountOfProducts();
+
+    console.log('dropSbmmSample - Before onReactionChange:', {
+      reactionChanged: reaction.changed,
+      sbmmCount: reaction.reactant_sbmm_samples?.length,
+      reactionId: reaction.id
+    });
+
+    // onReactionChange will update state and trigger re-render
+    // This will cause the Save button to appear when reaction.changed is true
+    onReactionChange(reaction, { updateGraphic: true });
+
+    console.log('dropSbmmSample - After onReactionChange:', {
+      reactionChanged: reaction.changed,
+      sbmmCount: reaction.reactant_sbmm_samples?.length
+    });
+
+    // The split SBMM sample is created and join record is created automatically
+    // when reaction is saved through the normal UpdateMaterials usecase
+  }
+
   onChangeRole(e) {
     const { onInputChange } = this.props;
     const value = e && e.value;
@@ -286,13 +349,22 @@ export default class ReactionDetailsScheme extends React.Component {
 
   deleteMaterial(material, materialGroup) {
     const { reaction, onReactionChange } = this.props;
-    reaction.deleteMaterial(material, materialGroup);
+
+    // Check if this is an SBMM sample and delete from the correct array
+    if (materialGroup === 'reactants' && isSbmmSample(material)) {
+      reaction.deleteMaterial(material, 'reactant_sbmm_samples');
+    } else {
+      reaction.deleteMaterial(material, materialGroup);
+    }
 
     // only reference of 'starting_materials' or 'reactants' triggers updatedReactionForReferenceChange
     // only when reaction.referenceMaterial not exist triggers updatedReactionForReferenceChange
     const referenceRelatedGroup = ['starting_materials', 'reactants'];
     if (referenceRelatedGroup.includes(materialGroup) && (!reaction.referenceMaterial)) {
-      if (reaction[materialGroup].length === 0) {
+      const materialsArray = materialGroup === 'reactants'
+        ? [...(reaction.reactants || []), ...(reaction.reactant_sbmm_samples || [])]
+        : reaction[materialGroup];
+      if (materialsArray.length === 0) {
         const refMaterialGroup = materialGroup === 'starting_materials' ? 'reactants' : 'starting_materials';
         if (reaction[refMaterialGroup].length > 0) {
           const event = {
@@ -1878,12 +1950,13 @@ export default class ReactionDetailsScheme extends React.Component {
           <MaterialGroup
             reaction={reaction}
             materialGroup="reactants"
-            materials={reaction.reactants}
+            materials={[...(reaction.reactants || []), ...(reaction.reactant_sbmm_samples || [])]}
             dropMaterial={this.dropMaterial}
             deleteMaterial={
               (material, materialGroup) => this.deleteMaterial(material, materialGroup)
             }
             dropSample={this.dropSample}
+            dropSbmmSample={this.dropSbmmSample}
             showLoadingColumn={!!reaction.hasPolymers()}
             onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
             switchEquiv={this.switchEquiv}

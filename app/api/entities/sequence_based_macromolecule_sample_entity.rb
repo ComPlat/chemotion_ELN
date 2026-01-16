@@ -26,6 +26,8 @@ module Entities
     expose! :amount_as_used_mass_unit
     expose! :activity_value
     expose! :activity_unit
+    expose! :equivalent
+    expose! :weight_percentage
     expose! :type
     expose! :changed
     expose! :errors

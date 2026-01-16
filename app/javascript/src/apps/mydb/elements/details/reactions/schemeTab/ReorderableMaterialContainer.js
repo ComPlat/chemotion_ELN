@@ -7,6 +7,7 @@ import { DragDropItemTypes } from 'src/utilities/DndConst';
 const newElementTypes = [
   DragDropItemTypes.SAMPLE,
   DragDropItemTypes.MOLECULE,
+  DragDropItemTypes.SEQUENCE_BASED_MACROMOLECULE_SAMPLE,
 ];
 
 // This component is a container for reorderable materials.
