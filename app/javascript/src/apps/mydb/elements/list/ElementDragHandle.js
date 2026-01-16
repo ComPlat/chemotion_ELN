@@ -9,6 +9,7 @@ import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
+import { isSbmmSample } from 'src/utilities/ElementUtils';
 import DragHandle from 'src/components/common/DragHandle';
 
 function inferElementSourceType(element) {
@@ -101,6 +102,15 @@ function ElementDragHandle({ element, sourceType: sourceTypeProp }) {
   if (sourceType === DragDropItemTypes.MOLECULE
     && element?.type === 'sample'
     && (element.isMixture() || element?.sample_type === 'Mixture')) {
+    return <DragHandle enabled={false} />;
+  }
+
+  // Disable dragging when:
+  // - resolved sourceType is SEQUENCE_BASED_MACROMOLECULE (the molecule/parent SBMM)
+  // - element represents an SBMM sample
+  // (allow dragging the sample itself, but disable for the molecule)
+  if (sourceType === DragDropItemTypes.SEQUENCE_BASED_MACROMOLECULE
+    && isSbmmSample(element)) {
     return <DragHandle enabled={false} />;
   }
 
