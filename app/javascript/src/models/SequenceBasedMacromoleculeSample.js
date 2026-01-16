@@ -98,18 +98,21 @@ export default class SequenceBasedMacromoleculeSample extends Element {
    * Supported input types and their recalculations:
    *
    * - "volume_as_used":
-   *      amount [mol]   = volume [L] * molarity [mol/L]
+   *      amount [mol]   = volume [L] * molarity [mol/L] * purity
    *      activity [U]   = volume [L] * activity_per_volume [U/L]
+   *      mass [g]       = volume [L] * concentration [g/L] * purity
    *
    * - "activity":
    *      volume [L]     = activity [U] / activity_per_volume [U/L]
-   *      amount [mol]   = volume [L] * molarity [mol/L]
+   *      mass [g]       = activity [U] / activity_per_mass [U/g]
+   *      amount [mol]   = volume [L] * molarity [mol/L] * purity
    *
    * - "amount_as_used_mol":
-   *      volume [L]     = amount [mol] / molarity [mol/L]
+   *      volume [L]     = amount [mol] / (molarity [mol/L] * purity)
    *      activity [U]   = volume [L] * activity_per_volume [U/L]
    *
    * - "amount_as_used_mass":
+   *      volume [L]     = mass [g] / (concentration [g/L] * purity)
    *      activity [U]   = mass [g] * activity_per_mass [U/g]
    *
    * - "molarity":
@@ -189,7 +192,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
 
       case 'purity':
         if (this.purity > 0) {
-          // Recalculate volume from mass: amount_l = amount_ng / (concentration × purity)
+          // Recalculate volume from mass: amount_l = amount_g / (concentration × purity)
           this.calculateVolumeByMass();
           // Recalculate amount_mol from volume: amount_mol = amount_l * molarity * purity
           this.calculateAmountAsUsed();
@@ -200,10 +203,11 @@ export default class SequenceBasedMacromoleculeSample extends Element {
 
       case 'concentration':
         if (this.concentration_value > 0) {
-          // Recalculate amount_g from volume: amount_g = amount_l * concentration * purity
-          this.calculateAmountAsUsedMass();
-          // Recalculate volume from mass: amount_l = amount_ng / concentration
+          // Recalculate volume from mass first: amount_l = amount_g / concentration
+          // This ensures volume is available for subsequent calculations
           this.calculateVolumeByMass();
+          // Then recalculate amount_g from volume: amount_g = amount_l * concentration * purity
+          this.calculateAmountAsUsedMass();
         }
         break;
 
@@ -267,7 +271,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
 
   calculateMassByActivity() {
     if (this.base_activity_value === 0 || this.base_activity_per_mass_value === 0) {
-      return;
+      return null;
     }
 
     // Calculate: mass = activity / activity_per_mass
@@ -298,16 +302,29 @@ export default class SequenceBasedMacromoleculeSample extends Element {
       convertUnits(this._amount_as_used_mol_value, this.amount_as_used_mol_unit, defaultUnits.amount_as_used_mol);
   }
 
+  /**
+   * Gets the concentration value for calculations, using purity-adjusted concentration if available,
+   * otherwise falling back to the base concentration_value.
+   *
+   * @returns {number} The concentration value to use in calculations.
+   */
+  getConcentrationValue() {
+    const concentrationByPurity = parseFloat(this.concentration_by_purity);
+    return !Number.isNaN(concentrationByPurity) && concentrationByPurity > 0
+      ? concentrationByPurity
+      : this.concentration_value;
+  }
+
   calculateAmountAsUsedMass() {
     if (this.base_volume_as_used_value === 0 || this.concentration_value === 0) {
-      return;
+      return null;
     }
 
     // Calculate: mass = volume × concentration_by_purity
-    // Use purity-adjusted concentration directly
-    const concentrationByPurity = this.concentration_by_purity || this.concentration_value;
+    // Use purity-adjusted concentration if available, otherwise fall back to concentration_value
+    const concentrationValue = this.getConcentrationValue();
     const concentrationInGPerL = convertUnits(
-      parseFloat(concentrationByPurity),
+      concentrationValue,
       this.concentration_unit,
       'g/L'
     );
@@ -325,14 +342,14 @@ export default class SequenceBasedMacromoleculeSample extends Element {
 
   calculateVolumeByMass() {
     if (this.base_amount_as_used_mass_value === 0 || this.concentration_value === 0) {
-      return;
+      return null;
     }
 
     // Calculate: volume = mass / concentration_by_purity
-    // Use purity-adjusted concentration directly
-    const concentrationByPurity = this.concentration_by_purity || this.concentration_value;
+    // Use purity-adjusted concentration if available, otherwise fall back to concentration_value
+    const concentrationValue = this.getConcentrationValue();
     const concentrationInGPerL = convertUnits(
-      parseFloat(concentrationByPurity),
+      concentrationValue,
       this.concentration_unit,
       'g/L'
     );
@@ -960,15 +977,15 @@ export default class SequenceBasedMacromoleculeSample extends Element {
     splitSbmm.updated_at = null;
     splitSbmm.is_split = true;
     splitSbmm.is_new = true;
-    
+
     // Build split short label with -NaN suffix (like starting_materials)
     // For SBMM samples, use -NaN suffix to match starting_materials format
     const baseLabel = this.short_label || '';
     splitSbmm.short_label = `${baseLabel}-NaN`;
-    
+
     // Initialize container
     splitSbmm.container = Container.init();
-    
+
     return splitSbmm;
   }
 

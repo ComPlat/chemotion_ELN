@@ -35,7 +35,7 @@ class OSample < OpenStruct
   end
 
   def to_boolean(string)
-    !!"#{string}".match(/^(true|t|yes|y|1)$/i)
+    !!string.to_s.match(/^(true|t|yes|y|1)$/i)
   end
 end
 
@@ -51,7 +51,7 @@ class OSbmmSample < OpenStruct
   end
 
   def to_boolean(string)
-    !!"#{string}".match(/^(true|t|yes|y|1)$/i)
+    !!string.to_s.match(/^(true|t|yes|y|1)$/i)
   end
 end
 
@@ -70,7 +70,7 @@ module Usecases
           solvent: Array(materials['solvents']).map { |m| OSample.new(m) },
           purification_solvent: Array(materials['purification_solvents']).map { |m| OSample.new(m) },
           product: Array(materials['products']).map { |m| OSample.new(m) },
-          reactant_sbmm: Array(materials['reactant_sbmm_samples'] || []).map { |m| OSbmmSample.new(m) }
+          reactant_sbmm: Array(materials['reactant_sbmm_samples'] || []).map { |m| OSbmmSample.new(m) },
         }
         @current_user = user
         @vessel_size = vessel_size
@@ -345,7 +345,7 @@ module Usecases
         parent_sbmm = SequenceBasedMacromoleculeSample.find(sbmm_data.parent_id)
         modified_sbmm = parent_sbmm.create_sub_sequence_based_macromolecule_sample(
           @current_user,
-          @reaction.collections.pluck(:id)
+          @reaction.collections.pluck(:id),
         )
 
         # Update with reaction-specific data
@@ -403,7 +403,7 @@ module Usecases
       def associate_sbmm_with_reaction(sbmm_data, modified_sbmm)
         existing_association = ReactionsReactantSbmmSample.find_by(
           reaction_id: @reaction.id,
-          sequence_based_macromolecule_sample_id: modified_sbmm.id
+          sequence_based_macromolecule_sample_id: modified_sbmm.id,
         )
 
         if existing_association

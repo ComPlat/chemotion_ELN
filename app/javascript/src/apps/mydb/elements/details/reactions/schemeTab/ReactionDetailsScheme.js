@@ -10,7 +10,6 @@ import MaterialGroup from 'src/apps/mydb/elements/details/reactions/schemeTab/Ma
 import Sample from 'src/models/Sample';
 import Reaction from 'src/models/Reaction';
 import Molecule from 'src/models/Molecule';
-import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';
 import { isSbmmSample } from 'src/utilities/ElementUtils';
 import ReactionDetailsMainProperties from 'src/apps/mydb/elements/details/reactions/ReactionDetailsMainProperties';
 import ReactionDetailsPurification from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsPurification';
@@ -217,34 +216,14 @@ export default class ReactionDetailsScheme extends React.Component {
     // Add the SPLIT copy to reaction's reactant_sbmm_samples array
     reaction.addMaterialAt(splitSbmmSample, null, tagMaterial, 'reactant_sbmm_samples');
 
-    // Debug: verify the SBMM was added
-    console.log('After addMaterialAt:', {
-      sbmmCount: reaction.reactant_sbmm_samples?.length,
-      sbmmSamples: reaction.reactant_sbmm_samples,
-      reactionId: reaction.id,
-      splitSbmmId: splitSbmmSample.id,
-      reactionChanged: reaction.changed
-    });
-
     // Mark reaction as changed and update max amounts
     // handleReactionChange will also set reaction.changed = true and update state
     reaction.changed = true;
     reaction.updateMaxAmountOfProducts();
 
-    console.log('dropSbmmSample - Before onReactionChange:', {
-      reactionChanged: reaction.changed,
-      sbmmCount: reaction.reactant_sbmm_samples?.length,
-      reactionId: reaction.id
-    });
-
     // onReactionChange will update state and trigger re-render
     // This will cause the Save button to appear when reaction.changed is true
     onReactionChange(reaction, { updateGraphic: true });
-
-    console.log('dropSbmmSample - After onReactionChange:', {
-      reactionChanged: reaction.changed,
-      sbmmCount: reaction.reactant_sbmm_samples?.length
-    });
 
     // The split SBMM sample is created and join record is created automatically
     // when reaction is saved through the normal UpdateMaterials usecase

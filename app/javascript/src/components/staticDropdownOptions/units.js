@@ -128,7 +128,8 @@ const defaultUnits = {
  *
  * @returns {number} The converted value, rounded to 8 decimal places.
  *
- * @throws {Error} If `from` or `to` is not a valid key in `conversionFactors`.
+ * @throws {TypeError} If `from` or `to` is not a valid key in `conversionFactors`,
+ *                     a TypeError will be thrown when accessing `.factor` on undefined.
  *
  * @example
  * convertUnits(1000, 'mL', 'L'); // => 1
