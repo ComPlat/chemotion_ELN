@@ -205,6 +205,51 @@ describe('Component', () => {
         / (component.density * 1000 * component.purity);
       expect(component.amount_l).toBeCloseTo(expectedAmountL, 6);
     });
+
+    it('should calculate amount from volume when volume is entered first, then density', () => {
+      const density = { unit: 'g/ml', value: 1.2 };
+      component.material_group = 'liquid';
+      component.amount_l = 0.1; // Volume entered first
+      component.amount_mol = 0.0; // Amount is not set yet
+      component.purity = 0.9;
+      component.molecule.molecular_weight = 18.015;
+
+      component.handleDensityChange(density, false);
+
+      expect(component.density).toBe(1.2);
+      expect(component.starting_molarity_value).toBe(0);
+
+      // amount_mol should be calculated from volume and density
+      // amount_g = amount_l * density * 1000
+      // amount_mol = (amount_g * purity) / molecular_weight
+      const expectedAmountG = 0.1 * 1.2 * 1000;
+      const expectedAmountMol = (expectedAmountG * 0.9) / 18.015;
+      expect(component.amount_mol).toBeCloseTo(expectedAmountMol, 6);
+
+      // amount_l should remain unchanged
+      expect(component.amount_l).toBe(0.1);
+    });
+
+    it('should prioritize amount_mol over volume when both are set', () => {
+      const density = { unit: 'g/ml', value: 0.8 };
+      component.material_group = 'liquid';
+      component.amount_l = 0.15; // Volume is set
+      component.amount_mol = 0.3; // Amount is set and takes priority
+      component.purity = 1.0;
+      component.molecule.molecular_weight = 100.0;
+
+      component.handleDensityChange(density, false);
+
+      expect(component.density).toBe(0.8);
+
+      // amount_mol should be preserved and volume should be recalculated from amount and density
+      // amount_l = (amount_mol * molecule_molecular_weight) / (density * 1000 * purity)
+      const expectedAmountL = (0.3 * 100.0) / (0.8 * 1000 * 1.0);
+      expect(component.amount_l).toBeCloseTo(expectedAmountL, 6);
+
+      // amount_mol should remain unchanged
+      expect(component.amount_mol).toBe(0.3);
+    });
   });
 
   describe('setPurity', () => {
@@ -293,6 +338,48 @@ describe('Component', () => {
       // amount_l is derived from existing amount_mol and new starting concentration
       const expectedAmountL = component.amount_mol / component.starting_molarity_value;
       expect(component.amount_l).toBeCloseTo(expectedAmountL, 6);
+    });
+
+    it('should calculate amount from volume when volume is entered first, then starting concentration', () => {
+      const startingConc = { unit: 'mol/l', value: 2.0 };
+      component.material_group = 'liquid';
+      component.amount_l = 0.1; // Volume entered first
+      component.amount_mol = 0.0; // Amount not set yet
+      component.purity = 0.95;
+
+      component.handleStartingConcChange(startingConc);
+
+      expect(component.starting_molarity_value).toBe(2.0);
+      expect(component.starting_molarity_unit).toBe('mol/l');
+      expect(component.density).toBe(0);
+
+      // amount_mol should be calculated from volume and concentration
+      // amount_mol = starting_molarity_value * amount_l * purity
+      const expectedAmountMol = 2.0 * 0.1 * 0.95;
+      expect(component.amount_mol).toBeCloseTo(expectedAmountMol, 6);
+
+      // amount_l should remain unchanged
+      expect(component.amount_l).toBe(0.1);
+    });
+
+    it('should prioritize amount_mol over volume when both are set', () => {
+      const startingConc = { unit: 'mol/l', value: 1.5 };
+      component.material_group = 'liquid';
+      component.amount_l = 0.2; // Volume is set
+      component.amount_mol = 0.5; // Amount is set and takes priority
+      component.purity = 0.95; // Set purity to verify it doesn't affect the calculation
+
+      component.handleStartingConcChange(startingConc);
+
+      expect(component.starting_molarity_value).toBe(1.5);
+
+      // amount_mol should be preserved and volume should be recalculated from amount and concentration
+      // amount_l = amount_mol / starting_molarity_value (purity is not used in this calculation)
+      const expectedAmountL = 0.5 / 1.5;
+      expect(component.amount_l).toBeCloseTo(expectedAmountL, 6);
+
+      // amount_mol should remain unchanged
+      expect(component.amount_mol).toBe(0.5);
     });
   });
 
