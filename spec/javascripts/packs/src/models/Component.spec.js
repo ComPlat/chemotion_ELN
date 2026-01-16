@@ -230,11 +230,11 @@ describe('Component', () => {
       expect(component.amount_l).toBe(0.1);
     });
 
-    it('should prioritize volume over amount_mol when both are set and volume is entered first', () => {
+    it('should prioritize amount_mol over volume when both are set', () => {
       const density = { unit: 'g/ml', value: 0.8 };
       component.material_group = 'liquid';
-      component.amount_l = 0.15; // Volume entered first
-      component.amount_mol = 0.3; // Amount was set, but volume takes priority
+      component.amount_l = 0.15; // Volume is set
+      component.amount_mol = 0.3; // Amount is set and takes priority
       component.purity = 1.0;
       component.molecule.molecular_weight = 100.0;
 
@@ -242,13 +242,13 @@ describe('Component', () => {
 
       expect(component.density).toBe(0.8);
 
-      // amount_mol should be recalculated from volume and density
-      const expectedAmountG = 0.15 * 0.8 * 1000;
-      const expectedAmountMol = (expectedAmountG * 1.0) / 100.0;
-      expect(component.amount_mol).toBeCloseTo(expectedAmountMol, 6);
+      // amount_mol should be preserved and volume should be recalculated from amount and density
+      // amount_l = (amount_mol * molecule_molecular_weight) / (density * 1000 * purity)
+      const expectedAmountL = (0.3 * 100.0) / (0.8 * 1000 * 1.0);
+      expect(component.amount_l).toBeCloseTo(expectedAmountL, 6);
 
-      // amount_l should remain unchanged
-      expect(component.amount_l).toBe(0.15);
+      // amount_mol should remain unchanged
+      expect(component.amount_mol).toBe(0.3);
     });
   });
 
@@ -362,23 +362,24 @@ describe('Component', () => {
       expect(component.amount_l).toBe(0.1);
     });
 
-    it('should prioritize volume over amount_mol when both are set and volume is entered first', () => {
+    it('should prioritize amount_mol over volume when both are set', () => {
       const startingConc = { unit: 'mol/l', value: 1.5 };
       component.material_group = 'liquid';
-      component.amount_l = 0.2; // Volume entered first
-      component.amount_mol = 0.5; // Amount was set, but volume takes priority
-      component.purity = 1.0;
+      component.amount_l = 0.2; // Volume is set
+      component.amount_mol = 0.5; // Amount is set and takes priority
+      component.purity = 0.95; // Set purity to verify it doesn't affect the calculation
 
       component.handleStartingConcChange(startingConc);
 
       expect(component.starting_molarity_value).toBe(1.5);
 
-      // amount_mol should be recalculated from volume and concentration
-      const expectedAmountMol = 1.5 * 0.2 * 1.0;
-      expect(component.amount_mol).toBeCloseTo(expectedAmountMol, 6);
+      // amount_mol should be preserved and volume should be recalculated from amount and concentration
+      // amount_l = amount_mol / starting_molarity_value (purity is not used in this calculation)
+      const expectedAmountL = 0.5 / 1.5;
+      expect(component.amount_l).toBeCloseTo(expectedAmountL, 6);
 
-      // amount_l should remain unchanged
-      expect(component.amount_l).toBe(0.2);
+      // amount_mol should remain unchanged
+      expect(component.amount_mol).toBe(0.5);
     });
   });
 
