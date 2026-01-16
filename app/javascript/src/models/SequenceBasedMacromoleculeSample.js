@@ -816,6 +816,8 @@ export default class SequenceBasedMacromoleculeSample extends Element {
       purity: this.purity,
       purity_detection: this.purity_detection,
       purification_method: this.purification_method,
+      equivalent: this.equivalent,
+      weight_percentage: this.weight_percentage,
 
       sequence_based_macromolecule_attributes: {
         accessions: this.accessions,
@@ -948,5 +950,37 @@ export default class SequenceBasedMacromoleculeSample extends Element {
         sequenceBasedMacromoleculeSample.sequence_based_macromolecule.parent.id;
     }
     return sequenceBasedMacromoleculeSample;
+  }
+
+  buildChildWithoutCounter() {
+    const splitSbmm = this.clone();
+    splitSbmm.parent_id = this.id; // Set parent relationship
+    splitSbmm.id = Element.buildID(); // New temporary ID
+    splitSbmm.created_at = null;
+    splitSbmm.updated_at = null;
+    splitSbmm.is_split = true;
+    splitSbmm.is_new = true;
+    
+    // Build split short label with -NaN suffix (like starting_materials)
+    // For SBMM samples, use -NaN suffix to match starting_materials format
+    const baseLabel = this.short_label || '';
+    splitSbmm.short_label = `${baseLabel}-NaN`;
+    
+    // Initialize container
+    splitSbmm.container = Container.init();
+    
+    return splitSbmm;
+  }
+
+  serializeSbmmMaterial() {
+    const params = this.serialize();
+    const extra_params = {
+      position: this.position,
+      show_label: this.show_label || false,
+      parent_id: this.parent_id,
+      is_new: this.is_new,
+      is_split: this.is_split,
+    };
+    return Object.assign(params, extra_params);
   }
 }

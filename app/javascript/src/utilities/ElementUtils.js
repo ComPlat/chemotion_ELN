@@ -6,6 +6,7 @@ import MatrixCheck from 'src/components/common/MatrixCheck';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from '../stores/alt/stores/UserStore';
+import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';
 
 const rfValueFormat = (input) => {
   if (typeof input !== 'string') { return input; }
@@ -473,6 +474,16 @@ const getElementSegments = (elementName, tabs) => {
   return _.uniq(allTabs.concat(labels));
 }
 
+/**
+ * Check if a material/sample is a Sequence-Based Macromolecule Sample
+ * @param {Object} material - The material or sample to check
+ * @returns {boolean} - True if the material is an SBMM sample
+ */
+const isSbmmSample = (material) => {
+  return material instanceof SequenceBasedMacromoleculeSample
+         || material.type === 'sequence_based_macromolecule_sample';
+};
+
 export {
   rfValueFormat,
   hNmrCheckMsg,
@@ -492,5 +503,6 @@ export {
   atomCountCInNMRDescription,
   emwInStr,
   instrumentText,
-  getElementSegments
+  getElementSegments,
+  isSbmmSample
 };
