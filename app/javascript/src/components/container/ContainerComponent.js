@@ -24,7 +24,8 @@ export default class ContainerComponent extends Component {
     const textTemplate = TextTemplateStore.getState()[templateType] || Map();
     this.state = {
       container,
-      textTemplate: textTemplate && textTemplate.toJS()
+      textTemplate: textTemplate && textTemplate.toJS(),
+      includeDescription: !!(container?.description)
     };
 
     this.handleInputChange = this.handleInputChange.bind(this);
@@ -34,6 +35,7 @@ export default class ContainerComponent extends Component {
 
     this.handleAddLink = this.handleAddLink.bind(this);
     this.handleRemoveLink = this.handleRemoveLink.bind(this);
+    this.handleIncludeDescriptionChange = this.handleIncludeDescriptionChange.bind(this);
   }
 
   componentDidMount() {
@@ -43,7 +45,10 @@ export default class ContainerComponent extends Component {
   componentDidUpdate(prevProps) {
     const { container } = this.props;
     if (container !== prevProps.container) {
-      this.setState({ container });
+      this.setState({
+        container,
+        includeDescription: !!(container?.description)
+      });
     }
   }
 
@@ -125,13 +130,27 @@ export default class ContainerComponent extends Component {
     this.setState({ container });
   }
 
+  handleIncludeDescriptionChange(e) {
+    const includeDescription = e.target.checked;
+    const { onChange } = this.props;
+    const { container } = this.state;
+
+    this.setState({ includeDescription });
+
+    if (!includeDescription) {
+      container.description = '';
+      this.setState({ container });
+      onChange(container);
+    }
+  }
+
   updateTextTemplates(textTemplate) {
     const { templateType } = this.props;
     TextTemplateActions.updateTextTemplates(templateType, textTemplate);
   }
 
   render() {
-    const { container, textTemplate } = this.state;
+    const { container, textTemplate, includeDescription } = this.state;
     const { readOnly, disabled, onChange, rootContainer, index, element } = this.props;
 
     let quill = (<span />);
@@ -153,8 +172,8 @@ export default class ContainerComponent extends Component {
 
     return (
       <div>
-        <Row>
-          <Col sm={8} className="mb-2">
+        <Row className="align-items-end">
+          <Col sm={6} className="mb-2">
             <Form.Label>Name</Form.Label>
             <Form.Control
               type="text"
@@ -164,7 +183,7 @@ export default class ContainerComponent extends Component {
               disabled={readOnly || disabled}
             />
           </Col>
-          <Col sm={4} className="mb-2">
+          <Col sm={3} className="mb-2">
             <div>
               <Form.Label>Status</Form.Label>
               <Select
@@ -175,6 +194,17 @@ export default class ContainerComponent extends Component {
                 onChange={({ value }) => this.handleInputChange('status', value)}
               />
             </div>
+          </Col>
+          <Col sm={3} className="mb-2">
+            <Form.Check
+              type="checkbox"
+              id="includeDescription"
+              label="Include Description"
+              checked={this.state.includeDescription}
+              disabled={readOnly || disabled}
+              onChange={this.handleIncludeDescriptionChange}
+              className="my-2"
+            />
           </Col>
         </Row>
         <Col sm={12} className="mb-2">
@@ -193,17 +223,19 @@ export default class ContainerComponent extends Component {
             <Form.Label>Content</Form.Label>
             {quill}
           </Form.Group>
-          <Form.Group className="my-3">
-            <Form.Label>Description</Form.Label>
-            <Form.Control
-              as="textarea"
-              rows={3}
-              label="Description"
-              value={container.description || ''}
-              disabled={readOnly || disabled}
-              onChange={(e) => this.handleInputChange('description', e)}
-            />
-          </Form.Group>
+          {includeDescription && (
+            <Form.Group className="my-3">
+              <Form.Label>Description</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                label="Description"
+                value={container.description || ''}
+                disabled={readOnly || disabled}
+                onChange={(e) => this.handleInputChange('description', e)}
+              />
+            </Form.Group>
+          )}
         </Col>
         <Col sm={12} >
           <Form.Label>Datasets</Form.Label>
