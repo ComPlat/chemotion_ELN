@@ -228,14 +228,12 @@ module Chemotion
       end
       post :svg do
         svg = params[:svg_file]
-        error!({ error: 'Invalid SVG' }, 422) unless IndigoService.new(nil).valid_indigo_svg?(svg)
         processor = if params[:is_chemdraw]
                       Chemotion::ChemdrawSvgProcessor.new(svg)
                     else
-                      Chemotion::KetcherSvgProcessor.new(svg)
+                      KetcherService::SVGProcessor.new(svg)
                     end
         svg = processor.centered_and_scaled_svg
-
         digest = Digest::SHA256.hexdigest svg
         digest = Digest::SHA256.hexdigest digest
         svg_file_name = "#{digest}.svg"

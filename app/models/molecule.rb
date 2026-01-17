@@ -252,15 +252,10 @@ class Molecule < ApplicationRecord
   end
 
   def self.svg_reprocess(svg, struct)
-    return svg if indigo_disabled?
     return svg if svg_valid_and_not_openbabel?(svg)
 
-    rendered_svg = IndigoService.new(struct, 'image/svg+xml').render_structure
-    rendered_svg || Chemotion::OpenBabelService.svg_from_molfile(struct)
-  end
-
-  def self.indigo_disabled?
-    Rails.configuration.indigo_service.disabled?
+    # Use unified SVG renderer service with fallback chain
+    Chemotion::SvgRenderer.render_svg_from_molfile(struct)
   end
 
   def self.svg_valid_and_not_openbabel?(svg)
