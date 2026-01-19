@@ -24,7 +24,7 @@ const qCheckPass = () => (
 
 const qCheckFail = (msg, kind, atomNum = '') => (
   <span className="ms-1 text-danger">
-    <sup>{atomNum}</sup>{kind} {msg})
+    (<sup>{atomNum}</sup>{kind} {msg})
   </span>
 );
 
@@ -42,12 +42,15 @@ const qCheckMsg = (sample, container) => {
 
   if (container.extended_metadata.kind.split('|')[0].trim() === chmoConversions.nmr_1h.termId) {
     const msg = hNmrCheckMsg(sample.molecule_formula, str);
+    console.log('msg', msg);
     return msg === '' ? qCheckPass() : qCheckFail(msg, 'H', '1');
   } else if (container.extended_metadata.kind.split('|')[0].trim() === chmoConversions.nmr_13c.termId) {
     const msg = cNmrCheckMsg(sample.molecule_formula, str);
+    console.log('msg', msg);
     return msg === '' ? qCheckPass() : qCheckFail(msg, 'C', '13');
   } else if (container.extended_metadata.kind.split('|')[1].includes('mass spectrometry')) {
     const msg = msCheckMsg(sample.molecule.exact_molecular_weight, str);
+    console.log('msg', msg);
     return msg === '' ? qCheckPass() : qCheckFail(msg, 'MS', '');
   }
   return '';
@@ -207,6 +210,7 @@ const AnalysesHeader = ({
   };
    const attachment = getAttachmentFromContainer(container);
  
+  console.log('message', qCheckMsg(sample, container));
   return (
     <div className={`analysis-header w-100 d-flex gap-3 lh-base ${mode === 'edit' ? '' : 'order pe-2'}`}>
       <div className="preview border d-flex align-items-center">
