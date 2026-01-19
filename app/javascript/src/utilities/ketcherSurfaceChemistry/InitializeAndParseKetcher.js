@@ -184,12 +184,45 @@ const fetchKetcherData = async (editor) => {
   }
 };
 
+// Helper function to clean up empty lines around attachment points
+const cleanMolfileEmptyLines = (molfile) => {
+  if (!molfile) return molfile;
+
+  const lines = molfile.split('\n');
+  const cleanedLines = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    // Remove attachment point lines (A followed by number)
+    if (trimmed.match(/^A\s+\d+$/)) {
+      // Skip attachment point line
+      i += 1;
+      // Skip any empty lines immediately after attachment point
+      while (i < lines.length && lines[i].trim() === '') {
+        i += 1;
+      }
+    } else {
+      // For non-attachment lines, add them normally
+      cleanedLines.push(line);
+      i += 1;
+    }
+  }
+
+  return cleanedLines.join('\n');
+};
+
 const prepareKetcherData = async (editor, initMol) => {
   try {
     const polymerTag = await hasKetcherData(initMol);
     const textNodes = await hasTextNodes(initMol);
-    const ketFile = await editor._structureDef.editor.indigo.convert(initMol).catch((err) => {
-      console.error('invalid molfile. Please try again', err.message);
+
+    // Clean up empty lines around attachment points before Indigo conversion
+    const cleanedMol = cleanMolfileEmptyLines(initMol);
+    const ketFile = await editor._structureDef.editor.indigo.convert(cleanedMol).catch((err) => {
+      console.error('invalid molfile. Please try again', err);
     });
 
     if (!ketFile || !ketFile.struct) {

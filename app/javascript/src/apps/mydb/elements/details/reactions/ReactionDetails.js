@@ -110,6 +110,7 @@ export default class ReactionDetails extends Component {
     this.state.showWtInfoModal = false;
     this.state.showSchemeChangeConfirm = false;
     this.state.pendingSchemeType = null;
+    this.isUpdatingGraphic = false; // Flag to prevent infinite loops
     this.schemeDropdownRef = createRef();
     if (!reaction.reaction_svg_file) {
       this.updateGraphic();
@@ -221,9 +222,11 @@ export default class ReactionDetails extends Component {
   handleReactionChange(reaction, options = {}) {
     reaction.updateMaxAmountOfProducts();
     reaction.changed = true;
-    if (options.updateGraphic) {
+    if (options.updateGraphic && !this.isUpdatingGraphic) {
+      // Only call updateGraphic if we're not already updating to prevent infinite loops
       this.setState({ reaction }, () => this.updateGraphic());
     } else {
+      // Just update state - ReactionSchemeGraphic will reload image automatically
       this.setState({ reaction });
     }
   }
@@ -503,6 +506,12 @@ export default class ReactionDetails extends Component {
   }
 
   updateGraphic() {
+    // Prevent infinite loops
+    if (this.isUpdatingGraphic) {
+      return;
+    }
+
+    this.isUpdatingGraphic = true;
     const { reaction } = this.state;
     const materialsSvgPaths = {
       starting_materials: reaction.starting_materials.map((material) => material.svgPath),
@@ -527,10 +536,17 @@ export default class ReactionDetails extends Component {
       reaction.duration,
       reaction.conditions
     ).then((result) => {
-      if (result.reaction_svg !== reaction.reaction_svg_file) {
+      if (result && result.reaction_svg && result.reaction_svg !== reaction.reaction_svg_file) {
+        // Update reaction_svg_file and state - image will reload automatically via ReactionSchemeGraphic useEffect
         reaction.reaction_svg_file = result.reaction_svg;
-        this.handleReactionChange(reaction, { updateGraphic: true });
+        // Update state without calling updateGraphic again to prevent infinite loop
+        this.setState({ reaction });
       }
+    }).catch((error) => {
+      console.error('Error updating reaction graphic:', error);
+    }).finally(() => {
+      // Reset flag after update completes
+      this.isUpdatingGraphic = false;
     });
   }
 
