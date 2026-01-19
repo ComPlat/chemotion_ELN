@@ -124,7 +124,6 @@
 
 /uploads/*
 !uploads/common_templates/default.json
-/public/json/common_templates_list.json
 !/public/attachments/.keep
 
 /public/json/*
