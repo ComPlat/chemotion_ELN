@@ -103,7 +103,10 @@ module Chemotion
               policy: @element_policy,
               detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels,
             ),
-            literatures: Entities::LiteratureEntity.represent(citation_for_elements(params[:id], class_name)),
+            literatures: Entities::LiteratureEntity.represent(
+              citation_for_elements(params[:id], class_name),
+              with_user_info: true,
+            ),
           }
         end
       end
@@ -279,6 +282,7 @@ module Chemotion
             url = literature[1][:url]
             title = literature[1][:title]
             isbn = literature[1][:isbn]
+            litype = literature[1][:litype]
 
             lit = Literature.find_or_create_by(doi: doi, url: url, title: title, isbn: isbn)
             lit.update!(refs: (lit.refs || {}).merge(declared(refs))) if refs
@@ -289,7 +293,9 @@ module Chemotion
               element_type: 'Reaction',
               element_id: reaction.id,
               category: 'detail',
+              litype: litype,
             }
+
             unless Literal.find_by(lattributes)
               Literal.create(lattributes)
               reaction.touch

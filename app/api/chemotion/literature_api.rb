@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/ClassLength, Rails/SkipsModelValidations, Style/MultilineIfThen
+# rubocop:disable Metrics/ClassLength, Rails/SkipsModelValidations
 
 module Chemotion
   class LiteratureAPI < Grape::API
@@ -287,4 +287,4 @@ module Chemotion
   end
 end
 # rubocop:enable Metrics/ClassLength
-# rubocop:enable Rails/SkipsModelValidations, Style/MultilineIfThen
+# rubocop:enable Rails/SkipsModelValidations
