@@ -30,6 +30,10 @@ module Usecases
               sample_id = subsample.id
             end
             included_sample_ids << sample_id
+            if sample_id && sample[:molarity_value].present?
+              db_sample = Sample.find(sample_id)
+              db_sample.update!(molarity_value: sample[:molarity_value].to_f, density: 0)
+            end
           end
 
           well_attributes = {
