@@ -22,14 +22,4 @@ class ElementsWellplate < ApplicationRecord
   acts_as_paranoid
   belongs_to :element, class_name: 'Labimotion::Element'
   belongs_to :wellplate
-
-  scope :get_wellplates, lambda { |element_ids|
-    where(element_id: element_ids)
-      .pluck(:wellplate_id).compact.uniq
-  }
-
-  scope :get_elements, lambda { |wellplate_ids|
-    where(wellplate_id: wellplate_ids)
-      .pluck(:element_id).compact.uniq
-  }
 end

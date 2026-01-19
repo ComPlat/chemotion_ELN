@@ -82,7 +82,7 @@ class GenericElWellplates extends Component {
           ))}
         </Accordion>
          {selectedWellplates.length > 0 && (
-          <div className="mt-3">
+          <div className="mt-3 text-end">
             <Button
               variant="primary"
               size="sm"
