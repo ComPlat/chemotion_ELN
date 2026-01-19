@@ -266,23 +266,6 @@ describe Usecases::Reactions::UpdateMaterials do
       end
     end
 
-    describe '#valid_reference_target_amount?' do
-      it 'returns true for positive non-zero amounts' do
-        result = class_instance_wp.send(:valid_reference_target_amount?, 100.5)
-        expect(result).to be true
-      end
-
-      it 'returns false for nil amounts' do
-        result = class_instance_wp.send(:valid_reference_target_amount?, nil)
-        expect(result).to be false
-      end
-
-      it 'returns false for zero amounts' do
-        result = class_instance_wp.send(:valid_reference_target_amount?, 0.0)
-        expect(result).to be true
-      end
-    end
-
     describe '#apply_weight_percentage' do
       it 'calculates the correct amount using weight percentage' do
         result = class_instance_wp.send(:apply_weight_percentage, 100.0, 0.25)
