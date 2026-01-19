@@ -1479,10 +1479,10 @@
     reselect "^4.0.0"
     typescript "^5.0.4"
 
-"@complat/react-spectra-editor@1.5.0":
-  version "1.5.0"
-  resolved "https://registry.yarnpkg.com/@complat/react-spectra-editor/-/react-spectra-editor-1.5.0.tgz#2610a2e3ed88cc4ce5cbdd7ff144863fc3658bb8"
-  integrity sha512-fXM6uM0m//6YxLgHTLFcWdEZ8Lixw68uqde1XwEGA6+ziOOFFjZPGGMZs+5qpHkRdbsuoWyA5hNx1WAzecW0PA==
+"@complat/react-spectra-editor@1.5.2":
+  version "1.5.2"
+  resolved "https://registry.yarnpkg.com/@complat/react-spectra-editor/-/react-spectra-editor-1.5.2.tgz#b64c0a01087c60b9b5cbc6e3f11ac6cb226820a1"
+  integrity sha512-ZDWYeyGAfYgidRxnfFbc7r8ACPEE7YYzpDGEs0LtVpce2VpVNBFo9jbqqlPSHZLKO5GunBcUGzhEV/l5Cp1HQQ==
   dependencies:
     "@complat/react-svg-file-zoom-pan" "1.1.4"
     "@emotion/react" "^11.11.1"
