@@ -126,6 +126,24 @@ services:
     working_dir: "/home/ubuntu/app"
     command: 'yarn run storybook'
 
+  ketchersvc:
+    image: ${IMG_KETCHERSVC:-ptrxyz/chemotion:ketchersvc-2.2.0}
+    restart: unless-stopped
+    environment:
+      - CONFIG_KETCHER_URL=http://app:3000/editors/standalone/index.html
+    init: true
+    depends_on:
+      app:
+        condition: service_healthy
+    networks:
+      - chemotion
+
+  ketchersvc-sc:
+    hostname: ketchersvc-sc
+    image: ${IMG_KETCH_SC:-ptrxyz/chemotion:ketchersvc-sc-1.10.5}
+    restart: unless-stopped
+    networks:
+      - chemotion
 
 volumes:
   database:

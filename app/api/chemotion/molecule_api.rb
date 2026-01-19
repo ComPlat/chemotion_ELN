@@ -189,7 +189,16 @@ module Chemotion
         molecule = decoupled ? Molecule.find_or_create_dummy : Molecule.find_or_create_by_molfile(molfile)
         molecule = Molecule.find_or_create_dummy if molecule.blank?
         ob = molecule&.ob_log
-        if svg.present?
+
+        # Check if molfile has changed (normalize whitespace for comparison)
+        molfile_changed = molecule.molfile.present? && 
+                         molecule.molfile.strip.gsub(/\r\n?/, "\n") != molfile.strip.gsub(/\r\n?/, "\n")
+        
+        if svg.present? && molfile_changed
+          svg = Molecule.svg_reprocess(nil, molfile)
+          svg_digest = "#{molecule.inchikey}#{Time.zone.now}"
+          svg_process = SVG::Processor.new.structure_svg('ketcher', svg, svg_digest, true)
+        elsif svg.present? && !molfile_changed
           svg_process = SVG::Processor.new.structure_svg(params[:editor], svg, molfile)
         else
           svg_file_src = Rails.public_path.join('images', 'molecules', molecule.molecule_svg_file)
