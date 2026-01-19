@@ -101,7 +101,7 @@ export default class EmbeddedWellplateGenericEl extends Component {
         <AgGridReact
           columnDefs={columnDefs}
           defaultColDef={defaultColDef}
-          rowData={wells}
+          rowData={wells.filter((well) => well.sample)}
           rowHeight="auto"
           domLayout="autoHeight"
           autoSizeStrategy={{ type: 'fitGridWidth' }}
