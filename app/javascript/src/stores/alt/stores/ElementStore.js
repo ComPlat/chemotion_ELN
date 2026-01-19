@@ -230,6 +230,7 @@ class ElementStore {
       handleBulkCreateWellplatesFromSamples:
         ElementActions.bulkCreateWellplatesFromSamples,
       handleFetchWellplateById: ElementActions.fetchWellplateById,
+      handleUpdateWellplate: ElementActions.updateWellplate,
       handleImportWellplateSpreadsheet: ElementActions.importWellplateSpreadsheet,
       handleCreateWellplate: ElementActions.createWellplate,
       handleGenerateWellplateFromClipboard:
@@ -1001,6 +1002,11 @@ class ElementStore {
     // this.navigateToNewElement(result)
   }
 
+  handleUpdateWellplate(result) {
+    // Update current wellplate and synchronize samples in open tabs
+    this.changeCurrentElement(result);
+  }
+
   handleImportWellplateSpreadsheet(result) {
     if (result.error) { return; }
 
@@ -1695,6 +1701,19 @@ class ElementStore {
           openedReaction.changed = previous.isPendingToSave;
         }
       }
+
+      // Synchronize sample molarity with open wellplate tabs
+      selecteds.map((el) => {
+        if (el.type === 'wellplate' && el.wells) {
+          const well = el.wells.find((w) => w.sample && w.sample.id === previous.id);
+          if (well && well.sample) {
+            well.sample.molarity_value = previous.molarity_value;
+            well.sample.molarity_unit = previous.molarity_unit;
+            el.changed = true;
+          }
+        }
+        return el;
+      });
     }
 
     if (previous instanceof Reaction) {
@@ -1711,6 +1730,23 @@ class ElementStore {
         }
         return nextSample;
       });
+    }
+
+    // Synchronize Wellplate samples with open sample tabs
+    if (previous instanceof Wellplate) {
+      const { wells } = previous;
+      if (wells && wells.length > 0) {
+        selecteds.map((nextSample) => {
+          if (nextSample.type === 'sample') {
+            const well = wells.find((w) => w.sample && w.sample.id === nextSample.id);
+            if (well && well.sample) {
+              nextSample._molarity_value = well.sample.molarity_value;
+              nextSample._molarity_unit = well.sample.molarity_unit;
+            }
+          }
+          return nextSample;
+        });
+      }
     }
 
     return previous;
