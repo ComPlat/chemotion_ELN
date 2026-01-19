@@ -489,7 +489,7 @@ export default class ReactionDetailsScheme extends React.Component {
         onReactionChange(
           this.updatedReactionForComponentMetricsChange(changeEvent)
         );
-        break
+        break;
       case 'VesselSizeChanged':
         this.onReactionChange(
           this.updatedReactionForVesselSizeChange()

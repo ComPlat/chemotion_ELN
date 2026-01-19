@@ -780,8 +780,8 @@ export default class ReactionDetails extends Component {
     if (reaction.products.length > 0) {
       reaction.products[0].weight_percentage_reference = true;
       WeightPercentageReactionActions.setWeightPercentageReference(reaction.products[0]);
-      const amountValue = reaction.products[0].amount_value;
-      const amountUnit = reaction.products[0].amount_unit;
+      const amountValue = reaction.products[0].target_amount_value;
+      const amountUnit = reaction.products[0].target_amount_unit;
       const targetAmount = { value: amountValue, unit: amountUnit };
       WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(targetAmount);
     }
