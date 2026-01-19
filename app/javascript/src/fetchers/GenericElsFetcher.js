@@ -256,29 +256,11 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
     return this.execData(params, 'upload_klass');
   }
 
-  static updateWellplates(elementId, wellplateIds) {
-    return fetch(`/api/v1/wellplates/by_generic_element/${elementId}`, {
-      credentials: 'same-origin',
-      method: 'put',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ wellplate_ids: wellplateIds }),
-    })
-      .then((response) => response.json())
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+  static fetchWellplates(elementId) {
+    return super.exec(`wellplates/by_generic_element/${elementId}`, 'GET');
   }
 
-  static fetchWellplates(elementId) {
-    return fetch(`/api/v1/wellplates/by_generic_element/${elementId}`, {
-      credentials: 'same-origin',
-    })
-      .then((response) => response.json())
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+  static updateWellplates(elementId, wellplateIds) {
+    return super.execData({ wellplate_ids: wellplateIds }, `wellplates/by_generic_element/${elementId}`, 'PUT');
   }
 }
