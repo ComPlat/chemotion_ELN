@@ -196,13 +196,20 @@ const cleanMolfileEmptyLines = (molfile) => {
     const line = lines[i];
     const trimmed = line.trim();
 
-    // Remove attachment point lines (A followed by number)
+    // If pattern matches and next line is empty, remove both
     if (trimmed.match(/^A\s+\d+$/)) {
-      // Skip attachment point line
-      i += 1;
-      // Skip any empty lines immediately after attachment point
-      while (i < lines.length && lines[i].trim() === '') {
+      // Check if next line is empty
+      if (i + 1 < lines.length && lines[i + 1].trim() === '') {
+        // Skip both the pattern line and the empty line
+        i += 2;
+      } else {
+        // Next line is not empty, keep the attachment point line
+        cleanedLines.push(line);
         i += 1;
+        // Skip any empty lines immediately after attachment point
+        while (i < lines.length && lines[i].trim() === '') {
+          i += 1;
+        }
       }
     } else {
       // For non-attachment lines, add them normally
@@ -221,6 +228,7 @@ const prepareKetcherData = async (editor, initMol) => {
 
     // Clean up empty lines around attachment points before Indigo conversion
     const cleanedMol = cleanMolfileEmptyLines(initMol);
+    console.log('cleanedMol', cleanedMol);
     const ketFile = await editor._structureDef.editor.indigo.convert(cleanedMol).catch((err) => {
       console.error('invalid molfile. Please try again', err);
     });
