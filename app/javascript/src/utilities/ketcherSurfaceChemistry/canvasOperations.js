@@ -273,7 +273,7 @@ const prepareSvg = async (editor) => {
     const regex = /source-\d+/;
     const A_PATH_ONE = '';
     const A_PATH_TWO = '';
-    const generateImageParams = {outputFormat: 'svg'};
+    const generateImageParams = { outputFormat: 'svg' };
     const parser = new DOMParser();
     const canvasDataMol = await editor.structureDef.editor.getMolfile('V2000');
 
@@ -382,16 +382,29 @@ const onTemplateMove = async (editor, recenter = false) => {
   // second fetch save and place
   await fetchKetcherData(editor);
 
+  // Capture latestData in a local variable to prevent race conditions
+  // Initialize if null to ensure we have a valid data structure
+  let data = latestData;
+  if (!data) {
+    data = emptyKetcherStore();
+    latestDataSetter(data);
+  }
+
+  // Ensure data.root exists
+  if (!data.root) {
+    data.root = { nodes: [] };
+  }
+
   let imageNodes = [];
   imageNodes = await placeAtomOnImage(molCopy, imageListCopy);
-  latestData.root.nodes = imageNodes;
+  data.root.nodes = imageNodes;
 
   if (textListCopy.length > 0) {
     const textNodes = await placeTextOnAtoms(molCopy, textListCopy);
-    latestData.root.nodes = textNodes;
+    data.root.nodes = textNodes;
   }
 
-  await saveMoveCanvas(editor, latestData, true, false, recenter);
+  await saveMoveCanvas(editor, data, true, false, recenter);
 
   // clear required
   ImagesToBeUpdatedSetter(true); // perform image layer in DOM
