@@ -5,7 +5,7 @@ require 'logger'
 
 class CommonTemplateExporter
   TABLE_NAME = 'ketcherails_common_templates'
-  OUTPUT_DIR = 'public/common_templates'
+  OUTPUT_DIR = 'public/json/common_templates_list.json'
   OUTPUT_FILE = File.join('uploads/common_templates', 'instance.json')
   DEFAULT_TEMPLATES_PATH = File.join('uploads/common_templates', 'default.json')
   LOGFILE = 'log/ketcher_common_templates.log'
@@ -33,6 +33,9 @@ class CommonTemplateExporter
 
     FileUtils.mkdir_p(File.dirname(OUTPUT_FILE))
     File.write(OUTPUT_FILE, JSON.pretty_generate(templates))
+
+    FileUtils.mkdir_p(File.dirname(OUTPUT_DIR))
+    File.write(OUTPUT_DIR, JSON.pretty_generate(templates))
     @logger.info "#{templates.length} Common Templates exported from #{source || 'fallback'} to #{OUTPUT_FILE}"
   end
 end
