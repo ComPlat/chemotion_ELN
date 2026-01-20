@@ -119,7 +119,7 @@ const convertGenericUnit = (value, fromUnit, toUnit, genericQuantity) => {
   const toUnitConfig = unitConfigs.find((config) => config.key === toUnit);
   if (!fromUnitConfig || !toUnitConfig) return null;
 
-  return value * (toUnitConfig.nm / fromUnitConfig.nm);
+  return value * ((toUnitConfig.nm ?? 1) / (fromUnitConfig.nm ?? 1));
 };
 
 function getStandardUnits(entry) {
