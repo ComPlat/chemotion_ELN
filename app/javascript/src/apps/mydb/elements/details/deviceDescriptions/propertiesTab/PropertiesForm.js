@@ -43,6 +43,7 @@ const PropertiesForm = () => {
     { value: 'owner_institution', label: 'Institution', type: 'text' },
     { value: 'owner_email', label: 'eMail', type: 'text' },
     { value: 'owner_id', label: 'ID', type: 'text' },
+    { value: 'owner_id_type', label: 'ID Type', type: 'text' },
   ];
   const institutionOwnerLabel = 'Owner';
 

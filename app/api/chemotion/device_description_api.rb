@@ -49,6 +49,7 @@ module Chemotion
         optional :owner_institution, type: String
         optional :owner_email, type: String
         optional :owner_id, type: String
+        optional :owner_id_type, type: String
         optional :inventory_id, type: String
         optional :alternative_identifier, type: String
         optional :vendor_id_type, type: String

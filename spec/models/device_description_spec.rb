@@ -35,6 +35,7 @@
 #  operation_mode                       :string
 #  operators                            :jsonb
 #  owner_email                          :string
+#  owner_id_type                        :string
 #  owner_institution                    :string
 #  planned_maintenance                  :jsonb
 #  policies_and_user_information        :text

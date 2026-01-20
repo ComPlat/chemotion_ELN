@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2026_01_08_155328) do
+ActiveRecord::Schema.define(version: 2026_01_20_183627) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -506,6 +506,7 @@ ActiveRecord::Schema.define(version: 2026_01_08_155328) do
     t.jsonb "operators"
     t.jsonb "ontologies"
     t.string "owner_id"
+    t.string "owner_id_type"
     t.string "owner_email"
     t.string "owner_institution"
     t.jsonb "planned_maintenance"

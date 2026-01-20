@@ -28,6 +28,7 @@ module Entities
     expose :owner_institution
     expose :owner_email
     expose :owner_id
+    expose :owner_id_type
     expose :inventory_id
     expose :alternative_identifier
     expose :vendor_id_type

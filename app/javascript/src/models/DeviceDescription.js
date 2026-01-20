@@ -33,6 +33,7 @@ export default class DeviceDescription extends Element {
       owner_institution: '',
       owner_email: '',
       owner_id: '',
+      owner_id_type: '',
       inventory_id: '',
       alternative_identifier: '',
       vendor_id_type: '',
