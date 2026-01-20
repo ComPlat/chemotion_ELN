@@ -320,6 +320,39 @@ module Chemotion
         return { msg: { level: 'error', message: e } }
       end
 
+      desc 'Render SVG from molfile using fallback chain (Indigo -> Ketcher -> OpenBabel) and save to molecule'
+      params do
+        requires :molfile, type: String, desc: 'Molecule molfile'
+      end
+      post :render_svg do
+        require Rails.root.join('lib/chemotion/svg_renderer.rb')
+
+        molfile = params[:molfile]
+        
+        # Find or create molecule from molfile
+        molecule = Molecule.find_or_create_by_molfile(molfile)
+        return { success: false, error: 'Failed to find or create molecule' } if molecule.blank?
+
+        # Render SVG using fallback chain: Indigo -> Ketcher -> OpenBabel
+        # This already returns processed (centered and scaled) SVG
+        processed_svg = Chemotion::SvgRenderer.render_svg_from_molfile(molfile)
+        return { success: false, error: 'Failed to render SVG: All rendering services failed' } if processed_svg.blank?
+
+        # Save SVG to molecule's file path (updates molecule_svg_file)
+        molecule.attach_svg(processed_svg)
+        molecule.save
+        
+        { 
+          success: true, 
+          molecule_svg_file: molecule.molecule_svg_file,
+          svg_path: "/images/molecules/#{molecule.molecule_svg_file}"
+        }
+      rescue StandardError => e
+        Rails.logger.error("Error rendering SVG: #{e.message}")
+        Rails.logger.error(e.backtrace.join("\n")) if e.backtrace
+        { success: false, error: e.message }
+      end
+
       desc 'update molfile and svg of molecule'
       params do
         requires :id, type: Integer, desc: 'Molecule ID'
