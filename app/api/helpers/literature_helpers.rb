@@ -2,17 +2,19 @@ module LiteratureHelpers
   extend Grape::API::Helpers
 
   def update_literature(element, literature_list)
-    current_literature_ids = element.literature_ids
+    element.literature_ids
     literatures = Array(literature_list)
     literatures.each do |lit|
-
       if lit.is_new
         l = Literature.find_or_create_by(title: lit.title, url: lit.url, doi: lit.doi, isbn: lit.isbn)
-        element.literals.where(literature_id: l.id).first || element.literals.build(literature_id: l.id, user_id: current_user.id) if l
+        if l
+          element.literals.where(literature_id: l.id).first || element.literals.build(literature_id: l.id,
+                                                                                      user_id: current_user.id)
+        end
       else
 
-        #todo:
-        #update
+        # todo:
+        # update
       end
     end
     # included_literature_ids = literatures.map(&:id)
@@ -24,9 +26,24 @@ module LiteratureHelpers
     update_literature(reaction, literatures)
   end
 
-  def citation_for_elements(id, type, cat = 'detail')
-    return Literature.none unless id.present?
-    Literature.by_element_attributes_and_cat(id, type, cat).with_user_info
-  end
+  def citation_for_elements(element_ids, element_type, cat = 'detail')
+    return Literature.none if element_ids.blank?
 
-end #module
+    Literal
+      .joins(:literature)
+      .where(
+        element_id: Array(element_ids),
+        element_type: element_type,
+        category: cat,
+      )
+      .select(
+        'literatures.*',
+        'literals.id AS literal_id',
+        'literals.litype',
+        'literals.user_id',
+        'literals.element_id',
+        'literals.element_type',
+        'literals.updated_at AS element_updated_at',
+      )
+  end
+end # module

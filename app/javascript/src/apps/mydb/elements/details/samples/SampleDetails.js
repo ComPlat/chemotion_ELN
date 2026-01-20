@@ -597,6 +597,7 @@ export default class SampleDetails extends React.Component {
         }
         <DetailsTabLiteratures
           element={sample}
+          literatures={sample.isNew ? sample.literatures : null}
         />
       </Tab>
     );

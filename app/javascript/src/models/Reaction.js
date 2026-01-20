@@ -893,18 +893,8 @@ export default class Reaction extends Element {
     }
   }
 
-  // literatures
-
-  get literatures() {
-    return this._literatures || {};
-  }
-
   get research_plans() {
     return this._research_plans || {};
-  }
-
-  set literatures(literatures) {
-    this._literatures = literatures;
   }
 
   set research_plans(research_plans) {

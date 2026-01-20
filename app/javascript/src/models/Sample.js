@@ -239,7 +239,8 @@ export default class Sample extends Element {
       xref: {},
       sample_type: SAMPLE_TYPE_MICROMOLECULE,
       components: [],
-      ancestor_ids: []
+      ancestor_ids: [],
+      literatures: {},
     });
 
     sample.short_label = Sample.buildNewShortLabel();
@@ -435,6 +436,7 @@ export default class Sample extends Element {
       segments: this.segments.map((s) => s.serialize()),
       sample_type: this.sample_type,
       sample_details: this.sample_details,
+      literatures: this.literatures,
     });
 
     return serialized;
