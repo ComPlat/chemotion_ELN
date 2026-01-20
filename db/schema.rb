@@ -1509,6 +1509,8 @@ ActiveRecord::Schema.define(version: 2026_01_20_183627) do
     t.datetime "updated_at", precision: 6, null: false
     t.float "equivalent"
     t.float "weight_percentage"
+    t.float "concentration_rt_value"
+    t.string "concentration_rt_unit", default: "mol/L", null: false
     t.index ["ancestry"], name: "idx_sbmm_samples_ancestry", opclass: :varchar_pattern_ops
     t.index ["deleted_at"], name: "idx_sbmm_samples_deleted_at"
     t.index ["sequence_based_macromolecule_id"], name: "idx_sbmm_samples_sbmm"
