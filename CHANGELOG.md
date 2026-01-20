@@ -2,6 +2,268 @@
 
 ## Latest
 
+## [v3.0.0rc]
+> (2026-01-15)
+
+* Features and enhancements
+
+  UX/UI
+  * new navigation structure  ([#2211](https://github.com/ComPlat/chemotion_ELN/pull/2211))
+  * show multiple quantities per reaction variation material  ([#2602](https://github.com/ComPlat/chemotion_ELN/pull/2602))
+  * overhaul reaction scheme table & sidebar  ([#2562](https://github.com/ComPlat/chemotion_ELN/pull/2562))
+  * responsive reaction scheme tab  ([#2803](https://github.com/ComPlat/chemotion_ELN/pull/2803))
+  * add tooltip to upload-add-analyses buttons  ([#2813](https://github.com/ComPlat/chemotion_ELN/pull/2813))
+  * folder and zip upload for multi-upload and new analyses  ([#2817](https://github.com/ComPlat/chemotion_ELN/pull/2817))
+  * refactor analyses tab to use a dedicated hint component  ([#2832](https://github.com/ComPlat/chemotion_ELN/pull/2832))
+  * enhance analyses containers with dynamic comment visibility  ([#2841](https://github.com/ComPlat/chemotion_ELN/pull/2841))
+  * sample types extension - mixtures  ([#2311](https://github.com/ComPlat/chemotion_ELN/pull/2311))
+  * display multi spectra for HPLC UV-VIS, NMR and UV  ([#2471](https://github.com/ComPlat/chemotion_ELN/pull/2471))
+  * search sample by custom molecule name  ([#2603](https://github.com/ComPlat/chemotion_ELN/pull/2603))
+  * enhance history tracker for reaction variations  ([#2375](https://github.com/ComPlat/chemotion_ELN/pull/2375))
+  * track device description changes  ([#2573](https://github.com/ComPlat/chemotion_ELN/pull/2573))
+  * improve dataset save action for element analysis  ([#2468](https://github.com/ComPlat/chemotion_ELN/pull/2468))
+  * implement api for vessel and vessel template  ([#2441](https://github.com/ComPlat/chemotion_ELN/pull/2441))
+  * make creatableselects editable across all elements  ([#2568](https://github.com/ComPlat/chemotion_ELN/pull/2568))
+  * create multiple analyses by uploading multiple files and folders at once  ([#2526](https://github.com/ComPlat/chemotion_ELN/pull/2526))
+  * UI implementation  ([#2235](https://github.com/ComPlat/chemotion_ELN/pull/2235))
+  * add metadata to attachment url for ChemLocalLink  ([#2662](https://github.com/ComPlat/chemotion_ELN/pull/2662))
+  * Ketcher solid phase support basic  ([#2655](https://github.com/ComPlat/chemotion_ELN/pull/2655))
+  * extend available fields with associated generic segment  ([#2528](https://github.com/ComPlat/chemotion_ELN/pull/2528))
+  * add custom text to surface image nodes  ([#2230](https://github.com/ComPlat/chemotion_ELN/pull/2230))
+  * replace ketcherails as editor and server side rendering service with ketcher and indigo   ([#2569](https://github.com/ComPlat/chemotion_ELN/pull/2569))
+  * Solid surface Polymer basic category assets  ([#2686](https://github.com/ComPlat/chemotion_ELN/pull/2686))
+  * refactor FastInput with new CAS API  ([#2705](https://github.com/ComPlat/chemotion_ELN/pull/2705))
+  * SDS upload in chemicalTab component as attachment modal  ([#2430](https://github.com/ComPlat/chemotion_ELN/pull/2430))
+  * improve sample class and components: molecular weight, labels, and mixture handling  ([#2679](https://github.com/ComPlat/chemotion_ELN/pull/2679))
+  * SMILES support to collection import.  ([#2692](https://github.com/ComPlat/chemotion_ELN/pull/2692))
+  * sample import enhanced headers mapping and data validation  ([#2446](https://github.com/ComPlat/chemotion_ELN/pull/2446))
+  * labimotion-2.1.0  ([#2760](https://github.com/ComPlat/chemotion_ELN/pull/2760))
+  * sequence based macromolecules  ([#2719](https://github.com/ComPlat/chemotion_ELN/pull/2719))
+  * reprocess reaction svg for smartadd import  ([#2801](https://github.com/ComPlat/chemotion_ELN/pull/2801))
+  * labimotion-2.1.0  ([#2802](https://github.com/ComPlat/chemotion_ELN/pull/2802))
+  * mixture samples in improved reaction scheme  ([#2706](https://github.com/ComPlat/chemotion_ELN/pull/2706))
+  * add inventory label field in inventory tab  ([#2785](https://github.com/ComPlat/chemotion_ELN/pull/2785))
+  * Implement improved elemental composition table display  ([#2636](https://github.com/ComPlat/chemotion_ELN/pull/2636))
+  * Quill Editor Add keyboard shortcuts for subscript and superscript formatting  ([#2807](https://github.com/ComPlat/chemotion_ELN/pull/2807))
+  * tracking sample mixture  ([#2823](https://github.com/ComPlat/chemotion_ELN/pull/2823))
+  * report generation with mixture components and fix mixture issues  ([#2824](https://github.com/ComPlat/chemotion_ELN/pull/2824))
+  * Weight percentage reaction scheme  ([#2588](https://github.com/ComPlat/chemotion_ELN/pull/2588))
+  * Change device description ontology logic, Add more fields  ([#2852](https://github.com/ComPlat/chemotion_ELN/pull/2852))
+  * labimotion-2.1.0  ([#2867](https://github.com/ComPlat/chemotion_ELN/pull/2867))
+
+  ChemSpectra and NMRIUM
+  * bump react-spectra-editor to 1.4.0  ([#2634](https://github.com/ComPlat/chemotion_ELN/pull/2634))
+
+* Bug fixes
+  * tooltip issue while transmitting data to repository  ([#2570](https://github.com/ComPlat/chemotion_ELN/pull/2570))
+  * history formaters  ([#2566](https://github.com/ComPlat/chemotion_ELN/pull/2566))
+  * refine mixture element check to ensure proper instance validation  ([#2583](https://github.com/ComPlat/chemotion_ELN/pull/2583))
+  * persist coefficient value on material change in reaction scheme  ([#2563](https://github.com/ComPlat/chemotion_ELN/pull/2563))
+  * message api param  ([#2599](https://github.com/ComPlat/chemotion_ELN/pull/2599))
+  * checkbox state when collapsing/expanding the elements in List  ([#2604](https://github.com/ComPlat/chemotion_ELN/pull/2604))
+  * custom labels getting deleted from reactions  ([#2593](https://github.com/ComPlat/chemotion_ELN/pull/2593))
+  * import chemical lost option  ([#2607](https://github.com/ComPlat/chemotion_ELN/pull/2607))
+  * chemical export queries with select all samples  ([#2605](https://github.com/ComPlat/chemotion_ELN/pull/2605))
+  * invalid statement in advanced search  ([#2613](https://github.com/ComPlat/chemotion_ELN/pull/2613))
+  * no attachment handling in ImageModal to prevent crashes  ([#2618](https://github.com/ComPlat/chemotion_ELN/pull/2618))
+  * rendering short label link in research plan table  ([#2601](https://github.com/ComPlat/chemotion_ELN/pull/2601))
+  * reverter  ([#2632](https://github.com/ComPlat/chemotion_ELN/pull/2632))
+  * resolve research plan table column renaming and short label link…  ([#2627](https://github.com/ComPlat/chemotion_ELN/pull/2627))
+  * advanced search listing for non sample elements  ([#2633](https://github.com/ComPlat/chemotion_ELN/pull/2633))
+  * tabs navigation in advanced search result  ([#2639](https://github.com/ComPlat/chemotion_ELN/pull/2639))
+  * ensure safe serialization of metadata  ([#2629](https://github.com/ComPlat/chemotion_ELN/pull/2629))
+  * development vessel template seeds  ([#2643](https://github.com/ComPlat/chemotion_ELN/pull/2643))
+  * handle report generation request with an empty selection of items  ([#2644](https://github.com/ComPlat/chemotion_ELN/pull/2644))
+  * chemdraw loadError function missing  ([#2653](https://github.com/ComPlat/chemotion_ELN/pull/2653))
+  * ensure tiff attachment can be previewed  ([#2693](https://github.com/ComPlat/chemotion_ELN/pull/2693))
+  * solid phase support operation and ketcher api update  ([#2696](https://github.com/ComPlat/chemotion_ELN/pull/2696))
+  * solid phase support operation and ketcher api update  ([#2696](https://github.com/ComPlat/chemotion_ELN/pull/2696))
+  * set ketcher as default when system has no editor is available  ([#2710](https://github.com/ComPlat/chemotion_ELN/pull/2710))
+  * navigation to page `about`   ([#2722](https://github.com/ComPlat/chemotion_ELN/pull/2722))
+  * missing gem daemons  ([#2723](https://github.com/ComPlat/chemotion_ELN/pull/2723))
+  * drag and drop sorting of sample analyses  ([#2724](https://github.com/ComPlat/chemotion_ELN/pull/2724))
+  * set activeTab to properties tab on create sample action  ([#2608](https://github.com/ComPlat/chemotion_ELN/pull/2608))
+  * ensure recipient is a user  ([#2733](https://github.com/ComPlat/chemotion_ELN/pull/2733))
+  * prefer processed peaks and auto select single spectrum on load  ([#2753](https://github.com/ComPlat/chemotion_ELN/pull/2753))
+  * split button disable  ([#2761](https://github.com/ComPlat/chemotion_ELN/pull/2761))
+  * split button disable for cell-line - rebase issue  ([#2766](https://github.com/ComPlat/chemotion_ELN/pull/2766))
+  * list display grouped by ontologies  ([#2769](https://github.com/ComPlat/chemotion_ELN/pull/2769))
+  * Reorder DnD backends to prioritize touch support on hybrid and mobile devices  ([#2776](https://github.com/ComPlat/chemotion_ELN/pull/2776))
+  * rename migration - add_detail_level_to_collections.rb‎  ([#2781](https://github.com/ComPlat/chemotion_ELN/pull/2781))
+  * polymer SVG node loss, handle save prompt delay on crash, and refine SVG glyph IDs  ([#2582](https://github.com/ComPlat/chemotion_ELN/pull/2582))
+  * Ketcher, indigo and refactoring  ([#2771](https://github.com/ComPlat/chemotion_ELN/pull/2771))
+  * add close button to modal header in ContainerDatasetModal component  ([#2806](https://github.com/ComPlat/chemotion_ELN/pull/2806))
+  * sample's molecule-name - show origin and remove duplicates from options  ([#2730](https://github.com/ComPlat/chemotion_ELN/pull/2730))
+  * remove leftover handleEdit binding that caused creation error  ([#2825](https://github.com/ComPlat/chemotion_ELN/pull/2825))
+  * Update reaction variations' sample IDs when reaction is copied  ([#2829](https://github.com/ComPlat/chemotion_ELN/pull/2829))
+  * gas phase scheme calculations  ([#2839](https://github.com/ComPlat/chemotion_ELN/pull/2839))
+  * update sample ID references in custom_column_query for consistency  ([#2831](https://github.com/ComPlat/chemotion_ELN/pull/2831))
+  * backend conversion with quill-delta-to-html (^0.12.1)  ([#2844](https://github.com/ComPlat/chemotion_ELN/pull/2844))
+  * dispatch error in gas phase reaction scheme UI  ([#2843](https://github.com/ComPlat/chemotion_ELN/pull/2843))
+  * rename device type to device class  ([#2861](https://github.com/ComPlat/chemotion_ELN/pull/2861))
+
+  UX/UI
+  * make element detail tabs and header sticky   ([#2576](https://github.com/ComPlat/chemotion_ELN/pull/2576))
+  * PrintCodeButton & Select dropdown menus being cut off  ([#2571](https://github.com/ComPlat/chemotion_ELN/pull/2571))
+  * Remove faulty z-index classes to fix Select menu  ([#2590](https://github.com/ComPlat/chemotion_ELN/pull/2590))
+  * Allow weighing task inbox to be toggled from sidebar  ([#2592](https://github.com/ComPlat/chemotion_ELN/pull/2592))
+  * select menus in modals  ([#2595](https://github.com/ComPlat/chemotion_ELN/pull/2595))
+  * menu action buttons initialized before user data is available  ([#2606](https://github.com/ComPlat/chemotion_ELN/pull/2606))
+  * sample measurements tab and empty measurement loading for new sample  ([#2619](https://github.com/ComPlat/chemotion_ELN/pull/2619))
+  * Make detail view tabs and headers sticky again  ([#2672](https://github.com/ComPlat/chemotion_ELN/pull/2672))
+  * selected element to match current element  ([#2746](https://github.com/ComPlat/chemotion_ELN/pull/2746))
+  * device settings for data collector  ([#2732](https://github.com/ComPlat/chemotion_ELN/pull/2732))
+  * prevent duplicate analysis  ([#2736](https://github.com/ComPlat/chemotion_ELN/pull/2736))
+
+   ChemSpectra and NMRIUM
+  * render one Spectra modal per analyses-list  ([#2572](https://github.com/ComPlat/chemotion_ELN/pull/2572))
+  * only strip last extension in fname_wo_ext to preserve internal dots  ([#2581](https://github.com/ComPlat/chemotion_ELN/pull/2581))
+  * Display Unicode unit labels correctly  ([#2660](https://github.com/ComPlat/chemotion_ELN/pull/2660))
+  * missing 1H operations and crash on multi spectra  ([#2695](https://github.com/ComPlat/chemotion_ELN/pull/2695))
+  * enforce binary multipart uploads after httparty bump  ([#2866](https://github.com/ComPlat/chemotion_ELN/pull/2866))
+
+* Performance improvements
+  * add indices to improve sample serialization  ([#2554](https://github.com/ComPlat/chemotion_ELN/pull/2554))
+  * export collection  ([#2756](https://github.com/ComPlat/chemotion_ELN/pull/2756))
+
+  ChemSpectra and NMRIUM
+  * improve the transfer of NMRium files  ([#2512](https://github.com/ComPlat/chemotion_ELN/pull/2512))
+
+* Styles
+  * change group name in device description list  ([#2589](https://github.com/ComPlat/chemotion_ELN/pull/2589))
+  * improve yield/conversion rate toggle button implementation  ([#2620](https://github.com/ComPlat/chemotion_ELN/pull/2620))
+
+* Code refactoring
+  * change data structure from array to object  ([#2519](https://github.com/ComPlat/chemotion_ELN/pull/2519))
+  * instrument field to use standard select component  ([#2551](https://github.com/ComPlat/chemotion_ELN/pull/2551))
+  * attachment access url for third party apps  ([#2622](https://github.com/ComPlat/chemotion_ELN/pull/2622))
+  * rescue type-error when encoding thumbnails to be sent to client  ([#2637](https://github.com/ComPlat/chemotion_ELN/pull/2637))
+  * reaction variations  ([#2690](https://github.com/ComPlat/chemotion_ELN/pull/2690))
+  * display account and profile page with iframe in modal  ([#2688](https://github.com/ComPlat/chemotion_ELN/pull/2688))
+  * image modal  ([#2759](https://github.com/ComPlat/chemotion_ELN/pull/2759))
+  * update Sample and Component specs for improved accuracy  ([#2810](https://github.com/ComPlat/chemotion_ELN/pull/2810))
+  * reaction variations generic segments  ([#2768](https://github.com/ComPlat/chemotion_ELN/pull/2768))
+  * only office integration  ([#2782](https://github.com/ComPlat/chemotion_ELN/pull/2782))
+  * update components exposure in sample_entity.rb  ([#2815](https://github.com/ComPlat/chemotion_ELN/pull/2815))
+  * improve collection tab editor UI with enhanced styling  ([#2821](https://github.com/ComPlat/chemotion_ELN/pull/2821))
+  * enhance Material component's update logic for better state management  ([#2851](https://github.com/ComPlat/chemotion_ELN/pull/2851))
+
+  UX/UI
+  * toggle well and user-label colors  ([#2536](https://github.com/ComPlat/chemotion_ELN/pull/2536))
+  * restructure CAS input layout in SampleDetails component  ([#2833](https://github.com/ComPlat/chemotion_ELN/pull/2833))
+
+* Tests
+  * fix setup.js path in devcontainer  ([#2647](https://github.com/ComPlat/chemotion_ELN/pull/2647))
+  * fix sample api flaky specs  ([#2699](https://github.com/ComPlat/chemotion_ELN/pull/2699))
+
+* Chores
+  * bump nodejs engine to 22.16.0 - bump shakapacker webpack and babel dep  ([#2556](https://github.com/ComPlat/chemotion_ELN/pull/2556))
+  * update RSpec debug configurations for ruby debugging  ([#2561](https://github.com/ComPlat/chemotion_ELN/pull/2561))
+  * gems update  ([#2560](https://github.com/ComPlat/chemotion_ELN/pull/2560))
+  * update annotate gem  ([#2575](https://github.com/ComPlat/chemotion_ELN/pull/2575))
+  * remove unused files  ([#2586](https://github.com/ComPlat/chemotion_ELN/pull/2586))
+  * Bump thor from 1.3.2 to 1.4.0  ([#2609](https://github.com/ComPlat/chemotion_ELN/pull/2609))
+  * bump nodejs engine from 22.16.0 to 22.17.1  ([#2626](https://github.com/ComPlat/chemotion_ELN/pull/2626))
+  * bump nodejs to minor 22.18 and other packages  ([#2648](https://github.com/ComPlat/chemotion_ELN/pull/2648))
+  * Bump tmp from 0.2.1 to 0.2.5  ([#2650](https://github.com/ComPlat/chemotion_ELN/pull/2650))
+  * bump service dependencies  ([#2641](https://github.com/ComPlat/chemotion_ELN/pull/2641))
+  * Bump jspdf from 3.0.0 to 3.0.1  ([#2656](https://github.com/ComPlat/chemotion_ELN/pull/2656))
+  * Bump rexml from 3.4.1 to 3.4.2  ([#2676](https://github.com/ComPlat/chemotion_ELN/pull/2676))
+  * bump nodejs to minor 22.19 and other packages  ([#2677](https://github.com/ComPlat/chemotion_ELN/pull/2677))
+  * node packages bump  ([#2702](https://github.com/ComPlat/chemotion_ELN/pull/2702))
+  * indigo service tagged as service dependencies  ([#2731](https://github.com/ComPlat/chemotion_ELN/pull/2731))
+  * migration to sync research plan attachments  ([#2744](https://github.com/ComPlat/chemotion_ELN/pull/2744))
+  * bump nodejs minor and yarn upgrade-interactive  ([#2819](https://github.com/ComPlat/chemotion_ELN/pull/2819))
+  * quilljs editor bump to v2  ([#2828](https://github.com/ComPlat/chemotion_ELN/pull/2828))
+  * Bump node-forge from 1.3.1 to 1.3.3  ([#2820](https://github.com/ComPlat/chemotion_ELN/pull/2820))
+  * Bump rack from 2.2.17 to 2.2.20  ([#2707](https://github.com/ComPlat/chemotion_ELN/pull/2707))
+  * Bump storybook from 9.1.16 to 9.1.17  ([#2838](https://github.com/ComPlat/chemotion_ELN/pull/2838))
+  * Bump min-document from 2.19.0 to 2.19.1  ([#2763](https://github.com/ComPlat/chemotion_ELN/pull/2763))
+  * bump react-spectra-editor to 1.5.0  ([#2857](https://github.com/ComPlat/chemotion_ELN/pull/2857))
+  * Bump httparty from 0.23.1 to 0.24.0  ([#2859](https://github.com/ComPlat/chemotion_ELN/pull/2859))
+  * Bump httparty from 0.24.0 to 0.24.2  ([#2871](https://github.com/ComPlat/chemotion_ELN/pull/2871))
+  * Bump html2pdf.js from 0.10.3 to 0.14.0  ([#2869](https://github.com/ComPlat/chemotion_ELN/pull/2869))
+  * add converter config data output to ui_api  ([#2870](https://github.com/ComPlat/chemotion_ELN/pull/2870))
+  * Bump shakapacker from 8.3.0 to 9.5.0  ([#2855](https://github.com/ComPlat/chemotion_ELN/pull/2855))
+
+* Build
+  * revert accidental schema changes  ([#2550](https://github.com/ComPlat/chemotion_ELN/pull/2550))
+  * bump ubuntu os 24 - asdf 18  ([#2557](https://github.com/ComPlat/chemotion_ELN/pull/2557))
+  * bump recommended versions for services  ([#2673](https://github.com/ComPlat/chemotion_ELN/pull/2673))
+  * map local user id to ubuntu user in app image and avoid parallel image building  ([#2668](https://github.com/ComPlat/chemotion_ELN/pull/2668))
+  * setup Storybook for UI component development  ([#2675](https://github.com/ComPlat/chemotion_ELN/pull/2675))
+
+* Ci
+  * push2deploy  ([#2610](https://github.com/ComPlat/chemotion_ELN/pull/2610))
+  * fix over reliance on cache   ([#2616](https://github.com/ComPlat/chemotion_ELN/pull/2616))
+  * fix ORIG_HEAD does not exist  ([#2617](https://github.com/ComPlat/chemotion_ELN/pull/2617))
+  * ensure nodejs version set in all cases  ([#2630](https://github.com/ComPlat/chemotion_ELN/pull/2630))
+  * reset version after releasing a tag  ([#2628](https://github.com/ComPlat/chemotion_ELN/pull/2628))
+  * fix: correct reset of env variable  ([#2631](https://github.com/ComPlat/chemotion_ELN/pull/2631))
+  * add ability to modify the `/shared` directory  ([#2646](https://github.com/ComPlat/chemotion_ELN/pull/2646))
+  * limit CPU resources  ([#2678](https://github.com/ComPlat/chemotion_ELN/pull/2678))
+  * update base images  ([#2680](https://github.com/ComPlat/chemotion_ELN/pull/2680))
+  * optimize test workflow  ([#2697](https://github.com/ComPlat/chemotion_ELN/pull/2697))
+  * optimize test workflow  ([#2708](https://github.com/ComPlat/chemotion_ELN/pull/2708))
+  * change base images to point to v2.1.1 of ELN  ([#2725](https://github.com/ComPlat/chemotion_ELN/pull/2725))
+  * push2deploy: revert changes   ([#2811](https://github.com/ComPlat/chemotion_ELN/pull/2811))
+  * Push2Deploy: rebase deployments to v2.2.0 images  ([#2812](https://github.com/ComPlat/chemotion_ELN/pull/2812))
+
+* Others
+  * refactor!(Ketcher): change common templates export implementation using migration  ([#2591](https://github.com/ComPlat/chemotion_ELN/pull/2591))
+
+## [v2.2.0]
+> (2025-11-17)
+
+### feat and perf:
+ - enhance export of large collections [#2756](https://github.com/ComPlat/chemotion_ELN/pull/2756)
+ - enhance collection import with SMILES support and conditional attachment handling. [#2692](https://github.com/ComPlat/chemotion_ELN/pull/2692)
+ - add db indices to improve sample serialization -  (port [#2754](https://github.com/ComPlat/chemotion_ELN/pull/2754), [#2778](https://github.com/ComPlat/chemotion_ELN/pull/2778))
+ - navigation: account and profile page as modal in mydb page [#2688](https://github.com/ComPlat/chemotion_ELN/pull/2688)
+
+### fixes:
+  - analysis duplication [#2736](https://github.com/ComPlat/chemotion_ELN/pull/2736)
+  - datacollector: ensure recipient is a user [#2733](https://github.com/ComPlat/chemotion_ELN/pull/2733)
+  - polymer SVG node loss, handle save prompt delay on crash, and refine SVG glyph IDs [#2774](https://github.com/ComPlat/chemotion_ELN/pull/2774)
+ 
+#### UI/UX
+  - device settings for data collector [#2732](https://github.com/ComPlat/chemotion_ELN/pull/2732)
+  - fix: set activeTab to properties tab on create sample action [#2608](https://github.com/ComPlat/chemotion_ELN/pull/2608)
+  - split button disable for cell-line and generic-elements [#2762](https://github.com/ComPlat/chemotion_ELN/pull/2762)
+  - reaction status icons contrast (port [#2734](https://github.com/ComPlat/chemotion_ELN/pull/2734))
+  - selected element to match current element [#2746](https://github.com/ComPlat/chemotion_ELN/pull/2746)
+  - drag and drop sorting of sample analyses - v2.x [#2726](https://github.com/ComPlat/chemotion_ELN/pull/2726)
+  - reorder DnD backends to prioritize touch support on hybrid and mobile devices [#2776](https://github.com/ComPlat/chemotion_ELN/pull/2776)
+  - navigation to page about  [#2722](https://github.com/ComPlat/chemotion_ELN/pull/2722)
+  - allow entering and selection of cas nummer in cas field in sample properties tab [#2737](https://github.com/ComPlat/chemotion_ELN/pull/2737)
+  - spectra: color contrast when displaying multiple spectra
+  - spectra: prefer processed peaks and auto select single spectrum on load [#2753](https://github.com/ComPlat/chemotion_ELN/pull/2753)
+
+  
+### chore & test:
+   - bump nodejs to 22.21.1
+   - migration to sync research plan attachments ([#2744](https://github.com/ComPlat/chemotion_ELN/pull/2744), [#2773](https://github.com/ComPlat/chemotion_ELN/pull/2773))
+   - fix TPA api test [#2662](https://github.com/ComPlat/chemotion_ELN/pull/2662)
+
+## [v2.1.1]
+> (2025-10-00)
+
+
+* Refactor:
+  * sample FastInput with new CAS API (#2705)
+
+* Fixes
+  * ensure tiff attachment can be previewed (#2693)
+  * fix(spectra): missing 1H operations and crash on multi spectra (#2695)
+  * history formaters (#2566)
+
+* Chore
+  * Bump Chem-spectra-app serice to [1.3.2](https://github.com/ComPlat/chem-spectra-app/releases/tag/v1.3.2)
+
+* Test
+  * fix flaky sample api test (#2699)
+
+
 ## [v2.1.0]
 > (2025-08-24)
 
