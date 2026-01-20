@@ -16,6 +16,8 @@
 #  amount_as_used_mol_unit         :string           default("mol"), not null
 #  amount_as_used_mol_value        :float
 #  ancestry                        :string           default("/"), not null
+#  concentration_rt_unit           :string           default("mol/L"), not null
+#  concentration_rt_value          :float
 #  concentration_unit              :string           default("ng/L"), not null
 #  concentration_value             :float
 #  deleted_at                      :datetime

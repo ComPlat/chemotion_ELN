@@ -180,6 +180,8 @@ module ParamsHelpers
     optional :function_or_application, type: String
     optional :concentration_value, type: Float
     optional :concentration_unit, type: String, values: %w[ng/L mg/L g/L], default: 'ng/L'
+    optional :concentration_rt_value, type: Float
+    optional :concentration_rt_unit, type: String, values: %w[mol/L mmol/L µmol/L nmol/L pmol/L], default: 'mol/L'
     optional :molarity_value, type: Float
     optional :molarity_unit, type: String, values: %w[mol/L mmol/L µmol/L nmol/L pmol/L], default: 'mol/L'
     optional :activity_per_volume_value, type: Float

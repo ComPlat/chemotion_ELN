@@ -200,8 +200,8 @@ export default class ReactionDetailsScheme extends React.Component {
 
     // Check if already in the group (by original ID or short_label)
     const isAlreadyAdded = reaction.reactant_sbmm_samples?.some(
-      s => s.id === splitSbmmSample.id ||
-           (s.parent_id === srcSbmmSample.id && s.short_label === splitSbmmSample.short_label)
+      (s) => s.id === splitSbmmSample.id
+        || (s.parent_id === srcSbmmSample.id && s.short_label === splitSbmmSample.short_label)
     );
 
     if (isAlreadyAdded) {

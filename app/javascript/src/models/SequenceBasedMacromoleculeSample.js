@@ -13,6 +13,12 @@ export default class SequenceBasedMacromoleculeSample extends Element {
       if (!newArgs._concentration_unit) {
         newArgs._concentration_unit = newArgs.concentration_unit;
       }
+      if (!newArgs._concentration_rt_value) {
+        newArgs._concentration_rt_value = newArgs.concentration_rt_value;
+      }
+      if (!newArgs._concentration_rt_unit) {
+        newArgs._concentration_rt_unit = newArgs.concentration_rt_unit;
+      }
       if (!newArgs._molarity_value) {
         newArgs._molarity_value = newArgs.molarity_value;
       }
@@ -315,6 +321,32 @@ export default class SequenceBasedMacromoleculeSample extends Element {
       : this.concentration_value;
   }
 
+  /**
+   * Calculates concentration (RT) for reaction scheme: concentration_rt = amount_mol / amount_l
+   * Recalculated when amount_as_used_mol_value or volume_as_used_value changes.
+   */
+  calculateConcentrationRt() {
+    const amountMol = this.base_amount_as_used_mol_value;
+    const volumeL = this.base_volume_as_used_value;
+
+    // Calculate concentration (RT) = amount_mol / amount_l
+    // Only calculate if volume is greater than 0 and amount is a valid number
+
+    if (!Number.isFinite(amountMol) || !Number.isFinite(volumeL) || volumeL <= 0) {
+      this._concentration_rt_value = null;
+      return;
+    }
+
+    // Calculate concentration in base units (mol/L)
+    const concentrationValue = amountMol / volumeL;
+
+    // Round to 8 decimal places
+    this._concentration_rt_value = Number(concentrationValue.toFixed(8));
+
+    // Ensure unit is set
+    this._concentration_rt_unit ??= 'mol/L';
+  }
+
   calculateAmountAsUsedMass() {
     if (this.base_volume_as_used_value === 0 || this.concentration_value === 0) {
       return null;
@@ -433,6 +465,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
     }
 
     this.calculateValues('amount_as_used_mol');
+    this.calculateConcentrationRt();
   }
 
   get base_amount_as_used_mol_value() {
@@ -502,6 +535,23 @@ export default class SequenceBasedMacromoleculeSample extends Element {
   set concentration_unit(value) {
     this._concentration_value = convertUnits(this.concentration_value, this.concentration_unit, value);
     this._concentration_unit = value;
+  }
+
+  get concentration_rt_value() {
+    return this._concentration_rt_value;
+  }
+
+  set concentration_rt_value(value) {
+    this._concentration_rt_value = value;
+  }
+
+  get concentration_rt_unit() {
+    return this._concentration_rt_unit || 'mol/L';
+  }
+
+  set concentration_rt_unit(value) {
+    this._concentration_rt_value = convertUnits(this.concentration_rt_value, this.concentration_rt_unit, value);
+    this._concentration_rt_unit = value;
   }
 
   get function_or_application() {
@@ -615,6 +665,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
     this._base_volume_as_used_value =
       convertUnits(this.volume_as_used_value, this.volume_as_used_unit, defaultUnits.volume_as_used);
     this.calculateValues('volume_as_used');
+    this.calculateConcentrationRt();
   }
 
   get base_volume_as_used_value() {
@@ -811,6 +862,8 @@ export default class SequenceBasedMacromoleculeSample extends Element {
       amount_as_used_mass_unit: this.amount_as_used_mass_unit,
       concentration_value: this.concentration_value,
       concentration_unit: this.concentration_unit,
+      concentration_rt_value: this.concentration_rt_value,
+      concentration_rt_unit: this.concentration_rt_unit,
       container: this.container,
       function_or_application: this.function_or_application,
       molarity_value: this.molarity_value,
@@ -885,6 +938,8 @@ export default class SequenceBasedMacromoleculeSample extends Element {
       amount_as_used_mass_unit: this.amount_as_used_mass_unit,
       concentration_value: this.concentration_value,
       concentration_unit: this.concentration_unit,
+      concentration_rt_value: this.concentration_rt_value,
+      concentration_rt_unit: this.concentration_rt_unit,
       container: this.container,
       function_or_application: this.function_or_application,
       molarity_value: this.molarity_value,
@@ -971,6 +1026,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
 
   buildChildWithoutCounter() {
     const splitSbmm = this.clone();
+
     splitSbmm.parent_id = this.id; // Set parent relationship
     splitSbmm.id = Element.buildID(); // New temporary ID
     splitSbmm.created_at = null;
@@ -980,11 +1036,33 @@ export default class SequenceBasedMacromoleculeSample extends Element {
 
     // Build split short label with -NaN suffix (like starting_materials)
     // For SBMM samples, use -NaN suffix to match starting_materials format
-    const baseLabel = this.short_label || '';
-    splitSbmm.short_label = `${baseLabel}-NaN`;
+    splitSbmm.short_label = `${this.short_label || ''}-NaN`;
 
     // Initialize container
     splitSbmm.container = Container.init();
+
+    // Copy values from source SBMM to split SBMM
+    const fieldsToCopy = [
+      { value: 'volume_as_used_value', unit: 'volume_as_used_unit' },
+      { value: 'amount_as_used_mol_value', unit: 'amount_as_used_mol_unit' },
+      { value: 'amount_as_used_mass_value', unit: 'amount_as_used_mass_unit' },
+      { value: 'activity_value', unit: 'activity_unit' },
+      { value: 'concentration_rt_value', unit: 'concentration_rt_unit' },
+    ];
+
+    fieldsToCopy.forEach(({ value, unit }) => {
+      if (this[value] != null) {
+        splitSbmm[value] = this[value];
+      }
+      if (this[unit]) {
+        splitSbmm[unit] = this[unit];
+      }
+    });
+
+    // Purity (no unit)
+    if (this.purity != null) {
+      splitSbmm.purity = this.purity;
+    }
 
     return splitSbmm;
   }

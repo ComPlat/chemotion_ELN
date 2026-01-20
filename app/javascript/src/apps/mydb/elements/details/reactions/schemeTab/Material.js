@@ -188,16 +188,21 @@ class Material extends Component {
   materialConcentration(material) {
     const metricMolConc = getMetricMolConc(material);
 
+    // For SBMM samples, use concentration_rt_value directly (automatically calculated)
+    const concentrationValue = isSbmmSample(material)
+      ? material.concentration_rt_value
+      : material.concn;
+
     return (
       <NumeralInputWithUnitsCompo
-        value={material.concn}
+        value={concentrationValue}
         className="reaction-material__concentration-data"
         unit="mol/l"
         metricPrefix={metricMolConc}
         metricPrefixes={metricPrefixesMolConc}
         precision={4}
         disabled
-        onChange={(e) => this.handleAmountUnitChange(e, material.concn)}
+        onChange={(e) => this.handleAmountUnitChange(e, concentrationValue)}
         onMetricsChange={this.handleMetricsChange}
         size="sm"
       />
@@ -687,6 +692,31 @@ class Material extends Component {
     );
   }
 
+  materialActivity(material) {
+    const { reaction, materialGroup, lockEquivColumn } = this.props;
+
+    const isAmountDisabledByWeightPercentage = reaction.weight_percentage
+      && material.weight_percentage > 0 && materialGroup !== 'products' && !material.weight_percentage_reference;
+
+    const isDisabled = !permitOn(reaction)
+      || isAmountDisabledByWeightPercentage
+      || (materialGroup === 'products'
+      || (!material.reference && lockEquivColumn));
+
+    return (
+      <NumeralInputWithUnitsCompo
+        value={material.activity_value}
+        className="reaction-material__activity-data"
+        unit={material.activity_unit || 'U'}
+        precision={4}
+        disabled={isDisabled}
+        onChange={(e) => this.handleAmountUnitChange(e, material.activity_value, material.amountType)}
+        onMetricsChange={this.handleMetricsChange}
+        size="sm"
+      />
+    );
+  }
+
   toggleComponentsAccordion() {
     this.setState((prevState, props) => {
       const nextOpen = !prevState.showComponents;
@@ -1153,7 +1183,9 @@ class Material extends Component {
               {this.materialAmountMol(material)}
             </div>
             {isSbmmSample(material) ? (
-              <div className="reaction-material__molar-mass-data" />
+              <div className="reaction-material__molar-mass-data">
+                {this.materialActivity(material)}
+              </div>
             ) : (
               <div className="reaction-material__molar-mass-data">
                 <OverlayTrigger
