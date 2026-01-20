@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import {
   Accordion, Button, ButtonGroup, Card, Tooltip, Overlay, OverlayTrigger, Form,
 } from 'react-bootstrap';
+import SVG from 'react-inlinesvg';
 import Aviator from 'aviator';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { wellplateShowOrNew } from 'src/utilities/routesUtils';
@@ -31,14 +32,48 @@ export default class EmbeddedWellplateGenericEl extends Component {
     wellplateShowOrNew({ params: { wellplateID } });
   }
 
-  renderSampleTitle(node) {
+  renderSVG(node) {
     const sample = node.data?.sample;
     if (!sample) { return null; }
 
-    return `${sample.short_label} ${sample.name}`;
+    return (
+      <SVG className="molecule-small" src={`/images/molecules/${sample.molecule.molecule_svg_file}`} />
+    );
   }
 
-  // eslint-disable-next-line class-methods-use-this
+  renderName(node) {
+    const sample = node.data?.sample;
+    if (!sample) { return null; }
+
+    return sample.short_label;
+  }
+
+  renderExternalLabel(node) {
+    const sample = node.data?.sample;
+    if (!sample) { return null; }
+
+    return sample.external_label;
+  }
+
+  renderSumFormula(node) {
+    const sample = node.data?.sample;
+    if (!sample) { return null; }
+
+    return sample.molecule_formula;
+  }
+
+  renderMolarity(node) {
+    const sample = node.data?.sample;
+    if (!sample) { return null; }
+
+    const value = sample?.molarity_value;
+    if (value === null || value === undefined || value === '') {
+      return null;
+    }
+
+    return parseFloat(value.toFixed(4));
+  }
+
   renderWellplateMain(wellplate) {
     const { wells, readout_titles } = wellplate;
 
@@ -49,36 +84,83 @@ export default class EmbeddedWellplateGenericEl extends Component {
 
     const columnDefs = [
       {
-        headerName: "Position",
-        field: "alphanumericPosition",
-        minWidth: 90,
-        maxWidth: 90,
+        headerName: '#',
+        minWidth: 35,
+        maxWidth: 35,
+        valueGetter: 'node.rowIndex + 1',
       },
       {
-        headerName: "Sample",
-        cellRenderer: this.renderSampleTitle,
+        headerName: 'Position',
+        field: 'alphanumericPosition',
+        minWidth: 70,
+        maxWidth: 70,
+      },
+      {
+        headerName: 'Molecule',
+        field: 'sample',
+        minWidth: 75,
+        maxWidth: 75,
+        cellRenderer: this.renderSVG,
+        cellClass: ['text-center', 'py-2', 'border-end'],
+      },
+      {
+        headerName: 'Name',
+        field: 'short_label',
+        cellRenderer: this.renderName,
         wrapText: true,
-        cellClass: ["lh-base", "py-2", "border-end"],
+        cellClass: ['lh-base', 'py-2', 'border-end'],
+      },
+      {
+        headerName: 'External Label',
+        field: 'external_label',
+        cellRenderer: this.renderExternalLabel,
+        wrapText: true,
+        cellClass: ['lh-base', 'py-2', 'border-end'],
+      },
+      {
+        headerName: 'Sum-Formula',
+        field: 'short_label',
+        cellRenderer: this.renderSumFormula,
+        wrapText: true,
+        cellClass: ['lh-base', 'py-2', 'border-end'],
+      },
+      {
+        headerName: 'Molarity (M)',
+        field: 'molarity_value',
+        valueGetter: (params) => {
+          if (params.data?.sample) {
+            return params.data.sample.molarity_value;
+          }
+        },
+        cellRenderer: this.renderMolarity,
+        wrapText: true,
+        cellClass: ['border-end', 'px-2'],
       },
     ];
 
-    readout_titles && readout_titles.map((title, index) => {
+    readout_titles && readout_titles.forEach((title, index) => {
       columnDefs.push(
         {
           headerName: `${title} Value`,
+          field: 'value',
           valueGetter: (params) => {
             if (params.data?.readouts) {
               return params.data.readouts[index].value;
             }
           },
+          cellRendererParams: { index },
+          cellClass: ['border-end', 'px-2'],
         },
         {
           headerName: `${title} Unit`,
+          field: 'unit',
           valueGetter: (params) => {
             if (params.data?.readouts) {
               return params.data.readouts[index].unit;
             }
           },
+          cellRendererParams: { index },
+          cellClass: ['border-end', 'px-2'],
         },
       );
     });
@@ -92,8 +174,8 @@ export default class EmbeddedWellplateGenericEl extends Component {
       sortable: false,
       resizable: false,
       suppressMovable: true,
-      cellClass: ["border-end"],
-      headerClass: ["border-end"],
+      cellClass: ['border-end', 'px-2'],
+      headerClass: ['border-end', 'px-2'],
     };
 
     return (

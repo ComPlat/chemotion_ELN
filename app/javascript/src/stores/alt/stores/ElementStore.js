@@ -1747,6 +1747,18 @@ class ElementStore {
           return nextSample;
         });
       }
+
+      // Synchronize Wellplate with open generic element tabs
+      selecteds.map((el) => {
+        if (el.klassType === 'GenericEl' && el.wellplates) {
+          const wellplateIndex = el.wellplates.findIndex((wp) => wp.id === previous.id);
+          if (wellplateIndex > -1) {
+            el.wellplates[wellplateIndex] = previous;
+            el.changed = true;
+          }
+        }
+        return el;
+      });
     }
 
     return previous;
