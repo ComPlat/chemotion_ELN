@@ -32,10 +32,6 @@ import columnDefinitionsReducer
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 
 export default function ReactionVariations({ reaction, onReactionChange, isActive }) {
-  if (!isActive) {
-    return null;
-  }
-
   if (reaction.isNew) {
     return (
       <Alert variant="info">
