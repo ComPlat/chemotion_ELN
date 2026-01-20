@@ -846,7 +846,7 @@ class Material extends Component {
   }
 
   handleMetricsChange(e) {
-    const { materialGroup, onChange } = this.props;
+    const { materialGroup, onChange, material } = this.props;
     if (onChange && e) {
       const event = {
         metricUnit: e.metricUnit,
@@ -854,6 +854,7 @@ class Material extends Component {
         type: 'MetricsChanged',
         materialGroup,
         sampleID: this.materialId(),
+        isSbmm: isSbmmSample(material),
       };
       onChange(event);
     }
