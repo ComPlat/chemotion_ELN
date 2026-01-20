@@ -281,7 +281,12 @@ class Reaction < ApplicationRecord
   def auto_set_short_label
     prefix = creator.reaction_name_prefix
     counter = creator.counters['reactions'].succ
-    self.short_label = "#{creator.initials}-#{prefix}#{counter}"
+    sh_label = self['short_label']
+    return if short_label && !short_label_changed?
+    return if !(creator && counter)
+
+    label_already_exists = Reaction.find_by(short_label: sh_label)
+    self.short_label = "#{creator.initials}-#{prefix}#{counter}" if !sh_label || label_already_exists
   end
 
   def update_counter
