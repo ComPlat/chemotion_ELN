@@ -390,7 +390,7 @@ module Chemotion
                                                   .search_by(search_method, arg)
                 end
 
-        if search_method != 'advanced' && search_method != 'structure' && molecule_sort == true
+        if search_method != 'advanced' && search_method != 'structure' && molecule_sort == true && scope.respond_to?(:includes)
           scope.includes(:molecule)
                .joins(:molecule)
                .order(Arel.sql("LENGTH(SUBSTRING(molecules.sum_formular, 'C\\d+'))"))
