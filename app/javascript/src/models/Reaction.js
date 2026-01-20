@@ -822,7 +822,11 @@ export default class Reaction extends Element {
   }
 
   sampleById(sampleID) {
-    return this.samples.find((sample) => sample.id == sampleID);
+    return this.samples.find((sample) => sample.id === sampleID);
+  }
+
+  findSbmmSample(sampleID) {
+    return this.reactant_sbmm_samples.find((s) => s.id === sampleID);
   }
 
   get referenceMaterial() {

@@ -144,6 +144,63 @@ export default class SequenceBasedMacromoleculeSample extends Element {
    *
    * @returns {void|null} Returns null if the object is not an enzyme.
    */
+
+  /**
+   * Sets the metric prefix for a given unit type.
+   * Updates the appropriate unit field (mol, mass, or volume) with the new prefix,
+   * automatically converting the value using the existing unit setter.
+   *
+   * @param {string} metricUnit - The base unit type ('mol', 'g', 'l')
+   * @param {string} metricPrefix - The metric prefix ('m', 'µ', 'u', 'n', 'p', or '' for base unit)
+   * @returns {void}
+   */
+  setUnitMetrics(metricUnit, metricPrefix) {
+    if (!metricUnit) return;
+
+    const unit = metricUnit.toLowerCase();
+    const prefix = metricPrefix || '';
+
+    if (unit === 'mol') {
+      // Update mol unit with new prefix
+      const newUnit = this.buildUnitWithPrefix('mol', prefix);
+      // The setter will automatically convert the value
+      this.amount_as_used_mol_unit = newUnit;
+    } else if (unit === 'g') {
+      // Update mass unit with new prefix
+      const newUnit = this.buildUnitWithPrefix('g', prefix);
+      // The setter will automatically convert the value
+      this.amount_as_used_mass_unit = newUnit;
+    } else if (unit === 'l') {
+      // Update volume unit with new prefix
+      const newUnit = this.buildUnitWithPrefix('L', prefix);
+      // The setter will automatically convert the value
+      this.volume_as_used_unit = newUnit;
+    }
+  }
+
+  /**
+   * Builds a unit string with the given metric prefix.
+   *
+   * @param {string} baseUnit - The base unit ('mol', 'g', 'L')
+   * @param {string} prefix - The metric prefix ('m', 'µ', 'u', 'n', 'p', or '' for base unit)
+   * @returns {string} The unit string with prefix (e.g., 'mmol', 'µg', 'mL')
+   */
+  buildUnitWithPrefix(baseUnit, prefix) {
+    if (!prefix || prefix === '') return baseUnit;
+
+    // Map prefix to unit prefix character
+    const prefixMap = {
+      'm': 'm',      // milli
+      'n': 'n',      // nano
+      'u': 'µ',      // micro (use µ symbol)
+      'µ': 'µ',      // micro
+      'p': 'p',      // pico
+    };
+
+    const prefixChar = prefixMap[prefix] || prefix;
+    return `${prefixChar}${baseUnit}`;
+  }
+
   calculateValues(type) {
     if (this.function_or_application !== 'enzyme') return null;
 

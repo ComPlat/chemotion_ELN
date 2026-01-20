@@ -668,9 +668,16 @@ export default class ReactionDetailsScheme extends React.Component {
 
   updatedReactionForMetricsChange(changeEvent) {
     const { reaction } = this.props;
-    const { sampleID, metricUnit, metricPrefix } = changeEvent;
-    const updatedSample = reaction.sampleById(sampleID);
+    const {
+      sampleID, metricUnit, metricPrefix, isSbmm
+    } = changeEvent;
 
+    const updatedSample = isSbmm === true
+      ? reaction.findSbmmSample(sampleID)
+      : reaction.sampleById(sampleID);
+
+    // Both SBMM and regular samples have setUnitMetrics method
+    // SBMM samples update unit fields directly, regular samples update metrics string
     updatedSample.setUnitMetrics(metricUnit, metricPrefix);
 
     return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample);
