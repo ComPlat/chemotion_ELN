@@ -615,7 +615,7 @@ module Chemotion
         sample.save!
 
         literatures = params[:literatures]
-        create_literatures_and_literals(sample, params[:literatures])
+        create_literatures_and_literals(sample, literatures)
 
         update_element_labels(sample, params[:user_labels], current_user.id)
         sample.save_segments(segments: params[:segments], current_user_id: current_user.id)

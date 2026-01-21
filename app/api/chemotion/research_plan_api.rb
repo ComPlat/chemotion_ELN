@@ -9,6 +9,7 @@ module Chemotion
     helpers CollectionHelpers
     helpers ContainerHelpers
     helpers UserLabelHelpers
+    helpers LiteratureHelpers
 
     namespace :research_plans do
       desc 'Return serialized research plans of current user'
@@ -23,22 +24,22 @@ module Chemotion
       paginate per_page: 7, offset: 0, max_per_page: 100
       get do
         scope = if params[:collection_id]
-          begin
-            Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids)
-                      .find(params[:collection_id]).research_plans
-          rescue ActiveRecord::RecordNotFound
-            ResearchPlan.none
-          end
-        elsif params[:sync_collection_id]
-          begin
-            current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection.research_plans
-          rescue ActiveRecord::RecordNotFound
-            ResearchPlan.none
-          end
-        else
-          # All collection of current_user
-          ResearchPlan.joins(:collections).where('collections.user_id = ?', current_user.id).distinct
-        end.order('research_plans.created_at DESC')
+                  begin
+                    Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids)
+                              .find(params[:collection_id]).research_plans
+                  rescue ActiveRecord::RecordNotFound
+                    ResearchPlan.none
+                  end
+                elsif params[:sync_collection_id]
+                  begin
+                    current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection.research_plans
+                  rescue ActiveRecord::RecordNotFound
+                    ResearchPlan.none
+                  end
+                else
+                  # All collection of current_user
+                  ResearchPlan.joins(:collections).where('collections.user_id = ?', current_user.id).distinct
+                end.order('research_plans.created_at DESC')
 
         from = params[:from_date]
         to = params[:to_date]
@@ -58,7 +59,7 @@ module Chemotion
           Entities::ResearchPlanEntity.represent(
             research_plan,
             displayed_in_list: true,
-            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: research_plan).detail_levels
+            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: research_plan).detail_levels,
           )
         end
 
@@ -74,11 +75,12 @@ module Chemotion
         optional :user_labels, type: Array
         optional :segments, type: Array, desc: 'Segments'
         optional :attachments, type: Array, desc: 'Attachments'
+        optional :literatures, type: Hash
       end
       post do
         attributes = {
           name: params[:name],
-          body: params[:body]
+          body: params[:body],
         }
 
         attributes.delete(:can_copy)
@@ -86,18 +88,22 @@ module Chemotion
         research_plan.creator = current_user
         research_plan.container = update_datamodel(params[:container])
         research_plan.save!
+
+        literatures = params[:literatures]
+        create_literatures_and_literals(research_plan, literatures)
+
         research_plan.save_segments(segments: params[:segments], current_user_id: current_user.id)
         clone_attachs = params[:attachments]&.reject { |a| a[:is_new] }
         Usecases::Attachments::Copy.execute!(clone_attachs, research_plan, current_user.id) if clone_attachs
 
         if params[:collection_id]
-          collection = current_user.collections.where(id: params[:collection_id]).take
+          collection = current_user.collections.find_by(id: params[:collection_id])
           research_plan.collections << collection if collection.present?
         end
 
         is_shared_collection = false
         unless collection.present?
-          sync_collection = current_user.all_sync_in_collections_users.where(id: params[:collection_id]).take
+          sync_collection = current_user.all_sync_in_collections_users.find_by(id: params[:collection_id])
           if sync_collection.present?
             is_shared_collection = true
             research_plan.collections << Collection.find(sync_collection['collection_id'])
@@ -128,7 +134,7 @@ module Chemotion
         post do
           attributes = {
             name: params[:name],
-            value: params[:value]
+            value: params[:value],
           }
 
           table_schema = ResearchPlanTableSchema.new attributes
@@ -141,7 +147,8 @@ module Chemotion
         desc 'Delete table schema'
         route_param :id do
           before do
-            error!('401 Unauthorized', 401) unless TableSchemaPolicy.new(current_user, ResearchPlanTableSchema.find(params[:id])).destroy?
+            error!('401 Unauthorized', 401) unless TableSchemaPolicy.new(current_user,
+                                                                         ResearchPlanTableSchema.find(params[:id])).destroy?
           end
           delete do
             present ResearchPlanTableSchema.find(params[:id]).destroy, with: Entities::ResearchPlanTableSchemaEntity
@@ -173,10 +180,12 @@ module Chemotion
           research_plan = ResearchPlan.find(params[:id])
           # TODO: Refactor this massively ugly fallback to be in a more convenient place
           # (i.e. the entity or maybe return a null element from the model)
-          research_plan.build_research_plan_metadata(
-            title: research_plan.name,
-            subject: ''
-          ) if research_plan.research_plan_metadata.nil?
+          if research_plan.research_plan_metadata.nil?
+            research_plan.build_research_plan_metadata(
+              title: research_plan.name,
+              subject: '',
+            )
+          end
           {
             research_plan: Entities::ResearchPlanEntity.represent(
               research_plan,
@@ -184,6 +193,10 @@ module Chemotion
               policy: @element_policy,
             ),
             attachments: Entities::AttachmentEntity.represent(research_plan.attachments),
+            literatures: Entities::LiteratureEntity.represent(
+              citation_for_elements(params[:id], 'ResearchPlan'),
+              with_user_info: true,
+            ),
           }
         end
       end
@@ -197,6 +210,7 @@ module Chemotion
         requires :container, type: Hash, desc: 'Research plan analyses'
         optional :user_labels, type: Array
         optional :segments, type: Array, desc: 'Segments'
+        optional :literatures, type: Hash
       end
       route_param :id do
         before do
@@ -207,6 +221,7 @@ module Chemotion
           attributes = declared(params.except(:segments, :user_labels), include_missing: false)
           update_datamodel(attributes[:container])
           attributes.delete(:container)
+          attributes.delete(:literatures)
 
           if (research_plan = ResearchPlan.find(params[:id]))
             research_plan.update!(attributes)
@@ -257,13 +272,11 @@ module Chemotion
         public_name = "#{SecureRandom.uuid}#{file_extname}"
         public_path = "public/images/research_plans/#{public_name}"
 
-        File.open(public_path, 'wb') do |file|
-          file.write(params[:file][:tempfile].read)
-        end
+        File.binwrite(public_path, params[:file][:tempfile].read)
 
         {
           file_name: file_name,
-          public_name: public_name
+          public_name: public_name,
         }
       end
 
@@ -299,7 +312,7 @@ module Chemotion
               present export.to_file
             end
           else
-            send_data export.to_html, filename: "document.docx"
+            send_data export.to_html, filename: 'document.docx'
           end
         end
       end
@@ -353,8 +366,8 @@ module Chemotion
               research_plan: Entities::ResearchPlanEntity.represent(
                 research_plan,
                 detail_levels: ElementDetailLevelCalculator.new(
-                  user: current_user, element: research_plan
-                ).detail_levels
+                  user: current_user, element: research_plan,
+                ).detail_levels,
               ),
               attachments: Entities::AttachmentEntity.represent(research_plan.attachments),
             }
@@ -386,8 +399,8 @@ module Chemotion
               research_plan: Entities::ResearchPlanEntity.represent(
                 research_plan,
                 detail_levels: ElementDetailLevelCalculator.new(
-                  user: current_user, element: research_plan
-                ).detail_levels
+                  user: current_user, element: research_plan,
+                ).detail_levels,
               ),
               attachments: Entities::AttachmentEntity.represent(research_plan.attachments),
             }

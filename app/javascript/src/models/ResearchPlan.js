@@ -59,7 +59,8 @@ export default class ResearchPlan extends Element {
       user_labels: [],
       attachments: [],
       wellplates: [],
-      segments: []
+      segments: [],
+      literatures: {},
     });
   }
 
@@ -71,7 +72,8 @@ export default class ResearchPlan extends Element {
       container: this.container,
       wellplate_ids: this.wellplateIDs,
       user_labels: this.user_labels || [],
-      segments: this.segments.map((s) => s.serialize())
+      segments: this.segments.map((s) => s.serialize()),
+      literatures: this.literatures,
     });
   }
 
