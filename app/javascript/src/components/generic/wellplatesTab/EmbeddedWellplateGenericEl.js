@@ -98,8 +98,8 @@ export default class EmbeddedWellplateGenericEl extends Component {
       {
         headerName: 'Molecule',
         field: 'sample',
-        minWidth: 75,
-        maxWidth: 75,
+        minWidth: 90,
+        maxWidth: 90,
         cellRenderer: this.renderSVG,
         cellClass: ['text-center', 'py-2', 'border-end'],
       },
@@ -139,6 +139,7 @@ export default class EmbeddedWellplateGenericEl extends Component {
     ];
 
     readout_titles && readout_titles.forEach((title, index) => {
+      const isLastReadout = index === readout_titles.length - 1;
       columnDefs.push(
         {
           headerName: `${title} Value`,
@@ -160,7 +161,8 @@ export default class EmbeddedWellplateGenericEl extends Component {
             }
           },
           cellRendererParams: { index },
-          cellClass: ['border-end', 'px-2'],
+          cellClass: isLastReadout ? ['px-2'] : ['border-end', 'px-2'],
+          headerClass: isLastReadout ? ['px-2'] : ['border-end', 'px-2'],
         },
       );
     });

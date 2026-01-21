@@ -1005,6 +1005,23 @@ class ElementStore {
   handleUpdateWellplate(result) {
     // Update current wellplate and synchronize samples in open tabs
     this.changeCurrentElement(result);
+
+    // Synchronize Wellplate with open generic element tabs
+    const { selecteds } = this.state;
+    let updated = false;
+    const newSelecteds = selecteds.map((el) => {
+      if (el.klassType === 'GenericEl' && el.wellplates) {
+        const wellplateIndex = el.wellplates.findIndex((wp) => wp.id === result.id);
+        if (wellplateIndex > -1) {
+          el.wellplates[wellplateIndex] = result;
+          updated = true;
+        }
+      }
+      return el;
+    });
+    if (updated) {
+      this.setState({ selecteds: newSelecteds });
+    }
   }
 
   handleImportWellplateSpreadsheet(result) {
@@ -1748,17 +1765,6 @@ class ElementStore {
         });
       }
 
-      // Synchronize Wellplate with open generic element tabs
-      selecteds.map((el) => {
-        if (el.klassType === 'GenericEl' && el.wellplates) {
-          const wellplateIndex = el.wellplates.findIndex((wp) => wp.id === previous.id);
-          if (wellplateIndex > -1) {
-            el.wellplates[wellplateIndex] = previous;
-            el.changed = true;
-          }
-        }
-        return el;
-      });
     }
 
     return previous;
