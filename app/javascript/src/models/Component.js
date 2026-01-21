@@ -403,9 +403,9 @@ export default class Component extends Sample {
     const lockedConcentration = this.isComponentConcentrationLocked();
 
     if (lockedConcentration) {
-      // Case 2: Total volume updated; Total Conc. is locked; thus ratio is also locked
+      // Case 2: Total volume updated; Total Conc. is locked
       // Amount recalculated
-      // Volume recalculated
+      // Volume recalculated (for liquids) or Mass recalculated (for solids)
       this.handleTargetConcUpdates(totalVolume);
     } else {
       // Case 3: Total volume updated; Total Conc. is not locked

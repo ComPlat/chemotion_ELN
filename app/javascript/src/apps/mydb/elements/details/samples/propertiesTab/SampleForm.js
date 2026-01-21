@@ -170,13 +170,14 @@ export default class SampleForm extends React.Component {
   }
 
   handleMixtureAmountLChanged(e, sample) {
-    // Your specific function logic here
-    // For example, you can call sample.setTotalMixtureVolume or any other custom logic
+    const { handleSampleChanged } = this.props;
+
     const totalVolume = e && (e.value || e.value === 0) ? e.value : e;
     sample.setTotalMixtureVolume(totalVolume);
 
-    // Call the standard field change handler
-    this.handleFieldChanged('amount_l', e);
+    // Trigger React re-render by calling handleSampleChanged directly
+    // This ensures the UI updates to show the new concentration values
+    handleSampleChanged(sample);
   }
 
   handleMixtureComponentChanged(sample) {
