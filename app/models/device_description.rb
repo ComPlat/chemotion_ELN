@@ -73,6 +73,8 @@
 #  index_device_descriptions_on_device_id  (device_id)
 #
 class DeviceDescription < ApplicationRecord
+  PREFIX = 'Dev'
+
   attr_accessor :collection_id, :is_split
 
   include ElementUIStateScopes
@@ -112,11 +114,10 @@ class DeviceDescription < ApplicationRecord
   def set_short_label
     return if is_split == true
 
-    prefix = 'Dev'
     counter = creator.increment_counter 'device_descriptions' # rubocop:disable Rails/SkipsModelValidations
     user_label = creator.name_abbreviation
 
-    update(short_label: "#{user_label}-#{prefix}#{counter}")
+    update(short_label: "#{user_label}-#{PREFIX}#{counter}")
   end
 
   def counter_for_split_short_label

@@ -1,17 +1,22 @@
+# frozen_string_literal: true
+
 # == Schema Information
 #
 # Table name: research_plans
 #
-#  id         :integer          not null, primary key
-#  name       :string           not null
-#  created_by :integer          not null
-#  deleted_at :datetime
-#  created_at :datetime         not null
-#  updated_at :datetime         not null
-#  body       :jsonb
+#  id          :integer          not null, primary key
+#  body        :jsonb
+#  created_by  :integer          not null
+#  deleted_at  :datetime
+#  name        :string           not null
+#  short_label :string
+#  created_at  :datetime         not null
+#  updated_at  :datetime         not null
 #
 
 class ResearchPlan < ApplicationRecord
+  PREFIX = 'RP'
+
   has_logidze
   acts_as_paranoid
   include ElementUIStateScopes
@@ -46,6 +51,7 @@ class ResearchPlan < ApplicationRecord
   }
   scope :by_literature_ids, ->(ids) { joins(:literals).where(literals: { literature_id: ids }) }
 
+  before_create :set_short_label
   after_create :create_root_container
 
   has_one :container, as: :containable
@@ -106,6 +112,13 @@ class ResearchPlan < ApplicationRecord
     end
 
     save!
+  end
+
+  def set_short_label
+    counter = creator.increment_counter 'research_plans' # rubocop:disable Rails/SkipsModelValidations
+    user_label = creator.name_abbreviation
+
+    self.short_label = "#{user_label}-#{PREFIX}#{counter}"
   end
 
   private

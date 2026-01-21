@@ -4,13 +4,14 @@
 #
 # Table name: research_plans
 #
-#  id         :integer          not null, primary key
-#  body       :jsonb
-#  created_by :integer          not null
-#  deleted_at :datetime
-#  name       :string           not null
-#  created_at :datetime         not null
-#  updated_at :datetime         not null
+#  id          :integer          not null, primary key
+#  body        :jsonb
+#  created_by  :integer          not null
+#  deleted_at  :datetime
+#  name        :string           not null
+#  short_label :string
+#  created_at  :datetime         not null
+#  updated_at  :datetime         not null
 #
 require 'rails_helper'
 
@@ -30,6 +31,11 @@ RSpec.describe ResearchPlan, type: :model do
     it 'is invalid if creator is blank' do
       research_plan.creator = nil
       expect(research_plan.valid?).to be(false)
+    end
+
+    it 'has correct short label' do
+      expected_label = "#{research_plan.creator.name_abbreviation}-RP1"
+      expect(research_plan.short_label).to eq(expected_label)
     end
   end
 end

@@ -63,6 +63,11 @@ export default class ResearchPlan extends Element {
     });
   }
 
+  title() {
+    const shortLabel = this.short_label ? this.short_label : '';
+    return this.name ? `${shortLabel} ${this.name}` : shortLabel;
+  }
+
   serialize() {
     return super.serialize({
       name: this.name,
