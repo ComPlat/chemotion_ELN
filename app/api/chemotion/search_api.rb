@@ -25,7 +25,7 @@ module Chemotion
           # ]
           optional :elementType, type: String, values: %w[
             All Samples Reactions Wellplates Screens all samples reactions wellplates screens elements cell_lines
-            sequence_based_macromolecule_samples by_ids advanced structure
+            sequence_based_macromolecule_samples device_descriptions by_ids advanced structure
           ]
           optional :molfile, type: String
           optional :search_type, type: String, values: %w[similar sub]
@@ -40,7 +40,7 @@ module Chemotion
                              default: 'LIKE'
             optional :table, type: String, values: %w[
               samples reactions wellplates screens research_plans elements segments literatures
-              sequence_based_macromolecule_samples
+              sequence_based_macromolecule_samples device_descriptions
             ]
             optional :element_id, type: Integer
             optional :unit, type: String
@@ -53,6 +53,7 @@ module Chemotion
           optional :id_params, type: Hash do
             requires :model_name, type: String, values: %w[
               sample reaction wellplate screen element research_plan sequence_based_macromolecule_sample
+              device_descriptions
             ]
             requires :ids, type: Array
             optional :total_elements, type: Integer

@@ -52,6 +52,7 @@ export default {
               opt: 'time',
               label: 'Time',
               type: 'text',
+              info: 'Only numbers are allowed',
               table: 'device_descriptions',
             },
             {
@@ -107,6 +108,7 @@ export default {
               opt: 'time',
               label: 'Time',
               type: 'text',
+              info: 'Only numbers are allowed',
               table: 'device_descriptions',
             },
             {
