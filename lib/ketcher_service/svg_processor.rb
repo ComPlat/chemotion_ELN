@@ -91,7 +91,7 @@ module KetcherService
       redefine_window_size if @width && @height
       to_xml
     end
-
+    
     def path_extrema(ind=nil)
       if ind
         splitxy_for_path(ind)
@@ -180,9 +180,46 @@ module KetcherService
     end
 
     def splitxy_for_text(text)
-      x,y,font=text["x"].to_f,text["y"].to_f,(text["font"].match(/(\d+\.?\d*)px/) && $1).to_f
-      l=text.content.size
-      [[x,y],[x+font*l,y+font]]
+      x,y = text["x"].to_f, text["y"].to_f
+      # Get font size from font attribute or font-size attribute
+      font = if text["font"] && text["font"].match(/(\d+\.?\d*)px/)
+               text["font"].match(/(\d+\.?\d*)px/)[1].to_f
+             elsif text["font-size"] && text["font-size"].match(/(\d+\.?\d*)/)
+               text["font-size"].match(/(\d+\.?\d*)/)[1].to_f
+             else
+               24.0 # default font size
+             end
+      
+      # Get actual text content - check tspan children first, then direct content
+      text_content = ""
+      if text.css('tspan').any?
+        text.css('tspan').each do |tspan|
+          text_content += tspan.content.to_s
+        end
+      else
+        text_content = text.content.to_s
+      end
+      
+      # Calculate text width more accurately (approximate: font_size * character_count * 0.6)
+      # This accounts for average character width in most fonts
+      text_width = font * text_content.length * 0.6
+      
+      # Account for text-anchor positioning
+      text_anchor = text["text-anchor"] || "start"
+      case text_anchor
+      when "middle"
+        x_start = x - (text_width / 2)
+        x_end = x + (text_width / 2)
+      when "end"
+        x_start = x - text_width
+        x_end = x
+      else # "start" or default
+        x_start = x
+        x_end = x + text_width
+      end
+      
+      # Text height is approximately the font size
+      [[x_start, y], [x_end, y + font]]
     end
 
     def splitxy_for_circle(circle)
