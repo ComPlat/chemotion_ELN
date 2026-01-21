@@ -20,7 +20,8 @@
 #  description_for_methods_part         :text
 #  device_class                         :string
 #  device_class_detail                  :string
-#  device_type                          :string
+#  device_type_id_type                  :string
+#  device_type_name                     :string
 #  general_tags                         :string           default([]), is an Array
 #  helpers_uploaded                     :boolean          default(FALSE)
 #  infrastructure_assignment            :string
@@ -63,6 +64,7 @@
 #  created_at                           :datetime         not null
 #  updated_at                           :datetime         not null
 #  device_id                            :integer
+#  device_type_id                       :string
 #  inventory_id                         :string
 #  owner_id                             :string
 #  vendor_device_id                     :string

@@ -6,7 +6,9 @@ module Entities
     expose :device_id
     expose :name
     expose :short_label
-    expose :device_type
+    expose :device_type_name
+    expose :device_type_id
+    expose :device_type_id_type
     expose :device_class
     expose :device_class_detail
     expose :operation_mode

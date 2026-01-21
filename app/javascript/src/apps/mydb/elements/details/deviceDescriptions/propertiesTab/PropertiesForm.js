@@ -15,6 +15,13 @@ const PropertiesForm = () => {
   const deviceDescriptionsStore = useContext(StoreContext).deviceDescriptions;
   let deviceDescription = deviceDescriptionsStore.device_description;
 
+  const deviceTypeFields = [
+    { value: 'device_type_name', label: 'device type name', type: 'text' },
+    { value: 'device_type_id', label: 'device type ID', type: 'text' },
+    { value: 'device_type_id_type', label: 'ID type', type: 'text' },
+  ];
+  const deviceTypeLabel = 'Device type'
+
   const operatorFields = [
     { value: 'name', label: 'Name', type: 'text' },
     { value: 'phone', label: 'Phone', type: 'text' },
@@ -146,13 +153,10 @@ const PropertiesForm = () => {
             )
           }
         </Col>
+      </Row>
+      <Row className="mb-4">
         <Col>
-          {
-            selectInput(
-              deviceDescription, deviceDescriptionsStore, 'device_type', 'Device type',
-              deviceDescriptionSelectOptions['device_type']
-            )
-          }
+          {multipleInputGroups(deviceDescription, deviceTypeLabel, deviceTypeFields, deviceDescriptionsStore)}
         </Col>
       </Row>
 

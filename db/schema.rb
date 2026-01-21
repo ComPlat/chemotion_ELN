@@ -490,7 +490,9 @@ ActiveRecord::Schema.define(version: 2026_01_20_183627) do
     t.string "device_class"
     t.string "device_class_detail"
     t.integer "device_id"
-    t.string "device_type"
+    t.string "device_type_name"
+    t.string "device_type_id"
+    t.string "device_type_id_type"
     t.string "general_tags", default: [], null: false, array: true
     t.boolean "helpers_uploaded", default: false
     t.string "infrastructure_assignment"
