@@ -22,6 +22,20 @@ export default {
     },
     {
       value: {
+        type: 'spacer',
+        label: '',
+      },
+      label: '',
+    },
+    {
+      value: {
+        type: 'spacer',
+        label: '',
+      },
+      label: '',
+    },
+    {
+      value: {
         column: 'device_class',
         label: 'Device class',
         type: 'select',
@@ -29,7 +43,7 @@ export default {
         table: 'device_descriptions',
         advanced: false,
       },
-      label: 'Device type'
+      label: 'Device class'
     },
     {
       value: {
@@ -40,7 +54,7 @@ export default {
         table: 'device_descriptions',
         advanced: false,
       },
-      label: 'Device type detail'
+      label: 'Device class detail'
     },
     {
       value: {
@@ -55,14 +69,40 @@ export default {
     },
     {
       value: {
-        column: 'device_type',
+        type: 'segment-headline',
         label: 'Device type',
-        type: 'select',
-        option_layers: "device_type",
+      },
+      label: 'Device type',
+    },
+    {
+      value: {
+        column: 'device_type_name',
+        label: 'Device type name',
+        type: 'text',
         table: 'device_descriptions',
         advanced: false,
       },
-      label: 'Device type'
+      label: 'Device type name'
+    },
+    {
+      value: {
+        column: 'device_type_id',
+        label: 'Device type ID',
+        type: 'text',
+        table: 'device_descriptions',
+        advanced: false,
+      },
+      label: 'Device type ID'
+    },
+    {
+      value: {
+        column: 'device_type_id_type',
+        label: 'ID type',
+        type: 'text',
+        table: 'device_descriptions',
+        advanced: false,
+      },
+      label: 'ID type'
     },
     {
       value: {
@@ -139,7 +179,8 @@ export default {
       value: {
         column: 'vendor_id_type',
         label: 'ID type',
-        type: 'text',
+        type: 'select',
+        option_layers: 'vendor_id_type',
         table: 'device_descriptions',
         advanced: false,
       },
@@ -204,8 +245,8 @@ export default {
       value: {
         column: 'version_doi',
         label: 'Persistent identifier',
-        type: 'textWithAddOn',
-        addon: 'select',
+        type: 'textWithAddOnSelect',
+        addon: 'version_identifier_type',
         option_layers: 'version_identifier_types',
         table: 'device_descriptions',
         advanced: false,
@@ -331,6 +372,16 @@ export default {
     },
     {
       value: {
+        column: 'owner_id_type',
+        label: 'ID type',
+        type: 'text',
+        table: 'device_descriptions',
+        advanced: false,
+      },
+      label: 'ID type'
+    },
+    {
+      value: {
         type: 'segment-headline',
         label: 'Location',
       },
@@ -452,12 +503,12 @@ export default {
         column: 'setup_descriptions',
         opt_type: 'component',
         opt: 'vendor_device_name',
-        label: 'Name',
+        label: 'Component of setup name',
         type: 'text',
         table: 'device_descriptions',
         advanced: false,
       },
-      label: 'Name'
+      label: 'Component of setup name'
     },
     {
       value: {

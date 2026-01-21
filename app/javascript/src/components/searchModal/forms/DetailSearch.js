@@ -264,13 +264,11 @@ const DetailSearch = () => {
   }
 
   const dateTimePickerInput = (option, type, selectedValue, column, keyLabel) => {
-    const selectedDate = selectedValue ? new Date(selectedValue[column].value) : null;
+    const selectedDate = selectedValue ? selectedValue[column].value : null;
     return (
       <Form.Group key={`${column}-${keyLabel}-${type}`}>
         {labelWithInfo(option)}
         <DatePicker
-          selected={selectedDate}
-          onChange={handleFieldChanged(option, column, type)}
           isClearable
           showTimeSelect
           timeFormat="HH:mm"
@@ -279,6 +277,8 @@ const DetailSearch = () => {
           dateFormat="dd/MM/yyyy HH:mm"
           placeholderText="dd/MM/YYYY HH:mm"
           popperPlacement="bottom-end"
+          selected={selectedDate}
+          onChange={handleFieldChanged(option, column, type)}
           wrapperClassName="w-100"
         />
       </Form.Group>
@@ -399,6 +399,42 @@ const DetailSearch = () => {
     );
   }
 
+  const menuLabel = (option, field) => {
+    const index = searchStore.openedAddonSelect.findIndex((object) => { return object[field] !== undefined });
+    let label = option.label;
+
+    if (index !== -1 && searchStore.openedAddonSelect[index][field] && option?.description) {
+      label = `${option.label} ${option.description}`;
+    }
+    return label;
+  }
+
+  const changeMenuStatus = (field, value) => {
+    searchStore.setOpenedAddonSelect(field, value);
+  }
+
+  const selectInputForAddOn = (option, type, keyLabel) => {
+    let options = optionsForSelect(option);
+    const columnName = option.addon;
+    const selectedValue = searchStore.detailSearchValues.find((f) => { return Object.keys(f).indexOf(columnName) != -1 });
+
+    return (
+      <Select
+        name={columnName}
+        key={`${columnName}-${keyLabel}`}
+        options={options}
+        value={selectedValue ? options.filter((f) => { return f.value == selectedValue[columnName].value }) : ''}
+        className={`select-in-inputgroup-text hide-border`}
+        classNamePrefix={`select-in-inputgroup-text hide-border`}
+        placeholder="Type"
+        getOptionLabel={(option) => menuLabel(option, columnName)}
+        onMenuOpen={() => changeMenuStatus(columnName, true)}
+        onMenuClose={() => changeMenuStatus(columnName, false)}
+        onChange={handleFieldChanged(option, columnName, 'select')}
+      />
+    );
+  }
+
   const solventOptions = Object.keys(ionic_liquids).reduce(
     (solvents, ionicLiquid) => solvents.concat({
       label: ionicLiquid,
@@ -467,6 +503,29 @@ const DetailSearch = () => {
             className={validationState}
           />
           <InputGroup.Text>{option.addon}</InputGroup.Text>
+        </InputGroup>
+      </Form.Group>
+    );
+  }
+
+  const textWithAddOnSelectInput = (option, type, selectedValue, keyLabel) => {
+    let column = option.column || option.field;
+    let validationState = selectedValue !== undefined ? selectedValue[column].validationState : null;
+    return (
+      <Form.Group key={`${column}-${keyLabel}-${type}`}>
+        {labelWithInfo(option)}
+        <InputGroup>
+          <InputGroup.Text className="p-0 m-0 overflow-hidden">
+            {selectInputForAddOn(option, type, keyLabel)}
+          </InputGroup.Text>
+          <Form.Control
+            id={`input_${column}`}
+            type="text"
+            key={`${column}-${keyLabel}`}
+            value={selectedValue ? selectedValue[column].value : ''}
+            onChange={handleFieldChanged(option, column, type)}
+            className={validationState}
+          />
         </InputGroup>
       </Form.Group>
     );
@@ -641,6 +700,7 @@ const DetailSearch = () => {
       case 'text':
       case 'textarea':
       case 'textWithAddOn':
+      case 'textWithAddOnSelect':
       case 'system-defined':
       case 'formula-field':
       case 'subGroupWithAddOn':
@@ -678,6 +738,12 @@ const DetailSearch = () => {
       case 'acetylation_lysin_number':
       case 'sequence_length':
       case 'molecular_weight':
+      case 'version_installation_start_date':
+      case 'version_installation_end_date':
+      case 'planned_maintenance_date':
+      case 'planned_maintenance_time':
+      case 'unexpected_maintenance_date':
+      case 'unexpected_maintenance_time':
         return searchStore.numeric_match;
       case 'unit_measurement':
       case 'solvent_smiles':
@@ -748,7 +814,8 @@ const DetailSearch = () => {
 
   const setSearchStoreValues = (value, option, column, type, subValue, smiles) => {
     let searchValue = searchValueByStoreOrDefaultValue(column);
-    let cleanedValue = ['>=', '<=', '<@'].includes(searchValue.match) ? value.replace(/,/g, '.') : value;
+    const dateFields = ['date', 'datetime', 'time'].includes(option.type);
+    let cleanedValue = ['>=', '<=', '<@'].includes(searchValue.match) && !dateFields ? value.replace(/,/g, '.') : value;
     searchValue.field = option;
     searchValue.value = cleanedValue;
     searchValue.sub_values = subValuesForSearchValue(searchValue, subValue, cleanedValue);
@@ -780,7 +847,7 @@ const DetailSearch = () => {
     let searchSubValuesLength = searchValue.sub_values.length >= 1 ? Object.keys(searchValue.sub_values[0]).length : 0;
     let typesWithSubValues = ['input-group', 'table'];
 
-    if (((value === '' || value === false) && !typesWithSubValues.includes(type))
+    if (((value === '' || value === false || value === null) && !typesWithSubValues.includes(type))
       || (searchSubValuesLength === 0 && typesWithSubValues.includes(type) && value === '')) {
       searchStore.removeDetailSearchValue(column);
     } else {
@@ -880,6 +947,9 @@ const DetailSearch = () => {
         break;
       case 'textWithAddOn':
         fields.push(textWithAddOnInput(option, 'textWithAddOn', selectedValue, keyLabel));
+        break;
+      case 'textWithAddOnSelect':
+        fields.push(textWithAddOnSelectInput(option, 'textWithAddOnSelect', selectedValue, keyLabel));
         break;
       case 'rxnos':
       case 'chmos':
