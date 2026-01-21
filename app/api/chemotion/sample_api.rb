@@ -615,32 +615,7 @@ module Chemotion
         sample.save!
 
         literatures = params[:literatures]
-        if literatures.present?
-          literatures.each do |literature|
-            next unless literature&.length&.> 1
-
-            refs = literature[1][:refs]
-            doi = literature[1][:doi]
-            url = literature[1][:url]
-            title = literature[1][:title]
-            isbn = literature[1][:isbn]
-            litype = literature[1][:litype]
-
-            lit = Literature.find_or_create_by(doi: doi, url: url, title: title, isbn: isbn)
-            lit.update!(refs: (lit.refs || {}).merge(declared(refs))) if refs
-
-            lattributes = {
-              literature_id: lit.id,
-              user_id: current_user.id,
-              element_type: 'Sample',
-              element_id: sample.id,
-              category: 'detail',
-              litype: litype,
-            }
-
-            Literal.create(lattributes) unless Literal.find_by(lattributes)
-          end
-        end
+        create_literatures_and_literals(sample, params[:literatures])
 
         update_element_labels(sample, params[:user_labels], current_user.id)
         sample.save_segments(segments: params[:segments], current_user_id: current_user.id)
