@@ -341,11 +341,10 @@ module Chemotion
         # Save SVG to molecule's file path (updates molecule_svg_file)
         molecule.attach_svg(processed_svg)
         molecule.save
-        
         { 
           success: true, 
           molecule_svg_file: molecule.molecule_svg_file,
-          svg_path: "/images/molecules/#{molecule.molecule_svg_file}"
+          svg_path: "/images/molecules/#{molecule.molecule_svg_file}",
         }
       rescue StandardError => e
         Rails.logger.error("Error rendering SVG: #{e.message}")
