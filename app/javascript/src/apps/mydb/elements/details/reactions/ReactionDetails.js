@@ -35,7 +35,6 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import { setReactionByType } from 'src/apps/mydb/elements/details/reactions/ReactionDetailsShare';
 import { sampleShowOrNew } from 'src/utilities/routesUtils';
 import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
-import MoleculeSvgFetcher from 'src/fetchers/MoleculeSvgFetcher';
 import ConfirmClose from 'src/components/common/ConfirmClose';
 import { rfValueFormat } from 'src/utilities/ElementUtils';
 import ExportSamplesButton from 'src/apps/mydb/elements/details/ExportSamplesButton';
@@ -113,35 +112,9 @@ export default class ReactionDetails extends Component {
     this.state.pendingSchemeType = null;
     this.isUpdatingGraphic = false; // Flag to prevent infinite loops
     this.schemeDropdownRef = createRef();
-    
-    // Track processed materials by type and identifier
-    this.processedMaterials = {
-      starting_materials: new Map(), // Map<materialId, svgPath>
-      reactants: new Map(),
-      products: new Map()
-    };
-    
-    // Enable reprocessing - call API to generate new SVG paths
-    const ENABLE_REPROCESSING = true;
-    
-    // Always call updateGraphic when reprocessing is enabled (even if reaction_svg_file exists)
-    if (ENABLE_REPROCESSING) {
-      console.log('[REPROCESSING] Enabled - will call updateGraphic on mount');
-      // Use setTimeout to ensure component is fully mounted
-      setTimeout(() => {
-        this.updateGraphic();
-      }, 100);
+    if (!reaction.reaction_svg_file) {
+      this.updateGraphic();
     }
-  }
-
-  // Helper to get material identifier (use ID if available, otherwise molfile hash)
-  getMaterialIdentifier(material) {
-    if (material.id) return material.id;
-    if (material.molfile) {
-      // Create hash from molfile for identification
-      return material.molfile.substring(0, 100).replace(/\s/g, '');
-    }
-    return null;
   }
 
   openWtInfoModal() {
@@ -249,10 +222,7 @@ export default class ReactionDetails extends Component {
   handleReactionChange(reaction, options = {}) {
     reaction.updateMaxAmountOfProducts();
     reaction.changed = true;
-    // Enable reprocessing - call API to generate new SVG paths
-    const ENABLE_REPROCESSING = true;
-    
-    if (ENABLE_REPROCESSING && options.updateGraphic && !this.isUpdatingGraphic) {
+    if (options.updateGraphic && !this.isUpdatingGraphic) {
       // Only call updateGraphic if we're not already updating to prevent infinite loops
       this.setState({ reaction }, () => this.updateGraphic());
     } else {
@@ -535,49 +505,18 @@ export default class ReactionDetails extends Component {
     );
   }
 
-  /**
-   * Process SVG results and generate reaction SVG
-   * Can be called separately for manual reprocessing (e.g., on button click)
-   * @param {Array} results - Array of results from material SVG processing
-   * @param {Object} reaction - The reaction object
-   */
-  processSvgResultsAndGenerateReactionSvg(results, reaction) {
-    // Build SVG paths map from results - preserve all materials
-    const svgPathsMap = {
-      starting_materials: [],
-      reactants: [],
-      products: []
-    };
-    
-    // Initialize with original paths to preserve all materials
-    reaction.starting_materials.forEach((material, index) => {
-      svgPathsMap.starting_materials[index] = material.svgPath || '';
-    });
-    
-    reaction.reactants.forEach((material, index) => {
-      svgPathsMap.reactants[index] = material.svgPath || '';
-    });
-    
-    reaction.products.forEach((material, index) => {
-      svgPathsMap.products[index] = [material.svgPath || '', material.equivalent];
-    });
-    
-    // Update with processed results
-    results.forEach((result) => {
-      if (result.svgPath) {
-        if (result.type === 'products') {
-          svgPathsMap[result.type][result.index] = [result.svgPath, result.equivalent];
-        } else {
-          svgPathsMap[result.type][result.index] = result.svgPath;
-        }
-      }
-    });
-    
-    // Use all paths (don't filter - preserve all materials)
+  updateGraphic() {
+    // Prevent infinite loops
+    if (this.isUpdatingGraphic) {
+      return;
+    }
+
+    this.isUpdatingGraphic = true;
+    const { reaction } = this.state;
     const materialsSvgPaths = {
-      starting_materials: svgPathsMap.starting_materials,
-      reactants: svgPathsMap.reactants,
-      products: svgPathsMap.products
+      starting_materials: reaction.starting_materials.map((material) => material.svgPath),
+      reactants: reaction.reactants.map((material) => material.svgPath),
+      products: reaction.products.map((material) => [material.svgPath, material.equivalent])
     };
 
     const solvents = reaction.solvents.map((s) => {
@@ -590,7 +529,7 @@ export default class ReactionDetails extends Component {
       temperature = `${temperature} ${reaction.temperature.valueUnit}`;
     }
 
-    return ReactionSvgFetcher.fetchByMaterialsSvgPaths(
+    ReactionSvgFetcher.fetchByMaterialsSvgPaths(
       materialsSvgPaths,
       temperature,
       solvents,
@@ -598,128 +537,15 @@ export default class ReactionDetails extends Component {
       reaction.conditions
     ).then((result) => {
       if (result && result.reaction_svg && result.reaction_svg !== reaction.reaction_svg_file) {
+        // Update reaction_svg_file and state - image will reload automatically via ReactionSchemeGraphic useEffect
         reaction.reaction_svg_file = result.reaction_svg;
+        // Update state without calling updateGraphic again to prevent infinite loop
         this.setState({ reaction });
       }
     }).catch((error) => {
       console.error('Error updating reaction graphic:', error);
     }).finally(() => {
-      this.isUpdatingGraphic = false;
-    });
-  }
-
-  updateGraphic() {
-    // Prevent infinite loops
-    if (this.isUpdatingGraphic) {
-      console.log('updateGraphic: Already updating, skipping');
-      return;
-    }
-
-    this.isUpdatingGraphic = true;
-    const { reaction } = this.state;
-    
-    console.log('updateGraphic: Starting reprocessing', {
-      starting_materials: reaction.starting_materials.length,
-      reactants: reaction.reactants.length,
-      products: reaction.products.length,
-      hasReactionSvgFile: !!reaction.reaction_svg_file
-    });
-    
-    const updatePromises = [];
-    
-    // Helper function to check if material needs SVG processing
-    // When reprocessing is enabled, always process materials that have molfiles
-    const needsProcessing = (material) => {
-      if (!material) return false;
-      // Always process if material has molfile when reprocessing is enabled
-      if (material.molfile) {
-        // Force reprocessing: always call API to get new SVG paths
-        return true;
-      }
-      return false;
-    };
-    
-    // Helper function to process a material and return its SVG path
-    const processMaterial = (material, type) => {
-      // If material doesn't need processing, use original svgPath
-      if (!needsProcessing(material)) {
-        return Promise.resolve(material.svgPath || '');
-      }
-      
-      // Log for debugging
-      console.log(`Processing material ${material.id || 'new'} in ${type}`, {
-        hasMolfile: !!material.molfile,
-        hasSvgPath: !!material.svgPath,
-        isNew: material.isNew
-      });
-      
-      const identifier = this.getMaterialIdentifier(material);
-      if (!identifier) {
-        return Promise.resolve(material.svgPath || '');
-      }
-      
-      // When reprocessing is enabled, always call API (skip cache check)
-      // Check if already processed in this session (only skip if same material was just processed)
-      // if (this.processedMaterials[type].has(identifier)) {
-      //   return Promise.resolve(this.processedMaterials[type].get(identifier));
-      // }
-      
-      // Always call API to render SVG from molfile when reprocessing
-      console.log(`[REPROCESSING] Calling API for material ${material.id || 'new'} in ${type}`, {
-        hasMolfile: !!material.molfile,
-        currentSvgPath: material.svgPath
-      });
-      return MoleculeSvgFetcher.renderSvgFromMolfile(material.molfile)
-        .then((result) => {
-          console.log(`[REPROCESSING] API response for material ${material.id || 'new'} in ${type}:`, result);
-          if (result && result.success && result.svg_path) {
-            // Update molecule's svg_file if material has molecule reference
-            if (material.molecule) {
-              material.molecule.molecule_svg_file = result.molecule_svg_file;
-            }
-            // Cache the SVG path (file path, not content)
-            this.processedMaterials[type].set(identifier, result.svg_path);
-            console.log(`[REPROCESSING] Successfully got new SVG path: ${result.svg_path}`);
-            return result.svg_path;
-          }
-          console.warn(`[REPROCESSING] Failed to render SVG for material in ${type}:`, result?.error || 'Unknown error');
-          return material.svgPath || ''; // Fallback to original
-        })
-        .catch((error) => {
-          console.error(`Error rendering SVG for ${type}:`, error);
-          return material.svgPath || ''; // Fallback to original
-        });
-    };
-    
-    // Process starting_materials
-    reaction.starting_materials.forEach((material, index) => {
-      updatePromises.push(
-        processMaterial(material, 'starting_materials')
-          .then((svgPath) => ({ type: 'starting_materials', index, svgPath }))
-      );
-    });
-    
-    // Process reactants
-    reaction.reactants.forEach((material, index) => {
-      updatePromises.push(
-        processMaterial(material, 'reactants')
-          .then((svgPath) => ({ type: 'reactants', index, svgPath }))
-      );
-    });
-    
-    // Process products
-    reaction.products.forEach((material, index) => {
-      updatePromises.push(
-        processMaterial(material, 'products')
-          .then((svgPath) => ({ type: 'products', index, svgPath, equivalent: material.equivalent }))
-      );
-    });
-    
-    // Wait for all SVG updates, then generate reaction SVG
-    Promise.all(updatePromises).then((results) => {
-      return this.processSvgResultsAndGenerateReactionSvg(results, reaction);
-    }).catch((error) => {
-      console.error('Error processing materials:', error);
+      // Reset flag after update completes
       this.isUpdatingGraphic = false;
     });
   }
