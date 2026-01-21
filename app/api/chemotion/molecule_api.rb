@@ -325,10 +325,7 @@ module Chemotion
         requires :molfile, type: String, desc: 'Molecule molfile'
       end
       post :render_svg do
-        require Rails.root.join('lib/chemotion/svg_renderer.rb')
-
         molfile = params[:molfile]
-        
         # Find or create molecule from molfile
         molecule = Molecule.find_or_create_by_molfile(molfile)
         return { success: false, error: 'Failed to find or create molecule' } if molecule.blank?
