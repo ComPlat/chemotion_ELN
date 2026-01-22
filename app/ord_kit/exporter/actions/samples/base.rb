@@ -15,7 +15,6 @@ module OrdKit
               addition_order: addition_order,
               addition_duration: addition_duration,
               addition_speed: addition_speed,
-              addition_time: addition_time,
               flow_rate: flow_rate,
               conditions: conditions,
             )
@@ -31,11 +30,6 @@ module OrdKit
 
           def components
             raise StandardError, "Don't call #to_ord on abstract OrdKit::Exporter::Actions::Samples::Base"
-          end
-
-          def addition_time
-            # TODO: redundant `action.start_time` has been removed, needs to be calculated.
-            Metrics::TimeSpanExporter.new(0).to_ord
           end
 
           def addition_duration
