@@ -199,6 +199,7 @@ module Chemotion
         cell_line_ids = elements.fetch(:cell_line_ids, [])
         research_plan_ids = elements.fetch(:research_plan_ids, [])
         sequence_based_macromolecule_sample_ids = elements.fetch(:sequence_based_macromolecule_sample_ids, [])
+        device_description_ids = elements.fetch(:device_description_ids, [])
 
         paginated_reaction_ids = Kaminari.paginate_array(reaction_ids).page(page).per(page_size)
         serialized_reactions = Reaction.find(paginated_reaction_ids).map do |reaction|
@@ -233,6 +234,12 @@ module Chemotion
                                           .map do |sequence_based_macromolecule_sample|
             Entities::SequenceBasedMacromoleculeSampleEntity
               .represent(sequence_based_macromolecule_sample, displayed_in_list: true).serializable_hash
+          end
+
+        paginated_device_description_ids = Kaminari.paginate_array(device_description_ids).page(page).per(page_size)
+        serialized_device_descriptions =
+          DeviceDescription.find(paginated_device_description_ids).map do |device_description|
+            Entities::DeviceDescriptionEntity.represent(device_description, displayed_in_list: true).serializable_hash
           end
 
         result = {
@@ -291,6 +298,14 @@ module Chemotion
             pages: pages(sequence_based_macromolecule_sample_ids.size),
             perPage: page_size,
             ids: sequence_based_macromolecule_sample_ids,
+          },
+          device_descriptions: {
+            elements: serialized_device_descriptions,
+            totalElements: device_description_ids.size,
+            page: page,
+            pages: pages(device_description_ids.size),
+            perPage: page_size,
+            ids: device_description_ids,
           },
         }
 
@@ -389,6 +404,13 @@ module Chemotion
                                                   .joins(:sequence_based_macromolecule)
                                                   .order('sequence_based_macromolecule_samples.updated_at DESC')
                                                   .search_by(search_method, arg)
+                when 'device_description_name', 'device_description_short_label',
+                     'device_description_vendor_device_name', 'device_description_vendor_device_id',
+                     'device_description_serial_number', 'device_description_vendor_company_name',
+                     'device_description_general_tags', 'device_description_ontologies'
+                  DeviceDescription.by_collection_id(c_id)
+                                   .order('device_descriptions.updated_at DESC')
+                                   .search_by(search_method, arg)
                 end
 
         if search_method != 'advanced' && search_method != 'structure' && molecule_sort == true
@@ -471,11 +493,15 @@ module Chemotion
 
           elements[:sequence_based_macromolecule_sample_ids] = scope&.sequence_based_macromolecule_sample_ids
 
+          elements[:device_description_ids] = scope&.device_description_ids
+
           elements[:element_ids] = (scope&.element_ids).uniq
         when CelllineSample
           elements[:cell_line_ids] = scope&.ids
         when SequenceBasedMacromoleculeSample
           elements[:sequence_based_macromolecule_sample_ids] = scope&.ids
+        when DeviceDescription
+          elements[:device_description_ids] = scope&.ids
         end
         elements
       end
@@ -743,6 +769,27 @@ module Chemotion
           sbmm_samples = SequenceBasedMacromoleculeSample.by_collection_id(@c_id)
                                                          .joins(:sequence_based_macromolecule)
                                                          .search_by(search_by_method, params[:selection][:name])
+
+          serialization_by_elements_and_page(
+            elements_by_scope(sbmm_samples),
+            params[:page],
+          )
+        end
+      end
+
+      namespace :device_descriptions do
+        desc 'Return device descriptions and associated elements by search selection'
+        params do
+          use :search_params
+        end
+
+        after_validation do
+          set_var
+        end
+
+        post do
+          sbmm_samples = DeviceDescription.by_collection_id(@c_id)
+                                          .search_by(search_by_method, params[:selection][:name])
 
           serialization_by_elements_and_page(
             elements_by_scope(sbmm_samples),
