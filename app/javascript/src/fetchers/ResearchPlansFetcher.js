@@ -1,9 +1,11 @@
 import 'whatwg-fetch';
-import _ from 'lodash';
+import Immutable from 'immutable';
+
 import ResearchPlan from 'src/models/ResearchPlan';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import BaseFetcher from 'src/fetchers/BaseFetcher';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
+import Literature from 'src/models/Literature';
 
 import { getFileName, downloadBlob } from 'src/utilities/FetcherHelper';
 
@@ -15,6 +17,12 @@ export default class ResearchPlansFetcher {
       .then((response) => response.json()).then((json) => {
         const rResearchPlan = new ResearchPlan(json.research_plan);
         rResearchPlan.attachments = json.attachments;
+        if (json.literatures && json.literatures.length > 0) {
+          const tliteratures = json.literatures.map((literature) => new Literature(literature));
+          const lits = tliteratures.reduce((acc, l) => acc.set(l.literal_id, l), new Immutable.Map());
+          rResearchPlan.literatures = lits;
+          rResearchPlan.updateChecksum();
+        }
         if (json.error) {
           rResearchPlan.id = `${id}:error:ResearchPlan ${id} is not accessible!`;
         }

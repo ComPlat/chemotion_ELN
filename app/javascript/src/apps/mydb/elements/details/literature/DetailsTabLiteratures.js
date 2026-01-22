@@ -128,16 +128,16 @@ export default class DetailsTabLiteratures extends Component {
   handleLiteratureRemove(literature) {
     const { element } = this.props;
     if (!checkElementStatus(element)) { return; }
-    if (Number.isNaN(element.id) && element.type === 'reaction') {
+    if (Number.isNaN(element.id) && ['reaction', 'sample', 'research_plan'].includes(element.type)) {
       this.setState((prevState) => ({
         ...prevState,
         literatures: prevState.literatures.delete(literature.literal_id),
         sortedIds: groupByCitation(prevState.literatures.delete(literature.literal_id))
       }));
-      if (element.type === 'reaction') {
+      if (['reaction', 'sample', 'research_plan'].includes(element.type)) {
         element.literatures = element.literatures && element.literatures.delete(literature.literal_id);
         this.setState({
-          reaction: element
+          [element.type]: element
         });
       }
     } else {
@@ -162,7 +162,7 @@ export default class DetailsTabLiteratures extends Component {
     const {
       doi, url, title, isbn
     } = literature;
-    if (element.isNew === true && element.type === 'reaction'
+    if (element.isNew === true && ['reaction', 'sample', 'research_plan'].includes(element.type)
       && element.literatures && element.literatures.size > 0) {
       const newlit = {
         ...literature,

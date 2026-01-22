@@ -103,7 +103,10 @@ module Chemotion
               policy: @element_policy,
               detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels,
             ),
-            literatures: Entities::LiteratureEntity.represent(citation_for_elements(params[:id], class_name)),
+            literatures: Entities::LiteratureEntity.represent(
+              citation_for_elements(params[:id], class_name),
+              with_user_info: true,
+            ),
           }
         end
       end
@@ -270,32 +273,7 @@ module Chemotion
         reaction = Reaction.create!(attributes)
         recent_ols_term_update('rxno', [params[:rxno]]) if params[:rxno].present?
 
-        if literatures.present?
-          literatures.each do |literature|
-            next unless literature&.length&.> 1
-
-            refs = literature[1][:refs]
-            doi = literature[1][:doi]
-            url = literature[1][:url]
-            title = literature[1][:title]
-            isbn = literature[1][:isbn]
-
-            lit = Literature.find_or_create_by(doi: doi, url: url, title: title, isbn: isbn)
-            lit.update!(refs: (lit.refs || {}).merge(declared(refs))) if refs
-
-            lattributes = {
-              literature_id: lit.id,
-              user_id: current_user.id,
-              element_type: 'Reaction',
-              element_id: reaction.id,
-              category: 'detail',
-            }
-            unless Literal.find_by(lattributes)
-              Literal.create(lattributes)
-              reaction.touch
-            end
-          end
-        end
+        create_literatures_and_literals(reaction, literatures)
         reaction.container = update_datamodel(container_info)
         reaction.save!
         update_element_labels(reaction, params[:user_labels], current_user.id)
