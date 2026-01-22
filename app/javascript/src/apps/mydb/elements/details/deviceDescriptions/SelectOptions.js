@@ -41,20 +41,6 @@ const deviceDescriptionSelectOptions = {
       label: 'integrated - automated'
     }
   ],
-  device_type: [
-    {
-      value: 'device type name',
-      label: 'device type name'
-    },
-    {
-      value: 'device type ID',
-      label: 'device type ID'
-    },
-    {
-      value: 'ID type',
-      label: 'ID type'
-    }
-  ],
   device_tags: [
     {
       value: 'manufacturing',

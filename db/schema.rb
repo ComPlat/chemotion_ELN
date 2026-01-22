@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2026_01_08_155328) do
+ActiveRecord::Schema.define(version: 2026_01_20_183627) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -490,7 +490,9 @@ ActiveRecord::Schema.define(version: 2026_01_08_155328) do
     t.string "device_class"
     t.string "device_class_detail"
     t.integer "device_id"
-    t.string "device_type"
+    t.string "device_type_name"
+    t.string "device_type_id"
+    t.string "device_type_id_type"
     t.string "general_tags", default: [], null: false, array: true
     t.boolean "helpers_uploaded", default: false
     t.string "infrastructure_assignment"
@@ -506,6 +508,7 @@ ActiveRecord::Schema.define(version: 2026_01_08_155328) do
     t.jsonb "operators"
     t.jsonb "ontologies"
     t.string "owner_id"
+    t.string "owner_id_type"
     t.string "owner_email"
     t.string "owner_institution"
     t.jsonb "planned_maintenance"

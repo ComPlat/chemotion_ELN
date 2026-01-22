@@ -21,7 +21,9 @@ module Chemotion
       params :default_params do
         optional :name, type: String
         optional :short_label, type: String
-        optional :device_type, type: String
+        optional :device_type_name, type: String
+        optional :device_type_id, type: String
+        optional :device_type_id_type, type: String
         optional :device_class, type: String
         optional :device_class_detail, type: String
         optional :operation_mode, type: String
@@ -49,6 +51,7 @@ module Chemotion
         optional :owner_institution, type: String
         optional :owner_email, type: String
         optional :owner_id, type: String
+        optional :owner_id_type, type: String
         optional :inventory_id, type: String
         optional :alternative_identifier, type: String
         optional :vendor_id_type, type: String
