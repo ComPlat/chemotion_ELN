@@ -1,4 +1,4 @@
-// Copyright 2023-2025 KIT ELN Reaction Database Authors
+// Copyright 2023-2026 KIT ELN Reaction Database Authors
 // Nicole Jung <nicole.jung@kit.edu>, Christian Buggle <christian@buggle.net>
 //
 // Ord::Kit for KIT IOC
@@ -7,8 +7,8 @@
 // allowing to store data describing the process of a chemical reaction
 // (loosely based on the original ORD Schema).
 //
-// v0.10.0
-// (draft, 30.12.2025)
+// v0.11.0
+// (draft, 16.01.2026)
 //
 //
 // Copyright 2020 Open Reaction Database Project Authors
@@ -30,20 +30,11 @@ syntax = "proto3";
 package ord_kit;
 
 /**
- * Throughout this schema, we introduce enums to encourage consistency in
- * nomenclature and to avoid unnecessary downstream data processing that would
- * otherwise be required to consolidate equivalent entries. However, we do
- * not wish to restrict what users are able to specify if their synthesis
- * does not fit cleanly into a pre-existing enum field. For that reason, many
- * enums contain a CUSTOM field, which must be accompanied by setting the
- * 'details' field, where appropriate).
+ * Reaction
+ * The root level of a Reaction.
  *
- * NOTE(kearnes): In many places, we deliberately violate the style guide for
- * enums by nesting instead of prefixing; this is not done lightly. The primary
- * consideration is API consistency and the ability to use unqualified strings
- * as enum values. For instance, we want 'CUSTOM' to be a valid value for all
- * enums that support custom types.
- */
+ **/
+
 message Reaction {
   string reaction_id = 1;
   ReactionProvenance provenance = 2;
@@ -54,7 +45,7 @@ message Reaction {
 
 /**
  * SampleSetup
- * The initial state of a Process. based only on a Sample alone.
+ * The initial state of a Process when based on a solitude Sample (i.e. no associated reaction)
  *
  **/
 message SampleSetup {
@@ -121,7 +112,6 @@ message Ontology {
  * }
  */
 
-//  # TODO: DELETEME
 message ReactionInput {
   // A component is any pure species that is added to the reaction, whether as
   // a pure substance or in a mixture/solution.
@@ -130,9 +120,7 @@ message ReactionInput {
   // assumed to be added simultaneously. One input with a lower addition_order
   // than another was added earlier in the procedure.
   int32 addition_order = 3;
-  // When the addition event took place in terms of the reaction time (or,
-  // in the case of flow chemistry, the residence time).
-  TimeSpan addition_time = 4;
+
   message AdditionSpeed {
     enum AdditionSpeedType {
       // Unspecified.
@@ -170,13 +158,15 @@ enum AutomationStatus {
   AUTOMATION_RESPONDED = 3;
   HALT_RESOLVED_NEEDS_CONFIRMATION = 4;
   HALT_RESOLVED = 5;
-  COMPLETED = 6;
+  DEPENDS_ON_ACTIVITY = 6;
+  DEPENDS_ON_STEP = 7;
+  COMPLETED = 8;
 }
 
 enum StepAutomationStatus {
   STEP_STATUS_UNSPECIFIED = 0;
   STEP_CAN_RUN = 1;
-  STEP_HALT_BY_PRECEDING = 2;
+  STEP_DEPENDS_ON_PRECEDING = 2;
   STEP_MANUAL_PROCEED = 3;
   STEP_COMPLETED = 4;
 }
