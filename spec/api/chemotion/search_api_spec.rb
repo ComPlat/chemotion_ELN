@@ -66,6 +66,9 @@ describe Chemotion::SearchAPI do
       user: user,
     )
   end
+  let(:device_description) do
+    create(:device_description, :with_ontologies, name: 'test device description', creator: user)
+  end
 
   before do
     CollectionsReaction.create!(reaction: reaction, collection: collection)
@@ -92,6 +95,7 @@ describe Chemotion::SearchAPI do
                                                         collection: collection)
     CollectionsSequenceBasedMacromoleculeSample.create!(sequence_based_macromolecule_sample: sbmm_sample_modified,
                                                         collection: collection)
+    CollectionsDeviceDescription.create!(device_description: device_description, collection: collection)
 
     post url, params: params
   end
@@ -210,6 +214,16 @@ describe Chemotion::SearchAPI do
       it 'returns one sbmm samples' do
         expect(parsed_json_response.dig('sequence_based_macromolecule_samples', 'totalElements')).to eq 1
         expect(parsed_json_response.dig('sequence_based_macromolecule_samples', 'ids')).to eq [sbmm_sample_uniprot.id]
+      end
+    end
+
+    context 'when searching a device_description by device_description_name search method' do
+      let(:search_term) { 'test' }
+      let(:search_by_method) { :device_description_name }
+
+      it 'returns one sbmm samples' do
+        expect(parsed_json_response.dig('device_descriptions', 'totalElements')).to eq 1
+        expect(parsed_json_response.dig('device_descriptions', 'ids')).to eq [device_description.id]
       end
     end
   end
@@ -367,6 +381,30 @@ describe Chemotion::SearchAPI do
 
       it 'returns one sbmm sample' do
         expect(parsed_json_response.dig('sequence_based_macromolecule_samples', 'totalElements')).to eq 1
+      end
+    end
+
+    context 'when searching a device description name' do
+      let(:advanced_params) do
+        [
+          {
+            link: '',
+            match: 'ILIKE',
+            table: 'device_descriptions',
+            element_id: 0,
+            field: {
+              column: 'name',
+              label: 'Name',
+            },
+            value: 'test',
+            sub_values: [],
+            unit: '',
+          },
+        ]
+      end
+
+      it 'returns one device_description' do
+        expect(parsed_json_response.dig('device_descriptions', 'totalElements')).to eq 1
       end
     end
   end
@@ -606,6 +644,28 @@ describe Chemotion::SearchAPI do
         expect(parsed_json_response.dig('sequence_based_macromolecule_samples', 'totalElements')).to eq 2
         expect(parsed_json_response.dig('sequence_based_macromolecule_samples',
                                         'ids')).to eq [sbmm_sample_uniprot.id, sbmm_sample_modified.id]
+      end
+    end
+  end
+
+  describe 'POST /api/v1/search/device_description_names' do
+    let(:url) { '/api/v1/search/device_descriptions' }
+
+    context 'when searching sbmm samples' do
+      let(:params) do
+        {
+          selection: {
+            elementType: :device_descriptions,
+            name: 'test',
+            search_by_method: :substring,
+          },
+          collection_id: collection.id,
+        }
+      end
+
+      it 'returns two sbmm samples' do
+        expect(parsed_json_response.dig('device_descriptions', 'totalElements')).to eq 1
+        expect(parsed_json_response.dig('device_descriptions', 'ids')).to eq [device_description.id]
       end
     end
   end
