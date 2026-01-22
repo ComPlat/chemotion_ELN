@@ -1651,12 +1651,20 @@ export default class Sample extends Element {
   setTotalMixtureVolume(totalVolume) {
     this.initializeSampleDetails();
 
-    this.amount_value = totalVolume;
+    // Store the volume values before calculateTotalMixtureMass overwrites them
     this.sample_details.total_mixture_volume_l = totalVolume;
 
     // updates the mass and density
+    // Note: calculateTotalMixtureMass() sets amount_unit to 'g' and amount_value to mass,
+    // so we need to restore volume values after it runs
     this.calculateTotalMixtureMass();
-    this.updateMixtureComponentVolume(totalVolume);
+
+    // Restore volume values after mass calculation
+    // This ensures amount_l getter returns the correct volume value
+    this.amount_value = totalVolume;
+    this.amount_unit = 'l';
+
+    this.handleTotalVolumeChangeForMixture(totalVolume);
   }
 
   /**
@@ -2018,14 +2026,28 @@ export default class Sample extends Element {
     this.calculateTotalMixtureMass();
   }
 
-  // callback function for handleTotalVolumeChangeforMixtures
-  // Case 2: Total volume updated; Total Conc. is locked
-  // Case 3: Total volume updated; Total Conc. is not locked
   /**
-   * Updates the volume for all mixture components when the total volume changes.
-   * @param {number} totalVolume - The new total volume for the mixture.
+   * Handles total volume changes for mixture samples.
+   *
+   * This method is called when the total volume of a mixture is updated.
+   * It handles two scenarios:
+   * - Case 2: Total volume updated; Total Concentration is locked
+   *   - Recalculates amount_mol for all components
+   *   - For liquid components: recalculates volume based on density or stock concentration
+   *   - For solid components: recalculates mass (not volume)
+   * - Case 3: Total volume updated; Total Concentration is not locked
+   *   - Only recalculates the target concentration
+   *   - Amount and volume stay the same
+   *
+   * The method validates the input, then delegates to each component's handleTotalVolumeChanges
+   * method to perform the appropriate calculations. After updating components, it recalculates
+   * the component equivalents to maintain proper ratios.
+   *
+   * @param {number} totalVolume - The new total volume for the mixture. Must be non-negative.
+   * @returns {void} Returns early without modifying components if totalVolume is negative,
+   *   showing an error notification; otherwise updates components based on the new total volume.
    */
-  updateMixtureComponentVolume(totalVolume) {
+  handleTotalVolumeChangeForMixture(totalVolume) {
     if (this.components.length < 1) {
       return;
     }
@@ -2041,10 +2063,8 @@ export default class Sample extends Element {
       return;
     }
 
-    const referenceComponent = this.reference_component;
-
     this.components.forEach((component) => {
-      component.handleTotalVolumeChanges(totalVolume, referenceComponent);
+      component.handleTotalVolumeChanges(totalVolume);
     });
 
     this.updateMixtureComponentEquivalent();
