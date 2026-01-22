@@ -197,7 +197,7 @@ module KetcherService
         return [[x,y],[x+font*l,y+font]]
       end
       
-      # For longer strings (>3 chars), use new logic with text-anchor positioning
+      # For longer strings (>3 chars), use logic with text-anchor positioning
       calculate_long_text_bounds(text, text_content)
     end
 
@@ -212,13 +212,14 @@ module KetcherService
       x, y = text["x"].to_f, text["y"].to_f
       
       # Get font size from font attribute or font-size attribute
-      # Priority: font attribute (e.g., "24px Arial") > font-size attribute > default 24.0
+      # Priority: font attribute (e.g., "24px Arial") > font-size attribute > old extraction method
       font = if text["font"] && text["font"].match(/(\d+\.?\d*)px/)
                text["font"].match(/(\d+\.?\d*)px/)[1].to_f
              elsif text["font-size"] && text["font-size"].match(/(\d+\.?\d*)/)
                text["font-size"].match(/(\d+\.?\d*)/)[1].to_f
              else
-               24.0 # default font size
+               # Use old extraction method as fallback
+               (text["font"].match(/(\d+\.?\d*)px/) && $1).to_f
              end
       
       # Calculate text width more accurately
