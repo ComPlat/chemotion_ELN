@@ -48,6 +48,7 @@ module Chemotion
         dl_e = dl[:element_detail_level]
         dl_cl = dl[:celllinesample_detail_level]
         dl_sbmms = dl[:sequencebasedmacromoleculesample_detail_level]
+        dl_dd = dl[:devicedescription_detail_level]
 
         d_for = proc do |klass|
           klass.by_collection_id(collection_id)
@@ -180,6 +181,8 @@ module Chemotion
           dl_cl.positive? ? search_for_celllines : []
         when 'sequence_based_macromolecule_samples'
           dl_sbmms ? SequenceBasedMacromoleculeSample.by_search_fields(qry) : []
+        when 'device_descriptions'
+          dl_dd ? DeviceDescription.by_search_fields(qry) : []
         else
           element_short_label = (dl_e.positive? && search_by_element_short_label.call(Labimotion::Element, qry)) || []
           sample_name = (dl_s.positive? && search_by_field.call(Sample, :name, qry)) || []
@@ -206,6 +209,7 @@ module Chemotion
           requirements = (dl_sc > -1 && search_by_field.call(Screen, :requirements, qry)) || []
           cell_line_infos = dl_cl.positive? ? search_for_celllines : []
           sbmm_samples = dl_sbmms ? SequenceBasedMacromoleculeSample.by_search_fields(qry) : []
+          device_descriptions = dl_dd ? DeviceDescription.by_search_fields(qry) : []
 
           {
             element_short_label: element_short_label,
@@ -228,7 +232,7 @@ module Chemotion
             screen_name: screen_name,
             conditions: conditions,
             requirements: requirements,
-          }.merge(cell_line_infos).merge(sbmm_samples)
+          }.merge(cell_line_infos).merge(sbmm_samples).merge(device_descriptions)
         end
       end
     end
@@ -238,7 +242,7 @@ module Chemotion
       end
 
       route_param :element_type, type: String, values: %w[
-        all samples reactions wellplates screens cell_lines sequence_based_macromolecule_samples
+        all samples reactions wellplates screens cell_lines sequence_based_macromolecule_samples device_descriptions
       ] do
         desc 'Return all suggestions for AutoCompleteInput'
         params do
