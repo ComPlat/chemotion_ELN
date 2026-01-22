@@ -207,6 +207,7 @@ ActiveRecord::Schema.define(version: 2026_01_08_155328) do
     t.integer "celllinesample_detail_level", default: 10
     t.bigint "inventory_id"
     t.integer "devicedescription_detail_level", default: 10
+    t.jsonb "log_data"
     t.index ["ancestry"], name: "index_collections_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
     t.index ["deleted_at"], name: "index_collections_on_deleted_at"
     t.index ["inventory_id"], name: "index_collections_on_inventory_id"
@@ -824,6 +825,7 @@ ActiveRecord::Schema.define(version: 2026_01_08_155328) do
     t.jsonb "refs"
     t.string "doi"
     t.string "isbn"
+    t.jsonb "log_data"
     t.index ["deleted_at"], name: "index_literatures_on_deleted_at"
   end
 
@@ -1912,8 +1914,8 @@ ActiveRecord::Schema.define(version: 2026_01_08_155328) do
        RETURNS TABLE(literatures text)
        LANGUAGE sql
       AS $function$
-         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2
-         where l.literature_id = l2.id
+         select string_agg(l2.id::text, ',') as literatures from literals l , literatures l2 
+         where l.literature_id = l2.id 
          and l.element_type = $1 and l.element_id = $2
        $function$
   SQL
@@ -2013,7 +2015,7 @@ ActiveRecord::Schema.define(version: 2026_01_08_155328) do
               where collection_id in (select id from collections where user_id = userId)
           ) s;
           used_space = COALESCE(used_space_samples,0);
-
+          
           select sum(calculate_element_space(r.reaction_id, 'Reaction')) into used_space_reactions from (
               select distinct reaction_id
               from collections_reactions
@@ -2255,38 +2257,38 @@ ActiveRecord::Schema.define(version: 2026_01_08_155328) do
           ts_column := NULLIF(TG_ARGV[1], 'null');
           columns := NULLIF(TG_ARGV[2], 'null');
           include_columns := NULLIF(TG_ARGV[3], 'null');
-
+      
           IF TG_OP = 'INSERT' THEN
             IF columns IS NOT NULL THEN
               snapshot = logidze_snapshot(to_jsonb(NEW.*), ts_column, columns, include_columns);
             ELSE
               snapshot = logidze_snapshot(to_jsonb(NEW.*), ts_column);
             END IF;
-
+      
             IF snapshot#>>'{h, -1, c}' != '{}' THEN
               NEW.log_data := snapshot;
             END IF;
-
+      
           ELSIF TG_OP = 'UPDATE' THEN
-
+      
             IF OLD.log_data is NULL OR OLD.log_data = '{}'::jsonb THEN
               IF columns IS NOT NULL THEN
                 snapshot = logidze_snapshot(to_jsonb(NEW.*), ts_column, columns, include_columns);
               ELSE
                 snapshot = logidze_snapshot(to_jsonb(NEW.*), ts_column);
               END IF;
-
+      
               IF snapshot#>>'{h, -1, c}' != '{}' THEN
                 NEW.log_data := snapshot;
               END IF;
               RETURN NEW;
             END IF;
-
+      
             history_limit := NULLIF(TG_ARGV[0], 'null');
             debounce_time := NULLIF(TG_ARGV[4], 'null');
-
+      
             current_version := (NEW.log_data->>'v')::int;
-
+      
             IF ts_column IS NULL THEN
               ts := statement_timestamp();
             ELSE
@@ -2295,11 +2297,11 @@ ActiveRecord::Schema.define(version: 2026_01_08_155328) do
                 ts := statement_timestamp();
               END IF;
             END IF;
-
+      
             IF NEW = OLD THEN
               RETURN NEW;
             END IF;
-
+      
             IF current_version < (NEW.log_data#>>'{h,-1,v}')::int THEN
               iterator := 0;
               FOR item in SELECT * FROM jsonb_array_elements(NEW.log_data->'h')
@@ -2314,9 +2316,9 @@ ActiveRecord::Schema.define(version: 2026_01_08_155328) do
                 iterator := iterator + 1;
               END LOOP;
             END IF;
-
+      
             changes := '{}';
-
+      
             IF (coalesce(current_setting('logidze.full_snapshot', true), '') = 'on') THEN
               BEGIN
                 changes = hstore_to_jsonb_loose(hstore(NEW.*));
@@ -2367,7 +2369,7 @@ ActiveRecord::Schema.define(version: 2026_01_08_155328) do
                 LEFT JOIN old_kv o ON k.key = o.key
               ) t
               WHERE value IS NOT NULL;
-
+      
               FOR k IN SELECT key FROM jsonb_each(changes)
                 LOOP
                   IF jsonb_typeof(changes->k) = 'object' THEN
@@ -2382,22 +2384,22 @@ ActiveRecord::Schema.define(version: 2026_01_08_155328) do
                   END IF;
                 END LOOP;
             END IF;
-
+      
             changes = changes - 'log_data';
-
+      
             IF columns IS NOT NULL THEN
               changes = logidze_filter_keys(changes, columns, include_columns);
             END IF;
-
+      
             IF changes = '{}' THEN
               RETURN NEW;
             END IF;
-
+      
             new_v := (NEW.log_data#>>'{h,-1,v}')::int + 1;
-
+      
             size := jsonb_array_length(NEW.log_data->'h');
             version := logidze_version(new_v, changes, ts);
-
+      
             IF (
               debounce_time IS NOT NULL AND
               (version->>'ts')::bigint - (NEW.log_data#>'{h,-1,ts}')::text::bigint <= debounce_time
@@ -2412,25 +2414,25 @@ ActiveRecord::Schema.define(version: 2026_01_08_155328) do
                 (NEW.log_data->'h') - (size - 1)
               );
             END IF;
-
+      
             NEW.log_data := jsonb_set(
               NEW.log_data,
               ARRAY['h', size::text],
               version,
               true
             );
-
+      
             NEW.log_data := jsonb_set(
               NEW.log_data,
               '{v}',
               to_jsonb(new_v)
             );
-
+      
             IF history_limit IS NOT NULL AND history_limit <= size THEN
               NEW.log_data := logidze_compact_history(NEW.log_data, size - history_limit + 1);
             END IF;
           END IF;
-
+      
           return NEW;
         EXCEPTION
           WHEN OTHERS THEN
@@ -2493,18 +2495,18 @@ ActiveRecord::Schema.define(version: 2026_01_08_155328) do
         IF old IS NULL OR jsonb_typeof(old) = 'null' THEN
           RETURN new;
         END IF;
-
+      
         -- If new is NULL, return an empty JSON
         IF new IS NULL OR jsonb_typeof(new) = 'null' THEN
           RETURN '{}'::jsonb;
         END IF;
-
+      
         -- Handle top-level arrays
         IF jsonb_typeof(old) = 'array' AND jsonb_typeof(new) = 'array' THEN
           IF result = '{}' THEN
             result := '[]';
           END IF;
-
+      
           -- If arrays are equal, return an empty JSON
           IF old = new THEN
             RETURN '[]'::jsonb;
@@ -2513,7 +2515,7 @@ ActiveRecord::Schema.define(version: 2026_01_08_155328) do
             -- Get array lengths
             new_length := JSONB_ARRAY_LENGTH(new);
             old_length := JSONB_ARRAY_LENGTH(old);
-
+      
             -- Loop through the array using an index
             FOR i IN 0..new_length-1 LOOP
               IF i <= old_length THEN
@@ -2532,12 +2534,12 @@ ActiveRecord::Schema.define(version: 2026_01_08_155328) do
             RETURN result;
           END IF;
         END IF;
-
+      
         -- If types differ (object vs. array), return the full new value
         IF jsonb_typeof(old) <> jsonb_typeof(new) THEN
           RETURN new;
         END IF;
-
+      
         -- Iterate through each key-value pair in new
         FOR v IN SELECT * FROM jsonb_each(new) LOOP
           -- If the key is an object in both old and new, recurse
@@ -2551,7 +2553,7 @@ ActiveRecord::Schema.define(version: 2026_01_08_155328) do
             result := result || jsonb_build_object(v.key, v.value);
           END IF;
         END LOOP;
-
+      
         -- Iterate through each key-value pair in old
         FOR v in SELECT * from jsonb_each(old) LOOP
           -- If value was deleted
@@ -2560,13 +2562,16 @@ ActiveRecord::Schema.define(version: 2026_01_08_155328) do
             result := result || jsonb_build_object(v.key, 'deleted');
           END IF;
         END LOOP;
-
+      
         RETURN result;
       END;
       $function$
   SQL
 
 
+  create_trigger :logidze_on_collections, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_collections BEFORE INSERT OR UPDATE ON public.collections FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
   create_trigger :logidze_on_reactions, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_reactions BEFORE INSERT OR UPDATE ON public.reactions FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
@@ -2578,6 +2583,9 @@ ActiveRecord::Schema.define(version: 2026_01_08_155328) do
   SQL
   create_trigger :logidze_on_wellplates, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_wellplates BEFORE INSERT OR UPDATE ON public.wellplates FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_literatures, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_literatures BEFORE INSERT OR UPDATE ON public.literatures FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
   create_trigger :logidze_on_screens, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_screens BEFORE INSERT OR UPDATE ON public.screens FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
