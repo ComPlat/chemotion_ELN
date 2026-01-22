@@ -189,22 +189,6 @@ module Chemotion
         molecule = decoupled ? Molecule.find_or_create_dummy : Molecule.find_or_create_by_molfile(molfile)
         molecule = Molecule.find_or_create_dummy if molecule.blank?
         ob = molecule&.ob_log
-
-        if molfile.present? && !molfile.strip.empty?
-          lines = molfile.lines.map(&:chomp)
-          if lines.length >= 4
-            fourth_line = lines[3]
-            if fourth_line
-              if fourth_line.match?(/\s+\d+\s+\d+\s+\d+\s+\d+\s+1\s+\d+/)
-                fourth_line = fourth_line.sub(/(\s+\d+\s+\d+\s+\d+\s+\d+\s+)1(\s+\d+)/, '\10\2')
-                lines[3] = fourth_line
-                molfile = lines.join("\n")
-                molfile += "\n" if molfile.lines.last != lines.last
-              end
-            end
-          end
-        end
-
         if svg.present?
           svg_process = SVG::Processor.new.structure_svg(params[:editor], svg, molfile)
         else
