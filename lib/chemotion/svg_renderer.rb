@@ -70,7 +70,7 @@ module Chemotion
     # Attempts to render SVG using OpenBabelService
     #
     # @param struct [String] The molfile structure to render
-    # @return [String, nil] The rendered SVG, or nil if rendering fails
+    # @return [String, nil] The rendered and processed SVG, or nil if rendering fails
     def self.open_babel_service(struct)
       rendered_svg = OpenBabelService.svg_from_molfile(struct)
       if rendered_svg.present?
