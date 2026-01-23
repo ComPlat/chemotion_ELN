@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Form } from 'react-bootstrap';
 
@@ -8,9 +8,23 @@ import { conditionsOptions } from 'src/components/staticDropdownOptions/options'
 import CreateButton from 'src/components/common/CreateButton';
 import DeleteButton from 'src/components/common/DeleteButton';
 
+// Function to decode all HTML entities (named, numeric decimal, and hexadecimal)
+function decodeHtmlEntities(text) {
+  if (!text) return text;
+  
+  // Use browser's native HTML entity decoding
+  // This handles named entities (&gt;, &lt;, &amp;, etc.)
+  // numeric decimal entities (&#62;, &#60;, etc.)
+  // and hexadecimal entities (&#x3E;, &#x3C;, etc.)
+  const textarea = document.createElement('textarea');
+  textarea.innerHTML = text;
+  return textarea.value;
+}
+
 function textToLines(text) {
   if (!text || text.trim() === '') return [];
-  return text.split('\n');
+  // Decode HTML entities when loading conditions from props
+  return text.split('\n').map(line => decodeHtmlEntities(line));
 }
 
 export default function ReactionConditions({
@@ -19,11 +33,21 @@ export default function ReactionConditions({
   onChange,
 }) {
   const [conditions, setConditions] = useState(textToLines(conditionsProp));
+  const debounceTimerRef = useRef(null);
 
   useEffect(
     () => setConditions(textToLines(conditionsProp)),
     [conditionsProp]
   );
+
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
 
   const handleChange = useCallback((newConditions) => {
     setConditions(newConditions);
@@ -31,19 +55,39 @@ export default function ReactionConditions({
   }, [onChange]);
 
   const addCondition = useCallback((value = '') => {
-    if (conditions.includes(value)) return;
-    handleChange([...conditions, value]);
-  }, [conditions]);
+    // Decode HTML entities when adding from dropdown or manual input
+    const decodedValue = decodeHtmlEntities(value);
+    if (conditions.includes(decodedValue)) return;
+    handleChange([...conditions, decodedValue]);
+  }, [conditions, handleChange]);
 
   const updateCondition = useCallback((index, value) => {
+    // Decode HTML entities in real-time (handles any HTML entity)
+    const decodedValue = decodeHtmlEntities(value);
+    
+    // Update local state immediately for responsive UI
     const updatedConditions = [...conditions];
-    updatedConditions[index] = value;
-    handleChange(updatedConditions);
-  }, [conditions]);
+    updatedConditions[index] = decodedValue;
+    setConditions(updatedConditions);
+
+    // Clear existing debounce timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    // Debounce the API call
+    debounceTimerRef.current = setTimeout(() => {
+      handleChange(updatedConditions);
+    }, 500); // 500ms debounce delay
+  }, [conditions, handleChange]);
 
   const removeCondition = useCallback((index) => {
+    // Clear debounce timer when removing
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
     handleChange(conditions.filter((_, i) => i !== index));
-  }, [conditions]);
+  }, [conditions, handleChange]);
 
   return (
     <div className="material-group">
