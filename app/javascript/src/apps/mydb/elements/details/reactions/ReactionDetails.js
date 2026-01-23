@@ -272,17 +272,38 @@ export default class ReactionDetails extends Component {
       const oldMaterials = oldReaction[group] || [];
       const newMaterials = newReaction[group] || [];
       
+      // Different number of materials always affects the SVG
       if (oldMaterials.length !== newMaterials.length) return true;
       
-      // Create a Map of old materials by ID for efficient lookup
-      const oldMaterialsMap = new Map(oldMaterials.map(m => [m.id, m]));
+      const oldMap = new Map();
+      const newMap = new Map();
       
-      // Compare materials by ID instead of index to handle reordering
-      for (const newMat of newMaterials) {
-        const oldMat = oldMaterialsMap.get(newMat.id);
-        
-        // If material ID doesn't exist in old materials, it's a new material
-        if (!oldMat) return true;
+      // Build maps keyed by material ID to be robust to reordering
+      for (const mat of oldMaterials) {
+        if (mat && mat.id != null) {
+          oldMap.set(mat.id, mat);
+        }
+      }
+      for (const mat of newMaterials) {
+        if (mat && mat.id != null) {
+          newMap.set(mat.id, mat);
+        }
+      }
+      
+      // If the sets of IDs differ, materials were added/removed/replaced
+      if (oldMap.size !== newMap.size) return true;
+      
+      for (const id of oldMap.keys()) {
+        if (!newMap.has(id)) return true;
+      }
+      for (const id of newMap.keys()) {
+        if (!oldMap.has(id)) return true;
+      }
+      
+      // Compare properties of each material by ID
+      for (const [id, oldMat] of oldMap.entries()) {
+        const newMat = newMap.get(id);
+        if (!newMat) return true;
         
         // Check if SVG path changed (affects display)
         if (oldMat.svgPath !== newMat.svgPath) return true;
