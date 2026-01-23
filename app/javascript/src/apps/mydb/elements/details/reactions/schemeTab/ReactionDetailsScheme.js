@@ -719,13 +719,13 @@ export default class ReactionDetailsScheme extends React.Component {
 
   updatedReactionForEquivalentChange(changeEvent) {
     const { reaction } = this.props;
-    const { sampleID, equivalent } = changeEvent;
+    const { sampleID, equivalent, weightPercentageField } = changeEvent;
     const updatedSample = reaction.sampleById(sampleID);
 
     updatedSample.equivalent = equivalent;
 
     // When equivalent is 0, reset all amounts to 0
-    if (equivalent === 0 || equivalent === '0') {
+    if ((equivalent === 0 || equivalent === '0') && !weightPercentageField) {
       updatedSample.setAmount({ value: 0, unit: 'g' });
     }
 
@@ -737,6 +737,9 @@ export default class ReactionDetailsScheme extends React.Component {
     const { sampleID, weightPercentage } = changeEvent;
     const updatedSample = reaction.sampleById(sampleID);
     updatedSample.weight_percentage = weightPercentage;
+    if (weightPercentage == null || weightPercentage === 0) {
+      updatedSample.equivalent = updatedSample.amount_mol / reaction.referenceMaterial.amount_mol;
+    }
     return this.updatedReactionWithSample(this.updatedSamplesForWeightPercentageChange.bind(this), updatedSample);
   }
 
@@ -1377,6 +1380,7 @@ export default class ReactionDetailsScheme extends React.Component {
    * @returns {Array<Sample>} The updated samples array
    */
   updatedSamplesForWeightPercentageChange(samples, updatedSample) {
+    const { reaction } = this.props;
     return samples.map((sample) => {
       if (sample.id === updatedSample.id) {
         if (sample.weight_percentage > 1 || sample.weight_percentage < 0) {
@@ -1386,6 +1390,9 @@ export default class ReactionDetailsScheme extends React.Component {
           });
         } else {
           sample.weight_percentage = updatedSample.weight_percentage;
+          if (updatedSample.weight_percentage == null || updatedSample.weight_percentage === 0) {
+            sample.equivalent = sample.amount_mol / reaction.referenceMaterial.amount_mol;
+          }
         }
       }
       return sample;

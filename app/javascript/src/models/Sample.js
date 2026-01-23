@@ -2495,7 +2495,12 @@ export default class Sample extends Element {
    */
   calculateAmountBasedOnWeightPercentage(targetAmount) {
     // guard clauses kept inside model, expect targetAmount: { value, unit }
-    if (!targetAmount || targetAmount.value == null || targetAmount.unit == null) return this;
+    if (
+      !targetAmount
+      || targetAmount.value == null
+      || targetAmount.unit == null
+      || this.weight_percentage == null
+    ) return this;
 
     if (this.weight_percentage && this.weight_percentage > 0 && !this.weight_percentage_reference) {
       if (!targetAmount.unit) return this;
