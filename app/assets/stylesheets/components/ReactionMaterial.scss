@@ -81,14 +81,11 @@ $rm-columns: (
   "target": map-get($rm-sizes, "square"),
   "dry-solvent": map-get($rm-sizes, "square"),
   "delete": map-get($rm-sizes, "square"),
-  "gaseous-fields":
-    calc(
-      #{3 * map-get($rm-sizes, "square")} + #{map-get(
-          $rm-sizes,
-          "large-numeral-with-units"
-        )} + #{map-get($rm-sizes, "numeral")} + #{gap(4)}
-    ),
-  // ref, target, amount, coefficient, concentration, equivalence + gaps
+  "gaseous-fields": calc(
+      #{3 * map-get($rm-sizes, "square")} +
+        #{map-get($rm-sizes, "large-numeral-with-units")} +
+        #{map-get($rm-sizes, "numeral")} + #{gap(4)}
+    ), // ref, target, amount, coefficient, concentration, equivalence + gaps
 );
 
 .reaction-material {
@@ -139,25 +136,23 @@ $rm-columns: (
   &__molar-mass {
     @include align-header-data(map-get($rm-columns, "molar-mass"));
     @include static-scheme-data;
-    @include optional-scheme-column(60rem);
+    @include optional-scheme-column(62rem);
   }
   &__density {
     @include align-header-data(map-get($rm-columns, "density"));
     @include static-scheme-data;
-    @include optional-scheme-column(64.5rem);
+    @include optional-scheme-column(66.5rem);
   }
   &__purity {
     @include align-header-data(map-get($rm-columns, "purity"));
     @include static-scheme-data;
-    @include optional-scheme-column(69rem);
+    @include optional-scheme-column(71rem);
   }
   &__solvent-label {
     @include align-header-data(
       calc(
-        #{map-get($rm-columns, "amount")} + #{map-get(
-            $rm-columns,
-            "solvent-label"
-          )}
+        #{map-get($rm-columns, "amount")} +
+          #{map-get($rm-columns, "solvent-label")}
       )
     );
   }
@@ -189,10 +184,8 @@ $rm-columns: (
     }
     @include align-header-data(
       calc(
-        #{map-get($rm-columns, "amount")} + #{map-get(
-            $rm-columns,
-            "gaseous-fields"
-          )}
+        #{map-get($rm-columns, "amount")} +
+          #{map-get($rm-columns, "gaseous-fields")}
       )
     );
   }
@@ -280,7 +273,7 @@ $rm-columns: (
   }
 }
 
-@container material-group (width < 49.25rem) {
+@container material-group (width < 51.25rem) {
   .reaction-material {
     &__amount-data {
       flex-direction: column; // not extending bootstrap utilities in this context to avoid side effects
@@ -292,20 +285,16 @@ $rm-columns: (
     &__solvent-label {
       @include align-header-data(
         calc(
-          #{map-get($rm-sizes, "numeral-with-units")} + #{map-get(
-              $rm-columns,
-              "solvent-label"
-            )}
+          #{map-get($rm-sizes, "numeral-with-units")} +
+            #{map-get($rm-columns, "solvent-label")}
         )
       ); // amount, coefficient + gap
     }
     &__gaseous-fields {
       @include align-header-data(
         calc(
-          #{map-get($rm-sizes, "numeral-with-units")} + #{map-get(
-              $rm-columns,
-              "gaseous-fields"
-            )}
+          #{map-get($rm-sizes, "numeral-with-units")} +
+            #{map-get($rm-columns, "gaseous-fields")}
         )
       );
       // ref, target, amount, coefficient, concentration, equivalence + gaps
