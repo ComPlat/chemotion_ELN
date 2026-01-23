@@ -38,7 +38,7 @@
 #  variations             :jsonb
 #  vessel_size            :jsonb
 #  volume                 :decimal(10, 4)
-#  weight_percentage      :boolean
+#  weight_percentage      :boolean          default(FALSE)
 #  created_at             :datetime         not null
 #  updated_at             :datetime         not null
 #
