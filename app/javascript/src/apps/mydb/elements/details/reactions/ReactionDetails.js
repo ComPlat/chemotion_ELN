@@ -274,12 +274,15 @@ export default class ReactionDetails extends Component {
       
       if (oldMaterials.length !== newMaterials.length) return true;
       
-      for (let i = 0; i < oldMaterials.length; i++) {
-        const oldMat = oldMaterials[i];
-        const newMat = newMaterials[i];
+      // Create a Map of old materials by ID for efficient lookup
+      const oldMaterialsMap = new Map(oldMaterials.map(m => [m.id, m]));
+      
+      // Compare materials by ID instead of index to handle reordering
+      for (const newMat of newMaterials) {
+        const oldMat = oldMaterialsMap.get(newMat.id);
         
-        // Check if material ID changed (replaced)
-        if (oldMat.id !== newMat.id) return true;
+        // If material ID doesn't exist in old materials, it's a new material
+        if (!oldMat) return true;
         
         // Check if SVG path changed (affects display)
         if (oldMat.svgPath !== newMat.svgPath) return true;
@@ -609,9 +612,9 @@ export default class ReactionDetails extends Component {
         
         // Force state update to trigger re-render - ReactionSchemeGraphic will reload image automatically
         // Create a new object reference to ensure React detects the change
+        // The _svgUpdateTimestamp on reaction is used by ReactionSchemeGraphic for cache busting
         this.setState({ 
-          reaction,
-          _graphicUpdateKey: timestamp // Additional key to force re-render
+          reaction
         });
       }
     }).catch((error) => {

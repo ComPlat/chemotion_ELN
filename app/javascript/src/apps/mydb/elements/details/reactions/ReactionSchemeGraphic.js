@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Popover, ButtonGroup } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import SvgFileZoomPan from 'react-svg-file-zoom-pan-latest';
@@ -10,7 +10,8 @@ export default function ReactionSchemeGraphic({ reaction, onToggleLabel }) {
   const [svgProps, setSvgProps] = useState({});
 
   // Create a comprehensive checksum to detect all SVG-affecting changes
-  const createMaterialsChecksum = () => {
+  // Memoized to prevent recalculation on every render
+  const materialsChecksum = useMemo(() => {
     const materialData = (materials, includeEquivalent = false) => 
       (materials || []).map(m => {
         const base = `${m.id}:${m.svgPath || ''}:${m.show_label ? '1' : '0'}`;
@@ -31,29 +32,36 @@ export default function ReactionSchemeGraphic({ reaction, onToggleLabel }) {
       reaction.conditions || '',
       (reaction.solvents || []).map(s => s.preferred_label || s.external_label || '').join(','),
     ].join('||');
-  };
-
-  const materialsChecksum = createMaterialsChecksum();
-  // Use timestamp from reaction if available, otherwise use checksum
-  const svgUpdateKey = reaction._svgUpdateTimestamp || materialsChecksum;
+  }, [
+    reaction.starting_materials,
+    reaction.reactants,
+    reaction.products,
+    reaction.solvents,
+    reaction.temperature_display,
+    reaction.duration,
+    reaction.conditions,
+  ]);
 
   useEffect(() => {
     // Force update by updating SVG props - include timestamp in path for cache busting
     const svgPath = reaction.svgPath;
     const isSvgFile = svgPath && svgPath.substr(svgPath.length - 4) === '.svg';
     
+    // Use timestamp from reaction if available, otherwise use checksum
+    const updateKey = reaction._svgUpdateTimestamp || materialsChecksum;
+    
     let newProps;
     if (isSvgFile) {
       // Add cache-busting query parameter to force reload
       const separator = svgPath.includes('?') ? '&' : '?';
-      newProps = { svgPath: `${svgPath}${separator}_t=${svgUpdateKey}` };
+      newProps = { svgPath: `${svgPath}${separator}_t=${updateKey}` };
     } else {
       // For inline SVG, include timestamp in a way that forces re-render
       newProps = { svg: reaction.reaction_svg_file };
     }
     
     setSvgProps(newProps);
-  }, [reaction.svgPath, reaction.reaction_svg_file, materialsChecksum, svgUpdateKey]);
+  }, [reaction.svgPath, reaction.reaction_svg_file, reaction._svgUpdateTimestamp, materialsChecksum]);
 
   if (!reaction.svgPath || !reaction.hasMaterials()) return null;
 
