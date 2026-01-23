@@ -9,13 +9,51 @@ import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButt
 export default function ReactionSchemeGraphic({ reaction, onToggleLabel }) {
   const [svgProps, setSvgProps] = useState({});
 
+  // Create a comprehensive checksum to detect all SVG-affecting changes
+  const createMaterialsChecksum = () => {
+    const materialData = (materials, includeEquivalent = false) => 
+      (materials || []).map(m => {
+        const base = `${m.id}:${m.svgPath || ''}:${m.show_label ? '1' : '0'}`;
+        return includeEquivalent ? `${base}:${m.equivalent || 0}` : base;
+      }).join('|');
+    
+    return [
+      reaction.starting_materials?.length || 0,
+      reaction.reactants?.length || 0,
+      reaction.products?.length || 0,
+      reaction.solvents?.length || 0,
+      materialData(reaction.starting_materials),
+      materialData(reaction.reactants),
+      materialData(reaction.products, true), // Include equivalent for products
+      materialData(reaction.solvents),
+      reaction.temperature_display || '',
+      reaction.duration || '',
+      reaction.conditions || '',
+      (reaction.solvents || []).map(s => s.preferred_label || s.external_label || '').join(','),
+    ].join('||');
+  };
+
+  const materialsChecksum = createMaterialsChecksum();
+  // Use timestamp from reaction if available, otherwise use checksum
+  const svgUpdateKey = reaction._svgUpdateTimestamp || materialsChecksum;
+
   useEffect(() => {
-    setSvgProps(
-      reaction.svgPath.substr(reaction.svgPath.length - 4) === '.svg'
-        ? { svgPath: reaction.svgPath }
-        : { svg: reaction.reaction_svg_file }
-    );
-  }, [reaction.svgPath, reaction.reaction_svg_file]);
+    // Force update by updating SVG props - include timestamp in path for cache busting
+    const svgPath = reaction.svgPath;
+    const isSvgFile = svgPath && svgPath.substr(svgPath.length - 4) === '.svg';
+    
+    let newProps;
+    if (isSvgFile) {
+      // Add cache-busting query parameter to force reload
+      const separator = svgPath.includes('?') ? '&' : '?';
+      newProps = { svgPath: `${svgPath}${separator}_t=${svgUpdateKey}` };
+    } else {
+      // For inline SVG, include timestamp in a way that forces re-render
+      newProps = { svg: reaction.reaction_svg_file };
+    }
+    
+    setSvgProps(newProps);
+  }, [reaction.svgPath, reaction.reaction_svg_file, materialsChecksum, svgUpdateKey]);
 
   if (!reaction.svgPath || !reaction.hasMaterials()) return null;
 
