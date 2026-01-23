@@ -92,7 +92,7 @@ export default class ScreenDetailsContainers extends Component {
     return (
       <div className="my-2">
         <Button
-          size="xxsm"
+          size="sm"
           variant="success"
           onClick={() => this.handleAdd()}
         >
@@ -207,7 +207,7 @@ export default class ScreenDetailsContainers extends Component {
                   <CommentButton
                     toggleCommentBox={this.toggleCommentBox}
                     isVisible={commentBoxVisible}
-                    size="xxsm"
+                    size="sm"
                   />
                 </div>
                 {this.addButton()}
@@ -250,7 +250,7 @@ export default class ScreenDetailsContainers extends Component {
                   <CommentButton
                     toggleCommentBox={this.toggleCommentBox}
                     isVisible={commentBoxVisible}
-                    size="xxsm"
+                    size="sm"
                   />
                 </div>
                 {this.addButton()}
@@ -274,7 +274,7 @@ export default class ScreenDetailsContainers extends Component {
                 <CommentButton
                   toggleCommentBox={this.toggleCommentBox}
                   isVisible={commentBoxVisible}
-                  size="xxsm"
+                  size="sm"
                 />
               </div>
             </ButtonToolbar>

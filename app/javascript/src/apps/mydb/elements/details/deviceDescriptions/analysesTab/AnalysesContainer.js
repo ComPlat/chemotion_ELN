@@ -56,7 +56,7 @@ function AnalysesContainer({ readonly }) {
   const addButton = () => (
     <div className="add-button">
       <Button
-        size="xsm"
+        size="sm"
         variant="success"
         onClick={() => addEmptyAnalysis()}
         disabled={readonly}
@@ -140,7 +140,7 @@ function AnalysesContainer({ readonly }) {
                 <CommentButton
                   toggleCommentBox={deviceDescriptionsStore.toggleAnalysisCommentBox}
                   isVisible={deviceDescriptionsStore.analysis_comment_box}
-                  size="xsm"
+                  size="sm"
                 />
                 {addButton()}
               </ButtonToolbar>
@@ -180,7 +180,7 @@ function AnalysesContainer({ readonly }) {
                 <CommentButton
                   toggleCommentBox={deviceDescriptionsStore.toggleAnalysisCommentBox}
                   isVisible={deviceDescriptionsStore.analysis_comment_box}
-                  size="xsm"
+                  size="sm"
                 />
                 {addButton()}
               </ButtonToolbar>
