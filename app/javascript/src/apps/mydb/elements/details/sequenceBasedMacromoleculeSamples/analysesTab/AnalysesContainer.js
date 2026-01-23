@@ -41,7 +41,7 @@ function AnalysesContainer({ readonly }) {
   const addButton = () => (
     <div className="add-button">
       <Button
-        size="xsm"
+        size="sm"
         variant="success"
         onClick={() => sbmmStore.addEmptyAnalysisContainer()}
         disabled={readonly}
@@ -125,7 +125,7 @@ function AnalysesContainer({ readonly }) {
                 <CommentButton
                   toggleCommentBox={sbmmStore.toggleAnalysisCommentBox}
                   isVisible={sbmmStore.analysis_comment_box}
-                  size="xsm"
+                  size="sm"
                 />
                 {addButton()}
               </ButtonToolbar>
@@ -165,7 +165,7 @@ function AnalysesContainer({ readonly }) {
                 <CommentButton
                   toggleCommentBox={sbmmStore.toggleAnalysisCommentBox}
                   isVisible={sbmmStore.analysis_comment_box}
-                  size="xsm"
+                  size="sm"
                 />
                 {addButton()}
               </ButtonToolbar>
