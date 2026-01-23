@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Popover, ButtonGroup } from 'react-bootstrap';
+import { Popover, ButtonGroup, Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import SvgFileZoomPan from 'react-svg-file-zoom-pan-latest';
 import Reaction from 'src/models/Reaction';
 import ConfigOverlayButton from 'src/components/common/ConfigOverlayButton';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 
-export default function ReactionSchemeGraphic({ reaction, onToggleLabel }) {
+export default function ReactionSchemeGraphic({ reaction, onToggleLabel, onRefresh }) {
   const [svgProps, setSvgProps] = useState({});
 
   useEffect(() => {
@@ -55,26 +55,46 @@ export default function ReactionSchemeGraphic({ reaction, onToggleLabel }) {
 
   return (
     <div className="position-relative">
-      <ConfigOverlayButton popoverSettings={
-        (
-          <Popover>
-            <Popover.Header>Graphic Settings</Popover.Header>
-            <Popover.Body className="border-bottom py-1">
-              <h6 className="fs-9 fw-medium">Starting Materials</h6>
-              {reaction.starting_materials.map((material) => (materialShowLabel(material, 'starting_materials')))}
-            </Popover.Body>
-            <Popover.Body className="border-bottom py-1">
-              <h6 className="fs-9 fw-medium">Reactants</h6>
-              {reaction.reactants.map((material) => (materialShowLabel(material, 'reactants')))}
-            </Popover.Body>
-            <Popover.Body className="py-1">
-              <h6 className="fs-9 fw-medium">Products</h6>
-              {reaction.products.map((material) => (materialShowLabel(material, 'products')))}
-            </Popover.Body>
-          </Popover>
-        )
-      }
-      />
+      <div className="position-absolute top-0 end-0 d-flex">
+        <ConfigOverlayButton
+          popoverSettings={
+            (
+              <Popover>
+                <Popover.Header>Graphic Settings</Popover.Header>
+                <Popover.Body className="border-bottom py-1">
+                  <h6 className="fs-9 fw-medium">Starting Materials</h6>
+                  {reaction.starting_materials.map((material) => (materialShowLabel(material, 'starting_materials')))}
+                </Popover.Body>
+                <Popover.Body className="border-bottom py-1">
+                  <h6 className="fs-9 fw-medium">Reactants</h6>
+                  {reaction.reactants.map((material) => (materialShowLabel(material, 'reactants')))}
+                </Popover.Body>
+                <Popover.Body className="py-1">
+                  <h6 className="fs-9 fw-medium">Products</h6>
+                  {reaction.products.map((material) => (materialShowLabel(material, 'products')))}
+                </Popover.Body>
+              </Popover>
+            )
+          }
+          onToggle={() => {}}
+          wrapperClassName=""
+        />
+        {onRefresh && (
+          <OverlayTrigger
+            placement="left"
+            overlay={<Tooltip id="refresh-graphic">Refresh Graphic</Tooltip>}
+          >
+            <Button
+              size="xsm"
+              variant="light"
+              className="m-1"
+              onClick={onRefresh}
+            >
+              <i className="fa fa-refresh" />
+            </Button>
+          </OverlayTrigger>
+        )}
+      </div>
       <SvgFileZoomPan
         duration={300}
         resize
@@ -88,4 +108,5 @@ export default function ReactionSchemeGraphic({ reaction, onToggleLabel }) {
 ReactionSchemeGraphic.propTypes = {
   reaction: PropTypes.instanceOf(Reaction).isRequired,
   onToggleLabel: PropTypes.func.isRequired,
+  onRefresh: PropTypes.func,
 };
