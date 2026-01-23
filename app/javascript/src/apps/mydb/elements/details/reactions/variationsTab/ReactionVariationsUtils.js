@@ -17,7 +17,7 @@ import {
   NoteCellRenderer, NoteCellEditor, MenuHeader, RowToolsCellRenderer, ToolHeader
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import { genUnits } from 'generic-ui-core';
+import { getGenSI } from 'chem-generic-ui';
 
 const PLACEHOLDER_CELL_TEXT = '_';
 const REACTION_VARIATIONS_TAB_KEY = 'reactionVariationsTab';
@@ -111,8 +111,7 @@ function convertUnit(value, fromUnit, toUnit) {
 }
 
 const convertGenericUnit = (value, fromUnit, toUnit, genericQuantity) => {
-  // https://github.com/LabIMotion/chem-generic-ui/blob/f335a10fb3deb99bf2bc53e48551ee8367025994/src/components/fields/InputUnit.js#L25
-  const unitConfigs = genUnits(genericQuantity);
+  const unitConfigs = getGenSI(genericQuantity);
   if (!unitConfigs || unitConfigs.length === 0) return null;
 
   const fromUnitConfig = unitConfigs.find((config) => config.key === fromUnit);
@@ -142,7 +141,7 @@ function getStandardUnits(entry) {
 }
 
 function getGenericStandardUnits(genericQuantity) {
-  const unitConfigs = genUnits(genericQuantity);
+  const unitConfigs = getGenSI(genericQuantity);
   if (!unitConfigs || unitConfigs.length === 0) return [null];
   return unitConfigs.map((config) => config.key);
 }
