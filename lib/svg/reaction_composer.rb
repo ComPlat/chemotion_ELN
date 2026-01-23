@@ -230,7 +230,8 @@ module SVG
       @solvents = (options[:solvents] || []).select(&:present?)
       @temperature = options[:temperature]
       @duration = options[:duration]
-      @conditions = Chemotion::Sanitizer.scrub_svg(options[:conditions]) if options[:conditions].present?
+      # Use scrub_xml instead of scrub_svg for plain text conditions
+      @conditions = Chemotion::Sanitizer.scrub_xml(options[:conditions]) if options[:conditions].present?
       @pas = options[:preserve_aspect_ratio]
       @show_yield = options[:show_yield]
       @box_width = options[:supporting_information] ? 2000 : 1560
