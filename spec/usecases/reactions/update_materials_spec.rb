@@ -278,36 +278,6 @@ describe Usecases::Reactions::UpdateMaterials do
       end
     end
 
-    describe '#update_amount_using_weight_percentage' do
-      it 'calculates amount when all conditions are met' do
-        result = class_instance_wp.send(:update_amount_using_weight_percentage, test_material, reference_record)
-        expect(result).to eq(30.0) # 100.0 * 0.3 = 30.0
-      end
-
-      it 'returns nil when reference record is nil' do
-        result = class_instance_wp.send(:update_amount_using_weight_percentage, test_material, nil)
-        expect(result).to be_nil
-      end
-
-      it 'returns nil when reference has no sample' do
-        reference_record.update(sample: nil)
-        result = class_instance_wp.send(:update_amount_using_weight_percentage, test_material, reference_record)
-        expect(result).to be_nil
-      end
-
-      it 'returns nil when reference target amount is zero' do
-        reference_sample.update(target_amount_value: 0.0)
-        result = class_instance_wp.send(:update_amount_using_weight_percentage, test_material, reference_record)
-        expect(result).to eq 0.0
-      end
-
-      it 'returns nil when material has no weight percentage' do
-        material_without_wp = OpenStruct.new(weight_percentage: nil)
-        result = class_instance_wp.send(:update_amount_using_weight_percentage, material_without_wp, reference_record)
-        expect(result).to be_nil
-      end
-    end
-
     describe '#assign_weight_percentage_amounts' do
       let(:target_sample) { create(:sample, target_amount_value: 100, real_amount_value: 0.0) }
       let(:target_reactions_sample) do
@@ -323,12 +293,8 @@ describe Usecases::Reactions::UpdateMaterials do
       end
 
       it 'assigns calculated amounts to target sample' do
-        # The assign_weight_percentage_amounts method calls update_amount_using_weight_percentage
-        # which gets weight_percentage from the target_reactions_sample, not target_sample
-        allow(class_instance_wp).to receive(:update_amount_using_weight_percentage)
-          .with(target_reactions_sample, reference_record).and_return(40.0)
-
-        result = class_instance_wp.send(:assign_weight_percentage_amounts, target_sample)
+        target_amount = { value: reference_sample.target_amount_value, unit: reference_sample.target_amount_unit }
+        result = class_instance_wp.send(:assign_weight_percentage_amounts, target_sample, target_amount, 0.4)
         expect(result).to eq(target_sample)
         expect(target_sample.target_amount_value).to eq(40.0)
         expect(target_sample.target_amount_unit).to eq(reference_sample.target_amount_unit)
@@ -336,10 +302,9 @@ describe Usecases::Reactions::UpdateMaterials do
 
       it 'preserves reference record units' do
         reference_sample.update(target_amount_unit: 'mg', real_amount_unit: 'mg')
-        allow(class_instance_wp).to receive(:update_amount_using_weight_percentage)
-          .with(target_reactions_sample, reference_record).and_return(40.0)
+        target_amount = { value: reference_sample.target_amount_value, unit: reference_sample.target_amount_unit }
 
-        class_instance_wp.send(:assign_weight_percentage_amounts, target_sample)
+        class_instance_wp.send(:assign_weight_percentage_amounts, target_sample, target_amount, 0.4)
 
         expect(target_sample.target_amount_unit).to eq('mg')
         expect(target_sample.real_amount_unit).to eq('mg')
@@ -370,8 +335,20 @@ describe Usecases::Reactions::UpdateMaterials do
             'container' => root_container,
           },
         ],
+        'products' => [
+          {
+            'id' => wp_reference_sample.id,
+            'name' => 'wp_reference',
+            'target_amount_unit' => wp_reference_sample.target_amount_unit,
+            'target_amount_value' => wp_reference_sample.target_amount_value,
+            'is_new' => false,
+            'weight_percentage_reference' => true,
+            'container' => root_container,
+          },
+        ],
       }
     end
+
     let(:wp_reference_sample) { create(:sample, target_amount_value: 200.0, target_amount_unit: 'g') }
 
     before do

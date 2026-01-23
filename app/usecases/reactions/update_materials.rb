@@ -92,7 +92,7 @@ module Usecases
                     weight_percentage_ref_record_target_amount,
                   )
                 else
-                  modified_sample = create_new_sample(sample, fixed_label)
+                  modified_sample = create_new_sample(sample, fixed_label, weight_percentage_ref_record_target_amount)
                 end
               else
                 modified_sample = update_existing_sample(
@@ -130,9 +130,9 @@ module Usecases
         subsample = parent_sample.create_subsample(@current_user, @reaction.collections, true, 'reaction')
         subsample.short_label = fixed_label if fixed_label
 
-        if @reaction.weight_percentage && subsample.weight_percentage.present? &&
-           subsample.weight_percentage.to_f.positive? && !subsample.weight_percentage_reference
-          assign_weight_percentage_amounts(subsample, target_amount)
+        if @reaction.weight_percentage && sample.weight_percentage.present? &&
+           sample.weight_percentage.to_f.positive? && !sample.weight_percentage_reference
+          assign_weight_percentage_amounts(subsample, target_amount, sample.weight_percentage)
         else
           subsample.target_amount_value = sample.target_amount_value
           subsample.target_amount_unit = sample.target_amount_unit
@@ -149,7 +149,7 @@ module Usecases
         subsample
       end
 
-      def create_new_sample(sample, fixed_label)
+      def create_new_sample(sample, fixed_label, target_amount = nil)
         attributes = sample.to_h.except(
           :id, :is_new, :is_split, :reference, :equivalent, :position,
           :type, :molecule, :collection_id, :short_label, :waste, :show_label, :coefficient, :user_labels,
@@ -171,6 +171,10 @@ module Usecases
         attributes.delete(:container)
         attributes.delete(:segments)
         new_sample = Sample.new(attributes)
+        if @reaction.weight_percentage && sample.weight_percentage.present? &&
+           sample.weight_percentage.to_f.positive? && !sample.weight_percentage_reference
+          assign_weight_percentage_amounts(new_sample, target_amount, sample.weight_percentage)
+        end
 
         new_sample.short_label = fixed_label if fixed_label
         new_sample.xref['inventory_label'] = nil if new_sample.xref['inventory_label']
@@ -218,7 +222,7 @@ module Usecases
           set_mole_value_gas_product(existing_sample, sample)
         elsif @reaction.weight_percentage && sample.weight_percentage.present? &&
               sample.weight_percentage.to_f.positive? && !sample.weight_percentage_reference
-          assign_weight_percentage_amounts(existing_sample, target_amount)
+          assign_weight_percentage_amounts(existing_sample, target_amount, sample.weight_percentage)
         else
           existing_sample.target_amount_value = sample.target_amount_value
           existing_sample.target_amount_unit = sample.target_amount_unit
@@ -305,22 +309,6 @@ module Usecases
         end
       end
 
-      # Update own amounts based on a reaction-level weight-percentage reference.
-      #
-      # Steps:
-      # 1) Short-circuit when this sample is the weight percentage reference or
-      #    the `weight_percentage` is not provided/zero.
-      # 2) Locate the reaction-level weight-percentage reference record.
-      # 3) If the reference has a valid `target_amount_value`, apply the local
-      #    `weight_percentage` multiplier to the appropriate amount field for
-      #    this sample (`target_amount_value` or `real_amount_value`).
-      def update_amount_using_weight_percentage(material, target_amount_value)
-        return nil unless target_amount_value
-
-        return nil if skip_weight_percentage_update?(material)
-
-        apply_weight_percentage(target_amount_value, material.weight_percentage)
-      end
 
       # Find the reaction-level ReactionsSample marked as the weight-percentage
       # reference.
@@ -337,7 +325,6 @@ module Usecases
         material.weight_percentage.nil? || material.weight_percentage.zero?
       end
 
-
       # Apply the reference's target amount multiplied by the local weight
       # percentage to the appropriate amount field (target or real) on this
       # ReactionsSample.
@@ -345,6 +332,8 @@ module Usecases
       # @param ref_target_amount_value [Numeric], weight percentage [Numeric]
       # @return [void]
       def apply_weight_percentage(ref_target_amount_value, weight_percentage)
+        return if ref_target_amount_value.nil? || weight_percentage.nil?
+
         ref_target_amount_value * weight_percentage
       end
 
@@ -353,16 +342,10 @@ module Usecases
       #
       # @param target_sample [Sample] The ActiveRecord sample to update
       # @return [Sample]
-      def assign_weight_percentage_amounts(target_sample, target_amount = nil)
-        ref_record = find_weight_percentage_reference_record
+      def assign_weight_percentage_amounts(sample, target_amount = nil, weight_percentage = nil)
+        return if target_amount.nil? || weight_percentage.nil?
 
-        return nil if ref_record.nil?
-
-        # Find the ReactionsSample record for this target_sample to get weight_percentage
-        target_reactions_sample = ReactionsSample.find_by(reaction_id: @reaction.id, sample_id: target_sample.id)
-        return nil if target_reactions_sample.nil?
-
-        calculated_value = update_amount_using_weight_percentage(target_reactions_sample, target_amount[:value])
+        calculated_value = apply_weight_percentage(target_amount[:value], weight_percentage)
         # When the reaction uses the weight-percentage scheme, the sample's
         # amounts (both target and real) cannot be independently input — they are
         # computed as a fraction of the reaction-level amount of weight percentage
@@ -371,14 +354,14 @@ module Usecases
         # the corresponding units from the reference sample so the record is
         # internally consistent using backend logic and UI reaction scheme display logic.
         unless calculated_value.nil?
-          target_sample.target_amount_value = calculated_value
+          sample.target_amount_value = calculated_value
           # Use the target amount unit from the weight percentage reference material
-          target_sample.target_amount_unit = target_amount[:unit]
-          target_sample.real_amount_value = calculated_value
-          target_sample.real_amount_unit = target_amount[:unit]
+          sample.target_amount_unit = target_amount[:unit]
+          sample.real_amount_value = calculated_value
+          sample.real_amount_unit = target_amount[:unit]
         end
 
-        target_sample
+        sample
       end
     end
   end
