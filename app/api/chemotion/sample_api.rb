@@ -587,6 +587,7 @@ module Chemotion
         end
         attributes.delete(:segments)
         attributes.delete(:user_labels)
+        literatures = attributes.delete(:literatures)
 
         sample = Sample.new(attributes)
 
@@ -614,7 +615,6 @@ module Chemotion
         sample.update_inventory_label(params[:xref][:inventory_label], params[:collection_id])
         sample.save!
 
-        literatures = params[:literatures]
         create_literatures_and_literals(sample, literatures)
 
         update_element_labels(sample, params[:user_labels], current_user.id)

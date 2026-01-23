@@ -32,13 +32,14 @@ module Chemotion
                   end
                 elsif params[:sync_collection_id]
                   begin
-                    current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection.research_plans
+                    current_user.all_sync_in_collections_users.find(params[:sync_collection_id])
+                                .collection.research_plans
                   rescue ActiveRecord::RecordNotFound
                     ResearchPlan.none
                   end
                 else
                   # All collection of current_user
-                  ResearchPlan.joins(:collections).where('collections.user_id = ?', current_user.id).distinct
+                  ResearchPlan.joins(:collections).where(collections: { user_id: current_user.id }).distinct
                 end.order('research_plans.created_at DESC')
 
         from = params[:from_date]
@@ -84,12 +85,12 @@ module Chemotion
         }
 
         attributes.delete(:can_copy)
+        literatures = attributes.delete(:literatures)
         research_plan = ResearchPlan.new attributes
         research_plan.creator = current_user
         research_plan.container = update_datamodel(params[:container])
         research_plan.save!
 
-        literatures = params[:literatures]
         create_literatures_and_literals(research_plan, literatures)
 
         research_plan.save_segments(segments: params[:segments], current_user_id: current_user.id)
@@ -147,8 +148,9 @@ module Chemotion
         desc 'Delete table schema'
         route_param :id do
           before do
-            error!('401 Unauthorized', 401) unless TableSchemaPolicy.new(current_user,
-                                                                         ResearchPlanTableSchema.find(params[:id])).destroy?
+            unless TableSchemaPolicy.new(current_user, ResearchPlanTableSchema.find(params[:id])).destroy?
+              error!('401 Unauthorized', 401)
+            end
           end
           delete do
             present ResearchPlanTableSchema.find(params[:id]).destroy, with: Entities::ResearchPlanTableSchemaEntity
