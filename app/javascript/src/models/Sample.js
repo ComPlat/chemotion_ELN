@@ -2503,8 +2503,6 @@ export default class Sample extends Element {
     ) return this;
 
     if (this.weight_percentage && this.weight_percentage > 0 && !this.weight_percentage_reference) {
-      if (!targetAmount.unit) return this;
-
       const amountValue = targetAmount.value * this.weight_percentage;
       this.setAmount({
         value: amountValue,
