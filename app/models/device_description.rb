@@ -22,7 +22,7 @@
 #  device_class_detail                  :string
 #  device_type_id_type                  :string
 #  device_type_name                     :string
-#  general_tags                         :string           default([]), is an Array
+#  general_tags                         :string           default([]), not null, is an Array
 #  helpers_uploaded                     :boolean          default(FALSE)
 #  infrastructure_assignment            :string
 #  institute                            :string

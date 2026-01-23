@@ -17,7 +17,7 @@
 #  prd_atts             :text             default([])
 #  reaction_settings    :text
 #  sample_settings      :text
-#  si_reaction_settings :text             default({:Name=>true, :CAS=>true, :Formula=>true, :Smiles=>true, :InCHI=>true, :"Molecular Mass"=>true, :"Exact Mass"=>true, :EA=>true})
+#  si_reaction_settings :text             default({"Name"=>true, "CAS"=>true, "Formula"=>true, "Smiles"=>true, "InCHI"=>true, "Molecular Mass"=>true, "Exact Mass"=>true, "EA"=>true})
 #  template             :string           default("standard")
 #  created_at           :datetime         not null
 #  updated_at           :datetime         not null
