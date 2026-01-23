@@ -593,6 +593,11 @@ export default class ReactionDetails extends Component {
     );
   }
 
+  refreshGraphic() {
+    alert('refreshGraphic');
+  }
+
+
   updateGraphic() {
     // Prevent infinite loops
     if (this.isUpdatingGraphic) {
@@ -1065,6 +1070,7 @@ export default class ReactionDetails extends Component {
             reaction.toggleShowLabelForSample(materialId);
             this.handleReactionChange(reaction, { updateGraphic: true });
           }}
+          onRefresh={() => this.refreshGraphic()}
         />
         <Modal show={this.state.showWtInfoModal} onHide={this.closeWtInfoModal} centered>
           <Modal.Header closeButton>
