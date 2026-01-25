@@ -1931,7 +1931,7 @@ export default class ReactionDetailsScheme extends React.Component {
             onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
             switchEquiv={this.switchEquiv}
             // lockEquivColumn={lockEquivColumn}
-            headIndex={reaction.intermediate_samples.length}
+            headIndex={reaction.intermediate_samples?.length}
           />
           <MaterialGroup
             reaction={reaction}

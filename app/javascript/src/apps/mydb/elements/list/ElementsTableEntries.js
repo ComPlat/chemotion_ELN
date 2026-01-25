@@ -87,7 +87,6 @@ export default class ElementsTableEntries extends Component {
   renderElement(element, showDetails) {
     return (
       <div className="d-flex align-items-start">
-        <ReactionEditorLink reaction={element} />
         <div
           role="button"
           onClick={showDetails}
@@ -117,6 +116,7 @@ export default class ElementsTableEntries extends Component {
             <ReactionVariations element={element} />
           </div>
           <div className="d-flex gap-1 align-items-center">
+            <ReactionEditorLink reaction={element} />
             <CommentIcon commentCount={element.comment_count} />
             <ElementCollectionLabels element={element} key={element.id} />
           </div>
