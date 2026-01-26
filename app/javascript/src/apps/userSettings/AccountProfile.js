@@ -180,7 +180,7 @@ function AccountProfile({ currentUser }) {
           <Form onSubmit={handleProfileInboxSubmit}>
             <Row className="mb-3">
               <Form.Label column className="col-form-label col-3 offset-3">
-                Enable Auto Transfer Inbox to Element
+                Enable Auto Transfer Inbox to Element (Sample, Reaction)
               </Form.Label>
               <Col className="col-4">
                 <Form.Check
@@ -193,7 +193,7 @@ function AccountProfile({ currentUser }) {
             </Row>
             <Row className="mb-3">
               <Form.Label column className="col-form-label col-3 offset-3">
-                Enable Manual Transfer Inbox to Element
+                Enable Manual Transfer Inbox to Element (Sample, Reaction)
               </Form.Label>
               <Col className="col-4">
                 <Form.Check
