@@ -10,12 +10,18 @@ class OSample < OpenStruct
 
       prop_value.each { |i| i.delete :id }
 
+      next if prop_value.blank?
+
       data.merge!(
-        "#{prop}_attributes" => prop_value
-      ) unless prop_value.blank?
+        "#{prop}_attributes" => prop_value,
+      )
     end
 
-    data['elemental_compositions_attributes'].each { |i| i.delete('description') } if data['elemental_compositions_attributes']
+    if data['elemental_compositions_attributes']
+      data['elemental_compositions_attributes'].each do |i|
+        i.delete('description')
+      end
+    end
     data['show_label'] = false if data['show_label'].blank?
     super
   end
@@ -47,7 +53,7 @@ module Usecases
           reactant: Array(materials['reactants']).map { |m| OSample.new(m) },
           solvent: Array(materials['solvents']).map { |m| OSample.new(m) },
           purification_solvent: Array(materials['purification_solvents']).map { |m| OSample.new(m) },
-          product: Array(materials['products']).map { |m| OSample.new(m) }
+          product: Array(materials['products']).map { |m| OSample.new(m) },
         }
         @current_user = user
         @vessel_size = vessel_size
@@ -62,21 +68,24 @@ module Usecases
             samples.each_with_index do |sample, idx|
               sample.position = idx if sample.position.nil?
               sample.reference = false if material_group == 'solvent' && sample.reference == true
-              if sample.is_new
-                if sample.parent_id && material_group != 'product'
-                  modified_sample = create_sub_sample(sample, fixed_label)
-                else
-                  modified_sample = create_new_sample(sample, fixed_label)
-                end
-              else
-                modified_sample = update_existing_sample(sample, fixed_label)
-              end
+              modified_sample = if sample.is_new
+                                  if sample.parent_id && material_group != 'product'
+                                    create_sub_sample(sample, fixed_label)
+                                  else
+                                    create_new_sample(sample, fixed_label)
+                                  end
+                                else
+                                  update_existing_sample(sample, fixed_label)
+                                end
 
               if sample.components.present? && sample.sample_type == Sample::SAMPLE_TYPE_MIXTURE
                 Usecases::Components::Create.new(modified_sample, sample.components).execute!
               end
 
-              modified_sample.save_segments(segments: sample.segments, current_user_id: @current_user.id) if sample.segments
+              if sample.segments
+                modified_sample.save_segments(segments: sample.segments,
+                                              current_user_id: @current_user.id)
+              end
               modified_sample_ids << modified_sample.id
 
               associate_sample_with_reaction(sample, modified_sample, material_group)
@@ -122,7 +131,7 @@ module Usecases
           :type, :molecule, :collection_id, :short_label, :waste, :show_label, :coefficient, :user_labels,
           :boiling_point_lowerbound, :boiling_point_upperbound,
           :melting_point_lowerbound, :melting_point_upperbound, :segments, :gas_type,
-          :gas_phase_data, :conversion_rate, :weight_percentage_reference, :weight_percentage, :components
+          :gas_phase_data, :conversion_rate, :weight_percentage_reference, :weight_percentage, :components, :literatures
         ).merge(created_by: @current_user.id,
                 boiling_point: rangebound(sample.boiling_point_lowerbound, sample.boiling_point_upperbound),
                 melting_point: rangebound(sample.melting_point_lowerbound, sample.melting_point_upperbound))

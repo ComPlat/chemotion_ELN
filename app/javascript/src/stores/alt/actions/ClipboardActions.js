@@ -1,3 +1,4 @@
+/* eslint-disable class-methods-use-this */
 import alt from 'src/stores/alt/alt';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
@@ -45,9 +46,9 @@ class ClipboardActions {
   fetchSamplesByUIStateAndLimit(params, action) {
     return (dispatch) => {
       SamplesFetcher.fetchSamplesByUIStateAndLimit(params)
-        .then(async (result) => {
+        .then(async (samples) => {
           const processedSamples = await Promise.all(
-            (Array.isArray(result) ? result : []).map(fetchAndAddComponents)
+            (Array.isArray(samples) ? samples : []).map(fetchAndAddComponents)
           );
 
           dispatch({
@@ -91,7 +92,7 @@ class ClipboardActions {
       SequenceBasedMacromoleculeSamplesFetcher.fetchSequenceBasedMacromoleculeSamplesByUIStateAndLimit(params)
         .then((result) => {
           dispatch(
-            { sequence_based_macromolecule_samples: result, collection_id: params.ui_state.collection_id, action: action }
+            { sequence_based_macromolecule_samples: result, collection_id: params.ui_state.collection_id, action }
           );
         }).catch((errorMessage) => {
           console.log(errorMessage);
@@ -113,12 +114,11 @@ class ClipboardActions {
   }
 
   fetchSequenceBasedMacromoleculeSamplesAndBuildCopy(sequence_based_macromolecule_sample, collection_id) {
-    const newSequenceBasedMacromoleculeSample =
-      new SequenceBasedMacromoleculeSample(sequence_based_macromolecule_sample.serializeForCopy());
+    const newSequenceBasedMacromoleculeSample = new SequenceBasedMacromoleculeSample(sequence_based_macromolecule_sample.serializeForCopy());
     newSequenceBasedMacromoleculeSample.collection_id = collection_id;
     return (
-      { sequence_based_macromolecule_samples: [newSequenceBasedMacromoleculeSample], collection_id: collection_id }
-    )
+      { sequence_based_macromolecule_samples: [newSequenceBasedMacromoleculeSample], collection_id }
+    );
   }
 }
 
