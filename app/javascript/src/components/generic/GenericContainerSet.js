@@ -2,11 +2,75 @@
 /* eslint-disable react/no-array-index-key */
 import React from 'react';
 import PropTypes from 'prop-types';
+import { DragSource, DropTarget } from 'react-dnd';
+import { compose } from 'redux';
 import { Accordion } from 'react-bootstrap';
+import { DragDropItemTypes } from 'src/utilities/DndConst';
 import {
   AiHeader,
   AiHeaderDeleted,
+  newHeader,
 } from 'src/components/generic/GenericContainer';
+
+const orderSource = {
+  beginDrag(props) {
+    return { container: props.container };
+  },
+};
+
+const orderTarget = {
+  drop(targetProps, monitor) {
+    const source = monitor.getItem().container;
+    const target = targetProps.container;
+    if (source.id !== target.id) {
+      targetProps.handleMove(source, target);
+    }
+  },
+};
+
+const orderDragCollect = (connect, monitor) => ({
+  connectDragSource: connect.dragSource(),
+  isDragging: monitor.isDragging(),
+});
+
+const orderDropCollect = (connect, monitor) => ({
+  connectDropTarget: connect.dropTarget(),
+  isOver: monitor.isOver(),
+  canDrop: monitor.canDrop(),
+});
+
+function OrderRowContent({
+  container,
+  connectDragSource, connectDropTarget, isDragging, isOver, canDrop,
+}) {
+  let dndClass = ' border';
+  if (canDrop) dndClass = ' dnd-zone';
+  if (isOver) dndClass += ' dnd-zone-over';
+  if (isDragging) dndClass += ' dnd-dragging';
+
+  return compose(connectDragSource, connectDropTarget)(
+    <div className={`d-flex gap-2 mb-3 bg-gray-100 px-2 py-3 rounded${dndClass}`}>
+      <div className="dnd-button d-flex align-items-center">
+        <i className="dnd-arrow-enable text-info fa fa-arrows" aria-hidden="true" />
+      </div>
+      {newHeader({ container, mode: 'order' })}
+    </div>
+  );
+}
+
+OrderRowContent.propTypes = {
+  container: PropTypes.object.isRequired,
+  connectDragSource: PropTypes.func.isRequired,
+  connectDropTarget: PropTypes.func.isRequired,
+  isDragging: PropTypes.bool.isRequired,
+  isOver: PropTypes.bool.isRequired,
+  canDrop: PropTypes.bool.isRequired,
+};
+
+const OrderRow = compose(
+  DragSource(DragDropItemTypes.CONTAINER, orderSource, orderDragCollect),
+  DropTarget(DragDropItemTypes.CONTAINER, orderTarget, orderDropCollect),
+)(OrderRowContent);
 
 function GenericContainerSet(props) {
   const {
@@ -21,11 +85,27 @@ function GenericContainerSet(props) {
     linkedAis,
     handleSubmit,
     activeKey,
+    mode,
+    handleMove,
   } = props;
   if (ae.length < 1 || ae[0].children.length < 0) return null;
   const ais = noAct
     ? ae[0].children.filter((x) => linkedAis.includes(x.id))
     : ae[0].children;
+
+  if (mode === 'order') {
+    return (
+      <div>
+        {ais.map((container, key) => (
+          <OrderRow
+            key={key}
+            container={container}
+            handleMove={handleMove}
+          />
+        ))}
+      </div>
+    );
+  }
 
   return (
     <Accordion
@@ -78,6 +158,8 @@ GenericContainerSet.propTypes = {
   noAct: PropTypes.bool,
   linkedAis: PropTypes.array,
   activeKey: PropTypes.string,
+  mode: PropTypes.string,
+  handleMove: PropTypes.func,
 };
 
 GenericContainerSet.defaultProps = {
@@ -86,6 +168,8 @@ GenericContainerSet.defaultProps = {
   noAct: false,
   linkedAis: [],
   activeKey: '0',
+  mode: 'edit',
+  handleMove: () => {},
 };
 
 export default GenericContainerSet;
