@@ -16,7 +16,8 @@ module Chemotion
       onblur oncancel oncanplay oncontextmenu
     ].freeze
 
-    BLOCKED_SCHEMES = %w[javascript vbscript livescript mocha data file about mhtml].freeze
+    BLOCKED_SCHEMES = %w[javascript vbscript livescript mocha file about mhtml].freeze
+    SAFE_DATA_MIME_TYPES = %w[image/png image/jpeg image/jpg image/gif image/svg+xml image/webp].freeze
 
     class << self
       def sanitize(svg_string)
@@ -97,7 +98,17 @@ module Chemotion
       def dangerous_scheme?
         return false unless value =~ /\A([a-z0-9+-]+):/i
 
-        BLOCKED_SCHEMES.include?(::Regexp.last_match(1).downcase)
+        scheme = ::Regexp.last_match(1).downcase
+        return false if safe_data_uri?(scheme)
+
+        BLOCKED_SCHEMES.include?(scheme)
+      end
+
+      def safe_data_uri?(scheme)
+        return false unless scheme == 'data'
+
+        # Check if it's a safe image MIME type: data:image/png;base64,...
+        SAFE_DATA_MIME_TYPES.any? { |mime| value.start_with?("data:#{mime}") }
       end
 
       def contains_javascript?

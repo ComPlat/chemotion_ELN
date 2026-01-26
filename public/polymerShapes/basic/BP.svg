@@ -1,18 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0.18 42.01 113.61 30.61" width="113.61" height="30.61">
-  <!-- Background with Halftone Pattern -->
-  <path d="M1.03 48.83v17.01q0,5.67 5.58,5.67h95.38q5.58,0 5.58,-5.67V48.83q0,-5.67 -5.58,-5.67H6.61q-5.58,0 -5.58,5.67z" 
-        fill="url(#pattern)"
-        stroke="#000000"
-        stroke-width="0.57" />
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" id="svg_k9d4m2" viewBox="0 41.72556224 114.06637636 31.29417168" version="1.1" style="max-height:500px" width="114.06637636" height="31.29417168">
+  <defs id="defs_t8h7r4">
+    <linearGradient id="grad_u5v3w1">
+      <stop id="stop_x2y9z6" offset="0" style="stop-color:#000000;stop-opacity:1"/>
+    </linearGradient>
 
-  <!-- Pattern inline: Halftones -->
-  <pattern id="pattern" patternUnits="userSpaceOnUse" width="10" height="10">
-    <g transform="scale(0.1)">
-      <circle r="25" cy="50" cx="50" fill="#dc9592" />
-      <path d="M 25,0 A 25,25 0 0 1 0,25 25,25 0 0 1 -25,0 25,25 0 0 1 0,-25 25,25 0 0 1 25,0 Z" fill="#dc9592" />
-      <path d="M 125,0 A 25,25 0 0 1 100,25 25,25 0 0 1 75,0 25,25 0 0 1 100,-25 25,25 0 0 1 125,0 Z" fill="#dc9592" />
-      <path d="M 25,100 A 25,25 0 0 1 0,125 25,25 0 0 1 -25,100 25,25 0 0 1 0,75 25,25 0 0 1 25,100 Z" fill="#dc9592" />
-      <path d="m 125,100 a 25,25 0 0 1 -25,25 25,25 0 0 1 -25,-25 25,25 0 0 1 25,-25 25,25 0 0 1 25,25 z" fill="#dc9592" />
-    </g>
-  </pattern>
+    <pattern y="0" x="0" patternTransform="matrix(0.98367094,0,0,1.0001649,-20.346321,-303.59409)" id="pattern_a7b8c9" preserveAspectRatio="xMidYMid" xlink:href="#pattern_d1e2f3"/>
+    <pattern y="0" x="0" id="pattern_d1e2f3" style="fill:#dc9592" preserveAspectRatio="xMidYMid" height="10" width="10" patternUnits="userSpaceOnUse">
+      <g transform="scale(0.1)" style="display:inline" id="g_h4i5j6">
+        <circle r="25" cy="50" cx="50" id="circle_k7l8m9" style="fill-opacity:1;stroke:none;paint-order:markers fill stroke;stop-color:#000000"/>
+        <path d="M 25,0 A 25,25 0 0 1 0,25 25,25 0 0 1 -25,0 25,25 0 0 1 0,-25 25,25 0 0 1 25,0 Z" style="paint-order:markers fill stroke" id="path_n1o2p3"/>
+        <path d="M 125,0 A 25,25 0 0 1 100,25 25,25 0 0 1 75,0 25,25 0 0 1 100,-25 25,25 0 0 1 125,0 Z" style="paint-order:markers fill stroke" id="path_q4r5s6"/>
+        <path d="M 25,100 A 25,25 0 0 1 0,125 25,25 0 0 1 -25,100 25,25 0 0 1 0,75 25,25 0 0 1 25,100 Z" style="paint-order:markers fill stroke" id="path_t7u8v9"/>
+        <path d="m 125,100 a 25,25 0 0 1 -25,25 25,25 0 0 1 -25,-25 25,25 0 0 1 25,-25 25,25 0 0 1 25,25 z" style="paint-order:markers fill stroke" id="path_w1x2y3"/>
+      </g>
+    </pattern>
+  </defs>
+
+  <path id="rect_a1b2c3" style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.571326;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1" d="m 1.0304225,48.833512 v 17.010606 q 0,5.670235 5.5766274,5.670235 H 106.98801 q 5.57673,0 5.57673,-5.670235 V 48.833512 q 0,-5.670235 -5.57673,-5.670235 H 6.6070499 q -5.5766274,0 -5.5766274,5.670235 z"/>
+  <path id="rect_d4e5f6" style="fill:url(#pattern_a7b8c9);fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.571326;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1" d="m 1.0304225,48.833512 v 17.010606 q 0,5.670235 5.576628,5.670235 H 106.98801 q 5.57673,0 5.57673,-5.670235 V 48.833512 q 0,-5.670235 -5.57673,-5.670235 H 6.6070505 q -5.576628,0 -5.576628,5.670235 z"/>
 </svg>

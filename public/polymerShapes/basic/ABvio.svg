@@ -1,10 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" id="svg51" viewBox="28.74336621 43.95084996968 54.19853668 26.985553839999998" version="1.1" style="max-height: 500px" width="54.19853668" height="26.985553839999998">
-  <defs>
-    <pattern id="stripes-grid-9-43" preserveAspectRatio="xMidYMid" patternUnits="userSpaceOnUse" width="6" height="10">
-      <rect width="2" height="10" x="0" y="0" fill="#cea5cd"/>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" id="svg_1x2y3z4a" viewBox="28.57328712 43.76648648 53.97176456 26.98555384" version="1.1" style="max-height:500px" width="53.97176456" height="26.98555384">
+  <defs id="defs_5b6c7d8e">
+    <linearGradient id="grad_9f0g1h2i">
+      <stop id="stop_3j4k5l6m" offset="0" style="stop-color:#000000;stop-opacity:1"/>
+    </linearGradient>
+
+    <pattern patternTransform="matrix(1.4142135,1.4142135,-1.4142135,1.4142135,23.568018,-15.618298)" id="pattern_7n8o9p0q" preserveAspectRatio="xMidYMid" xlink:href="#pattern_r1s2t3u4"/>
+    <pattern patternTransform="matrix(1.4142135,1.4142135,-1.4142135,1.4142135,23.568018,-15.618298)" id="pattern_r1s2t3u4" preserveAspectRatio="xMidYMid" xlink:href="#pattern_v5w6x7y8"/>
+    <pattern y="0" x="0" patternTransform="matrix(1.4142135,1.4142135,-1.4142135,1.4142135,-187.18241,-0.61826706)" id="pattern_v5w6x7y8" preserveAspectRatio="xMidYMid" xlink:href="#pattern_z9a0b1c2"/>
+    <pattern y="0" x="0" style="fill:#cea5cd" id="pattern_z9a0b1c2" preserveAspectRatio="xMidYMid" patternTransform="scale(2)" height="10" width="3" patternUnits="userSpaceOnUse">
+      <rect id="rect_d3e4f5g6" height="10" width="2" y="0" x="0" style="stroke:none"/>
     </pattern>
   </defs>
-  
-  <path style="fill:url(#stripes-grid-9-43);stroke:#1b1918;stroke-width:0.5669;stroke-linecap:butt;stroke-linejoin:miter;" 
-        d="M29.833405,59.276127v10.3113h51.5252v-10.3113l-14.1732,-14.1732h-23.1788z"/>
+
+  <path id="path_h7i8j9k0" style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#1b1918;stroke-width:0.5669;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1" d="m 29.833405,59.276127 v 10.3113 h 51.5252 v -10.3113 l -14.1732,-14.1732 h -23.1788 z"/>
+  <path id="path_l1m2n3o4" style="font-variation-settings:normal;vector-effect:none;fill:url(#pattern_7n8o9p0q);fill-opacity:1;fill-rule:evenodd;stroke:#1b1918;stroke-width:0.5669;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000" d="m 29.833405,59.276127 v 10.3113 h 51.5252 v -10.3113 l -14.1732,-14.1732 h -23.1788 z"/>
 </svg>
