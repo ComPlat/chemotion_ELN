@@ -6,10 +6,11 @@ require 'rails_helper'
 describe Chemotion::MoleculeAPI do
   context 'authorized user logged in' do
     let(:user) { create(:person) }
-    let(:warden_instance) { instance_double(WardenAuthentication, current_user: user) }
 
     before do
-      allow(WardenAuthentication).to receive(:new).and_return(warden_instance)
+      allow_any_instance_of(WardenAuthentication).to(
+        receive(:current_user).and_return(user),
+      )
     end
 
     describe 'POST /api/v1/molecules' do
@@ -118,154 +119,6 @@ describe Chemotion::MoleculeAPI do
           response_body = JSON.parse(response.body)
           # should have created a new molecule
           expect(response_body).to include('id' => satisfy { |id| id != wrong_molecule_id })
-        end
-      end
-    end
-
-    describe 'POST /api/v1/molecules/refresh-svg' do
-      let(:molfile) { build(:molfile, type: :water) }
-      let(:svg_filename) { "refresh_svg_spec_#{SecureRandom.hex(8)}.svg" }
-
-      def svg_path
-        "/images/samples/#{svg_filename}"
-      end
-
-      def target_path
-        Rails.public_path.join('images', 'samples', svg_filename)
-      end
-
-      def post_refresh_svg(params = { svg_path: svg_path, molfile: molfile })
-        post '/api/v1/molecules/refresh-svg',
-             params: params.to_json,
-             headers: { 'Content-Type' => 'application/json' }
-      end
-
-      after do
-        FileUtils.rm_f(target_path) if target_path && File.exist?(target_path)
-      end
-
-      context 'when molfile or svg_path is missing' do
-        it 'returns 400 when molfile is blank' do
-          post_refresh_svg(svg_path: svg_path, molfile: '')
-          expect(response).to have_http_status(400)
-          expect(JSON.parse(response.body)).to eq('molfile and svg_path are required.')
-        end
-
-        it 'returns 400 when svg_path is blank' do
-          post_refresh_svg(svg_path: '', molfile: molfile)
-          expect(response).to have_http_status(400)
-          expect(JSON.parse(response.body)).to eq('molfile and svg_path are required.')
-        end
-
-        it 'returns 400 when both are blank' do
-          post_refresh_svg(svg_path: '', molfile: '')
-          expect(response).to have_http_status(400)
-          expect(JSON.parse(response.body)).to eq('molfile and svg_path are required.')
-        end
-      end
-
-      context 'when filename is invalid (path traversal)' do
-        let(:mock_svg_temp) { Tempfile.create(['spec_invalid_fn', '.svg']) }
-
-        def mock_svg_path
-          mock_svg_temp.path
-        end
-
-        before do
-          File.write(mock_svg_path, '<svg/>')
-          molecule = instance_double(Molecule, inchikey: 'XLYOFNOQVPJJNP-UHFFFAOYSA-N')
-          allow(Molecule).to receive(:find_or_create_by_molfile).with(molfile).and_return(molecule)
-          allow(Molecule).to receive(:svg_reprocess).with(nil, molfile).and_return('<svg/>')
-          processor_instance = instance_double(SVG::Processor)
-          allow(SVG::Processor).to receive(:new).and_return(processor_instance)
-          allow(processor_instance).to receive(:structure_svg)
-            .and_return({ svg_file_path: mock_svg_path, svg_file_name: File.basename(mock_svg_path) })
-        end
-
-        after do
-          mock_svg_temp&.close
-          FileUtils.rm_f(mock_svg_path) if mock_svg_path && File.exist?(mock_svg_path)
-        end
-
-        it 'returns 400 when filename contains ".."' do
-          post_refresh_svg(svg_path: '/images/samples/sub/..', molfile: molfile)
-          expect(response).to have_http_status(400)
-          expect(JSON.parse(response.body)['error']).to eq('Invalid filename')
-        end
-
-        it 'returns 400 when filename contains backslash' do
-          post_refresh_svg(svg_path: 'folder\\name.svg', molfile: molfile)
-          expect(response).to have_http_status(400)
-          expect(JSON.parse(response.body)['error']).to eq('Invalid filename')
-        end
-      end
-
-      context 'when molecule creation or SVG generation fails' do
-        it 'returns 422 when Molecule.find_or_create_by_molfile fails' do
-          allow(Molecule).to receive(:find_or_create_by_molfile).with(molfile).and_return(nil)
-          allow(Molecule).to receive(:find_or_create_dummy).and_return(nil)
-
-          post_refresh_svg
-          expect(response).to have_http_status(422)
-          expect(JSON.parse(response.body)['error']).to eq('Failed to create molecule from molfile')
-        end
-
-        it 'returns 422 when Molecule.svg_reprocess returns blank' do
-          molecule = instance_double(Molecule, inchikey: 'XLYOFNOQVPJJNP-UHFFFAOYSA-N')
-          allow(Molecule).to receive(:find_or_create_by_molfile).with(molfile).and_return(molecule)
-          allow(Molecule).to receive(:svg_reprocess).with(nil, molfile).and_return(nil)
-
-          post_refresh_svg
-          expect(response).to have_http_status(422)
-          expect(JSON.parse(response.body)['error']).to eq('Failed to generate SVG from molfile')
-        end
-
-        it 'returns 500 when SVG::Processor does not produce a valid file' do
-          molecule = instance_double(Molecule, inchikey: 'XLYOFNOQVPJJNP-UHFFFAOYSA-N')
-          allow(Molecule).to receive(:find_or_create_by_molfile).with(molfile).and_return(molecule)
-          allow(Molecule).to receive(:svg_reprocess).with(nil, molfile).and_return('<svg></svg>')
-          processor_instance = instance_double(SVG::Processor)
-          allow(SVG::Processor).to receive(:new).and_return(processor_instance)
-          allow(processor_instance).to receive(:structure_svg)
-            .and_return({ svg_file_path: '/nonexistent/path.svg', svg_file_name: 'path.svg' })
-
-          post_refresh_svg
-          expect(response).to have_http_status(500)
-          expect(JSON.parse(response.body)).to eq('Failed to generate SVG.')
-        end
-      end
-
-      context 'with valid parameters and mocked services' do
-        let(:mock_svg_content) { '<svg xmlns="http://www.w3.org/2000/svg"></svg>' }
-        let(:mock_svg_temp) { Tempfile.create(['spec_refresh_svg', '.svg']) }
-
-        def mock_svg_path
-          mock_svg_temp.path
-        end
-
-        before do
-          File.write(mock_svg_path, mock_svg_content)
-          molecule = instance_double(Molecule, inchikey: 'XLYOFNOQVPJJNP-UHFFFAOYSA-N')
-          allow(Molecule).to receive(:find_or_create_by_molfile).with(molfile).and_return(molecule)
-          allow(Molecule).to receive(:svg_reprocess).with(nil, molfile).and_return(mock_svg_content)
-          processor_instance = instance_double(SVG::Processor)
-          allow(SVG::Processor).to receive(:new).and_return(processor_instance)
-          allow(processor_instance).to receive(:structure_svg) do |_editor, _svg, _digest, _centered|
-            { svg_file_path: mock_svg_path, svg_file_name: File.basename(mock_svg_path) }
-          end
-        end
-
-        after do
-          mock_svg_temp&.close
-          FileUtils.rm_f(mock_svg_path) if mock_svg_path && File.exist?(mock_svg_path)
-        end
-
-        it 'returns 201 and the filename, and writes processed SVG to public/images/samples', :aggregate_failures do
-          post_refresh_svg
-          expect(response).to have_http_status(201)
-          expect(JSON.parse(response.body)).to eq(svg_filename)
-          expect(File).to exist(target_path)
-          expect(File.read(target_path)).to eq(mock_svg_content)
         end
       end
     end

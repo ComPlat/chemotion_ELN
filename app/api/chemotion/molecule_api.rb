@@ -175,51 +175,6 @@ module Chemotion
         end
       end
 
-      desc 'refresh svg on path with services wrapper (Indigo -> Ketcher -> OpenBabel)'
-      params do
-        requires :svg_path, type: String, desc: 'existing svg file path'
-        requires :molfile, type: String, desc: 'Sample molfile'
-      end
-      post 'refresh-svg' do
-        molfile = params[:molfile]
-        svg_filename = params[:svg_path]
-
-        if molfile.blank? || svg_filename.blank?
-          status 400
-          body 'molfile and svg_path are required.'
-          return
-        end
-
-        # Find or create molecule from molfile to get inchikey
-        molecule = Molecule.find_or_create_by_molfile(molfile)
-        molecule = Molecule.find_or_create_dummy if molecule.blank?
-        return error!('Failed to create molecule from molfile', 422) if molecule.blank?
-
-        # Generate SVG from molfile
-        svg = Molecule.svg_reprocess(nil, molfile)
-        return error!('Failed to generate SVG from molfile', 422) if svg.blank?
-
-        # Process SVG through Ketcher processor
-        svg_digest = "#{molecule.inchikey}#{Time.zone.now}"
-        svg_process = SVG::Processor.new.structure_svg('ketcher', svg, svg_digest, true)
-
-        if svg_process.present? && File.exist?(svg_process[:svg_file_path])
-          filename = File.basename(svg_filename)
-          if filename.include?('..') || filename.include?('/') || filename.include?('\\')
-            return error!('Invalid filename', 400)
-          end
-
-          svg_dir = Rails.public_path.join('images', 'samples')
-          FileUtils.mkdir_p(svg_dir)
-          target_path = svg_dir.join(filename)
-          FileUtils.cp(svg_process[:svg_file_path], target_path)
-          present filename
-        else
-          status 500
-          body 'Failed to generate SVG.'
-        end
-      end
-
       desc 'Return molecule by Molfile'
       params do
         requires :molfile, type: String, desc: 'Molecule molfile'

@@ -35,7 +35,7 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import { setReactionByType } from 'src/apps/mydb/elements/details/reactions/ReactionDetailsShare';
 import { sampleShowOrNew } from 'src/utilities/routesUtils';
 import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
-import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
+import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 import ConfirmClose from 'src/components/common/ConfirmClose';
 import { rfValueFormat } from 'src/utilities/ElementUtils';
 import ExportSamplesButton from 'src/apps/mydb/elements/details/ExportSamplesButton';
@@ -542,7 +542,7 @@ export default class ReactionDetails extends Component {
                       variant="warning"
                       size="xxsm"
                       onClick={() => this.handleSubmit(true)}
-                      disabled={!permitOn(reaction) || !this.reactionIsValid() || reaction.isNew || this.state.isRefreshingGraphic}
+                      disabled={!permitOn(reaction) || !this.reactionIsValid() || reaction.isNew}
                     >
                       <i className="fa fa-floppy-o me-1" />
                       <i className="fa fa-times" />
@@ -556,7 +556,7 @@ export default class ReactionDetails extends Component {
                       variant="warning"
                       size="xxsm"
                       onClick={() => this.handleSubmit()}
-                      disabled={!permitOn(reaction) || !this.reactionIsValid() || this.state.isRefreshingGraphic}
+                      disabled={!permitOn(reaction) || !this.reactionIsValid()}
                     >
                       <i className="fa fa-floppy-o " />
                     </Button>
@@ -584,7 +584,7 @@ export default class ReactionDetails extends Component {
           id="submit-reaction-btn"
           variant="warning"
           onClick={() => this.handleSubmit()}
-          disabled={!permitOn(reaction) || !this.reactionIsValid() || this.state.isRefreshingGraphic}
+          disabled={!permitOn(reaction) || !this.reactionIsValid()}
         >
           {submitLabel}
         </Button>
@@ -597,14 +597,17 @@ export default class ReactionDetails extends Component {
 
   refreshGraphic() {
     const { reaction, isRefreshingGraphic } = this.state;
-    
+
     // Prevent multiple simultaneous refreshes
     if (isRefreshingGraphic) {
       return;
     }
-    
-    // Set loading state immediately
-    this.setState({ isRefreshingGraphic: true }, () => {
+
+    // Mark reaction as changed so save button is enabled when user clicks refresh
+    reaction.changed = true;
+
+    // Set loading state and enable save button
+    this.setState({ reaction, isRefreshingGraphic: true }, () => {
       // Use requestAnimationFrame to ensure React has rendered before starting async operations
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -617,27 +620,25 @@ export default class ReactionDetails extends Component {
           ].filter(material => material.molfile && material.svgPath);
 
           if (allMaterials.length === 0) {
-            this.setState({ isRefreshingGraphic: false });
+            // Keep loading state visible briefly so user sees feedback when there's nothing to refresh
+            setTimeout(() => this.setState({ isRefreshingGraphic: false }), 400);
             return;
           }
 
-          // Refresh SVG for each material
-          const refreshPromises = allMaterials.map(material => 
-            MoleculesFetcher.refreshSvg(material.svgPath, material.molfile)
-              .catch((error) => {
-                console.error(`Failed to refresh SVG for material ${material.svgPath}:`, error);
-              })
-          );
-
-          // Wait for all SVG refreshes to complete, then update the reaction graphic
-          Promise.all(refreshPromises)
-            .then(() => {
-              // Update the reaction graphic after all materials are refreshed
-              this.updateGraphic();
+          // Batch refresh all SVGs in a single API call
+          SamplesFetcher.batchRefreshSvg(allMaterials)
+            .then((results) => {
+              // Log any failures for debugging
+              const failures = results.filter(r => !r.success);
+              if (failures.length > 0) {
+                console.warn('Some SVG refreshes failed:', failures);
+              }
+              // Re-render on response, then refresh the reaction scheme graphic
+              this.setState({ reaction: this.state.reaction }, () => this.updateGraphic());
             })
             .catch((error) => {
-              console.error('Error refreshing material SVGs:', error);
-              // Still try to update graphic even if some refreshes failed
+              console.error('Error batch refreshing material SVGs:', error);
+              // Still try to update graphic even if batch refresh failed
               this.updateGraphic();
             })
             .finally(() => {

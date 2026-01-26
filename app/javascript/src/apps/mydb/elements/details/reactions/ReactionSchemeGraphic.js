@@ -144,14 +144,13 @@ export default function ReactionSchemeGraphic({ reaction, onToggleLabel, onRefre
         {onRefresh && (
           <OverlayTrigger
             placement="left"
-            overlay={<Tooltip id="refresh-graphic">Refresh Graphic</Tooltip>}
+            overlay={<Tooltip id="refresh-graphic">Refresh SVG</Tooltip>}
           >
             <Button
               size="xsm"
               variant="light"
               className="m-1"
               onClick={onRefresh}
-              disabled={isRefreshing}
             >
               <i className={`fa fa-refresh ${isRefreshing ? 'fa-spin' : ''}`} />
             </Button>
