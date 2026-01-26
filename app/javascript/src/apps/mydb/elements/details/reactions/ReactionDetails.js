@@ -621,23 +621,20 @@ export default class ReactionDetails extends Component {
             return;
           }
 
-          // Refresh SVG for each material
-          const refreshPromises = allMaterials.map(material => 
-            MoleculesFetcher.refreshSvg(material.svgPath, material.molfile)
-              .catch((error) => {
-                console.error(`Failed to refresh SVG for material ${material.svgPath}:`, error);
-              })
-          );
-
-          // Wait for all SVG refreshes to complete, then update the reaction graphic
-          Promise.all(refreshPromises)
-            .then(() => {
+          // Batch refresh all SVGs in a single API call
+          MoleculesFetcher.batchRefreshSvg(allMaterials)
+            .then((results) => {
+              // Log any failures for debugging
+              const failures = results.filter(r => !r.success);
+              if (failures.length > 0) {
+                console.warn('Some SVG refreshes failed:', failures);
+              }
               // Update the reaction graphic after all materials are refreshed
               this.updateGraphic();
             })
             .catch((error) => {
-              console.error('Error refreshing material SVGs:', error);
-              // Still try to update graphic even if some refreshes failed
+              console.error('Error batch refreshing material SVGs:', error);
+              // Still try to update graphic even if batch refresh failed
               this.updateGraphic();
             })
             .finally(() => {

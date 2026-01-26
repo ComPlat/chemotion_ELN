@@ -138,18 +138,25 @@ export default class MoleculesFetcher {
     return promise;
   }
 
-  static refreshSvg(svgPath, molfile) {
-    return fetch('/api/v1/molecules/refresh-svg', {
+  static batchRefreshSvg(svgs) {
+    return fetch('/api/v1/molecules/reaction-svg-refresh-batch', {
       credentials: 'same-origin',
       method: 'POST',
       headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        svg_path: svgPath,
-        molfile
+        svgs: svgs.map(svg => ({
+          svg_path: svg.svgPath,
+          molfile: svg.molfile
+        }))
       })
-    }).then(response => response.json()).then(json => json)
+    }).then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    }).then(json => json.results || [])
       .catch(errorMessage => {
-        console.error('Error refreshing SVG:', errorMessage);
+        console.error('Error batch refreshing SVGs:', errorMessage);
         throw errorMessage;
       });
   }

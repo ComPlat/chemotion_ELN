@@ -30,11 +30,17 @@ module Chemotion
     # Sanitizes the rendered SVG
     #
     # @param svg [String] The SVG to sanitize
-    # @return [String, nil] The sanitized SVG, or nil if input is blank
+    # @return [String, nil] The sanitized SVG, or nil if input is blank or sanitization fails
     def self.sanitize_svg(svg)
       return nil if svg.blank?
 
-      Chemotion::Sanitizer.scrub_svg(svg, remap_glyph_ids: true)
+      sanitized = Chemotion::Sanitizer.scrub_svg(svg, remap_glyph_ids: true)
+      # Return nil if sanitization resulted in empty or blank string
+      sanitized.presence
+    rescue StandardError => e
+      Rails.logger.error("SVG sanitization failed: #{e.message}")
+      # Return nil on error to ensure we don't return unsanitized content
+      nil
     end
 
     # Attempts to render SVG using IndigoService
