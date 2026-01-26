@@ -384,6 +384,62 @@ RSpec.describe 'ExportCollection' do
     end
   end
 
+  context 'when device descriptions, analyses and attachments were exported to zip file' do
+    let(:collection) { create(:collection, user_id: user.id, label: 'device description test') }
+    let(:device_description1) do
+      create(:device_description, collection_id: collection.id, created_by: collection.user_id)
+    end
+    let(:device_description2) do
+      create(:device_description, :with_ontologies, collection_id: collection.id, created_by: collection.user_id)
+    end
+    let(:attachment1) do
+      create(:attachment, :with_image, bucket: 1, created_by: user.id, attachable_id: device_description1.id)
+    end
+    let(:expected_attachment_filename) do
+      "attachments/#{attachment1.identifier}.jpg"
+    end
+
+    let(:device_descriptions) { elements_in_json['DeviceDescription'] }
+    let(:attachments) { elements_in_json['Attachment'] }
+    let(:container) { elements_in_json['Container'] }
+
+    before do
+      collection
+      device_description1
+      device_description1.attachments = [attachment1]
+      device_description1.container = FactoryBot.create(:container, :with_analysis)
+      device_description1.save!
+      device_description2
+
+      CollectionsDeviceDescription.create!(device_description: device_description1, collection: collection)
+      CollectionsDeviceDescription.create!(device_description: device_description2, collection: collection)
+
+      export = Export::ExportCollections.new(job_id, [collection.id], 'zip', nested, gate)
+      export.prepare_data
+      export.to_file
+    end
+
+    it 'returns existing zip file' do
+      file_path = File.join('public', 'zip', "#{job_id}.zip")
+      expect(File.exist?(file_path)).to be_present
+    end
+
+    it 'has included files' do
+      expect(file_names.length).to be 4
+      expect(file_names).to include('export.json', 'schema.json', 'description.txt')
+      expect(file_names).to include(expected_attachment_filename)
+    end
+
+    it 'has device descriptions in export.js' do
+      expect(device_descriptions.length).to be 2
+    end
+
+    it 'has analyses and attachments in export.js' do
+      expect(attachments.length).to be 1
+      expect(container.length).to be 6
+    end
+  end
+
   def update_body_of_researchplan(research_plan, identifier_of_attachment) # rubocop:disable Metrics/MethodLength
     research_plan.body = [
       {

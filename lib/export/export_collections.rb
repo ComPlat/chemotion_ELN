@@ -102,9 +102,8 @@ module Export
         @file_path
       end
     end
-    # rubocop:enable Metrics/MethodLength,Metrics/CyclomaticComplexity
 
-    def prepare_data # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+    def prepare_data
       # get the collections from the database, in order of ancestry, but with empty ancestry first
       collections = Collection.order(ancestry: :asc).find(@collection_ids)
       # add decendants for nested collections
@@ -138,6 +137,7 @@ module Export
           add_cell_line_material_to_package collection
           add_cell_line_sample_to_package collection
           fetch_sequence_based_macromolecule_samples collection
+          fetch_device_descriptions collection
         end
 
         fetch_segments
@@ -206,6 +206,31 @@ module Export
                  })
       # add sbmm attachments to the list of attachments
       @attachments += sbmm.attachments
+    end
+
+    def fetch_device_descriptions(collection)
+      # get device descriptions in order of ancestry, but with empty ancestry first
+      device_descriptions = collection.device_descriptions.order(ancestry: :asc)
+
+      # fetch device descriptions
+      fetch_many(device_descriptions, { 'created_by' => 'User' })
+      fetch_many(collection.collections_device_descriptions, {
+                   'collection_id' => 'Collection',
+                   'device_description_id' => 'DeviceDescription',
+                 })
+
+      # loop over device descriptions to get container and attachments
+      device_descriptions.each do |device_description|
+        fetch_containers(device_description)
+        fetch_many(device_description.attachments, {
+                     'attachable_id' => 'DeviceDescription',
+                     'created_by' => 'User',
+                     'created_for' => 'User',
+                   })
+
+        # add attachments to the list of attachments
+        @attachments += device_description.attachments
+      end
     end
 
     def add_cell_line_material_to_package(collection)
@@ -479,7 +504,6 @@ module Export
       @attachments += attachments
     end
 
-    # rubocop:disable Metrics/MethodLength
     def fetch_containers(containable)
       containable_type = containable.class.name
       # fetch root container
@@ -529,7 +553,6 @@ module Export
         end
       end
     end
-    # rubocop:enable Metrics/MethodLength
 
     def fetch_literals(element)
       element_type = element.class.name
@@ -552,7 +575,7 @@ module Export
       end
     end
 
-    # rubocop:disable Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
+    # rubocop:disable Metrics/PerceivedComplexity
     def fetch_one(instance, foreign_keys = {})
       return if instance.nil?
 
@@ -589,6 +612,7 @@ module Export
       end
       uuid
     end
+    # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
     def fetch_image(image_path, image_file_name)
       return if image_file_name.blank?
@@ -614,5 +638,5 @@ module Export
   end
 end
 
-# rubocop: enable Metrics/ClassLength, Performance/MethodObjectAsBlock
-# rubocop:enable Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
+# rubocop:enable Metrics/MethodLength, Metrics/ClassLength, Performance/MethodObjectAsBlock
+# rubocop:enable Metrics/AbcSize
