@@ -468,6 +468,68 @@ const addOrUpdateSvgTitle = (svgElement, titleText = 'epam-ketcher-ssc') => {
   }
 };
 
+/**
+ * Removes all colors from SVG elements and sets text to black
+ * @param {SVGElement} svgElement - The SVG element to remove colors from
+ */
+const removeAllColors = (svgElement) => {
+  // Get all elements in the SVG
+  const allElements = svgElement.querySelectorAll('*');
+  
+  allElements.forEach((element) => {
+    // Process style attribute
+    const currentStyle = element.getAttribute('style') || '';
+    if (currentStyle) {
+      let newStyle = currentStyle;
+      
+      // Remove or set fill to black
+      if (newStyle.match(/fill:/)) {
+        newStyle = newStyle.replace(/fill:\s*[^;]+/g, 'fill: #000000');
+      } else {
+        newStyle = newStyle ? `${newStyle}; fill: #000000` : 'fill: #000000';
+      }
+      
+      // Remove or set stroke to black
+      if (newStyle.match(/stroke:/)) {
+        newStyle = newStyle.replace(/stroke:\s*[^;]+/g, 'stroke: #000000');
+      } else {
+        newStyle = newStyle ? `${newStyle}; stroke: #000000` : 'stroke: #000000';
+      }
+      
+      element.setAttribute('style', newStyle);
+    }
+    
+    // Process fill attribute directly
+    if (element.hasAttribute('fill') && element.getAttribute('fill') !== 'none') {
+      element.setAttribute('fill', '#000000');
+    } else if (!element.hasAttribute('fill')) {
+      // Set default fill for elements that need it (text, paths, etc.)
+      const tagName = element.tagName?.toLowerCase();
+      if (tagName === 'text' || tagName === 'path' || tagName === 'circle' || tagName === 'rect' || tagName === 'polygon' || tagName === 'polyline') {
+        element.setAttribute('fill', '#000000');
+      }
+    }
+    
+    // Process stroke attribute directly
+    if (element.hasAttribute('stroke') && element.getAttribute('stroke') !== 'none') {
+      element.setAttribute('stroke', '#000000');
+    }
+    
+    // Specifically ensure text elements are black
+    if (element.tagName?.toLowerCase() === 'text') {
+      element.setAttribute('fill', '#000000');
+      element.removeAttribute('stroke');
+      // Update style to ensure text is black
+      const textStyle = element.getAttribute('style') || '';
+      let updatedTextStyle = textStyle.replace(/fill:\s*[^;]+/g, 'fill: #000000');
+      if (!updatedTextStyle.match(/fill:/)) {
+        updatedTextStyle = updatedTextStyle ? `${updatedTextStyle}; fill: #000000` : 'fill: #000000';
+      }
+      element.setAttribute('style', updatedTextStyle);
+    }
+  });
+};
+
 // function to get SVG from canvas element without modification
 const getSvgFromCanvas = async (iframeRef) => {
   try {
@@ -582,6 +644,9 @@ const getSvgFromCanvas = async (iframeRef) => {
     clonedCanvas.setAttribute('width', `${outputWidth}`);
     clonedCanvas.setAttribute('height', `${outputHeight}`);
     clonedCanvas.removeAttribute('transform');
+
+    // Remove all colors and set text to black
+    removeAllColors(clonedCanvas);
 
     // Add title element to identify this as ketcher-ssc SVG
     addOrUpdateSvgTitle(clonedCanvas);
