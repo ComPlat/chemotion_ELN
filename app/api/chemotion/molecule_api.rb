@@ -221,7 +221,7 @@ module Chemotion
           svg = Molecule.svg_reprocess(nil, molfile)
           return error!('Failed to generate SVG from molfile', 422) if svg.blank?
 
-          svg_process = SVG::Processor.new.structure_svg('ketcher_epam', svg, svg_digest, true)
+          svg_process = SVG::Processor.new.structure_svg('ketcher', svg, svg_digest, true)
         end
 
         molecule&.attributes&.merge(temp_svg: svg_process[:svg_file_name], ob_log: ob)
