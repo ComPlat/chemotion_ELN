@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Popover, ButtonGroup, Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import SvgFileZoomPan from 'react-svg-file-zoom-pan-latest';
@@ -100,27 +100,12 @@ export default function ReactionSchemeGraphic({ reaction, onToggleLabel, onRefre
     )};
 
   return (
-    <div className="position-relative" style={{ minHeight: '300px', width: '100%' }}>
-      <div className="position-relative" style={{ minHeight: '300px' }}>
+    <div className="Reaction-scheme-graphic__wrapper">
+      <div className="Reaction-scheme-graphic__svg-container">
         {isRefreshing && (
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              backgroundColor: 'rgba(255, 255, 255, 0.95)',
-              zIndex: 9999,
-              borderRadius: '4px',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              minHeight: '300px'
-            }}
-          >
+          <div className="Reaction-scheme-graphic__loader-overlay">
             <div className="text-center p-4">
-              <i className="fa fa-refresh fa-spin fa-3x text-primary mb-3 d-block" style={{ fontSize: '2rem' }} />
+              <i className="fa fa-refresh fa-spin fa-3x text-primary mb-3 d-block Reaction-scheme-graphic__loader-spinner" />
               <div className="text-muted fs-6 fw-medium">Refreshing SVGs...</div>
             </div>
           </div>
@@ -132,7 +117,7 @@ export default function ReactionSchemeGraphic({ reaction, onToggleLabel, onRefre
           {...svgProps}
         />
       </div>
-      <div className="position-absolute top-0 end-0 d-flex" style={{ zIndex: 10000 }}>
+      <div className="Reaction-scheme-graphic__toolbar">
         <ConfigOverlayButton
           popoverSettings={
             (
@@ -166,7 +151,7 @@ export default function ReactionSchemeGraphic({ reaction, onToggleLabel, onRefre
               variant="light"
               className="m-1"
               onClick={onRefresh}
-              // disabled={isRefreshing}
+              disabled={isRefreshing}
             >
               <i className={`fa fa-refresh ${isRefreshing ? 'fa-spin' : ''}`} />
             </Button>
