@@ -32,7 +32,7 @@ function RndNoAnalyses({
             <CommentButton
               toggleCommentBox={toggleCommentBox}
               isVisible={commentBoxVisible}
-              size="xsm"
+              size="sm"
             />
           )}
           {addButton()}
@@ -78,7 +78,7 @@ function ReactionsDisplay({
           <CommentButton
             toggleCommentBox={toggleCommentBox}
             isVisible={commentBoxVisible}
-            size="xsm"
+            size="sm"
           />
           {addButton()}
         </ButtonToolbar>

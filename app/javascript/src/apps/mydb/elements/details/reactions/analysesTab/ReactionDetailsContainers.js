@@ -257,7 +257,7 @@ export default class ReactionDetailsContainers extends Component {
             overlay={<Tooltip id="annotate_tooltip">Create and add empty analyses.</Tooltip>}
           >
             <Button
-              size="xsm"
+              size="sm"
               variant="success"
               onClick={this.handleAdd}
             >
@@ -382,7 +382,7 @@ export default class ReactionDetailsContainers extends Component {
                 <CommentButton
                   toggleCommentBox={this.toggleCommentBox}
                   isVisible={commentBoxVisible}
-                  size="xsm"
+                  size="sm"
                 />
                 {this.addButton()}
               </ButtonToolbar>
@@ -457,7 +457,7 @@ export default class ReactionDetailsContainers extends Component {
               <CommentButton
                 toggleCommentBox={this.toggleCommentBox}
                 isVisible={commentBoxVisible}
-                size="xsm"
+                size="sm"
               />
               {this.addButton()}
             </ButtonToolbar>
@@ -482,7 +482,7 @@ export default class ReactionDetailsContainers extends Component {
             <CommentButton
               toggleCommentBox={this.toggleCommentBox}
               isVisible={commentBoxVisible}
-              size="xsm"
+              size="sm"
             />
           </ButtonToolbar>
         </div>

@@ -1275,7 +1275,7 @@ export default class ReactionDetailsScheme extends React.Component {
           sample.maxAmount = referenceMaterial.amount_mol * stoichiometryCoeff * sample.molecule_molecular_weight / (sample.purity || 1);
         }
         // Update TON values for gas products when catalyst amount changes
-        if (updatedSample && updatedSample.isCatalyst() && sample.isGas()) {
+        if (updatedSample && updatedSample.gas_type === 'catalyst' && sample.isGas()) {
           sample.updateTONValue(sample.amount_mol);
         }
       }
@@ -1483,7 +1483,7 @@ export default class ReactionDetailsScheme extends React.Component {
         if (sample.isGas()) {
           const equivalent = this.calculateEquivalentForGasProduct(sample);
           sample.equivalent = equivalent;
-          if ((prevGasType === 'CAT' && updatedSample.gas_type === 'off') || updatedSample.isCatalyst()) {
+          if ((prevGasType === 'CAT' && updatedSample.gas_type === 'off') || updatedSample.gas_type === 'catalyst') {
             sample.updateTONValue(sample.amount_mol);
           }
         }

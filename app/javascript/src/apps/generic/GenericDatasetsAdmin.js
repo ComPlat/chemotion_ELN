@@ -3,10 +3,11 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { orderBy } from 'lodash';
+import { orderBy, sortBy } from 'lodash';
 import { Constants, Designer } from 'chem-generic-ui';
 import LoadingModal from 'src/components/common/LoadingModal';
 import Notifications from 'src/components/Notifications';
+import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 import GenericDSsFetcher from 'src/fetchers/GenericDSsFetcher';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
@@ -20,6 +21,7 @@ export default class GenericDatasetsAdmin extends React.Component {
     super(props);
     this.state = {
       elements: [],
+      klasses: [],
       show: { tab: '', modal: '' },
       revisions: [],
       currentUser: {},
@@ -36,14 +38,17 @@ export default class GenericDatasetsAdmin extends React.Component {
   componentDidMount() {
     LoadingActions.start();
     Promise.all([
+      GenericElsFetcher.fetchElementKlasses(),
       GenericDSsFetcher.listDatasetKlass(),
       UsersFetcher.fetchCurrentUser()
     ])
-      .then(([elementsResult, userResult]) => {
-        if (elementsResult?.error || userResult?.error) {
-          throw new Error(elementsResult?.error || userResult?.error);
+      .then(([klassResult, elementsResult, userResult]) => {
+        if (klassResult.error || elementsResult?.error || userResult?.error) {
+          throw new Error(klassResult.error || elementsResult?.error || userResult?.error);
         }
+        const klasses = sortBy(klassResult.klass || [], ['label']);
         this.setState({
+          klasses,
           elements: elementsResult.klass || [],
           currentUser: userResult.user || {}
         });
@@ -170,7 +175,9 @@ export default class GenericDatasetsAdmin extends React.Component {
   }
 
   renderGrid() {
-    const { elements, revisions, currentUser } = this.state;
+    const {
+      elements, revisions, currentUser, klasses
+    } = this.state;
     const els = orderBy(elements, ['is_active', 'label'], ['desc', 'asc']);
     return (
       <Designer
@@ -188,6 +195,7 @@ export default class GenericDatasetsAdmin extends React.Component {
         }}
         genericType={Constants.GENERIC_TYPES.DATASET}
         gridData={els}
+        klasses={klasses}
         refSource={{ currentUser }}
       />
     );

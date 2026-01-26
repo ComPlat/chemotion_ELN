@@ -60,7 +60,7 @@ export default class ElementsTableEntries extends Component {
       );
     }
     if (element.type === 'research_plan' || element.element_klass) {
-      if (element.preview_attachment !== 'not available') {
+      if (element.preview_attachment) {
         return (
           <div
             className="flex-grow-1"

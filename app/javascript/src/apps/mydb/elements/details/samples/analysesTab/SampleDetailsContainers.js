@@ -154,7 +154,7 @@ export default class SampleDetailsContainers extends Component {
           overlay={<Tooltip id="annotate_tooltip">Create and add empty analyses.</Tooltip>}
         >
         <Button
-          size="xsm"
+          size="sm"
           variant="success"
           onClick={this.handleAdd}
           disabled={!sample.can_update}
