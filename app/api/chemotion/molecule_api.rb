@@ -205,7 +205,9 @@ module Chemotion
 
         if svg_process.present? && File.exist?(svg_process[:svg_file_path])
           filename = File.basename(svg_filename)
-          return error!('Invalid filename', 400) if filename.include?('..') || filename.include?('/') || filename.include?('\\')
+          if filename.include?('..') || filename.include?('/') || filename.include?('\\')
+            return error!('Invalid filename', 400)
+          end
 
           svg_dir = Rails.public_path.join('images', 'samples')
           FileUtils.mkdir_p(svg_dir)

@@ -28,40 +28,34 @@ class IndigoService
     # Extract scale from options or use default
     scale_factor = 45
     bond_length = scale_factor * 0.75
-    bond_spacing = scale_factor / 6.0
-    bond_shift = scale_factor / 1.5
-    label_font_size = (3.5 * (scale_factor / 8.0)).ceil # change the scale factor to 9.0 to get the correct font size from 6.0
-    sub_font_size = (0.7 * label_font_size).ceil  
-
+    # bond_spacing = scale_factor / 6.0
+    # bond_shift = scale_factor / 1.5
+    # change the scale factor to 9.0 to get the correct font size from 6.0
+    label_font_size = (3.5 * (scale_factor / 8.0)).ceil
+    # sub_font_size = (0.7 * label_font_size).ceil
     stereo_bond_width = 8
     bond_thickness = 1.3
     unit = 'px'
-
     @options = {
       'render-coloring' => false,
-
       # font
       'render-font-size' => label_font_size,
-
       # bond
       # 'render-bond-spacing' => bond_spacing,
       'render-bond-length' => bond_length,
       'render-bond-thickness' => bond_thickness,
       'render-stereo-bond-width' => stereo_bond_width,
-      
       # units
       'render-font-size-unit' => unit,
       'render-hash-spacing-unit' => unit,
       'render-bond-thickness-unit' => unit,
       'render-font-size-sub-unit' => unit,
       'render-hash-spacing' => 1.5,
-
       # others
-      'render-margins' => "8,8"
-
-      # XX not possible to set in the options
+      'render-margins' => '8,8',
+      # not possible to set in the options
       # 'render-font' => '30px "Roboto"',
-      # 'font-family' => 'Arial', 
+      # 'font-family' => 'Arial',
     } 
     @service_url = Rails.configuration.indigo_service.indigo_service_url
   end
