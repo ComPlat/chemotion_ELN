@@ -3,11 +3,17 @@
 /* eslint-disable react/no-array-index-key */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Badge, Button } from 'react-bootstrap';
+import { Badge, Button, ButtonGroup } from 'react-bootstrap';
+import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 import Container from 'src/models/Container';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import GenericContainerSet from 'src/components/generic/GenericContainerSet';
 import { CommentButton, CommentBox } from 'src/components/common/AnalysisCommentBoxComponent';
+import ArrayUtils from 'src/utilities/ArrayUtils';
+import { reOrderArr } from 'src/utilities/DndControl';
+import {
+  indexedContainers,
+} from 'src/apps/mydb/elements/details/analyses/utils';
 
 export default class GenericElDetailsContainers extends Component {
   constructor(props) {
@@ -18,13 +24,16 @@ export default class GenericElDetailsContainers extends Component {
     this.state = {
       activeContainer: null,
       commentBoxVisible: hasComment,
+      mode: 'edit',
     };
     this.handleAccordionOpen = this.handleAccordionOpen.bind(this);
     this.handleAdd = this.handleAdd.bind(this);
     this.handleChange = this.handleChange.bind(this);
     this.handleCommentTextChange = this.handleCommentTextChange.bind(this);
+    this.handleMove = this.handleMove.bind(this);
     this.handleRemove = this.handleRemove.bind(this);
     this.handleSpChange = this.handleSpChange.bind(this);
+    this.handleToggleMode = this.handleToggleMode.bind(this);
     this.handleUndo = this.handleUndo.bind(this);
     this.toggleCommentBox = this.toggleCommentBox.bind(this);
   }
@@ -50,6 +59,23 @@ export default class GenericElDetailsContainers extends Component {
 
   toggleCommentBox() {
     this.setState((prevState) => ({ commentBoxVisible: !prevState.commentBoxVisible }));
+  }
+
+  handleToggleMode(mode) {
+    this.setState({ mode });
+  }
+
+  handleMove(source, target) {
+    const { genericEl, handleElChanged } = this.props;
+    const analysesContainer = genericEl.container.children.filter(
+      (element) => ~element.container_type.indexOf('analyses'),
+    )[0];
+    const sortedConts = ArrayUtils.sortArrByIndex(analysesContainer.children);
+    const isEqCId = (container, tagEl) => container.id === tagEl.id;
+    const newSortConts = reOrderArr(source, target, isEqCId, sortedConts);
+    const newIndexedConts = indexedContainers(newSortConts);
+    analysesContainer.children = newIndexedConts;
+    handleElChanged(genericEl);
   }
 
   handleSpChange(genericEl, cb) {
@@ -180,7 +206,7 @@ export default class GenericElDetailsContainers extends Component {
 
   render() {
     const { genericEl, readOnly, noAct, handleSubmit } = this.props;
-    const { activeContainer, commentBoxVisible } = this.state;
+    const { activeContainer, commentBoxVisible, mode } = this.state;
 
     if (noAct) return this.renderNoAct(genericEl, readOnly);
 
@@ -194,13 +220,33 @@ export default class GenericElDetailsContainers extends Component {
       ) {
         return (
           <div>
-            <div className="mb-2 me-1 d-flex justify-content-end gap-1">
-              <CommentButton
-                toggleCommentBox={this.toggleCommentBox}
-                isVisible={commentBoxVisible}
-                size="sm"
-              />
-              {this.addButton()}
+            <div className="d-flex justify-content-between align-items-center mb-2">
+              <ButtonGroup>
+                <ButtonGroupToggleButton
+                  size="sm"
+                  active={mode === 'edit'}
+                  onClick={() => this.handleToggleMode('edit')}
+                >
+                  <i className="fa fa-edit me-1" aria-hidden="true" />
+                  Edit mode
+                </ButtonGroupToggleButton>
+                <ButtonGroupToggleButton
+                  size="sm"
+                  active={mode === 'order'}
+                  onClick={() => this.handleToggleMode('order')}
+                >
+                  <i className="fa fa-reorder me-1" aria-hidden="true" />
+                  Order mode
+                </ButtonGroupToggleButton>
+              </ButtonGroup>
+              <div className="d-flex gap-1">
+                <CommentButton
+                  toggleCommentBox={this.toggleCommentBox}
+                  isVisible={commentBoxVisible}
+                  size="sm"
+                />
+                {this.addButton()}
+              </div>
             </div>
             <CommentBox
               isVisible={commentBoxVisible}
@@ -217,6 +263,8 @@ export default class GenericElDetailsContainers extends Component {
               fnRemove={this.handleRemove}
               handleSubmit={handleSubmit}
               activeKey={activeContainer}
+              mode={mode}
+              handleMove={this.handleMove}
             />
           </div>
         );
