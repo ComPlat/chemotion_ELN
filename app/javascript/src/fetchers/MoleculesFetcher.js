@@ -137,4 +137,20 @@ export default class MoleculesFetcher {
     });
     return promise;
   }
+
+  static refreshSvg(svgPath, molfile) {
+    return fetch('/api/v1/molecules/refresh-svg', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        svg_path: svgPath,
+        molfile
+      })
+    }).then(response => response.json()).then(json => json)
+      .catch(errorMessage => {
+        console.error('Error refreshing SVG:', errorMessage);
+        throw errorMessage;
+      });
+  }
 }

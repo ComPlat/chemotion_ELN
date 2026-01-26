@@ -35,6 +35,7 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import { setReactionByType } from 'src/apps/mydb/elements/details/reactions/ReactionDetailsShare';
 import { sampleShowOrNew } from 'src/utilities/routesUtils';
 import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
+import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import ConfirmClose from 'src/components/common/ConfirmClose';
 import { rfValueFormat } from 'src/utilities/ElementUtils';
 import ExportSamplesButton from 'src/apps/mydb/elements/details/ExportSamplesButton';
@@ -95,6 +96,7 @@ export default class ReactionDetails extends Component {
       visible: Immutable.List(),
       sfn: UIStore.getState().hasSfn,
       currentUser: (UserStore.getState() && UserStore.getState().currentUser) || {},
+      isRefreshingGraphic: false,
     };
 
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
@@ -452,7 +454,7 @@ export default class ReactionDetails extends Component {
                       variant="warning"
                       size="xxsm"
                       onClick={() => this.handleSubmit(true)}
-                      disabled={!permitOn(reaction) || !this.reactionIsValid() || reaction.isNew}
+                      disabled={!permitOn(reaction) || !this.reactionIsValid() || reaction.isNew || this.state.isRefreshingGraphic}
                     >
                       <i className="fa fa-floppy-o me-1" />
                       <i className="fa fa-times" />
@@ -466,7 +468,7 @@ export default class ReactionDetails extends Component {
                       variant="warning"
                       size="xxsm"
                       onClick={() => this.handleSubmit()}
-                      disabled={!permitOn(reaction) || !this.reactionIsValid()}
+                      disabled={!permitOn(reaction) || !this.reactionIsValid() || this.state.isRefreshingGraphic}
                     >
                       <i className="fa fa-floppy-o " />
                     </Button>
@@ -494,7 +496,7 @@ export default class ReactionDetails extends Component {
           id="submit-reaction-btn"
           variant="warning"
           onClick={() => this.handleSubmit()}
-          disabled={!permitOn(reaction) || !this.reactionIsValid()}
+          disabled={!permitOn(reaction) || !this.reactionIsValid() || this.state.isRefreshingGraphic}
         >
           {submitLabel}
         </Button>
@@ -506,7 +508,57 @@ export default class ReactionDetails extends Component {
   }
 
   refreshGraphic() {
-    alert('refreshGraphic');
+    const { reaction, isRefreshingGraphic } = this.state;
+    
+    // Prevent multiple simultaneous refreshes
+    if (isRefreshingGraphic) {
+      return;
+    }
+    
+    // Set loading state immediately
+    this.setState({ isRefreshingGraphic: true }, () => {
+      // Use requestAnimationFrame to ensure React has rendered before starting async operations
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          // Collect all materials with their molfile and svgPath
+          const { reaction: currentReaction } = this.state;
+          const allMaterials = [
+            ...currentReaction.starting_materials,
+            ...currentReaction.reactants,
+            ...currentReaction.products,
+          ].filter(material => material.molfile && material.svgPath);
+
+          if (allMaterials.length === 0) {
+            this.setState({ isRefreshingGraphic: false });
+            return;
+          }
+
+          // Refresh SVG for each material
+          const refreshPromises = allMaterials.map(material => 
+            MoleculesFetcher.refreshSvg(material.svgPath, material.molfile)
+              .catch((error) => {
+                console.error(`Failed to refresh SVG for material ${material.svgPath}:`, error);
+              })
+          );
+
+          // Wait for all SVG refreshes to complete, then update the reaction graphic
+          Promise.all(refreshPromises)
+            .then(() => {
+              // Update the reaction graphic after all materials are refreshed
+              this.updateGraphic();
+            })
+            .catch((error) => {
+              console.error('Error refreshing material SVGs:', error);
+              // Still try to update graphic even if some refreshes failed
+              this.updateGraphic();
+            })
+            .finally(() => {
+              // Reset loading state
+              this.setState({ isRefreshingGraphic: false });
+            });
+        });
+      });
+    });
   }
 
 
@@ -975,6 +1027,7 @@ export default class ReactionDetails extends Component {
             this.handleReactionChange(reaction, { updateGraphic: true });
           }}
           onRefresh={() => this.refreshGraphic()}
+          isRefreshing={this.state.isRefreshingGraphic || false}
         />
         <Modal show={this.state.showWtInfoModal} onHide={this.closeWtInfoModal} centered>
           <Modal.Header closeButton>

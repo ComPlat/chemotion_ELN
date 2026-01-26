@@ -6,7 +6,7 @@ import Reaction from 'src/models/Reaction';
 import ConfigOverlayButton from 'src/components/common/ConfigOverlayButton';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 
-export default function ReactionSchemeGraphic({ reaction, onToggleLabel, onRefresh }) {
+export default function ReactionSchemeGraphic({ reaction, onToggleLabel, onRefresh, isRefreshing }) {
   const [svgProps, setSvgProps] = useState({});
 
   useEffect(() => {
@@ -54,8 +54,39 @@ export default function ReactionSchemeGraphic({ reaction, onToggleLabel, onRefre
     )};
 
   return (
-    <div className="position-relative">
-      <div className="position-absolute top-0 end-0 d-flex">
+    <div className="position-relative" style={{ minHeight: '300px', width: '100%' }}>
+      <div className="position-relative" style={{ minHeight: '300px' }}>
+        {isRefreshing && (
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              backgroundColor: 'rgba(255, 255, 255, 0.95)',
+              zIndex: 9999,
+              borderRadius: '4px',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              minHeight: '300px'
+            }}
+          >
+            <div className="text-center p-4">
+              <i className="fa fa-refresh fa-spin fa-3x text-primary mb-3 d-block" style={{ fontSize: '2rem' }} />
+              <div className="text-muted fs-6 fw-medium">Refreshing SVGs...</div>
+            </div>
+          </div>
+        )}
+        <SvgFileZoomPan
+          duration={300}
+          resize
+          // eslint-disable-next-line react/jsx-props-no-spreading
+          {...svgProps}
+        />
+      </div>
+      <div className="position-absolute top-0 end-0 d-flex" style={{ zIndex: 10000 }}>
         <ConfigOverlayButton
           popoverSettings={
             (
@@ -89,18 +120,13 @@ export default function ReactionSchemeGraphic({ reaction, onToggleLabel, onRefre
               variant="light"
               className="m-1"
               onClick={onRefresh}
+              // disabled={isRefreshing}
             >
-              <i className="fa fa-refresh" />
+              <i className={`fa fa-refresh ${isRefreshing ? 'fa-spin' : ''}`} />
             </Button>
           </OverlayTrigger>
         )}
       </div>
-      <SvgFileZoomPan
-        duration={300}
-        resize
-        // eslint-disable-next-line react/jsx-props-no-spreading
-        {...svgProps}
-      />
     </div>
   );
 }
@@ -109,4 +135,5 @@ ReactionSchemeGraphic.propTypes = {
   reaction: PropTypes.instanceOf(Reaction).isRequired,
   onToggleLabel: PropTypes.func.isRequired,
   onRefresh: PropTypes.func,
+  isRefreshing: PropTypes.bool,
 };
