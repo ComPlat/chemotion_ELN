@@ -849,6 +849,7 @@ class Material extends Component {
         materialGroup,
         sampleID: this.materialId(),
         equivalent,
+        weightPercentageField: e.weightPercentageField || false,
       };
       onChange(event);
     }
@@ -860,7 +861,7 @@ class Material extends Component {
       if (material.reference) {
         this.handleEquivalentChange({ value: 1 });
       } else if (!material.weight_percentage_reference) {
-        this.handleEquivalentChange({ value: 0 });
+        this.handleEquivalentChange({ value: 0, weightPercentageField: true });
       }
     } else if (field === 'molar mass') {
       if (!material.reference) {
