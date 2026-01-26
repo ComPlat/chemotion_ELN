@@ -7,19 +7,26 @@ import { Badge, Button } from 'react-bootstrap';
 import Container from 'src/models/Container';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import GenericContainerSet from 'src/components/generic/GenericContainerSet';
+import { CommentButton, CommentBox } from 'src/components/common/AnalysisCommentBoxComponent';
 
 export default class GenericElDetailsContainers extends Component {
   constructor(props) {
     super(props);
+    const { genericEl } = props;
+    const hasComment = genericEl.container?.description
+      && genericEl.container.description.trim() !== '';
     this.state = {
       activeContainer: null,
+      commentBoxVisible: hasComment,
     };
     this.handleAccordionOpen = this.handleAccordionOpen.bind(this);
     this.handleAdd = this.handleAdd.bind(this);
     this.handleChange = this.handleChange.bind(this);
+    this.handleCommentTextChange = this.handleCommentTextChange.bind(this);
     this.handleRemove = this.handleRemove.bind(this);
     this.handleSpChange = this.handleSpChange.bind(this);
     this.handleUndo = this.handleUndo.bind(this);
+    this.toggleCommentBox = this.toggleCommentBox.bind(this);
   }
 
   componentDidMount() {
@@ -30,6 +37,19 @@ export default class GenericElDetailsContainers extends Component {
   handleChange() {
     const { genericEl, handleElChanged } = this.props;
     handleElChanged(genericEl);
+  }
+
+  handleCommentTextChange(e) {
+    const { genericEl } = this.props;
+    if (!genericEl.container) {
+      genericEl.container = Container.buildEmpty();
+    }
+    genericEl.container.description = e.target.value;
+    this.handleChange();
+  }
+
+  toggleCommentBox() {
+    this.setState((prevState) => ({ commentBoxVisible: !prevState.commentBoxVisible }));
   }
 
   handleSpChange(genericEl, cb) {
@@ -83,22 +103,37 @@ export default class GenericElDetailsContainers extends Component {
     const { readOnly } = this.props;
     if (!readOnly) {
       return (
-        <div className="mt-2">
-          <Button size="sm" variant="success" onClick={this.handleAdd}>
-            <i className="fa fa-plus" aria-hidden="true" />
-            &nbsp; Add analysis
-          </Button>
-        </div>
+        <Button size="sm" variant="success" onClick={this.handleAdd}>
+          <i className="fa fa-plus" aria-hidden="true" />
+          &nbsp; Add analysis
+        </Button>
       );
     }
     return null;
   }
 
   renderNoAnalysesMessage() {
+    const { genericEl } = this.props;
+    const { commentBoxVisible } = this.state;
+
     return (
-      <div className="d-flex align-items-center justify-content-between mb-2 mt-4 mx-3">
-        <span className="ms-3"> There are currently no Analyses. </span>
-        <div>{this.addButton()}</div>
+      <div>
+        <div className="d-flex align-items-center justify-content-between mb-2 mt-4 mx-3">
+          <span className="ms-3"> There are currently no Analyses. </span>
+          <div className="d-flex gap-1">
+            <CommentButton
+              toggleCommentBox={this.toggleCommentBox}
+              isVisible={commentBoxVisible}
+              size="sm"
+            />
+            {this.addButton()}
+          </div>
+        </div>
+        <CommentBox
+          isVisible={commentBoxVisible}
+          value={genericEl.container?.description || ''}
+          handleCommentTextChange={this.handleCommentTextChange}
+        />
       </div>
     );
   }
@@ -145,7 +180,7 @@ export default class GenericElDetailsContainers extends Component {
 
   render() {
     const { genericEl, readOnly, noAct, handleSubmit } = this.props;
-    const { activeContainer } = this.state;
+    const { activeContainer, commentBoxVisible } = this.state;
 
     if (noAct) return this.renderNoAct(genericEl, readOnly);
 
@@ -159,9 +194,19 @@ export default class GenericElDetailsContainers extends Component {
       ) {
         return (
           <div>
-            <div className="mb-2 me-1 d-flex justify-content-end">
+            <div className="mb-2 me-1 d-flex justify-content-end gap-1">
+              <CommentButton
+                toggleCommentBox={this.toggleCommentBox}
+                isVisible={commentBoxVisible}
+                size="sm"
+              />
               {this.addButton()}
             </div>
+            <CommentBox
+              isVisible={commentBoxVisible}
+              value={genericEl.container?.description || ''}
+              handleCommentTextChange={this.handleCommentTextChange}
+            />
             <GenericContainerSet
               ae={analysesContainer}
               readOnly={readOnly}
