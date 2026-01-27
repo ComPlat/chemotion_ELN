@@ -24,7 +24,7 @@ function ColumnMappingComponent({
     'real_amount_value', 'real_amount_unit', 'target_amount_value', 'target_amount_unit',
     'molarity', 'density', 'molfile', 'purity', 'solvent', 'location', 'is_top_secret', 'melting_point',
     'boiling_point', 'refractive_index', 'flash_point', 'molecular_mass', 'canonical_smiles',
-    'dry_solvent', 'stereo_abs', 'stereo_rel', 'sum_formula',
+    'dry_solvent', 'stereo_abs', 'stereo_rel', 'sum_formula', 'inventory_label', 'color', 'form', 'solubility',
   ];
 
   const chemicalSampleKeys = [...sampleKeys,
@@ -71,7 +71,13 @@ function ColumnMappingComponent({
       name: 'name',
       sample_external_label: 'external_label',
       external_label: 'external_label',
-      cas: 'cas'
+      cas: 'cas',
+      inventory_label: 'inventory_label',
+      form: 'form',
+      color: 'color',
+      solubility: 'solubility',
+      refractive_index: 'refractive_index',
+      flash_point: 'flash_point',
     };
 
     // Process each column name for mapping
