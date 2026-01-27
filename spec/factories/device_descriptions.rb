@@ -12,79 +12,76 @@ FactoryBot.define do
       ontologies do
         [
           {
-            'data' => {
-              'id' => 'chmo:class:http://purl.obolibrary.org/obo/CHMO_0002231',
-              'iri' => 'http://purl.obolibrary.org/obo/CHMO_0002231',
-              'type' => 'class',
-              'label' => 'purification',
-              'obo_id' => 'CHMO:0002231',
-              'short_form' => 'CHMO_0002231',
-              'description' => [
-                'Any technique used to physically separate an analyte from byproducts,
-                reagents or contaminating substances.',
-              ],
-              'ontology_name' => 'chmo',
-              'ontology_prefix' => 'CHMO',
+            data:
+            {
+              id: 'chmo:class:http://purl.obolibrary.org/obo/CHMO_0001000',
+              iri: 'http://purl.obolibrary.org/obo/CHMO_0001000',
+              type: 'class',
+              label: 'chromatography',
+              obo_id: 'CHMO:0001000',
+              short_form: 'CHMO_0001000',
+              description:
+                [
+                  'A separation method where the components are distributed between two phases, one of which is
+                  stationary, while the other moves in a definite direction.',
+                ],
+              segment_ids:
+                [
+                  9,
+                ],
+              ontology_name: 'chmo',
+              ontology_prefix: 'CHMO',
             },
-            'paths' => [
+            index: 0,
+            paths:
+            [],
+            segments:
+            [
               {
-                'iri' => 'http://purl.obolibrary.org/obo/OBI_0000094',
-                'label' => 'material processing',
-                'short_form' => 'OBI_0000094',
-              },
-              {
-                'iri' => 'http://purl.obolibrary.org/obo/CHMO_0000999',
-                'label' => 'separation method',
-                'short_form' => 'CHMO_0000999',
-              },
-              {
-                'iri' => 'http://purl.obolibrary.org/obo/CHMO_0002231',
-                'label' => 'purification',
-                'short_form' => 'CHMO_0002231',
+                show: true,
+                segment_klass_id: 9,
               },
             ],
           },
           {
-            'data' => {
-              'id' => 'chmo:class:http://purl.obolibrary.org/obo/CHMO_0002413',
-              'iri' => 'http://purl.obolibrary.org/obo/CHMO_0002413',
-              'type' => 'class',
-              'label' => 'cryogenic electron microscopy',
-              'obo_id' => 'CHMO:0002413',
-              'short_form' => 'CHMO_0002413',
-              'description' => [
-                'Microscopy where the specimen, which is cooled in liquid ethane to 180 °C',
-              ],
-              'ontology_name' => 'chmo',
-              'ontology_prefix' => 'CHMO',
+            data:
+            {
+              id: 'chmo:class:http://purl.obolibrary.org/obo/CHMO_0002589',
+              iri: 'http://purl.obolibrary.org/obo/CHMO_0002589',
+              type: 'class',
+              label: 'cryogenic scanning electron microscopy',
+              obo_id: 'CHMO:0002589',
+              short_form: 'CHMO_0002589',
+              description:
+                [
+                  'Microscopy where a finely focused (<10 nm diameter) electron beam with an acceleration voltage
+                  50–150 kV is scanned across an electron transparent specimen under vacuum and the intensities of
+                  the transmitted electrons are measured. Microscopy where a finely focused (<10 nm diameter) electron
+                  beam with an acceleration voltage 50–150 kV is scanned across the specimen, which is cooled in liquid
+                  ethane to 180 °C, under vacuum and the interaction of the electrons with the specimen is determined.',
+                ],
+              segment_ids:
+                [
+                  5,
+                  7,
+                ],
+              ontology_name: 'chmo',
+              ontology_prefix: 'CHMO',
             },
-            'paths' => [
-              {
-                'iri' => 'http://purl.obolibrary.org/obo/OBI_0000070',
-                'label' => 'assay',
-                'short_form' => 'OBI_0000070',
-              },
-              {
-                'iri' => 'http://purl.obolibrary.org/obo/OBI_0000185',
-                'label' => 'imaging assay',
-                'short_form' => 'OBI_0000185',
-              },
-              {
-                'iri' => 'http://purl.obolibrary.org/obo/CHMO_0000067',
-                'label' => 'microscopy',
-                'short_form' => 'CHMO_0000067',
-              },
-              {
-                'iri' => 'http://purl.obolibrary.org/obo/CHMO_0000068',
-                'label' => 'electron microscopy',
-                'short_form' => 'CHMO_0000068',
-              },
-              {
-                'iri' => 'http://purl.obolibrary.org/obo/CHMO_0002413',
-                'label' => 'cryogenic electron microscopy',
-                'short_form' => 'CHMO_0002413',
-              },
-            ],
+            index: 1,
+            paths:
+              [],
+            segments:
+              [
+                {
+                  show: true,
+                  segment_klass_id: 5,
+                },
+                {
+                  show: true,
+                  segment_klass_id: 7,
+                },
+              ],
           },
         ]
       end
