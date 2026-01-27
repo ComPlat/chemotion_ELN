@@ -386,8 +386,16 @@ RSpec.describe 'ExportCollection' do
 
   context 'when device descriptions, analyses and attachments were exported to zip file' do
     let(:collection) { create(:collection, user_id: user.id, label: 'device description test') }
+    let(:collection2) { create(:collection, user_id: user.id, label: 'device description test2') }
+    let(:device_description3) do
+      create(:device_description, collection_id: collection2.id, created_by: collection2.user_id)
+    end
     let(:device_description1) do
-      create(:device_description, collection_id: collection.id, created_by: collection.user_id)
+      create(
+        :device_description, collection_id: collection.id, created_by: collection.user_id,
+                             device_class: 'component', container: FactoryBot.create(:container, :with_analysis),
+                             setup_descriptions: { component: [{ device_description_id: device_description3.id }] }
+      )
     end
     let(:device_description2) do
       create(:device_description, :with_ontologies, collection_id: collection.id, created_by: collection.user_id)
@@ -405,14 +413,16 @@ RSpec.describe 'ExportCollection' do
 
     before do
       collection
+      collection2
       device_description1
       device_description1.attachments = [attachment1]
-      device_description1.container = FactoryBot.create(:container, :with_analysis)
       device_description1.save!
       device_description2
+      device_description3
 
       CollectionsDeviceDescription.create!(device_description: device_description1, collection: collection)
       CollectionsDeviceDescription.create!(device_description: device_description2, collection: collection)
+      CollectionsDeviceDescription.create!(device_description: device_description3, collection: collection2)
 
       export = Export::ExportCollections.new(job_id, [collection.id], 'zip', nested, gate)
       export.prepare_data
@@ -431,12 +441,12 @@ RSpec.describe 'ExportCollection' do
     end
 
     it 'has device descriptions in export.js' do
-      expect(device_descriptions.length).to be 2
+      expect(device_descriptions.length).to be 3
     end
 
     it 'has analyses and attachments in export.js' do
       expect(attachments.length).to be 1
-      expect(container.length).to be 6
+      expect(container.length).to be 9
     end
   end
 
