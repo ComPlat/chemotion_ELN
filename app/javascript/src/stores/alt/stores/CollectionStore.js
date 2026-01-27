@@ -179,6 +179,19 @@ class CollectionStore {
     }
     return promise;
   }
+
+  static getChildLabel(child) {
+    if (!child.is_locked) return child.label;
+
+    let label = '';
+    if (child.shared_by != null) {
+      label = `by ${child.shared_by.initials} (${child.shared_by.name})`;
+    }
+    if (child.shared_to != null) {
+      label += ` with ${child.shared_to.initials} (${child.shared_to.name})`;
+    }
+    return label;
+  }
 }
 
 export default alt.createStore(CollectionStore, 'CollectionStore');
