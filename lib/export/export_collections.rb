@@ -221,16 +221,120 @@ module Export
 
       # loop over device descriptions to get container and attachments
       device_descriptions.each do |device_description|
-        fetch_containers(device_description)
-        fetch_many(device_description.attachments, {
-                     'attachable_id' => 'DeviceDescription',
-                     'created_by' => 'User',
-                     'created_for' => 'User',
-                   })
-
-        # add attachments to the list of attachments
-        @attachments += device_description.attachments
+        transform_device_description_special_fields(device_description)
+        fetch_device_description_containers_and_attachments(device_description)
       end
+
+      # fetch related device descriptions from setup_descriptions
+      fetch_related_device_descriptions(device_descriptions, collection)
+    end
+
+    def fetch_device_description_containers_and_attachments(device_description)
+      fetch_containers(device_description)
+      fetch_many(device_description.attachments, {
+                   'attachable_id' => 'DeviceDescription',
+                   'created_by' => 'User',
+                   'created_for' => 'User',
+                 })
+
+      # add attachments to the list of attachments
+      @attachments += device_description.attachments
+    end
+
+    def transform_device_description_special_fields(device_description)
+      dd_uuid = uuid('DeviceDescription', device_description.id)
+      return unless @data['DeviceDescription']&.key?(dd_uuid)
+
+      transform_device_description_setup_descriptions(dd_uuid)
+      transform_device_description_ontologies(dd_uuid)
+    end
+
+    def transform_device_description_setup_descriptions(dd_uuid)
+      setup_descriptions = @data['DeviceDescription'][dd_uuid]['setup_descriptions']
+      return if setup_descriptions.blank?
+
+      setup_descriptions.each_key do |setup_type|
+        next if setup_descriptions[setup_type].blank?
+
+        setup_descriptions[setup_type].each do |entry|
+          next if entry['device_description_id'].blank?
+
+          entry['device_description_id'] = uuid('DeviceDescription', entry['device_description_id'])
+        end
+      end
+    end
+
+    def transform_device_description_ontologies(dd_uuid)
+      ontologies = @data['DeviceDescription'][dd_uuid]['ontologies']
+      return if ontologies.blank?
+
+      ontologies.each do |ontology|
+        data_segment_ids = []
+        ontology['data']['segment_ids'].map do |id|
+          data_segment_ids << uuid('Labimotion::SegmentKlass', id)
+        end
+        ontology['data']['segment_ids'] = data_segment_ids if data_segment_ids.present?
+
+        ontology['segments'].each do |entry|
+          entry['segment_klass_id'] = uuid('Labimotion::SegmentKlass', entry['segment_klass_id'])
+        end
+      end
+    end
+
+    # rubocop:disable Metrics/PerceivedComplexity
+    def fetch_related_device_descriptions(device_descriptions, collection, checked_ids = [])
+      setup_types = %w[setup component]
+      # IDs of device descriptions already being exported (in any collection)
+      exported_ids = @data['DeviceDescription']&.keys || []
+
+      device_descriptions.each do |device_description|
+        next if checked_ids.include?(device_description.id)
+
+        checked_ids << device_description.id
+        setup_type = device_description.device_class
+        next if setup_types.exclude?(setup_type) || device_description.setup_descriptions[setup_type].blank?
+
+        # get device_description_ids from setup_descriptions
+        related_ids = device_description.setup_descriptions[setup_type].pluck('device_description_id')
+        next if related_ids.blank?
+
+        # only fetch device descriptions that are not already exported
+        ids_to_fetch = related_ids - exported_ids - checked_ids
+        next if ids_to_fetch.empty?
+
+        export_related_device_descriptions(ids_to_fetch, collection, checked_ids)
+      end
+    end
+    # rubocop:enable Metrics/PerceivedComplexity
+
+    def export_related_device_descriptions(ids_to_fetch, collection, checked_ids)
+      related_device_descriptions = DeviceDescription.where(id: ids_to_fetch)
+      return if related_device_descriptions.empty?
+
+      # fetch the related device descriptions
+      fetch_many(related_device_descriptions, { 'created_by' => 'User' })
+
+      # create collections_device_descriptions entries for the same collection
+      related_device_descriptions.each do |related_device_description|
+        transform_device_description_special_fields(related_device_description)
+        fetch_collections_device_description(collection, related_device_description)
+        fetch_device_description_containers_and_attachments(related_device_description)
+      end
+
+      # recursively fetch related device descriptions
+      fetch_related_device_descriptions(related_device_descriptions, collection, checked_ids)
+    end
+
+    def fetch_collections_device_description(collection, device_description)
+      collection_device_description = CollectionsDeviceDescription.new(
+        id: uuid('CollectionsDeviceDescription', "#{collection.id}-#{device_description.id}"),
+        collection_id: collection.id,
+        device_description_id: device_description.id,
+      )
+      fetch_one(collection_device_description, {
+                  'collection_id' => 'Collection',
+                  'device_description_id' => 'DeviceDescription',
+                })
     end
 
     def add_cell_line_material_to_package(collection)
