@@ -56,7 +56,7 @@ class IndigoService
       # not possible to set in the options
       # 'render-font' => '30px "Roboto"',
       # 'font-family' => 'Arial',
-    } 
+    }
     @service_url = Rails.configuration.indigo_service.indigo_service_url
   end
 
