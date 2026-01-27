@@ -231,7 +231,7 @@ module SVG
       @temperature = options[:temperature]
       @duration = options[:duration]
       # Use scrub_xml instead of scrub_svg for plain text conditions
-      @conditions = Chemotion::Sanitizer.scrub_xml(options[:conditions]) if options[:conditions].present?
+      @conditions = options[:conditions] if options[:conditions].present?
       @pas = options[:preserve_aspect_ratio]
       @show_yield = options[:show_yield]
       @box_width = options[:supporting_information] ? 2000 : 1560
@@ -332,9 +332,11 @@ module SVG
 
       s_conditions = conditions.split("\n") || []
       s_conditions.map.with_index do |condition, index|
+        # Escape < and > for valid SVG/XML so "pH < value" displays correctly
+        esc = condition.to_s.gsub('<', '&lt;').gsub('>', '&gt;')
         <<~XML
           <svg font-family="sans-serif">
-            <text text-anchor="middle" x="#{arrow_width / 2}" y="#{y_init + index * 25}" font-size="#{word_size}">#{condition}</text>
+            <text text-anchor="middle" x="#{arrow_width / 2}" y="#{y_init + index * 25}" font-size="#{word_size}">#{esc}</text>
           </svg>
         XML
       end.join(' ')
