@@ -140,7 +140,7 @@ export default class GenericElDetailsContainers extends Component {
           placement="top"
           overlay={<Tooltip id="add_analysis_tooltip">Create and add empty analyses.</Tooltip>}
         >
-          <Button size="sm" variant="success" onClick={this.handleAdd}>
+          <Button size="xsm" variant="success" onClick={this.handleAdd}>
             <i className="fa fa-plus" aria-hidden="true" />
             &nbsp; Add analysis
           </Button>
@@ -161,7 +161,7 @@ export default class GenericElDetailsContainers extends Component {
             <CommentButton
               toggleCommentBox={this.toggleCommentBox}
               isVisible={commentBoxVisible}
-              size="sm"
+              size="xsm"
             />
             {this.addButton()}
           </div>
@@ -234,7 +234,7 @@ export default class GenericElDetailsContainers extends Component {
             <div className="d-flex justify-content-between align-items-center mb-2">
               <ButtonGroup>
                 <ButtonGroupToggleButton
-                  size="sm"
+                  size="xsm"
                   active={mode === 'edit'}
                   onClick={() => this.handleToggleMode('edit')}
                 >
@@ -242,7 +242,7 @@ export default class GenericElDetailsContainers extends Component {
                   Edit mode
                 </ButtonGroupToggleButton>
                 <ButtonGroupToggleButton
-                  size="sm"
+                  size="xsm"
                   active={mode === 'order'}
                   onClick={() => this.handleToggleMode('order')}
                 >
@@ -254,7 +254,7 @@ export default class GenericElDetailsContainers extends Component {
                 <CommentButton
                   toggleCommentBox={this.toggleCommentBox}
                   isVisible={commentBoxVisible}
-                  size="sm"
+                  size="xsm"
                 />
                 {this.addButton()}
               </div>
