@@ -658,6 +658,30 @@ class Sample < ApplicationRecord
     nil
   end
 
+  # Refreshes SVG from molfile and overwrites the file at svg_path.
+  # @param svg_path [String] Filename or path for the SVG (e.g. "TMPFILEabc.svg")
+  # @param molfile [String] The molfile to generate SVG from
+  # @return [Hash] { success:, filename:, error:, status: }
+  def self.refresh_smaple_svg(svg_path, molfile)
+    if molfile.blank? || svg_path.blank?
+      return { success: false, error: 'molfile and svg_path are required.', status: 400 }
+    end
+
+    filename = File.basename(svg_path)
+    return { success: false, error: 'Invalid filename', status: 400 } if filename.match?(%r{\.\.|/|\\})
+
+    svg = Molecule.svg_reprocess(nil, molfile)
+    return { success: false, error: 'Failed to generate SVG from molfile', status: 422 } if svg.blank?
+
+    target_path = Rails.public_path.join('images', 'samples', filename)
+    FileUtils.mkdir_p(File.dirname(target_path))
+    File.write(target_path, svg)
+    { success: true, filename: filename }
+  rescue StandardError => e
+    Rails.logger.error("Sample.refresh_svg_content: Error refreshing SVG for #{svg_path}: #{e.message}")
+    { success: false, error: e.message, status: 500 }
+  end
+
   private
 
   def has_collections
@@ -808,30 +832,6 @@ class Sample < ApplicationRecord
     return unless svg_file_name
 
     Rails.public_path.join('images', 'samples', svg_file_name)
-  end
-
-  # Refreshes SVG content: gets SVG from molfile via svg_reprocess and overwrites the file at svg_path.
-  #
-  # @param svg_path [String] Filename or path for the SVG (e.g. "TMPFILEabc.svg")
-  # @param molfile [String] The molfile to generate SVG from
-  # @return [Hash] Result with :success, :filename, :error, and :status keys
-  def self.refresh_smaple_svg(svg_path, molfile)
-    return { success: false, error: 'molfile and svg_path are required.', status: 400 } if molfile.blank? || svg_path.blank?
-
-    filename = File.basename(svg_path)
-    return { success: false, error: 'Invalid filename', status: 400 } if filename.include?('..') || filename.include?('/') || filename.include?('\\')
-
-    svg = Molecule.svg_reprocess(nil, molfile)
-    return { success: false, error: 'Failed to generate SVG from molfile', status: 422 } if svg.blank?
-
-    target_path = Rails.public_path.join('images', 'samples', filename)
-    FileUtils.mkdir_p(File.dirname(target_path))
-    File.write(target_path, svg)
-
-    { success: true, filename: filename }
-  rescue StandardError => e
-    Rails.logger.error("Sample.refresh_svg_content: Error refreshing SVG for #{svg_path}: #{e.message}")
-    { success: false, error: e.message, status: 500 }
   end
 
   def update_gas_material
