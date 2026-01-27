@@ -2,12 +2,9 @@ import React from "react";
 import { OverlayTrigger, Button } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
-export default function ConfigOverlayButton({ popoverSettings, onToggle, wrapperClassName }) {
-  const defaultClassName = "position-absolute top-0 end-0";
-  const className = wrapperClassName !== undefined ? wrapperClassName : defaultClassName;
-  
+export default function ConfigOverlayButton({ popoverSettings, onToggle}) {
   return (
-    <div className={className}>
+    <div className="position-absolute top-0 end-0">
       <OverlayTrigger
         trigger="click"
         placement="left"
@@ -29,6 +26,5 @@ export default function ConfigOverlayButton({ popoverSettings, onToggle, wrapper
 
 ConfigOverlayButton.propTypes = {
   popoverSettings: PropTypes.element.isRequired,
-  onToggle: PropTypes.func.isRequired,
-  wrapperClassName: PropTypes.string,
+  onToggle: PropTypes.func.isRequired
 };

@@ -47,7 +47,8 @@ const makeTransparentByTitle = (iframeRef) => {
   const iframeDocument = iframeRef?.current?.contentWindow?.document;
   if (!iframeDocument) return;
 
-  const svg = iframeDocument.querySelector('[data-testid="canvas"]');
+  const canvasContainer = iframeDocument.querySelector('.StructEditor-module_intermediateCanvas__fR3ws');
+  const svg = canvasContainer?.firstElementChild;
   if (!svg) return;
 
   const elements = svg.querySelectorAll('text');
@@ -115,7 +116,11 @@ const addGreenCircleOnCanvasImages = async (imageElements, iframeDocument = null
 const updateImagesInTheCanvas = async (iframeRef) => {
   const iframeDocument = iframeRef?.current?.contentWindow?.document;
   if (iframeDocument) {
-    const svg = iframeDocument.querySelector('[data-testid="canvas"]');
+    // const svg = iframeDocument.querySelector('[data-testid="canvas"]');
+
+    const canvasContainer = iframeDocument.querySelector('.StructEditor-module_intermediateCanvas__fR3ws');
+    const svg = canvasContainer?.firstElementChild;
+    if (!svg) return;
     if (svg) {
       const imageElements = iframeDocument.querySelectorAll(KET_DOM_TAG.imageTag);
       imageElements.forEach((img) => {

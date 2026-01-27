@@ -16,31 +16,12 @@ module Chemotion
     # @return [String, nil] The rendered SVG, or nil if all services fail
     def self.render_svg_from_molfile(struct)
       rendered_svg = indigo_service(struct)
-      return sanitize_svg(rendered_svg) if rendered_svg
+      return rendered_svg if rendered_svg
 
       rendered_svg = ketcher_service(struct)
-      return sanitize_svg(rendered_svg) if rendered_svg
+      return rendered_svg if rendered_svg
 
-      rendered_svg = open_babel_service(struct)
-      return sanitize_svg(rendered_svg) if rendered_svg
-
-      nil
-    end
-
-    # Sanitizes the rendered SVG
-    #
-    # @param svg [String] The SVG to sanitize
-    # @return [String, nil] The sanitized SVG, or nil if input is blank or sanitization fails
-    def self.sanitize_svg(svg)
-      return nil if svg.blank?
-
-      sanitized = Chemotion::Sanitizer.scrub_svg(svg, remap_glyph_ids: true)
-      # Return nil if sanitization resulted in empty or blank string
-      sanitized.presence
-    rescue StandardError => e
-      Rails.logger.error("SVG sanitization failed: #{e.message}")
-      # Return nil on error to ensure we don't return unsanitized content
-      nil
+      open_babel_service(struct)
     end
 
     # Attempts to render SVG using IndigoService

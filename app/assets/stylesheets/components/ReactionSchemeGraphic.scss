@@ -1,42 +1,4 @@
 .Reaction-scheme-graphic {
-  &__wrapper {
-    position: relative;
-    min-height: 300px;
-    width: 100%;
-  }
-
-  &__svg-container {
-    position: relative;
-    min-height: 300px;
-  }
-
-  &__loader-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    min-height: 300px;
-    background-color: rgba(255, 255, 255, 0.95);
-    z-index: 9999;
-    border-radius: 4px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-
-  &__loader-spinner {
-    font-size: 2rem;
-  }
-
-  &__toolbar {
-    position: absolute;
-    top: 0;
-    right: 0;
-    display: flex;
-    z-index: 10000;
-  }
-
   &__material-name {
     width: 150px;
     @extend .pb-1;

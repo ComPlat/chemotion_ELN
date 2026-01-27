@@ -475,30 +475,30 @@ const addOrUpdateSvgTitle = (svgElement, titleText = 'epam-ketcher-ssc') => {
 const removeAllColors = (svgElement) => {
   // Get all elements in the SVG
   const allElements = svgElement.querySelectorAll('*');
-  
+
   allElements.forEach((element) => {
     // Process style attribute
     const currentStyle = element.getAttribute('style') || '';
     if (currentStyle) {
       let newStyle = currentStyle;
-      
+
       // Remove or set fill to black
       if (newStyle.match(/fill:/)) {
         newStyle = newStyle.replace(/fill:\s*[^;]+/g, 'fill: #000000');
       } else {
         newStyle = newStyle ? `${newStyle}; fill: #000000` : 'fill: #000000';
       }
-      
+
       // Remove or set stroke to black
       if (newStyle.match(/stroke:/)) {
         newStyle = newStyle.replace(/stroke:\s*[^;]+/g, 'stroke: #000000');
       } else {
         newStyle = newStyle ? `${newStyle}; stroke: #000000` : 'stroke: #000000';
       }
-      
+
       element.setAttribute('style', newStyle);
     }
-    
+
     // Process fill attribute directly
     if (element.hasAttribute('fill') && element.getAttribute('fill') !== 'none') {
       element.setAttribute('fill', '#000000');
@@ -509,12 +509,12 @@ const removeAllColors = (svgElement) => {
         element.setAttribute('fill', '#000000');
       }
     }
-    
+
     // Process stroke attribute directly
     if (element.hasAttribute('stroke') && element.getAttribute('stroke') !== 'none') {
       element.setAttribute('stroke', '#000000');
     }
-    
+
     // Specifically ensure text elements are black
     if (element.tagName?.toLowerCase() === 'text') {
       element.setAttribute('fill', '#000000');
@@ -537,8 +537,9 @@ const getSvgFromCanvas = async (iframeRef) => {
     if (!iframeDocument) {
       return { svg: null, message: 'iframe document not available' };
     }
+    const canvasContainer = iframeDocument.querySelector('.StructEditor-module_intermediateCanvas__fR3ws');
+    const canvasElement = canvasContainer?.firstElementChild;
 
-    const canvasElement = iframeDocument.querySelector('[data-testid="canvas"]');
     if (!canvasElement) {
       return { svg: null, message: 'Canvas element not found' };
     }
@@ -646,7 +647,7 @@ const getSvgFromCanvas = async (iframeRef) => {
     clonedCanvas.removeAttribute('transform');
 
     // Remove all colors and set text to black
-    removeAllColors(clonedCanvas);
+    // removeAllColors(clonedCanvas);
 
     // Add title element to identify this as ketcher-ssc SVG
     addOrUpdateSvgTitle(clonedCanvas);
@@ -925,7 +926,7 @@ const onFinalCanvasSave = async (editor, iframeRef) => {
   } catch (e) {
     return {
       ket2Molfile: '',
-      svgElement: { svg: null, message: e?.message || 'Unknown error in prepareSvg' },
+      svgElement: { svg: null, message: e?.message },
       textNodesFormula: '',
       componentsList: [],
     };

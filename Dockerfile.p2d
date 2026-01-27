@@ -94,4 +94,3 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=300s --retries=3 \
 VOLUME [ "/chemotion/app", "/chemotion/data" ]
 
 RUN cp config/structure_editors.yml.example config/structure_editors.yml
-RUN cp config/ketcher_service.yml.example config/ketcher_service.yml
