@@ -332,12 +332,9 @@ module SVG
 
       s_conditions = conditions.split("\n") || []
       s_conditions.map.with_index do |condition, index|
-        # Escape < and > for valid SVG/XML so "pH < value" displays correctly
-        esc = condition.to_s.gsub('<', '&lt;').gsub('>', '&gt;')
         <<~XML
           <svg font-family="sans-serif">
-            <text text-anchor="middle" x="#{arrow_width / 2}" y="#{y_init + index * 25}" font-size="#{word_size}">#{esc}</text>
-          </svg>
+            <text text-anchor="middle" x="#{arrow_width / 2}" y="#{y_init + index * 25}" font-size="#{word_size}">#{condition}</text>          </svg>
         XML
       end.join(' ')
     end
