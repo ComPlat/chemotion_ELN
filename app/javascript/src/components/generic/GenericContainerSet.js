@@ -82,6 +82,7 @@ function GenericContainerSet(props) {
     fnChange,
     fnSelect,
     fnRemove,
+    toggleAddToReport,
     noAct,
     linkedAis,
     handleSubmit,
@@ -139,6 +140,7 @@ function GenericContainerSet(props) {
             readOnly={readOnly}
             fnChange={fnChange}
             fnRemove={fnRemove}
+            toggleAddToReport={toggleAddToReport}
             noAct={noAct}
             handleSubmit={handleSubmit}
           />

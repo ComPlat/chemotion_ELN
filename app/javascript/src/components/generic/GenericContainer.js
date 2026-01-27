@@ -3,7 +3,7 @@
 /* eslint-disable no-restricted-globals */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Accordion, Button, Card } from 'react-bootstrap';
+import { Accordion, Button, Card, Form } from 'react-bootstrap';
 import ContainerComponent from 'src/components/container/ContainerComponent';
 import QuillViewer from 'src/components/QuillViewer';
 import ImageModal from 'src/components/common/ImageModal';
@@ -21,8 +21,13 @@ import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWit
 
 const headerBtnGroup = (props) => {
   const {
-    container, readOnly, generic, fnRemove, fnChange
+    container, readOnly, generic, fnRemove, fnChange, toggleAddToReport
   } = props;
+  const inReport = container.extended_metadata.report;
+  const onToggleAddToReport = (e) => {
+    e.stopPropagation();
+    toggleAddToReport(container);
+  };
   const jcampIds = JcampIds(container);
   const hasJcamp = jcampIds.orig.length > 0;
   const confirmRegenerate = (e) => {
@@ -52,6 +57,13 @@ const headerBtnGroup = (props) => {
 
   return (
     <div className="d-flex justify-content-between align-items-center mb-0 gap-1">
+      <Form.Check
+        type="checkbox"
+        onClick={onToggleAddToReport}
+        defaultChecked={inReport}
+        label="Add to Report"
+        className="mx-2"
+      />
       <SpectraEditorButton
         element={generic}
         hasJcamp={hasJcamp}
@@ -246,6 +258,7 @@ AiHeader.propTypes = {
   readOnly: PropTypes.bool.isRequired,
   generic: PropTypes.object.isRequired,
   fnChange: PropTypes.func.isRequired,
+  toggleAddToReport: PropTypes.func.isRequired,
   handleSubmit: PropTypes.func.isRequired,
 };
 
