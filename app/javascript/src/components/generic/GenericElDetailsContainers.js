@@ -3,7 +3,7 @@
 /* eslint-disable react/no-array-index-key */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Badge, Button, ButtonGroup } from 'react-bootstrap';
+import { Badge, Button, ButtonGroup, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 import Container from 'src/models/Container';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
@@ -14,6 +14,7 @@ import { reOrderArr } from 'src/utilities/DndControl';
 import {
   indexedContainers,
 } from 'src/apps/mydb/elements/details/analyses/utils';
+import { UploadField } from 'src/apps/mydb/elements/details/analyses/UploadField';
 
 export default class GenericElDetailsContainers extends Component {
   constructor(props) {
@@ -126,16 +127,26 @@ export default class GenericElDetailsContainers extends Component {
   }
 
   addButton() {
-    const { readOnly } = this.props;
-    if (!readOnly) {
-      return (
-        <Button size="sm" variant="success" onClick={this.handleAdd}>
-          <i className="fa fa-plus" aria-hidden="true" />
-          &nbsp; Add analysis
-        </Button>
-      );
-    }
-    return null;
+    const { readOnly, genericEl, handleElChanged } = this.props;
+    if (readOnly) return null;
+    return (
+      <>
+        <UploadField
+          disabled={!genericEl.can_update}
+          element={genericEl}
+          setElement={(el) => handleElChanged(el)}
+        />
+        <OverlayTrigger
+          placement="top"
+          overlay={<Tooltip id="add_analysis_tooltip">Create and add empty analyses.</Tooltip>}
+        >
+          <Button size="sm" variant="success" onClick={this.handleAdd}>
+            <i className="fa fa-plus" aria-hidden="true" />
+            &nbsp; Add analysis
+          </Button>
+        </OverlayTrigger>
+      </>
+    );
   }
 
   renderNoAnalysesMessage() {
