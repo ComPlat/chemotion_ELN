@@ -6,6 +6,20 @@ import Reaction from 'src/models/Reaction';
 import ConfigOverlayButton from 'src/components/common/ConfigOverlayButton';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 
+// Ensure tooltips/popovers render above the scheme toolbar (z-index: 10000)
+const popperConfigAboveToolbar = {
+  modifiers: [
+    {
+      name: 'overlayAboveToolbar',
+      enabled: true,
+      phase: 'write',
+      fn: ({ state }) => {
+        state.styles.popper.zIndex = 10001;
+      },
+    },
+  ],
+};
+
 export default function ReactionSchemeGraphic({ reaction, onToggleLabel, onRefresh, isRefreshing }) {
   const [svgProps, setSvgProps] = useState({});
 
@@ -119,6 +133,7 @@ export default function ReactionSchemeGraphic({ reaction, onToggleLabel, onRefre
       </div>
       <div className="Reaction-scheme-graphic__toolbar">
         <ConfigOverlayButton
+          popperConfig={popperConfigAboveToolbar}
           popoverSettings={
             (
               <Popover>
@@ -145,6 +160,7 @@ export default function ReactionSchemeGraphic({ reaction, onToggleLabel, onRefre
           <OverlayTrigger
             placement="left"
             overlay={<Tooltip id="refresh-graphic">Refresh SVG</Tooltip>}
+            popperConfig={popperConfigAboveToolbar}
           >
             <Button
               size="xsm"
