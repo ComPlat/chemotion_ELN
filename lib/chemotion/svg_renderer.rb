@@ -33,7 +33,7 @@ module Chemotion
     # @return [String, nil] The sanitized SVG, or nil if input is blank or sanitization fails
     def self.sanitize_svg(svg)
       return nil if svg.blank?
-
+      
       sanitized = Chemotion::Sanitizer.scrub_svg(svg, remap_glyph_ids: true)
       # Return nil if sanitization resulted in empty or blank string
       sanitized.presence
