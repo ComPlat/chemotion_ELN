@@ -36,6 +36,7 @@ export default class GenericElDetailsContainers extends Component {
     this.handleSpChange = this.handleSpChange.bind(this);
     this.handleToggleMode = this.handleToggleMode.bind(this);
     this.handleUndo = this.handleUndo.bind(this);
+    this.toggleAddToReport = this.toggleAddToReport.bind(this);
     this.toggleCommentBox = this.toggleCommentBox.bind(this);
   }
 
@@ -60,6 +61,11 @@ export default class GenericElDetailsContainers extends Component {
 
   toggleCommentBox() {
     this.setState((prevState) => ({ commentBoxVisible: !prevState.commentBoxVisible }));
+  }
+
+  toggleAddToReport(container) {
+    container.extended_metadata.report = !container.extended_metadata.report;
+    this.handleChange();
   }
 
   handleToggleMode(mode) {
@@ -272,6 +278,7 @@ export default class GenericElDetailsContainers extends Component {
               fnSelect={this.handleAccordionOpen}
               fnUndo={this.handleUndo}
               fnRemove={this.handleRemove}
+              toggleAddToReport={this.toggleAddToReport}
               handleSubmit={handleSubmit}
               activeKey={activeContainer}
               mode={mode}
