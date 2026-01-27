@@ -334,7 +334,8 @@ module SVG
       s_conditions.map.with_index do |condition, index|
         <<~XML
           <svg font-family="sans-serif">
-            <text text-anchor="middle" x="#{arrow_width / 2}" y="#{y_init + index * 25}" font-size="#{word_size}">#{condition}</text>          </svg>
+            <text text-anchor="middle" x="#{arrow_width / 2}" y="#{y_init + index * 25}" font-size="#{word_size}">#{condition}</text>
+          </svg>
         XML
       end.join(' ')
     end
