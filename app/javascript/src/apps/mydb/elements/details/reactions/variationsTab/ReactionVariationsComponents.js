@@ -290,6 +290,73 @@ function MaterialFormatter({ value: cellData, colDef }) {
   return convertValueToDisplayUnit(cellData[currentEntry].value, cellData[currentEntry].unit, displayUnit);
 }
 
+function GroupCellEditor({ value, onValueChange }) {
+  const [group, setGroup] = useState(value.group ?? 1);
+  const [subgroup, setSubgroup] = useState(value.subgroup ?? 1);
+
+  const onGroupEdit = (update) => {
+    setGroup(update);
+    onValueChange({ group: update, subgroup });
+  };
+
+  const onSubgroupEdit = (update) => {
+    setSubgroup(update);
+    onValueChange({ group, subgroup: update });
+  };
+
+  return (
+    <div style={{
+      display: 'flex', gap: '8px', width: '100%', height: '100%', boxSizing: 'border-box'
+    }}
+    >
+      <div style={{
+        flex: 1, display: 'flex', flexDirection: 'column', height: '100%'
+      }}
+      >
+        <label style={{ fontSize: '9px', lineHeight: 1 }}>group</label>
+        <input
+          type="number"
+          min={1}
+          value={group}
+          onChange={(e) => onGroupEdit(Number(e.target.value))}
+          style={{
+            width: '100%',
+            height: '100%',
+            fontSize: '11px',
+            boxSizing: 'border-box',
+            padding: '0 2px',
+            border: '1px solid #ccc',
+          }}
+        />
+      </div>
+      <div style={{
+        flex: 1, display: 'flex', flexDirection: 'column', height: '100%'
+      }}
+      >
+        <label style={{ fontSize: '9px', lineHeight: 1 }}>subgroup</label>
+        <input
+          type="number"
+          min={1}
+          value={subgroup}
+          onChange={(e) => onSubgroupEdit(Number(e.target.value))}
+          style={{
+            width: '100%',
+            height: '100%',
+            fontSize: '11px',
+            boxSizing: 'border-box',
+            padding: '0 2px',
+            border: '1px solid #ccc',
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function GroupCellRenderer({ value: cellData }) {
+  return `group: ${cellData.group}, subgroup: ${cellData.subgroup}`;
+}
+
 function MaterialRenderer({ value: cellData, colDef }) {
   const { entryDefs } = colDef;
   return (
@@ -899,6 +966,24 @@ MenuHeader.defaultProps = {
   gasType: 'off',
 };
 
+function GroupHeader({ column, setSort }) {
+  return (
+    <div className="d-grid gap-1">
+      <span
+        className="ag-header-cell-text"
+      >
+        Group
+      </span>
+      <SortControl column={column} setSort={setSort} />
+    </div>
+  );
+}
+
+GroupHeader.propTypes = {
+  column: PropTypes.instanceOf(AgGridReact.column).isRequired,
+  setSort: PropTypes.func.isRequired,
+};
+
 function ColumnSelection({ selectedColumns, availableColumns, onApply }) {
   const [showModal, setShowModal] = useState(false);
   const [currentColumns, setCurrentColumns] = useState(selectedColumns);
@@ -1021,4 +1106,7 @@ export {
   SegmentRenderer,
   SegmentSelectEditor,
   RemoveVariationsModal,
+  GroupCellEditor,
+  GroupCellRenderer,
+  GroupHeader,
 };

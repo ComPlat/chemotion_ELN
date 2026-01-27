@@ -70,6 +70,7 @@ module Reporter
             'solvents' => variation_materials(var, :solvents),
             'products' => variation_materials(var, :products),
             'notes' => var[:metadata]&.dig(:notes),
+            'group' => var[:metadata]&.dig(:group)&.values_at(:group, :subgroup)&.join('.'),
           }.compact
         end
       end

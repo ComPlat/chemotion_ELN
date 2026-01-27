@@ -344,7 +344,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
               return acc;
             }, {}),
             properties: { duration: 'Duration', temperature: 'Temperature' },
-            metadata: { notes: 'Notes', analyses: 'Analyses' }
+            metadata: { notes: 'Notes', analyses: 'Analyses', group: 'Group' },
           }}
           onApply={applyColumnSelection}
         />
