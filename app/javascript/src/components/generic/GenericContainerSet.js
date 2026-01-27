@@ -6,6 +6,7 @@ import { DragSource, DropTarget } from 'react-dnd';
 import { compose } from 'redux';
 import { Accordion } from 'react-bootstrap';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
+import ArrayUtils from 'src/utilities/ArrayUtils';
 import {
   AiHeader,
   AiHeaderDeleted,
@@ -89,9 +90,10 @@ function GenericContainerSet(props) {
     handleMove,
   } = props;
   if (ae.length < 1 || ae[0].children.length < 0) return null;
+  const sortedChildren = ArrayUtils.sortArrByIndex(ae[0].children);
   const ais = noAct
-    ? ae[0].children.filter((x) => linkedAis.includes(x.id))
-    : ae[0].children;
+    ? sortedChildren.filter((x) => linkedAis.includes(x.id))
+    : sortedChildren;
 
   if (mode === 'order') {
     return (
