@@ -55,9 +55,9 @@ module UnitConvertable
     else
       case unit
       when 'g'
-        value;
+        value
       when 'mg'
-        value / 1000.0;
+        value / 1000.0
       when 'l'
         if has_molarity
           mol_weight = (decoupled? ? molecular_mass : molecule&.molecular_weight) || 0
