@@ -1,16 +1,18 @@
 import React, { useContext, useEffect } from 'react';
-import { Tab, Pagination, OverlayTrigger, Tooltip, Badge } from 'react-bootstrap';
+import {
+  Tab, Pagination, OverlayTrigger, Tooltip, Badge
+} from 'react-bootstrap';
 import { observer } from 'mobx-react';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import SampleName from 'src/components/common/SampleName';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
 
-const SearchResultTabContent = ({ list, tabResult, openDetail }) => {
+function SearchResultTabContent({ list, tabResult, openDetail }) {
   const searchStore = useContext(StoreContext).search;
-  let currentPage = searchStore.tabCurrentPage.length >= 1 ? searchStore.tab_current_page[list.index] : undefined;
-  let currentPageNumber = currentPage === undefined ? 1 : currentPage[list.key];
-  const activeTabPane = list.index === searchStore.search_result_active_tab_key ? true : false;
+  const currentPage = searchStore.tabCurrentPage.length >= 1 ? searchStore.tab_current_page[list.index] : undefined;
+  const currentPageNumber = currentPage === undefined ? 1 : currentPage[list.key];
+  const activeTabPane = list.index === searchStore.search_result_active_tab_key;
 
   useEffect(() => {
     if (currentPage === undefined) {
@@ -21,11 +23,11 @@ const SearchResultTabContent = ({ list, tabResult, openDetail }) => {
   const handlePaginationSelect = (index, ids, key) => {
     searchStore.changeTabCurrentPage(key, index, list.index);
 
-    const search_result = searchStore.tabSearchResultValues.find(val => val.id == `${key}s-${index}`);
+    const search_result = searchStore.tabSearchResultValues.find((val) => val.id == `${key}s-${index}`);
     if (search_result === undefined) {
       searchByIds(index, ids, key);
     }
-  }
+  };
 
   const searchByIds = (index, ids, key) => {
     const uiState = UIStore.getState();
@@ -37,7 +39,7 @@ const SearchResultTabContent = ({ list, tabResult, openDetail }) => {
       elementType: 'by_ids',
       id_params: {
         model_name: key,
-        ids: ids,
+        ids,
         total_elements: tabResult.total_elements,
         with_filter: false,
       },
@@ -48,20 +50,20 @@ const SearchResultTabContent = ({ list, tabResult, openDetail }) => {
 
     searchStore.loadSearchResultTab({
       selection,
-      collectionId: collectionId,
-      isSync: isSync,
+      collectionId,
+      isSync,
       page_size: tabResult.per_page,
       page: index,
       moleculeSort: true,
     });
-  }
+  };
 
   const pagination = (tabResult, key) => {
     if (tabResult.pages === 1) { return; }
     if (tabResult.total_elements == 0) { return; }
 
-    let splittedIds = [];
-    let items = [];
+    const splittedIds = [];
+    const items = [];
     for (let i = 0; i < tabResult.ids.length; i += tabResult.per_page) {
       splittedIds.push(tabResult.ids.slice(i, i + tabResult.per_page));
     }
@@ -84,7 +86,7 @@ const SearchResultTabContent = ({ list, tabResult, openDetail }) => {
         >
           {number}
         </Pagination.Item>
-      )
+      );
     }
     if (tabResult.pages > maxPage) {
       items.push(<Pagination.Ellipsis key="Ell2" />);
@@ -99,12 +101,12 @@ const SearchResultTabContent = ({ list, tabResult, openDetail }) => {
         {items}
       </Pagination>
     );
-  }
+  };
 
   const svgPreview = (object) => {
     if (!['sample', 'reaction'].includes(object.type)) { return null; }
 
-    const title = object.type == 'sample' ? object.molecule_iupac_name : object.short_label; 
+    const title = object.type == 'sample' ? object.molecule_iupac_name : object.short_label;
     return (
       <SvgWithPopover
         hasPop
@@ -114,32 +116,32 @@ const SearchResultTabContent = ({ list, tabResult, openDetail }) => {
           src: object.svgPath
         }}
         popObject={{
-          title: title,
+          title,
           src: object.svgPath,
           height: '26vh',
           width: '52vw',
         }}
       />
     );
-  }
+  };
 
   const copyToClipboard = (element) => {
     if (element.target.dataset.clipboardText) {
       navigator.clipboard.writeText(element.target.dataset.clipboardText);
     }
-  }
+  };
 
   const shortLabelWithMoreInfos = (object) => {
     let names;
     const tooltip = <Tooltip id="detailTip">Open detail</Tooltip>;
 
-    if (['screen', 'research_plan'].includes(object.type) || object.short_label === undefined) { 
+    if (['screen', 'research_plan'].includes(object.type) || object.short_label === undefined) {
       names = [object.name];
     } else if (object.type == 'sample') {
-      let infos = [];
-      if (object.external_label) { infos.push(object.external_label) }
-      if (object.xref && object.inventory_label) { infos.push(object.inventory_label) }
-      if (object.xref && object.xref.cas) { infos.push(object.xref.cas) }
+      const infos = [];
+      if (object.external_label) { infos.push(object.external_label); }
+      if (object.xref && object.inventory_label) { infos.push(object.inventory_label); }
+      if (object.xref && object.xref.cas) { infos.push(object.xref.cas); }
       names = [object.short_label, object.name].concat(infos);
     } else {
       names = [object.short_label, object.name];
@@ -153,7 +155,7 @@ const SearchResultTabContent = ({ list, tabResult, openDetail }) => {
         </span>
       </OverlayTrigger>
     );
-  }
+  };
 
   const sampleAndReactionList = (object, i, elements) => {
     const previous = elements[i - 1];
@@ -175,8 +177,8 @@ const SearchResultTabContent = ({ list, tabResult, openDetail }) => {
           {shortLabelWithMoreInfos(object)}
         </span>
       </div>
-    )
-  }
+    );
+  };
 
   const sbmmList = (object, i, elements) => {
     const previous = elements[i - 1];
@@ -188,7 +190,9 @@ const SearchResultTabContent = ({ list, tabResult, openDetail }) => {
         key={`${object.sequence_based_macromolecule.short_name}-${i}`}
         className="search-result-molecule pt-2 fw-bold fs-5"
       >
-        {object.sbmmShortLabel()} {object.sequence_based_macromolecule.short_name}
+        {object.sbmmShortLabel()}
+        {' '}
+        {object.sequence_based_macromolecule.short_name}
       </div>
     );
 
@@ -204,35 +208,34 @@ const SearchResultTabContent = ({ list, tabResult, openDetail }) => {
           </div>
         </div>
       </div>
-    )
-  }
+    );
+  };
 
   const tabContentList = () => {
     let contentList = <div key={list.index} className="search-result-tab-content-list-white">No results</div>;
-    let resultsByPage = searchStore.tabSearchResultValues.find(val => val.id == `${list.key}s-${currentPageNumber}`);
-    let tabResultByPage = resultsByPage != undefined ? resultsByPage.results : { elements: [] };
+    const resultsByPage = searchStore.tabSearchResultValues.find((val) => val.id == `${list.key}s-${currentPageNumber}`);
+    const tabResultByPage = resultsByPage != undefined ? resultsByPage.results : { elements: [] };
 
     if (tabResultByPage.elements.length > 0) {
       contentList = tabResultByPage.elements.map((object, i, elements) => {
         if (['sample', 'reaction'].includes(object.type)) {
           return sampleAndReactionList(object, i, elements);
-        } else if (object.type === 'sequence_based_macromolecule_sample') {
+        } if (object.type === 'sequence_based_macromolecule_sample') {
           return sbmmList(object, i, elements);
-        } else {
-          return (
-            <div key={`${list.key}-${i}`} className="search-result-tab-content-list-white">
-              <div key={object.type}>
-                {shortLabelWithMoreInfos(object)}
-              </div>
-            </div>
-          );
         }
+        return (
+          <div key={`${list.key}-${i}`} className="search-result-tab-content-list-white">
+            <div key={object.type}>
+              {shortLabelWithMoreInfos(object)}
+            </div>
+          </div>
+        );
       });
     } else if (tabResult.total_elements != 0) {
       contentList = <div className="tab-spinner"><i className="fa fa-spinner fa-pulse fa-3x fa-fw" /></div>;
     }
     return contentList;
-  }
+  };
 
   return (
     <Tab.Pane eventKey={list.index} active={activeTabPane} key={`${list.key}_tabPanel`}>
