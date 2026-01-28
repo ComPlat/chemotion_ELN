@@ -1,5 +1,6 @@
 require 'nokogiri'
 require 'digest'
+require 'cgi'
 
 module SVG
   class ReactionComposer
@@ -332,9 +333,11 @@ module SVG
 
       s_conditions = conditions.split("\n") || []
       s_conditions.map.with_index do |condition, index|
+        # Escape XML special chars so "pH < value" and ">" etc. render correctly (scrub_xml would strip < as a tag)
+        escaped = CGI.escapeHTML(condition.to_s)
         <<~XML
           <svg font-family="sans-serif">
-            <text text-anchor="middle" x="#{arrow_width / 2}" y="#{y_init + index * 25}" font-size="#{word_size}">#{condition}</text>
+            <text text-anchor="middle" x="#{arrow_width / 2}" y="#{y_init + index * 25}" font-size="#{word_size}">#{escaped}</text>
           </svg>
         XML
       end.join(' ')

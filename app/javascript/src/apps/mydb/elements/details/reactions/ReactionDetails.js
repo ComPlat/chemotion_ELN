@@ -95,6 +95,7 @@ export default class ReactionDetails extends Component {
       visible: Immutable.List(),
       sfn: UIStore.getState().hasSfn,
       currentUser: (UserStore.getState() && UserStore.getState().currentUser) || {},
+      reactionSvgVersion: 0, // Bumped when graphic is updated so shouldComponentUpdate sees a state change (we mutate reaction in place)
     };
 
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
@@ -111,6 +112,7 @@ export default class ReactionDetails extends Component {
     this.state.showSchemeChangeConfirm = false;
     this.state.pendingSchemeType = null;
     this.isUpdatingGraphic = false; // Flag to prevent infinite loops
+    this.pendingGraphicReaction = null; // Queued reaction when update requested during in-flight fetch
     this.schemeDropdownRef = createRef();
     if (!reaction.reaction_svg_file) {
       this.updateGraphic();
@@ -151,7 +153,19 @@ export default class ReactionDetails extends Component {
 
     // If props changed, update local state and then sync store if weight_percentage
     if (!isEqual(reaction, prevProps.reaction)) {
-      this.setState({ reaction }, () => {
+      // Same reaction (e.g. after save): keep current reaction_svg_file so SVG doesn't go white when server omits or delays it
+      const isSameReaction = prevState.reaction?.id != null && reaction?.id === prevState.reaction.id;
+      const prevSvg = prevState.reaction?.reaction_svg_file;
+      const hasPrevSvg = prevSvg !== undefined && prevSvg !== null && String(prevSvg).trim() !== '';
+      let stateUpdate = { reaction };
+      if (isSameReaction && hasPrevSvg) {
+        reaction.reaction_svg_file = prevSvg;
+        stateUpdate = { reaction, reactionSvgVersion: (this.state.reactionSvgVersion || 0) + 1 };
+      }
+      this.setState(stateUpdate, () => {
+        if (isSameReaction && hasPrevSvg) {
+          this.forceUpdate(); // Ensure SVG re-renders after preserving (same reaction ref can skip shouldComponentUpdate)
+        }
         if (this.state.reaction && this.state.reaction.weight_percentage) {
           this.updateWeightPercentageReference(this.state.reaction);
         }
@@ -183,9 +197,10 @@ export default class ReactionDetails extends Component {
     const nextVisible = nextState.visible;
     const nextShowSchemeChangeConfirm = nextState.showSchemeChangeConfirm;
     const nextShowWtInfoModal = nextState.showWtInfoModal;
+    const nextReactionSvgVersion = nextState.reactionSvgVersion;
     const {
       reaction: reactionFromCurrentState, activeTab, visible, activeAnalysisTab,
-      showSchemeChangeConfirm, showWtInfoModal
+      showSchemeChangeConfirm, showWtInfoModal, reactionSvgVersion
     } = this.state;
     return (
       reactionFromNextProps.id !== reactionFromCurrentState.id
@@ -197,6 +212,7 @@ export default class ReactionDetails extends Component {
       || reactionFromNextState !== reactionFromCurrentState
       || nextShowSchemeChangeConfirm !== showSchemeChangeConfirm
       || nextShowWtInfoModal !== showWtInfoModal
+      || nextReactionSvgVersion !== reactionSvgVersion
     );
   }
 
@@ -593,14 +609,17 @@ export default class ReactionDetails extends Component {
     );
   }
 
-  updateGraphic() {
-    // Prevent infinite loops
+  updateGraphic(reactionFromChange) {
+    // Use reaction passed from handleReactionChange when available so we have the latest data (e.g. conditions)
+    const reaction = reactionFromChange || this.state.reaction;
+
+    // If a fetch is already in progress, queue this reaction to update again when it completes
     if (this.isUpdatingGraphic) {
+      this.pendingGraphicReaction = reaction;
       return;
     }
 
     this.isUpdatingGraphic = true;
-    const { reaction } = this.state;
     const materialsSvgPaths = {
       starting_materials: reaction.starting_materials.map((material) => material.svgPath),
       reactants: reaction.reactants.map((material) => material.svgPath),
@@ -641,8 +660,13 @@ export default class ReactionDetails extends Component {
     }).catch((error) => {
       console.error('Error updating reaction graphic:', error);
     }).finally(() => {
-      // Reset flag after update completes
       this.isUpdatingGraphic = false;
+      // If a condition/material change was requested while we were fetching, update with latest data
+      if (this.pendingGraphicReaction) {
+        const pending = this.pendingGraphicReaction;
+        this.pendingGraphicReaction = null;
+        this.updateGraphic(pending);
+      }
     });
   }
 
@@ -1060,6 +1084,7 @@ export default class ReactionDetails extends Component {
         footer={this.reactionFooter()}
       >
         <ReactionSchemeGraphic
+          key={`reaction-graphic-${reaction.id}-${this.state.reactionSvgVersion || 0}`}
           reaction={reaction}
           onToggleLabel={(materialId) => {
             reaction.toggleShowLabelForSample(materialId);
