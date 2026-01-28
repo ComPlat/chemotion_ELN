@@ -74,17 +74,17 @@ describe('GenericElDetailsContainers', () => {
 
       // Empty
       container.description = '';
-      let hasComment = container.description && container.description.trim() !== '';
+      let hasComment = !!(container.description && container.description.trim() !== '');
       expect(hasComment).toBe(false);
 
       // Whitespace only
       container.description = '   ';
-      hasComment = container.description && container.description.trim() !== '';
+      hasComment = !!(container.description && container.description.trim() !== '');
       expect(hasComment).toBe(false);
 
       // Has content
       container.description = 'Some comment';
-      hasComment = container.description && container.description.trim() !== '';
+      hasComment = !!(container.description && container.description.trim() !== '');
       expect(hasComment).toBe(true);
     });
   });
