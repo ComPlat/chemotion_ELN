@@ -52,6 +52,10 @@ class Import::ImportSdf < Import::ImportSamples
       dry_solvent: { field: 'dry_solvent', displayName: 'Dry Solvent' },
       refractive_index: { field: 'refractive_index', displayName: 'Refractive index' },
       flash_point: { field: 'flash_point', displayName: 'Flash point' },
+      solubility: { field: 'solubility', displayName: 'Solubility' },
+      color: { field: 'color', displayName: 'Color' },
+      form: { field: 'form', displayName: 'Form' },
+      inventory_label: { field: 'inventory_label', displayName: 'Inventory Label' },
     }
   end
 
@@ -165,7 +169,7 @@ class Import::ImportSdf < Import::ImportSamples
               created_by: current_user_id,
               molfile: san_molfile,
               molfile_version: babel_info[:molfile_version],
-              molecule_id: molecule.id
+              molecule_id: molecule.id,
             )
 
             attribs.each do |attrib|
@@ -189,6 +193,10 @@ class Import::ImportSdf < Import::ImportSamples
             sample['purity'] = row['purity'] if row['purity'].present?
             sample['density'] = row['density'].to_f if row['density'].present? && row['density'].match?(DENSITY_UNIT)
             sample['xref']['refractive_index'] = row['refractive_index'] if row['refractive_index'].present?
+            sample['xref']['form'] = row['form'] if row['form'].present?
+            sample['xref']['color'] = row['color'] if row['color'].present?
+            sample['xref']['solubility'] = row['solubility'] if row['solubility'].present?
+            sample['xref']['inventory_label'] = row['inventory_label'] if row['inventory_label'].present?
             if row['flash_point'].present?
               flash_point = to_value_unit_format(row['flash_point'], 'flash_point')
               handle_flash_point(sample, flash_point)

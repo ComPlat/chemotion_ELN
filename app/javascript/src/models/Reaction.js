@@ -525,7 +525,7 @@ export default class Reaction extends Element {
       newSrcMaterial.weight_percentage_reference = true;
       newSrcMaterial.weight_percentage = 1;
       WeightPercentageReactionActions.setWeightPercentageReference(newSrcMaterial);
-      const amount = { value: newSrcMaterial.amount_value, unit: newSrcMaterial.amount_unit };
+      const amount = { value: newSrcMaterial.target_amount_value, unit: newSrcMaterial.target_amount_unit };
       WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(amount);
     }
 

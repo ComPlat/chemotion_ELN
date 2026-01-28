@@ -493,6 +493,10 @@ export const defaultSampleSchemaValidation = {
   location: { type: 'string' },
   external_label: { type: 'string' },
   impurities: { type: 'string' },
+  form: { type: 'string' },
+  color: { type: 'string' },
+  solubility: { type: 'string' },
+  inventory_label: { type: 'string' },
 };
 
 /**

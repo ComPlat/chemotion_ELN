@@ -34,6 +34,8 @@ export default function ReactionConditions({
 }) {
   const [conditions, setConditions] = useState(textToLines(conditionsProp));
   const debounceTimerRef = useRef(null);
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
 
   useEffect(
     () => setConditions(textToLines(conditionsProp)),
@@ -51,8 +53,9 @@ export default function ReactionConditions({
 
   const handleChange = useCallback((newConditions) => {
     setConditions(newConditions);
-    onChange(newConditions.join('\n'));
-  }, [onChange]);
+    // Use ref so parent and graphic update are always called (including when list was empty)
+    onChangeRef.current(newConditions.join('\n'));
+  }, []);
 
   const addCondition = useCallback((value = '') => {
     // Decode HTML entities when adding from dropdown or manual input

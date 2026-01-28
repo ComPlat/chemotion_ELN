@@ -174,7 +174,8 @@ describe('FieldValueSelector component behavior', () => {
     const firstOption = fieldButtons.at(0);
 
     firstOption.simulate('keyDown', { key: 'Enter' });
-    expect(onFieldChangeSpy.called).toBe(true);
+    // Selecting the already-selected field should NOT call onFieldChange
+    expect(onFieldChangeSpy.called).toBe(false);
   });
 
   it('should handle Space key on dropdown items', () => {
@@ -182,9 +183,10 @@ describe('FieldValueSelector component behavior', () => {
     dropdownButton.simulate('click');
 
     const fieldButtons = wrapper.find(Button).filter('[variant="link"]');
-    const firstOption = fieldButtons.at(0);
+    const secondOption = fieldButtons.at(1);
 
-    firstOption.simulate('keyDown', { key: ' ' });
+    secondOption.simulate('keyDown', { key: ' ' });
+    // Selecting a another field should call onFieldChange
     expect(onFieldChangeSpy.called).toBe(true);
   });
 });
