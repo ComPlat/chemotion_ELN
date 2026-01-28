@@ -272,10 +272,10 @@ class ElementActions {
     };
   }
 
-  updateGenericEl(params) {
+  updateGenericEl(params, closeView = false) {
     return (dispatch) => {
       GenericElsFetcher.update(params)
-        .then((result) => { dispatch(result); })
+        .then((result) => { dispatch({ element: result, closeView }); })
         .catch((errorMessage) => { console.log(errorMessage); });
     };
   }
