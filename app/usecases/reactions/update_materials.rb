@@ -102,7 +102,7 @@ module Usecases
                                   update_existing_sample(
                                     sample,
                                     fixed_label,
-                                    eight_percentage_ref_record_target_amount,
+                                    weight_percentage_ref_record_target_amount,
                                   )
                                 end
 
