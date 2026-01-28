@@ -213,4 +213,27 @@ export default class SamplesFetcher {
 
     return promise;
   }
+
+  static batchRefreshSvg(svgs) {
+    return fetch('/api/v1/samples/batch-refresh-svg', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        svgs: svgs.map(svg => ({
+          svg_path: svg.svgPath,
+          molfile: svg.molfile
+        }))
+      })
+    }).then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    }).then(json => json.results || [])
+      .catch(errorMessage => {
+        console.error('Error batch refreshing SVGs:', errorMessage);
+        throw errorMessage;
+      });
+  }
 }
