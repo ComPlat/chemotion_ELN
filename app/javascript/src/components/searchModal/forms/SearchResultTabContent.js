@@ -159,20 +159,31 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
 
   const sampleAndReactionList = (object, i, elements) => {
     const previous = elements[i - 1];
-    const previousMolecule = previous ? previous.molecule_formula : '';
-    const sampleNameOrEmpty = object.type === 'sample' ? <SampleName sample={object} /> : '';
-    const svg = previousMolecule !== object.molecule_formula || object.type == 'reaction' ? svgPreview(object) : '';
+    const previousMolecule = previous?.molecule_formula;
 
-    const header = previousMolecule !== object.molecule_formula && (
-      <div key={`${object.short_name}-${i}`} className={`search-result-molecule ${object.type}`}>
-        {svg}
-        {sampleNameOrEmpty}
-      </div>
-    );
+    const showSampleHeader = object.type === 'sample' && previousMolecule !== object.molecule_formula;
 
     return (
-      <div key={`${list.key}-${i}`} className="search-result-tab-content-list" onClick={copyToClipboard}>
-        {header}
+      <div
+        key={`${object.short_name}-${i}`}
+        className="search-result-tab-content-list"
+        onClick={copyToClipboard}
+      >
+        {/* Sample grouping header */}
+        {showSampleHeader && (
+        <div className="search-result-molecule sample">
+          {svgPreview(object)}
+          <SampleName sample={object} />
+        </div>
+        )}
+
+        {/* Reaction SVG — always */}
+        {object.type === 'reaction' && (
+        <div className="search-result-molecule reaction">
+          {svgPreview(object)}
+        </div>
+        )}
+
         <span className="search-result-tab-content-list-name">
           {shortLabelWithMoreInfos(object)}
         </span>
