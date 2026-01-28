@@ -122,6 +122,7 @@ export default function ReactionSchemeGraphic({ reaction, onToggleLabel }) {
       }
       />
       <SvgFileZoomPan
+        key={`reaction-svg-${reaction.id}-${typeof reaction.reaction_svg_file === 'string' ? reaction.reaction_svg_file.length : 0}`}
         duration={300}
         resize
         // eslint-disable-next-line react/jsx-props-no-spreading

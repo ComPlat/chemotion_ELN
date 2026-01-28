@@ -1881,7 +1881,10 @@ export default class ReactionDetailsScheme extends React.Component {
           <ReactionConditions
             conditions={reaction.conditions}
             isDisabled={!permitOn(reaction) || reaction.isMethodDisabled('conditions')}
-            onChange={(conditions) => onInputChange('conditions', conditions)}
+            onChange={(conditions) => {
+              onInputChange('conditions', conditions);
+              onReactionChange(reaction, { updateGraphic: true });
+            }}
           />
         </div>
 
