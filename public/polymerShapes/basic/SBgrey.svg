@@ -1,12 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="11.6986067405 34.882796802 88.4411268 45.127102640000004" width="88.4411268" height="45.127102640000004">
-  <!-- Background Rectangle (White) -->
-  <rect x="11.6986067405" y="34.882796802" width="88.4411268" height="45.127102640000004" style="fill:white;"/>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" id="svg-8f3c2a" viewBox="12.4724666 35.1492508 87.53403832000001 44.900333280000005" version="1.1" style="max-height: 500px" width="87.53403832000001" height="44.900333280000005">
+  <defs id="defs-5d2b1f">
+    <linearGradient id="swatch-1a4e7c">
+      <stop id="stop-7c8f2d" offset="0" style="stop-color:#000000;stop-opacity:1;"/>
+    </linearGradient>
+    <pattern patternTransform="matrix(1.4142135,1.4142135,-1.4142135,1.4142135,-369.71572,-4.762006)" id="pattern-a3f9b2" preserveAspectRatio="xMidYMid" xlink:href="#pattern-b1d6e7"/>
+    <pattern patternTransform="matrix(1.4142135,1.4142135,-1.4142135,1.4142135,-369.71572,-4.7620062)" id="pattern-b1d6e7" preserveAspectRatio="xMidYMid" xlink:href="#pattern-c4e5f0"/>
+    <pattern y="0" x="0" patternTransform="matrix(1.4142135,1.4142135,-1.4142135,1.4142135,-369.71572,-4.7620062)" id="pattern-c4e5f0" preserveAspectRatio="xMidYMid" xlink:href="#pattern-d7a1c3"/>
+    <pattern y="0" x="0" style="fill:#bdbcbc" id="pattern-d7a1c3" preserveAspectRatio="xMidYMid" patternTransform="scale(2)" height="10" width="3" patternUnits="userSpaceOnUse">
+      <rect id="rect-9b4e2f" height="10" width="2" y="0" x="0" style="stroke:none"/>
+    </pattern>
+  </defs>
 
-  <!-- Your original path element with random pattern -->
-  <path style="fill:url(#pattern-4f32a04f-c635-4b63-bf9d-d06a9278f2c4);fill-opacity:1;fill-rule:evenodd;stroke:#1b1918;stroke-width:0.5669;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" d="m 13.783477,41.952131 v 31.1807 q 0,5.6693 5.6693,5.6693 h 73.700797 q 5.6693,0 5.6693,-5.6693 v -31.1807 q 0,-5.6693 -5.6693,-5.6693 H 19.452777 q -5.6693,0 -5.6693,5.6693 z"/>
-
-  <!-- Random pattern definition -->
-  <pattern patternUnits="userSpaceOnUse" width="3" height="10" id="pattern-4f32a04f-c635-4b63-bf9d-d06a9278f2c4">
-    <rect width="2" height="10" fill="#bdbcbc"/>
-  </pattern>
+  <path id="path-6f2c1b" style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#1b1918;stroke-width:0.5669;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1" d="m 13.783477,41.952131 v 31.1807 q 0,5.6693 5.6693,5.6693 h 73.700797 q 5.6693,0 5.6693,-5.6693 v -31.1807 q 0,-5.6693 -5.6693,-5.6693 H 19.452777 q -5.6693,0 -5.6693,5.6693 z"/>
+  <path id="path-4e7d9f" style="font-variation-settings:normal;vector-effect:none;fill:url(#pattern-a3f9b2);fill-opacity:1;fill-rule:evenodd;stroke:#1b1918;stroke-width:0.5669;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000" d="m 13.783477,41.952131 v 31.1807 q 0,5.6693 5.6693,5.6693 h 73.700797 q 5.669297,0 5.669297,-5.6693 v -31.1807 q 0,-5.6693 -5.669297,-5.6693 H 19.452778 q -5.6693,0 -5.669301,5.6693 z"/>
 </svg>

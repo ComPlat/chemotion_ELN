@@ -19,6 +19,7 @@ import {
   textNodeStruct,
   textNodeStructSetter,
   imagesList,
+  textList,
   allAtoms,
   deletedAtomsSetter
 } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
@@ -38,6 +39,94 @@ const updateAtom = (atomLocation, templateType, imageCounter) => ({
   alias: `t_${templateType}_${imageCounter}`,
   location: atomLocation
 });
+
+// Generate a unique key for text nodes (used when pasting duplicates)
+const generateUniqueTextKey = () => {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let key = '';
+  for (let i = 0; i < 5; i++) {
+    key += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return key;
+};
+
+// Check if two positions are approximately the same
+const isSamePosition = (pos1, pos2) => {
+  if (!pos1 || !pos2) return false;
+  return Math.abs(pos1.x - pos2.x) < 0.1 && Math.abs(pos1.y - pos2.y) < 0.1;
+};
+
+// Associate pasted text with new alias by finding duplicates and assigning unique keys
+// When Ketcher pastes text, it duplicates the key - we need to give the pasted text a new unique key
+const associateTextNodeWithNewAlias = (atomLocation, newAlias, oldAlias) => {
+  if (!textList || textList.length === 0) return;
+
+  // Find the original text's position and key
+  let originalTextPosition = null;
+  let originalKey = null;
+  if (oldAlias && textNodeStruct[oldAlias]) {
+    originalKey = textNodeStruct[oldAlias];
+    for (const textNode of textList) {
+      try {
+        const content = JSON.parse(textNode.data.content);
+        if (content.blocks[0]?.key === originalKey) {
+          originalTextPosition = textNode.data?.position;
+          break;
+        }
+      } catch (e) { /* Skip */ }
+    }
+  }
+
+  // Find pasted text (same key as original but different position) and give it a unique key
+  for (let i = 0; i < textList.length; i++) {
+    const textNode = textList[i];
+    try {
+      const content = JSON.parse(textNode.data.content);
+      const textKey = content.blocks[0]?.key;
+      const textPos = textNode.data?.position;
+
+      // Pasted text has same key but different position
+      if (originalKey && textKey === originalKey && !isSamePosition(textPos, originalTextPosition)) {
+        const newKey = generateUniqueTextKey();
+        content.blocks[0].key = newKey;
+        textNode.data.content = JSON.stringify(content);
+        textList[i] = textNode;
+
+        const updatedStruct = { ...textNodeStruct };
+        updatedStruct[newAlias] = newKey;
+        textNodeStructSetter(updatedStruct);
+        return;
+      }
+    } catch (e) { /* Skip */ }
+  }
+
+  // Fallback: find any unassociated text at a different position
+  const associatedKeys = new Set(Object.values(textNodeStruct));
+  for (let i = 0; i < textList.length; i++) {
+    const textNode = textList[i];
+    try {
+      const content = JSON.parse(textNode.data.content);
+      const textKey = content.blocks[0]?.key;
+      const textPos = textNode.data?.position;
+
+      if (isSamePosition(textPos, originalTextPosition)) continue;
+
+      // Generate unique key if already associated elsewhere
+      let finalKey = textKey;
+      if (associatedKeys.has(textKey)) {
+        finalKey = generateUniqueTextKey();
+        content.blocks[0].key = finalKey;
+        textNode.data.content = JSON.stringify(content);
+        textList[i] = textNode;
+      }
+
+      const updatedStruct = { ...textNodeStruct };
+      updatedStruct[newAlias] = finalKey;
+      textNodeStructSetter(updatedStruct);
+      return;
+    } catch (e) { /* Skip */ }
+  }
+};
 
 // helper function to process ketcher-rails files and adding image to ketcher canvas
 const addingPolymersToKetcher = async (railsPolymersList, data) => {
@@ -250,16 +339,18 @@ const addAtomAliasHelper = async (processedAtoms) => {
   try {
     const newImageNodes = [...imagesList];
     imageUsedCounterSetter(processedAtoms.length - 1);
+
     for (let m = 0; m < mols.length; m++) {
       const mol = latestData[mols[m]];
       const removableIndices = [];
+
       for (let a = 0; a < mol?.atoms?.length; a++) {
         const atom = mol.atoms[a];
         const splits = atom?.alias?.split('_');
-        // label A with three part alias
-        if (ALIAS_PATTERNS.twoParts.test(atom.alias)) {
-          imageUsedCounterSetter(imageNodeCounter + 1);
 
+        if (ALIAS_PATTERNS.twoParts.test(atom.alias)) {
+          // New template added - assign next available index
+          imageUsedCounterSetter(imageNodeCounter + 1);
           if (!newImageNodes[imageNodeCounter]) {
             // eslint-disable-next-line no-await-in-loop
             const img = await prepareImageFromTemplateList(parseInt(splits[1]), atom.location);
@@ -268,28 +359,47 @@ const addAtomAliasHelper = async (processedAtoms) => {
           atom.alias += `_${imageNodeCounter}`;
           processedAtoms.push(`${m}_${a}_${imageNodeCounter}`);
         } else if (ALIAS_PATTERNS.threeParts.test(atom.alias)) {
-          if (processedAtoms.indexOf(`${m}_${a}_${splits[2]}`) !== -1) {
-            // add image if image doesn't exists
+          const checkKey = `${m}_${a}_${splits[2]}`;
+          const isInProcessed = processedAtoms.indexOf(checkKey) !== -1;
+
+          if (isInProcessed) {
+            // Existing atom - create image if missing
             if (!newImageNodes[imageNodeCounter]) {
               // eslint-disable-next-line no-await-in-loop
               const img = await prepareImageFromTemplateList(parseInt(splits[1]), atom.location);
               newImageNodes.push(img);
             }
           } else {
+            // Duplicate alias from paste - reassign to new unique index
+            const oldAlias = atom.alias;
             imageUsedCounterSetter(imageNodeCounter + 1);
-            atom.alias = `t_${splits[1]}_${imageNodeCounter}`;
+            const newAlias = `t_${splits[1]}_${imageNodeCounter}`;
+            atom.alias = newAlias;
             processedAtoms.push(`${m}_${a}_${imageNodeCounter}`);
+
+            // Create image for pasted atom
+            if (!newImageNodes[imageNodeCounter]) {
+              // eslint-disable-next-line no-await-in-loop
+              const img = await prepareImageFromTemplateList(parseInt(splits[1]), atom.location);
+              newImageNodes.push(img);
+            }
+
+            // Associate pasted text with new alias
+            associateTextNodeWithNewAlias(atom.location, newAlias, oldAlias);
           }
         }
+
         if (atom.label === 'tbr') {
           removableIndices.push(atom);
         }
       }
+
       if (removableIndices.length) {
         mol.atoms?.splice(mol.atoms.length - removableIndices.length, removableIndices.length);
         mol.bonds?.splice(mol.bonds.length - removableIndices.length, removableIndices.length);
       }
     }
+
     const d = { ...latestData };
     const molsList = removeImagesFromData(d);
     d.root.nodes = [...molsList, ...newImageNodes];
@@ -306,6 +416,7 @@ export const handleAddAtom = async () => {
   imageUsedCounterSetter(-1);
   const seenThirdParts = new Set();
 
+  // Collect unique atoms by their alias third part (index)
   for (let m = 0; m < mols.length; m++) {
     const mol = latestData[mols[m]];
     for (let a = 0; a < mol?.atoms?.length; a++) {

@@ -15,7 +15,7 @@ import {
 import { ALIAS_PATTERNS, KET_TAGS } from 'src/utilities/ketcherSurfaceChemistry/constants';
 import { findByKeyAndUpdateTextNodePosition } from 'src/utilities/ketcherSurfaceChemistry/TextNode';
 import {
-  mols, textNodeStruct, allTemplates, templatesBaseHashWithTemplateId
+  mols, textNodeStruct, allTemplates, templatesBaseHashWithTemplateId, textList
 } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
 import { latestData } from 'src/components/structureEditor/KetcherEditor';
 import loadAndEncodeSVG from 'src/utilities/ketcherSurfaceChemistry/iconBaseProvider';
@@ -99,7 +99,7 @@ const placeImageOnAtoms = async (mols_, imagesList_) => {
           }
           const boundingBox = {
             x: atom.location[0] - imageCoordinates.width / 2,
-            y: atom.location[1] + imageCoordinates.width / 2,
+            y: atom.location[1] + imageCoordinates.height / 2,
             z: atom.location[2],
             width: imageCoordinates.width,
             height: imageCoordinates.height
@@ -152,10 +152,10 @@ const findTextNodesNotConnectedWithTemplates = (updatedTextList) => {
 };
 
 // place text nodes on atom with matching aliases
-const placeTextOnAtoms = async (mols_) => {
+const placeTextOnAtoms = async () => {
   try {
     const updatedTextList = [];
-    for (const item of mols_) {
+    for (const item of mols) {
       for (const atom of latestData[item].atoms) {
         const textNodeKey = textNodeStruct[atom.alias];
 
@@ -165,7 +165,9 @@ const placeTextOnAtoms = async (mols_) => {
         }
       }
     }
-    const otherTextNodes = await findTextNodesNotConnectedWithTemplates(updatedTextList); // extra text components without aliases
+    // findTextNodesNotConnectedWithTemplates should check ALL textList, not just updatedTextList
+    // It finds text nodes that are NOT in textNodeStruct (unassociated text nodes)
+    const otherTextNodes = await findTextNodesNotConnectedWithTemplates(textList); // extra text components without aliases
     return [...removeTextFromData(latestData), ...updatedTextList, ...otherTextNodes];
   } catch (err) {
     console.error('placeTextOnAtoms', err.message);

@@ -304,9 +304,12 @@ export default class SampleDetails extends React.Component {
     }
   }
 
-  handleStructureEditorSave(molfile, svgFile = null, config = null, editor = 'ketcher') {
+  handleStructureEditorSave(molfile, svg, info, editorId) {
     const { sample } = this.state;
     sample.molfile = molfile;
+    const svgFile = svg; // SVG is passed as 4th parameter
+    const editor = editorId || 'ketcher'; // editorId is passed as 6th parameter
+    const config = info; // info might contain config data like smiles
     const smiles = (config && sample.molecule) ? config.smiles : null;
     sample.contains_residues = molfile?.indexOf(' R# ') > -1;
     sample.formulaChanged = true;

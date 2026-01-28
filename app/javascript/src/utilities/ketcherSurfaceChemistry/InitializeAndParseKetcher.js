@@ -176,7 +176,8 @@ const templateWithBoundingBox = async (templateType, atomLocation, templateSize)
 const fetchKetcherData = async (editor) => {
   try {
     if (!editor) throw new Error('Editor instance is invalid');
-    const data = JSON.parse(await editor.structureDef.editor.getKet());
+    const ketString = await editor.structureDef.editor.getKet();
+    const data = JSON.parse(ketString);
     await latestDataSetter(data);
     await loadKetcherData(data);
   } catch (err) {
@@ -184,51 +185,12 @@ const fetchKetcherData = async (editor) => {
   }
 };
 
-// Helper function to clean up empty lines around attachment points
-const cleanMolfileEmptyLines = (molfile) => {
-  if (!molfile) return molfile;
-
-  const lines = molfile.split('\n');
-  const cleanedLines = [];
-  let i = 0;
-
-  while (i < lines.length) {
-    const line = lines[i];
-    const trimmed = line.trim();
-
-    // If pattern matches and next line is empty, remove both
-    if (trimmed.match(/^A\s+\d+$/)) {
-      // Check if next line is empty
-      if (i + 1 < lines.length && lines[i + 1].trim() === '') {
-        // Skip both the pattern line and the empty line
-        i += 2;
-      } else {
-        // Next line is not empty, keep the attachment point line
-        cleanedLines.push(line);
-        i += 1;
-        while (i < lines.length && lines[i].trim() === '') {
-          i += 1;
-        }
-      }
-    } else {
-      // For non-attachment lines, add them normally
-      cleanedLines.push(line);
-      i += 1;
-    }
-  }
-
-  return cleanedLines.join('\n');
-};
-
 const prepareKetcherData = async (editor, initMol) => {
   try {
     const polymerTag = await hasKetcherData(initMol);
     const textNodes = await hasTextNodes(initMol);
-
-    // Clean up empty lines around attachment points before Indigo conversion
-    const cleanedMol = cleanMolfileEmptyLines(initMol);
-    const ketFile = await editor._structureDef.editor.indigo.convert(cleanedMol).catch((err) => {
-      console.error('invalid molfile. Please try again', err);
+    const ketFile = await editor._structureDef.editor.indigo.convert(initMol).catch((err) => {
+      console.error('invalid molfile. Please try again', err.message);
     });
 
     if (!ketFile || !ketFile.struct) {
@@ -239,6 +201,10 @@ const prepareKetcherData = async (editor, initMol) => {
     const fileContent = JSON.parse(ketFile.struct);
     textNodeStructSetter({});
     await applyKetcherData(polymerTag, fileContent, textNodes, editor);
+    // Increased timeout to ensure canvas is fully rendered before centering
+    setTimeout(async () => {
+      await centerPositionCanvas(editor);
+    }, 100);
   } catch (err) {
     console.error('Error preparing Ketcher data:', err.message);
   }
@@ -250,17 +216,16 @@ const applyKetcherData = async (polymerTag, fileContent, textNodes, editor) => {
     if (polymerTag) {
       const { molfileData } = await addPolymerTags(polymerTag, fileContent);
       molfileContent = molfileData;
-
-      // Add text nodes if available
-      const textNodeList = await addTextNodes(textNodes, molfileContent);
-      if (textNodeList.length) {
-        molfileContent.root.nodes.push(...textNodeList);
+    }
+    // Add text nodes when available (with or without polymer tag, so labels aren't lost on open)
+    if (textNodes && textNodes.length > 0) {
+      const textNodeList = await addTextNodes(textNodes);
+      const validNodes = (textNodeList || []).filter(Boolean);
+      if (validNodes.length) {
+        molfileContent.root.nodes.push(...validNodes);
       }
     }
-    saveMoveCanvas(editor, molfileContent, true, true);
-    setTimeout(() => {
-      centerPositionCanvas(editor);
-    }, 10);
+    saveMoveCanvas(editor, molfileContent, true, true, false, { syncImagesOnly: true });
     ImagesToBeUpdatedSetter(true);
     return { molfileContent, polymerTag };
   } catch (err) {
