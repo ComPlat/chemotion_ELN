@@ -1,4 +1,4 @@
-decoupled	molecular mass (decoupled)	sum formula (decoupled)	stereo_abs	stereo_rel	molfile		sample name		molecule name	sample external label	description	real amount	real unit	target amount	target unit	density	solvent	location	secret	melting pt	boiling pt	refractive index	purity	flash point	dry solvent	canonical smiles
+decoupled	molecular mass (decoupled)	sum formula (decoupled)	stereo_abs	stereo_rel	molfile	sample name	molecule name	sample external label	description	real amount	real unit	target amount	target unit	density	solvent	location	secret	melting pt	boiling pt	refractive index	purity	flash point	dry solvent	solubility	form	color	inventory_label	canonical smiles
 FALSE									 
 OpenBabel06022512412D
 
@@ -15,6 +15,6 @@ OpenBabel06022512412D
   3  4  1  0  0  0  0
   4  5  2  0  0  0  0
   5  6  1  0  0  0  0
-M  END		Test 4			external-label-01		1	g			0.88 g/mL			FALSE	5.5	80.1	1.501	1 	11 °C	FALSE
+M  END	Test 4		external-label-01		1	g			0.88 g/mL			FALSE	5.5	80.1	1.501	1	11 °C	FALSE	Soluble in water	powder	white	INV-001	
 
-FALSE							Test 5			external-label-02		1	g			0.88 g/mL			FALSE	5.5	80.1		1	11 °C	FALSE 	c1ccccc1								
+FALSE					Test 5			external-label-02		1	g			0.88 g/mL			FALSE	5.5	80.1		1	11 °C	FALSE	Soluble in DMSO	liquid	yellow	INV-002	c1ccccc1								
