@@ -802,15 +802,10 @@ function ToolHeader() {
   );
 }
 
-function MenuHeader({
-  column, context, setSort, names, gasType = 'off'
-}) {
-  const { setColumnDefinitions } = context;
+function SortControl({ column, setSort }) {
   const [ascendingSort, setAscendingSort] = useState('inactive');
   const [descendingSort, setDescendingSort] = useState('inactive');
   const [noSort, setNoSort] = useState('inactive');
-  const [name, setName] = useState(names[0]);
-  const { field, entryDefs } = column.colDef;
 
   const onSortChanged = () => {
     setAscendingSort(column.isSortAscending() ? 'sort_active' : 'inactive');
@@ -825,24 +820,15 @@ function MenuHeader({
   useEffect(() => {
     column.addEventListener('sortChanged', onSortChanged);
     onSortChanged();
+
+    return () => column.removeEventListener('sortChanged', onSortChanged);
   }, []);
 
   const onSortRequested = (order, event) => {
     setSort(order, event.shiftKey);
   };
 
-  const onEntryDefChange = (updatedEntryDefs) => {
-    setColumnDefinitions(
-      {
-        type: 'update_entry_defs',
-        field,
-        entryDefs: updatedEntryDefs,
-        gasType
-      }
-    );
-  };
-
-  const sortMenu = (
+  return (
     <div>
       <div
         onClick={(event) => onSortRequested('asc', event)}
@@ -867,6 +853,25 @@ function MenuHeader({
       </div>
     </div>
   );
+}
+
+function MenuHeader({
+  column, context, setSort, names, gasType = 'off'
+}) {
+  const { setColumnDefinitions } = context;
+  const [name, setName] = useState(names[0]);
+  const { field, entryDefs } = column.colDef;
+
+  const onEntryDefChange = (updatedEntryDefs) => {
+    setColumnDefinitions(
+      {
+        type: 'update_entry_defs',
+        field,
+        entryDefs: updatedEntryDefs,
+        gasType
+      }
+    );
+  };
 
   return (
     <div className="d-grid gap-1">
@@ -876,7 +881,7 @@ function MenuHeader({
       >
         {`${name} ${gasType !== 'off' ? `(${gasType})` : ''}`}
       </span>
-      {sortMenu}
+      <SortControl column={column} setSort={setSort} />
       <MaterialEntrySelection entryDefs={entryDefs} onChange={onEntryDefChange} />
     </div>
   );
