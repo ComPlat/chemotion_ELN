@@ -306,6 +306,7 @@ class ElementStore {
       handleUpdateLinkedElement: [
         ElementActions.updateReaction,
         ElementActions.updateSample,
+        ElementActions.updateGenericEl,
       ],
       handleUpdateElement: [
         // ElementActions.updateReaction,
@@ -318,7 +319,6 @@ class ElementStore {
         ElementActions.updateVessel,
         ElementActions.updateVesselTemplate,
         ElementActions.updateSequenceBasedMacromoleculeSample,
-        ElementActions.updateGenericEl,
       ],
       handleUpdateEmbeddedResearchPlan: ElementActions.updateEmbeddedResearchPlan,
       handleRefreshComputedProp: ElementActions.refreshComputedProp,
