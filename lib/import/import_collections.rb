@@ -246,16 +246,13 @@ module Import
         end
 
         # Priority: molfile > cano_smiles > dummy (if decoupled and both blank)
-        molecule = if molfile.present?
-                     # Always use molfile if available (highest priority)
-                     Molecule.find_or_create_by_molfile(molfile)
-                   elsif cano_smiles.present?
-                     # Use cano_smiles if molfile is missing but cano_smiles is available
-                     Molecule.find_or_create_by_cano_smiles(cano_smiles)
-                   elsif fields.fetch('decoupled', nil)
-                     # Create dummy only for decoupled samples with no structure data
-                     Molecule.find_or_create_dummy
-                   end
+        # Always use molfile if available (highest priority)
+        molecule = Molecule.find_or_create_by_molfile(molfile) if molfile.present?
+        # Use cano_smiles if molfile is missing or invalid but cano_smiles is available
+        molecule ||= Molecule.find_or_create_by_cano_smiles(cano_smiles) if cano_smiles.present?
+        # Create dummy only for decoupled samples with no structure data
+        molecule ||= Molecule.find_or_create_dummy if fields.fetch('decoupled', nil)
+
         unless (fields.fetch('decoupled', nil) && molfile.blank?) || molecule_name_name.blank?
           molecule.create_molecule_name_by_user(molecule_name_name, @current_user_id)
         end
@@ -689,6 +686,21 @@ module Import
 
         # add literal to the @instances map
         update_instances!(uuid, literal)
+      end
+    end
+
+    def reprocess_reaction_svgs
+      return unless @instances.key?('Reaction')
+
+      source_value = @data['source'] || ''
+      return unless source_value == 'smart-add'
+
+      @instances['Reaction'].each_value do |reaction|
+        reaction.update_svg_file!
+        reaction.save!
+      rescue StandardError => e
+        Rails.logger.error("Failed to reprocess SVG for reaction #{reaction.id}: #{e.message}")
+        Rails.logger.error(e.backtrace)
       end
     end
 
