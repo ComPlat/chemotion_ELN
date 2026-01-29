@@ -57,7 +57,11 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
         if (json.error) {
           genericEl.type = null;
         }
-        return genericEl;
+        // Fetch wellplates for this element
+        return this.fetchWellplates(id).then((wellplatesData) => {
+          genericEl.wellplates = wellplatesData?.wellplates || [];
+          return genericEl;
+        });
       })
       .catch((errorMessage) => {
         console.log(errorMessage);
@@ -163,7 +167,8 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
         'Element',
         true,
         true
-      ).then(() => this.fetchById(json.element.id)))
+      ).then(() => this.updateWellplates(json.element.id, genericEl.wellplateIDs || []))
+        .then(() => this.fetchById(json.element.id)))
       .catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -249,5 +254,13 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
 
   static uploadKlass(params) {
     return this.execData(params, 'upload_klass');
+  }
+
+  static fetchWellplates(elementId) {
+    return super.exec(`wellplates/by_generic_element/${elementId}`, 'GET');
+  }
+
+  static updateWellplates(elementId, wellplateIds) {
+    return super.execData({ wellplate_ids: wellplateIds }, `wellplates/by_generic_element/${elementId}`, 'PUT');
   }
 }
