@@ -380,7 +380,7 @@ module Import
 
     def handle_sample_fields(sample, db_column, value)
       case db_column
-      when 'cas', 'refractive_index'
+      when 'cas', 'refractive_index', 'form', 'color', 'solubility', 'inventory_label'
         handle_xref_fields(sample, db_column, value)
       when 'mn.name'
         assign_molecule_name_id(sample, value)
@@ -513,6 +513,10 @@ module Import
         location
         melting_point
         purity
+        form
+        color
+        solubility
+        inventory_label
       ].freeze
       return unless included_fields.include?(db_column) || additional_columns.include?(db_column)
 

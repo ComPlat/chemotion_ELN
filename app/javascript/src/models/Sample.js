@@ -320,6 +320,7 @@ export default class Sample extends Element {
     }
     if (sample instanceof Sample) {
       newSample.molecule = sample.molecule;
+      newSample.molecule_name = sample.molecule_name;
       newSample.sample_svg_file = sample.sample_svg_file;
     } else {
       newSample.molecule = sample;

@@ -35,6 +35,7 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import { setReactionByType } from 'src/apps/mydb/elements/details/reactions/ReactionDetailsShare';
 import { sampleShowOrNew } from 'src/utilities/routesUtils';
 import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
+import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 import ConfirmClose from 'src/components/common/ConfirmClose';
 import { rfValueFormat } from 'src/utilities/ElementUtils';
 import ExportSamplesButton from 'src/apps/mydb/elements/details/ExportSamplesButton';
@@ -1090,6 +1091,8 @@ export default class ReactionDetails extends Component {
             reaction.toggleShowLabelForSample(materialId);
             this.handleReactionChange(reaction, { updateGraphic: true });
           }}
+          onRefresh={() => this.refreshGraphic()}
+          isRefreshing={this.state.isRefreshingGraphic || false}
         />
         <Modal show={this.state.showWtInfoModal} onHide={this.closeWtInfoModal} centered>
           <Modal.Header closeButton>

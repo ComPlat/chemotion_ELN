@@ -16,6 +16,35 @@ module Chemotion
     helpers UserLabelHelpers
 
     resource :samples do
+      desc 'Batch refresh multiple sample SVGs'
+      params do
+        requires :svgs, type: Array, desc: 'Array of {svg_path, molfile} objects'
+      end
+      post 'batch-refresh-svg' do
+        svgs = params[:svgs] || []
+
+        if svgs.empty?
+          status 400
+          body 'svgs array is required and cannot be empty.'
+          return
+        end
+
+        results = svgs.map do |svg_params|
+          svg_path = svg_params[:svg_path] || svg_params['svg_path']
+          molfile = svg_params[:molfile] || svg_params['molfile']
+          if svg_path.blank? || molfile.blank?
+            { success: false, error: 'svg_path and molfile are required' }
+          else
+            Sample.refresh_smaple_svg(svg_path, molfile)
+          end
+        rescue StandardError => e
+          { success: false, error: e.message }
+        end
+
+        status 200
+        { results: results }
+      end
+
       # TODO: Refactoring: Use Grape Entities
       namespace :ui_state do
         desc 'Get samples by UI state'

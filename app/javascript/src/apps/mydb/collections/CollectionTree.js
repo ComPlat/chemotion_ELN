@@ -148,7 +148,14 @@ function CollectionTree({ isCollapsed }) {
                 <div className="tree-view_container">
                   {roots.length === 0
                     ? <div className="text-muted text-center p-2">No collections</div>
-                    : roots.map((root) => <CollectionSubtree key={root.id} root={root} level={1} />)}
+                    : roots.map((root) => {
+                      // create a copy of the root with computed label
+                      const rootWithLabel = collectionKey === 'syncedWithMe'
+                        ? { ...root, label: CollectionStore.getChildLabel(root) }
+                        : root;
+
+                      return <CollectionSubtree key={root.id} root={rootWithLabel} level={1} />;
+                    })}
                 </div>
               )}
             </Fragment>
