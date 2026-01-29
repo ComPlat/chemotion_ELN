@@ -18,6 +18,7 @@ export let textNodeStruct = {}; // contains a list of original text when tool ba
 export let imageListCopyContainer = [];
 export let textListCopyContainer = [];
 export let { editor } = window; // reference to the editor
+export let canvasIframeRef = null;
 export let allTemplates = {}; // contains all templates
 export let templatesBaseHashWithTemplateId = {}; // contains all templates
 export let allowProcessing = true;
@@ -109,12 +110,74 @@ export const textListCopyContainerSetter = (data) => {
   textListCopyContainer = data;
 };
 
+// Helper to get current atom positions hash for comparison
+const getAtomPositionsHash = async (editorLoc) => {
+  try {
+    const data = JSON.parse(await editorLoc.structureDef.editor.getKet());
+    const positions = [];
+    Object.keys(data).forEach((key) => {
+      if (data[key]?.atoms) {
+        data[key].atoms.forEach((atom) => {
+          if (atom.location) {
+            positions.push(atom.location.join(','));
+          }
+        });
+      }
+    });
+    return positions.join('|');
+  } catch {
+    return '';
+  }
+};
+
 // keep a copy of imageList and textList
-export const fetchAndReplace = (editorLoc) => {
-  centerPositionCanvas(editorLoc);
-  setTimeout(() => {
-    onTemplateMove(editorLoc, false);
-  }, 500);
+// After button actions (CLEAN_UP, LAYOUT, etc.), atoms are repositioned by Ketcher
+// so images and text nodes should follow the new atom positions
+export const fetchAndReplace = async (editorLoc) => {
+  // Deep copy imagesList and textList BEFORE Ketcher modifies them
+  // This preserves original dimensions (width, height) and data
+  const imagesCopy = imagesList.map((img) => ({
+    ...img,
+    boundingBox: img.boundingBox ? { ...img.boundingBox } : undefined,
+  }));
+  const textCopy = textList.map((txt) => ({
+    ...txt,
+    data: txt.data ? { ...txt.data, position: txt.data.position ? { ...txt.data.position } : undefined } : undefined,
+  }));
+
+  imageListCopyContainerSetter(imagesCopy);
+  textListCopyContainerSetter(textCopy);
+
+  // Get initial atom positions to detect when Ketcher finishes
+  const initialHash = await getAtomPositionsHash(editorLoc);
+
+  // Poll until atoms have moved (Ketcher finished) or timeout
+  const pollInterval = 50; // Check every 50ms
+  const maxWait = 2000; // Maximum 2 seconds
+  let elapsed = 0;
+
+  const waitForKetcher = () => new Promise((resolve) => {
+    const checkPositions = async () => {
+      elapsed += pollInterval;
+      const currentHash = await getAtomPositionsHash(editorLoc);
+
+      // If positions changed or max time reached, we're done
+      if (currentHash !== initialHash || elapsed >= maxWait) {
+        // Small additional delay to ensure Ketcher has fully settled
+        setTimeout(resolve, 50);
+        return;
+      }
+
+      // Keep polling
+      setTimeout(checkPositions, pollInterval);
+    };
+
+    // Start polling after a brief initial delay
+    setTimeout(checkPositions, pollInterval);
+  });
+
+  await waitForKetcher();
+  await onTemplateMove(editorLoc, null, { syncImagesOnly: true });
 };
 
 export const eventUpsertImageDecrement = () => {
@@ -127,6 +190,10 @@ export const eventUpsertImageSetter = (count) => {
 
 export const setEditor = (ref) => {
   editor = ref;
+};
+
+export const canvasIframeRefSetter = (ref) => {
+  canvasIframeRef = ref;
 };
 
 export const resetKetcherStore = () => {

@@ -16,6 +16,9 @@ import {
   createEditors, notifyError, initEditor, getEditorById
 } from 'src/components/structureEditor/EditorsInstances';
 import EditorRenderer from 'src/components/structureEditor/EditorRenderer';
+import Component from 'src/models/Component';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import uuid from 'uuid';
 
 function EditorList(props) {
   const { options, fnChange, value } = props;
@@ -81,6 +84,7 @@ export default class StructureEditorModal extends React.Component {
     this.resetEditor = this.resetEditor.bind(this);
     this.updateEditor = this.updateEditor.bind(this);
     this.ketcherRef = React.createRef();
+    this.alertForInvalidSources = this.alertForInvalidSources.bind(this);
   }
 
   async componentDidMount() {
@@ -163,7 +167,6 @@ export default class StructureEditorModal extends React.Component {
 
   handleStructureSave(molfile, svg, editorId, info = null) {
     const { hasChildren, hasParent, onSave } = this.props;
-
     this.setState(
       {
         showModal: false,
@@ -174,6 +177,44 @@ export default class StructureEditorModal extends React.Component {
           onSave(molfile, svg, info, editorId);
         }
       }
+    );
+  }
+
+  alertForInvalidSources(components) {
+    const wtPercentRegex = /^\d+(?:\.\d+)?wt\.%\s+[a-z]+$/;
+    const hyphenRegex = /^.+-.+$/;
+    const collectSources = [];
+    components.forEach(({ source }) => {
+      if (!source) {
+        collectSources.push(source);
+        return;
+      }
+      const s = source.trim().toLowerCase();
+      const isValid = wtPercentRegex.test(s) || hyphenRegex.test(s);
+      if (!isValid) collectSources.push(source);
+    });
+    if (collectSources.length) {
+      NotificationActions.add({
+        title: 'Invalid components labels',
+        message: `Invalid sources: ${collectSources.join(', ')}. Please follow the format: "1wt.% Pd" or "Y-Ai204".`,
+        level: 'error',
+        position: 'tc'
+      });
+    }
+  }
+
+  postComponents(components) {
+    return components?.map(
+      (comp, idx) => new Component({
+        id: uuid(),
+        name: 'HierarchicalMaterial',
+        position: idx,
+        molecule: { id: Math.random().toFixed(2) * 100 }, // TODO: should be discussion, duplication is not concerned in this case
+        template_category: Object.values(comp)[0],
+        source: Object.keys(comp)[0],
+        molar_mass: 0,
+        weight_ratio_exp: 0
+      })
     );
   }
 
@@ -204,11 +245,13 @@ export default class StructureEditorModal extends React.Component {
       }
       try {
         // Call onSaveFileK2SC and get the required data
-        const { ket2Molfile, svgElement } = await onSaveFileK2SC();
+        const { ket2Molfile, svgElement, componentsList, textNodesFormula } = await onSaveFileK2SC();
         const { svg: preparedSvg, message: svgFailedMessage } = svgElement || {};
         const updatedSvg = await transformSvgIdsAndReferences(preparedSvg);
-        this.handleStructureSave(ket2Molfile, updatedSvg, editorId.id);
+        const components = componentsList ? this.postComponents(componentsList) : [];
+        this.handleStructureSave(ket2Molfile, updatedSvg, editorId.id, components, textNodesFormula);
         onSVGStructureError(svgFailedMessage);
+        this.alertForInvalidSources(components);
       } catch (error) {
         console.error('Error during save operation for Ketcher:', error);
       }

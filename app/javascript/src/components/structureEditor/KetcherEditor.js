@@ -8,9 +8,12 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable import/no-mutable-exports */
 import PropTypes from 'prop-types';
-import React, { useEffect, useRef, useImperativeHandle, forwardRef, useState } from 'react';
+import React, {
+  useEffect, useRef, useImperativeHandle, forwardRef, useState
+} from 'react';
 import { findTemplateByPayload } from 'src/utilities/ketcherSurfaceChemistry/Ketcher2SurfaceChemistryUtils';
 import { PolymerListModal } from 'src/components/structureEditor/PolymerListModal';
+import TextEditorModal from 'src/components/structureEditor/TextEditorModal';
 import {
   fetchKetcherData,
   setupEditorIframe,
@@ -21,21 +24,20 @@ import {
   removeAtomFromData,
   analyzeAliasAndImageDifferences,
   filterImagesByDifferences,
+  findAtomByImageIndex,
 } from 'src/utilities/ketcherSurfaceChemistry/AtomsAndMolManipulation';
 import {
-  LAYERING_FLAGS,
   EventNames,
   ButtonSelectors,
   getButtonSelector,
 } from 'src/utilities/ketcherSurfaceChemistry/constants';
 import { deepCompareContent, filterTextList } from 'src/utilities/ketcherSurfaceChemistry/TextNode';
 import {
-  updateImagesInTheCanvas,
+  runImageLayering,
   undoKetcher,
   redoKetcher,
   imageNodeForTextNodeSetter,
   selectedImageForTextNode,
-  makeTransparentByTitle,
 } from 'src/utilities/ketcherSurfaceChemistry/DomHandeling';
 import {
   onAddAtom,
@@ -45,10 +47,10 @@ import {
   onFinalCanvasSave,
   onPasteNewShapes,
   onAddText,
+  onAddTextFromEditor,
 } from 'src/utilities/ketcherSurfaceChemistry/canvasOperations';
 import { handleEventCapture } from 'src/utilities/ketcherSurfaceChemistry/eventHandler';
 import {
-  ImagesToBeUpdated,
   ImagesToBeUpdatedSetter,
   imagesList,
   resetKetcherStore,
@@ -59,6 +61,9 @@ import {
   eventUpsertImageSetter,
   upsertImageCalled,
   imagesListSetter,
+  canvasIframeRefSetter,
+  textNodeStruct,
+  textList,
 } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
 
 export let latestData = null; // latestData contains the updated ket2 format always
@@ -150,47 +155,133 @@ const onAtomDelete = async (editor) => {
  * @param {Object} editor - The Ketcher editor instance.
  */
 export const eventLoadCanvas = async (editor) => {
-  if (editor && editor.structureDef) {
-    if (reloadCanvas) onTemplateMove(editor, null, true);
+  try {
+    if (editor && editor.structureDef) {
+      if (reloadCanvas) {
+        await onTemplateMove(editor, true, {});
+      }
+      ImagesToBeUpdatedSetter(true);
+    }
+  } catch (err) {
+    console.error('eventLoadCanvas error:', err);
     ImagesToBeUpdatedSetter(true);
   }
 };
 
 /* istanbul ignore next */
 const KetcherEditor = forwardRef((props, ref) => {
-  const { editor, iH, iS, molfile } = props;
+  const {
+    editor, iH, iS, molfile
+  } = props;
 
   const [showShapes, setShowShapes] = useState(false);
+  const [addLabelPopup, setAddLabelPopup] = useState(false);
+  const [selectedTextNodeContent, setSelectedTextNodeContent] = useState(null);
   // const [showSpecialCharModal, setSpecialCharModal] = useState(false);
 
   const iframeRef = useRef();
+  const eventCleanupRef = useRef(() => { });
+  useEffect(() => {
+    canvasIframeRefSetter(iframeRef);
+    return () => canvasIframeRefSetter(null);
+  }, [iframeRef]);
   const initMol = molfile || '\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n';
 
   // action based on event-name
   const eventHandlers = {
-    [EventNames.MOVE_IMAGE]: async () => onTemplateMove(editor),
-    [EventNames.MOVE_ATOM]: async () => {
-      oldImagePack = [...imagesList];
-      await onTemplateMove(editor, null, false);
+    [EventNames.MOVE_IMAGE]: async () => {
+      if (editor && editor.structureDef) {
+        await onTemplateMove(editor);
+      }
     },
-    [EventNames.ADD_ATOM]: async () => onAddAtom(editor),
+    [EventNames.MOVE_ATOM]: async () => {
+      if (editor && editor.structureDef) {
+        oldImagePack = [...imagesList];
+        await onTemplateMove(editor, null, false);
+      }
+    },
+    [EventNames.ADD_ATOM]: async () => {
+      if (editor && editor.structureDef) {
+        await onAddAtom(editor);
+      }
+    },
     [EventNames.DELETE_ATOM]: async () => {
-      oldImagePack = [...imagesList];
-      await onAtomDelete(editor);
-      canvasSelectionsSetter(null);
+      if (editor && editor.structureDef) {
+        oldImagePack = [...imagesList];
+        await onAtomDelete(editor);
+        canvasSelectionsSetter(null);
+      }
     },
     [EventNames.ADD_TEXT]: async () => {
-      await onAddText(editor, selectedImageForTextNode);
-      imageNodeForTextNodeSetter(null);
+      if (editor && editor.structureDef && selectedImageForTextNode) {
+        await onAddText(editor, selectedImageForTextNode);
+        imageNodeForTextNodeSetter(null);
+      }
     },
-    [EventNames.DELETE_TEXT]: async () => onDeleteText(editor),
+    [EventNames.DELETE_TEXT]: async () => {
+      if (editor && editor.structureDef) {
+        await onDeleteText(editor);
+        // Update button state after text is deleted (re-enable if image no longer has label)
+        const currentSelection = editor?._structureDef?.editor?.editor?._selection;
+        await updateAddLabelButtonState(currentSelection?.images || null);
+      }
+    },
     [EventNames.UPSERT_IMAGE]: async () => {
-      await fetchKetcherData(editor);
-      oldImagePack = [...imagesList];
-      await onImageAddedOrCopied();
+      if (editor && editor.structureDef) {
+        await fetchKetcherData(editor);
+        oldImagePack = [...imagesList];
+        await onImageAddedOrCopied();
+      }
     },
     [EventNames.ADD_BOND]: async () => {
-      onTemplateMove(editor);
+      if (editor && editor.structureDef) {
+        await onTemplateMove(editor);
+      }
+    }
+  };
+
+  // Function to update Add Label button disabled state
+  const updateAddLabelButtonState = async (imageIndexes, selectedTextKey = null) => {
+    try {
+      const iframeDocument = iframeRef?.current?.contentWindow?.document;
+      if (!iframeDocument) return;
+
+      const buttonSelector = getButtonSelector(ButtonSelectors.ADD_LABEL);
+      const button = iframeDocument.querySelector(buttonSelector);
+      if (!button) return;
+
+      // Default: button is disabled
+      let shouldEnable = false;
+
+      // Check if a text node is selected and has an associated image
+      if (selectedTextKey) {
+        // Check if this text key exists in textNodeStruct (meaning it has an associated image)
+        const hasAssociatedImage = Object.values(textNodeStruct).includes(selectedTextKey);
+        if (hasAssociatedImage) {
+          shouldEnable = true;
+        }
+      }
+
+      // If images are selected, check if any of them don't have labels yet
+      if (!shouldEnable && imageIndexes && imageIndexes.length > 0) {
+        // Check if the selected image already has a label
+        const imageIndex = imageIndexes[0];
+        const { alias } = await findAtomByImageIndex(imageIndex);
+
+        // Enable button only if image is selected AND doesn't have a label yet
+        if (alias && !textNodeStruct[alias]) {
+          shouldEnable = true;
+        }
+      }
+
+      button.disabled = !shouldEnable;
+      button.style.opacity = shouldEnable ? '1' : '0.5';
+      button.style.cursor = shouldEnable ? 'pointer' : 'not-allowed';
+
+      // Also set aria-disabled for accessibility
+      button.setAttribute('aria-disabled', !shouldEnable);
+    } catch (err) {
+      console.error('Error updating Add Label button state:', err);
     }
   };
 
@@ -201,20 +292,30 @@ const KetcherEditor = forwardRef((props, ref) => {
     [getButtonSelector(ButtonSelectors.LAYOUT)]: async () => fetchAndReplace(editor),
     [getButtonSelector(ButtonSelectors.EXPLICIT_HYDROGENS)]: async () => fetchAndReplace(editor),
     [getButtonSelector(ButtonSelectors.AROMATIZE)]: async () => fetchAndReplace(editor),
+    [getButtonSelector(ButtonSelectors.DEAROMATIZE)]: async () => fetchAndReplace(editor),
     [getButtonSelector(ButtonSelectors.VIEWER_3D)]: async () => fetchAndReplace(editor),
     [getButtonSelector(ButtonSelectors.OPEN)]: async () => imageNodeForTextNodeSetter(null),
     [getButtonSelector(ButtonSelectors.SAVE)]: async () => imageNodeForTextNodeSetter(null),
     [getButtonSelector(ButtonSelectors.UNDO)]: async () => undoKetcher(editor),
     [getButtonSelector(ButtonSelectors.REDO)]: () => redoKetcher(editor),
     [getButtonSelector(ButtonSelectors.POLYMER_LIST)]: async () => setShowShapes(!showShapes),
+    [getButtonSelector(ButtonSelectors.ADD_LABEL)]: async () => {
+      // Open modal if an image is selected OR if text with image is selected
+      if (selectedImageForTextNode && selectedImageForTextNode.length > 0) {
+        setAddLabelPopup(!addLabelPopup);
+      }
+    },
     [getButtonSelector(ButtonSelectors.CLEAR_CANVAS)]: async () => {
       resetStore();
       imageNodeForTextNodeSetter(null);
+      updateAddLabelButtonState(false);
     },
   };
 
   // attach click listeners to the iframe and initialize the editor
   useEffect(() => {
+    if (!editor) return () => { };
+
     const cleanup = setupEditorIframe({
       iframeRef,
       editor,
@@ -222,22 +323,45 @@ const KetcherEditor = forwardRef((props, ref) => {
       loadContent,
       buttonEvents,
     });
-    return cleanup;
-  }, [editor]);
 
-  /**
-   * Ensures that all images are layered correctly on the canvas.
-   * @async
-   * @function runImageLayering
-   */
-  const runImageLayering = async () => {
-    if (ImagesToBeUpdated && !LAYERING_FLAGS.skipImageLayering) {
-      setTimeout(async () => {
-        await makeTransparentByTitle(iframeRef);
-        await updateImagesInTheCanvas(iframeRef);
-      }, [100]);
-    }
-  };
+    // Initialize button state (disabled by default)
+    // Use multiple attempts to ensure button is found after iframe loads
+    const initializeButtonState = async () => {
+      for (let i = 0; i < 10; i++) {
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise((resolve) => {
+          setTimeout(() => {
+            resolve();
+          }, 200);
+        });
+        try {
+          // eslint-disable-next-line no-await-in-loop
+          await updateAddLabelButtonState(null);
+          // If button was found and disabled, break
+          const iframeDocument = iframeRef?.current?.contentWindow?.document;
+          if (iframeDocument) {
+            const buttonSelector = getButtonSelector(ButtonSelectors.ADD_LABEL);
+            const button = iframeDocument.querySelector(buttonSelector);
+            if (button && button.disabled) {
+              break;
+            }
+          }
+        } catch (err) {
+          // Continue trying
+        }
+      }
+    };
+    initializeButtonState();
+
+    return () => {
+      if (cleanup) cleanup();
+      // Cleanup event subscriptions when component unmounts
+      if (eventCleanupRef.current) {
+        eventCleanupRef.current();
+        eventCleanupRef.current = () => { };
+      }
+    };
+  }, [editor]);
 
   /**
    * Sets up listeners for changes in the editor's content and selection.
@@ -250,27 +374,134 @@ const KetcherEditor = forwardRef((props, ref) => {
    * 2. Subscribes to the `selectionChange` event in the editor to handle selection updates.
    *    - Updates the `imageNodeForTextNode` state with the currently selected images.
    * @function onEditorContentChange
+   * @returns {Function} Cleanup function to unsubscribe from events
    */
   const onEditorContentChange = () => {
-    editor._structureDef.editor.editor.subscribe('change', async (eventData) => {
-      canvasSelectionsSetter(editor._structureDef.editor.editor._selection);
-      const result = await eventData;
-      if (result) {
-        await handleEventCapture(editor, result, eventHandlers);
-        await runImageLayering(); // post all the images at the end of the canvas not duplicate
-        await makeTransparentByTitle(iframeRef);
-      }
-    });
+    if (!editor?._structureDef?.editor?.editor) {
+      return () => { }; // Return no-op cleanup if editor not ready
+    }
 
-    // Subscribes to the `selectionChange` event
-    editor._structureDef.editor.editor.subscribe('selectionChange', async () => {
-      const currentSelection = editor._structureDef.editor.editor._selection;
-
-      if (currentSelection?.images) {
-        canvasSelectionsSetter(currentSelection);
-        imageNodeForTextNodeSetter(editor._structureDef.editor.editor._selection?.images);
+    const changeHandler = async (eventData) => {
+      try {
+        if (editor?._structureDef?.editor?.editor?._selection) {
+          canvasSelectionsSetter(editor._structureDef.editor.editor._selection);
+        }
+        const result = await eventData;
+        if (result && editor?.structureDef) {
+          await handleEventCapture(editor, result, eventHandlers);
+          await runImageLayering(iframeRef); // post all the images at the end of the canvas not duplicate
+        }
+      } catch (err) {
+        console.error('Error in change event handler:', err);
       }
-    });
+    };
+
+    const selectionChangeHandler = async () => {
+      try {
+        const currentSelection = editor?._structureDef?.editor?.editor?._selection;
+        let selectedTextContent = null;
+
+        // Check if text nodes are selected
+        let selectedTextKey = null;
+        if (currentSelection?.texts && currentSelection.texts.length > 0) {
+          // selectedText is an index into the nodes array
+          const selectedTextIndex = currentSelection.texts[0];
+
+          // Try to get the text node from latestData.root.nodes first
+          let selectedTextNode = null;
+          if (latestData?.root?.nodes && latestData.root.nodes[selectedTextIndex]) {
+            const node = latestData.root.nodes[selectedTextIndex];
+            if (node.type === 'text') {
+              selectedTextNode = node;
+            }
+          }
+
+          // If not found in latestData, try to find it in textList by index
+          // (textList might have a different order, so we'll search by matching structure)
+          if (!selectedTextNode && textList && textList.length > 0) {
+            // Find text node in textList - we'll match by checking if index corresponds
+            // Since we don't have direct mapping, we'll search all text nodes
+            for (const textNode of textList) {
+              try {
+                const content = JSON.parse(textNode.data.content);
+                const textKey = content.blocks[0].key;
+                // Check if this text node is associated with an image
+                const hasAssociatedImage = Object.values(textNodeStruct).includes(textKey);
+                if (hasAssociatedImage) {
+                  selectedTextNode = textNode;
+                  break;
+                }
+              } catch (e) {
+                // Skip invalid nodes
+              }
+            }
+          }
+
+          // If we found a text node, extract its content
+          if (selectedTextNode) {
+            try {
+              const content = JSON.parse(selectedTextNode.data.content);
+              selectedTextKey = content.blocks[0].key;
+              // Extract the text content
+              selectedTextContent = content.blocks[0].text || '';
+
+              // Find associated image index from alias
+              for (const [alias, textKeyInStruct] of Object.entries(textNodeStruct)) {
+                if (textKeyInStruct === selectedTextKey) {
+                  // Extract image index from alias (last part after _)
+                  const aliasParts = alias.split('_');
+                  if (aliasParts.length >= 3) {
+                    const imageIndex = parseInt(aliasParts[2], 10);
+                    imageNodeForTextNodeSetter([imageIndex]);
+                  }
+                  break;
+                }
+              }
+            } catch (e) {
+              console.error('Error parsing selected text node content:', e);
+            }
+          }
+        } else if (currentSelection?.images) {
+          canvasSelectionsSetter(currentSelection);
+          imageNodeForTextNodeSetter(currentSelection.images);
+          selectedTextContent = null;
+          selectedTextKey = null;
+        } else {
+          imageNodeForTextNodeSetter(null);
+          selectedTextContent = null;
+          selectedTextKey = null;
+        }
+
+        // Store selected text content for modal
+        setSelectedTextNodeContent(selectedTextContent);
+
+        // Update button disabled state based on image/text selection and existing labels
+        await updateAddLabelButtonState(
+          currentSelection?.images || null,
+          selectedTextKey
+        );
+      } catch (err) {
+        console.error('Error in selectionChange event handler:', err);
+      }
+    };
+
+    editor._structureDef.editor.editor.subscribe('change', changeHandler);
+    editor._structureDef.editor.editor.subscribe('selectionChange', selectionChangeHandler);
+
+    // Set Add Label button to disabled by default
+    updateAddLabelButtonState(null);
+
+    // Return cleanup function to unsubscribe
+    return () => {
+      try {
+        if (editor?._structureDef?.editor?.editor) {
+          editor._structureDef.editor.editor.unsubscribe('change', changeHandler);
+          editor._structureDef.editor.editor.unsubscribe('selectionChange', selectionChangeHandler);
+        }
+      } catch (err) {
+        console.error('Error unsubscribing from events:', err);
+      }
+    };
   };
 
   /**
@@ -286,12 +517,17 @@ const KetcherEditor = forwardRef((props, ref) => {
    * @param {Object} event - The event object containing data about the editor initialization.
    */
   const loadContent = async (event) => {
-    if (event.data.eventType === 'init') {
-      window.editor = editor;
-      if (editor && editor.structureDef) {
-        onEditorContentChange(editor);
-        await prepareKetcherData(editor, initMol);
+    try {
+      if (event?.data?.eventType === 'init') {
+        window.editor = editor;
+        if (editor && editor.structureDef) {
+          // Store cleanup function in ref for later use
+          eventCleanupRef.current = onEditorContentChange(editor);
+          await prepareKetcherData(editor, initMol);
+        }
       }
+    } catch (err) {
+      console.error('Error in loadContent:', err);
     }
   };
 
@@ -309,14 +545,28 @@ const KetcherEditor = forwardRef((props, ref) => {
    * @returns {Promise<void>} This function does not return any value.
    */
   const onImageAddedOrCopied = async () => {
-    const imagesAddedList = imagesList.slice(upsertImageCalled);
-    imagesAddedList.forEach(async (item) => {
-      const templateId = await findTemplateByPayload(item.data);
-      if (templateId != null) {
-        await onShapeSelection(templateId, false);
+    try {
+      if (!editor || !editor.structureDef) return;
+
+      const imagesAddedList = imagesList.slice(upsertImageCalled);
+      // Use for...of instead of forEach to properly await async operations
+      for (const item of imagesAddedList) {
+        try {
+          if (item?.data) {
+            const templateId = await findTemplateByPayload(item.data);
+            if (templateId != null) {
+              await onShapeSelection(templateId, false);
+            }
+          }
+        } catch (err) {
+          console.error('Error processing image item:', err);
+        }
       }
-    });
-    eventUpsertImageSetter(0);
+      eventUpsertImageSetter(0);
+    } catch (err) {
+      console.error('Error in onImageAddedOrCopied:', err);
+      eventUpsertImageSetter(0);
+    }
   };
 
   /**
@@ -349,6 +599,33 @@ const KetcherEditor = forwardRef((props, ref) => {
         onShapeSelection={onShapeSelection}
         onCloseClick={() => setShowShapes(false)}
         title="Surface Chemistry Templates"
+      />
+
+      <TextEditorModal
+        loading={addLabelPopup}
+        initialText={selectedTextNodeContent}
+        onCloseClick={() => {
+          setAddLabelPopup(false);
+          setSelectedTextNodeContent(null);
+        }}
+        onApply={async (contents) => {
+          // Convert Delta object to plain text
+          const deltaToText = (delta) => {
+            if (!delta || !delta.ops) return '';
+            return delta.ops
+              .filter((op) => typeof op.insert === 'string')
+              .map((op) => op.insert)
+              .join('');
+          };
+          const text = deltaToText(contents);
+
+          // Use the improved function that handles text node creation/update and positioning
+          await onAddTextFromEditor(editor, text, selectedImageForTextNode, selectedTextNodeContent !== null);
+          // Update button state after text is added/updated
+          await updateAddLabelButtonState(selectedImageForTextNode);
+          setAddLabelPopup(false);
+          setSelectedTextNodeContent(null);
+        }}
       />
       <iframe
         ref={iframeRef}

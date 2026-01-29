@@ -1,17 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" id="svg51" viewBox="11.066479456 34.882796802 88.89467104 46.487718799999996" version="1.1" style="max-height: 500px" width="88.89467104" height="46.487718799999996">
-  <defs id="defs51">
-    <pattern patternTransform="matrix(1.4142135,1.4142135,-1.4142135,1.4142135,191.10288,2.227912)" id="pattern19" preserveAspectRatio="xMidYMid" xlink:href="#pattern11"/>
-    <pattern patternTransform="matrix(1.4142135,1.4142135,-1.4142135,1.4142135,191.10288,2.227912)" id="pattern11" preserveAspectRatio="xMidYMid" xlink:href="#pattern150-0-2"/>
-    <linearGradient id="swatch152">
-      <stop id="stop152" offset="0" style="stop-color:#000000;stop-opacity:1;"/>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" id="svg-a7f3c2" viewBox="12.4724666 35.1492508 87.53403832000001 44.900333280000005" version="1.1" style="max-height: 500px" width="87.53403832000001" height="44.900333280000005">
+  <defs id="defs-9d1b4f">
+    <linearGradient id="swatch-4e7c1a">
+      <stop id="stop-8c5f3d" offset="0" style="stop-color:#000000;stop-opacity:1;"/>
     </linearGradient>
-    <pattern y="0" x="0" patternTransform="matrix(1.4142135,1.4142135,-1.4142135,1.4142135,191.10288,2.227912)" id="pattern150-0-2" preserveAspectRatio="xMidYMid" xlink:href="#stripes-grid-9-4"/>
-    <pattern y="0" x="0" style="fill:#a6d097" id="stripes-grid-9-4" preserveAspectRatio="xMidYMid" patternTransform="scale(2)" height="10" width="3" patternUnits="userSpaceOnUse">
-      <rect id="rect134-4-4-5" height="10" width="2" y="0" x="0" style="stroke:none"/>
+    <pattern patternTransform="matrix(1.4142135,1.4142135,-1.4142135,1.4142135,191.10288,2.2279124)" id="pattern-3f2e6b" preserveAspectRatio="xMidYMid" xlink:href="#pattern-1a7d5c"/>
+    <pattern patternTransform="matrix(1.4142135,1.4142135,-1.4142135,1.4142135,191.10288,2.227912)" id="pattern-1a7d5c" preserveAspectRatio="xMidYMid" xlink:href="#pattern-6c4e2f"/>
+    <pattern y="0" x="0" patternTransform="matrix(1.4142135,1.4142135,-1.4142135,1.4142135,191.10288,2.227912)" id="pattern-6c4e2f" preserveAspectRatio="xMidYMid" xlink:href="#pattern-9b2d8a"/>
+    <pattern y="0" x="0" style="fill:#a6d097" id="pattern-9b2d8a" preserveAspectRatio="xMidYMid" patternTransform="scale(2)" height="10" width="3" patternUnits="userSpaceOnUse">
+      <rect id="rect-5f3a1c" height="10" width="2" y="0" x="0" style="stroke:none"/>
     </pattern>
   </defs>
-  
-    
-  
-  <path id="path25-8" style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:url(#pattern19);fill-opacity:1;fill-rule:evenodd;stroke:#1b1918;stroke-width:0.5669;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1" d="m 13.783477,41.952131 v 31.1807 q 0,5.6693 5.6693,5.6693 h 73.700797 q 5.6693,0 5.6693,-5.6693 v -31.1807 q 0,-5.6693 -5.6693,-5.6693 H 19.452777 q -5.6693,0 -5.6693,5.6693 z"/>
+
+  <path id="path-2e8b5d" style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#1b1918;stroke-width:0.5669;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1" d="m 13.783477,41.952131 v 31.1807 q 0,5.6693 5.6693,5.6693 h 73.700797 q 5.6693,0 5.6693,-5.6693 v -31.1807 q 0,-5.6693 -5.6693,-5.6693 H 19.452777 q -5.6693,0 -5.6693,5.6693 z"/>
+  <path id="path-7a1c3f" style="font-variation-settings:normal;vector-effect:none;fill:url(#pattern-3f2e6b);fill-opacity:1;fill-rule:evenodd;stroke:#1b1918;stroke-width:0.5669;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000" d="m 13.783477,41.952131 v 31.1807 q 0,5.6693 5.6693,5.6693 h 73.700797 q 5.6693,0 5.6693,-5.6693 v -31.1807 q 0,-5.6693 -5.6693,-5.6693 H 19.452777 q -5.6693,0 -5.6693,5.6693 z"/>
 </svg>

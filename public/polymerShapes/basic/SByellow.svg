@@ -1,9 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="10 34 90 50" width="90" height="50">
-  <!-- Rounded rect with pattern fill -->
-  <rect x="14" y="42" width="80" height="35" rx="5" ry="5" fill="url(#e5d213f4-5ac2-47a1-b0f1-e0849c62302b)" stroke="#1b1918" stroke-width="0.6"/>
-
-  <!-- Stripes pattern -->
-  <pattern patternUnits="userSpaceOnUse" width="3" height="10" id="e5d213f4-5ac2-47a1-b0f1-e0849c62302b">
-    <rect width="2" height="10" fill="#d3c3a0"/>
-  </pattern>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" id="svg51" viewBox="12.4724666 35.1492508 87.53403832 44.90033328" version="1.1" style="max-height: 500px" width="87.53403832" height="44.90033328">
+  <defs id="defs_3f9b1a">
+    <linearGradient id="grad_7c2d5e">
+      <stop id="stop_5a8d3f" offset="0" style="stop-color:#000000;stop-opacity:1;"/>
+    </linearGradient>
+    <pattern patternTransform="matrix(1.4142135,1.4142135,-1.4142135,1.4142135,94.299286,0.606756)" id="pattern_a1f7c4" preserveAspectRatio="xMidYMid" xlink:href="#pattern_d5e3b2"/>
+    <pattern patternTransform="matrix(1.4142135,1.4142135,-1.4142135,1.4142135,94.29929,0.60675554)" id="pattern_d5e3b2" preserveAspectRatio="xMidYMid" xlink:href="#pattern_6b9f1e"/>
+    <pattern y="0" x="0" patternTransform="matrix(1.4142135,1.4142135,-1.4142135,1.4142135,94.29929,0.60675554)" id="pattern_6b9f1e" preserveAspectRatio="xMidYMid" xlink:href="#stripes_2c7a8d"/>
+    <pattern y="0" x="0" style="fill:#d3c3a0" id="stripes_2c7a8d" preserveAspectRatio="xMidYMid" patternTransform="scale(2)" height="10" width="3" patternUnits="userSpaceOnUse">
+      <rect id="rect_8f4d1b" height="10" width="2" y="0" x="0" style="stroke:none"/>
+    </pattern>
+  </defs>
+  
+  <path id="path_7e2b6c" style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#1b1918;stroke-width:0.5669;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1" d="m 13.783477,41.952131 v 31.1807 q 0,5.6693 5.6693,5.6693 h 73.700797 q 5.6693,0 5.6693,-5.6693 v -31.1807 q 0,-5.6693 -5.6693,-5.6693 H 19.452777 q -5.6693,0 -5.6693,5.6693 z"/>
+  <path id="path_1c9d4f" style="font-variation-settings:normal;vector-effect:none;fill:url(#pattern_a1f7c4);fill-opacity:1;fill-rule:evenodd;stroke:#1b1918;stroke-width:0.5669;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000" d="m 13.783477,41.952131 v 31.1807 q 0,5.6693 5.6693,5.6693 h 73.700799 q 5.6693,0 5.6693,-5.6693 v -31.1807 q 0,-5.6693 -5.6693,-5.6693 H 19.452777 q -5.6693,0 -5.6693,5.6693 z"/>
 </svg>

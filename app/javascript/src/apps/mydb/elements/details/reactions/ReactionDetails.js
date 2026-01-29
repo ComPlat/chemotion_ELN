@@ -224,101 +224,13 @@ export default class ReactionDetails extends Component {
   handleReactionChange(reaction, options = {}) {
     reaction.updateMaxAmountOfProducts();
     reaction.changed = true;
-    
-    // Check if SVG-affecting properties have changed
-    const shouldUpdateGraphic = options.updateGraphic || this.hasSvgAffectingChanges(reaction);
-    
-    if (shouldUpdateGraphic && !this.isUpdatingGraphic) {
+    if (options.updateGraphic && !this.isUpdatingGraphic) {
       // Only call updateGraphic if we're not already updating to prevent infinite loops
       this.setState({ reaction }, () => this.updateGraphic());
     } else {
       // Just update state - ReactionSchemeGraphic will reload image automatically
       this.setState({ reaction });
     }
-  }
-
-  // Check if any properties that affect the SVG have changed
-  hasSvgAffectingChanges(newReaction) {
-    const { reaction: oldReaction } = this.state;
-    if (!oldReaction) return true;
-
-    // Check material counts
-    const materialCountsChanged = 
-      (oldReaction.starting_materials?.length || 0) !== (newReaction.starting_materials?.length || 0) ||
-      (oldReaction.reactants?.length || 0) !== (newReaction.reactants?.length || 0) ||
-      (oldReaction.products?.length || 0) !== (newReaction.products?.length || 0) ||
-      (oldReaction.solvents?.length || 0) !== (newReaction.solvents?.length || 0);
-
-    if (materialCountsChanged) return true;
-
-    // Check material SVG paths and equivalents (for products)
-    const materialsChanged = this.materialsSvgChanged(oldReaction, newReaction);
-    if (materialsChanged) return true;
-
-    // Check reaction properties that affect SVG
-    const reactionPropsChanged = 
-      oldReaction.temperature_display !== newReaction.temperature_display ||
-      oldReaction.duration !== newReaction.duration ||
-      oldReaction.conditions !== newReaction.conditions ||
-      JSON.stringify(oldReaction.solvents?.map(s => s.preferred_label || s.external_label)) !== 
-      JSON.stringify(newReaction.solvents?.map(s => s.preferred_label || s.external_label));
-
-    return reactionPropsChanged;
-  }
-
-  // Check if material SVG paths or equivalents have changed
-  materialsSvgChanged(oldReaction, newReaction) {
-    const materialGroups = ['starting_materials', 'reactants', 'products', 'solvents'];
-    
-    for (const group of materialGroups) {
-      const oldMaterials = oldReaction[group] || [];
-      const newMaterials = newReaction[group] || [];
-      
-      // Different number of materials always affects the SVG
-      if (oldMaterials.length !== newMaterials.length) return true;
-      
-      const oldMap = new Map();
-      const newMap = new Map();
-      
-      // Build maps keyed by material ID to be robust to reordering
-      for (const mat of oldMaterials) {
-        if (mat && mat.id != null) {
-          oldMap.set(mat.id, mat);
-        }
-      }
-      for (const mat of newMaterials) {
-        if (mat && mat.id != null) {
-          newMap.set(mat.id, mat);
-        }
-      }
-      
-      // If the sets of IDs differ, materials were added/removed/replaced
-      if (oldMap.size !== newMap.size) return true;
-      
-      for (const id of oldMap.keys()) {
-        if (!newMap.has(id)) return true;
-      }
-      for (const id of newMap.keys()) {
-        if (!oldMap.has(id)) return true;
-      }
-      
-      // Compare properties of each material by ID
-      for (const [id, oldMat] of oldMap.entries()) {
-        const newMat = newMap.get(id);
-        if (!newMat) return true;
-        
-        // Check if SVG path changed (affects display)
-        if (oldMat.svgPath !== newMat.svgPath) return true;
-        
-        // Check if show_label changed (affects SVG path)
-        if (oldMat.show_label !== newMat.show_label) return true;
-        
-        // For products, check equivalent (affects yield display)
-        if (group === 'products' && oldMat.equivalent !== newMat.equivalent) return true;
-      }
-    }
-    
-    return false;
   }
 
   handleInputChange(type, event) {
@@ -682,19 +594,11 @@ export default class ReactionDetails extends Component {
       reaction.duration,
       reaction.conditions
     ).then((result) => {
-      if (result && result.reaction_svg) {
-        // Always update reaction_svg_file and state when we get a result
-        // Add a timestamp to force refresh even if filename is the same
-        const timestamp = Date.now();
+      if (result && result.reaction_svg && result.reaction_svg !== reaction.reaction_svg_file) {
+        // Update reaction_svg_file and state - image will reload automatically via ReactionSchemeGraphic useEffect
         reaction.reaction_svg_file = result.reaction_svg;
-        reaction._svgUpdateTimestamp = timestamp; // Add timestamp to force re-render
-        
-        // Force state update to trigger re-render - ReactionSchemeGraphic will reload image automatically
-        // Create a new object reference to ensure React detects the change
-        // The _svgUpdateTimestamp on reaction is used by ReactionSchemeGraphic for cache busting
-        this.setState({ 
-          reaction
-        });
+        // Update state without calling updateGraphic again to prevent infinite loop
+        this.setState({ reaction });
       }
     }).catch((error) => {
       console.error('Error updating reaction graphic:', error);

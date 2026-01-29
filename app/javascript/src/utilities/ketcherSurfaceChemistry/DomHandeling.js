@@ -12,12 +12,12 @@ import {
 import { fetchKetcherData } from 'src/utilities/ketcherSurfaceChemistry/InitializeAndParseKetcher';
 import {
   PolymerListIconKetcherToolbarButton,
+  SolidSurfaceTemplatesIconTextButton,
 } from 'src/components/structureEditor/PolymerListModal';
 import {
   ImagesToBeUpdated,
   ImagesToBeUpdatedSetter,
-  canvasSelection,
-  canvasSelectionsSetter
+  canvasIframeRef
 } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
 import { saveMoveCanvas } from 'src/utilities/ketcherSurfaceChemistry/canvasOperations';
 import { handleAddAtom } from 'src/utilities/ketcherSurfaceChemistry/AtomsAndMolManipulation';
@@ -47,7 +47,8 @@ const makeTransparentByTitle = (iframeRef) => {
   const iframeDocument = iframeRef?.current?.contentWindow?.document;
   if (!iframeDocument) return;
 
-  const svg = iframeDocument.querySelector('[data-testid="canvas"]');
+  const canvasContainer = iframeDocument.querySelector('.StructEditor-module_intermediateCanvas__fR3ws');
+  const svg = canvasContainer?.firstElementChild;
   if (!svg) return;
 
   const elements = svg.querySelectorAll('text');
@@ -63,12 +64,63 @@ const makeTransparentByTitle = (iframeRef) => {
   });
 };
 
+const addGreenCircleOnCanvasImages = async (imageElements, iframeDocument = null, iframeRef = null) => {
+  imageElements.forEach((img) => {
+    // Create circle overlay element
+    const circle = iframeDocument.createElement('div');
+    circle.className = '__green-circle-overlay';
+    circle.style.position = 'absolute';
+    circle.style.border = '1px solid rgb(22,119,130)';
+    circle.style.borderRadius = '50%';
+    circle.style.pointerEvents = 'none';
+    circle.style.opacity = '0';
+    circle.style.transition = 'opacity 0.15s';
+    circle.style.zIndex = '999999'; // above canvas
+    circle.style.background = 'transparent';
+
+    // Append circle to iframe body
+    iframeDocument.body.appendChild(circle);
+
+    const positionCircle = () => {
+      const rect = img.getBoundingClientRect();
+
+      const size = 26; // match r=13 → 26px diameter
+
+      circle.style.width = `${size}px`;
+      circle.style.height = `${size}px`;
+
+      circle.style.left = `${rect.left + iframeRef.current.contentWindow.scrollX
+        + rect.width / 2 - size / 2}px`;
+
+      circle.style.top = `${rect.top + iframeRef.current.contentWindow.scrollY
+        + rect.height / 2 - size / 2}px`;
+    };
+
+    img.addEventListener('mouseenter', () => {
+      positionCircle();
+      circle.style.opacity = '1';
+    });
+
+    img.addEventListener('mouseleave', () => {
+      circle.style.opacity = '0';
+    });
+
+    // Keep circle aligned on resize/scroll inside iframe
+    iframeRef.current.contentWindow.addEventListener('scroll', positionCircle);
+    iframeRef.current.contentWindow.addEventListener('resize', positionCircle);
+  });
+};
+
 /* istanbul ignore next */
 // helper function to update DOM images using layering technique
 const updateImagesInTheCanvas = async (iframeRef) => {
   const iframeDocument = iframeRef?.current?.contentWindow?.document;
   if (iframeDocument) {
-    const svg = iframeDocument.querySelector('[data-testid="canvas"]');
+    // const svg = iframeDocument.querySelector('[data-testid="canvas"]');
+
+    const canvasContainer = iframeDocument.querySelector('.StructEditor-module_intermediateCanvas__fR3ws');
+    const svg = canvasContainer?.firstElementChild;
+    if (!svg) return;
     if (svg) {
       const imageElements = iframeDocument.querySelectorAll(KET_DOM_TAG.imageTag);
       imageElements.forEach((img) => {
@@ -78,6 +130,8 @@ const updateImagesInTheCanvas = async (iframeRef) => {
       imageElements.forEach((img) => {
         svg?.appendChild(img);
       });
+      iframeDocument.querySelectorAll('.__green-circle-overlay').forEach((el) => el.remove());
+      await addGreenCircleOnCanvasImages(imageElements, iframeDocument, iframeRef);
     }
     ImagesToBeUpdatedSetter(false);
   }
@@ -105,6 +159,7 @@ const updateTemplatesInTheCanvas = async (iframeRef) => {
     }
   }
 };
+
 // helper function to handle ketcher undo DOM element
 const undoKetcher = (editor) => {
   try {
@@ -176,12 +231,23 @@ const addTextNodeDescriptionOnTextPopup = async (node) => {
 };
 
 // add all the images at the end of the canvas
-const runImageLayering = async (iframeRef) => {
-  if (ImagesToBeUpdated && !LAYERING_FLAGS.skipImageLayering) {
-    setTimeout(async () => {
-      await updateImagesInTheCanvas(iframeRef);
-    }, [100]);
-  }
+const runImageLayering = async (iframeRef = canvasIframeRef) => {
+  const targetIframe = iframeRef || canvasIframeRef;
+  if (!targetIframe) return;
+  if (!ImagesToBeUpdated || LAYERING_FLAGS.skipImageLayering) return;
+
+  // Hybrid approach: RAF + minimum delay for reliability
+  // RAF syncs with render cycle, timeout ensures minimum wait
+  await Promise.all([
+    new Promise((resolve) => {
+      requestAnimationFrame(() => requestAnimationFrame(resolve));
+    }),
+    new Promise((resolve) => setTimeout(resolve, 50)) // Minimum 50ms
+  ]);
+
+  await makeTransparentByTitle(targetIframe);
+  await updateImagesInTheCanvas(targetIframe);
+  ImagesToBeUpdatedSetter(false);
 };
 
 // set image count
@@ -208,36 +274,8 @@ const attachClickListeners = (iframeRef, buttonEvents) => {
       })
     );
 
-    const cancelButton = iframeDocument.querySelector('.Dialog-module_cancel__8d83c');
-    const crossButton = iframeDocument.querySelector('.Dialog-module_buttonTop__91ha8');
-    const textModalPopup = iframeDocument.querySelector('.Dialog-module_body__EWh4H');
-    const isTextModal = iframeDocument.querySelector('.Text-module_controlPanel__agLDc');
-
-    if (cancelButton) {
-      cancelButton?.addEventListener('click', () => {
-        imageNodeForTextNodeSetter(null);
-      });
-    }
-    if (crossButton) {
-      crossButton?.addEventListener('click', () => {
-        imageNodeForTextNodeSetter(null);
-      });
-    }
-
     if (!LAYERING_FLAGS.skipTemplateName) {
       await updateTemplatesInTheCanvas(iframeRef);
-    }
-
-    if (isTextModal
-      && textModalPopup
-      && !textModalPopup.querySelector('.appended-text')
-      && canvasSelection?.images.length > 0
-    ) {
-      const newText = document.createElement('div');
-      newText.classList.add('appended-text');
-      newText.textContent = 'Input structure examples: Pt 1wt.% Pt, γ-Al2O3';
-      textModalPopup.appendChild(newText);
-      canvasSelectionsSetter(null);
     }
   });
 
@@ -256,8 +294,10 @@ const attachClickListeners = (iframeRef, buttonEvents) => {
     // Ensure iframe content is loaded before adding the button
     if (iframeRef?.current?.contentWindow?.document?.readyState === 'complete') {
       PolymerListIconKetcherToolbarButton(iframeDocument);
+      SolidSurfaceTemplatesIconTextButton(iframeDocument);
     } else if (iframeRef?.current?.onload) {
       iframeRef.current.onload = PolymerListIconKetcherToolbarButton;
+      iframeRef.current.onload = SolidSurfaceTemplatesIconTextButton;
     }
   }, 1000);
 

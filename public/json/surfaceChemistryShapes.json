@@ -352,7 +352,7 @@
             {
               "template_id": 93,
               "iconName": "BP",
-              "width": 2,
+              "width": 3,
               "height": 1
             }
           ]
@@ -365,7 +365,7 @@
             {
               "template_id": 94,
               "iconName": "BS",
-              "width": 2,
+              "width": 3,
               "height": 1
             }
           ]
@@ -424,7 +424,7 @@
         },
         {
           "id": "5.2",
-          "label": "Multi-compound active phase ",
+          "label": "Multi-compound active phase",
           "description": "Different colors representing different elements: Active_Mono_v1-2_",
           "shapes": [
             {

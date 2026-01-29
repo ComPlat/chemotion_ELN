@@ -71,7 +71,7 @@ function PolymerListModal({
   const onCategoryChange = (categoryAlias) => {
     setCategory(categoryAlias);
     setLoadingData(true);
-    localStorage.setItem('polymerCategory', categoryAlias); // ✅ correct value
+    localStorage.setItem('polymerCategory', categoryAlias);
   };
 
   return (
@@ -185,15 +185,38 @@ const PolymerListIconKetcherToolbarButton = (iframeDocument) => {
   const parentElement = iframeDocument.querySelector('.App-module_top__SBeSV.css-2yv69u');
   const container = parentElement?.querySelector('.css-6qnjre');
   if (container) {
+    // Add left border separator
+    const leftBorder = iframeDocument.createElement('span');
+    leftBorder.classList.add('css-2ssukb');
+    leftBorder.style.borderWidth = '0px 0px 0px thin';
+    container.appendChild(leftBorder);
+
     const newButton = iframeDocument.createElement('button');
-    newButton.classList.add('css-9c2fhu');
-    newButton.title = 'Polymer List';
+    newButton.classList.add('css-173yjn8');
+    newButton.title = 'Solid Surface Templates';
 
-    newButton.style.backgroundColor = 'transparent';
-    newButton.style.border = '0';
-
-    newButton.innerHTML = PolymerShapes;
+    const svgWithClass = PolymerShapes.replace('fill="none">', 'fill="none" class="css-2ntgcm">');
+    newButton.innerHTML = svgWithClass;
     container.appendChild(newButton);
+  }
+};
+
+const SolidSurfaceTemplatesIconTextButton = (iframeDocument) => {
+  const parentElement = iframeDocument.querySelector('.App-module_top__SBeSV.css-2yv69u');
+  const container = parentElement?.querySelector('.css-6qnjre');
+  if (container) {
+    const newButton = iframeDocument.createElement('button');
+    newButton.classList.add('css-173yjn8');
+    newButton.title = 'Add Label';
+
+    const bigTSVG = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" class="css-2ntgcm"><path d="M18 6H6v3.357h1.714V7.714h3.429v9.429h-1.5v1.714h4.714v-1.714h-1.5V7.714h3.429v1.643H18V6z" fill="currentColor"></path></svg>';
+    newButton.innerHTML = bigTSVG;
+    container.appendChild(newButton);
+
+    // Add right border separator
+    const rightBorder = iframeDocument.createElement('span');
+    rightBorder.classList.add('css-2ssukb');
+    container.appendChild(rightBorder);
   }
 };
 
@@ -282,7 +305,7 @@ function SpecialCharModal({
 }
 
 export {
-  PolymerListModal, PolymerListIconKetcherToolbarButton, specialCharButton, SpecialCharModal
+  PolymerListModal, PolymerListIconKetcherToolbarButton, specialCharButton, SpecialCharModal, SolidSurfaceTemplatesIconTextButton
 };
 
 PolymerListModal.propTypes = {
