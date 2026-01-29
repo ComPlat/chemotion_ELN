@@ -273,22 +273,12 @@ module Import
         end
 
         # Priority: molfile > cano_smiles > dummy (if decoupled and both blank)
-        molecule = if molfile.present?
-                     # Always use molfile if available (highest priority)
-                     Molecule.find_or_create_by_molfile(molfile)
-                   elsif cano_smiles.present?
-                     # Use cano_smiles if molfile is missing but cano_smiles is available
-                     Molecule.find_or_create_by_cano_smiles(cano_smiles)
-                   elsif fields.fetch('decoupled', nil)
-                     # Create dummy only for decoupled samples with no structure data
-                     Molecule.find_or_create_dummy
-                   end
-
-        if molecule.nil?
-          inchikey = @data.fetch('Molecule').fetch(fields.fetch('molecule_id')).fetch('inchikey')
-          molecule = Molecule.find_or_create_by!(inchikey: inchikey)
-          molecule.molfile = molfile
-        end
+        # Always use molfile if available (highest priority)
+        molecule = Molecule.find_or_create_by_molfile(molfile) if molfile.present?
+        # Use cano_smiles if molfile is missing or invalid but cano_smiles is available
+        molecule ||= Molecule.find_or_create_by_cano_smiles(cano_smiles) if cano_smiles.present?
+        # Create dummy only for decoupled samples with no structure data
+        molecule ||= Molecule.find_or_create_dummy if fields.fetch('decoupled', nil)
 
         unless (fields.fetch('decoupled', nil) && molfile.blank?) || molecule_name_name.blank?
           molecule.create_molecule_name_by_user(molecule_name_name, @current_user_id)
@@ -743,13 +733,11 @@ module Import
       return unless source_value == 'smart-add'
 
       @instances['Reaction'].each_value do |reaction|
-        begin
-          reaction.update_svg_file!
-          reaction.save!
-        rescue StandardError => e
-          Rails.logger.error("Failed to reprocess SVG for reaction #{reaction.id}: #{e.message}")
-          Rails.logger.error(e.backtrace)
-        end
+        reaction.update_svg_file!
+        reaction.save!
+      rescue StandardError => e
+        Rails.logger.error("Failed to reprocess SVG for reaction #{reaction.id}: #{e.message}")
+        Rails.logger.error(e.backtrace)
       end
     end
 
