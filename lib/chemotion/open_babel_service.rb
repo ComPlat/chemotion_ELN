@@ -87,7 +87,7 @@ M  END
       str = c.write_string(m, false).to_s
       str.lines.first.to_s.strip
     rescue StandardError, SystemStackError
-      ""
+      ''
     end
 
     unless format == 'mol'
