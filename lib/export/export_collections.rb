@@ -244,13 +244,13 @@ module Export
 
     def fetch_device_description_segments(device_description)
       segments =
-        Labimotion::Segment.where("element_id = ? AND element_type = ?", device_description.id, 'DeviceDescription')
+        Labimotion::Segment.where(element_id: device_description.id, element_type: 'DeviceDescription')
       return if segments.blank?
 
       fetch_many(segments, {
                    'element_id' => 'DeviceDescription',
                    'segment_klass_id' => 'Labimotion::SegmentKlass',
-                    'created_by' => 'User'
+                   'created_by' => 'User',
                  })
     end
 
@@ -282,11 +282,15 @@ module Export
       return if ontologies.blank?
 
       ontologies.each do |ontology|
-        data_segment_ids = []
-        ontology['data']['segment_ids'].map do |id|
-          data_segment_ids << uuid('Labimotion::SegmentKlass', id)
+        if ontology['data']['segment_ids'].present?
+          data_segment_ids = []
+          ontology['data']['segment_ids'].map do |id|
+            data_segment_ids << uuid('Labimotion::SegmentKlass', id)
+          end
+          ontology['data']['segment_ids'] = data_segment_ids if data_segment_ids.present?
         end
-        ontology['data']['segment_ids'] = data_segment_ids if data_segment_ids.present?
+
+        next if ontology['segments'].present?
 
         ontology['segments'].each do |entry|
           entry['segment_klass_id'] = uuid('Labimotion::SegmentKlass', entry['segment_klass_id'])
