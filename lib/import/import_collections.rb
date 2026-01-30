@@ -119,7 +119,7 @@ module Import
         import_containers
         import_segments
         import_datasets
-        Import::Helpers::DeviceDescriptionImporter.new(@data, @current_user_id, @instances).import_ontologies
+        Import::Helpers::DeviceDescriptionImporter.new(@data, @current_user_id, @instances).update_ontologies
         import_attachments
         import_literals
       end
