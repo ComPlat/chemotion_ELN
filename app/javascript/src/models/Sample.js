@@ -942,7 +942,7 @@ export default class Sample extends Element {
   }
 
   defaultAmountType() {
-    return (this.real_amount_value ? 'real' : 'target');
+    return (this.target_amount_value && !this.real_amount_value ? 'target' : 'real');
   }
 
   get defined_part_amount() {
