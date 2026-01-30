@@ -302,6 +302,46 @@ RSpec.describe 'ImportCollection' do
         expect(sbmm_with_parent.first.parent.attachments.count).to be 1
       end
     end
+
+    describe 'import a collection with device descriptions' do
+      let(:imported_collection) { Collection.find_by(label: 'device description test') }
+      let(:device_description_with_ancestry) { DeviceDescription.where.not(ancestry: '/') }
+      let(:device_description_with_ontology) do
+        DeviceDescription.where.not(ontologies: nil).where('jsonb_array_length(ontologies) > 0')
+      end
+      let(:device_description_setup_descriptions) do
+        DeviceDescription.where.not(setup_descriptions: nil).where("setup_descriptions != '{}'")
+      end
+      let(:import_id) { 'collection_device_descriptions' }
+      let(:attachment) { create(:attachment, :with_device_description_zip) }
+
+      before do
+        importer.execute
+      end
+
+      it 'has created a collection with 5 device descriptions' do
+        expect(imported_collection).to be_present
+        expect(imported_collection.device_descriptions.length).to be 5
+      end
+
+      it 'has successfully imported 5 device descriptions' do
+        expect(DeviceDescription.count).to be 5
+      end
+
+      it 'has successfully imported device descriptions with ancestry, ontologies and setup descriptions' do
+        expect(device_description_with_ancestry.count).to be 1
+        expect(device_description_with_ontology.count).to be 1
+        expect(device_description_setup_descriptions.count).to be 2
+      end
+
+      it 'has successfully imported analyses' do
+        expect(device_description_with_ontology.first.analyses.count).to be 1
+      end
+
+      it 'has successfully imported device description attachments' do
+        expect(device_description_with_ontology.first.attachments.count).to be 1
+      end
+    end
   end
 
   def copy_target_to_import_folder(import_id)

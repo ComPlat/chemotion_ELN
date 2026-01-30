@@ -223,6 +223,7 @@ module Export
       device_descriptions.each do |device_description|
         transform_device_description_special_fields(device_description)
         fetch_device_description_containers_and_attachments(device_description)
+        fetch_device_description_segments(device_description)
       end
 
       # fetch related device descriptions from setup_descriptions
@@ -239,6 +240,18 @@ module Export
 
       # add attachments to the list of attachments
       @attachments += device_description.attachments
+    end
+
+    def fetch_device_description_segments(device_description)
+      segments =
+        Labimotion::Segment.where("element_id = ? AND element_type = ?", device_description.id, 'DeviceDescription')
+      return if segments.blank?
+
+      fetch_many(segments, {
+                   'element_id' => 'DeviceDescription',
+                   'segment_klass_id' => 'Labimotion::SegmentKlass',
+                    'created_by' => 'User'
+                 })
     end
 
     def transform_device_description_special_fields(device_description)
@@ -319,6 +332,7 @@ module Export
         transform_device_description_special_fields(related_device_description)
         fetch_collections_device_description(collection, related_device_description)
         fetch_device_description_containers_and_attachments(related_device_description)
+        fetch_device_description_segments(related_device_description)
       end
 
       # recursively fetch related device descriptions
@@ -326,11 +340,14 @@ module Export
     end
 
     def fetch_collections_device_description(collection, device_description)
-      collection_device_description = CollectionsDeviceDescription.new(
-        id: uuid('CollectionsDeviceDescription', "#{collection.id}-#{device_description.id}"),
+      collection_device_description = CollectionsDeviceDescription.find_or_initialize_by(
         collection_id: collection.id,
         device_description_id: device_description.id,
       )
+      if collection_device_description.new_record?
+        collection_device_description.id =
+          uuid('CollectionsDeviceDescription', "#{collection.id}-#{device_description.id}")
+      end
       fetch_one(collection_device_description, {
                   'collection_id' => 'Collection',
                   'device_description_id' => 'DeviceDescription',
