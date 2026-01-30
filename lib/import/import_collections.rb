@@ -226,7 +226,7 @@ module Import
     end
 
     def import_samples
-      @data.fetch('Sample', {}).each do |uuid, fields|
+      sort_data(@data.fetch('Sample', {})).each do |uuid, fields|
         # look for the molecule_name
         molecule_name_uuid = fields.fetch('molecule_name_id')
         if molecule_name_uuid.present?
@@ -339,7 +339,7 @@ module Import
     end
 
     def import_reactions
-      @data.fetch('Reaction', {}).each do |uuid, fields|
+      sort_data(@data.fetch('Reaction', {})).each do |uuid, fields|
         # create the sample
         reaction = Reaction.create!(fields.slice(
           'name',
@@ -418,7 +418,7 @@ module Import
     end
 
     def import_wellplates
-      @data.fetch('Wellplate', {}).each do |uuid, fields|
+      sort_data(@data.fetch('Wellplate', {})).each do |uuid, fields|
         # create the wellplate
 
         wellplate = Wellplate.create!(fields.slice(
@@ -471,7 +471,7 @@ module Import
     end
 
     def import_screens
-      @data.fetch('Screen', {}).each do |uuid, fields|
+      sort_data(@data.fetch('Screen', {})).each do |uuid, fields|
         # create the screen
         screen = Screen.create!(fields.slice(
           'description',
@@ -505,7 +505,7 @@ module Import
     end
 
     def import_research_plans
-      @data.fetch('ResearchPlan', {}).each do |uuid, fields|
+      sort_data(@data.fetch('ResearchPlan', {})).each do |uuid, fields|
         # create the research_plan
         research_plan = ResearchPlan.create!(fields.slice(
           'name',
@@ -564,7 +564,7 @@ module Import
     end
 
     def import_attachments
-      @data.fetch('Attachment', {}).each do |uuid, fields|
+      sort_data(@data.fetch('Attachment', {})).each do |uuid, fields|
         # get the attachable for this attachment
         attachable_type = fields.fetch('attachable_type', nil)
         attachable_uuid = fields.fetch('attachable_id')
@@ -742,6 +742,18 @@ module Import
       LOG
 
       @logger.error(log_content)
+    end
+
+    # Sort records by created_at timestamp
+    # @param [Hash] records: the records to sort
+    # @return [Hash] the sorted records
+    # @note: expect a hash with structure { uuid => { created_at: timestamp, ... }, ... }
+    #   with created_at being an ISO8601 string
+    def sort_data(records)
+      records.sort_by { |_, v| v[:created_at] }.to_h
+    rescue StandardError => e
+      Rails.logger.error(e.backtrace)
+      records
     end
   end
 end
