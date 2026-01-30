@@ -2340,7 +2340,10 @@ export default class Sample extends Element {
     });
 
     // --- Step 2: Determine total/solvent volume info ---
-    const totalVolumeL = this.sample_details.total_mixture_volume_l || this.amount_l || 0;
+    // Use nullish coalescing to only fallback when total_mixture_volume_l is null/undefined, not when it's 0
+    const totalVolumeL = (this.sample_details.total_mixture_volume_l != null)
+      ? this.sample_details.total_mixture_volume_l
+      : (this.amount_l || 0);
     const totalVolumeML = (parseFloat(totalVolumeL) || 0) * 1000;
     const hasTotalVolume = totalVolumeML > 0;
     const hasSolvents = Array.isArray(this.solvent) && this.solvent.length > 0;
@@ -2401,7 +2404,10 @@ export default class Sample extends Element {
     this.initializeSampleDetails();
 
     const totalMassG = Number(this.sample_details.total_mixture_mass_g) || 0;
-    const totalVolumeL = this.sample_details.total_mixture_volume_l || this.amount_l || 0;
+    // Use nullish coalescing to only fallback when total_mixture_volume_l is null/undefined, not when it's 0
+    const totalVolumeL = (this.sample_details.total_mixture_volume_l != null)
+      ? this.sample_details.total_mixture_volume_l
+      : (this.amount_l || 0);
     const totalVolumeML = parseFloat(totalVolumeL) * 1000;
 
     // Calculate and set density if valid
