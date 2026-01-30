@@ -25,9 +25,18 @@ const filterSearchValues = (store) => {
 
   if (store.detail_search_values.length >= 1) {
     store.detailSearchValues.forEach((f) => {
-      const values = { ...Object.values(f)[0] };
+      const keys = { ...Object.keys(f) };
+      let values = { ...Object.values(f)[0] };
+
       if (values.value !== '') {
-        filteredOptions.push(values);
+        if (keys[0] == 'version_identifier_type') {
+          const fieldValues = { ...values.field };
+          fieldValues.column = keys[0];
+          values.field = fieldValues;
+          filteredOptions.push(values);
+        } else {
+          filteredOptions.push(values);
+        }
       }
     });
     if (filteredOptions[0]) {
@@ -143,15 +152,19 @@ const searchValuesByFilters = (store) => {
 
   if (store.searchResultVisible && filters.length > 0) {
     filters.map((val) => {
+      const dateFields = ['date', 'datetime', 'time'].includes(val.field.type);
       let table = val.field.table || val.table;
-      let value = val.value;
+      let value = dateFields ? new Date(val.value).toLocaleString('en-GB').split(', ').join(' ') : val.value;
       table = table.charAt(0).toUpperCase() + table.slice(1, -1).replace(/_/g, ' ');
-      value = value && value !== true ? value.replace(/[\n\r]/g, ' OR ') : value;
+      value = value && value !== true && !dateFields ? value.replace(/[\n\r]/g, ' OR ') : value;
 
       if (val.field.sub_fields && val.field.sub_fields.length >= 1 && val.sub_values.length >= 1) {
         let values = searchValuesBySubFields(val, table);
         searchValues.push(...values);
-      } else if (val.available_options) {
+      } else if (val.field.table == 'device_descriptions' && val.field.opt !== undefined) {
+        const label = `${val.field.column.toLowerCase()} ${val.field.label.toLowerCase()}`;
+        searchValues.push([val.link, table, label, val.match, value, val.unit].join(" "));
+      } else if (val.available_options.length >= 1) {
         let values = searchValuesByAvailableOptions(val, table);
         searchValues.push([val.link, table, val.field.label.toLowerCase(), val.match, value, val.unit].join(" "));
         searchValues.push(...values);

@@ -301,6 +301,14 @@ export default class AutoCompleteInput extends React.Component {
       sbmm_taxon_id: { icon: 'icon-sequence_based_macromolecule_sample', label: 'Sequence Based Macromolecule taxon ID' },
       sbmm_strain: { icon: 'icon-sequence_based_macromolecule_sample', label: 'Sequence Based Macromolecule strain' },
       sbmm_tissue: { icon: 'icon-sequence_based_macromolecule_sample', label: 'Sequence Based Macromolecule tissue' },
+      device_description_name: { icon: 'icon-device_description', label: 'Device Description name' },
+      device_description_short_label: { icon: 'icon-device_description', label: 'Device Description short label' },
+      device_description_vendor_device_name: { icon: 'icon-device_description', label: 'Device Description model name' },
+      device_description_vendor_device_id: { icon: 'icon-device_description', label: 'Device Description model ID' },
+      device_description_serial_number: { icon: 'icon-device_description', label: 'Device Description serial no' },
+      device_description_vendor_company_name: { icon: 'icon-device_description', label: 'Device Description manufacturer name' },
+      device_description_general_tags: { icon: 'icon-device_description', label: 'Device Description tags' },
+      device_description_ontologies: { icon: 'icon-device_description', label: 'Device Description ontology' },
     };
 
     if (suggestions) {
