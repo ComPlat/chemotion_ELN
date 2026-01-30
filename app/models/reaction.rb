@@ -302,6 +302,18 @@ class Reaction < ApplicationRecord
     raw.is_a?(Hash) ? raw.values : raw
   end
 
+  def assign_attachment_to_variation(variation_id, analysis_id)
+    return if variation_id.blank?
+
+    variation = variations.find { |v| v['id'].to_s == variation_id.to_s }
+    return unless variation
+
+    variation['metadata'] ||= {}
+    variation['metadata']['analyses'] ||= []
+    variation['metadata']['analyses'] << analysis_id
+    update(variations: variations)
+  end
+
   private
 
   def scrubber(value)
