@@ -560,13 +560,15 @@ export default class Reaction extends Element {
         (m) => m.reference === true
       )[0];
       // reset all weight percentage to null, since there is no weight percentage reference assigned
-      [...this.starting_materials, ...this.reactants].forEach(
-        (m) => {
-          m.weight_percentage = null;
-          // assign equivalent based on reference material
+      [...this.starting_materials, ...this.reactants].forEach((m) => {
+        m.weight_percentage = null;
+        // assign equivalent based on reference material (guard against missing ref)
+        if (refMaterial && Number.isFinite(refMaterial.amount_mol) && Number.isFinite(m.amount_mol)) {
           m.equivalent = m.amount_mol / refMaterial.amount_mol;
+        } else {
+          m.equivalent = null;
         }
-      );
+      });
     }
 
     if (material.weight_percentage && material.weight_percentage > 0) {
