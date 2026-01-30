@@ -77,13 +77,17 @@ function FieldValueSelector({
   /**
    * Handles field type change (e.g., switching from 'molar mass' to 'weight percentage').
    * Closes the dropdown and notifies parent component.
+   * Only triggers the callback if the field actually changed.
    *
    * @param {string} field - The newly selected field type
    */
   const handleFieldChange = (field) => {
-    setSelectedField(field);
     setShowDropdown(false);
-    onFieldChange(field);
+    // Only trigger the change callback if the field is actually different
+    if (field !== selectedField) {
+      setSelectedField(field);
+      onFieldChange(field);
+    }
   };
 
   /**
