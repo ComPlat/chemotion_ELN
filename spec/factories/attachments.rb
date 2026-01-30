@@ -128,5 +128,9 @@ FactoryBot.define do
     trait :with_sbmm_sample_collection_zip do
       file_path { Rails.root.join('spec/fixtures/import/collection_sbmm_samples.zip') }
     end
+
+    trait :with_device_description_zip do
+      file_path { Rails.root.join('spec/fixtures/import/collection_device_descriptions.zip') }
+    end
   end
 end
