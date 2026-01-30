@@ -113,11 +113,13 @@ module Import
           import_screens
           Import::Helpers::CelllineImporter.new(@data, @current_user_id, @instances).execute
           Import::Helpers::SequenceBasedMacromoleculeSampleImporter.new(@data, @current_user_id, @instances).execute
+          Import::Helpers::DeviceDescriptionImporter.new(@data, @current_user_id, @instances).execute
         end
 
         import_containers
         import_segments
         import_datasets
+        Import::Helpers::DeviceDescriptionImporter.new(@data, @current_user_id, @instances).import_ontologies
         import_attachments
         import_literals
       end
@@ -504,7 +506,7 @@ module Import
           'updated_at',
         ).merge(
           wellplate: @instances.fetch('Wellplate').fetch(fields.fetch('wellplate_id')),
-          sample: @instances.fetch('Sample', nil)&.fetch(fields.fetch('sample_id'), nil),
+          sample: @instances.dig('Sample', fields.fetch('sample_id')),
         ))
 
         # add reaction to the @instances map
@@ -574,10 +576,10 @@ module Import
           # the root container was created when the containable was imported
           containable_type = fields.fetch('containable_type')
           containable_uuid = fields.fetch('containable_id')
-          containable = @instances.fetch(containable_type, nil)&.fetch(containable_uuid, nil)
+          containable = @instances.dig(containable_type, containable_uuid)
           container = containable&.container
         when 'analyses'
-          # get the analyses container from its parent (root) container
+          # get the analyses container from its parent (root) containers
           parent = @instances.fetch('Container').fetch(fields.fetch('parent_id'), nil)
           container = parent.children.where("container_type = 'analyses'")&.first if parent.present?
         else
@@ -610,7 +612,7 @@ module Import
         # get the attachable for this attachment
         attachable_type = fields.fetch('attachable_type', nil)
         attachable_uuid = fields.fetch('attachable_id')
-        attachable = @instances.fetch(attachable_type, nil)&.fetch(attachable_uuid, nil) if attachable_type.present?
+        attachable = @instances.dig(attachable_type, attachable_uuid) if attachable_type.present?
 
         attachment = Attachment.where(
           'id IN (?) AND filename LIKE ? ',
@@ -746,7 +748,7 @@ module Import
 
       parents = ancestry.split('/')
       parent_uuid = parents[-1]
-      @instances.fetch(type, {}).fetch(parent_uuid, nil)
+      @instances.dig(type, parent_uuid)
     end
 
     # read the image from the tmp dir/file
@@ -784,7 +786,7 @@ module Import
         next unless fields.fetch(local_field) == local_id
 
         foreign_id = fields.fetch(foreign_field)
-        instance = @instances.fetch(foreign_type, {}).fetch(foreign_id, nil)
+        instance = @instances.dig(foreign_type, foreign_id)
         associations << instance unless instance.nil?
       end
       associations
