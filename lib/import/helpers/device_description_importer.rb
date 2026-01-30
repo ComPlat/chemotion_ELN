@@ -66,6 +66,8 @@ module Import
             next if entry['device_description_id'].blank?
 
             related_instance = @instances.dig('DeviceDescription', entry['device_description_id'])
+            next if related_instance.blank?
+
             related_device_description = DeviceDescription.find_by(id: related_instance.id)
             next if related_device_description.blank?
 
@@ -80,24 +82,37 @@ module Import
       def replace_uuids_for_ontologies(device_description, _uuid)
         device_description.ontologies.each do |ontology|
           data_segment_ids = []
-          ontology['data']['segment_ids'].map do |uuid|
-            segment_klass_data = @data.fetch('Labimotion::SegmentKlass')[uuid]
-            segment_klass = Labimotion::SegmentKlass.find_by(label: segment_klass_data['label'])
-            next if segment_klass.blank?
 
-            data_segment_ids << { uuid => segment_klass&.id }
+          if ontology['data']['segment_ids'].present?
+            ontology['data']['segment_ids'].map do |uuid|
+              segment_klass = get_segment_klass(uuid)
+              next if segment_klass.blank?
+
+              data_segment_ids << { uuid => segment_klass&.id }
+            end
+            ontology['data']['segment_ids'] = data_segment_ids.flat_map(&:values) if data_segment_ids.present?
           end
 
-          ontology['data']['segment_ids'] = data_segment_ids.flat_map(&:values) if data_segment_ids.present?
+          next if ontology['segments'].blank?
+
           ontology['segments'].each do |entry|
             segment_klass_id =
-              data_segment_ids.find { |h| h.key?(entry['segment_klass_id']) }&.dig(entry['segment_klass_id'])
+              if data_segment_ids.present?
+                data_segment_ids.find { |h| h.key?(entry['segment_klass_id']) }&.dig(entry['segment_klass_id'])
+              else
+                get_segment_klass(entry['segment_klass_id'])
+              end
             entry['segment_klass_id'] = segment_klass_id
           end
         end
         device_description
       end
       # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+
+      def get_segment_klass(uuid)
+        segment_klass_data = @data.fetch('Labimotion::SegmentKlass')[uuid]
+        Labimotion::SegmentKlass.find_by(label: segment_klass_data['label'])
+      end
 
       def update_instances!(uuid, instance)
         type = instance.class.name
