@@ -97,6 +97,7 @@ export default class ReactionDetails extends Component {
       sfn: UIStore.getState().hasSfn,
       currentUser: (UserStore.getState() && UserStore.getState().currentUser) || {},
       reactionSvgVersion: 0, // Bumped when graphic is updated so shouldComponentUpdate sees a state change (we mutate reaction in place)
+      isRefreshingGraphic: false,
     };
 
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
@@ -520,6 +521,61 @@ export default class ReactionDetails extends Component {
         )}
       </>
     );
+  }
+
+  refreshGraphic() {
+    const { reaction, isRefreshingGraphic } = this.state;
+
+    // Prevent multiple simultaneous refreshes
+    if (isRefreshingGraphic) {
+      return;
+    }
+
+    // Mark reaction as changed so save button is enabled when user clicks refresh
+    reaction.changed = true;
+
+    // Set loading state and enable save button
+    this.setState({ reaction, isRefreshingGraphic: true }, () => {
+      // Use requestAnimationFrame to ensure React has rendered before starting async operations
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          // Collect all materials with their molfile and svgPath
+          const { reaction: currentReaction } = this.state;
+          const allMaterials = [
+            ...currentReaction.starting_materials,
+            ...currentReaction.reactants,
+            ...currentReaction.products,
+          ].filter((material) => material.molfile && material.svgPath);
+
+          if (allMaterials.length === 0) {
+            // Keep loading state visible briefly so user sees feedback when there's nothing to refresh
+            setTimeout(() => this.setState({ isRefreshingGraphic: false }), 400);
+            return;
+          }
+
+          // Batch refresh all SVGs in a single API call
+          SamplesFetcher.batchRefreshSvg(allMaterials)
+            .then((results) => {
+              // Log any failures for debugging
+              const failures = results.filter((r) => !r.success);
+              if (failures.length > 0) {
+                console.warn('Some SVG refreshes failed:', failures);
+              }
+              // Re-render on response, then refresh the reaction scheme graphic
+              this.setState((state) => ({ reaction: state.reaction }), () => this.updateGraphic());
+            })
+            .catch((error) => {
+              console.error('Error batch refreshing material SVGs:', error);
+              // Still try to update graphic even if batch refresh failed
+              this.updateGraphic();
+            })
+            .finally(() => {
+              // Reset loading state
+              this.setState({ isRefreshingGraphic: false });
+            });
+        });
+      });
+    });
   }
 
   updateGraphic(reactionFromChange) {
