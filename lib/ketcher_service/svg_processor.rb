@@ -91,7 +91,7 @@ module KetcherService
       redefine_window_size if @width && @height
       to_xml
     end
-
+    
     def path_extrema(ind=nil)
       if ind
         splitxy_for_path(ind)
@@ -180,9 +180,75 @@ module KetcherService
     end
 
     def splitxy_for_text(text)
-      x,y,font=text["x"].to_f,text["y"].to_f,(text["font"].match(/(\d+\.?\d*)px/) && $1).to_f
-      l=text.content.size
-      [[x,y],[x+font*l,y+font]]
+      # Get actual text content - check tspan children first, then direct content
+      text_content = ""
+      if text.css('tspan').any?
+        text.css('tspan').each do |tspan|
+          text_content += tspan.content.to_s
+        end
+      else
+        text_content = text.content.to_s
+      end
+      
+      # If text length is 3 or less, use old simple logic
+      if text_content.length <= 3
+        x,y,font=text["x"].to_f,text["y"].to_f,(text["font"].match(/(\d+\.?\d*)px/) && $1).to_f
+        l=text_content.length
+        return [[x,y],[x+font*l,y+font]]
+      end
+      
+      # For longer strings (>3 chars), use logic with text-anchor positioning
+      calculate_long_text_bounds(text, text_content)
+    end
+
+    # Calculates bounding box coordinates for text elements longer than 3 characters
+    # This method handles text-anchor positioning and provides more accurate width calculation
+    #
+    # @param text [Nokogiri::XML::Element] The text SVG element
+    # @param text_content [String] The actual text content (already extracted)
+    # @return [Array<Array<Float>>] Array of two coordinate pairs: [[x_start, y], [x_end, y + font]]
+    def calculate_long_text_bounds(text, text_content)
+      # Extract x and y coordinates from the text element
+      x, y = text["x"].to_f, text["y"].to_f
+      
+      # Get font size from font attribute or font-size attribute
+      # Priority: font attribute (e.g., "24px Arial") > font-size attribute > old extraction method
+      font = if text["font"] && text["font"].match(/(\d+\.?\d*)px/)
+               text["font"].match(/(\d+\.?\d*)px/)[1].to_f
+             elsif text["font-size"] && text["font-size"].match(/(\d+\.?\d*)/)
+               text["font-size"].match(/(\d+\.?\d*)/)[1].to_f
+             else
+               # Use old extraction method as fallback
+               (text["font"].match(/(\d+\.?\d*)px/) && $1).to_f
+             end
+      
+      # Calculate text width more accurately
+      # Formula: font_size * character_count * 0.6
+      # The 0.6 multiplier accounts for average character width in most fonts
+      # (most characters are narrower than the font size)
+      text_width = font * text_content.length * 0.6
+      
+      # Account for text-anchor positioning
+      # text-anchor determines how the text is aligned relative to the x coordinate
+      text_anchor = text["text-anchor"] || "start"
+      case text_anchor
+      when "middle"
+        # Text is centered: x is the middle point
+        x_start = x - (text_width / 2)
+        x_end = x + (text_width / 2)
+      when "end"
+        # Text ends at x: x is the right edge
+        x_start = x - text_width
+        x_end = x
+      else # "start" or default
+        # Text starts at x: x is the left edge (default behavior)
+        x_start = x
+        x_end = x + text_width
+      end
+      
+      # Return bounding box coordinates
+      # Text height is approximately the font size
+      [[x_start, y], [x_end, y + font]]
     end
 
     def splitxy_for_circle(circle)
