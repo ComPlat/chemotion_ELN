@@ -929,12 +929,12 @@ export default class SampleForm extends React.Component {
    */
   totalMixtureMass() {
     const { sample } = this.props;
-    const massG = sample.amount_g || sample.total_mixture_mass_g;
+    const massG = sample.amount_g || sample.total_mixture_mass_g || 0;
 
     return (
       <div>
         <NumeralInputWithUnitsCompo
-          value={massG || 0}
+          value={massG}
           unit="g"
           label="Total mixture mass"
           metricPrefix="m"
