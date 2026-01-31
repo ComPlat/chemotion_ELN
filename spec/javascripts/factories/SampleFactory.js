@@ -24,7 +24,7 @@ export default class SampleFactory {
       sample.molecule = new Molecule();
       sample.molecule.exact_molecular_weight = 18.010564684;
       sample.molecule.molecular_weight = 18.010564684;
-      sample.amountType = 'target';
+      sample.amountType = 'real';
       sample.amount_unit = 'g';
       sample.coefficient = 1;
       sample.is_new = false;

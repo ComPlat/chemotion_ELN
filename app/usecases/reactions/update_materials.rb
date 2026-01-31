@@ -202,7 +202,8 @@ module Usecases
         vessel_volume = reaction_vessel_volume(@reaction.vessel_size)
         return nil if vessel_volume.nil?
 
-        if sample.real_amount_value.nil?
+        real_amount_unset = sample.real_amount_value.nil? || sample.real_amount_value.zero?
+        if real_amount_unset && sample.target_amount_value && !sample.target_amount_value.zero?
           existing_sample.target_amount_value = update_mole_gas_product(sample, vessel_volume)
           existing_sample.target_amount_unit = 'mol'
         else

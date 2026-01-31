@@ -38,8 +38,10 @@ module Reactable
     return if ref_record.nil? ||
               ref_record.id == id ||
               sample&.sample_type == Sample::SAMPLE_TYPE_MIXTURE
-
-    amount = sample.real_amount_value && sample.real_amount_value != 0 ? sample.amount_mmol(:real) : sample.amount_mmol
+              
+    ## use real amount unless target amount is defined and real amount is not
+    real_amount_condition = sample.real_amount_value && sample.real_amount_value != 0
+    target_amount_condition = sample.target_amount_value && sample.target_amount_value != 0
 
     case self
     when ReactionsProductSample
@@ -60,10 +62,10 @@ module Reactable
                     (self[:coefficient] || 1.0) / (ref_record[:coefficient] || 1.0)
       end
     else
-      condition = sample.real_amount_value && sample.real_amount_value != 0
-      ref_record_condition = ref_record.sample.real_amount_value && ref_record.sample.real_amount_value != 0
-      amount = condition ? sample.amount_mmol(:real, gas_type) : sample.amount_mmol('target', gas_type)
-      ref_amount = ref_record_condition ? ref_record.sample.amount_mmol(:real) : ref_record.sample.amount_mmol
+      ref_record_real_amount_condition = ref_record.sample.real_amount_value && ref_record.sample.real_amount_value != 0
+      ref_record_target_amount_condition = ref_record.sample.target_amount_value && ref_record.sample.target_amount_value != 0
+      amount = target_amount_condition && !real_amount_condition ? sample.amount_mmol('target', gas_type) : sample.amount_mmol(:real, gas_type)
+      ref_amount = ref_record_target_amount_condition && !ref_record_real_amount_condition ? ref_record.sample.amount_mmol : ref_record.sample.amount_mmol(:real)
     end
     if gas_type == 'gas'
       return nil if gas_phase_data.nil? || gas_phase_data['ppm'].nil? || gas_phase_data['temperature'].nil?
@@ -88,8 +90,9 @@ module Reactable
   end
 
   def detect_amount_type
-    condition = real_amount_value.nil? || real_amount_unit.nil?
-    return { 'value' => target_amount_value, 'unit' => target_amount_unit } if condition
+    target_amount_condition = target_amount_value.nil? || target_amount_value.zero? || target_amount_unit.nil?
+    real_amount_condition = real_amount_value.nil? || real_amount_value.zero? || real_amount_unit.nil?
+    return { 'value' => target_amount_value, 'unit' => target_amount_unit } if real_amount_condition && !target_amount_condition
 
     { 'value' => real_amount_value, 'unit' => real_amount_unit }
   end
