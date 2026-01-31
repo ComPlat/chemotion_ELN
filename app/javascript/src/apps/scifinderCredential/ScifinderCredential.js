@@ -46,6 +46,8 @@ const ScifinderCredential = () => {
             <Button
               variant="primary"
               href={`${window.location.origin}/users/auth/oauth2`}
+              target="_blank"
+              rel="noopener noreferrer"
             >
               Get token
             </Button>
