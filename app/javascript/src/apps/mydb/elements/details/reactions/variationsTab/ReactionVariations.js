@@ -13,8 +13,8 @@ import Reaction from 'src/models/Reaction';
 import {
   createVariationsRow, copyVariationsRow, updateVariationsRow, getVariationsColumns, materialTypes,
   addMissingColumnsToVariations, removeObsoleteColumnsFromVariations, getColumnDefinitions,
-  removeObsoleteColumnDefinitions, getInitialGridState, getInitialEntryDefinitions, persistTableLayout, cellDataTypes,
-  getReactionSegments
+  removeObsoleteColumnDefinitions, getInitialGridState, getInitialEntries, persistTableLayout, cellDataTypes,
+  getReactionSegments, setEntryVisibility,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   getReactionAnalyses, updateAnalyses
@@ -77,13 +77,15 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
         ...selectedColumns, segments: selectedColumns.segments.filter((segment) => Object.hasOwn(segments, segment))
       };
       const updatedReactionVariations = removeObsoleteColumnsFromVariations(reactionVariations, updatedSelectedColumns);
-      const updatedColumnDefinitions = getColumnDefinitions(
+      let updatedColumnDefinitions = getColumnDefinitions(
         updatedSelectedColumns,
         reactionMaterials,
         segments,
         gasMode,
-        getInitialEntryDefinitions(reaction.id)
       );
+      const entries = getInitialEntries(reaction.id);
+      updatedColumnDefinitions = setEntryVisibility(updatedColumnDefinitions, entries);
+
       setReactionSegments(segments);
       setSelectedColumns(updatedSelectedColumns);
       setReactionVariations(updatedReactionVariations);
@@ -273,6 +275,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
           return materials;
         }, {}),
         selectedColumns: updatedSelectedColumns,
+        segments: reactionSegments,
         gasMode
       }
     );
