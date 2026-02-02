@@ -22,35 +22,6 @@ import {
   calculateGasMoles, calculateTON, calculateFeedstockMoles, calculateFeedstockVolume, calculateGasVolume
 } from 'src/utilities/UnitsConversion';
 
-function MaterialEntry({ children, entry, isMain }) {
-  // TODO: Determine width dynamically based on length of `entry` string.
-  function getEntryWidth() {
-    switch (entry) {
-      case 'temperature':
-      case 'concentration':
-      case 'turnoverNumber':
-      case 'turnoverFrequency':
-        return 140;
-      default:
-        return parseGenericEntryName(entry) ? 250 : 110;
-    }
-  }
-  return (
-    <li
-      className={`list-group-item rounded-0 overflow-hidden ${isMain ? 'bg-info-subtle' : ''}`}
-      style={{ width: `${getEntryWidth()}px` }}
-    >
-      {children}
-    </li>
-  );
-}
-
-MaterialEntry.propTypes = {
-  children: PropTypes.node.isRequired,
-  entry: PropTypes.string.isRequired,
-  isMain: PropTypes.bool.isRequired
-};
-
 function RowToolsCellRenderer({
   data: row, context
 }) {
@@ -116,10 +87,9 @@ function EquivalentParser({ data: row, oldValue: cellData, newValue }) {
 function PropertyParser({
   oldValue: cellData, newValue, colDef
 }) {
-  const currentEntry = getCurrentEntry(colDef.entryDefs);
-  const { displayUnit } = colDef.entryDefs[currentEntry];
+  const { displayUnit, entry } = colDef;
   let value = parseNumericString(newValue);
-  if (currentEntry !== 'temperature' && value < 0) {
+  if (entry !== 'temperature' && value < 0) {
     value = 0;
   }
   value = convertUnit(value, displayUnit, cellData.unit);
@@ -128,8 +98,7 @@ function PropertyParser({
   return updatedCellData;
 }
 
-function convertGenericValueToDisplayUnit(entryData, entryDef) {
-  const { displayUnit } = entryDef;
+function convertGenericValueToDisplayUnit(entryData, displayUnit) {
   const { quantity, value, unit } = entryData;
   const valueInDisplayUnit = convertGenericUnit(value, unit, displayUnit, quantity);
 
@@ -137,14 +106,13 @@ function convertGenericValueToDisplayUnit(entryData, entryDef) {
 }
 
 function SegmentParser({ oldValue: cellData, newValue, colDef }) {
-  const currentEntry = getCurrentEntry(colDef.entryDefs);
-  const entryData = cellData[currentEntry];
+  const { entry, displayUnit } = colDef;
+  const entryData = cellData[entry];
   const updatedEntryData = { ...entryData, value: newValue };
 
   switch (entryData.type) {
     case 'system-defined': {
       const { quantity, unit } = entryData;
-      const { displayUnit } = colDef.entryDefs[currentEntry];
       updatedEntryData.value = convertGenericUnit(
         parseNumericString(newValue),
         displayUnit,
@@ -162,19 +130,18 @@ function SegmentParser({ oldValue: cellData, newValue, colDef }) {
       break;
   }
 
-  return { ...cellData, [currentEntry]: updatedEntryData };
+  return { ...cellData, [entry]: updatedEntryData };
 }
 
 function SegmentFormatter({ value: cellData, colDef }) {
-  const { entryDefs } = colDef;
-  const currentEntry = getCurrentEntry(entryDefs);
-  const entryData = cellData[currentEntry];
+  const { displayUnit, entry } = colDef;
+  const entryData = cellData[entry];
   const { value, type } = entryData;
   const formattedValue = value ?? PLACEHOLDER_CELL_TEXT;
 
   switch (type) {
     case 'system-defined': {
-      return convertGenericValueToDisplayUnit(entryData, entryDefs[currentEntry]) ?? PLACEHOLDER_CELL_TEXT;
+      return convertGenericValueToDisplayUnit(entryData, displayUnit) ?? PLACEHOLDER_CELL_TEXT;
     }
     case 'select':
     case 'text':
@@ -183,49 +150,11 @@ function SegmentFormatter({ value: cellData, colDef }) {
   }
 }
 
-function SegmentRenderer({
-  value: cellData, colDef,
-}) {
-  const { entryDefs } = colDef;
-  return (
-    <ol className="list-group list-group-horizontal w-100">
-      {Object.entries(entryDefs).map(([entry, entryDef]) => {
-        const entryData = cellData[entry];
-        if (!(entryData && typeof entryData === 'object' && 'value' in entryData && entryDef.isSelected)) {
-          return null;
-        }
-        return (
-          <MaterialEntry key={entry} entry={entry} isMain={entryDef.isMain}>
-            {entryData.type === 'system-defined' ? convertGenericValueToDisplayUnit(entryData, entryDef)
-              : entryData.value ?? PLACEHOLDER_CELL_TEXT}
-          </MaterialEntry>
-        );
-      })}
-    </ol>
-  );
-}
-
-SegmentRenderer.propTypes = {
-  value: PropTypes.arrayOf(PropTypes.shape({
-    value: PropTypes.number.isRequired,
-    unit: PropTypes.string.isRequired,
-  })).isRequired,
-  colDef: PropTypes.shape({
-    entryDefs: PropTypes.objectOf(
-      PropTypes.shape({
-        isMain: PropTypes.bool.isRequired,
-        isSelected: PropTypes.bool.isRequired,
-        displayUnit: PropTypes.string.isRequired
-      })
-    ).isRequired
-  }).isRequired
-};
-
 function SegmentSelectEditor({
   value: cellData, colDef, onValueChange, stopEditing
 }) {
-  const currentEntry = getCurrentEntry(colDef.entryDefs);
-  const entryData = cellData?.[currentEntry];
+  const { entry } = colDef;
+  const entryData = cellData?.[entry];
 
   if (!entryData) return null;
 
@@ -240,7 +169,7 @@ function SegmentSelectEditor({
 
   const handleChange = (event) => {
     const updatedEntryData = { ...entryData, value: event.target.value };
-    onValueChange({ ...cellData, [currentEntry]: updatedEntryData });
+    onValueChange({ ...cellData, [entry]: updatedEntryData });
   };
 
   return (
@@ -260,13 +189,7 @@ SegmentSelectEditor.propTypes = {
     unit: PropTypes.string.isRequired,
   })).isRequired,
   colDef: PropTypes.shape({
-    entryDefs: PropTypes.objectOf(
-      PropTypes.shape({
-        isMain: PropTypes.bool.isRequired,
-        isSelected: PropTypes.bool.isRequired,
-        displayUnit: PropTypes.string.isRequired
-      })
-    ).isRequired
+    entry: PropTypes.string
   }).isRequired,
   onValueChange: PropTypes.func.isRequired,
   stopEditing: PropTypes.func.isRequired,
@@ -278,18 +201,14 @@ function convertValueToDisplayUnit(value, unit, displayUnit) {
   return parseFloat(Number(valueInDisplayUnit).toPrecision(4));
 }
 
-function PropertyFormatter({ value: cellData, colDef }) {
-  const currentEntry = getCurrentEntry(colDef.entryDefs);
-  const { displayUnit } = colDef.entryDefs[currentEntry];
-
+function PropertyFormatter({ value: cellData, colDef: { displayUnit } }) {
   return convertValueToDisplayUnit(cellData.value, cellData.unit, displayUnit);
 }
 
 function MaterialFormatter({ value: cellData, colDef }) {
-  const currentEntry = getCurrentEntry(colDef.entryDefs);
-  const { displayUnit } = colDef.entryDefs[currentEntry];
+  const { displayUnit, entry } = colDef;
 
-  return convertValueToDisplayUnit(cellData[currentEntry].value, cellData[currentEntry].unit, displayUnit);
+  return convertValueToDisplayUnit(cellData[entry].value, cellData[entry].unit, displayUnit);
 }
 
 function GroupCellEditor({
@@ -384,55 +303,17 @@ GroupCellRenderer.propTypes = {
   }).isRequired,
 };
 
-function MaterialRenderer({ value: cellData, colDef }) {
-  const { entryDefs } = colDef;
-  return (
-    <ol className="list-group list-group-horizontal w-100">
-      {Object.entries(entryDefs).map(([entry, entryDef]) => {
-        const entryData = cellData[entry];
-        return (
-          entryData
-          && typeof entryData === 'object'
-          && 'value' in entryData
-          && entryDef.isSelected ? (
-            <MaterialEntry key={entry} entry={entry} isMain={entryDef.isMain}>
-              {convertValueToDisplayUnit(entryData.value, entryData.unit, entryDef.displayUnit)}
-            </MaterialEntry>
-            ) : null
-        );
-      })}
-    </ol>
-  );
-}
-
-MaterialRenderer.propTypes = {
-  value: PropTypes.arrayOf(PropTypes.shape({
-    value: PropTypes.number.isRequired,
-    unit: PropTypes.string.isRequired,
-  })).isRequired,
-  colDef: PropTypes.shape({
-    entryDefs: PropTypes.objectOf(
-      PropTypes.shape({
-        isMain: PropTypes.bool.isRequired,
-        isSelected: PropTypes.bool.isRequired,
-        displayUnit: PropTypes.string.isRequired
-      })
-    ).isRequired
-  }).isRequired
-};
-
 function MaterialParser({
   data: row, oldValue: cellData, newValue, colDef, context
 }) {
-  const currentEntry = getCurrentEntry(colDef.entryDefs);
-  const { displayUnit } = colDef.entryDefs[currentEntry];
-  let value = convertUnit(parseNumericString(newValue), displayUnit, cellData[currentEntry].unit);
+  const { displayUnit, entry } = colDef;
+  let value = convertUnit(parseNumericString(newValue), displayUnit, cellData[entry].unit);
   if (value < 0) {
     value = 0;
   }
-  let updatedCellData = { ...cellData, [currentEntry]: { ...cellData[currentEntry], value } };
+  let updatedCellData = { ...cellData, [entry]: { ...cellData[entry], value } };
 
-  switch (currentEntry) {
+  switch (entry) {
     case 'mass': {
       const amount = getMolFromGram(value, updatedCellData);
       const volume = getVolumeFromGram(value, updatedCellData);
@@ -493,15 +374,14 @@ function MaterialParser({
 function GasParser({
   data: row, oldValue: cellData, newValue, colDef
 }) {
-  const currentEntry = getCurrentEntry(colDef.entryDefs);
-  const { displayUnit } = colDef.entryDefs[currentEntry];
-  let value = convertUnit(parseNumericString(newValue), displayUnit, cellData[currentEntry].unit);
-  if (currentEntry !== 'temperature' && value < 0) {
+  const { displayUnit, entry } = colDef;
+  let value = convertUnit(parseNumericString(newValue), displayUnit, cellData[entry].unit);
+  if (entry !== 'temperature' && value < 0) {
     value = 0;
   }
-  let updatedCellData = { ...cellData, [currentEntry]: { ...cellData[currentEntry], value } };
+  let updatedCellData = { ...cellData, [entry]: { ...cellData[entry], value } };
 
-  switch (currentEntry) {
+  switch (entry) {
     case 'concentration':
     case 'temperature': {
       const temperatureInKelvin = convertUnit(
@@ -556,15 +436,14 @@ function GasParser({
 function FeedstockParser({
   data: row, oldValue: cellData, newValue, colDef
 }) {
-  const currentEntry = getCurrentEntry(colDef.entryDefs);
-  const { displayUnit } = colDef.entryDefs[currentEntry];
-  let value = convertUnit(parseNumericString(newValue), displayUnit, cellData[currentEntry].unit);
+  const { displayUnit, entry } = colDef;
+  let value = convertUnit(parseNumericString(newValue), displayUnit, cellData[entry].unit);
   if (value < 0) {
     value = 0;
   }
-  let updatedCellData = { ...cellData, [currentEntry]: { ...cellData[currentEntry], value } };
+  let updatedCellData = { ...cellData, [entry]: { ...cellData[entry], value } };
 
-  switch (currentEntry) {
+  switch (entry) {
     case 'amount': {
       const amount = updatedCellData.amount.value;
       const mass = getGramFromMol(amount, updatedCellData);
@@ -615,16 +494,17 @@ function FeedstockParser({
 }
 
 function NoteCellRenderer(props) {
+  const { data: { id }, value } = props;
   return (
     <OverlayTrigger
       placement="right"
       overlay={(
-        <Tooltip id={`note-tooltip-${props.data.id}`}>
+        <Tooltip id={`note-tooltip-${id}`}>
           double click to edit
         </Tooltip>
       )}
     >
-      <span>{props.value || PLACEHOLDER_CELL_TEXT}</span>
+      <span>{value || PLACEHOLDER_CELL_TEXT}</span>
     </OverlayTrigger>
   );
 }
@@ -722,16 +602,6 @@ MaterialOverlay.propTypes = {
     value: PropTypes.number.isRequired,
     unit: PropTypes.string.isRequired,
   })).isRequired,
-  colDef: PropTypes.shape({
-    entryDefs: PropTypes.objectOf(
-      PropTypes.shape({
-        isMain: PropTypes.bool.isRequired,
-        isSelected: PropTypes.bool.isRequired,
-        displayUnit: PropTypes.string.isRequired
-      })
-    )
-    ,
-  }).isRequired,
 };
 
 function MaterialEntrySelection({ entryDefs, onChange }) {
@@ -739,7 +609,6 @@ function MaterialEntrySelection({ entryDefs, onChange }) {
 
   const handleEntrySelection = (item) => {
     const updated = { ...entryDefs };
-    const wasMain = updated[item].isMain;
     const wasSelected = updated[item].isSelected;
     const selectedCount = Object.values(updated).filter((entry) => entry.isSelected).length;
 
@@ -748,22 +617,10 @@ function MaterialEntrySelection({ entryDefs, onChange }) {
       return;
     }
 
-    // Toggle the selection state
     updated[item] = {
       ...updated[item],
       isSelected: !wasSelected,
-      isMain: wasSelected ? false : wasMain // Clear isMain if deselecting
     };
-
-    // If we're deselecting the current main entry, find a new main entry
-    if (wasMain && wasSelected) {
-      const firstAvailable = Object.keys(updated).find(
-        (key) => key !== item && updated[key].isSelected
-      );
-      if (firstAvailable) {
-        updated[firstAvailable].isMain = true;
-      }
-    }
 
     onChange(updated);
   };
@@ -780,40 +637,8 @@ function MaterialEntrySelection({ entryDefs, onChange }) {
     onChange(updated);
   };
 
-  const handleMainEntryChange = (item) => {
-    const updated = { ...entryDefs };
-
-    Object.keys(updated).forEach((key) => {
-      // Clear previous main entry
-      if (updated[key].isMain) {
-        updated[key].isMain = false;
-      }
-    });
-
-    // Set new main entry
-    updated[item].isMain = true;
-
-    onChange(updated);
-  };
-
   return (
     <div className="w-100">
-      <div className="d-inline-block">
-        <Button className="w-100" onClick={() => setShowModal(true)}>
-          Entries
-        </Button>
-        <ol className="list-group list-group-horizontal w-100">
-          {Object.entries(entryDefs).map(([entry, entryDef]) => (!entryDef.isSelected ? null : (
-            <MaterialEntry key={entry} entry={entry} isMain={entryDef.isMain}>
-              {getUserFacingEntryName(entry)}
-              {' '}
-              {entryDef.displayUnit === null ? '' : `(${getUserFacingUnit(entryDef.displayUnit)})` }
-            </MaterialEntry>
-
-          )))}
-        </ol>
-      </div>
-
       <Modal show={showModal} onHide={() => setShowModal(false)} size="lg">
         <Modal.Header closeButton>
           <Modal.Title>Select entries</Modal.Title>
@@ -825,7 +650,6 @@ function MaterialEntrySelection({ entryDefs, onChange }) {
                 <th>Selected</th>
                 <th>Entry</th>
                 <th>Unit</th>
-                <th>Main entry (editable, sortable)</th>
               </tr>
             </thead>
             <tbody>
@@ -854,15 +678,6 @@ function MaterialEntrySelection({ entryDefs, onChange }) {
                         </Form.Select>
                       ) : getUserFacingUnit(units[0])}
                     </td>
-                    <td className="text-center">
-                      <Form.Check
-                        type="radio"
-                        name="default"
-                        checked={entryDef.isMain || false}
-                        onChange={() => handleMainEntryChange(entry)}
-                        disabled={!entryDef.isSelected}
-                      />
-                    </td>
                   </tr>
                 );
               })}
@@ -882,7 +697,6 @@ function MaterialEntrySelection({ entryDefs, onChange }) {
 MaterialEntrySelection.propTypes = {
   entryDefs: PropTypes.objectOf(
     PropTypes.shape({
-      isMain: PropTypes.bool.isRequired,
       isSelected: PropTypes.bool.isRequired,
       displayUnit: PropTypes.string.isRequired,
     })
@@ -950,22 +764,9 @@ function SortControl({ column, setSort }) {
 }
 
 function MenuHeader({
-  column, context, setSort, names, gasType = 'off'
+  column, setSort, names, gasType = 'off', sortable = true,
 }) {
-  const { setColumnDefinitions } = context;
   const [name, setName] = useState(names[0]);
-  const { field, entryDefs } = column.colDef;
-
-  const onEntryDefChange = (updatedEntryDefs) => {
-    setColumnDefinitions(
-      {
-        type: 'update_entry_defs',
-        field,
-        entryDefs: updatedEntryDefs,
-        gasType
-      }
-    );
-  };
 
   return (
     <div className="d-grid gap-1">
@@ -975,22 +776,22 @@ function MenuHeader({
       >
         {`${name} ${gasType !== 'off' ? `(${gasType})` : ''}`}
       </span>
-      <SortControl column={column} setSort={setSort} />
-      <MaterialEntrySelection entryDefs={entryDefs} onChange={onEntryDefChange} />
+      { sortable && <SortControl column={column} setSort={setSort} /> }
     </div>
   );
 }
 
 MenuHeader.propTypes = {
   column: PropTypes.instanceOf(AgGridReact.column).isRequired,
-  context: PropTypes.instanceOf(AgGridReact.context).isRequired,
   setSort: PropTypes.func.isRequired,
   names: PropTypes.arrayOf(PropTypes.string).isRequired,
   gasType: PropTypes.string,
+  sortable: PropTypes.bool,
 };
 
 MenuHeader.defaultProps = {
   gasType: 'off',
+  sortable: true,
 };
 
 function GroupHeader({ column, setSort }) {
@@ -1117,7 +918,6 @@ export {
   EquivalentParser,
   PropertyFormatter,
   PropertyParser,
-  MaterialRenderer,
   MaterialFormatter,
   MaterialParser,
   GasParser,
@@ -1130,7 +930,6 @@ export {
   ColumnSelection,
   SegmentFormatter,
   SegmentParser,
-  SegmentRenderer,
   SegmentSelectEditor,
   RemoveVariationsModal,
   GroupCellEditor,
