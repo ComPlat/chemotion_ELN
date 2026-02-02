@@ -229,7 +229,8 @@ module AttachmentJcampProcess
       keep = att.json? && keyword == 'infer'
       keep ? att : nil
     end.select(&:present?)
-    infers.empty? ? '{}' : infers[0].read_file
+    content = infers.empty? ? '{}' : infers[0].read_file
+    content.present? ? content : '{}'
   end
 
   def update_prediction(params, spc_type, is_regen)
@@ -594,6 +595,7 @@ module AttachmentJcampProcess
     case params[:layout]
     when 'IR'
       Tempfile.create('spectrum') do |t_spectrum|
+        t_spectrum.binmode
         t_spectrum.write(spectrum)
         t_spectrum.rewind
         Chemotion::Jcamp::Predict::Ir.exec(
@@ -602,6 +604,7 @@ module AttachmentJcampProcess
       end
     when 'MS'
       Tempfile.create('spectrum') do |t_spectrum|
+        t_spectrum.binmode
         t_spectrum.write(spectrum)
         t_spectrum.rewind
         Chemotion::Jcamp::Predict::MS.exec(
@@ -610,6 +613,7 @@ module AttachmentJcampProcess
       end
     else
       Tempfile.create('spectrum') do |t_spectrum|
+        t_spectrum.binmode
         t_spectrum.write(spectrum)
         t_spectrum.rewind
         Chemotion::Jcamp::Predict::NmrPeaksForm.exec(
