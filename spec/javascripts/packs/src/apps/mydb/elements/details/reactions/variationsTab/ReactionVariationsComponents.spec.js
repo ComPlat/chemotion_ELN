@@ -36,7 +36,6 @@ describe('ReactionVariationsComponents', async () => {
       const colDef = {
         entryDefs: {
           [entryName]: {
-            isMain: true,
             isSelected: true,
             displayUnit: 'mg_l',
             units: [
@@ -63,7 +62,6 @@ describe('ReactionVariationsComponents', async () => {
       const colDef = {
         entryDefs: {
           'layer<foo>field<bar>': {
-            isMain: true,
             isSelected: true,
             displayUnit: null,
             units: [null]
@@ -398,7 +396,6 @@ describe('ReactionVariationsComponents', async () => {
       const colDef = {
         entryDefs: {
           [entryName]: {
-            isMain: true,
             isSelected: true,
             displayUnit: null,
             units: [null]
@@ -424,7 +421,6 @@ describe('ReactionVariationsComponents', async () => {
       const colDef = {
         entryDefs: {
           [entryName]: {
-            isMain: true,
             isSelected: true,
             displayUnit: 'mg_l',
             units: [

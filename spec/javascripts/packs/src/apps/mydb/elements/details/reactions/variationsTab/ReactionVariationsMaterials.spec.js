@@ -11,7 +11,7 @@ import {
   setUpReaction, setUpGaseousReaction, getColumnDefinitionsMaterialIDs, getColumnGroupChild, getReactionMaterialsIDs
 } from 'helper/reactionVariationsHelpers';
 import {
-  materialTypes, getCurrentEntry, getEntryDefs,
+  materialTypes, getEntryDefs, getInnerMostColumnId,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import { cloneDeep } from 'lodash';
 
@@ -141,7 +141,7 @@ describe('ReactionVariationsMaterials', () => {
       `products.${productIDs[0]}`
     );
     expect(productColumnDefinition.cellDataType).toBe('gas');
-    const currentEntry = getCurrentEntry(productColumnDefinition.entryDefs);
+    const currentEntry = getInnerMostColumnId(productColumnDefinition.field);
     expect(currentEntry).toBe('duration');
     expect(productColumnDefinition.entryDefs[currentEntry].displayUnit).toBe('Second(s)');
 
@@ -152,7 +152,7 @@ describe('ReactionVariationsMaterials', () => {
       `reactants.${reactantIDs[0]}`
     );
     expect(reactantColumnDefinition.cellDataType).toBe('feedstock');
-    expect(getCurrentEntry(reactantColumnDefinition.entryDefs)).toBe('mass');
+    expect(getInnerMostColumnId(reactantColumnDefinition.field)).toBe('mass');
   });
   it('determines cell editability based on entry', async () => {
     const colDef = {

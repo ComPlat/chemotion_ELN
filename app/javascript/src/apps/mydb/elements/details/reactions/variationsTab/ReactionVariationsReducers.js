@@ -1,6 +1,5 @@
 import {
-  getCellDataType, updateColumnDefinitions, addMissingColumnDefinitions, removeObsoleteColumnDefinitions,
-  getColumnDefinitions, getCurrentEntry
+  addMissingColumnDefinitions, removeObsoleteColumnDefinitions, getColumnDefinitions, setEntryColDefs,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 
 export default function columnDefinitionsReducer(columnDefinitions, action) {
@@ -20,24 +19,13 @@ export default function columnDefinitionsReducer(columnDefinitions, action) {
       return updatedColumnDefinitions;
     }
     case 'update_entry_defs': {
-      let updatedColumnDefinitions = updateColumnDefinitions(
-        columnDefinitions,
-        action.field,
-        'entryDefs',
-        action.entryDefs
-      );
-      updatedColumnDefinitions = updateColumnDefinitions(
-        updatedColumnDefinitions,
-        action.field,
-        'cellDataType',
-        getCellDataType(getCurrentEntry(action.entryDefs), action.gasType)
-      );
-      return updatedColumnDefinitions;
+      return setEntryColDefs(columnDefinitions, action.path, action.update);
     }
     case 'toggle_gas_mode': {
       return getColumnDefinitions(
         action.selectedColumns,
         action.materials,
+        action.segments,
         action.gasMode
       );
     }
