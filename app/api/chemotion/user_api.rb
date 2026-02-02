@@ -233,7 +233,6 @@ module Chemotion
     resource :devices do
       params do
         optional :id, type: String, regexp: /\d+/, default: '0'
-        optional :status, type: String
       end
 
       get :novnc do
@@ -245,11 +244,29 @@ module Chemotion
         present devices, with: Entities::DeviceNovncEntity, root: 'devices'
       end
 
+      desc 'Get current connection status for a device'
+      params do
+        requires :id, type: String, regexp: /\d+/
+        optional :status, type: String
+      end
+
       get 'current_connection' do
-        path = Rails.root.join('tmp/novnc_devices', params[:id])
-        cmd = "echo '#{current_user.id},#{params[:status] == 'true' ? 1 : 0}' >> #{path};"
-        cmd += "LINES=$(tail -n 8 #{path});echo \"$LINES\" | tee #{path}"
-        { result: Open3.popen3(cmd) { |_i, o, _e, _t| o.read.split(/\s/) } }
+        return { result: [] } unless params[:id].present?
+
+        device_id = params[:id].to_s
+        status    = params[:status] == 'true' ? 1 : 0
+
+        dir = Rails.root.join('tmp/novnc_devices')
+        FileUtils.mkdir_p(dir)
+        path = dir.join(device_id)
+
+        cmd = "echo '#{current_user.id},#{status}' >> #{path};"
+        cmd += "LINES=$(tail -n 8 #{path} 2>/dev/null || echo '');"
+        cmd += 'echo "$LINES" | tee ' + path.to_s + ' > /dev/null 2>&1;'
+        cmd += 'echo "$LINES"'
+
+        result = Open3.popen3(cmd) { |_i, o, _e, _t| o.read.split(/\s+/) }.compact_blank
+        { result: result }
       end
     end
   end

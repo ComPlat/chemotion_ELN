@@ -210,20 +210,30 @@ class CnC extends React.Component {
     const {
       selected, isNotFocused
     } = this.state;
+    if (!selected || !selected.id) { return; }
+
     fetch(`/api/v1/devices/current_connection?id=${selected.id}&status=${isNotFocused}`, {
       credentials: 'same-origin'
     }).then((response) => response.json())
       .then((json) => {
         let using = 0;
         let watching = 0;
-        const data = uniq(json.result).map((line) => line.split(','));
-        const conn = Object.fromEntries(data);
+        if (json.result && Array.isArray(json.result) && json.result.length > 0) {
+          const data = uniq(json.result)
+            .filter((line) => line && line.includes(','))
+            .map((line) => line.split(','));
+          const conn = Object.fromEntries(data);
 
-        Object.keys(conn).forEach((k) => {
-          if (conn[k] === '0') { using += 1; }
-          if (conn[k] === '1') { watching += 1; }
-        });
+          Object.keys(conn).forEach((k) => {
+            if (conn[k] === '0') { using += 1; }
+            if (conn[k] === '1') { watching += 1; }
+          });
+        }
         this.setState({ using, watching });
+      })
+      .catch((error) => {
+        console.error('Error fetching connections:', error);
+        this.setState({ using: 0, watching: 0 });
       });
   }
 
