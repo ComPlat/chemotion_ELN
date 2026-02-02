@@ -1,5 +1,7 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { Popover, ButtonGroup, Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import React, { useEffect, useState } from 'react';
+import {
+  Popover, ButtonGroup, Button, OverlayTrigger, Tooltip
+} from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import SvgFileZoomPan from 'react-svg-file-zoom-pan-latest';
 import Reaction from 'src/models/Reaction';
@@ -14,22 +16,22 @@ const popperConfigAboveToolbar = {
       enabled: true,
       phase: 'write',
       fn: ({ state }) => {
+        // eslint-disable-next-line no-param-reassign
         state.styles.popper.zIndex = 10001;
       },
     },
   ],
 };
 
-export default function ReactionSchemeGraphic({ reaction, onToggleLabel, onRefresh, isRefreshing }) {
+export default function ReactionSchemeGraphic({
+  reaction, onToggleLabel, onRefresh, isRefreshing
+}) {
   const [svgProps, setSvgProps] = useState({});
 
   useEffect(() => {
-    setSvgProps(
-      reaction.svgPath.substr(reaction.svgPath.length - 4) === '.svg'
-        ? { svgPath: reaction.svgPath }
-        : { svg: reaction.reaction_svg_file }
-    );
-  }, [reaction.svgPath, reaction.reaction_svg_file]);
+    // Use svgPath for both file URLs and data URIs (raw SVG is encoded as data URI in Reaction.svgPath)
+    setSvgProps({ svgPath: reaction.svgPath });
+  }, [reaction.svgPath]);
 
   if (!reaction.svgPath || !reaction.hasMaterials()) return null;
 
@@ -65,7 +67,8 @@ export default function ReactionSchemeGraphic({ reaction, onToggleLabel, onRefre
           </ButtonGroupToggleButton>
         </ButtonGroup>
       </div>
-    )};
+    );
+  };
 
   return (
     <div className="Reaction-scheme-graphic__wrapper">
@@ -73,6 +76,7 @@ export default function ReactionSchemeGraphic({ reaction, onToggleLabel, onRefre
         {isRefreshing && (
           <div className="Reaction-scheme-graphic__loader-overlay">
             <div className="text-center p-4">
+              {/* eslint-disable-next-line max-len */}
               <i className="fa fa-refresh fa-spin fa-3x text-primary mb-3 d-block Reaction-scheme-graphic__loader-spinner" />
               <div className="text-muted fs-6 fw-medium">Refreshing SVGs...</div>
             </div>
@@ -136,4 +140,9 @@ ReactionSchemeGraphic.propTypes = {
   onToggleLabel: PropTypes.func.isRequired,
   onRefresh: PropTypes.func,
   isRefreshing: PropTypes.bool,
+};
+
+ReactionSchemeGraphic.defaultProps = {
+  onRefresh: undefined,
+  isRefreshing: false,
 };

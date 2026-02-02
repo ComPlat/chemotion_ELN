@@ -35,7 +35,8 @@ module Chemotion
           if svg_path.blank? || molfile.blank?
             { success: false, error: 'svg_path and molfile are required' }
           else
-            Sample.refresh_smaple_svg(svg_path, molfile)
+            result = Sample.refresh_smaple_svg(svg_path, molfile)
+            { success: result[:success], filename: result[:filename], error: result[:error] }.compact
           end
         rescue StandardError => e
           { success: false, error: e.message }

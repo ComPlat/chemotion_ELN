@@ -39,7 +39,33 @@ module KetcherService
       path_extrema
       circle_extrema
       text_extrema
+      image_extrema
       self
+    end
+
+    # Bounding box for embedded <image> elements (e.g. surface chemistry, epam-ketcher-ssc).
+    # Used to trim extra whitespace from image-containing SVGs.
+    def image_extrema
+      @svg.css("image").each do |element|
+        x = (element["x"] || 0).to_f
+        y = (element["y"] || 0).to_f
+        w = (element["width"] || 0).to_f
+        h = (element["height"] || 0).to_f
+        next if w <= 0 || h <= 0
+        coordinates = [[x, y], [x + w, y + h]]
+        minmax(coordinates)
+      end
+    end
+
+    # Cleans and trims SVG by removing extra whitespace and fitting viewBox to content.
+    # Works for both path/circle/text SVGs and image-containing SVGs (surface chemistry).
+    def self.clean_and_trim_svg(svg_string)
+      return nil if svg_string.blank?
+      processor = new(svg_string)
+      processor.centered_and_scaled_svg
+    rescue StandardError => e
+      Rails.logger.error("KetcherService::SVGProcessor.clean_and_trim_svg failed: #{e.message}")
+      nil
     end
 
     def get_internal_transform_shift(path)

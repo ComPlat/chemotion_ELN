@@ -795,7 +795,15 @@ export default class Reaction extends Element {
   get svgPath() {
     if (this.reaction_svg_file && this.reaction_svg_file != '***') {
       if (this.reaction_svg_file.includes('<svg')) {
-        return this.reaction_svg_file;
+        // Raw SVG must be encoded as data URI - passing it directly causes react-inlinesvg
+        // to match embedded data URIs (e.g. in <image href="...">) and atob() invalid base64
+        try {
+          const base64 = btoa(unescape(encodeURIComponent(this.reaction_svg_file)));
+          return `data:image/svg+xml;base64,${base64}`;
+        } catch (e) {
+          console.warn('Failed to encode reaction SVG as data URI', e);
+          return 'images/wild_card/no_image_180.svg';
+        }
       } if (this.reaction_svg_file.substr(this.reaction_svg_file.length - 4) === '.svg') {
         return `/images/reactions/${this.reaction_svg_file}`;
       }
