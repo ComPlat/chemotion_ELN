@@ -11,7 +11,6 @@ import StringTag from 'src/apps/mydb/elements/details/reactions/propertiesTab/St
 import { solventsTL } from 'src/utilities/reactionPredefined';
 import OlsTreeSelect from 'src/components/OlsComponent';
 import { permitOn } from 'src/components/common/uis';
-import { EditUserLabels } from 'src/components/UserLabels';
 
 export default class ReactionDetailsProperties extends Component {
   constructor(props) {
@@ -140,9 +139,6 @@ export default class ReactionDetailsProperties extends Component {
             onChange={(event) => this.props.onInputChange('tlcDescription', event)}
           />
         </Form.Group>
-        <div className="mx-0 mt-2">
-          <EditUserLabels element={reaction} fnCb={this.handleOnReactionChange} />
-        </div>
       </Form>
     );
   }
