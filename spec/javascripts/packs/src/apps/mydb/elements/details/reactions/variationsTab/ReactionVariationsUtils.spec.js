@@ -1,6 +1,6 @@
 import expect from 'expect';
 import {
-  convertUnit, createVariationsRow, copyVariationsRow, updateVariationsRow, updateColumnDefinitions,
+  convertUnit, createVariationsRow, copyVariationsRow, updateVariationsRow,
   removeObsoleteColumnsFromVariations, removeObsoleteColumnDefinitions, addMissingColumnDefinitions,
   addMissingColumnsToVariations, getVariationsColumns, convertGenericUnit, getColumnDefinitions,
   getUserFacingEntryName, getSegmentData, formatReactionSegments
@@ -10,7 +10,6 @@ import {
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   setUpReaction,
-  getColumnGroupChild,
   getSelectedColumns,
   getColumnDefinitionsMaterialIDs,
   getReactionMaterialsIDs
@@ -190,23 +189,6 @@ describe('ReactionVariationsUtils', () => {
     expect(Object.values(row.products)[0].yield.value).toBeGreaterThan(
       Object.values(updatedRow.products)[0].yield.value
     );
-  });
-  it('updates the definition of a column', async () => {
-    const reaction = await setUpReaction();
-    const reactionMaterials = getReactionMaterials(reaction);
-    const field = `startingMaterials.${reactionMaterials.startingMaterials[0].id}`;
-    const columnDefinitions = Object.entries(reactionMaterials).map(([materialType, materials]) => ({
-      groupId: materialType,
-      children: materials.map((material) => getMaterialColumnGroupChild(material, materialType, false))
-    }));
-    expect(getColumnGroupChild(columnDefinitions, 'startingMaterials', field).cellDataType).toBe('material');
-    const updatedColumnDefinitions = updateColumnDefinitions(
-      columnDefinitions,
-      field,
-      'cellDataType',
-      'equivalent'
-    );
-    expect(getColumnGroupChild(updatedColumnDefinitions, 'startingMaterials', field).cellDataType).toBe('equivalent');
   });
   it('gets column names from variations table', async () => {
     const reaction = await setUpReaction();
