@@ -146,10 +146,10 @@ module Chemotion
           deleted_attachments = attachments.destroy_all
         end
 
-        render json: { deleted_attachments: deleted_attachments }, status: :ok
+        { deleted_attachments: deleted_attachments }
       rescue StandardError => e
-        render json: { error: e.message }, status: :unprocessable_entity
         Rails.logger.error("Error deleting attachments: #{e.message}")
+        error!({ error: e.message }, 422)
       end
 
       desc 'Delete Attachment'

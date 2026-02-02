@@ -251,9 +251,10 @@ class InboxStore {
   handleBulkDeleteAttachment(payload) {
     if (payload?.fromUnsorted) {
       const { inbox } = this.state;
+      const deletedIds = payload?.attachmentIdsToDelete || [];
 
       const updatedAttachments = inbox.unlinked_attachments.filter(
-        (attachment) => attachment.id !== payload?.result.id
+        (attachment) => !deletedIds.includes(attachment.id)
       );
 
       this.setState({

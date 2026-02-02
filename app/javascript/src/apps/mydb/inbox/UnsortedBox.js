@@ -152,14 +152,10 @@ export default class UnsortedBox extends React.Component {
     const currentItemsCount = currentItems.length;
     const itemsDeleted = checkedIds.length;
 
-    checkedIds.forEach((checkedId) => {
-      // eslint-disable-next-line array-callback-return
-      unsortedBox.map((attachment) => {
-        if (checkedId === attachment.id) {
-          InboxActions.deleteAttachment(attachment, true);
-        }
-      });
-    });
+    if (checkedIds.length > 0) {
+      InboxActions.bulkDeleteAttachments(checkedIds, true);
+    }
+
     if (currentUnsortedBoxPage > 1 && itemsDeleted === currentItemsCount) {
       InboxActions.prevClick();
     } else {
