@@ -210,25 +210,6 @@ module Chemotion
         { errors: device_description.errors.messages }
       end
 
-      # get segment klass ids by new ontology
-      namespace :byontology do
-        params do
-          requires :id, type: Integer
-          requires :ontology, type: Hash do
-            optional :data, type: Hash
-            optional :paths, type: Array
-          end
-        end
-        put ':id' do
-          device_description = DeviceDescription.find(params[:id])
-          attributes = declared(params, include_missing: false)
-          segment_klass_ids =
-            Usecases::DeviceDescriptions::Update.new(attributes, device_description, current_user)
-                                                .segment_klass_ids_by_new_ontology
-          segment_klass_ids
-        end
-      end
-
       # get ontologies by segment klasses
       namespace :ontologies do
         get do
