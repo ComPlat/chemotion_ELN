@@ -41,16 +41,16 @@ FactoryBot.define do
                     short_form: 'CHMO_0001000',
                     description: [
                       'A separation method where the components are distributed between two phases, one of which is
-                      stationary, while the other moves in a definite direction.'
+                      stationary, while the other moves in a definite direction.',
                     ],
                     ontology_name: 'chmo',
-                    ontology_prefix: 'CHMO'
+                    ontology_prefix: 'CHMO',
                   },
                   position: 1,
                   readonly: false,
                   sub_fields: [],
                   placeholder: 'Ontology assignment one',
-                  text_sub_fields: []
+                  text_sub_fields: [],
                 },
                 {
                   type: 'text',
@@ -65,18 +65,18 @@ FactoryBot.define do
                     obo_id: 'CHMO:0002876',
                     short_form: 'CHMO_0002876',
                     ontology_name: 'chmo',
-                    ontology_prefix: 'CHMO'
+                    ontology_prefix: 'CHMO',
                   },
                   position: 2,
                   sub_fields: [],
-                  text_sub_fields: []
+                  text_sub_fields: [],
                 },
               ],
               position: 130,
               timeRecord: '',
-              wf_position: 0
+              wf_position: 0,
             },
-          }
+          },
         }
       end
     end
