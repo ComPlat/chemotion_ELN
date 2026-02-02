@@ -94,7 +94,7 @@ export default class ModalExportCollection extends React.Component {
 
   renderCheckAll() {
     return (
-      <div>
+      <div className="mt-3">
         <input type="checkbox" id="export-collection-check-all"
           checked={this.hasChecked()} onChange={this.handleCheckAll} className="common-checkbox" />
         <label className="ms-3" htmlFor="export-collection-check-all">
@@ -223,10 +223,12 @@ export default class ModalExportCollection extends React.Component {
           <Modal.Title>Export Collections as ZIP archive</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {this.renderCollections('Global collections', 'lockedRoots')}
-          {this.renderCollections('My collections', 'unsharedRoots')}
-          {this.renderSharedCollections('My shared collections', 'sharedRoots')}
-          {this.renderSharedCollections('Shared with me', 'remoteRoots')}
+          <div className="export-collections-modal">
+            {this.renderCollections('Global collections', 'lockedRoots')}
+            {this.renderCollections('My collections', 'unsharedRoots')}
+            {this.renderSharedCollections('My shared collections', 'sharedRoots')}
+            {this.renderSharedCollections('Shared with me', 'remoteRoots')}
+          </div>
           {this.renderCheckAll()}
           {this.renderButtonBar()}
         </Modal.Body>

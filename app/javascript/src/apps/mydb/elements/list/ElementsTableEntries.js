@@ -82,12 +82,16 @@ export default class ElementsTableEntries extends Component {
   }
 
   renderElement(element, showDetails) {
+    const leftColumnStyle = element.type === 'research_plan' || element.element_klass
+      ? { cursor: 'pointer', flex: 1 }
+      : { cursor: 'pointer' };
+
     return (
       <div className="d-flex align-items-start">
         <div
           role="button"
           onClick={showDetails}
-          style={{ cursor: 'pointer' }}
+          style={leftColumnStyle}
           width={element.type === 'research_plan' ? '280px' : 'unset'}
           data-cy={`researchPLanItem-${element.id}`}
           className="d-flex gap-1 flex-column flex-grow-1"
