@@ -260,7 +260,7 @@ module Usecases
         if existing_association
           existing_association.update!(
             reaction_id: @reaction.id,
-            equivalent: sample.equivalent,
+            #equivalent: sample.equivalent,
             reference: sample.reference,
             show_label: sample.show_label,
             waste: sample.waste,
@@ -278,7 +278,7 @@ module Usecases
           ReactionsSample.create!(
             sample_id: modified_sample.id,
             reaction_id: @reaction.id,
-            equivalent: sample.equivalent,
+            #equivalent: sample.equivalent,
             reference: sample.reference,
             show_label: sample.show_label,
             waste: sample.waste,
