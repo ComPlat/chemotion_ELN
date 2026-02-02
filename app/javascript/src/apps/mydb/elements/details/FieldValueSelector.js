@@ -169,7 +169,7 @@ function FieldValueSelector({
    */
   const handleFocus = () => {
     // When focusing, show the raw value for editing
-    setDisplayValue(internalValue);
+    setDisplayValue(internalValue || '');
     setIsEditing(true);
   };
 
