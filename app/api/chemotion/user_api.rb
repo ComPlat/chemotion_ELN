@@ -256,9 +256,8 @@ module Chemotion
         device_id = params[:id].to_s
         status    = params[:status] == 'true' ? 1 : 0
 
-        dir = Rails.root.join('tmp/novnc_devices')
-        FileUtils.mkdir_p(dir)
-        path = dir.join(device_id)
+        # Use pre-initialized directory
+        path = NOVNC_DEVICES_DIR.join(device_id)
 
         cmd = "echo '#{current_user.id},#{status}' >> #{path};"
         cmd += "LINES=$(tail -n 8 #{path} 2>/dev/null || echo '');"
