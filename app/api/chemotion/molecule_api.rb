@@ -185,14 +185,16 @@ module Chemotion
       post do
         svg = params[:svg_file]
         molfile = params[:molfile]
-        molecule = Molecule.find_or_create_by_molfile(molfile)
+        decoupled = params[:decoupled]
+        molecule = decoupled ? Molecule.find_or_create_dummy : Molecule.find_or_create_by_molfile(molfile)
+        molecule = Molecule.find_or_create_dummy if molecule.blank?
         ob = molecule&.ob_log
         svg_digest = "#{molecule.inchikey}#{Time.zone.now}"
 
         if svg.present? && svg.include?('epam-ketcher-ssc')
           svg = KetcherService::SVGProcessor.clean_and_trim_svg(svg) || svg
           svg_process = SVG::Processor.new.structure_svg('ketcher_epam', svg, svg_digest, true)
-        else  
+        else
           svg = Molecule.svg_reprocess(nil, molfile)
           return error!('Failed to generate SVG from molfile', 422) if svg.blank?
 
