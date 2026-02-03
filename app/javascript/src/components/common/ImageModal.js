@@ -95,7 +95,7 @@ export default class ImageModal extends Component {
 
   render() {
     const {
-      popObject, attachment
+      popObject, attachment, placement = 'right'
     } = this.props;
     const {
       isPdf, fetchSrc, thumbnail
@@ -111,7 +111,7 @@ export default class ImageModal extends Component {
           tabIndex={0}
         >
           <OverlayTrigger
-            placement="right"
+            placement={placement}
             overlay={this.showPopObject()}
           >
             <img
@@ -187,4 +187,5 @@ ImageModal.propTypes = {
   popObject: PropTypes.shape({
     title: PropTypes.string,
   }).isRequired,
+  placement: PropTypes.string,
 };
