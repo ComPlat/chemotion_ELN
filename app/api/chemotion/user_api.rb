@@ -251,22 +251,30 @@ module Chemotion
       end
 
       get 'current_connection' do
-        return { result: [] } unless params[:id].present?
+        # Authorize: ensure device is accessible to current user
+        device = Device.by_user_ids(user_ids).find_by(id: params[:id])
+        error!('Device not found', 404) unless device
 
-        device_id = params[:id].to_s
-        status    = params[:status] == 'true' ? 1 : 0
+        path = NOVNC_DEVICES_DIR.join(params[:id])
+        status = params[:status] == 'true' ? 1 : 0
 
-        # Use pre-initialized directory
-        path = NOVNC_DEVICES_DIR.join(device_id)
+        lines = File.open(path, File::RDWR | File::CREAT, 0o644) do |f|
+          f.flock(File::LOCK_EX)
 
-        cmd = "echo '#{current_user.id},#{status}' >> #{path};"
-        cmd += "LINES=$(tail -n 8 #{path} 2>/dev/null || echo '');"
-        cmd += 'echo "$LINES" | tee ' + path.to_s + ' > /dev/null 2>&1;'
-        cmd += 'echo "$LINES"'
+          lines = f.each_line.map(&:chomp).compact_blank
+          lines << "#{current_user.id},#{status}"
+          lines = lines.last(8)
 
-        result = Open3.popen3(cmd) { |_i, o, _e, _t| o.read.split(/\s+/) }.compact_blank
-        { result: result }
-      end
+          f.rewind
+          f.truncate(0)
+          f.puts(lines)
+          lines
+        end
+
+        { result: lines }
+      rescue SystemCallError => e
+        Rails.logger.error("current_connection: #{e.class} – #{e.message}")
+        error!('Internal server error', 500)
     end
   end
   # rubocop:enable Metrics/ClassLength
