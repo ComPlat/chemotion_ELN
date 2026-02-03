@@ -85,7 +85,7 @@ const PropertiesForm = ({ readonly }) => {
 
   const derivationLabelWithIcon = (
     <>
-      Existence in UniProt or reference
+      Existence
       <i className="text-danger ms-1 fa fa-exclamation-triangle" />
     </>
   );
@@ -104,7 +104,7 @@ const PropertiesForm = ({ readonly }) => {
 
   const handleDrop = (item) => {
     const dropped_sbmm = item.element.sequence_based_macromolecule;
-    
+
     sbmmStore.setSbmmBySearchResultOrDND(dropped_sbmm, 'full_sbmm', '');
     sbmmStore.toggleSearchOptions(sbmmSample.id, false);
   }
