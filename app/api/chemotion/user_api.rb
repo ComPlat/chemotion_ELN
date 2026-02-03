@@ -258,7 +258,7 @@ module Chemotion
         path = NOVNC_DEVICES_DIR.join(params[:id])
         status = params[:status] == 'true' ? 1 : 0
 
-        lines = File.open(path, File::RDWR | File::CREAT, 0o644) do |f|
+        lines = File.open(path, File::RDWR | File::CREAT, 0o600) do |f|
           f.flock(File::LOCK_EX)
 
           lines = f.each_line.map(&:chomp).compact_blank
