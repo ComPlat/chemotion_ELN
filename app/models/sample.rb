@@ -519,6 +519,7 @@ class Sample < ApplicationRecord
   def attach_svg(svg = sample_svg_file)
     return if svg.blank?
 
+    svg = File.basename(svg) if svg.include?('/')
     svg_file_name = "#{SecureRandom.hex(64)}.svg"
 
     if /\ATMPFILE[0-9a-f]{64}.svg\z/.match?(svg)
@@ -673,14 +674,9 @@ class Sample < ApplicationRecord
     return { success: false, error: 'Invalid filename', status: 400 } if filename.match?(%r{\.\.|/|\\})
 
     target_path = Rails.public_path.join('images', 'samples', filename)
-    # Image-containing SVGs (surface chemistry, epam-ketcher-ssc) have extra whitespace - clean and trim
     if File.file?(target_path)
       existing_svg = File.read(target_path)
       if existing_svg.include?('<image') || existing_svg.include?('epam-ketcher-ssc')
-        cleaned = KetcherService::SVGProcessor.clean_and_trim_svg(existing_svg)
-        if cleaned.present?
-          File.write(target_path, cleaned)
-        end
         return { success: true, filename: filename }
       end
     end
