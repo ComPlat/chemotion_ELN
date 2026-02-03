@@ -21,7 +21,7 @@ module ReactionProcessEditor
             optional :name
             optional :locked
             optional :automation_mode
-            optional :automation_status
+            optional :automation_control
           end
         end
 

@@ -7,8 +7,8 @@
 // allowing to store data describing the process of a chemical reaction
 // (loosely based on the original ORD Schema).
 //
-// v0.11.0
-// (draft, 16.01.2026)
+// v0.11.1
+// (draft, 01.02.2026)
 //
 //
 // Copyright 2020 Open Reaction Database Project Authors
@@ -45,7 +45,8 @@ message Reaction {
 
 /**
  * SampleSetup
- * The initial state of a Process when based on a solitude Sample (i.e. no associated reaction)
+ * The initial state of a Process when based on a solitude Sample (i.e. no
+ * associated reaction)
  *
  **/
 message SampleSetup {
@@ -75,7 +76,7 @@ message ReactionStep {
   repeated ReactionProcessAction actions = 6;
 
   Ontology automation_mode = 7;
-  StepAutomationStatus automation_status = 8;
+  AutomationControl automation_control = 8;
 }
 
 /**
@@ -151,24 +152,33 @@ message ReactionInput {
   ReactionConditions conditions = 9;
 }
 
-enum AutomationStatus {
-  UNSPECIFIED = 0;
-  RUN = 1;
-  HALT = 2;
-  AUTOMATION_RESPONDED = 3;
-  HALT_RESOLVED_NEEDS_CONFIRMATION = 4;
-  HALT_RESOLVED = 5;
-  DEPENDS_ON_ACTIVITY = 6;
-  DEPENDS_ON_STEP = 7;
-  COMPLETED = 8;
-}
+message AutomationControl {
+  enum AutomationStatus {
+    AUTOMATION_STATUS_UNSPECIFIED = 0;
+    CAN_RUN = 1;
+    HALT = 2;
+    AUTOMATION_RESPONDED = 3;
+    HALT_RESOLVED_NEEDS_CONFIRMATION = 4;
+    HALT_RESOLVED = 5;
+    DEPENDS_ON_ACTION = 6;
+    DEPENDS_ON_STEP = 7;
+    COMPLETED = 8;
+  }
 
-enum StepAutomationStatus {
-  STEP_STATUS_UNSPECIFIED = 0;
-  STEP_CAN_RUN = 1;
-  STEP_DEPENDS_ON_PRECEDING = 2;
-  STEP_MANUAL_PROCEED = 3;
-  STEP_COMPLETED = 4;
+  enum StepAutomationStatus {
+    STEP_AUTOMATION_STATUS_UNSPECIFIED = 0;
+    STEP_CAN_RUN = 1;
+    STEP_DEPENDS_ON_PRECEDING = 2;
+    STEP_MANUAL_PROCEED = 3;
+    STEP_COMPLETED = 4;
+  }
+
+  oneof automation_status {
+    AutomationStatus status = 1;
+    StepAutomationStatus step_status = 2;
+  }
+  optional string depends_on_action_id = 3;
+  optional string depends_on_step_id = 4;
 }
 
 message PoolingFraction {
@@ -192,7 +202,7 @@ message ReactionProcessAction {
   repeated Equipment equipment = 6;
   optional VesselTemplate vessel_template = 7;
 
-  optional AutomationStatus automation_status = 26;
+  optional AutomationControl automation_control = 26;
   optional PoolingFraction consumed_fraction = 27;
   int32 automation_ordinal = 28;
 
