@@ -192,6 +192,7 @@ module Chemotion
         svg_digest = "#{molecule.inchikey}#{Time.zone.now}"
 
         if svg.present? && svg.include?('epam-ketcher-ssc')
+          svg = KetcherService::SVGProcessor.clean_and_trim_svg(svg) || svg
           svg_process = SVG::Processor.new.structure_svg('ketcher_epam', svg, svg_digest, true)
         else
           svg = Molecule.svg_reprocess(nil, molfile)
