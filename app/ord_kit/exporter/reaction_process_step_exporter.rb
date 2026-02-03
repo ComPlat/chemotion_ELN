@@ -12,20 +12,18 @@ module OrdKit
           setup: setup,
           actions: reaction_process_activities,
           automation_mode: ontology_ord(model.automation_mode),
-          automation_status: actual_automation_status,
+          automation_control: automation_control,
         )
       end
 
       private
 
-      def actual_automation_status
-        OrdKit::StepAutomationStatus.const_get model.actual_automation_status.to_s
-      rescue NameError
-        OrdKit::StepAutomationStatus::STEP_STATUS_UNSPECIFIED
-      end
-
       def ontology_ord(ontology_id)
         OrdKit::Exporter::Models::OntologyExporter.new(ontology_id).to_ord
+      end
+
+      def automation_control
+        OrdKit::Exporter::Models::AutomationControlExporter.new(model.automation_control).to_ord
       end
 
       def setup

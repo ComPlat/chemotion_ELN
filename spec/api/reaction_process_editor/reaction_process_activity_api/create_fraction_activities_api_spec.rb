@@ -41,9 +41,9 @@ describe ReactionProcessEditor::ReactionProcessActivityAPI, '.create_fraction_ac
               index: 1 })
   end
 
-  it 'updates activity AUTOMATION_STATUS' do
+  it 'updates activity automation_control status' do
     expect { put_append_fraction_request }.to change {
-      activity.reload.workup['AUTOMATION_STATUS']
+      activity.reload.workup.dig('automation_control', 'status')
     }.to('HALT_RESOLVED_NEEDS_CONFIRMATION')
   end
 end

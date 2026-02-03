@@ -8,7 +8,7 @@ module Usecases
           ActiveRecord::Base.transaction do
             activity.automation_response = JSON.parse(response_json.read)
 
-            activity.workup['AUTOMATION_STATUS'] = 'AUTOMATION_RESPONDED'
+            activity.workup['automation_control'] = { status: 'AUTOMATION_RESPONDED' }
             activity.save
           end
         end

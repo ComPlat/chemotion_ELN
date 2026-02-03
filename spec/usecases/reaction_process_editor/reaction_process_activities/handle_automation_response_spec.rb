@@ -31,6 +31,8 @@ RSpec.describe Usecases::ReactionProcessEditor::ReactionProcessActivities::Handl
   end
 
   it "updates workup['automation_status']" do
-    expect { handle_automation_response }.to change { activity.workup['AUTOMATION_STATUS'] }.to('AUTOMATION_RESPONDED')
+    expect { handle_automation_response }.to change {
+      activity.workup.dig('automation_control', 'status')
+    }.to('AUTOMATION_RESPONDED')
   end
 end

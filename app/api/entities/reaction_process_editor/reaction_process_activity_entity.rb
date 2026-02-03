@@ -3,7 +3,7 @@
 module Entities
   module ReactionProcessEditor
     class ReactionProcessActivityEntity < Grape::Entity
-      expose(:id, :step_id, :activity_name, :position, :workup, :automation_response)
+      expose(:id, :value, :step_id, :activity_name, :position, :workup, :automation_response)
 
       expose :reaction_process_vessel, using: 'Entities::ReactionProcessEditor::ReactionProcessVesselEntity'
       expose :sample, using: 'Entities::ReactionProcessEditor::SampleEntity'
@@ -16,6 +16,10 @@ module Entities
       expose :transfer_target_step_name # supportive piggyback required in TRANSFER only
 
       private
+
+      def value
+        object.id
+      end
 
       def fractions
         object.fractions.order(:position)
