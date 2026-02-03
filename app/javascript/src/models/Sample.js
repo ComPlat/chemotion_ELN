@@ -1860,14 +1860,22 @@ export default class Sample extends Element {
       if (this.solvent) {
         Object.assign(tmpSolvents, this.solvent);
       }
+      // Use external_label if available (e.g., "Acetone" from dropdown),
+      // otherwise fall back to IUPAC name (e.g., "propan-2-one")
+      const label = newSolvent.external_label || molecule.iupac_name;
       const solventData = {
-        label: molecule.iupac_name, smiles: molecule.cano_smiles, inchikey: molecule.inchikey, ratio: 1
+        label, smiles: molecule.cano_smiles, inchikey: molecule.inchikey, ratio: 1
       };
-      const filtered = tmpSolvents.find((solv) => (solv && solv.label === solventData.label
-            && solv.smiles === solventData.smiles
-            && solv.inchikey && solventData.inchikey));
+      // Filter by chemical identity (inchikey or smiles) rather than label
+      // to avoid duplicates when the same compound has different labels (e.g., "Acetone" vs "propan-2-one")
+      const filtered = tmpSolvents.find((solv) => (solv && solv.smiles === solventData.smiles
+            && solv.inchikey === solventData.inchikey));
       if (!filtered) {
         tmpSolvents.push(solventData);
+      } else if (newSolvent.external_label) {
+        // If a match is found and we have an external_label, update the existing entry's label
+        // to prefer user-friendly names over IUPAC names
+        filtered.label = label;
       }
       this.solvent = tmpSolvents;
     }
@@ -1879,8 +1887,9 @@ export default class Sample extends Element {
       Object.assign(tmpSolvents, this.solvent);
     }
 
-    const filteredIndex = tmpSolvents.findIndex((solv) => (solv.label === solventToDelete.label
-            && solv.smiles === solventToDelete.smiles
+    // Match by chemical identity (inchikey or smiles) rather than label
+    // to ensure deletion works even if labels differ (e.g., "Acetone" vs "propan-2-one")
+    const filteredIndex = tmpSolvents.findIndex((solv) => (solv.smiles === solventToDelete.smiles
             && solv.inchikey === solventToDelete.inchikey));
     if (filteredIndex >= 0) {
       tmpSolvents.splice(filteredIndex, 1);
