@@ -98,7 +98,7 @@ function VersionsTableChanges(props) {
 
   const changesToRevert = useMemo(
     () => reversibleChanges(),
-    [checkboxTick]
+    [checkboxTick, changes]
   );
 
   return (
