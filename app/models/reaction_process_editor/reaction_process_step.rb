@@ -5,8 +5,9 @@
 # Table name: reaction_process_steps
 #
 #  id                         :uuid             not null, primary key
+#  automation_control         :jsonb
+#  automation_dependencies    :jsonb
 #  automation_mode            :string
-#  automation_status          :string
 #  deleted_at                 :datetime
 #  locked                     :boolean
 #  name                       :string
@@ -46,20 +47,6 @@ module ReactionProcessEditor
 
     def step_number
       position + 1
-    end
-
-    def halts_automation?
-      reaction_process_activities.any?(&:halts_automation?)
-    end
-
-    def actual_automation_status
-      # actual_automation_status is mostly determined by external conditions. When no other condition precedes, fallback
-      # to `automation_status` which can manually be set to "STEP_MANUAL_PROCEED" / "STEP_HALT_BY_PRECEDING"
-      # (Maybe rename `automation_status` to 'manual_automation_status'?)
-      return 'STEP_COMPLETED' if reaction_process_activities.all?(&:automation_completed?)
-      return 'STEP_CAN_RUN' if predecessors.none?(&:halts_automation?)
-
-      automation_status.presence || 'STEP_HALT_BY_PRECEDING'
     end
 
     # We precalculate the Array of activity preconditions which the ReactionActionEntity then indexes by its position.

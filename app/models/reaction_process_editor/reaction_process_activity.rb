@@ -75,14 +75,6 @@ module ReactionProcessEditor
       !removes_compound?
     end
 
-    def halts_automation?
-      %w[HALT AUTOMATION_RESPONDED HALT_RESOLVED_NEEDS_CONFIRMATION].include?(workup['AUTOMATION_STATUS'])
-    end
-
-    def automation_completed?
-      workup['AUTOMATION_STATUS'] == 'COMPLETED'
-    end
-
     def compound
       sample || medium
     end

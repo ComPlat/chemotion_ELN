@@ -13,6 +13,7 @@ module Entities
             equipment: SelectOptions::Models::Equipment.new.all,
             FORMS: forms_options(reaction_process),
             ontologies: SelectOptions::Models::Ontologies.new.all,
+            automation_control: automation_control_options(reaction_process),
           }
         end
 
@@ -83,6 +84,21 @@ module Entities
                                                                            .pluck(:name)
 
           process_step_names.uniq.map.with_index { |name, idx| { value: idx, label: name } }
+        end
+
+        def automation_control_options(reaction_process)
+          step_count = reaction_process.reaction_process_steps.count
+
+          {
+            activities:
+              reaction_process.reaction_process_steps.order(:position).map do |process_step|
+                process_step.reaction_process_activities.order(:position).map do |activity|
+                  { id: activity.id, value: activity.id,
+                    label: "#{process_step.step_number}/#{step_count}: #{activity.position} #{activity.activity_name}",
+                    saved_sample_id: activity.workup['sample_id'] }
+                end
+              end.flatten,
+          }
         end
       end
     end

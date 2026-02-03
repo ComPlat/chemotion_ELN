@@ -10,7 +10,7 @@ module Usecases
           return "unknown status #{automation_status}" unless AUTOMATION_STATES.include?(automation_status)
 
           ActiveRecord::Base.transaction do
-            activity.workup['AUTOMATION_STATUS'] = automation_status
+            activity.workup['automation_control'] = { status: automation_status }
             activity.save
           end
         end
