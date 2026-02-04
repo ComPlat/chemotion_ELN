@@ -1718,11 +1718,21 @@ class ElementStore {
 
   addElement(addEl) {
     const { selecteds } = this.state;
+    // Store the collection ID from which this element was opened
+    const currentCollection = UIStore.getState().currentCollection;
+    if (addEl && currentCollection?.id) {
+      addEl.openedFromCollectionId = currentCollection.id;
+    }
     return [...selecteds, addEl];
   }
 
   updateElement(updateEl, index) {
     const { selecteds } = this.state;
+    // Preserve openedFromCollectionId from the existing element
+    const existingEl = selecteds[index];
+    if (existingEl?.openedFromCollectionId && updateEl) {
+      updateEl.openedFromCollectionId = existingEl.openedFromCollectionId;
+    }
     return [
       ...selecteds.slice(0, index),
       updateEl,

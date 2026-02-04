@@ -139,9 +139,9 @@ export default class ElementDetails extends Component {
 
     switch (el.type) {
       case 'sample':
-        return <SampleDetails sample={el} />;
+        return <SampleDetails sample={el} openedFromCollectionId={el.openedFromCollectionId} />;
       case 'reaction':
-        return <ReactionDetails reaction={el} />;
+        return <ReactionDetails reaction={el} openedFromCollectionId={el.openedFromCollectionId} />;
       case 'wellplate':
         return <WellplateDetails wellplate={el} />;
       case 'screen':

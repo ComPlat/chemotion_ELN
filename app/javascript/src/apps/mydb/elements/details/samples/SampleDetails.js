@@ -1620,6 +1620,7 @@ export default class SampleDetails extends React.Component {
             tabTitles={tabTitlesMap}
             onTabPositionChanged={this.onTabPositionChanged}
             addInventoryTab={sample.inventory_sample}
+            openedFromCollectionId={this.props.openedFromCollectionId}
           />
           <Tabs
             mountOnEnter
@@ -1641,4 +1642,5 @@ export default class SampleDetails extends React.Component {
 
 SampleDetails.propTypes = {
   sample: PropTypes.object,
+  openedFromCollectionId: PropTypes.number,
 };
