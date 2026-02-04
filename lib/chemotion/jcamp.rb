@@ -56,18 +56,27 @@ module Chemotion
         Zip::InputStream.open(rsp_io) do |io|
           while (entry = io.get_next_entry)
             ext = extract_ext(entry)
+            entry_name = entry&.name.to_s
             data = entry.get_input_stream.read.force_encoding('UTF-8')
             if %w[png].include?(ext)
               tmp_img = generate_tmp_file(data, ext)
+              tmp_img.instance_variable_set(:@original_filename, entry_name)
+              tmp_img.define_singleton_method(:original_filename) { @original_filename }
               arr_img.push(tmp_img)
             elsif %w[dx jdx jcamp mzml raw cdf zip].include?(ext.downcase)
               tmp_jcamp = generate_tmp_file(data, ext)
+              tmp_jcamp.instance_variable_set(:@original_filename, entry_name)
+              tmp_jcamp.define_singleton_method(:original_filename) { @original_filename }
               arr_jcamp.push(tmp_jcamp)
             elsif %w[csv].include?(ext)
               tmp_csv = generate_tmp_file(data, ext)
+              tmp_csv.instance_variable_set(:@original_filename, entry_name)
+              tmp_csv.define_singleton_method(:original_filename) { @original_filename }
               arr_csv.push(tmp_csv)
             elsif %w[nmrium].include?(ext)
               tmp_nmrium = generate_tmp_file(data, ext)
+              tmp_nmrium.instance_variable_set(:@original_filename, entry_name)
+              tmp_nmrium.define_singleton_method(:original_filename) { @original_filename }
               arr_nmrium.push(tmp_nmrium)
             end
           end

@@ -4,6 +4,7 @@
 # State machine for attachment Jcamp handle
 module AttachmentJcampAasm
   FILE_EXT_SPECTRA = %w[dx jdx jcamp mzml mzxml raw cdf zip gz tar nmrium].freeze
+  LCMS_UVVIS_JDX_REGEX = /lcms.*[._]uvvis(\.peak)?\.jdx$/i.freeze
 
   extend ActiveSupport::Concern
 
@@ -93,8 +94,7 @@ module AttachmentJcampAasm
 
     filename_lower = filename.to_s.downcase
 
-    if filename_lower.match?(/lcms.*[._]uvvis\.jdx$/i) &&
-      !filename_lower.include?('peak') && !filename_lower.include?('edit')
+    if lcms_uvvis_raw?(filename_lower)
       set_non_jcamp
     else
       set_queueing
@@ -107,7 +107,7 @@ module AttachmentJcampAasm
     return unless belong_to_analysis?
 
     filename_lower = filename.to_s.downcase
-    if filename_lower.match?(/lcms.*_uvvis\.jdx$/i) && !filename_lower.include?('peak') && !filename_lower.include?('edit')
+    if lcms_uvvis_raw?(filename_lower)
       return
     end
 
@@ -121,13 +121,9 @@ module AttachmentJcampAasm
 
     if queueing? && filename.to_s.downcase.match?(/lcms.*\.jdx$/i)
       filename_lower = filename.to_s.downcase
-      
-      is_uvvis_raw = (
-        filename_lower.match?(/lcms.*[._]uvvis\.jdx$/i) ||
-        filename_lower == 'lcms_uvvis.jdx' ||
-        filename_lower == 'lcms.uvvis.jdx'
-      ) && !filename_lower.include?('peak') && !filename_lower.include?('edit')
-      
+
+      is_uvvis_raw = lcms_uvvis_raw?(filename_lower)
+
       if is_uvvis_raw
         return
       end
@@ -142,6 +138,12 @@ module AttachmentJcampAasm
 
   def belong_to_analysis?
     container&.parent&.container_type == 'analysis'
+  end
+
+  def lcms_uvvis_raw?(filename_lower)
+    filename_lower.match?(LCMS_UVVIS_JDX_REGEX) &&
+      !filename_lower.include?('peak') &&
+      !filename_lower.include?('edit')
   end
 end
 
@@ -190,14 +192,8 @@ module AttachmentJcampProcess
         filename_lower = att.filename.to_s.downcase
         
         if filename_lower.match?(/lcms.*\.jdx$/i)
-          
-          is_uvvis_raw = (
-            filename_lower.match?(/lcms.*[._]uvvis\.jdx$/i) ||
-            filename_lower == 'lcms_uvvis.jdx' ||
-            filename_lower == 'lcms.uvvis.jdx'
-          ) && !filename_lower.include?('peak') && !filename_lower.include?('edit')
-                    
-          if is_uvvis_raw
+
+          if lcms_uvvis_raw?(filename_lower)
             att.set_non_jcamp if att.may_set_non_jcamp?
           else
             att.set_force_peaked if att.may_set_force_peaked?
@@ -277,30 +273,6 @@ module AttachmentJcampProcess
 
     params[:ext]  = extname.downcase
     params[:fname] = filename.to_s
-
-    case params[:fname]
-    when /_uvvis\.peak/i  then params[:jcamp_idx] = 0
-    when /_uvvis(\.|$)/i  then params[:jcamp_idx] = 1
-    when /_tic_plus/i     then params[:jcamp_idx] = 2
-    when /_tic_minus/i    then params[:jcamp_idx] = 3
-    when /_mz_plus/i      then params[:jcamp_idx] = 4
-    when /_mz_minus/i     then params[:jcamp_idx] = 5
-    else                       params[:jcamp_idx] ||= 0
-    end
-
-    if params[:peaks_str].present? && params[:fname] =~ /_uvvis\.peak/i
-      begin
-        peaks_data = JSON.parse(params[:peaks_str])
-        if peaks_data.is_a?(Hash) && peaks_data.keys.any? { |k| k.to_s.match?(/\d+/) }
-          params[:jcamp_idx] = 0
-        end
-      rescue JSON::ParserError => e
-      end
-    end
-
-    if params[:curve_idx].present? && params[:curve_idx] == 0 && params[:fname] =~ /_uvvis\.peak/i
-      params[:jcamp_idx] = 0
-    end
 
     params
   end
@@ -449,17 +421,8 @@ module AttachmentJcampProcess
   
     base = filename_parts.first
 
-    wanted = {
-      0 => "#{base}_uvvis.peak",
-      1 => "#{base}_uvvis",
-      2 => "#{base}_tic_plus",
-      3 => "#{base}_tic_minus",
-      4 => "#{base}_mz_plus",
-      5 => "#{base}_mz_minus"
-    }
-  
     arr_jcamp.each_with_index do |jcamp, idx|
-      stem   = wanted[idx] || "#{base}_processed_#{idx}"
+      stem = original_stem(jcamp, base) || "#{base}_processed_#{idx}"
       addon  = stem.sub(/^#{base}_/, '')
   
       curr_jcamp_att = generate_jcamp_att(jcamp, addon)
@@ -469,8 +432,9 @@ module AttachmentJcampProcess
   
       curr_tmp_img = arr_img[idx]
       if curr_tmp_img
+        img_stem = original_stem(curr_tmp_img, base) || stem
         img_att = generate_img_att(curr_tmp_img, addon)
-        img_att.update!(filename: "#{stem}.png")
+        img_att.update!(filename: "#{img_stem}.png")
         tmp_img_to_deleted << img_att
         tmp_to_be_deleted << curr_tmp_img
       end
@@ -482,6 +446,24 @@ module AttachmentJcampProcess
     delete_related_arr_img(tmp_img_to_deleted)
     delete_edit_peak_after_done
     jcamp_att
+  end
+
+  def original_stem(tmp_file, base_prefix)
+    return unless tmp_file.respond_to?(:original_filename)
+
+    original = tmp_file.original_filename.to_s
+    return if original.strip.empty?
+
+    original_name = File.basename(original)
+    ext = File.extname(original_name)
+    stem = File.basename(original_name, ext)
+
+    if base_prefix.present? && !stem.start_with?(base_prefix)
+      suffix = stem[/_(?:lcms_)?(?:uvvis|tic|mz).*/i]
+      return "#{base_prefix}#{suffix}" if suffix.present?
+    end
+
+    stem
   end
 
   def read_bagit_data(arr_jcamp, arr_img, arr_csv, spc_type, is_regen, params)
