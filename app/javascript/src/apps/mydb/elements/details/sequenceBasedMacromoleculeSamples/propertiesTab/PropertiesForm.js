@@ -296,7 +296,7 @@ const PropertiesForm = ({ readonly }) => {
               </Accordion.Header>
               <Accordion.Body>
                 <h5 className="mb-3">Application</h5>
-                <Row className="mb-4">
+                <Row className="mb-4 align-items-end">
                   <Col>
                     {formHelper.textInput('name', 'Name', '')}
                   </Col>
