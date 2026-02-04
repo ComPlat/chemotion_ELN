@@ -40,6 +40,14 @@ module Chemotion
 
         old_att&.destroy
       end
+
+      def remove_generated_children(att)
+        Attachment.children_of(att.id).find_each do |child|
+          next unless writable?(child)
+
+          child.destroy
+        end
+      end
     end
 
     rescue_from ActiveRecord::RecordNotFound do |_error|
@@ -482,6 +490,7 @@ module Chemotion
           next unless writable?(att)
 
           remove_duplicated(att)
+          remove_generated_children(att)
 
           att.set_regenerating
           att.save
