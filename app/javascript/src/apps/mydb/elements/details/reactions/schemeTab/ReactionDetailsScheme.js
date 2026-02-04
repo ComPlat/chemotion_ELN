@@ -614,7 +614,9 @@ export default class ReactionDetailsScheme extends React.Component {
   updatedReactionForAmountChange(changeEvent) {
     const { reaction } = this.props;
     const { sampleID, amount } = changeEvent;
-    const updatedSample = reaction.sampleById(sampleID);
+    const updatedSample = changeEvent.isSbmm === true
+      ? reaction.findSbmmSample(sampleID)
+      : reaction.sampleById(sampleID);
 
     // When amount_g or amount_l is manually changed by user, clear the reference_component_changed flag
     // so that amount_mol will be calculated from amount_g instead of using reference component's amount_mol
@@ -631,7 +633,9 @@ export default class ReactionDetailsScheme extends React.Component {
   updatedReactionForAmountUnitChange(changeEvent) {
     const { reaction } = this.props;
     const { sampleID, amount } = changeEvent;
-    const updatedSample = reaction.sampleById(sampleID);
+    const updatedSample = changeEvent.isSbmm === true
+      ? reaction.findSbmmSample(sampleID)
+      : reaction.sampleById(sampleID);
 
     // normalize to milligram
     // updatedSample.setAmountAndNormalizeToGram(amount);
