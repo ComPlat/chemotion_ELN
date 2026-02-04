@@ -660,9 +660,12 @@ export default class ReactionDetailsScheme extends React.Component {
     }
 
     // --- Validate mixture mass ---
-    this.warnIfMixtureMassExceeded(updatedSample, updatedSample.amount_g);
+    // Only validate for mixture samples
+    if (updatedSample.isMixture && updatedSample.isMixture()) {
+      this.warnIfMixtureMassExceeded(updatedSample, updatedSample.amount_g);
+    }
 
-    if (updatedSample.isCatalyst()) {
+    if (updatedSample.isCatalyst && updatedSample.isCatalyst()) {
       GasPhaseReactionActions.setCatalystReferenceMole(updatedSample.amount_mol);
     }
 
