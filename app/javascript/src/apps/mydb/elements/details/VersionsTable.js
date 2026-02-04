@@ -1,7 +1,7 @@
 /* eslint-disable react/forbid-prop-types */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Pagination, Spinner } from 'react-bootstrap';
+import { Pagination, Spinner, Alert } from 'react-bootstrap';
 import { AgGridReact } from 'ag-grid-react';
 import VersionsFetcher from 'src/fetchers/VersionsFetcher';
 import VersionsTableChanges from 'src/apps/mydb/elements/details/VersionsTableChanges';
@@ -262,7 +262,16 @@ export default class VersionsTable extends Component {
     const {
       versions, page, pages, TableChangesId, renderRevertView
     } = this.state;
-    const { isEdited } = this.props;
+    const { isEdited, element, type } = this.props;
+    const entityType = type.slice(0, -1);
+
+    if (element.isNew) {
+      return (
+        <Alert variant="info">
+          {`Save the ${entityType} to enable the history tab.`}
+        </Alert>
+      );
+    }
 
     const pagination = () => (
       <Pagination>
