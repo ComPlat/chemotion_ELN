@@ -95,6 +95,9 @@ class Material extends Component {
       fieldToShow: 'molar mass',
     };
 
+    // Compute isSbmm once and store as instance property to avoid repeated calls
+    this.isSbmm = isSbmmSample(props.material);
+
     this.createParagraph = this.createParagraph.bind(this);
     this.handleAmountUnitChange = this.handleAmountUnitChange.bind(this);
     this.handleMetricsChange = this.handleMetricsChange.bind(this);
@@ -127,9 +130,15 @@ class Material extends Component {
 
   componentDidUpdate(prevProps) {
     const { material } = this.props;
+
     if (prevProps.material.id !== material.id) {
-      this.fetchMixtureComponentsIfNeeded(material);
-      this.restoreAccordionState(material);
+      // Update isSbmm when material changes
+      this.isSbmm = isSbmmSample(material);
+
+      if (material && material.isMixture && material.isMixture()) {
+        this.fetchMixtureComponentsIfNeeded(material);
+        this.restoreAccordionState(material);
+      }
     }
   }
 
@@ -840,13 +849,15 @@ class Material extends Component {
         materialGroup,
         sampleID: this.materialId(),
         amountType,
+        isSbmm: this.isSbmm,
       };
       onChange(event);
     }
   }
 
   handleMetricsChange(e) {
-    const { materialGroup, onChange, material } = this.props;
+    const { materialGroup, onChange } = this.props;
+
     if (onChange && e) {
       const event = {
         metricUnit: e.metricUnit,
@@ -854,7 +865,7 @@ class Material extends Component {
         type: 'MetricsChanged',
         materialGroup,
         sampleID: this.materialId(),
-        isSbmm: isSbmmSample(material),
+        isSbmm: this.isSbmm,
       };
       onChange(event);
     }

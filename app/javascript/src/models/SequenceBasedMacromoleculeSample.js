@@ -763,6 +763,158 @@ export default class SequenceBasedMacromoleculeSample extends Element {
     return this.activity_per_mass_value && this.purity ? parseFloat((this.activity_per_mass_value * this.purity) / 100).toFixed(8) : '';
   }
 
+  /**
+   * Getter for amount_g (mass in grams).
+   * Maps from amount_as_used_mass_value, converting to base unit (g) if needed.
+   * @returns {number|null} Mass in grams, or null if not set
+   */
+  get amount_g() {
+    if (this.base_amount_as_used_mass_value == null) {
+      return null;
+    }
+    // base_amount_as_used_mass_value is already in base unit (g)
+    return this.base_amount_as_used_mass_value;
+  }
+
+  /**
+   * Getter for amount_l (volume in liters).
+   * Maps from volume_as_used_value, converting to base unit (L) if needed.
+   * @returns {number|null} Volume in liters, or null if not set
+   */
+  get amount_l() {
+    if (this.base_volume_as_used_value == null) {
+      return null;
+    }
+    // base_volume_as_used_value is already in base unit (L)
+    return this.base_volume_as_used_value;
+  }
+
+  /**
+   * Getter for amount_mol (amount in moles).
+   * Maps from amount_as_used_mol_value, converting to base unit (mol) if needed.
+   * @returns {number|null} Amount in moles, or null if not set
+   */
+  get amount_mol() {
+    if (this.base_amount_as_used_mol_value == null) {
+      return null;
+    }
+    // base_amount_as_used_mol_value is already in base unit (mol)
+    return this.base_amount_as_used_mol_value;
+  }
+
+  /**
+   * Sets the "amount as used" on the sample based on the provided unit.
+   *
+   * The method detects whether the given unit represents:
+   * - mass (g, mg, µg, ng)
+   * - volume (l, ml, µl, nl)
+   * - amount of substance (mol, mmol, µmol, nmol, pmol)
+   *
+   * Based on the detected category, it updates the corresponding
+   * internal value/unit pair and sets `_amount_unit` to the base unit
+   * (`g`, `l`, or `mol`).
+   *
+   * If the unit is not recognized, the amount is treated as mass by default.
+   *
+   * @param {Object} amount - Amount descriptor.
+   * @param {number} amount.value - Numeric value of the amount.
+   * @param {string} amount.unit - Unit of the amount (e.g. `mg`, `ml`, `mmol`).
+   *
+   * @returns {void}
+   */
+  setAmount(amount) {
+    if (!amount || !amount.unit || Number.isNaN(amount.value)) return;
+
+    const massUnits = new Set(['g', 'mg', 'µg', 'ng']);
+    const volumeUnits = new Set(['l', 'ml', 'µl', 'nl']);
+    const molUnits = new Set(['mol', 'mmol', 'µmol', 'nmol', 'pmol']);
+
+    if (massUnits.has(amount.unit)) {
+      this.amount_as_used_mass_value = amount.value;
+      this.amount_as_used_mass_unit = amount.unit;
+      this._amount_unit = 'g';
+      return;
+    }
+
+    if (volumeUnits.has(amount.unit)) {
+      this.volume_as_used_value = amount.value;
+      this.volume_as_used_unit = amount.unit;
+      this._amount_unit = 'l';
+      return;
+    }
+
+    if (molUnits.has(amount.unit)) {
+      this.amount_as_used_mol_value = amount.value;
+      this.amount_as_used_mol_unit = amount.unit;
+      this._amount_unit = 'mol';
+      return;
+    }
+
+    // fallback
+    this.amount_as_used_mass_value = amount.value;
+    this.amount_as_used_mass_unit = amount.unit || 'g';
+    this._amount_unit = 'g';
+  }
+
+  /**
+   * Sets the amount and normalizes to grams.
+   * Converts any unit to grams and updates amount_as_used_mass_value.
+   * @param {Object} amount - The amount object containing value and unit
+   * @param {number} amount.value - The numeric value of the amount
+   * @param {string} amount.unit - The unit of measurement
+   */
+  setAmountAndNormalizeToGram(amount) {
+    if (!amount || !amount.unit || Number.isNaN(amount.value)) return;
+
+    // Convert to grams using convertUnits
+    const valueInGrams = convertUnits(
+      amount.value,
+      amount.unit,
+      'g'
+    );
+
+    // Update mass property with normalized value
+    this.amount_as_used_mass_value = valueInGrams;
+    this.amount_as_used_mass_unit = 'g';
+    // Track that the primary unit is now 'g'
+    this._amount_unit = 'g';
+  }
+
+  /**
+   * Getter for amount_unit to determine which field is primary.
+   * Returns the unit of the field that has a value, prioritizing mass > volume > mol.
+   * @returns {string} The primary unit ('g', 'l', or 'mol')
+   */
+  get amount_unit() {
+    // Return stored unit if set
+    if (this._amount_unit) {
+      return this._amount_unit;
+    }
+
+    // Determine primary unit based on which field has a value
+    // Priority: mass > volume > mol
+    if (this.base_amount_as_used_mass_value != null && this.base_amount_as_used_mass_value > 0) {
+      return 'g';
+    }
+    if (this.base_volume_as_used_value != null && this.base_volume_as_used_value > 0) {
+      return 'l';
+    }
+    if (this.base_amount_as_used_mol_value != null && this.base_amount_as_used_mol_value > 0) {
+      return 'mol';
+    }
+
+    // Default to 'g' if no values are set
+    return 'g';
+  }
+
+  /**
+   * Setter for amount_unit to track which field is primary.
+   * @param {string} unit - The unit ('g', 'l', or 'mol')
+   */
+  set amount_unit(unit) {
+    this._amount_unit = unit;
+  }
+
   get accessions() {
     const accessions = this.sequence_based_macromolecule.accessions;
     if (accessions) {
@@ -1098,27 +1250,9 @@ export default class SequenceBasedMacromoleculeSample extends Element {
     // Initialize container
     splitSbmm.container = Container.init();
 
-    // Copy values from source SBMM to split SBMM
-    const fieldsToCopy = [
-      { value: 'volume_as_used_value', unit: 'volume_as_used_unit' },
-      { value: 'amount_as_used_mol_value', unit: 'amount_as_used_mol_unit' },
-      { value: 'amount_as_used_mass_value', unit: 'amount_as_used_mass_unit' },
-      { value: 'activity_value', unit: 'activity_unit' },
-      { value: 'concentration_rt_value', unit: 'concentration_rt_unit' },
-    ];
-
-    fieldsToCopy.forEach(({ value, unit }) => {
-      if (this[value] != null) {
-        splitSbmm[value] = this[value];
-      }
-      if (this[unit]) {
-        splitSbmm[unit] = this[unit];
-      }
-    });
-
-    // Purity (no unit)
+    // Ensure purity is stored as decimal (0.5) not percentage (50)
     if (this.purity != null) {
-      splitSbmm.purity = this.purity;
+      splitSbmm.purity = this.purity / 100;
     }
 
     return splitSbmm;
