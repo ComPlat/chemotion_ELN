@@ -1272,6 +1272,12 @@ export default class SequenceBasedMacromoleculeSample extends Element {
     // Initialize container
     splitSbmm.container = Container.init();
 
+    // Calculate concentration_rt if amount_mol and volume are available
+    // This ensures the Conc field displays the correct value when dropped into reaction
+    if (splitSbmm.base_amount_as_used_mol_value && splitSbmm.base_volume_as_used_value) {
+      splitSbmm.calculateConcentrationRt();
+    }
+
     return splitSbmm;
   }
 

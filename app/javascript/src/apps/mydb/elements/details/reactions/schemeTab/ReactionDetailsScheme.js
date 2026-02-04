@@ -195,6 +195,12 @@ export default class ReactionDetailsScheme extends React.Component {
     // Create a split copy (like buildChildWithoutCounter for samples)
     const splitSbmmSample = srcSbmmSample.buildChildWithoutCounter();
 
+    // Calculate concentration_rt if amount_mol and volume are available
+    // This ensures the Conc field displays the correct value
+    if (splitSbmmSample.base_amount_as_used_mol_value && splitSbmmSample.base_volume_as_used_value) {
+      splitSbmmSample.calculateConcentrationRt();
+    }
+
     // Set reaction-specific properties
     splitSbmmSample.show_label = true; // Similar to how samples handle decoupled
 
