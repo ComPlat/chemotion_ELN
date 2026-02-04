@@ -2,6 +2,7 @@ import Element from 'src/models/Element';
 import Container from 'src/models/Container';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { convertUnits, defaultUnits } from 'src/components/staticDropdownOptions/units';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 export default class SequenceBasedMacromoleculeSample extends Element {
   constructor(args) {
@@ -354,10 +355,11 @@ export default class SequenceBasedMacromoleculeSample extends Element {
       return null;
     }
 
-    const purity = this.purity > 0 ? this.purity : 100;
+    // Purity is always stored as decimal (0.5 for 50%)
+    const purity = this.purity > 0 ? this.purity : 1.0;
 
     this._amount_as_used_mol_value = convertUnits(
-      parseFloat(((this.base_volume_as_used_value * this.base_molarity_value * purity) / 100).toFixed(8)),
+      parseFloat((this.base_volume_as_used_value * this.base_molarity_value * purity).toFixed(8)),
       defaultUnits.amount_as_used_mol,
       this.amount_as_used_mol_unit
     );
@@ -469,10 +471,11 @@ export default class SequenceBasedMacromoleculeSample extends Element {
   calculateVolumeByAmount() {
     if (this.base_molarity_value === 0 || this.base_amount_as_used_mol_value === 0) { return null; }
 
-    const purity = this.purity > 0 ? this.purity : 100;
+    // Purity is always stored as decimal (0.5 for 50%)
+    const purity = this.purity > 0 ? this.purity : 1.0;
 
     this._volume_as_used_value = convertUnits(
-      parseFloat((this.base_amount_as_used_mol_value / ((this.base_molarity_value * purity) / 100)).toFixed(8)),
+      parseFloat((this.base_amount_as_used_mol_value / (this.base_molarity_value * purity)).toFixed(8)),
       defaultUnits.volume_as_used,
       this.volume_as_used_unit
     );
@@ -746,21 +749,40 @@ export default class SequenceBasedMacromoleculeSample extends Element {
     return this._purity;
   }
 
+  validateAndSetPurity(value) {
+    // Validate purity value and show warning if invalid
+    if (value != null && (value < 0 || value > 1)) {
+      NotificationActions.add({
+        message: 'Purity value should be >= 0 and <=1',
+        level: 'error'
+      });
+      // Set to 1 if invalid
+      return 1;
+    }
+    return value;
+  }
+
   set purity(value) {
-    this._purity = value;
+    this._purity = this.validateAndSetPurity(value);
     this.calculateValues('purity');
   }
 
   get concentration_by_purity() {
-    return this.concentration_value && this.purity ? parseFloat((this.concentration_value * this.purity) / 100).toFixed(8) : '';
+    return this.concentration_value && this.purity
+      ? parseFloat((this.concentration_value * this.purity).toFixed(8))
+      : '';
   }
 
   get molarity_by_purity() {
-    return this.molarity_value && this.purity ? parseFloat((this.molarity_value * this.purity) / 100).toFixed(8) : '';
+    return this.molarity_value && this.purity
+      ? parseFloat((this.molarity_value * this.purity).toFixed(8))
+      : '';
   }
 
   get activity_per_mass_by_purity() {
-    return this.activity_per_mass_value && this.purity ? parseFloat((this.activity_per_mass_value * this.purity) / 100).toFixed(8) : '';
+    return this.activity_per_mass_value && this.purity
+      ? parseFloat((this.activity_per_mass_value * this.purity).toFixed(8))
+      : '';
   }
 
   /**
@@ -1249,11 +1271,6 @@ export default class SequenceBasedMacromoleculeSample extends Element {
 
     // Initialize container
     splitSbmm.container = Container.init();
-
-    // Ensure purity is stored as decimal (0.5) not percentage (50)
-    if (this.purity != null) {
-      splitSbmm.purity = this.purity / 100;
-    }
 
     return splitSbmm;
   }
