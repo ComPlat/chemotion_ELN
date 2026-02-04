@@ -103,11 +103,11 @@ const PropertiesForm = ({ readonly }) => {
   }
 
   const handleDrop = (item) => {
-    const dropped_sbmm = item.element.sequence_based_macromolecule;
+    const droppedSbmm = item.element.sequence_based_macromolecule;
 
-    sbmmStore.setSbmmBySearchResultOrDND(dropped_sbmm, 'full_sbmm', '');
+    sbmmStore.setSbmmBySearchResultOrDND(droppedSbmm, 'full_sbmm', '');
     sbmmStore.toggleSearchOptions(sbmmSample.id, false);
-  }
+  };
 
   const [{ isOver, canDrop }, drop] = useDrop({
     accept: DragDropItemTypes['SEQUENCE_BASED_MACROMOLECULE'],
@@ -372,7 +372,7 @@ const PropertiesForm = ({ readonly }) => {
                     )}
                   </Col>
                   <Col>
-                    {formHelper.unitInput('purity', 'Purity', 'purity', disabled, '')}
+                    {formHelper.textInput('purity', 'Purity', '')}
                   </Col>
                   <Col>
                     {formHelper.textInput('purity_detection', 'Purity detection', '')}
