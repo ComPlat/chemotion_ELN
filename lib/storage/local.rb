@@ -31,11 +31,11 @@ class Local < Storage
   end
 
   def read_file
-    (File.exist?(path) && IO.binread(path)) || false
+    (File.exist?(path) && File.binread(path)) || false
   end
 
   def read_thumb
-    (File.exist?(thumb_path) && IO.binread(thumb_path)) || false
+    (File.exist?(thumb_path) && File.binread(thumb_path)) || false
   end
 
   def destroy(at_previous_path = false)
@@ -102,7 +102,7 @@ class Local < Storage
     if (fp = attachment.thumb_path) && File.exist?(fp)
       FileUtils.copy(fp, thumb_path)
     elsif attachment.thumb_data
-      IO.binwrite(thumb_path, attachment.thumb_data)
+      File.binwrite(thumb_path, attachment.thumb_data)
     end
   end
 
@@ -115,7 +115,7 @@ class Local < Storage
       if (fp = attachment.file_path) && File.exist?(fp)
         FileUtils.copy(fp, target_path)
       elsif attachment.file_data
-        IO.binwrite(target_path, attachment.file_data)
+        File.binwrite(target_path, attachment.file_data)
       end
     rescue StandardError => e
       puts "ERROR: Can not write local-file: #{e.class} - #{e.message}"
@@ -145,6 +145,6 @@ class Local < Storage
     return unless attachment.thumb
 
     d = File.dirname(thumb_path)
-    FileUtils.mkdir_p(d) unless Dir.exist?(d)
+    FileUtils.mkdir_p(d)
   end
 end
