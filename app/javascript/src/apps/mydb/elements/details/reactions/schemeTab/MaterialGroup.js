@@ -192,6 +192,18 @@ function GeneralMaterialGroup({
         placeholder="Add"
         onChange={createReagentForReaction}
         size="xsm"
+        styles={{
+          menu: (base) => ({
+            ...base,
+            minWidth: 800,
+            width: '800px',
+            maxWidth: '95vw',
+          }),
+          option: (base) => ({
+            ...base,
+            fontSize: '0.875rem',
+          }),
+        }}
       />
     );
   }
