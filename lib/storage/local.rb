@@ -4,15 +4,15 @@ class Local < Storage
   attr_reader :data_folder
 
   def initialize(attach)
-    super(attach)
-    datafolder =  @store_config[:data_folder]
-    if datafolder.blank?
-      @data_folder ||= File.join(Rails.root,'tmp', Rails.env, 'uploads')
-    elsif datafolder.match(/^\//)
-      @data_folder ||= datafolder
-    else
-      @data_folder ||= File.join(Rails.root, datafolder)
-    end
+    super
+    datafolder = @store_config[:data_folder]
+    @data_folder ||= if datafolder.blank?
+                       Rails.root.join('tmp', Rails.env, 'uploads').to_s
+                     elsif datafolder.match?(%r{^/})
+                       datafolder
+                     else
+                       File.join(Rails.root, datafolder)
+                     end
     FileUtils.mkdir_p(data_folder) unless Dir.exist?(data_folder)
   end
 
@@ -31,11 +31,11 @@ class Local < Storage
   end
 
   def read_file
-    File.exist?(path) && IO.binread(path) || false
+    (File.exist?(path) && IO.binread(path)) || false
   end
 
   def read_thumb
-    File.exist?(thumb_path) && IO.binread(thumb_path) || false
+    (File.exist?(thumb_path) && IO.binread(thumb_path)) || false
   end
 
   def destroy(at_previous_path = false)
@@ -44,19 +44,20 @@ class Local < Storage
   end
 
   def remove_file(at_previous_path = false)
-    pat = at_previous_path && prev_path || path
+    pat = (at_previous_path && prev_path) || path
     File.exist?(pat) && rm_file(pat)
     !File.exist?(pat)
   end
 
   def remove_thumb_file(at_previous_path = false)
-    pat = at_previous_path && prev_thumb_path || thumb_path
+    pat = (at_previous_path && prev_thumb_path) || thumb_path
     File.exist?(pat) && rm_file(pat)
     !File.exist?(pat)
   end
 
   def path(bucket = attachment.bucket, key = attachment.key)
     raise StandardError, 'cannot build path without attachment key' if attachment.key.blank?
+
     if bucket.blank?
       File.join(data_folder, key.to_s)
     else
@@ -69,11 +70,11 @@ class Local < Storage
   end
 
   def prev_path
-    path(attachment.bucket_was,attachment.key_was)
+    path(attachment.bucket_was, attachment.key_was)
   end
 
   def prev_thumb_path
-    thumb_path(attachment.bucket_was,attachment.key_was)
+    thumb_path(attachment.bucket_was, attachment.key_was)
   end
 
   def thumb_suffix
@@ -108,16 +109,17 @@ class Local < Storage
   def write_file
     set_key
     set_bucket
-    create_dirs
+    target_path = path
+    create_dirs(target_path)
     begin
       if (fp = attachment.file_path) && File.exist?(fp)
-        FileUtils.copy(fp, path)
+        FileUtils.copy(fp, target_path)
       elsif attachment.file_data
-        IO.binwrite(path, attachment.file_data)
+        IO.binwrite(target_path, attachment.file_data)
       end
-    rescue Exception => e
-      puts "ERROR: Can not write local-file: " + e.message
-      raise e.message
+    rescue StandardError => e
+      puts "ERROR: Can not write local-file: #{e.class} - #{e.message}"
+      raise
     end
   end
 
@@ -126,23 +128,23 @@ class Local < Storage
   end
 
   def set_bucket
-    attachment.bucket = attachment.id / 10000 + 1
+    attachment.bucket = (attachment.id / 10_000) + 1
   end
 
   def rm_file(path_to_file)
     FileUtils.rm(path_to_file, force: true)
   end
 
-  def create_dirs
-    dirs = [File.dirname(path)]
-    dirs << File.dirname(thumb_path) if attachment.thumb
-    dirs.each{ |d| FileUtils.mkdir_p(d) unless Dir.exist?(d)}
+  def create_dirs(target_path)
+    dirs = [File.dirname(target_path)]
+    dirs << File.dirname(thumb_path) if attachment.thumb && thumb_path.present?
+    dirs.each { |d| FileUtils.mkdir_p(d) }
   end
 
   def create_thumb_dir
-    if attachment.thumb
-      d = File.dirname(thumb_path)
-      FileUtils.mkdir_p(d) unless Dir.exist?(d)
-    end
+    return unless attachment.thumb
+
+    d = File.dirname(thumb_path)
+    FileUtils.mkdir_p(d) unless Dir.exist?(d)
   end
 end
