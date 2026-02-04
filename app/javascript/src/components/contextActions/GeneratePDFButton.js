@@ -1,15 +1,12 @@
 import React from 'react';
-import {
-  ButtonGroup, Dropdown, DropdownMenu
-} from 'react-bootstrap';
+import { Dropdown } from 'react-bootstrap';
 import PrintCodeFetcher from 'src/fetchers/PrintCodeFetcher';
-import ScanCodeButton from "src/components/contextActions/ScanCodeButton";
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { PDFDocument } from 'pdf-lib'; // <-- Added import
 import Utils from 'src/utilities/Functions';
 import 'whatwg-fetch';
 
-export default class PrintCodeButton extends React.Component {
+export default class GeneratePDFButton extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -101,19 +98,17 @@ export default class PrintCodeButton extends React.Component {
 
     return (
       <Dropdown
-        as={ButtonGroup}
         id="search-code-split-button"
-        variant="light"
-        title={<i className="fa fa-barcode" />}
         onClick={this.open}
       >
-        <ScanCodeButton />
-        <Dropdown.Toggle split variant="light" />
-        <DropdownMenu>
+        <Dropdown.Toggle variant="light" disabled={disabledPrint}>
+          <i className="fa fa-file" />
+        </Dropdown.Toggle>
+
+        <Dropdown.Menu>
           {menuItems.map((e) => (
             <Dropdown.Item
               key={e.key}
-              disabled={disabledPrint}
               onClick={(event) => {
                 event.stopPropagation();
                 this.downloadPrintCodesPDF(ids, e.name);
@@ -122,7 +117,7 @@ export default class PrintCodeButton extends React.Component {
               {e.name}
             </Dropdown.Item>
           ))}
-        </DropdownMenu>
+        </Dropdown.Menu>
       </Dropdown>
     );
   }

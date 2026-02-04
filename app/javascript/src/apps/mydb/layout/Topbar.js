@@ -5,9 +5,10 @@ import Search from "src/components/navigation/search/Search";
 import ReportUtilButton from "src/components/contextActions/ReportUtilButton";
 import ManagingActions from "src/components/managingActions/ManagingActions";
 import CreateButton from "src/components/contextActions/CreateButton";
-import PrintCodeButton from "src/components/contextActions/PrintCodeButton";
+import GeneratePDFButton from "src/components/contextActions/GeneratePDFButton";
 import SplitElementButton from "src/components/contextActions/SplitElementButton";
 import ExportImportButton from "src/components/contextActions/ExportImportButton";
+import ScanCodeButton from "src/components/contextActions/ScanCodeButton";
 import SupportMenuButton from "src/components/navigation/SupportMenuButton";
 import UserAuth from "src/components/navigation/UserAuth";
 
@@ -23,9 +24,10 @@ export default function Topbar() {
         </ButtonGroup>
         <ExportImportButton />
         <ReportUtilButton />
-        <PrintCodeButton />
+        <GeneratePDFButton />
       </div>
       <div className="d-flex align-items-center gap-2 row-gap-1 flex-wrap justify-content-end">
+        <ScanCodeButton />
         <SupportMenuButton />
         <UserAuth />
       </div>
