@@ -1094,6 +1094,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
 
   serialize() {
     const serialized = {
+      id: this.id,
       collection_id: this.collection_id,
       name: this.name,
       short_label: this.short_label,
