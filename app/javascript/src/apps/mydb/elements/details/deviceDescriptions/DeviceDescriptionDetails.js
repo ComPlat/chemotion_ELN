@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
+import PropTypes from 'prop-types';
 import {
   Button, Tabs, Tab, Tooltip, OverlayTrigger
 } from 'react-bootstrap';
@@ -37,7 +38,7 @@ import DetailsForm from 'src/apps/mydb/elements/details/deviceDescriptions/detai
 // eslint-disable-next-line import/no-named-as-default
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 
-function DeviceDescriptionDetails() {
+function DeviceDescriptionDetails({ openedFromCollectionId }) {
   const deviceDescriptionsStore = useContext(StoreContext).deviceDescriptions;
   const deviceDescription = deviceDescriptionsStore.device_description;
   deviceDescriptionsStore.setKeyPrefix('deviceDescription');
@@ -229,6 +230,7 @@ function DeviceDescriptionDetails() {
           availableTabs={Object.keys(tabContentComponents)}
           tabTitles={tabTitles}
           onTabPositionChanged={onTabPositionChanged}
+          openedFromCollectionId={openedFromCollectionId}
         />
         <Tabs
           activeKey={deviceDescriptionsStore.active_tab_key}
@@ -244,5 +246,9 @@ function DeviceDescriptionDetails() {
     </DetailCard>
   );
 }
+
+DeviceDescriptionDetails.propTypes = {
+  openedFromCollectionId: PropTypes.number,
+};
 
 export default observer(DeviceDescriptionDetails);
