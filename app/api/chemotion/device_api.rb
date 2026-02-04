@@ -38,7 +38,7 @@ module Chemotion
 
       desc "set selected_device of user"
       route_param :id do
-        post 'selected' do 
+        post 'selected' do
           device = Device.find_by(id: params[:id])
           if device.nil?
             error!("404 Device with supplied id not found", 404)
@@ -111,13 +111,13 @@ module Chemotion
                   experiment = analysis.analyses_experiments.find_by(devices_sample_id: s.id)
                   experiment.destroy!
                 }
-                
+
                 sample.update!(params)
               end
               sample.id
             }
             to_remove_sample_ids = old_sample_ids - new_sample_ids
-            to_remove_sample_ids.map{|sample_id| 
+            to_remove_sample_ids.map{ |sample_id|
               device.devices_samples.find_by(id: sample_id).destroy
             }
 

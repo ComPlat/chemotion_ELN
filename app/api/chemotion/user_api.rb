@@ -233,7 +233,6 @@ module Chemotion
     resource :devices do
       params do
         optional :id, type: String, regexp: /\d+/, default: '0'
-        optional :status, type: String
       end
 
       get :novnc do
@@ -245,11 +244,34 @@ module Chemotion
         present devices, with: Entities::DeviceNovncEntity, root: 'devices'
       end
 
+      desc 'Get current connection status for a device'
+      params do
+        requires :id, type: String, regexp: /\d+/
+        optional :status, type: String
+      end
+
       get 'current_connection' do
-        path = Rails.root.join('tmp/novnc_devices', params[:id])
-        cmd = "echo '#{current_user.id},#{params[:status] == 'true' ? 1 : 0}' >> #{path};"
+        # Authorize: ensure device is accessible to current user (cached for 1 minute)
+        cache_key = "device_access/#{current_user.id}/#{params[:id]}"
+
+        device = Rails.cache.fetch(cache_key, expires_in: 1.minute) do
+          Device.by_user_ids(user_ids).find_by(id: params[:id])
+        end
+
+        error!('Device not found', 404) unless device
+
+        path = NOVNC_DEVICES_DIR.join(params[:id])
+        status = params[:status] == 'true' ? 1 : 0
+
+        cmd = "echo '#{current_user.id},#{status}' >> #{path};"
         cmd += "LINES=$(tail -n 8 #{path});echo \"$LINES\" | tee #{path}"
-        { result: Open3.popen3(cmd) { |_i, o, _e, _t| o.read.split(/\s/) } }
+
+        result = Open3.popen3(cmd) { |_i, o, _e, _t| o.read.split(/\s+/) }.compact_blank
+
+        { result: result }
+      rescue SystemCallError => e
+        Rails.logger.error("current_connection: #{e.class} – #{e.message}")
+        error!('Internal server error', 500)
       end
     end
   end
