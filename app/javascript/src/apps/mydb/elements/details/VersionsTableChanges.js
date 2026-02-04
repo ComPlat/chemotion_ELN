@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import VersionsTableFields from 'src/apps/mydb/elements/details/VersionsTableFields';
 import { Alert, Button, ButtonGroup } from 'react-bootstrap';
@@ -13,6 +13,8 @@ function VersionsTableChanges(props) {
   if (typeof data === 'undefined') {
     return '';
   }
+
+  const [checkboxTick, setCheckboxTick] = useState(0);
 
   const {
     changes, createdAt, userName
@@ -52,6 +54,7 @@ function VersionsTableChanges(props) {
       <VersionsTableFields
         fields={fields}
         renderRevertView={renderRevertView}
+        setCheckboxTick={setCheckboxTick}
       />
     </React.Fragment>
   ));
@@ -93,6 +96,11 @@ function VersionsTableChanges(props) {
     alertText += 'Either it is the first version or all changes are irreversible.';
   }
 
+  const changesToRevert = useMemo(
+    () => reversibleChanges(),
+    [checkboxTick, changes]
+  );
+
   return (
     <>
       <h2>
@@ -109,7 +117,8 @@ function VersionsTableChanges(props) {
           {renderRevertView ? (
             <Button
               variant="danger"
-              onClick={() => { toggleRevertView(); handleRevert(reversibleChanges()); }}
+              disabled={changesToRevert.length === 0}
+              onClick={() => { toggleRevertView(); handleRevert(changesToRevert); }}
             >
               Revert
             </Button>
