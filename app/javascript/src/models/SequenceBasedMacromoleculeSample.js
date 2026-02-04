@@ -1,7 +1,7 @@
 import Element from 'src/models/Element';
 import Container from 'src/models/Container';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import { convertUnits, defaultUnits } from 'src/components/staticDropdownOptions/units';
+import { convertUnits, defaultUnits, conversionFactors } from 'src/components/staticDropdownOptions/units';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 export default class SequenceBasedMacromoleculeSample extends Element {
@@ -541,7 +541,11 @@ export default class SequenceBasedMacromoleculeSample extends Element {
   }
 
   set amount_as_used_mol_unit(value) {
-    this._amount_as_used_mol_value = convertUnits(this.amount_as_used_mol_value, this.amount_as_used_mol_unit, value);
+    const currentUnit = this.amount_as_used_mol_unit;
+    // Only convert if both units are valid and different
+    if (currentUnit && value && currentUnit !== value && conversionFactors[currentUnit] && conversionFactors[value]) {
+      this._amount_as_used_mol_value = convertUnits(this.amount_as_used_mol_value, currentUnit, value);
+    }
     this._amount_as_used_mol_unit = value;
   }
 
@@ -575,7 +579,11 @@ export default class SequenceBasedMacromoleculeSample extends Element {
   }
 
   set amount_as_used_mass_unit(value) {
-    this._amount_as_used_mass_value = convertUnits(this.amount_as_used_mass_value, this.amount_as_used_mass_unit, value);
+    const currentUnit = this.amount_as_used_mass_unit;
+    // Only convert if both units are valid and different
+    if (currentUnit && value && currentUnit !== value && conversionFactors[currentUnit] && conversionFactors[value]) {
+      this._amount_as_used_mass_value = convertUnits(this.amount_as_used_mass_value, currentUnit, value);
+    }
     this._amount_as_used_mass_unit = value;
   }
 
@@ -741,7 +749,11 @@ export default class SequenceBasedMacromoleculeSample extends Element {
   }
 
   set volume_as_used_unit(value) {
-    this._volume_as_used_value = convertUnits(this.volume_as_used_value, this.volume_as_used_unit, value);
+    const currentUnit = this.volume_as_used_unit;
+    // Only convert if both units are valid and different
+    if (currentUnit && value && currentUnit !== value && conversionFactors[currentUnit] && conversionFactors[value]) {
+      this._volume_as_used_value = convertUnits(this.volume_as_used_value, currentUnit, value);
+    }
     this._volume_as_used_unit = value;
   }
 
