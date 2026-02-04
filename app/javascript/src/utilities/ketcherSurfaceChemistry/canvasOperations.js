@@ -894,13 +894,43 @@ const replaceAliasesWithIndexesAndCollectComponents = async (comboString) => {
   return { replacedString, textNodeStructureForComponents };
 };
 
+// Check if V2000 molfile is empty (0 atoms)
+const isMolfileEmpty = (molfile) => {
+  if (!molfile || typeof molfile !== 'string') return true;
+  const match = molfile.match(/^\s*(\d+)\s+\d+.*V2000$/m);
+  return match ? parseInt(match[1], 10) === 0 : true;
+};
+
 const onFinalCanvasSave = async (editor, iframeRef) => {
   try {
     let textNodesFormula = '';
     let componentsListContainer = '';
     let ket2Lines = [];
-
-    const canvasDataMol = await editor.structureDef.editor.getMolfile('V2000');
+    let canvasDataMol = null;
+    let shouldSvg = true;
+    try {
+      canvasDataMol = await editor.structureDef.editor.getMolfile('V2000');
+      if (isMolfileEmpty(canvasDataMol)) {
+        console.log('onFinalCanvasSave: V2000 empty, trying V3000');
+        try {
+          canvasDataMol = await editor.structureDef.editor.getMolfile();
+          console.log('onFinalCanvasSave: V3000 success', canvasDataMol?.slice(0, 80));
+        } catch (e) {
+          console.log('onFinalCanvasSave: V3000 failed, trying default', e);
+          canvasDataMol = await editor.structureDef.editor.getMolfile('');
+        }
+        shouldSvg = false;
+      }
+    } catch (e) {
+      console.log('onFinalCanvasSave: V2000 failed, trying V3000/default', e);
+      canvasDataMol = await editor.structureDef.editor.getMolfile('V3000').catch(
+        (err) => {
+          console.log('onFinalCanvasSave: V3000 failed, trying default', err);
+          return editor.structureDef.editor.getMolfile('');
+        }
+      );
+      shouldSvg = false;
+    }
     const ketFormatData = JSON.parse(await editor.structureDef.editor.getKet());
     await reArrangeImagesOnCanvas(iframeRef); // assemble image on the canvas
     ket2Lines = await arrangePolymers(canvasDataMol, editor); // polymers added
@@ -915,6 +945,7 @@ const onFinalCanvasSave = async (editor, iframeRef) => {
       textNodesFormula = replacedString;
     }
     ket2Lines.push(KET_TAGS.fileEndIdentifier);
+
     const svgElement = imagesList.length > 0 ? await getSvgFromCanvas(iframeRef) : await prepareSvg(editor);
     resetStore();
     return {
@@ -922,13 +953,16 @@ const onFinalCanvasSave = async (editor, iframeRef) => {
       svgElement,
       textNodesFormula,
       componentsList: componentsListContainer,
+      shouldSvg,
     };
   } catch (e) {
+    console.log('onFinalCanvasSave: Error generating SVG', e);
     return {
       ket2Molfile: '',
       svgElement: { svg: null, message: e?.message },
       textNodesFormula: '',
       componentsList: [],
+      shouldSvg: false,
     };
   }
 };
