@@ -251,30 +251,28 @@ module Chemotion
       end
 
       get 'current_connection' do
-        # Authorize: ensure device is accessible to current user
-        device = Device.by_user_ids(user_ids).find_by(id: params[:id])
+        # Authorize: ensure device is accessible to current user (cached for 1 minute)
+        cache_key = "device_access/#{current_user.id}/#{params[:id]}"
+
+        device = Rails.cache.fetch(cache_key, expires_in: 1.minute) do
+          Device.by_user_ids(user_ids).find_by(id: params[:id])
+        end
+
         error!('Device not found', 404) unless device
 
         path = NOVNC_DEVICES_DIR.join(params[:id])
         status = params[:status] == 'true' ? 1 : 0
 
-        lines = File.open(path, File::RDWR | File::CREAT, 0o600) do |f|
-          f.flock(File::LOCK_EX)
+        cmd = "echo '#{current_user.id},#{status}' >> #{path};"
+        cmd += "LINES=$(tail -n 8 #{path});echo \"$LINES\" | tee #{path}"
 
-          lines = f.each_line.map(&:chomp).compact_blank
-          lines << "#{current_user.id},#{status}"
-          lines = lines.last(8)
+        result = Open3.popen3(cmd) { |_i, o, _e, _t| o.read.split(/\s+/) }.compact_blank
 
-          f.rewind
-          f.truncate(0)
-          f.puts(lines)
-          lines
-        end
-
-        { result: lines }
+        { result: result }
       rescue SystemCallError => e
         Rails.logger.error("current_connection: #{e.class} – #{e.message}")
         error!('Internal server error', 500)
+      end
     end
   end
   # rubocop:enable Metrics/ClassLength
