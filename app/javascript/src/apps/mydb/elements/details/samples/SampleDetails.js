@@ -1165,7 +1165,6 @@ export default class SampleDetails extends React.Component {
 
   sampleInfo(sample) {
     const isMixture = sample.isMixture();
-    const style = { height: 'auto', marginBottom: '20px' };
     let pubchemLcss = (sample.pubchem_tag && sample.pubchem_tag.pubchem_lcss
       && sample.pubchem_tag.pubchem_lcss.Record) || null;
     if (pubchemLcss && pubchemLcss.Reference) {
@@ -1327,7 +1326,9 @@ export default class SampleDetails extends React.Component {
       ? '/images/wild_card/loading-bubbles.svg'
       : sample.svgPath;
 
-    const className = `position-relative ${svgPath ? 'svg-container' : 'svg-container-empty'}`;
+    const style = 'position-relative d-flex align-items-center justify-content-center';
+
+    const className = `${style} ${svgPath ? 'svg-container' : 'svg-container-empty'}`;
 
     const molViewerBtn = (
       <MolViewerBtn
@@ -1347,7 +1348,7 @@ export default class SampleDetails extends React.Component {
           role="button"
           tabIndex="0"
         >
-          <i className="fa fa-pencil position-absolute end-0" />
+          <i className="fa fa-pencil position-absolute top-0 end-0" />
           <SVG key={svgPath} src={svgPath} className="molecule-mid" />
         </div>
         {molViewerBtn}
