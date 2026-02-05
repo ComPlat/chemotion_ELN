@@ -296,11 +296,26 @@ export default class SampleDetails extends React.Component {
   }
 
   handleInventorySample(e) {
-    const { sample } = this.state;
+    const { sample, visible } = this.state;
     sample.inventory_sample = e.target.checked;
     this.handleSampleChanged(sample);
-    if (!e.target.checked) {
-      this.setState({ activeTab: 'properties' });
+
+    if (e.target.checked) {
+      // Add 'inventory' to visible tabs if not already present
+      if (!visible.includes('inventory')) {
+        this.setState({ visible: visible.push('inventory') });
+      }
+    } else {
+      // Remove 'inventory' from visible tabs
+      this.setState({
+        visible: visible.filter((v) => v !== 'inventory'),
+      });
+      // switch to properties tab if current tab is inventory tab
+      if (this.state.activeTab === 'inventory') {
+        this.setState({
+          activeTab: 'properties'
+        });
+      }
     }
   }
 
