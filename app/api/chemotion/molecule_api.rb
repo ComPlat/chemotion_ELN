@@ -188,7 +188,7 @@ module Chemotion
         decoupled = params[:decoupled]
         molecule = decoupled ? Molecule.find_or_create_dummy : Molecule.find_or_create_by_molfile(molfile)
         molecule = Molecule.find_or_create_dummy if molecule.blank?
-        ob = molecule&.ob_log 
+        ob = molecule&.ob_log
         svg_digest = "#{molecule.inchikey}#{Time.zone.now}"
 
         if svg.present? && svg.include?('epam-ketcher-ssc')
