@@ -13,20 +13,23 @@ function positionNodesByReaction(samples, reactions) {
   const V_GAP = 120;
   const H_GAP = 200;
   const BRANCH_X = 320;
+  const MIN_ROW_GAP = 480; // minimum horizontal gap between reaction blocks on same row
 
   const sampleById = Object.fromEntries(samples.map(s => [s.id, s]));
 
   /* ---------------- parent sample lookup ---------------- */
-
   const parentOf = {};
   samples.forEach(s => {
     if (s.ancestry && s.ancestry !== '/') {
-      parentOf[s.id] = s.ancestry.split('/').filter(Boolean).pop();
+      const parentIdStr = s.ancestry.split('/').filter(Boolean).pop();
+      const parentId = Number(parentIdStr);
+      if (!Number.isNaN(parentId)) {
+        parentOf[s.id] = parentId;
+      }
     }
   });
 
   /* ---------------- reaction → samples ---------------- */
-
   const reactionSamples = {};
   reactions.forEach(r => {
     reactionSamples[r.id] = new Set([
@@ -36,52 +39,65 @@ function positionNodesByReaction(samples, reactions) {
   });
 
   /* ---------------- reaction → parent reaction ---------------- */
-
   const reactionParent = {};
   reactions.forEach(r => {
-    for (const sid of reactionSamples[r.id]) {
-      const parentSample = parentOf[sid];
-      if (!parentSample) continue;
+    const starting = r.starting_material_ids || [];
+    const splitSampleId = starting.find(sid => parentOf[sid]);
+    if (!splitSampleId) return;
 
-      for (const other of reactions) {
-        if (
-          other.id !== r.id &&
-          reactionSamples[other.id].has(parentSample)
-        ) {
-          reactionParent[r.id] = other.id;
-          return;
-        }
+    const parentSampleId = parentOf[splitSampleId];
+
+    for (const other of reactions) {
+      if (other.id === r.id) continue;
+      if (reactionSamples[other.id]?.has(parentSampleId)) {
+        reactionParent[r.id] = other.id;
+        break;
       }
     }
   });
 
   /* ---------------- recursive reaction placement ---------------- */
-
   const blockPos = {};
   let rootIndex = 0;
+
+  function resolveRowCollision(x, y, direction) {
+    let nextX = x;
+    let safe = false;
+    while (!safe) {
+      safe = true;
+      for (const otherId in blockPos) {
+        const p = blockPos[otherId];
+        if (p.y !== y) continue;
+        if (Math.abs(p.x - nextX) < MIN_ROW_GAP) {
+          safe = false;
+          nextX += direction * MIN_ROW_GAP;
+          break;
+        }
+      }
+    }
+    return nextX;
+  }
 
   function placeReaction(rid) {
     if (blockPos[rid]) return;
 
     const parentId = reactionParent[rid];
 
-    // root reaction
     if (!parentId) {
-      blockPos[rid] = { x: 0, y: rootIndex * V_BLOCK };
+      const x = resolveRowCollision(0, rootIndex * V_BLOCK, 1);
+      blockPos[rid] = { x, y: rootIndex * V_BLOCK };
       rootIndex++;
       return;
     }
 
-    // ensure parent is placed first
     placeReaction(parentId);
 
     const parentPos = blockPos[parentId];
     const parentReaction = reactions.find(r => r.id === parentId);
 
-    // find the split sample USED BY THIS reaction
-    const splitSampleId = [...reactionSamples[rid]].find(
-      sid => parentOf[sid]
-    );
+    const currentReaction = reactions.find(r => r.id === rid);
+    const splitSampleId =
+      (currentReaction?.starting_material_ids || []).find(sid => parentOf[sid]);
 
     let direction = -1;
 
@@ -101,16 +117,16 @@ function positionNodesByReaction(samples, reactions) {
       }
     }
 
-    blockPos[rid] = {
-      x: parentPos.x + direction * BRANCH_X,
-      y: parentPos.y + V_BLOCK,
-    };
+    let x = parentPos.x + direction * BRANCH_X;
+    const y = parentPos.y + V_BLOCK;
+    x = resolveRowCollision(x, y, direction);
+
+    blockPos[rid] = { x, y };
   }
 
   reactions.forEach(r => placeReaction(r.id));
 
   /* ---------------- render reaction blocks ---------------- */
-
   const usedSamples = new Set();
 
   reactions.forEach(r => {
@@ -141,6 +157,9 @@ function positionNodesByReaction(samples, reactions) {
         id: `edge-start-${sid}-${r.id}`,
         source: `sample-${sid}`,
         target: `reaction-${r.id}`,
+        label: 'has starting material',
+        labelStyle: { fontSize: 10, fill: '#4338ca' },
+        style: { stroke: '#4338ca', strokeWidth: 2 },
       });
     });
 
@@ -171,29 +190,33 @@ function positionNodesByReaction(samples, reactions) {
         id: `edge-prod-${r.id}-${sid}`,
         source: `reaction-${r.id}`,
         target: `sample-${sid}`,
+        label: 'has product',
+        labelStyle: { fontSize: 12, fill: '#16a34a' },
+        style: { stroke: '#16a34a', strokeWidth: 2 },
       });
     });
   });
 
   /* ---------------- ancestry edges ---------------- */
-
   Object.entries(parentOf).forEach(([child, parent]) => {
     edges.push({
       id: `edge-split-${parent}-${child}`,
       source: `sample-${parent}`,
       target: `sample-${child}`,
+      label: 'split from',
+      labelStyle: { fontSize: 12, fill: '#D2B48C' }, // tan colour #D2B48C warm #C8A27A
+      style: { stroke: '#E0C9A6', strokeWidth: 2 },
     });
   });
 
   /* ---------------- unused samples ---------------- */
-
   let y = 0;
   samples.forEach(s => {
     if (!usedSamples.has(s.id)) {
       nodes.push({
         id: `unused-${s.id}`,
         type: 'sample',
-        position: { x: -600, y },
+        position: { x: -850, y },
         data: { label: s.short_label || 'Unused Sample' },
         style: { backgroundColor: '#e5e7eb', border: '1px solid #9ca3af' },
       });
@@ -205,7 +228,6 @@ function positionNodesByReaction(samples, reactions) {
 }
 
 /* ================== CONTAINER ================== */
-
 export default class ExplorerContainer extends Component {
   state = { isLoading: true, nodes: [], edges: [], error: null };
 
