@@ -38,10 +38,12 @@ module Reactable
     return if ref_record.nil? ||
               ref_record.id == id ||
               sample&.sample_type == Sample::SAMPLE_TYPE_MIXTURE
-              
     ## use real amount unless target amount is defined and real amount is not
     real_amount_condition = sample.real_amount_value && sample.real_amount_value != 0
     target_amount_condition = sample.target_amount_value && sample.target_amount_value != 0
+    ref_record_real_amount_condition = ref_record.sample.real_amount_value && ref_record.sample.real_amount_value != 0
+    ref_record_target_amount_condition = ref_record.sample.target_amount_value && ref_record.sample.target_amount_value != 0
+    condition = ref_record_target_amount_condition && !ref_record_real_amount_condition
 
     case self
     when ReactionsProductSample
@@ -51,21 +53,30 @@ module Reactable
           sample.real_amount_value,
           sample.real_amount_unit,
         )
-
-        ref_amount = sample.convert_amount_to_mol(
-          sample.target_amount_value,
-          sample.target_amount_unit,
-        )
+        ref_amount = if condition
+                       sample.convert_amount_to_mol(
+                         sample.target_amount_value,
+                         sample.target_amount_unit,
+                       )
+                     else
+                       sample.convert_amount_to_mol(
+                         sample.real_amount_value,
+                         sample.real_amount_unit,
+                       )
+                     end
       else
         amount = sample.amount_mmol(:real) if is_a? ReactionsProductSample
-        ref_amount = ref_record.sample.amount_mmol(:target) *
-                    (self[:coefficient] || 1.0) / (ref_record[:coefficient] || 1.0)
+        ref_amount =  if condition
+                        ref_record.sample.amount_mmol(:target) *
+                          (self[:coefficient] || 1.0) / (ref_record[:coefficient] || 1.0)
+                      else
+                        ref_record.sample.amount_mmol(:real) *
+                          (self[:coefficient] || 1.0) / (ref_record[:coefficient] || 1.0)
+                      end
       end
     else
-      ref_record_real_amount_condition = ref_record.sample.real_amount_value && ref_record.sample.real_amount_value != 0
-      ref_record_target_amount_condition = ref_record.sample.target_amount_value && ref_record.sample.target_amount_value != 0
       amount = target_amount_condition && !real_amount_condition ? sample.amount_mmol('target', gas_type) : sample.amount_mmol(:real, gas_type)
-      ref_amount = ref_record_target_amount_condition && !ref_record_real_amount_condition ? ref_record.sample.amount_mmol : ref_record.sample.amount_mmol(:real)
+      ref_amount = condition ? ref_record.sample.amount_mmol : ref_record.sample.amount_mmol(:real)
     end
     if gas_type == 'gas'
       return nil if gas_phase_data.nil? || gas_phase_data['ppm'].nil? || gas_phase_data['temperature'].nil?
