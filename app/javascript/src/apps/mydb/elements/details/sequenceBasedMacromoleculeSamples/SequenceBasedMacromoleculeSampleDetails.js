@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
+import PropTypes from 'prop-types';
 import {
   Alert, Button, Tabs, Tab, Tooltip, OverlayTrigger
 } from 'react-bootstrap';
@@ -33,7 +34,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import CollectionUtils from 'src/models/collection/CollectionUtils';
 
-const SequenceBasedMacromoleculeSampleDetails = () => {
+const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => {
   const sbmmStore = useContext(StoreContext).sequenceBasedMacromoleculeSamples;
   let sbmmSample = sbmmStore.sequence_based_macromolecule_sample;
 
@@ -260,6 +261,7 @@ const SequenceBasedMacromoleculeSampleDetails = () => {
           availableTabs={Object.keys(tabContentComponents)}
           tabTitles={tabTitles}
           onTabPositionChanged={onTabPositionChanged}
+          openedFromCollectionId={openedFromCollectionId}
         />
         <Tabs
           activeKey={sbmmStore.active_tab_key}
@@ -280,5 +282,9 @@ const SequenceBasedMacromoleculeSampleDetails = () => {
     </DetailCard>
   );
 }
+
+SequenceBasedMacromoleculeSampleDetails.propTypes = {
+  openedFromCollectionId: PropTypes.number,
+};
 
 export default observer(SequenceBasedMacromoleculeSampleDetails);

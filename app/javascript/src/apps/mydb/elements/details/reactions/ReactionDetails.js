@@ -1086,6 +1086,7 @@ export default class ReactionDetails extends Component {
             type="reaction"
             availableTabs={Object.keys(tabContentsMap)}
             onTabPositionChanged={this.onTabPositionChanged}
+            openedFromCollectionId={this.props.openedFromCollectionId}
           />
           <Tabs
             mountOnEnter
@@ -1106,4 +1107,5 @@ export default class ReactionDetails extends Component {
 ReactionDetails.propTypes = {
   // eslint-disable-next-line react/forbid-prop-types
   reaction: PropTypes.object,
+  openedFromCollectionId: PropTypes.number,
 };

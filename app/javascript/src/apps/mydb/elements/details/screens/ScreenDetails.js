@@ -465,6 +465,7 @@ export default class ScreenDetails extends Component {
             type="screen"
             availableTabs={Object.keys(tabContentsMap)}
             onTabPositionChanged={this.onTabPositionChanged}
+            openedFromCollectionId={this.props.openedFromCollectionId}
           />
           <Tabs
             mountOnEnter
@@ -484,4 +485,5 @@ export default class ScreenDetails extends Component {
 
 ScreenDetails.propTypes = {
   screen: PropTypes.instanceOf(Screen).isRequired,
+  openedFromCollectionId: PropTypes.number,
 };

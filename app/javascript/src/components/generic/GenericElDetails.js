@@ -553,6 +553,7 @@ export default class GenericElDetails extends Component {
               type={genericEl.type}
               availableTabs={Object.keys(tabContents)}
               onTabPositionChanged={this.onTabPositionChanged}
+              openedFromCollectionId={this.props.openedFromCollectionId}
             />
             <Tabs
               activeKey={activeTab}
@@ -570,6 +571,7 @@ export default class GenericElDetails extends Component {
 
 GenericElDetails.propTypes = {
   genericEl: PropTypes.object,
+  openedFromCollectionId: PropTypes.number,
 };
 
 GenericElDetails.defaultProps = {
