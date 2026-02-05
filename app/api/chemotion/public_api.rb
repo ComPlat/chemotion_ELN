@@ -126,8 +126,7 @@ module Chemotion
             response = Faraday.get(@url)
             raise 'Bad response' unless response.success?
 
-            @attachment.file_data = response.body
-            @attachment.rewrite_file_data!
+            @attachment.attachment = StringIO.new(response.body)
             @attachment.editing_end!
             @attachment.save!
           else

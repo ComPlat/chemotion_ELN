@@ -1,11 +1,8 @@
 # frozen_string_literal: true
 
-# rubocop:disable Rails/DurationArithmetic
-
 require 'rails_helper'
 
 describe Chemotion::PublicAPI do
-
   describe 'GET /api/v1/public/ping' do
     before { get('/api/v1/public/ping', params: '', headers: { 'AUTHORIZATION' => 'Bearer qwerty' }) }
 
@@ -52,5 +49,3 @@ describe Chemotion::PublicAPI do
     end
   end
 end
-
-# rubocop:enable Rails/DurationArithmetic

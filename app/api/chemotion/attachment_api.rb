@@ -512,8 +512,18 @@ module Chemotion
           result = Chemotion::Jcamp::RegenerateJcamp.spectrum(
             att.abs_path, t_molfile.path
           )
-          att.file_data = result
-          att.rewrite_file_data!
+          io = StringIO.new(result)
+          io.rewind
+
+          att.attachment_attacher.attach(
+            io,
+            metadata: {
+              'filename' => att.filename,
+              'mime_type' => att.content_type || 'chemical/x-jcamp-dx',
+            },
+          )
+
+          att.save!
         end
         t_molfile.close
         t_molfile.unlink
