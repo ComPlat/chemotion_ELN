@@ -38,11 +38,16 @@ function InlineSVG({ src }) {
   );
 }
 
+const HIDDEN_MODAL_CATEGORIES = ['ketcherails'];
+
 function PolymerListModal({
   loading, onShapeSelection, title, onCloseClick
 }) {
   const [shapesList, setShapeList] = useState([]); // Initialize the state as an empty array
-  const [category, setCategory] = useState(() => localStorage.getItem('polymerCategory') || 'basic');
+  const [category, setCategory] = useState(() => {
+    const saved = localStorage.getItem('polymerCategory') || 'basic';
+    return HIDDEN_MODAL_CATEGORIES.includes(saved) ? 'basic' : saved;
+  });
   const [loadingData, setLoadingData] = useState(false); // Initialize the state as an empty array
 
   const loadTemplates = () => {
@@ -95,7 +100,9 @@ function PolymerListModal({
             aria-label="Category switch"
             style={{ display: 'flex', gap: 0 }}
           >
-            {shapesList && Object.keys(shapesList).map((categoryItem, index, arr) => {
+            {shapesList && Object.keys(shapesList)
+              .filter((key) => !HIDDEN_MODAL_CATEGORIES.includes(key))
+              .map((categoryItem, index, arr) => {
               const isActive = category === categoryItem;
               const isFirst = index === 0;
               const isLast = index === arr.length - 1;

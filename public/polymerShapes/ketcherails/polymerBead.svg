@@ -1,0 +1,14 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Tighter metallic gradient: less soft grey, quicker fade to dark -->
+    <radialGradient id="metalSphere" cx="40%" cy="40%" r="50%">
+      <stop offset="0%"  stop-color="#ffffff" />
+      <stop offset="18%" stop-color="#dcdcdc" />
+      <stop offset="40%" stop-color="#a0a0a0" />
+      <stop offset="75%" stop-color="#505050" />
+      <stop offset="100%" stop-color="#202020" />
+    </radialGradient>
+  </defs>
+
+  <circle cx="32" cy="32" r="30" fill="url(#metalSphere)" />
+</svg>
