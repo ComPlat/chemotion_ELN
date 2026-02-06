@@ -332,7 +332,9 @@ export default class SequenceBasedMacromoleculeSample extends Element {
   }
 
   calculateActivity() {
-    if (this.base_activity_per_volume_value === 0 || this.base_volume_as_used_value === 0) { return null; }
+    if (this.base_activity_per_volume_value === 0 || this.base_volume_as_used_value === 0) {
+      return;
+    }
 
     this._activity_value = convertUnits(
       parseFloat((this.base_volume_as_used_value * this.base_activity_per_volume_value).toFixed(8)),
@@ -344,7 +346,9 @@ export default class SequenceBasedMacromoleculeSample extends Element {
   }
 
   calculateActivityByMass() {
-    if (this.base_activity_per_mass_value === 0 || this.base_amount_as_used_mass_value === 0) { return null; }
+    if (this.base_activity_per_mass_value === 0 || this.base_amount_as_used_mass_value === 0) {
+      return;
+    }
 
     this._activity_value = convertUnits(
       parseFloat((this.base_amount_as_used_mass_value * this.base_activity_per_mass_value).toFixed(8)),
@@ -357,7 +361,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
 
   calculateMassByActivity() {
     if (this.base_activity_value === 0 || this.base_activity_per_mass_value === 0) {
-      return null;
+      return;
     }
 
     // Calculate: mass = activity / activity_per_mass
@@ -374,7 +378,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
 
   calculateAmountAsUsed() {
     if (this.base_volume_as_used_value === 0 || this.base_molarity_value === 0) {
-      return null;
+      return;
     }
 
     // Purity is always stored as decimal (0.5 for 50%)
@@ -430,7 +434,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
 
   calculateAmountAsUsedMass() {
     if (this.base_volume_as_used_value === 0 || this.concentration_value === 0) {
-      return null;
+      return;
     }
 
     // Calculate: mass = volume × concentration_by_purity
@@ -455,7 +459,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
 
   calculateVolumeByMass() {
     if (this.base_amount_as_used_mass_value === 0 || this.concentration_value === 0) {
-      return null;
+      return;
     }
 
     // Calculate: volume = mass / concentration_by_purity
@@ -479,7 +483,9 @@ export default class SequenceBasedMacromoleculeSample extends Element {
   }
 
   calculateVolumeByActivity() {
-    if (this.base_activity_per_volume_value === 0 || this.base_activity_value === 0) { return null; }
+    if (this.base_activity_per_volume_value === 0 || this.base_activity_value === 0) {
+      return;
+    }
 
     this._volume_as_used_value = convertUnits(
       parseFloat((this.base_activity_value / this.base_activity_per_volume_value).toFixed(8)),
@@ -491,7 +497,9 @@ export default class SequenceBasedMacromoleculeSample extends Element {
   }
 
   calculateVolumeByAmount() {
-    if (this.base_molarity_value === 0 || this.base_amount_as_used_mol_value === 0) { return null; }
+    if (this.base_molarity_value === 0 || this.base_amount_as_used_mol_value === 0) {
+      return;
+    }
 
     // Purity is always stored as decimal (0.5 for 50%)
     const purity = this.purity > 0 ? this.purity : 1.0;
