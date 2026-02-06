@@ -712,6 +712,12 @@ class Material extends Component {
       || (materialGroup === 'products'
       || (!material.reference && lockEquivColumn));
 
+    // Check if activity is the active unit
+    // For SBMM samples: check if _amount_unit is 'U' (set when activity is the primary amount)
+    // For regular samples: check if amount_unit is 'U'
+    // eslint-disable-next-line no-underscore-dangle
+    const isActivityActive = (material._amount_unit === 'U') || (material.amount_unit === 'U');
+
     return (
       <NumeralInputWithUnitsCompo
         value={material.activity_value}
@@ -721,6 +727,7 @@ class Material extends Component {
         disabled={isDisabled}
         onChange={(e) => this.handleAmountUnitChange(e, material.activity_value, material.amountType)}
         onMetricsChange={this.handleMetricsChange}
+        variant={isActivityActive ? 'primary' : 'light'}
         size="sm"
       />
     );
