@@ -933,8 +933,6 @@ export default class ModalImport extends React.Component {
               <Dropdown.Item onClick={() => ModalImport.downloadTemplate('sample_sdf_example')}>
                 Sample - SDF with Example Data
               </Dropdown.Item>
-              <Dropdown.Divider />
-              <Dropdown.Header>Additional Sample Templates</Dropdown.Header>
               <Dropdown.Item onClick={() => ModalImport.downloadTemplate('sample_csv_template')}>
                 Sample - CSV with Example Data
               </Dropdown.Item>
@@ -942,18 +940,18 @@ export default class ModalImport extends React.Component {
                 Sample - TSV with Example Data
               </Dropdown.Item>
               <Dropdown.Divider />
-              <Dropdown.Header>Chemical Templates</Dropdown.Header>
+              <Dropdown.Header>Chemical Sample Templates (for a chemical inventory)</Dropdown.Header>
               <Dropdown.Item onClick={() => ModalImport.downloadTemplate('chemical_xlsx_template')}>
-                Chemical - Empty XLSX Template
+                Chemical Sample - Empty XLSX Template
               </Dropdown.Item>
               <Dropdown.Item onClick={() => ModalImport.downloadTemplate('chemical_xlsx_example')}>
-                Chemical - XLSX with Example Data
+                Chemical Sample - XLSX with Example Data
               </Dropdown.Item>
               <Dropdown.Item onClick={() => ModalImport.downloadTemplate('chemical_sdf_template')}>
-                Chemical - Empty SDF Template
+                Chemical Sample - Empty SDF Template
               </Dropdown.Item>
               <Dropdown.Item onClick={() => ModalImport.downloadTemplate('chemical_sdf_example')}>
-                Chemical - SDF with Example Data
+                Chemical Sample - SDF with Example Data
               </Dropdown.Item>
             </Dropdown.Menu>
           </Dropdown>
