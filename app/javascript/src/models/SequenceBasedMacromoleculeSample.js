@@ -202,6 +202,25 @@ export default class SequenceBasedMacromoleculeSample extends Element {
     return `${prefixChar}${baseUnit}`;
   }
 
+  /**
+   * Normalizes unit case to match conversionFactors keys
+   * Converts lowercase units to proper case (e.g., 'ml' -> 'mL', 'l' -> 'L')
+   * @param {string} unit - The unit string to normalize
+   * @returns {string} The normalized unit string
+   */
+  normalizeUnit(unit) {
+    if (!unit) return unit;
+    // Map lowercase units to conversionFactors keys
+    const unitMap = {
+      'l': 'L',
+      'ml': 'mL',
+      'µl': 'µL',
+      'ul': 'µL',
+      'nl': 'nL',
+    };
+    return unitMap[unit.toLowerCase()] || unit;
+  }
+
   calculateValues(type) {
     if (this.function_or_application !== 'enzyme') return null;
 
@@ -267,11 +286,14 @@ export default class SequenceBasedMacromoleculeSample extends Element {
 
       case 'concentration':
         if (this.concentration_value > 0) {
-          // Recalculate volume from mass first: amount_l = amount_g / concentration
-          // This ensures volume is available for subsequent calculations
-          this.calculateVolumeByMass();
-          // Then recalculate amount_g from volume: amount_g = amount_l * concentration * purity
-          this.calculateAmountAsUsedMass();
+          // Priority: If volume exists, update mass based on volume
+          if (this.base_volume_as_used_value > 0) {
+            this.calculateAmountAsUsedMass();
+          }
+          // If volume is not there but mass is, update volume based on mass
+          else if (this.base_amount_as_used_mass_value > 0) {
+            this.calculateVolumeByMass();
+          }
         }
         break;
 
@@ -730,8 +752,9 @@ export default class SequenceBasedMacromoleculeSample extends Element {
 
   set volume_as_used_value(value) {
     this._volume_as_used_value = value;
-    this._base_volume_as_used_value =
-      convertUnits(this.volume_as_used_value, this.volume_as_used_unit, defaultUnits.volume_as_used);
+    // Normalize unit case to match conversionFactors keys (e.g., 'ml' -> 'mL', 'l' -> 'L')
+    const normalizedUnit = this.normalizeUnit(this.volume_as_used_unit);
+    this._base_volume_as_used_value = convertUnits(this.volume_as_used_value, normalizedUnit, defaultUnits.volume_as_used);
     this.calculateValues('volume_as_used');
     this.calculateConcentrationRt();
   }
@@ -750,11 +773,19 @@ export default class SequenceBasedMacromoleculeSample extends Element {
 
   set volume_as_used_unit(value) {
     const currentUnit = this.volume_as_used_unit;
+
+    // Normalize unit case to match conversionFactors keys
+    const normalizedValue = this.normalizeUnit(value);
+    const normalizedUnit = this.normalizeUnit(currentUnit);
     // Only convert if both units are valid and different
-    if (currentUnit && value && currentUnit !== value && conversionFactors[currentUnit] && conversionFactors[value]) {
-      this._volume_as_used_value = convertUnits(this.volume_as_used_value, currentUnit, value);
+    const unitsAreValid = normalizedUnit && normalizedValue
+      && normalizedUnit !== normalizedValue
+      && conversionFactors[normalizedUnit]
+      && conversionFactors[normalizedValue];
+    if (unitsAreValid) {
+      this._volume_as_used_value = convertUnits(this.volume_as_used_value, normalizedUnit, normalizedValue);
     }
-    this._volume_as_used_unit = value;
+    this._volume_as_used_unit = normalizedValue;
   }
 
   get purity() {
@@ -862,31 +893,46 @@ export default class SequenceBasedMacromoleculeSample extends Element {
     const massUnits = new Set(['g', 'mg', 'µg', 'ng']);
     const volumeUnits = new Set(['l', 'ml', 'µl', 'nl']);
     const molUnits = new Set(['mol', 'mmol', 'µmol', 'nmol', 'pmol']);
+    const activityUnits = new Set(['U', 'mU', 'kat', 'mkat', 'µkat', 'nkat']);
 
     if (massUnits.has(amount.unit)) {
-      this.amount_as_used_mass_value = amount.value;
+      // Set unit first, then value
+      // This ensures the amount_as_used_mass_value setter uses the correct unit for conversion
       this.amount_as_used_mass_unit = amount.unit;
+      this.amount_as_used_mass_value = amount.value;
       this._amount_unit = 'g';
       return;
     }
 
     if (volumeUnits.has(amount.unit)) {
+      // Normalize unit case to match conversionFactors keys BEFORE setting value
+      // This ensures the volume_as_used_value setter uses the correct unit for conversion
+      const normalizedUnit = this.normalizeUnit(amount.unit);
+      this.volume_as_used_unit = normalizedUnit;
       this.volume_as_used_value = amount.value;
-      this.volume_as_used_unit = amount.unit;
       this._amount_unit = 'l';
       return;
     }
 
     if (molUnits.has(amount.unit)) {
-      this.amount_as_used_mol_value = amount.value;
       this.amount_as_used_mol_unit = amount.unit;
+      this.amount_as_used_mol_value = amount.value;
       this._amount_unit = 'mol';
       return;
     }
 
+    if (activityUnits.has(amount.unit)) {
+      // Handle activity units - set unit first, then value
+      // Setting activity_value triggers calculateValues('activity') which recalculates volume, mass, and mol
+      this.activity_unit = amount.unit;
+      this.activity_value = amount.value;
+      this._amount_unit = 'U';
+      return;
+    }
+
     // fallback
-    this.amount_as_used_mass_value = amount.value;
     this.amount_as_used_mass_unit = amount.unit || 'g';
+    this.amount_as_used_mass_value = amount.value;
     this._amount_unit = 'g';
   }
 
