@@ -567,6 +567,7 @@ class Material extends Component {
         materialGroup,
         sampleID: this.materialId(),
         value,
+        isSbmm: this.isSbmm,
       };
       onChange(event);
       this.setState({ fieldToShow: 'molar mass' });

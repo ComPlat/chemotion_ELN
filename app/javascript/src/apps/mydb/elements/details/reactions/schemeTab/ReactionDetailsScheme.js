@@ -189,6 +189,36 @@ export default class ReactionDetailsScheme extends React.Component {
     }
   }
 
+  /**
+   * Sets the reference flag and calculates equivalent for a new SBMM sample being added to the reaction.
+   *
+   * If no reference material exists in the reaction (regular sample or SBMM), this SBMM sample becomes
+   * the reference material with equivalent = 1.0. Otherwise, the equivalent is calculated relative to
+   * the current reference material's amount_mol.
+   *
+   * @param {SequenceBasedMacromoleculeSample} splitSbmmSample - The SBMM sample to configure
+   * @param {Reaction} reaction - The reaction object
+   */
+  // eslint-disable-next-line class-methods-use-this
+  setReferenceAndEquivalentForSbmmSample(splitSbmmSample, reaction) {
+    // If no reference material exists, make this SBMM sample the reference with Eq=1.
+    // Otherwise, calculate its equivalent relative to the current reference material.
+    if (!reaction.referenceMaterial) {
+      splitSbmmSample.reference = true;
+      splitSbmmSample.equivalent = 1.0;
+      return;
+    }
+
+    const referenceAmount = reaction.referenceMaterial.amount_mol;
+    const sbmmAmount = splitSbmmSample.amount_mol || 0;
+
+    if (referenceAmount && referenceAmount > 0) {
+      splitSbmmSample.equivalent = sbmmAmount / referenceAmount;
+    } else {
+      splitSbmmSample.equivalent = 0.0;
+    }
+  }
+
   dropSbmmSample(srcSbmmSample, tagMaterial) {
     const { reaction, onReactionChange } = this.props;
 
@@ -203,6 +233,8 @@ export default class ReactionDetailsScheme extends React.Component {
 
     // Set reaction-specific properties
     splitSbmmSample.show_label = true; // Similar to how samples handle decoupled
+
+    this.setReferenceAndEquivalentForSbmmSample(splitSbmmSample, reaction);
 
     // Check if already in the group (by original ID or short_label)
     const isAlreadyAdded = reaction.reactant_sbmm_samples?.some(
@@ -343,28 +375,36 @@ export default class ReactionDetailsScheme extends React.Component {
     }
 
     // only reference of 'starting_materials' or 'reactants' triggers updatedReactionForReferenceChange
-    // only when reaction.referenceMaterial not exist triggers updatedReactionForReferenceChange
+    // only when no reference material exists (regular or SBMM) triggers updatedReactionForReferenceChange
     const referenceRelatedGroup = ['starting_materials', 'reactants'];
     if (referenceRelatedGroup.includes(materialGroup) && (!reaction.referenceMaterial)) {
+      // Determine which array to use: reactants may include SBMM samples, so use reactantsWithSbmm
       const materialsArray = materialGroup === 'reactants'
-        ? [...(reaction.reactants || []), ...(reaction.reactant_sbmm_samples || [])]
+        ? reaction.reactantsWithSbmm
         : reaction[materialGroup];
+
       if (materialsArray.length === 0) {
+        // No materials left in the deleted group, try to set reference from the other group
         const refMaterialGroup = materialGroup === 'starting_materials' ? 'reactants' : 'starting_materials';
-        if (reaction[refMaterialGroup].length > 0) {
+        // When looking for alternative reference in 'reactants', use reactantsWithSbmm
+        const refMaterialsArray = refMaterialGroup === 'reactants'
+          ? reaction.reactantsWithSbmm
+          : reaction[refMaterialGroup];
+        if (refMaterialsArray.length > 0) {
           const event = {
             type: 'referenceChanged',
             refMaterialGroup,
-            sampleID: reaction[refMaterialGroup][0].id,
+            sampleID: refMaterialsArray[0].id,
             value: 'on'
           };
           this.updatedReactionForReferenceChange(event);
         }
       } else {
+        // Materials remain in this group, set the first one as reference
         const event = {
           type: 'referenceChanged',
           materialGroup,
-          sampleID: reaction[materialGroup][0].id,
+          sampleID: materialsArray[0].id,
           value: 'on'
         };
         this.updatedReactionForReferenceChange(event);
@@ -379,9 +419,8 @@ export default class ReactionDetailsScheme extends React.Component {
     onReactionChange(reaction, { updateGraphic: true });
   }
 
-  // eslint-disable-next-line class-methods-use-this
   updateDraggedMaterialGasType(reaction, srcMat, srcGroup, tagMat, tagGroup) {
-    const updatedSample = reaction.sampleById(srcMat.id);
+    const updatedSample = this.findReactionSample(srcMat.id, isSbmmSample(srcMat));
     const conditions = tagGroup === 'solvents'
     || ((srcGroup === 'reactants' || srcGroup === 'starting_materials') && tagGroup === 'products')
     || ((srcGroup === 'products') && (tagGroup === 'reactants' || tagGroup === 'starting_materials'));
@@ -581,9 +620,34 @@ export default class ReactionDetailsScheme extends React.Component {
     }
   }
 
+  /**
+   * Unified sample lookup that handles both regular samples and SBMM samples.
+   *
+   * Since SBMM (Sequence-Based Macromolecule) samples are stored separately from regular samples,
+   * this method provides a convenient way to retrieve either type based on the isSbmm flag.
+   * This eliminates the need for conditional logic throughout the component.
+   *
+   * @param {string|number} sampleID - The ID of the sample to retrieve
+   * @param {boolean} [isSbmm=false] - If true, searches SBMM samples; if false, searches regular samples
+   * @returns {Sample|SequenceBasedMacromoleculeSample} The sample object, or undefined if not found
+   */
+  findReactionSample(sampleID, isSbmm = false) {
+    const { reaction } = this.props;
+
+    // SBMM and regular samples are stored in different collections.
+    return isSbmm
+      ? reaction.findSbmmSample(sampleID)
+      : reaction.sampleById(sampleID);
+  }
+
+  /**
+   * Handles external label changes for both regular and SBMM samples.
+   * External labels are typically used for solvent or reagent descriptions.
+   */
   updatedReactionForExternalLabelChange(changeEvent) {
-    const { sampleID, externalLabel } = changeEvent;
-    const updatedSample = this.props.reaction.sampleById(sampleID);
+    const { sampleID, externalLabel, isSbmm } = changeEvent;
+    // Use unified lookup to get either regular or SBMM sample
+    const updatedSample = this.findReactionSample(sampleID, isSbmm === true);
 
     updatedSample.external_label = externalLabel;
 
@@ -602,7 +666,10 @@ export default class ReactionDetailsScheme extends React.Component {
   updatedReactionForReferenceChange(changeEvent, type) {
     const { sampleID } = changeEvent;
     const { reaction } = this.props;
-    const sample = reaction.sampleById(sampleID);
+
+    const isSbmm = changeEvent.isSbmm === true;
+    const sample = this.findReactionSample(sampleID, isSbmm);
+
     if (type === 'weightPercentageReferenceChanged') {
       reaction.markWeightPercentageSampleAsReference(sampleID);
       WeightPercentageReactionActions.setWeightPercentageReference(sample);
@@ -612,17 +679,26 @@ export default class ReactionDetailsScheme extends React.Component {
       });
       return this.updatedReactionWithSample(this.updatedSamplesForWeightPercentageReferenceChange.bind(this), sample);
     }
-    reaction.markSampleAsReference(sampleID);
+
+    if (isSbmm) {
+      reaction.markSbmmSampleAsReference(sampleID);
+    } else {
+      reaction.markSampleAsReference(sampleID);
+    }
 
     return this.updatedReactionWithSample(this.updatedSamplesForReferenceChange.bind(this), sample);
   }
 
+  /**
+   * Handles amount changes for both regular and SBMM samples.
+   *
+   * Clears reference_component_changed flag to ensure amount_mol is recalculated from the new amount.
+   * Both regular and SBMM samples support the same setAmountAndNormalizeToGram method.
+   */
   updatedReactionForAmountChange(changeEvent) {
-    const { reaction } = this.props;
-    const { sampleID, amount } = changeEvent;
-    const updatedSample = changeEvent.isSbmm === true
-      ? reaction.findSbmmSample(sampleID)
-      : reaction.sampleById(sampleID);
+    const { sampleID, amount, isSbmm } = changeEvent;
+    // Use unified lookup to get either regular or SBMM sample
+    const updatedSample = this.findReactionSample(sampleID, isSbmm === true);
 
     // When amount_g or amount_l is manually changed by user, clear the reference_component_changed flag
     // so that amount_mol will be calculated from amount_g instead of using reference component's amount_mol
@@ -636,12 +712,17 @@ export default class ReactionDetailsScheme extends React.Component {
     return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample);
   }
 
+  /**
+   * Handles amount unit changes for both regular and SBMM samples.
+   *
+   * Updates the sample amount for the new unit and recalculates all concentrations in the reaction,
+   * since changing any material's volume affects the combined reaction volume.
+   */
   updatedReactionForAmountUnitChange(changeEvent) {
     const { reaction } = this.props;
-    const { sampleID, amount } = changeEvent;
-    const updatedSample = changeEvent.isSbmm === true
-      ? reaction.findSbmmSample(sampleID)
-      : reaction.sampleById(sampleID);
+    const { sampleID, amount, isSbmm } = changeEvent;
+    // Use unified lookup to get either regular or SBMM sample
+    const updatedSample = this.findReactionSample(sampleID, isSbmm === true);
 
     // normalize to milligram
     // updatedSample.setAmountAndNormalizeToGram(amount);
@@ -679,15 +760,18 @@ export default class ReactionDetailsScheme extends React.Component {
     return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample);
   }
 
+  /**
+   * Handles metric changes (unit and prefix) for both regular and SBMM samples.
+   *
+   * Both sample types support the setUnitMetrics method which updates their unit representation.
+   */
   updatedReactionForMetricsChange(changeEvent) {
-    const { reaction } = this.props;
     const {
       sampleID, metricUnit, metricPrefix, isSbmm
     } = changeEvent;
 
-    const updatedSample = isSbmm === true
-      ? reaction.findSbmmSample(sampleID)
-      : reaction.sampleById(sampleID);
+    // Use unified lookup to get either regular or SBMM sample
+    const updatedSample = this.findReactionSample(sampleID, isSbmm === true);
 
     // Both SBMM and regular samples have setUnitMetrics method
     // SBMM samples update unit fields directly, regular samples update metrics string
@@ -727,30 +811,39 @@ export default class ReactionDetailsScheme extends React.Component {
     return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample);
   }
 
+  /**
+   * Handles loading/amountType changes for both regular and SBMM samples.
+   */
   updatedReactionForLoadingChange(changeEvent) {
-    const { reaction } = this.props;
-    const { sampleID, amountType } = changeEvent;
-    const updatedSample = reaction.sampleById(sampleID);
+    const { sampleID, amountType, isSbmm } = changeEvent;
+    // Use unified lookup to get either regular or SBMM sample
+    const updatedSample = this.findReactionSample(sampleID, isSbmm === true);
 
     updatedSample.amountType = amountType;
 
     return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample);
   }
 
+  /**
+   * Handles amount type changes for both regular and SBMM samples.
+   */
   updatedReactionForAmountTypeChange(changeEvent) {
-    const { reaction } = this.props;
-    const { sampleID, amountType } = changeEvent;
-    const updatedSample = reaction.sampleById(sampleID);
+    const { sampleID, amountType, isSbmm } = changeEvent;
+    // Use unified lookup to get either regular or SBMM sample
+    const updatedSample = this.findReactionSample(sampleID, isSbmm === true);
 
     updatedSample.amountType = amountType;
 
     return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample);
   }
 
+  /**
+   * Handles stoichiometry coefficient changes for both regular and SBMM samples.
+   */
   updatedReactionForCoefficientChange(changeEvent) {
-    const { reaction } = this.props;
-    const { sampleID, coefficient } = changeEvent;
-    const updatedSample = reaction.sampleById(sampleID);
+    const { sampleID, coefficient, isSbmm } = changeEvent;
+    // Use unified lookup to get either regular or SBMM sample
+    const updatedSample = this.findReactionSample(sampleID, isSbmm === true);
 
     updatedSample.coefficient = coefficient;
     // enable update of equivalent only if weight percentage is not set
@@ -1542,18 +1635,29 @@ export default class ReactionDetailsScheme extends React.Component {
   }
 
   updatedSamplesForReferenceChange(samples, referenceMaterial, materialGroup) {
+    const isReferenceSbmm = isSbmmSample(referenceMaterial);
+
     return samples.map((sample) => {
-      if (sample.id === referenceMaterial.id) {
+      const sampleIsSbmm = isSbmmSample(sample);
+      const isReferenceMatch = sampleIsSbmm === isReferenceSbmm
+        && sample.id === referenceMaterial.id;
+
+      if (isReferenceMatch) {
         sample.equivalent = 1.0;
         sample.reference = true;
       } else {
-        if (sample.amount_value) {
-          const referenceAmount = referenceMaterial.amount_mol;
-          if (referenceMaterial && referenceAmount > 0) {
+        // Both Sample and SequenceBasedMacromoleculeSample have amount_mol getter
+        const sampleAmountMol = sample.amount_mol;
+        const referenceAmountMol = referenceMaterial.amount_mol;
+
+        if (sample.amount_value || sampleAmountMol) {
+          if (referenceMaterial && referenceAmountMol > 0) {
             if (materialGroup === 'products') {
-              sample.equivalent = sample.amount_mol * (referenceMaterial.coefficient || 1) / (referenceAmount * (sample.coefficient || 1));
+              const refCoeff = referenceMaterial.coefficient || 1;
+              const sampleCoeff = sample.coefficient || 1;
+              sample.equivalent = (sampleAmountMol * refCoeff) / (referenceAmountMol * sampleCoeff);
             } else {
-              sample.equivalent = sample.amount_mol / referenceAmount;
+              sample.equivalent = sampleAmountMol / referenceAmountMol;
             }
           } else if ((materialGroup === 'starting_materials' || materialGroup === 'reactants') && referenceMaterial && !sample.reference) {
             // Set equivalent to 0 when reference material has no values (amount_mol = 0 or undefined)
@@ -1919,7 +2023,11 @@ export default class ReactionDetailsScheme extends React.Component {
     // if no reference material then mark first starting material
     const refM = reaction.starting_materials[0];
     if (!reaction.referenceMaterial && refM) {
-      reaction.markSampleAsReference(refM.id);
+      if (isSbmmSample(refM)) {
+        reaction.markSbmmSampleAsReference(refM.id);
+      } else {
+        reaction.markSampleAsReference(refM.id);
+      }
     }
 
     if (displayYieldField === null) {
@@ -1949,7 +2057,7 @@ export default class ReactionDetailsScheme extends React.Component {
           <MaterialGroup
             reaction={reaction}
             materialGroup="reactants"
-            materials={[...(reaction.reactants || []), ...(reaction.reactant_sbmm_samples || [])]}
+            materials={reaction.reactantsWithSbmm}
             dropMaterial={this.dropMaterial}
             deleteMaterial={
               (material, materialGroup) => this.deleteMaterial(material, materialGroup)
