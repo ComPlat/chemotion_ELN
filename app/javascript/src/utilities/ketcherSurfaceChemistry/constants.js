@@ -12,8 +12,8 @@ const LAYERING_FLAGS = Object.freeze({
 const KET_TAGS = Object.freeze({
   inspiredLabel: 'A',
   RGroupTag: 'R#',
-  templateSurface: 77,
-  templateBead: 69,
+  templateSurface: 96,
+  templateBead: 95,
   polymerIdentifier: '> <PolymersList>',
   textNodeIdentifier: '> <TextNode>',
   textNodeIdentifierClose: '> </TextNode>',
