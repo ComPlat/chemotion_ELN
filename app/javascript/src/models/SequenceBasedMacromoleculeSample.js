@@ -123,13 +123,22 @@ export default class SequenceBasedMacromoleculeSample extends Element {
    *      activity [U]   = mass [g] * activity_per_mass [U/g]
    *
    * - "molarity":
-   *      Recalculates amount if volume is available.
+   *      If volume is available: amount [mol] = volume [L] * molarity [mol/L] * purity
+   *      Else if amount [mol] is available: volume [L] = amount [mol] / molarity [mol/L] * purity
+   *      If concentration is available, mass [g] is recalculated from updated volume.
+   *      If activity_per_volume [U/L] is available, activity [U] is recalculated from updated volume.
    *
    * - "activity_per_volume":
-   *      Recalculates activity based on current volume.
+   *      First (if volume exists): activity [U] = volume [L] * activity_per_volume [U/L]
+   *      volume [L]     = activity [U] / activity_per_volume [U/L]
+   *      If molarity exists: amount [mol] = volume [L] * molarity [mol/L] * purity
+   *      If concentration exists: mass [g] = volume [L] * concentration
    *
    * - "activity_per_mass":
-   *      Recalculates activity based on mass.
+   *      First (if mass exists): activity [U] = mass [g] * activity_per_mass [U/g]
+   *      mass [g]       = activity [U] / activity_per_mass [U/g]
+   *      If concentration exists: volume [L] = mass [g] / concentration
+   *      If molarity exists: amount [mol] = volume [L] * molarity [mol/L] * purity
    *
    * @param {string} type - The field that triggered the update.
    *                        Must be one of:
@@ -235,8 +244,11 @@ export default class SequenceBasedMacromoleculeSample extends Element {
 
       case 'activity':
         if (this._base_activity_value > 0) {
+          // Case 1: Calculate volume from activity
           this.calculateVolumeFromActivity();
+          // Case 2: Calculate amount_g from activity
           this.calculateMassFromActivity();
+          // Case 3: Calculate amount_mol from activity
           this.calculateAmountMolFromActivity();
         }
         break;
@@ -257,19 +269,83 @@ export default class SequenceBasedMacromoleculeSample extends Element {
 
       case 'molarity':
         if (this.base_molarity_value > 0) {
-          this.calculateAmountAsUsed();
+          // Priority 1: if volume is available, recalculate amount_mol
+          // amount_mol = amount_l * molarity * purity
+          if (this.base_volume_as_used_value > 0) {
+            this.calculateAmountAsUsed();
+          } else if (this.base_amount_as_used_mol_value > 0) {
+            // Priority 2: if amount_mol is available, recalculate volume
+            // volume_as_used = amount_mol / molarity * purity
+            this.calculateVolumeByAmount();
+          }
+
+          // If concentration exists, keep amount_g in sync with updated volume
+          // amount_g = volume_as_used * concentration
+          if (this.concentration_value > 0 && this.base_volume_as_used_value > 0) {
+            this.calculateAmountAsUsedMass();
+          }
+
+          // If activity_per_volume is available, keep activity in sync with updated volume
+          // activity_U = volume_as_used * activity_U/L
+          if (this.base_activity_per_volume_value > 0 && this.base_volume_as_used_value > 0) {
+            this.calculateActivity();
+          }
         }
         break;
 
       case 'activity_per_volume':
         if (this.base_activity_per_volume_value > 0) {
-          this.calculateActivity();
+          // First recalculate activity from current volume when available:
+          // activity_U = amount_l * activity_U/L
+          if (this.base_activity_per_volume_value > 0) {
+            this.calculateActivity();
+          }
+
+          // Recalculate volume from activity:
+          // amount_l = activity_U / activity_U/L
+          if (this.base_activity_value > 0) {
+            this.calculateVolumeByActivity();
+          }
+
+          // If molarity is available, recalculate amount_mol:
+          // amount_mol = amount_l * molarity * purity
+          if (this.base_molarity_value > 0) {
+            this.calculateAmountAsUsed();
+          }
+
+          // If concentration is available, recalculate amount in g:
+          // amount_g = amount_l * concentration
+          if (this.concentration_value > 0) {
+            this.calculateAmountAsUsedMass();
+          }
         }
         break;
 
       case 'activity_per_mass':
         if (this.base_activity_per_mass_value > 0) {
-          this.calculateActivityByMass();
+          // First recalculate activity from current mass when available:
+          // activity_U = amount_g * activity_U/g
+          if (this.base_activity_per_mass_value > 0) {
+            this.calculateActivityByMass();
+          }
+
+          // Recalculate mass from activity:
+          // amount_g = activity_U / activity_U_per_g
+          if (this.base_activity_value > 0) {
+            this.calculateMassByActivity();
+          }
+
+          // If concentration is available, recalculate volume from mass:
+          // amount_l = amount_g / concentration
+          if (this.concentration_value > 0) {
+            this.calculateVolumeByMass();
+          }
+
+          // If molarity is available, recalculate mol amount from volume:
+          // amount_mol = amount_l * molarity * purity
+          if (this.base_molarity_value > 0) {
+            this.calculateAmountAsUsed();
+          }
         }
         break;
 
@@ -289,9 +365,8 @@ export default class SequenceBasedMacromoleculeSample extends Element {
           // Priority: If volume exists, update mass based on volume
           if (this.base_volume_as_used_value > 0) {
             this.calculateAmountAsUsedMass();
-          }
-          // If volume is not there but mass is, update volume based on mass
-          else if (this.base_amount_as_used_mass_value > 0) {
+          } else if (this.base_amount_as_used_mass_value > 0) {
+            // If volume is not there but mass is, update volume based on mass
             this.calculateVolumeByMass();
           }
         }
@@ -302,8 +377,8 @@ export default class SequenceBasedMacromoleculeSample extends Element {
     }
   }
 
+  // Calculate volume from activity
   calculateVolumeFromActivity() {
-    // Case 1: Calculate volume from activity
     if (this.base_activity_per_volume_value > 0) {
       // Priority 1: Calculate volume from activity if activity_per_volume is given
       this.calculateVolumeByActivity();
@@ -314,8 +389,8 @@ export default class SequenceBasedMacromoleculeSample extends Element {
     }
   }
 
+  // Calculate amount_g from activity
   calculateMassFromActivity() {
-    // Case 2: Calculate amount_g from activity
     if (this.base_activity_per_mass_value > 0) {
       // Priority 1: Calculate mass from activity if activity_per_mass is given
       this.calculateMassByActivity();
@@ -326,8 +401,8 @@ export default class SequenceBasedMacromoleculeSample extends Element {
     }
   }
 
+  // Calculate amount_mol from activity
   calculateAmountMolFromActivity() {
-    // Case 3: Calculate amount_mol from activity
     this.calculateAmountAsUsed();
   }
 
