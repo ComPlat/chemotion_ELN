@@ -801,12 +801,14 @@ export default class Reaction extends Element {
   }
 
   rebuildReference(material) {
-    const { referenceMaterial } = this;
+    if (this.referenceMaterial) {
+      const { referenceMaterial } = this;
 
-    if (referenceMaterial) {
-      this._updateEquivalentForMaterial(material);
-    } else if (this.starting_materials.length > 0) {
-      this._setAsReferenceMaterial(this.starting_materials[0]);
+      if (!referenceMaterial && this.starting_materials.length > 0) {
+        this._setAsReferenceMaterial(this.starting_materials[0]);
+      } else {
+        this._updateEquivalentForMaterial(material);
+      }
     }
 
     this.products.forEach((product, index, arr) => {
