@@ -269,6 +269,7 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
     const promise = () => fetch(api, {
       credentials: 'same-origin',
       method: 'get',
+      params,
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
@@ -284,6 +285,86 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
   static sendMttRequest(params) {
     console.log('Sending MTT request with params:', params);
     const api = '/api/v1/mtt/create_mtt_request';
+    const promise = () => fetch(api, {
+      credentials: 'same-origin',
+      method: 'post',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(params),
+    })
+      .then((response) => response.json())
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    return promise();
+  }
+
+  static deleteMttRequests(ids) {
+    const api = '/api/v1/mtt/requests';
+    const promise = () => fetch(api, {
+      credentials: 'same-origin',
+      method: 'delete',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ ids }),
+    })
+      .then((response) => response.json())
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    return promise();
+  }
+
+  static deleteMttOutputs(ids) {
+    const api = '/api/v1/mtt/outputs';
+    const promise = () => fetch(api, {
+      credentials: 'same-origin',
+      method: 'delete',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ ids }),
+    })
+      .then((response) => response.json())
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    return promise();
+  }
+
+  // TODO: BACKEND - Implement endpoint to delete individual result within an output
+  // DELETE /api/v1/mtt/outputs/:output_id/results
+  // Body: { sample_name: "Sample1" } or { result_index: 0 }
+  // This allows deleting a specific analysis result without removing the entire output
+  static deleteMttResult(outputId, sampleName) {
+    const api = `/api/v1/mtt/outputs/${outputId}/results`;
+    const promise = () => fetch(api, {
+      credentials: 'same-origin',
+      method: 'delete',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ sample_name: sampleName }),
+    })
+      .then((response) => response.json())
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    return promise();
+  }
+
+  // TODO: BACKEND - Implement endpoint to send MTT results to samples
+  // POST /api/v1/mtt/send_to_sample
+  // Body: { output_ids: [123, 456] }
+  // This attaches MTT analysis results to their respective sample measurement records
+  static sendMttResultsToSample(params) {
+    const api = '/api/v1/mtt/send_to_sample';
     const promise = () => fetch(api, {
       credentials: 'same-origin',
       method: 'post',
