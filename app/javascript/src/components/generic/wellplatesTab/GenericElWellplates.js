@@ -1,11 +1,15 @@
 import React, { Component } from 'react';
-import { Accordion, Button, Table, Badge } from 'react-bootstrap';
+import { Accordion, Button } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import { DropTarget } from 'react-dnd';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import EmbeddedWellplateGenericEl from 'src/components/generic/wellplatesTab/EmbeddedWellplateGenericEl';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
-import BoxPlotVisualization from 'src/components/generic/BoxPlotVisualization';
+import ConfirmModal from 'src/components/common/ConfirmModal';
+import MttAnalysisDetailsModal from 'src/components/generic/wellplatesTab/MttAnalysisDetailsModal';
+import MttResultsTable from 'src/components/generic/wellplatesTab/MttResultsTable';
+import MttRequestStatusTable from 'src/components/generic/wellplatesTab/MttRequestStatusTable';
+import { flattenAnalysesFromOutputs } from 'src/utilities/mttDataProcessor';
 
 const target = {
   drop(props, monitor) {
@@ -36,11 +40,28 @@ class GenericElWellplates extends Component {
       requests: [],
       loadingRequests: false,
       expandedRequestId: null,
+      selectedAnalyses: {}, // Track selected checkboxes by key
+      showDetailsModal: false,
+      selectedAnalysisForModal: null, // Store { dataItem, sampleName, outputId }
+      showDeleteConfirmation: false,
+      deleteType: null, // 'request' or 'output' or 'result'
+      deleteId: null,
+      deleteSampleName: null, // Store sample name for result deletion
+      sendingToSample: false, // Track if batch send is in progress
     };
     this.handleSelect = this.handleSelect.bind(this);
     this.processWellplates = this.processWellplates.bind(this);
     this.fetchRequests = this.fetchRequests.bind(this);
     this.toggleOutputs = this.toggleOutputs.bind(this);
+    this.toggleAnalysisSelection = this.toggleAnalysisSelection.bind(this);
+    this.handleShowDetails = this.handleShowDetails.bind(this);
+    this.handleCloseDetailsModal = this.handleCloseDetailsModal.bind(this);
+    this.handleDeleteRequest = this.handleDeleteRequest.bind(this);
+    this.handleDeleteOutput = this.handleDeleteOutput.bind(this);
+    this.handleDeleteAnalysis = this.handleDeleteAnalysis.bind(this);
+    this.onConfirmDelete = this.onConfirmDelete.bind(this);
+    this.toggleSelectAll = this.toggleSelectAll.bind(this);
+    this.handleBatchSendToSample = this.handleBatchSendToSample.bind(this);
   }
 
   componentDidMount() {
@@ -53,6 +74,8 @@ class GenericElWellplates extends Component {
 
     GenericElsFetcher.getMttRequest({ id: genericEl.id })
       .then((result) => {
+        console.log("Result item: ",{ id: genericEl.id },result);
+        
         // Handle different response structures
         let requestsArray = [];
         if (Array.isArray(result)) {
@@ -63,7 +86,15 @@ class GenericElWellplates extends Component {
           // If result is an object but not an array, log it for debugging
           console.log('Unexpected result structure:', result);
         }
-        this.setState({ requests: requestsArray, loadingRequests: false });
+
+        // Filter requests by element_id to show only requests for this element
+        const filteredRequests = requestsArray.filter(
+          (req) => req.element_id === genericEl.id
+        );
+        console.log("Request Results filteredRequests: ", filteredRequests);
+
+
+        this.setState({ requests: filteredRequests, loadingRequests: false });
       })
       .catch((error) => {
         console.error('Error fetching requests:', error);
@@ -73,9 +104,7 @@ class GenericElWellplates extends Component {
 
   processWellplates() {
     const { selectedWellplates } = this.state;
-    const { wellplates, genericEl } = this.props;
-    const selected = wellplates.filter((wp) => selectedWellplates.includes(wp.id));
-    // TODO: Implement processing logic
+    const { genericEl } = this.props;
     const inputs = {
       id: genericEl.id,
       wellplate_ids: selectedWellplates,
@@ -107,141 +136,264 @@ class GenericElWellplates extends Component {
     return connectDropTarget(<div className={className}>Drop Wellplate here to add.</div>);
   }
 
-  getStateBadgeVariant(stateName) {
-    switch (stateName) {
-      case 'completed': return 'success';
-      case 'processing': return 'info';
-      case 'error': return 'danger';
-      case 'initial': return 'secondary';
-      default: return 'warning';
-    }
-  }
-
   toggleOutputs(requestId) {
     this.setState((prevState) => ({
       expandedRequestId: prevState.expandedRequestId === requestId ? null : requestId
     }));
   }
 
+  toggleAnalysisSelection(key) {
+    this.setState((prevState) => ({
+      selectedAnalyses: {
+        ...prevState.selectedAnalyses,
+        [key]: !prevState.selectedAnalyses[key]
+      }
+    }));
+  }
+
+  toggleSelectAll(allKeys) {
+    this.setState((prevState) => {
+      const { selectedAnalyses } = prevState;
+      // Check if all are currently selected
+      const allSelected = allKeys.every(key => selectedAnalyses[key]);
+
+      // If all selected, deselect all. Otherwise, select all.
+      const newSelection = {};
+      allKeys.forEach(key => {
+        newSelection[key] = !allSelected;
+      });
+
+      return { selectedAnalyses: newSelection };
+    });
+  }
+
+  handleShowDetails(dataItem, sampleName, outputId) {
+    this.setState({
+      showDetailsModal: true,
+      selectedAnalysisForModal: { dataItem, sampleName, outputId }
+    });
+  }
+
+  handleCloseDetailsModal() {
+    this.setState({
+      showDetailsModal: false,
+      selectedAnalysisForModal: null
+    });
+  }
+
+  handleDeleteAnalysis(outputId, sampleName) {
+    this.setState({
+      showDeleteConfirmation: true,
+      deleteType: 'result',
+      deleteId: outputId,
+      deleteSampleName: sampleName,
+    });
+  }
+
+  handleBatchSendToSample(selectedItems) {
+    // Get output IDs from selected items
+    const outputIds = [...new Set(selectedItems.map(item => item.outputId))];
+
+    if (outputIds.length === 0) {
+      alert('No analyses selected');
+      return;
+    }
+
+    this.setState({ sendingToSample: true });
+
+    // TODO: BACKEND - Endpoint needs to be implemented
+    // For now, this will fail gracefully until backend is ready
+    GenericElsFetcher.sendMttResultsToSample({ output_ids: outputIds })
+      .then((result) => {
+        if (result && result.success) {
+          this.setState({
+            sendingToSample: false,
+            selectedAnalyses: {} // Clear selections after successful send
+          });
+          alert(`Successfully sent ${selectedItems.length} analysis results to samples`);
+          this.fetchRequests(); // Refresh data
+        }
+      })
+      .catch((error) => {
+        console.error('Error sending to sample:', error);
+        this.setState({ sendingToSample: false });
+        alert('Send to sample endpoint not yet implemented. Please ask backend team to implement: POST /api/v1/mtt/send_to_sample');
+      });
+  }
+
+  toggleDataItemExpansion(key) {
+    this.setState((prevState) => {
+      const { expandedDataItems } = prevState;
+      return {
+        expandedDataItems: {
+          ...expandedDataItems,
+          [key]: !expandedDataItems[key]
+        }
+      };
+    });
+  }
+
+  toggleInputSummary(key) {
+    this.setState((prevState) => {
+      const { expandedInputSummaries } = prevState;
+      return {
+        expandedInputSummaries: {
+          ...expandedInputSummaries,
+          [key]: !expandedInputSummaries[key]
+        }
+      };
+    });
+  }
+
+  handleDeleteRequest(requestId) {
+    this.setState({
+      showDeleteConfirmation: true,
+      deleteType: 'request',
+      deleteId: requestId,
+    });
+  }
+
+  handleDeleteOutput(outputId) {
+    this.setState({
+      showDeleteConfirmation: true,
+      deleteType: 'output',
+      deleteId: outputId,
+    });
+  }
+
+  onConfirmDelete(confirmed) {
+    if (!confirmed) {
+      this.setState({
+        showDeleteConfirmation: false,
+        deleteType: null,
+        deleteId: null,
+        deleteSampleName: null,
+      });
+      return;
+    }
+
+    const { deleteType, deleteId, deleteSampleName } = this.state;
+
+    if (deleteType === 'request') {
+      GenericElsFetcher.deleteMttRequests([deleteId])
+        .then((result) => {
+          if (result && result.success) {
+            this.fetchRequests();
+          }
+        })
+        .catch((error) => {
+          console.error('Error deleting request:', error);
+        })
+        .finally(() => {
+          this.setState({
+            showDeleteConfirmation: false,
+            deleteType: null,
+            deleteId: null,
+          });
+        });
+    } else if (deleteType === 'output') {
+      GenericElsFetcher.deleteMttOutputs([deleteId])
+        .then((result) => {
+          if (result && result.success) {
+            this.fetchRequests();
+          }
+        })
+        .catch((error) => {
+          console.error('Error deleting output:', error);
+        })
+        .finally(() => {
+          this.setState({
+            showDeleteConfirmation: false,
+            deleteType: null,
+            deleteId: null,
+          });
+        });
+    } else if (deleteType === 'result') {
+      // TODO: BACKEND - Endpoint needs to be implemented
+      // For now, this will fail gracefully until backend is ready
+      GenericElsFetcher.deleteMttResult(deleteId, deleteSampleName)
+        .then((result) => {
+          if (result && result.success) {
+            this.fetchRequests();
+            // Close modal if deleting from modal
+            if (this.state.showDetailsModal) {
+              this.handleCloseDetailsModal();
+            }
+          }
+        })
+        .catch((error) => {
+          console.error('Error deleting result:', error);
+          alert('Delete individual result endpoint not yet implemented. Please ask backend team to implement: DELETE /api/v1/mtt/outputs/:id/results');
+        })
+        .finally(() => {
+          this.setState({
+            showDeleteConfirmation: false,
+            deleteType: null,
+            deleteId: null,
+            deleteSampleName: null,
+          });
+        });
+    }
+  }
+
   renderOutputsTable(outputs) {
-    if (!outputs || outputs.length === 0) {
+    const { selectedAnalyses, sendingToSample } = this.state;
+
+    // Use utility function to flatten analyses
+    const allAnalyses = flattenAnalysesFromOutputs(outputs);
+
+    if (allAnalyses.length === 0) {
       return <p className="text-muted mb-0">No outputs available.</p>;
     }
 
+    // Get selected items
+    const selectedItems = allAnalyses.filter(item => selectedAnalyses[item.key]);
+    const selectedCount = selectedItems.length;
+
     return (
       <div className="mt-3">
-        <h6 className="text-secondary mb-3">Outputs ({outputs.length})</h6>
-        {outputs.map((output, idx) => (
-          <div key={output.id} className="mb-4 p-3 border rounded bg-light">
-            <div className="d-flex justify-content-between align-items-start mb-2">
-              <h6 className="mb-0">
-                <Badge bg="secondary" className="me-2">Output #{idx + 1}</Badge>
-                <small className="text-muted">ID: {output.id}</small>
-              </h6>
-              <small className="text-muted">
-                {new Date(output.created_at).toLocaleString()}
-              </small>
+        {/* Selection Toolbar */}
+        <div className="d-flex justify-content-between align-items-center mb-3">
+          <h6 className="text-secondary mb-0">
+            Results ({allAnalyses.length})
+          </h6>
+          {selectedCount > 0 && (
+            <div className="d-flex align-items-center gap-2">
+              <span className="text-muted" style={{ fontSize: '0.9rem' }}>
+                {selectedCount} selected
+              </span>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => this.handleBatchSendToSample(selectedItems)}
+                disabled={sendingToSample}
+                style={{ fontSize: '0.75rem' }}
+              >
+                <i className="fa fa-paper-plane me-1" />
+                {sendingToSample ? 'Sending...' : 'Send to Sample'}
+              </Button>
+              <Button
+                variant="outline-secondary"
+                size="sm"
+                onClick={() => this.setState({ selectedAnalyses: {} })}
+                style={{ fontSize: '0.75rem' }}
+                title="Clear selection"
+              >
+                <i className="fa fa-times" />
+              </Button>
             </div>
+          )}
+        </div>
 
-            {output.notes && (
-              <div className="mb-2">
-                <strong>Notes:</strong> {output.notes}
-              </div>
-            )}
-
-            {output.output_data && output.output_data.Output && output.output_data.Output.map((dataItem, dataIdx) => (
-              <div key={dataIdx} className="mt-3">
-                {/* BoxPlot Visualization */}
-                <div className="mb-4 p-3 bg-white border rounded">
-                  <h6 className="text-primary mb-3">Dose-Response Visualization</h6>
-                  <BoxPlotVisualization outputData={dataItem} />
-                </div>
-
-                {/* Results Table */}
-                {dataItem.result && dataItem.result.length > 0 && (
-                  <div className="mb-3">
-                    <h6 className="text-primary mb-2">Results</h6>
-                    <div style={{ overflowX: 'auto' }}>
-                      <Table bordered size="sm" className="bg-white" style={{ fontSize: '0.85rem' }}>
-                        <thead style={{ backgroundColor: '#e9ecef' }}>
-                          <tr>
-                            <th style={{ padding: '8px' }}>Name</th>
-                            <th style={{ padding: '8px' }}>IC50 (relative)</th>
-                            <th style={{ padding: '8px' }}>pIC50</th>
-                            <th style={{ padding: '8px' }}>Hill Coefficient</th>
-                            <th style={{ padding: '8px' }}>RSE</th>
-                            <th style={{ padding: '8px' }}>p-value</th>
-                            <th style={{ padding: '8px' }}>IC50 Range</th>
-                            <th style={{ padding: '8px' }}>Asymptotes</th>
-                            <th style={{ padding: '8px' }}>Problems</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {dataItem.result.map((res, resIdx) => (
-                            <tr key={resIdx}>
-                              <td style={{ padding: '8px', fontWeight: '500' }}>{res.name}</td>
-                              <td style={{ padding: '8px' }}>{res.IC50_relative?.toFixed(4)}</td>
-                              <td style={{ padding: '8px' }}>{res.pIC50?.toFixed(4)}</td>
-                              <td style={{ padding: '8px' }}>{res.HillCoefficient?.toFixed(4)}</td>
-                              <td style={{ padding: '8px' }}>{res.RSE?.toFixed(4)}</td>
-                              <td style={{ padding: '8px', fontSize: '0.75rem' }}>{res.p_value?.toExponential(4)}</td>
-                              <td style={{ padding: '8px', fontSize: '0.75rem' }}>
-                                {res.IC50_relative_lower?.toFixed(2)} - {res.IC50_relative_higher?.toFixed(2)}
-                              </td>
-                              <td style={{ padding: '8px', fontSize: '0.75rem' }}>
-                                {res.asymptote_one?.toFixed(4)} / {res.asymptote_two?.toFixed(4)}
-                              </td>
-                              <td style={{ padding: '8px' }}>
-                                {res.Problems ? (
-                                  <Badge bg="warning">{res.Problems}</Badge>
-                                ) : (
-                                  <span className="text-success">✓</span>
-                                )}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </Table>
-                    </div>
-                  </div>
-                )}
-
-                {/* Input Data Summary */}
-                {dataItem.input && dataItem.input.length > 0 && (
-                  <div>
-                    <h6 className="text-primary mb-2">Input Data Summary</h6>
-                    <div style={{ overflowX: 'auto' }}>
-                      <Table bordered size="sm" className="bg-white" style={{ fontSize: '0.85rem' }}>
-                        <thead style={{ backgroundColor: '#e9ecef' }}>
-                          <tr>
-                            <th style={{ padding: '8px' }}>Name</th>
-                            <th style={{ padding: '8px' }}>Concentration</th>
-                            <th style={{ padding: '8px' }}>Values</th>
-                            <th style={{ padding: '8px' }}>Well ID</th>
-                            <th style={{ padding: '8px' }}>Sample ID</th>
-                            <th style={{ padding: '8px' }}>Wellplate ID</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {dataItem.input.map((inp, inpIdx) => (
-                            <tr key={inpIdx}>
-                              <td style={{ padding: '8px' }}>{inp.name}</td>
-                              <td style={{ padding: '8px' }}>{inp.conc}</td>
-                              <td style={{ padding: '8px', fontWeight: '500' }}>{inp.values}</td>
-                              <td style={{ padding: '8px', fontFamily: 'monospace', fontSize: '0.75rem' }}>{inp.well_id}</td>
-                              <td style={{ padding: '8px', fontFamily: 'monospace', fontSize: '0.75rem' }}>{inp.sample_id}</td>
-                              <td style={{ padding: '8px' }}>{inp.wellplate_id}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </Table>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        ))}
+        {/* Results Table Component */}
+        <MttResultsTable
+          analyses={allAnalyses}
+          selectedAnalyses={selectedAnalyses}
+          onToggleSelection={this.toggleAnalysisSelection}
+          onToggleSelectAll={this.toggleSelectAll}
+          onShowDetails={this.handleShowDetails}
+          onDelete={this.handleDeleteAnalysis}
+        />
       </div>
     );
   }
@@ -249,140 +401,16 @@ class GenericElWellplates extends Component {
   renderRequestStatus() {
     const { requests, loadingRequests, expandedRequestId } = this.state;
 
-    if (loadingRequests) {
-      return (
-        <div className="mb-4 p-4 border rounded shadow-sm bg-white">
-          <h5 className="text-primary fw-bold mb-2">Request Status</h5>
-          <p className="text-muted mb-0">Loading requests...</p>
-        </div>
-      );
-    }
-
-    if (!requests || requests.length === 0) {
-      return (
-        <div className="mb-4 p-4 border rounded shadow-sm bg-white">
-          <h5 className="text-primary fw-bold mb-2">Request Status</h5>
-          <p className="text-muted mb-0">No requests found.</p>
-        </div>
-      );
-    }
-
     return (
-      <div className="mb-4 p-4 border rounded shadow-sm bg-white">
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <h5 className="mb-0 text-primary fw-bold">Request Status</h5>
-          <Button variant="outline-primary" size="sm" onClick={this.fetchRequests}>
-            <i className="fa fa-refresh me-1" /> Refresh
-          </Button>
-        </div>
-        <div style={{ overflowX: 'auto' }}>
-          <Table striped bordered hover className="mb-0" style={{ fontSize: '0.9rem' }}>
-            <thead style={{ backgroundColor: '#f8f9fa' }}>
-              <tr>
-                <th style={{ fontWeight: '600', fontSize: '0.85rem', padding: '12px' }}>Request ID</th>
-                <th style={{ fontWeight: '600', fontSize: '0.85rem', padding: '12px' }}>State</th>
-                <th style={{ fontWeight: '600', fontSize: '0.85rem', padding: '12px' }}>Created At</th>
-                <th style={{ fontWeight: '600', fontSize: '0.85rem', padding: '12px' }}>Expires At</th>
-                <th style={{ fontWeight: '600', fontSize: '0.85rem', padding: '12px' }}>Status</th>
-                <th style={{ fontWeight: '600', fontSize: '0.85rem', padding: '12px', textAlign: 'center' }}>Access Count</th>
-                <th style={{ fontWeight: '600', fontSize: '0.85rem', padding: '12px' }}>Message</th>
-                <th style={{ fontWeight: '600', fontSize: '0.85rem', padding: '12px', textAlign: 'center' }}>Outputs</th>
-              </tr>
-            </thead>
-            <tbody>
-              {requests.map((req) => (
-                <React.Fragment key={req.id}>
-                  <tr style={{ verticalAlign: 'middle' }}>
-                    <td style={{ padding: '10px', fontFamily: 'monospace', fontSize: '0.85rem' }}>
-                      {req.request_id}
-                    </td>
-                    <td style={{ padding: '10px' }}>
-                      <Badge
-                        bg={this.getStateBadgeVariant(req.state_name)}
-                        style={{ fontSize: '0.75rem', padding: '0.35em 0.65em', textTransform: 'capitalize' }}
-                      >
-                        {req.state_name}
-                      </Badge>
-                    </td>
-                    <td style={{ padding: '10px', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
-                      {new Date(req.created_at).toLocaleString()}
-                    </td>
-                    <td style={{ padding: '10px', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
-                      {new Date(req.expires_at).toLocaleString()}
-                    </td>
-                    <td style={{ padding: '10px' }}>
-                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                        {req.expired && (
-                          <Badge bg="warning" style={{ fontSize: '0.7rem', padding: '0.3em 0.5em' }}>
-                            Expired
-                          </Badge>
-                        )}
-                        {req.revoked && (
-                          <Badge bg="danger" style={{ fontSize: '0.7rem', padding: '0.3em 0.5em' }}>
-                            Revoked
-                          </Badge>
-                        )}
-                        {req.active && (
-                          <Badge bg="success" style={{ fontSize: '0.7rem', padding: '0.3em 0.5em' }}>
-                            Active
-                          </Badge>
-                        )}
-                      </div>
-                    </td>
-                    <td style={{ padding: '10px', fontSize: '0.85rem', textAlign: 'center', fontWeight: '500' }}>
-                      {req.access_count}
-                    </td>
-                    <td style={{ padding: '10px', fontSize: '0.85rem', maxWidth: '250px' }}>
-                      <div
-                        style={{
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          color: req.resp_message ? '#212529' : '#6c757d'
-                        }}
-                        title={req.resp_message || 'No message'}
-                      >
-                        {req.resp_message || '-'}
-                      </div>
-                    </td>
-                    <td style={{ padding: '10px', textAlign: 'center' }}>
-                      {req.outputs && req.outputs.length > 0 ? (
-                        <Button
-                          variant={expandedRequestId === req.id ? 'primary' : 'outline-primary'}
-                          size="sm"
-                          onClick={() => this.toggleOutputs(req.id)}
-                          style={{ fontSize: '0.75rem' }}
-                        >
-                          {expandedRequestId === req.id ? (
-                            <>
-                              <i className="fa fa-chevron-up me-1" />
-                              Hide ({req.outputs.length})
-                            </>
-                          ) : (
-                            <>
-                              <i className="fa fa-chevron-down me-1" />
-                              Show ({req.outputs.length})
-                            </>
-                          )}
-                        </Button>
-                      ) : (
-                        <span className="text-muted" style={{ fontSize: '0.85rem' }}>No outputs</span>
-                      )}
-                    </td>
-                  </tr>
-                  {expandedRequestId === req.id && req.outputs && req.outputs.length > 0 && (
-                    <tr>
-                      <td colSpan="8" style={{ padding: '20px', backgroundColor: '#f8f9fa' }}>
-                        {this.renderOutputsTable(req.outputs)}
-                      </td>
-                    </tr>
-                  )}
-                </React.Fragment>
-              ))}
-            </tbody>
-          </Table>
-        </div>
-      </div>
+      <MttRequestStatusTable
+        requests={requests}
+        loading={loadingRequests}
+        expandedRequestId={expandedRequestId}
+        onRefresh={this.fetchRequests}
+        onToggleOutputs={this.toggleOutputs}
+        onDeleteRequest={this.handleDeleteRequest}
+        renderOutputsTable={(outputs) => this.renderOutputsTable(outputs)}
+      />
     );
   }
 
@@ -394,7 +422,7 @@ class GenericElWellplates extends Component {
       <div>
         {this.renderDropZone()}
 
-        <Accordion className="border rounded overflow-hidden">
+        <Accordion className="mb-3 border rounded overflow-hidden">
           {wellplates && wellplates.map((wellplate, index) => (
             <EmbeddedWellplateGenericEl
               key={`${wellplate.short_label}-${wellplate.id}`}
@@ -406,8 +434,8 @@ class GenericElWellplates extends Component {
             />
           ))}
         </Accordion>
-         {selectedWellplates.length > 0 && (
-          <div className="mt-3 text-end">
+        {selectedWellplates.length > 0 && (
+          <div className="mb-3 text-end">
             <Button
               variant="primary"
               size="sm"
@@ -418,6 +446,24 @@ class GenericElWellplates extends Component {
           </div>
         )}
         {this.renderRequestStatus()}
+
+        <ConfirmModal
+          showModal={this.state.showDeleteConfirmation}
+          title="Are you sure?"
+          content={(
+            <p>
+              Deletion of this {this.state.deleteType} cannot be undone. Please check carefully.
+            </p>
+          )}
+          onClick={this.onConfirmDelete}
+        />
+
+        <MttAnalysisDetailsModal
+          show={this.state.showDetailsModal}
+          onHide={this.handleCloseDetailsModal}
+          analysisData={this.state.selectedAnalysisForModal}
+          onDelete={this.handleDeleteAnalysis}
+        />
       </div>
     );
   }
