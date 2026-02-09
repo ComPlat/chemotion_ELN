@@ -131,6 +131,7 @@
 !/public/json/precautionaryPhrases.json
 !/public/json/hazardPhrases.json
 !/public/json/pictograms.json
+!/public/json/ketcher_common_templates_default.json
 
 /public/safety_sheets/*
 !public/safety_sheets/.keep
