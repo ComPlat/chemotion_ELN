@@ -470,6 +470,23 @@ export default class Reaction extends Element {
     ];
   }
 
+  // do not run any check based on ID on allReactionMaterials, as some sample materials may have the same ID as the SBMM samples
+  get allReactionMaterials() {
+    return [
+      ...this.starting_materials || [],
+      ...this.reactants || [],
+      ...this.reactant_sbmm_samples || [],
+    ];
+  }
+
+  // may have same ID for the reactant samples and SBMM samples
+  get reactantsWithSbmm() {
+    return [
+      ...this.reactants || [],
+      ...this.reactant_sbmm_samples || [],
+    ];
+  }
+
   buildCopy(params = {}, keepAmounts = false) {
     const copy = super.buildCopy();
     Object.assign(copy, params);
@@ -591,19 +608,17 @@ export default class Reaction extends Element {
       material.weight_percentage_reference = false;
       WeightPercentageReactionActions.setWeightPercentageReference(null);
       WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(null);
-      const allReactants = [...this.starting_materials, ...this.reactants, ...(this.reactant_sbmm_samples || [])];
-      const refMaterial = allReactants.filter(
+      const { allReactionMaterials } = this;
+      const refMaterial = allReactionMaterials.filter(
         (m) => m.reference === true
       )[0];
 
-      const getMolAmount = (item) => (isSbmmSample(item) ? item.amount_as_used_mol_value : item.amount_mol) ?? 0;
-
-      const refAmountMol = getMolAmount(refMaterial) || 1;
+      const refAmountMol = refMaterial.amount_mol || 1;
 
       // reset all weight percentage to null, since there is no weight percentage reference assigned
-      allReactants.forEach((m) => {
+      allReactionMaterials.forEach((m) => {
         m.weight_percentage = null;
-        const amountMol = getMolAmount(m);
+        const amountMol = m.amount_mol || 0;
 
         // assign equivalent based on reference material (guard against missing ref)
         if (refMaterial && Number.isFinite(refAmountMol) && refAmountMol > 0 && Number.isFinite(amountMol)) {
@@ -786,19 +801,12 @@ export default class Reaction extends Element {
   }
 
   rebuildReference(material) {
-    if (this.referenceMaterial) {
-      const { referenceMaterial } = this;
-      let reference = this.starting_materials.find((m) => referenceMaterial.id === m.id);
+    const { referenceMaterial } = this;
 
-      // if referenceMaterial exists,
-      // referenceMaterialGroup must be either 'starting_materials' or 'reactants'
-      if (!reference) reference = this.reactants.find((m) => m.id === referenceMaterial.id);
-
-      if (!reference && this.starting_materials.length > 0) {
-        this._setAsReferenceMaterial(this.starting_materials[0]);
-      } else {
-        this._updateEquivalentForMaterial(material);
-      }
+    if (referenceMaterial) {
+      this._updateEquivalentForMaterial(material);
+    } else if (this.starting_materials.length > 0) {
+      this._setAsReferenceMaterial(this.starting_materials[0]);
     }
 
     this.products.forEach((product, index, arr) => {
@@ -829,16 +837,49 @@ export default class Reaction extends Element {
     return this.reactant_sbmm_samples.find((s) => s.id === sampleID);
   }
 
+  /**
+   * Gets the reference material for the reaction (either regular sample or SBMM sample)
+   * @returns {Sample|SequenceBasedMacromoleculeSample|undefined} The reference material, or undefined if none exists
+   */
   get referenceMaterial() {
-    return this.samples.find((sample) => sample.reference);
+    return this.allReactionMaterials.find((sample) => sample.reference);
   }
 
   get sampleCount() {
     return this.samples.length;
   }
 
+  /**
+   * Marks a regular Sample (non-SBMM) as the reference material for the reaction.
+   * Clears the reference flag from all other samples in the reaction.
+   *
+   * @param {string|number} sampleID - The ID of the sample to mark as reference
+   * @returns {void}
+   */
   markSampleAsReference(sampleID) {
     this.samples.forEach((sample) => {
+      sample.reference = sample.id === sampleID;
+    });
+
+    this.reactant_sbmm_samples.forEach((sample) => {
+      sample.reference = false;
+    });
+  }
+
+  /**
+   * Marks a Sequence-Based Macromolecule Sample (SBMM) as the reference material for the reaction.
+   * Only affects SBMM samples; does not modify regular samples.
+   * Use this when setting an SBMM sample as reference to avoid ID collision issues.
+   *
+   * @param {string|number} sampleID - The ID of the SBMM sample to mark as reference
+   * @returns {void}
+   */
+  markSbmmSampleAsReference(sampleID) {
+    this.samples.forEach((sample) => {
+      sample.reference = false;
+    });
+
+    this.reactant_sbmm_samples.forEach((sample) => {
       sample.reference = sample.id === sampleID;
     });
   }
@@ -952,7 +993,7 @@ export default class Reaction extends Element {
 
   refreshEquivalent(material, refreshCoefficient) {
     let matGroup;
-    const refMat = this.samples.find((sample) => sample.reference);
+    const refMat = this.referenceMaterial;
     if (refMat && refMat.amount_mol) {
       ['_starting_materials', '_reactants', '_solvents', '_products'].forEach((g) => {
         matGroup = this[g];
