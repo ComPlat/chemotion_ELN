@@ -69,8 +69,6 @@ import CommentModal from 'src/components/common/CommentModal';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import { commentActivation } from 'src/utilities/CommentHelper';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
-import MolViewerBtn from 'src/components/viewer/MolViewerBtn';
-import MolViewerSet from 'src/components/viewer/MolViewerSet';
 import { copyToClipboard } from 'src/utilities/clipboard';
 // eslint-disable-next-line import/no-named-as-default
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
@@ -153,7 +151,6 @@ export default class SampleDetails extends React.Component {
     this.enableComputedProps = MatrixCheck(currentUser.matrix, 'computedProp');
     this.enableSampleDecoupled = MatrixCheck(currentUser.matrix, 'sampleDecoupled');
     this.enableNmrSim = MatrixCheck(currentUser.matrix, 'nmrSim');
-    this.enableMoleculeViewer = MatrixCheck(currentUser.matrix, MolViewerSet.PK);
 
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.isCASNumberValid = this.isCASNumberValid.bind(this);
@@ -1345,16 +1342,6 @@ export default class SampleDetails extends React.Component {
 
     const className = `${style} ${svgPath ? 'svg-container' : 'svg-container-empty'}`;
 
-    const molViewerBtn = (
-      <MolViewerBtn
-        className="structure-editor-container"
-        disabled={sample.isNew || !this.enableMoleculeViewer}
-        fileContent={sample.molfile}
-        isPublic={false}
-        viewType={`mol_${sample.id}`}
-      />
-    );
-
     return sample.can_update ? (
       <>
         <div
@@ -1366,12 +1353,10 @@ export default class SampleDetails extends React.Component {
           <i className="fa fa-pencil position-absolute top-0 end-0" />
           <SVG key={svgPath} src={svgPath} className="molecule-mid" />
         </div>
-        {molViewerBtn}
       </>
     ) : (
       <div className={className}>
         <SVG key={svgPath} src={svgPath} className="molecule-mid" />
-        {molViewerBtn}
       </div>
     );
   }
