@@ -4,7 +4,7 @@
 # State machine for attachment Jcamp handle
 module AttachmentJcampAasm
   FILE_EXT_SPECTRA = %w[dx jdx jcamp mzml mzxml raw cdf zip gz tar nmrium].freeze
-  LCMS_UVVIS_JDX_REGEX = /lcms.*[._]uvvis(\.peak)?\.jdx$/i.freeze
+  LCMS_UVVIS_JDX_REGEX = /lcms.*[._]uvvis(\.(peak|edit))?\.jdx$/i.freeze
 
   extend ActiveSupport::Concern
 
@@ -186,13 +186,20 @@ module AttachmentJcampProcess
     if ext != 'png'
       if to_edit
         att.set_edited
-      elsif addon == 'peak'
+      elsif addon == 'peak' || (addon.is_a?(String) && addon.include?('peak'))
         att.set_force_peaked
+      elsif addon == 'edit' || (addon.is_a?(String) && addon.include?('edit'))
+        att.set_edited
       else
         filename_lower = att.filename.to_s.downcase
         
-        if filename_lower.match?(/lcms.*\.jdx$/i)
-
+        if filename_lower.match?(/lcms.*[._]uvvis\.(peak|edit)\.jdx$/i)
+          if filename_lower.include?('.edit.')
+            att.set_edited if att.may_set_edited?
+          else
+            att.set_force_peaked if att.may_set_force_peaked?
+          end
+        elsif filename_lower.match?(/lcms.*\.jdx$/i) || filename_lower.match?(/.*[._](tic|mz|uvvis).*\.jdx$/i)
           if lcms_uvvis_raw?(filename_lower)
             att.set_non_jcamp if att.may_set_non_jcamp?
           else
