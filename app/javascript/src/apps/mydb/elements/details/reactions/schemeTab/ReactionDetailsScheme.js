@@ -686,7 +686,12 @@ export default class ReactionDetailsScheme extends React.Component {
       reaction.markSampleAsReference(sampleID);
     }
 
-    return this.updatedReactionWithSample(this.updatedSamplesForReferenceChange.bind(this), sample);
+    return this.updatedReactionWithSample(
+      this.updatedSamplesForReferenceChange.bind(this),
+      sample,
+      undefined,
+      true
+    );
   }
 
   /**
@@ -1775,10 +1780,18 @@ export default class ReactionDetailsScheme extends React.Component {
     });
   }
 
-  updatedReactionWithSample(updateFunction, updatedSample, type) {
+  updatedReactionWithSample(updateFunction, updatedSample, type, includeSbmm = false) {
     const { reaction } = this.props;
     reaction.starting_materials = updateFunction(reaction.starting_materials, updatedSample, 'starting_materials', type);
     reaction.reactants = updateFunction(reaction.reactants, updatedSample, 'reactants', type);
+    if (includeSbmm) {
+      reaction.reactant_sbmm_samples = updateFunction(
+        reaction.reactant_sbmm_samples,
+        updatedSample,
+        'reactants',
+        type
+      );
+    }
     reaction.solvents = updateFunction(reaction.solvents, updatedSample, 'solvents', type);
     reaction.products = updateFunction(reaction.products, updatedSample, 'products', type);
     return reaction;
