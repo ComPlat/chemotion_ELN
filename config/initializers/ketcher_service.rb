@@ -32,3 +32,24 @@ ensure
   config.send(service_setter, config_for(:default_missing)) unless config.send(service)
   Rails.logger.info "#{ref} #{config.send(service).desc}"
 end
+
+# Copy uploads/common_templates/instance.json to public/ketcher/common_templates_list.json
+# CommonTemplateExporter::TEMPLATES_INSTANCE
+# source = Rails.root.join('uploads', 'common_templates', 'instance.json')
+# Destination:
+# Remove previous public/json/ketcher_common_templates.json files
+
+begin
+  require Rails.root.join('lib/tasks/support/ketcher_common_templates_exporter.rb')
+  source = KetcherCommonTemplatesExporter::TEMPLATES_INSTANCE
+  source = KetcherCommonTemplatesExporter::TEMPLATES_DEFAULT unless File.exist?(source)
+  destination = KetcherCommonTemplatesExporter::TEMPLATES_PUBLIC
+
+  FileUtils.rm_rf(Dir.glob(destination))
+  FileUtils.cp(source, destination)
+
+  Rails.logger.info "Ketcher common templates copied from #{source} to #{destination}"
+rescue StandardError => error
+  Rails.logger.warn error
+  Rails.logger.warn "Ketcher common templates source file not found: #{source}"
+end

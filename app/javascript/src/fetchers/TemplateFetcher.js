@@ -2,7 +2,7 @@ import 'whatwg-fetch';
 
 export default class TemplateFetcher {
   static commonTemplates() {
-    return fetch('/json/common_templates_list.json', {
+    return fetch('/json/ketcher_common_templates.json', {
       credentials: 'same-origin',
     })
       .then((response) => {

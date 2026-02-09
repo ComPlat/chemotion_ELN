@@ -658,11 +658,6 @@ export default class UserAuth extends Component {
             >
               Account &amp; Profile
             </Dropdown.Item>
-            {currentUser.is_templates_moderator && (
-              <Dropdown.Item eventKey="2" href="/ketcher/common_templates">
-                Template Management
-              </Dropdown.Item>
-            )}
             <Dropdown.Item eventKey="3" href="/users/edit">
               Change Password
             </Dropdown.Item>
