@@ -22,23 +22,31 @@ class EnableLogicalReplicationAndPublication < ActiveRecord::Migration[6.1]
     # Note: When using REPLICA IDENTITY FULL with column lists, ALL columns must be included
     # Column filtering should be done on the Sequin consumer side instead
     # Use IF NOT EXISTS equivalent for idempotency
-    unless publication_exists?('sequin_cdc_publication')
-      execute <<-SQL
-        CREATE PUBLICATION sequin_cdc_publication FOR TABLE
-          containers,
-          samples,
-          reactions
-        WITH (publish = 'insert,update,delete');
-      SQL
+    begin
+      unless publication_exists?('sequin_cdc_publication')
+        execute <<-SQL
+          CREATE PUBLICATION sequin_cdc_publication FOR TABLE
+            containers,
+            samples,
+            reactions
+          WITH (publish = 'insert,update,delete');
+        SQL
+      end
+    rescue ActiveRecord::StatementInvalid => e
+      warn "[EnableLogicalReplication] skipping publication creation: #{e.message}"
     end
 
     # Create a replication slot for Sequin
     # This ensures we don't miss any changes even if Sequin is temporarily down
     # Check if slot exists first to make migration idempotent
-    unless replication_slot_exists?('sequin_slot')
-      execute <<-SQL
-        SELECT pg_create_logical_replication_slot('sequin_slot', 'pgoutput');
-      SQL
+    begin
+      unless replication_slot_exists?('sequin_slot')
+        execute <<-SQL
+          SELECT pg_create_logical_replication_slot('sequin_slot', 'pgoutput');
+        SQL
+      end
+    rescue ActiveRecord::StatementInvalid => e
+      warn "[EnableLogicalReplication] skipping replication slot creation: #{e.message}"
     end
   end
 
