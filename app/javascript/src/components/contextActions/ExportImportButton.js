@@ -3,8 +3,6 @@ import { Dropdown, ButtonGroup } from 'react-bootstrap';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
 
-import ModalExport from 'src/components/contextActions/export/ModalExport';
-import ModalReactionExport from 'src/components/contextActions/export/ModalReactionExport';
 import ModalExportCollection from 'src/components/contextActions/export/ModalExportCollection';
 import ModalExportRadarCollection from 'src/components/contextActions/export/ModalExportRadarCollection';
 
@@ -60,8 +58,6 @@ function ExportImportButton() {
 
   const modalContent = ((m) => {
     switch (m) {
-      case 'export': return <ModalExport onHide={hideModal} />;
-      case 'exportReaction': return <ModalReactionExport onHide={hideModal} />;
       case 'importSamples': return <ModalImport onHide={hideModal} />;
       case 'exportCollection': return <ModalExportCollection onHide={hideModal} />;
       case 'importCollection': return <ModalImportCollection onHide={hideModal} />;
@@ -83,19 +79,6 @@ function ExportImportButton() {
           <i className="fa fa-upload ms-1" />
         </Dropdown.Toggle>
         <Dropdown.Menu>
-          <Dropdown.Item
-            onClick={() => showModal('export')}
-            title="Export to spreadsheet"
-          >
-            Export samples from selection
-          </Dropdown.Item>
-          <Dropdown.Item
-            onClick={() => showModal('exportReaction')}
-            title="Export reaction smiles to csv"
-          >
-            Export reactions from selection
-          </Dropdown.Item>
-          <Dropdown.Divider />
           <Dropdown.Item
             onClick={() => showModal('importSamples')}
             disabled={isDisabled}
