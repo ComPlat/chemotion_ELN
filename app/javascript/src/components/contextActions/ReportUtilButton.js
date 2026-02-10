@@ -50,10 +50,6 @@ function ReportUtilButton() {
             Format Analyses
           </Dropdown.Item>
 
-          <Dropdown.Item onClick={ElementActions.showLiteratureDetail} title="Reference Manager">
-            Reference Manager
-          </Dropdown.Item>
-
           {enableComputedProps && (
             <>
               <Dropdown.Item onClick={ElementActions.showComputedPropsGraph} title="Graph">
