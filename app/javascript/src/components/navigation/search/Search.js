@@ -28,29 +28,28 @@ export default class Search extends React.Component {
     const uiState = UIStore.getState();
     const { currentCollection } = uiState;
     const collectionId = currentCollection ? currentCollection.id : null;
-    const isPublic = this.props.isPublic;
+    const { isPublic } = this.props;
     const isSync = currentCollection ? currentCollection.is_sync_to_me : false;
-    selection.elementType = this.state.elementType;
-    UIActions.setSearchSelection(selection);
-    selection.page_size = uiState.number_of_results;
+    const { elementType } = this.state;
+    const updatedSelection = {
+      ...selection,
+      elementType,
+      page_size: uiState.number_of_results,
+    };
+    UIActions.setSearchSelection(updatedSelection);
     ElementActions.fetchBasedOnSearchSelectionAndCollection(
-      { selection, collectionId, isSync, isPublic });
-  }
-
-  search(query) {
-    const { currentCollection } = UIStore.getState();
-    const id = currentCollection ? currentCollection.id : null;
-    const isSync = currentCollection ? currentCollection.is_sync_to_me : false;
-    return SuggestionsFetcher.fetchSuggestionsForCurrentUser(
-      this.state.elementType.toLowerCase(), query, id, isSync
+      {
+        selection: updatedSelection, collectionId, isSync, isPublic
+      }
     );
   }
 
   handleClearSearchSelection() {
     const { currentCollection } = UIStore.getState();
-    this.setState({ elementType: 'all' })
-    currentCollection['clearSearch'] = true;
-    UIActions.selectCollection(currentCollection);
+    const { elementType: _elementType, ...restState } = this.state;
+    this.setState({ ...restState, elementType: 'all' })
+    const updatedCollection = { ...currentCollection, clearSearch: true };
+    UIActions.selectCollection(updatedCollection);
   }
 
   handleElementSelection(event, element = null) {
@@ -60,6 +59,14 @@ export default class Search extends React.Component {
     } else {
       this.setState({ elementType: event });
     }
+  }
+
+  search(query) {
+    const { currentCollection } = UIStore.getState();
+    const id = currentCollection ? currentCollection.id : null;
+    const isSync = currentCollection ? currentCollection.is_sync_to_me : false;
+    const { elementType } = this.state;
+    return SuggestionsFetcher.fetchSuggestionsForCurrentUser(elementType.toLowerCase(), query, id, isSync);
   }
 
   render() {
@@ -75,32 +82,29 @@ export default class Search extends React.Component {
     ];
 
     const buttonAfter = (
-      <>
-        <Button variant="info" id="open-search-modal" onClick={() => this.context.search.showSearchModal()}>
-          <i className="fa fa-search" />
-        </Button>
-        <Button variant="danger" onClick={this.handleClearSearchSelection}>
-          <i className="fa fa-times" />
-        </Button>
-      </>
+      <Button variant="light" onClick={this.handleClearSearchSelection}>
+        <i className="fa fa-times" />
+      </Button>
     );
 
     const searchIcon = (elementType) => {
+      const { genericEl } = this.state;
       if (elementType === 'all') return 'All';
       if (elements.find((e) => e.value === elementType)) {
         return (<i className={`icon-${elementType.slice(0, -1)}`} />);
       }
-      if (this.state.genericEl) return (<i className={this.state.genericEl.icon_name} />);
+      if (genericEl) return (<i className={genericEl.icon_name} />);
       return elementType;
-    }
+    };
 
+    const { elementType } = this.state;
     const innerDropdown = (
       <DropdownButton
         variant="light"
         id="search-inner-dropdown"
-        title={searchIcon(this.state.elementType)}
+        title={searchIcon(elementType)}
       >
-        {elements.map(element => (
+        {elements.map((element) => (
           <Dropdown.Item key={element.value} onClick={() => this.handleElementSelection(element.value)}>
             {element.label}
           </Dropdown.Item>
@@ -111,14 +115,23 @@ export default class Search extends React.Component {
     return (
       <>
         <SearchModal />
-        <div className="d-flex align-items-center flex-nowrap">
+        <div className="d-flex align-items-center flex-nowrap gap-2">
           <AutoCompleteInput
-            suggestions={input => this.search(input)}
-            ref={(input) => { this.autoComplete = input; }}
-            onSelectionChange={selection => this.handleSelectionChange(selection)}
+            suggestions={(input) => this.search(input)}
+            onSelectionChange={(selection) => this.handleSelectionChange(selection)}
             buttonBefore={innerDropdown}
             buttonAfter={buttonAfter}
           />
+          <Button
+            variant="light"
+            id="open-search-modal"
+            onClick={() => {
+              const { search } = this.context;
+              search.showSearchModal();
+            }}
+          >
+            Advanced
+          </Button>
         </div>
       </>
     );
