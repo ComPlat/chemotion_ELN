@@ -247,6 +247,11 @@ export default class ModalImport extends React.Component {
 
   constructor(props) {
     super(props);
+    
+    // Resolve the target collection ID once
+    const uiState = UIStore.getState();
+    const targetCollectionId = props.collectionId || uiState.currentCollection.id;
+    
     this.state = {
       file: null,
       importAsChemical: false,
@@ -261,6 +266,7 @@ export default class ModalImport extends React.Component {
       isProcessing: false,
       mappedColumns: null,
       showCancelConfirmation: false,
+      targetCollectionId,
     };
   }
 
@@ -276,12 +282,13 @@ export default class ModalImport extends React.Component {
       importAsChemical,
       importWithColumnMapping,
       showColumnMapping,
-      mappedColumns
+      mappedColumns,
+      targetCollectionId
     } = this.state;
-    const uiState = UIStore.getState();
+    
     const params = {
       file,
-      currentCollectionId: uiState.currentCollection.id,
+      currentCollectionId: targetCollectionId,
       type: importAsChemical ? 'chemical' : 'sample',
     };
 
@@ -353,11 +360,11 @@ export default class ModalImport extends React.Component {
 
   handleImportData() {
     const { onHide } = this.props;
-    const { importAsChemical, fileFormat, rowData } = this.state;
-    const uiState = UIStore.getState();
+    const { importAsChemical, fileFormat, rowData, targetCollectionId } = this.state;
+    
     // For Excel and other formats, send the cleaned data directly
     const params = {
-      currentCollectionId: uiState.currentCollection.id,
+      currentCollectionId: targetCollectionId,
       type: importAsChemical ? 'chemical' : 'sample',
       data: rowData,
       originalFormat: fileFormat
@@ -966,7 +973,7 @@ export default class ModalImport extends React.Component {
   }
 
   render() {
-    const { onHide } = this.props;
+    const { show, onHide, collectionName = 'Unknown Collection' } = this.props;
     const {
       importWithColumnMapping,
       importAsChemical,
@@ -979,6 +986,7 @@ export default class ModalImport extends React.Component {
       mappedColumns,
       showCancelConfirmation
     } = this.state;
+    
     let importButtonText;
     if (showColumnMapping) {
       importButtonText = 'Proceed to validate Data';
@@ -990,10 +998,10 @@ export default class ModalImport extends React.Component {
     return (
       <>
         <style>{'.modal-import-dialog{min-width:550px;}'}</style>
-        <Modal show onHide={onHide} dialogClassName="modal-import-dialog">
+        <Modal show={show} onHide={onHide} dialogClassName="modal-import-dialog">
           <Modal.Header closeButton>
             <Modal.Title>
-              Import samples from file
+              Import samples from file to {collectionName}
             </Modal.Title>
           </Modal.Header>
           <Modal.Body>
@@ -1028,9 +1036,9 @@ export default class ModalImport extends React.Component {
               />
             )}
             <ButtonToolbar className="justify-content-end mt-2 gap-1">
-              <Button variant="primary" onClick={() => onHide()}>Cancel</Button>
+              <Button variant="light" onClick={() => onHide()}>Cancel</Button>
               <Button
-                variant="warning"
+                variant="primary"
                 onClick={() => this.handleClick()}
                 disabled={this.isDisabled() || isProcessing}
               >
@@ -1079,5 +1087,8 @@ export default class ModalImport extends React.Component {
 }
 
 ModalImport.propTypes = {
+  show: PropTypes.bool.isRequired,
   onHide: PropTypes.func.isRequired,
+  collectionId: PropTypes.number,
+  collectionName: PropTypes.string,
 };

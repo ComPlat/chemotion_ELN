@@ -6,10 +6,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import ModalExportCollection from 'src/components/contextActions/export/ModalExportCollection';
 import ModalExportRadarCollection from 'src/components/contextActions/export/ModalExportRadarCollection';
 
-import ElementActions from 'src/stores/alt/actions/ElementActions';
-import ModalImport from 'src/components/contextActions/import/ModalImport';
-import ModalImportConfirm from 'src/components/contextActions/import/ModalImportConfirm';
-import ModalImportCollection from 'src/components/contextActions/import/ModalImportCollection';
+import ModalImportCollection from 'src/apps/mydb/collections/importSamples/ModalImportCollection';
 
 import { PermissionConst } from 'src/utilities/PermissionConst';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
@@ -59,7 +56,6 @@ function CollectionManagementMenu() {
 
   const modalContent = ((m) => {
     switch (m) {
-      case 'importSamples': return <ModalImport onHide={hideModal} />;
       case 'exportCollection': return <ModalExportCollection onHide={hideModal} />;
       case 'importCollection': return <ModalImportCollection onHide={hideModal} />;
       case 'exportCollectionToRadar': return (
@@ -74,17 +70,6 @@ function CollectionManagementMenu() {
 
   return (
     <div className="mb-3 d-flex gap-2">
-          <Button variant="light" onClick={ElementActions.showLiteratureDetail} title="Reference Manager">
-            Reference Manager
-          </Button>
-          <Button
-            variant="light"
-            onClick={() => showModal('importSamples')}
-            disabled={isDisabled}
-            title="Import from spreadsheet or sdf"
-          >
-            Import samples to collection
-          </Button>
           <Button
             variant="light"
             onClick={() => showModal('exportCollection')}
@@ -121,7 +106,6 @@ function CollectionManagementMenu() {
           )}
 
       {modalContent}
-      <ModalImportConfirm />
     </div>
   );
 }
