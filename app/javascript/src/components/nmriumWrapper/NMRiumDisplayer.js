@@ -418,8 +418,22 @@ export default class NMRiumDisplayer extends React.Component {
   }
 
   prepareNMRiumDataAttachment(nmriumData, baseName) {
+    const hasDataProp = !!nmriumData.data;
+    const root = hasDataProp ? nmriumData.data : nmriumData;
+    const spectra = root?.spectra || [];
+    const has2D = Array.isArray(spectra)
+      && spectra.some((spc) => spc?.info?.dimension === 2);
+    const hasAnySource =
+      !!root?.source
+      || spectra.some((spc) => spc?.source || spc?.sourceSelector);
+    const needsWrapper = has2D && !hasAnySource && !hasDataProp && !nmriumData.version;
+
+    const toSerialize = needsWrapper
+      ? { version: 7, data: root }
+      : nmriumData;
+
     const json = JSON.stringify(
-      nmriumData,
+      toSerialize,
       (key, value) => (ArrayBuffer.isView(value) ? Array.from(value) : value),
       0
     );
