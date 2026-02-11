@@ -8,7 +8,6 @@ import ElementStore from 'src/stores/alt/stores/ElementStore';
 import FormatContainer from 'src/apps/mydb/elements/details/formats/FormatContainer';
 import GenericElDetails from 'src/components/generic/GenericElDetails';
 import GraphContainer from 'src/apps/mydb/elements/details/GraphContainer';
-import LiteratureDetails from 'src/apps/mydb/elements/details/LiteratureDetails';
 import MetadataContainer from 'src/components/metadata/MetadataContainer';
 //import PredictionContainer from 'src/apps/mydb/elements/details/predictions/PredictionContainer';
 import ReactionDetails from 'src/apps/mydb/elements/details/reactions/ReactionDetails';
@@ -75,14 +74,6 @@ const tabInfoHash = {
     iconEl: (
       <span>
         <i className="fa fa-wrench" />
-      </span>
-    )
-  },
-  literature_map: {
-    title: 'Literature',
-    iconEl: (
-      <span>
-        <i className="fa fa-book" aria-hidden="true" />
       </span>
     )
   }
@@ -163,8 +154,6 @@ export default class ElementDetails extends Component {
         return <GraphContainer graph={el} />;
       case 'task':
         return <ComputeTaskContainer task={el} />;
-      case 'literature_map':
-        return <LiteratureDetails literatureMap={el} />;
       case 'cell_line':
         return <CellLineDetails cellLineItem={el} />;
       case 'vessel':

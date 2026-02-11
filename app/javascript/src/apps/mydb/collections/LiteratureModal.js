@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
+  Modal,
   Accordion,
   Table,
   Button,
@@ -24,13 +25,10 @@ import {
   LiteralType,
   literatureContent
 } from 'src/apps/mydb/elements/details/literature/LiteratureCommon';
-import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import Literature from 'src/models/Literature';
-import LiteratureMap from 'src/models/LiteratureMap';
 import LiteraturesFetcher from 'src/fetchers/LiteraturesFetcher';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import DetailActions from 'src/stores/alt/actions/DetailActions';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import { copyToClipboard } from 'src/utilities/clipboard';
 
@@ -133,17 +131,20 @@ CitationTable.propTypes = {
   removeCitation: PropTypes.func.isRequired,
 };
 
-export default class LiteratureDetails extends Component {
+export default class LiteratureModal extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      ...this.props.literatureMap,
+      sampleRefs: [],
+      reactionRefs: [],
+      selectedRefs: new Immutable.Map(),
       literature: Literature.buildEmpty(),
       sorting: 'element',
       sortedIds: [],
-      selectedRefs: new Immutable.Map()
+      currentCollection: null,
+      sample: {},
+      reaction: {}
     };
-    this.onClose = this.onClose.bind(this);
     this.handleUIStoreChange = this.handleUIStoreChange.bind(this);
     this.handleInputChange = this.handleInputChange.bind(this);
     this.handleLiteratureAdd = this.handleLiteratureAdd.bind(this);
@@ -160,7 +161,6 @@ export default class LiteratureDetails extends Component {
         currentCollection,
         sample: { ...sample },
         reaction: { ...reaction },
-
       }));
     });
     UIStore.listen(this.handleUIStoreChange);
@@ -168,10 +168,6 @@ export default class LiteratureDetails extends Component {
 
   componentWillUnmount() {
     UIStore.unlisten(this.handleUIStoreChange);
-  }
-
-  onClose() {
-    DetailActions.close(this.props.literatureMap, true);
   }
 
   handleUIStoreChange(state) {
@@ -182,7 +178,6 @@ export default class LiteratureDetails extends Component {
       (cCol.id !== currentCollection.id || cCol.is_sync_to_me !== currentCollection.is_sync_to_me)
     ) {
       LiteraturesFetcher.fetchReferencesByCollection(currentCollection).then((literatures) => {
-
         this.setState(prevState => ({
           ...prevState,
           ...literatures,
@@ -209,7 +204,6 @@ export default class LiteratureDetails extends Component {
         reaction,
         id: currentCollection.id,
         is_sync_to_me: currentCollection.is_sync_to_me
-
       };
       LiteraturesFetcher.postReferencesByUIState(params).then((selectedRefs) => {
         const sortedIds = sortByElement(selectedRefs);
@@ -344,36 +338,18 @@ export default class LiteratureDetails extends Component {
     );
   }
 
-  literatureHeader() {
-    const { currentCollection } = this.state;
-    const label = currentCollection?.label || null;
-    return (
-      <div className="d-flex justify-content-between">
-        <span>
-          <i className="fa fa-book me-1" />
-          Literature Management for collection '{label}'
-        </span>
-        <Button
-          key="closeBtn"
-          onClick={this.onClose}
-          variant="danger"
-          size="xxsm"
-        >
-          <i className="fa fa-times" />
-        </Button>
-      </div>
-    );
-  }
-
   render() {
+    const { show, onHide } = this.props;
     const {
       sampleRefs,
       reactionRefs,
       selectedRefs,
       sortedIds,
-      literature
+      literature,
+      currentCollection
     } = this.state;
     const { currentUser } = UserStore.getState();
+
     let contentSamples = '';
     sampleRefs.forEach((citation) => {
       contentSamples = `${contentSamples}\n${literatureContent(citation, true)}`;
@@ -393,115 +369,134 @@ export default class LiteratureDetails extends Component {
       contentElements = `${contentElements}\n${element}`;
     });
 
+    const label = currentCollection?.label || '';
+
     return (
-      <DetailCard header={this.literatureHeader()}>
-        <Accordion>
-          <Accordion.Item eventKey="2">
-            <Accordion.Header>
-              {this.renderSectionHeader('References for samples', contentSamples)}
-            </Accordion.Header>
-            <Accordion.Body>
-              {sampleRefs.map((lit) => (
-                <Row key={`sampleRef-${lit.id}`} className="mb-3">
-                  <Col xs={1}><ElementTypeLink literature={lit} type="sample" /></Col>
-                  <Col xs={11}><Citation literature={lit} /></Col>
-                </Row>
-              ))}
-            </Accordion.Body>
-          </Accordion.Item>
-
-          <Accordion.Item eventKey="3">
-            <Accordion.Header>
-              {this.renderSectionHeader('References for reactions', contentReactions)}
-            </Accordion.Header>
-            <Accordion.Body>
-              {reactionRefs.map((lit) => (
-                <Row key={`reactionRef-${lit.id}`} className="mb-3">
-                  <Col xs={1}><ElementTypeLink literature={lit} type="reaction" /></Col>
-                  <Col xs={11}><Citation literature={lit} /></Col>
-                </Row>
-              ))}
-            </Accordion.Body>
-          </Accordion.Item>
-
-          <Accordion.Item eventKey="4">
-            <Accordion.Header>
-              {this.renderSectionHeader('References for selected elements', contentElements)}
-            </Accordion.Header>
-            <Accordion.Body>
-              <ListGroup>
-                <ListGroupItem>
-                  <Row>
-                    <Col md={8} style={{ paddingRight: 0 }}>
-                      <LiteratureInput
-                        handleInputChange={this.handleInputChange}
-                        literature={literature}
-                        field="doi"
-                        placeholder="DOI: 10.... or  http://dx.doi.org/10... or 10. ..."
-                      />
-                    </Col>
-                    <Col md={3} style={{ paddingRight: 0 }}>
-                      <LiteralType
-                        handleInputChange={this.handleInputChange}
-                        disabled={false}
-                        val={literature.litype}
-                      />
-                    </Col>
-                    <Col md={1} style={{ paddingRight: 0 }}>
-                      <Button
-                        variant="success"
-                        size="sm"
-                        style={{ marginTop: 2 }}
-                        onClick={this.fetchDOIMetadata}
-                        title="fetch metadata for this doi and add citation to selection"
-                        disabled={!doiValid(literature.doi)}
-                      >
-                        <i className="fa fa-plus" />
-                      </Button>
-                    </Col>
-                    <Col md={12} style={{ paddingRight: 0 }}>
-                      <Citation literature={literature} />
-                    </Col>
-                    <Col md={7} style={{ paddingRight: 0 }}>
-                      <LiteratureInput
-                        handleInputChange={this.handleInputChange}
-                        literature={literature}
-                        field="title"
-                        placeholder="Title..."
-                      />
-                    </Col>
-                    <Col md={4} style={{ paddingRight: 0 }}>
-                      <LiteratureInput
-                        handleInputChange={this.handleInputChange}
-                        literature={literature}
-                        field="url"
-                        placeholder="URL..."
-                      />
-                    </Col>
-                    <Col md={1}>
-                      <AddButton
-                        onLiteratureAdd={this.handleLiteratureAdd}
-                        literature={literature}
-                        title="add citation to selection"
-                      />
-                    </Col>
+      <Modal show={show} onHide={onHide} size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>
+            <i className="fa fa-book me-2" />
+            Literature Management for collection '{label}'
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Accordion>
+            <Accordion.Item eventKey="2">
+              <Accordion.Header>
+                {this.renderSectionHeader('References for samples', contentSamples)}
+              </Accordion.Header>
+              <Accordion.Body>
+                {sampleRefs.map((lit) => (
+                  <Row key={`sampleRef-${lit.id}`} className="mb-3">
+                    <Col xs={1}><ElementTypeLink literature={lit} type="sample" /></Col>
+                    <Col xs={11}><Citation literature={lit} /></Col>
                   </Row>
-                </ListGroupItem>
-              </ListGroup>
-              <CitationTable
-                rows={selectedRefs}
-                sortedIds={sortedIds}
-                removeCitation={this.handleLiteratureRemove}
-                userId={currentUser.id}
-              />
-            </Accordion.Body>
-          </Accordion.Item>
-        </Accordion>
-      </DetailCard>
+                ))}
+              </Accordion.Body>
+            </Accordion.Item>
+
+            <Accordion.Item eventKey="3">
+              <Accordion.Header>
+                {this.renderSectionHeader('References for reactions', contentReactions)}
+              </Accordion.Header>
+              <Accordion.Body>
+                {reactionRefs.map((lit) => (
+                  <Row key={`reactionRef-${lit.id}`} className="mb-3">
+                    <Col xs={1}><ElementTypeLink literature={lit} type="reaction" /></Col>
+                    <Col xs={11}><Citation literature={lit} /></Col>
+                  </Row>
+                ))}
+              </Accordion.Body>
+            </Accordion.Item>
+
+            <Accordion.Item eventKey="4">
+              <Accordion.Header>
+                {this.renderSectionHeader('References for selected elements', contentElements)}
+              </Accordion.Header>
+              <Accordion.Body>
+                <ListGroup>
+                  <ListGroupItem>
+                    <Row>
+                      <Col md={8} style={{ paddingRight: 0 }}>
+                        <LiteratureInput
+                          handleInputChange={this.handleInputChange}
+                          literature={literature}
+                          field="doi"
+                          placeholder="DOI: 10.... or  http://dx.doi.org/10... or 10. ..."
+                        />
+                      </Col>
+                      <Col md={3} style={{ paddingRight: 0 }}>
+                        <LiteralType
+                          handleInputChange={this.handleInputChange}
+                          disabled={false}
+                          val={literature.litype}
+                        />
+                      </Col>
+                      <Col md={1} style={{ paddingRight: 0 }}>
+                        <Button
+                          variant="success"
+                          size="sm"
+                          style={{ marginTop: 2 }}
+                          onClick={this.fetchDOIMetadata}
+                          title="fetch metadata for this doi and add citation to selection"
+                          disabled={!doiValid(literature.doi)}
+                        >
+                          <i className="fa fa-plus" />
+                        </Button>
+                      </Col>
+                      <Col md={12} style={{ paddingRight: 0 }}>
+                        <Citation literature={literature} />
+                      </Col>
+                      <Col md={7} style={{ paddingRight: 0 }}>
+                        <LiteratureInput
+                          handleInputChange={this.handleInputChange}
+                          literature={literature}
+                          field="title"
+                          placeholder="Title..."
+                        />
+                      </Col>
+                      <Col md={4} style={{ paddingRight: 0 }}>
+                        <LiteratureInput
+                          handleInputChange={this.handleInputChange}
+                          literature={literature}
+                          field="url"
+                          placeholder="URL..."
+                        />
+                      </Col>
+                      <Col md={1}>
+                        <AddButton
+                          onLiteratureAdd={this.handleLiteratureAdd}
+                          literature={literature}
+                          title="add citation to selection"
+                        />
+                      </Col>
+                    </Row>
+                  </ListGroupItem>
+                </ListGroup>
+                <CitationTable
+                  rows={selectedRefs}
+                  sortedIds={sortedIds}
+                  removeCitation={this.handleLiteratureRemove}
+                  userId={currentUser.id}
+                />
+              </Accordion.Body>
+            </Accordion.Item>
+          </Accordion>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="light" onClick={onHide}>
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={onHide}>
+            Done
+          </Button>
+        </Modal.Footer>
+      </Modal>
     );
   }
 }
 
-LiteratureDetails.propTypes = {
-  literatureMap: PropTypes.instanceOf(LiteratureMap).isRequired
+LiteratureModal.propTypes = {
+  show: PropTypes.bool.isRequired,
+  onHide: PropTypes.func.isRequired
 };
