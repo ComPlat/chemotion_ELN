@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Dropdown, ButtonGroup } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
 
 import ModalExportCollection from 'src/components/contextActions/export/ModalExportCollection';
 import ModalExportRadarCollection from 'src/components/contextActions/export/ModalExportRadarCollection';
 
+import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ModalImport from 'src/components/contextActions/import/ModalImport';
 import ModalImportConfirm from 'src/components/contextActions/import/ModalImportConfirm';
 import ModalImportCollection from 'src/components/contextActions/import/ModalImportCollection';
@@ -26,7 +27,7 @@ const editMetadataFunction = () => {
   });
 };
 
-function ExportImportButton() {
+function CollectionManagementMenu() {
   const [modal, showModal] = useState(null);
   const [hasRadar, setHasRadar] = useState(false);
   const hideModal = () => showModal(null);
@@ -72,59 +73,57 @@ function ExportImportButton() {
   })(modal);
 
   return (
-    <>
-      <Dropdown as={ButtonGroup} id="export-dropdown">
-        <Dropdown.Toggle variant="light">
-          <i className="fa fa-download" />
-          <i className="fa fa-upload ms-1" />
-        </Dropdown.Toggle>
-        <Dropdown.Menu>
-          <Dropdown.Item
+    <div className="mb-3 d-flex gap-2">
+          <Button variant="light" onClick={ElementActions.showLiteratureDetail} title="Reference Manager">
+            Reference Manager
+          </Button>
+          <Button
+            variant="light"
             onClick={() => showModal('importSamples')}
             disabled={isDisabled}
             title="Import from spreadsheet or sdf"
           >
             Import samples to collection
-          </Dropdown.Item>
-          <Dropdown.Divider />
-          <Dropdown.Item
+          </Button>
+          <Button
+            variant="light"
             onClick={() => showModal('exportCollection')}
             title="Export as ZIP archive"
           >
             Export collections
-          </Dropdown.Item>
-          <Dropdown.Item
+          </Button>
+          <Button
+            variant="light"
             onClick={() => showModal('importCollection')}
             title="Import collections from ZIP archive"
           >
             Import collections
-          </Dropdown.Item>
+          </Button>
           {hasRadar && (
             <>
-              <Dropdown.Divider />
-              <Dropdown.Item
+              <Button
+                variant="light"
                 onClick={() => editMetadataFunction()}
                 disabled={isDisabled}
                 title="Edit metadata"
               >
                 Edit collection metadata
-              </Dropdown.Item>
-              <Dropdown.Item
+              </Button>
+              <Button
+                variant="light"
                 onClick={() => showModal('exportCollectionToRadar')}
                 disabled={isDisabled}
                 title="Export to RADAR"
               >
                 Publish current collection via RADAR
-              </Dropdown.Item>
+              </Button>
             </>
           )}
-        </Dropdown.Menu>
-      </Dropdown>
 
       {modalContent}
       <ModalImportConfirm />
-    </>
+    </div>
   );
 }
 
-export default ExportImportButton;
+export default CollectionManagementMenu;
