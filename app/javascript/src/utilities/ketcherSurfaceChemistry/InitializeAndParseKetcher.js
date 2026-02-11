@@ -52,13 +52,15 @@ const loadTemplates = async () => {
 
 // prepare/load ket2 format data
 const loadKetcherData = async (data) => {
+  const nodes = data?.root?.nodes && Array.isArray(data.root.nodes) ? data.root.nodes : [];
   allAtomsSetter([]);
-  allNodesSetter([...data.root.nodes]);
-  imagesListSetter(allNodes.filter((item) => item.type === 'image'));
-  textListSetter(allNodes.filter((item) => item.type === 'text'));
-  const sliceEnd = Math.max(0, allNodes.length - imagesList.length - textList.length);
-  molsSetter(sliceEnd > 0 ? allNodes.slice(0, sliceEnd).map((i) => i.$ref) : []);
-  mols.forEach((item) => data[item]?.atoms.map((i) => allAtoms.push(i)));
+  allNodesSetter([...nodes]);
+  imagesListSetter(nodes.filter((item) => item.type === 'image'));
+  textListSetter(nodes.filter((item) => item.type === 'text'));
+  const sliceEnd = Math.max(0, nodes.length - imagesList.length - textList.length);
+  molsSetter(sliceEnd > 0 ? nodes.slice(0, sliceEnd).map((i) => i.$ref) : []);
+  const molRefs = sliceEnd > 0 ? nodes.slice(0, sliceEnd).map((i) => i.$ref) : [];
+  molRefs.forEach((item) => (data[item]?.atoms || []).map((i) => allAtoms.push(i)));
 };
 
 const setupEditorIframe = ({

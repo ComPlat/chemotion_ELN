@@ -167,6 +167,12 @@
               "iconName": "ADblack",
               "width": 1.0,
               "height": 1
+            },
+            {
+              "template_id": 95,
+              "iconName": "polymerBead",
+              "width": 1.0,
+              "height": 1
             }
           ]
         }
@@ -228,6 +234,12 @@
             {
               "template_id": 77,
               "iconName": "SMblack",
+              "width": 2.0,
+              "height": 1
+            },
+            {
+              "template_id": 96,
+              "iconName": "polymerSurface",
               "width": 2.0,
               "height": 1
             }
@@ -710,34 +722,6 @@
               "iconName": "Body_porous_v1-2",
               "width": 2.0,
               "height": 1.5
-            }
-          ]
-        }
-      ]
-    }
-  ],
-  "ketcherails": [
-    {
-      "id": 8,
-      "label": "Ketcher Rails",
-      "description": "Shapes from ketcher editor",
-      "subTabs": [
-        {
-          "id": "8.1",
-          "label": "Polymer templates",
-          "description": "Bead and surface templates",
-          "shapes": [
-            {
-              "template_id": 95,
-              "iconName": "polymerBead",
-              "width": 1.0,
-              "height": 1
-            },
-            {
-              "template_id": 96,
-              "iconName": "polymerSurface",
-              "width": 1.0,
-              "height": 1
             }
           ]
         }

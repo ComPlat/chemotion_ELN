@@ -90,7 +90,7 @@ const placeImageOnAtoms = async (mols_, imagesList_) => {
   try {
     const imageListParam = imagesList_;
     mols_.forEach(async (item) => {
-      latestData[item]?.atoms.forEach((atom) => {
+      (latestData[item]?.atoms || []).forEach((atom) => {
         if (atom && ALIAS_PATTERNS.threeParts.test(atom?.alias)) {
           const aliasSplits = atom.alias.split('_');
           const imageCoordinates = imageListParam[aliasSplits[2]]?.boundingBox;
@@ -111,7 +111,7 @@ const placeImageOnAtoms = async (mols_, imagesList_) => {
     return [...removeImagesFromData(latestData), ...imageListParam];
   } catch (err) {
     console.error('placeImageOnAtoms', err.message);
-    return latestData.root.nodes;
+    return latestData?.root?.nodes ?? [];
   }
 };
 
@@ -120,7 +120,7 @@ const placeAtomOnImage = async (mols_, imagesList_) => {
   try {
     const imageListParam = imagesList_;
     mols_.forEach(async (item) => {
-      latestData[item]?.atoms.forEach((atom, idx) => {
+      (latestData[item]?.atoms || []).forEach((atom, idx) => {
         if (atom && ALIAS_PATTERNS.threeParts.test(atom?.alias)) {
           const aliasSplits = atom.alias.split('_');
           const imageCoordinates = imageListParam[aliasSplits[2]]?.boundingBox;
@@ -134,8 +134,8 @@ const placeAtomOnImage = async (mols_, imagesList_) => {
     });
     return [...removeImagesFromData(latestData), ...imageListParam];
   } catch (err) {
-    console.error('placeImageOnAtoms', err.message);
-    return latestData.root.nodes;
+    console.error('placeAtomOnImage', err.message);
+    return latestData?.root?.nodes ?? [];
   }
 };
 
