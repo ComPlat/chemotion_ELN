@@ -315,10 +315,6 @@ class GenericElWellplates extends Component {
         .then((result) => {
           if (result && result.success) {
             this.fetchRequests();
-            // Close modal if deleting from modal
-            if (this.state.showDetailsModal) {
-              this.handleCloseDetailsModal();
-            }
           }
         })
         .catch((error) => {
@@ -326,6 +322,11 @@ class GenericElWellplates extends Component {
           alert('Delete individual result endpoint not yet implemented. Please ask backend team to implement: DELETE /api/v1/mtt/outputs/:id/results');
         })
         .finally(() => {
+          // Close modal if deleting from modal (happens regardless of success/failure)
+          if (this.state.showDetailsModal) {
+            this.handleCloseDetailsModal();
+          }
+
           this.setState({
             showDeleteConfirmation: false,
             deleteType: null,
@@ -351,10 +352,10 @@ class GenericElWellplates extends Component {
     const selectedCount = selectedItems.length;
 
     return (
-      <div className="mt-3">
+      <div className="mt-1">
         {/* Selection Toolbar */}
         <div className="d-flex justify-content-between align-items-center mb-3">
-          <h6 className="text-secondary mb-0">
+          <h6 className="text-primary mb-0">
             Results ({allAnalyses.length})
           </h6>
           {selectedCount > 0 && (

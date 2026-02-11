@@ -181,7 +181,7 @@ function MttRequestStatusTable({
                 {/* Expanded Outputs Row */}
                 {expandedRequestId === req.id && req.outputs && req.outputs.length > 0 && (
                   <tr>
-                    <td colSpan="9" className="p-4 bg-light">
+                    <td colSpan="9" className="p-1 bg-light">
                       {renderOutputsTable(req.outputs)}
                     </td>
                   </tr>
