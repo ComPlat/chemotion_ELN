@@ -224,7 +224,7 @@ const cleaningNMRiumData = (nmriumData) => {
     const hasSource = hasLocalSource || hasGlobalSource;
 
     delete tmpSpc.originalData;
-    if (hasSource && spc?.info?.dimension !== 2) {
+    if (hasSource) {
       delete tmpSpc.data;
     }
     return tmpSpc;
