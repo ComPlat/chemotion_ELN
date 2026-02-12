@@ -1,5 +1,7 @@
 /* eslint-disable react/display-name */
-import React, { useState, useEffect, useMemo } from 'react';
+import React, {
+  useState, useEffect, useMemo, useRef, useCallback
+} from 'react';
 import Select from 'react-select';
 import { AgGridReact } from 'ag-grid-react';
 import {
@@ -290,66 +292,124 @@ function MaterialFormatter({ value: cellData, colDef }) {
   return convertValueToDisplayUnit(cellData[currentEntry].value, cellData[currentEntry].unit, displayUnit);
 }
 
-function GroupCellEditor({ value, onValueChange }) {
-  const [group, setGroup] = useState(value.group ?? 1);
-  const [subgroup, setSubgroup] = useState(value.subgroup ?? 1);
+function sanitizeGroupEntry(entry) {
+  // TODO: test
+  // Remove input other than digits and period.
+  let val = entry.replace(/[^0-9.]/g, '');
 
-  const onGroupEdit = (update) => {
-    setGroup(update);
-    onValueChange({ group: update, subgroup });
+  // Keep only first period.
+  const parts = val.split('.');
+  if (parts.length > 2) {
+    const group = parts[0];
+    const subGroup = parts.slice(1).join('');
+    val = `${group}.${subGroup}`;
+  }
+
+  const sanitizedParts = val.split('.');
+  let groupPart = sanitizedParts[0] || '';
+  let subGroupPart = sanitizedParts[1] || '';
+
+  // Remove leading zeros from group and subgroup.
+  groupPart = groupPart.replace(/^0+/, '');
+  subGroupPart = subGroupPart.replace(/^0+/, '');
+
+  let finalVal = groupPart;
+  if (val.includes('.')) {
+    finalVal += '.';
+  }
+  finalVal += subGroupPart;
+
+  return finalVal;
+}
+
+function GroupCellEditor({
+  value, onValueChange, stopEditing, onKeyDown
+}) {
+  const [inputValue, setInputValue] = useState(() => {
+    const group = value?.group ?? 1;
+    const subgroup = value?.subgroup ?? 1;
+    return `${group}.${subgroup}`;
+  });
+
+  const inputRef = useRef(null);
+
+  // Focus on mount
+  const focusInput = useCallback(() => {
+    requestAnimationFrame(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+        inputRef.current.select();
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    focusInput();
+  }, [focusInput]);
+
+  const handleChange = (e) => {
+    const sanitizedGroupEntry = sanitizeGroupEntry(e.target.value);
+
+    setInputValue(sanitizedGroupEntry);
   };
 
-  const onSubgroupEdit = (update) => {
-    setSubgroup(update);
-    onValueChange({ group, subgroup: update });
+  const commitValue = () => {
+    const parts = inputValue.split('.');
+
+    const groupStr = parts[0] || '';
+    const subGroupStr = parts[1] || '';
+
+    let group = parseInt(groupStr, 10);
+    let subgroup = parseInt(subGroupStr, 10);
+
+    if (Number.isNaN(group) || group <= 0) {
+      group = 1;
+    }
+
+    if (Number.isNaN(subgroup) || subgroup <= 0) {
+      subgroup = 1;
+    }
+
+    onValueChange({ group, subgroup });
+    stopEditing();
+  };
+
+  const handleBlur = () => {
+    commitValue();
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      commitValue();
+    } else if (e.key === 'Escape') {
+      stopEditing();
+    }
+    if (onKeyDown) onKeyDown(e);
   };
 
   return (
-    <div style={{
-      display: 'flex', gap: '8px', width: '100%', height: '100%', boxSizing: 'border-box'
-    }}
-    >
-      <div style={{
-        flex: 1, display: 'flex', flexDirection: 'column', height: '100%'
+    <input
+      ref={inputRef}
+      type="text"
+      value={inputValue}
+      onChange={handleChange}
+      onBlurCapture={handleBlur}
+      onKeyDownCapture={handleKeyDown}
+      style={{
+        width: '100%',
+        height: '100%',
+        boxSizing: 'border-box',
+        padding: '0',
+        margin: '0',
+        border: 'none',
+        outline: 'none',
+        background: 'transparent',
+        color: 'inherit',
+        display: 'block',
+        font: 'inherit',
       }}
-      >
-        <label style={{ fontSize: '9px', lineHeight: 1 }}>group</label>
-        <input
-          type="number"
-          min={1}
-          value={group}
-          onChange={(e) => onGroupEdit(Number(e.target.value))}
-          style={{
-            width: '100%',
-            height: '100%',
-            fontSize: '11px',
-            boxSizing: 'border-box',
-            padding: '0 2px',
-            border: '1px solid #ccc',
-          }}
-        />
-      </div>
-      <div style={{
-        flex: 1, display: 'flex', flexDirection: 'column', height: '100%'
-      }}
-      >
-        <label style={{ fontSize: '9px', lineHeight: 1 }}>subgroup</label>
-        <input
-          type="number"
-          min={1}
-          value={subgroup}
-          onChange={(e) => onSubgroupEdit(Number(e.target.value))}
-          style={{
-            width: '100%',
-            height: '100%',
-            fontSize: '11px',
-            boxSizing: 'border-box',
-            padding: '0 2px',
-            border: '1px solid #ccc',
-          }}
-        />
-      </div>
-    </div>
+    />
   );
 }
 
