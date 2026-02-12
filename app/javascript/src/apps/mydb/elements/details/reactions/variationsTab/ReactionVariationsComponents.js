@@ -293,39 +293,27 @@ function MaterialFormatter({ value: cellData, colDef }) {
 }
 
 function sanitizeGroupEntry(entry) {
-  // TODO: test
   // Remove input other than digits and period.
-  let val = entry.replace(/[^0-9.]/g, '');
+  const val = entry.replace(/[^0-9.]/g, '');
 
-  // Keep only first period.
-  const parts = val.split('.');
-  if (parts.length > 2) {
-    const group = parts[0];
-    const subGroup = parts.slice(1).join('');
-    val = `${group}.${subGroup}`;
-  }
+  // Extract the group (first item) and the rest of the parts.
+  const [group, ...subParts] = val.split('.');
+  const subGroup = subParts.join('');
 
-  const sanitizedParts = val.split('.');
-  let groupPart = sanitizedParts[0] || '';
-  let subGroupPart = sanitizedParts[1] || '';
+  // Remove leading zeros from both parts.
+  const cleanGroup = group.replace(/^0+/, '');
+  const cleanSub = subGroup.replace(/^0+/, '');
 
-  // Remove leading zeros from group and subgroup.
-  groupPart = groupPart.replace(/^0+/, '');
-  subGroupPart = subGroupPart.replace(/^0+/, '');
-
-  let finalVal = groupPart;
-  if (val.includes('.')) {
-    finalVal += '.';
-  }
-  finalVal += subGroupPart;
-
-  return finalVal;
+  // Reassemble, preserving the period if it existed in the cleaned string.
+  return val.includes('.')
+    ? `${cleanGroup}.${cleanSub}`
+    : cleanGroup;
 }
 
 function GroupCellEditor({
   value, onValueChange, stopEditing, onKeyDown
 }) {
-  const [inputValue, setInputValue] = useState(() => {
+  const [currentValue, setCurrentValue] = useState(() => {
     const group = value?.group ?? 1;
     const subgroup = value?.subgroup ?? 1;
     return `${group}.${subgroup}`;
@@ -333,7 +321,6 @@ function GroupCellEditor({
 
   const inputRef = useRef(null);
 
-  // Focus on mount
   const focusInput = useCallback(() => {
     requestAnimationFrame(() => {
       if (inputRef.current) {
@@ -344,17 +331,12 @@ function GroupCellEditor({
   }, []);
 
   useEffect(() => {
+    // Focus on mount
     focusInput();
   }, [focusInput]);
 
-  const handleChange = (e) => {
-    const sanitizedGroupEntry = sanitizeGroupEntry(e.target.value);
-
-    setInputValue(sanitizedGroupEntry);
-  };
-
   const commitValue = () => {
-    const parts = inputValue.split('.');
+    const parts = currentValue.split('.');
 
     const groupStr = parts[0] || '';
     const subGroupStr = parts[1] || '';
@@ -374,10 +356,6 @@ function GroupCellEditor({
     stopEditing();
   };
 
-  const handleBlur = () => {
-    commitValue();
-  };
-
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -392,9 +370,9 @@ function GroupCellEditor({
     <input
       ref={inputRef}
       type="text"
-      value={inputValue}
-      onChange={handleChange}
-      onBlurCapture={handleBlur}
+      value={currentValue}
+      onChange={(e) => setCurrentValue(sanitizeGroupEntry(e.target.value))}
+      onBlurCapture={commitValue}
       onKeyDownCapture={handleKeyDown}
       style={{
         width: '100%',
@@ -1169,4 +1147,5 @@ export {
   GroupCellEditor,
   GroupCellRenderer,
   GroupHeader,
+  sanitizeGroupEntry,
 };
