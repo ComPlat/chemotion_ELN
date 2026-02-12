@@ -354,7 +354,7 @@ function GroupCellEditor({ value, onValueChange }) {
 }
 
 function GroupCellRenderer({ value: cellData }) {
-  return `group: ${cellData.group}, subgroup: ${cellData.subgroup}`;
+  return `${cellData.group}.${cellData.subgroup}`;
 }
 
 function MaterialRenderer({ value: cellData, colDef }) {
