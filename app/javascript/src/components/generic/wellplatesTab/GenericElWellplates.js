@@ -216,7 +216,6 @@ class GenericElWellplates extends Component {
 
     GenericElsFetcher.sendMttResultsToSample(selections, genericEl.id, assayInfo)
       .then((result) => {
-        console.log('Batch send result:', result);
         // bulk_create_from_raw_data returns { measurements: [{id, errors, ...}, ...] }
         const entries = result && result.measurements ? result.measurements : [];
         const created = entries.filter(e => e.id && (!e.errors || e.errors.length === 0));
