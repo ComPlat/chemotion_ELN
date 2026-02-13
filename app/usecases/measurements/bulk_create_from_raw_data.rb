@@ -64,7 +64,7 @@ module Usecases
           unit: entry['unit'],
           value: entry['value'],
           source: source,
-          metadata: entry['metadata'] || {}
+          metadata: entry['metadata'] || {},
         )
         if (measurement.valid?)
           measurement.save!
