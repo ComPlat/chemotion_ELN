@@ -458,24 +458,44 @@ export default class Reaction extends Element {
     ];
   }
 
-  buildCopy(params = {}) {
+  buildCopy(params = {}, keepAmounts = false) {
     const copy = super.buildCopy();
     Object.assign(copy, params);
     copy.short_label = Reaction.buildReactionShortLabel();
     copy.starting_materials = this.starting_materials.map((sample) => {
       const copiedSample = Sample.copyFromSampleAndCollectionId(sample, copy.collection_id);
-      copiedSample._real_amount_value = null;
+      if (!keepAmounts) {
+        copiedSample._real_amount_value = null;
+        copiedSample._target_amount_value = null;
+        copiedSample.equivalent = null;
+      }
       return copiedSample;
     });
-    copy.reactants = this.reactants.map(
-      (sample) => Sample.copyFromSampleAndCollectionId(sample, copy.collection_id)
-    );
-    copy.solvents = this.solvents.map(
-      (sample) => Sample.copyFromSampleAndCollectionId(sample, copy.collection_id)
-    );
-    copy.products = this.products.map(
-      (sample) => Sample.copyFromSampleAndCollectionId(sample, copy.collection_id, true, true, false)
-    );
+    copy.reactants = this.reactants.map((sample) => {
+      const copiedSample = Sample.copyFromSampleAndCollectionId(sample, copy.collection_id);
+      if (!keepAmounts) {
+        copiedSample._real_amount_value = null;
+        copiedSample._target_amount_value = null;
+      }
+      return copiedSample;
+    });
+    copy.solvents = this.solvents.map((sample) => {
+      const copiedSample = Sample.copyFromSampleAndCollectionId(sample, copy.collection_id);
+      if (!keepAmounts) {
+        copiedSample._real_amount_value = null;
+        copiedSample._target_amount_value = null;
+      }
+      return copiedSample;
+    });
+    copy.products = this.products.map((sample) => {
+      const copiedSample = Sample.copyFromSampleAndCollectionId(sample, copy.collection_id);
+      if (!keepAmounts) {
+        copiedSample._real_amount_value = null;
+        copiedSample._target_amount_value = null;
+        copiedSample.equivalent = null;
+      }
+      return copiedSample;
+    });
 
     copy.rebuildProductName();
     copy.container = Container.init();
@@ -484,7 +504,7 @@ export default class Reaction extends Element {
     return copy;
   }
 
-  static copyFromReactionAndCollectionId(reaction, collection_id) {
+  static copyFromReactionAndCollectionId(reaction, collection_id, keepAmounts = false) {
     const target = Segment.buildCopy(reaction.segments);
     const params = {
       collection_id,
@@ -495,7 +515,7 @@ export default class Reaction extends Element {
       rf_value: 0.00,
       status: '',
     };
-    const copy = reaction.buildCopy(params);
+    const copy = reaction.buildCopy(params, keepAmounts);
     copy.origin = { id: reaction.id, short_label: reaction.short_label };
     copy.name = copy.nameFromRole(copy.role);
     return copy;

@@ -714,22 +714,22 @@ class ElementActions {
     return Reaction.buildEmpty(collection_id)
   }
 
-  copyReactionFromId(id) {
+  copyReactionFromId(id, keepAmounts = false) {
     return (dispatch) => {
       ReactionsFetcher.fetchById(id)
         .then((result) => {
-          dispatch(result);
+          dispatch({ reaction: result, keepAmounts });
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });
     };
   }
 
-  copyReaction(reaction, colId) {
+  copyReaction(reaction, colId, keepAmounts = false) {
     return (dispatch) => {
       ReactionsFetcher.fetchById(reaction.id)
         .then((result) => {
-          dispatch({ reaction: result, colId: colId });
+          dispatch({ reaction: result, colId, keepAmounts });
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });

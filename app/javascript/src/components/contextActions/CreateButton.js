@@ -1,6 +1,7 @@
 import React from 'react';
 import {
-  SplitButton, Button, ButtonToolbar, Form, Modal, Dropdown
+  SplitButton, Button, ButtonToolbar, Form, Modal, Dropdown,
+  OverlayTrigger, Tooltip
 } from 'react-bootstrap';
 import Aviator from 'aviator';
 import { PermissionConst } from 'src/utilities/PermissionConst';
@@ -26,12 +27,16 @@ export default class CreateButton extends React.Component {
         show: false,
         sampleCount: 0,
         wellplateCount: 0
-      }
+      },
+      showCopyReactionModal: false,
+      pendingReactionId: null
     }
 
     this.createBtn = this.createBtn.bind(this);
     this.onUserStoreChange = this.onUserStoreChange.bind(this);
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
+    this.handleCopyReactionConfirm = this.handleCopyReactionConfirm.bind(this);
+    this.handleCopyReactionModalClose = this.handleCopyReactionModalClose.bind(this);
   }
 
   componentDidMount() {
@@ -114,8 +119,58 @@ export default class CreateButton extends React.Component {
   }
 
   copyReaction() {
-    let reactionId = this.getReactionId();
-    ElementActions.copyReactionFromId(reactionId);
+    const reactionId = this.getReactionId();
+    this.setState({ showCopyReactionModal: true, pendingReactionId: reactionId });
+  }
+
+  handleCopyReactionConfirm(keepAmounts) {
+    const { pendingReactionId } = this.state;
+    this.setState({ showCopyReactionModal: false, pendingReactionId: null });
+    ElementActions.copyReactionFromId(pendingReactionId, keepAmounts);
+  }
+
+  handleCopyReactionModalClose() {
+    this.setState({ showCopyReactionModal: false, pendingReactionId: null });
+  }
+
+  copyReactionAmountsModal() {
+    const { showCopyReactionModal } = this.state;
+    return (
+      <Modal centered animation={false} show={showCopyReactionModal} onHide={this.handleCopyReactionModalClose}>
+        <Modal.Header closeButton>
+          <Modal.Title>Copy Reaction</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Do you want to copy the amounts (real and target) from the original reaction materials?
+        </Modal.Body>
+        <Modal.Footer className="border-0">
+          <OverlayTrigger
+            placement="bottom"
+            overlay={(
+              <Tooltip id="copy-reaction-yes-tooltip">
+                All amounts (real and target) will be preserved in the copied reaction
+              </Tooltip>
+            )}
+          >
+            <Button variant="success" onClick={() => this.handleCopyReactionConfirm(true)}>
+              Yes
+            </Button>
+          </OverlayTrigger>
+          <OverlayTrigger
+            placement="bottom"
+            overlay={(
+              <Tooltip id="copy-reaction-no-tooltip">
+                Amounts will be reset to empty in the copied reaction
+              </Tooltip>
+            )}
+          >
+            <Button variant="danger" onClick={() => this.handleCopyReactionConfirm(false)}>
+              No
+            </Button>
+          </OverlayTrigger>
+        </Modal.Footer>
+      </Modal>
+    );
   }
 
   isCopyCellLineDisabled() {
@@ -360,6 +415,7 @@ export default class CreateButton extends React.Component {
         onClick={() => this.createElementOfType(type)}
       >
         {this.createWellplateModal()}
+        {this.copyReactionAmountsModal()}
         {itemTables}
 
         <Dropdown.Divider />

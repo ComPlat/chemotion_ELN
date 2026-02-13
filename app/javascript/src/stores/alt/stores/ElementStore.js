@@ -1211,15 +1211,21 @@ class ElementStore {
     this.navigateToNewElement(reaction);
   }
 
-  handleCopyReactionFromId(reaction) {
+  handleCopyReactionFromId(result) {
     this.waitFor(UIStore.dispatchToken);
     const uiState = UIStore.getState();
-    this.changeCurrentElement(Reaction.copyFromReactionAndCollectionId(reaction, uiState.currentCollection.id));
+    const { reaction, keepAmounts } = result;
+    this.changeCurrentElement(
+      Reaction.copyFromReactionAndCollectionId(reaction, uiState.currentCollection.id, keepAmounts)
+    );
   }
 
   handleCopyReaction(result) {
-    this.changeCurrentElement(Reaction.copyFromReactionAndCollectionId(result.reaction, result.colId));
-    Aviator.navigate(`/collection/${result.colId}/reaction/copy`);
+    const { reaction, colId, keepAmounts } = result;
+    this.changeCurrentElement(
+      Reaction.copyFromReactionAndCollectionId(reaction, colId, keepAmounts)
+    );
+    Aviator.navigate(`/collection/${colId}/reaction/copy`);
   }
 
   handleCopyResearchPlan(result) {

@@ -1,6 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Form, Modal, Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import {
+  Form, Modal, Button, OverlayTrigger, Tooltip
+} from 'react-bootstrap';
 import uuid from 'uuid';
 
 import ClipboardActions from 'src/stores/alt/actions/ClipboardActions';
@@ -25,12 +27,15 @@ export default class CopyElementModal extends React.Component {
     super(props);
     this.state = {
       showModal: false,
-      selectedCol: props.defCol
+      selectedCol: props.defCol,
+      showAmountsConfirm: false
     };
     this.handleModalClose = this.handleModalClose.bind(this);
     this.handleModalShow = this.handleModalShow.bind(this);
     this.onColSelectChange = this.onColSelectChange.bind(this);
     this.copyElement = this.copyElement.bind(this);
+    this.handleAmountsConfirm = this.handleAmountsConfirm.bind(this);
+    this.handleAmountsConfirmClose = this.handleAmountsConfirmClose.bind(this);
   }
 
   onColSelectChange(e) {
@@ -56,7 +61,9 @@ export default class CopyElementModal extends React.Component {
     if (element.type === 'sample') {
       ClipboardActions.fetchElementAndBuildCopy(element, selectedCol, 'copy_sample');
     } else if (element.type === 'reaction') {
-      ElementActions.copyReaction(element, selectedCol);
+      // Show amounts confirmation modal instead of proceeding directly
+      this.setState({ showModal: false, showAmountsConfirm: true });
+      return true;
     } else if (element.type === 'research_plan') {
       ElementActions.copyResearchPlan(element, selectedCol);
     } else if (element.type === 'device_description') {
@@ -71,9 +78,20 @@ export default class CopyElementModal extends React.Component {
     return true;
   }
 
+  handleAmountsConfirm(keepAmounts) {
+    const { selectedCol } = this.state;
+    const { element } = this.props;
+    this.setState({ showAmountsConfirm: false });
+    ElementActions.copyReaction(element, selectedCol, keepAmounts);
+  }
+
+  handleAmountsConfirmClose() {
+    this.setState({ showAmountsConfirm: false });
+  }
+
   render() {
     const { element } = this.props;
-    const { showModal, selectedCol } = this.state;
+    const { showModal, selectedCol, showAmountsConfirm } = this.state;
 
     if (!element.can_copy) return null;
 
@@ -102,6 +120,42 @@ export default class CopyElementModal extends React.Component {
           <Modal.Footer className="border-0">
             <Button variant="light" onClick={this.handleModalClose}>Close</Button>
             <Button id="submit-copy-element-btn" variant="success" onClick={this.copyElement}>Copy</Button>
+          </Modal.Footer>
+        </Modal>
+
+        <Modal centered animation={false} show={showAmountsConfirm} onHide={this.handleAmountsConfirmClose}>
+          <Modal.Header closeButton>
+            <Modal.Title>Copy Reaction</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            Do you want to copy the amounts (real and target) from the original reaction materials?
+          </Modal.Body>
+          <Modal.Footer className="border-0">
+            <OverlayTrigger
+              placement="bottom"
+              overlay={(
+                <Tooltip id="copy-modal-yes-tooltip">
+                  All amounts (real and target) will be preserved in the copied reaction
+                </Tooltip>
+              )}
+            >
+              <Button variant="success" onClick={() => this.handleAmountsConfirm(true)}>
+                Yes
+              </Button>
+            </OverlayTrigger>
+
+            <OverlayTrigger
+              placement="bottom"
+              overlay={(
+                <Tooltip id="copy-modal-no-tooltip">
+                  Amounts will be reset to empty in the copied reaction
+                </Tooltip>
+              )}
+            >
+              <Button variant="danger" onClick={() => this.handleAmountsConfirm(false)}>
+                No
+              </Button>
+            </OverlayTrigger>
           </Modal.Footer>
         </Modal>
       </>
