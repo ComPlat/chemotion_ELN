@@ -149,6 +149,7 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     "@complat/react-spectra-editor": "github:ComPlat/react-spectra-editor#216f8bef4f5811585eace2f11e31ba9b0dfd4ead"
 =======
     "@complat/react-spectra-editor": "github:ComPlat/react-spectra-editor#6e29d61f95197aafce83971f403f3b91ab0e19dd"
@@ -159,6 +160,9 @@
 =======
     "@complat/react-spectra-editor": "github:ComPlat/react-spectra-editor#216f8bef4f5811585eace2f11e31ba9b0dfd4ead"
 >>>>>>> 05873aea6 (Update package.json)
+=======
+    "@complat/react-spectra-editor": "github:ComPlat/react-spectra-editor#ad1e1f3909c7a3179d0cba3ca47c5461cdbd393f"
+>>>>>>> f61f5d2de (Update package.json)
   },
   "scripts": {
     "postinstall": "./package_postinstall.sh",
