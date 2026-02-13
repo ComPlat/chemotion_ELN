@@ -87,8 +87,8 @@ export default class Element {
       collection_id: this.collection_id
     }
     _.merge(params, extraParams);
-    let paramsWithoutNullEntries = _.omit(params, _.isNull);
-    let cleanParams = _.omit(paramsWithoutNullEntries, (x) => { return x == '***'})
+    let paramsWithoutNullEntries = _.omitBy(params, _.isNull);
+    let cleanParams = _.omitBy(paramsWithoutNullEntries, (x) => { return x == '***'})
     return cleanParams;
   }
 
