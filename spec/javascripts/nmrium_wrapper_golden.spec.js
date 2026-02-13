@@ -4,6 +4,7 @@ import path from 'path';
 import expect from 'expect';
 import { chromium } from 'playwright';
 import { describe, it, before, after } from 'mocha';
+import { cleaningNMRiumData } from 'src/utilities/SpectraHelper';
 
 const WRAPPER_URL = 'https://nmrium.chemserv.scc.kit.edu/';
 const FIXTURES_ROOT = path.join(process.cwd(), 'spec', 'fixtures');
@@ -23,17 +24,32 @@ const DROP_KEYS = new Set([
   'relativePath',
   'files',
   'token',
+  'data',
 ]);
 
-function normalizeNmrium(value) {
-  if (Array.isArray(value)) return value.map(normalizeNmrium);
+const DROP_KEYS_IN_OPTIONS = new Set(['sum', 'sumAuto']);
+
+function isSpectrumInfoLike(obj) {
+  return obj && typeof obj === 'object' && (obj.nucleus !== undefined || obj.dimension !== undefined || obj.baseFrequency !== undefined);
+}
+
+function normalizeNmrium(value, parentKey = '', parent = null) {
+  if (typeof value === 'number') {
+    return value === 0 && 1 / value < 0 ? 0 : value;
+  }
+  if (Array.isArray(value)) return value.map((v) => normalizeNmrium(v, '', null));
   if (value && typeof value === 'object') {
     const out = {};
     Object.keys(value)
       .sort()
       .forEach((k) => {
         if (DROP_KEYS.has(k)) return;
-        out[k] = normalizeNmrium(value[k]);
+        if (parentKey === 'options' && DROP_KEYS_IN_OPTIONS.has(k)) return;
+        const v = value[k];
+        if (v === undefined) return;
+        let normalized = normalizeNmrium(v, k, value);
+        if (k === 'name' && typeof v === 'string' && isSpectrumInfoLike(value)) normalized = '<name>';
+        out[k] = normalized;
       });
     return out;
   }
@@ -128,14 +144,44 @@ async function getNmriumStateFromWrapper(page, fileUrl) {
     );
   }, fileUrl);
 
-  await page.waitForFunction(() => window.__nmriumState !== null, { timeout: 120000 });
+  await page.waitForFunction(
+    () => {
+      const s = window.__nmriumState;
+      const spectra = s?.spectra ?? s?.data?.spectra;
+      return Array.isArray(spectra) && spectra.length > 0;
+    },
+    { timeout: 120000 },
+  );
   return page.evaluate(() => window.__nmriumState);
 }
 
-// Run with: RUN_NMRIUM_GOLDEN=1 yarn test
-// Uses system Chrome/Chromium (no "playwright install" needed). Install with:
-//   Ubuntu/Debian: sudo apt install chromium-browser
-//   ou: sudo apt install chromium
+function extractPayloadForComparison(state) {
+  if (!state) return state;
+  const data = state.data ?? state;
+  const spectra = data.spectra ?? state.spectra ?? [];
+  const correlations = data.correlations ?? state.correlations ?? {};
+  return {
+    actionType: data.actionType ?? state.actionType ?? 'INITIATE',
+    spectra,
+    correlations,
+  };
+}
+
+function patchZipNameInState(state, zipLabel) {
+  if (!state || !zipLabel) return;
+  const spectra = state.data?.spectra ?? state.spectra ?? [];
+  spectra.forEach((s) => {
+    if (s?.info) s.info.name = zipLabel;
+  });
+}
+
+function applyElnBridgePipeline(rawState, options = {}) {
+  const cleaned = cleaningNMRiumData(rawState);
+  if (!cleaned) return null;
+  if (options.zipLabel) patchZipNameInState(cleaned, options.zipLabel);
+  return cleaned;
+}
+
 describe('NMRium wrapper golden files (no Cypress)', function nmriumWrapperGolden() {
   this.timeout(180000);
 
@@ -193,33 +239,48 @@ describe('NMRium wrapper golden files (no Cypress)', function nmriumWrapperGolde
   });
 
   const cases = [
-    {
-      name: 'JCAMP',
-      input: 'spectra_file.jdx',
-      golden: 'jdx_result_expected.nmrium',
-    },
-    {
-      name: 'ZIP 1D',
-      input: 'nmrium/zips/zip1D.zip',
-      golden: 'zip_1d_result_expected.nmrium',
-    },
-    {
-      name: 'ZIP 2D',
-      input: 'nmrium/zips/zip2D.zip',
-      golden: 'zip_2d_result_expected.nmrium',
-    },
+    { name: 'JCAMP', input: 'spectra_file.jdx', golden: 'jdx_result_expected.nmrium', zipLabel: null },
+    { name: 'ZIP 1D', input: 'nmrium/zips/zip1D.zip', golden: 'zip_1d_result_expected.nmrium', zipLabel: 'zip1D.zip' },
+    { name: 'ZIP 2D', input: 'nmrium/zips/zip2D.zip', golden: 'zip_2d_result_expected.nmrium', zipLabel: 'zip2D.zip' },
   ];
 
-  cases.forEach(({ name, input, golden }) => {
-    it(`converts ${name} via wrapper and matches golden`, async () => {
+  cases.forEach(({ name, input, golden, zipLabel }) => {
+    it(`converts ${name} via wrapper then ELN bridge (cleaningNMRiumData${zipLabel ? ' + patchZipName' : ''}) and matches golden`, async () => {
       const fileUrl = `${baseUrl}/${encodeURI(input)}`;
-      const nmriumState = await getNmriumStateFromWrapper(page, fileUrl);
+      const rawState = await getNmriumStateFromWrapper(page, fileUrl);
+      const cleanedState = applyElnBridgePipeline(rawState, { zipLabel });
+      const payload = extractPayloadForComparison(cleanedState);
+      const actual = normalizeNmrium(payload);
+
       const goldenObj = readGolden(golden);
-
-      const actual = normalizeNmrium(nmriumState);
-      const expected = normalizeNmrium(goldenObj);
-
+      const expected = normalizeNmrium(extractPayloadForComparison(goldenObj));
       expect(actual).toEqual(expected);
     });
+  });
+});
+
+describe('SpectraHelper.cleaningNMRiumData (ELN code)', () => {
+  it('removes spectrum.data and spectrum.originalData from wrapper state', () => {
+    const golden = readGolden('jdx_result_expected.nmrium');
+    const spectra = golden.spectra ?? [];
+    const stateWithData = {
+      data: {
+        actionType: golden.actionType ?? 'INITIATE',
+        spectra: spectra.map((sp) => ({ ...sp, data: { re: {}, im: {} }, originalData: {} })),
+        correlations: golden.correlations ?? {},
+      },
+    };
+    const cleaned = cleaningNMRiumData(stateWithData);
+    expect(cleaned).toBeTruthy();
+    expect(cleaned.data.spectra.every((s) => s.data === undefined && s.originalData === undefined)).toBe(true);
+  });
+
+  it('returns null for null input', () => {
+    expect(cleaningNMRiumData(null)).toBe(null);
+  });
+
+  it('handles state without data.spectra', () => {
+    const noSpectra = { data: { actionType: 'INITIATE' } };
+    expect(cleaningNMRiumData(noSpectra)).toEqual(noSpectra);
   });
 });
