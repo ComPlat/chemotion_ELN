@@ -132,7 +132,7 @@ async function getNmriumStateFromWrapper(page, fileUrl) {
   return page.evaluate(() => window.__nmriumState);
 }
 
-// Run with: RUN_NMRIUM_GOLDEN=1 yarn test:nmrium-golden
+// Run with: RUN_NMRIUM_GOLDEN=1 yarn test
 // Uses system Chrome/Chromium (no "playwright install" needed). Install with:
 //   Ubuntu/Debian: sudo apt install chromium-browser
 //   ou: sudo apt install chromium

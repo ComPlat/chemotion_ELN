@@ -10,8 +10,6 @@ on:
       - 'spec/javascripts/**'
       - '.tool-versions'
   push:
-    branches:
-      - main
 
 jobs:
   test:
@@ -85,16 +83,13 @@ jobs:
           path: ${{ steps.yarndir.outputs.dir }}
           key: ${{ steps.cache_key.outputs.key }}
 
-      - name: Tests
-        run: yarn test
-
       - name: Install Chromium (for NMRium golden test)
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq chromium-browser || sudo apt-get install -y -qq chromium
 
-      - name: NMRium wrapper golden (jdx/zip → wrapper → compare to golden)
-        run: RUN_NMRIUM_GOLDEN=1 yarn test:nmrium-golden
+      - name: Tests (unit + NMRium golden)
+        run: RUN_NMRIUM_GOLDEN=1 yarn test
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
 
