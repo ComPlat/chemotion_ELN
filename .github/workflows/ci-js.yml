@@ -83,13 +83,16 @@ jobs:
           path: ${{ steps.yarndir.outputs.dir }}
           key: ${{ steps.cache_key.outputs.key }}
 
+      - name: Tests (unit)
+        run: yarn test
+
       - name: Install Chromium (for NMRium golden test)
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq chromium-browser || sudo apt-get install -y -qq chromium
 
-      - name: Tests (unit + NMRium golden)
-        run: RUN_NMRIUM_GOLDEN=1 yarn test
+      - name: Tests NMRium golden (single spec, separate process to avoid Alt store conflicts)
+        run: yarn test:nmrium-golden
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
 

@@ -149,6 +149,7 @@
   "scripts": {
     "postinstall": "./package_postinstall.sh",
     "test": "NODE_PATH=./spec/javascripts:./app/javascript yarn mocha --exit --require './spec/javascripts/setup.js' './spec/javascripts/**/*.spec.js'",
+    "test:nmrium-golden": "NODE_PATH=./spec/javascripts:./app/javascript RUN_NMRIUM_GOLDEN=1 yarn mocha --exit --require './spec/javascripts/setup.js' './spec/javascripts/nmrium_wrapper_golden.spec.js'",
     "coverage": "yarn nyc npm test;yarn nyc report --reporter=html",
     "update-browserslist-db": "node_modules/.bin/update-browserslist-db",
     "storybook": "storybook dev -p 6006",
