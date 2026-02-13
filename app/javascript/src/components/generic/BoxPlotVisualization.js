@@ -50,7 +50,6 @@ class BoxPlotVisualization extends Component {
       }))
       .sort((a, b) => a.concentration - b.concentration);
 
-    console.log('Box Plot Chart Data:', chartData);
     return chartData;
   }
 

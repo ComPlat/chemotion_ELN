@@ -283,7 +283,6 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
   }
 
   static sendMttRequest(params) {
-    console.log('Sending MTT request with params:', params);
     const api = '/api/v1/mtt/create_mtt_request';
     const promise = () => fetch(api, {
       credentials: 'same-origin',
