@@ -750,7 +750,7 @@ describe('Sample', async () => {
 
       const serialized = sample.serialize();
 
-      expect(serialized.molecule_id).toBeNull();
+      expect(serialized).not.toHaveProperty('molecule_id');
     });
 
     it('should handle empty user_labels', () => {
@@ -939,8 +939,8 @@ describe('Sample', async () => {
 
       const serialized = sample.serialize();
 
-      expect(serialized.molecule).toBeNull();
-      expect(serialized.molecule_id).toBeNull();
+      expect(serialized).not.toHaveProperty('molecule');
+      expect(serialized).not.toHaveProperty('molecule_id');
     });
 
     it('should handle serialize with null molecule_name', () => {
@@ -949,7 +949,7 @@ describe('Sample', async () => {
 
       const serialized = sample.serialize();
 
-      expect(serialized.molecule_name_id).toBeNull();
+      expect(serialized).not.toHaveProperty('molecule_name_id');
     });
   });
 
