@@ -42,11 +42,12 @@ function MttAnalysisDetailsModal({
                 <tr>
                   <th>Name</th>
                   <th>IC50 (relative)</th>
+                  <th>IC50 Lower</th>
+                  <th>IC50 Upper</th>
                   <th>pIC50</th>
                   <th>Hill Coefficient</th>
                   <th>RSE</th>
                   <th>p-value</th>
-                  <th>IC50 Range</th>
                   <th>Asymptotes</th>
                   <th>Problems</th>
                 </tr>
@@ -55,13 +56,12 @@ function MttAnalysisDetailsModal({
                 <tr>
                   <td className="fw-semibold">{result.name}</td>
                   <td>{result.IC50_relative?.toFixed(4)}</td>
+                  <td>{result.IC50_relative_lower?.toFixed(4)}</td>
+                  <td>{result.IC50_relative_higher?.toFixed(4)}</td>
                   <td>{result.pIC50?.toFixed(4)}</td>
                   <td>{result.HillCoefficient?.toFixed(4)}</td>
                   <td>{result.RSE?.toFixed(4)}</td>
                   <td className="small">{result.p_value?.toExponential(4)}</td>
-                  <td className="small">
-                    {result.IC50_relative_lower?.toFixed(2)} - {result.IC50_relative_higher?.toFixed(2)}
-                  </td>
                   <td className="small">
                     {result.asymptote_one?.toFixed(4)} / {result.asymptote_two?.toFixed(4)}
                   </td>
