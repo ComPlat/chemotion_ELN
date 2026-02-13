@@ -337,10 +337,6 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
     return promise();
   }
 
-  // TODO: BACKEND - Implement endpoint to delete individual result within an output
-  // DELETE /api/v1/mtt/outputs/:output_id/results
-  // Body: { sample_name: "Sample1" } or { result_index: 0 }
-  // This allows deleting a specific analysis result without removing the entire output
   static deleteMttResult(outputId, sampleName) {
     const api = `/api/v1/mtt/outputs/${outputId}/results`;
     const promise = () => fetch(api, {
@@ -359,12 +355,27 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
     return promise();
   }
 
-  // TODO: BACKEND - Implement endpoint to send MTT results to samples
-  // POST /api/v1/mtt/send_to_sample
-  // Body: { output_ids: [123, 456] }
-  // This attaches MTT analysis results to their respective sample measurement records
-  static sendMttResultsToSample(params) {
-    const api = '/api/v1/mtt/send_to_sample';
+ static sendMttResultsToSample(selections, genericElementId, assayInfo = {}) {
+    const timestamp = new Date().toISOString().slice(0, 16).replace('T', ' ');
+
+    const raw_data = selections.map(selection => ({
+      uuid: `mtt-${selection.output_id}-${Math.random()}`,
+      sample_identifier: selection.sample_name,
+      description: `MTT Analysis (${timestamp})`,
+      value: selection.result_data.IC50_relative || 0,
+      unit: '',
+      metadata: {
+        analysis_type: 'mtt_output',
+        generic_element_id: genericElementId,
+        element_klass_label: assayInfo.element_klass_label || '',
+        element_short_label: assayInfo.element_short_label || '',
+        element_name: assayInfo.element_name || '',
+        analysis_timestamp: timestamp,
+        results: [selection.result_data]
+      }
+    }));
+
+    const api = '/api/v1/measurements/bulk_create_from_raw_data';
     const promise = () => fetch(api, {
       credentials: 'same-origin',
       method: 'post',
@@ -372,7 +383,11 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(params),
+      body: JSON.stringify({
+        raw_data,
+        source_type: 'Labimotion::Element',
+        source_id: genericElementId
+      }),
     })
       .then((response) => response.json())
       .catch((errorMessage) => {

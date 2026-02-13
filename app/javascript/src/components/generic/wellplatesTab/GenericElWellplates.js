@@ -10,6 +10,7 @@ import MttAnalysisDetailsModal from 'src/components/generic/wellplatesTab/MttAna
 import MttResultsTable from 'src/components/generic/wellplatesTab/MttResultsTable';
 import MttRequestStatusTable from 'src/components/generic/wellplatesTab/MttRequestStatusTable';
 import { flattenAnalysesFromOutputs } from 'src/utilities/mttDataProcessor';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 const target = {
   drop(props, monitor) {
@@ -74,8 +75,6 @@ class GenericElWellplates extends Component {
 
     GenericElsFetcher.getMttRequest({ id: genericEl.id })
       .then((result) => {
-        console.log("Result item: ",{ id: genericEl.id },result);
-        
         // Handle different response structures
         let requestsArray = [];
         if (Array.isArray(result)) {
@@ -83,17 +82,13 @@ class GenericElWellplates extends Component {
         } else if (result && Array.isArray(result.requests)) {
           requestsArray = result.requests;
         } else if (result && typeof result === 'object') {
-          // If result is an object but not an array, log it for debugging
-          console.log('Unexpected result structure:', result);
+          // If result is an object but not an array, treat as empty
         }
 
         // Filter requests by element_id to show only requests for this element
         const filteredRequests = requestsArray.filter(
           (req) => req.element_id === genericEl.id
         );
-        console.log("Request Results filteredRequests: ", filteredRequests);
-
-
         this.setState({ requests: filteredRequests, loadingRequests: false });
       })
       .catch((error) => {
@@ -191,33 +186,87 @@ class GenericElWellplates extends Component {
   }
 
   handleBatchSendToSample(selectedItems) {
-    // Get output IDs from selected items
-    const outputIds = [...new Set(selectedItems.map(item => item.outputId))];
-
-    if (outputIds.length === 0) {
-      alert('No analyses selected');
+    if (selectedItems.length === 0) {
+      NotificationActions.add({
+        title: 'No Selection',
+        message: 'Please select at least one analysis to send to samples.',
+        level: 'warning',
+        position: 'tr',
+        autoDismiss: 3
+      });
       return;
     }
 
+    const { genericEl } = this.props;
+
+    // Prepare selections array with output_id, sample_name, and result_data
+    const selections = selectedItems.map(item => ({
+      output_id: item.outputId,
+      sample_name: item.sampleName,
+      result_data: item.dataItem.result[0] // The actual result object with IC50, R², etc.
+    }));
+
     this.setState({ sendingToSample: true });
 
-    // TODO: BACKEND - Endpoint needs to be implemented
-    // For now, this will fail gracefully until backend is ready
-    GenericElsFetcher.sendMttResultsToSample({ output_ids: outputIds })
+    const assayInfo = {
+      element_klass_label: genericEl.element_klass?.label || '',
+      element_short_label: genericEl.short_label || '',
+      element_name: genericEl.name || '',
+    };
+
+    GenericElsFetcher.sendMttResultsToSample(selections, genericEl.id, assayInfo)
       .then((result) => {
-        if (result && result.success) {
+        console.log('Batch send result:', result);
+        // bulk_create_from_raw_data returns { measurements: [{id, errors, ...}, ...] }
+        const entries = result && result.measurements ? result.measurements : [];
+        const created = entries.filter(e => e.id && (!e.errors || e.errors.length === 0));
+        const failed = entries.filter(e => e.errors && e.errors.length > 0);
+
+        if (created.length > 0 && failed.length === 0) {
           this.setState({
             sendingToSample: false,
-            selectedAnalyses: {} // Clear selections after successful send
+            selectedAnalyses: {}
           });
-          alert(`Successfully sent ${selectedItems.length} analysis results to samples`);
-          this.fetchRequests(); // Refresh data
+          NotificationActions.add({
+            title: 'Measurements Created',
+            message: `Successfully created ${created.length} measurement${created.length > 1 ? 's' : ''}. Check the Measurements tab to view results.`,
+            level: 'success',
+            position: 'tr',
+            autoDismiss: 7
+          });
+        } else if (created.length > 0 && failed.length > 0) {
+          this.setState({ sendingToSample: false, selectedAnalyses: {} });
+          NotificationActions.add({
+            title: 'Partial Success',
+            message: `Created ${created.length} measurement(s), but ${failed.length} failed.`,
+            level: 'warning',
+            position: 'tr',
+            autoDismiss: 8
+          });
+        } else {
+          this.setState({ sendingToSample: false });
+          const errorMsg = failed.length > 0 && failed[0].errors
+            ? failed[0].errors[0]
+            : 'Unknown error';
+          NotificationActions.add({
+            title: 'Error',
+            message: `Failed to create measurements. ${errorMsg}`,
+            level: 'error',
+            position: 'tr',
+            autoDismiss: 8
+          });
         }
       })
       .catch((error) => {
         console.error('Error sending to sample:', error);
         this.setState({ sendingToSample: false });
-        alert('Send to sample endpoint not yet implemented. Please ask backend team to implement: POST /api/v1/mtt/send_to_sample');
+        NotificationActions.add({
+          title: 'Request Failed',
+          message: 'Failed to send results to samples. Please try again.',
+          level: 'error',
+          position: 'tr',
+          autoDismiss: 5
+        });
       });
   }
 
@@ -354,36 +403,53 @@ class GenericElWellplates extends Component {
     return (
       <div className="mt-1">
         {/* Selection Toolbar */}
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <h6 className="text-primary mb-0">
-            Results ({allAnalyses.length})
-          </h6>
-          {selectedCount > 0 && (
+        {selectedCount > 0 && (
+          <div className="mb-3 p-3 bg-light border rounded d-flex justify-content-between align-items-center">
             <div className="d-flex align-items-center gap-2">
-              <span className="text-muted" style={{ fontSize: '0.9rem' }}>
-                {selectedCount} selected
+              <i className="fa fa-check-square-o text-primary" style={{ fontSize: '1.2rem' }} />
+              <span className="fw-semibold">
+                <span className="badge bg-primary me-2">{selectedCount}</span>
+                {selectedCount === 1 ? 'analysis' : 'analyses'} selected
               </span>
+            </div>
+            <div className="d-flex gap-2">
               <Button
-                variant="primary"
+                variant="success"
                 size="sm"
                 onClick={() => this.handleBatchSendToSample(selectedItems)}
                 disabled={sendingToSample}
-                style={{ fontSize: '0.75rem' }}
               >
-                <i className="fa fa-paper-plane me-1" />
-                {sendingToSample ? 'Sending...' : 'Send to Sample'}
+                {sendingToSample ? (
+                  <>
+                    <i className="fa fa-spinner fa-spin me-1" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <i className="fa fa-paper-plane me-1" />
+                    Send to Sample
+                  </>
+                )}
               </Button>
               <Button
                 variant="outline-secondary"
                 size="sm"
                 onClick={() => this.setState({ selectedAnalyses: {} })}
-                style={{ fontSize: '0.75rem' }}
                 title="Clear selection"
               >
-                <i className="fa fa-times" />
+                <i className="fa fa-times me-1" />
+                Clear
               </Button>
             </div>
-          )}
+          </div>
+        )}
+
+        {/* Results Header */}
+        <div className="mb-3">
+          <h6 className="text-primary mb-0">
+            <i className="fa fa-flask me-2" />
+            Analysis Results ({allAnalyses.length})
+          </h6>
         </div>
 
         {/* Results Table Component */}
