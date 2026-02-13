@@ -48,11 +48,6 @@ export default class AttachmentFetcher {
   }
 
   static fetchThumbnail(params) {
-    // Be defensive: some callers may invoke this before an attachment is persisted.
-    if (!params || !params.id) {
-      return Promise.resolve(null);
-    }
-
     const promise = fetch(`/api/v1/attachments/thumbnail/${params.id}`, {
       credentials: 'same-origin',
       method: 'GET',
