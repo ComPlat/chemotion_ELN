@@ -6,32 +6,13 @@ Cypress.Commands.add('appCommands', (body) => {
     method: 'POST',
     url: '/__cypress__/command',
     body: JSON.stringify(body),
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-    },
     log: false,
-    failOnStatusCode: false,
-    // Avoid hanging forever if Rails is stuck / DB cleaning is slow.
-    timeout: 120000,
+    failOnStatusCode: false
   }).then((response) => {
     log.end();
     if (response.status !== 201) {
-      // Give a useful error when Rails is not running / middleware not mounted.
-      // cypress-on-rails should respond with 201 and a JSON array payload.
-      const bodyPreview = (() => {
-        try {
-          if (response && typeof response.body === 'string') return response.body.slice(0, 500);
-          return JSON.stringify(response && response.body ? response.body : null).slice(0, 500);
-        } catch (e) {
-          return '<unserializable response body>';
-        }
-      })();
-
-      throw new Error(
-        `CypressOnRails command failed (HTTP ${response.status}). ` +
-          `Body: ${bodyPreview}. ` +
-          `Make sure the Rails server is running and cypress-on-rails middleware is enabled (non-production).`
-      );
+      expect(response.body.message).to.equal('');
+      expect(response.status).to.be.equal(201);
     }
     return response.body;
   });
