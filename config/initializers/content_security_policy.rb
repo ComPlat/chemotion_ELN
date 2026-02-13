@@ -18,7 +18,9 @@ Rails.application.config.content_security_policy do |policy|
   src = %i[self https data wss blob]
   src += ['https://commonchemistry.cas.org', 'https://dx.doi.org', 'https://doi.org', 'https://api.crossref.org', 'https://service.tib.eu']
   script_src = %i[self]
-  script_src += [Rails.application.config.editors.docserver_api] if Rails.application.config.editors&.docserver_api.present?
+  if Rails.application.config.editors&.docserver_api.present?
+    script_src += [Rails.application.config.editors.docserver_api]
+  end
 
   # connect_src for log and webpack-dev-serverwebsockets in development
   if Rails.env.development?
@@ -43,8 +45,8 @@ Rails.application.config.content_security_policy do |policy|
   policy.report_uri '/csp-violation-report'
 end
 
-Rails.application.config.content_security_policy_nonce_generator = ->(request) { SecureRandom.base64(16) }
-Rails.application.config.content_security_policy_nonce_directives = %w(script-src script-src-elem)
+Rails.application.config.content_security_policy_nonce_generator = ->(_request) { SecureRandom.base64(16) }
+Rails.application.config.content_security_policy_nonce_directives = %w[script-src script-src-elem]
 
 # If you are using UJS then enable automatic nonce generation
 # Rails.application.config.content_security_policy_nonce_generator = -> request { SecureRandom.base64(16) }
