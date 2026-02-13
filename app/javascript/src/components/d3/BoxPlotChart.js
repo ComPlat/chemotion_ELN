@@ -351,25 +351,6 @@ class D3BoxPlotChart {
             .attr('stroke-width', 2);
           tooltip.style('visibility', 'hidden');
         });
-    } else {
-      // Fallback: draw line connecting medians
-      const medianPoints = boxPlotData.map(d => ({
-        x: d.concentration,
-        y: d.stats.median,
-      }));
-
-      const line = d3.svg.line()
-        .x(d => xScale(d.x))
-        .y(d => yScale(d.y))
-        .interpolate('monotone');
-
-      svg.append('path')
-        .datum(medianPoints)
-        .attr('class', 'trend-line')
-        .attr('d', line)
-        .attr('fill', 'none')
-        .attr('stroke', 'black')
-        .attr('stroke-width', 1.5);
     }
 
     // Draw red annotation bracket for IC50 confidence interval (if available)

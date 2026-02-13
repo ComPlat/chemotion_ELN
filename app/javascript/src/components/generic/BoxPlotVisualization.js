@@ -98,7 +98,8 @@ class BoxPlotVisualization extends Component {
       el: this.ref.current,
       sampleName: this.getSampleName(),
       ic50Data: this.getIC50Data(),
-      hillParameters: this.getHillParameters()
+      // hillParameters: this.getHillParameters()
+      hillParameters: null
     };
   }
 
