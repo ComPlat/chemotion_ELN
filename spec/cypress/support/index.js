@@ -24,5 +24,9 @@ require('./on-rails');
 
 beforeEach(() => {
   // Runs before every test (`it()`) in every test file (`*.cy.js`).
+  // Allow skipping the heavy DB clean for long-running E2E specs.
+  // Example:
+  //   yarn cypress run ... --env SKIP_APP_CLEAN=1
+  if (Cypress.env('SKIP_APP_CLEAN')) return;
   cy.app('clean');
 });

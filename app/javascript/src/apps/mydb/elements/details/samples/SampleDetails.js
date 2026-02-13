@@ -550,8 +550,11 @@ export default class SampleDetails extends React.Component {
     if (sample.isNew) {
       return true;
     }
+    if (!currentCollection?.id) {
+      return false;
+    }
     const collection_labels = sample.tag?.taggable_data?.collection_labels || [];
-    const result = collection_labels.filter((object) => object.id === currentCollection.id).length > 0;
+    const result = collection_labels.filter((object) => object?.id === currentCollection.id).length > 0;
     return result;
   }
 

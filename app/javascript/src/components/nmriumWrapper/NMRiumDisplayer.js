@@ -85,8 +85,9 @@ export default class NMRiumDisplayer extends React.Component {
     ).length || 0;
 
     // Ensure loaded files match requested spectra
-    const currentIds = spcInfos?.map((si) => si.idx).sort().join(',') || '';
-    const fetchedIds = fetchedSpectra?.map((fs) => fs.id).sort().join(',') || '';
+    const currentIds = spcInfos?.map((si) => si?.idx).filter(Boolean).sort().join(',') || '';
+    // Be defensive: in some edge cases fetchedSpectra may contain sparse/null entries.
+    const fetchedIds = fetchedSpectra?.map((fs) => fs?.id).filter(Boolean).sort().join(',') || '';
 
     const fetchedSpectraReady =
       fetchedSpectra?.length > 0 &&
@@ -109,8 +110,8 @@ export default class NMRiumDisplayer extends React.Component {
   }
 
   onChange(newState) {
-    const prevIds = (this.state.fetchedSpectra || []).map(s => s.id).join(',');
-    const nextIds = (newState.fetchedSpectra || []).map(s => s.id).join(',');
+    const prevIds = (this.state.fetchedSpectra || []).map((s) => s?.id).filter(Boolean).join(',');
+    const nextIds = (newState.fetchedSpectra || []).map((s) => s?.id).filter(Boolean).join(',');
 
     const hasChanged = prevIds !== nextIds;
 
@@ -237,7 +238,9 @@ export default class NMRiumDisplayer extends React.Component {
 
   patchZipName(nmriumData, zipLabel) {
     if (!nmriumData) return;
-    nmriumData.spectra.forEach((s) => {
+    const spectra = nmriumData?.spectra || nmriumData?.data?.spectra || [];
+    if (!Array.isArray(spectra)) return;
+    spectra.forEach((s) => {
       if (s.info) {
         s.info.name = zipLabel;
       }
@@ -534,7 +537,8 @@ export default class NMRiumDisplayer extends React.Component {
     const idToDisplay = this.findDisplayingSpectrumID(correlations);
 
     if (idToDisplay) {
-      return spectra.filter((s) => s.id === idToDisplay);
+      // Some exports may contain sparse/null entries; guard against that.
+      return spectra.filter((s) => s?.id === idToDisplay);
     }
 
     return spectra.filter((s) => s?.info?.isFid === false);

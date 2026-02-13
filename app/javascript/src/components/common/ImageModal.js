@@ -71,12 +71,14 @@ export default class ImageModal extends Component {
     const isImage = fileType?.startsWith('image/');
     const defaultNoAttachment = '/images/wild_card/no_attachment.svg';
     const defaultUnavailable = '/images/wild_card/not_available.svg';
-    if (attachment?.thumb) {
-      const src = await fetchImageSrcByAttachmentId(attachment.id);
-      this.setState({ thumbnail: src });
-    } else if (attachment?.is_new || attachment?.is_pending) {
+
+    // For unsaved/pending attachments we must use the local preview (there is no server thumbnail yet).
+    if (attachment?.is_new || attachment?.is_pending) {
       const previewSrc = isImage ? attachment?.file?.preview : defaultUnavailable;
       this.setState({ thumbnail: previewSrc });
+    } else if (attachment?.thumb) {
+      const src = await fetchImageSrcByAttachmentId(attachment.id);
+      this.setState({ thumbnail: src });
     } else {
       this.setState({ thumbnail: defaultNoAttachment });
     }
