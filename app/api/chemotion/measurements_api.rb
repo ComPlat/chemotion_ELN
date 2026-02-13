@@ -66,7 +66,7 @@ module Chemotion
                 unit: measurement.unit,
                 source_type: measurement.source_type.underscore,
                 source_id: measurement.source_id,
-                metadata: measurement.metadata || {}
+                metadata: measurement.metadata || {},
               }
             end
           }
