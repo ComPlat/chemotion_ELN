@@ -34,10 +34,9 @@ function MttResultsTable({
             <th>Molecule</th>
             <th>Dose Response</th>
             <th>IC50</th>
+            <th>IC50 Lower</th>
+            <th>IC50 Upper</th>
             <th>pIC50</th>
-            <th>Hill Coeff.</th>
-            <th>RSE</th>
-            <th>p-value</th>
             <th>Status</th>
             <th className="text-center" style={{ width: '120px' }}>Actions</th>
           </tr>
@@ -78,16 +77,13 @@ function MttResultsTable({
                   {result.IC50_relative !== undefined ? result.IC50_relative.toFixed(4) : '-'}
                 </td>
                 <td>
+                  {result.IC50_relative_lower !== undefined ? result.IC50_relative_lower.toFixed(4) : '-'}
+                </td>
+                <td>
+                  {result.IC50_relative_higher !== undefined ? result.IC50_relative_higher.toFixed(4) : '-'}
+                </td>
+                <td>
                   {result.pIC50 !== undefined ? result.pIC50.toFixed(4) : '-'}
-                </td>
-                <td>
-                  {result.HillCoefficient !== undefined ? result.HillCoefficient.toFixed(4) : '-'}
-                </td>
-                <td>
-                  {result.RSE !== undefined ? result.RSE.toFixed(4) : '-'}
-                </td>
-                <td className="small">
-                  {result.p_value !== undefined ? result.p_value.toExponential(2) : '-'}
                 </td>
                 <td>
                   {result.Problems ? (
