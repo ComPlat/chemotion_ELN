@@ -560,6 +560,10 @@ module Chemotion
         jcamp_att = @attachment.generate_spectrum(
           false, false, params
         )
+        unless jcamp_att.is_a?(Attachment)
+          Rails.logger.error("save_spectrum failed for attachment #{@attachment&.id}: #{jcamp_att.inspect}")
+          error!({ error: 'Spectrum generation failed' }, 422)
+        end
         { files: [raw_file_obj(jcamp_att)] }
       end
 
@@ -587,6 +591,10 @@ module Chemotion
         jcamp_att = @attachment.generate_spectrum(
           false, false, params
         )
+        unless jcamp_att.is_a?(Attachment)
+          Rails.logger.error("infer_spectrum failed for attachment #{@attachment&.id}: #{jcamp_att.inspect}")
+          error!({ error: 'Spectrum generation failed' }, 422)
+        end
         { files: [raw_file_obj(jcamp_att)], predict: predict }
       end
 
