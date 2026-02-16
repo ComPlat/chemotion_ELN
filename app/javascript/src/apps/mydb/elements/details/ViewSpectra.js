@@ -392,6 +392,7 @@ class ViewSpectra extends React.Component {
     peaks, shift, scan, thres, analysis, layout, isAscend, decimal, body,
     keepPred, isIntensity, multiplicity, integration, cyclicvoltaSt, curveSt,
     waveLength, axesUnitsSt, detectorSt, dscMetaData, lcms_peaks, lcms_integrals,
+    lcms_uvvis_wavelength, lcms_tic, lcms_mz_page,
   }, isMpy = false) {
     const { sample, handleSampleChanged } = this.props;
     const si = this.getSpcInfo();
@@ -438,6 +439,7 @@ class ViewSpectra extends React.Component {
     const cb = () => (
       this.saveOp({
         peaks, shift, scan, thres, analysis, keepPred, integration, multiplicity, cyclicvoltaSt, curveSt, layout, waveLength, axesUnitsSt, detectorSt, dscMetaData, lcms_peaks, lcms_integrals,
+        lcms_uvvis_wavelength, lcms_tic, lcms_mz_page,
       })
     );
     handleSampleChanged(sample, cb);
@@ -479,6 +481,7 @@ class ViewSpectra extends React.Component {
     integration, multiplicity, waveLength, cyclicvoltaSt,
     curveSt, simulatenmr = false, layout, axesUnitsSt,
     detectorSt, dscMetaData, lcms_peaks, lcms_integrals,
+    lcms_uvvis_wavelength, lcms_tic, lcms_mz_page,
   }) {
     const { handleSubmit } = this.props;
     const { curveIdx } = curveSt;
@@ -553,14 +556,19 @@ class ViewSpectra extends React.Component {
       JSON.stringify(dscMetaData),
       lcms_peaksStr,
       lcms_integralsStr,
+      lcms_uvvis_wavelength,
+      lcms_tic,
+      lcms_mz_page,
     );
   }
 
   refreshOp({
-    peaks, shift, scan, thres, analysis, keepPred, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt, layout, axesUnitsSt, detectorSt, lcms_peaks, lcms_integrals
+    peaks, shift, scan, thres, analysis, keepPred, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt, layout, axesUnitsSt, detectorSt, lcms_peaks, lcms_integrals,
+    lcms_uvvis_wavelength, lcms_tic, lcms_mz_page,
   }) {
     this.saveOp({
-      peaks, shift, scan, thres, analysis, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt, simulatenmr: true, layout, axesUnitsSt, detectorSt, lcms_peaks, lcms_integrals
+      peaks, shift, scan, thres, analysis, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt, simulatenmr: true, layout, axesUnitsSt, detectorSt, lcms_peaks, lcms_integrals,
+      lcms_uvvis_wavelength, lcms_tic, lcms_mz_page,
     });
   }
 
@@ -586,10 +594,12 @@ class ViewSpectra extends React.Component {
   }
 
   saveCloseOp({
-    peaks, shift, scan, thres, analysis, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt, layout, axesUnitsSt, detectorSt, dscMetaData, lcms_peaks, lcms_integrals
+    peaks, shift, scan, thres, analysis, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt, layout, axesUnitsSt, detectorSt, dscMetaData, lcms_peaks, lcms_integrals,
+    lcms_uvvis_wavelength, lcms_tic, lcms_mz_page,
   }) {
     this.saveOp({
       peaks, shift, scan, thres, analysis, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt, layout, axesUnitsSt, detectorSt, dscMetaData, lcms_peaks, lcms_integrals,
+      lcms_uvvis_wavelength, lcms_tic, lcms_mz_page,
     });
     this.closeOp();
   }
