@@ -6,7 +6,7 @@ import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionUtils from 'src/models/collection/CollectionUtils';
 import { Select } from 'src/components/common/Select';
 
-export default class ManagingModalCollectionActions extends React.Component {
+export default class SelectionTransferModal extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -136,7 +136,7 @@ export default class ManagingModalCollectionActions extends React.Component {
   }
 }
 
-ManagingModalCollectionActions.propTypes = {
+SelectionTransferModal.propTypes = {
   title: PropTypes.string.isRequired,
   action: PropTypes.func.isRequired,
   onHide: PropTypes.func.isRequired,

@@ -5,14 +5,17 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import PermissionStore from 'src/stores/alt/stores/PermissionStore';
 import PermissionActions from 'src/stores/alt/actions/PermissionActions';
-import ManagingModalSharing from 'src/apps/mydb/elements/list/managingActions/ManagingModalSharing';
-import ManagingModalCollectionActions from 'src/apps/mydb/elements/list/managingActions/ManagingModalCollectionActions';
-import ManagingModalDelete from 'src/apps/mydb/elements/list/managingActions/ManagingModalDelete';
-import ManagingModalRemove from 'src/apps/mydb/elements/list/managingActions/ManagingModalRemove';
+import SelectionShareModal from 'src/apps/mydb/elements/list/selectionActions/SelectionShareModal';
+import SelectionTransferModal from 'src/apps/mydb/elements/list/selectionActions/SelectionTransferModal';
+import SelectionDeleteModal from 'src/apps/mydb/elements/list/selectionActions/SelectionDeleteModal';
+import SelectionRemoveModal from 'src/apps/mydb/elements/list/selectionActions/SelectionRemoveModal';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
+import SelectionSplitButton from 'src/apps/mydb/elements/list/selectionActions/SelectionSplitButton';
+import SelectionGenerateButton from 'src/apps/mydb/elements/list/selectionActions/SelectionGenerateButton';
+import SelectionExportButton from 'src/apps/mydb/elements/list/selectionActions/SelectionExportButton';
 import { elementNames } from 'src/apps/generic/Utils';
 
-export default class ManagingActions extends React.Component {
+export default class SelectionActions extends React.Component {
   constructor(props) {
     super(props);
     const { currentUser, genericEls } = UserStore.getState();
@@ -130,10 +133,10 @@ export default class ManagingActions extends React.Component {
       case 'share':
         return is_top_secret
           ? this.renderTopSecretModal()
-          : <ManagingModalSharing onHide={this.hideModal} />;
+          : <SelectionShareModal onHide={this.hideModal} />;
 
       case 'move':
-        return <ManagingModalCollectionActions
+        return <SelectionTransferModal
           title="Move to Collection"
           action={ElementActions.updateElementsCollection}
           listSharedCollections={true}
@@ -141,7 +144,7 @@ export default class ManagingActions extends React.Component {
         />;
 
       case 'assign':
-        return <ManagingModalCollectionActions
+        return <SelectionTransferModal
           title="Assign to Collection"
           action={ElementActions.assignElementsCollection}
           listSharedCollections={false}
@@ -149,10 +152,10 @@ export default class ManagingActions extends React.Component {
         />;
 
       case 'remove':
-        return <ManagingModalRemove onHide={this.hideModal} />;
+        return <SelectionRemoveModal onHide={this.hideModal} />;
 
       case 'delete':
-        return <ManagingModalDelete onHide={this.hideModal} />;
+        return <SelectionDeleteModal onHide={this.hideModal} />;
 
       default:
         return null;
@@ -172,62 +175,65 @@ export default class ManagingActions extends React.Component {
     const shareDisabled = noSel || !sharing_allowed;
 
     return (
-      <>
-        <ButtonGroup>
-          <DropdownButton
-            as={ButtonGroup}
-            variant="success"
-            title={<i className="fa fa-arrow-right" />}
-            id="move-or-assign-btn"
-            disabled={assignDisabled && moveDisabled}
+      <div className="d-flex align-items-center gap-1 mb-3">
+        <SelectionGenerateButton />
+        <SelectionExportButton />
+        <SelectionSplitButton />
+        <DropdownButton
+          as={ButtonGroup}
+          title="Transfer"
+          variant="light"
+          size="sm"
+          id="move-or-assign-btn"
+          disabled={assignDisabled && moveDisabled}
+        >
+          <Dropdown.Item
+            onClick={() => this.showModal('move')}
+            disabled={moveDisabled}
           >
-            <Dropdown.Item
-              onClick={() => this.showModal('move')}
-              disabled={moveDisabled}
-            >
-              Move to Collection
-            </Dropdown.Item>
-            <Dropdown.Item
-              onClick={() => this.showModal('assign')}
-              disabled={assignDisabled}
-            >
-              Assign to Collection
-            </Dropdown.Item>
-          </DropdownButton>
+            Move to Collection
+          </Dropdown.Item>
+          <Dropdown.Item
+            onClick={() => this.showModal('assign')}
+            disabled={assignDisabled}
+          >
+            Assign to Collection
+          </Dropdown.Item>
+        </DropdownButton>
 
-          <DropdownButton
-            as={ButtonGroup}
-            variant="warning"
-            title={<i className="fa fa-minus-square" />}
-            id="remove-or-delete-btn"
-            disabled={removeDisabled && deleteDisabled}
+        <DropdownButton
+          as={ButtonGroup}
+          title="Remove"
+          variant="light"
+          size="sm"
+          id="remove-or-delete-btn"
+          disabled={removeDisabled && deleteDisabled}
+        >
+          <Dropdown.Item
+            onClick={() => this.showModal('remove')}
+            disabled={removeDisabled}
           >
-            <Dropdown.Item
-              onClick={() => this.showModal('remove')}
-              disabled={removeDisabled}
-            >
-              Remove from current Collection
-            </Dropdown.Item>
-            <Dropdown.Item
-              onClick={() => this.showModal('delete')}
-              disabled={deleteDisabled}
-            >
-              Remove from all Collections
-            </Dropdown.Item>
-          </DropdownButton>
-
-          <Button
-            variant="info"
-            id="share-btn"
-            disabled={shareDisabled}
-            onClick={() => this.showModal('share')}
+            Remove from current Collection
+          </Dropdown.Item>
+          <Dropdown.Item
+            onClick={() => this.showModal('delete')}
+            disabled={deleteDisabled}
           >
-            <i className="fa fa-share-alt" />
-          </Button>
-        </ButtonGroup>
+            Remove from all Collections
+          </Dropdown.Item>
+        </DropdownButton>
+        <Button
+          variant="light"
+          size="sm"
+          id="share-btn"
+          disabled={shareDisabled}
+          onClick={() => this.showModal('share')}
+        >
+          Share
+        </Button>
 
         {this.renderModal()}
-      </>
+      </div>
     );
   }
 }

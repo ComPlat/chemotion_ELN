@@ -6,7 +6,7 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 
-export default class SplitElementButton extends React.Component {
+export default class SelectionSplitButton extends React.Component {
   constructor(props) {
     super(props);
 
@@ -167,8 +167,9 @@ export default class SplitElementButton extends React.Component {
     return (
       <DropdownButton
         as={ButtonGroup}
-        variant="primary"
-        title={<i className="fa fa-code-fork" />}
+        title="Split"
+        variant="light"
+        size="sm"
         disabled={isDisabled}
       >
         <Dropdown.Item

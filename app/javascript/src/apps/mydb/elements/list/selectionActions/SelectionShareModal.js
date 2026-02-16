@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Button, Form, Modal } from 'react-bootstrap';
 import { AsyncSelect } from 'src/components/common/Select';
 
-import SharingShortcuts from 'src/apps/mydb/elements/list/managingActions/SharingShortcuts';
+import SelectionSharingShortcuts from 'src/apps/mydb/elements/list/selectionActions/SelectionSharingShortcuts';
 
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
@@ -14,7 +14,7 @@ import MatrixCheck from 'src/components/common/MatrixCheck';
 import { selectUserOptionFormater } from 'src/utilities/selectHelper';
 import { elementNames, allElnElements } from 'src/apps/generic/Utils';
 
-export default class ManagingModalSharing extends React.Component {
+export default class SelectionShareModal extends React.Component {
 
   constructor(props) {
     super(props);
@@ -214,19 +214,19 @@ export default class ManagingModalSharing extends React.Component {
     let permAndDetLevs = {}
     switch (val) {
       case 'user':
-        permAndDetLevs = SharingShortcuts.user();
+        permAndDetLevs = SelectionSharingShortcuts.user();
         break;
-      case 'partner':
-        permAndDetLevs = SharingShortcuts.partner();
+      case 'Partner':
+        permAndDetLevs = SelectionSharingShortcuts.partner();
         break;
-      case 'collaborator':
-        permAndDetLevs = SharingShortcuts.collaborator();
+      case 'Collaborator':
+        permAndDetLevs = SelectionSharingShortcuts.collaborator();
         break;
-      case 'reviewer':
-        permAndDetLevs = SharingShortcuts.reviewer();
+      case 'Reviewer':
+        permAndDetLevs = SelectionSharingShortcuts.reviewer();
         break;
-      case 'supervisor':
-        permAndDetLevs = SharingShortcuts.supervisor();
+      case 'Supervisor':
+        permAndDetLevs = SelectionSharingShortcuts.supervisor();
         break;
     }
     this.setState({ ...permAndDetLevs, role: val });
@@ -399,7 +399,7 @@ export default class ManagingModalSharing extends React.Component {
   }
 }
 
-ManagingModalSharing.propTypes = {
+SelectionShareModal.propTypes = {
   title: PropTypes.string,
   collectionId: PropTypes.number,
   collAction: PropTypes.string,
@@ -413,7 +413,7 @@ ManagingModalSharing.propTypes = {
   onHide: PropTypes.func.isRequired,
 };
 
-ManagingModalSharing.defaultProps = {
+SelectionShareModal.defaultProps = {
   title: 'Sharing',
   collectionId: null,
   collAction: "Create",
