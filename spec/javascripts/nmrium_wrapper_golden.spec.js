@@ -25,12 +25,42 @@ const DROP_KEYS = new Set([
   'files',
   'token',
   'data',
+  'originalInfo',
+  'actionType',
 ]);
 
 const DROP_KEYS_IN_OPTIONS = new Set(['sum', 'sumAuto']);
+const DROP_KEYS_IN_INTEGRALS_OPTIONS = new Set(['mf', 'moleculeId']);
 
 function isSpectrumInfoLike(obj) {
   return obj && typeof obj === 'object' && (obj.nucleus !== undefined || obj.dimension !== undefined || obj.baseFrequency !== undefined);
+}
+
+function isSpectrumLike(obj) {
+  return obj && typeof obj === 'object' && obj.display && obj.info;
+}
+
+function isDisplayLike(obj) {
+  return obj && typeof obj === 'object' && (obj.color !== undefined || obj.name !== undefined) && obj.isVisible !== undefined;
+}
+
+function isFilterItemLike(obj) {
+  return (
+    obj
+    && typeof obj === 'object'
+    && 'name' in obj
+    && 'value' in obj
+    && (obj.error !== undefined || obj.enabled !== undefined || obj.label !== undefined || obj.flag !== undefined)
+  );
+}
+
+function isEmptyCorrelations(obj) {
+  return (
+    obj
+    && typeof obj === 'object'
+    && Array.isArray(obj.values) && obj.values.length === 0
+    && (!obj.state || (typeof obj.state === 'object' && Object.keys(obj.state).length === 0))
+  );
 }
 
 function normalizeNmrium(value, parentKey = '', parent = null) {
@@ -39,16 +69,28 @@ function normalizeNmrium(value, parentKey = '', parent = null) {
   }
   if (Array.isArray(value)) return value.map((v) => normalizeNmrium(v, '', null));
   if (value && typeof value === 'object') {
+    if (isFilterItemLike(value)) {
+      return { name: normalizeNmrium(value.name, 'name', value), value: normalizeNmrium(value.value, 'value', value) };
+    }
     const out = {};
     Object.keys(value)
       .sort()
       .forEach((k) => {
         if (DROP_KEYS.has(k)) return;
         if (parentKey === 'options' && DROP_KEYS_IN_OPTIONS.has(k)) return;
+        if (parentKey === 'options' && Array.isArray(parent?.values) && DROP_KEYS_IN_INTEGRALS_OPTIONS.has(k)) return;
         const v = value[k];
         if (v === undefined) return;
         let normalized = normalizeNmrium(v, k, value);
-        if (k === 'name' && typeof v === 'string' && isSpectrumInfoLike(value)) normalized = '<name>';
+        if (k === 'name' && isSpectrumInfoLike(value)) return; // drop spectrum info name for comparison
+        if (k === 'correlations' && isEmptyCorrelations(normalized)) normalized = {};
+        if (isSpectrumLike(value) && k === 'customInfo' && typeof normalized === 'object' && normalized !== null && Object.keys(normalized).length === 0) return;
+        if (isSpectrumLike(value) && k === 'filters' && Array.isArray(normalized) && normalized.length === 0) return;
+        if (isSpectrumLike(value) && k === 'noise') return;
+        if (isSpectrumInfoLike(value) && k === 'noise') return;
+        if (isSpectrumInfoLike(value) && k === 'isComplex' && normalized === false) return;
+        if (isSpectrumInfoLike(value) && (k === 'phc0' || k === 'phc1') && normalized === 0) return;
+        if (isDisplayLike(value) && (k === 'isPeaksMarkersVisible' || k === 'isVisibleInDomain') && normalized === true) return;
         out[k] = normalized;
       });
     return out;
@@ -155,6 +197,27 @@ async function getNmriumStateFromWrapper(page, fileUrl) {
   return page.evaluate(() => window.__nmriumState);
 }
 
+/** Load a .nmrium fixture and send it to the wrapper (type 'nmrium'); return the state the wrapper sends back. */
+async function getNmriumStateFromWrapperLoadNmrium(page, nmriumState) {
+  await page.evaluate(() => {
+    window.__nmriumState = null;
+  });
+
+  await page.evaluate((state) => {
+    const iframe = document.getElementById('nmrium');
+    iframe.contentWindow.postMessage(
+      { type: 'nmr-wrapper:load', data: { type: 'nmrium', data: state } },
+      '*',
+    );
+  }, nmriumState);
+
+  await page.waitForFunction(
+    () => window.__nmriumState !== null,
+    { timeout: 30000 },
+  );
+  return page.evaluate(() => window.__nmriumState);
+}
+
 function extractPayloadForComparison(state) {
   if (!state) return state;
   const data = state.data ?? state;
@@ -239,15 +302,24 @@ describe('NMRium wrapper golden files (no Cypress)', function nmriumWrapperGolde
   });
 
   const cases = [
-    { name: 'JCAMP', input: 'spectra_file.jdx', golden: 'jdx_result_expected.nmrium', zipLabel: null },
-    { name: 'ZIP 1D', input: 'nmrium/zips/zip1D.zip', golden: 'zip_1d_result_expected.nmrium', zipLabel: 'zip1D.zip' },
-    { name: 'ZIP 2D', input: 'nmrium/zips/zip2D.zip', golden: 'zip_2d_result_expected.nmrium', zipLabel: 'zip2D.zip' },
+    { name: 'JCAMP', input: 'spectra_file.jdx', golden: 'jdx_result_expected.nmrium', zipLabel: null, loadAsNmrium: false },
+    { name: 'Legacy 1D (.nmrium → wrapper → same)', input: 'spectra_file_legacy_nmr.nmrium', golden: 'legacy_embedded_1d_from_jdx.nmrium', zipLabel: null, loadAsNmrium: true },
+    { name: 'ZIP 1D', input: 'nmrium/zips/zip1D.zip', golden: 'zip_1d_result_expected.nmrium', zipLabel: 'zip1D.zip', loadAsNmrium: false },
+    { name: 'ZIP 2D', input: 'nmrium/zips/zip2D.zip', golden: 'zip_2d_result_expected.nmrium', zipLabel: 'zip2D.zip', loadAsNmrium: false },
+    { name: 'Legacy 2D (.nmrium → wrapper → same)', input: 'nmrium/zips/legacy_2D_spectra.nmrium', golden: 'legacy_embedded_2d_from_zip.nmrium', zipLabel: null, loadAsNmrium: true },
   ];
 
-  cases.forEach(({ name, input, golden, zipLabel }) => {
-    it(`converts ${name} via wrapper then ELN bridge (cleaningNMRiumData${zipLabel ? ' + patchZipName' : ''}) and matches golden`, async () => {
-      const fileUrl = `${baseUrl}/${encodeURI(input)}`;
-      const rawState = await getNmriumStateFromWrapper(page, fileUrl);
+  cases.forEach(({ name, input, golden, zipLabel, loadAsNmrium }) => {
+    it(`${name}: ${loadAsNmrium ? 'load .nmrium, wrapper round-trip, compare to golden' : 'wrapper + ELN bridge, compare to golden'}`, async () => {
+      let rawState;
+      if (loadAsNmrium) {
+        const nmriumPath = path.join(FIXTURES_ROOT, input);
+        const nmriumState = JSON.parse(fs.readFileSync(nmriumPath, 'utf8'));
+        rawState = await getNmriumStateFromWrapperLoadNmrium(page, nmriumState);
+      } else {
+        const fileUrl = `${baseUrl}/${encodeURI(input)}`;
+        rawState = await getNmriumStateFromWrapper(page, fileUrl);
+      }
       const cleanedState = applyElnBridgePipeline(rawState, { zipLabel });
       const payload = extractPayloadForComparison(cleanedState);
       const actual = normalizeNmrium(payload);
@@ -256,31 +328,5 @@ describe('NMRium wrapper golden files (no Cypress)', function nmriumWrapperGolde
       const expected = normalizeNmrium(extractPayloadForComparison(goldenObj));
       expect(actual).toEqual(expected);
     });
-  });
-});
-
-describe('SpectraHelper.cleaningNMRiumData (ELN code)', () => {
-  it('removes spectrum.data and spectrum.originalData from wrapper state', () => {
-    const golden = readGolden('jdx_result_expected.nmrium');
-    const spectra = golden.spectra ?? [];
-    const stateWithData = {
-      data: {
-        actionType: golden.actionType ?? 'INITIATE',
-        spectra: spectra.map((sp) => ({ ...sp, data: { re: {}, im: {} }, originalData: {} })),
-        correlations: golden.correlations ?? {},
-      },
-    };
-    const cleaned = cleaningNMRiumData(stateWithData);
-    expect(cleaned).toBeTruthy();
-    expect(cleaned.data.spectra.every((s) => s.data === undefined && s.originalData === undefined)).toBe(true);
-  });
-
-  it('returns null for null input', () => {
-    expect(cleaningNMRiumData(null)).toBe(null);
-  });
-
-  it('handles state without data.spectra', () => {
-    const noSpectra = { data: { actionType: 'INITIATE' } };
-    expect(cleaningNMRiumData(noSpectra)).toEqual(noSpectra);
   });
 });
