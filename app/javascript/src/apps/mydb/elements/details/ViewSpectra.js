@@ -118,10 +118,12 @@ class ViewSpectra extends React.Component {
 
   onDSSelectChange(e) {
     const { value } = e;
-    const { spcInfos } = this.state;
+    const { spcInfos, spcMetas } = this.state;
     const sis = spcInfos.filter(x => x.idDt === value);
-    const si = sis.length > 0 ? sis[0] : spcInfos[0];
-    SpectraActions.SelectIdx(si.idx, []);
+    const availableIdxs = new Set(spcMetas.map((spc) => spc.idx));
+    const datasetIdxs = sis.map((info) => info.idx).filter((idx) => availableIdxs.has(idx));
+    const nextIdx = datasetIdxs[0] || spcMetas[0]?.idx || 0;
+    SpectraActions.SelectIdx(nextIdx, datasetIdxs);
   }
 
   getDSList() {
@@ -174,9 +176,19 @@ class ViewSpectra extends React.Component {
           listEntityFiles.push(entity);
         }
       }
+      console.log('[Spectra] selected spectra', {
+        datasetId: this.getSpcInfo()?.idDt,
+        spectrumIds: arrSpcIdx,
+        spectrumLabels: listEntityFiles.map((entity) => entity?.label).filter(Boolean),
+      });
       return { listMuliSpcs: listMuliSpcs, listEntityFiles: listEntityFiles };
     } else {
       const sm = spcMetas.filter(x => x.idx === spcIdx)[0];
+      console.log('[Spectra] selected spectrum', {
+        datasetId: this.getSpcInfo()?.idDt,
+        spectrumId: spcIdx,
+        spectrumLabel: spcInfos.find((info) => info.idx === spcIdx)?.label,
+      });
       return sm || spcMetas[0] || { jcamp: null, predictions: null };
     }
   }
@@ -201,7 +213,13 @@ class ViewSpectra extends React.Component {
     }
 
     if (arrSpcIdx.length > 0) {
-      const uvvisPeakFile = spcInfos.find(info => info.label && info.label.match(/_uvvis\.peak\.jdx$/i));
+      const selectedInfo = spcInfos.find((info) => info.idx === selectedIdx) || spcInfos[0];
+      const currentDatasetId = selectedInfo?.idDt;
+      const uvvisPeakFile = spcInfos.find((info) => (
+        info.idDt === currentDatasetId &&
+        info.label &&
+        info.label.match(/_uvvis\.peak\.jdx$/i)
+      ));
       if (uvvisPeakFile && curveIdx === 0) {
         selectedIdx = uvvisPeakFile.idx;
       }
@@ -565,6 +583,23 @@ class ViewSpectra extends React.Component {
       integrationStr = JSON.stringify(selectedIntegration);
     }
 
+    const isLcMs = layout === FN.LIST_LAYOUT.LC_MS;
+    const lcmsPeaksStr = isLcMs && Array.isArray(payload.lcms_peaks)
+      ? JSON.stringify(payload.lcms_peaks)
+      : undefined;
+    const lcmsIntegralsStr = isLcMs && Array.isArray(payload.lcms_integrals)
+      ? JSON.stringify(payload.lcms_integrals)
+      : undefined;
+    const lcmsUvvisWavelength = isLcMs && payload.lcms_uvvis_wavelength != null
+      ? JSON.stringify(payload.lcms_uvvis_wavelength)
+      : undefined;
+    const lcmsTic = isLcMs && (payload.lcms_mz_page_data != null || payload.lcms_tic != null)
+      ? JSON.stringify(payload.lcms_mz_page_data ?? payload.lcms_tic)
+      : undefined;
+    const lcmsMzPage = isLcMs && payload.lcms_mz_page != null
+      ? JSON.stringify(payload.lcms_mz_page)
+      : undefined;
+
     return {
       peaksStr,
       predict: JSON.stringify(rmRefreshed(payload.analysis)),
@@ -576,6 +611,11 @@ class ViewSpectra extends React.Component {
       selectedShift,
       integrationStr,
       multiplicityStr: JSON.stringify(selectedMultiplicity),
+      lcmsPeaksStr,
+      lcmsIntegralsStr,
+      lcmsUvvisWavelength,
+      lcmsTic,
+      lcmsMzPage,
     };
   }
 
@@ -908,6 +948,8 @@ class ViewSpectra extends React.Component {
 
   renderSpectraEditor(jcamp, predictions, listMuliSpcs, listEntityFiles) {
     const { sample } = this.props;
+    const spcInfo = this.getSpcInfo();
+    const datasetKey = spcInfo?.idDt ?? 'unknown';
     const {
       entity, isExist,
     } = FN.buildData(jcamp);
@@ -944,6 +986,7 @@ class ViewSpectra extends React.Component {
       ? this.renderInvalid()
       : (
       <SpectraEditor
+        key={`dataset-${datasetKey}`}
         entity={currEntity}
         multiEntities={multiEntities}
         entityFileNames={entityFileNames}
@@ -961,10 +1004,12 @@ class ViewSpectra extends React.Component {
   }
 
   renderTitle(idx) {
-    const { spcInfos, arrSpcIdx } = this.state;
+    const { spcInfos, arrSpcIdx, spcMetas } = this.state;
     const si = this.getSpcInfo();
     if (!si) return null;
     const modalTitle = si ? `Spectra Editor - ${si.title}` : '';
+    const currentSpc = spcMetas.find((x) => x.idx === idx) || spcMetas[0];
+    const isLcmsLayout = currentSpc?.jcamp?.layout === FN.LIST_LAYOUT.LC_MS;
     const options = spcInfos.filter((x) => x.idDt === si.idDt)
       .map((x) => ({ value: x.idx, label: x.label }));
     // const onSelectChange = e => SpectraActions.SelectIdx(e.value);
@@ -979,6 +1024,10 @@ class ViewSpectra extends React.Component {
     };
     const dses = this.getDSList();
     const dsOptions = dses.map((x) => ({ value: x.id, label: x.name }));
+    console.log('[Spectra] dataset select state', {
+      currentDatasetId: si.idDt,
+      selectedSpectrumIds: arrSpcIdx.length > 0 ? arrSpcIdx : [idx],
+    });
 
     const treePopupContainer = createRef();
 
@@ -1004,6 +1053,7 @@ class ViewSpectra extends React.Component {
             treeData={options}
             value={isShowMultiSelect ? arrSpcIdx : idx}
             treeCheckable={isShowMultiSelect}
+            disabled={isLcmsLayout}
             style={{ width: 500 }}
             maxTagCount={1}
             onChange={onSelectChange}

@@ -188,28 +188,26 @@ module Chemotion
         file_path_or_paths, mol_path, is_regen = false, params = {}
       )
         rsp = stub_http(file_path_or_paths, mol_path, is_regen, params)
-        begin
-          json_rsp = JSON.parse(rsp.to_s)
-        rescue
-          #cannot parse response from json, return as normal
+        extra_info_json = rsp.headers['x-extra-info-json']
+        if extra_info_json.present?
           rsp_io = StringIO.new(rsp.body.to_s)
-          spc_type = JSON.parse(rsp.headers['x-extra-info-json'])['spc_type']
-          invalid_molfile = JSON.parse(rsp.headers['x-extra-info-json'])['invalid_molfile']
+          extra_info = JSON.parse(extra_info_json)
           extracted_array = Util.extract_zip(rsp_io)
-          extracted_array << spc_type
-          extracted_array << invalid_molfile
-        else
-          if json_rsp['invalid_molfile'] == true
-            [json_rsp, nil, nil]
-          else
-            rsp_io = StringIO.new(rsp.body.to_s)
-            spc_type = JSON.parse(rsp.headers['x-extra-info-json'])['spc_type']
-            invalid_molfile = JSON.parse(rsp.headers['x-extra-info-json'])['invalid_molfile']
-            extracted_array = Util.extract_zip(rsp_io)
-            extracted_array << spc_type
-            extracted_array << invalid_molfile
-          end
+          extracted_array << extra_info['spc_type']
+          extracted_array << extra_info['invalid_molfile']
+          return extracted_array
         end
+
+        begin
+          json_rsp = JSON.parse(rsp.body.to_s)
+        rescue JSON::ParserError
+          raise StandardError, 'Chemspectra response missing metadata header'
+        end
+
+        message = if json_rsp.is_a?(Hash)
+                    json_rsp['error'] || json_rsp['message']
+                  end
+        raise StandardError, (message.present? ? message : 'Chemspectra response missing metadata header')
       end
     end
   end

@@ -96,22 +96,32 @@ class SpectraStore {
       return sortedSpcIdxs.indexOf(a.idx) - sortedSpcIdxs.indexOf(b.idx);
     });
     let newArrSpcIdx = [];
+    let nextSpcIdx = spcMetas[0]?.idx || 0;
     if (spcMetas.length >= 1) {
-      const spcInfoWithLabel = sortedSpcInfo.find(
+      const currentInfo = sortedSpcInfo.find((info) => info.idx === spcMetas[0].idx);
+      const currentDatasetId = currentInfo?.idDt;
+      const datasetSpcInfos = currentDatasetId
+        ? sortedSpcInfo.filter((info) => info.idDt === currentDatasetId)
+        : sortedSpcInfo;
+      const datasetIdxs = datasetSpcInfos.map((info) => info.idx);
+      const datasetSpcMetas = spcMetas.filter((spc) => datasetIdxs.includes(spc.idx));
+      const spcInfoWithLabel = datasetSpcInfos.find(
         info => typeof info.label === "string" && info.label.toLowerCase().includes('processed')
       );
       if (spcInfoWithLabel) {
         newArrSpcIdx = [spcInfoWithLabel.idx];
+        nextSpcIdx = spcInfoWithLabel.idx;
       } else {
-        newArrSpcIdx = spcMetas.map(spc => spc.idx);
+        newArrSpcIdx = datasetSpcMetas.map((spc) => spc.idx);
+        nextSpcIdx = datasetSpcMetas[0]?.idx || nextSpcIdx;
       }
     }
-    
+
     this.setState({
       spcInfos: sortedSpcInfo,
       spcMetas,
       fetched: true,
-      spcIdx: (spcMetas[0].idx || 0),
+      spcIdx: nextSpcIdx,
       others: [],
       arrSpcIdx: newArrSpcIdx,
     });

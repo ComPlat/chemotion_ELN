@@ -439,6 +439,7 @@ module AttachmentJcampProcess
     set_failure if may_set_failure?
     Rails.logger.info('**** Jcamp Peaks Generation fails ***')
     Rails.logger.error(e)
+    nil
   end
 
   def file_match(attachments, num)
