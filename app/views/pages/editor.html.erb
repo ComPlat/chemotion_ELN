@@ -3,10 +3,10 @@
   </div>
 </div>
 
-<script src="<%= Rails.configuration.editors.docserver_api %>"></script>
+<script src="<%= Rails.configuration.editors.docserver_api %>" nonce="<%= content_security_policy_nonce %>"></script>
 
 
-<script type="text/javascript" language="javascript">
+<script type="text/javascript" language="javascript" nonce="<%= content_security_policy_nonce %>">
 
     var docEditor;
 
