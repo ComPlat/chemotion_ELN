@@ -8,7 +8,7 @@ import UserActions from 'src/stores/alt/actions/UserActions';
 import Search from 'src/components/navigation/search/Search';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import SplitElementButton from 'src/components/contextActions/SplitElementButton';
-import ManagingActions from 'src/components/managingActions/ManagingActions';
+import ManagingActions from 'src/apps/mydb/elements/list/managingActions/ManagingActions';
 import GeneratePDFButton from 'src/components/contextActions/GeneratePDFButton';
 import ExportButton from 'src/components/contextActions/ExportButton';
 import ReportUtilButton from 'src/components/contextActions/ReportUtilButton';

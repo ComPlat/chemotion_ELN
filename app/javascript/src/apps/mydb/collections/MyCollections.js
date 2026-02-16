@@ -1,7 +1,7 @@
 import React from 'react';
 import Tree from 'react-ui-tree';
 import { Button, ButtonGroup, Form } from 'react-bootstrap';
-import ManagingModalSharing from 'src/components/managingActions/ManagingModalSharing';
+import ManagingModalSharing from 'src/apps/mydb/elements/list/managingActions/ManagingModalSharing';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import SyncedCollectionsUsersModal from 'src/apps/mydb/collections/SyncedCollectionsUsersModal';

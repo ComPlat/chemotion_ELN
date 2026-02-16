@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Button, Form, Modal } from 'react-bootstrap';
 import { AsyncSelect } from 'src/components/common/Select';
 
-import SharingShortcuts from 'src/components/managingActions/SharingShortcuts';
+import SharingShortcuts from 'src/apps/mydb/elements/list/managingActions/SharingShortcuts';
 
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import UserActions from 'src/stores/alt/actions/UserActions';

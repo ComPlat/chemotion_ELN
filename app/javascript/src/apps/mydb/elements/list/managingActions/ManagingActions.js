@@ -5,10 +5,10 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import PermissionStore from 'src/stores/alt/stores/PermissionStore';
 import PermissionActions from 'src/stores/alt/actions/PermissionActions';
-import ManagingModalSharing from 'src/components/managingActions/ManagingModalSharing';
-import ManagingModalCollectionActions from 'src/components/managingActions/ManagingModalCollectionActions';
-import ManagingModalDelete from 'src/components/managingActions/ManagingModalDelete';
-import ManagingModalRemove from 'src/components/managingActions/ManagingModalRemove';
+import ManagingModalSharing from 'src/apps/mydb/elements/list/managingActions/ManagingModalSharing';
+import ManagingModalCollectionActions from 'src/apps/mydb/elements/list/managingActions/ManagingModalCollectionActions';
+import ManagingModalDelete from 'src/apps/mydb/elements/list/managingActions/ManagingModalDelete';
+import ManagingModalRemove from 'src/apps/mydb/elements/list/managingActions/ManagingModalRemove';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import { elementNames } from 'src/apps/generic/Utils';
 
