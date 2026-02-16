@@ -421,6 +421,7 @@ class ViewSpectra extends React.Component {
     const waveLength = spectrum.waveLength ?? params.waveLength;
     const body = spectrum.body ?? params.body;
     const cyclicvoltaSt = spectrum.cyclicvoltaSt ?? params.cyclicvoltaSt;
+    const lcms_peaks_text = spectrum.lcms_peaks_text ?? params.lcms_peaks_text;
 
     // Construct arrays indexed by curveIdx for formatPks/formatMpy compatibility
     const shifts = [];
@@ -441,14 +442,15 @@ class ViewSpectra extends React.Component {
     return {
       peaks, shift, layout, isAscend, decimal, body,
       isIntensity, multiplicity, integration, cyclicvoltaSt, curveSt, waveLength,
+      lcms_peaks_text,
     };
   }
 
   writeCommon(params, isMpy = false) {
     const {
       peaks, shift, layout, isAscend, decimal, body,
-      isIntensity, multiplicity, integration, cyclicvoltaSt, curveSt, waveLength
-    lcms_uvvis_wavelength, lcms_tic, lcms_mz_page,
+      isIntensity, multiplicity, integration, cyclicvoltaSt, curveSt, waveLength,
+      lcms_peaks_text,
     } = this.resolveWriteParams(params);
 
     const { sample, handleSampleChanged } = this.props;
@@ -456,7 +458,28 @@ class ViewSpectra extends React.Component {
     if (!si) return;
 
     let ops = [];
-    if (['1H', '13C', '15N', '19F', '29Si', '31P'].includes(layout) && isMpy) {
+    if (layout === FN.LIST_LAYOUT.LC_MS) {
+      const lcmsBody = (lcms_peaks_text || '').trim().replace(/\.\s*$/, '');
+      if (lcmsBody) {
+        ops = [
+          { insert: lcmsBody },
+          { insert: '. ' },
+        ];
+      } else {
+        ops = this.formatPks({
+          peaks,
+          shift,
+          layout,
+          isAscend,
+          decimal,
+          body,
+          isIntensity,
+          integration,
+          curveSt,
+          waveLength
+        });
+      }
+    } else if (['1H', '13C', '15N', '19F', '29Si', '31P'].includes(layout) && isMpy) {
       ops = this.formatMpy({
         multiplicity, integration, shift, isAscend, decimal, layout, curveSt
       });
