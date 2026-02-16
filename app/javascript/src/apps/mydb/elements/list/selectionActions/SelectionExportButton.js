@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Dropdown, ButtonGroup } from 'react-bootstrap';
+import { Dropdown } from 'react-bootstrap';
 
 import ModalExport from 'src/components/contextActions/export/ModalExport';
 import ModalReactionExport from 'src/components/contextActions/export/ModalReactionExport';
@@ -18,9 +18,10 @@ function SelectionExportButton() {
 
   return (
     <>
-      <Dropdown as={ButtonGroup} id="export-dropdown">
+      <Dropdown id="export-dropdown">
         <Dropdown.Toggle variant="light" size="sm">
-          Export
+          <i className="icon-arrow-up-from-bracket me-1" />
+          <span className="selection-action-text-label">Export</span>
         </Dropdown.Toggle>
         <Dropdown.Menu>
           <Dropdown.Item

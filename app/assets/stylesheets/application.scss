@@ -8,7 +8,7 @@
  *= require_self
  */
 
- // file css rules that are used by multiple components under global-styles/utilities
+// file css rules that are used by multiple components under global-styles/utilities
 @import "global-styles/chemstrap-tokens";
 @import "global-styles/bootstrap-config";
 @import "global-styles/bootstrap-mods";
@@ -42,6 +42,7 @@
 @import "components/SampleName";
 @import "components/SearchModal";
 @import "components/SearchResult";
+@import "components/SelectionActions";
 @import "components/Sidebar_Topbar";
 @import "components/TabLayoutEditor";
 @import "components/CollectionTabLayoutEditor";

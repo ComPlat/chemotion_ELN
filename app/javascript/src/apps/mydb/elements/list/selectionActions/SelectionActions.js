@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dropdown, DropdownButton, Button, ButtonGroup, Modal } from 'react-bootstrap';
+import { Dropdown, Button, Modal } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
@@ -175,53 +175,59 @@ export default class SelectionActions extends React.Component {
     const shareDisabled = noSel || !sharing_allowed;
 
     return (
-      <div className="d-flex align-items-center gap-1 mb-3">
+      <div className="selection-actions d-flex align-items-center gap-1 mb-3">
         <SelectionGenerateButton />
         <SelectionExportButton />
         <SelectionSplitButton />
-        <DropdownButton
-          as={ButtonGroup}
-          title="Transfer"
-          variant="light"
-          size="sm"
-          id="move-or-assign-btn"
-          disabled={assignDisabled && moveDisabled}
-        >
-          <Dropdown.Item
-            onClick={() => this.showModal('move')}
-            disabled={moveDisabled}
+        <Dropdown id="move-or-assign-btn">
+          <Dropdown.Toggle 
+            variant="light"
+            size="sm"
+            disabled={assignDisabled && moveDisabled}
           >
-            Move to Collection
-          </Dropdown.Item>
-          <Dropdown.Item
-            onClick={() => this.showModal('assign')}
-            disabled={assignDisabled}
-          >
-            Assign to Collection
-          </Dropdown.Item>
-        </DropdownButton>
+            <i className="fa fa-exchange me-1" />
+            <span className="selection-action-text-label">Transfer</span>
+          </Dropdown.Toggle>
+          <Dropdown.Menu>
+            <Dropdown.Item
+              onClick={() => this.showModal('move')}
+              disabled={moveDisabled}
+            >
+              Move to Collection
+            </Dropdown.Item>
+            <Dropdown.Item
+              onClick={() => this.showModal('assign')}
+              disabled={assignDisabled}
+            >
+              Assign to Collection
+            </Dropdown.Item>
+          </Dropdown.Menu>
+        </Dropdown>
 
-        <DropdownButton
-          as={ButtonGroup}
-          title="Remove"
-          variant="light"
-          size="sm"
-          id="remove-or-delete-btn"
-          disabled={removeDisabled && deleteDisabled}
-        >
-          <Dropdown.Item
-            onClick={() => this.showModal('remove')}
-            disabled={removeDisabled}
+        <Dropdown id="remove-or-delete-btn">
+          <Dropdown.Toggle 
+            variant="light"
+            size="sm"
+            disabled={removeDisabled && deleteDisabled}
           >
-            Remove from current Collection
-          </Dropdown.Item>
-          <Dropdown.Item
-            onClick={() => this.showModal('delete')}
-            disabled={deleteDisabled}
-          >
-            Remove from all Collections
-          </Dropdown.Item>
-        </DropdownButton>
+            <i className="fa fa-times-circle-o me-1" />
+            <span className="selection-action-text-label">Remove</span>
+          </Dropdown.Toggle>
+          <Dropdown.Menu>
+            <Dropdown.Item
+              onClick={() => this.showModal('remove')}
+              disabled={removeDisabled}
+            >
+              Remove from current Collection
+            </Dropdown.Item>
+            <Dropdown.Item
+              onClick={() => this.showModal('delete')}
+              disabled={deleteDisabled}
+            >
+              Remove from all Collections
+            </Dropdown.Item>
+          </Dropdown.Menu>
+        </Dropdown>
         <Button
           variant="light"
           size="sm"
@@ -229,7 +235,8 @@ export default class SelectionActions extends React.Component {
           disabled={shareDisabled}
           onClick={() => this.showModal('share')}
         >
-          Share
+          <i className="fa fa-share-alt me-1" />
+          <span className="selection-action-text-label">Share</span>
         </Button>
 
         {this.renderModal()}

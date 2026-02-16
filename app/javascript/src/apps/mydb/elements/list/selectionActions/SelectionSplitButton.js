@@ -1,6 +1,6 @@
 /* eslint-disable class-methods-use-this */
 import React from 'react';
-import { Dropdown, DropdownButton, ButtonGroup } from 'react-bootstrap';
+import { Dropdown } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -165,56 +165,60 @@ export default class SelectionSplitButton extends React.Component {
       || Object.values(selectedElements).every((v) => !v);
 
     return (
-      <DropdownButton
-        as={ButtonGroup}
-        title="Split"
-        variant="light"
-        size="sm"
-        disabled={isDisabled}
-      >
-        <Dropdown.Item
-          onClick={() => this.splitSelectionAsSubsamples()}
-          disabled={!selectedElements.sample}
+      <Dropdown id="split-dropdown">
+        <Dropdown.Toggle 
+          variant="light"
+          size="sm"
+          disabled={isDisabled}
         >
-          Split Sample
-        </Dropdown.Item>
-        <Dropdown.Item
-          onClick={() => this.splitSelectionAsSubwellplates()}
-          disabled={!selectedElements.wellplate}
-        >
-          Split Wellplate
-        </Dropdown.Item>
-        <Dropdown.Item
-          onClick={() => ElementActions.splitAsSubCellLines(UIStore.getState())}
-          disabled={!selectedElements.cell_line}
-        >
-          Split Cell line
-        </Dropdown.Item>
-        <Dropdown.Item
-          onClick={() => this.splitSelectionAsSubDeviceDescription()}
-          disabled={!selectedElements.device_description}
-        >
-          Split Device Description
-        </Dropdown.Item>
-        <Dropdown.Item
-          onClick={() => this.splitSelectionAsSubSequenceBasedMacromoleculeSample()}
-          disabled={!selectedElements.sequence_based_macromolecule_sample}
-        >
-          Split Sequence Based Macromolecule Sample
-        </Dropdown.Item>
-        {sortedGenericEls.map((el) => (
+          <i className="fa fa-code-fork me-1" />
+          <span className="selection-action-text-label">Split</span>
+        </Dropdown.Toggle>
+        <Dropdown.Menu>
           <Dropdown.Item
-            id={`split-${el.name}-button`}
-            key={el.name}
-            onClick={() => this.splitElements(`${el.name}`)}
-            disabled={!selectedElements[el.name]}
+            onClick={() => this.splitSelectionAsSubsamples()}
+            disabled={!selectedElements.sample}
           >
-            Split
-            {' '}
-            {el.label}
+            Split Sample
           </Dropdown.Item>
-        ))}
-      </DropdownButton>
+          <Dropdown.Item
+            onClick={() => this.splitSelectionAsSubwellplates()}
+            disabled={!selectedElements.wellplate}
+          >
+            Split Wellplate
+          </Dropdown.Item>
+          <Dropdown.Item
+            onClick={() => ElementActions.splitAsSubCellLines(UIStore.getState())}
+            disabled={!selectedElements.cell_line}
+          >
+            Split Cell line
+          </Dropdown.Item>
+          <Dropdown.Item
+            onClick={() => this.splitSelectionAsSubDeviceDescription()}
+            disabled={!selectedElements.device_description}
+          >
+            Split Device Description
+          </Dropdown.Item>
+          <Dropdown.Item
+            onClick={() => this.splitSelectionAsSubSequenceBasedMacromoleculeSample()}
+            disabled={!selectedElements.sequence_based_macromolecule_sample}
+          >
+            Split Sequence Based Macromolecule Sample
+          </Dropdown.Item>
+          {sortedGenericEls.map((el) => (
+            <Dropdown.Item
+              id={`split-${el.name}-button`}
+              key={el.name}
+              onClick={() => this.splitElements(`${el.name}`)}
+              disabled={!selectedElements[el.name]}
+            >
+              Split
+              {' '}
+              {el.label}
+            </Dropdown.Item>
+          ))}
+        </Dropdown.Menu>
+      </Dropdown>
     );
   }
 }
