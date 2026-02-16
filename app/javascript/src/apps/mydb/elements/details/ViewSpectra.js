@@ -430,6 +430,7 @@ class ViewSpectra extends React.Component {
     const {
       peaks, shift, layout, isAscend, decimal, body,
       isIntensity, multiplicity, integration, cyclicvoltaSt, curveSt, waveLength
+    lcms_uvvis_wavelength, lcms_tic, lcms_mz_page,
     } = this.resolveWriteParams(params);
 
     const { sample, handleSampleChanged } = this.props;
@@ -605,6 +606,11 @@ class ViewSpectra extends React.Component {
         serialized.axesUnitsStr,
         serialized.detector,
         serialized.dscMetaDataStr,
+        serialized.lcmsPeaksStr,
+        serialized.lcmsIntegralsStr,
+        serialized.lcmsUvvisWavelength,
+        serialized.lcmsTic,
+        serialized.lcmsMzPage,
         (fetchedFiles, _spcInfo, errorMessage) => {
           const newIds = (fetchedFiles?.files || []).map((file) => file.id).filter(Boolean);
           resolve({ oldId: target.si.idx, newIds, errorMessage });

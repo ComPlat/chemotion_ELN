@@ -340,13 +340,15 @@ module AttachmentJcampProcess
 
   def edit_process(is_regen, orig_params)
     params = build_params(orig_params)
-    tmp_jcamp, tmp_img, _, _, arr_csv, arr_nmrium, spc_type, invalid_molfile = generate_spectrum_data(params, is_regen)
+    tmp_jcamp, tmp_img, arr_jcamp, _arr_img, arr_csv, arr_nmrium, spc_type, invalid_molfile = generate_spectrum_data(params, is_regen)
 
     check_invalid_molfile(invalid_molfile)
 
+    tmp_jcamp ||= arr_jcamp&.first
     jcamp_att = generate_jcamp_att(tmp_jcamp, 'edit', true)
-    jcamp_att.update_prediction(params, spc_type, is_regen)
-    img_att = generate_img_att(tmp_img, 'edit', true)
+    new_jcamp_created = !jcamp_att.nil?
+    jcamp_att.update_prediction(params, spc_type, is_regen) if jcamp_att
+    img_att = generate_img_att(tmp_img, 'edit', true) if tmp_img
 
     tmp_files_to_be_deleted = [tmp_jcamp, tmp_img]
 
@@ -367,9 +369,9 @@ module AttachmentJcampProcess
 
     set_backup
     delete_tmps(tmp_files_to_be_deleted)
-    delete_related_imgs(img_att)
-    delete_related_edit_peak(jcamp_att)
-    jcamp_att
+    delete_related_imgs(img_att) if img_att
+    delete_related_edit_peak(jcamp_att) if new_jcamp_created
+    jcamp_att || self
   end
 
   def check_invalid_molfile(invalid_molfile = false)
@@ -393,10 +395,40 @@ module AttachmentJcampProcess
         t_molfile.write(attachable.root_element.molecule.molfile)
         t_molfile.rewind
       end
+      file_paths = lcms_related_file_paths || abs_path
       Chemotion::Jcamp::Create.spectrum(
-        abs_path, t_molfile.path, is_regen, params
+        file_paths, t_molfile.path, is_regen, params
       )
     end
+  end
+
+  def lcms_related_file_paths
+    filename_lower = filename.to_s.downcase
+    return nil unless filename_lower.match?(/\.(jdx|dx|jcamp)\z/)
+    return nil unless filename_lower.match?(/(?:^|[._-])uvvis(?:[._-]|$)/)
+
+    base_scope = Attachment.where(attachable_id: attachable_id)
+    if respond_to?(:attachable_type) && attachable_type.present?
+      base_scope = base_scope.where(attachable_type: attachable_type)
+    end
+    sibs = base_scope.where.not(id: id)
+
+    tics = sibs.select do |a|
+      name = a.filename.to_s.downcase
+      name.match?(/\.(jdx|dx|jcamp)\z/) && name.match?(/(?:^|[._-])tic(?:[._-]|$)/)
+    end
+
+    mzs = sibs.select do |a|
+      name = a.filename.to_s.downcase
+      name.match?(/\.(jdx|dx|jcamp)\z/) && name.match?(/(?:^|[._-])(mz|ms)(?:[._-]|$)/)
+    end
+
+    return nil if tics.empty? || mzs.empty?
+
+    file_paths = ([abs_path] + tics.map(&:abs_path) + mzs.map(&:abs_path)).compact.uniq
+    return nil if file_paths.size < 3
+
+    file_paths
   end
 
   def generate_spectrum(is_create = false, is_regen = false, params = {})
@@ -404,7 +436,7 @@ module AttachmentJcampProcess
 
     is_create ? create_process(is_regen) : edit_process(is_regen, params)
   rescue StandardError => e
-    set_failure
+    set_failure if may_set_failure?
     Rails.logger.info('**** Jcamp Peaks Generation fails ***')
     Rails.logger.error(e)
   end

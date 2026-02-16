@@ -595,7 +595,12 @@ export default class AttachmentFetcher {
     isSaveCombined,
     axesUnitsStr,
     detector,
-    dscMetaData
+    dscMetaData,
+    lcmsPeaksStr,
+    lcmsIntegralsStr,
+    lcmsUvvisWavelength,
+    lcmsTic,
+    lcmsMzPage
   ) {
     const params = {
       attachmentId: attId,
@@ -615,7 +620,12 @@ export default class AttachmentFetcher {
       simulatenmr,
       axesUnits: axesUnitsStr,
       detector,
-      dscMetaData
+      dscMetaData,
+      lcmsPeaksStr,
+      lcmsIntegralsStr,
+      lcmsUvvisWavelength,
+      lcmsTic,
+      lcmsMzPage
     };
 
     const promise = fetch('/api/v1/attachments/save_spectrum/', {
@@ -627,7 +637,20 @@ export default class AttachmentFetcher {
       },
       body: JSON.stringify(decamelizeKeys(params)),
     })
-      .then((response) => response.json())
+      .then((response) => {
+        if (!response.ok) {
+          return response.text().then((text) => {
+            throw new Error(`save_spectrum ${response.status}: ${text.slice(0, 200)}`);
+          });
+        }
+        const contentType = response.headers.get('Content-Type') || '';
+        if (!contentType.includes('application/json')) {
+          return response.text().then((text) => {
+            throw new Error(`save_spectrum: expected JSON, got ${contentType.slice(0, 50)} - ${text.slice(0, 200)}`);
+          });
+        }
+        return response.json();
+      })
       .then((json) => {
         if (!isSaveCombined) {
           return json;
