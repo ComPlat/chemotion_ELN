@@ -146,7 +146,7 @@
     "webpack-dev-server": "5"
   },
   "resolutions": {
-    "@complat/react-spectra-editor": "github:ComPlat/react-spectra-editor#58999259c7f8b05493913a3260422131c970ccbb"
+    "@complat/react-spectra-editor": "github:ComPlat/react-spectra-editor#55dfc6588b41359723ddd85d0189c57ffac9f3ff"
   },
   "scripts": {
     "postinstall": "./package_postinstall.sh",
