@@ -4,7 +4,7 @@ import { Dropdown, ButtonGroup } from 'react-bootstrap';
 import ModalExport from 'src/components/contextActions/export/ModalExport';
 import ModalReactionExport from 'src/components/contextActions/export/ModalReactionExport';
 
-function ExportButton() {
+function SelectionExportButton() {
   const [modal, showModal] = useState(null);
   const hideModal = () => showModal(null);
 
@@ -19,8 +19,8 @@ function ExportButton() {
   return (
     <>
       <Dropdown as={ButtonGroup} id="export-dropdown">
-        <Dropdown.Toggle variant="light">
-          <i className="fa fa-upload" />
+        <Dropdown.Toggle variant="light" size="sm">
+          Export
         </Dropdown.Toggle>
         <Dropdown.Menu>
           <Dropdown.Item
@@ -42,4 +42,4 @@ function ExportButton() {
   );
 }
 
-export default ExportButton;
+export default SelectionExportButton;

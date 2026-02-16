@@ -5,7 +5,7 @@ import { Button, ButtonToolbar, Modal } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 
-const ManagingModalRemove = ({ onHide }) => {
+const SelectionRemoveModal = ({ onHide }) => {
   const submit = () => {
     const ui_state = UIStore.getState();
     ElementActions.removeElementsCollection({ ui_state });
@@ -28,8 +28,8 @@ const ManagingModalRemove = ({ onHide }) => {
   );
 };
 
-ManagingModalRemove.propTypes = {
+SelectionRemoveModal.propTypes = {
   onHide: PropTypes.func.isRequired,
 };
 
-export default ManagingModalRemove;
+export default SelectionRemoveModal;

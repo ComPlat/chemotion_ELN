@@ -4,7 +4,7 @@ import { Form, Button, ButtonToolbar, Modal } from 'react-bootstrap';
 
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 
-export default class ManagingModalDelete extends React.Component {
+export default class SelectionDeleteModal extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -63,6 +63,6 @@ export default class ManagingModalDelete extends React.Component {
   }
 }
 
-ManagingModalDelete.propTypes = {
+SelectionDeleteModal.propTypes = {
   onHide: PropTypes.func.isRequired,
 };

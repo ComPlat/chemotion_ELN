@@ -1,7 +1,7 @@
 import React from 'react';
 import Tree from 'react-ui-tree';
 import { Button, ButtonGroup, Form } from 'react-bootstrap';
-import ManagingModalSharing from 'src/apps/mydb/elements/list/managingActions/ManagingModalSharing';
+import SelectionShareModal from 'src/apps/mydb/elements/list/selectionActions/SelectionShareModal';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 
@@ -232,7 +232,7 @@ export default class MySharedCollections extends React.Component {
           />
         ))}
         {actNode && showSharingModal && (
-          <ManagingModalSharing
+          <SelectionShareModal
             title={`Update Share Settings for '${actNode.label}'`}
             collectionId={actNode.id}
             onHide={this.handleModalHide}

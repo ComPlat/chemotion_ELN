@@ -7,11 +7,7 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import Search from 'src/components/navigation/search/Search';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
-import SplitElementButton from 'src/components/contextActions/SplitElementButton';
-import ManagingActions from 'src/apps/mydb/elements/list/managingActions/ManagingActions';
-import GeneratePDFButton from 'src/components/contextActions/GeneratePDFButton';
-import ExportButton from 'src/components/contextActions/ExportButton';
-import ReportUtilButton from 'src/components/contextActions/ReportUtilButton';
+import SelectionActions from './selectionActions/SelectionActions';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import ElementsTable from 'src/apps/mydb/elements/list/ElementsTable';
 import ElementsTableSettings from 'src/apps/mydb/elements/list/ElementsTableSettings';
@@ -245,13 +241,7 @@ export default class ElementsList extends React.Component {
             </Button>
           ) : <Search />}
         </div>
-        <div className="d-flex align-items-center gap-2 mb-3">
-          <ManagingActions />
-          <SplitElementButton />
-          <GeneratePDFButton />
-          <ExportButton />
-          <ReportUtilButton />
-        </div>
+        <SelectionActions />
         <div className="tabs-container--with-full-height position-relative">
           <ElementsTableSettings
             visible={visible}
