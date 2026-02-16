@@ -128,6 +128,9 @@ module Chemotion
           axes_units: params[:axes_units],
           detector: params[:detector],
           dsc_meta_data: params[:dsc_meta_data],
+          lcms_uvvis_wavelength: params[:lcms_uvvis_wavelength] || params[:lcmsUvvisWavelength],
+          lcms_tic: params[:lcms_tic] || params[:lcmsTic],
+          lcms_mz_page: params[:lcms_mz_page] || params[:lcmsMzPage],
         }
       end
 
@@ -142,30 +145,49 @@ module Chemotion
       end
 
       def self.stub_http(
-        file_path, mol_path, is_regen = false, params = {}
+        file_path_or_paths, mol_path, is_regen = false, params = {}
       )
         response = nil
         url = Rails.configuration.spectra.chemspectra.url
         api_endpoint = "#{url}/zip_jcamp_n_img"
-
-        File.open(file_path, 'rb') do |file|
-          File.open(mol_path, 'rb') do |molfile|
-            body = build_body(file, molfile, is_regen, params)
-            response = HTTParty.post(
-              api_endpoint,
-              body: body,
-              multipart: true,
-              timeout: 120
-            )
+        paths = Array(file_path_or_paths)
+        if paths.length > 1
+          files_to_read = paths.map { |p| File.open(p, 'rb') }
+          begin
+            File.open(mol_path, 'rb') do |molfile|
+              # Conserve le flux standard (file) + ajoute files[] pour l'image combinée
+              body = build_body(files_to_read.first, molfile, is_regen, params).compact
+              body[:files] = files_to_read
+              response = HTTParty.post(
+                api_endpoint,
+                body: body,
+                multipart: true,
+                timeout: 120
+              )
+            end
+          ensure
+            files_to_read.each(&:close)
+          end
+        else
+          File.open(paths.first, 'rb') do |file|
+            File.open(mol_path, 'rb') do |molfile|
+              body = build_body(file, molfile, is_regen, params)
+              response = HTTParty.post(
+                api_endpoint,
+                body: body,
+                multipart: true,
+                timeout: 120
+              )
+            end
           end
         end
         response
       end
 
       def self.spectrum(
-        file_path, mol_path, is_regen = false, params = {}
+        file_path_or_paths, mol_path, is_regen = false, params = {}
       )
-        rsp = stub_http(file_path, mol_path, is_regen, params)
+        rsp = stub_http(file_path_or_paths, mol_path, is_regen, params)
         begin
           json_rsp = JSON.parse(rsp.to_s)
         rescue
