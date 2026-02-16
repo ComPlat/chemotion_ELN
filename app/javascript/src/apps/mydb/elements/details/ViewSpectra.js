@@ -410,14 +410,35 @@ class ViewSpectra extends React.Component {
     peaks, shift, scan, thres, analysis, layout, isAscend, decimal, body,
     keepPred, isIntensity, multiplicity, integration, cyclicvoltaSt, curveSt,
     waveLength, axesUnitsSt, detectorSt, dscMetaData, lcms_peaks, lcms_integrals,
-    lcms_uvvis_wavelength, lcms_tic, lcms_mz_page,
+    lcms_uvvis_wavelength, lcms_tic, lcms_mz_page, lcms_peaks_text,
   }, isMpy = false) {
     const { sample, handleSampleChanged } = this.props;
     const si = this.getSpcInfo();
     if (!si) return;
 
     let ops = [];
-    if (['1H', '13C', '15N', '19F', '29Si', '31P'].includes(layout) && isMpy) {
+    if (layout === FN.LIST_LAYOUT.LC_MS) {
+      const lcmsBody = (lcms_peaks_text || '').trim().replace(/\.\s*$/, '');
+      if (lcmsBody) {
+        ops = [
+          { insert: lcmsBody },
+          { insert: '. ' },
+        ];
+      } else {
+        ops = this.formatPks({
+          peaks,
+          shift,
+          layout,
+          isAscend,
+          decimal,
+          body,
+          isIntensity,
+          integration,
+          curveSt,
+          waveLength
+        });
+      }
+    } else if (['1H', '13C', '15N', '19F', '29Si', '31P'].includes(layout) && isMpy) {
       ops = this.formatMpy({
         multiplicity, integration, shift, isAscend, decimal, layout, curveSt
       });
