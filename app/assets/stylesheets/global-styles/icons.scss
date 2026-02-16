@@ -15,7 +15,8 @@
 @font-face {
   font-family: "chemstrap-icons";
   src: url("chemstrap-icons.eot");
-  src: url("chemstrap-icons.eot?#iefix") format("embedded-opentype"),
+  src:
+    url("chemstrap-icons.eot?#iefix") format("embedded-opentype"),
     url("chemstrap-icons.woff2") format("woff2"),
     url("chemstrap-icons.woff") format("woff"),
     url("chemstrap-icons.ttf") format("truetype"),
@@ -53,6 +54,16 @@
 
 // glyph codes
 
+.icon-research-plan,
+.icon-research_plan {
+  //
+  &:before {
+    content: "\e82a";
+  }
+} /* '' */
+.icon-arrow-up-from-bracket:before {
+  content: "\e827";
+} /* '' */
 .icon-pubchem:before {
   content: "\e826";
 } /* '' */
@@ -169,7 +180,6 @@
 
 // recontextualisation of standard icons
 
-.icon-research_plan,
 .icon-cell_line,
 .icon-device_description,
 .icon-vessel,
@@ -180,10 +190,6 @@
   &:before {
     font-family: FontAwesome;
   }
-}
-
-.icon-research_plan:before {
-  content: "\f0f6";
 }
 
 .icon-cell_line:before {
