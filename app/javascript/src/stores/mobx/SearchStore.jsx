@@ -85,6 +85,7 @@ export const SearchStore = types
     active_tab_key: types.optional(types.number, 0),
     show_search_result_list: types.optional(types.boolean, false),
     result_error_messages: types.optional(types.array(types.string), []),
+    openedAddonSelect: types.optional(types.array(types.frozen({})), []),
   })
   .actions(self => ({
     // here we are using async actions (https://mobx-state-tree.js.org/concepts/async-actions) to use promises
@@ -319,6 +320,17 @@ export const SearchStore = types
       self.show_search_result_list = value;
       if (!value) {
         self.clearSearchResults();
+      }
+    },
+    setOpenedAddonSelect(field, value) {
+      const index = self.openedAddonSelect.findIndex((x) => { return x[field] !== undefined });
+      const newValue = { [field]: value }
+      if (index >= 0) {
+        let fieldObject = { ...self.openedAddonSelect[index] };
+        fieldObject = newValue;
+        self.openedAddonSelect[index] = fieldObject;
+      } else {
+        self.openedAddonSelect.push(newValue);
       }
     }
   }))

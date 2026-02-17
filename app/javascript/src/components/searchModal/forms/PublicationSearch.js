@@ -82,7 +82,7 @@ const PublicationSearch = () => {
             callback={togglePanel(searchStore)}
           />
         </h2>
-        <Accordion.Collapse eventKey={1}>
+        <Accordion.Collapse eventKey={1} className="search-result-body">
           <div className="accordion-body">
             <SearchResult
               handleClear={() => handleClear(searchStore)}
