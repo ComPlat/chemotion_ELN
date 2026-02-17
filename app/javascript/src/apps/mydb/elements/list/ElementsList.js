@@ -225,7 +225,7 @@ export default class ElementsList extends React.Component {
     });
 
     return (
-      <>
+      <div className="elements-list h-100 d-flex flex-column" style={{ minWidth: '400px' }}>
         <div className="d-flex align-items-center justify-content-between mb-3 flex-wrap column-gap-4 row-gap-2">
           <h1 className="m-0 text-capitalize">
             {currentCollection?.label || ''}
@@ -242,7 +242,7 @@ export default class ElementsList extends React.Component {
           ) : <Search />}
         </div>
         <SelectionActions />
-        <div className="tabs-container--with-full-height position-relative">
+        <div className="tabs-container--with-full-grow position-relative">
           <ElementsTableSettings
             visible={visible}
             hidden={hidden}
@@ -256,7 +256,7 @@ export default class ElementsList extends React.Component {
             {tabItems}
           </Tabs>
         </div>
-      </>
+      </div>
     );
   }
 }
