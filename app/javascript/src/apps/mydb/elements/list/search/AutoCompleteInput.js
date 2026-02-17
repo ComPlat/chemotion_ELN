@@ -375,6 +375,7 @@ export default class AutoCompleteInput extends React.Component {
             {this.props.buttonBefore}
             <Form.Control
               placeholder="IUPAC, InChI, SMILES, RInChI..."
+              size="sm"
               style={{ minWidth: 200, maxWidth: 300 }}
               disabled={this.state.inputDisabled || this.props.inputDisabled}
               type="text"

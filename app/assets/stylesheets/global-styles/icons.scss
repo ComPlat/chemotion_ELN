@@ -54,9 +54,12 @@
 
 // glyph codes
 
+.icon-arrow-down-to-bracket:before {
+  content: "\e82b";
+} /* '' */
 .icon-research-plan,
 .icon-research_plan {
-  //
+  // underscore notation nescessary for classname from db
   &:before {
     content: "\e82a";
   }
