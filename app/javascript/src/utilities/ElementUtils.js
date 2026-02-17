@@ -480,8 +480,11 @@ const getElementSegments = (elementName, tabs) => {
  * @returns {boolean} - True if the material is an SBMM sample
  */
 const isSbmmSample = (material) => {
+  if (!material) return false;
+
   return material instanceof SequenceBasedMacromoleculeSample
-         || material.type === 'sequence_based_macromolecule_sample';
+         || material.type === 'sequence_based_macromolecule_sample'
+         || material.sequence_based_macromolecule != null;
 };
 
 export {
