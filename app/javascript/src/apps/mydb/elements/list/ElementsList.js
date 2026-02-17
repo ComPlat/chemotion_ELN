@@ -5,7 +5,7 @@ import {
 } from 'react-bootstrap';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
-import Search from 'src/components/navigation/search/Search';
+import Search from 'src/apps/mydb/elements/list/search/Search';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import SelectionActions from './selectionActions/SelectionActions';
 import MatrixCheck from 'src/components/common/MatrixCheck';
@@ -226,7 +226,7 @@ export default class ElementsList extends React.Component {
 
     return (
       <>
-        <div className="d-flex align-items-center justify-content-between mb-3">
+        <div className="d-flex align-items-center justify-content-between mb-3 flex-wrap column-gap-4 row-gap-2">
           <h1 className="m-0 text-capitalize">
             {currentCollection?.label || ''}
             {hasSearchApplied && (<span className="ms-2 text-lighten2 condensed-text-width">(search results)</span>)}

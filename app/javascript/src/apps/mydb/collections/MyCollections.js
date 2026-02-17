@@ -156,7 +156,7 @@ export default class MyCollections extends React.Component {
           onMouseDown={(e) => e.stopPropagation()}
           title="Import samples to collection"
         >
-          <i className="fa fa-upload" />
+          <i className="icon-arrow-down-to-bracket" />
         </Button>
 
         {this.renderSyncButton(node)}

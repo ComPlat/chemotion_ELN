@@ -2,7 +2,7 @@ import React from 'react';
 import { Button, Dropdown, DropdownButton } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
-import AutoCompleteInput from 'src/components/navigation/search/AutoCompleteInput';
+import AutoCompleteInput from 'src/apps/mydb/elements/list/search/AutoCompleteInput';
 import SearchModal from 'src/components/searchModal/SearchModal';
 import SuggestionsFetcher from 'src/fetchers/SuggestionsFetcher';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -81,7 +81,7 @@ export default class Search extends React.Component {
     ];
 
     const buttonAfter = (
-      <Button variant="light" onClick={this.handleClearSearchSelection}>
+      <Button variant="light" size="sm" onClick={this.handleClearSearchSelection}>
         <i className="fa fa-times" />
       </Button>
     );
@@ -100,6 +100,7 @@ export default class Search extends React.Component {
     const innerDropdown = (
       <DropdownButton
         variant="light"
+        size="sm"
         id="search-inner-dropdown"
         title={searchIcon(elementType)}
       >
@@ -123,6 +124,7 @@ export default class Search extends React.Component {
           />
           <Button
             variant="light"
+            size="sm"
             id="open-search-modal"
             onClick={() => {
               const { search } = this.context;
