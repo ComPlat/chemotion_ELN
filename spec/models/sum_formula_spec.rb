@@ -27,7 +27,7 @@ RSpec.describe SumFormula do
 
     it 'handles formula with dots' do
       expect(described_class.new('H2.H.H3')).to include('H' => 2 + 1 + 3)
-      expect(described_class.new('CuSO4.5H2O')).to include('Cu' => 1, 'S' => 1, 'O' => 4 + (5 * 1), 'H' => 10)
+      expect(described_class.new('CuSO4.5H2O')).to include('Cu' => 1, 'S' => 1, 'O' => 9, 'H' => 10)
     end
 
     it 'parses decimal atom counts' do
