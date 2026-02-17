@@ -1054,6 +1054,37 @@ export default class ReactionDetailsScheme extends React.Component {
     return this.updatedReactionWithSample(this.updatedSamplesForVesselSizeChange.bind(this));
   }
 
+  /**
+   * Recalculates equivalent values for starting materials and reactants.
+   * Uses the reference material's moles to compute each material's equivalent.
+   *
+   * Formula: equivalent = material.amount_mol / referenceMaterial.amount_mol
+   *
+   * @param {Object} reaction - The reaction object containing materials
+   */
+  // eslint-disable-next-line class-methods-use-this
+  recalculateEquivalentsForMaterials(reaction) {
+    const { referenceMaterial } = reaction;
+    if (!referenceMaterial) {
+      return;
+    }
+
+    const materialsToUpdate = [
+      ...reaction.starting_materials,
+      ...reaction.reactants,
+    ];
+
+    materialsToUpdate.forEach((material) => {
+      if (!material.reference && material.amount_mol) {
+        if (referenceMaterial.amount_mol === 0) {
+          material.equivalent = 0;
+        } else {
+          material.equivalent = material.amount_mol / referenceMaterial.amount_mol;
+        }
+      }
+    });
+  }
+
   calculateEquivalent(refM, updatedSample) {
     if (!refM.contains_residues) {
       NotificationActions.add({
@@ -1197,7 +1228,7 @@ export default class ReactionDetailsScheme extends React.Component {
               } else if (!lockEquivColumn) {
                 if (referenceMaterial.amount_mol > 0) {
                   sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol / stoichiometryCoeff;
-                } else {
+                } else if (!sample.reference) {
                   // Set equivalent to 0 when reference material has no values (amount_mol = 0)
                   sample.equivalent = 0.0;
                 }
@@ -1233,7 +1264,7 @@ export default class ReactionDetailsScheme extends React.Component {
             // yield taking into account stoichiometry:
             if (referenceMaterial.amount_mol > 0) {
               sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol / stoichiometryCoeff;
-            } else {
+            } else if (!sample.reference) {
               // Set equivalent to 0 when reference material has no values (amount_mol = 0)
               sample.equivalent = 0.0;
             }
@@ -1453,9 +1484,9 @@ export default class ReactionDetailsScheme extends React.Component {
             } else {
               sample.equivalent = sample.amount_mol / referenceAmount;
             }
-          } else if ((materialGroup === 'starting_materials' || materialGroup === 'reactants') && referenceMaterial) {
+          } else if ((materialGroup === 'starting_materials' || materialGroup === 'reactants') && referenceMaterial && !sample.reference) {
             // Set equivalent to 0 when reference material has no values (amount_mol = 0 or undefined)
-            sample.equivalent = 0.0;
+              sample.equivalent = 0.0;
           }
         }
         sample.reference = false;
@@ -1789,6 +1820,10 @@ export default class ReactionDetailsScheme extends React.Component {
     } else {
       this.updateReactionMaterials();
       const { referenceMaterial } = reaction;
+      if (referenceMaterial.weight_percentage) {
+        // If reference material has valid weight percentage value, ensure equivalents are recalculated as a result of amount changes to the reference material
+        this.recalculateEquivalentsForMaterials(reaction);
+      }
       reaction.products.map((sample) => {
         sample.updateConcentrationFromSolvent(reaction);
         if (typeof (referenceMaterial) !== 'undefined' && referenceMaterial) {
