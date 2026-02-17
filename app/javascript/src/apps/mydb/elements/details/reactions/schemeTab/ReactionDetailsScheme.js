@@ -1820,7 +1820,7 @@ export default class ReactionDetailsScheme extends React.Component {
     } else {
       this.updateReactionMaterials();
       const { referenceMaterial } = reaction;
-      if (referenceMaterial.weight_percentage) {
+      if (referenceMaterial?.weight_percentage) {
         // If reference material has valid weight percentage value, ensure equivalents are recalculated as a result of amount changes to the reference material
         this.recalculateEquivalentsForMaterials(reaction);
       }

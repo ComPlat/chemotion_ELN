@@ -147,8 +147,8 @@ export default class CopyElementModal extends React.Component {
                 </Tooltip>
               )}
             >
-              <Button variant="success" onClick={() => this.handleAmountsConfirm(true)}>
-                Yes
+              <Button className="w-100 btn btn-info" onClick={() => this.handleAmountsConfirm(true)}>
+                Yes - copy target and real amounts
               </Button>
             </OverlayTrigger>
 
@@ -160,8 +160,8 @@ export default class CopyElementModal extends React.Component {
                 </Tooltip>
               )}
             >
-              <Button variant="danger" onClick={() => this.handleAmountsConfirm(false)}>
-                No
+              <Button className="w-100 btn btn-info" onClick={() => this.handleAmountsConfirm(false)}>
+                No - only copy the target amounts
               </Button>
             </OverlayTrigger>
           </Modal.Footer>

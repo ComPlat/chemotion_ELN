@@ -155,25 +155,26 @@ export default class CreateButton extends React.Component {
           <OverlayTrigger
             placement="bottom"
             overlay={(
-              <Tooltip id="copy-reaction-yes-tooltip">
+              <Tooltip id="copy-modal-yes-tooltip">
                 Real amounts of starting materials, reactants, and solvents will be preserved
               </Tooltip>
             )}
           >
-            <Button variant="success" onClick={() => this.handleCopyReactionConfirm(true)}>
-              Yes
+            <Button className="w-100 btn btn-info" onClick={() => this.handleCopyReactionConfirm(true)}>
+              Yes - copy target and real amounts
             </Button>
           </OverlayTrigger>
+
           <OverlayTrigger
             placement="bottom"
             overlay={(
-              <Tooltip id="copy-reaction-no-tooltip">
+              <Tooltip id="copy-modal-no-tooltip">
                 Only target amounts will be copied, real amounts will be cleared
               </Tooltip>
             )}
           >
-            <Button variant="danger" onClick={() => this.handleCopyReactionConfirm(false)}>
-              No
+            <Button className="w-100 btn btn-info" onClick={() => this.handleCopyReactionConfirm(false)}>
+              No - only copy the target amounts
             </Button>
           </OverlayTrigger>
         </Modal.Footer>
