@@ -33,7 +33,7 @@ import DetailActions from 'src/stores/alt/actions/DetailActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import CollectionUtils from 'src/models/collection/CollectionUtils';
-import ChemicalTab from 'src/components/ChemicalTab';
+import ChemicalTab from 'src/components/chemicals/ChemicalTab';
 
 const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => {
   const sbmmStore = useContext(StoreContext).sequenceBasedMacromoleculeSamples;

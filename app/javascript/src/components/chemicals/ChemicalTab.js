@@ -1813,6 +1813,7 @@ export default class ChemicalTab extends React.Component {
   render() {
     const {
       chemical,
+      showModal,
     } = this.state;
     const { type } = this.props;
 
