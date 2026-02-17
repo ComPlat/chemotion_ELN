@@ -30,6 +30,20 @@ RSpec.describe SumFormula do
       expect(described_class.new('CuSO4.5H2O')).to include('Cu' => 1, 'S' => 1, 'O' => 4 + (5 * 1), 'H' => 10)
     end
 
+    it 'parses hydrate notation with dot coefficient' do
+      expect(described_class.new('CuSO4.5H2O')).to eq(
+        'Cu' => 1,
+        'S' => 1,
+        'O' => 9,
+        'H' => 10,
+      )
+    end
+
+    it 'parses decimal atom counts' do
+      parsed = described_class.new('C12.3H3.5O2.556')
+      expect(parsed).to include('C' => 12.3, 'H' => 3.5, 'O' => 2.556)
+    end
+
     it 'handles empty formula' do
       formula = described_class.new('')
       expect(formula).to be_empty
@@ -141,6 +155,14 @@ RSpec.describe SumFormula do
     it 'handles formulas with prefix coefficients' do
       # Two glucose molecules
       expect(described_class.new('2C6H12O6').molecular_weight).to be_within(0.01).of(360.31)
+      expect(described_class.new('CuSO4.5H2O').molecular_weight).to be_within(0.01).of(249.69)
+    end
+
+    it 'calculates molecular weight for decimal atom counts' do
+      expect(described_class.new('C12.3H3.5O2.556').molecular_weight).to be_within(0.001).of(195.6205)
+    end
+
+    it 'calculates molecular weight for hydrate notation with dot coefficient' do
       expect(described_class.new('CuSO4.5H2O').molecular_weight).to be_within(0.01).of(249.69)
     end
   end

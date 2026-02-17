@@ -2,6 +2,7 @@
 
 class SumFormula < Hash
   ELEMENT_REGEXP = /([A-Z][a-z]*)/.freeze
+  NUMBER_REGEXP = /\d+(?:\.\d+)?/.freeze
 
   def initialize(formula = '')
     super()
@@ -109,8 +110,10 @@ class SumFormula < Hash
     when String
       klass.new(input)
     when Hash
-      input.select { |_key| key ~ ELEMENT_REGEXP }
-           .each_with_object(klass.new) { |(key, value), formula| formula[key] = value.to_i }
+      input.select { |key, _value| key =~ ELEMENT_REGEXP }
+           .each_with_object(klass.new) do |(key, value), formula|
+        formula[key] = klass.parse_numeric_value(value)
+      end
     when klass
       input
     else
@@ -128,13 +131,21 @@ class SumFormula < Hash
     parts = []
     level = 0
     start = 0
+    decimal_mode = formula.count('.') > 1
     formula.chars.each_with_index do |char, idx|
       case char
       when '(', '['
         level += 1
       when ')', ']'
         level -= 1
-      when '.', '·'
+      when '.'
+        next if decimal_mode
+
+        if level.zero?
+          parts << formula[start...idx]
+          start = idx + 1
+        end
+      when '·'
         if level.zero?
           parts << formula[start...idx]
           start = idx + 1
@@ -159,12 +170,8 @@ class SumFormula < Hash
         i += 1
       when ')', ']'
         i += 1
-        num = ''
-        while i < part.length && part[i] =~ /\d/
-          num += part[i]
-          i += 1
-        end
-        current[:multiplier] = num.empty? ? 1 : num.to_i
+        num, i = extract_number(part, i)
+        current[:multiplier] = num.nil? ? 1 : num
         child = current
         current = stack.pop
         child[:elements].each do |el, count|
@@ -177,21 +184,13 @@ class SumFormula < Hash
           el += part[i]
           i += 1
         end
-        num = ''
-        while i < part.length && part[i] =~ /\d/
-          num += part[i]
-          i += 1
-        end
-        count = num.empty? ? 1 : num.to_i
+        num, i = extract_number(part, i)
+        count = num.nil? ? 1 : num
         current[:elements][el] += count
       when /\d/
-        num = ''
-        while i < part.length && part[i] =~ /\d/
-          num += part[i]
-          i += 1
-        end
+        num, i = extract_number(part, i)
         sub_counts = PARSE_PART.call(part[i..])
-        multiplier = num.to_i
+        multiplier = num || 1
         sub_counts.each { |sub_el, sub_count| current[:elements][sub_el] += sub_count * multiplier }
         break
       when '+', '−', '-'
@@ -214,5 +213,22 @@ class SumFormula < Hash
     end
 
     total_counts
+  end
+
+  def self.extract_number(text, start_idx)
+    match = NUMBER_REGEXP.match(text, start_idx)
+    return [nil, start_idx] unless match&.begin(0) == start_idx
+
+    [parse_numeric_token(match[0]), match.end(0)]
+  end
+
+  def self.parse_numeric_value(value)
+    return value if value.is_a?(Numeric)
+
+    parse_numeric_token(value.to_s)
+  end
+
+  def self.parse_numeric_token(token)
+    token.include?('.') ? token.to_f : token.to_i
   end
 end
