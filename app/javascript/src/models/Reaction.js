@@ -466,8 +466,9 @@ export default class Reaction extends Element {
       const copiedSample = Sample.copyFromSampleAndCollectionId(sample, copy.collection_id);
       if (!keepAmounts) {
         copiedSample._real_amount_value = null;
-        copiedSample._target_amount_value = null;
-        copiedSample.equivalent = null;
+        if (!copiedSample._target_amount_value && !copiedSample.reference) {
+          copiedSample.equivalent = null;
+        }
       }
       return copiedSample;
     });
@@ -475,7 +476,9 @@ export default class Reaction extends Element {
       const copiedSample = Sample.copyFromSampleAndCollectionId(sample, copy.collection_id);
       if (!keepAmounts) {
         copiedSample._real_amount_value = null;
-        copiedSample._target_amount_value = null;
+        if (!copiedSample._target_amount_value && !copiedSample.reference) {
+          copiedSample.equivalent = null;
+        }
       }
       return copiedSample;
     });
@@ -483,17 +486,17 @@ export default class Reaction extends Element {
       const copiedSample = Sample.copyFromSampleAndCollectionId(sample, copy.collection_id);
       if (!keepAmounts) {
         copiedSample._real_amount_value = null;
-        copiedSample._target_amount_value = null;
+        if (!copiedSample._target_amount_value && !copiedSample.reference) {
+          copiedSample.equivalent = null;
+        }
       }
       return copiedSample;
     });
     copy.products = this.products.map((sample) => {
       const copiedSample = Sample.copyFromSampleAndCollectionId(sample, copy.collection_id);
-      if (!keepAmounts) {
-        copiedSample._real_amount_value = null;
-        copiedSample._target_amount_value = null;
-        copiedSample.equivalent = null;
-      }
+      copiedSample._real_amount_value = null;
+      copiedSample._target_amount_value = null;
+      copiedSample.equivalent = null;
       return copiedSample;
     });
 

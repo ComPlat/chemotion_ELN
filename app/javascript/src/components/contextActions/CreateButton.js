@@ -141,14 +141,22 @@ export default class CreateButton extends React.Component {
           <Modal.Title>Copy Reaction</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          Do you want to copy the amounts (real and target) from the original reaction materials?
+          Do you also want to copy the
+          <strong> real amounts </strong>
+          of the reaction materials (excluding product materials)?
+          <br />
+          <br />
+          <strong>Note: </strong>
+          Target amounts of the starting and reactant materials will be copied by default.
+          The amounts (real and target) of the product materials can not be copied.
+          <br />
         </Modal.Body>
         <Modal.Footer className="border-0">
           <OverlayTrigger
             placement="bottom"
             overlay={(
               <Tooltip id="copy-reaction-yes-tooltip">
-                All amounts (real and target) will be preserved in the copied reaction
+                Real amounts of starting materials, reactants, and solvents will be preserved
               </Tooltip>
             )}
           >
@@ -160,7 +168,7 @@ export default class CreateButton extends React.Component {
             placement="bottom"
             overlay={(
               <Tooltip id="copy-reaction-no-tooltip">
-                Amounts will be reset to empty in the copied reaction
+                Only target amounts will be copied, real amounts will be cleared
               </Tooltip>
             )}
           >
