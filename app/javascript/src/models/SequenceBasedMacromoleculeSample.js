@@ -1374,6 +1374,14 @@ export default class SequenceBasedMacromoleculeSample extends Element {
     return sbmmShortLabel ? `${spacer}${sbmmShortLabel}${sbmmShortName}` : '';
   }
 
+  get labelText() {
+    return this.name || this.short_label || this.title();
+  }
+
+  get svgPath() {
+    return `svg_text/${this.labelText}`;
+  }
+
   get attachmentCount() {
     if (this.attachments) { return this.attachments.length; }
     return this.attachment_count;

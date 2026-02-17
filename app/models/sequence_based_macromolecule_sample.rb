@@ -228,4 +228,12 @@ class SequenceBasedMacromoleculeSample < ApplicationRecord
     sub_sbmm_sample.save!
     sub_sbmm_sample
   end
+
+  def label_text
+    name || short_label.presence
+  end
+
+  def svg_text_path
+    "svg_text/#{label_text}"
+  end
 end

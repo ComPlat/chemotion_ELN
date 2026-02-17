@@ -243,6 +243,8 @@ class Reaction < ApplicationRecord
           params
         end
       end
+      # SBMM reactants are stored in a separate association, so append them explicitly.
+      paths[:reactants] += reactant_sbmm_samples.map { |sbmm_sample| [sbmm_sample.svg_text_path] }
       begin
         composer = SVG::ReactionComposer.new(paths, temperature: temperature_display_with_unit,
                                                     duration: duration,
