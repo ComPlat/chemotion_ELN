@@ -1,7 +1,6 @@
 import React from 'react';
 import {
-  SplitButton, Button, ButtonToolbar, Form, Modal, Dropdown,
-  OverlayTrigger, Tooltip
+  Button, ButtonToolbar, Form, Modal, Dropdown, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
 import Aviator from 'aviator';
 import { PermissionConst } from 'src/utilities/PermissionConst';
@@ -15,7 +14,20 @@ import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import UIActions from 'src/stores/alt/actions/UIActions';
 
-export default class CreateButton extends React.Component {
+const CreateElementDropdownToggle = React.forwardRef(({ children, onClick }, ref) => (
+  <Button
+    variant="success"
+    className="rounded-circle shadow" 
+    ref={ref}
+    onClick={(e) => {
+      e.preventDefault();
+      onClick(e);
+    }}>
+      <i className="fa fa-plus" />
+    </Button>
+));
+
+export default class CreateElementButton extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -409,6 +421,7 @@ export default class CreateButton extends React.Component {
             key={el.name}
             onClick={() => this.createElementOfType(`${el.name}`)}
           >
+            <i className={`me-1 icon-${el.name}`} />
             Create {el.label}
           </Dropdown.Item>
         );
@@ -416,47 +429,59 @@ export default class CreateButton extends React.Component {
     });
 
     return (
-      <SplitButton
-        id="create-split-button"
-        variant="primary"
-        title={this.createBtn(type)}
-        disabled={isDisabled}
-        onClick={() => this.createElementOfType(type)}
+      <Dropdown
+        id="create-element-dropdown"
+        drop="up"
+        align="end"
+        className="create-element-button"
       >
-        {this.createWellplateModal()}
-        {this.copyReactionAmountsModal()}
-        {itemTables}
+        <Dropdown.Toggle as={CreateElementDropdownToggle}
+          disabled={isDisabled}
+        />
+        <Dropdown.Menu className="shadow">
+          {this.createWellplateModal()}
+          {this.copyReactionAmountsModal()}
+          {itemTables}
 
-        <Dropdown.Divider />
-        <Dropdown.Item onClick={() => this.createWellplateFromSamples()}>
-          Create Wellplate from Samples
-        </Dropdown.Item>
-        <Dropdown.Item onClick={() => this.createScreenFromWellplates()}>
-          Create Screen from Wellplates
-        </Dropdown.Item>
-        <Dropdown.Item onClick={() => this.createVesselTemplate()}>
-          Create Vessel Template
-        </Dropdown.Item>
-        <Dropdown.Divider />
-        <Dropdown.Item onClick={() => this.copySample()} disabled={this.isCopySampleDisabled()}>
-          Copy Sample
-        </Dropdown.Item>
-        <Dropdown.Item onClick={() => this.copyReaction()} disabled={this.isCopyReactionDisabled()}>
-          Copy Reaction
-        </Dropdown.Item>
-        <Dropdown.Item onClick={() => this.copyCellLine()} disabled={this.isCopyCellLineDisabled()}>
-          Copy Cell line
-        </Dropdown.Item>
-        <Dropdown.Item onClick={() => this.copyDeviceDescription()} disabled={this.isCopyDeviceDescriptionDisabled()}>
-          Copy Device Description
-        </Dropdown.Item>
-        <Dropdown.Item
-          onClick={() => this.copySequenceBasedMacromoleculeSample()}
-          disabled={this.isCopySequenceBasedMacromoleculeSampleDisabled()}
-        >
-          Copy Sequence Based Macromolecule
-        </Dropdown.Item>
-      </SplitButton>
+          <Dropdown.Divider />
+          <Dropdown.Item onClick={() => this.createWellplateFromSamples()}>
+            <i className="me-1 icon-wellplate" />
+            Create Wellplate from Samples
+          </Dropdown.Item>
+          <Dropdown.Item onClick={() => this.createScreenFromWellplates()}>
+            <i className="me-1 icon-screen" />
+            Create Screen from Wellplates
+          </Dropdown.Item>
+          <Dropdown.Item onClick={() => this.createVesselTemplate()}>
+            <i className="me-1 icon-vessel" />
+            Create Vessel Template
+          </Dropdown.Item>
+          <Dropdown.Divider />
+          <Dropdown.Item onClick={() => this.copySample()} disabled={this.isCopySampleDisabled()}>
+            <i className="me-1 icon-sample" />
+            Copy Sample
+          </Dropdown.Item>
+          <Dropdown.Item onClick={() => this.copyReaction()} disabled={this.isCopyReactionDisabled()}>
+            <i className="me-1 icon-reaction" />
+            Copy Reaction
+          </Dropdown.Item>
+          <Dropdown.Item onClick={() => this.copyCellLine()} disabled={this.isCopyCellLineDisabled()}>
+            <i className="me-1 icon-cell_line" />
+            Copy Cell line
+          </Dropdown.Item>
+          <Dropdown.Item onClick={() => this.copyDeviceDescription()} disabled={this.isCopyDeviceDescriptionDisabled()}>
+            <i className="me-1 icon-device_description" />
+            Copy Device Description
+          </Dropdown.Item>
+          <Dropdown.Item
+            onClick={() => this.copySequenceBasedMacromoleculeSample()}
+            disabled={this.isCopySequenceBasedMacromoleculeSampleDisabled()}
+          >
+            <i className="me-1 icon-sequence_based_macromolecule_sample" />
+            Copy Sequence Based Macromolecule
+          </Dropdown.Item>
+        </Dropdown.Menu>
+      </Dropdown>
     );
   }
 }
