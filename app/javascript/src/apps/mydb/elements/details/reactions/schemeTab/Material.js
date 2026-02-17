@@ -149,7 +149,6 @@ class Material extends Component {
     if (isSbmm) {
       // Navigate to SBMM detail view
       UrlSilentNavigation(sample);
-      sample.updateChecksum();
       ElementActions.fetchSequenceBasedMacromoleculeSampleById(sample.id);
     } else {
       UrlSilentNavigation(sample);
