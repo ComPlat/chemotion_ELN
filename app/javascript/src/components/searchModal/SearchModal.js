@@ -66,10 +66,12 @@ const SearchModal = () => {
     });
   }
 
-  let minimizedClass = searchStore.searchModalMinimized ? ' minimized' : '';
-  let searchTypeTextClass = searchStore.searchModalSelectedForm.value === 'advanced' ? 'active' : 'text-bg-paper';
-  let searchTypePublicationClass = searchStore.searchModalSelectedForm.value === 'publication' ? 'active' : 'text-bg-paper';
-  let searchTypeStructureClass = searchStore.searchModalSelectedForm.value === 'ketcher' ? 'active' : 'text-bg-paper';
+  const minimizedClass = searchStore.searchModalMinimized ? ' minimized' : '';
+  const modalClass = minimizedClass ? `draggable-modal-dialog-xxxl${minimizedClass}` : 'modal-dialog-fullscreen';
+  const modalStyle = minimizedClass ? { transform: `translate(${deltaPosition.x}px, ${deltaPosition.y}px)` } : '';
+  const searchTypeTextClass = searchStore.searchModalSelectedForm.value === 'advanced' ? 'active' : 'text-bg-paper';
+  const searchTypePublicationClass = searchStore.searchModalSelectedForm.value === 'publication' ? 'active' : 'text-bg-paper';
+  const searchTypeStructureClass = searchStore.searchModalSelectedForm.value === 'ketcher' ? 'active' : 'text-bg-paper';
 
   return (
     <Draggable handle=".modal-header" onDrag={handleDrag}>
@@ -79,13 +81,11 @@ const SearchModal = () => {
           onHide={() => searchStore.handleCancel()}
           backdrop={false}
           keyboard={false}
-          className={`draggable-modal-dialog-xxxl${minimizedClass}`}
+          className={modalClass}
           size="xxxl"
           dialogClassName="draggable-modal"
           contentClassName={`draggable-modal-content${minimizedClass}`}
-          style={{
-            transform: `translate(${deltaPosition.x}px, ${deltaPosition.y}px)`,
-          }}
+          style={modalStyle}
         >
 
           <Modal.Header className="ps-0 border-bottom border-gray-600 bg-gray-300" closeButton>

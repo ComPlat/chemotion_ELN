@@ -141,11 +141,12 @@ export const SearchStore = types
       // self.clearSearchResults();
       self.showMinimizedSearchModal();
     },
-    changeSearchType(e) {
+    changeSearchType(type) {
       self.resetAdvancedSearchValue();
       self.detail_search_values = [];
       self.resetPublicationSearchValue();
-      self.search_type = (e.target.checked == true ? 'detail' : 'advanced');
+      // self.search_type = (e.target.checked == true ? 'detail' : 'advanced');
+      self.search_type = type;
       self.active_tab_key = 0;
       self.search_result_active_tab_key = 1;
     },

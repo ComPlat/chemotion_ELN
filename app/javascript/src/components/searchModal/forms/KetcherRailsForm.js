@@ -21,7 +21,7 @@ function KetcherRailsform() {
   const { pgCartridge } = UIStore.getState();
   const iframeStyle = {};
   const iframeHeight = panelVars.invisibleClassName
-    ? 0.62 * window.innerHeight
+    ? 0.7 * window.innerHeight
     : 0.65 * window.innerHeight;
 
   useEffect(() => {
@@ -170,7 +170,7 @@ function KetcherRailsform() {
             callback={togglePanel(searchStore)}
           />
         </h2>
-        <Accordion.Collapse eventKey={1}>
+        <Accordion.Collapse eventKey={1} className="search-result-body">
           <div className="accordion-body">
             <SearchResult
               handleClear={() => handleClear(searchStore)}

@@ -188,7 +188,7 @@ function SearchResult({ handleClear }) {
         <OverlayTrigger delayShow={500} placement="top" overlay={tooltip}>
           <div className="d-inline-flex align-items-center">
             <i className={`${iconClass} pe-1`} />
-            <span className="fs-3">
+            <span className="fs-6">
               ({tabResult.total_elements})
             </span>
           </div>
