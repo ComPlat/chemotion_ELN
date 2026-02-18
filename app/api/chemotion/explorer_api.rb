@@ -22,7 +22,7 @@ module Chemotion
       get do
         samples = @collection
                     .samples
-                    .select(:id, :ancestry, :molecule_id, :name, :short_label)
+                    .select(:id, :ancestry, :molecule_id, :name, :short_label, :sample_svg_file)
 
         # reactions = @collection
         #               .reactions
@@ -34,7 +34,8 @@ module Chemotion
             short_label: r.short_label,
             starting_material_ids: r.starting_materials.pluck(:id),
             reactant_ids: r.reactants.pluck(:id),
-            product_ids:  r.products.pluck(:id)
+            product_ids:  r.products.pluck(:id),
+            reaction_svg_file: r.reaction_svg_file
           }
         end
 
