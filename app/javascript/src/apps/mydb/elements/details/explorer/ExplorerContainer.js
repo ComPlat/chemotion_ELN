@@ -13,9 +13,19 @@ function positionNodesByReaction(samples, reactions) {
   const V_GAP = 120;
   const H_GAP = 200;
   const BRANCH_X = 320;
-  const MIN_ROW_GAP = 480; // minimum horizontal gap between reaction blocks on same row
+  const MIN_ROW_GAP = 480;
 
   const sampleById = Object.fromEntries(samples.map(s => [s.id, s]));
+
+  const svgUrlFor = (sid) => {
+    const file = sampleById[sid]?.sample_svg_file;
+    return file ? `${window.location.origin}/images/samples/${file}` : null;
+  };
+
+  const reactionSvgUrlFor = (r) => {
+    const file = r.reaction_svg_file;
+    return file ? `${window.location.origin}/images/reactions/${file}` : null;
+  };
 
   /* ---------------- parent sample lookup ---------------- */
   const parentOf = {};
@@ -149,7 +159,10 @@ function positionNodesByReaction(samples, reactions) {
         id: `sample-${sid}`,
         type: 'sample',
         position: { x: startX + i * H_GAP, y: baseY },
-        data: { label: sampleById[sid]?.short_label || 'Sample' },
+        data: {
+          label: sampleById[sid]?.short_label || 'Sample',
+          image: svgUrlFor(sid),
+        },
         style: { backgroundColor: '#fce5b3', border: '2px solid #eb9800' },
       });
 
@@ -167,7 +180,12 @@ function positionNodesByReaction(samples, reactions) {
       id: `reaction-${r.id}`,
       type: 'reaction',
       position: { x: baseX, y: baseY + V_GAP },
-      data: { label: r.name || r.short_label || 'Reaction' },
+      data: {
+        label: `${r.short_label || 'Reaction'}${r.name ? `: ${r.name}` : ''}`,
+        reactionImage: reactionSvgUrlFor(r),      // NEW
+        reactionName: r.name || '',               // NEW
+        reactionShortLabel: r.short_label || '',  // NEW
+      },
       style: {
         backgroundColor: '#f87171',
         border: '2px solid #b91c1c',
@@ -182,7 +200,10 @@ function positionNodesByReaction(samples, reactions) {
         id: `sample-${sid}`,
         type: 'sample',
         position: { x: prodX + i * H_GAP, y: baseY + 2 * V_GAP },
-        data: { label: sampleById[sid]?.short_label || 'Sample' },
+        data: {
+          label: sampleById[sid]?.short_label || 'Sample',
+          image: svgUrlFor(sid),
+        },
         style: { backgroundColor: '#fce5b3', border: '2px solid #eb9800' },
       });
 
@@ -203,9 +224,9 @@ function positionNodesByReaction(samples, reactions) {
       id: `edge-split-${parent}-${child}`,
       source: `sample-${parent}`,
       target: `sample-${child}`,
-      label: 'split from',
-      labelStyle: { fontSize: 12, fill: '#D2B48C' }, // tan colour #D2B48C warm #C8A27A
-      style: { stroke: '#E0C9A6', strokeWidth: 2 },
+      label: 'has split sample',
+      labelStyle: { fontSize: 10, fill: '#6b7280' },
+      style: { stroke: '#6b7280', strokeWidth: 1.5 },
     });
   });
 
@@ -217,7 +238,12 @@ function positionNodesByReaction(samples, reactions) {
         id: `unused-${s.id}`,
         type: 'sample',
         position: { x: -850, y },
-        data: { label: s.short_label || 'Unused Sample' },
+        data: {
+          label: s.short_label || 'Unused Sample',
+          image: s.sample_svg_file
+            ? `${window.location.origin}/images/samples/${s.sample_svg_file}`
+            : null,
+        },
         style: { backgroundColor: '#e5e7eb', border: '1px solid #9ca3af' },
       });
       y += 80;
