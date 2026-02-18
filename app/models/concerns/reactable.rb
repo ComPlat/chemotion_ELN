@@ -36,8 +36,12 @@ module Reactable
 
     ref_record = ReactionsSample.find_by(reaction_id: reaction_id, reference: true)
     return if ref_record.nil? ||
-              ref_record.id == id ||
               sample&.sample_type == Sample::SAMPLE_TYPE_MIXTURE
+    if reference && gas_type != 'gas'
+      ## set equivalent to 1 for reference sample
+      update!(equivalent: 1.0)
+      return
+    end
     ## use real amount unless target amount is defined and real amount is not
     real_amount_condition = sample.real_amount_value && sample.real_amount_value != 0
     target_amount_condition = sample.target_amount_value && sample.target_amount_value != 0

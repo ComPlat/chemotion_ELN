@@ -458,7 +458,7 @@ export default class ReactionDetails extends Component {
                 <i className="fa fa-cogs" />
               </Button>
             </OverlayTrigger>
-            {reaction.changed
+            {(reaction.changed || reaction.isNew === true)
               && (
                 <>
                   <OverlayTrigger
