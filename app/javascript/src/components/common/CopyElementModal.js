@@ -82,7 +82,7 @@ export default class CopyElementModal extends React.Component {
     const { selectedCol } = this.state;
     const { element } = this.props;
     this.setState({ showAmountsConfirm: false });
-    ElementActions.copyReaction(element, selectedCol, keepAmounts);
+    ElementActions.copyReaction(element, selectedCol.id, keepAmounts);
   }
 
   handleAmountsConfirmClose() {
