@@ -11,7 +11,7 @@ import {
 } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import { CreatableSelect } from 'src/components/common/Select';
-import { cloneDeep, findIndex } from 'lodash';
+import { cloneDeep, findIndex, set } from 'lodash';
 import uuid from 'uuid';
 import Immutable from 'immutable';
 
@@ -22,6 +22,8 @@ import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
+import UserActions from 'src/stores/alt/actions/UserActions';
+import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import QcActions from 'src/stores/alt/actions/QcActions';
 import QcStore from 'src/stores/alt/stores/QcStore';
 
@@ -302,6 +304,8 @@ export default class SampleDetails extends React.Component {
       if (!visible.includes('inventory')) {
         this.setState({ visible: visible.push('inventory') });
       }
+      // Persist inventory tab in collection layout if not already present
+      this.persistInventoryTabInCollection();
     } else {
       // Remove 'inventory' from visible tabs
       this.setState({
@@ -544,6 +548,43 @@ export default class SampleDetails extends React.Component {
   editChemical = (boolean) => {
     this.setState({ isChemicalEdited: boolean });
   };
+
+  /**
+   * Persists the inventory tab into the current collection's tabs_segment
+   * and the user profile layout so it survives sample save/refresh.
+   * Only acts when the collection's sample layout does not already include
+   * the inventory tab; no-op for sync-to-me collections.
+   */
+  persistInventoryTabInCollection() {
+    const { currentCollection } = UIStore.getState();
+    if (!currentCollection || currentCollection.is_sync_to_me) return;
+
+    const sampleLayout = currentCollection?.tabs_segment?.sample;
+
+    // If the collection already tracks the inventory tab, nothing to do
+    if (sampleLayout && Object.prototype.hasOwnProperty.call(sampleLayout, 'inventory')) return;
+
+    // Resolve the effective layout: collection -> user profile -> fallback
+    const userProfile = UserStore.getState().profile;
+    const baseLayout = sampleLayout
+      || userProfile?.data?.layout_detail_sample;
+
+    if (!baseLayout) return;
+
+    // Append inventory as the next visible tab
+    const maxOrder = Math.max(0, ...Object.values(baseLayout).map((v) => Math.abs(v)));
+    const updatedLayout = { ...baseLayout, inventory: maxOrder + 1 };
+
+    // Persist to collection tabs_segment
+    const tabSegment = { ...currentCollection?.tabs_segment, sample: updatedLayout };
+    CollectionActions.updateTabsSegment({ segment: tabSegment, cId: currentCollection.id });
+    UIActions.selectCollection({ ...currentCollection, tabs_segment: tabSegment, clearSearch: true });
+
+    if (!userProfile) return;
+    // Persist to user profile
+    set(userProfile, 'data.layout_detail_sample', updatedLayout);
+    UserActions.updateUserProfile(userProfile);
+  }
 
   matchSelectedCollection(currentCollection) {
     const { sample } = this.props;

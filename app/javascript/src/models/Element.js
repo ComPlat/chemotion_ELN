@@ -33,8 +33,9 @@ export default class Element {
     }
     return sha256(JSON.stringify(_.omitBy(_.omit(
       tThis,
-      ['_checksum', 'belongTo', 'matGroup', 'molecule_names', 'equivalent', '_equivalent', 'formulaChanged', 'research_plans', ...fieldsToOmit],
-    ), _.isEmpty)));
+      ['_checksum', 'belongTo', 'matGroup', 'molecule_names', 'equivalent', '_equivalent',
+        'formulaChanged', 'research_plans', ...fieldsToOmit],
+    ), (value) => value !== true && _.isEmpty(value))));
   }
 
   get getChecksum() {
