@@ -34,6 +34,13 @@ module Reactable
       return
     end
 
+    # The reference material must always keep Eq = 1.
+    # Guard early to avoid transient recalculation paths during reaction save.
+    if reference
+      update!(equivalent: 1)
+      return
+    end
+
     ref_record = ReactionsSample.find_by(reaction_id: reaction_id, reference: true)
     return if ref_record.nil? ||
               sample&.sample_type == Sample::SAMPLE_TYPE_MIXTURE
