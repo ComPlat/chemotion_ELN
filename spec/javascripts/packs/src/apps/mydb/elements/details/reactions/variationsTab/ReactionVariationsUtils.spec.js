@@ -62,6 +62,7 @@ describe('ReactionVariationsUtils', () => {
     expect(row.id).toBe(4);
     expect(row.metadata.analyses).toEqual([]);
     expect(row.metadata.notes).toEqual('');
+    expect(row.metadata.group).toEqual({ group: 1, subgroup: 1 });
     expect(row.properties).toEqual({
       temperature: { value: '', unit: '°C' },
       duration: { value: NaN, unit: 'Second(s)' },
@@ -79,7 +80,7 @@ describe('ReactionVariationsUtils', () => {
     updatedVariations = addMissingColumnsToVariations({
       materials: {},
       segments: {},
-      selectedColumns: { properties: ['temperature', 'duration'], metadata: ['notes', 'analyses'] },
+      selectedColumns: { properties: ['temperature', 'duration'], metadata: ['notes', 'analyses', 'group'] },
       variations: updatedVariations,
       durationValue: 42,
       durationUnit: 'Second(s)',
@@ -92,6 +93,7 @@ describe('ReactionVariationsUtils', () => {
     expect(updatedVariations[0].metadata.notes).toBe('');
     expect(Array.isArray(updatedVariations[0].metadata.analyses));
     expect(updatedVariations[0].metadata.analyses.length === 0);
+    expect(updatedVariations[0].metadata.group).toEqual({ group: 1, subgroup: 1 });
   });
   it('removes obsolete materials from variations', async () => {
     const reaction = await setUpReaction();
@@ -121,12 +123,13 @@ describe('ReactionVariationsUtils', () => {
       },
     ];
 
-    const columns = { properties: ['temperature', 'duration'], metadata: ['notes', 'analyses'] };
+    const columns = { properties: ['temperature', 'duration'], metadata: ['notes', 'analyses', 'group'] };
     const updatedColumnDefinitions = addMissingColumnDefinitions(columnDefinitions, columns, {}, false);
 
     const metadataChildren = updatedColumnDefinitions.find((entry) => entry.groupId === 'metadata').children;
     expect(metadataChildren.some((child) => child.field === 'metadata.analyses'));
     expect(metadataChildren.some((child) => child.field === 'metadata.notes'));
+    expect(metadataChildren.some((child) => child.field === 'metadata.group'));
 
     const propertiesChildren = updatedColumnDefinitions.find((entry) => entry.groupId === 'properties').children;
     expect(propertiesChildren.some((child) => child.field === 'properties.temperature'));
@@ -159,10 +162,12 @@ describe('ReactionVariationsUtils', () => {
     const row = reaction.variations[0];
     row.metadata.analyses = [42];
     row.metadata.notes = 'foo bar baz';
+    row.metadata.group = { group: 42, subgroup: 42 };
     const copiedRow = copyVariationsRow(row, reaction.variations);
     expect(copiedRow.id).toBeGreaterThan(row.id);
     expect(copiedRow.metadata.analyses).toEqual([]);
     expect(copiedRow.metadata.notes).toEqual('');
+    expect(copiedRow.metadata.group).toEqual({ group: 1, subgroup: 1 });
   });
   it('updates a row in the variations table', async () => {
     const reaction = await setUpReaction();
@@ -210,7 +215,7 @@ describe('ReactionVariationsUtils', () => {
 
     expect(variationsColumns.startingMaterials).toEqual(reactionMaterialsIDs.startingMaterials);
     expect(variationsColumns.properties).toEqual(expect.arrayContaining(['duration', 'temperature']));
-    expect(variationsColumns.metadata).toEqual(expect.arrayContaining(['notes', 'analyses']));
+    expect(variationsColumns.metadata).toEqual(expect.arrayContaining(['notes', 'analyses', 'group']));
 
     const emptyVariationsColumns = getVariationsColumns([]);
     expect(emptyVariationsColumns.startingMaterials).toEqual([]);

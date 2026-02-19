@@ -2,7 +2,7 @@ import expect from 'expect';
 import { getEntryDefs } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   EquivalentParser, PropertyFormatter, PropertyParser, MaterialFormatter, MaterialParser, FeedstockParser, GasParser,
-  SegmentParser, SegmentFormatter
+  SegmentParser, SegmentFormatter, sanitizeGroupEntry
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import { setUpReaction, setUpGaseousReaction } from 'helper/reactionVariationsHelpers';
 
@@ -439,6 +439,24 @@ describe('ReactionVariationsComponents', async () => {
       const updatedCellData = SegmentParser({ oldValue: cellData, newValue, colDef });
 
       expect(updatedCellData[entryName].value).toBeCloseTo(0.0042, 4);
+    });
+  });
+  describe('GroupCellEditor', () => {
+    it('sanitized group identifier', () => {
+      expect(sanitizeGroupEntry('')).toBe('');
+      expect(sanitizeGroupEntry('-')).toBe('');
+      expect(sanitizeGroupEntry('a')).toBe('');
+      expect(sanitizeGroupEntry('a.')).toBe('.');
+      expect(sanitizeGroupEntry('.')).toBe('.');
+      expect(sanitizeGroupEntry('1')).toBe('1');
+      expect(sanitizeGroupEntry('0')).toBe('');
+      expect(sanitizeGroupEntry('.1')).toBe('.1');
+      expect(sanitizeGroupEntry('1.')).toBe('1.');
+      expect(sanitizeGroupEntry('1.0')).toBe('1.');
+      expect(sanitizeGroupEntry('0.1')).toBe('.1');
+      expect(sanitizeGroupEntry('1..')).toBe('1.');
+      expect(sanitizeGroupEntry('01.1')).toBe('1.1');
+      expect(sanitizeGroupEntry('1.01')).toBe('1.1');
     });
   });
 });

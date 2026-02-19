@@ -13,7 +13,7 @@ async function setUpMaterial() {
 
 function getSelectedColumns(materialIDs) {
   return {
-    ...materialIDs, properties: ['duration', 'temperature'], metadata: ['analyses', 'notes'], segments: []
+    ...materialIDs, properties: ['duration', 'temperature'], metadata: ['analyses', 'notes', 'group'], segments: []
   };
 }
 

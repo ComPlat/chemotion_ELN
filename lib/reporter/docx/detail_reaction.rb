@@ -70,6 +70,7 @@ module Reporter
             'solvents' => variation_materials(var, :solvents),
             'products' => variation_materials(var, :products),
             'notes' => var[:metadata]&.dig(:notes),
+            'group' => var[:metadata]&.dig(:group)&.values_at(:group, :subgroup)&.join('.'),
           }.compact
         end
       end
@@ -97,7 +98,7 @@ module Reporter
       end
 
       def title
-        (obj.name.presence || obj.short_label)
+        obj.name.presence || obj.short_label
       end
 
       def short_label
@@ -107,7 +108,7 @@ module Reporter
       def gp_title_html
         Sablon.content(
           :html,
-          Delta.new({ "ops" => gp_title_delta }, @font_family).getHTML()
+          Delta.new({ 'ops' => gp_title_delta }, @font_family).getHTML,
         )
       end
 
@@ -116,16 +117,16 @@ module Reporter
         delta = [{ 'attributes' => { 'font-size' => font_size },
                    'insert' => "3.#{@index + 1} " }]
         delta += [{ 'attributes' => { 'font-size' => font_size },
-                    'insert' => "#{obj.name} "}]
+                    'insert' => "#{obj.name} " }]
         delta += [{ 'attributes' => { 'font-size' => font_size },
-                    'insert' => "(#{obj.short_label})"}]
+                    'insert' => "(#{obj.short_label})" }]
         delta
       end
 
       def synthesis_title_html
         Sablon.content(
           :html,
-          Delta.new({ "ops" => synthesis_title_delta }, @font_family).getHTML
+          Delta.new({ 'ops' => synthesis_title_delta }, @font_family).getHTML,
         )
       end
 
@@ -153,9 +154,14 @@ module Reporter
         delta = []
         counter = 0
         st = @si_rxn_settings
-        st_name, st_formula, st_cas = st[:Name], st[:Formula], st[:CAS]
-        st_smiles, st_inchi, st_ea = st[:Smiles], st[:InChI], st[:EA]
-        st_m_mass, st_e_mass = st[:"Molecular Mass"], st[:"Exact Mass"]
+        st_name = st[:Name]
+        st_formula = st[:Formula]
+        st_cas = st[:CAS]
+        st_smiles = st[:Smiles]
+        st_inchi = st[:InChI]
+        st_ea = st[:EA]
+        st_m_mass = st[:'Molecular Mass']
+        st_e_mass = st[:'Exact Mass']
         obj.products.each do |p|
           counter += 1
           m = p[:molecule]
@@ -167,10 +173,10 @@ module Reporter
           delta += st_m_mass ? mol_mass_delta(m) : []
           delta += st_e_mass ? eat_mass_delta(m) : []
           delta += st_ea ? ea_delta(p) : []
-          delta += [{"insert"=>"\n"}]
-          delta += st_smiles ? smiles_delta(m) + [{"insert"=>"\n"}] : []
-          delta += st_inchi ? inchi_delta(m) + [{"insert"=>"\n"}] : []
-          delta += [{"insert"=>"\n"}]
+          delta += [{ 'insert' => "\n" }]
+          delta += st_smiles ? smiles_delta(m) + [{ 'insert' => "\n" }] : []
+          delta += st_inchi ? inchi_delta(m) + [{ 'insert' => "\n" }] : []
+          delta += [{ 'insert' => "\n" }]
         end
         delta
       end
@@ -181,57 +187,57 @@ module Reporter
       end
 
       def name_delta(mol_name, counter, material)
-        [{"insert"=> "Name " }] +
+        [{ 'insert' => 'Name ' }] +
           [
-            {"insert"=>"{P#{counter}|"},
+            { 'insert' => "{P#{counter}|" },
             *mol_serial_delta(material[:molecule][:id]),
-            {"insert"=>"}"}
+            { 'insert' => '}' },
           ] +
-          [{"insert"=> ": " }] +
+          [{ 'insert' => ': ' }] +
           mol_name +
-          [{"insert"=> "; " }]
+          [{ 'insert' => '; ' }]
       end
 
       def sum_formular_delta(m)
         delta = m[:sum_formular]&.scan(/\d+|\W+|[a-zA-Z]+/)&.map do |e|
           if e.match(/\d+/).present?
-            {"attributes"=>{"script"=>"sub"}, "insert"=>e}
+            { 'attributes' => { 'script' => 'sub' }, 'insert' => e }
           elsif e.match(/\W+/).present?
-            {"attributes"=>{"script"=>"super"}, "insert"=>e}
+            { 'attributes' => { 'script' => 'super' }, 'insert' => e }
           else
-            {"insert"=>e}
+            { 'insert' => e }
           end
         end
-        [{"insert"=>"Formula: "}] + (delta || [{"insert"=>"; "}]) + [{"insert"=>"; "}]
+        [{ 'insert' => 'Formula: ' }] + (delta || [{ 'insert' => '; ' }]) + [{ 'insert' => '; ' }]
       end
 
       def cas_delta(cas)
-        [{ "insert" => "CAS: #{cas}; " }]
+        [{ 'insert' => "CAS: #{cas}; " }]
       end
 
       def smiles_delta(m)
-        [{ "insert" => "Smiles: #{m[:cano_smiles]}" }]
+        [{ 'insert' => "Smiles: #{m[:cano_smiles]}" }]
       end
 
       def inchi_delta(m)
-        [{ "insert" => "InChIKey: #{m[:inchikey]}" }]
+        [{ 'insert' => "InChIKey: #{m[:inchikey]}" }]
       end
 
       def mol_mass_delta(m)
-        [{ "insert" => "Molecular Mass: #{fixed_digit(m[:molecular_weight], 4)}; " }]
+        [{ 'insert' => "Molecular Mass: #{fixed_digit(m[:molecular_weight], 4)}; " }]
       end
 
       def eat_mass_delta(m)
-        [{ "insert" => "Exact Mass: #{fixed_digit(m[:exact_molecular_weight], 4)}; " }]
+        [{ 'insert' => "Exact Mass: #{fixed_digit(m[:exact_molecular_weight], 4)}; " }]
       end
 
       def ea_delta(p)
         ea = {}
         p[:elemental_compositions].each do |ec|
-          ea = ec[:data] if ec[:description] == "By molecule formula"
+          ea = ec[:data] if ec[:description] == 'By molecule formula'
         end
-        delta = ea.map { |key, value| "#{key}, #{value}" }.join("; ")
-        [{"insert"=>"EA: "}, {"insert"=>delta}, {"insert"=>"."}]
+        delta = ea.map { |key, value| "#{key}, #{value}" }.join('; ')
+        [{ 'insert' => 'EA: ' }, { 'insert' => delta }, { 'insert' => '.' }]
       end
 
       def whole_equation
@@ -239,70 +245,75 @@ module Reporter
       end
 
       def equation_reaction
+        return unless whole_equation
+
         DiagramReaction.new(
           obj: obj,
           format: @img_format,
-          template: @template
-        ).generate if whole_equation
+          template: @template,
+        ).generate
       end
 
       def equation_products
         products_only = true
+        return if whole_equation
+
         DiagramReaction.new(
           obj: obj,
           format: @img_format,
-          template: @template
-        ).generate(products_only) if !whole_equation
+          template: @template,
+        ).generate(products_only)
       end
 
       def status
         path = case obj.status
-          when "Successful" then
-            Rails.root.join("lib", "template", "status", "successful.png")
-          when "Planned" then
-            Rails.root.join("lib", "template", "status", "planned.png")
-          when "Not Successful" then
-            Rails.root.join("lib", "template", "status", "not_successful.png")
-          when "Done" then
-            Rails.root.join("lib", "template", "status", "done.png")
-          when "Running" then
-            Rails.root.join("lib", "template", "status", "running.png")
-          when "Analyses Pending" then
-            Rails.root.join("lib", "template", "status", "analyses_pending.png")
-          else
-            Rails.root.join("lib", "template", "status", "blank.png")
-        end
+               when 'Successful'
+                 Rails.root.join('lib/template/status/successful.png')
+               when 'Planned'
+                 Rails.root.join('lib/template/status/planned.png')
+               when 'Not Successful'
+                 Rails.root.join('lib/template/status/not_successful.png')
+               when 'Done'
+                 Rails.root.join('lib/template/status/done.png')
+               when 'Running'
+                 Rails.root.join('lib/template/status/running.png')
+               when 'Analyses Pending'
+                 Rails.root.join('lib/template/status/analyses_pending.png')
+               else
+                 Rails.root.join('lib/template/status/blank.png')
+               end
         Sablon::Image.create_by_path(path)
       end
 
       def literatures
-        output = Array.new
+        output = []
         liters = obj.literatures
-        return [] if !liters
+        return [] unless liters
+
         liters.each do |l|
           bib = l[:refs] && l[:refs]['bibtex']
           bb = DataCite::LiteraturePaser.parse_bibtex!(bib, id)
           bb = DataCite::LiteraturePaser.get_metadata(bb, l[:doi], id) unless bb.class == BibTeX::Entry
           output.push(DataCite::LiteraturePaser.report_hash(l, bb)) if bb.class == BibTeX::Entry
         end
-        return output
+        output
       end
 
       def analyses
-        output = Array.new
+        output = []
         obj.products.each do |product|
           product[:analyses].each do |analysis|
             metadata = analysis[:extended_metadata]
             content = metadata[:content]
 
             output.push({
-              sample: product[:molecule][:sum_formular],
-              name: analysis[:name],
-              kind: metadata[:kind],
-              status: metadata[:status],
-              content: Sablon.content(:html, Delta.new(content).getHTML()),
-              description: analysis[:description]
-            })
+                          sample: product[:molecule][:sum_formular],
+                          name: analysis[:name],
+                          kind: metadata[:kind],
+                          status: metadata[:status],
+                          content: Sablon.content(:html, Delta.new(content).getHTML),
+                          description: analysis[:description],
+                        })
           end
         end
         output
@@ -521,7 +532,7 @@ module Reporter
         end
       end
 
-      def material_hash(material, is_product=false)
+      def material_hash(material, is_product = false)
         s = OpenStruct.new(material)
         m = s.molecule
         mass, vol, mmol = assigned_amount(s, is_product)
@@ -552,7 +563,7 @@ module Reporter
                                           end
 
         if is_product
-          equiv = s.equivalent.nil? || (s.equivalent*100).nan? ? "0%" : "#{valid_digit(s.equivalent * 100, 0)}%"
+          equiv = s.equivalent.nil? || (s.equivalent * 100).nan? ? '0%' : "#{valid_digit(s.equivalent * 100, 0)}%"
           sample_hash.update({
                                mass: valid_digit(mass, digit),
                                vol: valid_digit(vol, digit),
@@ -640,7 +651,7 @@ module Reporter
       end
 
       def starting_materials
-        output = Array.new
+        output = []
         obj.starting_materials.each do |s|
           output.push(material_hash(s, false))
         end
@@ -648,7 +659,7 @@ module Reporter
       end
 
       def reactants
-        output = Array.new
+        output = []
         obj.reactants.each do |r|
           output.push(material_hash(r, false))
         end
@@ -656,7 +667,7 @@ module Reporter
       end
 
       def products
-        output = Array.new
+        output = []
         obj.products.each do |p|
           output.push(material_hash(p, true))
         end
@@ -665,18 +676,20 @@ module Reporter
 
       def purification
         puri = obj.purification
-        return puri if puri == "***"
-        puri.compact.join(", ")
+        return puri if puri == '***'
+
+        puri.compact.join(', ')
       end
 
       def dangerous_products
         dang = obj.dangerous_products
         return dang if dang == '***'
+
         dang.compact.join(', ')
       end
 
       def description
-        delta_desc = obj.description.deep_stringify_keys["ops"]
+        delta_desc = obj.description.deep_stringify_keys['ops']
         clean_desc = { 'ops' => rm_redundant_newline(delta_desc) }
         [Sablon.content(:html, Delta.new(clean_desc, @font_family).getHTML), clean_desc]
       end
@@ -694,12 +707,12 @@ module Reporter
           solvents.map do |solvent|
             s = OpenStruct.new(solvent)
             volume = if s.target_amount_value
-              " (#{valid_digit(s.amount_ml, digit)}ml)"
-            elsif s.real_amount_value
-              " (#{valid_digit(s.amount_ml, digit)}ml)"
-            end
+                       " (#{valid_digit(s.amount_ml, digit)}ml)"
+                     elsif s.real_amount_value
+                       " (#{valid_digit(s.amount_ml, digit)}ml)"
+                     end
             "#{s.preferred_label}#{volume}" if s.preferred_label
-          end.join(", ")
+          end.join(', ')
         else
           solvent
         end
@@ -736,7 +749,7 @@ module Reporter
       def synthesis_html
         Sablon.content(
           :html,
-          Delta.new({"ops" => products_synthesis_delta}, @font_family).getHTML()
+          Delta.new({ 'ops' => products_synthesis_delta }, @font_family).getHTML,
         )
       end
 
@@ -753,25 +766,27 @@ module Reporter
       def synthesis_delta
         synthesis_name_delta +
           single_description_delta +
-          (@std_rxn || @template == 'supporting_information' ? [{"insert"=>"\n"}] : materials_table_delta) +
+          (@std_rxn || @template == 'supporting_information' ? [{ 'insert' => "\n" }] : materials_table_delta) +
           obsv_tlc_delta +
-          (@std_rxn ? [{"insert"=>"\n"}] : []) +
+          (@std_rxn ? [{ 'insert' => "\n" }] : []) +
           product_analyses_delta +
           dangerous_delta +
           bib_delta
       end
 
       def synthesis_name_delta
-        return [] if (@std_rxn && !["gp", "parts"].include?(obj.role)) || (@template == 'supporting_information' && ['parts'].include?(obj.role))
+        return [] if (@std_rxn && !%w[gp
+                                      parts].include?(obj.role)) || (@template == 'supporting_information' && ['parts'].include?(obj.role))
 
-        [{"insert"=>"#{title}: "}]
+        [{ 'insert' => "#{title}: " }]
       end
 
       def single_description_delta
-        return [] if ["gp"].include?(obj.role)
-        delta_desc = obj.description.deep_stringify_keys["ops"]
+        return [] if ['gp'].include?(obj.role)
+
+        delta_desc = obj.description.deep_stringify_keys['ops']
         clean_desc = remove_redundant_space_break(delta_desc)
-        return (@std_rxn ? [] : [{"insert"=>"\n"}]) + clean_desc + (@std_rxn ? [] : [{"insert"=>"\n"}])
+        (@std_rxn ? [] : [{ 'insert' => "\n" }]) + clean_desc + (@std_rxn ? [] : [{ 'insert' => "\n" }])
       end
 
       def observation_delta
@@ -784,28 +799,30 @@ module Reporter
         tlc_delta_arr = tlc_delta
         is_obsv_blank = obsv_blank
         return [] if is_obsv_blank && tlc_delta_arr.blank?
-        target = is_obsv_blank ? [] : (observation_delta + [{"insert"=>". "}])
-        target + tlc_delta_arr + [{"insert"=>"\n"}]
+
+        target = is_obsv_blank ? [] : (observation_delta + [{ 'insert' => '. ' }])
+        target + tlc_delta_arr + [{ 'insert' => "\n" }]
       end
 
       def subscripts_to_quill(input)
         input.split(/([₀-₉])/).map do |t|
-          if not t.match(/[₀-₉]/)
-            { "insert" => t }
-          else
+          if /[₀-₉]/.match?(t)
             num = '₀₁₂₃₄₅₆₇₈₉'.index(t)
-            {"attributes"=>{"script"=>"sub"}, "insert"=> num }
+            { 'attributes' => { 'script' => 'sub' }, 'insert' => num }
+          else
+            { 'insert' => t }
           end
         end
       end
 
       def tlc_delta
         return [] if obj.tlc_solvents.blank?
+
         [
-          {"attributes"=>{"italic"=> "true"}, "insert"=>"R"},
-          {"attributes"=>{"italic"=> "true", "script"=>"sub"}, "insert"=>"f"},
-          {"insert"=>" = #{obj.rf_value} ("}
-        ] + subscripts_to_quill(obj.tlc_solvents) + [{"insert"=>")."}]
+          { 'attributes' => { 'italic' => 'true' }, 'insert' => 'R' },
+          { 'attributes' => { 'italic' => 'true', 'script' => 'sub' }, 'insert' => 'f' },
+          { 'insert' => " = #{obj.rf_value} (" },
+        ] + subscripts_to_quill(obj.tlc_solvents) + [{ 'insert' => ').' }]
       end
 
       def obsv_blank
@@ -820,14 +837,15 @@ module Reporter
           valid_analyses = keep_report(product[:analyses])
           sorted_analyses = sort_by_index(valid_analyses)
           current = merge_items_symbols(current, sorted_analyses, '; ')
-          if !current.length.zero?
-            current = remove_redundant_space_break(current)[0..-2] +
-              [{ 'insert' => '.' }, { 'insert' => "\n\n" }]
-            delta += current
-          end
+          next if current.length.zero?
+
+          current = remove_redundant_space_break(current)[0..-2] +
+                    [{ 'insert' => '.' }, { 'insert' => "\n\n" }]
+          delta += current
         end
 
         return [] if delta.length.zero?
+
         delta[0..-2] + [{ 'insert' => "\n" }]
       end
 
@@ -837,49 +855,51 @@ module Reporter
         [obj.starting_materials, obj.reactants].flatten.each do |material|
           m = material_hash(material, false)
           counter += 1
-          delta += [{"insert"=>"{#{alphabet(counter)}|"},
+          delta += [{ 'insert' => "{#{alphabet(counter)}|" },
                     *mol_serial_delta(material[:molecule][:id]),
-                    {"insert"=>"} "},
+                    { 'insert' => '} ' },
                     *sample_molecule_name_delta(m),
-                    {"insert"=>" (#{m[:mass]} g, #{m[:mol]} mmol, " +
-                      "#{m[:equiv]} equiv); "}]
+                    { 'insert' => " (#{m[:mass]} g, #{m[:mol]} mmol, " +
+                      "#{m[:equiv]} equiv); " }]
         end
         counter = 0
         obj.solvents.flatten.each do |material|
           m = material_hash(material, false)
           counter += 1
-          delta += [{"insert"=>"{S#{counter}"},
-                    {"insert"=>"} "},
+          delta += [{ 'insert' => "{S#{counter}" },
+                    { 'insert' => '} ' },
                     *sample_molecule_name_delta(m),
-                    {"insert"=>" (#{valid_digit(m[:vol], 2)} mL); "}]
+                    { 'insert' => " (#{valid_digit(m[:vol], 2)} mL); " }]
         end
-        delta += [{"insert"=>"Yield "}]
+        delta += [{ 'insert' => 'Yield ' }]
         counter = 0
         obj.products.each do |material|
           p = material_hash(material, true)
           counter += 1
-          delta += [{"insert"=>"{P#{counter}|"},
+          delta += [{ 'insert' => "{P#{counter}|" },
                     *mol_serial_delta(material[:molecule][:id]),
-                    {"insert"=>"} = #{p[:equiv]} (#{p[:mass]} g, " +
-                      "#{p[:mol]} mmol)"},
-                    {"insert"=>"; "}]
+                    { 'insert' => "} = #{p[:equiv]} (#{p[:mass]} g, " +
+                      "#{p[:mol]} mmol)" },
+                    { 'insert' => '; ' }]
         end
         delta.pop
-        delta += [{"insert"=>"."}]
-        remove_redundant_space_break(delta) + [{"insert"=>"\n"}]
+        delta += [{ 'insert' => '.' }]
+        remove_redundant_space_break(delta) + [{ 'insert' => "\n" }]
       end
 
       def dangerous_delta
         d = obj.dangerous_products || []
         return [] if d.length == 0
-        content = "The reaction includes the use of dangerous chemicals, " +
-                  "which have the following classification: " +
-                  d.join(", ") +
-                  "."
-        [{"insert"=>"\n"}] + remove_redundant_space_break([
-          {"attributes"=>{"bold"=>"true"}, "insert"=>"Attention! "},
-          {"insert"=>content}
-        ])
+
+        content = 'The reaction includes the use of dangerous chemicals, ' +
+                  'which have the following classification: ' +
+                  d.join(', ') +
+                  '.'
+        [{ 'insert' => "\n" }] + remove_redundant_space_break([
+                                                                { 'attributes' => { 'bold' => 'true' },
+                                                                  'insert' => 'Attention! ' },
+                                                                { 'insert' => content },
+                                                              ])
       end
 
       def parse_bib(bib_str, idx)
@@ -894,28 +914,29 @@ module Reporter
           if el.name == 'i'
             {
               'attributes' => { 'italic' => 'true', 'font-size' => font_size },
-              'insert' => el.children.first.text
+              'insert' => el.children.first.text,
             }
           elsif el.name == 'b'
             {
               'attributes' => { 'bold' => 'true', 'font-size' => font_size },
-              'insert' => el.children.first.text
+              'insert' => el.children.first.text,
             }
           else
             {
               'attributes' => { 'font-size' => font_size },
-              'insert' => el.text
+              'insert' => el.text,
             }
           end
         end
-        [{'insert' => "[#{ idx + 1 }] "}] + delta + [{'insert' => "\n"}]
+        [{ 'insert' => "[#{idx + 1}] " }] + delta + [{ 'insert' => "\n" }]
       end
 
       def bib_delta
         refs = obj.references || []
         return [] if refs.length == 0
-        delta = [{'insert' => "\n"}]
-        refs.each_with_index  do |ref, idx|
+
+        delta = [{ 'insert' => "\n" }]
+        refs.each_with_index do |ref, idx|
           delta += parse_bib(ref[:bib], idx)
         end
         delta
@@ -925,7 +946,7 @@ module Reporter
         if snm && snm.length > 0
           char_idxs = []
           snm.split('').each_with_index do |m, idx|
-            char_idxs += [idx] if m.match(/^[a-zA-Z]$/)
+            char_idxs += [idx] if /^[a-zA-Z]$/.match?(m)
           end
           char_idx = char_idxs[0]
           if char_idx >= 0
@@ -953,7 +974,7 @@ module Reporter
       end
 
       def keep_report(analyses)
-        analyses.select { |a| a[:extended_metadata][:report].in?(["true", true]) }
+        analyses.select { |a| a[:extended_metadata][:report].in?(['true', true]) }
       end
 
       def sort_by_index(analyses)
@@ -965,7 +986,7 @@ module Reporter
 
       def mol_serial(mol_id)
         s = @mol_serials.select { |x| x['mol'] && x['mol']['id'] == mol_id }[0]
-        s.present? && s['value'].present? && s['value'] || 'xx'
+        (s.present? && s['value'].present? && s['value']) || 'xx'
       end
 
       def mol_serial_delta(mol_id, font_size = 12)

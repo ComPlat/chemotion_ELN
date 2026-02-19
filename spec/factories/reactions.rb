@@ -102,6 +102,7 @@ FactoryBot.define do
             metadata: {
               analyses: [],
               notes: '',
+              group: { group: 1, subgroup: 1 },
             },
             properties: {
               duration: { unit: 'Hour(s)', value: '42' },

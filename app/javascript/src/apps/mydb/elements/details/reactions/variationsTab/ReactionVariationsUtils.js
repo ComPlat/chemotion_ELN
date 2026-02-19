@@ -12,6 +12,7 @@ import {
 import {
   PropertyFormatter, PropertyParser,
   MaterialFormatter, MaterialParser,
+  GroupCellRenderer, GroupCellEditor, GroupHeader,
   SegmentFormatter, SegmentParser, SegmentRenderer, SegmentSelectEditor,
   EquivalentParser, GasParser, FeedstockParser,
   NoteCellRenderer, NoteCellEditor, MenuHeader, RowToolsCellRenderer, ToolHeader
@@ -318,6 +319,8 @@ function getMetaData(metadataType) {
       return [];
     case 'notes':
       return '';
+    case 'group':
+      return { group: 1, subgroup: 1 };
     default:
       return null;
   }
@@ -386,12 +389,11 @@ function copyVariationsRow(row, variations) {
   const copiedRow = cloneDeep(row);
   copiedRow.id = getSequentialId(variations);
   copiedRow.uuid = undefined; // UUID is generated server-side.
-  if (Object.hasOwn(copiedRow.metadata, 'notes')) {
-    copiedRow.metadata.notes = getMetaData('notes');
-  }
-  if (Object.hasOwn(copiedRow.metadata, 'analyses')) {
-    copiedRow.metadata.analyses = getMetaData('analyses');
-  }
+  ['notes', 'analyses', 'group'].forEach((key) => {
+    if (Object.hasOwn(copiedRow.metadata, key)) {
+      copiedRow.metadata[key] = getMetaData(key);
+    }
+  });
 
   return copiedRow;
 }
@@ -540,6 +542,21 @@ function getMetadataColumnGroupChild(metadataType) {
         cellDataType: false,
         sortable: false,
       };
+    case 'group':
+      return {
+        headerComponent: GroupHeader,
+        field: 'metadata.group',
+        cellRenderer: GroupCellRenderer,
+        cellEditor: GroupCellEditor,
+        cellDataType: false,
+        comparator: (valueA, valueB) => {
+          // Sort groups lexicographically.
+          const groupA = `${valueA.group}.${valueA.subgroup}`;
+          const groupB = `${valueB.group}.${valueB.subgroup}`;
+          if (groupA === groupB) return 0;
+          return (groupA > groupB) ? 1 : -1;
+        }
+      };
     default:
       return {};
   }
@@ -659,7 +676,6 @@ function getColumnDefinitions(selectedColumns, materials, segments, gasMode, ext
     {
       headerName: 'Metadata',
       groupId: 'metadata',
-      marryChildren: true,
       children: selectedColumns.metadata.map((entry) => getMetadataColumnGroupChild(entry))
     },
     {
