@@ -567,7 +567,9 @@ export default class SampleDetails extends React.Component {
     // Resolve the effective layout: collection -> user profile -> fallback
     const userProfile = UserStore.getState().profile;
     const baseLayout = sampleLayout
-      || userProfile?.data?.layout_detail_sample
+      || userProfile?.data?.layout_detail_sample;
+
+    if (!baseLayout) return;
 
     // Append inventory as the next visible tab
     const maxOrder = Math.max(0, ...Object.values(baseLayout).map((v) => Math.abs(v)));
@@ -578,6 +580,7 @@ export default class SampleDetails extends React.Component {
     CollectionActions.updateTabsSegment({ segment: tabSegment, cId: currentCollection.id });
     UIActions.selectCollection({ ...currentCollection, tabs_segment: tabSegment, clearSearch: true });
 
+    if (!userProfile) return;
     // Persist to user profile
     set(userProfile, 'data.layout_detail_sample', updatedLayout);
     UserActions.updateUserProfile(userProfile);
