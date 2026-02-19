@@ -49,10 +49,17 @@ module Datacollector
     def attach(filename, file_path, dataset_name = nil)
       dataset_name = dataset_name.presence || Time.zone.now.strftime('%Y-%m-%d')
       attachment = create_attachment(filename, file_path)
-      dataset = prepare_dataset(dataset_name)
-      # rubocop:disable Rails/SkipsModelValidations
-      dataset.touch
-      # rubocop:enable Rails/SkipsModelValidations
+      match, variation = attachment.resolve_unique_match
+
+      if match
+        dataset = match.container.analyses_container.create_analysis_with_dataset!(name: dataset_name)
+        match.assign_attachment_to_variation(variation, dataset.parent_id) if match.is_a?(Reaction)
+      else
+        dataset = prepare_dataset(dataset_name)
+        # rubocop:disable Rails/SkipsModelValidations
+        dataset.touch
+        # rubocop:enable Rails/SkipsModelValidations
+      end
       attachment.update!(attachable: dataset)
 
       # Add notifications

@@ -40,26 +40,6 @@ module Chemotion
 
         old_att&.destroy
       end
-
-      def find_unique_match_for_filename(filename, user)
-        samples = InboxSearchElements.call(
-          search_string: filename,
-          current_user: user,
-          element: :sample,
-        )
-
-        variation = filename[/-v(\d+)(?=\.[^.]+$|$)/, 1] # Handling for variations with "ReactionName-vi"
-        search_string = filename.sub(/-v\d+(?=\.[^.]+$|$)/, '')
-        reactions = InboxSearchElements.call(
-          search_string: search_string,
-          current_user: user,
-          element: :reaction,
-        )
-        return reactions.first, variation if samples.empty? && reactions.one?
-        return samples.first, nil if reactions.empty? && samples.one?
-
-        nil
-      end
     end
 
     rescue_from ActiveRecord::RecordNotFound do |_error|
@@ -279,8 +259,7 @@ module Chemotion
           begin
             attach.save!
             attach_ary.push(attach.id)
-            inbox_auto = current_user.profile&.data&.fetch('inbox_auto', true)
-            match, variation = find_unique_match_for_filename(file[:filename], current_user) if inbox_auto
+            match, variation = attach.resolve_unique_match
 
             if match # auto assign to element
               analysis_name = attach.filename.chomp(File.extname(attach.filename))
