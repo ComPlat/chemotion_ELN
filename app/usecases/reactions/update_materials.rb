@@ -151,8 +151,8 @@ module Usecases
                 modified_sample_ids << modified_sample.id
 
                 associate_sample_with_reaction(sample, modified_sample, material_group)
-                end
               end
+            end
           end
           destroy_unused_samples(modified_sample_ids)
           destroy_unused_sbmm_samples(modified_sbmm_ids)
@@ -257,7 +257,7 @@ module Usecases
 
         update_gas_material = @reaction.vessel_size && @vessel_size && (
           @reaction.vessel_size['amount'] != @vessel_size['amount'] ||
-          @reaction.vessel_size['unit'] != @vessel_size['unit']
+            @reaction.vessel_size['unit'] != @vessel_size['unit']
         )
         if sample.gas_type == 'gas' && update_gas_material
           set_mole_value_gas_product(existing_sample, sample)

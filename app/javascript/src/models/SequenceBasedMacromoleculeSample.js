@@ -1392,6 +1392,21 @@ export default class SequenceBasedMacromoleculeSample extends Element {
       .filter((attachment) => attachment.identifier === identifier)[0];
   }
 
+  // Keep the same API surface as Sample so shared reaction/scheme code
+  // can call these methods without branching for SBMM-specific types.
+  // SBMM materials are not mixtures/catalysts and do not have components.
+  isMixture() {
+    return false;
+  }
+
+  isCatalyst() {
+    return false;
+  }
+
+  hasComponents() {
+    return false;
+  }
+
   buildCopy() {
     const sequenceBasedMacromoleculeSample = super.buildCopy();
     sequenceBasedMacromoleculeSample.short_label = SequenceBasedMacromoleculeSample.buildNewShortLabel();
