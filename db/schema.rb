@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2026_01_20_183627) do
+ActiveRecord::Schema.define(version: 2026_02_19_120000) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -1117,6 +1117,7 @@ ActiveRecord::Schema.define(version: 2026_01_20_183627) do
     t.bigint "sequence_based_macromolecule_sample_id", null: false
     t.integer "position"
     t.datetime "deleted_at"
+    t.boolean "reference", default: false, null: false
     t.boolean "show_label", default: false, null: false
     t.datetime "created_at"
     t.datetime "updated_at"

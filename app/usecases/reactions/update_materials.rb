@@ -50,6 +50,11 @@ class OSbmmSample < OpenStruct
     to_boolean super
   end
 
+  def reference
+    # UI may send booleans/strings; normalize once so association persistence is consistent.
+    to_boolean super
+  end
+
   def to_boolean(string)
     !!string.to_s.match(/^(true|t|yes|y|1)$/i)
   end
@@ -295,7 +300,7 @@ module Usecases
         if existing_association
           existing_association.update!(
             reaction_id: @reaction.id,
-            #equivalent: sample.equivalent,
+            # equivalent: sample.equivalent,
             reference: sample.reference,
             show_label: sample.show_label,
             waste: sample.waste,
@@ -352,6 +357,7 @@ module Usecases
         modified_sbmm.update!(
           name: sbmm_data.name,
           external_label: sbmm_data.external_label,
+          equivalent: sbmm_data.equivalent,
           amount_as_used_mass_value: sbmm_data.amount_as_used_mass_value,
           amount_as_used_mass_unit: sbmm_data.amount_as_used_mass_unit,
           amount_as_used_mol_value: sbmm_data.amount_as_used_mol_value,
@@ -381,6 +387,7 @@ module Usecases
         existing_sbmm.update!(
           name: sbmm_data.name,
           external_label: sbmm_data.external_label,
+          equivalent: sbmm_data.equivalent,
           amount_as_used_mass_value: sbmm_data.amount_as_used_mass_value,
           amount_as_used_mass_unit: sbmm_data.amount_as_used_mass_unit,
           amount_as_used_mol_value: sbmm_data.amount_as_used_mol_value,
@@ -405,6 +412,8 @@ module Usecases
       end
 
       def associate_sbmm_with_reaction(sbmm_data, modified_sbmm)
+        # For SBMM materials, reference/show_label/position live on the reaction join row
+        # (reaction-specific state), not on the SBMM sample record itself.
         existing_association = ReactionsReactantSbmmSample.find_by(
           reaction_id: @reaction.id,
           sequence_based_macromolecule_sample_id: modified_sbmm.id,
@@ -412,6 +421,7 @@ module Usecases
 
         if existing_association
           existing_association.update!(
+            reference: sbmm_data.reference,
             show_label: sbmm_data.show_label || false,
             position: sbmm_data.position,
           )
@@ -419,6 +429,7 @@ module Usecases
           ReactionsReactantSbmmSample.create!(
             sequence_based_macromolecule_sample_id: modified_sbmm.id,
             reaction_id: @reaction.id,
+            reference: sbmm_data.reference,
             show_label: sbmm_data.show_label || false,
             position: sbmm_data.position,
           )
@@ -434,7 +445,6 @@ module Usecases
           Range.new(lower, upper)
         end
       end
-
 
       # Find the reaction-level ReactionsSample marked as the weight-percentage
       # reference.

@@ -761,7 +761,12 @@ export default class ReactionDetailsScheme extends React.Component {
     // In all cases, all material concentrations need to be recalculated
     reaction.updateAllConcentrations();
 
-    return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample);
+    return this.updatedReactionWithSample(
+      this.updatedSamplesForAmountChange.bind(this),
+      updatedSample,
+      undefined,
+      true
+    );
   }
 
   /**
@@ -1493,7 +1498,7 @@ export default class ReactionDetailsScheme extends React.Component {
       // For mixture samples, when amount_g changes, update components' amount_mol
       // This ensures that when the reference sample changes and causes amount_g to update,
       // the components within the mixture are recalculated based on the new total mass
-      if (sample.isMixture() && sample.hasComponents()) {
+      if (sample.isMixture && sample.isMixture() && sample.hasComponents && sample.hasComponents()) {
         sample.updateMixtureComponentAmounts();
       }
 
@@ -1518,8 +1523,8 @@ export default class ReactionDetailsScheme extends React.Component {
   // eslint-disable-next-line class-methods-use-this
   handleEquivalentBasedAmountUpdate(sample, newAmountMol) {
     if (
-      sample.isMixture()
-      && sample.hasComponents()
+      sample.isMixture && sample.isMixture()
+      && sample.hasComponents && sample.hasComponents()
       && sample.reference_component
       && sample.reference_component.relative_molecular_weight
     ) {

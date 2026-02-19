@@ -7,6 +7,7 @@ module Entities
     expose! :sequence_based_macromolecule_sample, using: 'Entities::SequenceBasedMacromoleculeSampleEntity', merge: true
 
     expose! :position
+    expose! :reference
     expose! :show_label
   end
 end

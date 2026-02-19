@@ -1434,6 +1434,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
   serializeSbmmMaterial() {
     const params = this.serialize();
     const extra_params = {
+      reference: this.reference || false,
       position: this.position,
       show_label: this.show_label || false,
       parent_id: this.parent_id,
