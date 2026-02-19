@@ -37,6 +37,10 @@ module Reporter
 
         paths[:starting_materials] = obj.starting_materials.map { |m| m[:show_label] == true ? svg_text_path.call(m) : m[:get_svg_path] }.compact
         paths[:reactants] = obj.reactants.map { |m| m[:show_label] == true ? svg_text_path.call(m) : m[:get_svg_path] }.compact
+        paths[:reactants] += Array(obj.reactant_sbmm_samples).map do |sbmm|
+          label = sbmm[:name].presence || sbmm[:short_label].presence || sbmm[:external_label].presence
+          "svg_text/#{label}" if label.present?
+        end.compact
         paths[:products] = obj.products.map do |p|
           svg = p[:show_label] == true ? svg_text_path.call(p) : p[:get_svg_path]
           [svg, p[:equivalent]] if svg.present?
