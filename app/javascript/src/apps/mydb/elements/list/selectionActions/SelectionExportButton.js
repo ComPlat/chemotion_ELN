@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Dropdown } from 'react-bootstrap';
 
-import ModalExport from 'src/components/contextActions/export/ModalExport';
-import ModalReactionExport from 'src/components/contextActions/export/ModalReactionExport';
+import ModalExport from 'src/apps/mydb/elements/list/selectionActions/ModalExport';
+import ModalReactionExport from 'src/apps/mydb/elements/list/selectionActions/ModalReactionExport';
 
 function SelectionExportButton() {
   const [modal, showModal] = useState(null);

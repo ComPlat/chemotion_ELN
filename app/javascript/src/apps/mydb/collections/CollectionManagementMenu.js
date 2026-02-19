@@ -3,8 +3,8 @@ import { Button } from 'react-bootstrap';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
 
-import ModalExportCollection from 'src/components/contextActions/export/ModalExportCollection';
-import ModalExportRadarCollection from 'src/components/contextActions/export/ModalExportRadarCollection';
+import ModalExportCollection from 'src/apps/mydb/collections/ModalExportCollection';
+import ModalExportRadarCollection from 'src/apps/mydb/collections/ModalExportRadarCollection';
 
 import ModalImportCollection from 'src/apps/mydb/collections/importSamples/ModalImportCollection';
 

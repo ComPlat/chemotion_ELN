@@ -10,8 +10,8 @@ import { parse as parseSdf } from 'sdf-parser';
 
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
-import ColumnMappingComponent from 'src/components/contextActions/ColumnMappingComponent';
-import ValidationComponent from 'src/components/contextActions/ValidationComponent';
+import ColumnMappingComponent from 'src/apps/mydb/collections/ColumnMappingComponent';
+import ValidationComponent from 'src/apps/mydb/collections/ValidationComponent';
 
 export default class ModalImport extends React.Component {
   static extractDataFromText(file, delimiter, mappedColumns) {
