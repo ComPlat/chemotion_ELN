@@ -23,7 +23,7 @@ describe('collectionUtilities', () => {
     });
     describe('when collection is shared with me', () => {
       it('has no permissions', () => {
-        expect(collectionHasPermission(createCollectionDummy(2, 2), 1)).toBe(false);
+        expect(collectionHasPermission(createCollectionDummy(2, 0), 1)).toBe(false);
       });
     });
   });
