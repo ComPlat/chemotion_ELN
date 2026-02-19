@@ -50,7 +50,7 @@ module CommentHelpers
     end
     unshared_user_ids = collections.unshared.pluck(:user_id)
 
-    message_to = sanitize_user_ids(sync_user_ids + unshared_user_ids) - [current_user.id]
+    message_to = sanitize_user_ids(Array(sync_user_ids) + unshared_user_ids) - [current_user.id]
     return if message_to.blank?
 
     data_args = {

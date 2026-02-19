@@ -41,6 +41,8 @@ class Message < ApplicationRecord
     return if [channel_id, message_id, user_id].any?(&:nil?)
 
     filtered_ids = normalize_integer_array(receiver_ids)
+    return if filtered_ids.empty?
+
     receiver_ids_str = filtered_ids.join(',')
     sql = "select generate_notifications(#{channel_id}, #{message_id},
            #{user_id}, ARRAY[#{receiver_ids_str}]::int[]) as message_id"
