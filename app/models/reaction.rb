@@ -140,7 +140,10 @@ class Reaction < ApplicationRecord
   has_many :reactants, through: :reactions_reactant_samples, source: :sample
   has_many :reactant_molecules, through: :reactants, source: :molecule
 
-  has_many :reactions_reactant_sbmm_samples, -> { order(position: :asc) }, dependent: :destroy
+  has_many :reactions_reactant_sbmm_samples,
+           -> { order(position: :asc) },
+           inverse_of: :reaction,
+           dependent: :destroy
   has_many :reactant_sbmm_samples,
            through: :reactions_reactant_sbmm_samples,
            source: :sequence_based_macromolecule_sample
