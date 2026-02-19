@@ -3,6 +3,14 @@
 module CommentHelpers
   extend Grape::API::Helpers
 
+  def sanitize_user_ids(values)
+    Array(values).flatten.filter_map do |value|
+      Integer(value)
+    rescue ArgumentError, TypeError
+      nil
+    end.uniq
+  end
+
   def authorized_users(collections)
     sync_collections = collections.synchronized
     shared_collections = collections.where(is_shared: true)
@@ -37,11 +45,12 @@ module CommentHelpers
                                                .where(shared_by_id: sync_collections.pluck(:user_id),
                                                       collection_id: sync_collections.ids)
 
-    message_to = sync_collection_users&.flat_map do |sync_collection_user|
+    sync_user_ids = sync_collection_users&.flat_map do |sync_collection_user|
       sync_collection_user.user&.send(:user_ids)
     end
+    unshared_user_ids = collections.unshared.pluck(:user_id)
 
-    message_to = (message_to + collections.unshared.pluck(:user_id) - [current_user.id]).uniq
+    message_to = sanitize_user_ids(sync_user_ids + unshared_user_ids) - [current_user.id]
     return if message_to.blank?
 
     data_args = {
@@ -61,7 +70,7 @@ module CommentHelpers
 
   def notify_shared_collection_users(shared_collections, current_user, element)
     shared_collections&.each do |collection|
-      message_to = collection.user.send(:user_ids) - [current_user.id]
+      message_to = sanitize_user_ids(collection.user&.send(:user_ids)) - [current_user.id]
       next if message_to.blank?
 
       data_args = {
@@ -73,7 +82,7 @@ module CommentHelpers
       Message.create_msg_notification(
         channel_subject: Channel::COMMENT_ON_MY_COLLECTION,
         message_from: current_user.id,
-        message_to: collection.user.send(:user_ids) - [current_user.id],
+        message_to: message_to,
         data_args: data_args,
         level: 'info',
       )
