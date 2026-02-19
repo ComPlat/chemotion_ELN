@@ -58,7 +58,7 @@ RSpec.describe Message do
       expect(connection).not_to have_received(:exec_query)
     end
 
-    it 'does not execute SQL when channel_id is invalid' do
+    it 'does not execute SQL when channel_id is nil' do
       described_class.send(:bulk_create_notifications, nil, 2, 3, [4])
       expect(connection).not_to have_received(:exec_query)
     end
