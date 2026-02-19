@@ -144,7 +144,10 @@ class GatePushButton extends React.Component {
         <Button
           variant="secondary"
           size="sm"
-          onClick={() => this.transmit()}
+          onClick={(e) => {
+            e.stopPropagation();
+            this.transmit();
+          }}
           ref={this.buttonRef}
         >
           <i className="fa fa-paper-plane" />

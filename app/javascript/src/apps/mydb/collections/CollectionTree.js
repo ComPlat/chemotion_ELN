@@ -7,7 +7,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 
 import CollectionSubtree from 'src/apps/mydb/collections/CollectionSubtree';
-import SidebarButton from 'src/apps/mydb/layout/sidebar/SidebarButton';
+import SidebarButton from 'src/apps/mydb/mainNavigation/sidebar/SidebarButton';
 import CollectionManagementButton from 'src/apps/mydb/collections/CollectionManagementButton';
 import GatePushButton from 'src/components/common/GatePushButton';
 
@@ -115,6 +115,7 @@ function CollectionTree({ isCollapsed }) {
 
   return (
     <div className="mh-100 d-flex flex-column">
+      <CollectionManagementButton isCollapsed={isCollapsed} />
       <div className="sidebar-button-frame tree-view_frame flex-column">
         {collectionGroups.map(({
           label, icon, collectionKey, roots, onClickOpenCollection
@@ -161,7 +162,6 @@ function CollectionTree({ isCollapsed }) {
             </Fragment>
           );
         })}
-        <CollectionManagementButton isCollapsed={isCollapsed} />
       </div>
     </div>
   );

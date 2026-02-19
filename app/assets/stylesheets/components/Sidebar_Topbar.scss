@@ -76,19 +76,6 @@ $sidebar-logo-height: 72px;
     $chemstrap-silicon-active2,
     $body-color
   );
-  &.sidebar-button--has-badge {
-    @include button-variant(
-      mix(map-get($silicon-shades, lighten4), shade-color($warning, 20), 85),
-      mix(map-get($silicon-shades, lighten4), shade-color($warning, 20), 85),
-      $body-color,
-      mix($chemstrap-silicon-hover2, shade-color($warning, 20), 85),
-      mix($chemstrap-silicon-hover2, shade-color($warning, 20), 85),
-      $body-color,
-      mix($chemstrap-silicon-active2, shade-color($warning, 20), 85),
-      mix($chemstrap-silicon-active2, shade-color($warning, 20), 85),
-      $body-color
-    );
-  }
   &.sidebar-button--expandable {
     .expand-icon {
       display: none;
