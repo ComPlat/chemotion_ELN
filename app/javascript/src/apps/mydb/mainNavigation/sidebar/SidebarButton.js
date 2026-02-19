@@ -2,47 +2,35 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import ChevronIcon from 'src/components/common/ChevronIcon';
 import {
-  Badge, Button, OverlayTrigger, Tooltip
+  Button, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
 
 export default function SidebarButton({
-  isCollapsed, onClick, label, icon, variant,
-  badgeCount, appendComponent, active, showLabel, expandable, isExpanded, onToggleExpansion
+  isCollapsed, onClick, label, icon, appendComponent, active, expandable, isExpanded, onToggleExpansion
 }) {
-  const hasBadge = badgeCount !== null && badgeCount > 0;
-
   const toggleExpansion = (e) => {
     e.stopPropagation();
     onToggleExpansion();
   };
 
-  return isCollapsed || !showLabel ? (
+  return isCollapsed ? (
     <OverlayTrigger
       placement={isCollapsed ? 'right' : 'top'}
       overlay={<Tooltip>{label}</Tooltip>}
     >
       <Button
-        className={`sidebar-button position-relative${hasBadge ? ' sidebar-button--has-badge' : ''}`}
-        variant={variant}
+        className="sidebar-button"
+        variant="sidebar"
         onClick={onClick}
         active={active}
       >
         <i className={`mx-auto fa fa-fw ${icon}`} />
-        {hasBadge && (
-          <Badge
-            pill
-            bg="warning"
-            className="sidebar-button__badge"
-          >
-            {badgeCount}
-          </Badge>
-        )}
       </Button>
     </OverlayTrigger>
   ) : (
     <Button
-      className={`sidebar-button gap-2 ${expandable ? 'sidebar-button--expandable' : ''}`}
-      variant={variant}
+      className={`sidebar-button gap-2${expandable ? ' sidebar-button--expandable' : ''}`}
+      variant="sidebar"
       onClick={onClick}
       active={active}
     >
@@ -57,9 +45,7 @@ export default function SidebarButton({
         )}
         <span>{label}</span>
       </span>
-      {appendComponent && (
-        <div onClick={(e) => e.stopPropagation()}>{appendComponent}</div>
-      )}
+      {appendComponent}
     </Button>
   );
 }
@@ -69,11 +55,8 @@ SidebarButton.propTypes = {
   icon: PropTypes.string.isRequired,
   isCollapsed: PropTypes.bool,
   onClick: PropTypes.func.isRequired,
-  variant: PropTypes.string,
-  badgeCount: PropTypes.number,
   appendComponent: PropTypes.node,
   active: PropTypes.bool,
-  showLabel: PropTypes.bool,
   expandable: PropTypes.bool,
   isExpanded: PropTypes.bool,
   onToggleExpansion: PropTypes.func,
@@ -81,11 +64,8 @@ SidebarButton.propTypes = {
 
 SidebarButton.defaultProps = {
   isCollapsed: true,
-  variant: 'sidebar',
-  badgeCount: null,
   appendComponent: null,
   active: false,
-  showLabel: true,
   expandable: false,
   isExpanded: false,
   onToggleExpansion: () => { }

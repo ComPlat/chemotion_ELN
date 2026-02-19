@@ -17,7 +17,7 @@ import InboxStore from 'src/stores/alt/stores/InboxStore';
 import { formatDate } from 'src/utilities/timezoneHelper';
 import UIStore from 'src/stores/alt/stores/UIStore';
 
-import SidebarButton from 'src/apps/mydb/layout/sidebar/SidebarButton';
+import NotificationButton from 'src/apps/mydb/mainNavigation/topbar/NotificationButton';
 
 const changeUrl = (url, urlTitle) => (url ? (
   <a href={url} target="_blank" rel="noopener noreferrer">
@@ -432,13 +432,11 @@ export default class NoticeButton extends React.Component {
 
     return (
       <>
-        <SidebarButton
+        <NotificationButton
           label="Notifications"
           variant={btnVariant}
           icon={btnIcon}
           onClick={this.handleShow}
-          isCollapsed={this.props.isCollapsed}
-          showLabel={false}
         />
         {this.renderModal()}
       </>

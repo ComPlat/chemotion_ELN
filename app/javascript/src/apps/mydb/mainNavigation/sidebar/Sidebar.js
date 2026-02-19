@@ -6,12 +6,7 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 
 import ChemotionLogo from 'src/components/common/ChemotionLogo';
 import CollectionTree from 'src/apps/mydb/collections/CollectionTree';
-
-import InboxButton from 'src/components/contextActions/InboxButton';
-import SampleTaskSidebarButton from 'src/components/sampleTaskInbox/SampleTaskSidebarButton';
-import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
-import NoticeButton from 'src/components/contextActions/NoticeButton';
-import PanelCollapseButton from 'src/apps/mydb/layout/PanelCollapseButton';
+import PanelCollapseButton from 'src/apps/mydb/mainNavigation/PanelCollapseButton';
 
 export default function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -25,9 +20,6 @@ export default function Sidebar() {
   return (
     <div className={classnames('sidebar', { 'sidebar--collapsed': isCollapsed })}>
       <div className="sidebar-content">
-        <a href="/mydb" title="Link to mydb index page" className="sidebar-logo">
-          <ChemotionLogo collapsed={isCollapsed} />
-        </a>
         <div className="flex-grow-1 h-0 pb-4">
           <CollectionTree isCollapsed={isCollapsed} />
         </div>
@@ -36,10 +28,9 @@ export default function Sidebar() {
           { 'flex-column': isCollapsed }
         )}
         >
-          <InboxButton isCollapsed={isCollapsed} />
-          <SampleTaskSidebarButton isCollapsed={isCollapsed} />
-          <OpenCalendarButton isCollapsed={isCollapsed} />
-          <NoticeButton isCollapsed={isCollapsed} />
+          <a href="/mydb" title="Link to mydb index page" className="sidebar-logo">
+            <ChemotionLogo collapsed={isCollapsed} />
+          </a>
         </div>
       </div>
       <div className="sidebar-collapse-button-container">
