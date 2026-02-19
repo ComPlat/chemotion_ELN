@@ -1173,16 +1173,11 @@ class ElementStore {
   }
 
   handleCopyReaction(result) {
-<<<<<<< HEAD
     const { reaction, colId, keepAmounts } = result;
     this.changeCurrentElement(
       Reaction.copyFromReactionAndCollectionId(reaction, colId, keepAmounts)
     );
-    Aviator.navigate(`/collection/${colId}/reaction/copy`);
-=======
-    this.changeCurrentElement(Reaction.copyFromReactionAndCollectionId(result.reaction, result.colId));
     aviatorNavigationWithCollectionId(result.colId, 'reaction', 'copy', true, false);
->>>>>>> b1f685939 (Add aviator navigation function)
   }
 
   handleCopyResearchPlan(result) {
