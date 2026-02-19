@@ -190,33 +190,21 @@ export default class ReactionDetailsScheme extends React.Component {
   }
 
   /**
-   * Sets the reference flag and calculates equivalent for a new SBMM sample being added to the reaction.
-   *
-   * If no reference material exists in the reaction (regular sample or SBMM), this SBMM sample becomes
-   * the reference material with equivalent = 1.0. Otherwise, the equivalent is calculated relative to
-   * the current reference material's amount_mol.
-   *
-   * @param {SequenceBasedMacromoleculeSample} splitSbmmSample - The SBMM sample to configure
-   * @param {Reaction} reaction - The reaction object
+   * Sets a dropped SBMM sample as the reaction reference and ensures Eq=1,
+   * but only when the reaction has no reference material yet.
    */
-  // eslint-disable-next-line class-methods-use-this
-  setReferenceAndEquivalentForSbmmSample(splitSbmmSample, reaction) {
-    // If no reference material exists, make this SBMM sample the reference with Eq=1.
-    // Otherwise, calculate its equivalent relative to the current reference material.
-    if (!reaction.referenceMaterial) {
-      splitSbmmSample.reference = true;
-      splitSbmmSample.equivalent = 1.0;
-      return;
-    }
+  setReferenceAndEquivalentForSbmmSample(splitSbmmSample) {
+    const { reaction } = this.props;
 
-    const referenceAmount = reaction.referenceMaterial.amount_mol;
-    const sbmmAmount = splitSbmmSample.amount_mol || 0;
+    if (reaction.referenceMaterial) return;
 
-    if (referenceAmount && referenceAmount > 0) {
-      splitSbmmSample.equivalent = sbmmAmount / referenceAmount;
-    } else {
-      splitSbmmSample.equivalent = 0.0;
-    }
+    this.updatedReactionForReferenceChange(
+      {
+        sampleID: splitSbmmSample.id,
+        isSbmm: true
+      },
+      'referenceChanged'
+    );
   }
 
   dropSbmmSample(srcSbmmSample, tagMaterial) {
@@ -233,8 +221,6 @@ export default class ReactionDetailsScheme extends React.Component {
 
     // Set reaction-specific properties
     splitSbmmSample.show_label = true; // Similar to how samples handle decoupled
-
-    this.setReferenceAndEquivalentForSbmmSample(splitSbmmSample, reaction);
 
     // Check if already in the group (by original ID or short_label)
     const isAlreadyAdded = reaction.reactant_sbmm_samples?.some(
@@ -253,6 +239,9 @@ export default class ReactionDetailsScheme extends React.Component {
 
     // Add the SPLIT copy to reaction's reactant_sbmm_samples array
     reaction.addMaterialAt(splitSbmmSample, null, tagMaterial, 'reactant_sbmm_samples');
+
+    // If no reference material exists, set dropped SBMM as reference (Eq=1).
+    this.setReferenceAndEquivalentForSbmmSample(splitSbmmSample);
 
     // Mark reaction as changed and update max amounts
     // handleReactionChange will also set reaction.changed = true and update state
@@ -391,20 +380,24 @@ export default class ReactionDetailsScheme extends React.Component {
           ? reaction.reactantsWithSbmm
           : reaction[refMaterialGroup];
         if (refMaterialsArray.length > 0) {
+          const nextReferenceSample = refMaterialsArray[0];
           const event = {
             type: 'referenceChanged',
             refMaterialGroup,
-            sampleID: refMaterialsArray[0].id,
+            sampleID: nextReferenceSample.id,
+            isSbmm: isSbmmSample(nextReferenceSample),
             value: 'on'
           };
           this.updatedReactionForReferenceChange(event);
         }
       } else {
         // Materials remain in this group, set the first one as reference
+        const nextReferenceSample = materialsArray[0];
         const event = {
           type: 'referenceChanged',
           materialGroup,
-          sampleID: materialsArray[0].id,
+          sampleID: nextReferenceSample.id,
+          isSbmm: isSbmmSample(nextReferenceSample),
           value: 'on'
         };
         this.updatedReactionForReferenceChange(event);
@@ -669,6 +662,7 @@ export default class ReactionDetailsScheme extends React.Component {
 
     const isSbmm = changeEvent.isSbmm === true;
     const sample = this.findReactionSample(sampleID, isSbmm);
+    if (!sample) return reaction;
 
     if (type === 'weightPercentageReferenceChanged') {
       reaction.markWeightPercentageSampleAsReference(sampleID);
@@ -1656,6 +1650,8 @@ export default class ReactionDetailsScheme extends React.Component {
   }
 
   updatedSamplesForReferenceChange(samples, referenceMaterial, materialGroup) {
+    if (!referenceMaterial) return samples;
+
     const isReferenceSbmm = isSbmmSample(referenceMaterial);
 
     return samples.map((sample) => {
