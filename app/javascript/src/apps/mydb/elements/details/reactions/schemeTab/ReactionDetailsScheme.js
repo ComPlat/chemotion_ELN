@@ -714,7 +714,12 @@ export default class ReactionDetailsScheme extends React.Component {
     // normalize to milligram
     updatedSample.setAmountAndNormalizeToGram(amount);
 
-    return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample);
+    return this.updatedReactionWithSample(
+      this.updatedSamplesForAmountChange.bind(this),
+      updatedSample,
+      undefined,
+      true
+    );
   }
 
   /**
@@ -888,8 +893,11 @@ export default class ReactionDetailsScheme extends React.Component {
 
   updatedReactionForEquivalentChange(changeEvent) {
     const { reaction } = this.props;
-    const { sampleID, equivalent, weightPercentageField } = changeEvent;
-    const updatedSample = reaction.sampleById(sampleID);
+    const {
+      sampleID, equivalent, weightPercentageField, isSbmm
+    } = changeEvent;
+    const updatedSample = this.findReactionSample(sampleID, isSbmm === true);
+    if (!updatedSample) return reaction;
 
     updatedSample.equivalent = equivalent;
 
@@ -898,7 +906,12 @@ export default class ReactionDetailsScheme extends React.Component {
       updatedSample.setAmount({ value: 0, unit: 'g' });
     }
 
-    return this.updatedReactionWithSample(this.updatedSamplesForEquivalentChange.bind(this), updatedSample);
+    return this.updatedReactionWithSample(
+      this.updatedSamplesForEquivalentChange.bind(this),
+      updatedSample,
+      undefined,
+      true
+    );
   }
 
   updatedReactionForWeightPercentageChange(changeEvent) {
@@ -1530,14 +1543,15 @@ export default class ReactionDetailsScheme extends React.Component {
 
   updatedSamplesForEquivalentChange(samples, updatedSample, materialGroup) {
     const { reaction: { referenceMaterial } } = this.props;
+    const referenceAmountMol = Number(referenceMaterial?.amount_mol);
+    const hasReferenceAmountMol = Number.isFinite(referenceAmountMol) && referenceAmountMol > 0;
     let stoichiometryCoeff = 1.0;
     return samples.map((sample) => {
       stoichiometryCoeff = (sample.coefficient || 1.0) / (referenceMaterial?.coefficient || 1.0);
-      if (sample.id === updatedSample.id && updatedSample.equivalent) {
+      if (sample.id === updatedSample.id && updatedSample.equivalent != null) {
         sample.equivalent = updatedSample.equivalent;
-        if (referenceMaterial && referenceMaterial.amount_value
-          && updatedSample.gas_type !== 'feedstock') {
-          const newAmountMol = updatedSample.equivalent * referenceMaterial.amount_mol;
+        if (hasReferenceAmountMol && updatedSample.gas_type !== 'feedstock') {
+          const newAmountMol = Number(updatedSample.equivalent) * referenceAmountMol;
           this.handleEquivalentBasedAmountUpdate(sample, newAmountMol);
         } else if (sample.amount_value && updatedSample.gas_type !== 'feedstock') {
           sample.setAmountAndNormalizeToGram({
@@ -1556,8 +1570,10 @@ export default class ReactionDetailsScheme extends React.Component {
           // NB: sample equivalent independant of coeff
           if (sample.reference) {
             sample.equivalent = sample.reference ? 1 : 0;
+          } else if (hasReferenceAmountMol) {
+            sample.equivalent = sample.amount_mol / referenceAmountMol;
           } else {
-            sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol;
+            sample.equivalent = 0.0;
           }
         }
       }
