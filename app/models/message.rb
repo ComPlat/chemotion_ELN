@@ -35,9 +35,17 @@ class Message < ApplicationRecord
   end
 
   def self.bulk_create_notifications(channel_id, message_id, user_id, receiver_ids)
-    receiver_ids = "ARRAY#{receiver_ids || []}::int[]"
+    channel_id = IdNormalizer.normalize_integer(channel_id)
+    message_id = IdNormalizer.normalize_integer(message_id)
+    user_id = IdNormalizer.normalize_integer(user_id)
+    return if [channel_id, message_id, user_id].any?(&:nil?)
+
+    filtered_ids = IdNormalizer.normalize_integer_array(receiver_ids)
+    return if filtered_ids.empty?
+
+    receiver_ids_str = filtered_ids.join(',')
     sql = "select generate_notifications(#{channel_id}, #{message_id},
-           #{user_id}, #{receiver_ids}) as message_id"
+           #{user_id}, ARRAY[#{receiver_ids_str}]::int[]) as message_id"
     ApplicationRecord.connection.exec_query(sql)
   end
 
