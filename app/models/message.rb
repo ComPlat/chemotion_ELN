@@ -35,12 +35,12 @@ class Message < ApplicationRecord
   end
 
   def self.bulk_create_notifications(channel_id, message_id, user_id, receiver_ids)
-    channel_id = normalize_integer(channel_id)
-    message_id = normalize_integer(message_id)
-    user_id = normalize_integer(user_id)
+    channel_id = IdNormalizer.normalize_integer(channel_id)
+    message_id = IdNormalizer.normalize_integer(message_id)
+    user_id = IdNormalizer.normalize_integer(user_id)
     return if [channel_id, message_id, user_id].any?(&:nil?)
 
-    filtered_ids = normalize_integer_array(receiver_ids)
+    filtered_ids = IdNormalizer.normalize_integer_array(receiver_ids)
     return if filtered_ids.empty?
 
     receiver_ids_str = filtered_ids.join(',')
@@ -49,17 +49,5 @@ class Message < ApplicationRecord
     ApplicationRecord.connection.exec_query(sql)
   end
 
-  def self.normalize_integer(value)
-    Integer(value)
-  rescue ArgumentError, TypeError
-    nil
-  end
-
-  def self.normalize_integer_array(values)
-    Array(values).filter_map { |value| normalize_integer(value) }.uniq
-  end
-
   private_class_method :bulk_create_notifications
-  private_class_method :normalize_integer
-  private_class_method :normalize_integer_array
 end

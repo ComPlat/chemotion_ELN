@@ -12,7 +12,7 @@ RSpec.describe Message do
     end
 
     it 'removes invalid receiver ids before building SQL' do
-      described_class.send(:bulk_create_notifications, 1, 2, 3, [4, nil, '5', 'invalid'])
+      described_class.send(:bulk_create_notifications, 1, 2, 3, [4, nil, '5', 5.9, 'invalid'])
 
       expect(connection).to have_received(:exec_query).with(
         a_string_including('generate_notifications(1, 2,'),
@@ -42,6 +42,12 @@ RSpec.describe Message do
 
     it 'does not execute SQL when message_id is nil' do
       described_class.send(:bulk_create_notifications, 1, nil, 3, [4])
+
+      expect(connection).not_to have_received(:exec_query)
+    end
+
+    it 'does not execute SQL when message_id is a float' do
+      described_class.send(:bulk_create_notifications, 1, 2.9, 3, [4])
 
       expect(connection).not_to have_received(:exec_query)
     end

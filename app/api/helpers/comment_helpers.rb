@@ -4,11 +4,7 @@ module CommentHelpers
   extend Grape::API::Helpers
 
   def sanitize_user_ids(values)
-    Array(values).flatten.filter_map do |value|
-      Integer(value)
-    rescue ArgumentError, TypeError
-      nil
-    end.uniq
+    IdNormalizer.normalize_integer_array(values)
   end
 
   def authorized_users(collections)
