@@ -103,6 +103,7 @@ describe 'Copy reaction' do
       sleep 6
       expect(page).to have_content('reaction B')
     end
+  end
 
   context 'from own collection' do
     before do
