@@ -663,7 +663,46 @@ module Reporter
         obj.reactants.each do |r|
           output.push(material_hash(r, false))
         end
+        reactant_sbmm_samples.each do |sbmm|
+          output.push(sbmm_material_hash(sbmm))
+        end
         output
+      end
+
+      def reactant_sbmm_samples
+        Array(obj.reactant_sbmm_samples)
+      end
+
+      def sbmm_material_hash(material)
+        s = OpenStruct.new(material)
+        sbmm_name = s.name.presence || s.short_label.presence || s.external_label.presence || 'SBMM'
+
+        mol_value = s.amount_as_used_mol_value
+        mol_unit = s.amount_as_used_mol_unit.to_s
+        if mol_value.present? && mol_unit.casecmp('mol').zero?
+          mol_value = mol_value.to_f * 1000.0
+          mol_unit = 'mmol'
+        end
+
+        {
+          name: s.name,
+          iupac_name: sbmm_name,
+          short_label: s.short_label.presence || s.external_label.presence || s.name.presence,
+          formular: 'n.d.',
+          mol_w: format_scientific(s.sequence_based_macromolecule&.dig(:molecular_weight), digit),
+          mass: format_scientific(s.amount_as_used_mass_value, digit),
+          mass_unit: s.amount_as_used_mass_unit.presence || 'g',
+          vol: format_scientific(s.volume_as_used_value, digit),
+          vol_unit: s.volume_as_used_unit.presence || 'mL',
+          density: 'n.d.',
+          mol: format_scientific(mol_value, digit),
+          mmol_unit: mol_unit.presence || 'mmol',
+          equiv: format_scientific(s.equivalent, digit),
+          molecule_name_hash: { label: sbmm_name },
+          components: [],
+          is_mixture: false,
+          weight_percentage: (@obj.weight_percentage && s.weight_percentage.present?) ? valid_digit(s.weight_percentage, digit) : '',
+        }
       end
 
       def products
