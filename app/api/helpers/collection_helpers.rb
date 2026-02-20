@@ -22,7 +22,7 @@ module CollectionHelpers
 
     return defaults unless collection_share
 
-    collection_share.attributes.slice(defaults.keys).symbolize_keys
+    collection_share.attributes.symbolize_keys.slice(*defaults.keys)
   end
 
   # TODO: improve this code and its callers by refactoring this logic into a method on collection
