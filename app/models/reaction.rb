@@ -140,6 +140,14 @@ class Reaction < ApplicationRecord
   has_many :reactants, through: :reactions_reactant_samples, source: :sample
   has_many :reactant_molecules, through: :reactants, source: :molecule
 
+  has_many :reactions_reactant_sbmm_samples,
+           -> { order(position: :asc) },
+           inverse_of: :reaction,
+           dependent: :destroy
+  has_many :reactant_sbmm_samples,
+           through: :reactions_reactant_sbmm_samples,
+           source: :sequence_based_macromolecule_sample
+
   has_many :reactions_product_samples, -> { order(position: :asc) }, dependent: :destroy
   has_many :products, through: :reactions_product_samples, source: :sample
   has_many :product_molecules, through: :products, source: :molecule
@@ -238,6 +246,8 @@ class Reaction < ApplicationRecord
           params
         end
       end
+      # SBMM reactants are stored in a separate association, so append them explicitly.
+      paths[:reactants] += reactant_sbmm_samples.map { |sbmm_sample| [sbmm_sample.svg_text_path] }
       begin
         composer = SVG::ReactionComposer.new(paths, temperature: temperature_display_with_unit,
                                                     duration: duration,

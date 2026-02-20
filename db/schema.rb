@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2026_01_20_183627) do
+ActiveRecord::Schema.define(version: 2026_02_19_120000) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -1112,6 +1112,21 @@ ActiveRecord::Schema.define(version: 2026_01_20_183627) do
     t.index ["rxno"], name: "index_reactions_on_rxno", order: :desc
   end
 
+  create_table "reactions_reactant_sbmm_samples", force: :cascade do |t|
+    t.integer "reaction_id", null: false
+    t.bigint "sequence_based_macromolecule_sample_id", null: false
+    t.integer "position"
+    t.datetime "deleted_at"
+    t.boolean "reference", default: false, null: false
+    t.boolean "show_label", default: false, null: false
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.jsonb "log_data"
+    t.index ["deleted_at"], name: "idx_rxn_reactant_sbmm_on_deleted"
+    t.index ["reaction_id"], name: "idx_rxn_reactant_sbmm_on_rxn_id"
+    t.index ["sequence_based_macromolecule_sample_id"], name: "idx_rxn_reactant_sbmm_on_sbmm_id"
+  end
+
   create_table "reactions_samples", id: :serial, force: :cascade do |t|
     t.integer "reaction_id"
     t.integer "sample_id"
@@ -1493,6 +1508,10 @@ ActiveRecord::Schema.define(version: 2026_01_20_183627) do
     t.string "purification_method", default: ""
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.float "equivalent"
+    t.float "weight_percentage"
+    t.float "concentration_rt_value"
+    t.string "concentration_rt_unit", default: "mol/L", null: false
     t.index ["ancestry"], name: "idx_sbmm_samples_ancestry", opclass: :varchar_pattern_ops
     t.index ["deleted_at"], name: "idx_sbmm_samples_deleted_at"
     t.index ["sequence_based_macromolecule_id"], name: "idx_sbmm_samples_sbmm"
@@ -1774,6 +1793,8 @@ ActiveRecord::Schema.define(version: 2026_01_20_183627) do
   add_foreign_key "components", "samples"
   add_foreign_key "layer_tracks", "layers", column: "identifier", primary_key: "identifier"
   add_foreign_key "literals", "literatures"
+  add_foreign_key "reactions_reactant_sbmm_samples", "reactions"
+  add_foreign_key "reactions_reactant_sbmm_samples", "sequence_based_macromolecule_samples"
   add_foreign_key "report_templates", "attachments"
   add_foreign_key "sample_tasks", "samples"
   add_foreign_key "sample_tasks", "users", column: "creator_id"
