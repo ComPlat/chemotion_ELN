@@ -9,14 +9,14 @@ import NoticeButton from 'src/apps/mydb/mainNavigation/topbar/NoticeButton';
 
 export default function Topbar() {
   return (
-    <div className="d-flex justify-content-between pe-3 topbar">
-      <div className="d-flex align-items-center flex-wrap gap-2 row-gap-1">
+    <div className="d-flex justify-content-between pe-3 ps-2 topbar">
+      <div className="d-flex align-items-center gap-2">
         <InboxButton />
         <SampleTaskSidebarButton />
         <OpenCalendarButton />
         <NoticeButton />
       </div>
-      <div className="d-flex align-items-center gap-2 row-gap-1 flex-wrap justify-content-end">
+      <div className="d-flex align-items-center gap-2">
         <ScanCodeButton />
         <SupportMenuButton />
         <UserAuth />

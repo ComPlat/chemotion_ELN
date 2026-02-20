@@ -1,5 +1,6 @@
-import React from 'react';
-import PropTypes from 'prop-types';
+import React, {
+  useState, useEffect, useContext, useRef, useCallback
+} from 'react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import {
   Button, Modal, Card, Row, Col
@@ -150,103 +151,70 @@ const createUpgradeNotification = (serverVersion, localVersion) => {
   handleNotification([not], 'add', false);
 };
 
-export default class NoticeButton extends React.Component {
-  static contextType = StoreContext;
-  constructor(props) {
-    super(props);
-    this.state = {
-      showModal: false,
-      dbNotices: [],
-      messageEnable: true,
-      messageAutoInterval: 6000,
-      lastActivityTime: new Date(),
-      idleTimeout: 12,
-      serverVersion: '',
-      localVersion: '',
-    };
-    this.envConfiguration = this.envConfiguration.bind(this);
-    this.handleShow = this.handleShow.bind(this);
-    this.handleHide = this.handleHide.bind(this);
-    this.messageAck = this.messageAck.bind(this);
-    this.detectActivity = this.detectActivity.bind(this);
-  }
+export default function NoticeButton() {
+  const context = useContext(StoreContext);
+  const intervalRef = useRef(null);
+  const prevDbNoticesRef = useRef([]);
+  const prevServerVersionRef = useRef('');
 
-  componentDidMount() {
-    this.envConfiguration();
-    this.startActivityDetection();
-  }
+  const [showModal, setShowModal] = useState(false);
+  const [dbNotices, setDbNotices] = useState([]);
+  const [messageEnable, setMessageEnable] = useState(true);
+  const [messageAutoInterval, setMessageAutoInterval] = useState(6000);
+  const [lastActivityTime, setLastActivityTime] = useState(new Date());
+  const [idleTimeout, setIdleTimeout] = useState(12);
+  const [serverVersion, setServerVersion] = useState('');
+  const [localVersion, setLocalVersion] = useState('');
 
-  shouldComponentUpdate(nextProps, nextState) {
-    const nots = this.state.dbNotices;
-    const nextNots = nextState.dbNotices;
+  // Render calculations
+  const noticeNum = Object.keys(dbNotices).length;
+  const btnIcon = noticeNum > 0 ? 'fa-bell' : 'fa-bell-o';
 
-    const notIds = _.map(nots, 'id');
-    const nextNotIds = _.map(nextNots, 'id');
-    const newMessages = _.filter(nextNots, (o) => !_.includes(notIds, o.id));
-    const remMessages = _.filter(nots, (o) => !_.includes(nextNotIds, o.id));
+  const detectActivity = useCallback(() => {
+    setLastActivityTime(new Date());
+  }, []);
 
-    if (Object.keys(newMessages).length > 0) {
-      handleNotification(newMessages, 'add');
+  const messageFetch = useCallback(() => {
+    const clientLastActivityTime = new Date(lastActivityTime).getTime();
+    const currentTime = new Date().getTime();
+    const remainTime = Math.floor(
+      (currentTime - clientLastActivityTime) / 1000
+    );
+    if (remainTime < idleTimeout) {
+      const { attachmentNotificationStore } = context;
+      MessagesFetcher.fetchMessages(0).then((result) => {
+        result.messages.forEach((message) => {
+          if (message.subject === 'Send TPA attachment arrival notification') {
+            attachmentNotificationStore.addMessage(message);
+          }
+        });
+        result.messages.sort((a, b) => a.id - b.id);
+        setDbNotices(result.messages);
+        setServerVersion(result.version);
+      });
     }
-    if (Object.keys(remMessages).length > 0) {
-      handleNotification(remMessages, 'rem');
+  }, [lastActivityTime, idleTimeout, context]);
+
+  const startActivityDetection = useCallback(() => {
+    if (messageEnable === true) {
+      intervalRef.current = setInterval(messageFetch, messageAutoInterval);
+      document.addEventListener('mousemove', detectActivity);
+      document.addEventListener('click', detectActivity);
     }
-    if (
-      nextState.serverVersion
-      && nextState.localVersion
-      && nextState.serverVersion !== this.state.serverVersion
-      && nextState.serverVersion !== nextState.localVersion
-    ) {
-      const serverVer = nextState.serverVersion.substring(
-        nextState.serverVersion.indexOf('-') + 1,
-        nextState.serverVersion.indexOf('.js')
-      );
-      const localVer = nextState.localVersion.substring(
-        nextState.localVersion.indexOf('-') + 1,
-        nextState.localVersion.indexOf('.js')
-      );
-      if (serverVer !== localVer) {
-        createUpgradeNotification(serverVer, localVer);
+  }, [messageEnable, messageAutoInterval, messageFetch, detectActivity]);
+
+  const stopActivityDetection = useCallback(() => {
+    if (messageEnable === true) {
+      document.removeEventListener('mousemove', detectActivity, false);
+      document.removeEventListener('click', detectActivity, false);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
     }
+  }, [messageEnable, detectActivity]);
 
-    return true;
-  }
-
-  componentWillUnmount() {
-    this.stopActivityDetection();
-  }
-
-  handleShow() {
-    MessagesFetcher.fetchMessages(0).then((result) => {
-      result.messages.sort((a, b) => a.id - b.id);
-      this.setState({ showModal: true, dbNotices: result.messages });
-    });
-  }
-
-  handleHide() {
-    this.setState({ showModal: false });
-  }
-
-  startActivityDetection() {
-    const { messageEnable } = this.state;
-    if (messageEnable === true) {
-      this.interval = setInterval(this.messageFetch.bind(this), this.state.messageAutoInterval);
-      document.addEventListener('mousemove', this.detectActivity);
-      document.addEventListener('click', this.detectActivity);
-    }
-  }
-
-  stopActivityDetection() {
-    const { messageEnable } = this.state;
-    if (messageEnable === true) {
-      document.removeEventListener('mousemove', this.detectActivity, false);
-      document.removeEventListener('click', this.detectActivity, false);
-      clearInterval(this.interval);
-    }
-  }
-
-  envConfiguration() {
+  const envConfiguration = useCallback(() => {
     // use 'application' (not 'application-') as keyword because there is a
     // difference between production and development environment
     const documentIndex = 'application';
@@ -258,33 +226,37 @@ export default class NoticeButton extends React.Component {
       applicationTag[0].src.indexOf(documentIndex)
     );
     MessagesFetcher.configuration().then((result) => {
-      this.setState({
-        messageEnable: result.messageEnable === 'true',
-        messageAutoInterval: result.messageAutoInterval,
-        idleTimeout: result.idleTimeout,
-        localVersion: applicationTagValue,
-      });
-      const { messageEnable, messageAutoInterval } = this.state;
+      const newMessageEnable = result.messageEnable === 'true';
+      const newMessageAutoInterval = result.messageAutoInterval;
 
-      if (messageEnable === true) {
-        this.interval = setInterval(
-          () => this.messageFetch(),
-          messageAutoInterval
-        );
-        document.addEventListener('mousemove', this.detectActivity);
-        document.addEventListener('click', this.detectActivity);
+      setMessageEnable(newMessageEnable);
+      setMessageAutoInterval(newMessageAutoInterval);
+      setIdleTimeout(result.idleTimeout);
+      setLocalVersion(applicationTagValue);
+
+      if (newMessageEnable === true) {
+        intervalRef.current = setInterval(messageFetch, newMessageAutoInterval);
+        document.addEventListener('mousemove', detectActivity);
+        document.addEventListener('click', detectActivity);
       } else {
-        this.messageFetch();
+        messageFetch();
       }
     });
-  }
+  }, [messageFetch, detectActivity]);
 
-  detectActivity() {
-    this.setState({ lastActivityTime: new Date() });
-  }
+  const handleShow = useCallback(() => {
+    MessagesFetcher.fetchMessages(0).then((result) => {
+      result.messages.sort((a, b) => a.id - b.id);
+      setShowModal(true);
+      setDbNotices(result.messages);
+    });
+  }, []);
 
-  messageAck(idx, ackAll) {
-    let { dbNotices } = this.state;
+  const handleHide = useCallback(() => {
+    setShowModal(false);
+  }, []);
+
+  const messageAck = useCallback((idx, ackAll) => {
     const params = {
       ids: [],
     };
@@ -295,42 +267,16 @@ export default class NoticeButton extends React.Component {
     }
     MessagesFetcher.acknowledgedMessage(params).then((result) => {
       const ackIds = _.map(result.ack, 'id');
-      dbNotices = _.filter(
-        this.state.dbNotices,
+      const filteredNotices = _.filter(
+        dbNotices,
         (o) => !_.includes(ackIds, o.id)
       );
-      dbNotices.sort((a, b) => a.id - b.id);
-      this.setState({
-        dbNotices,
-      });
+      filteredNotices.sort((a, b) => a.id - b.id);
+      setDbNotices(filteredNotices);
     });
-  }
+  }, [dbNotices]);
 
-  messageFetch() {
-    const { lastActivityTime, idleTimeout } = this.state;
-    const clientLastActivityTime = new Date(lastActivityTime).getTime();
-    const currentTime = new Date().getTime();
-    const remainTime = Math.floor(
-      (currentTime - clientLastActivityTime) / 1000
-    );
-    if (remainTime < idleTimeout) {
-      MessagesFetcher.fetchMessages(0).then((result) => {
-        result.messages.forEach((message) => {
-          if (message.subject === 'Send TPA attachment arrival notification')
-            this.context.attachmentNotificationStore.addMessage(message);
-        });
-        result.messages.sort((a, b) => a.id - b.id);
-        this.setState({
-          dbNotices: result.messages,
-          serverVersion: result.version,
-        });
-      });
-    }
-  }
-
-  renderBody() {
-    const { dbNotices } = this.state;
-
+  const renderBody = useCallback(() => {
     if (dbNotices.length === 0) {
       return (
         <Card className="text-center" eventKey="0">
@@ -377,7 +323,7 @@ export default class NoticeButton extends React.Component {
                 <Button
                   id={`notice-button-ack-${not.id}`}
                   key={`notice-button-ack-${not.id}`}
-                  onClick={() => this.messageAck(not.id, false)}
+                  onClick={() => messageAck(not.id, false)}
                 >
                   <i className="fa fa-check me-1" aria-hidden="true" />
                   Got it
@@ -389,57 +335,97 @@ export default class NoticeButton extends React.Component {
         </Card>
       );
     });
-  }
+  }, [dbNotices, messageAck]);
 
-  renderModal() {
-    const { showModal } = this.state;
-    return (
-      <Modal
-        centered
-        show={showModal}
-        onHide={this.handleHide}
-        dialogClassName="modal-xl"
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Unread Notifications</Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="vh-70 overflow-auto">
-          {this.renderBody()}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button
-            id="notice-button-ack-all"
-            key="notice-button-ack-all"
-            onClick={() => this.messageAck(0, true)}
-          >
-            <i className="fa fa-check" aria-hidden="true" />
-            &nbsp;Mark all notifications as read
-          </Button>
-        </Modal.Footer>
-      </Modal>
-    );
-  }
+  const renderModal = useCallback(() => (
+    <Modal
+      centered
+      show={showModal}
+      onHide={handleHide}
+      dialogClassName="modal-xl"
+    >
+      <Modal.Header closeButton>
+        <Modal.Title>Unread Notifications</Modal.Title>
+      </Modal.Header>
+      <Modal.Body className="vh-70 overflow-auto">
+        {renderBody()}
+      </Modal.Body>
+      <Modal.Footer>
+        <Button
+          id="notice-button-ack-all"
+          key="notice-button-ack-all"
+          onClick={() => messageAck(0, true)}
+        >
+          <i className="fa fa-check" aria-hidden="true" />
+          &nbsp;Mark all notifications as read
+        </Button>
+      </Modal.Footer>
+    </Modal>
+  ), [showModal, handleHide, renderBody, messageAck]);
 
-  render() {
-    const noticeNum = Object.keys(this.state.dbNotices).length;
-    let btnVariant = 'sidebar';
-    let btnIcon = 'fa-bell-o';
+  // Component mount effect
+  useEffect(() => {
+    envConfiguration();
+    startActivityDetection();
 
-    if (noticeNum > 0) {
-      btnVariant = 'warning';
-      btnIcon = 'fa-bell';
+    return () => {
+      stopActivityDetection();
+    };
+  }, [envConfiguration, startActivityDetection, stopActivityDetection]);
+
+  // Handle notifications when dbNotices change
+  useEffect(() => {
+    const prevNots = prevDbNoticesRef.current;
+    const currentNots = dbNotices;
+
+    const prevNotIds = _.map(prevNots, 'id');
+    const currentNotIds = _.map(currentNots, 'id');
+    const newMessages = _.filter(currentNots, (o) => !_.includes(prevNotIds, o.id));
+    const remMessages = _.filter(prevNots, (o) => !_.includes(currentNotIds, o.id));
+
+    if (Object.keys(newMessages).length > 0) {
+      handleNotification(newMessages, 'add');
+    }
+    if (Object.keys(remMessages).length > 0) {
+      handleNotification(remMessages, 'rem');
     }
 
-    return (
-      <>
-        <NotificationButton
-          label="Notifications"
-          variant={btnVariant}
-          icon={btnIcon}
-          onClick={this.handleShow}
-        />
-        {this.renderModal()}
-      </>
-    );
-  }
+    prevDbNoticesRef.current = dbNotices;
+  }, [dbNotices]);
+
+  // Handle version upgrade notifications
+  useEffect(() => {
+    if (
+      serverVersion
+      && localVersion
+      && serverVersion !== prevServerVersionRef.current
+      && serverVersion !== localVersion
+    ) {
+      const serverVer = serverVersion.substring(
+        serverVersion.indexOf('-') + 1,
+        serverVersion.indexOf('.js')
+      );
+      const localVer = localVersion.substring(
+        localVersion.indexOf('-') + 1,
+        localVersion.indexOf('.js')
+      );
+      if (serverVer !== localVer) {
+        createUpgradeNotification(serverVer, localVer);
+      }
+    }
+
+    prevServerVersionRef.current = serverVersion;
+  }, [serverVersion, localVersion]);
+
+  return (
+    <>
+      <NotificationButton
+        label="Notifications"
+        icon={btnIcon}
+        onClick={handleShow}
+        badgeCount={noticeNum}
+      />
+      {renderModal()}
+    </>
+  );
 }
