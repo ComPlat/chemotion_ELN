@@ -83,7 +83,12 @@ M  END
     smiles = c.write_string(m, false).to_s.gsub(/\s.*/m, "").strip
 
     c.set_out_format 'can'
-    ca_smiles = c.write_string(m, false).to_s.gsub(/\s.*/m, "").strip
+    ca_smiles = begin
+      str = c.write_string(m, false).to_s
+      str.lines.first.to_s.gsub(/\s.*/m, "").strip
+    rescue StandardError, SystemStackError
+      ''
+    end
 
     unless format == 'mol'
       c.set_out_format 'mol'
