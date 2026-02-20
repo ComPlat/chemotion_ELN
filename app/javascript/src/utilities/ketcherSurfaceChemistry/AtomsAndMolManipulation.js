@@ -131,7 +131,8 @@ const associateTextNodeWithNewAlias = (atomLocation, newAlias, oldAlias) => {
 // helper function to process ketcher-rails files and adding image to ketcher canvas
 const addingPolymersToKetcher = async (railsPolymersList, data) => {
   try {
-    const polymerList = railsPolymersList.split(' ');
+    // Split by whitespace and drop empties so each R# atom gets the correct entry (e.g. "6/7/1.00-2.00" -> template 7)
+    const polymerList = (railsPolymersList || '').trim().split(/\s+/).filter(Boolean);
     let visitedAtoms = 0;
     const collectedImages = [];
     await initializeKetcherData(data);
@@ -139,6 +140,7 @@ const addingPolymersToKetcher = async (railsPolymersList, data) => {
     // eslint-disable-next-line no-restricted-syntax
     for (const molName of mols) {
       const molecule = data[molName];
+      if (!molecule?.atoms) continue;
       for (let atomIndex = 0; atomIndex < molecule.atoms.length; atomIndex++) {
         const atom = molecule.atoms[atomIndex];
         const polymerItem = polymerList[visitedAtoms];
@@ -148,17 +150,16 @@ const addingPolymersToKetcher = async (railsPolymersList, data) => {
           || ALIAS_PATTERNS.threeParts.test(atom.alias)
         );
         if (polymerItem && aliasPass) {
-          // counters
-          imageUsedCounterSetter(imageNodeCounter + 1);
-          visitedAtoms += 1;
-          // step 1: get template type
+          // step 1: get template type from polymer entry (e.g. "6/7/1.00-2.00" -> type 7, size 1.00-2.00)
           const { type: templateType, size: templateSize } = getTemplateType(polymerItem);
           // step 2: update atom with alias
+          imageUsedCounterSetter(imageNodeCounter + 1);
+          visitedAtoms += 1;
           data[molName].atoms[atomIndex] = updateAtom(atom.location, templateType, imageNodeCounter);
-          // step 3: sync bounding box with atom location
+          // step 3: sync bounding box with atom location (fallback to bead if template id not found)
           const newTemplate = await templateWithBoundingBox(templateType, atom.location, templateSize);
           // step 4: add to the list
-          collectedImages.push(newTemplate);
+          if (newTemplate) collectedImages.push(newTemplate);
         }
       }
     }

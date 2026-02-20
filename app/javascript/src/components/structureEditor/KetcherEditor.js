@@ -322,6 +322,7 @@ const KetcherEditor = forwardRef((props, ref) => {
       resetStore,
       loadContent,
       buttonEvents,
+      onPasteWithKetcherData: handlePasteWithKetcherData,
     });
 
     // Initialize button state (disabled by default)
@@ -528,6 +529,16 @@ const KetcherEditor = forwardRef((props, ref) => {
       }
     } catch (err) {
       console.error('Error in loadContent:', err);
+    }
+  };
+
+  const handlePasteWithKetcherData = async (pastedText) => {
+    try {
+      if (editor?.structureDef && pastedText) {
+        await prepareKetcherData(editor, pastedText, { isPaste: true });
+      }
+    } catch (err) {
+      console.error('Error pasting molfile with polymer data:', err);
     }
   };
 
