@@ -92,3 +92,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=300s --retries=3 \
     CMD /embed/health.sh || exit 1
 
 VOLUME [ "/chemotion/app", "/chemotion/data" ]
+
+RUN cp config/structure_editors.yml.example config/structure_editors.yml
