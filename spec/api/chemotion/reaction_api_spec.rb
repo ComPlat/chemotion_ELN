@@ -594,7 +594,7 @@ describe Chemotion::ReactionAPI do
               'is_new' => true,
               'is_split' => true,
               'molfile' => build(:molfile, type: 'test_2'),
-              'molecule' => { molfile: molfile_1 },
+              'molecule' => { molfile: molfile1 },
               'container' => new_root_container,
             ],
           },
