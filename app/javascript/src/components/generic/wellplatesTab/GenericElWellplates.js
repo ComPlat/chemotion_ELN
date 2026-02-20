@@ -41,14 +41,14 @@ class GenericElWellplates extends Component {
       requests: [],
       loadingRequests: false,
       expandedRequestId: null,
-      selectedAnalyses: {}, // Track selected checkboxes by key
+      selectedAnalyses: {},
       showDetailsModal: false,
-      selectedAnalysisForModal: null, // Store { dataItem, sampleName, outputId }
+      selectedAnalysisForModal: null,
       showDeleteConfirmation: false,
-      deleteType: null, // 'request' or 'output' or 'result'
+      deleteType: null,
       deleteId: null,
-      deleteSampleName: null, // Store sample name for result deletion
-      sendingToSample: false, // Track if batch send is in progress
+      deleteSampleName: null,
+      sendingToSample: false,
     };
     this.handleSelect = this.handleSelect.bind(this);
     this.processWellplates = this.processWellplates.bind(this);
@@ -203,7 +203,7 @@ class GenericElWellplates extends Component {
     const selections = selectedItems.map(item => ({
       output_id: item.outputId,
       sample_name: item.sampleName,
-      result_data: item.dataItem.result[0] // The actual result object with IC50, R², etc.
+      result_data: item.dataItem.result[0]
     }));
 
     this.setState({ sendingToSample: true });
@@ -367,7 +367,7 @@ class GenericElWellplates extends Component {
         })
         .catch((error) => {
           console.error('Error deleting result:', error);
-          alert('Delete individual result endpoint not yet implemented. Please ask backend team to implement: DELETE /api/v1/mtt/outputs/:id/results');
+          alert('Delete individual result endpoint not yet implemented.');
         })
         .finally(() => {
           // Close modal if deleting from modal (happens regardless of success/failure)
