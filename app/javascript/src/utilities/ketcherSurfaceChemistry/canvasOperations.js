@@ -901,6 +901,34 @@ const isMolfileEmpty = (molfile) => {
   return match ? parseInt(match[1], 10) === 0 : true;
 };
 
+// Replace placeholder atom symbol A with R# in the atom block so the molfile
+// is recognized as containing residues (surface chemistry) by the rest of the app.
+const replaceAtomSymbolAWithRHashInAtomBlock = (lines) => {
+  const result = [...lines];
+  const isV3000 = result.some((l) => l && l.includes('V3000'));
+
+  if (isV3000) {
+    for (let i = 0; i < result.length; i++) {
+      if (result[i] && /^M  V30 \d+ A\s/.test(result[i])) {
+        result[i] = result[i].replace(/^(M  V30 \d+) A(\s)/, '$1 R#$2');
+      }
+    }
+  } else {
+    // V2000: atom block from line index 4 until M  END
+    const atomBlockStart = KET_TAGS.molfileHeaderLinenumber;
+    for (let i = atomBlockStart; i < result.length; i++) {
+      if (result[i] && /^M\s+END/.test(result[i])) break;
+      const parts = result[i].split(' ');
+      const idx = parts.indexOf(KET_TAGS.inspiredLabel);
+      if (idx !== -1) {
+        parts[idx] = KET_TAGS.RGroupTag;
+        result[i] = parts.join(' ');
+      }
+    }
+  }
+  return result;
+};
+
 const onFinalCanvasSave = async (editor, iframeRef) => {
   try {
     let textNodesFormula = '';
@@ -935,6 +963,9 @@ const onFinalCanvasSave = async (editor, iframeRef) => {
     await reArrangeImagesOnCanvas(iframeRef); // assemble image on the canvas
     ket2Lines = await arrangePolymers(canvasDataMol, editor); // polymers added
     ket2Lines = await arrangeTextNodes(ket2Lines); // text node
+    if (imagesList.length > 0) {
+      ket2Lines = replaceAtomSymbolAWithRHashInAtomBlock(ket2Lines);
+    }
     if (textList?.length) {
       const molStrings = processJsonMolecules(ketFormatData);
       const {
