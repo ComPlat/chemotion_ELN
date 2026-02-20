@@ -2,6 +2,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  overflow: hidden;
 }
 
 .accordion.search-modal .accordion-header {
@@ -13,11 +14,14 @@
 }
 
 .accordion.search-modal .accordion-item {
-  flex: 1 1 auto;
+  flex-shrink: 1;
 }
 
 .accordion.search-modal .accordion-item.active {
   height: 100%;
+  &.with-result {
+    height: calc(100% - 56px);
+  }
 }
 
 .accordion.search-modal .accordion-item.inactive {
@@ -48,27 +52,17 @@
 .advanced-search-buttons,
 .result-content-header,
 .draggable-modal-form-buttons {
-  flex: 0 0 auto;
-}
-
-.modal.modal-dialog-fullscreen .advanced-search-content-scrollable-body {
-  max-height: calc(100vh - 273px - 1rem);
+  flex-shrink: 0;
 }
 
 .advanced-search-content-scrollable-body {
-  flex: 1 1 auto;
-  max-height: calc(85vh - 273px - 1rem);
+  flex: 1;
   overflow-y: auto;
   margin-top: 1.5rem;
   margin-bottom: 1.5rem;
 }
 
-.modal.modal-dialog-fullscreen .advanced-search-content-scrollable-body.without-header {
-  max-height: calc(100vh - 202px);
-}
-
 .advanced-search-content-scrollable-body.without-header {
-  max-height: calc(85vh - 202px);
   margin-top: 0;
 }
 
@@ -79,7 +73,7 @@
 
 .advanced-search-content-header.hstack {
   margin-top: 0.5rem;
-  @extend .border-lighten1;
+  @extend .border-lighten2;
   @extend .border-bottom;
   justify-content: space-between;
   width: 100%;
@@ -93,7 +87,7 @@
   .btn-outline-dark {
     --bs-btn-padding-x: 1.5rem;
     --bs-btn-padding-y: 0;
-    @extend .border-lighten1;
+    @extend .border-lighten2;
     @extend .text-lighten1;
     border-bottom: none;
     border-bottom-left-radius: 0;
@@ -146,54 +140,9 @@
   }
 }
 
-.advanced-detail-switch {
-  height: 0;
-  width: 0;
-  visibility: hidden;
-}
-
 .advanced-detail-button-group {
   @extend .fs-6;
   width: 85px;
-}
-
-.advanced-detail-switch-label {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  width: 115px;
-  height: 30px;
-  position: relative;
-  padding: 0 34px 0 17px;
-  color: var(--bs-primary);
-  background-color: $chemstrap-silicon-active1;
-  border-radius: 100px;
-}
-
-.advanced-detail-switch-label:hover {
-  background-color: var(--bs-gray-400);
-}
-
-.advanced-detail-switch-label.active {
-  padding: 0 17px 0 36px;
-}
-
-.advanced-detail-switch-label .advanced-detail-switch-button {
-  content: "";
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  width: 26px;
-  height: 26px;
-  border-radius: 26px;
-  transition: right 2s;
-  background: var(--bs-white);
-  box-shadow: 0 0 2px 0 var(--bs-gray-200);
-}
-
-.advanced-detail-switch-label.active .advanced-detail-switch-button {
-  right: calc(115px - 28px);
 }
 
 .advanced-search-row {

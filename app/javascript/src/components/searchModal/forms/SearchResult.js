@@ -252,7 +252,7 @@ function SearchResult({ handleClear }) {
     if (searchStore.searchResultsCount === 0) { return null; }
 
     return (
-      <ButtonToolbar className="advanced-search-buttons results">
+      <ButtonToolbar className="advanced-search-buttons results flex-shrink-0">
         <Button variant="primary" onClick={() => searchStore.handleCancel()}>
           Cancel
         </Button>
@@ -268,7 +268,7 @@ function SearchResult({ handleClear }) {
 
   return (
     <>
-      <div className="result-content-header">
+      <div className="result-content-header flex-shrink-0">
         {searchValuesList()}
         {resultsCount()}
       </div>

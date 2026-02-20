@@ -128,7 +128,7 @@ const SearchModal = () => {
             </Stack>
           </Modal.Header>
 
-          <Modal.Body className="p-0">
+          <Modal.Body className="p-0 d-flex flex-column overflow-hidden vh-100">
             <React.Suspense fallback={<Spinner />}>
               <div className={`draggable-modal-form-container${minimizedClass}`}>
                 {FormComponent(searchStore.searchModalSelectedForm)}

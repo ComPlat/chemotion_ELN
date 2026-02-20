@@ -18,8 +18,9 @@ const TextSearch = () => {
   const genericElements = UserStore.getState().genericEls || [];
   const searchStore = useContext(StoreContext).search;
   const panelVars = panelVariables(searchStore);
-  const activeSearchAccordionClass = searchStore.search_accordion_active_key === 0 ? 'active' : '';
-  const activeResultAccordionClass = searchStore.search_accordion_active_key === 1 ? ' active' : '';
+  const accordionItemClass = searchStore.searchResultsCount > 0 ? ' with-result' : '';
+  const activeSearchAccordionClass = searchStore.search_accordion_active_key === 0 ? 'active' + accordionItemClass : '';
+  const activeResultAccordionClass = searchStore.search_accordion_active_key === 1 ? ' active with-result' : '';
 
   useEffect(() => {
     let advancedValues = searchStore.advancedSearchValues;
@@ -154,7 +155,7 @@ const TextSearch = () => {
   return (
     <Accordion defaultActiveKey={0} activeKey={searchStore.search_accordion_active_key} className="search-modal" flush>
       <Accordion.Item eventKey={0} className={activeSearchAccordionClass}>
-        <h2 className="accordion-header">
+        <h2 className="accordion-header flex-shrink-0">
           <AccordeonHeaderButtonForSearchForm
             title={panelVars.searchTitle}
             eventKey={0}
@@ -215,7 +216,7 @@ const TextSearch = () => {
         </Accordion.Collapse>
       </Accordion.Item>
       <Accordion.Item eventKey={1} className={`${panelVars.invisibleClassName}${activeResultAccordionClass}`}>
-        <h2 className="accordion-header">
+        <h2 className="accordion-header flex-shrink-0">
           <AccordeonHeaderButtonForSearchForm
             title={panelVars.resultTitle}
             eventKey={1}
