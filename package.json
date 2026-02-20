@@ -14,7 +14,7 @@
     "@citation-js/plugin-isbn": "0.3.0",
     "@complat/chem-spectra-client": "1.3.5",
     "@complat/chemotion-converter-client": "~0.14.0",
-    "@complat/react-spectra-editor": "github:ComPlat/react-spectra-editor#272b459f664085ad54419f87a35ffdb2b182d1b0",
+    "@complat/react-spectra-editor": "github:ComPlat/react-spectra-editor#e0bea6f090d9337969569dd51a2bd101283b0460",
     "@novnc/novnc": "~1.5.0",
     "@sentry/react": "^7.73.0",
     "@sentry/tracing": "^7.16.0",
@@ -146,7 +146,7 @@
     "webpack-dev-server": "5"
   },
   "resolutions": {
-    "@complat/react-spectra-editor": "github:ComPlat/react-spectra-editor#272b459f664085ad54419f87a35ffdb2b182d1b0"
+    "@complat/react-spectra-editor": "github:ComPlat/react-spectra-editor#e0bea6f090d9337969569dd51a2bd101283b0460"
   },
   "scripts": {
     "postinstall": "./package_postinstall.sh",
