@@ -34,14 +34,12 @@ function CollectionTree({ isCollapsed }) {
     setExpandedCollection((prev) => ((prev === collectionKey) ? null : collectionKey));
   };
 
-  const expandCollection = (collectionKey) => {
-    if (isCollapsed) UIActions.expandSidebar.defer();
-    setExpandedCollection(collectionKey);
-  };
-
   const setCollection = (collection) => {
-    expandCollection(collection);
-    if (collection !== activeCollection) setActiveCollection(collection);
+    if (collection !== activeCollection) {
+      setActiveCollection(collection);
+      if (isCollapsed) UIActions.expandSidebar.defer();
+      setExpandedCollection(collection);
+    }
   };
 
   useEffect(() => {
@@ -133,8 +131,6 @@ function CollectionTree({ isCollapsed }) {
                     setCollection(collectionKey);
                     Aviator.navigate(`/collection/${onClickOpenCollection}`, { silent: true });
                     collectionShow({ params: { collectionID: onClickOpenCollection } });
-                  } else {
-                    expandCollection(collectionKey);
                   }
                 }}
                 expandable
