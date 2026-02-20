@@ -1,6 +1,5 @@
 import React from 'react';
 import { Button, Dropdown, DropdownButton } from 'react-bootstrap';
-import PropTypes from 'prop-types';
 
 import AutoCompleteInput from 'src/apps/mydb/elements/list/search/AutoCompleteInput';
 import SearchModal from 'src/components/searchModal/SearchModal';

@@ -368,6 +368,9 @@ export default class AutoCompleteInput extends React.Component {
       scrollClass = ' overflow-y-scroll';
     }
 
+    const inputValue = this.props.defaultSearchValue || value || '';
+    const isEmpty = inputValue === '';
+
     return (
       <div className="d-flex flex-column">
         <Form.Group ref={this.overlayTarget}>
@@ -379,13 +382,19 @@ export default class AutoCompleteInput extends React.Component {
               style={{ minWidth: 200, maxWidth: 300 }}
               disabled={this.state.inputDisabled || this.props.inputDisabled}
               type="text"
-              value={this.props.defaultSearchValue || value || ''}
+              value={inputValue}
               autoComplete="off"
               ref="input"
               onChange={event => this.handleValueChange(event, this.doneTyping)}
               onKeyDown={event => this.handleKeyDown(event)}
             />
-            {this.props.buttonAfter}
+            {isEmpty ? (
+              <InputGroup.Text className="search-input__icon">
+                <i className="fa fa-search" />
+              </InputGroup.Text>
+            ) : (
+              this.props.buttonAfter
+            )}
           </InputGroup>
         </Form.Group>
         <Overlay
@@ -404,7 +413,7 @@ export default class AutoCompleteInput extends React.Component {
               style={{ maxHeight: 400, width: 400 }}
               ref={(alist) => { this.listSuggestions = alist; }}
             >
-              <div className="w-100 text-bg-paper border overflow-auto">
+              <div className="w-100 border overflow-auto bg-white">
                 {this.renderSuggestions()}
               </div>
             </ListGroup>
