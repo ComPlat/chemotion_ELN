@@ -368,7 +368,9 @@ export default class AttachmentFetcher {
       body: JSON.stringify({ ids: attachmentIdsToDelete }),
     })
       .then((response) => response.json())
-      .then((json) => new Attachment(json.attachment))
+      .then((json) => ({
+        deleted_attachments: json.deleted_attachments || [],
+      }))
       .catch((errorMessage) => {
         console.log(errorMessage);
       });

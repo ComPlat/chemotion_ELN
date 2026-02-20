@@ -249,12 +249,26 @@ export default class Component extends Sample {
   }
 
   /**
-   * Sets the starting concentration and resets row.
+   * Sets the starting concentration and updates related fields:
+   * calculates volume from amount if amount is set, otherwise calculates amount from volume.
+   * Amount takes priority when both amount and volume are set.
    * @param {{value: number, unit: string}} amount
    */
   handleStartingConcChange(amount) {
     this.setStartingConc(amount);
-    this.resetRowFields();
+
+    if (this.material_group === 'liquid' && (this.starting_molarity_value ?? 0) > 0) {
+      const purity = this.purity || 1.0;
+
+      if ((this.amount_mol ?? 0) > 0) {
+        // If amount_mol is set, calculate volume from amount and concentration.
+        // This preserves the user-entered amount and updates volume accordingly (even if volume was previously set).
+        this.calculateVolumeFromConcentration();
+      } else if ((this.amount_l ?? 0) > 0) {
+        // Otherwise, if only volume is set (amount_mol is zero), calculate amount from volume and concentration
+        this.calculateAmountFromConcentration(purity);
+      }
+    }
   }
 
   /**
@@ -392,9 +406,9 @@ export default class Component extends Sample {
     const lockedConcentration = this.isComponentConcentrationLocked();
 
     if (lockedConcentration) {
-      // Case 2: Total volume updated; Total Conc. is locked; thus ratio is also locked
+      // Case 2: Total volume updated; Total Conc. is locked
       // Amount recalculated
-      // Volume recalculated
+      // Volume recalculated (for liquids) or Mass recalculated (for solids)
       this.handleTargetConcUpdates(totalVolume);
     } else {
       // Case 3: Total volume updated; Total Conc. is not locked
@@ -407,6 +421,8 @@ export default class Component extends Sample {
 
   /**
    * Handles changes to the density field.
+   * Calculates volume from amount if amount is set, or calculates amount from volume if volume is set.
+   * Amount takes priority when both amount and volume are set. Applies to liquid components with a positive density.
    * @param {{ value: number, unit: string }} amount - The new density value.
    * @param {boolean} lockColumn - Whether the column is locked from editing.
    */
@@ -415,7 +431,18 @@ export default class Component extends Sample {
 
     this.setDensity(amount, lockColumn);
 
-    this.resetRowFields();
+    if (this.material_group === 'liquid' && this.density > 0) {
+      const purity = this.purity || 1.0;
+
+      if ((this.amount_mol ?? 0) > 0) {
+        // If amount_mol is set, treat it as the primary user-entered value and
+        // calculate volume from amount and density (even if volume was previously set).
+        this.calculateVolumeFromDensity(purity);
+      } else if ((this.amount_l ?? 0) > 0) {
+        // Otherwise, if only volume is set (amount_mol is zero), calculate amount from volume and density
+        this.calculateAmountFromDensity(purity);
+      }
+    }
   }
 
   /**
@@ -713,6 +740,7 @@ export default class Component extends Sample {
         material_group: this.material_group,
         reference: this.reference,
         purity: this.purity,
+<<<<<<< ketcher-surface-chemistry-sample-type
 
         // Hierarchical Material
         template_category: this.template_category,
@@ -720,6 +748,10 @@ export default class Component extends Sample {
         molar_mass: this.molar_mass,
         weight_ratio_exp: this.weight_ratio_exp,
       },
+=======
+        metrics: this.metrics || 'mmmm', // Preserve metrics for unit display
+      }
+>>>>>>> main
     };
   }
 
@@ -746,6 +778,13 @@ export default class Component extends Sample {
     component.reference = false;
     component.id = `comp_${Math.random().toString(36).substr(2, 9)}`;
 
+    // Initialize metrics from component_properties if available, otherwise use default
+    if (component_properties && component_properties.metrics) {
+      component.metrics = component_properties.metrics;
+    } else {
+      component.metrics = 'mmmm'; // Default: all metric prefixes set to 'm' (milli)
+    }
+
     if (materialGroup === 'solid') {
       component.setAmount({ value: component.amount_g, unit: 'g' }, sample.amount_l);
     } else if (materialGroup === 'liquid') {
@@ -770,6 +809,13 @@ export default class Component extends Sample {
     // Set the molecule if it exists in component_properties
     if (molecule) {
       comp.molecule = molecule;
+    }
+
+    // Restore metrics from component_properties if available, otherwise use default
+    if (component_properties && component_properties.metrics) {
+      comp.metrics = component_properties.metrics;
+    } else if (!comp.metrics) {
+      comp.metrics = 'mmmm'; // Default: all metric prefixes set to 'm' (milli)
     }
 
     return comp;

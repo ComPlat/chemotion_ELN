@@ -1,10 +1,21 @@
 import { getElementSegments } from './ElementUtils';
 import Immutable from 'immutable';
 
+export const TAB_DISPLAY_NAMES = {
+  qc_curation: 'QC & curation',
+  nmr_sim: 'NMR Simulation',
+  literature: 'References',
+  references: 'References',
+  computed_props: 'Computed Properties',
+  green_chemistry: 'Green Chemistry',
+  research_plan: 'Research Plan',
+  sequence_based_macromolecule_sample: 'Sequence Based Macromolecule Sample',
+};
+
 const getVisibilityList = (layout, availableTabs, addInventoryTab) => {
   if (typeof layout === 'undefined') {
     // eslint-disable-next-line no-param-reassign
-    layout = { properties: 1, analyses: 2, attachments: 3 };
+    layout = { properties: 1, analyses: 2 };
   }
   const layoutKeys = Object.keys(layout);
 
@@ -42,7 +53,7 @@ const getVisibilityList = (layout, availableTabs, addInventoryTab) => {
 const getArrayFromLayout = (layout, element, addInventoryTab, availableTabs = null) => {
   if (typeof layout === 'undefined') {
     // eslint-disable-next-line no-param-reassign
-    layout = { properties: 1, analyses: 2, attachments: 3 };
+    layout = { properties: 1, analyses: 2 };
   }
   const layoutKeys = Object.keys(layout);
   const segmentAvailableTabs = availableTabs || getElementSegments(element, layoutKeys);

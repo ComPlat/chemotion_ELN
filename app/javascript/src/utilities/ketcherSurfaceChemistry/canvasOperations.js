@@ -451,6 +451,7 @@ const prepareSvg = async (editor) => {
   }
 };
 
+<<<<<<< ketcher-surface-chemistry-sample-type
 // function to get SVG from canvas element without modification
 const getSvgFromCanvas = async (iframeRef) => {
   try {
@@ -521,6 +522,158 @@ const getSvgFromCanvas = async (iframeRef) => {
       } catch (e) { /* ignore elements that can't get bbox */ }
     });
 
+=======
+/**
+ * Adds or updates the title element in an SVG element to identify it as epam-ketcher-ssc
+ * @param {SVGElement} svgElement - The SVG element to add/update the title in
+ * @param {string} titleText - The title text to set (default: 'epam-ketcher-ssc')
+ */
+const addOrUpdateSvgTitle = (svgElement, titleText = 'epam-ketcher-ssc') => {
+  const existingTitle = svgElement.querySelector('title');
+  if (existingTitle) {
+    existingTitle.textContent = titleText;
+  } else {
+    const titleElement = svgElement.ownerDocument.createElementNS('http://www.w3.org/2000/svg', 'title');
+    titleElement.textContent = titleText;
+    // Insert title as first child (SVG spec recommends title be first)
+    svgElement.insertBefore(titleElement, svgElement.firstChild);
+  }
+};
+
+/**
+ * Removes all colors from SVG elements and sets text to black
+ * @param {SVGElement} svgElement - The SVG element to remove colors from
+ */
+const removeAllColors = (svgElement) => {
+  // Get all elements in the SVG
+  const allElements = svgElement.querySelectorAll('*');
+
+  allElements.forEach((element) => {
+    // Process style attribute
+    const currentStyle = element.getAttribute('style') || '';
+    if (currentStyle) {
+      let newStyle = currentStyle;
+
+      // Remove or set fill to black
+      if (newStyle.match(/fill:/)) {
+        newStyle = newStyle.replace(/fill:\s*[^;]+/g, 'fill: #000000');
+      } else {
+        newStyle = newStyle ? `${newStyle}; fill: #000000` : 'fill: #000000';
+      }
+
+      // Remove or set stroke to black
+      if (newStyle.match(/stroke:/)) {
+        newStyle = newStyle.replace(/stroke:\s*[^;]+/g, 'stroke: #000000');
+      } else {
+        newStyle = newStyle ? `${newStyle}; stroke: #000000` : 'stroke: #000000';
+      }
+
+      element.setAttribute('style', newStyle);
+    }
+
+    // Process fill attribute directly
+    if (element.hasAttribute('fill') && element.getAttribute('fill') !== 'none') {
+      element.setAttribute('fill', '#000000');
+    } else if (!element.hasAttribute('fill')) {
+      // Set default fill for elements that need it (text, paths, etc.)
+      const tagName = element.tagName?.toLowerCase();
+      if (tagName === 'text' || tagName === 'path' || tagName === 'circle' || tagName === 'rect' || tagName === 'polygon' || tagName === 'polyline') {
+        element.setAttribute('fill', '#000000');
+      }
+    }
+
+    // Process stroke attribute directly
+    if (element.hasAttribute('stroke') && element.getAttribute('stroke') !== 'none') {
+      element.setAttribute('stroke', '#000000');
+    }
+
+    // Specifically ensure text elements are black
+    if (element.tagName?.toLowerCase() === 'text') {
+      element.setAttribute('fill', '#000000');
+      element.removeAttribute('stroke');
+      // Update style to ensure text is black
+      const textStyle = element.getAttribute('style') || '';
+      let updatedTextStyle = textStyle.replace(/fill:\s*[^;]+/g, 'fill: #000000');
+      if (!updatedTextStyle.match(/fill:/)) {
+        updatedTextStyle = updatedTextStyle ? `${updatedTextStyle}; fill: #000000` : 'fill: #000000';
+      }
+      element.setAttribute('style', updatedTextStyle);
+    }
+  });
+};
+
+// function to get SVG from canvas element without modification
+const getSvgFromCanvas = async (iframeRef) => {
+  try {
+    const iframeDocument = iframeRef?.current?.contentWindow?.document;
+    if (!iframeDocument) {
+      return { svg: null, message: 'iframe document not available' };
+    }
+    const canvasContainer = iframeDocument.querySelector('.StructEditor-module_intermediateCanvas__fR3ws');
+    const canvasElement = canvasContainer?.firstElementChild;
+
+    if (!canvasElement) {
+      return { svg: null, message: 'Canvas element not found' };
+    }
+
+    // Clone the element to avoid modifying the original
+    const clonedCanvas = canvasElement.cloneNode(true);
+
+    // Remove layer placeholder rectangles (they inflate bounding box)
+    const layerClasses = [
+      'backgroundLayer', 'imagesLayer', 'selectionPlateLayer',
+      'selectionPointsLayer', 'hoveringLayer', 'atomLayer',
+      'bondSkeletonLayer', 'warningsLayer', 'dataLayer',
+      'additionalInfoLayer', 'indicesLayer'
+    ];
+    layerClasses.forEach((cls) => {
+      const el = clonedCanvas.querySelector(`.${cls}`);
+      if (el) el.remove();
+    });
+
+    // Also remove desc and hidden text elements
+    const descEl = clonedCanvas.querySelector('desc');
+    if (descEl) descEl.remove();
+    Array.from(clonedCanvas.querySelectorAll('text')).forEach((txt) => {
+      if (txt.style.display === 'none') txt.remove();
+    });
+
+    // Process images similar to updateImagesInTheCanvas - move images to the end for proper layering
+    const imageElements = Array.from(clonedCanvas.querySelectorAll(KET_DOM_TAG.imageTag));
+    if (imageElements.length > 0) {
+      // Remove all images from their current positions
+      imageElements.forEach((img) => {
+        if (img.parentNode) {
+          img.parentNode.removeChild(img);
+        }
+      });
+
+      // Re-append all images at the end to ensure they appear on top
+      imageElements.forEach((img) => {
+        clonedCanvas.appendChild(img);
+      });
+    }
+
+    // Calculate bounding box from ORIGINAL canvas (getBBox needs DOM-attached elements)
+    let minX = Infinity; let minY = Infinity; let maxX = -Infinity; let
+      maxY = -Infinity;
+    const visibleElements = canvasElement.querySelectorAll('path, image, text');
+    visibleElements.forEach((el) => {
+      // Skip layer placeholders and hidden elements
+      if (el.classList && layerClasses.some((cls) => el.classList.contains(cls))) return;
+      if (el.style.display === 'none') return;
+      try {
+        const elBbox = el.getBBox();
+        if (elBbox.width > 0 && elBbox.height > 0) {
+          minX = Math.min(minX, elBbox.x);
+          minY = Math.min(minY, elBbox.y);
+          maxX = Math.max(maxX, elBbox.x + elBbox.width);
+          maxY = Math.max(maxY, elBbox.y + elBbox.height);
+        }
+      } catch (e) { /* ignore elements that can't get bbox */ }
+    });
+
+>>>>>>> main
     // Fallback if no valid bbox found
     if (minX === Infinity || maxX === -Infinity) {
       const fallbackBbox = canvasElement.getBBox();
@@ -566,6 +719,15 @@ const getSvgFromCanvas = async (iframeRef) => {
     clonedCanvas.setAttribute('height', `${outputHeight}`);
     clonedCanvas.removeAttribute('transform');
 
+<<<<<<< ketcher-surface-chemistry-sample-type
+=======
+    // Remove all colors and set text to black
+    // removeAllColors(clonedCanvas);
+
+    // Add title element to identify this as ketcher-ssc SVG
+    addOrUpdateSvgTitle(clonedCanvas);
+
+>>>>>>> main
     const serializer = new XMLSerializer();
     const svgString = serializer.serializeToString(clonedCanvas);
 
@@ -573,7 +735,24 @@ const getSvgFromCanvas = async (iframeRef) => {
   } catch (error) {
     console.error('getSvgFromCanvas: Error generating SVG', error);
     return { svg: null, message: error?.message || 'Unknown error in getSvgFromCanvas' };
+<<<<<<< ketcher-surface-chemistry-sample-type
   }
+};
+
+const applyCanvasDataToEditor = async (editor, dataCopy, recenter = false) => {
+  if (!editor || !editor.structureDef) {
+    console.error('Editor is undefined');
+    return;
+=======
+>>>>>>> main
+  }
+
+  const serialized = JSON.stringify(dataCopy);
+  if (recenter) {
+    await editor.structureDef.editor.setMolecule(serialized);
+    return;
+  }
+  await editor.structureDef.editor.setMolecule(serialized, { rescale: false });
 };
 
 const applyCanvasDataToEditor = async (editor, dataCopy, recenter = false) => {
@@ -741,6 +920,7 @@ function processJsonMolecules(jsonData, verticalThreshold = 1) {
         // eslint-disable-next-line no-continue
         continue;
       }
+<<<<<<< ketcher-surface-chemistry-sample-type
 
       let paired = false;
       for (let j = i + 1; j < validAtoms.length; j++) {
@@ -749,6 +929,16 @@ function processJsonMolecules(jsonData, verticalThreshold = 1) {
           continue;
         }
 
+=======
+
+      let paired = false;
+      for (let j = i + 1; j < validAtoms.length; j++) {
+        if (used.has(j)) {
+          // eslint-disable-next-line no-continue
+          continue;
+        }
+
+>>>>>>> main
         const yDiff = Math.abs(validAtoms[i].y - validAtoms[j].y);
         if (yDiff <= verticalThreshold) {
           // Pair them with '_' and put the higher component first
@@ -808,13 +998,51 @@ const replaceAliasesWithIndexesAndCollectComponents = async (comboString) => {
   return { replacedString, textNodeStructureForComponents };
 };
 
+<<<<<<< ketcher-surface-chemistry-sample-type
+=======
+// Check if V2000 molfile is empty (0 atoms)
+const isMolfileEmpty = (molfile) => {
+  if (!molfile || typeof molfile !== 'string') return true;
+  const match = molfile.match(/^\s*(\d+)\s+\d+.*V2000$/m);
+  return match ? parseInt(match[1], 10) === 0 : true;
+};
+
+>>>>>>> main
 const onFinalCanvasSave = async (editor, iframeRef) => {
   try {
     let textNodesFormula = '';
     let componentsListContainer = '';
     let ket2Lines = [];
+<<<<<<< ketcher-surface-chemistry-sample-type
 
     const canvasDataMol = await editor.structureDef.editor.getMolfile('V2000');
+=======
+    let canvasDataMol = null;
+    let shouldSvg = true;
+    try {
+      canvasDataMol = await editor.structureDef.editor.getMolfile('V2000');
+      if (isMolfileEmpty(canvasDataMol)) {
+        console.log('onFinalCanvasSave: V2000 empty, trying V3000');
+        try {
+          canvasDataMol = await editor.structureDef.editor.getMolfile();
+          console.log('onFinalCanvasSave: V3000 success', canvasDataMol?.slice(0, 80));
+        } catch (e) {
+          console.log('onFinalCanvasSave: V3000 failed, trying default', e);
+          canvasDataMol = await editor.structureDef.editor.getMolfile('');
+        }
+        shouldSvg = false;
+      }
+    } catch (e) {
+      console.log('onFinalCanvasSave: V2000 failed, trying V3000/default', e);
+      canvasDataMol = await editor.structureDef.editor.getMolfile('V3000').catch(
+        (err) => {
+          console.log('onFinalCanvasSave: V3000 failed, trying default', err);
+          return editor.structureDef.editor.getMolfile('');
+        }
+      );
+      shouldSvg = false;
+    }
+>>>>>>> main
     const ketFormatData = JSON.parse(await editor.structureDef.editor.getKet());
     await reArrangeImagesOnCanvas(iframeRef); // assemble image on the canvas
     ket2Lines = await arrangePolymers(canvasDataMol, editor); // polymers added
@@ -829,6 +1057,10 @@ const onFinalCanvasSave = async (editor, iframeRef) => {
       textNodesFormula = replacedString;
     }
     ket2Lines.push(KET_TAGS.fileEndIdentifier);
+<<<<<<< ketcher-surface-chemistry-sample-type
+=======
+
+>>>>>>> main
     const svgElement = imagesList.length > 0 ? await getSvgFromCanvas(iframeRef) : await prepareSvg(editor);
     resetStore();
     return {
@@ -836,6 +1068,7 @@ const onFinalCanvasSave = async (editor, iframeRef) => {
       svgElement,
       textNodesFormula,
       componentsList: componentsListContainer,
+<<<<<<< ketcher-surface-chemistry-sample-type
     };
   } catch (e) {
     return {
@@ -843,6 +1076,18 @@ const onFinalCanvasSave = async (editor, iframeRef) => {
       svgElement: { svg: null, message: e?.message || 'Unknown error in prepareSvg' },
       textNodesFormula: '',
       componentsList: [],
+=======
+      shouldSvg,
+    };
+  } catch (e) {
+    console.log('onFinalCanvasSave: Error generating SVG', e);
+    return {
+      ket2Molfile: '',
+      svgElement: { svg: null, message: e?.message },
+      textNodesFormula: '',
+      componentsList: [],
+      shouldSvg: false,
+>>>>>>> main
     };
   }
 };

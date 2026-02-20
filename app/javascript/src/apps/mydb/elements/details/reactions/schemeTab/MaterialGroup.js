@@ -192,6 +192,18 @@ function GeneralMaterialGroup({
         placeholder="Add"
         onChange={createReagentForReaction}
         size="xsm"
+        styles={{
+          menu: (base) => ({
+            ...base,
+            minWidth: 800,
+            width: '800px',
+            maxWidth: '95vw',
+          }),
+          option: (base) => ({
+            ...base,
+            fontSize: '0.875rem',
+          }),
+        }}
       />
     );
   }
@@ -234,7 +246,20 @@ function GeneralMaterialGroup({
     groupHeaders.eq = yieldConversionRateFields();
   }
 
-  const refTHead = (materialGroup !== 'products') ? groupHeaders.ref : null;
+  const specialRefTHead = reaction.weight_percentage ? (
+    <OverlayTrigger
+      placement="top"
+      overlay={(
+        <Tooltip id="coefficientHeaderTitleReactionScheme">
+          Select Reference material for weight percentage calculation
+        </Tooltip>
+      )}
+    >
+      <span>{groupHeaders.ref}</span>
+    </OverlayTrigger>
+  ) : null;
+
+  const refTHead = materialGroup !== 'products' ? groupHeaders.ref : specialRefTHead;
   /**
    * Add a (not yet persisted) sample to a material group
    * of the given reaction

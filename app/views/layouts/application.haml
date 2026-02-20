@@ -4,7 +4,7 @@
     %meta{:content => "text/html; charset=UTF-8", "http-equiv" => "Content-Type"}/
     %title #{ENV['APPLICATION_TITLE'].presence || 'Chemotion'}
     = stylesheet_link_tag 'application', media: 'all'
-    = javascript_pack_tag 'application'
+    = javascript_pack_tag 'application', nonce: content_security_policy_nonce
     = csrf_meta_tags
   %body
     = favicon_link_tag

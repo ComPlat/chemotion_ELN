@@ -11,8 +11,14 @@ function DocumentationButton({
   overlayMessage,
   size,
   variant,
-  className
+  className,
+  omitDocumentationWord
 }) {
+  const btnClass = omitDocumentationWord
+    ? `${className} d-flex justify-content-center`.trim()
+    : className;
+  const iconClass = omitDocumentationWord ? 'fa fa-book' : 'fa fa-book me-1';
+
   return (
     <OverlayTrigger
       placement="top"
@@ -26,10 +32,10 @@ function DocumentationButton({
           e.preventDefault();
           window.open(link, '_blank');
         }}
-        className={className}
+        className={btnClass}
       >
-        <i className="fa fa-book me-1" />
-        Documentation
+        <i className={iconClass} />
+        {!omitDocumentationWord && 'Documentation'}
       </Button>
     </OverlayTrigger>
   );
@@ -41,12 +47,14 @@ DocumentationButton.propTypes = {
   size: PropTypes.string,
   variant: PropTypes.string,
   className: PropTypes.string,
+  omitDocumentationWord: PropTypes.bool,
 };
 
 DocumentationButton.defaultProps = {
   size: 'sm',
   variant: 'outline-info',
   className: '',
+  omitDocumentationWord: false,
 };
 
 export default DocumentationButton;

@@ -245,12 +245,12 @@ export default class StructureEditorModal extends React.Component {
       }
       try {
         // Call onSaveFileK2SC and get the required data
-        const { ket2Molfile, svgElement, componentsList, textNodesFormula } = await onSaveFileK2SC();
+        const { ket2Molfile, svgElement, componentsList, textNodesFormula, shouldSvg } = await onSaveFileK2SC();
         const { svg: preparedSvg, message: svgFailedMessage } = svgElement || {};
-        const updatedSvg = await transformSvgIdsAndReferences(preparedSvg);
+        const updatedSvg = shouldSvg ? await transformSvgIdsAndReferences(preparedSvg) : null;
         const components = componentsList ? this.postComponents(componentsList) : [];
         this.handleStructureSave(ket2Molfile, updatedSvg, editorId.id, components, textNodesFormula);
-        onSVGStructureError(svgFailedMessage);
+        if (shouldSvg) onSVGStructureError(svgFailedMessage);
         this.alertForInvalidSources(components);
       } catch (error) {
         console.error('Error during save operation for Ketcher:', error);

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 namespace :data do
   desc 'update attachment attributes'
   task ver_20170524130531_upg_file_store: :environment do
@@ -7,25 +8,23 @@ namespace :data do
         attachment.update_columns(
           key: File.join(
             attachment.created_by.to_s,
-            attachment.identifier + '_' + attachment.filename
+            attachment.identifier + '_' + attachment.filename,
           ),
-          storage: 'local_user'
+          storage: 'local_user',
         )
-        attachment.regenerate_thumbnail
+        attachment.attachment_attacher.create_derivatives
       elsif attachment.storage == 'temp'
         attachment.update_columns(
           key: File.join(
             attachment.created_by.to_s,
-            attachment.identifier + '_' + attachment.filename
+            attachment.identifier + '_' + attachment.filename,
           ),
-          storage: 'local_user'
+          storage: 'local_user',
         )
-        if File.exist?(attachment.store.path)
-          attachment.regenerate_thumbnail
+        if attachment.attachment&.exists?
+          attachment.attachment_attacher.create_derivatives
         else
-          attachment.update_columns(
-            storage: 'void'
-          )
+          attachment.update_columns(attachment_data: nil)
         end
       end
     end

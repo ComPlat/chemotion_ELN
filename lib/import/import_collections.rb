@@ -253,7 +253,7 @@ module Import
     end
 
     def import_samples
-      @data.fetch('Sample', {}).each do |uuid, fields|
+      sort_data(@data.fetch('Sample', {})).each do |uuid, fields|
         # look for the molecule_name
         molecule_name_uuid = fields.fetch('molecule_name_id')
         if molecule_name_uuid.present?
@@ -273,16 +273,13 @@ module Import
         end
 
         # Priority: molfile > cano_smiles > dummy (if decoupled and both blank)
-        molecule = if molfile.present?
-                     # Always use molfile if available (highest priority)
-                     Molecule.find_or_create_by_molfile(molfile)
-                   elsif cano_smiles.present?
-                     # Use cano_smiles if molfile is missing but cano_smiles is available
-                     Molecule.find_or_create_by_cano_smiles(cano_smiles)
-                   elsif fields.fetch('decoupled', nil)
-                     # Create dummy only for decoupled samples with no structure data
-                     Molecule.find_or_create_dummy
-                   end
+        # Always use molfile if available (highest priority)
+        molecule = Molecule.find_or_create_by_molfile(molfile) if molfile.present?
+        # Use cano_smiles if molfile is missing or invalid but cano_smiles is available
+        molecule ||= Molecule.find_or_create_by_cano_smiles(cano_smiles) if cano_smiles.present?
+        # Create dummy only for decoupled samples with no structure data
+        molecule ||= Molecule.find_or_create_dummy if fields.fetch('decoupled', nil)
+
         unless (fields.fetch('decoupled', nil) && molfile.blank?) || molecule_name_name.blank?
           molecule.create_molecule_name_by_user(molecule_name_name, @current_user_id)
         end
@@ -390,7 +387,7 @@ module Import
     end
 
     def import_reactions
-      @data.fetch('Reaction', {}).each do |uuid, fields|
+      sort_data(@data.fetch('Reaction', {})).each do |uuid, fields|
         # create the sample
         reaction = Reaction.create!(fields.slice(
           'name',
@@ -416,6 +413,7 @@ module Import
           'updated_at',
           'vessel_size',
           'gaseous',
+          'weight_percentage',
         ).merge(
           created_by: @current_user_id,
           collections: fetch_many(
@@ -457,6 +455,8 @@ module Import
             'gas_type',
             'gas_phase_data',
             'conversion_rate',
+            'weight_percentage_reference',
+            'weight_percentage',
           ).merge(
             reaction: @instances.fetch('Reaction').fetch(fields.fetch('reaction_id')),
             sample: @instances.fetch('Sample').fetch(fields.fetch('sample_id')),
@@ -469,7 +469,7 @@ module Import
     end
 
     def import_wellplates
-      @data.fetch('Wellplate', {}).each do |uuid, fields|
+      sort_data(@data.fetch('Wellplate', {})).each do |uuid, fields|
         # create the wellplate
 
         wellplate = Wellplate.create!(fields.slice(
@@ -522,7 +522,7 @@ module Import
     end
 
     def import_screens
-      @data.fetch('Screen', {}).each do |uuid, fields|
+      sort_data(@data.fetch('Screen', {})).each do |uuid, fields|
         # create the screen
         screen = Screen.create!(fields.slice(
           'description',
@@ -556,7 +556,7 @@ module Import
     end
 
     def import_research_plans
-      @data.fetch('ResearchPlan', {}).each do |uuid, fields|
+      sort_data(@data.fetch('ResearchPlan', {})).each do |uuid, fields|
         # create the research_plan
         research_plan = ResearchPlan.create!(fields.slice(
           'name',
@@ -615,7 +615,7 @@ module Import
     end
 
     def import_attachments
-      @data.fetch('Attachment', {}).each do |uuid, fields|
+      sort_data(@data.fetch('Attachment', {})).each do |uuid, fields|
         # get the attachable for this attachment
         attachable_type = fields.fetch('attachable_type', nil)
         attachable_uuid = fields.fetch('attachable_id')
@@ -742,13 +742,11 @@ module Import
       return unless source_value == 'smart-add'
 
       @instances['Reaction'].each_value do |reaction|
-        begin
-          reaction.update_svg_file!
-          reaction.save!
-        rescue StandardError => e
-          Rails.logger.error("Failed to reprocess SVG for reaction #{reaction.id}: #{e.message}")
-          Rails.logger.error(e.backtrace)
-        end
+        reaction.update_svg_file!
+        reaction.save!
+      rescue StandardError => e
+        Rails.logger.error("Failed to reprocess SVG for reaction #{reaction.id}: #{e.message}")
+        Rails.logger.error(e.backtrace)
       end
     end
 
@@ -827,6 +825,18 @@ module Import
       LOG
 
       @logger.error(log_content)
+    end
+
+    # Sort records by created_at timestamp
+    # @param [Hash] records: the records to sort
+    # @return [Hash] the sorted records
+    # @note: expect a hash with structure { uuid => { created_at: timestamp, ... }, ... }
+    #   with created_at being an ISO8601 string
+    def sort_data(records)
+      records.sort_by { |_, v| v[:created_at] }.to_h
+    rescue StandardError => e
+      Rails.logger.error(e.backtrace)
+      records
     end
   end
 end

@@ -170,6 +170,7 @@ export default function TabLayoutEditor({
         <div
           key={title}
           ref={ref}
+          onMouseDown={(e) => e.preventDefault()}
         >
           <h5>{title}</h5>
           <ListGroup className="my-1 tab-layout-editor-list" variant="flush">

@@ -3,10 +3,11 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { orderBy } from 'lodash';
+import { orderBy, sortBy } from 'lodash';
 import { Constants, Designer } from 'chem-generic-ui';
 import LoadingModal from 'src/components/common/LoadingModal';
 import Notifications from 'src/components/Notifications';
+import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 import GenericDSsFetcher from 'src/fetchers/GenericDSsFetcher';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
@@ -20,9 +21,10 @@ export default class GenericDatasetsAdmin extends React.Component {
     super(props);
     this.state = {
       elements: [],
+      klasses: [],
       show: { tab: '', modal: '' },
       revisions: [],
-      user: {},
+      currentUser: {},
     };
     this.handleShowState = this.handleShowState.bind(this);
     this.closeModal = this.closeModal.bind(this);
@@ -34,15 +36,32 @@ export default class GenericDatasetsAdmin extends React.Component {
   }
 
   componentDidMount() {
-    this.fetchElements();
-    UsersFetcher.fetchCurrentUser()
-      .then((result) => {
-        if (!result.error) {
-          this.setState({ user: result.user });
+    LoadingActions.start();
+    Promise.all([
+      GenericElsFetcher.fetchElementKlasses(),
+      GenericDSsFetcher.listDatasetKlass(),
+      UsersFetcher.fetchCurrentUser()
+    ])
+      .then(([klassResult, elementsResult, userResult]) => {
+        if (klassResult.error || elementsResult?.error || userResult?.error) {
+          throw new Error(klassResult.error || elementsResult?.error || userResult?.error);
         }
+        const klasses = sortBy(klassResult.klass || [], ['label']);
+        this.setState({
+          klasses,
+          elements: elementsResult.klass || [],
+          currentUser: userResult.user || {}
+        });
       })
       .catch((errorMessage) => {
-        console.log(errorMessage);
+        notification({
+          title: 'Error Loading Data',
+          lvl: 'error',
+          msg: `Failed to load initial data. Please refresh the page. ${errorMessage}`,
+        });
+      })
+      .finally(() => {
+        LoadingActions.stop();
       });
   }
 
@@ -156,7 +175,9 @@ export default class GenericDatasetsAdmin extends React.Component {
   }
 
   renderGrid() {
-    const { elements, revisions } = this.state;
+    const {
+      elements, revisions, currentUser, klasses
+    } = this.state;
     const els = orderBy(elements, ['is_active', 'label'], ['desc', 'asc']);
     return (
       <Designer
@@ -174,19 +195,21 @@ export default class GenericDatasetsAdmin extends React.Component {
         }}
         genericType={Constants.GENERIC_TYPES.DATASET}
         gridData={els}
+        klasses={klasses}
+        refSource={{ currentUser }}
       />
     );
   }
 
   render() {
-    const { user } = this.state;
-    if (!user.generic_admin?.datasets) {
-      return <Unauthorized userName={user.name} text={FN_ID} />;
+    const { currentUser } = this.state;
+    if (!currentUser.generic_admin?.datasets) {
+      return <Unauthorized userName={currentUser.name} text={FN_ID} />;
     }
 
     return (
       <div className="vw-90 my-auto mx-auto">
-        <GenericMenu userName={user.name} text={FN_ID} />
+        <GenericMenu userName={currentUser.name} text={FN_ID} />
         <div className="mt-3">
           {this.renderGrid()}
         </div>

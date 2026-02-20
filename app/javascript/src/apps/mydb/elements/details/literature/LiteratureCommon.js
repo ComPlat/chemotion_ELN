@@ -202,23 +202,44 @@ CitationUserRow.defaultProps = {
   userId: 0,
 };
 
-const groupByCitation = (literatures) => (
-  literatures.keySeq().toArray().sort((i, j) => {
-    // group by literature id then sort by user id
-    const a = literatures.get(i);
-    const b = literatures.get(j);
-    return ((a.id === b.id) ? (a.user_id - b.user_id) : (a.id - b.id));
-  }).reduce((acc, currentValue, i, array) => {
-    // duplicate first row of each literature group
-    acc.push(currentValue);
-    if (i > 0) {
-      const a = literatures.get(array[i]);
-      const b = literatures.get(array[i - 1]);
-      if (a.id !== b.id) { acc.push(currentValue); }
-    } else { acc.push(currentValue); }
-    return acc;
-  }, [])
-);
+const groupByCitation = (literatures) => {
+  // 🔒 guard: nothing to group
+  if (!literatures || typeof literatures.keySeq !== 'function') {
+    return [];
+  }
+
+  return literatures
+    .keySeq()
+    .toArray()
+    .sort((i, j) => {
+      // group by literature id then sort by user id
+      const a = literatures.get(i);
+      const b = literatures.get(j);
+
+      // extra safety (can happen during async updates)
+      if (!a || !b) return 0;
+
+      return (a.id === b.id)
+        ? (a.user_id - b.user_id)
+        : (a.id - b.id);
+    })
+    .reduce((acc, currentValue, i, array) => {
+      // duplicate first row of each literature group
+      acc.push(currentValue);
+
+      if (i > 0) {
+        const a = literatures.get(array[i]);
+        const b = literatures.get(array[i - 1]);
+        if (a && b && a.id !== b.id) {
+          acc.push(currentValue);
+        }
+      } else {
+        acc.push(currentValue);
+      }
+
+      return acc;
+    }, []);
+};
 
 const sortByElement = (literatures) => (
   literatures.keySeq().toArray().sort((i, j) => {

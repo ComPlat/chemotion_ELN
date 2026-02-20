@@ -10,13 +10,18 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
+<<<<<<< ketcher-surface-chemistry-sample-type
 ActiveRecord::Schema.define(version: 2025_11_05_150500) do
+=======
+ActiveRecord::Schema.define(version: 2026_01_20_183627) do
+>>>>>>> main
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
   enable_extension "pg_trgm"
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
+  enable_extension "rdkit"
   enable_extension "uuid-ossp"
 
   create_table "affiliations", id: :serial, force: :cascade do |t|
@@ -337,6 +342,8 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
     t.jsonb "component_properties"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.datetime "deleted_at"
+    t.jsonb "log_data"
     t.index ["sample_id"], name: "index_components_on_sample_id"
   end
 
@@ -411,6 +418,14 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
     t.jsonb "admin_ids", default: {}
     t.jsonb "user_ids", default: {}
     t.string "version"
+<<<<<<< ketcher-surface-chemistry-sample-type
+=======
+    t.jsonb "super_class_of", default: {}, null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.index ["ols_term_id"], name: "dataset_klasses_on_ols_term_id_ukey", unique: true
+    t.index ["super_class_of"], name: "index_dataset_klasses_on_super_class_of", using: :gin
+    t.check_constraint "jsonb_typeof(metadata) = 'object'::text", name: "chk_dataset_klasses_metadata"
+>>>>>>> main
   end
 
   create_table "dataset_klasses_revisions", id: :serial, force: :cascade do |t|
@@ -424,7 +439,10 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
     t.datetime "updated_at"
     t.datetime "deleted_at"
     t.string "version"
+    t.integer "submitted", default: 0, null: false
+    t.jsonb "metadata", default: {}, null: false
     t.index ["dataset_klass_id"], name: "index_dataset_klasses_revisions_on_dataset_klass_id"
+    t.check_constraint "jsonb_typeof(metadata) = 'object'::text", name: "chk_dataset_klasses_revisions_metadata"
   end
 
   create_table "datasets", id: :serial, force: :cascade do |t|
@@ -438,6 +456,8 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
     t.string "klass_uuid"
     t.datetime "deleted_at"
     t.jsonb "properties_release"
+    t.jsonb "metadata", default: {}, null: false
+    t.check_constraint "jsonb_typeof(metadata) = 'object'::text", name: "chk_datasets_metadata"
   end
 
   create_table "datasets_revisions", id: :serial, force: :cascade do |t|
@@ -450,7 +470,9 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
     t.datetime "updated_at"
     t.datetime "deleted_at"
     t.jsonb "properties_release"
+    t.jsonb "metadata", default: {}, null: false
     t.index ["dataset_id"], name: "index_datasets_revisions_on_dataset_id"
+    t.check_constraint "jsonb_typeof(metadata) = 'object'::text", name: "chk_datasets_revisions_metadata"
   end
 
   create_table "delayed_jobs", id: :serial, force: :cascade do |t|
@@ -483,8 +505,8 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
     t.text "description"
     t.text "description_for_methods_part"
     t.integer "device_id"
-    t.string "device_type"
-    t.string "device_type_detail"
+    t.string "device_class"
+    t.string "device_class_detail"
     t.string "general_tags", default: [], null: false, array: true
     t.boolean "helpers_uploaded", default: false
     t.string "infrastructure_assignment"
@@ -525,6 +547,16 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.jsonb "log_data"
+    t.string "owner_institution"
+    t.string "owner_email"
+    t.string "owner_id"
+    t.string "inventory_id"
+    t.string "alternative_identifier"
+    t.string "vendor_id_type"
+    t.string "owner_id_type"
+    t.string "device_type_name"
+    t.string "device_type_id"
+    t.string "device_type_id_type"
     t.index ["ancestry"], name: "index_device_descriptions_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
     t.index ["device_id"], name: "index_device_descriptions_on_device_id"
   end
@@ -611,6 +643,8 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
     t.jsonb "admin_ids", default: {}
     t.jsonb "user_ids", default: {}
     t.string "version"
+    t.jsonb "metadata", default: {}, null: false
+    t.check_constraint "jsonb_typeof(metadata) = 'object'::text", name: "chk_element_klasses_metadata"
   end
 
   create_table "element_klasses_revisions", id: :serial, force: :cascade do |t|
@@ -624,7 +658,10 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
     t.datetime "updated_at"
     t.datetime "deleted_at"
     t.string "version"
+    t.integer "submitted", default: 0, null: false
+    t.jsonb "metadata", default: {}, null: false
     t.index ["element_klass_id"], name: "index_element_klasses_revisions_on_element_klass_id"
+    t.check_constraint "jsonb_typeof(metadata) = 'object'::text", name: "chk_element_klasses_revisions_metadata"
   end
 
   create_table "element_tags", id: :serial, force: :cascade do |t|
@@ -659,7 +696,16 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
     t.string "uuid"
     t.string "klass_uuid"
     t.jsonb "properties_release"
+<<<<<<< ketcher-surface-chemistry-sample-type
     t.string "ancestry"
+=======
+    t.string "ancestry", default: "/", null: false, collation: "C"
+    t.jsonb "metadata", default: {}, null: false
+    t.index ["ancestry"], name: "index_elements_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
+    t.index ["name"], name: "index_elements_on_name_trigram", opclass: :gin_trgm_ops, using: :gin
+    t.index ["short_label"], name: "index_elements_on_short_label_trigram", opclass: :gin_trgm_ops, using: :gin
+    t.check_constraint "jsonb_typeof(metadata) = 'object'::text", name: "chk_elements_metadata"
+>>>>>>> main
   end
 
   create_table "elements_elements", force: :cascade do |t|
@@ -684,7 +730,9 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
     t.datetime "updated_at"
     t.datetime "deleted_at"
     t.jsonb "properties_release"
+    t.jsonb "metadata", default: {}, null: false
     t.index ["element_id"], name: "index_elements_revisions_on_element_id"
+    t.check_constraint "jsonb_typeof(metadata) = 'object'::text", name: "chk_elements_revisions_metadata"
   end
 
   create_table "elements_samples", id: :serial, force: :cascade do |t|
@@ -1161,6 +1209,7 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
     t.jsonb "log_data"
     t.decimal "volume", precision: 10, scale: 4
     t.boolean "use_reaction_volume", default: false, null: false
+    t.boolean "weight_percentage", default: false
     t.index ["deleted_at"], name: "index_reactions_on_deleted_at"
     t.index ["rinchi_short_key"], name: "index_reactions_on_rinchi_short_key", order: :desc
     t.index ["rinchi_web_key"], name: "index_reactions_on_rinchi_web_key"
@@ -1185,6 +1234,8 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.jsonb "log_data"
+    t.boolean "weight_percentage_reference", default: false
+    t.float "weight_percentage"
     t.index ["reaction_id"], name: "index_reactions_samples_on_reaction_id"
     t.index ["sample_id"], name: "index_reactions_samples_on_sample_id"
   end
@@ -1456,6 +1507,8 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
     t.jsonb "admin_ids", default: {}
     t.jsonb "user_ids", default: {}
     t.string "version"
+    t.jsonb "metadata", default: {}, null: false
+    t.check_constraint "jsonb_typeof(metadata) = 'object'::text", name: "chk_segment_klasses_metadata"
   end
 
   create_table "segment_klasses_revisions", id: :serial, force: :cascade do |t|
@@ -1469,7 +1522,10 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
     t.datetime "updated_at"
     t.datetime "deleted_at"
     t.string "version"
+    t.integer "submitted", default: 0, null: false
+    t.jsonb "metadata", default: {}, null: false
     t.index ["segment_klass_id"], name: "index_segment_klasses_revisions_on_segment_klass_id"
+    t.check_constraint "jsonb_typeof(metadata) = 'object'::text", name: "chk_segment_klasses_revisions_metadata"
   end
 
   create_table "segments", id: :serial, force: :cascade do |t|
@@ -1484,6 +1540,8 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
     t.string "uuid"
     t.string "klass_uuid"
     t.jsonb "properties_release"
+    t.jsonb "metadata", default: {}, null: false
+    t.check_constraint "jsonb_typeof(metadata) = 'object'::text", name: "chk_segments_metadata"
   end
 
   create_table "segments_revisions", id: :serial, force: :cascade do |t|
@@ -1496,7 +1554,9 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
     t.datetime "updated_at"
     t.datetime "deleted_at"
     t.jsonb "properties_release"
+    t.jsonb "metadata", default: {}, null: false
     t.index ["segment_id"], name: "index_segments_revisions_on_segment_id"
+    t.check_constraint "jsonb_typeof(metadata) = 'object'::text", name: "chk_segments_revisions_metadata"
   end
 
   create_table "sequence_based_macromolecule_samples", force: :cascade do |t|
@@ -2064,6 +2124,24 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
           END;
           RETURN NEW;
       END;
+      $function$
+  SQL
+  create_function :set_samples_mol_rdkit, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.set_samples_mol_rdkit()
+       RETURNS trigger
+       LANGUAGE plpgsql
+      AS $function$
+      begin
+      	if (TG_OP='INSERT') then
+      		insert into rdkit.mols values (new.id, mol_from_ctab(encode(new.molfile, 'escape')::cstring));
+      	end if;
+      	if (TG_OP='UPDATE') then
+      		if new.MOLFILE <> old.MOLFILE then
+      			update rdkit.mols set m = mol_from_ctab(encode(new.molfile, 'escape')::cstring) where id = new.id;
+      		end if;
+      	end if;
+      	return new;
+      end
       $function$
   SQL
   create_function :calculate_dataset_space, sql_definition: <<-'SQL'
@@ -2702,6 +2780,9 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
   create_trigger :logidze_on_reactions, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_reactions BEFORE INSERT OR UPDATE ON public.reactions FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
+  create_trigger :set_samples_mol_rdkit_trg, sql_definition: <<-SQL
+      CREATE TRIGGER set_samples_mol_rdkit_trg BEFORE INSERT OR UPDATE ON public.samples FOR EACH ROW EXECUTE FUNCTION set_samples_mol_rdkit()
+  SQL
   create_trigger :logidze_on_samples, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_samples BEFORE INSERT OR UPDATE ON public.samples FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
@@ -2746,6 +2827,9 @@ ActiveRecord::Schema.define(version: 2025_11_05_150500) do
   SQL
   create_trigger :logidze_on_device_descriptions, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_device_descriptions BEFORE INSERT OR UPDATE ON public.device_descriptions FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_components, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_components BEFORE INSERT OR UPDATE ON public.components FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
   create_trigger :lab_trg_layers_changes, sql_definition: <<-SQL
       CREATE TRIGGER lab_trg_layers_changes AFTER UPDATE ON public.layers FOR EACH ROW EXECUTE FUNCTION lab_record_layers_changes()

@@ -32,6 +32,8 @@ import {
   convertTime,
   convertTurnoverFrequency,
   calculateFeedstockMoles,
+  calculateGasMoles,
+  convertTemperatureToKelvin,
 } from 'src/utilities/UnitsConversion';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
@@ -41,6 +43,8 @@ import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
 import Component from 'src/models/Component';
 import { parseNumericString } from 'src/utilities/MathUtils';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
+import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
+import WeightPercentageReactionStore from 'src/stores/alt/stores/WeightPercentageReactionStore';
 
 export default class ReactionDetailsScheme extends React.Component {
   constructor(props) {
@@ -80,7 +84,6 @@ export default class ReactionDetailsScheme extends React.Component {
 
   componentDidMount() {
     TextTemplateStore.listen(this.handleTemplateChange);
-
     TextTemplateActions.fetchTextTemplates('reaction');
     TextTemplateActions.fetchTextTemplates('reactionDescription');
 
@@ -153,6 +156,7 @@ export default class ReactionDetailsScheme extends React.Component {
     // Solvents are never reference materials
     if (tagGroup === 'solvents') {
       splitSample.reference = false;
+      splitSample.weight_percentage_reference = false;
     }
 
     if (splitSample.isMixture()) {
@@ -310,6 +314,11 @@ export default class ReactionDetailsScheme extends React.Component {
       }
     }
 
+    if (reaction.gaseous && material.isCatalyst()) {
+      GasPhaseReactionActions.setCatalystReferenceMole(null);
+      this.updatedReactionForCatalystDeletion();
+    }
+
     onReactionChange(reaction, { updateGraphic: true });
   }
 
@@ -338,8 +347,47 @@ export default class ReactionDetailsScheme extends React.Component {
   }
 
   handleTemplateChange(state) {
+    const desc = state.reactionDescription;
     this.setState({
-      reactionDescTemplate: state.reactionDescription.toJS()
+      reactionDescTemplate: desc?.toJS ? desc.toJS() : desc
+    });
+  }
+
+  /**
+   * Updates reaction materials based on weight percentage calculations.
+   *
+   * This method recalculates the amounts of all starting materials, reactants, and yield for products
+   * when weight percentage mode is enabled and a target amount is set for the product weight percentage reference.
+   *
+   * Workflow:
+   * 1. Retrieves the target amount from WeightPercentageReactionStore
+   * 2. Validates that target amount exists and has a positive value
+   * 3. Updates starting materials and reactants by calling calculateAmountBasedOnWeightPercentage()
+   *    which sets their amount_g = targetAmount.value * weight_percentage
+   * 4. Updates products by calling updateYieldForWeightPercentageReference()
+   *    which recalculates yield/equivalent based on target vs actual amounts
+   *
+   * Guard clauses:
+   * - Returns early if targetAmount is missing, null, or <= 0
+   * - Individual sample methods handle their own validation
+   *
+   * Side effects:
+   * - Mutates sample amounts and equivalents in the reaction object
+   * - Triggered by weight percentage field changes or target amount updates
+   *
+   * @returns {void}
+   */
+  updateReactionMaterials() {
+    const { reaction } = this.props;
+    const { targetAmount } = WeightPercentageReactionStore.getState();
+
+    if (!targetAmount || targetAmount.value == null || targetAmount.unit == null) return;
+
+    [...reaction.starting_materials, ...reaction.reactants].forEach((sample) => {
+      sample.calculateAmountBasedOnWeightPercentage(targetAmount);
+    });
+    [...reaction.products].forEach((sample) => {
+      sample.updateYieldForWeightPercentageReference();
     });
   }
 
@@ -348,8 +396,9 @@ export default class ReactionDetailsScheme extends React.Component {
 
     switch (changeEvent.type) {
       case 'referenceChanged':
+      case 'weightPercentageReferenceChanged':
         onReactionChange(
-          this.updatedReactionForReferenceChange(changeEvent)
+          this.updatedReactionForReferenceChange(changeEvent, changeEvent.type)
         );
         break;
       case 'amountChanged':
@@ -385,6 +434,11 @@ export default class ReactionDetailsScheme extends React.Component {
       case 'equivalentChanged':
         onReactionChange(
           this.updatedReactionForEquivalentChange(changeEvent)
+        );
+        break;
+      case 'weightPercentageChanged':
+        onReactionChange(
+          this.updatedReactionForWeightPercentageChange(changeEvent)
         );
         break;
       case 'externalLabelChanged':
@@ -429,6 +483,16 @@ export default class ReactionDetailsScheme extends React.Component {
         onReactionChange(
           this.updatedReactionForComponentReferenceChange(changeEvent),
           { schemaChanged: true }
+        );
+        break;
+      case 'ComponentMetricsChanged':
+        onReactionChange(
+          this.updatedReactionForComponentMetricsChange(changeEvent)
+        );
+        break;
+      case 'VesselSizeChanged':
+        onReactionChange(
+          this.updatedReactionForVesselSizeChange()
         );
         break;
       default:
@@ -478,11 +542,19 @@ export default class ReactionDetailsScheme extends React.Component {
     return this.updatedReactionWithSample(this.updatedSamplesForDrySolventChange.bind(this), updatedSample);
   }
 
-  updatedReactionForReferenceChange(changeEvent) {
+  updatedReactionForReferenceChange(changeEvent, type) {
     const { sampleID } = changeEvent;
     const { reaction } = this.props;
     const sample = reaction.sampleById(sampleID);
-
+    if (type === 'weightPercentageReferenceChanged') {
+      reaction.markWeightPercentageSampleAsReference(sampleID);
+      WeightPercentageReactionActions.setWeightPercentageReference(sample);
+      WeightPercentageReactionActions.setTargetAmountWeightPercentageReference({
+        value: sample.target_amount_value,
+        unit: sample.target_amount_unit,
+      });
+      return this.updatedReactionWithSample(this.updatedSamplesForWeightPercentageReferenceChange.bind(this), sample);
+    }
     reaction.markSampleAsReference(sampleID);
 
     return this.updatedReactionWithSample(this.updatedSamplesForReferenceChange.bind(this), sample);
@@ -514,11 +586,22 @@ export default class ReactionDetailsScheme extends React.Component {
     // updatedSample.setAmountAndNormalizeToGram(amount);
     // setAmount should be called first before updating feedstock mole and volume values
     updatedSample.setAmount(amount);
+    if (
+      reaction.weight_percentage
+      && updatedSample.weight_percentage_reference
+      && changeEvent.amountType === 'target'
+    ) {
+      const amountUnitObject = {
+        value: amount.value,
+        unit: amount.unit,
+      };
+      WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(amountUnitObject);
+    }
 
     // --- Validate mixture mass ---
     this.warnIfMixtureMassExceeded(updatedSample, updatedSample.amount_g);
 
-    if (updatedSample.gas_type === 'catalyst') {
+    if (updatedSample.isCatalyst()) {
       GasPhaseReactionActions.setCatalystReferenceMole(updatedSample.amount_mol);
     }
 
@@ -538,6 +621,37 @@ export default class ReactionDetailsScheme extends React.Component {
     const updatedSample = reaction.sampleById(sampleID);
 
     updatedSample.setUnitMetrics(metricUnit, metricPrefix);
+
+    return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample);
+  }
+
+  updatedReactionForComponentMetricsChange(changeEvent) {
+    const { reaction } = this.props;
+    const {
+      sampleId,
+      componentId,
+      metricUnit,
+      metricPrefix
+    } = changeEvent;
+
+    // Find the sample that contains the component
+    const updatedSample = reaction.sampleById(sampleId);
+
+    if (!updatedSample || !updatedSample.isMixture() || !updatedSample.hasComponents()) {
+      return reaction;
+    }
+
+    // Find the component within the sample
+    const componentIndex = updatedSample.components.findIndex(
+      (component) => component.id === componentId || component.parent_id === componentId
+    );
+
+    if (componentIndex !== -1) {
+      // Update the component's metrics
+      updatedSample.components[componentIndex].setUnitMetrics(metricUnit, metricPrefix);
+      // Mark the sample as changed so the reaction save button activates
+      updatedSample.changed = true;
+    }
 
     return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample);
   }
@@ -568,7 +682,10 @@ export default class ReactionDetailsScheme extends React.Component {
     const updatedSample = reaction.sampleById(sampleID);
 
     updatedSample.coefficient = coefficient;
-    this.updatedReactionForEquivalentChange(changeEvent);
+    // enable update of equivalent only if weight percentage is not set
+    if (!updatedSample.weight_percentage || updatedSample.weight_percentage === 0) {
+      this.updatedReactionForEquivalentChange(changeEvent);
+    }
 
     return this.updatedReactionWithSample(this.updatedSamplesForCoefficientChange.bind(this), updatedSample);
   }
@@ -602,22 +719,33 @@ export default class ReactionDetailsScheme extends React.Component {
 
   updatedReactionForEquivalentChange(changeEvent) {
     const { reaction } = this.props;
-    const { sampleID, equivalent } = changeEvent;
+    const { sampleID, equivalent, weightPercentageField } = changeEvent;
     const updatedSample = reaction.sampleById(sampleID);
 
     updatedSample.equivalent = equivalent;
 
     // When equivalent is 0, reset all amounts to 0
-    if (equivalent === 0 || equivalent === '0') {
+    if ((equivalent === 0 || equivalent === '0') && !weightPercentageField) {
       updatedSample.setAmount({ value: 0, unit: 'g' });
     }
 
     return this.updatedReactionWithSample(this.updatedSamplesForEquivalentChange.bind(this), updatedSample);
   }
 
+  updatedReactionForWeightPercentageChange(changeEvent) {
+    const { reaction } = this.props;
+    const { sampleID, weightPercentage } = changeEvent;
+    const updatedSample = reaction.sampleById(sampleID);
+    updatedSample.weight_percentage = weightPercentage;
+    if (weightPercentage == null || weightPercentage === 0) {
+      updatedSample.equivalent = updatedSample.amount_mol / reaction.referenceMaterial.amount_mol;
+    }
+    return this.updatedReactionWithSample(this.updatedSamplesForWeightPercentageChange.bind(this), updatedSample);
+  }
+
   calculateEquivalentForProduct(sample, referenceMaterial, stoichiometryCoeff) {
     const vesselVolume = GasPhaseReactionStore.getState().reactionVesselSizeValue;
-    if (sample.gas_type === 'gas') {
+    if (sample.isGas()) {
       const result = this.calculateEquivalentForGasProduct(sample, vesselVolume);
       const equivalent = result > 1 ? 1 : result;
       return { ...sample, equivalent };
@@ -672,7 +800,13 @@ export default class ReactionDetailsScheme extends React.Component {
     if (updatedSample.gas_type === 'catalyst') {
       GasPhaseReactionActions.setCatalystReferenceMole(updatedSample.amount_mol);
     }
-    return this.updatedReactionWithSample(this.updatedSamplesForGasTypeChange.bind(this), updatedSample);
+    return this.updatedReactionWithSample(this.updatedSamplesForGasTypeChange.bind(this), updatedSample, value);
+  }
+
+  updatedReactionForCatalystDeletion() {
+    const { reaction } = this.props;
+    reaction.products = this.updatedSamplesForCatalystDeletion(reaction.products);
+    return reaction;
   }
 
   updatedReactionForGasProductFieldsChange(changeEvent) {
@@ -702,7 +836,8 @@ export default class ReactionDetailsScheme extends React.Component {
       }
       if (field === 'temperature' || field === 'part_per_million') {
         const vesselVolume = GasPhaseReactionStore.getState().reactionVesselSizeValue;
-        updatedSample.amount_value = updatedSample.updateGasMoles(vesselVolume);
+        const moles = updatedSample.updateGasMoles(vesselVolume);
+        updatedSample.setAmount({ value: moles, unit: 'mol' });
         const equivalent = this.calculateEquivalentForGasProduct(updatedSample);
         updatedSample.equivalent = equivalent;
         if (equivalent > 1) {
@@ -806,7 +941,7 @@ export default class ReactionDetailsScheme extends React.Component {
     }
 
     // Set the reference relative molecular weight
-    const relativeWeight = referenceComponent.component_properties?.relative_molecular_weight;
+    const relativeWeight = referenceComponent.relative_molecular_weight;
     if (relativeWeight) {
       updatedSample.sample_details.reference_relative_molecular_weight = relativeWeight;
     }
@@ -899,7 +1034,7 @@ export default class ReactionDetailsScheme extends React.Component {
     const newRelMolWeight = referenceComponent.relative_molecular_weight;
 
     if (updatedSample.amount_unit === 'mol' && Number.isFinite(preservedAmountG) && preservedAmountG > 0
-        && newRelMolWeight && newRelMolWeight > 0) {
+      && newRelMolWeight && newRelMolWeight > 0) {
       // Calculate new amount_mol from preserved amount_g and new reference component's relMolWeight
       const newAmountMol = preservedAmountG / newRelMolWeight;
       updatedSample.amount_value = newAmountMol;
@@ -913,6 +1048,41 @@ export default class ReactionDetailsScheme extends React.Component {
     if (referenceMaterial?.amount_mol > 0) {
       updatedSample.calculateEquivalentFromReferenceMaterial?.(referenceMaterial);
     }
+  }
+
+  updatedReactionForVesselSizeChange() {
+    return this.updatedReactionWithSample(this.updatedSamplesForVesselSizeChange.bind(this));
+  }
+
+  /**
+   * Recalculates equivalent values for starting materials and reactants.
+   * Uses the reference material's moles to compute each material's equivalent.
+   *
+   * Formula: equivalent = material.amount_mol / referenceMaterial.amount_mol
+   *
+   * @param {Object} reaction - The reaction object containing materials
+   */
+  // eslint-disable-next-line class-methods-use-this
+  recalculateEquivalentsForMaterials(reaction) {
+    const { referenceMaterial } = reaction;
+    if (!referenceMaterial) {
+      return;
+    }
+
+    const materialsToUpdate = [
+      ...reaction.starting_materials,
+      ...reaction.reactants,
+    ];
+
+    materialsToUpdate.forEach((material) => {
+      if (!material.reference && material.amount_mol) {
+        if (referenceMaterial.amount_mol === 0) {
+          material.equivalent = 0;
+        } else {
+          material.equivalent = material.amount_mol / referenceMaterial.amount_mol;
+        }
+      }
+    });
   }
 
   calculateEquivalent(refM, updatedSample) {
@@ -1052,11 +1222,16 @@ export default class ReactionDetailsScheme extends React.Component {
               }
               sample.maxAmount = referenceMaterial.amount_mol * stoichiometryCoeff * sample.molecule_molecular_weight / (sample.purity || 1);
               // yield taking into account stoichiometry:
-              if (updatedSample.gas_type === 'gas') {
+              if (updatedSample.isGas()) {
                 const equivalent = this.calculateEquivalentForGasProduct(sample, vesselVolume);
                 sample.equivalent = equivalent > 1 ? 1 : equivalent;
               } else if (!lockEquivColumn) {
-                sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol / stoichiometryCoeff;
+                if (referenceMaterial.amount_mol > 0) {
+                  sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol / stoichiometryCoeff;
+                } else if (!sample.reference) {
+                  // Set equivalent to 0 when reference material has no values (amount_mol = 0)
+                  sample.equivalent = 0.0;
+                }
               }
             } else {
               if (!lockEquivColumn) {
@@ -1087,7 +1262,12 @@ export default class ReactionDetailsScheme extends React.Component {
             // calculate equivalent, don't touch real amount
             sample.maxAmount = referenceMaterial.amount_mol * stoichiometryCoeff * sample.molecule_molecular_weight / (sample.purity || 1);
             // yield taking into account stoichiometry:
-            sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol / stoichiometryCoeff;
+            if (referenceMaterial.amount_mol > 0) {
+              sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol / stoichiometryCoeff;
+            } else if (!sample.reference) {
+              // Set equivalent to 0 when reference material has no values (amount_mol = 0)
+              sample.equivalent = 0.0;
+            }
           } else {
             //sample.amount_mol = sample.equivalent * referenceMaterial.amount_mol;
             if (referenceMaterial && referenceMaterial.amount_value && updatedSample.gas_type !== 'feedstock' && sample.gas_type !== 'gas') {
@@ -1101,7 +1281,12 @@ export default class ReactionDetailsScheme extends React.Component {
 
         if ((materialGroup === 'starting_materials' || materialGroup === 'reactants') && !sample.reference && !lockEquivColumn) {
           // eslint-disable-next-line no-param-reassign
-          sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol;
+          if (referenceMaterial.amount_mol > 0) {
+            sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol;
+          } else {
+            // Set equivalent to 0 when reference material has no values (amount_mol = 0)
+            sample.equivalent = 0.0;
+          }
         } else if (materialGroup === 'products'
           && (sample.equivalent < 0.0 || isNaN(sample.equivalent) || !isFinite(sample.equivalent))
           && sample.gas_type !== 'gas') {
@@ -1122,6 +1307,10 @@ export default class ReactionDetailsScheme extends React.Component {
       if (materialGroup === 'products') {
         if (typeof (referenceMaterial) !== 'undefined' && referenceMaterial) {
           sample.maxAmount = referenceMaterial.amount_mol * stoichiometryCoeff * sample.molecule_molecular_weight / (sample.purity || 1);
+        }
+        // Update TON values for gas products when catalyst amount changes
+        if (updatedSample && updatedSample.gas_type === 'catalyst' && sample.isGas()) {
+          sample.updateTONValue(sample.amount_mol);
         }
       }
 
@@ -1187,7 +1376,6 @@ export default class ReactionDetailsScheme extends React.Component {
             unit: 'mol'
           });
         }
-
         // Validate resulting mass against available mixture mass and warn if exceeded
         this.warnIfMixtureMassExceeded(sample, sample.amount_g);
       }
@@ -1201,6 +1389,40 @@ export default class ReactionDetailsScheme extends React.Component {
             sample.equivalent = sample.reference ? 1 : 0;
           } else {
             sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol;
+          }
+        }
+      }
+      return sample;
+    });
+  }
+
+  /**
+   * Updates the sample's weight percentage in a reaction when a sample's weight percentage changes.
+   *
+   * This method is called when a user modifies the weight percentage value of a sample
+   * in the reaction scheme.
+   *
+   * Key behaviors:
+   * - Only modifies the specific sample that changed
+   * - Mutates the updated sample's weight percentage property
+   *
+   * @param {Array<Sample>} samples - Array of all samples in the current material group
+   * @param {Sample} updatedSample - The sample whose weight percentage was changed
+   * @returns {Array<Sample>} The updated samples array
+   */
+  updatedSamplesForWeightPercentageChange(samples, updatedSample) {
+    const { reaction } = this.props;
+    return samples.map((sample) => {
+      if (sample.id === updatedSample.id) {
+        if (sample.weight_percentage > 1 || sample.weight_percentage < 0) {
+          NotificationActions.add({
+            message: 'Weight percentage should be between 0 and 1',
+            level: 'error'
+          });
+        } else {
+          sample.weight_percentage = updatedSample.weight_percentage;
+          if (updatedSample.weight_percentage == null || updatedSample.weight_percentage === 0) {
+            sample.equivalent = sample.amount_mol / reaction.referenceMaterial.amount_mol;
           }
         }
       }
@@ -1256,12 +1478,15 @@ export default class ReactionDetailsScheme extends React.Component {
       } else {
         if (sample.amount_value) {
           const referenceAmount = referenceMaterial.amount_mol;
-          if (referenceMaterial && referenceAmount) {
+          if (referenceMaterial && referenceAmount > 0) {
             if (materialGroup === 'products') {
               sample.equivalent = sample.amount_mol * (referenceMaterial.coefficient || 1) / (referenceAmount * (sample.coefficient || 1));
             } else {
               sample.equivalent = sample.amount_mol / referenceAmount;
             }
+          } else if ((materialGroup === 'starting_materials' || materialGroup === 'reactants') && referenceMaterial && !sample.reference) {
+            // Set equivalent to 0 when reference material has no values (amount_mol = 0 or undefined)
+              sample.equivalent = 0.0;
           }
         }
         sample.reference = false;
@@ -1270,20 +1495,45 @@ export default class ReactionDetailsScheme extends React.Component {
     });
   }
 
-  updatedSamplesForGasTypeChange(samples, updatedSample) {
+  updatedSamplesForWeightPercentageReferenceChange(samples, referenceMaterial) {
+    return samples.map((s) => {
+      if (s.id === referenceMaterial.id) {
+        s.weight_percentage_reference = true;
+        // set weight percentage of reference (weight percentage ref) material to null
+        s.weight_percentage = 1;
+      } else {
+        s.weight_percentage_reference = false;
+      }
+      return s;
+    });
+  }
+
+  updatedSamplesForGasTypeChange(samples, updatedSample, materialGroup, prevGasType) {
     return samples.map((sample) => {
       if (sample.id === updatedSample.id) {
         sample.gas_type = updatedSample.gas_type;
         sample.equivalent = updatedSample.equivalent;
       } else if (sample.id !== updatedSample.id) {
-        if ((updatedSample.gas_type === 'feedstock' && sample.gas_type === 'feedstock')
-        || (updatedSample.gas_type === 'catalyst' && sample.gas_type === 'catalyst')) {
+        if ((updatedSample.gas_type === 'feedstock' && sample.isFeedstock())
+        || (updatedSample.gas_type === 'catalyst' && sample.isCatalyst())) {
           sample.gas_type = 'off';
         }
-        if (sample.gas_type === 'gas') {
+        if (sample.isGas()) {
           const equivalent = this.calculateEquivalentForGasProduct(sample);
           sample.equivalent = equivalent;
+          if ((prevGasType === 'CAT' && updatedSample.gas_type === 'off') || updatedSample.gas_type === 'catalyst') {
+            sample.updateTONValue(sample.amount_mol);
+          }
         }
+      }
+      return sample;
+    });
+  }
+
+  updatedSamplesForCatalystDeletion(samples) {
+    return samples.map((sample) => {
+      if (sample.isGas()) {
+        sample.updateTONValue(sample.amount_mol);
       }
       return sample;
     });
@@ -1333,6 +1583,23 @@ export default class ReactionDetailsScheme extends React.Component {
     });
   }
 
+  updatedSamplesForVesselSizeChange(samples) {
+    const vesselSize = GasPhaseReactionStore.getState().reactionVesselSizeValue;
+    return samples.map((sample) => {
+      if (sample.isGas() && sample.gas_phase_data) {
+        const { part_per_million, temperature } = sample.gas_phase_data;
+        let temperatureInKelvin = temperature.value;
+        if (temperature.unit !== 'K') {
+          temperatureInKelvin = convertTemperatureToKelvin({ value: temperature.value, unit: temperature.unit });
+        }
+        const moles = calculateGasMoles(vesselSize, part_per_million, temperatureInKelvin);
+        sample.setAmount({ value: moles, unit: 'mol' });
+        sample.updateTONValue(moles);
+      }
+      return sample;
+    });
+  }
+
   updatedReactionWithSample(updateFunction, updatedSample, type) {
     const { reaction } = this.props;
     reaction.starting_materials = updateFunction(reaction.starting_materials, updatedSample, 'starting_materials', type);
@@ -1346,6 +1613,10 @@ export default class ReactionDetailsScheme extends React.Component {
     const { onInputChange } = this.props;
     const { value } = e.target;
     onInputChange('vesselSizeAmount', value);
+    const event = {
+      type: 'VesselSizeChanged',
+    };
+    this.handleMaterialsChange(event);
   }
 
   updateVesselSizeOnBlur(e) {
@@ -1381,8 +1652,8 @@ export default class ReactionDetailsScheme extends React.Component {
     if (refMol > 0 && typeof splitSample.amount_mol === 'number') {
       splitSample.equivalent = splitSample.amount_mol / refMol;
     } else {
-      // Fallback to 1 to avoid NaN/Infinity when reference has no mol amount yet
-      splitSample.equivalent = 1.0;
+      // Set equivalent to 0 when reference has no mol amount (no values defined)
+      splitSample.equivalent = 0.0;
     }
   }
 
@@ -1395,7 +1666,7 @@ export default class ReactionDetailsScheme extends React.Component {
           <Form.Control
             name="reaction_vessel_size"
             type="text"
-            value={reaction.vessel_size?.amount || ''}
+            value={reaction.vessel_size?.amount ?? ''}
             disabled={false}
             onChange={(event) => this.updateVesselSize(event)}
             onBlur={(event) => this.updateVesselSizeOnBlur(event, reaction.vessel_size.unit)}
@@ -1547,7 +1818,12 @@ export default class ReactionDetailsScheme extends React.Component {
       }
       reaction.editedSample = undefined;
     } else {
+      this.updateReactionMaterials();
       const { referenceMaterial } = reaction;
+      if (referenceMaterial?.weight_percentage) {
+        // If reference material has valid weight percentage value, ensure equivalents are recalculated as a result of amount changes to the reference material
+        this.recalculateEquivalentsForMaterials(reaction);
+      }
       reaction.products.map((sample) => {
         sample.updateConcentrationFromSolvent(reaction);
         if (typeof (referenceMaterial) !== 'undefined' && referenceMaterial) {
@@ -1647,7 +1923,10 @@ export default class ReactionDetailsScheme extends React.Component {
           <ReactionConditions
             conditions={reaction.conditions}
             isDisabled={!permitOn(reaction) || reaction.isMethodDisabled('conditions')}
-            onChange={(conditions) => onInputChange('conditions', conditions)}
+            onChange={(conditions) => {
+              onInputChange('conditions', conditions);
+              onReactionChange(reaction, { updateGraphic: true });
+            }}
           />
         </div>
 

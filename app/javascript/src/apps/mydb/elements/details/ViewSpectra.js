@@ -155,7 +155,7 @@ class ViewSpectra extends React.Component {
 
   getContent() {
     const { spcMetas, spcIdx, arrSpcIdx, spcInfos } = this.state;
-    if (arrSpcIdx.length > 0) {
+    if (arrSpcIdx.length > 1) {
       const listMuliSpcs = [];
       const listEntityFiles = [];
       for (let i = 0; i < arrSpcIdx.length; i++) {

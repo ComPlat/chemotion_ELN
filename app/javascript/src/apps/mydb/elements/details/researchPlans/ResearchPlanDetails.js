@@ -578,7 +578,10 @@ export default class ResearchPlanDetails extends Component {
           {
             !researchPlan.isNew && <CommentSection section="research_plan_references" element={researchPlan} />
           }
-          <DetailsTabLiteratures element={researchPlan} />
+          <DetailsTabLiteratures
+            element={researchPlan}
+            literatures={researchPlan.isNew ? researchPlan.literatures : null}
+          />
         </Tab>
       ),
       wellplates: (
@@ -638,6 +641,7 @@ export default class ResearchPlanDetails extends Component {
             type="research_plan"
             availableTabs={Object.keys(tabContentsMap)}
             onTabPositionChanged={this.onTabPositionChanged}
+            openedFromCollectionId={this.props.openedFromCollectionId}
           />
           <Tabs
             mountOnEnter
@@ -657,4 +661,5 @@ export default class ResearchPlanDetails extends Component {
 
 ResearchPlanDetails.propTypes = {
   researchPlan: PropTypes.instanceOf(ResearchPlan).isRequired,
+  openedFromCollectionId: PropTypes.number,
 };

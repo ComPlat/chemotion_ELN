@@ -379,7 +379,7 @@ function UploadField({ disabled = false, element, setElement }) {
         overlay={<Tooltip id="annotate_tooltip">Create multiple analyses at once from selected files and/or folders that will be uploaded.</Tooltip>}
       >
         <Button
-        size="xsm"
+        size="sm"
         variant="success"
         disabled={disabled}
         onClick={handleShow}

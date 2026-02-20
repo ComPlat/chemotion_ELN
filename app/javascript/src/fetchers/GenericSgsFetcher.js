@@ -32,24 +32,11 @@ export default class GenericSgsFetcher extends GenericBaseFetcher {
     return this.exec('fetch_repo_generic_template_list', 'GET');
   }
 
-  static segmentCache = {
-    active: null,
-    all: null,
-  };
-
-  static listSegmentKlass(params = {}, soft = false) {
-    const cacheType = params.is_active ? 'active' : 'all';
-    if (!soft || !this.segmentCache[cacheType]) {
-      const api = params.is_active === undefined
-        ? 'list_segment_klass.json'
-        : `list_segment_klass.json?is_active=${params.is_active}`;
-      return this.exec(api, 'GET').then((result) => {
-        this.segmentCache[cacheType] = result;
-        return this.segmentCache[cacheType];
-      });
-    }
-
-    return Promise.resolve(this.segmentCache[cacheType]);
+  static listSegmentKlass(params = {}) {
+    const api = params.is_active === undefined
+      ? 'list_segment_klass.json'
+      : `list_segment_klass.json?is_active=${params.is_active}`;
+    return this.exec(api, 'GET');
   }
 
   static syncTemplate(params) {
@@ -66,7 +53,7 @@ export default class GenericSgsFetcher extends GenericBaseFetcher {
       'update_segment_template'
     );
   }
-  
+
   static uploadKlass(params) {
     return this.execData(params, 'upload_klass');
   }

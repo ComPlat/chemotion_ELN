@@ -146,10 +146,10 @@ module Chemotion
           deleted_attachments = attachments.destroy_all
         end
 
-        render json: { deleted_attachments: deleted_attachments }, status: :ok
+        { deleted_attachments: deleted_attachments }
       rescue StandardError => e
-        render json: { error: e.message }, status: :unprocessable_entity
         Rails.logger.error("Error deleting attachments: #{e.message}")
+        error!({ error: e.message }, 422)
       end
 
       desc 'Delete Attachment'
@@ -512,8 +512,18 @@ module Chemotion
           result = Chemotion::Jcamp::RegenerateJcamp.spectrum(
             att.abs_path, t_molfile.path
           )
-          att.file_data = result
-          att.rewrite_file_data!
+          io = StringIO.new(result)
+          io.rewind
+
+          att.attachment_attacher.attach(
+            io,
+            metadata: {
+              'filename' => att.filename,
+              'mime_type' => att.content_type || 'chemical/x-jcamp-dx',
+            },
+          )
+
+          att.save!
         end
         t_molfile.close
         t_molfile.unlink

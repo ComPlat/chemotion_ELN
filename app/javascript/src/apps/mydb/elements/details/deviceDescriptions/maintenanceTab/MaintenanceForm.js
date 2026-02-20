@@ -3,6 +3,7 @@ import { Form, Row, Col, Accordion } from 'react-bootstrap';
 import {
   selectInput, textareaInput, mulipleRowInput, toggleContent
 } from '../FormFields';
+import { deviceDescriptionSelectOptions } from '../SelectOptions';
 
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
@@ -10,17 +11,6 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 const MaintenanceForm = () => {
   const deviceDescriptionsStore = useContext(StoreContext).deviceDescriptions;
   let deviceDescription = deviceDescriptionsStore.device_description;
-
-  const yesOrNo = [
-    { value: 'yes', label: 'yes' },
-    { value: 'no', label: 'no' },
-  ];
-
-  const schedules = [
-    { value: 'yearly', label: 'yearly' },
-    { value: 'every two years', label: 'every two years' },
-    { value: 'on Request', label: 'on request' },
-  ];
 
   const contactFields = [
     { value: 'company', label: 'Company', type: 'text' },
@@ -30,46 +20,21 @@ const MaintenanceForm = () => {
     { value: 'comment', label: 'Comment', type: 'text' },
   ];
 
-  const maintenanceType = [
-    { value: 'internal', label: 'internal' },
-    { value: 'external', label: 'external' },
-  ];
-
-  const maintenanceStatus = [
-    { value: 'planned', label: 'planned' },
-    { value: 'ordered', label: 'ordered' },
-    { value: 'done', label: 'done' },
-    { value: 'ongoing', label: 'ongoing' },
-  ];
-
   const maintenanceFields = [
     { value: 'date', label: 'Date', type: 'date' },
-    { value: 'type', label: 'Type', type: 'select', options: maintenanceType },
+    { value: 'type', label: 'Type', type: 'select', options: deviceDescriptionSelectOptions['maintenance_type'] },
     { value: 'details', label: 'Details', type: 'text' },
-    { value: 'status', label: 'Status', type: 'select', options: maintenanceStatus },
+    { value: 'status', label: 'Status', type: 'select', options: deviceDescriptionSelectOptions['maintenance_status'] },
     { value: 'costs', label: 'Costs', type: 'numeric' },
     { value: 'time', label: 'Time', type: 'numeric' },
     { value: 'changes', label: 'Changes', type: 'text' },
   ];
 
-  const consumablesNeededType = [
-    { value: 'mandatory', label: 'mandatory' },
-    { value: 'optional', label: 'optional' },
-    { value: 'sometimes', label: 'sometimes' },
-  ];
-
-  const consumablesNeededStatus = [
-    { value: 'available', label: 'available' },
-    { value: 'in parts', label: 'in parts' },
-    { value: 'ordered', label: 'ordered' },
-    { value: 'to be ordered', label: 'to be ordered' },
-  ];
-
   const consumablesNeededFields = [
     { value: 'name', label: 'Name', type: 'text' },
-    { value: 'type', label: 'Type', type: 'select', options: consumablesNeededType },
+    { value: 'type', label: 'Type', type: 'select', options: deviceDescriptionSelectOptions['consumables_needed_type'] },
     { value: 'number', label: 'Number', type: 'numeric' },
-    { value: 'status', label: 'Status', type: 'select', options: consumablesNeededStatus },
+    { value: 'status', label: 'Status', type: 'select', options: deviceDescriptionSelectOptions['consumables_needed_status'] },
     { value: 'costs', label: 'costs', type: 'numeric' },
     { value: 'details', label: 'details', type: 'text' },
   ];
@@ -91,7 +56,7 @@ const MaintenanceForm = () => {
                 {
                   selectInput(
                     deviceDescription, deviceDescriptionsStore, 'maintenance_contract_available',
-                    'Maintenance contract available', yesOrNo
+                    'Maintenance contract available', deviceDescriptionSelectOptions['yes_or_no']
                   )
                 }
               </Col>
@@ -99,7 +64,7 @@ const MaintenanceForm = () => {
                 {
                   selectInput(
                     deviceDescription, deviceDescriptionsStore, 'maintenance_scheduling',
-                    'Scheduling', schedules
+                    'Scheduling', deviceDescriptionSelectOptions['schedules']
                   )
                 }
               </Col>

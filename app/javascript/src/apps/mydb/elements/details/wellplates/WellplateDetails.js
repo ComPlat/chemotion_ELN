@@ -430,6 +430,7 @@ export default class WellplateDetails extends Component {
             type="wellplate"
             availableTabs={Object.keys(tabContentsMap)}
             onTabPositionChanged={this.onTabPositionChanged}
+            openedFromCollectionId={this.props.openedFromCollectionId}
           />
           <Tabs
             mountOnEnter
@@ -449,4 +450,5 @@ export default class WellplateDetails extends Component {
 
 WellplateDetails.propTypes = {
   wellplate: PropTypes.instanceOf(WellplateModel).isRequired,
+  openedFromCollectionId: PropTypes.number,
 };

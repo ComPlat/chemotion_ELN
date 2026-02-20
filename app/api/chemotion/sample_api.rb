@@ -9,12 +9,43 @@ module Chemotion
     include Grape::Kaminari
     helpers ContainerHelpers
     helpers ParamsHelpers
+    helpers LiteratureHelpers
     helpers CollectionHelpers
     helpers SampleHelpers
     helpers ProfileHelpers
     helpers UserLabelHelpers
 
     resource :samples do
+      desc 'Batch refresh multiple sample SVGs'
+      params do
+        requires :svgs, type: Array, desc: 'Array of {svg_path, molfile} objects'
+      end
+      post 'batch-refresh-svg' do
+        svgs = params[:svgs] || []
+
+        if svgs.empty?
+          status 400
+          body 'svgs array is required and cannot be empty.'
+          return
+        end
+
+        results = svgs.map do |svg_params|
+          svg_path = svg_params[:svg_path] || svg_params['svg_path']
+          molfile = svg_params[:molfile] || svg_params['molfile']
+          if svg_path.blank? || molfile.blank?
+            { success: false, error: 'svg_path and molfile are required' }
+          else
+            result = Sample.refresh_smaple_svg(svg_path, molfile)
+            { success: result[:success], filename: result[:filename], error: result[:error] }.compact
+          end
+        rescue StandardError => e
+          { success: false, error: e.message }
+        end
+
+        status 200
+        { results: results }
+      end
+
       # TODO: Refactoring: Use Grape Entities
       namespace :ui_state do
         desc 'Get samples by UI state'
@@ -41,7 +72,16 @@ module Chemotion
         post do
           @samples = @samples.limit(params[:limit]) if params[:limit]
 
-          present @samples, with: Entities::SampleEntity, root: :samples
+          {
+            samples: Entities::SampleEntity.represent(
+              @samples,
+              root: false,
+            ),
+            literatures: Entities::LiteratureEntity.represent(
+              citation_for_elements(@samples.pluck(:id), 'Sample'),
+              with_element_and_user_info: true,
+            ),
+          }
         end
       end
 
@@ -294,13 +334,19 @@ module Chemotion
         get do
           sample = Sample.includes(:molecule, :residues, :elemental_compositions, :container, :reactions_samples)
                          .find(params[:id])
-          present(
-            sample,
-            with: Entities::SampleEntity,
-            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: sample).detail_levels,
-            policy: @element_policy,
-            root: :sample,
-          )
+          {
+            sample: Entities::SampleEntity.represent(
+              sample,
+              detail_levels: ElementDetailLevelCalculator
+                .new(user: current_user, element: sample)
+                .detail_levels,
+              policy: @element_policy,
+            ),
+            literatures: Entities::LiteratureEntity.represent(
+              citation_for_elements(params[:id], 'Sample'),
+              with_user_info: true,
+            ),
+          }
         end
       end
 
@@ -333,7 +379,7 @@ module Chemotion
         optional :description, type: String, desc: 'Sample description'
         optional :metrics, type: String, desc: 'Sample metric units'
         optional :purity, type: Float, desc: 'Sample purity'
-        optional :solvent, type: Array[Hash], desc: 'Sample solvent'
+        optional :solvent, type: [Hash], desc: 'Sample solvent'
         optional :location, type: String, desc: 'Sample location'
         optional :molfile, type: String, desc: 'Sample molfile'
         optional :sample_svg_file, type: String, desc: 'Sample SVG file'
@@ -375,6 +421,7 @@ module Chemotion
         optional :width, type: String, desc: 'dimension of the Hierarchical sample HXWXL'
         optional :length, type: String, desc: 'dimension of the Hierarchical sample HXWXL'
         optional :storage_condition, type: String, desc: 'storage condition of the Hierarchical sample'
+        optional :literatures, type: Hash
       end
 
       route_param :id do
@@ -387,6 +434,7 @@ module Chemotion
           attributes = declared(params, include_missing: false)
           # attributes[:solvent] = params[:solvent].to_json
           attributes[:solvent] = params[:solvent]
+          attributes.delete(:literatures)
 
           update_datamodel(attributes[:container])
           attributes.delete(:container)
@@ -406,14 +454,14 @@ module Chemotion
             next if prop_value.blank?
 
             attributes.merge!(
-              "#{prop}_attributes".to_sym => prop_value,
+              "#{prop}_attributes": prop_value,
             )
           end
 
-          boiling_point_lowerbound = (params['boiling_point_lowerbound'].presence || -Float::INFINITY)
-          boiling_point_upperbound = (params['boiling_point_upperbound'].presence || Float::INFINITY)
-          melting_point_lowerbound = (params['melting_point_lowerbound'].presence || -Float::INFINITY)
-          melting_point_upperbound = (params['melting_point_upperbound'].presence || Float::INFINITY)
+          boiling_point_lowerbound = params['boiling_point_lowerbound'].presence || -Float::INFINITY
+          boiling_point_upperbound = params['boiling_point_upperbound'].presence || Float::INFINITY
+          melting_point_lowerbound = params['melting_point_lowerbound'].presence || -Float::INFINITY
+          melting_point_upperbound = params['melting_point_upperbound'].presence || Float::INFINITY
           attributes['boiling_point'] = Range.new(boiling_point_lowerbound, boiling_point_upperbound)
           attributes['melting_point'] = Range.new(melting_point_lowerbound, melting_point_upperbound)
           attributes.delete(:boiling_point_lowerbound)
@@ -476,7 +524,7 @@ module Chemotion
         requires :purity, type: Float, desc: 'Sample purity'
         optional :dry_solvent, default: false, type: Boolean, desc: 'Sample dry solvent'
         # requires :solvent, type: String, desc: "Sample solvent"
-        optional :solvent, type: Array[Hash], desc: 'Sample solvent', default: []
+        optional :solvent, type: [Hash], desc: 'Sample solvent', default: []
         requires :location, type: String, desc: 'Sample location'
         optional :molfile, type: String, desc: 'Sample molfile'
         optional :sample_svg_file, type: String, desc: 'Sample SVG file'
@@ -499,6 +547,7 @@ module Chemotion
         end
         optional :molecule_name_id, type: Integer
         optional :molecule_id, type: Integer
+        optional :literatures, type: Hash
         requires :container, type: Hash
         optional :decoupled, type: Boolean, desc: 'Sample is decoupled from structure?', default: false
         optional :inventory_sample, type: Boolean, default: false
@@ -547,10 +596,10 @@ module Chemotion
           sample_details: params[:sample_details],
         }
 
-        boiling_point_lowerbound = (params['boiling_point_lowerbound'].presence || -Float::INFINITY)
-        boiling_point_upperbound = (params['boiling_point_upperbound'].presence || Float::INFINITY)
-        melting_point_lowerbound = (params['melting_point_lowerbound'].presence || -Float::INFINITY)
-        melting_point_upperbound = (params['melting_point_upperbound'].presence || Float::INFINITY)
+        boiling_point_lowerbound = params['boiling_point_lowerbound'].presence || -Float::INFINITY
+        boiling_point_upperbound = params['boiling_point_upperbound'].presence || Float::INFINITY
+        melting_point_lowerbound = params['melting_point_lowerbound'].presence || -Float::INFINITY
+        melting_point_upperbound = params['melting_point_upperbound'].presence || Float::INFINITY
         attributes['boiling_point'] = Range.new(boiling_point_lowerbound, boiling_point_upperbound)
         attributes['melting_point'] = Range.new(melting_point_lowerbound, melting_point_upperbound)
 
@@ -571,22 +620,23 @@ module Chemotion
           next if prop_value.blank?
 
           attributes.merge!(
-            "#{prop}_attributes".to_sym => prop_value,
+            "#{prop}_attributes": prop_value,
           )
         end
         attributes.delete(:segments)
         attributes.delete(:user_labels)
+        literatures = attributes.delete(:literatures)
 
         sample = Sample.new(attributes)
 
         if params[:collection_id]
-          collection = current_user.collections.where(id: params[:collection_id]).take
+          collection = current_user.collections.find_by(id: params[:collection_id])
           sample.collections << collection if collection.present?
         end
 
         is_shared_collection = false
         if collection.blank?
-          sync_collection = current_user.all_sync_in_collections_users.where(id: params[:collection_id]).take
+          sync_collection = current_user.all_sync_in_collections_users.find_by(id: params[:collection_id])
           if sync_collection.present?
             is_shared_collection = true
             sample.collections << Collection.find(sync_collection['collection_id'])
@@ -602,6 +652,8 @@ module Chemotion
         sample.container = update_datamodel(params[:container])
         sample.update_inventory_label(params[:xref][:inventory_label], params[:collection_id])
         sample.save!
+
+        create_literatures_and_literals(sample, literatures)
 
         update_element_labels(sample, params[:user_labels], current_user.id)
         sample.save_segments(segments: params[:segments], current_user_id: current_user.id)

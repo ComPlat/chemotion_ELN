@@ -4,7 +4,7 @@ export default class MessagesFetcher {
   static configuration() {
     return fetch('/api/v1/messages/config.json', {
       credentials: 'same-origin'
-    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+    }).then((response) => response.json()).then((json) => json).catch((errorMessage) => {
       console.log(errorMessage);
     });
   }
@@ -12,23 +12,25 @@ export default class MessagesFetcher {
   static fetchMessages(isAck) {
     return fetch(`/api/v1/messages/list.json?is_ack=${isAck}`, {
       credentials: 'same-origin'
-    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+    }).then((response) => response.json()).then((json) => json).catch((errorMessage) => {
       console.log(errorMessage);
+      return { messages: [] };
     });
   }
 
   static fetchSpectraMessages(isAck) {
     return fetch(`/api/v1/messages/spectra.json?is_ack=${isAck}`, {
       credentials: 'same-origin'
-    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+    }).then((response) => response.json()).then((json) => json).catch((errorMessage) => {
       console.log(errorMessage);
+      return { messages: [] };
     });
   }
 
   static fetchChannels(channelType) {
     return fetch(`/api/v1/messages/channels.json?channel_type=${channelType}`, {
       credentials: 'same-origin'
-    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+    }).then((response) => response.json()).then((json) => json).catch((errorMessage) => {
       console.log(errorMessage);
     });
   }
@@ -36,7 +38,7 @@ export default class MessagesFetcher {
   static fetchChannelWithUser() {
     return fetch('/api/v1/messages/channels_user.json', {
       credentials: 'same-origin'
-    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+    }).then((response) => response.json()).then((json) => json).catch((errorMessage) => {
       console.log(errorMessage);
     });
   }
@@ -44,7 +46,7 @@ export default class MessagesFetcher {
   static channelIndividualUsers() {
     return fetch('/api/v1/messages/channel_individual.json', {
       credentials: 'same-origin'
-    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+    }).then((response) => response.json()).then((json) => json).catch((errorMessage) => {
       console.log(errorMessage);
     });
   }
@@ -55,7 +57,7 @@ export default class MessagesFetcher {
       method: 'PUT',
       headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify(params)
-    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+    }).then((response) => response.json()).then((json) => json).catch((errorMessage) => {
       console.log(errorMessage);
     });
   }
@@ -66,7 +68,7 @@ export default class MessagesFetcher {
       method: 'POST',
       headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify(params)
-    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+    }).then((response) => response.json()).then((json) => json).catch((errorMessage) => {
       console.log(errorMessage);
     });
   }
@@ -77,7 +79,7 @@ export default class MessagesFetcher {
       method: 'POST',
       headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify(params)
-    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+    }).then((response) => response.json()).then((json) => json).catch((errorMessage) => {
       console.log(errorMessage);
     });
   }

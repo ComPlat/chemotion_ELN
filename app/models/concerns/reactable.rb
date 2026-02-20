@@ -27,41 +27,87 @@ module Reactable
   }.freeze
 
   def update_equivalent
+    if weight_percentage.present? && weight_percentage.to_f.positive? &&
+       !reference && !weight_percentage_reference
+      ## nullify equivalent if weight percentage is used & material is not reference and not weight percentage reference
+      update!(equivalent: nil)
+      return
+    end
+
     ref_record = ReactionsSample.find_by(reaction_id: reaction_id, reference: true)
     return if ref_record.nil? ||
-              ref_record.id == id ||
               sample&.sample_type == Sample::SAMPLE_TYPE_MIXTURE
-
-    amount = sample.real_amount_value && sample.real_amount_value != 0 ? sample.amount_mmol(:real) : sample.amount_mmol
+    if reference && gas_type != 'gas'
+      ## set equivalent to 1 for reference sample
+      update!(equivalent: 1.0)
+      return
+    end
+    ## use real amount unless target amount is defined and real amount is not
+    real_amount_condition = sample.real_amount_value && sample.real_amount_value != 0
+    target_amount_condition = sample.target_amount_value && sample.target_amount_value != 0
+    ref_record_real_amount_condition = ref_record.sample.real_amount_value && ref_record.sample.real_amount_value != 0
+    ref_record_target_amount_condition = ref_record.sample.target_amount_value && ref_record.sample.target_amount_value != 0
+    condition = ref_record_target_amount_condition && !ref_record_real_amount_condition
 
     case self
     when ReactionsProductSample
-      amount = sample.amount_mmol(:real) if is_a? ReactionsProductSample
-      ref_amount = ref_record.sample.amount_mmol(:target) *
-                   (self[:coefficient] || 1.0) / (ref_record[:coefficient] || 1.0)
+      ## update yield (= real amount / target amount) for product sample if it is weight percentage reference
+      if weight_percentage_reference
+        amount = sample.convert_amount_to_mol(
+          sample.real_amount_value,
+          sample.real_amount_unit,
+        )
+        ref_amount = if condition
+                       sample.convert_amount_to_mol(
+                         sample.target_amount_value,
+                         sample.target_amount_unit,
+                       )
+                     else
+                       sample.convert_amount_to_mol(
+                         sample.real_amount_value,
+                         sample.real_amount_unit,
+                       )
+                     end
+      else
+        amount = sample.amount_mmol(:real) if is_a? ReactionsProductSample
+        ref_amount =  if condition
+                        ref_record.sample.amount_mmol(:target) *
+                          (self[:coefficient] || 1.0) / (ref_record[:coefficient] || 1.0)
+                      else
+                        ref_record.sample.amount_mmol(:real) *
+                          (self[:coefficient] || 1.0) / (ref_record[:coefficient] || 1.0)
+                      end
+      end
     else
-      condition = sample.real_amount_value && sample.real_amount_value != 0
-      ref_record_condition = ref_record.sample.real_amount_value && ref_record.sample.real_amount_value != 0
-      amount = condition ? sample.amount_mmol(:real) : sample.amount_mmol
-      ref_amount = ref_record_condition ? ref_record.sample.amount_mmol(:real) : ref_record.sample.amount_mmol
+      amount = target_amount_condition && !real_amount_condition ? sample.amount_mmol('target', gas_type) : sample.amount_mmol(:real, gas_type)
+      ref_amount = condition ? ref_record.sample.amount_mmol : ref_record.sample.amount_mmol(:real)
     end
     if gas_type == 'gas'
       return nil if gas_phase_data.nil? || gas_phase_data['ppm'].nil? || gas_phase_data['temperature'].nil?
 
       temperature_in_kelvin = convert_temperature_to_kelvin(gas_phase_data['temperature'])
-      update_attribute :equivalent, calculate_equivalent_for_gas_material(
+      update!(equivalent: calculate_equivalent_for_gas_material(
         sample.purity || 1,
         temperature_in_kelvin,
         gas_phase_data['ppm'],
-      )
+      ))
     else
-      update_attribute :equivalent, ref_amount.zero? ? 0 : amount / ref_amount
+      # compute equivalent safely (avoid calling `zero?` on nil)
+      equivalent_value = if ref_amount.nil? || amount.nil? || ref_amount.to_f.zero?
+                           0
+                         else
+                           amount / ref_amount
+                         end
+
+      # Persist equivalent using update! so model validations run
+      update!(equivalent: equivalent_value)
     end
   end
 
   def detect_amount_type
-    condition = real_amount_value.nil? || real_amount_unit.nil?
-    return { 'value' => target_amount_value, 'unit' => target_amount_unit } if condition
+    target_amount_condition = target_amount_value.nil? || target_amount_value.zero? || target_amount_unit.nil?
+    real_amount_condition = real_amount_value.nil? || real_amount_value.zero? || real_amount_unit.nil?
+    return { 'value' => target_amount_value, 'unit' => target_amount_unit } if real_amount_condition && !target_amount_condition
 
     { 'value' => real_amount_value, 'unit' => real_amount_unit }
   end

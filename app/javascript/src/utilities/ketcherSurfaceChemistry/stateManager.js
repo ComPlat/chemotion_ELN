@@ -79,8 +79,7 @@ export const textNodeStructSetter = (data) => {
 
 // set templates dataset
 export const templateListSetter = async (data) => {
-  const keys = Object.keys(data);
-  allTemplates = [...data[keys[0]], ...data[keys[1]]];
+  allTemplates = Object.values(data || {}).flat();
 };
 
 // Set base64-encoded SVG templates by template_id

@@ -54,14 +54,15 @@ $rm-sizes: (
   "square": 1.9rem,
   "small-numeral": 3.5rem,
   "numeral": 4rem,
+  "middle-numeral": 5.3rem,
   "numeral-with-units": 6.4rem,
   "large-numeral-with-units": 7.2rem,
 );
 
 $rm-columns: (
   "ratio": map-get($rm-sizes, "small-numeral"),
-  "equivalent": map-get($rm-sizes, "small-numeral"),
-  "yield": map-get($rm-sizes, "small-numeral"),
+  "equivalent": map-get($rm-sizes, "middle-numeral"),
+  "yield": map-get($rm-sizes, "middle-numeral"),
   "volume": map-get($rm-sizes, "numeral-with-units"),
   "mass": map-get($rm-sizes, "numeral-with-units"),
   "molarity": map-get($rm-sizes, "numeral-with-units"),
@@ -80,14 +81,11 @@ $rm-columns: (
   "target": map-get($rm-sizes, "square"),
   "dry-solvent": map-get($rm-sizes, "square"),
   "delete": map-get($rm-sizes, "square"),
-  "gaseous-fields":
-    calc(
-      #{3 * map-get($rm-sizes, "square")} + #{map-get(
-          $rm-sizes,
-          "large-numeral-with-units"
-        )} + #{map-get($rm-sizes, "numeral")} + #{gap(4)}
-    ),
-  // ref, target, amount, coefficient, concentration, equivalence + gaps
+  "gaseous-fields": calc(
+      #{3 * map-get($rm-sizes, "square")} +
+        #{map-get($rm-sizes, "large-numeral-with-units")} +
+        #{map-get($rm-sizes, "numeral")} + #{gap(4)}
+    ), // ref, target, amount, coefficient, concentration, equivalence + gaps
 );
 
 .reaction-material {
@@ -138,25 +136,23 @@ $rm-columns: (
   &__molar-mass {
     @include align-header-data(map-get($rm-columns, "molar-mass"));
     @include static-scheme-data;
-    @include optional-scheme-column(60rem);
+    @include optional-scheme-column(62rem);
   }
   &__density {
     @include align-header-data(map-get($rm-columns, "density"));
     @include static-scheme-data;
-    @include optional-scheme-column(64.5rem);
+    @include optional-scheme-column(66.5rem);
   }
   &__purity {
     @include align-header-data(map-get($rm-columns, "purity"));
     @include static-scheme-data;
-    @include optional-scheme-column(69rem);
+    @include optional-scheme-column(71rem);
   }
   &__solvent-label {
     @include align-header-data(
       calc(
-        #{map-get($rm-columns, "amount")} + #{map-get(
-            $rm-columns,
-            "solvent-label"
-          )}
+        #{map-get($rm-columns, "amount")} +
+          #{map-get($rm-columns, "solvent-label")}
       )
     );
   }
@@ -188,16 +184,96 @@ $rm-columns: (
     }
     @include align-header-data(
       calc(
-        #{map-get($rm-columns, "amount")} + #{map-get(
-            $rm-columns,
-            "gaseous-fields"
-          )}
+        #{map-get($rm-columns, "amount")} +
+          #{map-get($rm-columns, "gaseous-fields")}
       )
     );
   }
+
+  // Radio button styling for weight percentage feature
+  &__custom-radio .form-check-input:checked {
+    background-color: green;
+    border-color: green;
+  }
+
+  &__nested-radio-container {
+    position: relative;
+    display: inline-block;
+    width: 22px;
+    height: 22px;
+  }
+
+  &__nested-radio-outer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 3px solid #dee2e6;
+    background-color: transparent;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+
+    &:hover {
+      border-color: #86b7fe;
+    }
+
+    &:focus {
+      border-color: rgb(0, 123, 255);
+      outline: 0;
+      box-shadow: 0 0 0 0.25rem rgba(134, 183, 254, 1);
+    }
+
+    &.checked {
+      border-color: green;
+      border-width: 6px;
+    }
+
+    &.disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+  }
+
+  &__nested-radio-inner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid #dee2e6;
+    background-color: white;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+    z-index: 2;
+
+    &:hover {
+      border-color: #86b7fe;
+    }
+
+    &:focus {
+      border-color: #86b7fe;
+      outline: 0;
+      box-shadow: 0 0 0 0.25rem rgba(134, 183, 254, 1);
+    }
+
+    &.checked {
+      background-color: #0d6efd;
+      border-color: #0d6efd;
+      border: 1px solid white;
+    }
+
+    &.disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+  }
 }
 
-@container material-group (width < 49.25rem) {
+@container material-group (width < 51.25rem) {
   .reaction-material {
     &__amount-data {
       flex-direction: column; // not extending bootstrap utilities in this context to avoid side effects
@@ -209,20 +285,16 @@ $rm-columns: (
     &__solvent-label {
       @include align-header-data(
         calc(
-          #{map-get($rm-sizes, "numeral-with-units")} + #{map-get(
-              $rm-columns,
-              "solvent-label"
-            )}
+          #{map-get($rm-sizes, "numeral-with-units")} +
+            #{map-get($rm-columns, "solvent-label")}
         )
       ); // amount, coefficient + gap
     }
     &__gaseous-fields {
       @include align-header-data(
         calc(
-          #{map-get($rm-sizes, "numeral-with-units")} + #{map-get(
-              $rm-columns,
-              "gaseous-fields"
-            )}
+          #{map-get($rm-sizes, "numeral-with-units")} +
+            #{map-get($rm-columns, "gaseous-fields")}
         )
       );
       // ref, target, amount, coefficient, concentration, equivalence + gaps

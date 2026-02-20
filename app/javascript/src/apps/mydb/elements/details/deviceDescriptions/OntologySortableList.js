@@ -46,7 +46,7 @@ const OntologySortableList = ({ store, element, ontology, index }) => {
     },
   });
 
-  const deletedClass = ontology.data.is_deleted ? ' text-decoration-line-through' : '';
+  const deletedClass = ontology.is_deleted ? ' text-decoration-line-through' : '';
   const backgroundColor = index % 2 === 0 ? 'bg-gray-100' : 'bg-white';
   const hasNoSegmentsClass = !ontology.segments ? ' text-gray-600' : '';
   const orderClass = ' d-flex align-items-center gap-3';

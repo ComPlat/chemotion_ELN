@@ -13,6 +13,7 @@ import Container from 'src/models/Container';
 
 import UserStore from 'src/stores/alt/stores/UserStore';
 import Segment from 'src/models/Segment';
+import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
 
 const TemperatureUnit = ['°C', '°F', 'K'];
 
@@ -154,9 +155,9 @@ export default class Reaction extends Element {
       vessel_size: { amount: null, unit: 'ml' },
       volume: null,
       use_reaction_volume: false,
-      gaseous: false
+      gaseous: false,
+      weight_percentage: false
     });
-
     reaction.short_label = this.buildReactionShortLabel();
     reaction.rxno = '';
     return reaction;
@@ -225,7 +226,8 @@ export default class Reaction extends Element {
       vessel_size: this.vessel_size,
       volume: this.volume,
       use_reaction_volume: this.use_reaction_volume,
-      gaseous: this.gaseous
+      gaseous: this.gaseous,
+      weight_percentage: this.weight_percentage,
     });
   }
 
@@ -456,24 +458,47 @@ export default class Reaction extends Element {
     ];
   }
 
-  buildCopy(params = {}) {
+  buildCopy(params = {}, keepAmounts = false) {
     const copy = super.buildCopy();
     Object.assign(copy, params);
     copy.short_label = Reaction.buildReactionShortLabel();
     copy.starting_materials = this.starting_materials.map((sample) => {
       const copiedSample = Sample.copyFromSampleAndCollectionId(sample, copy.collection_id);
-      copiedSample._real_amount_value = null;
+      if (!keepAmounts) {
+        copiedSample._real_amount_value = null;
+        if (!copiedSample._target_amount_value && !copiedSample.reference) {
+          copiedSample.equivalent = null;
+        }
+      }
       return copiedSample;
     });
-    copy.reactants = this.reactants.map(
-      (sample) => Sample.copyFromSampleAndCollectionId(sample, copy.collection_id)
-    );
-    copy.solvents = this.solvents.map(
-      (sample) => Sample.copyFromSampleAndCollectionId(sample, copy.collection_id)
-    );
-    copy.products = this.products.map(
-      (sample) => Sample.copyFromSampleAndCollectionId(sample, copy.collection_id, true, true, false)
-    );
+    copy.reactants = this.reactants.map((sample) => {
+      const copiedSample = Sample.copyFromSampleAndCollectionId(sample, copy.collection_id);
+      if (!keepAmounts) {
+        copiedSample._real_amount_value = null;
+        if (!copiedSample._target_amount_value && !copiedSample.reference) {
+          copiedSample.equivalent = null;
+        }
+      }
+      return copiedSample;
+    });
+    copy.solvents = this.solvents.map((sample) => {
+      const copiedSample = Sample.copyFromSampleAndCollectionId(sample, copy.collection_id);
+      if (!keepAmounts) {
+        copiedSample._real_amount_value = null;
+        if (!copiedSample._target_amount_value && !copiedSample.reference) {
+          copiedSample.equivalent = null;
+        }
+      }
+      return copiedSample;
+    });
+    copy.products = this.products.map((sample) => {
+      const copiedSample = Sample.copyFromSampleAndCollectionId(sample, copy.collection_id);
+      copiedSample._real_amount_value = null;
+      copiedSample._target_amount_value = null;
+      copiedSample.equivalent = null;
+      return copiedSample;
+    });
 
     copy.rebuildProductName();
     copy.container = Container.init();
@@ -482,7 +507,7 @@ export default class Reaction extends Element {
     return copy;
   }
 
-  static copyFromReactionAndCollectionId(reaction, collection_id) {
+  static copyFromReactionAndCollectionId(reaction, collection_id, keepAmounts = false) {
     const target = Segment.buildCopy(reaction.segments);
     const params = {
       collection_id,
@@ -493,7 +518,7 @@ export default class Reaction extends Element {
       rf_value: 0.00,
       status: '',
     };
-    const copy = reaction.buildCopy(params);
+    const copy = reaction.buildCopy(params, keepAmounts);
     copy.origin = { id: reaction.id, short_label: reaction.short_label };
     copy.name = copy.nameFromRole(copy.role);
     return copy;
@@ -513,10 +538,19 @@ export default class Reaction extends Element {
     this.setPositions(group);
   }
 
-  addMaterialAt(srcMaterial, srcGp, tagMaterial, tagGp) {
+  addMaterialAt(srcMaterial, srcGp, tagMaterial, tagGp, srcIsWeightPercentageRef = false) {
     const materials = this[tagGp];
     const idx = materials.indexOf(tagMaterial);
     const newSrcMaterial = this.materialPolicy(srcMaterial, srcGp, tagGp);
+
+    // rebuild weight percentage reference
+    if (srcIsWeightPercentageRef) {
+      newSrcMaterial.weight_percentage_reference = true;
+      newSrcMaterial.weight_percentage = 1;
+      WeightPercentageReactionActions.setWeightPercentageReference(newSrcMaterial);
+      const amount = { value: newSrcMaterial.target_amount_value, unit: newSrcMaterial.target_amount_unit };
+      WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(amount);
+    }
 
     if (idx === -1) {
       this[tagGp] = [...materials, newSrcMaterial];
@@ -540,6 +574,29 @@ export default class Reaction extends Element {
       ...materials.slice(idx + 1),
     ];
 
+    // If deleted material is weight percentage reference, then set it to false
+    if (material.weight_percentage_reference) {
+      material.weight_percentage_reference = false;
+      WeightPercentageReactionActions.setWeightPercentageReference(null);
+      WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(null);
+      const refMaterial = [...this.starting_materials, ...this.reactants].filter(
+        (m) => m.reference === true
+      )[0];
+      // reset all weight percentage to null, since there is no weight percentage reference assigned
+      [...this.starting_materials, ...this.reactants].forEach((m) => {
+        m.weight_percentage = null;
+        // assign equivalent based on reference material (guard against missing ref)
+        if (refMaterial && Number.isFinite(refMaterial.amount_mol) && Number.isFinite(m.amount_mol)) {
+          m.equivalent = m.amount_mol / refMaterial.amount_mol;
+        } else {
+          m.equivalent = null;
+        }
+      });
+    }
+
+    if (material.weight_percentage && material.weight_percentage > 0) {
+      material.weight_percentage = null;
+    }
     this.rebuildReference(material);
     this.setPositions(group);
   }
@@ -566,8 +623,9 @@ export default class Reaction extends Element {
     if (srcGp === tagGp) {
       this.swapMaterial(srcMaterial, tagMaterial, tagGp);
     } else {
+      const srcIsWeightPercentageRef = srcMaterial.weight_percentage_reference || false;
       this.deleteMaterial(srcMaterial, srcGp);
-      this.addMaterialAt(srcMaterial, srcGp, tagMaterial, tagGp);
+      this.addMaterialAt(srcMaterial, srcGp, tagMaterial, tagGp, srcIsWeightPercentageRef);
     }
   }
 
@@ -613,12 +671,13 @@ export default class Reaction extends Element {
     ) {
       if (newGroup === 'solvents') {
         material.reference = false;
+        material.weight_percentage_reference = false;
       }
 
       // Temporary set true, to fit with server side logical
       material.isSplit = true;
       material.reaction_product = false;
-    } else if (newGroup === 'starting_materials') {
+    } else if (newGroup == "starting_materials") {
       material.isSplit = true;
       material.reaction_product = false;
 
@@ -734,6 +793,12 @@ export default class Reaction extends Element {
     });
   }
 
+  markWeightPercentageSampleAsReference(sampleID) {
+    this.samples.forEach((sample) => {
+      sample.weight_percentage_reference = sample.id === sampleID;
+    });
+  }
+
   toggleShowLabelForSample(sampleID) {
     const sample = this.sampleById(sampleID);
     sample.show_label = ((sample.decoupled && !sample.molfile) ? true : !sample.show_label);
@@ -753,7 +818,15 @@ export default class Reaction extends Element {
   get svgPath() {
     if (this.reaction_svg_file && this.reaction_svg_file != '***') {
       if (this.reaction_svg_file.includes('<svg')) {
-        return this.reaction_svg_file;
+        // Raw SVG must be encoded as data URI - passing it directly causes react-inlinesvg
+        // to match embedded data URIs (e.g. in <image href="...">) and atob() invalid base64
+        try {
+          const base64 = btoa(unescape(encodeURIComponent(this.reaction_svg_file)));
+          return `data:image/svg+xml;base64,${base64}`;
+        } catch (e) {
+          console.warn('Failed to encode reaction SVG as data URI', e);
+          return 'images/wild_card/no_image_180.svg';
+        }
       } if (this.reaction_svg_file.substr(this.reaction_svg_file.length - 4) === '.svg') {
         return `/images/reactions/${this.reaction_svg_file}`;
       }
@@ -805,6 +878,8 @@ export default class Reaction extends Element {
           mat.gas_type = existingMat.gas_type;
           mat.gas_phase_data = existingMat.gas_phase_data;
           mat.coefficient = existingMat.coefficient;
+          mat.weight_percentage_reference = existingMat.weight_percentage_reference;
+          mat.weight_percentage = existingMat.weight_percentage;
 
           // Ensure all components are Component instances, not plain objects
           if (mat.hasComponents()) {
@@ -851,18 +926,8 @@ export default class Reaction extends Element {
     }
   }
 
-  // literatures
-
-  get literatures() {
-    return this._literatures || {};
-  }
-
   get research_plans() {
     return this._research_plans || {};
-  }
-
-  set literatures(literatures) {
-    this._literatures = literatures;
   }
 
   set research_plans(research_plans) {
@@ -1117,5 +1182,24 @@ export default class Reaction extends Element {
     const materials = [...this.starting_materials, ...this.reactants];
     const feedstockMaterial = materials.find((material) => (material.gas_type === 'feedstock'));
     return feedstockMaterial;
+  }
+
+  findWeightPercentageReferenceMaterial() {
+    const result = {
+      weightPercentageReference: null,
+      targetAmount: null,
+    };
+    const materials = [...this.starting_materials, ...this.reactants, ...this.products];
+    if (materials && materials.length > 0) {
+      const reference = materials.find((material) => (material.weight_percentage_reference === true));
+      if (reference) {
+        result.weightPercentageReference = reference;
+        result.targetAmount = {
+          value: reference.target_amount_value,
+          unit: reference.target_amount_unit
+        };
+      }
+    }
+    return result;
   }
 }

@@ -3,7 +3,6 @@
   @extend .pseudo-table;
   .pseudo-table__row-header {
     @extend .border;
-    @extend .border-top-0;
   }
   container-name: material-group;
   container-type: inline-size;

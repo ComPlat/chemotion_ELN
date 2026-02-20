@@ -216,11 +216,13 @@ const applyKetcherData = async (polymerTag, fileContent, textNodes, editor) => {
     if (polymerTag) {
       const { molfileData } = await addPolymerTags(polymerTag, fileContent);
       molfileContent = molfileData;
-
-      // Add text nodes if available
-      const textNodeList = await addTextNodes(textNodes, molfileContent);
-      if (textNodeList.length) {
-        molfileContent.root.nodes.push(...textNodeList);
+    }
+    // Add text nodes when available (with or without polymer tag, so labels aren't lost on open)
+    if (textNodes && textNodes.length > 0) {
+      const textNodeList = await addTextNodes(textNodes);
+      const validNodes = (textNodeList || []).filter(Boolean);
+      if (validNodes.length) {
+        molfileContent.root.nodes.push(...validNodes);
       }
     }
     saveMoveCanvas(editor, molfileContent, true, true, false, { syncImagesOnly: true });

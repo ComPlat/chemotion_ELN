@@ -306,6 +306,7 @@ class ElementStore {
       handleUpdateLinkedElement: [
         ElementActions.updateReaction,
         ElementActions.updateSample,
+        ElementActions.updateGenericEl,
       ],
       handleUpdateElement: [
         // ElementActions.updateReaction,
@@ -318,7 +319,6 @@ class ElementStore {
         ElementActions.updateVessel,
         ElementActions.updateVesselTemplate,
         ElementActions.updateSequenceBasedMacromoleculeSample,
-        ElementActions.updateGenericEl,
       ],
       handleUpdateEmbeddedResearchPlan: ElementActions.updateEmbeddedResearchPlan,
       handleRefreshComputedProp: ElementActions.refreshComputedProp,
@@ -806,9 +806,10 @@ class ElementStore {
     this.changeCurrentElement(sample);
   }
 
-  handleUpdateSampleForReaction({ reaction, sample, closeView, components }) {
+  handleUpdateSampleForReaction({ reaction, sample, closeView }) {
     // UserActions.fetchCurrentUser();
     ElementActions.handleSvgReactionChange(reaction);
+<<<<<<< ketcher-surface-chemistry-sample-type
     if (sample.isMixture() || sample.isHierarchicalMaterial()) {
       ComponentsFetcher.saveOrUpdateComponents(sample, components)
         .then(async () => {
@@ -818,6 +819,12 @@ class ElementStore {
           console.log(errorMessage);
         });
     }
+=======
+
+    // Components are already saved and initialized in the action before dispatch
+    // No need to do it again here
+
+>>>>>>> main
     if (closeView) {
       this.changeCurrentElement(reaction);
     } else {
@@ -1216,15 +1223,21 @@ class ElementStore {
     this.navigateToNewElement(reaction);
   }
 
-  handleCopyReactionFromId(reaction) {
+  handleCopyReactionFromId(result) {
     this.waitFor(UIStore.dispatchToken);
     const uiState = UIStore.getState();
-    this.changeCurrentElement(Reaction.copyFromReactionAndCollectionId(reaction, uiState.currentCollection.id));
+    const { reaction, keepAmounts } = result;
+    this.changeCurrentElement(
+      Reaction.copyFromReactionAndCollectionId(reaction, uiState.currentCollection.id, keepAmounts)
+    );
   }
 
   handleCopyReaction(result) {
-    this.changeCurrentElement(Reaction.copyFromReactionAndCollectionId(result.reaction, result.colId));
-    Aviator.navigate(`/collection/${result.colId}/reaction/copy`);
+    const { reaction, colId, keepAmounts } = result;
+    this.changeCurrentElement(
+      Reaction.copyFromReactionAndCollectionId(reaction, colId, keepAmounts)
+    );
+    Aviator.navigate(`/collection/${colId}/reaction/copy`);
   }
 
   handleCopyResearchPlan(result) {
@@ -1723,11 +1736,21 @@ class ElementStore {
 
   addElement(addEl) {
     const { selecteds } = this.state;
+    // Store the collection ID from which this element was opened
+    const currentCollection = UIStore.getState().currentCollection;
+    if (addEl && currentCollection?.id) {
+      addEl.openedFromCollectionId = currentCollection.id;
+    }
     return [...selecteds, addEl];
   }
 
   updateElement(updateEl, index) {
     const { selecteds } = this.state;
+    // Preserve openedFromCollectionId from the existing element
+    const existingEl = selecteds[index];
+    if (existingEl?.openedFromCollectionId && updateEl) {
+      updateEl.openedFromCollectionId = existingEl.openedFromCollectionId;
+    }
     return [
       ...selecteds.slice(0, index),
       updateEl,

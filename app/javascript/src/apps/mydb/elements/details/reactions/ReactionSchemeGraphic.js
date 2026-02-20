@@ -1,21 +1,37 @@
 import React, { useEffect, useState } from 'react';
-import { Popover, ButtonGroup } from 'react-bootstrap';
+import {
+  Popover, ButtonGroup, Button, OverlayTrigger, Tooltip
+} from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import SvgFileZoomPan from 'react-svg-file-zoom-pan-latest';
 import Reaction from 'src/models/Reaction';
 import ConfigOverlayButton from 'src/components/common/ConfigOverlayButton';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 
-export default function ReactionSchemeGraphic({ reaction, onToggleLabel }) {
+// Ensure tooltips/popovers render above the scheme toolbar (z-index: 10000)
+const popperConfigAboveToolbar = {
+  modifiers: [
+    {
+      name: 'overlayAboveToolbar',
+      enabled: true,
+      phase: 'write',
+      fn: ({ state }) => {
+        // eslint-disable-next-line no-param-reassign
+        state.styles.popper.zIndex = 10001;
+      },
+    },
+  ],
+};
+
+export default function ReactionSchemeGraphic({
+  reaction, onToggleLabel, onRefresh, isRefreshing
+}) {
   const [svgProps, setSvgProps] = useState({});
 
   useEffect(() => {
-    setSvgProps(
-      reaction.svgPath.substr(reaction.svgPath.length - 4) === '.svg'
-        ? { svgPath: reaction.svgPath }
-        : { svg: reaction.reaction_svg_file }
-    );
-  }, [reaction.svgPath, reaction.reaction_svg_file]);
+    // Use svgPath for both file URLs and data URIs (raw SVG is encoded as data URI in Reaction.svgPath)
+    setSvgProps({ svgPath: reaction.svgPath });
+  }, [reaction.svgPath]);
 
   if (!reaction.svgPath || !reaction.hasMaterials()) return null;
 
@@ -51,36 +67,70 @@ export default function ReactionSchemeGraphic({ reaction, onToggleLabel }) {
           </ButtonGroupToggleButton>
         </ButtonGroup>
       </div>
-    )};
+    );
+  };
 
   return (
-    <div className="position-relative">
-      <ConfigOverlayButton popoverSettings={
-        (
-          <Popover>
-            <Popover.Header>Graphic Settings</Popover.Header>
-            <Popover.Body className="border-bottom py-1">
-              <h6 className="fs-9 fw-medium">Starting Materials</h6>
-              {reaction.starting_materials.map((material) => (materialShowLabel(material, 'starting_materials')))}
-            </Popover.Body>
-            <Popover.Body className="border-bottom py-1">
-              <h6 className="fs-9 fw-medium">Reactants</h6>
-              {reaction.reactants.map((material) => (materialShowLabel(material, 'reactants')))}
-            </Popover.Body>
-            <Popover.Body className="py-1">
-              <h6 className="fs-9 fw-medium">Products</h6>
-              {reaction.products.map((material) => (materialShowLabel(material, 'products')))}
-            </Popover.Body>
-          </Popover>
-        )
-      }
-      />
-      <SvgFileZoomPan
-        duration={300}
-        resize
-        // eslint-disable-next-line react/jsx-props-no-spreading
-        {...svgProps}
-      />
+    <div className="Reaction-scheme-graphic__wrapper">
+      <div className="Reaction-scheme-graphic__svg-container">
+        {isRefreshing && (
+          <div className="Reaction-scheme-graphic__loader-overlay">
+            <div className="text-center p-4">
+              {/* eslint-disable-next-line max-len */}
+              <i className="fa fa-refresh fa-spin fa-3x text-primary mb-3 d-block Reaction-scheme-graphic__loader-spinner" />
+              <div className="text-muted fs-6 fw-medium">Refreshing SVGs...</div>
+            </div>
+          </div>
+        )}
+        <SvgFileZoomPan
+          duration={300}
+          resize
+          // eslint-disable-next-line react/jsx-props-no-spreading
+          {...svgProps}
+        />
+      </div>
+      <div className="Reaction-scheme-graphic__toolbar">
+        <ConfigOverlayButton
+          popperConfig={popperConfigAboveToolbar}
+          popoverSettings={
+            (
+              <Popover>
+                <Popover.Header>Graphic Settings</Popover.Header>
+                <Popover.Body className="border-bottom py-1">
+                  <h6 className="fs-9 fw-medium">Starting Materials</h6>
+                  {reaction.starting_materials.map((material) => (materialShowLabel(material, 'starting_materials')))}
+                </Popover.Body>
+                <Popover.Body className="border-bottom py-1">
+                  <h6 className="fs-9 fw-medium">Reactants</h6>
+                  {reaction.reactants.map((material) => (materialShowLabel(material, 'reactants')))}
+                </Popover.Body>
+                <Popover.Body className="py-1">
+                  <h6 className="fs-9 fw-medium">Products</h6>
+                  {reaction.products.map((material) => (materialShowLabel(material, 'products')))}
+                </Popover.Body>
+              </Popover>
+            )
+          }
+          onToggle={() => {}}
+          wrapperClassName=""
+        />
+        {onRefresh && (
+          <OverlayTrigger
+            placement="left"
+            overlay={<Tooltip id="refresh-graphic">Refresh SVG</Tooltip>}
+            popperConfig={popperConfigAboveToolbar}
+          >
+            <Button
+              size="xsm"
+              variant="light"
+              className="m-1"
+              onClick={onRefresh}
+            >
+              <i className={`fa fa-refresh ${isRefreshing ? 'fa-spin' : ''}`} />
+            </Button>
+          </OverlayTrigger>
+        )}
+      </div>
     </div>
   );
 }
@@ -88,4 +138,11 @@ export default function ReactionSchemeGraphic({ reaction, onToggleLabel }) {
 ReactionSchemeGraphic.propTypes = {
   reaction: PropTypes.instanceOf(Reaction).isRequired,
   onToggleLabel: PropTypes.func.isRequired,
+  onRefresh: PropTypes.func,
+  isRefreshing: PropTypes.bool,
+};
+
+ReactionSchemeGraphic.defaultProps = {
+  onRefresh: undefined,
+  isRefreshing: false,
 };

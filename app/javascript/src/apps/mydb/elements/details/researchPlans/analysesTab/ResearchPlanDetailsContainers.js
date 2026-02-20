@@ -28,9 +28,11 @@ import { CommentButton, CommentBox } from 'src/components/common/AnalysisComment
 export default class ResearchPlanDetailsContainers extends Component {
   constructor(props) {
     super(props);
+    const { researchPlan } = props;
+    const hasComment = researchPlan.container?.description && researchPlan.container.description.trim() !== '';
     this.state = {
       activeContainer: 0,
-      commentBoxVisible: false,
+      commentBoxVisible: hasComment,
     };
 
     this.handleChange = this.handleChange.bind(this);
@@ -171,6 +173,9 @@ export default class ResearchPlanDetailsContainers extends Component {
 
   handleCommentTextChange = (e) => {
     const { researchPlan } = this.props;
+    if (!researchPlan.container) {
+      researchPlan.container = Container.buildEmpty();
+    }
     researchPlan.container.description = e.target.value;
     this.handleChange(researchPlan);
   };
@@ -271,7 +276,11 @@ export default class ResearchPlanDetailsContainers extends Component {
             <div className="my-2 mx-3 d-flex justify-content-end">
               <ButtonToolbar className="gap-1">
                 <div className="mt-2">
-                  <CommentButton toggleCommentBox={this.toggleCommentBox} size="sm" />
+                  <CommentButton
+                    toggleCommentBox={this.toggleCommentBox}
+                    isVisible={commentBoxVisible}
+                    size="sm"
+                  />
                 </div>
                 {this.addButton()}
               </ButtonToolbar>
@@ -335,18 +344,47 @@ export default class ResearchPlanDetailsContainers extends Component {
       }
 
       return (
-        <div className="d-flex align-items-center justify-content-between my-2 mx-3">
-          <span className="ms-3"> There are currently no Analyses. </span>
-          <div>
-            {this.addButton()}
+        <div>
+          <div className="d-flex align-items-center justify-content-between my-2 mx-3">
+            <span className="ms-3"> There are currently no Analyses. </span>
+            <ButtonToolbar className="gap-2">
+              <div className="mt-2">
+                <CommentButton
+                  toggleCommentBox={this.toggleCommentBox}
+                  isVisible={commentBoxVisible}
+                  size="sm"
+                />
+              </div>
+              {this.addButton()}
+            </ButtonToolbar>
           </div>
+          <CommentBox
+            isVisible={commentBoxVisible}
+            value={researchPlan.container.description}
+            handleCommentTextChange={this.handleCommentTextChange}
+          />
         </div>
       );
     }
 
     return (
       <div className="m-4">
-        There are currently no Analyses.
+        <div className="d-flex justify-content-between align-items-center mb-3">
+          <span>There are currently no Analyses.</span>
+          <ButtonToolbar className="gap-2">
+            <CommentButton
+              toggleCommentBox={this.toggleCommentBox}
+              isVisible={commentBoxVisible}
+              size="sm"
+            />
+            {this.addButton()}
+          </ButtonToolbar>
+        </div>
+        <CommentBox
+          isVisible={commentBoxVisible}
+          value={researchPlan.container?.description || ''}
+          handleCommentTextChange={this.handleCommentTextChange}
+        />
       </div>
     );
   }

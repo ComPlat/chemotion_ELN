@@ -1,0 +1,5 @@
+development:
+  :url: 'https://220.ketcher.chemserv.scc.kit.edu/render'
+
+production:
+  :url: 'https://220.ketcher.chemserv.scc.kit.edu/render'

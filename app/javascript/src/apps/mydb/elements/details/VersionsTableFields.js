@@ -51,7 +51,7 @@ SolventDetails.propTypes = {
 
 function VersionsTableFields(props) {
   const {
-    renderRevertView
+    renderRevertView, setCheckboxTick
   } = props;
 
   let { fields } = props;
@@ -344,6 +344,11 @@ function VersionsTableFields(props) {
         rowData={fields}
         domLayout="autoHeight"
         onColumnVisible={autoSizeColumns}
+        onCellValueChanged={(params) => {
+          if (params.colDef.field === 'checkbox') {
+            setCheckboxTick((t) => t + 1);
+          }
+        }}
       />
     </div>
   );
@@ -353,6 +358,7 @@ VersionsTableFields.propTypes = {
   // eslint-disable-next-line react/forbid-prop-types
   fields: PropTypes.arrayOf(PropTypes.object).isRequired,
   renderRevertView: PropTypes.bool.isRequired,
+  setCheckboxTick: PropTypes.func.isRequired,
 };
 
 export default VersionsTableFields;

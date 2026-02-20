@@ -65,6 +65,7 @@ describe Entities::ReactionEntity do
           volume: reaction.volume,
           use_reaction_volume: reaction.use_reaction_volume,
           user_labels: [],
+          weight_percentage: reaction.weight_percentage,
         )
       end
 
@@ -154,6 +155,7 @@ describe Entities::ReactionEntity do
           gaseous: '***',
           volume: '***',
           use_reaction_volume: '***',
+          weight_percentage: '***',
         )
       end
 

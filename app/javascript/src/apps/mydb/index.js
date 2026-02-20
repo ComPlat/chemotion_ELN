@@ -10,7 +10,6 @@ import { MultiBackend, TouchTransition } from 'dnd-multi-backend';
 import App from 'src/apps/mydb/App';
 import appRoutes from 'src/apps/mydb/routes';
 import { RootStore, StoreContext } from 'src/stores/mobx/RootStore';
-import { options } from 'numeral';
 
 Sentry.init({
   sendClientReports: false,
@@ -25,11 +24,13 @@ Sentry.init({
 const backendOptions = {
   backends: [
     {
+      id: 'touch',
       backend: TouchBackend, // Touch Drag Support
       options: { enableMouseEvents: true },
       transition: TouchTransition, // Detects if touch is used
     },
     {
+      id: 'html5',
       backend: HTML5Backend, // Mouse Drag Support
     },
   ],

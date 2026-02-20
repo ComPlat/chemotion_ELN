@@ -27,7 +27,9 @@ class PagesController < ApplicationController
       sfc = ScifinderNCredential.find_by(created_by: current_user.id)
       ScifinderNCredential.create!(provider_authorize.merge(created_by: current_user.id)) if sfc.blank?
       sfc.update!(provider_authorize) if sfc.present?
-      redirect_to pages_settings_path
+      # After successfully obtaining and storing the SciFinder-n token,
+      # redirect the user to close the popup window
+      render "oauth/token_registration_success"
     rescue StandardError
       redirect_to '/500.html'
     end

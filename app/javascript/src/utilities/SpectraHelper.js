@@ -215,10 +215,18 @@ const cleaningNMRiumData = (nmriumData) => {
   const { spectra } = data;
   if (!spectra) return cleanedNMRiumData;
 
+  const root = cleanedNMRiumData.data || cleanedNMRiumData;
+  const hasGlobalSource = !!root.source;
+
   const newSpectra = spectra.map((spc) => {
     const tmpSpc = { ...spc };
+    const hasLocalSource = !!(spc && (spc.source || spc.sourceSelector));
+    const hasSource = hasLocalSource || hasGlobalSource;
+
     delete tmpSpc.originalData;
-    delete tmpSpc.data;
+    if (hasSource) {
+      delete tmpSpc.data;
+    }
     return tmpSpc;
   });
 

@@ -134,22 +134,22 @@ export default class ElementDetails extends Component {
 
   content(el) {
     if (el && el.klassType === 'GenericEl' && el.type != null) {
-      return <GenericElDetails genericEl={el} />;
+      return <GenericElDetails genericEl={el} openedFromCollectionId={el.openedFromCollectionId} />;
     }
 
     switch (el.type) {
       case 'sample':
-        return <SampleDetails sample={el} />;
+        return <SampleDetails sample={el} openedFromCollectionId={el.openedFromCollectionId} />;
       case 'reaction':
-        return <ReactionDetails reaction={el} />;
+        return <ReactionDetails reaction={el} openedFromCollectionId={el.openedFromCollectionId} />;
       case 'wellplate':
-        return <WellplateDetails wellplate={el} />;
+        return <WellplateDetails wellplate={el} openedFromCollectionId={el.openedFromCollectionId} />;
       case 'screen':
-        return <ScreenDetails screen={el} />;
+        return <ScreenDetails screen={el} openedFromCollectionId={el.openedFromCollectionId} />;
       case 'research_plan':
-        return <ResearchPlanDetails researchPlan={el} />;
+        return <ResearchPlanDetails researchPlan={el} openedFromCollectionId={el.openedFromCollectionId} />;
       case 'device_description':
-        return <DeviceDescriptionDetails />;
+        return <DeviceDescriptionDetails openedFromCollectionId={el.openedFromCollectionId} />;
       case 'metadata':
         return <MetadataContainer metadata={el} />;
       case 'report':
@@ -181,7 +181,7 @@ export default class ElementDetails extends Component {
         }
         return null;
       case 'sequence_based_macromolecule_sample':
-        return <SequenceBasedMacromoleculeSampleDetails />;
+        return <SequenceBasedMacromoleculeSampleDetails openedFromCollectionId={el.openedFromCollectionId} />;
       default:
         return (
           <div className="text-center">

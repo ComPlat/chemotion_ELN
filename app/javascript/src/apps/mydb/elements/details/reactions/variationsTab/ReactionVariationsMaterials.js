@@ -26,7 +26,10 @@ function getGramFromMol(mol, material) {
   if (material.aux.loading) {
     return (mol / material.aux.loading) * 1e4;
   }
-  return (mol / (material.aux.purity ?? 1.0)) * material.aux.molecularWeight;
+  const { molecularWeight } = material.aux;
+  const purity = material.aux.purity || 1.0;
+
+  return (mol / purity) * molecularWeight;
 }
 
 function getVolumeFromGram(gram, material) {
@@ -98,7 +101,7 @@ function getReactionMaterialsIDsToLabels(materials) {
     Object.entries(materials).map(([materialType, materialsOfType]) => [
       materialType,
       Object.fromEntries(
-        materialsOfType.map(({ id, molecule_formula }) => [id, molecule_formula || id.toString()])
+        materialsOfType.map(({ id, short_label }) => [id, short_label || id.toString()])
       )
     ])
   );
@@ -277,12 +280,13 @@ function getMaterialColumnGroupChild(material, materialType, gasMode, externalEn
     gasType
   ));
 
-  let names = new Set([`ID: ${materialCopy.id}`]);
-  ['external_label', 'name', 'short_label', 'molecule_formula', 'molecule_iupac_name'].forEach((name) => {
+  let names = new Set([]);
+  ['short_label', 'external_label', 'name', 'molecule_formula', 'molecule_iupac_name'].forEach((name) => {
     if (materialCopy[name]) {
       names.add(materialCopy[name]);
     }
   });
+  names.add(`ID: ${materialCopy.id}`);
   names = Array.from(names);
 
   return {

@@ -24,7 +24,7 @@ const qCheckPass = () => (
 
 const qCheckFail = (msg, kind, atomNum = '') => (
   <span className="ms-1 text-danger">
-    <sup>{atomNum}</sup>{kind} {msg})
+    (<sup>{atomNum}</sup>{kind} {msg})
   </span>
 );
 

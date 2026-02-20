@@ -392,6 +392,7 @@ const datePickerInput = (element, store, field, label, info) => {
         popperPlacement="bottom-start"
         isClearable
         dateFormat="dd-MM-YY"
+        wrapperClassName="w-100"
       />
     </Form.Group>
   );
@@ -415,6 +416,7 @@ const timePickerInput = (element, store, field, label, info) => {
         timeIntervals={15}
         timeCaption="Time"
         dateFormat="HH:mm"
+        wrapperClassName="w-100"
       />
     </Form.Group>
   );
@@ -436,6 +438,7 @@ const dateTimePickerInput = (element, store, field, label, info) => {
         placeholderText="dd/MM/YYYY HH:mm"
         popperPlacement="bottom-end"
         selected={selectedDate}
+        wrapperClassName="w-100"
         onChange={handleFieldChanged(store, field, 'datetime', element.type)}
       />
     </Form.Group>
@@ -497,7 +500,7 @@ const identifierMultipleInputGroups = (element, label, options, store, info) => 
     <Form.Group key={`${store.key_prefix}-${idOrNew}-${formGroupKey}`}>
       {labelWithInfo(label, info)}
       <InputGroup key={`${store.key_prefix}-${idOrNew}-${formGroupKey}-group`}>
-        <InputGroup.Text key={`${element.type}-version_identifier_type`} className="py-0 my-0">
+        <InputGroup.Text key={`${element.type}-version_identifier_type`} className="p-0 m-0 overflow-hidden">
           {basicSelectInputWithSpecialLabel(element, store, 'version_identifier_type', 'Type', options, 'Type')}
         </InputGroup.Text>
         <Form.Control
@@ -594,6 +597,7 @@ const basicSelectInputWithSpecialLabel = (element, store, field, label, options,
   const elementValue = elementFieldValue(element, store, field);
   let value = options.find((o) => { return o.value == elementValue });
   value = value === undefined ? (placeholder ? placeholder : '') : value;
+  const additonalClass = field == 'version_identifier_type' ? 'hide-border' : '';
 
   return (
     <Select
@@ -603,8 +607,8 @@ const basicSelectInputWithSpecialLabel = (element, store, field, label, options,
       value={value}
       isClearable={true}
       placeholder={placeholder}
-      className="select-in-inputgroup-text"
-      classNamePrefix="select-in-inputgroup-text"
+      className={`select-in-inputgroup-text ${additonalClass}`}
+      classNamePrefix={`select-in-inputgroup-text ${additonalClass}`}
       getOptionLabel={(option) => menuLabel(option, field, store)}
       onMenuOpen={() => changeMenuStatus(store, field, true)}
       onMenuClose={() => changeMenuStatus(store, field, false)}

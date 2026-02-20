@@ -670,6 +670,10 @@ module ReportHelpers
         storage_condition: (begin; Sample.column_names.include?('storage_condition') ? ['s."storage_condition"', '"storage condition"', 0] : nil; rescue; nil; end),
         state: (begin; Sample.column_names.include?('state') ? ['s."state"', '"state"', 0] : nil; rescue; nil; end),
         color: (begin; Sample.column_names.include?('color') ? ['s."color"', '"color"', 0] : nil; rescue; nil; end),
+        inventory_label: ['s."inventory_label"', '"inventory label"', 0],
+        solubility: ['s."solubility"', '"solubility"', 0],
+        color: ['s."color"', '"color"', 0],
+        form: ['s."form"', '"form"', 0],
       },
       sample_id: {
         external_label: ['s.external_label', '"sample external label"', 0],
@@ -750,11 +754,18 @@ module ReportHelpers
 
   def custom_column_query(table, col, selection, user_id, attrs)
     column_map = {
-      'user_labels' => "labels_by_user_sample(#{user_id}, s_id) as user_labels",
-      # 'literature' => "literatures_by_element('Sample', s_id) as literatures",
+      # Use samples table alias `s.id` for functions that operate on sample IDs.
+      # This works across all export queries, including components exports
+      # where `s_id` is not selected.
+      'user_labels' => "labels_by_user_sample(#{user_id}, s.id) as user_labels",
+      'literature' => "literatures_by_element('Sample', s.id) as literatures",
       'cas' => "s.xref->>'cas' as cas",
+      'inventory_label' => "s.xref->>'inventory_label' as \"inventory label\"",
       'refractive_index' => "s.xref->>'refractive_index' as refractive_index",
       'flash_point' => "s.xref->>'flash_point' as flash_point",
+      'solubility' => "s.xref->>'solubility' as solubility",
+      'color' => "s.xref->>'color' as color",
+      'form' => "s.xref->>'form' as form",
     }
 
     if column_map[col]

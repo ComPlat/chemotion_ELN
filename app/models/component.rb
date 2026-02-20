@@ -6,6 +6,7 @@
 #
 #  id                   :bigint           not null, primary key
 #  component_properties :jsonb
+#  deleted_at           :datetime
 #  name                 :string
 #  position             :integer
 #  created_at           :datetime         not null
@@ -21,6 +22,8 @@
 #  fk_rails_...  (sample_id => samples.id)
 #
 class Component < ApplicationRecord
+  has_logidze
+  acts_as_paranoid
   belongs_to :sample
 
   validates :position, numericality: { only_integer: true }, allow_nil: true

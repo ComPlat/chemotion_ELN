@@ -26,31 +26,21 @@ export default class SyncWithMeCollections extends React.Component {
     CollectionStore.unlisten(this.onStoreChange)
   }
 
-  onStoreChange(state) {
-    const children = state.syncInRoots
+  handleClick() {
+    this.setState({ show: !this.state.show });
+  }
 
-    children.forEach((child) => {
-      if (child.is_locked) {
-        let label = '';
-        if (child.shared_by != null) {
-          label = `by ${child.shared_by.initials} (${child.shared_by.name})`;
-        }
-        if (child.shared_to != null) {
-          label += ` with ${child.shared_to.initials} (${child.shared_to.name})`;
-        }
-        child.label = label;
-      }
-    });
+  onStoreChange(state) {
+    const children = state.syncInRoots.map((child) => ({
+      ...child,
+      label: CollectionStore.getChildLabel(child),
+    }));
 
     this.setState({
       tree: {
         children,
       }
     });
-  }
-
-  handleClick() {
-    this.setState({ show: !this.state.show });
   }
 
   renderNode(node) {

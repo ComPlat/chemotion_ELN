@@ -85,7 +85,7 @@ const PropertiesForm = ({ readonly }) => {
 
   const derivationLabelWithIcon = (
     <>
-      Existence in UniProt or reference
+      Existence
       <i className="text-danger ms-1 fa fa-exclamation-triangle" />
     </>
   );
@@ -104,7 +104,7 @@ const PropertiesForm = ({ readonly }) => {
 
   const handleDrop = (item) => {
     const dropped_sbmm = item.element.sequence_based_macromolecule;
-    
+
     sbmmStore.setSbmmBySearchResultOrDND(dropped_sbmm, 'full_sbmm', '');
     sbmmStore.toggleSearchOptions(sbmmSample.id, false);
   }
@@ -296,7 +296,7 @@ const PropertiesForm = ({ readonly }) => {
               </Accordion.Header>
               <Accordion.Body>
                 <h5 className="mb-3">Application</h5>
-                <Row className="mb-4">
+                <Row className="mb-4 align-items-end">
                   <Col>
                     {formHelper.textInput('name', 'Name', '')}
                   </Col>
