@@ -21,7 +21,7 @@ class Chemical < ApplicationRecord
   has_logidze
   acts_as_paranoid
   belongs_to :sample, optional: true
-  belongs_to :sequence_based_macromolecule, optional: true
+  belongs_to :sequence_based_macromolecule_sample, optional: true
 
   validate :only_one_parent
   validate :at_least_one_parent
@@ -33,7 +33,7 @@ class Chemical < ApplicationRecord
 
     errors.add(
       :base,
-      'Chemical can belong to either a sample or a sequence_based_macromolecule, not both',
+      'Chemical can belong to either a sample or a sequence_based_macromolecule_sample, not both',
     )
   end
 
@@ -42,7 +42,7 @@ class Chemical < ApplicationRecord
 
     errors.add(
       :base,
-      'Chemical must belong to either a sample or a sequence_based_macromolecule',
+      'Chemical must belong to either a sample or a sequence_based_macromolecule_sample',
     )
   end
 end

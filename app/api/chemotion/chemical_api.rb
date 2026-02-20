@@ -18,8 +18,16 @@ module Chemotion
           attributes = attributes.except(:type)
           if params[:chemical_data].present? || params[:cas].present?
             chemical = if params[:type] == 'SBMM'
-                         Chemical.find_by(sequence_based_macromolecule_sample_id: params[:sequence_based_macromolecule_sample_id])
+                         unless params[:sequence_based_macromolecule_sample_id]
+                           error!('sequence_based_macromolecule_sample_id is required', 400)
+                         end
+                         attributes[:sample_id] = nil
+                         Chemical.find_by(
+                           sequence_based_macromolecule_sample_id: params[:sequence_based_macromolecule_sample_id],
+                         )
                        else
+                         error!('sample_id is required', 400) unless params[:sample_id]
+                         attributes[:sequence_based_macromolecule_sample_id] = nil
                          Chemical.find_by(sample_id: params[:sample_id])
                        end
             chemical&.update!(attributes)
@@ -39,8 +47,14 @@ module Chemotion
       get do
         Chemotion::ChemicalsService.handle_exceptions do
           if params[:type] == 'SBMM'
-            Chemical.find_by(sequence_based_macromolecule_sample_id: params[:sequence_based_macromolecule_sample_id]) || Chemical.new
+            unless params[:sequence_based_macromolecule_sample_id]
+              error!('sequence_based_macromolecule_sample_id is required', 400)
+            end
+            Chemical.find_by(
+              sequence_based_macromolecule_sample_id: params[:sequence_based_macromolecule_sample_id],
+            ) || Chemical.new
           else
+            error!('sample_id is required', 400) unless params[:sample_id]
             Chemical.find_by(sample_id: params[:sample_id]) || Chemical.new
           end
         end

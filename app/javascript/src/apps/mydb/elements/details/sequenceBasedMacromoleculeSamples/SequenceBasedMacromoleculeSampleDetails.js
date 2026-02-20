@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Alert, Button, Tabs, Tab, Tooltip, OverlayTrigger, ListGroupItem
+  Alert, Button, Form, Tabs, Tab, Tooltip, OverlayTrigger, ListGroupItem
 } from 'react-bootstrap';
 
 import PropertiesForm from './propertiesTab/PropertiesForm';
@@ -23,6 +23,7 @@ import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSo
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 import CopyElementModal from 'src/components/common/CopyElementModal';
 import Immutable from 'immutable';
+import { set } from 'lodash';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
@@ -31,7 +32,10 @@ import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
+import UIActions from 'src/stores/alt/actions/UIActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import UserActions from 'src/stores/alt/actions/UserActions';
+import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import CollectionUtils from 'src/models/collection/CollectionUtils';
 import ChemicalTab from 'src/components/chemicals/ChemicalTab';
 
@@ -91,8 +95,11 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
     properties: PropertiesForm,
     analyses: AnalysesContainer,
     attachments: AttachmentForm,
-    inventory: ChemicalTab,
   };
+
+  if (sbmmSample.inventory_sample) {
+    tabContentComponents.inventory = ChemicalTab;
+  }
 
   const tabTitles = {
     properties: 'Properties',
@@ -159,6 +166,48 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
   const onTabPositionChanged = (visible) => {
     setVisibleTabs(visible);
   }
+
+  const persistInventoryTabInCollection = () => {
+    if (!currentCollection || currentCollection.is_sync_to_me) return;
+
+    const sbmmLayout = currentCollection?.tabs_segment?.sequence_based_macromolecule_sample;
+
+    if (sbmmLayout && Object.prototype.hasOwnProperty.call(sbmmLayout, 'inventory')) return;
+
+    const userProfile = UserStore.getState().profile;
+    const baseLayout = sbmmLayout
+      || userProfile?.data?.layout_detail_sequence_based_macromolecule_sample;
+
+    if (!baseLayout) return;
+
+    const maxOrder = Math.max(0, ...Object.values(baseLayout).map((v) => Math.abs(v)));
+    const updatedLayout = { ...baseLayout, inventory: maxOrder + 1 };
+
+    const tabSegment = { ...currentCollection?.tabs_segment, sequence_based_macromolecule_sample: updatedLayout };
+    CollectionActions.updateTabsSegment({ segment: tabSegment, cId: currentCollection.id });
+    UIActions.selectCollection({ ...currentCollection, tabs_segment: tabSegment, clearSearch: true });
+
+    if (!userProfile) return;
+    set(userProfile, 'data.layout_detail_sequence_based_macromolecule_sample', updatedLayout);
+    UserActions.updateUserProfile(userProfile);
+  };
+
+  const handleInventorySample = (e) => {
+    const checked = e.target.checked;
+    sbmmStore.changeSequenceBasedMacromoleculeSample('inventory_sample', checked);
+
+    if (checked) {
+      if (!visibleTabs.includes('inventory')) {
+        setVisibleTabs(visibleTabs.push('inventory'));
+      }
+      persistInventoryTabInCollection();
+    } else {
+      setVisibleTabs(visibleTabs.filter((v) => v !== 'inventory'));
+      if (sbmmStore.active_tab_key === 'inventory') {
+        sbmmStore.setActiveTabKey('properties');
+      }
+    }
+  };
 
   const handleTabChange = (key) => {
     sbmmStore.setActiveTabKey(key);
@@ -268,6 +317,14 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
           {uniprotLogo()}
         </div>
         <div className="d-flex align-items-center gap-1">
+          <Form.Check
+            type="checkbox"
+            id="sbmm-sample-inventory-header"
+            className="mx-2 sample-inventory-header"
+            checked={sbmmSample.inventory_sample || false}
+            onChange={(e) => handleInventorySample(e)}
+            label="Inventory"
+          />
           <PrintCodeButton element={sbmmSample} />
           {!sbmmSample.isNew &&
             <OpenCalendarButton
@@ -339,6 +396,7 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
           availableTabs={Object.keys(tabContentComponents)}
           tabTitles={tabTitles}
           onTabPositionChanged={onTabPositionChanged}
+          addInventoryTab={sbmmSample.inventory_sample || false}
           openedFromCollectionId={openedFromCollectionId}
         />
         <Tabs

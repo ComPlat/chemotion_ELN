@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2026_01_20_183627) do
+ActiveRecord::Schema.define(version: 2026_02_20_000000) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -1492,11 +1492,13 @@ ActiveRecord::Schema.define(version: 2026_01_20_183627) do
     t.float "purity"
     t.string "purity_detection", default: ""
     t.string "purification_method", default: ""
+    t.boolean "inventory_sample", default: false, null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["ancestry"], name: "idx_sbmm_samples_ancestry", opclass: :varchar_pattern_ops
     t.index ["deleted_at"], name: "idx_sbmm_samples_deleted_at"
     t.index ["sequence_based_macromolecule_id"], name: "idx_sbmm_samples_sbmm"
+    t.index ["inventory_sample"], name: "idx_sbmm_samples_inventory_sample"
     t.index ["user_id"], name: "idx_sbmm_samples_user"
   end
 

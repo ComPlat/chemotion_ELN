@@ -1867,13 +1867,10 @@ export default class ChemicalTab extends React.Component {
 ChemicalTab.propTypes = {
   sample: PropTypes.object,
   type: PropTypes.string.isRequired,
-  handleUpdateSample: PropTypes.func,
   handleUpdateSample: PropTypes.func.isRequired,
   saveInventory: PropTypes.bool.isRequired,
   setSaveInventory: PropTypes.func.isRequired,
   editChemical: PropTypes.func.isRequired,
 };
 
-ChemicalTab.defaultProps = {
-  handleUpdateSample: () => {},
-};
+ChemicalTab.defaultProps = {};
