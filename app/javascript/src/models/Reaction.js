@@ -1218,7 +1218,8 @@ export default class Reaction extends Element {
   }
 
   /**
-   * Calculates the combined volume of all reaction materials (solvent + starting_materials + reactants + products).
+   * Calculates the combined volume of all reaction materials
+   * (solvent + starting_materials + reactants + reactant_sbmm_samples).
    *
    * @method calculateCombinedReactionVolume
    * @memberof Reaction
@@ -1232,13 +1233,9 @@ export default class Reaction extends Element {
       totalVolume += this.solventVolume;
     }
 
-    // Add volumes from starting materials, reactants
-    const allMaterials = [
-      ...(this.starting_materials || []),
-      ...(this.reactants || []),
-    ];
+    // Add volumes from all reaction materials (starting + reactants + SBMM reactants)
 
-    allMaterials.forEach((material) => {
+    this.allReactionMaterials.forEach((material) => {
       if (material && Number.isFinite(material.amount_l) && material.amount_l > 0) {
         totalVolume += material.amount_l;
       }
@@ -1257,8 +1254,7 @@ export default class Reaction extends Element {
    */
   updateAllConcentrations() {
     const allMaterials = [
-      ...(this.starting_materials || []),
-      ...(this.reactants || []),
+      ...this.allReactionMaterials,
       ...(this.products || []),
     ];
 

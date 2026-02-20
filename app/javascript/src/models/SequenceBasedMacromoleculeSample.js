@@ -507,6 +507,39 @@ export default class SequenceBasedMacromoleculeSample extends Element {
     this._concentration_rt_unit ??= 'mol/L';
   }
 
+  /**
+   * Updates reaction concentration for SBMM samples using reaction volume settings.
+   * Keeps parity with regular Sample concentration updates while storing result in concentration_rt_value.
+   *
+   * @param {Object} reaction - Reaction model
+   * @returns {void}
+   */
+  updateConcentrationFromSolvent(reaction) {
+    if (!reaction) {
+      this._concentration_rt_value = null;
+      return;
+    }
+
+    let volumeToUse;
+    if (reaction.use_reaction_volume && reaction.volume != null && reaction.volume > 0) {
+      volumeToUse = reaction.volume;
+    } else {
+      volumeToUse = reaction.calculateCombinedReactionVolume();
+    }
+
+    if (!volumeToUse || volumeToUse <= 0) {
+      this._concentration_rt_value = null;
+      return;
+    }
+
+    if (Number.isFinite(this.amount_mol) && this.amount_mol >= 0) {
+      this._concentration_rt_value = Number((this.amount_mol / volumeToUse).toFixed(8));
+      this._concentration_rt_unit ??= 'mol/L';
+    } else {
+      this._concentration_rt_value = null;
+    }
+  }
+
   calculateAmountAsUsedMass() {
     if (this.base_volume_as_used_value === 0 || this.concentration_value === 0) {
       return;
