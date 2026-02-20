@@ -196,7 +196,7 @@ export default class ScanCodeButton extends React.Component {
       <>
         <Button
           id="search-code-split-button"
-          variant="light"
+          variant="topbar"
           onClick={this.open}
         >
           <i className="fa fa-barcode" />

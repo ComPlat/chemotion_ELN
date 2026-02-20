@@ -16,7 +16,7 @@ export default function NotificationButton({
       onClick={onClick}
       active={active}
     >
-      <span className="d-flex gap-2 align-items-center flex-grow-1">
+      <span className="d-flex gap-1 align-items-center flex-grow-1">
         <i className={`fa fa-fw ${icon}`} />
         <span>{label}</span>
         {hasBadge && (

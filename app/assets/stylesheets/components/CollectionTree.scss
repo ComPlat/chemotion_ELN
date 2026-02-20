@@ -8,7 +8,7 @@
     @extend .tree-view;
     @extend .overflow-y-auto;
     @extend .surface-lighten3;
-    margin: 0 4px;
+    @extend .border-top;
   }
   &_item {
     @extend .d-flex;

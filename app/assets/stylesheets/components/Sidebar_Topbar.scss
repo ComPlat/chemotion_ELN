@@ -1,8 +1,7 @@
-$sidebar-logo-height: 72px;
+$topbar-height: 35px;
 
 .topbar {
-  min-height: $sidebar-logo-height;
-  @extend .surface-lighten4;
+  background-color: $chemstrap-graphite;
 }
 
 .sidebar {
@@ -14,11 +13,11 @@ $sidebar-logo-height: 72px;
     width: 44px;
     .sidebar-logo {
       @extend .justify-content-center;
-      @extend .ms-0;
+      margin-left: 0.25rem;
     }
   }
   &-logo {
-    height: $sidebar-logo-height;
+    height: 72px;
     margin-left: 0.75rem;
     @extend .d-flex;
     @extend .align-items-center;
@@ -31,7 +30,7 @@ $sidebar-logo-height: 72px;
     @extend .pb-4;
   }
   &-collapse-button-container {
-    margin-top: $sidebar-logo-height; //hack to compensate header height
+    margin-top: $topbar-height; //align under topbar
     @extend .d-flex;
     @extend .flex-column;
     @extend .justify-content-center;
@@ -52,6 +51,9 @@ $sidebar-logo-height: 72px;
     font-size: 16px;
     i {
       font-size: 18px;
+    }
+    &:first-child {
+      @extend .mt-0;
     }
     &__badge {
       font-size: 10px;
@@ -93,6 +95,22 @@ $sidebar-logo-height: 72px;
       }
     }
   }
+}
+
+.btn-topbar {
+  @include button-variant(
+    transparent,
+    transparent,
+    $white,
+    $chemstrap-graphite-hover,
+    $chemstrap-graphite-hover,
+    $white,
+    $chemstrap-graphite-active,
+    $chemstrap-graphite-active,
+    $white
+  );
+  @extend .rounded-0;
+  height: $topbar-height;
 }
 
 .collection-management-button {
