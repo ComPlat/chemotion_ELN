@@ -8,7 +8,8 @@ import Reaction from 'src/models/Reaction';
 import ConfigOverlayButton from 'src/components/common/ConfigOverlayButton';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 
-// Ensure tooltips/popovers render above the scheme toolbar (z-index: 10000)
+// Ensure popovers/tooltips from this toolbar render above the scheme toolbar (z-index: 11)
+// and above Bootstrap tooltips (z-index: 1080) when open
 const popperConfigAboveToolbar = {
   modifiers: [
     {
@@ -17,7 +18,7 @@ const popperConfigAboveToolbar = {
       phase: 'write',
       fn: ({ state }) => {
         // eslint-disable-next-line no-param-reassign
-        state.styles.popper.zIndex = 10001;
+        state.styles.popper.zIndex = 1100;
       },
     },
   ],
