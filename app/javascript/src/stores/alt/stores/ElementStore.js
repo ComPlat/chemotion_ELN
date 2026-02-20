@@ -737,8 +737,8 @@ class ElementStore {
   // -- Samples --
 
   handleFetchSampleById(result) {
-    if (!this.state.currentElement || this.state.currentElement._checksum != result._checksum) {
-      if (result.isMixture()) {
+    if (!this.state?.currentElement || this.state?.currentElement._checksum != result?._checksum) {
+      if (result.isMixture() || result.isHierarchicalMaterial()) {
         ComponentsFetcher.fetchComponentsBySampleId(result.id)
           .then(async (components) => {
             const sampleComponents = components.map((component) => {
@@ -760,7 +760,7 @@ class ElementStore {
   }
 
   handleCreateSample({ element, closeView, components }) {
-    if (element.isMixture()) {
+    if (element.isMixture() || element.isHierarchicalMaterial()) {
       ComponentsFetcher.saveOrUpdateComponents(element, components)
         .then(async () => {
           await element.initialComponents(components);
@@ -779,7 +779,7 @@ class ElementStore {
 
   handleCreateSampleForReaction({ newSample, reaction, materialGroup, components }) {
     UserActions.fetchCurrentUser();
-    if (newSample.isMixture()) {
+    if (newSample.isMixture() || newSample.isHierarchicalMaterial()) {
       ComponentsFetcher.saveOrUpdateComponents(newSample, components)
         .then(async () => {
           await newSample.initialComponents(components);
@@ -809,10 +809,22 @@ class ElementStore {
   handleUpdateSampleForReaction({ reaction, sample, closeView }) {
     // UserActions.fetchCurrentUser();
     ElementActions.handleSvgReactionChange(reaction);
+<<<<<<< ketcher-surface-chemistry-sample-type
+    if (sample.isMixture() || sample.isHierarchicalMaterial()) {
+      ComponentsFetcher.saveOrUpdateComponents(sample, components)
+        .then(async () => {
+          await sample.initialComponents(components);
+        })
+        .catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    }
+=======
 
     // Components are already saved and initialized in the action before dispatch
     // No need to do it again here
 
+>>>>>>> main
     if (closeView) {
       this.changeCurrentElement(reaction);
     } else {
@@ -825,7 +837,7 @@ class ElementStore {
   }
 
   handleUpdateLinkedElement({ element, closeView, components }) {
-    if (element instanceof Sample && element.isMixture()) {
+    if (element instanceof Sample && (element.isMixture() || element.isHierarchicalMaterial()) ) {
       ComponentsFetcher.saveOrUpdateComponents(element, components)
         .then(() => {
           element.initialComponents(components);

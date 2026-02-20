@@ -513,6 +513,7 @@ module Import
         location
         melting_point
         purity
+        height
         form
         color
         solubility

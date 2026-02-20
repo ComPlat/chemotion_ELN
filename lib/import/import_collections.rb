@@ -290,6 +290,9 @@ module Import
           molecule_name = molecule.molecule_names.find_by(name: molecule_name_name)
         end
 
+        Rails.logger.debug("Importing Sample #{fields['name']} with Molecule #{molecule&.id} and MoleculeName #{molecule_name&.name}")
+        Rails.logger.debug("Molfile: #{fields}")
+
         # create the sample
         sample = Sample.create!(fields.slice(
           'name',
@@ -320,6 +323,12 @@ module Import
           'sum_formula',
           'inventory_sample',
           'sample_type',
+          'state',
+          'height',
+          'color',
+          'width',
+          'length',
+          'storage_condition',
         ).merge(
           created_by: @current_user_id,
           collections: fetch_many(
