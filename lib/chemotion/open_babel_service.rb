@@ -84,9 +84,8 @@ M  END
 
     c.set_out_format 'can'
     ca_smiles = begin
-      str = c.write_string(m, false).to_s
-      str.lines.first.to_s.strip
-    rescue StandardError, SystemStackError
+      c.write_string(m, false).to_s.gsub(/\s.*/m, "").strip
+    rescue StandardError
       ''
     end
 
