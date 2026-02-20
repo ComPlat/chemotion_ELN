@@ -28,7 +28,7 @@ export default class ChemicalFetcher {
   }
 
   static update(params) {
-    // type should be 'sample' or 'sequence_based_macromolecule'
+    // type should be 'sample' or 'SBMM'
     let query = '';
     const { type } = params;
     if (type === 'SBMM') {
