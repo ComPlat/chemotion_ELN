@@ -41,11 +41,12 @@ class MeasurementsTable extends Component {
       let sampleHeader = measurementsStore.sampleHeader(sampleId);
       const columnsForRow = [this._sampleOutput(sampleHeader)];
 
+      // Filter out MTT measurements once per sample
+      const nonMttMeasurements = measurementsStore.measurementsForSample(sampleId)
+        .filter(m => !m.metadata || m.metadata.analysis_type !== 'mtt_output');
+
       this._uniqueDescriptions().forEach((description, index) => {
-        const measurements = this._measurementsWithDescription(
-          measurementsStore.measurementsForSample(sampleId),
-          description
-        );
+        const measurements = this._measurementsWithDescription(nonMttMeasurements, description);
 
         const descriptionColumn = (
           <td className={`measurementTable--Sample--sortedReadout`} key={`MeasurementTableSampleSortedReadout${sampleId}.${index}`}>
@@ -87,6 +88,7 @@ class MeasurementsTable extends Component {
     let sampleIds = [...this.props.sample.ancestor_ids, this.props.sample.id].filter(e => e);
     this.context.measurements
       .measurementsForSamples(sampleIds)
+      .filter(m => !m.metadata || m.metadata.analysis_type !== 'mtt_output')
       .forEach(measurement => descriptions[measurement.description] = 1);
 
     return Object.keys(descriptions).sort();
