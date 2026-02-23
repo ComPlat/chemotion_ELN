@@ -263,6 +263,9 @@ export default class SequenceBasedMacromoleculeSample extends Element {
       case 'amount_as_used_mass':
         if (this.base_amount_as_used_mass_value > 0) {
           this.calculateVolumeByMass();
+          if (this.base_molarity_value > 0) {
+            this.calculateAmountAsUsed();
+          }
           this.calculateActivityByMass();
         }
         break;
