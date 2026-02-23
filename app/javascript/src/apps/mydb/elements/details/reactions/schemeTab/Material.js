@@ -219,30 +219,25 @@ class Material extends Component {
 
   materialRef(material) {
     const { materialGroup, reaction } = this.props;
+    if (materialGroup === 'products') {
+      return <div>{this.renderProductReference(material, reaction)}</div>;
+    }
+
+    if (reaction.weight_percentage && !isSbmmSample(material)) {
+      return <div>{this.renderNestedReferenceRadios(material, reaction)}</div>;
+    }
 
     return (
       <div>
-        {
-          materialGroup === 'products'
-            ? this.renderProductReference(material, reaction)
-            : (
-              <div>
-                {reaction.weight_percentage ? (
-                  this.renderNestedReferenceRadios(material, reaction)
-                ) : (
-                  <Form.Check
-                    type="radio"
-                    disabled={!permitOn(reaction)}
-                    name="reference"
-                    checked={material.reference}
-                    onChange={(e) => this.handleReferenceChange(e)}
-                    size="sm"
-                    className="m-1"
-                  />
-                )}
-              </div>
-            )
-        }
+        <Form.Check
+          type="radio"
+          disabled={!permitOn(reaction)}
+          name="reference"
+          checked={material.reference}
+          onChange={(e) => this.handleReferenceChange(e)}
+          size="sm"
+          className="m-1"
+        />
       </div>
     );
   }
@@ -376,7 +371,8 @@ class Material extends Component {
     if (materialGroup === 'products') {
       return this.yieldOrConversionRate(material);
     }
-    return (reaction.weight_percentage ? this.customFieldValueSelector()
+    const isSbmm = isSbmmSample(material);
+    return (reaction.weight_percentage && !isSbmm ? this.customFieldValueSelector()
       : (
         <NumeralInputWithUnitsCompo
           className="reaction-material__equivalent-data"
@@ -1588,7 +1584,7 @@ class Material extends Component {
    */
   renderProductReference(material, reaction) {
     return (
-      reaction.weight_percentage ? (
+      reaction.weight_percentage && !isSbmmSample(material) ? (
         <div>
           <OverlayTrigger
             placement="top"
