@@ -640,18 +640,30 @@ module ReportHelpers
     if checkedAll
       return unless c_id
 
-      collection_join = " inner join collections_samples c_s on s_id = c_s.sample_id and c_s.deleted_at is null and c_s.collection_id = #{c_id} "
-      order = 'r_id asc'
+      order = 'r_s.reaction_id asc'
       selection = (r_ids.empty? && '') || "r_s.reaction_id not in (#{r_ids}) and"
+      reaction_filter = (r_ids.empty? && '') || "and reaction_id not in (#{r_ids})"
+      collection_join = <<~SQL.squish
+        left join collections_samples c_s on (
+          s.source_type = 'sample' and s.id = c_s.sample_id and c_s.deleted_at is null and c_s.collection_id = #{c_id}
+        )
+        left join collections_sequence_based_macromolecule_samples c_sbms on (
+          s.source_type = 'sbmm' and s.id = c_sbms.sequence_based_macromolecule_sample_id
+          and c_sbms.deleted_at is null and c_sbms.collection_id = #{c_id}
+        )
+      SQL
+      collection_filter = 'where c_s.id is not null or c_sbms.id is not null'
     else
-      order = "position(','||r_id::text||',' in '(,#{r_ids},)')"
+      order = "position(','||r_s.reaction_id::text||',' in '(,#{r_ids},)')"
       selection = "r_s.reaction_id in (#{r_ids}) and"
+      reaction_filter = "and reaction_id in (#{r_ids})"
+      collection_join = ''
+      collection_filter = ''
     end
 
     <<~SQL
       select
-      s_id, ts, co_id, scu_id, shared_sync, pl, dl_s
-      , dl_r
+      s_dl.s_id, s_dl.ts, s_dl.co_id, s_dl.scu_id, s_dl.shared_sync, s_dl.pl, s_dl.dl_s, s_dl.dl_r
       , res.residue_type, s.molfile_version, s.decoupled, s.molecular_mass as "molecular mass (decoupled)", s.sum_formula as "sum formula (decoupled)"
       , s.stereo->>'abs' as "stereo_abs", s.stereo->>'rel' as "stereo_rel"
       , cl.id as "sample uuid"
@@ -659,11 +671,13 @@ module ReportHelpers
       , case
         when r_s.type = 'ReactionsStartingMaterialSample' then '1 starting mat'
         when r_s.type = 'ReactionsReactantSample' then '2 reactant'
+        when r_s.type = 'ReactionsReactantSbmmSample' then '2 reactant'
         when r_s.type = 'ReactionsSolventSample' then '3 solvent'
         when r_s.type = 'ReactionsProductSample' then '4 product' end as "type"
       from (
         select
           s.id as s_id
+          , 'sample'::text as source_type
           , s.is_top_secret as ts
           , min(co.id) as co_id
           , min(scu.id) as scu_id
@@ -671,9 +685,8 @@ module ReportHelpers
           , max(GREATEST(co.permission_level, scu.permission_level)) as pl
           , max(GREATEST(co.sample_detail_level,scu.sample_detail_level)) dl_s
           , max(GREATEST(co.reaction_detail_level,scu.reaction_detail_level)) dl_r
-          , (array_agg(r_s.reaction_id)) [1] as r_id
         from samples s
-        inner join reactions_samples r_s on s.id = r_s.sample_id
+        inner join reactions_samples r_s on s.id = r_s.sample_id and r_s.deleted_at is null
         inner join collections_samples c_s on s.id = c_s.sample_id and c_s.deleted_at is null
         left join collections co on (co.id = c_s.collection_id and co.user_id in (#{u_ids}))
         left join collections sco on (sco.id = c_s.collection_id and sco.user_id not in (#{u_ids}))
@@ -681,14 +694,155 @@ module ReportHelpers
         where #{selection} s.deleted_at isnull and c_s.deleted_at isnull
           and (co.id is not null or scu.id is not null)
         group by s_id
+        union all
+        select
+          sbms.id as s_id
+          , 'sbmm'::text as source_type
+          , false as ts
+          , min(co.id) as co_id
+          , min(scu.id) as scu_id
+          , bool_and(co.is_shared) as shared_sync
+          , max(GREATEST(co.permission_level, scu.permission_level)) as pl
+          , max(
+            GREATEST(
+              co.sequencebasedmacromoleculesample_detail_level,
+              scu.sequencebasedmacromoleculesample_detail_level
+            )
+          ) as dl_s
+          , max(GREATEST(co.reaction_detail_level, scu.reaction_detail_level)) as dl_r
+        from sequence_based_macromolecule_samples sbms
+        inner join reactions_reactant_sbmm_samples r_s on (
+          sbms.id = r_s.sequence_based_macromolecule_sample_id and r_s.deleted_at is null
+        )
+        inner join collections_sequence_based_macromolecule_samples c_sbms on (
+          sbms.id = c_sbms.sequence_based_macromolecule_sample_id and c_sbms.deleted_at is null
+        )
+        left join collections co on (co.id = c_sbms.collection_id and co.user_id in (#{u_ids}))
+        left join collections sco on (sco.id = c_sbms.collection_id and sco.user_id not in (#{u_ids}))
+        left join sync_collections_users scu on (sco.id = scu.collection_id and scu.user_id in (#{u_ids}))
+        where #{selection} sbms.deleted_at isnull and c_sbms.deleted_at isnull
+          and (co.id is not null or scu.id is not null)
+        group by s_id
       ) as s_dl
-      inner join samples s on s_dl.s_id = s.id #{collection_join}
-      inner join reactions_samples r_s on s.id = r_s.sample_id
+      inner join (
+        select
+          s.id::bigint as id
+          , 'sample'::text as source_type
+          , s.is_top_secret
+          , s.external_label
+          , s.name
+          , s.target_amount_value
+          , s.target_amount_unit
+          , s.real_amount_value
+          , s.real_amount_unit
+          , s.description
+          , s.molfile
+          , s.purity
+          , s.solvent
+          , s.location
+          , s.short_label
+          , s.imported_readout
+          , s.sample_svg_file
+          , s.identifier
+          , s.density
+          , s.melting_point
+          , s.boiling_point
+          , s.created_at
+          , s.updated_at
+          , s.molecule_id
+          , s.molecule_name_id
+          , s.molarity_value
+          , s.molarity_unit
+          , s.dry_solvent
+          , s.xref
+          , s.decoupled
+          , s.molecular_mass
+          , s.sum_formula
+          , s.molfile_version
+          , s.stereo
+          , s.sample_type
+        from samples s
+        union all
+        select
+          sbms.id as id
+          , 'sbmm'::text as source_type
+          , false as is_top_secret
+          , sbms.external_label
+          , sbms.name
+          , null::float as target_amount_value
+          , null::varchar as target_amount_unit
+          , null::float as real_amount_value
+          , null::varchar as real_amount_unit
+          , null::text as description
+          , null::bytea as molfile
+          , sbms.purity
+          , null::jsonb as solvent
+          , null::varchar as location
+          , sbms.short_label
+          , null::varchar as imported_readout
+          , null::varchar as sample_svg_file
+          , null::varchar as identifier
+          , null::float as density
+          , null::numrange as melting_point
+          , null::numrange as boiling_point
+          , sbms.created_at
+          , sbms.updated_at
+          , null::integer as molecule_id
+          , null::integer as molecule_name_id
+          , sbms.molarity_value
+          , sbms.molarity_unit
+          , false as dry_solvent
+          , '{}'::jsonb as xref
+          , false as decoupled
+          , null::float as molecular_mass
+          , null::varchar as sum_formula
+          , null::varchar as molfile_version
+          , null::jsonb as stereo
+          , 'SequenceBasedMacromolecule'::varchar as sample_type
+        from sequence_based_macromolecule_samples sbms
+      ) as s on s_dl.s_id = s.id and s_dl.source_type = s.source_type
+      inner join (
+        select
+          r_s.sample_id::bigint as s_id
+          , 'sample'::text as source_type
+          , r_s.reaction_id
+          , r_s.reference
+          , r_s.equivalent
+          , r_s.conversion_rate
+          , r_s.position
+          , r_s.type
+        from reactions_samples r_s
+        where r_s.deleted_at isnull #{reaction_filter}
+        union all
+        select
+          r_s.sequence_based_macromolecule_sample_id as s_id
+          , 'sbmm'::text as source_type
+          , r_s.reaction_id
+          , r_s.reference
+          , sbms.equivalent
+          , null::float as conversion_rate
+          , r_s.position
+          , 'ReactionsReactantSbmmSample'::varchar as type
+        from reactions_reactant_sbmm_samples r_s
+        left join sequence_based_macromolecule_samples sbms on (
+          sbms.id = r_s.sequence_based_macromolecule_sample_id
+        )
+        where r_s.deleted_at isnull #{reaction_filter}
+      ) as r_s on s.id = r_s.s_id and s.source_type = r_s.source_type
       inner join reactions r on r_s.reaction_id = r.id
+      #{collection_join}
       left join molecules m on s.molecule_id = m.id
       left join molecule_names mn on s.molecule_name_id = mn.id
-      left join residues res on res.sample_id = s.id
-      left join code_logs cl on cl.source = 'sample' and cl.source_id = s.id
+      left join residues res on s.source_type = 'sample' and res.sample_id = s.id
+      left join code_logs cl on (
+        (s.source_type = 'sample' and cl.source = 'sample' and cl.source_id = s.id)
+        or (
+          s.source_type = 'sbmm'
+          and cl.source = 'sequence_based_macromolecule_sample'
+          and cl.source_id = s.id
+        )
+      )
+      #{collection_filter}
       order by #{order}, "type" asc, r_s.position asc;
     SQL
   end
