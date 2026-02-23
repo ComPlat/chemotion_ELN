@@ -96,6 +96,9 @@ export default class SearchFetcher {
               sequence_based_macromolecule_samples.elements.map(s => (new SequenceBasedMacromoleculeSample(s)));
           } else { result.sequence_based_macromolecule_samples = { elements: [], totalElements: 0, ids: [] }; }
           break;
+        case 'structure_svg':
+          result.structure_svg = { svg: result[`${key}`] }
+          break;
         default:
           if (result[`${key}`] && result[`${key}`].elements !== undefined && result[`${key}`].elements.length > 0) {
             result[`${key}`].elements = result[`${key}`].elements.map(s => (new GenericEl(s)));

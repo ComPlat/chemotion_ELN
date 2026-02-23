@@ -85,6 +85,7 @@ function KetcherRailsform() {
     /// / If the first character ~ num of atoms is 0, we will not search
     if (molfileLines[1].trim()[0] !== 0) {
       searchStore.showSearchResults();
+      searchStore.enableAccordionToggle();
       searchStore.removeErrorMessage(message);
       structureSearch(molfile);
     }
@@ -169,7 +170,6 @@ function KetcherRailsform() {
           <AccordeonHeaderButtonForSearchForm
             title={panelVars.resultTitle}
             eventKey={1}
-            disabled={false}
             callback={togglePanel(searchStore)}
           />
         </h2>

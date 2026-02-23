@@ -108,22 +108,31 @@ function SearchResult({ handleClear }) {
 
   const searchValuesList = () => {
     if (searchStore.searchResultVisible && searchStore.searchValues.length > 0) {
+      let structureSvg = '';
+      if (searchStore.structure_svg) {
+        const dataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(searchStore.structure_svg)}`;
+        structureSvg = <img src={dataUrl} style={{ maxHeight: '100px' }} />;
+      }
+
       return (
         <div className="search-value-list">
           <h4>Your Search</h4>
           {
+            searchStore.structure_svg && (
+              structureSvg
+            )
+          }
+          {!searchStore.structure_svg && (
             searchStore.searchValues.map((val, i) => {
               let cleanVal = val.replace(/\bILIKE\b/, 'LIKE');
-
               if (i === 0) {
                 cleanVal = cleanVal
                   .replace(/^AND\b\s*/, '')
                   .replace(/^OR\b\s*/, '')
                   .trim();
               }
-
               return <div key={i}>{cleanVal}</div>;
-            })
+            }))
           }
           {
             searchStore.searchResultsCount > 0 ? null : (
