@@ -664,6 +664,7 @@ module ReportHelpers
     <<~SQL
       select
       s_dl.s_id, s_dl.ts, s_dl.co_id, s_dl.scu_id, s_dl.shared_sync, s_dl.pl, s_dl.dl_s, s_dl.dl_r
+      , s.source_type
       , res.residue_type, s.molfile_version, s.decoupled, s.molecular_mass as "molecular mass (decoupled)", s.sum_formula as "sum formula (decoupled)"
       , s.stereo->>'abs' as "stereo_abs", s.stereo->>'rel' as "stereo_rel"
       , cl.id as "sample uuid"
