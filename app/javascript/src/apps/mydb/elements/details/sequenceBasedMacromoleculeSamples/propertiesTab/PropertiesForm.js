@@ -196,6 +196,8 @@ const PropertiesForm = ({ readonly }) => {
             <ColoredAccordeonHeaderButton
               title="SBMM"
               eventKey={sbmmAccordionIdent}
+              bgColor="sbmm-accordion-header"
+              bgColorActive="sbmm-accordion-header"
             />
           </h2>
           <Accordion.Collapse eventKey={sbmmAccordionIdent}>
