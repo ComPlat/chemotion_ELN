@@ -1,15 +1,7 @@
+# For more info: See https://chemotion.net/docs/eln/install_configure/configuration#structure-editor
 shared:
   :editors:
     :ketcher:
       :label: 'Ketcher'
       :extSrc: '/editors/ketcher/standalone/index.html'
-    :chemdraw:
-      :label: 'ChemDrawJS'
-      :license: 'license file'
-      :extJs: ['external javascript files to be included']
-    :marvinjs:
-      :label: 'MarvinJS'
-      :license: 'license file'
-      :extJs: ['external javascript files to be included']
-      :extSrc: 'external file'
 

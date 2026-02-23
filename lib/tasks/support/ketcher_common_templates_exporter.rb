@@ -13,7 +13,7 @@ class KetcherCommonTemplatesExporter
   TEMPLATES_DEFAULT = PUBLIC_DIR.join('ketcher_common_templates_default.json')
   # The template files in the public directory,
   #  public/json/ketcher_common_templates.json
-  TEMPLATES_PUBLIC = PUBLIC_DIR.join('ketcher_common_templates')
+  TEMPLATES_PUBLIC = PUBLIC_DIR.join('ketcher_common_templates.json')
 
   LOGFILE = 'log/ketcher_common_templates.log'
 
