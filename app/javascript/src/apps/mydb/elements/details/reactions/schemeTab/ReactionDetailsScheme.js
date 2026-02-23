@@ -665,6 +665,9 @@ export default class ReactionDetailsScheme extends React.Component {
     if (!sample) return reaction;
 
     if (type === 'weightPercentageReferenceChanged') {
+      if (isSbmm) {
+        return reaction;
+      }
       reaction.markWeightPercentageSampleAsReference(sampleID);
       WeightPercentageReactionActions.setWeightPercentageReference(sample);
       WeightPercentageReactionActions.setTargetAmountWeightPercentageReference({
