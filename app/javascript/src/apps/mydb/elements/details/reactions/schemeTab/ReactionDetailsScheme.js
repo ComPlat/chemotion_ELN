@@ -1525,9 +1525,16 @@ export default class ReactionDetailsScheme extends React.Component {
   // Handle mixture samples differently
   // eslint-disable-next-line class-methods-use-this
   handleEquivalentBasedAmountUpdate(sample, newAmountMol) {
+    // SBMM amount for equivalent changes should be driven by mol amount.
+    // Using mass normalization here clears mol in SBMM model setters.
+    if (isSbmmSample(sample)) {
+      sample.setAmount({ value: newAmountMol, unit: 'mol' });
+      sample.calculateAmountAsUsedMass();
+      return;
+    }
+
     if (
-      sample.isMixture && sample.isMixture()
-      && sample.hasComponents && sample.hasComponents()
+      sample.isMixture() && sample.hasComponents()
       && sample.reference_component
       && sample.reference_component.relative_molecular_weight
     ) {

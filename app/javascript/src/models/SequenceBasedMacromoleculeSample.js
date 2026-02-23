@@ -1428,15 +1428,25 @@ export default class SequenceBasedMacromoleculeSample extends Element {
   // Keep the same API surface as Sample so shared reaction/scheme code
   // can call these methods without branching for SBMM-specific types.
   // SBMM materials are not mixtures/catalysts and do not have components.
+  // eslint-disable-next-line class-methods-use-this
   isMixture() {
     return false;
   }
 
+  // eslint-disable-next-line class-methods-use-this
   isCatalyst() {
     return false;
   }
 
+  // eslint-disable-next-line class-methods-use-this
   hasComponents() {
+    return false;
+  }
+
+  // Keep compatibility with Sample API used in shared reaction update flows.
+  // SBMM samples are not mixture samples, so this check is always false.
+  // eslint-disable-next-line class-methods-use-this
+  validateMixtureMass() {
     return false;
   }
 
