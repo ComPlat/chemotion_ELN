@@ -128,6 +128,48 @@ module ReportHelpers
         -- molecules
         inner join molecules m on s.molecule_id = m.id
         where rsm.reaction_id in (#{selection})
+
+        union all
+
+        select s_id
+        , ('Enzyme' || row_number() over (
+          partition by rrss.reaction_id
+          order by coalesce(rrss.position, 999999), rrss.id
+        )) as smiles
+        , 1 as s_type
+        , rrss.reaction_id as r_id
+        from (
+          select sbms.id as s_id
+          , bool_and(co.is_shared) as shared_sync
+          , max(GREATEST(co.permission_level, scu.permission_level)) as pl
+          , max(
+            GREATEST(
+              co.sequencebasedmacromoleculesample_detail_level,
+              scu.sequencebasedmacromoleculesample_detail_level
+            )
+          ) dl_s
+          from sequence_based_macromolecule_samples sbms
+          inner join collections_sequence_based_macromolecule_samples c_sbms on (
+            sbms.id = c_sbms.sequence_based_macromolecule_sample_id and c_sbms.deleted_at is null
+          )
+          left join collections co on (
+            co.id = c_sbms.collection_id and co.user_id in (#{u_ids})
+          )
+          left join collections sco on (
+            sco.id = c_sbms.collection_id and sco.user_id not in (#{u_ids})
+          )
+          left join sync_collections_users scu on (
+            sco.id = scu.collection_id and scu.user_id in (#{u_ids})
+          )
+          where sbms.deleted_at isnull and c_sbms.deleted_at isnull
+            and (co.id is not null or scu.id is not null)
+          group by s_id
+        ) as s_sbmm
+        inner join reactions_reactant_sbmm_samples rrss on (
+          rrss.sequence_based_macromolecule_sample_id = s_sbmm.s_id and rrss.deleted_at isnull
+        )
+        inner join sequence_based_macromolecule_samples sbms on sbms.id = s_sbmm.s_id
+        where rrss.reaction_id in (#{selection})
         ) group_1
         group by r_id, s_type
       ) group_0 group by r_id order by #{order}
@@ -140,41 +182,74 @@ module ReportHelpers
     (v['0'] || []).join('.') + '>>' + (v['3'] || []).join('.')
   end
 
+  # Split reactants into regular entries and EnzymeN labels.
+  # Enzyme labels are extracted even if they are wrapped with separators.
+  def split_reactants(reactants)
+    common_reactants = []
+    enzyme_labels = []
+
+    Array(reactants).each do |item|
+      token = item.to_s
+      normalized = token.gsub(/\s+/, '')
+      extracted_enzymes = token.scan(/Enzyme\d+/i).map { |label| "Enzyme#{label[/\d+/]}" }
+      remaining = normalized.gsub(/Enzyme\d+/i, '')
+
+      if extracted_enzymes.any? && remaining.match?(/\A[.,;:|><]*\z/)
+        enzyme_labels.concat(extracted_enzymes)
+      else
+        common_reactants << token
+      end
+    end
+
+    [common_reactants, enzyme_labels]
+  end
+
+  # Keep enzyme labels in numeric order (Enzyme1, Enzyme2, ...).
+  def sorted_enzymes(enzymes)
+    enzymes.sort_by { |item| item.to_s.delete_prefix('Enzyme').to_i }
+  end
+
+  # Return a single reactant array where enzymes are normalized and appended.
+  def formatted_reactants(reactants)
+    common_reactants, enzymes = split_reactants(reactants)
+    common_reactants + sorted_enzymes(enzymes)
+  end
+
   # desc: SM.R>>P
   def r_smiles_1(v)
-    ((v['0'] || []) + (v['1'] || [])).join('.') \
+    ((v['0'] || []) + formatted_reactants(v['1'])).join('.') \
     + '>>' + (v['3'] || []).join('.')
   end
 
   # desc: SM.R.S>>P
   def r_smiles_2(v)
-    ((v['0'] || []) + (v['1'] || []) + (v['2'] || [])).join('.') \
+    ((v['0'] || []) + formatted_reactants(v['1']) + (v['2'] || [])).join('.') \
     + '>>' + (v['3'] || []).join('.')
   end
 
   # desc: SM>R>P
   def r_smiles_3(v)
     (v['0'] || []).join('.') + '>' \
-    + (v['1'] || []).join('.') + '>' \
+    + formatted_reactants(v['1']).join('.') + '>' \
     + (v['3'] || []).join('.')
   end
 
   # desc: SM>R.S>P
   def r_smiles_4(v)
     (v['0'] || []).join('.') + '>' \
-    + ((v['1'] || []) + (v['2'] || [])).join('.') + '>' \
+    + (formatted_reactants(v['1']) + (v['2'] || [])).join('.') + '>' \
     + (v['3'] || []).join('.')
   end
 
   # desc: SM>R>S>P
   def r_smiles_5(v)
-    (v['0'] || []).join('.') + '>' + (v['1'] || []).join('.') \
+    (v['0'] || []).join('.') + '>' + formatted_reactants(v['1']).join('.') \
     + '>' + (v['2'] || []).join('.') + '>' + (v['3'] || []).join('.')
   end
 
   # desc: SM , R , S ,P
   def r_smiles_6(v)
-    (v['0'] || []).join('.') + ' , ' + (v['1'] || []).join('.') + ' , ' \
+    (v['0'] || []).join('.') + ' , ' + formatted_reactants(v['1']).join('.') + ' , ' \
     + (v['2'] || []).join('.') + ' , ' + (v['3'] || []).join('.')
   end
 
