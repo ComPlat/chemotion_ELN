@@ -553,7 +553,6 @@ module Chemotion
         optional :detector, type: String
         optional :dscMetaData, type: String
         optional :lcms_uvvis_wavelength, type: String
-        optional :lcms_tic, type: String
         optional :lcms_mz_page, type: String
       end
       post 'save_spectrum' do

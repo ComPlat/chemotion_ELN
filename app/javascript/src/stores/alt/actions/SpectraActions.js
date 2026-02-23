@@ -35,9 +35,9 @@ class SpectraActions {
     };
   }
 
-  SaveToFile(spcInfo, peaksStr, shift, scan, thres, integration, multiplicity, predict, cb, keepPred = false, waveLengthStr, cyclicvolta, curveIdx = 0, simulatenmr = false, previousSpcInfos, isSaveCombined = false, axesUnitsStr, detector, dscMetaData, lcmsPeaksStr, lcmsIntegralsStr, lcmsUvvisWavelength, lcmsTic, lcmsMzPage) {
+  SaveToFile(spcInfo, peaksStr, shift, scan, thres, integration, multiplicity, predict, cb, keepPred = false, waveLengthStr, cyclicvolta, curveIdx = 0, simulatenmr = false, previousSpcInfos, isSaveCombined = false, axesUnitsStr, detector, dscMetaData, lcmsPeaksStr, lcmsIntegralsStr, lcmsUvvisWavelength, lcmsMzPage) {
     return (dispatch) => {
-      AttachmentFetcher.saveSpectrum(spcInfo.idx, peaksStr, shift, scan, thres, integration, multiplicity, predict, keepPred, waveLengthStr, cyclicvolta, curveIdx, simulatenmr, previousSpcInfos, isSaveCombined, axesUnitsStr, detector, dscMetaData, lcmsPeaksStr, lcmsIntegralsStr, lcmsUvvisWavelength, lcmsTic, lcmsMzPage)
+      AttachmentFetcher.saveSpectrum(spcInfo.idx, peaksStr, shift, scan, thres, integration, multiplicity, predict, keepPred, waveLengthStr, cyclicvolta, curveIdx, simulatenmr, previousSpcInfos, isSaveCombined, axesUnitsStr, detector, dscMetaData, lcmsPeaksStr, lcmsIntegralsStr, lcmsUvvisWavelength, lcmsMzPage)
         .then((fetchedFiles) => {
           dispatch({ fetchedFiles, spcInfo });
           cb();
