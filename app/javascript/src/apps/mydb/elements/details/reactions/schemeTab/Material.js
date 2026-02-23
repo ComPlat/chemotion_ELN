@@ -1427,6 +1427,10 @@ class Material extends Component {
   }
 
   gasType(material) {
+    const { materialGroup } = this.props;
+    const isSbmmGasSchemeUnavailable = this.isSbmm
+      && (materialGroup === 'reactants' || materialGroup === 'starting_materials');
+
     let gasTypeValue = material.gas_type || 'off';
     let tooltipText = 'This material is currently marked as non gaseous type';
     if (material.gas_type === 'off') {
@@ -1441,22 +1445,28 @@ class Material extends Component {
       gasTypeValue = 'CAT';
       tooltipText = 'Catalyst reference';
     }
+
+    if (isSbmmGasSchemeUnavailable) {
+      tooltipText = 'SBMM samples cannot be marked as gaseous type';
+    }
     const gasTypes = ['feedstock', 'catalyst', 'gas'];
     const gasTypeStatus = gasTypes.includes(material?.gas_type);
-    const feedstockStatus = gasTypeStatus ? '#009a4d' : 'grey';
+    const feedstockStatus = (gasTypeStatus && !isSbmmGasSchemeUnavailable) ? '#009a4d' : 'grey';
     const tooltip = <Tooltip id="feedstockGas">{tooltipText}</Tooltip>;
     return (
       <div className="pe-1">
         <OverlayTrigger placement="bottom" overlay={tooltip}>
-          <Button
-            variant="primary"
-            size="xsm"
-            onClick={() => this.handleGasTypeChange('gasType', gasTypeValue)}
-            disabled={false}
-            style={{ backgroundColor: feedstockStatus }}
-          >
-            {gasTypeValue}
-          </Button>
+          <span className="d-inline-block" style={{ cursor: isSbmmGasSchemeUnavailable ? 'not-allowed' : 'pointer' }}>
+            <Button
+              variant="primary"
+              size="xsm"
+              onClick={() => this.handleGasTypeChange('gasType', gasTypeValue)}
+              disabled={isSbmmGasSchemeUnavailable}
+              style={{ backgroundColor: feedstockStatus, pointerEvents: isSbmmGasSchemeUnavailable ? 'none' : 'auto' }}
+            >
+              {gasTypeValue}
+            </Button>
+          </span>
         </OverlayTrigger>
       </div>
     );
@@ -1506,7 +1516,7 @@ class Material extends Component {
           <SampleName sample={material} />
         );
       }
-      linkDisplayName = !!idCheck.test(material.id)
+      linkDisplayName = !!idCheck.test(material.id);
     } else {
       moleculeIupacName = material.molecule_iupac_name;
       materialDisplayName = material.title() === ''
