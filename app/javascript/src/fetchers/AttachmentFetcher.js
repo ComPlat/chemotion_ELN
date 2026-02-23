@@ -599,7 +599,6 @@ export default class AttachmentFetcher {
     lcmsPeaksStr,
     lcmsIntegralsStr,
     lcmsUvvisWavelength,
-    lcmsTic,
     lcmsMzPage
   ) {
     const params = {
@@ -624,7 +623,6 @@ export default class AttachmentFetcher {
       lcmsPeaksStr,
       lcmsIntegralsStr,
       lcmsUvvisWavelength,
-      lcmsTic,
       lcmsMzPage
     };
 

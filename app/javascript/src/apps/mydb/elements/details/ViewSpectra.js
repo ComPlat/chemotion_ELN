@@ -616,9 +616,6 @@ class ViewSpectra extends React.Component {
     const lcmsUvvisWavelength = isLcMs && payload.lcms_uvvis_wavelength != null
       ? JSON.stringify(payload.lcms_uvvis_wavelength)
       : undefined;
-    const lcmsTic = isLcMs && (payload.lcms_mz_page_data != null || payload.lcms_tic != null)
-      ? JSON.stringify(payload.lcms_mz_page_data ?? payload.lcms_tic)
-      : undefined;
     const lcmsMzPage = isLcMs && payload.lcms_mz_page != null
       ? JSON.stringify(payload.lcms_mz_page)
       : undefined;
@@ -637,7 +634,6 @@ class ViewSpectra extends React.Component {
       lcmsPeaksStr,
       lcmsIntegralsStr,
       lcmsUvvisWavelength,
-      lcmsTic,
       lcmsMzPage,
     };
   }
@@ -672,7 +668,6 @@ class ViewSpectra extends React.Component {
         serialized.lcmsPeaksStr,
         serialized.lcmsIntegralsStr,
         serialized.lcmsUvvisWavelength,
-        serialized.lcmsTic,
         serialized.lcmsMzPage,
         (fetchedFiles, _spcInfo, errorMessage) => {
           const newIds = (fetchedFiles?.files || []).map((file) => file.id).filter(Boolean);

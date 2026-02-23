@@ -129,7 +129,6 @@ module Chemotion
           detector: params[:detector],
           dsc_meta_data: params[:dsc_meta_data],
           lcms_uvvis_wavelength: params[:lcms_uvvis_wavelength] || params[:lcmsUvvisWavelength],
-          lcms_tic: params[:lcms_tic] || params[:lcmsTic],
           lcms_mz_page: params[:lcms_mz_page] || params[:lcmsMzPage],
         }
       end
@@ -197,7 +196,6 @@ module Chemotion
           extracted_array << extra_info['invalid_molfile']
           return extracted_array
         end
-
         begin
           json_rsp = JSON.parse(rsp.body.to_s)
         rescue JSON::ParserError
