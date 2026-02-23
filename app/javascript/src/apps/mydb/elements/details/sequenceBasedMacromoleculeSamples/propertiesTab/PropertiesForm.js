@@ -4,6 +4,7 @@ import { initFormHelper, ColoredAccordeonHeaderButton, SecondaryCollapseContent 
 import { selectOptions } from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/SelectOptions';
 import { useDrop } from 'react-dnd';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
+import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 import ReferenceAndModificationForm from './ReferenceAndModificationForm';
 import SearchResults from './SearchResults';
 
@@ -372,7 +373,17 @@ const PropertiesForm = ({ readonly }) => {
                     )}
                   </Col>
                   <Col>
-                    {formHelper.textInput('purity', 'Purity', '')}
+                    <NumeralInputWithUnitsCompo
+                      value={!isNaN(sbmmSample.purity) ? sbmmSample.purity : null}
+                      unit="n"
+                      metricPrefix="n"
+                      metricPrefixes={['n']}
+                      precision={5}
+                      label="Purity/Concentration"
+                      disabled={disabled}
+                      variant="light"
+                      onChange={(e) => formHelper.onChange('purity', e.value)}
+                    />
                   </Col>
                   <Col>
                     {formHelper.textInput('purity_detection', 'Purity detection', '')}
@@ -421,7 +432,7 @@ const PropertiesForm = ({ readonly }) => {
                       <Row className="mb-4 align-items-end">
                         <Col>{formHelper.textInput('strain', 'Strain', disabled, '')}</Col>
                         <Col>{formHelper.textInput('tissue', 'Tissue', disabled, '')}</Col>
-                        <Col>{formHelper.textInput('localisation', 'Localisation', disabled, '')}</Col>
+                        <Col>{formHelper.textInput('localisation', 'Localization', disabled, '')}</Col>
                       </Row>
                     </>
                   )
