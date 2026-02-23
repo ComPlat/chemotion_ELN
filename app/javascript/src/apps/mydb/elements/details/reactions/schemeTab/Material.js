@@ -912,6 +912,7 @@ class Material extends Component {
         type: 'equivalentChanged',
         materialGroup,
         sampleID: this.materialId(),
+        isSbmm: this.isSbmm,
         equivalent,
         weightPercentageField: e.weightPercentageField || false,
       };
