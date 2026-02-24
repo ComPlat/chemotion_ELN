@@ -291,7 +291,7 @@ class Reaction < ApplicationRecord
   end
 
   def scrub
-    return unless temperature&.fetch('userText', nil).present?
+    return if temperature&.fetch('userText', nil).blank?
 
     self.temperature = temperature.merge('userText' => scrubber(temperature['userText']))
 
