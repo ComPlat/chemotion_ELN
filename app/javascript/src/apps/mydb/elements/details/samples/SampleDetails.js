@@ -333,7 +333,26 @@ export default class SampleDetails extends React.Component {
     const smiles = (config && sample.molecule) ? config.smiles : null;
     sample.contains_residues = molfile?.indexOf(' R# ') > -1;
     sample.formulaChanged = true;
+
+    // For HierarchicalMaterial: preserve user-entered molar_mass and weight_ratio_exp
+    // when Ketcher rebuilds components from text nodes (which resets these to 0).
+    if (sample.isHierarchicalMaterial() && components?.length > 0 && sample.components?.length > 0) {
+      const existingComponents = sample.components;
+      components.forEach((newComp) => {
+        const existing = existingComponents.find((c) => {
+          const existingSource = c.source || c.component_properties?.source;
+          return existingSource && existingSource === newComp.source;
+        });
+        if (existing) {
+          const existingMolarMass = existing.molar_mass ?? existing.component_properties?.molar_mass;
+          const existingWeightRatioExp = existing.weight_ratio_exp ?? existing.component_properties?.weight_ratio_exp;
+          if (existingMolarMass) newComp.molar_mass = existingMolarMass;
+          if (existingWeightRatioExp) newComp.weight_ratio_exp = existingWeightRatioExp;
+        }
+      });
+    }
     sample.components = components;
+
     if (textNodesFormula?.length > 0) sample.name = textNodesFormula;
     this.setState({ loadingMolecule: true });
 

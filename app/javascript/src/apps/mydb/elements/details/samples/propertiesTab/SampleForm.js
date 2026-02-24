@@ -34,6 +34,20 @@ const stateOptions = [
   { value: 'liquid_solution', label: 'Liquid Solution' }
 ];
 
+/**
+ * Normalizes components that may be in API-format (with nested component_properties)
+ * to a flat format where source, molar_mass, weight_ratio_exp etc. are top-level fields.
+ * This handles the case where the backend returns components with nested component_properties
+ * before the async initialComponents() call has had a chance to flatten them.
+ */
+const flattenApiFormatComponents = (components) => (components || []).map((comp) => {
+  if (comp.component_properties && !comp.source) {
+    const { component_properties, ...rest } = comp;
+    return { ...rest, ...component_properties };
+  }
+  return comp;
+});
+
 export default class SampleForm extends React.Component {
   constructor(props) {
     super(props);
@@ -52,7 +66,7 @@ export default class SampleForm extends React.Component {
       enableComponentLabel: false,
       enableComponentPurity: false,
       moleculeNameInputValue: props.sample.molecule_name?.label || props.sample.molecule_name?.value || '',
-      components: props.sample.components || [],
+      components: flattenApiFormatComponents(props.sample.components),
     };
 
     this.handleFieldChanged = this.handleFieldChanged.bind(this);
@@ -85,8 +99,13 @@ export default class SampleForm extends React.Component {
 
     const prevComponents = prevProps.sample?.components || [];
     const nextComponents = this.props.sample?.components || [];
-    if (JSON.stringify(prevComponents) !== JSON.stringify(nextComponents)) {
-      this.setState({ components: nextComponents });
+    // Sync component state when the sample object reference changes (e.g. after save returns
+    // a fresh Sample from the API), or when the components data itself changes.
+    // Using reference equality as the first check ensures that saves always refresh the list
+    // even when the array was mutated in-place (same reference, same JSON).
+    if (prevProps.sample !== this.props.sample
+        || JSON.stringify(prevComponents) !== JSON.stringify(nextComponents)) {
+      this.setState({ components: flattenApiFormatComponents(nextComponents) });
     }
 
     if (currentMoleculeName !== prevMoleculeName) {
