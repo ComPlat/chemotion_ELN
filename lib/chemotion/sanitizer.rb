@@ -17,17 +17,6 @@ module Chemotion
 
       private
 
-      def allow_image_tag
-        # Allow the <img> tag and all its attributes
-        Loofah::Scrubber.new do |node|
-          if node.name == 'img'
-            node.attributes.each do |attr_name, attr_value|
-              node[attr_name] = attr_value.value
-            end
-          end
-        end
-      end
-
       def base_scrub_ml(fragment, type: :xml, encoding: nil, remap_glyph_ids: false)
         result = encoding ? fragment.encode(encoding) : fragment
 
