@@ -673,7 +673,6 @@ module ReportHelpers
         length: ['s."length"', '"length"', 0],
         storage_condition: ['s."storage_condition"', '"storage condition"', 0],
         state: ['s."state"', '"state"', 0],
-        color: ['s."color"', '"color"', 0],
       },
       sample_id: {
         external_label: ['s.external_label', '"sample external label"', 0],

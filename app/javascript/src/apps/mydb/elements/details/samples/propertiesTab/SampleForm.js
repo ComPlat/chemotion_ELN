@@ -83,10 +83,10 @@ export default class SampleForm extends React.Component {
     const currentMoleculeName = this.props.sample?.molecule_name;
     const prevMoleculeName = prevProps.sample?.molecule_name;
 
-    const prevComponents = this.props.sample?.components || [];
-    const currentComponents = this.state?.components || [];
-    if (JSON.stringify(prevComponents) !== JSON.stringify(currentComponents)) {
-      this.setState({ components: this.props.sample.components });
+    const prevComponents = prevProps.sample?.components || [];
+    const nextComponents = this.props.sample?.components || [];
+    if (JSON.stringify(prevComponents) !== JSON.stringify(nextComponents)) {
+      this.setState({ components: nextComponents });
     }
 
     if (currentMoleculeName !== prevMoleculeName) {

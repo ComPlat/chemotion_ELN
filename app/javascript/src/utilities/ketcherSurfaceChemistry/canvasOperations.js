@@ -782,7 +782,20 @@ function processJsonMolecules(jsonData, verticalThreshold = 1) {
     .filter((n) => n.$ref && jsonData[n.$ref]?.type === 'molecule')
     .map((n) => n.$ref);
 
-  nodeRefs.forEach((ref, molIndex) => {
+  // Sort mol refs by their highest aliased-atom y value (descending) so visually
+  // higher molecules produce their connString earlier, giving the correct global order.
+  const sortedNodeRefs = nodeRefs.slice().sort((refA, refB) => {
+    const getMaxY = (ref) => {
+      const atoms = jsonData[ref]?.atoms || [];
+      const ys = atoms
+        .filter((a) => a.alias && a.alias.split('_').length >= 3)
+        .map((a) => a.location[1]);
+      return ys.length ? Math.max(...ys) : -Infinity;
+    };
+    return getMaxY(refB) - getMaxY(refA);
+  });
+
+  sortedNodeRefs.forEach((ref, molIndex) => {
     const mol = jsonData[ref];
     if (!mol || !mol.atoms) {
       result.push(`Mol ${molIndex + 1}: (no atoms)`);
