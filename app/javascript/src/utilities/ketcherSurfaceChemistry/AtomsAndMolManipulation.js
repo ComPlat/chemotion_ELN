@@ -150,10 +150,10 @@ const addingPolymersToKetcher = async (railsPolymersList, data) => {
           || ALIAS_PATTERNS.threeParts.test(atom.alias)
         );
         if (polymerItem && aliasPass) {
-          if (ALIAS_PATTERNS.threeParts.test(atom.alias)) {
-            // Atom already has a valid alias from the current canvas (e.g. during paste merge).
+          const dataHasImages = data?.root?.nodes?.some((n) => n.type === 'image') ?? false;
+          if (ALIAS_PATTERNS.threeParts.test(atom.alias) && dataHasImages) {
+            // Atom already has a valid alias and data already has images (e.g. paste merge).
             // Keep the alias and its existing image as-is so textNodeStruct mappings stay valid.
-            // Just advance past this polymer list entry.
             visitedAtoms += 1;
           } else {
             // step 1: get template type from polymer entry (e.g. "6/7/1.00-2.00" -> type 7, size 1.00-2.00)
