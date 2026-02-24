@@ -263,14 +263,12 @@ const KetcherEditor = forwardRef((props, ref) => {
         }
       }
 
-      // If images are selected, check if any of them don't have labels yet
+      // Enable the button whenever a valid polymer image is selected,
+      // regardless of whether it already has a label (allows both add and edit).
       if (!shouldEnable && imageIndexes && imageIndexes.length > 0) {
-        // Check if the selected image already has a label
         const imageIndex = imageIndexes[0];
         const { alias } = await findAtomByImageIndex(imageIndex);
-
-        // Enable button only if image is selected AND doesn't have a label yet
-        if (alias && !textNodeStruct[alias]) {
+        if (alias) {
           shouldEnable = true;
         }
       }
@@ -398,80 +396,73 @@ const KetcherEditor = forwardRef((props, ref) => {
       }
     };
 
+    // Looks up the existing label text for an image index via textNodeStruct + textList.
+    // Returns { text, textKey } where text is null if no label exists yet.
+    const getLabelForImage = async (imageIndex) => {
+      const { alias } = await findAtomByImageIndex(imageIndex);
+      if (!alias) return { text: null, textKey: null };
+      const textKey = textNodeStruct[alias];
+      if (!textKey) return { text: null, textKey: null };
+      for (const tn of (textList || [])) {
+        try {
+          const content = JSON.parse(tn.data.content);
+          if (content.blocks[0].key === textKey) {
+            return { text: content.blocks[0].text || '', textKey };
+          }
+        } catch (e) { /* skip malformed nodes */ }
+      }
+      return { text: null, textKey };
+    };
+
     const selectionChangeHandler = async () => {
       try {
         const currentSelection = editor?._structureDef?.editor?.editor?._selection;
         let selectedTextContent = null;
-
-        // Check if text nodes are selected
         let selectedTextKey = null;
-        if (currentSelection?.texts && currentSelection.texts.length > 0) {
-          // selectedText is an index into the nodes array
-          const selectedTextIndex = currentSelection.texts[0];
 
-          // Try to get the text node from latestData.root.nodes first
-          let selectedTextNode = null;
-          if (latestData?.root?.nodes && latestData.root.nodes[selectedTextIndex]) {
-            const node = latestData.root.nodes[selectedTextIndex];
-            if (node.type === 'text') {
-              selectedTextNode = node;
-            }
-          }
-
-          // If not found in latestData, try to find it in textList by index
-          // (textList might have a different order, so we'll search by matching structure)
-          if (!selectedTextNode && textList && textList.length > 0) {
-            // Find text node in textList - we'll match by checking if index corresponds
-            // Since we don't have direct mapping, we'll search all text nodes
-            for (const textNode of textList) {
-              try {
-                const content = JSON.parse(textNode.data.content);
-                const textKey = content.blocks[0].key;
-                // Check if this text node is associated with an image
-                const hasAssociatedImage = Object.values(textNodeStruct).includes(textKey);
-                if (hasAssociatedImage) {
-                  selectedTextNode = textNode;
-                  break;
-                }
-              } catch (e) {
-                // Skip invalid nodes
-              }
-            }
-          }
-
-          // If we found a text node, extract its content
-          if (selectedTextNode) {
-            try {
-              const content = JSON.parse(selectedTextNode.data.content);
-              selectedTextKey = content.blocks[0].key;
-              // Extract the text content
-              selectedTextContent = content.blocks[0].text || '';
-
-              // Find associated image index from alias
-              for (const [alias, textKeyInStruct] of Object.entries(textNodeStruct)) {
-                if (textKeyInStruct === selectedTextKey) {
-                  // Extract image index from alias (last part after _)
-                  const aliasParts = alias.split('_');
-                  if (aliasParts.length >= 3) {
-                    const imageIndex = parseInt(aliasParts[2], 10);
-                    imageNodeForTextNodeSetter([imageIndex]);
-                  }
-                  break;
-                }
-              }
-            } catch (e) {
-              console.error('Error parsing selected text node content:', e);
-            }
-          }
-        } else if (currentSelection?.images) {
+        if (currentSelection?.images?.length > 0) {
+          // Image selected — use the image as the source of truth to find the label.
+          // This is reliable whether or not Ketcher also reports a text selection.
           canvasSelectionsSetter(currentSelection);
           imageNodeForTextNodeSetter(currentSelection.images);
-          selectedTextContent = null;
-          selectedTextKey = null;
+          const { text, textKey } = await getLabelForImage(currentSelection.images[0]);
+          selectedTextContent = text; // null → empty textarea; existing → pre-fill for editing
+          selectedTextKey = textKey;
+        } else if (currentSelection?.texts?.length > 0) {
+          // Only a text node is selected (no image in selection).
+          // currentSelection.texts[0] is Ketcher's internal text entity ID, NOT an array index.
+          // Look it up directly from Ketcher's internal struct to get the exact content.
+          const selectedTextId = currentSelection.texts[0];
+
+          try {
+            const ketcherStruct = editor._structureDef?.editor?.editor?.struct?.();
+            const ketcherTextEntity = ketcherStruct?.texts?.get(selectedTextId);
+            if (ketcherTextEntity?.content) {
+              // Parse the Draft.js content stored in Ketcher's struct
+              const parsedContent = JSON.parse(ketcherTextEntity.content);
+              const textKey = parsedContent?.blocks?.[0]?.key;
+              const textLabel = parsedContent?.blocks?.[0]?.text || '';
+              if (textKey) {
+                selectedTextKey = textKey;
+                selectedTextContent = textLabel;
+
+                // Sync imageNodeForTextNode to the image linked with this text node
+                for (const [alias, textKeyInStruct] of Object.entries(textNodeStruct)) {
+                  if (textKeyInStruct === selectedTextKey) {
+                    const aliasParts = alias.split('_');
+                    if (aliasParts.length >= 3) {
+                      imageNodeForTextNodeSetter([parseInt(aliasParts[2], 10)]);
+                    }
+                    break;
+                  }
+                }
+              }
+            }
+          } catch (e) {
+            console.error('Error reading selected text node from Ketcher struct:', e);
+          }
         } else {
           imageNodeForTextNodeSetter(null);
-          selectedTextContent = null;
-          selectedTextKey = null;
         }
 
         // Store selected text content for modal
