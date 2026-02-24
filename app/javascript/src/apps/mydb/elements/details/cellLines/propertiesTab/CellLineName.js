@@ -53,60 +53,54 @@ export default class CellLineName extends React.Component {
 
     if (readOnly) {
       return (
-        <Form.Group as={Row}>
-          <Form.Label column sm={3}>Cell line name *</Form.Label>
-          <Col sm={9}>
-            <Form.Control
-              disabled
-              type="text"
-              value={cellLineDetailsStore.cellLines(id).cellLineName}
-            />
-          </Col>
+        <Form.Group>
+          <Form.Label>Cell line name *</Form.Label>
+          <Form.Control
+            disabled
+            type="text"
+            value={cellLineDetailsStore.cellLines(id).cellLineName}
+          />
         </Form.Group>
       );
     }
 
-    const className = cellLineDetailsStore.cellLines(id).cellLineName
-      ? 'cell-line-name-autocomplete'
-      : 'cell-line-name-autocomplete invalid';
+    const invalidClassName = cellLineDetailsStore.cellLines(id).cellLineName ? '' : 'invalid-input';
     return (
-      <Form.Group as={Row} className="cell-line-name">
-        <Form.Label column sm={3}>Cell line name *</Form.Label>
-        <Col sm={9}>
-          <CreatableSelect
-            className={className}
-            isClearable
-            isInputEditable
-            inputValue={this.state.cellLineNameInputValue}
-            onChange={(e) => {
-              const value = e ? e.value : '';
-              this.setState({ cellLineNameInputValue: value });
-              if (typeof value === 'number') {
-                const currentEntry = nameSuggestions.filter((x) => x.value === value);
-                if (currentEntry.length > 0) {
-                  cellLineDetailsStore.changeCellLineName(id, currentEntry[0].name);
-                  CellLinesFetcher.getCellLineMaterialById(value)
-                    .then((result) => {
-                      cellLineDetailsStore.setMaterialProperties(id, result);
-                    });
-                }
-              } else {
-                cellLineDetailsStore.changeCellLineName(id, value);
+      <Form.Group>
+        <Form.Label>Cell line name *</Form.Label>
+        <CreatableSelect
+          className={invalidClassName}
+          isClearable
+          isInputEditable
+          inputValue={cellLineNameInputValue}
+          onChange={(e) => {
+            const value = e ? e.value : '';
+            this.setState({ cellLineNameInputValue: e?.name });
+            if (typeof value === 'number') {
+              const currentEntry = nameSuggestions.filter((x) => x.value === value);
+              if (currentEntry.length > 0) {
+                cellLineDetailsStore.changeCellLineName(id, currentEntry[0].name);
+                CellLinesFetcher.getCellLineMaterialById(value)
+                  .then((result) => {
+                    cellLineDetailsStore.setMaterialProperties(id, result);
+                  });
               }
-            }}
-            onInputChange={(e, { action }) => {
-              if (action === 'input-change') {
-                this.setState({ cellLineNameInputValue: e });
-                cellLineDetailsStore.changeCellLineName(id, e);
-              }
-            }}
-            options={nameSuggestions}
-            placeholder="Enter new cell line name or choose from existing ones "
-            defaultInputValue={name}
-            allowCreateWhileLoading
-            formatCreateLabel={(inputValue) => `Create "${inputValue}"`}
-          />
-        </Col>
+            } else {
+              cellLineDetailsStore.changeCellLineName(id, value);
+            }
+          }}
+          onInputChange={(e, { action }) => {
+            if (action === 'input-change') {
+              this.setState({ cellLineNameInputValue: e });
+              cellLineDetailsStore.changeCellLineName(id, e);
+            }
+          }}
+          options={nameSuggestions}
+          placeholder="Enter a new name or choose an existing one"
+          defaultInputValue={name}
+          allowCreateWhileLoading
+          formatCreateLabel={(inputValue) => `Create "${inputValue}"`}
+        />
       </Form.Group>
     );
   }

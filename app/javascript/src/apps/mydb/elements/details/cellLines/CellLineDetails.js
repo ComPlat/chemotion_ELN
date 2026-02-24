@@ -85,7 +85,7 @@ class CellLineDetails extends React.Component {
         saveDisabled={saveDisabled}
       >
         <div className="tabs-container--with-borders">
-          <Tabs activeKey={activeTab} onSelect={(event) => this.handleTabChange(event)} id="cell-line-details-tab">
+          <Tabs activeKey={activeTab} onSelect={(event) => this.handleTabChange(event)}>
             <Tab eventKey="tab1" title="Properties" key="tab1">
               <GeneralProperties
                 item={cellLineItem}
