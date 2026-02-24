@@ -1,7 +1,7 @@
 require 'export_table'
 
 module Export
-  class ExportExcel < ExportTable
+  class ExportExcel < ExportTable # rubocop:disable Metrics/ClassLength
     DEFAULT_ROW_WIDTH = 100
     DEFAULT_ROW_HEIGHT = 20
     DECOUPLED_STYLE = {
@@ -108,38 +108,47 @@ module Export
       @samples = samples
       return if samples.nil?
 
-      @headers.concat(%w[source molar_mass molecule_id weight_ratio_exp template_category])
-      # generate_headers(table, [], ["source", "molar_mass", "molecule_id", "weight_ratio_exp", "template_category"])
-      sheet = @xfile.workbook.add_worksheet(name: table) #do |sheet|
-      grey = sheet.styles.add_style(sz: 12, :border => { :style => :thick, :color => "FF777777", :edges => [:bottom] })
-      light_grey = sheet.styles.add_style(:border => { :style => :thick, :color => "FFCCCCCC", :edges => [:top] })
-      sheet.add_row(@headers, style: grey) # Add header
+      @headers.push('source', 'molar_mass', 'molecule_id', 'weight_ratio_exp', 'template_category')
+      sheet, light_grey = setup_composition_sheet(table)
+      samples.each { |sample| write_composition_sample_row(sheet, sample, light_grey) }
+      @samples = nil
+    end
+
+    def setup_composition_sheet(table)
+      sheet = @xfile.workbook.add_worksheet(name: table)
+      grey = sheet.styles.add_style(sz: 12, border: { style: :thick, color: 'FF777777', edges: [:bottom] })
+      light_grey = sheet.styles.add_style(border: { style: :thick, color: 'FFCCCCCC', edges: [:top] })
+      sheet.add_row(@headers, style: grey)
       decoupled_style = sheet.styles.add_style(DECOUPLED_STYLE)
       ['sample uuid'].each do |e|
         s_idx = @headers.find_index(e)
         sheet.rows[0].cells[s_idx].style = decoupled_style
       end
+      [sheet, light_grey]
+    end
 
-      samples.each do |sample|
-        sample_id_row = (@row_headers & HEADERS_SAMPLE_ID).map { |column| sample[column] }
-        components = JSON.parse(sample["components"]) rescue []
-        if components.present?
-          components.each do |comp|
-            row = sample_id_row + [
-              comp["source"],
-              comp["molar_mass"],
-              comp["molecule_id"],
-              comp["weight_ratio_exp"],
-              comp["template_category"]
-            ]
-            sheet.add_row(row, style: light_grey)
-          end
-        else
-          # fallback: just add sample row if no components
-          sheet.add_row(sample_id_row, style: light_grey)
-        end
+    def write_composition_sample_row(sheet, sample, light_grey)
+      sample_id_row = (@row_headers & HEADERS_SAMPLE_ID).map { |column| sample[column] }
+      components = begin
+                     JSON.parse(sample['components'])
+                   rescue StandardError
+                     []
+                   end
+      unless components.present?
+        sheet.add_row(sample_id_row, style: light_grey)
+        return
       end
-      @samples = nil
+
+      components.each do |comp|
+        row = sample_id_row + [
+          comp['source'],
+          comp['molar_mass'],
+          comp['molecule_id'],
+          comp['weight_ratio_exp'],
+          comp['template_category'],
+        ]
+        sheet.add_row(row, style: light_grey)
+      end
     end
 
     #TODO: implement better detail level filter
