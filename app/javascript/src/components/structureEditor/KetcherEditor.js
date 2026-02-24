@@ -64,6 +64,7 @@ import {
   canvasIframeRefSetter,
   textNodeStruct,
   textList,
+  textListSetter,
 } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
 
 export let latestData = null; // latestData contains the updated ket2 format always
@@ -135,6 +136,20 @@ const onAtomDelete = async (editor) => {
     imageNodeCounter = imagesList.length - 1;
     // 3rd resettle aliases in inspired atom alias A
     dataRes = await handleOnDeleteAtom(imagesDifferencesContainer, dataRes, imagesList);
+
+    // Sync textList to remove any orphaned text nodes (whose alias was deleted above).
+    // saveMoveCanvas re-injects all of textList into the canvas, so this must be done
+    // before that call, otherwise the orphaned text node reappears on the canvas.
+    const activeTextKeys = new Set(Object.values(textNodeStruct));
+    textListSetter(textList.filter((item) => {
+      try {
+        const { key } = JSON.parse(item.data.content).blocks[0];
+        return activeTextKeys.has(key);
+      } catch (_e) {
+        return false;
+      }
+    }));
+
     dataRes.root.nodes = await filterTextList(aliasDifferences, dataRes); // remove text nodes
     await saveMoveCanvas(editor, dataRes, false, true, false);
     deletedAtomsSetter([]);
