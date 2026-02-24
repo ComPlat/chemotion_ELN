@@ -748,15 +748,14 @@ export default class SequenceBasedMacromoleculeSample extends Element {
   }
 
   buildCopy() {
-    const sequenceBasedMacromoleculeSample = super.buildCopy();
-    sequenceBasedMacromoleculeSample.short_label = SequenceBasedMacromoleculeSample.buildNewShortLabel();
-    sequenceBasedMacromoleculeSample.container = Container.init();
-    sequenceBasedMacromoleculeSample.can_copy = false;
-    sequenceBasedMacromoleculeSample.attachments = [];
-    if (sequenceBasedMacromoleculeSample.sequence_based_macromolecule.uniprot_derivation == 'uniprot_modified') {
-      sequenceBasedMacromoleculeSample.sequence_based_macromolecule.parent_identifier =
-        sequenceBasedMacromoleculeSample.sequence_based_macromolecule.parent.id;
+    const copy = super.buildCopy();
+    copy.short_label = SequenceBasedMacromoleculeSample.buildNewShortLabel();
+    copy.container = Container.init();
+    copy.can_copy = false;
+    copy.attachments = [];
+    if (copy.sequence_based_macromolecule.uniprot_derivation === 'uniprot_modified') {
+      copy.sequence_based_macromolecule.parent_identifier = copy.sequence_based_macromolecule.parent.id;
     }
-    return sequenceBasedMacromoleculeSample;
+    return copy;
   }
 }

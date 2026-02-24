@@ -4,6 +4,7 @@ import { Badge } from 'react-bootstrap';
 
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import CommentIcon from 'src/components/comments/CommentIcon';
+import CopyElementModal from 'src/components/common/CopyElementModal';
 import ElementGroupsRenderer from 'src/apps/mydb/elements/list/renderers/ElementGroupsRenderer';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 
@@ -63,6 +64,7 @@ function ListItem({ element, showDetails }) {
         <span>{element.title()}</span>
       </div>
       <div className="d-flex align-items-center gap-1 flex-wrap">
+        <CopyElementModal element={element} />
         <CommentIcon commentCount={element.comment_count} />
         <ElementCollectionLabels element={element} />
       </div>

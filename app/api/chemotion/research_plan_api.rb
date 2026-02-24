@@ -57,10 +57,12 @@ module Chemotion
         reset_pagination_page(scope)
 
         research_plans = paginate(scope).map do |research_plan|
+          element_policy = ElementPolicy.new(current_user, research_plan)
           Entities::ResearchPlanEntity.represent(
             research_plan,
             displayed_in_list: true,
             detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: research_plan).detail_levels,
+            policy: element_policy,
           )
         end
 

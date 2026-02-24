@@ -8,6 +8,7 @@ import ReactionStatus from 'src/apps/mydb/elements/list/reaction/ReactionStatus'
 import ReactionRole from 'src/apps/mydb/elements/list/reaction/ReactionRole';
 import CommentIcon from 'src/components/comments/CommentIcon';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
+import CopyElementModal from 'src/components/common/CopyElementModal';
 import { ShowUserLabels } from 'src/components/UserLabels';
 
 function ReactionGroupItem({ element, showDetails }) {
@@ -33,6 +34,7 @@ function ReactionGroupItem({ element, showDetails }) {
       />
 
       <div className="d-flex gap-1 align-items-center">
+        <CopyElementModal element={element} />
         <ReactionStatus element={element} />
         <ReactionRole element={element} />
         <ShowUserLabels element={element} />

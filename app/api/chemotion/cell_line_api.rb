@@ -54,11 +54,13 @@ module Chemotion
         reset_pagination_page(scope)
 
         cell_line_samples = paginate(scope).map do |cell_line_sample|
+          element_policy = ElementPolicy.new(current_user, cell_line_sample)
           Entities::CellLineSampleEntity.represent(
             cell_line_sample,
             displayed_in_list: true,
             detail_levels: ElementDetailLevelCalculator.new(user: current_user,
                                                             element: cell_line_sample).detail_levels,
+            policy: element_policy,
           )
         end
         { cell_lines: cell_line_samples }
@@ -75,7 +77,8 @@ module Chemotion
         rescue StandardError => e
           error!(e, 400)
         end
-        return present cell_line_sample, with: Entities::CellLineSampleEntity
+        element_policy = ElementPolicy.new(current_user, cell_line_sample)
+        return present cell_line_sample, with: Entities::CellLineSampleEntity, policy: element_policy
       end
 
       desc 'Create a new Cell line sample'
@@ -88,7 +91,8 @@ module Chemotion
         cell_line_sample = use_case.execute!
         cell_line_sample.container = update_datamodel(params[:container])
 
-        return present cell_line_sample, with: Entities::CellLineSampleEntity
+        element_policy = ElementPolicy.new(current_user, cell_line_sample)
+        return present cell_line_sample, with: Entities::CellLineSampleEntity, policy: element_policy
       end
       desc 'Update a Cell line sample'
       params do
@@ -98,7 +102,8 @@ module Chemotion
         use_case = Usecases::CellLines::Update.new(params, current_user)
         cell_line_sample = use_case.execute!
         cell_line_sample.container = update_datamodel(params[:container])
-        return present cell_line_sample, with: Entities::CellLineSampleEntity
+        element_policy = ElementPolicy.new(current_user, cell_line_sample)
+        return present cell_line_sample, with: Entities::CellLineSampleEntity, policy: element_policy
       end
 
       desc 'Copy a cell line'
@@ -120,7 +125,8 @@ module Chemotion
           rescue StandardError => e
             error!(e, 400)
           end
-          return present copied_cell_line_sample, with: Entities::CellLineSampleEntity
+          element_policy = ElementPolicy.new(current_user, copied_cell_line_sample)
+          return present copied_cell_line_sample, with: Entities::CellLineSampleEntity, policy: element_policy
         end
       end
 
@@ -143,7 +149,8 @@ module Chemotion
           rescue StandardError => e
             error!(e, 400)
           end
-          return present splitted_cell_line_sample, with: Entities::CellLineSampleEntity
+          element_policy = ElementPolicy.new(current_user, splitted_cell_line_sample)
+          return present splitted_cell_line_sample, with: Entities::CellLineSampleEntity, policy: element_policy
         end
       end
 
