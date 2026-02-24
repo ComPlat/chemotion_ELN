@@ -53,7 +53,6 @@ class CellLineDetails extends React.Component {
     this.setState({ activeTab: eventKey });
   }
 
-  // eslint-disable-next-line class-methods-use-this
   isReadOnly() {
     const { currentCollection } = UIStore.getState();
     return !collectionHasPermission(currentCollection, 0);
