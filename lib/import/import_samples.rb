@@ -517,7 +517,6 @@ module Import
         color
         solubility
         inventory_label
-        height
       ].freeze
       return unless included_fields.include?(db_column) || additional_columns.include?(db_column)
 
