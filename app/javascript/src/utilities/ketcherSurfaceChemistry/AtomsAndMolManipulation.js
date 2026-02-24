@@ -150,16 +150,23 @@ const addingPolymersToKetcher = async (railsPolymersList, data) => {
           || ALIAS_PATTERNS.threeParts.test(atom.alias)
         );
         if (polymerItem && aliasPass) {
-          // step 1: get template type from polymer entry (e.g. "6/7/1.00-2.00" -> type 7, size 1.00-2.00)
-          const { type: templateType, size: templateSize } = getTemplateType(polymerItem);
-          // step 2: update atom with alias
-          imageUsedCounterSetter(imageNodeCounter + 1);
-          visitedAtoms += 1;
-          data[molName].atoms[atomIndex] = updateAtom(atom.location, templateType, imageNodeCounter);
-          // step 3: sync bounding box with atom location (fallback to bead if template id not found)
-          const newTemplate = await templateWithBoundingBox(templateType, atom.location, templateSize);
-          // step 4: add to the list
-          if (newTemplate) collectedImages.push(newTemplate);
+          if (ALIAS_PATTERNS.threeParts.test(atom.alias)) {
+            // Atom already has a valid alias from the current canvas (e.g. during paste merge).
+            // Keep the alias and its existing image as-is so textNodeStruct mappings stay valid.
+            // Just advance past this polymer list entry.
+            visitedAtoms += 1;
+          } else {
+            // step 1: get template type from polymer entry (e.g. "6/7/1.00-2.00" -> type 7, size 1.00-2.00)
+            const { type: templateType, size: templateSize } = getTemplateType(polymerItem);
+            // step 2: update atom with alias
+            imageUsedCounterSetter(imageNodeCounter + 1);
+            visitedAtoms += 1;
+            data[molName].atoms[atomIndex] = updateAtom(atom.location, templateType, imageNodeCounter);
+            // step 3: sync bounding box with atom location (fallback to bead if template id not found)
+            const newTemplate = await templateWithBoundingBox(templateType, atom.location, templateSize);
+            // step 4: add to the list
+            if (newTemplate) collectedImages.push(newTemplate);
+          }
         }
       }
     }
