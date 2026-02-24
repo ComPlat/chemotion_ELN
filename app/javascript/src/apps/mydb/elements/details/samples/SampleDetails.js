@@ -1096,17 +1096,6 @@ export default class SampleDetails extends React.Component {
     const isChemicalTab = activeTab === 'inventory';
     const saveBtnDisplay = sample.isEdited || (isChemicalEdited && isChemicalTab);
 
-    const { currentCollection } = UIStore.getState();
-    const defCol = currentCollection && currentCollection.is_shared === false
-      && currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
-
-    const copyBtn = (sample.can_copy && !sample.isNew) ? (
-      <CopyElementModal
-        element={sample}
-        defCol={defCol}
-      />
-    ) : null;
-
     const inventorySample = (
       <Form.Check
         type="checkbox"
@@ -1206,7 +1195,7 @@ export default class SampleDetails extends React.Component {
             {inventorySample}
             {!sample.isNew && <OpenCalendarButton isPanelHeader eventableId={sample.id} eventableType="Sample" />}
             <PrintCodeButton element={sample} />
-            {copyBtn}
+            <CopyElementModal element={sample} />
             {this.saveAndCloseSample(sample, saveBtnDisplay)}
           </div>
         </div>

@@ -154,8 +154,6 @@ function DeviceDescriptionDetails({ openedFromCollectionId }) {
 
   const deviceDescriptionHeader = () => {
     const titleTooltip = formatTimeStampsOfElement(deviceDescription || {});
-    const defCol = currentCollection && currentCollection.is_shared === false
-      && currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
 
     return (
       <div className="d-flex align-items-center justify-content-between">
@@ -180,12 +178,7 @@ function DeviceDescriptionDetails({ openedFromCollectionId }) {
               eventableType="DeviceDescription"
             />
           )}
-          {deviceDescription.can_copy && !deviceDescription.isNew && (
-            <CopyElementModal
-              element={deviceDescription}
-              defCol={defCol}
-            />
-          )}
+          <CopyElementModal element={deviceDescription} />
           {deviceDescription.isEdited && (
             <OverlayTrigger
               placement="bottom"

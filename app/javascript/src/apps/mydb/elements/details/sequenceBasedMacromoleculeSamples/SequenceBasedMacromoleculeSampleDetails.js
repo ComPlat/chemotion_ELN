@@ -179,8 +179,6 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
 
   const sbmmSampleHeader = () => {
     const titleTooltip = formatTimeStampsOfElement(sbmmSample || {});
-    const defCol = currentCollection && currentCollection.is_shared === false
-      && currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
 
     return (
       <div className="d-flex align-items-center justify-content-between">
@@ -211,12 +209,7 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
               eventableId={sbmmSample.id}
               eventableType="SequenceBasedMacromoleculeSample"
             />}
-          {sbmmSample.can_copy && !sbmmSample.isNew && (
-            <CopyElementModal
-              element={sbmmSample}
-              defCol={defCol}
-            />
-          )}
+          <CopyElementModal element={sbmmSample} />
           {sbmmSample.isEdited && (
             <OverlayTrigger
               placement="bottom"
