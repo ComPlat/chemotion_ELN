@@ -3,7 +3,11 @@
 /* eslint-disable react/forbid-prop-types */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Form, InputGroup, OverlayTrigger, Tooltip, Row, Col, ButtonGroup, Table } from 'react-bootstrap';
+import {
+  Button, Form, InputGroup,
+  OverlayTrigger, Tooltip, Row, Col,
+  ButtonGroup, Table
+} from 'react-bootstrap';
 import { Select, CreatableSelect } from 'src/components/common/Select';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
@@ -34,7 +38,9 @@ export default class SampleForm extends React.Component {
   constructor(props) {
     super(props);
 
-    const selectedOption = SampleTypesOptions.find((option) => option.value === props.sample.sample_type);
+    const selectedOption = SampleTypesOptions.find(
+      (option) => option.value === props.sample.sample_type
+    );
 
     this.state = {
       molarityBlocked: (props.sample.molarity_value || 0) <= 0,
@@ -79,7 +85,6 @@ export default class SampleForm extends React.Component {
 
     const prevComponents = this.props.sample?.components || [];
     const currentComponents = this.state?.components || [];
-
     if (JSON.stringify(prevComponents) !== JSON.stringify(currentComponents)) {
       this.setState({ components: this.props.sample.components });
     }
@@ -88,7 +93,7 @@ export default class SampleForm extends React.Component {
       // Use the label for display if available, otherwise fall back to value
       const displayValue = currentMoleculeName?.label || currentMoleculeName?.value || '';
       this.setState({
-        moleculeNameInputValue: String(displayValue),
+        moleculeNameInputValue: String(displayValue)
       });
     }
   }
@@ -111,11 +116,7 @@ export default class SampleForm extends React.Component {
         id={id}
         checked={isChecked}
         onChange={() => this.handleToggle(key)}
-        label={
-          <label htmlFor={id} style={{ cursor: 'pointer', marginBottom: 0 }}>
-            {label}
-          </label>
-        }
+        label={<label htmlFor={id} style={{ cursor: 'pointer', marginBottom: 0 }}>{label}</label>}
       />
     );
   };
@@ -205,7 +206,11 @@ export default class SampleForm extends React.Component {
 
   structureEditorButton(isDisabled) {
     return (
-      <Button onClick={this.props.showStructureEditor} disabled={isDisabled} variant="light">
+      <Button
+        onClick={this.props.showStructureEditor}
+        disabled={isDisabled}
+        variant="light"
+      >
         <i className="fa fa-pencil" />
       </Button>
     );
@@ -216,12 +221,13 @@ export default class SampleForm extends React.Component {
     return (
       <OverlayTrigger
         placement="top"
-        overlay={
+        overlay={(
           <Tooltip id="assignButton">
-            Information mirrored to the reaction table describing the content of pure compound or amount of pure
-            compound in a given solution
+            Information mirrored to the reaction table describing the content of pure
+            compound or amount of pure compound in a given solution
           </Tooltip>
-        }>
+        )}
+      >
         <Button>
           <i className="fa fa-info" />
         </Button>
@@ -242,7 +248,7 @@ export default class SampleForm extends React.Component {
       );
     }
 
-    return <span />;
+    return (<span />);
   }
 
   decoupledCheckbox(sample) {
@@ -258,7 +264,7 @@ export default class SampleForm extends React.Component {
       );
     }
 
-    return <span />;
+    return (<span />);
   }
 
   openMolName(sample) {
@@ -366,9 +372,7 @@ export default class SampleForm extends React.Component {
     const mno = sample.molecule_name;
     const newMolecule = !mno || sample._molecule.id !== mno.mid;
     let moleculeNames = newMolecule ? [] : [mno];
-    if (sample && mnos) {
-      moleculeNames = moleculeNames.concat(mnos);
-    }
+    if (sample && mnos) { moleculeNames = moleculeNames.concat(mnos); }
 
     const formattedOptions = moleculeNames.filter((name) => name).map((name) => {
       if (typeof name === 'string') {
@@ -419,12 +423,10 @@ export default class SampleForm extends React.Component {
               }
             }}
             isLoading={isMolNameLoading}
-            value={
-              formattedOptions.find(({ value, label }) => {
-                if (!mno) return false;
-                return String(value) === String(mno.value) || String(label) === String(mno.label);
-              }) || null
-            }
+            value={formattedOptions.find(({ value, label }) => {
+              if (!mno) return false;
+              return String(value) === String(mno.value) || String(label) === String(mno.label);
+            }) || null}
             onCreateOption={(inputValue) => {
               this.setState({ moleculeNameInputValue: inputValue });
               this.addMolName(inputValue);
@@ -465,10 +467,9 @@ export default class SampleForm extends React.Component {
             this.handleFieldChanged('xref_inventory_label', value);
           } else {
             NotificationActions.add({
-              message:
-                'Could not find next inventory label. ' +
-                'Please assign a prefix and a counter for a valid collection first.',
-              level: 'error',
+              message: 'Could not find next inventory label. '
+                + 'Please assign a prefix and a counter for a valid collection first.',
+              level: 'error'
             });
           }
         })
@@ -478,7 +479,7 @@ export default class SampleForm extends React.Component {
     } else {
       NotificationActions.add({
         message: 'Please select the collection to which sample belongs first',
-        level: 'error',
+        level: 'error'
       });
     }
   }
@@ -490,7 +491,7 @@ export default class SampleForm extends React.Component {
       sample[field] = e.value;
       NotificationActions.add({
         message: 'Purity value should be >= 0 and <=1',
-        level: 'error',
+        level: 'error'
       });
     } else if (/amount/.test(field)) {
       this.handleAmountChanged(e);
@@ -526,22 +527,28 @@ export default class SampleForm extends React.Component {
           delete sample.residues[0].custom_info.surface_type;
         }
       }
-      if (!sample[field] && (sample.molfile || '') === '') {
+      if (!sample[field] && ((sample.molfile || '') === '')) {
         handleSampleChanged(sample);
       } else {
         handleSampleChanged(sample, this.props.decoupleMolecule);
       }
-    } else {
-      handleSampleChanged(sample);
-    }
+    } else { handleSampleChanged(sample); }
   }
 
   btnCalculateMolecularMass() {
     const { sumFormula } = this.state;
 
     return (
-      <OverlayTrigger placement="top" overlay={<Tooltip id="molMass">calculate the molecular mass</Tooltip>}>
-        <Button onClick={() => this.handleMassCalculation(sumFormula)} variant="light">
+      <OverlayTrigger
+        placement="top"
+        overlay={
+          <Tooltip id="molMass">calculate the molecular mass</Tooltip>
+        }
+      >
+        <Button
+          onClick={() => this.handleMassCalculation(sumFormula)}
+          variant="light"
+        >
           <i className="fa fa-cog" />
         </Button>
       </OverlayTrigger>
@@ -552,8 +559,16 @@ export default class SampleForm extends React.Component {
     const resetTooltip = 'click to mark as undefined structure - it will reset the Molecular mass';
 
     return (
-      <OverlayTrigger placement="top" overlay={<Tooltip id="markUndefined">{resetTooltip}</Tooltip>}>
-        <Button onClick={this.markSumFormulaUndefined} variant="light">
+      <OverlayTrigger
+        placement="top"
+        overlay={
+          <Tooltip id="markUndefined">{resetTooltip}</Tooltip>
+        }
+      >
+        <Button
+          onClick={this.markSumFormulaUndefined}
+          variant="light"
+        >
           <i className="fa fa-tag" />
         </Button>
       </OverlayTrigger>
@@ -572,7 +587,7 @@ export default class SampleForm extends React.Component {
     this.clearMolecularMass();
     NotificationActions.add({
       message: 'Could not calculate the molecular mass for this sum formula',
-      level: 'error',
+      level: 'error'
     });
   }
 
@@ -590,7 +605,7 @@ export default class SampleForm extends React.Component {
         } else {
           NotificationActions.add({
             message: 'Could not calculate the molecular mass for this sum formula',
-            level: 'error',
+            level: 'error'
           });
         }
       })
@@ -599,7 +614,7 @@ export default class SampleForm extends React.Component {
 
         NotificationActions.add({
           message: 'An error occurred while calculating the molecular mass',
-          level: 'error',
+          level: 'error'
         });
       });
   }
@@ -609,8 +624,8 @@ export default class SampleForm extends React.Component {
   }
 
   textInput(sample, field, label, disabled = false, readOnly = false) {
-    const updateValue =
-      (/^xref_/.test(field) && sample.xref ? sample.xref[field.split('xref_')[1]] : sample[field]) || '';
+    const updateValue = (/^xref_/.test(field) && sample.xref
+      ? sample.xref[field.split('xref_')[1]] : sample[field]) || '';
 
     return (
       <Form.Group className="w-100">
@@ -633,12 +648,21 @@ export default class SampleForm extends React.Component {
 
   nextInventoryLabel(sample) {
     const overlayMessage = sample.isNew
-      ? 'Inventory label will be auto generated on sample create,' +
-        ' if sample belongs to a collection with a predefined label'
+      ? 'Inventory label will be auto generated on sample create,'
+      + ' if sample belongs to a collection with a predefined label'
       : 'click to assign next inventory label';
     return (
-      <OverlayTrigger placement="top" overlay={<Tooltip id="FetchNextInventoryLabel">{overlayMessage}</Tooltip>}>
-        <Button onClick={this.fetchNextInventoryLabel} disabled={sample.isNew} variant="light">
+      <OverlayTrigger
+        placement="top"
+        overlay={
+          <Tooltip id="FetchNextInventoryLabel">{overlayMessage}</Tooltip>
+        }
+      >
+        <Button
+          onClick={this.fetchNextInventoryLabel}
+          disabled={sample.isNew}
+          variant="light"
+        >
           <i className="fa fa-tag" />
         </Button>
       </OverlayTrigger>
@@ -666,7 +690,9 @@ export default class SampleForm extends React.Component {
       <NumericInputUnit
         field="flash_point"
         inputDisabled={false}
-        onInputChange={(newValue, newUnit) => this.handleFieldChanged(field, newValue, newUnit)}
+        onInputChange={
+          (newValue, newUnit) => this.handleFieldChanged(field, newValue, newUnit)
+        }
         unit={unit}
         numericValue={value}
         label={label}
@@ -706,7 +732,7 @@ export default class SampleForm extends React.Component {
     title = '',
     block = false,
     notApplicable = false,
-    showInfoTooltipTotalVol = false
+    showInfoTooltipTotalVol = false,
   ) {
     if (sample.contains_residues && unit === 'l') return false;
     const value = !isNaN(sample[field]) ? sample[field] : null;
@@ -976,31 +1002,23 @@ export default class SampleForm extends React.Component {
           <ButtonGroupToggleButton
             onClick={() => this.setState({ densityMolarity: 'density' })}
             active={densityMolarity === 'density'}
-            size="xxsm">
+            size="xxsm"
+          >
             Density
           </ButtonGroupToggleButton>
           <ButtonGroupToggleButton
             onClick={() => this.setState({ densityMolarity: 'molarity' })}
             active={densityMolarity === 'molarity'}
-            size="xxsm">
+            size="xxsm"
+          >
             Molarity
           </ButtonGroupToggleButton>
         </ButtonGroup>
-        {densityMolarity === 'density'
-          ? this.numInputWithoutTable(sample, 'density', 'g/ml', ['n'], 5, '', '', polyDisabled, '', false, isPolymer)
-          : this.numInputWithoutTable(
-              sample,
-              'molarity_value',
-              'M',
-              ['n'],
-              5,
-              '',
-              '',
-              polyDisabled,
-              '',
-              false,
-              isPolymer
-            )}
+        {densityMolarity === 'density' ? (
+          this.numInputWithoutTable(sample, 'density', 'g/ml', ['n'], 5, '', '', polyDisabled, '', false, isPolymer)
+        ) : (
+          this.numInputWithoutTable(sample, 'molarity_value', 'M', ['n'], 5, '', '', polyDisabled, '', false, isPolymer)
+        )}
       </>
     );
   }
@@ -1143,7 +1161,7 @@ export default class SampleForm extends React.Component {
 
   hierarchicalMaterialTable() {
     const { components } = this.state;
-    const { rowsData} = buildHierarchicalMaterialRows(components);
+    const { rowsData } = buildHierarchicalMaterialRows(components);
 
     return (
       <>
@@ -1209,18 +1227,25 @@ export default class SampleForm extends React.Component {
 
     return (
       <Form>
-        <Row className="align-items-end mb-4">{this.sampleTypeInput()}</Row>
-        {selectedSampleType?.value !== 'Mixture' && selectedSampleType?.value !== SAMPLE_TYPE_HIERARCHICAL_MATERIAL ? (
-          <>
-            <Row className="align-items-end mb-4">
-              <Col>{this.moleculeInput()}</Col>
-            </Row>
-            <Row className="align-items-end mb-4">
-              <Col>{this.textInput(sample, 'name', 'Sample name')}</Col>
-              <Col>{this.stereoAbsInput()}</Col>
-              <Col>{this.stereoRelInput()}</Col>
-              {enableSampleDecoupled && <Col xs={2}>{this.decoupledCheckbox(sample)}</Col>}
-            </Row>
+        <Row className="align-items-end mb-4">
+          {this.sampleTypeInput()}
+        </Row>
+        {
+          selectedSampleType?.value !== 'Mixture' && selectedSampleType?.value !== SAMPLE_TYPE_HIERARCHICAL_MATERIAL ? (
+            <>
+              <Row className="align-items-end mb-4">
+                <Col>{this.moleculeInput()}</Col>
+              </Row>
+              <Row className="align-items-end mb-4">
+                <Col>{this.textInput(sample, 'name', 'Sample name')}</Col>
+                <Col>{this.stereoAbsInput()}</Col>
+                <Col>{this.stereoRelInput()}</Col>
+                {
+                  enableSampleDecoupled && (
+                    <Col xs={2}>{this.decoupledCheckbox(sample)}</Col>
+                  )
+                }
+              </Row>
 
               <Row className="align-items-end mb-4">
                 <Col>{this.textInput(sample, 'short_label', 'Short label', true)}</Col>
@@ -1324,6 +1349,9 @@ export default class SampleForm extends React.Component {
           )
         }
 
+        {selectedSampleType?.value === SAMPLE_TYPE_HIERARCHICAL_MATERIAL
+          && this.hierarchicalMaterialComponentsList(sample)}
+
         {selectedSampleType?.value === 'Mixture' && (
           <>
             <br />
@@ -1355,11 +1383,11 @@ export default class SampleForm extends React.Component {
           </>
         )}
 
-        {selectedSampleType?.value === SAMPLE_TYPE_HIERARCHICAL_MATERIAL
-          && this.hierarchicalMaterialComponentsList(sample)}
-
         <Row>
-          <SampleDetailsSolvents sample={sample} onChange={handleSampleChanged} />
+          <SampleDetailsSolvents
+            sample={sample}
+            onChange={handleSampleChanged}
+          />
         </Row>
 
         {this.sampleDescription(sample)}
