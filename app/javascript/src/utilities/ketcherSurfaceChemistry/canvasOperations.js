@@ -53,6 +53,15 @@ import {
 } from 'src/utilities/ketcherSurfaceChemistry/Ketcher2SurfaceChemistryUtils';
 import { findTemplateIdCategoryFromTemplates } from 'src/utilities/ketcherSurfaceChemistry/iconBaseProvider';
 
+// Use only CTAB (up to and including M  END) so we never duplicate > <PolymersList> when
+// the editor's molfile already contains a PolymersList section from a previous load.
+const ctabLinesOnly = (molfileString) => {
+  if (!molfileString || typeof molfileString !== 'string') return [];
+  const lines = molfileString.trim().split('\n');
+  const endIdx = lines.findIndex((line) => line && /^M\s+END/.test(line));
+  return endIdx >= 0 ? lines.slice(0, endIdx + 1) : lines;
+};
+
 // function when a canvas is saved using main "SAVE" button
 const arrangePolymers = async (canvasData, editor) => {
   // grab image index
@@ -65,7 +74,8 @@ const arrangePolymers = async (canvasData, editor) => {
     .filter((i) => ALIAS_PATTERNS.threeParts.test(i.alias))
     .forEach((i) => listOfAtomsWithAlias.push(i.alias));
   const processString = await templateAliasesPrepare(listOfAtomsWithAlias);
-  return [...canvasData.split('\n'), KET_TAGS.polymerIdentifier, processString];
+  const ctabLines = ctabLinesOnly(canvasData);
+  return [...ctabLines, KET_TAGS.polymerIdentifier, processString];
 };
 
 // helper function to arrange text nodes for formula
@@ -100,25 +110,6 @@ const arrangeTextNodes = async (ket2Molfile) => {
       atomCount += 1;
     }
   }
-  ket2Molfile.push(...assembleTextList, KET_TAGS.textNodeIdentifierClose);
-  return ket2Molfile;
-};
-
-// sort and join / text nodes
-const traverseAtomForFormulaFormation = async (ket2Lines, textNodesPairs, startAtoms, endAtom) => {
-  const componentsList = [];
-  let count = 0;
-  for (let i = startAtoms + 1; i <= endAtom; i++) {
-    const pairValue = textNodesPairs[count];
-    if (pairValue) {
-      const templateId = pairValue.unique.split('_')[1];
-      const categoryName = await findTemplateIdCategoryFromTemplates(templateId);
-      componentsList.push({ [pairValue.text]: categoryName });
-      delete textNodesPairs[count];
-      const Y = parseFloat(ket2Lines[i].trim().split('   ')[1]);
-      textNodesPairs[Y.toFixed(4)] = pairValue.text;
-    }
-  }
 
   if (!assembleTextList.length) return ket2Molfile;
 
@@ -129,154 +120,6 @@ const traverseAtomForFormulaFormation = async (ket2Lines, textNodesPairs, startA
   );
 
   return ket2Molfile;
-  return { formula: Object.values(sortedYIndices).join('/'), componentsList };
-};
-
-// collect text node with index
-const collectTextListing = async (ket2Lines, startTextNode, endTextNode) => {
-  const struct = {};
-  for (let i = startTextNode + 1; i < endTextNode; i++) {
-    const item = ket2Lines[i].split(KET_TAGS.textIdentifier);
-    if (item.length === 4) {
-      const [idx, , unique, text] = item;
-      struct[idx] = { text, unique };
-    }
-  }
-  return struct;
-};
-
-const connectionHash = async (ket2Lines, bondsCount, startAtoms, atomsCount) => {
-  const connections = {};
-  const startIdx = atomsCount + startAtoms + 1;
-  for (let i = startIdx; i < startIdx + bondsCount; i++) {
-    const line = ket2Lines[i]
-      .trim()
-      .split(' ')
-      .filter((j) => j !== '');
-    if (line.length >= 3) {
-      const [atom1, atom2] = line;
-      console.log('atom1, atom2', atom1, atom2);
-      if (!connections[atom1]) connections[atom1] = [];
-      connections[atom1].push(atom2);
-    }
-  }
-  console.log('connections', connections);
-  console.log('texts', textList);
-  return smartInlineExpand(connections);
-};
-
-const smartInlineExpand = (input) => {
-  const result = JSON.parse(JSON.stringify(input)); // deep clone
-  const keysToDelete = new Set();
-
-  for (const key in result) {
-    const children = result[key];
-    for (const child of children) {
-      if (input[child]) {
-        const childValues = input[child];
-        const nextLevelKey = findNextKey(key, result);
-        if (nextLevelKey) {
-          const nextLevelValues = result[nextLevelKey];
-          const newItems = childValues.filter((val) => !nextLevelValues.includes(val));
-          if (newItems.length > 0) {
-            result[nextLevelKey].push(...newItems);
-            keysToDelete.add(child);
-          }
-        }
-      }
-    }
-  }
-
-  // Remove any fully inlined keys
-  for (const key of keysToDelete) {
-    delete result[key];
-  }
-
-  return result;
-};
-
-// Helper: find the "next" key in insertion order
-function findNextKey(currentKey, hash) {
-  const keys = Object.keys(hash);
-  const idx = keys.indexOf(currentKey);
-  if (idx !== -1 && idx + 1 < keys.length) {
-    return keys[idx + 1];
-  }
-  return null;
-}
-
-function connectWithUnderscore(connections, data) {
-  const result = {};
-
-  for (const key in connections) {
-    const connectedKeys = connections[key];
-
-    const texts = connectedKeys.map((k) => data[k]?.text).filter(Boolean); // remove undefined/null texts
-
-    result[key] = texts.join('_');
-  }
-
-  return result;
-}
-
-const subtractOneFromAll = (obj) => {
-  const result = {};
-  for (const key in obj) {
-    result[key] = obj[key].map((val) => Number(val) - 1);
-  }
-  return result;
-};
-
-// process text nodes into for formula
-const assembleTextDescriptionFormula = async (ket2Lines, editor) => {
-  const startAtoms = 3;
-  const splitsHeaders = ket2Lines[3]
-    .trim()
-    .split(' ')
-    .map((i) => i.trim())
-    .filter((i) => i !== '');
-  const atomsCount = parseInt(splitsHeaders[0]);
-  const bondsCount = parseInt(splitsHeaders[1]);
-  const startTextNode = ket2Lines.indexOf(KET_TAGS.textNodeIdentifier);
-  const endTextNode = ket2Lines.indexOf(KET_TAGS.textNodeIdentifierClose);
-  const endAtom = atomsCount + 3;
-  const indicesMap = {};
-  for (let i = 0; i < atomsCount; i++) {
-    indicesMap[i] = [];
-  }
-  const data = JSON.parse(await editor.structureDef.editor.getKet());
-
-  for (let mol = 0; mol < mols.length; mol++) {
-    const { bonds } = data[mols[mol]] || {};
-    for (let atom1Bond = 0; atom1Bond < bonds?.length; atom1Bond++) {
-      const [atom1, atom2] = bonds[atom1Bond].atoms || [];
-      for (let atom2Bond = atom1Bond; atom2Bond < bonds?.length; atom2Bond++) {
-        if (atom1 !== atom2) {
-          indicesMap[atom1].push(atom2);
-        }
-      }
-    }
-  }
-
-  const atomNumbersConnectWith_ = [];
-  const indicesKeys = Object.keys(indicesMap);
-  for (let atom = 0; atom < indicesKeys.length; atom++) {
-    const connectedAtoms = indicesMap[atom];
-    if (connectedAtoms.length > 1) {
-      atomNumbersConnectWith_.push(...connectedAtoms);
-    }
-  }
-
-  const textNodesPairs = await collectTextListing(ket2Lines, startTextNode, endTextNode);
-
-  for (let i = 0; i < atomNumbersConnectWith_.length; i++) {
-    const idx = atomNumbersConnectWith_[i];
-    if (textNodesPairs[idx]) {
-      textNodesPairs[idx].text += '_'; // textNodesPairs[idx].text.replace(/_/g, '');
-    }
-  }
-
-  return traverseAtomForFormulaFormation(ket2Lines, textNodesPairs, startAtoms, endAtom);
 };
 
 /* istanbul ignore next */
@@ -557,23 +400,7 @@ const onAddTextFromEditor = async (editor, textContent, selectedImageForTextNode
         ];
       }
 
-      // Save and update canvas - this will trigger onTemplateMove which handles positioning
-      // IMPORTANT: Store textList before saveMoveCanvas because fetchKetcherData might overwrite it
-      // if Ketcher hasn't processed the text node yet
-      const textListBeforeSave = [...textList];
-      const textNodeStructBeforeSave = { ...textNodeStruct };
-
       await saveMoveCanvas(editor, latestData, true, true, false);
-
-      // Restore textList if it was lost during fetchKetcherData
-      // This can happen if Ketcher hasn't processed the text node yet
-      if (textList.length < textListBeforeSave.length) {
-        textListSetter(textListBeforeSave);
-        textNodeStructSetter(textNodeStructBeforeSave);
-      }
-
-      // Ensure ImagesToBeUpdated is set to trigger rendering
-      // onTemplateMove already sets this, but we ensure it's set here too
       ImagesToBeUpdatedSetter(true);
     }
 
@@ -827,13 +654,6 @@ const getSvgFromCanvas = async (iframeRef) => {
     console.error('getSvgFromCanvas: Error generating SVG', error);
     return { svg: null, message: error?.message || 'Unknown error in getSvgFromCanvas' };
   }
-
-  const serialized = JSON.stringify(dataCopy);
-  if (recenter) {
-    await editor.structureDef.editor.setMolecule(serialized);
-    return;
-  }
-  await editor.structureDef.editor.setMolecule(serialized, { rescale: false });
 };
 
 const applyCanvasDataToEditor = async (editor, dataCopy, recenter = false) => {
@@ -860,7 +680,7 @@ const saveMoveCanvas = async (
   recenter = false,
   moveOptions = {}
 ) => {
-  const dataCopy = data || latestData;
+  let dataCopy = data || latestData;
   if (!editor || !editor.structureDef) {
     console.error('Editor is undefined');
     return;
@@ -870,21 +690,18 @@ const saveMoveCanvas = async (
     return;
   }
 
+  // Text nodes are non-standard and never returned by getKet(). Always inject the local
+  // textList into the payload so the editor renders them visually.
+  if (textList.length > 0) {
+    dataCopy = JSON.parse(JSON.stringify(dataCopy));
+    const nonText = (dataCopy.root?.nodes || []).filter((n) => n.type !== 'text');
+    dataCopy.root.nodes = [...nonText, ...textList];
+  }
+
   if (isMoveRequired) {
     await applyCanvasDataToEditor(editor, dataCopy, recenter);
-
-    // IMPORTANT: Preserve textList from dataCopy before fetching
-    // Ketcher might not have processed the text node yet when we fetch back
-    const textNodesFromDataCopy = dataCopy?.root?.nodes?.filter((n) => n.type === 'text') || [];
-    const preservedTextList = textNodesFromDataCopy.length > 0 ? textNodesFromDataCopy : textList;
-
     if (isFetchRequired) {
       await fetchKetcherData(editor);
-
-      // Restore textList from dataCopy if it was lost during fetchKetcherData
-      if (preservedTextList.length > textList.length) {
-        textListSetter(preservedTextList);
-      }
     }
     await onTemplateMove(editor, recenter, moveOptions);
     return;
@@ -1037,13 +854,6 @@ function processJsonMolecules(jsonData, verticalThreshold = 1) {
   return finalCombinedString;
 }
 
-// Check if V2000 molfile is empty (0 atoms)
-const isMolfileEmpty = (molfile) => {
-  if (!molfile || typeof molfile !== 'string') return true;
-  const match = molfile.match(/^\s*(\d+)\s+\d+.*V2000$/m);
-  return match ? parseInt(match[1], 10) === 0 : true;
-};
-
 const replaceAliasesWithIndexesAndCollectComponents = async (comboString) => {
   const textNodeStructureModified = {};
   const textNodeStructureForComponents = [];
@@ -1073,6 +883,41 @@ const replaceAliasesWithIndexesAndCollectComponents = async (comboString) => {
     .filter(Boolean) // remove empty parts
     .join('/');
   return { replacedString, textNodeStructureForComponents };
+};
+
+// Check if V2000 molfile is empty (0 atoms)
+const isMolfileEmpty = (molfile) => {
+  if (!molfile || typeof molfile !== 'string') return true;
+  const match = molfile.match(/^\s*(\d+)\s+\d+.*V2000$/m);
+  return match ? parseInt(match[1], 10) === 0 : true;
+};
+
+// Replace placeholder atom symbol A with R# in the atom block so the molfile
+// is recognized as containing residues (surface chemistry) by the rest of the app.
+const replaceAtomSymbolAWithRHashInAtomBlock = (lines) => {
+  const result = [...lines];
+  const isV3000 = result.some((l) => l && l.includes('V3000'));
+
+  if (isV3000) {
+    for (let i = 0; i < result.length; i++) {
+      if (result[i] && /^M  V30 \d+ A\s/.test(result[i])) {
+        result[i] = result[i].replace(/^(M  V30 \d+) A(\s)/, '$1 R#$2');
+      }
+    }
+  } else {
+    // V2000: atom block from line index 4 until M  END
+    const atomBlockStart = KET_TAGS.molfileHeaderLinenumber;
+    for (let i = atomBlockStart; i < result.length; i++) {
+      if (result[i] && /^M\s+END/.test(result[i])) break;
+      const parts = result[i].split(' ');
+      const idx = parts.indexOf(KET_TAGS.inspiredLabel);
+      if (idx !== -1) {
+        parts[idx] = KET_TAGS.RGroupTag;
+        result[i] = parts.join(' ');
+      }
+    }
+  }
+  return result;
 };
 
 const onFinalCanvasSave = async (editor, iframeRef) => {
@@ -1109,6 +954,9 @@ const onFinalCanvasSave = async (editor, iframeRef) => {
     await reArrangeImagesOnCanvas(iframeRef); // assemble image on the canvas
     ket2Lines = await arrangePolymers(canvasDataMol, editor); // polymers added
     ket2Lines = await arrangeTextNodes(ket2Lines); // text node
+    if (imagesList.length > 0) {
+      ket2Lines = replaceAtomSymbolAWithRHashInAtomBlock(ket2Lines);
+    }
     if (textList?.length) {
       const molStrings = processJsonMolecules(ketFormatData);
       const {
@@ -1119,6 +967,7 @@ const onFinalCanvasSave = async (editor, iframeRef) => {
       textNodesFormula = replacedString;
     }
     ket2Lines.push(KET_TAGS.fileEndIdentifier);
+
     const svgElement = imagesList.length > 0 ? await getSvgFromCanvas(iframeRef) : await prepareSvg(editor);
     resetStore();
     return {

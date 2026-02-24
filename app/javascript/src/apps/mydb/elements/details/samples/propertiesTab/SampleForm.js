@@ -370,7 +370,6 @@ export default class SampleForm extends React.Component {
       moleculeNames = moleculeNames.concat(mnos);
     }
 
-<<<<<<< HEAD
     const formattedOptions = moleculeNames.filter((name) => name).map((name) => {
       if (typeof name === 'string') {
         return { label: name, value: name, type: '' };
@@ -390,19 +389,6 @@ export default class SampleForm extends React.Component {
       }
       return true;
     });
-=======
-    const formattedOptions = moleculeNames
-      .filter((name) => name)
-      .map((name) => {
-        if (typeof name === 'string') {
-          return { label: name, value: name };
-        }
-        return {
-          label: name.label || name.value || name.name || String(name),
-          value: name.value || name.label || name.name || String(name),
-        };
-      });
->>>>>>> c0508b3a8 (chore: UI for sample type HeterogeneousMaterial)
 
     return (
       <Form.Group>
