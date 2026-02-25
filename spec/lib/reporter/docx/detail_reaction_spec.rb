@@ -187,9 +187,14 @@ describe 'Reporter::Docx::DetailReaction instance' do
     end
 
     it 'has correct content' do
+      sbmm_reactant = content[:reactants].find { |r| r[:short_label] == sbmm_sample.short_label }
+
       expect(content[:title]).to eq(tit)
       expect(content[:solvents]).to eq("#{s4.preferred_label} (55.5ml)")
       expect(content[:reactants].pluck(:short_label)).to include(sbmm_sample.short_label)
+      expect(sbmm_reactant[:mass_unit]).to eq('g')
+      expect(sbmm_reactant[:vol_unit]).to eq('l')
+      expect(sbmm_reactant[:mmol_unit]).to eq('mol')
       expect(content[:description]).to eq(
         Sablon.content(:html, Reporter::Delta.new(des).getHTML)
       )
@@ -298,7 +303,7 @@ describe 'Reporter::Docx::DetailReaction instance' do
           { 'insert' => '{S1' },
           { 'insert' => '} ' },
           { 'attributes' => { 'bold' => false, 'font-size' => 12 }, 'insert' => s4.preferred_label },
-          { 'insert' => ' (56 mL); ' },
+          { 'insert' => ' (56 ml); ' },
           { 'insert' => 'Yield ' },
           { 'insert' => '{P1|' },
           { 'attributes' => { 'bold' => 'true', 'font-size' => 12 }, 'insert' => serial },
