@@ -46,6 +46,7 @@ import { parseNumericString } from 'src/utilities/MathUtils';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
 import WeightPercentageReactionStore from 'src/stores/alt/stores/WeightPercentageReactionStore';
+import { convertUnits } from 'src/components/staticDropdownOptions/units';
 
 export default class ReactionDetailsScheme extends React.Component {
   constructor(props) {
@@ -1522,14 +1523,40 @@ export default class ReactionDetailsScheme extends React.Component {
     return (sample.amount_mol / feedstockMolValue);
   }
 
-  // Handle mixture samples differently
+  /**
+   * Updates SBMM amount from an equivalent-derived mol value while preserving
+   * the sample's currently selected mol unit.
+   *
+   * @param {SequenceBasedMacromoleculeSample} sample - SBMM sample to update.
+   * @param {number} newAmountMol - Canonical amount in mol.
+   * @returns {void}
+   */
+  // eslint-disable-next-line class-methods-use-this
+  updateSbmmAmountFromEquivalent(sample, newAmountMol) {
+    // Keep the sample's active mol unit, defaulting to mol when missing.
+    const molUnit = sample.amount_as_used_mol_unit || 'mol';
+    // Convert canonical mol input into the unit currently used by SBMM fields.
+    const convertedAmount = convertUnits(newAmountMol, 'mol', molUnit);
+
+    // Persist converted mol amount in the sample.
+    sample.setAmount({ value: convertedAmount, unit: molUnit });
+    // Recalculate dependent mass field derived from amount_as_used_mol.
+    sample.calculateAmountAsUsedMass();
+  }
+
+  /**
+   * Applies equivalent-driven amount updates for SBMM, mixture, and regular samples.
+   *
+   * @param {Sample|SequenceBasedMacromoleculeSample} sample - Target sample.
+   * @param {number} newAmountMol - Calculated amount in mol.
+   * @returns {void}
+   */
   // eslint-disable-next-line class-methods-use-this
   handleEquivalentBasedAmountUpdate(sample, newAmountMol) {
     // SBMM amount for equivalent changes should be driven by mol amount.
     // Using mass normalization here clears mol in SBMM model setters.
     if (isSbmmSample(sample)) {
-      sample.setAmount({ value: newAmountMol, unit: 'mol' });
-      sample.calculateAmountAsUsedMass();
+      this.updateSbmmAmountFromEquivalent(sample, newAmountMol);
       return;
     }
 

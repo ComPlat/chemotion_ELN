@@ -1,13 +1,74 @@
 import Element from 'src/models/Element';
 import Container from 'src/models/Container';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import { convertUnits, defaultUnits, conversionFactors } from 'src/components/staticDropdownOptions/units';
+import {
+  convertUnits,
+  defaultUnits,
+  conversionFactors,
+  normalizeUnitKey,
+} from 'src/components/staticDropdownOptions/units';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+
+/**
+ * Migrates legacy split-SBMM volume units saved as `nL` while the UI `n` prefix
+ * incorrectly represented nano instead of base unit.
+ *
+ * @param {Object} sampleArgs - Raw SBMM payload used to initialize the model.
+ * @returns {void}
+ */
+const fixLegacySplitUnits = (sampleArgs) => {
+  // Migration applies only to split SBMM records created from reaction materials.
+  if (!sampleArgs.is_split) return;
+
+  const normalizeLegacySplitUnit = (valueKey, unitKey, legacyUnit, canonicalUnit) => {
+    // Skip when this field is already persisted with the canonical unit.
+    if (sampleArgs[unitKey] !== legacyUnit) return;
+
+    const rawValue = sampleArgs[valueKey];
+    // Convert existing numeric value to preserve physical quantity after unit rewrite.
+    if (rawValue !== undefined && rawValue !== null && rawValue !== '') {
+      sampleArgs[valueKey] = convertUnits(rawValue, legacyUnit, canonicalUnit);
+    }
+    // Persist canonical unit so all downstream conversions use a stable key.
+    sampleArgs[unitKey] = canonicalUnit;
+  };
+
+  // Legacy correction for split SBMM records created while 'n' was interpreted as nano
+  // (instead of no-prefix/base unit) in reaction scheme unit toggles.
+  // Update both display and backing/internal volume fields used in calculations.
+  normalizeLegacySplitUnit('volume_as_used_value', 'volume_as_used_unit', 'nL', 'L');
+  normalizeLegacySplitUnit('_volume_as_used_value', '_volume_as_used_unit', 'nL', 'L');
+};
+
+/**
+ * Normalizes incoming persisted unit strings to canonical conversion keys.
+ *
+ * @param {Object} sampleArgs - Raw SBMM payload used to initialize the model.
+ * @returns {void}
+ */
+const normalizeLoadedUnits = (sampleArgs) => {
+  [
+    // Keep normalization limited to reaction-scheme coupled dimensions.
+    '_volume_as_used_unit',
+    'volume_as_used_unit',
+    '_amount_as_used_mass_unit',
+    'amount_as_used_mass_unit',
+    '_amount_as_used_mol_unit',
+    'amount_as_used_mol_unit',
+  ].forEach((field) => {
+    if (sampleArgs[field]) {
+      sampleArgs[field] = normalizeUnitKey(sampleArgs[field]);
+    }
+  });
+};
 
 export default class SequenceBasedMacromoleculeSample extends Element {
   constructor(args) {
     let newArgs = args;
     if (!newArgs.is_new) {
+      fixLegacySplitUnits(newArgs);
+      normalizeLoadedUnits(newArgs);
+
       if (!newArgs._concentration_value) {
         newArgs._concentration_value = newArgs.concentration_value;
       }
@@ -26,7 +87,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
       if (!newArgs._molarity_unit) {
         newArgs._molarity_unit = newArgs.molarity_unit;
       }
-      if (newArgs._molarity_value && newArgs._base_molarity_value && !newArgs._base_molarity_value) {
+      if (newArgs._molarity_value && newArgs._molarity_unit && !newArgs._base_molarity_value) {
         newArgs._base_molarity_value = convertUnits(newArgs.molarity_value, newArgs.molarity_unit, defaultUnits.molarity);
       }
       if (!newArgs._activity_value) {
@@ -93,6 +154,38 @@ export default class SequenceBasedMacromoleculeSample extends Element {
       newArgs._purity = newArgs.purity;
     }
     super(newArgs);
+  }
+
+  /**
+   * Normalizes a unit string for metric-prefix matching.
+   *
+   * @param {string} unit - Input unit text.
+   * @returns {string} Lowercased and trimmed unit token.
+   */
+  normalizedUnitForMetricPrefix(unit) {
+    return `${unit || ''}`.trim().toLowerCase();
+  }
+
+  /**
+   * Maps a concrete SBMM unit string to the reaction-scheme metric-prefix key
+   * expected by `NumeralInputWithUnitsCompo`.
+   *
+   * @param {string} [unit=''] - Unit label from SBMM fields.
+   * @returns {string} Prefix token expected by the UI (`k`, `m`, `u`, or `n`).
+   */
+  reactionSchemeMetricPrefix(unit = '') {
+    const normalized = this.normalizedUnitForMetricPrefix(unit);
+
+    if (['kg'].includes(normalized)) return 'k';
+    if (['mg', 'ml', 'mmol', 'mmol/l'].includes(normalized)) return 'm';
+    if ([
+      'ug', 'μg', 'µg',
+      'ul', 'μl', 'µl',
+      'umol', 'μmol', 'µmol',
+      'umol/l', 'μmol/l', 'µmol/l',
+    ].includes(normalized)) return 'u';
+    // In reaction scheme UI, `n` means no metric prefix (base unit).
+    return 'n';
   }
 
   /**
@@ -196,38 +289,21 @@ export default class SequenceBasedMacromoleculeSample extends Element {
    * @returns {string} The unit string with prefix (e.g., 'mmol', 'µg', 'mL')
    */
   buildUnitWithPrefix(baseUnit, prefix) {
-    if (!prefix || prefix === '') return baseUnit;
+    // In NumeralInputWithUnitsCompo, 'n' means no prefix (base unit),
+    // not nano. Keep SBMM unit conversion aligned with that convention.
+    if (!prefix || prefix === '' || prefix === 'n') return baseUnit;
 
     // Map prefix to unit prefix character
     const prefixMap = {
       'm': 'm',      // milli
-      'n': 'n',      // nano
       'u': 'µ',      // micro (use µ symbol)
       'µ': 'µ',      // micro
       'p': 'p',      // pico
+      'k': 'k',      // kilo
     };
 
     const prefixChar = prefixMap[prefix] || prefix;
     return `${prefixChar}${baseUnit}`;
-  }
-
-  /**
-   * Normalizes unit case to match conversionFactors keys
-   * Converts lowercase units to proper case (e.g., 'ml' -> 'mL', 'l' -> 'L')
-   * @param {string} unit - The unit string to normalize
-   * @returns {string} The normalized unit string
-   */
-  normalizeUnit(unit) {
-    if (!unit) return unit;
-    // Map lowercase units to conversionFactors keys
-    const unitMap = {
-      'l': 'L',
-      'ml': 'mL',
-      'µl': 'µL',
-      'ul': 'µL',
-      'nl': 'nL',
-    };
-    return unitMap[unit.toLowerCase()] || unit;
   }
 
   calculateValues(type) {
@@ -535,8 +611,9 @@ export default class SequenceBasedMacromoleculeSample extends Element {
       return;
     }
 
-    if (Number.isFinite(this.amount_mol) && this.amount_mol >= 0) {
-      this._concentration_rt_value = Number((this.amount_mol / volumeToUse).toFixed(8));
+    const amountMol = this.base_amount_as_used_mol_value;
+    if (Number.isFinite(amountMol) && amountMol >= 0) {
+      this._concentration_rt_value = Number((amountMol / volumeToUse).toFixed(8));
       this._concentration_rt_unit ??= 'mol/L';
     } else {
       this._concentration_rt_value = null;
@@ -646,9 +723,9 @@ export default class SequenceBasedMacromoleculeSample extends Element {
     return this._activity_unit || defaultUnits.activity;
   }
 
-  set activity_unit(value) {
-    this._activity_value = convertUnits(this.activity_value, this.activity_unit, value);
-    this._activity_unit = value;
+  set activity_unit(unit) {
+    this._activity_value = convertUnits(this.activity_value, this.activity_unit, unit);
+    this._activity_unit = unit;
   }
 
   get amount_as_used_mol_value() {
@@ -681,13 +758,15 @@ export default class SequenceBasedMacromoleculeSample extends Element {
     return this._amount_as_used_mol_unit || defaultUnits.amount_as_used_mol;
   }
 
-  set amount_as_used_mol_unit(value) {
-    const currentUnit = this.amount_as_used_mol_unit;
+  set amount_as_used_mol_unit(unit) {
+    const currentUnit = normalizeUnitKey(this.amount_as_used_mol_unit);
+    const normalizedUnit = normalizeUnitKey(unit);
     // Only convert if both units are valid and different
-    if (currentUnit && value && currentUnit !== value && conversionFactors[currentUnit] && conversionFactors[value]) {
-      this._amount_as_used_mol_value = convertUnits(this.amount_as_used_mol_value, currentUnit, value);
+    if (currentUnit && normalizedUnit && currentUnit !== normalizedUnit
+      && conversionFactors[currentUnit] && conversionFactors[normalizedUnit]) {
+      this._amount_as_used_mol_value = convertUnits(this.amount_as_used_mol_value, currentUnit, normalizedUnit);
     }
-    this._amount_as_used_mol_unit = value;
+    this._amount_as_used_mol_unit = normalizedUnit;
   }
 
   get amount_as_used_mass_value() {
@@ -719,13 +798,15 @@ export default class SequenceBasedMacromoleculeSample extends Element {
     return this._amount_as_used_mass_unit || defaultUnits.amount_as_used_mass;
   }
 
-  set amount_as_used_mass_unit(value) {
-    const currentUnit = this.amount_as_used_mass_unit;
+  set amount_as_used_mass_unit(unit) {
+    const currentUnit = normalizeUnitKey(this.amount_as_used_mass_unit);
+    const normalizedUnit = normalizeUnitKey(unit);
     // Only convert if both units are valid and different
-    if (currentUnit && value && currentUnit !== value && conversionFactors[currentUnit] && conversionFactors[value]) {
-      this._amount_as_used_mass_value = convertUnits(this.amount_as_used_mass_value, currentUnit, value);
+    if (currentUnit && normalizedUnit && currentUnit !== normalizedUnit
+      && conversionFactors[currentUnit] && conversionFactors[normalizedUnit]) {
+      this._amount_as_used_mass_value = convertUnits(this.amount_as_used_mass_value, currentUnit, normalizedUnit);
     }
-    this._amount_as_used_mass_unit = value;
+    this._amount_as_used_mass_unit = normalizedUnit;
   }
 
   get concentration_value() {
@@ -741,9 +822,9 @@ export default class SequenceBasedMacromoleculeSample extends Element {
     return this._concentration_unit || defaultUnits.concentration;
   }
 
-  set concentration_unit(value) {
-    this._concentration_value = convertUnits(this.concentration_value, this.concentration_unit, value);
-    this._concentration_unit = value;
+  set concentration_unit(unit) {
+    this._concentration_value = convertUnits(this.concentration_value, this.concentration_unit, unit);
+    this._concentration_unit = unit;
   }
 
   get concentration_rt_value() {
@@ -758,9 +839,9 @@ export default class SequenceBasedMacromoleculeSample extends Element {
     return this._concentration_rt_unit || 'mol/L';
   }
 
-  set concentration_rt_unit(value) {
-    this._concentration_rt_value = convertUnits(this.concentration_rt_value, this.concentration_rt_unit, value);
-    this._concentration_rt_unit = value;
+  set concentration_rt_unit(unit) {
+    this._concentration_rt_value = convertUnits(this.concentration_rt_value, this.concentration_rt_unit, unit);
+    this._concentration_rt_unit = unit;
   }
 
   get function_or_application() {
@@ -793,9 +874,9 @@ export default class SequenceBasedMacromoleculeSample extends Element {
     return this._molarity_unit || defaultUnits.molarity;
   }
 
-  set molarity_unit(value) {
-    this._molarity_value = convertUnits(this.molarity_value, this.molarity_unit, value);
-    this._molarity_unit = value;
+  set molarity_unit(unit) {
+    this._molarity_value = convertUnits(this.molarity_value, this.molarity_unit, unit);
+    this._molarity_unit = unit;
   }
 
   get activity_per_volume_value() {
@@ -826,9 +907,13 @@ export default class SequenceBasedMacromoleculeSample extends Element {
     return this._activity_per_volume_unit || defaultUnits.activity_per_volume;
   }
 
-  set activity_per_volume_unit(value) {
-    this._activity_per_volume_value = convertUnits(this.activity_per_volume_value, this.activity_per_volume_unit, value);
-    this._activity_per_volume_unit = value;
+  set activity_per_volume_unit(unit) {
+    this._activity_per_volume_value = convertUnits(
+      this.activity_per_volume_value,
+      this.activity_per_volume_unit,
+      unit
+    );
+    this._activity_per_volume_unit = unit;
   }
 
   get activity_per_mass_value() {
@@ -860,9 +945,13 @@ export default class SequenceBasedMacromoleculeSample extends Element {
     return this._activity_per_mass_unit || defaultUnits.activity_per_mass;
   }
 
-  set activity_per_mass_unit(value) {
-    this._activity_per_mass_value = convertUnits(this.activity_per_mass_value, this.activity_per_mass_unit, value);
-    this._activity_per_mass_unit = value;
+  set activity_per_mass_unit(unit) {
+    this._activity_per_mass_value = convertUnits(
+      this.activity_per_mass_value,
+      this.activity_per_mass_unit,
+      unit
+    );
+    this._activity_per_mass_unit = unit;
   }
 
   get volume_as_used_value() {
@@ -872,7 +961,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
   set volume_as_used_value(value) {
     this._volume_as_used_value = value;
     // Normalize unit case to match conversionFactors keys (e.g., 'ml' -> 'mL', 'l' -> 'L')
-    const normalizedUnit = this.normalizeUnit(this.volume_as_used_unit);
+    const normalizedUnit = normalizeUnitKey(this.volume_as_used_unit);
     this._base_volume_as_used_value = convertUnits(this.volume_as_used_value, normalizedUnit, defaultUnits.volume_as_used);
     this.calculateValues('volume_as_used');
     this.calculateConcentrationRt();
@@ -890,21 +979,21 @@ export default class SequenceBasedMacromoleculeSample extends Element {
     return this._volume_as_used_unit || defaultUnits.volume_as_used;
   }
 
-  set volume_as_used_unit(value) {
+  set volume_as_used_unit(unit) {
     const currentUnit = this.volume_as_used_unit;
 
     // Normalize unit case to match conversionFactors keys
-    const normalizedValue = this.normalizeUnit(value);
-    const normalizedUnit = this.normalizeUnit(currentUnit);
+    const normalizedUnit = normalizeUnitKey(unit);
+    const normalizedCurrentUnit = normalizeUnitKey(currentUnit);
     // Only convert if both units are valid and different
-    const unitsAreValid = normalizedUnit && normalizedValue
-      && normalizedUnit !== normalizedValue
-      && conversionFactors[normalizedUnit]
-      && conversionFactors[normalizedValue];
+    const unitsAreValid = normalizedCurrentUnit && normalizedUnit
+      && normalizedCurrentUnit !== normalizedUnit
+      && conversionFactors[normalizedCurrentUnit]
+      && conversionFactors[normalizedUnit];
     if (unitsAreValid) {
-      this._volume_as_used_value = convertUnits(this.volume_as_used_value, normalizedUnit, normalizedValue);
+      this._volume_as_used_value = convertUnits(this.volume_as_used_value, normalizedCurrentUnit, normalizedUnit);
     }
-    this._volume_as_used_unit = normalizedValue;
+    this._volume_as_used_unit = normalizedUnit;
   }
 
   get purity() {
@@ -974,16 +1063,21 @@ export default class SequenceBasedMacromoleculeSample extends Element {
   }
 
   /**
-   * Getter for amount_mol (amount in moles).
-   * Maps from amount_as_used_mol_value, converting to base unit (mol) if needed.
+   * Getter for amount_mol (amount in moles) in the reaction scheme.
+   * Computes normalized mol amount on-the-fly from value+unit to avoid stale cached base values.
+   * Always returns amount in base unit (mol).
    * @returns {number|null} Amount in moles, or null if not set
    */
   get amount_mol() {
-    if (this.base_amount_as_used_mol_value == null) {
+    const value = this.amount_as_used_mol_value;
+    const unit = this.amount_as_used_mol_unit || defaultUnits.amount_as_used_mol;
+
+    if (value === undefined || value === null || value === '' || !unit) {
       return null;
     }
-    // base_amount_as_used_mol_value is already in base unit (mol)
-    return this.base_amount_as_used_mol_value;
+
+    // Convert to base unit (mol) on-the-fly for consistency
+    return convertUnits(value, unit, defaultUnits.amount_as_used_mol);
   }
 
   /**
@@ -1009,48 +1103,48 @@ export default class SequenceBasedMacromoleculeSample extends Element {
   setAmount(amount) {
     if (!amount || !amount.unit || Number.isNaN(amount.value)) return;
 
-    const massUnits = new Set(['g', 'mg', 'µg', 'ng']);
-    const volumeUnits = new Set(['l', 'ml', 'µl', 'nl']);
+    const normalizedUnit = normalizeUnitKey(amount.unit);
+    const massUnits = new Set(['g', 'kg', 'mg', 'µg', 'ng']);
+    const volumeUnits = new Set(['L', 'mL', 'µL', 'nL']);
     const molUnits = new Set(['mol', 'mmol', 'µmol', 'nmol', 'pmol']);
     const activityUnits = new Set(['U', 'mU', 'kat', 'mkat', 'µkat', 'nkat']);
 
-    if (massUnits.has(amount.unit)) {
+    if (massUnits.has(normalizedUnit)) {
       // Set unit first, then value
       // This ensures the amount_as_used_mass_value setter uses the correct unit for conversion
-      this.amount_as_used_mass_unit = amount.unit;
+      this.amount_as_used_mass_unit = normalizedUnit;
       this.amount_as_used_mass_value = amount.value;
       this._amount_unit = 'g';
       return;
     }
 
-    if (volumeUnits.has(amount.unit)) {
+    if (volumeUnits.has(normalizedUnit)) {
       // Normalize unit case to match conversionFactors keys BEFORE setting value
       // This ensures the volume_as_used_value setter uses the correct unit for conversion
-      const normalizedUnit = this.normalizeUnit(amount.unit);
       this.volume_as_used_unit = normalizedUnit;
       this.volume_as_used_value = amount.value;
       this._amount_unit = 'l';
       return;
     }
 
-    if (molUnits.has(amount.unit)) {
-      this.amount_as_used_mol_unit = amount.unit;
+    if (molUnits.has(normalizedUnit)) {
+      this.amount_as_used_mol_unit = normalizedUnit;
       this.amount_as_used_mol_value = amount.value;
       this._amount_unit = 'mol';
       return;
     }
 
-    if (activityUnits.has(amount.unit)) {
+    if (activityUnits.has(normalizedUnit)) {
       // Handle activity units - set unit first, then value
       // Setting activity_value triggers calculateValues('activity') which recalculates volume, mass, and mol
-      this.activity_unit = amount.unit;
+      this.activity_unit = normalizedUnit;
       this.activity_value = amount.value;
       this._amount_unit = 'U';
       return;
     }
 
     // fallback
-    this.amount_as_used_mass_unit = amount.unit || 'g';
+    this.amount_as_used_mass_unit = normalizedUnit || 'g';
     this.amount_as_used_mass_value = amount.value;
     this._amount_unit = 'g';
   }
@@ -1064,11 +1158,12 @@ export default class SequenceBasedMacromoleculeSample extends Element {
    */
   setAmountAndNormalizeToGram(amount) {
     if (!amount || !amount.unit || Number.isNaN(amount.value)) return;
+    const normalizedUnit = normalizeUnitKey(amount.unit);
 
     // Convert to grams using convertUnits
     const valueInGrams = convertUnits(
       amount.value,
-      amount.unit,
+      normalizedUnit,
       'g'
     );
 
@@ -1482,6 +1577,36 @@ export default class SequenceBasedMacromoleculeSample extends Element {
 
     // Initialize container
     splitSbmm.container = Container.init();
+
+    // Rebuild base values from the active value/unit pairs so equivalent
+    // calculations on drop use consistent molar amount regardless of stale
+    // persisted `_base_*` values.
+    if (splitSbmm.amount_as_used_mol_value !== undefined && splitSbmm.amount_as_used_mol_value !== null
+      && splitSbmm.amount_as_used_mol_value !== '' && splitSbmm.amount_as_used_mol_unit) {
+      splitSbmm._base_amount_as_used_mol_value = convertUnits(
+        splitSbmm.amount_as_used_mol_value,
+        splitSbmm.amount_as_used_mol_unit,
+        defaultUnits.amount_as_used_mol
+      );
+    }
+
+    if (splitSbmm.volume_as_used_value !== undefined && splitSbmm.volume_as_used_value !== null
+      && splitSbmm.volume_as_used_value !== '' && splitSbmm.volume_as_used_unit) {
+      splitSbmm._base_volume_as_used_value = convertUnits(
+        splitSbmm.volume_as_used_value,
+        splitSbmm.volume_as_used_unit,
+        defaultUnits.volume_as_used
+      );
+    }
+
+    if (splitSbmm.amount_as_used_mass_value !== undefined && splitSbmm.amount_as_used_mass_value !== null
+      && splitSbmm.amount_as_used_mass_value !== '' && splitSbmm.amount_as_used_mass_unit) {
+      splitSbmm._base_amount_as_used_mass_value = convertUnits(
+        splitSbmm.amount_as_used_mass_value,
+        splitSbmm.amount_as_used_mass_unit,
+        defaultUnits.amount_as_used_mass
+      );
+    }
 
     // Calculate concentration_rt if amount_mol and volume are available
     // This ensures the Conc field displays the correct value when dropped into reaction

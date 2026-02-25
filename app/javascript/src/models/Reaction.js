@@ -903,8 +903,11 @@ export default class Reaction extends Element {
   }
 
   _updateEquivalentForMaterial(sample) {
-    if (this.referenceMaterial && this.referenceMaterial.amount_mol) {
-      sample.equivalent = sample.amount_mol / this.referenceMaterial.amount_mol;
+    const referenceAmountMol = this.referenceMaterial.amount_mol;
+    const sampleAmountMol = sample.amount_mol;
+
+    if (referenceAmountMol) {
+      sample.equivalent = sampleAmountMol / referenceAmountMol;
     }
   }
 
@@ -996,12 +999,15 @@ export default class Reaction extends Element {
   refreshEquivalent(material, refreshCoefficient) {
     let matGroup;
     const refMat = this.referenceMaterial;
-    if (refMat && refMat.amount_mol) {
+    const referenceAmountMol = refMat.amount_mol;
+
+    if (refMat && referenceAmountMol) {
       ['_starting_materials', '_reactants', '_solvents', '_products'].forEach((g) => {
         matGroup = this[g];
         if (matGroup) {
           this[g] = matGroup.map((mat) => {
             const m = mat;
+            const amountMol = m.amount_mol;
             if (m.id === material.id) {
               if (refreshCoefficient && m.id === refreshCoefficient.sId) {
                 m.coefficient = refreshCoefficient.coefficient;
@@ -1009,9 +1015,9 @@ export default class Reaction extends Element {
             }
             if (g === '_products' && m.gas_type !== 'gas') {
               const stoichiometryCoeff = (m.coefficient || 1.0) / (refMat?.coefficient || 1.0);
-              m.equivalent = m.amount_mol / refMat.amount_mol / stoichiometryCoeff;
+              m.equivalent = amountMol / referenceAmountMol / stoichiometryCoeff;
             } else {
-              m.equivalent = m.amount_mol / refMat.amount_mol;
+              m.equivalent = amountMol / referenceAmountMol;
             }
             return m;
           });

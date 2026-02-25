@@ -111,6 +111,63 @@ const defaultUnits = {
 };
 
 /**
+ * Normalizes user/backend unit variants to canonical keys used in `conversionFactors`.
+ *
+ * Accepts common aliases (e.g. `uM`, `ml`, `mol/l`) and Unicode variants,
+ * then returns the canonical unit token used by conversion logic.
+ *
+ * @param {string} unit - Raw unit string from UI or persisted payload.
+ * @returns {string} Canonical unit key (or original input when no mapping exists).
+ */
+const normalizeUnitKey = (unit) => {
+  if (!unit || typeof unit !== 'string') return unit;
+
+  const trimmed = unit.trim();
+  if (conversionFactors[trimmed]) return trimmed;
+  if (trimmed === 'M') return 'mol/L';
+  if (trimmed === 'mM') return 'mmol/L';
+  if (trimmed === 'uM' || trimmed === 'µM' || trimmed === 'μM') return 'µmol/L';
+  if (trimmed === 'nM') return 'nmol/L';
+  if (trimmed === 'pM') return 'pmol/L';
+
+  const aliases = {
+    l: 'L',
+    ml: 'mL',
+    ul: 'µL',
+    'µl': 'µL',
+    'μl': 'µL',
+    nl: 'nL',
+    ug: 'µg',
+    'µg': 'µg',
+    'μg': 'µg',
+    umol: 'µmol',
+    'µmol': 'µmol',
+    'μmol': 'µmol',
+    'mol/l': 'mol/L',
+    'mmol/l': 'mmol/L',
+    'umol/l': 'µmol/L',
+    'µmol/l': 'µmol/L',
+    'μmol/l': 'µmol/L',
+    'nmol/l': 'nmol/L',
+    'pmol/l': 'pmol/L',
+    'ng/l': 'ng/L',
+    'mg/l': 'mg/L',
+    'g/l': 'g/L',
+    u: 'U',
+    mu: 'mU',
+    ukat: 'µkat',
+    'µkat': 'µkat',
+    'μkat': 'µkat',
+    'u/l': 'U/L',
+    'u/ml': 'U/mL',
+    'u/g': 'U/g',
+    'u/mg': 'U/mg',
+  };
+
+  return aliases[trimmed.toLowerCase()] || trimmed;
+};
+
+/**
  * Converts a numeric value between two unit types based on predefined conversion factors.
  *
  * Conversion is calculated using:
@@ -119,6 +176,7 @@ const defaultUnits = {
  * Special behaviors:
  *  - If `from` or `to` is missing, the original value is returned.
  *  - If units are identical (`from === to`), the original value is returned.
+ *  - If `from` or `to` cannot be mapped to `conversionFactors`, the original value is returned.
  *  - The factor is rounded to the nearest integer **only when > 1**.
  *  - The final result is rounded to 8 decimal places.
  *
@@ -127,9 +185,6 @@ const defaultUnits = {
  * @param {string} to - The target unit key (must exist in `conversionFactors`).
  *
  * @returns {number} The converted value, rounded to 8 decimal places.
- *
- * @throws {TypeError} If `from` or `to` is not a valid key in `conversionFactors`,
- *                     a TypeError will be thrown when accessing `.factor` on undefined.
  *
  * @example
  * convertUnits(1000, 'mL', 'L'); // => 1
@@ -142,6 +197,7 @@ const defaultUnits = {
  */
 const convertUnits = (value, from, to) => {
   if (!from || !to || from === to) { return value; }
+  if (!conversionFactors[from] || !conversionFactors[to]) { return value; }
 
   let factor = conversionFactors[from].factor / conversionFactors[to].factor;
   factor = factor < 1 ? factor : Math.round(factor);
@@ -149,5 +205,5 @@ const convertUnits = (value, from, to) => {
 };
 
 export {
-  unitSystems, convertUnits, conversionFactors, defaultUnits
+  unitSystems, convertUnits, conversionFactors, defaultUnits, normalizeUnitKey
 };
