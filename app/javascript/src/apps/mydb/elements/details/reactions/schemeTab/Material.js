@@ -637,9 +637,17 @@ class Material extends Component {
     );
 
     const metricPrefixes = ['m', 'n', 'u'];
-    const metric = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[1]) > -1)
-      ? material.metrics[1]
-      : 'm';
+    let metric = 'm';
+    if (isSbmmSample(material)) {
+      // SBMM stores explicit unit strings (e.g. L/mL/µL), so derive UI prefix from that unit.
+      metric = material.reactionSchemeMetricPrefix(material.volume_as_used_unit);
+    } else if (
+      material.metrics
+      && material.metrics.length > 2
+      && metricPrefixes.indexOf(material.metrics[1]) > -1
+    ) {
+      metric = material.metrics[1];
+    }
     const isAmountDisabledByWeightPercentage = reaction.weight_percentage
       && material.weight_percentage > 0 && materialGroup !== 'products' && !material.weight_percentage_reference;
 
@@ -670,7 +678,10 @@ class Material extends Component {
 
   materialAmountMol(material) {
     const { reaction, materialGroup, lockEquivColumn } = this.props;
-    const metricMol = getMetricMol(material);
+    // Keep SBMM mol prefix synchronized with its dedicated mol unit field.
+    const metricMol = isSbmmSample(material)
+      ? material.reactionSchemeMetricPrefix(material.amount_as_used_mol_unit)
+      : getMetricMol(material);
 
     const isAmountDisabledByWeightPercentage = reaction.weight_percentage
       && material.weight_percentage > 0 && materialGroup !== 'products' && !material.weight_percentage_reference;
@@ -1148,11 +1159,16 @@ class Material extends Component {
 
     const massBsStyle = material.amount_unit === 'g' ? 'primary' : 'light';
     const metricPrefixes = ['m', 'n', 'u'];
-    const metric = (
+    let metric = 'm';
+    if (isSbmmSample(material)) {
+      metric = material.reactionSchemeMetricPrefix(material.amount_as_used_mass_unit);
+    } else if (
       material.metrics
       && material.metrics.length > 2
       && metricPrefixes.indexOf(material.metrics[0]) > -1
-    ) ? material.metrics[0] : 'm';
+    ) {
+      metric = material.metrics[0];
+    }
 
     const { showComponents, mixtureComponentsLoading } = this.state;
     const isMixture = material.isMixture && material.isMixture();

@@ -379,7 +379,7 @@ const PropertiesForm = ({ readonly }) => {
                       metricPrefix="n"
                       metricPrefixes={['n']}
                       precision={5}
-                      label="Purity/Concentration"
+                      label="Purity"
                       disabled={disabled}
                       variant="light"
                       onChange={(e) => formHelper.onChange('purity', e.value)}
