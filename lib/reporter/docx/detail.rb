@@ -148,7 +148,7 @@ module Reporter
       end
 
       def normalize_liter_unit(unit)
-        unit.to_s.gsub('L', 'l')
+        unit.to_s.tr('L', 'l')
       end
     end
   end

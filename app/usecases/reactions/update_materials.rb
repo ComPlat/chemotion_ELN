@@ -104,19 +104,7 @@ module Usecases
           @materials.each do |material_group, samples|
             material_group = material_group.to_s
             if material_group == 'reactant_sbmm'
-              # Handle SBMM samples
-              samples.each_with_index do |sbmm_data, idx|
-                sbmm_data.position = idx if sbmm_data.position.nil?
-
-                if sbmm_data.is_new
-                  modified_sbmm = create_sub_sbmm_sample(sbmm_data)
-                else
-                  modified_sbmm = update_existing_sbmm_sample(sbmm_data)
-                end
-
-                modified_sbmm_ids << modified_sbmm.id
-                associate_sbmm_with_reaction(sbmm_data, modified_sbmm)
-              end
+              process_sbmm_samples(samples, modified_sbmm_ids)
             else
               fixed_label = material_group if %w[reactant solvent].include?(material_group)
               samples.each_with_index do |sample, idx|
@@ -344,6 +332,19 @@ module Usecases
         current_sbmm_ids = @reaction.reactions_reactant_sbmm_samples.pluck(:sequence_based_macromolecule_sample_id)
         sbmm_ids_to_delete = current_sbmm_ids - modified_sbmm_ids
         SequenceBasedMacromoleculeSample.where(id: sbmm_ids_to_delete).destroy_all
+      end
+
+      def process_sbmm_samples(samples, modified_sbmm_ids)
+        samples.each_with_index do |sbmm_data, idx|
+          sbmm_data.position = idx if sbmm_data.position.nil?
+          modified_sbmm = if sbmm_data.is_new
+                            create_sub_sbmm_sample(sbmm_data)
+                          else
+                            update_existing_sbmm_sample(sbmm_data)
+                          end
+          modified_sbmm_ids << modified_sbmm.id
+          associate_sbmm_with_reaction(sbmm_data, modified_sbmm)
+        end
       end
 
       def create_sub_sbmm_sample(sbmm_data)

@@ -54,10 +54,12 @@ const optionsByRelatedField = (store, element, field, options) => {
   const relatedOptions = options.filter((o) => o.related !== undefined);
   if (relatedOptions.length < 1) { return options; }
 
-  const { lastObject, lastKey } = store.getLastObjectAndKeyByField(field, element);
+  const { lastObject } = store.getLastObjectAndKeyByField(field, element);
+  const relatedField = relatedOptions[0].related;
+  const relatedValue = lastObject?.[relatedField];
 
-  if (lastObject[relatedOptions[0].related] !== '' || lastObject[relatedOptions[0].related] !== undefined) {
-    return relatedOptions.filter((o) => o.only === lastObject[relatedOptions[0].related]);
+  if (relatedValue !== '' && relatedValue != null) {
+    return relatedOptions.filter((o) => o.only === relatedValue);
   }
 
   return options;

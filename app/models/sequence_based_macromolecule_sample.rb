@@ -230,7 +230,7 @@ class SequenceBasedMacromoleculeSample < ApplicationRecord
   end
 
   def label_text
-    name || short_label.presence
+    name.presence || short_label.presence || 'SBMM'
   end
 
   def svg_text_path

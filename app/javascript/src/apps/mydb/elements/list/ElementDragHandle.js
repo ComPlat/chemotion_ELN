@@ -9,7 +9,6 @@ import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
-import { isSbmmSample } from 'src/utilities/ElementUtils';
 import DragHandle from 'src/components/common/DragHandle';
 
 function inferElementSourceType(element) {
@@ -105,15 +104,6 @@ function ElementDragHandle({ element, sourceType: sourceTypeProp }) {
     return <DragHandle enabled={false} />;
   }
 
-  // Disable dragging when:
-  // - resolved sourceType is SEQUENCE_BASED_MACROMOLECULE (the molecule/parent SBMM)
-  // - element represents an SBMM sample
-  // (allow dragging the sample itself, but disable for the molecule)
-  if (sourceType === DragDropItemTypes.SEQUENCE_BASED_MACROMOLECULE
-    && isSbmmSample(element)) {
-    return <DragHandle enabled={false} />;
-  }
-
   const hasDropTarget = (type) => {
     switch (type) {
       case DragDropItemTypes.SAMPLE:
@@ -144,10 +134,7 @@ function ElementDragHandle({ element, sourceType: sourceTypeProp }) {
       case DragDropItemTypes.DEVICE_DESCRIPTION:
         return currentElementType === 'device_description' || useDnD(currentElement, genericEls);
       case DragDropItemTypes.SEQUENCE_BASED_MACROMOLECULE:
-        return (
-          ['sequence_based_macromolecule_sample', 'reaction'].includes(currentElementType)
-          || useDnD(currentElement, genericEls)
-        );
+        return currentElementType === 'sequence_based_macromolecule_sample' || useDnD(currentElement, genericEls);
       case DragDropItemTypes.SEQUENCE_BASED_MACROMOLECULE_SAMPLE:
         return currentElementType === 'reaction' || useDnD(currentElement, genericEls);
       default:
