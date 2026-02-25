@@ -1795,12 +1795,22 @@ class ElementStore {
     const { selecteds } = this.state;
     // Preserve openedFromCollectionId from the existing element
     const existingEl = selecteds[index];
+    let nextEl = updateEl;
     if (existingEl?.openedFromCollectionId && updateEl) {
-      updateEl.openedFromCollectionId = existingEl.openedFromCollectionId;
+      try {
+        // Fast path: keep the same object when it is mutable.
+        updateEl.openedFromCollectionId = existingEl.openedFromCollectionId;
+      } catch (_error) {
+        // Some SBMM instances can be readonly/frozen; clone and annotate instead.
+        nextEl = typeof updateEl.clone === 'function'
+          ? updateEl.clone()
+          : Object.assign(Object.create(Object.getPrototypeOf(updateEl)), updateEl);
+        nextEl.openedFromCollectionId = existingEl.openedFromCollectionId;
+      }
     }
     return [
       ...selecteds.slice(0, index),
-      updateEl,
+      nextEl,
       ...selecteds.slice(index + 1)
     ];
   }

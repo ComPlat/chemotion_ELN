@@ -677,12 +677,9 @@ module Reporter
         s = OpenStruct.new(material)
         sbmm_name = s.name.presence || s.short_label.presence || s.external_label.presence || 'SBMM'
 
-        mol_value = s.amount_as_used_mol_value
-        mol_unit = s.amount_as_used_mol_unit.to_s
-        if mol_value.present? && mol_unit.casecmp('mol').zero?
-          mol_value = mol_value.to_f * 1000.0
-          mol_unit = 'mmol'
-        end
+        mass_unit = s.amount_as_used_mass_unit.presence || 'g'
+        vol_unit = normalize_liter_unit(s.volume_as_used_unit.presence || 'l')
+        mol_unit = s.amount_as_used_mol_unit.presence || 'mol'
 
         {
           name: s.name,
@@ -691,12 +688,12 @@ module Reporter
           formular: 'n.d.',
           mol_w: format_scientific(s.sequence_based_macromolecule&.dig(:molecular_weight), digit),
           mass: format_scientific(s.amount_as_used_mass_value, digit),
-          mass_unit: s.amount_as_used_mass_unit.presence || 'g',
+          mass_unit: mass_unit,
           vol: format_scientific(s.volume_as_used_value, digit),
-          vol_unit: s.volume_as_used_unit.presence || 'mL',
+          vol_unit: vol_unit,
           density: 'n.d.',
-          mol: format_scientific(mol_value, digit),
-          mmol_unit: mol_unit.presence || 'mmol',
+          mol: format_scientific(s.amount_as_used_mol_value, digit),
+          mmol_unit: mol_unit,
           equiv: format_scientific(s.equivalent, digit),
           molecule_name_hash: { label: sbmm_name },
           components: [],
@@ -908,7 +905,7 @@ module Reporter
           delta += [{ 'insert' => "{S#{counter}" },
                     { 'insert' => '} ' },
                     *sample_molecule_name_delta(m),
-                    { 'insert' => " (#{valid_digit(m[:vol], 2)} mL); " }]
+                    {"insert"=>" (#{valid_digit(m[:vol], 2)} #{normalize_liter_unit(m[:vol_unit])}); "}]
         end
         delta += [{ 'insert' => 'Yield ' }]
         counter = 0
