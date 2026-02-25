@@ -9,6 +9,8 @@ import PropTypes from 'prop-types';
 import CellLineName from 'src/apps/mydb/elements/details/cellLines/propertiesTab/CellLineName';
 import Amount from 'src/apps/mydb/elements/details/cellLines/propertiesTab/Amount';
 import InvalidPropertyWarning from 'src/apps/mydb/elements/details/cellLines/propertiesTab/InvalidPropertyWarning';
+import { BiosafetyLevelOptions } from 'src/components/staticDropdownOptions/options';
+import { unitSystems } from 'src/components/staticDropdownOptions/units';
 import UserStore from 'src/stores/alt/stores/UserStore';
 
 class GeneralProperties extends React.Component {
@@ -73,20 +75,14 @@ class GeneralProperties extends React.Component {
     const { readOnly } = this.props;
 
     const { cellLineDetailsStore } = this.context;
-    const options = [
-      { value: 'S0', label: 'Biosafety level 0' },
-      { value: 'S1', label: 'Biosafety level 1' },
-      { value: 'S2', label: 'Biosafety level 2' },
-      { value: 'S3', label: 'Biosafety level 3' }
-    ];
     return (
       <Form.Group>
         <Form.Label>Biosafety level</Form.Label>
         <Select
           isDisabled={readOnly || this.checkPermission('Biosafety level')}
-          options={options}
+          options={BiosafetyLevelOptions}
           isClearable={false}
-          value={options.find(({ value }) => value === item.bioSafetyLevel)}
+          value={BiosafetyLevelOptions.find(({ value }) => value === item.bioSafetyLevel)}
           onChange={(e) => { cellLineDetailsStore.changeBioSafetyLevel(item.id, e.value); }}
         />
       </Form.Group>
@@ -98,10 +94,6 @@ class GeneralProperties extends React.Component {
     const { readOnly } = this.props;
     let unitClass = 'flex-grow-1 w-50';
     unitClass = item.unit === '' ? `invalid-input ${unitClass}` : unitClass;
-    const options = [
-      { value: 'g', label: 'g' },
-      { value: 'units/cm²', label: 'units/cm²' },
-    ];
 
     const unitComponent = readOnly ? (
       <Form.Control
@@ -115,9 +107,9 @@ class GeneralProperties extends React.Component {
       <Select
         name="unit"
         className={unitClass}
-        value={options.find(({ value }) => value === item.unit)}
+        value={unitSystems['cell_line_amount_unit'].find(({ value }) => value === item.unit)}
         onChange={(e) => { cellLineDetailsStore.changeUnit(item.id, e.value); }}
-        options={options}
+        options={unitSystems['cell_line_amount_unit']}
         placeholder="unit"
       />
     );

@@ -18,7 +18,7 @@ const AdvancedSearchRow = ({ idx }) => {
   let mapperOptions = mapperFields;
   let fieldOptions = [];
 
-  if (['sequence_based_macromolecule_samples', 'device_descriptions'].includes(searchElement.table)) {
+  if (['sequence_based_macromolecule_samples', 'device_descriptions', 'cell_lines'].includes(searchElement.table)) {
     fieldOptions = SelectFieldData[searchElement.table];
   } else {
     fieldOptions = SelectFieldData.fields[searchElement.table];
