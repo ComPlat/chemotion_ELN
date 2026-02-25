@@ -9,7 +9,7 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 import CollectionSubtree from 'src/apps/mydb/collections/CollectionSubtree';
 import SidebarButton from 'src/apps/mydb/mainNavigation/sidebar/SidebarButton';
 import CollectionManagementButton from 'src/apps/mydb/collections/CollectionManagementButton';
-import GatePushButton from 'src/components/common/GatePushButton';
+import GatePushButton from 'src/apps/mydb/collections/GatePushButton';
 
 import Aviator from 'aviator';
 import { collectionShow } from 'src/utilities/routesUtils';

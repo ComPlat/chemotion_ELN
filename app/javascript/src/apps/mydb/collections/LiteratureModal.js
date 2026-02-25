@@ -27,12 +27,37 @@ import {
 } from 'src/apps/mydb/elements/details/literature/LiteratureCommon';
 import Literature from 'src/models/Literature';
 import LiteraturesFetcher from 'src/fetchers/LiteraturesFetcher';
+import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import { copyToClipboard } from 'src/utilities/clipboard';
 
 const Cite = require('citation-js');
+
+const findCollectionById = (collections, collectionId) => {
+  if (!collections || collections.length === 0) return null;
+
+  for (let index = 0; index < collections.length; index += 1) {
+    const collection = collections[index];
+    if (collection.id === collectionId) return collection;
+    const childCollection = findCollectionById(collection.children, collectionId);
+    if (childCollection) return childCollection;
+  }
+
+  return null;
+};
+
+const resolveCollectionById = (collectionId) => {
+  const {
+    lockedRoots, unsharedRoots, sharedRoots, remoteRoots, syncInRoots
+  } = CollectionStore.getState();
+  const allRoots = [lockedRoots, unsharedRoots, sharedRoots, remoteRoots, syncInRoots]
+    .filter(Boolean)
+    .flat();
+
+  return findCollectionById(allRoots, collectionId) || { id: collectionId, is_sync_to_me: false };
+};
 
 const ElementLink = ({ literature }) => {
   const {
@@ -153,7 +178,10 @@ export default class LiteratureModal extends Component {
   }
 
   componentDidMount() {
-    const { currentCollection, sample, reaction } = UIStore.getState();
+    const { collectionId } = this.props;
+    const { sample, reaction } = UIStore.getState();
+    const currentCollection = resolveCollectionById(collectionId);
+
     LiteraturesFetcher.fetchReferencesByCollection(currentCollection).then((literatures) => {
       this.setState(prevState => ({
         ...prevState,
@@ -171,23 +199,8 @@ export default class LiteratureModal extends Component {
   }
 
   handleUIStoreChange(state) {
-    const cCol = this.state.currentCollection;
-    const { currentCollection, sorting } = state;
-
-    if (cCol && currentCollection &&
-      (cCol.id !== currentCollection.id || cCol.is_sync_to_me !== currentCollection.is_sync_to_me)
-    ) {
-      LiteraturesFetcher.fetchReferencesByCollection(currentCollection).then((literatures) => {
-        this.setState(prevState => ({
-          ...prevState,
-          ...literatures,
-          currentCollection,
-          sample: {},
-          reaction: {},
-        }));
-      });
-      return null;
-    }
+    const { collectionId } = this.props;
+    const currentCollection = this.state.currentCollection || resolveCollectionById(collectionId);
     const { sample, reaction } = state;
     const prevSample = this.state.sample;
     const prevReaction = this.state.reaction;
@@ -256,8 +269,10 @@ export default class LiteratureModal extends Component {
 
   handleLiteratureAdd(literature) {
     const { doi } = literature;
+    const { collectionId } = this.props;
 
-    const { currentCollection, sample, reaction } = UIStore.getState();
+    const currentCollection = this.state.currentCollection || resolveCollectionById(collectionId);
+    const { sample, reaction } = UIStore.getState();
     const params = {
       sample,
       reaction,
@@ -497,6 +512,7 @@ export default class LiteratureModal extends Component {
 }
 
 LiteratureModal.propTypes = {
+  collectionId: PropTypes.number.isRequired,
   show: PropTypes.bool.isRequired,
   onHide: PropTypes.func.isRequired
 };

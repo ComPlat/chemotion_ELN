@@ -5,11 +5,6 @@ import SelectionShareModal from 'src/apps/mydb/elements/list/selectionActions/Se
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import SyncedCollectionsUsersModal from 'src/apps/mydb/collections/SyncedCollectionsUsersModal';
-import ElementActions from 'src/stores/alt/actions/ElementActions';
-import UIActions from 'src/stores/alt/actions/UIActions';
-import ModalImport from 'src/apps/mydb/collections/importSamples/ModalImport';
-import LiteratureModal from 'src/apps/mydb/collections/LiteratureModal';
-import { elementShowOrNew } from 'src/utilities/routesUtils';
 
 export default class MyCollections extends React.Component {
   constructor(props) {
@@ -30,10 +25,6 @@ export default class MyCollections extends React.Component {
         show: false
       },
       syncListModalNodeId: null,
-      showImportModal: false,
-      importModalCollection: null,
-      showLiteratureModal: false,
-      literatureModalCollection: null,
     };
 
     this.onStoreChange = this.onStoreChange.bind(this);
@@ -43,10 +34,6 @@ export default class MyCollections extends React.Component {
     this.handleModalHide = this.handleModalHide.bind(this);
     this.openSyncListModal = this.openSyncListModal.bind(this);
     this.closeSyncListModal = this.closeSyncListModal.bind(this);
-    this.handleShowLiterature = this.handleShowLiterature.bind(this);
-    this.handleImportSamples = this.handleImportSamples.bind(this);
-    this.hideImportModal = this.hideImportModal.bind(this);
-    this.hideLiteratureModal = this.hideLiteratureModal.bind(this);
   }
 
   componentDidMount() {
@@ -139,26 +126,6 @@ export default class MyCollections extends React.Component {
 
     return (
       <ButtonGroup>
-        <Button
-          size="sm"
-          variant="light"
-          onClick={() => this.handleShowLiterature(node)}
-          onMouseDown={(e) => e.stopPropagation()}
-          title="Reference Manager"
-        >
-          <i className="fa fa-book" />
-        </Button>
-        
-        <Button
-          size="sm"
-          variant="light"
-          onClick={() => this.handleImportSamples(node)}
-          onMouseDown={(e) => e.stopPropagation()}
-          title="Import samples to collection"
-        >
-          <i className="icon-arrow-down-to-bracket" />
-        </Button>
-
         {this.renderSyncButton(node)}
 
         <Button
@@ -236,34 +203,6 @@ export default class MyCollections extends React.Component {
   closeSyncListModal() {
     this.setState({
       syncListModalNodeId: null,
-    });
-  }
-
-  handleShowLiterature(node) {
-    this.setState({
-      showLiteratureModal: true,
-      literatureModalCollection: node,
-    });
-  }
-
-  handleImportSamples(node) {
-    this.setState({
-      showImportModal: true,
-      importModalCollection: node,
-    });
-  }
-
-  hideImportModal() {
-    this.setState({
-      showImportModal: false,
-      importModalCollection: null,
-    });
-  }
-
-  hideLiteratureModal() {
-    this.setState({
-      showLiteratureModal: false,
-      literatureModalCollection: null,
     });
   }
 
@@ -380,8 +319,7 @@ export default class MyCollections extends React.Component {
 
   render() {
     const {
-      tree, sharingModal, syncListModalNodeId, active, showImportModal, importModalCollection,
-      showLiteratureModal, literatureModalCollection
+      tree, sharingModal, syncListModalNodeId, active
     } = this.state;
     return (
       <div className="tree">
@@ -420,18 +358,6 @@ export default class MyCollections extends React.Component {
             onHide={this.closeSyncListModal}
           />
         )}
-
-        <ModalImport 
-          show={showImportModal}
-          collectionId={importModalCollection?.id}
-          collectionName={importModalCollection?.label}
-          onHide={this.hideImportModal} 
-        />
-
-        <LiteratureModal
-          show={showLiteratureModal}
-          onHide={this.hideLiteratureModal}
-        />
       </div>
     );
   }

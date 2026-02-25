@@ -1,6 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { ButtonGroup, Button, Tooltip, Overlay } from 'react-bootstrap';
+import {
+  ButtonGroup, Button, Tooltip, Overlay
+} from 'react-bootstrap';
 
 class GatePushButton extends React.Component {
   constructor(props) {

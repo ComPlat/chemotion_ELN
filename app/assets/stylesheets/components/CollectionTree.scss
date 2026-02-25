@@ -10,13 +10,14 @@
     @extend .surface-lighten3;
     @extend .border-top;
   }
-  &_item {
+  &__item {
     @extend .d-flex;
-    @extend .align-items-baseline;
+    @extend .align-items-center;
     cursor: pointer;
     font-size: 14px;
-    @extend .py-2;
-    @extend .pe-3;
+    min-height: 36px;
+    @extend .py-1;
+    @extend .pe-2;
     @extend .gap-2;
     &:hover {
       @extend .surface-hover-on-grey;
@@ -42,5 +43,14 @@
     @extend .flex-grow-1;
     overflow-x: hidden;
     text-overflow: ellipsis;
+  }
+}
+
+.tree-view__item {
+  .collection-subtree-functions {
+    display: none;
+  }
+  &:hover .collection-subtree-functions {
+    display: block;
   }
 }
