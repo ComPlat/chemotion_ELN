@@ -1,8 +1,11 @@
 /**
  * Flattens MTT analysis data from outputs into individual analysis items.
  *
- * Handles the OpenStats bug workaround where multiple samples are combined
- * into one Output item instead of separate items.
+ * Supports the new OpenStats response structure (v2):
+ *   Output[].items[].input[] / Output[].items[].result[]
+ *
+ * Also supports the legacy structure for backward compatibility:
+ *   Output[].input[] / Output[].result[]
  *
  * @param {Array} outputs - Array of output objects from MTT requests
  * @returns {Array} Flattened array of analysis items with structure:
@@ -26,43 +29,29 @@ export function flattenAnalysesFromOutputs(outputs) {
       return;
     }
 
-    output.output_data.Output.forEach((dataItem, dataIdx) => {
-      // TODO: REMOVE THIS SPLIT LOGIC WHEN OPENSTATS IS FIXED
-      // OpenStats currently combines multiple samples into one Output item
-      // Expected: separate Output items per sample
-      // Actual: one Output item with multiple results in result array
-
-      if (dataItem.result && dataItem.result.length > 1) {
-        // Split case: Multiple samples in one output
-        dataItem.result.forEach((result, resultIdx) => {
-          const sampleName = result.name;
-          // Filter input data for this specific sample
-          const sampleInput = dataItem.input?.filter(inp => inp.name === sampleName) || [];
-
-          // Create a virtual dataItem for this sample
-          const splitDataItem = {
-            input: sampleInput,
-            result: [result]
-          };
-
-          const key = `${output.id}-${dataIdx}-${resultIdx}`;
+    output.output_data.Output.forEach((outputGroup, groupIdx) => {
+      // New structure: Output[].items[]
+      if (outputGroup.items && Array.isArray(outputGroup.items)) {
+        outputGroup.items.forEach((item, itemIdx) => {
+          const key = `${output.id}-${groupIdx}-${itemIdx}`;
+          const sampleName = item.result?.[0]?.name || `Analysis #${itemIdx + 1}`;
 
           allAnalyses.push({
             key,
-            dataItem: splitDataItem,
+            dataItem: item,
             sampleName,
             outputId: output.id,
             createdAt: output.created_at
           });
         });
-      } else {
-        // Normal case: Single sample per output
-        const key = `${output.id}-${dataIdx}`;
-        const sampleName = dataItem.result?.[0]?.name || `Analysis #${dataIdx + 1}`;
+      } else if (outputGroup.result) {
+        // Legacy structure: Output[].input[] / Output[].result[]
+        const key = `${output.id}-${groupIdx}`;
+        const sampleName = outputGroup.result?.[0]?.name || `Analysis #${groupIdx + 1}`;
 
         allAnalyses.push({
           key,
-          dataItem,
+          dataItem: outputGroup,
           sampleName,
           outputId: output.id,
           createdAt: output.created_at
