@@ -209,6 +209,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
    *
    * - "amount_as_used_mol":
    *      volume [L]     = amount [mol] / (molarity [mol/L] * purity)
+   *      mass [g]       = volume [L] * (concentration [g/L] * purity)
    *      activity [U]   = volume [L] * activity_per_volume [U/L]
    *
    * - "amount_as_used_mass":
@@ -332,6 +333,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
       case 'amount_as_used_mol':
         if (this.base_amount_as_used_mol_value > 0) {
           this.calculateVolumeByAmount();
+          this.calculateAmountAsUsedMass();
           this.calculateActivity();
         }
         break;
@@ -1002,9 +1004,9 @@ export default class SequenceBasedMacromoleculeSample extends Element {
 
   validateAndSetPurity(value) {
     // Validate purity value and show warning if invalid
-    if (value != null && (value < 0 || value > 1)) {
+    if (value != null && (value <= 0 || value > 1)) {
       NotificationActions.add({
-        message: 'Purity value should be >= 0 and <=1',
+        message: 'Purity value should be > 0 and <=1',
         level: 'error'
       });
       // Set to 1 if invalid

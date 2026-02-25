@@ -205,6 +205,25 @@ describe('SequenceBasedMacromoleculeSample', () => {
       });
     });
 
+    describe('calculateValues - amount_as_used_mol case', () => {
+      it('should trigger volume, mass, and activity calculations when amount_mol changes', () => {
+        const spyVolumeByAmount = sinon.spy(sample, 'calculateVolumeByAmount');
+        const spyAmountAsUsedMass = sinon.spy(sample, 'calculateAmountAsUsedMass');
+        const spyActivity = sinon.spy(sample, 'calculateActivity');
+
+        sample.base_amount_as_used_mol_value = 0.2;
+        sample.base_molarity_value = 0.1;
+        sample.concentration_value = 1000;
+        sample.purity = 0.5;
+
+        sample.calculateValues('amount_as_used_mol');
+
+        expect(spyVolumeByAmount.called).toBe(true);
+        expect(spyAmountAsUsedMass.called).toBe(true);
+        expect(spyActivity.called).toBe(true);
+      });
+    });
+
     describe('calculateValues - activity case with priority logic', () => {
       describe('calculateVolumeFromActivity', () => {
         it('should use activity_per_volume if available (Priority 1)', () => {
@@ -413,4 +432,3 @@ describe('SequenceBasedMacromoleculeSample', () => {
     });
   });
 });
-

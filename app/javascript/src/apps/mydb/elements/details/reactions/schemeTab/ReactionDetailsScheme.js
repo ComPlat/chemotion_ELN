@@ -1602,15 +1602,18 @@ export default class ReactionDetailsScheme extends React.Component {
         /* eslint-disable no-param-reassign, no-unused-expressions */
         if (materialGroup === 'products') {
           sample = this.calculateEquivalentForProduct(sample, referenceMaterial, stoichiometryCoeff);
+        } else if (sample.reference) {
+          // NB: sample equivalent independent of coeff
+          sample.equivalent = 1;
+        } else if (hasReferenceAmountMol) {
+          // NB: sample equivalent independent of coeff
+          const sampleAmountMol = Number(sample.amount_mol);
+          sample.equivalent = Number.isFinite(sampleAmountMol)
+            ? sampleAmountMol / referenceAmountMol
+            : 0.0;
         } else {
-          // NB: sample equivalent independant of coeff
-          if (sample.reference) {
-            sample.equivalent = sample.reference ? 1 : 0;
-          } else if (hasReferenceAmountMol) {
-            sample.equivalent = sample.amount_mol / referenceAmountMol;
-          } else {
-            sample.equivalent = 0.0;
-          }
+          // NB: sample equivalent independent of coeff
+          sample.equivalent = 0.0;
         }
       }
       return sample;
