@@ -88,7 +88,7 @@ const SearchModal = () => {
           style={modalStyle}
         >
 
-          <Modal.Header className="ps-0 border-bottom border-gray-600 bg-gray-300" closeButton>
+          <Modal.Header className="ps-0 border-bottom border-gray-600 bg-gray-300" id="search-modal-header" closeButton>
             <Stack direction="horizontal" className="draggable-modal-stack" gap={3}>
               <Modal.Title className="draggable-modal-stack-title">
                 <i className="fa fa-arrows move" />

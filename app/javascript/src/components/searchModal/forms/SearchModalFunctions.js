@@ -16,7 +16,7 @@ const handleClear = (store) => {
 
 const showErrorMessage = (store) => {
   if (store.errorMessages.length >= 1) {
-    return <Alert variant="danger">{store.errorMessages.join(', ')}</Alert>;
+    return <Alert variant="danger" className="flex-shrink-1" id="search-error-message">{store.errorMessages.join(', ')}</Alert>;
   }
 }
 
