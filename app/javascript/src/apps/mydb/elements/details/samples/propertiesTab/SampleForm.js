@@ -439,10 +439,10 @@ export default class SampleForm extends React.Component {
   fetchNextInventoryLabel() {
     const { currentCollection } = UIStore.getState();
     const message = (
-      <div style={{ textAlign: 'left' }}>
+      <div className="text-start">
         <p className="mb-1">Could not find next inventory label.</p>
         <p className="mb-1">
-          Please define an inventory label for this collection in the Account & Profile page.
+          Please define an inventory label for this collection in the Account &amp; Profile page.
           Select the collection and assign a name, prefix, and starting counter.
         </p>
       </div>
@@ -685,7 +685,7 @@ export default class SampleForm extends React.Component {
             </li>
           </ul>
           <a
-            href="https://chemotion.net/docs/eln/ui/first_steps?_highlight=inventory&_highlight=lab#define-a-sample-inventory-label-and-adjust-the-counter-inventory-label-for-a-collection"
+            href="https://chemotion.net/docs/eln/ui/first_steps#define-a-sample-inventory-label-and-adjust-the-counter-inventory-label-for-a-collection"
             target="_blank"
             rel="noopener noreferrer"
             className="d-block mt-2"
@@ -704,7 +704,13 @@ export default class SampleForm extends React.Component {
         delay={{ show: 250, hide: 650 }}
         rootClose
       >
-        <i className="ms-1 fa fa-info-circle" />
+        <span
+          tabIndex={0}
+          role="button"
+          aria-label="Information about sample inventory label configuration"
+        >
+          <i className="ms-1 fa fa-info-circle" />
+        </span>
       </OverlayTrigger>
     );
   }
