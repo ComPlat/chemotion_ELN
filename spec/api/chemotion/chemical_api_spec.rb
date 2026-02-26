@@ -14,7 +14,7 @@ describe Chemotion::ChemicalAPI do
   end
 
   describe 'GET find chemical /api/v1/chemicals' do
-    before { get "/api/v1/chemicals?sample_id=#{s.id}" }
+    before { get "/api/v1/chemicals?sample_id=#{s.id}&type=sample" }
 
     it 'is allowed' do
       expect(response).to have_http_status(:ok)
@@ -28,7 +28,7 @@ describe Chemotion::ChemicalAPI do
 
     context 'when chemical does not exist' do
       it 'returns new chemical object with null id' do
-        get "/api/v1/chemicals?sample_id=#{s.id + 100_000}"
+        get "/api/v1/chemicals?sample_id=#{s.id + 100_000}&type=sample"
         expect(response.status).to eq 200
         expect(response.body).to include('"id":null')
       end
@@ -39,6 +39,8 @@ describe Chemotion::ChemicalAPI do
     let(:params) do
       {
         chemical_data: [{ 'cas' => 64_197 }],
+        cas: '64197',
+        type: 'sample',
         sample_id: s.id,
       }
     end
@@ -58,7 +60,7 @@ describe Chemotion::ChemicalAPI do
     context 'when ActiveRecord::RecordInvalid is raised' do
       it 'returns error payload (201 status due to implementation)' do
         allow(Chemical).to receive(:create!).and_raise(ActiveRecord::RecordInvalid.new(Chemical.new))
-        post '/api/v1/chemicals/create', params: { sample_id: 999_999, cas: '10-10-0', chemical_data: [{ 'x' => 'y' }] }
+        post '/api/v1/chemicals/create', params: { sample_id: 999_999, cas: '10-10-0', type: 'sample', chemical_data: [{ 'x' => 'y' }] }
         expect(response.status).to eq 201
         expect(response.body).to include('error')
       end
@@ -69,17 +71,17 @@ describe Chemotion::ChemicalAPI do
     let(:chemical) { create(:chemical, id: 1, sample_id: s.id) }
     let(:params) do
       {
-        id: 1,
         chemical_data: [{ 'cas' => 64_197 }],
+        type: 'sample',
         sample_id: s.id,
       }
     end
     let(:attributes) { { chemical_data: params[:chemical_data] } }
 
-    before { post "/api/v1/chemicals/#{chemical.id}", params: params }
+    before { put '/api/v1/chemicals', params: params }
 
     it 'is able to update a new chemical' do
-      chemical_entry = Chemical.find(params[:id]).update!(attributes)
+      chemical_entry = Chemical.find(chemical.id).update!(attributes)
       expect(chemical_entry).not_to be_nil
     end
   end
@@ -194,7 +196,7 @@ describe Chemotion::ChemicalAPI do
     context 'when chemical_data param omitted (validation error)' do
       before do
         # Omitting required chemical_data param triggers 400 via Grape validation
-        put "/api/v1/chemicals/#{s.id}", params: { sample_id: s.id }
+        put '/api/v1/chemicals', params: { sample_id: s.id, type: 'sample' }
       end
 
       it 'returns 400 bad request' do
@@ -204,7 +206,7 @@ describe Chemotion::ChemicalAPI do
 
     context 'when empty chemical_data provided (validation error)' do
       before do
-        put "/api/v1/chemicals/#{s.id}", params: { sample_id: s.id, chemical_data: [] }
+        put '/api/v1/chemicals', params: { sample_id: s.id, type: 'sample', chemical_data: [] }
       end
 
       it 'returns 400 bad request' do
@@ -220,8 +222,8 @@ describe Chemotion::ChemicalAPI do
       it 'updates chemical when chemical_data present' do
         allow(Chemical).to receive(:find_by).and_return(chem)
         allow(chem).to receive(:update!).and_call_original
-        put "/api/v1/chemicals/#{chem.sample_id}",
-            params: { sample_id: chem.sample_id, chemical_data: [{ 'k' => 'v' }] }
+        put '/api/v1/chemicals',
+            params: { sample_id: chem.sample_id, type: 'sample', chemical_data: [{ 'k' => 'v' }] }
         expect(response.status).to eq 200
         expect(chem).to have_received(:update!)
       end
@@ -234,8 +236,8 @@ describe Chemotion::ChemicalAPI do
         chem = create(:chemical, sample_id: sample2.id)
         allow(Chemical).to receive(:find_by).and_return(chem)
         allow(chem).to receive(:update!).and_raise(ActiveRecord::RecordInvalid.new(chem))
-        put "/api/v1/chemicals/#{chem.sample_id}",
-            params: { sample_id: chem.sample_id, chemical_data: [{ 'a' => 'b' }] }
+        put '/api/v1/chemicals',
+            params: { sample_id: chem.sample_id, type: 'sample', chemical_data: [{ 'a' => 'b' }] }
         expect(response.status).to eq 200
         expect(response.body).to include('error')
       end
@@ -247,8 +249,8 @@ describe Chemotion::ChemicalAPI do
       it 'returns error hash with 200' do
         chem = create(:chemical, sample_id: sample2.id)
         allow(Chemical).to receive(:find_by).and_raise(ActiveRecord::StatementInvalid.new('bad SQL'))
-        put "/api/v1/chemicals/#{chem.sample_id}",
-            params: { sample_id: chem.sample_id, chemical_data: [{ 'a' => 'b' }] }
+        put '/api/v1/chemicals',
+            params: { sample_id: chem.sample_id, type: 'sample', chemical_data: [{ 'a' => 'b' }] }
         expect(response.status).to eq 200
         expect(response.body).to include('error')
       end
