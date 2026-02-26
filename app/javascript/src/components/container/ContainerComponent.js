@@ -199,11 +199,12 @@ export default class ContainerComponent extends Component {
             <Form.Check
               type="checkbox"
               id="includeDescription"
-              label="Include Description"
+              label={<span className="text-nowrap">Include description</span>}
               checked={this.state.includeDescription}
               disabled={readOnly || disabled}
               onChange={this.handleIncludeDescriptionChange}
-              className="my-2"
+              className="my-2 d-flex align-items-center gap-2"
+              inputClassName="mt-0"
             />
           </Col>
         </Row>
