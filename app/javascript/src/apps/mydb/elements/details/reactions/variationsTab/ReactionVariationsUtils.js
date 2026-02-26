@@ -12,10 +12,10 @@ import {
 import {
   PropertyFormatter, PropertyParser,
   MaterialFormatter, MaterialParser,
-  GroupCellRenderer, GroupCellEditor, GroupHeader,
+  GroupCellRenderer, GroupCellEditor,
   SegmentFormatter, SegmentParser, SegmentSelectEditor,
   EquivalentParser, GasParser, FeedstockParser,
-  NoteCellRenderer, NoteCellEditor, MenuHeader, RowToolsCellRenderer, ToolHeader
+  NoteCellRenderer, NoteCellEditor, RowToolsCellRenderer, ToolHeader, EntrySelectionHeader,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { getGenSI } from 'chem-generic-ui';
@@ -470,17 +470,13 @@ function getPropertyColumnGroupChild(propertyType, gasMode) {
   const cellDataType = getCellDataType(propertyType);
   const units = getStandardUnits(propertyType);
   const entry = propertyType;
-  const headerComponent = MenuHeader;
 
   switch (propertyType) {
     case 'temperature':
       return {
         field,
         cellDataType,
-        headerComponent,
-        headerComponentParams: {
-          names: ['T'],
-        },
+        headerName: 'T',
         displayUnit: units[0],
         units,
         entry
@@ -489,10 +485,7 @@ function getPropertyColumnGroupChild(propertyType, gasMode) {
       return {
         field,
         cellDataType,
-        headerComponent,
-        headerComponentParams: {
-          names: ['t'],
-        },
+        headerName: 't',
         displayUnit: units[0],
         units,
         entry,
@@ -527,8 +520,8 @@ function getMetadataColumnGroupChild(metadataType) {
       };
     case 'group':
       return {
-        headerComponent: GroupHeader,
         field: 'metadata.group',
+        headerName: 'Group',
         cellRenderer: GroupCellRenderer,
         cellEditor: GroupCellEditor,
         cellDataType: false,
@@ -559,17 +552,15 @@ function getSegmentEditor({ colDef: { entry }, value: cellData }) {
 
 function getSegmentColumnGroupChild(segmentLabel, segment) {
   return {
-    headerGroupComponent: MenuHeader,
-    headerGroupComponentParams: { names: [segmentLabel], sortable: false },
+    headerGroupComponent: EntrySelectionHeader,
+    headerGroupComponentParams: { names: [] },
+    headerName: segmentLabel,
     groupId: segmentLabel,
     children: Object.entries(segment).reduce((_children, [entryKey, entry], index) => [
       ..._children,
       {
         field: `segments.${segmentLabel}`,
-        headerComponent: MenuHeader,
-        headerComponentParams: {
-          names: [getUserFacingEntryName(entryKey)],
-        },
+        headerName: getUserFacingEntryName(entryKey),
         cellEditorSelector: (params) => getSegmentEditor(params),
         cellDataType: 'segment',
         displayUnit: entry.value_system || null,
@@ -634,14 +625,13 @@ function removeObsoleteColumnDefinitions(columnDefinitions, selectedColumns) {
   return updatedColumnDefinitions;
 }
 
-function setEntryColDefs(columnDefinitions, path, update) {
-  const [groupId, subGroupId] = path.split('.');
+function setGroupColDefAttribute(columnDefinitions, groupId, subGroupId, attribute, update) {
   if (!nestedColumnGroups.includes(groupId)) { return columnDefinitions; }
 
   const updatedColumnDefinitions = cloneDeep(columnDefinitions);
   const group = updatedColumnDefinitions.find((groupColDef) => groupColDef.groupId === groupId);
   const subGroup = group.children.find((child) => child.groupId === subGroupId);
-  subGroup.children = update;
+  subGroup[attribute] = update;
 
   return updatedColumnDefinitions;
 }
@@ -897,5 +887,5 @@ export {
   getSegmentData,
   formatReactionSegments,
   sanitizeGroupEntry,
-  setEntryColDefs,
+  setGroupColDefAttribute,
 };
