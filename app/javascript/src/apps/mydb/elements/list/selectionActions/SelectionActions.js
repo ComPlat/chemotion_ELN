@@ -173,6 +173,7 @@ export default class SelectionActions extends React.Component {
     const removeDisabled = noSel || isAll || !deletion_allowed; //!remove_allowed
     const deleteDisabled = noSel || !deletion_allowed;
     const shareDisabled = noSel || !sharing_allowed;
+    const literatureDisabled = noSel;
 
     return (
       <div className="selection-actions d-flex align-items-center gap-1 mb-3">
@@ -238,7 +239,16 @@ export default class SelectionActions extends React.Component {
           <i className="fa fa-share-alt me-1" />
           <span className="selection-action-text-label">Share</span>
         </Button>
-
+        <Button
+          variant="light"
+          size="sm"
+          id="literature-btn"
+          disabled={literatureDisabled}
+          onClick={ElementActions.showLiteratureDetail}
+        >
+          <i className="fa fa-book me-1" />
+          <span className="selection-action-text-label">Literature</span>
+        </Button>
         {this.renderModal()}
       </div>
     );

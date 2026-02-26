@@ -23,6 +23,7 @@ import VesselDetails from 'src/apps/mydb/elements/details/vessels/VesselDetails'
 import VesselTemplateDetails from 'src/apps/mydb/elements/details/vessels/VesselTemplateDetails';
 import VesselTemplateCreate from 'src/apps/mydb/elements/details/vessels/VesselTemplateCreate';
 import SequenceBasedMacromoleculeSampleDetails from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/SequenceBasedMacromoleculeSampleDetails';
+import LiteratureDetails from 'src/apps/mydb/elements/details/literature/LiteratureDetails';
 
 const tabInfoHash = {
   metadata: {
@@ -74,6 +75,14 @@ const tabInfoHash = {
     iconEl: (
       <span>
         <i className="fa fa-wrench" />
+      </span>
+    )
+  },
+  literature_map: {
+    title: 'Literature',
+    iconEl: (
+      <span>
+        <i className="fa fa-book" aria-hidden="true" />
       </span>
     )
   }
@@ -146,8 +155,9 @@ export default class ElementDetails extends Component {
       case 'report':
         return <ReportContainer report={el} />;
       case 'prediction':
-        //return <PredictionContainer prediction={el} />;
-        console.warn('Attempting to show outdated PredictionContainer')
+        // return <PredictionContainer prediction={el} />;
+        console.warn('Attempting to show outdated PredictionContainer');
+        break;
       case 'format':
         return <FormatContainer format={el} />;
       case 'graph':
@@ -171,6 +181,9 @@ export default class ElementDetails extends Component {
         return null;
       case 'sequence_based_macromolecule_sample':
         return <SequenceBasedMacromoleculeSampleDetails openedFromCollectionId={el.openedFromCollectionId} />;
+      case 'literature_map':
+        return <LiteratureDetails literatureMap={el} />;
+
       default:
         return (
           <div className="text-center">
