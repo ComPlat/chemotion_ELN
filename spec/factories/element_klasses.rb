@@ -104,5 +104,10 @@ FactoryBot.define do
     uuid { SecureRandom.uuid }
     properties_release { properties_template }
     released_at { Time.current }
+
+    trait :for_device_descriptions do
+      is_active { true }
+      name { 'device_description' }
+    end
   end
 end

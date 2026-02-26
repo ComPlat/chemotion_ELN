@@ -71,6 +71,7 @@ export default class Search extends React.Component {
       { label: 'Screens', value: 'screens' },
       { label: 'Cell lines', value: 'cell_lines' },
       { label: 'Sequence Based Macromolecule Samples', value: 'sequence_based_macromolecule_samples' },
+      { label: 'Device Descriptions', value: 'device_descriptions' },
     ];
 
     const buttonAfter = (

@@ -22,7 +22,7 @@ module Usecases
         @table_or_tab_types = {
           generics: false, chemicals: false, analyses: false, measurements: false, literatures: false,
           sequence_based_macromolecules: false, protein_sequence_modifications: false,
-          post_translational_modifications: false
+          post_translational_modifications: false, device_descriptions: false
         }
       end
 
@@ -87,6 +87,8 @@ module Usecases
           protein_sequence_modification_field_options(filter)
         elsif @table_or_tab_types[:post_translational_modifications]
           post_translational_modification_field_options(filter)
+        elsif @table_or_tab_types[:device_descriptions]
+          device_description_field_options(filter)
         else
           special_non_generic_field_options(filter)
         end
@@ -109,6 +111,7 @@ module Usecases
           @field_table.present? && @field_table == 'protein_sequence_modifications'
         @table_or_tab_types[:post_translational_modifications] =
           @field_table.present? && @field_table == 'post_translational_modifications'
+        @table_or_tab_types[:device_descriptions] = @field_table.present? && @field_table == 'device_descriptions'
       end
       # rubocop:enable Metrics/CyclomaticComplexity, Metrics/AbcSize, Metrics/PerceivedComplexity
 
@@ -137,6 +140,7 @@ module Usecases
         tables = %w[
           elements segments chemicals containers measurements molecules literals literatures datasets
           sequence_based_macromolecules protein_sequence_modifications post_translational_modifications
+          device_descriptions
         ]
         return true if tables.include?(table)
 
@@ -529,6 +533,53 @@ module Usecases
           'INNER JOIN post_translational_modifications ON
           post_translational_modifications.id = sequence_based_macromolecules.post_translational_modification_id'
         @conditions[:joins] << field_table_inner_join if @conditions[:joins].exclude?(field_table_inner_join)
+      end
+
+      def device_description_field_options(filter)
+        @conditions[:condition_table] = ''
+
+        if filter['field']['column'] == 'ontologies'
+          field_options_for_ontology_name
+
+        elsif filter['field']['opt_type'].present?
+          field_options_for_opt_type_fields(filter)
+
+        elsif filter['field']['opt'].present?
+          field_options_for_opt_fields(filter)
+
+        elsif filter['field']['column'] == 'general_tags'
+          field_options_for_general_tags(filter)
+        else
+          @conditions[:condition_table] = "#{@table}."
+        end
+      end
+
+      def field_options_for_ontology_name
+        cross_join = 'CROSS JOIN jsonb_array_elements(ontologies) AS prop_ontologies'
+        @conditions[:joins] << cross_join if @conditions[:joins].exclude?(cross_join)
+        @conditions[:field] = "(prop_ontologies -> 'data' ->> 'label')::TEXT"
+      end
+
+      def field_options_for_opt_type_fields(filter)
+        prop = "#{filter['field']['column']}_#{filter['field']['opt_type']}"
+        cross_join =
+          "CROSS JOIN jsonb_array_elements(#{filter['field']['column']} -> '#{filter['field']['opt_type']}') AS #{prop}"
+        @conditions[:joins] << cross_join if @conditions[:joins].exclude?(cross_join)
+        @conditions[:field] = "(#{prop} ->> '#{filter['field']['opt']}')::TEXT"
+      end
+
+      def field_options_for_opt_fields(filter)
+        prop = "#{filter['field']['column']}_#{filter['field']['opt']}"
+        cross_join = "CROSS JOIN jsonb_array_elements(#{filter['field']['column']}) AS #{prop}"
+        @conditions[:joins] << cross_join if @conditions[:joins].exclude?(cross_join)
+        type = filter['field']['type'] == 'date' ? 'Date' : 'TEXT'
+        @conditions[:field] = "(#{prop} ->> '#{filter['field']['opt']}')::#{type}"
+      end
+
+      def field_options_for_general_tags(filter)
+        @conditions[:first_condition] = "'#{filter['value']}' = ANY(general_tags)"
+        @conditions[:words][0] = ''
+        @conditions[:field] = ''
       end
     end
   end

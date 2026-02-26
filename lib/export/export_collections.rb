@@ -102,9 +102,8 @@ module Export
         @file_path
       end
     end
-    # rubocop:enable Metrics/MethodLength,Metrics/CyclomaticComplexity
 
-    def prepare_data # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+    def prepare_data
       # get the collections from the database, in order of ancestry, but with empty ancestry first
       collections = Collection.order(ancestry: :asc).find(@collection_ids)
       # add decendants for nested collections
@@ -138,6 +137,7 @@ module Export
           add_cell_line_material_to_package collection
           add_cell_line_sample_to_package collection
           fetch_sequence_based_macromolecule_samples collection
+          fetch_device_descriptions collection
         end
 
         fetch_segments
@@ -206,6 +206,156 @@ module Export
                  })
       # add sbmm attachments to the list of attachments
       @attachments += sbmm.attachments
+    end
+
+    def fetch_device_descriptions(collection)
+      # get device descriptions in order of ancestry, but with empty ancestry first
+      device_descriptions = collection.device_descriptions.order(ancestry: :asc)
+
+      # fetch device descriptions
+      fetch_many(device_descriptions, { 'created_by' => 'User' })
+      fetch_many(collection.collections_device_descriptions, {
+                   'collection_id' => 'Collection',
+                   'device_description_id' => 'DeviceDescription',
+                 })
+
+      # loop over device descriptions to get container and attachments
+      device_descriptions.each do |device_description|
+        transform_device_description_special_fields(device_description)
+        fetch_device_description_containers_and_attachments(device_description)
+        fetch_device_description_segments(device_description)
+      end
+
+      # fetch related device descriptions from setup_descriptions
+      fetch_related_device_descriptions(device_descriptions, collection)
+    end
+
+    def fetch_device_description_containers_and_attachments(device_description)
+      fetch_containers(device_description)
+      fetch_many(device_description.attachments, {
+                   'attachable_id' => 'DeviceDescription',
+                   'created_by' => 'User',
+                   'created_for' => 'User',
+                 })
+
+      # add attachments to the list of attachments
+      @attachments += device_description.attachments
+    end
+
+    def fetch_device_description_segments(device_description)
+      segments =
+        Labimotion::Segment.where(element_id: device_description.id, element_type: 'DeviceDescription')
+      return if segments.blank?
+
+      fetch_many(segments, {
+                   'element_id' => 'DeviceDescription',
+                   'segment_klass_id' => 'Labimotion::SegmentKlass',
+                   'created_by' => 'User',
+                 })
+    end
+
+    def transform_device_description_special_fields(device_description)
+      dd_uuid = uuid('DeviceDescription', device_description.id)
+      return unless @data['DeviceDescription']&.key?(dd_uuid)
+
+      transform_device_description_setup_descriptions(dd_uuid)
+      transform_device_description_ontologies(dd_uuid)
+    end
+
+    def transform_device_description_setup_descriptions(dd_uuid)
+      setup_descriptions = @data['DeviceDescription'][dd_uuid]['setup_descriptions']
+      return if setup_descriptions.blank?
+
+      setup_descriptions.each_key do |setup_type|
+        next if setup_descriptions[setup_type].blank?
+
+        setup_descriptions[setup_type].each do |entry|
+          next if entry['device_description_id'].blank?
+
+          entry['device_description_id'] = uuid('DeviceDescription', entry['device_description_id'])
+        end
+      end
+    end
+
+    def transform_device_description_ontologies(dd_uuid)
+      ontologies = @data['DeviceDescription'][dd_uuid]['ontologies']
+      return if ontologies.blank?
+
+      ontologies.each do |ontology|
+        if ontology['data']['segment_ids'].present?
+          data_segment_ids = []
+          ontology['data']['segment_ids'].map do |id|
+            data_segment_ids << uuid('Labimotion::SegmentKlass', id)
+          end
+          ontology['data']['segment_ids'] = data_segment_ids if data_segment_ids.present?
+        end
+
+        next if ontology['segments'].present?
+
+        ontology['segments'].each do |entry|
+          entry['segment_klass_id'] = uuid('Labimotion::SegmentKlass', entry['segment_klass_id'])
+        end
+      end
+    end
+
+    # rubocop:disable Metrics/PerceivedComplexity
+    def fetch_related_device_descriptions(device_descriptions, collection, checked_ids = [])
+      setup_types = %w[setup component]
+      # IDs of device descriptions already being exported (in any collection)
+      exported_ids = @data['DeviceDescription']&.keys || []
+
+      device_descriptions.each do |device_description|
+        next if checked_ids.include?(device_description.id)
+
+        checked_ids << device_description.id
+        setup_type = device_description.device_class
+        next if setup_types.exclude?(setup_type) || device_description.setup_descriptions[setup_type].blank?
+
+        # get device_description_ids from setup_descriptions
+        related_ids = device_description.setup_descriptions[setup_type].pluck('device_description_id')
+        next if related_ids.blank?
+
+        # only fetch device descriptions that are not already exported
+        ids_to_fetch = related_ids - exported_ids - checked_ids
+        next if ids_to_fetch.empty?
+
+        export_related_device_descriptions(ids_to_fetch, collection, checked_ids)
+      end
+    end
+    # rubocop:enable Metrics/PerceivedComplexity
+
+    def export_related_device_descriptions(ids_to_fetch, collection, checked_ids)
+      related_device_descriptions = DeviceDescription.where(id: ids_to_fetch)
+      return if related_device_descriptions.empty?
+
+      # fetch the related device descriptions
+      fetch_many(related_device_descriptions, { 'created_by' => 'User' })
+
+      # create collections_device_descriptions entries for the same collection
+      related_device_descriptions.each do |related_device_description|
+        transform_device_description_special_fields(related_device_description)
+        fetch_collections_device_description(collection, related_device_description)
+        fetch_device_description_containers_and_attachments(related_device_description)
+        fetch_device_description_segments(related_device_description)
+      end
+
+      # recursively fetch related device descriptions
+      fetch_related_device_descriptions(related_device_descriptions, collection, checked_ids)
+    end
+
+    def fetch_collections_device_description(collection, device_description)
+      collection_device_description = CollectionsDeviceDescription.find_or_initialize_by(
+        collection_id: collection.id,
+        device_description_id: device_description.id,
+      )
+      if collection_device_description.new_record?
+        collection_device_description.id =
+          uuid('CollectionsDeviceDescription', "#{collection.id}-#{device_description.id}")
+      end
+      fetch_one(collection_device_description, {
+                  'collection_id' => 'Collection',
+                  'device_description_id' => 'DeviceDescription',
+                })
     end
 
     def add_cell_line_material_to_package(collection)
@@ -479,7 +629,6 @@ module Export
       @attachments += attachments
     end
 
-    # rubocop:disable Metrics/MethodLength
     def fetch_containers(containable)
       containable_type = containable.class.name
       # fetch root container
@@ -529,7 +678,6 @@ module Export
         end
       end
     end
-    # rubocop:enable Metrics/MethodLength
 
     def fetch_literals(element)
       element_type = element.class.name
@@ -552,7 +700,7 @@ module Export
       end
     end
 
-    # rubocop:disable Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
+    # rubocop:disable Metrics/PerceivedComplexity
     def fetch_one(instance, foreign_keys = {})
       return if instance.nil?
 
@@ -589,6 +737,7 @@ module Export
       end
       uuid
     end
+    # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
     def fetch_image(image_path, image_file_name)
       return if image_file_name.blank?
@@ -614,5 +763,5 @@ module Export
   end
 end
 
-# rubocop: enable Metrics/ClassLength, Performance/MethodObjectAsBlock
-# rubocop:enable Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
+# rubocop:enable Metrics/MethodLength, Metrics/ClassLength, Performance/MethodObjectAsBlock
+# rubocop:enable Metrics/AbcSize

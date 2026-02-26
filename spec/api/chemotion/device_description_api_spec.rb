@@ -14,7 +14,8 @@ describe Chemotion::DeviceDescriptionAPI do
   let(:device_description_collection) do
     create(:collections_device_description, device_description: device_description, collection: collection)
   end
-  let(:segment_klass) { create(:segment_klass, :with_ontology_properties_template) }
+  let(:element_klass) { create(:element_klass, :for_device_descriptions) }
+  let(:segment_klass) { create(:segment_klass, :with_ontology_properties_template, element_klass: element_klass) }
 
   describe 'GET /api/v1/device_descriptions/' do
     before do
@@ -62,36 +63,16 @@ describe Chemotion::DeviceDescriptionAPI do
     end
   end
 
-  describe 'PUT /api/v1/device_descriptions/byontology/:id' do
+  describe 'GET /api/v1/device_descriptions/ontologies' do
     before do
       segment_klass
     end
 
-    context 'when selecting an ontology' do
-      let(:params) do
-        {
-          id: device_description.id,
-          ontology: device_description.ontologies.first,
-        }
-      end
+    context 'when getting ontologies of segments' do
+      it 'returns ontology' do
+        get '/api/v1/device_descriptions/ontologies'
 
-      let(:params2) do
-        {
-          id: device_description.id,
-          ontology: device_description.ontologies.last,
-        }
-      end
-
-      it 'returns segment klass id' do
-        put "/api/v1/device_descriptions/byontology/#{device_description.id}", params: params
-
-        expect(parsed_json_response).to eql([{ 'segment_klass_id' => segment_klass.id, 'show' => true }])
-      end
-
-      it 'returns empty array' do
-        put "/api/v1/device_descriptions/byontology/#{device_description.id}", params: params2
-
-        expect(parsed_json_response).to eql([])
+        expect(parsed_json_response.size).to be(2)
       end
     end
   end
