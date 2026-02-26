@@ -12,6 +12,10 @@
 #  sample_id                              :integer
 #  sequence_based_macromolecule_sample_id :bigint
 #
+# Indexes
+#
+#  idx_chemicals_sbmm_sample_id  (sequence_based_macromolecule_sample_id)
+#
 # Foreign Keys
 #
 #  fk_rails_...  (sequence_based_macromolecule_sample_id => sequence_based_macromolecule_samples.id)
@@ -78,7 +82,7 @@ RSpec.describe Chemical do
     end
 
     context 'when belonging to neither a sample nor a sequence_based_macromolecule_sample' do
-      let(:chemical) { Chemical.new }
+      let(:chemical) { described_class.new }
 
       it 'is invalid' do
         expect(chemical).not_to be_valid

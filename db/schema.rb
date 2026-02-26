@@ -174,6 +174,7 @@ ActiveRecord::Schema.define(version: 2026_02_20_000000) do
     t.datetime "deleted_at"
     t.jsonb "log_data"
     t.bigint "sequence_based_macromolecule_sample_id"
+    t.index ["sequence_based_macromolecule_sample_id"], name: "idx_chemicals_sbmm_sample_id"
   end
 
   create_table "code_logs", id: :uuid, default: -> { "uuid_generate_v4()" }, force: :cascade do |t|

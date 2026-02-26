@@ -95,11 +95,8 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
     properties: PropertiesForm,
     analyses: AnalysesContainer,
     attachments: AttachmentForm,
+    inventory: ChemicalTab,
   };
-
-  if (sbmmSample.inventory_sample) {
-    tabContentComponents.inventory = ChemicalTab;
-  }
 
   const tabTitles = {
     properties: 'Properties',
@@ -167,21 +164,17 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
     setVisibleTabs(visible);
   }
 
-  const persistInventoryTabInCollection = () => {
+  const updateInventoryTabInCollection = (inventoryOrder) => {
     if (!currentCollection || currentCollection.is_sync_to_me) return;
 
     const sbmmLayout = currentCollection?.tabs_segment?.sequence_based_macromolecule_sample;
-
-    if (sbmmLayout && Object.prototype.hasOwnProperty.call(sbmmLayout, 'inventory')) return;
-
     const userProfile = UserStore.getState().profile;
     const baseLayout = sbmmLayout
       || userProfile?.data?.layout_detail_sequence_based_macromolecule_sample;
 
     if (!baseLayout) return;
 
-    const maxOrder = Math.max(0, ...Object.values(baseLayout).map((v) => Math.abs(v)));
-    const updatedLayout = { ...baseLayout, inventory: maxOrder + 1 };
+    const updatedLayout = { ...baseLayout, inventory: inventoryOrder };
 
     const tabSegment = { ...currentCollection?.tabs_segment, sequence_based_macromolecule_sample: updatedLayout };
     CollectionActions.updateTabsSegment({ segment: tabSegment, cId: currentCollection.id });
@@ -190,6 +183,30 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
     if (!userProfile) return;
     set(userProfile, 'data.layout_detail_sequence_based_macromolecule_sample', updatedLayout);
     UserActions.updateUserProfile(userProfile);
+  };
+
+  const hideInventoryTabInCollection = () => {
+    const sbmmLayout = currentCollection?.tabs_segment?.sequence_based_macromolecule_sample;
+    const baseLayout = sbmmLayout
+      || UserStore.getState().profile?.data?.layout_detail_sequence_based_macromolecule_sample;
+
+    if (!baseLayout || baseLayout.inventory === undefined) return;
+
+    updateInventoryTabInCollection(-Math.abs(baseLayout.inventory));
+  };
+
+  const persistInventoryTabInCollection = () => {
+    const sbmmLayout = currentCollection?.tabs_segment?.sequence_based_macromolecule_sample;
+    const baseLayout = sbmmLayout
+      || UserStore.getState().profile?.data?.layout_detail_sequence_based_macromolecule_sample;
+
+    // Already visible — nothing to do
+    if (baseLayout?.inventory > 0) return;
+
+    if (!baseLayout) return;
+
+    const maxOrder = Math.max(0, ...Object.values(baseLayout).map((v) => Math.abs(v)));
+    updateInventoryTabInCollection(maxOrder + 1);
   };
 
   const handleInventorySample = (e) => {
@@ -206,6 +223,7 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
       if (sbmmStore.active_tab_key === 'inventory') {
         sbmmStore.setActiveTabKey('properties');
       }
+      hideInventoryTabInCollection();
     }
   };
 

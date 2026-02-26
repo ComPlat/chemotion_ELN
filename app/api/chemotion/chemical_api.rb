@@ -30,7 +30,8 @@ module Chemotion
                          attributes[:sequence_based_macromolecule_sample_id] = nil
                          Chemical.find_by(sample_id: params[:sample_id])
                        end
-            chemical&.update!(attributes)
+            error!('chemical not found', 404) unless chemical
+            chemical.update!(attributes)
           else
             status 204
           end

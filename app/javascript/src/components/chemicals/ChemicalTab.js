@@ -93,7 +93,6 @@ export default class ChemicalTab extends React.Component {
       cas,
       type,
     };
-    console.log(type);
     if (type === 'SBMM') {
       params.sequence_based_macromolecule_sample_id = sample.id;
       params.type = 'SBMM';
@@ -629,8 +628,10 @@ export default class ChemicalTab extends React.Component {
     sample.xref.refractive_index = properties.refractive_index || sample.xref.refractive_index;
     sample.xref.solubility = properties.solubility || sample.xref.solubility;
 
-    handleUpdateSample(sample);
-    ElementActions.updateSample(new Sample(sample), false);
+    if (handleUpdateSample) {
+      handleUpdateSample(sample);
+      ElementActions.updateSample(new Sample(sample), false);
+    }
   }
 
   chemicalStatus(data) {
@@ -1867,10 +1868,12 @@ export default class ChemicalTab extends React.Component {
 ChemicalTab.propTypes = {
   sample: PropTypes.object,
   type: PropTypes.string.isRequired,
-  handleUpdateSample: PropTypes.func.isRequired,
+  handleUpdateSample: PropTypes.func,
   saveInventory: PropTypes.bool.isRequired,
   setSaveInventory: PropTypes.func.isRequired,
   editChemical: PropTypes.func.isRequired,
 };
 
-ChemicalTab.defaultProps = {};
+ChemicalTab.defaultProps = {
+  handleUpdateSample: null,
+};
