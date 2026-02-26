@@ -30,10 +30,10 @@ describe('ChemicalFetcher methods', () => {
 
       fetchStub.resolves(new Response(JSON.stringify(expectedResponse)));
 
-      const result = await ChemicalFetcher.fetchChemical(sampleId);
+      const result = await ChemicalFetcher.fetchChemical(sampleId, 'sample');
 
       sinon.assert.calledOnce(fetchStub);
-      sinon.assert.calledWithExactly(fetchStub, `/api/v1/chemicals?sample_id=${sampleId}`, {
+      sinon.assert.calledWithExactly(fetchStub, `/api/v1/chemicals?sample_id=${sampleId}&type=sample`, {
         credentials: 'same-origin',
       });
       expect(result.id).toEqual(expectedResponse.id);
@@ -115,7 +115,8 @@ describe('ChemicalFetcher methods', () => {
     const params = {
       cas: '50-00-0',
       chemical_data: [{ status: 'Out of stock' }],
-      sample_id: 19
+      sample_id: 19,
+      type: 'sample'
     };
     it('should update chemical entry', async () => {
       const expectedResponse = {
@@ -130,7 +131,7 @@ describe('ChemicalFetcher methods', () => {
       const result = await ChemicalFetcher.update(params);
 
       sinon.assert.calledOnce(fetchStub);
-      sinon.assert.calledWithExactly(fetchStub, `/api/v1/chemicals/${params.sample_id}`, {
+      sinon.assert.calledWithExactly(fetchStub, `/api/v1/chemicals?sample_id=${params.sample_id}&type=sample`, {
         credentials: 'same-origin',
         method: 'put',
         headers: {
