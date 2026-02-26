@@ -1,15 +1,12 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Accordion,
   Table,
   Button,
   ListGroup,
   ListGroupItem,
   Row,
-  Col,
-  OverlayTrigger,
-  Tooltip
+  Col
 } from 'react-bootstrap';
 import Immutable from 'immutable';
 import { uniqBy } from 'lodash';
@@ -145,24 +142,38 @@ export default class LiteratureDetails extends Component {
     };
     this.onClose = this.onClose.bind(this);
     this.handleUIStoreChange = this.handleUIStoreChange.bind(this);
+    this.loadSelectedReferences = this.loadSelectedReferences.bind(this);
     this.handleInputChange = this.handleInputChange.bind(this);
     this.handleLiteratureAdd = this.handleLiteratureAdd.bind(this);
     this.handleLiteratureRemove = this.handleLiteratureRemove.bind(this);
     this.fetchDOIMetadata = this.fetchDOIMetadata.bind(this);
   }
 
-  componentDidMount() {
-    const { currentCollection, sample, reaction } = UIStore.getState();
-    LiteraturesFetcher.fetchReferencesByCollection(currentCollection).then((literatures) => {
-      this.setState(prevState => ({
+  loadSelectedReferences(currentCollection, sample, reaction) {
+    if (!currentCollection) return;
+
+    const params = {
+      sample,
+      reaction,
+      id: currentCollection.id,
+      is_sync_to_me: currentCollection.is_sync_to_me
+    };
+
+    LiteraturesFetcher.postReferencesByUIState(params).then((selectedRefs) => {
+      this.setState((prevState) => ({
         ...prevState,
-        ...literatures,
+        selectedRefs,
         currentCollection,
         sample: { ...sample },
         reaction: { ...reaction },
-
+        sortedIds: sortByElement(selectedRefs)
       }));
     });
+  }
+
+  componentDidMount() {
+    const { currentCollection, sample, reaction } = UIStore.getState();
+    this.loadSelectedReferences(currentCollection, sample, reaction);
     UIStore.listen(this.handleUIStoreChange);
   }
 
@@ -177,23 +188,16 @@ export default class LiteratureDetails extends Component {
   handleUIStoreChange(state) {
     const cCol = this.state.currentCollection;
     const { currentCollection } = state;
+    if (!currentCollection) return null;
+    const { sample, reaction } = state;
 
     if (cCol && currentCollection &&
       (cCol.id !== currentCollection.id || cCol.is_sync_to_me !== currentCollection.is_sync_to_me)
     ) {
-      LiteraturesFetcher.fetchReferencesByCollection(currentCollection).then((literatures) => {
-
-        this.setState(prevState => ({
-          ...prevState,
-          ...literatures,
-          currentCollection,
-          sample: {},
-          reaction: {},
-        }));
-      });
+      this.loadSelectedReferences(currentCollection, sample, reaction);
       return null;
     }
-    const { sample, reaction } = state;
+
     const prevSample = this.state.sample;
     const prevReaction = this.state.reaction;
 
@@ -204,24 +208,7 @@ export default class LiteratureDetails extends Component {
       || prevReaction.unCheckedIds !== reaction.unCheckedIds
       || prevReaction.checkedAll !== reaction.checkedAll
     ) {
-      const params = {
-        sample,
-        reaction,
-        id: currentCollection.id,
-        is_sync_to_me: currentCollection.is_sync_to_me
-
-      };
-      LiteraturesFetcher.postReferencesByUIState(params).then((selectedRefs) => {
-        const sortedIds = sortByElement(selectedRefs);
-        this.setState(prevState => ({
-          ...prevState,
-          selectedRefs,
-          currentCollection,
-          sample: { ...sample },
-          reaction: { ...reaction },
-          sortedIds
-        }));
-      });
+      this.loadSelectedReferences(currentCollection, sample, reaction);
     }
     return null;
   }
@@ -357,65 +344,63 @@ export default class LiteratureDetails extends Component {
 
     return (
       <DetailCard header={this.literatureHeader()}>
-        <ListGroup>
-          <ListGroupItem>
-            <Row>
-              <Col md={8} style={{ paddingRight: 0 }}>
-                <LiteratureInput
-                  handleInputChange={this.handleInputChange}
-                  literature={literature}
-                  field="doi"
-                  placeholder="DOI: 10.... or  http://dx.doi.org/10... or 10. ..."
-                />
-              </Col>
-              <Col md={3} style={{ paddingRight: 0 }}>
-                <LiteralType
-                  handleInputChange={this.handleInputChange}
-                  disabled={false}
-                  val={literature.litype}
-                />
-              </Col>
-              <Col md={1} style={{ paddingRight: 0 }}>
-                <Button
-                  variant="success"
-                  size="sm"
-                  style={{ marginTop: 2 }}
-                  onClick={this.fetchDOIMetadata}
-                  title="fetch metadata for this doi and add citation to selection"
-                  disabled={!doiValid(literature.doi)}
-                >
-                  <i className="fa fa-plus" />
-                </Button>
-              </Col>
-              <Col md={12} style={{ paddingRight: 0 }}>
-                <Citation literature={literature} />
-              </Col>
-              <Col md={7} style={{ paddingRight: 0 }}>
-                <LiteratureInput
-                  handleInputChange={this.handleInputChange}
-                  literature={literature}
-                  field="title"
-                  placeholder="Title..."
-                />
-              </Col>
-              <Col md={4} style={{ paddingRight: 0 }}>
-                <LiteratureInput
-                  handleInputChange={this.handleInputChange}
-                  literature={literature}
-                  field="url"
-                  placeholder="URL..."
-                />
-              </Col>
-              <Col md={1}>
-                <AddButton
-                  onLiteratureAdd={this.handleLiteratureAdd}
-                  literature={literature}
-                  title="add citation to selection"
-                />
-              </Col>
-            </Row>
-          </ListGroupItem>
-        </ListGroup>
+        <Row className="mb-2 align-items-center">
+          <Col xs={8}>
+            <LiteratureInput
+              handleInputChange={this.handleInputChange}
+              literature={literature}
+              field="doi"
+              placeholder="DOI: 10.... or  http://dx.doi.org/10... or 10. ..."
+            />
+          </Col>
+          <Col xs={3}>
+            <LiteralType
+              handleInputChange={this.handleInputChange}
+              disabled={false}
+              val={literature.litype}
+            />
+          </Col>
+          <Col xs={1}>
+            <Button
+              variant="success"
+              onClick={this.fetchDOIMetadata}
+              title="fetch metadata for this doi and add citation to selection"
+              disabled={!doiValid(literature.doi)}
+            >
+              <i className="fa fa-plus" />
+            </Button>
+          </Col>
+        </Row>
+        <Row className="mb-2 align-items-center">
+          <Col xs={12}>
+            <Citation literature={literature} />
+          </Col>
+        </Row>
+        <Row className="mb-2 align-items-center">
+          <Col xs={7}>
+            <LiteratureInput
+              handleInputChange={this.handleInputChange}
+              literature={literature}
+              field="title"
+              placeholder="Title..."
+            />
+          </Col>
+          <Col xs={4}>
+            <LiteratureInput
+              handleInputChange={this.handleInputChange}
+              literature={literature}
+              field="url"
+              placeholder="URL..."
+            />
+          </Col>
+          <Col xs={1}>
+            <AddButton
+              onLiteratureAdd={this.handleLiteratureAdd}
+              literature={literature}
+              title="add citation to selection"
+            />
+          </Col>
+        </Row>
         <CitationTable
           rows={selectedRefs}
           sortedIds={sortedIds}
