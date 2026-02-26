@@ -225,13 +225,40 @@ class SumFormula < Hash
   # Heuristic: treat "." as hydrate separator when the right side starts with
   # a coefficient and then looks like a formula fragment (e.g., "5H2O", "2(OH)3").
   def self.hydrate_dot?(formula, idx)
+    # If the left side of this top-level segment is a single element with an
+    # integer count (e.g., "C1"), prefer decimal interpretation for "C1.5..."
+    # over hydrate splitting.
+    left_segment_start = previous_top_level_separator_index(formula, idx - 1)
+    left_segment = formula[left_segment_start...idx]
+    return false if left_segment.match?(/\A[A-Z][a-z]*\d+\z/)
+
     segment_end = next_top_level_separator_index(formula, idx + 1) || formula.length
     right_segment = formula[(idx + 1)...segment_end]
-    match = right_segment.match(/\A\d+(.+)\z/)
-    return false unless match
+    digit_end = right_segment.index(/\D/)
+    return false if digit_end.nil? || digit_end.zero?
 
-    right_formula = match[1]
+    right_formula = right_segment[digit_end..]
     right_formula.match?(/[()\[\]]/) || right_formula.scan(/[A-Z][a-z]*/).uniq.length > 1
+  end
+
+  # Find the previous top-level dot separator before `from_idx`, ignoring nested groups.
+  # Returns the start index of the current top-level segment.
+  def self.previous_top_level_separator_index(formula, from_idx)
+    level = 0
+    idx = from_idx
+
+    while idx >= 0
+      case formula[idx]
+      when ')', ']'
+        level += 1
+      when '(', '['
+        level -= 1
+      when '.', '·'
+        return idx + 1 if level.zero?
+      end
+      idx -= 1
+    end
+    0
   end
 
   # Find the next top-level dot separator from `from_idx`, ignoring nested groups.
@@ -270,6 +297,7 @@ class SumFormula < Hash
     token.include?('.') ? token.to_f : token.to_i
   end
 
-  private_class_method :decimal_dot?, :hydrate_dot?, :next_top_level_separator_index,
-                       :extract_number, :parse_numeric_value, :parse_numeric_token
+  private_class_method :decimal_dot?, :hydrate_dot?, :previous_top_level_separator_index,
+                       :next_top_level_separator_index, :extract_number,
+                       :parse_numeric_value, :parse_numeric_token
 end
