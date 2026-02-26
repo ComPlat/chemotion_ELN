@@ -1,5 +1,5 @@
 import {
-  addMissingColumnDefinitions, removeObsoleteColumnDefinitions, getColumnDefinitions, setEntryColDefs,
+  addMissingColumnDefinitions, removeObsoleteColumnDefinitions, getColumnDefinitions, setGroupColDefAttribute,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 
 export default function columnDefinitionsReducer(columnDefinitions, action) {
@@ -18,8 +18,14 @@ export default function columnDefinitionsReducer(columnDefinitions, action) {
       );
       return updatedColumnDefinitions;
     }
-    case 'update_entry_defs': {
-      return setEntryColDefs(columnDefinitions, action.path, action.update);
+    case 'set_group_col_def_attribute': {
+      return setGroupColDefAttribute(
+        columnDefinitions,
+        action.groupId,
+        action.subGroupId,
+        action.attribute,
+        action.update
+      );
     }
     case 'toggle_gas_mode': {
       return getColumnDefinitions(
