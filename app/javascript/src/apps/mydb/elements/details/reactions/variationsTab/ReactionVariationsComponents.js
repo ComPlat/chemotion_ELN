@@ -3,7 +3,6 @@ import React, {
   useState, useEffect, useMemo, useRef, useCallback
 } from 'react';
 import Select from 'react-select';
-import { AgGridReact } from 'ag-grid-react';
 import {
   Button, ButtonGroup, Modal, Form, OverlayTrigger, Tooltip, Table
 } from 'react-bootstrap';
@@ -604,44 +603,79 @@ MaterialOverlay.propTypes = {
   })).isRequired,
 };
 
-function MaterialEntrySelection({ entryDefs, onChange }) {
+function EntrySelectionHeader({
+  columnGroup, names, gasType, context
+}) {
+  const { parent, groupId } = columnGroup;
+  const { setColumnDefinitions } = context;
+
   const [showModal, setShowModal] = useState(false);
+  const [name, setName] = useState(names[0]);
+  const [entryColDefs, setEntryColDefs] = useState(() => columnGroup.getColGroupDef().children);
 
-  const handleEntrySelection = (item) => {
-    const updated = { ...entryDefs };
-    const wasSelected = updated[item].isSelected;
-    const selectedCount = Object.values(updated).filter((entry) => entry.isSelected).length;
+  const handleApply = () => {
+    const path = `${parent.groupId}.${groupId}`;
 
-    // Prevent deselection if this is the last selected item
-    if (wasSelected && selectedCount <= 1) {
-      return;
-    }
-
-    updated[item] = {
-      ...updated[item],
-      isSelected: !wasSelected,
-    };
-
-    onChange(updated);
+    setColumnDefinitions({
+      type: 'update_entry_defs',
+      path,
+      update: entryColDefs
+    });
+    setShowModal(false);
   };
 
-  const handleUnitChange = (item, unit) => {
-    const updated = {
-      ...entryDefs,
-      [item]: {
-        ...entryDefs[item],
-        displayUnit: unit
-      }
-    };
+  const handleEntrySelection = (entry) => {
+    setEntryColDefs((prevEntryColDefs) => {
+      const newColDefs = [...prevEntryColDefs];
+      const entryIndex = newColDefs.findIndex((e) => e.entry === entry);
 
-    onChange(updated);
+      if (entryIndex === -1) return prevEntryColDefs;
+
+      const entryColDef = newColDefs[entryIndex];
+      const isSelected = !entryColDef.hide;
+      const nSelected = newColDefs.filter((e) => e.hide === false).length;
+
+      // Prevent deselection if this is the only selected entry
+      if (isSelected && nSelected === 1) {
+        return prevEntryColDefs;
+      }
+
+      newColDefs[entryIndex] = { ...entryColDef, hide: !entryColDef.hide };
+      return newColDefs;
+    });
+  };
+
+  const handleUnitChange = (entry, unit) => {
+    setEntryColDefs((prevEntryColDefs) => {
+      const newColDefs = [...prevEntryColDefs];
+      const entryIndex = newColDefs.findIndex((e) => e.entry === entry);
+
+      if (entryIndex === -1) return prevEntryColDefs;
+
+      newColDefs[entryIndex] = { ...prevEntryColDefs[entryIndex], displayUnit: unit };
+      return newColDefs;
+    });
   };
 
   return (
-    <div className="w-100">
-      <Modal show={showModal} onHide={() => setShowModal(false)} size="lg">
+    <div>
+      <div className="d-flex flex-column w-100">
+        <span
+          className="ag-header-cell-text"
+          onClick={() => setName(names[(names.indexOf(name) + 1) % names.length])}
+        >
+          {`${name} ${gasType && gasType !== 'off' ? `(${gasType})` : ''}`}
+        </span>
+        <Button
+          onClick={() => setShowModal(true)}
+          className="w-100"
+        >
+          Entries
+        </Button>
+      </div>
+      <Modal show={showModal} onHide={handleApply} size="lg">
         <Modal.Header closeButton>
-          <Modal.Title>Select entries</Modal.Title>
+          <Modal.Title>{`Select entries for ${name}`}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Table striped bordered hover className="table-layout-fixed">
@@ -653,14 +687,16 @@ function MaterialEntrySelection({ entryDefs, onChange }) {
               </tr>
             </thead>
             <tbody>
-              {Object.entries(entryDefs).map(([entry, entryDef]) => {
-                const { units } = entryDef;
+              {entryColDefs.map((entryColDef) => {
+                const {
+                  entry, units, displayUnit, hide
+                } = entryColDef;
                 return (
                   <tr key={entry}>
                     <td className="text-center">
                       <Form.Check
                         type="checkbox"
-                        checked={entryDef.isSelected || false}
+                        checked={!hide}
                         onChange={() => handleEntrySelection(entry)}
                       />
                     </td>
@@ -669,8 +705,10 @@ function MaterialEntrySelection({ entryDefs, onChange }) {
                       {units.length > 1 ? (
                         <Form.Select
                           size="sm"
-                          value={entryDef.displayUnit || ''}
+                          value={displayUnit || ''}
                           onChange={(e) => handleUnitChange(entry, e.target.value)}
+                          onMouseDown={(e) => e.stopPropagation()}
+                          onClick={(e) => e.stopPropagation()}
                         >
                           {units.map((unit) => (
                             <option key={unit} value={unit}>{getUserFacingUnit(unit)}</option>
@@ -685,8 +723,8 @@ function MaterialEntrySelection({ entryDefs, onChange }) {
           </Table>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="primary" onClick={() => setShowModal(false)}>
-            Close
+          <Button variant="secondary" onClick={handleApply}>
+            Apply
           </Button>
         </Modal.Footer>
       </Modal>
@@ -694,123 +732,11 @@ function MaterialEntrySelection({ entryDefs, onChange }) {
   );
 }
 
-MaterialEntrySelection.propTypes = {
-  entryDefs: PropTypes.objectOf(
-    PropTypes.shape({
-      isSelected: PropTypes.bool.isRequired,
-      displayUnit: PropTypes.string.isRequired,
-    })
-  ).isRequired,
-  onChange: PropTypes.func.isRequired,
-};
-
 function ToolHeader() {
   return (
     <span>Tools</span>
   );
 }
-
-function SortControl({ column, setSort }) {
-  const [ascendingSort, setAscendingSort] = useState('inactive');
-  const [descendingSort, setDescendingSort] = useState('inactive');
-  const [noSort, setNoSort] = useState('inactive');
-
-  const onSortChanged = () => {
-    setAscendingSort(column.isSortAscending() ? 'sort_active' : 'inactive');
-    setDescendingSort(column.isSortDescending() ? 'sort_active' : 'inactive');
-    setNoSort(
-      !column.isSortAscending() && !column.isSortDescending()
-        ? 'sort_active'
-        : 'inactive'
-    );
-  };
-
-  useEffect(() => {
-    column.addEventListener('sortChanged', onSortChanged);
-    onSortChanged();
-
-    return () => column.removeEventListener('sortChanged', onSortChanged);
-  }, []);
-
-  const onSortRequested = (order, event) => {
-    setSort(order, event.shiftKey);
-  };
-
-  return (
-    <div>
-      <div
-        onClick={(event) => onSortRequested('asc', event)}
-        onTouchEnd={(event) => onSortRequested('asc', event)}
-        className={`customSortDownLabel ${ascendingSort}`}
-      >
-        <i className="fa fa-chevron-up fa-fw" />
-      </div>
-      <div
-        onClick={(event) => onSortRequested('desc', event)}
-        onTouchEnd={(event) => onSortRequested('desc', event)}
-        className={`customSortUpLabel ${descendingSort}`}
-      >
-        <i className="fa fa-chevron-down fa-fw" />
-      </div>
-      <div
-        onClick={(event) => onSortRequested('', event)}
-        onTouchEnd={(event) => onSortRequested('', event)}
-        className={`customSortRemoveLabel ${noSort}`}
-      >
-        <i className="fa fa-times fa-fw" />
-      </div>
-    </div>
-  );
-}
-
-function MenuHeader({
-  column, setSort, names, gasType = 'off', sortable = true,
-}) {
-  const [name, setName] = useState(names[0]);
-
-  return (
-    <div className="d-grid gap-1">
-      <span
-        className="ag-header-cell-text"
-        onClick={() => setName(names[(names.indexOf(name) + 1) % names.length])}
-      >
-        {`${name} ${gasType !== 'off' ? `(${gasType})` : ''}`}
-      </span>
-      { sortable && <SortControl column={column} setSort={setSort} /> }
-    </div>
-  );
-}
-
-MenuHeader.propTypes = {
-  column: PropTypes.instanceOf(AgGridReact.column).isRequired,
-  setSort: PropTypes.func.isRequired,
-  names: PropTypes.arrayOf(PropTypes.string).isRequired,
-  gasType: PropTypes.string,
-  sortable: PropTypes.bool,
-};
-
-MenuHeader.defaultProps = {
-  gasType: 'off',
-  sortable: true,
-};
-
-function GroupHeader({ column, setSort }) {
-  return (
-    <div className="d-grid gap-1">
-      <span
-        className="ag-header-cell-text"
-      >
-        Group
-      </span>
-      <SortControl column={column} setSort={setSort} />
-    </div>
-  );
-}
-
-GroupHeader.propTypes = {
-  column: PropTypes.instanceOf(AgGridReact.column).isRequired,
-  setSort: PropTypes.func.isRequired,
-};
 
 function ColumnSelection({ selectedColumns, availableColumns, onApply }) {
   const [showModal, setShowModal] = useState(false);
@@ -913,6 +839,17 @@ function RemoveVariationsModal({ onRemoveAll }) {
   );
 }
 
+function MaterialHeaderName(colDef) {
+  const { entry, displayUnit } = colDef;
+  let headerName = getUserFacingEntryName(entry);
+
+  if (displayUnit) {
+    headerName += ` (${getUserFacingUnit(displayUnit)})`;
+  }
+
+  return headerName;
+}
+
 export {
   RowToolsCellRenderer,
   EquivalentParser,
@@ -925,7 +862,6 @@ export {
   NoteCellRenderer,
   NoteCellEditor,
   MaterialOverlay,
-  MenuHeader,
   ToolHeader,
   ColumnSelection,
   SegmentFormatter,
@@ -934,5 +870,6 @@ export {
   RemoveVariationsModal,
   GroupCellEditor,
   GroupCellRenderer,
-  GroupHeader,
+  EntrySelectionHeader,
+  MaterialHeaderName,
 };

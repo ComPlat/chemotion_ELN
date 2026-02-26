@@ -3,7 +3,7 @@ import {
   materialTypes, getStandardUnits, getCellDataType, getStandardValue, convertUnit,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
-  MaterialOverlay, MenuHeader
+  MaterialOverlay, EntrySelectionHeader, MaterialHeaderName
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import { calculateTON, calculateFeedstockMoles } from 'src/utilities/UnitsConversion';
 
@@ -284,14 +284,13 @@ function getMaterialColumnGroupChild(material, materialType, gasMode) {
   names = Array.from(names);
 
   return {
-    headerGroupComponent: MenuHeader,
-    headerGroupComponentParams: { names, gasType, sortable: false },
+    headerGroupComponent: EntrySelectionHeader,
+    headerGroupComponentParams: { names, gasType },
     groupId: `${materialCopy.id}`,
     children: entries.map((entry, index) => (
       {
         field: `${materialType}.${materialCopy.id}`, // Must be unique.
-        headerComponent: MenuHeader,
-        headerComponentParams: { names: [entry] },
+        headerValueGetter: ({ colDef }) => MaterialHeaderName(colDef),
         tooltipField: `${materialType}.${materialCopy.id}`,
         tooltipComponent: MaterialOverlay,
         editable: (params) => cellIsEditable(params),
