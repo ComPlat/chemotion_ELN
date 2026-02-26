@@ -231,6 +231,7 @@ function DeviceDescriptionDetails({ openedFromCollectionId }) {
           id="deviceDescriptionDetailsTab"
           mountOnEnter
           unmountOnExit
+          className="has-config-overlay"
         >
           {tabContents}
         </Tabs>

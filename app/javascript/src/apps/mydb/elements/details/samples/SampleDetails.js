@@ -1659,6 +1659,7 @@ export default class SampleDetails extends React.Component {
             activeKey={activeTab}
             onSelect={this.handleSelect}
             id="SampleDetailsXTab"
+            className="has-config-overlay"
           >
             {tabContents}
           </Tabs>

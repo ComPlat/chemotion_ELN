@@ -251,7 +251,7 @@ export default class ElementsList extends React.Component {
             id="tabList"
             activeKey={currentTab}
             onSelect={(eventKey) => this.handleTabSelect(parseInt(eventKey, 10))}
-            className="surface-tabs"
+            className="surface-tabs has-config-overlay"
           >
             {tabItems}
           </Tabs>

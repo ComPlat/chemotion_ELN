@@ -473,6 +473,7 @@ export default class ScreenDetails extends Component {
             activeKey={activeTab}
             onSelect={(key) => this.handleSelect(key)}
             id="screen-detail-tab"
+            className="has-config-overlay"
           >
             {tabContents}
           </Tabs>

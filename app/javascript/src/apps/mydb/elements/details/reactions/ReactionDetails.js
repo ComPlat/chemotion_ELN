@@ -1082,6 +1082,7 @@ export default class ReactionDetails extends Component {
             onSelect={this.handleSelect}
             id="reaction-detail-tab"
             unmountOnExit
+            className="has-config-overlay"
           >
             {tabContents}
           </Tabs>

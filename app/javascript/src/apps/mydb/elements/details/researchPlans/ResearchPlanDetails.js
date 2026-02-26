@@ -640,6 +640,7 @@ export default class ResearchPlanDetails extends Component {
             activeKey={activeTab}
             onSelect={(key) => this.handleSelect(key)}
             id="screen-detail-tab"
+            className="has-config-overlay"
           >
             {tabContents}
           </Tabs>

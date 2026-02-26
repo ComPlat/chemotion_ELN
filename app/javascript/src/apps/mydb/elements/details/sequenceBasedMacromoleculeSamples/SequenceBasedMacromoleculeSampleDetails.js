@@ -261,6 +261,7 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
           onSelect={key => handleTabChange(key)}
           id="sbmmSampleSampleDetailsTab"
           unmountOnExit
+          className="has-config-overlay"
         >
           {tabContents}
         </Tabs>
