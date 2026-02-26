@@ -94,7 +94,7 @@ export default class ContainerComponent extends Component {
         break;
     }
 
-    const { onChange } = this.props
+    const { onChange } = this.props;
     if (isChanged) onChange(container);
   }
 
@@ -135,12 +135,14 @@ export default class ContainerComponent extends Component {
     const { onChange } = this.props;
     const { container } = this.state;
 
-    this.setState({ includeDescription });
-
     if (!includeDescription) {
-      container.description = '';
-      this.setState({ container });
-      onChange(container);
+      const updatedContainer = { ...container, description: '' };
+      this.setState(
+        { includeDescription, container: updatedContainer },
+        () => onChange(updatedContainer)
+      );
+    } else {
+      this.setState({ includeDescription });
     }
   }
 
@@ -200,7 +202,7 @@ export default class ContainerComponent extends Component {
               type="checkbox"
               id="includeDescription"
               label={<span className="text-nowrap">Include description</span>}
-              checked={this.state.includeDescription}
+              checked={includeDescription}
               disabled={readOnly || disabled}
               onChange={this.handleIncludeDescriptionChange}
               className="my-2 d-flex align-items-center gap-2"
