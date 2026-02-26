@@ -104,51 +104,74 @@ module Export
       @samples = nil
     end
 
-    def generate_composition_table_components_sheet_with_samples(table, samples = nil)
+    # Column keys pulled from the SQL result row for each sample.
+    COMPOSITION_SAMPLE_KEYS = [
+      'sample external label',
+      'sample name',
+      'short label',
+      'sample uuid',
+    ].freeze
+
+    # Headers for the calculated composition columns, matching the UI table.
+    COMPOSITION_COMP_HEADERS = [
+      'Source',
+      'Weight ratio exp.',
+      'Molar Mass (g/mol)',
+      'Weight ratio calc./%',
+      'Weight ratio (calc)/MM',
+      'Molar ratio (calc)/MM',
+      'Molar ratio exp/%',
+      'Molar ratio calc/%',
+    ].freeze
+
+    # Generates a composition table sheet replicating all calculations from
+    # the frontend sampleHierarchicalCompositions.js utility.
+    #
+    # Columns: sample identification + HierarchicalMaterial properties,
+    # followed by 8 composition calculation columns per component.
+    # A bold totals row is appended after each sample's component rows.
+    def generate_composition_table_components_sheet_with_samples(table, samples = nil) # rubocop:disable Metrics/MethodLength
       @samples = samples
       return if samples.nil?
 
-      @headers.push('source', 'molar_mass', 'molecule_id', 'weight_ratio_exp', 'template_category')
-      sheet, light_grey = setup_composition_sheet(table)
-      samples.each { |sample| write_composition_sample_row(sheet, sample, light_grey) }
-      @samples = nil
-    end
-
-    def setup_composition_sheet(table)
+      headers = COMPOSITION_SAMPLE_KEYS + COMPOSITION_COMP_HEADERS
       sheet = @xfile.workbook.add_worksheet(name: table)
-      grey = sheet.styles.add_style(sz: 12, border: { style: :thick, color: 'FF777777', edges: [:bottom] })
+      grey       = sheet.styles.add_style(sz: 12, b: true, border: { style: :thick, color: 'FF777777', edges: [:bottom] })
       light_grey = sheet.styles.add_style(border: { style: :thick, color: 'FFCCCCCC', edges: [:top] })
-      sheet.add_row(@headers, style: grey)
-      decoupled_style = sheet.styles.add_style(DECOUPLED_STYLE)
-      ['sample uuid'].each do |e|
-        s_idx = @headers.find_index(e)
-        sheet.rows[0].cells[s_idx].style = decoupled_style
-      end
-      [sheet, light_grey]
-    end
+      sheet.add_row(headers, style: grey)
 
-    def write_composition_sample_row(sheet, sample, light_grey)
-      sample_id_row = (@row_headers & HEADERS_SAMPLE_ID).map { |column| sample[column] }
-      components = begin
-                     JSON.parse(sample['components'])
-                   rescue StandardError
-                     []
-                   end
-      unless components.present?
-        sheet.add_row(sample_id_row, style: light_grey)
-        return
+      samples.each do |sample|
+        sample_values = COMPOSITION_SAMPLE_KEYS.map { |col| sample[col] }
+        components    = begin
+                          JSON.parse(sample['components'] || '[]')
+                        rescue StandardError
+                          []
+                        end
+        hm_components = components.select { |c| c['name'] == 'HierarchicalMaterial' }
+
+        if hm_components.empty?
+          sheet.add_row(sample_values + Array.new(COMPOSITION_COMP_HEADERS.size), style: light_grey)
+          next
+        end
+
+        result = build_composition_rows(hm_components)
+        result[:rows].each do |row|
+          comp_values = [
+            row[:source_alias],
+            row[:weight_ratio_exp],
+            row[:molar_mass],
+            row[:weight_ratio_calc_processed],
+            row[:molar_ratio_calc_mm],
+            row[:weight_ratio_calc_mm_col9],
+            row[:molar_ratio_exp_percent],
+            row[:molar_ratio_calc_percent],
+          ]
+          sheet.add_row(sample_values + comp_values, style: light_grey)
+        end
+
       end
 
-      components.each do |comp|
-        row = sample_id_row + [
-          comp['source'],
-          comp['molar_mass'],
-          comp['molecule_id'],
-          comp['weight_ratio_exp'],
-          comp['template_category'],
-        ]
-        sheet.add_row(row, style: light_grey)
-      end
+      @samples = nil
     end
 
     #TODO: implement better detail level filter
@@ -307,6 +330,79 @@ module Export
       file.flush
       # file.close
       file
+    end
+
+    private
+
+    # Translates Component#parseComponentSource from the JS frontend model.
+    # Returns a hash with :source, :component, :weight_ratio_calc.
+    def parse_component_source(source)
+      return { source: source, component: nil, weight_ratio_calc: 0.0 } if source.nil? || source.empty?
+
+      if source.include?('%')
+        match = source.strip.match(/\A\d+/)
+        { source: source, component: source.strip, weight_ratio_calc: match ? match[0].to_f : 0.0 }
+      else
+        parts = source.split('-')
+        { source: source, component: parts[1], weight_ratio_calc: 0.0 }
+      end
+    end
+
+    # Returns the weight ratio for a component whose source does not encode a
+    # percentage — equivalent to Component#calcWeightRatioWithoutWeight.
+    def calc_weight_ratio_without_weight(components)
+      sum = components.sum { |item| parse_component_source(item['source'].to_s)[:weight_ratio_calc] }
+      100.0 - sum
+    end
+
+    # Replicates buildHierarchicalMaterialRows from sampleHierarchicalCompositions.js.
+    # Accepts an array of HierarchicalMaterial component hashes and returns
+    #   { rows: [...], total_molar_calc: Float, total_molar_exp: Float }
+    # Each row hash contains the keys consumed by generate_composition_table_components_sheet_with_samples.
+    def build_composition_rows(components) # rubocop:disable Metrics/MethodLength
+      rows_data        = []
+      total_molar_calc = 0.0
+      total_molar_exp  = 0.0
+
+      components.each do |comp|
+        molar_mass       = comp['molar_mass'].to_f
+        weight_ratio_exp = comp['weight_ratio_exp'].to_f
+        parsed           = parse_component_source(comp['source'].to_s)
+        wrc_float        = parsed[:weight_ratio_calc].to_f
+
+        weight_ratio_calc_processed = wrc_float > 0 ? wrc_float : calc_weight_ratio_without_weight(components)
+
+        molar_ratio_calc_mm = molar_mass > 0 ? (weight_ratio_calc_processed / molar_mass).round(10) : 0.0
+        molar_ratio_exp_mm  = molar_mass > 0 ? (weight_ratio_exp / molar_mass).round(10) : 0.0
+
+        total_molar_calc = (total_molar_calc + molar_ratio_calc_mm).round(10)
+        total_molar_exp  = (total_molar_exp  + molar_ratio_exp_mm).round(10)
+
+        rows_data << {
+          source_alias:                parsed[:source],
+          molar_mass:                  molar_mass,
+          weight_ratio_exp:            weight_ratio_exp,
+          weight_ratio_calc_processed: weight_ratio_calc_processed,
+          molar_ratio_calc_mm:         molar_ratio_calc_mm,
+          molar_ratio_exp_mm:          molar_ratio_exp_mm,
+        }
+      end
+
+      rows_with_percentages = rows_data.map do |row|
+        molar_ratio_calc_percent  = total_molar_calc > 0 ? (row[:molar_ratio_calc_mm] / total_molar_calc).round(3) : '-'
+        molar_ratio_exp_percent   = total_molar_exp  > 0 ? (row[:molar_ratio_exp_mm]  / total_molar_exp).round(3)  : '-'
+        weight_ratio_calc_mm_col9 = row[:molar_mass] > 0 ? (row[:weight_ratio_exp] / row[:molar_mass]).round(3) : nil
+
+        row.merge(
+          molar_ratio_calc_mm:       row[:molar_ratio_calc_mm].round(3),
+          weight_ratio_calc_mm_col9: weight_ratio_calc_mm_col9,
+          molar_ratio_exp_percent:   molar_ratio_exp_percent,
+          molar_ratio_calc_percent:  molar_ratio_calc_percent,
+        )
+      end
+
+      sorted = rows_with_percentages.sort_by { |r| r[:weight_ratio_calc_processed].to_f }
+      { rows: sorted, total_molar_calc: total_molar_calc.round(3), total_molar_exp: total_molar_exp.round(3) }
     end
   end
 end

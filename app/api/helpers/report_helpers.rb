@@ -408,7 +408,7 @@ module ReportHelpers
             #{component_columns}
           FROM components comp
           #{needs_molecule_join ? "LEFT JOIN molecules m ON m.id = (comp.component_properties->>'molecule_id')::integer" : ''}
-          WHERE comp.sample_id = s.id
+          WHERE comp.sample_id = s.id AND comp.deleted_at IS NULL
           ORDER BY comp.position
         ) AS component_row
       ) AS components ON TRUE
@@ -763,7 +763,6 @@ module ReportHelpers
       'refractive_index' => "s.xref->>'refractive_index' as refractive_index",
       'flash_point' => "s.xref->>'flash_point' as flash_point",
       'solubility' => "s.xref->>'solubility' as solubility",
-      'color' => "s.xref->>'color' as color",
       'form' => "s.xref->>'form' as form",
     }
 
@@ -776,7 +775,8 @@ module ReportHelpers
 
   def build_column_query(sel, user_id = 0, attrs = EXP_MAP_ATTR)
     selection = []
-    composition_table_properties = %w[source molar_mass molecule_id weight_ratio_exp template_category].freeze
+    # 'name' is required so the export can filter for HierarchicalMaterial components
+    composition_table_properties = %w[name source molar_mass molecule_id weight_ratio_exp template_category].freeze
     attrs.each_key do |table|
       sel.symbolize_keys.fetch(table, []).each do |col|
         custom_column_query(table, col, selection, user_id, attrs)
