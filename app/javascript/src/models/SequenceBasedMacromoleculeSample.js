@@ -308,7 +308,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
   }
 
   calculateValues(type) {
-    if (this.function_or_application !== 'enzyme') return null;
+    // if (this.function_or_application !== 'enzyme') return null;
 
     switch (type) {
       case 'volume_as_used':
