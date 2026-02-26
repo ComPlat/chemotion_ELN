@@ -49,6 +49,8 @@ class SharedMethods
   def serialized_elements(element, paginated_ids)
     if element.first == :sample_ids
       serialize_sample(paginated_ids)
+    elsif element.first == :cell_line_ids || element.first == :cellline_sample_ids
+      serialize_cellline(paginated_ids)
     else
       serialize_by_element(element, paginated_ids)
     end
@@ -90,6 +92,12 @@ class SharedMethods
         totalElements: element_ids_for_klass.size,
         error: error,
       }
+    end
+  end
+
+  def serialize_cellline(paginated_ids)
+    CelllineSample.find(paginated_ids).map do |model|
+      Entities::CellLineSampleEntity.represent(model, displayed_in_list: true).serializable_hash
     end
   end
 

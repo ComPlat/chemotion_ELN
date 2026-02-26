@@ -40,7 +40,7 @@ module Chemotion
                              default: 'LIKE'
             optional :table, type: String, values: %w[
               samples reactions wellplates screens research_plans elements segments literatures
-              sequence_based_macromolecule_samples device_descriptions
+              sequence_based_macromolecule_samples device_descriptions cell_lines
             ]
             optional :element_id, type: Integer
             optional :unit, type: String
@@ -53,7 +53,7 @@ module Chemotion
           optional :id_params, type: Hash do
             requires :model_name, type: String, values: %w[
               sample reaction wellplate screen element research_plan sequence_based_macromolecule_sample
-              device_descriptions
+              device_descriptions cell_lines
             ]
             requires :ids, type: Array
             optional :total_elements, type: Integer
@@ -614,7 +614,7 @@ module Chemotion
             conditions: conditions,
           ).perform!
 
-          results['cell_lines'] = { elements: [], ids: [], page: 1, perPage: 15, pages: 0, totalElements: 0, error: '' }
+          results['cell_lines'] = results['cellline_samples']
           results
         end
       end

@@ -31,6 +31,7 @@ class CelllineSample < ApplicationRecord
   include ElementUIStateScopes
   include Taggable
   include Collectable
+  include PgSearch::Model
 
   has_one :container, as: :containable
   has_many :collections_celllines, inverse_of: :cellline_sample, dependent: :destroy

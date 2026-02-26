@@ -64,7 +64,14 @@ module Usecases
       end
 
       def model_name(table)
-        table == 'elements' ? Labimotion::Element : table.singularize.camelize.constantize
+        case table
+        when 'elements'
+          Labimotion::Element
+        when 'cell_lines'
+          CelllineSample
+        else
+          table.singularize.camelize.constantize
+        end
       end
 
       # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
@@ -89,6 +96,8 @@ module Usecases
           post_translational_modification_field_options(filter)
         elsif @table_or_tab_types[:device_descriptions]
           device_description_field_options(filter)
+        elsif @table_or_tab_types[:cellline_materials] || @table_or_tab_types[:cellline_samples]
+          cell_line_field_options(filter)
         else
           special_non_generic_field_options(filter)
         end
@@ -112,6 +121,10 @@ module Usecases
         @table_or_tab_types[:post_translational_modifications] =
           @field_table.present? && @field_table == 'post_translational_modifications'
         @table_or_tab_types[:device_descriptions] = @field_table.present? && @field_table == 'device_descriptions'
+        @table_or_tab_types[:cellline_materials] =
+          @field_table.present? && @field_table == 'cellline_materials'
+        @table_or_tab_types[:cellline_samples] =
+          @field_table.present? && @field_table == 'cellline_samples'
       end
       # rubocop:enable Metrics/CyclomaticComplexity, Metrics/AbcSize, Metrics/PerceivedComplexity
 
@@ -140,7 +153,7 @@ module Usecases
         tables = %w[
           elements segments chemicals containers measurements molecules literals literatures datasets
           sequence_based_macromolecules protein_sequence_modifications post_translational_modifications
-          device_descriptions
+          device_descriptions cellline_materials cellline_samples
         ]
         return true if tables.include?(table)
 
@@ -172,7 +185,7 @@ module Usecases
       def sanitize_float_fields?(filter)
         fields = %w[
           boiling_point melting_point density molarity_value target_amount_value purity
-          temperature duration molecular_mass
+          temperature duration molecular_mass amount
         ]
         fields.include?(filter['field']['column']) && filter['field']['table'] != 'segments'
       end
@@ -580,6 +593,13 @@ module Usecases
         @conditions[:first_condition] = "'#{filter['value']}' = ANY(general_tags)"
         @conditions[:words][0] = ''
         @conditions[:field] = ''
+      end
+
+      def cell_line_field_options(filter)
+        @conditions[:condition_table] = "#{@field_table}."
+        field_table_inner_join =
+          'INNER JOIN cellline_materials ON cellline_materials.id = cellline_samples.cellline_material_id'
+        @conditions[:joins] << field_table_inner_join if @conditions[:joins].exclude?(field_table_inner_join)
       end
     end
   end
