@@ -37,13 +37,14 @@ module Reactable
     # The reference material must always keep Eq = 1.
     # Guard early to avoid transient recalculation paths during reaction save.
     if reference && gas_type != 'gas'
-      update!(equivalent: 1.0) unless equivalent.to_f == 1.0
+      update!(equivalent: 1.0) unless (equivalent.to_f - 1.0).abs < 1e-6
       return
     end
 
     ref_record = ReactionsSample.find_by(reaction_id: reaction_id, reference: true)
     return if ref_record.nil? ||
               sample&.sample_type == Sample::SAMPLE_TYPE_MIXTURE
+
     ## use real amount unless target amount is defined and real amount is not
     real_amount_condition = sample.real_amount_value && sample.real_amount_value != 0
     target_amount_condition = sample.target_amount_value && sample.target_amount_value != 0

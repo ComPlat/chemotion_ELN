@@ -2082,10 +2082,7 @@ export default class ReactionDetailsScheme extends React.Component {
 
     // Update concentrations for all materials when volumes change
     if ((typeof (lockEquivColumn) !== 'undefined' && !lockEquivColumn) || !reaction.changed) {
-      reaction.starting_materials.forEach((sample) => {
-        sample.updateConcentrationFromSolvent(reaction);
-      });
-      reaction.reactants.forEach((sample) => {
+      reaction.allReactionMaterials.forEach((sample) => {
         sample.updateConcentrationFromSolvent(reaction);
       });
     }
