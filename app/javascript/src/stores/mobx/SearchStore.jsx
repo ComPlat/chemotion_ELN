@@ -85,6 +85,7 @@ export const SearchStore = types
     active_tab_key: types.optional(types.number, 0),
     show_search_result_list: types.optional(types.boolean, false),
     result_error_messages: types.optional(types.array(types.string), []),
+    structure_svg: types.optional(types.string, ''),
   })
   .actions(self => ({
     // here we are using async actions (https://mobx-state-tree.js.org/concepts/async-actions) to use promises
@@ -94,23 +95,29 @@ export const SearchStore = types
       if (result) {
         self.search_results.clear();
         self.tab_search_results.clear();
+        self.structure_svg = '';
         Object.entries(result).forEach(([key, value]) => {
           let errorExists = self.result_error_messages.find((e) => { return e == value.error });
           if (value.error !== undefined && value.error !== '' && errorExists === undefined) {
             self.result_error_messages.push(value.error);
           }
-          let searchResult = SearchResult.create({
-            id: key,
-            results: {
-              ids: value.ids,
-              page: value.page,
-              pages: value.pages,
-              per_page: value.perPage,
-              total_elements: value.totalElements
-            }
-          })
-          self.search_results.set(searchResult.id, searchResult)
-          self.addSearchResult(key, value, value.ids.slice(0, 15))
+          let searchResult;
+          if (key == 'structure_svg') {
+            self.structure_svg = value.svg;
+          } else {
+            searchResult = SearchResult.create({
+              id: key,
+              results: {
+                ids: value.ids,
+                page: value.page,
+                pages: value.pages,
+                per_page: value.perPage,
+                total_elements: value.totalElements
+              }
+            })
+            self.search_results.set(searchResult.id, searchResult)
+            self.addSearchResult(key, value, value.ids.slice(0, 15))
+          }
         });
       }
     }),
@@ -141,11 +148,12 @@ export const SearchStore = types
       // self.clearSearchResults();
       self.showMinimizedSearchModal();
     },
-    changeSearchType(e) {
+    changeSearchType(type) {
       self.resetAdvancedSearchValue();
       self.detail_search_values = [];
       self.resetPublicationSearchValue();
-      self.search_type = (e.target.checked == true ? 'detail' : 'advanced');
+      // self.search_type = (e.target.checked == true ? 'detail' : 'advanced');
+      self.search_type = type;
       self.active_tab_key = 0;
       self.search_result_active_tab_key = 1;
     },
@@ -233,6 +241,7 @@ export const SearchStore = types
     clearSearchAndTabResults() {
       self.search_results.clear();
       self.tab_search_results.clear();
+      self.structure_svg = '';
       self.clearTabCurrentPage();
     },
     clearSearchResults() {
@@ -251,6 +260,7 @@ export const SearchStore = types
       self.resetKetcherRailsValues();
       self.resetPublicationSearchValue();
       self.result_error_messages = [];
+      self.structure_svg = '';
     },
     toggleSearch() {
       self.search_visible = !self.search_visible;

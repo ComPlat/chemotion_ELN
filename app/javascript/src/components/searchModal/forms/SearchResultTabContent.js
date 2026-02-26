@@ -171,17 +171,17 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
       >
         {/* Sample grouping header */}
         {showSampleHeader && (
-        <div className="search-result-molecule sample">
-          {svgPreview(object)}
-          <SampleName sample={object} />
-        </div>
+          <div className="search-result-molecule sample">
+            {svgPreview(object)}
+            <SampleName sample={object} />
+          </div>
         )}
 
         {/* Reaction SVG — always */}
         {object.type === 'reaction' && (
-        <div className="search-result-molecule reaction">
-          {svgPreview(object)}
-        </div>
+          <div className="search-result-molecule reaction">
+            {svgPreview(object)}
+          </div>
         )}
 
         <span className="search-result-tab-content-list-name">
