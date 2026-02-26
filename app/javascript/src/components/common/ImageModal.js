@@ -303,15 +303,6 @@ export default class ImageModal extends Component {
           role="button"
           tabIndex={0}
         >
-          <OverlayTrigger
-            placement={placement}
-            overlay={this.showPopObject()}
-          >
-            <img
-              src={thumbnail}
-              alt={attachment?.filename}
-            />
-          </OverlayTrigger>
           {this.state.isLoading ? (
             <div
               className="d-flex justify-content-center align-items-center"
@@ -328,12 +319,17 @@ export default class ImageModal extends Component {
               </div>
             </div>
           ) : (
-            <img
-              src={thumbnail}
-              alt={attachment?.filename}
-              style={{ ...imageStyle }}
-              role="button"
-            />
+            <OverlayTrigger
+              placement={placement}
+              overlay={this.showPopObject()}
+            >
+              <img
+                src={thumbnail}
+                alt={attachment?.filename}
+                style={{ ...imageStyle }}
+                role="button"
+              />
+            </OverlayTrigger>
           )}
         </div>
         <Modal
@@ -363,80 +359,33 @@ export default class ImageModal extends Component {
                 </p>
               </iframe>
             ) : (
-              <img
-                src={fetchSrc}
-                style={{
-                  display: 'block',
-                  maxHeight: '80vh',
-                  maxWidth: '100%',
-                  margin: '0 auto'
-                }}
-                alt={attachment?.filename}
-                onError={this.handleImageError}
-              />
+              <div className="d-flex justify-content-center align-items-center mt-2">
+                {this.state.isLoading ? (
+                  <div
+                    className="d-flex justify-content-center align-items-center"
+                    style={{
+                      width: imageStyle?.width || 300,
+                      height: imageStyle?.height || 300,
+                      minWidth: 120,
+                      minHeight: 120,
+                      ...imageStyle
+                    }}
+                  >
+                    <div className="spinner-border text-primary" role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
+                  </div>
+                ) : (
+                  <img
+                    src={this.state.fetchSrc}
+                    style={{ maxHeight: '100%', maxWidth: '100%', display: 'block' }}
+                    alt={attachment?.filename}
+                    onError={this.handleImageError}
+                  />
+                )}
+              </div>
             )}
             <div>
-              {isPdf && fetchSrc ? (
-                <div>
-                  <Document
-                    file={{ url: fetchSrc }}
-                    onLoadSuccess={(pdf) => this.onDocumentLoadSuccess(pdf.numPages)}
-                  >
-                    <Page pageNumber={pageIndex} renderAnnotationLayer={false} renderTextLayer={false} />
-                  </Document>
-                  <div>
-                    <p>
-                      Page
-                      {' '}
-                      {pageIndex || (numOfPages ? 1 : '--')}
-                      {' '}
-                      of
-                      {' '}
-                      {numOfPages || '--'}
-                    </p>
-                    <button
-                      type="button"
-                      disabled={pageIndex <= 1}
-                      onClick={this.previousPage}
-                    >
-                      Previous
-                    </button>
-                    <button
-                      type="button"
-                      disabled={pageIndex >= numOfPages}
-                      onClick={this.nextPage}
-                    >
-                      Next
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="d-flex justify-content-center align-items-center mt-2">
-                  {this.state.isLoading ? (
-                    <div
-                      className="d-flex justify-content-center align-items-center"
-                      style={{
-                        width: imageStyle?.width || 300,
-                        height: imageStyle?.height || 300,
-                        minWidth: 120,
-                        minHeight: 120,
-                        ...imageStyle
-                      }}
-                    >
-                      <div className="spinner-border text-primary" role="status">
-                        <span className="visually-hidden">Loading...</span>
-                      </div>
-                    </div>
-                  ) : (
-                    <img
-                      src={this.state.fetchSrc}
-                      style={{ maxHeight: '100%', maxWidth: '100%', display: 'block' }}
-                      alt={attachment?.filename}
-                      onError={this.handleImageError}
-                    />
-                  )}
-                </div>
-              )}
               {this.renderAttachmentsThumbnails()}
             </div>
           </Modal.Body>
