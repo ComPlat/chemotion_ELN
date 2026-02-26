@@ -5,8 +5,6 @@ import {
   Accordion,
   Table,
   Button,
-  ListGroup,
-  ListGroupItem,
   Row,
   Col,
   OverlayTrigger,
@@ -17,19 +15,14 @@ import { uniqBy } from 'lodash';
 import {
   Citation,
   CitationUserRow,
-  doiValid,
   sanitizeDoi,
-  AddButton,
-  LiteratureInput,
   sortByElement,
-  LiteralType,
   literatureContent
 } from 'src/apps/mydb/elements/details/literature/LiteratureCommon';
 import Literature from 'src/models/Literature';
 import LiteraturesFetcher from 'src/fetchers/LiteraturesFetcher';
 import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import { copyToClipboard } from 'src/utilities/clipboard';
 
@@ -171,9 +164,7 @@ export default class LiteratureModal extends Component {
       reaction: {}
     };
     this.handleUIStoreChange = this.handleUIStoreChange.bind(this);
-    this.handleInputChange = this.handleInputChange.bind(this);
     this.handleLiteratureAdd = this.handleLiteratureAdd.bind(this);
-    this.handleLiteratureRemove = this.handleLiteratureRemove.bind(this);
     this.fetchDOIMetadata = this.fetchDOIMetadata.bind(this);
   }
 
@@ -231,40 +222,6 @@ export default class LiteratureModal extends Component {
       });
     }
     return null;
-  }
-
-  handleLiteratureRemove(literature) {
-    const { element_type, element_id } = literature;
-    LiteraturesFetcher.deleteElementReference({ element: { type: element_type.toLowerCase(), id: element_id }, literature })
-      .then(() => {
-        this.setState(prevState => ({
-          ...prevState,
-          literatures: prevState.selectedRefs.delete(literature.literal_id),
-          sortedIds: sortByElement(prevState.selectedRefs.delete(literature.literal_id))
-        }));
-      });
-  }
-
-  handleInputChange(type, event) {
-    const { literature } = this.state;
-    const { value } = event.target;
-    switch (type) {
-      case 'url':
-        literature.url = value;
-        break;
-      case 'title':
-        literature.title = value;
-        break;
-      case 'doi':
-        literature.doi = value;
-        break;
-      case 'litype':
-        literature.litype = value;
-        break;
-      default:
-        break;
-    }
-    this.setState(prevState => ({ ...prevState, literature }));
   }
 
   handleLiteratureAdd(literature) {
@@ -327,7 +284,7 @@ export default class LiteratureModal extends Component {
     });
   }
 
-  renderSectionHeader(title, clipboardText) {
+  static renderSectionHeader(title, clipboardText) {
     return (
       <div className="d-flex flex-grow-1 align-items-baseline justify-content-between">
         {title}
@@ -359,11 +316,8 @@ export default class LiteratureModal extends Component {
       sampleRefs,
       reactionRefs,
       selectedRefs,
-      sortedIds,
-      literature,
       currentCollection
     } = this.state;
-    const { currentUser } = UserStore.getState();
 
     let contentSamples = '';
     sampleRefs.forEach((citation) => {
@@ -391,14 +345,14 @@ export default class LiteratureModal extends Component {
         <Modal.Header closeButton>
           <Modal.Title>
             <i className="fa fa-book me-2" />
-            Literature Management for collection '{label}'
+            {`Literature Report for collection ${label}`}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Accordion>
             <Accordion.Item eventKey="2">
               <Accordion.Header>
-                {this.renderSectionHeader('References for samples', contentSamples)}
+                {LiteratureModal.renderSectionHeader('References for samples', contentSamples)}
               </Accordion.Header>
               <Accordion.Body>
                 {sampleRefs.map((lit) => (
@@ -409,10 +363,9 @@ export default class LiteratureModal extends Component {
                 ))}
               </Accordion.Body>
             </Accordion.Item>
-
             <Accordion.Item eventKey="3">
               <Accordion.Header>
-                {this.renderSectionHeader('References for reactions', contentReactions)}
+                {LiteratureModal.renderSectionHeader('References for reactions', contentReactions)}
               </Accordion.Header>
               <Accordion.Body>
                 {reactionRefs.map((lit) => (
@@ -421,79 +374,6 @@ export default class LiteratureModal extends Component {
                     <Col xs={11}><Citation literature={lit} /></Col>
                   </Row>
                 ))}
-              </Accordion.Body>
-            </Accordion.Item>
-
-            <Accordion.Item eventKey="4">
-              <Accordion.Header>
-                {this.renderSectionHeader('References for selected elements', contentElements)}
-              </Accordion.Header>
-              <Accordion.Body>
-                <ListGroup>
-                  <ListGroupItem>
-                    <Row>
-                      <Col md={8} style={{ paddingRight: 0 }}>
-                        <LiteratureInput
-                          handleInputChange={this.handleInputChange}
-                          literature={literature}
-                          field="doi"
-                          placeholder="DOI: 10.... or  http://dx.doi.org/10... or 10. ..."
-                        />
-                      </Col>
-                      <Col md={3} style={{ paddingRight: 0 }}>
-                        <LiteralType
-                          handleInputChange={this.handleInputChange}
-                          disabled={false}
-                          val={literature.litype}
-                        />
-                      </Col>
-                      <Col md={1} style={{ paddingRight: 0 }}>
-                        <Button
-                          variant="success"
-                          size="sm"
-                          style={{ marginTop: 2 }}
-                          onClick={this.fetchDOIMetadata}
-                          title="fetch metadata for this doi and add citation to selection"
-                          disabled={!doiValid(literature.doi)}
-                        >
-                          <i className="fa fa-plus" />
-                        </Button>
-                      </Col>
-                      <Col md={12} style={{ paddingRight: 0 }}>
-                        <Citation literature={literature} />
-                      </Col>
-                      <Col md={7} style={{ paddingRight: 0 }}>
-                        <LiteratureInput
-                          handleInputChange={this.handleInputChange}
-                          literature={literature}
-                          field="title"
-                          placeholder="Title..."
-                        />
-                      </Col>
-                      <Col md={4} style={{ paddingRight: 0 }}>
-                        <LiteratureInput
-                          handleInputChange={this.handleInputChange}
-                          literature={literature}
-                          field="url"
-                          placeholder="URL..."
-                        />
-                      </Col>
-                      <Col md={1}>
-                        <AddButton
-                          onLiteratureAdd={this.handleLiteratureAdd}
-                          literature={literature}
-                          title="add citation to selection"
-                        />
-                      </Col>
-                    </Row>
-                  </ListGroupItem>
-                </ListGroup>
-                <CitationTable
-                  rows={selectedRefs}
-                  sortedIds={sortedIds}
-                  removeCitation={this.handleLiteratureRemove}
-                  userId={currentUser.id}
-                />
               </Accordion.Body>
             </Accordion.Item>
           </Accordion>
