@@ -60,7 +60,9 @@ describe Chemotion::ChemicalAPI do
     context 'when ActiveRecord::RecordInvalid is raised' do
       it 'returns error payload (201 status due to implementation)' do
         allow(Chemical).to receive(:create!).and_raise(ActiveRecord::RecordInvalid.new(Chemical.new))
-        post '/api/v1/chemicals/create', params: { sample_id: 999_999, cas: '10-10-0', type: 'sample', chemical_data: [{ 'x' => 'y' }] }
+        post '/api/v1/chemicals/create', params: {
+          sample_id: 999_999, cas: '10-10-0', type: 'sample', chemical_data: [{ 'x' => 'y' }]
+        }
         expect(response.status).to eq 201
         expect(response.body).to include('error')
       end

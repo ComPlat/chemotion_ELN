@@ -176,7 +176,7 @@ module ParamsHelpers
   params :sbmm_sample_params do
     optional :name, type: String
     optional :collection_id, type: Integer
-    optional :inventory_sample, type: Boolean
+    optional :inventory_sample, type: Boolean, default: false
     optional :external_label, type: String
     optional :function_or_application, type: String
     optional :concentration_value, type: Float
