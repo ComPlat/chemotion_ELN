@@ -124,14 +124,14 @@ module Chemotion
 
       def device_description_with_entity(device_description)
         @element_policy = ElementPolicy.new(current_user, device_description)
-        {
-          device_description: Entities::DeviceDescriptionEntity.represent(
-            device_description,
-            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: device_description)
-                                                       .detail_levels,
-            policy: @element_policy,
-          )
-        }
+        present(
+          device_description,
+          with: Entities::DeviceDescriptionEntity,
+          detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: device_description)
+                                                     .detail_levels,
+          policy: @element_policy,
+          root: :device_description,
+        )
       end
     end
 
@@ -184,13 +184,11 @@ module Chemotion
         reset_pagination_page(scope)
 
         device_descriptions = paginate(scope).map do |device_description|
-          element_policy = ElementPolicy.new(current_user, device_description)
           Entities::DeviceDescriptionEntity.represent(
             device_description,
             displayed_in_list: true,
             detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: device_description)
                                                        .detail_levels,
-            policy: element_policy,
           )
         end
 
@@ -244,17 +242,7 @@ module Chemotion
         post do
           @device_descriptions = @device_descriptions.limit(params[:limit]) if params[:limit]
 
-          device_descriptions = @device_descriptions.map do |device_description|
-            element_policy = ElementPolicy.new(current_user, device_description)
-            Entities::DeviceDescriptionEntity.represent(
-              device_description,
-              displayed_in_list: true,
-              detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: device_description).detail_levels,
-              policy: element_policy,
-            )
-          end
-
-          { device_descriptions: device_descriptions }
+          present @device_descriptions, with: Entities::DeviceDescriptionEntity, root: :device_descriptions
         end
       end
 

@@ -4,7 +4,7 @@
 module Entities
   class ReactionEntity < ApplicationEntity
     with_options(anonymize_below: 0) do
-      expose! :can_copy
+      expose! :can_copy,                                    unless: :displayed_in_list
       expose! :can_update,                                  unless: :displayed_in_list
       expose! :description,                                 unless: :displayed_in_list
       expose! :id

@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import CommentIcon from 'src/components/comments/CommentIcon';
-import CopyElementModal from 'src/components/common/CopyElementModal';
 import ElementGroupsRenderer from 'src/apps/mydb/elements/list/renderers/ElementGroupsRenderer';
 
 import { observer } from 'mobx-react';
@@ -49,7 +48,6 @@ function ListItem({ element, showDetails }) {
         <div>{element.title()}</div>
       </div>
       <div className="d-flex gap-1">
-        <CopyElementModal element={element} />
         <CommentIcon commentCount={element.comment_count} />
         <ElementCollectionLabels element={element} />
       </div>

@@ -5,7 +5,7 @@ module Entities
     # rubocop:disable Layout/ExtraSpacing
     # Level 0 attributes and relations
     with_options(anonymize_below: 0) do
-      expose! :can_copy
+      expose! :can_copy,        unless: :displayed_in_list
       expose! :can_publish,     unless: :displayed_in_list
       expose! :can_update,      unless: :displayed_in_list
       expose! :code_log,        unless: :displayed_in_list, using: 'Entities::CodeLogEntity'

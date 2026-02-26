@@ -105,11 +105,11 @@ export default class DeviceDescription extends Element {
   }
 
   buildCopy() {
-    const copy = super.buildCopy();
-    copy.short_label = DeviceDescription.buildNewShortLabel();
-    copy.container = Container.init();
-    copy.can_copy = false;
-    copy.attachments = [];
-    return copy;
+    const device_description = super.buildCopy();
+    device_description.short_label = DeviceDescription.buildNewShortLabel();
+    device_description.container = Container.init();
+    device_description.can_copy = false;
+    device_description.attachments = []
+    return device_description;
   }
 }

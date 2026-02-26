@@ -297,9 +297,8 @@ module Chemotion
             samples_group = samples_group.sort { |x, y| y.updated_at <=> x.updated_at }
             samples_group.each do |sample|
               detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: sample).detail_levels
-              element_policy = ElementPolicy.new(current_user, sample)
               sample_list.push(
-                Entities::SampleEntity.represent(sample, detail_levels: detail_levels, displayed_in_list: true, policy: element_policy),
+                Entities::SampleEntity.represent(sample, detail_levels: detail_levels, displayed_in_list: true),
               )
             end
           end
@@ -308,9 +307,8 @@ module Chemotion
           sample_scope = sample_scope.order('samples.updated_at DESC')
           paginate(sample_scope).each do |sample|
             detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: sample).detail_levels
-            element_policy = ElementPolicy.new(current_user, sample)
             sample_list.push(
-              Entities::SampleEntity.represent(sample, detail_levels: detail_levels, displayed_in_list: true, policy: element_policy),
+              Entities::SampleEntity.represent(sample, detail_levels: detail_levels, displayed_in_list: true),
             )
           end
         end

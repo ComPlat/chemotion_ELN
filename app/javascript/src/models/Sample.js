@@ -303,13 +303,13 @@ export default class Sample extends Element {
   }
 
   buildCopy() {
-    const copy = super.buildCopy();
-    copy.short_label = Sample.buildNewShortLabel();
-    copy.container = Container.init();
-    copy.can_update = true;
-    copy.can_copy = false;
-    copy.gas_type = 'off';
-    return copy;
+    const sample = super.buildCopy();
+    sample.short_label = Sample.buildNewShortLabel();
+    sample.container = Container.init();
+    sample.can_update = true;
+    sample.can_copy = false;
+    sample.gas_type = 'off';
+    return sample;
   }
 
   static buildNew(sample, collectionId, matGroup = null) {

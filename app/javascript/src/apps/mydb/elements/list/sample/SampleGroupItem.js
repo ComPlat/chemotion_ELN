@@ -11,7 +11,6 @@ import ElementWellplateLabels from 'src/apps/mydb/elements/labels/ElementWellpla
 import GenericElementLabels from 'src/apps/mydb/elements/labels/GenericElementLabels';
 import CommentIcon from 'src/components/comments/CommentIcon';
 import { ShowUserLabels } from 'src/components/UserLabels';
-import CopyElementModal from 'src/components/common/CopyElementModal';
 
 import Sample from 'src/models/Sample';
 
@@ -76,7 +75,6 @@ const showInventoryLabelIcon = (sample) => (
 );
 
 function SampleGroupItem({ sample, showDetails }) {
-
   return (
     <div
       className="d-flex justify-content-between flex-wrap"
@@ -86,7 +84,6 @@ function SampleGroupItem({ sample, showDetails }) {
       {sample.title()}
 
       <div className="d-flex align-items-center gap-1 flex-wrap">
-        <CopyElementModal element={sample} />
         {showInventoryLabelIcon(sample)}
         <CommentIcon commentCount={sample.comment_count} />
         <ShowUserLabels element={sample} />

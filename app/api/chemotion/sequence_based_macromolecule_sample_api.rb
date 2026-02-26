@@ -61,13 +61,7 @@ module Chemotion
         reset_pagination_page(sample_scope) # prevent fetching pages without results
 
         sbmm_samples = paginate(sample_scope).map do |sbmm_sample|
-          element_policy = ElementPolicy.new(current_user, sbmm_sample)
-          Entities::SequenceBasedMacromoleculeSampleEntity.represent(
-            sbmm_sample,
-            policy: element_policy,
-            displayed_in_list: true,
-            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: sbmm_sample).detail_levels,
-          )
+          Entities::SequenceBasedMacromoleculeSampleEntity.represent(sbmm_sample)
         end
 
         { sequence_based_macromolecule_samples: sbmm_samples }

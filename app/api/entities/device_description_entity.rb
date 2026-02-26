@@ -59,7 +59,7 @@ module Entities
     expose :comments, using: 'Entities::CommentEntity'
     expose :comment_count
     expose :tag, using: 'Entities::ElementTagEntity'
-    expose! :can_copy
+    expose! :can_copy, unless: :displayed_in_list
     expose! :ancestor_ids
     expose :setup_descriptions
     expose :maintenance_contract_available
