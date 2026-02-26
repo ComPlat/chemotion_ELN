@@ -72,7 +72,6 @@ export default class ModalExport extends React.Component {
           { value: 'refractive_index', text: 'refractive index', checked: false },
           { value: 'flash_point', text: 'flash point', checked: false },
           { value: 'solubility', text: 'solubility', checked: false },
-          { value: 'color', text: 'color', checked: false },
           { value: 'form', text: 'form', checked: false },
           { value: 'height', text: 'Height', checked: false },
           { value: 'width', text: 'Width', checked: false },
