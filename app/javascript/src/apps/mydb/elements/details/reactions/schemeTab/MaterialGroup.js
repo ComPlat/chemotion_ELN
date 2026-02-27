@@ -85,9 +85,11 @@ function MaterialGroup({
       } else {
         // Show notification if trying to drop SBMM into other groups
         NotificationActions.add({
-          title: 'Invalid drop location',
-          message: 'SBMM samples can only be added to the Reactants group.',
-          level: 'warning'
+          title: 'Invalid Action',
+          message: 'SBMM samples can only be placed in the Reactants group.',
+          level: 'warning',
+          dismissible: 'button',
+          position: 'tr',
         });
       }
     }

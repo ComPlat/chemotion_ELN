@@ -41,7 +41,7 @@ export default function ReactionSchemeGraphic({
     if (material.short_label && material.short_label !== 'reactant') {
       materialNames.push(material.short_label);
     }
-    if (material.molecule.iupac_name) {
+    if (material.molecule && material.molecule.iupac_name) {
       materialNames.push(material.molecule.iupac_name);
     }
     materialNames.push('\u00A0'); // Non-breaking space for empty second line

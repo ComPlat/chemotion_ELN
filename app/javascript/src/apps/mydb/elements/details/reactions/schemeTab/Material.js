@@ -1228,15 +1228,13 @@ class Material extends Component {
                 </OverlayTrigger>
               </div>
             )}
-            {isSbmmSample(material) ? (
-              <div className="reaction-material__density-data" />
-            ) : (
-              <div className="reaction-material__density-data">
-                {material.has_density ? material.density : 'undefined'}
-              </div>
-            )}
+            <div className="reaction-material__density-data">
+              {material.has_density ? material.density : 'undefined'}
+            </div>
             <div className="reaction-material__purity-data">
-              {material.purity}
+              {(material.purity === null || material.purity === undefined || material.purity === '')
+                ? 0
+                : material.purity}
             </div>
             {this.materialLoading(material, showLoadingColumn)}
             {this.materialConcentration(material)}

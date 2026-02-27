@@ -423,10 +423,28 @@ export default class ReactionDetailsScheme extends React.Component {
     }
   }
 
+  /**
+   * Maps UI group names to storage arrays. SBMM samples shown as 'reactants'
+   * are actually stored in 'reactant_sbmm_samples'. Without this translation,
+   * repositioning fails because indexOf returns -1, causing duplicates.
+   */
+  // eslint-disable-next-line class-methods-use-this
+  translateMaterialGroupForStorage(material, groupName) {
+    if (groupName === 'reactants' && isSbmmSample(material)) {
+      return 'reactant_sbmm_samples';
+    }
+    return groupName;
+  }
+
   dropMaterial(srcMat, srcGroup, tagMat, tagGroup) {
     const { reaction, onReactionChange } = this.props;
     this.updateDraggedMaterialGasType(reaction, srcMat, srcGroup, tagMat, tagGroup);
-    reaction.moveMaterial(srcMat, srcGroup, tagMat, tagGroup);
+
+    // Translate UI group names to actual storage arrays for SBMM samples
+    const actualSrcGroup = this.translateMaterialGroupForStorage(srcMat, srcGroup);
+    const actualTagGroup = this.translateMaterialGroupForStorage(tagMat, tagGroup);
+
+    reaction.moveMaterial(srcMat, actualSrcGroup, tagMat, actualTagGroup);
     onReactionChange(reaction, { updateGraphic: true });
   }
 

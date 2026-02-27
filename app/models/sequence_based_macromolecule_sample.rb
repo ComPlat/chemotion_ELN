@@ -236,4 +236,21 @@ class SequenceBasedMacromoleculeSample < ApplicationRecord
   def svg_text_path
     "svg_text/#{label_text}"
   end
+
+  # Populate resources tag for SBMM samples
+  def resources_tag
+    resources = []
+    reactions_reactant_sbmm_samples&.includes(:reaction)&.each do |rs|
+      next unless (r = rs.reaction)
+      next if r.deleted_at.present?
+
+      resources.push({
+                       resource_context_type: 'Reaction',
+                       resource_context_id: r.id,
+                       resource_context_label: r.short_label,
+                     })
+    end
+
+    resources
+  end
 end
