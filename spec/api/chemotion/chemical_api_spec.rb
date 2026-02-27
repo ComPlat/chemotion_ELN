@@ -553,4 +553,146 @@ describe Chemotion::ChemicalAPI do
       end
     end
   end
+
+  # ---------------------------------------------------------------------------
+  # SBMM (Sequence Based Macromolecule) chemical endpoints
+  # ---------------------------------------------------------------------------
+  context 'with SBMM-based chemicals' do
+    let(:sbmm) { create(:uniprot_sbmm) }
+    let(:sbmm_sample) do
+      create(:sequence_based_macromolecule_sample, sequence_based_macromolecule: sbmm, user: unauthorized_user)
+    end
+    let(:sbmm_chemical) { create(:chemical, :for_sbmm, sequence_based_macromolecule_sample: sbmm_sample) }
+
+    describe 'GET /api/v1/chemicals with type=SBMM' do
+      it 'finds a chemical by sequence_based_macromolecule_sample_id' do
+        sbmm_chemical # ensure created
+        get '/api/v1/chemicals', params: {
+          type: 'SBMM',
+          sequence_based_macromolecule_sample_id: sbmm_sample.id,
+        }
+        expect(response).to have_http_status(:ok)
+        body = JSON.parse(response.body)
+        expect(body['id']).to eq sbmm_chemical.id
+      end
+
+      it 'returns new chemical object when none exists for given SBMM sample' do
+        get '/api/v1/chemicals', params: {
+          type: 'SBMM',
+          sequence_based_macromolecule_sample_id: sbmm_sample.id,
+        }
+        expect(response).to have_http_status(:ok)
+        body = JSON.parse(response.body)
+        expect(body['id']).to be_nil
+      end
+
+      it 'returns 400 when sequence_based_macromolecule_sample_id is missing' do
+        get '/api/v1/chemicals', params: { type: 'SBMM' }
+        expect(response.status).to eq 400
+        expect(response.body).to include('sequence_based_macromolecule_sample_id is required')
+      end
+    end
+
+    describe 'POST /api/v1/chemicals/create with type=SBMM' do
+      let(:create_params) do
+        {
+          chemical_data: [{ 'cas' => '123-45-6' }],
+          cas: '123-45-6',
+          type: 'SBMM',
+          sequence_based_macromolecule_sample_id: sbmm_sample.id,
+        }
+      end
+
+      it 'creates a chemical linked to the SBMM sample' do
+        expect { post '/api/v1/chemicals/create', params: create_params }.to change(Chemical, :count).by(1)
+        expect(response).to have_http_status(:created)
+        created = Chemical.last
+        expect(created.sequence_based_macromolecule_sample_id).to eq sbmm_sample.id
+      end
+
+      it 'returns error when RecordInvalid is raised' do
+        allow(Chemical).to receive(:create!).and_raise(ActiveRecord::RecordInvalid.new(Chemical.new))
+        post '/api/v1/chemicals/create', params: create_params
+        expect(response.status).to eq 201
+        expect(response.body).to include('error')
+      end
+    end
+
+    describe 'PUT /api/v1/chemicals with type=SBMM' do
+      it 'updates a chemical found by sequence_based_macromolecule_sample_id' do
+        sbmm_chemical # ensure created
+        put '/api/v1/chemicals', params: {
+          type: 'SBMM',
+          sequence_based_macromolecule_sample_id: sbmm_sample.id,
+          chemical_data: [{ 'status' => 'Available' }],
+        }
+        expect(response).to have_http_status(:ok)
+        sbmm_chemical.reload
+        expect(sbmm_chemical.chemical_data).to eq [{ 'status' => 'Available' }]
+      end
+
+      it 'returns 400 when sequence_based_macromolecule_sample_id is missing' do
+        put '/api/v1/chemicals', params: {
+          type: 'SBMM',
+          chemical_data: [{ 'status' => 'Available' }],
+        }
+        expect(response.status).to eq 400
+        expect(response.body).to include('sequence_based_macromolecule_sample_id is required')
+      end
+
+      it 'returns 404 when no chemical exists for the given SBMM sample' do
+        put '/api/v1/chemicals', params: {
+          type: 'SBMM',
+          sequence_based_macromolecule_sample_id: sbmm_sample.id,
+          chemical_data: [{ 'status' => 'Available' }],
+        }
+        expect(response.status).to eq 404
+        expect(response.body).to include('chemical not found')
+      end
+
+      it 'nullifies sample_id when updating via SBMM type' do
+        sbmm_chemical # ensure created
+        put '/api/v1/chemicals', params: {
+          type: 'SBMM',
+          sequence_based_macromolecule_sample_id: sbmm_sample.id,
+          chemical_data: [{ 'note' => 'test' }],
+        }
+        expect(response).to have_http_status(:ok)
+        sbmm_chemical.reload
+        expect(sbmm_chemical.sample_id).to be_nil
+      end
+    end
+
+    describe 'mutual exclusivity validation' do
+      it 'rejects a chemical that belongs to both sample and SBMM sample' do
+        chem = Chemical.new(
+          sample_id: s.id,
+          sequence_based_macromolecule_sample_id: sbmm_sample.id,
+          chemical_data: [{}],
+        )
+        expect(chem).not_to be_valid
+        expect(chem.errors[:base]).to include(
+          'Chemical can belong to either a sample or a sequence_based_macromolecule_sample, not both',
+        )
+      end
+
+      it 'rejects a chemical that belongs to neither sample nor SBMM sample' do
+        chem = Chemical.new(sample_id: nil, sequence_based_macromolecule_sample_id: nil, chemical_data: [{}])
+        expect(chem).not_to be_valid
+        expect(chem.errors[:base]).to include(
+          'Chemical must belong to either a sample or a sequence_based_macromolecule_sample',
+        )
+      end
+
+      it 'accepts a chemical that belongs only to a sample' do
+        chem = Chemical.new(sample_id: s.id, chemical_data: [{}])
+        expect(chem).to be_valid
+      end
+
+      it 'accepts a chemical that belongs only to an SBMM sample' do
+        chem = Chemical.new(sequence_based_macromolecule_sample_id: sbmm_sample.id, chemical_data: [{}])
+        expect(chem).to be_valid
+      end
+    end
+  end
 end
