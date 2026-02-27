@@ -1,0 +1,459 @@
+import { keys, values } from 'mobx';
+import { flow, types } from 'mobx-state-tree';
+import { cloneDeep } from 'lodash';
+
+import CollectionsFetcher from 'src/fetchers/CollectionsFetcher';
+import CollectionSharesFetcher from 'src/fetchers/CollectionSharesFetcher';
+import CollectionElementsFetcher from 'src/fetchers/CollectionElementsFetcher';
+import MessagesFetcher from 'src/fetchers/MessagesFetcher';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import UIActions from 'src/stores/alt/actions/UIActions';
+import ElementActions from 'src/stores/alt/actions/ElementActions';
+
+export const Collection = types.model({
+  ancestry: types.string,
+  children: types.array(types.late(() => Collection)),
+  collection_share_id: types.maybeNull(types.number),
+  id: types.identifierNumber,
+  inventory_id: types.maybeNull(types.integer),
+  inventory_name: types.maybeNull(types.string),
+  inventory_prefix: types.maybeNull(types.string),
+  label: types.string,
+  is_locked: types.boolean,
+  owner: types.maybeNull(types.string),
+  permission_level: types.maybeNull(types.integer), // temp for testing
+  position: types.maybeNull(types.number),
+  shared: types.maybeNull(types.boolean),
+  tabs_segment: types.optional(types.frozen({}), {}),
+}).actions(self => ({
+  addChild(collection) {
+    if (self.id === 0 || self.isParentOf(collection)) {
+      self.children.push(collection)
+      self.sortChildren()
+    } else if (self.isAncestorOf(collection)) {
+      const nextParentIndex = self.children.findIndex(element => element.isAncestorOf(collection))
+      self.children[nextParentIndex].addChild(collection)
+    }
+  },
+  sortChildren() {
+    self.children.sort((a, b) => {
+      if (a.position != null && b.position != null) { return a.position - b.position }
+      else if (a.position != null && b.position == null) { return -1 }
+      else if (a.position == null && b.position != null) { return 1 }
+      else if (a.label.toUpperCase() < b.label.toUpperCase()) { return -1; }
+      else if (a.label.toUpperCase() == b.label.toUpperCase()) { return 0 }
+      else if (a.label.toUpperCase() > b.label.toUpperCase()) { return 1 }
+      else { console.debug('unsortable collections:', a, b); return 0 }
+    })
+  },
+  resetAncestry() {
+    self.ancestry = '/'
+  },
+})).views(self => ({
+  get ancestorIds() { return self.ancestry.split('/').filter(Number).map(element => parseInt(element)) },
+  find(collection_id) {
+    if (collection_id == self.id) return self;
+    if (self.children.length == 0) return null;
+
+    let collection = null
+    for (let i = 0; i < self.children.length; i++) {
+      collection = self.children[i].find(collection_id)
+      if (collection) return collection;
+    }
+
+    return null;
+  },
+  get isRootCollection() { return self.ancestry == '/' },
+  isAncestorOf(collection) {
+    if (!collection.ancestorIds) { return false }
+    return collection.ancestorIds.indexOf(self.id) != -1
+  },
+  isParentOf(collection) { return self.id == collection.ancestorIds.findLast(id => true) },
+  get idAndDescendantIds() { return [self.id].concat(self.children.flatMap(child => child.idAndDescendantIds)) },
+}));
+
+export const SharedWithUser = types.model({
+  celllinesample_detail_level: types.number,
+  devicedescription_detail_level: types.number,
+  element_detail_level: types.number,
+  id: types.identifierNumber,
+  permission_level: types.number,
+  reaction_detail_level: types.number,
+  researchplan_detail_level: types.number,
+  sample_detail_level: types.number,
+  screen_detail_level: types.number,
+  sequencebasedmacromoleculesample_detail_level: types.number,
+  shared_with: types.string,
+  shared_with_id: types.number,
+  shared_with_type: types.string,
+  wellplate_detail_level: types.number,
+});
+
+export const CollectionShares = types.model({
+  id: types.identifierNumber,
+  shared_with_users: types.array(types.late(() => SharedWithUser)),
+});
+
+const presort = (a, b) => {
+  const number_of_parents_a = a.ancestry.split('/').filter(Number).length;
+  const number_of_parents_b = b.ancestry.split('/').filter(Number).length;
+
+  if (number_of_parents_a != number_of_parents_b) { return number_of_parents_a - number_of_parents_b }
+  else { return a.position - b.position }
+}
+
+export const CollectionsStore = types
+  .model({
+    chemotion_repository_collection: types.maybeNull(Collection),
+    locked_collection: types.array(Collection),
+    own_collections: types.array(Collection),
+    own_collection_tree: types.maybeNull(types.frozen({})),
+    shared_with_me_collections: types.array(Collection),
+    shared_with_me_collection_tree: types.maybeNull(types.frozen({})),
+    collection_shares: types.array(CollectionShares),
+    update_tree: types.maybeNull(types.boolean, false),
+    toggled_tree_items: types.array(types.string, []),
+  })
+  .actions(self => ({
+    fetchCollections: flow(function* fetchCollections() {
+      const all_collections = yield CollectionsFetcher.fetchCollections();
+      self.own_collections.clear()
+      self.shared_with_me_collections.clear()
+
+      self.setOwnCollections(all_collections.own)
+      self.setSharedWithMeCollections(all_collections.shared_with_me)
+      self.setOwnCollectionTree()
+      self.setSharedWithMeCollectionTree()
+    }),
+    addCollection: flow(function* addCollection(collectionParams, refreshTree) {
+      const collectionItem = yield CollectionsFetcher.addCollection(collectionParams)
+      if (collectionItem) {
+        if (refreshTree) {
+          self.addNewCollectionToOwnCollection(collectionItem)
+        } else {
+          return collectionItem
+        }
+      }
+    }),
+    bulkUpdateCollection: flow(function* bulkUpdateCollection(collections) {
+      const params = { collections: collections }
+      const all_collections = yield CollectionsFetcher.buldUpdateForOwnCollections(params);
+      if (all_collections) {
+        self.own_collections.clear()
+        self.setOwnCollections(all_collections)
+        self.setOwnCollectionTree()
+      }
+    }),
+    updateCollection: flow(function* updateCollection(collection, tabs_segment) {
+      const params = { label: collection.label, tabs_segment: tabs_segment }
+      const collectionItem = yield CollectionsFetcher.updateCollection(collection.id, params)
+      if (collectionItem) {
+        self.changeTabsSegmentInTree(self.own_collections, collectionItem)
+        self.setOwnCollectionTree()
+        return self.own_collections
+      }
+    }),
+    deleteCollection: flow(function* deleteCollection(collectionId) {
+      const all_collections = yield CollectionsFetcher.deleteCollection(collectionId)
+      self.own_collections.clear()
+      self.setOwnCollections(all_collections)
+      self.setOwnCollectionTree()
+    }),
+    exportCollections: flow(function* exportCollections(collectionIds, currentUser) {
+      const response = yield CollectionsFetcher.exportCollections(collectionIds);
+
+      if (response.error) {
+        const errorMessage =
+          (response.error.includes('invalid') ? 'You do not have the right to export all selected collections' : response.error)
+        NotificationActions.add({ title: 'Export Collection', message: errorMessage, level: 'error', autoDismiss: 10 })
+      }
+    }),
+    importCollections: flow(function* importCollections(params) {
+      const response = yield CollectionsFetcher.importCollections(params)
+
+      if (response.error) {
+        NotificationActions.add({ title: 'Import Collection', message: response.error, level: 'error', autoDismiss: 10 })
+      } else {
+        NotificationActions.notifyExImportStatus('Collection import', response.status);
+      }
+    }),
+    useOrCreateCollection: flow(function* useOrCreateCollection(collectionParams) {
+      let collectionId = collectionParams?.id
+      let isNewCollection = false
+      let newCollection = {}
+      if (collectionId === undefined) {
+        newCollection = yield self.addCollection(collectionParams, false)
+        if (Object.keys(newCollection).length > 0) {
+          collectionId = newCollection.id
+          isNewCollection = true
+        }
+      }
+      if (collectionId !== undefined) {
+        return { collectionId: collectionId, isNewCollection: isNewCollection, newCollection: newCollection }
+      }
+    }),
+    getSharedWithUsers: flow(function* getSharedWithUsers(collectionId) {
+      const sharedWithUsers = yield CollectionSharesFetcher.getCollectionSharedWithUsers(collectionId)
+      if (sharedWithUsers) {
+        const collectionSharesIndex = self.collection_shares.findIndex((user) => user.id == collectionId)
+        if (self.collection_shares.length < 1 || collectionSharesIndex == -1) {
+          self.collection_shares.push({ id: collectionId, shared_with_users: sharedWithUsers })
+        } else {
+          self.collection_shares[collectionSharesIndex].shared_with_users = sharedWithUsers
+        }
+      }
+    }),
+    addCollectionShare: flow(function* addCollectionShare(params, currentUser) {
+      const response = yield CollectionSharesFetcher.addCollectionShare(params)
+      if (response.status === 204) {
+        self.fetchCollections()
+        self.getSharedWithUsers(params.collection_id)
+        self.createSharingMessage(currentUser, params.user_ids)
+      }
+    }),
+    updateCollectionShare: flow(function* updateCollectionShare(collectionShareId, params) {
+      const collectionShare = yield CollectionSharesFetcher.updateCollectionShare(collectionShareId, params)
+      if (collectionShare) {
+        self.getSharedWithUsers(collectionShare.collection_id)
+      }
+    }),
+    deleteCollectionShare: flow(function* deleteCollectionShare(collectionShareId, collectionId) {
+      const response = yield CollectionSharesFetcher.deleteCollectionShare(collectionShareId)
+      if (response.status === 204) {
+        self.fetchCollections()
+        self.getSharedWithUsers(collectionId)
+      }
+    }),
+    addElementsToCollection: flow(function* addElementsToCollection(collectionId, uiState, errorTitle, isNewCollection) {
+      const response = yield CollectionElementsFetcher.addElementsToCollection({ collection_id: collectionId, ui_state: uiState })
+      if (response.error) {
+        if (isNewCollection) {
+          self.deleteCollection(collectionId)
+        }
+        NotificationActions.add({ title: errorTitle, message: response.error, level: 'error', autoDismiss: 10 })
+      } else if (response.status === 204) {
+        return true
+      }
+    }),
+    removeElementsFromCollection: flow(function* removeElementsFromCollection(params) {
+      const response = yield CollectionElementsFetcher.deleteElementsFromCollection(params)
+
+      if (response.status === 204) {
+        // refresh elements
+        ElementActions.refreshElementsAfterCollectionChanges(params.ui_state.currentCollection.id)
+        return true
+      }
+    }),
+    assignElementsToCollection: flow(function* assignElementsToCollection(collectionParams, uiState) {
+      const { collectionId, isNewCollection, newCollection } = yield self.useOrCreateCollection(collectionParams)
+
+      if (collectionId) {
+        const response = yield self.addElementsToCollection(collectionId, uiState, 'Move to Collection', isNewCollection)
+
+        if (response) {
+          if (isNewCollection) { self.addNewCollectionToOwnCollection(newCollection) }
+          // uncheck all
+          UIActions.uncheckWholeSelection.defer()
+        }
+      }
+    }),
+    moveElementsToCollection: flow(function* moveElementsToCollection(collectionParams, uiState) {
+      const { collectionId, isNewCollection, newCollection } = yield self.useOrCreateCollection(collectionParams)
+
+      if (collectionId) {
+        const response = yield self.addElementsToCollection(collectionId, uiState, 'Move to Collection', isNewCollection)
+
+        if (response) {
+          const elementsRemoved = yield self.removeElementsFromCollection({ collection_id: uiState.currentCollection.id, ui_state: uiState })
+
+          if (elementsRemoved && isNewCollection) {
+            self.addNewCollectionToOwnCollection(newCollection)
+          }
+        }
+      }
+    }),
+    addElementsToCollectionAndShare: flow(function* addElementsToCollectionAndShare(user, params) {
+      const collectionParams = { label: `My project with ${user.name}`, parent_id: '', inventory_id: '' }
+      const newCollection = yield self.addCollection(collectionParams, false)
+
+      if (newCollection) {
+        const response = yield self.addElementsToCollection(newCollection.id, params.uiState, 'Sharing of Elements', true)
+
+        if (response) {
+          const shareParams = {
+            collection_id: newCollection.id,
+            user_ids: [user.id],
+            ...params.permissions
+          }
+          self.addCollectionShare(shareParams, params.currentUser)
+          self.addNewCollectionToOwnCollection(newCollection)
+          // uncheck all
+          UIActions.uncheckWholeSelection.defer()
+        }
+      }
+    }),
+    collectionShareForElements(params) {
+      params.users.forEach((user) => {
+        self.addElementsToCollectionAndShare(user, params)
+      })
+    },
+    createSharingMessage(currentUser, userIds) {
+      const messageParams = {
+        channel_id: 4,
+        content: `${currentUser.name} has shared a collection with you.`,
+        user_ids: userIds,
+      };
+
+      MessagesFetcher.createMessage(messageParams)
+    },
+    addNewCollectionToOwnCollection(newCollection) {
+      self.addCollectionToTree(Collection.create(newCollection), self.own_collections)
+      self.setOwnCollectionTree()
+    },
+    setOwnCollections(collections) {
+      // basic presorting, so we can assume that parent objects are encountered before child objects when iterating the collection array
+      collections.sort(presort);
+      collections.forEach((collection) => {
+        if (collection.is_locked && ['All', 'chemotion-repository.net', 'transferred'].includes(collection.label)
+          && self.locked_collection.findIndex((c) => c.label === collection.label) === -1) {
+          self.locked_collection.push(Collection.create(collection))
+        }
+
+        if (collection.is_locked && (collection.label == 'All' || (collection.label !== 'chemotion-repository.net'
+          && collection.label !== 'transferred'))) {
+          // do nothing and skip this collection
+        } else if (collection.label == 'chemotion-repository.net') {
+          self.chemotion_repository_collection = Collection.create(collection)
+        } else {
+          const collectionItem = Collection.create(collection)
+
+          const collectionTree =
+            (self.chemotion_repository_collection && collectionItem.ancestorIds.includes(self.chemotion_repository_collection.id))
+              ? self.chemotion_repository_collection.children
+              : self.own_collections
+          
+          self.addCollectionToTree(collectionItem, collectionTree)
+        }
+      });
+    },
+    setSharedWithMeCollections(collections) {
+      // group shared collections by owner
+      const sharedWithMeCollections = self.presortSharedWithMeCollections(collections)
+
+      sharedWithMeCollections.forEach((collection, i) => {
+        if (i === 0 || i > 0 && sharedWithMeCollections[i - 1].owner !== collection.owner) {
+          const ownerCollection = { ancestry: '/', id: 0, label: collection.owner, is_locked: true, owner: collection.owner }
+          self.shared_with_me_collections.push(Collection.create(ownerCollection))
+        }
+        const parentOwnerIndex = self.shared_with_me_collections.findIndex(element => element.owner == collection.owner)
+        if (parentOwnerIndex !== -1) {
+          self.shared_with_me_collections[parentOwnerIndex].addChild(collection)
+        }
+      });
+    },
+    setOwnCollectionTree(tree) {
+      const children = tree ? tree.children : cloneDeep(self.own_collections)
+      self.own_collection_tree = { label: 'My Collections', id: -1, children: children }
+    },
+    setSharedWithMeCollectionTree(tree) {
+      const children = tree ? tree.children : cloneDeep(self.shared_with_me_collections)
+      self.shared_with_me_collection_tree = { label: 'Collections shared with me', id: -1, children: children }
+    },
+    presortSharedWithMeCollections(collections) {
+      return collections
+        .sort(presort)
+        .sort((a, b) => (a.owner > b.owner) ? 1 : ((b.owner > a.owner) ? -1 : 0))
+        .filter((c) => !c.is_locked)
+    },
+    addCollectionToTree(collection, collectionTree) {
+      const parentIndex = collectionTree.findIndex(element => element.isAncestorOf(collection))
+
+      if (collection.isRootCollection || parentIndex === -1) {
+        if (parentIndex === -1 && !collection.isRootCollection) { collection.resetAncestry() }
+
+        collectionTree.push(collection)
+        collectionTree.sort((a, b) => {
+          if (a.position != null && b.position != null) { return a.position - b.position }
+          else if (a.position != null && b.position == null) { return -1 }
+          else if (a.position == null && b.position != null) { return 1 }
+          else if (a.label < b.label) { return -1; }
+          else if (a.label == b.label) { return 0 }
+          else if (a.label > b.label) { return 1 }
+          else { console.debug('unsortable collections:', a, b); return 0 }
+        })
+      } else {
+        collectionTree[parentIndex].addChild(collection)
+      }
+    },
+    changeTabsSegmentInTree(collections, node) {
+      collections.find((c) => {
+        if (c.id == node.id) {
+          c.tabs_segment = node.tabs_segment;
+        } else if (c.children.length >= 1) {
+          self.changeTabsSegmentInTree(c.children, node);
+        }
+      })
+    },
+    changeLabelInTree(collections, node, label) {
+      collections.find((c) => {
+        if (c.id == node.id) {
+          c.label = label;
+        } else if (c.children.length >= 1) {
+          self.changeLabelInTree(c.children, node, label);
+        }
+      })
+    },
+    updateCollectionLabel(label, collection) {
+      self.changeLabelInTree(self.own_collection_tree.children, collection, label)
+      self.setOwnCollectionTree(self.own_collection_tree)
+    },
+    deleteFromSharedWithMeCollections(collections, collectionShareId) {
+      return collections
+        .filter(c => c.collection_share_id !== collectionShareId)
+        .map((c) => {
+          return { ...c, children: self.deleteFromSharedWithMeCollections(c.children, collectionShareId) }
+        })
+    },
+    setUpdateTree(value) {
+      self.update_tree = value
+    },
+    addToggledTreeItem(id, label) {
+      if (self.toggled_tree_items.indexOf(`${id}-${label}`) === -1) {
+        self.toggled_tree_items.push(`${id}-${label}`)
+      }
+    },
+    removeToggledTreeItem(id, label) {
+      const toggledTreeItems = self.toggled_tree_items.filter((i) => i !== `${id}-${label}`)
+      self.toggled_tree_items = toggledTreeItems
+    },
+  }))
+  .views(self => ({
+    find(collection_id) {
+      let collection = null
+      // search under chemotion repository collection if present
+      if (self.chemotion_repository_collection) {
+        collection = self.chemotion_repository_collection.find(collection_id)
+        if (collection) return collection;
+      }
+      // search in own collections
+      for (let i = 0; i < self.own_collections.length; i++) {
+        collection = self.own_collections[i].find(collection_id)
+        if (collection) return collection;
+      }
+      // search shared collections next
+      for (let i = 0; i < self.shared_with_me_collections.length; i++) {
+        collection = self.shared_with_me_collections[i].find(collection_id)
+        if (collection) return collection;
+      }
+
+      return null;
+    },
+    get ownCollections() { return values(self.own_collections) },
+    get sharedWithMeCollections() { return values(self.shared_with_me_collections) },
+    isOwnCollection(collection_id) { return self.ownCollectionIds.indexOf(collection_id) != -1 },
+    isSharedCollection(collection_id) { return self.sharedCollectionIds.indexOf(collection_id) != -1 },
+    get ownCollectionIds() { return self.own_collections.flatMap(collection => collection.idAndDescendantIds) },
+    get sharedCollectionIds() { return self.shared_with_me_collections.flatMap(collection => collection.idAndDescendantIds) },
+    descendantIds(collection) { return collection.children.flatMap(collection => collection.idAndDescendantIds) },
+    sharedWithUsers(collection_id) { return self.collection_shares.find((share) => share.id == collection_id) },
+  }));

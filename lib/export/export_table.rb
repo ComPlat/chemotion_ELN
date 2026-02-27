@@ -76,7 +76,7 @@ module Export
       # Ensure required fields are in row_headers before creating @headers
       @row_headers << 'sample uuid' unless @row_headers.include?('sample uuid')
 
-      @headers = @row_headers - %w[s_id ts co_id scu_id shared_sync pl dl_s dl_wp dl_r m_image molfile_version]
+      @headers = @row_headers - %w[s_id ts co_id shared_id is_shared pl dl_s dl_wp dl_r m_image molfile_version]
       @image_index = @headers.index('image')
 
       case table.to_sym

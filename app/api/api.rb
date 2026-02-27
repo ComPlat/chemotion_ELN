@@ -168,7 +168,6 @@ class API < Grape::API
   mount Chemotion::ContainerAPI
   mount Chemotion::MoleculeAPI
   mount Chemotion::CollectionAPI
-  mount Chemotion::SyncCollectionAPI
   mount Chemotion::SampleAPI
   mount Chemotion::ReactionAPI
   mount Chemotion::WellplateAPI
@@ -224,6 +223,8 @@ class API < Grape::API
   mount Chemotion::VesselAPI
   mount Chemotion::SequenceBasedMacromoleculeAPI
   mount Chemotion::SequenceBasedMacromoleculeSampleAPI
+  mount Chemotion::CollectionShareAPI
+  mount Chemotion::CollectionElementsAPI
 
   if Rails.env.development?
     add_swagger_documentation(info: {

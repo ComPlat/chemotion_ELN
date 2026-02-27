@@ -2,17 +2,19 @@
 
 require 'rails_helper'
 
-describe 'Reporter::Docx::DetailSample instance' do
-  let(:s1) { create(:sample) }
+describe 'Reporter::Docx::DetailSample' do
+  let!(:user) { create(:user) }
+  let!(:collection) { create(:collection, user: user) }
+  let(:sample) { create(:sample, collections: [collection]) }
 
   let(:instance) do
-    Reporter::Docx::DetailSample.new(sample: s1,
+    Reporter::Docx::DetailSample.new(sample: sample,
                                      spl_settings: all_spl_settings,
                                      rxn_settings: all_rxn_settings,
                                      configs: all_configs)
   end
 
-  context '.content' do
+  describe '.content' do
     let!(:content) { instance.content }
 
     it 'returns a Hash' do
@@ -26,7 +28,7 @@ describe 'Reporter::Docx::DetailSample instance' do
     end
 
     it 'has correct content' do
-      analyses_content = JSON.parse(s1.analyses[0]['extended_metadata']['content'])
+      analyses_content = JSON.parse(sample.analyses[0]['extended_metadata']['content'])
       target_html = Sablon.content(:html, Reporter::Delta.new(analyses_content).getHTML)
       expect(content[:analyses]).to eq(target_html)
     end

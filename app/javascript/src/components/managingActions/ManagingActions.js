@@ -9,10 +9,12 @@ import ManagingModalSharing from 'src/components/managingActions/ManagingModalSh
 import ManagingModalCollectionActions from 'src/components/managingActions/ManagingModalCollectionActions';
 import ManagingModalDelete from 'src/components/managingActions/ManagingModalDelete';
 import ManagingModalRemove from 'src/components/managingActions/ManagingModalRemove';
-import ElementActions from 'src/stores/alt/actions/ElementActions';
 import { elementNames } from 'src/apps/generic/Utils';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
 export default class ManagingActions extends React.Component {
+  static contextType = StoreContext;
+
   constructor(props) {
     super(props);
     const { currentUser, genericEls } = UserStore.getState();
@@ -64,7 +66,9 @@ export default class ManagingActions extends React.Component {
       const newHasSel = klassArray.some((el) => {
         return (state[el] && (state[el].checkedIds.size > 0 || state[el].checkedAll));
       });
-      PermissionActions.fetchPermissionStatus(state);
+      if (state.currentCollection) {
+        PermissionActions.fetchPermissionStatus(state);
+      }
       const { hasSel } = this.state;
       if (newHasSel != hasSel) this.setState({ hasSel: newHasSel });
     }
@@ -94,9 +98,8 @@ export default class ManagingActions extends React.Component {
     if (typeof currentCollection === 'undefined' || currentCollection == null) {
       return false;
     }
-    const { id, is_sync_to_me } = currentCollection;
-    return this.state.currentCollection.id !== id ||
-      this.state.currentCollection.is_sync_to_me !== is_sync_to_me;
+    const { id } = currentCollection;
+    return this.state.currentCollection.id !== id;
   }
 
   showModal(type) {
@@ -135,16 +138,16 @@ export default class ManagingActions extends React.Component {
       case 'move':
         return <ManagingModalCollectionActions
           title="Move to Collection"
-          action={ElementActions.updateElementsCollection}
-          listSharedCollections={true}
+          action="move"
+          withShared={true}
           onHide={this.hideModal}
         />;
 
       case 'assign':
         return <ManagingModalCollectionActions
           title="Assign to Collection"
-          action={ElementActions.assignElementsCollection}
-          listSharedCollections={false}
+          action="assign"
+          withShared={false}
           onHide={this.hideModal}
         />;
 

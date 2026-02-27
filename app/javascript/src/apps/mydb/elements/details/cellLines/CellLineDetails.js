@@ -6,8 +6,7 @@ import { observer } from 'mobx-react';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import PropTypes from 'prop-types';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import UserStore from 'src/stores/alt/stores/UserStore';
-import CollectionUtils from 'src/models/collection/CollectionUtils';
+import { collectionHasPermission } from 'src/utilities/collectionUtilities';
 
 import {
   Button, Tabs, Tab, OverlayTrigger, Tooltip
@@ -58,14 +57,8 @@ class CellLineDetails extends React.Component {
   }
 
   isReadOnly() {
-    const { currentCollection, isSync } = UIStore.getState();
-    const { currentUser } = UserStore.getState();
-
-    return CollectionUtils.isReadOnly(
-      currentCollection,
-      currentUser.id,
-      isSync
-    );
+    const { currentCollection } = UIStore.getState();
+    return !collectionHasPermission(currentCollection, 0);
   }
 
   renderHeaderContent() {

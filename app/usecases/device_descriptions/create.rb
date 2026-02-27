@@ -16,47 +16,20 @@ module Usecases
           device_description = DeviceDescription.create!(params.except(:segments))
           save_segments(device_description)
           device_description.reload
+          collection = Collection.accessible_for(current_user).find(params[:collection_id])
+          CollectionsDeviceDescription.create(device_description: device_description, collection: collection)
 
-          is_shared_collection = false
-          if user_collection
-            CollectionsDeviceDescription.create(device_description: device_description, collection: user_collection)
-          elsif sync_collection_user
-            is_shared_collection = true
-            CollectionsDeviceDescription.create(device_description: device_description,
-                                                collection: sync_collection_user.collection)
-
-            CollectionsDeviceDescription.create(device_description: device_description,
-                                                collection: all_collection_of_sharer)
-          end
-
-          unless is_shared_collection
-            CollectionsDeviceDescription.create(
-              device_description: device_description,
-              collection: all_collection_of_current_user,
-            )
-          end
+          all_collection_of_collection_owner = Collection.get_all_collection_for_user(current_user)
+          CollectionsDeviceDescription.create(
+            device_description: device_description,
+            collection: all_collection_of_collection_owner,
+          )
 
           device_description
         end
       end
 
       private
-
-      def user_collection
-        @user_collection ||= @current_user.collections.find_by(id: @params[:collection_id])
-      end
-
-      def sync_collection_user
-        @sync_collection_user ||= @current_user.all_sync_in_collections_users.find_by(id: @params[:collection_id])
-      end
-
-      def all_collection_of_sharer
-        Collection.get_all_collection_for_user(sync_collection_user.shared_by_id)
-      end
-
-      def all_collection_of_current_user
-        Collection.get_all_collection_for_user(@current_user.id)
-      end
 
       def save_segments(device_description)
         return if @segments.blank?

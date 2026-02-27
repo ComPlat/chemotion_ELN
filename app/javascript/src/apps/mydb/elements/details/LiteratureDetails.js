@@ -33,6 +33,7 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import { copyToClipboard } from 'src/utilities/clipboard';
+import { aviatorNavigation } from 'src/utilities/routesUtils';
 
 const Cite = require('citation-js');
 
@@ -48,13 +49,7 @@ const ElementLink = ({ literature }) => {
   return (
     <Button
       title={`${external_label ? external_label.concat(' - ') : ''}${name}`}
-      onClick={() => {
-        const { uri } = Aviator.getCurrentRequest();
-        const uriArray = uri.split(/\//);
-        if (type && element_id) {
-          Aviator.navigate(`/${uriArray[1]}/${uriArray[2]}/${type}/${element_id}`);
-        }
-      }}
+      onClick={() => aviatorNavigation(type, element_id, false, false)}
     >
       <i className={`me-2 ${element_type ? `icon-${type}` : ''}`} />
       {short_label}
@@ -178,9 +173,7 @@ export default class LiteratureDetails extends Component {
     const cCol = this.state.currentCollection;
     const { currentCollection, sorting } = state;
 
-    if (cCol && currentCollection &&
-      (cCol.id !== currentCollection.id || cCol.is_sync_to_me !== currentCollection.is_sync_to_me)
-    ) {
+    if (cCol && currentCollection && cCol.id !== currentCollection.id) {
       LiteraturesFetcher.fetchReferencesByCollection(currentCollection).then((literatures) => {
 
         this.setState(prevState => ({
@@ -208,7 +201,6 @@ export default class LiteratureDetails extends Component {
         sample,
         reaction,
         id: currentCollection.id,
-        is_sync_to_me: currentCollection.is_sync_to_me
 
       };
       LiteraturesFetcher.postReferencesByUIState(params).then((selectedRefs) => {
@@ -268,7 +260,6 @@ export default class LiteratureDetails extends Component {
       sample,
       reaction,
       id: currentCollection.id,
-      is_sync_to_me: currentCollection.is_sync_to_me,
       ref: { ...literature, doi: sanitizeDoi(doi || '') }
     };
     LiteraturesFetcher.postReferencesByUIState(params).then((selectedRefs) => {

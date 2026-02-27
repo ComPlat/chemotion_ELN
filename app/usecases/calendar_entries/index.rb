@@ -19,7 +19,7 @@ module Usecases
       private
 
       def collection_ids
-        @collection_ids ||= user.collections.ids + user.sync_in_collections_users.pluck(:collection_id)
+        @collection_ids ||= Collection.unscoped.where(deleted_at: nil).accessible_for(user).ids
       end
 
       def eventable?

@@ -9,7 +9,6 @@ import ResearchPlan from 'src/models/ResearchPlan';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { Button } from 'react-bootstrap';
 import { DropTarget } from 'react-dnd';
-import { researchPlanShowOrNew } from 'src/utilities/routesUtils';
 
 const target = {
   drop(props, monitor) {
@@ -33,14 +32,6 @@ const collect = (connect, monitor) => ({
 });
 
 class ScreenResearchPlans extends Component {
-  handleResearchPlanClick(researchPlan) { // eslint-disable-line class-methods-use-this
-    const { currentCollection, isSync } = UIStore.getState();
-    const researchPlanID = researchPlan.id;
-    const uri = `/${isSync ? 's' : ''}collection/${currentCollection.id}/research_plan/${researchPlanID}`;
-    Aviator.navigate(uri, { silent: true });
-    researchPlanShowOrNew({ params: { research_planID: researchPlanID } });
-  }
-
   renderDropZone() {
     const { isOver, connectDropTarget } = this.props;
     const borderColor = isOver ? 'dnd-zone-over' : '';

@@ -13,7 +13,6 @@ module Chemotion
       desc "Return serialized screens"
       params do
         optional :collection_id, type: Integer, desc: "Collection id"
-        optional :sync_collection_id, type: Integer, desc: "SyncCollectionsUser id"
         optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'
         optional :user_label, type: Integer, desc: 'user label'
         optional :from_date, type: Integer, desc: 'created_date from in ms'
@@ -24,38 +23,32 @@ module Chemotion
         params[:per_page].to_i > 50 && (params[:per_page] = 50)
       end
       get do
-        scope = if params[:collection_id]
-                  begin
-                    Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids)
-                              .find(params[:collection_id]).screens
-                  rescue ActiveRecord::RecordNotFound
-                    Screen.none
-                  end
-                elsif params[:sync_collection_id]
-                  begin
-                    current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection.screens
-                  rescue ActiveRecord::RecordNotFound
-                    Screen.none
-                  end
-                else
-                  # All collection of current_user
-                  Screen.joins(:collections).where(collections: { user_id: current_user.id }).distinct
-                end.includes(collections: :sync_collections_users).order('screens.created_at DESC')
+        screen_scope = Screen.none
+        if params[:collection_id]
+          begin
+            screen_scope = Collection.accessible_for(current_user).find(params[:collection_id]).screens
+          rescue ActiveRecord::RecordNotFound
+            Screen.none
+          end
+        else
+          # All collection of current_user
+          screen_scope = Screen.for_user(current_user.id).distinct
+        end
 
         from = params[:from_date]
         to = params[:to_date]
         user_label = params[:user_label]
         by_created_at = params[:filter_created_at] || false
 
-        scope = scope.created_time_from(Time.at(from)) if from && by_created_at
-        scope = scope.created_time_to(Time.at(to) + 1.day) if to && by_created_at
-        scope = scope.updated_time_from(Time.at(from)) if from && !by_created_at
-        scope = scope.updated_time_to(Time.at(to) + 1.day) if to && !by_created_at
-        scope = scope.by_user_label(user_label) if user_label
+        screen_scope = screen_scope.created_time_from(Time.zone.at(from)) if from && by_created_at
+        screen_scope = screen_scope.created_time_to(Time.zone.at(to) + 1.day) if to && by_created_at
+        screen_scope = screen_scope.updated_time_from(Time.zone.at(from)) if from && !by_created_at
+        screen_scope = screen_scope.updated_time_to(Time.zone.at(to) + 1.day) if to && !by_created_at
+        screen_scope = screen_scope.by_user_label(user_label) if user_label
 
-        reset_pagination_page(scope)
+        reset_pagination_page(screen_scope)
 
-        screens = paginate(scope).map do |screen|
+        screens = paginate(screen_scope).map do |screen|
           Entities::ScreenEntity.represent(
             screen,
             detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: screen).detail_levels,
@@ -202,19 +195,8 @@ module Chemotion
         recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
         collection = current_user.collections.where(id: params[:collection_id]).take
-        screen.collections << collection if collection.present?
-
-        is_shared_collection = false
-        unless collection.present?
-          sync_collection = current_user.all_sync_in_collections_users.where(id: params[:collection_id]).take
-          if sync_collection.present?
-            is_shared_collection = true
-            screen.collections << Collection.find(sync_collection['collection_id'])
-            screen.collections << Collection.get_all_collection_for_user(sync_collection['shared_by_id'])
-          end
-        end
-
-        screen.collections << Collection.get_all_collection_for_user(current_user.id) unless is_shared_collection
+        screen.collections << collection
+        screen.collections << Collection.get_all_collection_for_user(current_user.id)
 
         params[:wellplate_ids].each do |id|
           ScreensWellplate.find_or_create_by(wellplate_id: id, screen_id: screen.id)

@@ -121,9 +121,7 @@ module Export
       # loop over all collections
       collections.each do |collection|
         # fetch collection
-        fetch_one(collection, {
-                    'user_id' => 'User',
-                  })
+        fetch_one(collection, { 'user_id' => 'User' })
         fetch_samples collection
         fetch_chemicals collection
         fetch_components collection

@@ -23,10 +23,11 @@ module Entities
     end
 
     def collections
-      Entities::CollectionEntity.represent(
-        object.collections,
-        current_user: current_user,
-      )
+      if object.collections.first.is_a?(CollectionShare)
+        Entities::SharedCollectionEntity.represent(object.collections, current_user: current_user)
+      else
+        Entities::OwnCollectionEntity.represent(object.collections, current_user: current_user)
+      end
     end
   end
 end

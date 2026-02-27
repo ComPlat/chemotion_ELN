@@ -61,8 +61,8 @@ const errorMessageParameter = {
 };
 
 export default class VesselsFetcher {
-  static fetchByCollectionId(id, queryParams = {}, isSync = false) {
-    return BaseFetcher.fetchByCollectionId(id, queryParams, isSync, 'vessels', Vessel);
+  static fetchByCollectionId(id, queryParams = {}) {
+    return BaseFetcher.fetchByCollectionId(id, queryParams, 'vessels', Vessel);
   }
 
   static fetchById(id) {

@@ -1,10 +1,8 @@
-import Aviator from 'aviator';
 import _ from 'lodash';
 import { deltaToMarkdown, markdownToDelta } from 'src/utilities/deltaMarkdownConverter';
 import { searchAndReplace } from 'src/utilities/markdownUtils';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 
-import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from '../stores/alt/stores/UserStore';
 
 const rfValueFormat = (input) => {
@@ -208,26 +206,6 @@ const SameEleTypId = (orig, next) => {
     return true;
   }
   return false;
-};
-
-const UrlSilentNavigation = (element) => {
-  const { currentCollection, isSync } = UIStore.getState();
-  if (element) {
-    let elementString = `${element.type}`;
-    if (!isNaN(element.id)) elementString += `/${element.id}`;
-
-    const collectionUrl = `${currentCollection.id}/${elementString}`;
-    Aviator.navigate(
-      isSync ? `/scollection/${collectionUrl}` : `/collection/${collectionUrl}`,
-      { silent: true },
-    );
-  } else {
-    const cId = currentCollection.id;
-    Aviator.navigate(
-      isSync ? `/scollection/${cId}/` : `/collection/${cId}/`,
-      { silent: true },
-    );
-  }
 };
 
 const markdownChemicalFormular = (text) => {
@@ -481,7 +459,6 @@ export {
   cNmrCount,
   msCheckMsg,
   SameEleTypId,
-  UrlSilentNavigation,
   sampleAnalysesFormatPattern,
   commonFormatPattern,
   Alphabet,

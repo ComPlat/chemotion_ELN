@@ -22,6 +22,7 @@ import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 import CopyElementModal from 'src/components/common/CopyElementModal';
+import { collectionHasPermission } from 'src/utilities/collectionUtilities';
 import Immutable from 'immutable';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 
@@ -32,13 +33,12 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import CollectionUtils from 'src/models/collection/CollectionUtils';
 
 const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => {
   const sbmmStore = useContext(StoreContext).sequenceBasedMacromoleculeSamples;
   let sbmmSample = sbmmStore.sequence_based_macromolecule_sample;
 
-  const { currentCollection, isSync } = UIStore.getState();
+  const { currentCollection } = UIStore.getState();
   const { currentUser } = UserStore.getState();
 
   const [visibleTabs, setVisibleTabs] = useState(Immutable.List());
@@ -80,15 +80,7 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
     attachments: 'Attachment',
   };
 
-  const isReadOnly = () => {
-    if (!currentCollection) { return false; }
-
-    return CollectionUtils.isReadOnly(
-      currentCollection,
-      currentUser.id,
-      isSync
-    );
-  }
+  const isReadOnly = () => !collectionHasPermission(currentCollection, 0);
 
   const disabled = (index) => {
     return sbmmSample.isNew && index !== 0 ? true : false;

@@ -1,58 +1,47 @@
-import React from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import Tree from 'react-ui-tree';
-import {
-  Button, Modal, Col, Row
-} from 'react-bootstrap';
-import _ from 'lodash';
+import { Button, Modal } from 'react-bootstrap';
+import { set, isEmpty } from 'lodash';
 import { List } from 'immutable';
-import CollectionStore from 'src/stores/alt/stores/CollectionStore';
-import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import CollectionTabLayoutEditor from 'src/apps/mydb/collections/CollectionTabLayoutEditor';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
-import UIStore from 'src/stores/alt/stores/UIStore';
-import UIActions from 'src/stores/alt/actions/UIActions';
 import { capitalizeWords } from 'src/utilities/textHelper';
 import { filterTabLayout, getArrayFromLayout, TAB_DISPLAY_NAMES } from 'src/utilities/CollectionTabsHelper';
 import { allElnElmentsWithLabel, allGenericElements } from 'src/apps/generic/Utils';
+import { observer } from 'mobx-react';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
 function TabItemComponent({ item }) {
   const displayName = TAB_DISPLAY_NAMES[item];
   return <div>{displayName ?? capitalizeWords(item)}</div>;
 }
 
-export default class CollectionTabs extends React.Component {
-  constructor(props) {
-    super(props);
+const CollectionTabs = () => {
+  const collectionsStore = useContext(StoreContext).collections;
+  const [showModal, setShowModal] = useState(false);
+  const [profileData, setProfileData] = useState({});
+  const [currentCollection, setCurrentCollection] = useState({});
+  const [allElements, setAllElements] = useState(allElnElmentsWithLabel)
+  const [layouts, setLayouts] = useState(allElements.reduce((acc, { name }) => {
+    acc[name] = { visible: List(), hidden: List() };
+    return acc;
+  }, {}));
+  const [selectedCategory, setSelectedCategory] = useState(allElements[0]?.name || 'sample');
+  const tree = collectionsStore.own_collection_tree;
 
-    this.state = {
-      profileData: {},
-      showModal: false,
-      currentCollection: {},
-      allElements: allElnElmentsWithLabel,
-      layouts: allElnElmentsWithLabel.reduce((acc, { name }) => {
-        acc[name] = { visible: List(), hidden: List() };
-        return acc;
-      }, {}),
-      tree: {
-        label: 'My Collections',
-        id: -1,
-        children: []
-      },
-      selectedCategory: allElnElmentsWithLabel[0]?.name || 'sample',
-    };
+  useEffect(() => {
+    const { profile } = UserStore.getState();
+    if (profile && profile.data) {
+      setProfileData(profile.data)
+    }
+    getAllElements();
+  }, []);
 
-    this.onStoreChange = this.onStoreChange.bind(this);
-    this.onClickCollection = this.onClickCollection.bind(this);
-    this.onUserStoreChange = this.onUserStoreChange.bind(this);
-
-    this.handleChange = this.handleChange.bind(this);
-    this.renderNode = this.renderNode.bind(this);
-    this.handleSave = this.handleSave.bind(this);
-  }
-
-  getAllElements() {
+  const getAllElements = () => {
     const genericEls = allGenericElements();
+    if (genericEls.size < 1) { return }
+
     const genericElsWithLabel = genericEls.map((el) => ({
       name: el.name,
       label: el.label,
@@ -60,73 +49,46 @@ export default class CollectionTabs extends React.Component {
       isGeneric: true
     }));
     const combined = [...allElnElmentsWithLabel, ...genericElsWithLabel];
-    return combined.sort((a, b) => a.label.localeCompare(b.label));
+    combined.sort((a, b) => a.label.localeCompare(b.label));
+
+    setAllElements(combined);
+    setSelectedCategory(combined[0]?.name);
+    setLayouts(combined.reduce((acc, { name }) => {
+      acc[name] = { visible: List(), hidden: List() };
+      return acc;
+    }, {}));
   }
 
-  componentDidMount() {
-    CollectionStore.listen(this.onStoreChange);
-    UserStore.listen(this.onUserStoreChange);
-    UserActions.fetchProfile();
-    CollectionActions.fetchUnsharedCollectionRoots();
+  const handleChange = (tree) => {
+    collectionsStore.setOwnCollectionTree(tree);
   }
 
-  componentWillUnmount() {
-    CollectionStore.unlisten(this.onStoreChange);
-    UserStore.unlisten(this.onUserStoreChange);
-  }
-
-  onStoreChange(state) {
-    const { tree } = this.state;
-    this.setState({
-      tree: {
-        ...tree,
-        children: state.unsharedRoots,
-      }
-    });
-  }
-
-  onUserStoreChange(state) {
-    const data = (state.profile && state.profile.data) || {};
-    if (!data) {
-      UserActions.fetchProfile();
-      return;
-    }
-
-    // Update allElements when genericEls changes
-    const allElements = this.getAllElements();
-    const { layouts: currentLayouts } = this.state;
-
-    // Add new elements to layouts if they don't exist
-    const updatedLayouts = allElements.reduce((acc, { name }) => {
-      acc[name] = currentLayouts[name] || { visible: List(), hidden: List() };
+  const handleSave = () => {
+    const layoutSegments = allElnElmentsWithLabel.reduce((acc, { name }) => {
+      const layout = filterTabLayout(layouts[name]);
+      acc[name] = layout;
       return acc;
     }, {});
+    collectionsStore.updateCollection(currentCollection, layoutSegments);
 
-    this.setState({
-      profileData: data,
-      allElements,
-      layouts: updatedLayouts,
-      selectedCategory: allElements[0]?.name || 'sample',
+    // Update profile
+    const userProfile = UserStore.getState().profile;
+    Object.entries(layoutSegments).map((type, layout) => {
+      set(userProfile, `data.layout_detail_${type}`, layout);
     });
+    UserActions.updateUserProfile(userProfile);
+
+    setShowModal(false);
   }
 
-  onClickCollection(node) {
-    const { profileData, allElements } = this.state;
-
+  const onClickCollection = (node) => {
+    const tabsSegment = typeof (node.tabs_segment) == 'string' ? JSON.parse(node.tabs_segment) : node.tabs_segment;
     const layouts = allElements.reduce((acc, { name, isGeneric }) => {
       let layout;
-      if (_.isEmpty(node.tabs_segment[name])) {
-        // Use element-specific layout, or generic layout for generic elements, or empty
-        if (profileData && profileData[`layout_detail_${name}`]) {
-          layout = profileData[`layout_detail_${name}`];
-        } else if (isGeneric && profileData && profileData['layout_detail_generic']) {
-          layout = profileData['layout_detail_generic'];
-        } else {
-          layout = {};
-        }
-      } else {
-        layout = node.tabs_segment[name];
-      }
+      // Use element-specific layout, or generic layout for generic elements, or empty
+      const layoutDetail = isGeneric ? 'layout_detail_generic' : `layout_detail_${name}`;
+      const defaultLayout = (profileData && profileData[layoutDetail]) || {};
+      layout = (isEmpty(tabsSegment[name])) ? defaultLayout : tabsSegment[name];
 
       // Get segment labels for this element type
       const segmentKlasses = (UserStore.getState() && UserStore.getState().segmentKlasses) || [];
@@ -135,106 +97,36 @@ export default class CollectionTabs extends React.Component {
         .map((s) => s.label);
 
       // Get all available tabs from profile data
-      let availableTabs = null;
-      if (isGeneric) {
-        // Generic elements use the generic layout as default
-        const defaultLayout = profileData['layout_detail_generic'] || {};
-        const tabsFromProfile = Object.keys(defaultLayout);
-        availableTabs = [...new Set([...tabsFromProfile, ...segmentLabels])];
-      } else {
-        // Standard elements use their specific layout
-        const defaultLayout = profileData[`layout_detail_${name}`] || {};
-        const tabsFromProfile = Object.keys(defaultLayout);
-        availableTabs = [...new Set([...tabsFromProfile, ...segmentLabels])];
-      }
+      const tabsFromProfile = Object.keys(defaultLayout);
+      const availableTabs = [...new Set([...tabsFromProfile, ...segmentLabels])];
 
-      const layoutData = getArrayFromLayout(layout, name, false, availableTabs);
-
-      acc[name] = {
-        visible: layoutData.visible,
-        hidden: layoutData.hidden
-      };
+      acc[name] = getArrayFromLayout(layout, name, false, availableTabs);
       return acc;
     }, {});
 
-    this.setState({
-      currentCollection: node,
-      showModal: true,
-      layouts,
-    });
+    setCurrentCollection(node);
+    setShowModal(true);
+    setLayouts(layouts);
   }
-
-  handleChange(tree) {
-    this.setState({
-      tree
-    });
-  }
-
-  handleSave() {
-    const { currentCollection: cCol, layouts, allElements } = this.state;
-    const layoutSegments = allElements.reduce((acc, { name }) => {
-      const layout = filterTabLayout(layouts[name]);
-      acc[name] = layout;
-      return acc;
-    }, {});
-    CollectionActions.createTabsSegment({ layoutSegments, currentCollectionId: cCol.id });
-
-    const { tree } = this.state;
-    const newChildren = [...tree.children];
-
-    const ancestryId = parseInt(cCol.ancestry, 10);
-    if (cCol.ancestry && !Number.isNaN(ancestryId)) {
-      const parentIndex = tree.children.findIndex((c) => c.id === ancestryId);
-      const childIndex = parentIndex !== -1
-        ? tree.children[parentIndex].children.findIndex((ch) => ch.id === cCol.id)
-        : -1;
-      if (childIndex !== -1) {
-        newChildren[parentIndex] = {
-          ...newChildren[parentIndex],
-          children: newChildren[parentIndex].children.map((child, idx) => (
-            idx === childIndex ? { ...child, tabs_segment: layoutSegments } : child
-          ))
-        };
-      }
-    } else {
-      // Update root-level collection
-      const collectionIndex = tree.children.findIndex((c) => c.id === cCol.id);
-      if (collectionIndex !== -1) {
-        newChildren[collectionIndex] = {
-          ...newChildren[collectionIndex],
-          tabs_segment: layoutSegments
-        };
-      }
-    }
-
-    // Update UIStore if this is the currently active collection
-    const uiState = UIStore.getState();
-    if (uiState.currentCollection && uiState.currentCollection.id === cCol.id) {
-      const updatedCollection = {
-        ...uiState.currentCollection,
-        tabs_segment: layoutSegments,
-        clearSearch: true
-      };
-      UIActions.selectCollection(updatedCollection);
-    }
-
-    this.setState({ showModal: false, tree: { ...tree, children: newChildren } });
-  }
-
-  renderNode(node) {
+  
+  const renderNode = (node) => {
     if (node.is_locked || node.id < 1) {
       return (
-        <div className="ms-3 mb-2">{node.label}</div>
+        <div className="ms-3 mb-2 fs-5">{node.label}</div>
       );
     }
 
     return (
-      <div className="d-flex align-items-center justify-content-between mb-2 bg-dark-subtle">
+      <div
+        className="d-flex align-items-center justify-content-between mb-2 bg-dark-subtle"
+        draggable={false}
+        onMouseDown={(e) => e.stopPropagation()}
+      >
         <div className="ms-3">{node.label}</div>
         <Button
           size="sm"
           variant="primary"
-          onClick={() => this.onClickCollection(node)}
+          onClick={() => onClickCollection(node)}
           title="Click to edit collection tab sorting"
         >
           <i className="fa fa-pencil" />
@@ -243,91 +135,87 @@ export default class CollectionTabs extends React.Component {
     );
   }
 
-  render() {
-    const { currentCollection, tree, showModal, layouts, selectedCategory, allElements } = this.state;
+  return (
+    <div className="tree mt-2">
+      <Tree
+        paddingLeft={30}
+        tree={tree}
+        onChange={handleChange}
+        renderNode={renderNode}
+      />
 
-    return (
-      <div className="tree">
-        <Tree
-          paddingLeft={30}
-          tree={tree}
-          isElementDetails
-          onChange={this.handleChange}
-          renderNode={this.renderNode}
-        />
+      {
+        showModal && (
+          <Modal
+            size="lg"
+            centered
+            animation
+            show={showModal}
+            onHide={() => setShowModal(false)}
+            contentClassName="vh-90"
+          >
+            <Modal.Header closeButton>
+              <Modal.Title>{currentCollection.label}</Modal.Title>
+            </Modal.Header>
+            <Modal.Body className="p-0 h-100 overflow-hidden">
+              <div className="d-flex h-100">
+                {/* Left Sidebar */}
+                <div className="bg-light border-end border-light p-3 w-40 overflow-auto">
+                  <div className="d-flex flex-column">
+                    {allElements.map(({ name, label, iconName }) => {
+                      const isActive = selectedCategory === name;
+                      const btnClass = `btn text-start py-2 mb-2 ${isActive ? 'surface-active-on-white' : ''}`;
+                      const icon = iconName || `icon-${name}`;
+                      return (
+                        <button
+                          key={name}
+                          type="button"
+                          className={btnClass}
+                          style={{
+                            border: '1px solid var(--bs-border-color)',
+                            borderRadius: '0.375rem',
+                            backgroundColor: isActive ? undefined : 'white'
+                          }}
+                          onClick={() => setSelectedCategory(name)}
+                        >
+                          <i className={icon} />
+                          {' '}
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
 
-        <Modal
-          size="lg"
-          centered
-          animation
-          show={showModal}
-          onHide={() => this.setState({ showModal: false })}
-          contentClassName="vh-90"
-        >
-          <Modal.Header closeButton>
-            <Modal.Title>{currentCollection.label}</Modal.Title>
-          </Modal.Header>
-          <Modal.Body className="p-0 h-100 overflow-hidden">
-            <div className="d-flex h-100">
-              {/* Left Sidebar */}
-              <div className="bg-light border-end border-light p-3 w-40 overflow-auto">
-                <div className="d-flex flex-column">
-                  {allElements.map(({ name, label, iconName }) => {
-                    const isActive = selectedCategory === name;
-                    const btnClass = `btn text-start py-2 mb-2 ${isActive ? 'surface-active-on-white' : ''}`;
-                    const icon = iconName || `icon-${name}`;
-                    return (
-                      <button
-                        key={name}
-                        type="button"
-                        className={btnClass}
-                        style={{
-                          border: '1px solid var(--bs-border-color)',
-                          borderRadius: '0.375rem',
-                          backgroundColor: isActive ? undefined : 'white'
-                        }}
-                        onClick={() => this.setState({ selectedCategory: name })}
-                      >
-                        <i className={icon} />
-                        {' '}
-                        {label}
-                      </button>
-                    );
-                  })}
+                {/* Right Content */}
+                <div className="flex-grow-1 p-4" style={{ overflowY: 'auto' }}>
+                  <p className="text-muted mb-2">
+                    Choose which items appear for this category and in what order.
+                  </p>
+                  <CollectionTabLayoutEditor
+                    visible={layouts[selectedCategory].visible}
+                    hidden={layouts[selectedCategory].hidden}
+                    getItemComponent={({ item }) => <TabItemComponent item={item} />}
+                    onLayoutChange={(visible, hidden) => {
+                      setLayouts({ ...layouts, [selectedCategory]: { visible, hidden } });
+                    }}
+                  />
                 </div>
               </div>
-
-              {/* Right Content */}
-              <div className="flex-grow-1 p-4" style={{ overflowY: 'auto' }}>
-                <p className="text-muted mb-2">
-                  Choose which items appear for this category and in what order.
-                </p>
-                <CollectionTabLayoutEditor
-                  visible={layouts[selectedCategory].visible}
-                  hidden={layouts[selectedCategory].hidden}
-                  getItemComponent={({ item }) => <TabItemComponent item={item} />}
-                  onLayoutChange={(visible, hidden) => {
-                    this.setState((prevState) => ({
-                      layouts: {
-                        ...prevState.layouts,
-                        [selectedCategory]: { visible, hidden }
-                      }
-                    }));
-                  }}
-                />
-              </div>
-            </div>
-          </Modal.Body>
-          <Modal.Footer className="d-flex justify-content-between">
-            <Button variant="secondary" onClick={() => this.setState({ showModal: false })}>
-              Cancel
-            </Button>
-            <Button variant="primary" onClick={this.handleSave}>
-              Save changes
-            </Button>
-          </Modal.Footer>
-        </Modal>
-      </div>
-    );
-  }
+            </Modal.Body>
+            <Modal.Footer className="d-flex justify-content-between">
+              <Button variant="secondary" onClick={() => setShowModal(false)}>
+                Cancel
+              </Button>
+              <Button variant="primary" onClick={() => handleSave()}>
+                Save changes
+              </Button>
+            </Modal.Footer>
+          </Modal>
+        )
+      }
+    </div>
+  );
 }
+
+export default observer(CollectionTabs);

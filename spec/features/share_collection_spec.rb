@@ -3,23 +3,37 @@
 require 'rails_helper'
 
 describe 'Copy sample' do
-  let!(:user) { create(:user, first_name: 'Hallo', last_name: 'Complat', account_active: true, confirmed_at: Time.now) }
-  let!(:mol) { create(:molecule, molecular_weight: 171.03448) }
-  let(:sample) { create(:sample, name: 'PH-1234', real_amount_value: 4.671, molecule: mol) }
-  let!(:col1) { create(:collection, user_id: user.id, label: 'Col1', sample_detail_level: 10) }
-  let!(:col2) { create(:collection, user_id: user.id, label: 'Col2', sample_detail_level: 10) }
+  let(:user) { create(:user, first_name: 'Hallo', last_name: 'Complat') }
+  let(:user2) do
+    create(
+      :user,
+      first_name: 'User2',
+      password: 'iamuser2',
+      last_name: 'Complat',
+      account_active: true,
+      email: 'user2@complat.edu',
+      name_abbreviation: 'US2',
+    )
+  end
+  let(:mol) { create(:molecule, molecular_weight: 171.03448) }
+  let(:sample) do
+    create(:sample, name: 'PH-1234', real_amount_value: 4.671, molecule: mol, collections: [collection_a])
+  end
+  let(:collection_a) { create(:collection, user_id: user.id, label: 'Col1') }
+  let(:collection_b) { create(:collection, user_id: user.id, label: 'Col2') }
 
   before do
-    user2 = User.create!({first_name: 'User2', password: 'iamuser2', last_name: 'Complat', account_active: true, email: 'user2@complat.edu', name_abbreviation: 'US2'})
-    sign_in(user)
-    fp = Rails.public_path.join('images', 'molecules', 'molecule.svg')
-    svg_path = Rails.root.join('spec', 'fixtures', 'images', 'molecule.svg')
-    `ln -s #{svg_path} #{fp} ` unless File.exist?(fp)
+    sample
+    collection_b
+    user2
 
-    CollectionsSample.find_or_create_by!(sample: sample, collection: col1)
+    sign_in(user)
+    fp = Rails.public_path.join('images/molecules/molecule.svg')
+    svg_path = Rails.root.join('spec/fixtures/images/molecule.svg')
+    `ln -s #{svg_path} #{fp} ` unless File.exist?(fp)
   end
 
-  it 'share with permission read everything', js: true do # rubocop:disable RSpec/MultipleExpectations
+  it 'share with permission read everything', :js do
     find_by_id('tree-id-Col1').click
     find_all('input[type="checkbox"]').first.click
     first('i.fa-share-alt').click
@@ -40,7 +54,7 @@ describe 'Copy sample' do
     expect(page).to have_content('PH-1234', wait: 5)
   end
 
-  it 'share with permission read limited', js: true do # rubocop:disable RSpec/MultipleExpectations
+  it 'share with permission read limited', :js do
     find_by_id('tree-id-Col1').click
     find_all('input[type="checkbox"]').first.click
     first('i.fa-share-alt').click

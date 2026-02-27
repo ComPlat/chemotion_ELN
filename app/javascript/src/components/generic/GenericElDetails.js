@@ -39,9 +39,9 @@ import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
 import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
 
 const onNaviClick = (type, id) => {
-  const { currentCollection, isSync } = UIStore.getState();
+  const { currentCollection } = UIStore.getState();
   const { genericEls = [] } = UserStore.getState();
-  const elementAction = browseElement(currentCollection, isSync, type, id, genericEls);
+  const elementAction = browseElement(currentCollection, false, type, id, genericEls);
   if (elementAction != null && ElementActions[elementAction]) {
     ElementActions[elementAction](id);
   }
@@ -417,9 +417,9 @@ export default class GenericElDetails extends Component {
     const { currentCollection } = UIStore.getState();
     const defCol =
       currentCollection &&
-      currentCollection.is_shared === false &&
-      currentCollection.is_locked === false &&
-      currentCollection.label !== 'All'
+        currentCollection.shared === false &&
+        currentCollection.is_locked === false &&
+        currentCollection.label !== 'All'
         ? currentCollection.id
         : null;
     const copyBtn =

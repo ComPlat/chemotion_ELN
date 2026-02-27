@@ -13,7 +13,6 @@ import MaterialCalculations from 'src/apps/mydb/elements/details/reactions/schem
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 import SampleName from 'src/components/common/SampleName';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
-import { UrlSilentNavigation, SampleCode } from 'src/utilities/ElementUtils';
 import { formatDisplayValue, correctPrefix, validDigit } from 'src/utilities/MathUtils';
 import {
   getMetricMol, metricPrefixesMol, metricPrefixesMolConc, getMetricMolConc
@@ -32,6 +31,8 @@ import ReactionMaterialComponentsGroup
 import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
 import ComponentModel from 'src/models/Component';
 import FieldValueSelector from 'src/apps/mydb/elements/details/FieldValueSelector';
+import { SampleCode } from 'src/utilities/ElementUtils';
+import { aviatorNavigation } from 'src/utilities/routesUtils';
 
 const notApplicableInput = (className) => (
   <div>
@@ -129,7 +130,7 @@ class Material extends Component {
 
   handleMaterialClick(sample) {
     const { reaction } = this.props;
-    UrlSilentNavigation(sample);
+    aviatorNavigation(sample.type, sample.id, true, false);
     sample.updateChecksum();
     ElementActions.showReactionMaterial({ sample, reaction });
   }
@@ -154,7 +155,7 @@ class Material extends Component {
         precision={3}
         disabled={
           !permitOn(this.props.reaction)
-            || (this.props.materialGroup === 'products'
+          || (this.props.materialGroup === 'products'
             || (!material.reference && this.props.lockEquivColumn))
         }
         onChange={(loading) => this.handleLoadingChange(loading)}

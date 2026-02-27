@@ -20,7 +20,7 @@ describe Labimotion::GenericElementAPI do
       end
 
       context 'with sort_column' do
-        let(:collection) { create(:collection, user: user, is_shared: false) }
+        let(:collection) { create(:collection, user: user) }
         let(:element_klass) { create(:element_klass, name: 'ElementKlass4') }
         let(:element1) do
           properties = element_klass.properties_release

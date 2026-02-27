@@ -1,16 +1,13 @@
 module Chemotion
   class ResearchPlanMetadataAPI < Grape::API
     include Grape::Kaminari
-    helpers ParamsHelpers
-    helpers CollectionHelpers
-    helpers ContainerHelpers
 
     namespace :research_plan_metadata do
       desc 'Get researchPlanMetadata by researchPlan id'
       params do
         requires :research_plan_id, type: Integer, desc: 'research plan id'
-        end
-        route_param :research_plan_id do
+      end
+      route_param :research_plan_id do
         get do
           present ResearchPlanMetadata.find_by(research_plan_id: params[:research_plan_id]), with: Entities::ResearchPlanMetadataEntity, root: 'research_plan_metadata'
         end

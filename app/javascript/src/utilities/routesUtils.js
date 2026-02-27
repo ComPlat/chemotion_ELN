@@ -1,11 +1,12 @@
 import UIStore from 'src/stores/alt/stores/UIStore';
-import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
+import CollectionsFetcher from 'src/fetchers/CollectionsFetcher';
+import Aviator from 'aviator';
 import { elementNames } from 'src/apps/generic/Utils';
 import { getLatestVesselIds, clearLatestVesselIds } from 'src/utilities/VesselUtilities';
 
@@ -16,25 +17,16 @@ const collectionShow = (e) => {
     UserActions.fetchProfile();
   }
   const uiState = UIStore.getState();
-  const currentSearchSelection = uiState.currentSearchSelection;
-  const currentSearchByID = uiState.currentSearchByID;
+  const { currentSearchSelection, currentSearchByID } = uiState;
   const collectionId = e.params['collectionID'];
-  let collectionPromise = null;
-  if (collectionId === 'all') {
-    collectionPromise = CollectionStore.findAllCollection();
-  } else {
-    collectionPromise = CollectionStore.findById(collectionId);
-  }
+  const collectionPromise = CollectionsFetcher.fetchByCollectionId(collectionId);
 
-  collectionPromise.then((result) => {
-    const collection = result.collection;
-
+  collectionPromise.then((collection) => {
     if (currentSearchSelection) {
       UIActions.selectCollectionWithoutUpdating(collection);
       ElementActions.fetchBasedOnSearchSelectionAndCollection({
         selection: currentSearchSelection,
         collectionId: collection.id,
-        isSync: !!collection.is_sync_to_me
       });
     } else {
       if (currentSearchByID) {
@@ -43,68 +35,11 @@ const collectionShow = (e) => {
       UIActions.selectCollection(collection);
     }
 
-    // if (!e.params['sampleID'] && !e.params['reactionID'] &&
-    // !e.params['wellplateID'] && !e.params['screenID']) {
-    UIActions.uncheckAllElements({ type: 'sample', range: 'all' });
-    UIActions.uncheckAllElements({ type: 'reaction', range: 'all' });
-    UIActions.uncheckAllElements({ type: 'wellplate', range: 'all' });
-    UIActions.uncheckAllElements({ type: 'screen', range: 'all' });
-    UIActions.uncheckAllElements({ type: 'device_description', range: 'all' });
-    UIActions.uncheckAllElements({ type: 'sequence_based_macromolecule_sample', range: 'all' });
-    elementNames(false).then((klassArray) => {
+    elementNames(true).then((klassArray) => {
       klassArray.forEach((klass) => {
         UIActions.uncheckAllElements({ type: klass, range: 'all' });
       });
     });
-    // }
-  });
-};
-
-const scollectionShow = (e) => {
-  UserActions.fetchCurrentUser();
-  const { profile } = UserStore.getState();
-  if (!profile) {
-    UserActions.fetchProfile();
-  }
-  const uiState = UIStore.getState();
-  const currentSearchSelection = uiState.currentSearchSelection;
-  const currentSearchByID = uiState.currentSearchByID;
-  const collectionId = e.params['collectionID'];
-  let collectionPromise = null;
-  collectionPromise = CollectionStore.findBySId(collectionId);
-
-  collectionPromise.then((result) => {
-    const collection = result.sync_collections_user;
-
-    if (currentSearchSelection) {
-      UIActions.selectCollectionWithoutUpdating(collection);
-      ElementActions.fetchBasedOnSearchSelectionAndCollection({
-        selection: currentSearchSelection,
-        collectionId: collection.id,
-        isSync: !!collection.is_sync_to_me
-      });
-    } else {
-      UIActions.selectCollection(collection);
-      if (currentSearchByID) {
-        UIActions.clearSearchById();
-      }
-    }
-
-    // if (!e.params['sampleID'] && !e.params['reactionID'] && !e.params['wellplateID'] && !e.params['screenID']) {
-    UIActions.uncheckAllElements({ type: 'sample', range: 'all' });
-    UIActions.uncheckAllElements({ type: 'reaction', range: 'all' });
-    UIActions.uncheckAllElements({ type: 'wellplate', range: 'all' });
-    UIActions.uncheckAllElements({ type: 'screen', range: 'all' });
-    UIActions.uncheckAllElements({ type: 'device_description', range: 'all' });
-    UIActions.uncheckAllElements({ type: 'vessel', range: 'all' });
-    UIActions.uncheckAllElements({ type: 'sequence_based_macromolecule_sample', range: 'all' });
-    elementNames(false).then((klassArray) => {
-      klassArray.forEach((klass) => {
-        UIActions.uncheckAllElements({ type: klass, range: 'all' });
-      });
-    });
-
-    // }
   });
 };
 
@@ -394,9 +329,59 @@ const elementShowOrNew = (e) => {
   return null;
 };
 
+const aviatorNavigation = (type, id, silent = true, showOrNew = false, params = {}) => {
+  const { currentCollection } = UIStore.getState();
+  const withType = type ? `/${type}` : '';
+  const withId = id ? `/${id}` : '';
+  const url = type === 'collection' ? `/collection/${id}/` : `/collection/${currentCollection.id}${withType}${withId}`;
+
+  Aviator.navigate(url, { silent: silent });
+
+  if (showOrNew) {
+    if (Object.keys(params).length >= 1) {
+      return elementShowOrNew(params);
+    } else if (type === 'collection') {
+      return collectionShow({ params: { collectionID: id } });
+    } else {
+      return elementShowOrNew(defaultParamsForAviatorNavigation(currentCollection.id, type, id));
+    }
+  }
+}
+
+const defaultParamsForAviatorNavigation = (collectionId, type, id) => {
+  const isGenericEl = (UserStore.getState().genericEls || []).some(({ name }) => name === type);
+
+  const params = {
+    type,
+    klassType: isGenericEl ? 'GenericEl' : undefined,
+    params: {
+      collectionID: collectionId,
+      [`${type}ID`]: id,
+    }
+  };
+  return params;
+}
+
+const aviatorNavigationWithCollectionId = (collectionId, type, id, silent = true, showOrNew = false) => {
+  const withId = id ? `/${id}` : '';
+  const withType = type ? `/${type}` : '';
+  const url = `/collection/${collectionId}${withType}${withId}`;
+
+  Aviator.navigate(url, { silent: silent });
+
+  if (showOrNew) {
+    if (type && id) {
+      collectionShow({ params: { collectionID: collectionId } });
+      return elementShowOrNew(defaultParamsForAviatorNavigation(collectionId, type, id));
+    } else {
+      return collectionShow({ params: { collectionID: collectionId } });
+    }
+  }
+  return true;
+}
+
 export {
   collectionShow,
-  scollectionShow,
   reportShowReport,
   sampleShowOrNew,
   reactionShow,
@@ -418,4 +403,6 @@ export {
   vesselShowOrNew,
   vesselTemplateShowOrNew,
   sequenceBasedMacromoleculeSampleShowOrNew,
+  aviatorNavigation,
+  aviatorNavigationWithCollectionId,
 };

@@ -1,26 +1,28 @@
 # frozen_string_literal: true
 
-# rubocop:disable RSpec/MultipleMemoizedHelpers
-
+# rubocop:disable RSpec/MultipleMemoizedHelpers, RSpec/IndexedLet, RSpec/MultipleExpectations, RSpec/NestedGroups, RSpec/ContextWording, RSpec/AnyInstance
+# rubocop:disable Layout/LineLength
 require 'rails_helper'
 
 describe Chemotion::SampleAPI do
   include_context 'api request authorization context'
 
-  let(:collection) { create(:collection, user_id: user.id) }
-  let(:other_user_collection) { create(:collection, user_id: user.id + 1) }
-  let(:personal_collection) { create(:collection, user: user, is_shared: false) }
-  let(:shared_collection) { create(:collection, user_id: user.id, is_shared: true) }
+  let(:other_user) { create(:person) }
+  let(:collection) { create(:collection, user: user) }
+  let(:other_user_collection) { create(:collection, user: other_user) }
+  let(:personal_collection) { create(:collection, user: user) }
+  let(:shared_collection) do
+    create(:collection, user: other_user).tap do |collection|
+      create(:collection_share, collection: collection, shared_with: user, permission_level: permission_level)
+    end
+  end
 
   describe 'POST /api/v1/samples/ui_state/' do
-    let(:sample_1) { create(:sample) }
-    let(:sample_2) { create(:sample) }
-    let(:limit)    { 1 }
+    let(:sample1) { create(:sample, collections: [collection]) }
+    let(:sample2) { create(:sample, collections: [collection]) }
+    let(:limit) { 1 }
 
     before do
-      CollectionsSample.create!(sample: sample_1, collection: collection)
-      CollectionsSample.create!(sample: sample_2, collection: collection)
-
       post '/api/v1/samples/ui_state/', params: params, as: :json
     end
 
@@ -29,7 +31,7 @@ describe Chemotion::SampleAPI do
         {
           ui_state: {
             all: false,
-            included_ids: [sample_1.id, sample_2.id],
+            included_ids: [sample1.id, sample2.id],
             excluded_ids: [],
             collection_id: collection.id,
           },
@@ -47,7 +49,7 @@ describe Chemotion::SampleAPI do
         {
           ui_state: {
             all: false,
-            included_ids: [sample_1.id, sample_2.id],
+            included_ids: [sample1.id, sample2.id],
             excluded_ids: [],
             collection_id: collection.id,
           },
@@ -61,8 +63,8 @@ describe Chemotion::SampleAPI do
   end
 
   describe 'POST /api/v1/samples/subsamples' do
-    let(:s1) { create(:sample, name: 's1', external_label: 'ext1') }
-    let(:s2) { create(:sample, name: 's2', external_label: 'ext2') }
+    let(:s1) { create(:sample, name: 's1', external_label: 'ext1', collections: [collection]) }
+    let(:s2) { create(:sample, name: 's2', external_label: 'ext2', collections: [collection]) }
 
     let(:params) do
       {
@@ -80,14 +82,15 @@ describe Chemotion::SampleAPI do
     let(:subsamples) { Sample.where(name: %w[s1 s2]).where.not(id: [s1.id, s2.id]) }
 
     before do
-      CollectionsSample.create!(sample: s1, collection: collection)
-      CollectionsSample.create!(sample: s2, collection: collection)
-
+      s1
+      s2
       post '/api/v1/samples/subsamples', params: params, as: :json
     end
 
     # TODO: Cleanup this
     it 'is able to split Samples into Subsamples' do
+      expect(response.status).to eq 201
+
       s3 = subsamples[0]
       s4 = subsamples[1]
       except_attr = %w[
@@ -413,8 +416,6 @@ describe Chemotion::SampleAPI do
           JSON.parse(response.body)['status'],
         ).to eq 'ok'
 
-        collection_sample = CollectionsSample.where(collection_id: collection.id)
-
         molecule = Molecule.find_by(inchikey: 'DTHMTBUWTGVEFG-DDWIOCJRSA-N')
         sample = Sample.find_by(molecule_id: molecule.id)
 
@@ -483,8 +484,6 @@ describe Chemotion::SampleAPI do
           JSON.parse(response.body)['status'],
         ).to eq 'ok'
 
-        collection_sample = CollectionsSample.where(collection_id: collection.id)
-
         molecule = Molecule.find_by(inchikey: 'DTHMTBUWTGVEFG-DDWIOCJRSA-N')
         sample = Sample.find_by(molecule_id: molecule.id)
 
@@ -520,16 +519,11 @@ describe Chemotion::SampleAPI do
           name: sample.name,
           type: 'sample',
         )
+
         expect(
           first_sample[:tag]['taggable_data']['collection_labels'],
-        ).to include(
-          'name' => personal_collection.label,
-          'is_shared' => false,
-          'id' => personal_collection.id,
-          'user_id' => user.id,
-          'shared_by_id' => personal_collection.shared_by_id,
-          'is_synchronized' => personal_collection.is_synchronized,
-        )
+        ).to include('id' => personal_collection.id)
+
         expect(
           first_sample[:tag]['taggable_data']['analyses'],
         ).to include('confirmed' => { 'CHMO:0000595 | 13C nuclear magnetic resonance spectroscopy (13C NMR)' => 1 })
@@ -552,8 +546,10 @@ describe Chemotion::SampleAPI do
     end
 
     context 'when collection_id is given' do
-      let!(:sample) { create(:sample, collections: [personal_collection]) }
-      let!(:sample2) { create(:sample, collections: [personal_collection]) }
+      before do
+        create(:sample, collections: [personal_collection])
+        create(:sample, collections: [personal_collection])
+      end
 
       it 'returns samples' do
         get '/api/v1/samples', params: { collection_id: personal_collection.id }
@@ -562,9 +558,14 @@ describe Chemotion::SampleAPI do
     end
 
     context 'when collection_id is given and no samples found' do
+      let(:empty_collection) { create(:collection, label: 'empty collection', user: user) }
+
+      before do
+        empty_collection
+      end
+
       it 'returns no samples' do
-        allow(Collection).to receive(:belongs_to_or_shared_by).and_raise(ActiveRecord::RecordNotFound)
-        get '/api/v1/samples', params: { collection_id: personal_collection.id }
+        get '/api/v1/samples', params: { collection_id: empty_collection.id }
         expect(JSON.parse(response.body)['samples'].size).to eq(0)
       end
     end
@@ -606,11 +607,7 @@ describe Chemotion::SampleAPI do
   end
 
   describe 'GET /api/v1/samples/:id' do
-    let(:sample) { create(:sample) }
-
-    before do
-      CollectionsSample.create!(sample: sample, collection: collection)
-    end
+    let(:sample) { create(:sample, collections: [collection]) }
 
     context 'when permissions are appropriate' do
       before do
@@ -635,7 +632,6 @@ describe Chemotion::SampleAPI do
       let(:collection) { shared_collection }
 
       before do
-        collection.update(permission_level: permission_level)
         get "/api/v1/samples/#{sample.id}"
       end
 
@@ -679,7 +675,6 @@ describe Chemotion::SampleAPI do
 
   describe 'GET /api/v1/samples/fetchByShortLabel/:shortLabel' do
     let(:sample) { create(:sample, short_label: 'FOOBAR', creator: user, collections: [collection]) }
-    let(:short_label) { 'FOOBAR' }
     let(:expected_response) do
       {
         'sample_id' => sample.id,
@@ -687,26 +682,29 @@ describe Chemotion::SampleAPI do
       }
     end
 
-    before do
-      sample
-    end
-
     it 'returns the sample_id and the collection_id' do
-      get "/api/v1/samples/findByShortLabel/#{short_label}.json"
+      get "/api/v1/samples/findByShortLabel/#{sample.short_label}.json"
 
       expect(parsed_json_response).to eq(expected_response)
     end
   end
 
   describe 'PUT /api/v1/samples/:id' do
-    let(:sample) { create(:sample) }
-
     context 'when permissions are appropriate' do
-      let(:c1) { collection }
-      let(:c2) { other_user_collection }
-      let(:c3) { create(:collection, user_id: user.id, is_shared: true, permission_level: 1) }
-      let(:s1) { create(:sample, name: 'old', target_amount_value: 0.1) }
-      let(:s2) { create(:sample, name: 'old2', target_amount_value: 0.2) }
+      let(:collection_shared_with_user) do
+        create(:collection, user: other_user).tao do |collection|
+          create(:collection_share, collection: collection, shared_with: user, permission_level: 1)
+        end
+      end
+      let(:sample1) { create(:sample, name: 'old', target_amount_value: 0.1, collections: [collection]) }
+      let(:sample2) do
+        create(
+          :sample,
+          name: 'old2',
+          target_amount_value: 0.2,
+          collections: [other_user_collection, collection_shared_with_user],
+        )
+      end
       let(:cas) { '58-08-2' }
 
       let(:params) do
@@ -738,16 +736,10 @@ describe Chemotion::SampleAPI do
       end
 
       before do
-        CollectionsSample.create!(sample: s1, collection: c1)
-        CollectionsSample.create!(sample: s1, collection: c2)
-        CollectionsSample.create!(sample: s2, collection: c3)
-        put "/api/v1/samples/#{sample.id}", params: params, as: :json
+        put "/api/v1/samples/#{sample1.id}", params: params, as: :json
       end
 
       context 'when updating sample 1' do
-        let(:sample) { s1 }
-        let(:s1) { create(:sample, name: 'old', target_amount_value: 0.1) }
-
         it 'returns 200 status code' do
           expect(response).to have_http_status :ok
         end
@@ -761,8 +753,7 @@ describe Chemotion::SampleAPI do
       end
 
       context 'when updating sample inventory label' do
-        let(:inventory_sample) { create(:sample_with_valid_inventory_label) }
-        let(:inventory_collection) { inventory_sample.collections.first }
+        let(:sample1) { create(:sample_with_valid_inventory_label, collections: [collection]) }
         let(:params) do
           {
             name: 'updated inventory sample',
@@ -776,15 +767,12 @@ describe Chemotion::SampleAPI do
             },
             location: '',
             molfile: '',
-            collection_id: inventory_collection.id,
+            collection_id: collection.id,
           }
         end
 
         before do
-          unless CollectionsSample.exists?(sample: s1, collection: inventory_collection)
-            CollectionsSample.create!(sample: s1, collection: inventory_collection)
-          end
-          put "/api/v1/samples/#{s1.id}", params: params, as: :json
+          put "/api/v1/samples/#{sample1.id}", params: params, as: :json
         end
 
         it 'returns 200 status code' do
@@ -792,19 +780,19 @@ describe Chemotion::SampleAPI do
         end
 
         it 'sample inventory label matches the prefix-counter of the collection' do
-          sample = Sample.find_by(id: s1.id)
-          expected_label = expected_inventory_label(inventory_collection)
+          sample = Sample.find_by(id: sample1.id)
+          expected_label = expected_inventory_label(collection)
           expect(sample.xref['inventory_label']).to eq expected_label
         end
 
-        def expected_inventory_label(inventory_collection)
-          inventory = Inventory.find_by(id: inventory_collection.inventory_id)
+        def expected_inventory_label(collection)
+          inventory = Inventory.find_by(id: collection.inventory_id)
           "#{inventory['prefix']}-#{inventory['counter']}"
         end
       end
 
       context 'when updating sample 2' do
-        let(:sample) { s2 }
+        let(:sample) { sample2 }
 
         it 'returns 200 status code' do
           expect(response).to have_http_status :ok
@@ -820,6 +808,7 @@ describe Chemotion::SampleAPI do
     end
 
     context 'when permissions are inappropriate' do
+      let(:other_users_sample) { create(:sample, collections: [other_user_collection]) }
       let(:params) do
         {
           name: 'updated name',
@@ -837,9 +826,7 @@ describe Chemotion::SampleAPI do
       end
 
       it 'returns 401 unauthorized status code' do
-        CollectionsSample.create!(sample: sample, collection: other_user_collection)
-
-        put "/api/v1/samples/#{sample.id}", params: params
+        put "/api/v1/samples/#{other_users_sample.id}", params: params
         expect(response).to have_http_status :unauthorized
       end
     end
@@ -924,26 +911,9 @@ describe Chemotion::SampleAPI do
 
   describe 'DELETE /api/v1/samples' do
     context 'when parameters are valid' do
-      let(:s1) { create(:sample, name: 'test') }
-
-      let!(:params) do
-        {
-          name: 'test',
-          target_amount_value: 0,
-          target_amount_unit: 'g',
-          molarity_value: nil,
-          molarity_unit: 'M',
-          description: 'Test Sample',
-          purity: 1,
-          solvent: '',
-          location: '',
-          molfile: '',
-          is_top_secret: false,
-        }
-      end
+      let(:s1) { create(:sample, name: 'test', collections: [collection]) }
 
       before do
-        CollectionsSample.create!(collection: collection, sample: s1)
         delete "/api/v1/samples/#{s1.id}"
       end
 
@@ -952,89 +922,16 @@ describe Chemotion::SampleAPI do
         expect(s).to be_nil
       end
     end
-
-    context 'with UIState' do
-      let!(:sample_1) { create(:sample, name: 'test_1') }
-      let!(:sample_2) { create(:sample, name: 'test_2') }
-      let!(:sample_3) { create(:sample, name: 'test_3') }
-
-      let!(:params_all_false) do
-        {
-          all: false,
-          included_ids: [sample_1.id, sample_2.id],
-          excluded_ids: [],
-        }
-      end
-
-      let!(:params_all_true) do
-        {
-          all: true,
-          included_ids: [],
-          excluded_ids: [sample_3.id],
-        }
-      end
-
-      # NB: deprecated api
-      xit 'should be able to delete samples when "all" is false' do
-        sample_ids = [sample_1.id, sample_2.id]
-        array = Sample.where(id: sample_ids).to_a
-        expect(array).to match_array([sample_1, sample_2])
-        CollectionsSample.create(sample_id: sample_1.id, collection_id: 1)
-        CollectionsSample.create(sample_id: sample_2.id, collection_id: 1)
-        s = Sample.find_by(id: sample_3.id)
-        expect(s).not_to be_nil
-        delete '/api/v1/samples', params: { ui_state: params_all_false }, as: :json
-        s = Sample.find_by(id: sample_3.id)
-        expect(s).not_to be_nil
-        array = Sample.where(id: sample_ids).to_a
-        expect(array).to match_array([])
-        a = Well.where(sample_id: sample_ids).to_a
-        expect(a).to match_array([])
-        a = CollectionsSample.where(sample_id: sample_ids).to_a
-        expect(a).to match_array([])
-        a = ReactionsProductSample.where(sample_id: sample_ids).to_a
-        expect(a).to match_array([])
-        a = ReactionsReactantSample.where(sample_id: sample_ids).to_a
-        expect(a).to match_array([])
-        a = ReactionsStartingMaterialSample.where(sample_id: sample_ids).to_a
-        expect(a).to match_array([])
-      end
-
-      xit 'should be able to delete samples when "all" is true' do
-        sample_ids = [sample_1.id, sample_2.id]
-        array = Sample.where(id: sample_ids).to_a
-        expect(array).to match_array([sample_1, sample_2])
-        CollectionsSample.create(sample_id: sample_1.id, collection_id: 1)
-        CollectionsSample.create(sample_id: sample_2.id, collection_id: 1)
-        s = Sample.find_by(id: sample_3.id)
-        expect(s).not_to be_nil
-        delete '/api/v1/samples', params: { ui_state: params_all_true }, as: :json
-        s = Sample.find_by(id: sample_3.id)
-        expect(s).not_to be_nil
-        array = Sample.where(id: sample_ids).to_a
-        expect(array).to match_array([])
-        a = Well.where(sample_id: sample_ids).to_a
-        expect(a).to match_array([])
-        a = CollectionsSample.where(sample_id: sample_ids).to_a
-        expect(a).to match_array([])
-        a = ReactionsProductSample.where(sample_id: sample_ids).to_a
-        expect(a).to match_array([])
-        a = ReactionsReactantSample.where(sample_id: sample_ids).to_a
-        expect(a).to match_array([])
-        a = ReactionsStartingMaterialSample.where(sample_id: sample_ids).to_a
-        expect(a).to match_array([])
-      end
-    end
   end
 
   # TODO: Check these specs and remove everything that is already covered by the specs above
   #       Refactor the rest to match the spec structure as shown above
   context 'legacy specs previously contained in spec/api/attachment_api_spec.rb' do
     let(:u1) { create(:person, first_name: 'Person', last_name: 'Test') }
-    let(:c1) { create(:collection, user_id: u1.id) }
+    let(:c1) { create(:collection, user: u1) }
     let!(:cont_s1_root) { create(:container) }
     let!(:s1) do
-      create(:sample_without_analysis, name: 'sample 1', container: cont_s1_root)
+      create(:sample_without_analysis, name: 'sample 1', container: cont_s1_root, collections: [c1])
     end
     let!(:cont_s1_analyses) { create(:container, container_type: 'analyses') }
     let!(:cont_s1_analysis) { create(:analysis_container) }
@@ -1042,12 +939,9 @@ describe Chemotion::SampleAPI do
 
     let(:u2) { create(:user) }
     let(:c2) { create(:collection, user_id: u2.id) }
-    # let(:c12) {
-    #  create(:collection, user_id: u1.id, is_shared: true, permission_level: 1)
-    # }
     let!(:cont_s2_root) { create(:container) }
     let!(:s2) do
-      create(:sample_without_analysis, name: 'sample 2', container: cont_s2_root)
+      create(:sample_without_analysis, name: 'sample 2', container: cont_s2_root, collections: [c2])
     end
     let!(:cont_s2_analyses) { create(:container, container_type: 'analyses') }
     let!(:cont_s2_analysis) { create(:analysis_container) }
@@ -1065,14 +959,13 @@ describe Chemotion::SampleAPI do
 
     let(:sample_upd_1_params) do
       JSON.parse(
-        Rails.root.join('spec', 'fixtures', 'sample_update_1_params.json').read,
+        Rails.root.join('spec/fixtures/sample_update_1_params.json').read,
       ).deep_symbolize_keys
     end
 
     before do
       allow_any_instance_of(WardenAuthentication).to receive(:current_user)
         .and_return(u1)
-      CollectionsSample.create!(sample: s1, collection: c1)
 
       cont_s1_root.children << cont_s1_analyses
       cont_s1_root.save!
@@ -1133,7 +1026,6 @@ describe Chemotion::SampleAPI do
 
       context 'with inappropriate permissions' do
         before do
-          CollectionsSample.create!(sample: s2, collection: c2)
           cont_s2_root.children << cont_s2_analyses
           cont_s2_root.save!
           cont_s2_analyses.children << cont_s2_analysis
@@ -1160,11 +1052,15 @@ describe Chemotion::SampleAPI do
 
           it 'has not created a dataset for the corresponding analysis' do
             expect(cont_s2_analysis.children.count).to eq(1)
-            expect do
-              put("/api/v1/samples/#{s1.id}.json",
-                  params: sample_upd_1_params.to_json,
-                  headers: { 'CONTENT_TYPE' => 'application/json' })
-            end.not_to change { s2.analyses.first.children.count }
+            count_before = s2.analyses.first.children.count
+
+            put("/api/v1/samples/#{s1.id}.json",
+                params: sample_upd_1_params.to_json,
+                headers: { 'CONTENT_TYPE' => 'application/json' })
+
+            s2.reload
+            count_after = s2.analyses.first.children.count
+            expect(count_before - count_after).to eq 0
           end
         end
       end
@@ -1341,5 +1237,5 @@ describe Chemotion::SampleAPI do
     end
   end
 end
-
-# rubocop:enable RSpec/MultipleMemoizedHelpers
+# rubocop:enable Layout/LineLength
+# rubocop:enable RSpec/MultipleMemoizedHelpers, RSpec/IndexedLet, RSpec/MultipleExpectations, RSpec/NestedGroups, RSpec/ContextWording, RSpec/AnyInstance

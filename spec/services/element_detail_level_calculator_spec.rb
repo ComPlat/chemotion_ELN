@@ -4,57 +4,52 @@ require 'rails_helper'
 
 describe ElementDetailLevelCalculator do
   let(:user) { create(:person) }
+  let(:other_user) { create(:person) }
+  let(:owned_collection) { create(:collection, user: user) }
+  let(:other_users_unshared_collection) { create(:collection, user: other_user) }
+  let(:other_users_shared_collection) do
+    create(:collection, user: other_user).tap do |collection|
+      create(
+        :collection_share,
+        collection: collection,
+        shared_with: user,
+        celllinesample_detail_level: 2,
+        devicedescription_detail_level: 2,
+        element_detail_level: 2,
+        reaction_detail_level: 2,
+        researchplan_detail_level: 2,
+        sample_detail_level: 2,
+        sequencebasedmacromoleculesample_detail_level: 2,
+        screen_detail_level: 2,
+        wellplate_detail_level: 2,
+      )
+    end
+  end
+  let(:element) { create(:sample, collections: element_collections) }
+  let(:calculator) { described_class.new(user: user, element: element) }
 
   describe '#detail_levels' do
-    let(:other_user) { create(:person) }
-    let(:other_user_collection) do
-      create(
-        :collection, is_shared: false, user: other_user, label: 'other_user_collection'
-      )
-    end
+    context 'when user has no access to element' do
+      let(:element_collections) { [other_users_unshared_collection] }
 
-    let(:shared_collection) do
-      create(
-        :collection,
-        is_shared: true, shared_by_id: other_user.id, user: user, label: 'shared_collection',
-        wellplate_detail_level: 9, researchplan_detail_level: 4, sample_detail_level: 3
-      )
-    end
-
-    let(:element) { create(:research_plan) }
-
-    subject { described_class.new(user: user, element: element).detail_levels }
-
-    before do
-      create(
-        :sync_collections_user,
-        user: user, sharer: other_user, collection: other_user_collection,
-        wellplate_detail_level: 6, researchplan_detail_level: 5, sample_detail_level: 7
-      )
-    end
-
-    it 'returns a hash with matching keys' do
-      expect(subject).to eq({
-        Labimotion::Element => 0,
-        Reaction => 0,
-        ResearchPlan => 0,
-        Sample => 0,
-        Screen => 0,
-        Well => 0,
-        Wellplate => 0,
-        CelllineSample => 0,
-        DeviceDescription => 0,
-        SequenceBasedMacromoleculeSample => 0,
-      })
-    end
-
-    context 'when user has shared/synced collection that contains the element' do
-      let(:element) do
-        create(:wellplate, collections: [other_user_collection, shared_collection])
+      it 'returns detail level 0' do
+        expect(calculator.detail_levels.values.max).to be 0
       end
+    end
 
-      it 'returns the highest configured detail level for the element' do
-        expect(subject[Wellplate]).to eq(9)
+    context 'when user owns a collection with the element' do
+      let(:element_collections) { [owned_collection] }
+
+      it 'returns a detail level of 10' do
+        expect(calculator.detail_levels.values.max).to be 10
+      end
+    end
+
+    context 'when element is in a collection shared with the user' do
+      let(:element_collections) { [other_users_shared_collection] }
+
+      it 'returns the configured detail levels' do
+        expect(calculator.detail_levels.values.max).to eq 2
       end
     end
   end

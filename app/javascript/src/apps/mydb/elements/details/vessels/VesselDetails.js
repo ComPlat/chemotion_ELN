@@ -6,10 +6,9 @@ import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollec
 import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import { observer } from 'mobx-react';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
-import CollectionUtils from 'src/models/collection/CollectionUtils';
+import { collectionHasPermission } from 'src/utilities/collectionUtilities';
 import PropTypes from 'prop-types';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import VesselProperties from 'src/apps/mydb/elements/details/vessels/propertiesTab/VesselProperties';
 
 function VesselDetails({ vesselItem }) {
@@ -17,13 +16,8 @@ function VesselDetails({ vesselItem }) {
     return null; // Render nothing if no vesselItem
   }
   const isReadOnly = () => {
-    const { currentCollection, isSync } = UIStore.getState();
-    const { currentUser } = UserStore.getState();
-    return CollectionUtils.isReadOnly(
-      currentCollection,
-      currentUser.id,
-      isSync
-    );
+    const { currentCollection } = UIStore.getState();
+    return !collectionHasPermission(currentCollection, 0);
   };
   const context = useContext(StoreContext);
   const [activeTab, setActiveTab] = useState('tab1');

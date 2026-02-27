@@ -1,4 +1,4 @@
-require:
+plugins:
   - rubocop-rspec
   - rubocop-rails
   - rubocop-performance
@@ -40,6 +40,9 @@ RSpec/MultipleExpectations:
   Max: 3
 
 Style/Documentation:
+  Enabled: false
+
+Style/RedundantArrayConstructor:
   Enabled: false
 
 Style/TrailingCommaInArrayLiteral:

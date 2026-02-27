@@ -1,0 +1,61 @@
+# frozen_string_literal: true
+
+module Usecases
+  module Collections
+    class RemoveElements
+      attr_reader :current_user, :collection
+
+      def initialize(current_user)
+        @current_user = current_user
+        @collection = nil
+      end
+
+      def perform!(collection_id:, ui_state:)
+        find_collection(collection_id)
+        prevent_removal_from_all_collection!
+        remove_elements_from_collection(ui_state)
+      end
+
+      # rubocop:disable Rails/FindByOrAssignmentMemoization
+      def find_collection(collection_id)
+        @collection = Collection.own_collections_for(current_user).find_by(id: collection_id)
+        @collection ||= Collection.shared_with_minimum_permission_level(
+          current_user,
+          CollectionShare.permission_level(:delete_elements),
+        ).find_by(id: collection_id)
+
+        return if @collection
+
+        raise Errors::InsufficientPermissionError, 'You do not have the right to remove elements from this collection'
+      end
+      # rubocop:enable Rails/FindByOrAssignmentMemoization
+
+      def prevent_removal_from_all_collection!
+        return unless collection.label == 'All' && collection.is_locked
+
+        raise Errors::InsufficientPermissionError, 'You can not delete from an ALL-Collection'
+      end
+
+      def remove_elements_from_collection(ui_state)
+        ui_state.each do |class_string, ui_selections|
+          element_class =
+            API::ELEMENT_CLASS[class_string] || Labimotion::ElementKlass.find(name: class_string)&.elements
+          next unless element_class
+
+          element_ids = element_class.by_ui_state(ui_selections).ids
+          join_table = API::ELEMENT_CLASS[class_string].collections_element_class || Labimotion::CollectionsElement
+
+          join_table.remove_in_collection(element_ids, collection.id)
+        end
+      end
+
+      def elements_scope(element_class, element_ids)
+        if element_class.in?(API::ELEMENT_CLASS.values)
+          element_class.where(id: element_ids)
+        else # Labimotion::ElementKlass
+          element_class.elements
+        end
+      end
+    end
+  end
+end
