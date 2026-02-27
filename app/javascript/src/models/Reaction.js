@@ -16,6 +16,7 @@ import { isSbmmSample } from 'src/utilities/ElementUtils';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import Segment from 'src/models/Segment';
 import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 const TemperatureUnit = ['°C', '°F', 'K'];
 
@@ -558,7 +559,24 @@ export default class Reaction extends Element {
     return this.name ? `${short_label} ${this.name}` : short_label;
   }
 
+  validateSbmmGroup(material, group) {
+    const isSbmm = isSbmmSample(material);
+    if (isSbmm && group !== 'reactants' && group !== 'reactant_sbmm_samples') {
+      NotificationActions.add({
+        title: 'Invalid Action',
+        message: 'SBMM samples can only be placed in the Reactants group.',
+        level: 'warning',
+        dismissible: 'button',
+        position: 'tr',
+      });
+      return false;
+    }
+    return true;
+  }
+
   addMaterial(material, group) {
+    if (!this.validateSbmmGroup(material, group)) return;
+
     const materials = this[group];
     const newMaterial = this.materialPolicy(material, null, group);
     this[group] = [...materials, newMaterial];
@@ -568,6 +586,8 @@ export default class Reaction extends Element {
   }
 
   addMaterialAt(srcMaterial, srcGp, tagMaterial, tagGp, srcIsWeightPercentageRef = false) {
+    if (!this.validateSbmmGroup(srcMaterial, tagGp)) return;
+
     const materials = this[tagGp];
     const idx = materials.indexOf(tagMaterial);
     const newSrcMaterial = this.materialPolicy(srcMaterial, srcGp, tagGp);
@@ -658,6 +678,9 @@ export default class Reaction extends Element {
     if (srcGp === tagGp) {
       this.swapMaterial(srcMaterial, tagMaterial, tagGp);
     } else {
+      // Validate before moving to prevent data loss if validation fails
+      if (!this.validateSbmmGroup(srcMaterial, tagGp)) return;
+
       const srcIsWeightPercentageRef = srcMaterial.weight_percentage_reference || false;
       this.deleteMaterial(srcMaterial, srcGp);
       this.addMaterialAt(srcMaterial, srcGp, tagMaterial, tagGp, srcIsWeightPercentageRef);
@@ -801,12 +824,22 @@ export default class Reaction extends Element {
   }
 
   rebuildReference(material) {
-    const { referenceMaterial } = this;
+    if (this.referenceMaterial) {
+      const { referenceMaterial } = this;
+      let reference;
 
-    if (!referenceMaterial && this.starting_materials.length > 0) {
-      this._setAsReferenceMaterial(this.starting_materials[0]);
-    } else if (referenceMaterial) {
-      this._updateEquivalentForMaterial(material);
+      if (isSbmmSample(referenceMaterial)) {
+        reference = this.reactant_sbmm_samples.find((m) => m.id === referenceMaterial.id);
+      } else {
+        reference = this.starting_materials.find((m) => m.id === referenceMaterial.id);
+        if (!reference) reference = this.reactants.find((m) => m.id === referenceMaterial.id);
+      }
+
+      if (!reference && this.starting_materials.length > 0) {
+        this._setAsReferenceMaterial(this.starting_materials[0]);
+      } else {
+        this._updateEquivalentForMaterial(material);
+      }
     }
 
     this.products.forEach((product, index, arr) => {
@@ -904,8 +937,10 @@ export default class Reaction extends Element {
     const referenceAmountMol = this.referenceMaterial.amount_mol;
     const sampleAmountMol = sample.amount_mol;
 
-    if (referenceAmountMol) {
+    if (Number.isFinite(referenceAmountMol) && referenceAmountMol > 0 && Number.isFinite(sampleAmountMol)) {
       sample.equivalent = sampleAmountMol / referenceAmountMol;
+    } else {
+      sample.equivalent = 0.0;
     }
   }
 
