@@ -25,6 +25,7 @@
 #  formulation                     :string           default("")
 #  function_or_application         :string
 #  heterologous_expression         :string           default("unknown"), not null
+#  inventory_sample                :boolean          default(FALSE), not null
 #  localisation                    :string           default("")
 #  molarity_unit                   :string           default("mol/L"), not null
 #  molarity_value                  :float
@@ -67,6 +68,7 @@ class SequenceBasedMacromoleculeSample < ApplicationRecord
   before_create :auto_assign_short_label
 
   has_one :container, as: :containable, inverse_of: :containable, dependent: :nullify
+  has_one :chemical, dependent: :destroy
   has_ancestry orphan_strategy: :adopt
 
   has_many :attachments, as: :attachable, inverse_of: :attachable, dependent: :nullify
