@@ -647,7 +647,7 @@ export default class UserAuth extends Component {
     return (
       <>
         <Dropdown>
-          <Dropdown.Toggle variant="light">
+          <Dropdown.Toggle variant="topbar">
             <i className="fa fa-user me-1" />
             {currentUser.name}
           </Dropdown.Toggle>

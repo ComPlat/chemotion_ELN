@@ -8,7 +8,6 @@ import ElementStore from 'src/stores/alt/stores/ElementStore';
 import FormatContainer from 'src/apps/mydb/elements/details/formats/FormatContainer';
 import GenericElDetails from 'src/components/generic/GenericElDetails';
 import GraphContainer from 'src/apps/mydb/elements/details/GraphContainer';
-import LiteratureDetails from 'src/apps/mydb/elements/details/LiteratureDetails';
 import MetadataContainer from 'src/components/metadata/MetadataContainer';
 //import PredictionContainer from 'src/apps/mydb/elements/details/predictions/PredictionContainer';
 import ReactionDetails from 'src/apps/mydb/elements/details/reactions/ReactionDetails';
@@ -24,6 +23,7 @@ import VesselDetails from 'src/apps/mydb/elements/details/vessels/VesselDetails'
 import VesselTemplateDetails from 'src/apps/mydb/elements/details/vessels/VesselTemplateDetails';
 import VesselTemplateCreate from 'src/apps/mydb/elements/details/vessels/VesselTemplateCreate';
 import SequenceBasedMacromoleculeSampleDetails from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/SequenceBasedMacromoleculeSampleDetails';
+import LiteratureDetails from 'src/apps/mydb/elements/details/literature/LiteratureDetails';
 
 const tabInfoHash = {
   metadata: {
@@ -155,16 +155,15 @@ export default class ElementDetails extends Component {
       case 'report':
         return <ReportContainer report={el} />;
       case 'prediction':
-        //return <PredictionContainer prediction={el} />;
-        console.warn('Attempting to show outdated PredictionContainer')
+        // return <PredictionContainer prediction={el} />;
+        console.warn('Attempting to show outdated PredictionContainer');
+        break;
       case 'format':
         return <FormatContainer format={el} />;
       case 'graph':
         return <GraphContainer graph={el} />;
       case 'task':
         return <ComputeTaskContainer task={el} />;
-      case 'literature_map':
-        return <LiteratureDetails literatureMap={el} />;
       case 'cell_line':
         return <CellLineDetails cellLineItem={el} />;
       case 'vessel':
@@ -182,6 +181,9 @@ export default class ElementDetails extends Component {
         return null;
       case 'sequence_based_macromolecule_sample':
         return <SequenceBasedMacromoleculeSampleDetails openedFromCollectionId={el.openedFromCollectionId} />;
+      case 'literature_map':
+        return <LiteratureDetails literatureMap={el} />;
+
       default:
         return (
           <div className="text-center">

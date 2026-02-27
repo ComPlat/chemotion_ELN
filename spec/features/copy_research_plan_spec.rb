@@ -26,13 +26,13 @@ describe 'Copy research plans' do
 
   it 'new research plan', :js do
     find_by_id('tree-id-Col1').click
-    first('i.icon-research_plan').click
+    first('i.icon-research-plan').click
     expect(page).to have_no_button('copy-element-btn', wait: 5)
   end
 
   it 'to same collection', :js do
     find_by_id('tree-id-Col1').click
-    first('i.icon-research_plan').click
+    first('i.icon-research-plan').click
     find_by_id('tree-id-Col1').click
     expect(page).to have_content('RP 1')
     find('div.preview-table').click
@@ -45,7 +45,7 @@ describe 'Copy research plans' do
 
   it 'to diff collection', :js do
     find_by_id('tree-id-Col1').click
-    first('i.icon-research_plan').click
+    first('i.icon-research-plan').click
     find_by_id('tree-id-Col1').click
     expect(page).to have_content('RP 1')
     find('div.preview-table').click
@@ -61,14 +61,14 @@ describe 'Copy research plans' do
     find_by_id('shared-home-link').click
     find_all('span.glyphicon-plus')[0].click
     find_by_id('tree-id-share-col').click
-    first('i.icon-research_plan').click
+    first('i.icon-research-plan').click
     expect(page).to have_content('RP 2', wait: 5)
     find('div.preview-table').click
     first('i.fa-clone').click
     find_field('modal-collection-id-select').set('Col1').send_keys(:enter)
     find_by_id('submit-copy-element-btn').click
     find('.tree-view', text: 'Col1').click
-    first('i.icon-research_plan').click
+    first('i.icon-research-plan').click
     expect(page).to have_content('RP 2', wait: 5)
   end
 end

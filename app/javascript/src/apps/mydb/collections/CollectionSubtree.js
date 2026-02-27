@@ -10,6 +10,7 @@ import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import UserInfosTooltip from 'src/apps/mydb/collections/UserInfosTooltip';
 import ChevronIcon from 'src/components/common/ChevronIcon';
 import { collectionShow, scollectionShow } from 'src/utilities/routesUtils';
+import CollectionSubtreeFunctions from 'src/apps/mydb/collections/CollectionSubtreeFunctions';
 
 export default class CollectionSubtree extends React.Component {
   constructor(props) {
@@ -147,9 +148,9 @@ export default class CollectionSubtree extends React.Component {
       <div key={root.id}>
         <div
           id={`tree-id-${root.label}`}
-          className={`tree-view_item ${selected ? 'tree-view_item--selected' : ''}`}
+          className={`tree-view__item ${selected ? 'tree-view__item--selected' : ''}`}
           onClick={this.handleClick}
-          style={{ paddingLeft: `${((level - 0.5) * 12)-4}px` }}
+          style={{ paddingLeft: `${(level - 0.5) * 12}px` }}
         >
           {children.length > 0 ? (
             <ChevronIcon
@@ -178,6 +179,7 @@ export default class CollectionSubtree extends React.Component {
               <i className="fa fa-share-alt" />
             </OverlayTrigger>
           )}
+          <CollectionSubtreeFunctions collectionId={root.id} />
         </div>
         {visible && (
           <div className="tree-view">

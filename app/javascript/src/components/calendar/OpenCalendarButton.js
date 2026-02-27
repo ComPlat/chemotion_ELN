@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
-import SidebarButton from 'src/apps/mydb/layout/sidebar/SidebarButton';
+import NotificationButton from 'src/apps/mydb/mainNavigation/topbar/NotificationButton';
 
 function getDefaultDateTimeRange() {
   const date = new Date();
@@ -13,7 +13,7 @@ function getDefaultDateTimeRange() {
   return { start: new Date(weekStart), end: new Date(weekEnd) };
 }
 
-function OpenCalendarButton({ eventableType, eventableId, isPanelHeader, isCollapsed }) {
+function OpenCalendarButton({ eventableType, eventableId, isPanelHeader }) {
   const { calendar } = useContext(StoreContext);
 
   const onClick = useCallback(() => {
@@ -48,12 +48,10 @@ function OpenCalendarButton({ eventableType, eventableId, isPanelHeader, isColla
   }
 
   return (
-    <SidebarButton
+    <NotificationButton
       onClick={onClick}
       label="Calendar"
       icon="fa-calendar"
-      isCollapsed={isCollapsed}
-      showLabel={false}
     />
   );
 }
@@ -62,14 +60,12 @@ OpenCalendarButton.defaultProps = {
   eventableType: undefined,
   eventableId: undefined,
   isPanelHeader: false,
-  isCollapsed: false,
 };
 
 OpenCalendarButton.propTypes = {
   eventableType: PropTypes.string,
   eventableId: PropTypes.number,
   isPanelHeader: PropTypes.bool,
-  isCollapsed: PropTypes.bool,
 };
 
 export default observer(OpenCalendarButton);
