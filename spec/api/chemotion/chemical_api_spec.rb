@@ -14,7 +14,7 @@ describe Chemotion::ChemicalAPI do
   end
 
   describe 'GET find chemical /api/v1/chemicals' do
-    before { get "/api/v1/chemicals?sample_id=#{s.id}&type=sample" }
+    before { get "/api/v1/chemicals?sample_id=#{s.id}" }
 
     it 'is allowed' do
       expect(response).to have_http_status(:ok)
@@ -28,7 +28,7 @@ describe Chemotion::ChemicalAPI do
 
     context 'when chemical does not exist' do
       it 'returns new chemical object with null id' do
-        get "/api/v1/chemicals?sample_id=#{s.id + 100_000}&type=sample"
+        get "/api/v1/chemicals?sample_id=#{s.id + 100_000}"
         expect(response.status).to eq 200
         expect(response.body).to include('"id":null')
       end
@@ -40,7 +40,6 @@ describe Chemotion::ChemicalAPI do
       {
         chemical_data: [{ 'cas' => 64_197 }],
         cas: '64197',
-        type: 'sample',
         sample_id: s.id,
       }
     end
@@ -61,7 +60,7 @@ describe Chemotion::ChemicalAPI do
       it 'returns error payload (201 status due to implementation)' do
         allow(Chemical).to receive(:create!).and_raise(ActiveRecord::RecordInvalid.new(Chemical.new))
         post '/api/v1/chemicals/create', params: {
-          sample_id: 999_999, cas: '10-10-0', type: 'sample', chemical_data: [{ 'x' => 'y' }]
+          sample_id: 999_999, cas: '10-10-0', chemical_data: [{ 'x' => 'y' }]
         }
         expect(response.status).to eq 201
         expect(response.body).to include('error')
@@ -74,7 +73,6 @@ describe Chemotion::ChemicalAPI do
     let(:params) do
       {
         chemical_data: [{ 'cas' => 64_197 }],
-        type: 'sample',
         sample_id: s.id,
       }
     end
@@ -198,7 +196,7 @@ describe Chemotion::ChemicalAPI do
     context 'when chemical_data param omitted (validation error)' do
       before do
         # Omitting required chemical_data param triggers 400 via Grape validation
-        put '/api/v1/chemicals', params: { sample_id: s.id, type: 'sample' }
+        put '/api/v1/chemicals', params: { sample_id: s.id }
       end
 
       it 'returns 400 bad request' do
@@ -208,7 +206,7 @@ describe Chemotion::ChemicalAPI do
 
     context 'when empty chemical_data provided (validation error)' do
       before do
-        put '/api/v1/chemicals', params: { sample_id: s.id, type: 'sample', chemical_data: [] }
+        put '/api/v1/chemicals', params: { sample_id: s.id, chemical_data: [] }
       end
 
       it 'returns 400 bad request' do
@@ -225,7 +223,7 @@ describe Chemotion::ChemicalAPI do
         allow(Chemical).to receive(:find_by).and_return(chem)
         allow(chem).to receive(:update!).and_call_original
         put '/api/v1/chemicals',
-            params: { sample_id: chem.sample_id, type: 'sample', chemical_data: [{ 'k' => 'v' }] }
+            params: { sample_id: chem.sample_id, chemical_data: [{ 'k' => 'v' }] }
         expect(response.status).to eq 200
         expect(chem).to have_received(:update!)
       end
@@ -239,7 +237,7 @@ describe Chemotion::ChemicalAPI do
         allow(Chemical).to receive(:find_by).and_return(chem)
         allow(chem).to receive(:update!).and_raise(ActiveRecord::RecordInvalid.new(chem))
         put '/api/v1/chemicals',
-            params: { sample_id: chem.sample_id, type: 'sample', chemical_data: [{ 'a' => 'b' }] }
+            params: { sample_id: chem.sample_id, chemical_data: [{ 'a' => 'b' }] }
         expect(response.status).to eq 200
         expect(response.body).to include('error')
       end
@@ -252,7 +250,7 @@ describe Chemotion::ChemicalAPI do
         chem = create(:chemical, sample_id: sample2.id)
         allow(Chemical).to receive(:find_by).and_raise(ActiveRecord::StatementInvalid.new('bad SQL'))
         put '/api/v1/chemicals',
-            params: { sample_id: chem.sample_id, type: 'sample', chemical_data: [{ 'a' => 'b' }] }
+            params: { sample_id: chem.sample_id, chemical_data: [{ 'a' => 'b' }] }
         expect(response.status).to eq 200
         expect(response.body).to include('error')
       end
@@ -564,11 +562,10 @@ describe Chemotion::ChemicalAPI do
     end
     let(:sbmm_chemical) { create(:chemical, :for_sbmm, sequence_based_macromolecule_sample: sbmm_sample) }
 
-    describe 'GET /api/v1/chemicals with type=SBMM' do
+    describe 'GET /api/v1/chemicals with sequence_based_macromolecule_sample_id' do
       it 'finds a chemical by sequence_based_macromolecule_sample_id' do
         sbmm_chemical # ensure created
         get '/api/v1/chemicals', params: {
-          type: 'SBMM',
           sequence_based_macromolecule_sample_id: sbmm_sample.id,
         }
         expect(response).to have_http_status(:ok)
@@ -578,7 +575,6 @@ describe Chemotion::ChemicalAPI do
 
       it 'returns new chemical object when none exists for given SBMM sample' do
         get '/api/v1/chemicals', params: {
-          type: 'SBMM',
           sequence_based_macromolecule_sample_id: sbmm_sample.id,
         }
         expect(response).to have_http_status(:ok)
@@ -586,19 +582,27 @@ describe Chemotion::ChemicalAPI do
         expect(body['id']).to be_nil
       end
 
-      it 'returns 400 when sequence_based_macromolecule_sample_id is missing' do
-        get '/api/v1/chemicals', params: { type: 'SBMM' }
+      it 'returns 400 when neither sample_id nor sequence_based_macromolecule_sample_id is provided' do
+        get '/api/v1/chemicals', params: {}
         expect(response.status).to eq 400
-        expect(response.body).to include('sequence_based_macromolecule_sample_id is required')
+        expect(response.body).to include('are missing, exactly one parameter must be provided')
+      end
+
+      it 'returns 400 when both sample_id and sequence_based_macromolecule_sample_id are provided' do
+        get '/api/v1/chemicals', params: {
+          sample_id: s.id,
+          sequence_based_macromolecule_sample_id: sbmm_sample.id,
+        }
+        expect(response.status).to eq 400
+        expect(response.body).to include('are mutually exclusive')
       end
     end
 
-    describe 'POST /api/v1/chemicals/create with type=SBMM' do
+    describe 'POST /api/v1/chemicals/create with sequence_based_macromolecule_sample_id' do
       let(:create_params) do
         {
           chemical_data: [{ 'cas' => '123-45-6' }],
           cas: '123-45-6',
-          type: 'SBMM',
           sequence_based_macromolecule_sample_id: sbmm_sample.id,
         }
       end
@@ -618,11 +622,10 @@ describe Chemotion::ChemicalAPI do
       end
     end
 
-    describe 'PUT /api/v1/chemicals with type=SBMM' do
+    describe 'PUT /api/v1/chemicals with sequence_based_macromolecule_sample_id' do
       it 'updates a chemical found by sequence_based_macromolecule_sample_id' do
         sbmm_chemical # ensure created
         put '/api/v1/chemicals', params: {
-          type: 'SBMM',
           sequence_based_macromolecule_sample_id: sbmm_sample.id,
           chemical_data: [{ 'status' => 'Available' }],
         }
@@ -631,18 +634,18 @@ describe Chemotion::ChemicalAPI do
         expect(sbmm_chemical.chemical_data).to eq [{ 'status' => 'Available' }]
       end
 
-      it 'returns 400 when sequence_based_macromolecule_sample_id is missing' do
+      it 'returns 400 when both sample_id and sequence_based_macromolecule_sample_id are provided' do
         put '/api/v1/chemicals', params: {
-          type: 'SBMM',
+          sample_id: s.id,
+          sequence_based_macromolecule_sample_id: sbmm_sample.id,
           chemical_data: [{ 'status' => 'Available' }],
         }
         expect(response.status).to eq 400
-        expect(response.body).to include('sequence_based_macromolecule_sample_id is required')
+        expect(response.body).to include('are mutually exclusive')
       end
 
       it 'returns 404 when no chemical exists for the given SBMM sample' do
         put '/api/v1/chemicals', params: {
-          type: 'SBMM',
           sequence_based_macromolecule_sample_id: sbmm_sample.id,
           chemical_data: [{ 'status' => 'Available' }],
         }
@@ -650,10 +653,9 @@ describe Chemotion::ChemicalAPI do
         expect(response.body).to include('chemical not found')
       end
 
-      it 'nullifies sample_id when updating via SBMM type' do
+      it 'nullifies sample_id when updating via sequence_based_macromolecule_sample_id' do
         sbmm_chemical # ensure created
         put '/api/v1/chemicals', params: {
-          type: 'SBMM',
           sequence_based_macromolecule_sample_id: sbmm_sample.id,
           chemical_data: [{ 'note' => 'test' }],
         }

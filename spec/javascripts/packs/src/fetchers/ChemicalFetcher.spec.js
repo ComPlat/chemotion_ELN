@@ -33,7 +33,7 @@ describe('ChemicalFetcher methods', () => {
       const result = await ChemicalFetcher.fetchChemical(sampleId, 'sample');
 
       sinon.assert.calledOnce(fetchStub);
-      sinon.assert.calledWithExactly(fetchStub, `/api/v1/chemicals?sample_id=${sampleId}&type=sample`, {
+      sinon.assert.calledWithExactly(fetchStub, `/api/v1/chemicals?sample_id=${sampleId}`, {
         credentials: 'same-origin',
       });
       expect(result.id).toEqual(expectedResponse.id);
@@ -130,15 +130,16 @@ describe('ChemicalFetcher methods', () => {
 
       const result = await ChemicalFetcher.update(params);
 
+      const { type, ...expectedBody } = params;
       sinon.assert.calledOnce(fetchStub);
-      sinon.assert.calledWithExactly(fetchStub, `/api/v1/chemicals?sample_id=${params.sample_id}&type=sample`, {
+      sinon.assert.calledWithExactly(fetchStub, '/api/v1/chemicals', {
         credentials: 'same-origin',
         method: 'put',
         headers: {
           Accept: 'application/json',
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(params)
+        body: JSON.stringify(expectedBody)
       });
       expect(result).toEqual(expectedResponse);
     });

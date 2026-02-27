@@ -91,14 +91,11 @@ export default class ChemicalTab extends React.Component {
     const params = {
       chemical_data: chemicalData,
       cas,
-      type,
     };
     if (type === 'SBMM') {
       params.sequence_based_macromolecule_sample_id = sample.id;
-      params.type = 'SBMM';
     } else {
       params.sample_id = sample.id;
-      params.type = 'sample';
     }
     if (chemical.isNew) {
       ChemicalFetcher.create(params).then((response) => {

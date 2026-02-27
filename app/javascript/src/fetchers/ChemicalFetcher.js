@@ -5,7 +5,7 @@ export default class ChemicalFetcher {
   // Fetch chemical by either sample_id or sequence_based_macromolecule_sample_id, depending on type
   static fetchChemical(id, type) {
     const paramName = type === 'SBMM' ? 'sequence_based_macromolecule_sample_id' : 'sample_id';
-    return fetch(`/api/v1/chemicals?${paramName}=${id}&type=${type}`, {
+    return fetch(`/api/v1/chemicals?${paramName}=${id}`, {
       credentials: 'same-origin',
     }).then((response) => response.json())
       .then((json) => new Chemical(json))
@@ -13,7 +13,7 @@ export default class ChemicalFetcher {
   }
 
   static create(data) {
-    const params = { ...data };
+    const { type, ...params } = data;
     return fetch('/api/v1/chemicals/create', {
       credentials: 'same-origin',
       method: 'post',
@@ -28,22 +28,15 @@ export default class ChemicalFetcher {
   }
 
   static update(params) {
-    // type should be 'sample' or 'SBMM'
-    let query = '';
-    const { type } = params;
-    if (type === 'SBMM') {
-      query = `sequence_based_macromolecule_sample_id=${params.sequence_based_macromolecule_sample_id}&type=${type}`;
-    } else {
-      query = `sample_id=${params.sample_id}&type=${type}`;
-    }
-    return fetch(`/api/v1/chemicals?${query}`, {
+    const { type, ...bodyParams } = params;
+    return fetch('/api/v1/chemicals', {
       credentials: 'same-origin',
       method: 'put',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(params)
+      body: JSON.stringify(bodyParams)
     }).then((response) => response.json())
       .then((json) => json)
       .catch((errorMessage) => { console.log(errorMessage); });
