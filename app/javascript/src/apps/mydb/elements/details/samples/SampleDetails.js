@@ -23,7 +23,6 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
-import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import QcActions from 'src/stores/alt/actions/QcActions';
 import QcStore from 'src/stores/alt/stores/QcStore';
 
@@ -74,6 +73,7 @@ import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElemen
 import { copyToClipboard } from 'src/utilities/clipboard';
 // eslint-disable-next-line import/no-named-as-default
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
 const MWPrecision = 6;
 
@@ -108,6 +108,7 @@ const rangeCheck = (field, sample) => {
 
 export default class SampleDetails extends React.Component {
   // eslint-disable-next-line react/static-property-placement
+  static contextType = StoreContext;
 
   constructor(props) {
     super(props);
@@ -577,8 +578,7 @@ export default class SampleDetails extends React.Component {
 
     // Persist to collection tabs_segment
     const tabSegment = { ...currentCollection?.tabs_segment, sample: updatedLayout };
-    CollectionActions.updateTabsSegment({ segment: tabSegment, cId: currentCollection.id });
-    UIActions.selectCollection({ ...currentCollection, tabs_segment: tabSegment, clearSearch: true });
+    this.context.collections.updateCollection(currentCollection, tabSegment);
 
     if (!userProfile) return;
     // Persist to user profile
