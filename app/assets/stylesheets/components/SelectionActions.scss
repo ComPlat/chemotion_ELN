@@ -1,0 +1,14 @@
+.selection-actions {
+  container-name: selection-actions;
+  container-type: inline-size;
+}
+
+.selection-action-text-label {
+  display: none;
+}
+
+@container selection-actions (width > 32.5rem) {
+  .selection-action-text-label {
+    display: inline;
+  }
+}

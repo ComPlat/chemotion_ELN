@@ -75,7 +75,9 @@ module Chemotion
         rescue StandardError => e
           error!(e, 400)
         end
-        return present cell_line_sample, with: Entities::CellLineSampleEntity
+        return present cell_line_sample,
+                       with: Entities::CellLineSampleEntity,
+                       policy: ElementPolicy.new(current_user, cell_line_sample)
       end
 
       desc 'Create a new Cell line sample'
@@ -88,7 +90,9 @@ module Chemotion
         cell_line_sample = use_case.execute!
         cell_line_sample.container = update_datamodel(params[:container])
 
-        return present cell_line_sample, with: Entities::CellLineSampleEntity
+        return present cell_line_sample,
+                       with: Entities::CellLineSampleEntity,
+                       policy: ElementPolicy.new(current_user, cell_line_sample)
       end
       desc 'Update a Cell line sample'
       params do
@@ -98,7 +102,9 @@ module Chemotion
         use_case = Usecases::CellLines::Update.new(params, current_user)
         cell_line_sample = use_case.execute!
         cell_line_sample.container = update_datamodel(params[:container])
-        return present cell_line_sample, with: Entities::CellLineSampleEntity
+        return present cell_line_sample,
+                       with: Entities::CellLineSampleEntity,
+                       policy: ElementPolicy.new(current_user, cell_line_sample)
       end
 
       desc 'Copy a cell line'
@@ -120,7 +126,9 @@ module Chemotion
           rescue StandardError => e
             error!(e, 400)
           end
-          return present copied_cell_line_sample, with: Entities::CellLineSampleEntity
+          return present copied_cell_line_sample,
+                         with: Entities::CellLineSampleEntity,
+                         policy: ElementPolicy.new(current_user, copied_cell_line_sample)
         end
       end
 
@@ -143,7 +151,9 @@ module Chemotion
           rescue StandardError => e
             error!(e, 400)
           end
-          return present splitted_cell_line_sample, with: Entities::CellLineSampleEntity
+          return present splitted_cell_line_sample,
+                         with: Entities::CellLineSampleEntity,
+                         policy: ElementPolicy.new(current_user, splitted_cell_line_sample)
         end
       end
 

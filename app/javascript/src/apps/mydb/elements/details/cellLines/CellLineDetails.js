@@ -16,6 +16,7 @@ import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import GeneralProperties from 'src/apps/mydb/elements/details/cellLines/propertiesTab/GeneralProperties';
 import AnalysesContainer from 'src/apps/mydb/elements/details/cellLines/analysesTab/AnalysesContainer';
 import DetailsTabLiteratures from 'src/apps/mydb/elements/details/literature/DetailsTabLiteratures';
+import CopyElementModal from 'src/components/common/CopyElementModal';
 
 class CellLineDetails extends React.Component {
   // eslint-disable-next-line react/static-property-placement
@@ -86,6 +87,7 @@ class CellLineDetails extends React.Component {
           />
         </div>
         <div className="d-flex gap-1">
+          <CopyElementModal element={cellLineItem} />
           {this.renderSaveButton(true)}
           {this.renderSaveButton()}
           {this.renderCloseHeaderButton()}

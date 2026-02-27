@@ -400,17 +400,6 @@ export default class ReactionDetails extends Component {
   reactionHeader(reaction) {
     const titleTooltip = formatTimeStampsOfElement(reaction || {});
 
-    const { currentCollection } = UIStore.getState();
-    const defCol = currentCollection && currentCollection.is_shared === false
-      && currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
-
-    const copyBtn = (reaction.can_copy === true && !reaction.isNew) && (
-      <CopyElementModal
-        element={reaction}
-        defCol={defCol}
-      />
-    );
-
     const colLabel = !reaction.isNew && (
       <ElementCollectionLabels element={reaction} key={reaction.id} placement="right" />
     );
@@ -490,7 +479,7 @@ export default class ReactionDetails extends Component {
                   </OverlayTrigger>
                 </>
               )}
-            {copyBtn}
+            <CopyElementModal element={reaction} />
             <ConfirmClose el={reaction} />
           </ButtonToolbar>
         </div>
@@ -1093,6 +1082,7 @@ export default class ReactionDetails extends Component {
             onSelect={this.handleSelect}
             id="reaction-detail-tab"
             unmountOnExit
+            className="has-config-overlay"
           >
             {tabContents}
           </Tabs>

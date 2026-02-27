@@ -3,20 +3,18 @@ import { observer } from 'mobx-react';
 
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
-import SidebarButton from 'src/apps/mydb/layout/sidebar/SidebarButton';
+import NotificationButton from 'src/apps/mydb/mainNavigation/topbar/NotificationButton';
 
-function SampleTaskNavigationElement({ isCollapsed }) {
+function SampleTaskNavigationElement() {
   const sampleTasksStore = useContext(StoreContext).sampleTasks;
   useEffect(() => sampleTasksStore.load(), []);
 
   return (
-    <SidebarButton
+    <NotificationButton
       label="Weighing Tasks"
       icon="fa-image"
       onClick={sampleTasksStore.toggleSampleTaskInbox}
       badgeCount={sampleTasksStore.openSampleTaskCount}
-      showLabel={false}
-      isCollapsed={isCollapsed}
     />
   );
 }
