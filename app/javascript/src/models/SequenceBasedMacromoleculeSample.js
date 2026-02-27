@@ -1004,7 +1004,13 @@ export default class SequenceBasedMacromoleculeSample extends Element {
 
   validateAndSetPurity(value) {
     // Validate purity value and show warning if invalid
-    if (value != null && (value <= 0 || value > 1)) {
+    // Allow null, undefined, and empty string (no value entered yet)
+    if (value == null || value === '') {
+      return value;
+    }
+    
+    const numericValue = Number(value);
+    if (Number.isFinite(numericValue) && (numericValue <= 0 || numericValue > 1)) {
       NotificationActions.add({
         message: 'Purity value should be > 0 and <=1',
         level: 'error'
