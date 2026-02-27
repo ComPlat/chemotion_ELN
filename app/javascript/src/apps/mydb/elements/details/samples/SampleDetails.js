@@ -563,7 +563,9 @@ export default class SampleDetails extends React.Component {
     const sampleLayout = currentCollection?.tabs_segment?.sample;
 
     // If the collection already tracks the inventory tab, nothing to do
-    if (sampleLayout && Object.prototype.hasOwnProperty.call(sampleLayout, 'inventory')) return;
+    if (sampleLayout && Object.prototype.hasOwnProperty.call(sampleLayout, 'inventory') && sampleLayout?.inventory > 0) {
+      return;
+    } 
 
     // Resolve the effective layout: collection -> user profile -> fallback
     const userProfile = UserStore.getState().profile;
