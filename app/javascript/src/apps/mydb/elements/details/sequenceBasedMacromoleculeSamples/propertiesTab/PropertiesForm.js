@@ -374,7 +374,7 @@ const PropertiesForm = ({ readonly }) => {
                   </Col>
                   <Col>
                     <NumeralInputWithUnitsCompo
-                      value={!isNaN(sbmmSample.purity) ? sbmmSample.purity : null}
+                      value={sbmmSample.purity}
                       unit="n"
                       metricPrefix="n"
                       metricPrefixes={['n']}
