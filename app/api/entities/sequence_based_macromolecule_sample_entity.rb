@@ -12,6 +12,8 @@ module Entities
     expose! :function_or_application
     expose! :concentration_value
     expose! :concentration_unit
+    expose! :concentration_rt_value
+    expose! :concentration_rt_unit
     expose! :molarity_value
     expose! :molarity_unit
     expose! :activity_per_volume_value
@@ -26,6 +28,8 @@ module Entities
     expose! :amount_as_used_mass_unit
     expose! :activity_value
     expose! :activity_unit
+    expose! :equivalent
+    expose! :weight_percentage
     expose! :type
     expose! :changed
     expose! :errors

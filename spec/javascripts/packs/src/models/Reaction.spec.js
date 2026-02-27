@@ -3,6 +3,7 @@ import expect from 'expect';
 import { beforeEach, describe, it } from 'mocha';
 import SampleFactory from 'factories/SampleFactory';
 import Reaction from 'src/models/Reaction';
+import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';
 
 function randFloat(min, max, precision) {
   return Number.parseFloat((Math.random() * (max - min) + min).toFixed(precision));
@@ -199,6 +200,40 @@ describe('Reaction', () => {
       const result = reaction.calculateCombinedReactionVolume();
       expect(result).toBe(null);
     });
+
+    it('includes SBMM reactant volume in combined volume', async() => {
+      const solvent = await SampleFactory.build('reactionConcentrations.water_100g');
+      const startingMaterial = await SampleFactory.build('reactionConcentrations.water_100g');
+      const reactant = await SampleFactory.build('reactionConcentrations.water_100g');
+
+      solvent.amount_value = 0.1;
+      solvent.amount_unit = 'l';
+      startingMaterial.amount_value = 0.05;
+      startingMaterial.amount_unit = 'l';
+      reactant.amount_value = 0.03;
+      reactant.amount_unit = 'l';
+
+      const sbmmReactant = new SequenceBasedMacromoleculeSample({
+        volume_as_used_value: 0.02,
+        volume_as_used_unit: 'L',
+        amount_as_used_mass_value: 0,
+        amount_as_used_mass_unit: 'g',
+        amount_as_used_mol_value: 0,
+        amount_as_used_mol_unit: 'mol',
+        concentration_value: 0,
+        concentration_unit: 'g/L',
+        sequence_based_macromolecule: {},
+      });
+
+      reaction.solvents = [solvent];
+      reaction.starting_materials = [startingMaterial];
+      reaction.reactants = [reactant];
+      reaction.reactant_sbmm_samples = [sbmmReactant];
+      reaction.products = [];
+
+      const result = reaction.calculateCombinedReactionVolume();
+      expect(result).toBeCloseTo(0.2, 5);
+    });
   });
 
   describe('Reaction.updateAllConcentrations()', () => {
@@ -226,6 +261,31 @@ describe('Reaction', () => {
       expect(material1Called).toBe(true);
       expect(material2Called).toBe(true);
     });
+
+    it('updates concentration for SBMM reactants', () => {
+      const sbmmReactant = new SequenceBasedMacromoleculeSample({
+        volume_as_used_value: 0.02,
+        volume_as_used_unit: 'L',
+        amount_as_used_mass_value: 0,
+        amount_as_used_mass_unit: 'g',
+        amount_as_used_mol_value: 0.02,
+        amount_as_used_mol_unit: 'mol',
+        concentration_value: 0,
+        concentration_unit: 'g/L',
+        concentration_rt_unit: 'mol/L',
+        sequence_based_macromolecule: {},
+      });
+
+      reaction.starting_materials = [];
+      reaction.reactants = [];
+      reaction.products = [];
+      reaction.reactant_sbmm_samples = [sbmmReactant];
+      reaction.use_reaction_volume = true;
+      reaction.volume = 0.5;
+
+      reaction.updateAllConcentrations();
+
+      expect(reaction.reactant_sbmm_samples[0].concentration_rt_value).toBeCloseTo(0.04, 8);
+    });
   });
 });
-

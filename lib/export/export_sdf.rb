@@ -4,6 +4,13 @@ require 'export_table'
 
 module Export
   class ExportSdf < ExportTable
+    EMPTY_MOLFILE = <<~MOLFILE.freeze
+      noname
+
+        0  0  0  0  0  0  0  0  0  0999 V2000
+      M  END
+    MOLFILE
+
     EXCLUDED_COLUMNS = [
       'image', 'description', 'r description', 'molfile'
     ].freeze
@@ -57,8 +64,10 @@ module Export
     end
 
     def filter_with_permission_and_detail_level(sample)
+      molfile = sdf_molfile_for(sample)
+
       if sample['shared_sync'] == 'f' || sample['shared_sync'] == false
-        data = validate_molfile(sample['molfile'])
+        data = validate_molfile(molfile)
         return nil unless data.presence
 
         if sample['molfile_version'] =~ /^(V2000).*T9/
@@ -71,7 +80,7 @@ module Export
         # return no data if molfile not allowed
         return nil if sample['dl_s'].zero?
 
-        data = validate_molfile(sample['molfile'])
+        data = validate_molfile(molfile)
         return nil unless data.presence
 
         data = data.rstrip
@@ -85,6 +94,13 @@ module Export
 
       end
       data.concat("\$\$\$\$\n")
+    end
+
+    def sdf_molfile_for(sample)
+      return sample['molfile'] if sample['molfile'].present?
+      return EMPTY_MOLFILE if sample['source_type'] == 'sbmm'
+
+      nil
     end
 
     def extract_reference_values(raw_value)
