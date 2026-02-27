@@ -11,7 +11,8 @@ module Chemotion
       namespace :users do
         desc 'Find all users'
         get do
-          present User.order(type: :desc, id: :asc), with: Entities::UserEntity, root: 'users'
+          users = User.includes(:profile).order(type: :desc, id: :asc)
+          present users, with: Entities::UserEntity, root: 'users'
         end
 
         desc 'Find top (5) matched user by name and by type'
