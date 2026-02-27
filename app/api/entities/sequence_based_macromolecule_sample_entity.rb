@@ -33,6 +33,7 @@ module Entities
     expose! :type
     expose! :changed
     expose! :errors
+    expose! :inventory_sample
 
     expose! :heterologous_expression, if: ->(_object, _options) { !uniprot_protein? }
     expose! :organism, if: ->(_object, _options) { !uniprot_protein? }

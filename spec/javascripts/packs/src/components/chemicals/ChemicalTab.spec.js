@@ -32,6 +32,7 @@ describe('ChemicalTab basic rendering', () => {
         ChemicalTab,
         {
           sample,
+          type: 'sample',
           saveInventory: false,
           setSaveInventory: sinon.spy(),
           handleUpdateSample: sinon.spy(),
@@ -75,6 +76,7 @@ describe('ChemicalTab component', () => {
       ChemicalTab,
       {
         sample,
+        type: 'sample',
         saveInventory: false,
         editChemical: sinon.spy(),
         setSaveInventory: sinon.spy(),
@@ -387,6 +389,7 @@ describe('Manual SDS attachment functionality', () => {
         ChemicalTab,
         {
           sample: testSample,
+          type: 'sample',
           saveInventory: false,
           setSaveInventory: sinon.spy(),
           handleUpdateSample: sinon.spy(),
