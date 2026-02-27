@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 class SumFormula < Hash
-  ELEMENT_REGEXP = /([A-Z][a-z]*)/.freeze
+  ELEMENT_REGEXP = /\A[A-Z][a-z]*\z/.freeze
+  NUMBER_REGEXP = /\d+(?:\.\d+)?/.freeze
 
   def initialize(formula = '')
     super()
@@ -98,43 +99,29 @@ class SumFormula < Hash
     sum
   end
 
-  private
-
-  # Parse the input argument and return a new instance of SumFormula
-  # @param input [String, Hash, SumFormula] the input argument
-  # @return [SumFormula] the parsed SumFormula instance
-  def parse_arg(input)
-    klass = self.class
-    case input
-    when String
-      klass.new(input)
-    when Hash
-      input.select { |_key| key ~ ELEMENT_REGEXP }
-           .each_with_object(klass.new) { |(key, value), formula| formula[key] = value.to_i }
-    when klass
-      input
-    else
-      raise ArgumentError, "Invalid argument type: #{input.class}"
-    end
-  end
-
   # Parse the formula string and return a hash of elements and their counts
   # @return [Hash] a hash with element symbols as keys and their counts as values
   # @note This method handles nested groups and multipliers
-  #   An Element is matched to the pattern /([A-Z][a-z]*)(\d*)/
+  #   An element token is matched as /([A-Z][a-z]*)(\d+(?:\.\d+)?)?/
   #   Group nesting is defined by parentheses followed by an optional multiplier
   #   Other characters are ignored and the index is incremented
   SPLIT_TOP_LEVEL = lambda do |formula|
     parts = []
     level = 0
     start = 0
+
     formula.chars.each_with_index do |char, idx|
       case char
       when '(', '['
         level += 1
       when ')', ']'
         level -= 1
-      when '.', '·'
+      when '.'
+        next if level.positive? || decimal_dot?(formula, idx)
+
+        parts << formula[start...idx]
+        start = idx + 1
+      when '·'
         if level.zero?
           parts << formula[start...idx]
           start = idx + 1
@@ -159,12 +146,8 @@ class SumFormula < Hash
         i += 1
       when ')', ']'
         i += 1
-        num = ''
-        while i < part.length && part[i] =~ /\d/
-          num += part[i]
-          i += 1
-        end
-        current[:multiplier] = num.empty? ? 1 : num.to_i
+        num, i = extract_number(part, i)
+        current[:multiplier] = num.nil? ? 1 : num
         child = current
         current = stack.pop
         child[:elements].each do |el, count|
@@ -177,21 +160,13 @@ class SumFormula < Hash
           el += part[i]
           i += 1
         end
-        num = ''
-        while i < part.length && part[i] =~ /\d/
-          num += part[i]
-          i += 1
-        end
-        count = num.empty? ? 1 : num.to_i
+        num, i = extract_number(part, i)
+        count = num.nil? ? 1 : num
         current[:elements][el] += count
       when /\d/
-        num = ''
-        while i < part.length && part[i] =~ /\d/
-          num += part[i]
-          i += 1
-        end
+        num, i = extract_number(part, i)
         sub_counts = PARSE_PART.call(part[i..])
-        multiplier = num.to_i
+        multiplier = num || 1
         sub_counts.each { |sub_el, sub_count| current[:elements][sub_el] += sub_count * multiplier }
         break
       when '+', '−', '-'
@@ -205,6 +180,8 @@ class SumFormula < Hash
   end
   # rubocop:enable Metrics/BlockLength, Lint/DuplicateBranch
 
+  private
+
   def parse_formula
     formula = @formula
     total_counts = Hash.new(0)
@@ -215,4 +192,112 @@ class SumFormula < Hash
 
     total_counts
   end
+
+  # Parse the input argument and return a new instance of SumFormula
+  # @param input [String, Hash, SumFormula] the input argument
+  # @return [SumFormula] the parsed SumFormula instance
+  def parse_arg(input)
+    klass = self.class
+    case input
+    when String
+      klass.new(input)
+    when Hash
+      input.select { |key, _value| key.to_s =~ ELEMENT_REGEXP }
+           .each_with_object(klass.new) do |(key, value), formula|
+             formula[key.to_s] = klass.send(:parse_numeric_value, value)
+           end
+    when klass
+      input
+    else
+      raise ArgumentError, "Invalid argument type: #{input.class}"
+    end
+  end
+
+  # True when "." is part of a decimal number, not a top-level separator.
+  def self.decimal_dot?(formula, idx)
+    idx.positive? &&
+      idx < formula.length - 1 &&
+      formula[idx - 1].match?(/\d/) &&
+      formula[idx + 1].match?(/\d/) &&
+      !hydrate_dot?(formula, idx)
+  end
+
+  # Heuristic: treat "." as hydrate separator when the right side starts with
+  # a coefficient and then looks like a formula fragment (e.g., "5H2O", "2(OH)3").
+  def self.hydrate_dot?(formula, idx)
+    # If the left side of this top-level segment is a single element with an
+    # integer count (e.g., "C1"), prefer decimal interpretation for "C1.5..."
+    # over hydrate splitting.
+    left_segment_start = previous_top_level_separator_index(formula, idx - 1)
+    left_segment = formula[left_segment_start...idx]
+    return false if left_segment.match?(/\A[A-Z][a-z]*\d+\z/)
+
+    segment_end = next_top_level_separator_index(formula, idx + 1) || formula.length
+    right_segment = formula[(idx + 1)...segment_end]
+    digit_end = right_segment.index(/\D/)
+    return false if digit_end.nil? || digit_end.zero?
+
+    right_formula = right_segment[digit_end..]
+    right_formula.match?(/[()\[\]]/) || right_formula.scan(/[A-Z][a-z]*/).uniq.length > 1
+  end
+
+  # Find the previous top-level dot separator before `from_idx`, ignoring nested groups.
+  # Returns the start index of the current top-level segment.
+  def self.previous_top_level_separator_index(formula, from_idx)
+    level = 0
+    idx = from_idx
+
+    while idx >= 0
+      case formula[idx]
+      when ')', ']'
+        level += 1
+      when '(', '['
+        level -= 1
+      when '.', '·'
+        return idx + 1 if level.zero?
+      end
+      idx -= 1
+    end
+    0
+  end
+
+  # Find the next top-level dot separator from `from_idx`, ignoring nested groups.
+  def self.next_top_level_separator_index(formula, from_idx)
+    level = 0
+    idx = from_idx
+
+    while idx < formula.length
+      case formula[idx]
+      when '(', '['
+        level += 1
+      when ')', ']'
+        level -= 1
+      when '.', '·'
+        return idx if level.zero?
+      end
+      idx += 1
+    end
+    nil
+  end
+
+  def self.extract_number(text, start_idx)
+    match = NUMBER_REGEXP.match(text, start_idx)
+    return [nil, start_idx] unless match&.begin(0) == start_idx
+
+    [parse_numeric_token(match[0]), match.end(0)]
+  end
+
+  def self.parse_numeric_value(value)
+    return value if value.is_a?(Numeric)
+
+    parse_numeric_token(value.to_s)
+  end
+
+  def self.parse_numeric_token(token)
+    token.include?('.') ? token.to_f : token.to_i
+  end
+
+  private_class_method :decimal_dot?, :hydrate_dot?, :previous_top_level_separator_index,
+                       :next_top_level_separator_index, :extract_number,
+                       :parse_numeric_value, :parse_numeric_token
 end
