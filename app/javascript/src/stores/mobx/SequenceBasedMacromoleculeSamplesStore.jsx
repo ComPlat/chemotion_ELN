@@ -97,8 +97,17 @@ export const SequenceBasedMacromoleculeSamplesStore = types
     conflict_sbmms: types.optional(types.array(types.frozen({})), []),
     show_search_options: types.optional(types.frozen({}), {}),
     list_grouped_by: types.optional(types.string, 'sbmm'),
+    // For ChemicalTab integration
+    saveInventoryAction: types.optional(types.boolean, false),
+    isChemicalEdited: types.optional(types.boolean, false),
   })
   .actions(self => ({
+    setSaveInventoryAction(value) {
+      self.saveInventoryAction = value;
+    },
+    editChemical(value) {
+      self.isChemicalEdited = value;
+    },
     searchForSequenceBasedMacromolecule: flow(function* searchForSequenceBasedMacromolecule(search_term, search_field) {
       let result = yield SequenceBasedMacromoleculesFetcher.searchForSequenceBasedMacromolecule(search_term, search_field);
       if (result?.search_results) {
