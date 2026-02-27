@@ -16,6 +16,8 @@ import { confirmOptions } from 'src/components/staticDropdownOptions/options';
 import AnalysisEditor from 'src/components/container/AnalysisEditor';
 import HyperLinksSection from 'src/components/common/HyperLinksSection';
 
+let includeDescriptionIdCounter = 0;
+
 export default class ContainerComponent extends Component {
   constructor(props) {
     super(props);
@@ -27,6 +29,8 @@ export default class ContainerComponent extends Component {
       textTemplate: textTemplate && textTemplate.toJS(),
       includeDescription: !!(container?.description)
     };
+    includeDescriptionIdCounter += 1;
+    this.includeDescriptionIdSuffix = includeDescriptionIdCounter;
 
     this.handleInputChange = this.handleInputChange.bind(this);
     this.updateTextTemplates = this.updateTextTemplates.bind(this);
@@ -153,7 +157,10 @@ export default class ContainerComponent extends Component {
 
   render() {
     const { container, textTemplate, includeDescription } = this.state;
-    const { readOnly, disabled, onChange, rootContainer, index, element } = this.props;
+    const {
+      readOnly, disabled, onChange, rootContainer, index, element
+    } = this.props;
+    const includeDescriptionId = `includeDescription-${index ?? this.includeDescriptionIdSuffix}`;
 
     let quill = (<span />);
     if (readOnly || disabled) {
@@ -200,13 +207,12 @@ export default class ContainerComponent extends Component {
           <Col sm={3} className="mb-2">
             <Form.Check
               type="checkbox"
-              id="includeDescription"
+              id={includeDescriptionId}
               label={<span className="text-nowrap">Include description</span>}
               checked={includeDescription}
               disabled={readOnly || disabled}
               onChange={this.handleIncludeDescriptionChange}
               className="my-2 d-flex align-items-center gap-2"
-              inputClassName="mt-0"
             />
           </Col>
         </Row>
