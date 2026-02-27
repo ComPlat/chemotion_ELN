@@ -204,7 +204,7 @@ class SumFormula < Hash
     when Hash
       input.select { |key, _value| key.to_s =~ ELEMENT_REGEXP }
            .each_with_object(klass.new) do |(key, value), formula|
-             formula[key.to_s] = klass.parse_numeric_value(value)
+             formula[key.to_s] = klass.send(:parse_numeric_value, value)
            end
     when klass
       input
