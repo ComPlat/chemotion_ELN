@@ -59,6 +59,19 @@ describe 'Reporter::Docx::DetailReaction instance' do
   let!(:s2) { create(:sample, name: 'Sample 2') }
   let!(:s3) { create(:sample, name: 'Sample 3') }
   let!(:s4) { create(:sample, name: 'Solvent') }
+  let!(:sbmm) { create(:uniprot_sbmm) }
+  let!(:sbmm_sample) do
+    create(
+      :sequence_based_macromolecule_sample,
+      user: user,
+      sequence_based_macromolecule: sbmm,
+      amount_as_used_mass_value: 1.5,
+      amount_as_used_mass_unit: 'g',
+      amount_as_used_mol_value: 0.002,
+      amount_as_used_mol_unit: 'mol',
+      equivalent: 0.5,
+    )
+  end
   let!(:correct_content) { 'analysis contents (true for report)' }
   let!(:non_breaking_space) { ' ' }
   let!(:inverse) { '{"attributes":{"color":"black","script":"super"},"insert":"-1"}' }
@@ -78,6 +91,11 @@ describe 'Reporter::Docx::DetailReaction instance' do
     )
     ReactionsSolventSample.create!(
       reaction: r1, sample: s4, equivalent: equiv
+    )
+    ReactionsReactantSbmmSample.create!(
+      reaction: r1,
+      sequence_based_macromolecule_sample: sbmm_sample,
+      show_label: true,
     )
     r1.reload
     con = r1.products[0].container.children[0].children[0]
@@ -169,8 +187,14 @@ describe 'Reporter::Docx::DetailReaction instance' do
     end
 
     it 'has correct content' do
+      sbmm_reactant = content[:reactants].find { |r| r[:short_label] == sbmm_sample.short_label }
+
       expect(content[:title]).to eq(tit)
       expect(content[:solvents]).to eq("#{s4.preferred_label} (55.5ml)")
+      expect(content[:reactants].pluck(:short_label)).to include(sbmm_sample.short_label)
+      expect(sbmm_reactant[:mass_unit]).to eq('g')
+      expect(sbmm_reactant[:vol_unit]).to eq('l')
+      expect(sbmm_reactant[:mmol_unit]).to eq('mol')
       expect(content[:description]).to eq(
         Sablon.content(:html, Reporter::Delta.new(des).getHTML)
       )
@@ -279,7 +303,7 @@ describe 'Reporter::Docx::DetailReaction instance' do
           { 'insert' => '{S1' },
           { 'insert' => '} ' },
           { 'attributes' => { 'bold' => false, 'font-size' => 12 }, 'insert' => s4.preferred_label },
-          { 'insert' => ' (56 mL); ' },
+          { 'insert' => ' (56 ml); ' },
           { 'insert' => 'Yield ' },
           { 'insert' => '{P1|' },
           { 'attributes' => { 'bold' => 'true', 'font-size' => 12 }, 'insert' => serial },

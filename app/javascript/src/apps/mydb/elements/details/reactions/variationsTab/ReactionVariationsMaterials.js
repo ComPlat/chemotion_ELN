@@ -8,6 +8,21 @@ import {
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import { calculateTON, calculateFeedstockMoles } from 'src/utilities/UnitsConversion';
 
+function getVariationsSbmmID(id) {
+  return `sbmm:${id}`;
+}
+
+function normalizeSbmmForVariations(material) {
+  return {
+    ...material,
+    id: getVariationsSbmmID(material.id),
+    molecule_molecular_weight:
+      material.molecule_molecular_weight
+      ?? material.sequence_based_macromolecule?.molecular_weight
+      ?? null,
+  };
+}
+
 function getMolFromGram(gram, material) {
   if (material.aux.loading) {
     return (material.aux.loading * gram) / 1e4;
@@ -91,7 +106,15 @@ function computePercentYieldGas(materialAmount, feedstockMaterial, vesselVolume)
 function getReactionMaterials(reaction) {
   const reactionCopy = cloneDeep(reaction);
   return Object.entries(materialTypes).reduce((materialsByType, [materialType, { reactionAttributeName }]) => {
-    materialsByType[materialType] = reactionCopy[reactionAttributeName].filter((material) => !material.isNew);
+    const materials = reactionCopy[reactionAttributeName] || [];
+    if (materialType === 'reactants') {
+      materialsByType[materialType] = [
+        ...materials,
+        ...(reactionCopy.reactant_sbmm_samples || []).map(normalizeSbmmForVariations)
+      ].filter((material) => !material.isNew);
+    } else {
+      materialsByType[materialType] = materials.filter((material) => !material.isNew);
+    }
     return materialsByType;
   }, {});
 }

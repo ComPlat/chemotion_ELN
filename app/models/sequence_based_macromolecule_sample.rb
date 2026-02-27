@@ -16,9 +16,12 @@
 #  amount_as_used_mol_unit         :string           default("mol"), not null
 #  amount_as_used_mol_value        :float
 #  ancestry                        :string           default("/"), not null
+#  concentration_rt_unit           :string           default("mol/L"), not null
+#  concentration_rt_value          :float
 #  concentration_unit              :string           default("ng/L"), not null
 #  concentration_value             :float
 #  deleted_at                      :datetime
+#  equivalent                      :float
 #  external_label                  :string
 #  formulation                     :string           default("")
 #  function_or_application         :string
@@ -38,6 +41,7 @@
 #  tissue                          :string           default("")
 #  volume_as_used_unit             :string           default("L"), not null
 #  volume_as_used_value            :float
+#  weight_percentage               :float
 #  created_at                      :datetime         not null
 #  updated_at                      :datetime         not null
 #  sequence_based_macromolecule_id :bigint
@@ -77,6 +81,8 @@ class SequenceBasedMacromoleculeSample < ApplicationRecord
   has_many :collections, through: :collections_sequence_based_macromolecule_samples
   has_many :comments, as: :commentable, inverse_of: :commentable, dependent: :destroy
   has_many :sync_collections_users, through: :collections
+  has_many :reactions_reactant_sbmm_samples, dependent: :destroy
+  has_many :reactions, through: :reactions_reactant_sbmm_samples
 
   belongs_to :sequence_based_macromolecule
   belongs_to :user
@@ -221,5 +227,13 @@ class SequenceBasedMacromoleculeSample < ApplicationRecord
     sub_sbmm_sample.container = Container.create_root_container
     sub_sbmm_sample.save!
     sub_sbmm_sample
+  end
+
+  def label_text
+    name.presence || short_label.presence || 'SBMM'
+  end
+
+  def svg_text_path
+    "svg_text/#{label_text}"
   end
 end

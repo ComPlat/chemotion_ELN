@@ -579,7 +579,7 @@ export default class ReactionDetails extends Component {
     this.isUpdatingGraphic = true;
     const materialsSvgPaths = {
       starting_materials: reaction.starting_materials.map((material) => material.svgPath),
-      reactants: reaction.reactants.map((material) => material.svgPath),
+      reactants: reaction.reactantsWithSbmm.map((material) => material.svgPath),
       products: reaction.products.map((material) => [material.svgPath, material.equivalent])
     };
 

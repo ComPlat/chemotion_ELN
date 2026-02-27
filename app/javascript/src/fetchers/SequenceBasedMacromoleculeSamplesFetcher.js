@@ -128,6 +128,9 @@ export default class SequenceBasedMacromoleculeSamplesFetcher {
         } else if (json.sequence_based_macromolecule_sample) {
           const updatedSequenceBasedMacromoleculeSample =
             new SequenceBasedMacromoleculeSample(json.sequence_based_macromolecule_sample);
+          if (sequenceBasedMacromoleculeSample.belongTo) {
+            updatedSequenceBasedMacromoleculeSample.belongTo = sequenceBasedMacromoleculeSample.belongTo;
+          }
           updatedSequenceBasedMacromoleculeSample.updated = true;
           updatedSequenceBasedMacromoleculeSample.updateChecksum();
           return updatedSequenceBasedMacromoleculeSample;

@@ -1110,7 +1110,21 @@ class ElementStore {
 
   // -- Sequence Based Macromolecules --
 
+  // eslint-disable-next-line class-methods-use-this
+  buildReactionReference(reaction) {
+    return { type: 'reaction', id: reaction.id };
+  }
+
   handlefetchSequenceBasedMacromoleculeSampleById(result) {
+    const current = this.state.currentElement;
+    // If SBMM was opened from an active reaction tab, preserve that origin context.
+    if (current instanceof Reaction) {
+      const isReactionSbmm = (current.reactant_sbmm_samples || []).some((s) => s.id === result.id);
+      if (isReactionSbmm) {
+        // Keep only reaction identity to avoid sharing/freezing side effects from full reaction objects.
+        result.belongTo = this.buildReactionReference(current);
+      }
+    }
     this.changeCurrentElement(result);
   }
 
@@ -1615,6 +1629,50 @@ class ElementStore {
     this.UpdateMolecule(updatedSample);
   }
 
+  findReactionForUpdatedSbmm(updatedElement) {
+    // When an SBMM is opened from a reaction, we store only { type, id } in belongTo.
+    // Prefer that direct reaction id to target the correct open reaction tab.
+    const reactionId = updatedElement?.belongTo?.type === 'reaction'
+      ? updatedElement.belongTo.id
+      : null;
+    const hasReactionRef = reactionId !== null && reactionId !== undefined;
+    const selecteds = this.state.selecteds || [];
+
+    return selecteds.find(
+      (el) => el instanceof Reaction
+        && (
+          // Primary match: reaction id from belongTo context.
+          (hasReactionRef && el.id === reactionId)
+          // Fallback match: if belongTo is missing, find the open reaction that currently contains this SBMM id.
+          || (el.reactant_sbmm_samples || []).some((sample) => sample.id === updatedElement.id)
+        )
+    );
+  }
+
+  updateReactionWithSbmm(reaction, updatedElement) {
+    // Keep a dedicated mutable SBMM instance inside reaction materials;
+    // this avoids sharing/frozen-reference issues with the detail element instance.
+    const updatedReactionSbmm = new SequenceBasedMacromoleculeSample(updatedElement);
+    // Persist only lightweight reaction identity as parent context.
+    updatedReactionSbmm.belongTo = this.buildReactionReference(reaction);
+    updatedElement.belongTo = this.buildReactionReference(reaction);
+    // Replace only the edited SBMM entry in the reaction material list.
+    reaction.reactant_sbmm_samples = (reaction.reactant_sbmm_samples || []).map((sample) => (
+      sample.id === updatedElement.id ? updatedReactionSbmm : sample
+    ));
+    // Mark reaction dirty and refresh SVG so updated SBMM label appears immediately.
+    reaction.changed = true;
+    ElementActions.handleSvgReactionChange(reaction);
+  }
+
+  handleUpdatedSbmmSample(updatedElement) {
+    // Resolve the owning open reaction tab and sync this SBMM back into it.
+    const reaction = this.findReactionForUpdatedSbmm(updatedElement);
+    if (reaction) {
+      this.updateReactionWithSbmm(reaction, updatedElement);
+    }
+  }
+
   handleUpdateElement(updatedElement) {
     switch (updatedElement?.type) {
       case 'sample':
@@ -1659,6 +1717,7 @@ class ElementStore {
         this.handleRefreshElements('device_description');
         break;
       case 'sequence_based_macromolecule_sample':
+        this.handleUpdatedSbmmSample(updatedElement);
         this.changeCurrentElement(updatedElement);
         this.handleRefreshElements('sequence_based_macromolecule_sample');
         break;
@@ -1736,12 +1795,22 @@ class ElementStore {
     const { selecteds } = this.state;
     // Preserve openedFromCollectionId from the existing element
     const existingEl = selecteds[index];
+    let nextEl = updateEl;
     if (existingEl?.openedFromCollectionId && updateEl) {
-      updateEl.openedFromCollectionId = existingEl.openedFromCollectionId;
+      try {
+        // Fast path: keep the same object when it is mutable.
+        updateEl.openedFromCollectionId = existingEl.openedFromCollectionId;
+      } catch (_error) {
+        // Some SBMM instances can be readonly/frozen; clone and annotate instead.
+        nextEl = typeof updateEl.clone === 'function'
+          ? updateEl.clone()
+          : Object.assign(Object.create(Object.getPrototypeOf(updateEl)), updateEl);
+        nextEl.openedFromCollectionId = existingEl.openedFromCollectionId;
+      }
     }
     return [
       ...selecteds.slice(0, index),
-      updateEl,
+      nextEl,
       ...selecteds.slice(index + 1)
     ];
   }
@@ -1776,12 +1845,29 @@ class ElementStore {
     return true;
   }
 
-  deleteCurrentElement(deleteEl) {
-    const newSelecteds = this.deleteElement(deleteEl);
+  preferredCloseKey(deleteEl, newSelecteds) {
+    // Special close behavior for SBMM opened from a reaction:
+    // return to the originating reaction tab instead of generic "left tab".
+    // This avoids wrong tab selection when multiple reactions are open.
+    if (deleteEl?.type === 'sequence_based_macromolecule_sample' && deleteEl?.belongTo?.type === 'reaction') {
+      const targetReactionId = deleteEl.belongTo.id;
+      const reactionIndex = this.elementIndex(newSelecteds, { type: 'reaction', id: targetReactionId });
+      if (reactionIndex >= 0) {
+        return reactionIndex;
+      }
+    }
+
+    // Default behavior for all other cases: activate the tab to the left.
     let left = this.state.activeKey - 1;
     if (left < 0) left = 0;
+    return left;
+  }
+
+  deleteCurrentElement(deleteEl) {
+    const newSelecteds = this.deleteElement(deleteEl);
+    const nextKey = this.preferredCloseKey(deleteEl, newSelecteds);
     this.setState({ selecteds: newSelecteds });
-    this.resetCurrentElement(left, newSelecteds);
+    this.resetCurrentElement(nextKey, newSelecteds);
   }
 
   isDeletable(deleteEl) {
