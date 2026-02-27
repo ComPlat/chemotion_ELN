@@ -15,7 +15,13 @@ export default class ImageModal extends Component {
       fetchSrc: '',
       showModal: false,
       isPdf: false,
-      thumbnail: ''
+      pageIndex: 1,
+      numOfPages: 0,
+      thumbnail: '',
+      thumbnails: [],
+      currentPreferredThumbnail: Number(props.preferredThumbnail) || null,
+      thumbPage: 0,
+      isLoading: false,
     };
 
     this.fetchImage = this.fetchImage.bind(this);
@@ -35,15 +41,26 @@ export default class ImageModal extends Component {
     }
   }
 
+  // keyboard handler extracted from inline render for thumbnails
+  handleThumbKeyDown = (e, thumb) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      this.handleSetPreferred(thumb);
+    }
+  };
+
   handleModalClose(e) {
     stopEvent(e);
     this.setState({ showModal: false });
   }
 
   handleModalShow(e) {
-    stopEvent(e);
-    this.fetchImage();
-    this.setState({ showModal: true });
+    if (!this.props.disableClick) {
+      stopEvent(e);
+      this.fetchImage();
+      this.fetchThumbnails();
+      this.setState({ showModal: true });
+    }
   }
 
   handleImageError() {
@@ -65,20 +82,64 @@ export default class ImageModal extends Component {
     }
   }
 
+  buildImageSrcArrayFromThumbnails(thumbnails) {
+    if (thumbnails && thumbnails.length > 0) {
+      return thumbnails.map(({ id, thumbnail }) => ({
+        id,
+        thumbnail: thumbnail ? `data:image/png;base64,${thumbnail}` : null
+      }));
+    }
+    return [];
+  }
+
+  fetchThumbnails() {
+    const { ChildrenAttachmentsIds } = this.props;
+    if (ChildrenAttachmentsIds && ChildrenAttachmentsIds.length > 0) {
+      AttachmentFetcher.fetchThumbnails(ChildrenAttachmentsIds)
+        .then((result) => {
+          this.setState({ thumbnails: this.buildImageSrcArrayFromThumbnails(result.thumbnails) });
+        })
+        .catch((err) => {
+          console.error('Failed to fetch thumbnails', err);
+          this.setState({ thumbnails: [] });
+        });
+    }
+  }
+
   async fetchImageThumbnail() {
-    const { attachment } = this.props;
+    const { attachment, preferredThumbnail } = this.props;
     const fileType = attachment?.file?.type;
     const isImage = fileType?.startsWith('image/');
     const defaultNoAttachment = '/images/wild_card/no_attachment.svg';
     const defaultUnavailable = '/images/wild_card/not_available.svg';
-    if (attachment?.thumb) {
-      const src = await fetchImageSrcByAttachmentId(attachment.id);
-      this.setState({ thumbnail: src });
-    } else if (attachment?.is_new || attachment?.is_pending) {
-      const previewSrc = isImage ? attachment?.file?.preview : defaultUnavailable;
-      this.setState({ thumbnail: previewSrc });
-    } else {
-      this.setState({ thumbnail: defaultNoAttachment });
+    // render image of preferred attachment thumbnail if available
+    if (preferredThumbnail) {
+      this.setState({ isLoading: true });
+      try {
+        const src = await fetchImageSrcByAttachmentId(preferredThumbnail);
+        this.setState({ thumbnail: src, fetchSrc: src, isLoading: false });
+        return;
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('Failed to fetch preferred thumbnail', err);
+        this.setState({ isLoading: false });
+      }
+    }
+
+    try {
+      if (attachment?.thumb) {
+        const src = await fetchImageSrcByAttachmentId(attachment.id);
+        this.setState({ thumbnail: src });
+      } else if (attachment?.is_new || attachment?.is_pending) {
+        const previewSrc = isImage ? attachment?.file?.preview : defaultUnavailable;
+        this.setState({ thumbnail: previewSrc });
+      } else {
+        this.setState({ thumbnail: defaultNoAttachment });
+      }
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to fetch image thumbnail', err);
+      this.setState({ thumbnail: defaultUnavailable, isLoading: false });
     }
   }
 
@@ -93,13 +154,145 @@ export default class ImageModal extends Component {
     );
   }
 
+  handleSetPreferred = (thumb) => {
+    const { onChangePreferredThumbnail } = this.props;
+    this.setState({ currentPreferredThumbnail: thumb.id, thumbnail: thumb.thumbnail });
+    if (thumb.id !== this.state.currentPreferredThumbnail) {
+      onChangePreferredThumbnail(thumb.id);
+    }
+  };
+
+  handleThumbPage = (delta) => {
+    const { thumbPage, thumbnails } = this.state;
+    const thumbnailsPerPage = 6;
+    const totalThumbPages = Math.ceil((thumbnails?.length || 0) / thumbnailsPerPage);
+    const newPage = thumbPage + delta;
+    if (newPage >= 0 && newPage < totalThumbPages) {
+      this.setState({ thumbPage: newPage });
+    }
+  };
+
+  renderAttachmentsThumbnails = () => {
+    const { thumbnails: allThumbnails, currentPreferredThumbnail, thumbPage } = this.state;
+    const thumbnailsPerPage = 6;
+    const totalThumbPages = Math.ceil((allThumbnails?.length || 0) / thumbnailsPerPage);
+    const currentThumbs = (allThumbnails || [])
+      .slice(
+        thumbPage * thumbnailsPerPage,
+        (thumbPage + 1) * thumbnailsPerPage
+      );
+    return (
+      <div className="text-center mt-2">
+        {allThumbnails && allThumbnails.length > 0 && (
+          <div className="d-flex align-items-center justify-content-center my-3">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => this.handleThumbPage(-1)}
+              disabled={thumbPage === 0}
+              className="me-2"
+            >
+              <i className="fa fa-chevron-left" />
+            </Button>
+            <div className="d-flex flex-row flex-nowrap overflow-auto gap-2">
+              {currentThumbs.map((thumb) => (
+                <div
+                  key={thumb.id}
+                  className={`d-flex flex-column align-items-center justify-content-center p-1 rounded
+                      ${thumb.id === currentPreferredThumbnail
+                    ? 'border-2 border-info bg-info-subtle' : 'border border-secondary bg-white'}`}
+                  style={{
+                    cursor: 'pointer',
+                    minWidth: 64,
+                    minHeight: 90,
+                    maxWidth: 70,
+                    height: 80,
+                  }}
+                  title={
+                    thumb.id === currentPreferredThumbnail
+                      ? 'Current Preferred Thumbnail' : 'Set as Preferred display thumbnail for this analysis item'
+                  }
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => this.handleSetPreferred(thumb)}
+                  onKeyDown={(e) => {
+                    this.handleThumbKeyDown(e, thumb);
+                  }}
+                >
+                  <img
+                    src={thumb.thumbnail || '/images/wild_card/no_attachment.svg'}
+                    alt={`Thumbnail ${thumb.id}`}
+                    className="img-thumbnail"
+                    style={{
+                      width: 60, height: 60, objectFit: 'cover', display: 'block'
+                    }}
+                  />
+                  {thumb.id === currentPreferredThumbnail && (
+                    <div className="text-primary small mt-1">Preferred</div>
+                  )}
+                </div>
+              ))}
+            </div>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => this.handleThumbPage(1)}
+              disabled={thumbPage >= totalThumbPages - 1}
+              className="ms-2"
+            >
+              <i className="fa fa-chevron-right" />
+            </Button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   render() {
     const {
-      popObject, attachment, placement = 'right'
+      showPop,
+      popObject,
+      imageStyle,
+      attachment,
+      placement = 'right'
     } = this.props;
     const {
-      isPdf, fetchSrc, thumbnail
+      pageIndex,
+      numOfPages,
+      isPdf,
+      fetchSrc,
+      thumbnail,
     } = this.state;
+
+    if (showPop) {
+      return (
+        <div className="preview-table">
+          {this.state.isLoading ? (
+            <div
+              className="d-flex justify-content-center align-items-center"
+              style={{
+                width: imageStyle?.width || 120,
+                height: imageStyle?.height || 120,
+                minWidth: 60,
+                minHeight: 60,
+                ...imageStyle
+              }}
+            >
+              <div className="spinner-border text-primary" role="status">
+                <span className="visually-hidden">Loading...</span>
+              </div>
+            </div>
+          ) : (
+            <img
+              src={thumbnail}
+              alt={attachment?.filename}
+              style={{ cursor: 'default', ...imageStyle }}
+              onError={this.handleImageError}
+            />
+          )}
+        </div>
+      );
+    }
 
     return (
       <div>
@@ -110,15 +303,34 @@ export default class ImageModal extends Component {
           role="button"
           tabIndex={0}
         >
-          <OverlayTrigger
-            placement={placement}
-            overlay={this.showPopObject()}
-          >
-            <img
-              src={thumbnail}
-              alt={attachment?.filename}
-            />
-          </OverlayTrigger>
+          {this.state.isLoading ? (
+            <div
+              className="d-flex justify-content-center align-items-center"
+              style={{
+                width: imageStyle?.width || 120,
+                height: imageStyle?.height || 120,
+                minWidth: 60,
+                minHeight: 60,
+                ...imageStyle
+              }}
+            >
+              <div className="spinner-border text-primary" role="status">
+                <span className="visually-hidden">Loading...</span>
+              </div>
+            </div>
+          ) : (
+            <OverlayTrigger
+              placement={placement}
+              overlay={this.showPopObject()}
+            >
+              <img
+                src={thumbnail}
+                alt={attachment?.filename}
+                style={{ ...imageStyle }}
+                role="button"
+              />
+            </OverlayTrigger>
+          )}
         </div>
         <Modal
           centered
@@ -147,18 +359,35 @@ export default class ImageModal extends Component {
                 </p>
               </iframe>
             ) : (
-              <img
-                src={fetchSrc}
-                style={{
-                  display: 'block',
-                  maxHeight: '80vh',
-                  maxWidth: '100%',
-                  margin: '0 auto'
-                }}
-                alt={attachment?.filename}
-                onError={this.handleImageError}
-              />
+              <div className="d-flex justify-content-center align-items-center mt-2">
+                {this.state.isLoading ? (
+                  <div
+                    className="d-flex justify-content-center align-items-center"
+                    style={{
+                      width: imageStyle?.width || 300,
+                      height: imageStyle?.height || 300,
+                      minWidth: 120,
+                      minHeight: 120,
+                      ...imageStyle
+                    }}
+                  >
+                    <div className="spinner-border text-primary" role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
+                  </div>
+                ) : (
+                  <img
+                    src={this.state.fetchSrc}
+                    style={{ maxHeight: '100%', maxWidth: '100%', display: 'block' }}
+                    alt={attachment?.filename}
+                    onError={this.handleImageError}
+                  />
+                )}
+              </div>
             )}
+            <div>
+              {this.renderAttachmentsThumbnails()}
+            </div>
           </Modal.Body>
           <Modal.Footer>
             <Button variant="primary" onClick={this.handleModalClose} className="pull-left">
@@ -188,4 +417,17 @@ ImageModal.propTypes = {
     title: PropTypes.string,
   }).isRequired,
   placement: PropTypes.string,
+  disableClick: PropTypes.bool,
+  imageStyle: PropTypes.object,
+  preferredThumbnail: PropTypes.string,
+  ChildrenAttachmentsIds: PropTypes.arrayOf(PropTypes.number),
+  onChangePreferredThumbnail: PropTypes.func,
+};
+
+ImageModal.defaultProps = {
+  imageStyle: {},
+  disableClick: false,
+  preferredThumbnail: null,
+  ChildrenAttachmentsIds: [],
+  onChangePreferredThumbnail: () => { },
 };

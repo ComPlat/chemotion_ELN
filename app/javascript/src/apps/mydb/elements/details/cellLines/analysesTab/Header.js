@@ -106,8 +106,21 @@ export default class Header extends React.Component {
 
   // eslint-disable-next-line class-methods-use-this
   renderImagePreview = () => {
-    const { container } = this.props;
+    const { container, handleChange } = this.props;
     const attachment = getAttachmentFromContainer(container);
+    const preferredThumbnail = container?.extended_metadata?.preferred_thumbnail || null;
+    const attachmentsIds = container?.children?.flatMap((child) => (child.attachments
+      || []).map((att) => Number(att.id))) || [];
+    const onChangePreferredThumbnail = (currentPreferredThumbnail) => {
+      if (currentPreferredThumbnail !== preferredThumbnail) {
+        // Handle the change of preferred thumbnail
+        container.extended_metadata = {
+          ...container.extended_metadata,
+          preferred_thumbnail: currentPreferredThumbnail,
+        };
+        handleChange(container);
+      }
+    };
 
     return (
       <ImageModal
@@ -115,6 +128,11 @@ export default class Header extends React.Component {
         popObject={{
           title: container.name,
         }}
+        preferredThumbnail={preferredThumbnail}
+        ChildrenAttachmentsIds={attachmentsIds}
+        onChangePreferredThumbnail={(currentPreferredThumbnail) => onChangePreferredThumbnail(
+          currentPreferredThumbnail
+        )}
       />
     );
   }

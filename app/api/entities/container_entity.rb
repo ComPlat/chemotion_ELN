@@ -32,6 +32,7 @@ module Entities
         metadata[:kind] = object.extended_metadata['kind']
         metadata[:index] = object.extended_metadata['index']
         metadata[:instrument] = object.extended_metadata['instrument']
+        metadata[:preferred_thumbnail] = object.extended_metadata['preferred_thumbnail']
         if object.extended_metadata['content'].present?
           metadata[:content] =
             JSON.parse(object.extended_metadata['content'])
