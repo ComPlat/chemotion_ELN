@@ -1526,7 +1526,9 @@ export default class Sample extends Element {
   }
 
   get polymer_formula() {
-    return this.contains_residues && this.residues[0].custom_info.formula.toString();
+    if (!this.contains_residues) return '';
+    const formula = this.residues[0].custom_info.formula;
+    return formula ? formula.toString() : '';
   }
 
   get concat_formula() {
@@ -1534,7 +1536,7 @@ export default class Sample extends Element {
       return '';
     }
 
-    if (this.contains_residues) {
+    if (this.contains_residues && this.polymer_formula) {
       return this.molecule_formula + this.polymer_formula;
     }
 
@@ -1544,7 +1546,8 @@ export default class Sample extends Element {
   get polymer_type() {
     if (this.contains_residues) {
       const info = this.residues[0].custom_info;
-      return (info.polymer_type ? info.polymer_type : info.surface_type).toString();
+      const value = info.polymer_type || info.surface_type;
+      return value ? value.toString() : false;
     }
     return false;
   }
@@ -1990,7 +1993,7 @@ export default class Sample extends Element {
     const tmpComponents = [...(this.components || [])];
     const isNew = !tmpComponents.some((component) => component.molecule.iupac_name === newComponent.molecule.iupac_name
                                 || component.molecule.inchikey === newComponent.molecule.inchikey
-                                || component.molecule_cano_smiles.split('.').includes(newComponent.molecule_cano_smiles)); // check if this component is already part of a merged component (e.g. ionic compound)
+                                || (component.molecule_cano_smiles || '').split('.').includes(newComponent.molecule_cano_smiles)); // check if this component is already part of a merged component (e.g. ionic compound)
 
     if (!newComponent.material_group) {
       newComponent.material_group = 'liquid';

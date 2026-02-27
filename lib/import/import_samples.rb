@@ -47,7 +47,8 @@ module Import
         return error_required_fields(e.message)
       end
       # a flag is set to determine which sheet (sample_component, sample, or chemical_sample) is under processing
-      xlsx.default_sheet = xlsx.sheets.include?('sample_components') ? xlsx.sheets.first : xlsx.default_sheet
+      # Reset to main data sheet after parsing components (so process_all_rows reads sample rows)
+      xlsx.default_sheet = xlsx.sheets.include?('sample_components') ? @main_sheet_name : xlsx.default_sheet
 
       begin
         process_all_rows
@@ -67,13 +68,14 @@ module Import
 
     # Select the primary sheet (sample or sample_chemicals)
     def set_main_sheet
-      @sheet = if xlsx.sheets.include?('sample')
-                 xlsx.sheet('sample')
-               elsif xlsx.sheets.include?('sample_chemicals')
-                 xlsx.sheet('sample_chemicals')
-               else
-                 xlsx.sheet(xlsx.sheets.first)
-               end
+      @main_sheet_name = if xlsx.sheets.include?('sample')
+                            'sample'
+                          elsif xlsx.sheets.include?('sample_chemicals')
+                            'sample_chemicals'
+                          else
+                            xlsx.sheets.first
+                          end
+      @sheet = xlsx.sheet(@main_sheet_name)
     end
 
     # Load the component sheet and headers when present
@@ -189,22 +191,33 @@ module Import
 
     def extract_molfile_and_molecule(row, index)
       if molfile?(row)
-        get_data_from_molfile(row)
+        molecule, molfile_from_babel = get_data_from_molfile(row)
+        if molecule.nil? && smiles?(row)
+          molecule, = get_data_from_smiles(row, index)
+          return [molecule, molfile_from_babel] if molecule # use molfile from get_data_from_molfile (unescaped TextNode)
+        end
+        return [molecule, molfile_from_babel]
       elsif smiles?(row)
         get_data_from_smiles(row, index)
+      else
+        nil
       end
     end
 
     def process_row(data)
-      row = [header, xlsx.row(data)].transpose.to_h
-      is_decoupled = row['decoupled']
+      row_values = xlsx.row(data)
+      # Align row length to header: pad with nil if shorter, truncate if longer
+      row_values = row_values.fill(nil, row_values.length...header.length) if row_values.length < header.length
+      row_values = row_values.first(header.length) if row_values.length > header.length
+      row = [header, row_values].transpose.to_h
+      is_decoupled = row_value_case_insensitive(row, 'decoupled')
       return unless structure?(row) || is_decoupled
 
       rows << row.each_pair { |k, v| v && row[k] = v.to_s }
     end
 
     def process_row_data(row, index)
-      is_decoupled = row['decoupled']
+      is_decoupled = row_value_case_insensitive(row, 'decoupled')
       return Molecule.find_or_create_dummy if is_decoupled && !structure?(row)
 
       molecule, molfile = extract_molfile_and_molecule(row, index)
@@ -253,16 +266,15 @@ module Import
 
     def molfile?(row)
       check = determine_sheet(xlsx)
+      return false unless check['molfile'].present?
 
-      check['molfile'].present? && row['molfile'].present?
+      row_value_case_insensitive(row, 'molfile').to_s.present?
     end
 
     def smiles?(row)
       keys = ['smiles', 'cano_smiles', 'canonical_smiles', 'canonical smiles']
-
       header_present = keys.any? { |key| determine_sheet(xlsx)[key] }
-      cell_present = keys.any? { |key| row[key].to_s.present? }
-
+      cell_present = keys.any? { |key| row_value_case_insensitive(row, key).to_s.present? }
       header_present && cell_present
     end
 
@@ -284,13 +296,21 @@ module Import
     end
 
     def get_data_from_molfile(row)
-      molfile = row['molfile'].to_s.strip
-      molfile = "\n#{molfile}" unless molfile.start_with?("\n")
-      molfile = "#{molfile}\n" unless molfile.end_with?("\n")
-      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
+      raw_molfile = row_value_case_insensitive(row, 'molfile').to_s.strip
+      raw_molfile = unescape_textnode_octal_in_molfile(raw_molfile)
+      # When molfile has polymer/text-node tags, do not pass it to Open Babel or change it at all.
+      # Use SMILES for molecule creation and keep this molfile unchanged for the sample.
+      if raw_molfile.include?('> <PolymersList>') || raw_molfile.include?('> <TextNode>')
+        return [nil, raw_molfile]
+      end
+
+      sanitized = sanitize_molfile_for_import(raw_molfile)
+      sanitized = "\n#{sanitized}" unless sanitized.start_with?("\n")
+      sanitized = "#{sanitized}\n" unless sanitized.end_with?("\n")
+      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(sanitized)
       inchikey = babel_info[:inchikey]
-      molecule = Molecule.find_or_create_by_molfile(molfile, babel_info) if inchikey.presence
-      [molecule, molfile]
+      molecule = Molecule.find_or_create_by_molfile(sanitized, babel_info) if inchikey.presence
+      [molecule, raw_molfile]
     end
 
     def assign_molecule_data(molfile_coord, babel_info, inchikey, _row, _index)
@@ -309,17 +329,83 @@ module Import
 
     def get_data_from_smiles(row, index)
       check = determine_sheet(xlsx)
+      smiles = (check['smiles'] && row_value_case_insensitive(row, 'smiles').presence) ||
+               (check['cano_smiles'] && row_value_case_insensitive(row, 'cano_smiles').presence) ||
+               (check['canonical_smiles'] && row_value_case_insensitive(row, 'canonical_smiles').presence) ||
+               (check['canonical smiles'] && row_value_case_insensitive(row, 'canonical smiles').presence)
+      smiles = sanitize_smiles_for_ob(smiles)
+      if smiles.blank?
+        return
+      end
 
-      smiles = (check['smiles'] && row['smiles'].presence) ||
-               (check['cano_smiles'] && row['cano_smiles'].presence) ||
-               (check['canonical_smiles'] && row['canonical_smiles'].presence) ||
-               (check['canonical smiles'] && row['canonical smiles'].presence)
+      inchikey = Chemotion::OpenBabelService.smiles_to_inchikey(smiles)
+      ori_molf = Chemotion::OpenBabelService.smiles_to_molfile(smiles)
+      if ori_molf.blank?
+        return
+      end
 
-      inchikey = Chemotion::OpenBabelService.smiles_to_inchikey smiles
-      ori_molf = Chemotion::OpenBabelService.smiles_to_molfile smiles
+      # Normalize molfile (leading/trailing newlines) so InChI/inchikey generation succeeds
+      ori_molf = "\n#{ori_molf}" unless ori_molf.start_with?("\n")
+      ori_molf = "#{ori_molf}\n" unless ori_molf.end_with?("\n")
+
       babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(ori_molf)
       molfile_coord = Chemotion::OpenBabelService.add_molfile_coordinate(ori_molf)
+      # Use inchikey from molfile-derived babel_info when smiles_to_inchikey returned blank
+      inchikey = babel_info[:inchikey] if inchikey.blank? && babel_info.present?
+      if inchikey.blank?
+        return
+      end
       assign_molecule_data(molfile_coord, babel_info, inchikey, row, index)
+    end
+
+    # Remove control chars and BOM so Open Babel accepts the SMILES string (e.g. from Excel).
+    def sanitize_smiles_for_ob(smiles)
+      return nil if smiles.nil?
+      s = smiles.to_s.encode('UTF-8', invalid: :replace, undef: :replace)
+      s = s.gsub(/\p{C}+/, ' ').strip
+      s.presence
+    end
+
+    # Keep only the CTAB (up to and including M  END). Strip SDF blocks (e.g. > <PolymersList>,
+    # > <TextNode>) that can cause molecule_info_from_molfile to return blank inchikey.
+    def sanitize_molfile_for_import(molfile)
+      return molfile if molfile.blank?
+
+      molfile = molfile.to_s.force_encoding('UTF-8')
+      lines = molfile.lines
+      m_end_index = lines.index { |line| line.match?(/\s*M\s+END\s*/i) }
+      if m_end_index
+        lines[0..m_end_index].join.rstrip
+      elsif (idx = molfile.index(/\sM\s+END\s/i))
+        # Single-line molfile: cut at M  END (include it)
+        end_marker = molfile.match(/\sM\s+END\s/i)[0]
+        molfile[0..(idx + end_marker.length - 1)].rstrip
+      else
+        molfile
+      end
+    end
+
+    # Restore Unicode in TextNode labels: Excel/export can turn e.g. ∀ into literal \342\210\200
+    # (octal UTF-8 byte sequences). Convert them back to the actual UTF-8 characters.
+    def unescape_textnode_octal_in_molfile(molfile)
+      return molfile if molfile.blank?
+
+      molfile = molfile.to_s
+      return molfile unless molfile.include?('> <TextNode>')
+
+      # Match the entire TextNode block (works for both multi-line and single-line molfiles)
+      molfile.gsub(/> <TextNode>\s*([\s\S]*?)\s*> <\/TextNode>/i) do
+        content = Regexp.last_match(1)
+
+        # Collect consecutive octal escapes (e.g. \342\210\200) into one UTF-8 character.
+        # Integer#chr only works for 0-127 in ASCII; pack('C*') handles bytes > 127 correctly.
+        converted = content.gsub(/(?:\\[0-7]{1,3})+/) do |seq|
+          bytes = seq.scan(/\\([0-7]{1,3})/).flatten.map { |o| o.to_i(8) }
+          bytes.pack('C*').force_encoding('UTF-8')
+        end
+
+        "> <TextNode>\n#{converted}\n> </TextNode>"
+      end
     end
 
     def included_fields
@@ -555,16 +641,37 @@ module Import
       sample.save!
       save_chemical(chemical, sample) if @import_type == 'chemical'
       handle_sample_components(row, sample) if sample_has_components?(row)
+      create_polymer_residue_if_needed(sample, row)
       processed.push(sample)
     end
 
+    def create_polymer_residue_if_needed(sample, row)
+      return if sample.residues.any?
+
+      residue_type = row_value_case_insensitive(row, 'residue_type').to_s.strip
+      has_polymer_molfile = sample.molfile.to_s.include?('> <PolymersList>')
+      return unless residue_type == 'polymer' || has_polymer_molfile
+
+      custom_info = {}
+      polymer_type = row_value_case_insensitive(row, 'polymer_type').to_s.strip
+      loading      = row_value_case_insensitive(row, 'loading').to_s.strip
+      loading_type = row_value_case_insensitive(row, 'loading_type').to_s.strip
+
+      custom_info['polymer_type'] = polymer_type if polymer_type.present?
+      custom_info['loading']      = loading      if loading.present?
+      custom_info['loading_type'] = loading_type if loading_type.present?
+
+      sample.residues.create!(residue_type: 'polymer', custom_info: custom_info)
+    rescue StandardError => _e
+    end
+
     def sample_has_components?(sample_row)
-      sample_uuid = sample_row['sample uuid']
+      sample_uuid = row_value_case_insensitive(sample_row, 'sample uuid')
       sample_uuid.present? && @sample_with_components.include?(sample_uuid)
     end
 
     def handle_sample_components(sample_row, sample)
-      sample_uuid = sample_row['sample uuid']
+      sample_uuid = row_value_case_insensitive(sample_row, 'sample uuid')
       sample_components_data = @sample_components_data.with_indifferent_access[sample_uuid]
       return if sample_components_data.blank?
 
@@ -595,6 +702,17 @@ module Import
 
     def determine_sheet(xlsx)
       xlsx.default_sheet == 'sample_components' ? @mandatory_component_check : mandatory_check
+    end
+
+    # Look up a key in a row hash with case-insensitive key match (Excel may vary header casing)
+    def row_value_case_insensitive(row, key)
+      return nil if row.nil? || key.to_s.strip.blank?
+
+      key_lower = key.to_s.strip.downcase
+      row.each do |k, v|
+        return v if k.to_s.strip.downcase == key_lower
+      end
+      nil
     end
 
     def create_sample_and_assign_molecule(current_user_id, molfile, molecule)

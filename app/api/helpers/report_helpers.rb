@@ -640,7 +640,7 @@ module ReportHelpers
         real_amount_value: ['s.real_amount_value', '"real amount"', 0],
         real_amount_unit: ['s.real_amount_unit', '"real unit"', 0],
         description: ['s.description', '"description"', 0],
-        molfile: ["encode(s.molfile, 'escape')", 'molfile', 1],
+        molfile: ["convert_from(s.molfile, 'UTF8')", 'molfile', 1],
         purity: ['s.purity', '"purity"', 0],
         solvent: ['s.solvent', '"solvent"', 0],
         # impurities: ['s.impurities', nil, 0],
@@ -673,6 +673,8 @@ module ReportHelpers
         length: ['s."length"', '"length"', 0],
         storage_condition: ['s."storage_condition"', '"storage condition"', 0],
         state: ['s."state"', '"state"', 0],
+        residue_type: ["res.residue_type", '"residue_type"', 1],
+        polymer_type: ["res.custom_info->>'polymer_type'", '"polymer_type"', 1],
       },
       sample_id: {
         external_label: ['s.external_label', '"sample external label"', 0],

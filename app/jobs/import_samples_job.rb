@@ -16,7 +16,7 @@ class ImportSamplesJob < ApplicationJob
       autoDismiss: 5,
     )
   rescue StandardError => e
-    Delayed::Worker.logger.error e
+    end
   end
 
   def perform(params)
@@ -47,7 +47,13 @@ class ImportSamplesJob < ApplicationJob
         @result[:message] = sdf_import.message
       end
     rescue StandardError => e
-      Delayed::Worker.logger.error e
+      # Ensure user sees the parsing error
+      @result = {
+        status: 'invalid',
+        message: "Error while parsing the file: #{e.message}",
+        error: e.message,
+        data: [],
+      }
     end
   end
 
