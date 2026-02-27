@@ -66,9 +66,11 @@ const SearchModal = () => {
     });
   }
 
-  let minimizedClass = searchStore.searchModalMinimized ? ' minimized' : '';
-  let searchTypeTextClass = searchStore.searchModalSelectedForm.value === 'advanced' ? 'active' : 'text-base';
-  let searchTypePublicationClass = searchStore.searchModalSelectedForm.value === 'publication' ? 'active' : 'text-base';
+  const minimizedClass = searchStore.searchModalMinimized ? ' minimized' : '';
+  const modalClass = minimizedClass ? `draggable-modal-dialog-xxxl${minimizedClass}` : 'modal-dialog-fullscreen';
+  const modalStyle = minimizedClass ? { transform: `translate(${deltaPosition.x}px, ${deltaPosition.y}px)` } : '';
+  const searchTypeTextClass = searchStore.searchModalSelectedForm.value === 'advanced' ? 'active' : 'text-base';
+  const searchTypePublicationClass = searchStore.searchModalSelectedForm.value === 'publication' ? 'active' : 'text-base';
   let searchTypeStructureClass = searchStore.searchModalSelectedForm.value === 'ketcher' ? 'active' : 'text-base';
 
   return (
