@@ -1,5 +1,7 @@
 /* eslint-disable react/display-name */
-import React, { useState, useEffect, useMemo } from 'react';
+import React, {
+  useState, useEffect, useMemo, useRef, useCallback
+} from 'react';
 import Select from 'react-select';
 import { AgGridReact } from 'ag-grid-react';
 import {
@@ -9,7 +11,8 @@ import PropTypes from 'prop-types';
 import { cloneDeep, isEqual } from 'lodash';
 import {
   getVariationsRowName, convertUnit, getUserFacingUnit, getCurrentEntry,
-  getUserFacingEntryName, convertGenericUnit, PLACEHOLDER_CELL_TEXT, parseGenericEntryName
+  getUserFacingEntryName, convertGenericUnit, PLACEHOLDER_CELL_TEXT, parseGenericEntryName, sanitizeGroupEntry,
+  groupNameAssembler
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   getReferenceMaterial, getCatalystMaterial, getFeedstockMaterial, getMolFromGram, getGramFromMol,
@@ -289,6 +292,98 @@ function MaterialFormatter({ value: cellData, colDef }) {
 
   return convertValueToDisplayUnit(cellData[currentEntry].value, cellData[currentEntry].unit, displayUnit);
 }
+
+function GroupCellEditor({
+  value, onValueChange, stopEditing, onKeyDown
+}) {
+  const [currentValue, setCurrentValue] = useState(() => {
+    const group = value?.group ?? 1;
+    const subgroup = value?.subgroup ?? 1;
+    return `${group}.${subgroup}`;
+  });
+
+  const inputRef = useRef(null);
+
+  const focusInput = useCallback(() => {
+    requestAnimationFrame(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+        inputRef.current.select();
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    // Focus on mount
+    focusInput();
+  }, [focusInput]);
+
+  const commitValue = () => {
+    const parts = currentValue.split('.');
+
+    const groupStr = parts[0] || '';
+    const subGroupStr = parts[1] || '';
+
+    let group = parseInt(groupStr, 10);
+    let subgroup = parseInt(subGroupStr, 10);
+
+    if (Number.isNaN(group) || group <= 0) {
+      group = 1;
+    }
+
+    if (Number.isNaN(subgroup) || subgroup <= 0) {
+      subgroup = 1;
+    }
+
+    onValueChange({ group, subgroup });
+    stopEditing();
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      commitValue();
+    } else if (e.key === 'Escape') {
+      stopEditing();
+    }
+    if (onKeyDown) onKeyDown(e);
+  };
+
+  return (
+    <input
+      className="reaction-variation-input"
+      ref={inputRef}
+      type="text"
+      value={currentValue}
+      onChange={(e) => setCurrentValue(sanitizeGroupEntry(e.target.value))}
+      onBlurCapture={commitValue}
+      onKeyDownCapture={handleKeyDown}
+    />
+  );
+}
+
+GroupCellEditor.propTypes = {
+  value: PropTypes.shape({
+    group: PropTypes.number,
+    subgroup: PropTypes.number,
+  }).isRequired,
+  onValueChange: PropTypes.func.isRequired,
+  onKeyDown: PropTypes.func.isRequired,
+  stopEditing: PropTypes.bool.isRequired,
+};
+
+function GroupCellRenderer({ value: cellData }) {
+  return groupNameAssembler(cellData);
+}
+
+GroupCellRenderer.propTypes = {
+  value: PropTypes.shape({
+    cellData: PropTypes.shape({
+      group: PropTypes.number,
+      subgroup: PropTypes.number
+    })
+  }).isRequired,
+};
 
 function MaterialRenderer({ value: cellData, colDef }) {
   const { entryDefs } = colDef;
@@ -802,15 +897,10 @@ function ToolHeader() {
   );
 }
 
-function MenuHeader({
-  column, context, setSort, names, gasType = 'off'
-}) {
-  const { setColumnDefinitions } = context;
+function SortControl({ column, setSort }) {
   const [ascendingSort, setAscendingSort] = useState('inactive');
   const [descendingSort, setDescendingSort] = useState('inactive');
   const [noSort, setNoSort] = useState('inactive');
-  const [name, setName] = useState(names[0]);
-  const { field, entryDefs } = column.colDef;
 
   const onSortChanged = () => {
     setAscendingSort(column.isSortAscending() ? 'sort_active' : 'inactive');
@@ -825,24 +915,15 @@ function MenuHeader({
   useEffect(() => {
     column.addEventListener('sortChanged', onSortChanged);
     onSortChanged();
+
+    return () => column.removeEventListener('sortChanged', onSortChanged);
   }, []);
 
   const onSortRequested = (order, event) => {
     setSort(order, event.shiftKey);
   };
 
-  const onEntryDefChange = (updatedEntryDefs) => {
-    setColumnDefinitions(
-      {
-        type: 'update_entry_defs',
-        field,
-        entryDefs: updatedEntryDefs,
-        gasType
-      }
-    );
-  };
-
-  const sortMenu = (
+  return (
     <div>
       <div
         onClick={(event) => onSortRequested('asc', event)}
@@ -867,6 +948,25 @@ function MenuHeader({
       </div>
     </div>
   );
+}
+
+function MenuHeader({
+  column, context, setSort, names, gasType = 'off'
+}) {
+  const { setColumnDefinitions } = context;
+  const [name, setName] = useState(names[0]);
+  const { field, entryDefs } = column.colDef;
+
+  const onEntryDefChange = (updatedEntryDefs) => {
+    setColumnDefinitions(
+      {
+        type: 'update_entry_defs',
+        field,
+        entryDefs: updatedEntryDefs,
+        gasType
+      }
+    );
+  };
 
   return (
     <div className="d-grid gap-1">
@@ -876,7 +976,7 @@ function MenuHeader({
       >
         {`${name} ${gasType !== 'off' ? `(${gasType})` : ''}`}
       </span>
-      {sortMenu}
+      <SortControl column={column} setSort={setSort} />
       <MaterialEntrySelection entryDefs={entryDefs} onChange={onEntryDefChange} />
     </div>
   );
@@ -892,6 +992,24 @@ MenuHeader.propTypes = {
 
 MenuHeader.defaultProps = {
   gasType: 'off',
+};
+
+function GroupHeader({ column, setSort }) {
+  return (
+    <div className="d-grid gap-1">
+      <span
+        className="ag-header-cell-text"
+      >
+        Group
+      </span>
+      <SortControl column={column} setSort={setSort} />
+    </div>
+  );
+}
+
+GroupHeader.propTypes = {
+  column: PropTypes.instanceOf(AgGridReact.column).isRequired,
+  setSort: PropTypes.func.isRequired,
 };
 
 function ColumnSelection({ selectedColumns, availableColumns, onApply }) {
@@ -1016,4 +1134,7 @@ export {
   SegmentRenderer,
   SegmentSelectEditor,
   RemoveVariationsModal,
+  GroupCellEditor,
+  GroupCellRenderer,
+  GroupHeader,
 };

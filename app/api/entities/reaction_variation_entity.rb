@@ -21,7 +21,7 @@ module Entities
     end
 
     def metadata
-      object[:metadata]&.slice(:notes, :analyses) || {}
+      object[:metadata]&.slice(:notes, :analyses, :group) || {}
     end
 
     def segments

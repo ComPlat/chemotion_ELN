@@ -12,6 +12,7 @@ import {
 import {
   PropertyFormatter, PropertyParser,
   MaterialFormatter, MaterialParser,
+  GroupCellRenderer, GroupCellEditor, GroupHeader,
   SegmentFormatter, SegmentParser, SegmentRenderer, SegmentSelectEditor,
   EquivalentParser, GasParser, FeedstockParser,
   NoteCellRenderer, NoteCellEditor, MenuHeader, RowToolsCellRenderer, ToolHeader
@@ -318,6 +319,8 @@ function getMetaData(metadataType) {
       return [];
     case 'notes':
       return '';
+    case 'group':
+      return { group: 1, subgroup: 1 };
     default:
       return null;
   }
@@ -386,12 +389,11 @@ function copyVariationsRow(row, variations) {
   const copiedRow = cloneDeep(row);
   copiedRow.id = getSequentialId(variations);
   copiedRow.uuid = undefined; // UUID is generated server-side.
-  if (Object.hasOwn(copiedRow.metadata, 'notes')) {
-    copiedRow.metadata.notes = getMetaData('notes');
-  }
-  if (Object.hasOwn(copiedRow.metadata, 'analyses')) {
-    copiedRow.metadata.analyses = getMetaData('analyses');
-  }
+  ['notes', 'analyses', 'group'].forEach((key) => {
+    if (Object.hasOwn(copiedRow.metadata, key)) {
+      copiedRow.metadata[key] = getMetaData(key);
+    }
+  });
 
   return copiedRow;
 }
@@ -518,6 +520,10 @@ function getPropertyColumnGroupChild(propertyType, gasMode, externalEntryDefs = 
   }
 }
 
+function groupNameAssembler(cellData) {
+  return `${cellData.group}.${cellData.subgroup}`;
+}
+
 function getMetadataColumnGroupChild(metadataType) {
   switch (metadataType) {
     case 'notes':
@@ -539,6 +545,21 @@ function getMetadataColumnGroupChild(metadataType) {
         cellEditor: AnalysesCellEditor,
         cellDataType: false,
         sortable: false,
+      };
+    case 'group':
+      return {
+        headerComponent: GroupHeader,
+        field: 'metadata.group',
+        cellRenderer: GroupCellRenderer,
+        cellEditor: GroupCellEditor,
+        cellDataType: false,
+        comparator: (valueA, valueB) => {
+          // Sort groups lexicographically.
+          if (valueA.group === valueB.group) {
+            return (valueA.subgroup > valueB.subgroup) ? 1 : -1;
+          }
+          return (valueA.group > valueB.group) ? 1 : -1;
+        }
       };
     default:
       return {};
@@ -659,7 +680,6 @@ function getColumnDefinitions(selectedColumns, materials, segments, gasMode, ext
     {
       headerName: 'Metadata',
       groupId: 'metadata',
-      marryChildren: true,
       children: selectedColumns.metadata.map((entry) => getMetadataColumnGroupChild(entry))
     },
     {
@@ -805,6 +825,24 @@ async function getReactionSegments(reaction) {
   }
 }
 
+function sanitizeGroupEntry(entry) {
+  // Remove input other than digits and period.
+  const val = entry.replace(/[^0-9.]/g, '');
+
+  // Extract the group (first item) and the rest of the parts.
+  const [group, ...subParts] = val.split('.');
+  const subGroup = subParts.join('');
+
+  // Remove leading zeros from both parts.
+  const cleanGroup = group.replace(/^0+/, '');
+  const cleanSub = subGroup.replace(/^0+/, '');
+
+  // Reassemble, preserving the period if it existed in the cleaned string.
+  return val.includes('.')
+    ? `${cleanGroup}.${cleanSub}`
+    : cleanGroup;
+}
+
 export {
   massUnits,
   volumeUnits,
@@ -844,5 +882,7 @@ export {
   getReactionSegments,
   parseGenericEntryName,
   getSegmentData,
-  formatReactionSegments
+  formatReactionSegments,
+  sanitizeGroupEntry,
+  groupNameAssembler,
 };
