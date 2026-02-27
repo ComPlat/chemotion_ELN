@@ -24,6 +24,7 @@ import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 const SAMPLE_TYPE_MIXTURE = 'Mixture';
 const SAMPLE_TYPE_MICROMOLECULE = 'Micromolecule';
+export const SAMPLE_TYPE_HIERARCHICAL_MATERIAL = 'HierarchicalMaterial';
 
 const prepareRangeBound = (args = {}, field) => {
   const argsNew = args;
@@ -241,6 +242,12 @@ export default class Sample extends Element {
       components: [],
       ancestor_ids: [],
       literatures: {},
+      state: '',
+      color: '',
+      height: '',
+      width: '',
+      length: '',
+      storage_condition: '',
     });
 
     sample.short_label = Sample.buildNewShortLabel();
@@ -268,6 +275,18 @@ export default class Sample extends Element {
    */
   isMixture() {
     return this.sample_type?.toString() === SAMPLE_TYPE_MIXTURE;
+  }
+
+  /**
+   * Determines whether the sample is of type "HierarchicalMaterial".
+   *
+   * Checks the `sample_type` property against the constant
+   * `SAMPLE_TYPE_HIERARCHICAL_MATERIAL`.
+   *
+   * @returns {boolean} True if the sample type matches "HierarchicalMaterial"; otherwise false.
+   */
+  isHierarchicalMaterial() {
+    return this.sample_type?.toString() === SAMPLE_TYPE_HIERARCHICAL_MATERIAL;
   }
 
   /**
@@ -438,6 +457,12 @@ export default class Sample extends Element {
       sample_type: this.sample_type,
       sample_details: this.sample_details,
       literatures: this.literatures,
+      state: this.state,
+      color: this.color || '',
+      height: this.height || '',
+      width: this.width || '',
+      length: this.length || '',
+      storage_condition: this.storage_condition || '',
     });
 
     return serialized;
@@ -1501,7 +1526,9 @@ export default class Sample extends Element {
   }
 
   get polymer_formula() {
-    return this.contains_residues && this.residues[0].custom_info.formula.toString();
+    if (!this.contains_residues) return '';
+    const formula = this.residues[0].custom_info.formula;
+    return formula ? formula.toString() : '';
   }
 
   get concat_formula() {
@@ -1509,7 +1536,7 @@ export default class Sample extends Element {
       return '';
     }
 
-    if (this.contains_residues) {
+    if (this.contains_residues && this.polymer_formula) {
       return this.molecule_formula + this.polymer_formula;
     }
 
@@ -1519,7 +1546,8 @@ export default class Sample extends Element {
   get polymer_type() {
     if (this.contains_residues) {
       const info = this.residues[0].custom_info;
-      return (info.polymer_type ? info.polymer_type : info.surface_type).toString();
+      const value = info.polymer_type || info.surface_type;
+      return value ? value.toString() : false;
     }
     return false;
   }
@@ -1965,7 +1993,7 @@ export default class Sample extends Element {
     const tmpComponents = [...(this.components || [])];
     const isNew = !tmpComponents.some((component) => component.molecule.iupac_name === newComponent.molecule.iupac_name
                                 || component.molecule.inchikey === newComponent.molecule.inchikey
-                                || component.molecule_cano_smiles.split('.').includes(newComponent.molecule_cano_smiles)); // check if this component is already part of a merged component (e.g. ionic compound)
+                                || (component.molecule_cano_smiles || '').split('.').includes(newComponent.molecule_cano_smiles)); // check if this component is already part of a merged component (e.g. ionic compound)
 
     if (!newComponent.material_group) {
       newComponent.material_group = 'liquid';

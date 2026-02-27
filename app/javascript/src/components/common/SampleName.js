@@ -42,6 +42,7 @@ const getMoleculeName = (decoupled, sample) => {
  * @returns {string} Formatted polymer name
  */
 const getPolymerName = (polymerType, decoupled) => {
+  if (!polymerType) return '';
   if (decoupled && polymerType === 'self_defined') return '';
 
   return `${polymerType.charAt(0).toUpperCase()}${polymerType.slice(1)}`.replace('_', '-');

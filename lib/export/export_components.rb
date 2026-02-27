@@ -28,6 +28,14 @@ module Export
       # molecule_sum_formula: ['m.sum_formular', '"sum formula"', 10],
       # molecule_inchistring: ['m.inchistring', '"inchistring"', 10],
       # molecule_molecular_weight: ['m.molecular_weight', '"MW"', 0],
+
+      # hierachical material properties could be added here
+      'source' => ['comp."component_properties"->>\'source\'', '"source"', 10],
+      'molar_mass' => ['comp."component_properties"->>\'molar_mass\'', '"molar_mass"', 10],
+      'molecule_id' => ['comp."component_properties"->>\'molecule_id\'', '"molecule_id"', 10],
+      'weight_ratio_exp' => ['comp."component_properties"->>\'weight_ratio_exp\'', '"weight_ratio_exp"', 10],
+      'template_category' => ['comp."component_properties"->>\'template_category\'', '"template_category"', 10],
+
     }.freeze
 
     # An array of all supported component field names (as strings).

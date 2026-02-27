@@ -53,6 +53,15 @@ import {
 } from 'src/utilities/ketcherSurfaceChemistry/Ketcher2SurfaceChemistryUtils';
 import { findTemplateIdCategoryFromTemplates } from 'src/utilities/ketcherSurfaceChemistry/iconBaseProvider';
 
+// Use only CTAB (up to and including M  END) so we never duplicate > <PolymersList> when
+// the editor's molfile already contains a PolymersList section from a previous load.
+const ctabLinesOnly = (molfileString) => {
+  if (!molfileString || typeof molfileString !== 'string') return [];
+  const lines = molfileString.trim().split('\n');
+  const endIdx = lines.findIndex((line) => line && /^M\s+END/.test(line));
+  return endIdx >= 0 ? lines.slice(0, endIdx + 1) : lines;
+};
+
 // function when a canvas is saved using main "SAVE" button
 const arrangePolymers = async (canvasData, editor) => {
   // grab image index
@@ -65,7 +74,8 @@ const arrangePolymers = async (canvasData, editor) => {
     .filter((i) => ALIAS_PATTERNS.threeParts.test(i.alias))
     .forEach((i) => listOfAtomsWithAlias.push(i.alias));
   const processString = await templateAliasesPrepare(listOfAtomsWithAlias);
-  return [...canvasData.split('\n'), KET_TAGS.polymerIdentifier, processString];
+  const ctabLines = ctabLinesOnly(canvasData);
+  return [...ctabLines, KET_TAGS.polymerIdentifier, processString];
 };
 
 // helper function to arrange text nodes for formula
@@ -390,23 +400,7 @@ const onAddTextFromEditor = async (editor, textContent, selectedImageForTextNode
         ];
       }
 
-      // Save and update canvas - this will trigger onTemplateMove which handles positioning
-      // IMPORTANT: Store textList before saveMoveCanvas because fetchKetcherData might overwrite it
-      // if Ketcher hasn't processed the text node yet
-      const textListBeforeSave = [...textList];
-      const textNodeStructBeforeSave = { ...textNodeStruct };
-
       await saveMoveCanvas(editor, latestData, true, true, false);
-
-      // Restore textList if it was lost during fetchKetcherData
-      // This can happen if Ketcher hasn't processed the text node yet
-      if (textList.length < textListBeforeSave.length) {
-        textListSetter(textListBeforeSave);
-        textNodeStructSetter(textNodeStructBeforeSave);
-      }
-
-      // Ensure ImagesToBeUpdated is set to trigger rendering
-      // onTemplateMove already sets this, but we ensure it's set here too
       ImagesToBeUpdatedSetter(true);
     }
 
@@ -686,7 +680,7 @@ const saveMoveCanvas = async (
   recenter = false,
   moveOptions = {}
 ) => {
-  const dataCopy = data || latestData;
+  let dataCopy = data || latestData;
   if (!editor || !editor.structureDef) {
     console.error('Editor is undefined');
     return;
@@ -696,21 +690,18 @@ const saveMoveCanvas = async (
     return;
   }
 
+  // Text nodes are non-standard and never returned by getKet(). Always inject the local
+  // textList into the payload so the editor renders them visually.
+  if (textList.length > 0) {
+    dataCopy = JSON.parse(JSON.stringify(dataCopy));
+    const nonText = (dataCopy.root?.nodes || []).filter((n) => n.type !== 'text');
+    dataCopy.root.nodes = [...nonText, ...textList];
+  }
+
   if (isMoveRequired) {
     await applyCanvasDataToEditor(editor, dataCopy, recenter);
-
-    // IMPORTANT: Preserve textList from dataCopy before fetching
-    // Ketcher might not have processed the text node yet when we fetch back
-    const textNodesFromDataCopy = dataCopy?.root?.nodes?.filter((n) => n.type === 'text') || [];
-    const preservedTextList = textNodesFromDataCopy.length > 0 ? textNodesFromDataCopy : textList;
-
     if (isFetchRequired) {
       await fetchKetcherData(editor);
-
-      // Restore textList from dataCopy if it was lost during fetchKetcherData
-      if (preservedTextList.length > textList.length) {
-        textListSetter(preservedTextList);
-      }
     }
     await onTemplateMove(editor, recenter, moveOptions);
     return;
@@ -791,7 +782,20 @@ function processJsonMolecules(jsonData, verticalThreshold = 1) {
     .filter((n) => n.$ref && jsonData[n.$ref]?.type === 'molecule')
     .map((n) => n.$ref);
 
-  nodeRefs.forEach((ref, molIndex) => {
+  // Sort mol refs by their highest aliased-atom y value (descending) so visually
+  // higher molecules produce their connString earlier, giving the correct global order.
+  const sortedNodeRefs = nodeRefs.slice().sort((refA, refB) => {
+    const getMaxY = (ref) => {
+      const atoms = jsonData[ref]?.atoms || [];
+      const ys = atoms
+        .filter((a) => a.alias && a.alias.split('_').length >= 3)
+        .map((a) => a.location[1]);
+      return ys.length ? Math.max(...ys) : -Infinity;
+    };
+    return getMaxY(refB) - getMaxY(refA);
+  });
+
+  sortedNodeRefs.forEach((ref, molIndex) => {
     const mol = jsonData[ref];
     if (!mol || !mol.atoms) {
       result.push(`Mol ${molIndex + 1}: (no atoms)`);

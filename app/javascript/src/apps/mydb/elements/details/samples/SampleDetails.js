@@ -147,6 +147,14 @@ export default class SampleDetails extends React.Component {
       currentUser,
       showRedirectWarning: redirectedFromMixture || false,
       casInputValue: '',
+      ketcherSVGError: null,
+      // Heterogeneous sample props
+      state: props.sample.state || '',
+      color: props.sample.color || '',
+      height: props.sample.height || '',
+      width: props.sample.width || '',
+      length: props.sample.length || '',
+      storage_condition: props.sample.storage_condition || '',
       ketcherSVGError: null
     };
 
@@ -214,7 +222,6 @@ export default class SampleDetails extends React.Component {
 
     // Sync casInputValue when CAS changes
     const currentCas = sample.xref?.cas ?? '';
-
     this.setState({
       sample,
       smileReadonly,
@@ -320,15 +327,33 @@ export default class SampleDetails extends React.Component {
     }
   }
 
-  handleStructureEditorSave(molfile, svg, info, editorId) {
+  handleStructureEditorSave(molfile, components, textNodesFormula, svgFile = null, config = null, editor = 'ketcher') {
     const { sample } = this.state;
     sample.molfile = molfile;
-    const svgFile = svg; // SVG is passed as 4th parameter
-    const editor = editorId || 'ketcher'; // editorId is passed as 6th parameter
-    const config = info; // info might contain config data like smiles
     const smiles = (config && sample.molecule) ? config.smiles : null;
     sample.contains_residues = molfile?.indexOf(' R# ') > -1;
     sample.formulaChanged = true;
+
+    // For HierarchicalMaterial: preserve user-entered molar_mass and weight_ratio_exp
+    // when Ketcher rebuilds components from text nodes (which resets these to 0).
+    if (sample.isHierarchicalMaterial() && components?.length > 0 && sample.components?.length > 0) {
+      const existingComponents = sample.components;
+      components.forEach((newComp) => {
+        const existing = existingComponents.find((c) => {
+          const existingSource = c.source || c.component_properties?.source;
+          return existingSource && existingSource === newComp.source;
+        });
+        if (existing) {
+          const existingMolarMass = existing.molar_mass ?? existing.component_properties?.molar_mass;
+          const existingWeightRatioExp = existing.weight_ratio_exp ?? existing.component_properties?.weight_ratio_exp;
+          if (existingMolarMass) newComp.molar_mass = existingMolarMass;
+          if (existingWeightRatioExp) newComp.weight_ratio_exp = existingWeightRatioExp;
+        }
+      });
+    }
+    sample.components = components;
+
+    if (textNodesFormula?.length > 0) sample.name = textNodesFormula;
     this.setState({ loadingMolecule: true });
 
     const fetchError = (errorMessage) => {
@@ -422,8 +447,11 @@ export default class SampleDetails extends React.Component {
     } else if (sample.isNew) {
       ElementActions.createSample(sample, closeView);
     } else {
+      // TODO: upate sample params
       sample.cleanBoilingMelting();
-      ElementActions.updateSample(new Sample(sample), closeView);
+      const newSample = new Sample(sample);
+      newSample.components = sample.components;
+      ElementActions.updateSample(newSample, closeView);
     }
 
     if (sample.is_new || closeView) {
@@ -878,7 +906,6 @@ export default class SampleDetails extends React.Component {
 
   samplePropertiesTab(ind) {
     const { sample } = this.state;
-
     return (
       <Tab eventKey={ind} title="Properties" key={`Props${sample.id.toString()}`}>
         {!sample.isNew && <CommentSection section="sample_properties" element={sample} />}
