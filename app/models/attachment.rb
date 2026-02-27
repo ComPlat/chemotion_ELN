@@ -263,6 +263,30 @@ class Attachment < ApplicationRecord
     available_extensions.include?(file_extension.downcase)
   end
 
+  def resolve_unique_match
+    return [nil, nil] unless inbox_auto_enabled?
+
+    samples = InboxSearchElements.call(
+      search_string: filename,
+      current_user: recipient,
+      element: :sample,
+    )
+
+    variation = filename[/-v(\d+)(?=[.-]|$)/i, 1]
+    search_string = filename.sub(/-v\d+.*$/i, '')
+
+    reactions = InboxSearchElements.call(
+      search_string: search_string,
+      current_user: recipient,
+      element: :reaction,
+    )
+
+    return [reactions.first, variation] if samples.empty? && reactions.one?
+    return [samples.first, nil]         if reactions.empty? && samples.one?
+
+    [nil, nil]
+  end
+
   private
 
   def generate_key
@@ -312,5 +336,14 @@ class Attachment < ApplicationRecord
 
     raise "File #{File.basename(file_path)}
       cannot be uploaded. File size must be less than #{Rails.configuration.shrine_storage.maximum_size} MB"
+  end
+
+  def inbox_auto_enabled?
+    return false unless recipient
+
+    data = recipient.profile&.data
+    return true unless data
+
+    data.fetch('inbox_auto', true)
   end
 end
