@@ -64,6 +64,8 @@ export default class ElementDetailSortTab extends Component {
 
   getOpenedFromCollection() {
     const { openedFromCollectionId } = this.props;
+    const uiCollection = UIStore.getState().currentCollection;
+    if (uiCollection && uiCollection.id == openedFromCollectionId) return uiCollection;
     const collectionState = CollectionStore.getState();
     const stack = [
       ...collectionState.unsharedRoots,
@@ -77,12 +79,12 @@ export default class ElementDetailSortTab extends Component {
       if (col.id == openedFromCollectionId) return col;
       if (col.children?.length > 0) stack.push(...col.children);
     }
-    return null;
+    return uiCollection;
   }
 
   onChangeUser(state) {
     const { type } = this.props;
-    const collection = this.getOpenedFromCollection() || UIStore.getState().currentCollection;
+    const collection = this.getOpenedFromCollection();
     const collectionTabs = collection?.tabs_segment;
     const layout = (!collectionTabs || _.isEmpty(collectionTabs[type]))
       ? state.profile?.data?.[`layout_detail_${type}`]
@@ -92,7 +94,7 @@ export default class ElementDetailSortTab extends Component {
 
   onChangeUI() {
     const { type } = this.props;
-    const collection = this.getOpenedFromCollection() || UIStore.getState().currentCollection;
+    const collection = this.getOpenedFromCollection();
     const collectionTabs = collection?.tabs_segment;
     const userProfile = UserStore.getState().profile;
     const layout = (!collectionTabs || _.isEmpty(collectionTabs[type]))
@@ -105,7 +107,10 @@ export default class ElementDetailSortTab extends Component {
     this.setState(
       (state) => ({ ...state, showTabLayoutContainer: !state.showTabLayoutContainer }),
       () => {
-        if (!show) this.updateLayout();
+        if (!show) {
+          this.props.onTabPositionChanged(this.state.visible);
+          this.updateLayout();
+        }
       }
     );
   }
@@ -118,7 +123,7 @@ export default class ElementDetailSortTab extends Component {
 
     if (currentCollection && !currentCollection.is_sync_to_me) {
       CollectionActions.updateTabsSegment({ segment: tabSegment, cId: currentCollection.id });
-      UIActions.selectCollection({ ...currentCollection, tabs_segment: tabSegment, clearSearch: true });
+      UIActions.selectCollectionWithoutUpdating({ ...currentCollection, tabs_segment: tabSegment });
     }
 
     const userProfile = UserStore.getState().profile;
