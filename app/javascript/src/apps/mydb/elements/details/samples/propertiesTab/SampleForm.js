@@ -5,7 +5,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {
   Button, Form, InputGroup,
-  OverlayTrigger, Tooltip, Row, Col,
+  OverlayTrigger, Tooltip, Popover, Row, Col,
   ButtonGroup
 } from 'react-bootstrap';
 import { Select, CreatableSelect } from 'src/components/common/Select';
@@ -438,6 +438,15 @@ export default class SampleForm extends React.Component {
 
   fetchNextInventoryLabel() {
     const { currentCollection } = UIStore.getState();
+    const message = (
+      <div className="text-start">
+        <p className="mb-1">Could not find next inventory label.</p>
+        <p className="mb-1">
+          Please define an inventory label for this collection in the Account &amp; Profile page.
+          Select the collection and assign a name, prefix, and starting counter.
+        </p>
+      </div>
+    );
     if (this.matchSelectedCollection(currentCollection)) {
       InventoryFetcher.fetchInventoryOfCollection(currentCollection.id)
         .then((result) => {
@@ -447,8 +456,7 @@ export default class SampleForm extends React.Component {
             this.handleFieldChanged('xref_inventory_label', value);
           } else {
             NotificationActions.add({
-              message: 'Could not find next inventory label. '
-                + 'Please assign a prefix and a counter for a valid collection first.',
+              message,
               level: 'error'
             });
           }
@@ -650,16 +658,89 @@ export default class SampleForm extends React.Component {
   }
 
   /**
+   * Renders the info button for inventory label with tooltip explanation.
+   * @returns {JSX.Element} The rendered info button
+   */
+  inventoryLabelInfoButton() {
+    const infoPopover = (
+      <Popover id="inventoryLabelInfoPopover">
+        <Popover.Header as="h6">How to define a sample inventory label for a collection</Popover.Header>
+        <Popover.Body className="text-start">
+          <ul className="ps-3 mb-3">
+            <li>
+              Configure the Inventory Label settings by navigating to
+              <strong> the Sample Inventory Label section in the Account &amp; Profile page</strong>
+              .
+            </li>
+            <li>
+              Select one or multiple collections to assign a name, prefix, and starting counter.
+            </li>
+            <li>
+              New samples will automatically generate a label with the next available counter number.
+            </li>
+            <li>
+              For existing samples, click the
+              <strong> Auto-Generate Inventory Label button </strong>
+              next to this field.
+            </li>
+          </ul>
+          <a
+            href="https://chemotion.net/docs/eln/ui/first_steps#define-a-sample-inventory-label-and-adjust-the-counter-inventory-label-for-a-collection"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="d-block mt-2"
+          >
+            Learn more in the documentation
+          </a>
+        </Popover.Body>
+      </Popover>
+    );
+
+    return (
+      <OverlayTrigger
+        trigger="hover"
+        placement="top"
+        overlay={infoPopover}
+        delay={{ show: 250, hide: 650 }}
+        rootClose
+      >
+        <span
+          tabIndex={0}
+          role="button"
+          aria-label="Information about sample inventory label configuration"
+        >
+          <i className="ms-1 fa fa-info-circle" />
+        </span>
+      </OverlayTrigger>
+    );
+  }
+
+  /**
    * Renders the inventory label input section with the text input and next label button.
    * @param {Object} sample - The sample object
    * @returns {JSX.Element} The rendered inventory label section
    */
   inventoryLabelSection(sample) {
+    const updateValue = (sample.xref ? sample.xref.inventory_label : '') || '';
+
     return (
-      <>
-        {this.textInput(sample, 'xref_inventory_label', 'Inventory label')}
-        {this.nextInventoryLabel(sample)}
-      </>
+      <Form.Group className="w-100">
+        <Form.Label>
+          Inventory label
+          {this.inventoryLabelInfoButton()}
+        </Form.Label>
+        <Form.Control
+          id="txinput_xref_inventory_label"
+          type="text"
+          value={updateValue}
+          onChange={(e) => {
+            const newValue = e.target.value;
+            this.handleFieldChanged('xref_inventory_label', newValue);
+          }}
+          disabled={!sample.can_update}
+          readOnly={!sample.can_update}
+        />
+      </Form.Group>
     );
   }
 
@@ -1103,6 +1184,7 @@ export default class SampleForm extends React.Component {
                 <Col>{this.textInput(sample, 'external_label', 'External label')}</Col>
                 <Col className="d-flex align-items-end">
                   {this.inventoryLabelSection(sample)}
+                  {this.nextInventoryLabel(sample)}
                 </Col>
                 <Col>{this.textInput(sample, 'location', 'Location')}</Col>
                 <Col xs={2}>{this.drySolventCheckbox(sample)}</Col>
@@ -1183,6 +1265,7 @@ export default class SampleForm extends React.Component {
                 </Col>
                 <Col md={4} className="d-flex align-items-end">
                   {this.inventoryLabelSection(sample)}
+                  {this.nextInventoryLabel(sample)}
                 </Col>
               </Row>
               <Row className="align-items-end mb-4">
