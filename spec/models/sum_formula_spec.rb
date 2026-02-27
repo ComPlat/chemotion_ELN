@@ -76,6 +76,15 @@ RSpec.describe SumFormula do
       expect(formula['H']).to be_within(1e-10).of(14.25)
       expect(formula['O']).to be_within(1e-10).of(1.5)
     end
+
+    it 'accepts hash fragments with symbol keys' do
+      formula.add_fragment!(C: 2, H: 4.5, invalid_key: 1)
+
+      expect(formula['C']).to eq(8)
+      expect(formula['H']).to be_within(1e-10).of(16.5)
+      expect(formula['O']).to eq(1)
+      expect(formula).not_to have_key('invalid_key')
+    end
   end
 
   describe '#remove_fragment' do
@@ -99,6 +108,15 @@ RSpec.describe SumFormula do
       expect(formula['C']).to be_within(1e-10).of(4.5)
       expect(formula['H']).to be_within(1e-10).of(9.75)
       expect(formula['O']).to be_within(1e-10).of(0.5)
+    end
+
+    it 'accepts hash fragments with symbol keys' do
+      formula.remove_fragment!(C: 1, H: 2, invalid_key: 1)
+
+      expect(formula['C']).to eq(5)
+      expect(formula['H']).to eq(10)
+      expect(formula['O']).to eq(1)
+      expect(formula).not_to have_key('invalid_key')
     end
   end
 
@@ -209,11 +227,11 @@ RSpec.describe SumFormula do
       expect(described_class.new('C12.3H3.5O2.556').molecular_weight).to be_within(0.001).of(expected_weight)
     end
 
-    it 'calculates molecular weight for hydrate notation with dot coefficient' do
+    it 'calculates molecular weight for hydrate notation with a dot coefficient' do
       expect(described_class.new('CuSO4.5H2O').molecular_weight).to be_within(0.01).of(249.69)
     end
 
-    it 'calculates molecular weight for hydrate notation with dot coefficient' do
+    it 'calculates molecular weight for non-hydrate formulas with decimal atom counts' do
       expect(described_class.new('C1.5H2O3').molecular_weight).to be_within(0.01).of(68.0295)
     end
   end
