@@ -1,8 +1,8 @@
 import expect from 'expect';
-import { getEntryDefs } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
+import { getEntryDefs, sanitizeGroupEntry } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   EquivalentParser, PropertyFormatter, PropertyParser, MaterialFormatter, MaterialParser, FeedstockParser, GasParser,
-  SegmentParser, SegmentFormatter, sanitizeGroupEntry
+  SegmentParser, SegmentFormatter
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import { setUpReaction, setUpGaseousReaction } from 'helper/reactionVariationsHelpers';
 
