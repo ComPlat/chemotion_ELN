@@ -276,6 +276,8 @@ module Export
             "#{sample['molarity_value']} #{sample['molarity_unit']}"
           elsif column == 'density'
             "#{sample['density']} g/ml"
+          elsif column == 'molfile'
+            sample[column]
           else
             sample[column]
           end
@@ -289,7 +291,10 @@ module Export
         # NB: as of now , only dl 0 and 10 are implemented
         dl = 10 if dl.positive?
         headers = instance_variable_get("@headers#{sample['dl_s']}#{dl}")
-        data = headers.map { |column| column ? sample[column] : nil }
+        data = headers.map do |column|
+          next nil unless column
+          sample[column]
+        end
         data[@image_index] = svg_path(sample) if headers.include?('image')
       end
       data
