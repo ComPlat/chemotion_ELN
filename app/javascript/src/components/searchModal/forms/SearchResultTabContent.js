@@ -49,7 +49,7 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
 
     searchStore.loadSearchResultTab({
       selection,
-      collectionId: collectionId,
+      collectionId,
       page_size: tabResult.per_page,
       page: index,
       moleculeSort: true,
@@ -141,6 +141,8 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
       if (object.xref && object.inventory_label) { infos.push(object.inventory_label); }
       if (object.xref && object.xref.cas) { infos.push(object.xref.cas); }
       names = [object.short_label, object.name].concat(infos);
+    } else if (object.type == 'cell_line') {
+      names = [object.short_label, object.itemName];
     } else {
       names = [object.short_label, object.name];
     }
@@ -190,7 +192,7 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
             </div>
           </div>
         )}
-        
+
         <div className="search-result-list-items">
           <div className="search-result-tab-content-list-name">
             {shortLabelWithMoreInfos(object)}
@@ -237,6 +239,30 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
     );
   };
 
+  const cellLineList = (object, i, elements) => {
+    const previous = elements[i - 1];
+    const previousMaterial = previous ? `${previous.cellLineName} - ${previous.source}` : '';
+    const objectMaterial = `${object.cellLineName} - ${object.source}`;
+
+    const header = previousMaterial !== objectMaterial && (
+      <div
+        key={`${objectMaterial}-${i}`}
+        className="search-result-molecule pt-2 fw-bold fs-5"
+      >
+        {objectMaterial}
+      </div>
+    );
+
+    return (
+      <div key={`${list.key}-${i}`} className="search-result-tab-content-list">
+        {header}
+        <div className="search-result-tab-content-list-name pt-3">
+          {shortLabelWithMoreInfos(object)}
+        </div>
+      </div>
+    );
+  };
+
   const tabContentList = () => {
     let contentList = <div key={list.index} className="search-result-tab-content-list-white">No results</div>;
     const resultsByPage = searchStore.tabSearchResultValues.find((val) => val.id == `${list.key}s-${currentPageNumber}`);
@@ -248,6 +274,8 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
           return sampleAndReactionList(object, i, elements);
         } if (object.type === 'sequence_based_macromolecule_sample') {
           return sbmmList(object, i, elements);
+        } if (object.type === 'cell_line') {
+          return cellLineList(object, i, elements);
         }
         return (
           <div className="search-result-group">
