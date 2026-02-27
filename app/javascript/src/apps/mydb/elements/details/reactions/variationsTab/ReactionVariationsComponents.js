@@ -11,7 +11,8 @@ import PropTypes from 'prop-types';
 import { cloneDeep, isEqual } from 'lodash';
 import {
   getVariationsRowName, convertUnit, getUserFacingUnit, getCurrentEntry,
-  getUserFacingEntryName, convertGenericUnit, PLACEHOLDER_CELL_TEXT, parseGenericEntryName
+  getUserFacingEntryName, convertGenericUnit, PLACEHOLDER_CELL_TEXT, parseGenericEntryName, sanitizeGroupEntry,
+  groupNameAssembler
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   getReferenceMaterial, getCatalystMaterial, getFeedstockMaterial, getMolFromGram, getGramFromMol,
@@ -292,24 +293,6 @@ function MaterialFormatter({ value: cellData, colDef }) {
   return convertValueToDisplayUnit(cellData[currentEntry].value, cellData[currentEntry].unit, displayUnit);
 }
 
-function sanitizeGroupEntry(entry) {
-  // Remove input other than digits and period.
-  const val = entry.replace(/[^0-9.]/g, '');
-
-  // Extract the group (first item) and the rest of the parts.
-  const [group, ...subParts] = val.split('.');
-  const subGroup = subParts.join('');
-
-  // Remove leading zeros from both parts.
-  const cleanGroup = group.replace(/^0+/, '');
-  const cleanSub = subGroup.replace(/^0+/, '');
-
-  // Reassemble, preserving the period if it existed in the cleaned string.
-  return val.includes('.')
-    ? `${cleanGroup}.${cleanSub}`
-    : cleanGroup;
-}
-
 function GroupCellEditor({
   value, onValueChange, stopEditing, onKeyDown
 }) {
@@ -368,32 +351,39 @@ function GroupCellEditor({
 
   return (
     <input
+      className="reaction-variation-input"
       ref={inputRef}
       type="text"
       value={currentValue}
       onChange={(e) => setCurrentValue(sanitizeGroupEntry(e.target.value))}
       onBlurCapture={commitValue}
       onKeyDownCapture={handleKeyDown}
-      style={{
-        width: '100%',
-        height: '100%',
-        boxSizing: 'border-box',
-        padding: '0',
-        margin: '0',
-        border: 'none',
-        outline: 'none',
-        background: 'transparent',
-        color: 'inherit',
-        display: 'block',
-        font: 'inherit',
-      }}
     />
   );
 }
 
+GroupCellEditor.propTypes = {
+  value: PropTypes.shape({
+    group: PropTypes.number,
+    subgroup: PropTypes.number,
+  }).isRequired,
+  onValueChange: PropTypes.func.isRequired,
+  onKeyDown: PropTypes.func.isRequired,
+  stopEditing: PropTypes.bool.isRequired,
+};
+
 function GroupCellRenderer({ value: cellData }) {
-  return `${cellData.group}.${cellData.subgroup}`;
+  return groupNameAssembler(cellData);
 }
+
+GroupCellRenderer.propTypes = {
+  value: PropTypes.shape({
+    cellData: PropTypes.shape({
+      group: PropTypes.number,
+      subgroup: PropTypes.number
+    })
+  }).isRequired,
+};
 
 function MaterialRenderer({ value: cellData, colDef }) {
   const { entryDefs } = colDef;
@@ -1147,5 +1137,4 @@ export {
   GroupCellEditor,
   GroupCellRenderer,
   GroupHeader,
-  sanitizeGroupEntry,
 };

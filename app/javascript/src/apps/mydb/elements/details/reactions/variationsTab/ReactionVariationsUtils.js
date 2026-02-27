@@ -520,6 +520,10 @@ function getPropertyColumnGroupChild(propertyType, gasMode, externalEntryDefs = 
   }
 }
 
+function groupNameAssembler(cellData) {
+  return `${cellData.group}.${cellData.subgroup}`;
+}
+
 function getMetadataColumnGroupChild(metadataType) {
   switch (metadataType) {
     case 'notes':
@@ -551,10 +555,10 @@ function getMetadataColumnGroupChild(metadataType) {
         cellDataType: false,
         comparator: (valueA, valueB) => {
           // Sort groups lexicographically.
-          const groupA = `${valueA.group}.${valueA.subgroup}`;
-          const groupB = `${valueB.group}.${valueB.subgroup}`;
-          if (groupA === groupB) return 0;
-          return (groupA > groupB) ? 1 : -1;
+          if (valueA.group === valueB.group) {
+            return (valueA.subgroup > valueB.subgroup) ? 1 : -1;
+          }
+          return (valueA.group > valueB.group) ? 1 : -1;
         }
       };
     default:
@@ -821,6 +825,24 @@ async function getReactionSegments(reaction) {
   }
 }
 
+function sanitizeGroupEntry(entry) {
+  // Remove input other than digits and period.
+  const val = entry.replace(/[^0-9.]/g, '');
+
+  // Extract the group (first item) and the rest of the parts.
+  const [group, ...subParts] = val.split('.');
+  const subGroup = subParts.join('');
+
+  // Remove leading zeros from both parts.
+  const cleanGroup = group.replace(/^0+/, '');
+  const cleanSub = subGroup.replace(/^0+/, '');
+
+  // Reassemble, preserving the period if it existed in the cleaned string.
+  return val.includes('.')
+    ? `${cleanGroup}.${cleanSub}`
+    : cleanGroup;
+}
+
 export {
   massUnits,
   volumeUnits,
@@ -860,5 +882,7 @@ export {
   getReactionSegments,
   parseGenericEntryName,
   getSegmentData,
-  formatReactionSegments
+  formatReactionSegments,
+  sanitizeGroupEntry,
+  groupNameAssembler,
 };
