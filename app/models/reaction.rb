@@ -279,6 +279,8 @@ class Reaction < ApplicationRecord
   end
 
   def auto_set_short_label
+    return if short_label.present?
+
     prefix = creator.reaction_name_prefix
     counter = creator.counters['reactions'].succ
     self.short_label = "#{creator.initials}-#{prefix}#{counter}"
@@ -289,9 +291,10 @@ class Reaction < ApplicationRecord
   end
 
   def scrub
-    if temperature&.fetch('userText', nil).present?
-      self.temperature = temperature.merge('userText' => scrubber(temperature['userText']))
-    end
+    return if temperature&.fetch('userText', nil).blank?
+
+    self.temperature = temperature.merge('userText' => scrubber(temperature['userText']))
+
     # Conditions are not scrubbed: plain text may contain "<" or ">" (e.g. "pH < 7");
     # scrub_xml would strip them. Conditions are escaped at display time.
   end
