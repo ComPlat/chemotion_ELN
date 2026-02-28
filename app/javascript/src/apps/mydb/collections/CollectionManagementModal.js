@@ -7,6 +7,7 @@ import MySharedCollections from 'src/apps/mydb/collections/MySharedCollections';
 import SharedWithMeCollections from 'src/apps/mydb/collections/SharedWithMeCollections';
 import SyncWithMeCollections from 'src/apps/mydb/collections/SyncWithMeCollections';
 import CollectionTabs from 'src/apps/mydb/collections/CollectionTabs';
+import CollectionManagementMenu from 'src/apps/mydb/collections/CollectionManagementMenu';
 
 function CollectionManagementModal({ show, onHide }) {
   return (
@@ -22,6 +23,7 @@ function CollectionManagementModal({ show, onHide }) {
         Collection Management
       </Modal.Header>
       <Modal.Body>
+        <CollectionManagementMenu />
         <Tabs defaultActiveKey={0} id="collection-management-tab" className="surface-tabs">
           <Tab eventKey={0} title="My Collections">
             <MyCollections />

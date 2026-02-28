@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Alert, Button, Tabs, Tab, Tooltip, OverlayTrigger
+  Alert, Button, Form, Tabs, Tab, Tooltip, OverlayTrigger, ListGroupItem
 } from 'react-bootstrap';
 
 import PropertiesForm from './propertiesTab/PropertiesForm';
@@ -23,6 +23,7 @@ import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSo
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 import CopyElementModal from 'src/components/common/CopyElementModal';
 import Immutable from 'immutable';
+import { set } from 'lodash';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
@@ -31,8 +32,12 @@ import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
+import UIActions from 'src/stores/alt/actions/UIActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import UserActions from 'src/stores/alt/actions/UserActions';
+import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import CollectionUtils from 'src/models/collection/CollectionUtils';
+import ChemicalTab from 'src/components/chemicals/ChemicalTab';
 
 const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => {
   const sbmmStore = useContext(StoreContext).sequenceBasedMacromoleculeSamples;
@@ -68,16 +73,36 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
     }
   }, [alertRef.current]);
 
+  const sbmmInventoryTab = (eventKey) => (
+    <Tab eventKey={eventKey} title="Inventory" key={`Inventory${sbmmSample.id.toString()}`}>
+      {
+        !sbmmSample.isNew && <CommentSection section="sbmm_sample_inventory" element={sbmmSample} />
+      }
+      <ListGroupItem>
+        <ChemicalTab
+          sample={sbmmSample}
+          type="SBMM"
+          setSaveInventory={(v) => sbmmStore.setSaveInventoryAction(v)}
+          saveInventory={sbmmStore.saveInventoryAction}
+          editChemical={sbmmStore.editChemical}
+          key={`ChemicalTab${sbmmSample.id.toString()}`}
+        />
+      </ListGroupItem>
+    </Tab>
+  );
+
   const tabContentComponents = {
     properties: PropertiesForm,
     analyses: AnalysesContainer,
     attachments: AttachmentForm,
+    inventory: ChemicalTab,
   };
 
   const tabTitles = {
     properties: 'Properties',
     analyses: 'Analyses',
     attachments: 'Attachment',
+    inventory: 'Inventory',
   };
 
   const isReadOnly = () => {
@@ -96,19 +121,22 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
 
   visibleTabs.forEach((key, i) => {
     let title = tabTitles[key];
-  
-    tabContents.push(
-      <Tab eventKey={key} title={title} key={`${key}_${sbmmSample.id}`} disabled={disabled(i)}>
-        {
-          !sbmmSample.isNew &&
-          <CommentSection section={`sequence_based_macromolecule_sample_${key}`} element={sbmmSample} />
-        }
-        {React.createElement(tabContentComponents[key], {
-          key: `${sbmmSample.id}-${key}`,
-          readonly: isReadOnly()
-        })}
-      </Tab>
-    );
+    if (key === 'inventory') {
+      tabContents.push(sbmmInventoryTab(key));
+    } else {
+      tabContents.push(
+        <Tab eventKey={key} title={title} key={`${key}_${sbmmSample.id}`} disabled={disabled(i)}>
+          {
+            !sbmmSample.isNew
+            && <CommentSection section={`sequence_based_macromolecule_sample_${key}`} element={sbmmSample} />
+          }
+          {React.createElement(tabContentComponents[key], {
+            key: `${sbmmSample.id}-${key}`,
+            readonly: isReadOnly()
+          })}
+        </Tab>
+      );
+    }
   });
 
   const errorMessage = () => {
@@ -135,6 +163,69 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
   const onTabPositionChanged = (visible) => {
     setVisibleTabs(visible);
   }
+
+  const updateInventoryTabInCollection = (inventoryOrder) => {
+    if (!currentCollection || currentCollection.is_sync_to_me) return;
+
+    const sbmmLayout = currentCollection?.tabs_segment?.sequence_based_macromolecule_sample;
+    const userProfile = UserStore.getState().profile;
+    const baseLayout = sbmmLayout
+      || userProfile?.data?.layout_detail_sequence_based_macromolecule_sample;
+
+    if (!baseLayout) return;
+
+    const updatedLayout = { ...baseLayout, inventory: inventoryOrder };
+
+    const tabSegment = { ...currentCollection?.tabs_segment, sequence_based_macromolecule_sample: updatedLayout };
+    CollectionActions.updateTabsSegment({ segment: tabSegment, cId: currentCollection.id });
+    UIActions.selectCollection({ ...currentCollection, tabs_segment: tabSegment, clearSearch: true });
+
+    if (!userProfile) return;
+    set(userProfile, 'data.layout_detail_sequence_based_macromolecule_sample', updatedLayout);
+    UserActions.updateUserProfile(userProfile);
+  };
+
+  const hideInventoryTabInCollection = () => {
+    const sbmmLayout = currentCollection?.tabs_segment?.sequence_based_macromolecule_sample;
+    const baseLayout = sbmmLayout
+      || UserStore.getState().profile?.data?.layout_detail_sequence_based_macromolecule_sample;
+
+    if (!baseLayout || baseLayout.inventory === undefined) return;
+
+    updateInventoryTabInCollection(-Math.abs(baseLayout.inventory));
+  };
+
+  const persistInventoryTabInCollection = () => {
+    const sbmmLayout = currentCollection?.tabs_segment?.sequence_based_macromolecule_sample;
+    const baseLayout = sbmmLayout
+      || UserStore.getState().profile?.data?.layout_detail_sequence_based_macromolecule_sample;
+
+    // Already visible — nothing to do
+    if (baseLayout?.inventory > 0) return;
+
+    if (!baseLayout) return;
+
+    const maxOrder = Math.max(0, ...Object.values(baseLayout).map((v) => Math.abs(v)));
+    updateInventoryTabInCollection(maxOrder + 1);
+  };
+
+  const handleInventorySample = (e) => {
+    const checked = e.target.checked;
+    sbmmStore.changeSequenceBasedMacromoleculeSample('inventory_sample', checked);
+
+    if (checked) {
+      if (!visibleTabs.includes('inventory')) {
+        setVisibleTabs(visibleTabs.push('inventory'));
+      }
+      persistInventoryTabInCollection();
+    } else {
+      setVisibleTabs(visibleTabs.filter((v) => v !== 'inventory'));
+      if (sbmmStore.active_tab_key === 'inventory') {
+        sbmmStore.setActiveTabKey('properties');
+      }
+      hideInventoryTabInCollection();
+    }
+  };
 
   const handleTabChange = (key) => {
     sbmmStore.setActiveTabKey(key);
@@ -177,10 +268,50 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
     );
   }
 
+  // Handler for chemical save
+  const handleSubmitChemical = () => {
+    // Set saveInventoryAction to true, which triggers ChemicalTab to save
+    sbmmStore.setSaveInventoryAction(true);
+  };
+
+  const saveButtonForChemical = () => (
+    <OverlayTrigger
+      placement="bottom"
+      overlay={<Tooltip id="saveChemicalforSBMM">Save chemical</Tooltip>}
+    >
+      <Button
+        variant="warning"
+        size="xxsm"
+        onClick={() => handleSubmitChemical()}
+      >
+        <i className="fa fa-floppy-o " />
+      </Button>
+    </OverlayTrigger>
+  );
+
+  // Save button for sbmm sample
+  const saveButtonForSbmm = () => (
+    <OverlayTrigger
+      placement="bottom"
+      overlay={<Tooltip id="saveSequenceBasedMacromolecule">Save sequence based macromolecule</Tooltip>}
+    >
+      <Button
+        variant="warning"
+        size="xxsm"
+        onClick={() => handleSubmit()}
+      >
+        <i className="fa fa-floppy-o " />
+      </Button>
+    </OverlayTrigger>
+  );
+
   const sbmmSampleHeader = () => {
     const titleTooltip = formatTimeStampsOfElement(sbmmSample || {});
     const defCol = currentCollection && currentCollection.is_shared === false
       && currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
+    const isChemicalTab = sbmmStore.active_tab_key === 'inventory';
+    const chemicalSaveBtn = isChemicalTab && sbmmStore.isChemicalEdited;
+    const sampleSaveBtn = sbmmSample.isEdited && sbmmStore.active_tab_key !== 'inventory';
 
     return (
       <div className="d-flex align-items-center justify-content-between">
@@ -204,6 +335,14 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
           {uniprotLogo()}
         </div>
         <div className="d-flex align-items-center gap-1">
+          <Form.Check
+            type="checkbox"
+            id="sbmm-sample-inventory-header"
+            className="mx-2 sample-inventory-header"
+            checked={sbmmSample.inventory_sample || false}
+            onChange={(e) => handleInventorySample(e)}
+            label="Inventory"
+          />
           <PrintCodeButton element={sbmmSample} />
           {!sbmmSample.isNew &&
             <OpenCalendarButton
@@ -231,27 +370,55 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
               </Button>
             </OverlayTrigger>
           )}
+          {(() => {
+            if (chemicalSaveBtn) {
+              return saveButtonForChemical();
+            }
+            if (sampleSaveBtn) {
+              return saveButtonForSbmm();
+            }
+            return null;
+          })()}
           <ConfirmClose el={sbmmSample} />
         </div>
       </div>
     );
-  }
+  };
 
+  // Footer logic: show save button for chemical if on inventory tab and isChemicalEdited, else show sbmm save
+  const isChemicalTab = sbmmStore.active_tab_key === 'inventory';
+  const chemicalSaveBtn = isChemicalTab && sbmmStore.isChemicalEdited;
+  const sampleSaveBtn = sbmmSample.isEdited && sbmmStore.active_tab_key !== 'inventory';
   const sbmmSampleFooter = () => (
     <>
       <Button variant="primary" onClick={() => DetailActions.close(sbmmSample)}>
         Close
       </Button>
-      <Button variant="warning" onClick={() => handleSubmit()}>
-        {submitLabel}
-      </Button>
+      {(() => {
+        if (chemicalSaveBtn) {
+          return (
+            <Button variant="warning" onClick={() => handleSubmitChemical()}>
+              {submitLabel}
+            </Button>
+          );
+        }
+        if (sampleSaveBtn) {
+          return (
+            <Button variant="warning" onClick={() => handleSubmit()}>
+              {submitLabel}
+            </Button>
+          );
+        }
+        return null;
+      })()}
       {downloadAnalysisButton()}
     </>
   );
+  const isPendingToSave = sbmmSample.isPendingToSave || sbmmStore.isChemicalEdited;
 
   return (
     <DetailCard
-      isPendingToSave={sbmmSample.isPendingToSave}
+      isPendingToSave={isPendingToSave}
       header={sbmmSampleHeader()}
       footer={sbmmSampleFooter()}
     >
@@ -261,6 +428,7 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
           availableTabs={Object.keys(tabContentComponents)}
           tabTitles={tabTitles}
           onTabPositionChanged={onTabPositionChanged}
+          addInventoryTab={sbmmSample.inventory_sample || false}
           openedFromCollectionId={openedFromCollectionId}
         />
         <Tabs
@@ -268,6 +436,7 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
           onSelect={key => handleTabChange(key)}
           id="sbmmSampleSampleDetailsTab"
           unmountOnExit
+          className="has-config-overlay"
         >
           {tabContents}
         </Tabs>

@@ -476,16 +476,7 @@ export default class ResearchPlanDetails extends Component {
   } /* eslint-enable */
 
   renderPanelHeading(researchPlan) {
-    const { currentCollection } = UIStore.getState();
-    const rootCol = currentCollection && currentCollection.is_shared === false
-      && currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
     const titleTooltip = formatTimeStampsOfElement(researchPlan || {});
-    const copyBtn = (
-      <CopyElementModal
-        element={researchPlan}
-        defCol={rootCol}
-      />
-    );
 
     return (
       <div className="d-flex align-items-center justify-content-between">
@@ -514,7 +505,7 @@ export default class ResearchPlanDetails extends Component {
           </OverlayTrigger>
           {!researchPlan.isNew
             && <OpenCalendarButton isPanelHeader eventableId={researchPlan.id} eventableType="ResearchPlan" />}
-          {copyBtn}
+          <CopyElementModal element={researchPlan} />
         </div>
       </div>
     );
@@ -649,6 +640,7 @@ export default class ResearchPlanDetails extends Component {
             activeKey={activeTab}
             onSelect={(key) => this.handleSelect(key)}
             id="screen-detail-tab"
+            className="has-config-overlay"
           >
             {tabContents}
           </Tabs>

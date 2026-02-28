@@ -28,7 +28,7 @@ export default function SupportMenuButton({ linkToEln = false }) {
 
   return (
     <Dropdown>
-      <Dropdown.Toggle variant="light">
+      <Dropdown.Toggle variant="topbar">
         <i className="fa fa-info-circle me-1" />
         Info & Support
       </Dropdown.Toggle>

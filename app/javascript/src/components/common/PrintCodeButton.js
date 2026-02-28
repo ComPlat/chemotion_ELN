@@ -39,7 +39,7 @@ export default function PrintCodeButton({ element, analyses }) {
   };
 
   // Set the tooltip text for the button
-  const tooltipText = 'Print code Label';
+  const tooltip = <Tooltip id="printCode">Print code Label</Tooltip>;
 
   // Create the menu items for the dropdown button
   const menuItemsAnalyses = [
@@ -71,11 +71,7 @@ export default function PrintCodeButton({ element, analyses }) {
       <OverlayTrigger
         placement="top"
         delayShow={500}
-        overlay={(
-          <Tooltip id="printCode">
-            {tooltipText}
-          </Tooltip>
-        )}
+        overlay={tooltip}
       >
         <Dropdown>
           <Dropdown.Toggle
@@ -119,6 +115,7 @@ export default function PrintCodeButton({ element, analyses }) {
 
 PrintCodeButton.propTypes = {
   element: PropTypes.object.isRequired,
+  analyses: PropTypes.array,
 };
 
 PrintCodeButton.defaultProps = {

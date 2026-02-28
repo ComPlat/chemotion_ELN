@@ -438,6 +438,7 @@ export default class WellplateDetails extends Component {
             activeKey={activeTab}
             onSelect={(event) => this.handleTabChange(event)}
             id="wellplateDetailsTab"
+            className="has-config-overlay"
           >
             {tabContents}
           </Tabs>
