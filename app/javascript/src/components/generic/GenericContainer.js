@@ -3,7 +3,7 @@
 /* eslint-disable no-restricted-globals */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Accordion, Button, Card } from 'react-bootstrap';
+import { Accordion, Button, Card, Form } from 'react-bootstrap';
 import ContainerComponent from 'src/components/container/ContainerComponent';
 import QuillViewer from 'src/components/QuillViewer';
 import ImageModal from 'src/components/common/ImageModal';
@@ -21,8 +21,13 @@ import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWit
 
 const headerBtnGroup = (props) => {
   const {
-    container, readOnly, generic, fnRemove, fnChange
+    container, readOnly, generic, fnRemove, fnChange, toggleAddToReport
   } = props;
+  const inReport = container.extended_metadata.report;
+  const onToggleAddToReport = (e) => {
+    e.stopPropagation();
+    toggleAddToReport(container);
+  };
   const jcampIds = JcampIds(container);
   const hasJcamp = jcampIds.orig.length > 0;
   const confirmRegenerate = (e) => {
@@ -52,6 +57,13 @@ const headerBtnGroup = (props) => {
 
   return (
     <div className="d-flex justify-content-between align-items-center mb-0 gap-1">
+      <Form.Check
+        type="checkbox"
+        onClick={onToggleAddToReport}
+        defaultChecked={inReport}
+        label="Add to Report"
+        className="mx-2"
+      />
       <SpectraEditorButton
         element={generic}
         hasJcamp={hasJcamp}
@@ -81,7 +93,8 @@ const headerBtnGroup = (props) => {
 };
 
 const newHeader = (props) => {
-  const { container, noAct } = props;
+  const { container, noAct, mode } = props;
+  const deleted = container.is_deleted;
   let kind = container.extended_metadata.kind || '';
   kind = (kind.split('|')[1] || kind).trim();
   const insText = instrumentText(container);
@@ -99,33 +112,39 @@ const newHeader = (props) => {
   const attachment = getAttachmentFromContainer(container);
 
   return (
-    <div className="analysis-header w-100 d-flex gap-3 lh-base">
+    <div className={`analysis-header w-100 d-flex gap-3 lh-base${mode === 'order' ? ' order pe-2' : ''}`}>
       <div className="preview border d-flex align-items-center">
-        <ImageModal
-          attachment={attachment}
-          popObject={{
-            title: container.name,
-          }}
-        />
+        {deleted ? (
+          <i className="fa fa-ban text-body-tertiary fs-2 text-center d-block" aria-hidden="true" />
+        ) : (
+          <ImageModal
+            attachment={attachment}
+            popObject={{
+              title: container.name,
+            }}
+          />
+        )}
       </div>
-      <div className="flex-grow-1">
+      <div className={`flex-grow-1${deleted ? '' : ' analysis-header-fade'}`}>
         <div className="d-flex justify-content-between align-items-center">
-          <h4 className="flex-grow-1">{container.name}</h4>
-          {!noAct && headerBtnGroup(props)}
+          <h4 className={`flex-grow-1${deleted ? ' text-decoration-line-through' : ''}`}>{container.name}</h4>
+          {(mode !== 'order') && !noAct && headerBtnGroup(props)}
         </div>
-        <div>
+        <div className={deleted ? 'text-body-tertiary' : ''}>
           {`Type: ${kind}`}
           <br />
           {`Status: ${status}`}
           <span className="me-5" />
           {insText}
         </div>
-        <div className="d-flex gap-2">
-          <span>Content:</span>
-          <div className="flex-grow-1">
-            <QuillViewer value={contentOneLine} className="p-0" preview />
+        {!deleted && (
+          <div className="d-flex gap-2">
+            <span>Content:</span>
+            <div className="flex-grow-1">
+              <QuillViewer value={contentOneLine} className="p-0" preview />
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
@@ -239,7 +258,8 @@ AiHeader.propTypes = {
   readOnly: PropTypes.bool.isRequired,
   generic: PropTypes.object.isRequired,
   fnChange: PropTypes.func.isRequired,
+  toggleAddToReport: PropTypes.func.isRequired,
   handleSubmit: PropTypes.func.isRequired,
 };
 
-export { AiHeader, AiHeaderDeleted };
+export { AiHeader, AiHeaderDeleted, newHeader };
