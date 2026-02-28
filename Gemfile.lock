@@ -1,6 +1,6 @@
 GIT
   remote: https://github.com/ComPlat/inchi-gem.git
-  revision: 55cf667c08f5391ae0ddcd7908f433b1ab0766c2
+  revision: a0efa115734c3de45150ede943c3deb368827ad6
   branch: main
   specs:
     inchi-gem (1.06.1)
