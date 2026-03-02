@@ -74,7 +74,7 @@ module Usecases
         end
       end
 
-      # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+      # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/AbcSize
       def special_and_generic_conditions_by_filter(filter, number)
         if @table_or_tab_types[:generics]
           generic_field_options(filter, number)
@@ -102,7 +102,7 @@ module Usecases
           special_non_generic_field_options(filter)
         end
       end
-      # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+      # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/AbcSize
 
       # rubocop:disable Metrics/CyclomaticComplexity, Metrics/AbcSize, Metrics/PerceivedComplexity
       def table_or_tab_types
@@ -601,9 +601,9 @@ module Usecases
           'INNER JOIN cellline_materials ON cellline_materials.id = cellline_samples.cellline_material_id'
         @conditions[:joins] << field_table_inner_join if @conditions[:joins].exclude?(field_table_inner_join)
 
-        if %w[organism tissue disease].include?(filter['field']['column'])
-          @conditions[:field] = "#{filter['field']['column']}::TEXT"
-        end
+        return unless %w[organism tissue disease].include?(filter['field']['column'])
+
+        @conditions[:field] = "#{filter['field']['column']}::TEXT"
       end
     end
   end
