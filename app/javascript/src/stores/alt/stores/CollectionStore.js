@@ -32,7 +32,8 @@ class CollectionStore {
       ],
       handleRejectSharedCollection: CollectionActions.rejectShared,
       handleRejectSyncdCollection: CollectionActions.rejectSync,
-      handleUpdateCollectrionTree: CollectionActions.updateCollectrionTree
+      handleUpdateCollectrionTree: CollectionActions.updateCollectrionTree,
+      handleUpdateTabsSegment: [CollectionActions.updateTabsSegment, CollectionActions.createTabsSegment],
     })
   }
 
@@ -84,6 +85,22 @@ class CollectionStore {
 
   handleUpdateCollectrionTree(visibleRootsIds) {
     this.state.visibleRootsIds = visibleRootsIds
+  }
+
+  handleUpdateTabsSegment({ segment, cId }) {
+    const updateInTree = (collections) => collections.map((col) => {
+      if (col.id === cId) {
+        return { ...col, tabs_segment: segment };
+      }
+      if (col.children?.length > 0) return { ...col, children: updateInTree(col.children) };
+      return col;
+    });
+
+    this.state.unsharedRoots = updateInTree(this.state.unsharedRoots);
+    this.state.sharedRoots = updateInTree(this.state.sharedRoots);
+    this.state.remoteRoots = updateInTree(this.state.remoteRoots);
+    this.state.syncInRoots = updateInTree(this.state.syncInRoots);
+    this.state.lockedRoots = updateInTree(this.state.lockedRoots);
   }
 
   handleRejectSharedCollection(results) {
