@@ -382,33 +382,50 @@ export default class SampleDetailsComponents extends React.Component {
 
     splitSample.material_group = tagGroup;
 
+    const { onChange, setMoleculeLoading } = this.props;
+
     if (splitSample.isMixture()) {
       ComponentsFetcher.fetchComponentsBySampleId(srcSample.id)
         .then(async (components) => {
-          await Promise.all(
-            components.map(async (component) => {
-              const sampleComponent = Component.createFromSampleData(
-                component,
-                splitSample.parent_id,
-                tagGroup,
-                sample,
-              );
-              await sample.addMixtureComponent(sampleComponent);
-              sample.updateMixtureComponentEquivalent();
-            })
-          );
-          this.props.onChange(sample);
+          const sampleComponents = components.map((component) => Component.createFromSampleData(
+            component,
+            splitSample.parent_id,
+            tagGroup,
+            sample,
+          ));
+
+          // Phase 1: add components synchronously and re-render immediately
+          sample.addMixtureComponentsSync(sampleComponents);
+          setMoleculeLoading(true);
+          onChange(sample);
+
+          // Phase 2: fetch combined molecule/SVG in the background, then re-render
+          try {
+            await sample.updateMixtureMolecule();
+          } finally {
+            setMoleculeLoading(false);
+          }
+          onChange(sample);
         }).catch((errorMessage) => {
           console.error(errorMessage);
+          setMoleculeLoading(false);
         });
     } else {
-      sample.addMixtureComponent(splitSample)
+      // Phase 1: add component synchronously and re-render immediately
+      sample.addMixtureComponentSync(splitSample);
+      setMoleculeLoading(true);
+      onChange(sample);
+
+      // Phase 2: fetch combined molecule/SVG in the background, then re-render
+      sample.updateMixtureMolecule()
         .then(() => {
-          sample.updateMixtureComponentEquivalent();
-          this.props.onChange(sample);
+          onChange(sample);
         })
         .catch((errorMessage) => {
-          console.error('Error adding component:', errorMessage);
+          console.error('Error updating mixture molecule:', errorMessage);
+        })
+        .finally(() => {
+          setMoleculeLoading(false);
         });
     }
   }
@@ -621,4 +638,5 @@ SampleDetailsComponents.propTypes = {
   enableComponentLabel: PropTypes.bool.isRequired,
   enableComponentPurity: PropTypes.bool.isRequired,
   setComponentDeletionLoading: PropTypes.func.isRequired,
+  setMoleculeLoading: PropTypes.func.isRequired,
 };

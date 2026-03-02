@@ -1051,6 +1051,7 @@ export default class SampleForm extends React.Component {
    */
   mixtureComponentsList(sample) {
     const { enableComponentLabel, enableComponentPurity } = this.state;
+    const { setComponentDeletionLoading, setMoleculeLoading } = this.props;
 
     return (
       <Row className="mb-4">
@@ -1060,7 +1061,8 @@ export default class SampleForm extends React.Component {
             onChange={this.handleMixtureComponentChanged}
             enableComponentLabel={enableComponentLabel}
             enableComponentPurity={enableComponentPurity}
-            setComponentDeletionLoading={this.props.setComponentDeletionLoading}
+            setComponentDeletionLoading={setComponentDeletionLoading}
+            setMoleculeLoading={setMoleculeLoading}
           />
         </Col>
       </Row>

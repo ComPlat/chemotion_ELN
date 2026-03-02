@@ -1962,10 +1962,25 @@ export default class Sample extends Element {
    * @param {Object} newComponent - The new component to add.
    */
   async addMixtureComponent(newComponent) {
+    this.addMixtureComponentSync(newComponent);
+    await this.updateMixtureMolecule();
+  }
+
+  /**
+   * Synchronously adds a new component to the mixture's component array.
+   * Does NOT fetch the combined molecule — call updateMixtureMolecule() afterwards
+   * to update the molecule/SVG via a network request.
+   * @param {Object} newComponent - The new component to add.
+   * @returns {boolean} True if the component was added, false if it was a duplicate.
+   */
+  addMixtureComponentSync(newComponent) {
     const tmpComponents = [...(this.components || [])];
-    const isNew = !tmpComponents.some((component) => component.molecule.iupac_name === newComponent.molecule.iupac_name
-                                || component.molecule.inchikey === newComponent.molecule.inchikey
-                                || component.molecule_cano_smiles.split('.').includes(newComponent.molecule_cano_smiles)); // check if this component is already part of a merged component (e.g. ionic compound)
+    // Check if this component is already present (including merged components, e.g. ionic compounds)
+    const isNew = !tmpComponents.some(
+      (component) => component.molecule.iupac_name === newComponent.molecule.iupac_name
+        || component.molecule.inchikey === newComponent.molecule.inchikey
+        || component.molecule_cano_smiles.split('.').includes(newComponent.molecule_cano_smiles)
+    );
 
     if (!newComponent.material_group) {
       newComponent.material_group = 'liquid';
@@ -1979,23 +1994,50 @@ export default class Sample extends Element {
       tmpComponents.push(newComponent);
       this.components = tmpComponents;
       this.setComponentPositions();
-
-      if (!this.molecule_cano_smiles
-        || !this.molecule_cano_smiles.split('.').some((smiles) => smiles === newComponent.molecule_cano_smiles)) {
-        const newSmiles = this.molecule_cano_smiles
-          ? `${this.molecule_cano_smiles}.${newComponent.molecule_cano_smiles}`
-          : newComponent.molecule_cano_smiles;
-
-        const result = await MoleculesFetcher.fetchBySmi(newSmiles, null, this.molfile, 'ketcher');
-        this.molecule = result;
-        this.molfile = result.molfile;
-      }
-
       this.calculateTotalMixtureMass();
-
-      // Ensure reference and equivalents are consistent after add
       this.updateMixtureComponentEquivalent();
     }
+
+    return isNew;
+  }
+
+  /**
+   * Fetches the combined molecule for the current mixture components via a
+   * single network request and updates the molecule, molfile, and SVG.
+   * @async
+   */
+  async updateMixtureMolecule() {
+    const combinedSmiles = (this.components || [])
+      .map((c) => c.molecule_cano_smiles)
+      .filter(Boolean)
+      .join('.');
+
+    if (!combinedSmiles) return;
+
+    // Only fetch if the combined SMILES differs from current
+    if (combinedSmiles === this.molecule_cano_smiles) return;
+
+    const result = await MoleculesFetcher.fetchBySmi(combinedSmiles, null, this.molfile, 'ketcher');
+    this.molecule = result;
+    this.molfile = result.molfile;
+
+    // Clear sample_svg_file after setting molecule, because the setter
+    // re-populates it from temp_svg.  For mixtures the permanent combined
+    // SVG (molecule.molecule_svg_file) should be used instead.
+    if (this.isMixture()) {
+      this.sample_svg_file = null;
+    }
+  }
+
+  /**
+   * Synchronously adds multiple new components to the mixture in a single batch.
+   * Does NOT fetch the combined molecule — call updateMixtureMolecule() afterwards.
+   * @param {Array<Object>} newComponents - The new components to add.
+   */
+  addMixtureComponentsSync(newComponents) {
+    if (!newComponents || newComponents.length === 0) return;
+
+    newComponents.forEach((c) => this.addMixtureComponentSync(c));
   }
 
   /**
@@ -2009,11 +2051,6 @@ export default class Sample extends Element {
       (comp) => comp !== componentToDelete
     );
     this.components = filteredComponents;
-
-    // Clear sample_svg_file for mixture samples to ensure combined molecule SVG is used
-    if (this.isMixture()) {
-      this.sample_svg_file = null;
-    }
 
     if (!this.molecule_cano_smiles || this.molecule_cano_smiles === '') {
       this.molecule = null;
@@ -2034,8 +2071,12 @@ export default class Sample extends Element {
     }
     this.setComponentPositions();
 
-    // Recalculate total mixture mass after component deletion
-    this.calculateTotalMixtureMass();
+    // Clear sample_svg_file again after setting molecule, because the
+    // molecule setter re-populates it from temp_svg.  For mixtures the
+    // combined molecule SVG (molecule.molecule_svg_file) should be used.
+    if (this.isMixture()) {
+      this.sample_svg_file = null;
+    }
   }
 
   /**
@@ -2221,20 +2262,30 @@ export default class Sample extends Element {
   }
 
   /**
-   * Splits a list of SMILES strings into molecules and adds them as subsamples/components.
+   * Fetches individual molecules for each SMILES in parallel, wraps them as
+   * Component instances, and adds them synchronously to the mixture.
+   *
+   * Does NOT call updateMixtureMolecule() — the caller is responsible for
+   * triggering the combined-molecule fetch (and any intermediate setState)
+   * so the UI can show components before the SVG update finishes.
+   *
    * @param {Array<string>} mixtureSmiles - Array of SMILES strings to split.
    * @param {string} editor - The editor to use for fetching molecules.
-   * @returns {Promise<Array>} A promise that resolves when all molecules are processed.
+   * @returns {Promise<void>} Resolves once components have been added.
    */
-  splitSmilesToMolecule(mixtureSmiles, editor) {
-    const promises = mixtureSmiles.map((smiles) => MoleculesFetcher.fetchBySmi(smiles, null, null, editor));
+  async splitSmilesToMolecule(mixtureSmiles, editor) {
+    const molecules = await Promise.all(
+      mixtureSmiles.map((smiles) => MoleculesFetcher.fetchBySmi(smiles, null, null, editor))
+    );
 
-    return Promise.all(promises)
-      .then((mixtureMolecules) => this.mixtureMoleculeToSubsample(mixtureMolecules))
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-        return [];
-      });
+    const { default: Component } = await import('src/models/Component');
+
+    const newComponents = molecules.map((molecule) => {
+      const newSample = Sample.buildNew(molecule, this.collection_id);
+      return new Component(newSample);
+    });
+
+    this.addMixtureComponentsSync(newComponents);
   }
 
   /**
@@ -2251,21 +2302,11 @@ export default class Sample extends Element {
     try {
       const mixtureSmiles = this.molecule_cano_smiles.split('.');
       await this.splitSmilesToMolecule(mixtureSmiles, editor);
+      await this.updateMixtureMolecule();
       return true;
     } catch (err) {
       return false;
     }
-  }
-
-  /**
-   * Converts an array of mixture molecules into subsamples/components and adds them to the mixture.
-   * @param {Array<Object>} mixtureMolecules - The molecules to convert and add.
-   */
-  mixtureMoleculeToSubsample(mixtureMolecules) {
-    mixtureMolecules.map(async (molecule) => {
-      const newSample = Sample.buildNew(molecule, this.collection_id);
-      await this.addMixtureComponent(newSample);
-    });
   }
 
   initializeSampleDetails() {
