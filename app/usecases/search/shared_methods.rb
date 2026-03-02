@@ -49,7 +49,7 @@ class SharedMethods
   def serialized_elements(element, paginated_ids)
     if element.first == :sample_ids
       serialize_sample(paginated_ids)
-    elsif element.first == :cell_line_ids || element.first == :cellline_sample_ids
+    elsif %i[cell_line_ids cellline_sample_ids].include?(element.first)
       serialize_cellline(paginated_ids)
     else
       serialize_by_element(element, paginated_ids)
