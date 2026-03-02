@@ -10,9 +10,8 @@ import {
 import PropTypes from 'prop-types';
 import { cloneDeep, isEqual } from 'lodash';
 import {
-  getVariationsRowName, convertUnit, getUserFacingUnit, getCurrentEntry,
-  getUserFacingEntryName, convertGenericUnit, PLACEHOLDER_CELL_TEXT, parseGenericEntryName, sanitizeGroupEntry,
-  groupNameAssembler
+  getVariationsRowName, convertUnit, getUserFacingUnit,
+  getUserFacingEntryName, convertGenericUnit, PLACEHOLDER_CELL_TEXT, sanitizeGroupEntry,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   getReferenceMaterial, getCatalystMaterial, getFeedstockMaterial, getMolFromGram, getGramFromMol,
@@ -373,7 +372,7 @@ GroupCellEditor.propTypes = {
 };
 
 function GroupCellRenderer({ value: cellData }) {
-  return groupNameAssembler(cellData);
+  return `${cellData.group}.${cellData.subgroup}`;
 }
 
 GroupCellRenderer.propTypes = {
