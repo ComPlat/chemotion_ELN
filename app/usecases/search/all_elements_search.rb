@@ -7,7 +7,8 @@ module Usecases
         @term = term
         @collection_id = collection_id
         @user = user
-        @pg_elements = %w[sample reaction screen wellplate sequence_based_macromolecule_sample device_description]
+        @pg_elements =
+          %w[sample reaction screen wellplate sequence_based_macromolecule_sample device_description cell_line]
       end
 
       def search_by_substring
@@ -33,7 +34,7 @@ module Usecases
 
           query = types.map do |type|
             "(#{searchable_type_for_query(type)} AND searchable_id IN (" \
-              "SELECT #{type}_id FROM collections_#{type.pluralize} " \
+              "SELECT #{type_id(type)} FROM #{collections_by_type(type)} " \
               "WHERE collection_id = #{collection_id} AND deleted_at IS NULL))"
           end
 
@@ -44,8 +45,26 @@ module Usecases
         def searchable_type_for_query(type)
           if type == 'sequence_based_macromolecule_sample'
             "(searchable_type = '#{type.camelize}' OR searchable_type = 'SequenceBasedMacromolecule')"
+          elsif type == 'cell_line'
+            "(searchable_type = 'CelllineSample' OR searchable_type = 'CelllineMaterial')"
           else
             "searchable_type = '#{type.camelize}'"
+          end
+        end
+
+        def type_id(type)
+          if type == 'cell_line'
+            'cellline_sample_id'
+          else
+            "#{type}_id"
+          end
+        end
+
+        def collections_by_type(type)
+          if type == 'cell_line'
+            'collections_celllines'
+          else
+            "collections_#{type.pluralize}"
           end
         end
 
@@ -84,6 +103,17 @@ module Usecases
 
         def device_description_ids
           filter_results_ids_by_type('DeviceDescription')
+        end
+
+        def cell_line_ids
+          cell_line_sample_ids = filter_results_ids_by_type('CelllineSample')
+          cell_line_material_ids = filter_results_ids_by_type('CelllineMaterial')
+          sample_ids_by_material = []
+
+          if cell_line_material_ids
+            sample_ids_by_material = CelllineSample.where(cellline_material_id: cell_line_material_ids).pluck(:id)
+          end
+          (cell_line_sample_ids + sample_ids_by_material).uniq
         end
 
         def element_ids

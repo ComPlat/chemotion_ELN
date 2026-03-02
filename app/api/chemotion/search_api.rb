@@ -495,6 +495,8 @@ module Chemotion
 
           elements[:device_description_ids] = scope&.device_description_ids
 
+          elements[:cell_line_ids] = scope&.cell_line_ids
+
           elements[:element_ids] = (scope&.element_ids).uniq
         when CelllineSample
           elements[:cell_line_ids] = scope&.ids
