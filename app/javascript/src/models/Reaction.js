@@ -167,6 +167,7 @@ export default class Reaction extends Element {
       volume: null,
       use_reaction_volume: false,
       reaction_type: 'standard',
+      lock_reaction_volume: false,
       gaseous: false,
       weight_percentage: false
     });
@@ -255,6 +256,7 @@ export default class Reaction extends Element {
       volume: this.volume,
       use_reaction_volume: this.use_reaction_volume,
       reaction_type: this.reaction_type || 'standard',
+      lock_reaction_volume: this.lock_reaction_volume,
       gaseous: this.gaseous,
       weight_percentage: this.weight_percentage,
     });
@@ -1105,6 +1107,16 @@ export default class Reaction extends Element {
       ...this.solvents];
     materials.map((m) => totalVolume += m.amount_l);
     return totalVolume;
+  }
+
+  /**
+   * Checks if the reaction volume field is locked.
+   * When locked, the volume value cannot be automatically recalculated.
+   *
+   * @returns {boolean} True if the volume is locked, false otherwise.
+   */
+  get isVolumeLocked() {
+    return !!this.lock_reaction_volume;
   }
 
   get purificationSolventVolume() {
