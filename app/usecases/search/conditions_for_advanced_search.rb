@@ -185,7 +185,7 @@ module Usecases
       def sanitize_float_fields?(filter)
         fields = %w[
           boiling_point melting_point density molarity_value target_amount_value purity
-          temperature duration molecular_mass amount
+          temperature duration molecular_mass amount passage optimal_growth_temp
         ]
         fields.include?(filter['field']['column']) && filter['field']['table'] != 'segments'
       end
@@ -600,6 +600,10 @@ module Usecases
         field_table_inner_join =
           'INNER JOIN cellline_materials ON cellline_materials.id = cellline_samples.cellline_material_id'
         @conditions[:joins] << field_table_inner_join if @conditions[:joins].exclude?(field_table_inner_join)
+
+        if %w[organism tissue disease].include?(filter['field']['column'])
+          @conditions[:field] = "#{filter['field']['column']}::TEXT"
+        end
       end
     end
   end

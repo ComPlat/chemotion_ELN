@@ -614,7 +614,7 @@ module Chemotion
             conditions: conditions,
           ).perform!
 
-          results['cell_lines'] = results['cellline_samples']
+          results['cell_lines'] = results['cellline_samples'] if results['cellline_samples'].present?
           results
         end
       end

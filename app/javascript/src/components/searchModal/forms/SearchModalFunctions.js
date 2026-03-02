@@ -164,7 +164,7 @@ const searchValuesByFilters = (store) => {
       } else if (val.field.table == 'device_descriptions' && val.field.opt !== undefined) {
         const label = `${val.field.column.toLowerCase()} ${val.field.label.toLowerCase()}`;
         searchValues.push([val.link, table, label, val.match, value, val.unit].join(" "));
-      } else if (val.available_options.length >= 1) {
+      } else if (val?.available_options?.length >= 1) {
         let values = searchValuesByAvailableOptions(val, table);
         searchValues.push([val.link, table, val.field.label.toLowerCase(), val.match, value, val.unit].join(" "));
         searchValues.push(...values);

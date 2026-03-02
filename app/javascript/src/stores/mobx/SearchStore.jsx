@@ -102,6 +102,7 @@ export const SearchStore = types
           if (value.error !== undefined && value.error !== '' && errorExists === undefined) {
             self.result_error_messages.push(value.error);
           }
+          if (key == 'cellline_samples') { return }
           let searchResult;
           if (key == 'structure_svg') {
             self.structure_svg = value.svg;

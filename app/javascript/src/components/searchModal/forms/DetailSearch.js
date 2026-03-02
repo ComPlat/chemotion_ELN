@@ -744,6 +744,9 @@ const DetailSearch = () => {
       case 'planned_maintenance_time':
       case 'unexpected_maintenance_date':
       case 'unexpected_maintenance_time':
+      case 'optimal_growth_temp':
+      case 'amount':
+      case 'passage':
         return searchStore.numeric_match;
       case 'unit_measurement':
       case 'solvent_smiles':
