@@ -89,7 +89,7 @@ const handleSearch = (store, uiState) => {
       isSync: uiState.isSync,
       moleculeSort: true,
     });
-    store.clearSearchAndTabResults();
+    // store.clearSearchAndTabResults();
     searchValuesByFilters(store);
   }
 }
