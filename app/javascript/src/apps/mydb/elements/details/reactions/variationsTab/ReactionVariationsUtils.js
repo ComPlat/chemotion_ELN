@@ -520,10 +520,6 @@ function getPropertyColumnGroupChild(propertyType, gasMode, externalEntryDefs = 
   }
 }
 
-function groupNameAssembler(cellData) {
-  return `${cellData.group}.${cellData.subgroup}`;
-}
-
 function getMetadataColumnGroupChild(metadataType) {
   switch (metadataType) {
     case 'notes':
@@ -884,5 +880,4 @@ export {
   getSegmentData,
   formatReactionSegments,
   sanitizeGroupEntry,
-  groupNameAssembler,
 };
