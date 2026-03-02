@@ -40,6 +40,11 @@ export default class SampleDetailsComponents extends React.Component {
       activeTab: 'concentration',
     };
 
+    // Counter to track pending molecule update requests
+    this.pendingMoleculeRequests = 0;
+    // Sequence counter to ensure only the latest molecule update is applied
+    this.moleculeUpdateSequence = 0;
+
     this.dropSample = this.dropSample.bind(this);
     this.dropMaterial = this.dropMaterial.bind(this);
     this.deleteMixtureComponent = this.deleteMixtureComponent.bind(this);
@@ -54,6 +59,8 @@ export default class SampleDetailsComponents extends React.Component {
     this.handleModalAction = this.handleModalAction.bind(this);
     this.handleTabSelect = this.handleTabSelect.bind(this);
     this.updatePurity = this.updatePurity.bind(this);
+    this.startMoleculeUpdate = this.startMoleculeUpdate.bind(this);
+    this.endMoleculeUpdate = this.endMoleculeUpdate.bind(this);
   }
 
   /**
@@ -173,6 +180,81 @@ export default class SampleDetailsComponents extends React.Component {
     }
     checkComponentVolumeAndNotify(sample);
     onChange(sample);
+  }
+
+  /**
+   * Starts a molecule update request and manages loading state.
+   * Increments the pending request counter and sets loading to true if first request.
+   */
+  startMoleculeUpdate() {
+    const { setMoleculeLoading } = this.props;
+    this.pendingMoleculeRequests += 1;
+    if (this.pendingMoleculeRequests === 1) {
+      setMoleculeLoading(true);
+    }
+  }
+
+  /**
+   * Starts a sequenced molecule update to prevent race conditions.
+   * @returns {number} The sequence number for this update request
+   */
+  startSequencedMoleculeUpdate() {
+    this.startMoleculeUpdate();
+    this.moleculeUpdateSequence += 1;
+    return this.moleculeUpdateSequence;
+  }
+
+  /**
+   * Ends a molecule update request and manages loading state.
+   * Decrements the pending request counter and sets loading to false if no pending requests.
+   */
+  endMoleculeUpdate() {
+    const { setMoleculeLoading } = this.props;
+    this.pendingMoleculeRequests = Math.max(0, this.pendingMoleculeRequests - 1);
+    if (this.pendingMoleculeRequests === 0) {
+      setMoleculeLoading(false);
+    }
+  }
+
+  /**
+   * Checks if the given sequence number is still current (not superseded by newer requests).
+   * @param {number} sequenceNumber - The sequence number to check
+   * @returns {boolean} True if this sequence is still the latest
+   */
+  isSequenceCurrent(sequenceNumber) {
+    return sequenceNumber === this.moleculeUpdateSequence;
+  }
+
+  /**
+   * Updates the mixture molecule in the background after component deletion.
+   * Handles race conditions where additional deletions may occur during the async fetch.
+   * @param {Sample} sample - The sample to update
+   * @param {number} updateSequence - The sequence number for this update
+   * @param {number} expectedComponentCount - The expected component count after deletion
+   * @param {Function} onChange - Callback to trigger UI update
+   */
+  async updateMoleculeAfterDeletion(sample, updateSequence, expectedComponentCount, onChange) {
+    if (!this.isSequenceCurrent(updateSequence)) return;
+
+    try {
+      await sample.updateMixtureMolecule();
+    } catch (error) {
+      console.error('Error updating mixture molecule after deletion:', error);
+      return;
+    }
+
+    // After async operation, verify state is still valid:
+    // - Sequence must still be current
+    // - Component count must match (user may have deleted more while waiting)
+    const currentComponentCount = sample.components?.length || 0;
+    if (this.isSequenceCurrent(updateSequence) && currentComponentCount === expectedComponentCount) {
+      onChange(sample);
+    } else if (currentComponentCount === 0) {
+      // Components were all deleted while we were fetching - ensure molecule is cleared
+      sample.clearMoleculeData();
+      onChange(sample);
+    }
+    // If count changed but not zero, a newer sequence will handle the correct update
   }
 
   /**
@@ -382,7 +464,7 @@ export default class SampleDetailsComponents extends React.Component {
 
     splitSample.material_group = tagGroup;
 
-    const { onChange, setMoleculeLoading } = this.props;
+    const { onChange } = this.props;
 
     if (splitSample.isMixture()) {
       ComponentsFetcher.fetchComponentsBySampleId(srcSample.id)
@@ -396,36 +478,41 @@ export default class SampleDetailsComponents extends React.Component {
 
           // Phase 1: add components synchronously and re-render immediately
           sample.addMixtureComponentsSync(sampleComponents);
-          setMoleculeLoading(true);
+          const updateSequence = this.startSequencedMoleculeUpdate();
           onChange(sample);
 
           // Phase 2: fetch combined molecule/SVG in the background, then re-render
           try {
             await sample.updateMixtureMolecule();
+            // Only apply the result if this is still the latest request
+            if (this.isSequenceCurrent(updateSequence)) {
+              onChange(sample);
+            }
           } finally {
-            setMoleculeLoading(false);
+            this.endMoleculeUpdate();
           }
-          onChange(sample);
         }).catch((errorMessage) => {
           console.error(errorMessage);
-          setMoleculeLoading(false);
         });
     } else {
       // Phase 1: add component synchronously and re-render immediately
       sample.addMixtureComponentSync(splitSample);
-      setMoleculeLoading(true);
+      const updateSequence = this.startSequencedMoleculeUpdate();
       onChange(sample);
 
       // Phase 2: fetch combined molecule/SVG in the background, then re-render
       sample.updateMixtureMolecule()
         .then(() => {
-          onChange(sample);
+          // Only apply the result if this is still the latest request
+          if (this.isSequenceCurrent(updateSequence)) {
+            onChange(sample);
+          }
         })
         .catch((errorMessage) => {
           console.error('Error updating mixture molecule:', errorMessage);
         })
         .finally(() => {
-          setMoleculeLoading(false);
+          this.endMoleculeUpdate();
         });
     }
   }
@@ -464,12 +551,19 @@ export default class SampleDetailsComponents extends React.Component {
       sample.moveMaterial(srcMat, srcGroup, tagMat, tagGroup);
       onChange(sample);
     } else if (action === 'merge') {
+      const updateSequence = this.startSequencedMoleculeUpdate();
       sample.mergeComponents(srcMat, srcGroup, tagMat, tagGroup)
         .then(() => {
-          onChange(sample);
+          // Only apply the result if this is still the latest request
+          if (this.isSequenceCurrent(updateSequence)) {
+            onChange(sample);
+          }
         })
         .catch((error) => {
           console.error('Error merging components:', error);
+        })
+        .finally(() => {
+          this.endMoleculeUpdate();
         });
     }
   }
@@ -483,13 +577,24 @@ export default class SampleDetailsComponents extends React.Component {
 
     // Set loading state for component deletion
     setComponentDeletionLoading(true);
+    const updateSequence = this.startSequencedMoleculeUpdate();
 
     try {
-      await sample.deleteMixtureComponent(component);
-      onChange(sample);
+      // Phase 1: Fast operations - immediate UI update with mass changes
+      sample.deleteMixtureComponent(component);
+      onChange(sample); // Immediate update with new mass
+
+      // Capture expected component count AFTER deletion
+      const expectedComponentCount = sample.components?.length || 0;
+
+      // Phase 2: Slow molecule update in background - only if components remain
+      if (expectedComponentCount > 0 && sample.molecule_cano_smiles) {
+        await this.updateMoleculeAfterDeletion(sample, updateSequence, expectedComponentCount, onChange);
+      }
     } finally {
-      // Clear loading state
+      // Clear loading states
       setComponentDeletionLoading(false);
+      this.endMoleculeUpdate();
     }
   }
 

@@ -371,7 +371,7 @@ export default class SampleDetails extends React.Component {
     const fetchMolecule = (fetchFunction) => {
       fetchFunction()
         .then(fetchSuccess).catch(fetchError).finally(() => {
-          this.splitSmiles(editor, svgFile);
+          this.splitSmiles(editor);
           this.hideStructureEditor();
         });
     };

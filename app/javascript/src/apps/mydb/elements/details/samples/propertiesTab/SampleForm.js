@@ -1254,8 +1254,12 @@ SampleForm.propTypes = {
   customizableField: PropTypes.func.isRequired,
   enableSampleDecoupled: PropTypes.bool,
   decoupleMolecule: PropTypes.func.isRequired,
+  setComponentDeletionLoading: PropTypes.func,
+  setMoleculeLoading: PropTypes.func,
 };
 
 SampleForm.defaultProps = {
   enableSampleDecoupled: false,
+  setComponentDeletionLoading: () => {},
+  setMoleculeLoading: () => {},
 };
