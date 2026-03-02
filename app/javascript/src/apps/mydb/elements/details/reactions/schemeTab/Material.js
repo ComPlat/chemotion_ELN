@@ -103,6 +103,7 @@ class Material extends Component {
     this.handleMetricsChange = this.handleMetricsChange.bind(this);
     this.gasFieldsUnitsChanged = this.gasFieldsUnitsChanged.bind(this);
     this.handleCoefficientChange = this.handleCoefficientChange.bind(this);
+    this.handleConcentrationChange = this.handleConcentrationChange.bind(this);
     this.debounceHandleAmountUnitChange = debounce(this.handleAmountUnitChange, 500);
     this.yieldOrConversionRate = this.yieldOrConversionRate.bind(this);
     this.toggleComponentsAccordion = this.toggleComponentsAccordion.bind(this);
@@ -194,6 +195,7 @@ class Material extends Component {
    * @returns {JSX.Element} A table cell containing the concentration input component
    */
   materialConcentration(material) {
+    const { reaction } = this.props;
     const metricMolConc = getMetricMolConc(material);
 
     // For SBMM samples, use concentration_rt_value directly (automatically calculated)
@@ -209,12 +211,34 @@ class Material extends Component {
         metricPrefix={metricMolConc}
         metricPrefixes={metricPrefixesMolConc}
         precision={4}
-        disabled
+        disabled={!permitOn(reaction)}
         onChange={(e) => this.handleAmountUnitChange(e, concentrationValue)}
         onMetricsChange={this.handleMetricsChange}
         size="sm"
       />
     );
+  }
+
+  /**
+   * Handles changes to a material's concentration value.
+   * Emits a 'concentrationChanged' event to trigger recalculation of material amounts.
+   *
+   * @param {Object} e - The change event containing new concentration value
+   * @param {number} currentValue - Current concentration value for comparison
+   */
+  handleConcentrationChange(e, currentValue) {
+    const { materialGroup, onChange } = this.props;
+    if (e.value === currentValue) return;
+
+    if (onChange && e) {
+      const event = {
+        concentration: e,
+        type: 'concentrationChanged',
+        materialGroup,
+        sampleID: this.materialId(),
+      };
+      onChange(event);
+    }
   }
 
   materialRef(material) {

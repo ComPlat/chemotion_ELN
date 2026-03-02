@@ -83,6 +83,7 @@ export default class ReactionDetailsScheme extends React.Component {
     this.reactionVolume = this.reactionVolume.bind(this);
     this.updateVolume = this.updateVolume.bind(this);
     this.handleVolumeCheckboxChange = this.handleVolumeCheckboxChange.bind(this);
+    this.switchVolumeLock = this.switchVolumeLock.bind(this);
   }
 
   componentDidMount() {
@@ -1933,6 +1934,12 @@ export default class ReactionDetailsScheme extends React.Component {
     );
   }
 
+  switchVolumeLock() {
+    const { reaction, onReactionChange } = this.props;
+    reaction.lock_reaction_volume = !reaction.lock_reaction_volume;
+    onReactionChange(reaction, { updateGraphic: false });
+  }
+
   reactionVolume() {
     const { reaction } = this.props;
     const isDisabled = !permitOn(reaction) || reaction.isMethodDisabled('volume');
@@ -1950,7 +1957,29 @@ export default class ReactionDetailsScheme extends React.Component {
 
       return (
         <Form.Group>
-          <Form.Label>Reaction volume</Form.Label>
+          <Form.Label>
+            Reaction volume
+            <OverlayTrigger
+              placement="top"
+              overlay={(
+                <Tooltip id="lock_volume_tooltip">
+                  Lock/unlock reaction volume
+                  <br />
+                  When locked, volume won&apos;t be auto-calculated
+                </Tooltip>
+              )}
+            >
+              <Button
+                id="lock_reaction_volume_btn"
+                size="sm"
+                variant={reaction.isVolumeLocked ? 'warning' : 'light'}
+                onClick={this.switchVolumeLock}
+                className="ms-1 py-0 px-1"
+              >
+                <i className={reaction.isVolumeLocked ? 'fa fa-lock' : 'fa fa-unlock'} />
+              </Button>
+            </OverlayTrigger>
+          </Form.Label>
           <NumeralInputWithUnitsCompo
             value={volumeValue}
             unit="l"
