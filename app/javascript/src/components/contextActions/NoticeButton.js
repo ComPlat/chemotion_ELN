@@ -28,11 +28,16 @@ const changeUrl = (url, urlTitle) => (url ? (
 ));
 
 const handleNotification = (nots, act, needCallback = true) => {
+  let count = 0;
   nots.forEach((n) => {
     if (act === 'rem') {
       NotificationActions.removeByUid(n.id);
     }
     if (act === 'add') {
+      count += 1;
+      if (count > 3) {
+        return;
+      }
       const infoTimeString = formatDate(n.created_at);
 
       const newText = n.content.data
@@ -65,7 +70,6 @@ const handleNotification = (nots, act, needCallback = true) => {
               const params = { ids: [] };
               params.ids[0] = n.id;
               MessagesFetcher.acknowledgedMessage(params);
-              // .then((result) => { console.log(JSON.stringify(result)); });
             }
           },
         },
@@ -119,10 +123,20 @@ const handleNotification = (nots, act, needCallback = true) => {
           }
           break;
         default:
-        //
       }
     }
   });
+
+  if (count > 3) {
+    const notification = {
+      title: `You have ${count - 3} more notification${count > 4 ? 's' : ''}`,
+      level: 'warning',
+      autoDismiss: 5,
+      position: 'tr',
+    };
+
+    NotificationActions.add(notification);
+  }
 };
 
 const createUpgradeNotification = (serverVersion, localVersion) => {
@@ -152,6 +166,7 @@ const createUpgradeNotification = (serverVersion, localVersion) => {
 
 export default class NoticeButton extends React.Component {
   static contextType = StoreContext;
+
   constructor(props) {
     super(props);
     this.state = {
@@ -219,7 +234,7 @@ export default class NoticeButton extends React.Component {
 
   handleShow() {
     MessagesFetcher.fetchMessages(0).then((result) => {
-      result.messages.sort((a, b) => a.id - b.id);
+      result.messages.sort((a, b) => b.id - a.id);
       this.setState({ showModal: true, dbNotices: result.messages });
     });
   }
@@ -299,7 +314,7 @@ export default class NoticeButton extends React.Component {
         this.state.dbNotices,
         (o) => !_.includes(ackIds, o.id)
       );
-      dbNotices.sort((a, b) => a.id - b.id);
+      dbNotices.sort((a, b) => b.id - a.id);
       this.setState({
         dbNotices,
       });
@@ -319,7 +334,7 @@ export default class NoticeButton extends React.Component {
           if (message.subject === 'Send TPA attachment arrival notification')
             this.context.attachmentNotificationStore.addMessage(message);
         });
-        result.messages.sort((a, b) => a.id - b.id);
+        result.messages.sort((a, b) => b.id - a.id);
         this.setState({
           dbNotices: result.messages,
           serverVersion: result.version,
