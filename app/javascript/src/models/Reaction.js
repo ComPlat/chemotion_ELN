@@ -870,6 +870,10 @@ export default class Reaction extends Element {
     return this.reactant_sbmm_samples.find((s) => s.id === sampleID);
   }
 
+  findReactionSample(sampleID, isSbmm = false) {
+    return isSbmm ? this.findSbmmSample(sampleID) : this.sampleById(sampleID);
+  }
+
   /**
    * Gets the reference material for the reaction (either regular sample or SBMM sample)
    * @returns {Sample|SequenceBasedMacromoleculeSample|undefined} The reference material, or undefined if none exists
@@ -923,9 +927,11 @@ export default class Reaction extends Element {
     });
   }
 
-  toggleShowLabelForSample(sampleID) {
-    const sample = this.sampleById(sampleID);
-    sample.show_label = ((sample.decoupled && !sample.molfile) ? true : !sample.show_label);
+  toggleShowLabelForSample(sampleID, isSbmm = false) {
+    const sample = this.findReactionSample(sampleID, isSbmm);
+    if (!sample) return;
+
+    sample.show_label = isSbmm || (sample.decoupled && !sample.molfile) ? true : !sample.show_label;
   }
 
   _setAsReferenceMaterial(sample) {

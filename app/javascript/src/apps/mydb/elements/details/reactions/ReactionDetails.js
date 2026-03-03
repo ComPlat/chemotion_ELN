@@ -1046,8 +1046,8 @@ export default class ReactionDetails extends Component {
         <ReactionSchemeGraphic
           key={`reaction-graphic-${reaction.id}-${this.state.reactionSvgVersion || 0}`}
           reaction={reaction}
-          onToggleLabel={(materialId) => {
-            reaction.toggleShowLabelForSample(materialId);
+          onToggleLabel={(materialId, isSbmm) => {
+            reaction.toggleShowLabelForSample(materialId, isSbmm);
             this.handleReactionChange(reaction, { updateGraphic: true });
           }}
           onRefresh={() => this.refreshGraphic()}

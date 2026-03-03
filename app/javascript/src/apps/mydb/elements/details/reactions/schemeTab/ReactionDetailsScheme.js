@@ -414,7 +414,7 @@ export default class ReactionDetailsScheme extends React.Component {
   }
 
   updateDraggedMaterialGasType(reaction, srcMat, srcGroup, tagMat, tagGroup) {
-    const updatedSample = this.findReactionSample(srcMat.id, isSbmmSample(srcMat));
+    const updatedSample = reaction.findReactionSample(srcMat.id, isSbmmSample(srcMat));
     const conditions = tagGroup === 'solvents'
     || ((srcGroup === 'reactants' || srcGroup === 'starting_materials') && tagGroup === 'products')
     || ((srcGroup === 'products') && (tagGroup === 'reactants' || tagGroup === 'starting_materials'));
@@ -633,33 +633,14 @@ export default class ReactionDetailsScheme extends React.Component {
   }
 
   /**
-   * Unified sample lookup that handles both regular samples and SBMM samples.
-   *
-   * Since SBMM (Sequence-Based Macromolecule) samples are stored separately from regular samples,
-   * this method provides a convenient way to retrieve either type based on the isSbmm flag.
-   * This eliminates the need for conditional logic throughout the component.
-   *
-   * @param {string|number} sampleID - The ID of the sample to retrieve
-   * @param {boolean} [isSbmm=false] - If true, searches SBMM samples; if false, searches regular samples
-   * @returns {Sample|SequenceBasedMacromoleculeSample} The sample object, or undefined if not found
-   */
-  findReactionSample(sampleID, isSbmm = false) {
-    const { reaction } = this.props;
-
-    // SBMM and regular samples are stored in different collections.
-    return isSbmm
-      ? reaction.findSbmmSample(sampleID)
-      : reaction.sampleById(sampleID);
-  }
-
-  /**
    * Handles external label changes for both regular and SBMM samples.
    * External labels are typically used for solvent or reagent descriptions.
    */
   updatedReactionForExternalLabelChange(changeEvent) {
+    const { reaction } = this.props;
     const { sampleID, externalLabel, isSbmm } = changeEvent;
     // Use unified lookup to get either regular or SBMM sample
-    const updatedSample = this.findReactionSample(sampleID, isSbmm === true);
+    const updatedSample = reaction.findReactionSample(sampleID, isSbmm === true);
 
     updatedSample.external_label = externalLabel;
 
@@ -680,7 +661,7 @@ export default class ReactionDetailsScheme extends React.Component {
     const { reaction } = this.props;
 
     const isSbmm = changeEvent.isSbmm === true;
-    const sample = this.findReactionSample(sampleID, isSbmm);
+    const sample = reaction.findReactionSample(sampleID, isSbmm);
     if (!sample) return reaction;
 
     if (type === 'weightPercentageReferenceChanged') {
@@ -717,9 +698,10 @@ export default class ReactionDetailsScheme extends React.Component {
    * Both regular and SBMM samples support the same setAmountAndNormalizeToGram method.
    */
   updatedReactionForAmountChange(changeEvent) {
+    const { reaction } = this.props;
     const { sampleID, amount, isSbmm } = changeEvent;
     // Use unified lookup to get either regular or SBMM sample
-    const updatedSample = this.findReactionSample(sampleID, isSbmm === true);
+    const updatedSample = reaction.findReactionSample(sampleID, isSbmm === true);
 
     // When amount_g or amount_l is manually changed by user, clear the reference_component_changed flag
     // so that amount_mol will be calculated from amount_g instead of using reference component's amount_mol
@@ -748,7 +730,7 @@ export default class ReactionDetailsScheme extends React.Component {
     const { reaction } = this.props;
     const { sampleID, amount, isSbmm } = changeEvent;
     // Use unified lookup to get either regular or SBMM sample
-    const updatedSample = this.findReactionSample(sampleID, isSbmm === true);
+    const updatedSample = reaction.findReactionSample(sampleID, isSbmm === true);
 
     // normalize to milligram
     // updatedSample.setAmountAndNormalizeToGram(amount);
@@ -797,12 +779,13 @@ export default class ReactionDetailsScheme extends React.Component {
    * Both sample types support the setUnitMetrics method which updates their unit representation.
    */
   updatedReactionForMetricsChange(changeEvent) {
+    const { reaction } = this.props;
     const {
       sampleID, metricUnit, metricPrefix, isSbmm
     } = changeEvent;
 
     // Use unified lookup to get either regular or SBMM sample
-    const updatedSample = this.findReactionSample(sampleID, isSbmm === true);
+    const updatedSample = reaction.findReactionSample(sampleID, isSbmm === true);
 
     // Both SBMM and regular samples have setUnitMetrics method
     // SBMM samples update unit fields directly, regular samples update metrics string
@@ -846,9 +829,10 @@ export default class ReactionDetailsScheme extends React.Component {
    * Handles loading/amountType changes for both regular and SBMM samples.
    */
   updatedReactionForLoadingChange(changeEvent) {
+    const { reaction } = this.props;
     const { sampleID, amountType, isSbmm } = changeEvent;
     // Use unified lookup to get either regular or SBMM sample
-    const updatedSample = this.findReactionSample(sampleID, isSbmm === true);
+    const updatedSample = reaction.findReactionSample(sampleID, isSbmm === true);
 
     updatedSample.amountType = amountType;
 
@@ -859,9 +843,10 @@ export default class ReactionDetailsScheme extends React.Component {
    * Handles amount type changes for both regular and SBMM samples.
    */
   updatedReactionForAmountTypeChange(changeEvent) {
+    const { reaction } = this.props;
     const { sampleID, amountType, isSbmm } = changeEvent;
     // Use unified lookup to get either regular or SBMM sample
-    const updatedSample = this.findReactionSample(sampleID, isSbmm === true);
+    const updatedSample = reaction.findReactionSample(sampleID, isSbmm === true);
 
     updatedSample.amountType = amountType;
 
@@ -872,9 +857,10 @@ export default class ReactionDetailsScheme extends React.Component {
    * Handles stoichiometry coefficient changes for both regular and SBMM samples.
    */
   updatedReactionForCoefficientChange(changeEvent) {
+    const { reaction } = this.props;
     const { sampleID, coefficient, isSbmm } = changeEvent;
     // Use unified lookup to get either regular or SBMM sample
-    const updatedSample = this.findReactionSample(sampleID, isSbmm === true);
+    const updatedSample = reaction.findReactionSample(sampleID, isSbmm === true);
 
     updatedSample.coefficient = coefficient;
     // enable update of equivalent only if weight percentage is not set
@@ -917,7 +903,7 @@ export default class ReactionDetailsScheme extends React.Component {
     const {
       sampleID, equivalent, weightPercentageField, isSbmm
     } = changeEvent;
-    const updatedSample = this.findReactionSample(sampleID, isSbmm === true);
+    const updatedSample = reaction.findReactionSample(sampleID, isSbmm === true);
     if (!updatedSample) return reaction;
 
     updatedSample.equivalent = equivalent;
