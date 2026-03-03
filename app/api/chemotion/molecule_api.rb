@@ -191,10 +191,12 @@ module Chemotion
         ob = molecule&.ob_log
         svg_digest = "#{molecule.inchikey}#{Time.zone.now}"
 
-        if svg.present? && svg.include?('epam-ketcher-ssc')
+        if false && svg.present? && svg.include?('epam-ketcher-ssc')
           svg = KetcherService::SVGProcessor.clean_and_trim_svg(svg) || svg
           svg_process = SVG::Processor.new.structure_svg('ketcher_epam', svg, svg_digest, true)
         else
+          # Keep polymer metadata in the payload; SvgRenderer will clean for rendering
+          # and then inject polymer images/text into the resulting SVG.
           svg = Molecule.svg_reprocess(nil, molfile)
           return error!('Failed to generate SVG from molfile', 422) if svg.blank?
 

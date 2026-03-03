@@ -134,23 +134,23 @@ module KetcherService
 
     def text_extrema
       texts.each do |element|
-        if !element["style"].match(/display:\s*none/)
-          coordinates = splitxy_for_text(element)
-          sx,sy = *get_internal_transform_shift(element)
-          coordinates.map!{|xy| x,y = *xy; [x+sx,y+sy]}
-          minmax(coordinates)
-        end
+        style = element["style"].to_s
+        next if style.match(/display:\s*none/)
+        coordinates = splitxy_for_text(element)
+        sx,sy = *get_internal_transform_shift(element)
+        coordinates.map!{|xy| x,y = *xy; [x+sx,y+sy]}
+        minmax(coordinates)
       end
     end
 
     def circle_extrema
       circles.each do |element|
-        if !element["style"].match(/display:\s*none/)
-          coordinates = splitxy_for_circle(element)
-          sx,sy = *get_internal_transform_shift(element)
-          coordinates.map!{|xy| x,y = *xy; [x+sx,y+sy]}
-          minmax(coordinates)
-        end
+        style = element["style"].to_s
+        next if style.match(/display:\s*none/)
+        coordinates = splitxy_for_circle(element)
+        sx,sy = *get_internal_transform_shift(element)
+        coordinates.map!{|xy| x,y = *xy; [x+sx,y+sy]}
+        minmax(coordinates)
       end
     end
 
