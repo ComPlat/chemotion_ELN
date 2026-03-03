@@ -1119,6 +1119,8 @@ ActiveRecord::Schema.define(version: 2026_02_19_120000) do
     t.datetime "deleted_at"
     t.boolean "reference", default: false, null: false
     t.boolean "show_label", default: false, null: false
+    t.float "equivalent"
+    t.float "weight_percentage"
     t.datetime "created_at"
     t.datetime "updated_at"
     t.jsonb "log_data"

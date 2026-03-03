@@ -97,10 +97,7 @@ module Export
     end
 
     def sdf_molfile_for(sample)
-      return sample['molfile'] if sample['molfile'].present?
-      return EMPTY_MOLFILE if sample['source_type'] == 'sbmm'
-
-      nil
+      sample['molfile'].presence
     end
 
     def extract_reference_values(raw_value)

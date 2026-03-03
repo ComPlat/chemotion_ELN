@@ -6,6 +6,9 @@ class CreateReactionsReactantSbmmSamples < ActiveRecord::Migration[6.1]
       t.integer :position
       t.datetime :deleted_at
       t.boolean :show_label, default: false, null: false
+      t.boolean :reference, default: false, null: false
+      t.float :equivalent
+      t.float :weight_percentage
       t.datetime :created_at
       t.datetime :updated_at
       t.jsonb :log_data

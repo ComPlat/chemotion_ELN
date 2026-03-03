@@ -358,7 +358,6 @@ module Usecases
         modified_sbmm.update!(
           name: sbmm_data.name,
           external_label: sbmm_data.external_label,
-          equivalent: sbmm_data.equivalent,
           amount_as_used_mass_value: sbmm_data.amount_as_used_mass_value,
           amount_as_used_mass_unit: sbmm_data.amount_as_used_mass_unit,
           amount_as_used_mol_value: sbmm_data.amount_as_used_mol_value,
@@ -388,7 +387,6 @@ module Usecases
         existing_sbmm.update!(
           name: sbmm_data.name,
           external_label: sbmm_data.external_label,
-          equivalent: sbmm_data.equivalent,
           amount_as_used_mass_value: sbmm_data.amount_as_used_mass_value,
           amount_as_used_mass_unit: sbmm_data.amount_as_used_mass_unit,
           amount_as_used_mol_value: sbmm_data.amount_as_used_mol_value,
@@ -425,6 +423,8 @@ module Usecases
             reference: sbmm_data.reference,
             show_label: sbmm_data.show_label || false,
             position: sbmm_data.position,
+            equivalent: sbmm_data.equivalent,
+            weight_percentage: sbmm_data.weight_percentage,
           )
         else
           ReactionsReactantSbmmSample.create!(
@@ -433,6 +433,8 @@ module Usecases
             reference: sbmm_data.reference,
             show_label: sbmm_data.show_label || false,
             position: sbmm_data.position,
+            equivalent: sbmm_data.equivalent,
+            weight_percentage: sbmm_data.weight_percentage,
           )
         end
       end

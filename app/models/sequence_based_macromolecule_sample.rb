@@ -21,7 +21,6 @@
 #  concentration_unit              :string           default("ng/L"), not null
 #  concentration_value             :float
 #  deleted_at                      :datetime
-#  equivalent                      :float
 #  external_label                  :string
 #  formulation                     :string           default("")
 #  function_or_application         :string
@@ -41,7 +40,6 @@
 #  tissue                          :string           default("")
 #  volume_as_used_unit             :string           default("L"), not null
 #  volume_as_used_value            :float
-#  weight_percentage               :float
 #  created_at                      :datetime         not null
 #  updated_at                      :datetime         not null
 #  sequence_based_macromolecule_id :bigint
@@ -50,15 +48,11 @@
 #
 # Indexes
 #
-#  idx_sbmm_samples_ancestry    (ancestry)
-#  idx_sbmm_samples_deleted_at  (deleted_at)
-#  idx_sbmm_samples_sbmm        (sequence_based_macromolecule_id)
-#  idx_sbmm_samples_user        (user_id)
-#
-# Foreign Keys
-#
-#  fk_rails_...  (sequence_based_macromolecule_id => sequence_based_macromolecules.id)
-#  fk_rails_...  (user_id => users.id)
+#  idx_sbmm_samples_ancestry          (ancestry)
+#  idx_sbmm_samples_deleted_at        (deleted_at)
+#  idx_sbmm_samples_inventory_sample  (inventory_sample)
+#  idx_sbmm_samples_sbmm              (sequence_based_macromolecule_id)
+#  idx_sbmm_samples_user              (user_id)
 #
 class SequenceBasedMacromoleculeSample < ApplicationRecord
   acts_as_paranoid

@@ -9,5 +9,7 @@ module Entities
     expose! :position
     expose! :reference
     expose! :show_label
+    expose! :equivalent
+    expose! :weight_percentage
   end
 end
