@@ -259,7 +259,26 @@ module Chemotion
           begin
             attach.save!
             attach_ary.push(attach.id)
-          rescue StandardError
+            match, variation = attach.resolve_unique_match
+
+            if match # auto assign to element
+              analysis_name = attach.filename.chomp(File.extname(attach.filename))
+              dataset = match.container.analyses_container.create_analysis_with_dataset!(name: analysis_name)
+              attach.update!(attachable: dataset)
+              type = match.model_name.singular
+              @link = "#{Rails.application.config.root_url}/mydb/collection/all/#{type}/#{match.id}"
+              match.assign_attachment_to_variation(variation, dataset.parent_id) if match.is_a?(Reaction)
+
+              Message.create_msg_notification(
+                channel_subject: Channel::ASSIGN_INBOX_TO_SAMPLE,
+                message_from: current_user.id,
+                data_args: { filename: attach.filename, info: "#{match.short_label} #{match.name}" },
+                url: @link,
+                level: 'success',
+              )
+            end
+          rescue StandardError => e
+            Rails.logger.error(e)
             status 413
           ensure
             tempfile.close
