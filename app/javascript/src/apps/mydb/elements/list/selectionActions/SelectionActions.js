@@ -247,7 +247,7 @@ export default class SelectionActions extends React.Component {
           onClick={ElementActions.showLiteratureDetail}
         >
           <i className="fa fa-book me-1" />
-          <span className="selection-action-text-label">Literature</span>
+          <span className="selection-action-text-label">References</span>
         </Button>
         {this.renderModal()}
       </div>
