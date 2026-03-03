@@ -10,7 +10,7 @@ import {
 } from 'mocha';
 // Use relative path for Jest compatibility
 import ColumnMappingComponent from
-  '../../../../../../../../app/javascript/src/apps/mydb/collections/ColumnMappingComponent';
+  'src/apps/mydb/collections/ColumnMappingComponent';
 
 configure({ adapter: new Adapter() });
 
