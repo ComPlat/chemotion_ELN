@@ -638,7 +638,7 @@ module Chemotion
 
         unless is_shared_collection
           all_coll = Collection.get_all_collection_for_user(current_user.id)
-          sample.collections << all_coll
+          sample.collections << all_coll if all_coll.present? && sample.collection_ids.exclude?(all_coll.id)
         end
 
         sample.container = update_datamodel(params[:container])

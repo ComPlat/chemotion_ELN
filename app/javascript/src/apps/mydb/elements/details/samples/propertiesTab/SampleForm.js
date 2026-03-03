@@ -473,7 +473,9 @@ export default class SampleForm extends React.Component {
   }
 
   handleFieldChanged(field, e, unit = null) {
-    const { sample, handleSampleChanged } = this.props;
+    const {
+      sample, handleSampleChanged, onDecoupleChanged, decoupleMolecule
+    } = this.props;
     if (field === 'purity' && (e.value < 0 || e.value > 1)) {
       e.value = 1;
       sample[field] = e.value;
@@ -506,8 +508,8 @@ export default class SampleForm extends React.Component {
     sample.formulaChanged = this.formulaChanged();
 
     if (field === 'decoupled') {
-      if (this.props.onDecoupleChanged) {
-        this.props.onDecoupleChanged(e);
+      if (onDecoupleChanged) {
+        onDecoupleChanged(e);
       } else {
         sample[field] = e;
         if (!sample[field]) {
@@ -521,7 +523,7 @@ export default class SampleForm extends React.Component {
         if (!sample[field] && ((sample.molfile || '') === '')) {
           handleSampleChanged(sample);
         } else {
-          handleSampleChanged(sample, this.props.decoupleMolecule);
+          handleSampleChanged(sample, decoupleMolecule);
         }
       }
     } else { handleSampleChanged(sample); }
