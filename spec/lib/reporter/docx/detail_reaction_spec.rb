@@ -69,7 +69,6 @@ describe 'Reporter::Docx::DetailReaction instance' do
       amount_as_used_mass_unit: 'g',
       amount_as_used_mol_value: 0.002,
       amount_as_used_mol_unit: 'mol',
-      equivalent: 0.5,
     )
   end
   let!(:correct_content) { 'analysis contents (true for report)' }

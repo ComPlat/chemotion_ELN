@@ -820,7 +820,7 @@ module ReportHelpers
           , 'sbmm'::text as source_type
           , r_s.reaction_id
           , r_s.reference
-          , sbms.equivalent
+          , r_s.equivalent
           , null::float as conversion_rate
           , r_s.position
           , 'ReactionsReactantSbmmSample'::varchar as type

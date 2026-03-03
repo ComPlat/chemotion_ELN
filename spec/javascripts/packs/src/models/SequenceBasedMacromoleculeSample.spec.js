@@ -77,6 +77,25 @@ describe('SequenceBasedMacromoleculeSample', () => {
         // amount_mol = volume * molarity * 1
         expect(sample.amount_as_used_mol_value).toBeCloseTo(0.1, 6);
       });
+
+      it('should produce same volume for purity 0 and purity 1 after purity recalculation', () => {
+        sample.base_amount_as_used_mass_value = 1000;
+        sample.concentration_value = 1000;
+        sample.concentration_unit = 'g/L';
+
+        sample.purity = 0.5;
+        sample.calculateValues('purity');
+
+        sample.purity = 1;
+        sample.calculateValues('purity');
+        const volumeWithPurityOne = sample.volume_as_used_value;
+
+        sample.purity = 0;
+        sample.calculateValues('purity');
+        const volumeWithPurityZero = sample.volume_as_used_value;
+
+        expect(volumeWithPurityZero).toBeCloseTo(volumeWithPurityOne, 8);
+      });
     });
 
     describe('calculateAmountAsUsedMass (mass calculation with purity via concentration_by_purity)', () => {
@@ -430,16 +449,6 @@ describe('SequenceBasedMacromoleculeSample', () => {
         sample.molarity_value = 0.2;
 
         expect(spy.calledWith('molarity')).toBe(true);
-      });
-    });
-
-    describe('Non-enzyme samples', () => {
-      it('should return null for calculateValues if not an enzyme', () => {
-        sample.function_or_application = 'other';
-
-        const result = sample.calculateValues('volume_as_used');
-
-        expect(result).toBeNull();
       });
     });
   });

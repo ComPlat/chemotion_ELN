@@ -431,7 +431,9 @@ export default class SequenceBasedMacromoleculeSample extends Element {
         break;
 
       case 'purity':
-        if (this.purity > 0) {
+        if (this.purity !== null && this.purity !== undefined && this.purity !== '') {
+          // Keep client-side calculations stable: treat 0/invalid purity as 1.0.
+          this._purity = this.normalizedPurityForCalculations();
           // Recalculate volume from mass: amount_l = amount_g / (concentration × purity)
           this.calculateVolumeByMass();
           // Recalculate amount_mol from volume: amount_mol = amount_l * molarity * purity
@@ -532,13 +534,18 @@ export default class SequenceBasedMacromoleculeSample extends Element {
       convertUnits(this._amount_as_used_mass_value, this.amount_as_used_mass_unit, defaultUnits.amount_as_used_mass);
   }
 
+  normalizedPurityForCalculations() {
+    const purityValue = Number(this.purity);
+    return Number.isFinite(purityValue) && purityValue > 0 ? purityValue : 1.0;
+  }
+
   calculateAmountAsUsed() {
     if (this.base_volume_as_used_value === 0 || this.base_molarity_value === 0) {
       return;
     }
 
     // Purity is always stored as decimal (0.5 for 50%)
-    const purity = this.purity > 0 ? this.purity : 1.0;
+    const purity = this.normalizedPurityForCalculations();
 
     this._amount_as_used_mol_value = convertUnits(
       parseFloat((this.base_volume_as_used_value * this.base_molarity_value * purity).toFixed(8)),
@@ -692,7 +699,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
     }
 
     // Purity is always stored as decimal (0.5 for 50%)
-    const purity = this.purity > 0 ? this.purity : 1.0;
+    const purity = this.normalizedPurityForCalculations();
 
     this._volume_as_used_value = convertUnits(
       parseFloat((this.base_amount_as_used_mol_value / (this.base_molarity_value * purity)).toFixed(8)),
@@ -1010,9 +1017,9 @@ export default class SequenceBasedMacromoleculeSample extends Element {
     }
     
     const numericValue = Number(value);
-    if (Number.isFinite(numericValue) && (numericValue <= 0 || numericValue > 1)) {
+    if (Number.isFinite(numericValue) && (numericValue < 0 || numericValue > 1)) {
       NotificationActions.add({
-        message: 'Purity value should be > 0 and <=1',
+        message: 'Purity value should be >= 0 and <=1',
         level: 'error'
       });
       // Set to 1 if invalid
