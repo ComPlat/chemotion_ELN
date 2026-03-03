@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 
 import ElementDragLayer from 'src/components/ElementDragLayer';
-import Sidebar from 'src/apps/mydb/layout/Sidebar';
-import Topbar from 'src/apps/mydb/layout/Topbar';
+import Sidebar from 'src/apps/mydb/mainNavigation/sidebar/Sidebar';
+import Topbar from 'src/apps/mydb/mainNavigation/topbar/Topbar';
 
 import FlowViewerModal from 'src/apps/generic/FlowViewerModal';
 import Elements from 'src/apps/mydb/elements/Elements';
@@ -15,6 +15,7 @@ import SampleTaskInbox from 'src/components/sampleTaskInbox/SampleTaskInbox';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import OnEventListen from 'src/utilities/UserTemplatesHelpers';
+import CreateElementButton from 'src/components/navigation/CreateElementButton';
 
 class App extends Component {
   componentDidMount() {
@@ -106,6 +107,7 @@ class App extends Component {
         <ElementDragLayer />
         {this.renderContent()}
         {this.renderModals()}
+        <CreateElementButton />
       </>
     );
   }

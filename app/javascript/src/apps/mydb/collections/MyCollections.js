@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import Tree from 'react-ui-tree';
 import { cloneDeep } from 'lodash';
 import { Button, ButtonGroup, Form, OverlayTrigger, Popover } from 'react-bootstrap';
-import ManagingModalSharing from 'src/components/managingActions/ManagingModalSharing';
+import SelectionShareModal from 'src/apps/mydb/elements/list/selectionActions/SelectionShareModal';
 import CollectionSharesEditModal from 'src/apps/mydb/collections/CollectionSharesEditModal';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
@@ -20,50 +20,49 @@ const MyCollections = () => {
     wellplateDetailLevel: 10,
     screenDetailLevel: 10,
     elementDetailLevel: 10,
-  }
+  };
   const [permissions, setPermissions] = useState(defaultPermissions);
 
   useEffect(() => {
     setClonedTree(cloneDeep(tree));
-  }, [tree])
+  }, [tree]);
 
   const handleChange = (tree) => {
     collectionsStore.setOwnCollectionTree(tree);
     collectionsStore.setUpdateTree(true);
-  }
+  };
 
   const addCollection = (node) => {
-    const params = { 
+    const params = {
       label: 'New Collection', parent_id: (node.id == -1 ? '' : node.id), inventory_id: node.inventory_id
-    }
+    };
     collectionsStore.addCollection(params, true);
-  }
+  };
 
   const changeCollectionLabel = (e, node) => {
     collectionsStore.updateCollectionLabel(e.target.value, node);
     collectionsStore.setUpdateTree(true);
-  }
+  };
 
   const bulkUpdate = () => {
-    // filter empty objects
     const collections = tree.children.filter((child) => child.label);
     collectionsStore.bulkUpdateCollection(collections);
     collectionsStore.setUpdateTree(false);
-  }
+  };
 
   const deleteCollection = (node) => {
     collectionsStore.deleteCollection(node.id);
-  }
+  };
 
   const openCollectionSharesModal = (node) => {
     setPermissions(defaultPermissions);
-    setSharesModal({ action: 'create', show: true, node: node });
-  }
+    setSharesModal({ action: 'create', show: true, node });
+  };
 
   const closeCollectionSharesModal = () => {
     setPermissions(defaultPermissions);
     setSharesModal({ action: null, show: false, node: {} });
-  }
+  };
 
   const editCollectionShares = (node, collectionShare) => {
     setPermissions({
@@ -76,24 +75,24 @@ const MyCollections = () => {
     });
     const nodeWithCollectionShare = {
       ...node, collectionShareId: collectionShare.id, sharedWith: collectionShare.shared_with
-    }
+    };
     setSharesModal({ action: 'edit', show: true, node: nodeWithCollectionShare });
-  }
+  };
 
   const deleteCollectionShares = (node, collectionShare) => {
     collectionsStore.deleteCollectionShare(collectionShare.id, node.id);
-  }
+  };
 
   const openCollectionSharesEditModal = (node) => {
     setSharesEditgModal({ show: true, node: { id: node.id, label: node.label } });
-  }
+  };
 
   const closeCollectionSharesEditModal = () => {
     setSharesEditgModal({ show: false, node: {} });
-  }
+  };
 
   const renderCollectionShareButton = (node) => {
-    if (!node.shared) { return null }
+    if (!node.shared) { return null; }
 
     const sharedWithUsers = collectionsStore.sharedWithUsers(node.id);
     const users = sharedWithUsers !== undefined ? sharedWithUsers.shared_with_users : [];
@@ -114,21 +113,19 @@ const MyCollections = () => {
         {count}
       </Button>
     );
-  }
+  };
 
-  const addCollectionButton = (node) => {
-    return (
-      <Button
-        id={`add-new-collection-button${node.id !== -1 ? `-${node.id}` : ''}`}
-        size="sm"
-        variant="success"
-        onMouseDown={(e) => e.stopPropagation()}
-        onClick={() => addCollection(node)}
-      >
-        <i className="fa fa-plus" />
-      </Button>
-    );
-  }
+  const addCollectionButton = (node) => (
+    <Button
+      id={`add-new-collection-button${node.id !== -1 ? `-${node.id}` : ''}`}
+      size="sm"
+      variant="success"
+      onMouseDown={(e) => e.stopPropagation()}
+      onClick={() => addCollection(node)}
+    >
+      <i className="fa fa-plus" />
+    </Button>
+  );
 
   const actions = (node) => {
     if (node.id == -1) {
@@ -154,7 +151,7 @@ const MyCollections = () => {
     const popover = (
       <Popover>
         <Popover.Body>
-          <div className="mb-2">Do you really want to delete "{node.label}"?</div>
+          <div className="mb-2">Do you really want to delete &quot;{node.label}&quot;?</div>
           <ButtonGroup>
             <Button
               variant="danger"
@@ -181,7 +178,6 @@ const MyCollections = () => {
     return (
       <ButtonGroup>
         {renderCollectionShareButton(node)}
-    
         <Button
           id="collection-share-btn"
           size="sm"
@@ -193,29 +189,19 @@ const MyCollections = () => {
           <i className="fa fa-plus" />
           <i className="fa fa-share-alt ms-1" />
         </Button>
-    
         {addCollectionButton(node)}
-    
-        <OverlayTrigger
-          animation
-          placement="bottom"
-          root
-          trigger="focus"
-          overlay={popover}
-        >
+        <OverlayTrigger animation placement="bottom" root trigger="focus" overlay={popover}>
           <Button size="sm" variant="danger" onMouseDown={(e) => e.stopPropagation()}>
             <i className="fa fa-trash-o" />
           </Button>
         </OverlayTrigger>
       </ButtonGroup>
     );
-  }
+  };
 
   const label = (node) => {
     if (node.id == -1) {
-      return (
-        <div className="ms-3 mb-2 fs-5">{node.label}</div>
-      );
+      return <div className="ms-3 mb-2 fs-5">{node.label}</div>;
     }
     return (
       <Form.Control
@@ -226,16 +212,14 @@ const MyCollections = () => {
         onChange={(e) => { changeCollectionLabel(e, node); }}
       />
     );
-  }
+  };
 
-  const renderNode = (node) => {
-    return (
-      <div className="collection-node py-1 d-flex justify-content-between">
-        {label(node)}
-        {actions(node)}
-      </div>
-    );
-  }
+  const renderNode = (node) => (
+    <div className="collection-node py-1 d-flex justify-content-between">
+      {label(node)}
+      {actions(node)}
+    </div>
+  );
 
   return (
     <div className="tree mt-2">
@@ -246,7 +230,7 @@ const MyCollections = () => {
         renderNode={renderNode}
       />
       {Object.keys(sharesModal.node).length >= 1 && sharesModal.show && (
-        <ManagingModalSharing
+        <SelectionShareModal
           title={sharesModal.action === 'create'
             ? `Share "${sharesModal.node.label}"`
             : `Edit Permissions of "${sharesModal.node.sharedWith}" at "${sharesModal.node.label}"`}
@@ -268,6 +252,6 @@ const MyCollections = () => {
       )}
     </div>
   );
-}
+};
 
 export default observer(MyCollections);
