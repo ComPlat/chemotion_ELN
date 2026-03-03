@@ -502,7 +502,8 @@ export default class SequenceBasedMacromoleculeSample extends Element {
       purity: '',
       purity_detection: '',
       purification_method: '',
-      
+      inventory_sample: false,
+
       sequence_based_macromolecule: {
         accessions: [],
         ec_numbers: [''],
@@ -626,6 +627,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
       purity: this.purity,
       purity_detection: this.purity_detection,
       purification_method: this.purification_method,
+      inventory_sample: this.inventory_sample,
 
       sequence_based_macromolecule_attributes: {
         accessions: this.accessions,
