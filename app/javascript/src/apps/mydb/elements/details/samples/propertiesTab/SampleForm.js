@@ -506,19 +506,23 @@ export default class SampleForm extends React.Component {
     sample.formulaChanged = this.formulaChanged();
 
     if (field === 'decoupled') {
-      if (!sample[field]) {
-        sample.sum_formula = '';
+      if (this.props.onDecoupleChanged) {
+        this.props.onDecoupleChanged(e);
       } else {
-        if (!sample.sum_formula || sample.sum_formula.trim() === '') sample.sum_formula = 'undefined structure';
-        if (sample.residues && sample.residues[0] && sample.residues[0].custom_info) {
-          sample.residues[0].custom_info.polymer_type = 'self_defined';
-          delete sample.residues[0].custom_info.surface_type;
+        sample[field] = e;
+        if (!sample[field]) {
+          sample.sum_formula = '';
+        } else {
+          if (!sample.sum_formula || sample.sum_formula.trim() === '') sample.sum_formula = 'undefined structure';
+          if (sample.residues && sample.residues[0] && sample.residues[0].custom_info) {
+            delete sample.residues[0].custom_info.surface_type;
+          }
         }
-      }
-      if (!sample[field] && ((sample.molfile || '') === '')) {
-        handleSampleChanged(sample);
-      } else {
-        handleSampleChanged(sample, this.props.decoupleMolecule);
+        if (!sample[field] && ((sample.molfile || '') === '')) {
+          handleSampleChanged(sample);
+        } else {
+          handleSampleChanged(sample, this.props.decoupleMolecule);
+        }
       }
     } else { handleSampleChanged(sample); }
   }
@@ -1337,12 +1341,14 @@ SampleForm.propTypes = {
   customizableField: PropTypes.func.isRequired,
   enableSampleDecoupled: PropTypes.bool,
   decoupleMolecule: PropTypes.func.isRequired,
+  onDecoupleChanged: PropTypes.func,
   setComponentDeletionLoading: PropTypes.func,
   setMoleculeLoading: PropTypes.func,
 };
 
 SampleForm.defaultProps = {
   enableSampleDecoupled: false,
+  onDecoupleChanged: null,
   setComponentDeletionLoading: () => {},
   setMoleculeLoading: () => {},
 };
