@@ -171,9 +171,11 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
       >
         {/* Sample grouping header */}
         {showSampleHeader && (
-          <div className="search-result-molecule sample">
+          <div className="flex-grow-1 gap-5 pt-2 search-result-molecule sample">
             {svgPreview(object)}
-            <SampleName sample={object} />
+            <div className="flex-grow-1 sample-group-molecule-header__name">
+              <SampleName sample={object} />
+            </div>
           </div>
         )}
 
