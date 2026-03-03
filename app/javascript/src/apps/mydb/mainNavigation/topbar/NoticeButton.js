@@ -157,12 +157,16 @@ export default function NoticeButton() {
   const prevDbNoticesRef = useRef([]);
   const prevServerVersionRef = useRef('');
 
+  // Use refs for values needed inside the polling interval to avoid
+  // stale closures and prevent useCallback/useEffect churn that would
+  // restart the interval on every mouse move / state update.
+  const lastActivityTimeRef = useRef(new Date());
+  const idleTimeoutRef = useRef(12);
+  const messageEnableRef = useRef(true);
+  const messageAutoIntervalRef = useRef(6000);
+
   const [showModal, setShowModal] = useState(false);
   const [dbNotices, setDbNotices] = useState([]);
-  const [messageEnable, setMessageEnable] = useState(true);
-  const [messageAutoInterval, setMessageAutoInterval] = useState(6000);
-  const [lastActivityTime, setLastActivityTime] = useState(new Date());
-  const [idleTimeout, setIdleTimeout] = useState(12);
   const [serverVersion, setServerVersion] = useState('');
   const [localVersion, setLocalVersion] = useState('');
 
@@ -170,17 +174,19 @@ export default function NoticeButton() {
   const noticeNum = Object.keys(dbNotices).length;
   const btnIcon = noticeNum > 0 ? 'fa-bell' : 'fa-bell-o';
 
+  // Stable: reads from ref, never needs to change
   const detectActivity = useCallback(() => {
-    setLastActivityTime(new Date());
+    lastActivityTimeRef.current = new Date();
   }, []);
 
+  // Stable: reads from refs, no state dependencies that change
   const messageFetch = useCallback(() => {
-    const clientLastActivityTime = new Date(lastActivityTime).getTime();
+    const clientLastActivityTime = lastActivityTimeRef.current.getTime();
     const currentTime = new Date().getTime();
     const remainTime = Math.floor(
       (currentTime - clientLastActivityTime) / 1000
     );
-    if (remainTime < idleTimeout) {
+    if (remainTime < idleTimeoutRef.current) {
       const { attachmentNotificationStore } = context;
       MessagesFetcher.fetchMessages(0).then((result) => {
         result.messages.forEach((message) => {
@@ -193,27 +199,31 @@ export default function NoticeButton() {
         setServerVersion(result.version);
       });
     }
-  }, [lastActivityTime, idleTimeout, context]);
+  }, [context]);
 
-  const startActivityDetection = useCallback(() => {
-    if (messageEnable === true) {
-      intervalRef.current = setInterval(messageFetch, messageAutoInterval);
-      document.addEventListener('mousemove', detectActivity);
-      document.addEventListener('click', detectActivity);
-    }
-  }, [messageEnable, messageAutoInterval, messageFetch, detectActivity]);
-
+  // Stable: reads messageEnable/interval from refs
   const stopActivityDetection = useCallback(() => {
-    if (messageEnable === true) {
+    if (messageEnableRef.current === true) {
       document.removeEventListener('mousemove', detectActivity, false);
       document.removeEventListener('click', detectActivity, false);
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
     }
-  }, [messageEnable, detectActivity]);
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, [detectActivity]);
 
+  // Stable: called once on mount via envConfiguration
+  const startPolling = useCallback((interval) => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+    intervalRef.current = setInterval(messageFetch, interval);
+    document.addEventListener('mousemove', detectActivity);
+    document.addEventListener('click', detectActivity);
+  }, [messageFetch, detectActivity]);
+
+  // Stable: no dependencies that change after mount
   const envConfiguration = useCallback(() => {
     // use 'application' (not 'application-') as keyword because there is a
     // difference between production and development environment
@@ -229,20 +239,20 @@ export default function NoticeButton() {
       const newMessageEnable = result.messageEnable === 'true';
       const newMessageAutoInterval = result.messageAutoInterval;
 
-      setMessageEnable(newMessageEnable);
-      setMessageAutoInterval(newMessageAutoInterval);
-      setIdleTimeout(result.idleTimeout);
+      // Sync refs before starting interval so messageFetch sees correct values
+      messageEnableRef.current = newMessageEnable;
+      messageAutoIntervalRef.current = newMessageAutoInterval;
+      idleTimeoutRef.current = result.idleTimeout;
+
       setLocalVersion(applicationTagValue);
 
       if (newMessageEnable === true) {
-        intervalRef.current = setInterval(messageFetch, newMessageAutoInterval);
-        document.addEventListener('mousemove', detectActivity);
-        document.addEventListener('click', detectActivity);
+        startPolling(newMessageAutoInterval);
       } else {
         messageFetch();
       }
     });
-  }, [messageFetch, detectActivity]);
+  }, [messageFetch, startPolling]);
 
   const handleShow = useCallback(() => {
     MessagesFetcher.fetchMessages(0).then((result) => {
@@ -363,15 +373,16 @@ export default function NoticeButton() {
     </Modal>
   ), [showModal, handleHide, renderBody, messageAck]);
 
-  // Component mount effect
+  // Runs once on mount: fetch config, then start polling.
+  // All dependencies are stable (never recreated), so this effect
+  // will not re-fire after mount.
   useEffect(() => {
     envConfiguration();
-    startActivityDetection();
 
     return () => {
       stopActivityDetection();
     };
-  }, [envConfiguration, startActivityDetection, stopActivityDetection]);
+  }, [envConfiguration, stopActivityDetection]);
 
   // Handle notifications when dbNotices change
   useEffect(() => {
