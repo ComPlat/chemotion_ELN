@@ -31,7 +31,6 @@ import ReactionMaterialComponentsGroup
 import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
 import ComponentModel from 'src/models/Component';
 import FieldValueSelector from 'src/apps/mydb/elements/details/FieldValueSelector';
-import { SampleCode } from 'src/utilities/ElementUtils';
 import { aviatorNavigation } from 'src/utilities/routesUtils';
 
 const notApplicableInput = (className) => (

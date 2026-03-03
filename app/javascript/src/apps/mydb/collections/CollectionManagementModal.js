@@ -6,6 +6,7 @@ import MyCollections from 'src/apps/mydb/collections/MyCollections';
 import SharedWithMeCollections from 'src/apps/mydb/collections/SharedWithMeCollections';
 import CollectionTabs from 'src/apps/mydb/collections/CollectionTabs';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import CollectionManagementMenu from 'src/apps/mydb/collections/CollectionManagementMenu';
 
 function CollectionManagementModal({ show, onHide }) {
   const collectionsStore = useContext(StoreContext).collections;
@@ -28,6 +29,7 @@ function CollectionManagementModal({ show, onHide }) {
         Collection Management
       </Modal.Header>
       <Modal.Body>
+        <CollectionManagementMenu />
         <Tabs defaultActiveKey={0} id="collection-management-tab" className="surface-tabs">
           <Tab eventKey="0" title="My Collections">
             <MyCollections />

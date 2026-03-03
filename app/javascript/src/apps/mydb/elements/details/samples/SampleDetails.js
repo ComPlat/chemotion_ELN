@@ -1102,13 +1102,6 @@ export default class SampleDetails extends React.Component {
     const defCol = currentCollection && currentCollection.shared === false
       && currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
 
-    const copyBtn = (sample.can_copy && !sample.isNew) ? (
-      <CopyElementModal
-        element={sample}
-        defCol={defCol}
-      />
-    ) : null;
-
     const inventorySample = (
       <Form.Check
         type="checkbox"
@@ -1208,7 +1201,7 @@ export default class SampleDetails extends React.Component {
             {inventorySample}
             {!sample.isNew && <OpenCalendarButton isPanelHeader eventableId={sample.id} eventableType="Sample" />}
             <PrintCodeButton element={sample} />
-            {copyBtn}
+            <CopyElementModal element={sample} defCol={defCol} />
             {this.saveAndCloseSample(sample, saveBtnDisplay)}
           </div>
         </div>
@@ -1672,6 +1665,7 @@ export default class SampleDetails extends React.Component {
             activeKey={activeTab}
             onSelect={this.handleSelect}
             id="SampleDetailsXTab"
+            className="has-config-overlay"
           >
             {tabContents}
           </Tabs>

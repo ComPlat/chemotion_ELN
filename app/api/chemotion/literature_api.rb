@@ -156,7 +156,7 @@ module Chemotion
         end
 
         after_validation do
-          set_var(params[:id], false)
+          set_var(params[:id])
           error!(404) unless @c
         end
 
@@ -204,7 +204,7 @@ module Chemotion
         end
 
         after_validation do
-          set_var(params[:id], false)
+          set_var(params[:id])
           error!(404) unless @c
           @sids = @dl_s > 1 ? @c.samples.by_ui_state(declared(params)[:sample]).pluck(:id) : []
           @rids = @dl_r > 1 ? @c.reactions.by_ui_state(declared(params)[:reaction]).pluck(:id) : []
