@@ -6,7 +6,7 @@ import {
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import expect from 'expect';
 import sinon from 'sinon';
-import TextAreaCellEditor from '../../../../../../../../app/javascript/src/apps/mydb/collections/TextAreaCellEditor';
+import TextAreaCellEditor from 'src/apps/mydb/collections/TextAreaCellEditor';
 
 configure({ adapter: new Adapter() });
 

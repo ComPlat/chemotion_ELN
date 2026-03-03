@@ -11,8 +11,8 @@ import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import expect from 'expect';
 import sinon from 'sinon';
 import { AgGridReact } from 'ag-grid-react';
-import ValidationComponent from '../../../../../../../../app/javascript/src/apps/mydb/collections/ValidationComponent';
-import * as validationUtils from '../../../../../../../../app/javascript/src/utilities/importDataValidations';
+import ValidationComponent from 'src/apps/mydb/collections/ValidationComponent';
+import * as validationUtils from 'src/utilities/importDataValidations';
 
 configure({ adapter: new Adapter() });
 
