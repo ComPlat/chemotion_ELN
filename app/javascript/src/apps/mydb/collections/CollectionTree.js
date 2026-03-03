@@ -7,9 +7,9 @@ import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
 import CollectionSubtree from 'src/apps/mydb/collections/CollectionSubtree';
-import SidebarButton from 'src/apps/mydb/layout/sidebar/SidebarButton';
+import SidebarButton from 'src/apps/mydb/mainNavigation/sidebar/SidebarButton';
 import CollectionManagementButton from 'src/apps/mydb/collections/CollectionManagementButton';
-import GatePushButton from 'src/components/common/GatePushButton';
+import GatePushButton from 'src/apps/mydb/collections/GatePushButton';
 
 import { aviatorNavigation } from 'src/utilities/routesUtils';
 
@@ -77,21 +77,21 @@ function CollectionTree({ isCollapsed }) {
     collectionsStore.fetchCollections();
   }, []);
 
-  // Set the active collection based on the currentCollection in UIStore
   useEffect(() => {
     const onUiStoreChange = ({ currentCollection }) => {
       if (!currentCollection) return;
-  
+
       const group = collectionGroups.find(({ collections }) => containsCollection(collections, currentCollection.id));
       if (group) changeActiveCollectionType(group.collectionType);
     };
-  
+
     UIStore.listen(onUiStoreChange);
     return () => UIStore.unlisten(onUiStoreChange);
   }, [collectionGroups]);
 
   return (
     <div className="mh-100 d-flex flex-column">
+      <CollectionManagementButton isCollapsed={isCollapsed} />
       <div className="sidebar-button-frame tree-view_frame flex-column">
         {collectionGroups.map(({
           label, icon, collectionType, collections, onClickOpenCollection,
@@ -108,7 +108,7 @@ function CollectionTree({ isCollapsed }) {
                 onClick={() => {
                   changeActiveCollectionType(collectionType);
                   if (onClickOpenCollection !== undefined) {
-                    aviatorNavigation('collection', onClickOpenCollection, true, true)
+                    aviatorNavigation('collection', onClickOpenCollection, true, true);
                   }
                 }}
                 expandable
@@ -123,21 +123,20 @@ function CollectionTree({ isCollapsed }) {
                 <div className="tree-view_container">
                   {collections.length === 0
                     ? <div className="text-muted text-center p-2">No collections</div>
-                    : collections.map((collection) => {
-                      return <CollectionSubtree
+                    : collections.map((collection) => (
+                      <CollectionSubtree
                         key={`${collection.id}-${collection.label}`}
                         root={collection}
                         sharedWithMe={sharedWithMe}
                         isExpanded={isExpanded}
                         level={1}
                       />
-                    })}
+                    ))}
                 </div>
               )}
             </Fragment>
           );
         })}
-        <CollectionManagementButton isCollapsed={isCollapsed} />
       </div>
     </div>
   );

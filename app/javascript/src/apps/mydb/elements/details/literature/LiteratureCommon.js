@@ -83,9 +83,7 @@ function AddButton({
   return (
     <Button
       variant="success"
-      size="sm"
       onClick={() => onLiteratureAdd(literature)}
-      style={{ marginTop: 2 }}
       disabled={!isLiteratureValid(literature) || readOnly}
       title={title}
     >
