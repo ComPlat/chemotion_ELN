@@ -55,6 +55,19 @@ class SpectraActions {
     };
   }
 
+  CombineSpectra(jcampIds, curveIdx, extraParams, cb) {
+    return () => {
+      AttachmentFetcher.combineSpectra(jcampIds, curveIdx, extraParams)
+        .then((combined) => {
+          if (cb) cb(combined);
+        })
+        .catch((errorMessage) => {
+          console.log(errorMessage); // eslint-disable-line
+          if (cb) cb(null, errorMessage);
+        });
+    };
+  }
+
   WriteStart(payload) {
     return payload;
   }
