@@ -217,13 +217,14 @@ describe('ReactionVariationsUtils', () => {
       ]
     };
     const columnDefinitions = getColumnDefinitions(selectedColumns, {}, reactionVariationSegments, false);
-    const segmentColumnDefinitions = columnDefinitions.find((colDef) => colDef.groupId === 'segments');
-    const segmentColumnChild = segmentColumnDefinitions.children[0];
-    const { entryDefs } = segmentColumnChild;
-    expect(Object.keys(entryDefs)).toEqual(Object.keys(reactionVariationSegments.foo));
-    expect(entryDefs['layer<layera>field<fielda>'].displayUnit).toBe('ng_l');
-    expect(entryDefs['layer<layera>field<fielda>'].units).toEqual(['ng_l', 'mg_l', 'g_l']);
-    expect(entryDefs['layer<layera>field<fieldb>'].units).toEqual([null]);
+    const segmentGroup = columnDefinitions.find((colDef) => colDef.groupId === 'segments');
+    const segmentSubGroup = segmentGroup.children[0];
+    const layerAfieldA = segmentSubGroup.children.find((child) => child.entry === 'layer<layera>field<fielda>');
+    const layerAfieldB = segmentSubGroup.children.find((child) => child.entry === 'layer<layera>field<fieldb>');
+
+    expect(layerAfieldA.displayUnit).toBe('ng_l');
+    expect(layerAfieldA.units).toEqual(['ng_l', 'mg_l', 'g_l']);
+    expect(layerAfieldB.units).toEqual([null]);
   });
   it('gets segment data', () => {
     const segmentDataFoo = getSegmentData(reactionVariationSegments.foo);
