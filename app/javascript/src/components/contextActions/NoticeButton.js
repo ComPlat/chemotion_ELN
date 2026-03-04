@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import {
-  Button, Modal, Card, Row, Col
+  Button, Modal, Card, Row, Col, Pagination
 } from 'react-bootstrap';
 import 'whatwg-fetch';
 import _ from 'lodash';
@@ -171,13 +171,17 @@ export default class NoticeButton extends React.Component {
     super(props);
     this.state = {
       showModal: false,
-      dbNotices: [],
+      newNotices: [],
+      ackNotices: [],
       messageEnable: true,
       messageAutoInterval: 6000,
       lastActivityTime: new Date(),
       idleTimeout: 12,
       serverVersion: '',
       localVersion: '',
+      showAck: false,
+      currentPage: 1,
+      perPage: 4,
     };
     this.envConfiguration = this.envConfiguration.bind(this);
     this.handleShow = this.handleShow.bind(this);
@@ -192,8 +196,8 @@ export default class NoticeButton extends React.Component {
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-    const nots = this.state.dbNotices;
-    const nextNots = nextState.dbNotices;
+    const { newNotices: nots } = this.state;
+    const nextNots = nextState.newNotices;
 
     const notIds = _.map(nots, 'id');
     const nextNotIds = _.map(nextNots, 'id');
@@ -233,9 +237,9 @@ export default class NoticeButton extends React.Component {
   }
 
   handleShow() {
-    MessagesFetcher.fetchMessages(0).then((result) => {
+    MessagesFetcher.fetchMessages(1).then((result) => {
       result.messages.sort((a, b) => b.id - a.id);
-      this.setState({ showModal: true, dbNotices: result.messages });
+      this.setState({ showModal: true, ackNotices: result.messages });
     });
   }
 
@@ -299,30 +303,29 @@ export default class NoticeButton extends React.Component {
   }
 
   messageAck(idx, ackAll) {
-    let { dbNotices } = this.state;
+    const { newNotices } = this.state;
     const params = {
       ids: [],
     };
     if (ackAll) {
-      params.ids = _.map(dbNotices, 'id');
+      params.ids = _.map(newNotices, 'id');
     } else {
       params.ids[0] = idx;
     }
     MessagesFetcher.acknowledgedMessage(params).then((result) => {
-      const ackIds = _.map(result.ack, 'id');
-      dbNotices = _.filter(
-        this.state.dbNotices,
-        (o) => !_.includes(ackIds, o.id)
-      );
-      dbNotices.sort((a, b) => b.id - a.id);
-      this.setState({
-        dbNotices,
-      });
+      const ackIdSet = new Set(_.map(result.ack, 'id'));
+
+      this.setState((prevState) => ({
+        newNotices: prevState.newNotices
+          .filter((o) => !ackIdSet.has(o.id))
+          .sort((a, b) => b.id - a.id)
+      }));
     });
   }
 
   messageFetch() {
     const { lastActivityTime, idleTimeout } = this.state;
+    const { attachmentNotificationStore } = this.context;
     const clientLastActivityTime = new Date(lastActivityTime).getTime();
     const currentTime = new Date().getTime();
     const remainTime = Math.floor(
@@ -331,12 +334,13 @@ export default class NoticeButton extends React.Component {
     if (remainTime < idleTimeout) {
       MessagesFetcher.fetchMessages(0).then((result) => {
         result.messages.forEach((message) => {
-          if (message.subject === 'Send TPA attachment arrival notification')
-            this.context.attachmentNotificationStore.addMessage(message);
+          if (message.subject === 'Send TPA attachment arrival notification') {
+            attachmentNotificationStore.addMessage(message);
+          }
         });
         result.messages.sort((a, b) => b.id - a.id);
         this.setState({
-          dbNotices: result.messages,
+          newNotices: result.messages,
           serverVersion: result.version,
         });
       });
@@ -344,9 +348,11 @@ export default class NoticeButton extends React.Component {
   }
 
   renderBody() {
-    const { dbNotices } = this.state;
+    const {
+      newNotices, ackNotices, showAck, currentPage, perPage
+    } = this.state;
 
-    if (dbNotices.length === 0) {
+    if (!showAck && newNotices.length === 0) {
       return (
         <Card className="text-center" eventKey="0">
           <Card.Body>No new notifications.</Card.Body>
@@ -354,60 +360,98 @@ export default class NoticeButton extends React.Component {
       );
     }
 
-    return dbNotices.map((not, index) => {
-      const infoTimeString = formatDate(not.created_at);
+    const allNotices = [
+      ...newNotices.map((n) => ({ ...n, source: 'db' })),
+      ...(showAck ? ackNotices.map((n) => ({ ...n, source: 'ack' })) : [])
+    ].sort((a, b) => b.id - a.id);
 
-      const newText = not.content.data
-        .split('\n')
-        .map((i) => <p key={`${infoTimeString}-${i}`}>{i}</p>);
+    const totalPages = Math.ceil(allNotices.length / perPage);
 
-      const { url, urlTitle } = not.content;
-      if (url) {
-        newText.push(
-          <p key={`${infoTimeString}-${url}`}>{changeUrl(url, urlTitle)}</p>
-        );
-      }
+    const start = (currentPage - 1) * perPage;
+    const end = start + perPage;
 
-      return (
-        <Card
-          key={`panel-modal-body-${not.id}`}
-          eventKey={index}
-          className="mb-3"
-        >
-          <Card.Header className="d-flex gap-2">
-            <i className="fa fa-commenting-o" aria-hidden="true" />
-            {not.subject}
-            <span>
-              <strong>From: </strong>
-              {not.sender_name}
-            </span>
-            <span>
-              <strong>Created On: </strong>
-              {formatDate(not.created_at)}
-            </span>
-          </Card.Header>
-          <Card.Body>
-            <Row>
-              <Col lg="auto">
-                <Button
-                  id={`notice-button-ack-${not.id}`}
-                  key={`notice-button-ack-${not.id}`}
-                  onClick={() => this.messageAck(not.id, false)}
-                >
-                  <i className="fa fa-check me-1" aria-hidden="true" />
-                  Got it
-                </Button>
-              </Col>
-              <Col>{newText}</Col>
-            </Row>
-          </Card.Body>
-        </Card>
-      );
-    });
+    return (
+      <>
+        {allNotices.slice(start, end).map((not, index) => {
+          const infoTimeString = formatDate(not.created_at);
+
+          const newText = not.content.data
+            .split('\n')
+            .map((i) => <p key={`${infoTimeString}-${i}`}>{i}</p>);
+
+          const { url, urlTitle } = not.content;
+          if (url) {
+            newText.push(
+              <p key={`${infoTimeString}-${url}`}>{changeUrl(url, urlTitle)}</p>
+            );
+          }
+
+          return (
+            <Card
+              key={`panel-modal-body-${not.id}`}
+              eventKey={index}
+              className="mb-3"
+            >
+              <Card.Header className="d-flex gap-2">
+                <i className="fa fa-commenting-o" aria-hidden="true" />
+                {not.subject}
+                <span>
+                  <strong>From: </strong>
+                  {not.sender_name}
+                </span>
+                <span>
+                  <strong>Created On: </strong>
+                  {formatDate(not.created_at)}
+                </span>
+              </Card.Header>
+              <Card.Body>
+                <Row>
+                  <Col lg="auto">
+                    <Button
+                      id={`notice-button-ack-${not.id}`}
+                      key={`notice-button-ack-${not.id}`}
+                      size="sm"
+                      onClick={() => this.messageAck(not.id, false)}
+                      variant={not.source === 'db' ? 'primary' : 'secondary'}
+                      disabled={not.source !== 'db'}
+                    >
+                      <i className="fa fa-check me-1" aria-hidden="true" />
+                      Got it
+                    </Button>
+                  </Col>
+                  <Col>{newText}</Col>
+                </Row>
+              </Card.Body>
+            </Card>
+          );
+        })}
+        {totalPages > 1 && (
+          <Pagination className="justify-content-center mt-3">
+            <Pagination.Prev
+              disabled={currentPage === 1}
+              onClick={() => this.setState({ currentPage: currentPage - 1 })}
+            />
+            {[...Array(totalPages).keys()].map((key, i) => (
+              <Pagination.Item
+                key={`page_${key}`}
+                active={i + 1 === currentPage}
+                onClick={() => this.setState({ currentPage: i + 1 })}
+              >
+                {i + 1}
+              </Pagination.Item>
+            ))}
+            <Pagination.Next
+              disabled={currentPage === totalPages}
+              onClick={() => this.setState({ currentPage: currentPage + 1 })}
+            />
+          </Pagination>
+        )}
+      </>
+    );
   }
 
   renderModal() {
-    const { showModal } = this.state;
+    const { showModal, showAck } = this.state;
     return (
       <Modal
         centered
@@ -416,7 +460,34 @@ export default class NoticeButton extends React.Component {
         dialogClassName="modal-xl"
       >
         <Modal.Header closeButton>
-          <Modal.Title>Unread Notifications</Modal.Title>
+          <Modal.Title style={{ width: '100%' }}>
+            <Row>
+              {showAck ? (
+                <>
+                  <Col xs="6">
+                    All Notifications
+                  </Col>
+                  <Col>
+                    <Button variant="info" onClick={() => this.setState({ showAck: false })}>
+                      Hide acknowledged
+                    </Button>
+                  </Col>
+                </>
+              )
+                : (
+                  <>
+                    <Col xs="6">
+                      Unread Notifications
+                    </Col>
+                    <Col>
+                      <Button variant="info" onClick={() => this.setState({ showAck: true })}>
+                        Show acknowledged
+                      </Button>
+                    </Col>
+                  </>
+                )}
+            </Row>
+          </Modal.Title>
         </Modal.Header>
         <Modal.Body className="vh-70 overflow-auto">
           {this.renderBody()}
@@ -436,7 +507,8 @@ export default class NoticeButton extends React.Component {
   }
 
   render() {
-    const noticeNum = Object.keys(this.state.dbNotices).length;
+    const { newNotices } = this.state;
+    const noticeNum = Object.keys(newNotices).length;
     let btnVariant = 'sidebar';
     let btnIcon = 'fa-bell-o';
 
