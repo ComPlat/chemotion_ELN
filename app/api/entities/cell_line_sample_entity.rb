@@ -13,5 +13,12 @@ module Entities
     expose :cellline_material
     expose :tag
     expose :container, using: 'Entities::ContainerEntity'
+    expose :type
+
+    private
+
+    def type
+      'cell_line'
+    end
   end
 end

@@ -22,6 +22,7 @@ module Usecases
           element_ids: [],
           sequence_based_macromolecule_sample_ids: [],
           device_description_ids: [],
+          cell_line_ids: [],
         }
         @user_samples = Sample.by_collection_id(@collection_id)
         @user_reactions = Reaction.by_collection_id(@collection_id)
@@ -31,6 +32,7 @@ module Usecases
         @user_elements = Labimotion::Element.by_collection_id(@collection_id)
         @user_sequence_based_macromolecule_samples = SequenceBasedMacromoleculeSample.by_collection_id(@collection_id)
         @user_device_descriptions = DeviceDescription.by_collection_id(@collection_id)
+        @user_cell_lines = CelllineSample.by_collection_id(@collection_id)
       end
 
       def perform!
@@ -141,6 +143,7 @@ module Usecases
 
       def sequencebasedmacromoleculesample_relations_element_ids; end
       def devicedescription_relations_element_ids; end
+      def celllinesample_relations_element_ids; end
       # rubocop:enable Metrics/AbcSize
     end
   end

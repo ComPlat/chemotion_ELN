@@ -7,6 +7,7 @@ import Screen from 'src/models/Screen';
 import GenericEl from 'src/models/GenericEl';
 import ResearchPlan from 'src/models/ResearchPlan';
 import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';
+import DeviceDescription from 'src/models/DeviceDescription';
 
 export default class SearchFetcher {
   static fetchBasedOnSearchSelectionAndCollection(params) {
@@ -30,7 +31,7 @@ export default class SearchFetcher {
     }).then(response => response.json())
       .then((json) => {
         const result = { ...json };
-        return this.getResultByKey(result);
+        return this.getResultByKey(result, collectionId);
       }).catch((errorMessage) => { console.log(errorMessage); });
   }
 
@@ -56,12 +57,15 @@ export default class SearchFetcher {
     }).then(response => response.json())
       .then((json) => {
         const result = { ...json };
-        return this.getResultByKey(result);
+        return this.getResultByKey(result, collectionId);
       }).catch((errorMessage) => { console.log(errorMessage); });
   }
 
-  static getResultByKey(result) {
-    const { samples, reactions, wellplates, screens, research_plans, sequence_based_macromolecule_samples } = result;
+  static getResultByKey(result, collectionId) {
+    const {
+      samples, reactions, wellplates, screens, research_plans,
+      sequence_based_macromolecule_samples, device_descriptions, cell_lines,
+    } = result;
 
     Object.keys(result).forEach((key) => {
       switch (key) {
@@ -95,6 +99,18 @@ export default class SearchFetcher {
             result.sequence_based_macromolecule_samples.elements =
               sequence_based_macromolecule_samples.elements.map(s => (new SequenceBasedMacromoleculeSample(s)));
           } else { result.sequence_based_macromolecule_samples = { elements: [], totalElements: 0, ids: [] }; }
+          break;
+        case 'device_descriptions':
+          if (device_descriptions && device_descriptions.elements.length > 0) {
+            result.device_descriptions.elements =
+              device_descriptions.elements.map(s => (new DeviceDescription(s)));
+          } else { result.device_descriptions = { elements: [], totalElements: 0, ids: [] }; }
+          break;
+        case 'cell_lines':
+          if (cell_lines && cell_lines.elements.length > 0) {
+            result.cell_lines.elements =
+              cell_lines.elements.map(s => (new CellLine(CellLine.createFromRestResponse(collectionId, s))));
+          } else { result.cell_lines = { elements: [], totalElements: 0, ids: [] }; }
           break;
         case 'structure_svg':
           result.structure_svg = { svg: result[`${key}`] }

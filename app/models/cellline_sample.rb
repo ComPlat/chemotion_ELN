@@ -31,14 +31,15 @@ class CelllineSample < ApplicationRecord
   include ElementUIStateScopes
   include Taggable
   include Collectable
+  include PgSearch::Model
 
-  has_one :container, as: :containable
+  has_one :container, as: :containable, inverse_of: :containable, dependent: :nullify
   has_many :collections_celllines, inverse_of: :cellline_sample, dependent: :destroy
   has_many :collections, through: :collections_celllines
 
   belongs_to :cell_line_sample, optional: true
   belongs_to :cellline_material
-  belongs_to :creator, class_name: 'User', foreign_key: 'user_id'
+  belongs_to :creator, foreign_key: :user_id, class_name: 'User', inverse_of: :cellline_samples
 
   has_many :sync_collections_users, through: :collections
 
@@ -56,8 +57,9 @@ class CelllineSample < ApplicationRecord
       .where('cellline_materials.name ILIKE ?', "%#{sanitize_sql_like(query)}%")
   }
 
+  multisearchable against: %i[name]
+
   def create_root_container
     self.container = Container.create_root_container if container.nil?
   end
 end
-# rubocop:enable Rails/InverseOf, Rails/HasManyOrHasOneDependent

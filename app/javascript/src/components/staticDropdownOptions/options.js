@@ -683,4 +683,11 @@ export const colorOptions = [
 export const SampleTypesOptions = [
   { label: 'Single molecule', value: 'Micromolecule' },
   { label: 'Mixture', value: 'Mixture' },
-]
+];
+
+export const BiosafetyLevelOptions = [
+  { value: 'S0', label: 'Biosafety level 0' },
+  { value: 'S1', label: 'Biosafety level 1' },
+  { value: 'S2', label: 'Biosafety level 2' },
+  { value: 'S3', label: 'Biosafety level 3' },
+];
