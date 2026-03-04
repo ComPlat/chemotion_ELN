@@ -230,19 +230,25 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
     const objectMaterial = `${object.cellLineName} - ${object.source}`;
 
     const header = previousMaterial !== objectMaterial && (
-      <div
-        key={`${objectMaterial}-${i}`}
-        className="search-result-molecule pt-2 fw-bold fs-5"
-      >
-        {objectMaterial}
+      <div className="search-result-group-header-content">
+        <div key={`${list.key}-${i}`} className="search-result-tab-content-list">
+          <div
+            key={`${objectMaterial}-${i}`}
+            className="search-result-molecule align-items-center fw-bold fs-5"
+          >
+            {objectMaterial}
+          </div>
+        </div>
       </div>
     );
 
     return (
-      <div key={`${list.key}-${i}`} className="search-result-tab-content-list">
+      <div className="search-result-group">
         {header}
-        <div className="search-result-tab-content-list-name pt-3">
-          {shortLabelWithMoreInfos(object)}
+        <div className="search-result-list-items">
+          <div className="search-result-tab-content-list-name">
+            {shortLabelWithMoreInfos(object)}
+          </div>
         </div>
       </div>
     );
