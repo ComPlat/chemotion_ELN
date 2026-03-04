@@ -612,7 +612,6 @@ class ViewSpectra extends React.Component {
     const refreshPayloads = this.getSavePayloads(params, { simulatenmr: true });
     this.saveOp({
       ...params,
-      simulatenmr: true,
       spectra_list: refreshPayloads,
     });
   }
