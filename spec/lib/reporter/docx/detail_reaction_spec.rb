@@ -58,11 +58,29 @@ describe 'Reporter::Docx::DetailReaction' do
   let(:correct_content) { 'analysis contents (true for report)' }
   let(:non_breaking_space) { ' ' }
   let(:inverse) { '{"attributes":{"color":"black","script":"super"},"insert":"-1"}' }
+  let!(:sbmm) { create(:uniprot_sbmm) }
+  let!(:sbmm_sample) do
+    create(
+      :sequence_based_macromolecule_sample,
+      user: user,
+      sequence_based_macromolecule: sbmm,
+      amount_as_used_mass_value: 1.5,
+      amount_as_used_mass_unit: 'g',
+      amount_as_used_mol_value: 0.002,
+      amount_as_used_mol_unit: 'mol',
+    )
+  end
+
   let(:reaction_serialized) do
     create(:reactions_starting_material_sample, reaction: reaction, sample: sample1, equivalent: equiv)
     create(:reactions_product_sample, reaction: reaction, sample: sample2, equivalent: equiv, position: 1)
     create(:reactions_product_sample, reaction: reaction, sample: sample3, equivalent: equiv, position: 2)
     create(:reactions_solvent_sample, reaction: reaction, sample: sample4, equivalent: equiv)
+    ReactionsReactantSbmmSample.create!(
+      reaction: reaction,
+      sequence_based_macromolecule_sample: sbmm_sample,
+      show_label: true,
+    )
     reaction.reload
     con = reaction.products[0].container.children[0].children[0]
     con.extended_metadata['report'] = true
@@ -154,8 +172,14 @@ describe 'Reporter::Docx::DetailReaction' do
     end
 
     it 'has correct content' do
+      sbmm_reactant = content[:reactants].find { |r| r[:short_label] == sbmm_sample.short_label }
+
       expect(content[:title]).to eq(tit)
       expect(content[:solvents]).to eq("#{sample4.preferred_label} (55.5ml)")
+      expect(content[:reactants].pluck(:short_label)).to include(sbmm_sample.short_label)
+      expect(sbmm_reactant[:mass_unit]).to eq('g')
+      expect(sbmm_reactant[:vol_unit]).to eq('l')
+      expect(sbmm_reactant[:mmol_unit]).to eq('mol')
       expect(content[:description]).to eq(
         Sablon.content(:html, Reporter::Delta.new(des).getHTML),
       )
