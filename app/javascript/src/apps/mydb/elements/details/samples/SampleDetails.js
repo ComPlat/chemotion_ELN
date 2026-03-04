@@ -352,7 +352,6 @@ export default class SampleDetails extends React.Component {
     }
     sample.components = components;
 
-    if (textNodesFormula?.length > 0) sample.name = textNodesFormula;
     this.setState({ loadingMolecule: true });
 
     const fetchError = (errorMessage) => {
@@ -382,6 +381,13 @@ export default class SampleDetails extends React.Component {
         } else {
           sample.sample_svg_file = result.temp_svg;
         }
+      }
+
+      // Auto-create a molecule name from the Ketcher text-node formula and assign it.
+      // Collapse any newlines/extra whitespace so the label renders on a single line.
+      if (textNodesFormula?.length > 0) {
+        const normalizedFormula = textNodesFormula.replace(/\s*\n\s*/g, ' ').trim();
+        DetailActions.updateMoleculeNames(sample, normalizedFormula);
       }
 
       this.setState({
