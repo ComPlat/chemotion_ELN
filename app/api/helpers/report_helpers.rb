@@ -134,7 +134,7 @@ module ReportHelpers
         , rrss.reaction_id as r_id
         from (
           select sbms.id as s_id
-          , bool_and(collection.shared) as is_shared
+          , bool_and(collections.shared) as is_shared
           , max(collection_shares.permission_level) as pl
           , max(collection_shares.sequencebasedmacromoleculesample_detail_level) as dl_s
           from sequence_based_macromolecule_samples sbms
