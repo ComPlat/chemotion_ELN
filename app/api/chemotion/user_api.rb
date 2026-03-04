@@ -8,9 +8,9 @@ module Chemotion
       params do
         requires :name, type: String
         optional :type, type: [String], desc: 'user types',
-                        coerce_with: ->(val) { val.split(/[\s|,]+/) },
-                        values: %w[Group Person],
-                        default: %w[Group Person]
+                 coerce_with: ->(val) { val.split(/[\s|,]+/) },
+                 values: %w[Group Person],
+                 default: %w[Group Person]
       end
       get 'name' do
         return { users: [] } if params[:name].blank?
@@ -37,7 +37,7 @@ module Chemotion
           editors.push(str) if current_user.matrix_check_by_name(str)
         end
         present Matrice.where(name: editors).order('name'), with: Entities::MatriceEntity, root: 'matrices',
-                                                            unexpose_include_ids: true, unexpose_exclude_ids: true
+                unexpose_include_ids: true, unexpose_exclude_ids: true
       end
 
       namespace :omniauth_providers do
@@ -117,6 +117,54 @@ module Chemotion
       delete 'sign_out' do
         status 204
       end
+
+      namespace :auth_token do
+        desc 'Generate Token'
+        params do
+          optional :expires_in_days,
+                   type: Integer,
+                   default: 160,
+                   values: 1..600,
+                   desc: 'Token expiration in days (1–600)'
+          optional :name, type: String, desc: 'Name of the item'
+        end
+        post do
+          item_name = params[:name].to_s.strip
+          item_name = nil if item_name.empty?
+          token = Usecases::Public::BuildToken.execute!(params, item_name, current_user)
+          error!('401 Unauthorized', 401) if token.blank?
+
+          { token: token }
+        end
+      end
+
+      namespace :revoke_auth_token do
+        desc 'Revoke user Auth Token'
+        params do
+          requires :expiration_date, type: Integer
+          requires :name, type: String
+        end
+
+        post do
+
+          result = current_user.tokens.find do |_, token|
+            token["name"] == params[:name] && token["expiration_date"] == params[:expiration_date]
+          end
+
+          # Return error if not found
+          error!('Token not found', 404) unless result
+
+          key, token = result
+
+          # Mark as revoked
+          token["revoked"] = true
+
+          # Save the updated tokens back to the user
+          current_user.save!
+        end
+
+      end
+
     end
 
     resource :groups do
@@ -179,7 +227,7 @@ module Chemotion
         route_param :device_id do
           get do
             present DeviceMetadata.find_by(device_id: params[:device_id]), with: Entities::DeviceMetadataEntity,
-                                                                           root: 'device_metadata'
+                    root: 'device_metadata'
           end
         end
       end
@@ -275,5 +323,6 @@ module Chemotion
       end
     end
   end
+
   # rubocop:enable Metrics/ClassLength
 end

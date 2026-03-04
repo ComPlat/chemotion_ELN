@@ -38,7 +38,10 @@ class API < Grape::API
       decoded_token = JsonWebToken.decode(current_token)
       user_id = decoded_token[:user_id]
 
-      User.find(user_id)
+      user = User.find(user_id)
+      token = user.get_token(current_token)
+      return nil if token && token['revoked']
+      user
     rescue StandardError
       nil
     end
