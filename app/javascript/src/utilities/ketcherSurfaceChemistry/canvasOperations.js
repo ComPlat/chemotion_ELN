@@ -566,6 +566,24 @@ const removeAllColors = (svgElement) => {
   });
 };
 
+/**
+ * Dispatches a synthetic mousedown → mouseup → click sequence on the Ketcher
+ * intermediate canvas SVG so that any pending pointer-driven render flush is
+ * triggered before we read the canvas content.
+ * Must target the iframe's document, not the host page's document.
+ */
+const flushIntermediateCanvas = (iframeRef) => {
+  const iframeDocument = iframeRef?.current?.contentWindow?.document;
+  if (!iframeDocument) return;
+
+  const svg = iframeDocument.querySelector('.StructEditor-module_intermediateCanvas__fR3ws svg');
+  if (!svg) return;
+
+  ['mousedown', 'mouseup', 'click'].forEach((type) => {
+    svg.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, view: window }));
+  });
+};
+
 // function to get SVG from canvas element without modification
 const getSvgFromCanvas = async (iframeRef) => {
   try {
@@ -1022,6 +1040,8 @@ const onFinalCanvasSave = async (editor, iframeRef) => {
       textNodesFormula = replacedString;
     }
     ket2Lines.push(KET_TAGS.fileEndIdentifier);
+
+    if (imagesList.length > 0) flushIntermediateCanvas(iframeRef);
 
     const svgElement = imagesList.length > 0 ? await getSvgFromCanvas(iframeRef) : await prepareSvg(editor);
     resetStore();
