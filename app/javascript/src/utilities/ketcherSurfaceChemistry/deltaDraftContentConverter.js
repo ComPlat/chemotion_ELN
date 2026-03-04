@@ -119,6 +119,24 @@ export function deltaToDraftContent(delta) {
     if (isNewlineOp) lineStart = offset;
   });
 
+  // Quill ends each block with \n; for single-block text labels, trim trailing newlines
+  // so subscript/superscript don't introduce unwanted line breaks.
+  const trimmedText = fullText.replace(/\n+$/, '');
+  if (trimmedText.length < fullText.length) {
+    fullText = trimmedText;
+    // Remove style ranges that only covered the trimmed newlines
+    for (let i = styleRanges.length - 1; i >= 0; i -= 1) {
+      const r = styleRanges[i];
+      if (r.offset + r.length > fullText.length) {
+        if (r.offset >= fullText.length) {
+          styleRanges.splice(i, 1);
+        } else {
+          r.length = fullText.length - r.offset;
+        }
+      }
+    }
+  }
+
   const key = Math.random().toString(36).substring(2, 8);
   return {
     blocks: [
