@@ -16,7 +16,6 @@ class ImportSamplesJob < ApplicationJob
       autoDismiss: 5,
     )
   rescue StandardError => e
-    end
   end
 
   def perform(params)
