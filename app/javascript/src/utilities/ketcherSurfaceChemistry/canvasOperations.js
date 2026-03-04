@@ -122,6 +122,22 @@ const arrangeTextNodes = async (ket2Molfile) => {
   return ket2Molfile;
 };
 
+// Appends a TextNodeMeta block containing the raw Draft.js content string for each
+// text node. One content entry per line, preserving the same order as TextNode lines.
+const arrangeTextNodeMeta = (ket2Molfile) => {
+  if (!textList?.length) return ket2Molfile;
+
+  const contentLines = textList.map((textItem) => textItem.data?.content).filter(Boolean);
+  if (!contentLines.length) return ket2Molfile;
+
+  ket2Molfile.push(
+    KET_TAGS.textNodeMeta,
+    ...contentLines,
+    KET_TAGS.textNodeMetaClose
+  );
+  return ket2Molfile;
+};
+
 /* istanbul ignore next */
 // container function for onAddAtom
 const onAddAtom = async (editor) => {
@@ -1027,6 +1043,7 @@ const onFinalCanvasSave = async (editor, iframeRef) => {
     await reArrangeImagesOnCanvas(iframeRef); // assemble image on the canvas
     ket2Lines = await arrangePolymers(canvasDataMol, editor); // polymers added
     ket2Lines = await arrangeTextNodes(ket2Lines); // text node
+    ket2Lines = arrangeTextNodeMeta(ket2Lines); // text node raw content metadata
     if (imagesList.length > 0) {
       ket2Lines = replaceAtomSymbolAWithRHashInAtomBlock(ket2Lines);
     }
@@ -1105,6 +1122,7 @@ export {
   onAddAtom,
   onDeleteText,
   arrangeTextNodes,
+  arrangeTextNodeMeta,
   onAddText,
   onAddTextFromEditor,
   createTextNodeFromContent,

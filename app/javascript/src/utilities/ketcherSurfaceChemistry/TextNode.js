@@ -111,11 +111,16 @@ const forTextNodeHeader = (key, description) => JSON.stringify({
 });
 
 // generating images for ket2 format from molfile polymers list
-const addTextNodes = async (textNodes) => textNodes.map((item) => {
+// textNodeMeta: optional map of { [blockKey]: rawContentString } from TextNodeMeta block,
+// used to restore rich text styles saved alongside the plain TextNode lines.
+const addTextNodes = async (textNodes, textNodeMeta = {}) => textNodes.map((item) => {
   const [, key, alias, description] = item.split(KET_TAGS.textIdentifier);
-  if (alias && key) {
-    textNodeStruct[alias] = key;
-    const content = forTextNodeHeader(key, description);
+  const trimmedKey = key?.trim();
+  const trimmedAlias = alias?.trim();
+  const trimmedDescription = description?.trim();
+  if (trimmedAlias && trimmedKey) {
+    textNodeStruct[trimmedAlias] = trimmedKey;
+    const content = textNodeMeta[trimmedKey] ?? forTextNodeHeader(trimmedKey, trimmedDescription);
     return {
       type: 'text',
       data: {

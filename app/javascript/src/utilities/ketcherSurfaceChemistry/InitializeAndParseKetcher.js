@@ -173,6 +173,28 @@ const hasTextNodes = async (molfile) => {
   }
 };
 
+// Parse TextNodeMeta block and return a map of { [blockKey]: rawContentString }.
+// Returns an empty object when no TextNodeMeta section is present (backward compat).
+const hasTextNodeMeta = (molfile) => {
+  if (!molfile) return {};
+  const lines = molfile.trim().split('\n');
+  const start = lines.indexOf(KET_TAGS.textNodeMeta);
+  const end = lines.indexOf(KET_TAGS.textNodeMetaClose);
+  if (start === -1 || end === -1) return {};
+
+  const metaMap = {};
+  lines.slice(start + 1, end).forEach((line) => {
+    try {
+      const parsed = JSON.parse(line);
+      const key = parsed?.blocks?.[0]?.key;
+      if (key) metaMap[key] = line;
+    } catch (e) {
+      // skip malformed lines
+    }
+  });
+  return metaMap;
+};
+
 // Return molfile string up to and including M  END so Indigo only sees standard CTAB.
 const getStandardMolfileForIndigo = (molfile) => {
   if (!molfile || typeof molfile !== 'string') return molfile;
@@ -306,6 +328,7 @@ const prepareKetcherData = async (editor, initMol, options = {}) => {
   try {
     const polymerTagFromPasted = await hasKetcherData(initMol);
     const textNodes = await hasTextNodes(initMol);
+    const textNodeMeta = hasTextNodeMeta(initMol);
     const molfileForIndigo = getStandardMolfileForIndigo(initMol);
     const formatError = (err) => (err?.message != null ? err.message : (err && typeof err?.toString === 'function' ? err.toString() : String(err)));
 
@@ -347,7 +370,6 @@ const prepareKetcherData = async (editor, initMol, options = {}) => {
       }
     }
 
-
     if (!isPaste && polymerTagFromPasted) {
       storedPolymersListLineSetter(polymerTagFromPasted);
     }
@@ -361,6 +383,7 @@ const prepareKetcherData = async (editor, initMol, options = {}) => {
       preserveTextList,
       preserveTextNodeStruct,
       isPaste,
+      textNodeMeta,
     });
 
     if (polymerTagToUse) {
@@ -378,7 +401,9 @@ const prepareKetcherData = async (editor, initMol, options = {}) => {
 
 const applyKetcherData = async (polymerTag, fileContent, textNodes, editor, options = {}) => {
   try {
-    const { preserveTextList = [], preserveTextNodeStruct = {}, isPaste = false } = options;
+    const {
+      preserveTextList = [], preserveTextNodeStruct = {}, isPaste = false, textNodeMeta = {}
+    } = options;
     let molfileContent = fileContent;
     if (polymerTag) {
       const { molfileData } = await addPolymerTags(polymerTag, fileContent);
@@ -386,7 +411,7 @@ const applyKetcherData = async (polymerTag, fileContent, textNodes, editor, opti
     }
     if (textNodes && textNodes.length > 0) {
       // Add text nodes from the pasted molfile (already reindexed in prepareKetcherData)
-      const textNodeList = await addTextNodes(textNodes);
+      const textNodeList = await addTextNodes(textNodes, textNodeMeta);
       const validNodes = (textNodeList || []).filter(Boolean);
       if (validNodes.length) {
         molfileContent.root.nodes.push(...validNodes);
@@ -417,6 +442,7 @@ export {
   initializeKetcherData,
   hasKetcherData,
   hasTextNodes,
+  hasTextNodeMeta,
   getTemplateType,
   templateWithBoundingBox,
   fetchKetcherData,
