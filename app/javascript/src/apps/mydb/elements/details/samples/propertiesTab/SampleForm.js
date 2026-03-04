@@ -6,8 +6,9 @@ import PropTypes from 'prop-types';
 import {
   Button, Form, InputGroup,
   OverlayTrigger, Tooltip, Row, Col,
-  ButtonGroup, Table
+  ButtonGroup
 } from 'react-bootstrap';
+import { AgGridReact } from 'ag-grid-react';
 import { Select, CreatableSelect } from 'src/components/common/Select';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
@@ -1268,56 +1269,105 @@ export default class SampleForm extends React.Component {
   hierarchicalMaterialTable() {
     const { components } = this.state;
     const { rowsData } = buildHierarchicalMaterialRows(components);
+    const gridRowData = Array.isArray(rowsData) ? rowsData : [];
+
+    const defaultColDef = {
+      editable: false,
+      flex: 1,
+      wrapHeaderText: true,
+      autoHeaderHeight: true,
+      autoHeight: true,
+      sortable: false,
+      resizable: false,
+      suppressMovable: true,
+      cellClass: ['border-end'],
+      headerClass: ['border-end', 'px-2'],
+    };
+
+    const columnDefs = [
+      {
+        headerName: 'Source',
+        field: 'sourceAlias',
+        minWidth: 90,
+        cellClass: ['lh-base', 'border-end'],
+      },
+      {
+        headerName: 'Weight ratio exp.',
+        field: 'weight_ratio_exp',
+        editable: true,
+        cellClass: ['editable-cell', 'border-end'],
+        valueSetter: (params) => {
+          if (params.newValue != null) {
+            this.handleComponentFieldChanged(params.data.index, 'weight_ratio_exp', params.newValue);
+          }
+        },
+      },
+      {
+        headerName: 'Molar Mass (g/mol)',
+        field: 'molar_mass',
+        editable: true,
+        cellClass: ['editable-cell', 'border-end'],
+        valueSetter: (params) => {
+          if (params.newValue != null) {
+            this.handleComponentFieldChanged(params.data.index, 'molar_mass', params.newValue);
+          }
+        },
+      },
+      {
+        headerName: 'Weight ratio calc./%',
+        field: 'weightRatioCalcProcessed',
+        minWidth: 110,
+        cellClass: ['lh-base', 'border-end'],
+      },
+      {
+        headerName: 'weight ratio (calc)/molar mass',
+        field: 'molarRatioCalcMM',
+        minWidth: 120,
+        valueGetter: (p) => (p.data?.molarRatioCalcMM !== undefined && p.data?.molarRatioCalcMM !== null ? p.data.molarRatioCalcMM : '-'),
+        cellClass: ['lh-base', 'border-end'],
+      },
+      {
+        headerName: 'molar ratio (calc)/molar mass',
+        field: 'weightRatioCalcMM',
+        minWidth: 120,
+        valueGetter: (p) => (p.data?.weightRatioCalcMM !== undefined && p.data?.weightRatioCalcMM !== null ? p.data.weightRatioCalcMM : '-'),
+        cellClass: ['lh-base', 'border-end'],
+      },
+      {
+        headerName: 'Molar ratio exp / %',
+        field: 'molarRatioExpPercent',
+        minWidth: 110,
+        valueGetter: (p) => (p.data?.molarRatioExpPercent !== undefined && p.data?.molarRatioExpPercent !== '-' ? p.data.molarRatioExpPercent : '-'),
+        cellClass: ['lh-base', 'border-end'],
+      },
+      {
+        headerName: 'Molar ratio calc / %',
+        field: 'molarRatioCalcPercent',
+        minWidth: 120,
+        valueGetter: (p) => (p.data?.molarRatioCalcPercent !== undefined && p.data?.molarRatioCalcPercent !== '-' ? p.data.molarRatioCalcPercent : '-'),
+        cellClass: ['lh-base', 'border-end'],
+      },
+    ];
 
     return (
       <>
         <h5 className="mt-3">Composition table:</h5>
-        <Table responsive hover bordered>
-          <thead>
-            <tr>
-              <th>Source</th>
-              <th>Weight ratio exp.</th>
-              <th>Molar Mass (g/mol)</th>
-              <th>Weight ratio calc./%</th>
-              <th>weight ratio (calc)/molar mass</th>
-              <th>molar ratio (calc)/molar mass</th>
-              <th>Molar ratio exp / %</th>
-              <th>Molar ratio calc / %</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rowsData.map((row) => (
-              <tr key={`component${row.template_category}`}>
-                <td>{row.sourceAlias || ''}</td>
-                <td>
-                  <Form.Control
-                    type="number"
-                    value={row.weight_ratio_exp}
-                    onChange={(e) => {
-                      const newValue = e.target.value;
-                      this.handleComponentFieldChanged(row.index, 'weight_ratio_exp', newValue);
-                    }}
-                  />
-                </td>
-                <td>
-                  <Form.Control
-                    type="number"
-                    value={row.molar_mass}
-                    onChange={(e) => {
-                      const newValue = e.target.value;
-                      this.handleComponentFieldChanged(row.index, 'molar_mass', newValue);
-                    }}
-                  />
-                </td>
-                <td>{row.weightRatioCalcProcessed}</td>
-                <td>{row.molarRatioCalcMM !== undefined && row.molarRatioCalcMM !== null ? row.molarRatioCalcMM : '-'}</td>
-                <td>{row.weightRatioCalcMM !== undefined && row.weightRatioCalcMM !== null ? row.weightRatioCalcMM : '-'}</td>
-                <td>{row.molarRatioExpPercent !== undefined && row.molarRatioExpPercent !== '-' ? row.molarRatioExpPercent : '-'}</td>
-                <td>{row.molarRatioCalcPercent !== undefined && row.molarRatioCalcPercent !== '-' ? row.molarRatioCalcPercent : '-'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
+        <div className="ag-theme-alpine sample-form-composition-grid mb-3">
+          <AgGridReact
+            columnDefs={columnDefs}
+            defaultColDef={defaultColDef}
+            rowData={gridRowData}
+            getRowId={(params) => {
+              const id = params.data?.index;
+              return id !== undefined && id !== null ? `component-${id}` : `row-${params.node?.rowIndex ?? 0}`;
+            }}
+            rowHeight="auto"
+            domLayout="autoHeight"
+            autoSizeStrategy={{ type: 'fitGridWidth' }}
+            singleClickEdit
+            stopEditingWhenCellsLoseFocus
+          />
+        </div>
       </>
     );
   }
