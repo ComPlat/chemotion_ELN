@@ -17,6 +17,8 @@ const KET_TAGS = Object.freeze({
   polymerIdentifier: '> <PolymersList>',
   textNodeIdentifier: '> <TextNode>',
   textNodeIdentifierClose: '> </TextNode>',
+  textNodeMeta: '> <TextNodeMeta>',
+  textNodeMetaClose: '> </TextNodeMeta>',
   fileEndIdentifier: '$$$$',
   molfileHeaderLinenumber: 4,
   rgLabel: 'rg-label',

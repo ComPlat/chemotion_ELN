@@ -322,6 +322,12 @@ module Import
           'sum_formula',
           'inventory_sample',
           'sample_type',
+          'state',
+          'height',
+          'color',
+          'width',
+          'length',
+          'storage_condition',
         ).merge(
           created_by: @current_user_id,
           collections: fetch_many(
