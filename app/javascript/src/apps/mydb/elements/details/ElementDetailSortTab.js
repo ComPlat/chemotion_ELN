@@ -37,6 +37,13 @@ export default class ElementDetailSortTab extends Component {
     CollectionStore.listen(this.onChangeUI);
   }
 
+  componentDidUpdate(prevProps) {
+    if (prevProps.addInventoryTab !== this.props.addInventoryTab
+      || !_.isEqual(prevProps.availableTabs, this.props.availableTabs)) {
+      this.onChangeUI();
+    }
+  }
+
   componentWillUnmount() {
     UserStore.unlisten(this.onChangeUser);
     CollectionStore.unlisten(this.onChangeUI);
