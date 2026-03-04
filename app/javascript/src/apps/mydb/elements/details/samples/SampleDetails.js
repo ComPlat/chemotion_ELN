@@ -148,7 +148,8 @@ export default class SampleDetails extends React.Component {
       currentUser,
       showRedirectWarning: redirectedFromMixture || false,
       casInputValue: '',
-      ketcherSVGError: null
+      ketcherSVGError: null,
+      previousSurfaceType: null
     };
 
     this.enableComputedProps = MatrixCheck(currentUser.matrix, 'computedProp');
@@ -891,6 +892,7 @@ export default class SampleDetails extends React.Component {
           customizableField={this.customizableField}
           enableSampleDecoupled={this.enableSampleDecoupled}
           decoupleMolecule={this.decoupleMolecule}
+          onDecoupleChanged={this.decoupleChanged}
           setComponentDeletionLoading={this.setComponentDeletionLoading}
           setMoleculeLoading={(loading) => this.setState({ loadingMolecule: loading })}
         />
@@ -1506,16 +1508,22 @@ export default class SampleDetails extends React.Component {
   }
 
   decoupleChanged(e) {
-    const { sample } = this.state;
-    sample.decoupled = e.target.checked;
+    const { sample, previousSurfaceType } = this.state;
+    const checked = typeof e === 'boolean' ? e : e.target.checked;
+    sample.decoupled = checked;
     if (!sample.decoupled) {
       sample.sum_formula = '';
       sample.molecular_mass = null;
+      if (sample.residues && sample.residues[0] && sample.residues[0].custom_info && previousSurfaceType != null) {
+        sample.residues[0].custom_info.surface_type = previousSurfaceType;
+        this.setState({ previousSurfaceType: null });
+      }
     } else {
       if (!sample.sum_formula || sample.sum_formula.trim() === '') sample.sum_formula = 'undefined structure';
       if (sample.residues && sample.residues[0] && sample.residues[0].custom_info) {
-        sample.residues[0].custom_info.polymer_type = 'self_defined';
-        delete sample.residues[0].custom_info.surface_type;
+        const ci = sample.residues[0].custom_info;
+        this.setState({ previousSurfaceType: ci.surface_type || null });
+        delete ci.surface_type;
       }
     }
     if (!sample.decoupled && ((sample.molfile || '') === '')) {
