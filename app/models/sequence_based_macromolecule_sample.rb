@@ -75,6 +75,7 @@ class SequenceBasedMacromoleculeSample < ApplicationRecord
   before_create :auto_assign_short_label
 
   has_one :container, as: :containable, inverse_of: :containable, dependent: :nullify
+  has_one :chemical, dependent: :destroy
   has_ancestry orphan_strategy: :adopt
 
   has_many :attachments, as: :attachable, inverse_of: :attachable, dependent: :nullify
