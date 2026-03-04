@@ -20,6 +20,7 @@ import {
   removeTextFromData
 } from 'src/utilities/ketcherSurfaceChemistry/AtomsAndMolManipulation';
 import { findByKeyAndUpdateTextNodePosition } from 'src/utilities/ketcherSurfaceChemistry/TextNode';
+import { isDraftContent } from 'src/utilities/ketcherSurfaceChemistry/deltaDraftContentConverter';
 import {
   imageNodeForTextNodeSetter,
   buttonClickForRectangleSelection,
@@ -32,7 +33,6 @@ import {
   textList,
   textListSetter,
   textNodeStruct,
-  textNodeStructSetter,
   deletedAtomsSetter,
   reloadCanvasSetter,
   imageListCopyContainer,
@@ -167,25 +167,16 @@ const onDeleteText = async (editor) => {
   }
 };
 
-// Helper function to create a new text node from text content
-const createTextNodeFromContent = (text, defaultPosition = { x: 4.4, y: -10.4, z: 0 }) => {
-  if (!text || !text.trim()) {
-    return null;
-  }
-
-  // Generate unique key for text node (similar to draft.js format)
-  const generateKey = () => Math.random().toString(36).substring(2, 8);
-  const textKey = generateKey();
-
-  // Import forTextNodeHeader from TextNode utility
-  const forTextNodeHeader = (key, description) => JSON.stringify({
+// Helper function to create a new text node from text content or Draft-style content
+const createTextNodeFromContent = (textOrContent, defaultPosition = { x: 4.4, y: -10.4, z: 0 }) => {
+  const forTextNodeHeader = (key, description, inlineStyleRanges = []) => JSON.stringify({
     blocks: [
       {
         key,
         text: description,
         type: 'unstyled',
         depth: 0,
-        inlineStyleRanges: [],
+        inlineStyleRanges,
         entityRanges: [],
         data: {},
       }
@@ -193,7 +184,41 @@ const createTextNodeFromContent = (text, defaultPosition = { x: 4.4, y: -10.4, z
     entityMap: {}
   });
 
-  // Create default pos array based on position
+  // Draft content: { blocks: [...], entityMap: {} }
+  if (isDraftContent(textOrContent)) {
+    const content = typeof textOrContent === 'string' ? JSON.parse(textOrContent) : textOrContent;
+    const block = content.blocks[0];
+    if (!block || !(block.text || '').trim()) return null;
+    const key = block.key || Math.random().toString(36).substring(2, 8);
+    const contentStr = JSON.stringify({
+      blocks: [{ ...block, key }],
+      entityMap: content.entityMap || {}
+    });
+    const defaultPos = [
+      { x: defaultPosition.x, y: defaultPosition.y, z: defaultPosition.z },
+      { x: defaultPosition.x, y: defaultPosition.y - 0.375, z: defaultPosition.z },
+      { x: defaultPosition.x + 0.71724853515625, y: defaultPosition.y - 0.375, z: defaultPosition.z },
+      { x: defaultPosition.x + 0.71724853515625, y: defaultPosition.y, z: defaultPosition.z }
+    ];
+    return {
+      type: 'text',
+      data: {
+        content: contentStr,
+        position: defaultPosition,
+        pos: defaultPos
+      }
+    };
+  }
+
+  // Plain text (legacy)
+  const text = typeof textOrContent === 'string' ? textOrContent : '';
+  if (!text || !text.trim()) {
+    return null;
+  }
+
+  const generateKey = () => Math.random().toString(36).substring(2, 8);
+  const textKey = generateKey();
+
   const defaultPos = [
     { x: defaultPosition.x, y: defaultPosition.y, z: defaultPosition.z },
     { x: defaultPosition.x, y: defaultPosition.y - 0.375, z: defaultPosition.z },
@@ -254,7 +279,16 @@ const onAddTextFromEditor = async (editor, textContent, selectedImageForTextNode
       return false;
     }
 
-    if (!textContent || !textContent.trim()) {
+    // Normalize: accept Draft content (object or JSON string) or plain string
+    const isEmpty = (v) => {
+      if (typeof v === 'string' && !isDraftContent(v)) return !v.trim();
+      if (isDraftContent(v)) {
+        const c = typeof v === 'string' ? JSON.parse(v) : v;
+        return !(c.blocks[0]?.text || '').trim();
+      }
+      return true;
+    };
+    if (isEmpty(textContent)) {
       return false;
     }
 
@@ -282,11 +316,19 @@ const onAddTextFromEditor = async (editor, textContent, selectedImageForTextNode
         });
 
         if (existingNodeIndex !== -1) {
-          // Update the existing text node content
+          // Update the existing text node content (full Draft content, preserve key)
           const existingNode = updatedTextList[existingNodeIndex];
           const existingContent = JSON.parse(existingNode.data.content);
-          existingContent.blocks[0].text = textContent.trim();
-          existingNode.data.content = JSON.stringify(existingContent);
+          const existingKey = existingContent.blocks[0].key;
+          if (isDraftContent(textContent)) {
+            const newContent = typeof textContent === 'string' ? JSON.parse(textContent) : textContent;
+            newContent.blocks[0].key = existingKey;
+            existingNode.data.content = JSON.stringify(newContent);
+          } else {
+            existingContent.blocks[0].text = textContent.trim();
+            existingContent.blocks[0].inlineStyleRanges = existingContent.blocks[0].inlineStyleRanges || [];
+            existingNode.data.content = JSON.stringify(existingContent);
+          }
           textKey = existingKey;
           newTextNode = existingNode;
           textListSetter(updatedTextList);

@@ -2,11 +2,20 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 
-import Quill from 'quill';
+import Quill, { Parchment } from 'quill';
 import Delta from 'quill-delta';
 
 import _ from 'lodash';
 import { Dropdown, DropdownButton, OverlayTrigger, Popover, Button } from 'react-bootstrap';
+
+// Use style-based font size so inline CUSTOM_FONT_SIZE_* from Draft content apply (e.g. 32px).
+// Default Quill uses class-based size (small/large/huge); we override with StyleAttributor and extended whitelist.
+const FONT_SIZE_WHITELIST = ['10px', '14px', '16px', '18px', '20px', '24px', '26px', '32px'];
+const SizeStyle = new Parchment.StyleAttributor('size', 'font-size', {
+  scope: Parchment.Scope.INLINE,
+  whitelist: FONT_SIZE_WHITELIST
+});
+Quill.register({ 'attributors/style/size': SizeStyle, 'formats/size': SizeStyle }, true);
 
 const toolbarOptions = [
   ['bold', 'italic', 'underline'],

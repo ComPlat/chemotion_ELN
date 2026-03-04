@@ -50,6 +50,7 @@ import {
   onAddTextFromEditor,
 } from 'src/utilities/ketcherSurfaceChemistry/canvasOperations';
 import { handleEventCapture } from 'src/utilities/ketcherSurfaceChemistry/eventHandler';
+import { deltaToDraftContent } from 'src/utilities/ketcherSurfaceChemistry/deltaDraftContentConverter';
 import {
   ImagesToBeUpdatedSetter,
   imagesList,
@@ -412,21 +413,21 @@ const KetcherEditor = forwardRef((props, ref) => {
     };
 
     // Looks up the existing label text for an image index via textNodeStruct + textList.
-    // Returns { text, textKey } where text is null if no label exists yet.
+    // Returns { content, textKey } where content is full Draft content (JSON string) or null.
     const getLabelForImage = async (imageIndex) => {
       const { alias } = await findAtomByImageIndex(imageIndex);
-      if (!alias) return { text: null, textKey: null };
+      if (!alias) return { content: null, textKey: null };
       const textKey = textNodeStruct[alias];
-      if (!textKey) return { text: null, textKey: null };
+      if (!textKey) return { content: null, textKey: null };
       for (const tn of (textList || [])) {
         try {
-          const content = JSON.parse(tn.data.content);
-          if (content.blocks[0].key === textKey) {
-            return { text: content.blocks[0].text || '', textKey };
+          const c = JSON.parse(tn.data.content);
+          if (c.blocks[0].key === textKey) {
+            return { content: tn.data.content, textKey };
           }
         } catch (e) { /* skip malformed nodes */ }
       }
-      return { text: null, textKey };
+      return { content: null, textKey: null };
     };
 
     const selectionChangeHandler = async () => {
@@ -440,8 +441,8 @@ const KetcherEditor = forwardRef((props, ref) => {
           // This is reliable whether or not Ketcher also reports a text selection.
           canvasSelectionsSetter(currentSelection);
           imageNodeForTextNodeSetter(currentSelection.images);
-          const { text, textKey } = await getLabelForImage(currentSelection.images[0]);
-          selectedTextContent = text; // null → empty textarea; existing → pre-fill for editing
+          const { content, textKey } = await getLabelForImage(currentSelection.images[0]);
+          selectedTextContent = content; // full Draft content (JSON string) or null
           selectedTextKey = textKey;
         } else if (currentSelection?.texts?.length > 0) {
           // Only a text node is selected (no image in selection).
@@ -453,23 +454,18 @@ const KetcherEditor = forwardRef((props, ref) => {
             const ketcherStruct = editor._structureDef?.editor?.editor?.struct?.();
             const ketcherTextEntity = ketcherStruct?.texts?.get(selectedTextId);
             if (ketcherTextEntity?.content) {
-              // Parse the Draft.js content stored in Ketcher's struct
               const parsedContent = JSON.parse(ketcherTextEntity.content);
-              const textKey = parsedContent?.blocks?.[0]?.key;
-              const textLabel = parsedContent?.blocks?.[0]?.text || '';
-              if (textKey) {
-                selectedTextKey = textKey;
-                selectedTextContent = textLabel;
+              selectedTextKey = parsedContent?.blocks?.[0]?.key;
+              selectedTextContent = ketcherTextEntity.content; // full Draft content (JSON string)
 
-                // Sync imageNodeForTextNode to the image linked with this text node
-                for (const [alias, textKeyInStruct] of Object.entries(textNodeStruct)) {
-                  if (textKeyInStruct === selectedTextKey) {
-                    const aliasParts = alias.split('_');
-                    if (aliasParts.length >= 3) {
-                      imageNodeForTextNodeSetter([parseInt(aliasParts[2], 10)]);
-                    }
-                    break;
+              // Sync imageNodeForTextNode to the image linked with this text node
+              for (const [alias, textKeyInStruct] of Object.entries(textNodeStruct)) {
+                if (textKeyInStruct === selectedTextKey) {
+                  const aliasParts = alias.split('_');
+                  if (aliasParts.length >= 3) {
+                    imageNodeForTextNodeSetter([parseInt(aliasParts[2], 10)]);
                   }
+                  break;
                 }
               }
             }
@@ -627,18 +623,9 @@ const KetcherEditor = forwardRef((props, ref) => {
           setSelectedTextNodeContent(null);
         }}
         onApply={async (contents) => {
-          // Convert Delta object to plain text
-          const deltaToText = (delta) => {
-            if (!delta || !delta.ops) return '';
-            return delta.ops
-              .filter((op) => typeof op.insert === 'string')
-              .map((op) => op.insert)
-              .join('');
-          };
-          const text = deltaToText(contents);
-
-          // Use the improved function that handles text node creation/update and positioning
-          await onAddTextFromEditor(editor, text, selectedImageForTextNode, selectedTextNodeContent !== null);
+          const draftContent = deltaToDraftContent(contents);
+          const contentStr = JSON.stringify(draftContent);
+          await onAddTextFromEditor(editor, contentStr, selectedImageForTextNode, selectedTextNodeContent !== null);
           // Update button state after text is added/updated
           await updateAddLabelButtonState(selectedImageForTextNode);
           setAddLabelPopup(false);

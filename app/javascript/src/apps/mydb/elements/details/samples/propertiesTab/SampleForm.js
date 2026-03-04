@@ -877,6 +877,12 @@ export default class SampleForm extends React.Component {
           metric = 'n';
           break;
         }
+        case 'defined_part_amount': {
+          const isDefinedPartValid = sample.metrics && sample.metrics.length > 2;
+          const prefixDefinedPart = isDefinedPartValid ? sample.metrics[0] : 'm';
+          metric = metricPrefixes.indexOf(prefixDefinedPart) > -1 ? prefixDefinedPart : 'm';
+          break;
+        }
         default:
           console.warn(`Unknown field: ${field}`);
           metric = 'm';
