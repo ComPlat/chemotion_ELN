@@ -1265,19 +1265,20 @@ export default class SampleDetails extends React.Component {
       ? sample.pubchem_tag.pubchem_cid : 0;
     const lcssSign = pubchemLcss && !sample.decoupled
       ? <PubchemLcss cid={pubchemCid} informArray={pubchemLcss} /> : null;
+    const isHierarchicalMaterial = sample.isHierarchicalMaterial();
 
     return (
       <Container>
         <Row className="mb-4">
           <Col md={4}>
             <h4><SampleName sample={sample} /></h4>
-            {!isMixture && (
+            {!isMixture && !isHierarchicalMaterial && (
               <>
                 <h5>{this.sampleAverageMW(sample)}</h5>
                 <h5>{this.sampleExactMW(sample)}</h5>
               </>
             )}
-            {sample.isNew || isMixture ? null : <h6>{this.moleculeCas()}</h6>}
+            {sample.isNew || isMixture || isHierarchicalMaterial ? null : <h6>{this.moleculeCas()}</h6>}
             {lcssSign}
           </Col>
           <Col md={8} className="position-relative">
