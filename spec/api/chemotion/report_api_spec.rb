@@ -140,6 +140,46 @@ describe Chemotion::ReportAPI do
           expect(sdf).to eq(msdf), "Mismatch in SDF for sample ##{i}"
         end
       end
+
+      it 'exports sbmm reactants from reaction selection as sdf entries' do
+        reaction = create(:reaction, name: 'Reaction with SBMM SDF')
+        sbmm = create(:uniprot_sbmm)
+        sbmm_sample = SequenceBasedMacromoleculeSample.create!(
+          name: 'SBMM SDF sample',
+          short_label: 'SBMM-SDF-1',
+          sequence_based_macromolecule: sbmm,
+          user: user,
+        )
+
+        CollectionsReaction.create!(reaction: reaction, collection: c)
+        CollectionsSequenceBasedMacromoleculeSample.create!(
+          sequence_based_macromolecule_sample: sbmm_sample,
+          collection: c,
+        )
+        ReactionsReactantSbmmSample.create!(
+          reaction: reaction,
+          sequence_based_macromolecule_sample: sbmm_sample,
+          position: 1,
+        )
+
+        sdf_params = params.deep_dup
+        sdf_params[:columns][:sample] << 'short_label'
+        sdf_params[:uiState][:reaction][:checkedIds] = [reaction.id]
+
+        post(
+          '/api/v1/reports/export_samples_from_selections',
+          params: sdf_params.to_json,
+          headers: { 'CONTENT-TYPE' => 'application/json' },
+        )
+
+        expect(response['Content-Type']).to eq('chemical/x-mdl-sdfile')
+        expect(response['Content-Disposition']).to include('.sdf')
+        expect(response.body).to include('M  END')
+        expect(response.body).to include('>  <SAMPLE_NAME>')
+        expect(response.body).to include('SBMM SDF sample')
+        expect(response.body).to include('>  <SHORT_LABEL>')
+        expect(response.body).to include('SBMM-SDF-1')
+      end
     end
 
     describe 'POST /api/v1/reports/export_samples_from_selections' do
@@ -234,6 +274,68 @@ describe Chemotion::ReportAPI do
         it 'returns a header with excel-type' do
           expect(response['Content-Type']).to eq(excel_mime_type)
           expect(response['Content-Disposition']).to include('.xlsx')
+        end
+      end
+
+      describe 'when reaction selection includes sbmm reactants' do
+        let(:reaction) { create(:reaction, name: 'Reaction with SBMM', short_label: 'R-SBMM-1') }
+        let(:sbmm) { create(:uniprot_sbmm) }
+        let(:sbmm_sample) do
+          SequenceBasedMacromoleculeSample.create!(
+            name: 'SBMM export sample',
+            short_label: 'SBMM-EXP-1',
+            sequence_based_macromolecule: sbmm,
+            user: user,
+          )
+        end
+
+        let(:params) do
+          {
+            exportType: 1,
+            uiState: base_ui_state.merge(
+              sample: {
+                checkedIds: [],
+                uncheckedIds: [],
+                checkedAll: false,
+              },
+              reaction: {
+                checkedIds: [reaction.id],
+                uncheckedIds: [],
+                checkedAll: false,
+              },
+            ),
+            columns: {
+              sample: %w[name short_label],
+              reaction: %w[name short_label],
+            },
+          }
+        end
+
+        before do
+          CollectionsReaction.create!(reaction: reaction, collection: c)
+          CollectionsSequenceBasedMacromoleculeSample.create!(
+            sequence_based_macromolecule_sample: sbmm_sample,
+            collection: c,
+          )
+          ReactionsReactantSbmmSample.create!(
+            reaction: reaction,
+            sequence_based_macromolecule_sample: sbmm_sample,
+            position: 1,
+          )
+
+          make_request
+        end
+
+        it 'includes sbmm sample values in the exported workbook' do
+          expect(response).to have_http_status(:success)
+
+          xml_payload = ''
+          Zip::File.open_buffer(response.body) do |zip|
+            xml_payload = zip.glob('xl/**/*.xml').map { |entry| entry.get_input_stream.read }.join("\n")
+          end
+
+          expect(xml_payload).to include('SBMM export sample')
+          expect(xml_payload).to include('SBMM-EXP-1')
         end
       end
     end
