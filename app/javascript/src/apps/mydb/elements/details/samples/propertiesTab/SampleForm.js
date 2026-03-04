@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 /* eslint-disable react/sort-comp */
 /* eslint-disable react/forbid-prop-types */
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import {
   Button, Form, InputGroup,
@@ -49,6 +49,129 @@ const flattenApiFormatComponents = (components) => (components || []).map((comp)
   return comp;
 });
 
+const COMPOSITION_DEFAULT_COL_DEF = {
+  editable: false,
+  flex: 1,
+  wrapHeaderText: true,
+  autoHeaderHeight: true,
+  autoHeight: true,
+  sortable: false,
+  resizable: false,
+  suppressMovable: true,
+  cellClass: ['border-end'],
+  headerClass: ['border-end', 'px-2'],
+};
+
+const buildCompositionColumnDefs = (onFieldChange) => [
+  {
+    headerName: 'Source',
+    field: 'sourceAlias',
+    minWidth: 90,
+    cellClass: ['lh-base', 'border-end'],
+  },
+  {
+    headerName: 'Weight ratio exp.',
+    field: 'weight_ratio_exp',
+    editable: true,
+    cellClass: ['editable-cell', 'border-end'],
+    valueSetter: (params) => {
+      if (params.newValue != null) onFieldChange(params.data.index, 'weight_ratio_exp', params.newValue);
+    },
+  },
+  {
+    headerName: 'Molar Mass (g/mol)',
+    field: 'molar_mass',
+    editable: true,
+    cellClass: ['editable-cell', 'border-end'],
+    valueSetter: (params) => {
+      if (params.newValue != null) onFieldChange(params.data.index, 'molar_mass', params.newValue);
+    },
+  },
+  {
+    headerName: 'Weight ratio calc./%',
+    field: 'weightRatioCalcProcessed',
+    minWidth: 110,
+    cellClass: ['lh-base', 'border-end'],
+  },
+  {
+    headerName: 'weight ratio (calc)/molar mass',
+    field: 'molarRatioCalcMM',
+    minWidth: 120,
+    valueGetter: (p) => (p.data?.molarRatioCalcMM ?? '-'),
+    cellClass: ['lh-base', 'border-end'],
+  },
+  {
+    headerName: 'molar ratio (calc)/molar mass',
+    field: 'weightRatioCalcMM',
+    minWidth: 120,
+    valueGetter: (p) => (p.data?.weightRatioCalcMM ?? '-'),
+    cellClass: ['lh-base', 'border-end'],
+  },
+  {
+    headerName: 'Molar ratio exp / %',
+    field: 'molarRatioExpPercent',
+    minWidth: 110,
+    valueGetter: (p) => (p.data?.molarRatioExpPercent !== '-' ? (p.data?.molarRatioExpPercent ?? '-') : '-'),
+    cellClass: ['lh-base', 'border-end'],
+  },
+  {
+    headerName: 'Molar ratio calc / %',
+    field: 'molarRatioCalcPercent',
+    minWidth: 120,
+    valueGetter: (p) => (p.data?.molarRatioCalcPercent !== '-' ? (p.data?.molarRatioCalcPercent ?? '-') : '-'),
+    cellClass: ['lh-base', 'border-end'],
+  },
+];
+
+/**
+ * Renders the hierarchical material composition table using AG Grid.
+ * Mounted deferred (one animation frame) to avoid ResizeObserver loop errors
+ * when switching sample type during a heavy layout change.
+ */
+function HierarchicalCompositionTable({ components, onFieldChange }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  const columnDefs = useCallback(() => buildCompositionColumnDefs(onFieldChange), [onFieldChange])();
+  const { rowsData } = buildHierarchicalMaterialRows(components);
+  const gridRowData = Array.isArray(rowsData) ? rowsData : [];
+
+  const getRowId = useCallback((params) => {
+    const id = params.data?.index;
+    return id !== undefined && id !== null ? `component-${id}` : `row-${params.node?.rowIndex ?? 0}`;
+  }, []);
+
+  if (!mounted) return null;
+
+  return (
+    <>
+      <h5 className="mt-3">Composition table:</h5>
+      <div className="ag-theme-alpine sample-form-composition-grid mb-3">
+        <AgGridReact
+          columnDefs={columnDefs}
+          defaultColDef={COMPOSITION_DEFAULT_COL_DEF}
+          rowData={gridRowData}
+          getRowId={getRowId}
+          rowHeight="auto"
+          domLayout="autoHeight"
+          autoSizeStrategy={{ type: 'fitGridWidth' }}
+          singleClickEdit
+          stopEditingWhenCellsLoseFocus
+        />
+      </div>
+    </>
+  );
+}
+
+HierarchicalCompositionTable.propTypes = {
+  components: PropTypes.array.isRequired, // eslint-disable-line react/forbid-prop-types
+  onFieldChange: PropTypes.func.isRequired,
+};
+
 export default class SampleForm extends React.Component {
   constructor(props) {
     super(props);
@@ -86,6 +209,7 @@ export default class SampleForm extends React.Component {
     this.handleMixtureComponentChanged = this.handleMixtureComponentChanged.bind(this);
     this.handleSampleTypeChanged = this.handleSampleTypeChanged.bind(this);
     this.stateSelect = this.stateSelect.bind(this);
+    this.handleComponentFieldChanged = this.handleComponentFieldChanged.bind(this);
   }
 
   componentDidUpdate(prevProps) {
@@ -1187,107 +1311,11 @@ export default class SampleForm extends React.Component {
 
   hierarchicalMaterialTable() {
     const { components } = this.state;
-    const { rowsData } = buildHierarchicalMaterialRows(components);
-    const gridRowData = Array.isArray(rowsData) ? rowsData : [];
-
-    const defaultColDef = {
-      editable: false,
-      flex: 1,
-      wrapHeaderText: true,
-      autoHeaderHeight: true,
-      autoHeight: true,
-      sortable: false,
-      resizable: false,
-      suppressMovable: true,
-      cellClass: ['border-end'],
-      headerClass: ['border-end', 'px-2'],
-    };
-
-    const columnDefs = [
-      {
-        headerName: 'Source',
-        field: 'sourceAlias',
-        minWidth: 90,
-        cellClass: ['lh-base', 'border-end'],
-      },
-      {
-        headerName: 'Weight ratio exp.',
-        field: 'weight_ratio_exp',
-        editable: true,
-        cellClass: ['editable-cell', 'border-end'],
-        valueSetter: (params) => {
-          if (params.newValue != null) {
-            this.handleComponentFieldChanged(params.data.index, 'weight_ratio_exp', params.newValue);
-          }
-        },
-      },
-      {
-        headerName: 'Molar Mass (g/mol)',
-        field: 'molar_mass',
-        editable: true,
-        cellClass: ['editable-cell', 'border-end'],
-        valueSetter: (params) => {
-          if (params.newValue != null) {
-            this.handleComponentFieldChanged(params.data.index, 'molar_mass', params.newValue);
-          }
-        },
-      },
-      {
-        headerName: 'Weight ratio calc./%',
-        field: 'weightRatioCalcProcessed',
-        minWidth: 110,
-        cellClass: ['lh-base', 'border-end'],
-      },
-      {
-        headerName: 'weight ratio (calc)/molar mass',
-        field: 'molarRatioCalcMM',
-        minWidth: 120,
-        valueGetter: (p) => (p.data?.molarRatioCalcMM !== undefined && p.data?.molarRatioCalcMM !== null ? p.data.molarRatioCalcMM : '-'),
-        cellClass: ['lh-base', 'border-end'],
-      },
-      {
-        headerName: 'molar ratio (calc)/molar mass',
-        field: 'weightRatioCalcMM',
-        minWidth: 120,
-        valueGetter: (p) => (p.data?.weightRatioCalcMM !== undefined && p.data?.weightRatioCalcMM !== null ? p.data.weightRatioCalcMM : '-'),
-        cellClass: ['lh-base', 'border-end'],
-      },
-      {
-        headerName: 'Molar ratio exp / %',
-        field: 'molarRatioExpPercent',
-        minWidth: 110,
-        valueGetter: (p) => (p.data?.molarRatioExpPercent !== undefined && p.data?.molarRatioExpPercent !== '-' ? p.data.molarRatioExpPercent : '-'),
-        cellClass: ['lh-base', 'border-end'],
-      },
-      {
-        headerName: 'Molar ratio calc / %',
-        field: 'molarRatioCalcPercent',
-        minWidth: 120,
-        valueGetter: (p) => (p.data?.molarRatioCalcPercent !== undefined && p.data?.molarRatioCalcPercent !== '-' ? p.data.molarRatioCalcPercent : '-'),
-        cellClass: ['lh-base', 'border-end'],
-      },
-    ];
-
     return (
-      <>
-        <h5 className="mt-3">Composition table:</h5>
-        <div className="ag-theme-alpine sample-form-composition-grid mb-3">
-          <AgGridReact
-            columnDefs={columnDefs}
-            defaultColDef={defaultColDef}
-            rowData={gridRowData}
-            getRowId={(params) => {
-              const id = params.data?.index;
-              return id !== undefined && id !== null ? `component-${id}` : `row-${params.node?.rowIndex ?? 0}`;
-            }}
-            rowHeight="auto"
-            domLayout="autoHeight"
-            autoSizeStrategy={{ type: 'fitGridWidth' }}
-            singleClickEdit
-            stopEditingWhenCellsLoseFocus
-          />
-        </div>
-      </>
+      <HierarchicalCompositionTable
+        components={components}
+        onFieldChange={this.handleComponentFieldChanged}
+      />
     );
   }
 
@@ -1365,7 +1393,7 @@ export default class SampleForm extends React.Component {
 
               <Row className="mb-4">
                 <Col>{this.textInput(sample, 'xref_form', 'Form')}</Col>
-                <Col>{this.textInput(sample, 'xref_color', 'Color')}</Col>
+                <Col>{this.textInput(sample, 'color', 'Color')}</Col>
                 <Col>{this.textInput(sample, 'xref_solubility', 'Soluble in')}</Col>
               </Row>
               <Row className="align-items-end mb-4">

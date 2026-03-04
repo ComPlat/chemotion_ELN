@@ -1,5 +1,26 @@
 import 'whatwg-fetch';
 
+const COMPONENT_PROPERTY_KEYS = [
+  'amount_mol', 'amount_l', 'amount_g', 'relative_molecular_weight', 'density',
+  'molarity_unit', 'molarity_value', 'starting_molarity_value', 'starting_molarity_unit',
+  'molecule_id', 'equivalent', 'parent_id', 'material_group', 'reference', 'purity', 'metrics',
+  'template_category', 'source', 'molar_mass', 'weight_ratio_exp'
+];
+
+function serializePlainComponent(comp) {
+  const props = comp.component_properties || {};
+  const componentProperties = { ...props };
+  COMPONENT_PROPERTY_KEYS.forEach((key) => {
+    if (comp[key] !== undefined) componentProperties[key] = comp[key];
+  });
+  return {
+    id: comp.id,
+    name: comp.name ?? props.name ?? '',
+    position: comp.position ?? props.position ?? 0,
+    component_properties: componentProperties
+  };
+}
+
 export default class ComponentsFetcher {
   /**
    * Fetches components for a given sample by its ID.
@@ -29,7 +50,13 @@ export default class ComponentsFetcher {
    * @returns {Promise<Object>} A promise resolving to the updated components response
    */
   static saveOrUpdateComponents(sample, components) {
-    const serializedComponents = components?.length ? components.map((component) => component.serializeComponent()) : [];
+    const serializedComponents = components?.length
+      ? components.map((component) => (
+        typeof component.serializeComponent === 'function'
+          ? component.serializeComponent()
+          : serializePlainComponent(component)
+      ))
+      : [];
     return fetch('/api/v1/components', {
       credentials: 'same-origin',
       method: 'PUT',

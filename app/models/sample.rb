@@ -89,6 +89,15 @@ class Sample < ApplicationRecord
     SAMPLE_TYPE_HIERARCHICAL_MATERIAL,
   ].freeze
 
+  # Hierarchical sample properties (column or sample_details, fallback to xref for backwards compatibility)
+  %i[color state height width length storage_condition].each do |key|
+    define_method(key) do
+      read_attribute(key).presence ||
+        (sample_details || {}).dig(key.to_s) ||
+        (xref || {}).dig(key.to_s)
+    end
+  end
+
   multisearchable against: %i[
     name short_label external_label molecule_sum_formular
     molecule_iupac_name molecule_inchistring molecule_inchikey molecule_cano_smiles
