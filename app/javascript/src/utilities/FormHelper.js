@@ -13,14 +13,14 @@ import { unitSystems } from 'src/components/staticDropdownOptions/units';
 import { capitalizeWords } from 'src/utilities/textHelper';
 
 const inputByType = (object, field, index, formHelper, disabled) => {
-  const fullFieldName = `${field}.${index}.${object.value}`
+  const fullFieldName = `${field}.${index}.${object.value}`;
   switch (object.type) {
     case 'text':
       return formHelper.textInput(fullFieldName, '', disabled, object.info);
     case 'select':
       return formHelper.selectInput(fullFieldName, '', object.options, disabled, '', object.info);
   }
-}
+};
 
 const labelWithInfo = (label, info) => {
   if (label === '') { return null; }
@@ -38,34 +38,35 @@ const labelWithInfo = (label, info) => {
     );
   }
   return formLabel;
-}
+};
 
 const elementField = (element, field) => {
-  let fieldParts = field.split('.');
+  const fieldParts = field.split('.');
   return fieldParts.reduce((accumulator, currentValue) => accumulator?.[currentValue], element);
-}
+};
 
 const errorMessage = (element, field) => {
-  let fieldParts = `errors.${field}`.split('.');
+  const fieldParts = `errors.${field}`.split('.');
   return fieldParts.reduce((accumulator, currentValue) => accumulator?.[currentValue], element);
-}
+};
 
 const optionsByRelatedField = (store, element, field, options) => {
   const relatedOptions = options.filter((o) => o.related !== undefined);
   if (relatedOptions.length < 1) { return options; }
 
-  const { lastObject, lastKey } = store.getLastObjectAndKeyByField(field, element);
+  const { lastObject } = store.getLastObjectAndKeyByField(field, element);
+  const relatedField = relatedOptions[0].related;
+  const relatedValue = lastObject?.[relatedField];
 
-  if (lastObject[relatedOptions[0].related] !== '' || lastObject[relatedOptions[0].related] !== undefined) {
-    return relatedOptions.filter((o) => o.only === lastObject[relatedOptions[0].related]);
-  } else {
-    return options;
+  if (relatedValue !== '' && relatedValue != null) {
+    return relatedOptions.filter((o) => o.only === relatedValue);
   }
-}
+
+  return options;
+};
 
 const numberValue = (value) => {
   if (value === '' || value === undefined) { return ''; }
-
 
   let cleanedValue = value;
   let changeToFloat = typeof cleanedValue === 'number';
@@ -80,13 +81,13 @@ const numberValue = (value) => {
   }
 
   return changeToFloat ? parseFloat(cleanedValue) : cleanedValue;
-}
+};
 
-const changeElement = (store, field, value, element_type) => {
-  if (element_type == 'sequence_based_macromolecule_sample') {
+const changeElement = (store, field, value, elementType) => {
+  if (elementType === 'sequence_based_macromolecule_sample') {
     store.changeSequenceBasedMacromoleculeSample(field, value);
   }
-}
+};
 
 const addRow = (store, element, field, rowFields) => {
   let newRow = {};
@@ -97,23 +98,23 @@ const addRow = (store, element, field, rowFields) => {
   const fieldArray = elementField(element, field) || [];
   const value = fieldArray.concat(newRow);
   changeElement(store, field, value, element.type);
-}
+};
 
 const deleteRow = (store, element, field, index) => {
   const fieldArray = elementField(element, field);
   fieldArray.splice(index, 1);
   changeElement(store, field, fieldArray, element.type);
-}
+};
 
 const changeUnit = (store, element, units, unitField, unitValue) => {
-  const activeUnitIndex = units.findIndex((f) => { return f.label === unitValue });
+  const activeUnitIndex = units.findIndex((f) => f.label === unitValue);
   const nextUnitIndex = activeUnitIndex === units.length - 1 ? 0 : activeUnitIndex + 1;
   const newUnitValue = units[nextUnitIndex].label;
 
   if (unitValue === newUnitValue) { return null; }
 
   changeElement(store, unitField, newUnitValue, element.type);
-}
+};
 
 const initFormHelper = (element, store) => {
   const formHelper = {
@@ -156,7 +157,7 @@ const initFormHelper = (element, store) => {
     selectInput: (field, label, options, disabled, info, required = false) => {
       const elementValue = elementField(element, field);
       const relatedOptions = optionsByRelatedField(store, element, field, options);
-      let value = options.find((o) => { return o.value == elementValue });
+      let value = options.find((o) => o.value === elementValue);
       value = value === undefined ? '' : value;
 
       return (
@@ -167,7 +168,7 @@ const initFormHelper = (element, store) => {
             key={`${store.key_prefix}-${field}`}
             options={relatedOptions}
             value={value}
-            isClearable={true}
+            isClearable
             isDisabled={disabled}
             required={required}
             classNames={{
@@ -243,7 +244,7 @@ const initFormHelper = (element, store) => {
 
     inputGroupTextOrNumericInput: (field, label, text, type, disabled, info, required = false) => {
       let value = elementField(element, field);
-      value = type == 'number' ? numberValue(value) : value || '';
+      value = type === 'number' ? numberValue(value) : value || '';
 
       return (
         <Form.Group key={`${store.key_prefix}-${label}`}>
@@ -350,7 +351,7 @@ const initFormHelper = (element, store) => {
         groups.push(
           <div key={`${field}-${group.label}-${i}-buttons`}>
             <div key={`${field}-${group.label}-${i}-label`} className="form-label">{group.label}</div>
-            
+
             <ButtonGroup
               key={`${field}-${group.label}-${i}`}
               className="mb-4"
@@ -400,8 +401,8 @@ const initFormHelper = (element, store) => {
                   )
                 }
               </div>
-            )
-          };
+            );
+          }
         });
       });
 
@@ -412,7 +413,7 @@ const initFormHelper = (element, store) => {
             {buttons}
             {
               details.length >= 1 && (
-                <div key={`detail-fields`}>
+                <div key="detail-fields">
                   <Form.Label>Details</Form.Label>
                   {details}
                 </div>
@@ -509,7 +510,7 @@ const initFormHelper = (element, store) => {
     },
   };
   return formHelper;
-}
+};
 
 const ColoredAccordeonHeaderButton = ({ title, eventKey, bgColor, bgColorActive, callback }) => {
   const { activeEventKey } = useContext(AccordionContext);
@@ -529,7 +530,7 @@ const ColoredAccordeonHeaderButton = ({ title, eventKey, bgColor, bgColorActive,
       {title}
     </Button>
   );
-}
+};
 
 const SecondaryCollapseContent = ({ children, title, eventKey, error, active, store }) => {
   const activeClass = active ? 'active' : 'collapsed';
@@ -547,12 +548,12 @@ const SecondaryCollapseContent = ({ children, title, eventKey, error, active, st
         <span>{title}</span>
       </Button>
       <Collapse in={active}>
-        <div className={`accordion-body mb-0 pb-0`}>
+        <div className="accordion-body mb-0 pb-0">
           {children}
         </div>
       </Collapse>
     </div>
   );
-}
+};
 
-export { initFormHelper, ColoredAccordeonHeaderButton, SecondaryCollapseContent }
+export { initFormHelper, ColoredAccordeonHeaderButton, SecondaryCollapseContent };
