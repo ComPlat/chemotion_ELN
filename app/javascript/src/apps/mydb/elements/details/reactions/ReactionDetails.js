@@ -576,7 +576,7 @@ export default class ReactionDetails extends Component {
     this.isUpdatingGraphic = true;
     const materialsSvgPaths = {
       starting_materials: reaction.starting_materials.map((material) => material.svgPath),
-      reactants: reaction.reactants.map((material) => material.svgPath),
+      reactants: reaction.reactantsWithSbmm.map((material) => material.svgPath),
       products: reaction.products.map((material) => [material.svgPath, material.equivalent])
     };
 
@@ -1032,8 +1032,8 @@ export default class ReactionDetails extends Component {
         <ReactionSchemeGraphic
           key={`reaction-graphic-${reaction.id}-${this.state.reactionSvgVersion || 0}`}
           reaction={reaction}
-          onToggleLabel={(materialId) => {
-            reaction.toggleShowLabelForSample(materialId);
+          onToggleLabel={(materialId, isSbmm) => {
+            reaction.toggleShowLabelForSample(materialId, isSbmm);
             this.handleReactionChange(reaction, { updateGraphic: true });
           }}
           onRefresh={() => this.refreshGraphic()}
