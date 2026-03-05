@@ -92,22 +92,25 @@ const SelectionShareModal = (props) => {
   const handleShortcutChange = (e) => {
     let val = e.target.value
     let permissionsAndDetailLevel = {}
+
     switch (val) {
       case 'user':
         permissionsAndDetailLevel = SelectionSharingShortcuts.user();
         break;
-      case 'Partner':
+      case 'partner':
         permissionsAndDetailLevel = SelectionSharingShortcuts.partner();
         break;
-      case 'Collaborator':
+      case 'collaborator':
         permissionsAndDetailLevel = SelectionSharingShortcuts.collaborator();
         break;
-      case 'Reviewer':
+      case 'reviewer':
         permissionsAndDetailLevel = SelectionSharingShortcuts.reviewer();
         break;
-      case 'Supervisor':
+      case 'supervisor':
         permissionsAndDetailLevel = SelectionSharingShortcuts.supervisor();
         break;
+      default:
+        permAndDetLevs = {};
     }
     permissionsAndDetailLevel['elementDetailLevel'] = permissions.elementDetailLevel;
     setPermissions(permissionsAndDetailLevel);
