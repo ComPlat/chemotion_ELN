@@ -307,7 +307,7 @@ function getSegmentData(segment) {
         type: layerFieldData.type,
         label: layerFieldData.label,
         ...(layerFieldData.options && { options: layerFieldData.options.map((option) => option.label) }),
-        value: layerFieldData.options ? layerFieldData.options[0].label : null,
+        value: (layerFieldData.options && layerFieldData.options.length > 0) ? layerFieldData.options[0].label : null,
         unit: layerFieldData.value_system || null,
         quantity: layerFieldData.option_layers || null,
       }
