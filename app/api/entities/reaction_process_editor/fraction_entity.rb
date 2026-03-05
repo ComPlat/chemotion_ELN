@@ -4,16 +4,16 @@ module Entities
   module ReactionProcessEditor
     class FractionEntity < Grape::Entity
       expose(
-        :id, :position, :vials, :consuming_activity_id
+        :id, :position, :vials, :consuming_action_id
       )
 
-      expose :consuming_activity_name
+      expose :consuming_action_name
 
       private
 
-      def consuming_activity_name
-        consuming_activity = object.consuming_activity
-        activity_name = consuming_activity&.activity_name
+      def consuming_action_name
+        consuming_action = object.consuming_action
+        activity_name = consuming_action&.activity_name
 
         activity_name || 'DEFINE_FRACTION'
       end

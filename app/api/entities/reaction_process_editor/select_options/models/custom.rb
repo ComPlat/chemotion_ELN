@@ -6,7 +6,7 @@ module Entities
       module Models
         class Custom < Base
           def addition_speed_types
-            titlecase_options_for(OrdKit::ReactionInput::AdditionSpeed::AdditionSpeedType.constants)
+            titlecase_options_for(OrdKit::ReactionProcessAction::ActionAdd::AdditionSpeedType.constants)
           end
 
           def automation_modes

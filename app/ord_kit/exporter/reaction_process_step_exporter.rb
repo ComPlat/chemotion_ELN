@@ -9,7 +9,7 @@ module OrdKit
           position: model.position + 1,
           start_time: start_time(starts_at),
           duration: duration,
-          setup: setup,
+          vessel_template: vessel_template,
           actions: reaction_process_activities,
           automation_mode: ontology_ord(model.automation_mode),
           automation_control: automation_control,
@@ -18,29 +18,23 @@ module OrdKit
 
       private
 
-      def ontology_ord(ontology_id)
-        OrdKit::Exporter::Models::OntologyExporter.new(ontology_id).to_ord
-      end
-
       def automation_control
         OrdKit::Exporter::Models::AutomationControlExporter.new(model.automation_control).to_ord
       end
 
-      def setup
-        Reactions::ReactionSetupExporter.new(model).to_ord
+      def vessel_template
+        Vessels::ReactionProcessVesselableExporter.new(model.reaction_process_vessel).to_ord
       end
 
       def reaction_process_activities
+        process_activities = model.reaction_process_activities.order(:position)
+
         start_times = process_activities.inject([0]) do |starts, rps|
           starts << (starts.last + rps.workup['duration'].to_i)
         end
         process_activities.map.with_index do |activity, idx|
           ReactionProcessActivityExporter.new(activity).to_ord(starts_at: start_times[idx])
         end
-      end
-
-      def process_activities
-        model.reaction_process_activities.order(:position)
       end
 
       def start_time(starts_at)

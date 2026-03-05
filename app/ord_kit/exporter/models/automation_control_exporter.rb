@@ -30,10 +30,6 @@ module OrdKit
         rescue NameError
           OrdKit::AutomationControl::StepAutomationStatus::STEP_AUTOMATION_STATUS_UNSPECIFIED
         end
-
-        def ontology
-          ReactionProcessEditor::Ontology.find_by(ontology_id: @ontology_id)
-        end
       end
     end
   end

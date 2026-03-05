@@ -5,12 +5,11 @@
 // (Karlsruhe Institute of Technology / Institute for Organical Chemistry).
 // Schema for the KIT ELN Reaction Database,
 // allowing to store data describing the process of a chemical reaction
+// (loosely based on the original ORD Schema).
 //
-// v0.12.0
-// (draft, 04.03.2026)
+// v0.11.1
+// (draft, 01.02.2026)
 //
-// This is almost entirely written from scratch yet contains a few concepts of
-// the original ORD Schema. We pay tribute to the Authors.
 //
 // Copyright 2020 Open Reaction Database Project Authors
 //
@@ -33,33 +32,34 @@ package ord_kit;
 /**
  * Reaction
  * The root level of a Reaction.
+ *
  **/
 
 message Reaction {
-  string ord_version = 1;
-  string reaction_id = 2;
-  ReactionProvenance provenance = 3;
-  ReactionConditions conditions = 4;
-  repeated ReactionStep reaction_steps = 5;
-  optional SampleSetup sample_setup = 6;
+  string reaction_id = 1;
+  ReactionProvenance provenance = 2;
+  ReactionConditions conditions = 3;
+  repeated ReactionStep reaction_steps = 4;
+  optional SampleSetup sample_setup = 5;
 }
 
 /**
  * SampleSetup
- * We can create Reaction processes based on a Sample only, which are not
- * associated to an actual ELN-Reaction. The SampleSetup defines the initial
- * state of such a Process, i.e. which Sample it acts upon and the initial
- * VesselTemplate used.
+ * The initial state of a Process when based on a solitude Sample (i.e. no
+ * associated reaction)
+ *
  **/
 message SampleSetup {
-  Sample sample = 1;
+  Compound sample = 1;
   optional VesselTemplate vessel_template = 2;
 }
 
 /**
- * Each ReactionStep describes an atomar reaction (in a vessel) and itself
- * consists of atomar ReactionProcessActions.
+ * Each ReactionStep
+ * describes an atomar reaction (in a vessel) and is made of atomar
+ * Actions.
  **/
+
 message ReactionStep {
   // Unique UUID for this reaction step.
   string reaction_step_id = 1;
@@ -69,263 +69,19 @@ message ReactionStep {
   TimeSpan start_time = 3;
   // The total duration.
   TimeSpan duration = 4;
-  // The VesselTemplate / Vessel this Step takes place in.
-  optional VesselTemplate vessel_template = 5;
-  // The individual ReactionProcessActions defining the ReactionStep.
+  // The setup specifies how the reaction step was prepared.
+  // Most importantly it contains the Vessel.
+  ReactionSetup setup = 5;
+  // The indivdual actions defining the ReactionStep.
   repeated ReactionProcessAction actions = 6;
-  // The automation mode of the Step, i.e. wether this Step runs manually,
-  // semi-automated or automated.
-  Ontology automation_mode = 7;
 
-  // The AutomationControl defines the status of this step for the automation in
-  // the actual automated laboratory run.
+  Ontology automation_mode = 7;
   AutomationControl automation_control = 8;
 }
 
 /**
- * An individual Action defining the reaction workflow.
- * It is usually referenced within a ReactionStep.
+ * An Ontology is a reference to a CHMO or a genericly defined Ontology
  *
- */
-message ReactionProcessAction {
-  string id = 1;
-  string description = 2;
-  int32 position = 3;
-  TimeSpan start_time = 4;
-  TimeSpan duration = 5;
-  repeated Equipment equipment = 6;
-  optional VesselTemplate vessel_template = 7;
-
-  optional AutomationControl automation_control = 26;
-  optional PoolingFraction consumed_fraction = 27;
-  int32 automation_ordinal = 28;
-
-  optional Ontology type = 29;
-  optional Ontology subtype = 30;
-  optional Ontology device = 31;
-  optional string method = 32;
-
-  oneof action {
-    // A special form of Action defining an alteration of the environment
-    // conditions of the Reaction Process.
-    ReactionConditions conditions = 8;
-    ActionAdd addition = 9;
-    ActionEvaporation evaporation = 10;
-    ActionGasExchange gas_exchange = 11;
-    ActionFiltration filtration = 12;
-    ActionChromatography chromatography = 13;
-    ActionExtraction extraction = 14;
-    ActionCrystallization crystallization = 15;
-    ActionCentrifugation centrifugation = 16;
-    ActionChromatography analysis_chromatography = 17;
-    ActionAnalysisSpectroscopy analysis_spectroscopy = 18;
-    ActionAnalysisElemental analysis_elemental = 19;
-    ActionTransfer transfer = 20;
-    ActionWait wait = 21;
-    ActionSaveSample save_sample = 22;
-    ActionDiscard discard = 23;
-    ActionDefineFraction define_fraction = 24;
-    ActionMixing mixing = 25;
-  }
-
-  message ActionAdd {
-    enum AdditionSpeedType {
-      UNSPECIFIED = 0;
-      ALL_AT_ONCE = 1;
-      FAST = 2;
-      SLOW = 3;
-      DROPWISE = 4;
-      CONTINUOUS = 5;
-      PORTIONWISE = 6;
-      FLOW_RATE = 7;
-    }
-    Sample sample = 1;
-    AdditionSpeedType addition_speed_type = 2;
-    FlowRate flow_rate = 3;
-    ReactionConditions addition_conditions = 4;
-  }
-
-  message ActionGasExchange { repeated SolventWithRatio gas_type = 1; }
-
-  message ActionMixing { Motion speed = 1; }
-
-  message ActionTransfer {
-    Sample sample = 1;
-    string source_reaction_step_id = 2;
-    string target_reaction_step_id = 3;
-    Amount amount = 4;
-    Percentage percentage = 5;
-  }
-
-  message ActionEvaporation {
-    message FromDiverseSolvents {
-      repeated SolventWithRatio solvents = 1;
-      Amount solvents_amount = 2;
-    }
-    message FromReaction {
-      repeated Sample samples = 1;
-      Amount amount = 2;
-      repeated SolventWithRatio solvents = 3;
-      Amount solvents_amount = 4;
-    }
-    message FromMethod {
-      ReactionConditions starter_conditions = 1;
-      repeated ReactionConditionLimits limits = 2;
-    }
-    message FromFraction { repeated PoolingFraction fraction = 1; }
-
-    oneof origin {
-      FromReaction from_reaction = 2;
-      FromReaction from_reaction_step = 3;
-      FromReaction from_sample = 4;
-      FromMethod from_method = 5;
-      FromMethod stepwise = 6;
-      FromFraction from_fraction = 7;
-      FromDiverseSolvents diverse_solvents = 8;
-    }
-  }
-
-  message ActionCrystallization {
-    enum CrystallizationMode {
-      UNSPECIFIED = 0;
-      NONE = 1;
-      COLD = 2;
-      HOT = 3;
-    }
-
-    repeated SolventWithRatio solvents = 1;
-    Amount amount = 2;
-    Temperature temperature = 3;
-    TimeSpan heating_duration = 4;
-    TimeSpan cooling_duration = 5;
-    CrystallizationMode crystallization_mode = 6;
-  }
-
-  message ActionCentrifugation {
-    Temperature temperature = 1;
-    Motion motion = 2;
-    Pressure pressure = 3;
-  }
-
-  message ActionChromatography {
-    message ChromatographyStep {
-      enum Step {
-        STEP_UNSPECIFIED = 0;
-        EQUILIBRIUM = 1;
-        SEPARATION = 2;
-        AFTER_RUN = 3;
-      }
-      enum Prod {
-        PROD_UNSPECIFIED = 0;
-        ANY = 1;
-        PROD = 2;
-        NONE = 3;
-      }
-
-      TimeSpan duration = 1;
-      repeated SolventWithRatio solvents = 2;
-      Amount amount = 3;
-      FlowRate flow_rate = 4;
-      Step step = 5;
-      Prod prod = 6;
-    }
-
-    repeated Ontology detectors = 1;
-    repeated Ontology mobile_phase = 2;
-    optional string method = 3;
-    string stationary_phase = 4;
-    TemperatureConditions stationary_phase_temperature = 5;
-    Volume volume = 6;
-
-    optional Ontology material = 7;
-    optional Length diameter = 8;
-    optional Length height = 9;
-    optional Length filling_height = 10;
-
-    repeated ChromatographyStep steps = 11;
-    repeated PoolingFraction fractions = 12;
-
-    repeated Sample molecular_entities = 13;
-    optional Sample sample = 14;
-  }
-
-  message ActionExtraction {
-    message ExtractionStep {
-      TimeSpan duration = 1;
-      repeated SolventWithRatio solvents = 2;
-      Amount amount = 3;
-      FlowRate flow_rate = 4;
-    }
-    enum ExtractionPhase {
-      UNSPECIFIED = 0;
-      AQUEOUS = 1;
-      ORGANIC = 2;
-    }
-
-    ExtractionPhase phase = 2;
-    repeated ExtractionStep steps = 3;
-  }
-
-  message ActionFiltration {
-    enum FiltrationMode {
-      UNSPECIFIED = 0;
-      KEEP_SUPERNATANT = 1;
-      KEEP_PRECIPITATE = 2;
-    }
-    message FiltrationStep {
-      TimeSpan duration = 1;
-      repeated SolventWithRatio solvents = 2;
-      Amount amount = 3;
-      FlowRate flow_rate = 4;
-      int32 repetitions = 5;
-      bool rinse_vessel = 6;
-    }
-    FiltrationMode filtration_mode = 1;
-    repeated FiltrationStep steps = 2;
-  }
-
-  message ActionAnalysisElemental {
-    repeated Sample molecular_entities = 3;
-    Sample sample = 4;
-  }
-
-  message ActionAnalysisSpectroscopy {
-    repeated Sample molecular_entities = 3;
-    Sample sample = 4;
-  }
-
-  message ActionDiscard { PoolingFraction fraction = 1; }
-  message ActionDefineFraction { PoolingFraction fraction = 1; }
-  message ActionWait { TimeSpan duration = 1; }
-
-  message ActionSaveSample {
-    enum OriginType {
-      UNSPECIFIED = 0;
-      ALL = 1;
-      SPLIT = 2;
-      PURIFICATION = 3;
-    }
-
-    message PurificationOrigin {
-      string origin_action_id = 1;
-      int32 origin_purification_step_position = 2;
-      repeated Sample solvents = 3;
-      Amount amount = 4;
-      repeated Sample extra_solvents = 5;
-    }
-
-    Sample sample = 1;
-    repeated Sample molecular_entities = 2;
-    OriginType sample_origin_type = 3;
-    optional PurificationOrigin purification_origin = 4;
-  }
-}
-
-/**
- * An Ontology is a reference to a CHMO or a genericly defined Ontology.
- * It can contain any concept, i.e. Substances, Solvents, Materials,
- * Automation_modes, Devices, Detectors, ... Most Ontologies stand by
- * themselves, except Samples have their Ontology data piggybacked.
  **/
 
 message Ontology {
@@ -335,91 +91,66 @@ message Ontology {
 }
 
 /**
- * An Sample is a Substance used in the Reaction either by adding, saving,
- * transfering, etc.
- **/
-
-message Sample {
-  ReactionRole.ReactionRoleType reaction_role = 1;
-  string label = 2;
-  string name = 3;
-  // Samples may be defined through an Ontology which we reference here.
-  Ontology ontology = 4;
-
-  // The preparations for this Sample before the actual Reaction process.
-  repeated SamplePreparation preparations = 5;
-  Amount amount = 6;
-  optional Percentage percentage = 7;
-  Percentage purity = 8;
-  // Optional flag when adding solvents.
-  optional bool is_waterfree_solvent = 9;
-
-  // The location where the Sample is stored in the laboratory.
-  string location = 10;
-}
-
-/**
- * Samples may undergo additional preparation before being used in a
- * reaction after being received from a supplier or vendor.
+ * A reaction input is any pure substance, mixture, or solution that is
+ * added to the reaction vessel.
+ *
+ * For example, suppose we are adding 3 mL of a 4 M solution of NaOH in water.
+ * We would define one component for the solvent and one component for the
+ * solute with the correct respective amounts.
+ *
+ * input {
+ *   components: {
+ *     identifiers: {type: IDENTIFIER_SMILES, value: "O"}
+ *     identifiers: {type: IDENTIFIER_NAME, value: "water"}
+ *     volume: {value: 3, units: MILLILITER}
+ *     volume_includes_solutes: true
+ *   }
+ *   components: {
+ *     identifiers: {type: IDENTIFIER_SMILES, value: "[Na+].[OH-]"}
+ *     identifiers: {type: IDENTIFIER_NAME, value: "sodium hydroxide"}
+ *     moles: {value: 12, units: MILLIMOLES}
+ *   }
+ * }
  */
-message SamplePreparation {
-  enum PreparationType {
-    UNDEFINED = 0;
-    SYNTHESIZED = 1;
-    DISSOLVED = 2;
-    HOMOGENIZED = 3;
-    TEMPERATURE_ADJUSTED = 4;
-    DEGASSED = 5;
-    DRIED = 6;
+
+message ReactionInput {
+  // A component is any pure species that is added to the reaction, whether as
+  // a pure substance or in a mixture/solution.
+  repeated Compound components = 1;
+  // The addition order is 1-indexed. Inputs with the same addition_order are
+  // assumed to be added simultaneously. One input with a lower addition_order
+  // than another was added earlier in the procedure.
+  int32 addition_order = 3;
+
+  message AdditionSpeed {
+    enum AdditionSpeedType {
+      // Unspecified.
+      UNSPECIFIED = 0;
+      ALL_AT_ONCE = 1;
+      FAST = 2;
+      SLOW = 3;
+      DROPWISE = 4;
+      CONTINUOUS = 5;
+      PORTIONWISE = 6;
+      FLOW_RATE = 7;
+    }
+    AdditionSpeedType type = 1;
+    // Specify, e.g., portion sizes and intervals for PORTIONWISE.
+
+    string details = 2;
   }
-  repeated PreparationType type = 1;
-  string details = 2;
-  repeated Equipment equipment = 3;
+  // The qualitative rate of addition.
+  AdditionSpeed addition_speed = 5;
+  // Quantitatively, how long addition took
+  TimeSpan addition_duration = 6;
+  // For continuous synthesis, we instead specify a flow rate.
+  FlowRate flow_rate = 7;
+  // The device used for addition.
+  Equipment addition_device = 8;
+  // Specify the temperature of the material being added.
+  // E.g., a cooled flask of a stock solution to be added at low temperature.
+  ReactionConditions conditions = 9;
 }
-
-/**
- * Definition of a Solvent with its ratio in a mixture (Array) of Samples.
- */
-
-message SolventWithRatio {
-  Sample solvent = 1;
-  string ratio = 2;
-}
-
-// /**
-//  * Definition of an Ontology with its ratio in a mixture (Array) of Samples.
-//  */
-
-// Probably not required
-// message OntologyWithRatio {
-//   Ontology solvent = 1;
-//   string ratio = 2;
-// }
-
-/**
- * A pooling fraction contains the pooling of vials after specific Actions,
- * mostly Chromatography. The pooling is usually done manually from the
- * intermediate results of the automation.
- */
-
-message PoolingFraction {
-  // The ReactionProcessAction that delivered the intermediate results
-  string parent_action_id = 1;
-  // The position (order) of this fraction within all fractions created from the
-  // Parent Activity.
-  int32 position = 2;
-  // The ReactionProcessAction where the PoolingFraction is processed further
-  // ("consumed").
-  string consuming_action_id = 3;
-  // The Array of vials making up this PoolingFraction.
-  repeated string vials = 4;
-}
-
-/**
- * AutomationControl defines the status of the ReactionProcess and the
- * ReactionProcessAction. For convenience they are combined into a single
- * message
- */
 
 message AutomationControl {
   enum AutomationStatus {
@@ -450,21 +181,398 @@ message AutomationControl {
   optional string depends_on_step_id = 4;
 }
 
+message PoolingFraction {
+  string parent_activity_id = 1;
+  int32 position = 2;
+  string consuming_activity_id = 3;
+  repeated string vials = 4;
+}
+
+/**
+ * An individual Action defining the reaction workflow.
+ * It is usually referenced within a ReactionStep.
+ *
+ */
+message ReactionProcessAction {
+  string id = 1;
+  string description = 2;
+  int32 position = 3;
+  TimeSpan start_time = 4;
+  TimeSpan duration = 5;
+  repeated Equipment equipment = 6;
+  optional VesselTemplate vessel_template = 7;
+
+  optional AutomationControl automation_control = 26;
+  optional PoolingFraction consumed_fraction = 27;
+  int32 automation_ordinal = 28;
+
+  optional Ontology type = 29;
+  optional Ontology subtype = 30;
+  optional Ontology device = 31;
+  optional string method = 32;
+
+  oneof action {
+    ReactionConditions conditions = 8;
+    ActionAdd addition = 9;
+    ActionEvaporation evaporation = 10;
+    ActionGasExchange gas_exchange = 11;
+    ActionFiltration filtration = 12;
+    ActionChromatography chromatography = 13;
+    ActionExtraction extraction = 14;
+    ActionCrystallization crystallization = 15;
+    ActionCentrifugation centrifugation = 16;
+    ActionChromatography analysis_chromatography = 17;
+    ActionAnalysisSpectroscopy analysis_spectroscopy = 18;
+    ActionAnalysisElemental analysis_elemental = 19;
+    ActionTransfer transfer = 20;
+    ActionWait wait = 21;
+    ActionSaveSample save_sample = 22;
+    ActionDiscard discard = 23;
+    ActionDefineFraction define_fraction = 24;
+    ActionMixing mixing = 25;
+  }
+
+  message ActionAdd {
+    ReactionRole.ReactionRoleType reaction_role = 1;
+    ReactionInput input = 2;
+  }
+
+  message ActionGasExchange { repeated OntologyMaterialWithRatio gas_type = 1; }
+
+  message ActionMixing { Motion speed = 1; }
+
+  message ActionTransfer {
+    ReactionRole.ReactionRoleType reaction_role = 1;
+    ReactionInput input = 2;
+    string source_reaction_step_id = 3;
+    string target_reaction_step_id = 4;
+    Amount amount = 5;
+    Percentage percentage = 6;
+  }
+
+  message ActionEvaporation {
+    message FromDiverseSolvents {
+      repeated CompoundWithRatio solvents = 1;
+      Amount solvents_amount = 2;
+    }
+    message FromReaction {
+      repeated Compound samples = 1;
+      Amount amount = 2;
+      repeated CompoundWithRatio solvents = 3;
+      Amount solvents_amount = 4;
+    }
+    message FromMethod {
+      ReactionConditions starter_conditions = 1;
+      repeated ReactionConditionLimits limits = 2;
+    }
+    message FromFraction { repeated PoolingFraction fraction = 1; }
+
+    oneof origin {
+      FromReaction from_reaction = 2;
+      FromReaction from_reaction_step = 3;
+      FromReaction from_sample = 4;
+      FromMethod from_method = 5;
+      FromMethod stepwise = 6;
+      FromFraction from_fraction = 7;
+      FromDiverseSolvents diverse_solvents = 8;
+    }
+  }
+
+  message ActionCrystallization {
+    enum CrystallizationMode {
+      UNSPECIFIED = 0;
+      NONE = 1;
+      COLD = 2;
+      HOT = 3;
+    }
+
+    repeated CompoundWithRatio solvents = 1;
+    Amount amount = 2;
+    Temperature temperature = 3;
+    TimeSpan heating_duration = 4;
+    TimeSpan cooling_duration = 5;
+    CrystallizationMode crystallization_mode = 6;
+  }
+
+  message ActionCentrifugation {
+    Temperature temperature = 1;
+    Motion motion = 2;
+    Pressure pressure = 3;
+  }
+
+  message ActionChromatography {
+    message ChromatographyStep {
+      enum Step {
+        STEP_UNSPECIFIED = 0;
+        EQUILIBRIUM = 1;
+        SEPARATION = 2;
+        AFTER_RUN = 3;
+      }
+      enum Prod {
+        PROD_UNSPECIFIED = 0;
+        ANY = 1;
+        PROD = 2;
+        NONE = 3;
+      }
+
+      TimeSpan duration = 1;
+      repeated OntologyMaterialWithRatio solvents = 2;
+      Amount amount = 3;
+      FlowRate flow_rate = 4;
+      Step step = 5;
+      Prod prod = 6;
+    }
+
+    repeated Ontology detectors = 1;
+    repeated Ontology mobile_phase = 2;
+    optional string method = 3;
+    string stationary_phase = 4;
+    TemperatureConditions stationary_phase_temperature = 5;
+    Volume volume = 6;
+
+    optional Ontology material = 7;
+    optional Length diameter = 8;
+    optional Length height = 9;
+    optional Length filling_height = 10;
+
+    repeated ChromatographyStep steps = 11;
+    repeated PoolingFraction fractions = 12;
+
+    repeated Compound molecular_entities = 13;
+    optional Compound sample = 14;
+  }
+
+  message ActionExtraction {
+    message ExtractionStep {
+      TimeSpan duration = 1;
+      repeated CompoundWithRatio solvents = 2;
+      Amount amount = 3;
+      FlowRate flow_rate = 4;
+    }
+    enum ExtractionPhase {
+      UNSPECIFIED = 0;
+      AQUEOUS = 1;
+      ORGANIC = 2;
+    }
+
+    ExtractionPhase phase = 2;
+    repeated ExtractionStep steps = 3;
+  }
+
+  message ActionFiltration {
+    enum FiltrationMode {
+      UNSPECIFIED = 0;
+      KEEP_SUPERNATANT = 1;
+      KEEP_PRECIPITATE = 2;
+    }
+    message FiltrationStep {
+      TimeSpan duration = 1;
+      repeated CompoundWithRatio solvents = 2;
+      Amount amount = 3;
+      FlowRate flow_rate = 4;
+      int32 repetitions = 5;
+      bool rinse_vessel = 6;
+    }
+    FiltrationMode filtration_mode = 1;
+    repeated FiltrationStep steps = 2;
+  }
+
+  message ActionAnalysisElemental {
+    repeated Compound molecular_entities = 3;
+    Compound sample = 4;
+  }
+
+  message ActionAnalysisSpectroscopy {
+    repeated Compound molecular_entities = 3;
+    Compound sample = 4;
+  }
+
+  message ActionDiscard { PoolingFraction fraction = 1; }
+  message ActionDefineFraction { PoolingFraction fraction = 1; }
+  message ActionWait { TimeSpan duration = 1; }
+
+  message ActionSaveSample {
+    enum OriginType {
+      UNSPECIFIED = 0;
+      ALL = 1;
+      SPLIT = 2;
+      PURIFICATION = 3;
+    }
+
+    message PurificationOrigin {
+      string origin_action_id = 1;
+      int32 origin_purification_step_position = 2;
+      repeated Compound solvents = 3;
+      Amount amount = 4;
+      repeated Compound extra_solvents = 5;
+    }
+
+    Compound sample = 1;
+    repeated Compound molecular_entities = 2;
+    OriginType sample_origin_type = 4;
+    optional PurificationOrigin purification_origin = 5;
+  }
+}
+
+/**
+ * The quantitative amount of a Compound used in a particular reaction.
+ * Compounds added in their pure form should have their value defined by
+ * mass, moles, or volume. Compounds prepared as solutions should be defined
+ * in terms of their volume. Compounds prepared on solid supports should
+ * define the total mass/volume including the support.
+ */
+message Amount {
+  oneof kind {
+    Mass mass = 1;
+    Moles moles = 2;
+    Volume volume = 3;
+    Percentage percentage = 4;
+  }
+}
+
+/**
+ * A Compound defines both the identity of a pure species and a quantitative
+ * amount (mass, moles, volume). For compounds used in inputs, details can
+ * be provided about how it was prepared and from where it was purchased.
+ */
+message Compound {
+  // Set of identifiers used to uniquely define this compound.
+  // Solutions or mixed compounds should use the NAME identifier
+  // and list all constituent compounds in the "components" field.
+  repeated CompoundIdentifier identifiers = 1;
+  Amount amount = 2;
+  optional Percentage percentage = 3;
+  ReactionRole.ReactionRoleType reaction_role = 4;
+  repeated CompoundPreparation preparations = 5;
+
+  // The purity of the compound.
+  Percentage purity = 6;
+
+  // Optional flag when adding solvents.
+  optional bool is_waterfree_solvent = 10;
+
+  string location = 11;
+}
+
+message CompoundWithRatio {
+  Compound compound = 1;
+  string ratio = 2;
+}
+
+message OntologyMaterialWithRatio {
+  Ontology solvent = 1;
+  string ratio = 2;
+}
+
 message ReactionRole {
   enum ReactionRoleType {
     UNSPECIFIED = 0;
+    // A reactant is any compound that contributes atoms to a desired or
+    // observed product.
+    REACTANT = 1;
+    REAGENT = 2;
+    SOLVENT = 3;
+    CATALYST = 4;
+    // The workup role is used when defining quenches, buffer additives for
+    // liquid-liquid separations, etc.
+    WORKUP = 5;
+    // Internal standards can be included as part of a reaction input (when
+    // added prior to the start of the reaction) or as part of a workup
+    // step of addition.
+    INTERNAL_STANDARD = 6;
+    AUTHENTIC_STANDARD = 7;
+    // A product can be any species produced by the reaction, whether desired
+    // or undesired.
+    PRODUCT = 8;
 
     // KIT Enhancements
-    SOLVENT = 1;
-    DIVERSE_SOLVENT = 2;
-    SAMPLE = 3;
-    ADDITIVE = 4;
-    MEDIUM = 5;
-    CRUDE = 6;
-    INTERMEDIATE = 7;
-    MIXTURE = 8;
-    PURE = 9;
+    SAMPLE = 9;
+    DIVERSE_SOLVENT = 10;
+    ADDITIVE = 11;
+    MEDIUM = 12;
+    CRUDE = 13;
+    INTERMEDIATE = 14;
+    MIXTURE = 15;
+    PURE = 16;
   }
+}
+
+/**
+ * Compounds may undergo additional preparation before being used in a
+ * reaction after being received from a supplier or vendor. We encourage
+ * the use of the 'preparation' enum when possible, even if the description
+ * is an oversimplification of the full procedure, which can be described
+ * in the 'details' field.
+ */
+message CompoundPreparation {
+  enum PreparationType {
+    UNSPECIFIED = 0;
+    CUSTOM = 1;
+    NONE = 2;       // Compound used as received.
+    REPURIFIED = 3; // Compound repurified (e.g., recrystallized).
+    SPARGED = 4; // Compound sparged, most likely to be the case with solvents.
+    DRIED = 5;   // Moisture removed, e.g., using molecular sieves.
+    SYNTHESIZED = 6; // Compound synthesized in-house.
+    DISSOLVED = 7;
+    HOMOGENIZED = 8;
+    TEMPERATURE_ADJUSTED = 9;
+    DEGASSED = 10;
+  }
+  repeated PreparationType type = 1;
+  // Full description of how the received compound was prepared.
+  string details = 2;
+  repeated Equipment equipment = 4;
+}
+
+/**
+ * Compound identifiers uniquely define a single (pure) chemical species.
+ * While we encourage the use of SMILES strings, these do not work well in
+ * all cases (e.g., handling tautomerism, axial chirality). Multiple
+ * identifiers may be specified for a single compound to avoid ambiguity.
+ * We discourage chemicals from being defined only by a name. For compounds
+ * that are prepared or isolated as salts, the identifier should include
+ * specification of which salt.
+ */
+message CompoundIdentifier {
+  enum IdentifierType {
+    UNSPECIFIED = 0;
+    CUSTOM = 1;
+    // Simplified molecular-input line-entry system.
+    SMILES = 2;
+    // IUPAC International Chemical Identifier.
+    INCHI = 3;
+    // Molblock from a MDL Molfile V3000.
+    MOLBLOCK = 4;
+    // Chemical name following IUPAC nomenclature recommendations.
+    IUPAC_NAME = 5;
+    // Any accepted common name, trade name, etc.
+    NAME = 6;
+    // Chemical Abstracts Service Registry Number (with hyphens).
+    CAS_NUMBER = 7;
+    // PubChem Compound ID number.
+    PUBCHEM_CID = 8;
+    // ChemSpider ID number.
+    CHEMSPIDER_ID = 9;
+    // ChemAxon extended SMILES
+    CXSMILES = 10;
+    // IUPAC International Chemical Identifier key
+    INCHI_KEY = 11;
+    // XYZ molecule file
+    XYZ = 12;
+    // UniProt ID (for enzymes)
+    UNIPROT_ID = 13;
+    // Protein data bank ID (for enzymes)
+    PDB_ID = 14;
+    // Amino acid sequence (for enzymes).
+    AMINO_ACID_SEQUENCE = 15;
+    // HELM; https://www.pistoiaalliance.org/helm-notation/.
+    HELM = 16;
+  }
+  IdentifierType type = 1;
+  string details = 2;
+  // Value of the compound identifier; certain types (e.g., PUBCHEM_CID) may
+  // cast the string as an integer for downstream processing and validation.
+  string value = 3;
 }
 
 /**
@@ -657,7 +765,25 @@ message VesselPreparation {
   string medium = 3;
 }
 
-message ReactionSetup { optional VesselTemplate vessel_template = 1; }
+message ReactionSetup {
+  optional VesselTemplate vessel_template = 1;
+
+  message ReactionEnvironment {
+    enum ReactionEnvironmentType {
+      UNSPECIFIED = 0;
+      CUSTOM = 1;
+      FUME_HOOD = 2;
+      BENCH_TOP = 3;
+      GLOVE_BOX = 4;
+      GLOVE_BAG = 5;
+    }
+    ReactionEnvironmentType type = 1;
+    // Specify environment details, e.g., "nitrogen-filled" for GLOVE_BOX.
+    string details = 2;
+  }
+  // Specify reaction environment.
+  ReactionEnvironment environment = 5;
+}
 
 message ReactionConditions {
   TemperatureConditions temperature = 1;
@@ -670,6 +796,8 @@ message ReactionConditions {
   PhAdjustConditions ph = 8;
   WavelengthRange wavelengths = 9;
   repeated GenericConditions generic = 10;
+  // A catch-all string field for providing more information about
+  // the conditions (e.g., multiple stages)
   string details = 11;
 }
 
@@ -681,22 +809,6 @@ message GenericConditions {
 message ReactionConditionLimits {
   ReactionConditions conditions = 1;
   TimeSpan duration = 2;
-}
-
-/**
- * The quantitative amount of a Sample used in a particular reaction.
- * Compounds added in their pure form should have their value defined by
- * mass, moles, or volume. Compounds prepared as solutions should be defined
- * in terms of their volume. Compounds prepared on solid supports should
- * define the total mass/volume including the support.
- */
-message Amount {
-  oneof kind {
-    Mass mass = 1;
-    Moles moles = 2;
-    Volume volume = 3;
-    Percentage percentage = 4;
-  }
 }
 
 message PhAdjustConditions {
@@ -963,7 +1075,8 @@ message TimeSpan {
     DAY = 4;
   }
   optional float value = 1;
-  TimeUnit unit = 2;
+  optional float precision = 2;
+  TimeUnit unit = 3;
 }
 message Mass {
   enum MassUnit {

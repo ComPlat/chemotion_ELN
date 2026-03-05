@@ -52,7 +52,7 @@ RSpec.describe ReactionProcessEditor::ReactionProcessActivity do
     expect(process_activity.condition?).to be true
   end
 
-  describe '#adds_compound?' do
+  describe '#adds_substance?' do
     subject(:process_activity) do
       create(:reaction_process_activity,
              workup: { sample_id: sample.id }.stringify_keys)
@@ -63,14 +63,14 @@ RSpec.describe ReactionProcessEditor::ReactionProcessActivity do
     ACTIVITY_ADDS_SAMPLE_KEYS.each do |key|
       it "#{key} -> true" do
         process_activity.activity_name = key
-        expect(process_activity).to be_adds_compound
+        expect(process_activity).to be_adds_substance
       end
     end
 
     ACTIVITY_ADDS_NO_SAMPLE_KEYS.each do |key|
       it "#{key} -> false" do
         process_activity.activity_name = key
-        expect(process_activity).not_to be_adds_compound
+        expect(process_activity).not_to be_adds_substance
       end
     end
 
@@ -82,7 +82,7 @@ RSpec.describe ReactionProcessEditor::ReactionProcessActivity do
       ACTIVITY_ADDS_SAMPLE_KEYS.each do |key|
         it "#{key} -> false" do
           process_activity.activity_name = key
-          expect(process_activity).not_to be_adds_compound
+          expect(process_activity).not_to be_adds_substance
         end
       end
     end

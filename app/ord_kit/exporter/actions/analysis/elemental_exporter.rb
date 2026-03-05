@@ -19,7 +19,9 @@ module OrdKit
 
           def molecular_entities
             Array(workup['molecular_entities']).map do |sample|
-              OrdKit::Exporter::Samples::SampleExporter.new(sample).to_ord
+              OrdKit::Sample.new(
+                label: sample['label'],
+              )
             end
           end
         end
