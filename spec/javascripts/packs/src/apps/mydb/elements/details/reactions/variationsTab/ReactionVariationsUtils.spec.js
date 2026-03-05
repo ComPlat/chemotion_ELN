@@ -236,7 +236,7 @@ describe('ReactionVariationsUtils', () => {
   });
   it('formats entry names', () => {
     expect(getUserFacingEntryName('fooBar')).toBe('foo bar');
-    expect(getUserFacingEntryName('layer<foo>field<bar>')).toBe('layer: foo, field: bar');
+    expect(getUserFacingEntryName('layer<foo>field<bar>')).toBe('foo / bar');
   });
   it('formats reaction segments', () => {
     const formattedSegment = formatReactionSegments(reactionSegments);

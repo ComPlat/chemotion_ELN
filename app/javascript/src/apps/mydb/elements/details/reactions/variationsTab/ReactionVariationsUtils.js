@@ -254,7 +254,7 @@ function getCellDataType(entry, gasType = 'off') {
 function getUserFacingEntryName(entry) {
   const genericEntryMatch = parseGenericEntryName(entry);
   if (genericEntryMatch) {
-    return `layer: ${genericEntryMatch.layer}, field: ${genericEntryMatch.field}`;
+    return `${genericEntryMatch.layer} / ${genericEntryMatch.field}`;
   }
 
   return entry.split(/(?=[A-Z])/).join(' ').toLowerCase(); // E.g., 'turnoverNumber' -> 'turnover number'
