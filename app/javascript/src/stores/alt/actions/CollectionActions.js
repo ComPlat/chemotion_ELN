@@ -98,7 +98,7 @@ class CollectionActions {
     return (dispatch) => {
       CollectionsFetcher.createTabsSegment(params)
         .then(() => {
-          dispatch();
+          dispatch({ segment: params.layoutSegments, cId: params.currentCollectionId });
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });
@@ -109,7 +109,7 @@ class CollectionActions {
     return (dispatch) => {
       CollectionsFetcher.updateTabsLayout(params)
         .then(() => {
-          dispatch();
+          dispatch(params);
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });

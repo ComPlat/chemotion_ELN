@@ -289,6 +289,8 @@ class Reaction < ApplicationRecord
   end
 
   def auto_set_short_label
+    return if short_label.present?
+
     prefix = creator.reaction_name_prefix
     counter = creator.counters['reactions'].succ
     self.short_label = "#{creator.initials}-#{prefix}#{counter}"
@@ -299,9 +301,10 @@ class Reaction < ApplicationRecord
   end
 
   def scrub
-    if temperature&.fetch('userText', nil).present?
-      self.temperature = temperature.merge('userText' => scrubber(temperature['userText']))
-    end
+    return if temperature&.fetch('userText', nil).blank?
+
+    self.temperature = temperature.merge('userText' => scrubber(temperature['userText']))
+
     # Conditions are not scrubbed: plain text may contain "<" or ">" (e.g. "pH < 7");
     # scrub_xml would strip them. Conditions are escaped at display time.
   end
@@ -310,6 +313,18 @@ class Reaction < ApplicationRecord
     # We need to return raw.values because the frontend expects the variations to be an array of objects.
     raw = self[:variations]
     raw.is_a?(Hash) ? raw.values : raw
+  end
+
+  def assign_attachment_to_variation(variation_id, analysis_id)
+    return if variation_id.blank?
+
+    variation = variations.find { |v| v['id'].to_s == variation_id.to_s }
+    return unless variation
+
+    variation['metadata'] ||= {}
+    variation['metadata']['analyses'] ||= []
+    variation['metadata']['analyses'] << analysis_id
+    update(variations: variations)
   end
 
   private
