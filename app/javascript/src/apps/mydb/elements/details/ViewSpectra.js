@@ -464,7 +464,8 @@ class ViewSpectra extends React.Component {
   }
 
   buildSerializedPayload(payload, curveIdx) {
-    const fPeaks = payload.peaks && payload.shift ? FN.rmRef(payload.peaks, payload.shift) : payload.peaks;
+    const hasShiftArray = Array.isArray(payload?.shift?.shifts);
+    const fPeaks = payload?.peaks && hasShiftArray ? FN.rmRef(payload.peaks, payload.shift, curveIdx) : payload?.peaks;
     const selectedShift = payload.shift?.shifts ? payload.shift.shifts[curveIdx] : payload.shift;
     const selectedIntegration = payload.integration?.integrations ? payload.integration.integrations[curveIdx] : payload.integration;
     const selectedMultiplicity = payload.multiplicity?.multiplicities ? payload.multiplicity.multiplicities[curveIdx] : payload.multiplicity;
