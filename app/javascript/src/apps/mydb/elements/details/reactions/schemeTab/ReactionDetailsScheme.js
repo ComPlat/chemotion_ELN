@@ -1298,24 +1298,41 @@ export default class ReactionDetailsScheme extends React.Component {
 
   /**
    * Handles concentration changes when reaction volume is locked.
-   * Recalculates sample amount from concentration and preserves the user-entered concentration
-   * while dependent fields (amount_mol, amount_g, equivalents) are updated.
+   * Two subcases:
+   * 2.1) Equivalents unlocked: Only the changed sample's amount is recalculated
+   * 2.2) Equivalents locked: Changed sample's amount is recalculated, and if it's a reference material,
+   *      all other samples' amounts are recalculated based on their locked equivalents, then all
+   *      concentrations are updated (respecting the manually-entered concentration).
    *
    * @param {Sample} updatedSample - The sample with the concentration change
    * @param {number} newConcentration - The new concentration value in mol/L
    * @returns {Reaction} The updated reaction object
    */
   handleLockedVolumeConcentrationChange(updatedSample, newConcentration) {
+    const { lockEquivColumn } = this.state;
+
+    // Calculate amount_mol and amount_g from concentration and locked volume
     this.calculateAmountFromConcentration(updatedSample, newConcentration);
 
     // Mark the sample to preserve its manually-set concentration
     updatedSample.preserveConcentration = true;
 
-    // Update reaction with the changed sample amounts and recalculate equivalents
-    return this.updatedReactionWithSample(
+    // Update reaction with the changed sample amounts
+    // This will handle equivalent recalculation based on lockEquivColumn state
+    const updatedReaction = this.updatedReactionWithSample(
       this.updatedSamplesForAmountChange.bind(this),
       updatedSample
     );
+
+    // Case 2.2: If equivalents are locked, recalculate all concentrations
+    // (except the one with preserveConcentration flag)
+    // This ensures that when amounts of other materials are recalculated based on their
+    // locked equivalents, their concentrations are also updated accordingly
+    if (lockEquivColumn) {
+      updatedReaction.updateAllConcentrations();
+    }
+
+    return updatedReaction;
   }
 
   /**
