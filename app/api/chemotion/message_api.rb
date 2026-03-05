@@ -74,12 +74,19 @@ module Chemotion
         desc 'acknowledged message by current user'
         params do
           requires :ids, type: Array, desc: 'notification ids'
+          optional :archive, type: Boolean, desc: 'archive notification'
         end
         put do
           return if params[:ids].nil?
 
           notifications = Notification.find(params[:ids])
-          params_arr = { is_ack: 1 }
+
+          params_arr = { is_ack: if params[:archive]
+                                   2
+                                 else
+                                   1
+                                 end }
+
           notifications.each do |notif|
             next if notif.user_id != current_user.id
 
