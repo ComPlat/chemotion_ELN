@@ -195,7 +195,7 @@ class Material extends Component {
    * @returns {JSX.Element} A table cell containing the concentration input component
    */
   materialConcentration(material) {
-    const { reaction } = this.props;
+    const { reaction, lockEquivColumn } = this.props;
     const metricMolConc = getMetricMolConc(material);
 
     // For SBMM samples, use concentration_rt_value directly (automatically calculated)
