@@ -172,7 +172,7 @@ class Material extends Component {
    * @returns {JSX.Element} A table cell containing the concentration input component
    */
   materialConcentration(material) {
-    const { reaction } = this.props;
+    const { reaction, lockEquivColumn } = this.props;
     const metricMolConc = getMetricMolConc(material);
 
     return (
@@ -183,7 +183,7 @@ class Material extends Component {
         metricPrefix={metricMolConc}
         metricPrefixes={metricPrefixesMolConc}
         precision={4}
-        disabled={!permitOn(reaction)}
+        disabled={!permitOn(reaction) || (!material.reference && lockEquivColumn)}
         onChange={(e) => this.handleConcentrationChange(e, material.concn)}
         onMetricsChange={this.handleMetricsChange}
         size="sm"
