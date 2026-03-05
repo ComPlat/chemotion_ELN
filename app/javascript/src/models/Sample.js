@@ -876,6 +876,11 @@ export default class Sample extends Element {
    * @returns {void}
    */
   updateConcentrationFromSolvent(reaction) {
+    // Keep manually-entered concentration unchanged.
+    if (this.preserveConcentration) {
+      return;
+    }
+
     if (!reaction) {
       this.concn = null;
       return;
