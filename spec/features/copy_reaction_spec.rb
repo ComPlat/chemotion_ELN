@@ -11,7 +11,7 @@ describe 'Copy reaction' do
       last_name: 'Complat',
       name_abbreviation: 'US1',
       account_active: true,
-      confirmed_at: Time.now
+      confirmed_at: Time.current,
     )
   end
   let!(:user2) do
@@ -21,7 +21,7 @@ describe 'Copy reaction' do
       last_name: 'Complat',
       name_abbreviation: 'US2',
       account_active: true,
-      confirmed_at: Time.now
+      confirmed_at: Time.current,
     )
   end
 
@@ -42,7 +42,7 @@ describe 'Copy reaction' do
       name: 'Material2',
       target_amount_value: 7.15,
       molecule: m1,
-      collections: [shared_collection_with_high_detail_level]
+      collections: [shared_collection_with_high_detail_level],
     )
   end
   let(:product2) do
@@ -51,7 +51,7 @@ describe 'Copy reaction' do
       name: 'Product2',
       real_amount_value: 4.671,
       molecule: m2,
-      collections: [shared_collection_with_high_detail_level]
+      collections: [shared_collection_with_high_detail_level],
     )
   end
   let(:reaction2) do
@@ -59,7 +59,7 @@ describe 'Copy reaction' do
       :reaction,
       status: 'Successful',
       short_label: 'Reaction2',
-      collections: [shared_collection_with_high_detail_level]
+      collections: [shared_collection_with_high_detail_level],
     )
   end
 
@@ -69,7 +69,7 @@ describe 'Copy reaction' do
       name: 'Material3',
       target_amount_value: 7.15,
       molecule: m1,
-      collections: [shared_collection_with_low_detail_level]
+      collections: [shared_collection_with_low_detail_level],
     )
   end
   let(:product3) do
@@ -78,7 +78,7 @@ describe 'Copy reaction' do
       name: 'Product3',
       real_amount_value: 4.671,
       molecule: m2,
-      collections: [shared_collection_with_low_detail_level]
+      collections: [shared_collection_with_low_detail_level],
     )
   end
   let(:reaction3) do
@@ -86,7 +86,7 @@ describe 'Copy reaction' do
       :reaction,
       status: 'Successful',
       short_label: 'Reaction3',
-      collections: [shared_collection_with_low_detail_level]
+      collections: [shared_collection_with_low_detail_level],
     )
   end
 
@@ -98,7 +98,7 @@ describe 'Copy reaction' do
         shared_with: user1,
         permission_level: 10,
         sample_detail_level: 10,
-        reaction_detail_level: 10
+        reaction_detail_level: 10,
       )
     end
   end
@@ -110,7 +110,7 @@ describe 'Copy reaction' do
         shared_with: user1,
         permission_level: 10,
         sample_detail_level: 10,
-        reaction_detail_level: 10
+        reaction_detail_level: 10,
       )
     end
   end
