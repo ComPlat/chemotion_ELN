@@ -324,15 +324,12 @@ export default class LiteratureDetails extends Component {
     } = this.state;
     const { currentUser } = UserStore.getState();
     const elements = [];
-    let contentElements = '';
 
     selectedRefs.forEach((citation) => {
       elements.push(literatureContent(citation, true));
     });
 
-    uniqBy(elements).forEach((element) => {
-      contentElements = `${contentElements}\n${element}`;
-    });
+    const contentElements = uniqBy(elements).join('\n');
 
     return (
       <DetailCard header={this.literatureHeader()}>
@@ -402,7 +399,7 @@ export default class LiteratureDetails extends Component {
         <div className="lmt-3 d-flex justify-content-end">
           <Button
             size="sm"
-            onClick={() => copyToClipboard(selectedRefs)}
+            onClick={() => copyToClipboard(contentElements)}
           >
             <i className="fa fa-clipboard me-2" />
             Copy References to Clipboard
