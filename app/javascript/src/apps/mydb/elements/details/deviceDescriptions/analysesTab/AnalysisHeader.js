@@ -155,10 +155,14 @@ function AnalysisHeader({ container, readonly }) {
       return c;
     }),
   };
-  const preferredThumbnail = container?.extended_metadata?.preferred_thumbnail || null;
   const attachment = getAttachmentFromContainer(container);
-  const attachmentsIds = container?.children?.flatMap((child) => (child.attachments
-    || []).map((att) => Number(att.id))) || [];
+  // Build list of non-deleted attachment IDs
+  const allAttachments = container?.children?.flatMap((child) => (child.attachments || [])) || [];
+  const nonDeletedAttachments = allAttachments.filter((att) => !att.is_deleted);
+  const attachmentsIds = nonDeletedAttachments.map((att) => Number(att.id));
+  // Get current preferred thumbnail (reassignment is handled by ContainerDatasets on deletion)
+  const preferredThumbnail = container?.extended_metadata?.preferred_thumbnail || null;
+
   const onChangePreferredThumbnail = (currentPreferredThumbnail) => {
     if (currentPreferredThumbnail !== preferredThumbnail) {
       // Handle the change of preferred thumbnail
