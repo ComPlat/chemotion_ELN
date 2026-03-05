@@ -2,9 +2,28 @@
 
 require 'rails_helper'
 
+# rubocop: disable RSpec/MultipleMemoizedHelpers, RSpec/IndexedLet, RSpec/LetSetup, RSpec/NoExpectationExample
 describe 'Copy reaction' do
-  let!(:user1) { create(:user, first_name: 'User1', last_name: 'Complat', name_abbreviation: 'US1', account_active: true, confirmed_at: Time.now) }
-  let!(:user2) { create(:user, first_name: 'User2', last_name: 'Complat', name_abbreviation: 'US2', account_active: true, confirmed_at: Time.now) }
+  let!(:user1) do
+    create(
+      :user,
+      first_name: 'User1',
+      last_name: 'Complat',
+      name_abbreviation: 'US1',
+      account_active: true,
+      confirmed_at: Time.now
+    )
+  end
+  let!(:user2) do
+    create(
+      :user,
+      first_name: 'User2',
+      last_name: 'Complat',
+      name_abbreviation: 'US2',
+      account_active: true,
+      confirmed_at: Time.now
+    )
+  end
 
   let!(:col1) { create(:collection, user_id: user1.id, label: 'Col1') }
   let!(:col2) { create(:collection, user_id: user1.id, label: 'Col2') }
@@ -17,23 +36,82 @@ describe 'Copy reaction' do
   let(:product1) { create(:sample, name: 'Product1', real_amount_value: 4.671, molecule: m2, collections: [col3]) }
   let(:reaction1) { create(:reaction, status: 'Successful', short_label: 'Reaction1', collections: [col3]) }
 
-  let(:material2) { create(:sample, name: 'Material2', target_amount_value: 7.15, molecule: m1, collections: [shared_collection_with_high_detail_level]) }
-  let(:product2) { create(:sample, name: 'Product2', real_amount_value: 4.671, molecule: m2, collections: [shared_collection_with_high_detail_level]) }
-  let(:reaction2) { create(:reaction, status: 'Successful', short_label: 'Reaction2', collections: [shared_collection_with_high_detail_level]) }
+  let(:material2) do
+    create(
+      :sample,
+      name: 'Material2',
+      target_amount_value: 7.15,
+      molecule: m1,
+      collections: [shared_collection_with_high_detail_level]
+    )
+  end
+  let(:product2) do
+    create(
+      :sample,
+      name: 'Product2',
+      real_amount_value: 4.671,
+      molecule: m2,
+      collections: [shared_collection_with_high_detail_level]
+    )
+  end
+  let(:reaction2) do
+    create(
+      :reaction,
+      status: 'Successful',
+      short_label: 'Reaction2',
+      collections: [shared_collection_with_high_detail_level]
+    )
+  end
 
-  let(:material3) { create(:sample, name: 'Material3', target_amount_value: 7.15, molecule: m1, collections: [shared_collection_with_low_detail_level]) }
-  let(:product3) { create(:sample, name: 'Product3', real_amount_value: 4.671, molecule: m2, collections: [shared_collection_with_low_detail_level]) }
-  let(:reaction3) { create(:reaction, status: 'Successful', short_label: 'Reaction3', collections: [shared_collection_with_low_detail_level]) }
-
+  let(:material3) do
+    create(
+      :sample,
+      name: 'Material3',
+      target_amount_value: 7.15,
+      molecule: m1,
+      collections: [shared_collection_with_low_detail_level]
+    )
+  end
+  let(:product3) do
+    create(
+      :sample,
+      name: 'Product3',
+      real_amount_value: 4.671,
+      molecule: m2,
+      collections: [shared_collection_with_low_detail_level]
+    )
+  end
+  let(:reaction3) do
+    create(
+      :reaction,
+      status: 'Successful',
+      short_label: 'Reaction3',
+      collections: [shared_collection_with_low_detail_level]
+    )
+  end
 
   let!(:shared_collection_with_high_detail_level) do
     create(:collection, user: user2, label: 'HighDL').tap do |collection|
-      create(:collection_share, collection: collection, shared_with: user1, permission_level: 10, sample_detail_level: 10, reaction_detail_level: 10)
+      create(
+        :collection_share,
+        collection: collection,
+        shared_with: user1,
+        permission_level: 10,
+        sample_detail_level: 10,
+        reaction_detail_level: 10
+      )
     end
   end
   let(:shared_collection_with_low_detail_level) do
     create(:collection, user: user2, label: 'LowDL').tap do |collection|
-      create(:collection_share, collection: collection, shared_with: user1, permission_level: 10, sample_detail_level: 10, reaction_detail_level: 10)
+      create(
+        :collection_share,
+        collection: collection,
+        shared_with: user1,
+        permission_level: 10,
+        sample_detail_level: 10,
+        reaction_detail_level: 10
+      )
     end
   end
 
@@ -53,8 +131,8 @@ describe 'Copy reaction' do
 
   context 'when handling own collections' do
     before do
-      fp = Rails.public_path.join('images', 'molecules', 'molecule.svg')
-      svg_path = Rails.root.join('spec', 'fixtures', 'images', 'molecule.svg')
+      fp = Rails.public_path.join('images/molecules/molecule.svg')
+      svg_path = Rails.root.join('spec/fixtures/images/molecule.svg')
       `ln -s #{svg_path} #{fp} ` unless File.exist?(fp)
       ReactionsStartingMaterialSample.create!(reaction: reaction1, sample: material1, reference: true, equivalent: 1)
       ReactionsProductSample.create!(reaction: reaction1, sample: product1, equivalent: 1)
@@ -68,13 +146,13 @@ describe 'Copy reaction' do
       sign_in(user1)
     end
 
-    it 'new reaction', js: true do
+    it 'new reaction', :js do
       find_by_id('tree-id-Col1').click
       first('i.icon-reaction').click
       expect(page).not_to have_button('copy-element-btn', wait: 5)
     end
 
-    it 'to same collection', js: true do
+    it 'to same collection', :js do
       find_by_id('tree-id-Col3').click
       first('i.icon-reaction').click
       first('i.c-bs-success').click
@@ -89,7 +167,7 @@ describe 'Copy reaction' do
       expect(page).to have_content('reaction B')
     end
 
-    it 'to diff collection', js: true do
+    it 'to diff collection', :js do
       find_by_id('tree-id-Col3').click
       first('i.icon-reaction').click
       first('i.c-bs-success').click
@@ -120,11 +198,11 @@ describe 'Copy reaction' do
       ReactionsProductSample.create!(reaction: reaction2, sample: product2, equivalent: 1)
     end
 
-    it 'to different own collection', js: true do
+    it 'to different own collection', :js do
       copy_reaction('Col1', 'Col2')
     end
 
-    it 'to same own collection', js: true do
+    it 'to same own collection', :js do
       copy_reaction('Col1', 'Col1')
     end
   end
@@ -148,13 +226,13 @@ describe 'Copy reaction' do
       ReactionsProductSample.create!(reaction: reaction2, sample: product2, equivalent: 1)
     end
 
-    it 'with copy permission to own collection', js: true do
+    it 'with copy permission to own collection', :js do
       find_by_id('shared-home-link').click
       find('span.glyphicon-plus').click
       copy_reaction('HighDL', 'Col1')
     end
 
-    it 'without copy permission to own collection', js: true do
+    it 'without copy permission to own collection', :js do
       find_by_id('shared-home-link').click
       find('span.glyphicon-plus').click
       find_by_id('tree-id-LowDL-shared').click
@@ -164,3 +242,4 @@ describe 'Copy reaction' do
     end
   end
 end
+# rubocop: enable RSpec/MultipleMemoizedHelpers, RSpec/IndexedLet, RSpec/LetSetup, RSpec/NoExpectationExample

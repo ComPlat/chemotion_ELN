@@ -468,7 +468,7 @@ describe Chemotion::ReactionAPI do
           },
           'origin' => { 'short_label' => 'bar' },
           'materials' => {
-            'products' => [
+            'products' => [{
               'id' => 'd4ca4ec0-6d8e-11e5-b2f1-c9913eb3e335',
               'name' => 'New Subsample 1',
               'target_amount_unit' => 'mg',
@@ -481,7 +481,7 @@ describe Chemotion::ReactionAPI do
               'molfile' => build(:molfile, type: 'test_2'),
               'molecule' => { molfile: molfile1 },
               'container' => new_root_container,
-            ],
+            }],
           },
         }
       end
@@ -504,7 +504,7 @@ describe Chemotion::ReactionAPI do
           'collection_id' => collection1.id,
           'container' => new_root_container,
           'materials' => {
-            'products' => [
+            'products' => [{
               'id' => 'd4ca4ec0-6d8e-11e5-b2f1-c9913eb3e335',
               'name' => 'New Subsample 1',
               'target_amount_unit' => 'mg',
@@ -517,8 +517,8 @@ describe Chemotion::ReactionAPI do
               'molfile' => build(:molfile, type: 'test_2'),
               'molecule' => { molfile: molfile1 },
               'container' => new_root_container,
-            ],
-            'reactants' => [
+            }],
+            'reactants' => [{
               'id' => 'd4ca4ec0-6d8e-11e5-b2f1-c9913eb3e336',
               'name' => 'Copied Sample',
               'solvent' => [{ label: 'Acetone', smiles: 'CC(C)=O', ratio: '100' }],
@@ -530,7 +530,7 @@ describe Chemotion::ReactionAPI do
               'is_split' => false,
               'molfile' => molfile1,
               'container' => new_root_container,
-            ],
+            }],
           },
         }
       end
@@ -583,7 +583,7 @@ describe Chemotion::ReactionAPI do
           'use_reaction_volume' => false,
           'container' => new_root_container,
           'materials' => {
-            'products' => [
+            'products' => [{
               'id' => 'd4ca4ec0-6d8e-11e5-b2f1-c9913eb3e335',
               'name' => 'New Subsample 1',
               'target_amount_unit' => 'mg',
@@ -596,7 +596,7 @@ describe Chemotion::ReactionAPI do
               'molfile' => build(:molfile, type: 'test_2'),
               'molecule' => { molfile: molfile1 },
               'container' => new_root_container,
-            ],
+            }],
           },
         }
       end
@@ -640,7 +640,7 @@ describe Chemotion::ReactionAPI do
           'collection_id' => collection1.id,
           'container' => new_container,
           'materials' => {
-            'products' => [
+            'products' => [{
               'id' => 'd4ca4ec0-6d8e-11e5-b2f1-c9913eb3e335',
               'name' => 'JHX-1-A',
               'target_amount_unit' => 'mg',
@@ -652,7 +652,7 @@ describe Chemotion::ReactionAPI do
               # 'molecule' => { molfile: molfile1 },
               'molfile' => molfile1,
               'container' => new_container,
-            ],
+            }],
           },
         }
       end
