@@ -15,7 +15,6 @@ module OrdKit
           # In the workup we store milliseconds following the javascript standard. cbuggle, 1.8.2024
           OrdKit::TimeSpan.new(
             value: @duration.to_i / 1000,
-            precision: nil,
             unit: OrdKit::TimeSpan::TimeUnit::SECOND,
           )
         end

@@ -1,35 +1,34 @@
 # ReactionProcessEditor
 
-The Reaction Process Editor is a separate React project allowing to visually compose and edit the actual reaction processes. It uses the ELN as API backend.
+The Reaction Process Editor is a separate React project allowing to visually compose and edit the actual reaction processes. It uses and requires a running ELN instance as API backend.
 
-The current version of the Reaction Process Editor (RPE) is still privately hosted on
-<https://github.com/cbuggle/eln-reaction-procedure-editor>
-Access on request with your github name to <christian@buggle.net>
+The Reaction Process Editor (RPE) is op0en source (MIT license) hosted on
+<https://github.com/ComPlat/reaction-process-editor>
 
-As this is work in progress we will keep this code in a separate branch until at least the database schema is reasonably established.
+As this is still work in progress we will keep the enhancements to the code in a separate branch until at least the database schema is reasonably established.
 
 ## Setup
 
 ### Backend
 
-My developments can be found in the branch
+The ELN version required for the RPE can be found in the ELN repository in branch
 `reaction-process-editor`
 
-The backend is based on the Chemotion ELN editor on the most recent `main`. I try to keep it as up to date as possible.
+It is based on the Chemotion ELN editor on the most recent `main`. I try to keep it as up to date as possible.
 
 It adds some ActiveRecord models, API access points, Grape Entity Serializing and last not least the definition of and the export to the generic KIT-ORD reaction database format.
 
 For the proper functioning of the Frontend Editor
 
-* The db seeds in `db/seeds/reaction_editor_seeds.rb` need to run (they are included in a `rake db:seed` run).
+* The db seeds in `db/seeds/reaction_editor_seeds.rb` need to run (they are included in a regular `rake db:seed` run).
 
-* The Frontend Hostname needs to be set as ENV['REACTION_PROCESS_EDITOR_HOSTNAME'] which needs to be defined in `.env`
-* (`export REACTION_PROCESS_EDITOR_HOSTNAME="http://localhost:3000"` in your shell will also work).
+* The RPE Frontend Hostname needs to be set as ENV['REACTION_PROCESS_EDITOR_HOSTNAME'] which needs to be defined in `.env`
+* (`export REACTION_PROCESS_EDITOR_HOSTNAME="http://localhost:4000"` in your shell will also work).
 
 #### SFTP Sync
 
 The devices and their characteristics that can be selected in certain actions (e.g. Purify/Chromatography) are defined in CSV files lying in a designated directory.
-We may either place these files manually (see below) or (preferably) have them synced from a designated SFTP server.
+We may either place these files manually (see below) or have them synced from a designated SFTP server.
 
 The delayed job SynchronizeAutomationDevicesFilesJob will take care of syncing the actual equipment in the automation lab via SFTP. This jobs needs to be configured in `datacollector.yml` as such:
 
@@ -40,7 +39,7 @@ development:
       :every: 1
 ```
 
-It will become active as soon as it these relevant `.env` settings are provided.
+It is fully implemented and will become active as soon as it these relevant `.env` settings are provided.
 
 ```env
 REACTION_PROCESS_EDITOR_DEVICES_SFTP_HOSTNAME='sftp-server-hostname'
@@ -74,7 +73,7 @@ For details contact Patrick Hodapp <patrick.hodapp@kit.edu>.
 ### Frontend
 
 The frontend is a plain React yarn app to be installed and can be started with `yarn install`, `yarn start`.
-It requires the hostname of the ELN backend along with some other configs to be set in its `config.jsx`. For details see the README there.
+It requires the hostname of the ELN backend along to be set in its `.env`. For details see the README there.
 
 ## Structure
 
@@ -88,8 +87,8 @@ Reaction <-1:1-> ReactionProcess <-1:n-> ReactionProcessStep <-1:n-> ReactionPro
 #### The ReactionProcess
 
 The ReactionProcess is the root entity in the RPE. It maps 1:1 to a reaction with the purpose to separate RPE data from
-ELN code as much as possible. When a reaction is first accessed by RPE its respective (empty) ReactionProcess will be created in
-the ELN database.
+ELN code as much as possible. When a reaction is first accessed through the RPE API, its respective (initially empty)
+ReactionProcess will be created in the ELN database.
 
 #### The ReactionProcessStep
 
@@ -135,14 +134,14 @@ The "source of truth" is the Database. All relevant changes will be persisted as
 
 Apart from the Samples defined and provided by a given Reaction, we need "Medium", "Additives" and "Diverse Solvents" that will be offered to the User as Samples in the RPE UI.
 
-This is done in the DB-table "Medium" as base class (STI) for "Medium::MediumSample"  "Medium::Additive",
- "Medium::DiverseSolvents" (provided in UI Selects for adding Media). For ease of handling they define some void methods
- mimicing the `Sample` model to provide consistent attributes (e.g. "short_label", "target_amount_value").
+This is done via the DB-table "mediums" and the ruby model "Medium" as base class (STI) for "Medium::MediumSample"  "Medium::Additive",
+ "Medium::DiverseSolvents" (provided in UI Selects for adding Media). For ease of handling, `Medium` defines some void methods
+ mimicking the `Sample` model to provide consistent attributes (e.g. "short_label", "target_amount_value").
 
 ### Vessels
 
-The vessel management is happening in the backend outside the scope of the RPE.
-The RPE provides functions to assign a Vessel to a ReactionProcessStep and to certain ReactionProcessActions.
+The management of existing Vessels and VesselTemplates is happening in the backend, outside the scope of the RPE.
+The RPE only provides functions to assign a Vessel to a ReactionProcessStep and to certain ReactionProcessActions.
 
 ### Noteworthy in API
 
@@ -177,7 +176,7 @@ There are currently 2 API endpoints serving for automation lab feedback.
 * PUT /api/v1/reaction_process_editor/reaction_process_activities/{id}/automation_status
   * This endpoint serves to update the automation status, particularly to report the completion of a ReactionProcessActivity. It accepts the parameter "automation_status" and  "COMPLETED" as only accepted value.
 
-### Automation status model
+### AutomationControl & -status model
 
 The automation status model handles the synchronization of the Editor with the actual Reaction Process in the automation lab particularly for ReactionProcessActivities that need user feedback after having run.
 
@@ -190,9 +189,13 @@ Each ReactionProcessActivity can be in one of the following states.
 * AUTOMATION_RESPONDED
   * The automation feedback has been received through the api and user interaction is required (most commonly applies in Chromatography activities).
 * HALT_RESOLVED_NEEDS_CONFIRMATION
-  * User feedback has been provided (e.g. selecting vials for pooling groups). The user needs to confirm the resolve manually in a separate step for better handling.
+  * User feedback has been provided (e.g. selecting vials for pooling groups). The automation response has been processed manually but can still be changed. The user needs to confirm the resolved response manually thorugh this separate state for better handling.
 * HALT_RESOLVED
-  * The HALT has been resolved and confirmed. the
+  * The automation response has been processed and confirmed manually. This Action can run.
+* DEPENDS_ON_ACTION
+  * This Action depends on the completion of a previous Action.
+* DEPENDS_ON_STEP
+  * This Action depends on the completion of a preceding previous Step.
 * COMPLETED
   * The ReactionProcessActivity has completed successfully
 
@@ -202,7 +205,7 @@ The ReactionProcessSteps subsequently show their own status
   * The ReactionProcessStep can run unrestrictedly.
 * STEP_COMPLETED
   * All of the ReactionProcessStep's ReactionProcessActivities have been completed and thus the ReactionProcessStep itself.
-* STEP_HALT_BY_PRECEDING
+* STEP_DEPENDS_ON_PRECEDING
   * There is a ReactionProcessActivity in some prior ReactionProcessStep that HALTS the automation process (i.e. in status "HALT", "AUTOMATION_RESPONDED", "HALT_RESOLVED_NEEDS_CONFIRMATION" ). This is required to stop later ReactionProcessSteps from running while there might still be a dependency.
 * STEP_MANUAL_PROCEED
   * A STEP_HALT_BY_PRECEDING status has been overridden by the user to allow a ReactionProcessStep to run in parallel.

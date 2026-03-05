@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2026_01_27_192814) do
+ActiveRecord::Schema.define(version: 2026_03_05_070008) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -784,8 +784,8 @@ ActiveRecord::Schema.define(version: 2026_01_27_192814) do
 
   create_table "fractions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.integer "position"
-    t.uuid "parent_activity_id"
-    t.uuid "consuming_activity_id"
+    t.uuid "parent_action_id"
+    t.uuid "consuming_action_id"
     t.string "vials", default: [], array: true
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
@@ -985,7 +985,7 @@ ActiveRecord::Schema.define(version: 2026_01_27_192814) do
   create_table "media", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "type"
     t.string "sum_formula"
-    t.string "sample_name"
+    t.string "name"
     t.string "molecule_name"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false

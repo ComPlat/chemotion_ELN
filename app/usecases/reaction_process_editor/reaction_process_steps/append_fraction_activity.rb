@@ -12,39 +12,39 @@ module Usecases
         }.deep_stringify_keys.freeze
 
         # rubocop:disable  Metrics/BlockLength
-        def self.execute!(parent_activity:, index:, fraction_params:)
+        def self.execute!(parent_action:, index:, fraction_params:)
           ActiveRecord::Base.transaction do
-            consuming_activity = build_consuming_activity_for_activity_name(
-              reaction_process_step: parent_activity.reaction_process_step,
-              activity_name: fraction_params['consuming_activity_name'],
+            consuming_action = build_consuming_action_for_activity_name(
+              reaction_process_step: parent_action.reaction_process_step,
+              activity_name: fraction_params['consuming_action_name'],
             )
 
             fraction = ::ReactionProcessEditor::Fraction.create(
               position: fraction_params['position'],
-              parent_activity: parent_activity,
-              consuming_activity: consuming_activity,
+              parent_action: parent_action,
+              consuming_action: consuming_action,
               vials: fraction_params['vials'] || [],
             )
 
-            if consuming_activity
-              consuming_activity.reaction_process_vessel =
+            if consuming_action
+              consuming_action.reaction_process_vessel =
                 Usecases::ReactionProcessEditor::ReactionProcessVessels::CreateOrUpdate.execute!(
-                  reaction_process_id: parent_activity.reaction_process.id,
+                  reaction_process_id: parent_action.reaction_process.id,
                   reaction_process_vessel_params: fraction_params['vessel'],
                 )
 
-              if consuming_activity.saves_sample?
-                ReactionProcessActivities::SaveIntermediate.execute!(activity: consuming_activity, workup: {})
+              if consuming_action.saves_sample?
+                ReactionProcessActivities::SaveIntermediate.execute!(activity: consuming_action, workup: {})
               end
 
-              if consuming_activity.remove?
-                consuming_activity = assign_remove_workup(fraction: fraction, consuming_activity: consuming_activity)
+              if consuming_action.remove?
+                consuming_action = assign_remove_workup(fraction: fraction, consuming_action: consuming_action)
               end
 
-              ReactionProcessActivities::UpdatePosition.execute!(activity: consuming_activity,
-                                                                 position: parent_activity.position + index + 1)
+              ReactionProcessActivities::UpdatePosition.execute!(activity: consuming_action,
+                                                                 position: parent_action.position + index + 1)
             end
-            consuming_activity
+            consuming_action
           end
         end
         # rubocop:enable  Metrics/BlockLength
@@ -59,24 +59,24 @@ module Usecases
             } }
         end
 
-        def self.assign_remove_workup(fraction:, consuming_activity:)
-          label = "(#{(fraction.parent_activity&.position || 0) + 1}) Fraction ##{fraction&.position}"
-          consuming_activity.workup['samples'] = [{ id: fraction.id, value: fraction.id, label: label }]
-          consuming_activity.workup['origin_type'] = 'SOLVENT_FROM_FRACTION'
-          consuming_activity.workup['automation_mode'] = 'AUTOMATED'
-          consuming_activity
+        def self.assign_remove_workup(fraction:, consuming_action:)
+          label = "(#{(fraction.parent_action&.position || 0) + 1}) Fraction ##{fraction&.position}"
+          consuming_action.workup['samples'] = [{ id: fraction.id, value: fraction.id, label: label }]
+          consuming_action.workup['origin_type'] = 'SOLVENT_FROM_FRACTION'
+          consuming_action.workup['automation_mode'] = 'AUTOMATED'
+          consuming_action
         end
 
-        def self.build_consuming_activity_for_activity_name(reaction_process_step:, activity_name:)
+        def self.build_consuming_action_for_activity_name(reaction_process_step:, activity_name:)
           return if activity_name == 'DEFINE_FRACTION'
 
           activity_setup = activity_setup_for_action_name(activity_name)
 
-          consuming_activity = reaction_process_step.reaction_process_activities
+          consuming_action = reaction_process_step.reaction_process_activities
                                                     .new(activity_name: activity_setup[:activity_name])
 
-          consuming_activity.workup = activity_setup[:workup].deep_stringify_keys
-          consuming_activity
+          consuming_action.workup = activity_setup[:workup].deep_stringify_keys
+          consuming_action
         end
       end
     end

@@ -40,8 +40,8 @@ RSpec.describe Usecases::ReactionProcessEditor::ReactionProcessActivities::Updat
       }.deep_stringify_keys
     end
 
-    it 'sets fraction consuming_activity' do
-      expect { update_activity }.to change { fraction.reload.consuming_activity }.to(activity)
+    it 'sets fraction consuming_action' do
+      expect { update_activity }.to change { fraction.reload.consuming_action }.to(activity)
     end
   end
 

@@ -69,15 +69,16 @@ module ReactionProcessEditor
       when 'MODIFIER'
         Medium::Modifier.find added_material_ids(material_type)
       when 'SAMPLE', 'SOLVENT'
-        Sample.find added_material_ids(material_type)
+        Sample.where(id: added_material_ids(material_type)) +
+          Ontology.where(ontology_id: added_material_ids(material_type))
       else
         Medium::Medium.find added_material_ids(material_type)
         []
-      end
+      end.compact
     end
 
     def added_material_ids(material_type)
-      activities_adding_compound_acting_as(material_type).map { |activity| activity.workup['sample_id'] }
+      activities_adding_substance_acting_as(material_type).map { |activity| activity.workup['sample_id'] }
     end
 
     def saved_sample_ids
@@ -98,14 +99,14 @@ module ReactionProcessEditor
 
     private
 
-    def activities_adding_compound_acting_as(material_type)
-      activities_adding_compounds.select do |activity|
+    def activities_adding_substance_acting_as(material_type)
+      activities_adding_substances.select do |activity|
         activity.workup['acts_as'] == material_type
       end
     end
 
-    def activities_adding_compounds
-      @activities_adding_compounds ||= reaction_process_activities.select(&:adds_compound?)
+    def activities_adding_substances
+      @activities_adding_substances ||= reaction_process_activities.select(&:adds_substance?)
     end
 
     def calculate_activity_post_conditions
