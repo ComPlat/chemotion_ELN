@@ -14,8 +14,8 @@ module OrdKit
           OrdKit::PoolingFraction.new(
             position: fraction.position,
             vials: fraction.vials,
-            parent_activity_id: fraction.parent_activity_id,
-            consuming_activity_id: fraction.consuming_activity_id,
+            parent_action_id: fraction.parent_action_id,
+            consuming_action_id: fraction.consuming_action_id,
           )
         end
 

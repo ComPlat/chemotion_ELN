@@ -13,7 +13,7 @@ module OrdKit
 
         attr_reader :action
 
-        delegate :workup, to: :@action
+        delegate :workup, to: :action
 
         def to_ord(starts_at:)
           OrdKit::ReactionProcessAction.new(
@@ -69,7 +69,7 @@ module OrdKit
           workup.dig('EQUIPMENT', 'value').map do |equipment|
             OrdKit::Equipment.new(
               type: equipment_type(equipment),
-              details: '', # Currently n/a in ELN.
+              details: '', # Currently n/a in ELN. # TODO: eliminate?
             )
           end
         end

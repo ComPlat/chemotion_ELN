@@ -9,7 +9,7 @@ module OrdKit
         def action_type_attributes
           {
             save_sample: ReactionProcessAction::ActionSaveSample.new(
-              sample: OrdKit::Exporter::Compounds::SaveCompoundExporter.new(@action).to_ord,
+              sample: sample,
               molecular_entities: molecular_entities,
               sample_origin_type: sample_origin_type,
               purification_origin: purification_origin,
@@ -17,9 +17,15 @@ module OrdKit
           }
         end
 
+        def sample
+          OrdKit::Exporter::Samples::SampleInActionExporter.new(action).to_ord
+        end
+
         def molecular_entities
           Array(workup['molecular_entities']).map do |sample|
-            OrdKit::Exporter::Samples::SampleExporter.new(sample).to_ord
+            OrdKit::Sample.new(
+              label: sample['label'],
+            )
           end
         end
 

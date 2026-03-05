@@ -22,7 +22,7 @@ module Entities
         def added_materials(reaction_process_step)
           # For the ProcessStepHeader in the UI, in order of actions.
           reaction_process_step.reaction_process_activities.order(:position).filter_map do |action|
-            if action.adds_compound?
+            if action.adds_substance?
               added_material_option = sample_info_option(action.compound, action.workup['acts_as'])
               added_material_option.merge(amount: action.workup['target_amount'])
             end
@@ -55,9 +55,9 @@ module Entities
             .reaction_process_activities
             .includes(:fractions)
             .order(:position)
-            .map do |parent_activity|
-              parent_activity.fractions.map do |fraction|
-                label = "(#{parent_activity.position + 1}) Fraction ##{fraction.position}"
+            .map do |parent_action|
+              parent_action.fractions.map do |fraction|
+                label = "(#{parent_action.position + 1}) Fraction ##{fraction.position}"
 
                 { value: fraction.id, id: fraction.id, label: label, acts_as: 'FRACTION' }
               end
@@ -87,7 +87,7 @@ module Entities
 
         def current_step_samples_options(reaction_process_step)
           %w[SOLVENT MEDIUM ADDITIVE DIVERSE_SOLVENT MODIFIER SAMPLE].map do |material|
-            added_compounds_acting_as(reaction_process_step, material)
+            added_substances_acting_as(reaction_process_step, material)
           end.flatten.uniq
         end
 
@@ -124,7 +124,7 @@ module Entities
           )
         end
 
-        def added_compounds_acting_as(reaction_process_step, acts_as)
+        def added_substances_acting_as(reaction_process_step, acts_as)
           reaction_process_step.added_materials(acts_as).map do |sample|
             sample_minimal_option(sample, acts_as)
           end

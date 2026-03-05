@@ -10,6 +10,10 @@ module OrdKit
       private
 
       attr_reader :model
+
+      def ontology_ord(ontology_id)
+        OrdKit::Exporter::Models::OntologyExporter.new(ontology_id).to_ord
+      end
     end
   end
 end

@@ -38,7 +38,7 @@ module ReactionProcessEditor
 
           fractions_params.each_with_index do |fraction_params, index|
             ::Usecases::ReactionProcessEditor::ReactionProcessSteps::AppendFractionActivity
-              .execute!(parent_activity: @activity, index: index, fraction_params: fraction_params)
+              .execute!(parent_action: @activity, index: index, fraction_params: fraction_params)
           end
 
           @activity.workup['automation_control'] ||= {}

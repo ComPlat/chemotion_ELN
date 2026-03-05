@@ -2,7 +2,7 @@
 
 RSpec.describe Usecases::ReactionProcessEditor::ReactionProcessSteps::AppendFractionActivity do
   subject(:append_activity) do
-    described_class.execute!(parent_activity: existing_actions.first,
+    described_class.execute!(parent_action: existing_actions.first,
                              fraction_params: fraction_params,
                              index: 1)
   end
@@ -17,7 +17,7 @@ RSpec.describe Usecases::ReactionProcessEditor::ReactionProcessSteps::AppendFrac
   let(:vessel_params) { { vesselable_id: vessel.id, vesselable_type: vessel.class.to_s } }
 
   let(:fraction_params) do
-    { consuming_activity_name: 'DISCARD',
+    { consuming_action_name: 'DISCARD',
       vessel: vessel_params,
       vials: %w[1 2 3] }.deep_stringify_keys
   end
@@ -47,9 +47,9 @@ RSpec.describe Usecases::ReactionProcessEditor::ReactionProcessSteps::AppendFrac
     expect(append_activity.position).to eq 2
   end
 
-  context 'when consuming_activity is SAVE' do
+  context 'when consuming_action is SAVE' do
     let(:fraction_params) do
-      { consuming_activity_name: 'SAVE',
+      { consuming_action_name: 'SAVE',
         workup: {},
         vessel: vessel_params,
         vials: %w[1 2 3] }.deep_stringify_keys

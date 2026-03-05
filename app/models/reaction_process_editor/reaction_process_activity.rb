@@ -28,14 +28,14 @@ module ReactionProcessEditor
     has_one :reactions_intermediate_sample, dependent: :nullify
     has_many :fractions,
              class_name: 'ReactionProcessEditor::Fraction',
-             inverse_of: :parent_activity,
-             foreign_key: :parent_activity_id,
+             inverse_of: :parent_action,
+             foreign_key: :parent_action_id,
              dependent: :destroy
 
     has_one :consumed_fraction,
             class_name: 'ReactionProcessEditor::Fraction',
-            inverse_of: :consuming_activity,
-            foreign_key: :consuming_activity_id,
+            inverse_of: :consuming_action,
+            foreign_key: :consuming_action_id,
             dependent: :nullify
 
     validate :validate_workup
@@ -63,16 +63,16 @@ module ReactionProcessEditor
       %w[CONDITION].include?(activity_name)
     end
 
-    def adds_compound?
+    def adds_substance?
       %w[ADD TRANSFER].include?(activity_name) && compound
     end
 
-    def removes_compound?
+    def removes_substance?
       %w[REMOVE EVAPORATION DISCARD].include?(activity_name)
     end
 
-    def carries_compound?
-      !removes_compound?
+    def carries_substance?
+      !removes_substance?
     end
 
     def compound
@@ -91,12 +91,18 @@ module ReactionProcessEditor
       Sample.find_by(id: workup['sample_id'])
     end
 
+    def ontology
+      return unless carries_sample?
+
+      ::ReactionProcessEditor::Ontology.find_by(ontology_id: workup['sample_id'])
+    end
+
     def carries_sample?
-      carries_compound? && !carries_medium?
+      carries_substance? && !carries_medium?
     end
 
     def carries_medium?
-      carries_compound? &&
+      carries_substance? &&
         %w[ADDITIVE MEDIUM DIVERSE_SOLVENT MODIFIER].include?(workup['acts_as'])
     end
 

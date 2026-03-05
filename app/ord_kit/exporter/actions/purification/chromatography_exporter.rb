@@ -25,7 +25,9 @@ module OrdKit
 
           def molecular_entities
             Array(workup['molecular_entities']).map do |sample|
-              OrdKit::Exporter::Samples::SampleExporter.new(sample).to_ord
+              OrdKit::Sample.new(
+                label: sample['label'],
+              )
             end
           end
 
@@ -121,7 +123,7 @@ module OrdKit
           end
 
           def solvents(chromatography_step)
-            OrdKit::Exporter::Samples::OntologySolventsWithRatioExporter.new(chromatography_step['solvents']).to_ord
+            OrdKit::Exporter::Samples::SolventsWithRatioExporter.new(chromatography_step['solvents']).to_ord
           end
 
           def ord_step(stepname)

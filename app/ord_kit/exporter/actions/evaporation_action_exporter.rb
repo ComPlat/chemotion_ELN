@@ -39,7 +39,7 @@ module OrdKit
           OrdKit::ReactionProcessAction::ActionEvaporation::FromReaction.new(
             samples: solvents_to_ord(workup['samples'] || []),
             amount: amount_to_ord(workup['amount']),
-            solvents: OrdKit::Exporter::Samples::SolventsWithRatioExporter.new(workup['solvents']).to_ord,
+            solvents: solvents_with_ratio(workup['solvents']),
             solvents_amount: amount_to_ord(workup['solvents_amount']),
           )
         end
@@ -48,7 +48,7 @@ module OrdKit
           OrdKit::ReactionProcessAction::ActionEvaporation::FromReaction.new(
             samples: solvents_to_ord(workup['samples'] || []),
             amount: amount_to_ord(workup['amount']),
-            solvents: OrdKit::Exporter::Samples::SolventsWithRatioExporter.new(workup['solvents']).to_ord,
+            solvents: solvents_with_ratio(workup['solvents']),
             solvents_amount: amount_to_ord(workup['solvents_amount']),
           )
         end
@@ -96,17 +96,12 @@ module OrdKit
         end
 
         def solvents_with_ratio(solvents)
-          solvents&.map do |solvent|
-            OrdKit::CompoundWithRatio.new(
-              compound: Compounds::PurificationSampleOrDiverseSolventExporter.new(solvent['id']).to_ord,
-              ratio: solvent['ratio'].to_s,
-            )
-          end
+          OrdKit::Exporter::Samples::SolventsWithRatioExporter.new(solvents).to_ord
         end
 
         def solvents_to_ord(solvents)
           Array(solvents).map do |solvent|
-            OrdKit::Exporter::Samples::SampleExporter.new(solvent).to_ord
+            OrdKit::Sample.new(label: solvent['label'])
           end
         end
 

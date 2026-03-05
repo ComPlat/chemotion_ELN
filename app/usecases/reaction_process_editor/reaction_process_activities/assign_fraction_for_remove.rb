@@ -10,7 +10,7 @@ module Usecases
           fraction_id = activity.workup['samples'][0]['id']
           fraction = ::ReactionProcessEditor::Fraction.find_by(id: fraction_id)
 
-          fraction&.update(consuming_activity: activity)
+          fraction&.update(consuming_action: activity)
           fraction
         end
       end

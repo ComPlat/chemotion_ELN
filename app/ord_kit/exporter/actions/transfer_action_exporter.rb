@@ -9,7 +9,7 @@ module OrdKit
         def action_type_attributes
           {
             transfer: OrdKit::ReactionProcessAction::ActionTransfer.new(
-              input: sample,
+              sample: sample,
               source_reaction_step_id: workup['source_step_id'],
               target_reaction_step_id: workup['target_step_id'],
               amount: amount,
@@ -19,7 +19,7 @@ module OrdKit
         end
 
         def sample
-          OrdKit::Exporter::Actions::Samples::TransferSampleExporter.new(@action).to_ord
+          OrdKit::Exporter::Samples::SampleInActionExporter.new(@action).to_ord
         end
 
         def amount
@@ -27,7 +27,7 @@ module OrdKit
         end
 
         def percentage
-          # percentage redundantly denotes the fraction of the original sample amount, piggybacked onto target_amount.
+          # percentage as fraction of the original sample amount (piggybacked from frontend onto workup.target_amount).
           percentage_workup = { value: workup.dig('target_amount', 'percentage'), unit: 'PERCENT' }.stringify_keys
           Metrics::Amounts::PercentageExporter.new(percentage_workup).to_ord
         end
