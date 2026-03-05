@@ -9,7 +9,6 @@ import ClipboardActions from 'src/stores/alt/actions/ClipboardActions';
 import CollectionSelect from 'src/components/common/CollectionSelect';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
-import UIStore from 'src/stores/alt/stores/UIStore';
 
 const Notification = (props) => (
   NotificationActions.add({
@@ -25,6 +24,7 @@ const Notification = (props) => (
 export default class CopyElementModal extends React.Component {
   constructor(props) {
     super(props);
+
 
     this.state = {
       showModal: false,
@@ -80,6 +80,8 @@ export default class CopyElementModal extends React.Component {
       ElementActions.copyResearchPlan(element, selectedCol.id);
     } else if (element.type === 'device_description') {
       ClipboardActions.fetchDeviceDescriptionAndBuildCopy(element, selectedCol.id);
+    } else if (element.type === 'cell_line') {
+      ElementActions.copyCellLineFromId(element.id, selectedCol.id);
     } else if (element.type === 'sequence_based_macromolecule_sample') {
       ClipboardActions.fetchSequenceBasedMacromoleculeSamplesAndBuildCopy(element, selectedCol.id);
     } else {
