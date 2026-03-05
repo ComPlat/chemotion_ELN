@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import {
-  Button, Modal, Card, Row, Col, Pagination
+  Button, Modal, Card, Row, Col, Pagination, InputGroup, Form
 } from 'react-bootstrap';
 import 'whatwg-fetch';
 import _ from 'lodash';
@@ -181,7 +181,8 @@ export default class NoticeButton extends React.Component {
       localVersion: '',
       showAck: false,
       currentPage: 1,
-      perPage: 4,
+      perPage: 3,
+      filterNotices: '',
     };
     this.envConfiguration = this.envConfiguration.bind(this);
     this.handleShow = this.handleShow.bind(this);
@@ -349,7 +350,7 @@ export default class NoticeButton extends React.Component {
 
   renderBody() {
     const {
-      newNotices, ackNotices, showAck, currentPage, perPage
+      newNotices, ackNotices, showAck, currentPage, perPage, filterNotices
     } = this.state;
 
     if (!showAck && newNotices.length === 0) {
@@ -365,14 +366,32 @@ export default class NoticeButton extends React.Component {
       ...(showAck ? ackNotices.map((n) => ({ ...n, source: 'ack' })) : [])
     ].sort((a, b) => b.id - a.id);
 
-    const totalPages = Math.ceil(allNotices.length / perPage);
+    const search = filterNotices?.toLowerCase() || '';
+
+    const filteredNotices = allNotices.filter((not) => (
+      not.subject.toLowerCase().includes(search)
+      || not.sender_name.toLowerCase().includes(search)
+      || not.content.data.toLowerCase().includes(search)
+    ));
+
+    const totalPages = Math.ceil(filteredNotices.length / perPage);
 
     const start = (currentPage - 1) * perPage;
     const end = start + perPage;
 
     return (
       <>
-        {allNotices.slice(start, end).map((not, index) => {
+        <Row>
+          <InputGroup className="mb-3">
+            <InputGroup.Text><i className="fa fa-search" /></InputGroup.Text>
+            <Form.Control
+              type="text"
+              value={filterNotices}
+              onChange={(event) => this.setState({ filterNotices: event.target.value, currentPage: 1 })}
+            />
+          </InputGroup>
+        </Row>
+        {filteredNotices.slice(start, end).map((not, index) => {
           const infoTimeString = formatDate(not.created_at);
 
           const newText = not.content.data
