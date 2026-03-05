@@ -210,25 +210,29 @@ export default class SelectionShareModal extends React.Component {
   }
 
   handleShortcutChange(e) {
-    let val = e.target.value
-    let permAndDetLevs = {}
+    const val = e.target.value.toLowerCase();
+    let permAndDetLevs = {};
+
     switch (val) {
       case 'user':
         permAndDetLevs = SelectionSharingShortcuts.user();
         break;
-      case 'Partner':
+      case 'partner':
         permAndDetLevs = SelectionSharingShortcuts.partner();
         break;
-      case 'Collaborator':
+      case 'collaborator':
         permAndDetLevs = SelectionSharingShortcuts.collaborator();
         break;
-      case 'Reviewer':
+      case 'reviewer':
         permAndDetLevs = SelectionSharingShortcuts.reviewer();
         break;
-      case 'Supervisor':
+      case 'supervisor':
         permAndDetLevs = SelectionSharingShortcuts.supervisor();
         break;
+      default:
+        permAndDetLevs = {};
     }
+
     this.setState({ ...permAndDetLevs, role: val });
   }
 
