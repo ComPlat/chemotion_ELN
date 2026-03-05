@@ -36,9 +36,38 @@ export default class ImageModal extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    if (this.props.attachment?.id !== prevProps.attachment?.id) {
+    const { attachment, ChildrenAttachmentsIds, preferredThumbnail } = this.props;
+    const prevIds = prevProps.ChildrenAttachmentsIds || [];
+    const currIds = ChildrenAttachmentsIds || [];
+    // Attachment changed - refetch thumbnail
+    if (attachment?.id !== prevProps.attachment?.id) {
       this.fetchImageThumbnail();
     }
+    // Preferred thumbnail prop changed - sync state and refetch
+    if (preferredThumbnail !== prevProps.preferredThumbnail) {
+      this.setState({
+        currentPreferredThumbnail: preferredThumbnail ? Number(preferredThumbnail) : null
+      });
+      this.fetchImageThumbnail();
+    }
+    // ChildrenAttachmentsIds changed (attachment added/deleted) - refresh thumbnails
+    if (prevIds.length !== currIds.length || !prevIds.every((id, i) => id === currIds[i])) {
+      this.fetchThumbnails();
+      // If current preferred thumbnail is no longer in the list, clear it from state
+      const { currentPreferredThumbnail } = this.state;
+      if (currentPreferredThumbnail && !currIds.includes(currentPreferredThumbnail)) {
+        // Parent will handle reassigning; clear local state
+        this.setState({ currentPreferredThumbnail: null });
+        this.fetchImageThumbnail();
+      }
+    }
+  }
+
+  // Check if src is a valid displayable image source
+  isValidImageSrc(src) {
+    return typeof src === 'string'
+      && src.length > 0
+      && !src.includes('[object Object]');
   }
 
   // keyboard handler extracted from inline render for thumbnails
@@ -84,10 +113,12 @@ export default class ImageModal extends Component {
 
   buildImageSrcArrayFromThumbnails(thumbnails) {
     if (thumbnails && thumbnails.length > 0) {
-      return thumbnails.map(({ id, thumbnail }) => ({
-        id,
-        thumbnail: thumbnail ? `data:image/png;base64,${thumbnail}` : null
-      }));
+      return thumbnails.map(({ id, thumbnail }) => {
+        const src = (typeof thumbnail === 'string' && thumbnail.length > 0)
+          ? `data:image/png;base64,${thumbnail}`
+          : null;
+        return { id, thumbnail: src };
+      });
     }
     return [];
   }
@@ -149,7 +180,10 @@ export default class ImageModal extends Component {
 
     return (
       <Tooltip id="popObject" className="large-preview-modal">
-        <img src={thumbnail} alt={attachment?.filename} />
+        <img
+          src={this.isValidImageSrc(thumbnail) ? thumbnail : '/images/wild_card/not_available.svg'}
+          alt={attachment?.filename}
+        />
       </Tooltip>
     );
   }
@@ -220,7 +254,8 @@ export default class ImageModal extends Component {
                   }}
                 >
                   <img
-                    src={thumb.thumbnail || '/images/wild_card/no_attachment.svg'}
+                    src={this.isValidImageSrc(thumb.thumbnail)
+                      ? thumb.thumbnail : '/images/wild_card/no_attachment.svg'}
                     alt={`Thumbnail ${thumb.id}`}
                     className="img-thumbnail"
                     style={{
@@ -263,6 +298,7 @@ export default class ImageModal extends Component {
       fetchSrc,
       thumbnail,
     } = this.state;
+    const defaultUnavailable = '/images/wild_card/not_available.svg';
 
     if (showPop) {
       return (
@@ -284,7 +320,7 @@ export default class ImageModal extends Component {
             </div>
           ) : (
             <img
-              src={thumbnail}
+              src={this.isValidImageSrc(thumbnail) ? thumbnail : defaultUnavailable}
               alt={attachment?.filename}
               style={{ cursor: 'default', ...imageStyle }}
               onError={this.handleImageError}
@@ -324,7 +360,7 @@ export default class ImageModal extends Component {
               overlay={this.showPopObject()}
             >
               <img
-                src={thumbnail}
+                src={this.isValidImageSrc(thumbnail) ? thumbnail : defaultUnavailable}
                 alt={attachment?.filename}
                 style={{ ...imageStyle }}
                 role="button"
@@ -377,7 +413,7 @@ export default class ImageModal extends Component {
                   </div>
                 ) : (
                   <img
-                    src={this.state.fetchSrc}
+                    src={this.isValidImageSrc(fetchSrc) ? fetchSrc : defaultUnavailable}
                     style={{ maxHeight: '100%', maxWidth: '100%', display: 'block' }}
                     alt={attachment?.filename}
                     onError={this.handleImageError}
