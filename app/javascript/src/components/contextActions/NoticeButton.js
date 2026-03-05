@@ -188,6 +188,7 @@ export default class NoticeButton extends React.Component {
     this.handleShow = this.handleShow.bind(this);
     this.handleHide = this.handleHide.bind(this);
     this.messageAck = this.messageAck.bind(this);
+    this.messageArc = this.messageArc.bind(this);
     this.detectActivity = this.detectActivity.bind(this);
   }
 
@@ -324,6 +325,23 @@ export default class NoticeButton extends React.Component {
     });
   }
 
+  messageArc(idx) {
+    const params = {
+      ids: [idx],
+      archive: true,
+    };
+
+    MessagesFetcher.acknowledgedMessage(params).then((result) => {
+      const ackIdSet = new Set(_.map(result.ack, 'id'));
+
+      this.setState((prevState) => ({
+        ackNotices: prevState.ackNotices
+          .filter((o) => !ackIdSet.has(o.id))
+          .sort((a, b) => b.id - a.id)
+      }));
+    });
+  }
+
   messageFetch() {
     const { lastActivityTime, idleTimeout } = this.state;
     const { attachmentNotificationStore } = this.context;
@@ -362,7 +380,7 @@ export default class NoticeButton extends React.Component {
     }
 
     const allNotices = [
-      ...newNotices.map((n) => ({ ...n, source: 'db' })),
+      ...newNotices.map((n) => ({ ...n, source: 'new' })),
       ...(showAck ? ackNotices.map((n) => ({ ...n, source: 'ack' })) : [])
     ].sort((a, b) => b.id - a.id);
 
@@ -426,17 +444,30 @@ export default class NoticeButton extends React.Component {
               <Card.Body>
                 <Row>
                   <Col lg="auto">
-                    <Button
-                      id={`notice-button-ack-${not.id}`}
-                      key={`notice-button-ack-${not.id}`}
-                      size="sm"
-                      onClick={() => this.messageAck(not.id, false)}
-                      variant={not.source === 'db' ? 'primary' : 'secondary'}
-                      disabled={not.source !== 'db'}
-                    >
-                      <i className="fa fa-check me-1" aria-hidden="true" />
-                      Got it
-                    </Button>
+                    { not.source === 'new' ? (
+                      <Button
+                        id={`notice-button-ack-${not.id}`}
+                        key={`notice-button-ack-${not.id}`}
+                        size="sm"
+                        variant="warning"
+                        onClick={() => this.messageAck(not.id, false)}
+                      >
+                        <i className="fa fa-check me-1" aria-hidden="true" />
+                        Got it
+                      </Button>
+                    )
+                      : (
+                        <Button
+                          id={`notice-button-del-${not.id}`}
+                          key={`notice-button-del-${not.id}`}
+                          size="sm"
+                          variant="danger"
+                          onClick={() => this.messageArc(not.id)}
+                        >
+                          <i className="fa fa-check me-1" aria-hidden="true" />
+                          Archive
+                        </Button>
+                      )}
                   </Col>
                   <Col>{newText}</Col>
                 </Row>
