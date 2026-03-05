@@ -241,7 +241,7 @@ RSpec.describe 'CalendarEntry' do
   end
 
   describe 'collection_for' do
-    it 'returns the first collection or syn collection that contains this entry of a given user' do
+    it 'returns the first collection that contains this entry of a given user' do
       entry = create(:calendar_entry, :reaction)
 
       reaction = entry.eventable
@@ -252,12 +252,8 @@ RSpec.describe 'CalendarEntry' do
 
       another_user = create(:person)
 
-      sync_user = create(:person)
-      sync_collection = collection.sync_collections_users.create(user: sync_user, sharer: creator)
-
       expect(entry.collection_for(creator)).to eq collection
       expect(entry.collection_for(another_user)).to be_nil
-      expect(entry.collection_for(sync_user)).to eq sync_collection
     end
   end
 

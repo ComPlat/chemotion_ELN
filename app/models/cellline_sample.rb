@@ -40,8 +40,6 @@ class CelllineSample < ApplicationRecord
   belongs_to :cellline_material
   belongs_to :creator, class_name: 'User', foreign_key: 'user_id'
 
-  has_many :sync_collections_users, through: :collections
-
   after_create :create_root_container
 
   scope :by_sample_name, lambda { |query, collection_id|

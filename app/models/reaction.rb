@@ -147,8 +147,6 @@ class Reaction < ApplicationRecord
   has_many :literals, as: :element, dependent: :destroy
   has_many :literatures, through: :literals
 
-  has_many :sync_collections_users, through: :collections
-
   has_many :private_notes, as: :noteable, dependent: :destroy
   has_many :comments, as: :commentable, dependent: :destroy
 
