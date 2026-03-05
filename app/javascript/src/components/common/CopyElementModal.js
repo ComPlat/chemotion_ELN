@@ -29,7 +29,7 @@ export default class CopyElementModal extends React.Component {
     // Determine default collection ID
     const { currentCollection } = UIStore.getState();
     const defCol = currentCollection && currentCollection.is_shared === false
-      && currentCollection.is_locked === false && currentCollection.label !== 'All' 
+      && currentCollection.is_locked === false && currentCollection.label !== 'All'
       ? currentCollection.id : null;
 
     this.state = {
@@ -86,6 +86,8 @@ export default class CopyElementModal extends React.Component {
       ElementActions.copyResearchPlan(element, selectedCol);
     } else if (element.type === 'device_description') {
       ClipboardActions.fetchDeviceDescriptionAndBuildCopy(element, selectedCol);
+    } else if (element.type === 'cell_line') {
+      ElementActions.copyCellLineFromId(element.id, selectedCol);
     } else if (element.type === 'sequence_based_macromolecule_sample') {
       ClipboardActions.fetchSequenceBasedMacromoleculeSamplesAndBuildCopy(element, selectedCol);
     } else {
