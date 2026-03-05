@@ -604,6 +604,11 @@ export default class ReactionDetailsScheme extends React.Component {
           this.updatedReactionForVesselSizeChange()
         );
         break;
+      case 'concentrationChanged':
+        onReactionChange(
+          this.updatedReactionForConcentrationChange(changeEvent)
+        );
+        break;
       default:
         break;
     }
@@ -709,6 +714,8 @@ export default class ReactionDetailsScheme extends React.Component {
     // Only do this for user-initiated changes, not programmatic changes (like during reference component switch)
     updatedSample.initializeSampleDetails?.();
     updatedSample.sample_details.reference_component_changed = false;
+    // Amount was edited directly by user, so concentration can be auto-recalculated again.
+    delete updatedSample.preserveConcentration;
 
     // normalize to milligram
     updatedSample.setAmountAndNormalizeToGram(amount);
@@ -736,6 +743,8 @@ export default class ReactionDetailsScheme extends React.Component {
     // normalize to milligram
     // updatedSample.setAmountAndNormalizeToGram(amount);
     // setAmount should be called first before updating feedstock mole and volume values
+    // Amount was edited directly by user, so concentration can be auto-recalculated again.
+    delete updatedSample.preserveConcentration;
     updatedSample.setAmount(amount);
     if (
       reaction.weight_percentage
@@ -1242,6 +1251,117 @@ export default class ReactionDetailsScheme extends React.Component {
 
   updatedReactionForVesselSizeChange() {
     return this.updatedReactionWithSample(this.updatedSamplesForVesselSizeChange.bind(this));
+  }
+
+  /**
+   * Handles concentration change for a material.
+   * Case 1: When volume is unlocked, recalculates reaction volume based on the entered concentration.
+   * Case 2: When volume is locked, recalculates amount_mol and amount_g based on the entered concentration.
+   *
+   * Formula (Case 1): volume (L) = amount_mol / concentration (mol/L)
+   * Formula (Case 2): amount_mol = volume (L) * concentration (mol/L)
+   *                   amount_g = amount_mol * molecular_weight (g/mol)
+   *
+   * @param {Object} changeEvent - Event containing sampleID, concentration, materialGroup
+   * @returns {Reaction} The updated reaction object
+   */
+  updatedReactionForConcentrationChange(changeEvent) {
+    const { reaction } = this.props;
+    const { sampleID, concentration } = changeEvent;
+    const updatedSample = reaction.sampleById(sampleID);
+    const concentrationValue = concentration.value;
+
+    if (!updatedSample
+      || concentrationValue == null
+      || !Number.isFinite(concentrationValue)
+      || concentrationValue < 0) {
+      return reaction;
+    }
+
+    const newConcentration = concentrationValue; // in mol/L (base unit)
+
+    // Store the new concentration on the sample
+    updatedSample.concn = newConcentration;
+
+    if (!reaction.isVolumeLocked) {
+      // Case 1: Volume is unlocked - calculate new volume from concentration
+      this.calculateVolumeFromConcentration(updatedSample, newConcentration, reaction);
+      // Recalculate concentrations for all other materials based on new volume
+      reaction.updateAllConcentrations();
+    } else if (reaction.isVolumeLocked) {
+      // Case 2: Volume is locked - calculate amount_mol and amount_g from concentration
+      return this.handleLockedVolumeConcentrationChange(updatedSample, newConcentration);
+    }
+
+    return reaction;
+  }
+
+  /**
+   * Handles concentration changes when reaction volume is locked.
+   * Recalculates sample amount from concentration and preserves the user-entered concentration
+   * while dependent fields (amount_mol, amount_g, equivalents) are updated.
+   *
+   * @param {Sample} updatedSample - The sample with the concentration change
+   * @param {number} newConcentration - The new concentration value in mol/L
+   * @returns {Reaction} The updated reaction object
+   */
+  handleLockedVolumeConcentrationChange(updatedSample, newConcentration) {
+    this.calculateAmountFromConcentration(updatedSample, newConcentration);
+
+    // Mark the sample to preserve its manually-set concentration
+    updatedSample.preserveConcentration = true;
+
+    // Update reaction with the changed sample amounts and recalculate equivalents
+    return this.updatedReactionWithSample(
+      this.updatedSamplesForAmountChange.bind(this),
+      updatedSample
+    );
+  }
+
+  /**
+   * Calculates and updates reaction volume based on sample concentration.
+   * Formula: volume (L) = amount_mol / concentration (mol/L)
+   *
+   * @param {Sample} sample - The sample with the concentration change
+   * @param {number} concentration - The new concentration value in mol/L
+   * @param {Reaction} reaction - The reaction to update
+   */
+  calculateVolumeFromConcentration(sample, concentration, reaction) {
+    const { onInputChange } = this.props;
+
+    const amountMol = sample.amount_mol || 0;
+    if (amountMol > 0) {
+      const newVolume = amountMol / concentration; // in liters
+      reaction.volume = newVolume;
+
+      // Update volume via onInputChange to ensure persistence
+      if (onInputChange) {
+        onInputChange('volume', newVolume);
+      }
+    }
+  }
+
+  /**
+   * Calculates and updates sample amount based on concentration when volume is locked.
+   * Formula: amount_mol = sample_volume (L) * concentration (mol/L)
+   * The amount_g is automatically calculated from amount_mol by setAmount() using molecular weight.
+   *
+   * @param {Sample} sample - The sample with the concentration change
+   * @param {number} concentration - The new concentration value in mol/L
+   * @param {Reaction} reaction - The reaction containing the sample
+   */
+  calculateAmountFromConcentration(sample, concentration) {
+    const volumeL = sample.amount_l; // Get the sample's volume in liters
+
+    if (!Number.isFinite(volumeL) || volumeL <= 0 || !Number.isFinite(concentration) || concentration < 0) {
+      return;
+    }
+
+    const newAmountMol = volumeL * concentration; // in moles
+
+    // Update the sample's amount with the new mol value
+    // setAmount will handle conversion to amount_g using molecular weight
+    sample.setAmount({ value: newAmountMol, unit: 'mol' });
   }
 
   /**
@@ -1989,6 +2109,7 @@ export default class ReactionDetailsScheme extends React.Component {
             title="Reaction volume"
             variant="primary"
             id="numInput_reaction_volume_l"
+            disabled={reaction.isVolumeLocked}
             onChange={(e) => this.updateVolume(e)}
             onMetricsChange={(e) => this.updateVolume(e)}
           />
