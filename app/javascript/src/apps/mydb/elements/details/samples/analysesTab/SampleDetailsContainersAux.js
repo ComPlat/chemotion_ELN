@@ -214,10 +214,12 @@ function AnalysesHeader({
     }),
   };
   const attachment = getAttachmentFromContainer(container);
-  // Build list of non-deleted attachment IDs
+  // Build list of saved, non-deleted attachment IDs (exclude is_new which don't have server IDs yet)
   const allAttachments = container?.children?.flatMap((child) => (child.attachments || [])) || [];
-  const nonDeletedAttachments = allAttachments.filter((att) => !att.is_deleted);
-  const attachmentsIds = nonDeletedAttachments.map((att) => Number(att.id));
+  const savedAttachments = allAttachments.filter((att) => !att.is_deleted && !att.is_new);
+  const attachmentsIds = savedAttachments
+    .map((att) => Number(att.id))
+    .filter((id) => !Number.isNaN(id) && id > 0);
   // Get current preferred thumbnail (reassignment is handled by ContainerDatasets on deletion)
   const preferredThumbnail = container?.extended_metadata?.preferred_thumbnail || null;
 
