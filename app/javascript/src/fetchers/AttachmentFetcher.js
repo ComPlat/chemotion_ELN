@@ -599,14 +599,15 @@ export default class AttachmentFetcher {
     lcmsPeaksStr,
     lcmsIntegralsStr,
     lcmsUvvisWavelength,
-    lcmsMzPage
+    lcmsMzPage,
+    lcmsMzPageData
   ) {
     const params = {
       attachmentId: attId,
       peaksStr,
-      shiftSelectX: shift.peak.x,
-      shiftRefName: shift.ref.name,
-      shiftRefValue: shift.ref.value,
+      shiftSelectX: shift?.peak?.x,
+      shiftRefName: shift?.ref?.name,
+      shiftRefValue: shift?.ref?.value,
       scan,
       thres,
       integration,
@@ -623,17 +624,38 @@ export default class AttachmentFetcher {
       lcmsPeaksStr,
       lcmsIntegralsStr,
       lcmsUvvisWavelength,
-      lcmsMzPage
+      lcmsMzPage,
+      lcmsMzPageData
     };
+
+    const decamelized = decamelizeKeys(params);
+    const hasLcmsMzPageData = decamelized.lcms_mz_page_data != null;
+
+    let body;
+    let headers = { Accept: 'application/json' };
+    if (hasLcmsMzPageData) {
+      const formData = new FormData();
+      Object.keys(decamelized).forEach((key) => {
+        const value = decamelized[key];
+        if (value === undefined) return;
+        if (key === 'lcms_mz_page_data') {
+          formData.append(key, new Blob([JSON.stringify(value)], { type: 'application/json' }), 'lcms_mz_page_data.json');
+        } else {
+          const str = (value != null && typeof value === 'object') ? JSON.stringify(value) : value;
+          formData.append(key, str != null ? String(str) : '');
+        }
+      });
+      body = formData;
+    } else {
+      headers['Content-Type'] = 'application/json';
+      body = JSON.stringify(decamelized);
+    }
 
     const promise = fetch('/api/v1/attachments/save_spectrum/', {
       credentials: 'same-origin',
       method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(decamelizeKeys(params)),
+      headers,
+      body,
     })
       .then((response) => {
         if (!response.ok) {
