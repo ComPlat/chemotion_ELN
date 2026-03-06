@@ -15,15 +15,16 @@ module KetcherService
     end
 
     def paths
-      @paths = @svg.css("//path")
+      # Namespace-agnostic: Indigo (and others) use xmlns="http://www.w3.org/2000/svg"
+      @paths = @svg.xpath('//*[local-name()="path"]')
     end
 
     def circles
-      @circles = @svg.css("//circle")
+      @circles = @svg.xpath('//*[local-name()="circle"]')
     end
 
     def texts
-      @texts = @svg.css("//text")
+      @texts = @svg.xpath('//*[local-name()="text"]')
     end
 
     def clean
@@ -45,14 +46,16 @@ module KetcherService
 
     # Bounding box for embedded <image> elements (e.g. surface chemistry, epam-ketcher-ssc).
     # Used to trim extra whitespace from image-containing SVGs.
+    # Applies cumulative transform so bounds are correct when images live inside a <g>.
     def image_extrema
-      @svg.css("image").each do |element|
+      @svg.xpath('//*[local-name()="image"]').each do |element|
         x = (element["x"] || 0).to_f
         y = (element["y"] || 0).to_f
         w = (element["width"] || 0).to_f
         h = (element["height"] || 0).to_f
         next if w <= 0 || h <= 0
-        coordinates = [[x, y], [x + w, y + h]]
+        sx, sy = get_cumulative_transform_shift(element)
+        coordinates = [[x + sx, y + sy], [x + w + sx, y + h + sy]]
         minmax(coordinates)
       end
     end
@@ -79,8 +82,24 @@ module KetcherService
         matrix = get_matrix_from_transform_matrix(transformation)
         get_translation_from_matrix(matrix)
       elsif transformation&.match(/^translate/)
-        get_translation_from_transform_translate(transformation)
+        get_translation_from_transform_translate(transformation) || [0, 0]
+      else
+        [0, 0]
       end
+    end
+
+    # Cumulative translation from this element and all ancestors (for Indigo SVGs with nested <g>).
+    def get_cumulative_transform_shift(element)
+      total_x = 0.0
+      total_y = 0.0
+      node = element
+      while node && node.name != 'svg'
+        tx = get_internal_transform_shift(node)
+        total_x += tx[0]
+        total_y += tx[1]
+        node = node.respond_to?(:parent) ? node.parent : nil
+      end
+      [total_x, total_y]
     end
 
     def remove_all_internal_transform
@@ -101,14 +120,19 @@ module KetcherService
       find_extrema
       mx = @margins[0] || 20
       my = @margins[1] || 20 # this value correlates to SVG text font as well
+      # When SVG has both images and text (e.g. 2 polymers, one with label), add extra bottom
+      # margin so the trim viewBox does not cut off the bottom (second image or label).
+      has_images = @svg.xpath('//*[local-name()="image"]').any?
+      has_text = @svg.xpath('//*[local-name()="text"]').any?
+      my_bottom = (has_images && has_text) ? (my + 14) : my
       if (@min+@max).compact.size == 4
         x1,y1=*@min
         x2,y2=*@max
-        @svg.at_css("svg")["viewBox"]='%i %i %i %i' % [0, 0, x2-x1 + mx,y2-y1 + my]
+        @svg.at_css("svg")["viewBox"]='%i %i %i %i' % [0, 0, x2-x1 + mx, y2-y1 + my_bottom]
         @svg.at_css("svg")["width"]= x2-x1
         @svg.at_css("svg")["height"]=y2-y1
         children = @svg.at_css("svg").children
-        @svg.at_css("svg").children.first.add_previous_sibling "<g transform='translate(#{(-x1+mx/2).round}, #{(-y1+my/2).round})'>"
+        @svg.at_css("svg").children.first.add_previous_sibling "<g transform='translate(#{(-x1+mx/2).round}, #{(-y1+my_bottom/2).round})'>"
         first_child = @svg.at_css("svg").children.first
         children.each do |n|
           n.parent = first_child
@@ -126,7 +150,7 @@ module KetcherService
       end
       paths.each do |element|
         coordinates = splitxy_for_path(element["d"])
-        sx,sy = *get_internal_transform_shift(element)
+        sx, sy = get_cumulative_transform_shift(element)
         coordinates.map!{|xy| x,y = *xy; [x+sx,y+sy]}
         minmax(coordinates)
       end
@@ -137,10 +161,35 @@ module KetcherService
         style = element["style"].to_s
         next if style.match(/display:\s*none/)
         coordinates = splitxy_for_text(element)
-        sx,sy = *get_internal_transform_shift(element)
+        sx, sy = get_cumulative_transform_shift(element)
         coordinates.map!{|xy| x,y = *xy; [x+sx,y+sy]}
         minmax(coordinates)
       end
+    end
+
+    # Returns positions of text elements matching R# (R1, R2, ...), R#, or A alone.
+    # Sorted by vertical position (top to bottom). Used for polymer shape placement.
+    def extract_r_or_a_positions
+      found = []
+      texts.each do |element|
+        style = element["style"].to_s
+        next if style.match(/display:\s*none/)
+        text_content = ""
+        if element.xpath('.//*[local-name()="tspan"]').any?
+          element.xpath('.//*[local-name()="tspan"]').each { |tspan| text_content += tspan.content.to_s }
+        else
+          text_content = element.content.to_s
+        end
+        text_content = text_content.to_s.strip
+        # Match R1, R#, R, A; allow optional space (e.g. Indigo "R 1", "R #", "R")
+        next unless text_content.match?(/\A\s*(R\s*\d+|R\s*#|R|A)\s*\z/)
+        coords = splitxy_for_text(element)
+        sx, sy = get_cumulative_transform_shift(element)
+        x = coords[0][0].to_f + sx
+        y = coords[0][1].to_f + sy
+        found << { x: x, y: y, element: element }
+      end
+      found.sort_by { |h| h[:y] }
     end
 
     def circle_extrema
@@ -148,7 +197,7 @@ module KetcherService
         style = element["style"].to_s
         next if style.match(/display:\s*none/)
         coordinates = splitxy_for_circle(element)
-        sx,sy = *get_internal_transform_shift(element)
+        sx, sy = get_cumulative_transform_shift(element)
         coordinates.map!{|xy| x,y = *xy; [x+sx,y+sy]}
         minmax(coordinates)
       end
@@ -170,10 +219,12 @@ module KetcherService
     private
 
     def get_translation_from_transform_translate(transformation)
-      transformation.match(/translate\( ([-+]?\d+\.?\d*)\s*(,\s*([-+]?\d+\.?\d*))?\)/)
-      translation =[$1.to_f,$1.to_f] if $1
-      translation[1]=$3.to_f if $3
-      tranlation||=nil
+      # Allow optional whitespace (Indigo uses "translate(x,y)" without space after "(")
+      m = transformation.match(/translate\s*\(\s*([-+]?\d+\.?\d*)\s*(?:,\s*([-+]?\d+\.?\d*))?\s*\)/)
+      return nil unless m && m[1]
+      x = m[1].to_f
+      y = m[2] ? m[2].to_f : x
+      [x, y]
     end
 
     def get_matrix_from_transform_matrix(transform_matrix)
@@ -206,25 +257,35 @@ module KetcherService
     end
 
     def splitxy_for_text(text)
-      # Get actual text content - check tspan children first, then direct content
+      # Get actual text content - check tspan children first, then direct content (namespace-agnostic)
       text_content = ""
-      if text.css('tspan').any?
-        text.css('tspan').each do |tspan|
+      if text.xpath('.//*[local-name()="tspan"]').any?
+        text.xpath('.//*[local-name()="tspan"]').each do |tspan|
           text_content += tspan.content.to_s
         end
       else
         text_content = text.content.to_s
       end
       
+      # Position: prefer text element x,y; fallback to first tspan (Indigo may put x,y on tspan)
+      base_x = text["x"].to_f
+      base_y = text["y"].to_f
+      if base_x == 0.0 && base_y == 0.0 && text.xpath('.//*[local-name()="tspan"]').any?
+        first_tspan = text.xpath('.//*[local-name()="tspan"]').first
+        base_x = (first_tspan["x"] || first_tspan["dx"])&.to_f || 0.0
+        base_y = (first_tspan["y"] || first_tspan["dy"])&.to_f || 0.0
+      end
+      
       # If text length is 3 or less, use old simple logic
       if text_content.length <= 3
-        x,y,font=text["x"].to_f,text["y"].to_f,(text["font"].match(/(\d+\.?\d*)px/) && $1).to_f
-        l=text_content.length
-        return [[x,y],[x+font*l,y+font]]
+        font = (text["font"].to_s.match(/(\d+\.?\d*)px/) && $1).to_f
+        font = (text["font-size"].to_s.match(/(\d+\.?\d*)/) && $1).to_f if font <= 0
+        l = text_content.length
+        return [[base_x, base_y], [base_x + font * l, base_y + font]]
       end
       
       # For longer strings (>3 chars), use logic with text-anchor positioning
-      calculate_long_text_bounds(text, text_content)
+      calculate_long_text_bounds(text, text_content, base_x, base_y)
     end
 
     # Calculates bounding box coordinates for text elements longer than 3 characters
@@ -232,10 +293,13 @@ module KetcherService
     #
     # @param text [Nokogiri::XML::Element] The text SVG element
     # @param text_content [String] The actual text content (already extracted)
+    # @param base_x [Float] Optional x position (from text or first tspan)
+    # @param base_y [Float] Optional y position (from text or first tspan)
     # @return [Array<Array<Float>>] Array of two coordinate pairs: [[x_start, y], [x_end, y + font]]
-    def calculate_long_text_bounds(text, text_content)
-      # Extract x and y coordinates from the text element
-      x, y = text["x"].to_f, text["y"].to_f
+    def calculate_long_text_bounds(text, text_content, base_x = nil, base_y = nil)
+      # Extract x and y coordinates from the text element (or use passed-in base)
+      x = base_x.nil? ? text["x"].to_f : base_x
+      y = base_y.nil? ? text["y"].to_f : base_y
       
       # Get font size from font attribute or font-size attribute
       # Priority: font attribute (e.g., "24px Arial") > font-size attribute > old extraction method
