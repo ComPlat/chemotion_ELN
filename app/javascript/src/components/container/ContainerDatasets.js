@@ -90,12 +90,14 @@ export default class ContainerDatasets extends Component {
   };
 
   reassignPreferredThumbnailIfNeeded = (analysisContainer) => {
-    // Get all non-deleted attachment IDs from all datasets
+    // Get all saved, non-deleted attachment IDs from all datasets (exclude is_new which don't have server IDs yet)
     const allAttachments = analysisContainer?.children?.flatMap(
       (child) => (child.attachments || [])
     ) || [];
-    const nonDeletedAttachments = allAttachments.filter((att) => !att.is_deleted);
-    const validAttachmentIds = nonDeletedAttachments.map((att) => Number(att.id));
+    const savedAttachments = allAttachments.filter((att) => !att.is_deleted && !att.is_new);
+    const validAttachmentIds = savedAttachments
+      .map((att) => Number(att.id))
+      .filter((id) => !Number.isNaN(id) && id > 0);
 
     const currentPreferred = analysisContainer?.extended_metadata?.preferred_thumbnail;
     const preferredIsValid = currentPreferred

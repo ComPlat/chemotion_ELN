@@ -86,9 +86,14 @@ export default class ImageModal extends Component {
   handleModalShow(e) {
     if (!this.props.disableClick) {
       stopEvent(e);
+      // Sync currentPreferredThumbnail with prop when modal opens
+      const { preferredThumbnail } = this.props;
+      this.setState({
+        showModal: true,
+        currentPreferredThumbnail: preferredThumbnail ? Number(preferredThumbnail) : null,
+      });
       this.fetchImage();
       this.fetchThumbnails();
-      this.setState({ showModal: true });
     }
   }
 
@@ -125,8 +130,12 @@ export default class ImageModal extends Component {
 
   fetchThumbnails() {
     const { ChildrenAttachmentsIds } = this.props;
-    if (ChildrenAttachmentsIds && ChildrenAttachmentsIds.length > 0) {
-      AttachmentFetcher.fetchThumbnails(ChildrenAttachmentsIds)
+    // Filter to ensure only valid numeric IDs are sent to the API
+    const validIds = (ChildrenAttachmentsIds || []).filter(
+      (id) => typeof id === 'number' && !Number.isNaN(id) && id > 0
+    );
+    if (validIds.length > 0) {
+      AttachmentFetcher.fetchThumbnails(validIds)
         .then((result) => {
           this.setState({ thumbnails: this.buildImageSrcArrayFromThumbnails(result.thumbnails) });
         })
@@ -134,17 +143,28 @@ export default class ImageModal extends Component {
           console.error('Failed to fetch thumbnails', err);
           this.setState({ thumbnails: [] });
         });
+    } else {
+      // Clear thumbnails when no valid attachment IDs exist
+      this.setState({ thumbnails: [] });
     }
   }
 
   async fetchImageThumbnail() {
-    const { attachment, preferredThumbnail } = this.props;
+    const { attachment, preferredThumbnail, ChildrenAttachmentsIds } = this.props;
     const fileType = attachment?.file?.type;
     const isImage = fileType?.startsWith('image/');
     const defaultNoAttachment = '/images/wild_card/no_attachment.svg';
     const defaultUnavailable = '/images/wild_card/not_available.svg';
-    // render image of preferred attachment thumbnail if available
-    if (preferredThumbnail) {
+
+    // Validate preferredThumbnail is still in the list of valid attachment IDs
+    const preferredId = Number(preferredThumbnail);
+    const isPreferredValid = preferredThumbnail
+      && !Number.isNaN(preferredId)
+      && preferredId > 0
+      && (ChildrenAttachmentsIds || []).includes(preferredId);
+
+    // render image of preferred attachment thumbnail if available and valid
+    if (isPreferredValid) {
       this.setState({ isLoading: true });
       try {
         const src = await fetchImageSrcByAttachmentId(preferredThumbnail);
