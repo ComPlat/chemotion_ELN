@@ -158,8 +158,11 @@ function AnalysisHeader({ container, readonly }) {
   const attachment = getAttachmentFromContainer(container);
   // Build list of non-deleted attachment IDs
   const allAttachments = container?.children?.flatMap((child) => (child.attachments || [])) || [];
-  const nonDeletedAttachments = allAttachments.filter((att) => !att.is_deleted);
-  const attachmentsIds = nonDeletedAttachments.map((att) => Number(att.id));
+  // Filter: exclude deleted and is_new attachments (is_new don't have server IDs yet)
+  const savedAttachments = allAttachments.filter((att) => !att.is_deleted && !att.is_new);
+  const attachmentsIds = savedAttachments
+    .map((att) => Number(att.id))
+    .filter((id) => !Number.isNaN(id) && id > 0);
   // Get current preferred thumbnail (reassignment is handled by ContainerDatasets on deletion)
   const preferredThumbnail = container?.extended_metadata?.preferred_thumbnail || null;
 
