@@ -35,14 +35,35 @@ class SpectraActions {
     };
   }
 
-  SaveToFile(spcInfo, peaksStr, shift, scan, thres, integration, multiplicity, predict, cb, keepPred = false, waveLengthStr, cyclicvolta, curveIdx = 0, simulatenmr = false, previousSpcInfos, isSaveCombined = false, axesUnitsStr, detector, dscMetaData, lcmsPeaksStr, lcmsIntegralsStr, lcmsUvvisWavelength, lcmsMzPage) {
+  SaveToFile(spcInfo, peaksStr, shift, scan, thres, integration, multiplicity, predict, cb, keepPred = false, waveLengthStr, cyclicvolta, curveIdx = 0, simulatenmr = false, previousSpcInfos, isSaveCombined = false, axesUnitsStr, detector, dscMetaData, lcmsPeaksStr, lcmsIntegralsStr, lcmsUvvisWavelength, lcmsMzPage, lcmsMzPageData, onSaved) {
     return (dispatch) => {
-      AttachmentFetcher.saveSpectrum(spcInfo.idx, peaksStr, shift, scan, thres, integration, multiplicity, predict, keepPred, waveLengthStr, cyclicvolta, curveIdx, simulatenmr, previousSpcInfos, isSaveCombined, axesUnitsStr, detector, dscMetaData, lcmsPeaksStr, lcmsIntegralsStr, lcmsUvvisWavelength, lcmsMzPage)
+      AttachmentFetcher.saveSpectrum(spcInfo.idx, peaksStr, shift, scan, thres, integration, multiplicity, predict, keepPred, waveLengthStr, cyclicvolta, curveIdx, simulatenmr, previousSpcInfos, isSaveCombined, axesUnitsStr, detector, dscMetaData, lcmsPeaksStr, lcmsIntegralsStr, lcmsUvvisWavelength, lcmsMzPage, lcmsMzPageData)
         .then((fetchedFiles) => {
           dispatch({ fetchedFiles, spcInfo });
-          cb();
+          if (onSaved) {
+            onSaved(fetchedFiles, spcInfo);
+          }
+          if (cb) {
+            cb();
+          }
         }).catch((errorMessage) => {
           console.log(errorMessage); // eslint-disable-line
+          if (onSaved) {
+            onSaved(null, spcInfo, errorMessage);
+          }
+        });
+    };
+  }
+
+  CombineSpectra(jcampIds, curveIdx, extraParams, cb) {
+    return () => {
+      AttachmentFetcher.combineSpectra(jcampIds, curveIdx, extraParams)
+        .then((combined) => {
+          if (cb) cb(combined);
+        })
+        .catch((errorMessage) => {
+          console.log(errorMessage); // eslint-disable-line
+          if (cb) cb(null, errorMessage);
         });
     };
   }

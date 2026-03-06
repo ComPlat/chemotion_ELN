@@ -554,8 +554,16 @@ module Chemotion
         optional :dscMetaData, type: String
         optional :lcms_uvvis_wavelength, type: String
         optional :lcms_mz_page, type: String
+        optional :lcms_mz_page_data
       end
       post 'save_spectrum' do
+        lcms_data = params[:lcms_mz_page_data]
+        if lcms_data.respond_to?(:read)
+          params[:lcms_mz_page_data] = lcms_data.read
+        elsif lcms_data.is_a?(Hash) && lcms_data[:tempfile]
+          params[:lcms_mz_page_data] = lcms_data[:tempfile].read
+        end
+
         jcamp_att = @attachment.generate_spectrum(
           false, false, params
         )

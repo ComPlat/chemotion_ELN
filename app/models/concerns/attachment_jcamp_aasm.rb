@@ -395,7 +395,11 @@ module AttachmentJcampProcess
         t_molfile.write(attachable.root_element.molecule.molfile)
         t_molfile.rewind
       end
-      file_paths = lcms_related_file_paths || abs_path
+      file_paths = if lcms_related_file_paths.present? && (params[:lcms_mz_page_data].present? || params['lcms_mz_page_data'].present?)
+        abs_path
+      else
+        lcms_related_file_paths || abs_path
+      end
       Chemotion::Jcamp::Create.spectrum(
         file_paths, t_molfile.path, is_regen, params
       )

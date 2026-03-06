@@ -128,8 +128,9 @@ module Chemotion
           axes_units: params[:axes_units],
           detector: params[:detector],
           dsc_meta_data: params[:dsc_meta_data],
-          lcms_uvvis_wavelength: params[:lcms_uvvis_wavelength] || params[:lcmsUvvisWavelength],
-          lcms_mz_page: params[:lcms_mz_page] || params[:lcmsMzPage],
+          lcms_uvvis_wavelength: params[:lcms_uvvis_wavelength],
+          lcms_mz_page: params[:lcms_mz_page],
+          lcms_mz_page_data: params[:lcms_mz_page_data],
         }
       end
 
