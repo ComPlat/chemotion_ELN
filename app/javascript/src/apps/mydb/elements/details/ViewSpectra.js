@@ -372,13 +372,50 @@ class ViewSpectra extends React.Component {
     ];
   }
 
+  resolveWriteParams(params) {
+    const curveIdx = params?.curveSt?.curveIdx ?? 0;
+    const spectraList = Array.isArray(params?.spectra_list) ? params.spectra_list : [];
+    const spectrum = spectraList[curveIdx] || spectraList[0] || {};
+
+    const peaks = spectrum.peaks ?? params.peaks;
+    const layout = spectrum.layout ?? params.layout;
+    const isAscend = spectrum.isAscend ?? params.isAscend;
+    const decimal = spectrum.decimal ?? params.decimal;
+    const isIntensity = spectrum.isIntensity ?? params.isIntensity;
+    const waveLength = spectrum.waveLength ?? params.waveLength;
+    const body = spectrum.body ?? params.body;
+    const cyclicvoltaSt = spectrum.cyclicvoltaSt ?? params.cyclicvoltaSt;
+
+    // Construct arrays indexed by curveIdx for formatPks/formatMpy compatibility
+    const shifts = [];
+    shifts[curveIdx] = spectrum.shift;
+    const shift = spectrum.shift ? { shifts } : params.shift;
+
+    const integrations = [];
+    integrations[curveIdx] = spectrum.integration;
+    const integration = spectrum.integration ? { integrations } : params.integration;
+
+    const multiplicities = [];
+    multiplicities[curveIdx] = spectrum.multiplicity;
+    const multiplicity = spectrum.multiplicity ? { multiplicities } : params.multiplicity;
+
+    // Preserve the curveIdx for downstream functions
+    const curveSt = { curveIdx };
+
+    return {
+      peaks, shift, layout, isAscend, decimal, body,
+      isIntensity, multiplicity, integration, cyclicvoltaSt, curveSt, waveLength,
+    };
+  }
+
   writeCommon(params, isMpy = false) {
     const {
       peaks, shift, layout, isAscend, decimal, body,
       isIntensity, multiplicity, integration, cyclicvoltaSt, curveSt, waveLength
-    } = params;
+    } = this.resolveWriteParams(params);
+
     const { sample, handleSampleChanged } = this.props;
-    const si = this.getSpcInfo();
+    const si = this.getSpcInfo(curveSt?.curveIdx ?? 0);
     if (!si) return;
 
     let ops = [];
@@ -425,17 +462,29 @@ class ViewSpectra extends React.Component {
 
   notationVoltammetry(cyclicvoltaSt, curveSt, layout, sample, idDt) {
     const { spectraList } = cyclicvoltaSt;
-    const { curveIdx, listCurves } = curveSt;
-    const selectedVolta = spectraList[curveIdx];
-    const selectedCurve = listCurves[curveIdx];
-    const { feature } = selectedCurve;
-    const { scanRate } = feature;
+    const { curveIdx } = curveSt;
+    const selectedVolta = spectraList?.[curveIdx];
+    if (!selectedVolta) return [];
+
+    const content = this.getContent();
+    let built = content?.jcamp ? FN.buildData(content.jcamp) : null;
+    if (!built) {
+      const spcs = content?.listMuliSpcs;
+      if (Array.isArray(spcs) && spcs.length) {
+        const spc = spcs[curveIdx] || spcs[0];
+        if (spc?.jcamp) built = FN.buildData(spc.jcamp);
+      }
+    }
+    const feature = built?.entity?.features?.[0] || built?.entity?.features || {};
+
+    const scanRate = feature?.scanRate;
+    const xyData = Array.isArray(feature?.data) ? feature.data[0] : { x: [], y: [] };
     const metadata = InlineMetadata(sample?.datasetContainers(), idDt);
     const data = {
       scanRate,
       voltaData: {
         listPeaks: selectedVolta.list,
-        xyData: feature.data[0],
+        xyData,
       },
       sampleName: sample.name,
     };
