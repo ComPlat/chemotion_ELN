@@ -94,33 +94,37 @@ const determineBestSide = (atomLocation, imageWidth, currentImageIndex, textWidt
 
   return 'left';
 };
-// for text component
-const forTextNodeHeader = (key, description) => JSON.stringify({
-  blocks: [
-    {
-      key,
-      text: description,
-      type: 'unstyled',
-      depth: 0,
-      inlineStyleRanges: [],
-      entityRanges: [],
-      data: {},
-    }
-  ],
-  entityMap: {}
-});
+// for text component (smaller font for labels attached to shapes)
+const forTextNodeHeader = (key, description) => {
+  const text = description || '';
+  const fontSize = KET_TAGS.textNodeFontSize;
+  return JSON.stringify({
+    blocks: [
+      {
+        key,
+        text,
+        type: 'unstyled',
+        depth: 0,
+        inlineStyleRanges: text.length > 0
+          ? [{ style: `fontsize-${fontSize}`, offset: 0, length: text.length }]
+          : [],
+        entityRanges: [],
+        data: { fontSize },
+      }
+    ],
+    entityMap: {}
+  });
+};
 
 // generating images for ket2 format from molfile polymers list
-// textNodeMeta: optional map of { [blockKey]: rawContentString } from TextNodeMeta block,
-// used to restore rich text styles saved alongside the plain TextNode lines.
-const addTextNodes = async (textNodes, textNodeMeta = {}) => textNodes.map((item) => {
-  const [, key, alias, description] = item.split(KET_TAGS.textIdentifier);
-  const trimmedKey = key?.trim();
-  const trimmedAlias = alias?.trim();
-  const trimmedDescription = description?.trim();
-  if (trimmedAlias && trimmedKey) {
-    textNodeStruct[trimmedAlias] = trimmedKey;
-    const content = textNodeMeta[trimmedKey] ?? forTextNodeHeader(trimmedKey, trimmedDescription);
+const addTextNodes = async (textNodes) => textNodes.map((item) => {
+  const parts = item.split(KET_TAGS.textIdentifier);
+  if (parts.length < 4) return null;
+  const [, key, alias, ...rest] = parts;
+  const description = rest.join(KET_TAGS.textIdentifier);
+  if (alias && key) {
+    textNodeStruct[alias] = key;
+    const content = forTextNodeHeader(key, description);
     return {
       type: 'text',
       data: {

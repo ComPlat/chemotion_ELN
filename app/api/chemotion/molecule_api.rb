@@ -191,13 +191,13 @@ module Chemotion
         ob = molecule&.ob_log
         svg_digest = "#{molecule.inchikey}#{Time.zone.now}"
 
-        if false && svg.present? && svg.include?('epam-ketcher-ssc')
+        if svg.present? && svg.include?('epam-ketcher-ssc')
           svg = KetcherService::SVGProcessor.clean_and_trim_svg(svg) || svg
           svg_process = SVG::Processor.new.structure_svg('ketcher_epam', svg, svg_digest, true)
         else
-          # Keep polymer metadata in the payload; SvgRenderer will clean for rendering
-          # and then inject polymer images/text into the resulting SVG.
-          svg = Molecule.svg_reprocess(nil, molfile)
+          # Molfile has PolymersList tag -> use Indigo first; else Ketcher first; fallback to OpenBabel.
+          svg_service = Chemotion::SvgRenderer.has_polymers_list_tag?(molfile) ? 'indigo' : 'ketcher'
+          svg = Molecule.svg_reprocess(nil, molfile, service: svg_service)
           return error!('Failed to generate SVG from molfile', 422) if svg.blank?
 
           svg_process = SVG::Processor.new.structure_svg('ketcher', svg, svg_digest, true)

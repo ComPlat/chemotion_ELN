@@ -289,6 +289,21 @@ const getTemplateType = (polymerValue) => {
   return { type: binaryTemplates, size: templateSplits[1] || '1-1' };
 };
 
+// Parse polymer entry as atomIndex/templateId/size when present (e.g. "2/10/1.00-1.00").
+// Returns { atomIndex, type, size } or null when format is legacy (e.g. "0", "0s", "3/95/1.00-1.00" without leading index).
+const parsePolymerEntryByAtomIndex = (polymerValue) => {
+  const trimmed = (polymerValue || '').trim();
+  if (!trimmed || trimmed.includes('s')) return null;
+  const parts = trimmed.split('/');
+  if (parts.length < 3) return null;
+  const atomIndex = parseInt(parts[0], 10);
+  const templateId = parts[1];
+  if (Number.isNaN(atomIndex) || templateId === undefined) return null;
+  const templateIdNum = parseInt(templateId, 10);
+  if (Number.isNaN(templateIdNum)) return null;
+  return { atomIndex, type: templateId, size: parts[2] || '1-1' };
+};
+
 // Helper to create a bounding box for a template with atom location
 const templateWithBoundingBox = async (templateType, atomLocation, templateSize) => {
   let template = await fetchSurfaceChemistryImageData(templateType);
@@ -444,6 +459,7 @@ export {
   hasTextNodes,
   hasTextNodeMeta,
   getTemplateType,
+  parsePolymerEntryByAtomIndex,
   templateWithBoundingBox,
   fetchKetcherData,
   loadKetcherData,

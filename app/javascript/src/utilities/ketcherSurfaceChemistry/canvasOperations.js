@@ -64,15 +64,26 @@ const ctabLinesOnly = (molfileString) => {
 
 // function when a canvas is saved using main "SAVE" button
 const arrangePolymers = async (canvasData, editor) => {
+  // Do not add PolymersList tag when no polymer images are present
+  if (!imagesList || imagesList.length === 0) {
+    return canvasData.split('\n');
+  }
   // grab image index
   // find index for alias
   // on matching create a string to be attached with polymers sections
-  const listOfAtomsWithAlias = [];
   const data = JSON.parse(await editor.structureDef.editor.getKet());
-  mols
+  const atomsWithAlias = mols
     .flatMap((item) => data[item]?.atoms ?? [])
-    .filter((i) => ALIAS_PATTERNS.threeParts.test(i.alias))
-    .forEach((i) => listOfAtomsWithAlias.push(i.alias));
+    .filter((i) => ALIAS_PATTERNS.threeParts.test(i.alias));
+
+  // Sort by vertical position in molfile: top first (higher y first), then following down
+  atomsWithAlias.sort((a, b) => {
+    const yA = a.location?.[1] ?? 0;
+    const yB = b.location?.[1] ?? 0;
+    return yB - yA; // descending y = top first
+  });
+
+  const listOfAtomsWithAlias = atomsWithAlias.map((i) => i.alias);
   const processString = await templateAliasesPrepare(listOfAtomsWithAlias);
   const ctabLines = ctabLinesOnly(canvasData);
   return [...ctabLines, KET_TAGS.polymerIdentifier, processString];
@@ -183,22 +194,38 @@ const onDeleteText = async (editor) => {
   }
 };
 
-// Helper function to create a new text node from text content or Draft-style content
-const createTextNodeFromContent = (textOrContent, defaultPosition = { x: 4.4, y: -10.4, z: 0 }) => {
-  const forTextNodeHeader = (key, description, inlineStyleRanges = []) => JSON.stringify({
-    blocks: [
-      {
-        key,
-        text: description,
-        type: 'unstyled',
-        depth: 0,
-        inlineStyleRanges,
-        entityRanges: [],
-        data: {},
-      }
-    ],
-    entityMap: {}
-  });
+// Helper function to create a new text node from text content
+const createTextNodeFromContent = (text, defaultPosition = { x: 4.4, y: -10.4, z: 0 }) => {
+  if (!text || !text.trim()) {
+    return null;
+  }
+
+  // Generate unique key for text node (similar to draft.js format)
+  const generateKey = () => Math.random().toString(36).substring(2, 8);
+  const textKey = generateKey();
+
+  // Import forTextNodeHeader from TextNode utility
+  const forTextNodeHeader = (key, description) => {
+    const text = (description || '').trim();
+    const len = text.length;
+    const fontSize = KET_TAGS.textNodeFontSize;
+    return JSON.stringify({
+      blocks: [
+        {
+          key,
+          text: description,
+          type: 'unstyled',
+          depth: 0,
+          inlineStyleRanges: len > 0
+            ? [{ style: `fontsize-${fontSize}`, offset: 0, length: len }]
+            : [],
+          entityRanges: [],
+          data: { fontSize },
+        }
+      ],
+      entityMap: {}
+    });
+  };
 
   // Draft content: { blocks: [...], entityMap: {} }
   if (isDraftContent(textOrContent)) {

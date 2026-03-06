@@ -25,6 +25,8 @@ const KET_TAGS = Object.freeze({
   shapes: ['Bead', 'Surface'],
   moleculeIdentifier: '> <MoleculesList>',
   textIdentifier: '#',
+  /** Font size (px) for text nodes attached to shapes; kept a little smaller than default */
+  textNodeFontSize: 10,
   templateEditProps: {
     text: 'You are adding a text description to the selected template',
     id: 'templateSelectedInfo',
