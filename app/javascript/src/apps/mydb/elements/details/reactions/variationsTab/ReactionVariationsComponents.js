@@ -268,7 +268,6 @@ function GroupCellEditor({
 
   return (
     <input
-      className="reaction-variation-input"
       ref={inputRef}
       type="text"
       value={currentValue}
