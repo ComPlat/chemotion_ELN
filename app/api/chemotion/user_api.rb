@@ -8,9 +8,9 @@ module Chemotion
       params do
         requires :name, type: String
         optional :type, type: [String], desc: 'user types',
-                        coerce_with: ->(val) { val.split(/[\s|,]+/) },
-                        values: %w[Group Person],
-                        default: %w[Group Person]
+                 coerce_with: ->(val) { val.split(/[\s|,]+/) },
+                 values: %w[Group Person],
+                 default: %w[Group Person]
       end
       get 'name' do
         return { users: [] } if params[:name].blank?
@@ -22,6 +22,42 @@ module Chemotion
       desc 'Return current_user'
       get 'current' do
         present current_user, with: Entities::UserEntity, root: 'user'
+      end
+
+      resource :two_factor do
+        desc 'Get 2FA QR code and status'
+        get do
+
+          {
+            otp_required_for_login: current_user.otp_required_for_login
+          }
+        end
+
+        desc 'Enable 2FA by verifying OTP code'
+        put do
+
+          # 1. Generate JWT
+          payload = {
+            user_id: current_user.id,
+            action: 'activate_2fa',
+          }
+          jwt = JsonWebToken.encode(payload, 2.days.from_now)
+
+          # 2. Generate verification link
+          url = Rails.application.config.root_url
+          # 3. Send email
+          if current_user.otp_required_for_login
+            link = "#{url}/users/two_factor_auth/request_disable?jwt=#{jwt}"
+            TwoFactorAuthMailer.disable_mail(current_user, link).deliver_now
+          else
+            link = "#{url}/users/two_factor_auth/request_enable?jwt=#{jwt}"
+            TwoFactorAuthMailer.enable_mail(current_user, link, 2.days.from_now).deliver_now
+          end
+
+          {
+            success: true
+          }
+        end
       end
 
       desc 'list user labels'
@@ -37,7 +73,7 @@ module Chemotion
           editors.push(str) if current_user.matrix_check_by_name(str)
         end
         present Matrice.where(name: editors).order('name'), with: Entities::MatriceEntity, root: 'matrices',
-                                                            unexpose_include_ids: true, unexpose_exclude_ids: true
+                unexpose_include_ids: true, unexpose_exclude_ids: true
       end
 
       namespace :omniauth_providers do
@@ -179,7 +215,7 @@ module Chemotion
         route_param :device_id do
           get do
             present DeviceMetadata.find_by(device_id: params[:device_id]), with: Entities::DeviceMetadataEntity,
-                                                                           root: 'device_metadata'
+                    root: 'device_metadata'
           end
         end
       end
@@ -275,5 +311,6 @@ module Chemotion
       end
     end
   end
+
   # rubocop:enable Metrics/ClassLength
 end

@@ -5,7 +5,7 @@ Rails.application.routes.draw do
   post '/csp-violation-report', to: 'csp_reports#create'
 
   if ENV['DEVISE_DISABLED_SIGN_UP'].presence == 'true'
-    devise_for :users, controllers: { registrations: 'users/registrations', omniauth_callbacks: 'users/omniauth' }, skip: [:registrations]
+    devise_for :users, controllers: { registrations: 'users/registrations', omniauth_callbacks: 'users/omniauth', sessions: 'users/sessions' }, skip: [:registrations]
     as :user do
       get 'sign_in' => 'devise/sessions#new'
       get 'users/sign_up' => 'devise/sessions#new', as: 'new_user_registration'
@@ -14,7 +14,7 @@ Rails.application.routes.draw do
       put 'users' => 'devise/registrations#update', :as => 'user_registration'
     end
   else
-    devise_for :users, controllers: { registrations: 'users/registrations', omniauth_callbacks: 'users/omniauth' }
+    devise_for :users, controllers: { registrations: 'users/registrations', omniauth_callbacks: 'users/omniauth', sessions: 'users/sessions' }
   end
 
   authenticated :user, ->(u) { u.type == 'Admin' } do
@@ -75,6 +75,11 @@ Rails.application.routes.draw do
   root to: redirect('home')
 
   get 'test', to: 'pages#test'
+  namespace :users do
+    get  "two_factor_auth/request_enable"
+    get  "two_factor_auth/request_disable"
+    post "two_factor_auth/verify"
+  end
 end
 
 # rubocop: enable Metrics/BlockLength, Layout/LineLength, Style/FrozenStringLiteralComment

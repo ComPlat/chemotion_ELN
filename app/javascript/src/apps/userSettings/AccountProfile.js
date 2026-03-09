@@ -9,6 +9,7 @@ import ScifinderCredential from 'src/apps/scifinderCredential/ScifinderCredentia
 import UserSetting from 'src/components/structureEditor/UserSetting';
 import OmniauthCredential from 'src/apps/omniauthCredential/OmniauthCredential';
 import UserCounter from 'src/apps/userCounter/UserCounter';
+import { TwoFactorSettings } from 'src/apps/userSettings/TwoFA';
 
 function AccountProfile({ currentUser }) {
   const [reactionPrefix, setReactionPrefix] = useState(currentUser.reaction_name_prefix || '');
@@ -19,7 +20,7 @@ function AccountProfile({ currentUser }) {
   const [successPosition, setSuccessPosition] = useState(null);
 
   const nextReactionLabelCounter = parseInt(reactionsCount, 10) + 1;
-  const updatedNextReactionLabel  = nextReactionLabelCounter.toString().padStart(3, '0');
+  const updatedNextReactionLabel = nextReactionLabelCounter.toString().padStart(3, '0');
 
   useEffect(() => {
     setNextLabel(`${currentUser.initials}-${reactionPrefix}${updatedNextReactionLabel}`);
@@ -131,7 +132,10 @@ function AccountProfile({ currentUser }) {
             <Row className="mb-3">
               <Col className="col-3 offset-3">
                 <Form.Label className="col-form-label">Next reaction label will be:</Form.Label>
-                <span> {nextLabel}</span>
+                <span>
+                  {' '}
+                  {nextLabel}
+                </span>
               </Col>
             </Row>
 
@@ -148,6 +152,8 @@ function AccountProfile({ currentUser }) {
           )}
         </Card.Body>
       </Card>
+
+      <TwoFactorSettings />
 
       <InventoryLabelSettings />
 
