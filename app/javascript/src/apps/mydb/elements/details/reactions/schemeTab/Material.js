@@ -316,7 +316,6 @@ class Material extends Component {
       return (
         <div>
           <OverlayTrigger
-            placement="top"
             overlay={(
               <Tooltip id="yield-tooltip">
                 {yieldMessage}
@@ -434,7 +433,6 @@ class Material extends Component {
     return (
       (value === 'n.d' || !value) && !noSwitchUnits.includes(unit) ? (
         <OverlayTrigger
-          placement="top"
           overlay={<Tooltip id={`${field}-tooltip`}>{message}</Tooltip>}
         >
           <div>{inputComponent}</div>
@@ -615,7 +613,7 @@ class Material extends Component {
       && material.weight_percentage > 0 && materialGroup !== 'products' && !material.weight_percentage_reference;
 
     return (
-      <OverlayTrigger placement="top" overlay={tooltip}>
+      <OverlayTrigger overlay={tooltip}>
         <div>
           <NumeralInputWithUnitsCompo
             className={className}
@@ -1015,8 +1013,6 @@ class Material extends Component {
       && material.weight_percentage > 0 && materialGroup !== 'products' && !material.weight_percentage_reference;
     return (
       <OverlayTrigger
-        delay="100"
-        placement="top"
         overlay={tooltip}
       >
         <div>
@@ -1105,7 +1101,6 @@ class Material extends Component {
             {this.materialRef(material)}
             {this.switchTargetReal()}
             <OverlayTrigger
-              placement="top"
               overlay={<Tooltip id="reaction-coefficient-info"> Reaction Coefficient </Tooltip>}
             >
               <div>
@@ -1125,7 +1120,6 @@ class Material extends Component {
             </div>
             <div className="reaction-material__molar-mass-data">
               <OverlayTrigger
-                placement="top"
                 overlay={<Tooltip id="molar-weight-details">{this.molarWeightValue(material, reaction)}</Tooltip>}
               >
                 <span>{this.molarWeightValue(material, reaction, true)}</span>
@@ -1234,7 +1228,7 @@ class Material extends Component {
         {this.dragHandle()}
         {this.materialNameWithIupac(material)}
         <div className="reaction-material__dry-solvent-data">
-          <OverlayTrigger placement="top" overlay={drySolvTooltip}>
+          <OverlayTrigger overlay={drySolvTooltip}>
             <Form.Check
               type="checkbox"
               checked={material.dry_solvent}
@@ -1246,7 +1240,6 @@ class Material extends Component {
         {this.switchTargetReal()}
         <InputGroup className="reaction-material__solvent-label-data">
           <OverlayTrigger
-            placement="top"
             overlay={(
               <Tooltip id="molecular-weight-info">
                 {material.amount_g}
@@ -1265,7 +1258,7 @@ class Material extends Component {
               onChange={(event) => this.handleExternalLabelChange(event)}
             />
           </OverlayTrigger>
-          <OverlayTrigger placement="bottom" overlay={refreshSvgTooltip}>
+          <OverlayTrigger overlay={refreshSvgTooltip}>
             <Button
               disabled={materialGroup === 'purification_solvents' || !permitOn(reaction)}
               onClick={(e) => this.handleExternalLabelCompleted(e)}
@@ -1343,7 +1336,7 @@ class Material extends Component {
     const tooltip = <Tooltip id="feedstockGas">{tooltipText}</Tooltip>;
     return (
       <div className="pe-1">
-        <OverlayTrigger placement="bottom" overlay={tooltip}>
+        <OverlayTrigger overlay={tooltip}>
           <Button
             variant="primary"
             size="xsm"
@@ -1434,12 +1427,12 @@ class Material extends Component {
           <div className="d-flex align-items-center">
             {reaction.gaseous && materialGroup !== 'solvents'
               ? this.gasType(material) : null}
-            <OverlayTrigger placement="top" overlay={AddtoDescToolTip}>
+            <OverlayTrigger overlay={AddtoDescToolTip}>
               <Button variant="light" size="xsm" className="me-1" onClick={addToDesc} disabled={!permitOn(reaction)}>
                 {serialCode}
               </Button>
             </OverlayTrigger>
-            <OverlayTrigger placement="bottom" overlay={iupacNameTooltip(material)}>
+            <OverlayTrigger overlay={iupacNameTooltip(material)}>
               <div className="reaction-material__link">
                 {materialName}
               </div>
@@ -1470,7 +1463,6 @@ class Material extends Component {
       reaction.weight_percentage ? (
         <div>
           <OverlayTrigger
-            placement="top"
             overlay={(
               <Tooltip id="weight-percentage-reference-tooltip">
                 Select as reference product for weight percentage
@@ -1558,7 +1550,6 @@ class Material extends Component {
 
     return (
       <OverlayTrigger
-        placement="top"
         overlay={(
           <Tooltip id="nested-reference-tooltip">
             Outer Circle: Select Weight % Reference
