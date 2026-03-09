@@ -35,6 +35,7 @@ export default function ExplorerComponent({ nodes, edges }) {
   ]);
 
   const [searchTerm, setSearchTerm] = useState('');
+  const [focusSearchOnly, setFocusSearchOnly] = useState(true);
 
   const nodeMap = useMemo(() => {
     const map = {};
@@ -98,9 +99,7 @@ export default function ExplorerComponent({ nodes, edges }) {
         if (!reactionToSamples[e.target]) reactionToSamples[e.target] = new Set();
         reactionToSamples[e.target].add(e.source);
 
-        if (!sampleToConsumerReactions[e.source]) {
-          sampleToConsumerReactions[e.source] = new Set();
-        }
+        if (!sampleToConsumerReactions[e.source]) sampleToConsumerReactions[e.source] = new Set();
         sampleToConsumerReactions[e.source].add(e.target);
       }
 
@@ -133,7 +132,6 @@ export default function ExplorerComponent({ nodes, edges }) {
       while (splitQueue.length > 0) {
         const sid = splitQueue.shift();
         if (visitedSplitSamples.has(sid)) continue;
-
         visitedSplitSamples.add(sid);
 
         const children = splitChildren[sid] || new Set();
@@ -149,6 +147,18 @@ export default function ExplorerComponent({ nodes, edges }) {
       }
     }
 
+    const reactionNodeById = {};
+    reactionNodes.forEach((n) => {
+      reactionNodeById[n.id] = n;
+    });
+
+    [...highlightedNodeIds]
+      .filter((id) => id.startsWith('reaction-'))
+      .forEach((rid) => {
+        const reagentNodeIds = reactionNodeById[rid]?.data?.reactionReagentNodeIds || [];
+        reagentNodeIds.forEach((nid) => highlightedNodeIds.add(nid));
+      });
+
     return {
       hasSearch: true,
       matchedReactionIds,
@@ -158,60 +168,85 @@ export default function ExplorerComponent({ nodes, edges }) {
 
   const displayNodes = useMemo(() => {
     if (!reactionSearchResult.hasSearch) return filteredNodes;
-
     const { matchedReactionIds, highlightedNodeIds } = reactionSearchResult;
+
+    if (focusSearchOnly) {
+      return filteredNodes
+        .filter((n) => highlightedNodeIds.has(n.id))
+        .map((n) => {
+          const isMatchedReaction = matchedReactionIds.has(n.id);
+
+          if (isMatchedReaction) {
+            return {
+              ...n,
+              style: { ...(n.style || {}), boxShadow: '0 0 0 3px #2563eb' },
+            };
+          }
+
+          if (n.type === 'reaction') {
+            return {
+              ...n,
+              style: { ...(n.style || {}), boxShadow: '0 0 0 2px #60a5fa' },
+            };
+          }
+
+          return {
+            ...n,
+            style: { ...(n.style || {}), boxShadow: '0 0 0 2px #22c55e' },
+          };
+        });
+    }
 
     return filteredNodes.map((n) => {
       const isHighlighted = highlightedNodeIds.has(n.id);
       const isMatchedReaction = matchedReactionIds.has(n.id);
 
       if (!isHighlighted) {
-        return {
-          ...n,
-          style: {
-            ...(n.style || {}),
-            opacity: 0.2,
-          },
-        };
+        return { ...n, style: { ...(n.style || {}), opacity: 0.2 } };
       }
 
       if (isMatchedReaction) {
         return {
           ...n,
-          style: {
-            ...(n.style || {}),
-            opacity: 1,
-            boxShadow: '0 0 0 3px #2563eb',
-          },
+          style: { ...(n.style || {}), opacity: 1, boxShadow: '0 0 0 3px #2563eb' },
         };
       }
 
       if (n.type === 'reaction') {
         return {
           ...n,
-          style: {
-            ...(n.style || {}),
-            opacity: 1,
-            boxShadow: '0 0 0 2px #60a5fa',
-          },
+          style: { ...(n.style || {}), opacity: 1, boxShadow: '0 0 0 2px #60a5fa' },
         };
       }
 
       return {
         ...n,
-        style: {
-          ...(n.style || {}),
-          opacity: 1,
-          boxShadow: '0 0 0 2px #22c55e',
-        },
+        style: { ...(n.style || {}), opacity: 1, boxShadow: '0 0 0 2px #22c55e' },
       };
     });
-  }, [filteredNodes, reactionSearchResult]);
+  }, [filteredNodes, reactionSearchResult, focusSearchOnly]);
 
   const displayEdges = useMemo(() => {
     if (!reactionSearchResult.hasSearch) return filteredEdges;
-
     const { highlightedNodeIds } = reactionSearchResult;
+
+    if (focusSearchOnly) {
+      return filteredEdges
+        .filter((e) => highlightedNodeIds.has(e.source) && highlightedNodeIds.has(e.target))
+        .map((e) => ({
+          ...e,
+          style: {
+            ...(e.style || {}),
+            opacity: 1,
+            strokeWidth: (e.style?.strokeWidth || 1.5) + 0.5,
+          },
+          labelStyle: {
+            ...(e.labelStyle || {}),
+            opacity: 1,
+            fontWeight: 600,
+          },
+        }));
+    }
 
     return filteredEdges.map((e) => {
       const isHighlighted =
@@ -220,14 +255,8 @@ export default function ExplorerComponent({ nodes, edges }) {
       if (!isHighlighted) {
         return {
           ...e,
-          style: {
-            ...(e.style || {}),
-            opacity: 0.12,
-          },
-          labelStyle: {
-            ...(e.labelStyle || {}),
-            opacity: 0.12,
-          },
+          style: { ...(e.style || {}), opacity: 0.12 },
+          labelStyle: { ...(e.labelStyle || {}), opacity: 0.12 },
         };
       }
 
@@ -245,7 +274,7 @@ export default function ExplorerComponent({ nodes, edges }) {
         },
       };
     });
-  }, [filteredEdges, reactionSearchResult]);
+  }, [filteredEdges, reactionSearchResult, focusSearchOnly]);
 
   const wrapperRef = useRef(null);
   const [hover, setHover] = useState(null);
@@ -278,11 +307,14 @@ export default function ExplorerComponent({ nodes, edges }) {
     const rawY = event.clientY - rect.top + 12;
     const pos = clampHoverPos(rawX, rawY, hover.kind);
 
-    setHover((prev) => prev && ({
-      ...prev,
-      x: pos.x,
-      y: pos.y,
-    }));
+    setHover((prev) => prev && ({ ...prev, x: pos.x, y: pos.y }));
+  };
+
+  const formatPerformedAt = (isoDate) => {
+    if (!isoDate) return 'Date not available';
+    const date = new Date(isoDate);
+    if (Number.isNaN(date.getTime())) return 'Date not available';
+    return date.toLocaleString();
   };
 
   return (
@@ -317,6 +349,15 @@ export default function ExplorerComponent({ nodes, edges }) {
             fontSize: 12,
           }}
         />
+        <label style={{ fontSize: 12, display: 'block', marginTop: 6 }}>
+          <input
+            type="checkbox"
+            checked={focusSearchOnly}
+            onChange={(e) => setFocusSearchOnly(e.target.checked)}
+            style={{ marginRight: 6 }}
+          />
+          Show only search result
+        </label>
       </div>
 
       {hover && (hover.src || hover.text) && (
@@ -335,9 +376,14 @@ export default function ExplorerComponent({ nodes, edges }) {
             pointerEvents: 'none',
           }}
         >
-          {hover.text && (
-            <div style={{ fontSize: 12, marginBottom: hover.src ? 8 : 0 }}>
-              {hover.text}
+          {(hover.text || hover.meta) && (
+            <div style={{ marginBottom: hover.src ? 8 : 0 }}>
+              <div style={{ fontSize: 12 }}>{hover.text}</div>
+              {hover.meta && (
+                <div style={{ fontSize: 11, textAlign: 'right', color: '#6b7280' }}>
+                  {hover.meta}
+                </div>
+              )}
             </div>
           )}
 
@@ -380,6 +426,7 @@ export default function ExplorerComponent({ nodes, edges }) {
 
           let src = null;
           let text = null;
+          let meta = null;
           let kind = null;
 
           if (isSample) {
@@ -392,7 +439,11 @@ export default function ExplorerComponent({ nodes, edges }) {
             src = node?.data?.reactionImage;
             const shortLabel = node?.data?.reactionShortLabel || '';
             const name = node?.data?.reactionName || '';
-            text = shortLabel && name ? `${shortLabel}: ${name}` : (shortLabel || name);
+            const performedAt = node?.data?.reactionPerformedAt;
+            const performedText = formatPerformedAt(performedAt);
+
+            text = shortLabel && name ? `${shortLabel}: ${name}` : (shortLabel || name || 'Reaction');
+            meta = `Performed: ${performedText}`;
             kind = 'reaction';
           }
 
@@ -405,6 +456,7 @@ export default function ExplorerComponent({ nodes, edges }) {
           setHover({
             src,
             text,
+            meta,
             kind,
             x: pos.x,
             y: pos.y,
@@ -419,3 +471,4 @@ export default function ExplorerComponent({ nodes, edges }) {
     </div>
   );
 }
+

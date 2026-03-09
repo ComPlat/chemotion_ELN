@@ -35,6 +35,8 @@ module Chemotion
             starting_material_ids: r.starting_materials.pluck(:id),
             reactant_ids: r.reactants.pluck(:id),
             product_ids:  r.products.pluck(:id),
+            created_at: r.created_at,
+            updated_at: r.updated_at,
             reaction_svg_file: r.reaction_svg_file
           }
         end

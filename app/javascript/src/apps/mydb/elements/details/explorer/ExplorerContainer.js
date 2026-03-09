@@ -15,7 +15,13 @@ function positionNodesByReaction(samples, reactions) {
   const BRANCH_X = 320;
   const MIN_ROW_GAP = 480;
 
-  const sampleById = Object.fromEntries(samples.map(s => [s.id, s]));
+  const sampleById = Object.fromEntries(samples.map((s) => [s.id, s]));
+
+  const sortedReactions = [...reactions].sort((a, b) => {
+    const aDate = new Date(a.updated_at || a.created_at || 0).getTime();
+    const bDate = new Date(b.updated_at || b.created_at || 0).getTime();
+    return bDate - aDate;
+  });
 
   const svgUrlFor = (sid) => {
     const file = sampleById[sid]?.sample_svg_file;
@@ -27,9 +33,8 @@ function positionNodesByReaction(samples, reactions) {
     return file ? `${window.location.origin}/images/reactions/${file}` : null;
   };
 
-  /* ---------------- parent sample lookup ---------------- */
   const parentOf = {};
-  samples.forEach(s => {
+  samples.forEach((s) => {
     if (s.ancestry && s.ancestry !== '/') {
       const parentIdStr = s.ancestry.split('/').filter(Boolean).pop();
       const parentId = Number(parentIdStr);
@@ -39,25 +44,27 @@ function positionNodesByReaction(samples, reactions) {
     }
   });
 
-  /* ---------------- reaction → samples ---------------- */
   const reactionSamples = {};
-  reactions.forEach(r => {
+  sortedReactions.forEach((r) => {
     reactionSamples[r.id] = new Set([
       ...(r.starting_material_ids || []),
       ...(r.product_ids || []),
     ]);
   });
 
-  /* ---------------- reaction → parent reaction ---------------- */
   const reactionParent = {};
-  reactions.forEach(r => {
-    const starting = r.starting_material_ids || [];
-    const splitSampleId = starting.find(sid => parentOf[sid]);
+  sortedReactions.forEach((r) => {
+    const candidateIds = [
+      ...(r.starting_material_ids || []),
+      ...(r.product_ids || []),
+    ];
+
+    const splitSampleId = candidateIds.find((sid) => parentOf[sid]);
     if (!splitSampleId) return;
 
     const parentSampleId = parentOf[splitSampleId];
 
-    for (const other of reactions) {
+    for (const other of sortedReactions) {
       if (other.id === r.id) continue;
       if (reactionSamples[other.id]?.has(parentSampleId)) {
         reactionParent[r.id] = other.id;
@@ -66,7 +73,6 @@ function positionNodesByReaction(samples, reactions) {
     }
   });
 
-  /* ---------------- recursive reaction placement ---------------- */
   const blockPos = {};
   let rootIndex = 0;
 
@@ -103,11 +109,13 @@ function positionNodesByReaction(samples, reactions) {
     placeReaction(parentId);
 
     const parentPos = blockPos[parentId];
-    const parentReaction = reactions.find(r => r.id === parentId);
+    const parentReaction = sortedReactions.find((r) => r.id === parentId);
 
-    const currentReaction = reactions.find(r => r.id === rid);
-    const splitSampleId =
-      (currentReaction?.starting_material_ids || []).find(sid => parentOf[sid]);
+    const currentReaction = sortedReactions.find((r) => r.id === rid);
+    const splitSampleId = [
+      ...(currentReaction?.starting_material_ids || []),
+      ...(currentReaction?.product_ids || []),
+    ].find((sid) => parentOf[sid]);
 
     let direction = -1;
 
@@ -134,12 +142,11 @@ function positionNodesByReaction(samples, reactions) {
     blockPos[rid] = { x, y };
   }
 
-  reactions.forEach(r => placeReaction(r.id));
+  sortedReactions.forEach((r) => placeReaction(r.id));
 
-  /* ---------------- render reaction blocks ---------------- */
   const usedSamples = new Set();
 
-  reactions.forEach(r => {
+  sortedReactions.forEach((r) => {
     const pos = blockPos[r.id];
     if (!pos) return;
 
@@ -147,10 +154,12 @@ function positionNodesByReaction(samples, reactions) {
     const baseY = pos.y;
 
     const starting = r.starting_material_ids || [];
+    const reagents = r.reactant_ids || [];
     const products = r.product_ids || [];
 
-    starting.forEach(id => usedSamples.add(id));
-    products.forEach(id => usedSamples.add(id));
+    starting.forEach((id) => usedSamples.add(id));
+    reagents.forEach((id) => usedSamples.add(id));
+    products.forEach((id) => usedSamples.add(id));
 
     const startX = baseX - ((starting.length - 1) * H_GAP) / 2;
 
@@ -176,15 +185,21 @@ function positionNodesByReaction(samples, reactions) {
       });
     });
 
+    const reactionY = baseY + V_GAP;
+
     nodes.push({
       id: `reaction-${r.id}`,
       type: 'reaction',
-      position: { x: baseX, y: baseY + V_GAP },
+      position: { x: baseX, y: reactionY },
       data: {
         label: `${r.short_label || 'Reaction'}${r.name ? `: ${r.name}` : ''}`,
-        reactionImage: reactionSvgUrlFor(r),      // NEW
-        reactionName: r.name || '',               // NEW
-        reactionShortLabel: r.short_label || '',  // NEW
+        reactionImage: reactionSvgUrlFor(r),
+        reactionName: r.name || '',
+        reactionShortLabel: r.short_label || '',
+        reactionCreatedAt: r.created_at || null,
+        reactionUpdatedAt: r.updated_at || null,
+        reactionPerformedAt: r.updated_at || r.created_at || null,
+        reactionReagentNodeIds: (reagents || []).map((sid) => `sample-${sid}`),
       },
       style: {
         backgroundColor: '#f87171',
@@ -192,6 +207,73 @@ function positionNodesByReaction(samples, reactions) {
         color: 'white',
       },
     });
+
+    const REAGENT_NEAR_OFFSET = 160;
+    const REAGENT_STEP = 160;
+
+    if (reagents.length === 1) {
+      const sid = reagents[0];
+      nodes.push({
+        id: `sample-${sid}`,
+        type: 'sample',
+        position: {
+          x: baseX + REAGENT_NEAR_OFFSET,
+          y: reactionY,
+        },
+        data: {
+          label: sampleById[sid]?.short_label || 'Reagent',
+          image: svgUrlFor(sid),
+        },
+        style: { backgroundColor: '#dbeafe', border: '2px solid #3b82f6' },
+      });
+    } else if (reagents.length === 2) {
+      const leftSid = reagents[0];
+      const rightSid = reagents[1];
+
+      nodes.push({
+        id: `sample-${leftSid}`,
+        type: 'sample',
+        position: {
+          x: baseX - REAGENT_NEAR_OFFSET,
+          y: reactionY,
+        },
+        data: {
+          label: sampleById[leftSid]?.short_label || 'Reagent',
+          image: svgUrlFor(leftSid),
+        },
+        style: { backgroundColor: '#dbeafe', border: '2px solid #3b82f6' },
+      });
+
+      nodes.push({
+        id: `sample-${rightSid}`,
+        type: 'sample',
+        position: {
+          x: baseX + REAGENT_NEAR_OFFSET,
+          y: reactionY,
+        },
+        data: {
+          label: sampleById[rightSid]?.short_label || 'Reagent',
+          image: svgUrlFor(rightSid),
+        },
+        style: { backgroundColor: '#dbeafe', border: '2px solid #3b82f6' },
+      });
+    } else {
+      reagents.forEach((sid, i) => {
+        nodes.push({
+          id: `sample-${sid}`,
+          type: 'sample',
+          position: {
+            x: baseX + REAGENT_NEAR_OFFSET + i * REAGENT_STEP,
+            y: reactionY,
+          },
+          data: {
+            label: sampleById[sid]?.short_label || 'Reagent',
+            image: svgUrlFor(sid),
+          },
+          style: { backgroundColor: '#dbeafe', border: '2px solid #3b82f6' },
+        });
+      });
+    }
 
     const prodX = baseX - ((products.length - 1) * H_GAP) / 2;
 
@@ -218,7 +300,6 @@ function positionNodesByReaction(samples, reactions) {
     });
   });
 
-  /* ---------------- ancestry edges ---------------- */
   Object.entries(parentOf).forEach(([child, parent]) => {
     edges.push({
       id: `edge-split-${parent}-${child}`,
@@ -230,9 +311,8 @@ function positionNodesByReaction(samples, reactions) {
     });
   });
 
-  /* ---------------- unused samples ---------------- */
   let y = 0;
-  samples.forEach(s => {
+  samples.forEach((s) => {
     if (!usedSamples.has(s.id)) {
       nodes.push({
         id: `unused-${s.id}`,
@@ -253,7 +333,6 @@ function positionNodesByReaction(samples, reactions) {
   return { nodes, edges };
 }
 
-/* ================== CONTAINER ================== */
 export default class ExplorerContainer extends Component {
   state = { isLoading: true, nodes: [], edges: [], error: null };
 
@@ -300,3 +379,4 @@ export default class ExplorerContainer extends Component {
     );
   }
 }
+
