@@ -22,6 +22,7 @@ function SearchResult({ handleClear }) {
   const profile = userState.profile || {};
   const genericElements = userState.genericEls || [];
   const [visibleTabs, setVisibleTabs] = useState([]);
+  const { currentCollection } = UIStore.getState();
 
   useEffect(() => {
     if (typeof (profile) !== 'undefined' && profile
@@ -146,7 +147,7 @@ function SearchResult({ handleClear }) {
         <h4 className="search-result-number-of-results">
           {sum}
           {' '}
-          results
+          results for the collection "{currentCollection?.label}"
         </h4>
       </div>
     );
