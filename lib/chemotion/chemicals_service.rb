@@ -50,12 +50,24 @@ module Chemotion
     def self.merck(name, language)
       product_number_string = merck_request(name)
       product_number = merck_request(name)[15, merck_request(name).length].split('/')[1]
+      validate_product_number!(product_number)
       url_string = product_number_string[15, product_number_string.length]
       merck_link = "https://www.sigmaaldrich.com/DE/#{language}/sds/#{url_string}"
       { 'merck_link' => merck_link, 'merck_product_number' => product_number,
         'merck_product_link' => "https://www.sigmaaldrich.com#{product_number_string}" }
     rescue StandardError
       'Could not find safety data sheet from Merck'
+    end
+
+    # Validate product number to avoid URLs or query strings being treated as product IDs
+    # Only allow letters, digits, hyphen and underscore. Reject any other characters.
+    def self.validate_product_number!(product_number)
+      return if product_number.nil? || product_number.to_s.strip.empty?
+
+      allowed_pattern = /\A[A-Za-z0-9\-_]+\z/
+      return if product_number.to_s.match?(allowed_pattern)
+
+      raise StandardError, 'Could not find safety data sheet from Merck'
     end
 
     def self.alfa_product(alfa_req)
@@ -158,7 +170,7 @@ module Chemotion
       h_statements = {}
       h_phrases_hash = JSON.parse(File.read('./public/json/hazardPhrases.json'))
 
-      h_array = vendor == 'merck' ? h_phrases[4].split(',') : h_phrases
+      h_array = vendor == 'merck' ? h_phrases[3].split(',') : h_phrases
       h_array.each do |element|
         h_phrases_hash.map { |k, v| k == element ? h_statements[k] = " #{v}" : nil }
       end
@@ -168,7 +180,7 @@ module Chemotion
     def self.construct_p_statements(p_phrases, vendor = nil)
       p_statements = {}
       p_phrases_hash = JSON.parse(File.read('./public/json/precautionaryPhrases.json'))
-      p_array = vendor == 'merck' ? p_phrases[5].split('-').map { |element| element.gsub(/\s+/, '') } : p_phrases
+      p_array = vendor == 'merck' ? p_phrases[4].split('-').map { |element| element.gsub(/\s+/, '') } : p_phrases
       p_array.each do |element|
         p_phrases_hash.map { |k, v| k == element ? p_statements[k] = " #{v}" : nil }
       end
@@ -204,7 +216,7 @@ module Chemotion
     def self.safety_phrases_merck(product_link)
       safety_section = safety_section(product_link)
       safety_array = safety_section.children.reject { |i| i.text.empty? }.map(&:text)
-      pictograms = safety_array[3].split(',')
+      pictograms = safety_array[2].split(',')
       { 'h_statements' => construct_h_statements(safety_array, 'merck'),
         'p_statements' => construct_p_statements(safety_array, 'merck'),
         'pictograms' => construct_pictograms(pictograms) }
