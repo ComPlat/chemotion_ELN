@@ -404,8 +404,10 @@ class User < ApplicationRecord
         email: params[:email]&.downcase,
         first_name: params[:first_name],
         last_name: params[:last_name],
+        name_abbreviation: params[:name_abbreviation],
         password: Devise.friendly_token[0, 20],
       )
+      user.save!
     end
 
     if (params[:groups] || []).length&.positive?
