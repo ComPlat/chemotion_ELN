@@ -1615,6 +1615,12 @@ export default class SampleDetails extends React.Component {
       }
     });
 
+    if (sample.inventory_sample && visible.indexOf('inventory') < 0) {
+      const tabContent = tabContentsMap.inventory;
+      if (tabContent) { tabContents.push(tabContent); }
+      stb.push('inventory');
+    }
+
     const { pageMessage, ketcherSVGError } = this.state;
     const messageBlock = (pageMessage
       && (pageMessage.error.length > 0 || pageMessage.warning.length > 0)) ? (
