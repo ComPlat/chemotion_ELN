@@ -673,8 +673,8 @@ function EntrySelectionHeader({
           {`${displayName} ${gasType && gasType !== 'off' ? `(${gasType})` : ''}`}
         </span>
         <Button
+          size="sm"
           onClick={() => setShowModal(true)}
-          className="w-100"
         >
           Entries
         </Button>
