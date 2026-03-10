@@ -56,10 +56,28 @@ class Container < ApplicationRecord
     root&.containable
   end
 
+  def analyses_container
+    children.find_by!(container_type: 'analyses')
+  end
+
   def self.create_root_container(**args)
     root_con = Container.create(name: 'root', container_type: 'root', **args)
     root_con.children.create(container_type: 'analyses')
     root_con
+  end
+
+  def create_analysis_with_dataset!(name:)
+    transaction do
+      analysis = children.create!(
+        container_type: 'analysis',
+        name: name,
+      )
+
+      analysis.children.create!(
+        container_type: 'dataset',
+        name: name,
+      )
+    end
   end
 
   private
@@ -73,8 +91,6 @@ class Container < ApplicationRecord
       attachments.each(&:destroy!)
     end
   end
-
-  # rubocop:disable Style/StringLiterals
 
   def content_to_plain_text
     yield
@@ -94,5 +110,4 @@ class Container < ApplicationRecord
   # rubocop:enable Rails/SkipsModelValidations
 
   handle_asynchronously :update_content_to_plain_text, queue: 'plain_text_container_content'
-  # rubocop:enable Style/StringLiterals
 end
