@@ -53,6 +53,7 @@ module Usecases
         scope = @shared_methods.order_by_molecule(scope) if @conditions[:model_name] == Sample
         scope = scope.group("#{@conditions[:model_name].table_name}.id") if group_by_model_name
         scope = scope.group('samples.id, molecules.sum_formular') if @conditions[:model_name] == Sample
+        scope = @shared_methods.order_by_created_at_desc(scope) if @conditions[:model_name] == Reaction
         scope = @shared_methods.order_and_group_for_sequence_based_macromolecule(scope) if is_sbmm_sample_model
         scope.pluck(:id)
       end
@@ -85,7 +86,8 @@ module Usecases
       # rubocop:disable Metrics/AbcSize
 
       def sample_relations_element_ids
-        @elements[:reaction_ids] = @user_reactions.by_sample_ids(@elements[:sample_ids]).pluck(:id).uniq
+        @elements[:reaction_ids] =
+          @user_reactions.by_sample_ids(@elements[:sample_ids]).order('reactions.created_at desc').pluck(:id).uniq
         @elements[:wellplate_ids] = @user_wellplates.by_sample_ids(@elements[:sample_ids]).uniq.pluck(:id)
         @elements[:screen_ids] = @user_screens.by_wellplate_ids(@elements[:wellplate_ids]).pluck(:id).uniq
         @elements[:research_plan_ids] = @user_research_plans.by_sample_ids(@elements[:sample_ids]).pluck(:id).uniq
@@ -102,7 +104,8 @@ module Usecases
       def wellplate_relations_element_ids
         @elements[:screen_ids] = @user_screens.by_wellplate_ids(@elements[:wellplate_ids]).uniq.pluck(:id)
         @elements[:sample_ids] = @user_samples.by_wellplate_ids(@elements[:wellplate_ids]).uniq.pluck(:id)
-        @elements[:reaction_ids] = @user_reactions.by_sample_ids(@elements[:sample_ids]).pluck(:id).uniq
+        @elements[:reaction_ids] =
+          @user_reactions.by_sample_ids(@elements[:sample_ids]).order('reactions.created_at desc').pluck(:id).uniq
         @elements[:research_plan_ids] = ResearchPlansWellplate.get_research_plans(@elements[:wellplate_ids]).uniq
       end
 
@@ -112,7 +115,8 @@ module Usecases
 
         return if @elements[:sample_ids].blank?
 
-        @elements[:reaction_ids] = @user_reactions.by_sample_ids(@elements[:sample_ids]).pluck(:id).uniq
+        @elements[:reaction_ids] =
+          @user_reactions.by_sample_ids(@elements[:sample_ids]).order('reactions.created_at desc').pluck(:id).uniq
         @elements[:research_plan_ids] = @user_research_plans.by_sample_ids(@elements[:sample_ids]).pluck(:id).uniq
         @elements[:element_ids] = @user_elements.by_sample_ids(@elements[:sample_ids]).pluck(:id).uniq
       end
@@ -120,6 +124,7 @@ module Usecases
       def researchplan_relations_element_ids
         sample_ids = ResearchPlan.sample_ids_by_research_plan_ids(@elements[:research_plan_ids])
         reaction_ids = ResearchPlan.reaction_ids_by_research_plan_ids(@elements[:research_plan_ids])
+                                   .order('reactions.created_at desc')
         @elements[:sample_ids] = sample_ids.map(&:sample_id).uniq
         @elements[:reaction_ids] = reaction_ids.map(&:reaction_id).uniq
         @elements[:wellplate_ids] = ResearchPlansWellplate.get_wellplates(@elements[:research_plan_ids]).uniq
@@ -129,7 +134,8 @@ module Usecases
 
       def literature_relations_element_ids
         @elements[:sample_ids] = @user_samples.by_literature_ids(@elements[:literature_ids]).pluck(:id).uniq
-        @elements[:reaction_ids] = @user_reactions.by_literature_ids(@elements[:literature_ids]).uniq.pluck(:id)
+        @elements[:reaction_ids] = @user_reactions.by_literature_ids(@elements[:literature_ids])
+                                                  .order('reactions.created_at desc').uniq.pluck(:id)
         @elements[:research_plan_ids] =
           @user_research_plans.by_literature_ids(@elements[:literature_ids]).pluck(:id).uniq
       end
