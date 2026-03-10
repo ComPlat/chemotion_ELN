@@ -79,7 +79,7 @@ const tabInfoHash = {
     )
   },
   literature_map: {
-    title: 'Literature',
+    title: 'References',
     iconEl: (
       <span>
         <i className="fa fa-book" aria-hidden="true" />

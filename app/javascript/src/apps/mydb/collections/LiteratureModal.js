@@ -345,7 +345,7 @@ export default class LiteratureModal extends Component {
         <Modal.Header closeButton>
           <Modal.Title>
             <i className="fa fa-book me-2" />
-            {`Literature Report for collection ${label}`}
+            {`Reference Report for collection ${label}`}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
