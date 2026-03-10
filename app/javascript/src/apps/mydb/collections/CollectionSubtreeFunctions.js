@@ -72,7 +72,7 @@ export default function CollectionSubtreeFunctions({ collection }) {
         <Dropdown.Menu renderOnMount popperConfig={{ strategy: 'fixed' }}>
           <Dropdown.Item onClick={handleShowLiterature}>
             <i className="fa square-icon fa-book me-1" />
-            Literature Report
+            Reference Report
           </Dropdown.Item>
           <Dropdown.Item onClick={handleImportSamples}>
             <i className="icon-square icon-arrow-down-to-bracket me-1" />
