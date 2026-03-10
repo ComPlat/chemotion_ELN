@@ -11,7 +11,7 @@
 # What it does:
 #   1. Creates an "IOC-Inventory" collection for the specified user
 #   2. Parses all records from the IOC SDF file
-#   3. For each record with a CAS number:
+#   3. For each location of a record with a CAS number:
 #      a. Looks up the molecule via CAS → SMILES → Molecule
 #      b. Creates a Sample with mapped fields (name, location, amount, etc.)
 #      c. Creates a Chemical record with vendor, price, safety data, etc.
@@ -60,6 +60,22 @@ class IocMigration
     'Bemerkungen' => 'Bemerkungen',
     'Rechnung' => 'Rechnung',
     'cfn' => 'CFN'
+  }.freeze
+
+  # GHS / CLP hazard and precautionary phrase lookups (keyed by code, e.g. "H302", "P305+P351+P338")
+  HAZARD_PHRASES = JSON.parse(
+    File.read(Rails.root.join('public', 'json', 'hazardPhrases.json'))
+  ).freeze
+
+  PRECAUTIONARY_PHRASES = JSON.parse(
+    File.read(Rails.root.join('public', 'json', 'precautionaryPhrases.json'))
+  ).freeze
+
+  # Status code mapping: IOC letter codes → Chemical inventory status labels
+  STATUS_MAP = {
+    'V' => 'Available',
+    'L' => 'Out of stock',
+    'N' => 'To be ordered',
   }.freeze
 
   # Location mapping: ISIS DB location labels → Chemical host location fields
@@ -193,6 +209,15 @@ class IocMigration
     LOCATION_MAP[cleaned] || {}
   end
 
+  def split_statuses(status_str)
+    # Split the comma-separated Status field into individual tokens,
+    # mirroring the positional order of aktueller_Standort.
+    # e.g. "V, V (2x), L" → ["V", "V (2x)", "L"]
+    return [] if status_str.blank?
+
+    status_str.split(',').map(&:strip).reject(&:blank?)
+  end
+
   # ── SDF Parsing ────────────────────────────────────────────────────────────
 
   def parse_sdf_file
@@ -220,18 +245,24 @@ class IocMigration
     cas_nr = clean_cas(rec['CAS_Nr'])
     substance = rec['substanz']
 
-    # Split aktueller_Standort into individual locations.
-    # Each location gets its own sample + chemical record (same data, different location).
+    # Split aktueller_Standort and Status in parallel — each location gets its
+    # corresponding status value by index (same positional order).
     locations = split_locations(rec['aktueller_Standort'])
     locations = [nil] if locations.empty?
+    statuses  = split_statuses(rec['Status'])
 
-    locations.each do |location|
+    locations.each_with_index do |location, loc_idx|
+      status = statuses[loc_idx] # nil when Status has fewer entries than locations
       @stats[:total] += 1
       record_log = { ioc_id: ioc_id, cas: cas_nr, substance: substance,
-                     location: location, status: nil, sample_id: nil, error: nil }
+                     location: location,
+                     chemical_status: translate_status(status),
+                     h_statements: parse_safety_statements(rec['R_Sätze']&.strip, HAZARD_PHRASES),
+                     p_statements: parse_safety_statements(rec['S_Sätze']&.strip, PRECAUTIONARY_PHRASES),
+                     import_status: nil, sample_id: nil, error: nil }
 
       if @dry_run
-        record_log[:status] = cas_nr.present? ? 'would_create' : 'would_create_decoupled'
+        record_log[:import_status] = cas_nr.present? ? 'would_create' : 'would_create_decoupled'
         @stats[cas_nr.present? ? :created : :decoupled] += 1
         @log[:records] << record_log
         next
@@ -245,7 +276,7 @@ class IocMigration
                  end
 
         if sample&.persisted?
-          create_chemical(sample, rec, location)
+          create_chemical(sample, rec, location, status)
           record_log[:status] = sample.decoupled? ? 'created_decoupled' : 'created'
           record_log[:sample_id] = sample.id
           @stats[sample.decoupled? ? :decoupled : :created] += 1
@@ -376,12 +407,12 @@ class IocMigration
 
   # ── Chemical Creation ──────────────────────────────────────────────────────
 
-  def create_chemical(sample, rec, location)
+  def create_chemical(sample, rec, location, status = nil)
     chemical = Chemical.new
     chemical.sample_id = sample.id
     chemical.cas = clean_cas(rec['CAS_Nr'])
 
-    chemical_data = build_chemical_data(rec, location)
+    chemical_data = build_chemical_data(rec, location, status)
     chemical.chemical_data = [chemical_data]
 
     chemical.save!
@@ -389,7 +420,7 @@ class IocMigration
     chemical
   end
 
-  def build_chemical_data(rec, location)
+  def build_chemical_data(rec, location, status = nil)
     data = {}
 
     # Vendor info
@@ -397,7 +428,7 @@ class IocMigration
     data['order_number'] = rec['BestNr'] if rec['BestNr'].present?
     data['price'] = rec['Preis'] if rec['Preis'].present?
     data['ordered_date'] = rec['Datum'] if rec['Datum'].present?
-    data['status'] = translate_status(rec['Status']) if rec['Status'].present?
+    data['status'] = translate_status(status) if status.present?
 
     # People
     data['person'] = rec['Kürzel'] if rec['Kürzel'].present?
@@ -425,10 +456,14 @@ class IocMigration
     data
   end
 
-  def translate_status(status_str)
-    # "V" = Vorhanden (available), "N" = Nicht vorhanden (not available)
-    # Keep the original value as-is since it may contain multiple statuses
-    status_str
+  def translate_status(status_token)
+    # Extract the base letter code from a single status token, ignoring
+    # multiplier annotations like "(2x)" or "x2".
+    # Then map to the English inventory status label via STATUS_MAP.
+    return nil if status_token.blank?
+
+    code = status_token.strip.gsub(/\s*\(.*?\)/, '').gsub(/[xX]\d+/, '').strip.upcase
+    STATUS_MAP[code] || status_token.strip
   end
 
   def build_safety_phrases(rec)
@@ -442,25 +477,32 @@ class IocMigration
 
     if rec['R_Sätze'].present?
       h_raw = rec['R_Sätze'].strip
-      phrases['h_statements'] = parse_safety_statements(h_raw) unless h_raw == '-'
+      phrases['h_statements'] = parse_safety_statements(h_raw, HAZARD_PHRASES) unless h_raw == '-'
     end
 
     if rec['S_Sätze'].present?
       p_raw = rec['S_Sätze'].strip
-      phrases['p_statements'] = parse_safety_statements(p_raw) unless p_raw == '-'
+      phrases['p_statements'] = parse_safety_statements(p_raw, PRECAUTIONARY_PHRASES) unless p_raw == '-'
     end
 
     phrases.presence
   end
 
-  def parse_safety_statements(raw)
+  def parse_safety_statements(raw, lookup = {})
     # Safety statements can be in formats like:
     #   "H225-H260-H314"  or  "22-36/38-50"  or  "P210-P223"
-    #   "302, 315, 410"   or  "P280, P271, P261"
-    # Split on common delimiters and return as hash for compatibility
+    #   "302, 315, 410"   or  "P280, P271, P261"  or  "P305+P351+P338"
+    # Split on commas and hyphens (but not "+" which joins combined codes).
+    # Keys are normalised by removing spaces around "+" before JSON lookup.
+    return {} if raw.blank?
+
     statements = raw.split(/[-,]\s*/).map(&:strip).reject(&:blank?)
     result = {}
-    statements.each { |s| result[s] = s }
+    statements.each do |s|
+      normalized = s.gsub(/\s*\+\s*/, '+')
+      description = lookup[normalized] || lookup[s]
+      result[normalized] = description || normalized
+    end
     result
   end
 
