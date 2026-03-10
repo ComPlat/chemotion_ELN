@@ -1,5 +1,12 @@
 module Users
   class SessionsController < Devise::SessionsController
+
+    def new
+      @username = params[:login]
+      @invalid = params[:invalid]
+      super
+    end
+
     def create
       requested_user = User.where(name_abbreviation: params[:user][:login]).or(User.where(email: params[:user][:login])).take
       if requested_user && requested_user.valid_password?(params[:user][:password])
