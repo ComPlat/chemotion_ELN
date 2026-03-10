@@ -45,6 +45,8 @@ const getPolymerName = (polymerType, decoupled, isHierarchicalMaterial) => {
   if (!polymerType) return '';
   if (decoupled && polymerType === 'self_defined') return '';
   if (isHierarchicalMaterial) return `${polymerType} `;
+  if (!polymerType || typeof polymerType !== 'string') return '';
+
   return `${polymerType.charAt(0).toUpperCase()}${polymerType.slice(1)}`.replace('_', '-');
 };
 
@@ -142,7 +144,7 @@ function SampleName({ sample }) {
 SampleName.propTypes = {
   sample: PropTypes.shape({
     contains_residues: PropTypes.bool,
-    polymer_type: PropTypes.string,
+    polymer_type: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
     molecule_formula: PropTypes.string,
     decoupled: PropTypes.bool,
     stereo: PropTypes.shape({}),

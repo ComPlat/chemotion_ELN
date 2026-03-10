@@ -1,9 +1,11 @@
 require 'export_table'
+require 'base64'
 
 module Export
   class ExportExcel < ExportTable # rubocop:disable Metrics/ClassLength
     DEFAULT_ROW_WIDTH = 100
     DEFAULT_ROW_HEIGHT = 20
+
     DECOUPLED_STYLE = {
       b: true,
       fg_color: 'CEECF5',
@@ -26,7 +28,7 @@ module Export
       return if samples.nil? # || samples.count.zero?
 
       generate_headers(table, [], selected_columns)
-      sheet = @xfile.workbook.add_worksheet(name: table.to_s) # do |sheet|
+      sheet = @xfile.workbook.add_worksheet(name: table.to_s)
       grey = sheet.styles.add_style(sz: 12, border: { style: :thick, color: 'FF777777', edges: [:bottom] })
       sheet.add_row(@headers, style: grey) # Add header
       decoupled_style = sheet.styles.add_style(DECOUPLED_STYLE)
@@ -58,7 +60,6 @@ module Export
         sheet.add_row filtered_sample, :height => row_height * 3 / 4, :style=>[size]
       end
       sheet.column_info[@image_index].width = image_width / 8 if @image_index
-      # end
       @samples = nil
     end
 
@@ -179,7 +180,7 @@ module Export
       @samples = samples
       return if samples.nil? # || samples.count.zero?
       generate_headers(table, [], selected_columns)
-      sheet = @xfile.workbook.add_worksheet(name: table.to_s) #do |sheet|
+      sheet = @xfile.workbook.add_worksheet(name: table.to_s)
       grey = sheet.styles.add_style(sz: 12, :border => { :style => :thick, :color => "FF777777", :edges => [:bottom] })
       light_grey = sheet.styles.add_style(:border => { :style => :thick, :color => "FFCCCCCC", :edges => [:top] })
       sheet.add_row(@headers, style: grey) # Add header
@@ -212,7 +213,6 @@ module Export
           end
         end
       end
-      # end
       @samples = nil
     end
 
@@ -283,8 +283,6 @@ module Export
           end
         end
         data[@image_index] = svg_path(sample) if @image_index
-      # elsif sample['ts'] == 't' || sample['ts'].equal?(true)
-      #   return Array.new(@headers.size)data = headers.map { |column| sample[column] }
       else
         dl = sample['dl_wp'] && sample['dl_wp'].to_i ||
           sample['dl_r'] && sample['dl_r'].to_i || 0
@@ -321,11 +319,68 @@ module Export
       image_data
     end
 
+    # Converts SVG to PNG for Excel. SVGs with embedded <image> use Inkscape (data: → file://); others use ImageMagick.
     def get_image_from_svg(svg_path)
+      has_embedded = svg_has_embedded_images?(svg_path)
+
+      if has_embedded
+        svg_to_use_path, _temp_svg, temp_images = svg_with_embedded_images_as_files(svg_path)
+        png_path, width, height = convert_svg_to_png_with_inkscape(svg_to_use_path)
+        if png_path
+          return { path: png_path, width: width, height: height }
+        end
+      end
+
       image = Magick::Image.read(svg_path) { self.format('SVG'); }.first
       image.format = 'png'
       file = create_file(image.to_blob)
       { path: file.path, width: image.columns, height: image.rows }
+    end
+
+    def svg_has_embedded_images?(svg_path)
+      return false unless File.file?(svg_path)
+
+      content = File.read(svg_path, encoding: 'UTF-8')
+      content.include?('<image') ||
+        content.include?('epam-ketcher-ssc') ||
+        content.include?('xlink:href="data:image') ||
+        content.include?('href="data:image')
+    end
+
+    # Writes each data:image/...;base64,... to a temp file and replaces with file:// + xlink:href for Inkscape.
+    def svg_with_embedded_images_as_files(svg_path)
+      content = File.read(svg_path, encoding: 'UTF-8')
+      temp_images = []
+      new_content = content.gsub(/(?:href|xlink:href)="(data:image\/([^;]+);base64,([^"]+))"/) do
+        mime = Regexp.last_match(2)
+        b64 = Regexp.last_match(3)
+        ext = (mime == 'svg+xml') ? '.svg' : '.png'
+        decoded = Base64.decode64(b64)
+        tmp = Tempfile.new(['embed', ext])
+        tmp.binmode
+        tmp.write(decoded)
+        tmp.flush
+        tmp.close
+        temp_images << tmp
+        %(xlink:href="file://#{tmp.path}" href="file://#{tmp.path}")
+      end
+      return [svg_path, nil, []] if temp_images.empty?
+
+      tmp_svg = Tempfile.new(['svg_with_files', '.svg'])
+      tmp_svg.write(new_content)
+      tmp_svg.flush
+      tmp_svg.close
+      [tmp_svg.path, tmp_svg, temp_images]
+    end
+
+    def convert_svg_to_png_with_inkscape(svg_path, width: 1550, height: 440)
+      require 'reporter/img/conv'
+      png_file = Tempfile.new(['image', '.png'])
+      png_file.close
+      Reporter::Img::Conv.by_inkscape(svg_path, png_file.path, 'png', width: width, height: height)
+      [png_file.path, width, height]
+    rescue StandardError => _e
+      [nil, nil, nil]
     end
 
     def create_file(png_blob)
@@ -333,7 +388,6 @@ module Export
       file.binmode
       file.write(png_blob)
       file.flush
-      # file.close
       file
     end
 

@@ -1526,9 +1526,9 @@ export default class Sample extends Element {
   }
 
   get polymer_formula() {
-    if (!this.contains_residues) return '';
+    if (!this.contains_residues || !this.residues?.[0]?.custom_info) return '';
     const formula = this.residues[0].custom_info.formula;
-    return formula ? formula.toString() : '';
+    return formula != null ? String(formula) : '';
   }
 
   get concat_formula() {
@@ -1544,34 +1544,36 @@ export default class Sample extends Element {
   }
 
   get polymer_type() {
-    if (this.contains_residues) {
+    if (this.contains_residues && this.residues?.[0]?.custom_info) {
       const info = this.residues[0].custom_info;
-      const value = info.polymer_type || info.surface_type;
-      return value ? value.toString() : false;
+      const value = info.polymer_type ?? info.surface_type;
+      return value != null ? String(value) : '';
     }
-    return false;
+    return '';
   }
 
   get loading() {
-    if (this.contains_residues) {
+    if (this.contains_residues && this.residues?.[0]?.custom_info) {
       return this.residues[0].custom_info.loading;
     }
     return false;
   }
 
   set loading(loading) {
-    if (this.contains_residues) { this.residues[0].custom_info.loading = loading; }
+    if (this.contains_residues && this.residues?.[0]?.custom_info) {
+      this.residues[0].custom_info.loading = loading;
+    }
   }
 
   get external_loading() {
-    if (this.contains_residues) {
+    if (this.contains_residues && this.residues?.[0]?.custom_info) {
       return this.residues[0].custom_info.external_loading;
     }
     return false;
   }
 
   set external_loading(loading) {
-    if (this.contains_residues) {
+    if (this.contains_residues && this.residues?.[0]?.custom_info) {
       this.residues[0].custom_info.external_loading = loading;
     }
   }
