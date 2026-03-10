@@ -10,7 +10,7 @@ function TwoFactorSettings() {
 
   useEffect(() => {
     UsersFetcher.fetch2FAQR()
-      .then((res) => setIsActive(res.otp_required_for_login))
+      .then((res) => setIsActive(res.otp_required_for_login ?? false))
       .catch((err) => console.error(err));
   }, []);
 
