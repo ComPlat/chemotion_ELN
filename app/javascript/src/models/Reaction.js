@@ -1300,6 +1300,26 @@ export default class Reaction extends Element {
   }
 
   /**
+   * Returns the volume (L) to use for concentration calculations.
+   *
+   * Priority:
+   * 1. Explicit reaction volume when `use_reaction_volume` is enabled and valid.
+   * 2. Calculated combined reaction volume from materials.
+   *
+   * @returns {number|null} Volume in liters, or null if no valid volume is available
+   */
+  reactionVolumeForConcentration() {
+    if (this.use_reaction_volume) {
+      const reactionVolume = Number(this.volume);
+      if (Number.isFinite(reactionVolume) && reactionVolume > 0) {
+        return reactionVolume;
+      }
+    }
+
+    return this.calculateCombinedReactionVolume();
+  }
+
+  /**
    * Updates concentrations for all materials in the reaction when volumes change.
    * This should be called whenever any material's amount_l changes.
    *
