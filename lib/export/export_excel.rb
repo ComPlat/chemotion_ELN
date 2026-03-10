@@ -5,6 +5,11 @@ module Export
   class ExportExcel < ExportTable # rubocop:disable Metrics/ClassLength
     DEFAULT_ROW_WIDTH = 100
     DEFAULT_ROW_HEIGHT = 20
+    # Default pixel size for SVG→PNG export (Inkscape); kept in line with ImageMagick’s natural SVG size.
+    DEFAULT_IMAGE_EXPORT_MAX_WIDTH = 180
+    DEFAULT_IMAGE_EXPORT_MAX_HEIGHT = 180
+    # Export at this multiple then downscale so embedded rasters stay sharp (supersampling).
+    INKSCAPE_EXPORT_SCALE = 3
 
     DECOUPLED_STYLE = {
       b: true,
@@ -373,14 +378,54 @@ module Export
       [tmp_svg.path, tmp_svg, temp_images]
     end
 
-    def convert_svg_to_png_with_inkscape(svg_path, width: 1550, height: 440)
+    def convert_svg_to_png_with_inkscape(svg_path, max_width: DEFAULT_IMAGE_EXPORT_MAX_WIDTH, max_height: DEFAULT_IMAGE_EXPORT_MAX_HEIGHT)
       require 'reporter/img/conv'
+      width, height = svg_export_dimensions(svg_path, max_width, max_height)
+      scale = INKSCAPE_EXPORT_SCALE
+      export_w = (width * scale).round
+      export_h = (height * scale).round
       png_file = Tempfile.new(['image', '.png'])
       png_file.close
-      Reporter::Img::Conv.by_inkscape(svg_path, png_file.path, 'png', width: width, height: height)
-      [png_file.path, width, height]
+      Reporter::Img::Conv.by_inkscape(svg_path, png_file.path, 'png', width: export_w, height: export_h)
+      # Downscale so embedded rasters are supersampled and look sharp at display size
+      resized_path, _ = downscale_png_to(png_file.path, width, height)
+      [resized_path, width, height]
     rescue StandardError => _e
       [nil, nil, nil]
+    end
+
+    # Resizes a PNG file to target dimensions; returns [path_to_resized_file, width, height].
+    # Uses Lanczos filter for sharper downscaling and smoother gradients (e.g. orbs, diagrams).
+    def downscale_png_to(png_path, target_width, target_height)
+      image = Magick::Image.read(png_path).first
+      resized = image.resize(target_width, target_height, Magick::LanczosFilter, 1.0)
+      file = create_file(resized.to_blob)
+      [file.path, target_width, target_height]
+    end
+
+    # Returns [width, height] for Inkscape export so the image fits within max_width×max_height while preserving SVG aspect ratio.
+    def svg_export_dimensions(svg_path, max_width, max_height)
+      w, h = svg_natural_dimensions(svg_path)
+      return [max_width, max_height] if w.nil? || h.nil? || w <= 0 || h <= 0
+
+      scale = [max_width.to_f / w, max_height.to_f / h].min
+      [(w * scale).round, (h * scale).round]
+    end
+
+    # Parses SVG for viewBox or width/height; returns [width, height] in pixels or [nil, nil].
+    def svg_natural_dimensions(svg_path)
+      return [nil, nil] unless File.file?(svg_path)
+
+      content = File.read(svg_path, encoding: 'UTF-8')
+      # viewBox="minX minY width height"
+      if content =~ /viewBox\s*=\s*["']?\s*[\d.-]+\s+[\d.-]+\s+([\d.]+)\s+([\d.]+)/
+        return [Regexp.last_match(1).to_f.ceil, Regexp.last_match(2).to_f.ceil]
+      end
+      # width and height attributes (e.g. width="200" or width="200px")
+      w = content[/width\s*=\s*["']?\s*([\d.]+)/, 1]
+      h = content[/height\s*=\s*["']?\s*([\d.]+)/, 1]
+      return [w.to_f.ceil, h.to_f.ceil] if w && h
+      [nil, nil]
     end
 
     def create_file(png_blob)
