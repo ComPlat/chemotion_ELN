@@ -311,7 +311,7 @@ class IocMigration
       created_by: @user.id,
       molecule_id: molecule.id,
       molfile: molecule.molfile,
-      inventory_sample: true
+      inventory_sample: true,
     )
 
     apply_sample_fields(sample, rec, location)
@@ -348,8 +348,8 @@ class IocMigration
     # name: substance name
     sample.name = rec['substanz'] if rec['substanz'].present?
 
-    # external_label: IOC database ID
-    sample.external_label = "IOC-#{rec['ID']}" if rec['ID'].present?
+    # inventory_label: BR database ID
+    sample.xref['inventory_label'] = "BR-#{rec['ID']}" if rec['ID'].present?
 
     # location: individual location for this record
     sample.location = location if location.present?
