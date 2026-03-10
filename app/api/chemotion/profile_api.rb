@@ -115,6 +115,8 @@ module Chemotion
           end
           optional :default_structure_editor, type: String
           optional :filters, type: Hash
+          optional :inbox_auto, type: Boolean
+          optional :inbox_manual, type: Boolean
         end
         optional :show_external_name, type: Boolean
         optional :show_sample_name, type: Boolean
