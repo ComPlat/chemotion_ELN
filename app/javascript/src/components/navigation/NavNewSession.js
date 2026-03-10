@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import uuid from 'uuid';
 import {
@@ -93,9 +93,11 @@ function OtpInput({
   );
 }
 
-function ExtendedSignInForm({ url, rememberable }) {
+function ExtendedSignInForm({
+  url, rememberable, username, fromInvalid = false
+}) {
   const [form, setForm] = useState({
-    login: '',
+    login: username || '',
     password: '',
     remember_me: false,
     otp_attempt: ''
@@ -133,6 +135,12 @@ function ExtendedSignInForm({ url, rememberable }) {
       // Do something with each alert element
     });
   }
+
+  useEffect(() => {
+    if (fromInvalid) {
+      replaceWarningsInLogin('<body><div class="alert alert-warning">Invalid Login or password.</div></body>');
+    }
+  }, [fromInvalid]);
 
   const handleSubmit = useCallback(async (e) => {
     e?.preventDefault();
@@ -229,7 +237,7 @@ function SignInForm({ authenticityToken }) {
       setShowOtp(true);
     } else if (resText.html) {
       setShowOtp(false);
-      window.location = url;
+      window.location = `${url}?login=${form.login}&invalid=1`;
     }
   }, [form]);
 

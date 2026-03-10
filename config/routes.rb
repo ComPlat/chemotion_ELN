@@ -47,6 +47,12 @@ Rails.application.routes.draw do
     get 'generic_datasets_admin', to: 'pages#gda'
   end
 
+  namespace :users do
+    get  "two_factor_auth/request_enable"
+    get  "two_factor_auth/request_disable"
+    post "two_factor_auth/verify"
+  end
+
   get 'editor',      to: 'pages#editor'
 
   # Standalone page for ChemSpectra
@@ -75,11 +81,6 @@ Rails.application.routes.draw do
   root to: redirect('home')
 
   get 'test', to: 'pages#test'
-  namespace :users do
-    get  "two_factor_auth/request_enable"
-    get  "two_factor_auth/request_disable"
-    post "two_factor_auth/verify"
-  end
 end
 
 # rubocop: enable Metrics/BlockLength, Layout/LineLength, Style/FrozenStringLiteralComment
