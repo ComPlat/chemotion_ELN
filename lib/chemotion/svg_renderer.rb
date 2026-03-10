@@ -17,10 +17,12 @@ module Chemotion
     #   Indigo first if molfile contains a PolymersList tag, otherwise Ketcher first; then falls back to OpenBabel.
     # @return [String, nil] The rendered SVG, or nil if all services fail
     def self.render_svg_from_molfile(struct, service: nil)
+      has_polymer = has_polymers_list_tag?(struct)
       polymer_data = parse_polymer_payload(struct)
+      # Use cleaned_struct only for rendering (Indigo/Ketcher/OpenBabel may not handle > <PolymersList>). The full struct is passed to finalize_svg for injection.
       render_struct = polymer_data[:cleaned_struct]
       chain = service_chain(service, struct)
-      indigo_options = has_polymers_list_tag?(struct) ? { scale_factor: 90, label_font_size: 5 } : {}
+      indigo_options = has_polymer ? { scale_factor: 90, label_font_size: 5 } : {}
 
       chain.each do |name|
         rendered_svg = if name == :indigo
@@ -29,11 +31,14 @@ module Chemotion
                         send(:"#{name}_service", render_struct)
                       end
         if rendered_svg.present?
-          return finalize_svg(rendered_svg, render_struct, polymer_data)
+          # Pass full struct (with PolymersList) to finalize_svg so inject_polymer_shapes can run; polymer_data was parsed from this full struct.
+          return finalize_svg(rendered_svg, struct, polymer_data)
         end
       end
 
       nil
+    rescue StandardError
+      raise
     end
 
     # Returns the ordered list of service names to try (e.g. %i[indigo ketcher open_babel]).
@@ -59,7 +64,7 @@ module Chemotion
     end
 
     def self.finalize_svg(svg, molfile, polymer_data)
-      # Polymer injection only when molfile has a polymer list; otherwise use original flow (sanitize only).
+      # Polymer injection uses molfile (full, with PolymersList) and polymer_data parsed from it; only rendering used cleaned_struct.
       if has_polymer_list?(polymer_data)
         with_polymer = inject_polymer_shapes(svg, molfile, polymer_data)
         used_injected = with_polymer.present? && with_polymer != svg
@@ -172,6 +177,7 @@ module Chemotion
 
     def self.parse_polymer_payload(struct)
       source = struct.to_s
+      # Strip PolymersList/TextNode only for cleaned_struct (used for rendering); polymers/text_by_index are from full source for injection.
       cleaned_struct = source
         .gsub(/^> <PolymersList>\R.*?(?=^> <|\z)/m, '')
         .gsub(/^> <TextNode>\R.*?^> <\/TextNode>\R?/m, '')
@@ -189,24 +195,38 @@ module Chemotion
 
     def self.extract_polymers_line(source)
       lines = source.to_s.lines
-      start_idx = lines.find_index { |line| line.strip == '> <PolymersList>' }
-      return '' unless start_idx
-
-      data = []
-      idx = start_idx + 1
+      # When there are multiple "> <PolymersList>" blocks (e.g. redundant indices-only then full format), prefer the one with full format (contains "/") so we get correct template_id.
+      blocks = []
+      idx = 0
       while idx < lines.length
-        line = lines[idx].strip
-        break if line.start_with?('> <') || line == '$$$$'
-        data << line unless line.empty?
-        idx += 1
+        start_idx = lines[idx..].find_index { |line| line.strip == '> <PolymersList>' }
+        break unless start_idx
+
+        start_idx += idx
+        data = []
+        i = start_idx + 1
+        while i < lines.length
+          line = lines[i].strip
+          break if line.start_with?('> <') || line == '$$$$'
+          data << line unless line.empty?
+          i += 1
+        end
+        content = data.join(' ').strip
+        blocks << content unless content.empty?
+        idx = start_idx + 1
       end
-      data.join(' ').strip
+
+      return '' if blocks.empty?
+
+      # Prefer block that contains full format (e.g. "0/95/1.00-1.00") over indices-only ("0 1 2")
+      full_format_block = blocks.find { |content| content.include?('/') }
+      full_format_block.presence || blocks.first.to_s
     end
 
     def self.parse_polymers_line(polymers_line)
       return [] if polymers_line.blank?
 
-      polymers_line.split(/\s+/).filter_map do |token|
+      full_format = polymers_line.split(/\s+/).filter_map do |token|
         parts = token.split('/')
         next if parts.size < 3
 
@@ -219,6 +239,15 @@ module Chemotion
 
         { atom_index: atom_index, template_id: template_id, height: height, width: width }
       end
+
+      return full_format if full_format.any?
+
+      # Fallback: PolymersList content is indices-only (e.g. "0 1 2" or "0") — build default polymer entries so injection runs.
+      indices = polymers_line.split(/\s+/).filter_map do |token|
+        n = Integer(token, exception: false)
+        n if n.is_a?(Integer) && n >= 0
+      end
+      indices.map { |atom_index| { atom_index: atom_index, template_id: 1, height: 2.0, width: 2.0 } }
     end
 
     def self.parse_size(size_token)
@@ -355,7 +384,7 @@ module Chemotion
         x = pos[:x]
         y = pos[:y]
         # Single scale preserves image ratio (e.g. 1:1 stays 1:1); base scale then +40% size.
-        scale = scale_x * 6
+        scale = scale_x * 9
         width = polymer[:width] * scale
         height = polymer[:height] * scale
         img_x = x - (width / 2.0)
@@ -382,6 +411,7 @@ module Chemotion
 
       remove_r_or_a_placeholder_text(doc)
       remove_r_or_a_placeholder_glyphs(doc, occupied) if used_molfile_fallback && occupied.any?
+      expand_svg_viewbox_to_include(doc, bounds, occupied)
       doc.to_xml
     rescue StandardError => e
       Rails.logger.error("Polymer SVG injection failed: #{e.message}")
@@ -492,6 +522,7 @@ module Chemotion
       end
 
       injected_groups = []
+      occupied = []
       use_elements.each_with_index do |use_el, idx|
         polymer = polymers[idx]
         break unless polymer
@@ -547,12 +578,14 @@ module Chemotion
 
         use_el.replace(group)
         injected_groups << group
+        occupied << { x: ux - width / 2.0, y: uy - height / 2.0 - (height * 0.04), width: width, height: height }
       end
 
       # Draw injected images on top: move their groups to the end of the SVG root
       injected_groups.each { |g| svg_root.add_child(g) }
 
       remove_unused_glyph_from_defs(doc, r_glyph_id)
+      expand_svg_viewbox_to_include(doc, bounds, occupied)
       doc.to_xml
     rescue StandardError => e
       Rails.logger.error("Polymer replace_r_glyph failed: #{e.message}")
@@ -770,7 +803,6 @@ module Chemotion
       }
     end
 
-    # When there are no text nodes we skip clean_and_trim_svg; the SVG may look congested.
     # Expand the viewBox in both dimensions so content has more space and is less congested.
     def self.widen_svg_viewbox_width(svg_string, width_factor: 1.5, height_factor: 1.6)
       return svg_string if svg_string.blank?
@@ -805,6 +837,65 @@ module Chemotion
       doc.to_xml
     rescue StandardError => e
       svg_string
+    end
+
+    # Expand the SVG viewBox (and width/height) to include original bounds plus all injected rects (e.g. polymer images), so nothing is clipped on the left or right.
+    def self.expand_svg_viewbox_to_include(doc, bounds, occupied, padding: 10)
+      return if doc.nil? || bounds.nil?
+
+      root = doc.xpath('//*[local-name()="svg"]').first
+      return unless root
+
+      vb = root['viewBox'] || root['viewbox']
+      return if vb.blank?
+
+      parts = vb.strip.split(/\s+/)
+      return unless parts.size >= 4
+
+      old_min_x = Float(parts[0], exception: false)
+      old_min_y = Float(parts[1], exception: false)
+      old_w = Float(parts[2], exception: false)
+      old_h = Float(parts[3], exception: false)
+      return if old_min_x.nil? || old_min_y.nil? || old_w.nil? || old_h.nil? || old_w <= 0 || old_h <= 0
+
+      min_x = bounds[:min_x]
+      max_x = bounds[:max_x]
+      min_y = bounds[:min_y]
+      max_y = bounds[:max_y]
+
+      if occupied.present?
+        occupied.each do |o|
+          min_x = [min_x, o[:x]].min
+          max_x = [max_x, o[:x] + o[:width]].max
+          min_y = [min_y, o[:y]].min
+          max_y = [max_y, o[:y] + o[:height]].max
+        end
+      end
+
+      min_x -= padding
+      min_y -= padding
+      max_x += padding
+      max_y += padding
+
+      new_w = (max_x - min_x).round(4)
+      new_h = (max_y - min_y).round(4)
+      return if new_w <= 0 || new_h <= 0
+
+      root['viewBox'] = "#{min_x} #{min_y} #{new_w} #{new_h}"
+
+      if root['width'].present? && root['height'].present?
+        current_w = Float(root['width'], exception: false)
+        current_h = Float(root['height'], exception: false)
+        if current_w && current_w > 0 && current_h && current_h > 0
+          # Scale width/height so the new viewBox is fully visible without stretching
+          scale_w = new_w / old_w
+          scale_h = new_h / old_h
+          root['width'] = (current_w * scale_w).round(4).to_s
+          root['height'] = (current_h * scale_h).round(4).to_s
+        end
+      end
+    rescue StandardError => _e
+      # non-fatal
     end
 
     def self.map_x(x, mol_bounds, svg_bounds)
