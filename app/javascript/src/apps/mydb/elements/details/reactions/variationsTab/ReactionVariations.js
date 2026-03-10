@@ -358,13 +358,15 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
           initialState={initialGridState}
           rowData={reactionVariations}
           rowDragManaged
-          headerHeight={110}
           columnDefs={columnDefinitions}
           suppressPropertyNamesCheck
           defaultColDef={{
             editable: true,
             sortable: true,
             resizable: false,
+          }}
+          defaultColGroupDef={{
+            autoHeaderHeight: true,
           }}
           dataTypeDefinitions={cellDataTypes}
           tooltipShowDelay={0}
