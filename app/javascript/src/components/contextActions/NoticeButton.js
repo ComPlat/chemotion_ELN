@@ -312,16 +312,23 @@ export default class NoticeButton extends React.Component {
     if (ackAll) {
       params.ids = _.map(newNotices, 'id');
     } else {
-      params.ids[0] = idx;
+      params.ids = [idx];
     }
     MessagesFetcher.acknowledgedMessage(params).then((result) => {
       const ackIdSet = new Set(_.map(result.ack, 'id'));
 
-      this.setState((prevState) => ({
-        newNotices: prevState.newNotices
+      this.setState((prevState) => {
+        const acknowledged = prevState.newNotices.filter((o) => ackIdSet.has(o.id));
+
+        const remaining = prevState.newNotices
           .filter((o) => !ackIdSet.has(o.id))
-          .sort((a, b) => b.id - a.id)
-      }));
+          .sort((a, b) => b.id - a.id);
+
+        return {
+          newNotices: remaining,
+          ackNotices: [...prevState.ackNotices, ...acknowledged]
+        };
+      });
     });
   }
 
@@ -371,18 +378,18 @@ export default class NoticeButton extends React.Component {
       newNotices, ackNotices, showAck, currentPage, perPage, filterNotices
     } = this.state;
 
-    if (!showAck && newNotices.length === 0) {
-      return (
-        <Card className="text-center" eventKey="0">
-          <Card.Body>No new notifications.</Card.Body>
-        </Card>
-      );
-    }
-
     const allNotices = [
       ...newNotices.map((n) => ({ ...n, source: 'new' })),
       ...(showAck ? ackNotices.map((n) => ({ ...n, source: 'ack' })) : [])
     ].sort((a, b) => b.id - a.id);
+
+    if (allNotices.length === 0) {
+      return (
+        <Card className="text-center" eventKey="0">
+          <Card.Body>{`No ${showAck ? '' : 'new'} notifications.`}</Card.Body>
+        </Card>
+      );
+    }
 
     const search = filterNotices?.toLowerCase() || '';
 
