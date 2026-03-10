@@ -1,2 +1,3 @@
 - if !(resource.extra_rules['disable_db_login'] == true)
-  #Home-Login{ data: { url: session_path(resource_name), rememberable: devise_mapping.rememberable?.to_s } }
+  #Home-Login{ data: { url: session_path(resource_name), rememberable: devise_mapping.rememberable?.to_s, username: @username, invalid: @invalid } }
+    %h3 Loading form ...

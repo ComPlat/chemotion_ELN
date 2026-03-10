@@ -21,6 +21,8 @@ document.addEventListener('DOMContentLoaded', () => {
           <ExtendedSignInForm
             url={domElementLogin.dataset.url ?? '/users/sign_in'}
             rememberable={domElementLogin.dataset.rememberable ?? true}
+            username={domElementLogin.dataset.username}
+            fromInvalid={domElementLogin.dataset.invalid ?? false}
           />
         </StoreContext.Provider>,
         domElementLogin

@@ -1,6 +1,7 @@
 module Users
   class TwoFactorAuthController < ApplicationController
     before_action :decode_jwt, only: [:request_enable, :request_disable, :verify]
+    skip_before_action :authenticate_user!
     layout "two_factor_auth"
 
     def request_enable
