@@ -673,8 +673,6 @@ function getColumnDefinitions(selectedColumns, materials, segments, gasMode) {
       headerName: label,
       groupId: materialType,
       marryChildren: true,
-      autoHeaderHeight: true,
-      wrapHeaderText: true,
       children: selectedColumns[materialType].map(
         (materialID) => getMaterialColumnGroupChild(
           materials[materialType].find((material) => material.id.toString() === materialID),
