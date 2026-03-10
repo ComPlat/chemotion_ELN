@@ -13,13 +13,27 @@ module Reporter
         output_file.path
       end
 
-      def self.by_inkscape(input, output, ext)
-        system(
+      def self.by_inkscape(input, output, ext, width: 1550, height: 440)
+        # Inkscape 1.x: --export-type and --export-filename (or -o)
+        # --export-area-drawing exports the content bounds (avoids black PNG when page/viewBox is off)
+        args_1x = [
+          '--without-gui',
+          '--export-type=png',
+          '--export-filename=' + output.to_s,
+          '--export-area-drawing',
+          '--export-width=' + width.to_i.to_s,
+          '--export-height=' + height.to_i.to_s,
+          input.to_s
+        ]
+        return if system('inkscape', *args_1x)
+
+        # Inkscape 0.x: --file and --export-png
+        success = system(
           'inkscape --export-text-to-path --without-gui ' \
           "--file=#{input} --export-#{ext}=#{output} " \
-          '--export-width=1550 --export-height=440',
-          exception: true
+          "--export-width=#{width.to_i} --export-height=#{height.to_i}"
         )
+        raise 'Inkscape export failed' unless success
       end
 
       def self.valid?(path)
