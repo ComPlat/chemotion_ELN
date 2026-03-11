@@ -15,13 +15,15 @@ export default class ImageModal extends Component {
       fetchSrc: '',
       showModal: false,
       isPdf: false,
-      pageIndex: 1,
-      numOfPages: 0,
       thumbnail: '',
       thumbnails: [],
       currentPreferredThumbnail: Number(props.preferredThumbnail) || null,
       thumbPage: 0,
       isLoading: false,
+      // 'preview' = clicking thumbnail only previews it; 'select' = sets it as preferred
+      thumbMode: 'select',
+      // src shown in modal main image area (may differ from the saved preferred)
+      modalPreviewSrc: '',
     };
 
     this.fetchImage = this.fetchImage.bind(this);
@@ -74,7 +76,7 @@ export default class ImageModal extends Component {
   handleThumbKeyDown = (e, thumb) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      this.handleSetPreferred(thumb);
+      this.handleThumbClick(thumb);
     }
   };
 
@@ -88,10 +90,13 @@ export default class ImageModal extends Component {
       stopEvent(e);
       // Sync currentPreferredThumbnail with prop when modal opens
       const { preferredThumbnail } = this.props;
-      this.setState({
+      this.setState((prevState) => ({
         showModal: true,
         currentPreferredThumbnail: preferredThumbnail ? Number(preferredThumbnail) : null,
-      });
+        // Reset modal preview to current thumbnail so preferred image shows immediately
+        modalPreviewSrc: prevState.thumbnail || '',
+        thumbMode: 'select',
+      }));
       this.fetchImage();
       this.fetchThumbnails();
     }
@@ -108,7 +113,15 @@ export default class ImageModal extends Component {
       AttachmentFetcher.fetchImageAttachment({ id: attachment.id }).then(
         (result) => {
           if (!result?.data) throw new Error('Attachment is not provided');
-          this.setState({ fetchSrc: result.data, isPdf: result.type === 'application/pdf' });
+          const src = result.data;
+          // Only update modalPreviewSrc from fetchImage if no preferred thumbnail is active
+          this.setState((prevState) => ({
+            fetchSrc: src,
+            isPdf: result.type === 'application/pdf',
+            modalPreviewSrc: prevState.currentPreferredThumbnail
+              ? prevState.modalPreviewSrc
+              : src,
+          }));
         }
       );
     } catch (error) {
@@ -168,7 +181,12 @@ export default class ImageModal extends Component {
       this.setState({ isLoading: true });
       try {
         const src = await fetchImageSrcByAttachmentId(preferredThumbnail);
-        this.setState({ thumbnail: src, fetchSrc: src, isLoading: false });
+        this.setState({
+          thumbnail: src,
+          fetchSrc: src,
+          modalPreviewSrc: src,
+          isLoading: false,
+        });
         return;
       } catch (err) {
         // eslint-disable-next-line no-console
@@ -210,9 +228,24 @@ export default class ImageModal extends Component {
 
   handleSetPreferred = (thumb) => {
     const { onChangePreferredThumbnail } = this.props;
-    this.setState({ currentPreferredThumbnail: thumb.id, thumbnail: thumb.thumbnail });
+    this.setState({
+      currentPreferredThumbnail: thumb.id,
+      thumbnail: thumb.thumbnail,
+      modalPreviewSrc: thumb.thumbnail,
+    });
     if (thumb.id !== this.state.currentPreferredThumbnail) {
       onChangePreferredThumbnail(thumb.id);
+    }
+  };
+
+  // Handles thumbnail click depending on current mode
+  handleThumbClick = (thumb) => {
+    const { thumbMode } = this.state;
+    if (thumbMode === 'select') {
+      this.handleSetPreferred(thumb);
+    } else {
+      // preview mode: only update the modal preview image, do not change preferred
+      this.setState({ modalPreviewSrc: thumb.thumbnail });
     }
   };
 
@@ -227,7 +260,9 @@ export default class ImageModal extends Component {
   };
 
   renderAttachmentsThumbnails = () => {
-    const { thumbnails: allThumbnails, currentPreferredThumbnail, thumbPage } = this.state;
+    const {
+      thumbnails: allThumbnails, currentPreferredThumbnail, thumbPage, thumbMode,
+    } = this.state;
     const thumbnailsPerPage = 6;
     const totalThumbPages = Math.ceil((allThumbnails?.length || 0) / thumbnailsPerPage);
     const currentThumbs = (allThumbnails || [])
@@ -235,43 +270,72 @@ export default class ImageModal extends Component {
         thumbPage * thumbnailsPerPage,
         (thumbPage + 1) * thumbnailsPerPage
       );
+
+    if (!allThumbnails || allThumbnails.length === 0) return null;
+
     return (
-      <div className="text-center mt-2">
-        {allThumbnails && allThumbnails.length > 0 && (
-          <div className="d-flex align-items-center justify-content-center my-3">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => this.handleThumbPage(-1)}
-              disabled={thumbPage === 0}
-              className="me-2"
+      <div className="mt-3 pt-2">
+        {/* Mode toggle */}
+        <div className="d-flex align-items-center justify-content-center gap-2 mb-2">
+          <span className="text-muted small">Thumbnail mode:</span>
+          <div className="btn-group btn-group-sm" role="group" aria-label="Thumbnail mode">
+            <button
+              type="button"
+              className={`btn ${thumbMode === 'preview' ? 'btn-primary' : 'btn-outline-secondary'}`}
+              onClick={() => this.setState({ thumbMode: 'preview' })}
+              title="Click a thumbnail to preview it without changing the preferred selection"
             >
-              <i className="fa fa-chevron-left" />
-            </Button>
-            <div className="d-flex flex-row flex-nowrap overflow-auto gap-2">
-              {currentThumbs.map((thumb) => (
+              <i className="fa fa-eye me-1" />
+              Preview only
+            </button>
+            <button
+              type="button"
+              className={`btn ${thumbMode === 'select' ? 'btn-primary' : 'btn-outline-secondary'}`}
+              onClick={() => this.setState({ thumbMode: 'select' })}
+              title="Click a thumbnail to set it as the preferred display image"
+            >
+              <i className="fa fa-star me-1" />
+              Set preferred
+            </button>
+          </div>
+        </div>
+
+        {/* Thumbnail strip */}
+        <div className="d-flex align-items-center justify-content-center">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => this.handleThumbPage(-1)}
+            disabled={thumbPage === 0}
+            className="me-2 flex-shrink-0"
+          >
+            <i className="fa fa-chevron-left" />
+          </Button>
+          <div className="d-flex flex-row flex-nowrap overflow-auto gap-2">
+            {currentThumbs.map((thumb) => {
+              const isPreferred = thumb.id === currentPreferredThumbnail;
+              const cardClass = isPreferred
+                ? 'border-2 border-info bg-info-subtle'
+                : 'border border-secondary bg-white';
+              let modeTitle;
+              if (thumbMode === 'select') {
+                modeTitle = isPreferred ? 'Current preferred thumbnail'
+                  : 'Set as preferred display thumbnail by selecting this image using set preferred mode';
+              } else {
+                modeTitle = 'Preview this image';
+              }
+              return (
                 <div
                   key={thumb.id}
-                  className={`d-flex flex-column align-items-center justify-content-center p-1 rounded
-                      ${thumb.id === currentPreferredThumbnail
-                    ? 'border-2 border-info bg-info-subtle' : 'border border-secondary bg-white'}`}
+                  className={`d-flex flex-column align-items-center justify-content-center p-1 rounded ${cardClass}`}
                   style={{
-                    cursor: 'pointer',
-                    minWidth: 64,
-                    minHeight: 90,
-                    maxWidth: 70,
-                    height: 80,
+                    cursor: 'pointer', minWidth: 64, minHeight: 90, maxWidth: 70, height: 80,
                   }}
-                  title={
-                    thumb.id === currentPreferredThumbnail
-                      ? 'Current Preferred Thumbnail' : 'Set as Preferred display thumbnail for this analysis item'
-                  }
+                  title={modeTitle}
                   role="button"
                   tabIndex={0}
-                  onClick={() => this.handleSetPreferred(thumb)}
-                  onKeyDown={(e) => {
-                    this.handleThumbKeyDown(e, thumb);
-                  }}
+                  onClick={() => this.handleThumbClick(thumb)}
+                  onKeyDown={(e) => this.handleThumbKeyDown(e, thumb)}
                 >
                   <img
                     src={this.isValidImageSrc(thumb.thumbnail)
@@ -279,26 +343,29 @@ export default class ImageModal extends Component {
                     alt={`Thumbnail ${thumb.id}`}
                     className="img-thumbnail"
                     style={{
-                      width: 60, height: 60, objectFit: 'cover', display: 'block'
+                      width: 60, height: 60, objectFit: 'cover', display: 'block',
                     }}
                   />
-                  {thumb.id === currentPreferredThumbnail && (
-                    <div className="text-primary small mt-1">Preferred</div>
+                  {isPreferred && (
+                    <div className="text-primary small mt-1" style={{ fontSize: '0.65rem' }}>
+                      <i className="fa fa-star me-1" />
+                      Preferred
+                    </div>
                   )}
                 </div>
-              ))}
-            </div>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => this.handleThumbPage(1)}
-              disabled={thumbPage >= totalThumbPages - 1}
-              className="ms-2"
-            >
-              <i className="fa fa-chevron-right" />
-            </Button>
+              );
+            })}
           </div>
-        )}
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => this.handleThumbPage(1)}
+            disabled={thumbPage >= totalThumbPages - 1}
+            className="ms-2 flex-shrink-0"
+          >
+            <i className="fa fa-chevron-right" />
+          </Button>
+        </div>
       </div>
     );
   };
@@ -312,11 +379,10 @@ export default class ImageModal extends Component {
       placement = 'right'
     } = this.props;
     const {
-      pageIndex,
-      numOfPages,
       isPdf,
       fetchSrc,
       thumbnail,
+      modalPreviewSrc,
     } = this.state;
     const defaultUnavailable = '/images/wild_card/not_available.svg';
 
@@ -398,12 +464,12 @@ export default class ImageModal extends Component {
           <Modal.Header closeButton>
             <Modal.Title>{popObject.title}</Modal.Title>
           </Modal.Header>
-          <Modal.Body style={{ overflow: 'auto', position: 'relative', minHeight: '400px' }}>
+          <Modal.Body style={{ overflow: 'auto', position: 'relative' }}>
             {isPdf && fetchSrc ? (
               <iframe
                 src={fetchSrc}
                 width="100%"
-                height="600px"
+                height="500px"
                 style={{ border: 'none' }}
                 title="PDF Viewer"
               >
@@ -415,35 +481,26 @@ export default class ImageModal extends Component {
                 </p>
               </iframe>
             ) : (
-              <div className="d-flex justify-content-center align-items-center mt-2">
+              <div
+                className="d-flex justify-content-center align-items-center bg-light rounded"
+                style={{ minHeight: 300, maxHeight: 420 }}
+              >
                 {this.state.isLoading ? (
-                  <div
-                    className="d-flex justify-content-center align-items-center"
-                    style={{
-                      width: imageStyle?.width || 300,
-                      height: imageStyle?.height || 300,
-                      minWidth: 120,
-                      minHeight: 120,
-                      ...imageStyle
-                    }}
-                  >
-                    <div className="spinner-border text-primary" role="status">
-                      <span className="visually-hidden">Loading...</span>
-                    </div>
+                  <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Loading...</span>
                   </div>
                 ) : (
                   <img
-                    src={this.isValidImageSrc(fetchSrc) ? fetchSrc : defaultUnavailable}
-                    style={{ maxHeight: '100%', maxWidth: '100%', display: 'block' }}
+                    src={this.isValidImageSrc(modalPreviewSrc) ? modalPreviewSrc : defaultUnavailable}
+                    className="img-fluid"
+                    style={{ maxHeight: 400, objectFit: 'contain' }}
                     alt={attachment?.filename}
                     onError={this.handleImageError}
                   />
                 )}
               </div>
             )}
-            <div>
-              {this.renderAttachmentsThumbnails()}
-            </div>
+            {this.renderAttachmentsThumbnails()}
           </Modal.Body>
           <Modal.Footer>
             <Button variant="primary" onClick={this.handleModalClose} className="pull-left">
