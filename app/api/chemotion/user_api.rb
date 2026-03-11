@@ -41,7 +41,7 @@ module Chemotion
             user_id: current_user.id,
             action: 'activate_2fa',
           }
-          jwt = JsonWebToken.encode(payload, 2.days.from_now)
+          jwt = JsonWebToken.encode(payload, 30.minute.from_now)
 
           # 2. Generate verification link
           url = Rails.application.config.root_url
@@ -51,7 +51,7 @@ module Chemotion
             TwoFactorAuthMailer.disable_mail(current_user, link).deliver_now
           else
             link = "#{url}/users/two_factor_auth/request_enable?jwt=#{jwt}"
-            TwoFactorAuthMailer.enable_mail(current_user, link, 2.days.from_now).deliver_now
+            TwoFactorAuthMailer.enable_mail(current_user, link).deliver_now
           end
 
           {

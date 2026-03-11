@@ -1,9 +1,8 @@
 # frozen_string_literal: true
 
 class TwoFactorAuthMailer < ApplicationMailer
-  def enable_mail(user, link, expire_at)
+  def enable_mail(user, link)
     @user = user
-    @expire_at = expire_at
     @link = link
     mail(to: @user.email, subject: "[ELN] Enable 2FA") do |format|
       format.html

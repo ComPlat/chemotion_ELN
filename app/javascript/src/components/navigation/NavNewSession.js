@@ -8,8 +8,11 @@ import {
   OverlayTrigger,
   Tooltip,
   Row,
-  Col, Modal
+  Col
 } from 'react-bootstrap';
+
+import { OtpInput } from 'src/components/common/AuthendifactionHelper';
+import { formValueHandler, submitAsForm } from 'src/utilities/FormHelper';
 
 function omniauthLabel(icon, name) {
   if (icon) {
@@ -21,19 +24,11 @@ function omniauthLabel(icon, name) {
 }
 
 const handleLoginSubmit = async ({ form, url }) => {
-  const formData = new FormData();
-  formData.append('user[login]', form.login);
-  formData.append('user[password]', form.password);
-  formData.append('user[remember_me]', form.remember_me);
-  formData.append('user[otp_attempt]', form.otp_attempt);
-
-  const res = await fetch(url, {
-    method: 'POST',
-    body: formData,
-    credentials: 'same-origin'
+  const res = await submitAsForm({
+    url, form, prefix: 'user', method: 'POST'
   });
-  const { status } = res;
-  if (res.redirected) {
+  const { status, redirected } = res;
+  if (redirected) {
     window.location = res.url;
   }
   let html;
@@ -51,52 +46,10 @@ const handleLoginSubmit = async ({ form, url }) => {
   };
 };
 
-function OtpInput({
-  closeOtp, showOtp, onChange, otp, handleSubmit
-}) {
-  const handleSubmitWrapper = useCallback(async (e) => {
-    e.preventDefault();
-    handleSubmit();
-  }, [handleSubmit]);
-  return (
-    <Modal show={showOtp} onHide={closeOtp} centered>
-      <Modal.Header closeButton>
-        <Modal.Title>Enter One-Time Password</Modal.Title>
-      </Modal.Header>
-      <Form onSubmit={handleSubmitWrapper}>
-
-        <Modal.Body>
-          <Form.Group>
-            <Form.Label>OTP Code</Form.Label>
-            <Form.Control
-              type="text"
-              name="otp_attempt"
-              placeholder="Enter 6-digit code"
-              value={otp}
-              onChange={onChange}
-              maxLength={6}
-              autoFocus
-            />
-          </Form.Group>
-        </Modal.Body>
-
-        <Modal.Footer>
-          <Button variant="secondary" type="button" onClick={closeOtp}>
-            Cancel
-          </Button>
-          <Button variant="primary" type="submit" disabled={otp.length === 0}>
-            Verify
-          </Button>
-        </Modal.Footer>
-      </Form>
-    </Modal>
-  );
-}
-
 function ExtendedSignInForm({
-  url, rememberable, username, fromInvalid = false
+  url, rememberable, username = '', fromInvalid = false
 }) {
-  const [form, setForm] = useState({
+  const [form, setForm] = formValueHandler({
     login: username || '',
     password: '',
     remember_me: false,
@@ -104,16 +57,6 @@ function ExtendedSignInForm({
   });
   const [showOtp, setShowOtp] = useState('');
   const closeOtp = useCallback(() => setShowOtp(false), []);
-  const handleChange = (e) => {
-    const {
-      name, value, type, checked
-    } = e.target;
-
-    setForm({
-      ...form,
-      [name]: type === 'checkbox' ? checked : value
-    });
-  };
 
   // Assume `htmlString` is the HTML response as a string
   function replaceWarningsInLogin(htmlString) {
@@ -157,16 +100,16 @@ function ExtendedSignInForm({
     <>
       <h3 className="mb-3">Log in with registered account</h3>
       <OtpInput
-        otp={form.otp_attempt}
-        onChange={handleChange}
-        closeOtp={closeOtp}
-        showOtp={showOtp}
+        value={form.otp_attempt}
+        onOtpChange={setForm}
+        closeOtpModal={closeOtp}
+        showOtpModal={showOtp}
         handleSubmit={handleSubmit}
       />
 
       <Form className="mb-3" onSubmit={handleSubmit}>
         <Form.Group className="mb-3">
-          <Form.Label>
+          <Form.Label column="lg">
             Email or name abbreviation (case-sensitive)
           </Form.Label>
           <Form.Control
@@ -174,18 +117,18 @@ function ExtendedSignInForm({
             name="login"
             autoFocus
             value={form.login}
-            onChange={handleChange}
+            onChange={setForm}
           />
         </Form.Group>
 
         <Form.Group className="mb-3">
-          <Form.Label>Password</Form.Label>
+          <Form.Label column="lg">Password</Form.Label>
           <Form.Control
             type="password"
             name="password"
             autoComplete="off"
             value={form.password}
-            onChange={handleChange}
+            onChange={setForm}
           />
         </Form.Group>
 
@@ -196,7 +139,7 @@ function ExtendedSignInForm({
               name="remember_me"
               label="Remember me"
               checked={form.remember_me}
-              onChange={handleChange}
+              onChange={setForm}
             />
           </Form.Group>
         )}
@@ -209,24 +152,26 @@ function ExtendedSignInForm({
   );
 }
 
+ExtendedSignInForm.propTypes = {
+  url: PropTypes.string.isRequired,
+  username: PropTypes.string,
+  rememberable: PropTypes.bool.isRequired,
+  fromInvalid: PropTypes.bool
+};
+
+ExtendedSignInForm.defaultProps = {
+  username: '',
+  fromInvalid: false
+};
+
 function SignInForm({ authenticityToken }) {
-  const [form, setForm] = useState({
+  const [form, setForm] = formValueHandler({
     login: '',
     password: '',
     otp_attempt: ''
   });
   const [showOtp, setShowOtp] = useState('');
   const closeOtp = useCallback(() => setShowOtp(false), []);
-  const handleChange = (e) => {
-    const {
-      name, value, type, checked
-    } = e.target;
-
-    setForm({
-      ...form,
-      [name]: type === 'checkbox' ? checked : value
-    });
-  };
 
   const handleSubmit = useCallback(async (e) => {
     e?.preventDefault();
@@ -244,10 +189,10 @@ function SignInForm({ authenticityToken }) {
   return (
     <Form id="new_user" className="new_user" action="" acceptCharset="UTF-8" method="post" onSubmit={handleSubmit}>
       <OtpInput
-        otp={form.otp_attempt}
-        onChange={handleChange}
-        closeOtp={closeOtp}
-        showOtp={showOtp}
+        value={form.otp_attempt}
+        onOtpChange={setForm}
+        closeOtpModal={closeOtp}
+        showOtpModal={showOtp}
         handleSubmit={handleSubmit}
       />
       <input name="utf8" value="✓" type="hidden" />
@@ -270,7 +215,7 @@ function SignInForm({ authenticityToken }) {
                 placeholder="Email or name abbreviation"
                 name="login"
                 value={form.login}
-                onChange={handleChange}
+                onChange={setForm}
                 className=" mr-sm-2"
               />
             </Form.Group>
@@ -283,7 +228,7 @@ function SignInForm({ authenticityToken }) {
               type="password"
               name="password"
               value={form.password}
-              onChange={handleChange}
+              onChange={setForm}
               placeholder="password"
               className=" mr-sm-2"
             />
@@ -298,6 +243,10 @@ function SignInForm({ authenticityToken }) {
     </Form>
   );
 }
+
+SignInForm.propTypes = {
+  authenticityToken: PropTypes.string.isRequired,
+};
 
 function NewSession({ authenticityToken, omniauthProviders = {}, extraRules = {} }) {
   const items = omniauthProviders && Object.keys(omniauthProviders).map((key) => (
@@ -337,6 +286,20 @@ function NewSession({ authenticityToken, omniauthProviders = {}, extraRules = {}
 
 NewSession.propTypes = {
   authenticityToken: PropTypes.string.isRequired,
+  omniauthProviders: PropTypes.PropTypes.objectOf(
+    PropTypes.shape({
+      icon: PropTypes.string.isRequired,
+      label: PropTypes.string.isRequired,
+    })
+  ),
+  extraRules: PropTypes.shape({
+    disable_db_login: PropTypes.bool.isRequired,
+    disable_signup: PropTypes.bool.isRequired,
+  }).isRequired
+};
+
+NewSession.defaultProps = {
+  omniauthProviders: {}
 };
 
 export default NewSession;
