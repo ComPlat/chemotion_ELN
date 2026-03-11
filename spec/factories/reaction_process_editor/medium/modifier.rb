@@ -2,6 +2,6 @@
 
 FactoryBot.define do
   factory :modifier, class: 'Medium::Modifier' do
-    sequence(:sample_name) { |i| "Modifier #{i}" }
+    sequence(:name) { |i| "Modifier #{i}" }
   end
 end

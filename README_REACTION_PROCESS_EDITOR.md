@@ -167,14 +167,26 @@ and (re)fetches the ReactionProcess from the backend by it's id whenever relevan
 
 The ReactionProcessEditor and the ORD export output file is tailored to serve the automation as required in the KIT automation lab.
 
+### Automation API authorization
+
+To use the Automation API you will need the credentials of an ELN ApiUser and sign_in via
+
+* POST /api/v1/reaction_process_editor/sign_in
+  * using basic_auth. The response will carry an authorization header with a Bearer Token. The token can then subsequently be used to access the other endpoints with the Bearer Token in the authorization header.
+  * The Bearer Token has a lifetime of 24h.
+
+* POST /api/v1/reaction_process_editor/sign_in
+  * Can be used to sign out after a session.
+
 ### Automation API endpoints
 
-There are currently 2 API endpoints serving for automation lab feedback.
+There are currently 2 API endpoints serving for automation lab feedback. To access these endpoint you need to send an Authorization Header the with the Bearer Token as described above.
 
 * PUT /api/v1/reaction_process_editor/reaction_process_activities/{id}/automation_response
-  * This endpoints serves the automation feedback which is currenty required in Chromatography Activities only. It accepts the parameter "response_json" with a json file containinfg the results of the automation in a specific JSON format describing the vial-plates and vials returning from the automation.
+  * This endpoints serves to send automation feedback (which is currenty required in Chromatography Activities only). It accepts the parameter "response_json" with a json file containing the results of the automation in a specific JSON format, describing the vial-plates and vials as returned from the automation devices.
+
 * PUT /api/v1/reaction_process_editor/reaction_process_activities/{id}/automation_status
-  * This endpoint serves to update the automation status, particularly to report the completion of a ReactionProcessActivity. It accepts the parameter "automation_status" and  "COMPLETED" as only accepted value.
+  * This endpoint serves to update the automation status, particularly to report the completion of a ReactionProcessActivity. It accepts the parameter "automation_status". As of this writing, "COMPLETED" is the only accepted value, all others will be silently discarded.
 
 ### AutomationControl & -status model
 

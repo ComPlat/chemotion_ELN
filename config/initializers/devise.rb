@@ -340,10 +340,10 @@ Devise.setup do |config| # rubocop:disable Metrics/BlockLength
   config.jwt do |jwt|
     jwt.secret = Rails.application.secrets.secret_key_base
     jwt.dispatch_requests = [
-      ['POST', /^*sign_in$/],
+      ['POST', /^*sign_in(\.json)?$/],
     ]
     jwt.revocation_requests = [
-      ['DELETE', /^*sign_out$/],
+      ['DELETE', /^*sign_out(\.json)?$/],
     ]
     jwt.expiration_time = 1.day.to_i
   end

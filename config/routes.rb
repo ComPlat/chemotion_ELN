@@ -1,3 +1,4 @@
+
 # frozen_string_literal: true
 
 # rubocop:disable Metrics/BlockLength
@@ -22,9 +23,9 @@ Rails.application.routes.draw do
     devise_for :users, controllers: { registrations: 'users/registrations', omniauth_callbacks: 'users/omniauth' }
 
     devise_scope :user do
-      with_options format: :json do
-        # Separate session endpoints for ReactionProcessEditor ( < Devise::SessionsController).
-        # Using the general Users::Sessions will interfere with ELN authentication.
+      defaults format: :json do
+        # Separate session endpoints for ReactionProcessEditor API access.
+        # Using the general Users::SessionsController will interfere with ELN authentication code.
         post 'api/v1/reaction_process_editor/sign_in', to: 'reaction_process_editor/sessions#create'
         delete 'api/v1/reaction_process_editor/sign_out', to: 'reaction_process_editor/sessions#destroy'
       end
