@@ -75,13 +75,38 @@ module Chemotion
             trimmed = KetcherService::SVGProcessor.clean_and_trim_svg(with_polymer)
             with_polymer = trimmed if trimmed.present?
           end
-          sanitize_svg(with_polymer)
+          sanitize_svg(remove_placeholder_paths(with_polymer))
         else
-          sanitize_svg(svg)
+          sanitize_svg(remove_placeholder_paths(svg))
         end
       else
-        sanitize_svg(svg)
+        sanitize_svg(remove_placeholder_paths(svg))
       end
+    end
+
+    # Removes the small ellipse placeholder path sometimes emitted by Indigo (R# placeholder).
+    # Matches path with fill="none", stroke-width 0.0166667, and the distinctive d curve.
+    # @param svg [String] SVG markup
+    # @return [String] SVG with matching path(s) removed, or original string if parse fails
+    def self.remove_placeholder_paths(svg)
+      return svg if svg.blank?
+
+      doc = Nokogiri::XML(svg)
+      # Small ellipse placeholder: M x y C (6 numbers) C (6 numbers). Matches both known variants (0.44/0.39 and 0.39/0.33).
+      path_d_pattern = %r{M\s*[\d.]+\s+[\d.]+\s+C\s*[\d.]+\s+[\d.]+\s+[\d.]+\s+[\d.]+\s+[\d.]+\s+[\d.]+\s+C\s*[\d.]+\s+[\d.]+\s+[\d.]+\s+[\d.]+\s+[\d.]+\s+[\d.]+\s*}
+      removed = 0
+      doc.xpath('//*[local-name()="path"]').each do |path_el|
+        d = path_el['d'].to_s
+        next if d.blank?
+        next unless path_el['fill'] == 'none' && path_el['stroke-width'].to_s.start_with?('0.016')
+        next unless d.match?(path_d_pattern)
+
+        path_el.remove
+        removed += 1
+      end
+      removed.positive? ? doc.to_xml : svg
+    rescue StandardError
+      svg
     end
 
     # True when polymer_data contains a non-empty polymers list (injection path applies).
@@ -312,11 +337,20 @@ module Chemotion
 
       return svg if svg.blank? || polymers.blank?
 
+      # Ensure polymer order matches position order: positions are always top-to-bottom (ascending y).
+      # Sort polymers by their atom's y (descending molfile y = top first) so polymer[i] -> position[i].
+      atom_positions = parse_atom_positions(molfile)
+      polymers = if atom_positions.present?
+                   polymers.sort_by { |p| -(atom_positions[p[:atom_index]]&.[](1) || -Float::INFINITY) }
+                 else
+                   polymers.sort_by { |p| p[:atom_index] }
+                 end
+
       # When Indigo renders R# as glyphs, replace <use> nodes with shapes+labels from molfile (position preserved by transform).
       doc = Nokogiri::XML(svg)
       r_glyph_id = find_r_glyph_id(doc)
       if r_glyph_id && find_use_elements_referencing_glyph(doc, r_glyph_id).any?
-        return replace_r_glyph_uses_with_molfile_content(svg, molfile, polymer_data)
+        return replace_r_glyph_uses_with_molfile_content(svg, molfile, polymer_data.merge(polymers: polymers))
       end
 
       positions = extract_r_or_a_positions_from_svg(svg)
