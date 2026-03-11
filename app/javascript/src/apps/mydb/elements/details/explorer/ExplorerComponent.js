@@ -37,6 +37,31 @@ export default function ExplorerComponent({ nodes, edges }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [focusSearchOnly, setFocusSearchOnly] = useState(true);
 
+  const escapeRegExp = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+  const matchesQuery = (value, query) => {
+    const v = (value || '').toLowerCase();
+    const q = (query || '').trim().toLowerCase();
+    if (!q) return false;
+
+    if (v === q) return true;
+
+    const looksLikeLabel = /[\d._\-/]/.test(q);
+
+    if (looksLikeLabel) {
+      // strict token-boundary
+      const boundaryPat = new RegExp(`(^|[\\s._\\-/])${escapeRegExp(q)}($|[\\s._\\-/])`, 'i');
+      if (boundaryPat.test(v)) return true;
+
+      // suffix-after-separator: r5 -> pst-r5
+      const suffixPat = new RegExp(`[\\s._\\-/]${escapeRegExp(q)}$`, 'i');
+      return suffixPat.test(v);
+    }
+
+    // plain text contains
+    return v.includes(q);
+  };
+
   const nodeMap = useMemo(() => {
     const map = {};
     rfNodes.forEach((n) => {
@@ -71,6 +96,7 @@ export default function ExplorerComponent({ nodes, edges }) {
     }
 
     const reactionNodes = filteredNodes.filter((n) => n.type === 'reaction');
+    const sampleNodes = filteredNodes.filter((n) => n.type === 'sample');
 
     const matchedReactionIds = new Set(
       reactionNodes
@@ -78,7 +104,26 @@ export default function ExplorerComponent({ nodes, edges }) {
           const shortLabel = (n.data?.reactionShortLabel || '').toLowerCase();
           const name = (n.data?.reactionName || '').toLowerCase();
           const label = (n.data?.label || '').toLowerCase();
-          return shortLabel.includes(q) || name.includes(q) || label.includes(q);
+
+          return (
+            matchesQuery(shortLabel, q) ||
+            matchesQuery(name, q) ||
+            matchesQuery(label, q)
+          );
+        })
+        .map((n) => n.id)
+    );
+
+    const matchedSampleIds = new Set(
+      sampleNodes
+        .filter((n) => {
+          const label = (n.data?.label || '').toLowerCase();
+          const sampleName = (n.data?.sampleName || '').toLowerCase();
+
+          return (
+            matchesQuery(label, q) ||
+            matchesQuery(sampleName, q)
+          );
         })
         .map((n) => n.id)
     );
@@ -86,8 +131,14 @@ export default function ExplorerComponent({ nodes, edges }) {
     const highlightedNodeIds = new Set();
 
     const reactionToSamples = {};
-    const sampleToConsumerReactions = {};
+    const sampleToReactions = {};
     const splitChildren = {};
+    const splitParents = {};
+
+    const reactionNodeById = {};
+    reactionNodes.forEach((n) => {
+      reactionNodeById[n.id] = n;
+    });
 
     filteredEdges.forEach((e) => {
       const srcIsSample = e.source.startsWith('sample-');
@@ -99,22 +150,63 @@ export default function ExplorerComponent({ nodes, edges }) {
         if (!reactionToSamples[e.target]) reactionToSamples[e.target] = new Set();
         reactionToSamples[e.target].add(e.source);
 
-        if (!sampleToConsumerReactions[e.source]) sampleToConsumerReactions[e.source] = new Set();
-        sampleToConsumerReactions[e.source].add(e.target);
+        if (!sampleToReactions[e.source]) sampleToReactions[e.source] = new Set();
+        sampleToReactions[e.source].add(e.target);
       }
 
       if (srcIsReaction && tgtIsSample) {
         if (!reactionToSamples[e.source]) reactionToSamples[e.source] = new Set();
         reactionToSamples[e.source].add(e.target);
+
+        if (!sampleToReactions[e.target]) sampleToReactions[e.target] = new Set();
+        sampleToReactions[e.target].add(e.source);
       }
 
       if (srcIsSample && tgtIsSample) {
         if (!splitChildren[e.source]) splitChildren[e.source] = new Set();
         splitChildren[e.source].add(e.target);
+
+        if (!splitParents[e.target]) splitParents[e.target] = new Set();
+        splitParents[e.target].add(e.source);
       }
     });
 
+    Object.keys(reactionNodeById).forEach((rid) => {
+      const reagentNodeIds = reactionNodeById[rid]?.data?.reactionReagentNodeIds || [];
+      reagentNodeIds.forEach((sid) => {
+        if (!sampleToReactions[sid]) sampleToReactions[sid] = new Set();
+        sampleToReactions[sid].add(rid);
+      });
+    });
+
+    const expandedSampleIds = new Set();
+    const splitQueueSeed = [...matchedSampleIds];
+
+    while (splitQueueSeed.length > 0) {
+      const sid = splitQueueSeed.shift();
+      if (expandedSampleIds.has(sid)) continue;
+      expandedSampleIds.add(sid);
+
+      const children = splitChildren[sid] || new Set();
+      const parents = splitParents[sid] || new Set();
+
+      children.forEach((childSid) => {
+        if (!expandedSampleIds.has(childSid)) splitQueueSeed.push(childSid);
+      });
+
+      parents.forEach((parentSid) => {
+        if (!expandedSampleIds.has(parentSid)) splitQueueSeed.push(parentSid);
+      });
+    }
+
     const reactionQueue = [...matchedReactionIds];
+
+    expandedSampleIds.forEach((sid) => {
+      const rset = sampleToReactions[sid] || new Set();
+      rset.forEach((rid) => reactionQueue.push(rid));
+      highlightedNodeIds.add(sid);
+    });
+
     const visitedReactions = new Set();
     const visitedSplitSamples = new Set();
 
@@ -124,6 +216,9 @@ export default function ExplorerComponent({ nodes, edges }) {
 
       visitedReactions.add(rid);
       highlightedNodeIds.add(rid);
+
+      const reagentNodeIds = reactionNodeById[rid]?.data?.reactionReagentNodeIds || [];
+      reagentNodeIds.forEach((sid) => highlightedNodeIds.add(sid));
 
       const blockSamples = reactionToSamples[rid] || new Set();
       blockSamples.forEach((sid) => highlightedNodeIds.add(sid));
@@ -139,25 +234,13 @@ export default function ExplorerComponent({ nodes, edges }) {
           highlightedNodeIds.add(childSid);
           splitQueue.push(childSid);
 
-          const childReactions = sampleToConsumerReactions[childSid] || new Set();
+          const childReactions = sampleToReactions[childSid] || new Set();
           childReactions.forEach((crid) => {
             if (!visitedReactions.has(crid)) reactionQueue.push(crid);
           });
         });
       }
     }
-
-    const reactionNodeById = {};
-    reactionNodes.forEach((n) => {
-      reactionNodeById[n.id] = n;
-    });
-
-    [...highlightedNodeIds]
-      .filter((id) => id.startsWith('reaction-'))
-      .forEach((rid) => {
-        const reagentNodeIds = reactionNodeById[rid]?.data?.reactionReagentNodeIds || [];
-        reagentNodeIds.forEach((nid) => highlightedNodeIds.add(nid));
-      });
 
     return {
       hasSearch: true,
@@ -338,7 +421,7 @@ export default function ExplorerComponent({ nodes, edges }) {
       >
         <input
           type="text"
-          placeholder="Search reaction by short label or name"
+          placeholder="Search reaction or sample by label/name"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           style={{
