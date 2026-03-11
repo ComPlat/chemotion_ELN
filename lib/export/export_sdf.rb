@@ -111,10 +111,19 @@ module Export
       ">  <#{field}>\n#{value}\n\n"
     end
 
+    # Keep only the CTAB (up to and including "M  END") when molfile has no PolymersList/TextNode.
+    # When PolymersList or TextNode blocks are present, keep the full molfile including those blocks and $$$$.
     def validate_molfile(molfile)
-      return ($`).concat('M  END') if molfile.to_s =~ /^M  END/
+      s = molfile.to_s
+      if s.include?('> <PolymersList>') || s.include?('> <TextNode>')
+        return s.rstrip
+      end
+      return s unless s.include?('M  END')
 
-      molfile
+      idx = s.index('M  END')
+      return s unless idx
+
+      s[0..(idx + 'M  END'.length - 1)].rstrip
     end
 
     def validate_value(value)
