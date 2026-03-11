@@ -263,4 +263,40 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
   static updateWellplates(elementId, wellplateIds) {
     return super.execData({ wellplate_ids: wellplateIds }, `wellplates/by_generic_element/${elementId}`, 'PUT');
   }
+
+  static getMttRequest(params) {
+    const api = '/api/v1/mtt/requests';
+    const promise = () => fetch(api, {
+      credentials: 'same-origin',
+      method: 'get',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+    })
+      .then((response) => response.json())
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    return promise();
+  }
+
+  static sendMttRequest(params) {
+    console.log('Sending MTT request with params:', params);
+    const api = '/api/v1/mtt/create_mtt_request';
+    const promise = () => fetch(api, {
+      credentials: 'same-origin',
+      method: 'post',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(params),
+    })
+      .then((response) => response.json())
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    return promise();
+  }
 }
