@@ -57,6 +57,11 @@ class Import::ImportSdf < Import::ImportSamples
       color: { field: 'color', displayName: 'Color' },
       form: { field: 'form', displayName: 'Form' },
       inventory_label: { field: 'inventory_label', displayName: 'Inventory Label' },
+      height: { field: 'height', displayName: 'Height' },
+      width: { field: 'width', displayName: 'Width' },
+      length: { field: 'length', displayName: 'Length' },
+      state: { field: 'state', displayName: 'State' },
+      storage_condition: { field: 'storage_condition', displayName: 'Storage condition' },
     }
   end
 
@@ -194,6 +199,12 @@ class Import::ImportSdf < Import::ImportSamples
             sample['xref']['refractive_index'] = row['refractive_index'] if row['refractive_index'].present?
             sample['xref']['form'] = row['form'] if row['form'].present?
             sample['xref']['color'] = row['color'] if row['color'].present?
+            sample['color'] = row['color'] if row['color'].present?
+            sample['height'] = row['height'].to_s.strip.to_f if row['height'].present?
+            sample['width'] = row['width'].to_s.strip.to_f if row['width'].present?
+            sample['length'] = row['length'].to_s.strip.to_f if row['length'].present?
+            sample['state'] = row['state'] if row['state'].present?
+            sample['storage_condition'] = row['storage_condition'] if row['storage_condition'].present?
             sample['xref']['solubility'] = row['solubility'] if row['solubility'].present?
             sample['xref']['inventory_label'] = row['inventory_label'] if row['inventory_label'].present?
             if row['flash_point'].present?
