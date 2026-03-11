@@ -3,6 +3,7 @@
 # rubocop:disable Metrics/AbcSize,Metrics/MethodLength,Metrics/BlockLength,Metrics/PerceivedComplexity,Metrics/CyclomaticComplexity, Layout/LineLength
 
 require 'json'
+require Rails.root.join('lib/chemotion/molfile_polymer_support')
 
 module Import
   class ImportCollections # rubocop:disable Metrics/ClassLength
@@ -284,7 +285,7 @@ module Import
 
         # Priority: molfile > cano_smiles > dummy (if decoupled and both blank)
         # When molfile has > <PolymersList>, use full molfile and Molecule.svg_reprocess so polymers use SvgRenderer.
-        if molfile.present? && molfile.to_s.include?('> <PolymersList>')
+        if molfile.present? && Chemotion::MolfilePolymerSupport.has_polymers_list_tag?(molfile)
           molecule = find_or_create_molecule_for_polymer_molfile(molfile.to_s)
         end
         # Always use molfile if available (highest priority)
@@ -843,7 +844,7 @@ module Import
     # Mirrors logic in Import::ImportSamples#get_data_from_molfile.
     # @return [Molecule, nil] the molecule or nil if cleaned molfile is blank
     def find_or_create_molecule_for_polymer_molfile(raw_molfile)
-      cleaned = clean_molfile_for_inchikey(raw_molfile)
+      cleaned = Chemotion::MolfilePolymerSupport.clean_molfile_for_inchikey(raw_molfile)
       return nil if cleaned.blank?
 
       molfile_for_babel = cleaned.dup
@@ -870,29 +871,12 @@ module Import
 
     # Remove PolymersList, TextNode and other SDF blocks, then keep only CTAB (up to M  END).
     def clean_molfile_for_inchikey(raw_molfile)
-      return nil if raw_molfile.blank?
-
-      s = raw_molfile.to_s.force_encoding('UTF-8')
-      s = s.gsub(/>\s*<\s*PolymersList\s*>[\s\S]*?(?=\n\s*>\s*<\s|\z)/i, '')
-      s = s.gsub(/>\s*<\s*TextNode\s*>[\s\S]*?(?=\n\s*>\s*<\s|\z)/i, '')
-      sanitize_molfile_for_import(s)
+      Chemotion::MolfilePolymerSupport.clean_molfile_for_inchikey(raw_molfile)
     end
 
     # Keep only the CTAB (up to and including M END). Strip SDF blocks that can break Open Babel.
     def sanitize_molfile_for_import(molfile)
-      return molfile if molfile.blank?
-
-      molfile = molfile.to_s.force_encoding('UTF-8')
-      lines = molfile.lines
-      m_end_index = lines.index { |line| line.match?(/\s*M\s+END\s*/i) }
-      if m_end_index
-        lines[0..m_end_index].join.rstrip
-      elsif (idx = molfile.index(/\sM\s+END\s/i))
-        end_marker = molfile.match(/\sM\s+END\s/i)[0]
-        molfile[0..(idx + end_marker.length - 1)].rstrip
-      else
-        molfile
-      end
+      Chemotion::MolfilePolymerSupport.keep_only_ctab(molfile)
     end
 
     # When Open Babel returns blank inchikey for a PolymersList molfile, create a molecule with a synthetic inchikey.

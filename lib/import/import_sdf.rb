@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'charlock_holmes'
+require Rails.root.join('lib/chemotion/molfile_polymer_support')
 
 class Import::ImportSdf < Import::ImportSamples
   attr_reader  :collection_id, :current_user_id, :processed_mol,
@@ -293,7 +294,7 @@ class Import::ImportSdf < Import::ImportSamples
 
     babel_info_array.map.with_index do |babel_info, i|
       mf = molfiles[i]
-      if mf.to_s.include?('> <PolymersList>')
+      if Chemotion::MolfilePolymerSupport.has_polymers_list_tag?(mf.to_s)
         find_or_create_polymer_molfile_entry(mf.to_s.strip, babel_info)
       elsif babel_info[:inchikey].present?
         m = Molecule.find_or_create_by_molfile(mf, babel_info)
@@ -357,9 +358,9 @@ class Import::ImportSdf < Import::ImportSamples
   # keeps full molfile and uses polymer find/create + SVG reprocess; otherwise sanitizes and finds by inchikey.
   def molecule_and_molfile_for_row(molfile)
     raw = molfile.to_s.strip
-    if raw.include?('> <PolymersList>')
+    if Chemotion::MolfilePolymerSupport.has_polymers_list_tag?(raw)
       raw = unescape_textnode_octal_in_molfile(raw)
-      cleaned = clean_molfile_for_inchikey(raw)
+      cleaned = Chemotion::MolfilePolymerSupport.clean_molfile_for_inchikey(raw)
       return [nil, nil, nil] if cleaned.blank?
 
       molfile_for_babel = cleaned.dup

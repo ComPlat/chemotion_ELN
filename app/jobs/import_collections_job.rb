@@ -5,11 +5,11 @@ class ImportCollectionsJob < ApplicationJob
 
   after_perform do
     if @success
-      labels = @created_collection_labels.is_a?(Array) ? @created_collection_labels.join(', ') : ''
+      col_labels = @created_collection_labels.is_a?(Array) ? @created_collection_labels.join(', ') : ''
       Message.create_msg_notification(
         channel_subject: Channel::COLLECTION_ZIP,
         message_from: @user_id,
-        data_args: { col_labels: '', operation: 'import', expires_at: nil },
+        data_args: { col_labels: col_labels, operation: 'import', expires_at: nil },
         url: @log_file_path,
         autoDismiss: 5,
       )
