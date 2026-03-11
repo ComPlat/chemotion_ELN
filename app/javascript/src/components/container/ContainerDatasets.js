@@ -84,6 +84,43 @@ export default class ContainerDatasets extends Component {
         container.children[datasetId] = datasetContainer;
       }
     });
+
+    // Check and reassign preferred thumbnail if the current one was deleted
+    this.reassignPreferredThumbnailIfNeeded(container);
+  };
+
+  reassignPreferredThumbnailIfNeeded = (analysisContainer) => {
+    // Get all saved, non-deleted attachment IDs from all datasets (exclude is_new which don't have server IDs yet)
+    const allAttachments = analysisContainer?.children?.flatMap(
+      (child) => (child.attachments || [])
+    ) || [];
+    const savedAttachments = allAttachments.filter((att) => !att.is_deleted && !att.is_new);
+    const validAttachmentIds = savedAttachments
+      .map((att) => Number(att.id))
+      .filter((id) => !Number.isNaN(id) && id > 0);
+
+    const currentPreferred = analysisContainer?.extended_metadata?.preferred_thumbnail;
+    const preferredIsValid = currentPreferred
+      && validAttachmentIds.includes(Number(currentPreferred));
+
+    if (!preferredIsValid) {
+      // Need to reassign
+      if (validAttachmentIds.length > 0) {
+        // Assign first available
+        analysisContainer.extended_metadata = {
+          ...analysisContainer.extended_metadata,
+          preferred_thumbnail: String(validAttachmentIds[0]),
+        };
+      } else {
+        // No attachments available - clear preferred
+        analysisContainer.extended_metadata = {
+          ...analysisContainer.extended_metadata,
+          preferred_thumbnail: null,
+        };
+      }
+      // Propagate change to parent
+      this.props.onChange(analysisContainer);
+    }
   };
 
   handleModalHide() {

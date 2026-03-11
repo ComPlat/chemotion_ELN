@@ -59,10 +59,12 @@ const getAttachmentFromContainer = (container) => {
  */
 const fetchImageSrcByAttachmentId = async (id) => {
   try {
-    if (!id) {
+    // Validate that id is a valid positive number
+    const numericId = Number(id);
+    if (!id || Number.isNaN(numericId) || numericId <= 0) {
       return '/images/wild_card/no_attachment.svg';
     }
-    const response = await AttachmentFetcher.fetchThumbnail({ id });
+    const response = await AttachmentFetcher.fetchThumbnail({ id: numericId });
     return `data:image/png;base64,${response}`;
   } catch {
     return '/images/wild_card/not_available.svg';
