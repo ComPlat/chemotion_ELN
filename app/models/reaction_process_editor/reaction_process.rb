@@ -76,10 +76,10 @@ module ReactionProcessEditor
       update({ automation_ordinal: 0 }) unless automation_ordinal
     end
 
-    def ord_filename
+    def clap_filename
       model = reaction || sample
 
-      "#{Time.zone.today.iso8601}-#{model.class}-#{model.id}-#{model.short_label}.kit-ord.json"
+      "#{Time.zone.today.iso8601}-#{model.class}-#{model.id}-#{model.short_label}.clap"
     end
   end
 end

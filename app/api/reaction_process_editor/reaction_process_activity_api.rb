@@ -101,6 +101,8 @@ module ReactionProcessEditor
           )
 
           status 204
+        rescue StandardError
+          error!('422 Unprocessable Entity', 422)
         end
       end
     end
