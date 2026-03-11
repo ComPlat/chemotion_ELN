@@ -8,6 +8,7 @@ module Import
   # It processes the data and tracks any unprocessable entries.
   class ImportSamples
     attr_reader :xlsx, :sheet, :component_sheet, :header, :component_header, :sample_components_data,
+                :composition_table_data,
                 :mandatory_check, :mandatory_component_check, :rows,
                 :unprocessable, :processed, :collection_id, :current_user_id, :file_name
 
@@ -30,6 +31,7 @@ module Import
 
       @sample_with_components = []
       @sample_components_data = {}
+      @composition_table_data = {}
     end
 
     def process
@@ -43,6 +45,7 @@ module Import
         check_required_fields
         check_required_component_fields
         parse_sample_components_data
+        parse_composition_table_data
       rescue StandardError => e
         return error_required_fields(e.message)
       end
@@ -180,6 +183,44 @@ module Import
         if valid_component_data?(component_attributes)
           @sample_components_data[current_sample_uuid] << component_attributes
         end
+      end
+    end
+
+    # Parses the sample_composition_table sheet (when present) into @composition_table_data.
+    # Keys: sample uuid (from the sheet). Values: array of hashes with :source, :weight_ratio_exp, :molar_mass.
+    # Column names match Export::ExportExcel (COMPOSITION_SAMPLE_KEYS + COMPOSITION_COMP_HEADERS).
+    def parse_composition_table_data
+      return unless xlsx.sheets.include?('sample_composition_table')
+
+      comp_sheet = xlsx.sheet('sample_composition_table')
+      headers = comp_sheet.row(1).map { |h| h.to_s.strip }
+      sample_uuid_idx = headers.index { |h| h.to_s.downcase == 'sample uuid' }
+      source_idx       = headers.index { |h| h.to_s.downcase == 'source' }
+      weight_ratio_idx = headers.index { |h| h.to_s.downcase.include?('weight ratio exp') }
+      molar_mass_idx   = headers.index { |h| h.to_s.downcase.include?('molar mass') }
+
+      return if sample_uuid_idx.nil? || source_idx.nil?
+
+      current_sample_uuid = nil
+      (2..comp_sheet.last_row).each do |row_index|
+        row_values = comp_sheet.row(row_index)
+        row_values = row_values.fill(nil, row_values.length...headers.length) if row_values.length < headers.length
+        uuid_cell = row_values[sample_uuid_idx].to_s.strip
+
+        current_sample_uuid = uuid_cell if uuid_cell.present?
+        next if current_sample_uuid.blank?
+
+        source_val = source_idx ? row_values[source_idx].to_s.strip : nil
+        weight_ratio_val = weight_ratio_idx && row_values[weight_ratio_idx].present? ? row_values[weight_ratio_idx].to_s.to_f : nil
+        molar_mass_val   = molar_mass_idx && row_values[molar_mass_idx].present? ? row_values[molar_mass_idx].to_s.to_f : nil
+        next if source_val.blank? && weight_ratio_val.nil? && molar_mass_val.nil?
+
+        @composition_table_data[current_sample_uuid] ||= []
+        @composition_table_data[current_sample_uuid] << {
+          source: source_val.presence,
+          weight_ratio_exp: weight_ratio_val,
+          molar_mass: molar_mass_val,
+        }
       end
     end
 
@@ -466,8 +507,10 @@ module Import
 
     def handle_sample_fields(sample, db_column, value)
       case db_column
-      when 'cas', 'refractive_index', 'form', 'color', 'solubility', 'inventory_label'
+      when 'cas', 'refractive_index', 'form', 'solubility', 'inventory_label'
         handle_xref_fields(sample, db_column, value)
+      when 'height', 'width', 'length', 'state', 'color', 'storage_condition'
+        handle_default_fields(sample, db_column, value)
       when 'mn.name'
         assign_molecule_name_id(sample, value)
       when 'flash_point'
@@ -517,7 +560,14 @@ module Import
     def process_fields(sample, map_column, field, row, molecule)
       array = ["\"cas\""]
       conditions = map_column.nil? || array.include?(map_column[1])
-      db_column = conditions ? field : (map_column[0].sub('s.', '').delete!('"') || map_column[0].sub('s.', ''))
+      # Hierarchical fields use COALESCE in export map; use simple attribute name for import
+      hierarchical_db_columns = {
+        'height' => 'height', 'width' => 'width', 'length' => 'length',
+        'state' => 'state', 'color' => 'color', 'storage_condition' => 'storage_condition'
+      }.freeze
+      field_normalized = field.to_s.strip.downcase.gsub(/\s+/, '_')
+      db_column = hierarchical_db_columns[field_normalized]
+      db_column ||= (conditions ? field : (map_column[0].sub('s.', '').delete!('"') || map_column[0].sub('s.', '')))
       if field == 'molecule name' && row[field].present?
         molecule.create_molecule_name_by_user(row[field], current_user_id)
       end
@@ -527,7 +577,10 @@ module Import
 
     def process_value(value, db_column)
       fields_with_units = %w[density molarity flash_point].freeze
-      fields_with_float_values = %w[real_amount_value target_amount_value purity refractive_index molecular_mass].freeze
+      fields_with_float_values = %w[
+        real_amount_value target_amount_value purity refractive_index molecular_mass
+        height width length
+      ].freeze
       comparison_values = %w[melting_point boiling_point].freeze
       if comparison_values.include?(db_column)
         format_to_interval_syntax(value)
@@ -603,6 +656,11 @@ module Import
         color
         solubility
         inventory_label
+        height
+        width
+        length
+        state
+        storage_condition
       ].freeze
       return unless included_fields.include?(db_column) || additional_columns.include?(db_column)
 
@@ -638,10 +696,17 @@ module Import
       sample.inventory_sample = true if @import_type == 'chemical'
       chemical = ImportChemicals.build_chemical(row, header) if @import_type == 'chemical'
       sample.sample_type = Sample::SAMPLE_TYPE_MIXTURE if sample_has_components?(row)
+      # Set Hierarchical sample type from row so height/width/length/state/color/storage_condition apply
+      sample_type_val = row_value_case_insensitive(row, 'sample type').to_s.strip
+      if sample_type_val.present? &&
+         (sample_type_val.casecmp('hierarchicalmaterial').zero? || sample_type_val.casecmp('hierarchical').zero?)
+        sample.sample_type = Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL
+      end
       sample.save!
       save_chemical(chemical, sample) if @import_type == 'chemical'
       handle_sample_components(row, sample) if sample_has_components?(row)
       create_polymer_residue_if_needed(sample, row)
+      apply_composition_table_data(sample, row)
       processed.push(sample)
     end
 
@@ -663,6 +728,49 @@ module Import
 
       sample.residues.create!(residue_type: 'polymer', custom_info: custom_info)
     rescue StandardError => _e
+    end
+
+    # Applies parsed sample_composition_table data to the sample's HierarchicalMaterial components.
+    # Updates existing HM components by index; creates new HM components (with dummy molecule) if more rows than components.
+    def apply_composition_table_data(sample, sample_row)
+      sample_uuid = row_value_case_insensitive(sample_row, 'sample uuid').to_s.strip
+      return if sample_uuid.blank?
+
+      composition_rows = @composition_table_data.with_indifferent_access[sample_uuid]
+      return if composition_rows.blank?
+
+      # If we're adding HM components from composition table only, set sample type to HierarchicalMaterial
+      if sample.sample_type != Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL &&
+         sample.sample_type != Sample::SAMPLE_TYPE_MIXTURE
+        sample.update!(sample_type: Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL)
+      end
+
+      hm_components = sample.components.where(name: Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL).order(:position).to_a
+      dummy_molecule = nil
+
+      composition_rows.each_with_index do |row_data, idx|
+        props = {
+          'source' => row_data[:source].to_s.presence,
+          'weight_ratio_exp' => row_data[:weight_ratio_exp],
+          'molar_mass' => row_data[:molar_mass],
+        }.compact
+
+        if (comp = hm_components[idx])
+          comp.update!(component_properties: comp.component_properties.merge(props))
+        else
+          dummy_molecule ||= Molecule.find_or_create_dummy
+          sample.components.create!(
+            name: Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL,
+            position: idx,
+            component_properties: {
+              'source' => row_data[:source].to_s.presence,
+              'weight_ratio_exp' => row_data[:weight_ratio_exp],
+              'molar_mass' => row_data[:molar_mass],
+              'molecule_id' => dummy_molecule.id,
+            }.compact,
+          )
+        end
+      end
     end
 
     def sample_has_components?(sample_row)
