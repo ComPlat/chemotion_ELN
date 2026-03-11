@@ -193,7 +193,7 @@ module Chemotion
       h_statements
     end
 
-    def self.construct_p_statements(p_phrases, vendor = nil)
+    def self.construct_p_statements(p_phrases)
       p_statements = {}
       p_phrases_hash = JSON.parse(File.read('./public/json/precautionaryPhrases.json'))
 
@@ -253,16 +253,28 @@ module Chemotion
                     .xpath("//*[contains(@class, '#{search_string}')]")
     end
 
+    def self.extract_h_text_from_array(safety_array)
+      safety_array.find { |t| t =~ /H\d{1,3}/ } || safety_array.find { |t| t.to_s.downcase.include?('hazard') } || ''
+    end
+
+    def self.extract_p_text_from_array(safety_array)
+      safety_array.find { |t| t =~ /P\d{1,3}/ } || safety_array.find { |t| t.to_s.downcase.include?('precaution') } || ''
+    end
+
+    def self.extract_pictograms_from_array(safety_array)
+      pictogram_text = safety_array.find { |t| t =~ /pictogram|GHS|ghs|,/i } || ''
+      pictogram_text.to_s.split(',').map(&:strip).reject(&:empty?)
+    end
+
+    private_class_method :extract_h_text_from_array, :extract_p_text_from_array, :extract_pictograms_from_array
+
     def self.safety_phrases_merck(product_link)
       safety_section = safety_section(product_link)
       safety_array = safety_section.children.reject { |i| i.text.empty? }.map(&:text)
-      # Find hazard and precautionary text by looking for H/P codes or keywords
-      h_text = safety_array.find { |t| t =~ /H\d{1,3}/ } || safety_array.find { |t| t.downcase.include?('hazard') }
-      p_text = safety_array.find { |t| t =~ /P\d{1,3}/ } || safety_array.find { |t| t.downcase.include?('precaution') }
 
-      # Locate pictogram text (comma-separated) by heuristics
-      pictogram_text = safety_array.find { |t| t =~ /pictogram|GHS|ghs|,/i } || ''
-      pictograms = pictogram_text.to_s.split(',').map(&:strip).reject(&:empty?)
+      h_text = extract_h_text_from_array(safety_array)
+      p_text = extract_p_text_from_array(safety_array)
+      pictograms = extract_pictograms_from_array(safety_array)
 
       { 'h_statements' => construct_h_statements(h_text),
         'p_statements' => construct_p_statements(p_text),
