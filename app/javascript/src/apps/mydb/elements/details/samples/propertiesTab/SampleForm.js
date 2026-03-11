@@ -5,7 +5,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {
   Button, Form, InputGroup,
-  OverlayTrigger, Tooltip, Row, Col,
+  OverlayTrigger, Tooltip, Popover, Row, Col,
   ButtonGroup
 } from 'react-bootstrap';
 import { Select, CreatableSelect } from 'src/components/common/Select';
@@ -170,13 +170,14 @@ export default class SampleForm extends React.Component {
   }
 
   handleMixtureAmountLChanged(e, sample) {
-    // Your specific function logic here
-    // For example, you can call sample.setTotalMixtureVolume or any other custom logic
+    const { handleSampleChanged } = this.props;
+
     const totalVolume = e && (e.value || e.value === 0) ? e.value : e;
     sample.setTotalMixtureVolume(totalVolume);
 
-    // Call the standard field change handler
-    this.handleFieldChanged('amount_l', e);
+    // Trigger React re-render by calling handleSampleChanged directly
+    // This ensures the UI updates to show the new concentration values
+    handleSampleChanged(sample);
   }
 
   handleMixtureComponentChanged(sample) {
@@ -353,14 +354,24 @@ export default class SampleForm extends React.Component {
     let moleculeNames = newMolecule ? [] : [mno];
     if (sample && mnos) { moleculeNames = moleculeNames.concat(mnos); }
 
-    const formattedOptions = moleculeNames.filter(name => name).map(name => {
+    const formattedOptions = moleculeNames.filter((name) => name).map((name) => {
       if (typeof name === 'string') {
-        return { label: name, value: name };
+        return { label: name, value: name, type: '' };
       }
       return {
         label: name.label || name.value || name.name || String(name),
-        value: name.value || name.label || name.name || String(name)
+        value: name.value || name.label || name.name || String(name),
+        type: name.desc || ''
       };
+    }).filter((name, _, names) => {
+      if (name.type === 'alternate' || name.type?.startsWith('defined by user')) {
+        const hasMainVersion = names.some(
+          (other) => other.label === name.label
+            && !(other.type === 'alternate' || other.type?.toLowerCase().startsWith('defined by user'))
+        );
+        return !hasMainVersion;
+      }
+      return true;
     });
 
     return (
@@ -379,6 +390,12 @@ export default class SampleForm extends React.Component {
               const value = selectedOption ? selectedOption.label : '';
               this.setState({ moleculeNameInputValue: value });
               this.updateMolName(selectedOption);
+            }}
+            formatOptionLabel={(option, { context }) => {
+              if (context === 'menu') {
+                return option.type ? `${option.label}(${option.type})` : option.label;
+              }
+              return option.label;
             }}
             onInputChange={(inputValue, { action }) => {
               if (action === 'input-change') {
@@ -421,7 +438,16 @@ export default class SampleForm extends React.Component {
 
   fetchNextInventoryLabel() {
     const { currentCollection } = UIStore.getState();
-    if(this.matchSelectedCollection(currentCollection)) {
+    const message = (
+      <div className="text-start">
+        <p className="mb-1">Could not find next inventory label.</p>
+        <p className="mb-1">
+          Please define an inventory label for this collection in the Account &amp; Profile page.
+          Select the collection and assign a name, prefix, and starting counter.
+        </p>
+      </div>
+    );
+    if (this.matchSelectedCollection(currentCollection)) {
       InventoryFetcher.fetchInventoryOfCollection(currentCollection.id)
         .then((result) => {
           if (result && result.prefix && result.counter !== undefined) {
@@ -430,8 +456,7 @@ export default class SampleForm extends React.Component {
             this.handleFieldChanged('xref_inventory_label', value);
           } else {
             NotificationActions.add({
-              message: 'Could not find next inventory label. '
-                + 'Please assign a prefix and a counter for a valid collection first.',
+              message,
               level: 'error'
             });
           }
@@ -633,16 +658,89 @@ export default class SampleForm extends React.Component {
   }
 
   /**
+   * Renders the info button for inventory label with tooltip explanation.
+   * @returns {JSX.Element} The rendered info button
+   */
+  inventoryLabelInfoButton() {
+    const infoPopover = (
+      <Popover id="inventoryLabelInfoPopover">
+        <Popover.Header as="h6">How to define a sample inventory label for a collection</Popover.Header>
+        <Popover.Body className="text-start">
+          <ul className="ps-3 mb-3">
+            <li>
+              Configure the Inventory Label settings by navigating to
+              <strong> the Sample Inventory Label section in the Account &amp; Profile page</strong>
+              .
+            </li>
+            <li>
+              Select one or multiple collections to assign a name, prefix, and starting counter.
+            </li>
+            <li>
+              New samples will automatically generate a label with the next available counter number.
+            </li>
+            <li>
+              For existing samples, click the
+              <strong> Auto-Generate Inventory Label button </strong>
+              next to this field.
+            </li>
+          </ul>
+          <a
+            href="https://chemotion.net/docs/eln/ui/first_steps#define-a-sample-inventory-label-and-adjust-the-counter-inventory-label-for-a-collection"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="d-block mt-2"
+          >
+            Learn more in the documentation
+          </a>
+        </Popover.Body>
+      </Popover>
+    );
+
+    return (
+      <OverlayTrigger
+        trigger="hover"
+        placement="top"
+        overlay={infoPopover}
+        delay={{ show: 250, hide: 650 }}
+        rootClose
+      >
+        <span
+          tabIndex={0}
+          role="button"
+          aria-label="Information about sample inventory label configuration"
+        >
+          <i className="ms-1 fa fa-info-circle" />
+        </span>
+      </OverlayTrigger>
+    );
+  }
+
+  /**
    * Renders the inventory label input section with the text input and next label button.
    * @param {Object} sample - The sample object
    * @returns {JSX.Element} The rendered inventory label section
    */
   inventoryLabelSection(sample) {
+    const updateValue = (sample.xref ? sample.xref.inventory_label : '') || '';
+
     return (
-      <>
-        {this.textInput(sample, 'xref_inventory_label', 'Inventory label')}
-        {this.nextInventoryLabel(sample)}
-      </>
+      <Form.Group className="w-100">
+        <Form.Label>
+          Inventory label
+          {this.inventoryLabelInfoButton()}
+        </Form.Label>
+        <Form.Control
+          id="txinput_xref_inventory_label"
+          type="text"
+          value={updateValue}
+          onChange={(e) => {
+            const newValue = e.target.value;
+            this.handleFieldChanged('xref_inventory_label', newValue);
+          }}
+          disabled={!sample.can_update}
+          readOnly={!sample.can_update}
+        />
+      </Form.Group>
     );
   }
 
@@ -701,8 +799,13 @@ export default class SampleForm extends React.Component {
     const value = !isNaN(sample[field]) ? sample[field] : null;
     const metricPrefixes = ['m', 'n', 'u'];
     const disableFieldsForGasTypeSample = ['amount_l', 'amount_g', 'amount_mol'];
-    const gasSample = sample.gas_type === 'gas' && disableFieldsForGasTypeSample.includes(field);
-    const feedstockSample = sample.gas_type === 'feedstock' && field === 'amount_g';
+    const gasSample = sample.isGas() && disableFieldsForGasTypeSample.includes(field);
+    const feedstockSample = sample.isFeedstock() && field === 'amount_g';
+    const weightPercentageSample = sample.weight_percentage > 0;
+    const overlayMessage = weightPercentageSample
+      ? 'Amount field is disabled for samples that belong to reactions with weight percentage. '
+        + 'To change the amount, please edit the material sample amount field using weight percentage field in the reaction scheme tab and save the reaction.'
+      : null;
     let metric;
     if (unit === 'l') {
       metric = prefixes[1];
@@ -759,6 +862,7 @@ export default class SampleForm extends React.Component {
         onMetricsChange={(e) => this.handleMetricsChange(e)}
         id={`numInput_${field}`}
         showInfoTooltipTotalVol={showInfoTooltipTotalVol}
+        overlayMessage={overlayMessage}
       />
     );
   }
@@ -906,12 +1010,12 @@ export default class SampleForm extends React.Component {
    */
   totalMixtureMass() {
     const { sample } = this.props;
-    const massG = sample.amount_g || sample.total_mixture_mass_g;
+    const massG = sample.amount_g || sample.total_mixture_mass_g || 0;
 
     return (
       <div>
         <NumeralInputWithUnitsCompo
-          value={massG || 0}
+          value={massG}
           unit="g"
           label="Total mixture mass"
           metricPrefix="m"
@@ -927,7 +1031,8 @@ export default class SampleForm extends React.Component {
   }
 
   sampleAmount(sample) {
-    const isDisabled = !sample.can_update;
+    const belongsToWeightPercentageReaction = sample.weight_percentage > 0;
+    const isDisabled = !sample.can_update || belongsToWeightPercentageReaction;
     const volumeBlocked = !sample.has_density && !sample.has_molarity;
 
     return (
@@ -995,18 +1100,6 @@ export default class SampleForm extends React.Component {
     );
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  assignAmountType(reaction, sample) {
-    // eslint-disable-next-line no-underscore-dangle
-    reaction._products.map((s) => {
-      if (s.id === sample.id) {
-        // eslint-disable-next-line no-param-reassign
-        sample.amountType = 'real';
-      }
-      return sample;
-    });
-  }
-
   /**
    * Renders the sample type selection input.
    * Allows the user to select the type of sample (e.g., Mixture, Micromolecule).
@@ -1056,17 +1149,13 @@ export default class SampleForm extends React.Component {
   }
 
   render() {
-    const { enableSampleDecoupled, sample = {}, customizableField, handleSampleChanged } = this.props;
+    const {
+      enableSampleDecoupled, sample = {}, customizableField, handleSampleChanged
+    } = this.props;
     const isPolymer = (sample.molfile || '').indexOf(' R# ') !== -1;
     const isDisabled = !sample.can_update;
     const polyDisabled = isPolymer || isDisabled;
-    const molarityBlocked = isDisabled ? true : this.state.molarityBlocked;
     const { selectedSampleType } = this.state;
-
-    if (sample.belongTo !== undefined && sample.belongTo !== null) {
-      // assign amount type for product samples of reaction to real
-      this.assignAmountType(sample.belongTo, sample);
-    }
 
     return (
       <Form>
@@ -1095,6 +1184,7 @@ export default class SampleForm extends React.Component {
                 <Col>{this.textInput(sample, 'external_label', 'External label')}</Col>
                 <Col className="d-flex align-items-end">
                   {this.inventoryLabelSection(sample)}
+                  {this.nextInventoryLabel(sample)}
                 </Col>
                 <Col>{this.textInput(sample, 'location', 'Location')}</Col>
                 <Col xs={2}>{this.drySolventCheckbox(sample)}</Col>
@@ -1175,6 +1265,7 @@ export default class SampleForm extends React.Component {
                 </Col>
                 <Col md={4} className="d-flex align-items-end">
                   {this.inventoryLabelSection(sample)}
+                  {this.nextInventoryLabel(sample)}
                 </Col>
               </Row>
               <Row className="align-items-end mb-4">
@@ -1194,7 +1285,7 @@ export default class SampleForm extends React.Component {
 
         {selectedSampleType?.value === 'Mixture' && (
           <>
-            <br/>
+            <br />
             <h5>Mixture components:</h5>
             <Row className="mb-4 g-2">
               <Col xs={12} sm={6} lg={3}>

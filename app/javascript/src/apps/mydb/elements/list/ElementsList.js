@@ -215,9 +215,9 @@ export default class ElementsList extends React.Component {
       <>
         {UIStore.getState().currentSearchByID && (
           <Button
-            variant="info"
+            variant="warning"
             onClick={() => this.handleRemoveSearchResult(this.context.search)}
-            className="w-100 p-3 mb-3 text-start fs-5"
+            className="w-100 py-2 px-3 mb-3 text-start fs-5"
           >
             Remove search result
           </Button>

@@ -6,8 +6,11 @@ module Entities
     expose :device_id
     expose :name
     expose :short_label
-    expose :device_type
-    expose :device_type_detail
+    expose :device_type_name
+    expose :device_type_id
+    expose :device_type_id_type
+    expose :device_class
+    expose :device_class_detail
     expose :operation_mode
     expose :vendor_device_name
     expose :vendor_device_id
@@ -24,6 +27,13 @@ module Entities
     expose :version_doi_url
     expose :version_characterization
     expose :operators
+    expose :owner_institution
+    expose :owner_email
+    expose :owner_id
+    expose :owner_id_type
+    expose :inventory_id
+    expose :alternative_identifier
+    expose :vendor_id_type
     expose :university_campus
     expose :institute
     expose :building

@@ -91,18 +91,19 @@ export default class GenericElDetails extends Component {
     ElementStore.unlisten(this.onChangeElement);
   }
 
-  handleElChanged(el) {
+  handleElChanged(el, cb) {
     const genericEl = el;
     genericEl.changed = true;
-    this.setState({ genericEl });
+    this.setState({ genericEl }, cb);
   }
 
-  handleGenericElChanged(el) {
+  handleGenericElChanged(el, cb) {
     const genericEl = el;
     genericEl.changed = true;
     this.setState({ genericEl }, () => {
       // ElementActions.opGenericAnalysis(el);
       renderFlowModal(genericEl, false);
+      if (typeof cb === 'function') cb();
     });
   }
 
@@ -114,7 +115,8 @@ export default class GenericElDetails extends Component {
 
   handleRetrieveRevision(revision, cb) {
     const { genericEl } = this.state;
-    genericEl.properties = revision;
+    genericEl.properties = revision.properties;
+    genericEl.metadata = revision.metadata;
     genericEl.changed = true;
     this.setState({ genericEl }, cb);
   }
@@ -142,12 +144,9 @@ export default class GenericElDetails extends Component {
     // eslint-disable-next-line react/destructuring-assignment
     this.context.attachmentNotificationStore.clearMessages();
 
-    genericEl.name = genericEl.name.trim();
-    // filter is_deleted analysis
-    const { container } = genericEl;
+    el.name = el.name.trim();
 
-    let ais =
-      (container && container.children && container.children[0].children) || [];
+    let ais = el.analysisContainers() || [];
     ais = ais
       .filter((x) => !x.is_deleted)
       .map((x, i) => {
@@ -158,16 +157,16 @@ export default class GenericElDetails extends Component {
         }
         return x.id;
       });
-    (Object.keys(genericEl.properties.layers) || {}).forEach((key) => {
-      if (genericEl.properties.layers[key].ai) {
-        genericEl.properties.layers[key].ai = genericEl.properties.layers[
+    (Object.keys(el.properties.layers) || {}).forEach((key) => {
+      if (el.properties.layers[key].ai) {
+        el.properties.layers[key].ai = el.properties.layers[
           key
         ].ai.filter((x) => ais.includes(x));
       } else {
-        genericEl.properties.layers[key].ai = [];
+        el.properties.layers[key].ai = [];
       }
-      genericEl.properties.layers[key].fields = (
-        genericEl.properties.layers[key].fields || []
+      el.properties.layers[key].fields = (
+        el.properties.layers[key].fields || []
       ).map((f) => {
         const field = f;
         if (
@@ -180,13 +179,13 @@ export default class GenericElDetails extends Component {
         return field;
       });
     });
-    if (genericEl && genericEl.isNew) {
-      ElementActions.createGenericEl(genericEl);
+    if (el && el.isNew) {
+      ElementActions.createGenericEl(el);
     } else {
-      ElementActions.updateGenericEl(genericEl, closeView);
+      ElementActions.updateGenericEl(el, closeView);
     }
-    if (genericEl.is_new || closeView) {
-      DetailActions.close(genericEl, true);
+    if (el.is_new || closeView) {
+      DetailActions.close(el, true);
     }
     return true;
   }
@@ -554,6 +553,7 @@ export default class GenericElDetails extends Component {
               type={genericEl.type}
               availableTabs={Object.keys(tabContents)}
               onTabPositionChanged={this.onTabPositionChanged}
+              openedFromCollectionId={this.props.openedFromCollectionId}
             />
             <Tabs
               activeKey={activeTab}
@@ -571,6 +571,7 @@ export default class GenericElDetails extends Component {
 
 GenericElDetails.propTypes = {
   genericEl: PropTypes.object,
+  openedFromCollectionId: PropTypes.number,
 };
 
 GenericElDetails.defaultProps = {

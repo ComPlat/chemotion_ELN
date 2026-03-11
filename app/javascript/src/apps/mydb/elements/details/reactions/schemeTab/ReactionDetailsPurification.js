@@ -11,6 +11,7 @@ import Sample from 'src/models/Sample';
 import { observationPurification, solventsTL } from 'src/utilities/reactionPredefined';
 import { permitOn } from 'src/components/common/uis';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
+import { EditUserLabels } from 'src/components/UserLabels';
 
 function dummy() { return true; }
 
@@ -25,11 +26,13 @@ export default class ReactionDetailsPurification extends Component {
   }
 
   handleOnReactionChange(reaction) {
-    this.props.onReactionChange(reaction);
+    const { onReactionChange } = this.props;
+
+    onReactionChange(reaction);
   }
 
   handlePurificationChange(selected) {
-    if (selected.length == 0) {
+    if (selected.length === 0) {
       return this.handleMultiselectChange('purification', []);
     }
 
@@ -144,6 +147,9 @@ export default class ReactionDetailsPurification extends Component {
                   />
                 ) : <QuillViewer value={reaction.observation} />
               }
+            </div>
+            <div className="mx-0 mt-2">
+              <EditUserLabels element={reaction} fnCb={this.handleOnReactionChange} />
             </div>
             <PrivateNoteElement element={reaction} disabled={!reaction.can_update} />
           </Col>

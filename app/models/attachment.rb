@@ -16,6 +16,7 @@
 #  created_by_type :string
 #  created_for     :integer
 #  deleted_at      :datetime
+#  edit_state      :integer          default("not_editing")
 #  filename        :string
 #  filesize        :bigint
 #  folder          :string
@@ -35,14 +36,29 @@
 #  index_attachments_on_version                            (version) WHERE (deleted_at IS NULL)
 #
 
-# rubocop:disable Metrics/ClassLength
 class Attachment < ApplicationRecord
   has_logidze
   acts_as_paranoid
+  include AASM
   include AttachmentJcampAasm
   include AttachmentJcampProcess
   include Labimotion::AttachmentConverter
   include AttachmentUploader::Attachment(:attachment)
+
+  enum edit_state: { not_editing: 0, editing: 1 }
+
+  aasm(:document, column: :edit_state) do
+    state :not_editing, initial: true
+    state :editing
+
+    event :editing_start do
+      transitions from: :not_editing, to: :editing
+    end
+
+    event :editing_end do
+      transitions from: %i[editing not_editing], to: :not_editing
+    end
+  end
 
   attr_accessor :file_data, :file_path, :thumb_path, :thumb_data, :duplicated, :transferred
 
@@ -57,8 +73,6 @@ class Attachment < ApplicationRecord
   after_create :reload
   after_destroy :delete_file_and_thumbnail
   after_save :attach_file
-  # TODO: rm this during legacy store cleaning
-  # after_save :add_checksum, if: :new_upload
 
   belongs_to :attachable, polymorphic: true, optional: true
   has_one :report_template, dependent: :nullify
@@ -107,43 +121,6 @@ class Attachment < ApplicationRecord
     attachment_attacher.url if attachment_attacher.file.present?
   end
 
-  def abs_prev_path
-    store.prev_path
-  end
-
-  def store
-    Storage.new_store(self)
-  end
-
-  def old_store(old_store = storage_was)
-    Storage.old_store(self, old_store)
-  end
-
-  # TODO: rm this during legacy store cleaning
-  def add_checksum
-    self.checksum = Digest::MD5.hexdigest(read_file) if attachment_attacher.file.present?
-    update_column('checksum', checksum) # rubocop:disable Rails/SkipsModelValidations
-  end
-
-  # Rewrite read attribute for checksum
-  def checksum
-    # read_attribute(:checksum).presence || attachment['md5']
-    attachment && attachment['md5']
-  end
-
-  # TODO: to be handled by shrine
-  def reset_checksum
-    add_checksum
-    update_column('checksum', checksum) if checksum_changed? # rubocop:disable Rails/SkipsModelValidations
-  end
-
-  def regenerate_thumbnail
-    return unless filesize <= 50 * 1024 * 1024
-
-    store.regenerate_thumbnail
-    update_column('thumb', thumb) if thumb_changed? # rubocop:disable Rails/SkipsModelValidations
-  end
-
   # @desc return the associated element {instance of ResearchPlan, Sample,.. or User , or nil}
   # @return [ApplicationRecord, nil] the associated element through direct attachable association
   #   or indirectly through the containers association (Attachment -> Container -> {Element|User})
@@ -189,16 +166,12 @@ class Attachment < ApplicationRecord
     for_container? ? attachable : nil
   end
 
-  def update_research_plan!(c_id)
-    update!(attachable_id: c_id, attachable_type: 'ResearchPlan')
+  def checksum
+    attachment&.metadata&.fetch('md5', nil)
   end
 
-  def rewrite_file_data!
-    return if file_data.blank?
-
-    store.destroy
-    store.store_file
-    self
+  def update_research_plan!(c_id)
+    update!(attachable_id: c_id, attachable_type: 'ResearchPlan')
   end
 
   # Rewrite read attribute for filesize
@@ -253,13 +226,17 @@ class Attachment < ApplicationRecord
     )
   end
 
-  # @return [String] build annotation file name based on the original file name
   def annotated_filename
     return '' unless annotated?
 
     # NB: original tiff file are converted to png for the annotation background layer
     extension_of_annotation = content_type == 'image/tiff' ? '.png' : File.extname(filename)
     "#{File.basename(filename, '.*')}_annotated#{extension_of_annotation}"
+  end
+
+  def file_extension
+    extname = File.extname(filename.to_s)
+    extname && extname[1..]
   end
 
   def thumbnail_base64
@@ -277,20 +254,20 @@ class Attachment < ApplicationRecord
     base64_data ? "data:image/png;base64,#{base64_data}" : nil
   end
 
+  def editable_document?
+    return false if file_extension.blank?
+
+    available_extensions = Rails.configuration.editors&.available_extensions
+    return false if available_extensions.blank?
+
+    available_extensions.include?(file_extension.downcase)
+  end
+
   private
 
   def generate_key
     self.key = SecureRandom.uuid unless key
     self.storage = 'local'
-  end
-
-  # TODO: rm this during legacy store cleaning
-  def new_upload
-    storage == 'tmp'
-  end
-
-  def store_changed
-    !duplicated && storage_changed?
   end
 
   def transferred?
@@ -337,4 +314,3 @@ class Attachment < ApplicationRecord
       cannot be uploaded. File size must be less than #{Rails.configuration.shrine_storage.maximum_size} MB"
   end
 end
-# rubocop:enable Metrics/ClassLength

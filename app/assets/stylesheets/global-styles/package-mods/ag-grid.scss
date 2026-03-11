@@ -1,9 +1,31 @@
 .ag-theme-reaction-variations {
-    --ag-cell-horizontal-padding: 0 !important;
+  --ag-cell-horizontal-padding: 0 !important;
 }
 
 .ag-theme-reaction-variations .ag-body-horizontal-scroll {
-    position: absolute !important;
+  position: absolute !important;
+}
+
+.ag-theme-reaction-variations .ag-header-group-text,
+.ag-theme-reaction-variations .ag-header-cell-text {
+  &::before {
+    content: '';
+    position: relative;
+    display: inline-block;
+    margin-right: 3px;
+    width: 16px;
+    height: 16px;
+    @include drag-surface();
+    background-color: $chemstrap-blue-dull;
+    border: 3px solid $chemstrap-blue-dull;
+  }
+  &:hover::before {
+    cursor: all-scroll;
+  }
+}
+
+.ag-theme-reaction-variations .ag-root-wrapper {
+  padding: 5px;
 }
 
 .ag-theme-alpine .ag-layout-auto-height .ag-center-cols-viewport,

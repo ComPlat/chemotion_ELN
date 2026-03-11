@@ -519,6 +519,7 @@ class Sample < ApplicationRecord
   def attach_svg(svg = sample_svg_file)
     return if svg.blank?
 
+    svg = File.basename(svg) if svg.include?('/')
     svg_file_name = "#{SecureRandom.hex(64)}.svg"
 
     if /\ATMPFILE[0-9a-f]{64}.svg\z/.match?(svg)
@@ -618,28 +619,18 @@ class Sample < ApplicationRecord
   end
 
   def detect_amount_type
-    condition = real_amount_value.nil? || real_amount_unit.nil?
-    return { 'value' => target_amount_value, 'unit' => target_amount_unit } if condition
+    target_amount_condition = target_amount_value.nil? || target_amount_value.zero? || target_amount_unit.nil?
+    real_amount_condition = real_amount_value.nil? || real_amount_value.zero? || real_amount_unit.nil?
+
+    return { 'value' => target_amount_value, 'unit' => target_amount_unit } if real_amount_condition && !target_amount_condition
 
     { 'value' => real_amount_value, 'unit' => real_amount_unit }
   end
 
   def amount_mol
-    mol = nil
     amount_value = detect_amount_type['value']
-    case detect_amount_type['unit']
-    when 'l'
-      mol = if has_molarity
-              amount_value * molarity_value
-            else
-              amount_value * density * 1000 * purity / molecule.molecular_weight
-            end
-    when 'mol'
-      mol = amount_value
-    when 'g'
-      mol = (amount_value * purity) / molecule.molecular_weight
-    end
-    mol
+    unit = detect_amount_type['unit']
+    convert_amount_to_mol(amount_value, unit)
   end
 
   def update_inventory_label(inventory_label, collection_id = nil)
@@ -648,6 +639,57 @@ class Sample < ApplicationRecord
     return if inventory_label.present? && !inventory.match_inventory_counter(inventory_label)
 
     self['xref']['inventory_label'] = inventory.label if inventory.update_incremented_counter
+  end
+
+  # Compute number of moles from given amount and unit
+  # Supports units: 'l', 'mol', 'g'
+  # - 'l': if `has_molarity` uses molarity, otherwise uses density and molecular weight
+  # - 'mol': returns amount_value
+  # - 'g': converts mass to moles using molecular weight and purity
+  def convert_amount_to_mol(amount_value, unit)
+    amount = coerce_amount(amount_value)
+    return nil if amount.nil?
+
+    case unit
+    when 'l'
+      return convert_liters_to_moles(amount)
+    when 'mol'
+      return amount
+    when 'g'
+      return convert_grams_to_moles(amount)
+    end
+    nil
+  end
+
+  # Refreshes SVG from molfile and overwrites the file at svg_path.
+  # @param svg_path [String] Filename or path for the SVG (e.g. "TMPFILEabc.svg")
+  # @param molfile [String] The molfile to generate SVG from
+  # @return [Hash] { success:, filename:, error:, status: }
+  def self.refresh_smaple_svg(svg_path, molfile)
+    if molfile.blank? || svg_path.blank?
+      return { success: false, error: 'molfile and svg_path are required.', status: 400 }
+    end
+
+    filename = File.basename(svg_path)
+    return { success: false, error: 'Invalid filename', status: 400 } if filename.match?(%r{\.\.|/|\\})
+
+    target_path = Rails.public_path.join('images', 'samples', filename)
+    if File.file?(target_path)
+      existing_svg = File.read(target_path)
+      if existing_svg.include?('<image') || existing_svg.include?('epam-ketcher-ssc')
+        return { success: true, filename: filename }
+      end
+    end
+
+    svg = Molecule.svg_reprocess(nil, molfile)
+    return { success: false, error: 'Failed to generate SVG from molfile', status: 422 } if svg.blank?
+
+    FileUtils.mkdir_p(File.dirname(target_path))
+    File.write(target_path, svg)
+    { success: true, filename: filename }
+  rescue StandardError => e
+    Rails.logger.error("Sample.refresh_svg_content: Error refreshing SVG for #{svg_path}: #{e.message}")
+    { success: false, error: e.message, status: 500 }
   end
 
   private
@@ -817,6 +859,43 @@ class Sample < ApplicationRecord
     ).find_each do |material|
       material.update_gas_material(catalyst_mol_value)
     end
+  end
+
+  def coerce_amount(value)
+    return nil if value.nil?
+
+    amount = value.to_f
+    return nil unless amount&.finite?
+
+    amount
+  end
+
+  def convert_liters_to_moles(amount)
+    return convert_liters_using_molarity(amount) if has_molarity
+
+    return nil unless density_and_mw_valid?
+
+    amount * density.to_f * 1000 * purity.to_f / molecule.molecular_weight.to_f
+  end
+
+  def convert_liters_using_molarity(amount)
+    return nil unless molarity_value.present? && molarity_value.to_f.positive?
+
+    amount * molarity_value.to_f
+  end
+
+  def density_and_mw_valid?
+    density.present? && density.to_f.positive? && valid_molecular_weight?
+  end
+
+  def convert_grams_to_moles(amount)
+    return nil unless valid_molecular_weight?
+
+    (amount * purity.to_f) / molecule.molecular_weight.to_f
+  end
+
+  def valid_molecular_weight?
+    molecule&.molecular_weight.present? && molecule.molecular_weight.to_f.positive?
   end
 end
 # rubocop:enable Metrics/ClassLength

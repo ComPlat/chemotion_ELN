@@ -27,8 +27,15 @@
   padding-right: 0 !important;
 }
 
+.modal.modal-dialog-fullscreen {
+  width: 100vw;
+  height: 100vh;
+  top: 0;
+  left: 0;
+}
+
 .modal.draggable-modal-dialog.minimized, .modal.draggable-modal-dialog-xxxl.minimized {
-  height: 55px;
+  height: 66px;
   overflow: hidden;
 }
 
@@ -40,6 +47,13 @@
   transform: none !important;
   width: 90vw;
   height: 85vh;
+}
+
+.modal.modal-dialog-fullscreen .modal-dialog.draggable-modal.modal-xxxl {
+  transform: none !important;
+  width: 100vw;
+  height: 100vh;
+  max-width: none;
 }
 
 .modal-content.draggable-modal-content {
@@ -95,11 +109,11 @@
 }
 
 .draggable-modal-content .modal-header .btn-group .btn:hover {
-  color: var(--bs-gray-500);
+  background-color: $chemstrap-silicon-active1;
 }
 
 .draggable-modal-content .modal-header .btn-group .btn.active {
-  background-color: var(--bs-info);
+  background-color: $chemstrap-silicon-active1;
   color: var(--bs-gray-800);
 }
 
@@ -109,7 +123,11 @@
 
 .draggable-modal-content .modal-header .btn-group .btn .button-icon {
   margin-right: 0.25rem;
-  font-size: 1.5em;
+  font-size: 1.1em;
+}
+
+.draggable-modal-content .modal-header .btn-group .btn .icon-pubchem {
+  font-size: 1.1em;
 }
 
 .draggable-modal-content.calendar .modal-body {

@@ -24,6 +24,11 @@ function AnalysesContainer({ readonly }) {
 
   useEffect(() => {
     TextTemplateActions.fetchTextTemplates('deviceDescription');
+    const description = deviceDescription.container?.description;
+    const hasComment = description && description.trim() !== '';
+    if (hasComment && !deviceDescriptionsStore.analysis_comment_box) {
+      deviceDescriptionsStore.setAnalysisCommentBox(true);
+    }
   }, []);
 
   const addEmptyAnalysis = () => {
@@ -51,7 +56,7 @@ function AnalysesContainer({ readonly }) {
   const addButton = () => (
     <div className="add-button">
       <Button
-        size="xsm"
+        size="sm"
         variant="success"
         onClick={() => addEmptyAnalysis()}
         disabled={readonly}
@@ -134,7 +139,8 @@ function AnalysesContainer({ readonly }) {
               <ButtonToolbar className="gap-2">
                 <CommentButton
                   toggleCommentBox={deviceDescriptionsStore.toggleAnalysisCommentBox}
-                  size="xsm"
+                  isVisible={deviceDescriptionsStore.analysis_comment_box}
+                  size="sm"
                 />
                 {addButton()}
               </ButtonToolbar>
@@ -167,9 +173,23 @@ function AnalysesContainer({ readonly }) {
             )}
           </div>
         ) : (
-          <div className="d-flex justify-content-between align-items-center">
-            <p className="m-0">There are currently no Analyses.</p>
-            {addButton()}
+          <div>
+            <div className="d-flex justify-content-between align-items-center">
+              <p className="m-0">There are currently no Analyses.</p>
+              <ButtonToolbar className="gap-2">
+                <CommentButton
+                  toggleCommentBox={deviceDescriptionsStore.toggleAnalysisCommentBox}
+                  isVisible={deviceDescriptionsStore.analysis_comment_box}
+                  size="sm"
+                />
+                {addButton()}
+              </ButtonToolbar>
+            </div>
+            <CommentBox
+              isVisible={deviceDescriptionsStore.analysis_comment_box}
+              value={deviceDescription.container?.description || ''}
+              handleCommentTextChange={deviceDescriptionsStore.changeAnalysisComment}
+            />
           </div>
         )
       }

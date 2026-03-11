@@ -92,13 +92,13 @@ function FastInput({ fnHandle }) {
   };
 
   return (
-    <div className="w-50">
+    <div className="w-75">
       <OverlayTrigger
         placement="top"
         delayShow={500}
         overlay={<Tooltip id="_fast_create_btn">Fast create by CAS RN (with dashes) or SMILES</Tooltip>}
       >
-        <InputGroup size="xxsm" className="fast-input">
+        <InputGroup size="sm" className="fast-input">
           <Form.Control
             id="_fast_create_btn_split"
             type="text"

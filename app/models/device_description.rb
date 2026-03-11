@@ -7,6 +7,7 @@
 #  id                                   :bigint           not null, primary key
 #  access_comments                      :string
 #  access_options                       :string
+#  alternative_identifier               :string
 #  ancestry                             :string           default("/"), not null
 #  application_name                     :string
 #  application_version                  :string
@@ -17,8 +18,10 @@
 #  deleted_at                           :datetime
 #  description                          :text
 #  description_for_methods_part         :text
-#  device_type                          :string
-#  device_type_detail                   :string
+#  device_class                         :string
+#  device_class_detail                  :string
+#  device_type_id_type                  :string
+#  device_type_name                     :string
 #  general_tags                         :string           default([]), not null, is an Array
 #  helpers_uploaded                     :boolean          default(FALSE)
 #  infrastructure_assignment            :string
@@ -32,6 +35,9 @@
 #  ontologies                           :jsonb
 #  operation_mode                       :string
 #  operators                            :jsonb
+#  owner_email                          :string
+#  owner_id_type                        :string
+#  owner_institution                    :string
 #  planned_maintenance                  :jsonb
 #  policies_and_user_information        :text
 #  restart_after_planned_offline_period :text
@@ -44,6 +50,7 @@
 #  university_campus                    :string
 #  vendor_company_name                  :string
 #  vendor_device_name                   :string
+#  vendor_id_type                       :string
 #  vendor_url                           :string
 #  version_characterization             :text
 #  version_doi                          :string
@@ -57,6 +64,9 @@
 #  created_at                           :datetime         not null
 #  updated_at                           :datetime         not null
 #  device_id                            :integer
+#  device_type_id                       :string
+#  inventory_id                         :string
+#  owner_id                             :string
 #  vendor_device_id                     :string
 #  vendor_id                            :string
 #
@@ -69,7 +79,7 @@ class DeviceDescription < ApplicationRecord
   attr_accessor :collection_id, :is_split
 
   include ElementUIStateScopes
-  # include PgSearch::Model
+  include PgSearch::Model
   include Collectable
   include ElementCodes
   include AnalysisCodes
@@ -94,9 +104,81 @@ class DeviceDescription < ApplicationRecord
 
   accepts_nested_attributes_for :collections_device_descriptions
 
+  multisearchable against: %i[
+    name short_label vendor_device_name vendor_device_id serial_number vendor_company_name
+    searchable_general_tags searchable_ontology_labels
+  ]
+  pg_search_scope :search_by_device_description_name, against: :name
+  pg_search_scope :search_by_device_description_short_label, against: :short_label
+  pg_search_scope :search_by_device_description_vendor_device_name, against: :vendor_device_name
+  pg_search_scope :search_by_device_description_vendor_device_id, against: :vendor_device_id
+  pg_search_scope :search_by_device_description_serial_number, against: :serial_number
+  pg_search_scope :search_by_device_description_vendor_company_name, against: :vendor_company_name
+
+  pg_search_scope :search_by_device_description_general_tags, against: :general_tags
+  pg_search_scope :search_by_device_description_ontologies, against: :ontologies
+
+  pg_search_scope :search_by_substring, against: %i[
+    name short_label vendor_device_name vendor_device_id serial_number vendor_company_name general_tags ontologies
+  ], using: { trigram: { threshold: 0.0001 } }
+
   scope :includes_for_list_display, -> { includes(:tag) }
 
   after_create :set_short_label
+
+  def self.search_text_filter(term, field)
+    Arel.sql(
+      "COALESCE(array_agg(DISTINCT #{field}) FILTER (WHERE #{field} ILIKE '#{term}'), '{}')",
+    )
+  end
+
+  def self.search_array_filter(term, table, field)
+    Arel.sql(
+      'COALESCE(' \
+      "(SELECT array_agg(DISTINCT val) FROM #{table} s, unnest(s.#{field}) val WHERE val ILIKE '#{term}'), '{}'" \
+      ')',
+    )
+  end
+
+  def self.search_jsonb_label_filter(term, table, field)
+    Arel.sql(
+      'COALESCE(' \
+      "(SELECT array_agg(DISTINCT elem->'data'->>'label') FROM #{table} s " \
+      "CROSS JOIN jsonb_array_elements(s.#{field}) elem WHERE elem->'data'->>'label' ILIKE '#{term}'), '{}'" \
+      ')',
+    )
+  end
+
+  def self.by_search_fields(query)
+    term = "%#{sanitize_sql_like(query)}%"
+
+    json_expr = Arel.sql(
+      'jsonb_build_object(' \
+      "'device_description_name', #{search_text_filter(term, 'device_descriptions.name')}, " \
+      "'device_description_short_label', #{search_text_filter(term, 'device_descriptions.short_label')}, " \
+      "'device_description_vendor_device_name', #{search_text_filter(term,
+                                                                     'device_descriptions.vendor_device_name')}, " \
+      "'device_description_vendor_device_id', #{search_text_filter(term, 'device_descriptions.vendor_device_id')}, " \
+      "'device_description_serial_number', #{search_text_filter(term, 'device_descriptions.serial_number')}, " \
+      "'device_description_vendor_company_name', #{search_text_filter(term,
+                                                                      'device_descriptions.vendor_company_name')}, " \
+      "'device_description_general_tags', #{search_array_filter(term, 'device_descriptions', 'general_tags')}, " \
+      "'device_description_ontologies', #{search_jsonb_label_filter(term, 'device_descriptions', 'ontologies')} " \
+      ')',
+    )
+
+    select(json_expr.as('result')).take.result
+  end
+
+  def searchable_general_tags
+    general_tags&.join(' ')
+  end
+
+  def searchable_ontology_labels
+    return '' if ontologies.blank?
+
+    ontologies.filter_map { |entry| entry.dig('data', 'label') }.join(' ')
+  end
 
   def analyses
     container ? container.analyses : []

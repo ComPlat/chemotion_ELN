@@ -12,7 +12,7 @@ module SVG
                   when /chemdraw/i
                     Chemotion::ChemdrawSvgProcessor.new(svg)
                   when /ketcher/i
-                    Chemotion::KetcherSvgProcessor.new(svg)
+                    KetcherService::SVGProcessor.new(svg)
                   else
                     Chemotion::ChemdrawSvgProcessor.new(svg)
                   end

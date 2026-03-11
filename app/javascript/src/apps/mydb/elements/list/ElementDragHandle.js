@@ -134,7 +134,7 @@ function ElementDragHandle({ element, sourceType: sourceTypeProp }) {
       case DragDropItemTypes.DEVICE_DESCRIPTION:
         return currentElementType === 'device_description' || useDnD(currentElement, genericEls);
       case DragDropItemTypes.SEQUENCE_BASED_MACROMOLECULE:
-        return currentElementType === 'sequence_based_macromolecule' || useDnD(currentElement, genericEls);
+        return currentElementType === 'sequence_based_macromolecule_sample' || useDnD(currentElement, genericEls);
       // case DragDropItemTypes.SEQUENCE_BASED_MACROMOLECULE_SAMPLE:
       //   return currentElementType === 'sequence_based_macromolecule_sample' || useDnD(currentElement, genericEls);
       default:

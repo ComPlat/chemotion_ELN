@@ -154,10 +154,13 @@ class InboxActions {
 
   bulkDeleteAttachments(attachmentIdsToDelete, fromUnsorted = false) {
     return (dispatch) => {
-      AttachmentFetcher.bulkDeleteAttachments(attachmentIdsToDelete)
+      // Create a copy to avoid mutation issues (checkedIds.length = 0 in UnsortedBox)
+      const idsToDelete = Array.isArray(attachmentIdsToDelete) ? [...attachmentIdsToDelete] : attachmentIdsToDelete;
+      AttachmentFetcher.bulkDeleteAttachments(idsToDelete)
         .then((result) => {
           dispatch({
             result,
+            attachmentIdsToDelete: idsToDelete,
             fromUnsorted,
           });
         }).catch((errorMessage) => {

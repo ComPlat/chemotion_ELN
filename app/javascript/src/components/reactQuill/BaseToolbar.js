@@ -2,7 +2,7 @@ import React from 'react';
 
 const BaseToolbar = () => (
   <React.Fragment>
-    <select className="ql-header" defaultValue="">
+    <select className="ql-header" defaultValue="" title="Heading">
       <option value="1" />
       <option value="2" />
       <option value="3" />
@@ -11,13 +11,13 @@ const BaseToolbar = () => (
       <option value="6" />
       <option />
     </select>
-    <button className="ql-bold" />
-    <button className="ql-italic" />
-    <button className="ql-underline" />
-    <button className="ql-list" value="ordered" />
-    <button className="ql-list" value="bullet" />
-    <button className="ql-script" value="sub" />
-    <button className="ql-script" value="super" />
+    <button className="ql-bold" title="Bold (Ctrl+B)" />
+    <button className="ql-italic" title="Italic (Ctrl+I)" />
+    <button className="ql-underline" title="Underline (Ctrl+U)" />
+    <button className="ql-list" value="ordered" title="Numbered List" />
+    <button className="ql-list" value="bullet" title="Bullet List" />
+    <button className="ql-script" value="sub" title="Subscript (Ctrl+,)" />
+    <button className="ql-script" value="super" title="Superscript (Ctrl+.)" />
   </React.Fragment>
 );
 

@@ -59,6 +59,7 @@ describe Chemotion::SuggestionAPI do
     end
   end
 
+  # rubocop:disable RSpec/MultipleMemoizedHelpers
   describe 'GET /api/v1/suggestions/all' do
     include_context 'api request authorization context'
 
@@ -90,6 +91,13 @@ describe Chemotion::SuggestionAPI do
         user: user,
       )
     end
+    let(:device_description) do
+      create(
+        :device_description, :with_ontologies, name: 'test device description',
+                                               vendor_device_name: 'test device name', creator: user
+      )
+    end
+    let(:search_by_methods) { parsed_json_response['suggestions'].pluck('search_by_method') }
 
     before do
       sample
@@ -101,6 +109,7 @@ describe Chemotion::SuggestionAPI do
                                                           collection: collection)
       CollectionsSequenceBasedMacromoleculeSample.create!(sequence_based_macromolecule_sample: sbmm_sample_modified,
                                                           collection: collection)
+      CollectionsDeviceDescription.create!(device_description: device_description, collection: collection)
       get '/api/v1/suggestions/all', params: params
     end
 
@@ -109,8 +118,7 @@ describe Chemotion::SuggestionAPI do
 
       it 'returns two sbmm sample suggestions' do
         expect(response.status).to be 200
-        expect(parsed_json_response['suggestions'].length).to be 2
-        search_by_methods = parsed_json_response['suggestions'].pluck('search_by_method')
+        expect(search_by_methods.count { |s| s.start_with?('sbmm') }).to be 2
         expect(search_by_methods).to include('sbmm_sample_name', 'sbmm_systematic_name')
       end
     end
@@ -120,9 +128,19 @@ describe Chemotion::SuggestionAPI do
 
       it 'returns one sbmm sample suggestions' do
         expect(response.status).to be 200
-        expect(parsed_json_response['suggestions'].length).to be 2
-        search_by_methods = parsed_json_response['suggestions'].pluck('search_by_method')
+        expect(search_by_methods.count { |s| s.start_with?('sbmm') }).to be 2
         expect(search_by_methods).to include('sbmm_ec_numbers')
+      end
+    end
+
+    context 'when search term matches device descriptions by device description name' do
+      let(:query) { 'test' }
+
+      it 'returns two device description suggestions' do
+        expect(response.status).to be 200
+        expect(search_by_methods.count { |s| s.start_with?('device_description') }).to be 2
+        search_by_methods = parsed_json_response['suggestions'].pluck('search_by_method')
+        expect(search_by_methods).to include('device_description_name', 'device_description_vendor_device_name')
       end
     end
 
@@ -162,6 +180,7 @@ describe Chemotion::SuggestionAPI do
       end
     end
   end
+  # rubocop:enable RSpec/MultipleMemoizedHelpers
 
   describe 'GET /api/v1/suggestions/samples' do
     include_context 'api request authorization context'
@@ -232,6 +251,32 @@ describe Chemotion::SuggestionAPI do
         expect(parsed_json_response['suggestions'].length).to be 2
         search_by_methods = parsed_json_response['suggestions'].pluck('search_by_method')
         expect(search_by_methods).to include('sbmm_sample_name', 'sbmm_systematic_name')
+      end
+    end
+  end
+
+  describe 'GET /api/v1/suggestions/device_descriptions' do
+    include_context 'api request authorization context'
+
+    context 'when searching for device descriptions' do
+      let(:device_description) do
+        create(
+          :device_description, :with_ontologies, name: 'test device description',
+                                                 vendor_device_name: 'test device name', creator: user
+        )
+      end
+      let(:query) { 'test' }
+
+      before do
+        CollectionsDeviceDescription.create!(device_description: device_description, collection: collection)
+        get '/api/v1/suggestions/device_descriptions', params: params
+      end
+
+      it 'returns two device description suggestions' do
+        expect(response.status).to be 200
+        expect(parsed_json_response['suggestions'].length).to be 2
+        search_by_methods = parsed_json_response['suggestions'].pluck('search_by_method')
+        expect(search_by_methods).to include('device_description_name', 'device_description_vendor_device_name')
       end
     end
   end

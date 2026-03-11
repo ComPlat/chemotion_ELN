@@ -57,7 +57,7 @@ gem 'jwt'
 gem 'kaminari'
 gem 'kaminari-grape'
 
-gem 'labimotion', '2.1.0.rc13'
+gem 'labimotion', '2.1.0'
 gem 'logidze'
 
 gem 'mimemagic', '0.3.10'
@@ -105,7 +105,7 @@ gem 'sassc-rails'
 gem 'scenic'
 gem 'schmooze'
 gem 'semacode', git: 'https://github.com/toretore/semacode.git', branch: 'master' # required for Barby but not listed...
-gem 'shakapacker', '~> 8.3.0'
+gem 'shakapacker', '~> 9.5.0'
 
 gem 'sentry-delayed_job'
 gem 'sentry-rails'

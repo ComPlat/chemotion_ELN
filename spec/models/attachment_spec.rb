@@ -19,6 +19,7 @@
 #  created_by_type :string
 #  created_for     :integer
 #  deleted_at      :datetime
+#  edit_state      :integer          default("not_editing")
 #  filename        :string
 #  filesize        :bigint
 #  folder          :string
@@ -74,13 +75,6 @@ RSpec.describe Attachment do
     it 'returns the absolute path of file' do
       expected_path = Rails.root.join("uploads/test/1/#{attachment.identifier}").to_s
       expect(attachment.abs_path).to eq(expected_path)
-    end
-  end
-
-  describe '#add_checksum' do
-    it 'returns a MD5 checksum' do
-      expect(attachment.add_checksum).to be_present
-      expect(attachment['checksum']).to be_present
     end
   end
 
@@ -213,23 +207,6 @@ RSpec.describe Attachment do
 
     it 'assigns the provided id as attachable_id and sets the attachable_type to "ResearchPlan"' do
       expect(attachment).to have_attributes(attachable_id: 666, attachable_type: 'ResearchPlan')
-    end
-  end
-
-  describe '#rewrite_file_data!' do
-    context 'when file_path leads to an existing file' do
-      let(:old_file_content) { 'Foo Bar' }
-      let(:attachment) { create(:attachment, file_data: old_file_content) }
-
-      let(:new_file_path) { Rails.root.join('spec/fixtures/upload.txt') }
-      let(:new_file_content) { File.binread(new_file_path) }
-
-      it 'overwrites the attachment file with the new file' do
-        attachment.file_path = new_file_path
-        attachment.rewrite_file_data!
-
-        expect(attachment.read_file).to eq new_file_content
-      end
     end
   end
 

@@ -6,65 +6,77 @@ FactoryBot.define do
     element_klass { FactoryBot.build(:element_klass) }
 
     trait :with_ontology_properties_template do
-      properties_template do
+      is_active { true }
+      properties_release do
         {
-          'pkg' => {
-            'eln' => { 'version' => '1.9.0', 'base_revision' => 'a714b63f6', 'current_revision' => 0 },
-            'name' => 'chem-generic-ui',
-            'version' => '1.1.1',
-            'labimotion' => '1.1.4',
+          pkg: {
+            eln: {
+              version: '2.1.0',
+            },
+            name: 'chem-generic-ui',
+            version: '1.1.1',
+            labimotion: '2.1.0',
           },
-          'uuid' => '1e3aa4fa-bbb1-468a-aab3-505c14bdca12',
-          'klass' => 'SegmentKlass',
-          'layers' => {
-            'fields' => {
-              'wf' => false,
-              'key' => 'fields',
-              'cols' => 2,
-              'color' => 'info',
-              'label' => 'Fields',
-              'style' => 'panel_generic_heading',
-              'fields' => [
+          klass: 'SegmentKlass',
+          layers: {
+            ontology_fields: {
+              wf: false,
+              key: 'ontology',
+              cols: 3,
+              color: 'default',
+              label: 'Ontology',
+              style: 'panel_generic_heading',
+              fields: [
                 {
-                  'type' => 'text',
-                  'field' => 'material',
-                  'label' => 'material',
-                  'default' => '',
-                  'ontology' => {
-                    'id' => 'obi:class:http://purl.obolibrary.org/obo/OBI_0000094',
-                    'iri' => 'http://purl.obolibrary.org/obo/OBI_0000094',
-                    'type' => 'class',
-                    'label' => 'material processing',
-                    'obo_id' => 'OBI:0000094',
-                    'short_form' => 'OBI_0000094',
-                    'description' => [
-                      'A planned process which results in physical changes in a specified input material',
+                  type: 'text',
+                  field: 'ontology_one',
+                  label: 'Ontology term one',
+                  default: '',
+                  ontology: {
+                    id: 'chmo:class:http://purl.obolibrary.org/obo/CHMO_0001000',
+                    iri: 'http://purl.obolibrary.org/obo/CHMO_0001000',
+                    type: 'class',
+                    label: 'chromatography',
+                    obo_id: 'CHMO:0001000',
+                    short_form: 'CHMO_0001000',
+                    description: [
+                      'A separation method where the components are distributed between two phases, one of which is
+                      stationary, while the other moves in a definite direction.',
                     ],
-                    'ontology_name' => 'obi',
-                    'ontology_prefix' => 'OBI',
+                    ontology_name: 'chmo',
+                    ontology_prefix: 'CHMO',
                   },
-                  'position' => 1,
-                  'sub_fields' => [],
-                  'text_sub_fields' => [],
+                  position: 1,
+                  readonly: false,
+                  sub_fields: [],
+                  placeholder: 'Ontology assignment one',
+                  text_sub_fields: [],
                 },
                 {
-                  'type' => 'text',
-                  'field' => 'weight',
-                  'label' => 'weight',
-                  'default' => '',
-                  'position' => 2,
-                  'sub_fields' => [],
-                  'text_sub_fields' => [],
+                  type: 'text',
+                  field: 'ontology_two',
+                  label: 'Ontology term two',
+                  default: '',
+                  ontology: {
+                    id: 'chmo:class:http://purl.obolibrary.org/obo/CHMO_0002876',
+                    iri: 'http://purl.obolibrary.org/obo/CHMO_0002876',
+                    type: 'class',
+                    label: 'high performance liquid chromatography-tandem mass spectrometry',
+                    obo_id: 'CHMO:0002876',
+                    short_form: 'CHMO_0002876',
+                    ontology_name: 'chmo',
+                    ontology_prefix: 'CHMO',
+                  },
+                  position: 2,
+                  sub_fields: [],
+                  text_sub_fields: [],
                 },
               ],
-              'position' => 10,
-              'timeRecord' => '',
-              'wf_position' => 0,
+              position: 130,
+              timeRecord: '',
+              wf_position: 0,
             },
           },
-          'version' => '2.0',
-          'identifier' => '',
-          'select_options' => {},
         }
       end
     end

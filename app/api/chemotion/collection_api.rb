@@ -352,6 +352,10 @@ module Chemotion
             ids = API::ELEMENT_CLASS[element].by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
             next if ids.empty?
 
+            if API::ELEMENT_CLASS[element] == DeviceDescription
+              ids = Usecases::DeviceDescriptions::ByUIState.new(ids).with_joined_ids
+            end
+
             collections_element_class = API::ELEMENT_CLASS[element].collections_element_class
             collections_element_class.move_to_collection(ids, from_collection.id, to_collection_id)
             collections_element_class.remove_in_collection(
@@ -396,6 +400,10 @@ module Chemotion
 
             ids = API::ELEMENT_CLASS[element].by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
             next if ids.empty?
+
+            if API::ELEMENT_CLASS[element] == DeviceDescription
+              ids = Usecases::DeviceDescriptions::ByUIState.new(ids).with_joined_ids
+            end
 
             collections_element_class = API::ELEMENT_CLASS[element].collections_element_class
             collections_element_class.create_in_collection(ids, to_collection_id)

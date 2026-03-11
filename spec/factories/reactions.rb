@@ -99,10 +99,10 @@ FactoryBot.define do
 
           {
             id: i.to_s,
-            segmentData: [],
             metadata: {
               analyses: [],
               notes: '',
+              group: { group: 1, subgroup: 1 },
             },
             properties: {
               duration: { unit: 'Hour(s)', value: '42' },
@@ -112,6 +112,7 @@ FactoryBot.define do
             reactants: reactants,
             products: products,
             solvents: solvents,
+            segments: {},
           }
         end
         reaction.variations = variations.each_with_object({}) do |item, hash|

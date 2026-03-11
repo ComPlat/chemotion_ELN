@@ -32,6 +32,23 @@ const toolbarOptions = [
   // ['clean'],
 ];
 
+// Keyboard shortcut tooltips for toolbar buttons
+const shortcutTooltips = {
+  bold: 'Bold (Ctrl+B)',
+  italic: 'Italic (Ctrl+I)',
+  underline: 'Underline (Ctrl+U)',
+  list: {
+    ordered: 'Numbered List',
+    bullet: 'Bullet List',
+  },
+  script: {
+    sub: 'Subscript (Ctrl+,)',
+    super: 'Superscript (Ctrl+.)',
+  },
+  header: 'Heading',
+  specialCharacters: 'Special Characters (Ω)',
+};
+
 export default class QuillEditor extends React.Component {
   constructor(props) {
     super(props);
@@ -138,6 +155,24 @@ export default class QuillEditor extends React.Component {
               specialCharacters: this.specialCharacters,
             }
           },
+          keyboard: {
+            bindings: {
+              subscript: {
+                key: 188,
+                shortKey: true,
+                handler(range, context) {
+                  this.quill.format('script', context.format.script === 'sub' ? false : 'sub');
+                }
+              },
+              superscript: {
+                key: 190,
+                shortKey: true,
+                handler(range, context) {
+                  this.quill.format('script', context.format.script === 'super' ? false : 'super');
+                }
+              }
+            }
+          }
         },
         theme: this.theme,
         readOnly: this.readOnly,
@@ -176,25 +211,42 @@ export default class QuillEditor extends React.Component {
     }
   }
 
+  getTooltip(elementName, elementValue) {
+    const tooltip = shortcutTooltips[elementName];
+    if (typeof tooltip === 'string') {
+      return tooltip;
+    } else if (typeof tooltip === 'object' && elementValue) {
+      return tooltip[elementValue] || '';
+    }
+    return '';
+  }
+
   renderQuillToolbarGroup() {
     if (this.theme !== 'snow') return (<span />);
 
     const quillToolbar = toolbarOptions.map((formatGroup, index) => {
       const groupElement = formatGroup.map((element) => {
         if (typeof element === 'string') {
+          const tooltip = this.getTooltip(element);
           return (
-            <button className={`ql-${element}`} key={`btnKey_${element}`} />
+            <button
+              className={`ql-${element}`}
+              key={`btnKey_${element}`}
+              title={tooltip}
+            />
           );
         } else if (typeof element === 'object') {
           const elementName = Object.getOwnPropertyNames(element)[0];
           const elementValue = element[elementName];
 
           if (typeof elementValue === 'string') {
+            const tooltip = this.getTooltip(elementName, elementValue);
             return (
               <button
                 className={`ql-${elementName}`}
                 key={`btnKey_${elementValue}`}
                 value={elementValue}
+                title={tooltip}
               />
             );
           } else if (Array.isArray(elementValue)) {
@@ -231,17 +283,19 @@ export default class QuillEditor extends React.Component {
                   overlay={templateCreatorPopover}
                   rootClose
                 >
-                  <span className="ql-formats">
+                  <span className="ql-formats" title={shortcutTooltips.specialCharacters}>
                     &#937;
                   </span>
                 </OverlayTrigger>
               );
             }
 
+            const tooltip = this.getTooltip(elementName);
             return (
               <select
                 className={`ql-${elementName}`}
                 key={`btnKey_${elementName}`}
+                title={tooltip}
               >
                 {options}
               </select>

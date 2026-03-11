@@ -640,6 +640,7 @@ export default class ChemicalTab extends React.Component {
   }
 
   textInput(data, label, parameter) {
+    const { sample } = this.props;
     const componentClass = parameter !== 'important_notes'
       && parameter !== 'disposal_info' && parameter !== 'sensitivity_storage'
     && parameter !== 'solubility' ? 'input' : 'textarea';
@@ -656,6 +657,8 @@ export default class ChemicalTab extends React.Component {
       conditionalOverlay = 'please enter the name of the person who requires the substance';
     } else if (parameter === 'expiration_date') {
       conditionalOverlay = 'please enter the expiration date of the substance';
+    } else if (parameter === 'inventory_label') {
+      value = sample.xref?.inventory_label ?? '';
     }
     const checkLabel = label !== 'Date' && <Form.Label>{label}</Form.Label>;
     const dateArray = ['person', 'required_by', 'expiration_date'];
@@ -675,6 +678,7 @@ export default class ChemicalTab extends React.Component {
             value={value}
             onChange={(e) => { this.handleFieldChanged(parameter, e.target.value); }}
             rows={label !== 'Important notes' && label !== 'Disposal information' ? 1 : 2}
+            disabled={parameter === 'inventory_label'}
           />
         </Form.Group>
       </OverlayTrigger>
@@ -1542,6 +1546,9 @@ export default class ChemicalTab extends React.Component {
           </Col>
           <Col>
             {this.numInputWithoutTable(data, 'Storage Temperature', 'storage_temperature')}
+          </Col>
+          <Col>
+            {this.textInput(data, 'Inventory Label', 'inventory_label')}
           </Col>
         </Row>
       </>

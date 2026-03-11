@@ -146,7 +146,8 @@ export default class NumeralInputWithUnitsCompo extends Component {
 
   render() {
     const {
-      size, variant, disabled, label, unit, name, showInfoTooltipTotalVol, showInfoTooltipRequiredVol, className
+      size, variant, disabled, label, unit, name, showInfoTooltipTotalVol, showInfoTooltipRequiredVol, className,
+      overlayMessage
     } = this.props;
     const {
       showString, value, metricPrefix, currentPrecision, valueString, block
@@ -236,35 +237,52 @@ export default class NumeralInputWithUnitsCompo extends Component {
               <i className="ms-1 fa fa-info-circle" />
             </OverlayTrigger>
           )}
-          <InputGroup
-            className="d-flex flex-nowrap align-items-center w-100"
-          >
-            <Form.Control
-              type="text"
-              disabled={inputDisabled}
-              variant={variant}
-              size={size}
-              value={displayValue || ''}
-              onChange={event => this._handleInputValueChange(event)}
-              onFocus={event => this._handleInputValueFocus(event)}
-              onBlur={event => this._handleInputValueBlur(event)}
-              name={name}
-              className="flex-grow-1"
-            />
-            {prefixSwitch}
-            {showInfoTooltipRequiredVol && (
-              <OverlayTrigger placement="bottom" overlay={<Tooltip id="assign_button">copy to clipboard</Tooltip>}>
-                <Button
-                  variant="light"
+          {(() => {
+            const inputGroup = (
+              <InputGroup
+                className="d-flex flex-nowrap align-items-center w-100"
+              >
+                <Form.Control
+                  type="text"
+                  disabled={inputDisabled}
+                  variant={variant}
                   size={size}
-                  onClick={() => copyToClipboard(displayValue)}
-                  className="ms-1"
-                >
-                  <i className="fa fa-clipboard" />
-                </Button>
+                  value={displayValue || ''}
+                  onChange={event => this._handleInputValueChange(event)}
+                  onFocus={event => this._handleInputValueFocus(event)}
+                  onBlur={event => this._handleInputValueBlur(event)}
+                  name={name}
+                  className="flex-grow-1"
+                />
+                {prefixSwitch}
+                {showInfoTooltipRequiredVol && (
+                  <OverlayTrigger placement="bottom" overlay={<Tooltip id="assign_button">copy to clipboard</Tooltip>}>
+                    <Button
+                      variant="light"
+                      size={size}
+                      onClick={() => copyToClipboard(displayValue)}
+                      className="ms-1"
+                    >
+                      <i className="fa fa-clipboard" />
+                    </Button>
+                  </OverlayTrigger>
+                )}
+              </InputGroup>
+            );
+
+            return overlayMessage ? (
+              <OverlayTrigger
+                placement="top"
+                overlay={(
+                  <Tooltip id="info-for-weight-percentage-sample">
+                    {overlayMessage}
+                  </Tooltip>
+                )}
+              >
+                {inputGroup}
               </OverlayTrigger>
-            )}
-          </InputGroup>
+            ) : inputGroup;
+          })()}
         </div>
       );
     }
@@ -306,6 +324,7 @@ NumeralInputWithUnitsCompo.propTypes = {
   name: PropTypes.string,
   showInfoTooltipTotalVol: PropTypes.bool,
   showInfoTooltipRequiredVol: PropTypes.bool,
+  overlayMessage: PropTypes.string,
 };
 
 NumeralInputWithUnitsCompo.defaultProps = {
@@ -319,4 +338,5 @@ NumeralInputWithUnitsCompo.defaultProps = {
   name: '',
   showInfoTooltipTotalVol: false,
   showInfoTooltipRequiredVol: false,
+  overlayMessage: null,
 };

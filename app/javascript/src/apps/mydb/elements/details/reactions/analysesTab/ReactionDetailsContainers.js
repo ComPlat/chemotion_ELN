@@ -3,10 +3,11 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
+  OverlayTrigger,
   Button,
   Accordion,
   Card,
-  ButtonToolbar,
+  ButtonToolbar, Tooltip,
 } from 'react-bootstrap';
 import Container from 'src/models/Container';
 import ContainerComponent from 'src/components/container/ContainerComponent';
@@ -74,10 +75,12 @@ const nmrMsg = (reaction, container) => {
 export default class ReactionDetailsContainers extends Component {
   constructor(props) {
     super(props);
+    const { reaction } = props;
+    const hasComment = reaction.container?.description && reaction.container.description.trim() !== '';
 
     this.state = {
       activeContainer: UIStore.getState().reaction.activeAnalysis,
-      commentBoxVisible: false,
+      commentBoxVisible: hasComment,
     };
     this.containerRefs = {};
 
@@ -228,6 +231,16 @@ export default class ReactionDetailsContainers extends Component {
     this.setState({ activeContainer: key });
   }
 
+  // eslint-disable-next-line class-methods-use-this
+  renderAnalysesHint() {
+    return (
+      <span className="text-muted me-3 small" style={{ maxWidth: '60%' }}>
+        This tab can be used for reaction-related data (e.g., process control, in situ).
+        For sample data (e.g., characterization), use the sample analysis tab.
+      </span>
+    );
+  }
+
   addButton() {
     const { readOnly, reaction, handleReactionChange } = this.props;
     if (!readOnly) {
@@ -238,13 +251,19 @@ export default class ReactionDetailsContainers extends Component {
             element={reaction}
             setElement={(reaction, cb = null) => handleReactionChange(reaction)}
           />
-          <Button
-            size="xsm"
-            variant="success"
-            onClick={this.handleAdd}
+
+          <OverlayTrigger
+            placement="top"
+            overlay={<Tooltip id="annotate_tooltip">Create and add empty analyses.</Tooltip>}
           >
-            Add analysis
-          </Button>
+            <Button
+              size="sm"
+              variant="success"
+              onClick={this.handleAdd}
+            >
+              Add analysis
+            </Button>
+          </OverlayTrigger>
         </>
       );
     }
@@ -253,6 +272,9 @@ export default class ReactionDetailsContainers extends Component {
 
   handleCommentTextChange = (e) => {
     const { reaction } = this.props;
+    if (!reaction.container) {
+      reaction.container = Container.buildEmpty();
+    }
     reaction.container.description = e.target.value;
     this.handleChange(reaction.container);
   };
@@ -355,12 +377,13 @@ export default class ReactionDetailsContainers extends Component {
         return (
           <div>
             <div className="d-flex justify-content-between align-items-center mb-3">
-              <span className="text-muted me-3 small" style={{ maxWidth: '60%' }}>
-                This tab can be used for reaction-related data (e.g., process control, in situ).
-                For sample data (e.g., characterization), use the sample analysis tab.
-              </span>
+              {this.renderAnalysesHint()}
               <ButtonToolbar className="gap-2">
-                <CommentButton toggleCommentBox={this.toggleCommentBox} size="xsm" />
+                <CommentButton
+                  toggleCommentBox={this.toggleCommentBox}
+                  isVisible={commentBoxVisible}
+                  size="sm"
+                />
                 {this.addButton()}
               </ButtonToolbar>
             </div>
@@ -427,10 +450,25 @@ export default class ReactionDetailsContainers extends Component {
       }
 
       return (
-        <div className="d-flex align-items-center justify-content-between mb-2 mt-4 mx-3">
-          <span className="ms-3"> There are currently no Analyses. </span>
-          <div>
-            {this.addButton()}
+        <div>
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            {this.renderAnalysesHint()}
+            <ButtonToolbar className="gap-2">
+              <CommentButton
+                toggleCommentBox={this.toggleCommentBox}
+                isVisible={commentBoxVisible}
+                size="sm"
+              />
+              {this.addButton()}
+            </ButtonToolbar>
+          </div>
+          <CommentBox
+            isVisible={commentBoxVisible}
+            value={reaction.container.description}
+            handleCommentTextChange={this.handleCommentTextChange}
+          />
+          <div className="d-flex align-items-center">
+            <span className="ms-3"> There are currently no Analyses. </span>
           </div>
         </div>
       );
@@ -438,7 +476,24 @@ export default class ReactionDetailsContainers extends Component {
 
     return (
       <div className="m-4">
-        There are currently no Analyses.
+        <div className="d-flex justify-content-between align-items-center mb-3">
+          {this.renderAnalysesHint()}
+          <ButtonToolbar className="gap-2">
+            <CommentButton
+              toggleCommentBox={this.toggleCommentBox}
+              isVisible={commentBoxVisible}
+              size="sm"
+            />
+          </ButtonToolbar>
+        </div>
+        <CommentBox
+          isVisible={commentBoxVisible}
+          value={reaction.container?.description || ''}
+          handleCommentTextChange={this.handleCommentTextChange}
+        />
+        <div className="mt-2">
+          There are currently no Analyses.
+        </div>
       </div>
     );
   }

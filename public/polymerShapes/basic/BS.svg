@@ -1,13 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0.18 42.01 113.61 30.61" width="113.61" height="30.61">
-  <!-- Checkerboard Pattern -->
-  <pattern id="checkerboard" patternUnits="userSpaceOnUse" width="2" height="2" patternTransform="scale(10)">
-    <rect width="1" height="1" fill="#565555"/>
-    <rect x="1" y="1" width="1" height="1" fill="#565555"/>
-  </pattern>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" id="svg_f1d2e3" viewBox="0 41.72556224 114.06637636 31.29417168" version="1.1" style="max-height:500px" width="114.06637636" height="31.29417168">
+  <defs id="defs_a4b5c6">
+    <linearGradient id="grad_h7i8j9">
+      <stop id="stop_k1l2m3" offset="0" style="stop-color:#000000;stop-opacity:1"/>
+    </linearGradient>
 
-  <!-- Path with Checkerboard Pattern -->
-  <path d="M1.03 48.83v17.01q0,5.67 5.58,5.67h95.38q5.58,0 5.58,-5.67V48.83q0,-5.67 -5.58,-5.67H6.61q-5.58,0 -5.58,5.67z" 
-        fill="url(#checkerboard)" 
-        stroke="#1b1918" 
-        stroke-width="0.57"/>
+    <pattern patternTransform="scale(7.1)" id="pattern_n4o5p6" preserveAspectRatio="xMidYMid" xlink:href="#pattern_q7r8s9"/>
+    <pattern y="0" x="0" patternTransform="scale(7.1)" id="pattern_q7r8s9" preserveAspectRatio="xMidYMid" xlink:href="#checker_t1u2v3"/>
+    <pattern preserveAspectRatio="xMidYMid" id="checker_t1u2v3" patternTransform="translate(0,0) scale(10,10)" height="2" width="2" patternUnits="userSpaceOnUse" style="fill:#565555">
+      <rect id="rect_w4x5y6" height="1" width="1" y="0" x="0" style="stroke:none"/>
+      <rect id="rect_z7a8b9" height="1" width="1" y="1" x="1" style="stroke:none"/>
+    </pattern>
+  </defs>
+
+  <path id="path_c1d2e3" style="font-variation-settings:normal;opacity:1;vector-effect:none;fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#1b1918;stroke-width:0.5669;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000;stop-opacity:1" d="m 1.0304225,48.833512 v 17.010606 q 0,5.670235 5.5766274,5.670235 H 106.98801 q 5.57673,0 5.57673,-5.670235 V 48.833512 q 0,-5.670235 -5.57673,-5.670235 H 6.6070499 q -5.5766274,0 -5.5766274,5.670235 z"/>
+  <path id="path_f4g5h6" style="font-variation-settings:normal;vector-effect:none;fill:url(#pattern_n4o5p6);fill-opacity:1;fill-rule:evenodd;stroke:#1b1918;stroke-width:0.5669;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000" d="m 1.0304225,48.833512 v 17.010606 q 0,5.670236 5.576627,5.670236 H 106.98801 q 5.57673,0 5.57673,-5.670236 V 48.833512 q 0,-5.670235 -5.57673,-5.670235 H 6.6070495 q -5.576627,0 -5.576627,5.670235 z"/>
 </svg>

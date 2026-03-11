@@ -86,6 +86,9 @@ const setReactionByType = (reaction, type, value) => {
     case 'useReactionVolumeForConcentration':
       reaction.use_reaction_volume = value;
       break;
+    case 'weight_percentage':
+      reaction.weight_percentage = value;
+      break;
   }
 
   return { newReaction: reaction, options: options }

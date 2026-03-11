@@ -60,10 +60,10 @@ export default class ElementsTableEntries extends Component {
       );
     }
     if (element.type === 'research_plan' || element.element_klass) {
-      if (element.preview_attachment !== 'not available') {
+      if (element.preview_attachment) {
         return (
           <div
-            className="flex-grow-1"
+            className="ms-auto"
             style={svgContainerStyle}
             onClick={showDetails}
           >
@@ -71,6 +71,7 @@ export default class ElementsTableEntries extends Component {
               <ImageModal
                 attachment={element.preview_attachment}
                 popObject={{}}
+                placement="left"
               />
             </div>
           </div>

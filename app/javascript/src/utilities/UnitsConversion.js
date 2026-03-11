@@ -117,23 +117,36 @@ const calculateGasVolume = (molAmount, gasPhaseData) => {
     return 0;
   }
 
-  return (molAmount * IDEAL_GAS_CONSTANT * temperatureInKelvin) / (ppm / PARTS_PER_MILLION_FACTOR);
+  return (molAmount * IDEAL_GAS_CONSTANT * temperatureInKelvin);
 };
 
 const calculateMolesFromMoleculeWeight = (amountGram, molecularWeight) => (amountGram / molecularWeight);
 
-const calculateVolumeForFeedstockOrGas = (amountGram, molecularWeight, purity, gasType, gasPhaseData) => {
-  const molAmount = calculateMolesFromMoleculeWeight(amountGram, molecularWeight);
-
-  if (gasType === 'gas') {
-    return calculateGasVolume(molAmount, gasPhaseData);
+const calculateGasMoles = (volume, ppm, temperatureInKelvin) => {
+  if (!temperatureInKelvin || temperatureInKelvin <= 0) {
+    return 0;
   }
-
-  return calculateFeedstockVolume(molAmount, purity);
+  return (
+    (ppm * volume) / (IDEAL_GAS_CONSTANT * temperatureInKelvin * PARTS_PER_MILLION_FACTOR)
+  );
 };
 
-const calculateGasMoles = (volume, ppm, temperatureInKelvin) => (ppm * volume)
-  / (IDEAL_GAS_CONSTANT * temperatureInKelvin * PARTS_PER_MILLION_FACTOR);
+const calculateVolumeForFeedstockOrGas = (
+  vesselVolume,
+  purity,
+  gasType,
+  gasPhaseData,
+  moles = null
+) => {
+  const { part_per_million, temperature } = gasPhaseData || {};
+  const temperatureInKelvin = convertTemperatureToKelvin(temperature);
+  let molAmount = moles;
+  if (gasType === 'gas') {
+    molAmount = calculateGasMoles(vesselVolume, part_per_million, temperatureInKelvin);
+    return calculateGasVolume(molAmount, gasPhaseData);
+  }
+  return calculateFeedstockVolume(molAmount, purity);
+};
 
 const calculateFeedstockMoles = (volume, purity) => (volume * purity) / (
   IDEAL_GAS_CONSTANT * DEFAULT_TEMPERATURE_IN_KELVIN);
@@ -186,21 +199,38 @@ const calculateTONPerTimeValue = (timeValue, timeUnit) => {
   }
 };
 
-const determineTONFrequencyValue = (tonValue, tonFrequencyUnit, timeValues, defaultValue) => {
-  if (tonValue === undefined || tonValue === null) {
-    return null;
-  }
-  if (tonValue === 0) {
-    return 0;
-  }
+/**
+ * Determine TON frequency value based on tonValue and a time resolution object.
+ *
+ * @param {number|string} tonValue - numeric TON value (may be string); returns null if missing/invalid.
+ * @param {string} tonFrequencyUnit - one of TON_UNITS.
+ * @param {object} timeValues - object with numeric fields { hours, minutes, seconds } (may be strings).
+ * @param {number|null} defaultValue - fallback to return when time resolution is not available or zero.
+ * @returns {number|null} - computed frequency or defaultValue, or null for invalid input.
+ */
+const determineTONFrequencyValue = (tonValue, tonFrequencyUnit, timeValues, defaultValue = null) => {
+  // Validate / normalize tonValue
+  if (tonValue === null || tonValue === undefined) return null; // undefined or null -> invalid input
+  const ton = Number(tonValue);
+  if (Number.isNaN(ton)) return null; // invalid numeric input
+  if (ton === 0) return 0;
+
+  // Safely normalize timeValues
+  const tv = timeValues || {};
+  const seconds = tv.seconds != null ? Number(tv.seconds) : null;
+  const minutes = tv.minutes != null ? Number(tv.minutes) : null;
+  const hours = tv.hours != null ? Number(tv.hours) : null;
+
+  // Helper: safe division, returns defaultValue on invalid denominator
+  const safeDiv = (denom) => (denom != null && !Number.isNaN(denom) && denom !== 0 ? ton / denom : defaultValue);
 
   switch (tonFrequencyUnit) {
     case TON_UNITS.PER_SECOND:
-      return timeValues.seconds ? tonValue / timeValues.seconds : defaultValue;
+      return safeDiv(seconds);
     case TON_UNITS.PER_MINUTE:
-      return timeValues.minutes ? tonValue / timeValues.minutes : defaultValue;
+      return safeDiv(minutes);
     case TON_UNITS.PER_HOUR:
-      return timeValues.hours ? tonValue / timeValues.hours : defaultValue;
+      return safeDiv(hours);
     default:
       return defaultValue;
   }

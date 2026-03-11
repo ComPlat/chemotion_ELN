@@ -1,6 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Form, Modal, Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import {
+  Form, Modal, Button, OverlayTrigger, Tooltip
+} from 'react-bootstrap';
 import uuid from 'uuid';
 
 import ClipboardActions from 'src/stores/alt/actions/ClipboardActions';
@@ -25,12 +27,15 @@ export default class CopyElementModal extends React.Component {
     super(props);
     this.state = {
       showModal: false,
-      selectedCol: props.defCol
+      selectedCol: props.defCol,
+      showAmountsConfirm: false
     };
     this.handleModalClose = this.handleModalClose.bind(this);
     this.handleModalShow = this.handleModalShow.bind(this);
     this.onColSelectChange = this.onColSelectChange.bind(this);
     this.copyElement = this.copyElement.bind(this);
+    this.handleAmountsConfirm = this.handleAmountsConfirm.bind(this);
+    this.handleAmountsConfirmClose = this.handleAmountsConfirmClose.bind(this);
   }
 
   onColSelectChange(e) {
@@ -56,7 +61,9 @@ export default class CopyElementModal extends React.Component {
     if (element.type === 'sample') {
       ClipboardActions.fetchElementAndBuildCopy(element, selectedCol, 'copy_sample');
     } else if (element.type === 'reaction') {
-      ElementActions.copyReaction(element, selectedCol);
+      // Show amounts confirmation modal instead of proceeding directly
+      this.setState({ showModal: false, showAmountsConfirm: true });
+      return true;
     } else if (element.type === 'research_plan') {
       ElementActions.copyResearchPlan(element, selectedCol);
     } else if (element.type === 'device_description') {
@@ -71,9 +78,20 @@ export default class CopyElementModal extends React.Component {
     return true;
   }
 
+  handleAmountsConfirm(keepAmounts) {
+    const { selectedCol } = this.state;
+    const { element } = this.props;
+    this.setState({ showAmountsConfirm: false });
+    ElementActions.copyReaction(element, selectedCol, keepAmounts);
+  }
+
+  handleAmountsConfirmClose() {
+    this.setState({ showAmountsConfirm: false });
+  }
+
   render() {
     const { element } = this.props;
-    const { showModal, selectedCol } = this.state;
+    const { showModal, selectedCol, showAmountsConfirm } = this.state;
 
     if (!element.can_copy) return null;
 
@@ -102,6 +120,50 @@ export default class CopyElementModal extends React.Component {
           <Modal.Footer className="border-0">
             <Button variant="light" onClick={this.handleModalClose}>Close</Button>
             <Button id="submit-copy-element-btn" variant="success" onClick={this.copyElement}>Copy</Button>
+          </Modal.Footer>
+        </Modal>
+
+        <Modal centered animation={false} show={showAmountsConfirm} onHide={this.handleAmountsConfirmClose}>
+          <Modal.Header closeButton>
+            <Modal.Title>Copy Reaction</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            Do you also want to copy the
+            <strong> real amounts </strong>
+            of the reaction materials (excluding product materials)?
+            <br />
+            <br />
+            <strong>Note: </strong>
+            Target amounts of the starting and reactant materials will be copied by default.
+            The amounts (real and target) of the product materials can not be copied.
+            <br />
+          </Modal.Body>
+          <Modal.Footer className="border-0">
+            <OverlayTrigger
+              placement="bottom"
+              overlay={(
+                <Tooltip id="copy-modal-yes-tooltip">
+                  Real amounts of starting materials, reactants, and solvents will be preserved
+                </Tooltip>
+              )}
+            >
+              <Button className="w-100 btn btn-info" onClick={() => this.handleAmountsConfirm(true)}>
+                Yes - copy target and real amounts
+              </Button>
+            </OverlayTrigger>
+
+            <OverlayTrigger
+              placement="bottom"
+              overlay={(
+                <Tooltip id="copy-modal-no-tooltip">
+                  Only target amounts will be copied, real amounts will be cleared
+                </Tooltip>
+              )}
+            >
+              <Button className="w-100 btn btn-info" onClick={() => this.handleAmountsConfirm(false)}>
+                No - only copy the target amounts
+              </Button>
+            </OverlayTrigger>
           </Modal.Footer>
         </Modal>
       </>

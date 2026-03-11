@@ -1,10 +1,12 @@
 import 'whatwg-fetch';
+import Immutable from 'immutable';
 
 import Sample from 'src/models/Sample';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import BaseFetcher from 'src/fetchers/BaseFetcher';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
+import Literature from 'src/models/Literature';
 
 export default class SamplesFetcher {
   static fetchSamplesByUIStateAndLimit(params) {
@@ -24,10 +26,33 @@ export default class SamplesFetcher {
         },
         limit: params?.limit || null
       })
-    }).then((response) => response.json())
-      .then((json) => json.samples.map((s) => new Sample(s)))
+    })
+      .then((response) => response.json())
+      .then((json) => {
+        const samples = (json.samples || []).map((s) => new Sample(s));
+
+        // build literature map by literal_id
+        const literatures = (json.literatures || []).reduce(
+          (acc, l) => acc.set(l.literal_id, new Literature(l)),
+          new Immutable.Map()
+        );
+
+        // attach literatures per sample BEFORE enrichment
+        samples.forEach((sample) => {
+          const sampleLits = literatures.filter(
+            (l) => l.element_id === sample.id
+          );
+
+          if (sampleLits.size > 0) {
+            sample.literatures = sampleLits;
+            sample.updateChecksum(); // prevent dirty-on-load
+          }
+        });
+
+        return samples;
+      })
       .catch((errorMessage) => {
-        console.log(errorMessage);
+        console.error(errorMessage);
       });
   }
 
@@ -37,6 +62,12 @@ export default class SamplesFetcher {
     })
       .then((response) => response.json()).then((json) => {
         const rSample = new Sample(json.sample);
+        if (json.literatures && json.literatures.length > 0) {
+          const tliteratures = json.literatures.map((literature) => new Literature(literature));
+          const lits = tliteratures.reduce((acc, l) => acc.set(l.literal_id, l), new Immutable.Map());
+          rSample.literatures = lits;
+          rSample.updateChecksum();
+        }
         if (json.error) {
           rSample.id = `${id}:error:Sample ${id} is not accessible!`;
         }
@@ -181,5 +212,28 @@ export default class SamplesFetcher {
     });
 
     return promise;
+  }
+
+  static batchRefreshSvg(svgs) {
+    return fetch('/api/v1/samples/batch-refresh-svg', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        svgs: svgs.map(svg => ({
+          svg_path: svg.svgPath,
+          molfile: svg.molfile
+        }))
+      })
+    }).then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    }).then(json => json.results || [])
+      .catch(errorMessage => {
+        console.error('Error batch refreshing SVGs:', errorMessage);
+        throw errorMessage;
+      });
   }
 }

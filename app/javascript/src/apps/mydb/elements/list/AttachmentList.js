@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, {
+  useState, useEffect, useMemo, useCallback
+} from 'react';
 import {
   Button, OverlayTrigger, Tooltip, Dropdown, Overlay, ButtonGroup
 } from 'react-bootstrap';
 import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
-import { values } from 'lodash';
+import { values, last } from 'lodash';
 import uuid from 'uuid';
 import mime from 'mime-types';
 import SpinnerPencilIcon from 'src/components/common/SpinnerPencilIcon';
@@ -11,6 +13,9 @@ import Dropzone from 'react-dropzone';
 import Utils from 'src/utilities/Functions';
 import ImageModal from 'src/components/common/ImageModal';
 import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import EditorFetcher from 'src/fetchers/EditorFetcher';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 export const attachmentThumbnail = (attachment) => (
   <div className="attachment-row-image">
@@ -143,42 +148,115 @@ export const annotateButton = (attachment, onClick) => (
   />
 );
 
-export const editButton = (
-  attachment,
-  extension,
-  attachmentEditor,
-  isEditing,
-  editDisable,
-  handleEdit
-) => {
-  const editorTooltip = (exts) => (
-    <Tooltip id="editor_tooltip">
-      {editDisable ? (
-        <span>
-          Editing is only available for these files:&nbsp;
-          <strong>{exts}</strong>
-          .
-          <br />
-          Or you are not authorized to edit this file.
-        </span>
-      ) : (
-        <span>Edit attachment</span>
-      )}
-    </Tooltip>
+// EditButton
+/**
+ * Props:
+ *  - attachment: Attachment instance
+ *  - disabled: boolean
+ *  - onChange: function
+ */
+export function EditButton({ attachment, disabled, onChange }) {
+  const { docserver } = UIStore.getState() || {};
+  const extensionsObj = docserver?.extensions || {};
+  // Previously "attachmentEditor" -> now available at UserStore.editorConfig.available (bool)
+  const attachmentEditor = Boolean(docserver?.available);
+  const editDisable = disabled || !attachmentEditor || attachment.edit_state === 'editing';
+
+  const extsList = useMemo(
+    () => values(extensionsObj).join(','),
+    [extensionsObj]
   );
+
+  const editorTooltip = useCallback(
+    (exts) => (
+      <Tooltip id="editor_tooltip">
+        {disabled ? (
+          <span>
+            Editing is only available for these files:&nbsp;
+            <strong>{exts}</strong>
+            .
+            <br />
+            Or you are not authorized to edit this file.
+          </span>
+        ) : (
+          <span>Edit attachment</span>
+        )}
+      </Tooltip>
+    ),
+    [disabled]
+  );
+
+  const documentType = (filename) => {
+    const extension = filename.split('.').pop()?.toLowerCase();
+
+    if (!extension) return 'unknown';
+
+    const textExts = ['doc', 'docx', 'txt', 'odt', 'rtf'];
+    const spreadsheetExts = ['xls', 'xlsx', 'ods', 'csv'];
+    const presentationExts = ['ppt', 'pptx', 'odp'];
+    const pdfExts = ['pdf'];
+
+    if (textExts.includes(extension)) return 'word';
+    if (spreadsheetExts.includes(extension)) return 'cell';
+    if (presentationExts.includes(extension)) return 'slide';
+    if (pdfExts.includes(extension)) return 'pdf';
+
+    return 'unknown';
+  };
+
+  const handleEdit = useCallback(() => {
+    if (editDisable) return;
+
+    const fileType = last(attachment.filename.split('.'));
+    const docType = documentType(attachment.filename);
+    const forceStop = attachment.edit_state === 'editing';
+
+    EditorFetcher.startEditing({ attachmentId: attachment.id, forceStop })
+      .then((result) => {
+        const newAttachment = { ...attachment };
+
+        if (!forceStop && result.token) {
+          const url = `/editor?id=${newAttachment.id}`
+          + `&docType=${docType}`
+          + `&fileType=${fileType}`
+          + `&title=${newAttachment.filename}`
+          + `&key=${result.token}`
+          + `&only_office_token=${result.only_office_token}`;
+
+          newAttachment.edit_state = 'editing';
+          newAttachment.updated_at = new Date();
+
+          onChange(newAttachment); // <-- UI updates here first
+
+          setTimeout(() => {
+            window.open(url, '_blank'); // <-- new tab opens AFTER state flush
+          }, 0);
+        } else if (forceStop) {
+          newAttachment.edit_state = 'not_editing';
+          newAttachment.updated_at = new Date();
+          onChange(newAttachment);
+        } else {
+          NotificationActions.add({ message: 'Cannot edit this file.', level: 'error', position: 'tc' });
+          onChange(newAttachment);
+        }
+      });
+  }, [attachment, editDisable]);
+
   return (
-    <OverlayTrigger placement="top" overlay={editorTooltip(values(extension).join(','))}>
+    <OverlayTrigger placement="top" overlay={editorTooltip(extsList)}>
       <Button
         size="sm"
         variant="success"
         disabled={editDisable}
-        onClick={() => handleEdit(attachment)}
+        onClick={handleEdit}
       >
-        <SpinnerPencilIcon spinningLock={!attachmentEditor || isEditing} />
+        <SpinnerPencilIcon
+          spinningLock={attachment.edit_state === 'editing'}
+        />
       </Button>
     </OverlayTrigger>
   );
-};
+}
 
 export const importButton = (
   attachment,
@@ -322,7 +400,8 @@ const noChoice = [<Dropdown.Item key={uuid.v4()} disabled>None Available</Dropdo
 
 export function ThirdPartyAppButton({ attachment, options = [] }) {
   const [menuItems, setMenuItems] = useState([]);
-  const contentType = mime.contentType(attachment.content_type) ? attachment.content_type : mime.lookup(attachment.filename);
+  const contentType = mime.contentType(attachment.content_type)
+    ? attachment.content_type : mime.lookup(attachment.filename);
 
   useEffect(() => {
     const generatedMenuItems = () => {

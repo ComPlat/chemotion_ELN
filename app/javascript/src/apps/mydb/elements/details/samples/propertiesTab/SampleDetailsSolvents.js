@@ -35,6 +35,12 @@ export default class SampleDetailsSolvents extends React.Component {
       splitSample = srcSample.buildChild();
     }
 
+    // Set external_label if provided (e.g., from dropdown selection like "Acetone")
+    // This ensures the solvent label matches what the user selected, not the IUPAC name
+    if (extLabel) {
+      splitSample.external_label = extLabel;
+    }
+
     sample.addSolvent(splitSample);
     this.props.onChange(sample);
   }

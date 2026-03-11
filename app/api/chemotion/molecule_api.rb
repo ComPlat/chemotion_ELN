@@ -70,9 +70,9 @@ module Chemotion
             svg_file_src = Rails.public_path.join('images', 'molecules', molecule.molecule_svg_file)
             if File.exist?(svg_file_src)
               if svg.nil? || svg&.include?('Open Babel')
-                indigo_served_svg = Molecule.svg_reprocess(svg, molecule.molfile)
-                if indigo_served_svg
-                  svg_process = SVG::Processor.new.structure_svg('ketcher', indigo_served_svg, svg_digest, true)
+                svg = Molecule.svg_reprocess(svg, molecule.molfile)
+                if svg
+                  svg_process = SVG::Processor.new.structure_svg('ketcher', svg, svg_digest, true)
                   FileUtils.cp(svg_process[:svg_file_path], svg_file_src)
                 end
               else
@@ -189,20 +189,16 @@ module Chemotion
         molecule = decoupled ? Molecule.find_or_create_dummy : Molecule.find_or_create_by_molfile(molfile)
         molecule = Molecule.find_or_create_dummy if molecule.blank?
         ob = molecule&.ob_log
-        if svg.present?
-          svg_process = SVG::Processor.new.structure_svg(params[:editor], svg, molfile)
+        svg_digest = "#{molecule.inchikey}#{Time.zone.now}"
+
+        if svg.present? && svg.include?('epam-ketcher-ssc')
+          svg = KetcherService::SVGProcessor.clean_and_trim_svg(svg) || svg
+          svg_process = SVG::Processor.new.structure_svg('ketcher_epam', svg, svg_digest, true)
         else
-          svg_file_src = Rails.public_path.join('images', 'molecules', molecule.molecule_svg_file)
-          if File.exist?(svg_file_src)
-            mol = molecule.molfile.lines.first(2)
-            if mol[1]&.strip&.match?('OpenBabel')
-              svg = File.read(svg_file_src)
-              svg_process = SVG::Processor.new.structure_svg('openbabel', svg, molfile)
-            else
-              svg_process = SVG::Processor.new.generate_svg_info('samples', molfile)
-              FileUtils.cp(svg_file_src, svg_process[:svg_file_path])
-            end
-          end
+          svg = Molecule.svg_reprocess(nil, molfile)
+          return error!('Failed to generate SVG from molfile', 422) if svg.blank?
+
+          svg_process = SVG::Processor.new.structure_svg('ketcher', svg, svg_digest, true)
         end
         molecule&.attributes&.merge(temp_svg: svg_process[:svg_file_name], ob_log: ob)
         Entities::MoleculeEntity.represent(molecule, temp_svg: svg_process[:svg_file_name], ob_log: ob)
@@ -297,7 +293,7 @@ module Chemotion
         processor = if params[:is_chemdraw]
                       Chemotion::ChemdrawSvgProcessor.new(svg)
                     else
-                      Chemotion::KetcherSvgProcessor.new(svg)
+                      KetcherService::SVGProcessor.new(svg)
                     end
         svg = processor.centered_and_scaled_svg
         molecule = Molecule.find(params[:id])
@@ -305,6 +301,35 @@ module Chemotion
         { svg_path: molecule.molecule_svg_file }
       rescue StandardError => e
         return { msg: { level: 'error', message: e } }
+      end
+
+      desc 'Render SVG from molfile using fallback chain (Indigo -> Ketcher -> OpenBabel) and save to molecule'
+      params do
+        requires :molfile, type: String, desc: 'Molecule molfile'
+      end
+      post :render_svg do
+        molfile = params[:molfile]
+        # Find or create molecule from molfile
+        molecule = Molecule.find_or_create_by_molfile(molfile)
+        return { success: false, error: 'Failed to find or create molecule' } if molecule.blank?
+
+        # Render SVG using fallback chain: Indigo -> Ketcher -> OpenBabel
+        # This already returns processed (centered and scaled) SVG
+        processed_svg = Chemotion::SvgRenderer.render_svg_from_molfile(molfile)
+        return { success: false, error: 'Failed to render SVG: All rendering services failed' } if processed_svg.blank?
+
+        # Save SVG to molecule's file path (updates molecule_svg_file)
+        molecule.attach_svg(processed_svg)
+        molecule.save
+        { 
+          success: true, 
+          molecule_svg_file: molecule.molecule_svg_file,
+          svg_path: "/images/molecules/#{molecule.molecule_svg_file}",
+        }
+      rescue StandardError => e
+        Rails.logger.error("Error rendering SVG: #{e.message}")
+        Rails.logger.error(e.backtrace.join("\n")) if e.backtrace
+        { success: false, error: e.message }
       end
 
       desc 'update molfile and svg of molecule'

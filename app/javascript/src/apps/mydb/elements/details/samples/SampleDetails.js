@@ -11,7 +11,7 @@ import {
 } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import { CreatableSelect } from 'src/components/common/Select';
-import { cloneDeep, findIndex } from 'lodash';
+import { cloneDeep, findIndex, set } from 'lodash';
 import uuid from 'uuid';
 import Immutable from 'immutable';
 
@@ -22,6 +22,8 @@ import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
+import UserActions from 'src/stores/alt/actions/UserActions';
+import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import QcActions from 'src/stores/alt/actions/QcActions';
 import QcStore from 'src/stores/alt/stores/QcStore';
 
@@ -69,8 +71,6 @@ import CommentModal from 'src/components/common/CommentModal';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import { commentActivation } from 'src/utilities/CommentHelper';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
-import MolViewerBtn from 'src/components/viewer/MolViewerBtn';
-import MolViewerSet from 'src/components/viewer/MolViewerSet';
 import { copyToClipboard } from 'src/utilities/clipboard';
 // eslint-disable-next-line import/no-named-as-default
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
@@ -153,7 +153,6 @@ export default class SampleDetails extends React.Component {
     this.enableComputedProps = MatrixCheck(currentUser.matrix, 'computedProp');
     this.enableSampleDecoupled = MatrixCheck(currentUser.matrix, 'sampleDecoupled');
     this.enableNmrSim = MatrixCheck(currentUser.matrix, 'nmrSim');
-    this.enableMoleculeViewer = MatrixCheck(currentUser.matrix, MolViewerSet.PK);
 
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.isCASNumberValid = this.isCASNumberValid.bind(this);
@@ -296,17 +295,37 @@ export default class SampleDetails extends React.Component {
   }
 
   handleInventorySample(e) {
-    const { sample } = this.state;
+    const { sample, visible } = this.state;
     sample.inventory_sample = e.target.checked;
     this.handleSampleChanged(sample);
-    if (!e.target.checked) {
-      this.setState({ activeTab: 'properties' });
+
+    if (e.target.checked) {
+      // Add 'inventory' to visible tabs if not already present
+      if (!visible.includes('inventory')) {
+        this.setState({ visible: visible.push('inventory') });
+      }
+      // Persist inventory tab in collection layout if not already present
+      this.persistInventoryTabInCollection();
+    } else {
+      // Remove 'inventory' from visible tabs
+      this.setState({
+        visible: visible.filter((v) => v !== 'inventory'),
+      });
+      // switch to properties tab if current tab is inventory tab
+      if (this.state.activeTab === 'inventory') {
+        this.setState({
+          activeTab: 'properties'
+        });
+      }
     }
   }
 
-  handleStructureEditorSave(molfile, svgFile = null, config = null, editor = 'ketcher') {
+  handleStructureEditorSave(molfile, svg, info, editorId) {
     const { sample } = this.state;
     sample.molfile = molfile;
+    const svgFile = svg; // SVG is passed as 4th parameter
+    const editor = editorId || 'ketcher'; // editorId is passed as 6th parameter
+    const config = info; // info might contain config data like smiles
     const smiles = (config && sample.molecule) ? config.smiles : null;
     sample.contains_residues = molfile?.indexOf(' R# ') > -1;
     sample.formulaChanged = true;
@@ -530,6 +549,43 @@ export default class SampleDetails extends React.Component {
     this.setState({ isChemicalEdited: boolean });
   };
 
+  /**
+   * Persists the inventory tab into the current collection's tabs_segment
+   * and the user profile layout so it survives sample save/refresh.
+   * Only acts when the collection's sample layout does not already include
+   * the inventory tab; no-op for sync-to-me collections.
+   */
+  persistInventoryTabInCollection() {
+    const { currentCollection } = UIStore.getState();
+    if (!currentCollection || currentCollection.is_sync_to_me) return;
+
+    const sampleLayout = currentCollection?.tabs_segment?.sample;
+
+    // If the collection already tracks the inventory tab, nothing to do
+    if (sampleLayout && Object.prototype.hasOwnProperty.call(sampleLayout, 'inventory')) return;
+
+    // Resolve the effective layout: collection -> user profile -> fallback
+    const userProfile = UserStore.getState().profile;
+    const baseLayout = sampleLayout
+      || userProfile?.data?.layout_detail_sample;
+
+    if (!baseLayout) return;
+
+    // Append inventory as the next visible tab
+    const maxOrder = Math.max(0, ...Object.values(baseLayout).map((v) => Math.abs(v)));
+    const updatedLayout = { ...baseLayout, inventory: maxOrder + 1 };
+
+    // Persist to collection tabs_segment
+    const tabSegment = { ...currentCollection?.tabs_segment, sample: updatedLayout };
+    CollectionActions.updateTabsSegment({ segment: tabSegment, cId: currentCollection.id });
+    UIActions.selectCollection({ ...currentCollection, tabs_segment: tabSegment, clearSearch: true });
+
+    if (!userProfile) return;
+    // Persist to user profile
+    set(userProfile, 'data.layout_detail_sample', updatedLayout);
+    UserActions.updateUserProfile(userProfile);
+  }
+
   matchSelectedCollection(currentCollection) {
     const { sample } = this.props;
     if (sample.isNew) {
@@ -597,6 +653,7 @@ export default class SampleDetails extends React.Component {
         }
         <DetailsTabLiteratures
           element={sample}
+          literatures={sample.isNew ? sample.literatures : null}
         />
       </Tab>
     );
@@ -897,50 +954,52 @@ export default class SampleDetails extends React.Component {
     return (
       <div className="my-4">
         <InputGroup>
-          <InputGroup.Text>CAS</InputGroup.Text>
-          <CreatableSelect
-            name="cas"
-            isClearable
-            isInputEditable
-            inputValue={this.state.casInputValue}
-            options={options}
-            onChange={(selectedOption) => {
-              if (selectedOption) {
-                const value = selectedOption.value;
-                this.setState({ casInputValue: value });
-                this.updateCas(selectedOption);
-              } else {
-                this.setState({ casInputValue: '' });
-                this.updateCas(null);
-              }
-            }}
-            onInputChange={(inputValue, { action }) => {
-              if (action === 'input-change' || action === 'set-value') {
-                this.setState({ casInputValue: inputValue });
-              }
-            }}
-            onFocus={() => {
-              const currentCas = cas || '';
-              this.setState({ casInputValue: currentCas });
-            }}
-            onMenuOpen={() => this.onCasSelectOpen(casArr)}
-            isLoading={isCasLoading}
-            value={options.find(({ value }) => value === cas) || null}
-            onBlur={() => this.isCASNumberValid(cas || '', true)}
-            isDisabled={!sample.can_update}
-            className="flex-grow-1"
-            placeholder="Select or enter CAS number"
-            allowCreateWhileLoading
-            formatCreateLabel={(inputValue) => `Create "${inputValue}"`}
-          />
-          <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
-            <Button
-              variant="light"
-              onClick={() => copyToClipboard(cas)}
-            >
-              <i className="fa fa-clipboard" />
-            </Button>
-          </OverlayTrigger>
+          <div className="d-flex flex-grow-1">
+            <InputGroup.Text>CAS</InputGroup.Text>
+            <CreatableSelect
+              name="cas"
+              isClearable
+              isInputEditable
+              inputValue={this.state.casInputValue}
+              options={options}
+              onChange={(selectedOption) => {
+                if (selectedOption) {
+                  const value = selectedOption.value;
+                  this.setState({ casInputValue: value });
+                  this.updateCas(selectedOption);
+                } else {
+                  this.setState({ casInputValue: '' });
+                  this.updateCas(null);
+                }
+              }}
+              onInputChange={(inputValue, { action }) => {
+                if (action === 'input-change' || action === 'set-value') {
+                  this.setState({ casInputValue: inputValue });
+                }
+              }}
+              onFocus={() => {
+                const currentCas = cas || '';
+                this.setState({ casInputValue: currentCas });
+              }}
+              onMenuOpen={() => this.onCasSelectOpen(casArr)}
+              isLoading={isCasLoading}
+              value={options.find(({ value }) => value === cas) || null}
+              onBlur={() => this.isCASNumberValid(cas || '', true)}
+              isDisabled={!sample.can_update}
+              className="flex-grow-1"
+              placeholder="Select or enter CAS number"
+              allowCreateWhileLoading
+              formatCreateLabel={(inputValue) => `Create "${inputValue}"`}
+            />
+            <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
+              <Button
+                variant="light"
+                onClick={() => copyToClipboard(cas)}
+              >
+                <i className="fa fa-clipboard" />
+              </Button>
+            </OverlayTrigger>
+          </div>
         </InputGroup>
         {!validCas && errorMessage}
       </div>
@@ -1159,7 +1218,6 @@ export default class SampleDetails extends React.Component {
 
   sampleInfo(sample) {
     const isMixture = sample.isMixture();
-    const style = { height: 'auto', marginBottom: '20px' };
     let pubchemLcss = (sample.pubchem_tag && sample.pubchem_tag.pubchem_lcss
       && sample.pubchem_tag.pubchem_lcss.Record) || null;
     if (pubchemLcss && pubchemLcss.Reference) {
@@ -1321,17 +1379,9 @@ export default class SampleDetails extends React.Component {
       ? '/images/wild_card/loading-bubbles.svg'
       : sample.svgPath;
 
-    const className = `position-relative ${svgPath ? 'svg-container' : 'svg-container-empty'}`;
+    const style = 'position-relative d-flex align-items-center justify-content-center';
 
-    const molViewerBtn = (
-      <MolViewerBtn
-        className="structure-editor-container"
-        disabled={sample.isNew || !this.enableMoleculeViewer}
-        fileContent={sample.molfile}
-        isPublic={false}
-        viewType={`mol_${sample.id}`}
-      />
-    );
+    const className = `${style} ${svgPath ? 'svg-container' : 'svg-container-empty'}`;
 
     return sample.can_update ? (
       <>
@@ -1341,15 +1391,13 @@ export default class SampleDetails extends React.Component {
           role="button"
           tabIndex="0"
         >
-          <i className="fa fa-pencil position-absolute end-0" />
+          <i className="fa fa-pencil position-absolute top-0 end-0" />
           <SVG key={svgPath} src={svgPath} className="molecule-mid" />
         </div>
-        {molViewerBtn}
       </>
     ) : (
       <div className={className}>
         <SVG key={svgPath} src={svgPath} className="molecule-mid" />
-        {molViewerBtn}
       </div>
     );
   }
@@ -1614,6 +1662,7 @@ export default class SampleDetails extends React.Component {
             tabTitles={tabTitlesMap}
             onTabPositionChanged={this.onTabPositionChanged}
             addInventoryTab={sample.inventory_sample}
+            openedFromCollectionId={this.props.openedFromCollectionId}
           />
           <Tabs
             mountOnEnter
@@ -1635,4 +1684,5 @@ export default class SampleDetails extends React.Component {
 
 SampleDetails.propTypes = {
   sample: PropTypes.object,
+  openedFromCollectionId: PropTypes.number,
 };

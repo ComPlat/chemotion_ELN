@@ -225,4 +225,10 @@ h6 {
       @extend .ms-0;
     }
   }
+  &.accordion-button.sbmm-accordion-header {
+    @extend .surface-lighten2;
+  }
+  &.accordion-button.sbmm-accordion-header.active {
+    @extend .surface-lighten1;
+  }
 }

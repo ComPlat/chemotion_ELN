@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Button } from 'react-bootstrap';
+import {OverlayTrigger, Button, Tooltip} from 'react-bootstrap';
 
 import Container from 'src/models/Container';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -16,6 +16,7 @@ import {
 
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import { UploadField } from 'src/apps/mydb/elements/details/analyses/UploadField';
+import { CommentButton, CommentBox } from 'src/components/common/AnalysisCommentBoxComponent';
 import {
   sortedContainers,
   indexedContainers,
@@ -25,14 +26,18 @@ import {
 export default class SampleDetailsContainers extends Component {
   constructor(props) {
     super(props);
+    const { sample } = props;
+    const hasComment = sample.container?.description && sample.container.description.trim() !== '';
     this.state = {
       activeAnalysis: UIStore.getState().sample.activeAnalysis,
       mode: 'edit',
+      commentBoxVisible: hasComment,
     };
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.addButton = this.addButton.bind(this);
     this.handleChange = this.handleChange.bind(this);
     this.handleCommentTextChange = this.handleCommentTextChange.bind(this);
+    this.toggleCommentBox = this.toggleCommentBox.bind(this);
     this.handleUndo = this.handleUndo.bind(this);
     this.handleRemove = this.handleRemove.bind(this);
     this.handleAccordionOpen = this.handleAccordionOpen.bind(this);
@@ -55,10 +60,15 @@ export default class SampleDetailsContainers extends Component {
 
   handleCommentTextChange(e) {
     const { sample } = this.props;
-
+    if (!sample.container) {
+      sample.container = Container.buildEmpty();
+    }
     sample.container.description = e.target.value;
-
     this.handleChange();
+  }
+
+  toggleCommentBox() {
+    this.setState((prevState) => ({ commentBoxVisible: !prevState.commentBoxVisible }));
   }
 
   handleChange() {
@@ -139,8 +149,12 @@ export default class SampleDetailsContainers extends Component {
           element={sample}
           setElement={(sample, cb = null) => setState((prevState) => ({ ...prevState, sample }), cb)}
         />
+        <OverlayTrigger
+          placement="top"
+          overlay={<Tooltip id="annotate_tooltip">Create and add empty analyses.</Tooltip>}
+        >
         <Button
-          size="xsm"
+          size="sm"
           variant="success"
           onClick={this.handleAdd}
           disabled={!sample.can_update}
@@ -148,6 +162,7 @@ export default class SampleDetailsContainers extends Component {
           <i className="fa fa-plus me-1" />
           Add analysis
         </Button>
+        </OverlayTrigger>
       </>
     );
   }
@@ -162,7 +177,7 @@ export default class SampleDetailsContainers extends Component {
   }
 
   render() {
-    const { activeAnalysis, mode } = this.state;
+    const { activeAnalysis, mode, commentBoxVisible } = this.state;
     const {
       readOnly, sample, handleSubmit, handleSampleChanged,
     } = this.props;
@@ -194,6 +209,8 @@ export default class SampleDetailsContainers extends Component {
             activeAnalysis={activeAnalysis}
             handleChange={this.handleChange}
             handleCommentTextChange={this.handleCommentTextChange}
+            commentBoxVisible={commentBoxVisible}
+            toggleCommentBox={this.toggleCommentBox}
           />
           <ViewSpectra
             sample={sample}
@@ -208,9 +225,14 @@ export default class SampleDetailsContainers extends Component {
         </div>
       );
     }
+
     return (
       <RndNoAnalyses
         addButton={this.addButton}
+        toggleCommentBox={this.toggleCommentBox}
+        commentBoxVisible={commentBoxVisible}
+        containerDescription={sample.container?.description || ''}
+        handleCommentTextChange={this.handleCommentTextChange}
       />
     );
   }

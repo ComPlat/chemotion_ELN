@@ -7,6 +7,7 @@
 #  id                                   :bigint           not null, primary key
 #  access_comments                      :string
 #  access_options                       :string
+#  alternative_identifier               :string
 #  ancestry                             :string           default("/"), not null
 #  application_name                     :string
 #  application_version                  :string
@@ -17,8 +18,10 @@
 #  deleted_at                           :datetime
 #  description                          :text
 #  description_for_methods_part         :text
-#  device_type                          :string
-#  device_type_detail                   :string
+#  device_class                         :string
+#  device_class_detail                  :string
+#  device_type_id_type                  :string
+#  device_type_name                     :string
 #  general_tags                         :string           default([]), not null, is an Array
 #  helpers_uploaded                     :boolean          default(FALSE)
 #  infrastructure_assignment            :string
@@ -32,6 +35,9 @@
 #  ontologies                           :jsonb
 #  operation_mode                       :string
 #  operators                            :jsonb
+#  owner_email                          :string
+#  owner_id_type                        :string
+#  owner_institution                    :string
 #  planned_maintenance                  :jsonb
 #  policies_and_user_information        :text
 #  restart_after_planned_offline_period :text
@@ -44,6 +50,7 @@
 #  university_campus                    :string
 #  vendor_company_name                  :string
 #  vendor_device_name                   :string
+#  vendor_id_type                       :string
 #  vendor_url                           :string
 #  version_characterization             :text
 #  version_doi                          :string
@@ -57,6 +64,9 @@
 #  created_at                           :datetime         not null
 #  updated_at                           :datetime         not null
 #  device_id                            :integer
+#  device_type_id                       :string
+#  inventory_id                         :string
+#  owner_id                             :string
 #  vendor_device_id                     :string
 #  vendor_id                            :string
 #

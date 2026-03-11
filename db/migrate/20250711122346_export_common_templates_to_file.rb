@@ -1,9 +1,9 @@
-require Rails.root.join('lib/tasks/support/ketcher_common_templates.rb')
+require Rails.root.join('lib/tasks/support/ketcher_common_templates_exporter.rb')
 
 class ExportCommonTemplatesToFile < ActiveRecord::Migration[6.1]
   def up
     say_with_time "Exporting common templates to file..." do
-      CommonTemplateExporter.export
+      KetcherCommonTemplatesExporter.export
     end
   end
 

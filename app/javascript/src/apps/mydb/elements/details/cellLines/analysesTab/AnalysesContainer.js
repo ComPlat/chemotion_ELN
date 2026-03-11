@@ -8,6 +8,7 @@ import {
   ButtonToolbar
 } from 'react-bootstrap';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
+import Container from 'src/models/Container';
 import OrderModeRow from 'src/apps/mydb/elements/details/cellLines/analysesTab/OrderModeRow';
 import EditModeRow from 'src/apps/mydb/elements/details/cellLines/analysesTab/EditModeRow';
 import PropTypes from 'prop-types';
@@ -19,9 +20,11 @@ class AnalysesContainer extends Component {
 
   constructor() {
     super();
+    const { currentElement } = ElementStore.getState();
+    const hasComment = currentElement.container?.description && currentElement.container.description.trim() !== '';
     this.state = {
       mode: 'edit',
-      commentBoxVisible: false,
+      commentBoxVisible: hasComment,
     };
   }
 
@@ -75,6 +78,9 @@ class AnalysesContainer extends Component {
 
   handleCommentTextChange = (e) => {
     const { currentElement } = ElementStore.getState();
+    if (!currentElement.container) {
+      currentElement.container = Container.buildEmpty();
+    }
     currentElement.container.description = e.target.value;
     this.handleChange(true);
   };
@@ -197,13 +203,18 @@ class AnalysesContainer extends Component {
         <div className="d-flex justify-content-between mb-3">
           {this.renderModeButton()}
           <ButtonToolbar className="gap-2">
-            <CommentButton toggleCommentBox={this.toggleCommentBox} size="xsm" disable={false} />
+            <CommentButton
+              toggleCommentBox={this.toggleCommentBox}
+              isVisible={commentBoxVisible}
+              size="sm"
+              disable={false}
+            />
             {this.renderAddButton()}
           </ButtonToolbar>
         </div>
         <CommentBox
           isVisible={commentBoxVisible}
-          value={currentElement.container.description}
+          value={currentElement.container?.description || ''}
           handleCommentTextChange={this.handleCommentTextChange}
         />
         {this.renderContainerPanel()}

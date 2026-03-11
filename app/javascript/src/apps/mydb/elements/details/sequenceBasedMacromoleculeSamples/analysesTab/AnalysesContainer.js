@@ -23,6 +23,11 @@ function AnalysesContainer({ readonly }) {
 
   useEffect(() => {
     TextTemplateActions.fetchTextTemplates('sbmmSample');
+    const description = sbmmSample.container?.description;
+    const hasComment = description && description.trim() !== '';
+    if (hasComment && !sbmmStore.analysis_comment_box) {
+      sbmmStore.setAnalysisCommentBox(true);
+    }
   }, []);
 
   const handleSpectraChange = () => {
@@ -36,7 +41,7 @@ function AnalysesContainer({ readonly }) {
   const addButton = () => (
     <div className="add-button">
       <Button
-        size="xsm"
+        size="sm"
         variant="success"
         onClick={() => sbmmStore.addEmptyAnalysisContainer()}
         disabled={readonly}
@@ -119,7 +124,8 @@ function AnalysesContainer({ readonly }) {
               <ButtonToolbar className="gap-2">
                 <CommentButton
                   toggleCommentBox={sbmmStore.toggleAnalysisCommentBox}
-                  size="xsm"
+                  isVisible={sbmmStore.analysis_comment_box}
+                  size="sm"
                 />
                 {addButton()}
               </ButtonToolbar>
@@ -152,9 +158,23 @@ function AnalysesContainer({ readonly }) {
             )}
           </div>
         ) : (
-          <div className="d-flex justify-content-between align-items-center">
-            <p className="m-0">There are currently no Analyses.</p>
-            {addButton()}
+          <div>
+            <div className="d-flex justify-content-between align-items-center">
+              <p className="m-0">There are currently no Analyses.</p>
+              <ButtonToolbar className="gap-2">
+                <CommentButton
+                  toggleCommentBox={sbmmStore.toggleAnalysisCommentBox}
+                  isVisible={sbmmStore.analysis_comment_box}
+                  size="sm"
+                />
+                {addButton()}
+              </ButtonToolbar>
+            </div>
+            <CommentBox
+              isVisible={sbmmStore.analysis_comment_box}
+              value={sbmmSample.container?.description || ''}
+              handleCommentTextChange={sbmmStore.changeAnalysisComment}
+            />
           </div>
         )
       }

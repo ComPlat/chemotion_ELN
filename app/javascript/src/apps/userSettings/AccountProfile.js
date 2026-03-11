@@ -18,8 +18,11 @@ function AccountProfile({ currentUser }) {
   const [successMessage, setSuccessMessage] = useState('');
   const [successPosition, setSuccessPosition] = useState(null);
 
+  const nextReactionLabelCounter = parseInt(reactionsCount, 10) + 1;
+  const updatedNextReactionLabel  = nextReactionLabelCounter.toString().padStart(3, '0');
+
   useEffect(() => {
-    setNextLabel(`${currentUser.initials}-${reactionPrefix}${reactionsCount}`);
+    setNextLabel(`${currentUser.initials}-${reactionPrefix}${updatedNextReactionLabel}`);
   }, [currentUser, reactionPrefix, reactionsCount]);
 
   const handleUserSettingsSubmit = useCallback(
@@ -128,7 +131,7 @@ function AccountProfile({ currentUser }) {
             <Row className="mb-3">
               <Col className="col-3 offset-3">
                 <Form.Label className="col-form-label">Next reaction label will be:</Form.Label>
-                <span>{nextLabel}</span>
+                <span> {nextLabel}</span>
               </Col>
             </Row>
 

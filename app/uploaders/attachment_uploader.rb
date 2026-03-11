@@ -15,25 +15,34 @@ class AttachmentUploader < Shrine
                       message: "File #{record.filename} cannot be uploaded. File size must be less than #{Rails.configuration.shrine_storage.maximum_size} MB" # rubocop:disable Layout/LineLength
   end
 
-  def generate_location(io, context = {}) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
-    if context[:record]
-      file_name = if io.path.include? 'thumb.jpg'
-                    "#{context[:record][:identifier]}.thumb.jpg"
-                  elsif io.path.include? 'annotation.svg'
-                    "#{context[:record][:identifier]}.annotation.svg"
-                  elsif io.path.include? 'conversion.png'
-                    "#{context[:record][:identifier]}.conversion.png"
-                  else
-                    (context[:record][:identifier]).to_s
-                  end
+  def generate_location(io, context = {}) # rubocop:disable Metrics/PerceivedComplexity
+    record = context[:record]
+    metadata = context[:metadata] || {}
 
-      bucket = 1
-      bucket = (context[:record][:id] / 10_000).floor + 1 if context[:record][:id].present?
-      "#{bucket}/#{file_name}"
-    else
-      super
-    end
-  end
+    return super unless record
+
+    filename = metadata['filename'].to_s
+
+    file_name =
+      if filename.include?('thumb')
+        "#{record.identifier}.thumb.jpg"
+      elsif filename.include?('annotation')
+        "#{record.identifier}.annotation.svg"
+      elsif filename.include?('conversion')
+        "#{record.identifier}.conversion.png"
+      else
+        record.identifier.to_s
+      end
+
+    bucket =
+      if record.id.present?
+        (record.id / 10_000).floor + 1
+      else
+        1
+      end
+
+    "#{bucket}/#{file_name}"
+  end # rubocop:enable Metrics/PerceivedComplexity
 
   # plugins and uploading logic
   add_metadata :md5 do |io|
@@ -43,7 +52,6 @@ class AttachmentUploader < Shrine
   Attacher.derivatives do |original|
     file_extension = ".#{record.attachment.mime_type.split('/').last}" unless record.attachment.mime_type.nil?
 
-    #  
     file_extension = '.svg' if file_extension == '.svg+xml'
 
     file_extension = '.jpg' if file_extension == '.jpeg'
