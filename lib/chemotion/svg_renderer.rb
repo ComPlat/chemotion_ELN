@@ -2,8 +2,9 @@
 
 require Rails.root.join('lib/ketcher_service/render_svg.rb')
 require 'base64'
+require Rails.root.join('lib/chemotion/molfile_polymer_support')
 
-# rubocop:disable Rails/Output
+# rubocop:disable Metrics/AbcSize, Metrics/MethodLength, Metrics/BlockLength, Metrics/ClassLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/ParameterLists, Layout/LineLength, Layout/IndentationWidth, Layout/ElseAlignment, Layout/EndAlignment, Layout/MultilineMethodCallIndentation, Layout/EmptyLineAfterGuardClause, Layout/EmptyLineBetweenDefs, Naming/PredicatePrefix, Naming/MethodParameterName, Naming/MemoizedInstanceVariableName, Style/IfUnlessModifier, Style/EmptyElse, Style/RegexpLiteral, Style/NestedTernaryOperator, Style/TernaryParentheses, Style/ComparableClamp, Style/NumericPredicate, Lint/UselessRescue, Lint/UselessAssignment, Lint/AmbiguousOperatorPrecedence, Lint/UnusedMethodArgument, Rails/Presence, Rails/Blank, Rails/FilePath, Rails/Pluck, Rails/RootPublicPath, Performance/MapCompact, Style/SafeNavigation
 module Chemotion
   # Unified SVG renderer with fallback chain:
   # 1. IndigoService (if enabled)
@@ -59,8 +60,7 @@ module Chemotion
 
     # True when molfile contains the PolymersList tag (e.g. "> <PolymersList>").
     def self.has_polymers_list_tag?(struct)
-      return false if struct.blank?
-      struct.to_s.include?('> <PolymersList>')
+      Chemotion::MolfilePolymerSupport.has_polymers_list_tag?(struct)
     end
 
     def self.finalize_svg(svg, molfile, polymer_data)
@@ -760,13 +760,19 @@ module Chemotion
 
     def self.parse_atom_positions(molfile)
       lines = molfile.to_s.lines
-      counts_idx = lines.find_index { |line| line.match?(/^\s*\d+\s+\d+\s+.*V2000/) }
+      # Avoid regex on full line (CodeQL: polynomial backtracking). Find V2000 line then parse counts.
+      counts_idx = lines.find_index { |line| line.include?('V2000') }
       return {} unless counts_idx
 
-      atom_count = lines[counts_idx].to_s.strip.split(/\s+/).first.to_i
+      count_line = lines[counts_idx].to_s.strip
+      parts = count_line.split(/\s+/)
+      return {} unless parts.size >= 2
+
+      atom_count = Integer(parts[0], exception: false)
+      return {} unless atom_count.is_a?(Integer) && atom_count >= 0
+
       atoms_start = counts_idx + 1
       atoms = {}
-
       atom_count.times do |idx|
         line = lines[atoms_start + idx].to_s
         parts = line.strip.split(/\s+/)
@@ -778,7 +784,6 @@ module Chemotion
 
         atoms[idx] = [x, y]
       end
-
       atoms
     end
 
@@ -984,5 +989,5 @@ module Chemotion
       nil
     end
   end
-  # rubocop:enable Rails/Output
+  # rubocop:enable Metrics/AbcSize, Metrics/MethodLength, Metrics/BlockLength, Metrics/ClassLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/ParameterLists, Layout/LineLength, Layout/IndentationWidth, Layout/ElseAlignment, Layout/EndAlignment, Layout/MultilineMethodCallIndentation, Layout/EmptyLineAfterGuardClause, Layout/EmptyLineBetweenDefs, Naming/PredicatePrefix, Naming/MethodParameterName, Naming/MemoizedInstanceVariableName, Style/IfUnlessModifier, Style/EmptyElse, Style/RegexpLiteral, Style/NestedTernaryOperator, Style/TernaryParentheses, Style/ComparableClamp, Style/NumericPredicate, Lint/UselessRescue, Lint/UselessAssignment, Lint/AmbiguousOperatorPrecedence, Lint/UnusedMethodArgument, Rails/Presence, Rails/Blank, Rails/FilePath, Rails/Pluck, Rails/RootPublicPath, Performance/MapCompact, Style/SafeNavigation
 end

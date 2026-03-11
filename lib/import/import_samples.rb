@@ -2,6 +2,7 @@
 
 require 'roo'
 require 'digest'
+require Rails.root.join('lib/chemotion/molfile_polymer_support')
 
 # rubocop:disable Metrics/ClassLength
 module Import
@@ -163,7 +164,7 @@ module Import
         molecule, raw_molfile = get_data_from_molfile(row)
         if molecule.present?
           [molecule, raw_molfile]
-        elsif raw_molfile.to_s.include?('> <PolymersList>')
+        elsif raw_molfile.to_s.include?(Chemotion::MolfilePolymerSupport::POLYMERS_LIST_TAG)
           # Polymer molfile but molecule not created (e.g. inchikey blank); do not fall back to smiles or we get same dummy molecule for every row.
           nil
         elsif smiles?(row)
@@ -281,9 +282,9 @@ module Import
       raw_molfile = row_value_case_insensitive(row, 'molfile').to_s.strip
       raw_molfile = unescape_textnode_octal_in_molfile(raw_molfile)
       # When molfile has > <PolymersList>, use full molfile and Molecule.svg_reprocess so polymers use SvgRenderer.
-      if raw_molfile.include?('> <PolymersList>')
+      if raw_molfile.include?(Chemotion::MolfilePolymerSupport::POLYMERS_LIST_TAG)
         # Remove PolymersList, TextNode and clean; then get inchikey from cleaned molfile. If it still fails, create with synthetic inchikey.
-        cleaned = clean_molfile_for_inchikey(raw_molfile)
+        cleaned = Chemotion::MolfilePolymerSupport.clean_molfile_for_inchikey(raw_molfile)
         if cleaned.blank?
           return [nil, raw_molfile]
         end
@@ -669,32 +670,13 @@ module Import
     # Remove PolymersList, TextNode and other SDF blocks, then keep only CTAB (up to M  END).
     # Use this cleaned molfile to get inchikey from Open Babel; if it still fails, create molecule with synthetic inchikey.
     def clean_molfile_for_inchikey(raw_molfile)
-      return nil if raw_molfile.blank?
-
-      s = raw_molfile.to_s.force_encoding('UTF-8')
-      # Remove SDF data blocks that break Open Babel: > <PolymersList>, > <TextNode>, and any other > <...>
-      s = s.gsub(/>\s*<\s*PolymersList\s*>[\s\S]*?(?=\n\s*>\s*<\s|\z)/i, '')
-      s = s.gsub(/>\s*<\s*TextNode\s*>[\s\S]*?(?=\n\s*>\s*<\s|\z)/i, '')
-      # Keep only CTAB (up to and including M  END)
-      sanitize_molfile_for_import(s)
+      Chemotion::MolfilePolymerSupport.clean_molfile_for_inchikey(raw_molfile)
     end
 
     # Keep only the CTAB (up to and including M END). Strip SDF blocks (e.g. > <...>) that can
     # cause molecule_info_from_molfile to return blank inchikey.
     def sanitize_molfile_for_import(molfile)
-      return molfile if molfile.blank?
-
-      molfile = molfile.to_s.force_encoding('UTF-8')
-      lines = molfile.lines
-      m_end_index = lines.index { |line| line.match?(/\s*M\s+END\s*/i) }
-      if m_end_index
-        lines[0..m_end_index].join.rstrip
-      elsif (idx = molfile.index(/\sM\s+END\s/i))
-        end_marker = molfile.match(/\sM\s+END\s/i)[0]
-        molfile[0..(idx + end_marker.length - 1)].rstrip
-      else
-        molfile
-      end
+      Chemotion::MolfilePolymerSupport.keep_only_ctab(molfile)
     end
 
     # Restore Unicode in TextNode labels: Excel/export can turn e.g. ∀ into literal \342\210\200

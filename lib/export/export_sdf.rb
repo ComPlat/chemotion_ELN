@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'export_table'
+require Rails.root.join('lib/chemotion/molfile_polymer_support')
 
 module Export
   class ExportSdf < ExportTable
@@ -115,7 +116,7 @@ module Export
     # When PolymersList or TextNode blocks are present, keep the full molfile including those blocks and $$$$.
     def validate_molfile(molfile)
       s = molfile.to_s
-      if s.include?('> <PolymersList>') || s.include?('> <TextNode>')
+      if Chemotion::MolfilePolymerSupport.has_polymer_or_textnode_blocks?(s)
         return s.rstrip
       end
       return s unless s.include?('M  END')
