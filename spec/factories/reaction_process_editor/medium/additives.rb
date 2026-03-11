@@ -2,6 +2,6 @@
 
 FactoryBot.define do
   factory :additive, class: 'Medium::Additive' do
-    sample_name { 'Brine' }
+    name { 'Brine' }
   end
 end
