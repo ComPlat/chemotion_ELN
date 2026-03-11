@@ -13,7 +13,10 @@ import {
   latestDataSetter
 } from 'src/components/structureEditor/KetcherEditor';
 import { ALIAS_PATTERNS, KET_TAGS, KET_DOM_TAG } from 'src/utilities/ketcherSurfaceChemistry/constants';
-import { fetchKetcherData } from 'src/utilities/ketcherSurfaceChemistry/InitializeAndParseKetcher';
+import {
+  fetchKetcherData,
+  loadKetcherData
+} from 'src/utilities/ketcherSurfaceChemistry/InitializeAndParseKetcher';
 import {
   findAtomByImageIndex,
   handleAddAtom,
@@ -28,6 +31,7 @@ import {
 import {
   ImagesToBeUpdatedSetter,
   imagesList,
+  imagesListSetter,
   mols,
   textList,
   textListSetter,
@@ -83,8 +87,9 @@ const arrangePolymers = async (canvasData, editor) => {
 };
 
 // helper function to arrange text nodes for formula
+// Use polymerIndex (0,1,2...) for the first number — matches PolymersList atom index, not raw atom index.
 const arrangeTextNodes = async (ket2Molfile) => {
-  let atomCount = 0;
+  let polymerIndex = 0;
   const assembleTextList = [];
 
   for (const item of mols) {
@@ -94,12 +99,12 @@ const arrangeTextNodes = async (ket2Molfile) => {
     for (const atom of atoms) {
       const textNodeKey = textNodeStruct[atom.alias];
 
-      if (textNodeKey) {
+      if (textNodeKey && ALIAS_PATTERNS.threeParts.test(atom.alias)) {
         for (const textItem of textList) {
           const block = JSON.parse(textItem.data.content).blocks[0];
           if (textNodeKey === block.key) {
             const line = [
-              atomCount,
+              polymerIndex,
               textSeparator,
               textNodeKey,
               textSeparator,
@@ -111,8 +116,8 @@ const arrangeTextNodes = async (ket2Molfile) => {
             assembleTextList.push({ line, y });
           }
         }
+        polymerIndex += 1;
       }
-      atomCount += 1;
     }
   }
 
@@ -741,12 +746,28 @@ const saveMoveCanvas = async (
     dataCopy.root.nodes = [...nonText, ...textList];
   }
 
+  // Preserve images from our payload before apply/fetch — getKet() often omits them.
+  // This ensures imagesList is correct when loadKetcherData receives no images from the editor.
+  const imagesFromPayload = (dataCopy.root?.nodes || []).filter((n) => n.type === 'image');
+  if (imagesFromPayload.length > 0) {
+    imagesListSetter(imagesFromPayload);
+  }
+
   if (isMoveRequired) {
     await applyCanvasDataToEditor(editor, dataCopy, recenter);
-    if (isFetchRequired) {
-      await fetchKetcherData(editor);
+    const { syncImagesOnly = false } = moveOptions;
+    if (syncImagesOnly) {
+      // Use payload data for atom positions — avoid fetch overwriting with editor data
+      // that may omit images or alter positions on load/reopen.
+      latestDataSetter(dataCopy);
+      await loadKetcherData(dataCopy);
+      await onTemplateMove(editor, recenter, { ...moveOptions, skipFetch: true });
+    } else {
+      if (isFetchRequired) {
+        await fetchKetcherData(editor);
+      }
+      await onTemplateMove(editor, recenter, moveOptions);
     }
-    await onTemplateMove(editor, recenter, moveOptions);
     return;
   }
 
@@ -774,21 +795,23 @@ const centerPositionCanvas = async (editor) => {
 
 const onTemplateMove = async (editor, recenter = false, options = {}) => {
   if (!editor || !editor.structureDef) return;
-  const { syncImagesOnly = false } = options;
+  const { syncImagesOnly = false, skipFetch = false } = options;
 
   // for tool bar button events - but skip recentering when only syncing images
   if (!recenter && !syncImagesOnly && (imageListCopyContainer.length || textListCopyContainer.length)) {
     recenter = true;
   }
-  // first fetch to save values
-  await fetchKetcherData(editor);
+  if (!skipFetch) {
+    await fetchKetcherData(editor);
+  }
 
   const molCopy = mols;
   const imageListCopy = imageListCopyContainer.length ? imageListCopyContainer : imagesList;
   const textListCopy = textListCopyContainer.length ? textListCopyContainer : textList;
 
-  // second fetch save and place
-  await fetchKetcherData(editor);
+  if (!skipFetch) {
+    await fetchKetcherData(editor);
+  }
 
   let imageNodes = [];
   if (syncImagesOnly) {

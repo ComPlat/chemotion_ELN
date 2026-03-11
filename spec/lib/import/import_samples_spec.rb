@@ -208,4 +208,95 @@ RSpec.describe 'Import::ImportSamples' do
       expect(sample['density']).to eq(2.24)
     end
   end
+
+  describe 'composition table' do
+    describe '#parse_composition_table_data' do
+      it 'does nothing when workbook has no sample_composition_table sheet' do
+        importer.read_file
+        allow(importer.xlsx).to receive(:sheets).and_return(['Sample'])
+        importer.send(:parse_composition_table_data)
+        expect(importer.composition_table_data).to eq({})
+      end
+
+      context 'when sample_composition_table sheet is present' do
+        let(:comp_sheet) do
+          sheet = instance_double(Roo::Excelx, 'comp_sheet')
+          allow(sheet).to receive(:row).with(1).and_return(
+            ['Sample UUID', 'Source', 'Weight ratio exp.', 'Molar Mass (g/mol)']
+          )
+          allow(sheet).to receive(:row).with(2).and_return(
+            ['uuid-abc', '50% Pd', 50.0, 106.4]
+          )
+          allow(sheet).to receive(:row).with(3).and_return(
+            ['uuid-abc', '50% support', 50.0, 200.0]
+          )
+          allow(sheet).to receive(:last_row).and_return(3)
+          sheet
+        end
+
+        before do
+          importer.read_file
+          allow(importer.xlsx).to receive(:sheets).and_return(%w[sheet1 sample_composition_table])
+          allow(importer.xlsx).to receive(:sheet).with('sample_composition_table').and_return(comp_sheet)
+          importer.send(:parse_composition_table_data)
+        end
+
+        it 'parses rows into composition_table_data keyed by sample uuid' do
+          expect(importer.composition_table_data.keys).to include('uuid-abc')
+          rows = importer.composition_table_data['uuid-abc']
+          expect(rows.size).to eq(2)
+          expect(rows[0]).to eq(source: '50% Pd', weight_ratio_exp: 50.0, molar_mass: 106.4)
+          expect(rows[1]).to eq(source: '50% support', weight_ratio_exp: 50.0, molar_mass: 200.0)
+        end
+      end
+    end
+
+    describe '#apply_composition_table_data' do
+      let(:sample_with_uuid) { create(:valid_sample) }
+      let(:sample_uuid) { 'test-composition-uuid' }
+      let(:row_with_uuid) { { 'sample uuid' => sample_uuid } }
+      let(:dummy_molecule) { instance_double(Molecule, id: 1) }
+
+      before do
+        importer.instance_variable_set(:@composition_table_data, {
+                                         sample_uuid => [
+                                           { source: '60% Pd', weight_ratio_exp: 60.0, molar_mass: 106.4 },
+                                           { source: '40% support', weight_ratio_exp: 40.0, molar_mass: 200.0 },
+                                         ],
+                                       })
+        allow(Molecule).to receive(:find_or_create_dummy).and_return(dummy_molecule)
+      end
+
+      it 'creates HierarchicalMaterial components with source, weight_ratio_exp, molar_mass' do
+        importer.send(:apply_composition_table_data, sample_with_uuid, row_with_uuid)
+        sample_with_uuid.reload
+        hm = sample_with_uuid.components.where(name: Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL).order(:position)
+        expect(hm.count).to eq(2)
+        expect(hm.first.component_properties['source']).to eq('60% Pd')
+        expect(hm.first.component_properties['weight_ratio_exp']).to eq(60.0)
+        expect(hm.first.component_properties['molar_mass']).to eq(106.4)
+        expect(hm.second.component_properties['source']).to eq('40% support')
+      end
+
+      it 'updates sample_type to HierarchicalMaterial when not already hierarchical or mixture' do
+        sample_with_uuid.update!(sample_type: 'Micromolecule')
+        importer.send(:apply_composition_table_data, sample_with_uuid, row_with_uuid)
+        sample_with_uuid.reload
+        expect(sample_with_uuid.sample_type).to eq(Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL)
+      end
+
+      it 'does nothing when sample uuid is blank in row' do
+        importer.send(:apply_composition_table_data, sample_with_uuid, { 'sample uuid' => '' })
+        sample_with_uuid.reload
+        expect(sample_with_uuid.components.where(name: Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL).count).to eq(0)
+      end
+
+      it 'does nothing when composition_table_data has no entry for sample uuid' do
+        importer.instance_variable_set(:@composition_table_data, {})
+        importer.send(:apply_composition_table_data, sample_with_uuid, row_with_uuid)
+        sample_with_uuid.reload
+        expect(sample_with_uuid.components.where(name: Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL).count).to eq(0)
+      end
+    end
+  end
 end

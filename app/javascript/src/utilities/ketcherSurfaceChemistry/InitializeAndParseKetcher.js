@@ -42,24 +42,30 @@ import {
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 const loadTemplates = async () => {
-  fetch('/json/surfaceChemistryShapes.json').then((response) => {
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
-    }
-    return response.json();
-  }).then((data) => {
+  try {
+    const response = await fetch('/json/surfaceChemistryShapes.json');
+    if (!response.ok) throw new Error('Network response was not ok');
+    const data = await response.json();
     templateListSetter(data);
-  }).catch((error) => {
+  } catch (error) {
     console.error('Error fetching the JSON data:', error);
-  });
+  }
 };
 
 // prepare/load ket2 format data
-const loadKetcherData = async (data) => {
+// preserveImagesWhenEmpty: when true (from fetchKetcherData), keep imagesList if data has no images
+// because getKet() often omits them. When false (default), always sync imagesList with data.
+const loadKetcherData = async (data, options = {}) => {
+  const { preserveImagesWhenEmpty = false } = options;
   const nodes = data?.root?.nodes && Array.isArray(data.root.nodes) ? data.root.nodes : [];
   allAtomsSetter([]);
   allNodesSetter([...nodes]);
-  imagesListSetter(nodes.filter((item) => item.type === 'image'));
+  const imageNodesFromData = nodes.filter((item) => item.type === 'image');
+  if (imageNodesFromData.length > 0) {
+    imagesListSetter(imageNodesFromData);
+  } else if (!preserveImagesWhenEmpty) {
+    imagesListSetter([]);
+  }
 
   // Text nodes are non-standard Ketcher extensions managed entirely in local state.
   // The editor never returns them via getKet(), so we must never overwrite the local
@@ -71,9 +77,9 @@ const loadKetcherData = async (data) => {
     textListSetter(textNodesFromEditor);
   }
 
-  const sliceEnd = Math.max(0, nodes.length - imagesList.length - textList.length);
-  molsSetter(sliceEnd > 0 ? nodes.slice(0, sliceEnd).map((i) => i.$ref) : []);
-  const molRefs = sliceEnd > 0 ? nodes.slice(0, sliceEnd).map((i) => i.$ref) : [];
+  // Mol refs are nodes with $ref; getKet() may omit images/text, so derive mols from structure
+  const molRefs = (nodes || []).filter((n) => n?.$ref).map((n) => n.$ref);
+  molsSetter(molRefs);
   molRefs.forEach((item) => (data[item]?.atoms || []).map((i) => allAtoms.push(i)));
 };
 
@@ -324,12 +330,17 @@ const templateWithBoundingBox = async (templateType, atomLocation, templateSize)
   if (!template) return null;
   const defaultSize = [template.boundingBox.height, template.boundingBox.width];
   const [height, width] = templateSize?.split('-') || defaultSize;
-  template.boundingBox.x = atomLocation[0];
-  template.boundingBox.y = atomLocation[1];
-  template.boundingBox.z = 0;
-  template.boundingBox.height = parseFloat(height);
-  template.boundingBox.width = parseFloat(width);
-  return template;
+  return {
+    ...template,
+    boundingBox: {
+      ...template.boundingBox,
+      x: atomLocation[0],
+      y: atomLocation[1],
+      z: atomLocation[2] ?? 0,
+      height: parseFloat(height) || template.boundingBox.height,
+      width: parseFloat(width) || template.boundingBox.width
+    }
+  };
 };
 
 /* istanbul ignore next */
@@ -340,7 +351,7 @@ const fetchKetcherData = async (editor) => {
     const ketString = await editor.structureDef.editor.getKet();
     const data = JSON.parse(ketString);
     await latestDataSetter(data);
-    await loadKetcherData(data);
+    await loadKetcherData(data, { preserveImagesWhenEmpty: true });
   } catch (err) {
     console.error('fetchKetcherData', err.message);
   }
@@ -447,7 +458,8 @@ const applyKetcherData = async (polymerTag, fileContent, textNodes, editor, opti
     }
     if (textNodes && textNodes.length > 0) {
       // Add text nodes from the pasted molfile (already reindexed in prepareKetcherData)
-      const textNodeList = await addTextNodes(textNodes, textNodeMeta);
+      // Pass molfileContent for alias resolution when latestData is null (initial load)
+      const textNodeList = await addTextNodes(textNodes, textNodeMeta, molfileContent);
       const validNodes = (textNodeList || []).filter(Boolean);
       if (validNodes.length) {
         molfileContent.root.nodes.push(...validNodes);
