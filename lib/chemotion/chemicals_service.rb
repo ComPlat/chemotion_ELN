@@ -258,7 +258,9 @@ module Chemotion
     end
 
     def self.extract_p_text_from_array(safety_array)
-      safety_array.find { |t| t =~ /P\d{1,3}/ } || safety_array.find { |t| t.to_s.downcase.include?('precaution') } || ''
+      p_code_regex = /P\d{1,3}/
+      safety_array.find { |t| t =~ p_code_regex } ||
+        safety_array.find { |t| t.to_s.downcase.include?('precaution') } || ''
     end
 
     def self.extract_pictograms_from_array(safety_array)
