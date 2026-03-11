@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Reporter
   module Img
     module Conv
@@ -19,11 +21,11 @@ module Reporter
         args_1x = [
           '--without-gui',
           '--export-type=png',
-          '--export-filename=' + output.to_s,
+          "--export-filename=#{output}",
           '--export-area-drawing',
-          '--export-width=' + width.to_i.to_s,
-          '--export-height=' + height.to_i.to_s,
-          input.to_s
+          "--export-width=#{width.to_i}",
+          "--export-height=#{height.to_i}",
+          input.to_s,
         ]
         return if system('inkscape', *args_1x)
 
@@ -31,14 +33,14 @@ module Reporter
         success = system(
           'inkscape --export-text-to-path --without-gui ' \
           "--file=#{input} --export-#{ext}=#{output} " \
-          "--export-width=#{width.to_i} --export-height=#{height.to_i}"
+          "--export-width=#{width.to_i} --export-height=#{height.to_i}",
         )
         raise 'Inkscape export failed' unless success
       end
 
       def self.valid?(path)
         data = File.read(path)
-        data.length > 0
+        !data.empty?
       end
     end
   end

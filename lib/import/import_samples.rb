@@ -229,9 +229,7 @@ module Import
       padded_row = raw_row.values_at(0...header.length)
       row = [header, padded_row].transpose.to_h
       is_decoupled = row_value_case_insensitive(row, 'decoupled')
-      unless structure?(row) || is_decoupled
-        return
-      end
+      return unless structure?(row) || is_decoupled
 
       rows << row.each_pair { |k, v| v && row[k] = v.to_s }
     end
@@ -241,9 +239,8 @@ module Import
       return Molecule.find_or_create_dummy if is_decoupled && !structure?(row)
 
       molecule, molfile = extract_molfile_and_molecule(row, index)
-      if molfile.nil? || molecule.nil?
-        return
-      end
+      return if molfile.nil? || molecule.nil?
+
       [molecule, molfile]
     end
 
@@ -811,7 +808,7 @@ module Import
       molfile = molfile.to_s
       return molfile unless molfile.include?('> <TextNode>')
 
-      molfile.gsub(/> <TextNode>\s*([\s\S]*?)\s*> <\/TextNode>/i) do
+      molfile.gsub(%r{> <TextNode>\s*([\s\S]*?)\s*> </TextNode>}i) do
         content = Regexp.last_match(1)
         converted = content.gsub(/(?:\\[0-7]{1,3})+/) do |seq|
           bytes = seq.scan(/\\([0-7]{1,3})/).flatten.map { |o| o.to_i(8) }

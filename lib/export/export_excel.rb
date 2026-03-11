@@ -329,11 +329,9 @@ module Export
       has_embedded = svg_has_embedded_images?(svg_path)
 
       if has_embedded
-        svg_to_use_path, _temp_svg, temp_images = svg_with_embedded_images_as_files(svg_path)
+        svg_to_use_path, _temp_svg, _temp_images = svg_with_embedded_images_as_files(svg_path)
         png_path, width, height = convert_svg_to_png_with_inkscape(svg_to_use_path)
-        if png_path
-          return { path: png_path, width: width, height: height }
-        end
+        return { path: png_path, width: width, height: height } if png_path
       end
 
       image = Magick::Image.read(svg_path) { self.format('SVG'); }.first
@@ -356,10 +354,10 @@ module Export
     def svg_with_embedded_images_as_files(svg_path)
       content = File.read(svg_path, encoding: 'UTF-8')
       temp_images = []
-      new_content = content.gsub(/(?:href|xlink:href)="(data:image\/([^;]+);base64,([^"]+))"/) do
+      new_content = content.gsub(%r{(?:href|xlink:href)="(data:image/([^;]+);base64,([^"]+))"}) do
         mime = Regexp.last_match(2)
         b64 = Regexp.last_match(3)
-        ext = (mime == 'svg+xml') ? '.svg' : '.png'
+        ext = mime == 'svg+xml' ? '.svg' : '.png'
         decoded = Base64.decode64(b64)
         tmp = Tempfile.new(['embed', ext])
         tmp.binmode
@@ -388,7 +386,7 @@ module Export
       png_file.close
       Reporter::Img::Conv.by_inkscape(svg_path, png_file.path, 'png', width: export_w, height: export_h)
       # Downscale so embedded rasters are supersampled and look sharp at display size
-      resized_path, _ = downscale_png_to(png_file.path, width, height)
+      resized_path, = downscale_png_to(png_file.path, width, height)
       [resized_path, width, height]
     rescue StandardError => _e
       [nil, nil, nil]
