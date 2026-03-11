@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import {
   InputGroup, OverlayTrigger, Tooltip, Button, Form, Row, Col, ToggleButton, ButtonGroup,
   Collapse, AccordionContext, useAccordionButton,
@@ -13,14 +13,14 @@ import { unitSystems } from 'src/components/staticDropdownOptions/units';
 import { capitalizeWords } from 'src/utilities/textHelper';
 
 const inputByType = (object, field, index, formHelper, disabled) => {
-  const fullFieldName = `${field}.${index}.${object.value}`
+  const fullFieldName = `${field}.${index}.${object.value}`;
   switch (object.type) {
     case 'text':
       return formHelper.textInput(fullFieldName, '', disabled, object.info);
     case 'select':
       return formHelper.selectInput(fullFieldName, '', object.options, disabled, '', object.info);
   }
-}
+};
 
 const labelWithInfo = (label, info) => {
   if (label === '') { return null; }
@@ -38,17 +38,17 @@ const labelWithInfo = (label, info) => {
     );
   }
   return formLabel;
-}
+};
 
 const elementField = (element, field) => {
-  let fieldParts = field.split('.');
+  const fieldParts = field.split('.');
   return fieldParts.reduce((accumulator, currentValue) => accumulator?.[currentValue], element);
-}
+};
 
 const errorMessage = (element, field) => {
-  let fieldParts = `errors.${field}`.split('.');
+  const fieldParts = `errors.${field}`.split('.');
   return fieldParts.reduce((accumulator, currentValue) => accumulator?.[currentValue], element);
-}
+};
 
 const optionsByRelatedField = (store, element, field, options) => {
   const relatedOptions = options.filter((o) => o.related !== undefined);
@@ -58,14 +58,12 @@ const optionsByRelatedField = (store, element, field, options) => {
 
   if (lastObject[relatedOptions[0].related] !== '' || lastObject[relatedOptions[0].related] !== undefined) {
     return relatedOptions.filter((o) => o.only === lastObject[relatedOptions[0].related]);
-  } else {
-    return options;
   }
-}
+  return options;
+};
 
 const numberValue = (value) => {
   if (value === '' || value === undefined) { return ''; }
-
 
   let cleanedValue = value;
   let changeToFloat = typeof cleanedValue === 'number';
@@ -80,16 +78,16 @@ const numberValue = (value) => {
   }
 
   return changeToFloat ? parseFloat(cleanedValue) : cleanedValue;
-}
+};
 
 const changeElement = (store, field, value, element_type) => {
   if (element_type == 'sequence_based_macromolecule_sample') {
     store.changeSequenceBasedMacromoleculeSample(field, value);
   }
-}
+};
 
 const addRow = (store, element, field, rowFields) => {
-  let newRow = {};
+  const newRow = {};
   rowFields.map((f) => {
     newRow[f.value] = '';
   });
@@ -97,23 +95,23 @@ const addRow = (store, element, field, rowFields) => {
   const fieldArray = elementField(element, field) || [];
   const value = fieldArray.concat(newRow);
   changeElement(store, field, value, element.type);
-}
+};
 
 const deleteRow = (store, element, field, index) => {
   const fieldArray = elementField(element, field);
   fieldArray.splice(index, 1);
   changeElement(store, field, fieldArray, element.type);
-}
+};
 
 const changeUnit = (store, element, units, unitField, unitValue) => {
-  const activeUnitIndex = units.findIndex((f) => { return f.label === unitValue });
+  const activeUnitIndex = units.findIndex((f) => f.label === unitValue);
   const nextUnitIndex = activeUnitIndex === units.length - 1 ? 0 : activeUnitIndex + 1;
   const newUnitValue = units[nextUnitIndex].label;
 
   if (unitValue === newUnitValue) { return null; }
 
   changeElement(store, unitField, newUnitValue, element.type);
-}
+};
 
 const initFormHelper = (element, store) => {
   const formHelper = {
@@ -156,7 +154,7 @@ const initFormHelper = (element, store) => {
     selectInput: (field, label, options, disabled, info, required = false) => {
       const elementValue = elementField(element, field);
       const relatedOptions = optionsByRelatedField(store, element, field, options);
-      let value = options.find((o) => { return o.value == elementValue });
+      let value = options.find((o) => o.value == elementValue);
       value = value === undefined ? '' : value;
 
       return (
@@ -167,12 +165,11 @@ const initFormHelper = (element, store) => {
             key={`${store.key_prefix}-${field}`}
             options={relatedOptions}
             value={value}
-            isClearable={true}
+            isClearable
             isDisabled={disabled}
             required={required}
             classNames={{
-              control: (state) =>
-                !state.hasValue && errorMessage(element, field) ? 'border-danger' : '',
+              control: (state) => (!state.hasValue && errorMessage(element, field) ? 'border-danger' : ''),
             }}
             onChange={(event) => formHelper.onChange(field, (event?.value || event?.label || ''))}
           />
@@ -316,41 +313,37 @@ const initFormHelper = (element, store) => {
       );
     },
 
-    addRowButton: (field, rowFields) => {
-      return (
-        <Button
-          size="xxsm"
-          variant="primary"
-          onClick={() => addRow(store, element, field, rowFields)}
-          className="me-2 mb-2"
-        >
-          <i className="fa fa-plus" />
-        </Button>
-      );
-    },
+    addRowButton: (field, rowFields) => (
+      <Button
+        size="xxsm"
+        variant="primary"
+        onClick={() => addRow(store, element, field, rowFields)}
+        className="me-2 mb-2"
+      >
+        <i className="fa fa-plus" />
+      </Button>
+    ),
 
-    deleteRowButton: (field, i) => {
-      return (
-        <Button
-          size="sm"
-          variant="danger"
-          onClick={() => deleteRow(store, element, field, i)}
-          className="py-2"
-        >
-          <i className="fa fa-trash-o" />
-        </Button>
-      );
-    },
+    deleteRowButton: (field, i) => (
+      <Button
+        size="sm"
+        variant="danger"
+        onClick={() => deleteRow(store, element, field, i)}
+        className="py-2"
+      >
+        <i className="fa fa-trash-o" />
+      </Button>
+    ),
 
     toggleButton: (fieldPrefix, field, fieldSuffix, buttonGroups) => {
-      let groups = [];
+      const groups = [];
       const { lastObject, lastKey } = store.getLastObjectAndKeyByField(fieldPrefix, element);
 
       buttonGroups.map((group, i) => {
         groups.push(
           <div key={`${field}-${group.label}-${i}-buttons`}>
             <div key={`${field}-${group.label}-${i}-label`} className="form-label">{group.label}</div>
-            
+
             <ButtonGroup
               key={`${field}-${group.label}-${i}`}
               className="mb-4"
@@ -386,7 +379,7 @@ const initFormHelper = (element, store) => {
     multiToggleButtonsWithDetailField: (field, fieldPrefix, fieldSuffix, buttonGroups, headline, disabled) => {
       const buttons = formHelper.toggleButton(fieldPrefix, field, fieldSuffix, buttonGroups);
       const { lastObject, lastKey } = store.getLastObjectAndKeyByField(fieldPrefix, element);
-      let details = [];
+      const details = [];
 
       buttonGroups.map((group, i) => {
         group.options.map((option) => {
@@ -395,13 +388,11 @@ const initFormHelper = (element, store) => {
             details.push(
               <div className="mb-2" key={`detail-${ident}-${i}`}>
                 {
-                  formHelper.inputGroupTextOrNumericInput(
-                    `${fieldPrefix}.${field}_${ident}_${fieldSuffix}`, '', capitalizeWords(ident), 'text', disabled, ''
-                  )
+                  formHelper.inputGroupTextOrNumericInput(`${fieldPrefix}.${field}_${ident}_${fieldSuffix}`, '', capitalizeWords(ident), 'text', disabled, '')
                 }
               </div>
-            )
-          };
+            );
+          }
         });
       });
 
@@ -412,7 +403,7 @@ const initFormHelper = (element, store) => {
             {buttons}
             {
               details.length >= 1 && (
-                <div key={`detail-fields`}>
+                <div key="detail-fields">
                   <Form.Label>Details</Form.Label>
                   {details}
                 </div>
@@ -424,14 +415,14 @@ const initFormHelper = (element, store) => {
     },
 
     multipleRowInput: (field, rowFields, headline, disabled) => {
-      let rows = [];
-      let headerCols = [];
-      let colWidth = Math.round(12 / rowFields.length);
+      const rows = [];
+      const headerCols = [];
+      const colWidth = Math.round(12 / rowFields.length);
       const fieldArray = elementField(element, field);
 
       if (fieldArray) {
         fieldArray.map((row, i) => {
-          let fields = [];
+          const fields = [];
 
           rowFields.map((entry, j) => {
             const col = j === 0 ? colWidth - 1 : colWidth;
@@ -472,13 +463,11 @@ const initFormHelper = (element, store) => {
       );
     },
 
-    dropzone: (field, onDrop) => {
-      return (
-        <Dropzone onDrop={() => onDrop(field)} className="attachment-dropzone">
-          Drop files here, or click to upload.
-        </Dropzone>
-      );
-    },
+    dropzone: (field, onDrop) => (
+      <Dropzone onDrop={() => onDrop(field)} className="attachment-dropzone">
+        Drop files here, or click to upload.
+      </Dropzone>
+    ),
 
     dropAreaForElement: (dropType, handleDrop, description) => {
       const [{ isOver, canDrop }, drop] = useDrop({
@@ -509,14 +498,16 @@ const initFormHelper = (element, store) => {
     },
   };
   return formHelper;
-}
+};
 
-const ColoredAccordeonHeaderButton = ({ title, eventKey, bgColor, bgColorActive, callback }) => {
+function ColoredAccordeonHeaderButton({
+  title, eventKey, bgColor, bgColorActive, callback
+}) {
   const { activeEventKey } = useContext(AccordionContext);
   const isCurrentEventKey = activeEventKey === eventKey;
 
-  const backgroundColor = bgColor ? bgColor : 'surface-lighten3 text-body';
-  const backgroundColorActive = bgColorActive ? bgColorActive : 'surface-lighten1 text-body';
+  const backgroundColor = bgColor || 'surface-lighten3 text-body';
+  const backgroundColorActive = bgColorActive || 'surface-lighten1 text-body';
   const activeClass = isCurrentEventKey ? `active ${backgroundColorActive}` : `collapsed ${backgroundColor}`;
   const decoratedOnClick = useAccordionButton(eventKey, () => callback && callback(eventKey));
 
@@ -531,7 +522,9 @@ const ColoredAccordeonHeaderButton = ({ title, eventKey, bgColor, bgColorActive,
   );
 }
 
-const SecondaryCollapseContent = ({ children, title, eventKey, error, active, store }) => {
+function SecondaryCollapseContent({
+  children, title, eventKey, error, active, store
+}) {
   const activeClass = active ? 'active' : 'collapsed';
   const errorInCollapseClass = error ? 'border border-danger' : '';
 
@@ -547,7 +540,7 @@ const SecondaryCollapseContent = ({ children, title, eventKey, error, active, st
         <span>{title}</span>
       </Button>
       <Collapse in={active}>
-        <div className={`accordion-body mb-0 pb-0`}>
+        <div className="accordion-body mb-0 pb-0">
           {children}
         </div>
       </Collapse>
@@ -555,4 +548,51 @@ const SecondaryCollapseContent = ({ children, title, eventKey, error, active, st
   );
 }
 
-export { initFormHelper, ColoredAccordeonHeaderButton, SecondaryCollapseContent }
+function formValueHandler(startValues) {
+  const [form, setForm] = useState(startValues);
+  const handleChange = (e, val) => {
+    const {
+      name, value, type, checked
+    } = (() => {
+      if (e.target && val === undefined) {
+        return e.target;
+      }
+      if (typeof e === 'string') {
+        return {
+          name: e,
+          type: '',
+          value: val,
+          checked: true
+        };
+      }
+      return {};
+    })();
+
+    setForm({
+      ...form,
+      [name]: type === 'checkbox' ? checked : value
+    });
+  };
+
+  return [form, handleChange];
+}
+
+function submitAsForm({
+  url, method, form, prefix = null
+}) {
+  const makeKey = (key) => (prefix ? `${prefix}[${key}]` : key);
+  const formData = new FormData();
+  Object.entries(form).forEach(([key, val]) => {
+    formData.append(makeKey(key), val);
+  });
+
+  return fetch(url, {
+    method,
+    body: formData,
+    credentials: 'same-origin'
+  });
+}
+
+export {
+  initFormHelper, ColoredAccordeonHeaderButton, SecondaryCollapseContent, formValueHandler, submitAsForm,
+};
