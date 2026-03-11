@@ -39,13 +39,13 @@ module ReactionProcessEditor
           status 201
         end
 
-        get :ord do
-          header 'Content-Disposition', "attachment; filename*=UTF-8''#{@reaction_process.ord_filename}"
+        get :clap do
+          header 'Content-Disposition', "attachment; filename*=UTF-8''#{@reaction_process.clap_filename}.json"
           content_type('application/json')
 
-          present OrdKit::Exporter::ReactionProcessExporter.new(@reaction_process).to_ord
+          present Clap::Exporter::ReactionProcessExporter.new(@reaction_process).to_clap
         rescue StandardError => e
-          header 'Content-Disposition', "attachment; filename*=UTF-8''OrdExportError-#{@reaction_process.ord_filename}"
+          header 'Content-Disposition', "attachment; filename*=UTF-8''Clap-ExportError-#{@reaction_process.clap_filename}.dump"
           content_type 'text/plain'
           present "#{e.message} #{e.backtrace}"
         end

@@ -6,7 +6,7 @@ module Entities
       module Models
         class Equipment < Base
           def all
-            titlecase_options_for(OrdKit::Equipment::EquipmentType.constants)
+            titlecase_options_for(Clap::Equipment::EquipmentType.constants)
           end
         end
       end

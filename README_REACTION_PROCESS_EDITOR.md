@@ -122,7 +122,7 @@ the parameters and details of the respective Activity, e.g.
 As they fulfill no external schema it is a bit hard to validate and keep track of them. In fact they are provided mostly
 by the the respective input fields in the frontend RPE which set them when filled out and sent as part of the request.
 The only actual validation (2023-12-11) is on `"ADD"` Activities validating that `workup[:sample_id]` is set.
-This again makes it very easy to handle and store arbitrary data and later transform them into ORDKit.
+This again makes it very easy to handle and store arbitrary data and later transform them into CLAP format.
 
 ### API endpoints
 
@@ -165,7 +165,7 @@ and (re)fetches the ReactionProcess from the backend by it's id whenever relevan
 
 ## Automation
 
-The ReactionProcessEditor and the ORD export output file is tailored to serve the automation as required in the KIT automation lab.
+The ReactionProcessEditor and the CLAP export output file is tailored to serve the automation as required in the KIT automation lab.
 
 ### Automation API authorization
 
