@@ -17,6 +17,7 @@ module Export
     def generate_sheet_with_samples(table, samples = nil)
       @samples = samples
       return if samples.nil? # || samples.count.zero?
+
       generate_headers(table, EXCLUDED_COLUMNS)
       @xfile[table] = Tempfile.new(["#{table}s_#{@t}_", '.sdf'], encoding: 'utf-8')
       samples.each do |sample|
@@ -27,7 +28,8 @@ module Export
     end
 
     def read
-      return nil if @xfile.size.zero?
+      return nil if @xfile.empty?
+
       file = stream_data
       file.rewind
       file.read
@@ -58,12 +60,12 @@ module Export
     end
 
     def filter_with_permission_and_detail_level(sample)
-      if sample['shared_sync'] == 'f' || sample['shared_sync'] == false
+      if ['f', false].include?(sample['shared_sync'])
         data = validate_molfile(sample['molfile'])
         return nil unless data.presence
 
         if sample['molfile_version'] =~ /^(V2000).*T9/
-          data = Chemotion::OpenBabelService.mofile_clear_coord_bonds(data, $1)
+          data = Chemotion::OpenBabelService.mofile_clear_coord_bonds(data, Regexp.last_match(1))
         end
         data = data.rstrip
         data += "\n"
@@ -85,7 +87,7 @@ module Export
         data = concatenate_data(sample, data, headers)
 
       end
-      data.concat("\$\$\$\$\n")
+      data.concat("#{'$$$$'}\n")
     end
 
     def extract_reference_values(raw_value)
@@ -116,9 +118,8 @@ module Export
     # When PolymersList or TextNode blocks are present, keep the full molfile including those blocks and $$$$.
     def validate_molfile(molfile)
       s = molfile.to_s
-      if Chemotion::MolfilePolymerSupport.has_polymer_or_textnode_blocks?(s)
-        return s.rstrip
-      end
+      return s.rstrip if Chemotion::MolfilePolymerSupport.has_polymer_or_textnode_blocks?(s)
+
       return s unless s.include?('M  END')
 
       idx = s.index('M  END')
@@ -139,9 +140,11 @@ module Export
 
     def stream_data
       return @xfile.first[1] if @xfile.size == 1
+
       Zip::OutputStream.write_buffer do |zip|
         @xfile.each_pair do |table, file|
           next unless file
+
           file.rewind
           zip.put_next_entry "#{table}s_#{@t}_.sdf"
           zip.write file.read

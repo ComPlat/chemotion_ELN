@@ -23,7 +23,7 @@ class Import::ImportSdf < Import::ImportSamples
     @unprocessable_samples = []
     read_data
 
-    @count = @raw_data.empty? && @rows.size || @raw_data.size
+    @count = (@raw_data.empty? && @rows.size) || @raw_data.size
     if @count.zero?
       @message[:error] << 'No Molecule found!'
     else
@@ -95,7 +95,7 @@ class Import::ImportSdf < Import::ImportSamples
   end
 
   def status
-    @message[:error].empty? && 'ok' || 'error'
+    (@message[:error].empty? && 'ok') || 'error'
   end
 
   def find_or_create_mol_by_batch(batch_size = 50)
@@ -106,13 +106,13 @@ class Import::ImportSdf < Import::ImportSamples
     until data.empty?
       batch = data.slice!(0..n)
       molecules = find_or_create_by_molfiles(batch)
-      inchikeys += molecules.map { |m| m && m[:inchikey] || nil }
+      inchikeys += molecules.map { |m| (m && m[:inchikey]) || nil }
       @processed_mol += molecules
     end
 
     count = inchikeys.compact.size
     if count.positive?
-      @message[:info] << "#{count} Molecule#{count > 1 && 's' || ''} processed. "
+      @message[:info] << "#{count} Molecule#{(count > 1 && 's') || ''} processed. "
     else
       @message[:error] << 'No Molecule processed. '
     end
@@ -288,7 +288,10 @@ class Import::ImportSdf < Import::ImportSamples
       elsif babel_info[:inchikey].present?
         m = Molecule.find_or_create_by_molfile(mf, babel_info)
         process_molfile_opt_data(mf).merge(
-          inchikey: m.inchikey, svg: "molecules/#{m.molecule_svg_file}", name: m.iupac_name, molfile: mf
+          inchikey: m.inchikey,
+          svg: "molecules/#{m.molecule_svg_file}",
+          name: m.iupac_name,
+          molfile: mf,
         )
       else
         { name: nil, inchikey: nil, svg: 'no_image_180.svg' }
@@ -300,9 +303,7 @@ class Import::ImportSdf < Import::ImportSamples
   def find_or_create_polymer_molfile_entry(raw_molfile, _babel_info_from_batch)
     raw_molfile = unescape_textnode_octal_in_molfile(raw_molfile)
     cleaned = clean_molfile_for_inchikey(raw_molfile)
-    if cleaned.blank?
-      return { name: nil, inchikey: nil, svg: 'no_image_180.svg' }
-    end
+    return { name: nil, inchikey: nil, svg: 'no_image_180.svg' } if cleaned.blank?
 
     molfile_for_babel = cleaned.dup
     molfile_for_babel = "\n#{molfile_for_babel}" unless molfile_for_babel.start_with?("\n")
@@ -326,7 +327,7 @@ class Import::ImportSdf < Import::ImportSamples
         inchikey: molecule.inchikey,
         svg: "molecules/#{molecule.molecule_svg_file}",
         name: molecule.iupac_name,
-        molfile: raw_molfile
+        molfile: raw_molfile,
       )
     else
       { name: nil, inchikey: nil, svg: 'no_image_180.svg' }
