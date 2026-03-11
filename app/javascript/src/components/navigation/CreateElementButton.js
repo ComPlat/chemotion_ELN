@@ -16,7 +16,7 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 
 const CreateElementDropdownToggle = React.forwardRef(({ onClick }, ref) => (
   <Button
-    variant="success"
+    variant="create"
     className="rounded-circle shadow"
     ref={ref}
     onClick={(e) => {
