@@ -50,7 +50,6 @@ class BoxPlotVisualization extends Component {
       }))
       .sort((a, b) => a.concentration - b.concentration);
 
-    console.log('Box Plot Chart Data:', chartData);
     return chartData;
   }
 
@@ -98,7 +97,8 @@ class BoxPlotVisualization extends Component {
       el: this.ref.current,
       sampleName: this.getSampleName(),
       ic50Data: this.getIC50Data(),
-      hillParameters: this.getHillParameters()
+      // hillParameters: this.getHillParameters()
+      hillParameters: null
     };
   }
 
@@ -118,7 +118,7 @@ class BoxPlotVisualization extends Component {
     const hasData = outputData && outputData.input && outputData.input.length > 0;
 
     return (
-      <div>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         {!hasData && (
           <p className="text-muted mb-2" style={{ fontSize: '0.85rem' }}>
             No input data available for visualization
