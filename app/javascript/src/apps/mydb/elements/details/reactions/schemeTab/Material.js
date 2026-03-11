@@ -183,7 +183,7 @@ class Material extends Component {
         metricPrefix={metricMolConc}
         metricPrefixes={metricPrefixesMolConc}
         precision={4}
-        disabled={!permitOn(reaction) || (!material.reference && lockEquivColumn)}
+        disabled={!permitOn(reaction)}
         onChange={(e) => this.handleConcentrationChange(e, material.concn)}
         onMetricsChange={this.handleMetricsChange}
         size="sm"

@@ -1375,6 +1375,40 @@ export default class ReactionDetailsScheme extends React.Component {
     }
   }
 
+  /**
+   * Recomputes reference material amount when equivalent locking is enabled
+   * and a non-reference material amount is changed.
+   *
+   * @param {Sample} sample
+   * @param {Sample} updatedSample
+   * @param {boolean} lockEquivColumn
+   */
+  // eslint-disable-next-line class-methods-use-this
+  updateReferenceAmountForLockedEquivalents(sample, updatedSample, lockEquivColumn) {
+    if (!lockEquivColumn || !sample.reference || !updatedSample || updatedSample.reference) {
+      return;
+    }
+
+    const sampleEquiv = updatedSample.equivalent;
+    if (!Number.isFinite(sampleEquiv) || sampleEquiv <= 0 || !Number.isFinite(updatedSample.amount_mol)) {
+      return;
+    }
+
+    const newRefMol = updatedSample.amount_mol / sampleEquiv;
+    if (Number.isFinite(newRefMol) && newRefMol >= 0) {
+      sample.setAmount({ value: newRefMol, unit: 'mol' });
+    }
+  }
+
+  /**
+   * Returns the material list with dependent amount/equivalent values recalculated
+   * after one material amount change.
+   *
+   * @param {Sample[]} samples
+   * @param {Sample} updatedSample
+   * @param {string} materialGroup
+   * @returns {Sample[]}
+   */
   updatedSamplesForAmountChange(samples, updatedSample, materialGroup) {
     const { reaction: { referenceMaterial } } = this.props;
     const { lockEquivColumn } = this.state;
@@ -1383,6 +1417,11 @@ export default class ReactionDetailsScheme extends React.Component {
 
     return samples.map((sample) => {
       stoichiometryCoeff = (sample.coefficient || 1.0) / (referenceMaterial?.coefficient || 1.0);
+
+      // If equivalents are locked and this is the reference sample,
+      // recalculate its amount from the updated sample
+      this.updateReferenceAmountForLockedEquivalents(sample, updatedSample, lockEquivColumn);
+
       if (referenceMaterial) {
         if (sample.id === updatedSample.id) {
           if (!updatedSample.reference && referenceMaterial.amount_value) {
@@ -1857,9 +1896,8 @@ export default class ReactionDetailsScheme extends React.Component {
   }
 
   switchVolumeLock() {
-    const { reaction, onReactionChange } = this.props;
-    reaction.lock_reaction_volume = !reaction.lock_reaction_volume;
-    onReactionChange(reaction, { updateGraphic: false });
+    const { reaction, onInputChange } = this.props;
+    onInputChange('lockReactionVolume', !reaction.isVolumeLocked);
   }
 
   reactionVolume() {

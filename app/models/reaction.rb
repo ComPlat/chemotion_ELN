@@ -28,6 +28,7 @@
 #  tlc_description        :text
 #  tlc_solvents           :string
 #  use_reaction_volume    :boolean          default(FALSE), not null
+#  lock_reaction_volume   :boolean          default(FALSE), not null
 #  variations             :jsonb
 #  vessel_size            :jsonb
 #  volume                 :decimal(10, 4)
