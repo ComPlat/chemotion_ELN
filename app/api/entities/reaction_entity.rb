@@ -51,6 +51,7 @@ module Entities
       expose! :vessel_size
       expose! :volume
       expose! :use_reaction_volume
+      expose! :lock_reaction_volume
       expose! :gaseous
       expose! :weight_percentage
     end

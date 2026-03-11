@@ -212,7 +212,7 @@ class Material extends Component {
         metricPrefixes={metricPrefixesMolConc}
         precision={4}
         disabled={!permitOn(reaction)}
-        onChange={(e) => this.handleAmountUnitChange(e, concentrationValue)}
+        onChange={(e) => this.handleConcentrationChange(e, concentrationValue)}
         onMetricsChange={this.handleMetricsChange}
         size="sm"
       />
