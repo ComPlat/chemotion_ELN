@@ -29,10 +29,7 @@ class IndigoService
     # Extract scale from options or use default; allow override from options (e.g. when molfile has polymer)
     scale_factor = opts.fetch(:scale_factor, 45)
     bond_length = scale_factor * 0.75
-    # bond_spacing = scale_factor / 6.0
-    # bond_shift = scale_factor / 1.5
     label_font_size = opts.fetch(:label_font_size) { (3.5 * (scale_factor / 8.0)).ceil }
-    # sub_font_size = (0.7 * label_font_size).ceil
     stereo_bond_width = 8
     bond_thickness = 1.3
     unit = 'px'
@@ -41,7 +38,6 @@ class IndigoService
       # font
       'render-font-size' => label_font_size,
       # bond
-      # 'render-bond-spacing' => bond_spacing,
       'render-bond-length' => bond_length,
       'render-bond-thickness' => bond_thickness,
       'render-stereo-bond-width' => stereo_bond_width,
@@ -53,9 +49,6 @@ class IndigoService
       'render-hash-spacing' => 1.5,
       # others
       'render-margins' => '8,8',
-      # not possible to set in the options
-      # 'render-font' => '30px "Roboto"',
-      # 'font-family' => 'Arial',
     }
     @service_url = Rails.configuration.indigo_service.indigo_service_url
   end

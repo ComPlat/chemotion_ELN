@@ -76,13 +76,7 @@ const arrangePolymers = async (canvasData, editor) => {
     .flatMap((item) => data[item]?.atoms ?? [])
     .filter((i) => ALIAS_PATTERNS.threeParts.test(i.alias));
 
-  // Sort by vertical position in molfile: top first (higher y first), then following down
-  atomsWithAlias.sort((a, b) => {
-    const yA = a.location?.[1] ?? 0;
-    const yB = b.location?.[1] ?? 0;
-    return yB - yA; // descending y = top first
-  });
-
+  // Keep atom index order so PolymersList matches positions (0, 1, 2) and image sequence is correct after load
   const listOfAtomsWithAlias = atomsWithAlias.map((i) => i.alias);
   const processString = await templateAliasesPrepare(listOfAtomsWithAlias);
   const ctabLines = ctabLinesOnly(canvasData);
@@ -114,7 +108,8 @@ const arrangeTextNodes = async (ket2Molfile) => {
               textSeparator,
               block.text
             ].join('').trim();
-            assembleTextList.push(line);
+            const y = textItem.data?.position?.y ?? 0;
+            assembleTextList.push({ line, y });
           }
         }
       }
@@ -124,9 +119,12 @@ const arrangeTextNodes = async (ket2Molfile) => {
 
   if (!assembleTextList.length) return ket2Molfile;
 
+  // Sort vertically: bottom (larger y) first
+  assembleTextList.sort((a, b) => b.y - a.y);
+
   ket2Molfile.push(
     KET_TAGS.textNodeIdentifier,
-    ...assembleTextList,
+    ...assembleTextList.map((entry) => entry.line),
     KET_TAGS.textNodeIdentifierClose
   );
 
