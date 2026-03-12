@@ -45,21 +45,17 @@ function TwoFactorSettings() {
       );
     }
     return (
-      <>
-        <Row>
-          <Col xs={9} className="offset-3">
-            <p className="form-text text-muted">
-              Two-factor authentication (2FA) adds an extra layer of security to your account.
-              Click below to request an email to enable 2FA.
-            </p>
-          </Col>
-        </Row>
-        <Row>
-          <Col xs={9} className="offset-3">
-            <Button variant="success" onClick={enable2FA}>Request 2FA</Button>
-          </Col>
-        </Row>
-      </>
+      <Row>
+        <Col xs={3}>
+          <Button variant="success" onClick={enable2FA}>Request 2FA</Button>
+        </Col>
+        <Col xs={9}>
+          <p>
+            Two-factor authentication (2FA) adds an extra layer of security to your account.
+            Click below to request an email to enable 2FA.
+          </p>
+        </Col>
+      </Row>
     );
   };
 
