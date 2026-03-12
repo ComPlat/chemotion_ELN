@@ -12,7 +12,7 @@ import UserSetting from 'src/components/structureEditor/UserSetting';
 import OmniauthCredential from 'src/apps/omniauthCredential/OmniauthCredential';
 import UserCounter from 'src/apps/userCounter/UserCounter';
 import { TwoFactorSettings } from 'src/apps/userSettings/TwoFA';
-import AccountSettings from 'src/apps/userSettings/UserSettings';
+import { AccountSettings, DeleteSettings } from 'src/apps/userSettings/UserSettings';
 import Affiliations from 'src/apps/userSettings/Affiliations';
 
 function AccountProfile({ currentUser, closeSettings }) {
@@ -78,6 +78,7 @@ function AccountProfile({ currentUser, closeSettings }) {
     <Container className="my-3 d-flex flex-column gap-3">
       <AccountSettings currentUser={currentUser} />
       <TwoFactorSettings />
+      <DeleteSettings />
     </Container>
   );
 
@@ -261,7 +262,7 @@ function AccountProfile({ currentUser, closeSettings }) {
           Settings
         </h1>
 
-        <Button onClick={closeSettings} className="m-2 mb-4 float-end" size="sm">Close</Button>
+        <Button variant="outline-dark" onClick={closeSettings} className="m-2 mb-4 float-end" size="sm">X</Button>
       </div>
       <div className="row flex-grow-1">
         {/* Left column: stretch to bottom */}
@@ -283,7 +284,7 @@ function AccountProfile({ currentUser, closeSettings }) {
                 style={buttonStyle}
                 onClick={() => setCurrentSettings('external')}
               >
-                SciFinder & 3rd-Party
+                3rd-party apps & SciFinder
               </button>
             </li>
             <li>
