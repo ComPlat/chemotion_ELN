@@ -4,6 +4,7 @@ import {
 } from 'react-bootstrap';
 import { formValueHandler, submitAsForm } from 'src/utilities/FormHelper';
 import { OtpInput } from 'src/components/common/AuthendifactionHelper';
+import PropTypes from 'prop-types';
 
 function AccountSettings({ currentUser }) {
   const [errors, setErrors] = useState([]);
@@ -121,11 +122,11 @@ function AccountSettings({ currentUser }) {
                 <Form.Text>Leave unchanged if you don&#39;t want to change it</Form.Text>
               </Form.Group>
 
-              {currentUser.pendingReconfirmation && (
+              {currentUser.unconfirmed_email && (
               <div className="form-text mb-3">
                 Currently waiting confirmation for:
                 {' '}
-                {currentUser.unconfirmedEmail}
+                {currentUser.unconfirmed_email}
               </div>
               )}
 
@@ -188,5 +189,11 @@ function AccountSettings({ currentUser }) {
     </>
   );
 }
+AccountSettings.propTypes = {
+  currentUser: PropTypes.shape({
+    email: PropTypes.string.isRequired,
+    unconfirmed_email: PropTypes.string.isRequired,
+  }).isRequired
+};
 
 export default AccountSettings;

@@ -12,7 +12,7 @@ import UserSetting from 'src/components/structureEditor/UserSetting';
 import OmniauthCredential from 'src/apps/omniauthCredential/OmniauthCredential';
 import UserCounter from 'src/apps/userCounter/UserCounter';
 import { TwoFactorSettings } from 'src/apps/userSettings/TwoFA';
-import AccountSettings from 'src/apps/userSettings/userSettings';
+import AccountSettings from 'src/apps/userSettings/UserSettings';
 import Affiliations from 'src/apps/userSettings/Affiliations';
 
 function AccountProfile({ currentUser, closeSettings }) {
