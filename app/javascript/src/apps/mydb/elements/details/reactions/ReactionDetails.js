@@ -1006,7 +1006,6 @@ export default class ReactionDetails extends Component {
           <ReactionVariations
             reaction={reaction}
             onReactionChange={this.handleReactionChange}
-            isActive={activeTab === REACTION_VARIATIONS_TAB_KEY}
           />
         </Tab>
       ),
