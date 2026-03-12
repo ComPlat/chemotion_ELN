@@ -643,7 +643,6 @@ function getColumnDefinitions(selectedColumns, materials, segments, gasMode) {
       cellRenderer: RowToolsCellRenderer,
       lockPosition: 'left',
       sortable: false,
-      maxWidth: 100,
       cellDataType: false,
       rowDrag: true,
 
