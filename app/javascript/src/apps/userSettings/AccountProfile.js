@@ -15,15 +15,30 @@ import { TwoFactorSettings } from 'src/apps/userSettings/TwoFA';
 import { AccountSettings, DeleteSettings } from 'src/apps/userSettings/UserSettings';
 import Affiliations from 'src/apps/userSettings/Affiliations';
 
-function AccountProfile({ currentUser, closeSettings }) {
+function AuthenticationSettings({ currentUser }) {
+  return (
+    <Container className="my-3 d-flex flex-column gap-3">
+      <AccountSettings currentUser={currentUser} />
+      <TwoFactorSettings />
+      <DeleteSettings />
+    </Container>
+  );
+}
+
+AuthenticationSettings.propTypes = {
+  currentUser: PropTypes.shape({
+    email: PropTypes.string.isRequired,
+    unconfirmed_email: PropTypes.string.isRequired,
+  }).isRequired,
+};
+
+function ProfileSettings({ currentUser }) {
   const [reactionPrefix, setReactionPrefix] = useState(currentUser.reaction_name_prefix || '');
   const [reactionsCount, setReactionsCount] = useState(currentUser.counters?.reactions || 0);
   const [curation, setCuration] = useState(currentUser.profile?.curation || 1);
   const [nextLabel, setNextLabel] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [successPosition, setSuccessPosition] = useState(null);
-  const [currentSettings, setCurrentSettings] = useState('account');
-
   const nextReactionLabelCounter = parseInt(reactionsCount, 10) + 1;
   const updatedNextReactionLabel = nextReactionLabelCounter.toString().padStart(3, '0');
 
@@ -73,16 +88,7 @@ function AccountProfile({ currentUser, closeSettings }) {
     'No curation standard': 1,
     'Curation standard I: experimental organic chemistry': 2,
   };
-
-  const accountSettings = () => (
-    <Container className="my-3 d-flex flex-column gap-3">
-      <AccountSettings currentUser={currentUser} />
-      <TwoFactorSettings />
-      <DeleteSettings />
-    </Container>
-  );
-
-  const profileSettings = () => (
+  return (
     <Container className="my-3 d-flex flex-column gap-3">
       {currentUser.allocated_space > 0 && (
         <Card>
@@ -205,8 +211,25 @@ function AccountProfile({ currentUser, closeSettings }) {
       <UserCounter />
     </Container>
   );
+}
 
-  const externalSettings = () => (
+ProfileSettings.propTypes = {
+  currentUser: PropTypes.shape({
+    initials: PropTypes.string.isRequired,
+    used_space: PropTypes.number.isRequired,
+    allocated_space: PropTypes.number.isRequired,
+    reaction_name_prefix: PropTypes.string.isRequired,
+    counters: PropTypes.shape({
+      reactions: PropTypes.number.isRequired,
+    }).isRequired,
+    profile: PropTypes.shape({
+      curation: PropTypes.number.isRequired,
+    }).isRequired,
+  }).isRequired,
+};
+
+function ExternalSettings() {
+  return (
     <Container className="my-3 d-flex flex-column gap-3">
 
       <ScifinderCredential />
@@ -215,26 +238,32 @@ function AccountProfile({ currentUser, closeSettings }) {
 
     </Container>
   );
+}
 
-  const affiliationsSettings = () => (
+function AffiliationsSettings() {
+  return (
     <Container className="my-3 d-flex flex-column gap-3">
       <Affiliations />
     </Container>
   );
+}
+function AccountProfile({ currentUser, closeSettings }) {
+  const [currentSettings, setCurrentSettings] = useState('account');
 
   const renderMain = () => {
     if (currentSettings === 'account') {
-      return accountSettings();
+      return <AuthenticationSettings currentUser={currentUser} />;
     }
     if (currentSettings === 'profile') {
-      return profileSettings();
+      return <ProfileSettings currentUser={currentUser} />;
     }
     if (currentSettings === 'external') {
-      return externalSettings();
+      return <ExternalSettings />;
     }
     if (currentSettings === 'affiliations') {
-      return affiliationsSettings();
+      return <AffiliationsSettings />;
     }
+    return null;
   };
 
   const buttonStyle = useMemo(() => ({
@@ -311,6 +340,8 @@ function AccountProfile({ currentUser, closeSettings }) {
 AccountProfile.propTypes = {
   closeSettings: PropTypes.func.isRequired,
   currentUser: PropTypes.shape({
+    email: PropTypes.string.isRequired,
+    unconfirmed_email: PropTypes.string.isRequired,
     initials: PropTypes.string.isRequired,
     used_space: PropTypes.number.isRequired,
     allocated_space: PropTypes.number.isRequired,
