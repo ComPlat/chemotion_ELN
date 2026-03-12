@@ -560,6 +560,7 @@ function getSegmentColumnGroupChild(segmentLabel, segment) {
       ..._children,
       {
         field: `segments.${segmentLabel}`,
+        colId: `segments.${segmentLabel}.${entryKey}`,
         headerName: getUserFacingEntryName(entryKey),
         cellEditorSelector: (params) => getSegmentEditor(params),
         cellDataType: 'segment',
@@ -641,6 +642,7 @@ function getColumnDefinitions(selectedColumns, materials, segments, gasMode) {
     {
       headerComponent: ToolHeader,
       cellRenderer: RowToolsCellRenderer,
+      colId: 'tools',
       lockPosition: 'left',
       sortable: false,
       cellDataType: false,
