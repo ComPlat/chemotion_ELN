@@ -48,7 +48,7 @@ class HeaderCommentSection extends Component {
 
     if (MatrixCheck(currentUser.matrix, commentActivation) && !element?.isNew) {
       return (
-        <ButtonToolbar className="gap-1">
+        <ButtonToolbar>
           <OverlayTrigger
             key="ot_comments"
             placement="top"

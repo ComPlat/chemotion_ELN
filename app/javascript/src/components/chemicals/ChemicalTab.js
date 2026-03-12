@@ -1248,7 +1248,7 @@ export default class ChemicalTab extends React.Component {
               {this.checkMarkButton(document)}
             </a>
           ) : null}
-          <ButtonToolbar className="gap-1">
+          <ButtonToolbar>
             {this.copyButton(document)}
             {this.saveSafetySheetsButton(document)}
             {this.removeButton(index, document)}

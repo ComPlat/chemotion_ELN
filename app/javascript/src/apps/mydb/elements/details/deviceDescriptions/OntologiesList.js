@@ -224,7 +224,7 @@ const OntologiesList = ({ store, element }) => {
                 <div className="d-flex justify-content-between align-items-center gap-2">
                   <h4>{ontology.data.label}</h4>
                   <div>
-                    <ButtonToolbar className="flex-nowrap gap-2">
+                    <ButtonToolbar className="flex-nowrap">
                       {editButton(index, ontology.segments)}
                       {undoDeleteButton(index)}
                       {deleteOntologyButton(index)}

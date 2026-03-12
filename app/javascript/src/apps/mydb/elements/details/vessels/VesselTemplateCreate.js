@@ -253,7 +253,7 @@ function VesselTemplateCreate({ vesselItem: initialVesselItem }) {
         </Tabs>
       </div>
 
-      <ButtonToolbar className="d-flex gap-1">
+      <ButtonToolbar>
         <Button variant="primary" onClick={() => handleClose()}>
           Cancel
         </Button>

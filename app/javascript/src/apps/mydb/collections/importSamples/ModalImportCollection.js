@@ -80,7 +80,7 @@ export default class ModalImportCollection extends React.Component {
         </Modal.Header>
         <Modal.Body>
           {this.dropzoneOrfilePreview()}
-          <ButtonToolbar className="mt-2 justify-content-end gap-1">
+          <ButtonToolbar className="mt-2 justify-content-end">
             <Button variant="primary" onClick={() => onHide()}>Cancel</Button>
             <Button variant={bStyle} onClick={() => this.handleClick()} disabled={this.isDisabled()}>
               <i className={bClass} />

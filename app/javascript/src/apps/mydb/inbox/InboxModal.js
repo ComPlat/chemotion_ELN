@@ -408,7 +408,7 @@ export default class InboxModal extends React.Component {
                     )
                   }
                 </div>
-                <ButtonToolbar className=" gap-1">
+                <ButtonToolbar>
                   {this.renderSortButton()}
                   {collectorAddress && this.collectorAddressInfoButton()}
                   {this.renderSizingIcon()}
