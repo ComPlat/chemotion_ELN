@@ -286,6 +286,11 @@ button.btn-close {
   }
 }
 
+.btn-toolbar {
+  @extend .gap-1;
+  @extend .align-items-center;
+}
+
 .popover-multi-item {
   &:not(:first-child) .popover-header {
     border-top-left-radius: 0;
