@@ -31,7 +31,7 @@ import columnDefinitionsReducer
   from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsReducers';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 
-export default function ReactionVariations({ reaction, onReactionChange, isActive }) {
+export default function ReactionVariations({ reaction, onReactionChange }) {
   if (reaction.isNew) {
     return (
       <Alert variant="info">
@@ -62,13 +62,6 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   const [columnDefinitions, setColumnDefinitions] = useReducer(columnDefinitionsReducer, []);
   const initialGridState = useMemo(() => getInitialGridState(reaction.id), []);
   const [asyncDataLoaded, setAsyncDataLoaded] = useState(false);
-
-  useEffect(() => {
-    // Auto-size columns when the parent tab is (re-)entered.
-    if (isActive && gridRef.current?.api) {
-      gridRef.current.api.autoSizeAllColumns();
-    }
-  }, [isActive]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -192,11 +185,6 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
       </Button>
     </OverlayTrigger>
   );
-
-  const fitColumnToContent = (event) => {
-    const { column } = event;
-    gridRef.current.api.autoSizeColumns([column], false);
-  };
 
   /*
   What follows is a series of imperative state updates that keep the "Variations" tab in sync with the "Scheme" tab.
@@ -363,10 +351,12 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
           defaultColDef={{
             editable: true,
             sortable: true,
-            resizable: false,
+            resizable: true,
           }}
           defaultColGroupDef={{
             autoHeaderHeight: true,
+            wrapHeaderText: true,
+            resizable: true,
           }}
           dataTypeDefinitions={cellDataTypes}
           tooltipShowDelay={0}
@@ -388,12 +378,8 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
           */
           readOnlyEdit
           onCellEditRequest={updateRow}
-          onCellValueChanged={(event) => fitColumnToContent(event)}
-          onColumnHeaderClicked={(event) => fitColumnToContent(event)}
           onGridPreDestroyed={(event) => persistTableLayout(reaction.id, event, columnDefinitions)}
           onStateUpdated={(event) => persistTableLayout(reaction.id, event, columnDefinitions)}
-          onFirstDataRendered={() => gridRef.current.api.autoSizeAllColumns()}
-          onComponentStateChanged={() => gridRef.current.api.autoSizeAllColumns()}
         />
       </div>
     </div>
