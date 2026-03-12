@@ -101,8 +101,8 @@ export default class SelectionGenerateButton extends React.Component {
 
     return (
       <Dropdown id="selection-generate-button">
-        <Dropdown.Toggle variant="light" size="sm">
-          <i className="fa fa-file-text-o me-1" />
+        <Dropdown.Toggle variant="light" size="sm" title="Generate" aria-label="Generate">
+          <i className="fa fa-file-text-o me-1" aria-hidden="true" />
           <span className="selection-action-text-label">Generate</span>
         </Dropdown.Toggle>
 

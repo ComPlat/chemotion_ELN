@@ -170,8 +170,10 @@ export default class SelectionSplitButton extends React.Component {
           variant="light"
           size="sm"
           disabled={isDisabled}
+          title="Split"
+          aria-label="Split"
         >
-          <i className="fa fa-code-fork me-1" />
+          <i className="fa fa-code-fork me-1" aria-hidden="true" />
           <span className="selection-action-text-label">Split</span>
         </Dropdown.Toggle>
         <Dropdown.Menu>
