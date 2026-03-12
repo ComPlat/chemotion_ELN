@@ -157,7 +157,6 @@ export default class WellplateDetailsContainers extends Component {
               isVisible={commentBoxVisible}
               size="sm"
             />
-            <ButtonToolbar className="gap-2" />
           </div>
           <CommentBox
             isVisible={commentBoxVisible}
@@ -177,7 +176,7 @@ export default class WellplateDetailsContainers extends Component {
             <p className='m-0'>
               There are currently no Analyses.
             </p>
-            <ButtonToolbar className="gap-2">
+            <ButtonToolbar>
               <CommentButton
                 toggleCommentBox={this.toggleCommentBox}
                 isVisible={commentBoxVisible}
@@ -198,7 +197,7 @@ export default class WellplateDetailsContainers extends Component {
     return (
       <div>
         <div className="d-flex justify-content-end my-2 mx-3">
-          <ButtonToolbar className="gap-2">
+          <ButtonToolbar>
             <CommentButton
               toggleCommentBox={this.toggleCommentBox}
               isVisible={commentBoxVisible}

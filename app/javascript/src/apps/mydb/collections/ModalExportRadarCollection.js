@@ -234,7 +234,7 @@ export default class ModalExportRadarCollection extends React.Component {
     const archiveUrl = `/oauth/radar/archive?collection_id=${currentCollection.id}`
 
     return (
-      <ButtonToolbar className="justify-content-end gap-1">
+      <ButtonToolbar className="justify-content-end">
         <Button variant="primary" onClick={onHide}>Cancel</Button>
         <Button onClick={this.handleEdit}>Edit collection metadata</Button>
         <a href={archiveUrl} target="_blank"

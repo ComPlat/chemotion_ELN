@@ -417,7 +417,7 @@ export default class ResearchPlanDetails extends Component {
               onCopyToMetadata={this.handleCopyToMetadata.bind(this)}
             />
           </div>
-          <ButtonToolbar className="d-flex justify-content-center align-items-end gap-1">
+          <ButtonToolbar className="d-flex justify-content-center align-items-end">
             {btnMode}
             {this.renderExportButton(changed)}
           </ButtonToolbar>

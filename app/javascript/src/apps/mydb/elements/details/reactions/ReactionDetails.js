@@ -424,7 +424,7 @@ export default class ReactionDetails extends Component {
           <HeaderCommentSection element={reaction} />
         </div>
         <div className="d-flex align-items-center gap-1">
-          <ButtonToolbar className="gap-1 justify-content-end">
+          <ButtonToolbar className="justify-content-end">
             <PrintCodeButton element={reaction} />
             {!reaction.isNew
               && <OpenCalendarButton isPanelHeader eventableId={reaction.id} eventableType="Reaction" />}
@@ -893,7 +893,7 @@ export default class ReactionDetails extends Component {
                 <br />
                 Switch scheme?
                 <br />
-                <ButtonToolbar className="gap-2 justify-content-center mt-1">
+                <ButtonToolbar className="justify-content-center mt-1">
                   <Button
                     variant="danger"
                     size="xxsm"

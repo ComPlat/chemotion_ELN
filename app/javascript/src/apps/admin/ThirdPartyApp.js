@@ -409,7 +409,7 @@ export default class ThirdPartyApp extends React.Component {
             {this.state.thirdPartyApps.map((entry) => (
               <tr key={entry.id}>
                 <td>
-                  <ButtonToolbar className="gap-1">
+                  <ButtonToolbar>
                     <OverlayTrigger placement="bottom" overlay={editTip}>
                       <Button variant="info" size="sm" onClick={() => this.showEditThirdPartyAppModal(entry.id)}>
                         Edit

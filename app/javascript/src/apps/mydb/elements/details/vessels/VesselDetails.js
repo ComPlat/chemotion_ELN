@@ -160,7 +160,7 @@ function VesselDetails({ vesselItem }) {
           </Tab>
         </Tabs>
       </div>
-      <ButtonToolbar className="d-flex gap-1">
+      <ButtonToolbar>
         <Button variant="primary" onClick={() => { handleClose(vesselItem); }}>
           Close
         </Button>
