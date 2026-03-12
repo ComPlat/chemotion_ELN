@@ -314,6 +314,7 @@ function getMaterialColumnGroupChild(material, materialType, gasMode) {
     children: entries.map((entry, index) => (
       {
         field: `${materialType}.${materialCopy.id}`, // Must be unique.
+        colId: `${materialType}.${materialCopy.id}.${entry}`,
         headerValueGetter: ({ colDef }) => MaterialHeaderName(colDef),
         tooltipField: `${materialType}.${materialCopy.id}`,
         tooltipComponent: MaterialOverlay,
