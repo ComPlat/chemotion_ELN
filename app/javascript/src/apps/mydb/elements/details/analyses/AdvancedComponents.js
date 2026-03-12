@@ -228,7 +228,7 @@ function AdvancedAnalysesList({
 
   return (
     <>
-      <ButtonToolbar className="gap-2">
+      <ButtonToolbar>
         <Button variant="success" onClick={addAnalyses}>
           <i className="fa fa-plus me-1" />
           Analysis

@@ -155,7 +155,7 @@ export default class UnsortedDataset extends React.Component {
           <br />
         </Col>
         <Col md={12}>
-          <ButtonToolbar className="gap-1 justify-content-end">
+          <ButtonToolbar className="justify-content-end">
             <Button variant="primary" onClick={() => onModalHide()}>Close</Button>
             <Button
               variant="warning"

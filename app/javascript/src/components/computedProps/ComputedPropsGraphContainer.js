@@ -314,7 +314,7 @@ export default class ComputedPropsGraphContainer extends React.Component {
                   onChange={e => this.onDescChange(e)}
                 />
               </Form.Group>
-              <ButtonToolbar className="gap-1 mt-2 justify-content-end">
+              <ButtonToolbar className="mt-2 justify-content-end">
                 <Button variant="info" size="sm" onClick={this.saveTemplate}>
                   Save Template
                 </Button>
