@@ -195,6 +195,7 @@ describe('number formatting', () => {
     expect(parseNumericString(',')).toEqual(NaN);
     expect(parseNumericString('-')).toEqual(NaN);
     expect(parseNumericString('')).toEqual(NaN);
-    expect(parseNumericString(1)).toEqual(NaN);
+    expect(parseNumericString(1)).toEqual(1);
+    expect(parseNumericString(NaN)).toEqual(NaN);
   });
 });
