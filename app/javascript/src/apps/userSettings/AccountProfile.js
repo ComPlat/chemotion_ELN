@@ -291,7 +291,8 @@ function AccountProfile({ currentUser, closeSettings }) {
           Settings
         </h1>
 
-        <Button variant="outline-dark" onClick={closeSettings} className="m-2 mb-4 float-end" size="sm">X</Button>
+        {/* eslint-disable-next-line jsx-a11y/control-has-associated-label */}
+        <button type="button" onClick={closeSettings} className="m-2 mb-4 float-end btn-close" />
       </div>
       <div className="row flex-grow-1">
         {/* Left column: stretch to bottom */}
