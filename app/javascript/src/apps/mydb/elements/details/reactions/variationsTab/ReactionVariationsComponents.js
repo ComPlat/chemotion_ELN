@@ -516,6 +516,7 @@ function NoteCellEditor({
 }) {
   const [note, setNote] = useState(value);
   const { reactionShortLabel } = context;
+  const textareaRef = useRef(null);
 
   const onClose = () => {
     stopEditing();
@@ -527,13 +528,18 @@ function NoteCellEditor({
   };
 
   const cellContent = (
-    <Modal show onHide={onClose}>
+    <Modal
+      show
+      onHide={onClose}
+      onEntered={() => textareaRef.current?.focus()}
+    >
       <Modal.Header closeButton>
         {`Edit note for ${getVariationsRowName(reactionShortLabel, row.id)}`}
       </Modal.Header>
       <Modal.Body>
         <Form.Control
           as="textarea"
+          ref={textareaRef}
           placeholder="Start typing your note..."
           value={note}
           onChange={(event) => setNote(event.target.value)}
