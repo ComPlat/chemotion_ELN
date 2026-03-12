@@ -151,6 +151,7 @@ class GatePushButton extends React.Component {
             this.transmit();
           }}
           ref={this.buttonRef}
+          className="border-0"
         >
           <i className="fa fa-paper-plane" />
         </Button>

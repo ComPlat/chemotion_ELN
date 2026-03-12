@@ -80,7 +80,7 @@ $topbar-height: 35px;
   );
   &.sidebar-button--expandable {
     .expand-icon {
-      display: none;
+      @extend .d-none;
       @extend .text-lighten1;
       &:hover {
         @extend .text-active;
@@ -88,10 +88,10 @@ $topbar-height: 35px;
     }
     &:hover {
       .expand-icon {
-        display: inline-block;
+        @extend .d-inline-block;
       }
       .type-icon {
-        display: none;
+        @extend .d-none;
       }
     }
   }

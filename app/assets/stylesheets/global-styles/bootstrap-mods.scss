@@ -144,32 +144,71 @@ h6 {
   }
 }
 
+@mixin square-icon-form-elements($padding-x, $padding-y) {
+  padding: $padding-y $padding-x;
+  &:has(> i:only-child) {
+    padding: $padding-y;
+  }
+}
+
 @mixin xsm-form-elements {
-  padding: 3px 5px;
+  @include square-icon-form-elements(
+    $input-btn-padding-x-xsm,
+    $input-btn-padding-y-xsm
+  );
   font-size: 12px;
-  line-height: 1.25;
   border-radius: 3px;
   @include condensed-text-width;
 }
 
 @mixin xxsm-form-elements {
-  padding: 1px 4px;
+  @include square-icon-form-elements(
+    $input-btn-padding-x-xxsm,
+    $input-btn-padding-y-xxsm
+  );
   font-size: 12px;
-  line-height: 1.25;
   border-radius: 2.5px;
   @include condensed-text-width;
 }
 
-.btn-sm {
-  @include condensed-text-width;
+.btn {
+  @include square-icon-form-elements(
+    $input-btn-padding-x,
+    $input-btn-padding-y
+  );
+  &-lg {
+    @include square-icon-form-elements(
+      $input-btn-padding-x-lg,
+      $input-btn-padding-y-lg
+    );
+  }
+  &-sm {
+    @include square-icon-form-elements(
+      $input-btn-padding-x-sm,
+      $input-btn-padding-y-sm
+    );
+    @include condensed-text-width;
+  }
+  &-xsm {
+    @include xsm-form-elements;
+  }
+  &-xxsm {
+    @include xxsm-form-elements;
+  }
 }
 
-.btn-xsm {
-  @include xsm-form-elements;
+.btn i {
+  @extend .fa-fw;
+  @extend .d-inline-flex;
+  @extend .flex-column;
+  @extend .align-items-center;
+  @extend .justify-content-center;
+  height: $btn-line-height;
 }
 
-.btn-xxsm {
-  @include xxsm-form-elements;
+.btn-toolbar {
+  @extend .gap-1;
+  @extend .align-items-center;
 }
 
 .form-control-xsm {
@@ -200,11 +239,6 @@ h6 {
   .btn {
     @include xxsm-form-elements;
   }
-}
-
-.btn-toolbar {
-  @extend .gap-1;
-  @extend .align-items-center;
 }
 
 .popover-multi-item {
