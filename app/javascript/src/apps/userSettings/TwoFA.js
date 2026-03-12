@@ -31,21 +31,17 @@ function TwoFactorSettings() {
       return <p>Loading...!</p>;
     } if (isActive) {
       return (
-        <>
-          <Row>
-            <Col xs={9} className="offset-3">
-              <p className="form-text text-muted">
-                Two-factor authentication (2FA) adds an extra layer of security to your account.
-                Click below to request an email to disable 2FA.
-              </p>
-            </Col>
-          </Row>
-          <Row>
-            <Col xs={9} className="offset-3">
-              <Button variant="danger" onClick={enable2FA}>Disable 2FA</Button>
-            </Col>
-          </Row>
-        </>
+        <Row>
+          <Col xs={3}>
+            <Button variant="danger" onClick={enable2FA}>Disable 2FA</Button>
+          </Col>
+          <Col xs={9}>
+            <p>
+              Two-factor authentication (2FA) adds an extra layer of security to your account.
+              Click below to request an email to disable 2FA.
+            </p>
+          </Col>
+        </Row>
       );
     }
     return (
