@@ -178,7 +178,7 @@
 //make .fa-fw work in flex containers
 
 .fa-fw {
-  min-width: 1.28571429em;
+  min-width: $input-btn-line-height;
 }
 
 // recontextualisation of standard icons

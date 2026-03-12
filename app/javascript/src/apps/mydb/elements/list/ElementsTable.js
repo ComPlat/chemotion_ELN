@@ -418,7 +418,7 @@ export default class ElementsTable extends React.Component {
           style={{ border: 'none' }}
           onClick={this.changeSortDirection}
         >
-          <i className={`fa fa-fw ${sortDirectionIcon}`} />
+          <i className={`fa ${sortDirectionIcon}`} />
         </button>
       </OverlayTrigger>
     );
@@ -449,7 +449,7 @@ export default class ElementsTable extends React.Component {
     } else {
       sortIconClass = elementsSort ? 'fa-history' : 'fa-clock-o';
     }
-    const sortIcon = <i className={`fa fa-fw ${sortIconClass}`} />;
+    const sortIcon = <i className={`fa ${sortIconClass}`} />;
     const sortContent = (
       <OverlayTrigger placement="top" overlay={sortTooltip}>
         <button
@@ -525,7 +525,7 @@ export default class ElementsTable extends React.Component {
     const sortTitle = elementsSort ? `sort by ${sortColumn}` : 'sort by update date';
     const sortTooltip = <Tooltip id="reaction_sort_tooltip">{sortTitle}</Tooltip>;
     const sortIconClass = elementsSort ? 'fa-sort-alpha-desc' : 'fa-clock-o';
-    const sortIcon = <i className={`fa fa-fw ${sortIconClass}`} />;
+    const sortIcon = <i className={`fa ${sortIconClass}`} />;
     const sortContent = (
       <OverlayTrigger placement="top" overlay={sortTooltip}>
         <button
@@ -573,7 +573,7 @@ export default class ElementsTable extends React.Component {
     const sortTooltip = <Tooltip id="vessel_sort_tooltip">{sortTitle}</Tooltip>;
 
     const sortIconClass = elementsSort ? 'fa-sort-alpha-desc' : 'fa-clock-o';
-    const sortIcon = <i className={`fa fa-fw ${sortIconClass}`} />;
+    const sortIcon = <i className={`fa ${sortIconClass}`} />;
 
     return (
       <>

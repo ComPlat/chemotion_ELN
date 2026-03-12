@@ -183,7 +183,6 @@ export default function ReactionSchemeGraphic({
             <Button
               size="xsm"
               variant="light"
-              className="m-1"
               onClick={onRefresh}
             >
               <i className={`fa fa-refresh ${isRefreshing ? 'fa-spin' : ''}`} />

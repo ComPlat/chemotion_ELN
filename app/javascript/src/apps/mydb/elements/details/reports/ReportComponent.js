@@ -74,7 +74,7 @@ const GenerateReportBtn = ({ allState, updateQueue }) => {
         variant="danger"
         size="sm"
       >
-        <span><i className="fa fa-spinner fa-pulse fa-fw" /> Processing</span>
+        <span><i className="fa fa-spinner fa-pulse" /> Processing</span>
       </Button>
   );
 };

@@ -24,7 +24,7 @@ export default function SidebarButton({
         onClick={onClick}
         active={active}
       >
-        <i className={`mx-auto fa fa-fw ${icon}`} />
+        <i className={`mx-auto fa ${icon}`} />
       </Button>
     </OverlayTrigger>
   ) : (
@@ -35,7 +35,7 @@ export default function SidebarButton({
       active={active}
     >
       <span className="d-flex gap-2 align-items-center flex-grow-1">
-        <i className={`type-icon fa-fw ${icon}`} />
+        <i className={`type-icon ${icon}`} />
         {expandable && (
           <ChevronIcon
             direction={isExpanded ? 'down' : 'right'}
