@@ -35,6 +35,19 @@ en:
     formats:
       eln_timestamp: "%d.%m.%Y, %H:%M:%S %z"
       eln_iso8601: "%Y-%m-%dT%H:%M:%S%z"
+  two_factor_auth_controller:
+    request_disable:
+      header: "Two-Factor Authentication disabled!"
+      message: "Successfully disabled Two-Factor Authentication."
+    verify:
+      header: "Two-Factor Authentication activated!"
+      message: "Successfully activated Two-Factor Authentication."
+      error_message: "Code wrong!"
+    decode_jwt:
+      error_header: "Two-Factor Authentication failed!"
+      error_message_wrong_token: "Token is not a valid 2FA token!"
+      error_message_no_token: "Token is not a valid!"
+      error_message_expired_token: "Token expired! please request a new token!"
   two_factor_auth_mailer:
     greeting: "Hallo %{name},"
     enable_mail:
