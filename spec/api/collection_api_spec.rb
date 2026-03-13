@@ -813,7 +813,7 @@ describe Chemotion::CollectionAPI do
 
         it 'without a valid collection id' do
           get '/api/v1/collections/12345/metadata'
-          expect(response).to have_http_status(:not_found)
+          expect(response).to have_http_status(:unauthorized)
         end
 
         it 'with a collection id of someone else' do
