@@ -7,11 +7,13 @@ module Clap
         def to_clap
           []
 
-          # TODO:  Vessel Attachments Not yet implemented.  Depends on upcoming enhancements in ELN Vessel code.
+          # TODO:  Vessel Attachments Not yet implemented. Depends on upcoming enhancements in ELN Vessel code.
+          # Keeping premature implementation for reference.
+          # cbuggle, 13.03.2026.
+          #
           # model.attachments.map do |attachment|
           #   Clap::VesselAttachment.new(
           #     type: attachment_type(attachment),
-          #     details: nil, # n/a. currently nonexistant in ELN.
           #   )
           # end
         end
@@ -23,9 +25,9 @@ module Clap
         # end
         #
         # def attachment_type(attachment)
-        # Clap::VesselPreparation::VesselAttachmentType.const_get(attachment)
-        # rescue StandardError
-        # Clap::VesselPreparation::VesselAttachmentType.UNSPECIFIED
+        # Clap::VesselAttachment::VesselAttachmentType.const_get(attachment)
+        # rescue NameError
+        # Clap::VesselAttachment::VesselAttachmentType.UNSPECIFIED
         # end
       end
     end

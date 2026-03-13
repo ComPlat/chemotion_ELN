@@ -5,7 +5,7 @@ module Entities
     module SelectOptions
       module Models
         class Detectors < Base
-          DETECTOR_TYPES = { PDA: ['CHMO:0001728', 'WAVELENGTHLIST', 'WAVELENGTHS', 'NM', 'Wavelengths (nm)'],
+          DETECTOR_TYPES = { PDA: ['CHMO:0001728', 'WAVELENGTHRANGE', 'WAVELENGTHS', 'NM', 'Wavelengths (nm)'],
                              ELSD: %w[CHMO:0002866 METRIC TEMPERATURE CELSIUS Temperature],
                              MS: %w[CHMO:0002337 TEXT MS_PARAMETER V Parameter],
                              FID: %w[CHMO:0001719],

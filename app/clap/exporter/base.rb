@@ -11,7 +11,7 @@ module Clap
 
       attr_reader :model
 
-      def ontology_ord(ontology_id)
+      def ontology_to_clap(ontology_id)
         Clap::Exporter::Models::OntologyExporter.new(ontology_id).to_clap
       end
     end

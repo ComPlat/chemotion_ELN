@@ -9,9 +9,9 @@ module Entities
             titlecase_options_for(Clap::ReactionProcessAction::ActionAdd::AdditionSpeedType.constants)
           end
 
-          def automation_modes
-            [{ value: 'MANUAL', label: 'Manual' },
-             { value: 'AUTOMATED', label: 'Automated' }]
+          def motion_modes
+            [{ value: 'NCIT:C63513', label: 'Manual' },
+             { value: 'NCIT:C70669', label: 'Automated' }]
           end
         end
       end

@@ -7,9 +7,14 @@ module Entities
         class Motion < Base
           def select_options
             {
-              automation_modes: SelectOptions::Models::Custom.new.automation_modes,
+              motion_modes: SelectOptions::Models::Custom.new.motion_modes,
               types: motion_types,
             }
+          end
+
+          def motion_modes
+            [{ value: 'NCIT:C63513', label: 'Manual' },
+             { value: 'NCIT:C70669', label: 'Automated' }]
           end
 
           def motion_types

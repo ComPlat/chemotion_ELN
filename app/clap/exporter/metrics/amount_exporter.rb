@@ -5,6 +5,8 @@ module Clap
     module Metrics
       class AmountExporter < Clap::Exporter::Metrics::Base
         def to_clap
+          return unless @amount
+
           case @unit
           when 'l', 'ml', 'mcl', 'nl'
             Amount.new(volume: Amounts::VolumeExporter.new(@amount).to_clap)

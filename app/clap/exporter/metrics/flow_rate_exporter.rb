@@ -10,9 +10,10 @@ module Clap
         }.stringify_keys.freeze
 
         def to_clap
+          return unless @value
+
           FlowRate.new(
             value: @value.to_f,
-            precision: nil,
             unit: flow_rate_unit,
           )
         end

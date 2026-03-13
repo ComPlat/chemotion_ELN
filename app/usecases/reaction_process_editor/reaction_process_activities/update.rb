@@ -16,9 +16,6 @@ module Usecases
             SaveIntermediate.execute!(activity: activity, workup: activity_params['workup']) if activity.saves_sample?
             AssignFractionForRemove.execute!(activity: activity)
 
-            # if activity.workup['origin_type'] == 'SOLVENT_FROM_FRACTION'
-            # end
-
             activity.save
 
             ReactionProcessVessels::SweepUnused.execute!(reaction_process_id: activity.reaction_process.id)

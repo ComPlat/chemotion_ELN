@@ -6,11 +6,11 @@
 // Karlsruhe Institute of Technology / Institute for Organical Chemistry.
 //
 // Schema enhancing the KIT ELN (Electronic Laboratory Notebook)
-// to store reaction process data describing the automatable process of a chemical reaction
-// tailored to the actual (configurable) laboratory setup.
+// to store reaction process data describing the automatable process of a
+// chemical reaction tailored to the actual (configurable) laboratory setup.
 //
-// v1.0.0
-// (09.03.2026)
+// v1.0.2
+// (13.03.2026)
 //
 // This format has been inspired by and contains a few concepts of
 // the Open Reaction Database (ORD) schema. We gratefully pay tribute to the ORD
@@ -43,8 +43,8 @@ message Reaction {
   string reaction_id = 2;
   ReactionProvenance provenance = 3;
   ReactionConditions conditions = 4;
-  repeated ReactionStep reaction_steps = 5;
-  optional SampleSetup sample_setup = 6;
+  optional SampleSetup sample_setup = 5;
+  repeated ReactionStep reaction_steps = 6;
 }
 
 /**
@@ -59,6 +59,17 @@ message SampleSetup {
   optional VesselTemplate vessel_template = 2;
 }
 
+message ReactionProvenance {
+  Person experimenter = 1;
+  string city = 2;
+  DateTime experiment_start = 3;
+  string doi = 4;
+  string patent = 5;
+  string publication_url = 6;
+  RecordEvent record_created = 7;
+  repeated RecordEvent record_modified = 8;
+}
+
 /**
  * Each ReactionStep describes an atomar reaction (in a vessel) and itself
  * consists of atomar ReactionProcessActions.
@@ -68,21 +79,37 @@ message ReactionStep {
   string reaction_step_id = 1;
   // The position of this step within the Reaction
   int32 position = 2;
-  // The start_time (in seconds) in the total reaction.
-  TimeSpan start_time = 3;
-  // The total duration.
-  TimeSpan duration = 4;
-  // The VesselTemplate / Vessel this Step takes place in.
-  optional VesselTemplate vessel_template = 5;
-  // The individual ReactionProcessActions defining the ReactionStep.
-  repeated ReactionProcessAction actions = 6;
-  // The automation mode of the Step, i.e. wether this Step runs manually,
-  // semi-automated or automated.
-  Ontology automation_mode = 7;
-
   // The AutomationControl defines the status of this step for the automation in
   // the actual automated laboratory run.
-  AutomationControl automation_control = 8;
+  AutomationControl automation_control = 3;
+  // The start_time (in seconds) in the total reaction.
+  TimeSpan start_time = 4;
+  // The total duration.
+  TimeSpan duration = 5;
+  // The automation mode of the Step, i.e. wether this Step runs manually,
+  // semi-automated or automated.
+  Ontology automation_mode = 6;
+  // The VesselTemplate / Vessel this Step takes place in.
+  optional VesselTemplate vessel_template = 7;
+  // The individual ReactionProcessActions defining the ReactionStep.
+  repeated ReactionProcessAction actions = 8;
+}
+
+message ReactionSetup { optional VesselTemplate vessel_template = 1; }
+
+message ReactionConditions {
+  TemperatureControl temperature_control = 1;
+  PressureControl pressure_control = 2;
+  MotionControl motion_control = 3;
+  IrradiationControl irradiation_control = 4;
+  PhAdjustControl ph_control = 5;
+  WavelengthRange wavelengths = 6;
+  repeated GenericConditions generic = 7;
+}
+
+message ReactionConditionLimits {
+  ReactionConditions conditions = 1;
+  TimeSpan duration = 2;
 }
 
 /**
@@ -94,14 +121,19 @@ message ReactionProcessAction {
   string id = 1;
   string description = 2;
   int32 position = 3;
-  TimeSpan start_time = 4;
-  TimeSpan duration = 5;
-  repeated Equipment equipment = 6;
-  optional VesselTemplate vessel_template = 7;
-
-  optional AutomationControl automation_control = 8;
-  optional PoolingFraction consumed_fraction = 9;
-  int32 automation_ordinal = 10;
+  optional AutomationControl automation_control = 4;
+  // automationOrdinal is a unique numbering assigned for uniqe identification
+  // in the communication with the automation lab. It is relevant in case of multiple runs (e.g.
+  // due to halting Actions with manual resolving) where the ReactionProcess can
+  // be edited further, so automationControl-status, position etc. might change so the automation lab can
+  // identify and keep track of the actions it already knows.
+  int32 automation_ordinal = 5;
+  TimeSpan start_time = 6;
+  TimeSpan duration = 7;
+  repeated Equipment equipment = 8;
+  optional VesselTemplate vessel_template = 9;
+  // The fraction (usually created manually from a Chromatography response) processed by this Action.
+  optional PoolingFraction consumed_fraction = 10;
 
   optional Ontology type = 11;
   optional Ontology subtype = 12;
@@ -206,7 +238,7 @@ message ReactionProcessAction {
 
   message ActionCentrifugation {
     Temperature temperature = 1;
-    Motion motion = 2;
+    Motion speed = 2;
     Pressure pressure = 3;
   }
 
@@ -233,12 +265,12 @@ message ReactionProcessAction {
       Prod prod = 6;
     }
 
-    repeated Ontology detectors = 1;
+    repeated Detector detectors = 1;
     repeated Ontology mobile_phase = 2;
     optional string method = 3;
     string stationary_phase = 4;
-    TemperatureConditions stationary_phase_temperature = 5;
-    Volume volume = 6;
+    TemperatureControl stationary_phase_temperature = 5;
+    Volume inject_volume = 6;
 
     optional Ontology material = 7;
     optional Length diameter = 8;
@@ -249,7 +281,7 @@ message ReactionProcessAction {
     repeated PoolingFraction fractions = 12;
 
     repeated Sample molecular_entities = 13;
-    optional Sample sample = 14;
+    repeated Sample samples = 14;
   }
 
   message ActionExtraction {
@@ -288,13 +320,15 @@ message ReactionProcessAction {
   }
 
   message ActionAnalysisElemental {
-    repeated Sample molecular_entities = 3;
-    Sample sample = 4;
+    repeated Sample samples = 3;
+    repeated Sample molecular_entities = 4;
+    repeated Ontology detectors = 5;
   }
 
   message ActionAnalysisSpectroscopy {
     repeated Sample molecular_entities = 3;
-    Sample sample = 4;
+    repeated Sample samples = 4;
+    repeated SolventWithRatio solvents = 5;
   }
 
   message ActionDiscard { PoolingFraction fraction = 1; }
@@ -322,6 +356,11 @@ message ReactionProcessAction {
     OriginType sample_origin_type = 3;
     optional PurificationOrigin purification_origin = 4;
   }
+}
+
+message Detector {
+  Ontology ontology = 1;
+  ReactionConditions conditions = 2;
 }
 
 /**
@@ -406,17 +445,6 @@ message PoolingFraction {
   repeated string vials = 4;
 }
 
-/**
- * The AutomationModes in which a step can run.
- */
-message Automation {
-  enum AutomationMode {
-    UNSPECIFIED = 0;
-    MANUAL = 1;
-    AUTOMATED = 2;
-    SEMI_AUTOMATED = 3;
-  }
-}
 
 /**
  * AutomationControl defines the automation status of the ReactionProcess and
@@ -473,83 +501,8 @@ message ReactionRole {
 }
 
 /**
- * The VesselTemplate defines the primary container within which the
- * reaction was performed, including the type of vessel, its primary material,
- * any preparation steps or vessel attachments, and its volume.
- *
- * It defines the characteristics of a Vessel, not the Vessel itself.
- * If a specific Vessel
+ * The Equipment that can be applied to several ReactionProcessActions etc.
  */
-message VesselTemplate {
-  message Vessel {
-    string id = 1;
-    string label = 2;
-    string description = 3;
-    string bar_code = 4;
-    string qr_code = 5;
-    Mass weight = 6;
-  }
-
-  enum VesselType {
-    UNSPECIFIED = 0;
-    CUSTOM = 1;
-    ROUND_BOTTOM_FLASK = 2;
-    VIAL = 3;
-    WELL_PLATE = 4;
-    MICROWAVE_VIAL = 5;
-    TUBE = 6;
-    CONTINUOUS_STIRRED_TANK_REACTOR = 7;
-    PACKED_BED_REACTOR = 8;
-    NMR_TUBE = 9;
-    PRESSURE_FLASK = 10;   // E.g., sealed tube
-    PRESSURE_REACTOR = 11; // High-pressure (e.g., Parr bomb reactor)
-    ELECTROCHEMICAL_CELL = 12;
-    SCHLENK_FLASK = 13;
-    SCHLENK_TUBE = 14;
-    MULTINECK_FLASK = 15;
-    COIL = 16;
-    CUVETTE = 17;
-    BEAKER = 18;
-    ERLENMEYER_FLASK = 19;
-  }
-
-  string id = 1;
-  string name = 2;
-
-  string details = 3;
-
-  VesselType type = 4;
-  // Vessel material (glass, plastic, etc.).
-  Material material = 5;
-  // Size (volume) of the vessel.
-  Volume volume = 6;
-  // How the vessel was prepared for the reaction.
-  repeated VesselPreparation preparations = 7;
-  // Vessel attachments (septum, cap, gas adapter, etc.).
-  repeated VesselAttachment attachments = 8;
-
-  optional VesselTemplate.Vessel vessel = 9;
-}
-
-message Material {
-  enum MaterialType {
-    UNSPECIFIED = 0;
-    CUSTOM = 1;
-    GLASS = 2;
-    POLYPROPYLENE = 3;
-    PLASTIC = 4;
-    METAL = 5;
-    QUARTZ = 6;
-    BROWN_GLASS = 7;
-    PFA = 8;
-    PTFE = 9;
-    BOROSILICATE_GLASS = 10;
-    POLYMETHLYPENTENE = 11;
-    POLYETHYLENE = 12;
-  }
-  MaterialType type = 1;
-  string details = 2;
-}
 
 message Equipment {
   enum EquipmentType {
@@ -599,7 +552,67 @@ message Equipment {
     SEPARATION_FILTER = 43;
   }
   EquipmentType type = 1;
-  string details = 2;
+}
+
+/**
+ * The VesselTemplate defines the primary container within which the
+ * reaction was performed, including the type of vessel, its primary material,
+ * any preparation steps or vessel attachments, and its volume.
+ *
+ * It defines the characteristics of a Vessel, not the Vessel itself.
+ * If a specific Vessel is used it can be set in Vessel.
+ * This is a bit unusual due to the VesselTemplate schema in the ELN, which
+ * requires us to always specify the VesselTemplate used and allows but not
+ * requires a specific vessel.
+ */
+message VesselTemplate {
+  message Vessel {
+    string id = 1;
+    string label = 2;
+    string description = 3;
+    string bar_code = 4;
+    string qr_code = 5;
+    Mass weight = 6;
+  }
+  enum VesselType {
+    UNSPECIFIED = 0;
+    CUSTOM = 1;
+    ROUND_BOTTOM_FLASK = 2;
+    VIAL = 3;
+    WELL_PLATE = 4;
+    MICROWAVE_VIAL = 5;
+    TUBE = 6;
+    CONTINUOUS_STIRRED_TANK_REACTOR = 7;
+    PACKED_BED_REACTOR = 8;
+    NMR_TUBE = 9;
+    PRESSURE_FLASK = 10;
+    PRESSURE_REACTOR = 11;
+    ELECTROCHEMICAL_CELL = 12;
+    SCHLENK_FLASK = 13;
+    SCHLENK_TUBE = 14;
+    MULTINECK_FLASK = 15;
+    COIL = 16;
+    CUVETTE = 17;
+    BEAKER = 18;
+    ERLENMEYER_FLASK = 19;
+  }
+
+  string id = 1;
+  string name = 2;
+
+  string details = 3;
+
+  VesselType type = 4;
+  string material = 5;
+  Volume volume = 6;
+  repeated VesselPreparation preparations = 7;
+  repeated VesselAttachment attachments = 8;
+
+  // Filled if a specific vessel is in use (as opposed to a vesselTemplate
+  // defined only by its characteristics)
+  optional VesselTemplate.Vessel vessel = 9;
+
+  VesselCleanup cleanup = 10;
 }
 
 message VesselAttachment {
@@ -637,17 +650,6 @@ message VesselAttachment {
     HYDRATION_APPARATUS = 30;
   }
   VesselAttachmentType type = 1;
-  string details = 2;
-}
-
-message VesselCleanup {
-  enum VesselCleanupType {
-    UNSPECIFIED = 0;
-    WASTE = 1;
-    REMOVE = 2;
-    STORAGE = 3;
-  }
-  VesselCleanupType type = 1;
 }
 
 message VesselPreparation {
@@ -661,42 +663,44 @@ message VesselPreparation {
     PURGED = 6;
   }
   VesselPreparationType type = 1;
-  string details = 2;
-  string medium = 3;
-}
-
-message ReactionSetup { optional VesselTemplate vessel_template = 1; }
-
-message ReactionConditions {
-  TemperatureConditions temperature = 1;
-  PressureConditions pressure = 2;
-  StirringConditions stirring = 3;
-  IlluminationConditions illumination = 4;
-  ElectrochemistryConditions electrochemistry = 5;
-  FlowConditions flow = 6;
-  optional bool reflux = 7;
-  PhAdjustConditions ph = 8;
-  WavelengthRange wavelengths = 9;
-  // repeated GenericConditions generic = 10;
-  string details = 11;
-}
-
-// message GenericConditions {
-//   string name = 1;
-//   string conditions = 2;
-// }
-
-message ReactionConditionLimits {
-  ReactionConditions conditions = 1;
-  TimeSpan duration = 2;
 }
 
 /**
- * The quantitative amount of a Sample used in a particular reaction.
- * Compounds added in their pure form should have their value defined by
- * mass, moles, or volume. Compounds prepared as solutions should be defined
- * in terms of their volume. CoIlluminationConditionsmpounds prepared on solid
- * supports should define the total mass/volume including the support.
+ *  What to do with vessel after the automated process run.
+ */
+
+message VesselCleanup {
+  enum VesselCleanupType {
+    UNSPECIFIED = 0;
+    WASTE = 1;
+    REMOVE = 2;
+    STORAGE = 3;
+  }
+  VesselCleanupType type = 1;
+}
+
+message Material {
+  enum MaterialType {
+    UNSPECIFIED = 0;
+    CUSTOM = 1;
+    GLASS = 2;
+    POLYPROPYLENE = 3;
+    PLASTIC = 4;
+    METAL = 5;
+    QUARTZ = 6;
+    BROWN_GLASS = 7;
+    PFA = 8;
+    PTFE = 9;
+    BOROSILICATE_GLASS = 10;
+    POLYMETHLYPENTENE = 11;
+    POLYETHYLENE = 12;
+  }
+  MaterialType type = 1;
+  string details = 2;
+}
+
+/**
+ * The amount of a Substance
  */
 message Amount {
   oneof kind {
@@ -707,112 +711,48 @@ message Amount {
   }
 }
 
-message PhAdjustConditions {
+message GenericConditions {
+  string name = 1;
+  string conditions = 2;
+}
+
+message PhAdjustControl {
   enum PhAdjustMeasurementType {
     UNSPECIFIED = 0;
-    ELECTRODE = 1;
-    STRIPE = 2;
+    PH_ELECTRODE = 1;
+    PH_STRIPE = 2;
     OTHER = 3;
   }
 
-  PhAdjustMeasurementType measurement_type = 1;
-  double value = 2;
+  double ph = 1;
+  PhAdjustMeasurementType measurement_type = 2;
 }
 
-message TemperatureConditions {
-  message TemperatureControl {
-    enum TemperatureControlType {
-      UNSPECIFIED = 0;
-      CUSTOM = 1;
-      AMBIENT = 2;
-      OIL_BATH = 3;
-      WATER_BATH = 4;
-      SAND_BATH = 5;
-      ICE_BATH = 6;
-      DRY_ALUMINUM_PLATE = 7;
-      MICROWAVE = 8;
-      DRY_ICE_BATH = 9;
-      AIR_FAN = 10;
-      LIQUID_NITROGEN = 11;
-      MEASUREMENT_IN_REACTION = 12;
-      CONTACT_MEDIUM = 13;
-    }
-    TemperatureControlType type = 1;
-    // Specify, e.g., ICE_BATH components (e.g., "ice water, salt"),
-    // MICROWAVE power, AIR_FAN speed, etc.
-    string details = 2;
+message TemperatureControl {
+  enum TemperatureControlType {
+    UNSPECIFIED = 0;
+    CUSTOM = 1;
+    AMBIENT = 2;
+    OIL_BATH = 3;
+    WATER_BATH = 4;
+    SAND_BATH = 5;
+    ICE_BATH = 6;
+    DRY_ALUMINUM_PLATE = 7;
+    MICROWAVE = 8;
+    DRY_ICE_BATH = 9;
+    AIR_FAN = 10;
+    LIQUID_NITROGEN = 11;
+    MEASUREMENT_IN_REACTION = 12;
+    CONTACT_MEDIUM = 13;
   }
-  TemperatureControl control = 1;
-  Temperature setpoint = 2;
-  message Measurement {
-    enum MeasurementType {
-      UNSPECIFIED = 0;
-      CUSTOM = 1;
-      THERMOCOUPLE_INTERNAL = 2; // Physically in reaction solution.
-      THERMOCOUPLE_EXTERNAL = 3; // On outside of vessel or, e.g., in oil bath.
-      INFRARED = 4;              // Contactless infrared probe.
-    }
-    MeasurementType type = 1;
-    string details = 2;
-    TimeSpan time = 3;
-    Temperature temperature = 4;
-  }
-  repeated Measurement measurements = 3;
+  Temperature temperature = 1;
+  TemperatureControlType temperature_control_type = 2;
 }
 
-message PressureConditions {
-  message PressureControl {
-    enum PressureControlType {
-      UNSPECIFIED = 0;
-      CUSTOM = 1;
-      AMBIENT = 2;
-      SLIGHT_POSITIVE = 3; // E.g., 1-5 psi with a gas line inlet.
-      SEALED = 4; // Fully sealed vessel (e.g., microwave vial, sealed tube).
-      PRESSURIZED = 5; // High-pressure applied, e.g., in a bomb reactor.
-    }
-    PressureControlType type = 1;
-    // Include means of pressure control in "Attachment" when appropriate.
-    string details = 2;
-  }
-  PressureControl control = 1;
-  Pressure setpoint = 2;
-  message Atmosphere {
-    enum AtmosphereType {
-      UNSPECIFIED = 0;
-      CUSTOM = 1;
-      AIR = 2;
-      NITROGEN = 3;
-      ARGON = 4;
-      OXYGEN = 5;
-      HYDROGEN = 6;
-      CARBON_MONOXIDE = 7;
-      CARBON_DIOXIDE = 8;
-      METHANE = 9;
-      AMMONIA = 10;
-      OZONE = 11;
-      ETHYLENE = 12;
-      ACETYLENE = 13;
-    }
-    AtmosphereType type = 1;
-    string details = 2;
-  }
-  Atmosphere atmosphere = 3;
-  message Measurement {
-    enum MeasurementType {
-      UNSPECIFIED = 0;
-      CUSTOM = 1;
-      PRESSURE_TRANSDUCER = 2;
-    }
-    MeasurementType type = 1;
-    string details = 2;
-    TimeSpan time = 3;
-    Pressure pressure = 4;
-  }
-  repeated Measurement measurements = 4;
-}
+message PressureControl { Pressure pressure = 1; }
 
-message StirringConditions {
-  enum StirringMethodType {
+message MotionControl {
+  enum MotionControlType {
     UNSPECIFIED = 0;
     CUSTOM = 1;
     NONE = 2;
@@ -824,15 +764,14 @@ message StirringConditions {
     OTHER = 8;
   }
 
-  StirringMethodType type = 1;
-  string details = 2;
-  Motion speed = 3;
+  MotionControlType type = 1;
+  Motion speed = 2;
 
-  Automation.AutomationMode automation_mode = 4;
+  Ontology motion_mode = 3;
 }
 
-message IlluminationConditions {
-  enum IlluminationType {
+message IrradiationControl {
+  enum IrradiationType {
     UNSPECIFIED = 0;
     CUSTOM = 1;
     AMBIENT = 2;
@@ -846,97 +785,16 @@ message IlluminationConditions {
     LASER = 10;
     MICROWAVE_REACTOR = 11;
   }
-  IlluminationType type = 1;
-  string details = 2; // E.g. manufacturer, setup specifications, etc.
+  IrradiationType type = 1;
   Wavelength peak_wavelength = 3;
-  string color = 4;
-  Length distance_to_vessel = 5;
   Power power = 6;
   optional bool power_is_ramp = 7;
   optional Power power_end = 8;
 }
 
-message ElectrochemistryConditions {
-  enum ElectrochemistryType {
-    UNSPECIFIED = 0;
-    CUSTOM = 1;
-    CONSTANT_CURRENT = 2;
-    CONSTANT_VOLTAGE = 3;
-  }
-  ElectrochemistryType type = 1;
-  string details = 2;
-  Current current = 3;
-  Voltage voltage = 4;
-  string anode_material = 5;
-  string cathode_material = 6;
-  Length electrode_separation = 7;
-  message Measurement {
-    TimeSpan time = 1;
-    oneof kind {
-      Current current = 2;
-      Voltage voltage = 3;
-    }
-  }
-  repeated Measurement measurements = 8;
-  message ElectrochemistryCell {
-    enum ElectrochemistryCellType {
-      UNSPECIFIED = 0;
-      CUSTOM = 1;
-      DIVIDED_CELL = 2;
-      UNDIVIDED_CELL = 3;
-    }
-    ElectrochemistryCellType type = 1;
-    string details = 2;
-  }
-  ElectrochemistryCell cell = 9;
-}
-
-message FlowConditions {
-  enum FlowType {
-    UNSPECIFIED = 0;
-    CUSTOM = 1;
-    PLUG_FLOW_REACTOR = 2;
-    CONTINUOUS_STIRRED_TANK_REACTOR = 3;
-    PACKED_BED_REACTOR = 4;
-  }
-  FlowType type = 1;
-  string details = 2;
-  string pump_type = 3;
-  message Tubing {
-    enum TubingType {
-      UNSPECIFIED = 0;
-      CUSTOM = 1;
-      STEEL = 2;
-      COPPER = 3;
-      PFA = 4;
-      FEP = 5;
-      TEFLONAF = 6;
-      PTFE = 7;
-      GLASS = 8;
-      QUARTZ = 9;
-      SILICON = 10; // e.g., a chip-based microreactor
-      PDMS = 11;
-    }
-    TubingType type = 1;
-    string details = 2;
-    Length diameter = 3;
-  }
-  Tubing tubing = 4;
-}
-
-message DateTime { string value = 1; }
-
-message ReactionProvenance {
-  Person experimenter = 1;
-  string city = 2;
-  DateTime experiment_start = 3;
-  string doi = 4;
-  string patent = 5;
-  string publication_url = 6;
-  RecordEvent record_created = 7;
-  repeated RecordEvent record_modified = 8;
-}
-
+/**
+ * General Definitions
+ */
 message Person {
   string username = 1;
   string name = 2;
@@ -952,16 +810,11 @@ message RecordEvent {
 }
 
 /**
- * To allow users to describe synthetic processes in whatever units they find
- * most natural, we define a fixed list of allowable units for each measurement
- * type. Upon submission to a centralized database, or using a validation and
- * canonicalization script, we will convert all values to the default units
- * (the first nonzero item in each enum).
- *
- * Each message also contains a `precision` field, which specifies the precision
- * of the measurement in the same units as the measurement itself. Often the
- * precision will be the standard deviation from an instrument calibration.
+ * Definition of metrics and units.
+ * Aligned to the OpenReactionDatabase (ORD) scheme even when unused in ELN.
  */
+message DateTime { string value = 1; }
+
 message TimeSpan {
   enum TimeUnit {
     UNSPECIFIED = 0;
@@ -1019,6 +872,10 @@ message Concentration {
   optional double value = 1;
   optional double precision = 2;
   ConcentrationUnit unit = 3;
+}
+message Percentage {
+  optional double value = 1;
+  optional double precision = 2;
 }
 message Pressure {
   enum PressureUnit {
@@ -1129,9 +986,4 @@ message FlowRate {
   optional double value = 1;
   optional double precision = 2;
   FlowRateUnit unit = 3;
-}
-// Used for things like conversion and yield.
-message Percentage {
-  optional double value = 1;
-  optional double precision = 2;
 }
