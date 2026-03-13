@@ -73,7 +73,7 @@ module Chemotion
           editors.push(str) if current_user.matrix_check_by_name(str)
         end
         matrices = Matrice.where(name: editors)
-                          .order('name')
+                          .order(:name)
 
         present matrices,
                 with: Entities::MatriceEntity,
@@ -220,7 +220,8 @@ module Chemotion
         end
         route_param :device_id do
           get do
-            present DeviceMetadata.find_by(device_id: params[:device_id]),
+            deviceMetadata = DeviceMetadata.find_by(device_id: params[:device_id])
+            present deviceMetadata,
                     with: Entities::DeviceMetadataEntity,
                     root: 'device_metadata'
           end
