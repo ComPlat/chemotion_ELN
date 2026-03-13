@@ -3,6 +3,7 @@
 module Entities
   class SampleEntity < ApplicationEntity
     # rubocop:disable Layout/ExtraSpacing
+    # rubocop:disable Layout/LineLength, Layout/ExtraSpacing, Metrics/BlockLength
     # Level 0 attributes and relations
     with_options(anonymize_below: 0) do
       expose! :can_copy,        unless: :displayed_in_list
@@ -26,6 +27,12 @@ module Entities
       expose! :gas_phase_data
       expose! :user_labels
       expose! :weight_percentage
+      expose! :state
+      expose! :color
+      expose! :storage_condition
+      expose! :height
+      expose! :width
+      expose! :length
     end
 
     # Level 1 attributes
@@ -123,9 +130,15 @@ module Entities
     end
 
     def molfile
-      return unless object.respond_to? :molfile
-
-      object.molfile&.encode('utf-8', universal_newline: true, invalid: :replace, undef: :replace)
+      return unless object.respond_to?(:molfile)
+      return if object.molfile.nil?
+    
+      mf = object.molfile.dup.force_encoding('UTF-8')
+      if mf.valid_encoding?
+        mf.encode('UTF-8', universal_newline: true)
+      else
+        mf.encode('UTF-8', 'binary', invalid: :replace, undef: :replace, universal_newline: true)
+      end
     end
 
     def parent_id

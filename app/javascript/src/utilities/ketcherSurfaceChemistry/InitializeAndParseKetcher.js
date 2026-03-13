@@ -18,6 +18,7 @@ import {
   molsSetter,
   textList,
   textListSetter,
+  textNodeStruct,
   textNodeStructSetter,
   ImagesToBeUpdatedSetter,
   setBase64TemplateHashSetter,
@@ -58,7 +59,17 @@ const loadKetcherData = async (data) => {
   allAtomsSetter([]);
   allNodesSetter([...nodes]);
   imagesListSetter(nodes.filter((item) => item.type === 'image'));
-  textListSetter(nodes.filter((item) => item.type === 'text'));
+
+  // Text nodes are non-standard Ketcher extensions managed entirely in local state.
+  // The editor never returns them via getKet(), so we must never overwrite the local
+  // textList from editor data — doing so would silently wipe user text on every fetch.
+  // Only update textList when the incoming data actually contains text nodes (e.g. initial
+  // load where we injected them into the ket payload before calling setMolecule).
+  const textNodesFromEditor = nodes.filter((item) => item.type === 'text');
+  if (textNodesFromEditor.length > 0) {
+    textListSetter(textNodesFromEditor);
+  }
+
   const sliceEnd = Math.max(0, nodes.length - imagesList.length - textList.length);
   molsSetter(sliceEnd > 0 ? nodes.slice(0, sliceEnd).map((i) => i.$ref) : []);
   const molRefs = sliceEnd > 0 ? nodes.slice(0, sliceEnd).map((i) => i.$ref) : [];
@@ -162,6 +173,28 @@ const hasTextNodes = async (molfile) => {
   }
 };
 
+// Parse TextNodeMeta block and return a map of { [blockKey]: rawContentString }.
+// Returns an empty object when no TextNodeMeta section is present (backward compat).
+const hasTextNodeMeta = (molfile) => {
+  if (!molfile) return {};
+  const lines = molfile.trim().split('\n');
+  const start = lines.indexOf(KET_TAGS.textNodeMeta);
+  const end = lines.indexOf(KET_TAGS.textNodeMetaClose);
+  if (start === -1 || end === -1) return {};
+
+  const metaMap = {};
+  lines.slice(start + 1, end).forEach((line) => {
+    try {
+      const parsed = JSON.parse(line);
+      const key = parsed?.blocks?.[0]?.key;
+      if (key) metaMap[key] = line;
+    } catch (e) {
+      // skip malformed lines
+    }
+  });
+  return metaMap;
+};
+
 // Return molfile string up to and including M  END so Indigo only sees standard CTAB.
 const getStandardMolfileForIndigo = (molfile) => {
   if (!molfile || typeof molfile !== 'string') return molfile;
@@ -183,6 +216,26 @@ const reindexPastedAliases = (pastedMolData, imageIndexOffset) => {
         atom.alias = parts.join('_');
       }
     }
+  });
+};
+
+// Reindex alias in text node lines so they match merged atom aliases (same offset as reindexPastedAliases).
+// Line format: "0#key#t_6_0#description" -> alias at index 2, third part is image index.
+const reindexTextNodeLines = (textNodeLines, imageIndexOffset) => {
+  if (!textNodeLines?.length || imageIndexOffset <= 0) return textNodeLines;
+  const sep = KET_TAGS.textIdentifier;
+  return textNodeLines.map((line) => {
+    const parts = line.split(sep);
+    if (parts.length < 3) return line;
+    const alias = parts[2];
+    if (!alias || !ALIAS_PATTERNS.threeParts.test(alias)) return line;
+    const aliasParts = alias.split('_');
+    if (aliasParts.length !== 3) return line;
+    const oldIndex = parseInt(aliasParts[2], 10);
+    if (Number.isNaN(oldIndex)) return line;
+    aliasParts[2] = String(imageIndexOffset + oldIndex);
+    parts[2] = aliasParts.join('_');
+    return parts.join(sep);
   });
 };
 
@@ -236,6 +289,21 @@ const getTemplateType = (polymerValue) => {
   return { type: binaryTemplates, size: templateSplits[1] || '1-1' };
 };
 
+// Parse polymer entry as atomIndex/templateId/size when present (e.g. "2/10/1.00-1.00").
+// Returns { atomIndex, type, size } or null when format is legacy (e.g. "0", "0s", "3/95/1.00-1.00" without leading index).
+const parsePolymerEntryByAtomIndex = (polymerValue) => {
+  const trimmed = (polymerValue || '').trim();
+  if (!trimmed || trimmed.includes('s')) return null;
+  const parts = trimmed.split('/');
+  if (parts.length < 3) return null;
+  const atomIndex = parseInt(parts[0], 10);
+  const templateId = parts[1];
+  if (Number.isNaN(atomIndex) || templateId === undefined) return null;
+  const templateIdNum = parseInt(templateId, 10);
+  if (Number.isNaN(templateIdNum)) return null;
+  return { atomIndex, type: templateId, size: parts[2] || '1-1' };
+};
+
 // Helper to create a bounding box for a template with atom location
 const templateWithBoundingBox = async (templateType, atomLocation, templateSize) => {
   let template = await fetchSurfaceChemistryImageData(templateType);
@@ -275,6 +343,7 @@ const prepareKetcherData = async (editor, initMol, options = {}) => {
   try {
     const polymerTagFromPasted = await hasKetcherData(initMol);
     const textNodes = await hasTextNodes(initMol);
+    const textNodeMeta = hasTextNodeMeta(initMol);
     const molfileForIndigo = getStandardMolfileForIndigo(initMol);
     const formatError = (err) => (err?.message != null ? err.message : (err && typeof err?.toString === 'function' ? err.toString() : String(err)));
 
@@ -298,6 +367,7 @@ const prepareKetcherData = async (editor, initMol, options = {}) => {
     let fileContent = JSON.parse(ketFile.struct);
     let polymerTagToUse = polymerTagFromPasted;
 
+    let textNodesToApply = textNodes;
     if (isPaste && (storedPolymersListLine || polymerTagFromPasted)) {
       const extended = [storedPolymersListLine, polymerTagFromPasted].filter(Boolean).map((s) => s.trim()).join(' ');
       polymerTagToUse = extended || polymerTagToUse;
@@ -305,6 +375,11 @@ const prepareKetcherData = async (editor, initMol, options = {}) => {
         const currentKetString = await editor.structureDef.editor.getKet();
         const currentKet = JSON.parse(currentKetString);
         fileContent = mergeKetWithPasted(currentKet, fileContent);
+        // Reindex pasted text node lines so aliases match merged atoms (same offset as in merge)
+        if (textNodes?.length > 0) {
+          const currentImageCount = currentKet.root.nodes.filter((n) => n && n.type === 'image').length;
+          textNodesToApply = reindexTextNodeLines(textNodes, currentImageCount);
+        }
       } catch (e) {
         console.warn('Could not merge with current canvas, applying pasted only.', e);
       }
@@ -314,8 +389,17 @@ const prepareKetcherData = async (editor, initMol, options = {}) => {
       storedPolymersListLineSetter(polymerTagFromPasted);
     }
 
+    // On paste, keep only current canvas text nodes; ignore pasted text nodes
+    const preserveTextList = isPaste ? [...textList] : [];
+    const preserveTextNodeStruct = isPaste ? { ...textNodeStruct } : {};
+
     textNodeStructSetter({});
-    await applyKetcherData(polymerTagToUse, fileContent, textNodes, editor);
+    await applyKetcherData(polymerTagToUse, fileContent, textNodesToApply, editor, {
+      preserveTextList,
+      preserveTextNodeStruct,
+      isPaste,
+      textNodeMeta,
+    });
 
     if (polymerTagToUse) {
       storedPolymersListLineSetter(polymerTagToUse);
@@ -330,20 +414,34 @@ const prepareKetcherData = async (editor, initMol, options = {}) => {
   }
 };
 
-const applyKetcherData = async (polymerTag, fileContent, textNodes, editor) => {
+const applyKetcherData = async (polymerTag, fileContent, textNodes, editor, options = {}) => {
   try {
+    const {
+      preserveTextList = [], preserveTextNodeStruct = {}, isPaste = false, textNodeMeta = {}
+    } = options;
     let molfileContent = fileContent;
     if (polymerTag) {
       const { molfileData } = await addPolymerTags(polymerTag, fileContent);
       molfileContent = molfileData;
     }
-    // Add text nodes when available (with or without polymer tag, so labels aren't lost on open)
     if (textNodes && textNodes.length > 0) {
-      const textNodeList = await addTextNodes(textNodes);
+      // Add text nodes from the pasted molfile (already reindexed in prepareKetcherData)
+      const textNodeList = await addTextNodes(textNodes, textNodeMeta);
       const validNodes = (textNodeList || []).filter(Boolean);
       if (validNodes.length) {
         molfileContent.root.nodes.push(...validNodes);
+        // Merge with any preserved text nodes from the current canvas
+        textListSetter([...preserveTextList, ...validNodes]);
+        textNodeStructSetter({ ...preserveTextNodeStruct, ...textNodeStruct });
+      } else if (isPaste) {
+        // Pasted molfile had text node lines but none were valid; keep original
+        textListSetter(preserveTextList);
+        textNodeStructSetter(preserveTextNodeStruct);
       }
+    } else if (isPaste) {
+      // No text nodes in pasted molfile; keep original canvas text nodes
+      textListSetter(preserveTextList);
+      textNodeStructSetter(preserveTextNodeStruct);
     }
     saveMoveCanvas(editor, molfileContent, true, true, false, { syncImagesOnly: true });
     ImagesToBeUpdatedSetter(true);
@@ -359,7 +457,9 @@ export {
   initializeKetcherData,
   hasKetcherData,
   hasTextNodes,
+  hasTextNodeMeta,
   getTemplateType,
+  parsePolymerEntryByAtomIndex,
   templateWithBoundingBox,
   fetchKetcherData,
   loadKetcherData,

@@ -81,11 +81,22 @@ class Sample < ApplicationRecord
 
   SAMPLE_TYPE_MIXTURE = 'Mixture'
   SAMPLE_TYPE_MICROMOLECULE = 'Micromolecule'
+  SAMPLE_TYPE_HIERARCHICAL_MATERIAL = 'HierarchicalMaterial'
 
   SAMPLE_TYPES = [
     SAMPLE_TYPE_MICROMOLECULE,
     SAMPLE_TYPE_MIXTURE,
+    SAMPLE_TYPE_HIERARCHICAL_MATERIAL,
   ].freeze
+
+  # Hierarchical sample properties (column or sample_details, fallback to xref for backwards compatibility)
+  %i[color state height width length storage_condition].each do |key|
+    define_method(key) do
+      read_attribute(key).presence ||
+        (sample_details || {}).dig(key.to_s) ||
+        (xref || {}).dig(key.to_s)
+    end
+  end
 
   multisearchable against: %i[
     name short_label external_label molecule_sum_formular
@@ -211,7 +222,6 @@ class Sample < ApplicationRecord
   before_save :auto_set_molfile_to_molecules_molfile
   before_save :find_or_create_molecule_based_on_inchikey
   before_save :update_molecule_name
-  before_save :check_molfile_polymer_section
   before_save :find_or_create_fingerprint
   before_save :attach_svg, :init_elemental_compositions,
               :set_loading_from_ea
@@ -688,7 +698,6 @@ class Sample < ApplicationRecord
     File.write(target_path, svg)
     { success: true, filename: filename }
   rescue StandardError => e
-    Rails.logger.error("Sample.refresh_svg_content: Error refreshing SVG for #{svg_path}: #{e.message}")
     { success: false, error: e.message, status: 500 }
   end
 
@@ -712,31 +721,6 @@ class Sample < ApplicationRecord
     end
   end
 
-  def check_molfile_polymer_section
-    return if decoupled || sample_type == SAMPLE_TYPE_MIXTURE
-    return unless molfile.include? 'R#'
-
-    lines = molfile.lines
-    polymers = []
-    m_end_index = nil
-    lines[4..].each_with_index do |line, index|
-      polymers << index if line.include? 'R#'
-      (m_end_index = index) && break if /M\s+END/.match?(line)
-    end
-
-    reg = /(> <PolymersList>[\W\w.\n]+\d+)/m
-    unless (lines[5 + m_end_index].to_s + lines[6 + m_end_index].to_s).match reg
-      if lines[5 + m_end_index].to_s.include? '> <PolymersList>'
-        lines.insert(6 + m_end_index, "#{polymers.join(' ')}\n")
-      else
-        lines.insert(4 + m_end_index, "> <PolymersList>\n")
-        lines.insert(5 + m_end_index, "#{polymers.join(' ')}\n")
-      end
-    end
-
-    self.molfile = lines.join
-    self.fingerprint_id = Fingerprint.find_or_create_by_molfile(molfile.clone)&.id
-  end
 
   def set_loading_from_ea
     return unless residues.first

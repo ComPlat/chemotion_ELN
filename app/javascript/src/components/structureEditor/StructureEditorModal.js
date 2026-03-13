@@ -165,7 +165,7 @@ export default class StructureEditorModal extends React.Component {
     }
   }
 
-  handleStructureSave(molfile, svg, editorId, info = null) {
+  handleStructureSave(molfile, svg, editorId, components, textNodesFormula, info = null) {
     const { hasChildren, hasParent, onSave } = this.props;
     this.setState(
       {
@@ -174,7 +174,7 @@ export default class StructureEditorModal extends React.Component {
       },
       () => {
         if (onSave) {
-          onSave(molfile, svg, info, editorId);
+          onSave(molfile, components, textNodesFormula, svg, info, editorId);
         }
       }
     );
@@ -251,7 +251,7 @@ export default class StructureEditorModal extends React.Component {
         const components = componentsList ? this.postComponents(componentsList) : [];
         this.handleStructureSave(ket2Molfile, updatedSvg, editorId.id, components, textNodesFormula);
         if (shouldSvg) onSVGStructureError(svgFailedMessage);
-        this.alertForInvalidSources(components);
+        // this.alertForInvalidSources(components); display any error with label
       } catch (error) {
         console.error('Error during save operation for Ketcher:', error);
       }

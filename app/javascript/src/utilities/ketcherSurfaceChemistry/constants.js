@@ -17,12 +17,16 @@ const KET_TAGS = Object.freeze({
   polymerIdentifier: '> <PolymersList>',
   textNodeIdentifier: '> <TextNode>',
   textNodeIdentifierClose: '> </TextNode>',
+  textNodeMeta: '> <TextNodeMeta>',
+  textNodeMetaClose: '> </TextNodeMeta>',
   fileEndIdentifier: '$$$$',
   molfileHeaderLinenumber: 4,
   rgLabel: 'rg-label',
   shapes: ['Bead', 'Surface'],
   moleculeIdentifier: '> <MoleculesList>',
   textIdentifier: '#',
+  /** Font size (px) for text nodes attached to shapes; kept a little smaller than default */
+  textNodeFontSize: 10,
   templateEditProps: {
     text: 'You are adding a text description to the selected template',
     id: 'templateSelectedInfo',
