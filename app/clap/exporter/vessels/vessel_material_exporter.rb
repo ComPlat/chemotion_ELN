@@ -5,7 +5,9 @@ module Clap
     module Vessels
       class VesselMaterialExporter < Clap::Exporter::Base
         def to_clap
-          Clap::Material.new(type: material_type, details: model.material_details)
+          model.material_type&.upcase
+          # TODO: VesselMaterials as CLAP Constants?
+          # Clap::Material.new(type: material_type, details: model.material_details)
         end
 
         def material_type

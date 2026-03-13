@@ -5,21 +5,19 @@ module Clap
     module Vessels
       class VesselPreparationsExporter < Clap::Exporter::Base
         def to_clap
-          model ||= ['NONE']
+          preparations = model || ['NONE']
 
-          model.map do |preparation|
+          preparations.map do |preparation|
             VesselPreparation.new(
               type: preparation_type(preparation),
-              medium: nil,
-              details: nil,
             )
           end
         end
 
         private
 
-        def preparation_type(attachment)
-          Clap::VesselPreparation::VesselPreparationType.const_get(attachment)
+        def preparation_type(preparation)
+          Clap::VesselPreparation::VesselPreparationType.const_get(preparation)
         rescue StandardError
           Clap::VesselPreparation::VesselPreparationType.UNSPECIFIED
         end

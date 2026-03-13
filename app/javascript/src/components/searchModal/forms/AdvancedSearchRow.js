@@ -23,7 +23,7 @@ const AdvancedSearchRow = ({ idx }) => {
   } else {
     fieldOptions = SelectFieldData.fields[searchElement.table];
   }
-  
+
   fieldOptions = fieldOptions?.filter(f => {
     return f.value.advanced === true && f.value.advanced !== undefined
   });
@@ -60,7 +60,7 @@ const AdvancedSearchRow = ({ idx }) => {
     }
   }
 
-  const temperatureConditions = (searchValues, column) => {
+  const TemperatureControl = (searchValues, column) => {
     if (searchValues['unit'] == '' || column == 'temperature') {
       searchValues['unit'] = '°C';
     }
@@ -102,7 +102,7 @@ const AdvancedSearchRow = ({ idx }) => {
     searchValues['element_id'] = searchElement.element_id;
 
     const fieldColumn = searchValues.field.column;
-    if (value.column == 'temperature') { searchValues = temperatureConditions(searchValues, value.column) }
+    if (value.column == 'temperature') { searchValues = TemperatureControl(searchValues, value.column) }
     if (value.column == 'duration') { searchValues = durationConditions(searchValues, value.column) }
     if (specialMatcherFields.includes(searchValues.field.column)) { checkValueForNumber(searchValues.value) }
     if (!specialMatcherFields.includes(fieldColumn) && formElement != 'unit' && !specialMatcherFields.includes(value.column)) {

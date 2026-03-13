@@ -9,7 +9,6 @@ module Entities
             def select_options
               {
                 modes: crystallization_modes,
-                automation_modes: SelectOptions::Models::Custom.new.automation_modes,
                 solvents: crystallization_solvent_options,
               }
             end

@@ -12,11 +12,27 @@ module Clap
           return unless @ontology_id
 
           { id: @ontology_id,
-            label: ontology&.label || 'Error: Ontology non-existant',
-            name: ontology&.name || 'Error: Ontology specified but non-existant' }
+            label: ontology_label,
+            name: ontology_name }
         end
 
         private
+
+        def ontology_name
+          if ontology
+            ontology.name
+          else
+            'Error: Ontology specified but non-existant'
+          end
+        end
+
+        def ontology_label
+          if ontology
+            ontology.label
+          else
+            'Error: Ontology specified but non-existant'
+          end
+        end
 
         def ontology
           ReactionProcessEditor::Ontology.find_by(ontology_id: @ontology_id)

@@ -8,56 +8,44 @@ module Clap
           return unless workup
 
           ReactionConditions.new(
-            temperature: temperature,
-            ph: ph,
-            pressure: pressure,
-            stirring: stirring,
-            illumination: illumination,
-            electrochemistry: electrochemistry,
-            details: condition_details,
+            temperature_control: temperature_control,
+            ph_control: ph_control,
+            pressure_control: pressure_control,
+            motion_control: motion_control,
+            irradiation_control: irradiation_control,
             wavelengths: wavelengths,
             generic: generic_conditions,
           )
-        rescue StandardError => e
-          Rails.logger.error('ReactionConditionsExporter: WORKUP ERROR')
-          Rails.logger.error(e)
-
-          Rails.logger.error(workup)
-          nil
         end
 
-        def temperature
+        def temperature_control
           return if workup['TEMPERATURE'].blank?
 
-          Conditions::TemperatureConditionsExporter.new(workup['TEMPERATURE']).to_clap
+          Conditions::TemperatureControlExporter.new(workup['TEMPERATURE']).to_clap
         end
 
-        def pressure
+        def pressure_control
           return if workup['PRESSURE'].blank?
 
-          Conditions::PressureConditionsExporter.new(workup['PRESSURE']).to_clap
+          Conditions::PressureControlExporter.new(workup['PRESSURE']).to_clap
         end
 
-        def stirring
+        def motion_control
           return if workup['MOTION'].blank?
 
-          Conditions::MotionConditionsExporter.new(workup['MOTION']).to_clap
+          Conditions::MotionControlExporter.new(workup['MOTION']).to_clap
         end
 
-        def illumination
+        def irradiation_control
           return if workup['IRRADIATION'].blank?
 
-          Conditions::IrradiationConditionsExporter.new(workup['IRRADIATION']).to_clap
+          Conditions::IrradiationControlExporter.new(workup['IRRADIATION']).to_clap
         end
 
-        def electrochemistry
-          nil # n/a. Electrochemistry unknown in ELN Editor.
-        end
-
-        def ph
+        def ph_control
           return if workup['PH'].blank?
 
-          Conditions::PhAdjustConditionsExporter.new(workup['PH']).to_clap
+          Conditions::PhAdjustControlExporter.new(workup['PH']).to_clap
         end
 
         def wavelengths
@@ -70,10 +58,6 @@ module Clap
           return if workup['MS_PARAMETER'].blank?
 
           [Clap::GenericConditions.new(name: 'MS_PARAMETER', conditions: workup['MS_PARAMETER'])]
-        end
-
-        def condition_details
-          nil # n/a unkown in ELN Editor.
         end
       end
     end

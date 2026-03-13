@@ -8,8 +8,8 @@ module Import
       DEVICENAME_PREFIX = ENV.fetch('REACTION_PROCESS_EDITOR_DEVICENAME_PREFIX', '')
       METHODNAME_SUFFIX = ENV.fetch('REACTION_PROCESS_EDITOR_DEVICE_METHODS_SUFFIX', '')
 
-      DETECTOR_TYPES = { PDA: ['CHMO:0001728', 'WAVELENGTHLIST', 'WAVELENGTHS', 'NM', 'Wavelengths (nm)'],
-                         'PDA/DAD': ['CHMO:0001728', 'WAVELENGTHLIST', 'WAVELENGTHS', 'NM', 'Wavelengths (nm)'],
+      DETECTOR_TYPES = { PDA: ['CHMO:0001728', 'WAVELENGTHRANGE', 'WAVELENGTHS', 'NM', 'Wavelengths (nm)'],
+                         'PDA/DAD': ['CHMO:0001728', 'WAVELENGTHRANGE', 'WAVELENGTHS', 'NM', 'Wavelengths (nm)'],
                          ELSD: %w[CHMO:0002866 METRIC TEMPERATURE CELSIUS Temperature],
                          MS: %w[CHMO:0002337 TEXT MS_PARAMETER V Parameter] }.stringify_keys
       #  ,
@@ -106,7 +106,7 @@ module Import
           "#{values} #{unit}"
         when 'METRIC'
           { value: values, unit: unit }
-        when 'WAVELENGTHLIST'
+        when 'WAVELENGTHRANGE'
           { peaks: values.split(',').map { |value| { value: value, unit: unit } } }
         end
       end

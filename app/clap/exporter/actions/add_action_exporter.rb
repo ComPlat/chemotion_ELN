@@ -34,8 +34,8 @@ module Clap
         end
 
         def addition_conditions
-          conditions_workup = { TEMPERATURE: workup['TEMPERATURE'],
-                                PRESSURE: workup['PRESSURE'] }.stringify_keys
+          conditions_workup = workup.slice('TEMPERATURE', 'PRESSURE')
+
           Clap::Exporter::Conditions::ReactionConditionsExporter.new(conditions_workup).to_clap
         end
       end

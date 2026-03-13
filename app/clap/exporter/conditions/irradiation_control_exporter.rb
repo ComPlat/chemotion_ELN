@@ -3,15 +3,12 @@
 module Clap
   module Exporter
     module Conditions
-      class IrradiationConditionsExporter < Clap::Exporter::Conditions::Base
+      class IrradiationControlExporter < Clap::Exporter::Conditions::Base
         # Works on ReactionProcessActivity "CONDITION / IRRADIATION"
         def to_clap
-          IlluminationConditions.new(
+          IrradiationControl.new(
             type: irradiation_type,
-            details: details,
             peak_wavelength: peak_wavelength,
-            color: color,
-            distance_to_vessel: distance_to_vessel,
             power: power,
             power_is_ramp: power_is_ramp,
             power_end: power_end,
@@ -21,25 +18,13 @@ module Clap
         private
 
         def irradiation_type
-          IlluminationConditions::IlluminationType.const_get workup['additional_information'].to_s
+          IrradiationControl::IrradiationType.const_get workup['additional_information'].to_s
         rescue NameError
-          IlluminationConditions::IlluminationType::UNSPECIFIED
-        end
-
-        def details
-          nil # n/a. Unknown in ELN.
+          IrradiationControl::IrradiationType::UNSPECIFIED
         end
 
         def peak_wavelength
           Exporter::Metrics::WavelengthExporter.new(workup).to_clap
-        end
-
-        def color
-          nil # n/a. Unkown in ELN
-        end
-
-        def distance_to_vessel
-          nil # n/a. Unknown in ELN
         end
 
         def power
