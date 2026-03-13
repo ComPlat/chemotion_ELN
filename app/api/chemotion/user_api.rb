@@ -220,8 +220,8 @@ module Chemotion
         end
         route_param :device_id do
           get do
-            deviceMetadata = DeviceMetadata.find_by(device_id: params[:device_id])
-            present deviceMetadata,
+            device_metadata = DeviceMetadata.find_by(device_id: params[:device_id])
+            present device_metadata,
                     with: Entities::DeviceMetadataEntity,
                     root: 'device_metadata'
           end
