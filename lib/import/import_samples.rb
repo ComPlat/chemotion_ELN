@@ -82,7 +82,7 @@ module Import
       return unless xlsx.sheets.include?('sample_components')
 
       @component_sheet = xlsx.sheet('sample_components')
-      @component_header = component_sheet.row(1).map(&:to_s).map(&:strip)
+      @component_header = component_sheet.row(1).map { |c| c.to_s.strip }
       @sample_with_components = extract_sample_uuids_with_components
     end
 
@@ -267,12 +267,12 @@ module Import
               next
             end
             sample_save(row, molfile, molecule, i)
-          rescue StandardError => e
+          rescue StandardError => _e
             unprocessable_count += 1
             @unprocessable << { row: row, index: i } unless @unprocessable.any? { |u| u[:index] == i }
           end
         end
-      rescue StandardError => e
+      rescue StandardError => _e
         raise 'More than 1 row can not be processed' if unprocessable_count.positive?
       end
     end
@@ -283,7 +283,7 @@ module Import
 
     def molfile?(row)
       check = determine_sheet(xlsx)
-      return false unless check['molfile'].present?
+      return false if check['molfile'].blank?
 
       row_value_case_insensitive(row, 'molfile').to_s.present?
     end
@@ -303,16 +303,15 @@ module Import
       molecule = Molecule.find_by(inchikey: synthetic_inchikey, is_partial: true, sum_formular: formula)
       if molecule
         molecule.molfile = raw_molfile
-        molecule.save!
       else
         molecule = Molecule.new(
           inchikey: synthetic_inchikey,
           is_partial: true,
           sum_formular: formula,
-          molfile: raw_molfile
+          molfile: raw_molfile,
         )
-        molecule.save!
       end
+      molecule.save!
       molecule
     end
 
@@ -340,7 +339,6 @@ module Import
                      find_or_create_polymer_molecule_without_inchikey(raw_molfile, babel_info)
                    end
         if molecule.present?
-          svg_before = molecule.molecule_svg_file
           # Use raw_molfile (row's full molfile with PolymersList) for SVG so SvgRenderer can inject polymer images; molecule.molfile may be cleaned/truncated.
           reprocessed_svg = Molecule.svg_reprocess(nil, raw_molfile, service: :indigo)
 

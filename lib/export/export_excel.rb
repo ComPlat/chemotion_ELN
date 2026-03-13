@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'export_table'
 require 'base64'
 
