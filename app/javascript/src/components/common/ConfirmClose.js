@@ -25,6 +25,9 @@ export default class ConfirmClose extends Component {
     if (el && el.type == 'sequence_based_macromolecule_sample') {
       this.context.sequenceBasedMacromoleculeSamples.removeFromOpenSequenceBasedMacromoleculeSamples(el);
     }
+    if (el && el.type == 'cell_line') {
+      this.context.cellLineDetailsStore.removeCellLineFromStore(el.id);
+    }
   }
 
   onClickButton(el) {

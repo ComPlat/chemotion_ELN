@@ -134,14 +134,11 @@ const sampleShowOrNew = (e) => {
 };
 
 const cellLineShowOrNew = (e) => {
-  const cellLineId = e.params.cell_lineID;
-
-  if (cellLineId === 'new') {
+  const id = e.params.cell_lineID || e.params.cellLineID;
+  if (id === 'new') {
     ElementActions.generateEmptyCellLine(e.params.collectionID, e.params.cell_line_template);
-    return;
-  }
-  if (cellLineId != null && String(cellLineId).trim()) {
-    ElementActions.tryFetchCellLineElById.defer(cellLineId);
+  } else {
+    ElementActions.tryFetchCellLineElById.defer(id);
   }
 };
 

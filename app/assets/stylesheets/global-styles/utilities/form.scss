@@ -31,3 +31,11 @@
 .secondary-toggle-headline.active {
   @extend .surface-lighten2;
 }
+
+.invalid-input {
+  @extend .border-danger;
+
+  .chemotion-select__control {
+    border-color: var(--bs-danger);
+  }
+}
