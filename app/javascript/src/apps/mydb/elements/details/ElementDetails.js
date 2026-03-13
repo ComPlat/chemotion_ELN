@@ -24,6 +24,7 @@ import VesselTemplateDetails from 'src/apps/mydb/elements/details/vessels/Vessel
 import VesselTemplateCreate from 'src/apps/mydb/elements/details/vessels/VesselTemplateCreate';
 import SequenceBasedMacromoleculeSampleDetails from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/SequenceBasedMacromoleculeSampleDetails';
 import LiteratureDetails from 'src/apps/mydb/elements/details/literature/LiteratureDetails';
+import ElementIcon from 'src/components/common/ElementIcon';
 
 const tabInfoHash = {
   metadata: {
@@ -216,11 +217,13 @@ export default class ElementDetails extends Component {
     const title = el.type === 'vessel_template' ? el.title : tab.title ?? el.title();
 
     const spanClassName = el.isPendingToSave ? 'unsaved' : '';
-    const iconClassName = 'me-1 ' + (el.element_klass ? el.element_klass.icon_name : tab.iconEl ?? 'icon-' + el.type);
 
     return (
       <span className={spanClassName}>
-        <i className={iconClassName} />
+        <ElementIcon
+          element={el}
+          className="me-1"
+        />
         {title}
       </span>
     );

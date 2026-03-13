@@ -15,6 +15,7 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 import { capitalizeWords } from 'src/utilities/textHelper';
 import { filterTabLayout, getArrayFromLayout, TAB_DISPLAY_NAMES } from 'src/utilities/CollectionTabsHelper';
 import { allElnElmentsWithLabel, allGenericElements } from 'src/apps/generic/Utils';
+import ElementIcon from 'src/components/common/ElementIcon';
 
 function TabItemComponent({ item }) {
   const displayName = TAB_DISPLAY_NAMES[item];
@@ -52,14 +53,20 @@ export default class CollectionTabs extends React.Component {
   }
 
   getAllElements() {
+    const standardEls = allElnElmentsWithLabel.map((el) => ({
+      ...el,
+      type: el.name,
+    }));
+
     const genericEls = allGenericElements();
     const genericElsWithLabel = genericEls.map((el) => ({
       name: el.name,
       label: el.label,
-      iconName: el.icon_name,
+      icon_name: el.icon_name,
+      type: el.name,
       isGeneric: true
     }));
-    const combined = [...allElnElmentsWithLabel, ...genericElsWithLabel];
+    const combined = [...standardEls, ...genericElsWithLabel];
     return combined.sort((a, b) => a.label.localeCompare(b.label));
   }
 
@@ -272,10 +279,10 @@ export default class CollectionTabs extends React.Component {
               {/* Left Sidebar */}
               <div className="bg-light border-end border-light p-3 w-40 overflow-auto">
                 <div className="d-flex flex-column">
-                  {allElements.map(({ name, label, iconName }) => {
+                  {allElements.map((element) => {
+                    const { name, label } = element;
                     const isActive = selectedCategory === name;
                     const btnClass = `btn text-start py-2 mb-2 ${isActive ? 'surface-active-on-white' : ''}`;
-                    const icon = iconName || `icon-${name}`;
                     return (
                       <button
                         key={name}
@@ -288,8 +295,7 @@ export default class CollectionTabs extends React.Component {
                         }}
                         onClick={() => this.setState({ selectedCategory: name })}
                       >
-                        <i className={icon} />
-                        {' '}
+                        <ElementIcon element={element} className="me-1" />
                         {label}
                       </button>
                     );
