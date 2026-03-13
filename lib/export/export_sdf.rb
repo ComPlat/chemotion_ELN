@@ -87,7 +87,7 @@ module Export
         data = concatenate_data(sample, data, headers)
 
       end
-      data.concat("#{'$$$$'}\n")
+      data.concat("$$$$\n")
     end
 
     def extract_reference_values(raw_value)
