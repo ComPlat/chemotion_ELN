@@ -110,7 +110,12 @@ module Usecases
             attachment.destroy!
             next
           end
+
           attachment.update!(attachable_id: container.id, attachable_type: 'Container') if container.present?
+          variation = attachment.filename[/-v(\d+)(?=\.[^.]+$|$)/, 1]
+          if variation.present? && container.root&.containable.is_a?(Reaction)
+            container.root&.containable&.assign_attachment_to_variation(variation, container.parent_id)
+          end
         end
       end
       # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity

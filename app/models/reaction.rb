@@ -299,9 +299,10 @@ class Reaction < ApplicationRecord
   end
 
   def scrub
-    if temperature&.fetch('userText', nil).present?
-      self.temperature = temperature.merge('userText' => scrubber(temperature['userText']))
-    end
+    return if temperature&.fetch('userText', nil).blank?
+
+    self.temperature = temperature.merge('userText' => scrubber(temperature['userText']))
+
     # Conditions are not scrubbed: plain text may contain "<" or ">" (e.g. "pH < 7");
     # scrub_xml would strip them. Conditions are escaped at display time.
   end
@@ -320,7 +321,7 @@ class Reaction < ApplicationRecord
 
     variation['metadata'] ||= {}
     variation['metadata']['analyses'] ||= []
-    variation['metadata']['analyses'] << analysis_id
+    variation['metadata']['analyses'] << analysis_id unless variation['metadata']['analyses'].include?(analysis_id)
     update(variations: variations)
   end
 
