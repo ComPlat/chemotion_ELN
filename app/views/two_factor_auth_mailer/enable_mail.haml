@@ -1,6 +1,6 @@
-%p Hello #{@user.name},
+%p= t('two_factor_auth_mailer.greeting', name: @user.name)
 
-%p Click the button below to enable Two-Factor Authentication:
+%p= t('two_factor_auth_mailer.enable_mail.message')
 
 %p
-  %a.btn.btn-primary{ href: @link, style: "padding: 10px 20px; text-decoration: none; color: white; background-color: #007bff; border-radius: 5px;" } Enable 2FA
+  %a.btn.btn-primary{ href: @link, style: "padding: 10px 20px; text-decoration: none; color: white; background-color: #007bff; border-radius: 5px;" }= t('two_factor_auth_mailer.enable_mail.button')
