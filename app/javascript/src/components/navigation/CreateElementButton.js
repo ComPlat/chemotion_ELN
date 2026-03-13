@@ -13,6 +13,7 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ClipboardActions from 'src/stores/alt/actions/ClipboardActions';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 import UIActions from 'src/stores/alt/actions/UIActions';
+import ElementIcon from 'src/components/common/ElementIcon';
 
 const CreateElementDropdownToggle = React.forwardRef(({ onClick }, ref) => (
   <Button
@@ -55,16 +56,15 @@ export default class CreateElementButton extends React.Component {
   }
 
   static createBtn(type) {
-    let iconClass = `icon-${type}`;
     const genericEls = UserStore.getState().genericEls || [];
-    if (!allElnElements.includes(type) && typeof genericEls !== 'undefined'
-      && genericEls !== null && genericEls.length > 0) {
-      const genericEl = (genericEls && genericEls.find((el) => el.name === type)) || {};
-      iconClass = `${genericEl.icon_name}`;
-    }
+    const genericEl = !allElnElements.includes(type)
+      ? genericEls.find((el) => el.name === type)
+      : null;
+    const element = genericEl || { type };
+
     return (
       <div>
-        <i className={`${iconClass} me-1`} />
+        <ElementIcon element={element} className="me-1" />
         <i className="fa fa-plus" />
       </div>
     );
@@ -321,14 +321,13 @@ export default class CreateElementButton extends React.Component {
     sortedLayout?.forEach(([sl]) => {
       const el = allElnElmentsWithLabel.concat(allGenericElements()).find((ael) => ael.name === sl);
       if (el) {
-        const iconClass = el.icon_name ? el.icon_name : `icon-${el.name}`;
         itemTables.push(
           <Dropdown.Item
             id={`create-${el.name}-button`}
             key={el.name}
             onClick={() => CreateElementButton.createElementOfType(el.name)}
           >
-            <i className={`me-1 ${iconClass}`} />
+            <ElementIcon element={{ ...el, type: el.name }} className="me-1" />
             {`Create ${el.label}`}
           </Dropdown.Item>
         );
