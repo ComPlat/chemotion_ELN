@@ -27,25 +27,19 @@ module Users
     end
 
     def update
-      if resource.otp_required_for_login
-        # respond_with resource
-        unless resource.validate_and_consume_otp!(params[:user][:otp_attempt])
-          resource.assign_attributes(account_update_params.except(:current_password))
-          resource.errors.add(:base, :invalid_otp)
-          return  render json: { otp_required: true }, status: :unprocessable_entity
-        end
+      if resource.otp_required_for_login && !resource.validate_and_consume_otp!(params[:user][:otp_attempt])
+        resource.assign_attributes(account_update_params.except(:current_password))
+        resource.errors.add(:base, :invalid_otp)
+        return render json: { otp_required: true }, status: :unprocessable_entity
       end
       super
     end
 
     def destroy
-      if resource.otp_required_for_login
-        # respond_with resource
-        unless resource.validate_and_consume_otp!(params[:otp_attempt])
-          resource.assign_attributes(account_update_params.except(:current_password))
-          resource.errors.add(:base, :invalid_otp)
-          return  render json: { otp_required: true }, status: :unprocessable_entity
-        end
+      if resource.otp_required_for_login && !resource.validate_and_consume_otp!(params[:otp_attempt])
+        resource.assign_attributes(account_update_params.except(:current_password))
+        resource.errors.add(:base, :invalid_otp)
+        return render json: { otp_required: true }, status: :unprocessable_entity
       end
       super
     end

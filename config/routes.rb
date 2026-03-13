@@ -48,9 +48,9 @@ Rails.application.routes.draw do
   end
 
   namespace :users do
-    get  "two_factor_auth/request_enable"
-    get  "two_factor_auth/request_disable"
-    post "two_factor_auth/verify"
+    get  'two_factor_auth/request_enable'
+    get  'two_factor_auth/request_disable'
+    post 'two_factor_auth/verify'
   end
 
   get 'editor',      to: 'pages#editor'
