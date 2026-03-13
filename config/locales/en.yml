@@ -35,6 +35,16 @@ en:
     formats:
       eln_timestamp: "%d.%m.%Y, %H:%M:%S %z"
       eln_iso8601: "%Y-%m-%dT%H:%M:%S%z"
+  two_factor_auth_mailer:
+    greeting: "Hallo %{name},"
+    enable_mail:
+      subject: "[ELN] Enable 2FA"
+      message: "Click the button below to enable Two-Factor Authentication:"
+      button: "Enable 2FA"
+    disable_mail:
+      subject: "[ELN] Disable 2FA"
+      message: "Click the button below to disable Two-Factor Authentication:"
+      button: "Disable 2FA"
   errors:
     messages:
       invalid_otp: "The verification code from your authenticator app is incorrect. Please try again."

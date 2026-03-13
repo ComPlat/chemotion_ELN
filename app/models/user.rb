@@ -73,7 +73,7 @@ class User < ApplicationRecord
          :lockable, :omniauthable,
          :two_factor_authenticatable,
          authentication_keys: [:login],
-         otp_secret_encryption_key: ENV['OTP_SECRET_KEY']
+         otp_secret_encryption_key: Rails.application.config.otp_secret_encryption_key
 
   has_one :profile, dependent: :destroy
   has_one :container, as: :containable
@@ -191,7 +191,7 @@ class User < ApplicationRecord
   def generate_qr_code
     issuer = 'Chemotion'
     label = email
-    if self.otp_secret.blank?
+    if otp_secret.blank?
       self.otp_secret = User.generate_otp_secret
       save!
     end

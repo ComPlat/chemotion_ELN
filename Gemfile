@@ -23,7 +23,7 @@ gem 'delayed_cron_job'
 gem 'delayed_job_active_record'
 gem 'devise'
 gem 'devise-two-factor'
-gem "encryptor" # Needed for devise-two-factor
+gem 'encryptor' # Needed for devise-two-factor
 gem 'dotenv-rails', require: 'dotenv/rails-now'
 
 gem 'ed25519'

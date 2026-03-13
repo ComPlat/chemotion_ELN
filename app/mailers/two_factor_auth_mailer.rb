@@ -4,14 +4,17 @@ class TwoFactorAuthMailer < ApplicationMailer
   def enable_mail(user, link)
     @user = user
     @link = link
-    mail(to: @user.email, subject: "[ELN] Enable 2FA") do |format|
+    subject_text = I18n.t('two_factor_auth_mailer.enable_mail.subject')
+    mail(to: @user.email, subject: subject_text) do |format|
       format.html
     end
   end
+
   def disable_mail(user, link)
     @user = user
     @link = link
-    mail(to: @user.email, subject: "[ELN] Disable 2FA") do |format|
+    subject_text = I18n.t('two_factor_auth_mailer.disable_mail.subject')
+    mail(to: @user.email, subject: subject_text) do |format|
       format.html
     end
   end
