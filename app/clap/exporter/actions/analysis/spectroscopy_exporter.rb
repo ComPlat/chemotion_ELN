@@ -12,12 +12,15 @@ module Clap
             ReactionProcessAction::ActionAnalysisSpectroscopy.new({
 
                                                                     molecular_entities: molecular_entities,
-                                                                    sample: sample,
+                                                                    samples: samples,
+                                                                    solvents: solvents,
                                                                   }) }
           end
 
-          def sample
-            Clap::Exporter::Compounds::SaveCompoundExporter.new(@action).to_clap if @action.sample
+          def samples
+            Array(workup['samples']).map do |sample|
+              Clap::Sample.new(label: sample['label'])
+            end
           end
 
           def molecular_entities
@@ -26,6 +29,10 @@ module Clap
                 label: sample['label'],
               )
             end
+          end
+
+          def solvents
+            Clap::Exporter::Samples::SolventsWithRatioExporter.new(workup['solvents']).to_clap
           end
         end
       end

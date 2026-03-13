@@ -73,7 +73,7 @@ module Usecases
           activity_setup = activity_setup_for_action_name(activity_name)
 
           consuming_action = reaction_process_step.reaction_process_activities
-                                                    .new(activity_name: activity_setup[:activity_name])
+                                                  .new(activity_name: activity_setup[:activity_name])
 
           consuming_action.workup = activity_setup[:workup].deep_stringify_keys
           consuming_action

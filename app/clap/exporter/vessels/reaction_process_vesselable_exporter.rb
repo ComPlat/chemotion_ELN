@@ -28,6 +28,7 @@ module Clap
             preparations: preparations,
             attachments: attachments,
             vessel: vessel_instance(vessel),
+            cleanup: cleanup,
           )
         end
 
@@ -59,7 +60,11 @@ module Clap
         end
 
         def attachments
-          VesselAttachmentsExporter.new(vessel_template).to_clap
+          VesselAttachmentsExporter.new(model).to_clap
+        end
+
+        def cleanup
+          VesselCleanupExporter.new(model).to_clap
         end
 
         def volume

@@ -43,7 +43,7 @@ module Entities
           {
             id: molecule.id,
             value: molecule.id,
-            label: molecule.iupac_name,
+            label: molecule.iupac_name || molecule.sum_formular,
             sample_svg_file: molecule.molecule_svg_file,
           }
         end

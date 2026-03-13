@@ -28,9 +28,9 @@ module Clap
               automation_control: automation_control,
               consumed_fraction: consumed_fraction,
               automation_ordinal: @action.automation_ordinal,
-              type: ontology_ord(workup['type']),
-              subtype: ontology_ord(workup['subtype']),
-              device: ontology_ord(workup['device']),
+              type: ontology_to_clap(workup['type']),
+              subtype: ontology_to_clap(workup['subtype']),
+              device: ontology_to_clap(workup['device']),
               method: workup['method'],
             }.merge(action_type_attributes),
           )
@@ -38,7 +38,7 @@ module Clap
 
         private
 
-        def ontology_ord(ontology_id)
+        def ontology_to_clap(ontology_id)
           Clap::Exporter::Models::OntologyExporter.new(ontology_id).to_clap
         end
 
@@ -69,7 +69,6 @@ module Clap
           workup.dig('EQUIPMENT', 'value').map do |equipment|
             Clap::Equipment.new(
               type: equipment_type(equipment),
-              details: '', # Currently n/a in ELN. # TODO: eliminate?
             )
           end
         end

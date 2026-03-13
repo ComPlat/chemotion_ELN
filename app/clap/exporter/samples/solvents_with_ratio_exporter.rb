@@ -22,11 +22,11 @@ module Clap
         def solvent(workup)
           Clap::Sample.new(
             label: workup['label'],
-            ontology: ontology_ord(workup['id']),
+            ontology: ontology_to_clap(workup['id']),
           )
         end
 
-        def ontology_ord(ontology_id)
+        def ontology_to_clap(ontology_id)
           return unless ReactionProcessEditor::Ontology.find_by(ontology_id: ontology_id)
 
           Clap::Exporter::Models::OntologyExporter.new(ontology_id).to_clap
@@ -35,9 +35,3 @@ module Clap
     end
   end
 end
-
-#  Array(workup['molecular_entities']).map do |sample|
-#               Clap::Sample.new(
-#                 label: sample['label'],
-#               )
-#             end

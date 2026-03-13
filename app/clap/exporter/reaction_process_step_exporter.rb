@@ -11,7 +11,7 @@ module Clap
           duration: duration,
           vessel_template: vessel_template,
           actions: reaction_process_activities,
-          automation_mode: ontology_ord(model.automation_mode),
+          automation_mode: ontology_to_clap(model.automation_mode),
           automation_control: automation_control,
         )
       end
@@ -19,7 +19,7 @@ module Clap
       private
 
       def automation_control
-        Clap::Exporter::Models::AutomationControlExporter.new(model.automation_control).to_clap
+        Clap::Exporter::Models::StepAutomationControlExporter.new(model.automation_control).to_clap
       end
 
       def vessel_template

@@ -7,7 +7,6 @@ module Entities
         class Remove < Base
           def select_options
             {
-              automation_modes: SelectOptions::Models::Custom.new.automation_modes,
               sample_types: sample_types,
               origin_types: origin_types,
               equipment: equipment,
