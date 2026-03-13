@@ -251,15 +251,6 @@ const createTextNodeFromContent = (text, defaultPosition = { x: 4.4, y: -10.4, z
     };
   }
 
-  // Plain text (legacy)
-  const text = typeof textOrContent === 'string' ? textOrContent : '';
-  if (!text || !text.trim()) {
-    return null;
-  }
-
-  const generateKey = () => Math.random().toString(36).substring(2, 8);
-  const textKey = generateKey();
-
   const defaultPos = [
     { x: defaultPosition.x, y: defaultPosition.y, z: defaultPosition.z },
     { x: defaultPosition.x, y: defaultPosition.y - 0.375, z: defaultPosition.z },

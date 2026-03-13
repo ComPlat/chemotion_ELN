@@ -708,6 +708,7 @@ module Import
       save_chemical(chemical, sample) if @import_type == 'chemical'
       handle_sample_components(row, sample) if sample_has_components?(row)
       create_polymer_residue_if_needed(sample, row)
+      apply_composition_table_data(sample, row)
       processed.push(sample)
     end
 
@@ -715,7 +716,7 @@ module Import
       return if sample.residues.any?
 
       residue_type = row_value_case_insensitive(row, 'residue_type').to_s.strip
-      has_polymer_molfile = sample.molfile.to_s.include?('> <')
+      has_polymer_molfile = sample.molfile.to_s.include?(Chemotion::MolfilePolymerSupport::POLYMERS_LIST_TAG)
       return unless residue_type == 'polymer' || has_polymer_molfile
 
       polymer_type = row_value_case_insensitive(row, 'polymer_type').to_s.strip
@@ -742,6 +743,45 @@ module Import
       return if sample_components_data.blank?
 
       create_components(sample, sample_components_data)
+    end
+
+    # Applies parsed sample_composition_table data to the sample (HierarchicalMaterial components).
+    # Row must have 'sample uuid' matching keys in @composition_table_data (from sample_composition_table sheet).
+    def apply_composition_table_data(sample, sample_row)
+      sample_uuid = row_value_case_insensitive(sample_row, 'sample uuid').to_s.strip
+      return if sample_uuid.blank?
+
+      composition_rows = @composition_table_data.with_indifferent_access[sample_uuid]
+      return if composition_rows.blank?
+
+      if sample.sample_type != Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL &&
+         sample.sample_type != Sample::SAMPLE_TYPE_MIXTURE
+        sample.update!(sample_type: Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL)
+      end
+
+      dummy_molecule = Molecule.find_or_create_dummy
+      return if dummy_molecule.blank?
+
+      hm_components = sample.components.where(name: Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL).order(:position).to_a
+      composition_rows.each_with_index do |row_data, idx|
+        props = {
+          'molecule_id' => dummy_molecule.id,
+          'source' => row_data[:source].to_s.presence,
+          'weight_ratio_exp' => row_data[:weight_ratio_exp],
+          'molar_mass' => row_data[:molar_mass],
+        }.compact
+        if hm_components[idx]
+          hm_components[idx].update!(component_properties: hm_components[idx].component_properties.merge(props))
+        else
+          sample.components.create!(
+            name: Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL,
+            position: idx,
+            component_properties: props,
+          )
+        end
+      end
+    rescue StandardError => _e
+      # do not fail the whole import if composition application fails
     end
 
     def create_components(sample, sample_components_data)
