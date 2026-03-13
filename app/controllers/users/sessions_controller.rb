@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Users
   class SessionsController < Devise::SessionsController
     def new
@@ -7,23 +9,44 @@ module Users
     end
 
     def create
-      requested_user = User.where(name_abbreviation: params[:user][:login]).or(User.where(email: params[:user][:login])).take
-      if requested_user&.valid_password?(params[:user][:password]) && requested_user.otp_required_for_login
-        if params[:user][:otp_attempt].blank?
-          render json: { otp_required: true }, status: :unauthorized
-          return
-        end
+      requested_user = find_requested_user
 
-        unless requested_user.validate_and_consume_otp!(params[:user][:otp_attempt])
-          render json: { otp_required: true, error: 'Invalid OTP' }, status: :unauthorized
-          return
-        end
-      end
+      return render_otp_required if otp_required_for_user?(requested_user)
 
       super do |resource|
         # custom logic after successful login
         Rails.logger.info("Login success: #{resource.id}")
       end
+    end
+
+    private
+
+    def otp_required_for_user?(user)
+      user&.otp_required_for_login && otp_missing_or_invalid?(user)
+    end
+
+    def find_requested_user
+      User.where(name_abbreviation: params[:user][:login])
+          .or(User.where(email: params[:user][:login]))
+          .take
+    end
+
+    def otp_missing_or_invalid?(user)
+      otp_attempt = params[:user][:otp_attempt]
+
+      # OTP missing
+      return true if otp_attempt.blank? && user.valid_password?(params[:user][:password])
+
+      # OTP invalid
+      return true unless user.validate_and_consume_otp!(otp_attempt)
+
+      false
+    end
+
+    def render_otp_required(error: nil)
+      response = { otp_required: true }
+      response[:error] = error if error
+      render json: response, status: :unauthorized
     end
   end
 end
