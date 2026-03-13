@@ -39,6 +39,7 @@ import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSo
 import { EditUserLabels, ShowUserLabels } from 'src/components/UserLabels';
 import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
 import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
+import ElementIcon from 'src/components/common/ElementIcon';
 
 const onNaviClick = (type, id) => {
   const { currentCollection, isSync } = UIStore.getState();
@@ -407,9 +408,6 @@ export default class GenericElDetails extends Component {
   }
 
   header(genericEl) {
-    const iconClass =
-      (genericEl.element_klass && genericEl.element_klass.icon_name) || '';
-
     const saveBtnDisplay =
       genericEl.changed && genericEl.can_update ? '' : 'none';
     const datetp = `Created at: ${genericEl.created_at} \n Updated at: ${genericEl.updated_at}`;
@@ -421,7 +419,7 @@ export default class GenericElDetails extends Component {
             overlay={<Tooltip id="genericElDatesx">{datetp}</Tooltip>}
           >
             <span>
-              <i className={iconClass} />
+              <ElementIcon element={genericEl} />
               &nbsp;
               <span>{genericEl.short_label}</span>
               &nbsp;
