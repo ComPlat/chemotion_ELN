@@ -38,7 +38,9 @@ const getAttachmentFromContainer = (container) => {
   const attachments = datasetChildren
     .flatMap((child) => child.attachments || [])
     .filter((att) => att.thumb);
-  const combinedImageAttachment = attachments.find((att) => att.filename?.toLowerCase().includes('combined'));
+  const combinedImageAttachment = attachments
+    .filter((att) => att.filename?.toLowerCase().includes('combined'))
+    .sort((a, b) => parseDateWithMoment(b.updated_at).valueOf() - parseDateWithMoment(a.updated_at).valueOf())[0];
   const latestImageAttachment = attachments
     .sort((a, b) => parseDateWithMoment(b.updated_at).valueOf() - parseDateWithMoment(a.updated_at).valueOf())[0];
   return combinedImageAttachment || latestImageAttachment || null;
