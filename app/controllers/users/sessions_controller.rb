@@ -11,7 +11,8 @@ module Users
     def create
       requested_user = find_requested_user
 
-      return render_otp_required if otp_required_for_user?(requested_user)
+      return render_otp_required if otp_required_for_user?(requested_user) &&
+                                    requested_user.valid_password?(params[:user][:password])
 
       super do |resource|
         # custom logic after successful login
@@ -35,7 +36,7 @@ module Users
       otp_attempt = params[:user][:otp_attempt]
 
       # OTP missing
-      return true if otp_attempt.blank? && user.valid_password?(params[:user][:password])
+      return true if otp_attempt.blank?
 
       # OTP invalid
       return true unless user.validate_and_consume_otp!(otp_attempt)
