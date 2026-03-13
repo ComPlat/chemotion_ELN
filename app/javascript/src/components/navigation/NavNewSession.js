@@ -87,6 +87,7 @@ function ExtendedSignInForm({
 
   const handleSubmit = useCallback(async (e) => {
     e?.preventDefault();
+    setForm('otp_attempt', '');
     const resText = await handleLoginSubmit({ form, url });
     if (resText.html) {
       setShowOtp(false);
@@ -175,6 +176,7 @@ function SignInForm({ authenticityToken }) {
 
   const handleSubmit = useCallback(async (e) => {
     e?.preventDefault();
+    setForm('otp_attempt', '');
     const url = '/users/sign_in';
     const resText = await handleLoginSubmit({ form, url });
 
