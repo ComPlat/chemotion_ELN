@@ -834,6 +834,10 @@ export default class SampleForm extends React.Component {
           metric = metricPrefixes.indexOf(prefixAmountL) > -1 ? prefixAmountL : 'm';
           break;
         }
+        case 'defined_part_amount': {
+          metric = 'm';
+          break;
+        }
         case 'molecular_mass': {
           metric = 'n';
           break;
