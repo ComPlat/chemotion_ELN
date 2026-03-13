@@ -400,6 +400,9 @@ export default class NoticeButton extends React.Component {
     ));
 
     const totalPages = Math.ceil(filteredNotices.length / perPage);
+    if (currentPage > totalPages) {
+      this.setState({ currentPage: totalPages });
+    }
 
     const start = (currentPage - 1) * perPage;
     const end = start + perPage;
@@ -538,7 +541,7 @@ export default class NoticeButton extends React.Component {
                     </Col>
                     <Col>
                       <Button variant="info" onClick={() => this.setState({ showAck: true })}>
-                        Show acknowledged
+                        Show all
                       </Button>
                     </Col>
                   </>
