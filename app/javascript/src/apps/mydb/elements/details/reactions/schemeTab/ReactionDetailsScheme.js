@@ -570,6 +570,7 @@ export default class ReactionDetailsScheme extends React.Component {
 
   updatedReactionForAmountChange(changeEvent) {
     const { reaction } = this.props;
+    const { lockEquivColumn } = this.state;
     const { sampleID, amount } = changeEvent;
     const updatedSample = reaction.sampleById(sampleID);
 
@@ -584,11 +585,24 @@ export default class ReactionDetailsScheme extends React.Component {
     // normalize to milligram
     updatedSample.setAmountAndNormalizeToGram(amount);
 
-    return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample);
+    const updatedReaction = this.updatedReactionWithSample(
+      this.updatedSamplesForAmountChange.bind(this),
+      updatedSample
+    );
+
+    if (lockEquivColumn) {
+      // A direct amount edit should refresh every derived concentration once
+      // locked-equivalent propagation has updated the dependent sample amounts.
+      this.resetPreservedConcentrationForOtherMaterials(updatedReaction, updatedSample);
+      updatedReaction.updateAllConcentrations();
+    }
+
+    return updatedReaction;
   }
 
   updatedReactionForAmountUnitChange(changeEvent) {
     const { reaction } = this.props;
+    const { lockEquivColumn } = this.state;
     const { sampleID, amount } = changeEvent;
     const updatedSample = reaction.sampleById(sampleID);
 
@@ -617,14 +631,19 @@ export default class ReactionDetailsScheme extends React.Component {
       GasPhaseReactionActions.setCatalystReferenceMole(updatedSample.amount_mol);
     }
 
-    // When any amount changes (mass, volume, or mol), recalculate all concentrations
-    // This is necessary because:
-    // 1. If volume (amount_l) changes directly, the combined reaction volume changes
-    // 2. If mass or mol changes, it may affect amount_l (via density/conversion), changing the combined volume
-    // In all cases, all material concentrations need to be recalculated
-    reaction.updateAllConcentrations();
+    const updatedReaction = this.updatedReactionWithSample(
+      this.updatedSamplesForAmountChange.bind(this),
+      updatedSample
+    );
 
-    return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample);
+    if (lockEquivColumn) {
+      // Recompute concentrations after locked-equivalent amount propagation.
+      // Running this earlier would use stale amount_mol values for the other samples.
+      this.resetPreservedConcentrationForOtherMaterials(updatedReaction, updatedSample);
+      updatedReaction.updateAllConcentrations();
+    }
+
+    return updatedReaction;
   }
 
   updatedReactionForMetricsChange(changeEvent) {
@@ -1167,6 +1186,7 @@ export default class ReactionDetailsScheme extends React.Component {
 
     materialsToRecalculate.forEach((material, index) => {
       if (material.id !== editedSample.id) {
+        // Only the actively edited sample should keep its manual concentration.
         delete materialsToRecalculate[index].preserveConcentration;
       }
     });
