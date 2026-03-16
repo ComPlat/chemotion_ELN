@@ -13,6 +13,10 @@ const setReactionByType = (reaction, type, value) => {
       break;
     case 'reactionType':
       reaction.reaction_type = value;
+      if (value === 'interaction') {
+        reaction.gaseous = false;
+        reaction.weight_percentage = false;
+      }
       options = { updateGraphic: true };
       break;
     case 'description':

@@ -318,6 +318,13 @@ export default class ReactionDetails extends Component {
 
     const { newReaction, options } = setReactionByType(reaction, type, value);
 
+    if (type === 'reactionType' && value === 'interaction') {
+      // Interaction reactions always use the default scheme internals, so clear
+      // any residual gas or weight-percentage state before re-rendering the tab.
+      this.resetWeightPercentagedependencies(newReaction);
+      this.recalculateEquivalentsForMaterials(newReaction);
+    }
+
     // Update gas phase store synchronously for vessel size changes
     // to ensure store is updated before gas calculations run during render
     if (type === 'vesselSizeAmount' || type === 'vesselSizeUnit') {

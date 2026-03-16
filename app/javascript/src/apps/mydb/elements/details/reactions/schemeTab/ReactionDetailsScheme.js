@@ -1964,27 +1964,7 @@ export default class ReactionDetailsScheme extends React.Component {
 
       return (
         <Form.Group>
-          <div className="d-flex justify-content-between align-items-center mb-1">
-            <Form.Label>Reaction volume</Form.Label>
-            <Form.Check
-              className="mb-0 ms-2 flex-shrink-0"
-              type="checkbox"
-              id="use_reaction_volume"
-              checked={reaction.use_reaction_volume || false}
-              onChange={this.handleVolumeCheckboxChange}
-              label={(
-                <span>
-                  Calculate Conc
-                  <OverlayTrigger
-                    placement="top"
-                    overlay={volumeCalculationTooltip}
-                  >
-                    <i className="ms-1 fa fa-info-circle" />
-                  </OverlayTrigger>
-                </span>
-              )}
-            />
-          </div>
+          <Form.Label>Reaction volume</Form.Label>
           <NumeralInputWithUnitsCompo
             value={volumeValue}
             unit="l"
@@ -1996,6 +1976,24 @@ export default class ReactionDetailsScheme extends React.Component {
             id="numInput_reaction_volume_l"
             onChange={(e) => this.updateVolume(e)}
             onMetricsChange={(e) => this.updateVolume(e)}
+          />
+          <Form.Check
+            className="mt-2"
+            type="checkbox"
+            id="use_reaction_volume"
+            checked={reaction.use_reaction_volume || false}
+            onChange={this.handleVolumeCheckboxChange}
+            label={(
+              <span>
+                Calculate Conc
+                <OverlayTrigger
+                  placement="top"
+                  overlay={volumeCalculationTooltip}
+                >
+                  <i className="ms-1 fa fa-info-circle" />
+                </OverlayTrigger>
+              </span>
+            )}
           />
         </Form.Group>
       );
