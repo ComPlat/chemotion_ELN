@@ -258,11 +258,15 @@ class Reaction < ApplicationRecord
       # SBMM reactants are stored in a separate association, so append them explicitly.
       paths[:reactants] += reactant_sbmm_samples.map { |sbmm_sample| [sbmm_sample.svg_text_path] }
       begin
-        composer = SVG::ReactionComposer.new(paths, temperature: temperature_display_with_unit,
-                                                    duration: duration,
-                                                    solvents: solvents_in_svg,
-                                                    conditions: conditions,
-                                                    show_yield: true)
+        composer_options = {
+          temperature: temperature_display_with_unit,
+          duration: duration,
+          solvents: solvents_in_svg,
+          conditions: conditions,
+          show_yield: !interaction?
+        }
+        composer_class = interaction? ? SVG::ProductsComposer : SVG::ReactionComposer
+        composer = composer_class.new(paths, composer_options)
         self.reaction_svg_file = composer.compose_reaction_svg_and_save
       rescue StandardError => _e
         Rails.logger.info('**** SVG::ReactionComposer failed ***')

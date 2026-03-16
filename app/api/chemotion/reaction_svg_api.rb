@@ -11,15 +11,22 @@ module Chemotion
         optional :duration, type: String, desc: 'duration which is placed under the reaction-arrow'
         requires :solvents, type: Array, desc: 'solvents which is placed under the reaction-arrow'
         optional :conditions, type: String, desc: 'conditions which is placed under the reaction-arrow'
+        optional :products_only, type: Boolean, default: false
+        optional :show_yield, type: Boolean, default: true
       end
       post do
         paths = params[:materials_svg_paths]
-        composer = SVG::ReactionComposer.new(paths, temperature: params[:temperature],
-                                                    solvents: params[:solvents],
-                                                    duration: params[:duration],
-                                                    conditions: params[:conditions],
-                                                    show_yield: true)
-        { reaction_svg: composer.compose_reaction_svg }
+        composer_class = params[:products_only] ? SVG::ProductsComposer : SVG::ReactionComposer
+        composer_options = {
+          temperature: params[:temperature],
+          solvents: params[:solvents],
+          duration: params[:duration],
+          conditions: params[:conditions],
+          show_yield: params[:show_yield]
+        }
+
+        composer = composer_class.new(paths, composer_options)
+        { reaction_svg: composer.compose_svg }
       end
     end
   end

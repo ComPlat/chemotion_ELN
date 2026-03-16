@@ -179,6 +179,7 @@ function GeneralMaterialGroup({
 }) {
   const isReactants = materialGroup === 'reactants';
   const isInteractionReaction = reaction.isInteractionReaction();
+  const isInteractionProducts = isInteractionReaction && materialGroup === 'products';
   const groupHeaders = { ...headers };
 
   let reagentDd = null;
@@ -339,15 +340,17 @@ function GeneralMaterialGroup({
             <div className="reaction-material__purity-header">{groupHeaders.purity}</div>
             {showLoadingColumn && <div className="reaction-material__loading-header">{groupHeaders.loading}</div>}
             <div className="reaction-material__concentration-header">{groupHeaders.concn}</div>
-            <div className="reaction-material__equivalent-header">
-              {groupHeaders.eq}
-              {materialGroup === 'starting_materials' && (
-                <SwitchEquivButton
-                  lockEquivColumn={lockEquivColumn}
-                  switchEquiv={switchEquiv}
-                />
-              )}
-            </div>
+            {!isInteractionProducts && (
+              <div className="reaction-material__equivalent-header">
+                {groupHeaders.eq}
+                {materialGroup === 'starting_materials' && (
+                  <SwitchEquivButton
+                    lockEquivColumn={lockEquivColumn}
+                    switchEquiv={switchEquiv}
+                  />
+                )}
+              </div>
+            )}
             <div className="reaction-material__delete-header" />
           </div>
 

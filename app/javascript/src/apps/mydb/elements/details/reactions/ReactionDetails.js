@@ -130,7 +130,9 @@ export default class ReactionDetails extends Component {
     this.isUpdatingGraphic = false; // Flag to prevent infinite loops
     this.pendingGraphicReaction = null; // Queued reaction when update requested during in-flight fetch
     this.schemeDropdownRef = createRef();
-    if (!reaction.reaction_svg_file) {
+    // If reaction type is Interaction, always regenerate the scheme preview on load because
+    // they intentionally use the products-only graphic, even if an older SVG exists.
+    if (!reaction.reaction_svg_file || reaction.isInteractionReaction()) {
       this.updateGraphic();
     }
   }
@@ -628,13 +630,17 @@ export default class ReactionDetails extends Component {
     if (/^[\-|\d]\d*\.{0,1}\d{0,2}$/.test(temperature)) {
       temperature = `${temperature} ${reaction.temperature.valueUnit}`;
     }
+    const productsOnly = reaction.isInteractionReaction();
+    const showYield = !productsOnly;
 
     ReactionSvgFetcher.fetchByMaterialsSvgPaths(
       materialsSvgPaths,
       temperature,
       solvents,
       reaction.duration,
-      reaction.conditions
+      reaction.conditions,
+      productsOnly,
+      showYield
     ).then((result) => {
       if (result && result.reaction_svg && result.reaction_svg !== reaction.reaction_svg_file) {
         // Update reaction_svg_file and state - image will reload automatically via ReactionSchemeGraphic useEffect

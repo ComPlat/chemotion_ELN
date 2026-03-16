@@ -13,6 +13,7 @@ const setReactionByType = (reaction, type, value) => {
       break;
     case 'reactionType':
       reaction.reaction_type = value;
+      options = { updateGraphic: true };
       break;
     case 'description':
       reaction.description = value;
