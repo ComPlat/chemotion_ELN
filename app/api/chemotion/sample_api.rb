@@ -414,6 +414,14 @@ module Chemotion
         optional :sample_type, type: String, default: 'Micromolecule', values: Sample::SAMPLE_TYPES
         optional :sample_details, type: Hash, desc: 'extra params for mixtures or polymers'
         optional :literatures, type: Hash
+
+        # Hierarchical sample params
+        optional :state, type: String, desc: 'state of the Hierarchical sample'
+        optional :color, type: String, desc: 'color of the Hierarchical sample'
+        optional :height, type: String, desc: 'dimension of the Hierarchical sample HXWXL'
+        optional :width, type: String, desc: 'dimension of the Hierarchical sample HXWXL'
+        optional :length, type: String, desc: 'dimension of the Hierarchical sample HXWXL'
+        optional :storage_condition, type: String, desc: 'storage condition of the Hierarchical sample'
       end
 
       route_param :id do
@@ -472,6 +480,17 @@ module Chemotion
           end
           # remove collection_id from sample attributes after updating inventory label
           attributes.delete(:collection_id)
+
+          # store hierarchical fields as properties in sample_details (no DB columns)
+          hierarchical_keys = %i[color state height width length storage_condition]
+          hierarchical = hierarchical_keys.each_with_object({}) do |k, h|
+            h[k.to_s] = attributes.delete(k) if attributes.key?(k)
+          end
+          if hierarchical.present?
+            existing = @sample.sample_details || {}
+            from_params = attributes.delete(:sample_details) || {}
+            attributes[:sample_details] = existing.deep_merge(from_params).merge(hierarchical)
+          end
 
           @sample.update!(attributes)
           @sample.save_segments(segments: params[:segments], current_user_id: current_user.id)
@@ -585,7 +604,9 @@ module Chemotion
           molecular_mass: params[:molecular_mass],
           sum_formula: params[:sum_formula],
           sample_type: params[:sample_type],
-          sample_details: params[:sample_details],
+          sample_details: (params[:sample_details] || {}).merge(
+            %w[color state height width length storage_condition].index_with { |k| params[k.to_sym] }
+          ).compact,
         }
 
         boiling_point_lowerbound = params['boiling_point_lowerbound'].presence || -Float::INFINITY

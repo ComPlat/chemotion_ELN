@@ -41,8 +41,11 @@ const getMoleculeName = (decoupled, sample) => {
  * @param {boolean} decoupled - Whether the polymer is decoupled
  * @returns {string} Formatted polymer name
  */
-const getPolymerName = (polymerType, decoupled) => {
+const getPolymerName = (polymerType, decoupled, isHierarchicalMaterial) => {
+  if (!polymerType) return '';
   if (decoupled && polymerType === 'self_defined') return '';
+  if (isHierarchicalMaterial) return `${polymerType} `;
+  if (!polymerType || typeof polymerType !== 'string') return '';
 
   return `${polymerType.charAt(0).toUpperCase()}${polymerType.slice(1)}`.replace('_', '-');
 };
@@ -91,13 +94,13 @@ function SampleName({ sample }) {
   const moleculeName = getMoleculeName(decoupled, sample); // Handle molecule name display
   const stereoText = getStereoInfo(stereo); // Format stereo information
   const sumFormulaCom = <Formula formula={molecule_formula} customText={stereoText} />;
-
+  const isHierarchicalMaterial = sample.isHierarchicalMaterial();
   // Default case for regular molecules
   let clipText = molecule_formula || '';
 
   // Handle polymer/residue case
   if (contains_residues) {
-    const polymerName = getPolymerName(polymer_type, decoupled);
+    const polymerName = getPolymerName(polymer_type, decoupled, isHierarchicalMaterial);
     clipText = (decoupled && polymer_type === 'self_defined')
       ? molecule_formula
       : `${polymerName} - ${molecule_formula}`;
@@ -106,7 +109,7 @@ function SampleName({ sample }) {
       <div>
         <p className="mb-2 fix-font-size">
           {polymerName}
-          <ClipboardCopyText text={sumFormulaCom} clipText={clipText} />
+          {!isHierarchicalMaterial && <ClipboardCopyText text={sumFormulaCom} clipText={clipText} />}
         </p>
         {moleculeName}
       </div>
@@ -130,7 +133,7 @@ function SampleName({ sample }) {
   return (
     <div>
       <p className="mb-1 fix-font-size">
-        <ClipboardCopyText text={sumFormulaCom} clipText={clipText} />
+        {!isHierarchicalMaterial && <ClipboardCopyText text={sumFormulaCom} clipText={clipText} />}
       </p>
       {moleculeName}
     </div>
@@ -141,7 +144,7 @@ function SampleName({ sample }) {
 SampleName.propTypes = {
   sample: PropTypes.shape({
     contains_residues: PropTypes.bool,
-    polymer_type: PropTypes.string,
+    polymer_type: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
     molecule_formula: PropTypes.string,
     decoupled: PropTypes.bool,
     stereo: PropTypes.shape({}),
@@ -153,6 +156,7 @@ SampleName.propTypes = {
       })
     ),
     isMixture: PropTypes.func.isRequired,
+    isHierarchicalMaterial: PropTypes.func.isRequired,
     showed_name: PropTypes.string,
   }).isRequired,
 };
