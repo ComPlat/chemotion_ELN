@@ -29,7 +29,7 @@ import DetailActions from 'src/stores/alt/actions/DetailActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import CollectionUtils from 'src/models/collection/CollectionUtils';
+import { collectionHasPermission } from 'src/utilities/collectionUtilities';
 import PropertiesForm from 'src/apps/mydb/elements/details/deviceDescriptions/propertiesTab/PropertiesForm';
 import AttachmentForm from 'src/apps/mydb/elements/details/deviceDescriptions/attachmentsTab/AttachmentForm';
 import AnalysesContainer from 'src/apps/mydb/elements/details/deviceDescriptions/analysesTab/AnalysesContainer';
@@ -43,7 +43,7 @@ function DeviceDescriptionDetails({ openedFromCollectionId }) {
   const deviceDescription = deviceDescriptionsStore.device_description;
   deviceDescriptionsStore.setKeyPrefix('deviceDescription');
 
-  const { currentCollection, isSync } = UIStore.getState();
+  const { currentCollection } = UIStore.getState();
   const { currentUser } = UserStore.getState();
 
   const [visibleTabs, setVisibleTabs] = useState(Immutable.List());
@@ -85,11 +85,7 @@ function DeviceDescriptionDetails({ openedFromCollectionId }) {
     history: 'History',
   };
 
-  const isReadOnly = () => CollectionUtils.isReadOnly(
-    currentCollection,
-    currentUser.id,
-    isSync
-  );
+  const isReadOnly = () => !collectionHasPermission(currentCollection, 0);
 
   const disabled = (index) => (!!(deviceDescription.isNew && index !== 0));
 
@@ -154,7 +150,7 @@ function DeviceDescriptionDetails({ openedFromCollectionId }) {
 
   const deviceDescriptionHeader = () => {
     const titleTooltip = formatTimeStampsOfElement(deviceDescription || {});
-    const defCol = currentCollection && currentCollection.is_shared === false
+    const defCol = currentCollection && currentCollection.shared === false
       && currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
 
     return (

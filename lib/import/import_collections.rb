@@ -182,11 +182,6 @@ module Import
         # create the collection
         collection = Collection.create!(fields.slice(
           'label',
-          'sample_detail_level',
-          'reaction_detail_level',
-          'wellplate_detail_level',
-          'screen_detail_level',
-          'researchplan_detail_level',
           'created_at',
           'updated_at',
         ).merge(

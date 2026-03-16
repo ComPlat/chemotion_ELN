@@ -4,8 +4,8 @@ import DeviceDescription from 'src/models/DeviceDescription';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 
 export default class DeviceDescriptionFetcher {
-  static fetchByCollectionId(id, queryParams = {}, isSync = false) {
-    return BaseFetcher.fetchByCollectionId(id, queryParams, isSync, 'device_descriptions', DeviceDescription);
+  static fetchByCollectionId(id, queryParams = {}) {
+    return BaseFetcher.fetchByCollectionId(id, queryParams, 'device_descriptions', DeviceDescription);
   }
 
   static fetchDeviceDescriptionsByUIStateAndLimit(params) {

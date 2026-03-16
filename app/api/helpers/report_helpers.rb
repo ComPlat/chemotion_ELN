@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# desc: Helper methods for GrapeAPI::ReportAPI
+# rubocop:disable Metrics/ModuleLength, Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 module ReportHelpers
   extend Grape::API::Helpers
 
@@ -29,7 +29,6 @@ module ReportHelpers
         requires :checkedAll, type: Boolean
       end
       requires :currentCollection, type: Integer
-      requires :isSync, type: Boolean
     end
     # requires :columns, type: Array
   end
@@ -88,9 +87,7 @@ module ReportHelpers
           select s_id
           , case
             when s.is_top_secret then '*'
-            when (shared_sync is false) or
-              (shared_sync is true and dl_s > 0) or
-              (shared_sync isnull and dl_s > 0) then m.cano_smiles
+            when ((is_shared is false) or (is_shared is true and dl_s > 0)) then m.cano_smiles
             else '*' end as smiles
           , case
             when rsm.type = 'ReactionsStartingMaterialSample' then 0
@@ -98,27 +95,24 @@ module ReportHelpers
             when rsm.type = 'ReactionsSolventSample' then 2
             when rsm.type = 'ReactionsProductSample' then 3 end as s_type
           , rsm.reaction_id as r_id
-          -- , pl, dl_s , co_id, scu_id
+          -- , dl_s , collection_id, collection_share_id
           from (
             select s.id as s_id, s.molecule_id
             , s.is_top_secret -- as ts
-            -- , min(co.id) as co_id, min(scu.id) as scu_id
-            , bool_and(co.is_shared) as shared_sync
-            , max(GREATEST(co.permission_level, scu.permission_level)) as pl
-            , max(GREATEST(co.sample_detail_level,scu.sample_detail_level)) dl_s
+            -- , min(collections.id) as collection_id, min(collection_shares.id) as collection_share_id
+            , bool_and(collections.shared) as is_shared
+            , max(collection_shares.permission_level) as pl
+            , max(collection_shares.sample_detail_level) as dl_s
             from samples s
             inner join collections_samples c_s on s.id = c_s.sample_id and c_s.deleted_at is null
-            left join collections co on (
-              co.id = c_s.collection_id and co.user_id in (#{u_ids})
+            left join collections on (
+              collections.id = c_s.collection_id and collections.user_id in (#{u_ids})
             )
-            left join collections sco on (
-              sco.id = c_s.collection_id and sco.user_id not in (#{u_ids})
-            )
-            left join sync_collections_users scu on (
-              sco.id = scu.collection_id and scu.user_id in (#{u_ids})
+            left join collection_shares on (
+              collections.id = collection_shares.collection_id and collection_shares.shared_with_id in (#{u_ids})
             )
             where s.deleted_at isnull and c_s.deleted_at isnull
-              and (co.id is not null or scu.id is not null)
+              and (collections.id is not null or collection_shares.id is not null)
             group by s_id
           ) as s
         -- reactions_samples
@@ -251,18 +245,19 @@ module ReportHelpers
       select
         s.id as s_id
         , s.is_top_secret as ts
-        , min(co.id) as co_id
-        , min(scu.id) as scu_id
-        , bool_and(co.is_shared) as shared_sync
-        , max(GREATEST(co.permission_level, scu.permission_level)) as pl
-        , max(GREATEST(co.sample_detail_level,scu.sample_detail_level)) dl_s
+        , min(collections.id) as co_id
+        , min(collection_shares.id) as shared_id
+        , bool_and(collections.shared) as is_shared
+        , max(collection_shares.permission_level) as pl
+        , max(collection_shares.sample_detail_level) dl_s
       from samples s
-      inner join collections_samples c_s on s.id = c_s.sample_id and c_s.deleted_at is null
-      left join collections co on (co.id = c_s.collection_id and co.user_id in (#{u_ids}))
-      left join collections sco on (sco.id = c_s.collection_id and sco.user_id not in (#{u_ids}))
-      left join sync_collections_users scu on (sco.id = scu.collection_id and scu.user_id in (#{u_ids}))
+      inner join collections_samples c_s on
+        (s.id = c_s.sample_id and c_s.deleted_at is null)
+      left join collections on (collections.id = c_s.collection_id and collections.user_id in (#{u_ids}))
+      left join collection_shares on
+        (collections.id = collection_shares.collection_id and collection_shares.shared_with_id in (#{u_ids}))
       where #{selection} s.deleted_at isnull and c_s.deleted_at isnull
-        and (co.id is not null or scu.id is not null)
+        and (collections.id is not null or collection_shares.id is not null)
       group by s_id
     SQL
   end
@@ -293,7 +288,7 @@ module ReportHelpers
 
     <<~SQL.squish
       select
-      s_id, ts, co_id, scu_id, shared_sync, pl, dl_s
+      s_id, ts, co_id, shared_id, is_shared, pl, dl_s
       , res.residue_type, s.molfile_version, s.decoupled, s.molecular_mass as "molecular mass (decoupled)", s.sum_formula as "sum formula (decoupled)"
       , s.stereo->>'abs' as "stereo_abs", s.stereo->>'rel' as "stereo_rel"
       , cl.id as "sample uuid"
@@ -439,7 +434,7 @@ module ReportHelpers
 
     <<~SQL.squish
       select
-      s_id, ts, co_id, scu_id, shared_sync, pl, dl_s
+      s_id, ts, co_id, shared_id, is_shared, pl, dl_s
       , #{columns}
       , cl.id as "sample uuid"
       , (select array_to_json(array_agg(row_to_json(analysis)))
@@ -492,11 +487,10 @@ module ReportHelpers
   #
   # 's_dl': table of s.id, collection dl info(, and wellp info for ordering)
   # co_id => own or shared coll if not null
-  # scu_id => sync_coll if not null
-  # shared_sync == false => sample in at least 1 own collection
-  # shared_sync == true => sample in at least 1 shared collection, no own coll
-  # shared_sync == null => sample in at least 1 sync_coll, no shared, no own
-  # 'co.id is not null or scu.id is not null' : validate associations with user
+  # shared_id => collection_shared if not null
+  # is_shared == false => sample in at least 1 own collection
+  # is_shared == true => sample in at least 1 shared collection, no own coll
+  # 'collections.id is not null or collection_shares.id is not null' : validate associations with user
   def build_sql_wellplate_sample(columns, c_id, ids, checkedAll = false)
     wp_ids = [ids].flatten.join(',')
     u_ids = [user_ids].flatten.join(',')
@@ -516,7 +510,7 @@ module ReportHelpers
 
     <<~SQL
       select
-      s_id, ts, co_id, scu_id, shared_sync, pl, dl_s
+      s_id, ts, co_id, shared_id, is_shared, pl, dl_s
       , dl_wp
       , res.residue_type, s.molfile_version, s.decoupled, s.molecular_mass as "molecular mass (decoupled)", s.sum_formula as "sum formula (decoupled)"
       , s.stereo->>'abs' as "stereo_abs", s.stereo->>'rel' as "stereo_rel"
@@ -526,21 +520,22 @@ module ReportHelpers
         select
           s.id as s_id
           , s.is_top_secret as ts
-          , min(co.id) as co_id
-          , min(scu.id) as scu_id
-          , bool_and(co.is_shared) as shared_sync
-          , max(GREATEST(co.permission_level, scu.permission_level)) as pl
-          , max(GREATEST(co.sample_detail_level,scu.sample_detail_level)) dl_s
-          , max(GREATEST(co.wellplate_detail_level,scu.wellplate_detail_level)) dl_wp
+          , min(collections.id) as co_id
+          , min(collection_shares.id) as shared_id
+          , bool_and(collections.shared) as is_shared
+          , max(collection_shares.permission_level) as pl
+          , max(collection_shares.sample_detail_level) dl_s
+          , max(collection_shares.wellplate_detail_level) dl_wp
           , (array_agg(w.wellplate_id)) [1] as wp_id
           , (array_agg(w.position_x)) [1] as "wx"
           , (array_agg(w.position_y)) [1] as "wy"
         from samples s
         inner join wells w on s.id = w.sample_id
         inner join collections_samples c_s on s.id = c_s.sample_id and c_s.deleted_at is null
-        left join collections co on (co.id = c_s.collection_id and co.user_id in (#{u_ids}))
-        left join collections sco on (sco.id = c_s.collection_id and sco.user_id not in (#{u_ids}))
-        left join sync_collections_users scu on (sco.id = scu.collection_id and scu.user_id in (#{u_ids}))
+        left join collections on (collections.id = c_s.collection_id and collections.user_id in (#{u_ids}))
+        left join collection_shares on (
+          collections.id = collection_shares.collection_id and collection_shares.shared_with_id in (#{u_ids})
+        )
         where #{selection} s.deleted_at isnull and c_s.deleted_at isnull
           and (co.id is not null or scu.id is not null)
         group by s_id
@@ -575,7 +570,7 @@ module ReportHelpers
 
     <<~SQL
       select
-      s_id, ts, co_id, scu_id, shared_sync, pl, dl_s
+      s_id, ts, co_id, shared_id, is_shared, pl, dl_s
       , dl_r
       , res.residue_type, s.molfile_version, s.decoupled, s.molecular_mass as "molecular mass (decoupled)", s.sum_formula as "sum formula (decoupled)"
       , s.stereo->>'abs' as "stereo_abs", s.stereo->>'rel' as "stereo_rel"
@@ -590,21 +585,22 @@ module ReportHelpers
         select
           s.id as s_id
           , s.is_top_secret as ts
-          , min(co.id) as co_id
-          , min(scu.id) as scu_id
-          , bool_and(co.is_shared) as shared_sync
-          , max(GREATEST(co.permission_level, scu.permission_level)) as pl
-          , max(GREATEST(co.sample_detail_level,scu.sample_detail_level)) dl_s
-          , max(GREATEST(co.reaction_detail_level,scu.reaction_detail_level)) dl_r
+          , min(collections.id) as co_id
+          , min(collection_shares.id) as shared_id
+          , bool_and(collections.shared) as is_shared
+          , max(collection_shares.permission_level) as pl
+          , max(collection_shares.sample_detail_level) dl_s
+          , max(collection_shares.reaction_detail_level) dl_r
           , (array_agg(r_s.reaction_id)) [1] as r_id
         from samples s
         inner join reactions_samples r_s on s.id = r_s.sample_id
         inner join collections_samples c_s on s.id = c_s.sample_id and c_s.deleted_at is null
-        left join collections co on (co.id = c_s.collection_id and co.user_id in (#{u_ids}))
-        left join collections sco on (sco.id = c_s.collection_id and sco.user_id not in (#{u_ids}))
-        left join sync_collections_users scu on (sco.id = scu.collection_id and scu.user_id in (#{u_ids}))
+        left join collections on (collections.id = c_s.collection_id and collections.user_id in (#{u_ids}))
+        left join collection_shares on (
+          collections.id = collection_shares.collection_id and collection_shares.shared_with_id not in (#{u_ids})
+        )
         where #{selection} s.deleted_at isnull and c_s.deleted_at isnull
-          and (co.id is not null or scu.id is not null)
+          and (collections.id is not null or collection_shares.id is not null)
         group by s_id
       ) as s_dl
       inner join samples s on s_dl.s_id = s.id #{collection_join}
@@ -879,3 +875,4 @@ module ReportHelpers
     DEFAULT_COLUMNS_WELLPLATE
   end
 end
+# rubocop:enable Metrics/ModuleLength, Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
