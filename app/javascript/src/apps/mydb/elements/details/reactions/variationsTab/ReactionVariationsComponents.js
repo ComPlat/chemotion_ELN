@@ -615,7 +615,7 @@ function EntrySelectionHeader({
   const { setColumnDefinitions } = context;
 
   const [showModal, setShowModal] = useState(false);
-  const [entryColDefs, setEntryColDefs] = useState(() => columnGroup.getColGroupDef().children);
+  const [entryColDefs, setEntryColDefs] = useState([]);
 
   const setAttribute = (attribute, update) => {
     setColumnDefinitions({
@@ -653,18 +653,6 @@ function EntrySelectionHeader({
     });
   };
 
-  const handleUnitChange = (entry, unit) => {
-    setEntryColDefs((prevEntryColDefs) => {
-      const newColDefs = [...prevEntryColDefs];
-      const entryIndex = newColDefs.findIndex((e) => e.entry === entry);
-
-      if (entryIndex === -1) return prevEntryColDefs;
-
-      newColDefs[entryIndex] = { ...prevEntryColDefs[entryIndex], displayUnit: unit };
-      return newColDefs;
-    });
-  };
-
   const handleNameChange = (name) => {
     setAttribute('headerName', name);
   };
@@ -680,7 +668,7 @@ function EntrySelectionHeader({
         </span>
         <Button
           size="sm"
-          onClick={() => setShowModal(true)}
+          onClick={() => { setEntryColDefs(columnGroup.getColGroupDef().children); setShowModal(true); }}
         >
           Entries
         </Button>
@@ -695,14 +683,11 @@ function EntrySelectionHeader({
               <tr>
                 <th>Selected</th>
                 <th>Entry</th>
-                <th>Unit</th>
               </tr>
             </thead>
             <tbody>
               {entryColDefs.map((entryColDef) => {
-                const {
-                  entry, units, displayUnit, hide
-                } = entryColDef;
+                const { entry, hide } = entryColDef;
                 return (
                   <tr key={entry}>
                     <td className="text-center">
@@ -713,21 +698,6 @@ function EntrySelectionHeader({
                       />
                     </td>
                     <td>{getUserFacingEntryName(entry)}</td>
-                    <td>
-                      {units.length > 1 ? (
-                        <Form.Select
-                          size="sm"
-                          value={displayUnit || ''}
-                          onChange={(e) => handleUnitChange(entry, e.target.value)}
-                          onMouseDown={(e) => e.stopPropagation()}
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {units.map((unit) => (
-                            <option key={unit} value={unit}>{getUserFacingUnit(unit)}</option>
-                          ))}
-                        </Form.Select>
-                      ) : getUserFacingUnit(units[0])}
-                    </td>
                   </tr>
                 );
               })}
@@ -851,16 +821,52 @@ function RemoveVariationsModal({ onRemoveAll }) {
   );
 }
 
-function MaterialHeaderName(colDef) {
-  const { entry, displayUnit } = colDef;
-  let headerName = getUserFacingEntryName(entry);
+function UnitToggleHeader({ column, context, api }) {
+  const { units, entry } = column.getColDef();
+  const { setColumnDefinitions } = context;
+  const [displayUnit, setDisplayUnit] = useState(() => column.getColDef().displayUnit);
+  const entryLabel = getUserFacingEntryName(entry);
+  const unitLabel = displayUnit ? getUserFacingUnit(displayUnit) : null;
+  const isToggleable = units && units.filter(Boolean).length > 1;
 
-  if (displayUnit) {
-    headerName += ` (${getUserFacingUnit(displayUnit)})`;
-  }
+  const handleToggle = (e) => {
+    e.stopPropagation();
+    const nextUnit = units[(units.indexOf(displayUnit) + 1) % units.length];
+    setDisplayUnit(nextUnit);
+    setColumnDefinitions({
+      type: 'set_leaf_col_def_attribute',
+      colId: column.getColId(),
+      attribute: 'displayUnit',
+      update: nextUnit,
+    });
+    setTimeout(() => api.refreshCells({ force: true, columns: [column.getColId()] }), 0);
+  };
 
-  return headerName;
+  return (
+    <div className="ag-header-cell-text">
+      <span>{entryLabel}</span>
+      {' '}
+      {unitLabel && (
+        isToggleable
+          ? <Button size="xsm" onClick={handleToggle}>{unitLabel}</Button>
+          : <span>{` (${unitLabel})`}</span>
+      )}
+    </div>
+  );
 }
+
+UnitToggleHeader.propTypes = {
+  column: PropTypes.shape({
+    getColDef: PropTypes.func.isRequired,
+    getColId: PropTypes.func.isRequired,
+  }).isRequired,
+  context: PropTypes.shape({
+    setColumnDefinitions: PropTypes.func.isRequired,
+  }).isRequired,
+  api: PropTypes.shape({
+    refreshCells: PropTypes.func.isRequired,
+  }).isRequired,
+};
 
 export {
   RowToolsCellRenderer,
@@ -883,5 +889,5 @@ export {
   GroupCellEditor,
   GroupCellRenderer,
   EntrySelectionHeader,
-  MaterialHeaderName,
+  UnitToggleHeader,
 };
