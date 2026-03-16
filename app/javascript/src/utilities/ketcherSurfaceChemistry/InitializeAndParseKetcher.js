@@ -52,16 +52,18 @@ const loadTemplates = async () => {
 };
 
 // prepare/load ket2 format data
-const loadKetcherData = async (data) => {
+// preserveImagesWhenEmpty: when true (from fetchKetcherData), keep imagesList if data has no images
+// because getKet() often omits them. When false (default), always sync imagesList with data.
+const loadKetcherData = async (data, options = {}) => {
+  const { preserveImagesWhenEmpty = false } = options;
   const nodes = data?.root?.nodes && Array.isArray(data.root.nodes) ? data.root.nodes : [];
   allAtomsSetter([]);
   allNodesSetter([...nodes]);
-  // Only overwrite imagesList when the editor actually returns image nodes.
-  // getKet() often omits images, so preserving existing imagesList avoids losing
-  // shape positions on load/sync.
-  const imageNodesFromEditor = nodes.filter((item) => item.type === 'image');
-  if (imageNodesFromEditor.length > 0) {
-    imagesListSetter(imageNodesFromEditor);
+  const imageNodesFromData = nodes.filter((item) => item.type === 'image');
+  if (imageNodesFromData.length > 0) {
+    imagesListSetter(imageNodesFromData);
+  } else if (!preserveImagesWhenEmpty) {
+    imagesListSetter([]);
   }
 
   // Text nodes are non-standard Ketcher extensions managed entirely in local state.
@@ -342,7 +344,7 @@ const fetchKetcherData = async (editor) => {
     const ketString = await editor.structureDef.editor.getKet();
     const data = JSON.parse(ketString);
     await latestDataSetter(data);
-    await loadKetcherData(data);
+    await loadKetcherData(data, { preserveImagesWhenEmpty: true });
   } catch (err) {
     console.error('fetchKetcherData', err.message);
   }
