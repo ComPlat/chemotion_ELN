@@ -661,7 +661,7 @@ function EntrySelectionHeader({
     <div>
       <div className="d-flex flex-column w-100">
         <span
-          className="ag-header-cell-text"
+          className="ag-header-group-cell-label"
           onClick={() => handleNameChange(names[(names.indexOf(displayName) + 1) % names.length] ?? displayName)}
         >
           {`${displayName} ${gasType && gasType !== 'off' ? `(${gasType})` : ''}`}
