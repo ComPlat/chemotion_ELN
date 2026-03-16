@@ -65,6 +65,7 @@ export default function ReactionSchemeGraphic({
 }) {
   const [svgProps, setSvgProps] = useState({});
   const tooltipContainer = typeof document !== 'undefined' ? document.body : undefined;
+  const isInteractionReaction = reaction.isInteractionReaction();
 
   useEffect(() => {
     // Use svgPath for both file URLs and data URIs (raw SVG is encoded as data URI in Reaction.svgPath)
@@ -146,6 +147,7 @@ export default function ReactionSchemeGraphic({
       </div>
       <ButtonToolbar className="Reaction-scheme-graphic__toolbar">
         <ConfigOverlayButton
+          key={isInteractionReaction ? 'interaction' : 'standard'}
           popperConfig={popperConfigAboveToolbar}
           popoverSettings={
             (

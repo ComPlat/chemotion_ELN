@@ -215,6 +215,10 @@ module SVG
       "#{template_it.strip} #{sections_string_filtered} </svg></svg>"
     end
 
+    def compose_svg
+      compose_reaction_svg
+    end
+
     private
 
     def init_materials(materials_svg_paths)
