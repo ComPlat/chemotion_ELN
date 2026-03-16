@@ -22,10 +22,12 @@ import loadAndEncodeSVG from 'src/utilities/ketcherSurfaceChemistry/iconBaseProv
 
 // helper function to fetch list of all surface chemistry shape/image list
 const fetchSurfaceChemistryImageData = async (templateId) => {
+  const id = parseInt(templateId, 10);
+  if (Number.isNaN(id) || !Array.isArray(allTemplates)) return null;
   for (const tab of allTemplates) {
     for (const subTab of tab.subTabs) {
       for (const shape of subTab.shapes) {
-        if (shape.template_id === parseInt(templateId)) {
+        if (shape.template_id === id) {
           const constructImageObj = {
             type: 'image',
             format: 'image/svg+xml',
@@ -155,13 +157,18 @@ const findTextNodesNotConnectedWithTemplates = (updatedTextList) => {
 const placeTextOnAtoms = async () => {
   try {
     const updatedTextList = [];
+    const addedKeys = new Set(); // avoid adding the same text node twice (e.g. single shape with one alias)
     for (const item of mols) {
       for (const atom of latestData[item].atoms) {
         const textNodeKey = textNodeStruct[atom.alias];
 
         if (atom && ALIAS_PATTERNS.threeParts.test(atom.alias) && textNodeKey) {
+          if (addedKeys.has(textNodeKey)) continue;
           const res = await findByKeyAndUpdateTextNodePosition(textNodeKey, atom);
-          if (res) updatedTextList.push(res);
+          if (res) {
+            addedKeys.add(textNodeKey);
+            updatedTextList.push(res);
+          }
         }
       }
     }

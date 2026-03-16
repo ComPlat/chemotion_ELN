@@ -13,7 +13,10 @@ import {
   latestDataSetter
 } from 'src/components/structureEditor/KetcherEditor';
 import { ALIAS_PATTERNS, KET_TAGS, KET_DOM_TAG } from 'src/utilities/ketcherSurfaceChemistry/constants';
-import { fetchKetcherData } from 'src/utilities/ketcherSurfaceChemistry/InitializeAndParseKetcher';
+import {
+  fetchKetcherData,
+  loadKetcherData
+} from 'src/utilities/ketcherSurfaceChemistry/InitializeAndParseKetcher';
 import {
   findAtomByImageIndex,
   handleAddAtom,
@@ -29,6 +32,7 @@ import {
 import {
   ImagesToBeUpdatedSetter,
   imagesList,
+  imagesListSetter,
   mols,
   textList,
   textListSetter,
@@ -192,11 +196,18 @@ const onDeleteText = async (editor) => {
   }
 };
 
-// Helper function to create a new text node from text content
-const createTextNodeFromContent = (text, defaultPosition = { x: 4.4, y: -10.4, z: 0 }) => {
-  if (!text || !text.trim()) {
-    return null;
-  }
+// Helper function to create a new text node from text content (plain string or Draft.js content)
+const createTextNodeFromContent = (textOrContent, defaultPosition = { x: 4.4, y: -10.4, z: 0 }) => {
+  const isEmpty = (v) => {
+    if (v == null) return true;
+    if (typeof v === 'string' && !isDraftContent(v)) return !v.trim();
+    if (isDraftContent(v)) {
+      const c = typeof v === 'string' ? JSON.parse(v) : v;
+      return !(c?.blocks?.[0]?.text || '').trim();
+    }
+    return true;
+  };
+  if (isEmpty(textOrContent)) return null;
 
   // Generate unique key for text node (similar to draft.js format)
   const generateKey = () => Math.random().toString(36).substring(2, 8);
@@ -258,10 +269,12 @@ const createTextNodeFromContent = (text, defaultPosition = { x: 4.4, y: -10.4, z
     { x: defaultPosition.x + 0.71724853515625, y: defaultPosition.y, z: defaultPosition.z }
   ];
 
+  // Plain text path
+  const plainText = typeof textOrContent === 'string' ? textOrContent.trim() : String(textOrContent || '').trim();
   return {
     type: 'text',
     data: {
-      content: forTextNodeHeader(textKey, text.trim()),
+      content: forTextNodeHeader(textKey, plainText),
       position: defaultPosition,
       pos: defaultPos
     }
@@ -790,12 +803,28 @@ const saveMoveCanvas = async (
     dataCopy.root.nodes = [...nonText, ...textList];
   }
 
+  // Preserve images from our payload before apply/fetch — getKet() often omits them.
+  // This ensures imagesList is correct when loadKetcherData receives no images from the editor.
+  const imagesFromPayload = (dataCopy.root?.nodes || []).filter((n) => n.type === 'image');
+  if (imagesFromPayload.length > 0) {
+    imagesListSetter(imagesFromPayload);
+  }
+
   if (isMoveRequired) {
     await applyCanvasDataToEditor(editor, dataCopy, recenter);
-    if (isFetchRequired) {
-      await fetchKetcherData(editor);
+    const { syncImagesOnly = false } = moveOptions;
+    if (syncImagesOnly) {
+      // Use payload data for atom positions — avoid fetch overwriting with editor data
+      // that may omit images or alter positions on load/reopen.
+      latestDataSetter(dataCopy);
+      await loadKetcherData(dataCopy);
+      await onTemplateMove(editor, recenter, { ...moveOptions, skipFetch: true });
+    } else {
+      if (isFetchRequired) {
+        await fetchKetcherData(editor);
+      }
+      await onTemplateMove(editor, recenter, moveOptions);
     }
-    await onTemplateMove(editor, recenter, moveOptions);
     return;
   }
 
@@ -823,21 +852,23 @@ const centerPositionCanvas = async (editor) => {
 
 const onTemplateMove = async (editor, recenter = false, options = {}) => {
   if (!editor || !editor.structureDef) return;
-  const { syncImagesOnly = false } = options;
+  const { syncImagesOnly = false, skipFetch = false } = options;
 
   // for tool bar button events - but skip recentering when only syncing images
   if (!recenter && !syncImagesOnly && (imageListCopyContainer.length || textListCopyContainer.length)) {
     recenter = true;
   }
-  // first fetch to save values
-  await fetchKetcherData(editor);
+  if (!skipFetch) {
+    await fetchKetcherData(editor);
+  }
 
   const molCopy = mols;
   const imageListCopy = imageListCopyContainer.length ? imageListCopyContainer : imagesList;
   const textListCopy = textListCopyContainer.length ? textListCopyContainer : textList;
 
-  // second fetch save and place
-  await fetchKetcherData(editor);
+  if (!skipFetch) {
+    await fetchKetcherData(editor);
+  }
 
   let imageNodes = [];
   if (syncImagesOnly) {

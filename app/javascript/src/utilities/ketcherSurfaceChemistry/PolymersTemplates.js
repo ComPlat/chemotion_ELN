@@ -2,6 +2,7 @@
 /* eslint-disable no-plusplus */
 /* eslint-disable radix */
 import { addingPolymersToKetcher } from 'src/utilities/ketcherSurfaceChemistry/AtomsAndMolManipulation';
+import { findTemplateByPayload } from 'src/utilities/ketcherSurfaceChemistry/Ketcher2SurfaceChemistryUtils';
 import { ALIAS_PATTERNS, KET_TAGS } from 'src/utilities/ketcherSurfaceChemistry/constants';
 import { imageNodeCounter } from 'src/components/structureEditor/KetcherEditor';
 import { imagesList } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
@@ -41,22 +42,31 @@ const processAtomLines = async (linesCopy, atomStarts, atomsCount) => {
 };
 
 // helper to combine and prepare alias into a polymer list
+// Output format: atomIndex/templateId/size (e.g. 0/10/1.00-1.00 1/14/1.00-1.00) so load assigns correct template per atom.
+// Derive template id from image data (findTemplateByPayload) so we save the real shape type even when getKet() alias has wrong id.
 const templateAliasesPrepare = async (aliasesList) => {
-  let counter = 0;
   const polymersCombination = [];
   for (let i = 0; i < aliasesList.length; i++) {
-    if (ALIAS_PATTERNS.threeParts.test(aliasesList[i])) {
-      const templateId = parseInt(aliasesList[i].split('_')[1]);
-      const imagePlace = parseInt(aliasesList[i].split('_')[2]);
-      const { height, width } = imagesList[imagePlace].boundingBox;
-      if (templateId) {
-        let idx = aliasesList[counter].split("_")[2]
-        idx += templateId === KET_TAGS.templateSurface ? 's' : `/${templateId}`;
-        idx += `/${height.toFixed(2)}-${width.toFixed(2)}`;
-        polymersCombination.push(idx)
-        counter++;
+    if (!ALIAS_PATTERNS.threeParts.test(aliasesList[i])) continue;
+    const parts = aliasesList[i].split('_');
+    const imagePlace = parseInt(parts[2], 10);
+    const aliasTemplateId = parseInt(parts[1], 10);
+    const bbox = imagesList[imagePlace]?.boundingBox;
+    const height = bbox?.height ?? 1;
+    const width = bbox?.width ?? 1;
+    // Prefer template id from actual image payload so template 14 is saved as 14 (getKet() may return t_10_1 for second shape)
+    let templateId = aliasTemplateId;
+    if (imagesList[imagePlace]?.data != null) {
+      const payloadTemplateId = await findTemplateByPayload(imagesList[imagePlace].data);
+      if (payloadTemplateId != null) {
+        templateId = parseInt(String(payloadTemplateId), 10);
       }
     }
+    if (!templateId) continue;
+    let idx = String(i);
+    idx += templateId === KET_TAGS.templateSurface ? 's' : `/${templateId}`;
+    idx += `/${height.toFixed(2)}-${width.toFixed(2)}`;
+    polymersCombination.push(idx);
   }
   return polymersCombination.join(' ');
 };

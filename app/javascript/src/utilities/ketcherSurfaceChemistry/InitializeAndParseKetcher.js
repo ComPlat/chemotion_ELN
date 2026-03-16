@@ -41,16 +41,14 @@ import {
 } from 'src/utilities/ketcherSurfaceChemistry/DomHandeling';
 
 const loadTemplates = async () => {
-  fetch('/json/surfaceChemistryShapes.json').then((response) => {
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
-    }
-    return response.json();
-  }).then((data) => {
+  try {
+    const response = await fetch('/json/surfaceChemistryShapes.json');
+    if (!response.ok) throw new Error('Network response was not ok');
+    const data = await response.json();
     templateListSetter(data);
-  }).catch((error) => {
+  } catch (error) {
     console.error('Error fetching the JSON data:', error);
-  });
+  }
 };
 
 // prepare/load ket2 format data
@@ -58,7 +56,13 @@ const loadKetcherData = async (data) => {
   const nodes = data?.root?.nodes && Array.isArray(data.root.nodes) ? data.root.nodes : [];
   allAtomsSetter([]);
   allNodesSetter([...nodes]);
-  imagesListSetter(nodes.filter((item) => item.type === 'image'));
+  // Only overwrite imagesList when the editor actually returns image nodes.
+  // getKet() often omits images, so preserving existing imagesList avoids losing
+  // shape positions on load/sync.
+  const imageNodesFromEditor = nodes.filter((item) => item.type === 'image');
+  if (imageNodesFromEditor.length > 0) {
+    imagesListSetter(imageNodesFromEditor);
+  }
 
   // Text nodes are non-standard Ketcher extensions managed entirely in local state.
   // The editor never returns them via getKet(), so we must never overwrite the local
@@ -70,9 +74,9 @@ const loadKetcherData = async (data) => {
     textListSetter(textNodesFromEditor);
   }
 
-  const sliceEnd = Math.max(0, nodes.length - imagesList.length - textList.length);
-  molsSetter(sliceEnd > 0 ? nodes.slice(0, sliceEnd).map((i) => i.$ref) : []);
-  const molRefs = sliceEnd > 0 ? nodes.slice(0, sliceEnd).map((i) => i.$ref) : [];
+  // Mol refs are nodes with $ref; getKet() may omit images/text, so derive mols from structure
+  const molRefs = (nodes || []).filter((n) => n?.$ref).map((n) => n.$ref);
+  molsSetter(molRefs);
   molRefs.forEach((item) => (data[item]?.atoms || []).map((i) => allAtoms.push(i)));
 };
 
@@ -304,7 +308,8 @@ const parsePolymerEntryByAtomIndex = (polymerValue) => {
   return { atomIndex, type: templateId, size: parts[2] || '1-1' };
 };
 
-// Helper to create a bounding box for a template with atom location
+// Helper to create a bounding box for a template with atom location.
+// Returns a fresh object per call so multiple images never share mutable state.
 const templateWithBoundingBox = async (templateType, atomLocation, templateSize) => {
   let template = await fetchSurfaceChemistryImageData(templateType);
   if (!template) {
@@ -316,12 +321,17 @@ const templateWithBoundingBox = async (templateType, atomLocation, templateSize)
   if (!template) return null;
   const defaultSize = [template.boundingBox.height, template.boundingBox.width];
   const [height, width] = templateSize?.split('-') || defaultSize;
-  template.boundingBox.x = atomLocation[0];
-  template.boundingBox.y = atomLocation[1];
-  template.boundingBox.z = 0;
-  template.boundingBox.height = parseFloat(height);
-  template.boundingBox.width = parseFloat(width);
-  return template;
+  return {
+    ...template,
+    boundingBox: {
+      ...template.boundingBox,
+      x: atomLocation[0],
+      y: atomLocation[1],
+      z: atomLocation[2] ?? 0,
+      height: parseFloat(height) || template.boundingBox.height,
+      width: parseFloat(width) || template.boundingBox.width
+    }
+  };
 };
 
 /* istanbul ignore next */

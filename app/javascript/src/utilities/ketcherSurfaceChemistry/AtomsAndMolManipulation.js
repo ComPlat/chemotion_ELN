@@ -5,7 +5,7 @@
 /* eslint-disable no-param-reassign */
 import {
   getTemplateType, initializeKetcherData, templateWithBoundingBox,
-  fetchKetcherData, parsePolymerEntryByAtomIndex
+  fetchKetcherData, parsePolymerEntryByAtomIndex, loadTemplates
 } from 'src/utilities/ketcherSurfaceChemistry/InitializeAndParseKetcher';
 import {
   imageNodeCounter, imageUsedCounterSetter,
@@ -21,6 +21,7 @@ import {
   imagesList,
   textList,
   allAtoms,
+  allTemplates,
   deletedAtomsSetter
 } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
 import {
@@ -131,24 +132,30 @@ const associateTextNodeWithNewAlias = (atomLocation, newAlias, oldAlias) => {
 // helper function to process ketcher-rails files and adding image to ketcher canvas
 const addingPolymersToKetcher = async (railsPolymersList, data) => {
   try {
+    // Ensure templates are loaded before lookup (avoids template 14 showing as 10 when load races)
+    if (!Array.isArray(allTemplates) || allTemplates.length === 0) {
+      await loadTemplates();
+    }
     // Split by whitespace and drop empties so each R# atom gets the correct entry (e.g. "6/7/1.00-2.00" -> template 7)
     const polymerList = (railsPolymersList || '').trim().split(/\s+/).filter(Boolean);
     const collectedImages = [];
     await initializeKetcherData(data);
 
-    // When format is atomIndex/templateId/size (e.g. "2/10/1.00-1.00 0/25/1.00-1.00 1/52/1.50-2.00"),
-    // assign each entry to the correct atom by index so images and TextNode aliases stay in sync.
-    const polymerByAtomIndex = {};
+    // Format atomIndex/templateId/size (e.g. "0/10/1.00-1.00 1/14/1.00-1.00").
+    // Use position-in-list for mapping: entry i -> atom i, so "0/10 0/10 1/14" with 3 atoms
+    // correctly assigns template 10, 10, 14 (not 10, 14 and skipping atom 2).
+    const polymerByPosition = [];
     let useIndexedFormat = false;
     for (let i = 0; i < polymerList.length; i++) {
       const parsed = parsePolymerEntryByAtomIndex(polymerList[i]);
       if (parsed != null) {
-        polymerByAtomIndex[parsed.atomIndex] = { type: parsed.type, size: parsed.size };
+        polymerByPosition.push({ type: parsed.type, size: parsed.size });
         useIndexedFormat = true;
       }
     }
 
-    if (useIndexedFormat && Object.keys(polymerByAtomIndex).length > 0) {
+    if (useIndexedFormat && polymerByPosition.length > 0) {
+      let visitedPositions = 0;
       let maxAtomIndex = -1;
       for (const molName of mols) {
         const molecule = data[molName];
@@ -160,14 +167,18 @@ const addingPolymersToKetcher = async (railsPolymersList, data) => {
             || atom.label === KET_TAGS.inspiredLabel
             || ALIAS_PATTERNS.threeParts.test(atom.alias)
           );
-          const entry = polymerByAtomIndex[atomIndex];
-          if (entry && aliasPass) {
-            const { type: templateType, size: templateSize } = { type: entry.type, size: entry.size };
-            data[molName].atoms[atomIndex] = updateAtom(atom.location, templateType, atomIndex);
-            const newTemplate = await templateWithBoundingBox(templateType, atom.location, templateSize);
-            if (newTemplate) collectedImages.push(newTemplate);
-            if (atomIndex > maxAtomIndex) maxAtomIndex = atomIndex;
-          }
+          if (!aliasPass || visitedPositions >= polymerByPosition.length) continue;
+          const entry = polymerByPosition[visitedPositions];
+          const templateType = String(entry.type || '').trim();
+          const templateSize = entry.size || '1-1';
+          if (!templateType) continue;
+          // Use visitedPositions as image index so alias is t_templateId_0, t_templateId_1, ...
+          // atomIndex would be wrong for multi-mol: each mol's first atom has atomIndex 0.
+          data[molName].atoms[atomIndex] = updateAtom(atom.location, templateType, visitedPositions);
+          const newTemplate = await templateWithBoundingBox(templateType, atom.location, templateSize);
+          if (newTemplate) collectedImages.push(newTemplate);
+          visitedPositions += 1;
+          if (atomIndex > maxAtomIndex) maxAtomIndex = atomIndex;
         }
       }
       imageUsedCounterSetter(maxAtomIndex >= 0 ? maxAtomIndex : 0);
