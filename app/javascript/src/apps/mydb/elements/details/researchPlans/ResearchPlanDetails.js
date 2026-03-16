@@ -29,7 +29,7 @@ import ResearchPlanDetailsName from
   'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsName';
 import ResearchPlanDetailsContainers from
   'src/apps/mydb/elements/details/researchPlans/analysesTab/ResearchPlanDetailsContainers';
-import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
+import DetailCard from 'src/apps/mydb/elements/details/LegacyDetailCard';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';

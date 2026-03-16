@@ -8,7 +8,7 @@ import DetailActions from 'src/stores/alt/actions/DetailActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
-import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
+import DetailCard from 'src/apps/mydb/elements/details/LegacyDetailCard';
 
 import MetadataHeader from 'src/components/metadata/MetadataHeader';
 import MetadataGeneral from 'src/components/metadata/MetadataGeneral';

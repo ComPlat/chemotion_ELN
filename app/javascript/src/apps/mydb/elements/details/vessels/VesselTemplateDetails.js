@@ -9,7 +9,7 @@ import { toJS } from 'mobx';
 import {
   Button, Form, Row, Col, Table, OverlayTrigger, Popover, InputGroup, Modal, Card, Container
 } from 'react-bootstrap';
-import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
+import DetailCard from 'src/apps/mydb/elements/details/LegacyDetailCard';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import VesselsFetcher from 'src/fetchers/VesselsFetcher';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
