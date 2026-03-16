@@ -2234,23 +2234,27 @@ export default class ReactionDetailsScheme extends React.Component {
         <ReactionDetailsDuration
           reaction={reaction}
           onInputChange={onInputChange}
+          isInteractionReaction={isInteractionReaction}
         />
-        <Row className="mb-3">
-          <Col sm={6}>
-            <Form.Group className="">
-              <Form.Label className="text-nowrap">Type (Name Reaction Ontology)</Form.Label>
-              <OlsTreeSelect
-                selectName="rxno"
-                selectedValue={(reaction.rxno && reaction.rxno.trim()) || ''}
-                onSelectChange={(event) => onInputChange('rxno', event.trim())}
-                selectedDisable={!permitOn(reaction) || reaction.isMethodDisabled('rxno')}
-              />
-            </Form.Group>
-          </Col>
-          <Col sm={3}>
-            {this.renderRole()}
-          </Col>
-        </Row>
+        {/* Interaction mode intentionally drops ontology and role fields from the scheme tab. */}
+        {!isInteractionReaction && (
+          <Row className="mb-3">
+            <Col sm={6}>
+              <Form.Group className="">
+                <Form.Label className="text-nowrap">Type (Name Reaction Ontology)</Form.Label>
+                <OlsTreeSelect
+                  selectName="rxno"
+                  selectedValue={(reaction.rxno && reaction.rxno.trim()) || ''}
+                  onSelectChange={(event) => onInputChange('rxno', event.trim())}
+                  selectedDisable={!permitOn(reaction) || reaction.isMethodDisabled('rxno')}
+                />
+              </Form.Group>
+            </Col>
+            <Col sm={3}>
+              {this.renderRole()}
+            </Col>
+          </Row>
+        )}
         <Row className="mb-3">
           <Form.Group>
             <Form.Label>Description</Form.Label>
@@ -2277,6 +2281,7 @@ export default class ReactionDetailsScheme extends React.Component {
           onInputChange={onInputChange}
           additionQuillRef={this.additionQuillRef}
           onChange={(event) => this.handleMaterialsChange(event)}
+          isInteractionReaction={isInteractionReaction}
         />
       </>
     );

@@ -41,11 +41,48 @@ export default class ReactionDetailsDuration extends Component {
   }
 
   render() {
-    const { reaction } = this.props;
+    const { reaction, onInputChange, isInteractionReaction } = this.props;
     const durationCalc = reaction && reaction.durationCalc();
     const timePlaceholder = 'DD/MM/YYYY hh:mm:ss';
+
+    if (isInteractionReaction) {
+      // Interaction reactions use a single incubation-time input instead of
+      // the start/stop/duration workflow used for standard reactions.
+      return (
+        <Row className="mb-3">
+          <Col md={{ span: 3, offset: 9 }} sm={6}>
+            <Form.Group>
+              <Form.Label>Time (incubation)</Form.Label>
+              <InputGroup>
+                <Form.Control
+                  disabled={!permitOn(reaction) || reaction.gaseous}
+                  type="text"
+                  value={reaction.durationDisplay.dispValue || ''}
+                  ref={this.refDuration}
+                  placeholder="Input duration..."
+                  onChange={(event) => this.handleDurationChange(event)}
+                />
+                <OverlayTrigger
+                  placement="bottom"
+                  overlay={<Tooltip id="switch_incubation_unit">switch duration unit</Tooltip>}
+                >
+                  <Button
+                    disabled={!permitOn(reaction) || reaction.gaseous}
+                    variant="primary"
+                    onClick={() => this.changeDurationUnit()}
+                  >
+                    {reaction.durationUnit}
+                  </Button>
+                </OverlayTrigger>
+              </InputGroup>
+            </Form.Group>
+          </Col>
+        </Row>
+      );
+    }
+
     return (
-      <Row className='mb-3'>
+      <Row className="mb-3">
         <Col md={3} sm={6}>
           <Form.Group>
             <Form.Label>Start</Form.Label>
@@ -55,11 +92,15 @@ export default class ReactionDetailsDuration extends Component {
                 value={reaction.timestamp_start || ''}
                 disabled={!permitOn(reaction) || reaction.isMethodDisabled('timestamp_start') || reaction.gaseous}
                 placeholder={timePlaceholder}
-                onChange={event => this.props.onInputChange('timestampStart', event)}
+                onChange={event => onInputChange('timestampStart', event)}
               />
-                <Button disabled={!permitOn(reaction) || reaction.gaseous} variant='light' onClick={() => this.setCurrentTime('timestampStart')}>
-                  <i className="fa fa-clock-o" aria-hidden="true" />
-                </Button>
+              <Button
+                disabled={!permitOn(reaction) || reaction.gaseous}
+                variant="light"
+                onClick={() => this.setCurrentTime('timestampStart')}
+              >
+                <i className="fa fa-clock-o" aria-hidden="true" />
+              </Button>
             </InputGroup>
           </Form.Group>
         </Col>
@@ -72,7 +113,7 @@ export default class ReactionDetailsDuration extends Component {
                 value={reaction.timestamp_stop || ''}
                 disabled={!permitOn(reaction) || reaction.isMethodDisabled('timestamp_stop') || reaction.gaseous}
                 placeholder={timePlaceholder}
-                onChange={event => this.props.onInputChange('timestampStop', event)}
+                onChange={event => onInputChange('timestampStop', event)}
               />
               <Button disabled={!permitOn(reaction) || reaction.gaseous} variant='light' onClick={() => this.setCurrentTime('timestampStop')}>
                 <i className="fa fa-clock-o" aria-hidden="true" />
@@ -132,10 +173,12 @@ export default class ReactionDetailsDuration extends Component {
 
 ReactionDetailsDuration.propTypes = {
   reaction: PropTypes.object,
-  onInputChange: PropTypes.func
+  onInputChange: PropTypes.func,
+  isInteractionReaction: PropTypes.bool,
 };
 
 ReactionDetailsDuration.defaultProps = {
   reaction: {},
-  onInputChange: () => {}
+  onInputChange: () => {},
+  isInteractionReaction: false,
 };
