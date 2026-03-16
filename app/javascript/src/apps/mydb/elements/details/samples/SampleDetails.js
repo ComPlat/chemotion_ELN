@@ -1647,8 +1647,6 @@ export default class SampleDetails extends React.Component {
             onClose={() => this.setState({ ketcherSVGError: null })}
           >
             <strong>SVG generation failed.</strong>
-            {' '}
-            Falling back to the previous SVG.
             <br />
             <small className="text-muted">{ketcherSVGError}</small>
           </Alert>

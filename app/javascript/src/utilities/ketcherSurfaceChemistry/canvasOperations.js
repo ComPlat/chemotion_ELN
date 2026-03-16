@@ -447,7 +447,7 @@ const prepareSvg = async (editor) => {
     const svg = new XMLSerializer().serializeToString(doc);
     return { svg, message: null };
   } catch (e) {
-    return { svg: null, message: e?.message || 'Unknown error in prepareSvg' };
+    return { svg: null, message: e || 'Unknown error in prepareSvg' };
   }
 };
 
