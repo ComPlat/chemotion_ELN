@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Card, Button } from 'react-bootstrap';
 import QuillViewer from 'src/components/QuillViewer';
-import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
+import DetailCard from 'src/apps/mydb/elements/details/LegacyDetailCard';
 
 const tryParse = function TryParseToJson(obj) {
   if (typeof obj === 'object') return obj;

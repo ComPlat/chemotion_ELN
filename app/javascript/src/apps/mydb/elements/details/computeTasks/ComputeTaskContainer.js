@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Button, Table } from 'react-bootstrap';
 
-import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
+import DetailCard from 'src/apps/mydb/elements/details/LegacyDetailCard';
 
 import ComputeTaskActions from 'src/stores/alt/actions/ComputeTaskActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
