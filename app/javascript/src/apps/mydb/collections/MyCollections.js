@@ -1,77 +1,220 @@
-import React from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import Tree from 'react-ui-tree';
-import { Button, ButtonGroup, Form } from 'react-bootstrap';
+import { cloneDeep } from 'lodash';
+import { Button, ButtonGroup, Form, OverlayTrigger, Popover } from 'react-bootstrap';
 import ManagingModalSharing from 'src/components/managingActions/ManagingModalSharing';
-import CollectionStore from 'src/stores/alt/stores/CollectionStore';
-import CollectionActions from 'src/stores/alt/actions/CollectionActions';
-import SyncedCollectionsUsersModal from 'src/apps/mydb/collections/SyncedCollectionsUsersModal';
+import CollectionSharesEditModal from 'src/apps/mydb/collections/CollectionSharesEditModal';
+import { observer } from 'mobx-react';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
-export default class MyCollections extends React.Component {
-  constructor(props) {
-    super(props);
+const MyCollections = () => {
+  const collectionsStore = useContext(StoreContext).collections;
+  const tree = collectionsStore.own_collection_tree;
+  const [clonedTree, setClonedTree] = useState(cloneDeep(tree));
+  const [sharesModal, setSharesModal] = useState({ action: null, show: false, node: {} });
+  const [sharesEditModal, setSharesEditgModal] = useState({ show: false, node: {} });
+  const defaultPermissions = {
+    permissionLevel: 0,
+    sampleDetailLevel: 10,
+    reactionDetailLevel: 10,
+    wellplateDetailLevel: 10,
+    screenDetailLevel: 10,
+    elementDetailLevel: 10,
+  }
+  const [permissions, setPermissions] = useState(defaultPermissions);
 
-    this.state = {
-      active: { id: null },
-      deleted_ids: [],
+  useEffect(() => {
+    setClonedTree(cloneDeep(tree));
+  }, [tree])
 
-      tree: {
-        id: -1,
-        children: []
-      },
-
-      isChange: false,
-      sharingModal: {
-        action: null,
-        show: false
-      },
-      syncListModalNodeId: null,
-    };
-
-    this.onStoreChange = this.onStoreChange.bind(this);
-    this.bulkUpdate = this.bulkUpdate.bind(this);
-    this.handleChange = this.handleChange.bind(this);
-    this.renderNode = this.renderNode.bind(this);
-    this.handleModalHide = this.handleModalHide.bind(this);
-    this.openSyncListModal = this.openSyncListModal.bind(this);
-    this.closeSyncListModal = this.closeSyncListModal.bind(this);
+  const handleChange = (tree) => {
+    collectionsStore.setOwnCollectionTree(tree);
+    collectionsStore.setUpdateTree(true);
   }
 
-  componentDidMount() {
-    CollectionStore.listen(this.onStoreChange);
-    CollectionActions.fetchUnsharedCollectionRoots();
+  const addCollection = (node) => {
+    const params = { 
+      label: 'New Collection', parent_id: (node.id == -1 ? '' : node.id), inventory_id: node.inventory_id
+    }
+    collectionsStore.addCollection(params, true);
   }
 
-  componentWillUnmount() {
-    CollectionStore.unlisten(this.onStoreChange);
+  const changeCollectionLabel = (e, node) => {
+    collectionsStore.updateCollectionLabel(e.target.value, node);
+    collectionsStore.setUpdateTree(true);
   }
 
-  onStoreChange(state) {
-    const { tree } = this.state;
-    this.setState({
-      tree: {
-        ...tree,
-        children: state.unsharedRoots,
-      }
+  const bulkUpdate = () => {
+    // filter empty objects
+    const collections = tree.children.filter((child) => child.label);
+    collectionsStore.bulkUpdateCollection(collections);
+    collectionsStore.setUpdateTree(false);
+  }
+
+  const deleteCollection = (node) => {
+    collectionsStore.deleteCollection(node.id);
+  }
+
+  const openCollectionSharesModal = (node) => {
+    setPermissions(defaultPermissions);
+    setSharesModal({ action: 'create', show: true, node: node });
+  }
+
+  const closeCollectionSharesModal = () => {
+    setPermissions(defaultPermissions);
+    setSharesModal({ action: null, show: false, node: {} });
+  }
+
+  const editCollectionShares = (node, collectionShare) => {
+    setPermissions({
+      permissionLevel: collectionShare.permission_level,
+      sampleDetailLevel: collectionShare.sample_detail_level,
+      reactionDetailLevel: collectionShare.reaction_detail_level,
+      wellplateDetailLevel: collectionShare.wellplate_detail_level,
+      screenDetailLevel: collectionShare.screen_detail_level,
+      elementDetailLevel: collectionShare.element_detail_level,
     });
+    const nodeWithCollectionShare = {
+      ...node, collectionShareId: collectionShare.id, sharedWith: collectionShare.shared_with
+    }
+    setSharesModal({ action: 'edit', show: true, node: nodeWithCollectionShare });
   }
 
-  handleChange(tree) {
-    this.setState({
-      tree,
-      isChange: true
-    });
+  const deleteCollectionShares = (node, collectionShare) => {
+    collectionsStore.deleteCollectionShare(collectionShare.id, node.id);
   }
 
-  label(node) {
+  const openCollectionSharesEditModal = (node) => {
+    setSharesEditgModal({ show: true, node: { id: node.id, label: node.label } });
+  }
+
+  const closeCollectionSharesEditModal = () => {
+    setSharesEditgModal({ show: false, node: {} });
+  }
+
+  const renderCollectionShareButton = (node) => {
+    if (!node.shared) { return null }
+
+    const sharedWithUsers = collectionsStore.sharedWithUsers(node.id);
+    const users = sharedWithUsers !== undefined ? sharedWithUsers.shared_with_users : [];
+    const count = users.length > 0 ? `(${users.length})` : '';
+
+    return (
+      <Button
+        id={`collection-share-button-${node.id}`}
+        className="d-flex align-items-center gap-1"
+        onMouseDown={(e) => e.stopPropagation()}
+        onClick={() => openCollectionSharesEditModal(node)}
+        size="sm"
+        variant="warning"
+        disabled={node.isNew === true}
+      >
+        <i className="fa fa-users" />
+        <i className="fa fa-share-alt" />
+        {count}
+      </Button>
+    );
+  }
+
+  const addCollectionButton = (node) => {
+    return (
+      <Button
+        id={`add-new-collection-button${node.id !== -1 ? `-${node.id}` : ''}`}
+        size="sm"
+        variant="success"
+        onMouseDown={(e) => e.stopPropagation()}
+        onClick={() => addCollection(node)}
+      >
+        <i className="fa fa-plus" />
+      </Button>
+    );
+  }
+
+  const actions = (node) => {
     if (node.id == -1) {
       return (
-        <Form.Control
-          value="My Collections"
+        <div>
+          {collectionsStore.update_tree && (
+            <Button
+              id="save-collections-button"
+              className="me-2"
+              size="sm"
+              variant="warning"
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={() => bulkUpdate()}
+            >
+              Save
+            </Button>
+          )}
+          {addCollectionButton(node)}
+        </div>
+      );
+    }
+
+    const popover = (
+      <Popover>
+        <Popover.Body>
+          <div className="mb-2">Do you really want to delete "{node.label}"?</div>
+          <ButtonGroup>
+            <Button
+              variant="danger"
+              size="sm"
+              className="me-2"
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={() => deleteCollection(node)}
+            >
+              Yes
+            </Button>
+            <Button
+              variant="warning"
+              size="sm"
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={() => {}}
+            >
+              No
+            </Button>
+          </ButtonGroup>
+        </Popover.Body>
+      </Popover>
+    );
+
+    return (
+      <ButtonGroup>
+        {renderCollectionShareButton(node)}
+    
+        <Button
+          id="collection-share-btn"
           size="sm"
-          type="text"
-          className="ms-3 w-75"
-          disabled
-        />
+          variant="primary"
+          disabled={node.isNew === true}
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={() => openCollectionSharesModal(node, 'create')}
+        >
+          <i className="fa fa-plus" />
+          <i className="fa fa-share-alt ms-1" />
+        </Button>
+    
+        {addCollectionButton(node)}
+    
+        <OverlayTrigger
+          animation
+          placement="bottom"
+          root
+          trigger="focus"
+          overlay={popover}
+        >
+          <Button size="sm" variant="danger" onMouseDown={(e) => e.stopPropagation()}>
+            <i className="fa fa-trash-o" />
+          </Button>
+        </OverlayTrigger>
+      </ButtonGroup>
+    );
+  }
+
+  const label = (node) => {
+    if (node.id == -1) {
+      return (
+        <div className="ms-3 mb-2 fs-5">{node.label}</div>
       );
     }
     return (
@@ -80,285 +223,51 @@ export default class MyCollections extends React.Component {
         size="sm"
         type="text"
         value={node.label || ''}
-        onChange={(e) => { this.handleLabelChange(e, node); }}
+        onChange={(e) => { changeCollectionLabel(e, node); }}
       />
     );
   }
 
-  handleLabelChange(e, node) {
-    node.label = e.target.value;
-    this.forceUpdate();
-  }
-
-  // TODO: confirmation before start the updating process?
-  bulkUpdate() {
-    // filter empty objects
-    const collections = this.state.tree.children.filter((child) => child.label);
-
-    const params = {
-      collections,
-      deleted_ids: this.state.deleted_ids
-    };
-
-    CollectionActions.bulkUpdateUnsharedCollections(params);
-  }
-
-  actions(node) {
-    if (node.id == -1) {
-      const { isChange } = this.state;
-      return (
-        <div>
-          {isChange && (
-            <Button
-              id="save-collections-button"
-              size="sm"
-              variant="warning"
-              onMouseDown={(e) => e.stopPropagation()}
-              onClick={this.bulkUpdate}
-            >
-              Save
-            </Button>
-          )}
-          {this.addCollectionButton(node)}
-        </div>
-      );
-    }
-
-    return (
-      <ButtonGroup>
-        {this.renderSyncButton(node)}
-
-        <Button
-          id="sync-users-btn"
-          size="sm"
-          variant="primary"
-          disabled={node.isNew === true}
-          onClick={() => this.doSync(node, 'CreateSync')}
-        >
-          <i className="fa fa-plus" />
-          <i className="fa fa-share-alt ms-1" />
-        </Button>
-
-        {this.addSubcollectionButton(node)}
-
-        <Button
-          size="sm"
-          variant="danger"
-          id={`delete-collection-button_${node.id}`}
-          onClick={() => this.deleteCollection(node)}
-        >
-          <i className="fa fa-trash-o" />
-        </Button>
-      </ButtonGroup>
-    );
-  }
-
-  renderSyncButton(node) {
-    const syncUsers = node.sync_collections_users ?? [];
-    if (syncUsers.length === 0) return null;
-
-    return (
-      <Button
-        id={`sync-users-button_${node.id}`}
-        className="d-flex align-items-center gap-1"
-        onClick={() => this.openSyncListModal(node)}
-        size="sm"
-        variant="warning"
-        disabled={node.isNew === true}
-      >
-        <i className="fa fa-users" />
-        <i className="fa fa-share-alt" />
-        {`(${syncUsers.length})`}
-      </Button>
-    );
-  }
-
-  doSync(node, action) {
-    this.setState({
-      sharingModal: { show: true, action },
-      active: node,
-    });
-  }
-
-  addCollectionButton(node) {
-    return (
-      <Button
-        id="add-new-collection-button"
-        size="sm"
-        variant="success"
-        onClick={() => this.addSubcollection(node)}
-        onMouseDown={(e) => { e.stopPropagation(); }}
-      >
-        <i className="fa fa-plus" />
-      </Button>
-    );
-  }
-
-  openSyncListModal(node) {
-    this.setState({
-      syncListModalNodeId: node.id,
-    });
-  }
-
-  closeSyncListModal() {
-    this.setState({
-      syncListModalNodeId: null,
-    });
-  }
-
-  addSubcollectionButton(node) {
-    return (
-      <Button
-        id={`add-subcollection-to-collection_${node.id}`}
-        size="sm"
-        variant="success"
-        onClick={() => this.addSubcollection(node)}
-      >
-        <i className="fa fa-plus" />
-      </Button>
-    );
-  }
-
-  addSubcollection(node) {
-    if (node.children) {
-      node.children.push({
-        id: Math.random(),
-        label: 'New Collection',
-        isNew: true
-      });
-    } else {
-      node.children = [{
-        id: Math.random(),
-        label: 'New Collection',
-        isNew: true
-      }];
-    }
-    this.forceUpdate();
-  }
-
-  deleteCollection(node) {
-    const children = node.children || [];
-    const parent = this.findParentById(this.state.tree, node.id);
-
-    this.removeNodeById(parent, node.id);
-    this.appendChildrenToParent(parent, children);
-
-    if (!node.isNew) {
-      const deleted_ids = this.state.deleted_ids.concat([node.id]);
-
-      this.setState({
-        deleted_ids
-      });
-    }
-    this.forceUpdate();
-  }
-
-  appendChildrenToParent(parent, children) {
-    if (children.length > 0) {
-      children.forEach((child) => {
-        parent.children.push(child);
-      });
-    } else if (parent.label == 'My Collections') {
-      parent.children.push({});
-    }
-  }
-
-  findParentById(root, id) {
-    if (!root.children) {
-      root.children = [];
-      return null;
-    }
-
-    const { children } = root;
-
-    for (let i = 0; i < children.length; i++) {
-      if (children[i].id == id) {
-        return root;
-      }
-      const parent = this.findParentById(children[i], id);
-      if (parent) {
-        return parent;
-      }
-    }
-  }
-
-  findNodeById(node, id) {
-    if (node.id === id) return node;
-    if (!node.children) return null;
-
-    const { children } = node;
-    for (let i = 0; i < children.length; i += 1) {
-      const found = this.findNodeById(children[i], id);
-      if (found) return found;
-    }
-
-    return null;
-  }
-
-  removeNodeById(parent, id) {
-    parent.children = parent.children.filter((child) => child.id != id);
-  }
-
-  handleModalHide() {
-    this.setState({
-      sharingModal: {
-        show: false,
-        action: null,
-      }
-    });
-  }
-
-  renderNode(node) {
+  const renderNode = (node) => {
     return (
       <div className="collection-node py-1 d-flex justify-content-between">
-        {this.label(node)}
-        {this.actions(node)}
+        {label(node)}
+        {actions(node)}
       </div>
     );
   }
 
-  render() {
-    const {
-      tree, sharingModal, syncListModalNodeId, active
-    } = this.state;
-    return (
-      <div className="tree">
-        <Tree
-          paddingLeft={20}
-          tree={tree}
-          onChange={this.handleChange}
-          renderNode={this.renderNode}
+  return (
+    <div className="tree mt-2">
+      <Tree
+        paddingLeft={20}
+        tree={clonedTree}
+        onChange={handleChange}
+        renderNode={renderNode}
+      />
+      {Object.keys(sharesModal.node).length >= 1 && sharesModal.show && (
+        <ManagingModalSharing
+          title={sharesModal.action === 'create'
+            ? `Share "${sharesModal.node.label}"`
+            : `Edit Permissions of "${sharesModal.node.sharedWith}" at "${sharesModal.node.label}"`}
+          collectionId={sharesModal.node.id}
+          collectionShareId={sharesModal.node?.collectionShareId}
+          onHide={closeCollectionSharesModal}
+          collectionPermissions={permissions}
+          showUserSelect={sharesModal.action === 'create'}
+          shareType={sharesModal.action}
         />
-        {active.id !== null && sharingModal.show && (
-          <ManagingModalSharing
-            title={sharingModal.action === 'CreateSync'
-              ? `Synchronize '${active.label}'`
-              : 'Edit Synchronization'}
-            collectionId={active.id}
-            onHide={this.handleModalHide}
-            permissionLevel={active.permission_level}
-            sampleDetailLevel={active.sample_detail_level}
-            reactionDetailLevel={active.reaction_detail_level}
-            wellplateDetailLevel={active.wellplate_detail_level}
-            screenDetailLevel={active.screen_detail_level}
-            selectUsers={sharingModal.action === 'CreateSync'}
-            collAction={sharingModal.action}
-          />
-        )}
-
-        {syncListModalNodeId && (
-          <SyncedCollectionsUsersModal
-            node={this.findNodeById(tree, syncListModalNodeId)}
-            updateSync={(collection) => {
-              this.doSync(collection, 'EditSync');
-            }}
-            deleteSync={(collection) => {
-              CollectionActions.deleteSync({ id: collection.id, is_syncd: false });
-            }}
-            onHide={this.closeSyncListModal}
-          />
-        )}
-      </div>
-    );
-  }
+      )}
+      {Object.keys(sharesEditModal.node).length >= 1 && sharesEditModal.show && (
+        <CollectionSharesEditModal
+          node={sharesEditModal.node}
+          updateNode={editCollectionShares}
+          deleteNode={deleteCollectionShares}
+          onHide={closeCollectionSharesEditModal}
+        />
+      )}
+    </div>
+  );
 }
+
+export default observer(MyCollections);

@@ -1,78 +1,33 @@
-import React from 'react';
-import PropTypes from 'prop-types';
+import React, { useState, useContext } from 'react';
 import { Select } from 'src/components/common/Select';
-import CollectionStore from 'src/stores/alt/stores/CollectionStore';
+import { collectionOptions } from 'src/utilities/collectionUtilities';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
-export default class CollectionSelect extends React.Component {
-  constructor(props) {
-    super(props);
+const CollectionSelect = ({ value, withShared, onChange }) => {
+  const collectionsStore = useContext(StoreContext).collections;
+  const [selectedCollection, setSelectedCollection] = useState(value || null);
 
-    const { unsharedRoots } = CollectionStore.getState();
-    this.state = {
-      unsharedRoots: unsharedRoots || [],
-    };
+  const optionLabel = ({ label, depth }) => (
+    <span style={{ paddingLeft: `${depth * 10}px` }}>
+      {label}
+    </span>
+  );
 
-    this.onColChange = this.onColChange.bind(this);
-    this.onColSelectChange = this.onColSelectChange.bind(this);
+  const changeValue = (val) => {
+    setSelectedCollection(val);
+    onChange(val);
   }
 
-  componentDidMount() {
-    CollectionStore.listen(this.onColChange);
-  }
-
-  onColChange(state) {
-    if (state.unsharedRoots != this.state.unsharedRoots) {
-      this.setState({
-        unsharedRoots: state.unsharedRoots || [],
-      });
-    }
-  }
-
-  onColSelectChange({ value }) {
-    this.props.onChange(value);
-  }
-
-  makeTree(collections, tree = [], depth = 0) {
-    if (!Array.isArray(collections)) return tree;
-
-    collections.forEach((collection) => {
-      if (collection.label === 'All') return;
-
-      tree.push({ value: collection.id, label: collection.label, depth });
-      this.makeTree(collection.children, tree, depth + 1);
-    });
-
-    return tree;
-  }
-
-  render() {
-    const { value } = this.props;
-    const { unsharedRoots } = this.state;
-    const options = this.makeTree(unsharedRoots);
-
-    const optionLabel = ({ label, depth }) => (
-      <span style={{ paddingLeft: `${depth * 10}px` }}>
-        {label}
-      </span>
-    );
-
-    return (
-      <Select
-        id="modal-collection-id-select"
-        options={options}
-        formatOptionLabel={optionLabel}
-        value={options.find((o) => o.value === value)}
-        onChange={this.onColSelectChange}
-      />
-    );
-  }
+  return (
+    <Select
+      id="modal-collection-id-select"
+      options={collectionOptions(collectionsStore, withShared)}
+      formatOptionLabel={optionLabel}
+      value={selectedCollection}
+      getOptionValue={(o) => o.id}
+      onChange={(val) => changeValue(val)}
+    />
+  );
 }
 
-CollectionSelect.propTypes = {
-  value: PropTypes.number,
-  onChange: PropTypes.func.isRequired,
-};
-
-CollectionSelect.defaultProps = {
-  value: null,
-};
+export default CollectionSelect;

@@ -14,14 +14,8 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
     return super.execData(params, `generic_elements/${path}`);
   }
 
-  static fetchByCollectionId(id, queryParams = {}, isSync = false) {
-    return BaseFetcher.fetchByCollectionId(
-      id,
-      queryParams,
-      isSync,
-      'generic_elements',
-      GenericEl
-    );
+  static fetchByCollectionId(id, queryParams = {}) {
+    return BaseFetcher.fetchByCollectionId(id, queryParams, 'generic_elements', GenericEl);
   }
 
   static export(element, klass, exportFormat) {

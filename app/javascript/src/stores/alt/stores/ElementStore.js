@@ -8,7 +8,6 @@ import Aviator from 'aviator';
 import alt from 'src/stores/alt/alt';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
-import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -32,10 +31,9 @@ import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import WellplatesFetcher from 'src/fetchers/WellplatesFetcher';
 import ScreensFetcher from 'src/fetchers/ScreensFetcher';
 
-import { elementShowOrNew } from 'src/utilities/routesUtils';
-
 import DetailActions from 'src/stores/alt/actions/DetailActions';
-import { SameEleTypId, UrlSilentNavigation } from 'src/utilities/ElementUtils';
+import { SameEleTypId } from 'src/utilities/ElementUtils';
+import { aviatorNavigation, aviatorNavigationWithCollectionId } from 'src/utilities/routesUtils';
 import { chmoConversions } from 'src/components/OlsComponent';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import GenericEl from 'src/models/GenericEl';
@@ -285,9 +283,6 @@ class ElementStore {
       handleFetchMetadata: ElementActions.fetchMetadata,
       handleDeleteElements: ElementActions.deleteElements,
 
-      handleUpdateElementsCollection: ElementActions.updateElementsCollection,
-      handleAssignElementsCollection: ElementActions.assignElementsCollection,
-      handleRemoveElementsCollection: ElementActions.removeElementsCollection,
       handleSplitAsSubsamples: ElementActions.splitAsSubsamples,
       handleSplitElements: ElementActions.splitElements,
       handleSplitAsSubwellplates: ElementActions.splitAsSubwellplates,
@@ -322,6 +317,7 @@ class ElementStore {
       ],
       handleUpdateEmbeddedResearchPlan: ElementActions.updateEmbeddedResearchPlan,
       handleRefreshComputedProp: ElementActions.refreshComputedProp,
+      handleRefreshElementsAfterCollectionChanges: ElementActions.refreshElementsAfterCollectionChanges,
     });
   }
 
@@ -420,7 +416,7 @@ class ElementStore {
   handleOpenDeviceAnalysis({ device, type }) {
     switch (type) {
       case "NMR":
-        const { currentCollection, isSync } = UIStore.getState();
+        const { currentCollection } = UIStore.getState();
         const deviceAnalysis = device.devicesAnalyses.find((a) => a.analysisType === "NMR");
 
         // update Device in case of sample was added by dnd and device was not saved
@@ -428,15 +424,9 @@ class ElementStore {
         ElementActions.saveDevice(device);
 
         if (deviceAnalysis) {
-          Aviator.navigate(isSync
-            ? `/scollection/${currentCollection.id}/devicesAnalysis/${deviceAnalysis.id}`
-            : `/collection/${currentCollection.id}/devicesAnalysis/${deviceAnalysis.id}`
-          );
+          Aviator.navigate(`/collection/${currentCollection.id}/devicesAnalysis/${deviceAnalysis.id}`);
         } else {
-          Aviator.navigate(isSync
-            ? `/scollection/${currentCollection.id}/devicesAnalysis/new/${device.id}/${type}`
-            : `/collection/${currentCollection.id}/devicesAnalysis/new/${device.id}/${type}`
-          );
+          Aviator.navigate(`/collection/${currentCollection.id}/devicesAnalysis/new/${device.id}/${type}`);
         }
         break;
     }
@@ -527,13 +517,10 @@ class ElementStore {
   }
 
   handleSaveDeviceAnalysis(analysis) {
-    const { currentCollection, isSync } = UIStore.getState();
+    const { currentCollection } = UIStore.getState();
     this.state.currentElement = analysis;
 
-    Aviator.navigate(isSync
-      ? `/scollection/${currentCollection.id}/devicesAnalysis/${analysis.id}`
-      : `/collection/${currentCollection.id}/devicesAnalysis/${analysis.id}`
-    );
+    Aviator.navigate(`/collection/${currentCollection.id}/devicesAnalysis/${analysis.id}`);
   }
 
   handleChangeAnalysisExperimentProp({ analysis, experiment, prop, value }) {
@@ -622,30 +609,13 @@ class ElementStore {
     ElementActions.deleteElementsByUIState(params);
   }
 
-  handleUpdateElementsCollection() {
-    CollectionActions.fetchUnsharedCollectionRoots();
+  handleRefreshElementsAfterCollectionChanges() {
     UIActions.uncheckWholeSelection.defer();
-    this.fetchElementsByCollectionIdandLayout();
-  }
-
-  handleAssignElementsCollection() {
-    CollectionActions.fetchUnsharedCollectionRoots();
-    UIActions.uncheckWholeSelection.defer();
-    this.fetchElementsByCollectionIdandLayout();
-  }
-
-  handleRemoveElementsCollection() {
-    // CollectionActions.fetchUnsharedCollectionRoots();
-    // UIActions.clearSearchSelection.defer()
-    UIActions.uncheckWholeSelection.defer();
-    this.waitFor(UIStore.dispatchToken);
-
     this.fetchElementsByCollectionIdandLayout();
   }
 
   fetchElementsByCollectionIdandLayout() {
     const { currentSearchSelection, currentCollection } = UIStore.getState();
-    const isSync = !!(currentCollection && currentCollection.is_sync_to_me);
     if (currentSearchSelection != null) {
       const { currentType } = UserStore.getState();
       this.handleRefreshElements(currentType);
@@ -664,7 +634,7 @@ class ElementStore {
         if (layout.sequence_based_macromolecule_sample && layout.sequence_based_macromolecule_sample > 0) {
           this.handleRefreshElements('sequence_based_macromolecule_sample');
         }
-        if (!isSync && layout.research_plan && layout.research_plan > 0) { this.handleRefreshElements('research_plan'); }
+        if (layout.research_plan && layout.research_plan > 0) { this.handleRefreshElements('research_plan'); }
 
         const { currentUser, genericEls } = UserStore.getState();
         if (MatrixCheck(currentUser.matrix, 'genericElement')) {
@@ -852,12 +822,7 @@ class ElementStore {
   }
 
   handleSplitAsSubsamples(uiState) {
-    ElementActions.fetchSamplesByCollectionId(
-      uiState.currentCollection.id,
-      {},
-      uiState.isSync,
-      this.state.moleculeSort
-    );
+    ElementActions.fetchSamplesByCollectionId(uiState.currentCollection.id, {}, this.state.moleculeSort);
   }
 
   handleSplitElements(obj) {
@@ -870,17 +835,12 @@ class ElementStore {
     const params = {
       page, perPage, fromDate, toDate, userLabel, productOnly, name
     };
-    ElementActions.fetchGenericElsByCollectionId(ui_state.currentCollection.id, params, ui_state.isSync, name);
+    ElementActions.fetchGenericElsByCollectionId(ui_state.currentCollection.id, params, name);
   }
 
   handleSplitAsSubwellplates(uiState) {
     ElementActions.fetchWellplatesByCollectionId(uiState.currentCollection.id);
-    ElementActions.fetchSamplesByCollectionId(
-      uiState.currentCollection.id,
-      {},
-      uiState.isSync,
-      this.state.moleculeSort
-    );
+    ElementActions.fetchSamplesByCollectionId(uiState.currentCollection.id, {}, this.state.moleculeSort);
   }
 
   handleSplitAsSubCellLines(uiState) {
@@ -1101,11 +1061,7 @@ class ElementStore {
   }
 
   handleSplitAsSubDeviceDescription(uiState) {
-    ElementActions.fetchDeviceDescriptionsByCollectionId(
-      uiState.currentCollectionId,
-      {},
-      uiState.isSync,
-    );
+    this.handleRefreshElements('device_description');
   }
 
   // -- Sequence Based Macromolecules --
@@ -1134,11 +1090,7 @@ class ElementStore {
   }
 
   handleSplitAsSubSequenceBasedMacromoleculeSample(uiState) {
-    ElementActions.fetchSequenceBasedMacromoleculeSamplesByCollectionId(
-      uiState.currentCollectionId,
-      {},
-      uiState.isSync,
-    );
+    this.handleRefreshElements('sequence_based_macromolecule_sample');
   }
 
   // -- Reactions --
@@ -1225,17 +1177,17 @@ class ElementStore {
     this.changeCurrentElement(
       Reaction.copyFromReactionAndCollectionId(reaction, colId, keepAmounts)
     );
-    Aviator.navigate(`/collection/${colId}/reaction/copy`);
+    aviatorNavigationWithCollectionId(result.colId, 'reaction', 'copy', true, false);
   }
 
   handleCopyResearchPlan(result) {
     this.changeCurrentElement(ResearchPlan.copyFromResearchPlanAndCollectionId(result.research_plan, result.colId));
-    Aviator.navigate(`/collection/${result.colId}/research_plan/copy`);
+    aviatorNavigationWithCollectionId(result.colId, 'research_plan', 'copy', true, false);
   }
 
   handleCopyElement(result) {
     this.changeCurrentElement(GenericEl.copyFromCollectionId(result.element, result.colId));
-    Aviator.navigate(`/collection/${result.colId}/${result.element.type}/copy`);
+    aviatorNavigationWithCollectionId(result.colId, result.element.type, 'copy', true, false);
   }
 
   handleCopyCellLine(result) {
@@ -1268,15 +1220,8 @@ class ElementStore {
   navigateToNewElement(element = {}, klassType = '') {
     this.waitFor(UIStore.dispatchToken);
     const { type, id } = element;
-    const { uri, namedParams } = Aviator.getCurrentRequest();
-    const uriArray = uri.split(/\//);
-    if (!type) {
-      Aviator.navigate(`/${uriArray[1]}/${uriArray[2]}`, { silent: true });
-      return null;
-    }
-    namedParams[`${type}ID`] = id;
-    Aviator.navigate(`/${uriArray[1]}/${uriArray[2]}/${type}/${id}`, { silent: true });
-    elementShowOrNew({ type, klassType, params: namedParams });
+
+    aviatorNavigation(type, id, true, true);
     return null;
   }
 
@@ -1322,7 +1267,6 @@ class ElementStore {
         selection: currentSearchSelection,
         collectionId: uiState.currentCollection.id,
         page,
-        isSync: uiState.isSync,
         moleculeSort
       });
     } else if (currentSearchByID != null) {
@@ -1346,13 +1290,13 @@ class ElementStore {
         'fetchSequenceBasedMacromoleculeSamplesByCollectionId'
       ];
       if (allowedActions.includes(fn)) {
-        const actionFn = ElementActions[fn](uiState.currentCollection.id, params, uiState.isSync, sortValue);
+        const actionFn = ElementActions[fn](uiState.currentCollection.id, params, sortValue);
         if (typeof actionFn === 'function') {
           actionFn(this.alt.dispatch.bind(this));
         }
       } else {
-        ElementActions.fetchGenericElsByCollectionId(uiState.currentCollection.id, params, uiState.isSync, type);
-        ElementActions.fetchSamplesByCollectionId(uiState.currentCollection.id, params, uiState.isSync, moleculeSort);
+        ElementActions.fetchGenericElsByCollectionId(uiState.currentCollection.id, params, type);
+        ElementActions.fetchSamplesByCollectionId(uiState.currentCollection.id, params, moleculeSort);
       }
     }
 
@@ -1404,7 +1348,6 @@ class ElementStore {
       selection,
       collectionId: uiState.currentCollection.id,
       page,
-      isSync: uiState.isSync,
       moleculeSort
     });
   }
@@ -1772,7 +1715,7 @@ class ElementStore {
       this.changeCurrentElement(newCurrentElement);
     }
 
-    UrlSilentNavigation(newCurrentElement);
+    aviatorNavigation(newCurrentElement?.type, newCurrentElement?.id, true, false);
     return true;
   }
 
@@ -1860,8 +1803,8 @@ class ElementStore {
   static isCurrentElement(element) {
     const currentElement = this.state?.currentElement;
     return !!element && !!currentElement
-         && currentElement.type === element.type
-         && currentElement.id === element.id;
+      && currentElement.type === element.type
+      && currentElement.id === element.id;
   }
 }
 

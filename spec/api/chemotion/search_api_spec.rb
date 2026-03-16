@@ -3,48 +3,72 @@
 require 'rails_helper'
 
 # rubocop:disable RSpec/MultipleMemoizedHelpers, RSpec/MultipleExpectations,  RSpec/NestedGroups
-
+# rubocop:disable RSpec/IndexedLet, Naming/VariableNumber
 describe Chemotion::SearchAPI do
   include_context 'api request authorization context'
 
   let(:collection) { create(:collection, user: user) }
   let(:other_collection) { create(:collection, user: user) }
-  let(:sample_a) { create(:sample, name: 'SampleA', creator: user) }
-  let(:sample_b) { create(:sample, name: 'SampleB', creator: user) }
-  let(:sample_c) { create(:sample, name: 'SampleC', creator: user) }
-  let(:sample_d) { create(:sample, name: 'SampleD', creator: user) }
-  let(:sample_e) { create(:sample, name: 'Methonol', creator: user, molfile: mof3000_two) }
-  let(:sample_f) { create(:sample, name: 'Dekan', creator: user, molfile: mof3000) }
-  let(:wellplate) { create(:wellplate, name: 'Wellplate', wells: [build(:well, sample: sample_a)]) }
-  let(:other_wellplate) { create(:wellplate, name: 'Other Wellplate', wells: [build(:well, sample: sample_b)]) }
-  let(:reaction) { create(:reaction, name: 'Reaction', samples: [sample_a, sample_b], creator: user) }
+  let(:sample_a) { create(:sample, name: 'Water', creator: user, collections: [collection]) }
+  let(:sample_b) { create(:sample, name: 'Carbon', creator: user, collections: [collection, other_collection]) }
+  let(:sample_c) { create(:sample, name: 'Plutonium', creator: user, collections: [other_collection]) }
+  let(:sample_d) { create(:sample, name: 'Iron', creator: user, collections: [other_collection]) }
+  let(:sample_e) { create(:sample, name: 'Methonol', creator: user, molfile: mof3000_2, collections: [collection]) }
+  let(:sample_f) { create(:sample, name: 'Dekan', creator: user, molfile: mof3000_1, collections: [collection]) }
+  let(:wellplate) do
+    create(:wellplate, name: 'Wellplate', wells: [build(:well, sample: sample_a)], collections: [collection])
+  end
+  let(:other_wellplate) do
+    create(
+      :wellplate,
+      name: 'Other Wellplate',
+      wells: [build(:well, sample: sample_b)],
+      collections: [other_collection],
+    )
+  end
+  let(:reaction) do
+    create(:reaction, name: 'Reaction', samples: [sample_a, sample_b], creator: user, collections: [collection])
+  end
   let(:invalid_reaction_with_duration) do
-    create(:reaction, name: 'invalid Reaction', creator: user, duration: 'Day(s)')
+    create(:reaction, name: 'invalid Reaction', creator: user, duration: 'Day(s)', collections: [collection])
   end
   let(:reaction_with_temperature) do
     create(:reaction, name: 'reaction with temperature',
                       creator: user,
-                      temperature: { data: [], userText: '21.24', valueUnit: '°C' })
+                      temperature: { data: [], userText: '21.24', valueUnit: '°C' },
+                      collections: [collection])
   end
   let(:reaction_with_negative_temperature) do
     create(:reaction, name: 'reaction with temperature',
                       creator: user,
-                      temperature: { data: [], userText: '-21', valueUnit: '°C' })
+                      temperature: { data: [], userText: '-21', valueUnit: '°C' },
+                      collections: [collection])
   end
 
   let(:invalid_reaction_with_temperature) do
     create(:reaction, name: 'invalid reaction with temperature',
                       creator: user,
-                      temperature: { data: [], userText: '-4 to rt', valueUnit: '°C' })
+                      temperature: { data: [], userText: '-4 to rt', valueUnit: '°C' },
+                      collections: [collection])
   end
 
-  let(:reaction_with_duration) { create(:reaction, name: 'invalid Reaction', creator: user, duration: '1.33 Day(s)') }
-  let(:other_reaction) { create(:reaction, name: 'Other Reaction', samples: [sample_c, sample_d], creator: user) }
-  let(:screen) { create(:screen, name: 'Screen') }
-  let(:other_screen) { create(:screen, name: 'Other Screen') }
+  let(:reaction_with_duration) do
+    create(:reaction, name: 'invalid Reaction', creator: user, duration: '1.33 Day(s)', collections: [collection])
+  end
+  let(:other_reaction) do
+    create(
+      :reaction,
+      name: 'Other Reaction',
+      samples: [sample_c, sample_d],
+      creator: user,
+      collections: [other_collection],
+    )
+  end
+  let(:screen) { create(:screen, name: 'Screen', collections: [collection]) }
+  let(:other_screen) { create(:screen, name: 'Other Screen', collections: [other_collection]) }
   let!(:cell_line) { create(:cellline_sample, name: 'another-cellline-search-example', collections: [collection]) }
-  let!(:mof3000) { Rails.root.join('spec/fixtures/mof_v3000_1.mol').read }
-  let!(:mof3000_two) { Rails.root.join('spec/fixtures/mof_v3000_2.mol').read }
+  let!(:mof3000_1) { Rails.root.join('spec/fixtures/mof_v3000_1.mol').read }
+  let!(:mof3000_2) { Rails.root.join('spec/fixtures/mof_v3000_2.mol').read }
 
   let(:sbmm_sample_uniprot) do
     create(
@@ -71,24 +95,25 @@ describe Chemotion::SearchAPI do
   end
 
   before do
-    CollectionsReaction.create!(reaction: reaction, collection: collection)
-    CollectionsReaction.create!(reaction: invalid_reaction_with_duration, collection: collection)
-    CollectionsReaction.create!(reaction: reaction_with_duration, collection: collection)
-
-    CollectionsReaction.create!(reaction: reaction_with_temperature, collection: collection)
-    CollectionsReaction.create!(reaction: reaction_with_negative_temperature, collection: collection)
-    CollectionsReaction.create!(reaction: invalid_reaction_with_temperature, collection: collection)
-    CollectionsSample.create!(sample: sample_a, collection: collection)
-    CollectionsSample.create!(sample: sample_e, collection: collection)
-    CollectionsSample.create!(sample: sample_f, collection: collection)
-    CollectionsScreen.create!(screen: screen, collection: collection)
-    CollectionsWellplate.create!(wellplate: wellplate, collection: collection)
+    sample_a
+    sample_b
+    sample_c
+    sample_d
+    sample_e
+    sample_f
+    reaction
+    other_reaction
+    invalid_reaction_with_duration
+    reaction_with_duration
+    reaction_with_temperature
+    reaction_with_negative_temperature
+    invalid_reaction_with_duration
+    invalid_reaction_with_temperature
+    screen
+    other_screen
+    wellplate
+    other_wellplate
     ScreensWellplate.create!(wellplate: wellplate, screen: screen)
-
-    CollectionsReaction.create!(reaction: other_reaction, collection: other_collection)
-    CollectionsSample.create!(sample: sample_b, collection: other_collection)
-    CollectionsScreen.create!(screen: other_screen, collection: other_collection)
-    CollectionsWellplate.create!(wellplate: other_wellplate, collection: other_collection)
     ScreensWellplate.create!(wellplate: other_wellplate, screen: other_screen)
 
     CollectionsSequenceBasedMacromoleculeSample.create!(sequence_based_macromolecule_sample: sbmm_sample_uniprot,
@@ -173,7 +198,7 @@ describe Chemotion::SearchAPI do
     end
 
     context 'when searching a sample in correct collection' do
-      let(:search_term) { 'SampleA' }
+      let(:search_term) { 'Water' }
 
       it 'returns the sample' do
         expect(parsed_json_response.dig('samples', 'totalElements')).to eq 1
@@ -244,6 +269,7 @@ describe Chemotion::SearchAPI do
           value: search_term,
           sub_values: [],
           unit: '',
+          available_options: [],
         },
       ]
     end
@@ -262,7 +288,7 @@ describe Chemotion::SearchAPI do
     end
 
     context 'when searching a name in samples in correct collection' do
-      let(:search_term) { 'SampleA' }
+      let(:search_term) { 'Water' }
 
       it 'returns the sample and all other objects referencing the sample from the requested collection' do
         expect(parsed_json_response.dig('reactions', 'totalElements')).to eq 1
@@ -290,6 +316,7 @@ describe Chemotion::SearchAPI do
               value: search_term,
               sub_values: [],
               unit: '',
+              available_options: [],
             },
           ]
         end
@@ -320,6 +347,7 @@ describe Chemotion::SearchAPI do
             value: '12.0',
             sub_values: [],
             unit: 'Hour(s)',
+            available_options: [],
           },
         ]
       end
@@ -447,8 +475,8 @@ describe Chemotion::SearchAPI do
         it 'returns the sample' do
           expect(parsed_json_response.dig('reactions', 'totalElements')).to eq 1
           expect(parsed_json_response.dig('reactions', 'ids')).to eq [reaction.id]
-          expect(parsed_json_response.dig('samples', 'totalElements')).to eq 2
-          expect(parsed_json_response.dig('samples', 'ids')).to eq [sample_e.id, sample_a.id]
+          expect(parsed_json_response.dig('samples', 'totalElements')).to eq 3
+          expect(parsed_json_response.dig('samples', 'ids').sort).to eq [sample_e.id, sample_a.id, sample_b.id].sort
           expect(parsed_json_response.dig('screens', 'totalElements')).to eq 1
           expect(parsed_json_response.dig('screens', 'ids')).to eq [screen.id]
           expect(parsed_json_response.dig('wellplates', 'totalElements')).to eq 1
@@ -459,14 +487,15 @@ describe Chemotion::SearchAPI do
 
     context 'when search_by_fingerprint_sub' do
       context 'when searching with explicit hydrogen' do
-        let(:aromatic_molfiles) { build_list(:molfile, 2, type: :aromatics) }
+        let(:aromatic_molfiles) { build_list(:molfile, 2, { type: :aromatics }) }
         let(:query_molfile) { build(:molfile, type: :aromatic_explicit_hydrogen) }
+        let(:aromatic_collection) { create(:collection, user: user) }
         let(:aromatic_samples) do
           create_list(:sample, 2) do |sample, i|
             sample.molfile = aromatic_molfiles[i]
+            sample.collections = [aromatic_collection]
           end
         end
-        let(:aromatic_collection) { create(:collection, user: user, samples: aromatic_samples) }
         let(:params) do
           {
             selection: {
@@ -509,8 +538,9 @@ describe Chemotion::SearchAPI do
         end
 
         it 'returns the sample and all other objects referencing the sample from the requested collection' do
-          expected_count = Rails.configuration.pg_cartridge == 'none' ? 2 : 1
-          expected_ids = Rails.configuration.pg_cartridge == 'none' ? [sample_a.id, sample_e.id] : [sample_a.id]
+          expected_count = Rails.configuration.pg_cartridge == 'none' ? 3 : 2
+          expected_ids =
+            Rails.configuration.pg_cartridge == 'none' ? [sample_a.id, sample_e.id] : [sample_a.id, sample_b.id]
 
           expect(parsed_json_response.dig('reactions', 'totalElements')).to eq 1
           expect(parsed_json_response.dig('reactions', 'ids')).to eq [reaction.id]
@@ -524,7 +554,7 @@ describe Chemotion::SearchAPI do
       end
 
       context 'when searching a molfile in samples in wrong collection' do
-        let(:molfile) { mof3000 }
+        let(:molfile) { mof3000_1 }
         let(:params) do
           {
             selection: {
@@ -591,7 +621,7 @@ describe Chemotion::SearchAPI do
     let(:url) { '/api/v1/search/samples' }
 
     context 'when searching a sample in correct collection' do
-      let(:search_term) { 'SampleA' }
+      let(:search_term) { 'Water' }
       let(:params) do
         {
           selection: {
@@ -682,4 +712,5 @@ describe Chemotion::SearchAPI do
     pending 'TODO: Add missing spec'
   end
 end
+# rubocop:enable RSpec/IndexedLet, Naming/VariableNumber
 # rubocop:enable RSpec/MultipleMemoizedHelpers, RSpec/MultipleExpectations, RSpec/NestedGroups

@@ -3,17 +3,14 @@ import {
   SplitButton, Button, ButtonToolbar, Form, Modal, Dropdown,
   OverlayTrigger, Tooltip
 } from 'react-bootstrap';
-import Aviator from 'aviator';
 import { PermissionConst } from 'src/utilities/PermissionConst';
-import { elementShowOrNew } from 'src/utilities/routesUtils';
 import { allElnElements, allElnElmentsWithLabel, allGenericElements } from 'src/apps/generic/Utils';
+import { aviatorNavigation } from 'src/utilities/routesUtils';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ClipboardActions from 'src/stores/alt/actions/ClipboardActions';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
-import MatrixCheck from 'src/components/common/MatrixCheck';
-import UIActions from 'src/stores/alt/actions/UIActions';
 
 export default class CreateButton extends React.Component {
   constructor(props) {
@@ -67,17 +64,14 @@ export default class CreateButton extends React.Component {
     const {
       label,
       is_locked,
-      is_shared,
-      is_synchronized,
-      is_sync_to_me,
+      collection_share_id,
       permission_level
     } = currentCollection;
 
-    const newIsDisabled = (
-      (label === 'All' && is_locked)
-      || (is_shared && is_synchronized === false)
-      || (is_sync_to_me && permission_level < PermissionConst.Write)
-    );
+    const newIsDisabled = permission_level !== undefined
+      ? (collection_share_id && permission_level < PermissionConst.Write)
+      : (label === 'All' && is_locked);
+
     this.setState({ isDisabled: newIsDisabled });
   }
 
@@ -336,21 +330,7 @@ export default class CreateButton extends React.Component {
   }
 
   createElementOfType(type) {
-    const { currentCollection, isSync } = UIStore.getState();
-    const uri = isSync
-      ? `/scollection/${currentCollection.id}/${type}/new`
-      : `/collection/${currentCollection.id}/${type}/new`;
-    Aviator.navigate(uri, { silent: true });
-    const e = { type: type, params: { collectionID: currentCollection.id } };
-    e.params[`${type}ID`] = 'new'
-    const genericEls = (UserStore.getState() && UserStore.getState().genericEls) || [];
-    if (genericEls.find(el => el.name == type)) {
-      e.klassType = 'GenericEl';
-    }
-    if (type === 'sample') {
-      UIActions.selectTab(0);
-    }
-    elementShowOrNew(e);
+    aviatorNavigation(type, 'new', true, true);
   }
 
   createBtn(type) {
@@ -369,22 +349,7 @@ export default class CreateButton extends React.Component {
   }
 
   createVesselTemplate() {
-    const { currentCollection, isSync } = UIStore.getState();
-    const uri = isSync
-      ? `/scollection/${currentCollection.id}/vessel_template/new`
-      : `/collection/${currentCollection.id}/vessel_template/new`;
-
-    Aviator.navigate(uri, { silent: true });
-
-    const e = {
-      type: 'vessel_template',
-      params: {
-        collectionID: currentCollection.id,
-        vesselTemplateID: 'new'
-      }
-    };
-
-    elementShowOrNew(e);
+    aviatorNavigation('vessel_template', 'new', true, true);
   }
 
   noWellplateSelected() {
