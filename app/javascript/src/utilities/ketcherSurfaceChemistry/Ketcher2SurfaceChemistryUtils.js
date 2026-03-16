@@ -141,13 +141,18 @@ const placeAtomOnImage = async (mols_, imagesList_) => {
   }
 };
 
-const findTextNodesNotConnectedWithTemplates = (updatedTextList) => {
-  const values = Object.values(textNodeStruct);
+// Text nodes in textList that were not positioned (no matching atom, or positioning failed).
+// Include them so they still display with their default/existing position.
+const getUnpositionedTextNodes = (addedKeys) => {
   const list = [];
-  for (let i = 0; i < updatedTextList.length; i++) {
-    const block = JSON.parse(updatedTextList[i].data.content).blocks[0];
-    if (values.indexOf(block.key) === -1) {
-      list.push(updatedTextList[i]);
+  for (let i = 0; i < textList.length; i++) {
+    try {
+      const key = JSON.parse(textList[i].data.content).blocks[0]?.key;
+      if (key && !addedKeys.has(key)) {
+        list.push(textList[i]);
+      }
+    } catch (e) {
+      // skip malformed content
     }
   }
   return list;
@@ -172,9 +177,9 @@ const placeTextOnAtoms = async () => {
         }
       }
     }
-    // findTextNodesNotConnectedWithTemplates should check ALL textList, not just updatedTextList
-    // It finds text nodes that are NOT in textNodeStruct (unassociated text nodes)
-    const otherTextNodes = await findTextNodesNotConnectedWithTemplates(textList); // extra text components without aliases
+    // Include text nodes that weren't positioned (alias mismatch, missing image, etc.)
+    // so they still display with their default/existing position
+    const otherTextNodes = getUnpositionedTextNodes(addedKeys);
     return [...removeTextFromData(latestData), ...updatedTextList, ...otherTextNodes];
   } catch (err) {
     console.error('placeTextOnAtoms', err.message);

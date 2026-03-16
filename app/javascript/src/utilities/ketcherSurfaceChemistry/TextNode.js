@@ -178,7 +178,8 @@ const findByKeyAndUpdateTextNodePosition = async (textNodeKey, atom) => {
     const content = JSON.parse(text.data.content); // Parse content
     if (content.blocks[0].key === textNodeKey) {
       const split = atom.alias.split('_')[2];
-      const imageWidth = imagesList[split].boundingBox.width;
+      const img = imagesList?.[split];
+      const imageWidth = img?.boundingBox?.width ?? 1;
 
       // Estimate text width based on content length (rough approximation)
       const textContent = content.blocks[0].text || '';

@@ -88,8 +88,9 @@ const arrangePolymers = async (canvasData, editor) => {
 };
 
 // helper function to arrange text nodes for formula
+// Use polymerIndex (0,1,2...) for the first number — matches PolymersList atom index, not raw atom index.
 const arrangeTextNodes = async (ket2Molfile) => {
-  let atomCount = 0;
+  let polymerIndex = 0;
   const assembleTextList = [];
 
   for (const item of mols) {
@@ -99,12 +100,12 @@ const arrangeTextNodes = async (ket2Molfile) => {
     for (const atom of atoms) {
       const textNodeKey = textNodeStruct[atom.alias];
 
-      if (textNodeKey) {
+      if (textNodeKey && ALIAS_PATTERNS.threeParts.test(atom.alias)) {
         for (const textItem of textList) {
           const block = JSON.parse(textItem.data.content).blocks[0];
           if (textNodeKey === block.key) {
             const line = [
-              atomCount,
+              polymerIndex,
               textSeparator,
               textNodeKey,
               textSeparator,
@@ -116,8 +117,8 @@ const arrangeTextNodes = async (ket2Molfile) => {
             assembleTextList.push({ line, y });
           }
         }
+        polymerIndex += 1;
       }
-      atomCount += 1;
     }
   }
 
