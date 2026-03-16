@@ -5,9 +5,10 @@ import React, { Component, createRef } from 'react';
 import Aviator from 'aviator';
 import PropTypes from 'prop-types';
 import {
-  Button, Tabs, Tab, OverlayTrigger, Tooltip, ButtonToolbar, Dropdown, Modal, Overlay
+  Button, Tabs, Tab, OverlayTrigger, Tooltip, ButtonToolbar, Dropdown, Modal, Overlay, Form
 } from 'react-bootstrap';
 import { findIndex, isEmpty } from 'lodash';
+import { Select } from 'src/components/common/Select';
 
 import ElementResearchPlanLabels from 'src/apps/mydb/elements/labels/ElementResearchPlanLabels';
 import ElementAnalysesLabels from 'src/apps/mydb/elements/labels/ElementAnalysesLabels';
@@ -54,6 +55,19 @@ import ReactionSchemeGraphic from 'src/apps/mydb/elements/details/reactions/Reac
 import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
 import isEqual from 'lodash/isEqual';
 import DocumentationButton from 'src/components/common/DocumentationButton';
+import { statusOptions } from 'src/components/staticDropdownOptions/options';
+import Reaction from 'src/models/Reaction';
+
+const formatReactionTypeOption = (option, { context }) => (
+  context === 'value'
+    ? (
+      <span>
+        <i className="fa fa-flask me-1" />
+        {`Reaction type: ${option.label}`}
+      </span>
+    )
+    : option.label
+);
 
 const handleProductClick = (product) => {
   const uri = Aviator.getCurrentURI();
@@ -91,6 +105,8 @@ export default class ReactionDetails extends Component {
       currentUser: (UserStore.getState() && UserStore.getState().currentUser) || {},
       reactionSvgVersion: 0, // Bumped when graphic is updated so shouldComponentUpdate sees a state change (we mutate reaction in place)
       isRefreshingGraphic: false,
+      isEditingHeaderName: false,
+      headerNameDraft: reaction.name || '',
     };
 
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
@@ -103,13 +119,20 @@ export default class ReactionDetails extends Component {
     this.closeWtInfoModal = this.closeWtInfoModal.bind(this);
     this.confirmSchemeChange = this.confirmSchemeChange.bind(this);
     this.cancelSchemeChange = this.cancelSchemeChange.bind(this);
+    this.openHeaderNameEditor = this.openHeaderNameEditor.bind(this);
+    this.handleHeaderNameDraftChange = this.handleHeaderNameDraftChange.bind(this);
+    this.commitHeaderNameChange = this.commitHeaderNameChange.bind(this);
+    this.cancelHeaderNameChange = this.cancelHeaderNameChange.bind(this);
     this.state.showWtInfoModal = false;
     this.state.pendingSchemeType = null;
     this.state.schemeChangeConfirmMessage = null;
     this.isUpdatingGraphic = false; // Flag to prevent infinite loops
     this.pendingGraphicReaction = null; // Queued reaction when update requested during in-flight fetch
     this.schemeDropdownRef = createRef();
-    if (!reaction.reaction_svg_file) {
+    this.headerNameInputRef = createRef();
+    // If reaction type is Interaction, always regenerate the scheme preview on load because
+    // they intentionally use the products-only graphic, even if an older SVG exists.
+    if (!reaction.reaction_svg_file || reaction.isInteractionReaction()) {
       this.updateGraphic();
     }
   }
@@ -120,6 +143,25 @@ export default class ReactionDetails extends Component {
 
   closeWtInfoModal() {
     this.setState({ showWtInfoModal: false });
+  }
+
+  renderReactionTypeSelect(reaction) {
+    const selectedReactionType = reaction.reaction_type || 'standard';
+
+    return (
+      <Form.Group className="reaction-details-toolbar__group mb-0">
+        <Select
+          size="sm"
+          name="reaction_type"
+          isClearable={false}
+          options={Reaction.reaction_type_options}
+          formatOptionLabel={formatReactionTypeOption}
+          value={Reaction.reaction_type_options.find(({ value }) => value === selectedReactionType)}
+          isDisabled={!permitOn(reaction)}
+          onChange={(option) => this.handleInputChange('reactionType', option?.value || 'standard')}
+        />
+      </Form.Group>
+    );
   }
 
   componentDidMount() {
@@ -153,9 +195,16 @@ export default class ReactionDetails extends Component {
       const prevSvg = prevState.reaction?.reaction_svg_file;
       const hasPrevSvg = prevSvg !== undefined && prevSvg !== null && String(prevSvg).trim() !== '';
       let stateUpdate = { reaction };
+      if (!this.state.isEditingHeaderName) {
+        stateUpdate = { ...stateUpdate, headerNameDraft: reaction.name || '' };
+      }
       if (isSameReaction && hasPrevSvg) {
         reaction.reaction_svg_file = prevSvg;
-        stateUpdate = { reaction, reactionSvgVersion: (this.state.reactionSvgVersion || 0) + 1 };
+        stateUpdate = {
+          ...stateUpdate,
+          reaction,
+          reactionSvgVersion: (this.state.reactionSvgVersion || 0) + 1
+        };
       }
       this.setState(stateUpdate, () => {
         if (isSameReaction && hasPrevSvg) {
@@ -193,9 +242,12 @@ export default class ReactionDetails extends Component {
     const nextSchemeChangeConfirmMessage = nextState.schemeChangeConfirmMessage;
     const nextShowWtInfoModal = nextState.showWtInfoModal;
     const nextReactionSvgVersion = nextState.reactionSvgVersion;
+    const nextIsEditingHeaderName = nextState.isEditingHeaderName;
+    const nextHeaderNameDraft = nextState.headerNameDraft;
     const {
       reaction: reactionFromCurrentState, activeTab, visible, activeAnalysisTab,
-      schemeChangeConfirmMessage, showWtInfoModal, reactionSvgVersion
+      schemeChangeConfirmMessage, showWtInfoModal, reactionSvgVersion,
+      isEditingHeaderName, headerNameDraft
     } = this.state;
     return (
       reactionFromNextProps.id !== reactionFromCurrentState.id
@@ -208,6 +260,8 @@ export default class ReactionDetails extends Component {
       || nextSchemeChangeConfirmMessage !== schemeChangeConfirmMessage
       || nextShowWtInfoModal !== showWtInfoModal
       || nextReactionSvgVersion !== reactionSvgVersion
+      || nextIsEditingHeaderName !== isEditingHeaderName
+      || nextHeaderNameDraft !== headerNameDraft
     );
   }
 
@@ -242,6 +296,45 @@ export default class ReactionDetails extends Component {
     }
   }
 
+  openHeaderNameEditor() {
+    const { reaction } = this.state;
+    if (!permitOn(reaction) || reaction.isMethodDisabled('name')) {
+      return;
+    }
+
+    this.setState({
+      isEditingHeaderName: true,
+      headerNameDraft: reaction.name || '',
+    }, () => {
+      this.headerNameInputRef.current?.focus();
+      this.headerNameInputRef.current?.select();
+    });
+  }
+
+  handleHeaderNameDraftChange(event) {
+    this.setState({ headerNameDraft: event.target.value });
+  }
+
+  commitHeaderNameChange() {
+    const { reaction, headerNameDraft } = this.state;
+    const nextName = headerNameDraft.trim();
+
+    this.setState({ isEditingHeaderName: false });
+    if (nextName === (reaction.name || '')) {
+      return;
+    }
+
+    this.handleInputChange('name', { target: { value: nextName } });
+  }
+
+  cancelHeaderNameChange() {
+    const { reaction } = this.state;
+    this.setState({
+      isEditingHeaderName: false,
+      headerNameDraft: reaction.name || '',
+    });
+  }
+
   handleInputChange(type, event) {
     let value;
     if (
@@ -257,9 +350,12 @@ export default class ReactionDetails extends Component {
       || type === 'vesselSizeUnit'
       || type === 'gaseous'
       || type === 'conditions'
+      || type === 'phOperator'
+      || type === 'phValue'
       || type === 'volume'
       || type === 'useReactionVolumeForConcentration'
       || type === 'weight_percentage'
+      || type === 'reactionType'
       || type === 'default'
     ) {
       value = event;
@@ -272,6 +368,13 @@ export default class ReactionDetails extends Component {
     const { reaction } = this.state;
 
     const { newReaction, options } = setReactionByType(reaction, type, value);
+
+    if (type === 'reactionType' && value === 'interaction') {
+      // Interaction reactions always use the default scheme internals, so clear
+      // any residual gas or weight-percentage state before re-rendering the tab.
+      this.resetWeightPercentagedependencies(newReaction);
+      this.recalculateEquivalentsForMaterials(newReaction);
+    }
 
     // Update gas phase store synchronously for vessel size changes
     // to ensure store is updated before gas calculations run during render
@@ -473,13 +576,17 @@ export default class ReactionDetails extends Component {
     if (/^[\-|\d]\d*\.{0,1}\d{0,2}$/.test(temperature)) {
       temperature = `${temperature} ${reaction.temperature.valueUnit}`;
     }
+    const productsOnly = reaction.isInteractionReaction();
+    const showYield = !productsOnly;
 
     ReactionSvgFetcher.fetchByMaterialsSvgPaths(
       materialsSvgPaths,
       temperature,
       solvents,
       reaction.duration,
-      reaction.conditions
+      reaction.conditions,
+      productsOnly,
+      showYield
     ).then((result) => {
       if (result && result.reaction_svg && result.reaction_svg !== reaction.reaction_svg_file) {
         // Update reaction_svg_file and state - image will reload automatically via ReactionSchemeGraphic useEffect
@@ -748,6 +855,7 @@ export default class ReactionDetails extends Component {
       activeTab,
       schemeChangeConfirmMessage,
     } = this.state;
+    const isInteractionReaction = reaction.isInteractionReaction();
     this.updateReactionVesselSize(reaction);
     let schemeType = 'Default';
     let documentationLink;
@@ -780,63 +888,68 @@ export default class ReactionDetails extends Component {
       scheme: (
         <Tab eventKey="scheme" title="Scheme" key={`scheme_${reaction.id}`}>
           <div className="d-flex align-items-center">
-            <Dropdown ref={this.schemeDropdownRef}>
-              <Dropdown.Toggle variant="info" size="sm" id="scheme-type-dropdown">
-                <i className="fa fa-cog" />
-                <span className="ms-1">
-                  Current Scheme:&nbsp;
-                  {schemeType}
-                </span>
-              </Dropdown.Toggle>
-              <Dropdown.Menu>
-                <Dropdown.Item
-                  active={!reaction.gaseous && !reaction.weight_percentage}
-                  onClick={() => this.handleReactionSchemeChange('default')}
-                >
-                  Default Scheme
-                </Dropdown.Item>
-                <Dropdown.Item
-                  active={reaction.gaseous}
-                  onClick={() => this.handleReactionSchemeChange('gaseous')}
-                >
-                  Gas Scheme
-                </Dropdown.Item>
-                <Dropdown.Item
-                  active={reaction.weight_percentage}
-                  onClick={() => this.handleReactionSchemeChange('weight_percentage')}
-                >
-                  Weight Percentage Scheme
-                </Dropdown.Item>
-              </Dropdown.Menu>
-            </Dropdown>
-            <Overlay
-              target={() => this.schemeDropdownRef.current}
-              show={!!schemeChangeConfirmMessage}
-              placement="bottom"
-              rootClose
-              onHide={() => this.cancelSchemeChange()}
-            >
-              <Tooltip placement="bottom" className="in" id="scheme-change-confirm-tooltip">
-                {schemeChangeConfirmMessage}
-                <br />
-                <ButtonToolbar className="justify-content-center mt-1">
-                  <Button
-                    variant="danger"
-                    size="xxsm"
-                    onClick={() => this.confirmSchemeChange()}
+            {this.renderReactionTypeSelect(reaction)}
+            {!isInteractionReaction && (
+              <Dropdown ref={this.schemeDropdownRef}>
+                <Dropdown.Toggle variant="info" size="sm" id="scheme-type-dropdown">
+                  <i className="fa fa-cog" />
+                  <span className="ms-1">
+                    Current Scheme:&nbsp;
+                    {schemeType}
+                  </span>
+                </Dropdown.Toggle>
+                <Dropdown.Menu>
+                  <Dropdown.Item
+                    active={!reaction.gaseous && !reaction.weight_percentage}
+                    onClick={() => this.handleReactionSchemeChange('default')}
                   >
-                    Confirm
-                  </Button>
-                  <Button
-                    variant="warning"
-                    size="xxsm"
-                    onClick={() => this.cancelSchemeChange()}
+                    Default Scheme
+                  </Dropdown.Item>
+                  <Dropdown.Item
+                    active={reaction.gaseous}
+                    onClick={() => this.handleReactionSchemeChange('gaseous')}
                   >
-                    Discard
-                  </Button>
-                </ButtonToolbar>
-              </Tooltip>
-            </Overlay>
+                    Gas Scheme
+                  </Dropdown.Item>
+                  <Dropdown.Item
+                    active={reaction.weight_percentage}
+                    onClick={() => this.handleReactionSchemeChange('weight_percentage')}
+                  >
+                    Weight Percentage Scheme
+                  </Dropdown.Item>
+                </Dropdown.Menu>
+              </Dropdown>
+            )}
+            {!isInteractionReaction && (
+              <Overlay
+                target={() => this.schemeDropdownRef.current}
+                show={!!schemeChangeConfirmMessage}
+                placement="bottom"
+                rootClose
+                onHide={() => this.cancelSchemeChange()}
+              >
+                <Tooltip placement="bottom" className="in" id="scheme-change-confirm-tooltip">
+                  {schemeChangeConfirmMessage}
+                  <br />
+                  <ButtonToolbar className="justify-content-center mt-1">
+                    <Button
+                      variant="danger"
+                      size="xxsm"
+                      onClick={() => this.confirmSchemeChange()}
+                    >
+                      Confirm
+                    </Button>
+                    <Button
+                      variant="warning"
+                      size="xxsm"
+                      onClick={() => this.cancelSchemeChange()}
+                    >
+                      Discard
+                    </Button>
+                  </ButtonToolbar>
+                </Tooltip>
+              </Overlay>
+            )}
             {reaction.weight_percentage && (
               <>
                 <OverlayTrigger
@@ -856,6 +969,23 @@ export default class ReactionDetails extends Component {
                 {documentComponent}
               </>
             )}
+            <div className="reaction-details-toolbar__right d-flex align-items-end">
+              <Form.Group className="reaction-details-toolbar__group reaction-details-toolbar__group--status mb-0">
+                <Select
+                  size="sm"
+                  name="status"
+                  isClearable
+                  placeholder="Status"
+                  options={statusOptions}
+                  value={statusOptions.find(({ value }) => value === reaction.status)}
+                  isDisabled={!permitOn(reaction) || reaction.isMethodDisabled('status')}
+                  onChange={(option) => {
+                    const wrappedEvent = { target: { value: option?.value || null } };
+                    this.handleInputChange('status', wrappedEvent);
+                  }}
+                />
+              </Form.Group>
+            </div>
           </div>
           {
             !reaction.isNew && <CommentSection section="reaction_scheme" element={reaction} />

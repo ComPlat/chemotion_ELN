@@ -152,12 +152,15 @@ module Chemotion
         optional :purification, type: [String]
         optional :dangerous_products, type: [String]
         optional :conditions, type: String
+        optional :ph_operator, type: String
+        optional :ph_value, type: String
         optional :tlc_solvents, type: String
         optional :solvent, type: String
         optional :tlc_description, type: String
         optional :rf_value, type: String
         optional :temperature, type: Hash
         optional :status, type: String
+        optional :reaction_type, type: String, values: Reaction.reaction_types.keys
         optional :role, type: String
         optional :origin, type: Hash
         optional :reaction_svg_file, type: String
@@ -233,12 +236,15 @@ module Chemotion
         optional :purification, type: [String]
         optional :dangerous_products, type: [String]
         optional :conditions, type: String
+        optional :ph_operator, type: String
+        optional :ph_value, type: String
         optional :tlc_solvents, type: String
         optional :solvent, type: String
         optional :tlc_description, type: String
         optional :rf_value, type: String
         optional :temperature, type: Hash
         optional :status, type: String
+        optional :reaction_type, type: String, values: Reaction.reaction_types.keys
         optional :role, type: String
         optional :origin, type: Hash
         optional :reaction_svg_file, type: String

@@ -178,11 +178,13 @@ function GeneralMaterialGroup({
   switchEquiv, lockEquivColumn, displayYieldField, switchYield
 }) {
   const isReactants = materialGroup === 'reactants';
+  const isInteractionReaction = reaction.isInteractionReaction();
+  const isInteractionProducts = isInteractionReaction && materialGroup === 'products';
   const groupHeaders = { ...headers };
 
   let reagentDd = null;
   if (isReactants) {
-    groupHeaders.group = 'Reactants';
+    groupHeaders.group = isInteractionReaction ? 'Additives' : 'Reactants';
 
     const reagentList = Object.keys(reagents_kombi).map((x) => ({
       label: x,
@@ -231,6 +233,10 @@ function GeneralMaterialGroup({
     );
   }
 
+  if (materialGroup === 'starting_materials' && isInteractionReaction) {
+    groupHeaders.group = 'Guest and host';
+  }
+
   const yieldConversionRateFields = () => {
     const conversionText = (
       <>
@@ -265,7 +271,9 @@ function GeneralMaterialGroup({
 
   if (materialGroup === 'products') {
     groupHeaders.group = 'Products';
-    groupHeaders.eq = yieldConversionRateFields();
+    if (!isInteractionReaction) {
+      groupHeaders.eq = yieldConversionRateFields();
+    }
   }
 
   const specialRefTHead = reaction.weight_percentage ? (
@@ -338,15 +346,17 @@ function GeneralMaterialGroup({
             <div className="reaction-material__purity-header">{groupHeaders.purity}</div>
             {showLoadingColumn && <div className="reaction-material__loading-header">{groupHeaders.loading}</div>}
             <div className="reaction-material__concentration-header">{groupHeaders.concn}</div>
-            <div className="reaction-material__equivalent-header">
-              {groupHeaders.eq}
-              {materialGroup === 'starting_materials' && (
-                <SwitchEquivButton
-                  lockEquivColumn={lockEquivColumn}
-                  switchEquiv={switchEquiv}
-                />
-              )}
-            </div>
+            {!isInteractionProducts && (
+              <div className="reaction-material__equivalent-header">
+                {groupHeaders.eq}
+                {materialGroup === 'starting_materials' && (
+                  <SwitchEquivButton
+                    lockEquivColumn={lockEquivColumn}
+                    switchEquiv={switchEquiv}
+                  />
+                )}
+              </div>
+            )}
             <div className="reaction-material__delete-header" />
           </div>
 
