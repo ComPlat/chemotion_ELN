@@ -1,5 +1,5 @@
 import {
-  addMissingColumnDefinitions, removeObsoleteColumnDefinitions, getColumnDefinitions, setGroupColDefAttribute,
+  addMissingColumnDefinitions, removeObsoleteColumnDefinitions, getColumnDefinitions, setGroupColDefAttribute, setLeafColDefAttribute,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 
 export default function columnDefinitionsReducer(columnDefinitions, action) {
@@ -26,6 +26,9 @@ export default function columnDefinitionsReducer(columnDefinitions, action) {
         action.attribute,
         action.update
       );
+    }
+    case 'set_leaf_col_def_attribute': {
+      return setLeafColDefAttribute(columnDefinitions, action.colId, action.attribute, action.update);
     }
     case 'toggle_gas_mode': {
       return getColumnDefinitions(
