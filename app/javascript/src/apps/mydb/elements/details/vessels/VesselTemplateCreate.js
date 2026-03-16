@@ -7,7 +7,7 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 import Aviator from 'aviator';
 import VesselSuggestProperties from 'src/apps/mydb/elements/details/vessels/propertiesTab/VesselSuggestProperties';
 import VesselProperty from 'src/apps/mydb/elements/details/vessels/propertiesTab/VesselProperty';
-import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
+import DetailCard from 'src/apps/mydb/elements/details/LegacyDetailCard';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import VesselsFetcher from 'src/fetchers/VesselsFetcher';
 import UIStore from 'src/stores/alt/stores/UIStore';

@@ -32,7 +32,7 @@ import ElementAnalysesLabels from 'src/apps/mydb/elements/labels/ElementAnalyses
 import PubchemLabels from 'src/components/pubchem/PubchemLabels';
 import PubchemLcss from 'src/components/pubchem/PubchemLcss';
 import ElementReactionLabels from 'src/apps/mydb/elements/labels/ElementReactionLabels';
-import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
+import DetailCard from 'src/apps/mydb/elements/details/LegacyDetailCard';
 import SampleDetailsContainers from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainers';
 
 import StructureEditorModal from 'src/components/structureEditor/StructureEditorModal';

@@ -28,7 +28,7 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import ConfirmClose from 'src/components/common/ConfirmClose';
-import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
+import DetailCard from 'src/apps/mydb/elements/details/LegacyDetailCard';
 import ExportSamplesButton from 'src/apps/mydb/elements/details/ExportSamplesButton';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';

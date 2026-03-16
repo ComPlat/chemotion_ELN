@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Button } from 'react-bootstrap';
 
-import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
+import DetailCard from 'src/apps/mydb/elements/details/LegacyDetailCard';
 import ReportActions from 'src/stores/alt/actions/ReportActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import UIStore from 'src/stores/alt/stores/UIStore';

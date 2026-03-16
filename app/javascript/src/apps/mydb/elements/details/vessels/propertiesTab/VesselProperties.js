@@ -9,7 +9,7 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 import VesselProperty from 'src/apps/mydb/elements/details/vessels/propertiesTab/VesselProperty';
 import VesselSuggestProperties from 'src/apps/mydb/elements/details/vessels/propertiesTab/VesselSuggestProperties';
 import { generateNextShortLabel } from 'src/utilities/VesselUtilities';
-import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
+import DetailCard from 'src/apps/mydb/elements/details/LegacyDetailCard';
 
 const VesselProperties = ({ item, readOnly }) => {
   const { vesselDetailsStore } = useContext(StoreContext);

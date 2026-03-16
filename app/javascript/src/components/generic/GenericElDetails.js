@@ -34,7 +34,7 @@ import GenericAttachments from 'src/components/generic/GenericAttachments';
 import { SegmentTabs } from 'src/components/generic/SegmentDetails';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
-import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
+import DetailCard from 'src/apps/mydb/elements/details/LegacyDetailCard';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import { EditUserLabels, ShowUserLabels } from 'src/components/UserLabels';
 import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';

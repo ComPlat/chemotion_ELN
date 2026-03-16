@@ -3,7 +3,7 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 import { ButtonToolbar, Button, Tabs, Tab, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
-import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
+import DetailCard from 'src/apps/mydb/elements/details/LegacyDetailCard';
 import { observer } from 'mobx-react';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import CollectionUtils from 'src/models/collection/CollectionUtils';

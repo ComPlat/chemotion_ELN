@@ -21,7 +21,7 @@ import {
   LiteralType,
   literatureContent
 } from 'src/apps/mydb/elements/details/literature/LiteratureCommon';
-import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
+import DetailCard from 'src/apps/mydb/elements/details/LegacyDetailCard';
 import Literature from 'src/models/Literature';
 import LiteratureMap from 'src/models/LiteratureMap';
 import LiteraturesFetcher from 'src/fetchers/LiteraturesFetcher';

@@ -6,7 +6,7 @@ import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import ReportActions from 'src/stores/alt/actions/ReportActions';
 import ReportStore from 'src/stores/alt/stores/ReportStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
+import DetailCard from 'src/apps/mydb/elements/details/LegacyDetailCard';
 import Setting from 'src/apps/mydb/elements/details/reports/Setting';
 import Previews from 'src/apps/mydb/elements/details/reports/Previews';
 import Orders from 'src/apps/mydb/elements/details/reports/Orders';
