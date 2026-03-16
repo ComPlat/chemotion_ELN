@@ -2,8 +2,8 @@
   position: absolute !important;
 }
 
-.ag-theme-reaction-variations .ag-header-group-text,
-.ag-theme-reaction-variations .ag-header-cell-text {
+.ag-theme-reaction-variations .ag-header-group-cell-label,
+.ag-theme-reaction-variations .ag-header-cell-label {
   &::before {
     content: '';
     position: relative;
