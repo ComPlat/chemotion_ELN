@@ -19,6 +19,7 @@
 #  plain_text_observation :text
 #  purification           :string           default([]), is an Array
 #  reaction_svg_file      :string
+#  reaction_type          :string           default("standard"), not null
 #  rf_value               :string
 #  rinchi_long_key        :text
 #  rinchi_short_key       :string
@@ -53,6 +54,11 @@
 
 # rubocop:disable Metrics/ClassLength
 class Reaction < ApplicationRecord
+  enum reaction_type: {
+    standard: 'standard',
+    interaction: 'interaction'
+  }
+
   has_logidze
   acts_as_paranoid
   include ElementUIStateScopes
@@ -167,12 +173,15 @@ class Reaction < ApplicationRecord
   before_save :scrub
   before_save :auto_format_temperature!
   before_save :transform_variations
+  before_validation :set_default_reaction_type
   around_save :update_fields_to_plain_text, if: -> { description_changed? || observation_changed? }
   before_create :auto_set_short_label
 
   after_create :update_counter
 
   has_one :container, as: :containable
+
+  validates :reaction_type, inclusion: { in: Reaction.reaction_types.keys }
 
   def self.get_associated_samples(reaction_ids)
     ReactionsSample.where(reaction_id: reaction_ids).pluck(:sample_id)
@@ -325,6 +334,10 @@ class Reaction < ApplicationRecord
   end
 
   private
+
+  def set_default_reaction_type
+    self.reaction_type = 'standard' if reaction_type.blank?
+  end
 
   def scrubber(value)
     Chemotion::Sanitizer.scrub_xml(value)
