@@ -15,7 +15,7 @@ import {
   GroupCellRenderer, GroupCellEditor,
   SegmentFormatter, SegmentParser, SegmentSelectEditor,
   EquivalentParser, GasParser, FeedstockParser,
-  NoteCellRenderer, NoteCellEditor, RowToolsCellRenderer, ToolHeader, EntrySelectionHeader,
+  NoteCellRenderer, NoteCellEditor, RowToolsCellRenderer, ToolHeader, EntrySelectionHeader, UnitToggleHeader,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { getGenSI } from 'chem-generic-ui';
@@ -561,7 +561,7 @@ function getSegmentColumnGroupChild(segmentLabel, segment) {
       {
         field: `segments.${segmentLabel}`,
         colId: `segments.${segmentLabel}.${entryKey}`,
-        headerName: getUserFacingEntryName(entryKey),
+        headerComponentParams: { innerHeaderComponent: UnitToggleHeader },
         cellEditorSelector: (params) => getSegmentEditor(params),
         cellDataType: 'segment',
         displayUnit: entry.value_system || null,
@@ -634,6 +634,18 @@ function setGroupColDefAttribute(columnDefinitions, groupId, subGroupId, attribu
   const subGroup = group.children.find((child) => child.groupId === subGroupId);
   subGroup[attribute] = update;
 
+  return updatedColumnDefinitions;
+}
+
+function setLeafColDefAttribute(columnDefinitions, colId, attribute, update) {
+  const updatedColumnDefinitions = cloneDeep(columnDefinitions);
+  function updateLeaf(columns) {
+    return columns.some((col) => {
+      if (col.colId === colId) { col[attribute] = update; return true; }
+      return col.children && updateLeaf(col.children);
+    });
+  }
+  updateLeaf(updatedColumnDefinitions);
   return updatedColumnDefinitions;
 }
 
@@ -887,4 +899,5 @@ export {
   formatReactionSegments,
   sanitizeGroupEntry,
   setGroupColDefAttribute,
+  setLeafColDefAttribute,
 };
