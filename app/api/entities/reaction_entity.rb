@@ -25,6 +25,8 @@ module Entities
     with_options(anonymize_below: 10) do
       expose! :code_log,              anonymize_with: nil,                              using: 'Entities::CodeLogEntity'
       expose! :conditions,                                  unless: :displayed_in_list
+      expose! :ph_operator,                                 unless: :displayed_in_list
+      expose! :ph_value,                                    unless: :displayed_in_list
       expose! :container,             anonymize_with: nil,                              using: 'Entities::ContainerEntity'
       expose! :dangerous_products,    anonymize_with: [],   unless: :displayed_in_list
       expose! :duration,                                    unless: :displayed_in_list

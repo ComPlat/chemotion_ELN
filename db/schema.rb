@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2026_03_16_120000) do
+ActiveRecord::Schema.define(version: 2026_03_16_133000) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -1046,6 +1046,8 @@ ActiveRecord::Schema.define(version: 2026_03_16_120000) do
     t.boolean "use_reaction_volume", default: false, null: false
     t.boolean "weight_percentage"
     t.string "reaction_type", default: "standard", null: false
+    t.string "ph_operator", default: "=", null: false
+    t.string "ph_value"
     t.index ["deleted_at"], name: "index_reactions_on_deleted_at"
     t.index ["rinchi_short_key"], name: "index_reactions_on_rinchi_short_key", order: :desc
     t.index ["rinchi_web_key"], name: "index_reactions_on_rinchi_web_key"
