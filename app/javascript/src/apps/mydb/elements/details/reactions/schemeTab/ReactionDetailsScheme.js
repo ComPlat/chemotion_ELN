@@ -2098,6 +2098,7 @@ export default class ReactionDetailsScheme extends React.Component {
       displayYieldField,
     } = this.state;
     const { reaction, onInputChange, onReactionChange } = this.props;
+    const isInteractionReaction = reaction.isInteractionReaction();
     if (reaction.editedSample !== undefined) {
       if (reaction.editedSample.amountType === 'target') {
         this.updatedSamplesForEquivalentChange(reaction.samples, reaction.editedSample);
@@ -2210,14 +2211,16 @@ export default class ReactionDetailsScheme extends React.Component {
             switchYield={this.switchYield}
             displayYieldField={displayYieldField}
           />
-          <ReactionConditions
-            conditions={reaction.conditions}
-            isDisabled={!permitOn(reaction) || reaction.isMethodDisabled('conditions')}
-            onChange={(conditions) => {
-              onInputChange('conditions', conditions);
-              onReactionChange(reaction, { updateGraphic: true });
-            }}
-          />
+          {!isInteractionReaction && (
+            <ReactionConditions
+              conditions={reaction.conditions}
+              isDisabled={!permitOn(reaction) || reaction.isMethodDisabled('conditions')}
+              onChange={(conditions) => {
+                onInputChange('conditions', conditions);
+                onReactionChange(reaction, { updateGraphic: true });
+              }}
+            />
+          )}
         </div>
 
         <ReactionDetailsMainProperties

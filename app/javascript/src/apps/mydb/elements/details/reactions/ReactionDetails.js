@@ -854,6 +854,7 @@ export default class ReactionDetails extends Component {
     const {
       reaction, visible, activeTab, showSchemeChangeConfirm
     } = this.state;
+    const isInteractionReaction = reaction.isInteractionReaction();
     this.updateReactionVesselSize(reaction);
     let schemeType = 'Default';
     let documentationLink;
@@ -888,68 +889,72 @@ export default class ReactionDetails extends Component {
           <div className="reaction-details-toolbar d-flex align-items-end flex-wrap gap-2 mb-2">
             <div className="reaction-details-toolbar__left d-flex align-items-end flex-wrap gap-2">
               {this.renderReactionTypeSelect(reaction)}
-              <Dropdown ref={this.schemeDropdownRef}>
-                <Dropdown.Toggle variant="info" size="sm" id="scheme-type-dropdown">
-                  <i className="fa fa-cog" />
-                  <span className="ms-1">
-                    Current Scheme:&nbsp;
-                    {schemeType}
-                  </span>
-                </Dropdown.Toggle>
-                <Dropdown.Menu>
-                  <Dropdown.Item
-                    active={!reaction.gaseous && !reaction.weight_percentage}
-                    onClick={() => this.handleReactionSchemeChange('default')}
-                  >
-                    Default Scheme
-                  </Dropdown.Item>
-                  <Dropdown.Item
-                    active={reaction.gaseous}
-                    onClick={() => this.handleReactionSchemeChange('gaseous')}
-                  >
-                    Gas Scheme
-                  </Dropdown.Item>
-                  <Dropdown.Item
-                    active={reaction.weight_percentage}
-                    onClick={() => this.handleReactionSchemeChange('weight_percentage')}
-                  >
-                    Weight Percentage Scheme
-                  </Dropdown.Item>
-                </Dropdown.Menu>
-              </Dropdown>
+              {!isInteractionReaction && (
+                <Dropdown ref={this.schemeDropdownRef}>
+                  <Dropdown.Toggle variant="info" size="sm" id="scheme-type-dropdown">
+                    <i className="fa fa-cog" />
+                    <span className="ms-1">
+                      Current Scheme:&nbsp;
+                      {schemeType}
+                    </span>
+                  </Dropdown.Toggle>
+                  <Dropdown.Menu>
+                    <Dropdown.Item
+                      active={!reaction.gaseous && !reaction.weight_percentage}
+                      onClick={() => this.handleReactionSchemeChange('default')}
+                    >
+                      Default Scheme
+                    </Dropdown.Item>
+                    <Dropdown.Item
+                      active={reaction.gaseous}
+                      onClick={() => this.handleReactionSchemeChange('gaseous')}
+                    >
+                      Gas Scheme
+                    </Dropdown.Item>
+                    <Dropdown.Item
+                      active={reaction.weight_percentage}
+                      onClick={() => this.handleReactionSchemeChange('weight_percentage')}
+                    >
+                      Weight Percentage Scheme
+                    </Dropdown.Item>
+                  </Dropdown.Menu>
+                </Dropdown>
+              )}
             </div>
-            <Overlay
-              target={() => this.schemeDropdownRef.current}
-              show={showSchemeChangeConfirm}
-              placement="bottom"
-              rootClose
-              onHide={() => this.cancelSchemeChange()}
-            >
-              <Tooltip placement="bottom" className="in" id="scheme-change-confirm-tooltip">
-                Any Assigned Weight percentage reference and wt% values in wt% fields
-                <br />
-                of materials will be deleted.
-                <br />
-                Switch scheme?
-                <br />
-                <ButtonToolbar className="gap-2 justify-content-center mt-1">
-                  <Button
-                    variant="danger"
-                    size="xxsm"
-                    onClick={() => this.confirmSchemeChange()}
-                  >
-                    Confirm
-                  </Button>
-                  <Button
-                    variant="warning"
-                    size="xxsm"
-                    onClick={() => this.cancelSchemeChange()}
-                  >
-                    Discard
-                  </Button>
-                </ButtonToolbar>
-              </Tooltip>
-            </Overlay>
+            {!isInteractionReaction && (
+              <Overlay
+                target={() => this.schemeDropdownRef.current}
+                show={showSchemeChangeConfirm}
+                placement="bottom"
+                rootClose
+                onHide={() => this.cancelSchemeChange()}
+              >
+                <Tooltip placement="bottom" className="in" id="scheme-change-confirm-tooltip">
+                  Any Assigned Weight percentage reference and wt% values in wt% fields
+                  <br />
+                  of materials will be deleted.
+                  <br />
+                  Switch scheme?
+                  <br />
+                  <ButtonToolbar className="gap-2 justify-content-center mt-1">
+                    <Button
+                      variant="danger"
+                      size="xxsm"
+                      onClick={() => this.confirmSchemeChange()}
+                    >
+                      Confirm
+                    </Button>
+                    <Button
+                      variant="warning"
+                      size="xxsm"
+                      onClick={() => this.cancelSchemeChange()}
+                    >
+                      Discard
+                    </Button>
+                  </ButtonToolbar>
+                </Tooltip>
+              </Overlay>
+            )}
             {reaction.weight_percentage && (
               <>
                 <OverlayTrigger

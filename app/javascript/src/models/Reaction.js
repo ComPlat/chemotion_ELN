@@ -80,7 +80,7 @@ const DurationDefault = {
 
 const ReactionTypeOptions = [
   { value: 'standard', label: 'Standard' },
-  { value: 'interactions', label: 'Interaction' },
+  { value: 'interaction', label: 'Interaction' },
 ];
 
 export const convertDuration = (value, unit, newUnit) => moment.duration(Number.parseFloat(value), LegMomentUnit[unit])
@@ -198,6 +198,10 @@ export default class Reaction extends Element {
 
   set name(name) {
     this._name = name;
+  }
+
+  isInteractionReaction() {
+    return this.reaction_type === 'interaction';
   }
 
   serialize() {
