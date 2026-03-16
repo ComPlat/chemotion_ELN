@@ -137,6 +137,56 @@ table.reaction-scheme-solvent {
   }
 }
 
+.reaction-details-header {
+  &__left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+
+  &__title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+    flex-wrap: nowrap;
+    flex: 0 1 auto;
+  }
+
+  &__title-prefix {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  &__title-meta {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  &__title-text {
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+
+    &--placeholder {
+      color: #6c757d;
+    }
+  }
+
+  &__title-input {
+    width: clamp(120px, 16vw, 220px);
+    min-width: 0;
+    flex: 0 1 clamp(120px, 16vw, 220px);
+  }
+}
+
 .reaction-ph-operator {
   min-width: 72px;
 }

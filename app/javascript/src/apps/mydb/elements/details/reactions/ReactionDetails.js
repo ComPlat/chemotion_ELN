@@ -112,6 +112,8 @@ export default class ReactionDetails extends Component {
       currentUser: (UserStore.getState() && UserStore.getState().currentUser) || {},
       reactionSvgVersion: 0, // Bumped when graphic is updated so shouldComponentUpdate sees a state change (we mutate reaction in place)
       isRefreshingGraphic: false,
+      isEditingHeaderName: false,
+      headerNameDraft: reaction.name || '',
     };
 
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
@@ -124,12 +126,17 @@ export default class ReactionDetails extends Component {
     this.closeWtInfoModal = this.closeWtInfoModal.bind(this);
     this.confirmSchemeChange = this.confirmSchemeChange.bind(this);
     this.cancelSchemeChange = this.cancelSchemeChange.bind(this);
+    this.openHeaderNameEditor = this.openHeaderNameEditor.bind(this);
+    this.handleHeaderNameDraftChange = this.handleHeaderNameDraftChange.bind(this);
+    this.commitHeaderNameChange = this.commitHeaderNameChange.bind(this);
+    this.cancelHeaderNameChange = this.cancelHeaderNameChange.bind(this);
     this.state.showWtInfoModal = false;
     this.state.showSchemeChangeConfirm = false;
     this.state.pendingSchemeType = null;
     this.isUpdatingGraphic = false; // Flag to prevent infinite loops
     this.pendingGraphicReaction = null; // Queued reaction when update requested during in-flight fetch
     this.schemeDropdownRef = createRef();
+    this.headerNameInputRef = createRef();
     // If reaction type is Interaction, always regenerate the scheme preview on load because
     // they intentionally use the products-only graphic, even if an older SVG exists.
     if (!reaction.reaction_svg_file || reaction.isInteractionReaction()) {
@@ -195,9 +202,16 @@ export default class ReactionDetails extends Component {
       const prevSvg = prevState.reaction?.reaction_svg_file;
       const hasPrevSvg = prevSvg !== undefined && prevSvg !== null && String(prevSvg).trim() !== '';
       let stateUpdate = { reaction };
+      if (!this.state.isEditingHeaderName) {
+        stateUpdate = { ...stateUpdate, headerNameDraft: reaction.name || '' };
+      }
       if (isSameReaction && hasPrevSvg) {
         reaction.reaction_svg_file = prevSvg;
-        stateUpdate = { reaction, reactionSvgVersion: (this.state.reactionSvgVersion || 0) + 1 };
+        stateUpdate = {
+          ...stateUpdate,
+          reaction,
+          reactionSvgVersion: (this.state.reactionSvgVersion || 0) + 1
+        };
       }
       this.setState(stateUpdate, () => {
         if (isSameReaction && hasPrevSvg) {
@@ -235,9 +249,12 @@ export default class ReactionDetails extends Component {
     const nextShowSchemeChangeConfirm = nextState.showSchemeChangeConfirm;
     const nextShowWtInfoModal = nextState.showWtInfoModal;
     const nextReactionSvgVersion = nextState.reactionSvgVersion;
+    const nextIsEditingHeaderName = nextState.isEditingHeaderName;
+    const nextHeaderNameDraft = nextState.headerNameDraft;
     const {
       reaction: reactionFromCurrentState, activeTab, visible, activeAnalysisTab,
-      showSchemeChangeConfirm, showWtInfoModal, reactionSvgVersion
+      showSchemeChangeConfirm, showWtInfoModal, reactionSvgVersion,
+      isEditingHeaderName, headerNameDraft
     } = this.state;
     return (
       reactionFromNextProps.id !== reactionFromCurrentState.id
@@ -250,6 +267,8 @@ export default class ReactionDetails extends Component {
       || nextShowSchemeChangeConfirm !== showSchemeChangeConfirm
       || nextShowWtInfoModal !== showWtInfoModal
       || nextReactionSvgVersion !== reactionSvgVersion
+      || nextIsEditingHeaderName !== isEditingHeaderName
+      || nextHeaderNameDraft !== headerNameDraft
     );
   }
 
@@ -282,6 +301,45 @@ export default class ReactionDetails extends Component {
       // Just update state - ReactionSchemeGraphic will reload image automatically
       this.setState({ reaction });
     }
+  }
+
+  openHeaderNameEditor() {
+    const { reaction } = this.state;
+    if (!permitOn(reaction) || reaction.isMethodDisabled('name')) {
+      return;
+    }
+
+    this.setState({
+      isEditingHeaderName: true,
+      headerNameDraft: reaction.name || '',
+    }, () => {
+      this.headerNameInputRef.current?.focus();
+      this.headerNameInputRef.current?.select();
+    });
+  }
+
+  handleHeaderNameDraftChange(event) {
+    this.setState({ headerNameDraft: event.target.value });
+  }
+
+  commitHeaderNameChange() {
+    const { reaction, headerNameDraft } = this.state;
+    const nextName = headerNameDraft.trim();
+
+    this.setState({ isEditingHeaderName: false });
+    if (nextName === (reaction.name || '')) {
+      return;
+    }
+
+    this.handleInputChange('name', { target: { value: nextName } });
+  }
+
+  cancelHeaderNameChange() {
+    const { reaction } = this.state;
+    this.setState({
+      isEditingHeaderName: false,
+      headerNameDraft: reaction.name || '',
+    });
   }
 
   handleInputChange(type, event) {
@@ -444,6 +502,8 @@ export default class ReactionDetails extends Component {
 
   reactionHeader(reaction) {
     const titleTooltip = formatTimeStampsOfElement(reaction || {});
+    const titlePrefix = reaction.short_label || '';
+    const { isEditingHeaderName, headerNameDraft } = this.state;
 
     const colLabel = !reaction.isNew && (
       <ElementCollectionLabels element={reaction} key={reaction.id} placement="right" />
@@ -453,15 +513,57 @@ export default class ReactionDetails extends Component {
       <ElementResearchPlanLabels plans={reaction.research_plans} key={reaction.id} placement="right" />
     );
 
-    return (
-      <div className="d-flex justify-content-between">
-        <div className="d-flex align-items-center gap-2">
-          <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
-            <span>
-              <i className="icon-reaction me-1" />
-              {reaction.title()}
+    const titleContent = (
+      <div className="reaction-details-header__title">
+        <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
+          <span className="reaction-details-header__title-meta">
+            <i className="icon-reaction me-1" />
+            {titlePrefix && (
+              <span className="reaction-details-header__title-prefix">{titlePrefix}</span>
+            )}
+          </span>
+        </OverlayTrigger>
+        {isEditingHeaderName ? (
+          <Form.Control
+            ref={this.headerNameInputRef}
+            size="sm"
+            type="text"
+            name="reaction_name"
+            value={headerNameDraft}
+            placeholder="Reaction name..."
+            className="reaction-details-header__title-input"
+            onChange={this.handleHeaderNameDraftChange}
+            onBlur={this.commitHeaderNameChange}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                this.commitHeaderNameChange();
+              } else if (event.key === 'Escape') {
+                this.cancelHeaderNameChange();
+              }
+            }}
+          />
+        ) : (
+          <OverlayTrigger
+            placement="bottom"
+            overlay={<Tooltip id="editReactionName">Double-click to edit reaction name</Tooltip>}
+          >
+            <span
+              aria-hidden="true"
+              className={`reaction-details-header__title-text${reaction.name ? '' : ' reaction-details-header__title-text--placeholder'}`}
+              onDoubleClick={this.openHeaderNameEditor}
+            >
+              {reaction.name || 'Reaction name...'}
             </span>
           </OverlayTrigger>
+        )}
+      </div>
+    );
+
+    return (
+      <div className="d-flex justify-content-between">
+        <div className="reaction-details-header__left">
+          {titleContent}
           {colLabel}
           {rsPlanLabel}
           <ShowUserLabels element={reaction} />
