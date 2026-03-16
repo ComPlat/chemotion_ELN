@@ -84,6 +84,8 @@ export default class ReactionDetailsScheme extends React.Component {
     this.updateVolume = this.updateVolume.bind(this);
     this.handleVolumeCheckboxChange = this.handleVolumeCheckboxChange.bind(this);
     this.switchVolumeLock = this.switchVolumeLock.bind(this);
+    this.hasValidReactionVolume = this.hasValidReactionVolume.bind(this);
+    this.showReactionVolumeRequiredWarning = this.showReactionVolumeRequiredWarning.bind(this);
   }
 
   componentDidMount() {
@@ -2146,7 +2148,32 @@ export default class ReactionDetailsScheme extends React.Component {
 
   switchVolumeLock() {
     const { reaction, onInputChange } = this.props;
+    const willLockVolume = !reaction.isVolumeLocked;
+
+    if (willLockVolume && !this.hasValidReactionVolume(reaction)) {
+      this.showReactionVolumeRequiredWarning(
+        'Please enter a reaction volume value before locking the reaction volume.'
+      );
+      return;
+    }
+
     onInputChange('lockReactionVolume', !reaction.isVolumeLocked);
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  hasValidReactionVolume(reaction) {
+    return reaction.volume != null && reaction.volume !== '' && Number(reaction.volume) > 0;
+  }
+
+  showReactionVolumeRequiredWarning(message) {
+    NotificationActions.add({
+      title: 'Reaction Volume Required',
+      message,
+      level: 'warning',
+      position: 'tc',
+      dismissible: 'button',
+      autoDismiss: 5,
+    });
   }
 
   reactionVolume() {
@@ -2272,16 +2299,11 @@ export default class ReactionDetailsScheme extends React.Component {
     const { reaction, onInputChange } = this.props;
 
     // Show notification if checkbox is selected but volume is 0 or null
-    if (checked && (reaction.volume == null || reaction.volume === 0 || reaction.volume === '')) {
-      NotificationActions.add({
-        title: 'Reaction Volume Required',
-        message: 'Please enter a reaction volume value before enabling concentration calculation '
-          + 'based on reaction volume.',
-        level: 'warning',
-        position: 'tc',
-        dismissible: 'button',
-        autoDismiss: 5,
-      });
+    if (checked && !this.hasValidReactionVolume(reaction)) {
+      this.showReactionVolumeRequiredWarning(
+        'Please enter a reaction volume value before enabling concentration calculation '
+          + 'based on reaction volume.'
+      );
       // Don't update the checkbox if volume is invalid
       return;
     }
