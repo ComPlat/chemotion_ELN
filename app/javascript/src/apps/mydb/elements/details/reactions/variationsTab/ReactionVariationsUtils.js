@@ -475,8 +475,9 @@ function getPropertyColumnGroupChild(propertyType, gasMode) {
     case 'temperature':
       return {
         field,
+        colId: field,
         cellDataType,
-        headerName: 'T',
+        headerComponentParams: { innerHeaderComponent: UnitToggleHeader },
         displayUnit: units[0],
         units,
         entry
@@ -484,8 +485,9 @@ function getPropertyColumnGroupChild(propertyType, gasMode) {
     case 'duration':
       return {
         field,
+        colId: field,
         cellDataType,
-        headerName: 't',
+        headerComponentParams: { innerHeaderComponent: UnitToggleHeader },
         displayUnit: units[0],
         units,
         entry,
