@@ -11,6 +11,9 @@ const setReactionByType = (reaction, type, value) => {
     case 'status':
       reaction.status = value;
       break;
+    case 'reactionType':
+      reaction.reaction_type = value;
+      break;
     case 'description':
       reaction.description = value;
       break;
@@ -50,6 +53,12 @@ const setReactionByType = (reaction, type, value) => {
     case 'conditions':
       reaction.conditions = value;
       options = {updateGraphic: true}
+      break;
+    case 'phOperator':
+      reaction.ph_operator = value;
+      break;
+    case 'phValue':
+      reaction.ph_value = value;
       break;
     case 'solvent':
       reaction.solvent = value;

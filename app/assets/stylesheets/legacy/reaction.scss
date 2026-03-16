@@ -113,6 +113,34 @@ table.reaction-scheme-solvent {
   }
 }
 
+.reaction-details-toolbar {
+  width: 100%;
+
+  &__left {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  &__right {
+    margin-left: auto;
+    flex: 0 0 auto;
+  }
+
+  &__group {
+    .form-label {
+      font-weight: 600;
+    }
+  }
+
+  &__group--status {
+    min-width: 220px;
+  }
+}
+
+.reaction-ph-operator {
+  min-width: 72px;
+}
+
 /* Safari 4.0 - 8.0 */
 @-webkit-keyframes reaction-status-color-change {
   from {

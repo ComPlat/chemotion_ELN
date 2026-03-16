@@ -30,8 +30,8 @@ export default class ReactionDetailsMainProperties extends Component {
   }
 
   updateTemperature(newData) {
-    const { reaction: { temperature } } = this.props;
-    this.props.onInputChange('temperatureData', { ...temperature, data: newData });
+    const { reaction: { temperature }, onInputChange } = this.props;
+    onInputChange('temperatureData', { ...temperature, data: newData });
   }
 
   toggleTemperatureChart() {
@@ -40,59 +40,74 @@ export default class ReactionDetailsMainProperties extends Component {
   }
 
   changeUnit() {
-    const { reaction: { temperature } } = this.props;
+    const { reaction: { temperature }, onInputChange } = this.props;
 
     const units = Reaction.temperature_unit;
     const index = units.indexOf(temperature.valueUnit);
     const unit = units[(index + 1) % units.length];
-    this.props.onInputChange('temperatureUnit', unit);
+    onInputChange('temperatureUnit', unit);
   }
 
   render() {
-    const { reaction, onInputChange } = this.props;
+    const {
+      reaction,
+      onInputChange,
+      showPropertiesFields,
+      showSchemeFields,
+      phField,
+      vesselSizeField,
+      reactionVolumeField,
+    } = this.props;
     const { temperature } = reaction;
     const { showTemperatureChart } = this.state;
 
     return (
       <>
         <Row className="my-3">
-          <Col sm={6}>
-            <Form.Group>
-              <Form.Label>Name</Form.Label>
-              <Form.Control
-                id={uuid.v4()}
-                name="reaction_name"
-                type="text"
-                value={reaction.name || ''}
-                placeholder="Name..."
-                disabled={!permitOn(reaction) || reaction.isMethodDisabled('name')}
-                onChange={(event) => onInputChange('name', event)}
-              />
-            </Form.Group>
-          </Col>
-          <Col sm={3}>
-            <Form.Group>
-              <Form.Label>Status</Form.Label>
-              <Select
-                name="status"
-                isClearable
-                options={statusOptions}
-                value={statusOptions.find(({value}) => value === reaction.status)}
-                isDisabled={!permitOn(reaction) || reaction.isMethodDisabled('status')}
-                onChange={(option) => {
-                  const wrappedEvent = {target: {value: option?.value || null}};
-                  onInputChange('status', wrappedEvent);
-                }}
-              />
-            </Form.Group>
-          </Col>
+          {showPropertiesFields && (
+            <>
+              <Col sm={6}>
+                <Form.Group>
+                  <Form.Label>Name</Form.Label>
+                  <Form.Control
+                    id={uuid.v4()}
+                    name="reaction_name"
+                    type="text"
+                    value={reaction.name || ''}
+                    placeholder="Name..."
+                    disabled={!permitOn(reaction) || reaction.isMethodDisabled('name')}
+                    onChange={(event) => onInputChange('name', event)}
+                  />
+                </Form.Group>
+              </Col>
+              <Col sm={3}>
+                <Form.Group>
+                  <Form.Label>Status</Form.Label>
+                  <Select
+                    name="status"
+                    isClearable
+                    options={statusOptions}
+                    value={statusOptions.find(({ value }) => value === reaction.status)}
+                    isDisabled={!permitOn(reaction) || reaction.isMethodDisabled('status')}
+                    onChange={(option) => {
+                      const wrappedEvent = { target: { value: option?.value || null } };
+                      onInputChange('status', wrappedEvent);
+                    }}
+                  />
+                </Form.Group>
+              </Col>
+            </>
+          )}
           <Col sm={3}>
             <Form.Group>
               <Form.Label>Temperature</Form.Label>
               <InputGroup>
-                <OverlayTrigger placement="bottom" overlay={(
-                  <Tooltip id="show_temperature">Show temperature chart</Tooltip>
-                )}>
+                <OverlayTrigger
+                  placement="bottom"
+                  overlay={(
+                    <Tooltip id="show_temperature">Show temperature chart</Tooltip>
+                  )}
+                >
                   <Button
                     disabled={!permitOn(reaction)}
                     className="clipboardBtn"
@@ -119,6 +134,19 @@ export default class ReactionDetailsMainProperties extends Component {
               </InputGroup>
             </Form.Group>
           </Col>
+          {showSchemeFields && (
+            <>
+              <Col sm={3}>
+                {phField}
+              </Col>
+              <Col sm={3}>
+                {vesselSizeField}
+              </Col>
+              <Col sm={3}>
+                {reactionVolumeField}
+              </Col>
+            </>
+          )}
         </Row>
 
         {showTemperatureChart && (
@@ -146,10 +174,20 @@ export default class ReactionDetailsMainProperties extends Component {
 ReactionDetailsMainProperties.propTypes = {
   // eslint-disable-next-line react/forbid-prop-types
   reaction: PropTypes.object,
-  onInputChange: PropTypes.func
+  onInputChange: PropTypes.func,
+  showPropertiesFields: PropTypes.bool,
+  showSchemeFields: PropTypes.bool,
+  phField: PropTypes.node,
+  vesselSizeField: PropTypes.node,
+  reactionVolumeField: PropTypes.node,
 };
 
 ReactionDetailsMainProperties.defaultProps = {
   reaction: {},
-  onInputChange: () => {}
+  onInputChange: () => {},
+  showPropertiesFields: false,
+  showSchemeFields: false,
+  phField: null,
+  vesselSizeField: null,
+  reactionVolumeField: null,
 };

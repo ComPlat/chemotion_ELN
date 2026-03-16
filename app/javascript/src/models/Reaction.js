@@ -78,6 +78,11 @@ const DurationDefault = {
   memUnit: 'Hour(s)'
 };
 
+const ReactionTypeOptions = [
+  { value: 'standard', label: 'Standard' },
+  { value: 'interactions', label: 'Interaction' },
+];
+
 export const convertDuration = (value, unit, newUnit) => moment.duration(Number.parseFloat(value), LegMomentUnit[unit])
   .as(MomentUnit[newUnit]);
 
@@ -128,6 +133,8 @@ export default class Reaction extends Element {
       container: Container.init(),
       dangerous_products: '',
       conditions: '',
+      ph_operator: '=',
+      ph_value: '',
       description: Reaction.quillDefault(),
       duration: '',
       durationDisplay: DurationDefault,
@@ -159,6 +166,7 @@ export default class Reaction extends Element {
       vessel_size: { amount: null, unit: 'ml' },
       volume: null,
       use_reaction_volume: false,
+      reaction_type: 'standard',
       gaseous: false,
       weight_percentage: false
     });
@@ -180,6 +188,10 @@ export default class Reaction extends Element {
     return TemperatureUnit;
   }
 
+  static get reaction_type_options() {
+    return ReactionTypeOptions;
+  }
+
   get name() {
     return this._name;
   }
@@ -195,6 +207,8 @@ export default class Reaction extends Element {
       description: this.description,
       dangerous_products: this.dangerous_products,
       conditions: this.conditions,
+      ph_operator: this.ph_operator || '=',
+      ph_value: this.ph_value || '',
       duration: this.duration,
       durationDisplay: this.durationDisplay,
       durationCalc: this.durationCalc(),
@@ -231,6 +245,7 @@ export default class Reaction extends Element {
       vessel_size: this.vessel_size,
       volume: this.volume,
       use_reaction_volume: this.use_reaction_volume,
+      reaction_type: this.reaction_type || 'standard',
       gaseous: this.gaseous,
       weight_percentage: this.weight_percentage,
     });

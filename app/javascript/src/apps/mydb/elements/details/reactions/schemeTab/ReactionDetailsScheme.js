@@ -1947,10 +1947,44 @@ export default class ReactionDetailsScheme extends React.Component {
       const volumeValue = (reaction.volume != null && reaction.volume !== '')
         ? reaction.volume
         : undefined;
+      const volumeCalculationTooltip = (
+        <Tooltip id="volume-calculation-tooltip">
+          <div>
+            <strong>Concentration Calculation Method:</strong>
+            <br />
+            <strong>When checked:</strong>
+            {' Concentration calculations will use the reaction volume value entered above.'}
+            <br />
+            <strong>When unchecked:</strong>
+            {' Concentration calculations will be based on the sum of volumes from all reaction materials '}
+            (solvents, starting materials, and reactants).
+          </div>
+        </Tooltip>
+      );
 
       return (
         <Form.Group>
-          <Form.Label>Reaction volume</Form.Label>
+          <div className="d-flex justify-content-between align-items-center mb-1">
+            <Form.Label>Reaction volume</Form.Label>
+            <Form.Check
+              className="mb-0 ms-2 flex-shrink-0"
+              type="checkbox"
+              id="use_reaction_volume"
+              checked={reaction.use_reaction_volume || false}
+              onChange={this.handleVolumeCheckboxChange}
+              label={(
+                <span>
+                  Calculate Conc
+                  <OverlayTrigger
+                    placement="top"
+                    overlay={volumeCalculationTooltip}
+                  >
+                    <i className="ms-1 fa fa-info-circle" />
+                  </OverlayTrigger>
+                </span>
+              )}
+            />
+          </div>
           <NumeralInputWithUnitsCompo
             value={volumeValue}
             unit="l"
@@ -1963,38 +1997,6 @@ export default class ReactionDetailsScheme extends React.Component {
             onChange={(e) => this.updateVolume(e)}
             onMetricsChange={(e) => this.updateVolume(e)}
           />
-          <div className="mt-2">
-            <Form.Check
-              type="checkbox"
-              id="use_reaction_volume"
-              checked={reaction.use_reaction_volume || false}
-              onChange={this.handleVolumeCheckboxChange}
-              label={(
-                <span>
-                  Calculate Conc
-                  <OverlayTrigger
-                    placement="top"
-                    overlay={(
-                      <Tooltip id="volume-calculation-tooltip">
-                        <div>
-                          <strong>Concentration Calculation Method:</strong>
-                          <br />
-                          <strong>When checked:</strong>
-                          {' Concentration calculations will use the reaction volume value entered above.'}
-                          <br />
-                          <strong>When unchecked:</strong>
-                          {' Concentration calculations will be based on the sum of volumes from all reaction materials '}
-                          (solvents, starting materials, and reactants).
-                        </div>
-                      </Tooltip>
-                    )}
-                  >
-                    <i className="ms-1 fa fa-info-circle" />
-                  </OverlayTrigger>
-                </span>
-              )}
-            />
-          </div>
         </Form.Group>
       );
     }
@@ -2050,6 +2052,43 @@ export default class ReactionDetailsScheme extends React.Component {
 
     // Recalculate concentrations when checkbox state changes
     reaction.updateAllConcentrations();
+  }
+
+  renderPhConditionProperty() {
+    const { reaction, onInputChange } = this.props;
+    const operator = reaction.ph_operator || '=';
+    const value = reaction.ph_value || '';
+    const isDisabled = !permitOn(reaction);
+    const phOperatorOptions = [
+      { value: '=', label: '=' },
+      { value: '>', label: '>' },
+      { value: '<', label: '<' },
+    ];
+
+    return (
+      <Form.Group>
+        <Form.Label>pH</Form.Label>
+        <InputGroup>
+          <div className="reaction-ph-operator">
+            <Select
+              name="ph_operator"
+              isDisabled={isDisabled}
+              isClearable={false}
+              options={phOperatorOptions}
+              value={phOperatorOptions.find((item) => item.value === operator) || phOperatorOptions[0]}
+              onChange={(option) => onInputChange('phOperator', option?.value || '=')}
+            />
+          </div>
+          <Form.Control
+            type="text"
+            value={value}
+            disabled={isDisabled}
+            placeholder="value"
+            onChange={(event) => onInputChange('phValue', event.target.value)}
+          />
+        </InputGroup>
+      </Form.Group>
+    );
   }
 
   render() {
@@ -2184,13 +2223,17 @@ export default class ReactionDetailsScheme extends React.Component {
         <ReactionDetailsMainProperties
           reaction={reaction}
           onInputChange={onInputChange}
+          showSchemeFields
+          phField={this.renderPhConditionProperty()}
+          vesselSizeField={this.reactionVesselSize()}
+          reactionVolumeField={this.reactionVolume()}
         />
         <ReactionDetailsDuration
           reaction={reaction}
           onInputChange={onInputChange}
         />
         <Row className="mb-3">
-          <Col sm={3}>
+          <Col sm={6}>
             <Form.Group className="">
               <Form.Label className="text-nowrap">Type (Name Reaction Ontology)</Form.Label>
               <OlsTreeSelect
@@ -2203,12 +2246,6 @@ export default class ReactionDetailsScheme extends React.Component {
           </Col>
           <Col sm={3}>
             {this.renderRole()}
-          </Col>
-          <Col sm={3}>
-            {this.reactionVesselSize()}
-          </Col>
-          <Col sm={3}>
-            {this.reactionVolume()}
           </Col>
         </Row>
         <Row className="mb-3">

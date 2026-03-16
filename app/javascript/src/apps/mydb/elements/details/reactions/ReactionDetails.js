@@ -5,9 +5,10 @@ import React, { Component, createRef } from 'react';
 import Aviator from 'aviator';
 import PropTypes from 'prop-types';
 import {
-  Button, Tabs, Tab, OverlayTrigger, Tooltip, ButtonToolbar, Dropdown, Modal, Overlay
+  Button, Tabs, Tab, OverlayTrigger, Tooltip, ButtonToolbar, Dropdown, Modal, Overlay, Form
 } from 'react-bootstrap';
 import { findIndex, isEmpty } from 'lodash';
+import { Select } from 'src/components/common/Select';
 
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import ElementResearchPlanLabels from 'src/apps/mydb/elements/labels/ElementResearchPlanLabels';
@@ -61,6 +62,19 @@ import ReactionSchemeGraphic from 'src/apps/mydb/elements/details/reactions/Reac
 import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
 import isEqual from 'lodash/isEqual';
 import DocumentationButton from 'src/components/common/DocumentationButton';
+import { statusOptions } from 'src/components/staticDropdownOptions/options';
+import Reaction from 'src/models/Reaction';
+
+const formatReactionTypeOption = (option, { context }) => (
+  context === 'value'
+    ? (
+      <span>
+        <i className="fa fa-flask me-1" />
+        {`Reaction type: ${option.label}`}
+      </span>
+    )
+    : option.label
+);
 
 const handleProductClick = (product) => {
   const uri = Aviator.getCurrentURI();
@@ -127,6 +141,25 @@ export default class ReactionDetails extends Component {
 
   closeWtInfoModal() {
     this.setState({ showWtInfoModal: false });
+  }
+
+  renderReactionTypeSelect(reaction) {
+    const selectedReactionType = reaction.reaction_type || 'standard';
+
+    return (
+      <Form.Group className="reaction-details-toolbar__group mb-0">
+        <Select
+          size="sm"
+          name="reaction_type"
+          isClearable={false}
+          options={Reaction.reaction_type_options}
+          formatOptionLabel={formatReactionTypeOption}
+          value={Reaction.reaction_type_options.find(({ value }) => value === selectedReactionType)}
+          isDisabled={!permitOn(reaction)}
+          onChange={(option) => this.handleInputChange('reactionType', option?.value || 'standard')}
+        />
+      </Form.Group>
+    );
   }
 
   componentDidMount() {
@@ -264,9 +297,12 @@ export default class ReactionDetails extends Component {
       || type === 'vesselSizeUnit'
       || type === 'gaseous'
       || type === 'conditions'
+      || type === 'phOperator'
+      || type === 'phValue'
       || type === 'volume'
       || type === 'useReactionVolumeForConcentration'
       || type === 'weight_percentage'
+      || type === 'reactionType'
       || type === 'default'
     ) {
       value = event;
@@ -849,36 +885,39 @@ export default class ReactionDetails extends Component {
     const tabContentsMap = {
       scheme: (
         <Tab eventKey="scheme" title="Scheme" key={`scheme_${reaction.id}`}>
-          <div className="d-flex align-items-center">
-            <Dropdown ref={this.schemeDropdownRef}>
-              <Dropdown.Toggle variant="info" size="sm" id="scheme-type-dropdown">
-                <i className="fa fa-cog" />
-                <span className="ms-1">
-                  Current Scheme:&nbsp;
-                  {schemeType}
-                </span>
-              </Dropdown.Toggle>
-              <Dropdown.Menu>
-                <Dropdown.Item
-                  active={!reaction.gaseous && !reaction.weight_percentage}
-                  onClick={() => this.handleReactionSchemeChange('default')}
-                >
-                  Default Scheme
-                </Dropdown.Item>
-                <Dropdown.Item
-                  active={reaction.gaseous}
-                  onClick={() => this.handleReactionSchemeChange('gaseous')}
-                >
-                  Gas Scheme
-                </Dropdown.Item>
-                <Dropdown.Item
-                  active={reaction.weight_percentage}
-                  onClick={() => this.handleReactionSchemeChange('weight_percentage')}
-                >
-                  Weight Percentage Scheme
-                </Dropdown.Item>
-              </Dropdown.Menu>
-            </Dropdown>
+          <div className="reaction-details-toolbar d-flex align-items-end flex-wrap gap-2 mb-2">
+            <div className="reaction-details-toolbar__left d-flex align-items-end flex-wrap gap-2">
+              {this.renderReactionTypeSelect(reaction)}
+              <Dropdown ref={this.schemeDropdownRef}>
+                <Dropdown.Toggle variant="info" size="sm" id="scheme-type-dropdown">
+                  <i className="fa fa-cog" />
+                  <span className="ms-1">
+                    Current Scheme:&nbsp;
+                    {schemeType}
+                  </span>
+                </Dropdown.Toggle>
+                <Dropdown.Menu>
+                  <Dropdown.Item
+                    active={!reaction.gaseous && !reaction.weight_percentage}
+                    onClick={() => this.handleReactionSchemeChange('default')}
+                  >
+                    Default Scheme
+                  </Dropdown.Item>
+                  <Dropdown.Item
+                    active={reaction.gaseous}
+                    onClick={() => this.handleReactionSchemeChange('gaseous')}
+                  >
+                    Gas Scheme
+                  </Dropdown.Item>
+                  <Dropdown.Item
+                    active={reaction.weight_percentage}
+                    onClick={() => this.handleReactionSchemeChange('weight_percentage')}
+                  >
+                    Weight Percentage Scheme
+                  </Dropdown.Item>
+                </Dropdown.Menu>
+              </Dropdown>
+            </div>
             <Overlay
               target={() => this.schemeDropdownRef.current}
               show={showSchemeChangeConfirm}
@@ -930,6 +969,23 @@ export default class ReactionDetails extends Component {
                 {documentComponent}
               </>
             )}
+            <div className="reaction-details-toolbar__right d-flex align-items-end">
+              <Form.Group className="reaction-details-toolbar__group reaction-details-toolbar__group--status mb-0">
+                <Select
+                  size="sm"
+                  name="status"
+                  isClearable
+                  placeholder="Status"
+                  options={statusOptions}
+                  value={statusOptions.find(({ value }) => value === reaction.status)}
+                  isDisabled={!permitOn(reaction) || reaction.isMethodDisabled('status')}
+                  onChange={(option) => {
+                    const wrappedEvent = { target: { value: option?.value || null } };
+                    this.handleInputChange('status', wrappedEvent);
+                  }}
+                />
+              </Form.Group>
+            </div>
           </div>
           {
             !reaction.isNew && <CommentSection section="reaction_scheme" element={reaction} />
