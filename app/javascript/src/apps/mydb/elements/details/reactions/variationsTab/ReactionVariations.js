@@ -13,7 +13,8 @@ import Reaction from 'src/models/Reaction';
 import {
   createVariationsRow, copyVariationsRow, updateVariationsRow, getVariationsColumns, materialTypes,
   addMissingColumnsToVariations, removeObsoleteColumnsFromVariations, getColumnDefinitions,
-  removeObsoleteColumnDefinitions, getInitialGridState, getInitialLayout, setLayout, persistTableLayout, cellDataTypes,
+  removeObsoleteColumnDefinitions, getInitialGridState, getInitialLayout, persistRowOrder, setRowOrder,
+  setLayout, persistTableLayout, cellDataTypes,
   getReactionSegments,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
@@ -69,7 +70,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
       const updatedSelectedColumns = {
         ...selectedColumns, segments: selectedColumns.segments.filter((segment) => Object.hasOwn(segments, segment))
       };
-      const updatedReactionVariations = removeObsoleteColumnsFromVariations(reactionVariations, updatedSelectedColumns);
+      let updatedReactionVariations = removeObsoleteColumnsFromVariations(reactionVariations, updatedSelectedColumns);
       let updatedColumnDefinitions = getColumnDefinitions(
         updatedSelectedColumns,
         reactionMaterials,
@@ -77,6 +78,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
         gasMode,
       );
       updatedColumnDefinitions = setLayout(updatedColumnDefinitions, getInitialLayout(reaction.id));
+      updatedReactionVariations = setRowOrder(reaction.id, updatedReactionVariations);
 
       setReactionSegments(segments);
       setSelectedColumns(updatedSelectedColumns);
@@ -86,6 +88,13 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     };
     fetchData();
   }, []);
+
+  const handleRowDrag = (event) => {
+    const rowOrder = [];
+    event.api.forEachNode((node) => rowOrder.push(node.data.id));
+
+    persistRowOrder(reaction.id, rowOrder);
+  };
 
   const addRow = () => {
     setReactionVariations(
@@ -384,6 +393,13 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
           onCellEditRequest={updateRow}
           onGridPreDestroyed={(event) => persistTableLayout(reaction.id, event, columnDefinitions)}
           onStateUpdated={(event) => persistTableLayout(reaction.id, event, columnDefinitions)}
+          /*
+          We need to persist manual row sort (i.e., user changes row order by dragging rows),
+          since ag-grid does not persist manual row sort as part of the grid state.
+          In contrast to sort by column, we persist manual row sorting in the data, not in the grid state.
+          When the event fires, the grid has already mutated the row order, we just need to persist it.
+          */
+          onRowDragEnd={(event) => handleRowDrag(event)}
         />
       </div>
     </div>
