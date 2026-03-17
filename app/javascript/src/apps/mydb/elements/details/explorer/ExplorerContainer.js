@@ -73,12 +73,23 @@ function positionNodesByReaction(samples, reactions) {
     }
   });
 
+  const childrenByParent = {};
+  sortedReactions.forEach((r) => {
+    const parentId = reactionParent[r.id];
+    if (!parentId) return;
+
+    if (!childrenByParent[parentId]) {
+      childrenByParent[parentId] = [];
+    }
+    childrenByParent[parentId].push(r.id);
+  });
+
   const blockPos = {};
-  let rootIndex = 0;
 
   function resolveRowCollision(x, y, direction) {
     let nextX = x;
     let safe = false;
+
     while (!safe) {
       safe = true;
       for (const otherId in blockPos) {
@@ -91,32 +102,11 @@ function positionNodesByReaction(samples, reactions) {
         }
       }
     }
+
     return nextX;
   }
 
-  function placeReaction(rid) {
-    if (blockPos[rid]) return;
-
-    const parentId = reactionParent[rid];
-
-    if (!parentId) {
-      const x = resolveRowCollision(0, rootIndex * V_BLOCK, 1);
-      blockPos[rid] = { x, y: rootIndex * V_BLOCK };
-      rootIndex++;
-      return;
-    }
-
-    placeReaction(parentId);
-
-    const parentPos = blockPos[parentId];
-    const parentReaction = sortedReactions.find((r) => r.id === parentId);
-
-    const currentReaction = sortedReactions.find((r) => r.id === rid);
-    const splitSampleId = [
-      ...(currentReaction?.starting_material_ids || []),
-      ...(currentReaction?.product_ids || []),
-    ].find((sid) => parentOf[sid]);
-
+  function getBranchDirection(parentReaction, splitSampleId) {
     let direction = -1;
 
     if (splitSampleId && parentReaction) {
@@ -135,14 +125,66 @@ function positionNodesByReaction(samples, reactions) {
       }
     }
 
-    let x = parentPos.x + direction * BRANCH_X;
+    return direction;
+  }
+
+  const subtreeHeightCache = {};
+  function getSubtreeHeight(rid) {
+    if (subtreeHeightCache[rid]) return subtreeHeightCache[rid];
+
+    const childIds = childrenByParent[rid] || [];
+    if (childIds.length === 0) {
+      subtreeHeightCache[rid] = 1;
+      return 1;
+    }
+
+    const height = 1 + Math.max(...childIds.map((childId) => getSubtreeHeight(childId)));
+    subtreeHeightCache[rid] = height;
+    return height;
+  }
+
+  function placeReaction(rid) {
+    if (blockPos[rid]) return;
+
+    const parentId = reactionParent[rid];
+
+    if (!parentId) {
+      return;
+    }
+
+    placeReaction(parentId);
+
+    const parentPos = blockPos[parentId];
+    const parentReaction = sortedReactions.find((r) => r.id === parentId);
+    const currentReaction = sortedReactions.find((r) => r.id === rid);
+
+    const splitSampleId = [
+      ...(currentReaction?.starting_material_ids || []),
+      ...(currentReaction?.product_ids || []),
+    ].find((sid) => parentOf[sid]);
+
+    const direction = getBranchDirection(parentReaction, splitSampleId);
     const y = parentPos.y + V_BLOCK;
+    let x = parentPos.x + direction * BRANCH_X;
     x = resolveRowCollision(x, y, direction);
 
     blockPos[rid] = { x, y };
   }
 
-  sortedReactions.forEach((r) => placeReaction(r.id));
+  let mainRow = 0;
+  sortedReactions.forEach((r) => {
+    if (reactionParent[r.id]) return;
+
+    blockPos[r.id] = { x: 0, y: mainRow * V_BLOCK };
+    placeReaction(r.id);
+    mainRow += getSubtreeHeight(r.id);
+  });
+
+  sortedReactions.forEach((r) => {
+    if (!blockPos[r.id]) {
+      placeReaction(r.id);
+    }
+  });
 
   const usedSamples = new Set();
 
