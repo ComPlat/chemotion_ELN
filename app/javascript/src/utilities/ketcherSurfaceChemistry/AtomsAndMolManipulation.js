@@ -129,9 +129,10 @@ const associateTextNodeWithNewAlias = (atomLocation, newAlias, oldAlias) => {
 };
 
 // helper function to process ketcher-rails files and adding image to ketcher canvas
+// List order must match atom index order (first entry = first R# atom) so shapes stay correct on import.
 const addingPolymersToKetcher = async (railsPolymersList, data) => {
   try {
-    // Split by whitespace and drop empties so each R# atom gets the correct entry (e.g. "6/7/1.00-2.00" -> template 7)
+    // Split by whitespace and drop empties; preserve order so each R# atom gets the correct entry
     const polymerList = (railsPolymersList || '').trim().split(/\s+/).filter(Boolean);
     const collectedImages = [];
     await initializeKetcherData(data);
