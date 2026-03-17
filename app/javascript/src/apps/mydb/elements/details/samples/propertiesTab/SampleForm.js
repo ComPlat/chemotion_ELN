@@ -1099,8 +1099,8 @@ export default class SampleForm extends React.Component {
           placeholder={sample.description}
           value={sample.description || ''}
           onChange={(e) => this.handleFieldChanged('description', e.target.value)}
-          rows={2}
           disabled={!sample.can_update}
+          style={{ fieldSizing: 'content', minHeight: '2lh', resize: 'none', overflow: 'hidden' }}
         />
       </Form.Group>
     );
