@@ -93,7 +93,12 @@ function Affiliations() {
             return false;
           }
           getAllAffiliations();
+          return true;
         });
+    } else {
+      affiliations.splice(index, 1);
+      setAffiliations(affiliations);
+      setInputValues({});
     }
   };
 
@@ -212,6 +217,7 @@ function Affiliations() {
 
       <div className="d-flex justify-content-end my-1">
         <Button
+          disabled={affiliations.some((item) => !item.id)}
           variant="primary"
           onClick={() => {
             setAffiliations((prev) => [...prev, {
@@ -244,7 +250,7 @@ function Affiliations() {
               <span className="text-danger ms-1">*</span>
             </th>
             <th>To</th>
-            <th />
+            <th>Control</th>
           </tr>
         </thead>
         <tbody>
