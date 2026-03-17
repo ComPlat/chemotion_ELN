@@ -25,7 +25,7 @@ function TwoFactorSettings() {
       })
       .catch((err) => console.error(err.response.error));
   });
-  // http://localhost:3000/users/two_factor_auth/request_enable?jwt=eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo4LCJhY3Rpb24iOiJhY3RpdmF0ZV8yZmEiLCJleHAiOjE3NzMyMjM0ODN9.TlgJcZpaJ7O4Oyoyp-Ajxyv-XCa-GlQqQTbQQa2SyDg
+
   const cardBodyContent = () => {
     if (isActive === null) {
       return <p>Loading...!</p>;

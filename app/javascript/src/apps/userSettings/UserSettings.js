@@ -11,12 +11,13 @@ function DeleteSettings() {
   const [otpAttempt, setOtpAttempt] = useState('');
 
   const closeOtpDel = useCallback(() => setShowOtpDel(false), []);
+  const [isWrongOtp, setIsWrongOtp] = useState(false);
   const onChangeOptAttempt = useCallback((e) => setOtpAttempt(e.target.value), []);
 
   const handleDelete = async () => {
     setOtpAttempt('');
     const res = await submitAsForm({
-      url: '/users', form: { _method: 'delete', otp_attempt: otpAttempt }, method: 'POST'
+      url: '/users', form: { _method: 'delete', 'user[otp_attempt]': otpAttempt }, method: 'POST'
     }).catch((err) => console.error(err.messages || ['Something went wrong']));
     if (res.redirected) {
       window.location = res.url;
@@ -25,6 +26,7 @@ function DeleteSettings() {
     if (status === 401 || status === 422) {
       const content = await res.json();
       setShowOtpDel(content?.otp_required || false);
+      setIsWrongOtp(content?.otp_wrong || false);
     } else {
       setShowOtpDel(false);
     }
@@ -46,6 +48,7 @@ function DeleteSettings() {
           closeOtpModal={closeOtpDel}
           showOtpModal={showOtpDel}
           handleSubmit={handleDelete}
+          isWrongOtp={isWrongOtp}
         />
         <Row className="mb-3">
           <Col xs={3}>
@@ -68,6 +71,7 @@ function AccountSettings({ currentUser }) {
   const [errors, setErrors] = useState([]);
   const [successMessage, setSuccessMessage] = useState('');
   const [showOtp, setShowOtp] = useState(false);
+  const [isWrongOtp, setIsWrongOtp] = useState(false);
   const closeOtp = useCallback(() => setShowOtp(false), []);
   const [unconfirmedEmail, setUnconfirmedEmail] = useState(currentUser.unconfirmed_email);
   const [form, setForm] = formValueHandler({
@@ -109,6 +113,7 @@ function AccountSettings({ currentUser }) {
     }
 
     setShowOtp(content?.otp_required || false);
+    setIsWrongOtp(content?.otp_wrong || false);
   };
 
   return (
@@ -135,6 +140,7 @@ function AccountSettings({ currentUser }) {
             closeOtpModal={closeOtp}
             showOtpModal={showOtp}
             handleSubmit={handleSubmit}
+            isWrongOtp={isWrongOtp}
           />
 
           <Form onSubmit={handleSubmit}>

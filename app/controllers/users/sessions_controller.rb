@@ -45,7 +45,7 @@ module Users
     end
 
     def render_otp_required(error: nil)
-      response = { otp_required: true }
+      response = { otp_required: true, otp_wrong: params[:user][:otp_attempt].present? }
       response[:error] = error if error
       render json: response, status: :unauthorized
     end
