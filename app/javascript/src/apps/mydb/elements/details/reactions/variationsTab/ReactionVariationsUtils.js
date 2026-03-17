@@ -640,14 +640,16 @@ function setGroupColDefAttribute(columnDefinitions, groupId, subGroupId, attribu
 }
 
 function setLeafColDefAttribute(columnDefinitions, colId, attribute, update) {
-  const updatedColumnDefinitions = cloneDeep(columnDefinitions);
   function updateLeaf(columns) {
     return columns.some((col) => {
       if (col.colId === colId) { col[attribute] = update; return true; }
       return col.children && updateLeaf(col.children);
     });
   }
+
+  const updatedColumnDefinitions = cloneDeep(columnDefinitions);
   updateLeaf(updatedColumnDefinitions);
+
   return updatedColumnDefinitions;
 }
 
@@ -723,68 +725,126 @@ function getInitialGridState(reactionId) {
   return JSON.parse(localStorage.getItem(getGridStateId(reactionId))) || {};
 }
 
-function getEntryId(reactionId) {
+function getLayoutId(reactionId) {
   const { currentUser } = UserStore.getState();
-  return `user${currentUser.id}-reaction${reactionId}-reactionVariationsEntries`;
+  return `user${currentUser.id}-reaction${reactionId}-reactionVariationsLayout`;
 }
 
-function getInitialEntries(reactionId) {
-  return JSON.parse(localStorage.getItem(getEntryId(reactionId))) || [];
+function getInitialLayout(reactionId) {
+  return JSON.parse(localStorage.getItem(getLayoutId(reactionId))) || {};
+}
+
+function traverseColDefs(colDef, callback, path = []) {
+  const { groupId } = colDef;
+  if (groupId) {
+    path.push(groupId);
+  }
+
+  if (colDef.children) {
+    colDef.children.forEach((child) => traverseColDefs(child, callback, [...path]));
+  } else if (colDef.entry) {
+    const key = [...path, colDef.entry].join('.');
+    callback(colDef, key);
+  }
 }
 
 function getEntryVisibility(columnDefinitions) {
   const entryVisibility = {};
 
-  function traverseColDefs(colDef, path = []) {
-    const { groupId } = colDef;
-    if (groupId) {
-      path.push(colDef.groupId);
-    }
-
-    if (colDef.children) {
-      colDef.children.forEach((child) => traverseColDefs(child, [...path]));
-    } else if (colDef.entry) {
-      const key = [...path, colDef.entry].join('.');
-      entryVisibility[key] = colDef.hide ?? true;
-    }
-  }
-
   columnDefinitions
     .filter((groupColDef) => nestedColumnGroups.includes(groupColDef.groupId))
-    .forEach((groupColDef) => traverseColDefs(groupColDef));
+    .forEach((groupColDef) => traverseColDefs(groupColDef, (colDef, key) => {
+      entryVisibility[key] = colDef.hide ?? true;
+    }));
 
   return entryVisibility;
 }
 
 function setEntryVisibility(columnDefinition, entryVisibility) {
-  function traverseColDefs(colDef, path = []) {
-    const { groupId } = colDef;
-    if (groupId) {
-      path.push(colDef.groupId);
-    }
-
-    if (colDef.children) {
-      colDef.children.forEach((child) => traverseColDefs(child, [...path]));
-    } else if (colDef.entry) {
-      const key = [...path, colDef.entry].join('.');
-      if (key in entryVisibility) {
-        colDef.hide = entryVisibility[key];
-      }
-    }
-  }
-
   const updatedColumnDefinition = cloneDeep(columnDefinition);
   updatedColumnDefinition
     .filter((groupColDef) => nestedColumnGroups.includes(groupColDef.groupId))
-    .forEach((groupColDef) => traverseColDefs(groupColDef));
+    .forEach((groupColDef) => traverseColDefs(groupColDef, (colDef, key) => {
+      if (key in entryVisibility) {
+        colDef.hide = entryVisibility[key];
+      }
+    }));
 
   return updatedColumnDefinition;
+}
+
+function getEntryDisplayUnits(columnDefinitions) {
+  const displayUnits = {};
+
+  columnDefinitions.forEach((groupColDef) => traverseColDefs(groupColDef, (colDef, key) => {
+    if (colDef.displayUnit !== undefined) {
+      displayUnits[key] = colDef.displayUnit;
+    }
+  }));
+
+  return displayUnits;
+}
+
+function setEntryDisplayUnits(columnDefinition, displayUnits) {
+  const updatedColumnDefinition = cloneDeep(columnDefinition);
+  updatedColumnDefinition.forEach((groupColDef) => traverseColDefs(groupColDef, (colDef, key) => {
+    if (key in displayUnits) {
+      colDef.displayUnit = displayUnits[key];
+    }
+  }));
+
+  return updatedColumnDefinition;
+}
+
+function getGroupHeaderNames(columnDefinitions) {
+  const headerNames = {};
+  columnDefinitions
+    .filter((groupColDef) => nestedColumnGroups.includes(groupColDef.groupId))
+    .forEach((groupColDef) => {
+      groupColDef.children.forEach((subGroup) => {
+        headerNames[`${groupColDef.groupId}.${subGroup.groupId}`] = subGroup.headerName;
+      });
+    });
+
+  return headerNames;
+}
+
+function setGroupHeaderNames(columnDefinition, headerNames) {
+  const updatedColumnDefinition = cloneDeep(columnDefinition);
+  updatedColumnDefinition
+    .filter((groupColDef) => nestedColumnGroups.includes(groupColDef.groupId))
+    .forEach((groupColDef) => {
+      groupColDef.children.forEach((subGroup) => {
+        const key = `${groupColDef.groupId}.${subGroup.groupId}`;
+        if (key in headerNames) {
+          subGroup.headerName = headerNames[key];
+        }
+      });
+    });
+
+  return updatedColumnDefinition;
+}
+
+function getLayout(columnDefinitions) {
+  return {
+    entries: getEntryVisibility(columnDefinitions),
+    displayUnits: getEntryDisplayUnits(columnDefinitions),
+    groupHeaderNames: getGroupHeaderNames(columnDefinitions),
+  };
+}
+
+function setLayout(columnDefinitions, layout) {
+  let updated = setEntryVisibility(columnDefinitions, layout.entries ?? {});
+  updated = setEntryDisplayUnits(updated, layout.displayUnits ?? {});
+  updated = setGroupHeaderNames(updated, layout.groupHeaderNames ?? {});
+
+  return updated;
 }
 
 const persistTableLayout = (reactionId, event, columnDefinitions) => {
   const { state: gridState } = event;
   localStorage.setItem(getGridStateId(reactionId), JSON.stringify(gridState));
-  localStorage.setItem(getEntryId(reactionId), JSON.stringify(getEntryVisibility(columnDefinitions)));
+  localStorage.setItem(getLayoutId(reactionId), JSON.stringify(getLayout(columnDefinitions)));
 };
 
 function formatReactionSegments(segments) {
@@ -891,8 +951,8 @@ export {
   PLACEHOLDER_CELL_TEXT,
   REACTION_VARIATIONS_TAB_KEY,
   getInitialGridState,
-  getInitialEntries,
-  setEntryVisibility,
+  getInitialLayout,
+  setLayout,
   persistTableLayout,
   getUserFacingEntryName,
   getReactionSegments,
