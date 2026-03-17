@@ -734,6 +734,38 @@ function getInitialLayout(reactionId) {
   return JSON.parse(localStorage.getItem(getLayoutId(reactionId))) || {};
 }
 
+function getRowOrderId(reactionId) {
+  const { currentUser } = UserStore.getState();
+  return `user${currentUser.id}-reaction${reactionId}-reactionVariationsRowOrder`;
+}
+
+function getInitialRowOrder(reactionId) {
+  return JSON.parse(localStorage.getItem(getRowOrderId(reactionId))) || null;
+}
+
+function persistRowOrder(reactionId, rowOrder) {
+  localStorage.setItem(getRowOrderId(reactionId), JSON.stringify(rowOrder));
+}
+
+function setRowOrder(reactionId, reactionVariations) {
+  const rowOrder = getInitialRowOrder(reactionId);
+  let updatedReactionVariations = cloneDeep(reactionVariations);
+
+  if (rowOrder) {
+    updatedReactionVariations = updatedReactionVariations.sort(
+      (a, b) => {
+        const indexA = rowOrder.indexOf(a.id);
+        const indexB = rowOrder.indexOf(b.id);
+        const posA = indexA === -1 ? Infinity : indexA;
+        const posB = indexB === -1 ? Infinity : indexB;
+        return posA - posB;
+      }
+    );
+  }
+
+  return updatedReactionVariations;
+}
+
 function traverseColDefs(colDef, callback, path = []) {
   const { groupId } = colDef;
   if (groupId) {
@@ -952,6 +984,9 @@ export {
   REACTION_VARIATIONS_TAB_KEY,
   getInitialGridState,
   getInitialLayout,
+  getInitialRowOrder,
+  persistRowOrder,
+  setRowOrder,
   setLayout,
   persistTableLayout,
   getUserFacingEntryName,
