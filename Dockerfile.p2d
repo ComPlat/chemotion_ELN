@@ -73,6 +73,7 @@ ADD https://payload.chemserv.scc.kit.edu/initialize.sh /initialize.sh
 ADD https://payload.chemserv.scc.kit.edu/converter.yml /chemotion/app/config/converter.yml
 ADD https://payload.chemserv.scc.kit.edu/spectra.yml /chemotion/app/config/spectra.yml
 ADD https://payload.chemserv.scc.kit.edu/indigo.yml /chemotion/app/config/indigo_service.yml
+
 # stop check for ketcherails
 RUN sed -i '/# add ketcherails templates if needed/,$d' /embed/scripts/dbcheck.sh
 
@@ -95,3 +96,4 @@ VOLUME [ "/chemotion/app", "/chemotion/data" ]
 
 RUN cp config/structure_editors.yml.example config/structure_editors.yml
 RUN cp config/ketcher_service.yml.example config/ketcher_service.yml
+RUN cp config/indigo_service.yml.example config/indigo_service.yml

@@ -123,7 +123,8 @@ const initializeKetcherData = async (data) => {
   }
 };
 
-// helper function to examine the file coming ketcher rails
+// helper function to examine the file coming from ketcher/rails
+// Use the *first* PolymersList block so shape order is preserved on import (matches atom index order).
 const hasKetcherData = async (molfile) => {
   if (!molfile) {
     console.error('Invalid molfile source.');
@@ -132,11 +133,16 @@ const hasKetcherData = async (molfile) => {
 
   try {
     const lines = molfile.trim().split('\n');
-    const lastIndex = lines.map((line, i) => (line.includes(KET_TAGS.polymerIdentifier) ? i : -1))
-      .filter((i) => i >= 0)
-      .pop();
-    if (lastIndex == null) return null;
-    return lines[lastIndex + 1]?.trim() || null;
+    const firstIndex = lines.findIndex((line) => line.includes(KET_TAGS.polymerIdentifier));
+    if (firstIndex === -1) return null;
+    // Collect content lines after "> <PolymersList>" until next block tag (preserve order for shapes)
+    const contentLines = [];
+    for (let i = firstIndex + 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (line.startsWith('> <')) break;
+      if (line.length > 0) contentLines.push(line);
+    }
+    return contentLines.length > 0 ? contentLines.join(' ') : null;
   } catch (err) {
     console.error('Error processing molfile');
     return null;
