@@ -13,8 +13,8 @@ import Reaction from 'src/models/Reaction';
 import {
   createVariationsRow, copyVariationsRow, updateVariationsRow, getVariationsColumns, materialTypes,
   addMissingColumnsToVariations, removeObsoleteColumnsFromVariations, getColumnDefinitions,
-  removeObsoleteColumnDefinitions, getInitialGridState, getInitialEntries, persistTableLayout, cellDataTypes,
-  getReactionSegments, setEntryVisibility,
+  removeObsoleteColumnDefinitions, getInitialGridState, getInitialLayout, setLayout, persistTableLayout, cellDataTypes,
+  getReactionSegments,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   getReactionAnalyses, updateAnalyses
@@ -76,8 +76,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
         segments,
         gasMode,
       );
-      const entries = getInitialEntries(reaction.id);
-      updatedColumnDefinitions = setEntryVisibility(updatedColumnDefinitions, entries);
+      updatedColumnDefinitions = setLayout(updatedColumnDefinitions, getInitialLayout(reaction.id));
 
       setReactionSegments(segments);
       setSelectedColumns(updatedSelectedColumns);
