@@ -352,9 +352,10 @@ const applyKetcherData = async (polymerTag, fileContent, textNodes, editor) => {
       const { molfileData } = await addPolymerTags(polymerTag, fileContent);
       molfileContent = molfileData;
     }
-    // Add text nodes when available (with or without polymer tag, so labels aren't lost on open)
+    // Add text nodes when available (with or without polymer tag, so labels aren't lost on open).
+    // Pass molfileContent so TextNode lines are read in atom index order (same as PolymersList).
     if (textNodes && textNodes.length > 0) {
-      const textNodeList = await addTextNodes(textNodes);
+      const textNodeList = await addTextNodes(textNodes, molfileContent);
       const validNodes = (textNodeList || []).filter(Boolean);
       if (validNodes.length) {
         molfileContent.root.nodes.push(...validNodes);

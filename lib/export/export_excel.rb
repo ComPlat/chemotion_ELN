@@ -3,7 +3,7 @@ require 'export_table'
 require 'base64'
 
 module Export
-  class ExportExcel < ExportTable
+  class ExportExcel < ExportTable # rubocop:disable Metrics/ClassLength
     DEFAULT_ROW_WIDTH = 100
     DEFAULT_ROW_HEIGHT = 20
     # Default pixel size for SVG→PNG export (Inkscape); kept in line with ImageMagick’s natural SVG size.
@@ -212,6 +212,8 @@ module Export
             "#{sample['molarity_value']} #{sample['molarity_unit']}"
           elsif column == 'density'
             "#{sample['density']} g/ml"
+          elsif column == 'molfile'
+            sample[column]
           else
             sample[column]
           end
@@ -362,5 +364,7 @@ module Export
       file.flush
       file
     end
+
+    private
   end
 end

@@ -116,30 +116,46 @@ const forTextNodeHeader = (key, description) => {
   });
 };
 
-// generating images for ket2 format from molfile polymers list
-const addTextNodes = async (textNodes) => textNodes.map((item) => {
-  const parts = item.split(KET_TAGS.textIdentifier);
-  if (parts.length < 4) return null;
-  const [, key, alias, ...rest] = parts;
-  const description = rest.join(KET_TAGS.textIdentifier);
-  if (alias && key) {
-    textNodeStruct[alias] = key;
-    const content = forTextNodeHeader(key, description);
-    return {
-      type: 'text',
-      data: {
-        content,
-        position: {
-          x: 10.325000000000001,
-          y: -11.325000000000001,
-          z: 0
-        },
-        pos: []
-      }
-    };
-  }
-  return null;
-});
+// Build atoms-with-alias in mol order (same order as PolymersList / arrangeTextNodes write).
+const getAtomsWithAliasInOrder = (fileContent) => {
+  if (!fileContent?.root?.nodes) return [];
+  const molRefs = fileContent.root.nodes.filter((n) => n && n.$ref).map((n) => n.$ref);
+  return molRefs.flatMap((ref) => (fileContent[ref]?.atoms || []).filter(
+    (a) => a && a.alias && ALIAS_PATTERNS.threeParts.test(a.alias)
+  ));
+};
+
+// Generating text nodes for ket2 format from molfile TextNode block.
+// When fileContent is provided, lines are read in atom index order (same as PolymersList).
+const addTextNodes = async (textNodes, fileContent) => {
+  const atomsWithAliasInOrder = fileContent ? getAtomsWithAliasInOrder(fileContent) : [];
+  const useIndexOrder = atomsWithAliasInOrder.length > 0;
+
+  return textNodes.map((item, i) => {
+    const parts = item.split(KET_TAGS.textIdentifier);
+    if (parts.length < 4) return null;
+    const [, key, aliasFromLine, ...rest] = parts;
+    const description = rest.join(KET_TAGS.textIdentifier);
+    const alias = useIndexOrder ? (atomsWithAliasInOrder[i]?.alias ?? aliasFromLine) : aliasFromLine;
+    if (alias && key) {
+      textNodeStruct[alias] = key;
+      const content = forTextNodeHeader(key, description);
+      return {
+        type: 'text',
+        data: {
+          content,
+          position: {
+            x: 10.325000000000001,
+            y: -11.325000000000001,
+            z: 0
+          },
+          pos: []
+        }
+      };
+    }
+    return null;
+  });
+};
 
 // helper function to test alias list consistency 0,1,2,3,4...
 const isAliasConsistent = () => {

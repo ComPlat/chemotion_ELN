@@ -62,6 +62,5 @@ class ImportSamplesJob < ApplicationJob
       autoDismiss: 5,
     )
   rescue StandardError => e
-    Delayed::Worker.logger.error e
   end
 end

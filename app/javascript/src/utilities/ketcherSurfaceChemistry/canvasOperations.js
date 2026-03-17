@@ -109,9 +109,7 @@ const arrangeTextNodes = async (ket2Molfile) => {
 
   if (!assembleTextList.length) return ket2Molfile;
 
-  // Sort vertically: bottom (larger y) first
-  assembleTextList.sort((a, b) => b.y - a.y);
-
+  // Keep atom index order (same as PolymersList) so TextNode lines match positions 0,1,2... and read-back order is correct
   ket2Molfile.push(
     KET_TAGS.textNodeIdentifier,
     ...assembleTextList.map((entry) => entry.line),

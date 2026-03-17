@@ -403,7 +403,7 @@ module ReportHelpers
             #{component_columns}
           FROM components comp
           #{needs_molecule_join ? "LEFT JOIN molecules m ON m.id = (comp.component_properties->>'molecule_id')::integer" : ''}
-          WHERE comp.sample_id = s.id
+          WHERE comp.sample_id = s.id AND comp.deleted_at IS NULL
           ORDER BY comp.position
         ) AS component_row
       ) AS components ON TRUE
@@ -635,7 +635,7 @@ module ReportHelpers
         real_amount_value: ['s.real_amount_value', '"real amount"', 0],
         real_amount_unit: ['s.real_amount_unit', '"real unit"', 0],
         description: ['s.description', '"description"', 0],
-        molfile: ["encode(s.molfile, 'escape')", 'molfile', 1],
+        molfile: ["convert_from(s.molfile, 'UTF8')", 'molfile', 1],
         purity: ['s.purity', '"purity"', 0],
         solvent: ['s.solvent', '"solvent"', 0],
         # impurities: ['s.impurities', nil, 0],
@@ -661,8 +661,15 @@ module ReportHelpers
         refractive_index: ['s."refractive_index"', '"refractive index"', 0],
         inventory_label: ['s."inventory_label"', '"inventory label"', 0],
         solubility: ['s."solubility"', '"solubility"', 0],
-        color: ['s."color"', '"color"', 0],
+        color: ["COALESCE(s.\"color\", s.sample_details->>'color', s.xref->>'color')", '"color"', 0],
         form: ['s."form"', '"form"', 0],
+        height: ["COALESCE(s.\"height\"::text, s.sample_details->>'height', s.xref->>'height')", '"height"', 0],
+        width: ["COALESCE(s.\"width\"::text, s.sample_details->>'width', s.xref->>'width')", '"width"', 0],
+        length: ["COALESCE(s.\"length\"::text, s.sample_details->>'length', s.xref->>'length')", '"length"', 0],
+        storage_condition: ["COALESCE(s.\"storage_condition\", s.sample_details->>'storage_condition', s.xref->>'storage_condition')", '"storage condition"', 0],
+        state: ["COALESCE(s.\"state\", s.sample_details->>'state', s.xref->>'state')", '"state"', 0],
+        residue_type: ["res.residue_type", '"residue_type"', 1],
+        polymer_type: ["res.custom_info->>'polymer_type'", '"polymer_type"', 1],
       },
       sample_id: {
         external_label: ['s.external_label', '"sample external label"', 0],
@@ -753,7 +760,6 @@ module ReportHelpers
       'refractive_index' => "s.xref->>'refractive_index' as refractive_index",
       'flash_point' => "s.xref->>'flash_point' as flash_point",
       'solubility' => "s.xref->>'solubility' as solubility",
-      'color' => "s.xref->>'color' as color",
       'form' => "s.xref->>'form' as form",
     }
 
