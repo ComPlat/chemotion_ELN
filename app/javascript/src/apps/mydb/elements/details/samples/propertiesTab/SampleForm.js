@@ -57,6 +57,20 @@ export default class SampleForm extends React.Component {
     this.switchDensityMolarity = this.switchDensityMolarity.bind(this);
     this.handleMixtureComponentChanged = this.handleMixtureComponentChanged.bind(this);
     this.handleSampleTypeChanged = this.handleSampleTypeChanged.bind(this);
+    this.descTextareaRef = React.createRef();
+  }
+
+  adjustDescriptionHeight() {
+    const node = this.descTextareaRef.current;
+    const el = node?.tagName === 'TEXTAREA' ? node : node?.querySelector?.('textarea');
+    if (!el) return;
+    el.style.height = 'auto';
+    const minHeight = 2 * 20;
+    el.style.height = `${Math.max(minHeight, el.scrollHeight)}px`;
+  }
+
+  componentDidMount() {
+    this.adjustDescriptionHeight();
   }
 
   componentDidUpdate(prevProps) {
@@ -75,6 +89,11 @@ export default class SampleForm extends React.Component {
       this.setState({
         moleculeNameInputValue: String(displayValue)
       });
+    }
+
+    if (prevProps.sample?.description !== this.props.sample?.description
+        || prevProps.sample?.id !== this.props.sample?.id) {
+      this.adjustDescriptionHeight();
     }
   }
 
@@ -1095,10 +1114,14 @@ export default class SampleForm extends React.Component {
       <Form.Group className="my-4">
         <Form.Label>Description</Form.Label>
         <Form.Control
+          ref={this.descTextareaRef}
           as="textarea"
           placeholder={sample.description}
           value={sample.description || ''}
-          onChange={(e) => this.handleFieldChanged('description', e.target.value)}
+          onChange={(e) => {
+            this.handleFieldChanged('description', e.target.value);
+            requestAnimationFrame(() => this.adjustDescriptionHeight());
+          }}
           rows={2}
           disabled={!sample.can_update}
         />
