@@ -116,30 +116,82 @@ const forTextNodeHeader = (key, description) => {
   });
 };
 
-// generating images for ket2 format from molfile polymers list
-const addTextNodes = async (textNodes) => textNodes.map((item) => {
-  const parts = item.split(KET_TAGS.textIdentifier);
-  if (parts.length < 4) return null;
-  const [, key, alias, ...rest] = parts;
-  const description = rest.join(KET_TAGS.textIdentifier);
-  if (alias && key) {
-    textNodeStruct[alias] = key;
-    const content = forTextNodeHeader(key, description);
-    return {
-      type: 'text',
-      data: {
-        content,
-        position: {
-          x: 10.325000000000001,
-          y: -11.325000000000001,
-          z: 0
-        },
-        pos: []
+// Build ordered list of atom aliases (matches PolymersList index 0,1,2...)
+// ketData: optional structure to use when latestData is null (e.g. during initial load)
+const getAtomsWithAliasInOrder = (ketData) => {
+  const data = ketData || latestData;
+  if (!data) return [];
+  const molRefs = (data.root?.nodes || []).filter((n) => n?.$ref).map((n) => n.$ref);
+  const aliases = [];
+  for (const molKey of molRefs) {
+    const mol = data[molKey];
+    if (!mol?.atoms) continue;
+    for (const atom of mol.atoms) {
+      if (atom?.alias && ALIAS_PATTERNS.threeParts.test(atom.alias)) {
+        aliases.push(atom.alias);
       }
-    };
+    }
+  }
+  return aliases;
+};
+
+// Parse template id from alias (e.g. t_19_1 -> 19)
+const getTemplateIdFromAlias = (alias) => {
+  if (!alias || !ALIAS_PATTERNS.threeParts.test(alias)) return null;
+  const parts = alias.split('_');
+  const id = parseInt(parts[1], 10);
+  return Number.isNaN(id) ? null : id;
+};
+
+// Find alias in list that matches template id (e.g. template 19 -> t_19_2)
+const findAliasByTemplateId = (aliasesByIndex, templateId) => {
+  for (const a of aliasesByIndex) {
+    if (getTemplateIdFromAlias(a) === templateId) return a;
   }
   return null;
-});
+};
+
+// generating images for ket2 format from molfile polymers list
+// Resolve correct alias: prefer polymer index (canonical, handles duplicate templates),
+// then template id (for legacy/wrong-index files), then file alias.
+// ketData: optional structure for alias resolution when latestData is null (initial load)
+const addTextNodes = async (textNodes, textNodeMeta, ketData) => {
+  const aliasesByIndex = getAtomsWithAliasInOrder(ketData);
+  return textNodes.map((item) => {
+    const parts = item.split(KET_TAGS.textIdentifier);
+    if (parts.length < 4) return null;
+    const [polymerIndexStr, key, fileAlias, ...rest] = parts;
+    const description = rest.join(KET_TAGS.textIdentifier);
+    if (!key) return null;
+    const polymerIndex = parseInt(polymerIndexStr, 10);
+    const templateId = getTemplateIdFromAlias(fileAlias);
+    let alias = null;
+    if (!Number.isNaN(polymerIndex) && polymerIndex >= 0 && polymerIndex < aliasesByIndex.length) {
+      alias = aliasesByIndex[polymerIndex];
+    }
+    if (!alias && templateId != null) {
+      alias = findAliasByTemplateId(aliasesByIndex, templateId);
+    }
+    if (!alias) alias = fileAlias;
+    if (alias) {
+      textNodeStruct[alias] = key;
+      const content = forTextNodeHeader(key, description);
+      return {
+        type: 'text',
+        data: {
+          content,
+          position: {
+            x: 10.325000000000001,
+            y: -11.325000000000001,
+            z: 0
+          },
+          pos: []
+        }
+      };
+    }
+    return null;
+  });
+};
 
 // helper function to test alias list consistency 0,1,2,3,4...
 const isAliasConsistent = () => {

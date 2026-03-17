@@ -438,7 +438,8 @@ const applyKetcherData = async (polymerTag, fileContent, textNodes, editor, opti
     }
     if (textNodes && textNodes.length > 0) {
       // Add text nodes from the pasted molfile (already reindexed in prepareKetcherData)
-      const textNodeList = await addTextNodes(textNodes, textNodeMeta);
+      // Pass molfileContent for alias resolution when latestData is null (initial load)
+      const textNodeList = await addTextNodes(textNodes, textNodeMeta, molfileContent);
       const validNodes = (textNodeList || []).filter(Boolean);
       if (validNodes.length) {
         molfileContent.root.nodes.push(...validNodes);

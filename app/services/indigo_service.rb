@@ -27,7 +27,7 @@ class IndigoService
     @output_format = output_format
     opts = (options || {}).to_h.symbolize_keys
     # Extract scale from options or use default; allow override from options (e.g. when molfile has polymer)
-    scale_factor = opts.fetch(:scale_factor, 45)
+    scale_factor = 45
     bond_length = scale_factor * 0.75
     label_font_size = opts.fetch(:label_font_size) { (3.5 * (scale_factor / 8.0)).ceil }
     stereo_bond_width = 8

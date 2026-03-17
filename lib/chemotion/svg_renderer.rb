@@ -575,6 +575,8 @@ module Chemotion
         width = polymer[:width] * scale
         height = polymer[:height] * scale
         uy -= height * 0.04
+        # Nudge right so image center aligns with R# glyph position
+        ux += width * 0.22
 
         group = Nokogiri::XML::Node.new('g', doc)
         group['transform'] = "translate(#{ux.round(4)},#{uy.round(4)})"

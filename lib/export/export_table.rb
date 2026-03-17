@@ -61,15 +61,15 @@ module Export
     def extract_label_from_solvent_column(sample_column)
       return unless sample_column.is_a?(String) && !sample_column.empty?
 
-      solvent_hash = begin
+      parsed = begin
         JSON.parse(sample_column)
       rescue StandardError
         nil
       end
 
-      return nil if solvent_hash.nil?
-
-      solvent_values = solvent_hash.map { |solvent| solvent&.fetch('label', nil) }
+      return nil if parsed.nil?
+      solvent_list = parsed.is_a?(Array) ? parsed : []
+      solvent_values = solvent_list.map { |solvent| solvent.is_a?(Hash) ? solvent&.fetch('label', nil) : nil }
       solvent_values.compact.join('-')
     end
 
