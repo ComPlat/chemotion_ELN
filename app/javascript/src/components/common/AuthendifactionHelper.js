@@ -3,11 +3,11 @@ import PropTypes from 'prop-types';
 import {
   Button,
   Form,
-  Modal
+  Modal, Alert
 } from 'react-bootstrap';
 
 function OtpInput({
-  closeOtpModal, showOtpModal, onOtpChange, value, handleSubmit
+  closeOtpModal, showOtpModal, onOtpChange, value, handleSubmit, isWrongOtp
 }) {
   const handleSubmitWrapper = useCallback(async (e) => {
     e.preventDefault();
@@ -23,6 +23,9 @@ function OtpInput({
 
         <Modal.Body>
           <Form.Group>
+            {isWrongOtp && (
+              <Alert variant="danger">Wrong Password! Please try again.</Alert>
+            )}
             <Form.Label column="lg">OTP Code</Form.Label>
             <Form.Control
               type="text"
@@ -55,6 +58,7 @@ OtpInput.propTypes = {
   onOtpChange: PropTypes.func.isRequired,
   value: PropTypes.string.isRequired,
   handleSubmit: PropTypes.func.isRequired,
+  isWrongOtp: PropTypes.bool.isRequired,
 };
 
 export {

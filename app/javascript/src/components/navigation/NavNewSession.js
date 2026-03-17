@@ -56,6 +56,7 @@ function ExtendedSignInForm({
     otp_attempt: ''
   });
   const [showOtp, setShowOtp] = useState('');
+  const [wrongOtp, setWrongOtp] = useState(false);
   const closeOtp = useCallback(() => setShowOtp(false), []);
 
   // Assume `htmlString` is the HTML response as a string
@@ -91,9 +92,11 @@ function ExtendedSignInForm({
     const resText = await handleLoginSubmit({ form, url });
     if (resText.html) {
       setShowOtp(false);
+      setWrongOtp(false);
       replaceWarningsInLogin(resText.html);
     } else if (resText.content.otp_required) {
       setShowOtp(true);
+      setWrongOtp(resText.content.otp_wrong);
     }
   }, [form]);
 
@@ -106,6 +109,7 @@ function ExtendedSignInForm({
         closeOtpModal={closeOtp}
         showOtpModal={showOtp}
         handleSubmit={handleSubmit}
+        isWrongOtp={wrongOtp}
       />
 
       <Form className="mb-3" onSubmit={handleSubmit}>
@@ -172,6 +176,7 @@ function SignInForm({ authenticityToken }) {
     otp_attempt: ''
   });
   const [showOtp, setShowOtp] = useState('');
+  const [wrongOtp, setWrongOtp] = useState(false);
   const closeOtp = useCallback(() => setShowOtp(false), []);
 
   const handleSubmit = useCallback(async (e) => {
@@ -182,8 +187,11 @@ function SignInForm({ authenticityToken }) {
 
     if (resText.content?.otp_required) {
       setShowOtp(true);
+      console.log(resText.content);
+      setWrongOtp(resText.content.otp_wrong);
     } else if (resText.html) {
       setShowOtp(false);
+      setWrongOtp(false);
       window.location = `${url}?login=${form.login}&invalid=1`;
     }
   }, [form]);
@@ -196,6 +204,7 @@ function SignInForm({ authenticityToken }) {
         closeOtpModal={closeOtp}
         showOtpModal={showOtp}
         handleSubmit={handleSubmit}
+        isWrongOtp={wrongOtp}
       />
       <input name="utf8" value="✓" type="hidden" />
       <input name="authenticity_token" value={authenticityToken} type="hidden" />
