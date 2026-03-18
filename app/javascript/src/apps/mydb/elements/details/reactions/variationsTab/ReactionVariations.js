@@ -353,12 +353,11 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
             resizable: true,
           }}
           defaultColGroupDef={{
-            autoHeaderHeight: true,
-            wrapHeaderText: true,
             resizable: true,
           }}
           dataTypeDefinitions={cellDataTypes}
           tooltipShowDelay={0}
+          groupHeaderHeight={53}
           domLayout="autoHeight"
           maintainColumnOrder
           context={{
