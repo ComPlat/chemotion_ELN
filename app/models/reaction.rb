@@ -56,7 +56,7 @@
 class Reaction < ApplicationRecord
   enum reaction_type: {
     standard: 'standard',
-    interaction: 'interaction'
+    interaction: 'interaction',
   }
 
   has_logidze
@@ -168,12 +168,12 @@ class Reaction < ApplicationRecord
 
   belongs_to :creator, foreign_key: :created_by, class_name: 'User'
 
+  before_validation :set_default_reaction_type
   before_save :update_svg_file!
   before_save :cleanup_array_fields
   before_save :scrub
   before_save :auto_format_temperature!
   before_save :transform_variations
-  before_validation :set_default_reaction_type
   around_save :update_fields_to_plain_text, if: -> { description_changed? || observation_changed? }
   before_create :auto_set_short_label
 
@@ -263,7 +263,7 @@ class Reaction < ApplicationRecord
           duration: duration,
           solvents: solvents_in_svg,
           conditions: conditions,
-          show_yield: !interaction?
+          show_yield: !interaction?,
         }
         composer_class = interaction? ? SVG::ProductsComposer : SVG::ReactionComposer
         composer = composer_class.new(paths, composer_options)

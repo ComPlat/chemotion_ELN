@@ -22,7 +22,7 @@ module Chemotion
           solvents: params[:solvents],
           duration: params[:duration],
           conditions: params[:conditions],
-          show_yield: params[:show_yield]
+          show_yield: params[:show_yield],
         }
 
         composer = composer_class.new(paths, composer_options)
