@@ -44,7 +44,7 @@ const getMoleculeName = (decoupled, sample) => {
 const getPolymerName = (polymerType, decoupled, isHierarchicalMaterial) => {
   if (!polymerType) return '';
   if (decoupled && polymerType === 'self_defined') return '';
-  if (isHierarchicalMaterial) return `${polymerType} `;
+  if (polymerType === 'self_defined' && isHierarchicalMaterial) return '';
   if (!polymerType || typeof polymerType !== 'string') return '';
 
   return `${polymerType.charAt(0).toUpperCase()}${polymerType.slice(1)}`.replace('_', '-');

@@ -66,15 +66,13 @@ const ctabLinesOnly = (molfileString) => {
 };
 
 // function when a canvas is saved using main "SAVE" button
-const arrangePolymers = async (canvasData, editor) => {
+// ketData: optional pre-fetched KET JSON to avoid a second getKet() call during save
+const arrangePolymers = async (canvasData, editor, ketData = null) => {
   // Do not add PolymersList tag when no polymer images are present
   if (!imagesList || imagesList.length === 0) {
     return canvasData.split('\n');
   }
-  // grab image index
-  // find index for alias
-  // on matching create a string to be attached with polymers sections
-  const data = JSON.parse(await editor.structureDef.editor.getKet());
+  const data = ketData ?? JSON.parse(await editor.structureDef.editor.getKet());
   const atomsWithAlias = mols
     .flatMap((item) => data[item]?.atoms ?? [])
     .filter((i) => ALIAS_PATTERNS.threeParts.test(i.alias));
@@ -624,32 +622,39 @@ const getSvgFromCanvas = async (iframeRef) => {
       });
     }
 
-    // Calculate bounding box from ORIGINAL canvas (getBBox needs DOM-attached elements)
-    let minX = Infinity; let minY = Infinity; let maxX = -Infinity; let
-      maxY = -Infinity;
-    const visibleElements = canvasElement.querySelectorAll('path, image, text');
-    visibleElements.forEach((el) => {
-      // Skip layer placeholders and hidden elements
-      if (el.classList && layerClasses.some((cls) => el.classList.contains(cls))) return;
-      if (el.style.display === 'none') return;
-      try {
-        const elBbox = el.getBBox();
-        if (elBbox.width > 0 && elBbox.height > 0) {
-          minX = Math.min(minX, elBbox.x);
-          minY = Math.min(minY, elBbox.y);
-          maxX = Math.max(maxX, elBbox.x + elBbox.width);
-          maxY = Math.max(maxY, elBbox.y + elBbox.height);
-        }
-      } catch (e) { /* ignore elements that can't get bbox */ }
-    });
-
-    // Fallback if no valid bbox found
-    if (minX === Infinity || maxX === -Infinity) {
-      const fallbackBbox = canvasElement.getBBox();
-      minX = fallbackBbox.x;
-      minY = fallbackBbox.y;
-      maxX = fallbackBbox.x + fallbackBbox.width;
-      maxY = fallbackBbox.y + fallbackBbox.height;
+    // Single getBBox on clone (after layer removal) is much faster than N getBBox calls per element
+    let minX; let minY; let maxX; let maxY;
+    try {
+      const bbox = clonedCanvas.getBBox();
+      if (bbox && bbox.width > 0 && bbox.height > 0) {
+        minX = bbox.x;
+        minY = bbox.y;
+        maxX = bbox.x + bbox.width;
+        maxY = bbox.y + bbox.height;
+      }
+    } catch (_e) { /* clone not in DOM or getBBox not supported */ }
+    if (minX == null || maxX == null) {
+      // Fallback: compute from visible elements on original canvas (slower but correct)
+      minX = Infinity; minY = Infinity; maxX = -Infinity; maxY = -Infinity;
+      const visibleElements = canvasElement.querySelectorAll('path, image, text');
+      visibleElements.forEach((el) => {
+        if (el.classList && layerClasses.some((cls) => el.classList.contains(cls))) return;
+        if (el.style.display === 'none') return;
+        try {
+          const elBbox = el.getBBox();
+          if (elBbox.width > 0 && elBbox.height > 0) {
+            minX = Math.min(minX, elBbox.x);
+            minY = Math.min(minY, elBbox.y);
+            maxX = Math.max(maxX, elBbox.x + elBbox.width);
+            maxY = Math.max(maxY, elBbox.y + elBbox.height);
+          }
+        } catch (e) { /* ignore */ }
+      });
+      if (minX === Infinity || maxX === -Infinity) {
+        const fallbackBbox = canvasElement.getBBox();
+        minX = fallbackBbox.x; minY = fallbackBbox.y;
+        maxX = fallbackBbox.x + fallbackBbox.width; maxY = fallbackBbox.y + fallbackBbox.height;
+      }
     }
 
     const padding = 5;
@@ -1031,7 +1036,7 @@ const onFinalCanvasSave = async (editor, iframeRef) => {
     }
     const ketFormatData = JSON.parse(await editor.structureDef.editor.getKet());
     await reArrangeImagesOnCanvas(iframeRef); // assemble image on the canvas
-    ket2Lines = await arrangePolymers(canvasDataMol, editor); // polymers added
+    ket2Lines = await arrangePolymers(canvasDataMol, editor, ketFormatData); // reuse KET data, no second getKet()
     ket2Lines = await arrangeTextNodes(ket2Lines); // text node
     ket2Lines = arrangeTextNodeMeta(ket2Lines); // text node raw content metadata
     if (imagesList.length > 0) {

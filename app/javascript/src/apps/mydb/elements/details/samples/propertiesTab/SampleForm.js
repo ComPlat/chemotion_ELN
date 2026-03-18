@@ -88,20 +88,20 @@ const buildCompositionColumnDefs = (onFieldChange) => [
     },
   },
   {
-    headerName: 'Weight ratio calc./%',
+    headerName: 'Weight ratio (calc) / %',
     field: 'weightRatioCalcProcessed',
     minWidth: 110,
     cellClass: ['lh-base', 'border-end'],
   },
   {
-    headerName: 'weight ratio (calc)/molar mass',
+    headerName: 'Molar ratio (calc) / molar mass',
     field: 'molarRatioCalcMM',
     minWidth: 120,
     valueGetter: (p) => (p.data?.molarRatioCalcMM ?? '-'),
     cellClass: ['lh-base', 'border-end'],
   },
   {
-    headerName: 'molar ratio (calc)/molar mass',
+    headerName: 'Weight ratio (calc) / molar mass',
     field: 'weightRatioCalcMM',
     minWidth: 120,
     valueGetter: (p) => (p.data?.weightRatioCalcMM ?? '-'),
@@ -115,7 +115,7 @@ const buildCompositionColumnDefs = (onFieldChange) => [
     cellClass: ['lh-base', 'border-end'],
   },
   {
-    headerName: 'Molar ratio calc / %',
+    headerName: 'Molar ratio (calc) / %',
     field: 'molarRatioCalcPercent',
     minWidth: 120,
     valueGetter: (p) => (p.data?.molarRatioCalcPercent !== '-' ? (p.data?.molarRatioCalcPercent ?? '-') : '-'),
@@ -139,6 +139,9 @@ function HierarchicalCompositionTable({ components, onFieldChange }) {
   const columnDefs = useCallback(() => buildCompositionColumnDefs(onFieldChange), [onFieldChange])();
   const { rowsData } = buildHierarchicalMaterialRows(components);
   const gridRowData = Array.isArray(rowsData) ? rowsData : [];
+  const fitColumnsToGrid = useCallback((params) => {
+    params.api.sizeColumnsToFit();
+  }, []);
 
   const getRowId = useCallback((params) => {
     const id = params.data?.index;
@@ -158,7 +161,9 @@ function HierarchicalCompositionTable({ components, onFieldChange }) {
           getRowId={getRowId}
           rowHeight="auto"
           domLayout="autoHeight"
-          autoSizeStrategy={{ type: 'fitGridWidth' }}
+          onGridReady={fitColumnsToGrid}
+          onGridSizeChanged={fitColumnsToGrid}
+          onFirstDataRendered={fitColumnsToGrid}
           singleClickEdit
           stopEditingWhenCellsLoseFocus
         />
@@ -229,7 +234,7 @@ export default class SampleForm extends React.Component {
     // Using reference equality as the first check ensures that saves always refresh the list
     // even when the array was mutated in-place (same reference, same JSON).
     if (prevProps.sample !== this.props.sample
-        || JSON.stringify(prevComponents) !== JSON.stringify(nextComponents)) {
+      || JSON.stringify(prevComponents) !== JSON.stringify(nextComponents)) {
       this.setState({ components: flattenApiFormatComponents(nextComponents) });
     }
 
@@ -512,6 +517,7 @@ export default class SampleForm extends React.Component {
   moleculeInput() {
     const { sample } = this.props;
     const { isMolNameLoading, moleculeNameInputValue } = this.state;
+    const isMoleculeNameDisabled = !sample.can_update || sample.isHierarchicalMaterial();
     const mnos = sample.molecule_names;
     const mno = sample.molecule_name;
     const newMolecule = !mno || sample._molecule.id !== mno.mid;
@@ -545,9 +551,9 @@ export default class SampleForm extends React.Component {
           <CreatableSelect
             name="moleculeName"
             isClearable
-            isInputEditable
-            inputValue={moleculeNameInputValue}
-            isDisabled={!sample.can_update}
+            isInputEditable={!isMoleculeNameDisabled}
+            inputValue={isMoleculeNameDisabled ? undefined : moleculeNameInputValue}
+            isDisabled={isMoleculeNameDisabled}
             options={formattedOptions}
             onMenuOpen={() => this.openMolName(sample)}
             onChange={(selectedOption) => {
@@ -578,7 +584,7 @@ export default class SampleForm extends React.Component {
             placeholder="Enter or select a molecule name"
             allowCreateWhileLoading
             formatCreateLabel={(inputValue) => `Create "${inputValue}"`}
-            className="flex-grow-1"
+            className={`flex-grow-1 ${isMoleculeNameDisabled ? 'molecule-name-select--disabled' : ''}`}
           />
           {this.structureEditorButton(!sample.can_update)}
         </InputGroup>
@@ -974,7 +980,7 @@ export default class SampleForm extends React.Component {
     const weightPercentageSample = sample.weight_percentage > 0;
     const overlayMessage = weightPercentageSample
       ? 'Amount field is disabled for samples that belong to reactions with weight percentage. '
-        + 'To change the amount, please edit the material sample amount field using weight percentage field in the reaction scheme tab and save the reaction.'
+      + 'To change the amount, please edit the material sample amount field using weight percentage field in the reaction scheme tab and save the reaction.'
       : null;
     let metric;
     if (unit === 'l') {
@@ -1367,13 +1373,12 @@ export default class SampleForm extends React.Component {
         <h5 className="mt-4">Hierarchical material components:</h5>
         <Row className="align-items-end mb-4">
           <Col>{this.moleculeInput()}</Col>
-          <Col>{this.textInput(sample, 'short_label', 'Short label', true)}</Col>
-        </Row>
-        <Row className="align-items-end mb-4">
           <Col xs={4} className="d-flex align-items-end gap-2">
             {this.infoButton()}
             {this.sampleAmount(sample)}
           </Col>
+        </Row>
+        <Row className="align-items-end mb-4">
           <Col>{this.dimensionFieldGroup(sample)}</Col>
         </Row>
         <Row>
@@ -1418,6 +1423,7 @@ export default class SampleForm extends React.Component {
     } = this.props;
     const isPolymer = (sample.molfile || '').indexOf(' R# ') !== -1;
     const isDisabled = !sample.can_update;
+    const isHierarchicalMaterial = sample.isHierarchicalMaterial();
     const polyDisabled = isPolymer || isDisabled;
     const { selectedSampleType } = this.state;
 
@@ -1581,12 +1587,14 @@ export default class SampleForm extends React.Component {
           </>
         )}
 
-        <Row>
-          <SampleDetailsSolvents
-            sample={sample}
-            onChange={handleSampleChanged}
-          />
-        </Row>
+        {!isHierarchicalMaterial && (
+          <Row>
+            <SampleDetailsSolvents
+              sample={sample}
+              onChange={handleSampleChanged}
+            />
+          </Row>
+        )}
 
         {this.sampleDescription(sample)}
         {customizableField()}

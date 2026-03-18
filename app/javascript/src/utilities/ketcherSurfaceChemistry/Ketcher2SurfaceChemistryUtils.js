@@ -237,15 +237,37 @@ const applySelectedStruct = async (editor, dataCopy) => {
   }
 };
 
-// find template from dataset by image base
-const findTemplateByPayload = async (targetPayload) => {
-  for (const [templateId, iconName] of Object.entries(templatesBaseHashWithTemplateId)) {
-    const base64 = await loadAndEncodeSVG(iconName);
-    if (base64 === targetPayload) {
-      return templateId;
-    }
+// Cache: payload (base64) -> templateId. Built once per save to avoid O(images × templates) SVG loads.
+let payloadToTemplateIdCache = null;
+let payloadToTemplateIdCacheKey = null;
+let buildPayloadToTemplateIdPromise = null;
+
+const buildPayloadToTemplateIdMap = async () => {
+  const key = Object.keys(templatesBaseHashWithTemplateId || {}).sort().join(',');
+  if (payloadToTemplateIdCache != null && payloadToTemplateIdCacheKey === key) {
+    return payloadToTemplateIdCache;
   }
-  return null;
+  if (buildPayloadToTemplateIdPromise) return buildPayloadToTemplateIdPromise;
+  buildPayloadToTemplateIdPromise = (async () => {
+    const map = new Map();
+    const entries = Object.entries(templatesBaseHashWithTemplateId || {});
+    for (const [templateId, iconName] of entries) {
+      const base64 = await loadAndEncodeSVG(iconName);
+      if (base64) map.set(base64, templateId);
+    }
+    payloadToTemplateIdCache = map;
+    payloadToTemplateIdCacheKey = key;
+    buildPayloadToTemplateIdPromise = null;
+    return map;
+  })();
+  return buildPayloadToTemplateIdPromise;
+};
+
+// Find template from dataset by image base. Uses a cache so one save does one pass over templates.
+const findTemplateByPayload = async (targetPayload) => {
+  if (!targetPayload) return null;
+  const map = await buildPayloadToTemplateIdMap();
+  return map.get(targetPayload) ?? null;
 };
 
 export {
