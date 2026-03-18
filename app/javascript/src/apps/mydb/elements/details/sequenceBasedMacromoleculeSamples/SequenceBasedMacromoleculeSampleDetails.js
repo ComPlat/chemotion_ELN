@@ -263,11 +263,11 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
     if (linkUniprot) {
       return (
         <a href={linkUniprot} className="pe-auto" target="_blank">
-          <img src="/images/wild_card/uniprot-logo.svg" className="uniprot-logo" />
+          <img src="/logos/uniprot-logo.svg" className="uniprot-logo" />
         </a>
       );
     } else {
-      return (<img src="/images/wild_card/uniprot-logo.svg" className="uniprot-logo-gray" />);
+      return (<img src="/logos/uniprot-logo.svg" className="uniprot-logo-gray" />);
     }
   }
 
