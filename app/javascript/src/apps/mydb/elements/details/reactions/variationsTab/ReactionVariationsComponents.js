@@ -667,7 +667,7 @@ function EntrySelectionHeader({
           {`${displayName} ${gasType && gasType !== 'off' ? `(${gasType})` : ''}`}
         </span>
         <Button
-          size="sm"
+          size="xsm"
           onClick={() => { setEntryColDefs(columnGroup.getColGroupDef().children); setShowModal(true); }}
         >
           Entries
