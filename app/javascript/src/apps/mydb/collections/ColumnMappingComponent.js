@@ -30,7 +30,7 @@ function ColumnMappingComponent({
   const chemicalSampleKeys = [...sampleKeys,
     'status', 'vendor', 'order_number', 'amount', 'volume', 'price',
     'person', 'required_date', 'ordered_date', 'expiration_date',
-    'storage_temperature', 'required_by', 'safety_sheet_link_merck',
+    'delivery_date', 'opening_date', 'storage_temperature', 'required_by', 'safety_sheet_link_merck',
     'safety_sheet_link_thermofischer', 'product_link_merck', 'product_link_thermofischer',
     'pictograms', 'h_statements', 'p_statements', 'host_building', 'host_room',
     'host_cabinet', 'host_group', 'owner', 'current_building', 'current_room',
