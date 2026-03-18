@@ -351,6 +351,11 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
             editable: true,
             sortable: true,
             resizable: true,
+            cellStyle: (params) => {
+              const { editable } = params.colDef;
+              const isEditable = typeof editable === 'function' ? editable(params) : editable;
+              return isEditable === false ? { backgroundColor: '#e9ecef' } : null;
+            },
           }}
           defaultColGroupDef={{
             resizable: true,
