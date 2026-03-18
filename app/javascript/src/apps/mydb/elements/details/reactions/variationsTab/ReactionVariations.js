@@ -360,6 +360,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
           groupHeaderHeight={53}
           domLayout="autoHeight"
           maintainColumnOrder
+          suppressNoRowsOverlay
           context={{
             copyRow,
             removeRow,
