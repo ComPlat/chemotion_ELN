@@ -962,4 +962,11 @@ export {
   sanitizeGroupEntry,
   setGroupColDefAttribute,
   setLeafColDefAttribute,
+  getEntryVisibility,
+  setEntryVisibility,
+  getEntryDisplayUnits,
+  setEntryDisplayUnits,
+  getGroupHeaderNames,
+  setGroupHeaderNames,
+  getLayout,
 };
