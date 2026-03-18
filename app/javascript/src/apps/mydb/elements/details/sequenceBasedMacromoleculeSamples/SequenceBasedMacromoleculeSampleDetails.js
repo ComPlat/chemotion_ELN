@@ -259,13 +259,16 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
   const uniprotLogo = () => {
     const linkUniprot =
       sbmmSample.sequence_based_macromolecule.parent?.link_uniprot || sbmmSample.sequence_based_macromolecule?.link_uniprot;
-    if (!linkUniprot) { return null; }
 
-    return (
-      <a href={linkUniprot} className="pe-auto" target="_blank">
-        <img src="/images/wild_card/uniprot-logo.svg" className="uniprot-logo" />
-      </a>
-    );
+    if (linkUniprot) {
+      return (
+        <a href={linkUniprot} className="pe-auto" target="_blank">
+          <img src="/images/wild_card/uniprot-logo.svg" className="uniprot-logo" />
+        </a>
+      );
+    } else {
+      return (<img src="/images/wild_card/uniprot-logo.svg" className="uniprot-logo-gray" />);
+    }
   }
 
   // Handler for chemical save
