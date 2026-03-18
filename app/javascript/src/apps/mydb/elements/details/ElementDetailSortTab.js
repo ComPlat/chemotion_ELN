@@ -2,7 +2,7 @@
 /* eslint-disable react/require-default-props */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Popover } from 'react-bootstrap';
+import { Popover, Button } from 'react-bootstrap';
 import Immutable from 'immutable';
 import _ from 'lodash';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -27,7 +27,6 @@ export default class ElementDetailSortTab extends Component {
 
     this.onChangeUser = this.onChangeUser.bind(this);
     this.onChangeUI = this.onChangeUI.bind(this);
-    this.toggleTabLayoutContainer = this.toggleTabLayoutContainer.bind(this);
 
     UserActions.fetchCurrentUser();
   }
@@ -50,13 +49,15 @@ export default class ElementDetailSortTab extends Component {
   }
 
   updateTabLayout(layout) {
-    const { addInventoryTab, availableTabs, type, onTabPositionChanged } = this.props;
+    const {
+      addInventoryTab, availableTabs, type, onTabPositionChanged
+    } = this.props;
 
     // Ensure default tabs exist in layout (for backward compatibility)
     if (layout && availableTabs) {
       const defaultTabs = ['properties', 'analyses'];
       const layoutKeys = Object.keys(layout);
-      const maxOrder = Math.max(0, ...layoutKeys.map(k => Math.abs(layout[k])));
+      const maxOrder = Math.max(0, ...layoutKeys.map((k) => Math.abs(layout[k])));
 
       defaultTabs.forEach((tab, idx) => {
         if (!layoutKeys.includes(tab) && availableTabs.includes(tab)) {
@@ -110,18 +111,6 @@ export default class ElementDetailSortTab extends Component {
     this.updateTabLayout(layout);
   }
 
-  toggleTabLayoutContainer(show) {
-    this.setState(
-      (state) => ({ ...state, showTabLayoutContainer: !state.showTabLayoutContainer }),
-      () => {
-        if (!show) {
-          this.props.onTabPositionChanged(this.state.visible);
-          this.updateLayout();
-        }
-      }
-    );
-  }
-
   updateLayout() {
     const layout = filterTabLayout(this.state);
     const { currentCollection } = UIStore.getState();
@@ -144,16 +133,23 @@ export default class ElementDetailSortTab extends Component {
 
   render() {
     const { visible, hidden } = this.state;
-    const { tabTitles } = this.props;
+    const { tabTitles, onTabPositionChanged } = this.props;
 
-    const popoverSettings = (
+    const popoverSettings = ({ close }) => (
       <Popover>
-        <Popover.Header>Tab Layout</Popover.Header>
+        <Popover.Header className="d-flex justify-content-between align-items-center">
+          Tab Layout
+          <Button
+            variant="close"
+            aria-label="Close"
+            onClick={close}
+          />
+        </Popover.Header>
         <Popover.Body>
           <TabLayoutEditor
             visible={visible}
             hidden={hidden}
-            getItemComponent={({item}) => (<div>{tabTitles[item] ?? capitalizeWords(item)}</div>)}
+            getItemComponent={({ item }) => (<div>{tabTitles[item] ?? capitalizeWords(item)}</div>)}
             onLayoutChange={this.onLayoutChange}
           />
         </Popover.Body>
@@ -161,7 +157,13 @@ export default class ElementDetailSortTab extends Component {
     );
 
     return (
-      <ConfigOverlayButton onToggle={this.toggleTabLayoutContainer} popoverSettings={popoverSettings} />
+      <ConfigOverlayButton
+        popoverSettings={popoverSettings}
+        onClose={() => {
+          onTabPositionChanged(visible);
+          this.updateLayout();
+        }}
+      />
     );
   }
 }

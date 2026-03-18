@@ -124,6 +124,36 @@ export default function ReactionSchemeGraphic({
     );
   };
 
+  const popoverSettings = ({ close }) => (
+    <Popover>
+      <Popover.Header className="d-flex justify-content-between align-items-center">
+        Graphic Settings
+        <Button
+          variant="close"
+          aria-label="Close"
+          onClick={close}
+        />
+      </Popover.Header>
+      <Popover.Body className="border-bottom py-1">
+        <h6 className="fs-9 fw-medium">Starting Materials</h6>
+        {reaction.starting_materials.map(
+          (material) => materialShowLabel(material, false, 'starting_materials')
+        )}
+      </Popover.Body>
+      <Popover.Body className="border-bottom py-1">
+        <h6 className="fs-9 fw-medium">Reactants</h6>
+        {reaction.reactants.map((material) => materialShowLabel(material, false, 'reactants'))}
+        {reaction.reactant_sbmm_samples.map(
+          (material) => materialShowLabel(material, true, 'sbmm_reactants')
+        )}
+      </Popover.Body>
+      <Popover.Body className="py-1">
+        <h6 className="fs-9 fw-medium">Products</h6>
+        {reaction.products.map((material) => materialShowLabel(material, false, 'products'))}
+      </Popover.Body>
+    </Popover>
+  );
+
   return (
     <div className="Reaction-scheme-graphic__wrapper">
       <div className="Reaction-scheme-graphic__svg-container">
@@ -146,31 +176,7 @@ export default function ReactionSchemeGraphic({
       <div className="Reaction-scheme-graphic__toolbar">
         <ConfigOverlayButton
           popperConfig={popperConfigAboveToolbar}
-          popoverSettings={
-            (
-              <Popover>
-                <Popover.Header>Graphic Settings</Popover.Header>
-                <Popover.Body className="border-bottom py-1">
-                  <h6 className="fs-9 fw-medium">Starting Materials</h6>
-                  {reaction.starting_materials.map(
-                    (material) => materialShowLabel(material, false, 'starting_materials')
-                  )}
-                </Popover.Body>
-                <Popover.Body className="border-bottom py-1">
-                  <h6 className="fs-9 fw-medium">Reactants</h6>
-                  {reaction.reactants.map((material) => materialShowLabel(material, false, 'reactants'))}
-                  {reaction.reactant_sbmm_samples.map(
-                    (material) => materialShowLabel(material, true, 'sbmm_reactants')
-                  )}
-                </Popover.Body>
-                <Popover.Body className="py-1">
-                  <h6 className="fs-9 fw-medium">Products</h6>
-                  {reaction.products.map((material) => materialShowLabel(material, false, 'products'))}
-                </Popover.Body>
-              </Popover>
-            )
-          }
-          onToggle={() => {}}
+          popoverSettings={popoverSettings}
           wrapperClassName=""
         />
         {onRefresh && (
