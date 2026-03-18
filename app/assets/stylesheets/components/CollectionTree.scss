@@ -20,13 +20,13 @@
     @extend .pe-2;
     @extend .gap-2;
     &:hover {
-      @extend .surface-hover-on-grey;
+      @extend .surface-hover;
     }
 
     &--selected {
-      @extend .surface-active-on-grey;
+      @extend .surface-active;
       &:hover {
-        @extend .surface-hover-on-grey;
+        @extend .surface-hover;
       }
     }
 

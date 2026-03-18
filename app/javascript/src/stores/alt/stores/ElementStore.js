@@ -274,7 +274,7 @@ class ElementStore {
           ElementActions.generateEmptyVessel,
           ElementActions.generateEmptyVesselTemplate,
           ElementActions.generateEmptySequenceBasedMacromoleculeSample,
-          ElementActions.showReportContainer,
+          ElementActions.showReportDetails,
           ElementActions.showFormatContainer,
           ElementActions.showComputedPropsGraph,
           ElementActions.showComputedPropsTasks,

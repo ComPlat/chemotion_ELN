@@ -71,11 +71,11 @@ $topbar-height: 35px;
     map-get($silicon-shades, lighten4),
     map-get($silicon-shades, lighten4),
     $body-color,
-    $chemstrap-silicon-hover2,
-    $chemstrap-silicon-hover2,
+    $chemstrap-silicon-hover,
+    $chemstrap-silicon-hover,
     $body-color,
-    $chemstrap-silicon-active2,
-    $chemstrap-silicon-active2,
+    $chemstrap-silicon-active,
+    $chemstrap-silicon-active,
     $body-color
   );
   &.sidebar-button--expandable {

@@ -282,7 +282,7 @@ export default class CollectionTabs extends React.Component {
                   {allElements.map((element) => {
                     const { name, label } = element;
                     const isActive = selectedCategory === name;
-                    const btnClass = `btn text-start py-2 mb-2 ${isActive ? 'surface-active-on-white' : ''}`;
+                    const btnClass = `btn text-start py-2 mb-2 ${isActive ? 'surface-active' : ''}`;
                     return (
                       <button
                         key={name}
