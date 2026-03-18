@@ -189,8 +189,10 @@ function AdvancedAnalysesList({
     setConsumedPaths(changedVal.map((ana) => ana.children.map((ds) => ds.files)).flat(Infinity));
   };
   const addAnalyses = useCallback(() => {
-    wrapperSetAnaContainer((x) => [...x, ContainerWrapper.newWrapper()]);
-  }, []);
+    const newWrapper = ContainerWrapper.newWrapper();
+    newWrapper.children.push(ContainerWrapper.newWrapper('Dataset #1'));
+    wrapperSetAnaContainer((x) => [...x, newWrapper]);
+  }, [analContainerList]);
 
   const emptyAnalyses = useCallback(() => {
     wrapperSetAnaContainer(() => []);
