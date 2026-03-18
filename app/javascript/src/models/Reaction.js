@@ -155,6 +155,7 @@ export default class Reaction extends Element {
       vessel_size: { amount: null, unit: 'ml' },
       volume: null,
       use_reaction_volume: false,
+      lock_reaction_volume: false,
       gaseous: false,
       weight_percentage: false
     });
@@ -226,6 +227,7 @@ export default class Reaction extends Element {
       vessel_size: this.vessel_size,
       volume: this.volume,
       use_reaction_volume: this.use_reaction_volume,
+      lock_reaction_volume: this.lock_reaction_volume,
       gaseous: this.gaseous,
       weight_percentage: this.weight_percentage,
     });
@@ -944,6 +946,16 @@ export default class Reaction extends Element {
     return totalVolume;
   }
 
+  /**
+   * Checks if the reaction volume field is locked.
+   * When locked, the volume value cannot be automatically recalculated.
+   *
+   * @returns {boolean} True if the volume is locked, false otherwise.
+   */
+  get isVolumeLocked() {
+    return !!this.lock_reaction_volume;
+  }
+
   get purificationSolventVolume() {
     return this.totalVolumeForMaterialGroup(Reaction.PURIFICATION_SOLVENTS);
   }
@@ -1151,6 +1163,26 @@ export default class Reaction extends Element {
     });
 
     return totalVolume > 0 ? totalVolume : null;
+  }
+
+  /**
+   * Returns the volume (L) to use for concentration calculations.
+   *
+   * Priority:
+   * 1. Explicit reaction volume when `use_reaction_volume` is enabled and valid.
+   * 2. Calculated combined reaction volume from materials.
+   *
+   * @returns {number|null} Volume in liters, or null if no valid volume is available
+   */
+  reactionVolumeForConcentration() {
+    if (this.use_reaction_volume) {
+      const reactionVolume = Number(this.volume);
+      if (Number.isFinite(reactionVolume) && reactionVolume > 0) {
+        return reactionVolume;
+      }
+    }
+
+    return this.calculateCombinedReactionVolume();
   }
 
   /**
