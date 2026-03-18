@@ -1293,6 +1293,10 @@ export default class ReactionDetailsScheme extends React.Component {
       return reaction;
     }
 
+    if (!this.canUpdateConcentrationWithCurrentVolumeSettings(reaction)) {
+      return reaction;
+    }
+
     const newConcentration = concentrationValue; // in mol/L (base unit)
 
     // Store the new concentration on the sample
@@ -1309,6 +1313,37 @@ export default class ReactionDetailsScheme extends React.Component {
     }
 
     return reaction;
+  }
+
+  /**
+ * Determines whether concentration can be updated based on current volume settings.
+ *
+ * When equivalents are unlocked, concentration updates are always allowed.
+ * When equivalents are locked, a valid reaction volume is required.
+ * If the requirement is not met, a warning is shown to the user.
+ *
+ * @param {Object} reaction - The reaction object containing volume settings.
+ * @param {boolean} reaction.use_reaction_volume - Indicates if reaction volume is enabled.
+ * @returns {boolean} Returns true if concentration update is allowed, otherwise false.
+ */
+  canUpdateConcentrationWithCurrentVolumeSettings(reaction) {
+    const { lockEquivColumn } = this.state;
+
+    // If equivalents are unlocked, allow updates without checks
+    if (!lockEquivColumn) return true;
+
+    const hasValidVolume = reaction.use_reaction_volume && this.hasValidReactionVolume(reaction);
+
+    if (!hasValidVolume) {
+      this.showReactionVolumeRequiredWarning(
+        'Please provide a reaction volume to update the concentration. '
+          + 'You can enter the calculated volume (e.g., from the solvents) '
+          + 'or use the detected material volume.'
+      );
+      return false;
+    }
+
+    return true;
   }
 
   /**
