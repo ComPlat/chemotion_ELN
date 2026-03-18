@@ -144,7 +144,7 @@ class GatePushButton extends React.Component {
     return (
       <>
         <Button
-          variant="secondary"
+          variant="surface"
           size="sm"
           onClick={(e) => {
             e.stopPropagation();
