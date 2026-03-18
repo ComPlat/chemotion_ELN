@@ -886,7 +886,7 @@ export default class SampleDetails extends React.Component {
     }
 
     const label = sample.contains_residues
-      ? 'Polymer section / Elemental composition'
+      ? 'Material Detail Section / Elemental composition'
       : 'Elemental composition';
 
     const { materialGroup } = this.state;
@@ -1176,6 +1176,7 @@ export default class SampleDetails extends React.Component {
 
   sampleInfo(sample) {
     const isMixture = sample.isMixture();
+    const isHierarchicalMaterial = sample.isHierarchicalMaterial();
     let pubchemLcss = (sample.pubchem_tag && sample.pubchem_tag.pubchem_lcss
       && sample.pubchem_tag.pubchem_lcss.Record) || null;
     if (pubchemLcss && pubchemLcss.Reference) {
@@ -1191,7 +1192,6 @@ export default class SampleDetails extends React.Component {
       ? sample.pubchem_tag.pubchem_cid : 0;
     const lcssSign = pubchemLcss && !sample.decoupled
       ? <PubchemLcss cid={pubchemCid} informArray={pubchemLcss} /> : null;
-    const isHierarchicalMaterial = sample.isHierarchicalMaterial();
 
     return (
       <Container>
@@ -1205,7 +1205,7 @@ export default class SampleDetails extends React.Component {
               </>
             )}
             {sample.isNew || isMixture || isHierarchicalMaterial ? null : <h6>{this.moleculeCas()}</h6>}
-            {lcssSign}
+            {isHierarchicalMaterial ? null : lcssSign}
           </Col>
           <Col md={8} className="position-relative">
             {this.svgOrLoading(sample)}
