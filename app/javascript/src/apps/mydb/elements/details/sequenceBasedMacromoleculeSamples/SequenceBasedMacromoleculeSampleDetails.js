@@ -388,7 +388,8 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
   // Footer logic: show save button for chemical if on inventory tab and isChemicalEdited, else show sbmm save
   const isChemicalTab = sbmmStore.active_tab_key === 'inventory';
   const chemicalSaveBtn = isChemicalTab && sbmmStore.isChemicalEdited;
-  const sampleSaveBtn = sbmmSample.isEdited && sbmmStore.active_tab_key !== 'inventory';
+  const isValid = Object.keys(sbmmSample.errors).length < 1
+  const sampleSaveBtn = sbmmSample.isEdited && sbmmStore.active_tab_key !== 'inventory' && isValid;
   const sbmmSampleFooter = () => (
     <>
       <Button variant="primary" onClick={() => DetailActions.close(sbmmSample)}>

@@ -384,6 +384,9 @@ const PropertiesForm = ({ readonly }) => {
                       variant="light"
                       onChange={(e) => formHelper.onChange('purity', e.value)}
                     />
+                    {sbmmSample?.errors?.purity && (
+                      <Form.Control.Feedback type="invalid" className="d-block">{sbmmSample.errors.purity}</Form.Control.Feedback>
+                    )}
                   </Col>
                   <Col>
                     {formHelper.textInput('purity_detection', 'Purity detection', '')}

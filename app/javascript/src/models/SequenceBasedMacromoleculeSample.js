@@ -1,3 +1,5 @@
+import sha256 from 'sha256';
+import _ from 'lodash';
 import Element from 'src/models/Element';
 import Container from 'src/models/Container';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -317,6 +319,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
           this.calculateActivity();
           this.calculateAmountAsUsedMass();
         }
+        this.computeCalculationFieldsChecksum();
         break;
 
       case 'activity':
@@ -328,6 +331,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
           // Case 3: Calculate amount_mol from activity
           this.calculateAmountMolFromActivity();
         }
+        this.computeCalculationFieldsChecksum();
         break;
 
       case 'amount_as_used_mol':
@@ -336,6 +340,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
           this.calculateAmountAsUsedMass();
           this.calculateActivity();
         }
+        this.computeCalculationFieldsChecksum();
         break;
 
       case 'amount_as_used_mass':
@@ -346,6 +351,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
           }
           this.calculateActivityByMass();
         }
+        this.computeCalculationFieldsChecksum();
         break;
 
       case 'molarity':
@@ -372,6 +378,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
             this.calculateActivity();
           }
         }
+        this.computeCalculationFieldsChecksum();
         break;
 
       case 'activity_per_volume':
@@ -400,6 +407,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
             this.calculateAmountAsUsedMass();
           }
         }
+        this.computeCalculationFieldsChecksum();
         break;
 
       case 'activity_per_mass':
@@ -428,6 +436,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
             this.calculateAmountAsUsed();
           }
         }
+        this.computeCalculationFieldsChecksum();
         break;
 
       case 'purity':
@@ -441,6 +450,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
           // Recalculate amount_g from volume: amount_g = amount_l * (concentration × purity)
           this.calculateAmountAsUsedMass();
         }
+        this.computeCalculationFieldsChecksum();
         break;
 
       case 'concentration':
@@ -453,6 +463,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
             this.calculateVolumeByMass();
           }
         }
+        this.computeCalculationFieldsChecksum();
         break;
 
       default:
@@ -536,7 +547,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
 
   normalizedPurityForCalculations() {
     const purityValue = Number(this.purity);
-    return Number.isFinite(purityValue) && purityValue > 0 ? purityValue : 1.0;
+    return Number.isFinite(purityValue) && purityValue > 0 && purityValue < 1 ? purityValue : 1.0;
   }
 
   calculateAmountAsUsed() {
@@ -708,6 +719,20 @@ export default class SequenceBasedMacromoleculeSample extends Element {
     );
     this._base_volume_as_used_value =
       convertUnits(this._volume_as_used_value, this.volume_as_used_unit, defaultUnits.volume_as_used);
+  }
+
+  computeCalculationFieldsChecksum() {
+    return sha256(JSON.stringify(_.omit({
+      purity: String(this.purity || null),
+      concentration_value: String(this.concentration_value || null),
+      molarity_value: String(this.molarity_value || null),
+      activity_per_volume_value: String(this.activity_per_volume_value || null),
+      activity_per_mass_value: String(this.activity_per_mass_value || null),
+      volume_as_used_value: String(this.volume_as_used_value || null),
+      amount_as_used_mol_value: String(this.amount_as_used_mol_value || null),
+      amount_as_used_mass_value: String(this.amount_as_used_mass_value || null),
+      activity_value: String(this.activity_value || null),
+    })));
   }
 
   get activity_value() {
@@ -1009,27 +1034,8 @@ export default class SequenceBasedMacromoleculeSample extends Element {
     return this._purity;
   }
 
-  validateAndSetPurity(value) {
-    // Validate purity value and show warning if invalid
-    // Allow null, undefined, and empty string (no value entered yet)
-    if (value == null || value === '') {
-      return value;
-    }
-    
-    const numericValue = Number(value);
-    if (Number.isFinite(numericValue) && (numericValue < 0 || numericValue > 1)) {
-      NotificationActions.add({
-        message: 'Purity value should be >= 0 and <=1',
-        level: 'error'
-      });
-      // Set to 1 if invalid
-      return 1;
-    }
-    return value;
-  }
-
   set purity(value) {
-    this._purity = this.validateAndSetPurity(value);
+    this._purity = value;
     this.calculateValues('purity');
   }
 
