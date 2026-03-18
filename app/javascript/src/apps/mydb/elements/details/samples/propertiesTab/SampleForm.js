@@ -1359,13 +1359,12 @@ export default class SampleForm extends React.Component {
         <h5 className="mt-4">Hierarchical material components:</h5>
         <Row className="align-items-end mb-4">
           <Col>{this.moleculeInput()}</Col>
-          <Col>{this.textInput(sample, 'short_label', 'Short label', true)}</Col>
-        </Row>
-        <Row className="align-items-end mb-4">
           <Col xs={4} className="d-flex align-items-end gap-2">
             {this.infoButton()}
             {this.sampleAmount(sample)}
           </Col>
+        </Row>
+        <Row className="align-items-end mb-4">
           <Col>{this.dimensionFieldGroup(sample)}</Col>
         </Row>
         <Row>
