@@ -105,7 +105,7 @@ function ValidationComponent({
       sortable: false,
       filter: false,
       pinned: 'left',
-      suppressMenu: true,
+      suppressHeaderMenuButton: true,
       suppressSizeToFit: true
     };
 
@@ -116,7 +116,7 @@ function ValidationComponent({
       editable: false,
       sortable: false,
       filter: false,
-      suppressMenu: true,
+      suppressHeaderMenuButton: true,
       cellRenderer: 'deleteButtonCellRenderer',
       cellRendererParams: {
         onDelete: handleDeleteRow
