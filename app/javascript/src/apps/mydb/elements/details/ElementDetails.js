@@ -11,7 +11,7 @@ import GraphContainer from 'src/apps/mydb/elements/details/GraphContainer';
 import MetadataContainer from 'src/components/metadata/MetadataContainer';
 //import PredictionContainer from 'src/apps/mydb/elements/details/predictions/PredictionContainer';
 import ReactionDetails from 'src/apps/mydb/elements/details/reactions/ReactionDetails';
-import ReportContainer from 'src/apps/mydb/elements/details/reports/ReportContainer';
+import ReportDetails from 'src/apps/mydb/elements/details/reports/ReportDetails';
 import ResearchPlanDetails from 'src/apps/mydb/elements/details/researchPlans/ResearchPlanDetails';
 import DeviceDescriptionDetails from 'src/apps/mydb/elements/details/deviceDescriptions/DeviceDescriptionDetails';
 import SampleDetails from 'src/apps/mydb/elements/details/samples/SampleDetails';
@@ -154,7 +154,7 @@ export default class ElementDetails extends Component {
       case 'metadata':
         return <MetadataContainer metadata={el} />;
       case 'report':
-        return <ReportContainer report={el} />;
+        return <ReportDetails report={el} />;
       case 'prediction':
         // return <PredictionContainer prediction={el} />;
         console.warn('Attempting to show outdated PredictionContainer');

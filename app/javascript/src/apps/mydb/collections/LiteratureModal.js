@@ -64,6 +64,7 @@ const ElementLink = ({ literature }) => {
   return (
     <Button
       title={`${externalLabel ? externalLabel.concat(' - ') : ''}${name}`}
+      variant="light"
       onClick={() => {
         const { uri } = Aviator.getCurrentRequest();
         const uriArray = uri.split(/\//);

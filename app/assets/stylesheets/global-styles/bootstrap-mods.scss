@@ -1,8 +1,8 @@
 $open-button-variants: (
-  "light": (
-    "bg": $chemstrap-silicon,
-    "border": map-get($carbon-shades, lighten3),
-    "text": $body-color,
+  "secondary": (
+    "bg": $secondary,
+    "border": $secondary,
+    "text": $secondary,
   ),
   "danger": (
     "bg": $danger,
@@ -19,12 +19,16 @@ $open-button-variants: (
     "border": shade-color($warning, 20%),
     "text": shade-color($warning, 20%),
   ),
+  "info": (
+    "bg": $info,
+    "border": shade-color($info, 20%),
+    "text": shade-color($info, 20%),
+  ),
 );
 
 $solid-button-variants: (
   "primary": $primary,
-  "secondary": $secondary,
-  "info": $info,
+  "surface": $chemstrap-silicon,
   "create": $chemstrap-green,
 );
 
@@ -42,10 +46,10 @@ h6 {
   }
 }
 
-@mixin solid-button-variant($name) {
+@mixin solid-button-variant($color) {
   @include button-variant(
     $color,
-    $color,
+    mix($color, $white, 50),
     $white,
     $hover-color: $white,
     $active-color: $white,
@@ -55,50 +59,75 @@ h6 {
 
 // open chemstrap button variants
 
+@mixin open-button($name) {
+  @include button-variant(
+    mix(
+      map-get($silicon-shades, lighten5),
+      map-get(map-get($open-button-variants, $name), "bg"),
+      98
+    ),
+    mix(
+      map-get($carbon-shades, lighten3),
+      map-get(map-get($open-button-variants, $name), "border"),
+      50
+    ),
+    map-get(map-get($open-button-variants, $name), "text"),
+    mix(
+      map-get($silicon-shades, lighten5),
+      map-get(map-get($open-button-variants, $name), "bg"),
+      90
+    ),
+    mix(
+      map-get($carbon-shades, lighten3),
+      map-get(map-get($open-button-variants, $name), "border"),
+      50
+    ),
+    map-get(map-get($open-button-variants, $name), "text"),
+    map-get(map-get($open-button-variants, $name), "bg"),
+    map-get(map-get($open-button-variants, $name), "border"),
+    $chemstrap-white
+  );
+}
+
 @each $name, $color in $open-button-variants {
   .btn-#{$name} {
-    @include button-variant(
-      mix(
-        map-get($silicon-shades, lighten5),
-        map-get(map-get($open-button-variants, $name), "bg"),
-        98
-      ),
-      mix(
-        map-get($carbon-shades, lighten3),
-        map-get(map-get($open-button-variants, $name), "border"),
-        50
-      ),
-      map-get(map-get($open-button-variants, $name), "text"),
-      mix(
-        map-get($silicon-shades, lighten5),
-        map-get(map-get($open-button-variants, $name), "bg"),
-        90
-      ),
-      mix(
-        map-get($carbon-shades, lighten3),
-        map-get(map-get($open-button-variants, $name), "border"),
-        50
-      ),
-      map-get(map-get($open-button-variants, $name), "text"),
-      map-get(map-get($open-button-variants, $name), "bg"),
-      map-get(map-get($open-button-variants, $name), "border"),
-      $chemstrap-white
-    );
+    @include open-button($name);
   }
 }
 
 // solid chemstrap button variants
 @each $name, $color in $solid-button-variants {
   .btn-#{$name} {
-    @include button-variant(
-      $color,
-      shade-color($color, 20%),
-      $white,
-      $hover-color: $white,
-      $active-color: $white,
-      $disabled-color: $white
-    );
+    @include solid-button-variant($color);
   }
+}
+
+.btn-light {
+  @include button-variant(
+    mix(map-get($silicon-shades, lighten5), $chemstrap-silicon, 98),
+    map-get($carbon-shades, lighten3),
+    $body-color,
+    mix(map-get($silicon-shades, lighten5), $chemstrap-silicon, 90),
+    map-get($carbon-shades, lighten3),
+    $body-color,
+    $chemstrap-graphite,
+    map-get($carbon-shades, lighten3),
+    $chemstrap-white
+  );
+}
+
+.btn-ghost {
+  @include button-variant(
+    transparent,
+    map-get($carbon-shades, lighten4),
+    $chemstrap-white,
+    mix(transparent, $chemstrap-blue, 50),
+    map-get($carbon-shades, lighten4),
+    $chemstrap-white,
+    $chemstrap-blue,
+    map-get($carbon-shades, lighten4),
+    $chemstrap-white
+  );
 }
 
 .btn-plain,
@@ -195,6 +224,22 @@ h6 {
   &-xxsm {
     @include xxsm-form-elements;
   }
+}
+
+button.btn-close {
+  @extend .btn;
+  @extend .btn-sm;
+  padding: $input-btn-padding-y-sm !important;
+  background-image: none !important;
+  &::before {
+    @extend .fa;
+    @extend .fa-times;
+  }
+  @extend .btn-ghost;
+}
+
+.modal-header .btn-close {
+  margin: 0 0 0 auto !important;
 }
 
 .btn i {
@@ -298,4 +343,8 @@ h6 {
   &.accordion-button.sbmm-accordion-header.active {
     @extend .surface-lighten1;
   }
+}
+
+.modal-header {
+  @extend .surface-active;
 }

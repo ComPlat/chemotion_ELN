@@ -109,7 +109,7 @@ const scollectionShow = (e) => {
 };
 
 const reportShowReport = () => {
-  ElementActions.showReportContainer();
+  ElementActions.showReportDetails();
 };
 
 const predictionShowFwdRxn = () => {
