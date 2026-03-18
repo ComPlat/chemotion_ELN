@@ -28,12 +28,7 @@ function RowToolsCellRenderer({
   return (
     <div>
       <ButtonGroup>
-        <OverlayTrigger
-          placement="bottom"
-          overlay={<Tooltip>{getVariationsRowName(reactionShortLabel, row.id)}</Tooltip>}
-        >
-          <Button size="xsm" variant="secondary">{row.id}</Button>
-        </OverlayTrigger>
+        <Button size="xsm" variant="secondary">{getVariationsRowName(reactionShortLabel, row.id)}</Button>
         <Button size="xsm" variant="success" onClick={() => copyRow(row)}>
           <i className="fa fa-clone" />
         </Button>
