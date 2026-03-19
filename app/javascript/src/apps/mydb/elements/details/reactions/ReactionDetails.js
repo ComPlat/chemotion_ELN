@@ -9,13 +9,12 @@ import {
 } from 'react-bootstrap';
 import { findIndex, isEmpty } from 'lodash';
 
-import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import ElementResearchPlanLabels from 'src/apps/mydb/elements/labels/ElementResearchPlanLabels';
 import ElementAnalysesLabels from 'src/apps/mydb/elements/labels/ElementAnalysesLabels';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
-import DetailCard from 'src/apps/mydb/elements/details/LegacyDetailCard';
+import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import ReactionVariations from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariations';
 import {
   REACTION_VARIATIONS_TAB_KEY
@@ -36,10 +35,8 @@ import { setReactionByType } from 'src/apps/mydb/elements/details/reactions/Reac
 import { sampleShowOrNew } from 'src/utilities/routesUtils';
 import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
-import ConfirmClose from 'src/components/common/ConfirmClose';
 import { rfValueFormat } from 'src/utilities/ElementUtils';
 import ExportSamplesButton from 'src/apps/mydb/elements/details/ExportSamplesButton';
-import CopyElementModal from 'src/components/common/CopyElementModal';
 import { permitOn } from 'src/components/common/uis';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import Immutable from 'immutable';
@@ -397,119 +394,7 @@ export default class ReactionDetails extends Component {
     );
   }
 
-  reactionHeader(reaction) {
-    const titleTooltip = formatTimeStampsOfElement(reaction || {});
 
-    const colLabel = !reaction.isNew && (
-      <ElementCollectionLabels element={reaction} key={reaction.id} placement="right" />
-    );
-
-    const rsPlanLabel = (reaction.isNew || isEmpty(reaction.research_plans)) ? null : (
-      <ElementResearchPlanLabels plans={reaction.research_plans} key={reaction.id} placement="right" />
-    );
-
-    return (
-      <div className="d-flex justify-content-between">
-        <div className="d-flex align-items-center gap-2">
-          <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
-            <span>
-              <i className="icon-reaction me-1" />
-              {reaction.title()}
-            </span>
-          </OverlayTrigger>
-          {colLabel}
-          {rsPlanLabel}
-          <ShowUserLabels element={reaction} />
-          <ElementAnalysesLabels element={reaction} key={`${reaction.id}_analyses`} />
-          <HeaderCommentSection element={reaction} />
-        </div>
-        <div className="d-flex align-items-center gap-1">
-          <ButtonToolbar className="justify-content-end">
-            <PrintCodeButton element={reaction} />
-            {!reaction.isNew
-              && <OpenCalendarButton isPanelHeader eventableId={reaction.id} eventableType="Reaction" />}
-            <OverlayTrigger
-              placement="bottom"
-              overlay={<Tooltip id="generateReport">Generate Report</Tooltip>}
-            >
-              <Button
-                variant="success"
-                size="xxsm"
-                disabled={reaction.changed || reaction.isNew}
-                title={(reaction.changed || reaction.isNew)
-                  ? 'Report can be generated after reaction is saved.'
-                  : 'Generate report for this reaction'}
-                onClick={() => Utils.downloadFile({
-                  contents: `/api/v1/reports/docx?id=${reaction.id}`,
-                  name: reaction.name
-                })}
-              >
-                <i className="fa fa-cogs" />
-              </Button>
-            </OverlayTrigger>
-            {(reaction.changed || reaction.isNew === true)
-              && (
-                <>
-                  <OverlayTrigger
-                    placement="bottom"
-                    overlay={<Tooltip id="saveReaction">Save and Close Reaction</Tooltip>}
-                  >
-                    <Button
-                      variant="warning"
-                      size="xxsm"
-                      onClick={() => this.handleSubmit(true)}
-                      disabled={!permitOn(reaction) || !this.reactionIsValid() || reaction.isNew}
-                    >
-                      <i className="fa fa-floppy-o me-1" />
-                      <i className="fa fa-times" />
-                    </Button>
-                  </OverlayTrigger>
-                  <OverlayTrigger
-                    placement="bottom"
-                    overlay={<Tooltip id="saveReaction">Save Reaction</Tooltip>}
-                  >
-                    <Button
-                      variant="warning"
-                      size="xxsm"
-                      onClick={() => this.handleSubmit()}
-                      disabled={!permitOn(reaction) || !this.reactionIsValid()}
-                    >
-                      <i className="fa fa-floppy-o " />
-                    </Button>
-                  </OverlayTrigger>
-                </>
-              )}
-            <CopyElementModal element={reaction} />
-            <ConfirmClose el={reaction} />
-          </ButtonToolbar>
-        </div>
-      </div>
-    );
-  }
-
-  reactionFooter() {
-    const { reaction } = this.state;
-    const submitLabel = (reaction && reaction.isNew) ? 'Create' : 'Save';
-
-    return (
-      <>
-        <Button variant="primary" onClick={() => DetailActions.close(reaction)}>
-          Close
-        </Button>
-        <Button
-          id="submit-reaction-btn"
-          variant="warning"
-          onClick={() => this.handleSubmit()}
-          disabled={!permitOn(reaction) || !this.reactionIsValid()}
-        >
-          {submitLabel}
-        </Button>
-        {reaction && !reaction.isNew && (
-          <ExportSamplesButton type="reaction" id={reaction.id} />
-        )}
-      </>
-    );
-  }
 
   refreshGraphic() {
     const { reaction, isRefreshingGraphic } = this.state;
@@ -1026,11 +911,68 @@ export default class ReactionDetails extends Component {
 
     const currentTab = (activeTab !== 0 && activeTab) || visible[0];
 
+    const titleTooltip = formatTimeStampsOfElement(reaction || {});
+    const title = reaction.title();
+
+    const titleAppendix = (
+      <>
+        {!reaction.isNew && !isEmpty(reaction.research_plans) && (
+          <ElementResearchPlanLabels plans={reaction.research_plans} key={reaction.id} placement="right" />
+        )}
+        <ShowUserLabels element={reaction} />
+        <ElementAnalysesLabels element={reaction} key={`${reaction.id}_analyses`} />
+      </>
+    );
+
+    const headerToolbar = (
+      <>
+        <HeaderCommentSection element={reaction} />
+        <PrintCodeButton element={reaction} />
+        {!reaction.isNew && (
+          <OpenCalendarButton isPanelHeader eventableId={reaction.id} eventableType="Reaction" />
+        )}
+        <OverlayTrigger
+          placement="bottom"
+          overlay={<Tooltip id="generateReport">Generate Report</Tooltip>}
+        >
+          <Button
+            variant="secondary"
+            size="sm"
+            disabled={reaction.changed || reaction.isNew}
+            title={(reaction.changed || reaction.isNew)
+              ? 'Report can be generated after reaction is saved.'
+              : 'Generate report for this reaction'}
+            onClick={() => Utils.downloadFile({
+              contents: `/api/v1/reports/docx?id=${reaction.id}`,
+              name: reaction.name
+            })}
+          >
+            <i className="fa fa-cogs" />
+          </Button>
+        </OverlayTrigger>
+      </>
+    );
+
+    const footerToolbar = !reaction.isNew && (
+      <ExportSamplesButton type="reaction" id={reaction.id} />
+    );
+
+    const showSave = reaction.changed || reaction.isNew;
+    const saveDisabled = !permitOn(reaction) || !this.reactionIsValid();
+
     return (
       <DetailCard
+        element={reaction}
         isPendingToSave={reaction.isPendingToSave}
-        header={this.reactionHeader(reaction)}
-        footer={this.reactionFooter()}
+        title={title}
+        titleTooltip={titleTooltip}
+        titleAppendix={titleAppendix}
+        headerToolbar={headerToolbar}
+        footerToolbar={footerToolbar}
+        onSave={() => this.handleSubmit()}
+        onSaveClose={() => this.handleSubmit(true)}
+        showSave={showSave}
+        saveDisabled={saveDisabled}
       >
         <ReactionSchemeGraphic
           key={`reaction-graphic-${reaction.id}-${this.state.reactionSvgVersion || 0}`}
