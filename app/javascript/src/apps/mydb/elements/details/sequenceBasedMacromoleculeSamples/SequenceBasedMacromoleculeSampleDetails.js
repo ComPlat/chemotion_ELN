@@ -301,7 +301,8 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
       && currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
     const isChemicalTab = sbmmStore.active_tab_key === 'inventory';
     const chemicalSaveBtn = isChemicalTab && sbmmStore.isChemicalEdited;
-    const sampleSaveBtn = sbmmSample.isEdited && sbmmStore.active_tab_key !== 'inventory';
+    const hasSampleChanges = sbmmSample.isEdited || sbmmSample.changed;
+    const sampleSaveBtn = hasSampleChanges && sbmmStore.active_tab_key !== 'inventory';
 
     return (
       <div className="d-flex align-items-center justify-content-between">
@@ -346,7 +347,7 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
               defCol={defCol}
             />
           )}
-          {sbmmSample.isEdited && (
+          {hasSampleChanges && (
             <OverlayTrigger
               placement="bottom"
               overlay={<Tooltip id="saveSequenceBasedMacromolecule">Save sequence based macromolecule</Tooltip>}
@@ -378,7 +379,7 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
   // Footer logic: show save button for chemical if on inventory tab and isChemicalEdited, else show sbmm save
   const isChemicalTab = sbmmStore.active_tab_key === 'inventory';
   const chemicalSaveBtn = isChemicalTab && sbmmStore.isChemicalEdited;
-  const sampleSaveBtn = sbmmSample.isEdited && sbmmStore.active_tab_key !== 'inventory';
+  const sampleSaveBtn = (sbmmSample.isEdited || sbmmSample.changed) && sbmmStore.active_tab_key !== 'inventory';
   const sbmmSampleFooter = () => (
     <>
       <Button variant="primary" onClick={() => DetailActions.close(sbmmSample)}>
