@@ -5,6 +5,7 @@ import {
   CloseButton,
   Button,
   Overlay,
+  OverlayTrigger,
   Tooltip,
   ButtonToolbar,
 } from 'react-bootstrap';
@@ -22,6 +23,7 @@ export default function DetailCard({
   element,
   isPendingToSave,
   title,
+  titleTooltip,
   titleAppendix,
   headerToolbar,
   footerToolbar,
@@ -136,7 +138,16 @@ export default function DetailCard({
           <div className="d-flex align-items-center gap-2">
             <div className="d-flex align-items-center me-2">
               {element && <ElementIcon element={element} className="me-1" />}
-              <span>{title}</span>
+              {titleTooltip ? (
+                <OverlayTrigger
+                  placement="bottom"
+                  overlay={<Tooltip id="detail-card-title-tooltip">{titleTooltip}</Tooltip>}
+                >
+                  <span>{title}</span>
+                </OverlayTrigger>
+              ) : (
+                <span>{title}</span>
+              )}
             </div>
             {element && !element.isNew && <ElementCollectionLabels element={element} placement="right" />}
             {titleAppendix}
@@ -169,10 +180,10 @@ export default function DetailCard({
               >
                 Close
               </Button>
+              {footerToolbar}
               {hasSave && (
                 detailFooterButton(footerSaveButtonProps)
               )}
-              {footerToolbar}
             </div>
           </Card.Footer>
         )}
@@ -211,7 +222,8 @@ DetailCard.propTypes = {
     }),
   }),
   isPendingToSave: PropTypes.bool,
-  title: PropTypes.node.isRequired,
+  title: PropTypes.string.isRequired,
+  titleTooltip: PropTypes.string,
   titleAppendix: PropTypes.node,
   headerToolbar: PropTypes.node,
   footerToolbar: PropTypes.node,
@@ -226,6 +238,7 @@ DetailCard.propTypes = {
 DetailCard.defaultProps = {
   element: null,
   isPendingToSave: undefined,
+  titleTooltip: null,
   titleAppendix: null,
   headerToolbar: null,
   footerToolbar: null,
