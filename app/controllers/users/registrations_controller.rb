@@ -3,6 +3,7 @@
 module Users
   class RegistrationsController < Devise::RegistrationsController
     before_action :check_otp, only: %i[destroy update]
+
     def new
       build_resource({})
       @affiliation = resource.affiliations.build
@@ -30,11 +31,13 @@ module Users
     protected
 
     def check_otp
-      if resource.otp_required_for_login && !resource.validate_and_consume_otp!(params[:user][:otp_attempt])
-          resource.assign_attributes(account_update_params.except(:current_password))
-          resource.errors.add(:base, :invalid_otp)
-          render json: { otp_required: true, otp_wrong: params[:user][:otp_attempt].present? }, status: :unprocessable_entity
-      end
+      return unless resource.otp_required_for_login &&
+                    !resource.validate_and_consume_otp!(params[:user][:otp_attempt])
+
+      resource.assign_attributes(account_update_params.except(:current_password))
+      resource.errors.add(:base, :invalid_otp)
+      render json: { otp_required: true, otp_wrong: params[:user][:otp_attempt].present? },
+             status: :unprocessable_entity
     end
 
     def providers
